@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.2 1999/01/19 21:04:48 ragge Exp $	*/
+/*	$NetBSD: ka820.h,v 1.2.8.1 2000/11/20 20:32:54 bouyer Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -139,13 +139,5 @@ struct ka820clock {
 	u_short csr3;
 };
 
-/*
- * Prototypes.
- */
-void	ka820_conf __P((struct device *, struct device *, void *));
-void	ka820_memerr __P((void));
-int	ka820_mchk __P((caddr_t));
-void	ka820_steal_pages __P((void));
-int	ka820_clkread __P((time_t));
-void	ka820_clkwrite __P((void));
+void	crxintr __P((void *arg));
 #endif

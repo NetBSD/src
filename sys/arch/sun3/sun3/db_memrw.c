@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.19 1998/02/05 04:57:31 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.19.14.1 2000/11/20 20:27:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pte.h>

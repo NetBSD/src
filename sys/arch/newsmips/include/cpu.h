@@ -1,14 +1,36 @@
-/*	$NetBSD: cpu.h,v 1.3 1999/01/16 08:26:24 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.8.1 2000/11/20 20:17:24 bouyer Exp $	*/
 
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
 
-#define MIPS_INT_MASK_FPU	MIPS_INT_MASK_3
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
 
-#define	INT_MASK_REAL_DEV	(MIPS_HARD_INT_MASK &~ MIPS_INT_MASK_3)
-#define	INT_MASK_FPU_DEAL	MIPS_INT_MASK_3
+extern int systype;
 
-#endif	_MACHINE_CPU_H_
+#define NEWS3400	1
+#define NEWS5000	2
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()		(&cpu_info_store)
+#define	cpu_number()		0
+#endif /* _KERNEL */
+
+#endif /* _LOCORE */
+#endif /* _MACHINE_CPU_H_ */

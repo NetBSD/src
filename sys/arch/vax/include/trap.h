@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.16 1997/07/28 21:48:36 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.16.20.1 2000/11/20 20:33:04 bouyer Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,28 +91,6 @@ struct	trapframe {
         long	psl;    /* User psl */
 };
 
-/*
- * This struct is used when setting up interrupt vectors dynamically.
- * It pushes a longword between 0-63 on the stack; this number is
- * normally used as the ctlr number on devices. This use effectively
- * limits the number of interruptable ctlrs on one unibus to 64.
- */
-struct ivec_dsp {
-	char	pushr; 		/* pushr */
-	char	pushrarg;	/* $3f */
-	char	pushl; 		/* pushl */
-	char	pushlarg;	/* $? */
-	char	nop;      	/* nop, for foolish gcc */
-	char	calls[3]; 	/* calls $1,? */
-	void	(*hoppaddr) __P((int));	/* jump for calls */
-	char	popr;	  	/* popr $0x3f */
-	char	poprarg;
-	char	rei;      	/* rei */
-	char	pad;		/* sizeof(struct ivec_dsp) == 16 */
-};
-
-extern	struct ivec_dsp idsptch;
-
 #endif /* _LOCORE */
 
-#endif _VAX_TRAP_H_
+#endif /* _VAX_TRAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.13 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: device.h,v 1.13.2.1 2000/11/20 20:20:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)device.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/callout.h>
 
 /*
  * This structure is used to encapsulate the routines for a device driver.
@@ -101,7 +103,9 @@ struct pmax_scsi_device {
  * needs to execute a SCSI command.
  */
 typedef struct ScsiCmd {
+#if NXSII == 0			/* Not used for MI SCSI */
 	struct	pmax_scsi_device *sd; /* device requesting the command */
+#endif
 	int	unit;		/* unit number passed to device done routine */
 	int	flags;		/* control flags for this command (see below) */
 	int	buflen;		/* length of the data buffer in bytes */
@@ -109,6 +113,8 @@ typedef struct ScsiCmd {
 	int	cmdlen;		/* length of data in cmdbuf */
 	u_char	*cmd;		/* buffer for the SCSI command */
 	int	error;		/* compatibility hack for new scsi */
+	int	lun;		/* LUN for MI SCSI */
+	struct callout timo_ch;	/* timeout callout handle */
 } ScsiCmd;
 
 /*
@@ -133,7 +139,7 @@ extern struct pmax_scsi_device scsi_dinit[];
  * Callbacks to add known a controller, and to configure all slaves on
  * all  known controllers.
  */
-void pmax_add_scsi __P((struct pmax_driver *dp, int unit));
-void configure_scsi __P((void));
+void	pmax_add_scsi __P((struct pmax_driver *dp, int unit));
+void	configure_scsi __P((void));
 
 #endif	/* _KERNEL */

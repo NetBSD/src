@@ -1,16 +1,22 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 1998/09/02 05:51:37 eeh Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3.12.1 2000/11/20 20:26:47 bouyer Exp $	*/
 
-#define ELF32_MACHDEP_ENDIANNESS	Elf_ed_2msb
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
-		case Elf_em_sparc:					\
-		case Elf_em_sparc32plus:				\
+		case EM_SPARC:						\
+		case EM_SPARC32PLUS:					\
 			break;
 
-#define	ELF64_MACHDEP_ENDIANNESS	Elf_ed_2msb
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF64_MACHDEP_ID_CASES						\
-		case Elf_em_sparc32plus:				\
-		case Elf_em_sparc64:					\
+		case EM_SPARC32PLUS:					\
+		case EM_SPARCV9:					\
 			break;
+
+#ifdef __arch64__
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
 
 #define R_SPARC_NONE		0
 #define R_SPARC_8		1
@@ -58,5 +64,16 @@
 #define R_SPARC_7		43
 #define R_SPARC_5		44
 #define R_SPARC_6		45
+#define	R_SPARC_DISP64		46
+#define	R_SPARC_PLT64		47
+#define	R_SPARC_HIX22		48
+#define	R_SPARC_LOX10		49
+#define	R_SPARC_H44		50
+#define	R_SPARC_M44		51
+#define	R_SPARC_L44		52
+#define	R_SPARC_REGISTER	53
+#define	R_SPARC_UA64		54
+#define	R_SPARC_UA16		55
+
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)

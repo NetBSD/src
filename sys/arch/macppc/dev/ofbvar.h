@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.1 1998/10/14 12:15:13 tsubai Exp $	*/
+/*	$NetBSD: ofbvar.h,v 1.1.12.1 2000/11/20 20:12:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,24 +29,17 @@
 
 struct ofb_devconfig {
 	paddr_t	dc_paddr;		/* physcal address */
+	int	dc_node;		/* phandle of this node */
 	int	dc_ih;			/* ihandle of this node */
-
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
+	struct rasops_info dc_ri;
 };
 
-#define dc_width	dc_raster.width
-#define dc_height	dc_raster.height
-#define dc_depth	dc_raster.depth
-#define dc_linebytes	dc_raster.linelongs * sizeof(u_int32_t)
-
-	
 struct ofb_softc {
 	struct	device sc_dev;
 
-	struct	ofb_devconfig *sc_dc;	/* device configuration */
+	struct ofb_devconfig *sc_dc;	/* device configuration */
 	int nscreens;
-
+	u_int32_t sc_addrs[30];		/* "assigned-addresses" storage */
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];

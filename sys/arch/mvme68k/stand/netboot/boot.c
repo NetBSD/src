@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1996/05/19 21:07:21 chuck Exp $ */
+/*	$NetBSD: boot.c,v 1.4.32.1 2000/11/20 20:15:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,19 +39,24 @@
 #include <sys/reboot.h>
 #include <machine/prom.h>
 
+#include <lib/libkern/libkern.h>
+
 #include "stand.h"
 #include "libsa.h"
 
-extern	char *version;
+void main(void);
+
+extern	char bootprog_name[], bootprog_rev[];
 char	line[80];
 
+void
 main()
 {
 	char *cp, *file;
-	int ask = 0, howto, sboot = 0;
+	int ask = 0, howto, part, sboot = 0;
 
-	printf(">> BSD MVME%x netboot (via %s) [%s]\n", bugargs.cputyp, 
-		bugargs.arg_start, version);
+	printf(">> %s MVME%x netboot (via %s) [%s]\n",
+		bootprog_name, bugargs.cputyp, bugargs.arg_start, bootprog_rev);
 	if (bcmp("sboot", bugargs.arg_start, 5) == 0)
 		sboot = 1;
 	/* cycle in the correct args */
@@ -59,7 +64,7 @@ main()
 	bugargs.arg_end   = bugargs.nbarg_end;
 	*bugargs.arg_end = 0; /* ensure */
 
-	parse_args(&file, &howto);
+	parse_args(&file, &howto, &part);
 
 	for (;;) {
 		if (ask) {
@@ -71,12 +76,12 @@ main()
 				while (cp < (line + sizeof(line) - 1) && *cp) 
 					cp++;
 				bugargs.arg_end = cp;
-				parse_args(&file, &howto);
+				parse_args(&file, &howto, &part);
 			}
 		}
 		if (sboot)
 			howto |= RB_SBOOT;
-		exec_mvme(file, howto);
+		exec_mvme(file, howto, part);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}

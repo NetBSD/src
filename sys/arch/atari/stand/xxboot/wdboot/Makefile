@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2000/11/20 20:05:34 bouyer Exp $
 
 PROG=	wdboot
-SRCS=	${.CURDIR}/wdboot.s
+SRCS=	wdboot.s
 MKMAN=	no
 LIBCRT0=
 INCL=	-I${.CURDIR} -I${.CURDIR}/..

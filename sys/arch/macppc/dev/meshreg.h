@@ -1,4 +1,4 @@
-/*	$NetBSD: meshreg.h,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
+/*	$NetBSD: meshreg.h,v 1.1.8.1 2000/11/20 20:12:57 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -85,6 +85,9 @@
 #define MESH_EXC_PHASEMM	0x02	/* phase mismatch */
 #define MESH_EXC_SELTO		0x01	/* selection timeout */
 
+#define MESH_EXC_BITMASK \
+	"\20\06SELATN\05SELECTED\04RESEL\03ARBLOST\02PHASEMM\01SELTO"
+
 /* ERROR register bits */
 #define MESH_ERR_DISCONNECT	0x40	/* unexpected disconnect */
 #define MESH_ERR_SCSI_RESET	0x20	/* Rst signal asserted */
@@ -93,6 +96,9 @@
 #define MESH_ERR_PARITY_ERR2	0x04
 #define MESH_ERR_PARITY_ERR1	0x02
 #define MESH_ERR_PARITY_ERR0	0x01
+
+#define MESH_ERR_BITMASK \
+	"\20\07DISCON\06RESET\05SEQERR\04PAR3\03PAR2\02PAR1\01PAR0"
 
 /* BUS_STATUS0 status bits */
 #define MESH_STATUS0_REQ32	0x80
@@ -104,7 +110,11 @@
 #define MESH_STATUS0_CD		0x02
 #define MESH_STATUS0_IO		0x01
 
+#define MESH_STATUS0_BITMASK "\20\06REQ\05ACK\04ATN\03MSG\02CD\01IO"
+
 /* BUS_STATUS1 status bits */
 #define MESH_STATUS1_RST	0x80
 #define MESH_STATUS1_BSY	0x40
 #define MESH_STATUS1_SEL	0x20
+
+#define MESH_STATUS1_BITMASK "\20\10RST\07BSY\06SEL"

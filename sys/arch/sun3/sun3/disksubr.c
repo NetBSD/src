@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1998/06/20 03:45:55 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19.14.1 2000/11/20 20:28:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -53,11 +53,6 @@
 
 #include <dev/sun/disklabel.h>
 
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkpart(dev)		(minor(dev) & 7)
-
-#define	b_cylin	b_resid
-
 #if LABELSECTOR != 0
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
@@ -103,7 +98,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -112,7 +107,7 @@ readdisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 	if (!error) {
 		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_un.b_addr, clp->cd_block, sizeof(clp->cd_block));
+		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
@@ -213,12 +208,12 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_un.b_addr, sizeof(clp->cd_block));
+	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -242,7 +237,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct partition *p;
 	int sz, maxsz;
 
-	p = lp->d_partitions + dkpart(bp->b_dev);
+	p = lp->d_partitions + DISKPART(bp->b_dev);
 	maxsz = p->p_size;
 	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
@@ -273,26 +268,12 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
-}
-
-/*
- * This function appears to be called by each disk driver.
- * Aparently this is to give this MD code a chance to do
- * additional "device registration" types of work. (?)
- * For example, the sparc port uses this to record the
- * device node for the PROM-specified boot device.
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
 }
 
 /************************************************************************
@@ -461,11 +442,11 @@ disklabel_bsd_to_sun(lp, cp)
  */
 int
 isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+	struct dkbad *bt;
 	int cyl, trk, sec;
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < 126; i++) {

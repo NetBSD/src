@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 1999/03/27 06:31:31 abs Exp $ */
+/*	$NetBSD: mem.c,v 1.21.8.1 2000/11/20 20:25:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;
@@ -132,7 +132,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(pa), prot, TRUE, prot);
+			    trunc_page(pa), prot, prot|PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -191,10 +191,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(zeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			break;
 
@@ -211,10 +211,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
-        dev_t dev;
-        int off, prot;
+	dev_t dev;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

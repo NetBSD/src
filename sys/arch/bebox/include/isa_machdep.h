@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8 1999/03/19 05:02:03 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8.8.1 2000/11/20 20:06:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,16 +109,19 @@ struct isabus_attach_args;	/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
+void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg);
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
 #define	isa_dmacascade(ic, c)						\
 	_isa_dmacascade(&(ic)->ic_dmastate, (c))
+#define	isa_dmamaxsize(ic, c)						\
+	_isa_dmamaxsize(&(ic)->ic_dmastate, (c))
 #define	isa_dmamap_create(ic, c, s, f)					\
 	_isa_dmamap_create(&(ic)->ic_dmastate, (c), (s), (f))
 #define	isa_dmamap_destroy(ic, c)					\
@@ -237,6 +240,6 @@ extern paddr_t isaphysmem;
 /*
  * Miscellanous functions.
  */
-void sysbeep __P((int, int));		/* beep with the system speaker */
+void sysbeep(int, int);		/* beep with the system speaker */
 
 #endif /* _BEBOX_ISA_MACHDEP_H_ XXX */

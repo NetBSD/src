@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 1999/01/31 09:21:20 mrg Exp $ */
+/*	$NetBSD: types.h,v 1.8.8.1 2000/11/20 20:26:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,27 +70,37 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
+
 #ifdef __arch64__
 /* 64-bit compiler */
 typedef	long			  int64_t;
 typedef unsigned long		u_int64_t;
 #else
 /* 32-bit compiler */
+/* LONGLONG */
 typedef	long long		  int64_t;
+/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 #endif
+
 /* The following are unsigned to prevent annoying sign extended pointers. */
 typedef unsigned long		register_t;
 typedef u_int32_t		register32_t;
 typedef u_int64_t		register64_t;
 
-/* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef unsigned long		vaddr_t;
 typedef vaddr_t			vsize_t;
+#ifdef SUN4U
 typedef u_int64_t		paddr_t;
+#else
+typedef unsigned long		paddr_t;
+#endif
 typedef paddr_t			psize_t;
 #endif
 
+#define __HAVE_DEVICE_REGISTER
+
+#define __BROKEN_CONFIG_UNIT_USAGE
 
 #endif	/* _MACHTYPES_H_ */

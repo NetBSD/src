@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.7 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.7.10.1 2000/11/20 20:12:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -60,6 +60,7 @@ struct sbc_softc {
 	volatile vaddr_t	sc_drq_addr;
 	volatile vaddr_t	sc_nodrq_addr;
 	void			(*sc_clrintr) __P((struct ncr5380_softc *));
+	volatile int		sc_resid;
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
 };
@@ -85,7 +86,6 @@ struct sbc_softc {
 extern int	sbc_debug;
 extern int	sbc_link_flags;
 extern int	sbc_options;
-extern struct scsipi_device sbc_dev;
 
 int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
 int	sbc_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));

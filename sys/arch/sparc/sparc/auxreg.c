@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.25 1999/03/11 06:44:40 fair Exp $ */
+/*	$NetBSD: auxreg.c,v 1.25.8.1 2000/11/20 20:25:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
@@ -71,6 +72,8 @@ struct cfattach auxreg_obio_ca = {
 };
 
 #ifdef BLINK
+static struct callout blink_ch = CALLOUT_INITIALIZER;
+
 static void blink __P((void *zero));
 
 static void
@@ -90,7 +93,7 @@ blink(zero)
 	 * etc.
 	 */
 	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout(blink, (caddr_t)0, s);
+	callout_reset(&blink_ch, s, blink, NULL);
 }
 #endif
 
@@ -129,7 +132,7 @@ auxregattach_mainbus(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t hp;
+	bus_space_handle_t bh;
 
 	if (bus_space_map2(ma->ma_bustag,
 			  ma->ma_iospace,
@@ -137,7 +140,7 @@ auxregattach_mainbus(parent, self, aux)
 			  sizeof(long),
 			  BUS_SPACE_MAP_LINEAR,
 			  AUXREG_VA,
-			  &hp) != 0) {
+			  &bh) != 0) {
 		printf("auxregattach_mainbus: can't map register\n");
 		return;
 	}

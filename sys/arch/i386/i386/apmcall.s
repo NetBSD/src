@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.6 1999/08/02 08:34:50 darrenr Exp $ */
+/*	$NetBSD: apmcall.s,v 1.6.2.1 2000/11/20 20:09:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <machine/asm.h>
 #include <machine/apmvar.h>
 #include <machine/bioscall.h>
+
+#include "opt_apm.h"
 
 /*
  * int apmcall(int function, struct bioscallregs *regs):

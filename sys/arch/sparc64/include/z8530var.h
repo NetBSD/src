@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.1.1.1.14.1 2000/11/20 20:26:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,9 @@ struct zsc_softc {
 	struct zs_chanstate	*zsc_cs[2];	/* channel A and B soft state */
 
 	/* Machine-dependent part follows... */
+	void			*zsc_softintr;
+	int			zsc_promunit;	/* PROM's view of zs devices */
+	int			zsc_node;	/* PROM node, if any */
 	struct evcnt		zsc_intrcnt;	/* count interrupts */
 	struct zs_chanstate	zsc_cs_store[2];
 };

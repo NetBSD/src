@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 1999/09/25 00:00:38 shin Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.1 2000/11/20 20:13:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
+#include "opt_lockdebug.h"
 #include "fs_coda.h"
 
 #include <machine/cdefs.h>
@@ -72,6 +73,7 @@
 #include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+#include <mips/trap.h>
 
 #include "assym.h"
 
@@ -81,17 +83,24 @@
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
+#if defined(MIPS3) & !defined(MIPS1)
+	/* keep firmware exception handler until we hook. */
+	mfc0	v0, MIPS_COP_0_STATUS
+	and	v0, MIPS3_SR_DIAG_BEV
+	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+#endif
 /*
  * Initialize stack and call machine startup.
  */
 	la	v1, start
 	slt	v0, v1, sp
-	bne	v0, $0, 1f
+	bne	v0, zero, 1f
 	addu	v0, v1, -CALLFRAME_SIZ
 	subu	v0, v1, sp
 	slt	v0, v0, 4096			# within 4KB of _start
-	beq	v0, $0, 2f
+	beq	v0, zero, 2f
 	addu	v0, v1, -CALLFRAME_SIZ
 1:
 	move	sp, v0
@@ -99,17 +108,38 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+
+#ifdef ENABLE_MIPS_TX3900
+	/*
+	 * TX3922 write-through D-cache mode.
+	 * for TX3912, no meaning. (no write-back mode)
+	 */
+	mfc0	t0, R3900_COP_0_CONFIG
+	li	t1, 0xffffdfff
+	and	t0, t0, t1
+	mtc0	t0, R3900_COP_0_CONFIG
+#ifdef R3900_CACHE_DISABLE
+	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
+	mfc0	t1, R3900_COP_0_CONFIG
+	and	t1, t0, t1
+	nop
+	mtc0	t1, R3900_COP_0_CONFIG
+	nop
+#endif /* R3900_CACHE_DISABLE */
+#endif /* ENABLE_MIPS_TX3900 */
+
+#ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 #ifdef HPCMIPS_L1CACHE_DISABLE
 	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
 	mtc0	t0, MIPS_COP_0_CONFIG
-#endif /*  HPCMIPS_L1CACHE_DISABLE */
-#else	
-	li	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
+#endif /* HPCMIPS_L1CACHE_DISABLE */
+#else
+	mfc0	t0, MIPS_COP_0_STATUS
+	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
-#endif	
+#endif
 	nop
 	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
@@ -117,11 +147,11 @@ _C_LABEL(kernel_text):
 	nop					# wait for new SR
 	nop					# to be effective
 	nop
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+#ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
-#else	
+#else
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
-#endif	
+#endif
 	sw	t0, _C_LABEL(cpu_id)		# save PRID register
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
@@ -188,12 +218,12 @@ NESTED(setrunqueue, CALLFRAME_SIZ, ra)
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
 	sll	t1, t1, t0
-	lw	t2, _C_LABEL(whichqs)	# set corresponding bit
+	lw	t2, _C_LABEL(sched_whichqs)	# set corresponding bit
 	nop
 	or	t2, t2, t1
-	sw	t2, _C_LABEL(whichqs)
+	sw	t2, _C_LABEL(sched_whichqs)
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	t1, _C_LABEL(qs)
+	la	t1, _C_LABEL(sched_qs)
 	addu	t0, t0, t1		# t0 = qp = &qs[pri >> 2]
 	lw	t1, P_BACK(t0)		# t1 = qp->ph_rlink
 	sw	t0, P_FORW(a0)		# p->p_forw = qp
@@ -215,7 +245,7 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, _C_LABEL(whichqs)	# check corresponding bit
+	lw	t2, _C_LABEL(sched_whichqs)	# check corresponding bit
 	sll	t1, t1, t0
 	and	v0, t2, t1
 	sw	ra, CALLFRAME_RA(sp)
@@ -228,14 +258,14 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	sw	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
 	sw	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	v0, _C_LABEL(qs)
+	la	v0, _C_LABEL(sched_qs)
 	addu	t0, t0, v0		# t0 = qp = &qs[pri >> 2]
 	lw	v0, P_FORW(t0)		# check if queue empty
 	nop
 	bne	v0, t0, 2f		# No. qp->ph_link != qp
 	nop
 	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, _C_LABEL(whichqs)
+	sw	t2, _C_LABEL(sched_whichqs)
 2:
 	sw	zero, P_BACK(a0)	# for firewall checking
 	j	ra
@@ -248,33 +278,50 @@ END(remrunqueue)
  * Note: this is really a part of cpu_switch() but defined here for kernel
  * profiling.
  */
-LEAF(idle)
+LEAF(mips_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
+
+	/* Try to zero some free pages. */
+	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	nop
+	beq	t0, zero, 1f
+	nop
+	jal	_C_LABEL(uvm_pageidlezero)
+	nop
 1:
-	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
-	nop
-#if defined(MIPS3_4100) && defined(VR41_STANDBY_IDLE)
-	bne	t0, zero, 1f
-	nop
-	.word	0x42000021			# standby
-	nop
-	nop
-	nop
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
 	nop
-1:
-#else /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
-	beq	t0, zero, 1b
-	nop
-#endif /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
-	la	ra, sw1
-	j	ra
+#if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-END(idle)
+	nop
+	nop
+	nop
+	nop
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
+#else
+	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
+#endif
+END(mips_idle)
 
 /*
  * cpu_switch(struct proc *)
@@ -295,29 +342,25 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	t0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-	lw	t0, uvmexp+UVMEXP_SWTCH
-	lw	t1, _C_LABEL(whichqs)
-	addu	t0, t0, 1
-	sw	t0, uvmexp+UVMEXP_SWTCH
-	beq	t1, zero, _C_LABEL(idle)
-	mtc0	zero, MIPS_COP_0_STATUS
 /*
- * Entered here from idle() and switch_exit().
+ * Entered here from idle() and switch_exit().  Interrupts are
+ * blocked, and sched_lock is held.
  */
-sw1:
-	nop					# wait for intrs disabled
-	nop
-	nop					# extra cycles on r4000
-	nop					# extra cycles on r4000
-
-	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
+	.globl	cpu_switch_queuescan
+cpu_switch_queuescan:
+	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
-	beq	t0, zero, _C_LABEL(idle)	# if none, idle
+	bne	t0, zero, 1f
+	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
+	nop					# for r2000/r3000
+	jal	ra, t3
+	nop
+1:
 	move	t3, t0				# t3 = saved whichqs
 1:
 	addu	t2, t2, 1
@@ -328,7 +371,7 @@ sw1:
  * Remove process from queue.
  */
 	sll	t0, t2, 3
-	la	t1, _C_LABEL(qs)
+	la	t1, _C_LABEL(sched_qs)
 	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
 	lw	a0, P_FORW(t0)			# a0 = p = highest pri process
 	nop
@@ -343,25 +386,55 @@ sw1:
 	li	v1, 1				# compute bit in 'whichqs'
 	sll	v1, v1, t2
 	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, _C_LABEL(whichqs)
+	sw	t3, _C_LABEL(sched_whichqs)
 3:
+	/* Squirrel away proc pointer. */
+	move	s7, a0
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	jal	_C_LABEL(sched_unlock_idle)
+	nop
+	move	a0, s7				# restore proc
+#endif
+
 /*
  * Switch to new context.
  */
-	sw	zero, _C_LABEL(want_resched)
-	jal	_C_LABEL(pmap_alloc_asid)	# v0 = new proc's ASID
-	move	s0, a0				# BDSLOT: save p
-	lw	a0, P_ADDR(s0)			# a0 = p_addr
-	lw	a1, P_MD_UPTE_0(s0)		# a1 = first u. pte
-	lw	a2, P_MD_UPTE_1(s0)		# a2 = 2nd u. pte
-	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
-	sw	s0, _C_LABEL(curproc)		# set curproc
-	sw	a0, _C_LABEL(curpcb)		# set curpcb
-	jal	ra, s1				# CPU-specific: resume process
-	move	a3, v0				# BDSLOT: a3 = ASID
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXXSMP
+	 * p->p_cpu = curcpu();
+	 */
+#endif
+	li	v1, SONPROC			# p->p_stat = SONPROC
+	sb	v1, P_STAT(a0)
+	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
+	sw	a0, _C_LABEL(curproc)
+	jal	ra, t2
+	nop
+
+#if 1	/* XXX XXX XXX */
+	REG_PROLOGUE
+	lw	a0, P_ADDR(s7)
+	nop
+	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	nop
+	REG_EPILOGUE
+#endif	/* XXX XXX XXX */
+
+	jal	_C_LABEL(pmap_activate)
+	move	a0, s7				# -BDSLOT-
+
+	lw	a0, P_ADDR(s7)
+	sw	zero, _C_LABEL(want_resched)	# we've context switched
+	sw	a0, _C_LABEL(curpcb)
 
 	REG_PROLOGUE
-	REG_L	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -393,7 +466,11 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
-	la	ra, sw1				# rathole to cpu_switch()
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
+#endif
+	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
@@ -415,13 +492,13 @@ LEAF(savectx)
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	REG_S	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	REG_S	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
 END(savectx)
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 /*
  * setjmp(label_t *)
  * longjmp(label_t *)
@@ -440,7 +517,7 @@ LEAF(setjmp)
 	REG_S	sp, SF_REG_SP(a0)
 	REG_S	s8, SF_REG_S8(a0)
 	REG_S	ra, SF_REG_RA(a0)
-	REG_S	v0, SF_REG_ST(a0)
+	REG_S	v0, SF_REG_SR(a0)
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
@@ -448,7 +525,8 @@ END(setjmp)
 
 LEAF(longjmp)
 	REG_PROLOGUE
-	REG_L	v0, SF_REG_ST(a0)
+	REG_L	v0, SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
 	REG_L	ra, SF_REG_RA(a0)
 	REG_L	s0, SF_REG_S0(a0)
 	REG_L	s1, SF_REG_S1(a0)
@@ -474,10 +552,12 @@ END(longjmp)
  * Used as building blocks for spl(9) kernel interface.
  */
 LEAF(_splraise)
+XLEAF(_splraise_noprof)				# does not get mcount hooks
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, a0, MIPS_INT_MASK		# extract INT bits
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	a0, a0, v0			# disable retaining other bits
+	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -491,18 +571,34 @@ LEAF(_spllower)
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	a0, a0, MIPS_INT_MASK		# extract INT bits
 	or	a0, a0, v1			# disable making other bits on
+	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(_spllower)
 
+LEAF(_splrestore)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, MIPS_INT_MASK
+	li	v1, ~MIPS_INT_MASK
+	and	v1, v1, v0			# turn off every INT bit
+	or	v1, v1, a0			# set old INT bits
+	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
+	mtc0	v1, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, MIPS_INT_MASK
+END(_splrestore)
+
 LEAF(_splset)
+XLEAF(_splset_noprof)				# does not get mcount hooks
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
 	and	v1, v1, v0			# turn off every INT bit
 	or	v1, v1, a0			# set old INT bits
+	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -519,7 +615,8 @@ END(_splget)
 LEAF(_setsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
+	nop
+	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nop
 	or	v0, v0, a0			# set soft intr. bits
@@ -532,7 +629,8 @@ END(_setsoftintr)
 LEAF(_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
+	nop
+	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	v0, v0, a0			# clear soft intr. bits
@@ -545,6 +643,7 @@ END(_clrsoftintr)
 LEAF(_splnone)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
 	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
 	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
 	nop
 	j	ra
@@ -560,6 +659,7 @@ END(_splnone)
  */
 LEAF(copystr)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -568,6 +668,7 @@ LEAF(copystr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
@@ -591,6 +692,7 @@ LEAF(copyinstr)
 	blt	a0, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -599,6 +701,7 @@ LEAF(copyinstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
@@ -622,6 +725,7 @@ LEAF(copyoutstr)
 	blt	a1, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -630,6 +734,7 @@ LEAF(copyoutstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
@@ -752,11 +857,12 @@ END(copyerr)
 LEAF(fuswintr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswintrberr)
+	lw	a2, U_PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	lhu	v0, 0(a0)			# fetch short
 	j	ra
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	a2, U_PCB_ONFAULT(v1)
 END(fuswintr)
 
 /*
@@ -767,10 +873,11 @@ END(fuswintr)
 LEAF(suswintr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswintrberr)
+	lw	a2, U_PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	sh	a1, 0(a0)			# store short
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	a2, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
 END(suswintr)
@@ -917,23 +1024,17 @@ END(badaddr)
  */
 LEAF(fswintrberr)
 	nop
-XLEAF(fswberr)
+	sw	a2, U_PCB_ONFAULT(v1)
+	j	ra
+	li	v0, -1
+END(fswintrberr)
+
+LEAF(fswberr)
 XLEAF(baderr)
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
 END(fswintrberr)
-
-#if 1
-/*
- * temporary glue for bcopy
- */
-bcopy:
-	move	v0, a0
-	move	a0, a1
-	j	_C_LABEL(memcpy)
-	move	a1, v0
-#endif
 
 #if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
 /*
@@ -966,215 +1067,71 @@ END(_remque)
 #endif
 
 
-/*----------------------------------------------------------------------------
+/*
+ * u_int32_t mips_cp0_cause_read(void)
  *
- * mips_read_causereg --
+ *	Return the current value of the CP0 Cause register.
  *
- *	Return the current value of the cause register.
- *
- *	int mips_read_causereg(void)
- *
- * Results:
- *	current value of Cause register.
- *
- * Side effects:
- *	None.
- *	Not profiled,  skews CPU-clock measurement to uselessness.
- *
- *----------------------------------------------------------------------------
+ *	Note: Not profiled, skews CPU-clock measurement (mips_mcclock.c)
+ *	to uselessness.
  */
-LEAF_NOPROFILE(mips_read_causereg)
+LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
 	j	ra
 	nop
-END(mips_read_causereg)
-
+END(mips_cp0_cause_read)
 
 /*
- * void switchfpregs(struct proc *old, struct proc *new)
+ * void mips_cp0_cause_write(u_int32_t)
  *
- * Save the current floating point coprocessor state, then restore
- * the state of next coprocessor owner process.
+ *	Set the value of the CP0 Cause register.
  */
-LEAF(switchfpregs)
-	REG_PROLOGUE
-	mfc0	v0, MIPS_COP_0_STATUS	# Disable interrupt, and
-	li	t0, MIPS_SR_COP_1_BIT	# enable the coprocessor
-	mtc0	t0, MIPS_COP_0_STATUS	# old SR is saved in v0
-
-	beq	a0, zero, 1f		# skip save if NULL pointer
+LEAF(mips_cp0_cause_write)
+	mtc0	a0, MIPS_COP_0_CAUSE
 	nop
-/*
- * First read out the status register to make sure that all FP operations
- * have completed.
- */
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
-	cfc1	t0, MIPS_FPU_CSR		# stall til FP done
-	cfc1	t0, MIPS_FPU_CSR		# now get status
-	addiu	v1, a0, USPACE - FRAME_SIZ
-	REG_L	t1, FRAME_SR(v1)		# get CPU status register
-	li	t2, ~MIPS_SR_COP_1_BIT
-	and	t1, t1, t2			# clear COP_1 enable bit
-	REG_S	t1, FRAME_SR(v1)		# save new status register
-/*
- * Save the floating point registers.
- */
-	sw	t0, U_PCB_FPREGS+FRAME_FSR(a0)	# save FP status
-	swc1	$f0, U_PCB_FPREGS+FRAME_FP0(a0)
-	swc1	$f1, U_PCB_FPREGS+FRAME_FP1(a0)
-	swc1	$f2, U_PCB_FPREGS+FRAME_FP2(a0)
-	swc1	$f3, U_PCB_FPREGS+FRAME_FP3(a0)
-	swc1	$f4, U_PCB_FPREGS+FRAME_FP4(a0)
-	swc1	$f5, U_PCB_FPREGS+FRAME_FP5(a0)
-	swc1	$f6, U_PCB_FPREGS+FRAME_FP6(a0)
-	swc1	$f7, U_PCB_FPREGS+FRAME_FP7(a0)
-	swc1	$f8, U_PCB_FPREGS+FRAME_FP8(a0)
-	swc1	$f9, U_PCB_FPREGS+FRAME_FP9(a0)
-	swc1	$f10, U_PCB_FPREGS+FRAME_FP10(a0)
-	swc1	$f11, U_PCB_FPREGS+FRAME_FP11(a0)
-	swc1	$f12, U_PCB_FPREGS+FRAME_FP12(a0)
-	swc1	$f13, U_PCB_FPREGS+FRAME_FP13(a0)
-	swc1	$f14, U_PCB_FPREGS+FRAME_FP14(a0)
-	swc1	$f15, U_PCB_FPREGS+FRAME_FP15(a0)
-	swc1	$f16, U_PCB_FPREGS+FRAME_FP16(a0)
-	swc1	$f17, U_PCB_FPREGS+FRAME_FP17(a0)
-	swc1	$f18, U_PCB_FPREGS+FRAME_FP18(a0)
-	swc1	$f19, U_PCB_FPREGS+FRAME_FP19(a0)
-	swc1	$f20, U_PCB_FPREGS+FRAME_FP20(a0)
-	swc1	$f21, U_PCB_FPREGS+FRAME_FP21(a0)
-	swc1	$f22, U_PCB_FPREGS+FRAME_FP22(a0)
-	swc1	$f23, U_PCB_FPREGS+FRAME_FP23(a0)
-	swc1	$f24, U_PCB_FPREGS+FRAME_FP24(a0)
-	swc1	$f25, U_PCB_FPREGS+FRAME_FP25(a0)
-	swc1	$f26, U_PCB_FPREGS+FRAME_FP26(a0)
-	swc1	$f27, U_PCB_FPREGS+FRAME_FP27(a0)
-	swc1	$f28, U_PCB_FPREGS+FRAME_FP28(a0)
-	swc1	$f29, U_PCB_FPREGS+FRAME_FP29(a0)
-	swc1	$f30, U_PCB_FPREGS+FRAME_FP30(a0)
-	swc1	$f31, U_PCB_FPREGS+FRAME_FP31(a0)
-
-1:
-/*
- *  Restore the floating point registers.
- */
-	lw	a1, P_ADDR(a1)
 	nop
-	lw	t0, U_PCB_FPREGS+FRAME_FSR(a1)	# get status register
-	lwc1	$f0, U_PCB_FPREGS+FRAME_FP0(a1)
-	lwc1	$f1, U_PCB_FPREGS+FRAME_FP1(a1)
-	lwc1	$f2, U_PCB_FPREGS+FRAME_FP2(a1)
-	lwc1	$f3, U_PCB_FPREGS+FRAME_FP3(a1)
-	lwc1	$f4, U_PCB_FPREGS+FRAME_FP4(a1)
-	lwc1	$f5, U_PCB_FPREGS+FRAME_FP5(a1)
-	lwc1	$f6, U_PCB_FPREGS+FRAME_FP6(a1)
-	lwc1	$f7, U_PCB_FPREGS+FRAME_FP7(a1)
-	lwc1	$f8, U_PCB_FPREGS+FRAME_FP8(a1)
-	lwc1	$f9, U_PCB_FPREGS+FRAME_FP9(a1)
-	lwc1	$f10, U_PCB_FPREGS+FRAME_FP10(a1)
-	lwc1	$f11, U_PCB_FPREGS+FRAME_FP11(a1)
-	lwc1	$f12, U_PCB_FPREGS+FRAME_FP12(a1)
-	lwc1	$f13, U_PCB_FPREGS+FRAME_FP13(a1)
-	lwc1	$f14, U_PCB_FPREGS+FRAME_FP14(a1)
-	lwc1	$f15, U_PCB_FPREGS+FRAME_FP15(a1)
-	lwc1	$f16, U_PCB_FPREGS+FRAME_FP16(a1)
-	lwc1	$f17, U_PCB_FPREGS+FRAME_FP17(a1)
-	lwc1	$f18, U_PCB_FPREGS+FRAME_FP18(a1)
-	lwc1	$f19, U_PCB_FPREGS+FRAME_FP19(a1)
-	lwc1	$f20, U_PCB_FPREGS+FRAME_FP20(a1)
-	lwc1	$f21, U_PCB_FPREGS+FRAME_FP21(a1)
-	lwc1	$f22, U_PCB_FPREGS+FRAME_FP22(a1)
-	lwc1	$f23, U_PCB_FPREGS+FRAME_FP23(a1)
-	lwc1	$f24, U_PCB_FPREGS+FRAME_FP24(a1)
-	lwc1	$f25, U_PCB_FPREGS+FRAME_FP25(a1)
-	lwc1	$f26, U_PCB_FPREGS+FRAME_FP26(a1)
-	lwc1	$f27, U_PCB_FPREGS+FRAME_FP27(a1)
-	lwc1	$f28, U_PCB_FPREGS+FRAME_FP28(a1)
-	lwc1	$f29, U_PCB_FPREGS+FRAME_FP29(a1)
-	lwc1	$f30, U_PCB_FPREGS+FRAME_FP30(a1)
-	lwc1	$f31, U_PCB_FPREGS+FRAME_FP31(a1)
-
-	and	t0, t0, ~MIPS_FPU_EXCEPTION_BITS
-	ctc1	t0, MIPS_FPU_CSR
-	nop
-
 	j	ra
-	mtc0	v0, MIPS_COP_0_STATUS	# Restore the status register.
-	REG_EPILOGUE
-END(switchfpregs)
+	nop
+END(mips_cp0_cause_write)
+
 
 /*
- * void savefpregs(struct proc *)
+ * u_int32_t mips_cp0_status_read(void)
  *
- * Save the current floating point coprocessor state.  Owner indicator
- * variable fpcurproc will have NULL after save operation.
+ *	Return the current value of the CP0 Status register.
  */
-LEAF(savefpregs)
-	mfc0	v0, MIPS_COP_0_STATUS		# Disable interrupts, and
-	li	t0, MIPS_SR_COP_1_BIT		# enable the coprocessor
-	mtc0	t0, MIPS_COP_0_STATUS
-	sw	zero, _C_LABEL(fpcurproc)	# indicate state has been saved
-/*
- * First read out the status register to make sure that all FP operations
- * have completed.
- */
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
-	cfc1	t0, MIPS_FPU_CSR		# stall til FP done
-	cfc1	t0, MIPS_FPU_CSR		# now get status
-	addiu	v1, a0, USPACE - FRAME_SIZ
-	REG_PROLOGUE
-	REG_L	t1, FRAME_SR(v1)		# get CPU status register
-	li	t2, ~MIPS_SR_COP_1_BIT
-	and	t1, t1, t2			# clear COP_1 enable bit
-	REG_S	t1, FRAME_SR(v1)		# save new status register
-	REG_EPILOGUE
-/*
- * Save the floating point registers.
- */
-	sw	t0, U_PCB_FPREGS+FRAME_FSR(a0)	# save FP status
-	swc1	$f0, U_PCB_FPREGS+FRAME_FP0(a0)
-	swc1	$f1, U_PCB_FPREGS+FRAME_FP1(a0)
-	swc1	$f2, U_PCB_FPREGS+FRAME_FP2(a0)
-	swc1	$f3, U_PCB_FPREGS+FRAME_FP3(a0)
-	swc1	$f4, U_PCB_FPREGS+FRAME_FP4(a0)
-	swc1	$f5, U_PCB_FPREGS+FRAME_FP5(a0)
-	swc1	$f6, U_PCB_FPREGS+FRAME_FP6(a0)
-	swc1	$f7, U_PCB_FPREGS+FRAME_FP7(a0)
-	swc1	$f8, U_PCB_FPREGS+FRAME_FP8(a0)
-	swc1	$f9, U_PCB_FPREGS+FRAME_FP9(a0)
-	swc1	$f10, U_PCB_FPREGS+FRAME_FP10(a0)
-	swc1	$f11, U_PCB_FPREGS+FRAME_FP11(a0)
-	swc1	$f12, U_PCB_FPREGS+FRAME_FP12(a0)
-	swc1	$f13, U_PCB_FPREGS+FRAME_FP13(a0)
-	swc1	$f14, U_PCB_FPREGS+FRAME_FP14(a0)
-	swc1	$f15, U_PCB_FPREGS+FRAME_FP15(a0)
-	swc1	$f16, U_PCB_FPREGS+FRAME_FP16(a0)
-	swc1	$f17, U_PCB_FPREGS+FRAME_FP17(a0)
-	swc1	$f18, U_PCB_FPREGS+FRAME_FP18(a0)
-	swc1	$f19, U_PCB_FPREGS+FRAME_FP19(a0)
-	swc1	$f20, U_PCB_FPREGS+FRAME_FP20(a0)
-	swc1	$f21, U_PCB_FPREGS+FRAME_FP21(a0)
-	swc1	$f22, U_PCB_FPREGS+FRAME_FP22(a0)
-	swc1	$f23, U_PCB_FPREGS+FRAME_FP23(a0)
-	swc1	$f24, U_PCB_FPREGS+FRAME_FP24(a0)
-	swc1	$f25, U_PCB_FPREGS+FRAME_FP25(a0)
-	swc1	$f26, U_PCB_FPREGS+FRAME_FP26(a0)
-	swc1	$f27, U_PCB_FPREGS+FRAME_FP27(a0)
-	swc1	$f28, U_PCB_FPREGS+FRAME_FP28(a0)
-	swc1	$f29, U_PCB_FPREGS+FRAME_FP29(a0)
-	swc1	$f30, U_PCB_FPREGS+FRAME_FP30(a0)
-	swc1	$f31, U_PCB_FPREGS+FRAME_FP31(a0)
-
+LEAF(mips_cp0_status_read)
+	mfc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	mtc0	v0, MIPS_COP_0_STATUS	# Restore the status register.
-END(savefpregs)
+	nop
+END(mips_cp0_status_read)
 
+/*
+ * void mips_cp0_status_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Status register.
+ *
+ *	Note: This is almost certainly not the way you want to write a
+ *	"permanent" value to to the CP0 Status register, since it gets
+ *	saved in trap frames and restores.
+ */
+LEAF(mips_cp0_status_write)
+	mtc0	a0, MIPS_COP_0_STATUS
+	nop
+	nop
+	j	ra
+	nop
+END(mips_cp0_status_write)
+
+
+#if !defined(NOFPU) || defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
  *
  * MachFPInterrupt --
  * MachFPTrap --
  *
  *	Handle a floating point interrupt (r3k) or trap (r4k).
- *	the handlers  are indentical, only the reporting mechanisms differ.
+ *	the handlers are indentical, only the reporting mechanisms differ.
  *
  *	MachFPInterrupt(status, cause, pc, frame)
  *		unsigned status;
@@ -1200,8 +1157,11 @@ NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
 XNESTED(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
+#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
+#endif
 	sw	ra, CALLFRAME_RA(sp)
+#ifndef SOFTFLOAT
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	nop
@@ -1215,29 +1175,16 @@ XNESTED(MachFPTrap)
 	sll	t2, t0, (31 - 17)	# unimplemented operation?
 	bgez	t2, 3f			# no, normal trap
 	nop
+#endif
 /*
  * We got an unimplemented operation trap so
- * fetch the instruction, compute the next PC and emulate the instruction.
+ * fetch the instruction and emulate the instruction.
  */
 	bgez	a1, 1f			# Check the branch delay bit.
 	nop
 /*
- * The instruction is in the branch delay slot so the branch will have to
- * be emulated to get the resulting PC.
+ * The instruction is in the branch delay slot.
  */
-	sw	a2, CALLFRAME_SIZ + 8(sp)
-	sw	a3, CALLFRAME_SIZ + 12(sp)
-	move	a0, a3				# 1st arg is p. to trapframe
-	move	a1, a2				# 2nd arg is instruction PC
-	move	a2, t0				# 3rd arg is FP CSR
-	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
-	move	a3, zero			# 4th arg is FALSE
-/*
- * Now load the floating-point instruction in the branch delay slot
- * to be emulated.
- */
-	lw	a2, CALLFRAME_SIZ + 8(sp)	# restore exception PC
-	lw	a3, CALLFRAME_SIZ + 12(sp)
 	b	2f
 	lw	a0, 4(a2)			# a0 = coproc instruction
 /*
@@ -1246,25 +1193,64 @@ XNESTED(MachFPTrap)
  */
 1:
 	lw	a0, 0(a2)			# a0 = coproc instruction
-	addu	v0, a2, 4			# v0 = next pc
 2:
-	sw	v0, FRAME_EPC(a3)		# save new pc
+	move	a2, a1
+
 /*
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
 	srl	t0, a0, MIPS_OPCODE_SHIFT
-	beq	t0, MIPS_OPCODE_C1, 4f		# this should never fail
+	beq	t0, MIPS_OPCODE_C1, 4f
 	nop
+
+#ifdef SOFTFLOAT
+	REG_PROLOGUE
+	REG_S	zero, FRAME_ZERO(a3)		# ensure zero has value 0
+	REG_EPILOGUE
+
+	beq	t0, MIPS_OPCODE_LWC1, 5f
+	nop
+	beq	t0, MIPS_OPCODE_LDC1, 6f
+	nop
+	beq	t0, MIPS_OPCODE_SWC1, 7f
+	nop
+	beq	t0, MIPS_OPCODE_SDC1, 8f
+	nop
+#endif
+
 /*
  * Send a floating point exception signal to the current process.
  */
-3:
+	li	t0, 0xFFFFFF00
+	and	a1, a1, t0
+	ori	a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	REG_PROLOGUE
+	REG_S	a1, FRAME_CAUSE(a3)
+	REG_EPILOGUE
+
+	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
-	cfc1	a2, MIPS_FPU_CSR		# code = FP execptions
-	ctc1	zero, MIPS_FPU_CSR		# Clear exceptions
 	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE
+	li	a1, SIGILL
+
+	b	FPReturn
+	nop
+
+/*
+ * Send a FPE signal to the current process if it tripped the any of
+ * the VZOUI bits.
+ */
+3:
+	REG_PROLOGUE
+	REG_S	a1, FRAME_CAUSE(a3)
+	REG_EPILOGUE
+
+	move	a2, a0				# code = instruction
+	lw	a0, _C_LABEL(curproc)		# get current process
+	jal	_C_LABEL(trapsignal)
+	li	a1, SIGFPE			# BDSLOT
+
 	b	FPReturn
 	nop
 
@@ -1273,23 +1259,58 @@ XNESTED(MachFPTrap)
  */
 4:
 	jal	_C_LABEL(MachEmulateFP)
-	nop
+	move	a1, a3
 
 /*
  * Turn off the floating point coprocessor and return.
  */
 FPReturn:
+#ifndef SOFTFLOAT
 	mfc0	t0, MIPS_COP_0_STATUS
+#endif
 	lw	ra, CALLFRAME_RA(sp)
+#ifndef SOFTFLOAT
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
+#else
+	nop
+#endif
 	j	ra
 	addu	sp, sp, CALLFRAME_SIZ
+
+#ifdef SOFTFLOAT
+5:	# lwc1
+	jal	_C_LABEL(MachEmulateLWC1)
+	move	a1, a3
+	b	FPReturn
+	nop
+
+6:	# ldc1
+	jal	_C_LABEL(MachEmulateLDC1)
+	move	a1, a3
+	b	FPReturn
+	nop
+
+7:	# swc1
+	jal	_C_LABEL(MachEmulateSWC1)
+	move	a1, a3
+	b	FPReturn
+	nop
+
+8:	# sdc1
+	jal	_C_LABEL(MachEmulateSDC1)
+	move	a1, a3
+	b	FPReturn
+	nop
+
+#endif
 END(MachFPInterrupt)
+#endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
+
 
 #ifndef DDB_TRACE
 
-#if defined(DEBUG) || defined(DDB)
+#if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
 /*
  * Stacktrace support hooks which use type punnign to access
  * the caller's registers.
@@ -1300,12 +1321,12 @@ END(MachFPInterrupt)
  * stacktrace() -- print a stack backtrace to the console.
  *	implicitly accesses caller's a0-a3.
  */
-NESTED(stacktrace, CALLFRAME_SIZ+20, ra)
-
-	subu	sp, sp, CALLFRAME_SIZ+20	# four arg-passing slots
+NESTED(stacktrace, CALLFRAME_SIZ+24, ra)
+XNESTED(logstacktrace)
+	subu	sp, sp, CALLFRAME_SIZ+24	# four arg-passing slots
 
 	move	t0, ra				# save caller's PC
-	addu	t1, sp, CALLFRAME_SIZ+20	# compute caller's SP
+	addu	t1, sp, CALLFRAME_SIZ+24	# compute caller's SP
 	move	t2, s8				# non-virtual frame pointer
 
 	la	v0, _C_LABEL(printf)
@@ -1313,50 +1334,18 @@ NESTED(stacktrace, CALLFRAME_SIZ+20, ra)
 	sw	ra, 36(sp)			# save return address
 
 	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
-	sw	t0, 16(sp)			#   push caller's PC
-	sw	t1, 20(sp)			#   push caller's SP
-	sw	t2, 24(sp)			#   push caller's FP, in case
-	sw	zero, 28(sp)			#   caller's RA on stack
+	sw	t0, 16(sp)			# push caller's PC
+	sw	t1, 20(sp)			# push caller's SP
+	sw	t2, 24(sp)			# push caller's FP, in case
+	sw	zero, 28(sp)			# caller's RA on stack
 	jal	_C_LABEL(stacktrace_subr)
-	sw	v0, 32(sp)			#   push printf
+	sw	v0, 32(sp)			# push printf
 
 	lw	ra, 36(sp)
-	addu	sp, sp, CALLFRAME_SIZ+20
+	addu	sp, sp, CALLFRAME_SIZ+24
 	j	ra
 	nop
 END(stacktrace)
-
-
-/*
- * logstacktrace() -- log a stack traceback to msgbuf.
- *	implicitly accesses caller's a0-a3.
- */
-NESTED(logstacktrace, CALLFRAME_SIZ+20, ra)
-
-	subu	sp, sp, CALLFRAME_SIZ+20	# four arg-passing slots
-
-	move	t0, ra				# save caller's PC
-	addu	t1, sp, CALLFRAME_SIZ+20	# compute caller's SP
-	move	t2, s8				# non-virtual frame pointer
-
-	la	v0, _C_LABEL(printf)
-
-	sw	ra, 36(sp)			# save return address
-
-	/* a0-a3 are still caller's a0-a3, pass in-place as given. */
-	sw	t0, 16(sp)			#   push caller's PC
-	sw	t1, 20(sp)			#   push caller's SP
-	sw	t2, 24(sp)			#   push caller's FP, in case
-	sw	zero, 28(sp)			#   RA on stack
-	jal	_C_LABEL(stacktrace_subr)
-	sw	v0, 32(sp)			#   push printf
-
-	lw	ra, 36(sp)
-	addu	sp, sp, CALLFRAME_SIZ+20
-	j	ra
-	nop
-END(logstacktrace)
-
 #endif	/* DEBUG || DDB */
 #endif	/* DDB_TRACE */
 
@@ -1367,12 +1356,9 @@ _C_LABEL(esym):
 
 	.globl	_C_LABEL(cpu_id)
 	.globl	_C_LABEL(fpu_id)
-	.globl	_C_LABEL(cpu_arch)
 _C_LABEL(cpu_id):
 	.word	0
 _C_LABEL(fpu_id):
-	.word	0
-_C_LABEL(cpu_arch):
 	.word	0
 
 	.globl	_C_LABEL(mips_L1DCacheSize)
@@ -1380,6 +1366,7 @@ _C_LABEL(cpu_arch):
 	.globl	_C_LABEL(mips_L1DCacheLSize)
 	.globl	_C_LABEL(mips_L1ICacheLSize)
 	.globl	_C_LABEL(mips_CacheAliasMask)
+	.globl	_C_LABEL(mips_CachePreferMask)
 	.globl	_C_LABEL(mips_L2CacheSize)
 	.globl	_C_LABEL(mips_L2CacheLSize)
 	.globl	_C_LABEL(mips_L2CachePresent)
@@ -1393,9 +1380,16 @@ _C_LABEL(mips_L1ICacheLSize):
 	.word	0
 _C_LABEL(mips_CacheAliasMask):
 	.word 0
+_C_LABEL(mips_CachePreferMask):
+	.word 0
 _C_LABEL(mips_L2CacheSize):
 	.word	0
 _C_LABEL(mips_L2CacheLSize):
 	.word	0
 _C_LABEL(mips_L2CachePresent):
 	.word	0
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+	.globl	_C_LABEL(mips_dynamic_status_mask)
+_C_LABEL(mips_dynamic_status_mask):
+	.word	0xffffffff
+#endif

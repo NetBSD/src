@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1999/09/16 14:40:21 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46.2.1 2000/11/20 20:30:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_m680x0.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
@@ -139,10 +140,6 @@
 #include <sys/pool.h>
 
 #include <machine/pte.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
@@ -409,14 +406,14 @@ pmap_init()
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
 		    m68k_ptob(IIOMAPSIZE+EIOMAPSIZE),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, X68K_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
@@ -490,7 +487,7 @@ pmap_init()
 	 * we already have kernel PT pages.
 	 */
 	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
@@ -640,7 +637,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -693,7 +690,7 @@ pmap_collect_pv()
 			continue;
 		s = splimp();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
+			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
@@ -743,7 +740,7 @@ pmap_map(va, spa, epa, prot)
 	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -1185,27 +1182,27 @@ pmap_protect(pmap, sva, eva, prot)
  *	or lose information.  Thatis, this routine must actually
  *	insert this page into the given map NOW.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *pte;
 	int npte;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 	    pmap, va, pa, prot, wired));
 
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1279,7 +1276,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		pmap_ptpage_addref(trunc_page(pte));
+		pmap_ptpage_addref(trunc_page((vaddr_t)pte));
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1374,12 +1371,12 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 * on the hint provided in access_type.
 		 */
 #ifdef DIAGNOSTIC
-		if (access_type & ~prot)
+		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
-		if (access_type & VM_PROT_WRITE)
+		if (flags & VM_PROT_WRITE)
 			*pa_to_attribute(pa) |= (PG_U|PG_M);
-		else if (access_type & VM_PROT_ALL)
+		else if (flags & VM_PROT_ALL)
 			*pa_to_attribute(pa) |= PG_U;
 
 		splx(s);
@@ -1476,8 +1473,9 @@ validate:
 #endif
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
-		pmap_check_wiring("enter", trunc_page(pte));
+		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
 #endif
+	return (KERN_SUCCESS);
 }
 
 /*
@@ -1972,6 +1970,46 @@ pmap_zero_page(phys)
 }
 
 /*
+ * pmap_zero_page_uncached:
+ *
+ *	Same as above, except uncached.  Used in uvm_pageidlezero,
+ *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
+ *	was zero'd, FALSE if we aborted.
+ */
+boolean_t
+pmap_zero_page_uncached(phys)
+	paddr_t phys;
+{
+	int s, npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		DCPP(phys);
+	}
+#endif
+
+	npte = phys | PG_V | PG_CI;
+
+	s = splimp();
+
+	*caddr1_pte = npte;
+	TBIS((vaddr_t)CADDR1);
+
+	zeropage(CADDR1);
+
+#ifdef DEBUG
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+#endif
+
+	splx(s);
+
+	return (TRUE);
+}
+
+/*
  * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
@@ -2258,7 +2296,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * the PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		vaddr_t ptpva = trunc_page(pte);
+		vaddr_t ptpva = trunc_page((vaddr_t)pte);
 		int refs = pmap_ptpage_delref(ptpva);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
@@ -2401,7 +2439,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			    ptpmap->pm_stab, ptpmap->pm_sref - 1));
 #ifdef DEBUG
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab !=
+			     (st_entry_t *)trunc_page((vaddr_t)ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {
@@ -2732,8 +2771,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
+		    VM_PROT_DEFAULT|PMAP_WIRED);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

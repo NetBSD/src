@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.2.1 2000/11/20 20:33:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,8 +44,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/macros.h>
 #include <machine/pte.h>
@@ -54,18 +53,13 @@
 
 #include <dev/mscp/mscp.h> /* For disk encoding scheme */
 
-#define b_cylin b_resid
-
 /*
  * Determine the size of the transfer, and make sure it is
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
-	struct	buf *bp;
-	struct	disklabel *lp;
-	int	wlabel;
+bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[2].p_offset;
@@ -95,7 +89,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:
@@ -112,13 +106,10 @@ bad:
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
 
@@ -134,12 +125,12 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
-		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -159,13 +150,11 @@ readdisklabel(dev, strat, lp, osdep)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_long openmask, struct cpu_disklabel *osdep)
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
@@ -201,11 +190,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -219,7 +205,7 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -235,8 +221,7 @@ done:
  * disk type encoding scheme for most of its disks.
  */   
 void  
-disk_printtype(unit, type)
-	int unit, type;
+disk_printtype(int unit, int type)
 {
 	printf(" drive %d: %c%c", unit, (int)MSCP_MID_CHAR(2, type),
 	    (int)MSCP_MID_CHAR(1, type));
@@ -251,21 +236,18 @@ disk_printtype(unit, type)
  * also map it in.
  */
 void
-disk_reallymapin(bp, map, reg, flag)
-	struct buf *bp;
-	struct pte *map;
-	int reg, flag;
+disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 {
 	struct proc *p;
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	struct pcb *pcb;
-	int pfnum, npf, o, i;
+	int pfnum, npf, o;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 	p = bp->b_proc;
 
 	/*
@@ -281,21 +263,6 @@ disk_reallymapin(bp, map, reg, flag)
 		pte = uvtopte(addr, pcb);
 	}
 
-	/*
-	 * When we are doing DMA to user space, be sure that all pages
-	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
-	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-	 */
-	for (i = 0; i < (npf - 1); i++) {
-		if ((pte + i)->pg_pfn == 0) {
-			int rv;
-			rv = uvm_fault(&p->p_vmspace->vm_map,
-			    (unsigned)addr + i * VAX_NBPG, 0,
-			    VM_PROT_READ|VM_PROT_WRITE);
-			if (rv)
-				panic("DMA to nonexistent page, %d", rv);
-		}
-	}
 	if (map) {
 		io = &map[reg];
 		while (--npf > 0) {

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.12 1999/09/12 01:17:15 chs Exp $ */
+/* $NetBSD: bus_dma.c,v 1.12.2.1 2000/11/20 20:18:12 bouyer Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 1999/09/12 01:17:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.2.1 2000/11/20 20:18:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 1999/09/12 01:17:15 chs Exp $");
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
-
 
 #include <machine/cpu.h>
 
@@ -649,8 +645,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
 
@@ -681,11 +677,13 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-int
+paddr_t
 _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.15 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.15.8.1 2000/11/20 20:28:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,10 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,7 +108,7 @@ bus_tmapin(bustype, pa)
 
 	pgva = tmp_vpages[1];
 	pmap_enter(pmap_kernel(), pgva, pa,
-	           (VM_PROT_READ|VM_PROT_WRITE), TRUE, 0);
+	           (VM_PROT_READ|VM_PROT_WRITE), PMAP_WIRED);
 	splx(s);
 
 	return ((void *)(pgva + off));

@@ -1,4 +1,4 @@
-/* $NetBSD: systeminfo.c,v 1.2 1999/09/26 12:46:58 takemura Exp $ */
+/* $NetBSD: systeminfo.c,v 1.2.2.1 2000/11/20 20:39:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

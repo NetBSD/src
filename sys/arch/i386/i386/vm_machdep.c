@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 1999/07/20 22:25:19 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +58,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -77,18 +75,29 @@ void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -124,25 +133,18 @@ cpu_fork(p1, p2, stack, stacksize)
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
 	 *
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call below.
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
+	 * we run the new process.
 	 */
-	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-
-	/*
-	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
-	 */
-	pmap_activate(p2);
+	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
-	tss_alloc(pcb);
+	tss_alloc(p2);
 
 	/*
-	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
-	 *
-	 * Note the inlined version of cpu_set_kpc().
+	 * Copy the trapframe.
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -155,23 +157,11 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
-	sf->sf_esi = (int)child_return;
-	sf->sf_ebx = (int)p2;
+	sf->sf_esi = (int)func;
+	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
-
-	sf->sf_esi = (int) pc;
-	sf->sf_ebx = (int) arg;
-	sf->sf_eip = (int) proc_trampoline;
+	pcb->pcb_ebp = 0;
 }
 
 void
@@ -226,7 +216,7 @@ cpu_wait(p)
 {
 
 	/* Nuke the TSS. */
-	tss_free(&p->p_addr->u_pcb);
+	tss_free(p);
 }
 
 /*
@@ -304,8 +294,7 @@ setredzone(pte, vaddr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)
@@ -314,10 +303,17 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+	fpte = kvtopte((vaddr_t)from);
+	tpte = kvtopte((vaddr_t)to);
+#ifdef LARGEPAGES
+	/* XXX For now... */
+	if (*fpte & PG_PS)
+		panic("pagemove: fpte PG_PS");
+	if (*tpte & PG_PS)
+		panic("pagemove: tpte PG_PS");
+#endif
 	while (size > 0) {
 		otpte = *tpte;
 		ofpte = *fpte;
@@ -373,7 +369,7 @@ vmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -394,7 +390,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -413,7 +409,7 @@ vunmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);

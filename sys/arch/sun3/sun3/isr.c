@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.41 1999/06/28 08:20:48 itojun Exp $	*/
+/*	$NetBSD: isr.c,v 1.41.2.1 2000/11/20 20:28:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,19 +41,11 @@
  * and the handy software interrupt request register.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,28 +92,9 @@ isr_add_custom(level, handler)
 
 /*
  * netisr junk...
- * XXX - This really belongs in some common file,
- *	i.e.  src/sys/net/netisr.c
- * Also, should use an array of chars instead of
+ * should use an array of chars instead of
  * a bitmask to avoid atomicity locking issues.
  */
-
-#include "arp.h"	/* for NARP */
-#include "ppp.h"
-
-/*
- * Declarations for the netisr functions...
- * They are in the header files, but that's not
- * really a good reason to drag all those in.
- */
-void arpintr __P((void));
-void ipintr __P((void));
-void ip6intr __P((void));
-void atintr __P((void));
-void nsintr __P((void));
-void clnlintr __P((void));
-void ccittintr __P((void));
-void pppintr __P((void));
 
 void netintr()
 {
@@ -132,40 +105,14 @@ void netintr()
 	netisr = 0;
 	splx(s);
 
-#if	NARP > 0
-	if (n & (1 << NETISR_ARP))
-		arpintr();
-#endif
-#ifdef INET
-	if (n & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef INET6
-	if (n & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef NETATALK
-	if (n & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#ifdef NS
-	if (n & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef ISO
-	if (n & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef CCITT
-	if (n & (1 << NETISR_CCITT)) {
-		ccittintr();
-	}
-#endif
-#if NPPP > 0
-	if (n & (1 << NETISR_PPP)) {
-		pppintr();
-	}
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (n & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 

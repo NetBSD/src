@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 1998/09/02 19:17:22 matthias Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9.12.1 2000/11/20 20:19:19 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,9 +46,9 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <vm/vm_inherit.h>
+#include <uvm/uvm_prot.h>
+
+#include <uvm/uvm_param.h>
 
 #include <machine/reg.h>		/* For struct reg */
 #include <machine/psl.h>

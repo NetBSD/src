@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.12 1998/09/26 03:30:50 mark Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.12.12.1 2000/11/20 20:04:05 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp 
+ *	NetBSD: podules,v 1.10 1999/11/12 07:37:21 mark Exp 
  */
 
 /*
@@ -47,6 +47,7 @@ static struct podule_description podules_acorn[] = {
 	{ PODULE_ACORN_ST506,	"ST506 HD interface" },
 	{ PODULE_ACORN_MIDI,	"MIDI interface" },
 	{ PODULE_ACORN_ETHER2,	"ether 2 interface" },
+	{ PODULE_ACORN_ETHERI,	"EtherI interface" },
 	{ 0x0000, NULL }
 };
 
@@ -97,6 +98,7 @@ static struct podule_description podules_lingenuity[] = {
 
 static struct podule_description podules_irlam[] = {
 	{ PODULE_IRLAM_24I16,	"24i16 digitiser" },
+	{ PODULE_IRLAM_ETHERN,	"EtherN interface" },
 	{ 0x0000, NULL }
 };
 
@@ -176,6 +178,11 @@ static struct podule_description podules_castle[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_dtsoft[] = {
+	{ PODULE_DTSOFT_IDE,	"IDE interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_alsystems[] = {
 	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
 	{ 0x0000, NULL }
@@ -226,6 +233,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
 	{ MANUFACTURER_CASTLE, 		"Castle Technology", 	podules_castle },
+	{ MANUFACTURER_DTSOFT, 		"D.T. Software", 	podules_dtsoft },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
 	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
 	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },

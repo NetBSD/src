@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.4 1999/02/15 04:36:33 hubertf Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.4.8.1 2000/11/20 20:17:19 bouyer Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,8 @@
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -88,7 +89,8 @@ struct consdev consdev_bm = {
 	bmcninit,
 	bmcngetc,
 	bmcnputc,
-	bmcnpollc
+	bmcnpollc,
+	NULL,
 };
 
 static void
@@ -558,7 +560,8 @@ bmcnstart(tp)
 		 */
 		if (nch == 0) {
 			nch = getc(&tp->t_outq);
-			timeout(ttrstrt, (caddr_t)tp, (nch&0x7f)+6);
+			callout_reset(&tp->t_rstrt_ch, (nch&0x7f)+6,
+			    ttrstrt, tp);
 			tp->t_state |= TS_TIMEOUT;
 			goto out;
 		}

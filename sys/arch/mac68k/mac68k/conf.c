@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 1999/07/29 19:14:37 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.51.2.1 2000/11/20 20:12:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,6 +56,7 @@
 #include "raid.h"
 #include "sd.h"
 #include "st.h"
+#include "vcoda.h"
 #include "vnd.h"
 
 /* No cdev for md */
@@ -98,25 +99,23 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#define NADB 1 /* #include "adb.h" */
 #include "aed.h"
 #include "asc.h"
 #include "bpfilter.h"
 #include "ch.h"
 #include "grf.h"
-#include "ipfilter.h"
 #include "ite.h"
+#include "ipfilter.h"
 #include "pty.h"
 #include "rnd.h"
 #include "se.h"
 #include "ss.h"
 #include "tun.h"
 #include "uk.h"
-#if 0
+#include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
-#endif
 #include "zsc.h"
 #include "zstty.h"
 #include "scsibus.h"
@@ -130,8 +129,8 @@ cdev_decl(cn);
 cdev_decl(ctty);
 cdev_decl(fd);
 cdev_decl(grf);
-cdev_decl(ipl);
 cdev_decl(ite);
+cdev_decl(ipl);
 cdev_decl(kbd);
 cdev_decl(log);
 cdev_decl(md);
@@ -154,14 +153,14 @@ cdev_decl(sw);
 cdev_decl(tun);
 cdev_decl(uk);
 cdev_decl(vnd);
-#if 0
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
-#endif
+cdev_decl(wsdisplay);
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
+cdev_decl(vc_nb_);
 
 dev_decl(filedesc,open);
 
@@ -177,8 +176,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_fb_init(NGRF,grf),		/* 10: frame buffer */
-	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
+	cdev_fb_init(NGRF,grf),		/* 10: grf (frame buffer) emulation */
+	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator*/
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
@@ -207,22 +206,14 @@ struct cdevsw	cdevsw[] =
 	cdev_se_init(NSE, se),		/* 37: SCSI ethernet */
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
-#if 0
 	cdev_mouse_init(NWSKBD, wskbd),	/* 40: wscons keyboard driver */
-	cdev_mouse_init(NWSMOUSE,
-	    wsmouse),			/* 41: wscons mouse driver */
-#else
-	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
-#endif
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 41: wscons mouse driver */
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
-#if 0
-	cdev_mouse_init(NWSMUX, wsmux),	/* 44: ws multiplexor */
-#else
-	cdev_notdef(),			/* 44 */
-#endif
+	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
+	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -309,6 +300,9 @@ static int chrtoblktab[] = {
 	/* 42 */	20,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 dev_t
@@ -325,17 +319,19 @@ chrtoblk(dev)
 	return (makedev(blkmaj, minor(dev)));
 }
 
-#define itecnpollc	nullcnpollc
-cons_decl(ite);
+#include "akbd.h"
+#include "macfb.h"
+#define maccnpollc	nullcnpollc
+cons_decl(mac);
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
 struct	consdev constab[] = {
-#if NITE > 0
-	cons_init(ite),
-#endif
 #if NZSTTY > 0
 	cons_init(zs),
+#endif
+#if NAKBD > 0 && NMACFB > 0
+	cons_init(mac),
 #endif
 	{ 0 },
 };

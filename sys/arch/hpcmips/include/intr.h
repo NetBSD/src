@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.1.1.2.1 2000/11/20 20:46:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -56,18 +56,13 @@
 
 #include <mips/cpuregs.h>
 
-extern int _splraise __P((int));
-extern int _spllower __P((int));
-extern int _splset __P((int));
-extern int _splget __P((void));
-extern void _splnone __P((void));
-extern void _setsoftintr __P((int));
-extern void _clrsoftintr __P((int));
-
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	 _clrsoftintr(MIPS_SOFT_INT_MASK_1)
+int	_splraise __P((int));
+int	_spllower __P((int));
+int	_splset __P((int));
+int	_splget __P((void));
+void	_splnone __P((void));
+void	_setsoftintr __P((int));
+void	_clrsoftintr __P((int));
 
 #define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
@@ -81,7 +76,10 @@ extern void _clrsoftintr __P((int));
 #define splstatclock()	(_splraise(splvec.splstatclock))
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1) 
+#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 struct splvec {
 	int	splbio;
@@ -98,11 +96,14 @@ extern struct splvec splvec;
 #define MIPS_SPLHIGH (MIPS_INT_MASK)
 #define MIPS_SPL0 (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL1 (MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL2 (MIPS_INT_MASK_2|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL3 (MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPL4 (MIPS_INT_MASK_4|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define MIPS_SPL_0_1	 (MIPS_INT_MASK_1|MIPS_SPL0)
 #define MIPS_SPL_0_1_2	 (MIPS_INT_MASK_2|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_3	 (MIPS_INT_MASK_3|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_2_3 (MIPS_INT_MASK_3|MIPS_SPL_0_1_2)
+#define MIPS_SPL_2_4     (MIPS_INT_MASK_4|MIPS_SPL2)
 
 /*
  * Index into intrcnt[], which is defined in locore
@@ -127,8 +128,20 @@ extern u_long intrcnt[];
 #define	FLOPPY_INTR	15
 #define	STRAY_INTR	16
 
-/* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
+/*
+ * software simulated interrupt
+ */
+extern unsigned ssir;
+
+#define SIR_NET		0x1
+
+#define setsoftnet()	setsoft(SIR_NET)
+#define setsoft(x) \
+	do { ssir |= (x); _setsoftintr(MIPS_SOFT_INT_MASK_1); } while (0)
+
+#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
+#define clearsoftnet()	 _clrsoftintr(MIPS_SOFT_INT_MASK_1)
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

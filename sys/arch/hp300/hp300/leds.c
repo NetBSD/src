@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.5 1999/06/15 15:18:55 kleink Exp $	*/
+/*	$NetBSD: leds.c,v 1.5.2.1 2000/11/20 20:08:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <arch/hp300/hp300/leds.h>
 
@@ -60,7 +60,7 @@ ledinit()
 {
 
 	pmap_enter(pmap_kernel(), (vaddr_t)ledbase, (paddr_t)LED_ADDR,
-	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	ledaddr = (u_int8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
 }
 

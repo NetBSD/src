@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 1999/10/04 19:23:49 pk Exp $
+#	$NetBSD: genassym.cf,v 1.22.2.1 2000/11/20 20:25:44 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,12 +90,9 @@ include <sys/device.h>
 include <sys/disklabel.h>
 include <sys/disk.h>
 
-include <vm/vm.h>
-include <uvm/uvm_extern.h>
+include <uvm/uvm.h>
 
-include <machine/pmap.h>
 include <machine/cpu.h>
-
 include <machine/oldmon.h>
 include <machine/bsd_openprom.h>
 
@@ -107,8 +104,7 @@ include <sparc/dev/zsvar.h>
 endif
 
 include <machine/bus.h>
-include <dev/ic/am7930reg.h>
-include <dev/ic/am7930var.h>
+include <sparc/dev/audioamdvar.h>
 
 include <sparc/dev/fdreg.h>
 include <sparc/dev/fdvar.h>
@@ -124,12 +120,16 @@ define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_WCHAN		offsetof(struct proc, p_wchan)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+define	P_CPU		offsetof(struct proc, p_cpu)
 define	SRUN		SRUN
+define	SONPROC		SONPROC
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct uvmexp, swtch)
@@ -150,7 +150,8 @@ define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
 define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
-define	CPUINFO_CURPROC		offsetof(struct cpu_info, _curproc)
+define	CPUINFO_CURPROC		offsetof(struct cpu_info, ci_curproc)
+define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -212,10 +213,6 @@ define	AU_PDATA	offsetof(struct auio, au_pdata)
 define	AU_PEND		offsetof(struct auio, au_pend)
 define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
 
-define	AMD_IR		offsetof(struct am7930, ir)
-define	AMD_BBRB	offsetof(struct am7930, bbrb)
-define	AMD_BBTB	offsetof(struct am7930, bbtb)
-
 define	PROM_BASE	PROM_BASE
 
 define	PV_MAGIC	offsetof(struct promvec, pv_magic)
@@ -232,9 +229,11 @@ define	OLDMON_PRINTF	offsetof(struct om_vector, printf)
 define	OLDMON_HALT	offsetof(struct om_vector, exitToMon)
 
 # floppy trap handler fields
+define	FDC_REG_HANDLE	offsetof(struct fdcio, fdcio_handle)
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
 define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
-define	FDC_ISTATE	offsetof(struct fdcio, fdcio_istate)
+define	FDC_ITASK	offsetof(struct fdcio, fdcio_itask)
+define	FDC_ISTATUS	offsetof(struct fdcio, fdcio_istatus)
 define	FDC_STATUS	offsetof(struct fdcio, fdcio_status)
 define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
 define	FDC_DATA	offsetof(struct fdcio, fdcio_data)

@@ -1,11 +1,11 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1 1999/09/16 12:23:24 takemura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.1.1.2.1 2000/11/20 20:46:52 bouyer Exp $	*/
 
 #include <mips/vmparam.h>
 
 /*
  * hpcmips has one physical memory segment.
  */
-#define	VM_PHYSSEG_MAX		1
+#define	VM_PHYSSEG_MAX		5
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

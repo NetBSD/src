@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.18 1999/09/12 01:17:22 chs Exp $
+# 	$NetBSD: NONPLUS,v 1.18.2.1 2000/11/20 20:26:41 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -134,7 +134,6 @@ options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options		EXEC_ELF64	# Exec module for SunOS 5.x binaries.
 options		SYSCALL_DEBUG
-options		COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 ## File systems.  You probably need at least one of FFS or NFS.
@@ -156,6 +155,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+options		SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -166,7 +166,7 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
@@ -191,9 +191,9 @@ sbus0	at mainbus0				# sun4c and sun4u
 
 #### Standard system devices -- all required for a given architecture
 
-## Auxiliary system registers on sun4c and sun4m
-#auxreg0 at sbus0
-#auxreg0 at pci0
+## Auxiliary system registers -- We use the OBP for power management
+#auxio*	at ebus?				# auxio registers
+#auxio*	at sbus? slot ? offset ?		# auxio registers
 
 # We also need:
 # bpp0 at sbus0					# parallel port
@@ -385,12 +385,8 @@ cgsix*		at sbus? slot ? offset ?
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
-pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
+pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

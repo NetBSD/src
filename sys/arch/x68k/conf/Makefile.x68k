@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.38 1999/09/24 15:31:52 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.38.2.1 2000/11/20 20:29:55 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ S!=	cd ../../../..; pwd
 .endif
 X68K=	$S/arch/x68k
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
 .if empty(IDENT:M-DM68060)
@@ -54,13 +54,16 @@ CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CMACHFLAGS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -193,6 +196,8 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -204,7 +209,7 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration 
-fd.o intio_dmac.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+locore.o: Makefile
 
 # depend on DEBUG and/or DIAGNOSTIC options
 grf.o par.o sram.o: Makefile
@@ -214,5 +219,17 @@ intio.o vm_machdep.o: Makefile
 
 locore.o: ${X68K}/x68k/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

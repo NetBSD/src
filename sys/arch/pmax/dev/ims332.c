@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: ims332.c,v 1.10.2.1 2000/11/20 20:20:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -40,18 +40,16 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.10.2.1 2000/11/20 20:20:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/errno.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/ims332.h>
-
 
 #define	assert_ims332_reset_bit(r)	*r &= ~0x40
 #define	deassert_ims332_reset_bit(r)	*r |=  0x40
@@ -230,7 +228,7 @@ ims332InitColorMap(fi)
 int
 ims332LoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	const u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;
@@ -261,7 +259,7 @@ ims332LoadColorMap(fi, bits, index, count)
 int
 ims332GetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;

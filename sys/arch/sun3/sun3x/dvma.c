@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.13 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.13.2.1 2000/11/20 20:28:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,10 +86,6 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -243,7 +239,7 @@ dvma_mapin(kmem_va, len, canwait)
 
 		iommu_enter((tva & IOMMU_VA_MASK), pa);
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
-			VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 
 	return (dvma_addr);

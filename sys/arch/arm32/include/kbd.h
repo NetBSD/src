@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.3 1997/10/14 09:20:23 mark Exp $	*/
+/*	$NetBSD: kbd.h,v 1.3.16.1 2000/11/20 20:04:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -60,7 +60,7 @@ struct kbd_autorepeat {
 
 #ifdef _KERNEL
 void	kbdsetstate __P((int /*state*/));
-int	kbdgetstate __P(());
+int	kbdgetstate __P((void));
 #endif
 
 /* End of kbd.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.1.1.1.2.1 2000/11/20 20:47:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -48,6 +48,21 @@
 #include <hpcmips/vr/icureg.h>
 #include "locators.h"
 
+#define VRIPDEBUG
+#ifdef VRIPDEBUG
+#ifndef VRIPDEBUG_CONF
+#define VRIPDEBUG_CONF 0
+#endif /* VRIPDEBUG_CONF */
+int	vrip_debug = VRIPDEBUG_CONF;
+#define DPRINTF(arg) if (vrip_debug) printf arg;
+#define DBITDISP32(reg) if (vrip_debug) bitdisp32(reg);
+#define DDUMP_LEVEL2MASK(sc,arg) if (vrip_debug) vrip_dump_level2mask(sc,arg)
+#else
+#define DPRINTF(arg)
+#define DBITDISP32(arg)
+#define DDUMP_LEVEL2MASK(sc,arg)
+#endif
+
 int	vripmatch __P((struct device*, struct cfdata*, void*));
 void	vripattach __P((struct device*, struct device*, void*));
 int	vrip_print __P((void*, const char*));
@@ -62,6 +77,8 @@ struct cfattach vrip_ca = {
 
 #define MAX_LEVEL1 32
 
+struct vrip_softc *the_vrip_sc = NULL;
+
 static struct intrhand {
 	int	 (*ih_fun) __P((void *));
 	void *ih_arg;
@@ -72,7 +89,7 @@ static struct intrhand {
 	bus_addr_t	ih_hreg;
 	bus_addr_t	ih_mhreg;
 } intrhand[MAX_LEVEL1] = {
-	[5] = { 0, 0, 0, 0, PIUINT_REG_W,	MPIUINT_REG_W	},
+	[5] = { 0, 0, 0, 0, ICUPIUINT_REG_W,	MPIUINT_REG_W	},
 	[6] = { 0, 0, 0, 0, AIUINT_REG_W,	MAIUINT_REG_W	},
 	[7] = { 0, 0, 0, 0, KIUINT_REG_W,	MKIUINT_REG_W	},
 	[8] = { 0, 0, 0, 0, GIUINT_L_REG_W,	MGIUINT_L_REG_W, GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
@@ -147,12 +164,14 @@ vripattach(parent, self, aux)
 	/*
 	 *  Disable all Level 1 interrupts.
 	 */
+	sc->sc_intrmask = 0;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, MSYSINT1_REG_W, 0x0000);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, MSYSINT2_REG_W, 0x0000);
 	/*
 	 *  Level 1 interrupts are redirected to HwInt0
 	 */
 	vr_intr_establish(VR_INTR0, vrip_intr, self);
+	the_vrip_sc = sc;
 	/*
 	 *  Attach each devices
 	 */
@@ -172,9 +191,9 @@ vrip_print(aux, hoge)
 	struct vrip_attach_args *va = (struct vrip_attach_args*)aux;
 
 	if (va->va_addr)
-		printf(" addr 0x%x", va->va_addr);
+		printf(" addr 0x%lx", va->va_addr);
 	if (va->va_size > 1)
-		printf("-0x%x", va->va_addr + va->va_size - 1);
+		printf("-0x%lx", va->va_addr + va->va_size - 1);
 	if (va->va_intr != VRIPCF_INTR_DEFAULT)
 		printf(" intr %d", va->va_intr);
 	return (UNCONF);
@@ -247,6 +266,27 @@ vrip_intr_disestablish(vc, arg)
 	vrip_intr_setmask1(vc, ih, 0);
 }
 
+void
+vrip_intr_suspend()
+{
+	bus_space_tag_t iot = the_vrip_sc->sc_iot;
+	bus_space_handle_t ioh = the_vrip_sc->sc_ioh;
+
+	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, (1<<VRIP_INTR_POWER));
+	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, 0);
+}
+
+void
+vrip_intr_resume()
+{
+	u_int32_t reg = the_vrip_sc->sc_intrmask;
+	bus_space_tag_t iot = the_vrip_sc->sc_iot;
+	bus_space_handle_t ioh = the_vrip_sc->sc_ioh;
+
+	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
+	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
+}
+
 /* Set level 1 interrupt mask. */
 void
 vrip_intr_setmask1(vc, arg, enable)
@@ -259,7 +299,7 @@ vrip_intr_setmask1(vc, arg, enable)
 	int level1 = ih->ih_l1line;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t reg;
+	u_int32_t reg = sc->sc_intrmask;
 
 	reg = (bus_space_read_2 (iot, ioh, MSYSINT1_REG_W)&0xffff) |
 		((bus_space_read_2 (iot, ioh, MSYSINT2_REG_W)<< 16)&0xffff0000);
@@ -268,9 +308,10 @@ vrip_intr_setmask1(vc, arg, enable)
 	else {
 		reg &= ~(1 << level1);	
 	}
+	sc->sc_intrmask = reg;
 	bus_space_write_2 (iot, ioh, MSYSINT1_REG_W, reg & 0xffff);
 	bus_space_write_2 (iot, ioh, MSYSINT2_REG_W, (reg >> 16) & 0xffff);
-/*    bitdisp32(reg);    */
+	DBITDISP32(reg);
     
 	return;
 }
@@ -323,10 +364,9 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 	struct vrip_softc *sc = (void*)vc;
 	struct intrhand *ih = arg;
 	u_int16_t reg;
-#if 1
-	printf("vrip_intr_setmask2:\n");
-	vrip_dump_level2mask (vc, arg);
-#endif
+
+	DPRINTF(("vrip_intr_setmask2:\n"));
+	DDUMP_LEVEL2MASK(vc, arg);
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
@@ -348,9 +388,8 @@ vrip_intr_setmask2(vc, arg, mask, onoff)
 		}
 	}
 #endif /* WINCE_DEFAULT_SETTING */
-#if 0
-	vrip_dump_level2mask (vc, arg);
-#endif
+	DDUMP_LEVEL2MASK(vc, arg);
+
 	return;
 }
 

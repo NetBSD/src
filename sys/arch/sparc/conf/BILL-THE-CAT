@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.8 1999/07/29 10:37:22 augustss Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.8.2.1 2000/11/20 20:25:27 bouyer Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -23,9 +23,9 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	RASTERCONSOLE		# fast rasterop console
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 #options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
@@ -127,7 +127,6 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	COMPAT_AOUT	# NetBSD a.out compatibility
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -526,12 +525,8 @@ cgthree*	at sbus? slot ? offset ?
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
-pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
+pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 1999/10/04 19:23:49 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.125.2.1 2000/11/20 20:25:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -54,6 +54,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -157,6 +158,13 @@ _C_LABEL(intstack):
 _C_LABEL(eintstack):
 
 _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
+
+/*
+ * CPUINFO_VA is a CPU-local virtual address; cpi->ci_self is a global
+ * virtual address for the same structure.  It must be stored in p->p_cpu
+ * upon context switch.
+ */
+_CISELFP = CPUINFO_VA + CPUINFO_SELF
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -2213,7 +2221,7 @@ _ENTRY(_C_LABEL(kgdb_trap_glue))
 	 mov	%sp, %l4		! %l4 = current %sp
 
 	/* copy trapframe to top of kgdb stack */
-	set	_kgdb_stack + KGDB_STACK_SIZE - 80, %l0
+	set	_C_LABEL(kgdb_stack) + KGDB_STACK_SIZE - 80, %l0
 					! %l0 = tfcopy -> end_of_kgdb_stack
 	mov	80, %l1
 1:	ldd	[%i1], %l2
@@ -3616,6 +3624,7 @@ start_havetype:
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, 0x24 ! XXX - SUN4_400
 	bne	no_3mmu
+	 nop
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
@@ -3887,10 +3896,18 @@ Lgandul:	nop
 	call	_C_LABEL(bzero)
 	 add	%o1, %lo(CPUINFO_STRUCTSIZE), %o1
 
-	/* Initialize `cpuinfo' fields which are needed early */
+	/*
+	 * Initialize `cpuinfo' fields which are needed early.  Note
+	 * we make the cpuinfo self-reference at the local VA for now.
+	 * It may be changed to reference a global VA later.
+	 */
 	set	_C_LABEL(u0), %o0		! cpuinfo.curpcb = u0;
 	sethi	%hi(cpcb), %l0
 	st	%o0, [%l0 + %lo(cpcb)]
+
+	sethi	%hi(CPUINFO_VA), %o0		! cpuinfo.ci_self = &cpuinfo;
+	sethi	%hi(_CISELFP), %l0
+	st	%o0, [%l0 + %lo(_CISELFP)]
 
 	set	_C_LABEL(eintstack), %o0	! cpuinfo.eintstack= _eintstack;
 	sethi	%hi(_EINTSTACKP), %l0
@@ -4158,25 +4175,18 @@ ENTRY(getfp)
  */
 ENTRY(copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2			! kernel should never give maxlen <= 0
-	ble	1f
-	 EMPTY
-#endif
+	mov	%o1, %o5		! save = toaddr;
+	tst	%o2			! maxlen == 0?
+	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	 sethi	%hi(cpcb), %o4
+
 	set	KERNBASE, %o4
 	cmp	%o0, %o4		! fromaddr < KERNBASE?
-	blu,a	Lcsdocopy		! yes, go do it
-	sethi	%hi(cpcb), %o4		! (first instr of copy)
+	blu	Lcsdocopy		! yes, go do it
+	 sethi	%hi(cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
-
-1:
-	sethi	%hi(2f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(2f), %o0, %o0
-2:	.asciz	"copyinstr"
-	_ALIGN
 
 /*
  * copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -4186,33 +4196,25 @@ ENTRY(copyinstr)
  */
 ENTRY(copyoutstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2
-	ble	1f
-	 EMPTY
-#endif
+	mov	%o1, %o5		! save = toaddr;
+	tst	%o2			! maxlen == 0?
+	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	 sethi	%hi(cpcb), %o4
+
 	set	KERNBASE, %o4
 	cmp	%o1, %o4		! toaddr < KERNBASE?
-	blu,a	Lcsdocopy		! yes, go do it
+	blu	Lcsdocopy		! yes, go do it
 	 sethi	%hi(cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
 
-1:
-	sethi	%hi(2f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(2f), %o0, %o0
-2:	.asciz	"copyoutstr"
-	_ALIGN
-
 Lcsdocopy:
 !	sethi	%hi(cpcb), %o4		! (done earlier)
 	ld	[%o4 + %lo(cpcb)], %o4	! catch faults
-	set	Lcsfault, %o5
-	st	%o5, [%o4 + PCB_ONFAULT]
+	set	Lcsfault, %g1
+	st	%g1, [%o4 + PCB_ONFAULT]
 
-	mov	%o1, %o5		!	save = toaddr;
 ! XXX should do this in bigger chunks when possible
 0:					! loop:
 	ldsb	[%o0], %g1		!	c = *fromaddr;
@@ -4221,10 +4223,10 @@ Lcsdocopy:
 	be	1f			!	if (c == NULL)
 	 inc	%o1			!		goto ok;
 	deccc	%o2			!	if (--len > 0) {
-	bg	0b			!		fromaddr++;
+	bgu	0b			!		fromaddr++;
 	 inc	%o0			!		goto loop;
 					!	}
-					!
+Lcstoolong:				!
 	b	Lcsdone			!	error = ENAMETOOLONG;
 	 mov	ENAMETOOLONG, %o0	!	goto done;
 1:					! ok:
@@ -4250,12 +4252,11 @@ Lcsfault:
  * it does not seem that way to the C compiler.)
  */
 ENTRY(copystr)
-#ifdef DIAGNOSTIC
-	tst	%o2			! 	if (maxlength <= 0)
-	ble	4f			!		panic(...);
-	 EMPTY
-#endif
 	mov	%o1, %o5		!	to0 = to;
+	tst	%o2			! if (maxlength == 0)
+	beq,a	2f			!
+	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
+
 0:					! loop:
 	ldsb	[%o0], %o4		!	c = *from;
 	tst	%o4
@@ -4263,7 +4264,7 @@ ENTRY(copystr)
 	be	1f			!	if (c == 0)
 	 inc	%o1			!		goto ok;
 	deccc	%o2			!	if (--len > 0) {
-	bg,a	0b			!		from++;
+	bgu,a	0b			!		from++;
 	 inc	%o0			!		goto loop;
 	b	2f			!	}
 	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
@@ -4277,15 +4278,6 @@ ENTRY(copystr)
 3:
 	retl
 	 nop
-#ifdef DIAGNOSTIC
-4:
-	sethi	%hi(5f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(5f), %o0, %o0
-5:
-	.asciz	"copystr"
-	_ALIGN
-#endif
 
 /*
  * Copyin(src, dst, len)
@@ -4422,6 +4414,30 @@ ENTRY(write_user_windows)
  */
 
 /*
+ * When calling external functions from cpu_switch() and idle(), we must
+ * preserve the global registers mentioned above across the call.  We also
+ * set up a stack frame since we will be running in our caller's frame
+ * in cpu_switch().
+ */
+#define SAVE_GLOBALS_AND_CALL(name)	\
+	save	%sp, -CCFSZ, %sp;	\
+	mov	%g1, %i0;		\
+	mov	%g2, %i1;		\
+	mov	%g3, %i2;		\
+	mov	%g4, %i3;		\
+	mov	%g6, %i4;		\
+	call	_C_LABEL(name);		\
+	 mov	%g7, %i5;		\
+	mov	%i5, %g7;		\
+	mov	%i4, %g6;		\
+	mov	%i3, %g4;		\
+	mov	%i2, %g3;		\
+	mov	%i1, %g2;		\
+	mov	%i0, %g1;		\
+	restore
+
+
+/*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
  * freed.  (curproc is already NULL.)
@@ -4435,7 +4451,7 @@ ENTRY(switchexit)
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
 	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to idle_u.
-	 * Once we have left the old stack, we can call kmem_free to
+	 * Once we have left the old stack, we can call exit2() to
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
@@ -4468,7 +4484,7 @@ ENTRY(switchexit)
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
-	 * %hi(cpcb), but may have been clobbered in kmem_free,
+	 * %hi(cpcb), but may have been clobbered in exit2(),
 	 * so all the registers described below will be set here.
 	 *
 	 * REGISTER USAGE AT THIS POINT:
@@ -4486,10 +4502,12 @@ ENTRY(switchexit)
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(_C_LABEL(whichqs)), %g2
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(cpcb), %g6
 	sethi	%hi(curproc), %g7
+	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
 /*
@@ -4497,16 +4515,40 @@ ENTRY(switchexit)
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
  */
-	.globl	_ASM_LABEL(idle)
-_ASM_LABEL(idle):
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+idle:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Release the scheduler lock */
+	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
+#endif
+idle_enter_no_schedlock:
 	wr	%g1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	tst	%o3
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bnz,a	idle_leave
+#else
 	bnz,a	Lsw_scan
-	 wr	%g1, PIL_CLOCK << 8, %psr	! (void) splclock();
+#endif
+	 wr	%g1, PSR_PIL, %psr	! (void) splhigh();
+
+	! Check uvm.page_idle_zero
+	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
+	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	tst	%o3
+	bz	1b
+	 nop
+
+	SAVE_GLOBALS_AND_CALL(uvm_pageidlezero)
 	b,a	1b
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+idle_leave:
+	/* Before we leave the idle loop, detain the scheduler lock */
+	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	SAVE_GLOBALS_AND_CALL(sched_lock_idle)
+	b,a	Lsw_scan
+#endif
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -4556,35 +4598,20 @@ ENTRY(cpu_switch)
 	 *	%o4 = tmp 5, then at Lsw_scan, which
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
-	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	sethi	%hi(cpcb), %g6
 	ld	[%g6 + %lo(cpcb)], %o0
-	std	%o6, [%o0 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
-	rd	%psr, %g1		! oldpsr = %psr;
+	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
+	rd	%psr, %g1			! oldpsr = %psr;
 	sethi	%hi(curproc), %g7
 	ld	[%g7 + %lo(curproc)], %g4	! lastproc = curproc;
-	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
-	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
-
-	/*
-	 * In all the fiddling we did to get this far, the thing we are
-	 * waiting for might have come ready, so let interrupts in briefly
-	 * before checking for other processes.  Note that we still have
-	 * curproc set---we have to fix this or we can get in trouble with
-	 * the run queues below.
-	 * Also note that we can remove a process from the run queues
-	 * below at splclock(), because there are currently no drivers
-	 * that can run above splclock and call wakeup(). Otherwise, we
-	 * should run at splstatclock() until we have the new process.
-	 */
+	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
+	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
 	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
-	wr	%g1, 0, %psr			! (void) spl0();
-	nop; nop; nop				! paranoia
-	wr	%g1, PIL_CLOCK << 8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
+	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 	/*
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
@@ -4618,7 +4645,7 @@ Lsw_scan:
 	/*
 	 * We found a nonempty run queue.  Take its first process.
 	 */
-	set	_C_LABEL(qs), %o5	! q = &qs[which];
+	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
 	sll	%o4, 3, %o0
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
@@ -4634,7 +4661,7 @@ Lsw_scan:
 	mov	1, %o1			!	whichqs &= ~(1 << which);
 	sll	%o1, %o4, %o1
 	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(whichqs))]
+	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
 1:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
@@ -4649,8 +4676,6 @@ Lsw_scan:
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
 	 *	%o3 = vm
-	 *	%o4 = sswap
-	 *	%o5 = <free>
 	 */
 
 	/* firewalls */
@@ -4667,8 +4692,22 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
+	mov	SONPROC, %o0			! p->p_stat = SONPROC;
+	stb	%o0, [%g3 + P_STAT]
+
+	/* p->p_cpu initialized in fork1() for single-processor */
+#if defined(MULTIPROCESSOR)
+	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
+	ld	[%o0 + %lo(_CISELFP)], %o0
+	st	%o0, [%g3 + P_CPU]
+#endif
+
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Done with the run queues; release the scheduler lock */
+	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
+#endif
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
@@ -4721,11 +4760,6 @@ Lsw_load:
 	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
 	/* set new cpcb */
 	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = newpcb;
-#if 0
-	/* XXX update masterpaddr too */
-	sethi	%hi(_C_LABEL(masterpaddr)), %g7
-	st	%g5, [%g7 + %lo(_C_LABEL(masterpaddr))]
-#endif
 	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
 	/* load window */
 	ldd	[%sp + (0*8)], %l0
@@ -6180,5 +6214,3 @@ _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(romp), 4
-	.comm	_C_LABEL(qs), 32 * 8
-	.comm	_C_LABEL(whichqs), 4

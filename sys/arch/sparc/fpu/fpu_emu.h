@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.2 1994/11/20 20:52:39 deraadt Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.2.32.1 2000/11/20 20:25:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,7 @@ struct fpn {
 #define	FP_NMANT	115		/* total bits in mantissa (incl g,r) */
 #define	FP_NG		2		/* number of low-order guard bits */
 #define	FP_LG		((FP_NMANT - 1) & 31)	/* log2(1.0) for fp_mant[0] */
+#define	FP_LG2		((FP_NMANT - 1) & 63)	/* log2(1.0) for fp_mant[0] and fp_mant[1] */
 #define	FP_QUIETBIT	(1 << (FP_LG - 1))	/* Quiet bit in NaNs (0.5) */
 #define	FP_1		(1 << FP_LG)		/* 1.0 in fp_mant[0] */
 #define	FP_2		(1 << (FP_LG + 1))	/* 2.0 in fp_mant[0] */
@@ -138,7 +139,11 @@ struct fpn {
  * Emulator state.
  */
 struct fpemu {
+#ifndef SUN4U
 	struct	fpstate *fe_fpstate;	/* registers, etc */
+#else /* SUN4U */
+	struct	fpstate64 *fe_fpstate;	/* registers, etc */
+#endif /* SUN4U */
 	int	fe_fsr;			/* fsr copy (modified during op) */
 	int	fe_cx;			/* exceptions */
 	struct	fpn fe_f1;		/* operand 1 */
@@ -174,16 +179,17 @@ struct	fpn *fpu_newnan(struct fpemu *);
  */
 int	fpu_shr(struct fpn *, int);
 
-/* Conversion to and from internal format -- note asymmetry. */
-int	fpu_itofpn(struct fpn *, u_int);
-int	fpu_stofpn(struct fpn *, u_int);
-int	fpu_dtofpn(struct fpn *, u_int, u_int);
-int	fpu_xtofpn(struct fpn *, u_int, u_int, u_int, u_int);
-
-u_int	fpu_fpntoi(struct fpemu *, struct fpn *);
-u_int	fpu_fpntos(struct fpemu *, struct fpn *);
-u_int	fpu_fpntod(struct fpemu *, struct fpn *);
-u_int	fpu_fpntox(struct fpemu *, struct fpn *);
-
 void	fpu_explode(struct fpemu *, struct fpn *, int, int);
 void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
+
+#ifdef DEBUG
+#define	FPE_INSN	0x1
+#define	FPE_REG		0x2
+extern int fpe_debug;
+void	fpu_dumpfpn(struct fpn *);
+#define	DPRINTF(x, y)	if (fpe_debug & (x)) printf y
+#define DUMPFPN(x, f)	if (fpe_debug & (x)) fpu_dumpfpn((f))
+#else
+#define	DPRINTF(x, y)
+#define DUMPFPN(x, f)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.13 1999/08/06 08:27:47 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13.2.1 2000/11/20 20:05:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -38,8 +38,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
@@ -85,12 +84,11 @@ void		*auxp;
 {
 	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct isabus_attach_args	iba;
-	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
 
 	iba.iba_busname = "isa";
 	iba.iba_dmat	= BUS_ISA_DMA_TAG;
-	iba.iba_iot     = leb_alloc_bus_space_tag();
-	iba.iba_memt    = leb_alloc_bus_space_tag();
+	iba.iba_iot     = leb_alloc_bus_space_tag(NULL);
+	iba.iba_memt    = leb_alloc_bus_space_tag(NULL);
 	iba.iba_ic	= &sc->sc_chipset;
 	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
@@ -130,6 +128,9 @@ isa_attach_hook(parent, self, iba)
  *   - irq <= 6 -> slot 1
  *   - irq >  6 -> slot 2
  */
+
+#define	SLOTNR(irq)	((irq <= 6) ? 0 : 1)
+
 static isa_intr_info_t iinfo[2] = { { -1 }, { -1 } };
 
 static int	iifun __P((int, int));
@@ -181,6 +182,55 @@ int	sr;
 	return 1;
 }
 
+
+/*
+ * XXXX
+ * XXXX Note that this function is not really working yet! The big problem is
+ * XXXX to only generate interrupts for the slot the card is in...
+ */
+int
+isa_intr_alloc(ic, mask, type, irq)
+	isa_chipset_tag_t ic;
+	int mask;
+	int type;
+	int *irq;
+{
+	isa_intr_info_t *iinfo_p;
+	int		slot, i;
+
+
+	/*
+	 * The Hades only supports edge triggered interrupts!
+	 */
+	if (type != IST_EDGE)
+		return 1;
+
+#define	MAXIRQ		10	/* XXX: Pure fiction	*/
+	for (i = 0; i < MAXIRQ; i++) {
+		if (mask & (1<<i)) {
+		    slot    = SLOTNR(i);
+		    iinfo_p = &iinfo[slot];
+
+		    if (iinfo_p->slot < 0) {
+			*irq = i;
+			printf("WARNING: isa_intr_alloc is not yet ready!\n"
+			       "         make sure the card is in slot %d!\n",
+				slot);
+			return 0;
+		    }
+		}
+	}
+	return (1);
+}
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 void *
 isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
@@ -198,10 +248,10 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	if (type != IST_EDGE)
 		return NULL;
 
-	slot    = (irq <= 6) ? 0 : 1;
+	slot    = SLOTNR(irq);
 	iinfo_p = &iinfo[slot];
 
-	if (iinfo_p->slot > 0)
+	if (iinfo_p->slot >= 0)
 	    panic("isa_intr_establish: interrupt was already established\n");
 
 	ihand = intr_establish((slot == 0) ? 3 : 15, USER_VEC, 0,

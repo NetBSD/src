@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ctrl.c,v 1.3 1998/12/26 00:53:49 tsubai Exp $	*/
+/*	$NetBSD: kb_ctrl.c,v 1.3.8.1 2000/11/20 20:17:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -196,7 +196,7 @@ kbd_read_raw(chan, buf, count)
 	s = splscc();
 	while ((n = imin(scode_buf.c_cc, count)) == 0) {
 		kb_rwait = 1;
-		sleep((caddr_t)&kb_rwait, KBPRI);
+		(void) tsleep(&kb_rwait, KBPRI, "kbdrdraw", 0);
 		kb_rwait = 0;
 	}
 	(void) splx(s);

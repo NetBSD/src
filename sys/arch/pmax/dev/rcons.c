@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.32 1999/08/26 20:49:40 thorpej Exp $	*/
+/*	$NetBSD: rcons.c,v 1.32.2.1 2000/11/20 20:20:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -41,40 +41,26 @@
 #if NRASTERCONSOLE > 0
 
 #include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/conf.h>
-#include <machine/conf.h>
-#include <sys/vnode.h>
 
-#include <pmax/dev/sccreg.h>
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
-#include <pmax/pmax/kn03.h>
-#include <pmax/pmax/asic.h>
-#include <pmax/pmax/turbochannel.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/dev/rconsvar.h>
-#include <dev/cons.h>
-
-#include <sys/device.h>
-#include <machine/fbio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/rcons/rcons.h>
+#include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
-#include <machine/fbvar.h>
+#include <dev/rcons/rcons.h>
 
-#include <machine/pmioctl.h>
-#include <pmax/dev/fbreg.h>
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#include <machine/conf.h>
+
+#include <pmax/pmax/cons.h>
+
 #include <pmax/dev/lk201var.h>
+#include <pmax/dev/rconsvar.h>
 
 #include "fb.h"
 #include "px.h"
@@ -84,25 +70,19 @@
  * keyboard, a serial port, or the "virtual" console.
  */
 
-extern struct tty *constty;	/* virtual console output device */
+extern struct tty *constty;	/* XXX virtual console output device */
 struct tty *fbconstty;		/* Frame buffer console tty... */
 struct tty rcons_tty [NRASTERCONSOLE];	/* Console tty struct... */
 
-struct	vnode *cn_in_devvp;	/* vnode for underlying input device. */
-dev_t	cn_in_dev = NODEV;	/* console input device. */
+dev_t	cn_in_dev = NODEV;		/* console input device. */
 
 char rcons_maxcols [20];
 
 static struct rconsole rc;
 
-void	rasterconsoleattach __P((int n));
-void	rcons_vputc __P ((dev_t dev, int c));
-
-void	rconsreset __P((struct tty *tp, int rw));
-void	rcons_input __P((dev_t dev, int ic));
-
+static void	rcons_vputc __P((dev_t dev, int c));
 #ifdef notyet
-void		rconsstart		__P((struct tty *));
+void		rconsstart __P((struct tty *));
 static void	rcons_later __P((void*));
 #endif
 
@@ -137,7 +117,8 @@ rcons_connect (info)
 
 	/* Choose 'Gallant' font if this is an 8-bit display */
 	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) > 0)
-		wsfont_lock(cookie, &ri.ri_font, WSFONT_L2R, WSFONT_L2R);
+		wsfont_lock(cookie, &ri.ri_font, WSDISPLAY_FONTORDER_L2R, 
+		    WSDISPLAY_FONTORDER_L2R);
 
 	/* Get operations set and set framebugger colormap */
 	if (rasops_init(&ri, 5000, 80))
@@ -168,6 +149,7 @@ rcons_connect (info)
 	rc.rc_deffgcolor = WSCOL_WHITE;
 	rc.rc_defbgcolor = WSCOL_BLACK;
 	rcons_init(&rc, 1);
+	rcons_ttyinit(fbconstty);
 }
 #endif
 
@@ -182,8 +164,6 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	void *cookie;
 	int width, height, cols, rows;
 {
-	extern dev_t cn_in_dev;	/* XXX rcons hackery */
-
 	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 
 	fbconstty = &rcons_tty [0];
@@ -208,13 +188,14 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	rc.rc_deffgcolor = WSCOL_WHITE;
 	rc.rc_defbgcolor = WSCOL_BLACK;
 	rcons_init(&rc, 1);
+	rcons_ttyinit(fbconstty);
 }
 #endif
 
 /*
  * Hack around the rcons putchar interface not taking a dev_t.
  */
-void
+static void
 rcons_vputc(dev, c)
 	dev_t dev;
 	int c;
@@ -223,7 +204,6 @@ rcons_vputc(dev, c)
 	 * Call the pointer-to-function that rcons_init tried to give us,
 	 * discarding the dev_t argument.
 	 */
-	extern void rcons_cnputc __P((int c));
 	rcons_cnputc(c);
 }
 
@@ -368,7 +348,8 @@ struct tty *
 rconstty(dev)
         dev_t dev;
 {
-        register struct tty *tp = &rcons_tty [0];
+        struct tty *tp = &rcons_tty[0];
+
         return (tp);
 }
 
@@ -400,16 +381,6 @@ rconsstop(tp, rw)
 
 }
 
-/*ARGSUSED*/
-void
-rconsreset(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-
-}
-
-
 int
 rconspoll(dev, events, p)
 	dev_t dev;
@@ -420,11 +391,11 @@ rconspoll(dev, events, p)
 }
 
 /*ARGSUSED*/
-int
-rconsmmap (dev, off, prot)
+paddr_t
+rconsmmap(dev, off, prot)
 	dev_t dev;
-	 int off;
-	 int prot;
+	off_t off;
+	int prot;
 {
 
 	return -1;
@@ -454,7 +425,7 @@ rconsstart(tp)
 			tp->t_state &= ~TS_BUSY;
 		} else {
 			/* called at interrupt level - do it later */
-			timeout(rcons_later, (void*)tp, 0);
+			callout_reset(&tp->t_rstrt_ch, 0, rcons_later, tp);
 		}
 	}
 	if (cl->c_cc <= tp->t_lowat) {

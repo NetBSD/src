@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26 1999/09/12 01:17:07 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.2.1 2000/11/20 20:09:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@ struct pcb {
 #define	pcb_fs	pcb_tss.tss_fs
 #define	pcb_gs	pcb_tss.tss_gs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
-	int	pcb_tss_sel;
 	int	pcb_cr0;		/* saved image of CR0 */
 	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
 	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */

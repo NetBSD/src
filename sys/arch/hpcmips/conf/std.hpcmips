@@ -1,7 +1,8 @@
-#	$NetBSD: std.hpcmips,v 1.3 1999/09/27 08:39:44 enami Exp $
+#	$NetBSD: std.hpcmips,v 1.3.2.1 2000/11/20 20:45:46 bouyer Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+
 mainbus0 at root
 cpu* at mainbus0
 

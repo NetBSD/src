@@ -1,11 +1,12 @@
-#	$NetBSD: files.x68k,v 1.28 1999/09/23 15:24:34 minoura Exp $
+#	$NetBSD: files.x68k,v 1.28.2.1 2000/11/20 20:29:55 bouyer Exp $
 #
 # new style config file for x68k architecture
 #
 
 defopt	opt_fpuemulate.h	FPU_EMULATE
 defopt	opt_m060sp.h		M060SP
-#defopt	opt_fpsp.h		FPSP		# this will fail...
+
+defopt	opt_m680x0.h		M68020 M68030 M68040 M68060
 
 defopt	opt_jupiter.h		JUPITER
 defopt	opt_panicbutton.h	PANICBUTTON
@@ -54,10 +55,6 @@ include "arch/m68k/060sp/files.060sp"
 device	xcom: tty
 attach	xcom at mainbus
 file	arch/x68k/dev/com.c		xcom needs-count
-
-device	par
-attach	par at mainbus
-file	arch/x68k/dev/par.c		par needs-flag
 
 # graphic devices
 define	grfb {}
@@ -139,6 +136,11 @@ attach	fdc at intio
 device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
+major	{fd = 2}
+
+device	par
+attach	par at intio
+file	arch/x68k/dev/par.c		par needs-flag
 
 #
 # SCSI drivers
@@ -170,6 +172,10 @@ file	arch/x68k/dev/pow.c		pow needs-count
 
 # memory disk
 file	arch/x68k/dev/md_root.c		memory_disk_hooks
+major	{md = 8}
+
+# RAIDframe
+major	{raid = 16}
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

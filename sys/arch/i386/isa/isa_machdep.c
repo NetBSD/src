@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.43 1999/09/17 19:59:43 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.43.2.1 2000/11/20 20:09:32 bouyer Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -96,7 +96,12 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/icu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>		/* for MCA_system */
+#endif
 
 /*
  * ISA can only DMA to 0-16M.
@@ -110,7 +115,11 @@ typedef void (vector) __P((void));
 extern vector *IDTVEC(intr)[];
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
+static int fakeintr __P((void *));
+#if NMCA > 0
+static int mca_clockfakeintr __P((void *));
+#endif
+
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -171,7 +180,14 @@ isa_defaultirq()
 		    SDT_SYS386IGT, SEL_KPL);
   
 	/* initialize 8259's */
-	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
+#if NMCA > 0
+	/* level-triggered interrupts on MCA PS/2s */
+	if (MCA_system)
+		outb(IO_ICU1, 0x19);	/* reset; program device, four bytes */
+	else
+#endif
+		outb(IO_ICU1, 0x11);	/* reset; program device, four bytes */
+
 	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
 	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
 #ifdef AUTO_EOI_1
@@ -186,7 +202,14 @@ isa_defaultirq()
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
 
-	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
+#if NMCA > 0
+	/* level-triggered interrupts on MCA PS/2s */
+	if (MCA_system)
+		outb(IO_ICU2, 0x19);	/* reset; program device, four bytes */
+	else
+#endif	
+		outb(IO_ICU2, 0x11);	/* reset; program device, four bytes */
+
 	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
 	outb(IO_ICU2+1, IRQ_SLAVE);
 #ifdef AUTO_EOI_2
@@ -206,7 +229,6 @@ isa_defaultirq()
 int
 isa_nmi()
 {
-
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
 	return(0);
 }
@@ -243,15 +265,18 @@ struct intrhand *intrhand[ICU_LEN];
 void
 intr_calculatemasks()
 {
-	int irq, level;
+	int irq, level, unusedirqs;
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
+	unusedirqs = 0xffff;
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
+		if (levels)
+			unusedirqs &= ~(1 << irq);
 	}
 
 	/* Then figure out which IRQs use each level. */
@@ -260,7 +285,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs;
+		imask[level] = irqs | unusedirqs;
 	}
 
 	/*
@@ -317,7 +342,7 @@ intr_calculatemasks()
 		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
@@ -329,11 +354,10 @@ intr_calculatemasks()
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
-		SET_ICUS();
 	}
 }
 
-int
+static int
 fakeintr(arg)
 	void *arg;
 {
@@ -416,6 +440,14 @@ isa_intr_alloc(ic, mask, type, irq)
 	return (0);
 }
 
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 /*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
@@ -432,6 +464,15 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 
+#if NMCA > 0
+	/*
+	 * Need special fake handler for PS/2 MCA clock interrupt
+	 */
+
+	if (MCA_system && irq == 0)
+		fakehand.ih_fun = &mca_clockfakeintr;
+#endif
+
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
@@ -439,6 +480,12 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
+
+#if NMCA > 0
+	/* change IST_EDGE to IST_LEVEL if MCA system */
+	if (MCA_system && type == IST_EDGE)
+		type = IST_LEVEL;
+#endif
 
 	switch (intrtype[irq]) {
 	case IST_NONE:
@@ -486,6 +533,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	ih->ih_irq = irq;
 	*p = ih;
 
+	SET_ICUS();
 	return (ih);
 }
 
@@ -517,6 +565,7 @@ isa_intr_disestablish(ic, arg)
 	free(ih, M_DEVBUF);
 
 	intr_calculatemasks();
+	SET_ICUS();
 
 	if (intrhand[irq] == NULL)
 		intrtype[irq] = IST_NONE;
@@ -527,7 +576,7 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-	static struct i386_isa_chipset i386_isa_chipset;
+	extern struct i386_isa_chipset i386_isa_chipset;
 	extern int isa_has_been_seen;
 
 	/*
@@ -1126,3 +1175,17 @@ _isa_dma_free_bouncebuf(t, map)
 	cookie->id_nbouncesegs = 0;
 	cookie->id_flags &= ~ID_HAS_BOUNCE;
 }
+
+#if NMCA > 0
+/*
+ * Special fake handler for PS/2 MCA clock interrupts
+ */
+static int
+mca_clockfakeintr(arg)
+	void *arg;
+{
+	/* Reset clock interrupt by asserting bit 7 of port 0x61 */
+	outb(0x61, inb(0x61) | 0x80);
+	return 0;
+}
+#endif

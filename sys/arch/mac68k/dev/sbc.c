@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.39 1999/09/17 20:04:34 thorpej Exp $	*/
+/*	$NetBSD: sbc.c,v 1.39.2.1 2000/11/20 20:12:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -88,15 +88,6 @@
 int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
-
-/* This is copied from julian's bt driver */
-/* "so we have a default dev struct for our link struct." */
-struct scsipi_device sbc_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* Use default start handler.		*/
-	NULL,		/* Use default async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-};
 
 extern label_t	*nofault;
 extern caddr_t	m68k_fault_addr;
@@ -652,7 +643,7 @@ found:
 	dh->dh_len = xlen;
 
 	/* Copy the 'write' flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SBC_DH_OUT;
 
 	sr->sr_dma_hand = dh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.5 1999/08/23 19:10:43 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.5.2.1 2000/11/20 20:33:16 bouyer Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,7 +56,7 @@ int vax_confdata;	/* machine dependend, configuration/setup data */
  * Try to figure out which type of system this is.
  */
 void
-findcpu()
+findcpu(void)
 {
 	vax_cpudata = mfpr(PR_SID);
 	vax_cputype = vax_cpudata >> 24;
@@ -88,6 +88,7 @@ findcpu()
 		case VAX_BTYP_43:
 		case VAX_BTYP_46:
 		case VAX_BTYP_48:
+		case VAX_BTYP_IS1:
 			vax_confdata = *(int *)(0x20020000);
 		case VAX_BTYP_49:
 			vax_bustype = VAX_VSBUS;
@@ -103,9 +104,10 @@ findcpu()
 		case VAX_BTYP_670:
 		case VAX_BTYP_660:
 		case VAX_BTYP_60:
-		case VAX_BTYP_69D:
+		case VAX_BTYP_680:
 		case VAX_BTYP_630:
 		case VAX_BTYP_650:
+		case VAX_BTYP_53:
 			vax_bustype = VAX_IBUS;
 			break;
 
@@ -118,8 +120,12 @@ findcpu()
 		break;
 
 	case VAX_TYP_8NN:
+		vax_boardtype = VAX_BTYP_8800; /* subversion later */
+		vax_bustype = VAX_NBIBUS;
+		break;
+
 	case VAX_TYP_8PS:
-		vax_boardtype = VAX_BTYP_8800;
+		vax_boardtype = VAX_BTYP_8PS;
 		vax_bustype = VAX_NBIBUS;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.c,v 1.1 1996/09/30 16:34:43 ws Exp $	*/
+/*	$NetBSD: copystr.c,v 1.1.28.1 2000/11/20 20:31:14 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,27 +32,33 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 /*
  * Emulate copyinstr.
  */
 int
 copystr(kfaddr, kdaddr, len, done)
-	void *kfaddr;
+	const void *kfaddr;
 	void *kdaddr;
 	size_t len;
 	size_t *done;
 {
-	u_char *kfp = kfaddr;
+	const u_char *kfp = kfaddr;
 	u_char *kdp = kdaddr;
 	size_t l;
+	int rv;
 	
+	rv = ENAMETOOLONG;
 	for (l = 0; len-- > 0; l++) {
 		if (!(*kdp++ = *kfp++)) {
-			*done = l + 1;
-			return 0;
+			l++;
+			rv = 0;
+			break;
 		}
 	}
-	*done = l;
-	return ENAMETOOLONG;
+	if (done != NULL) {
+		*done = l;
+	}
+	return rv;
 }

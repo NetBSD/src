@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.6 1999/09/22 07:15:43 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.6.2.1 2000/11/20 20:05:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -61,6 +61,8 @@ vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #define PCI_IO_SIZE	(NBPG)
 #define PCI_VGA_SIZE	(32 * 1024)
 
+#define	BOOTM_VA_POOL	(32 * 8192)	/* Pre-allocated VA-space	*/
+
 #define	AD_RAM		(0x000000L)	/* main memory			*/
 #define	AD_CART		(0xFA0000L)	/* expansion cartridge		*/
 #define	AD_ROM		(0xFC0000L)	/* system ROM			*/
@@ -87,7 +89,7 @@ vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #define	AD_RTC		(AD_STIO + 0x0960)	/* TT realtime clock	*/
 #define	AD_SCC		(AD_STIO + 0x0C80)	/* SCC 8530		*/
 #define	AD_SCU		(AD_STIO + 0x0E00)	/* System Control Unit	*/
-
+#define	AD_CFG_SWITCH	(AD_STIO + 0x1200)	/* Config switches	*/
 #define	AD_MFP		(AD_STIO + 0x7A00)	/* 68901		*/
 #define	AD_MFP2		(AD_STIO + 0x7A80)	/* 68901-TT		*/
 #define	AD_ACIA		(AD_STIO + 0x7C00)	/* 2 * 6850		*/

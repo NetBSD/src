@@ -1,3 +1,4 @@
-$NetBSD: version,v 1.1 1997/05/17 13:56:02 matthias Exp $
+$NetBSD: version,v 1.1.22.1 2000/11/20 20:19:24 bouyer Exp $
 
 1.1:	Initial version
+1.2:	Support verbose/quiet boot.

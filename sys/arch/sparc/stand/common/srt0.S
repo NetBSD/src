@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.4 1999/03/05 11:12:16 pk Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4.8.1 2000/11/20 20:25:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ start:
 	 nop
 2:	add	%o7, (start-1b), %l0
 	set	start, %l1
-	set	_end, %o0
+	set	_edata, %o0
 	sub	%o0, %l1, %l2		! length
 3:	ld	[%l0], %o0
 	add	%l0, 4, %l0

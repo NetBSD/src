@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 1999/09/13 10:30:57 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.1 2000/11/20 20:14:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,17 +69,25 @@
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
 #define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-/* #define ALIGNED_POINTER(p,t)	1 */
+#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+/* #define ALIGNED_POINTER(p, t)	1 */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0x8c000000	/* start of kernel virtual space */
+#ifdef _KERNEL
+#ifndef _LOCORE
+extern vaddr_t ram_start;
+#define	KERNBASE	ram_start	/* start of kernel virtual space */
+#define	KERNTEXTOFF	ram_start	/* start of kernel text */
+#else
+#define	KERNBASE	IOM_RAM_BEGIN	/* start of kernel virtual space */
+#define	KERNTEXTOFF	IOM_RAM_BEGIN	/* start of kernel text */
+#endif
+#endif
 #define	KERNSIZE	0x01800000	/* size of kernel virtual space */
-#define	KERNTEXTOFF	0x8c000000	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define NPGDIR (1*NBPG)
@@ -90,10 +98,6 @@
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 #if 0
@@ -114,7 +118,7 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 
 #ifndef MCLSHIFT
 # define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
@@ -132,11 +136,11 @@
 #endif
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
-#endif
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))

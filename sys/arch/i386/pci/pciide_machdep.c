@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2.8.1 2000/11/20 20:09:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -50,8 +50,6 @@
 #include <dev/pci/pciidevar.h>
 
 #include <dev/isa/isavar.h>
-
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)

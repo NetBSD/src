@@ -1,12 +1,13 @@
-#	$NetBSD: GENERIC,v 1.57 1999/07/29 10:37:14 augustss Exp $
+#	$NetBSD: GENERIC,v 1.57.2.1 2000/11/20 20:03:54 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-# estimated number of users
+#ident 		"GENERIC-$Revision: 1.57.2.1 $"
 
+# estimated number of users
 maxusers	32
 
 # Standard system options
@@ -50,6 +51,7 @@ file-system	FDESC		# /dev/fd
 file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay filesystem
 file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
@@ -58,17 +60,22 @@ file-system	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
 
 # Networking options
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
@@ -114,7 +121,6 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -259,12 +265,16 @@ pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter
-#pseudo-device	strip	4		# STRIP 
-pseudo-device	pty     32              # pseudo-terminals
+pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
+#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 

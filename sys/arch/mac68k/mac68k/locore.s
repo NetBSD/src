@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 1999/09/17 20:04:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.120.2.1 2000/11/20 20:12:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,9 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
+#include "opt_lockdebug.h"
 #include "assym.h"
+#include "opt_fpsp.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
 
@@ -327,7 +329,6 @@ Lloaddone:
 Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(mac68k_init)
-	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -675,9 +676,17 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
+
+	| Check PSW and see what happen.
+	|   T=0 S=0	(should not happen)
+	|   T=1 S=0	trace trap from user mode
+	|   T=0 S=1	trace trap on a trap instruction
+	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
+
 	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
+	notw	d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	jeq	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
@@ -811,7 +820,7 @@ ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
+ENTRY_NOPROFILE(intrhand)
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
 	clrw	sp@-
@@ -853,7 +862,7 @@ ENTRY_NOPROFILE(rtclock_intr)
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	addql	#4,sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
-	addql	#1,_C_LABEL(intrcnt)+32
+	addql	#1,_C_LABEL(intrcnt)+32	| record a clock interrupt
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
@@ -975,6 +984,8 @@ ASBSS(nullpcb,SIZEOF_PCB)
  * At exit of a process, do a switch for the last time.
  * Switch to a safe stack and PCB, and select a new process to run.  The
  * old stack and u-area will be freed by the reaper.
+ *
+ * MUST BE CALLED AT SPLHIGH!
  */
 ENTRY(switch_exit)
 	movl	sp@(4),a0
@@ -987,6 +998,11 @@ ENTRY(switch_exit)
 	jbsr	_C_LABEL(exit2)
 	lea	sp@(4),sp		| pop args
 
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	jra	_C_LABEL(cpu_switch)
 
 /*
@@ -994,9 +1010,17 @@ ENTRY(switch_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	_C_LABEL(sched_unlock_idle)
+#endif
 	stop	#PSL_LOWIPL
 	movw	#PSL_HIGHIPL,sr
-	movl	_C_LABEL(whichqs),d0
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),d0
 	jeq	_ASM_LABEL(Idle)
 	jra	Lsw1
 
@@ -1027,10 +1051,14 @@ ENTRY(cpu_switch)
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	_C_LABEL(whichqs),d0
+	movl	_C_LABEL(sched_whichqs),d0
 	jeq	_ASM_LABEL(Idle)
 Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
 	movl	d0,d1
 	negl	d0
 	andl	d1,d0
@@ -1039,20 +1067,28 @@ Lsw1:
 
 	movl	d1,d0
 	lslb	#3,d1			| convert queue number to index
-	addl	#_C_LABEL(qs),d1	| locate queue (q)
+	addl	#_C_LABEL(sched_qs),d1	| locate queue (q)
 	movl	d1,a1
 	movl	a1@(P_FORW),a0		| p = q->p_forw
 	cmpal	d1,a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
+#ifdef DIAGNOSTIC
+	tstl	a0@(P_WCHAN)
+	jne	Lbadsw
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lbadsw
+#endif
 	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
 	movl	a0@(P_FORW),a1		| n = p->p_forw
 	movl	d1,a1@(P_BACK)		| n->p_back = q
 	cmpal	d1,a1			| anyone left on queue?
 	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(whichqs),d1
+	movl	_C_LABEL(sched_whichqs),d1
 	bclr	d0,d1			| no, clear bit
-	movl	d1,_C_LABEL(whichqs)
+	movl	d1,_C_LABEL(sched_whichqs)
 Lsw2:
+	/* p->p_cpu initialized in fork1() for single-processor */
+	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
@@ -1078,16 +1114,22 @@ Lsw2:
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
 Lswnofpsave:
 
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lbadsw
-#endif
 	clrl	a0@(P_BACK)		| clear back link
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Activate the process's address space.

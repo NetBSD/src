@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 1999/07/08 18:08:57 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.2.1 2000/11/20 20:19:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -54,9 +54,6 @@
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -68,15 +65,29 @@ void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy the pcb and setup the kernel stack for the child.
- * Setup the child's stackframe to return to child_return
- * via proc_trampoline from cpu_switch.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct syscframe *tf;
@@ -100,8 +111,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	pmap_activate(p2);
 
 	/*
-	 * Copy the syscframe, and arrange for the child to return directly
-	 * through rei().  Note the in-line cpu_set_kpc().
+	 * Copy the syscframe.
 	 */
 	tf = (struct syscframe *)((u_int)p2->p_addr + USPACE) - 1;
 
@@ -116,37 +126,11 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf->sf_p  = p2;
 	sf->sf_pc = (long) proc_trampoline;
 	sf->sf_fp = (long) &tf->sf_regs.r_fp;
-	sf->sf_r3 = (long) child_return;
-	sf->sf_r4 = (long) p2;
+	sf->sf_r3 = (long) func;
+	sf->sf_r4 = (long) arg;
 	sf->sf_pl = imask[IPL_ZERO];
 	pcb->pcb_ksp = (long) sf;
 	pcb->pcb_kfp = (long) &sf->sf_fp;
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcbp;
-	struct switchframe *sf;
-
-	pcbp = &p->p_addr->u_pcb;
-	sf = (struct switchframe *) pcbp->pcb_ksp;
-	sf->sf_pc = (long) proc_trampoline;
-	sf->sf_r3 = (long) pc;
-	sf->sf_r4 = (long) arg;
 }
 
 /*
@@ -290,7 +274,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
@@ -352,7 +336,7 @@ vmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -373,7 +357,7 @@ vmapbuf(bp, len)
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -392,7 +376,7 @@ vunmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);

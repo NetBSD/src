@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.1.1.2.1 2000/11/20 20:46:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,9 +31,14 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <mips/locore.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
+#include "opt_vr41x1.h"
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -46,6 +51,7 @@ struct cfattach cpu_ca = {
 extern struct cfdriver cpu_cd;
 
 extern void cpu_identify __P((void));
+extern void vr_idle __P((void));
 
 
 static int
@@ -74,4 +80,11 @@ cpuattach(parent, dev, aux)
 	printf(": ");
 
 	cpu_identify();
+
+#ifdef VR41X1
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+		printf("cpu0: install VR specific idle routine\n");
+		CPU_IDLE = (long *)vr_idle;
+	}
+#endif
 }

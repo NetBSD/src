@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_iic.S,v 1.2 1998/04/01 22:52:24 mark Exp $	*/
+/*	$NetBSD: iomd_iic.S,v 1.2.14.1 2000/11/20 20:04:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -116,7 +116,7 @@ ENTRY(iic_set_state)
 	mov	r0, #(IIC_BITDELAY)
 
 	/* Exit via iic_delay routine */
-	b	_iic_delay
+	b	_C_LABEL(iic_delay)
 
 ENTRY(iic_set_state_and_ack)
 	/*
@@ -188,7 +188,7 @@ Liic_set_state_and_ack_loop:
 	mov	r0, #(IIC_BITDELAY)
 
 	/* Exit via iic_delay routine */
-	b	_iic_delay
+	b	_C_LABEL(iic_delay)
 
 
 ENTRY(iic_delay)

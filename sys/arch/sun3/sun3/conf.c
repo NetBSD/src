@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63 1999/04/19 21:23:01 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.63.2.1 2000/11/20 20:27:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -224,7 +224,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
-	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
 	cdev_mouse_init(NMS,ms),	/* 13: Sun mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: /dev/winXXX */

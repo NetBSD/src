@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: lptvar.h,v 1.2.8.1 2000/11/20 20:15:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,11 +43,14 @@
 #ifndef __mvme68k_lptvar_h
 #define __mvme68k_lptvar_h
 
+#include <sys/callout.h>
+
 struct lpt_funcs;
 
 
 struct lpt_softc {
 	struct device		sc_dev;
+	struct callout		sc_wakeup_ch;
 	struct lpt_funcs	*sc_funcs;
 	void			*sc_arg;
 	size_t			sc_count;
@@ -65,7 +68,8 @@ struct lpt_softc {
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 
 	/* Back-end specific stuff */
-	void			*sc_regs;
+	bus_space_tag_t		sc_bust;
+	bus_space_handle_t	sc_bush;
 	int			sc_ipl;
 	u_char			sc_icr;
 	u_char			sc_laststatus;

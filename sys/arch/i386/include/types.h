@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 1999/02/05 22:13:12 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.20.8.1 2000/11/20 20:09:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,9 +72,11 @@ typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
 
-#define __HAVE_NWSCONS
-
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
+
+#define __HAVE_DEVICE_REGISTER
+#define __HAVE_NWSCONS
+#define __HAVE_CPU_COUNTER
 
 #endif	/* _MACHTYPES_H_ */

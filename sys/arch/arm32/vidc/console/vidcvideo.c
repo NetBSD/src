@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcvideo.c,v 1.3 1998/01/21 22:51:38 mark Exp $	*/
+/*	$NetBSD: vidcvideo.c,v 1.3.14.1 2000/11/20 20:04:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -60,8 +60,6 @@
 /*#include <sys/user.h>*/
 #include <sys/syslog.h>
 /*#include <sys/resourcevar.h>*/
-/*#include <vm/vm.h>*/
-/*#include <vm/vm_kern.h>*/
 
 #include <machine/cpu.h>
 #include <machine/param.h>
@@ -192,12 +190,12 @@ vidcvideoioctl(dev, cmd, data, flag, p)
 	return(physconioctl(dev, cmd, data, flag, p));
 }
 
-extern int physconmmap __P((dev_t, int, int));
+extern paddr_t physconmmap __P((dev_t, off_t, int));
 
-int
+paddr_t
 vidcvideommap(dev, offset, prot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int prot;
 {
 	dev = makedev(physcon_major, 64 + minor(dev));

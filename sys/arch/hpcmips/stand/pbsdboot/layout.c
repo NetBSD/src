@@ -1,4 +1,4 @@
-/*	$NetBSD: layout.c,v 1.1.1.1 1999/09/16 12:23:30 takemura Exp $	*/
+/*	$NetBSD: layout.c,v 1.1.1.1.2.1 2000/11/20 20:39:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

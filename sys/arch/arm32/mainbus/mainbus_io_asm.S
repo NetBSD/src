@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io_asm.S,v 1.5 1998/06/28 07:27:53 thorpej Exp $	*/
+/*	$NetBSD: mainbus_io_asm.S,v 1.5.14.1 2000/11/20 20:04:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -83,7 +83,7 @@ ENTRY(mainbus_bs_rm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_insw16
+	b	_C_LABEL(insw16)
 
 /*
  * write multiple
@@ -109,4 +109,4 @@ ENTRY(mainbus_bs_wm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_outsw16
+	b	_C_LABEL(outsw16)

@@ -39,8 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -79,6 +78,9 @@ struct	cpu_dep ka48_calls = {
 	2,	/* SCB pages */
 	ka48_halt,
 	ka48_reboot,
+	NULL,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 
@@ -101,33 +103,22 @@ void
 ka48_cache_enable()
 {
 	int i, *tmp;
-	return; /*** not yet MK-990306 ***/
+	long *par_ctl = (long *)KA48_PARCTL;
 
-	/* Disable caches */
-	*(int *)KA48_CCR &= ~CCR_SPECIO;/* secondary */
-	mtpr(PCSTS_FLUSH, PR_PCSTS);	/* primary */
-	*(int *)KA48_BWF0 &= ~BWF0_FEN; /* invalidate filter */
+	/* Disable cache */
+	mtpr(0, PR_CADR);		/* disable */
+	*par_ctl &= ~KA48_PARCTL_INVENA;	/* clear ? invalid enable */
+	mtpr(2, PR_CADR);		/* flush */
 
 	/* Clear caches */
 	tmp = (void *)KA48_INVFLT;	/* inv filter */
-	for (i = 0; i < 32768; i++)
+	for (i = 0; i < KA48_INVFLTSZ / sizeof(int); i++)
 		tmp[i] = 0;
-
-	/* Write valid parity to all primary cache entries */
-	for (i = 0; i < 256; i++) {
-		mtpr(i << 3, PR_PCIDX);
-		mtpr(PCTAG_PARITY, PR_PCTAG);
-	}
-
-	/* Secondary cache */
-	tmp = (void *)KA48_TAGST;
-	for (i = 0; i < KA48_TAGSZ*2; i+=2)
-		tmp[i] = 0;
-
-	/* Enable cache */
-	*(int *)KA48_BWF0 |= BWF0_FEN; /* invalidate filter */
-	mtpr(PCSTS_ENABLE, PR_PCSTS);
-	*(int *)KA48_CCR = CCR_SPECIO | CCR_CENA;
+	*par_ctl |= KA48_PARCTL_INVENA;	/* Enable ???? */
+	mtpr(4, PR_CADR);		/* enable cache */
+	*par_ctl |= (KA48_PARCTL_AGS |	/* AGS? */
+	    KA48_PARCTL_NPEN |		/* N? Parity Enable */
+	    KA48_PARCTL_CPEN);		/* Cpu parity enable */
 }
 
 void
@@ -147,32 +138,8 @@ ka48_mchk(addr)
 void
 ka48_steal_pages()
 {
-	extern	vm_offset_t virtual_avail, avail_end;
-	int	i;
-
 	/* Turn on caches (to speed up execution a bit) */
 	ka48_cache_enable();
-	/*
-	 * The I/O MMU maps all 16K device addressable memory to
-	 * the low 16M of the physical memory. In this way the
-	 * device operations emulate the VS3100 way.
-	 * This area must be on a 128k boundary and that causes
-	 * a slight waste of memory. We steal it from the end.
-	 *
-	 * This will be reworked the day NetBSD/vax changes to
-	 * 4K pages. (No use before that).
-	 */
-	{	int *io_map, *lio_map;
-
-		avail_end &= ~0x3ffff;
-		lio_map = (int *)avail_end;
-		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
-		MAPVIRT(io_map, (0x20000 / VAX_NBPG));
-		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
-		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
-		for (i = 0; i < 0x8000; i++)
-			lio_map[i] = 0x80000000|i;
-	}
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3 1999/03/28 18:08:55 scw Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.3.8.1 2000/11/20 20:15:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -41,16 +41,20 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+
 #define NTXBUF	1
 #define NRXBUF	16
 #define IE_RBUF_SIZE	ETHER_MAX_LEN
 
 #include <machine/prom.h>
 
-#include "stand.h"
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "dev_net.h"
 
 #include "i82586.h"
 #include "if_iereg.h"
@@ -67,6 +71,7 @@ int ie_poll __P((struct iodesc *, void *, int));
 int ie_probe __P((struct netif *, void *));
 int ie_put __P((struct iodesc *, void *, size_t));
 void ie_reset __P((struct netif *, u_char *));
+void ieack __P((volatile struct iereg *, struct iemem *));
 
 struct netif_stats ie_stats;
 
@@ -154,6 +159,7 @@ ie_error(nif, str, ier)
 	panic("ie%d: unknown error\n", nif->nif_unit);
 }
 
+void
 ieack(ier, iem)
 	volatile struct iereg *ier;
 	struct iemem *iem;
@@ -172,7 +178,7 @@ ie_reset(nif, myea)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	int     timo = 10000, stat, i;
+	int     timo = 10000, i;
 	volatile int t;
 	u_int   a;
 
@@ -300,10 +306,8 @@ ie_poll(desc, pkt, len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	u_char *p = pkt;
 	static int slot;
 	int     length = 0;
-	u_int   a;
 	u_short status;
 
 	asm(".word	0xf518\n");
@@ -369,8 +373,6 @@ ie_put(desc, pkt, len)
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
 	u_char *p = pkt;
-	int     timo = 10000, stat, i;
-	volatile int t;
 	u_int   a;
 	int     xx = 0;
 
@@ -446,7 +448,7 @@ ie_init(desc, machdep_hint)
 	bzero(&ie_softc, sizeof(ie_softc));
 	ie_softc.sc_reg =
 	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
-	ie_softc.sc_mem = (struct iemem *) 0x1e0000;
+	ie_softc.sc_mem = (struct iemem *) 0x3e0000;
 	ie_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));

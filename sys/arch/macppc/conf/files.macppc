@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.25 1999/10/15 07:16:16 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.25.2.1 2000/11/20 20:12:55 bouyer Exp $
 #
 # macppc-specific configuration info
 
@@ -26,6 +26,11 @@ file arch/macppc/macppc/md_root.c		memory_disk_hooks
 major {md = 9}
 
 #
+# RAIDframe
+#
+major {raid = 12}
+
+#
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
@@ -48,13 +53,27 @@ major {wd = 10}
 # System bus types
 #
 define mainbus {}
-device mainbus: pcibus, mainbus
+device mainbus: mainbus
 attach mainbus at root
 file arch/macppc/macppc/mainbus.c		mainbus
 
 device cpu
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
+
+file arch/macppc/pci/pci_machdep.c		pci
+
+device bandit: pcibus
+attach bandit at mainbus
+file arch/macppc/pci/bandit.c			bandit
+
+device grackle: pcibus
+attach grackle at mainbus
+file arch/macppc/pci/grackle.c			grackle
+
+device uninorth: pcibus
+attach uninorth at mainbus
+file arch/macppc/pci/uninorth.c			uninorth
 
 # PCI bus support
 include "dev/pci/files.pci"
@@ -65,18 +84,21 @@ file arch/macppc/pci/pciide_machdep.c		pciide
 include "dev/mii/files.mii"
 
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
 
-device ofb: wsemuldisplaydev, wsrasteremulops
+device ofb: wsemuldisplaydev, rasops8
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
-
-file arch/macppc/pci/pci_machdep.c		pci
-file arch/macppc/pci/bandit.c			pci
 
 # PCI-Host bridge chipsets
 device pchb
 attach pchb at pci
 file arch/macppc/pci/pchb.c			pchb
+
+device gm: ifnet, ether, arp, mii
+attach gm at pci
+file arch/macppc/dev/if_gm.c			gm
 
 define obio {}
 device obio: obio
@@ -87,7 +109,6 @@ device mediabay: obio
 attach mediabay at obio
 file arch/macppc/dev/mediabay.c			mediabay
 
-device esp: scsi, ncr53c9x
 attach esp at obio
 file arch/macppc/dev/esp.c			esp
 
@@ -100,7 +121,7 @@ attach mc at obio
 file arch/macppc/dev/if_mc.c			mc
 file arch/macppc/dev/am79c950.c			mc
 
-device bm: ifnet, ether, arp
+device bm: ifnet, ether, arp, mii, mii_bitbang
 attach bm at obio
 file arch/macppc/dev/if_bm.c			bm
 
@@ -141,6 +162,10 @@ file arch/macppc/dev/nvram.c			nvram needs-flag
 
 attach wdc at obio with wdc_obio
 file arch/macppc/dev/wdc_obio.c			wdc_obio
+
+device awacs: audio, auconv, mulaw
+attach awacs at obio
+file arch/macppc/dev/awacs.c			awacs
 
 define grfdev {}
 

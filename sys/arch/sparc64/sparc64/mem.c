@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1999/03/27 00:30:07 mycroft Exp $ */
+/*	$NetBSD: mem.c,v 1.8.8.1 2000/11/20 20:26:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,16 +51,16 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/msgbuf.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 #include <machine/ctlreg.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
-extern vaddr_t prom_vstart;
-extern vaddr_t prom_vend;
+vaddr_t prom_vstart = 0xf000000;
+vaddr_t prom_vend = 0xf0100000;
 caddr_t zeropage;
 
 /*ARGSUSED*/
@@ -99,6 +99,7 @@ mmrw(dev, uio, flags)
 	static int physlock;
 	vm_prot_t prot;
 	extern caddr_t vmmap;
+	vsize_t msgbufsz;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -133,7 +134,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, prot|PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -208,9 +209,12 @@ mmrw(dev, uio, flags)
 		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
-			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
-				c = min(iov->iov_len, 4096);
-#if 0		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
+			msgbufsz = msgbufp->msg_bufs +
+				offsetof(struct kern_msgbuf, msg_bufc);
+			if (v >= (vaddr_t)msgbufp &&
+			    v < (vaddr_t)(msgbufp + msgbufsz)) {
+				c = min(iov->iov_len, msgbufsz);
+#if 1		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
 			} else if (v >= prom_vstart && v < prom_vend &&
 				   uio->uio_rw == UIO_READ) {
 				/* Allow read-only access to the PROM */
@@ -233,20 +237,6 @@ mmrw(dev, uio, flags)
 
 /* XXX should add sbus, etc */
 
-#if defined(SUN4)
-		/*
-		 * minor device 11 (/dev/eeprom) is the old-style
-		 * (a'la Sun 3) EEPROM.
-		 */
-		case 11:
-			if (cputyp == CPU_SUN4)
-				error = eeprom_uio(uio);
-			else
-				error = ENXIO;
-
-			break;
-#endif /* SUN4 */
-
 		/*
 		 * minor device 12 (/dev/zero) is source of nulls on read,
 		 * rathole on write.
@@ -258,10 +248,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(zeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			break;
 
@@ -278,10 +268,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
         dev_t dev;
-        int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

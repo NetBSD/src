@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 1999/06/05 21:58:17 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.4.1 2000/11/20 20:26:44 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,12 @@
  * functions expected by the MI PCI code.
  */
 
-#undef DEBUG
-#define DEBUG
-
 #ifdef DEBUG
 #define SPDB_CONF	0x01
 #define SPDB_INTR	0x04
 #define SPDB_INTMAP	0x08
 #define SPDB_INTFIX	0x10
-int sparc_pci_debug = 0x4;
+int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -53,9 +50,6 @@ int sparc_pci_debug = 0x4;
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -73,11 +67,6 @@ int sparc_pci_debug = 0x4;
 struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
-
-/* commonly used */
-#define TAG2BUS(tag)	((tag) >> 16) & 0xff;
-#define TAG2DEV(tag)	((tag) >> 11) & 0x1f;
-#define TAG2FN(tag)	((tag) >> 8) & 0x7;
 
 /*
  * functions provided to the MI code.
@@ -200,6 +189,7 @@ pci_attach_hook(parent, self, pba)
 				continue;
 			DPRINTF(SPDB_INTFIX, ("... BINGO! ..."));
 			
+		bingo:
 			/*
 			 * OK!  we found match.  pull out the old interrupt
 			 * register, patch in the new value, and put it back.
@@ -210,11 +200,34 @@ pci_attach_hook(parent, self, pba)
 			intr = (intr & ~PCI_INTERRUPT_LINE_MASK) |
 			       (pp->pp_intmap[i].child_intr & PCI_INTERRUPT_LINE_MASK);
 			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; gonna write %x to intreg", intr));
-
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; reread %x from intreg", intr));
 			break;
 		}
+		if (i == pp->pp_nintmap) {
+			/*
+			 * Not matched by parent interrupt map. If the
+			 * interrupt property has the INTMAP_OBIO bit
+			 * set, assume the PROM has (wrongly) supplied it
+			 * in the parent's bus format, rather than as a
+			 * PCI interrupt line number.
+			 *
+			 * This seems to be an issue only with the
+			 * psycho host-to-pci bridge.
+			 */
+			if (pp->pp_sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+			    (*ip & INTMAP_OBIO) != 0) {
+				DPRINTF((SPDB_INTFIX|SPDB_INTMAP),
+		("\n\t; PSYCHO: no match but obio interrupt in parent format"));
+
+				i = -1; goto bingo; /* XXX - hackish.. */
+			}
+		}
+
+		/* enable mem & dma if not already */
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE);
+
 
 		/* clean up */
 		if (pr)
@@ -281,13 +294,17 @@ confaddr_ok(sc, tag)
 			DPRINTF(SPDB_CONF, (" confaddr_ok: rejecting bus %d dev %d fn %d -", bus, dev, fn));
 			return (0);
 		}
-	} else if (sc->sc_mode == PSYCHO_MODE_PSYCHO_A ||
-		   sc->sc_mode == PSYCHO_MODE_PSYCHO_B) {
+	} else if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
 		/*
 		 * make sure we are reading our own bus
 		 */
 		/* XXX??? */
-		panic("confaddr_ok: can't do SUNW,psycho yet");
+		paddr_t addr = sc->sc_configaddr + tag;
+		int asi = bus_type_asi[sc->sc_configtag->type];
+		if (probeget(addr, asi, 4) == -1) {
+			DPRINTF(SPDB_CONF, (" confaddr_ok: rejecting bus %d dev %d fn %d -", bus, dev, fn));
+			return (0);
+		}
 	}
 	return (1);
 }
@@ -301,7 +318,6 @@ pci_conf_read(pc, tag, reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
-	u_int32_t data;
 	pcireg_t val;
 
 	DPRINTF(SPDB_CONF, ("pci_conf_read: tag %lx; reg %x; ", (long)tag, reg));
@@ -312,19 +328,10 @@ pci_conf_read(pc, tag, reg)
 	if (confaddr_ok(sc, tag) == 0) {
 		val = (pcireg_t)~0;
 	} else {
-#if 0
-		data = probeget(sc->sc_configaddr + tag + reg,
-				bus_type_asi[sc->sc_configtag->type], 4);
-		if (data == -1)
-			val = (pcireg_t)~0;
-		else
-			val = (pcireg_t)data;
-#else
 		membar_sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
 		    tag + reg);
 		membar_sync();
-#endif
 	}
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -341,7 +348,7 @@ pci_conf_write(pc, tag, reg, data)
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %ld; reg %d; data %d; ", (long)tag, reg, (int)data));
+	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", (long)tag, reg, (int)data));
 	DPRINTF(SPDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
 		    bus_type_asi[sc->sc_configtag->type],
 		    sc->sc_configaddr + tag + reg, (int)tag + reg));
@@ -349,15 +356,9 @@ pci_conf_write(pc, tag, reg, data)
 	if (confaddr_ok(sc, tag) == 0)
 		panic("pci_conf_write: bad addr");
 		
-#if 0
-	probeset(sc->sc_configaddr + tag + reg,
-		 bus_type_asi[sc->sc_configtag->type],
-		 4, data);
-#else
 	membar_sync();
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
 	membar_sync();
-#endif
 }
 
 /*
@@ -371,16 +372,22 @@ pci_intr_map(pc, tag, pin, line, ihp)
 	int line;
 	pci_intr_handle_t *ihp;
 {
-	struct psycho_pbm *pp = pc->cookie;
 	int rv;
 
-	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %x; pin %d; line %d", (u_int)tag, pin, line));
-	
-	if (line == 255 || pin == 0) {
+	/*
+	 * XXX
+	 * UltraSPARC IIi PCI does not use PCI_INTERRUPT_REG, but we have
+	 * used this space for our own purposes...
+	 */
+	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", 
+		(long)tag, pin, line));
+#if 1
+	if (line == 255) {
 		*ihp = -1;
 		rv = 1;
 		goto out;
 	}
+#endif
 	if (pin > 4)
 		panic("pci_intr_map: pin > 4");
 
@@ -409,6 +416,16 @@ pci_intr_string(pc, ih)
 	return (str);
 }
 
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 void *
 pci_intr_establish(pc, ih, level, func, arg)
 	pci_chipset_tag_t pc;
@@ -421,7 +438,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
 
 	DPRINTF(SPDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
-	cookie = bus_intr_establish(pp->pp_memt, ih, 0, func, arg);
+	cookie = bus_intr_establish(pp->pp_memt, ih, level, 0, func, arg);
 
 	DPRINTF(SPDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);

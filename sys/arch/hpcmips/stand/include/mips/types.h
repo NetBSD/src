@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.1 1999/09/16 12:23:27 takemura Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.1.2.1 2000/11/20 20:47:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,10 +44,10 @@
 #include <sys/cdefs.h>
 
 /*
- * Note that mips_reg_t is distinct from the register_t defined 
+ * Note that mips_reg_t is distinct from the register_t defined
  * in <types.h> to allow these structures to be as hidden from
  * the rest of the operating system as possible.
- * 
+ *
  */
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_ABI_LP32
@@ -72,13 +72,10 @@ typedef struct label_t {
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
-typedef vm_offset_t	paddr_t;
-typedef vm_size_t	psize_t;
-typedef vm_offset_t	vaddr_t;
-typedef vm_size_t	vsize_t;
+typedef unsigned long	paddr_t;
+typedef unsigned long	psize_t;
+typedef unsigned long	vaddr_t;
+typedef unsigned long	vsize_t;
 #endif
 
 /*
@@ -92,15 +89,8 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
-#ifdef NO_LONG_LONG
-typedef	INT64TYPE      		  int64_t;
-typedef	UINT64TYPE	     	u_int64_t;
-#else
-/* LONGLONG */
-typedef	long long		  int64_t;
-/* LONGLONG */
-typedef	unsigned long long	u_int64_t;
-#endif
+typedef	__int64      		  int64_t;
+typedef	unsigned __int64     	u_int64_t;
 
 typedef int32_t			register_t;
 

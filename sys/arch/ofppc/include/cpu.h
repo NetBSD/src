@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.1 2000/11/20 20:18:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,7 +33,26 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 #include <machine/frame.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()		(&cpu_info_store)
+#endif
 
 struct machvec {
 	int (*splhigh) __P((void));
@@ -75,6 +94,9 @@ extern struct machvec machine_interface;
 #define	irq_establish(irq, level, handler, arg)	\
 	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
 
+#define	splsched()	splhigh()
+#define	spllock()	splhigh()
+
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
@@ -90,7 +112,7 @@ extern void delay __P((unsigned));
 extern __volatile int want_resched;
 extern __volatile int astpending;
 
-#define	need_resched()		(want_resched = 1, astpending = 1)
+#define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 

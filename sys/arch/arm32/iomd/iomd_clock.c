@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.19 1999/04/20 09:14:32 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.19.2.1 2000/11/20 20:04:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -92,7 +92,7 @@ clockmatch(parent, cf, aux)
 {
 	struct clk_attach_args *ca = aux;
 
-	if (strcmp(ca->ca_name, "clk") == 0 && cf->cf_unit == 0)
+	if (strcmp(ca->ca_name, "clk") == 0)
 		return(1);
 	return(0);
 }
@@ -291,7 +291,7 @@ microtime(tvp)
 	tvp->tv_usec += (deltatm / TICKS_PER_MICROSECOND);
 
 	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		++tvp->tv_sec;
 	}
@@ -300,7 +300,7 @@ microtime(tvp)
 	if (tvp->tv_sec == oldtv.tv_sec &&
 	    tvp->tv_usec <= oldtv.tv_usec) {
 		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec > 1000000) {
+		if (tvp->tv_usec >= 1000000) {
 			tvp->tv_usec -= 1000000;
 			++tvp->tv_sec;
 		}

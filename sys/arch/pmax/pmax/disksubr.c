@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 1999/04/24 08:01:12 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.2.1 2000/11/20 20:20:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,25 +40,18 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/syslog.h>
-
-#define	b_cylin	b_resid
 
 #ifdef COMPAT_ULTRIX
-#include <machine/dec_boot.h>
+#include <dev/dec/dec_boot.h>
+#include <ufs/ufs/dinode.h>		/* XXX for fs.h */
+#include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-extern char *
-compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		  struct disklabel *lp, struct cpu_disklabel *osdep));
+char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+	    struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
 
 #endif
-
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
 
 /*
  * Attempt to read a disk label from a device
@@ -91,12 +84,12 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	} else for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -112,6 +105,20 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
+#ifdef COMPAT_ULTRIX
+	/*
+	 * If no NetBSD label was found, check for an Ultrix label and
+	 * construct tne incore label from the Ultrix partition information.
+	 */
+	if (msg != NULL) {
+		msg = compat_label(dev, strat, lp, osdep);
+		if (msg == NULL) {
+			printf("WARNING: using Ultrix partition information\n");
+			/* set geometry? */
+		}
+	}
+#endif
+/* XXX If no NetBSD label or Ultrix label found, generate default label here */
 	return (msg);
 }
 
@@ -127,7 +134,7 @@ compat_label(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	Dec_DiskLabel *dlp;
+	dec_disklabel *dlp;
 	struct buf *bp = NULL;
 	char *msg = NULL;
 
@@ -136,7 +143,7 @@ compat_label(dev, strat, lp, osdep)
 	bp->b_blkno = DEC_LABEL_SECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = DEC_LABEL_SECTOR / lp->d_secpercyl;
+	bp->b_cylinder = DEC_LABEL_SECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -144,9 +151,9 @@ compat_label(dev, strat, lp, osdep)
 		goto done;
 	}
 
-	for (dlp = (Dec_DiskLabel *)bp->b_un.b_addr;
-	     dlp <= (Dec_DiskLabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	     dlp = (Dec_DiskLabel *)((char *)dlp + sizeof(long))) {
+	for (dlp = (dec_disklabel *)bp->b_data;
+	     dlp <= (dec_disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
+	     dlp = (dec_disklabel *)((char *)dlp + sizeof(long))) {
 
 		int part;
 
@@ -162,12 +169,18 @@ compat_label(dev, strat, lp, osdep)
 
 		lp->d_magic = DEC_LABEL_MAGIC;
 		lp->d_npartitions = 0;
+		strncpy(lp->d_packname, "Ultrix label", 16);
+		lp->d_rpm = 3600;
+		lp->d_interleave = 1;
+		lp->d_flags = 0;
+		lp->d_bbsize = BBSIZE;
+		lp->d_sbsize = SBSIZE;
 		for (part = 0;
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
 		     part++) {
-			lp->d_partitions[part].p_size = dlp->map[part].numBlocks;
-			lp->d_partitions[part].p_offset = dlp->map[part].startBlock;
+			lp->d_partitions[part].p_size = dlp->map[part].num_blocks;
+			lp->d_partitions[part].p_offset = dlp->map[part].start_block;
 			lp->d_partitions[part].p_fsize = 1024;
 			lp->d_partitions[part].p_fstype =
 			  (part==1) ? FS_SWAP : FS_BSDFFS;
@@ -233,11 +246,6 @@ setdisklabel(olp, nlp, openmask, osdep)
 	return (0);
 }
 
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 07)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
-
 /*
  * Write disk label back to device after modification.
  */
@@ -253,23 +261,23 @@ writedisklabel(dev, strat, lp, osdep)
 	int labelpart;
 	int error = 0;
 
-	labelpart = dkpart(dev);
+	labelpart = DISKPART(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
 		if (lp->d_partitions[0].p_offset != 0)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+	bp->b_dev = makedev(major(dev), DISKMINOR(DISKUNIT(dev), labelpart));
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
+	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
+	      (bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
@@ -286,20 +294,6 @@ done:
 	return (error);
 }
 
-
-/*
- * was this the boot device ?
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	/* see also arch/alpha/alpha/disksubr.c */
-	printf("Warning: boot path unknown\n");
-	return;
-}
-
 /*
  * UNTESTED !!
  *
@@ -314,8 +308,8 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int labelsect = lp->d_partitions[RAW_PART].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 

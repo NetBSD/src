@@ -1,4 +1,4 @@
-/* $NetBSD: pcic_shb.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $ */
+/* $NetBSD: pcic_shb.c,v 1.2.2.1 2000/11/20 20:24:27 bouyer Exp $ */
 
 #define	PCICSHBDEBUG
 
@@ -45,7 +45,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -117,8 +117,8 @@ pcic_shb_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct shb_attach_args *ia = aux;
 #if 0
-	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh, memh;
 	int val, found;
@@ -180,9 +180,9 @@ pcic_shb_probe(parent, match, aux)
 
 	if (!found)
 		return (0);
-
-	ia->ia_iosize = SHPCIC_IOSIZE;
 #endif
+	ia->ia_iosize = SHPCIC_IOSIZE;
+
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.1 1999/06/07 14:59:14 mrg Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.1.4.1 2000/11/20 20:26:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,10 +104,16 @@ cs4231_attach_ebus(parent, self, aux)
 	sc->sc_ad1848.sc_writereg = cs4231_write;
 
 	/*
+	 * These are the register we get from the prom:
+	 *	- CS4231 registers
+	 *	- DMA (play)
+	 *	- DMA (write)
+	 *	- AUXIO audio registers 
+	 *
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (ea->ea_naddrs) {
+	if (ea->ea_nvaddrs) {
 		bh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	} else {
 		if (ebus_bus_map(ea->ea_bustag, 0,
@@ -120,9 +126,10 @@ cs4231_attach_ebus(parent, self, aux)
 			return;
 		}
 	}
+	/* XXX what to do with the DMA registers ? */
 
 	sc->sc_ad1848.sc_ioh = bh;
-	sc->sc_dmareg = (struct apc_dma *)(bh + CS4231_REG_SIZE);
+	sc->sc_dmareg = (struct apc_dma *)(u_long)(bh + CS4231_REG_SIZE);
 
 	cs4231_init(sc);
 
@@ -132,15 +139,14 @@ cs4231_attach_ebus(parent, self, aux)
 
 	printf("\n");
 
-	/* sbus_establish(&sc->sc_ed, &sc->sc_ad1848.sc_dev); */
-
 	/* Establish interrupt channels */
 	for (i = 0; i < ea->ea_nintrs; i++)
 		bus_intr_establish(ea->ea_bustag,
-				   ea->ea_intrs[i], 0,
+				   ea->ea_intrs[i], IPL_AUDIO, 0,
 				   cs4231_intr, sc);
 
-	evcnt_attach(&sc->sc_ad1848.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_ad1848.sc_dev.dv_xname, "intr");
 	audio_attach_mi(&audiocs_hw_if, sc, &sc->sc_ad1848.sc_dev);
 }
 #endif

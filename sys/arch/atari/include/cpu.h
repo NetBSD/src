@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1999/08/10 21:08:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32.2.1 2000/11/20 20:05:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,11 +49,29 @@
  * Exported definitions unique to atari/68k cpu support.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -92,7 +110,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()	{want_resched = 1; setsoftast();}
+#define	need_resched(ci)	{want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
@@ -112,6 +130,8 @@ struct clockframe {
 
 extern int	astpending;	/* need trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
+
+#endif /* _KERNEL */
 
 /* include support for software interrupts */
 #include <machine/mtpr.h>

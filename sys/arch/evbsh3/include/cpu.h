@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1999/09/13 10:30:30 itojun Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.1 2000/11/20 20:07:36 bouyer Exp $	*/
 #ifndef _EVBSH3_CPU_H_
 #define _EVBSH3_CPU_H_
 

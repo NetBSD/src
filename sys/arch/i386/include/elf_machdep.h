@@ -1,14 +1,16 @@
-/*	$NetBSD: elf_machdep.h,v 1.6 1999/02/25 10:18:04 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.6.8.1 2000/11/20 20:09:26 bouyer Exp $	*/
 
-#define	ELF32_MACHDEP_ENDIANNESS	Elf_ed_2lsb
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
-		case Elf_em_386:					\
-		case Elf_em_486:					\
+		case EM_386:						\
+		case EM_486:						\
 			break;
 
 #define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF64_MACHDEP_ID_CASES						\
 		/* no 64-bit ELF machine types supported */
+
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* i386 relocations */
 #define	R_386_NONE	0

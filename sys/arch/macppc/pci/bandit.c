@@ -1,12 +1,7 @@
-/*	$NetBSD: bandit.c,v 1.11 1999/05/06 19:16:45 thorpej Exp $	*/
+/*	$NetBSD: bandit.c,v 1.11.2.1 2000/11/20 20:13:02 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,353 +11,240 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright 1991-1998 by Open Software Foundation, Inc. 
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- */
-/*
- * Copyright 1991-1998 by Apple Computer, Inc. 
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
-#include <machine/bus.h>
+#include <machine/autoconf.h>
+
+struct bandit_softc {
+	struct device sc_dev;
+	struct pci_bridge sc_pc;
+};
+
+void bandit_attach __P((struct device *, struct device *, void *));
+int bandit_match __P((struct device *, struct cfdata *, void *));
+int bandit_print __P((void *, const char *));
+
+pcireg_t bandit_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
+void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+
+static void bandit_init __P((struct bandit_softc *));
+
+struct cfattach bandit_ca = {
+	sizeof(struct bandit_softc), bandit_match, bandit_attach
+};
+
+int
+bandit_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, "bandit") == 0 ||
+	    strcmp(ca->ca_name, "chaos") == 0)
+		return 1;
+
+	return 0;
+}
+
+void
+bandit_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct bandit_softc *sc = (void *)self;
+	pci_chipset_tag_t pc = &sc->sc_pc;
+	struct confargs *ca = aux;
+	struct pcibus_attach_args pba;
+	int len, node = ca->ca_node;
+	u_int32_t reg[2], busrange[2];
+	struct ranges {
+		u_int32_t pci_hi, pci_mid, pci_lo;
+		u_int32_t host;
+		u_int32_t size_hi, size_lo;
+	} ranges[6], *rp = ranges;
+
+	printf("\n");
+
+	/* Bandit address */
+	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
+		return;
+
+	/* PCI bus number */
+	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
+		return;
+
+	pc->node = node;
+	pc->addr = mapiodev(reg[0] + 0x800000, 4);
+	pc->data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->bus = busrange[0];
+	pc->conf_read = bandit_conf_read;
+	pc->conf_write = bandit_conf_write;
+	pc->memt = (bus_space_tag_t)0;
+
+	/* find i/o tag */
+	len = OF_getprop(node, "ranges", ranges, sizeof(ranges));
+	if (len == -1)
+		return;
+	while (len >= sizeof(ranges[0])) {
+		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
+		     OFW_PCI_PHYS_HI_SPACE_IO)
+			pc->iot = (bus_space_tag_t)rp->host;
+		len -= sizeof(ranges[0]);
+		rp++;
+	}
+
+	bandit_init(sc);
+
+	bzero(&pba, sizeof(pba));
+	pba.pba_busname = "pci";
+	pba.pba_memt = pc->memt;
+	pba.pba_iot = pc->iot;
+	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_bus = pc->bus;
+	pba.pba_pc = pc;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+
+	config_found(self, &pba, bandit_print);
+}
+
+int
+bandit_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct pcibus_attach_args *pa = aux;
+
+	if (pnp)
+		printf("%s at %s", pa->pba_busname, pnp);
+	printf(" bus %d", pa->pba_bus);
+	return UNCONF;
+}
+
+pcireg_t
+bandit_conf_read(pc, tag, reg)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int reg;
+{
+	pcireg_t data;
+	int bus, dev, func, s;
+	u_int32_t x;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	/*
+	 * bandit's minimum device number of the first bus is 11.
+	 * So we behave as if there is no device when dev < 11.
+	 */
+	if (func > 7)
+		panic("pci_conf_read: func > 7");
+
+	if (bus == pc->bus) {
+		if (dev < 11) {
+			if (reg == PCI_ID_REG)
+				return 0xffffffff;
+			else
+				panic("pci_conf_read: dev < 11");
+		}
+		x = (1 << dev) | (func << 8) | reg;
+	} else
+		x = tag | reg | 1;
+
+	s = splhigh();
+
+	out32rb(pc->addr, x);
+	DELAY(10);
+	data = 0xffffffff;
+	if (!badaddr(pc->data, 4))
+		data = in32rb(pc->data);
+	DELAY(10);
+	out32rb(pc->addr, 0);
+	DELAY(10);
+
+	splx(s);
+
+	return data;
+}
+
+void
+bandit_conf_write(pc, tag, reg, data)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int reg;
+	pcireg_t data;
+{
+	int bus, dev, func, s;
+	u_int32_t x;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	if (func > 7)
+		panic("pci_conf_write: func > 7");
+
+	if (bus == pc->bus) {
+		if (dev < 11)
+			panic("pci_conf_write: dev < 11");
+		x = (1 << dev) | (func << 8) | reg;
+	} else
+		x = tag | reg | 1;
+
+	s = splhigh();
+
+	out32rb(pc->addr, x);
+	DELAY(10);
+	out32rb(pc->data, data);
+	DELAY(10);
+	out32rb(pc->addr, 0);
+	DELAY(10);
+
+	splx(s);
+}
 
 #define	PCI_BANDIT		11
 
-#define	PCI_REG_BANDIT_CFG	0x40
-#define	PCI_REG_ADDR_MASK	0x48
 #define	PCI_REG_MODE_SELECT	0x50
-#define	PCI_REG_ARBUS_HOLDOFF	0x58
 
-#define	PCI_MS_BYTESWAP		0x001	/* Enable Big Endian mode. (R/W)*/
-#define	PCI_MS_PASSATOMIC	0x002	/* PCI Bus to ARBus Lock are always allowed (R)*/
-#define	PCI_MS_NUMBER_MASK	0x00C	/* PCI Bus Number (R) */
-#define	PCI_MS_IS_SYNC		0x010	/* Is Synchronous (1) or Async (0) ? (R)*/
-#define	PCI_MS_VGA_SPACE	0x020	/* Map VGA I/O space  (R/W) */
-#define	PCI_MS_IO_COHERENT	0x040	/* I/O Coherent (R/W) */
-#define	PCI_MS_INT_ENABLE	0x080	/* Allow TEA or PCI Abort INT to pass to Grand Central (R/W) */
-
-#define	BANDIT_SPECIAL_CYCLE	0xe00000	/* Special Cycle offset */
-
-static void bandit_init __P((pci_chipset_tag_t));
-static void scan_pci_devs __P((int));
-static void config_slot __P((int, pci_chipset_tag_t, int));
+#define	PCI_MODE_IO_COHERENT	0x040	/* I/O coherent */
 
 void
-pci_init(canmap)
-	int canmap;
+bandit_init(sc)
+	struct bandit_softc *sc;
 {
-
-	scan_pci_devs(canmap);
-}
-
-static void
-bandit_init(pc)
-	pci_chipset_tag_t pc;
-{
-	u_int status;
+	pci_chipset_tag_t pc = &sc->sc_pc;
 	pcitag_t tag;
+	u_int mode;
 
-	tag = pci_make_tag(pc, 0, PCI_BANDIT, 0);
+	tag = pci_make_tag(pc, pc->bus, PCI_BANDIT, 0);
 	if ((pci_conf_read(pc, tag, PCI_ID_REG) & 0xffff) == 0xffff)
 		return;
 
-	status = pci_conf_read(pc, tag, PCI_REG_MODE_SELECT);
+	mode = pci_conf_read(pc, tag, PCI_REG_MODE_SELECT);
 
-	if ((status & PCI_MS_IO_COHERENT) == 0) {
-		status |= PCI_MS_IO_COHERENT;
-		pci_conf_write(pc, tag, PCI_REG_MODE_SELECT, status);
+	if ((mode & PCI_MODE_IO_COHERENT) == 0) {
+		mode |= PCI_MODE_IO_COHERENT;
+		pci_conf_write(pc, tag, PCI_REG_MODE_SELECT, mode);
 	}
-}
-
-
-static void
-scan_pci_devs(canmap)
-	int canmap;
-{
-	int reglen, node, child, n, is_bandit, is_mpc106;
-	char name[64];
-	u_int32_t *p, reg[36];
-
-	bzero(pci_bridges, sizeof(pci_bridges));
-
-	node = OF_peer(0);
-	node = OF_child(node);
-
-	for (n = 0; node != 0; node = OF_peer(node)) {
-		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
-			continue;
-
-		is_bandit = (strcmp(name, "bandit") == 0 ||
-			     strcmp(name, "chaos") == 0) ? 1 : 0;
-
-		/* XXX for now */
-		is_mpc106 = (strcmp(name, "pci") == 0) ? 1 : 0;
-
-		if (is_bandit == 0 && is_mpc106 == 0)
-			continue;
-
-		/*
-		 * Get the "ranges" property.  We're expecting 6 32-bit
-		 * values for each address space:
-		 *
-		 *	phys.hi phys.mid phys.lo host size.hi size.lo
-		 *
-		 * Note that the MPC106 maps PCI memory space into
-		 * two regions, one of which has a 24-bit addressing
-		 * mode.  We don't know the order of the "ranges"
-		 * property, but both Address Map modes of the MPC106
-		 * map the 32-bit memory range at a lower host address
-		 * than the 24-bit range.  We always pick the lower
-		 * of the memory ranges for this reason.
-		 */
-
-		pci_bridges[n].memt = (bus_space_tag_t) 0xffffffff;
-
-		reglen = OF_getproplen(node, "ranges");
-		if (reglen > sizeof(reg) || reglen <= 0 ||
-		    reglen % (6 * sizeof(u_int32_t)) != 0)
-			continue;	/* eek */
-
-		reglen = OF_getprop(node, "ranges", reg, sizeof(reg));
-
-		for (p = reg; reglen > 0;
-		     reglen -= (6 * sizeof(u_int32_t)), p += 6) {
-			switch (p[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
-			case OFW_PCI_PHYS_HI_SPACE_IO:
-				pci_bridges[n].iot =
-				    (bus_space_tag_t) p[3];
-				break;
-
-			case OFW_PCI_PHYS_HI_SPACE_MEM32:
-#if 0	/* XXX XXX XXX */
-				if (pci_bridges[n].memt >
-				    (bus_space_tag_t)p[3])
-					pci_bridges[n].memt =
-					    (bus_space_tag_t) p[3];
-#else
-				/*
-				 * XXX The Power Mac firmware seems to
-				 * XXX include the PCI memory space base
-				 * XXX in the device's BARs.  We can remove
-				 * XXX this kludge from here once we
-				 * XXX fix the bus_space(9) implelentation.
-				 */
-				pci_bridges[n].memt = (bus_space_tag_t) 0;
-#endif
-				break;
-
-			/* XXX What about OFW_PCI_PHYS_HI_SPACE_MEM64? */
-			}
-		}
-
-		/*
-		 * The "bus-range" property tells us our PCI bus number.
-		 */
-		if (OF_getprop(node, "bus-range", reg, sizeof(reg)) != 8)
-			continue;
-
-		pci_bridges[n].bus = reg[0];
-		pci_bridges[n].present = 1;
-
-		/*
-		 * Map the PCI configuration space access registers,
-		 * and perform any PCI-Host bridge initialization.
-		 */
-		if (is_bandit) {
-			/* XXX magic numbers */
-			pci_bridges[n].pc = n;
-			if (canmap) {
-				if (OF_getprop(node, "reg", reg,
-				    sizeof(reg)) != 8)
-					continue;
-				pci_bridges[n].addr =
-				    mapiodev(reg[0] + 0x800000, 4);
-				pci_bridges[n].data =
-				    mapiodev(reg[0] + 0xc00000, 4);
-				bandit_init(n);
-			}
-		} else if (is_mpc106) {
-			/* XXX magic numbers */
-			pci_bridges[n].pc = PCI_CHIPSET_MPC106; /* for now */
-			if (canmap) {
-				pci_bridges[n].addr = mapiodev(0xfec00000, 4);
-				pci_bridges[n].data = mapiodev(0xfee00000, 4);
-			}
-		}
-
-		if (canmap) {
-			/*
-			 * Configure all of the PCI devices attached to this
-			 * PCI-Host bridge.
-			 */
-			child = OF_child(node);
-			while (child) {
-				config_slot(child, pci_bridges[n].pc, -1);
-				child = OF_peer(child);
-			}
-		}
-
-		/* Bridge found, increment bridge instance. */
-		n++;
-	}
-}
-
-static void
-config_slot(node, pc, irq)
-	int node;
-	pci_chipset_tag_t pc;
-	int irq;
-{
-	pcitag_t tag;
-	pcireg_t csr, intr;
-	int i, sz;
-	int bus, dev, func;
-	u_int32_t reg[40], *rp;
-	char name[16];
-	struct {
-		u_int32_t device;
-		u_int32_t junk[3];
-		u_int32_t intrnode;
-		u_int32_t interrupt;
-	} imap[16];
-
-	bzero(name, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-	if (strcmp(name, "pci-bridge") == 0) {
-		if (irq == -1)
-			OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq));
-
-		node = OF_child(node);
-		while (node) {
-			config_slot(node, pc, irq);
-			node = OF_peer(node);
-		}
-		return;
-	}
-
-	sz = OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
-	if (sz < 4)
-		return;
-
-	rp = reg;
-	bus = (rp[0] & OFW_PCI_PHYS_HI_BUSMASK) >>
-	    OFW_PCI_PHYS_HI_BUSSHIFT;
-	dev = (rp[0] & OFW_PCI_PHYS_HI_DEVICEMASK) >>
-	    OFW_PCI_PHYS_HI_DEVICESHIFT;
-	func = (rp[0] & OFW_PCI_PHYS_HI_FUNCTIONMASK) >>
-	    OFW_PCI_PHYS_HI_FUNCTIONSHIFT;
-
-	tag = pci_make_tag(pc, bus, dev, func);
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-
-	/*
-	 * Make sure the IO and MEM enable bits are set in the CSR.
-	 */
-	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
-	for (; sz > 0; sz -= 5 * sizeof(u_int32_t), rp += 5) {
-		switch (rp[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
-		case OFW_PCI_PHYS_HI_SPACE_IO:
-			csr |= PCI_COMMAND_IO_ENABLE;
-			break;
-
-		case OFW_PCI_PHYS_HI_SPACE_MEM32:
-			csr |= PCI_COMMAND_MEM_ENABLE;
-			break;
-		}
-	}
-
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-	/*
-	 * Make sure the line register is programmed with the interrupt
-	 * mapping.
-	 */
-	if (irq == -1 &&
-	    OF_getprop(node, "AAPL,interrupts", &irq, sizeof(irq)) == -1 &&
-	    OF_getprop(node, "interrupts", &irq, sizeof(irq)) == -1)
-		return;
-
-	if (irq == 1) {		/* XXX */
-		sz = OF_getprop(OF_parent(node), "interrupt-map",
-		    imap, sizeof(imap));
-		if (sz != -1) {
-			for (i = 0; i < sz / sizeof(*imap); i++) {
-				/* XXX should use interrupt-map-mask */
-				if (((imap[i].device &
-				      OFW_PCI_PHYS_HI_DEVICEMASK) >>
-				     OFW_PCI_PHYS_HI_DEVICESHIFT) == dev) {
-					irq = imap[i].interrupt;
-					break;
-				}
-			}
-		}
-	}
-
-	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	intr = (intr & ~PCI_INTERRUPT_LINE_MASK) |
-	    (irq & PCI_INTERRUPT_LINE_MASK);
-	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disptest.c,v 1.2 1999/09/26 02:42:50 takemura Exp $	*/
+/*	$NetBSD: disptest.c,v 1.2.2.1 2000/11/20 20:39:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

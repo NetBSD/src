@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32.2.1 2000/11/20 20:13:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,9 +46,44 @@
  */
 
 /*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define CPU_ROOT_DEVICE		3	/* string: root device name */
+
+/*
+ * Platform can override, but note this breaks userland compatability
+ * with other mips platforms.
+ */
+#ifndef CPU_MAXID
+#define CPU_MAXID		4	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "root_device", CTLTYPE_STRING }, \
+}
+#endif
+
+#ifdef _KERNEL
+#ifndef _LOCORE
+
+/*
  * Macros to find the CPU architecture we're on at run-time,
  * or if possible, at compile-time.
  */
+
+extern int cpu_arch;
+
+#define	CPU_ARCH_MIPS1	(1 << 0)
+#define	CPU_ARCH_MIPS2	(1 << 1)
+#define	CPU_ARCH_MIPS3	(1 << 2)
+#define	CPU_ARCH_MIPS4	(1 << 3)
+#define	CPU_ARCH_MIPS5	(1 << 4)
+#define	CPU_ARCH_MIPS32	(1 << 5)
+#define	CPU_ARCH_MIPS64	(1 << 6)
 
 #if (MIPS1 + MIPS3) == 1
 #ifdef MIPS1
@@ -60,8 +95,9 @@
 #endif /* mips1 */
 
 #else /* run-time test */
-extern int cpu_arch;
-#define CPUISMIPS3	(cpu_arch == 3)
+
+/* This test is ... rather bogus */
+#define CPUISMIPS3	((cpu_arch & (CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4)) != 0)
 #endif /* run-time test */
 
 /*
@@ -70,7 +106,8 @@ extern int cpu_arch;
  */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
-#define	cpu_number()			0
+
+void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -96,7 +133,7 @@ struct clockframe {
 /* mips3 versions */
 #define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KSU_USER)
 #define	MIPS3_CLKF_BASEPRI(framep)	\
-	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_ENAB)) == 0)
+	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_IE)) == 0)
 
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
@@ -120,12 +157,11 @@ struct clockframe {
 #endif
 
 
-
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()	{ want_resched = 1; aston(); }
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -148,52 +184,36 @@ extern int want_resched;	/* resched() was called */
 extern u_int	mips_L2CacheSize;
 extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */
 extern int	mips_L2CacheMixed;
-
-#ifdef MIPS3_INTERNAL_TIMER_INTERRUPT
-extern u_int32_t mips3_intr_cycle_count;
-extern u_int32_t mips3_timer_delta;
-#endif
-#endif
+#endif /* MIPS3 */
 
 /*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
-
-#ifdef _KERNEL
-
-/*
- * Misc prototypes.
+ * Misc prototypes and variable declarations.
  */
 struct proc;
 struct user;
 
+extern struct proc *fpcurproc;
+
 /* trap.c */
 void	child_return __P((void *));
+void	netintr __P((void));
 int	kdbpeek __P((vaddr_t));
 
 /* mips_machdep.c */
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
 void	mips_init_msgbuf __P((void));
+void	savefpregs __P((struct proc *));
+void	loadfpregs __P((struct proc *));
 
 /* locore.S */
-void	savefpregs __P((struct proc *));
-void	switchfpregs __P((struct proc *, struct proc *));
 int	badaddr __P((void *, size_t));
 
 /* mips_machdep.c */
 void	cpu_identify __P((void));
 void	mips_vector_init __P((void));
 
+#endif /* ! _LOCORE */
 #endif /* _KERNEL */
 
 #endif /* _CPU_H_ */

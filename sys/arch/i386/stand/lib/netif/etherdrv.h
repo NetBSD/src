@@ -1,4 +1,4 @@
-/*	$NetBSD: etherdrv.h,v 1.4 1999/02/19 19:30:46 drochner Exp $	*/
+/*	$NetBSD: etherdrv.h,v 1.4.8.1 2000/11/20 20:09:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -42,3 +42,4 @@ extern int ether_medium;
 #define ETHERMEDIUM_UTP 1
 #define ETHERMEDIUM_AUI 2
 #define ETHERMEDIUM_MII 3
+#define ETHERMEDIUM_100TX 4

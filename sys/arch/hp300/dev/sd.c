@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.36 1998/01/12 18:31:10 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.36.14.1 2000/11/20 20:08:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  * SCSI CCS (Command Command Set) disk driver.
  */
 
+#include "rnd.h"
+#include "opt_useleds.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -90,11 +93,13 @@
 #include <sys/proc.h>
 #include <sys/stat.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-
-#include "opt_useleds.h"
 
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
@@ -231,6 +236,8 @@ sdattach(parent, self, aux)
 	struct sd_softc *sc = (struct sd_softc *)self;
 	struct oscsi_attach_args *osa = aux;
 
+	BUFQ_INIT(&sc->sc_tab);
+
 	/*
 	 * XXX formerly 0 meant unused but now pid 0 can legitimately
 	 * use this interface (sdgetcapacity).
@@ -294,6 +301,13 @@ sdattach(parent, self, aux)
 	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_flags |= SDF_ALIVE;
+#if NRND > 0
+	/*
+	 * attach the device into the random source list
+	 */
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
+#endif
 }
 
 void
@@ -347,7 +361,7 @@ sdgetcapacity(sc, dev)
 		bcopy(&cap, &sc->sc_cmdstore, sizeof cap);
 		bp->b_dev = dev;
 		bp->b_flags = B_READ | B_BUSY;
-		bp->b_un.b_addr = (caddr_t)capbuf;
+		bp->b_data = (caddr_t)capbuf;
 		bp->b_bcount = capbufsize;
 		sdstrategy(bp);
 		i = biowait(bp) ? sc->sc_sensestore.status : 0;
@@ -520,7 +534,7 @@ sdopen(dev, flags, mode, p)
 	 * Wait for any pending opens/closes to complete
 	 */
 	while (sc->sc_flags & (SDF_OPENING|SDF_CLOSING))
-		sleep((caddr_t)sc, PRIBIO);
+		(void) tsleep(sc, PRIBIO, "sdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -587,9 +601,9 @@ sdclose(dev, flag, mode, p)
 	if (dk->dk_openmask == 0) {
 		sc->sc_flags |= SDF_CLOSING;
 		s = splbio();
-		while (sc->sc_tab.b_active) {
+		while (sc->sc_active) {
 			sc->sc_flags |= SDF_WANTED;
-			sleep((caddr_t)&sc->sc_tab, PRIBIO);
+			(void) tsleep(&sc->sc_tab, PRIBIO, "sdclose", 0);
 		}
 		splx(s);
 		sc->sc_flags &= ~(SDF_CLOSING|SDF_WLABEL|SDF_ERROR);
@@ -625,7 +639,7 @@ sdlblkstrat(bp, bsize)
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
 	resid = bp->b_bcount;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 #ifdef DEBUG
 	if (sddebug & SDB_PARTIAL)
 		printf("sdlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
@@ -641,7 +655,7 @@ sdlblkstrat(bp, bsize)
 			count = min(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
 			cbp->b_blkno = bn - btodb(boff);
-			cbp->b_un.b_addr = cbuf;
+			cbp->b_data = cbuf;
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
@@ -668,7 +682,7 @@ sdlblkstrat(bp, bsize)
 		} else {
 			count = resid & ~(bsize - 1);
 			cbp->b_blkno = bn;
-			cbp->b_un.b_addr = addr;
+			cbp->b_data = addr;
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
@@ -704,7 +718,6 @@ sdstrategy(bp)
 {
 	int unit = sdunit(bp->b_dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
-	struct buf *dp = &sc->sc_tab;
 	struct partition *pinfo;
 	daddr_t bn;
 	int sz, s;
@@ -715,7 +728,7 @@ sdstrategy(bp)
 			bp->b_error = EPERM;
 			goto bad;
 		}
-		bp->b_cylin = 0;
+		bp->b_rawblkno = 0;
 	} else {
 		if (sc->sc_flags & SDF_ERROR) {
 			bp->b_error = EIO;
@@ -767,12 +780,12 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + offset) >> sc->sc_bshift;
+		bp->b_rawblkno = (bn + offset) >> sc->sc_bshift;
 	}
 	s = splbio();
-	disksort(dp, bp);
-	if (dp->b_active == 0) {
-		dp->b_active = 1;
+	disksort_blkno(&sc->sc_tab, bp);
+	if (sc->sc_active == 0) {
+		sc->sc_active = 1;
 		sdustart(unit);
 	}
 	splx(s);
@@ -858,20 +871,19 @@ sdfinish(sc, bp)
 	struct sd_softc *sc;
 	struct buf *bp;
 {
-	struct buf *dp = &sc->sc_tab;
 
-	dp->b_errcnt = 0;
-	dp->b_actf = bp->b_actf;
+	sc->sc_errcnt = 0;
+	BUFQ_REMOVE(&sc->sc_tab, bp);
 	bp->b_resid = 0;
 	biodone(bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
-	if (dp->b_actf)
+	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
 		sdustart(sc->sc_dev.dv_unit);
 	else {
-		dp->b_active = 0;
+		sc->sc_active = 0;
 		if (sc->sc_flags & SDF_WANTED) {
 			sc->sc_flags &= ~SDF_WANTED;
-			wakeup((caddr_t)dp);
+			wakeup((caddr_t)&sc->sc_tab);
 		}
 	}
 }
@@ -887,20 +899,20 @@ sdstart(arg)
 	 * so check now.
 	 */
 	if (sc->sc_format_pid >= 0 && legal_cmds[sc->sc_cmdstore.cdb[0]] > 0) {
-		struct buf *bp = sc->sc_tab.b_actf;
+		struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 		int sts;
 
-		sc->sc_tab.b_errcnt = 0;
+		sc->sc_errcnt = 0;
 		while (1) {
 			sts = scsi_immed_command(sc->sc_dev.dv_parent->dv_unit,
 			    sc->sc_target, sc->sc_lun, &sc->sc_cmdstore,
-			    bp->b_un.b_addr, bp->b_bcount,
+			    bp->b_data, bp->b_bcount,
 			    bp->b_flags & B_READ);
 			sc->sc_sensestore.status = sts;
 			if ((sts & 0xfe) == 0 ||
 			    (sts = sderror(sc, sts)) == 0)
 				break;
-			if (sts > 0 || sc->sc_tab.b_errcnt++ >= SDRETRY) {
+			if (sts > 0 || sc->sc_errcnt++ >= SDRETRY) {
 				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				break;
@@ -917,7 +929,7 @@ sdgo(arg)
 	void *arg;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int pad;
 	struct scsi_fmt_cdb *cmd;
 
@@ -935,7 +947,7 @@ sdgo(arg)
 			return;
 		}
 		cmd = bp->b_flags & B_READ? &sd_read_cmd : &sd_write_cmd;
-		*(int *)(&cmd->cdb[2]) = bp->b_cylin;
+		*(int *)(&cmd->cdb[2]) = bp->b_rawblkno;
 		pad = howmany(bp->b_bcount, sc->sc_blksize);
 		*(u_short *)(&cmd->cdb[7]) = pad;
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
@@ -958,11 +970,11 @@ sdgo(arg)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
-		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %ld\n",
+		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %d\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
-		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
-		       sc->sc_tab.b_errcnt);
+		       bp->b_data, (long)bp->b_rawblkno, bp->b_bcount,
+		       sc->sc_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
@@ -975,7 +987,7 @@ sdintr(arg, stat)
 	int stat;
 {
 	struct sd_softc *sc = arg;
-	struct buf *bp = sc->sc_tab.b_actf;
+	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
 	int cond;
 	
 	if (bp == NULL) {
@@ -993,12 +1005,12 @@ sdintr(arg, stat)
 #endif
 		cond = sderror(sc, stat);
 		if (cond) {
-			if (cond < 0 && sc->sc_tab.b_errcnt++ < SDRETRY) {
+			if (cond < 0 && sc->sc_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
-					printf("%s: retry #%ld\n",
+					printf("%s: retry #%d\n",
 					    sc->sc_dev.dv_xname,
-					    sc->sc_tab.b_errcnt);
+					    sc->sc_errcnt);
 #endif
 				sdstart(sc);
 				return;
@@ -1008,6 +1020,9 @@ sdintr(arg, stat)
 		}
 	}
 	sdfinish(sc, bp);
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
+#endif
 }
 
 int

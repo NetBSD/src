@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/07/04 04:38:54 minoura Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2000/11/20 20:30:18 bouyer Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -10,8 +10,6 @@ TEXTSZ=		1024
 PROG=		${BOOT}
 BINDIR=		/usr/mdec
 BINMODE=	444
-SCRIPTSMODE=	555
-SCRIPTS=	newdisk.sh
 MKMAN=		no
 STRIPFLAG=
 
@@ -39,7 +37,7 @@ machine-links:
 	    ln -s ${KERN}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 CLEANFILES+=	machine ${MACHINE_ARCH}
 
-all: machine-links ${PROG}
+realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
 	${LD} ${LDFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
 #	${STRIP} ${BOOT}.x

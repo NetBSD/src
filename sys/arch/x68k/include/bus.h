@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1999/03/23 21:29:06 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.8.1 2000/11/20 20:30:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,8 +122,9 @@ void x68k_bus_space_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 		((*((t)->x68k_bus_space_unmap)) ((t),(h),(s)))
 #define bus_space_subregion(t,h,o,s,p) \
 		((*((t)->x68k_bus_space_subregion)) ((t),(h),(o),(s),(p)))
-#define BUS_SPACE_MAP_CACHEABLE	0x0001
-#define BUS_SPACE_MAP_LINEAR	0x0002
+#define BUS_SPACE_MAP_CACHEABLE		0x0001
+#define BUS_SPACE_MAP_LINEAR		0x0002
+#define BUS_SPACE_MAP_PREFETCHABLE	0x0004
 /*
  * For simpler hadware, many x68k devices are mapped with shifted address
  * i.e. only on even or odd addresses.
@@ -700,8 +701,8 @@ struct x68k_bus_dma {
 	int	(*x68k_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*x68k_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*x68k_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*x68k_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 /*
@@ -754,8 +755,8 @@ int	x68k_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	x68k_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	x68k_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	x68k_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	x68k_bus_dmamap_load_buffer __P((bus_dmamap_t, void *,
 	    bus_size_t buflen, struct proc *, int, paddr_t *, int *, int));

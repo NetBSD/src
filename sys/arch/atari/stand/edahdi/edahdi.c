@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.2 1999/06/01 14:27:39 leo Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.2.2.1 2000/11/20 20:05:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -109,7 +109,6 @@ void	disk_write __P((int, u_int, u_int, void  *));
 char   *get_id __P((void));
 void	get_termcap __P((void));
 int	lex __P((int *));
-void	outc __P((int));
 int	show_parts __P((ptable_t *, int));
 void	update_disk __P((ptable_t *, int, int));
 
@@ -170,7 +169,7 @@ edit_parts(fd, ptable)
 
 	for (;;) {
 		error = NULL;
-		tputs(Clr_screen, 1, outc);
+		tputs(Clr_screen, 1, putchar);
 		show_parts(ptable, scr_base);
 
 		printf("\n\n");
@@ -564,11 +563,4 @@ get_termcap()
 			strcpy(Clr_screen, buf);
 		}
 	}
-}
-
-void
-outc(c)
-int	c;
-{
-	(void)putchar(c);
 }

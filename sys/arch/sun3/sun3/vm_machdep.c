@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54.2.1 2000/11/20 20:28:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -53,9 +53,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -68,18 +65,34 @@
 extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
 
+/* XXX MAKE THIS LIKE OTHER M68K PORTS! */
+static void cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
+
 /*
- * Finish a fork operation, with process p2 nearly set up.  Copy and
- * update the kernel stack and pcb, making the child ready to run,  
- * and marking it so that it can return differently than the parent.
- * When scheduled, child p2 will start from proc_do_uret(). cpu_fork()
- * returns once for forking parent p1. 
+ * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_do_uret() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
 	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
@@ -143,7 +156,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	 * onto the stack of p2, very much like signal delivery.
 	 * When p2 runs, it will find itself in child_return().
 	 */
-	cpu_set_kpc(p2, child_return, p2);
+	cpu_set_kpc(p2, func, arg);
 }
 
 /*
@@ -167,7 +180,7 @@ cpu_fork(p1, p2, stack, stacksize)
  * were pushed here and return to where it would have returned
  * before we "pushed" this call.
  */
-void
+static void
 cpu_set_kpc(proc, func, arg)
 	struct proc *proc;
 	void (*func) __P((void *));
@@ -316,7 +329,7 @@ pagemove(from, to, len)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (len & CLOFSET)
+	if (len & PGOFSET)
 		panic("pagemove");
 #endif
 	while (len > 0) {
@@ -329,7 +342,7 @@ pagemove(from, to, len)
 #endif
 		/* pmap_remove does the necessary cache flush.*/
 		pmap_remove(kpmap, fva, fva + NBPG);
-		pmap_enter(kpmap, tva, pa, prot, 1, prot);
+		pmap_enter(kpmap, tva, pa, prot, prot|PMAP_WIRED);
 		fva += NBPG;
 		tva += NBPG;
 		len -= NBPG;
@@ -378,7 +391,7 @@ vmapbuf(bp, len)
 #endif
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		uva += NBPG;
 		kva += NBPG;
 		len -= NBPG;

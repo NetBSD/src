@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.13 1999/05/18 23:52:54 thorpej Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.13.2.1 2000/11/20 20:33:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -205,20 +205,20 @@ struct ln_softc {
 	char	sc_enaddr[6];
 };
 
-static	inline struct mbuf *ln_get __P((struct ln_softc *, caddr_t, int));
-void	ln_start __P((struct ifnet *));
-void	ln_watchdog __P((struct ifnet *));
-int	ln_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	ln_setladrf __P((struct ethercom *, u_int16_t *));
-static	void ln_intr __P((int));
-int	lnmatch __P((struct device *, struct cfdata *, void *));
-void	lnattach __P((struct device *, struct device *, void *));
-static	void ln_init __P((struct ln_softc *));
-static	inline int ln_put __P((struct ln_softc *, caddr_t, struct mbuf *));
-static	inline void ln_rint __P((struct ln_softc *));
-static	inline void ln_tint __P((struct ln_softc *));
-static	inline void ln_read __P((struct ln_softc *, caddr_t, int)); 
-void	ln_reset __P((struct ln_softc *));
+static	inline struct mbuf *ln_get(struct ln_softc *, caddr_t, int);
+void	ln_start(struct ifnet *);
+void	ln_watchdog(struct ifnet *);
+int	ln_ioctl(struct ifnet *, u_long, caddr_t);
+void	ln_setladrf(struct ethercom *, u_int16_t *);
+static	void ln_intr(int);
+int	lnmatch(struct device *, struct cfdata *, void *);
+void	lnattach(struct device *, struct device *, void *);
+static	void ln_init(struct ln_softc *);
+static	inline int ln_put(struct ln_softc *, caddr_t, struct mbuf *);
+static	inline void ln_rint(struct ln_softc *);
+static	inline void ln_tint(struct ln_softc *);
+static	inline void ln_read(struct ln_softc *, caddr_t, int); 
+void	ln_reset(struct ln_softc *);
 
 static	short *lance_csr; /* LANCE CSR virtual address */
 static	int *lance_addr; /* Ethernet address */
@@ -535,7 +535,6 @@ ln_read(sc, boff, len)
 	int len;
 {
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -552,29 +551,13 @@ ln_read(sc, boff, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.	And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_enaddr, 6)) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Pass the packet up. */

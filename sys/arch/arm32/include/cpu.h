@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 1999/08/10 21:08:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,6 +50,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
+#include "opt_lockdebug.h"
 #endif
 
 #ifndef _LOCORE
@@ -223,6 +224,21 @@
  * referenced in generic code
  */
 
+#ifndef _LOCORE
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+#define	curcpu()	(&cpu_info_store)
+#endif /* _KERNEL */
+#endif /* ! _LOCORE */
+
 #define cpu_wait(p)	/* nothing */
 #define	cpu_number()	0
 
@@ -238,7 +254,7 @@
 extern int current_intr_depth;
 
 /* stubs.c */
-void need_resched	__P((void));
+void need_resched	__P((struct cpu_info *));
 void need_proftick	__P((struct proc *p));
 
 /* locore.S */
@@ -267,11 +283,17 @@ void child_return	__P((void *));
  * CTL_MACHDEP definitions.
  */
 #define	CPU_DEBUG		1	/* int: misc kernel debug control */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
+#define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
+#define	CPU_CONSDEV		4	/* struct: dev_t of our console */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "debug", CTLTYPE_INT }, \
+	{ "booted_device", CTLTYPE_STRING }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
 }    
 
 #endif /* !_ARM32_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.5 1999/05/24 20:10:30 ragge Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.5.2.1 2000/11/20 20:33:12 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -38,8 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -57,13 +56,14 @@ vax_mem_bus_space_map(
 {
 	vaddr_t va;
 
+	size += (pa & VAX_PGOFSET);	/* have to include the byte offset */
 	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
 	*bshp = (bus_space_handle_t)(va + (pa & VAX_PGOFSET));
 
-	ioaccess(va, pa, size >> VAX_PGSHIFT);
+	ioaccess(va, pa, (size + VAX_NBPG - 1) >> VAX_PGSHIFT);
 
 	return 0;   
 } 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.33 1999/07/08 18:08:54 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.33.2.1 2000/11/20 20:12:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -72,8 +72,7 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 
-#include <vm/vm.h>
-#include <vm/pmap.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -126,6 +125,8 @@ ascmatch(parent, cf, aux)
 
 	if (oa->oa_addr != (-1))
 		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACTV)
+		return 0;
 	else if (current_mac_model->machineid == MACH_MACIIFX)
 		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
 	else
@@ -168,6 +169,7 @@ ascattach(parent, self, aux)
 	}
 	sc->sc_open = 0;
 	sc->sc_ringing = 0;
+	callout_init(&sc->sc_bell_ch);
 
 	for (i = 0; i < 256; i++) {	/* up part of wave, four voices? */
 		asc_wave_tab[i] = i / 4;
@@ -284,10 +286,10 @@ ascpoll(dev, events, p)
 	return (events & (POLLOUT | POLLWRNORM));
 }
 
-int
+paddr_t
 ascmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	int unit = ASCUNIT(dev);
@@ -296,7 +298,8 @@ ascmmap(dev, off, prot)
 
 	sc = asc_cd.cd_devs[unit];
 	if ((u_int)off < MAC68K_ASC_LEN) {
-		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle, &pa);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle.base,
+		    &pa);
 		return m68k_btop(pa + off);
 	}
 
@@ -347,9 +350,9 @@ asc_ring_bell(arg, freq, length, volume)
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80f, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x802, 2); /* sampled */
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 2); /* enable sampled */
+		sc->sc_ringing = 1;
+		callout_reset(&sc->sc_bell_ch, length, asc_stop_bell, sc);
 	}
-	sc->sc_ringing++;
-	timeout(asc_stop_bell, sc, length);
 
 	return (0);
 }

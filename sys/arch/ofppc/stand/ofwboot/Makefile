@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1999/10/12 19:40:27 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2000/11/20 20:18:43 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
+SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c vers.c
 .PATH:		${S}/arch/ofppc/ofppc
 SRCS+=		ofwmagic.S
 .PATH:		${S}/arch/powerpc/powerpc
@@ -19,7 +19,7 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c vers.o
+CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. -I${.OBJDIR}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -31,12 +31,8 @@ CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-
-CLEANFILES+= ${.OBJDIR}/machine  ${.OBJDIR}/powerpc
-
-${.OBJDIR}/machine::
-	-rm -f $@
-	ln -s $S/arch/ofppc/include $@
+.NOPATH: machine powerpc
+CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -54,10 +50,12 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
+	
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.29 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: FALCON,v 1.29.2.1 2000/11/20 20:05:24 bouyer Exp $
 #
 # ATARI-FALCON
 #
@@ -68,7 +68,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:
@@ -88,7 +87,7 @@ pseudo-device	mouse		1	# mouse
 pseudo-device	view		2	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pty		16	# Pseudo-tty support
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk
@@ -99,8 +98,13 @@ pseudo-device	md		2	# Boot memory disk
 fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
-grfcc1	at grfbus0		# second graphics driver
-ite*	at grfcc1		# second tty
+grfbus0	at mainbus0		# bitmapped display's
+grfcc0	at grfbus0		# graphics driver
+ite0	at grfcc0		# console
+grfcc1	at grfbus0		# 2nd graphics driver
+ite1	at grfcc1		# 2nd tty
+grfcc2	at grfbus0		# 3rd graphics driver
+ite2	at grfcc2		# 3rd tty
 nvr0	at mainbus0		# nvram driver
 lp0	at mainbus0		# centronics printer
 wdc0	at mainbus0		# IDE-bus

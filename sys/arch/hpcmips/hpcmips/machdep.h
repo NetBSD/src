@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.1.1.2.1 2000/11/20 20:46:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,6 +30,5 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* the following is used externally (sysctl_hw) */
-extern char machine[];
-extern char cpu_model[];
+/* others.. */
+extern char cpu_name[];

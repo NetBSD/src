@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.15 1999/02/20 00:12:02 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.15.8.1 2000/11/20 20:15:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -45,6 +45,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 
 #include <mvme68k/dev/dmavar.h>
@@ -56,6 +58,12 @@
 
 void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
 int     wdsc_pcc_match  __P((struct device *, struct cfdata *, void *));
+
+struct cfattach wdsc_pcc_ca = {
+	sizeof(struct sbic_softc), wdsc_pcc_match, wdsc_pcc_attach
+};
+
+extern struct cfdriver wdsc_cd;
 
 void    wdsc_enintr     __P((struct sbic_softc *));
 int     wdsc_dmago      __P((struct sbic_softc *, char *, int, int));
@@ -70,12 +78,6 @@ struct scsipi_device wdsc_scsidev = {
     NULL,       /* have no async handler */
     NULL,       /* Use default done routine */
 };
-
-struct cfattach wdsc_pcc_ca = {
-	sizeof(struct sbic_softc), wdsc_pcc_match, wdsc_pcc_attach
-};
-
-extern struct cfdriver wdsc_cd;
 
 
 /*
@@ -104,15 +106,19 @@ wdsc_pcc_attach(pdp, dp, auxp)
     struct device *pdp, *dp;
     void *auxp;
 {
-    struct sbic_softc   *sc = (struct sbic_softc *)dp;
-    struct pcc_attach_args *pa = auxp;
-    static int          attached = 0;
-    int tmp;
+    struct sbic_softc *sc;
+    struct pcc_attach_args *pa;
+    bus_space_handle_t bush;
 
-    if ( attached )
-        panic("wdsc: Driver already attached!");
+    sc = (struct sbic_softc *)dp;
+    pa = auxp;
 
-    attached = 1;
+    bus_space_map(pa->pa_bust, pa->pa_offset, 0x20, 0, &bush);
+
+    /*
+     * XXXSCW: We *need* an MI, bus_spaced WD33C93 driver...
+     */
+    sc->sc_sbicp = (sbic_regmap_p) bush;
 
     sc->sc_enintr  = wdsc_enintr;
     sc->sc_dmago   = wdsc_dmago;
@@ -136,9 +142,6 @@ wdsc_pcc_attach(pdp, dp, auxp)
     printf(": WD33C93 SCSI, target %d\n",
 		sc->sc_link.scsipi_scsi.adapter_target);
 
-    sc->sc_cregs = (volatile void *)sys_pcc;
-    sc->sc_sbicp = (sbic_regmap_p) PCC_VADDR(pa->pa_offset);
-
     /*
      * Eveything is a valid dma address.
      */
@@ -160,24 +163,16 @@ wdsc_pcc_attach(pdp, dp, auxp)
      */
     sc->sc_ipl = pa->pa_ipl & PCC_IMASK;
 
-    sys_pcc->scsi_int = sc->sc_ipl | PCC_ICLEAR;
-    sys_pcc->dma_int  = sc->sc_ipl | PCC_ICLEAR;
-    sys_pcc->dma_csr  = 0;
+    pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL, PCC_ICLEAR);
+    pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL, PCC_ICLEAR);
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
 
-    pccintr_establish(PCCV_SCSID, wdsc_dmaintr,  sc->sc_ipl, sc);
-    pccintr_establish(PCCV_SCSIP, wdsc_scsiintr, sc->sc_ipl, sc);
+    pccintr_establish(PCCV_DMA, wdsc_dmaintr,  sc->sc_ipl, sc);
+    pccintr_establish(PCCV_SCSI, wdsc_scsiintr, sc->sc_ipl, sc);
+    pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
+        sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
-    sys_pcc->scsi_int = sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
-
-    /*
-     * Attach all scsi units on us, watching for boot device
-     * (see dk_establish).
-     */
-    tmp = bootpart;
-    if (PCC_PADDR(pa->pa_offset) != bootaddr) 
-	bootpart = -1;		/* invalid flag to dk_establish */
     (void)config_found(dp, &sc->sc_link, scsiprint);
-    bootpart = tmp;		/* restore old value */
 }
 
 /*
@@ -187,11 +182,10 @@ void
 wdsc_enintr(dev)
     struct sbic_softc *dev;
 {
-    volatile struct pcc *pc = dev->sc_cregs;
-
     dev->sc_flags |= SBICF_INTR;
 
-    pc->dma_int = dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
+    pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL,
+        dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 }
 
 /*
@@ -203,8 +197,6 @@ wdsc_dmago(dev, addr, count, flags)
     char *addr;
     int count, flags;
 {
-    volatile struct pcc *pc = dev->sc_cregs;
-
     /*
      * Set up the command word based on flags
      */
@@ -221,11 +213,14 @@ wdsc_dmago(dev, addr, count, flags)
      * Note, it's probably not necessary to do this here, since dmanext
      * is called just prior to the actual transfer.
      */
-    pc->dma_csr   = 0;
-    pc->dma_int   = dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
-    pc->dma_daddr = (unsigned long)dev->sc_cur->dc_addr;
-    pc->dma_bcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
-    pc->dma_csr   = dev->sc_dmacmd;
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
+    pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL,
+        dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
+    pcc_reg_write32(sys_pcc, PCCREG_DMA_DATA_ADDR,
+	(u_int32_t) dev->sc_cur->dc_addr);
+    pcc_reg_write32(sys_pcc, PCCREG_DMA_BYTE_COUNT,
+	(u_int32_t) dev->sc_tcnt | (1 << 24));
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, dev->sc_dmacmd);
 
     return(dev->sc_tcnt);
 }
@@ -237,8 +232,6 @@ int
 wdsc_dmanext(dev)
     struct sbic_softc *dev;
 {
-    volatile struct pcc *pc = dev->sc_cregs;
-
     if ( dev->sc_cur > dev->sc_last ) {
         /*
          * Shouldn't happen !!
@@ -253,11 +246,14 @@ wdsc_dmanext(dev)
     /* 
      * Load the next DMA address
      */
-    pc->dma_csr   = 0;
-    pc->dma_int   = dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
-    pc->dma_daddr = (unsigned long)dev->sc_cur->dc_addr;
-    pc->dma_bcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
-    pc->dma_csr   = dev->sc_dmacmd;
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
+    pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL,
+        dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
+    pcc_reg_write32(sys_pcc, PCCREG_DMA_DATA_ADDR,
+	(u_int32_t) dev->sc_cur->dc_addr);
+    pcc_reg_write32(sys_pcc, PCCREG_DMA_BYTE_COUNT,
+	(u_int32_t) dev->sc_tcnt | (1 << 24));
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, dev->sc_dmacmd);
 
     return(dev->sc_tcnt);
 }
@@ -269,13 +265,12 @@ void
 wdsc_dmastop(dev)
     struct sbic_softc *dev;
 {
-    volatile struct pcc *pc = dev->sc_cregs;
-    int                 s;
+    int s;
 
     s = splbio();
 
-    pc->dma_csr    = 0;
-    pc->dma_int    = dev->sc_ipl | PCC_ICLEAR;
+    pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
+    pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL, dev->sc_ipl | PCC_ICLEAR);
 
     splx(s);
 }
@@ -288,23 +283,23 @@ wdsc_dmaintr(arg)
     void *arg;
 {
     struct sbic_softc *dev = arg;
-    volatile struct pcc *pc = dev->sc_cregs;
-    int                 found = 0;
+    int found = 0;
 
     /*
      * Really a DMA interrupt?
      */
-    if ( (pc->dma_int & 0x80) == 0 )
+    if ( (pcc_reg_read(sys_pcc, PCCREG_DMA_INTR_CTRL) & 0x80) == 0 )
         return(0);
 
     /*
      * Was it a completion interrupt?
      * XXXSCW Note: Support for other DMA interrupts is required, eg. buserr
      */
-    if ( pc->dma_csr & DMAC_CSR_DONE ) {
+    if ( pcc_reg_read(sys_pcc, PCCREG_DMA_CONTROL) & DMAC_CSR_DONE ) {
         ++found;
 
-        pc->dma_int = dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
+	pcc_reg_write(sys_pcc, PCCREG_DMA_INTR_CTRL,
+	    dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
     }
 
     return(found);
@@ -318,13 +313,12 @@ wdsc_scsiintr(arg)
     void *arg;
 {
     struct sbic_softc *dev = arg;
-    volatile struct pcc *pc = dev->sc_cregs;
-    int                 found;
+    int found;
 
     /*
      * Really a SCSI interrupt?
      */
-    if ( (pc->scsi_int & 0x80) == 0 )
+    if ( (pcc_reg_read(sys_pcc, PCCREG_SCSI_INTR_CTRL) & 0x80) == 0 )
         return(0);
 
     /*
@@ -335,7 +329,8 @@ wdsc_scsiintr(arg)
     /*
      * Acknowledge and clear the interrupt
      */
-    pc->scsi_int = dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR;
+    pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
+	    dev->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
     return(found);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.4 1999/09/25 19:27:35 is Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.4.2.1 2000/11/20 20:11:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <machine/cpu.h>
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
-#include <machine/cpu.h>
 
 #if defined(_MULTI_CPU)
 
@@ -287,20 +287,10 @@ void _PCIA()
 	}
 }
 
+#if defined(M68040) || defined(M68060)
 void _DCFA()
 {
 	switch (cputype) {
-	default:
-#ifdef M68020
-	case CPU_68020:
-		DCFA_20();
-		break;
-#endif
-#ifdef M68030
-	case CPU_68030:
-		DCFA_30();
-		break;
-#endif
 #ifdef M68040
 	case CPU_68040:
 		DCFA_40();
@@ -313,6 +303,7 @@ void _DCFA()
 #endif
 	}
 }
+#endif /* M68040 || M68060 */
 
 void _TBIS(va)
 	vaddr_t	va;
@@ -370,18 +361,19 @@ void _DCIAS(pa)
 	}
 }
 
+#if defined(M68040) || defined(M68060)
 void _DCPA()
 {
 	switch (cputype) {
 	default:
-#ifdef M68020
-	case CPU_68020:
-		DCPA_20();
+#ifdef M68040
+	case CPU_68040:
+		DCPA_40();
 		break;
 #endif
-#ifdef M68030
-	case CPU_68030:
-		DCPA_30();
+#ifdef M68060
+	case CPU_68060:
+		DCPA_60();
 		break;
 #endif
 	}
@@ -494,5 +486,6 @@ void _DCFP(pa)
 #endif
 	}
 }
+#endif /* M68040 || M68060 */
 
-#endif /* defined(_TBIA) */
+#endif /* defined(_MULTI_CPU) */

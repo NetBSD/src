@@ -1,10 +1,12 @@
-#	$NetBSD: TOKOCHAN,v 1.9 1999/08/05 15:05:56 minoura Exp $
+#	$NetBSD: TOKOCHAN,v 1.9.2.1 2000/11/20 20:29:55 bouyer Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
 #
 
 include "arch/x68k/conf/std.x68k"
+
+#ident 		"TOKOCHAN-$Revision: 1.9.2.1 $"
 
 maxusers	10
 
@@ -85,7 +87,7 @@ options 	PANICBUTTON		# interrupt switch invokes DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+makeoptions 	DEBUG="-g"
 makeoptions 	COPTS="-O2 -pipe"	# pass -pipe option to CC
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -138,6 +140,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
@@ -153,9 +156,14 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -174,11 +182,9 @@ options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
-options 	BUFCACHE=20	# 20% of real memory as buffer cache
 options 	NVNODE=1024	# 'make build' required huge vnode table
 options 	MSGBUFSIZE=32768 # increase msgbuf to preserve debug messages
-#options 	NKMEMCLUSTERS=2048 # 8MB kernel vm
-#options 	EXPORTMFS	# NFS export /tmp
+options 	EXPORTMFS	# NFS export /tmp
 
 
 #### Device configurations
@@ -218,7 +224,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 #ch*	at scsibus? target ? lun ?	# SCSI changer devices
 #uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
-## Serial ports
+## Ports
 zsc0	at intio0 addr 0xe98000 intr 112
 zstty0	at zsc0 channel 0		# built-in RS-232C
 ms0	at zsc0 channel 1		# standard mouse
@@ -228,14 +234,13 @@ ms0	at zsc0 channel 1		# standard mouse
 #zsc2	at intio0 addr 0xeafc10 intr 114
 #zstty4	at zsc2 channel 0
 #zstty5	at zsc2 channel 1
+par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
 pseudo-device	sram			# battery-backuped static RAM
 pseudo-device	bell			# OPM bell
 
 #xcom0	at mainbus0			# NS16550 fast serial
 #xcom1	at mainbus0
-
-#par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
@@ -263,6 +268,7 @@ pseudo-device	vnd	4
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
 #pseudo-device	raid	4
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
@@ -293,42 +299,17 @@ pseudo-device	bpfilter	4
 ## one example of the use of the IP Filter.
 pseudo-device	ipfilter
 
+## for IPv6
+#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
-pseudo-device	pty		16	# pseudo-ttys (for network, etc.)
+pseudo-device	pty			# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
-
-
-## IPv6 options from GENERIC.v6
-
-# Pull in config fragments for kernel crypto.  Use only one of these,
-# and adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
-# IPv6 options
-options 	INET6		# IPV6
-options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
-
-# for IPv6
-pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

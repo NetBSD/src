@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25 1999/09/13 06:17:27 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.25.2.1 2000/11/20 20:03:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,7 @@
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_pmap_debug.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -53,9 +54,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -242,7 +240,7 @@ syscall(frame, code)
 #endif	/* DDB && PORTMASTER */
 
 	case SYS_syscall:
-		/* Don't have to look in user space, we have it in the the trapframe */
+		/* Don't have to look in user space, we have it in the trapframe */
 /*		code = fuword(params);*/
 		code = ReadWord(params);
 		params += sizeof(int);
@@ -300,7 +298,7 @@ syscall(frame, code)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	rval[0] = 0;
 	rval[1] = frame->tf_r1;
@@ -349,7 +347,7 @@ bad:
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -369,7 +367,7 @@ child_return(arg)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

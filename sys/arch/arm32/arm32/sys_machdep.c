@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1998/07/07 17:51:55 mark Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.14.1 2000/11/20 20:03:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1999/09/21 13:16:16 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.1 2000/11/20 20:14:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_memsize.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,10 +97,6 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -119,6 +116,11 @@
 #if 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#endif
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -142,6 +144,8 @@ struct user *proc0paddr;
 
 extern int boothowto;
 extern paddr_t avail_start, avail_end;
+
+#define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -407,7 +411,7 @@ dumpsys()
 
 #if 0	/* XXX this doesn't work.  grr. */
         /* toss any characters present prior to dump */
-	while (sget() != NULL); /*syscons and pccons differ */
+	while (sget() != NULL); /* syscons and pccons differ */
 #endif
 
 	bytes = ctob(dumpmem_high) + IOM_END;
@@ -490,7 +494,7 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)0x8c000000)
+#define VBRINIT		((char *)IOM_RAM_BEGIN)
 #define Trap100Vec	(VBRINIT + 0x100)
 #define Trap600Vec	(VBRINIT + 0x600)
 #define TLBVECTOR	(VBRINIT + 0x400)
@@ -513,7 +517,14 @@ initSH3(pc)
 	int x;
 	char *p;
 
+	/* clear BSS */
+	bzero(edata, end - edata);
+
 	avail = sh3_round_page(end);
+#ifdef DDB
+	/* XXX Currently symbol table size is not passed to the kernel. */
+	avail += 0x40000;					/* XXX */
+#endif
 
 	/*
 	 * clear .bss, .common area, page dir area,
@@ -521,7 +532,7 @@ initSH3(pc)
 	 */
 
 	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * 9;
-	bzero(edata, p - edata);
+	bzero((char *)avail, p - (char *)avail);
 
 	/*
 	 * install trap handler
@@ -544,9 +555,9 @@ initSH3(pc)
 	nkpde = 8;	/* XXX nkpde = kernel page dir area (32 Mbyte) */
 
 	/*
-	 *	Construct a page table directory
-	 *	In SH3 H/W does not support PTD,
-	 *	these structures are used by S/W.
+	 * Construct a page table directory
+	 * In SH3 H/W does not support PTD,
+	 * these structures are used by S/W.
 	 */
 	pte = (pt_entry_t)pagetab;
 	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
@@ -579,11 +590,6 @@ initSH3(pc)
 #ifndef ROMIMAGE
 	MMEYE_LED = 1;
 #endif
-
-#define MMUCR_AT	0x0001	/* address traslation enable */
-#define MMUCR_IX	0x0002	/* index mode */
-#define MMUCR_TF	0x0004	/* TLB flush */
-#define MMUCR_SV	0x0100	/* single virtual space mode */
 
 	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
 
@@ -631,6 +637,10 @@ initSH3(pc)
 	/* MMEYE_LED = 0x04; */
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+
+#ifdef DDB
+	ddb_init(1, end, end + 0x40000);			/* XXX */
+#endif
 
 	/* MMEYE_LED = 0x00; */
 
@@ -759,10 +769,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-
-#ifdef DDB
-	ddb_init();
-#endif
 }
 
 void
@@ -775,7 +781,7 @@ cpu_reset()
 }
 
 int
-bus_space_map (t, addr, size, flags, bshp)
+bus_space_map(t, addr, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -968,7 +974,7 @@ InitializeBsc()
 
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
+	SHREG_CCR = CCR_CE;
 #endif
 
 	/* MMEYE_LED = 0x04; */
@@ -979,11 +985,14 @@ sh3_cache_on(void)
 {
 #ifndef MMEYE_NO_CACHE
 	/* Cache ON */
-	SHREG_CCR = 0x0001;
-	SHREG_CCR = 0x0009; /* cache clear */
-	SHREG_CCR = 0x0001; /* cache on */
+	SHREG_CCR = CCR_CE;
+	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
+	SHREG_CCR = CCR_CE;		/* cache on */
 #endif
 }
+
+ /* XXX This value depends on physical available memory */
+#define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
 
 void
 LoadAndReset(osimage)
@@ -996,8 +1005,6 @@ LoadAndReset(osimage)
 	u_long csum = 0;
 	u_long csum2 = 0;
 	u_long size2;
-#define OSIMAGE_BUF_ADDR 0x8c400000 /* !!!!!! This value depends on physical
-				       available memory */
 
 	MMTA_IMASK = 0; /* mask all externel interrupt */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 1999/10/04 19:11:43 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.34.2.1 2000/11/20 20:25:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,17 +63,31 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+#if !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 #include <machine/psl.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	curcpu()		(cpuinfo.ci_self)
+#define	curproc			(curcpu()->ci_curproc)
+#define	CPU_IS_PRIMARY(ci)	((ci)->master)
+
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	0		/* XXX */
+#define	cpu_number()	(cpuinfo.cpu_no)
+
+#if defined(MULTIPROCESSOR)
+void	cpu_boot_secondary_processors __P((void));
+#endif
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -137,7 +151,7 @@ extern int	want_ast;
  * or after the current trap/syscall if in system mode.
  */
 extern int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci)		(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -205,6 +219,7 @@ int	probeget __P((caddr_t, int));
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));
 void 	proc_trampoline __P((void));
+void	switchexit __P((struct proc *));
 struct pcb;
 void	snapshot __P((struct pcb *));
 struct frame *getfp __P((void));

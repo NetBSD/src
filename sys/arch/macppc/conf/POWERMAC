@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.19 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: POWERMAC,v 1.19.2.1 2000/11/20 20:12:55 bouyer Exp $
 #
 # POWERMAC config file
 #
@@ -44,9 +44,11 @@ options 	NMBCLUSTERS=1024
 # These options enable verbose messages for several subsystems.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 #options 	ZS_TXDMA	# Use dma on zs output
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
@@ -58,7 +60,9 @@ config	netbsd	root on ? type ?
 mainbus* at root
 
 cpu*	at mainbus?
-pci*	at mainbus? bus ?
+bandit*	at mainbus?
+
+pci*	at bandit? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -91,6 +95,6 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices

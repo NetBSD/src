@@ -8,7 +8,6 @@
  *
  *	loadbsd options:
  *		-h	help
- *		-v	verbose
  *		-V	print version and exit
  *
  *	kernel options:
@@ -16,16 +15,17 @@
  *		-s	single user boot (default)
  *		-D	enter kernel debugger
  *		-b	ask root device
- *		-d	use compiled-in rootdev
  *		-r	specify root device
+ *		-q	quiet boot
+ *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $
+ *	$NetBSD: loadbsd.c,v 1.4.2.1 2000/11/20 20:30:17 bouyer Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $");
-#define VERSION	"$Revision: 1.4 $ $Date: 1999/09/23 15:14:59 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.4.2.1 2000/11/20 20:30:17 bouyer Exp $");
+#define VERSION	"$Revision: 1.4.2.1 $ $Date: 2000/11/20 20:30:17 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -451,7 +451,6 @@ kernel options:\n\
 \t-s	single user boot (default)\n\
 \t-D	enter kernel debugger\n\
 \t-b	ask root device\n\
-\t-d	use compiled-in rootdev\n\
 \t-r	specify root device (default %s)\n\
 \t	format:  [/interface/]device@unit[,lun][:partition]\n\
 \t	    interface: one of  spc@0, spc@1, mha@0\n\
@@ -494,6 +493,7 @@ main(argc, argv)
 				break;
 			case 'v':
 				opt_v = 1;
+				boothowto |= AB_VERBOSE; /* XXX */
 				break;
 			case 'V':
 				xprintf("loadbsd %s\n", VERSION);
@@ -510,9 +510,6 @@ main(argc, argv)
 				else
 					rootdevname = *arg;
 				break;
-			case 'd':
-				boothowto |= RB_DFLTROOT;
-				break;
 			case 'b':
 				boothowto |= RB_ASKNAME;
 				break;
@@ -524,6 +521,9 @@ main(argc, argv)
 				break;
 			case 'D':
 				boothowto |= RB_KDB;
+				break;
+			case 'q':
+				boothowto |= AB_QUIET;
 				break;
 
 			default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.6.2.1 2000/11/20 20:12:57 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -69,10 +68,11 @@ obio_match(parent, cf, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 
-		case 0x02:	/* gc */
-		case 0x07:	/* ohare */
-		case 0x10:	/* mac-io "Heathrow" */
-		case 0x17:	/* mac-io "Paddington" */
+		case PCI_PRODUCT_APPLE_GC:
+		case PCI_PRODUCT_APPLE_OHARE:
+		case PCI_PRODUCT_APPLE_HEATHROW:
+		case PCI_PRODUCT_APPLE_PADDINGTON:
+		case PCI_PRODUCT_APPLE_KEYLARGO:
 			return 1;
 		}
 
@@ -98,16 +98,17 @@ obio_attach(parent, self, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	/* XXX should not use name */
-	case 0x02:
+	case PCI_PRODUCT_APPLE_GC:
 		node = OF_finddevice("/bandit/gc");
 		break;
 
-	case 0x07:
+	case PCI_PRODUCT_APPLE_OHARE:
 		node = OF_finddevice("/bandit/ohare");
 		break;
 
-	case 0x10:
-	case 0x17:
+	case PCI_PRODUCT_APPLE_HEATHROW:
+	case PCI_PRODUCT_APPLE_PADDINGTON:
+	case PCI_PRODUCT_APPLE_KEYLARGO:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
@@ -151,12 +152,28 @@ obio_attach(parent, self, aux)
 	}
 }
 
+static char *skiplist[] = {
+	"interrupt-controller",
+	"gpio",
+	"escc-legacy",
+	"timer",
+	"i2c",
+	"power-mgt"
+};
+
+#define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))
+
 int
 obio_print(aux, obio)
 	void *aux;
 	const char *obio;
 {
 	struct confargs *ca = aux;
+	int i;
+
+	for (i = 0; i < N_LIST; i++)
+		if (strcmp(ca->ca_name, skiplist[i]) == 0)
+			return QUIET;
 
 	if (obio)
 		printf("%s at %s", ca->ca_name, obio);

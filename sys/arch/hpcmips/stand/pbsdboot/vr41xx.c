@@ -1,4 +1,4 @@
-/* $NetBSD: */
+/* $NetBSD: vr41xx.c,v 1.1.2.1 2000/11/20 20:39:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -54,6 +54,7 @@ vr41xx_init(SYSTEM_INFO *info)
 	system_info.si_asmcodelen = (unsigned char*)vr41xx_asm_code_end
 		- system_info.si_asmcode;
 	system_info.si_boot = mips_boot;
+	system_info.si_intrvec = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25 1999/08/28 09:19:04 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.25.2.1 2000/11/20 20:18:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -145,13 +145,6 @@ int esp_dma_nest = 0;
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_intio, espattach_intio
-};
-
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -397,17 +390,15 @@ espattach_intio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), 0);
+	isrlink_autovec(ncr53c9x_intr, sc, NEXT_I_IPL(NEXT_I_SCSI), 0);
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*
@@ -454,10 +445,15 @@ esp_dma_isintr(sc)
 
 #ifdef ESP_DEBUG
 			esp_dma_nest++;
-#endif
 
-			DPRINTF(("esp_dma_isintr = 0x%b\n",
-					(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
+			if (esp_debug) {
+				char sbuf[256];
+
+				bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+						 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+				printf("esp_dma_isintr = 0x%s\n", sbuf);
+			}
+#endif
 
 			while (esp_dma_isactive(sc)) {
 				flushcount++;
@@ -577,10 +573,15 @@ esp_dma_reset(sc)
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
-		printf("  *intrstat = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-		printf("  *intrmask = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+		char sbuf[256];
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrstat = 0x%s\n", sbuf);
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif
 
@@ -1208,10 +1209,15 @@ esp_dmacb_shutdown(arg)
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
-		printf("  *intrstat = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-		printf("  *intrmask = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+		char sbuf[256];
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrstat = 0x%s\n", sbuf);
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif
 }

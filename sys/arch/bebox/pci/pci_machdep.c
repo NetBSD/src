@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 1998/08/15 03:02:37 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.12.1 2000/11/20 20:06:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,8 +49,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/pio.h>
@@ -211,6 +210,16 @@ pci_intr_string(pc, ih)
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/09/04 22:25:51 jtk Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2000/11/20 20:09:14 bouyer Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -9,7 +9,7 @@ CFLAGS+= -I${ARCHSRC} -I${KSRC} -D_LKM
 SRCS=	biostramp.S
 OBJS=	biostramp.o
 DEPS=	${APMDEPS}
-STRIP?= strip
+STRIP?=	strip
 
 all: biostramp.inc
 

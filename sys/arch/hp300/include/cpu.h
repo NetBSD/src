@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 1999/08/10 21:08:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33.2.1 2000/11/20 20:08:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,10 @@
 #ifndef _HP300_CPU_H_
 #define	_HP300_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Exported definitions unique to hp300/68k cpu support.
  */
@@ -58,6 +62,20 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -96,7 +114,7 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched()	{ want_resched++; aston(); }
+#define	need_resched(ci)	{ want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -113,6 +131,8 @@ extern int want_resched;	/* resched() was called */
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
+
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.

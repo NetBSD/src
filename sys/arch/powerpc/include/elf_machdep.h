@@ -1,13 +1,15 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 1998/11/24 11:17:17 tsubai Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.2.10.1 2000/11/20 20:31:08 bouyer Exp $	*/
 
-#define	ELF32_MACHDEP_ENDIANNESS	Elf_ed_2msb
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
-		case Elf_em_ppc:					\
+		case EM_PPC:						\
 			break;
 
 #define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF64_MACHDEP_ID_CASES						\
 		/* no 64-bit ELF machine types supported */
+
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #include <machine/reloc.h>		/* XXX */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 1999/09/17 20:04:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106.2.1 2000/11/20 20:19:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -43,12 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -63,7 +57,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -75,10 +68,6 @@
 #include <sys/kcore.h>
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -93,44 +82,6 @@
 #include <machine/kcore.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet6/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#include "arp.h"
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -155,6 +106,9 @@ int _mapped = 0;
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[] = "ns32532";
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 struct user *proc0paddr;
 
@@ -234,7 +188,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
@@ -257,7 +211,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -299,16 +253,9 @@ cpu_startup()
 			   UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -663,7 +610,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -730,7 +677,6 @@ dumpsys()
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
@@ -901,9 +847,9 @@ map(pd, virtual, physical, protection, size)
  *
  * Level one and level two page tables are initialized to create
  * the following mapping:
- *	0xf7c00000-0xf7ffefff:	Kernel level two page tables
- *	0xf7fff000-0xf7ffffff:	Kernel level one page table
- *	0xf8000000-0xff7fffff:	Kernel code and data
+ *	0xdfc00000-0xdfffefff:	Kernel level two page tables
+ *	0xdffff000-0xf7ffffff:	Kernel level one page table
+ *	0xe0000000-0xff7fffff:	Kernel code and data
  *	0xffc00000-0xffc00fff:	Kernel temporary stack
  *	0xffc80000-0xffc80fff:	Duarts and Parity control
  *	0xffd00000-0xffdfffff:	SCSI polled
@@ -1207,31 +1153,13 @@ softnet(arg)
 	di(); isr = netisr; netisr = 0; ei();
 	if (isr == 0) return;
 
-#ifdef INET
-#if NARP > 0
-	if (isr & (1 << NETISR_ARP)) arpintr();
-#endif
-	if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef INET6
-	if (isr & (1 << NETISR_IPV6)) ip6intr();
-#endif
-#ifdef NETATALK
-	if (isr & (1 << NETISR_ATALK)) atintr();
-#endif
-#ifdef NS
-	if (isr & (1 << NETISR_NS)) nsintr();
-#endif
-#ifdef ISO
-	if (isr & (1 << NETISR_ISO)) clnlintr();
-#endif
-#ifdef CCITT
-	if (isr & (1 << NETISR_CCITT)) ccittintr();
-#endif
-#ifdef NATM
-	if (isr & (1 << NETISR_NATM)) natmintr();
-#endif
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP)) pppintr();
-#endif
+#define DONETISR(bit, fn)		\
+    do {				\
+	if (isr & (1 << bit))		\
+		fn();			\
+    } while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }

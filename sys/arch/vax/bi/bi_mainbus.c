@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.1 1999/08/07 10:36:43 ragge Exp $	   */
+/*	$NetBSD: bi_mainbus.c,v 1.1.2.1 2000/11/20 20:32:33 bouyer Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,8 +37,11 @@
 #include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
+#include <machine/scb.h>
+#include <machine/cpu.h>
 
 #include <dev/bi/bivar.h>
+#include <dev/bi/bireg.h>
 
 static	int bi_mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void bi_mainbus_attach __P((struct device *, struct device *, void *));
@@ -50,29 +53,27 @@ struct	cfattach bi_mainbus_ca = {
 extern	struct vax_bus_space vax_mem_bus_space;
 extern	struct vax_bus_dma_tag vax_bus_dma_tag;
 
-int
-bi_mainbus_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+static int
+bi_mainbus_match(struct device *parent, struct cfdata *vcf, void *aux)
 {
 	if (vax_bustype == VAX_BIBUS)
 		return 1;
 	return 0;
 }
 
-void
-bi_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bi_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bi_softc *sc = (void *)self;
 
 	/*
 	 * Fill in bus specific data.
 	 */
+	sc->sc_addr = (bus_addr_t)BI_BASE(0, 0);
 	sc->sc_iot = &vax_mem_bus_space; /* No special I/O handling */
 	sc->sc_dmat = &vax_bus_dma_tag;	/* No special DMA handling either */
+	sc->sc_intcpu = 1 << mfpr(PR_BINID);
+	sc->sc_lastiv = 256; /* Lowest available vector address */
 
 	bi_attach(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 1999/05/06 13:54:06 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.12.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,15 +52,25 @@
 # define _END_ENTRY	_END_ENTRY_NP
 #endif
 
+#ifdef __ELF__
+#  define _C_FUNC(x)	x
+#  define _C_LABEL(x)	x
+#else
+# ifdef __STDC__
+#  define _C_FUNC(x)	_ ## x
+#  define _C_LABEL(x)	_ ## x
+# else
+#  define _C_FUNC(x)	_/**/x
+#  define _C_LABEL(x)	_/**/x
+# endif
+#endif
+
 #ifdef __STDC__
-# define _C_FUNC(x)	_ ## x
-# define _C_LABEL(x)	_ ## x
 # define __CONCAT(x,y)	x ## y
 # define __STRING(x)	#x
 #else
-# define _C_FUNC(x)	_/**/x
-# define _C_LABEL(x)	_/**/x
 # define __CONCAT(x,y)	x/**/y
+# define __STRING(x)	"x"
 #endif
 #define	_ASM_FUNC(x)	x
 
@@ -86,13 +96,21 @@
 
 #define RCSID(x)	.text; .asciz x
 
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
+
 #ifdef __STDC__
-#define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_ ## sym) ## ,1,0,0,0
+	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
+#elif defined(__ELF__)
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs __STRING(sym),1,0,0,0
 #else
-#define	__STRING(x)			"x"
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.20 1999/07/25 18:05:31 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.20.2.1 2000/11/20 20:09:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,9 +41,6 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -107,15 +104,13 @@ void
 gdt_compact()
 {
 	struct proc *p;
-	struct pcb *pcb;
 	pmap_t pmap;
 	int slot = NGDT, oslot;
 
 	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		pcb = &p->p_addr->u_pcb;
 		pmap = p->p_vmspace->vm_map.pmap;
-		oslot = IDXSEL(pcb->pcb_tss_sel);
+		oslot = IDXSEL(p->p_md.md_tss_sel);
 		if (oslot >= gdt_count) {
 			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
 				if (++slot >= gdt_count)
@@ -123,7 +118,7 @@ gdt_compact()
 			}
 			gdt[slot] = gdt[oslot];
 			gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
+			p->p_md.md_tss_sel = GSEL(slot, SEL_KPL);
 		}
 		simple_lock(&pmap->pm_lock);
 		oslot = IDXSEL(pmap->pm_ldt_sel);
@@ -135,16 +130,10 @@ gdt_compact()
 			gdt[slot] = gdt[oslot];
 			gdt[oslot].gd.gd_type = SDT_SYSNULL;
 			pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
-
-			/* Refresh the PCB. */
-			pcb->pcb_pmap = pmap;
-			pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-
 			/*
-			 * XXX We don't need to re-load the LDT on this
-			 * XXX processor, but if this pmap/pcb is in use
-			 * XXX on _another_ processor, we need to notify
-			 * XXX it!
+			 * XXXSMP: if the pmap is in use on other
+			 * processors, they need to reload thier
+			 * LDT!
 			 */
 		}
 		simple_unlock(&pmap->pm_lock);
@@ -283,23 +272,24 @@ gdt_put_slot(slot)
 }
 
 void
-tss_alloc(pcb)
-	struct pcb *pcb;
+tss_alloc(p)
+	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	int slot;
 
 	slot = gdt_get_slot();
 	setsegment(&gdt[slot].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
+	p->p_md.md_tss_sel = GSEL(slot, SEL_KPL);
 }
 
 void
-tss_free(pcb)
-	struct pcb *pcb;
+tss_free(p)
+	struct proc *p;
 {
 
-	gdt_put_slot(IDXSEL(pcb->pcb_tss_sel));
+	gdt_put_slot(IDXSEL(p->p_md.md_tss_sel));
 }
 
 void

@@ -1,11 +1,11 @@
-/* 	$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.18.2.1 2000/11/20 20:20:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18.2.1 2000/11/20 20:20:19 bouyer Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -51,57 +51,55 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $");
  * cards).
  */
 #include <sys/param.h>
-#include <sys/types.h>
-#include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/poll.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/vnode.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/cons.h>
-#include <dev/tc/tcvar.h>
+
 #include <dev/ic/bt459reg.h>
+
+#include <dev/tc/tcvar.h>
+
 #include <dev/rcons/rcons.h>
-#include <dev/wscons/wsdisplayvar.h>
+
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wsfont/wsfont.h>
 
-#include <mips/cpuregs.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/pmioctl.h>
+#include <machine/conf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <machine/pmioctl.h>
 
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/pxreg.h>
 #include <pmax/dev/pxvar.h>
-#include <pmax/dev/rconsvar.h>
 #include <pmax/dev/qvssvar.h>
+#include <pmax/dev/rconsvar.h>
 
 struct px_softc {
 	struct	device px_dv;
 	struct	px_info *px_info;
 };
 
-int	px_match __P((struct device *, struct cfdata *, void *));
-void	px_attach __P((struct device *, struct device *, void *));
-int	px_intr __P((void *xxx_sc));
-
-int	pxopen __P((dev_t, int, int, struct proc *));
-int	pxclose __P((dev_t, int, int, struct proc *));
-int	pxioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	pxpoll __P((dev_t, int, struct proc *));
-int	pxmmap __P((dev_t, int, int));
+static int	px_match __P((struct device *, struct cfdata *, void *));
+static void	px_attach __P((struct device *, struct device *, void *));
+static int	px_init __P((struct fbinfo *, caddr_t, int, int));
+static int	px_intr __P((void *xxx_sc));
 
 static int32_t *px_alloc_pbuf __P((struct px_info *));
 static int	px_send_packet __P((struct px_info *, int *buf));
@@ -115,7 +113,7 @@ static void	px_load_cursor_data __P((struct px_info *, int, int));
 static void	px_make_cursor __P((struct px_info *));
 static int	px_rect __P((struct px_info *, int, int, int, int, int));
 static void	px_qvss_init __P((struct px_info *));
-static int	px_mmap_info  __P((struct proc *, dev_t, vm_offset_t *));
+static int	px_mmap_info  __P((struct proc *, dev_t, vaddr_t *));
 static void	px_cursor_hack __P((struct fbinfo *, int, int));
 static int	px_probe_sram __P((struct px_info *));
 static void	px_bt459_flush __P((struct px_info *));
@@ -128,9 +126,12 @@ struct cfattach px_ca = {
 
 /* The different types of card that we support, for px_match(). */
 static const char *px_types[] = {
-	"PMAG-CA ",
-	"PMAG-DA ",
-	"PMAG-FA ",	/* XXX um, does this ever get reported? */
+	"PMAG-CA ",	/* 2DA */
+	"PMAG-DA ",	/* LM-3DA */
+	"PMAG-FA ",	/* HE-3DA */
+	"PMAG-FB ",	/* HE+3DA */
+	"PMAGB-FA",	/* HE+3DA */
+	"PMAGB-FB",	/* HE+3DA */
 };
 
 #define NUM_PX_TYPES (sizeof(px_types) / sizeof(px_types[0]))
@@ -225,10 +226,10 @@ static const u_char px_shuffle[256] = {
 #define PXMAP_RBUF_SIZE	(4096 * 16 + 8192 * 2)
 
 /* Need alignment to 8KB here... */
-static u_char	px_cons_rbuf[PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE + 8192];
-static u_int	px_cons_rbuf_use;
-struct px_info *px_cons_info;
-struct px_info *px_unit[NPX];
+static u_char		 px_cons_rbuf[PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE + 8192];
+static u_int		 px_cons_rbuf_use;
+static struct px_info	*px_cons_info;
+static struct px_info	*px_unit[NPX];
 
 /* bt459 gunk. XXX should be done with driver independant interface */
 struct bt459_regs {
@@ -259,10 +260,21 @@ struct bt459_regs {
 
 #define PACK_WORD(p, o) ((p)[(o)] | ((p)[(o)+1] << 16))
 
+int
+px_cnattach(addr)
+      paddr_t addr;
+{
+      caddr_t base;
+      base = (caddr_t)TC_PHYS_TO_UNCACHED(addr);
+      if (px_init((struct fbinfo *)1, base, 0, 1) != 1)
+              return (0);
+      return (1);
+}
+
 /*
  * Match a supported board.
  */
-int
+static int
 px_match(parent, match, aux)
 	struct	device *parent;
 	struct	cfdata *match;
@@ -278,11 +290,10 @@ px_match(parent, match, aux)
 	return (0);
 }
 
-
 /*
  * Attach the graphics board.
  */
-void
+static void
 px_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -300,7 +311,7 @@ px_attach(parent, self, aux)
 
 	/* Init the card only if it hasn't been done before... */
 	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
-		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 1);
+		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 0);
 
 	/* px_init() fills in px_unit[#] */
 	pxi = px_unit[sc->px_dv.dv_unit];
@@ -328,14 +339,13 @@ px_attach(parent, self, aux)
 	printf("\n");
 }
 
-
 /*
  * Initialize the graphics board. This can be called from tc_findcons and
  * the pmax console trickery, in which case ``fi'' will be null.
  *
  * XXX use magic number to make sure fi isn't a real struct fbinfo?
  */
-int
+static int
 px_init(fi, slotbase, unit, console)
 	struct fbinfo *fi;
 	caddr_t slotbase;
@@ -344,7 +354,7 @@ px_init(fi, slotbase, unit, console)
 	struct px_info *pxi;
 	u_long bufpa;
 	int i;
-
+	
 #if NPX > 1
 	if (px_cons_rbuf_use)
 		/* XXX allocate buffers */;
@@ -357,7 +367,7 @@ px_init(fi, slotbase, unit, console)
 
 	/* Align to 8KB. px_info struct gets the first 4KB */
 	bufpa = (bufpa + 8191) & ~8191;
-	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG0(bufpa);
+	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG1(bufpa);
 	px_unit[unit] = pxi;
 	bufpa += PXMAP_INFO_SIZE;
 
@@ -371,7 +381,7 @@ px_init(fi, slotbase, unit, console)
 	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
 	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
 	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
-	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 	pxi->pxi_rbuf_phys = bufpa;
 	pxi->pxi_rbuf_size = PXMAP_RBUF_SIZE;
 	pxi->pxi_pbuf_select = 0;
@@ -386,7 +396,7 @@ px_init(fi, slotbase, unit, console)
 	 */
 	if (pxi->pxi_option) {
 		bufpa = MIPS_KSEG0_TO_PHYS(slotbase + PXG_SRAM_OFFSET);
-		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 		pxi->pxi_rbuf_phys = bufpa;
 		pxi->pxi_rbuf_size = px_probe_sram(pxi);
 	}
@@ -398,7 +408,8 @@ px_init(fi, slotbase, unit, console)
 		if ((i = wsfont_find(NULL, 0, 0, 2)) <= 0)
 			panic("px_init: unable to get font");
 		
-		if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) <= 0)
+		if (wsfont_lock(i, &pxi->pxi_font, WSDISPLAY_FONTORDER_R2L, 
+		    WSDISPLAY_FONTORDER_L2R) <= 0)
 			panic("px_init: unable to lock font");
 			
 		pxi->pxi_wsfcookie = i;
@@ -411,10 +422,11 @@ px_init(fi, slotbase, unit, console)
 	/* Clear ringbuffer and then the screen */
 	bzero(pxi->pxi_rbuf, pxi->pxi_rbuf_size);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
-	pxi->pxi_fontscale = pxi->pxi_font->fontheight * pxi->pxi_font->stride;
 
 	/* Connect to rcons if this is the console device */
 	if (console) {
+		pxi->pxi_fontscale = pxi->pxi_font->fontheight * 
+		    pxi->pxi_font->stride;
 		px_cons_info = pxi;
 		
 		/* XXX no multiscreen X support yet */
@@ -427,7 +439,6 @@ px_init(fi, slotbase, unit, console)
 
 	return 1;
 }
-
 
 /*
  * Initalize our DISGUSTING little hack so we can use the qvss event-buffer
@@ -450,7 +461,6 @@ px_qvss_init(pxi)
 	fi->fi_fbu = &pxi->pxi_fbuaccess;
 	fi->fi_type.fb_width = 1280;
 	fi->fi_type.fb_height = 1024;
-	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_PX;
 	fi->fi_type.fb_cmsize = 256;
 	fi->fi_type.fb_depth = 8;
@@ -461,7 +471,6 @@ px_qvss_init(pxi)
 	tb_kbdmouseconfig(fi);
 	init_pmaxfbu(fi);
 }
-
 
 /*
  * Initialize the Brooktree 459 VDAC.
@@ -474,7 +483,7 @@ px_bt459_init(pxi)
 	int i;
 
 	/* Hit it... */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_0);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_0);
 	BT459_WRITE_REG(vdac, 0xc0c0c0);
 
 	/* Now reset the VDAC */
@@ -486,7 +495,7 @@ px_bt459_init(pxi)
 	tc_wmb();
 
 	/* Finish the initalization */
-	BT459_SELECT(vdac, BT459_REG_COMMAND_1);
+	BT459_SELECT(vdac, BT459_IREG_COMMAND_1);
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -495,7 +504,7 @@ px_bt459_init(pxi)
 		BT459_WRITE_REG(vdac, 0);
 
 	/* Set cursor colormap */
-	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+	BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
 	BT459_WRITE_REG(vdac, 0xffffff);
@@ -522,15 +531,14 @@ px_bt459_init(pxi)
 		px_load_cursor(pxi);
 
 		/* Enable cursor */
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0x1c1c1c1);
 		pxi->pxi_flg |= PX_CURSOR_ENABLE;
 	} else {
-		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_SELECT(vdac, BT459_IREG_CCR);
 		BT459_WRITE_REG(vdac, 0);
 	}
 }
-
 
 /*
  * Determine the number of planes supported by the given buffer.
@@ -549,7 +557,7 @@ px_probe_planes(pxi, buf)
 		 * VDAC ID. One color is active at level 0x4a for 8 bits, all
 		 * colors are active at 0x4a on the 24 bit cards.
 		 */
-		BT459_SELECT(pxi->pxi_vdac, BT459_REG_ID);
+		BT459_SELECT(pxi->pxi_vdac, BT459_IREG_ID);
 		i = pxi->pxi_vdac->reg & 0x00ffffff;
 
 		/* 3 VDACs */
@@ -571,7 +579,6 @@ px_probe_planes(pxi, buf)
 	/* Don't give a damn about Z-buffers... */
 	panic("px_probe_planes: (buf != 0) was un-implemented (bloat)");
 }
-	
 
 /*
  * Figure out how much SRAM the PXG has: 128KB or 256KB.
@@ -595,7 +602,7 @@ px_probe_sram(pxi)
 /*
  * Initialize the STIC (STamp Interface Chip) and stamp
  */
-void
+static void
 px_init_stic(pxi, probe)
 	struct px_info *pxi;
 	int probe;
@@ -711,7 +718,6 @@ px_init_stic(pxi, probe)
 #endif
 }
 
-
 /*
  * Make a cursor matching the current font dimensions.
  */
@@ -739,7 +745,6 @@ px_make_cursor(pxi)
 	}
 }
 
-
 /*
  * Convert a 16x16 cursor from the Xserver.
  */
@@ -764,7 +769,6 @@ px_conv_cursor(pxi, sip)
 	}
 }
 
-
 /*
  * Load a single byte into the cursor map.
  */
@@ -780,14 +784,13 @@ px_load_cursor_data(pxi, pos, val)
 	val = DUPBYTE0(val);
 		
 	for (cnt = 10; cnt; cnt--) {
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE + pos);
+		BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + pos);
 		BT459_WRITE_REG(vdac, val);
 
 		if ((BT459_READ_REG(vdac) & pxi->pxi_planemask) == val)
 			break;
 	}
 }
-
 
 /*
  * Load the cursor image.
@@ -805,7 +808,7 @@ px_load_cursor(pxi)
 	mp = pxi->pxi_cursor + (sizeof(pxi->pxi_cursor) >> 1);
 
 	bcnt = 0;
-	BT459_SELECT(vdac, BT459_REG_CRAM_BASE + 0);
+	BT459_SELECT(vdac, BT459_IREG_CRAM_BASE + 0);
 
 	/* 64 pixel scan line is made with 8 bytes of cursor RAM */
 	while (bcnt < sizeof(pxi->pxi_cursor)) {
@@ -818,7 +821,6 @@ px_load_cursor(pxi)
 		px_load_cursor_data(pxi, bcnt++, px_shuffle[u]);
 	}
 }
-
 
 /*
  * Load the colormap.
@@ -846,7 +848,6 @@ px_load_cmap(pxi, index, num)
 		BT459_WRITE_CMAP(vdac, DUPBYTE0(*p));
 }
 
-
 /*
  * Flush any pending updates to the bt459. This gets called during vblank
  * on the PX to prevent shearing/snow. The PXG always has to flush.
@@ -862,7 +863,7 @@ px_bt459_flush(pxi)
 	vdac = pxi->pxi_vdac;
 
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_POS) {
-		BT459_SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+		BT459_SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE1(pxi->pxi_curx));
 		BT459_WRITE_REG(vdac, DUPBYTE0(pxi->pxi_cury));
@@ -875,7 +876,7 @@ px_bt459_flush(pxi)
 	if (pxi->pxi_dirty & PX_DIRTY_CURSOR_CMAP) {
 		cp = pxi->pxi_curcmap;
 
-		BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+		BT459_SELECT(vdac, BT459_IREG_CCOLOR_1);
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[3]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[4]));
 		BT459_WRITE_REG(vdac, DUPBYTE0(cp[5]));
@@ -889,12 +890,12 @@ px_bt459_flush(pxi)
 
 	if (pxi->pxi_dirty & PX_DIRTY_ENABLE) {
 		if (pxi->pxi_flg & PX_ENABLE) {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0xffffff);
 			px_load_cmap(pxi, 0, 1);
 			pxi->pxi_dirty |= PX_DIRTY_CURSOR_ENABLE;
 		} else {
-			BT459_SELECT(vdac, BT459_REG_PRM);
+			BT459_SELECT(vdac, BT459_IREG_PRM);
 			BT459_WRITE_REG(vdac, 0);
 
 			BT459_SELECT(vdac, 0);
@@ -902,7 +903,7 @@ px_bt459_flush(pxi)
 			BT459_WRITE_CMAP(vdac, 0);
 			BT459_WRITE_CMAP(vdac, 0);
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, 0);
 		}
 	}
@@ -922,7 +923,7 @@ px_bt459_flush(pxi)
 			} else
 				i = 0;
 
-			BT459_SELECT(vdac, BT459_REG_CCR);
+			BT459_SELECT(vdac, BT459_IREG_CCR);
 			BT459_WRITE_REG(vdac, i);
 		}
 	}
@@ -930,13 +931,12 @@ px_bt459_flush(pxi)
 	pxi->pxi_dirty = 0;
 }
 
-
 /*
  * PixelStamp board interrupt handler. We can get more than one interrupt
  * at a time (i.e. packet+vertical retrace) so we don't return after
  * handling each case.
  */
-int
+static int
 px_intr(xxx_sc)
 	void	*xxx_sc;
 {
@@ -1054,7 +1054,6 @@ px_intr(xxx_sc)
 	return (0);
 }
 
-
 /*
  * Allocate a PixelStamp packet buffer.
  */
@@ -1145,7 +1144,6 @@ px_alloc_pbuf(pxi)
 	return buf;
 }
 
-
 /*
  * Send a PixelStamp packet.
  */
@@ -1216,7 +1214,6 @@ px_send_packet(pxi, buf)
 	return (-*poll);
 }
 
-
 /*
  * Draw a 'flat' rectangle
  */
@@ -1244,7 +1241,6 @@ px_rect(pxi, x, y, w, h, color)
 	return px_send_packet(pxi, pb);
 }
 
-
 /*
  * Allocate attribute. We just pack these into an integer.
  */
@@ -1271,7 +1267,6 @@ px_alloc_attr(cookie, fg, bg, flags, attr)
 	*attr = fg | (bg << 8) | (flags << 16);
 	return 0;
 }
-
 
 /*
  * Erase columns
@@ -1307,7 +1302,6 @@ px_erasecols(cookie, row, col, num, attr)
 	px_send_packet(pxi, pb);
 }
 
-
 /*
  * Erase rows
  */
@@ -1340,7 +1334,6 @@ px_eraserows(cookie, row, num, attr)
 
 	px_send_packet(pxi, pb);
 }
-
 
 /*
  * Copy rows.
@@ -1404,7 +1397,6 @@ px_copyrows(cookie, src, dst, height)
 	}
 }
 
-
 /*
  * Copy columns.
  */
@@ -1450,7 +1442,6 @@ px_copycols(cookie, row, src, dst, num)
 
 	px_send_packet(pxi, pbs);
 }
-
 
 /*
  * Blit a character at the specified co-ordinates.
@@ -1574,7 +1565,6 @@ px_putchar(cookie, r, c, uc, attr)
 	px_send_packet(pxi, pb);
 }
 
-
 /*
  * Map a character.
  */
@@ -1601,7 +1591,6 @@ px_mapchar(cookie, c, cp)
 	*cp = c;
 	return (5);
 }
-
 
 /*
  * Position|{enable|disable} the cursor at the specified location.
@@ -1643,7 +1632,6 @@ px_cursor(cookie, on, row, col)
 		px_bt459_flush(pxi);
 }
 
-
 /*
  * Move the cursor for qvss. This is disgusting.
  */
@@ -1663,14 +1651,13 @@ px_cursor_hack(fi, x, y)
 		px_bt459_flush(pxi);
 }
 
-
 int
 pxopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	extern struct fbinfo *firstfi;
+	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
@@ -1695,11 +1682,6 @@ pxopen(dev, flag, mode, p)
 	pmEventQueueInit(&pxi->pxi_fbuaccess.scrInfo.qe);
 	genConfigMouse();
 
-	/* Enable interrupt driven operation */
-	pxi->pxi_lpw = 0;
-	pxi->pxi_lpr = 0;
-	pxi->pxi_flg = (pxi->pxi_flg & ~PX_ISR_MASK) | PX_ISR_ENABLE;
-
 	/* Turn packet-done interrupts on */
 	stic = pxi->pxi_stic;
 	s = stic->ipdvint | STIC_INT_P_WE | STIC_INT_P_EN;
@@ -1716,7 +1698,7 @@ pxclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	extern struct fbinfo *firstfi;
+	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
 	struct px_info *pxi;
 	int s;
@@ -1786,7 +1768,7 @@ pxioctl(dev, cmd, data, flag, p)
 		/*
 		 * Map card info.
 		 */
-		return (px_mmap_info(p, dev, (vm_offset_t *)data));
+		return (px_mmap_info(p, dev, (vaddr_t *)data));
 
 	case QIOCPMSTATE:
 		/*
@@ -1872,7 +1854,6 @@ pxioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
-
 int
 pxpoll(dev, events, p)
 	dev_t dev;
@@ -1893,10 +1874,11 @@ pxpoll(dev, events, p)
 	return (revents);
 }
 
-int
+paddr_t
 pxmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct px_info *pxi;
 
@@ -1907,18 +1889,30 @@ pxmmap(dev, off, prot)
 
 	if ((pxi->pxi_flg & PX_OPEN) == 0)
 		return (EBADF);
-
-	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
-		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
-
-	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
-
+	
+	/* 
+	 * STIC control registers
+	 */	
 	if (off < NBPG)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_stic) + off);
+	off -= NBPG;
+	
+	/*
+	 * STIC poll registers
+	 */
+	if (off < sizeof(int32_t) * 4096)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_poll) + off);
+	off -= sizeof(int32_t) * 4096;
+
+	/*
+	 * 'struct px_info' and ringbuffer
+	 */ 
+	if (off < PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE)
+		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi) + off);
+	off -= (PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE);
 
 	return (-1);
 }
-
 
 /*
  * mmap info struct for this card into userspace.
@@ -1927,12 +1921,12 @@ static int
 px_mmap_info (p, dev, va)
 	struct proc *p;
 	dev_t dev;
-	vm_offset_t *va;
+	vaddr_t *va;
 {
 	struct specinfo si;
 	struct vnode vn;
 	vm_prot_t prot;
-	vm_size_t size;
+	vsize_t size;
 	int flags;
 
 	vn.v_type = VCHR;			/* XXX */
@@ -1942,7 +1936,7 @@ px_mmap_info (p, dev, va)
 	size = sizeof(struct px_map);
 	prot = VM_PROT_READ | VM_PROT_WRITE;
 	flags = MAP_SHARED | MAP_FILE;
-	*va = round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
+	*va = round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
 	return uvm_mmap(&p->p_vmspace->vm_map, va, size, prot,
 	    VM_PROT_ALL, flags, (caddr_t)&vn, 0,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);

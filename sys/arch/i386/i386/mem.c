@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.42 1999/06/17 00:12:11 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.42.2.1 2000/11/20 20:09:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,8 +56,6 @@
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -143,7 +141,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, PMAP_WIRED|prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -175,10 +173,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			break;
 
@@ -194,29 +192,26 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct proc *p = curproc;	/* XXX */
 
-	switch (minor(dev)) {
-/* minor device 0 is physical memory */
-	case 0:
-		if ((u_int)off > ctob(physmem) &&
-		    suser(p->p_ucred, &p->p_acflag) != 0)
-			return -1;
-		return i386_btop((u_int)off);
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != 0)
+		return (-1);
 
-/* minor device 1 is kernel memory */
-	case 1:
-		/* XXX - writability, executability checks? */
-		if (!uvm_kernacc((caddr_t)off, NBPG, B_READ))
-			return -1;
-		return i386_btop(vtophys((u_int)off));
-
-	default:
-		return -1;
-	}
+	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+		return (-1);
+	return (i386_btop((u_int)off));
 }

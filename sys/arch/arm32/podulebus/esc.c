@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.8 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.8.2.1 2000/11/20 20:04:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -61,10 +61,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

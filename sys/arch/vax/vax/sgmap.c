@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.3 1999/07/08 18:11:02 thorpej Exp $ */
+/* $NetBSD: sgmap.c,v 1.3.2.1 2000/11/20 20:33:32 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/sgmap.h>
@@ -128,8 +128,14 @@ vax_sgmap_alloc(map, origlen, sgmap, flags)
 		panic("vax_sgmap_alloc: already have sgva space");
 #endif
 
-	map->_dm_sgvalen = vax_round_page(len);
+	/* If we need a spill page (for the VS4000 SCSI), make sure we 
+	 * allocate enough space for an extra page.
+	 */
+	if (flags & VAX_BUS_DMA_SPILLPAGE) {
+		len += VAX_NBPG;
+	}
 
+	map->_dm_sgvalen = vax_round_page(len);
 #if 0
 	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
 	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
@@ -205,10 +211,6 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	/*
 	 * Allocate the necessary virtual address space for the
 	 * mapping.  Round the size, since we deal with whole pages.
-	 *
-	 * alpha_sgmap_alloc will deal with the appropriate spill page
-	 * allocations.
-	 *
 	 */
 	endva = vax_round_page(va + buflen);
 	va = vax_trunc_page(va);
@@ -235,8 +237,7 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 	 * Create the bus-specific page tables.
 	 * Can be done much more efficient than this.
 	 */
-	for (; va < endva; va += VAX_NBPG, pteidx++,
-		pte = &page_table[pteidx], map->_dm_ptecnt++) {
+	for (; va < endva; va += VAX_NBPG, pte++, map->_dm_ptecnt++) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -248,7 +249,28 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		/*
 		 * Load the current PTE with this page.
 		 */
-		*pte = (pa >> VAX_PGSHIFT) | PG_V;
+		if (sgmap->aps_flags & SGMAP_KA49) {
+			unsigned long tmp = pa >> VAX_PGSHIFT;
+			int cnt;
+
+			for (cnt = 0; tmp != 0; tmp >>= 1) {
+				cnt += (tmp & 1);
+			}
+			*pte = pa | PG_V | ((cnt & 1) ? 0 : 0x10000000);
+#if 0
+			printf("[%d]: va=0x%08lx map=0x%08lx\n", 
+			    pteidx + map->_dm_ptecnt, va + dmaoffset, *pte);
+#endif
+		} else {
+			*pte = (pa >> VAX_PGSHIFT) | PG_V;
+		}
+	}
+	/* The VS4000 SCSI prefetcher doesn't like to end on a page boundary
+	 * so add an extra page to quiet it down.
+	 */
+	if (flags & VAX_BUS_DMA_SPILLPAGE) {
+		*pte = pte[-1];
+		map->_dm_ptecnt++;
 	}
 
 	map->dm_mapsize = buflen;
@@ -301,17 +323,14 @@ vax_sgmap_unload(t, map, sgmap)
 	struct vax_sgmap *sgmap;
 {
 	long *pte, *page_table = (long *)sgmap->aps_pt;
-	int ptecnt, pteidx;
+	int ptecnt;
 
 	/*
 	 * Invalidate the PTEs for the mapping.
 	 */
-	for (ptecnt = map->_dm_ptecnt, pteidx = map->_dm_pteidx,
-		pte = &page_table[pteidx];
-		ptecnt != 0;
-		ptecnt--, pteidx++,
-		pte = &page_table[pteidx]) {
-		*pte = 0;
+	for (ptecnt = map->_dm_ptecnt, pte = &page_table[map->_dm_pteidx];
+		ptecnt-- != 0; ) {
+		*pte++ = 0;
 	}
 
 	/*

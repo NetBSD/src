@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3 1999/10/11 01:57:46 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3.2.1 2000/11/20 20:26:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,13 +28,20 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
+
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/user.h>
+#include <sys/core.h>
 #include <sys/mount.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/map.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -56,12 +63,15 @@ netbsd32_setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
+	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct fpstate64 *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
+
+	/* Mark this as a 32-bit emulation */
+	p->p_flag |= P_32;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -70,7 +80,7 @@ netbsd32_setregs(p, pack, stack)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
-	tstate = ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) 
+	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
 		| (tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
@@ -87,7 +97,7 @@ netbsd32_setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (int)PS_STRINGS;
+	tf->tf_global[1] = (int)(long)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 
@@ -118,12 +128,12 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig;
 	sigset_t *mask;
-	u_int32_t code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sparc32_sigframe *fp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sparc32_sigframe sf;
@@ -159,7 +169,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 * directly in user space....
 	 */
 	sf.sf_signo = sig;
-	sf.sf_code = code;
+	sf.sf_code = (u_int)code;
 #ifdef COMPAT_SUNOS
 	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
@@ -169,11 +179,11 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	sf.sf_sc.sc_onstack = onstack;
-	sf.sf_sc.sc_mask = mask;
+	sf.sf_sc.sc_mask = *mask;
 	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+	sf.sf_sc.sc_tstate = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
@@ -221,7 +231,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (long)PS_STRINGS - szsigcode;
+	addr = (long)p->p_psstr - szsigcode;
 	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -241,18 +251,20 @@ netbsd32_sendsig(catcher, sig, mask, code)
 }
 
 #undef DEBUG
+
+#ifdef COMPAT_13
 int
-netbsd32_sigreturn(p, v, retval)
+compat_13_netbsd32_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_sigreturn_args /* {
-		syscallarg(struct netbsd32_sigcontext *) sigcntxp;
+	struct compat_13_netbsd32_sigreturn_args /* {
+		syscallarg(struct netbsd32_sigcontext13 *) sigcntxp;
 	} */ *uap = v;
-	struct netbsd32_sigcontext *scp;
-	struct netbsd32_sigcontext sc;
-	register struct trapframe *tf;
+	struct netbsd32_sigcontext13 *scp;
+	struct netbsd32_sigcontext13 sc;
+	register struct trapframe64 *tf;
 	struct rwindow32 *rwstack, *kstack;
 	sigset_t mask;
 
@@ -260,23 +272,23 @@ netbsd32_sigreturn(p, v, retval)
 	write_user_windows();
 	if (rwindow_save(p)) {
 #ifdef DEBUG
-		printf("sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
+		printf("compat_13_netbsd32_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
 		Debugger();
 #endif
 		sigexit(p, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
+		printf("compat_13_netbsd32_sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
-	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
+	scp = (struct netbsd32_sigcontext13 *)(u_long)SCARG(uap, sigcntxp);
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn: copyin failed\n");
+		printf("compat_13_netbsd32_sigreturn: copyin failed\n");
 		Debugger();
 		return (EINVAL);
 	}
@@ -292,7 +304,7 @@ netbsd32_sigreturn(p, v, retval)
 	if (((sc.sc_pc | sc.sc_npc) & 3) != 0)
 #ifdef DEBUG
 	{
-		printf("sigreturn: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		printf("compat_13_netbsd32_sigreturn: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
 		Debugger();
 		return (EINVAL);
 	}
@@ -310,7 +322,7 @@ netbsd32_sigreturn(p, v, retval)
 	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
+		printf("compat_13_netbsd32_sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
 		       (int)tf->tf_pc, (int)tf->tf_out[6], (int)tf->tf_tstate);
 		if (sigdebug & SDB_DDB) Debugger();
 	}
@@ -325,7 +337,102 @@ netbsd32_sigreturn(p, v, retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	return (EJUSTRETURN);
 }
+#endif
+/*
+ * System call to cleanup state after a signal
+ * has been taken.  Reset signal mask and
+ * stack state from context left by sendsig (above),
+ * and return to the given trap frame (if there is one).
+ * Check carefully to make sure that the user has not
+ * modified the state to gain improper privileges or to cause
+ * a machine fault.
+ */
+/* ARGSUSED */
+int
+netbsd32___sigreturn14(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32___sigreturn14_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct netbsd32_sigcontext sc, *scp;
+	register struct trapframe64 *tf;
 
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+	if (rwindow_save(p)) {
+#ifdef DEBUG
+		printf("netbsd32_sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
+		Debugger();
+#endif
+		sigexit(p, SIGILL);
+	}
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("netbsd32_sigreturn14: %s[%d], sigcntxp %p\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
+	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
+ 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+#ifdef DEBUG
+	{
+		printf("netbsd32_sigreturn14: copyin failed: scp=%p\n", scp);
+		Debugger();
+		return (EINVAL);
+	}
+#else
+		return (EINVAL);
+#endif
+	scp = &sc;
+
+	tf = p->p_md.md_tf;
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 || (sc.sc_pc == 0) || (sc.sc_npc == 0))
+#ifdef DEBUG
+	{
+		printf("netbsd32_sigreturn14: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		Debugger();
+		return (EINVAL);
+	}
+#else
+		return (EINVAL);
+#endif
+	/* take only psr ICC field */
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+	tf->tf_pc = (int64_t)scp->sc_pc;
+	tf->tf_npc = (int64_t)scp->sc_npc;
+	tf->tf_global[1] = (int64_t)scp->sc_g1;
+	tf->tf_out[0] = (int64_t)scp->sc_o0;
+	tf->tf_out[6] = (int64_t)scp->sc_sp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("netbsd32_sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
+		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
+
+	/* Restore signal stack. */
+	if (sc.sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
+
+	return (EJUSTRETURN);
+}
+
+#if 0
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
 netbsd32_process_read_regs(p, regs)
@@ -333,7 +440,7 @@ netbsd32_process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	/* 
@@ -360,7 +467,7 @@ netbsd32_process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe* tf = p->p_md.md_tf;
+	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
 	tf->tf_pc = regp->r_pc;
@@ -380,8 +487,8 @@ netbsd32_process_read_fpregs(p, regs)
 struct proc	*p;
 struct fpreg	*regs;
 {
-	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	extern struct fpstate64	initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
@@ -404,7 +511,7 @@ struct proc	*p;
 struct fpreg	*regs;
 {
 	extern struct fpstate	initfpstate;
-	struct fpstate		*statep = &initfpstate;
+	struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
@@ -419,4 +526,69 @@ struct fpreg	*regs;
 		statep->fs_queue[i] = regp->fr_queue[i];
 
 	return 0;
+}
+#endif
+
+/*
+ * 32-bit version of cpu_coredump.
+ */
+int
+cpu_coredump32(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core32 *chdr;
+{
+	int i, error;
+	struct md_coredump32 md_core;
+	struct coreseg32 cseg;
+
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(md_core);
+
+	/* Fake a v8 trapframe */
+	md_core.md_tf.tf_psr = TSTATECCR_TO_PSR(p->p_md.md_tf->tf_tstate);
+	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
+	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
+	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
+	for (i=0; i<8; i++) {
+		md_core.md_tf.tf_global[i] = p->p_md.md_tf->tf_global[i];
+		md_core.md_tf.tf_out[i] = p->p_md.md_tf->tf_out[i];
+	}
+
+	if (p->p_md.md_fpstate) {
+		if (p == fpproc)
+			savefpstate(p->p_md.md_fpstate);
+		/* Copy individual fields */
+		for (i=0; i<32; i++)
+			md_core.md_fpstate.fs_regs[i] = 
+				p->p_md.md_fpstate->fs_regs[i];
+		md_core.md_fpstate.fs_fsr = p->p_md.md_fpstate->fs_fsr;
+		i = md_core.md_fpstate.fs_qsize = p->p_md.md_fpstate->fs_qsize;
+		/* Should always be zero */
+		while (i--)
+			md_core.md_fpstate.fs_queue[i] = 
+				p->p_md.md_fpstate->fs_queue[i];
+	} else
+		bzero((caddr_t)&md_core.md_fpstate, 
+		      sizeof(md_core.md_fpstate));
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }

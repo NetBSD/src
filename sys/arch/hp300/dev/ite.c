@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.41 1998/04/20 20:41:05 frueauf Exp $	*/
+/*	$NetBSD: ite.c,v 1.41.14.1 2000/11/20 20:08:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ iteoff(ip, flag)
 	/*
 	 * XXX When the system is rebooted with "reboot", init(8)
 	 * kills the last process to have the console open.
-	 * If we don't revent the the ITE_ACTIVE bit from being
+	 * If we don't prevent the ITE_ACTIVE bit from being
 	 * cleared, we will never see messages printed during
 	 * the process of rebooting.
 	 */
@@ -504,7 +504,7 @@ itestart(tp)
 		}
 		if (hiwat) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout(ttrstrt, tp, 1);
+			callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 		}
 	}
 	tp->t_state &= ~TS_BUSY;
@@ -526,10 +526,12 @@ itefilter(stat, c)
 	static int capsmode = 0;
 	static int metamode = 0;
 	char code, *str;
-	struct tty *kbd_tty = kbd_ite->tty;
+	struct tty *kbd_tty;
 
-	if (kbd_tty == NULL)
+	if (kbd_ite == NULL || kbd_ite->tty == NULL)
 		return;
+
+	kbd_tty = kbd_ite->tty;
 
 	switch (c & 0xFF) {
 	case KBD_CAPSLOCK:

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61 1999/03/29 17:54:34 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.61.8.1 2000/11/20 20:09:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -85,6 +85,9 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+/* #define CLOCKDEBUG */
+/* #define CLOCK_PARANOIA */
+
 /*
  * Primitive clock interrupt routines.
  */
@@ -110,6 +113,18 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>	/* for MCA_system */
+#endif
+
+#ifdef CLOCKDEBUG
+int clock_debug = 0;
+#define DPRINTF(arg) if (clock_debug) printf arg
+#else
+#define DPRINTF(arg)
+#endif
+
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
@@ -121,7 +136,6 @@ static int ppi_attached;
 static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
-static void initrtclock __P((void));
 void	spinwait __P((int));
 int	clockintr __P((void *));
 int	gettick __P((void));
@@ -131,6 +145,9 @@ int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
 int 	bcdtobin __P((int));
 int	bintobcd __P((int));
+
+static void check_clock_bug __P((void));
+static inline int gettick_broken_latch __P((void));
 
 
 __inline u_int mc146818_read __P((void *, u_int));
@@ -157,9 +174,108 @@ mc146818_write(sc, reg, datum)
 }
 
 static u_long rtclock_tval;
+static int clock_broken_latch = 0;
+
+#ifdef CLOCK_PARANOIA
+static int ticks[6];
+#endif
+
+/*
+ * i8254 latch check routine:
+ *     National Geode (formerly Cyrix MediaGX) has a sirious bug in
+ *     its built-in i8254-compatible clock module.
+ *     Set the variable 'clock_broken_latch' to indicate it.
+ *     XXX check only cpu_id
+ */
+static void
+check_clock_bug()
+{
+	extern int cpu_id;
+
+	switch (cpu_id) {
+	case 0x440:     /* Cyrix MediaGX */
+	case 0x540:     /* GXm */
+		clock_broken_latch = 1;
+		break;
+	default:
+		clock_broken_latch = 0;
+		break;
+	}
+}
+
+int
+gettick_broken_latch()
+{
+	u_long ef;
+	int v1, v2, v3;
+	int w1, w2, w3;
+
+	/* Don't want someone screwing with the counter
+	   while we're here. */
+	ef = read_eflags();
+	disable_intr();
+
+	v1 = inb(TIMER_CNTR0);
+	v1 |= inb(TIMER_CNTR0) << 8;
+	v2 = inb(TIMER_CNTR0);
+	v2 |= inb(TIMER_CNTR0) << 8;
+	v3 = inb(TIMER_CNTR0);
+	v3 |= inb(TIMER_CNTR0) << 8;
+
+	write_eflags(ef);
+
+#ifdef CLOCK_PARANOIA
+	if (clock_debug) {
+		ticks[0] = ticks[3];
+		ticks[1] = ticks[4];
+		ticks[2] = ticks[5];
+		ticks[3] = v1;
+		ticks[4] = v2;
+		ticks[5] = v3;
+	}
+#endif
+
+	if (v1 >= v2 && v2 >= v3 && v1 - v3 < 0x200)
+		return (v2);
+
+#define _swap_val(a, b) do { \
+	int c = a; \
+	a = b; \
+	b = c; \
+} while (0)
+
+	/*
+	 * sort v1 v2 v3
+	 */
+	if (v1 < v2)
+		_swap_val(v1, v2);
+	if (v2 < v3)
+		_swap_val(v2, v3);
+	if (v1 < v2)
+		_swap_val(v1, v2);
+
+	/*
+	 * compute the middle value
+	 */
+
+	if (v1 - v3 < 0x200)
+		return (v2);
+
+	w1 = v2 - v3;
+	w2 = v3 - v1 + rtclock_tval;
+	w3 = v1 - v2;
+	if (w1 >= w2) {
+		if (w1 >= w3)
+		        return (v1);
+	} else {
+		if (w2 >= w3)
+			return (v2);
+	}
+	return (v3);
+}
 
 /* minimal initialization, enough for delay() */
-static void
+void
 initrtclock()
 {
 	u_long tval;
@@ -180,6 +296,8 @@ initrtclock()
 	outb(IO_TIMER1, tval / 256);
 
 	rtclock_tval = tval;
+
+	check_clock_bug();
 }
 
 /*
@@ -289,6 +407,13 @@ clockintr(arg)
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
 	hardclock(frame);
+
+#if NMCA > 0
+	if (MCA_system) {
+		/* Reset PS/2 clock interrupt by asserting bit 7 of port 0x61 */
+		outb(0x61, inb(0x61) | 0x80);
+	}
+#endif
 	return -1;
 }
 
@@ -297,6 +422,9 @@ gettick()
 {
 	u_long ef;
 	u_char lo, hi;
+
+	if (clock_broken_latch)
+		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
 	ef = read_eflags();
@@ -347,14 +475,13 @@ delay(n)
 		 * code so we can take advantage of the intermediate 64-bit
 		 * quantity to prevent loss of significance.
 		 */
-		register int m;
+		int m;
 		__asm __volatile("mul %3"
 				 : "=a" (n), "=d" (m)
 				 : "0" (n), "r" (TIMER_FREQ));
-		__asm __volatile("div %3"
-				 : "=a" (n)
-				 : "0" (n), "d" (m), "r" (1000000)
-				 : "%edx");
+		__asm __volatile("div %4"
+				 : "=a" (n), "=d" (m)
+				 : "0" (n), "1" (m), "r" (1000000));
 #else
 		/*
 		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
@@ -370,11 +497,32 @@ delay(n)
 	}
 
 	while (n > 0) {
+#ifdef CLOCK_PARANOIA
+		int delta;
+		tick = gettick();
+		if (tick > otick)
+			delta = rtclock_tval - (tick - otick);
+		else
+			delta = otick - tick;
+		if (delta < 0 || delta >= rtclock_tval / 2) {
+			DPRINTF(("delay: ignore ticks %.4x-%.4x",
+				 otick, tick));
+			if (clock_broken_latch) {
+				DPRINTF(("  (%.4x %.4x %.4x %.4x %.4x %.4x)\n",
+				         ticks[0], ticks[1], ticks[2],
+				         ticks[3], ticks[4], ticks[5]));
+			} else {
+				DPRINTF(("\n"));
+			}
+		} else
+			n -= delta;
+#else
 		tick = gettick();
 		if (tick > otick)
 			n -= rtclock_tval - (tick - otick);
 		else
 			n -= otick - tick;
+#endif
 		otick = tick;
 	}
 }

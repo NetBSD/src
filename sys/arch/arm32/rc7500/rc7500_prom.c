@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_prom.c,v 1.2 1997/10/14 10:49:53 mark Exp $	*/
+/*	$NetBSD: rc7500_prom.c,v 1.2.16.1 2000/11/20 20:04:06 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -35,7 +35,7 @@
 void promcnputc __P((dev_t, int));
 int promcngetc __P((dev_t));
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
-			    nullcnpollc, makedev(23,0), 1 };
+			    nullcnpollc, NULL, makedev(23,0), 1 };
 
 void
 init_prom_interface()

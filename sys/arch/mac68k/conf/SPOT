@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.38 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: SPOT,v 1.38.2.1 2000/11/20 20:12:14 bouyer Exp $
 #
 # GENERIC
 
@@ -104,6 +104,16 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Warning, these may compile large string tables into the kernel!
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
+
+# rcons options; note that 1-bit and 8-bit displays are supported by default.
+#options 	RCONS_2BPP		# Support for 2-bit display
+#options 	RCONS_4BPP		# Support for 4-bit display
+#options 	RCONS_16BPP		# Support for 16-bit display
+
 # Mac-specific options
 #options 	ZS_CONSOLE_ABORT
 #options 	DISABLE_EXT_CACHE # Don't use IIci external cache
@@ -136,19 +146,21 @@ nubus0 at mainbus?
 # Apple Desktop Bus interface
 adb0	at obio?
 aed*	at adb?				# ADB event device
-kbd*	at adb?				# ADB keyboard
-ms*	at adb?				# ADB mouse
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
 
 # Basic frame buffer support
 #intvid0	at obio?			# Internal video hardware
 macvid*	at nubus?			# NuBus video card
 
 # Device-independent frame buffer interface
-#grf*	at intvid?
-grf*	at macvid?
+#macfb*	at intvid?
+macfb*	at macvid?
 
-# Integrated Terminal Emulator (console) support
-ite0	at grf?
+# Workstation Console devices
+wsdisplay0 at macfb? console ?
+wskbd0	at akbd? console ?
+wsmouse0 at ams?
 
 
 # Serial Devices
@@ -213,7 +225,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
 # rnd is EXPERIMENTAL at this point.

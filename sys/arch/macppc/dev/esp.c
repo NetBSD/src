@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.9 1998/11/19 21:46:41 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.9.10.1 2000/11/20 20:12:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <vm/vm_param.h>	/* for trunc_page */
+#include <uvm/uvm_param.h>	/* for trunc_page */
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -114,13 +114,6 @@ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -251,16 +244,13 @@ espattach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* and the interuppts */
-	intr_establish(esc->sc_pri, IST_LEVEL, IPL_BIO, (void *)ncr53c9x_intr,
-	    sc);
+	intr_establish(esc->sc_pri, IST_LEVEL, IPL_BIO, ncr53c9x_intr, sc);
 
 	/* Reset SCSI bus when halt. */
 	shutdownhook_establish(esp_shutdownhook, sc);
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;

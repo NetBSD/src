@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 1999/04/24 08:01:09 simonb Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3.2.1 2000/11/20 20:20:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _PMAX_BOOTINFO_H_
+#define _PMAX_BOOTINFO_H_
 
 #define BOOTINFO_MAGIC	0xb007babe
 #define BOOTINFO_SIZE	1024
@@ -69,5 +72,7 @@ struct btinfo_symtab {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void	*lookup_bootinfo __P((int));
 #endif
+
+#endif	/* !_PMAX_BOOTINFO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.31.2.1 2000/11/20 20:04:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -63,7 +63,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/signal.h>
@@ -80,7 +79,7 @@
 #include <machine/rtc.h>
 #include <arm32/iomd/iomdreg.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #ifdef HYDRA
 #include "hydrabus.h"
 #endif	/* HYDRA */
@@ -96,7 +95,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#if NIPKDB > 0
+#ifdef IPKDB
 #define UND_STACK_SIZE	2
 #else
 #define UND_STACK_SIZE	1
@@ -645,7 +644,7 @@ initarm(bootconf)
 
 	/*
 	 * Since we have mapped the VRAM up into kernel space we must
-	 * now update the the bootconfig and display structures by hand.
+	 * now update the bootconfig and display structures by hand.
 	 */
 	if (bootconfig.vram[0].pages != 0) {
 		bootconfig.display_start = VMEM_VBASE;
@@ -730,7 +729,7 @@ initarm(bootconf)
 	/*
 	 * Right We have the bottom meg of memory mapped to 0x00000000
 	 * so was can get at it. The kernel will ocupy the start of it.
-	 * After the kernel/args we allocate some the the fixed page tables
+	 * After the kernel/args we allocate some of the fixed page tables
 	 * we need to get the system going.
 	 * We allocate one page directory and 8 page tables and store the
 	 * physical addresses in the kernel_pt_table array.	
@@ -1130,7 +1129,7 @@ initarm(bootconf)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)

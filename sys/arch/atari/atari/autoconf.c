@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.2.1 2000/11/20 20:05:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -42,10 +42,13 @@
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
 
-static void findroot __P((struct device **, int *));
+static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
+
+struct device *booted_device;
+int booted_partition;
 
 int atari_realconfig;
 #include <sys/kernel.h>
@@ -67,10 +70,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 	setroot(booted_device, booted_partition);
 }
 
@@ -132,6 +132,14 @@ config_console()
 	cf = config_rootsearch(NULL, "mainbus", "mainbus");
 	if (cf == NULL)
 		panic("no mainbus");
+
+	/*
+	 * Note: The order of the 'atari_config_found()' calls is
+	 * important! On the Hades, the 'pci-side' of the config does
+	 * some setup for the 'grf-side'. This make it possible to use
+	 * a PCI card for both wscons and grfabs.
+	 */
+	atari_config_found(cf, NULL, "pcibus", NULL);
 	atari_config_found(cf, NULL, "grfbus", NULL);
 }
 
@@ -178,22 +186,12 @@ struct cfdriver *genericconf[] = {
 };
 
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-
-	/* Always partition `a'. */
-	*partp = 0;
 
 	if (boothowto & RB_ASKNAME)
 		return;		/* Don't bother looking */
@@ -231,9 +229,9 @@ findroot(devpp, partp)
 			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 			
-			pp = &dkp->dk_label->d_partitions[*partp];
+			pp = &dkp->dk_label->d_partitions[booted_partition];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
-				*devpp = devs[unit];
+				booted_device = devs[unit];
 				return;
 			}
 		}

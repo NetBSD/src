@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.87 1999/09/17 20:07:20 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.87.2.1 2000/11/20 20:33:25 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -46,11 +46,9 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,38 +63,16 @@
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
-#include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#include "ppp.h"	/* For NERISR_PPP */
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
+#include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>
 
 #include <machine/sid.h>
 #include <machine/pte.h>
@@ -107,6 +83,7 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 #include <machine/db_machdep.h>
+#include <machine/scb.h>
 #include <vax/vax/gencons.h>
 
 #ifdef DDB
@@ -121,7 +98,6 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
-int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
@@ -140,14 +116,16 @@ vm_map_t phys_map = NULL;
 int iospace_inited = 0;
 #endif
 
+struct softintr_head softnet_head = { IPL_SOFTNET };
+struct softintr_head softserial_head = { IPL_SOFTSERIAL };
+
 void
 cpu_startup()
 {
 	caddr_t		v;
-	extern char	version[];
 	int		base, residual, i, sz;
-	vm_offset_t	minaddr, maxaddr;
-	vm_size_t	size;
+	vaddr_t		minaddr, maxaddr;
+	vsize_t		size;
 	extern unsigned int avail_end;
 	char pbuf[9];
 
@@ -166,12 +144,9 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), avail_end);
 	printf("total memory = %s\n", pbuf);
-	physmem = btoc(avail_end);
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
-
-	dumpsize = physmem + 1;
 
 	/*
 	 * Find out how much space we need, allocate it, and then give
@@ -190,13 +165,13 @@ cpu_startup()
 	size = MAXBSIZE * nbuf;		/* # bytes for buffers */
 
 	/* allocate VM for buffers... area is not managed by VM system */
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");
 
-	minaddr = (vm_offset_t) buffers;
+	minaddr = (vaddr_t) buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -205,8 +180,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	/* now allocate RAM for buffers */
 	for (i = 0 ; i < nbuf ; i++) {
-		vm_offset_t curbuf;
-		vm_size_t curbufsize;
+		vaddr_t curbuf;
+		vsize_t curbufsize;
 		struct vm_page *pg;
 
 		/*
@@ -216,8 +191,8 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space, but has no
 		 * physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+		curbuf = (vaddr_t) buffers + i * MAXBSIZE;
+		curbufsize = NBPG * (i < residual ? base + 1 : base);
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
@@ -225,38 +200,30 @@ cpu_startup()
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += CLBYTES;
-			curbufsize -= CLBYTES;
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			curbuf += NBPG;
+			curbufsize -= NBPG;
 		}
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively limits
 	 * the number of processes exec'ing at any time.
+	 * At most one process with the full length is allowed.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-#if VAX410 || VAX43
 	/*
-	 * Allocate a submap for physio
+	 * Allocate a submap for physio.  This map effectively limits the
+	 * number of processes doing physio at any one time.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
-#endif
-	/*
-	 * Initialize callouts
-	 */
-
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i - 1].c_next = &callout[i];
-	callout[i - 1].c_next = NULL;
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -286,11 +253,11 @@ cpu_dumpconf()
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?) in case the dump
+	 * Don't dump on the first NBPG (why NBPG?) in case the dump
 	 * device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(NBPG))
+		dumplo = btodb(NBPG);
 }
 
 int
@@ -308,14 +275,11 @@ void
 setstatclockrate(hzrate)
 	int hzrate;
 {
-	panic("setstatclockrate");
 }
 
 void
 consinit()
 {
-	extern int smgprobe(void), smgcninit(void);
-
 	/*
 	 * Init I/O memory resource map. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
@@ -324,20 +288,12 @@ consinit()
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
-
 	cninit();
-#if NSMG
-	/* XXX - do this probe after everything else due to wscons trouble */
-	if (smgprobe())
-		smgcninit();
-#endif
 #ifdef DDB
 	{
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-//		extern void ksym_init(int *, int *);
-//		ksym_init(&end, esym);
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef DEBUG
@@ -367,6 +323,8 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	scf = p->p_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
+	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+		return EINVAL;
 
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
@@ -406,6 +364,8 @@ sys___sigreturn14(p, v, retval)
 	scf = p->p_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
 
+	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
+		return EINVAL;
 	/* Compatibility mode? */
 	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
 	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
@@ -475,6 +435,7 @@ sendsig(catcher, sig, mask, code)
 
 	gtrampf.arg = (int) sigctx;
 	gtrampf.pc = (unsigned) catcher;
+	/* r0..r5 are saved by the popr in the sigcode snippet */
 	gtrampf.scp = (int) sigctx;
 	gtrampf.code = code;
 	gtrampf.sig = sig;
@@ -523,6 +484,7 @@ cpu_reboot(howto, b)
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
+		doshutdownhooks();
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
@@ -585,7 +547,6 @@ void
 dumpsys()
 {
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -654,7 +615,8 @@ process_write_regs(p, regs)
 	tf->fp = regs->fp;
 	tf->sp = regs->sp;
 	tf->pc = regs->pc;
-	tf->psl = regs->psl;
+	tf->psl = (regs->psl|PSL_U|PSL_PREVU) &
+	    ~(PSL_MBZ|PSL_IS|PSL_IPL1F|PSL_CM); /* Allow compat mode? */
 	return 0;
 }
 
@@ -767,3 +729,48 @@ vax_unmap_physmem(addr, size)
 	else
 		rmfree(iomap, size, pageno);
 }
+
+void *
+softintr_establish(int ipl, void (*func)(void *), void *arg)
+{
+	struct softintr_handler *sh;
+	struct softintr_head *shd;
+
+	switch (ipl) {
+	case IPL_SOFTNET: shd = &softnet_head; break;
+	case IPL_SOFTSERIAL: shd = &softserial_head; break;
+	default: panic("softintr_establish: unsupported soft IPL");
+	}
+
+	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
+	if (sh == NULL)
+		return NULL;
+
+	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
+	sh->sh_head = shd;
+	sh->sh_pending = 0;
+	sh->sh_func = func;
+	sh->sh_arg = arg;
+
+	return sh;
+}
+
+void
+softintr_disestablish(void *arg)
+{
+	struct softintr_handler *sh = arg;
+	LIST_REMOVE(sh, sh_link);
+	free(sh, M_SOFTINTR);
+}
+
+#include <dev/bi/bivar.h>
+/*
+ * This should be somewhere else.
+ */
+void
+bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg, 
+	struct evcnt *ev) 
+{  
+	scb_vecalloc(vec, func, arg, SCB_ISTACK, ev);
+}
+

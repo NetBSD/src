@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.10 1998/10/18 18:51:30 ragge Exp $ */
+/*	$NetBSD: ubareg.h,v 1.10.12.1 2000/11/20 20:33:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -51,6 +51,18 @@
  * Definition of a type includes support code for that type.
  */
 
+#ifdef _KERNEL
+#include "opt_vax8200.h"
+#include "opt_vax8600.h"
+#include "opt_vax780.h"
+#include "opt_vax750.h"
+#include "opt_vax730.h"
+#include "opt_vax630.h"
+#include "opt_vax650.h"
+#include "opt_vax660.h"
+#include "opt_vax670.h"
+#endif
+
 #if VAX780 || VAX8600
 #define DW780	1		/* has adaptor regs, sr: 780/785/8600 */
 #else
@@ -66,7 +78,7 @@
 #define DW730	3		/* has adaptor regs, no sr: 750, 730 */
 #endif
 
-#if VAX630 || VAX650
+#if VAX630 || VAX650 || VAX660 || VAX670
 #define QBA	4		/* 22-bit Q-bus, no adaptor regs: uVAX II */
 #endif
 

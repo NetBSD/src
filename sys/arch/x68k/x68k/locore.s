@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1999/09/23 15:24:34 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.50.2.1 2000/11/20 20:30:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,8 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
+#include "opt_fpsp.h"
+#include "opt_lockdebug.h"
 
 #include "ite.h"
 #include "fd.h"
@@ -154,14 +156,14 @@ Lberr2:
 	movw	d0,sp@			| save (ONLY LOW 16 BITS!)
 	jra	Lismerr
 #endif
-_addrerr:
+ENTRY_NOPROFILE(addrerr)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lbenot040		| no, skip
 	movl	a1@(8),sp@-		| yes, push fault address
 	clrl	sp@-			| no SSW for address fault
@@ -388,9 +390,17 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
+
+	| Check PSW and see what happen.
+	|   T=0 S=0	(should not happen)
+	|   T=1 S=0	trace trap from user mode
+	|   T=0 S=1	trace trap on a trap instruction
+	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
+
 	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
+	notw	d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	jeq	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
@@ -506,40 +516,6 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 ENTRY_NOPROFILE(kbdtimer)
 	rte
 
-ENTRY_NOPROFILE(audiotrap)
-#if 0
-#if NADPCM > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(audiointr)
-	INTERRUPT_RESTOREREG
-#endif
-#endif
-	addql	#1,_C_LABEL(intrcnt)+44
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
-ENTRY_NOPROFILE(partrap)
-#if NPAR > 0
-	INTERRUPT_SAVEREG
-	movel	#1,sp@-
-	jbsr	_C_LABEL(parintr)
-	addql	#4,sp
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+48
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
-ENTRY_NOPROFILE(audioerrtrap)
-#if NADPCM > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(audioerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+32
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
 ENTRY_NOPROFILE(powtrap)
 #include "pow.h"
 #if NPOW > 0
@@ -547,7 +523,7 @@ ENTRY_NOPROFILE(powtrap)
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+	addql	#1,_C_LABEL(intrcnt)+48
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -560,7 +536,7 @@ ENTRY_NOPROFILE(com0trap)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+52
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -572,7 +548,7 @@ ENTRY_NOPROFILE(com1trap)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+52
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -609,17 +585,12 @@ Lnotdma:
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(timertrap)
-	movw	#SPL4,sr		| XXX?
 	moveml	#0xC0C0,sp@-		| save scratch registers
 	addql	#1,_C_LABEL(intrcnt)+36	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,sp
-#include "ms.h"
-#if NMS > 0
-	jbsr	_C_LABEL(ms_modem)
-#endif
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	moveml	sp@+,#0x0303		| restore scratch registers
 	jra	_ASM_LABEL(rei)		| all done
@@ -809,24 +780,18 @@ Lnot68030:
 	movl	#MMU_68040,a0@		| with a 68040 compatible MMU 
 	RELOC(cputype, a0)
 	movl	#CPU_68060,a0@		| and a 68060 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68060,a0@		| and a 68060 FPU
 	jra	Lstart1
 Lis68040:
 	RELOC(mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(cputype, a0)
 	movl	#CPU_68040,a0@		| and a 68040 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68040,a0@		| and a 68040 FPU
 	jra	Lstart1
 Lis68020:
 	RELOC(mmutype, a0)
 	movl	#MMU_68851,a0@		| we have PMMU
 	RELOC(cputype, a0)
 	movl	#CPU_68020,a0@		| and a 68020 CPU
-	RELOC(fputype, a0)
-	movl	#FPU_68881,a0@		| and a 68881 FPU
 
 Lstart1:
 /* initialize source/destination control registers for movs */
@@ -947,6 +912,9 @@ Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
 	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	d0,_C_LABEL(fputype)
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -1043,6 +1011,8 @@ ASBSS(nullpcb,SIZEOF_PCB)
  * At exit of a process, do a switch for the last time.
  * Switch to a safe stack and PCB, and select a new process to run.  The
  * old stack and u-area will be freed by the reaper.
+ *
+ * MUST BE CALLED AT SPLHIGH!
  */
 ENTRY(switch_exit)
 	movl	sp@(4),a0
@@ -1055,6 +1025,11 @@ ENTRY(switch_exit)
 	jbsr	_C_LABEL(exit2)
 	lea	sp@(4),sp		| pop args
 
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */ 
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	jra	_C_LABEL(cpu_switch)
 
 /*
@@ -1062,9 +1037,25 @@ ENTRY(switch_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	 _C_LABEL(sched_unlock_idle)
+#endif
+	movw	#PSL_LOWIPL,%sr
+
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
+	jeq	1f
+	jbsr	_C_LABEL(uvm_pageidlezero)
+	jra	2f
+1:
 	stop	#PSL_LOWIPL
-	movw	#PSL_HIGHIPL,sr
-	movl	_C_LABEL(whichqs),d0
+2:	movw	#PSL_HIGHIPL,sr
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),%d0
 	jeq	_ASM_LABEL(Idle)
 	jra	Lsw1
 
@@ -1095,10 +1086,14 @@ ENTRY(cpu_switch)
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	_C_LABEL(whichqs),d0
+	movl	_C_LABEL(sched_whichqs),d0
 	jeq	_ASM_LABEL(Idle)
 Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
 	movl	d0,d1
 	negl	d0
 	andl	d1,d0
@@ -1107,20 +1102,28 @@ Lsw1:
 
 	movl	d1,d0
 	lslb	#3,d1			| convert queue number to index
-	addl	#_C_LABEL(qs),d1	| locate queue (q)
+	addl	#_C_LABEL(sched_qs),d1	| locate queue (q)
 	movl	d1,a1
 	movl	a1@(P_FORW),a0		| p = q->p_forw
 	cmpal	d1,a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
+#ifdef DIAGNOSTIC
+	tstl	a0@(P_WCHAN)
+	jne	Lbadsw
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lbadsw
+#endif
 	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
 	movl	a0@(P_FORW),a1		| n = p->p_forw
 	movl	d1,a1@(P_BACK)		| n->p_back = q
 	cmpal	d1,a1			| anyone left on queue?
 	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(whichqs),d1
+	movl	_C_LABEL(sched_whichqs),d1
 	bclr	d0,d1			| no, clear bit
-	movl	d1,_C_LABEL(whichqs)
+	movl	d1,_C_LABEL(sched_whichqs)
 Lsw2:
+	/* p->p_cpu initialized in fork1() for single-processor */
+	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
@@ -1164,16 +1167,22 @@ Lsavfp60:
 #endif
 Lswnofpsave:
 
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lbadsw
-#endif
 	clrl	a0@(P_BACK)		| clear back link
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Activate process's address space.
@@ -1296,241 +1305,6 @@ Lslerr:
 Lsldone:
 	movl	_C_LABEL(curpcb),a1	| current pcb
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
-	rts
-#endif
-
-#if 0
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu3		| no, skip
-	.word	0xf518			| yes, pflusha
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiano60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbiano60:
-#endif
-	rts
-Lmotommu3:
-#endif
-	pflusha				| flush entire TLB
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851a		| 68851 implies no d-cache
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-Lmc68851a:
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu4		| no, skip
-	movl	sp@(4),a0
-	movc	dfc,d1
-	moveq	#FC_USERD,d0		| user space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	moveq	#FC_SUPERD,d0		| supervisor space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	movc	d1,dfc
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbisno60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbisno60:
-#endif
-	rts
-Lmotommu4:
-#endif
-	movl	sp@(4),a0		| get addr to flush
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851b		| is 68851?
-	pflush	#0,#0,a0@		| flush address from both sides
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,a0@		| flush address from both sides
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu5		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiasno60
-	movc	cacr,d0
-	orl	#IC60_CABC,d0		| clear all branch cache entries
-	movc	d0,cacr
-Ltbiasno60:
-#endif
-	rts
-Lmotommu5:
-#endif
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851c		| 68851?
-	pflush #4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			| flush supervisor TLB entries
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lmotommu6		| no, skip
-	.word	0xf518			| yes, pflusha (for now) XXX
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiauno60
-	movc	cacr,d0
-	orl	#IC60_CUBC,d0		| clear user branch cache entries
-	movc	d0,cacr
-Ltbiauno60:
-#endif
-	rts
-Lmotommu6:
-#endif
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851d		| 68851?
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4			| flush user TLB entries
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-#if defined(M68040) || defined(M68060)
-ENTRY(ICPA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu7		| no, skip
-	.word	0xf498			| cinva ic
-	rts
-Lmotommu7:
-#endif
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate i-cache
-	rts
-
-/*
- * Invalidate data cache.
- * HP external cache allows for invalidation of user/supervisor portions.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu8		| no, skip
-	/* XXX implement */
-Lmotommu8:
-#endif
-	rts
-
-ENTRY(DCIS)
-_C_LABEL(_DCIS):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	Lmotommu9		| no, skip
-	/* XXX implement */
-Lmotommu9:
-#endif
-	rts
-
-ENTRY(DCIU)
-_C_LABEL(_DCIU):
-#if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	LmotommuA		| no, skip
-	/* XXX implement */
-LmotommuA:
-#endif
-	rts
-
-#if defined(M68040) || defined(M68060)
-ENTRY(ICPL)
-	movl	sp@(4),a0		| address
-	.word	0xf488			| cinvl ic,a0@
-	rts
-ENTRY(ICPP)
-	movl	sp@(4),a0		| address
-	.word	0xf490			| cinvp ic,a0@
-	rts
-ENTRY(DCPL)
-	movl	sp@(4),a0		| address
-	.word	0xf448			| cinvl dc,a0@
-	rts
-ENTRY(DCPP)
-	movl	sp@(4),a0		| address
-	.word	0xf450			| cinvp dc,a0@
-	rts
-ENTRY(DCPA)
-	.word	0xf458			| cinva dc
-	rts
-ENTRY(DCFL)
-	movl	sp@(4),a0		| address
-	.word	0xf468			| cpushl dc,a0@
-	rts
-ENTRY(DCFP)
-	movl	sp@(4),a0		| address
-	.word	0xf470			| cpushp dc,a0@
-	rts
-#endif
-
-ENTRY(PCIA)
-#if defined(M68040) || defined(M68060)
-ENTRY(DCFA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jne	LmotommuB		| no, skip
-	.word	0xf478			| cpusha dc
-	rts
-LmotommuB:
-#endif
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 #endif
 
@@ -1790,7 +1564,6 @@ GLOBAL(intrnames)
 	.asciz	"clock"
 	.asciz	"scsi"
 	.asciz	"audio"
-	.asciz	"ppi"
 	.asciz	"pow"
 	.asciz	"com"
 	.space	200

@@ -1,0 +1,6 @@
+$NetBSD: xiodevs,v 1.1.6.2 2000/11/20 20:23:49 bouyer Exp $
+
+00000000 xbow
+c0010036 heart
+c0020036 pci
+c00302aa mgras

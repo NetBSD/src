@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.19 1999/07/26 05:20:47 cgd Exp $
+#	$NetBSD: Makefile.newsmips,v 1.19.2.1 2000/11/20 20:17:18 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -41,21 +41,25 @@ COPTS?=	-O2
 #S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-NEWS=	$S/arch/newsmips
+NEWSMIPS=	$S/arch/newsmips
 MIPS=	$S/arch/mips
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dnewsmips
 CWARNFLAGS?=	-Werror -Wall -Wno-parentheses -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G0
+GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ../../conf/kern.ldscript
+LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} \
+		-T ${MIPS}/conf/kern.ldscript.be
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
@@ -171,12 +175,12 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${NEWS}/newsmips/locore_machdep.S \
+	${NEWSMIPS}/newsmips/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWSMIPS}/newsmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -185,6 +189,8 @@ depend: .depend
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration
@@ -212,7 +218,19 @@ locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${NEWS}/newsmips/locore_machdep.S assym.h
+locore_machdep.o: ${NEWSMIPS}/newsmips/locore_machdep.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.7 1999/06/12 12:49:24 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7.2.1 2000/11/20 20:25:48 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,15 +10,16 @@ SRCS=		${COMMONSOURCE} ${PROGSOURCE}
 MKMAN=		no
 BINMODE=	444
 
-RELOC_SUN4=	0x240000
-RELOC_SUN4C=	0x340000
-RELOC_SUN4M=	0x440000
+# Note: relocating `boot' at 0x3C8000 seems to work on most machines
+RELOC_DEFAULT?=	3C8000
+RELOCS=		$(RELOC_DEFAULT)
+#RELOCS+=	200000 400000 700000		# additional link addresses
 
-# Note: a `RELOC' value of 0x340000 seems to work on most machines
-RELOC?=		${RELOC_SUN4C}
+# `bootxx' is linked at a different address to circumvent i-cache
+# flushing issues on Hypersparcs
+RELOC_BOOTXX=	300000
 
-CPPFLAGS+=	-D_STANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS\
-		-DHEAP_VARIABLE
+CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O2
@@ -42,5 +43,9 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.NOPATH: machine
+CLEANFILES+= machine
+.endif

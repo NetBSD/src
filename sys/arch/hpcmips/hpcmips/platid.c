@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.1.1.1 1999/09/16 12:23:21 takemura Exp $	*/
+/*	$NetBSD: platid.c,v 1.1.1.1.2.1 2000/11/20 20:46:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -82,13 +82,17 @@ platid_match(platid_t *platid, platid_mask_t *mask)
 int
 platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 {
+	int match_count;
+
 #define PLATID_MATCH(mbr) \
 	if (platid->s.mbr != mask->s.mbr && \
 	    mask->s.mbr != platid_wild.s.mbr && \
 	    !(platid->s.mbr == platid_unknown.s.mbr && unknown_is_match)) { \
 		return (0); \
-	}
+	} else if (platid->s.mbr == mask->s.mbr) \
+		match_count++;
 
+	match_count = 1;
 	PLATID_MATCH(cpu_submodel);
 	PLATID_MATCH(cpu_model);
 	PLATID_MATCH(cpu_series);
@@ -99,7 +103,28 @@ platid_match_sub(platid_t *platid, platid_mask_t *mask, int unknown_is_match)
 	PLATID_MATCH(series);
 	PLATID_MATCH(vendor);
 
-	return (1);
+	return (match_count);
 
 #undef PLATID_MATCH
+}
+
+char*
+platid_name(platid_t *platid)
+{
+	int match_level;
+	struct platid_name *p, *match, *pe;
+
+	match_level = 0;
+	pe = &platid_name_table[platid_name_table_size];
+	for (p = platid_name_table; p < pe; p++) {
+		int res = platid_match(platid, p->mask);
+		if (match_level < res) {
+			match = p;
+			match_level = res;
+		}
+	}
+	if (0 < match_level)
+		return (match->name);
+	else
+		return ("UNKNOWN");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.136 1999/07/26 19:31:54 wrstuden Exp $	*/
+/*	$NetBSD: pccons.c,v 1.136.2.1 2000/11/20 20:09:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
 #include "pc.h"
 #if (NPCCONSKBD > 0)
 #include <machine/bus.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/pckbcvar.h>
 #else
 /* consistency check: plain pccons can't coexist with pckbc */
 #include "pckbc.h"
@@ -198,6 +198,8 @@ struct pc_softc {
 	void	*sc_ih;
 	struct	tty *sc_tty;
 };
+
+static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
 int pcprobe __P((struct device *, struct cfdata *, void *));
 void pcattach __P((struct device *, struct device *, void *));
@@ -529,13 +531,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, NULL);
+			callout_stop(&async_update_ch);
 		do_async_update((void *)1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, NULL, 1);
+		callout_reset(&async_update_ch, 1, do_async_update, NULL);
 	}
 }
 
@@ -728,7 +730,7 @@ pcattach(parent, self, aux)
 	do_async_update((void *)1);
 
 #if (NPCCONSKBD > 0)
-	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc);
+	pckbc_set_inputhandler(kbctag, kbcslot, pcinput, sc, sc->sc_dev.dv_xname);
 #else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pcintr, sc);
@@ -1050,7 +1052,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -1077,7 +1079,8 @@ int
 pccnattach()
 {
 	static struct consdev pccons = {
-		NULL, NULL, pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL
+		NULL, NULL, pccngetc, pccnputc, pccnpollc,
+		    NULL, NODEV, CN_NORMAL
 	};
 
 	cn_tab = &pccons;
@@ -1209,6 +1212,9 @@ pcinit()
 	cursorat = inb(addr_6845+1) << 8;
 	outb(addr_6845, 15);
 	cursorat |= inb(addr_6845+1);
+
+	if (cursorat > COL * ROW)
+		cursorat = 0;
 
 #ifdef FAT_CURSOR
 	cursor_shape = 0x0012;
@@ -2620,14 +2626,14 @@ strans(dt)
 	return (0);
 }
 
-int
+paddr_t
 pcmmap(dev, offset, nprot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 
-	if ((unsigned int)offset > 0x20000)
+	if (offset > 0x20000)
 		return (-1);
 	return (i386_btop(0xa0000 + offset));
 }

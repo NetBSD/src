@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 1999/01/31 09:21:19 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.7.8.1 2000/11/20 20:26:47 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -33,8 +33,8 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
+#include <uvm/uvm_extern.h>
 
-#include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -45,18 +45,20 @@
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
-#if 1
-typedef struct {
-	struct trapframe ddb_tf;
-	struct frame64	 ddb_fr;
-} db_regs_t;
-#else
-struct trapregs {
-	int64_t	tt;
+struct trapstate {
 	int64_t tstate;
 	int64_t tpc;
 	int64_t	tnpc;
+	int64_t	tt;
 };
+#if 1
+typedef struct {
+	struct trapframe64	ddb_tf;
+	struct frame64		ddb_fr;
+	struct trapstate	ddb_ts[5];
+	int			ddb_tl;
+} db_regs_t;
+#else
 typedef struct db_regs {
 	struct trapregs dbr_traps[4];
 	int		dbr_y;
@@ -96,23 +98,44 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	db_clear_single_step(regs)	(void) (0)
-#define	db_set_single_step(regs)	(void) (0)
-
 #define	IS_BREAKPOINT_TRAP(type, code)	\
 	((type) == T_BREAKPOINT || (type) == T_KGDB_EXEC)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define IS_WATCHPOINT_TRAP(type, code)	\
+	((type) ==T_PA_WATCHPT || (type) == T_VA_WATCHPT)
 
-#define	inst_trap_return(ins)	((ins)&0)
-#define	inst_return(ins)	((ins)&0)
-#define	inst_call(ins)		((ins)&0)
-#define inst_load(ins)		0
-#define inst_store(ins)		0
+/*
+ * Sparc cpus have no hardware single-step.
+ */
+#define SOFTWARE_SSTEP
+
+boolean_t	db_inst_trap_return __P((int inst));
+boolean_t	db_inst_return __P((int inst));
+boolean_t	db_inst_call __P((int inst));
+boolean_t	db_inst_branch __P((int inst));
+int		db_inst_load __P((int inst));
+int		db_inst_store __P((int inst));
+boolean_t	db_inst_unconditional_flow_transfer __P((int inst));
+db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
+
+#define inst_trap_return(ins)	db_inst_trap_return(ins)
+#define inst_return(ins)	db_inst_return(ins)
+#define inst_call(ins)		db_inst_call(ins)
+#define inst_branch(ins)	db_inst_branch(ins)
+#define inst_load(ins)		db_inst_load(ins)
+#define inst_store(ins)		db_inst_store(ins)
+#define	inst_unconditional_flow_transfer(ins) \
+				db_inst_unconditional_flow_transfer(ins)
+#define branch_taken(ins, pc, regs) \
+				db_branch_taken((ins), (pc), (regs))
+
+/* see note in db_interface.c about reversed breakpoint addrs */
+#define next_instr_address(pc, bd) \
+	((bd) ? (pc) : ddb_regs.ddb_tf.tf_npc)
 
 #define DB_MACHINE_COMMANDS
 
 void db_machine_init __P((void));
-int kdb_trap __P((int, struct trapframe *));
+int kdb_trap __P((int, struct trapframe64 *));
 
 /*
  * We will use elf symbols in DDB when they work.

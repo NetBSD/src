@@ -6,3 +6,6 @@
 #define PLATID_DEFINE_MASK_NICKNAME
 #include <machine/platid_mask.h>
 #undef PLATID_DEFINE_MASK_NICKNAME
+#define CONFIG_HOOK_DEFINE_NICKNAME
+#include <machine/config_hook.h>
+#undef CONFIG_HOOK_DEFINE_NICKNAME

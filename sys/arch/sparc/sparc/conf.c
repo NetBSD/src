@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61 1999/10/14 00:08:45 phil Exp $ */
+/*	$NetBSD: conf.c,v 1.61.2.1 2000/11/20 20:25:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@
 #include "cgfourteen.h"
 #include "pnozz.h"
 #include "fb.h"
+#include "tctrl.h"
 
 #include "xd.h"
 #include "xy.h"
@@ -134,7 +135,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKBD,kd), 	/* 1: Sun keyboard/display */
+	cdev_tty_init(1,kd), 		/* 1: PROM-based console (internal) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4 */
@@ -145,7 +146,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
-	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
 	cdev_mouse_init(NMS,ms),	/* 13: /dev/mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
@@ -204,7 +205,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
-	cdev_notdef(),			/* 71 */
+	cdev_tctrl_init(NTCTRL,tctrl),	/* 71: /dev/tctrl */
 	cdev_notdef(),			/* 72 */
 	cdev_notdef(),			/* 73 */
 	cdev_notdef(),			/* 74 */

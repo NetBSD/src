@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.1.1.1 1999/09/16 12:23:29 takemura Exp $	*/
+/*	$NetBSD: winblk.c,v 1.1.1.1.2.1 2000/11/20 20:47:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,11 +38,9 @@
 #define STANDALONE_WINDOWS_SIDE
 #include <stand.h>
 #include <winblk.h>
-
 #include <winioctl.h>
-#include <diskio.h>
-
 #include <sys/disklabel.h>
+#include "diskio.h"
 
 /*
  * BOOL
@@ -67,7 +65,7 @@
 struct winblk {
 	HANDLE	hDevice;
 	DISK_INFO di;
-	struct dos_partition mbr[NDOSPART];
+	struct mbr_partition mbr[NMBRPART];
 	struct disklabel dl;
 	char buf[BLKSZ];
 	int start;
@@ -85,7 +83,8 @@ winblkstrategy(devdata, flag, dblk, size, buf, rsize)
 	size_t         *rsize;
 {
 	struct winblk *ctx = (struct winblk*)devdata;
-	int nblks, error;
+	int error;
+	size_t nblks;
 
 	if (flag != F_READ)
 		return (EROFS);
@@ -210,25 +209,25 @@ winblkopen(struct open_file *f, ...)
 	/*
 	 *  read MBR
 	 */
-	if (error = rawread(ctx, DOSBBSECTOR, 1, ctx->buf)) {
+	if (error = rawread(ctx, MBR_BBSECTOR, 1, ctx->buf)) {
 		goto end;
 	}
-	memcpy(&ctx->mbr, &ctx->buf[DOSPARTOFF], sizeof(ctx->mbr));
+	memcpy(&ctx->mbr, &ctx->buf[MBR_PARTOFF], sizeof(ctx->mbr));
 
-	for (i = 0; i < NDOSPART; i++) {
+	for (i = 0; i < NMBRPART; i++) {
 	        DEBUG_PRINTF((TEXT("%d: type=%d %d(%d) (%d:%d:%d - %d:%d:%d)")
 			      TEXT(" flag=0x%02x\n"),
 			      i,
-			      ctx->mbr[i].dp_typ,
-			      ctx->mbr[i].dp_start,
-			      ctx->mbr[i].dp_size,
-			      ctx->mbr[i].dp_scyl,
-			      ctx->mbr[i].dp_shd,
-			      ctx->mbr[i].dp_ssect,
-			      ctx->mbr[i].dp_ecyl,
-			      ctx->mbr[i].dp_ehd,
-			      ctx->mbr[i].dp_esect,
-			      ctx->mbr[i].dp_flag));
+			      ctx->mbr[i].mbrp_typ,
+			      ctx->mbr[i].mbrp_start,
+			      ctx->mbr[i].mbrp_size,
+			      ctx->mbr[i].mbrp_scyl,
+			      ctx->mbr[i].mbrp_shd,
+			      ctx->mbr[i].mbrp_ssect,
+			      ctx->mbr[i].mbrp_ecyl,
+			      ctx->mbr[i].mbrp_ehd,
+			      ctx->mbr[i].mbrp_esect,
+			      ctx->mbr[i].mbrp_flag));
 	}
 
 	/*
@@ -236,13 +235,13 @@ winblkopen(struct open_file *f, ...)
 	 */
 	ctx->start = -1;
 	start_386bsd = -1;
-	for (i = 0; i < NDOSPART; i++) {
-		if (ctx->mbr[i].dp_typ == DOSPTYP_NETBSD) {
-			ctx->start = ctx->mbr[i].dp_start;
+	for (i = 0; i < NMBRPART; i++) {
+		if (ctx->mbr[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+			ctx->start = ctx->mbr[i].mbrp_start;
 			break;
 		}
-		if (ctx->mbr[i].dp_typ == DOSPTYP_386BSD) {
-			start_386bsd = ctx->mbr[i].dp_start;
+		if (ctx->mbr[i].mbrp_typ == MBR_PTYPE_386BSD) {
+			start_386bsd = ctx->mbr[i].mbrp_start;
 		}
 	}
 	if (ctx->start == -1) {

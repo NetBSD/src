@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10 1999/09/30 23:01:12 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10.2.1 2000/11/20 20:15:18 bouyer Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -61,14 +61,13 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/pmap.h>
-#include <machine/pmap.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/dev/dmavar.h>
 #include <mvme68k/dev/sbicreg.h>
@@ -93,7 +92,7 @@
  */
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
-extern u_int kvtop();
+extern paddr_t kvtop __P((caddr_t));
 
 int     sbicicmd            __P((struct sbic_softc *, void *, int, void *, int));
 int     sbicgo              __P((struct sbic_softc *, struct scsipi_xfer *));
@@ -105,7 +104,6 @@ int     sbicxfout           __P((sbic_regmap_p, int, void *));
 int     sbicxfin            __P((sbic_regmap_p, int, void *));
 int     sbicfromscsiperiod  __P((struct sbic_softc *, int));
 int     sbictoscsiperiod    __P((struct sbic_softc *, int));
-int     sbicintr            __P((struct sbic_softc *));
 int     sbicpoll            __P((struct sbic_softc *));
 int     sbicnextstate       __P((struct sbic_softc *, u_char, u_char));
 int     sbicmsgin           __P((struct sbic_softc *));
@@ -260,7 +258,7 @@ sbic_save_ptrs(dev)
 
 #ifdef DEBUG
     if ( data_pointer_debug )
-        printf("save at (%x,%x):%x\n",
+        printf("save at (%p,%x):%x\n",
                dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count);
     sbicdma_saves++;
 #endif
@@ -317,11 +315,11 @@ sbic_load_ptrs(dev)
          * do kvm to pa mappings
          */
         vaddr = acb->sc_kv.dc_addr;
-        paddr = acb->sc_pa.dc_addr = (char *) kvtop(vaddr);
+        paddr = acb->sc_pa.dc_addr = (char *) kvtop((caddr_t)vaddr);
 
         for (count = (NBPG - ((int)vaddr & PGOFSET));
              count < acb->sc_kv.dc_count &&
-                     (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
+             (char*)kvtop((caddr_t)(vaddr + count + 4)) == paddr + count + 4;
              count += NBPG)
             ;   /* Do nothing */
 
@@ -344,7 +342,7 @@ sbic_load_ptrs(dev)
 
 #ifdef DEBUG
         if ( data_pointer_debug )
-            printf("DMA recalc:kv(%x,%x)pa(%x,%x)\n", acb->sc_kv.dc_addr,
+            printf("DMA recalc:kv(%p,%x)pa(%p,%lx)\n", acb->sc_kv.dc_addr,
                                                       acb->sc_kv.dc_count,
                                                       acb->sc_pa.dc_addr,
                                                       acb->sc_tcnt);
@@ -410,7 +408,7 @@ sbic_scsicmd(xs)
     acb->clen           = xs->cmdlen;
     acb->sc_kv.dc_addr  = xs->data;
     acb->sc_kv.dc_count = xs->datalen;
-    acb->pa_addr        = xs->data ? (char *)kvtop(xs->data) : 0;
+    acb->pa_addr        = xs->data ? (char *)kvtop((caddr_t)xs->data) : 0;
     bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
 
     if ( flags & XS_CTL_POLL ) {
@@ -539,7 +537,7 @@ sbic_sched(dev)
         stat = sbicicmd(dev, &acb->cmd, acb->clen,
                         acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
     else
-    if ( sbicgo(dev, xs) == 0 )
+    if ( sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT )
         return;
     else
         stat = dev->sc_stat[0];
@@ -607,7 +605,7 @@ sbic_scsidone(acb, stat)
             acb->clen           = sizeof(*ss);
             acb->sc_kv.dc_addr  = (char *)&xs->sense.scsi_sense;
             acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
-            acb->pa_addr        = (char *)kvtop(&xs->sense.scsi_sense); /* XXX check */
+            acb->pa_addr        = (char *)kvtop((caddr_t)&xs->sense.scsi_sense);
             acb->flags          = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
 
             TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
@@ -708,7 +706,8 @@ sbicdmaok(dev, xs)
     struct sbic_softc   *dev;
     struct scsipi_xfer    *xs;
 {
-    if ( sbic_no_dma || xs->datalen & 0x03 || (int)xs->data & 0x03)
+    if ( sbic_no_dma || xs->datalen == 0 ||
+    	 xs->datalen & 0x03 || (int)xs->data & 0x03)
         return(0);
 
     /*
@@ -850,6 +849,7 @@ sbicinit(dev)
         TAILQ_INIT(&dev->ready_list);
         TAILQ_INIT(&dev->nexus_list);
         TAILQ_INIT(&dev->free_list);
+	callout_init(&dev->sc_timo_ch);
 
         dev->sc_nexus = NULL;
         dev->sc_xs    = NULL;
@@ -868,7 +868,7 @@ sbicinit(dev)
         /*
          * make sure timeout is really not needed
          */
-        timeout((void *)sbictimeout, dev, 30 * hz);
+	callout_reset(&dev->sc_timo_ch, 30 * hz, (void *)sbictimeout, dev);
 #endif
 
     } else
@@ -1328,9 +1328,6 @@ sbicicmd(dev, cbuf, clen, buf, len)
     u_char          csr,
                     asr;
     int             still_busy = SBIC_STATE_RUNNING;
-#ifdef  DEBUG
-    int             counter = 0;
-#endif
 
     /*
      * Make sure pointers are OK
@@ -1604,9 +1601,9 @@ sbicgo(dev, xs)
     addr  = acb->sc_kv.dc_addr;
     count = acb->sc_kv.dc_count;
 
-    if ( count && ((char *)kvtop(addr) != acb->sc_pa.dc_addr) ) {
-        printf("sbic: DMA buffer mapping changed %x->%x\n",
-                acb->sc_pa.dc_addr, kvtop(addr));
+    if ( count && ((char *)kvtop((caddr_t)addr) != acb->sc_pa.dc_addr) ) {
+        printf("sbic: DMA buffer mapping changed %p->%lx\n",
+                acb->sc_pa.dc_addr, kvtop((caddr_t)addr));
 #ifdef DDB
         Debugger();
 #endif
@@ -1644,7 +1641,7 @@ sbicgo(dev, xs)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 ) {
-        printf("sbicgo dmago:%d(%x:%x) dmacmd=0x%02x\n", dev->target,
+        printf("sbicgo dmago:%d(%p:%lx) dmacmd=0x%02x\n", dev->target,
                                            dev->sc_cur->dc_addr,
                                            dev->sc_tcnt,
                                            dev->sc_dmacmd);
@@ -2170,7 +2167,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
             dev->sc_dmatimo = 0;
             if ( data_pointer_debug > 1 )
-                printf("next dmastop: %d(%x:%x)\n", dev->target,
+                printf("next dmastop: %d(%p:%lx)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2220,7 +2217,7 @@ sbicnextstate(dev, csr, asr)
 
 #ifdef DEBUG
                 if ( data_pointer_debug > 1 )
-                    printf("next PIO: %d(%x:%x)\n", dev->target,
+                    printf("next PIO: %d(%p:%x)\n", dev->target,
                                                     acb->sc_kv.dc_addr,
                                                     acb->sc_kv.dc_count);
 #endif
@@ -2263,7 +2260,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
                 dev->sc_dmatimo = 1;
                 if ( data_pointer_debug > 1 )
-                    printf("next DMA: %d(%x:%x)\n", dev->target,
+                    printf("next DMA: %d(%p:%lx)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2427,9 +2424,9 @@ sbicnextstate(dev, csr, asr)
                      */
                     GET_SBIC_csr(regs,csr);
 
-                    if ( csr == SBIC_CSR_MIS   | MESG_IN_PHASE ||
-                         csr == SBIC_CSR_MIS_1 | MESG_IN_PHASE ||
-                         csr == SBIC_CSR_MIS_2 | MESG_IN_PHASE ) {
+                    if ( csr == (SBIC_CSR_MIS   | MESG_IN_PHASE) ||
+                         csr == (SBIC_CSR_MIS_1 | MESG_IN_PHASE) ||
+                         csr == (SBIC_CSR_MIS_2 | MESG_IN_PHASE) ) {
                         /*
                          * Yup, gone to message in. Fetch the target LUN
                          */
@@ -2513,7 +2510,7 @@ sbicnextstate(dev, csr, asr)
             }
 
             if ( acb == NULL ) {
-                printf("%s: reselect %s targ %d not in nexus_list %x\n",
+                printf("%s: reselect %s targ %d not in nexus_list %p\n",
                         dev->sc_dev.dv_xname,
                         csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget,
                         &dev->nexus_list.tqh_first);
@@ -2540,7 +2537,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
             dev->sc_dmatimo = 0;
             if ( data_pointer_debug > 1 )
-                printf("next dmastop: %d(%x:%x)\n", dev->target,
+                printf("next dmastop: %d(%p:%lx)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2556,7 +2553,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
                 dev->sc_dmatimo = 0;
                 if ( data_pointer_debug > 1 )
-                    printf("next dmastop: %d(%x:%x)\n", dev->target,
+                    printf("next dmastop: %d(%p:%lx)\n", dev->target,
                                                         dev->sc_cur->dc_addr,
                                                         dev->sc_tcnt);
 #endif
@@ -2591,7 +2588,7 @@ sbiccheckdmap(bp, len, mask)
 
     while ( len ) {
 
-        phy_buf = kvtop(buffer);
+        phy_buf = kvtop((caddr_t)buffer);
         phy_len = NBPG - ((int) buffer & PGOFSET);
 
         if ( len < phy_len )
@@ -2700,6 +2697,6 @@ sbictimeout(dev)
 
     splx(s);
 
-    timeout((void *)sbictimeout, dev, 30 * hz);
+    callout_reset(&dev->sc_timo_ch, 30 * hz, (void *)sbictimeout, dev);
 }
 #endif

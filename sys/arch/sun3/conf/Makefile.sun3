@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.76 1999/07/26 05:20:48 cgd Exp $
+# $NetBSD: Makefile.sun3,v 1.76.2.1 2000/11/20 20:27:49 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ TEXTADDR=0E004000
 
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
 DEFINES=	-D_KERNEL -Dsun3
@@ -62,7 +62,10 @@ CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
 CWARNFLAGS?= 	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
@@ -70,7 +73,7 @@ CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
 AFLAGS=
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -206,6 +209,9 @@ depend: .depend
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${CPPFLAGS} ${SUN3}/${MACHTYPE}/genassym.c
 
+dependall: depend all
+
+
 # XXX - see below
 #	${MKDEP} -a ${APPFLAGS} ${SUN3}/${MACHTYPE}/locore.s
 #	${MKDEP} -a ${APPFLAGS} ${SFILES}
@@ -240,5 +246,17 @@ locore.o: ${SUN3}/${MACHTYPE}/locore.s
 	${NORMAL_S}
 
 # Generated rules follow:
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 1999/08/26 20:50:09 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.16.2.1 2000/11/20 20:26:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,6 @@
 #include <machine/fbvar.h>
 #include <machine/conf.h>
 #include <machine/eeprom.h>
-#include <sparc64/dev/pfourreg.h>
 
 static struct fbdevice *devfb;
 
@@ -186,12 +185,13 @@ fbpoll(dev, events, p)
 	return (devfb->fb_driver->fbd_poll)(dev, events, p);
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1LL);

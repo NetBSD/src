@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1999/08/05 18:28:01 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.11.2.1 2000/11/20 20:26:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,9 @@
 #define PIL_FD		11
 #define PIL_SER		12
 #define PIL_AUD		13
+#define	PIL_HIGH	15
+#define	PIL_SCHED	PIL_HIGH
+#define	PIL_LOCK	PIL_SCHED
 
 /* 
  * SPARC V9 CCR register
@@ -136,20 +139,31 @@
 
 #define	PSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
+
+/*
+ * 32-bit code requires TSO or at best PSO since that's what's supported on
+ * SPARC V8 and earlier machines.
+ *
+ * 64-bit code sets the memory model in the ELF header.
+ *
+ * We're running kernel code in TSO for the moment so we don't need to worry
+ * about possible memory barrier bugs.
+ */
+
 #ifdef __arch64__
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
-#define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_IE)
 #else
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
-#define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
 #endif
 
 /*
@@ -159,8 +173,7 @@
  *  +-----+-----+-----+--------+---+-----+
  *  | CCR | ASI |  -  | PSTATE | - | CWP |
  *  +-----+-----+-----+--------+---+-----+
- *
- */
+ * */
 
 #define TSTATE_CWP		0x01f
 #define TSTATE_PSTATE		0x6ff00
@@ -392,7 +405,10 @@ SPLHOLD(splaudio, PIL_AUD)
 /* second sparc timer interrupts at level 14 */
 SPLHOLD(splstatclock, 14)
 
-SPLHOLD(splhigh, 15)
+SPLHOLD(splsched, PIL_SCHED)
+SPLHOLD(spllock, PIL_LOCK)
+
+SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
@@ -426,6 +442,8 @@ static __inline void splx(newpil)
 #define	splserial()	splzerialX(__FILE__, __LINE__)
 #define	splaudio()	splaudioX(__FILE__, __LINE__)
 #define	splstatclock()	splstatclockX(__FILE__, __LINE__)
+#define	splsched()	splschedX(__FILE__, __LINE__)
+#define	spllock()	spllockX(__FILE__, __LINE__)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 

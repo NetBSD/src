@@ -1,4 +1,3 @@
-/*	$NetBSD: pmap.c,v 1.53 1999/09/16 11:58:49 leo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,10 +114,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
 #include <sys/user.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
@@ -471,14 +467,14 @@ pmap_init()
 	addr = atarihwaddr;
 	if (uvm_map(kernel_map, &addr,
 		    ptoa(atarihwpg),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, ATARI_KPTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
@@ -570,7 +566,7 @@ pmap_init()
 	 * we already have kernel PT pages.
 	 */
 	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
@@ -709,7 +705,7 @@ pmap_free_pv(pv)
 {
 	register struct pv_page *pvp;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -745,7 +741,7 @@ pmap_map(virt, start, end, prot)
 		printf("pmap_map(%lx, %lx, %lx, %x)\n", virt, start, end, prot);
 #endif
 	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), virt, start, prot, 0);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -1083,20 +1079,22 @@ pmap_protect(pmap, sva, eva, prot)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+extern int kernel_copyback;
+
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	register pmap_t pmap;
 	vaddr_t va;
 	register paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	register u_int *pte;
 	register int npte;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1104,7 +1102,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		       pmap, va, pa, prot, wired);
 #endif
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 
 #ifdef DEBUG
 	if (pmap == pmap_kernel())
@@ -1189,7 +1187,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		pmap_ptpage_addref(trunc_page(pte));
+		pmap_ptpage_addref(trunc_page((vaddr_t)pte));
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1308,10 +1306,10 @@ validate:
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
-		npte |= PG_CI;
+		npte |= (cputype == CPU_68060 ? PG_CIN : PG_CI);
 #if defined(M68040) || defined(M68060)
 	else if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW &&
-	         pmap != pmap_kernel())
+	         (kernel_copyback || pmap != pmap_kernel()))
 		npte |= PG_CCB;		/* cache copyback */
 #endif
 	/*
@@ -1335,9 +1333,12 @@ validate:
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel()) {
 		va -= PAGE_SIZE;
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter",
+		    trunc_page((vaddr_t)pmap_pte(pmap, va)));
 	}
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1346,7 +1347,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -1359,7 +1360,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 
@@ -1969,7 +1970,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * the PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		vaddr_t ptpva = trunc_page(pte);
+		vaddr_t ptpva = trunc_page((vaddr_t)pte);
 		int refs = pmap_ptpage_delref(ptpva);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
@@ -2109,7 +2110,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 					ptpmap->pm_stab,
 					ptpmap->pm_sref - 1);
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab !=
+			     (st_entry_t *)trunc_page((vaddr_t)ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {
@@ -2469,8 +2471,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
+		    VM_PROT_DEFAULT|PMAP_WIRED);
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

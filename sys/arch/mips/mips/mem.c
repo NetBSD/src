@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 1999/03/24 05:51:05 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.18.8.1 2000/11/20 20:13:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,8 +53,6 @@
 #include <sys/msgbuf.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -114,6 +112,9 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			c = iov->iov_len;
+			/*
+			 * XXX Broken; assumes contiguous physical memory.
+			 */
 			if (v + c > ctob(physmem))
 				return (EFAULT);
 			v += MIPS_KSEG0_START;
@@ -126,8 +127,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end +
-						mips_round_page(MSGBUFSIZE)) &&
+			if (v > MIPS_PHYS_TO_KSEG0(avail_end +
+					mips_round_page(MSGBUFSIZE) - c) &&
 			    (v < MIPS_KSEG2_START ||
 			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
@@ -148,10 +149,10 @@ mmrw(dev, uio, flags)
 				break;
 			}
 			if (zeropage == NULL) {
-				zeropage = malloc(CLBYTES, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, CLBYTES);
+				zeropage = malloc(NBPG, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			continue;
 
@@ -168,10 +169,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

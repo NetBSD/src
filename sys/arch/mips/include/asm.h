@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 1999/04/24 08:10:33 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.22.2.1 2000/11/20 20:13:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,21 +62,27 @@
 
 /*
  * Define -pg profile entry code.
- * XXX assume .set noreorder for kernel, .set reorder for user code.
+ * Must always be noreorder, must never use a macro instruction
+ * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
  */
-#define _KERN_MCOUNT		\
-	.set	noat;		\
-	move	$1,$31;		\
-	jal	_mcount;	\
-	subu	sp,sp,8;	\
-	.set at
+#define _KERN_MCOUNT						\
+	.set	push;						\
+	.set	noreorder;					\
+	.set	noat;						\
+	subu	sp,sp,16;					\
+	sw	t9,12(sp);					\
+	move	AT,ra;						\
+	lui	t9,%hi(_mcount); 				\
+	addiu	t9,t9,%lo(_mcount);				\
+	jalr	t9;						\
+	nop;							\
+	lw	t9,4(sp);					\
+	addiu	sp,sp,8;					\
+	addiu	t9,t9,40;					\
+	.set	pop;					
 
 #ifdef GPROF
-# if defined(_KERNEL) || defined(_LOCORE)
-#  define MCOUNT _KERN_MCOUNT
-# else
-#  define MCOUNT .set noreorder; _KERN_MCOUNT ;  .set reorder;
-# endif
+#define MCOUNT _KERN_MCOUNT
 #else
 #define	MCOUNT
 #endif
@@ -96,6 +102,12 @@
 	.aent	x, 0
 #else
 #define AENT(x)
+#endif
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
 #endif
 
 /*
@@ -221,11 +233,13 @@ _C_LABEL(x):
 #define PANIC(msg)			\
 	la	a0, 9f;			\
 	jal	_C_LABEL(panic);	\
+	nop;				\
 	MSG(msg)
 
 #define	PRINTF(msg)			\
 	la	a0, 9f;			\
 	jal	_C_LABEL(printf);	\
+	nop;				\
 	MSG(msg)
 
 #define	MSG(msg)			\
@@ -281,5 +295,23 @@ _C_LABEL(x):
 #define	REG_EPILOGUE	.set pop
 #define SZREG	8
 #endif	/* _MIPS_BSD_API */
+
+/*
+ * The DYNAMIC_STATUS_MASK option adds an additional masking operation
+ * when updating the hardware interrupt mask in the status register.
+ *
+ * This is useful for platforms that need to at run-time mask
+ * interrupts based on motherboard configuration or to handle
+ * slowly clearing interrupts.
+ *
+ * XXX this is only currently implemented for mips3.
+ */
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+#define DYNAMIC_STATUS_MASK(sr,scratch)	\
+	lw	scratch, mips_dynamic_status_mask; \
+	and	sr, sr, scratch
+#else
+#define DYNAMIC_STATUS_MASK(sr,scratch)
+#endif
 
 #endif /* _MIPS_ASM_H */

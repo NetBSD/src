@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.15 1999/03/24 06:06:10 mrg Exp $
+#	$NetBSD: std.atari,v 1.15.8.1 2000/11/20 20:05:24 bouyer Exp $
 #
 # standard atari information
 #
@@ -12,11 +12,8 @@ mainbus0	at root
 clock0		at mainbus0		# system clock
 kbd0		at mainbus0		# standard keyboard
 fdc0		at mainbus0		# floppy controller
-grfbus0		at mainbus0		# bitmapped display's
 ncrscsi0	at mainbus0		# SCSI driver
 scsibus0	at ncrscsi0		# SCSI bus
-grfcc0		at grfbus0		# graphics driver
-ite*		at grfcc0		# console
 
 # any disk/tape drives on configured controllers.
 sd*	at scsibus? target ? lun ?

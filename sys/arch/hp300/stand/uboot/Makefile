@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 1997/02/04 03:53:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2000/11/20 20:08:10 bouyer Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
 NEWVERSWHAT=	"Primary Boot"
 
+CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
+
 install:
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
 	    ${DESTDIR}${BINDIR}/rbootd
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
 	    ${DESTDIR}${BINDIR}/uboot.lif
 	rm -f ${DESTDIR}${BINDIR}/rdboot
 	ln ${DESTDIR}${BINDIR}/uboot.lif ${DESTDIR}${BINDIR}/rdboot
@@ -23,5 +25,18 @@ install:
 	ln ${DESTDIR}${BINDIR}/uboot.lif ${DESTDIR}${BINDIR}/bootct
 	rm -f ${DESTDIR}${BINDIR}/rbootd/SYS_UBOOT
 	ln ${DESTDIR}${BINDIR}/uboot.lif ${DESTDIR}${BINDIR}/rbootd/SYS_UBOOT
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: uboot.lif
+	mkdir -p ${RELEASEDIR}/installation/misc
+	rm -f ${RELEASEDIR}/installation/misc/SYS_UBOOT
+	${INSTALL} ${COPY} -m 444 uboot.lif \
+	    ${RELEASEDIR}/installation/misc/SYS_UBOOT
+.endif # RELEASEDIR check
+
 
 .include "../Makefile.buildboot"

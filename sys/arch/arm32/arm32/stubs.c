@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.27 1998/10/05 00:51:21 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.27.12.1 2000/11/20 20:03:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -46,9 +46,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/msgbuf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
@@ -175,7 +173,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {

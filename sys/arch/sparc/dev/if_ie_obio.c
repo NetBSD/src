@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.11 1999/07/08 18:08:58 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.11.2.1 2000/11/20 20:25:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,12 +98,11 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/pmap.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -279,12 +278,14 @@ ie_obio_attach(parent, self, aux)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct ie_softc *sc = (void *) self;
+	bus_dma_tag_t dmatag = oba->oba_dmatag;
 	bus_space_handle_t bh;
 	bus_dma_segment_t seg;
 	int rseg;
-	struct bootpath *bp;
+	int error;
 	paddr_t pa;
 	struct intrhand *ih;
+	bus_size_t msize;
 	u_long iebase;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 extern	void myetheraddr(u_char *);	/* should be elsewhere */
@@ -299,7 +300,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	sc->ie_bus_read16 = ie_obio_read16;
 	sc->ie_bus_write16 = ie_obio_write16;
 	sc->ie_bus_write24 = ie_obio_write24;
-	sc->sc_msize = 65536; /* XXX */
+	sc->sc_msize = msize = 65536; /* XXX */
 
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
 			 0,
@@ -314,32 +315,42 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	/*
 	 * Allocate control & buffer memory.
 	 */
-	if (bus_dmamem_alloc(oba->oba_dmatag, sc->sc_msize, 64*1024, 0,
+	if ((error = bus_dmamap_create(dmatag, msize, 1, msize, 0,
+					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
+					&sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n",
+			sc->sc_dev.dv_xname, error);
+		return;
+	}
+	if ((error = bus_dmamem_alloc(dmatag, msize, 64*1024, 0,
 			     &seg, 1, &rseg,
-			     BUS_DMA_NOWAIT | BUS_DMA_24BIT) != 0) {
-		printf("%s @ obio: DMA memory allocation error\n",
-			self->dv_xname);
+			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
+		printf("%s: DMA memory allocation error %d\n",
+			self->dv_xname, error);
 		return;
 	}
-#if 0
-	if (bus_dmamem_map(oba->oba_dmatag, &seg, rseg, sc->sc_msize,
-			   (caddr_t *)&sc->sc_maddr,
-			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
-		printf("%s @ obio: DMA memory map error\n", self->dv_xname);
-		bus_dmamem_free(oba->oba_dmatag, &seg, rseg);
-		return;
-	}
-#else
-	/*
-	 * We happen to know we can use the DVMA address directly as
-	 * a CPU virtual address on machines where this driver can
-	 * attach (sun4's). So we possibly save a MMU resource
-	 * by not asking for a double mapping.
-	 */
-	sc->sc_maddr = (void *)seg.ds_addr;
-#endif
 
-	wzero(sc->sc_maddr, sc->sc_msize);
+	/* Map DMA buffer in CPU addressable space */
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, msize,
+				    (caddr_t *)&sc->sc_maddr,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: DMA buffer map error %d\n",
+			sc->sc_dev.dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+
+	/* Load the segment */
+	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
+				&seg, rseg, msize, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			sc->sc_dev.dv_xname, error);
+		bus_dmamem_unmap(dmatag, sc->sc_maddr, msize);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+
+	wzero(sc->sc_maddr, msize);
 	sc->bh = (bus_space_handle_t)(sc->sc_maddr);
 
 	/*
@@ -374,7 +385,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
 	    pa | PMAP_NC /*| PMAP_IOC*/,
-	    VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+	    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 	/* Map iscp at location 0 (relative to `maddr') */
 	sc->iscp = 0;
@@ -386,7 +397,8 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	sc->scp = IE_SCP_ADDR & PGOFSET;
 
 	/* Calculate the 24-bit base of i82586 operations */
-	iebase = (u_long)seg.ds_addr - (u_long)IEOB_ADBASE;
+	iebase = (u_long)sc->sc_dmamap->dm_segs[0].ds_addr -
+			(u_long)IEOB_ADBASE;
 	ie_obio_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
 	ie_obio_write24(sc, IE_ISCP_BASE(sc->iscp), iebase);
 	ie_obio_write24(sc, IE_SCP_ISCP(sc->scp), iebase + sc->iscp);
@@ -396,7 +408,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	 * are used for buffers.
 	 */
 	sc->buf_area = NBPG;
-	sc->buf_area_sz = sc->sc_msize - NBPG;
+	sc->buf_area_sz = msize - NBPG;
 
 	if (i82586_proberam(sc) == 0) {
 		printf(": memory probe failed\n");
@@ -408,11 +420,6 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	/* Establish interrupt channel */
 	ih = bus_intr_establish(oba->oba_bustag,
-				oba->oba_pri, 0,
+				oba->oba_pri, IPL_NET, 0,
 				i82586_intr, sc);
-
-	bp = oba->oba_bp;
-	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
-	    sc->sc_dev.dv_unit == bp->val[1])
-		bp->dev = &sc->sc_dev;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4.2.1 2000/11/20 20:13:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
 
 static char *op_name[64] = {
@@ -73,6 +74,10 @@ static char *spec_name[64] = {
 /*40 */ "spec50","spec51","slt","sltu", "dadd","daddu","dsub","dsubu",
 /*48 */ "tge","tgeu","tlt","tltu","teq","spec65","tne","spec67",
 /*56 */ "dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
+};
+
+static char *spec2_name[4] = {		/* QED RM4650, R5000, etc. */
+/* 0 */ "mad", "madu", "mul", "spec3"
 };
 
 static char *bcond_name[32] = {
@@ -144,7 +149,25 @@ db_disasm(loc, altfmt)
 	boolean_t	altfmt;
 
 {
-	return (db_disasm_insn(*(int*)loc, loc, altfmt));
+	u_int32_t instr;
+
+	/*
+	 * Take some care with addresses to not UTLB here as it
+	 * loses the current debugging context.  KSEG2 not checked.
+	 */
+	if (loc < MIPS_KSEG0_START) {
+		instr = fuword((void *)loc);
+		if (instr == 0xffffffff) {
+			/* "sd ra, -1(ra)" is unlikely */
+			db_printf("invalid address.\n");
+			return loc;
+		}
+	}
+	else {
+		instr =  *(u_int32_t *)loc;
+	}
+
+	return (db_disasm_insn(instr, loc, altfmt));
 }
 
 
@@ -158,6 +181,7 @@ db_disasm_insn(insn, loc, altfmt)
 	db_addr_t	loc;
 	boolean_t	altfmt;
 {
+	boolean_t bdslot = FALSE;
 	InstFmt i;
 
 	i.word = insn;
@@ -211,7 +235,9 @@ db_disasm_insn(insn, loc, altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			/* FALLTHROUGH */
+			db_printf("\t%s", reg_name[i.RType.rs]);
+			bdslot = TRUE;
+			break;
 		case OP_MTLO:
 		case OP_MTHI:
 			db_printf("\t%s", reg_name[i.RType.rs]);
@@ -247,6 +273,21 @@ db_disasm_insn(insn, loc, altfmt)
 		}
 		break;
 
+	case OP_SPECIAL2:
+		if (i.RType.func == OP_MUL)
+			db_printf("%s\t%s,%s,%s",
+				spec2_name[i.RType.func & 0x3],
+		    		reg_name[i.RType.rd],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt]);
+		else
+			db_printf("%s\t%s,%s",
+				spec2_name[i.RType.func & 0x3],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt]);
+			
+		break;
+
 	case OP_BCOND:
 		db_printf("%s\t%s,", bcond_name[i.IType.rt],
 		    reg_name[i.IType.rs]);
@@ -274,6 +315,7 @@ db_disasm_insn(insn, loc, altfmt)
 		    reg_name[i.IType.rt]);
 	pr_displ:
 		print_addr(loc + 4 + ((short)i.IType.imm << 2));
+		bdslot = TRUE;
 		break;
 
 	case OP_COP0:
@@ -358,6 +400,7 @@ db_disasm_insn(insn, loc, altfmt)
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
+		bdslot = TRUE;
 		break;
 
 	case OP_LWC1:
@@ -406,6 +449,14 @@ db_disasm_insn(insn, loc, altfmt)
 		    i.IType.imm);
 		break;
 
+	case OP_CACHE:
+		db_printf("%s\t0x%x,0x%x(%s)",
+		    op_name[i.IType.op],
+		    i.IType.rt,
+		    i.IType.imm,
+		    reg_name[i.IType.rs]);
+		break;
+
 	case OP_ADDI:
 	case OP_DADDI:
 	case OP_ADDIU:
@@ -424,6 +475,11 @@ db_disasm_insn(insn, loc, altfmt)
 		    (short)i.IType.imm);
 	}
 	db_printf("\n");
+	if (bdslot) {
+		db_printf("\t\tbdslot:\t");
+		db_disasm(loc+4, FALSE);
+		return (loc + 8);
+	}
 	return (loc + 4);
 }
 

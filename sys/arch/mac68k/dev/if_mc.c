@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.14 1999/10/14 20:58:18 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.14.2.1 2000/11/20 20:12:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -76,7 +76,7 @@
 #include <netccitt/pk_extern.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -627,7 +627,6 @@ mace_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh = (struct ether_header *)pkt;
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -646,13 +645,8 @@ mace_read(sc, pkt, len)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt, len);
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr))
-			return;
-	}
 #endif
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {

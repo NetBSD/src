@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2 1998/10/05 02:36:02 mark Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2.12.1 2000/11/20 20:03:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -75,6 +75,7 @@ struct fcom_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
+	struct callout		sc_softintr_ch;
 	int			sc_rx_irq;
 	int			sc_tx_irq;
 	int			sc_hwflags;
@@ -153,7 +154,7 @@ fcom_probe(parent, cf, aux)
 {
 	union footbridge_attach_args *fba = aux;
 
-	if (strcmp(fba->fba_name, "fcom") == 0 && cf->cf_unit == 0)
+	if (strcmp(fba->fba_name, "fcom") == 0)
 		return(1);
 	return(0);
 }
@@ -175,6 +176,7 @@ fcom_attach(parent, self, aux)
 	/* Set up the softc */
 	sc->sc_iot = fba->fba_fca.fca_iot;
 	sc->sc_ioh = fba->fba_fca.fca_ioh;
+	callout_init(&sc->sc_softintr_ch);
 	sc->sc_rx_irq = fba->fba_fca.fca_rx_irq;
 	sc->sc_tx_irq = fba->fba_fca.fca_tx_irq;
 	sc->sc_hwflags = 0;
@@ -392,7 +394,7 @@ fcomstart(tp)
 	s = splserial();
 	if (bus_space_read_4(iot, ioh, UART_FLAGS) & UART_TX_BUSY) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 		(void)splx(s);
 		return;
 	}
@@ -416,7 +418,7 @@ fcomstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -592,7 +594,8 @@ fcom_rxintr(arg)
 				sc->sc_rxbuf[sc->sc_rxpos++] = byte;
 				if (!softint_scheduled) {
 					softint_scheduled = 1;
-					timeout(fcom_softintr, sc, 1);
+					callout_reset(&sc->sc_softintr_ch,
+					    1, fcom_softintr, sc);
 				}
 			}
 	} while (1);
@@ -656,8 +659,8 @@ fcomcnattach(iobase, rate, cflag)
 	tcflag_t cflag;
 {
 	static struct consdev fcomcons = {
-		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NODEV,
-		CN_NORMAL
+		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NULL,
+		    NODEV, CN_NORMAL
 	};
 
 	fcomconstag = &fcomcons_bs_tag;

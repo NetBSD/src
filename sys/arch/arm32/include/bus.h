@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 1999/06/18 04:49:25 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef u_long bus_space_handle_t;
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE     	0x04
 
 struct bus_space {
 	/* cookie */
@@ -111,6 +112,9 @@ struct bus_space {
 			    bus_addr_t *, bus_space_handle_t *));
 	void		(*bs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
+
+	/* get kernel virtual address */
+	void *		(*bs_vaddr) __P((void *, bus_space_handle_t));
 
 	/* barrier */
 	void		(*bs_barrier) __P((void *, bus_space_handle_t,
@@ -246,6 +250,12 @@ struct bus_space {
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
 	(*(t)->bs_free)((t)->bs_cookie, (h), (s))
+
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define	bus_space_vaddr(t, h)						\
+	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
 
 /*
  * Bus barrier operations.
@@ -391,6 +401,9 @@ int	__bs_c(f,_bs_alloc) __P((void *t, bus_addr_t rstart,		\
 #define bs_free_proto(f)						\
 void	__bs_c(f,_bs_free) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t size));
+
+#define bs_vaddr_proto(f)						\
+void *	__bs_c(f,_bs_vaddr) __P((void *t, bus_space_handle_t bsh));
 
 #define bs_barrier_proto(f)						\
 void	__bs_c(f,_bs_barrier) __P((void *t, bus_space_handle_t bsh,	\
@@ -550,6 +563,7 @@ bs_unmap_proto(f);		\
 bs_subregion_proto(f);		\
 bs_alloc_proto(f);		\
 bs_free_proto(f);		\
+bs_vaddr_proto(f);		\
 bs_barrier_proto(f);		\
 bs_r_1_proto(f);		\
 bs_r_2_proto(f);		\
@@ -684,8 +698,8 @@ struct arm32_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -767,8 +781,8 @@ int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,

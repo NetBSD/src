@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 1999/03/27 01:17:03 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.31.8.1 2000/11/20 20:12:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -314,7 +314,7 @@ zsc_attach(parent, self, aux)
 
 		/* Define BAUD rate stuff. */
 		xcs->cs_clocks[0].clk = PCLK;
-		xcs->cs_clocks[0].flags = ZSC_RTXBRG;
+		xcs->cs_clocks[0].flags = ZSC_RTXBRG | ZSC_RTXDIV;
 		xcs->cs_clocks[1].flags =
 			ZSC_RTXBRG | ZSC_RTXDIV | ZSC_VARIABLE | ZSC_EXTERN;
 		xcs->cs_clocks[2].flags = ZSC_TRXDIV | ZSC_VARIABLE;
@@ -738,7 +738,7 @@ zs_set_modes(cs, cflag)
 		 * Enable only if nothing else will want the interrupt and
 		 * it's ok to enable interrupts on this line.
 		 */
-		if ((cflag & (CLOCAL & MDMBUF)) == CLOCAL)
+		if ((cflag & (CLOCAL | MDMBUF)) == CLOCAL)
 			cs->cs_rr0_pps = ZSRR0_DCD;
 	}
 	if ((xcs->cs_hwflags & ZS_HWFLAG_NO_CTS) && (cflag & (CRTSCTS | CDTRCTS)))

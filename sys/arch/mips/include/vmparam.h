@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.1 2000/11/20 20:13:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,9 +52,13 @@
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.
+ *
+ * USRSTACK needs to start a little below 0x8000000 because the R8000
+ * and some QED CPUs perform some virtual address checks before the
+ * offset is calculated.
  */
-#define	USRTEXT		0x00001000	/* Start of user text */
-#define	USRSTACK	0x80000000	/* Start of user stack */
+#define	USRTEXT		0x00001000		/* Start of user text */
+#define	USRSTACK	0x7ffff000		/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -77,10 +81,10 @@
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
- * 16 pte's are enough to cover 8 disks * MAXBSIZE.
+ * The default PTE number is enough to cover 8 disks * MAXBSIZE.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	32
+#define USRIOSIZE	(MAXBSIZE/NBPG * 8)
 #endif
 
 /*
@@ -103,29 +107,6 @@
 #define	MAXSLP 		20
 
 /*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
- * Update: memory prices have changed recently (9/96). At the current
- * value of $6 per megabyte, we lend each swapped in process memory worth
- * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent.
- */
-#define	SAFERSS		4		/* nominal ``small'' resident set size
-					   protected against replacement */
-
-#define	mapin(pte, v, pfnum, prot) \
-	(*(int *)(pte) = ((pfnum) << PG_SHIFT) | (prot), MachTLBFlushAddr(v))
-
-/*
  * Mach derived constants
  */
 
@@ -134,15 +115,18 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
 #define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xC0000000)
+#ifdef ENABLE_MIPS_TX3900
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+#else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 1999/10/04 17:36:37 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
@@ -101,8 +102,6 @@
 #endif
 #include <sys/syscall.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -113,6 +112,13 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>
+#endif
+
+#include "isa.h"
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -172,7 +178,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -180,18 +186,9 @@ userret(p, pc, oticks)
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -205,7 +202,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}                   
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 char	*trap_type[] = {
@@ -470,7 +467,7 @@ trap(frame)
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				/*
 				 * We used to fail here. However, it may
@@ -530,8 +527,7 @@ trap(frame)
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
-#include "isa.h"
-#if	NISA > 0
+#if	NISA > 0 || NMCA > 0
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -547,11 +543,20 @@ trap(frame)
 #endif
 #endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
-		if (isa_nmi() == 0)
-			return;
-		else
+
+#if NMCA > 0
+		/* mca_nmi() takes care to call isa_nmi() if appropriate */
+		if (mca_nmi() != 0)
 			goto we_re_toast;
-#endif
+		else
+			return;
+#else /* NISA > 0 */
+		if (isa_nmi() != 0)
+			goto we_re_toast;
+		else
+			return;
+#endif /* NMCA > 0 */
+#endif /* NISA > 0 || NMCA > 0 */
 	}
 
 	if ((type & T_USER) == 0)
@@ -581,7 +586,7 @@ trapwrite(addr)
 	p = curproc;
 	vm = p->p_vmspace;
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		nss = clrnd(btoc(USRSTACK-(unsigned)va));
+		nss = btoc(USRSTACK-(unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 			nss = 0;
 	}
@@ -753,7 +758,7 @@ syscall(frame)
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif /* KTRACE */
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
@@ -798,7 +803,7 @@ syscall(frame)
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif /* KTRACE */
 }
 
@@ -815,6 +820,6 @@ child_return(arg)
 	userret(p, tf->tf_eip, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }

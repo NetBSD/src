@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.2 1999/04/14 12:56:33 hpeyerl Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.2.8.1 2000/11/20 20:09:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl
@@ -104,7 +104,7 @@
 /**************************************************************************
  *										  *
  * These are the registers for the 3Com 3c509 and their bit patterns when *
- * applicable.  They have been taken out the the "EtherLink III Parallel  *
+ * applicable.  They have been taken out of the "EtherLink III Parallel   *
  * Tasking EISA and ISA Technical Reference" "Beta Draft 10/30/92" manual *
  * from 3com.								  *
  *										  *

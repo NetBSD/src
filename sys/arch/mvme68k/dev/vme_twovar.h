@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.1 1999/02/20 00:12:01 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.1.8.1 2000/11/20 20:15:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,43 +36,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __mvme68k_vme_twovar_h
-#define __mvme68k_vme_twovar_h
+#ifndef _MVME68K_VME_TWOVAR_H
+#define _MVME68K_VME_TWOVAR_H
 
-#define VME2_VECTOR_BASE	(0x60u)
-#define	VME2_VECTOR_MIN		0x08
-#define VME2_VECTOR_MAX		0x1f
+#define	VME2_MASTER_FIXED_A16	0
+#define	VME2_MASTER_FIXED_A24	1
+#define	VME2_MASTER_FIXED_A32	2
+#define VME2_MASTER_PROG_START	3
+#define VME2_SLAVE_OFFBOARD_RAM	0
+#define VME2_SLAVE_PROG_START	1
+#define VME2_SLAVE_A16		(VME2_SLAVE_PROG_START+(VME2_SLAVE_WINDOWS*2))
 
-#define VME2_VEC_SOFT0		0x08
-#define VME2_VEC_SOFT1		0x09
-#define VME2_VEC_SOFT2		0x0a
-#define VME2_VEC_SOFT3		0x0b
-#define VME2_VEC_SOFT4		0x0c
-#define VME2_VEC_SOFT5		0x0d
-#define VME2_VEC_SOFT6		0x0e
-#define VME2_VEC_SOFT7		0x0f
-#define VME2_VEC_GCSRLM0	0x10
-#define VME2_VEC_GCSRLM1	0x11
-#define VME2_VEC_GCSRSIG0	0x12
-#define VME2_VEC_GCSRSIG1	0x13
-#define VME2_VEC_GCSRSIG2	0x14
-#define VME2_VEC_GCSRSIG3	0x15
-#define VME2_VEC_DMAC		0x16
-#define VME2_VEC_VIA		0x17
-#define VME2_VEC_TT1		0x18
-#define VME2_VEC_TT2		0x19
-#define VME2_VEC_IRQ1		0x1a
-#define VME2_VEC_PARITY_ERROR	0x1b
-#define VME2_VEC_MWP_ERROR	0x1c
-#define VME2_VEC_SYSFAIL	0x1d
-#define VME2_VEC_ABORT		0x1e
-#define VME2_VEC_ACFAIL		0x1f
+#define VME2_NMASTERS		(VME2_MASTER_PROG_START + VME2_MASTER_WINDOWS)
+#define VME2_NSLAVES		(VME2_SLAVE_A16 + 1)
 
-extern void vmetwo_intr_establish __P((int, void (*) __P((void *)),
-					int, void *));
-extern void vmetwo_intr_disestablish __P((int));
+struct vmetwo_softc {
+	struct mvmebus_softc	sc_mvmebus;
+	bus_space_tag_t		sc_bust;
+	bus_space_handle_t	sc_lcrh;
+	bus_space_handle_t	sc_gcrh;
+	struct mvmebus_range	sc_master[VME2_NMASTERS];
+	struct mvmebus_range	sc_slave[VME2_NSLAVES];
+};
 
-extern struct vme_two_lcsr *sys_vme_two;
-extern struct vme_two_gcsr *sys_vme_two_gcsr;
-
-#endif /* __mvme68k_vme_twovar_h */
+#endif /* _MVME68K_VME_TWOVAR_H */

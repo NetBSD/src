@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.47 1999/07/26 05:20:45 cgd Exp $
+#	$NetBSD: Makefile.arm32,v 1.47.2.1 2000/11/20 20:03:54 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -42,17 +42,20 @@ S!=	cd ../../../..; pwd
 .endif
 ARM32=	$S/arch/arm32
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm32
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000000 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -189,6 +192,9 @@ depend: .depend
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
 .endif
 
+dependall: depend all
+
+
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
  
@@ -213,5 +219,17 @@ modedefs.c: ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} Makefi
 
 modedefs.o: modedefs.c
 	${NORMAL_C}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

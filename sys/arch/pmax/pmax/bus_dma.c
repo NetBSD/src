@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 1999/09/12 01:17:17 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16.2.1 2000/11/20 20:20:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,29 +39,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#include <machine/cpu.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
-
-#include <mips/locore.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, vaddr_t *,
-	    int *, int));
+static int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
+		    void *, bus_size_t, struct proc *, int, vaddr_t *,
+		    int *, int));
 
-extern	paddr_t kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * The default DMA tag for all busses on the DECstation.
@@ -151,7 +140,7 @@ _bus_dmamap_destroy(t, map)
  * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
-int
+static int
 _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
     lastaddrp, segp, first)
 	bus_dmamap_t map;
@@ -508,9 +497,11 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
+#ifdef MIPS3
 		if (CPUISMIPS3)
 			addr = map->dm_segs[i]._ds_vaddr;
 		else
+#endif
 			addr = map->dm_segs[i].ds_addr;
 
 #ifdef BUS_DMA_DEBUG
@@ -518,9 +509,12 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
+#ifdef MIPS3
 		if (CPUISMIPS3)
-			MachFlushDCache(addr + offset, minlen);
-		else {
+			MachHitFlushDCache(addr + offset, minlen);
+		else
+#endif
+		{
 			/*
 			 * We can't have a TLB miss; use KSEG0.
 			 */
@@ -549,7 +543,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern paddr_t avail_start, avail_end;
+	extern paddr_t avail_start, avail_end;		/* XXX */
 	vaddr_t curaddr, lastaddr;
 	psize_t high;
 	vm_page_t m;
@@ -680,8 +674,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 
 			/* XXX Do something about COHERENT here. */
 		}
@@ -722,11 +716,13 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-int
+paddr_t
 _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 	int i;
 

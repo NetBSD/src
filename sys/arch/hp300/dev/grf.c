@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.35 1999/06/22 14:51:57 oster Exp $	*/
+/*	$NetBSD: grf.c,v 1.35.2.1 2000/11/20 20:08:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,6 @@
 extern struct emul emul_hpux;
 #endif
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 
@@ -300,10 +299,11 @@ grfpoll(dev, events, p)
 }
 
 /*ARGSUSED*/
-int
+paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 
@@ -353,22 +353,22 @@ grfoff(dev)
 	return(error);
 }
 
-int
+paddr_t
 grfaddr(sc, off)
 	struct grf_softc *sc;
-	int off;
+	off_t off;
 {
 	struct grf_data *gp= sc->sc_data;
 	struct grfinfo *gi = &gp->g_display;
 
 	/* control registers */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
+		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
 
 	/* frame buffer */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
+		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
 	/* bogus */
 	return(-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.1.1.1.2.1 2000/11/20 20:47:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -173,22 +173,40 @@
 
 #define	BCUCLKSPEED_REG_W	0x014	/* Clock Speed Register */
 
-#define		BCUCLKSPEED_DIV2B	(1<<15)
-#define		BCUCLKSPEED_DIV3B	(1<<14)
-#define		BCUCLKSPEED_DIV4B	(1<<13)
+#define		BCUCLKSPEED_DIVT2B	(1<<15)		/* (= vr4102, vr4111) */
+#define		BCUCLKSPEED_DIVT3B	(1<<14)		/* (= vr4111) */
+#define		BCUCLKSPEED_DIVT4B	(1<<13)		/* (= vr4111) */
 
-#define		BCUCLKSPEED_CLKSPMASK	(0xf)		/* calculate for Clock */
+#define		BCUCLKSPEED_DIVTMASK	(0xf<<12)	/* (= vr4121) */
+#define			BCUCLKSPEED_DIVT3	0x3
+#define			BCUCLKSPEED_DIVT4	0x4
+#define			BCUCLKSPEED_DIVT5	0x5
+#define			BCUCLKSPEED_DIVT6	0x6
+#define		BCUCLKSPEED_DIVTSHFT	(12)		
+
+#define		BCUCLKSPEED_DIVVTMASK	(0xf<<8)	/* (= vr4121) */
+#define			BCUCLKSPEED_DIVVT1	0x1
+#define			BCUCLKSPEED_DIVVT2	0x2
+#define			BCUCLKSPEED_DIVVT3	0x3
+#define			BCUCLKSPEED_DIVVT4	0x4
+#define			BCUCLKSPEED_DIVVT5	0x5
+#define			BCUCLKSPEED_DIVVT6	0x6
+#define			BCUCLKSPEED_DIVVT1_5	0x9
+#define			BCUCLKSPEED_DIVVT2_5	0xa
+#define		BCUCLKSPEED_DIVVTSHFT	(8)		
+
+#define		BCUCLKSPEED_CLKSPMASK	(0x1f)		/* calculate for Clock */
 #define		BCUCLKSPEED_CLKSPSHFT	(0)		
 
-#define	BCUCNT3_REG_W		0x016	/* BCU Control Register 3 */
+#define	BCUCNT3_REG_W		0x016	/* BCU Control Register 3 (>= vr4111) */
 
 #define		BCUCNT3_EXTROMMASK	(1<<15)		/* ROM SIZE */
-#define		BCUCNT3_EXTROM64M	(1<<15)		/* ROM SIZE 64Mbit*/
-#define		BCUCNT3_EXTROM32M	(0<<15)		/* ROM SIZE 32Mbit*/
+#define		BCUCNT3_EXTROM64M	(1<<15)		/* 64Mbit DRAM */
+#define		BCUCNT3_EXTROM32M	(0<<15)		/* 32Mbit DRAM */
 
-#define		BCUCNT3_EXTDRAMMASK	(1<<14)		/* ROM SIZE */
-#define		BCUCNT3_EXTDRAM64M	(1<<14)		/* ROM SIZE 64Mbit*/
-#define		BCUCNT3_EXTDRAM16M	(0<<14)		/* ROM SIZE 16Mbit*/
+#define		BCUCNT3_EXTDRAMMASK	(1<<14)		/* DRAM SIZE */
+#define		BCUCNT3_EXTDRAM64M	(1<<14)		/* 64Mbit DRAM */
+#define		BCUCNT3_EXTDRAM16M	(0<<14)		/* 16Mbit DRAM */
 
 #define		BCUCNT3_EXTROMCS	(0x3<<12)	/* Bank3,2 */
 #define		BCUCNT3_ROMROM		(0x3<<12)	/* Bank3 ROM ,2 ROM  */

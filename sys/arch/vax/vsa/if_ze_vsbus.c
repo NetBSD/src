@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.1 1999/08/27 17:50:42 ragge Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.1.2.1 2000/11/20 20:33:39 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -64,9 +64,8 @@
 #define NISA_ROM        0x27800000
 #define	SGECVEC		0x108
 
-static	int	zematch __P((struct device *, struct cfdata *, void *));
-static	void	zeattach __P((struct device *, struct device *, void *));
-static	void	zeintr __P((int));
+static	int	zematch(struct device *, struct cfdata *, void *);
+static	void	zeattach(struct device *, struct device *, void *);
 
 struct	cfattach ze_vsbus_ca = {
 	sizeof(struct ze_softc), zematch, zeattach
@@ -81,8 +80,6 @@ zematch(parent, cf, aux)
 	struct	cfdata *cf;
 	void	*aux;
 {
-	struct vsbus_attach_args *va = aux;
-
 	/*
 	 * Should some more intelligent checking be done???
 	 * Should for sure force an interrupt instead...
@@ -92,7 +89,6 @@ zematch(parent, cf, aux)
 
 	/* Fool the interrupt system. */
 	scb_fake(SGECVEC, 0x15);
-	va->va_ivec = zeintr;
 	return 12;
 }
 
@@ -106,8 +102,9 @@ zeattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
+	struct ze_softc *sc = (struct ze_softc *)self;
+	struct vsbus_attach_args *va = aux;
 	extern struct vax_bus_dma_tag vax_bus_dma_tag;
-	struct	ze_softc *sc = (struct ze_softc *)self;
 	int *ea, i;
 
 	/*
@@ -118,6 +115,8 @@ zeattach(parent, self, aux)
 	sc->sc_dmat = &vax_bus_dma_tag;
 
 	sc->sc_intvec = SGECVEC;
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr,
+		sc, SCB_ISTACK, &sc->sc_intrcnt);
 
 	/*
 	 * Map in, read and release ethernet rom address.
@@ -128,13 +127,4 @@ zeattach(parent, self, aux)
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
 	sgec_attach(sc);
-}
-
-void
-zeintr(unit)
-	int	unit;
-{
-	struct ze_softc *sc = ze_cd.cd_devs[unit];
-
-	sgec_intr(sc);
 }

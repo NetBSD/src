@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.5 1998/08/29 20:49:37 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.5.12.1 2000/11/20 20:25:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,9 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
@@ -68,6 +69,7 @@ struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+	bus_dmamap_t		sc_dmamap;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
 };
 
@@ -157,12 +159,14 @@ leattach_obio(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_dma_segment_t seg;
+	bus_dma_tag_t dmatag;
 	int rseg;
+	int error;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
 	lesc->sc_bustag = oba->oba_bustag;
-	lesc->sc_dmatag = oba->oba_dmatag;
+	lesc->sc_dmatag = dmatag = oba->oba_dmatag;
 
 	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
 			 0, 2 * sizeof(u_int16_t),
@@ -172,27 +176,43 @@ leattach_obio(parent, self, aux)
 		return;
 	}
 
-	if (oba->oba_bp != NULL &&
-	    strcmp(oba->oba_bp->name, le_cd.cd_name) == 0 &&
-	    sc->sc_dev.dv_unit == oba->oba_bp->val[1])
-		oba->oba_bp->dev = &sc->sc_dev;
-
-
-	if (bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
-			     &seg, 1, &rseg,
-			     BUS_DMA_NOWAIT | BUS_DMA_24BIT) != 0) {
-		printf("%s @ obio: DMA memory allocation error\n",
-			self->dv_xname);
+	/* Get a DMA handle */
+	if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
+					BUS_DMA_NOWAIT|BUS_DMA_24BIT,
+					&lesc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n",
+			self->dv_xname, error);
 		return;
 	}
-	if (bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
+
+	/* Allocate DMA buffer */
+	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, NBPG, 0,
+			     &seg, 1, &rseg,
+			     BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
+		printf("%s: DMA memory allocation error %d\n",
+			self->dv_xname, error);
+		return;
+	}
+	/* Map DMA buffer into kernel space */
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 			   (caddr_t *)&sc->sc_mem,
-			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
-		printf("%s @ obio: DMA memory map error\n", self->dv_xname);
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: DMA memory map error %d\n", self->dv_xname, error);
 		bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 		return;
 	}
-	sc->sc_addr = seg.ds_addr & 0xffffff;
+	/* Load DMA buffer */
+	if ((error = bus_dmamap_load_raw(dmatag, lesc->sc_dmamap,
+				&seg, rseg,
+				MEMSIZE, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_unmap(dmatag, (caddr_t)sc->sc_mem, MEMSIZE);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+
+	sc->sc_addr = lesc->sc_dmamap->dm_segs[0].ds_addr & 0xffffff;
 	sc->sc_memsize = MEMSIZE;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
@@ -214,6 +234,6 @@ leattach_obio(parent, self, aux)
 	am7990_config(&lesc->sc_am7990);
 
 	/* Install interrupt */
-	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, 0,
+	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, IPL_NET, 0,
 				 am7990_intr, sc);
 }

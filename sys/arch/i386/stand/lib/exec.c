@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.14 1999/09/07 18:27:58 ross Exp $	 */
+/*	$NetBSD: exec.c,v 1.14.2.1 2000/11/20 20:09:40 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -94,6 +94,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	u_long		marks[MARK_MAX];
 	struct btinfo_symtab btinfo_symtab;
 	u_long		extmem;
+	u_long		basemem;
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
@@ -116,6 +117,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
 	extmem = getextmem();
+	basemem = getbasemem();
 
 #ifdef XMS
 	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
@@ -195,7 +197,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
 	/* argv[3] below */
 	boot_argv[4] = extmem;
-	boot_argv[5] = getbasemem();
+	boot_argv[5] = basemem;
 
 	close(fd);
 
@@ -241,7 +243,8 @@ exec_netbsd(file, loadaddr, boothowto)
 	btinfo_symtab.esym = marks[MARK_END];
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
-	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv, 0x90000);
+	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
+		i386_trunc_page(basemem*1024));
 	panic("exec returned");
 
 out:

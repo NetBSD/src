@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/16 16:30:21 minoura Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2000/11/20 20:30:16 bouyer Exp $
 
 LIB=	iocs
 
 MKLINT=no
 MKPROFILE=no
 MKPIC=no
+
+.if defined(DESTDIR)
+CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
 
 AWK?=	awk
 
@@ -54,7 +58,7 @@ MAKECALL=${.CURDIR}/makeiocscalls.awk
 ${ASM}: ${.CURDIR}/iocs.h ${MAKECALL}
 	@echo creating ${.TARGET}
 	@grep -i 'IOCS_${.PREFIX} ' ${.CURDIR}/iocs.h | \
-	    ${AWK} -f ${MAKECALL} | ${AS} -o ${.TARGET}
+	    ${AWK} -f ${MAKECALL} | ${CPP} ${CPPFLAGS} | ${AS} -o ${.TARGET}
 
 # only needed during build
 libinstall::

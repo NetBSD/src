@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1999/06/28 01:35:11 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.2.1 2000/11/20 20:06:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 #include <stand.h>
 #include <loadfile.h>
+#include <sys/boot_flag.h>
 #include <sys/reboot.h>
 #include <machine/bootinfo.h>
 #include "boot.h"
@@ -170,18 +171,8 @@ ret:
 		if (!c)
 			goto next;
 		if (c == '-') {
-			while ((c = *++ptr) && c != ' ') {
-				if (c == 'a')
-					howto |= RB_ASKNAME;
-				else if (c == 'b')
-					howto |= RB_HALT;
-				else if (c == 'd')
-					howto |= RB_KDB;
-				else if (c == 'r')
-					howto |= RB_DFLTROOT;
-				else if (c == 's')
-					howto |= RB_SINGLE;
-			}
+			while ((c = *++ptr) && c != ' ')
+				BOOT_FLAG(c, howto);
 		} else {
 			name = ptr;
 			while ((c = *++ptr) && c != ' ');

@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.4 1999/09/26 12:46:57 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.4.2.1 2000/11/20 20:39:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -43,6 +43,7 @@
 extern TCHAR szAppName[ ];
 #define whoami szAppName
 #define PREFNAME TEXT("pbsdboot.ini")
+#define LOGNAME TEXT("pbsdboot.log")
 #define PATHBUFLEN 200
 
 
@@ -75,6 +76,7 @@ struct preference_s {
 	int setting_idx;
 	int fb_type;
 	int fb_width, fb_height, fb_linebytes;
+	int boot_time;
 	long fb_addr;
 	unsigned long platid_cpu, platid_machine;
 	TCHAR setting_name[PATHBUFLEN];
@@ -83,6 +85,15 @@ struct preference_s {
 	BOOL check_last_chance;
 	BOOL load_debug_info;
 	BOOL serial_port;
+	BOOL reverse_video;
+	BOOL autoboot;	
+};
+
+struct path_s {
+	TCHAR* name;
+	LANGID	langid;
+	unsigned long flags;
+#define PATH_SAVE	1
 };
 
 /*
@@ -95,6 +106,7 @@ struct system_info {
 	unsigned char *si_asmcode;
 	int si_asmcodelen;
 	int (*si_boot) __P((caddr_t));
+	int si_intrvec;
 };
 extern struct system_info system_info;
 
@@ -105,7 +117,7 @@ extern TCHAR* where_pref_load_from;
  *  main.c
  */
 BOOL CheckCancel(int progress);
-extern HWND hWndMain;
+extern HWND hDlgMain;
 
 /*
  *  layout.c
@@ -144,6 +156,10 @@ int pbsdboot(TCHAR*, int argc, char *argv[], struct bootinfo *bi);
  */
 int debug_printf(LPWSTR lpszFmt, ...);
 int msg_printf(UINT type, LPWSTR caption, LPWSTR lpszFmt, ...);
+int stat_printf(LPWSTR lpszFmt, ...);
+int set_debug_log(TCHAR* path);
+void close_debug_log(void);
+
 
 #define	MSG_ERROR	(MB_OK | MB_ICONERROR)
 #define MSG_INFO	(MB_OK | MB_ICONINFORMATION)
@@ -160,7 +176,8 @@ void hardware_test(void);
 void pref_init(struct preference_s* pref);
 void pref_dump(struct preference_s* pref);
 int pref_read(TCHAR* filename, struct preference_s* pref);
-int pref_load(TCHAR* load_path[], int pathlen);
+int pref_load(struct path_s load_path[], int pathlen);
+int pref_save(struct path_s load_path[], int pathlen);
 int pref_write(TCHAR* filename, struct preference_s* buf);
 
 
@@ -169,6 +186,15 @@ int pref_write(TCHAR* filename, struct preference_s* buf);
  */
 int set_system_info(platid_t* platid);
 
+
+/*
+ *  palette.c
+ */
+enum palette_status { PAL_ERROR, PAL_NOERROR, PAL_SUCCEEDED };
+extern enum palette_status palette_succeeded;
+void palette_init(HWND hWnd);
+void palette_set(HWND hWnd);
+void palette_check(HWND hWnd);
 
 /*
  *  vr41xx.c

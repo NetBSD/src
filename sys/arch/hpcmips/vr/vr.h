@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vr.h,v 1.1.1.1.2.1 2000/11/20 20:47:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999

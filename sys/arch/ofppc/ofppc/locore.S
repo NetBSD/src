@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 1999/03/25 00:41:47 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.8.1 2000/11/20 20:18:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,9 @@
  */
 
 #include "opt_ddb.h"
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -232,25 +234,33 @@ ofw_back:
 /*
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
+ * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
-					   manipulating runque */
-	mtmsr	3
-
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	bne-	.Lsw1			/* at least one queue non-empty */
 	
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	mfmsr	3
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
 	
 /* May do some power saving here? */
 
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
+	mtmsr	3
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 	b	_ASM_LABEL(Idle)
 
 /*
@@ -268,6 +278,10 @@ ENTRY(switchexit)
 	 * already in r3).
 	 */
 	bl	_C_LABEL(exit2)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 /* Fall through to cpu_switch to actually select another proc */
 	li	3,0			/* indicate exited process */
@@ -291,6 +305,11 @@ ENTRY(cpu_switch)
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* Release the sched_lock before processing interrupts. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
 	xor	3,3,3
 	lis	4,_C_LABEL(machine_interface)+SPLX@ha
 	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
@@ -298,22 +317,26 @@ ENTRY(cpu_switch)
 	blrl
 	stw	3,PCB_SPL(31)		/* save spl */
 
-/* Find a new process */
+/* Lock the scheduler. */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
 	isync
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+/* Find a new process */
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	beq-	_ASM_LABEL(Idle)	/* all queues empty */
 .Lsw1:
 	cntlzw	10,9
-	lis	4,_C_LABEL(qs)@ha
-	addi	4,4,_C_LABEL(qs)@l
+	lis	4,_C_LABEL(sched_qs)@ha
+	addi	4,4,_C_LABEL(sched_qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
 	
@@ -328,7 +351,7 @@ ENTRY(cpu_switch)
 	lis	3,0x80000000@h
 	srw	3,3,10
 	andc	9,9,3
-	stw	9,_C_LABEL(whichqs)@l(8) /* mark it empty */
+	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
 1:
 	/* just did this resched thing */
@@ -337,6 +360,22 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Unlock the sched_lock, but leave interrupts off, for now. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * XXXSMP
+	 * p->p_cpu = curcpu();
+	 */
+#endif
+
+	/* Process now running on a processor. */
+	li	3,SONPROC		/* p->p_stat = SONPROC */
+	stb	3,P_STAT(31)
 
 	/* record new process */
 	lis	4,_C_LABEL(curproc)@ha
@@ -443,8 +482,8 @@ GLOBAL(intr_depth)
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, the interrupts, and possibly the debugging traps when
- * using IPKDB).
+ * (except ISI/DSI, ALI, the interrupts, and possibly the debugging 
+ * traps when using IPKDB).
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -463,6 +502,29 @@ _C_LABEL(trapcode):
 1:
 	bla	s_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
+
+/*
+ * For ALI: has to save DSISR and DAR
+ */
+	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
+_C_LABEL(alitrap):
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mfdar	30
+	mfdsisr	31
+	stmw	30,tempsave+16(0)
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+/* Test whether we already had PR set */
+	mfsrr1	31
+	mtcr	31
+	bc	4,17,1f			/* branch if PSL_PR is clear */
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
+1:
+	bla	s_trap
+_C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
  * Similar to the above for DSI
@@ -800,7 +862,7 @@ _C_LABEL(ddblow):
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
  * In case of IPKDB we want a separate trap catcher for it
@@ -819,7 +881,7 @@ _C_LABEL(ipkdblow):
 	addi	1,1,ipkdbstk+INTSTK@l
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 
 /*
  * FRAME_SETUP assumes:
@@ -1133,7 +1195,7 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
@@ -1231,7 +1293,7 @@ ddbleave:
 	rfi
 #endif /* DDB */
 
-#if NIPKDB > 0
+#ifdef IPKDB
 /*
  * Deliberate entry to ipkdbtrap
  */
@@ -1341,7 +1403,7 @@ _C_LABEL(ipkdbsbyte):
 	sync
 	icbi	0,9			/* and instruction caches */	
 	blr
-#endif	/* NIPKDB > 0 */
+#endif	/* IPKDB */
 	
 /*
  * int setfault()
@@ -1364,21 +1426,3 @@ _C_LABEL(setfault):
 	stmw	12,12(3)
 	xor	3,3,3
 	blr
-
-/*
- * The following code gets copied to the top of the user stack on process
- * execution.  It does signal trampolining on signal delivery.
- *
- * On entry r1 points to a struct sigframe at bottom of current stack.
- * All other registers are unchanged.
- */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-_C_LABEL(sigcode):
-	addi	1,1,-16			/* reserved space for callee */
-	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS___sigreturn14
-	sc				/* sigreturn(scp) */
-	li	0,SYS_exit
-	sc				/* exit(errno) */
-_C_LABEL(esigcode):

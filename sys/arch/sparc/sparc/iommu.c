@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.35 1999/07/08 18:08:58 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.35.2.1 2000/11/20 20:25:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -42,10 +42,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
@@ -84,37 +81,38 @@ int	iommu_print __P((void *, const char *));
 void	iommu_attach __P((struct device *, struct device *, void *));
 int	iommu_match __P((struct device *, struct cfdata *, void *));
 
+static void iommu_copy_prom_entries __P((struct iommu_softc *));
+
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
 };
 
 /* IOMMU DMA map functions */
+int	iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+			bus_size_t, int, bus_dmamap_t *));
 int	iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+			bus_size_t, struct proc *, int));
 int	iommu_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+			struct mbuf *, int));
 int	iommu_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+			struct uio *, int));
 int	iommu_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+			bus_dma_segment_t *, int, bus_size_t, int));
 void	iommu_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+			bus_size_t, int));
 
-int	iommu_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	iommu_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
 int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-int	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+			int nsegs, size_t size, caddr_t *kvap, int flags));
+paddr_t	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+			int nsegs, off_t off, int prot, int flags));
+int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, int,
+			bus_addr_t *, bus_size_t *);
 
 
 struct sparc_bus_dma_tag iommu_dma_tag = {
 	NULL,
-	_bus_dmamap_create,
+	iommu_dmamap_create,
 	_bus_dmamap_destroy,
 	iommu_dmamap_load,
 	iommu_dmamap_load_mbuf,
@@ -123,8 +121,8 @@ struct sparc_bus_dma_tag iommu_dma_tag = {
 	iommu_dmamap_unload,
 	iommu_dmamap_sync,
 
-	iommu_dmamem_alloc,
-	iommu_dmamem_free,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
 	iommu_dmamem_map,
 	_bus_dmamem_unmap,
 	iommu_dmamem_mmap
@@ -172,16 +170,15 @@ iommu_attach(parent, self, aux)
 #if defined(SUN4M)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	int node;
-	struct bootpath *bp;
 	bus_space_handle_t bh;
-	u_int pbase, pa;
-	int i, mmupcrsave, s;
-	iopte_t *tpte_p;
-	extern u_int *kernel_iopte_table;
-	extern u_int kernel_iopte_table_pa;
+	int node;
+	int i, s;
+	u_int iopte_table_pa;
+	struct pglist mlist;
+	u_int size;
+	vm_page_t m;
+	vaddr_t va;
 
-/*XXX-GCC!*/mmupcrsave=0;
 	iommu_sc = sc;
 	/*
 	 * XXX there is only one iommu, for now -- do not know how to
@@ -193,14 +190,10 @@ iommu_attach(parent, self, aux)
 	}
 	node = ma->ma_node;
 
-#if 0
-	if (ra->ra_vaddr)
-		sc->sc_reg = (struct iommureg *)ca->ca_ra.ra_vaddr;
-#else
 	/*
 	 * Map registers into our space. The PROM may have done this
 	 * already, but I feel better if we have our own copy. Plus, the
-	 * prom doesn't map the entire register set
+	 * prom doesn't map the entire register set.
 	 *
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
@@ -217,7 +210,6 @@ iommu_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_reg = (struct iommureg *)bh;
-#endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
 	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
@@ -225,59 +217,44 @@ iommu_attach(parent, self, aux)
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = getpropint(node, "page-size", NBPG),
-	sc->sc_range = (1 << 24) <<
-	    ((sc->sc_reg->io_cr & IOMMU_CTL_RANGE) >> IOMMU_CTL_RANGESHFT);
-#if 0
-	sc->sc_dvmabase = (0 - sc->sc_range);
-#endif
-	pbase = (sc->sc_reg->io_bar & IOMMU_BAR_IBA) <<
-			(14 - IOMMU_BAR_IBASHFT);
 
 	/*
-	 * Now we build our own copy of the IOMMU page tables. We need to
-	 * do this since we're going to change the range to give us 64M of
-	 * mappings, and thus we can move DVMA space down to 0xfd000000 to
-	 * give us lots of space and to avoid bumping into the PROM, etc.
-	 *
-	 * XXX Note that this is rather messy.
+	 * Allocate memory for I/O pagetables.
+	 * This takes 64K of contiguous physical memory to map 64M of
+	 * DVMA space (starting at IOMMU_DVMA_BASE).
+	 * The table must be aligned on a (-IOMMU_DVMA_BASE/pagesize)
+	 * boundary (i.e. 64K for 64M of DVMA space).
 	 */
-	sc->sc_ptes = (iopte_t *) kernel_iopte_table;
+
+	size = ((0 - IOMMU_DVMA_BASE) / sc->sc_pagesize) * sizeof(iopte_t);
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
+			    size, 0, &mlist, 1, 0) != 0)
+		panic("iommu_attach: no memory");
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("iommu_attach: no memory");
+
+	sc->sc_ptes = (iopte_t *)va;
+
+	m = TAILQ_FIRST(&mlist);
+	iopte_table_pa = VM_PAGE_TO_PHYS(m);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		va += NBPG;
+	}
 
 	/*
-	 * Now discache the page tables so that the IOMMU sees our
-	 * changes.
+	 * Copy entries from current IOMMU table.
+	 * XXX - Why do we need to do this?
 	 */
-	kvm_uncache((caddr_t)sc->sc_ptes,
-	    (((0 - IOMMU_DVMA_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
-
-	/*
-	 * Ok. We've got to read in the original table using MMU bypass,
-	 * and copy all of its entries to the appropriate place in our
-	 * new table, even if the sizes are different.
-	 * This is pretty easy since we know DVMA ends at 0xffffffff.
-	 *
-	 * XXX: PGOFSET, NBPG assume same page size as SRMMU
-	 */
-	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
-		/* set MMU AC bit */
-		sta(SRMMU_PCR, ASI_SRMMU,
-		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
-	}
-
-	for (tpte_p = &sc->sc_ptes[((0 - IOMMU_DVMA_BASE)/NBPG) - 1],
-	     pa = (u_int)pbase - sizeof(iopte_t) +
-		   ((u_int)sc->sc_range/NBPG)*sizeof(iopte_t);
-	     tpte_p >= &sc->sc_ptes[0] && pa >= (u_int)pbase;
-	     tpte_p--, pa -= sizeof(iopte_t)) {
-
-		IOMMU_FLUSHPAGE(sc,
-			     (tpte_p - &sc->sc_ptes[0])*NBPG + IOMMU_DVMA_BASE);
-		*tpte_p = lda(pa, ASI_BYPASS);
-	}
-	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
-		/* restore mmu after bug-avoidance */
-		sta(SRMMU_PCR, ASI_SRMMU, mmupcrsave);
-	}
+	iommu_copy_prom_entries(sc);
 
 	/*
 	 * Now we can install our new pagetable into the IOMMU
@@ -288,14 +265,15 @@ iommu_attach(parent, self, aux)
 	/* calculate log2(sc->sc_range/16MB) */
 	i = ffs(sc->sc_range/(1 << 24)) - 1;
 	if ((1 << i) != (sc->sc_range/(1 << 24)))
-		panic("bad iommu range: %d\n",i);
+		panic("iommu: bad range: %d\n", i);
 
 	s = splhigh();
 	IOMMU_FLUSHALL(sc);
 
+	/* Load range and physical address of PTEs */
 	sc->sc_reg->io_cr = (sc->sc_reg->io_cr & ~IOMMU_CTL_RANGE) |
 			  (i << IOMMU_CTL_RANGESHFT) | IOMMU_CTL_ME;
-	sc->sc_reg->io_bar = (kernel_iopte_table_pa >> 4) & IOMMU_BAR_IBA;
+	sc->sc_reg->io_bar = (iopte_table_pa >> 4) & IOMMU_BAR_IBA;
 
 	IOMMU_FLUSHALL(sc);
 	splx(s);
@@ -305,12 +283,6 @@ iommu_attach(parent, self, aux)
 		(sc->sc_reg->io_cr & IOMMU_CTL_IMPL) >> 28,
 		sc->sc_pagesize,
 		sc->sc_range >> 20);
-
-	/* Propagate bootpath */
-	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "iommu") == 0)
-		bp = ma->ma_bp + 1;
-	else
-		bp = NULL;
 
 	iommu_dvmamap = extent_create("iommudvma",
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
@@ -332,7 +304,6 @@ iommu_attach(parent, self, aux)
 		ia.iom_dmatag = &iommu_dma_tag;
 
 		ia.iom_node = node;
-		ia.iom_bp = bp;
 
 		ia.iom_reg = NULL;
 		getprop(node, "reg", sizeof(struct sbus_reg),
@@ -345,32 +316,91 @@ iommu_attach(parent, self, aux)
 #endif
 }
 
+static void
+iommu_copy_prom_entries(sc)
+	struct iommu_softc *sc;
+{
+	u_int pbase, pa;
+	u_int range;
+	iopte_t *tpte_p;
+	u_int pagesz = sc->sc_pagesize;
+	int use_ac = (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc);
+	u_int mmupcr_save;
+
+	/*
+	 * We read in the original table using MMU bypass and copy all
+	 * of its entries to the appropriate place in our new table,
+	 * even if the sizes are different.
+	 * This is pretty easy since we know DVMA ends at 0xffffffff.
+	 */
+
+	range = (1 << 24) <<
+	    ((sc->sc_reg->io_cr & IOMMU_CTL_RANGE) >> IOMMU_CTL_RANGESHFT);
+
+	pbase = (sc->sc_reg->io_bar & IOMMU_BAR_IBA) <<
+			(14 - IOMMU_BAR_IBASHFT);
+
+	if (use_ac) {
+		/*
+		 * Set MMU AC bit so we'll still read from the cache
+		 * in by-pass mode.
+		 */
+		mmupcr_save = lda(SRMMU_PCR, ASI_SRMMU);
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save | VIKING_PCR_AC);
+	} else
+		mmupcr_save = 0; /* XXX - avoid GCC `unintialized' warning */
+
+	/* Flush entire IOMMU TLB before messing with the in-memory tables */
+	IOMMU_FLUSHALL(sc);
+
+	/*
+	 * tpte_p = top of our PTE table
+	 * pa     = top of current PTE table
+	 * Then work downwards and copy entries until we hit the bottom
+	 * of either table.
+	 */
+	for (tpte_p = &sc->sc_ptes[((0 - IOMMU_DVMA_BASE)/pagesz) - 1],
+	     pa = (u_int)pbase + (range/pagesz - 1)*sizeof(iopte_t);
+	     tpte_p >= &sc->sc_ptes[0] && pa >= (u_int)pbase;
+	     tpte_p--, pa -= sizeof(iopte_t)) {
+
+		*tpte_p = lda(pa, ASI_BYPASS);
+	}
+
+	if (use_ac) {
+		/* restore mmu after bug-avoidance */
+		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save);
+	}
+}
+
 void
-iommu_enter(va, pa)
-	bus_addr_t va;
+iommu_enter(dva, pa)
+	bus_addr_t dva;
 	paddr_t pa;
 {
 	struct iommu_softc *sc = iommu_sc;
 	int pte;
 
-#ifdef DEBUG
-	if (va < sc->sc_dvmabase)
-		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
+	/* This routine relies on the fact that sc->sc_pagesize == PAGE_SIZE */
+
+#ifdef DIAGNOSTIC
+	if (dva < sc->sc_dvmabase)
+		panic("iommu_enter: dva 0x%lx not in DVMA space", (long)dva);
 #endif
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
 	pte &= IOPTE_PPN;
 	pte |= IOPTE_V | IOPTE_W | (has_iocache ? IOPTE_C : 0);
-	sc->sc_ptes[atop(va - sc->sc_dvmabase)] = pte;
-	IOMMU_FLUSHPAGE(sc, va);
+	sc->sc_ptes[atop(dva - sc->sc_dvmabase)] = pte;
+	IOMMU_FLUSHPAGE(sc, dva);
 }
 
 /*
  * iommu_clear: clears mappings created by iommu_enter
  */
 void
-iommu_remove(va, len)
-	bus_addr_t va;
+iommu_remove(dva, len)
+	bus_addr_t dva;
 	bus_size_t len;
 {
 	struct iommu_softc *sc = iommu_sc;
@@ -378,22 +408,22 @@ iommu_remove(va, len)
 	bus_addr_t base = sc->sc_dvmabase;
 
 #ifdef DEBUG
-	if (va < base)
-		panic("iommu_enter: va 0x%lx not in DVMA space", (long)va);
+	if (dva < base)
+		panic("iommu_remove: va 0x%lx not in DVMA space", (long)dva);
 #endif
 
 	while ((long)len > 0) {
 #ifdef notyet
 #ifdef DEBUG
-		if ((sc->sc_ptes[atop(va - base)] & IOPTE_V) == 0)
-			panic("iommu_clear: clearing invalid pte at va 0x%lx",
-			      (long)va);
+		if ((sc->sc_ptes[atop(dva - base)] & IOPTE_V) == 0)
+			panic("iommu_remove: clearing invalid pte at dva 0x%lx",
+			      (long)dva);
 #endif
 #endif
-		sc->sc_ptes[atop(va - base)] = 0;
-		IOMMU_FLUSHPAGE(sc, va);
+		sc->sc_ptes[atop(dva - base)] = 0;
+		IOMMU_FLUSHPAGE(sc, dva);
 		len -= pagesz;
-		va += pagesz;
+		dva += pagesz;
 	}
 }
 
@@ -448,6 +478,84 @@ if ((int)sc->sc_dvmacur + len > 0)
  * IOMMU DMA map functions.
  */
 int
+iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	bus_dmamap_t map;
+	int error;
+
+	if ((error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
+					boundary, flags, &map)) != 0)
+		return (error);
+
+	if ((flags & BUS_DMA_24BIT) != 0) {
+		/* Limit this map to the range usable by `24-bit' devices */
+		map->_dm_ex_start = D24_DVMA_BASE;
+		map->_dm_ex_end = D24_DVMA_END;
+	} else {
+		/* Enable allocations from the entire map */
+		map->_dm_ex_start = iommu_dvmamap->ex_start;
+		map->_dm_ex_end = iommu_dvmamap->ex_end;
+	}
+
+	*dmamp = map;
+	return (0);
+}
+
+/*
+ * Internal routine to allocate space in the IOMMU map.
+ */
+int
+iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
+	bus_dmamap_t map;
+	vaddr_t va;
+	bus_size_t len;
+	int flags;
+	bus_addr_t *dvap;
+	bus_size_t *sgsizep;
+{
+	bus_size_t sgsize;
+	u_long align, voff;
+	int s, error;
+	int pagesz = PAGE_SIZE;
+
+	/*
+	 * Remember page offset, then truncate the buffer address to
+	 * a page boundary.
+	 */
+	voff = va & (pagesz - 1);
+	va &= -pagesz;
+
+	if (len > map->_dm_size)
+		return (EINVAL);
+
+	sgsize = (len + voff + pagesz - 1) & -pagesz;
+	align = dvma_cachealign ? dvma_cachealign : map->_dm_align;
+
+	s = splhigh();
+	error = extent_alloc_subregion1(iommu_dvmamap,
+					map->_dm_ex_start, map->_dm_ex_end,
+					sgsize, align, va & (align-1),
+					map->_dm_boundary,
+					(flags & BUS_DMA_NOWAIT) == 0
+						? EX_WAITOK : EX_NOWAIT,
+					(u_long *)dvap);
+	splx(s);
+
+	*sgsizep = sgsize;
+	return (error);
+}
+
+/*
+ * Prepare buffer for DMA transfer.
+ */
+int
 iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -458,48 +566,31 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t dva;
-	bus_addr_t boundary;
 	vaddr_t va = (vaddr_t)buf;
-	u_long align, voff;
+	int pagesz = PAGE_SIZE;
 	pmap_t pmap;
-	int s, error;
-
-	/*
-	 * Remember page offset, then truncate the buffer address to
-	 * a page boundary.
-	 */
-	voff = va & PGOFSET;
-	va &= ~PGOFSET;
+	int error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
 
-	if (buflen > map->_dm_size)
-		return (EINVAL);
-
-	sgsize = (buflen + voff + PGOFSET) & ~PGOFSET;
-	align = dvma_cachealign ? dvma_cachealign : NBPG;
-	boundary = map->_dm_boundary;
-
-	s = splhigh();
-	error = extent_alloc1(iommu_dvmamap, sgsize, align, va & (align-1),
-			  boundary, EX_NOWAIT, (u_long *)&dva);
-	splx(s);
-
-	if (error != 0)
+	/* Allocate IOMMU resources */
+	if ((error = iommu_dvma_alloc(map, va, buflen, flags,
+					&dva, &sgsize)) != 0)
 		return (error);
 
-	cpuinfo.cache_flush(buf, buflen);
+	cpuinfo.cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
 	 * We always use just one segment.
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dva + voff;
+	map->dm_segs[0].ds_addr = dva + (va & (pagesz - 1));
 	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -515,9 +606,9 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 
 		iommu_enter(dva, pa);
 
-		dva += NBPG;
-		va += NBPG;
-		sgsize -= NBPG;
+		dva += pagesz;
+		va += pagesz;
+		sgsize -= pagesz;
 	}
 
 	return (0);
@@ -534,7 +625,7 @@ iommu_dmamap_load_mbuf(t, map, m, flags)
 	int flags;
 {
 
-	panic("_bus_dmamap_load: not implemented");
+	panic("_bus_dmamap_load_mbuf: not implemented");
 }
 
 /*
@@ -564,37 +655,75 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
+	vm_page_t m;
+	paddr_t pa;
+	bus_addr_t dva;
+	bus_size_t sgsize;
+	struct pglist *mlist;
+	int pagesz = PAGE_SIZE;
+	int error;
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	map->dm_nsegs = 0;
+
+	/* Allocate IOMMU resources */
+	if ((error = iommu_dvma_alloc(map, segs[0]._ds_va, size,
+				      flags, &dva, &sgsize)) != 0)
+		return (error);
+
+	/*
+	 * Note DVMA address in case bus_dmamem_map() is called later.
+	 * It can then insure cache coherency by choosing a KVA that
+	 * is aligned to `ds_addr'.
+	 */
+	segs[0].ds_addr = dva;
+	segs[0].ds_len = size;
+
+	map->dm_segs[0].ds_addr = dva;
+	map->dm_segs[0].ds_len = size;
+	map->dm_segs[0]._ds_sgsize = sgsize;
+
+	/* Map physical pages into IOMMU */
+	mlist = segs[0]._ds_mlist;
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		if (sgsize == 0)
+			panic("iommu_dmamap_load_raw: size botch");
+		pa = VM_PAGE_TO_PHYS(m);
+		iommu_enter(dva, pa);
+		dva += pagesz;
+		sgsize -= pagesz;
+	}
+
+	map->dm_nsegs = 1;
+	map->dm_mapsize = size;
+
+	return (0);
 }
 
 /*
- * Common function for unloading a DMA map.  May be called by
- * bus-specific DMA map unload functions.
+ * Unload an IOMMU DMA map.
  */
 void
 iommu_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	bus_addr_t addr;
+	bus_dma_segment_t *segs = map->dm_segs;
+	int nsegs = map->dm_nsegs;
+	bus_addr_t dva;
 	bus_size_t len;
-	int s, error;
+	int i, s, error;
 
-	if (map->dm_nsegs != 1)
-		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+	for (i = 0; i < nsegs; i++) {
+		dva = segs[i].ds_addr & -PAGE_SIZE;
+		len = segs[i]._ds_sgsize;
 
-	addr = map->dm_segs[0].ds_addr;
-	len = map->dm_segs[0].ds_len;
-	len = ((addr & PGOFSET) + len + PGOFSET) & ~PGOFSET;
-	addr &= ~PGOFSET;
-
-	iommu_remove(addr, len);
-	s = splhigh();
-	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
-	splx(s);
-	if (error != 0)
-		printf("warning: %ld of DVMA space lost\n", (long)len);
+		iommu_remove(dva, len);
+		s = splhigh();
+		error = extent_free(iommu_dvmamap, dva, len, EX_NOWAIT);
+		splx(s);
+		if (error != 0)
+			printf("warning: %ld of DVMA space lost\n", (long)len);
+	}
 
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
@@ -602,8 +731,7 @@ iommu_dmamap_unload(t, map)
 }
 
 /*
- * Common function for DMA map synchronization.  May be called
- * by bus-specific DMA map synchronization functions.
+ * DMA map synchronization.
  */
 void
 iommu_dmamap_sync(t, map, offset, len, ops)
@@ -620,94 +748,7 @@ iommu_dmamap_sync(t, map, offset, len, ops)
 }
 
 /*
- * Common function for DMA-safe memory allocation.  May be called
- * by bus-specific DMA memory allocation functions.
- */
-int
-iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
-{
-	paddr_t pa;
-	bus_addr_t dva;
-	vm_page_t m;
-	int s, error;
-	struct pglist *mlist;
-
-	size = round_page(size);
-	error = _bus_dmamem_alloc_common(t, size, alignment, boundary,
-					 segs, nsegs, rsegs, flags);
-	if (error != 0)
-		return (error);
-
-	s = splhigh();
-	error = extent_alloc(iommu_dvmamap, size, alignment, boundary,
-			     (flags & BUS_DMA_NOWAIT) == 0
-				? EX_WAITOK : EX_NOWAIT,
-			     (u_long *)&dva);
-	splx(s);
-	if (error != 0)
-		return (error);
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	segs[0].ds_addr = dva;
-	segs[0].ds_len = size;
-	*rsegs = 1;
-
-	mlist = segs[0]._ds_mlist;
-	/* Map memory into DVMA space */
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		pa = VM_PAGE_TO_PHYS(m);
-
-		iommu_enter(dva, pa);
-		dva += PAGE_SIZE;
-	}
-
-	return (0);
-}
-
-/*
- * Common function for freeing DMA-safe memory.  May be called by
- * bus-specific DMA memory free functions.
- */
-void
-iommu_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-{
-	bus_addr_t addr;
-	bus_size_t len;
-	int s, error;
-
-	if (nsegs != 1)
-		panic("bus_dmamem_free: nsegs = %d", nsegs);
-
-	addr = segs[0].ds_addr;
-	len = segs[0].ds_len;
-
-	iommu_remove(addr, len);
-	s = splhigh();
-	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
-	splx(s);
-	if (error != 0)
-		printf("warning: %ld of DVMA space lost\n", (long)len);
-	/*
-	 * Return the list of pages back to the VM system.
-	 */
-	_bus_dmamem_free_common(t, segs, nsegs);
-}
-
-/*
- * Common function for mapping DMA-safe memory.  May be called by
- * bus-specific DMA memory map functions.
+ * Map DMA-safe memory.
  */
 int
 iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
@@ -719,44 +760,39 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vm_page_t m;
-	vaddr_t va, sva;
+	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
 	int cbit;
-	size_t oversize;
 	u_long align;
+	int pagesz = PAGE_SIZE;
 
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
 
 	cbit = has_iocache ? 0 : PMAP_NC;
-	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
+	align = dvma_cachealign ? dvma_cachealign : pagesz;
 
 	size = round_page(size);
 
 	/*
-	 * Find a region of kernel virtual addresses that can accomodate
-	 * our aligment requirements.
+	 * In case the segment has already been loaded by
+	 * iommu_dmamap_load_raw(), find a region of kernel virtual
+	 * addresses that can accomodate our aligment requirements.
 	 */
-	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	va = _bus_dma_valloc_skewed(size, 0, align,
+				    segs[0].ds_addr & (align - 1));
+	if (va == 0)
 		return (ENOMEM);
 
-	/* Compute start of aligned region */
-	va = sva;
-	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
-
-	/* Return excess virtual addresses */
-	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
-	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
-
-
+	segs[0]._ds_va = va;
 	*kvap = (caddr_t)va;
-	mlist = segs[0]._ds_mlist;
 
+	/*
+	 * Map the pages allocated in _bus_dmamem_alloc() to the
+	 * kernel virtual address space.
+	 */
+	mlist = segs[0]._ds_mlist;
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 
 		if (size == 0)
@@ -764,28 +800,29 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
 #endif
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+		va += pagesz;
+		size -= pagesz;
 	}
 
 	return (0);
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
- * bus-specific DMA mmap(2)'ing functions.
+ * mmap(2)'ing DMA-safe memory.
  */
-int
+paddr_t
 iommu_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 
 	panic("_bus_dmamem_mmap: not implemented");

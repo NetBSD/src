@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 1999/08/01 21:50:17 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.14.2.1 2000/11/20 20:08:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -40,20 +40,12 @@
  * Link and dispatch interrupts.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-
 #define _HP300_INTR_H_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,6 +62,7 @@ u_short hp300_ipls[HP300_NIPLS];
 extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl __P((void));
+void	netintr __P((void));
 
 void
 intr_init()
@@ -298,19 +291,6 @@ intr_dispatch(evec)
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
 }
 
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
-
 void
 netintr()
 {
@@ -324,39 +304,14 @@ netintr()
 
 		if (isr == 0)
 			return;
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-		if (isr & (1 << NETISR_ARP))
-			arpintr();
-#endif
-		if (isr & (1 << NETISR_IP))
-			ipintr();
-#endif
-#ifdef INET6
-		if (isr & (1 << NETISR_IPV6))
-			ip6intr();
-#endif
-#ifdef NETATALK
-		if (isr & (1 << NETISR_ATALK))
-			atintr();
-#endif
-#ifdef NS
-		if (isr & (1 << NETISR_NS))
-			nsintr();
-#endif
-#ifdef ISO
-		if (isr & (1 << NETISR_ISO))
-			clnlintr();
-#endif
-#ifdef CCITT
-		if (isr & (1 << NETISR_CCITT))
-			ccittintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-		if (isr & (1 << NETISR_PPP))
-			pppintr();
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while(0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 	}
 }

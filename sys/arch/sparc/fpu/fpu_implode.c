@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.3 1996/03/14 19:41:59 christos Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.3.30.1 2000/11/20 20:25:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,15 +133,10 @@ round(register struct fpemu *fe, register struct fpn *fp)
 	}
 
 	/* Bump low bit of mantissa, with carry. */
-#ifdef sparc /* ``cheating'' (left out FPU_DECL_CARRY; know this is faster) */
 	FPU_ADDS(m3, m3, 1);
 	FPU_ADDCS(m2, m2, 0);
 	FPU_ADDCS(m1, m1, 0);
 	FPU_ADDC(m0, m0, 0);
-#else
-	if (++m3 == 0 && ++m2 == 0 && ++m1 == 0)
-		m0++;
-#endif
 	fp->fp_mant[0] = m0;
 	fp->fp_mant[1] = m1;
 	fp->fp_mant[2] = m2;
@@ -237,6 +232,59 @@ fpu_ftoi(fe, fp)
 	fe->fe_cx = (fe->fe_cx & ~FSR_NX) | FSR_NV;
 	return (0x7fffffff + sign);
 }
+
+#ifdef SUN4U
+/*
+ * fpn -> extended int (high bits of int value returned as return value).
+ *
+ * N.B.: this conversion always rounds towards zero (this is a peculiarity
+ * of the SPARC instruction set).
+ */
+u_int
+fpu_ftox(fe, fp, res)
+	struct fpemu *fe;
+	register struct fpn *fp;
+	u_int *res;
+{
+	register u_int64_t i;
+	register int sign, exp;
+
+	sign = fp->fp_sign;
+	switch (fp->fp_class) {
+
+	case FPC_ZERO:
+		res[1] = 0;
+		return (0);
+
+	case FPC_NUM:
+		/*
+		 * If exp >= 2^64, overflow.  Otherwise shift value right
+		 * into last mantissa word (this will not exceed 0xffffffffffffffff),
+		 * shifting any guard and round bits out into the sticky
+		 * bit.  Then ``round'' towards zero, i.e., just set an
+		 * inexact exception if sticky is set (see round()).
+		 * If the result is > 0x8000000000000000, or is positive and equals
+		 * 0x8000000000000000, overflow; otherwise the last fraction word
+		 * is the result.
+		 */
+		if ((exp = fp->fp_exp) >= 64)
+			break;
+		/* NB: the following includes exp < 0 cases */
+		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
+			fe->fe_cx |= FSR_NX;
+		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
+			break;
+		return (sign ? -i : i);
+
+	default:		/* Inf, qNaN, sNaN */
+		break;
+	}
+	/* overflow: replace any inexact exception with invalid */
+	fe->fe_cx = (fe->fe_cx & ~FSR_NX) | FSR_NV;
+	return (0x7fffffffffffffffLL + sign);
+}
+#endif /* SUN4U */
 
 /*
  * fpn -> single (32 bit single returned as return value).
@@ -388,7 +436,7 @@ done:
  * so we can avoid a small bit of work.
  */
 u_int
-fpu_ftox(fe, fp, res)
+fpu_ftoq(fe, fp, res)
 	struct fpemu *fe;
 	register struct fpn *fp;
 	u_int *res;
@@ -457,6 +505,12 @@ fpu_implode(fe, fp, type, space)
 
 	switch (type) {
 
+#ifdef SUN4U
+	case FTYPE_LNG:
+		space[0] = fpu_ftox(fe, fp, space);
+		break;
+#endif /* SUN4U */
+
 	case FTYPE_INT:
 		space[0] = fpu_ftoi(fe, fp);
 		break;
@@ -471,7 +525,7 @@ fpu_implode(fe, fp, type, space)
 
 	case FTYPE_EXT:
 		/* funky rounding precision options ?? */
-		space[0] = fpu_ftox(fe, fp, space);
+		space[0] = fpu_ftoq(fe, fp, space);
 		break;
 
 	default:

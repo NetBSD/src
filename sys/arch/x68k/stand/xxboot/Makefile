@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/03/28 14:03:36 minoura Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2000/11/20 20:30:20 bouyer Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -17,7 +17,7 @@ SCRIPTSMODE=	555
 SCRIPTS=	installboot.sh
 MKMAN=		no
 
-STRIP?=	strip
+STRIP?=		strip
 
 SRCS=	xxboot.S bootufs.c unzip.c
 .PATH:	${.CURDIR}/gunzip

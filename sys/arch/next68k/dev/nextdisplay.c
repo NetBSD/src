@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.2.8.1 2000/11/20 20:18:13 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -103,11 +103,12 @@ const struct wsscreen_list nextdisplay_screenlist_color = {
 };
 
 static int	nextdisplay_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	nextdisplay_mmap __P((void *, off_t, int));
+static paddr_t	nextdisplay_mmap __P((void *, off_t, int));
 static int	nextdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 		void **, int *, int *, long *));
 static void	nextdisplay_free_screen __P((void *, void *));
-static void	nextdisplay_show_screen __P((void *, void *));
+static int	nextdisplay_show_screen __P((void *, void *, int,
+					     void (*) (void *, int, int), void *));
 static int	nextdisplay_load_font __P((void *, void *, struct wsdisplay_font *));
 
 const struct wsdisplay_accessops nextdisplay_accessops = {
@@ -140,7 +141,9 @@ nextdisplay_match(parent, match, aux)
 	void *aux;
 {
 	if ((rom_machine_type == NeXT_WARP9)
-	    || (rom_machine_type == NeXT_X15))
+	    || (rom_machine_type == NeXT_X15)
+	    || (rom_machine_type == NeXT_WARP9C)
+	    || (rom_machine_type == NeXT_TURBO_COLOR))
 		return (1);
 	else 
 		return (0);
@@ -167,9 +170,9 @@ nextdisplay_init(dc, color)
 	dc->dc_paddr = color ? COLORP(addr) : MONOP(addr);
 	dc->dc_size = color ? NEXT_P_C16_VIDEOSIZE : NEXT_P_VIDEOSIZE;
 
-	dc->dc_wid = 1152; /* XXX color */
-	dc->dc_ht = 832; /* XXX color */
-	dc->dc_depth = color ? 8 : 2; 
+	dc->dc_wid = color ? 1152 : 1152; 
+	dc->dc_ht = color ? 832 : 832;
+	dc->dc_depth = color ? 16 : 2; 
 	dc->dc_rowbytes = dc->dc_wid * dc->dc_depth / 8;
 
 	dc->dc_videobase = dc->dc_vaddr;
@@ -193,12 +196,15 @@ nextdisplay_init(dc, color)
 
 	/* clear the screen */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
-		*(u_int32_t *)(dc->dc_videobase + i) = 0xffffffff;
+		*(u_int32_t *)(dc->dc_videobase + i) = 
+			(color ? 0x0 : 0xffffffff);
+
+	printf("done clearing\n", dc->dc_videobase);
 
 	rap = &dc->dc_raster;
 	rap->width = dc->dc_wid;
 	rap->height = dc->dc_ht;
-	rap->depth = color ? 8 : 2;
+	rap->depth = color ? 16 : 2;
 	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
 	rap->pixels = (u_int32_t *)dc->dc_videobase;
 
@@ -233,7 +239,8 @@ nextdisplay_attach(parent, self, aux)
 
 	sc = (struct nextdisplay_softc *)self;
 
-	if (rom_machine_type == NeXT_WARP9C) {
+	if ((rom_machine_type == NeXT_WARP9C) 
+	    || (rom_machine_type == NeXT_TURBO_COLOR)) {
 		iscolor = 1;
 		addr = (paddr_t)colorbase;
 	} else {
@@ -306,7 +313,7 @@ nextdisplay_ioctl(v, cmd, data, flag, p)
 	return ENOTTY;
 }
 
-static int
+static paddr_t
 nextdisplay_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -337,7 +344,9 @@ nextdisplay_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	*curxp = 0;
 	*curyp = 0;
 	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 
-			 WSATTR_REVERSE, &defattr);
+			 (strcmp(type->name, "color") == 0) 
+			 ? 0 
+			 : WSATTR_REVERSE, &defattr);
 	*defattrp = defattr;
 	sc->nscreens++;
 #if 0
@@ -359,11 +368,16 @@ nextdisplay_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-nextdisplay_show_screen(v, cookie)
+int
+nextdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 static int
@@ -382,7 +396,8 @@ nextdisplay_cnattach(void)
 	long defattr;
 	int iscolor;
 
-	if (rom_machine_type == NeXT_WARP9C) {
+	if ((rom_machine_type == NeXT_WARP9C)
+	    || (rom_machine_type == NeXT_TURBO_COLOR)) {
 		iscolor = 1;
 		nextdisplay_consaddr = (paddr_t)colorbase;
 	} else {
@@ -393,7 +408,8 @@ nextdisplay_cnattach(void)
 	/* set up the display */
 	nextdisplay_init(&nextdisplay_console_dc, iscolor);
 
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, WSATTR_REVERSE, &defattr);
+	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 
+			 iscolor ? 0 : WSATTR_REVERSE, &defattr);
 
 	wsdisplay_cnattach(iscolor ? &nextdisplay_color : &nextdisplay_mono,
 			   &dc->dc_rcons, 0, 0, defattr);

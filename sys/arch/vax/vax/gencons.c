@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.21 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.21.2.1 2000/11/20 20:33:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,6 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include "opt_ddb.h"
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,28 +67,19 @@ static	int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
 static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
 
 cons_decl(gen);
-#ifdef DYNAMIC_DEVSW
-bcdev_decl(gencn);
-#else
 cdev_decl(gencn);
-#endif
 
 static	int gencnparam __P((struct tty *, struct termios *));
 static	void gencnstart __P((struct tty *));
-void	gencnrint __P((int));
-void	gencntint __P((int));
 
 int
-gencnopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag, mode;
-	struct proc *p;
+gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-        int unit;
-        struct tty *tp;
+	int unit;
+	struct tty *tp;
 
-        unit = minor(dev);
-        if (unit >= maxttys)
+	unit = minor(dev);
+	if (unit >= maxttys)
 		return ENXIO;
 
 	if (gencn_tty[unit] == NULL)
@@ -95,108 +87,92 @@ gencnopen(dev, flag, mode, p)
 
 	tp = gencn_tty[unit];
 
-        tp->t_oproc = gencnstart;
-        tp->t_param = gencnparam;
-        tp->t_dev = dev;
-        if ((tp->t_state & TS_ISOPEN) == 0) {
-                ttychars(tp);
-                tp->t_iflag = TTYDEF_IFLAG;
-                tp->t_oflag = TTYDEF_OFLAG;
-                tp->t_cflag = TTYDEF_CFLAG;
-                tp->t_lflag = TTYDEF_LFLAG;
-                tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-                gencnparam(tp, &tp->t_termios);
-                ttsetwater(tp);
-        } else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
-                return EBUSY;
-        tp->t_state |= TS_CARR_ON;
+	tp->t_oproc = gencnstart;
+	tp->t_param = gencnparam;
+	tp->t_dev = dev;
+	if ((tp->t_state & TS_ISOPEN) == 0) {
+		ttychars(tp);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		gencnparam(tp, &tp->t_termios);
+		ttsetwater(tp);
+	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+		return EBUSY;
+	tp->t_state |= TS_CARR_ON;
 	if (unit == 0)
 		consopened = 1;
 	mtpr(GC_RIE, pr_rxcs[unit]); /* Turn on interrupts */
 	mtpr(GC_TIE, pr_txcs[unit]);
 
-        return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 int
-gencnclose(dev, flag, mode, p)
-        dev_t dev;
-        int flag, mode;
-        struct proc *p;
+gencnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-        struct tty *tp = gencn_tty[minor(dev)];
+	struct tty *tp = gencn_tty[minor(dev)];
 
 	if (minor(dev) == 0)
 		consopened = 0;
-        (*linesw[tp->t_line].l_close)(tp, flag);
-        ttyclose(tp);
-        return (0);
+	(*linesw[tp->t_line].l_close)(tp, flag);
+	ttyclose(tp);
+	return (0);
 }
 
 struct tty *
-gencntty(dev)
-	dev_t dev;
+gencntty(dev_t dev)
 {
 	return gencn_tty[minor(dev)];
 }
 
 int
-gencnread(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-        int flag;
+gencnread(dev_t dev, struct uio *uio, int flag)
 {
-        struct tty *tp = gencn_tty[minor(dev)];
+	struct tty *tp = gencn_tty[minor(dev)];
 
-        return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
 int
-gencnwrite(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-        int flag;
+gencnwrite(dev_t dev, struct uio *uio, int flag)
 {
-        struct tty *tp = gencn_tty[minor(dev)];
+	struct tty *tp = gencn_tty[minor(dev)];
 
-        return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
 int
-gencnioctl(dev, cmd, data, flag, p)
-        dev_t dev;
-        u_long cmd;
-        caddr_t data;
-        int flag;
-        struct proc *p;
+gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-        struct tty *tp = gencn_tty[minor(dev)];
-        int error;
+	struct tty *tp = gencn_tty[minor(dev)];
+	int error;
 
-        error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-        if (error >= 0)
-                return error;
-        error = ttioctl(tp, cmd, data, flag, p);
-        if (error >= 0)
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error >= 0)
 		return error;
  
 	return ENOTTY;
 }
 
 void
-gencnstart(tp)
-        struct tty *tp;
+gencnstart(struct tty *tp)
 {
-        struct clist *cl;
-        int s, ch;
+	struct clist *cl;
+	int s, ch;
 
-        s = spltty();
-        if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
-                goto out;
-        cl = &tp->t_outq;
+	s = spltty();
+	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
+		goto out;
+	cl = &tp->t_outq;
 
 	if(cl->c_cc){
-        	tp->t_state |= TS_BUSY;
+		tp->t_state |= TS_BUSY;
 		ch = getc(cl);
 		mtpr(ch, pr_txdb[minor(tp->t_dev)]);
 	} else {
@@ -210,14 +186,13 @@ gencnstart(tp)
 out:	splx(s);
 }
 
-void
-gencnrint(unit)
-	int unit;
+static void
+gencnrint(void *arg)
 {
-	struct tty *tp;
+	struct tty *tp = *(struct tty **) arg;
+	int unit = (struct tty **) arg - gencn_tty;
 	int i;
 
-	tp = gencn_tty[unit];
 	i = mfpr(pr_rxdb[unit]) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
@@ -232,47 +207,42 @@ gencnrint(unit)
 	}
 #endif
 
-	(*linesw[tp->t_line].l_rint)(i,tp);
+	(*linesw[tp->t_line].l_rint)(i, tp);
 	return;
 }
 
 void
-gencnstop(tp, flag)
-        struct tty *tp;
-        int flag;
+gencnstop(struct tty *tp, int flag)
 {
 }
 
-void
-gencntint(unit)
-	int unit;
+static void
+gencntint(void *arg)
 {
-	struct tty *tp;
+	struct tty *tp = *(struct tty **) arg;
 
-	tp = gencn_tty[unit];
 	tp->t_state &= ~TS_BUSY;
 
 	gencnstart(tp);
 }
 
 int
-gencnparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+gencnparam(struct tty *tp, struct termios *t)
 {
-        /* XXX - These are ignored... */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = t->c_cflag;
+	/* XXX - These are ignored... */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
 	return 0;
 }
 
 void
-gencnprobe(cndev)
-	struct	consdev *cndev;
+gencnprobe(struct consdev *cndev)
 {
 	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
+	    (vax_boardtype == VAX_BTYP_9RR) ||
 	    (vax_boardtype == VAX_BTYP_630) ||
+	    (vax_boardtype == VAX_BTYP_660) ||
 	    (vax_boardtype == VAX_BTYP_670) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
 		cndev->cn_dev = makedev(25, 0);
@@ -282,29 +252,56 @@ gencnprobe(cndev)
 }
 
 void
-gencninit(cndev)
-	struct	consdev *cndev;
+gencninit(struct consdev *cndev)
 {
+
 	/* Allocate interrupt vectors */
-	scb_vecalloc(SCB_G0R, gencnrint, 0, SCB_ISTACK);
-	scb_vecalloc(SCB_G0T, gencntint, 0, SCB_ISTACK);
+	scb_vecalloc(SCB_G0R, gencnrint, &gencn_tty[0], SCB_ISTACK, NULL);
+	scb_vecalloc(SCB_G0T, gencntint, &gencn_tty[0], SCB_ISTACK, NULL);
+
 	if (vax_cputype == VAX_TYP_8SS) {
 		maxttys = 4;
-		scb_vecalloc(SCB_G1R, gencnrint, 1, SCB_ISTACK);
-		scb_vecalloc(SCB_G1T, gencntint, 1, SCB_ISTACK);
-		scb_vecalloc(SCB_G2R, gencnrint, 2, SCB_ISTACK);
-		scb_vecalloc(SCB_G2T, gencntint, 2, SCB_ISTACK);
-		scb_vecalloc(SCB_G3R, gencnrint, 3, SCB_ISTACK);
-		scb_vecalloc(SCB_G3T, gencntint, 3, SCB_ISTACK);
+		scb_vecalloc(SCB_G1R, gencnrint, &gencn_tty[1], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G1T, gencntint, &gencn_tty[1], SCB_ISTACK, NULL);
+
+		scb_vecalloc(SCB_G2R, gencnrint, &gencn_tty[2], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G2T, gencntint, &gencn_tty[2], SCB_ISTACK, NULL);
+
+		scb_vecalloc(SCB_G3R, gencnrint, &gencn_tty[3], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G3T, gencntint, &gencn_tty[3], SCB_ISTACK, NULL);
 	}
+	mtpr(0, PR_RXCS);
+	mtpr(0, PR_TXCS); 
 	mtpr(0, PR_TBIA); /* ??? */
 }
 
 void
-gencnputc(dev,ch)
-	dev_t	dev;
-	int	ch;
+gencnputc(dev_t dev, int ch)
 {
+#ifdef VAX8800
+	/*
+	 * On KA88 we may get C-S/C-Q from the console.
+	 * XXX - this will cause a loop at spltty() in kernel and will
+	 * interfere with other console communication. Fortunately
+	 * kernel printf's are uncommon.
+	 */
+	if (vax_cputype == VAX_TYP_8NN) {
+		int s = spltty();
+
+		while (mfpr(PR_RXCS) & GC_DON) {
+			if ((mfpr(PR_RXDB) & 0x7f) == 19) {
+				while (1) {
+					while ((mfpr(PR_RXCS) & GC_DON) == 0)
+						;
+					if ((mfpr(PR_RXDB) & 0x7f) == 17)
+						break;
+				}
+			}
+		}
+		splx(s);
+	}
+#endif
+
 	while ((mfpr(PR_TXCS) & GC_RDY) == 0) /* Wait until xmit ready */
 		;
 	mtpr(ch, PR_TXDB);	/* xmit character */
@@ -314,8 +311,7 @@ gencnputc(dev,ch)
 }
 
 int
-gencngetc(dev)
-	dev_t	dev;
+gencngetc(dev_t dev)
 {
 	int i;
 
@@ -328,15 +324,13 @@ gencngetc(dev)
 }
 
 void 
-gencnpollc(dev, pollflag)
-        dev_t dev;
-        int pollflag;
+gencnpollc(dev_t dev, int pollflag)
 {
-        if (pollflag)  {
-                mtpr(0, PR_RXCS);
-	        mtpr(0, PR_TXCS); 
+	if (pollflag)  {
+		mtpr(0, PR_RXCS);
+		mtpr(0, PR_TXCS); 
 	} else if (consopened) {
-	        mtpr(GC_RIE, PR_RXCS);
-	        mtpr(GC_TIE, PR_TXCS);
+		mtpr(GC_RIE, PR_RXCS);
+		mtpr(GC_TIE, PR_TXCS);
 	}
 }

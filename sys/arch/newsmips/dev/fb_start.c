@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_start.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: fb_start.c,v 1.3.8.1 2000/11/20 20:17:19 bouyer Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,11 +49,14 @@
 #include <newsmips/dev/fbdefs.h>
 #define spl7 splhigh
 
+/*
+ * XXX SHOULD USE yield().
+ */
 #ifdef CPU_SINGLE
 #include <machine/cpu.h>
 extern struct tty cons;
 extern int cnstart();
-#define PRE_EMPT	need_resched()
+#define PRE_EMPT	need_resched(curcpu())
 #endif
 
 extern void mem_to_mem();
@@ -212,7 +215,7 @@ lock_bitmap()
 	s = splbitmap();
 	while (bitmap_use & FB_BUSY) {
 		bitmap_use |= FB_WANTED;
-		sleep((caddr_t)&bitmap_use, FBPRI);
+		(void) tsleep(&bitmap_use, FBPRI, "fbbitmap", 0);
 	}
 	bitmap_use |= FB_BUSY;
 	splx(s);
@@ -294,7 +297,8 @@ rop_wait(fb)
 				fbbm_ioctl(fb, FB_INTCLEAR, &i);
 			} else {
 				fb->run_flag |= FB_WAITING;
-				sleep((caddr_t)&fb->run_flag, FBPRI);
+				(void) tsleep(&fb->run_flag, FBPRI,
+				    "fbrop", 0);
 			}
 		}
 		splx(s);
@@ -397,7 +401,7 @@ iopmemfbmap(addr, len, map)
 	register int i;
 
 	map->fm_vaddr = addr;
-	map->fm_offset = (unsigned)addr & CLOFSET;
+	map->fm_offset = (unsigned)addr & PGOFSET;
 	map->fm_count = len;
 	len += map->fm_offset;
 	p = map->fm_addr;
@@ -405,8 +409,8 @@ iopmemfbmap(addr, len, map)
 
 	for (i = 0; i < NFBMAP && len > 0; i++) {
 		*p++ = addr;
-		addr += CLBYTES;
-		len -= CLBYTES;
+		addr += NBPG;
+		len -= NBPG;
 	}
 }
 #endif /* IPC_MRX */

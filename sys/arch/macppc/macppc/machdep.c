@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1999/10/15 12:24:36 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.1 2000/11/20 20:13:02 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,18 +33,12 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
+#include "opt_ipkdb.h"
+#include "opt_multiprocessor.h"
 #include "adb.h"
-#include "ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/callout.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
@@ -58,28 +52,11 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
-
-#ifdef INET
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet6/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
 
 #include <machine/bat.h>
 #include <machine/powerpc.h>
@@ -101,9 +78,11 @@ vm_map_t phys_map = NULL;
 /*
  * Global variables used here and there
  */
+#ifndef MULTIPROCESSOR
 struct pcb *curpcb;
 struct pmap *curpm;
 struct proc *fpuproc;
+#endif
 
 extern struct user *proc0paddr;
 extern int ofmsr;
@@ -114,19 +93,27 @@ char bootpath[256];
 paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
-
-int	ofkbd_ihandle;
-int	ofkbd_cngetc __P((dev_t));
-void	ofkbd_cnpollc __P((dev_t, int));
-int	lcsplx __P((int));
+int ofkbd_ihandle;
 
 int msgbufmapped = 0;
-
-void install_extint __P((void (*)(void)));
 
 #ifdef DDB
 void *startsym, *endsym;
 #endif
+
+struct ofw_translations {
+	vaddr_t va;
+	int len;
+	paddr_t pa;
+	int mode;
+};
+
+int ofkbd_cngetc(dev_t);
+void ofkbd_cnpollc(dev_t, int);
+int lcsplx(int);
+void install_extint(void (*)(void));
+int save_ofmap(struct ofw_translations *, int);
+void restore_ofmap(struct ofw_translations *, int);
 
 void
 initppc(startkernel, endkernel, args)
@@ -134,6 +121,7 @@ initppc(startkernel, endkernel, args)
 	char *args;
 {
 	extern trapcode, trapsize;
+	extern alitrap, alisize;
 	extern dsitrap, dsisize;
 	extern isitrap, isisize;
 	extern decrint, decrsize;
@@ -143,13 +131,15 @@ initppc(startkernel, endkernel, args)
 #ifdef DDB
 	extern ddblow, ddbsize;
 #endif
-#if NIPKDB > 0
+#ifdef IPKDB
 	extern ipkdblow, ipkdbsize;
 #endif
-	extern void consinit __P((void));
-	extern void callback __P((void *));
-	extern void ext_intr __P((void));
+	extern void callback(void *);
+	extern void ext_intr(void);
 	int exc, scratch;
+	struct mem_region *allmem, *availmem, *mp;
+	struct ofw_translations *ofmap;
+	int ofmaplen;
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -167,23 +157,26 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up BAT0 to only map the lowest 256 MB area
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
+	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[8].batl = BATL(0x80000000, BAT_I);
-	battable[8].batu = BATU(0x80000000);
+	battable[0x8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[9].batl = BATL(0x90000000, BAT_I);
-	battable[9].batu = BATU(0x90000000);
+	battable[0x9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
+
+	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
+	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
 	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I);
-	battable[0xf].batu = BATU(0xf0000000);
+	battable[0xf].batl = BATL(0xf0000000, BAT_I, BAT_PP_RW);
+	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -196,8 +189,29 @@ initppc(startkernel, endkernel, args)
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
+	/*
+	 * Set up battable to map all RAM regions.
+	 * This is here because mem_regions() call needs bat0 set up.
+	 */
+	mem_regions(&allmem, &availmem);
+	for (mp = allmem; mp->size; mp++) {
+		paddr_t pa = mp->start & 0xf0000000;
+		paddr_t end = mp->start + mp->size;
+
+		do {
+			u_int n = pa >> 28;
+
+			battable[n].batl = BATL(pa, BAT_M, BAT_PP_RW);
+			battable[n].batu = BATU(pa, BAT_BL_256M, BAT_Vs);
+			pa += 0x10000000;
+		} while (pa < end);
+	}
+
 	chosen = OF_finddevice("/chosen");
-	save_ofw_mapping();
+
+	ofmaplen = save_ofmap(NULL, 0);
+	ofmap = alloca(ofmaplen);
+	save_ofmap(ofmap, ofmaplen);
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -205,15 +219,6 @@ initppc(startkernel, endkernel, args)
 	curpcb = &proc0paddr->u_pcb;
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
-#if 0
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-#endif
 
 #ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
 	OF_set_callback(callback);
@@ -231,6 +236,9 @@ initppc(startkernel, endkernel, args)
 			/*
 			 * This one is (potentially) installed during autoconf
 			 */
+			break;
+		case EXC_ALI:
+			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
 			break;
 		case EXC_DSI:
 			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
@@ -250,7 +258,7 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#if defined(DDB) || NIPKDB > 0
+#if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
@@ -260,7 +268,7 @@ initppc(startkernel, endkernel, args)
 			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
 #endif
 			break;
-#endif /* DDB || NIPKDB > 0 */
+#endif /* DDB || IPKDB */
 		}
 
 	/*
@@ -279,6 +287,13 @@ initppc(startkernel, endkernel, args)
 	ofmsr &= ~PSL_IP;
 
 	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
+
+	/*
 	 * Parse arg string.
 	 */
 #ifdef DDB
@@ -293,25 +308,14 @@ initppc(startkernel, endkernel, args)
 	while (*++args && *args != ' ');
 	if (*args) {
 		*args++ = 0;
-		while (*args) {
-			switch (*args++) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			}
-		}
+		while (*args)
+			BOOT_FLAG(*args++, boothowto);
 	}
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
-#if NIPKDB > 0
+#ifdef IPKDB
 	/*
 	 * Now trap to IPKDB
 	 */
@@ -330,116 +334,64 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-	restore_ofw_mapping();
-	battable[msgbuf_paddr >> 28].batl = BATL(msgbuf_paddr, BAT_M);
-	battable[msgbuf_paddr >> 28].batu = BATU(msgbuf_paddr);
+	restore_ofmap(ofmap, ofmaplen);
 }
 
-static int N_mapping;
-static struct {
-	vaddr_t va;
-	int len;
-	paddr_t pa;
-	int mode;
-} ofw_mapping[256];
-
 int
-save_ofw_mapping()
+save_ofmap(ofmap, maxlen)
+	struct ofw_translations *ofmap;
+	int maxlen;
 {
-	int mmui, mmu;
+	int mmui, mmu, len;
 
-	OF_getprop(chosen, "mmu", &mmui, 4);
+	OF_getprop(chosen, "mmu", &mmui, sizeof mmui);
 	mmu = OF_instance_to_package(mmui);
-	bzero(ofw_mapping, sizeof(ofw_mapping));
-	N_mapping =
-	    OF_getprop(mmu, "translations", ofw_mapping, sizeof(ofw_mapping));
-	N_mapping /= sizeof(ofw_mapping[0]);
 
-	return 0;
+	if (ofmap) {
+		bzero(ofmap, maxlen);	/* to be safe */
+		len = OF_getprop(mmu, "translations", ofmap, maxlen);
+	} else
+		len = OF_getproplen(mmu, "translations");
+
+	return len;
 }
 
-int
-restore_ofw_mapping()
+void
+restore_ofmap(ofmap, len)
+	struct ofw_translations *ofmap;
+	int len;
 {
+	int n = len / sizeof(struct ofw_translations);
 	int i;
 
 	pmap_pinit(&ofw_pmap);
 
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 
-	for (i = 0; i < N_mapping; i++) {
-		paddr_t pa = ofw_mapping[i].pa;
-		vaddr_t va = ofw_mapping[i].va;
-		int size = ofw_mapping[i].len;
+	for (i = 0; i < n; i++) {
+		paddr_t pa = ofmap[i].pa;
+		vaddr_t va = ofmap[i].va;
+		int len = ofmap[i].len;
 
 		if (va < 0xf0000000)			/* XXX */
 			continue;
 
-		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1,
-			    VM_PROT_ALL);
+		while (len > 0) {
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL,
+			    VM_PROT_ALL|PMAP_WIRED);
 			pa += NBPG;
 			va += NBPG;
-			size -= NBPG;
+			len -= NBPG;
 		}
 	}
-
-	return 0;
 }
 
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-void
-identifycpu()
-{
-	int pvr;
-
-	/*
-	 * Find cpu type (Do it by OpenFirmware?)
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 8:
-		sprintf(cpu_model, "750");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s\n", cpu_model);
-}
 
 void
 install_extint(handler)
@@ -481,7 +433,7 @@ cpu_startup()
 	v = (caddr_t)proc0paddr + USPACE;
 
 	printf("%s", version);
-	identifycpu();
+	identifycpu(cpu_model);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -503,7 +455,7 @@ cpu_startup()
 	sz = MAXBSIZE * nbuf;
 	minaddr = 0;
 	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
-		NULL, UVM_UNKNOWN_OFFSET,
+		NULL, UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 			    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -521,7 +473,7 @@ cpu_startup()
 		struct vm_page *pg;
 
 		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+		curbufsize = NBPG * (i < residual ? base + 1 : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -530,7 +482,7 @@ cpu_startup()
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -555,16 +507,9 @@ cpu_startup()
 	 * pool pages.
 	 */
 
-	/*
-	 * Initialize callouts.
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i - 1].c_next = &callout[i];
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -634,132 +579,6 @@ setregs(p, pack, stack)
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
-
-	/* sync I-cache for signal trampoline code */
-	(void) pmap_extract(p->p_addr->u_pcb.pcb_pm,
-	    (vaddr_t)p->p_sigacts->ps_sigcode, &pa);
-	__syncicache((void *)pa,
-	    pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
-}
-
-/*
- * Send a signal to process.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	struct proc *p = curproc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
-	int onstack;
-
-	tf = trapframe(p);
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->fixreg[1];
-	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-
-	/* Save register context. */
-	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
-
-	if (copyout(&frame, fp, sizeof frame) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->fixreg[1] = (int)fp;
-	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)sig;
-	tf->fixreg[4] = (int)code;
-	tf->fixreg[5] = (int)&frame.sf_sc;
-	tf->srr0 = (int)psp->ps_sigcode;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * System call to cleanup state after a signal handler returns.
- */
-int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext sc;
-	struct trapframe *tf;
-	int error;
-
-	/*
-	 * The trampoline hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal hander.
-	 */
-	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
-		return (error);
-
-	/* Restore the register context. */
-	tf = trapframe(p);
-	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
-		return (EINVAL);
-	bcopy(&sc.sc_frame, tf, sizeof *tf);
-
-	/* Restore signal stack. */
-	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
-
-	return (EJUSTRETURN);
 }
 
 /*
@@ -812,48 +631,15 @@ softnet()
 	isr = netisr;
 	netisr = 0;
 
-#ifdef	INET
-#include "arp.h"
-#if NARP > 0
-	if (isr & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (isr & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef	INET6
-	if (isr & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef	IMP
-	if (isr & (1 << NETISR_IMP))
-		impintr();
-#endif
-#ifdef	NS
-	if (isr & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef	ISO
-	if (isr & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef	CCITT
-	if (isr & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#ifdef	NATM
-	if (isr & (1 << NETISR_NATM))
-		natmintr();
-#endif
-#ifdef	NETATALK
-	if (isr & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP))
-		pppintr();
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 }
 
 #include "zsc.h"
@@ -910,7 +696,7 @@ cpu_reboot(howto, what)
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NADB > 0
-		DELAY(1000000);
+		delay(1000000);
 		adb_poweroff();
 		printf("WARNING: powerdown failed!\n");
 #endif
@@ -918,6 +704,10 @@ cpu_reboot(howto, what)
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
+
+		/* flush cache for msgbuf */
+		__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
 		ppc_exit();
 	}
 
@@ -939,6 +729,10 @@ cpu_reboot(howto, what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
+
+	/* flush cache for msgbuf */
+	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
+
 #if NADB > 0
 	adb_restart();	/* not return */
 #endif
@@ -977,7 +771,7 @@ kvtop(addr)
 	if (addr < end)
 		return (int)addr;
 
-	va = trunc_page(addr);
+	va = trunc_page((vaddr_t)addr);
 	off = (int)addr - va;
 
 	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
@@ -1010,7 +804,7 @@ mapiodev(pa, len)
 
 	for (; len > 0; len -= NBPG) {
 		pmap_enter(pmap_kernel(), taddr, faddr,
-			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
@@ -1034,7 +828,7 @@ cninit()
 	struct consdev *cp;
 	int l, node;
 	int stdout;
-	int akbd_ih;
+	int akbd_ih, akbd;
 	char type[16];
 
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
@@ -1087,13 +881,20 @@ cninit()
 		 * So, test "`adb-kbd-ihandle" method and use the value if
 		 * it succeeded.
 		 */
-		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
-		    != -1) {
-			int akbd;
-
-			if ((akbd = OF_instance_to_package(akbd_ih)) != -1)
-				node = akbd;
+#if NUKBD > 0
+		if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
 		}
+#endif
+#if NAKBD > 0
+		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
+		}
+#endif
 
 		node = OF_parent(node);
 		bzero(type, sizeof(type));
@@ -1105,8 +906,8 @@ cninit()
 		}
 
 		if (strcmp(type, "adb") == 0) {
-			printf("console keyboard type: ADB\n");
 #if NAKBD > 0
+			printf("console keyboard type: ADB\n");
 			akbd_cnattach();
 #else
 			panic("akbd support not in kernel");
@@ -1153,7 +954,7 @@ cninit()
 		 * XXX call wskbd_cnattach() twice.
 		 */
 		ofkbd_ihandle = stdin;
-		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc);
+		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc, NULL);
 		return;
 	}
 #endif /* NOFB > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.12 1999/05/25 04:17:57 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.12.2.1 2000/11/20 20:20:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,24 +53,23 @@
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
-
 /*
- * DEcstation-specific mips locore code.
+ * DECstation-specific mips locore code.
  */
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>	/* XXX - misnomer? */
 
-#include "opt_dec_3100.h"
+#include "sii.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
 
 	.set	noreorder
-#if defined(DEC_3100) || defined(DEC_5100)
 
+#if NSII > 0 || NXSII > 0
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
- * bits of padding per 32bit word (e.g., for pmin/pmax  sii (and lance) DMA).
+ * bits of padding per 32bit word (e.g., for pmin/pmax sii DMA).
  *
  * The DMA bufffer can only be written one short at a time
  * (and takes ~14 cycles).
@@ -140,8 +139,7 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif /* DEC_3100 || DEC_5100 */
-
+#endif	/* NSII > 0 || NXSII > 0 */
 
 /*
  * Write-buffer flush for writebuffer hardware on DEC mips r2000a
@@ -173,34 +171,27 @@ END(dec_mips1_wbflush)
  * Interrupt counters for vmstat.
  */
 	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
-	.globl _C_LABEL(intrnames)
-	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
+EXPORT(intrnames)
 	.asciiz	"softclock"
 	.asciiz	"softnet"
 	.asciiz	"serial0"
 	.asciiz	"serial1"
-	.asciiz	"serial2"
 	.asciiz	"ether"
 	.asciiz	"scsi"
 	.asciiz	"memory"
 	.asciiz	"clock"
 	.asciiz	"fpu"
-	.asciiz	"tcslot0"
-	.asciiz	"tcslot1"
-	.asciiz	"tcslot2"
+	.asciiz	"optslot0"
+	.asciiz	"optslot1"
+	.asciiz	"optslot2"
 	.asciiz "dtop"
 	.asciiz "isdn"
 	.asciiz	"floppy"
 	.asciiz	"stray"
-	.asciiz	"nmi"
-	.asciiz	"lostclock"
-_C_LABEL(eintrnames):
+EXPORT(eintrnames)
 	.align	2
-_C_LABEL(intrcnt):
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
-_C_LABEL(eintrcnt):
+EXPORT(intrcnt)
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+EXPORT(eintrcnt)
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.

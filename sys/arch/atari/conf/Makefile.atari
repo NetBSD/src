@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.54 1999/07/26 05:20:45 cgd Exp $
+#	$NetBSD: Makefile.atari,v 1.54.2.1 2000/11/20 20:05:24 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -42,12 +42,15 @@ S!=	cd ../../../..; pwd
 .endif
 ATARI=	$S/arch/atari
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Datari
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=    -Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 .if empty(IDENT:M-DM68060)
@@ -58,7 +61,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -189,6 +192,8 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -205,5 +210,17 @@ locore.o pmap.o sys_machdep.o: Makefile
 
 locore.o: ${ATARI}/atari/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

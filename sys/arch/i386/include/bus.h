@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24 1999/06/18 04:49:25 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.24.2.1 2000/11/20 20:09:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 #include <machine/pio.h>
 
 #ifdef BUS_SPACE_DEBUG
+#include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for sanity-checking the aligned-ness of pointers passed to
  * bus space ops.  These are not strictly necessary on the x86, but
@@ -104,6 +105,8 @@
 #define	I386_BUS_SPACE_IO	0	/* space is i/o space */
 #define I386_BUS_SPACE_MEM	1	/* space is mem space */
 
+#define __BUS_SPACE_HAS_STREAM_METHODS 1
+
 /*
  * Bus address and size types
  */
@@ -125,6 +128,7 @@ typedef	u_long bus_space_handle_t;
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 int	i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int flags, bus_space_handle_t *bshp));
@@ -193,6 +197,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	i386_memio_free((t), (h), (s))
 
 /*
+ *	void *bus_space_vaddr __P((bus_space_tag_t, bus_space_handle_t));
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h) \
+	((t) == I386_BUS_SPACE_MEM ? (void *)(h) : (void *)0)
+
+/*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset));
  *
@@ -214,8 +228,14 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	  ((t) == I386_BUS_SPACE_IO ? (inl((h) + (o))) :		\
 	    (*(volatile u_int32_t *)((h) + (o)))))
 
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
+#define	bus_space_read_stream_8(t, h, o)	\
+		!!! bus_space_read_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -232,15 +252,17 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insb((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movb (%1),%%al				;	\
 			stosb					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -251,15 +273,17 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insw((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movw (%1),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -270,20 +294,28 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insl((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	movl (%1),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "memory");				\
+		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
+#define	bus_space_read_multi_stream_8	\
+		!!! bus_space_read_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -299,6 +331,9 @@ do {									\
 #define	bus_space_read_region_1(t, h, o, a, c)				\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -306,17 +341,21 @@ do {									\
 			stosb					;	\
 			incl %1					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -325,6 +364,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -332,17 +374,21 @@ do {									\
 			stosw					;	\
 			addl $2,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -351,6 +397,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -358,22 +407,32 @@ do {									\
 			stosl					;	\
 			addl $4,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
 		    "%esi", "%edi", "%ecx", "memory");			\
 	}								\
 } while (0)
 
+#define bus_space_read_region_stream_1 bus_space_read_region_1
+#define bus_space_read_region_stream_2 bus_space_read_region_2
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
+#define	bus_space_read_region_stream_8	\
+		!!! bus_space_read_region_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -411,8 +470,14 @@ do {									\
 		((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
 } while (0)
 
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
+#define	bus_space_write_stream_8	\
+		!!! bus_space_write_stream_8 not implemented !!!
 #endif
 
 /*
@@ -429,15 +494,16 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsb((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
 			movb %%al,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
 
@@ -448,15 +514,16 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsw((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
 			movw %%ax,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
 
@@ -467,21 +534,28 @@ do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsl((h) + (o), (a), (c));				\
 	} else {							\
+		void *dummy1;						\
+		int dummy2;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
 			movl %%eax,(%1)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx");					\
+		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
+		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
 	}								\
 } while (0)
+
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 			!!! bus_space_write_multi_8 unimplemented !!!
+#define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
+			!!! bus_space_write_multi_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -496,6 +570,9 @@ do {									\
 #define	bus_space_write_region_1(t, h, o, a, c)				\
 do {									\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -503,17 +580,21 @@ do {									\
 			outb %%al,%w1				;	\
 			incl %1					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -522,6 +603,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int16_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int16_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -529,17 +613,21 @@ do {									\
 			outw %%ax,%w1				;	\
 			addl $2,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -548,6 +636,9 @@ do {									\
 	__BUS_SPACE_ADDRESS_SANITY((a), u_int32_t, "buffer");		\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), u_int32_t, "bus addr");	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
@@ -555,23 +646,33 @@ do {									\
 			outl %%eax,%w1				;	\
 			addl $4,%1				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x)					:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "memory");			\
+		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),		\
+		    "=c" (dummy3)				:	\
+		    "1" ((h) + (o)), "2" ((a)), "3" ((c))	:	\
+		    "memory");						\
 	} else {							\
+		int dummy1;						\
+		void *dummy2;						\
+		int dummy3;						\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:	\
+		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "memory");						\
 	}								\
 } while (0)
+
+#define bus_space_write_region_stream_1 bus_space_write_region_1
+#define bus_space_write_region_stream_2 bus_space_write_region_2
+#define bus_space_write_region_stream_4 bus_space_write_region_4
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
 			!!! bus_space_write_region_8 unimplemented !!!
+#define	bus_space_write_region_stream_8				\
+			!!! bus_space_write_region_stream_8 unimplemented !!!
 #endif
 
 /*
@@ -1012,8 +1113,8 @@ struct i386_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -1096,8 +1197,8 @@ int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,

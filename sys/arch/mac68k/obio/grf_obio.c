@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.43 1999/07/19 05:20:15 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.43.2.1 2000/11/20 20:12:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -58,8 +58,6 @@
  * Graphics display driver for the Macintosh internal video for machines
  * that don't map it into a fake nubus card.
  */
-
-#include "opt_grf.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,10 +212,13 @@ grfiv_attach(parent, self, aux)
 			length = 0x00100000;		/* 1MB */
 
 			if (sc->sc_basepa <= mac68k_vidphys &&
-			    mac68k_vidphys < (sc->sc_basepa + length))
+			    mac68k_vidphys < (sc->sc_basepa + length)) {
 				sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
-			else
-				sc->sc_fbofs = 0;
+			} else {
+				sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
+				sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
+				length = mac68k_vidlen + sc->sc_fbofs;
+			}
 
 			printf(" @ %lx: Valkyrie video subsystem\n",
 			    sc->sc_basepa + sc->sc_fbofs);
@@ -269,20 +270,22 @@ grfiv_attach(parent, self, aux)
 	case MACH_CLASSAV:
 		sc->sc_basepa = CIVIC_BASE;
 		length = 0x00200000;		/* 2MB */
-
-		if (sc->sc_basepa <= mac68k_vidphys &&
-		    mac68k_vidphys < (sc->sc_basepa + length))
+		if (mac68k_vidphys >= sc->sc_basepa &&
+		    mac68k_vidphys < (sc->sc_basepa + length)) {
 			sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
-		else
-			sc->sc_fbofs = 0;
+		} else {
+			sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
+			sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
+			length = mac68k_vidlen + sc->sc_fbofs;
+		}
 
-		printf(" @ %lx: Civic video subsystem\n",
+		printf(" @ %lx: CIVIC video subsystem\n",
 		    sc->sc_basepa + sc->sc_fbofs);
 		break;
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
 		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-		sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 		printf(" @ %lx: RBV video subsystem, ",
@@ -309,7 +312,7 @@ grfiv_attach(parent, self, aux)
 		break;
 	default:
 		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-		sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 		printf(" @ %lx: On-board video\n",
@@ -325,7 +328,7 @@ grfiv_attach(parent, self, aux)
 
 	if (sc->sc_basepa <= mac68k_vidphys &&
 	    mac68k_vidphys < (sc->sc_basepa + length))
-		videoaddr = sc->sc_handle + sc->sc_fbofs; /* XXX big ol' hack */
+		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX hack */
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
@@ -337,7 +340,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;				/* XXX hack */
 	gm->vres = 80;				/* XXX hack */
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX yet another hack */
+	gm->fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
 	gm->fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */

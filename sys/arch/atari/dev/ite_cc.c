@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.14 1998/01/12 18:04:08 thorpej Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.14.14.1 2000/11/20 20:05:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -98,15 +98,6 @@ static void clear8 __P((struct ite_softc *, int, int, int, int));
 static void scroll8 __P((struct ite_softc *, int, int, int, int));
 static void scrollbmap __P((bmap_t *, u_short, u_short, u_short, u_short,
 							short, short));
-
-/*
- * Patchable
- */
-int ite_default_x      = 0;	/* def leftedge offset	*/
-int ite_default_y      = 0;	/* def topedge offset	*/
-int ite_default_width  = 640;	/* def width		*/
-int ite_default_depth  = 1;	/* def depth		*/
-int ite_default_height = 400;	/* def height		*/
 
 /*
  * grfcc config stuff

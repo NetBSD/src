@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.9 1999/06/28 01:56:56 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.9.2.1 2000/11/20 20:12:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -221,15 +221,6 @@ struct adbCommand {
 };
 extern	void	adb_pass_up __P((struct adbCommand *));
 
-extern int ite_polling;		/* Are we polling?  (Debugger mode) */
-
-#if 0
-/*
- * Define the external functions
- */
-extern int	zshard __P((int));		/* from zs.c */
-#endif
-
 #ifdef ADB_DEBUG
 /*
  * This function dumps contents of the PMData
@@ -308,11 +299,7 @@ pm_wait_busy(delay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
 			return 1;	/* timeout */
@@ -330,11 +317,7 @@ pm_wait_free(delay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
 			return 0;	/* timeout */
@@ -387,9 +370,9 @@ pm_receive_pm1(data)
  * Send data to PM for the PB1XX series
  */
 int
-pm_send_pm1(data, delay)
+pm_send_pm1(data, timo)
 	u_char data;
-	int delay;
+	int timo;
 {
 	int rval;
 
@@ -397,17 +380,19 @@ pm_send_pm1(data, delay)
 	via_reg(VIA2, 0x200) = data;
 
 	PM_SET_STATE_ACKOFF();
-	if (pm_wait_busy(0x400) != 0) {
+#if 0
+	if (pm_wait_busy(0x400) == 0) {
+#else
+	if (pm_wait_busy(timo) == 0) {
+#endif
 		PM_SET_STATE_ACKON();
-		via_reg(VIA2, vDirA) = 0x00;
-
-		return 0xffffcd36;
+		if (pm_wait_free(0x40) != 0)
+			rval = 0x0;
+		else
+			rval = 0xffffcd35;
+	} else {
+		rval = 0xffffcd36;
 	}
-
-	rval = 0x0;
-	PM_SET_STATE_ACKON();
-	if (pm_wait_free(0x40) == 0)
-		rval = 0xffffcd35;
 
 	PM_SET_STATE_ACKON();
 	via_reg(VIA2, vDirA) = 0x00;
@@ -494,7 +479,9 @@ pm_pmgrop_pm1(pmdata)
 				/* restore formar value */
 				via_reg(VIA1, vDirA) = via1_vDirA;
 				via_reg(VIA1, vIER) = via1_vIER;
-					return 0xffffcd38;
+				if (s != 0x81815963)
+					splx(s);
+				return 0xffffcd38;
 			}
 
 			/* send # of PM data */
@@ -536,7 +523,7 @@ pm_pmgrop_pm1(pmdata)
 			pm_buf = (u_char *)pmdata->r_buf;
 			for (i = 0; i < num_pm_data; i++) {
 				if ((rval = pm_receive_pm1(&pm_data)) != 0)
-					break;				/* timeout */
+					break;		/* timeout */
 				pm_buf[i] = pm_data;
 			}
 
@@ -668,19 +655,15 @@ pm_send_pm2(data)
 	PM_SR() = data;
 
 	PM_SET_STATE_ACKOFF();
-	rval = 0xffffcd36;
-	if (pm_wait_busy((int)ADBDelay*32) != 0) {
+	if (pm_wait_busy((int)ADBDelay*32) == 0) {
 		PM_SET_STATE_ACKON();
-
-		via_reg(VIA1, vACR) |= 0x1c;
-
-		return rval;		
+		if (pm_wait_free((int)ADBDelay*32) != 0)
+			rval = 0;
+		else
+			rval = 0xffffcd35;
+	} else {
+		rval = 0xffffcd36;
 	}
-
-	PM_SET_STATE_ACKON();
-	rval = 0xffffcd35;
-	if (pm_wait_free((int)ADBDelay*32) != 0)
-		rval = 0;
 
 	PM_SET_STATE_ACKON();
 	via_reg(VIA1, vACR) |= 0x1c;
@@ -1051,14 +1034,16 @@ pm_adb_op(buffer, compRout, data, command)
 		packet.cmd = command;
 		packet.unsol = 0;
 		packet.ack_only = 1;
-		ite_polling = 1;
+		adb_polling = 1;
 		adb_pass_up(&packet);
-		ite_polling = 0;
+		adb_polling = 0;
 	}
 
 	rval = pmgrop(&pmdata);
-	if (rval != 0)
+	if (rval != 0) {
+		splx(s);
 		return 1;
+	}
 
 	adbWaiting = 1;
 	adbWaitingCmd = command;
@@ -1068,17 +1053,27 @@ pm_adb_op(buffer, compRout, data, command)
 	/* wait until the PM interrupt is occured */
 	delay = 0x80000;
 	while (adbWaiting == 1) {
-		if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
+		switch (mac68k_machine.machineid) {
+		case MACH_MACPB210:
+		case MACH_MACPB230:	/* daishi tested with Duo230 */
+		case MACH_MACPB250:
+		case MACH_MACPB270:
+		case MACH_MACPB280:
+		case MACH_MACPB280C:
 			pm_intr((void *)0);
+			break;
+		default:
+			if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
+				pm_intr((void *)0);
+			break;
+		}
 #ifdef PM_GRAB_SI
-#if 0
-			zshard(0);		/* grab any serial interrupts */
-#else
-			(void)intr_dispatch(0x70);
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
-#endif
-		if ((--delay) < 0)
+		if ((--delay) < 0) {
+			splx(s);
 			return 1;
+		}
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
@@ -1125,9 +1120,9 @@ pm_adb_get_TALK_result(pmdata)
 	packet.compData = adbCompData;
 	packet.unsol = 0;
 	packet.ack_only = 0;
-	ite_polling = 1;
+	adb_polling = 1;
 	adb_pass_up(&packet);
-	ite_polling = 0;
+	adb_polling = 0;
 
 	adbWaiting = 0;
 	adbBuffer = (long)0;
@@ -1166,7 +1161,7 @@ pm_adb_poll_next_device_pm1(pmdata)
 
 	/* find another existent ADB device to poll */
 	for (i = 1; i < 16; i++) {
-		ndid = (((pmdata->data[3] & 0xf0) >> 4) + i) & 0xf;
+		ndid = (ADB_CMDADDR(pmdata->data[3]) + i) & 0xf;
 		bendid <<= ndid;
 		if ((pm_existent_ADB_devices & bendid) != 0)
 			break;

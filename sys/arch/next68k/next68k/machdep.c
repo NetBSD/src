@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1999/09/17 20:04:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.2.1 2000/11/20 20:18:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -74,10 +73,7 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,24 +96,18 @@
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <next68k/next68k/isr.h>
+#include <next68k/next68k/nextrom.h>
+#include <next68k/next68k/rtc.h>
 #include <next68k/next68k/seglist.h>
 
-#include "nextkbd.h"
-#if (NNEXTKBD > 0)
-#include <next68k/dev/nextkbdvar.h>
-#endif
-
-#include "nextdisplay.h"
-#if (NNEXTDISPLAY > 0)
-#include <next68k/dev/nextdisplayvar.h>
-#endif
-
-#include <next68k/next68k/nextrom.h>
-
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -209,21 +199,8 @@ next68k_init()
 		char *p = rom_boot_arg;
 		boothowto = 0;
 		if (*p++ == '-') {
-			for (;*p;p++) {
-				switch(*p) {
-				case 'a':
-					boothowto |= RB_ASKNAME;
-					break;
-				case 's':
-					boothowto |= RB_SINGLE;
-					break;
-				case 'd':
-					boothowto |= RB_KDB;
-					break;
-				default:
-					break;
-				}
-			}
+			for (;*p;p++)
+				BOOT_FLAG(*p, boothowto);
 		}
 	}
 
@@ -238,8 +215,8 @@ next68k_init()
 	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
 
@@ -341,7 +318,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -360,7 +337,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -393,20 +370,12 @@ cpu_startup()
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -416,7 +385,7 @@ cpu_startup()
 	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
 	 * XXX but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	if (uvm_map_protect(kernel_map, 0, round_page((vaddr_t)&kernel_text),
 	    UVM_PROT_NONE, TRUE) != KERN_SUCCESS)
 		panic("can't mark pre-text pages off-limits");
 
@@ -424,8 +393,8 @@ cpu_startup()
 	 * Tell the VM system that writing to the kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
-	if (uvm_map_protect(kernel_map, trunc_page(&kernel_text),
-	    round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
+	if (uvm_map_protect(kernel_map, trunc_page((vaddr_t)&kernel_text),
+	    round_page((vaddr_t)&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
 	    != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
@@ -480,7 +449,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char	cpu_model[124];
-extern	char version[];
 
 void
 identifycpu()
@@ -791,7 +759,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -817,7 +785,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check do see if we will fit.  Note we always skip the
-	 * first CLBYTES in case there is a disk label there.
+	 * first NBPG in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -880,7 +848,7 @@ dumpsys()
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -949,6 +917,7 @@ straytrap(pc, evec)
 
 int	*nofault;
 
+#if 0
 int
 badaddr(addr, nbytes)
 	caddr_t addr;
@@ -986,6 +955,7 @@ badaddr(addr, nbytes)
 	nofault = (int *) 0;
 	return (0);
 }
+#endif
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.

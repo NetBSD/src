@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.42 1999/02/02 18:37:20 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.42.8.1 2000/11/20 20:33:10 bouyer Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -51,8 +51,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -60,11 +59,10 @@
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/trap.h>
 #include <machine/frame.h>
 
 #include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/qbus/ubavar.h>
 
 volatile int /* rbr, rcvec,*/ svec;
 
@@ -154,7 +152,9 @@ dw780_attach(parent, self, aux)
 
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc->uh_dev.dv_unit, SCB_ISTACK);
+		    sc->uh_dev.dv_unit, SCB_ISTACK, &sc->uh_intrcnt);
+	evcnt_attach_dynamic(&sc->uh_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->uh_dev.dev_xname, "intr");
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
 	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
@@ -200,10 +200,9 @@ void
 uba_dw780int(uba)
 	int	uba;
 {
-	int	br, vec, arg;
+	int	br, vec;
 	struct	uba_softc *sc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = sc->uh_uba;
-	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
@@ -215,10 +214,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + sc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
-		func = scb_vec[vec/4].hoppaddr;
-		arg = scb_vec[vec/4].pushlarg;
-		(*func)(arg);
+		struct ivec_dsp *ivec = &scb_vec[vec / 4];
+		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
 
@@ -260,6 +257,7 @@ ubaerror(uh, ipl, uvec)
 {
 	struct	uba_regs *uba = uh->uh_uba;
 	register int sr, s;
+	char sbuf[256], sbuf2[256];
 
 	if (*uvec == 0) {
 		/*
@@ -276,28 +274,34 @@ ubaerror(uh, ipl, uvec)
 		if (++uh->uh_zvcnt > zvcnt_max) {
 			printf("%s: too many zero vectors (%d in <%d sec)\n",
 				uh->uh_dev.dv_xname, uh->uh_zvcnt, (int)dt + 1);
-			printf("\tIPL 0x%x\n\tcnfgr: %b	 Adapter Code: 0x%x\n",
-				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
-				uba->uba_cnfgr&0xff);
-			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
-				uba->uba_sr, ubasr_bits, uba->uba_dcr,
+
+			bitmask_snprintf(uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
+					 sbuf, sizeof(sbuf));
+			printf("\tIPL 0x%x\n\tcnfgr: %s	 Adapter Code: 0x%x\n",
+				*ipl, sbuf, uba->uba_cnfgr&0xff);
+
+			bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+			printf("\tsr: %s\n\tdcr: %x (MIC %sOK)\n",
+				sbuf, uba->uba_dcr,
 				(uba->uba_dcr&0x8000000)?"":"NOT ");
 			ubareset(uh->uh_dev.dv_unit);
 		}
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		printf("%s: sbi fault sr=%b cnfgr=%b\n",
-		    uh->uh_dev.dv_xname, uba->uba_sr, ubasr_bits,
-		    uba->uba_cnfgr, NEXFLT_BITS);
+		bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+		bitmask_snprintf(uba->uba_cnfgr, NEXFLT_BITS, sbuf2, sizeof(sbuf2));
+		printf("%s: sbi fault sr=%s cnfgr=%s\n",
+		    uh->uh_dev.dv_xname, sbuf, sbuf2);
 		ubareset(uh->uh_dev.dv_unit);
 		*uvec = 0;
 		return;
 	}
 	sr = uba->uba_sr;
 	s = spluba();
-	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
-	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
+	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+	printf("%s: uba error sr=%s fmer=%x fubar=%o\n", uh->uh_dev.dv_xname,
+	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
 	*uvec &= UBABRRVR_DIV;
@@ -467,21 +471,21 @@ ubastray(arg)
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	struct	uba_softc *sc = uba_cd.cd_devs[arg];
-	int	vektor;
+	int	vector;
 
 	rbr = mfpr(PR_IPL);
 #ifdef DW780
 	if (sc->uh_type == DW780)
-		vektor = svec >> 2;
+		vector = svec >> 2;
 	else
 #endif
-		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+		vector = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
 
 	if (cold) {
 #ifdef DW780
 		if (sc->uh_type != DW780)
 #endif
-			rcvec = vektor;
+			rcvec = vector;
 	} else 
 		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
 		    arg, svec, rbr);
@@ -585,7 +589,7 @@ ubasetup(uh, bp, flags)
 	if (uh->uh_nbdp == 0)
 		flags &= ~UBA_NEEDBDP;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
@@ -596,7 +600,7 @@ ubasetup(uh, bp, flags)
 			return (0);
 		}
 		uh->uh_mrwant++;
-		sleep((caddr_t)&uh->uh_mrwant, PSWP);
+		(void) tsleep(&uh->uh_mrwant, PSWP, "ubamrwant", 0);
 	}
 	if ((flags & UBA_NEED16) && reg + npf > 128) {
 		/*
@@ -616,7 +620,7 @@ ubasetup(uh, bp, flags)
 				return (0);
 			}
 			uh->uh_bdpwant++;
-			sleep((caddr_t)&uh->uh_bdpwant, PSWP);
+			(void) tsleep(&uh->uh_bdpwant, PSWP, "ubabdpwant", 0);
 		}
 		uh->uh_bdpfree &= ~(1 << (bdp-1));
 	} else if (flags & UBA_HAVEBDP)
@@ -644,7 +648,7 @@ uballoc(uh, addr, bcnt, flags)
 {
 	struct buf ubabuf;
 
-	ubabuf.b_un.b_addr = addr;
+	ubabuf.b_data = addr;
 	ubabuf.b_flags = B_BUSY;
 	ubabuf.b_bcount = bcnt;
 	/* that's all the fields ubasetup() needs */
@@ -867,7 +871,6 @@ ubasearch(parent, cf, aux)
 	if (vec == 0)
 		goto fail;
 		
-	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);

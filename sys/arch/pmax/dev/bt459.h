@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.h,v 1.4 1999/04/24 08:01:02 simonb Exp $	*/
+/*	$NetBSD: bt459.h,v 1.4.2.1 2000/11/20 20:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -149,14 +149,14 @@ typedef struct {
 #define BT459_REG_CRAM_END	0x07ff
 
 #ifdef _KERNEL
-int bt459init (struct fbinfo *);
-void bt459RestoreCursorColor (struct fbinfo *);
-void bt459CursorColor (struct fbinfo *, unsigned int []);
-void bt459PosCursor (struct fbinfo *, int, int);
-void bt459InitColorMap (struct fbinfo *);
-int bt459LoadColorMap (struct fbinfo *, caddr_t, int, int);
-int bt459GetColorMap (struct fbinfo *, caddr_t, int, int);
-void bt459LoadCursor (struct fbinfo *, u_short *);
-int bt459_video_on (struct fbinfo *);
-int bt459_video_off (struct fbinfo *);
+int	bt459init __P((struct fbinfo *));
+void	bt459RestoreCursorColor __P((struct fbinfo *));
+void	bt459CursorColor __P((struct fbinfo *, unsigned int []));
+void	bt459PosCursor __P((struct fbinfo *, int, int));
+void	bt459InitColorMap __P((struct fbinfo *));
+int	bt459LoadColorMap __P((struct fbinfo *, const u_char *, int, int));
+int	bt459GetColorMap __P((struct fbinfo *, u_char *, int, int));
+void	bt459LoadCursor __P((struct fbinfo *, u_short *));
+int	bt459_video_on __P((struct fbinfo *));
+int	bt459_video_off __P((struct fbinfo *));
 #endif /* _KERNEL */

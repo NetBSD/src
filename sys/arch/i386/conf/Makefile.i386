@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.99 1999/07/26 05:20:46 cgd Exp $
+#	$NetBSD: Makefile.i386,v 1.99.2.1 2000/11/20 20:09:17 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -44,23 +44,31 @@ S!=	cd ../../../..; pwd
 .endif
 I386=	$S/arch/i386
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Di386
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext F0100000 -e start
+LINKFLAGS=	-Ttext c0100000 -e start
 .if (${OBJECT_FMT} == "ELF")
 #LINKFLAGS+=	-N
 .else
 LINKFLAGS+=	-z
 .endif
-STRIPFLAGS=	-d
+
+.if defined(KERN_LDSCRIPT)
+LINKFLAGS+=	-T ${I386}/conf/${KERN_LDSCRIPT}
+.endif
+
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -181,6 +189,8 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -197,5 +207,17 @@ locore.o machdep.o: Makefile
 
 locore.o: ${I386}/i386/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

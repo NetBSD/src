@@ -1,0 +1,8 @@
+/* $NetBSD: ioconf.incl.news68k,v 1.1.6.2 2000/11/20 20:16:09 bouyer Exp $ */
+
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/mount.h>
+
+#include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.3 1999/08/09 12:16:10 christos Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.3.2.1 2000/11/20 20:25:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <machine/fbio.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -56,22 +55,18 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
-#include <machine/fbvar.h>
-#include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
-#include <sparc/dev/btreg.h>
-#include <sparc/dev/btvar.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/dev/cgsixreg.h>
-#include <sparc/dev/cgsixvar.h>
-#include <sparc/dev/pfourreg.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+#include <dev/sun/btreg.h>
+#include <dev/sun/btvar.h>
+#include <dev/sun/cgsixreg.h>
+#include <dev/sun/cgsixvar.h>
+#include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
 static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
@@ -132,7 +127,6 @@ cgsixattach(parent, self, aux)
 	bus_space_handle_t bh;
 	int constype, isconsole;
 	char *name;
-	extern struct tty *fbconstty;
 
 	oba = &uoba->uoba_oba4;
 
@@ -193,6 +187,16 @@ cgsixattach(parent, self, aux)
 	}
 	sc->sc_tec = (struct cg6_tec_xxx *)bh;
 
+	if (bus_space_map2(oba->oba_bustag, 0,
+			   oba->oba_paddr + CGSIX_FBC_OFFSET,
+			   sizeof(*sc->sc_fbc),
+			   BUS_SPACE_MAP_LINEAR,
+			   0, &bh) != 0) {
+		printf("%s: cannot map FBC registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_fbc = (struct cg6_fbc *)bh;
+
 
 	if (fb_pfour_id((void *)sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
 		fb->fb_flags |= FB_PFOUR;
@@ -207,7 +211,7 @@ cgsixattach(parent, self, aux)
 	 * to be found.
 	 */
 	if (eep == NULL || eep->eeConsole == constype)
-		isconsole = (fbconstty != NULL);
+		isconsole = fb_is_console(0);
 	else
 		isconsole = 0;
 
@@ -224,5 +228,5 @@ cgsixattach(parent, self, aux)
 		sc->sc_fb.fb_pixels = (caddr_t)bh;
 	}
 
-	cg6attach(sc, name, isconsole, 1);
+	cg6attach(sc, name, isconsole);
 }

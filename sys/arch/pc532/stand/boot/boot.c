@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1997/05/17 13:56:01 matthias Exp $	*/
+/*	$NetBSD: boot.c,v 1.1.22.1 2000/11/20 20:19:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
 
@@ -107,7 +108,7 @@ getbootdev(howto)
 {
 	char c, *ptr = line;
 
-	printf("Boot: [[[%s%d%c:]%s][-abdrs]] :- ",
+	printf("Boot: [[[%s%d%c:]%s][-abds]] :- ",
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
@@ -118,23 +119,7 @@ getbootdev(howto)
 				return;
 			if (c == '-')
 				while ((c = *++ptr) && c != ' ')
-					switch (c) {
-					case 'a':
-						*howto |= RB_ASKNAME;
-						continue;
-					case 'b':
-						*howto |= RB_HALT;
-						continue;
-					case 'd':
-						*howto |= RB_KDB;
-						continue;
-					case 'r':
-						*howto |= RB_DFLTROOT;
-						continue;
-					case 's':
-						*howto |= RB_SINGLE;
-						continue;
-					}
+					BOOT_FLAG(c, *howto);
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');

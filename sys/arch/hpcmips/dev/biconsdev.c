@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.1.1.1.2.1 2000/11/20 20:45:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -148,7 +148,7 @@ biconsdev_output(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {

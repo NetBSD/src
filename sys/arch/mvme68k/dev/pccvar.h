@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.4 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.4.8.1 2000/11/20 20:15:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -36,38 +36,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Autoconfiguration definitions shared between the MVME-147 Peripheral
- * Channel Controller (PCC) and the MVME-167's PCCchip2.
- */
-
-/*
- * Structure used to describe a device for autoconfiguration purposes.
- */
-struct pcc_device {
-	char	*pcc_name;	/* name of device (e.g. "clock") */
-	u_long	pcc_offset;	/* offset from PCC base */
-	int	pcc_bytes;	/* size of badaddr check */
-};
+#ifndef _MVME68K_PCCVAR_H
+#define _MVME68K_PCCVAR_H
 
 /*
  * Structure used to attach PCC devices.
  */
 struct pcc_attach_args {
-	char	*pa_name;	/* name of device */
-	u_long	pa_offset;	/* offset from PCC base */
-	int	pa_ipl;		/* interrupt level */
+	const char	*pa_name;	/* name of device */
+	int		pa_ipl;		/* interrupt level */
+	bus_dma_tag_t	pa_dmat;
+	bus_space_tag_t	pa_bust;
+	bus_addr_t	pa_offset;
 };
 
 /* Shorthand for locators. */
 #include "locators.h"
 #define pcccf_ipl	cf_loc[PCCCF_IPL]
 
-#if NPCC
+
+struct pcc_softc {
+        struct device sc_dev;
+	bus_space_tag_t sc_bust;
+	bus_space_handle_t sc_bush;
+};
+
+extern struct pcc_softc *sys_pcc;
+extern bus_addr_t pcc_slave_base_addr;
+
 void	pccintr_establish __P((int, int (*)(void *), int, void *));
 void	pccintr_disestablish __P((int));
-#endif
-#if NPCCTWO
-void	pcctwointr_establish __P((int, int (*)(void *), int, void *));
-void	pcctwointr_disestablish __P((int));
-#endif
+
+#endif /* _MVME68K_PCCVAR_H */

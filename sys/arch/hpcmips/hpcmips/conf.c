@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.1.2.1 2000/11/20 20:46:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,12 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 /*
  * Swapdev is a fake block device implemented  in sw.c and only used 
  * internally to get to swstrategy.  It cannot be provided to the
@@ -106,7 +112,7 @@ cdev_decl(pts);
 #define ptcioctl ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-
+#include "biconsdev.h"
 cdev_decl(biconsdev);
 
 cdev_decl(fd);
@@ -127,6 +133,10 @@ cdev_decl(ipl);
 
 #include "com.h"
 cdev_decl(com);
+#include "tx39uart.h"
+cdev_decl(txcom);
+#include "ucbsnd.h"
+cdev_decl(ucbsnd);
 #if notyet
 #include "lpt.h"
 cdev_decl(lpt);
@@ -149,8 +159,9 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
-#if notyet
 /* USB */
 #include "usb.h"
 cdev_decl(usb); 
@@ -160,7 +171,13 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
-#endif
+#include "ucom.h"
+cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
+
 #include "rnd.h"
 
 struct cdevsw	cdevsw[] =
@@ -192,17 +209,10 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),	 	/* 20: SCSI autochanger */
 	cdev_uk_init(NUK,uk),	 	/* 21: SCSI unknown */
 	cdev_scanner_init(NSS,ss),	/* 22: SCSI scanner */
-#if notyet
 	cdev_usb_init(NUSB,usb),	/* 23: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 24: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 25: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 26: USB generic driver */
-#else
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-#endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 27: ip-filter device */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 29: Berkeley packet filter */
@@ -212,7 +222,13 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,
 	    wsmouse),			/* 32: mice */
 	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
-	cdev_tty_init(1,biconsdev),	/* 34: bicons pseudo-dev */	
+	cdev_tty_init(NBICONSDEV,biconsdev),	/* 34: bicons pseudo-dev */
+	cdev_tty_init(NTX39UART,txcom),	/* 35: TX39 internal UART */
+	cdev_audio_init(NUCBSND,ucbsnd),/* 36: UCB1200 Codec (TX39 companion chip) */
+	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
+	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
+	cdev_usbdev_init(NURIO,urio),	/* 39: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 40: USB scanner */
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -277,6 +293,12 @@ static int chrtoblktbl[] =  {
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
 };
 
 /*

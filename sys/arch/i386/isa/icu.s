@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61 1999/07/01 22:03:38 thorpej Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.2.1 2000/11/20 20:09:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_vm86.h"
 
 #include <net/netisr.h>
@@ -150,50 +145,23 @@ IDTVEC(softserial)
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	%esi
 
-#define DONET(s, c) \
-	.globl  c		;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	c		;\
-1:
-
 IDTVEC(softnet)
 	movl	_C_LABEL(imask) + IPL_SOFTNET * 4,%eax
 	movl	%eax,_C_LABEL(cpl)
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-	DONET(NETISR_ARP, _C_LABEL(arpintr))
-#endif
-	DONET(NETISR_IP, _C_LABEL(ipintr))
-#endif
-#ifdef INET6
-	DONET(NETISR_IPV6, _C_LABEL(ip6intr))
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _C_LABEL(impintr))
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _C_LABEL(nsintr))
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _C_LABEL(clnlintr))
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _C_LABEL(ccittintr))
-#endif
-#ifdef NATM
-	DONET(NETISR_NATM, _C_LABEL(natmintr))
-#endif
-#ifdef NETATALK
-	DONET(NETISR_ATALK, _C_LABEL(atintr))
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	DONET(NETISR_PPP, _C_LABEL(pppintr))
-#endif
+
+#define DONETISR(s, c) \
+	.globl  _C_LABEL(c)	;\
+	testl	$(1 << s),%edi	;\
+	jz	1f		;\
+	call	_C_LABEL(c)	;\
+1:
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	%esi
 

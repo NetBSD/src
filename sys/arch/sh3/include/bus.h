@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1999/09/13 10:31:15 itojun Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.1 2000/11/20 20:24:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,6 +86,11 @@
  */
 #define	SH3_BUS_SPACE_IO	0	/* space is i/o space */
 #define SH3_BUS_SPACE_MEM	1	/* space is mem space */
+#ifdef SH4_PCMCIA
+#define SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
+#define SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
+#define SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
+#endif
 
 /*
  * Bus address and size types
@@ -110,6 +115,21 @@ typedef	u_long bus_space_handle_t;
 
 int bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
 	int, bus_space_handle_t *));
+
+#ifdef SH4_PCMCIA
+int shpcmcia_memio_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
+	int, bus_space_handle_t *));
+
+int shpcmcia_mem_add_mapping __P((bus_addr_t, bus_size_t, int, 
+				  bus_space_handle_t *));
+void shpcmcia_memio_unmap __P((bus_space_tag_t, bus_space_handle_t,
+			       bus_size_t));
+void shpcmcia_memio_free __P((bus_space_tag_t, bus_space_handle_t,
+			      bus_size_t));
+int shpcmcia_memio_subregion __P((bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t, bus_size_t,
+				  bus_space_handle_t *));
+#endif
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
@@ -884,8 +904,8 @@ struct sh3_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -965,8 +985,8 @@ int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.h,v 1.1 1996/07/20 18:55:12 ragge Exp $ */
+/*	$NetBSD: hdc9224.h,v 1.1.28.1 2000/11/20 20:33:38 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 
 struct hdc9224_DKCreg {
@@ -118,6 +117,9 @@ struct hdc9224_UDCreg { /* internal disk controller registers */
 #define udc_dstat udc_term	/*     drive status register */
 	u_char udc_data;	/* 10: data */
 };
+
+/* UDC regs */
+#define	UDC_TERM	9
 
 /*
  * Definition of bits in the Current-Head register

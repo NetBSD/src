@@ -1,7 +1,10 @@
-/*	$NetBSD: mips_param.h,v 1.14 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.14.2.1 2000/11/20 20:13:31 bouyer Exp $	*/
+
+#ifdef _KERNEL
+#include <machine/cpu.h>
+#endif
 
 /*
- * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
  * to be the number of per-process-wired kernel-stack pages/PTES.
  */
@@ -31,15 +34,9 @@
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
-#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
-#define	NBPG		(1024*16)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		14		/* LOG2(NBPG) */
-#else
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#endif
 #define	NPTEPG		(NBPG/4)
 
 #define NBSEG		0x400000	/* bytes/segment */
@@ -47,11 +44,11 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
@@ -78,5 +75,5 @@
  */
 #define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define mips_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define mips_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
+#define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)

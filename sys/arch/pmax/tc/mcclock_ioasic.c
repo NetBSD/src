@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.8 1999/04/24 08:01:13 simonb Exp $ */
+/*	$NetBSD: mcclock_ioasic.c,v 1.8.2.1 2000/11/20 20:20:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,36 +27,31 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.8 1999/04/24 08:01:13 simonb Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.8.2.1 2000/11/20 20:20:50 bouyer Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
-#include <dev/ic/mc146818reg.h>
+#include <dev/dec/mcclock_pad32.h>
 
+#include <dev/tc/tcvar.h> 
+#include <dev/tc/ioasicvar.h>
 
-#include <dev/tc/tcreg.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>                   /* XXX */
-
-#include  <dev/dec/mcclock_pad32.h>
-
-int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
+static int	mcclock_ioasic_match __P((struct device *, struct cfdata *,
+		    void *));
+static void	mcclock_ioasic_attach __P((struct device *, struct device *,
+		    void *));
 
 struct cfattach mcclock_ioasic_ca = {
 	sizeof (struct mcclock_pad32_softc),
-	     (void *)mcclock_ioasic_match, mcclock_ioasic_attach,
+	mcclock_ioasic_match, mcclock_ioasic_attach, 
 };
+extern struct cfdriver ioasic_cd;
 
-int
+
+static int
 mcclock_ioasic_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -64,8 +59,7 @@ mcclock_ioasic_match(parent, match, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
-#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
-	if (strcmp(CFNAME(parent), "ioasic") != 0)
+	if (parent->dv_cfdata->cf_driver != &ioasic_cd)
 		return 0;
 
 	if (strcmp("mc146818", d->iada_modname) != 0)
@@ -77,7 +71,7 @@ mcclock_ioasic_match(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 mcclock_ioasic_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 1999/09/16 14:42:27 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2.2.1 2000/11/20 20:24:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -49,21 +49,72 @@
 
 #ifdef _KERNEL
 
+void enable_ext_intr __P((void));
+void disable_ext_intr __P((void));
+static __inline void setPageDir __P((int));
+static __inline void cache_clear __P((int));
+static __inline void breakpoint __P((void));
+
 static __inline void
 tlbflush(void)
 {
 #define TLB_FLUSH 0x04
 /* #define CACHE_FLUSH 0x80 */
 
+#ifdef SH4
+	SHREG_MMUCR = (SHREG_MMUCR | TLB_FLUSH) & MMUCR_VALIDBITS;
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+#else
 	SHREG_MMUCR |= TLB_FLUSH;
+#endif
+
 /*   SHREG_CCR |= CACHE_FLUSH; */
 }
 
 static __inline void
-setPageDir(int pagedir)
+cacheflush(void)
 {
+#if 1
+	volatile int *p = (int *)ram_start;
+	int i;
+	int d;
+
+	for(i = 0; i < 512; i++){
+		d = *p;
+		p += 8;
+	}
+#else
+#define CACHE_FLUSH 0x809
+
+	SHREG_CCR |= CACHE_FLUSH; 
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+	__asm __volatile("nop");
+#endif
+}
+
+static __inline void
+setPageDir(pagedir)
+	int pagedir;
+{
+
 	PageDirReg = pagedir;
 	tlbflush();
+#ifdef SH4
+	SHREG_TTB = pagedir;
+#endif
 }
 
 /* XXXX ought to be in psl.h with spl() functions */
@@ -71,6 +122,7 @@ setPageDir(int pagedir)
 static __inline void
 disable_intr(void)
 {
+
 	__asm __volatile("mov.l r0, @-r15");
 	__asm __volatile("mov.l r1, @-r15");
 	__asm __volatile("mov #0x10, r0");
@@ -86,6 +138,7 @@ disable_intr(void)
 static __inline void
 enable_intr(void)
 {
+
 	__asm __volatile("mov.l r0, @-r15");
 	__asm __volatile("mov.l r1, @-r15");
 	__asm __volatile("mov #0x10, r0");
@@ -97,6 +150,21 @@ enable_intr(void)
 	__asm __volatile("ldc r1, sr");
 	__asm __volatile("mov.l @r15+, r1");
 	__asm __volatile("mov.l @r15+, r0");
+}
+
+static __inline void
+cache_clear(va)
+	int va;
+{
+#ifdef SH4
+	__asm __volatile("ocbp @%0" :: "r"(va));
+#endif
+}
+
+static __inline void
+breakpoint()
+{
+	__asm __volatile ("trapa #0xc3");
 }
 
 #endif

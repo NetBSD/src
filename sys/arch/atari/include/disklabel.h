@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 1996/02/19 09:05:52 leo Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5.30.1 2000/11/20 20:05:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,6 +47,7 @@
 #define LABELMAXSIZE	1020		/* maximum size of disk label, at
 					   least (MAXPARTITIONS * 16 + 152)*/
 #define MAXPARTITIONS	16		/* max. # of NetBSD partitions     */
+#define SWAP_PART	1		/* xx?b is default swap partition  */
 #define RAW_PART	2		/* xx?c is raw partition	   */
 
 #define MAXAUXROOTS	29		/* max. # of auxilary root sectors */

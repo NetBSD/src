@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.2 1999/06/20 00:59:55 ragge Exp $ */
+/* $NetBSD: uba_dma.c,v 1.2.4.1 2000/11/20 20:33:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPEUBAL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -43,7 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -108,11 +108,16 @@ uba_dma_init(sc)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Map in Unibus map registers.
+	 * Map in Unibus map registers, if not mapped in already.
 	 */
-	pte = (struct pte *)vax_map_physmem(sc->uv_addr, sc->uv_size/VAX_NBPG);
-	if (pte == 0)
-		panic("uba_dma_init");
+	if (sc->uv_uba) {
+		pte = sc->uv_uba->uba_map;
+	} else {
+		pte = (struct pte *)vax_map_physmem(sc->uv_addr,
+		    sc->uv_size/(VAX_NBPG/sizeof(struct pte)));
+		if (pte == 0)
+			panic("uba_dma_init");
+	}
 	/*
 	 * Initialize the SGMAP.
 	 */

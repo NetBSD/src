@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.213 1999/09/17 19:59:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.213.2.1 2000/11/20 20:09:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
@@ -83,6 +84,9 @@
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_oldboot.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -128,9 +132,8 @@
 
 
 /* XXX temporary kluge; these should not be here */
-#define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
-#define	IOM_END		0x100000	/* end of I/O memory "hole" */
-#define	IOM_SIZE	(IOM_END - IOM_BEGIN)
+/* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
+#include <dev/isa/isareg.h>
 
 
 /* NB: NOP now preserves registers so NOPs can be inserted anywhere */
@@ -216,7 +219,9 @@
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
+#ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
+#endif
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(curpcb),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
@@ -262,14 +267,15 @@ tmpstk:
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
-	 * Load parameters from stack (howto, bootdev, unit, bootinfo, esym).
-	 * note: (%esp) is return address of boot
-	 * (If we want to hold onto /boot, it's physical %esp up to _end.)
+	 * Load parameters from stack
+	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
 	 */
 	movl	4(%esp),%eax
 	movl	%eax,RELOC(boothowto)
+#ifdef COMPAT_OLDBOOT
 	movl	8(%esp),%eax
 	movl	%eax,RELOC(bootdev)
+#endif
 	movl	12(%esp),%eax
 
 	testl	%eax, %eax
@@ -590,11 +596,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-#ifdef DDB
-	orl	$(PG_V|PG_KW),%eax
-#else
 	orl	$(PG_V|PG_KR),%eax
-#endif
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
@@ -1758,7 +1760,8 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(uvmexp),_C_LABEL(panic)
+	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
+	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
 /*
  * setrunqueue(struct proc *p);
@@ -1776,8 +1779,8 @@ NENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 	movzbl	P_PRIORITY(%eax),%edx
 	shrl	$2,%edx
-	btsl	%edx,_C_LABEL(whichqs)		# set q full bit
-	leal	_C_LABEL(qs)(,%edx,8),%edx	# locate q hdr
+	btsl	%edx,_C_LABEL(sched_whichqs)	# set q full bit
+	leal	_C_LABEL(sched_qs)(,%edx,8),%edx # locate q hdr
 	movl	P_BACK(%edx),%ecx
 	movl	%edx,P_FORW(%eax)	# link process on tail of q
 	movl	%eax,P_BACK(%edx)
@@ -1800,7 +1803,7 @@ NENTRY(remrunqueue)
 	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
 	shrl	$2,%eax
-	btl	%eax,_C_LABEL(whichqs)
+	btl	%eax,_C_LABEL(sched_whichqs)
 	jnc	1f
 #endif /* DIAGNOSTIC */
 	movl	P_BACK(%ecx),%edx	# unlink process
@@ -1813,7 +1816,7 @@ NENTRY(remrunqueue)
 #ifndef DIAGNOSTIC
 	shrl	$2,%eax
 #endif
-	btrl	%eax,_C_LABEL(whichqs)	# no; clear bit
+	btrl	%eax,_C_LABEL(sched_whichqs)	# no; clear bit
 2:	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$3f
@@ -1830,17 +1833,34 @@ NENTRY(remrunqueue)
  * something to come ready.
  */
 ENTRY(idle)
-	cli
-	movl	_C_LABEL(whichqs),%ecx
+	/*
+	 * When we get here, interrupts are off (via cli) and
+	 * sched_lock is held.
+	 */
+	movl	_C_LABEL(sched_whichqs),%ecx
 	testl	%ecx,%ecx
 	jnz	sw1
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_unlock_idle)
+#endif
 	sti
+
+	/* Try to zero some pages. */
+	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%ecx
+	testl	%ecx,%ecx
+	jz	1f
+	call	_C_LABEL(uvm_pageidlezero)
+1:
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_idle)
 #endif
 	hlt
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_busy)
+#endif
+	cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
 #endif
 	jmp	_C_LABEL(idle)
 
@@ -1853,7 +1873,7 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -1875,6 +1895,11 @@ ENTRY(cpu_switch)
 	 */
 	movl	$0,_C_LABEL(curproc)
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
 	movl	$0,_C_LABEL(cpl)	# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
@@ -1891,14 +1916,19 @@ switch_search:
 	 *   %edi - new process
 	 */
 
-	/* Wait for new process. */
+	/* Lock the scheduler. */
 	cli				# splhigh doesn't do a cli
-	movl	_C_LABEL(whichqs),%ecx
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
+#endif
+
+	/* Wait for new process. */
+	movl	_C_LABEL(sched_whichqs),%ecx
 
 sw1:	bsfl	%ecx,%ebx		# find a full q
 	jz	_C_LABEL(idle)		# if none, idle
 
-	leal	_C_LABEL(qs)(,%ebx,8),%eax	# select q
+	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
 	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
@@ -1913,7 +1943,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	jne	3f
 
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(whichqs)	# update q status
+	movl	%ecx,_C_LABEL(sched_whichqs) # update q status
 
 3:	/* We just did it. */
 	xorl	%eax,%eax
@@ -1929,7 +1959,22 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
 
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * p->p_cpu = curcpu()
+	 * XXXSMP
+	 */
+#endif
+
 	/* Record new process. */
+	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
 	movl	%edi,_C_LABEL(curproc)
 
 	/* It's okay to take interrupts here. */
@@ -1988,16 +2033,22 @@ switch_exited:
 	jnz	switch_restored
 #endif
 
+	/*
+	 * Activate the address space.  We're curproc, so %cr3 will
+	 * be reloaded, but we're not yet curpcb, so the LDT won't
+	 * be reloaded, although the PCB copy of the selector will
+	 * be refreshed from the pmap.
+	 */
+	pushl	%edi
+	call	_C_LABEL(pmap_activate)
+	addl	$4,%esp
+
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
+	movl	P_MD_TSS_SEL(%edi),%edx
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
-	/* Switch TSS. */
-	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	/* Switch TSS. Reset "task busy" flag before */
+	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
 #ifdef USER_LDT
@@ -2066,7 +2117,7 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
+	movl	P_MD_TSS_SEL(%ebx),%edx
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
@@ -2153,15 +2204,21 @@ ENTRY(savectx)
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 
+#ifdef IPKDB
+#define	BPTTRAP(a)	pushl $0; pushl $(a); jmp _C_LABEL(bpttraps)
+#else
+#define	BPTTRAP(a)	ZTRAP(a)
+#endif
+
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	ZTRAP(T_TRCTRAP)
+	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
-	ZTRAP(T_BPTFLT)
+	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
@@ -2325,6 +2382,86 @@ calltrap:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
+
+#ifdef IPKDB
+NENTRY(bpttraps)
+	INTRENTRY
+	call	_C_LABEL(ipkdb_trap_glue)
+	testl	%eax,%eax
+	jz	calltrap
+	INTRFASTEXIT
+
+ipkdbsetup:
+	popl	%ecx
+
+	/* Disable write protection: */
+	movl	%cr0,%eax
+	pushl	%eax
+	andl	$~CR0_WP,%eax
+	movl	%eax,%cr0
+
+	/* Substitute Protection & Page Fault handlers: */
+	movl	_C_LABEL(idt),%edx
+	pushl	13*8(%edx)
+	pushl	13*8+4(%edx)
+	pushl	14*8(%edx)
+	pushl	14*8+4(%edx)
+	movl	$fault,%eax
+	movw	%ax,13*8(%edx)
+	movw	%ax,14*8(%edx)
+	shrl	$16,%eax
+	movw	%ax,13*8+6(%edx)
+	movw	%ax,14*8+6(%edx)
+
+	pushl	%ecx
+	ret
+
+ipkdbrestore:
+	popl	%ecx
+
+	/* Restore Protection & Page Fault handlers: */
+	movl	_C_LABEL(idt),%edx
+	popl	14*8+4(%edx)
+	popl	14*8(%edx)
+	popl	13*8+4(%edx)
+	popl	13*8(%edx)
+
+	/* Restore write protection: */
+	popl	%edx
+	movl	%edx,%cr0
+
+	pushl	%ecx
+	ret
+
+NENTRY(ipkdbfbyte)
+	pushl	%ebp
+	movl	%esp,%ebp
+	call	ipkdbsetup
+	movl	8(%ebp),%edx
+	movzbl	(%edx),%eax
+faultexit:
+	call	ipkdbrestore
+	popl	%ebp
+	ret
+
+NENTRY(ipkdbsbyte)
+	pushl	%ebp
+	movl	%esp,%ebp
+	call	ipkdbsetup
+	movl	8(%ebp),%edx
+	movl	12(%ebp),%eax
+	movb	%al,(%edx)
+	call	ipkdbrestore
+	popl	%ebp
+	ret
+
+fault:
+	popl	%eax		/* error code */
+	movl	$faultexit,%eax
+	movl	%eax,(%esp)
+	movl	$-1,%eax
+	iret
+#endif	/* IPKDB */
 
 /*
  * Old call gate entry for syscall

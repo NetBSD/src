@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.16 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.16.2.1 2000/11/20 20:04:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -671,14 +671,14 @@ physconioctl(dev, cmd, data, flag, p)
 	return(ENOTTY);
 }
 
-int
+paddr_t
 physconmmap(dev, offset, nprot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 	struct vconsole *vc = find_vc(dev);
-	u_int physaddr;
+	paddr_t physaddr;
 
 	if (minor(dev) < 64) {
 		log(LOG_WARNING, "You should no longer use ttyv to mmap a frame buffer\n");
@@ -737,7 +737,7 @@ physconstart(tp)
 
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 
 	if (cl->c_cc <= tp->t_lowat) {
@@ -942,7 +942,7 @@ physconputstring(string, length)
  * Get a character from the physical console
  */
 
-int getkey_polled __P(());
+int getkey_polled __P((void));
 
 char
 physcongetchar(void)

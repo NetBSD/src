@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1998/01/06 06:46:05 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.14.1 2000/11/20 20:11:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
+#ifndef _M68K_PCB_H_
+#define _M68K_PCB_H_
 
 #include <machine/frame.h>
 
@@ -57,6 +59,10 @@ struct pcb {
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 };
 
+/* Positions within pcb_regs[] of A6 and A7 (FP and SP). For m68k DDB. */
+#define PCB_REGS_FP	10
+#define PCB_REGS_SP	11
+
 /*
  * The pcb is augmented with machine-dependent additional data for
  * core dumps. For the hp300, this includes an HP-UX exec header
@@ -65,3 +71,4 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for HP-UX core dumps */
 };
+#endif /* _M68K_PCB_H_ */

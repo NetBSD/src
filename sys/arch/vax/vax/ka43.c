@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.19.2.1 2000/11/20 20:33:20 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -82,6 +81,8 @@ struct	cpu_dep ka43_calls = {
         ka43_halt,
         ka43_reboot,
         ka43_clrf,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 /*
@@ -150,7 +151,7 @@ ka43_mchk(addr)
 
 	/*
 	 * If either the Restart flag is set or the First-Part-Done flag
-	 * is set, and the TRAP2 (double error) bit is not set, the the
+	 * is set, and the TRAP2 (double error) bit is not set, then the
 	 * error is recoverable.
 	 */
 	if (mfpr(PR_PCSTS) & KA43_PCS_TRAP2) {
@@ -175,13 +176,20 @@ ka43_mchk(addr)
 void
 ka43_memerr()
 {
+	char sbuf[256];
+
 	/*
 	 * Don\'t know what to do here. So just print some messages
 	 * and try to go on...
 	 */
+
 	printf("memory error!\n");
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
-	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+
+	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 }
 
 int
@@ -203,6 +211,8 @@ ka43_clear_errors()
 int
 ka43_cache_reset()
 {
+	char sbuf[256];
+
 	/*
 	 * resetting primary and secondary caches is done in three steps:
 	 *	1. disable both caches
@@ -213,8 +223,11 @@ ka43_cache_reset()
 	ka43_cache_invalidate();
 	ka43_cache_enable();
 
-	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA43_PCSTS_BITS);
-	printf("secondary cache status: %b\n", *ka43_creg, KA43_SESR_BITS);
+	bitmask_snprintf(mfpr(PR_PCSTS), KA43_PCSTS_BITS, sbuf, sizeof(sbuf));
+	printf("primary cache status: %s\n", sbuf);
+
+	bitmask_snprintf(*ka43_creg, KA43_SESR_BITS, sbuf, sizeof(sbuf));
+	printf("secondary cache status: %s\n", sbuf);
 
 	return (0);
 }

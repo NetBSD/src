@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.16 1999/08/23 08:24:37 kleink Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.16.2.1 2000/11/20 20:09:40 bouyer Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -64,7 +64,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "bbinfo.h"
 
-BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
+BOOTSEG		=	0x01000	# boot will be loaded here (below 640K)
 BOOTSTACK	=	0xfffc	# boot stack
 LOADSZ		=	PRIM_LOADSZ	# size of first loaded chunk
 
@@ -231,7 +231,7 @@ found:
 
 	data32
 	addr32
-	movl	8(%esi),%ebx
+	movl	%es:8(%esi),%ebx
 	data32
 	addl	$LOADSZ+1, %ebx	/* ebx = maximum sector # we need */
 
@@ -306,7 +306,7 @@ found:
 	data32
 	pushl	%eax		/* so we get address 0 in BOOTSEG */
 	data32
-	pushl	$0x10+LOADSZ*0x10000
+	pushl	$0x10+LOADSZ*0x20000
 	movl	%esp, %esi
 	movb	$0x42, %ah
 	int	$0x13
@@ -411,7 +411,7 @@ done:
 
 eread:	.asciz		"Read err\r\n"
 enoboot: .asciz		"No NetBSD part\r\n"
-efail: .asciz		"Boot failed\r\n"
+efail: .asciz		"Boot fail\r\n"
 
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */

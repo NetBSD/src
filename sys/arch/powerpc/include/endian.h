@@ -1,9 +1,3 @@
-/*	$NetBSD: endian.h,v 1.7 1999/08/21 05:53:51 simonb Exp $	*/
+/*	$NetBSD: endian.h,v 1.7.2.1 2000/11/20 20:31:08 bouyer Exp $	*/
 
-#ifndef	_MACHINE_ENDIAN_H_
-#define	_MACHINE_ENDIAN_H_
-
-#define _BYTE_ORDER _BIG_ENDIAN
 #include <sys/endian.h>
-
-#endif /* _MACHINE_ENDIAN_H_ */

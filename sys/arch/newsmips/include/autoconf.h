@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.4 1999/10/17 15:06:45 tsubai Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4.2.1 2000/11/20 20:17:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,13 +31,6 @@
  * Machine-dependent structures of autoconfiguration
  */
 
-struct confargs;
-
-/* Handle device interrupt for  given unit of a driver */
-
-typedef void* intr_arg_t;		/* pointer to some softc */
-typedef int (*intr_handler_t) __P((intr_arg_t));
-
 struct confargs {
 	char	*ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot (table entry). */
@@ -48,6 +41,9 @@ struct confargs {
 
 /* Locator aliases */
 #define cf_addr	cf_loc[0]
+#define cf_level	cf_loc[1]
 
 int news3400_badaddr __P((void *, u_int));
 #define badaddr news3400_badaddr
+
+void *hb_intr_establish __P((int, int, int (*)(void *), void *));

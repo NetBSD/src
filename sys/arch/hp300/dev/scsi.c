@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.25 1999/02/06 03:30:32 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.25.8.1 2000/11/20 20:08:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -187,8 +187,6 @@ u_int	sgo_wait[MAXWAIT+2];
 #else
 #define HIST(h,w)
 #endif
-
-#define	b_cylin		b_resid
 
 static void
 scsiabort(target, hs, hd, where)
@@ -487,13 +485,14 @@ scsi_print(aux, pnp)
 	switch (inqbuf->version) {
 	case 1:
 	case 2:
+	case 3:
 		scsi_str(inqbuf->vendor_id, vendor, sizeof(inqbuf->vendor_id));
 		scsi_str(inqbuf->product_id, product,
 		    sizeof(inqbuf->product_id));
 		scsi_str(inqbuf->rev, revision, sizeof(inqbuf->rev));
 		printf("<%s, %s, %s>", vendor, product, revision);
-		if (inqbuf->version == 2)
-			printf(" (SCSI-2)");
+		if (inqbuf->version >= 2)
+			printf(" (SCSI-%d)", inqbuf->version);
 		break;
 	default:
 		printf("type 0x%x, qual 0x%x, ver %d",
@@ -1288,12 +1287,12 @@ out:
 	if (bp->b_flags & B_READ)
 		dmaflags |= DMAGO_READ;
 	if ((hs->sc_flags & SCSI_DMA32) &&
-	    ((int)bp->b_un.b_addr & 3) == 0 && (bp->b_bcount & 3) == 0) {
+	    ((int)bp->b_data & 3) == 0 && (bp->b_bcount & 3) == 0) {
 		cmd |= CSR_DMA32;
 		dmaflags |= DMAGO_LWORD;
 	} else
 		dmaflags |= DMAGO_WORD;
-	dmago(hs->sc_dq.dq_chan, bp->b_un.b_addr, bp->b_bcount, dmaflags);
+	dmago(hs->sc_dq.dq_chan, bp->b_data, bp->b_bcount, dmaflags);
 
 	if (bp->b_flags & B_READ) {
 		cmd |= CSR_DMAIN;
@@ -1331,7 +1330,7 @@ out:
 		hs->sc_flags |= SCSI_PAD;
 		if (i & 1)
 			printf("%s: odd byte count: %d bytes @ %ld\n",
-				hs->sc_dev.dv_xname, i, bp->b_cylin);
+				hs->sc_dev.dv_xname, i, bp->b_cylinder);
 #endif
 	} else
 		i += 4;

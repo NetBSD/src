@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1998/08/01 11:22:52 scw Exp $ */
+/*	$NetBSD: clock.c,v 1.3.14.1 2000/11/20 20:15:30 bouyer Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -19,7 +19,6 @@
 #define LEAPYEAR(y)     (((y) & 3) == 0)
 #define YEAR0		68
 
-
 /*
  * This code is defunct after 2068.
  * Will Unix still be here then??
@@ -27,7 +26,7 @@
 const short dayyr[12] =
 {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-static  u_long
+u_long
 chiptotime(sec, min, hour, day, mon, year)
 	int sec, min, hour, day, mon, year;
 {

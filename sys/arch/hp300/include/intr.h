@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 1999/08/05 18:08:10 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.2.1 2000/11/20 20:08:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -116,6 +116,8 @@ extern unsigned short hp300_ipls[];
 #define	splclock()	spl6()
 #define	splstatclock()	splclock()
 #define	splhigh()	spl7()
+#define	splsched()	spl7()
+#define	spllock()	spl7()
 
 /* watch out for side effects */
 #define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.48 1999/06/14 03:11:34 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.48.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -67,12 +67,14 @@
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
 #define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
+#define    NUBUS_DRHW_LVIEW	0x0278	/* Sigma Designs L-View */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
 #define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
-#define    NUBUS_DRHW_ROPS24XLTV	0x02B7	/* E-Machines Futura-SX */
+#define    NUBUS_DRHW_ROPS24XLTV 0x02B7	/* RasterOps 24XlTV */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
+#define    NUBUS_DRHW_ROPS24MXTV 0x03DF	/* RasterOps 24MxTV */
 #define    NUBUS_DRHW_GVIMAGE	0x03FB	/* Interware Co., Ltd. Grand Vimage */
 #define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
 #define	   NUBUS_DRHW_RPC24X	0x040A	/* Radius PrecisionColor 24X */
@@ -95,8 +97,10 @@
 #define   NUBUS_DRSW_FARALLON	0x010C
 #define   NUBUS_DRSW_DAYNA2	0x0115
 #define   NUBUS_DRSW_FOCUS	0x011A
+#define   NUBUS_DRSW_ASANTEF	0x011D
 #define   NUBUS_DRSW_TFLLAN	0x011E
 #define    NUBUS_DRHW_INTERLAN	0x0100
+#define    NUBUS_DRHW_ASANTEF	0x0101
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
 #define    NUBUS_DRHW_NUVOLINK	0x010B

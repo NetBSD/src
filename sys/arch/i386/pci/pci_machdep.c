@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34 1999/01/28 12:43:14 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.8.1 2000/11/20 20:09:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,9 +85,9 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -103,6 +103,20 @@
 #include "opt_pci_conf_mode.h"
 
 int pci_mode = -1;
+
+struct simplelock pci_conf_slock;
+
+#define	PCI_CONF_LOCK(s)						\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&pci_conf_slock);					\
+} while (0)
+
+#define	PCI_CONF_UNLOCK(s)						\
+do {									\
+	simple_unlock(&pci_conf_slock);					\
+	splx((s));							\
+} while (0)
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -277,6 +291,7 @@ pci_conf_read(pc, tag, reg)
 	int reg;
 {
 	pcireg_t data;
+	int s;
 
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {
@@ -293,9 +308,11 @@ pci_conf_read(pc, tag, reg)
 #ifndef PCI_CONF_MODE
 mode1:
 #endif
+	PCI_CONF_LOCK(s);
 	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
 	data = inl(PCI_MODE1_DATA_REG);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
+	PCI_CONF_UNLOCK(s);
 	return data;
 #endif
 
@@ -303,10 +320,12 @@ mode1:
 #ifndef PCI_CONF_MODE
 mode2:
 #endif
+	PCI_CONF_LOCK(s);
 	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 	data = inl(tag.mode2.port | reg);
 	outb(PCI_MODE2_ENABLE_REG, 0);
+	PCI_CONF_UNLOCK(s);
 	return data;
 #endif
 }
@@ -318,6 +337,7 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
+	int s;
 
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {
@@ -334,9 +354,11 @@ pci_conf_write(pc, tag, reg, data)
 #ifndef PCI_CONF_MODE
 mode1:
 #endif
+	PCI_CONF_LOCK(s);
 	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
 	outl(PCI_MODE1_DATA_REG, data);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
+	PCI_CONF_UNLOCK(s);
 	return;
 #endif
 
@@ -344,10 +366,12 @@ mode1:
 #ifndef PCI_CONF_MODE
 mode2:
 #endif
+	PCI_CONF_LOCK(s);
 	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 	outl(tag.mode2.port | reg, data);
 	outb(PCI_MODE2_ENABLE_REG, 0);
+	PCI_CONF_UNLOCK(s);
 #endif
 }
 
@@ -365,6 +389,8 @@ pci_mode_detect()
 	u_int32_t sav, val;
 	int i;
 	pcireg_t idreg;
+
+	simple_lock_init(&pci_conf_slock);
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -452,7 +478,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		goto bad;
 	}
 
-	if (pin > 4) {
+	if (pin > PCI_INTERRUPT_PIN_MAX) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
@@ -471,7 +497,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
 	 */
-	if (line == 0 || line == 255) {
+	if (line == 0 || line == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {
@@ -506,6 +532,16 @@ pci_intr_string(pc, ih)
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -38,13 +38,17 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
+#define	KA49_CPMBX	0x38
+#define	KA49_HLT_HALT	0x03
+#define	KA49_HLT_BOOT	0x02
+
 static	void	ka49_conf __P((void));
 static	void	ka49_memerr __P((void));
 static	int	ka49_mchk __P((caddr_t));
 static	void	ka49_halt __P((void));
 static	void	ka49_reboot __P((int));
-static	void	ka49_softmem __P((int));
-static	void	ka49_hardmem __P((int));
+static	void	ka49_softmem __P((void *));
+static	void	ka49_hardmem __P((void *));
 static	void	ka49_steal_pages __P((void));
 static	void	ka49_cache_enable __P((void));
 static	void	ka49_halt __P((void));
@@ -63,6 +67,9 @@ struct	cpu_dep ka49_calls = {
 	2,	/* SCB pages */
 	ka49_halt,
 	ka49_reboot,
+	NULL,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 
@@ -87,6 +94,7 @@ ka49_conf()
  */
 void
 ka49_hardmem(arg)
+	void *arg;
 {
 	if (cold == 0)
 		printf("Hard memory error\n");
@@ -95,6 +103,7 @@ ka49_hardmem(arg)
 
 void
 ka49_softmem(arg)
+	void *arg;
 {
 	if (cold == 0)
 		printf("Soft memory error\n");
@@ -206,20 +215,21 @@ ka49_mchk(addr)
 void
 ka49_steal_pages()
 {
-
 	/*
 	 * Get the soft and hard memory error vectors now.
 	 */
-	scb_vecalloc(0x54, ka49_softmem, 0, 0);
-	scb_vecalloc(0x60, ka49_hardmem, 0, 0);
+	scb_vecalloc(0x54, ka49_softmem, NULL, 0, NULL);
+	scb_vecalloc(0x60, ka49_hardmem, NULL, 0, NULL);
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka49_cache_enable();
+
 }
 
 static void
 ka49_halt()
 {
+	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
 	asm("halt");
 }
 
@@ -227,5 +237,6 @@ static void
 ka49_reboot(arg)
 	int arg;
 {
+	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
 	asm("halt");
 }

@@ -1,15 +1,18 @@
+# 	$NetBSD: GENERIC,v 1.10.2.1 2000/11/20 20:17:17 bouyer Exp $
 #
-# NEWS3400 config file
-#
-# 	$NetBSD: GENERIC,v 1.10 1999/07/29 10:37:20 augustss Exp $
-#
+#	GENERIC kernel for RISC-NEWS
+
 include		"arch/newsmips/conf/std.newsmips"
+
+#ident 		"GENERIC-$Revision: 1.10.2.1 $"
 
 maxusers	16
 
 options 	news3400
+options 	news5000
 options 	MIPS1			# R2000/R3000 support
-options 	CPU_SINGLE
+options 	MIPS3			# R4000 support
+options 	CPU_SINGLE		# no I/O processor
 
 # Standard system options
 options 	KTRACE			# system call tracing support
@@ -18,7 +21,6 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 
@@ -44,6 +46,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
+file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -57,9 +60,14 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocols
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 options 	NS		# Xerox NS networking
@@ -76,35 +84,43 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
+options 	NFS_BOOT_BOOTPARAM
+
 config		netbsd	root on ? type ?
 
 mainbus0 at root
 
 cpu0	at mainbus0
-hb0	at mainbus0
+hb0	at mainbus0			# Hyper-bus
+ap0	at mainbus0			# APbus
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
+mkclock0 at ap?
 
-le0	at hb0 addr 0xbff80000		# onboard LANCE ethernet
-#le1	at hb0 addr 0xb8c30000
+le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
+le1	at hb0 addr 0xb8c30000 level 0
 
-kb0	at hb0 addr 0xbfd00000		# keyboard
-ms0	at hb0 addr 0xbfd00004		# mouse
+sn*	at ap?				# SONIC Ethernet
+tlp*	at ap?
 
-zsc0	at hb0 addr 0xbfec0000		# onboard
-#zsc1	at hb0 addr 0xb8c40100
-#zsc2	at hb0 addr 0xb8c40104
+kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
+ms0	at hb0 addr 0xbfd00004 level 2	# mouse
+
+zsc0	at hb0 addr 0xbfec0000 level 1 flags 0x0	# on-board
+zsc1	at hb0 addr 0xb8c40100 level 1 flags 0x1	# expansion board
+zsc2	at hb0 addr 0xb8c40104 level 1 flags 0x1
+zsc0	at ap?
+
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
-#zstty2	at zsc1 channel 0		# tty02
-#zstty3	at zsc1 channel 1		# tty03
-#zstty4	at zsc2 channel 0		# tty04
-#zstty5	at zsc2 channel 1		# tty05
+zstty2	at zsc1 channel 0		# tty02
+zstty3	at zsc1 channel 1		# tty03
+zstty4	at zsc2 channel 0		# tty04
+zstty5	at zsc2 channel 1		# tty05
 
-fb0	at hb0 addr 0x88000000		# framebuffer
+fb0	at hb0 addr 0x88000000		# frame buffer
 
-sc0	at hb0 addr 0xbfe00100		# onboard cxd1185 SCSI controller
-
+sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
@@ -113,14 +129,19 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	tun		4	# Network "tunnel" device
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
+pseudo-device	rnd			# /dev/random and in-kernel generator

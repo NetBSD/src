@@ -1,9 +1,21 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1999/09/16 12:23:30 takemura Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.2.1 2000/11/20 20:39:22 bouyer Exp $
 
-all: pbsdboot.exe
+all: pbsdboot.exe pbsdboot1.exe
 
 pbsdboot.exe: pbsdboot.uu
 	uudecode pbsdboot.uu
+	chmod 755 pbsdboot.exe
 
-uu: WMIPSDbg/pbsdboot.exe
-	uuencode WMIPSDbg/pbsdboot.exe pbsdboot.exe > pbsdboot.uu
+pbsdboot1.exe: pbsdboot1.uu
+	uudecode pbsdboot1.uu
+	chmod 755 pbsdboot1.exe
+
+uu::
+	if [ X"`strings WMIPSDbg/pbsdboot.exe | grep 'Compiled for WinCE'`" = \
+           X'Compiled for WinCE 1.01' ]; then \
+          echo This binary is compiled for WinCE 1.01; \
+          uuencode WMIPSDbg/pbsdboot.exe pbsdboot1.exe > pbsdboot1.uu; \
+        else \
+          echo This binary is compiled for WinCE 2.00; \
+          uuencode WMIPSDbg/pbsdboot.exe pbsdboot.exe > pbsdboot.uu; \
+        fi

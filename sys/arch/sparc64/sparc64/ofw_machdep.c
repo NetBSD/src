@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.8 1999/05/22 20:30:54 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.8.2.1 2000/11/20 20:26:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -163,7 +163,7 @@ prom_vtop(vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo); 
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo); 
 }
 
 /* 
@@ -401,7 +401,7 @@ prom_alloc_phys(len, align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return 0;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
 }
 
 /* 
@@ -425,7 +425,6 @@ prom_claim_phys(phys, len)
 		cell_t phys_hi;
 		cell_t phys_lo;
 		cell_t status;
-		cell_t res;
 		cell_t rphys_hi;
 		cell_t rphys_lo;
 	} args;
@@ -436,15 +435,16 @@ prom_claim_phys(phys, len)
 	}
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = 6;
-	args.nreturns = 4;
+	args.nreturns = 3;
 	args.method = ADR2CELL(&"claim");
 	args.ihandle = HDL2CELL(memh);
+	args.align = 0;
 	args.len = len;
 	args.phys_hi = HDL2CELL(phys>>32);
 	args.phys_lo = HDL2CELL(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(u_int32_t)args.rphys_lo);
 }
 
 /* 
@@ -507,12 +507,26 @@ prom_get_msgbuf(len, align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
+	int rooth;
+	int is_e250 = 1;
+
+	/* E250s tend to have buggy PROMs that break on test-method */
+	if ((rooth = OF_finddevice("/")) != -1) {
+		char name[80];
+
+		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
+			if (strcmp(name, "SUNW,Ultra-250")) 
+				is_e250 = 0;
+		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
+	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (OF_test("test-method") == 0) {
+	if (is_e250) {
+		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
+	} else if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
@@ -524,7 +538,8 @@ prom_get_msgbuf(len, align)
 			args.align = align;
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((paddr_t)args.phys_hi<<32)|args.phys_lo);
+				return (((paddr_t)args.phys_hi<<32)|
+					(u_int32_t)args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
@@ -550,26 +565,26 @@ static u_int stdout = NULL;
 int 
 OF_stdin() 
 {
+	u_int chosen;
 
-	if (stdin == NULL) {
-		u_int chosen;
+	if (stdin != NULL) 
+		return stdin;
 		
-		chosen = OF_finddevice("/chosen");
-		OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
-	}
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
 	return stdin;
 }
 
 int
 OF_stdout()
 {
+	u_int chosen;
 
-	if (stdout == NULL) {
-		u_int chosen;
+	if (stdout != NULL) 
+		return stdout;
 		
-		chosen = OF_finddevice("/chosen");
-		OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	}
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
 	return stdout;
 }
 

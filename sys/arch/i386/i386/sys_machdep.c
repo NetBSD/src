@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.48 1999/05/12 19:28:29 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.48.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +94,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -107,6 +105,10 @@
 
 #ifdef VM86
 #include <machine/vm86.h>
+#endif
+
+#ifdef PERFCTRS
+#include <machine/pmc.h>
 #endif
 
 extern vm_map_t kernel_map;
@@ -476,6 +478,20 @@ sys_sysarch(p, v, retval)
 #ifdef VM86
 	case I386_VM86:
 		error = i386_vm86(p, SCARG(uap, parms), retval);
+		break;
+#endif
+
+#ifdef PERFCTRS
+	case I386_PMC_INFO:
+		error = pmc_info(p, SCARG(uap, parms), retval);
+		break;
+
+	case I386_PMC_STARTSTOP:
+		error = pmc_startstop(p, SCARG(uap, parms), retval);
+		break;
+
+	case I386_PMC_READ:
+		error = pmc_read(p, SCARG(uap, parms), retval);
 		break;
 #endif
 

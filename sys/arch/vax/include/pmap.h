@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.37.2.1 2000/11/20 20:33:02 bouyer Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -70,7 +70,7 @@ typedef struct pmap {
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
-	int		 pm_lock;	/* Lock entry in MP environment */
+	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
 	u_char		 pm_refcnt[NPTEPGS];	/* Refcount per pte page */
 } *pmap_t;
@@ -92,12 +92,12 @@ struct pv_entry {
 #define TRUNC_PAGE(x)	((uint)(x) & ~PGOFSET)
 
 /* Mapping macros used when allocating SPT */
-#define MAPVIRT(ptr, count)					\
-	(vm_offset_t)ptr = virtual_avail;			\
+#define MAPVIRT(ptr, count)				\
+	(vaddr_t)ptr = virtual_avail;			\
 	virtual_avail += (count) * VAX_NBPG;
 
-#define MAPPHYS(ptr, count, perm)				\
-	(vm_offset_t)ptr = avail_start + KERNBASE;		\
+#define MAPPHYS(ptr, count, perm)			\
+	(vaddr_t)ptr = avail_start + KERNBASE;		\
 	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL
@@ -156,7 +156,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
-#define pmap_unwire(pmap, v)		/* no need */
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
 #define pmap_update()	mtpr(0,PR_TBIA) /* Update buffes */
 #define pmap_collect(pmap)		/* No need so far */
@@ -177,7 +176,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
-vaddr_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 void	pmap_pinit __P((pmap_t));
 
 #endif PMAP_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1999/08/03 10:52:06 dbj Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.2.1 2000/11/20 20:15:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
@@ -73,9 +74,6 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-
-#include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <m68k/cacheops.h>
 
@@ -190,11 +188,6 @@ int mmupid = -1;
 #endif
 
 
-#define NSIR	32
-void (*sir_routines[NSIR])(void *);
-void *sir_args[NSIR];
-int next_sir;
-
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
@@ -207,7 +200,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	u_int faultaddr;
 	int fromtrap;
 {
-	int sig, s;
+	int sig;
 #ifdef M68040
 	int beenhere = 0;
 
@@ -219,18 +212,9 @@ again:
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we mi_switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -270,7 +254,7 @@ again:
 		}
 	}
 #endif
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*
@@ -291,7 +275,6 @@ trap(type, code, v, frame)
 	int i, s;
 	u_int ucode;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-	int bit;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -490,10 +473,9 @@ trap(type, code, v, frame)
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: We should never get kernel-mode T_TRAP15
 	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
 #ifdef DEBUG
 		printf("unexpected kernel trace trap, type = %d\n", type);
@@ -503,7 +485,6 @@ trap(type, code, v, frame)
 		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -515,6 +496,9 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -537,13 +521,8 @@ trap(type, code, v, frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		while ((bit = ffs(ssir))) {
-			--bit;
-			ssir &= ~(1 << bit);
-			uvmexp.softs++;
-			if (sir_routines[bit])
-				sir_routines[bit](sir_args[bit]);
-		}
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
@@ -642,7 +621,7 @@ trap(type, code, v, frame)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc(USRSTACK-(unsigned)va));
+				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -716,6 +695,7 @@ writeback(fp, docachepush)
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
 	paddr_t pa;
+	extern int suline(caddr_t, caddr_t);	/* locore.s */
 
 #ifdef DEBUG
 	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
@@ -753,8 +733,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
-			    VM_PROT_WRITE);
+			    trunc_page(f->f_fa), VM_PROT_WRITE,
+			    VM_PROT_WRITE|PMAP_WIRED);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
@@ -1133,7 +1113,7 @@ syscall(code, frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -1176,7 +1156,7 @@ syscall(code, frame)
 	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -1195,34 +1175,6 @@ child_return(arg)
 	userret(p, f, 0, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
-}
-
-/*
- * Allocation routines for software interrupts.
- */
-u_long
-allocate_sir(proc, arg)
-	void (*proc)(void *);
-	void *arg;
-{
-	int bit;
-
-	if( next_sir >= NSIR )
-		panic("allocate_sir: none left");
-	bit = next_sir++;
-	sir_routines[bit] = proc;
-	sir_args[bit] = arg;
-	return (1 << bit);
-}
-
-void
-init_sir()
-{
-	extern void netintr(void);
-
-	sir_routines[0] = (void (*)(void *))netintr;
-	sir_routines[1] = (void (*)(void *))softclock;
-	next_sir = 2;
 }

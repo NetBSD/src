@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1999/09/17 19:59:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.2.1 2000/11/20 20:03:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,13 +41,13 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_footbridge.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
@@ -57,7 +57,8 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/msgbuf.h>
-#include <vm/vm.h>
+#include <sys/device.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
@@ -66,8 +67,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,7 +77,7 @@
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #include "md.h"
 #include "opt_mdsize.h"
 
@@ -101,6 +100,9 @@ pv_addr_t kernelstack;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;
@@ -139,6 +141,10 @@ extern void dumpsys	__P((void));
 extern void pmap_debug	__P((int level));
 #endif	/* PMAP_DEBUG */
 
+#if defined(SHARK)
+int shark_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+	void *newp, size_t newlen, struct proc *p);
+#endif
 /*
  * Debug function just to park the CPU
  */
@@ -368,8 +374,8 @@ cpu_startup()
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
-		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
@@ -386,7 +392,7 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	size = allocsys(NULL, NULL);
-	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size));
+	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page((vaddr_t)size));
 	if (sysbase == 0)
 		panic(
 		    "cpu_startup: no room for system tables; %d bytes required",
@@ -400,7 +406,7 @@ cpu_startup()
 	 */
 	bufsize = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(bufsize),
-	    NULL, UVM_UNKNOWN_OFFSET,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate UVM space for buffers");
@@ -418,7 +424,7 @@ cpu_startup()
 		struct vm_page *pg;
 
 		curbuf = (vm_offset_t) buffers + (loop * MAXBSIZE);
-		curbufsize = CLBYTES * ((loop < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -426,7 +432,7 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -452,17 +458,9 @@ cpu_startup()
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	/*
-	 * Initialise callouts
-	 */
-	callfree = callout;
-	for (loop = 1; loop < ncallout; ++loop)
-		callout[loop - 1].c_next = &callout[loop];
-	callout[loop - 1].c_next = NULL;
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -778,6 +776,31 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_DEBUG:
 		return(sysctl_int(oldp, oldlenp, newp, newlen, &kernel_debug));
 
+	case CPU_BOOTED_DEVICE:
+		if (booted_device != NULL)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    booted_device->dv_xname));
+		return (EOPNOTSUPP);
+
+	case CPU_CONSDEV: {
+		dev_t consdev;
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+			sizeof consdev));
+	}
+#if defined(SHARK)
+	case CPU_BOOTED_KERNEL: {
+		extern char *boot_kernel;
+		if (boot_kernel != NULL && boot_kernel[0] != '\0')
+			return sysctl_rdstring(oldp, oldlenp, newp,
+			    boot_kernel);
+		return (EOPNOTSUPP);
+	}
+#endif
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -913,6 +936,15 @@ parse_mi_bootargs(args)
 			memory_disc_size = 2048*1024;
 	}
 #endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+
+	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_QUIET;
+	if (get_bootconf_option(args, "verbose", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_VERBOSE;
 }
 
 /* End of machdep.c */

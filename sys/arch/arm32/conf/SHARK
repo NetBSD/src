@@ -1,13 +1,14 @@
-#	$NetBSD: SHARK,v 1.25 1999/09/16 16:49:49 matt Exp $
-# From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
+#	$NetBSD: SHARK,v 1.25.2.1 2000/11/20 20:03:55 bouyer Exp $
+# From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-# estimated number of users
+#ident		"GENERIC-$Revision: 1.25.2.1 $"
 
+# estimated number of users
 maxusers	32
 
 # Standard system options
@@ -42,7 +43,7 @@ options 	COMPAT_OLD_OFW
 file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
-file-system	NFS
+file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
 #file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
@@ -51,6 +52,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay filesystem
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
@@ -59,12 +61,17 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
 
 # Networking options
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -126,7 +133,6 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 #options  	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	POSTMORTEM	# perform postmortem on panic
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
@@ -134,10 +140,7 @@ options 	DDB		# in-kernel debugger
 #options 	KERNEL_DEBUG	# compile in kernel debuging capability
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
-config		netbsd_netboot	root on cs0 type nfs	# Ethernet
-config		netbsd_wdboot	root on wd0a type ffs	# IDE disk
-config		netbsd_sdboot	root on sd0a type ffs	# Zip disk
-#config		netbsd		root on ? type ?	# cannot yet detect
+config		netbsd		root on ? type ?
 
 # The main bus device
 mainbus0 at root
@@ -168,6 +171,10 @@ sd*		at atapibus? drive?
 # PCCONS@OFW
 ofisapc*	at ofbus?
 pc*		at ofisapc?
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
 
 # PS/2 Mouse
 opms0		at spckbd? irq 12
@@ -200,10 +207,13 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-
-pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
+#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.10 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.10.2.1 2000/11/20 20:33:20 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -78,6 +77,9 @@ struct	cpu_dep ka46_calls = {
 	2,	/* SCB pages */
 	ka46_halt,
 	ka46_reboot,
+	NULL,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 
@@ -145,32 +147,9 @@ ka46_mchk(addr)
 void
 ka46_steal_pages()
 {
-	extern	vm_offset_t virtual_avail, avail_end;
-	int	i;
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka46_cache_enable();
-	/*
-	 * The I/O MMU maps all 16K device addressable memory to
-	 * the low 16M of the physical memory. In this way the
-	 * device operations emulate the VS3100 way.
-	 * This area must be on a 128k boundary and that causes
-	 * a slight waste of memory. We steal it from the end.
-	 *
-	 * This will be reworked the day NetBSD/vax changes to
-	 * 4K pages. (No use before that).
-	 */
-	{	int *io_map, *lio_map;
-
-		avail_end &= ~0x3ffff;
-		lio_map = (int *)avail_end;
-		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
-		MAPVIRT(io_map, (0x20000 / VAX_NBPG));
-		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
-		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
-		for (i = 0; i < 0x8000; i++)
-			lio_map[i] = 0x80000000|i;
-	}
 }
 
 static void

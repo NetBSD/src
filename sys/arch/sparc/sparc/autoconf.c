@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.125.2.1 1999/10/19 17:57:25 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125.2.2 2000/11/20 20:25:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,12 +64,13 @@
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
+#include <sys/boot_flag.h>
 
 #include <net/if.h>
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/promlib.h>
@@ -82,7 +83,6 @@
 #include <sparc/sparc/memreg.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
-#include <machine/pmap.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
@@ -99,9 +99,7 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
-int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -121,6 +119,7 @@ int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
+static	struct bootpath	*bootpath_store __P((int, struct bootpath *));
 int	find_cpus __P((void));
 
 /*
@@ -321,8 +320,8 @@ bootstrap()
 		/* Map Interrupt Enable Register */
 		pmap_enter(pmap_kernel(), INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE, 1,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
@@ -350,6 +349,7 @@ bootpath_build()
 {
 	char *cp, *pp;
 	struct bootpath *bp;
+	int fl;
 
 	/*
 	 * Grab boot path from PROM and split into `bootpath' components.
@@ -406,23 +406,18 @@ bootpath_build()
 		if (*cp++ == '\0')
 			return;
 
-	for (;;) {
-		switch (*++cp) {
+	for (;*++cp;) {
+		fl = 0;
+		BOOT_FLAG(*cp, fl);
+		if (!fl) {
+			printf("unknown option `%c'\n", *cp);
+			continue;
+		}
+		boothowto |= fl;
 
-		case '\0':
-			return;
-
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'b':
-			boothowto |= RB_DFLTROOT;
-			break;
-
-		case 'd':	/* kgdb - always on zs	XXX */
+		/* specialties */
+		if (*cp == 'd') {
 #if defined(KGDB)
-			boothowto |= RB_KDB;	/* XXX unused */
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
 #elif defined(DDB)
@@ -430,14 +425,6 @@ bootpath_build()
 #else
 			printf("kernel has no debugger\n");
 #endif
-			break;
-
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
-
-		default:
-			printf("unknown option `%c'\n", *cp);
 		}
 	}
 }
@@ -576,8 +563,11 @@ bootpath_fake(bp, cp)
 		/*
 		 * Assume `fd(c,u,p)' means:
 		 * partition `p' on floppy drive `u' on controller `c'
+		 * Yet, for the purpose of determining the boot device,
+		 * we support only one controller, so we encode the
+		 * bootpath component by unit number, as on a v2 prom.
 		 */
-		BP_APPEND(bp, "fd", v0val[0], v0val[1], v0val[2]);
+		BP_APPEND(bp, "fd", -1, v0val[1], v0val[2]);
 		return;
 	}
 
@@ -647,12 +637,7 @@ bootpath_print(bp)
 
 /*
  * save or read a bootpath pointer from the boothpath store.
- *
- * XXX. required because of SCSI... we don't have control over the "sd"
- * device, so we can't set boot device there.   we patch in with
- * dk_establish(), and use this to recover the bootpath.
  */
-
 struct bootpath *
 bootpath_store(storep, bp)
 	int storep;
@@ -667,23 +652,6 @@ bootpath_store(storep, bp)
 
 	return (retval);
 }
-/* TEMP: */
-struct bootpath *altbootpath_store(int, struct bootpath *);
-struct bootpath *
-altbootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
-{
-	static struct bootpath *save;
-	struct bootpath *retval;
-
-	retval = save;
-	if (storep)
-		save = bp;
-
-	return (retval);
-}
-/* END TEMP */
 
 /*
  * Set up the sd target mappings for non SUN4 PROMs.
@@ -825,10 +793,8 @@ cpu_configure()
 	 */
 	bzero(proc0paddr, sizeof(struct user));
 
-	(void)spl0();
+	spl0();
 }
-
-struct device *altbootdev;
 
 void
 cpu_rootconf()
@@ -839,29 +805,8 @@ cpu_rootconf()
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = bp == NULL ? NULL : bp->dev;
-	bootpartition = bp == NULL ? 0 : bp->val[2];
+	bootpartition = bootdv == NULL ? 0 : bp->val[2];
 
-#if 1
-	/*
-	 * Old bootpath code no longer works now that SCSI autoconfiguration
-	 * can be delayed.  device_register() is the One True Way.
-	 */
-	bootdv = altbootdev;
-#else
-	if (bootdv != altbootdev) {
-		int c;
-		printf("device_register boot device mismatch\n");
-		printf("\tbootdv=%s\n",
-			bootdv==NULL?"NOT FOUND":bootdv->dv_xname);
-		printf("\taltbootdev=%s\n",
-			altbootdev==NULL?"NOT FOUND":altbootdev->dv_xname);
-		printf("RETURN to continue ");
-		cnpollc(1);
-		while ((c = cngetc()) != '\r' && c != '\n');
-		printf("\n");
-		cnpollc(0);
-	}
-#endif
 	setroot(bootdv, bootpartition);
 }
 
@@ -922,8 +867,6 @@ mainbus_match(parent, cf, aux)
 
 	return (1);
 }
-
-int autoconf_nzs = 0;	/* must be global so obio.c can see it */
 
 /* 
  * Helper routines to get some of the more common properties. These
@@ -1013,7 +956,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 						namebuf, sizeof(namebuf)));
 
 	/* Establish the first component of the boot path */
-	altbootpath_store(1, bootpath);
+	bootpath_store(1, bootpath);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -1036,14 +979,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "obio";
-		ma.ma_bp = bootpath;
 		if (config_found(dev, (void *)&ma, mbprint) == NULL)
 			panic("obio missing");
 
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "vme";
-		ma.ma_bp = bootpath;
 		(void)config_found(dev, (void *)&ma, mbprint);
 		return;
 	}
@@ -1089,10 +1030,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	node = findroot();	/* re-init root node */
 
-	if (prom_version() <= 2)
-		/* remember which frame buffer, if any, is to be `/dev/fb' */
-		fbnode = getpropint(node, "fb", 0);
-
 	/* Find the "options" node */
 	node0 = firstchild(node);
 	optionsnode = findnode(node0, "options");
@@ -1123,9 +1060,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			continue;
 		if (getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
-
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
 
 		if (config_found(dev, (void *)&ma, mbprint) == NULL)
 			panic(sp);
@@ -1174,9 +1108,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
 
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
-
 		(void) config_found(dev, (void *)&ma, mbprint);
 	}
 #endif /* SUN4C || SUN4M */
@@ -1186,88 +1117,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-/*
- * findzs() is called from the zs driver (which is, at least in theory,
- * generic to any machine with a Zilog ZSCC chip).  It should return the
- * address of the corresponding zs channel.  It may not fail, and it
- * may be called before the VM code can be used.  Here we count on the
- * FORTH PROM to map in the required zs chips.
- */
-void *
-findzs(zs)
-	int zs;
-{
-
-#if defined(SUN4)
-#define ZS0_PHYS	0xf1000000
-#define ZS1_PHYS	0xf0000000
-#define ZS2_PHYS	0xe0000000
-
-	if (CPU_ISSUN4) {
-		bus_space_handle_t bh;
-		bus_addr_t paddr;
-
-		switch (zs) {
-		case 0:
-			paddr = ZS0_PHYS;
-			break;
-		case 1:
-			paddr = ZS1_PHYS;
-			break;
-		case 2:
-			paddr = ZS2_PHYS;
-			break;
-		default:
-			panic("findzs: unknown zs device %d", zs);
-		}
-
-		if (cpuinfo.cpu_type == CPUTYP_4_100)
-			/* Clear top bits of physical address on 4/100 */
-			paddr &= ~0xf0000000;
-
-		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
-			panic("findzs: can't map zs%d registers", zs);
-
-		return ((void *)bh);
-	}
-#endif
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M) {
-		int node;
-
-		node = firstchild(findroot());
-		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
-			node = findnode(node, "obio");
-			if (node == 0)
-				panic("findzs: no obio node");
-			node = firstchild(node);
-		}
-		while ((node = findnode(node, "zs")) != 0) {
-			int nvaddrs, *vaddrs, vstore[10];
-
-			if (getpropint(node, "slave", -1) != zs) {
-				node = nextsibling(node);
-				continue;
-			}
-
-			/*
-			 * On some machines (e.g. the Voyager), the zs
-			 * device has multi-valued register properties.
-			 */
-			vaddrs = vstore;
-			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
-			if (getprop(node, "address", sizeof(int),
-				    &nvaddrs, (void **)&vaddrs) != 0) {
-				panic("findzs: zs%d not mapped by PROM", zs);
-			}
-			return ((void *)vaddrs[0]);
-		}
-	}
-#endif
-	panic("findzs: cannot find zs%d", zs);
-	/* NOTREACHED */
-}
 
 int
 makememarr(ap, max, which)
@@ -1544,14 +1393,18 @@ getdevunit(name, unit)
 #include <dev/scsipi/scsiconf.h>
 #include <sparc/sparc/iommuvar.h>
 
-#define BUSCLASS_GENERIC	0
+#define BUSCLASS_NONE		0
 #define BUSCLASS_MAINBUS	1
 #define BUSCLASS_IOMMU		2
 #define BUSCLASS_OBIO		3
 #define BUSCLASS_SBUS		4
 #define BUSCLASS_VME		5
+#define BUSCLASS_XDC		6
+#define BUSCLASS_XYC		7
+#define BUSCLASS_FDC		8
 
 static int bus_class __P((struct device *));
+static char *bus_compatible __P((char *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
 static void nail_bootdev __P((struct device *, struct bootpath *));
 
@@ -1570,18 +1423,55 @@ static struct {
 	{ "isp",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "lebuffer",	BUSCLASS_SBUS },
-	{ "vme",	BUSCLASS_VME }
+	{ "vme",	BUSCLASS_VME },
+	{ "si",		BUSCLASS_VME },
+	{ "sw",		BUSCLASS_OBIO },
+	{ "xdc",	BUSCLASS_XDC },
+	{ "xyc",	BUSCLASS_XYC },
+	{ "fdc",	BUSCLASS_FDC },
 };
+
+/*
+ * A list of PROM device names that differ from our NetBSD
+ * device names.
+ */
+static struct {
+	char	*bpname;
+	char	*cfname;
+} dev_compat_tab[] = {
+	{ "espdma",	"dma" },
+	{ "QLGC,isp",	"isp" },
+	{ "PTI,isp",	"isp" },
+	{ "ptisp",	"isp" },
+	{ "SUNW,fdtwo",	"fdc" },
+};
+
+static char *
+bus_compatible(bpname)
+	char *bpname;
+{
+	int i;
+
+	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
+		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0)
+			return (dev_compat_tab[i].cfname);
+	}
+
+	return (bpname);
+}
 
 static int
 bus_class(dev)
 	struct device *dev;
 {
-	struct device *parent = dev->dv_parent;
-	char *name = parent->dv_cfdata->cf_driver->cd_name;
+	char *name;
 	int i, class;
 
-	class = BUSCLASS_GENERIC;
+	class = BUSCLASS_NONE;
+	if (dev == NULL)
+		return (class);
+
+	name = dev->dv_cfdata->cf_driver->cd_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
 		if (strcmp(name, bus_class_tab[i].name) == 0) {
 			class = bus_class_tab[i].class;
@@ -1607,16 +1497,19 @@ instance_match(dev, aux, bp)
 	struct iommu_attach_args *iom;
 
 	/*
-	 * Several Sbus devices are represented on bootpaths in one of
-	 * two formats:
+	 * Several devices are represented on bootpaths in one of
+	 * two formats, e.g.:
 	 *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..  (PROM v3 style)
 	 *	(2) /sbus0/esp0/sd@..                      (PROM v2 style)
 	 *
-	 * hence we fall back on a `unit number' check if the Sbus-specific
+	 * hence we fall back on a `unit number' check if the bus-specific
 	 * instance parameter check does not produce a match.
 	 */
 
-	switch (bus_class(dev)) {
+	/*
+	 * Rank parent bus so we know which locators to check.
+	 */
+	switch (bus_class(dev->dv_parent)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		if (bp->val[0] == ma->ma_iospace && bp->val[1] == ma->ma_paddr)
@@ -1633,6 +1526,20 @@ instance_match(dev, aux, bp)
 		    bp->val[1] == iom->iom_reg[0].ior_pa)
 			return (1);
 		break;
+	case BUSCLASS_XDC:
+	case BUSCLASS_XYC:
+		{
+		/*
+		 * XXX - x[dy]c attach args are not exported right now..
+		 * XXX   we happen to know they look like this:
+		 */
+		struct xxxx_attach_args { int driveno; } *aap = aux;
+
+		if (aap->driveno == bp->val[0])
+			return (1);
+
+		}
+		break;
 	default:
 		break;
 	}
@@ -1643,23 +1550,30 @@ instance_match(dev, aux, bp)
 	return (0);
 }
 
+struct device *booted_device;
+
 void
 nail_bootdev(dev, bp)
 	struct device *dev;
 	struct bootpath *bp;
 {
-	/*bp->dev = dev;	-* got it! */
-	if (altbootdev != NULL)
+
+	if (bp->dev != NULL)
 		panic("device_register: already got a boot device: %s",
-			altbootdev->dv_xname);
-	altbootdev = dev;
+			bp->dev->dv_xname);
 
 	/*
-	 * Clear current bootpath component, so we don't spuriously
+	 * Mark this bootpath component by linking it to the matched
+	 * device. We pick up the device pointer in cpu_rootconf().
+	 */
+	booted_device = bp->dev = dev;
+
+	/*
+	 * Then clear the current bootpath component, so we don't spuriously
 	 * match similar instances on other busses, e.g. a disk on
 	 * another SCSI bus with the same target.
 	 */
-	altbootpath_store(1, NULL);
+	bootpath_store(1, NULL);
 }
 
 void
@@ -1667,8 +1581,8 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	struct bootpath *bp = altbootpath_store(0, NULL);
-	char *dvname = dev->dv_cfdata->cf_driver->cd_name;
+	struct bootpath *bp = bootpath_store(0, NULL);
+	char *dvname, *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1677,32 +1591,38 @@ device_register(dev, aux)
 	if (bp == NULL)
 		return;
 
-	if (strcmp(bp->name, "espdma") == 0) {
-		/* espdma special case */
-		if (strcmp(dvname, "dma") != 0)
-			return;
-	} else if (strcmp(dvname, bp->name) != 0)
+	/*
+	 * Translate PROM name in case our drivers are named differently
+	 */
+	bpname = bus_compatible(bp->name);
+
+	/* First, match by name */
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
+	if (strcmp(dvname, bpname) != 0)
 		return;
 
-	if (strcmp(dvname, "obio") == 0 ||
-	    strcmp(dvname, "vme") == 0 ||
-	    strcmp(dvname, "iommu") == 0 ||
-	    strcmp(dvname, "sbus") == 0 ||
-	    strcmp(dvname, "xbox") == 0 ||
-	    strcmp(dvname, "dma") == 0 ||
-	    strcmp(dvname, "ledma") == 0 ||
-	    strcmp(dvname, "lebuffer") == 0 ||
-	    strcmp(dvname, "espdma") == 0 ||
-	    strcmp(dvname, "esp") == 0 ||
-	    strcmp(dvname, "isp") == 0 ||
-	    strcmp(dvname, "xdc") == 0 ||
-	    strcmp(dvname, "xyc") == 0 ) {
+
+	if (bus_class(dev) != BUSCLASS_NONE) {
 		/*
 		 * A bus or controller device of sorts. Check instance
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			altbootpath_store(1, bp + 1);
+			if (strcmp(dvname, "fdc") == 0) {
+				/*
+				 * XXX - HACK ALERT
+				 * Sun PROMs don't really seem to support
+				 * multiple floppy drives. So we aren't
+				 * going to, either.  Since the PROM
+				 * only provides a node for the floppy
+				 * controller, we sneakily add a drive to
+				 * the bootpath here.
+				 */
+				strcpy(bootpath[nbootpath].name, "fd");
+				nbootpath++;
+			}
+			bp->dev = dev;
+			bootpath_store(1, bp + 1);
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0) {
@@ -1717,15 +1637,24 @@ device_register(dev, aux)
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
+		 * Note that we also have look back past the `scsibus'
+		 * device to determine whether this target is on the
+		 * correct controller in our boot path.
 		 */
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
+		struct scsibus_softc *sbsc =
+			(struct scsibus_softc *)dev->dv_parent;
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
+		/* Check the controller that this scsibus is on */
+		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+			return;
+
 		/*
-		 * Bounds check; XXX - guess a reasonable target/lun bound.
+		 * Bounds check: we know the target and lun widths.
 		 */
 		if (target >= chan->chan_ntargets || lun >= chan->chan_nluns) {
 			printf("SCSI disk bootpath component not accepted: "
@@ -1754,19 +1683,25 @@ device_register(dev, aux)
 			nail_bootdev(dev, bp);
 			return;
 		}
+
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
-		/*
-		 * XXX - x[dy]c attach args are not exported right now..
-		 * XXX   we happen to know they look like this:
-		 */
-		struct xxxx_attach_args { int driveno; } *aap = aux;
-
-		if (aap->driveno == bp->val[0]) {
-			/* We've found the boot device */
+		/* A Xylogic disk */
+		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
 			return;
 		}
+
+	} else if (strcmp("fd", dvname) == 0) {
+		/*
+		 * Sun PROMs don't really seem to support multiple
+		 * floppy drives. So we aren't going to, either.
+		 * If we get this far, the `fdc controller' has
+		 * already matched and has appended a fake `fd' entry
+		 * to the bootpath, so just accept that as the boot device.
+		 */
+		nail_bootdev(dev, bp);
+		return;
 	} else {
 		/*
 		 * Generic match procedure.

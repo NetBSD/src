@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1999/03/24 05:51:17 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.8.1 2000/11/20 20:33:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,25 +52,18 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/pte.h>
-#include <machine/mtpr.h>
+#include <uvm/uvm_extern.h>
 
-#include <vm/vm.h>
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
-extern unsigned int avail_end;
-caddr_t zeropage;
-
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
-
+extern	unsigned int avail_end;
+static	caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
@@ -78,9 +71,7 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
@@ -88,12 +79,9 @@ mmclose(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register vm_offset_t v;
+	register vaddr_t v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
@@ -143,10 +131,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(zeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			continue;
 
@@ -163,10 +151,8 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
-mmmmap(dev, off, prot)
-	dev_t dev;
-	int off, prot;
+paddr_t
+mmmmap(dev_t dev, off_t off, int prot)
 {
 
 	return (-1);

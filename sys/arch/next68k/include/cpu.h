@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11.2.1 2000/11/20 20:18:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,10 @@
 #ifndef _CPU_MACHINE_
 #define _CPU_MACHINE_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Exported definitions unique to next68k/68k cpu support.
  */
@@ -61,6 +65,20 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -97,8 +115,8 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched; /* resched() was called */
-#define	need_resched()	{ want_resched = 1; aston(); }
+extern int want_resched; 	/* resched() was called */
+#define	need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -118,7 +136,6 @@ extern int want_resched; /* resched() was called */
 int	astpending;	/* need to trap before returning to user mode */
 int	want_resched;	/* resched() was called */
 
-#ifdef _KERNEL
 extern	volatile char *intiobase;
 extern  volatile char *intiolimit;
 extern	volatile char *monobase;
@@ -282,7 +299,10 @@ void	child_return __P((void *));
 #define NEXT_P_MEMSIZE		0x04000000
 #define NEXT_P_VIDEOMEM		(NEXT_SLOT_ID+0x0b000000)
 #define NEXT_P_VIDEOSIZE	0x0003a800
+#if 0
 #define NEXT_P_C16_VIDEOMEM	(NEXT_SLOT_ID+0x06000000)	/* COLOR_FB */
+#endif
+#define NEXT_P_C16_VIDEOMEM	(0x2c000000)
 #define NEXT_P_C16_VIDEOSIZE	0x001D4000		/* COLOR_FB */
 #define NEXT_P_WF4VIDEO		(NEXT_SLOT_ID+0x0c000000)	/* w A+B-AB function */
 #define NEXT_P_WF3VIDEO		(NEXT_SLOT_ID+0x0d000000)	/* w (1-A)B function */
@@ -373,8 +393,8 @@ void	child_return __P((void *));
 #define	INTIOTOP	(0x02120000)
 #define MONOBASE        (0x0b000000)
 #define MONOTOP         (0x0b03a800)
-#define COLORBASE	(0x06000000)
-#define COLORTOP	(0x061D4000)
+#define COLORBASE	(0x2c000000)
+#define COLORTOP	(0x2c1D4000)
                                      
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 1998/12/22 08:47:06 scottr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2.10.1 2000/11/20 20:12:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
@@ -72,7 +72,7 @@ kgdb_acc(va, ulen)
 	pt_entry_t *pte;
 
 	len = (int)ulen;
-	pgoff = va & PGOFSET;
+	pgoff = m68k_page_offset(va);
 	va  -= pgoff;
 	len += pgoff;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28 1999/03/19 04:58:46 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.8.1 2000/11/20 20:09:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,11 +45,21 @@
 #include "pci.h"
 #include "eisa.h"
 #include "isa.h"
+#include "mca.h"
 #include "apm.h"
+#include "pnpbios.h"
 
 #if NAPM > 0
 #include <machine/bioscall.h>
 #include <machine/apmvar.h>
+#endif
+
+#if NPNPBIOS > 0
+#include <arch/i386/pnpbios/pnpbiosvar.h>
+#endif
+
+#if NMCA > 0
+#include <dev/mca/mcavar.h>
 #endif
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
@@ -66,8 +76,14 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct eisabus_attach_args mba_eba;
 	struct isabus_attach_args mba_iba;
+#if NMCA > 0
+	struct mcabus_attach_args mba_mba;
+#endif
 #if NAPM > 0
 	struct apm_attach_args mba_aaa;
+#endif
+#if NPNPBIOS > 0
+	struct pnpbios_attach_args mba_paa;
 #endif
 };
 
@@ -76,6 +92,15 @@ union mainbus_attach_args {
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
 int	isa_has_been_seen;
+struct i386_isa_chipset i386_isa_chipset;
+#if NISA > 0
+struct isabus_attach_args mba_iba = {
+	"isa",
+	I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
+	&isa_bus_dma_tag,
+	&i386_isa_chipset
+};
+#endif
 
 /*
  * Same as above, but for EISA.
@@ -107,6 +132,14 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+#if NPNPBIOS > 0
+	if (pnpbios_probe()) {
+		mba.mba_paa.paa_busname = "pnpbios";
+		mba.mba_paa.paa_ic = &i386_isa_chipset;
+		config_found(self, &mba.mba_paa, mainbus_print);
+	}
+#endif
+
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
@@ -119,9 +152,23 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
+	}
+#endif
+
+#if NMCA > 0
+	/* note MCA bus probe is done in i386/machdep.c */
+	if (MCA_system) {
+		mba.mba_mba.mba_busname = "mca";
+		mba.mba_mba.mba_iot = I386_BUS_SPACE_IO;
+		mba.mba_mba.mba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
+		mba.mba_mba.mba_mc = NULL;
+		mba.mba_mba.mba_bus = 0;
+		config_found(self, &mba.mba_mba, mainbus_print);
 	}
 #endif
 
@@ -136,15 +183,11 @@ mainbus_attach(parent, self, aux)
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
-	if (isa_has_been_seen == 0) {
-		mba.mba_iba.iba_busname = "isa";
-		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
-		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
 #if NISA > 0
-		mba.mba_iba.iba_dmat = &isa_bus_dma_tag;
+	if (isa_has_been_seen == 0)
+		config_found(self, &mba_iba, mainbus_print);
 #endif
-		config_found(self, &mba.mba_iba, mainbus_print);
-	}
+
 #if NAPM > 0
 	if (apm_busprobe()) {
 		mba.mba_aaa.aaa_busname = "apm";

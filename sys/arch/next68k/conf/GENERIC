@@ -1,10 +1,12 @@
-# $NetBSD: GENERIC,v 1.19 1999/08/04 06:49:50 dbj Exp $
+# $NetBSD: GENERIC,v 1.19.2.1 2000/11/20 20:18:11 bouyer Exp $
 #
 # GENERIC next68k
 #
 #
 
 include "arch/next68k/conf/std.next68k"
+
+#ident 		"GENERIC-$Revision: 1.19.2.1 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -20,10 +22,11 @@ options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
-# Which kernel debugger?  Uncomment either this:
-options 	DDB
 options 	DEBUG		# kernel debugging code
 options 	DIAGNOSTIC	# extra kernel sanity checking
+
+# Which kernel debugger?  Uncomment either this:
+options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
@@ -49,10 +52,7 @@ options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
 options 	COMPAT_14	# NetBSD 1.4
 
-# @@ COMPAT_M68K4K doesn't compile because my egcs cross compiler isn't defining __m68k__
-#   I don't know whether the compiler is broken or whether 
-#    /sys/compat/m68k4k/m68k4k_exec.c should be updated.  -- dbj
-#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_SVR4	# can run SVR4 executables
@@ -70,6 +70,7 @@ file-system 	NFS		# Network File System client
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -77,12 +78,17 @@ file-system 	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
+options 	SOFTDEP         # FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
 # Networking options
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -104,14 +110,15 @@ options 	M68030
 options 	FPSP
 #options 	FPU_EMULATE
 
-options         ZS_CONSOLE_ABORT
-#options        SERCONSOLE
+options 	ZS_CONSOLE_ABORT	# drop to debugger on break
+#options 	SERCONSOLE		# use serial console
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
 # wscons options
 options         RCONS_2BPP              # necessary for nextdisplay
+options         RCONS_16BPP		# necessary for color nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -178,11 +185,15 @@ pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipfilter		# ip filter
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ccd		4	# concatenated disks

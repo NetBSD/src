@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1999/03/27 00:30:08 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.13.8.1 2000/11/20 20:28:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,10 +51,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -157,7 +153,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, prot|PMAP_WIRED);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -207,10 +203,10 @@ mmrw(dev, uio, flags)
 			 */
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(devzeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(devzeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
 			break;
 
@@ -238,54 +234,53 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	register u_int v = off;
-
 	/*
 	 * Check address validity.
 	 */
-	if (v & PGOFSET)
+	if (off & PGOFSET)
 		return (-1);
 
 	switch (minor(dev)) {
 
 	case 0:		/* dev/mem */
 		/* Allow access only in valid memory. */
-		if (!pmap_pa_exists(v))
+		if (!pmap_pa_exists(off))
 			break;
-		return (v);
+		return (off);
 
 #if 0	/* XXX - NOTYET */
 		/* XXX - Move this to bus_subr.c? */
 	case 5: 	/* dev/vme16d16 */
-		if (v & 0xffff0000)
+		if (off & 0xffff0000)
 			break;
-		v |= 0xff0000;
+		off |= 0xff0000;
 		/* fall through */
 	case 6: 	/* dev/vme24d16 */
-		if (v & 0xff000000)
+		if (off & 0xff000000)
 			break;
-		v |= 0xff000000;
+		off |= 0xff000000;
 		/* fall through */
 	case 7: 	/* dev/vme32d16 */
-		return (v | PMAP_VME16);
+		return (off | PMAP_VME16);
 
 	case 8: 	/* dev/vme16d32 */
-		if (v & 0xffff0000)
+		if (off & 0xffff0000)
 			break;
-		v |= 0xff0000;
+		off |= 0xff0000;
 		/* fall through */
 	case 9: 	/* dev/vme24d32 */
-		if (v & 0xff000000)
+		if (off & 0xff000000)
 			break;
-		v |= 0xff000000;
+		off |= 0xff000000;
 		/* fall through */
 	case 10:	/* dev/vme32d32 */
-		return (v | PMAP_VME32);
+		return (off | PMAP_VME32);
 #endif	/* XXX */
 	}
 

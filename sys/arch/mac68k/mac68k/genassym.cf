@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 1999/08/05 12:34:49 briggs Exp $
+#	$NetBSD: genassym.cf,v 1.15.2.1 2000/11/20 20:12:22 bouyer Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -46,8 +46,6 @@ include	<sys/proc.h>
 include	<sys/syscall.h>
 include	<sys/user.h>
 
-include	<vm/vm.h>
-
 include <uvm/uvm_extern.h>
 
 ifdef COMPAT_SVR4
@@ -83,7 +81,6 @@ define	FPU_68040		FPU_68040
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	P1PAGES 		P1PAGES
-define	CLSIZE			CLSIZE
 define	NBPG			NBPG
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
@@ -107,6 +104,7 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
@@ -117,6 +115,7 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			(PSL_T | PSL_S)
 define	SPL1			(PSL_S | PSL_IPL1)
 define	SPL2			(PSL_S | PSL_IPL2)
 define	SPL3			(PSL_S | PSL_IPL3)

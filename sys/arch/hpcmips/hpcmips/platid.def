@@ -1,7 +1,7 @@
-/*	$NetBSD: platid.def,v 1.2 1999/09/25 10:51:13 uch Exp $	*/
+/*	$NetBSD: platid.def,v 1.2.2.1 2000/11/20 20:46:39 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999, 2000
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,10 @@ MIPS {
     }
   }
   TX {
-    391X {
-      3910 3911 3912 
+    3900 {
+      3911 3912 
     }
-    392X {
+    3920 {
       3922
     }
   }
@@ -63,23 +63,30 @@ MIPS {
 MACHINE:
 
 NEC {
-  MCCS {
-    1X {
-      CPU=MIPS_VR_4102 11 12 13
+  MCCS " MC-CS" {
+    1X " series" {
+      CPU=MIPS_VR_4102 11 -"11" 12 -"12" 13 -"13"
     }
   }
-  MCR {
+  MCR " MC-R" {
     CPU=MIPS_VR_41XX
-    3XX {
-      CPU=MIPS_VR_4111 300
-      CPU=MIPS_VR_4121 320
+    3XX "300 series" {
+      CPU=MIPS_VR_4111 300 -"300"
+      CPU=MIPS_VR_4121 320 -"320"
+      CPU=MIPS_VR_4111 forDoCoMo --" MobileGearII for DoCoMo"
+      CPU=MIPS_VR_4102 mpro700 --" MobilePro 700"
+      CPU=MIPS_VR_4121 330 -"330"
     }
-    5XX {
-      CPU=MIPS_VR_4111 500
-      CPU=MIPS_VR_4121 510 520
+    5XX "500 series" {
+      CPU=MIPS_VR_4111 500 -"500"
+      CPU=MIPS_VR_4121 510 -"510" 520 -"520" 520A --" MobilePro 770"
+      CPU=MIPS_VR_4111 500A --" MobilePro 750c"
+      CPU=MIPS_VR_4121 530 -"530" 430 -"430" 530A --" MobilePro 780"
+                       sigmarion ---"DoCoMo sigmarion"
     }
-    7XX {
-      CPU=MIPS_VR_4121 700
+    7XX "700 series" {
+      CPU=MIPS_VR_4121 700 -"700" 700A --" MobilePro 800"
+                       730 -"730" 730A --" MobilePro 880"
     }
   }
 }
@@ -95,9 +102,12 @@ Everex {
 }
 
 CASIO {
-  CassiopeiaE {
+  CassiopeiaE " Cassiopeia" {
     EXX {
-      CPU=MIPS_VR_4111 E10 E11 E15 E55
+      CPU=MIPS_VR_4111 E10 E11 E15
+                       E55 -" E-55"
+                       forDoCoMo -" for DoCoMo"
+                       E65 -" E-65"
     }
     EXXX {
       CPU=MIPS_VR_4121 E100 E105 E500 E507
@@ -111,12 +121,25 @@ Sharp {
       CPU=MIPS_VR_4111 PV6000
     }
   }
+  Telios {
+    HC {
+      CPU=MIPS_TX_3922 HCAJ1 --" HC-AJ1/AJ2"
+      CPU=MIPS_TX_3922 HCVJ1C_JP --" HC-VJ1C (Japanese)"
+    }
+  }
+  Mobilon {
+    HC {	
+      CPU=MIPS_TX_3912 HC4100
+      CPU=MIPS_TX_3912 HC4500
+      CPU=MIPS_TX_3912 HC1200
+    }
+  }
 }
 
 Fujitsu {
   INTERTOP {
     ITXXX {
-      CPU=MIPS_VR_4121 IT300
+      CPU=MIPS_VR_4121 IT300 IT310
     }
   }
 }
@@ -139,8 +162,41 @@ Compaq {
     }
   }
   AERO {
+    15XX {
+      CPU=MIPS_VR_4111 1530
+    }
     21XX {
       CPU=MIPS_VR_4111 2110 2130 2140
+    }
+  }
+  PRESARIO {
+    21X {
+      CPU=MIPS_VR_4111 213
+    }
+  }
+}
+
+Victor {
+  InterLink {
+    MP {
+      CPU=MIPS_TX_3922 MPC101
+    }
+  }
+}
+
+IBM {
+  WorkPad {
+    z50 {
+      CPU=MIPS_VR_4121 26011AU -" z50 2601 1AU"
+    }
+  }
+}
+
+VADEM {
+  CLIO {
+    C {
+      CPU=MIPS_VR_4111 C1000 "-1000"
+      CPU=MIPS_VR_4121 C1050 "-1050"
     }
   }
 }

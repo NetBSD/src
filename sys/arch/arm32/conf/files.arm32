@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78 1999/07/07 00:05:29 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.78.2.1 2000/11/20 20:03:55 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -23,6 +23,10 @@ defopt	PMAP_DEBUG
 
 # X server support in console drivers
 defopt	XSERVER
+
+# Architectures and core logic
+defopt	EBSA285
+defopt	FOOTBRIDGE
 
 define todservice {}
 
@@ -115,6 +119,9 @@ file    arch/arm32/mainbus/com_pioc.c		com_pioc
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major   {md = 18}
+
+# RAIDframe
+major	{raid = 71}
 
 # IOMD device
 # parent to kbd, qms, pms, iic
@@ -354,11 +361,11 @@ file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
 
 file	arch/arm32/arm32/in_cksum_arm32.c	inet
+file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 # library functions
 file	arch/arm32/arm32/strstr.c
-file	arch/arm32/arm32/strtoul.c
 file	arch/arm32/arm32/bcopy_page.S
 file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S

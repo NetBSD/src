@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.11 1999/05/03 16:30:34 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.11.2.1 2000/11/20 20:33:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -39,6 +39,7 @@
 #define	_VAX_STDARG_H_
 
 #include <machine/ansi.h>
+#include <sys/featuretest.h>
 
 typedef _BSD_VA_LIST_	va_list;
 
@@ -46,6 +47,12 @@ typedef _BSD_VA_LIST_	va_list;
 #define __builtin_next_arg(t)		((t) ? 0 : 0)
 #endif
 
+#if __GNUC_PREREQ__(2, 96)
+#define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#define	va_arg			__builtin_va_arg
+#define	va_end			__builtin_va_end
+#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+#else
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
@@ -56,5 +63,14 @@ typedef _BSD_VA_LIST_	va_list;
 	(*(type *)(void *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
 #define va_end(ap)	
+
+#define __va_copy(dest, src)	((dest) == (src))
+#endif
+
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#define	va_copy(dest, src)	__va_copy(dest, src)
+#endif
 
 #endif /* !_VAX_STDARG_H_ */

@@ -1,0 +1,9 @@
+$NetBSD: TODO,v 1.2.6.2 2000/11/20 20:06:59 bouyer Exp $
+
+Things yet to do:
+
+- A boot loader
+- Respect console setting
+- Configuration of PCI slot?
+- Front panel driver
+- Installation guide

@@ -1,4 +1,4 @@
-/*	$NetBSD: kadb.c,v 1.6 1999/04/24 08:01:12 simonb Exp $	*/
+/*	$NetBSD: kadb.c,v 1.6.2.1 2000/11/20 20:20:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -244,11 +244,11 @@ kdbsetsstep()
 	i = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 	if (i < 0) {
 		struct proc *p = curproc;
-		vm_offset_t sa, ea;
+		vaddr_t sa, ea;
 		int rv;
 
-		sa = trunc_page((vm_offset_t)va);
-		ea = round_page((vm_offset_t)va+sizeof(int)-1);
+		sa = trunc_page((vaddr_t)va);
+		ea = round_page((vaddr_t)va+sizeof(int)-1);
 		rv = vm_map_protect(&p->p_vmspace->vm_map, sa, ea,
 			VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
@@ -299,11 +299,11 @@ kdbclrsstep()
 	i = suiword((caddr_t)va, kdb_ss_instr);
 	if (i < 0) {
 		struct proc *p = curproc;
-		vm_offset_t sa, ea;
+		vaddr_t sa, ea;
 		int rv;
 
-		sa = trunc_page((vm_offset_t)va);
-		ea = round_page((vm_offset_t)va+sizeof(int)-1);
+		sa = trunc_page((vaddr_t)va);
+		ea = round_page((vaddr_t)va+sizeof(int)-1);
 		rv = vm_map_protect(&p->p_vmspace->vm_map, sa, ea,
 			VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1999/08/03 07:08:36 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.7.2.1 2000/11/20 20:13:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <sys/exec_elf.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
@@ -147,20 +148,8 @@ parseargs(str, howtop)
 
 found:
 	*cp++ = 0;
-	while (*cp) {
-		switch (*cp++) {
-		case 'a':
-			*howtop |= RB_ASKNAME;
-			break;
-		case 's':
-			*howtop |= RB_SINGLE;
-			break;
-		case 'd':
-			*howtop |= RB_KDB;
-			debug = 1;
-			break;
-		}
-	}
+	while (*cp)
+		BOOT_FLAG(*cp++, *howtop);
 }
 
 static void
@@ -171,8 +160,6 @@ chain(entry, args, ssym, esym)
 {
 	extern char end[];
 	int l, machine_tag;
-
-	freeall();
 
 	/*
 	 * Stash pointer to end of symbol table after the argument

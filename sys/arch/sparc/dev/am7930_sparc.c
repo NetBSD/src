@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.44.8.1 2000/11/20 20:25:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -39,8 +39,8 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -215,7 +215,8 @@ am7930attach_sbus(parent, self, aux)
 		return;
 	}
 	sc->sc_bh = bh;
-	am7930_sparc_attach(sc, sa->sa_pri);
+	if (sa->sa_nintr != 0)
+		am7930_sparc_attach(sc, sa->sa_pri);
 }
 
 void
@@ -234,18 +235,19 @@ am7930_sparc_attach(sc, pri)
 
 #ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
-	(void)bus_intr_establish(sc->sc_bustag, pri,
+	(void)bus_intr_establish(sc->sc_bustag, pri, IPL_AUDIO,
 				 BUS_INTR_ESTABLISH_FASTTRAP,
 				 (int (*) __P((void *)))amd7930_trap, NULL);
 #else
-	(void)bus_intr_establish(sc->sc_bustag, pri, 0,
+	(void)bus_intr_establish(sc->sc_bustag, pri, IPL_AUDIO, 0,
 				 am7930hwintr, &sc->sc_au);
 #endif
-	(void)bus_intr_establish(sc->sc_bustag, PIL_AUSOFT,
+	(void)bus_intr_establish(sc->sc_bustag, PIL_AUSOFT, IPL_AUDIO,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.2 1999/08/27 20:05:08 ragge Exp $ */
+/*      $NetBSD: if_ze.c,v 1.2.2.1 2000/11/20 20:32:46 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -51,6 +51,7 @@
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/sid.h>
 
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
@@ -65,7 +66,6 @@
 
 static	int	zematch __P((struct device *, struct cfdata *, void *));
 static	void	zeattach __P((struct device *, struct device *, void *));
-static	void	zeintr __P((int));
 
 struct	cfattach ze_ibus_ca = {
 	sizeof(struct ze_softc), zematch, zeattach
@@ -118,19 +118,14 @@ zeattach(parent, self, aux)
 	 */
 	ea = (int *)vax_map_physmem(NISA_ROM, 1);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_enaddr[i] = (ea[i] >> 8) & 0377;
+		if (vax_boardtype == VAX_BTYP_660)
+			sc->sc_enaddr[i] = (ea[i] >> 24) & 0377;
+		else
+			sc->sc_enaddr[i] = (ea[i] >> 8) & 0377;
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
-	scb_vecalloc(SGECVEC, zeintr, sc->sc_dev.dv_unit, SCB_ISTACK);
+	scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc,
+		SCB_ISTACK, &sc->sc_intrcnt);
 
 	sgec_attach(sc);
-}
-
-void
-zeintr(unit)
-	int	unit;
-{
-	struct ze_softc *sc = ze_cd.cd_devs[unit];
-
-	sgec_intr(sc);
 }

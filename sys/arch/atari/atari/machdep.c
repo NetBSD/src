@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1999/07/22 09:20:38 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.2.1 2000/11/20 20:05:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_atalk.h"
-#include "opt_inet.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -60,7 +56,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -71,11 +66,11 @@
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <net/netisr.h>
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
+#include <net/netisr.h>
+#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
+
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -122,6 +117,9 @@ int	fputype = 0;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
+
  /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -139,12 +137,18 @@ consinit()
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
-	 * Initialize the console before we print anything out.
+	 * Initialize hardware that support various console types like
+	 * the grf and PCI busses.
+	 */
+	config_console();
+
+	/*
+	 * Now pick the best console candidate.
 	 */
 	cninit();
 
@@ -168,6 +172,7 @@ void
 cpu_startup()
 {
 	extern	 void		etext __P((void));
+	extern	 int		iomem_malloc_safe;
 	register unsigned	i;
 		 caddr_t	v;
 		 int		base, residual;
@@ -210,7 +215,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");
@@ -233,7 +238,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -242,7 +247,7 @@ cpu_startup()
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -288,25 +293,24 @@ cpu_startup()
 	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
 	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/*
+	 * Alloc extent allocation to use malloc
+	 */
+	iomem_malloc_safe = 1;
 }
 
 /*
@@ -349,7 +353,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char cpu_model[120];
-extern char version[];
  
 static void
 identifycpu()
@@ -532,11 +535,11 @@ cpu_dumpconf()
 	dumplo -= cpu_dumpsize();
 
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * Don't dump on the first NBPG (why NBPG?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(NBPG))
+		dumplo = btodb(NBPG);
 }
 
 /*
@@ -556,7 +559,7 @@ dumpsys()
 	int	nbytes;		/* Bytes left to dump		*/
 	int	i, n, error;
 
-	error = msgbufenabled = segnum = 0;
+	error = segnum = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -677,13 +680,13 @@ void microtime(tvp)
 
 	*tvp = time;
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -777,95 +780,19 @@ badbaddr(addr, size)
 /*
  * Network interrupt handling
  */
-#include "arp.h"
-#include "ppp.h"
-
-#ifdef NPPP
-void	pppintr __P((void));
-#endif
-#ifdef INET
-void	ipintr __P((void));
-#endif
-#ifdef INET6
-void	ip6intr __P((void));
-#endif
-#ifdef NETATALK
-void	atintr __P((void));
-#endif
-#if NARP > 0
-void	arpintr __P((void));
-#endif
-#ifdef NS
-void	nsintr __P((void));
-#endif
-#ifdef ISO
-void	clnlintr __P((void));
-#endif
-#ifdef CCITT
-void	ccittintr __P((void));
-#endif
-#ifdef NATM
-void	natmintr __P((void));
-#endif
-
-
 static void
 netintr()
 {
-#ifdef INET
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#ifdef NATM
-	if (netisr & (1 << NETISR_NATM)) {
-		netisr &= ~(1 << NETISR_NATM);
-		natmintr();
-	}
-#endif
-#ifdef NPPP
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
+#define DONETISR(bit, fn) do {			\
+	if (netisr & (1 << bit)) {		\
+		netisr &= ~(1 << bit);		\
+		fn();				\
+	}					\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 }
 
 
@@ -1034,4 +961,3 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 	return(error);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.23 1999/09/17 19:59:39 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.23.2.1 2000/11/20 20:04:03 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -45,8 +45,8 @@
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -542,6 +542,9 @@ ofw_getbootinfo(bp_pp, ba_pp)
 
 	*bp_pp = bootpathv;
 	*ba_pp = bootargsv;
+#ifdef DIAGNOSTIC
+	printf("bootpath=<%s>, bootargs=<%s>\n", bootpathv, bootargsv);
+#endif
 }
 
 vm_offset_t

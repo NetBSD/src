@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.4 1998/04/19 03:54:24 mark Exp $	*/
+/*	$NetBSD: todclock.c,v 1.4.14.1 2000/11/20 20:03:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -109,7 +109,7 @@ todclockmatch(parent, cf, aux)
 {
 	struct todclock_attach_args *ta = aux;
 
-	if (cf->cf_unit > 0)
+	if (todclock_sc != NULL)
 		return(0);
 	if (strcmp(ta->ta_name, "todclock") != 0)
 		return(0);
@@ -222,7 +222,7 @@ resettodr()
 		month[1]=29;
 	else
 		month[1]=28;
-	while ((sec/SECPERDAY) > month[mon]) {
+	while (sec >= month[mon]*SECPERDAY) {
 		sec -= month[mon]*SECPERDAY;
 		mon++;
 	}
@@ -243,7 +243,7 @@ resettodr()
 	rtc.rtc_centi =
 	rtc.rtc_micro = 0;
 
-	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
+	printf("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
 	    rtc.rtc_min, rtc.rtc_sec);
 

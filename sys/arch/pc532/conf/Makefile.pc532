@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.56 1999/07/26 05:20:47 cgd Exp $
+#	$NetBSD: Makefile.pc532,v 1.56.2.1 2000/11/20 20:19:18 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -42,18 +42,21 @@ S!=	cd ../../../..; pwd
 .endif
 PC532=	$S/arch/pc532
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
-CWARNFLAGS?=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-format -Werror -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith -Wno-format
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-z -Ttext F8002000 -e start
-STRIPFLAGS=	-d
+LINKFLAGS=	-z -Ttext E0002000 -e start
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -181,6 +184,9 @@ depend: .depend
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
+dependall: depend all
+
+
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
  
@@ -196,5 +202,17 @@ machdep.o: Makefile
 
 locore.o: ${PC532}/pc532/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

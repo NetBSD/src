@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.1 1996/04/12 08:37:06 leo Exp $	*/
+/*	$NetBSD: msvar.h,v 1.1.30.1 2000/11/20 20:05:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -54,6 +54,7 @@ struct ms_softc {
 	int			ms_dy;	    /* accumulated dy		*/
 	struct firm_event	ms_bq[2];   /* Button queue		*/
 	int			ms_bq_idx;  /* Button queue index	*/
+	struct callout		ms_delay_ch;
 };
 
 #ifdef _KERNEL

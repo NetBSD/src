@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 1999/10/06 20:04:53 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56.2.1 2000/11/20 20:09:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,12 +41,32 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Definitions unique to i386 cpu support.
  */
 #include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
+#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -67,14 +87,14 @@
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -93,7 +113,6 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay __P((int));
 
 /*
  * pull in #defines for kinds of processors
@@ -121,9 +140,13 @@ struct cpu_cpuid_nameclass {
 };
 
 #ifdef _KERNEL
+extern int biosbasemem;
+extern int biosextmem;
 extern int cpu;
 extern int cpu_class;
 extern int cpu_feature;
+extern int cpu_id;
+extern char cpu_vendor[];
 extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
@@ -146,6 +169,7 @@ void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
 
 /* clock.c */
+void	initrtclock __P((void));
 void	startrtclock __P((void));
 
 /* npx.c */
@@ -187,6 +211,13 @@ void	vm86_gpfault __P((struct proc *, int));
 
 /* trap.c */
 void	child_return __P((void *));
+
+/* consinit.c */
+void kgdb_port_init __P((void));
+
+/* bus_machdep.c */
+void i386_bus_space_init __P((void));
+void i386_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
 

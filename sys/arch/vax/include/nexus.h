@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.15 1999/08/07 10:36:46 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.15.2.1 2000/11/20 20:32:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -37,6 +37,12 @@
 
 #ifndef _VAX_NEXUS_H_
 #define _VAX_NEXUS_H_
+
+#include <machine/bus.h>
+
+#ifdef _KERNEL
+#include "opt_cputype.h"
+#endif
 /*
  * Different definitions for nicer autoconf probing.
  */
@@ -96,10 +102,10 @@ struct	nexus {
 };
 
 struct sbi_attach_args {
-	u_int	nexnum; 	/* This nexus TR number */
-	u_int	type;		/* This nexus type */
-	int	nexinfo;	/* Some info sent between attach & match */
-	void	*nexaddr;	/* Virtual address of this nexus */
+	int sa_nexnum; 		/* This nexus TR number */
+	int sa_type;		/* This nexus type */
+	bus_space_tag_t sa_iot;
+	bus_space_handle_t sa_ioh;
 };
 
 /* Memory device struct. This should be somewhere else */
@@ -117,9 +123,6 @@ struct bp_conf {
 	int bp_addr;
 };
 
-extern caddr_t *nex_vec;
-#define nex_vec_num(ipl, nexnum) nex_vec[(ipl-14)*16+nexnum]
-
 #endif
 
 /*
@@ -135,7 +138,7 @@ extern caddr_t *nex_vec;
 #define	NEX_CFGFLT	(0xfc000000)
 
 #ifndef _LOCORE
-#if defined(VAX780) || defined(VAX8600)
+#if VAX780 || VAX8600
 #define	NEXFLT_BITS \
 "\20\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT"
 #endif
@@ -181,9 +184,10 @@ extern caddr_t *nex_vec;
 #define	NEX_MEM256I	0x74		/* 256K chips, interleaved */
 
 /* Memory classes */
-#define	M780C		0
-#define	M780EL		1
-#define	M780EU		2
+#define	M_NONE		0
+#define	M780C		1
+#define	M780EL		2
+#define	M780EU		3
 
 /* Memory recover defines */
 #define	MCHK_PANIC	-1

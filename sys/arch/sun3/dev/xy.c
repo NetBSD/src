@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.23 1999/09/17 20:07:18 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.23.2.1 2000/11/20 20:27:53 bouyer Exp $	*/
 
 /*
  *
@@ -74,8 +74,7 @@
 #include <sys/dkbad.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -233,7 +232,7 @@ xydummystrat(bp)
 {
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
-	bcopy(xy_labeldata, bp->b_un.b_addr, XYFM_BPS);
+	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }
@@ -425,14 +424,17 @@ xycattach(parent, self, aux)
 	/* link in interrupt with higher level software */
 	isr_add_vectored(xycintr, (void *)xyc,
 	                 ca->ca_intpri, ca->ca_intvec);
-	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
+	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    xyc->sc_dev.dv_xname, "intr");
+
+	callout_init(&xyc->sc_tick_ch);
 
 	/* now we must look for disks using autoconfig */
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, xyc_print);
 
 	/* start the watchdog clock */
-	timeout(xyc_tick, xyc, XYC_TICKCNT);
+	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
 }
 
 static int
@@ -503,9 +505,7 @@ xyattach(parent, self, aux)
 	xy->parent = xyc;
 
 	/* init queue of waiting bufs */
-	xy->xyq.b_active = 0;
-	xy->xyq.b_actf = 0;
-	xy->xyq.b_actb = &xy->xyq.b_actf; /* XXX b_actb: not used? */
+	BUFQ_INIT(&xy->xyq);
 	xy->xyrq = &xyc->reqs[xa->driveno];
 
 	xy->xy_drive = xa->driveno;
@@ -513,7 +513,6 @@ xyattach(parent, self, aux)
 
 	/* Do init work common to attach and open. */
 	xy_init(xy);
-	dk_establish(&xy->sc_dk, &xy->sc_dev);
 }
 
 /*
@@ -980,6 +979,8 @@ xystrategy(bp)
 {
 	struct xy_softc *xy;
 	int     s, unit;
+	struct disklabel *lp;
+	daddr_t blkno;
 
 	unit = DISKUNIT(bp->b_dev);
 
@@ -1012,9 +1013,21 @@ xystrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
+	lp = xy->sc_dk.dk_label;
+
+	if (bounds_check_with_label(bp, lp,
 		(xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	if (DISKPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno;
 
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
@@ -1023,7 +1036,7 @@ xystrategy(bp)
 
 	s = splbio();		/* protect the queues */
 
-	disksort(&xy->xyq, bp);
+	disksort_blkno(&xy->xyq, bp);	 /* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1255,8 +1268,7 @@ xyc_startbuf(xycsc, xysc, bp)
 #endif
 
 	/*
-	 * load request.  we have to calculate the correct block number based
-	 * on partition info.
+	 * load request.
 	 *
 	 * also, note that there are two kinds of buf structures, those with
 	 * B_PHYS set and those without B_PHYS.   if B_PHYS is set, then it is
@@ -1276,8 +1288,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	 * (It is done inexpensively, using whole segments!)
 	 */
 
-	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
-	    xysc->sc_dk.dk_label->d_partitions[partno].p_offset);
+	block = bp->b_rawblkno;
 
 	dbuf = dvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */
@@ -1362,7 +1373,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			return XY_ERR_AOK;	/* success */
 		case XY_SUB_WAIT:
 			while (iorq->iopb->done == 0) {
-				sleep(iorq, PRIBIO);
+				(void) tsleep(iorq, PRIBIO, "xyciorq", 0);
 			}
 			return (iorq->errno);
 		case XY_SUB_POLL:		/* steal controller */
@@ -1394,7 +1405,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		return (XY_ERR_AOK);	/* success */
 	case XY_SUB_WAIT:
 		while (iorq->iopb->done == 0) {
-			sleep(iorq, PRIBIO);
+			(void) tsleep(iorq, PRIBIO, "xyciorq", 0);
 		}
 		return (iorq->errno);
 	case XY_SUB_POLL:
@@ -1634,8 +1645,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
-			    iorq->xy->xyq.b_actf =
-					iorq->buf->b_actf;
+			    BUFQ_REMOVE(&iorq->xy->xyq, iorq->buf);
 			    disk_unbusy(&iorq->xy->sc_dk,
 					        (iorq->buf->b_bcount -
 					         iorq->buf->b_resid));
@@ -1681,9 +1691,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (xy->xyq.b_actf == NULL) continue;
+			if (BUFQ_FIRST(&xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, xy->xyq.b_actf);
+			xyc_startbuf(xycsc, xy, BUFQ_FIRST(&xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1813,7 +1823,7 @@ xyc_remove_iorq(xycsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			iorq->xy->xyq.b_actf = bp->b_actf;
+			BUFQ_REMOVE(&iorq->xy->xyq, bp);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
 			iorq->mode = XY_SUB_FREE;
@@ -1968,7 +1978,7 @@ xyc_tick(arg)
 
 	/* until next time */
 
-	timeout(xyc_tick, xycsc, XYC_TICKCNT);
+	callout_reset(&xycsc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xycsc);
 }
 
 /*

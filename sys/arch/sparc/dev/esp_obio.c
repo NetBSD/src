@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.4 1998/11/19 21:49:17 thorpej Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.4.10.1 2000/11/20 20:25:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -77,13 +77,6 @@ int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_obio_ca = {
 	sizeof(struct esp_softc), espmatch_obio, espattach_obio
-};
-
-static struct scsipi_device esp_obio_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -174,12 +167,6 @@ espattach_obio(parent, self, aux)
 		return;
 	}
 
-	if (oba->oba_bp != NULL && strcmp(oba->oba_bp->name, "esp") == 0 &&
-	    oba->oba_bp->val[0] == -1 &&
-	    oba->oba_bp->val[1] == sc->sc_dev.dv_unit)
-		bootpath_store(1, oba->oba_bp + 1);
-
-
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
@@ -267,22 +254,18 @@ espattach_obio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	bus_intr_establish(esc->sc_bustag,
-			   oba->oba_pri, 0,
-			   (int(*)__P((void*)))ncr53c9x_intr, sc);
+	bus_intr_establish(esc->sc_bustag, oba->oba_pri, IPL_BIO, 0,
+			   ncr53c9x_intr, sc);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_obio_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
-
-	bootpath_store(1, NULL);
 }
 
 /*

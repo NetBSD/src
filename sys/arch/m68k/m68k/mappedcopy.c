@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.8 1999/09/25 21:19:48 is Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.8.2.1 2000/11/20 20:11:41 bouyer Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -50,8 +50,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 
@@ -113,11 +112,12 @@ mappedcopyin(f, t, count)
 		/*
 		 * Map in the page and bcopy data in from it
 		 */
-		if (pmap_extract(upmap, trunc_page(fromp), &upa) == FALSE)
+		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa)
+		    == FALSE)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage((caddr_t)kva, top);
 		else
@@ -169,11 +169,13 @@ mappedcopyout(f, t, count)
 		/*
 		 * Map in the page and bcopy data out to it
 		 */
-		if (pmap_extract(upmap, trunc_page(top), &upa) == FALSE)
+		if (pmap_extract(upmap, trunc_page((vaddr_t)top), &upa)
+		    == FALSE)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, (caddr_t)kva);
 		else
