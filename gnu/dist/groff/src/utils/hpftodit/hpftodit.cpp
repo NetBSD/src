@@ -1,4 +1,4 @@
-/*	$NetBSD: hpftodit.cpp,v 1.1.1.2 2004/07/30 14:45:06 wiz Exp $	*/
+/*	$NetBSD: hpftodit.cpp,v 1.2 2004/08/01 10:19:26 martin Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1994, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
@@ -158,7 +158,7 @@ struct entry {
   char present;
   uint16 type;
   uint32 count;
-  uint32 value;
+  intptr_t value;
   entry() : present(0) { }
 };
 
