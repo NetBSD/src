@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.18 2001/03/10 12:57:02 wiz Exp $
+.\"	$NetBSD: swapctl.2,v 1.19 2001/04/11 14:18:30 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -161,6 +161,11 @@ left unused to prevent any disklabel present from being overwritten.  This
 space is allocated from the swap device when the
 .Dv SWAP_ON
 command is used.
+.Pp
+The priority of a swap device can be used to fill faster swap devices before
+slower ones.  A priority of 0 is the highest, with larger numbers having
+lower priority.  For a fuller discussion on swap priority, see
+.Xr swapctl 8 .
 .Sh RETURN VALUES
 If the
 .Fa cmd
@@ -219,7 +224,7 @@ An I/O error occurred while opening the swap device.
 points outside the process' allocated address space.
 .El
 .Sh SEE ALSO
-.Xr swapctl 8
+.Xr swapctl 8 .
 .Sh AUTHOR
 The current swap system was designed and implemented by Matthew Green
 <mrg@eterna.com.au>, with help from Paul Kranenburg <pk@NetBSD.ORG>
