@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.36 2005/01/17 13:00:32 dogcow Exp $	*/
+/*	$NetBSD: atactl.c,v 1.37 2005/01/20 15:36:02 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.36 2005/01/17 13:00:32 dogcow Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.37 2005/01/20 15:36:02 xtraeme Exp $");
 #endif
 
 
@@ -107,7 +107,6 @@ struct bitinfo {
 	const char *string;
 };
 
-int	main(int, char *[]);
 void	usage(void);
 void	ata_command(struct atareq *);
 void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
@@ -148,7 +147,7 @@ struct command device_commands[] = {
 	{ NULL,		NULL,			NULL },
 };
 
-void	bus_reset __P((int, char *[]));
+void	bus_reset(int, char *[]);
 
 struct command bus_commands[] = {
 	{ "reset",	"",			bus_reset },
