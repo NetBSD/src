@@ -115,7 +115,8 @@ gotit:
 		}
 #endif
 	}
-	panic("no suitable root");
+	printf("no suitable root");
+	sun3_rom_halt();
 found:
 	gc->gc_root = makedev(major(gc->gc_root), unit*8);
 	rootdev = gc->gc_root;
