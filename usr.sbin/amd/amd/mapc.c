@@ -1,4 +1,4 @@
-/*	$NetBSD: mapc.c,v 1.11 1999/02/01 19:05:10 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.11.2.1 1999/09/21 04:55:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mapc.c,v 1.3 1999/01/13 23:30:59 ezk Exp 
+ * Id: mapc.c,v 1.4 1999/08/09 06:09:44 ezk Exp 
  *
  */
 
@@ -1054,7 +1054,7 @@ key_already_in_chain(char *keyname, const nfsentry *chain)
 nfsentry *
 make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable)
 {
-  static u_int last_cookie = ~(u_int) 0 - 1;
+  static u_int last_cookie = (u_int) 2;	/* monotonically increasing */
   static nfsentry chain[MAX_CHAIN];
   static int max_entries = MAX_CHAIN;
   char *key;
@@ -1126,10 +1126,9 @@ make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable
       }
 
       /* we have space.  put entry in next cell */
-      --last_cookie;
+      ++last_cookie;
       chain[num_entries].ne_fileid = (u_int) last_cookie;
-      *(u_int *) chain[num_entries].ne_cookie =
-	(u_int) last_cookie;
+      *(u_int *) chain[num_entries].ne_cookie = (u_int) last_cookie;
       chain[num_entries].ne_name = key;
       if (num_entries < max_entries - 1) {	/* link to next one */
 	chain[num_entries].ne_nextentry = &chain[num_entries + 1];
