@@ -20,10 +20,6 @@
 /*
  * globals needed by the vm system
  *
-
-
-
-
  * [frankly the stupid vm system should allocate these]
  */
 
@@ -883,8 +879,10 @@ pmap_init(phys_start, phys_end)
 	vm_offset_t	phys_start, phys_end;
 {
     vm_offset_t tmp,end;
+    extern int physmem;
 
     pv_init();
+    physmem = btoc(phys_end);
 }
 
 vm_offset_t

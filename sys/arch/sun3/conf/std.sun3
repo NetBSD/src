@@ -1,0 +1,6 @@
+machine		"sun3"
+
+#mainbus0 at root
+
+obio0 at root
+obmem0 at root

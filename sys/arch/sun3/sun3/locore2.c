@@ -17,7 +17,8 @@
 unsigned int *old_vector_table;
 
 static struct idprom identity_prom;
-unsigned char cpu_machine_id;
+unsigned char cpu_machine_id = 0;
+char *cpu_string = NULL;
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
@@ -26,6 +27,7 @@ int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
 caddr_t vmmap;
 extern vm_offset_t tmp_vpages[];
+extern int physmem;
 
 static void initialize_vector_table()
 {
@@ -276,7 +278,7 @@ void sun3_verify_hardware()
 {
     unsigned char arch;
     int cpu_match = 0;
-    char *cpu_string;
+
 
     if (idprom_fetch(&identity_prom, IDPROM_VERSION))
 	mon_panic("idprom fetch failed\n");
