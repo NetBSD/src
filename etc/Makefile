@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.238 2002/12/21 15:54:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.239 2002/12/23 06:52:49 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -162,11 +162,10 @@ install-etc-files: check_DESTDIR
 	    ${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
 	( \
-	    echo "/etc/passwd type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
-	    echo "/etc/pwd.db type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
-	    echo "/etc/spwd.db type=file mode=0600 uname=root gname=wheel tags=etc_pkg"; \
-	) | \
-	    sed -e "s|^/|./${DESTDIR}/|g" -e "s|//|/|g" | ${CAT} -l >>${METALOG}
+	    echo "./etc/passwd type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+	    echo "./etc/pwd.db type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+	    echo "./etc/spwd.db type=file mode=0600 uname=root gname=wheel tags=etc_pkg"; \
+	) | ${METALOG.add}
 .endif	# UNPRIVED
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
