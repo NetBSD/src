@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.76 2001/04/05 12:21:30 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.1 2001/04/10 05:52:14 leo Exp $
 #
 # Generic atari
 #
@@ -12,7 +12,7 @@ include "arch/atari/conf/std.hades"
 include "arch/atari/conf/std.milan"
 #endif
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.1 $"
 
 #
 # Add support for about 16 users. This variable is used to size
