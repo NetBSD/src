@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.23 2001/12/21 03:21:50 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.24 2002/06/20 07:43:39 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23 2001/12/21 03:21:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.24 2002/06/20 07:43:39 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -476,6 +476,15 @@ stf_checkaddr4(sc, in, inifp)
 	case 0: case 127: case 255:
 		return -1;
 	}
+
+	/*
+	 * reject packets with private address range:
+	 * 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+	 */
+	if ((ntohl(in->s_addr) & 0xff000000) >> 24 == 10 ||
+	    (ntohl(in->s_addr) & 0xfff00000) >> 16 == 172 * 256 + 16 ||
+	    (ntohl(in->s_addr) & 0xffff0000) >> 16 == 192 * 256 + 168)
+		return -1;
 
 	/*
 	 * reject packets with broadcast
