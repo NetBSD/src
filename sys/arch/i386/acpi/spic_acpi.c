@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.8 2003/11/03 17:54:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.7 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.8 2003/11/03 17:54:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,11 +102,8 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Parse our resources. */
 	rv = acpi_resource_parse(&sc->sc_spic.sc_dev, sc->sc_node, &sc->sc_res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK) {
-		printf("%s: unable to parse resources: %d\n",
-		    sc->sc_spic.sc_dev.dv_xname, rv);
+	if (rv != AE_OK)
 		return;
-	}
 
 	sc->sc_spic.sc_iot = aa->aa_iot;
 	io = acpi_res_io(&sc->sc_res, 0);
