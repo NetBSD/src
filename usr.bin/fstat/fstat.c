@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.50 2001/07/08 20:24:05 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.51 2001/09/28 20:16:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.50 2001/07/08 20:24:05 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.51 2001/09/28 20:16:43 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -937,8 +937,8 @@ ptrans(fp, cpipe, i)
 		goto bad;
 	}
 
-	printf("* pipe %p %s %p", cpipe,
-		(fp->f_flag == FWRITE) ? "->" : "<-",
+	printf("* pipe %d %p %s %p", fp->f_flag, cpipe,
+		(fp->f_flag & FWRITE) ? "->" : "<-",
 		cp.pipe_peer);
 	printf("\n");
 	return;
