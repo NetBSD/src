@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.38 1997/10/17 13:53:30 lukem Exp $	*/
+/*	$NetBSD: inetd.c,v 1.39 1997/12/04 06:39:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.38 1997/10/17 13:53:30 lukem Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.39 1997/12/04 06:39:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,6 +442,8 @@ main(argc, argv, envp)
 	sigvec(SIGTERM, &sv, (struct sigvec *)0);
 	sv.sv_handler = goaway;
 	sigvec(SIGINT, &sv, (struct sigvec *)0);
+	sv.sv_handler = SIG_IGN;
+	sigvec(SIGPIPE, &sv, (struct sigvec *)0);
 
 	{
 		/* space for daemons to overwrite environment for ps */
