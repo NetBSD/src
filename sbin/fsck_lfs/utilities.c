@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.6 2000/10/10 20:24:51 is Exp $	 */
+/* $NetBSD: utilities.c,v 1.7 2001/02/04 21:52:04 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -54,6 +54,8 @@
 long            diskreads, totalreads;	/* Disk cache statistics */
 
 static void     rwerror(char *, daddr_t);
+
+extern int      returntosingle;
 
 int
 ftypeok(struct dinode * dp)
@@ -505,8 +507,6 @@ catch(int n)
 void
 catchquit(int n)
 {
-	extern int      returntosingle;
-
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);

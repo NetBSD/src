@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.9 2001/01/06 23:08:24 joff Exp $	 */
+/* $NetBSD: inode.c,v 1.10 2001/02/04 21:52:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -58,7 +58,6 @@ extern daddr_t *din_table;
 static int      iblock(struct inodesc *, long, u_int64_t);
 int             blksreqd(struct lfs *, int);
 int             lfs_maxino(void);
-SEGUSE         *lfs_gseguse(int, struct bufarea **);
 /* static void dump_inoblk (struct lfs *, struct dinode *); */
 
 /* stolen from lfs_inode.c */
