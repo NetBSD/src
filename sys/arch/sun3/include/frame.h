@@ -156,3 +156,10 @@ struct fpframe {
 #define fpf_res1	FPF_u1.FPF_nonnull.FPF_res1
 #define fpf_idle	FPF_u2.FPF_idle
 #define fpf_busy	FPF_u2.FPF_busy
+
+struct funcall_frame {
+    struct funcall_frame *fr_savfp;
+    int fr_savpc;
+    int fr_arg[1];
+};
+

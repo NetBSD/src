@@ -39,5 +39,6 @@
 #define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)
 #define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
+#define PA_PGNUM(pa) (pa >>PGSHIFT)
 
 #endif /* !_MACHINE_PTE_H*/
