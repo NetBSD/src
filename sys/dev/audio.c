@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.103 1998/08/28 12:07:41 pk Exp $	*/
+/*	$NetBSD: audio.c,v 1.104 1998/09/01 07:27:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1237,7 +1237,7 @@ audio_write(dev, uio, ioflag)
 	u_char *inp, *einp;
 	int error, s, n, cc, used;
 
-	DPRINTF(("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
+	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
 		 uio->uio_resid, sc->sc_pr.used, sc->sc_pr.usedhigh));
 
 	if (cb->mmapped)
@@ -1278,7 +1278,7 @@ audio_write(dev, uio, ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while (cb->used >= cb->usedhigh) {
-			DPRINTF(("audio_write: sleep used=%d lowat=%d hiwat=%d\n", 
+			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d hiwat=%d\n", 
 				 cb->used, cb->usedlow, cb->usedhigh));
 			if (ioflag & IO_NDELAY) {
 				splx(s);
@@ -1845,7 +1845,7 @@ audio_pint(v)
 		}
 	}
 
-	DPRINTFN(5, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
+	DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
                      sc->sc_mode, cb->pause, cb->used, cb->usedlow));
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
 		if (cb->used <= cb->usedlow) {
