@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 1996/08/09 14:10:45 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.39 1996/09/07 14:25:51 mycroft Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -25,7 +25,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
 	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
-	munlock.o munmap.o nfssvc.o open.o pathconf.o profil.o quotactl.o \
+	munlock.o munmap.o nfssvc.o open.o pathconf.o poll.o \
+	profil.o quotactl.o \
 	read.o readlink.o readv.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setpgid.o \
