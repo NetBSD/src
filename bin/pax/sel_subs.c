@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.7 1997/07/20 20:32:43 christos Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.8 1998/01/21 00:11:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.7 1997/07/20 20:32:43 christos Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.8 1998/01/21 00:11:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: sel_subs.c,v 1.7 1997/07/20 20:32:43 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
@@ -58,6 +59,8 @@ __RCSID("$NetBSD: sel_subs.c,v 1.7 1997/07/20 20:32:43 christos Exp $");
 #include <strings.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <tzfile.h>
+
 #include "pax.h"
 #include "sel_subs.h"
 #include "extern.h"
@@ -587,6 +590,8 @@ trng_match(arcn)
  *	0 if converted ok, -1 otherwise
  */
 
+#define ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
 #if __STDC__
 static int
 str_sec(char *str, time_t *tval)
@@ -599,6 +604,7 @@ str_sec(str, tval)
 {
 	struct tm *lt;
 	char *dot = NULL;
+	int yearset;
 
 	lt = localtime(tval);
 	if ((dot = strchr(str, '.')) != NULL) {
@@ -608,57 +614,44 @@ str_sec(str, tval)
 		*dot++ = '\0';
 		if (strlen(dot) != 2)
 			return(-1);
-		if ((lt->tm_sec = ATOI2(dot)) > 61)
-			return(-1);
+		lt->tm_sec = ATOI2(dot);
 	} else
 		lt->tm_sec = 0;
 
+	yearset = 0;
 	switch (strlen(str)) {
+	case 12:
+		lt->tm_year = ATOI2(str) * 100 - TM_YEAR_BASE;
+		yearset = 1;
+		/* FALLTHROUGH */
 	case 10:
-		/*
-		 * year (yy)
-		 * watch out for year 2000
-		 */
-		if ((lt->tm_year = ATOI2(str)) < 69)
-			lt->tm_year += 100;
-		str += 2;
+		if (yearset) {
+			lt->tm_year += ATOI2(str);
+		} else {
+			yearset = ATOI2(str);
+			if (yearset < 69)
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
+			else
+				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
+		}
 		/* FALLTHROUGH */
 	case 8:
-		/*
-		 * month (mm)
-		 * watch out months are from 0 - 11 internally
-		 */
-		if ((lt->tm_mon = ATOI2(str)) > 12)
-			return(-1);
+		lt->tm_mon = ATOI2(str);
 		--lt->tm_mon;
-		str += 2;
 		/* FALLTHROUGH */
 	case 6:
-		/*
-		 * day (dd)
-		 */
-		if ((lt->tm_mday = ATOI2(str)) > 31)
-			return(-1);
-		str += 2;
+		lt->tm_mday = ATOI2(str);
 		/* FALLTHROUGH */
 	case 4:
-		/*
-		 * hour (hh)
-		 */
-		if ((lt->tm_hour = ATOI2(str)) > 23)
-			return(-1);
-		str += 2;
+		lt->tm_hour = ATOI2(str);
 		/* FALLTHROUGH */
 	case 2:
-		/*
-		 * minute (mm)
-		 */
-		if ((lt->tm_min = ATOI2(str)) > 59)
-			return(-1);
+		lt->tm_min = ATOI2(str);
 		break;
 	default:
 		return(-1);
 	}
+
 	/*
 	 * convert broken-down time to GMT clock time seconds
 	 */
