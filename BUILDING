@@ -451,6 +451,9 @@ BUILDING
                /var.  Note this does not build a ``release''; no release sets
                are placed in ${RELEASEDIR}.  -d is implied by -R.
 
+     -E        Set `expert' mode; DESTDIR does not have to be set to a non-
+               root path for builds when this is set.
+
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
                If you see build failures with -j, please save complete build
