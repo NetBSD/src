@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsock.c,v 1.1 2001/07/09 06:04:28 itojun Exp $	*/
-/*	$KAME: rtsock.c,v 1.3 2000/10/10 08:46:45 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.2 2002/05/31 10:22:14 itojun Exp $	*/
+/*	$KAME: rtsock.c,v 1.4 2001/09/19 06:59:41 sakane Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
