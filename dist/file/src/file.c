@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2003/09/25 18:11:16 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -77,7 +77,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.81 2003/09/12 19:39:44 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.3 2003/09/25 17:59:03 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.2 2003/09/25 18:11:16 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -102,8 +102,7 @@ private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
 	nobuffer = 0,   /* Do not buffer stdout 		*/
-	kflag = 0,	/* Keep going after the first match	*/
-	rflag = 0;	/* Restore access times of files	*/
+	kflag = 0;	/* Keep going after the first match	*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
