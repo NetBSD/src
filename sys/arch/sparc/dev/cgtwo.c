@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.14 1996/04/01 17:30:06 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.15 1996/04/23 19:34:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,7 +219,7 @@ cgtwoattach(parent, self, args)
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG2_PIXMAP_OFF,
 					       CG2_PIXMAP_SIZE,
-					       ca->ca_bustype);
+					       PMAP_VME32/*ca->ca_bustype*/);
 	}
 #ifndef offsetof
 #define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
