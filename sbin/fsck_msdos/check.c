@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.3 1996/05/28 19:51:11 ws Exp $	*/
+/*	$NetBSD: check.c,v 1.4 1996/09/23 16:27:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: check.c,v 1.3 1996/05/28 19:51:11 ws Exp $";
+static char rcsid[] = "$NetBSD: check.c,v 1.4 1996/09/23 16:27:57 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$NetBSD: check.c,v 1.3 1996/05/28 19:51:11 ws Exp $";
 #include <fcntl.h>
 
 #include "ext.h"
+#include "util.h"
 
 int
 checkfilesys(fname)
