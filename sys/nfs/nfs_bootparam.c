@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.11 1999/02/21 15:07:49 drochner Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.12 1999/04/11 22:15:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -111,15 +111,14 @@ nfs_bootparam(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
+	extern u_int32_t inet_addr __P((char *)); /* XXX libkern */
 	struct ifnet *ifp = nd->nd_ifp;
 	struct in_addr my_ip, arps_ip, gw_ip;
 	struct sockaddr_in bp_sin;
 	struct sockaddr_in *sin;
-#if 0	/* XXX - not yet */
 	struct nfs_dlmount *gw_ndm = 0;
 	char *p;
 	u_int32_t mask;
-#endif	/* XXX */
 	int error;
 
 	/*
@@ -131,19 +130,19 @@ nfs_bootparam(nd, procp)
 		return (error);
 	}
 
-	error = EADDRNOTAVAIL; /* ??? */
+	error = EADDRNOTAVAIL;
 #if NARP > 0
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		/*
 		 * Do RARP for the interface address.
 		 */
 		error = revarpwhoarewe(ifp, &arps_ip, &my_ip);
-		if (error) {
-			printf("revarp failed, error=%d\n", error);
-			goto out;
-		}
 	}
 #endif
+	if (error) {
+		printf("revarp failed, error=%d\n", error);
+		goto out;
+	}
 
 	nd->nd_myip.s_addr = my_ip.s_addr;
 	printf("nfs_boot: client_addr=0x%x (RARP from 0x%x)\n",
@@ -213,7 +212,6 @@ nfs_bootparam(nd, procp)
 		nd->nd_gwip = gw_ip;
 	}
 #endif
-#if 0	/* XXX - not yet */
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
 	memset((caddr_t)gw_ndm, 0, sizeof(*gw_ndm));
 	error = bp_getfile(sin, "gateway", gw_ndm);
@@ -222,35 +220,37 @@ nfs_bootparam(nd, procp)
 		error = 0;
 		goto out;
 	}
-	printf("nfs_boot: gateway=%s\n", gw_ndm->ndm_host);
 	sin = (struct sockaddr_in *) &gw_ndm->ndm_saddr;
+	if (sin->sin_addr.s_addr == 0)
+	    goto out;	/* no gateway */
+
+	/* OK, we have a gateway! */
+	printf("nfs_boot: gateway=0x%x\n",
+		   (u_int32_t)ntohl(sin->sin_addr.s_addr));
+	/* Just save it.  Caller adds the route. */
 	nd->nd_gwip = sin->sin_addr;
-	/* Find the pathname part of the "mounted-on" string. */
+
+	/* Look for a mask string after the colon. */
 	p = strchr(gw_ndm->ndm_host, ':');
 	if (p == 0)
-		goto out;
+		goto out;	/* no netmask */
 	/* have pathname */
 	p++;	/* skip ':' */
 	mask = inet_addr(p);	/* libkern */
-	if (mask == 0) {
-		printf("nfs_boot: gateway netmask missing\n");
-		goto out;
-	}
+	if (mask == 0)
+		goto out;	/* no netmask */
 
-	/* Save our netmask and update the network interface. */
+	/* Have a netmask too!  Save it; update the I/F. */
+	printf("nfs_boot: my_mask=0x%x\n",
+		   (u_int32_t)ntohl(mask));
 	nd->nd_mask.s_addr = mask;
-	sin = (struct sockaddr_in *)&ireq.ifr_addr;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr = nd->nd_mask;
-	error = ifioctl(so, SIOCSIFNETMASK, (caddr_t)&ireq, procp);
+	(void)  nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
+	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
+				    mask, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifmask, error=%d\n", error);
 		error = 0;	/* ignore it */
 	}
-	if (gw_ndm)
-		free(gw_ndm, M_NFSMNT);
-#endif	/* XXX */
 
 delout:
 	if (error)
@@ -260,6 +260,8 @@ out:
 		(void) nfs_boot_ifupdown(ifp, procp, 0);
 		nfs_boot_flushrt(ifp);
 	}
+	if (gw_ndm)
+		free(gw_ndm, M_NFSMNT);
 	return (error);
 }
 
