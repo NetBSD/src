@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.41 1994/11/18 22:03:02 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.42 1994/11/25 08:17:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -212,7 +212,7 @@ comattach(parent, self, aux)
 	outb(iobase + com_ier, 0);
 	outb(iobase + com_mcr, 0);
 
-	if (!parent) {	/* XXX no master */
+	if (ia->ia_irq != IRQUNK) {
 		sc->sc_ih.ih_fun = comintr;
 		sc->sc_ih.ih_arg = sc;
 		sc->sc_ih.ih_level = IPL_TTY;
