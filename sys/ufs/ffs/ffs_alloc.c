@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.35.4.3 2001/11/25 19:59:57 he Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.35.4.4 2001/11/25 20:01:55 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -808,12 +808,10 @@ ffs_blkpref(ip, lbn, indx, bap)
 		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				fs->fs_cgrotor = cg;
 				return (fs->fs_fpg * cg + fs->fs_frag);
 			}
-		for (cg = 0; cg <= startcg; cg++)
+		for (cg = 0; cg < startcg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				fs->fs_cgrotor = cg;
 				return (fs->fs_fpg * cg + fs->fs_frag);
 			}
 		return (0);
