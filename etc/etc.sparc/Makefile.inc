@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.26 2002/05/02 15:09:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2002/10/10 16:58:07 jdolecek Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
 
 TOP= $(.CURDIR)/..
 
-KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U
+KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U GENERIC.MP
 
 BUILD_KERNELS=		INSTALL
 
