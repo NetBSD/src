@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11 2000/07/06 02:02:49 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.12 2001/07/18 20:39:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ satlinkopen(dev, flags, fmt, p)
 	sc->sc_uptr = 0; 
 	sc->sc_sptr = 0; 
 	sc->sc_lastresid = sc->sc_bufsize;
-	bzero(sc->sc_buf, sc->sc_bufsize);
+	memset(sc->sc_buf, 0, sc->sc_bufsize);
 	error = isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 	    sc->sc_bufsize, NULL, DMAMODE_READ|DMAMODE_LOOP, BUS_DMA_WAITOK);
 	if (error)
