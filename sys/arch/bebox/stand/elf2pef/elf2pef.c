@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.6 1999/10/25 13:59:09 kleink Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.7 1999/12/03 15:44:41 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -117,7 +117,7 @@ main(argc, argv)
 	/*
 	 * ELF file operation
 	 */
-	if (read(elf_fd, &hdr, ELF32_HDR_SIZE) != ELF32_HDR_SIZE) {
+	if (read(elf_fd, &hdr, sizeof (hdr)) != sizeof (hdr)) {
 		fprintf(stderr, "Can't read input '%s' : %s\n",
 			argv[1], strerror(errno));
 		exit(3);
