@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.69 2002/07/03 11:41:39 wiz Exp $
+#	$NetBSD: termcap.src,v 1.70 2002/08/04 14:43:47 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1737,38 +1737,50 @@ xterm-r6|xterm-old|xterm X11R6 version:\
 	:sc=\E7:se=\E[m:sf=^J:so=\E[7m:sr=\EM:ta=^I:\
 	:te=\E[2J\E[?47l\E8:ti=\E7\E[?47h:ue=\E[m:up=\E[A:\
 	:us=\E[4m:
-# This is the stock xterm entry supplied with XFree86 3.2
+# This is the base xterm entry for the xterm supplied with XFree86 3.2 & up.
 # The name has been changed and some aliases have been removed.
 # (untranslatable capabilities removed to fit entry within 1023 bytes)
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
-xterm-xf86-v32|xterm terminal emulator (X Window System):\
-	:am:bs:km:mi:ms:ut:xn:\
-	:Co#8:co#80:it#8:li#24:pa#64:\
-	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
-	:@1=\EOE:@7=\EOF:@8=\EOM:k;=\E[21~:\
+xterm-xf86-v32|xterm terminal emulator (XFree86 3.2 Window System):\
+	:am:bs:km:mi:ms:xn:\
+	:co#80:it#8:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOy:K3=\EOu:K4=\EOq:K5=\EOs:LE=\E[%dD:\
-	:RI=\E[%dC:UP=\E[%dA:\
-	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
-	:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:\
-	:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:bl=^G:bt=\E[Z:\
+	:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:\
 	:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ec=\E[%dX:\
 	:ei=\E[4l:ho=\E[H:ic=\E[@:im=\E[4h:\
 	:is=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:\
 	:k1=\E[11~:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:\
-	:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kD=\E[3~:kI=\E[2~:\
+	:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kD=\177:kI=\E[2~:\
 	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\EOH:\
 	:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:\
-	:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[m:\
+	:me=\E[m\017:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
 	:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:te=\E[2J\E[?47l\E8:\
-	:ti=\E7\E[?47h:ue=\E[m:up=\E[A:us=\E[4m:\
+	:ti=\E7\E[?47h:ue=\E[24m:up=\E[A:us=\E[4m:\
 	:vb=\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
 # This is the stock xterm entry supplied with XFree86 3.3, which uses VT100
 # codes for F1-F4 except while in VT220 mode.
-xterm-xf86-v33|xterm terminal emulator (X Window System):\
+xterm-xf86-v33|xterm terminal emulator (XFree86 3.3 Window System):\
 	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
 	:tc=xterm-xf86-v32:
+# This version was released in XFree86 3.3.3 (November 1998).
+# Besides providing printer support, it exploits a new feature that allows
+# xterm to use terminfo-based descriptions with the titeInhibit resource.
+xterm-xf86-v333|xterm terminal emulator (XFree86 3.3.3 Window System):\
+	:5i:\
+	:*6@:@0@:@7=\E[4~:ei=:ic@:im=:is=\E[\041p\E[?3;4l\E[4l\E>:\
+	:kD=\E[3~:kh=\E[1~:mb=\E[5m:mk=\E[8m:pf=\E[4i:po=\E[5i:\
+	:ps=\E[i:r1=\Ec:r2=\E[\041p\E[?3;4l\E[4l\E>:\
+	:..sa=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;:\
+	:te=\E[?1047l\E[?1048l:ti=\E[?1048h\E[?1047h:\
+	:tc=xterm-xf86-v33:
+# This beta version will probably be released in XFree86 4.0.
+xterm-xf86-v40|xterm terminal emulator (XFree86 4.0 Window System):\
+	:@7=\EOF:K1=\EOH:K2=\EOE:K3=\E[5~:K4=\EOF:K5=\E[6~:kD=\177:\
+	:kh=\EOH:te=\E[?1049l:ti=\E[?1049h:\
+	:tc=xterm-xf86-v333:
 # This is one of the variants from XFree86 3.3 (T.Dickey)
 xterm-16color|xterm with 16 colors like aixterm:\
 	:Co#16:NC#32:pa#256:ut:\
@@ -1782,14 +1794,40 @@ xterm-nc|vs100-nc|xterms-nc|xterm terminal emulator (X Window System):\
 	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
 	:tc=xterm-r6:
 
-# This is the standard xterm entry.  Visual bell is undefined for compatibility
-# with older implementations.
-xterm|vs100|xterms|xterm terminal emulator (X Window System):\
-	:vb@:tc=xterm-xf86-v33:
+# This is our standard xterm entry.  It is based on the xterm-xf86-v33 entry
+# with some changes in order to try to be compatible with as many xterm
+# implementations as possible.
+#xterm|vs100|xterm terminal emulator (X Window System):\
+#	:ut:Co#8:pa#64:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
+#	:@1=\EOE:@7=\EOF:@8=\EOM:k;=\E[21~:\
+#	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+#	:ic@:kD=\E[3~:me=\E[m:se=\E[m:ue=\E[m:vb@:\
+#	:tc=xterm-xf86-v33:
+xterm|vs100|xterm terminal emulator (X Window System):\
+	:am:bs:km:mi:ms:ut:xn:\
+	:co#80:it#8:li#24:\
+	:Co#8:pa#64:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
+	:@1=\EOE:@7=\EOF:@8=\EOM:k;=\E[21~:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+	:K1=\EOw:K2=\EOy:K3=\EOu:K4=\EOq:K5=\EOs:LE=\E[%dD:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:bl=^G:bt=\E[Z:\
+	:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:\
+	:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ec=\E[%dX:\
+	:ei=\E[4l:ho=\E[H:im=\E[4h:\
+	:is=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:\
+	:k1=\E[OP:k2=\E[OQ:k3=\E[OR:k4=\E[OS:k5=\E[15~:\
+	:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kD=\E[3~:kI=\E[2~:\
+	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\EOH:\
+	:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[m:\
+	:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:te=\E[2J\E[?47l\E8:\
+	:ti=\E7\E[?47h:ue=\E[m:up=\E[A:us=\E[4m:\
+	:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
 
 # Xterm with the visual bell capability.
 xterm-vb|xterm terminal emulator with visual bell:\
-	:tc=xterm-xf86-v33:
+	:vb=\E[?5h\E[?5l:tc=xterm:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
 # Note that twm (and possibly window managers descended from it such as tvtwm, 
