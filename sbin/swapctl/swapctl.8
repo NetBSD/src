@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.5 1997/06/25 23:18:10 thorpej Exp $
+.\"	$NetBSD: swapctl.8,v 1.6 1997/06/26 00:51:07 perry Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -89,19 +89,7 @@ This options causes
 to read the
 .Pa /etc/fstab
 file for devices and files with a ``sw'' type, and adds all these entries
-as swap devices.  The optional
-.Fl t
-flag allows the type of device to add to be specified.  An argument of
-.Ar blk
-causes all block devices in
-.Pa /etc/fstab
-to be added.  An argument of
-.Ar noblk
-causes all non-block devices in
-.Pa /etc/fstab
-to be added.  This option is useful in early system startup, where swapping
-may be needed before all file systems are available, such as during
-disk checks of large file systems.
+as swap devices.
 .It Fl a
 The
 .Fl a
@@ -152,6 +140,23 @@ options.
 The
 .Fl k
 option uses 1024 byte blocks instead of the default 512 byte.
+.It Fl t
+This flag modifies the function of the
+.Fl A
+option.
+The
+.Fl t
+option allows the type of device to add to be specified.  An argument of
+.Ar blk
+causes all block devices in
+.Pa /etc/fstab
+to be added.  An argument of
+.Ar noblk
+causes all non-block devices in
+.Pa /etc/fstab
+to be added.  This option is useful in early system startup, where swapping
+may be needed before all file systems are available, such as during
+disk checks of large file systems.
 .El
 .Sh SWAP OPTIONS
 When parsing the
@@ -171,6 +176,26 @@ be available under this point mount.  For example:
 server:/export/swap/client none swap sw,nfsmntpt=/swap
 .Ed
 .El
+.Sh WARNINGS
+If no swap information is specified in
+.Pa /etc/fstab ,
+the system startup scripts (see
+.Xr rc 8 )
+will configure no swap space and your machine will behave very badly
+if (more likely when) it runs out of real memory.
+.Pp
+Local and remote swap files cannot be configured until after the file
+systems they reside on are mounted read/write.  The system startup
+scripts need to
+.Xr fsck 8
+all local file systems before this can happen. This process requires
+substantial amounts of memory on some systems.  If you configure no
+local block swap devices on a machine that has local file systems to
+check and rely only on swap files, the machine will have no swap space
+at all during system
+.Xr fsck 8
+and may run out of real memory, causing fsck to abnormally exit and
+startup scripts to fail.
 .Sh HISTORY
 The
 .Nm
