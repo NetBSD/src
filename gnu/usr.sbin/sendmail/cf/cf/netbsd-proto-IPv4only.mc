@@ -35,13 +35,19 @@ divert(-1)
 #
 
 #
-#  This is the prototype file for a configuration that supports nothing
-#  but basic SMTP connections via TCP.
+#  This is the prototype file for a configuration that supports SMTP
+#  connections via TCP and some commonly required features.
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.1.2.2 $')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.1.2.3 $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 define(`confAUTO_REBUILD', True)dnl
+FEATURE(genericstable,DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`genericstable')
+FEATURE(mailertable,  DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`mailertable')
+FEATURE(virtusertable,DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`virtusertable')
+FEATURE(domaintable,  DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`domaintable')
+FEATURE(access_db,    DATABASE_MAP_TYPE` -o 'MAIL_SETTINGS_DIR`access')
+FEATURE(`redirect')
