@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.35 2002/11/08 03:40:28 rafal Exp $ */
+/*	$NetBSD: arp.c,v 1.36 2003/05/17 00:50:36 itojun Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.35 2002/11/08 03:40:28 rafal Exp $");
+__RCSID("$NetBSD: arp.c,v 1.36 2003/05/17 00:50:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,8 +193,8 @@ file(name)
 	args[4] = &arg[4][0];
 	retval = 0;
 	while (fgets(line, 100, fp) != NULL) {
-		i = sscanf(line, "%s %s %s %s %s", arg[0], arg[1], arg[2],
-		    arg[3], arg[4]);
+		i = sscanf(line, "%49s %49s %49s %49s %49s",
+		    arg[0], arg[1], arg[2], arg[3], arg[4]);
 		if (i < 2) {
 			warnx("bad line: %s", line);
 			retval = 1;
