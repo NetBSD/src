@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.5 1997/10/12 11:45:52 lukem Exp $	*/
+/*	$NetBSD: rogue.h,v 1.6 1998/07/27 01:12:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -467,7 +467,8 @@ object	*get_zapped_monster __P((short, short *, short *));
 object	*gr_monster __P((object *, int));
 object	*gr_object __P((void));
 char	*md_getenv __P((char *));
-char	*md_gln __P((void));
+const char *
+	md_gln __P((void));
 char	*md_malloc __P((int));
 char	*mon_name __P((object *));
 char	*name_of __P((object *));
