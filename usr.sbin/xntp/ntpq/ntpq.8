@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.2 1997/04/20 21:53:22 christos Exp $
+.\"	$NetBSD: ntpq.8,v 1.3 1997/07/07 19:10:39 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -34,7 +34,8 @@ arguments, or on localhost by default. If no request options are given,
 will attempt to read commands from the standard input
 and execute these on the NTP server running on the first host given on
 the command line, again defaulting to localhost when no other host is
-specified. .Nm
+specified.
+.Nm
 will prompt for commands if the standard
 input is a terminal device.
 .Pp
@@ -317,7 +318,7 @@ discarded by the clustering algorithm;
 .Cd "+"
 included in the final selection set; 
 .Cd "#"
-selected for synchronizatio;n but distance exceeds
+selected for synchronization but distance exceeds
 maximum; 
 .Cd "*"
 selected for synchronization; and
