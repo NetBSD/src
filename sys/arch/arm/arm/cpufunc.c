@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.7 2001/06/02 22:30:07 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.8 2001/06/03 13:38:14 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -508,11 +508,14 @@ extern int pmap_debug_level;
 #endif
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    (defined(CPU_ARM6) && !defined(ARM6_LATE_ABORT))
+    defined(CPU_ARM6) || defined(CPU_ARM7)
 /*
  * "Early" data abort fixup.
  *
- * For ARM2, ARM2as, ARM3 and ARM6 (in early-abort mode).
+ * For ARM2, ARM2as, ARM3 and ARM6 (in early-abort mode).  Also used
+ * indirectly by ARM6 (in late-abort mode) and ARM7.
+ *
+ * In early aborts, we may have to fix up LDM, STM, LDC and STC.
  */
 int
 early_abort_fixup(arg)
@@ -667,13 +670,16 @@ early_abort_fixup(arg)
 
 	return(ABORT_FIXUP_OK);
 }
-#endif	/* CPU_ARM2/250/3/6(!LATE) */
+#endif	/* CPU_ARM2/250/3/6/7 */
 
 #if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7)
 /*
  * "Late" (base updated) data abort fixup
  *
  * For ARM6 (in late-abort mode) and ARM7.
+ *
+ * In this model, all data-transfer instructions need fixing up.  We defer
+ * LDM, STM, LDC and STC fixup to the early-abort handler.
  */
 int
 late_abort_fixup(arg)
@@ -822,88 +828,7 @@ late_abort_fixup(arg)
 				printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
-	} else if ((fault_instruction & 0x0e000000) == 0x08000000) {
-		int base;
-		int loop;
-		int count;
-		int *registers = &frame->tf_r0;
-        
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("LDM/STM\n");
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
-		if (fault_instruction & (1 << 21)) {
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("This instruction must be corrected\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 15)
-				return ABORT_FIXUP_FAILED;
-			/* Count registers transferred */
-			count = 0;
-			for (loop = 0; loop < 16; ++loop) {
-				if (fault_instruction & (1<<loop))
-					++count;
-			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0) {
-				printf("%d registers used\n", count);
-				printf("Corrected r%d by %d bytes ", base, count * 4);
-			}
-#endif	/* DEBUG_FAULT_CORRECTION */
-			if (fault_instruction & (1 << 23)) {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("down\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-				registers[base] -= count * 4;
-			} else {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("up\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
-				registers[base] += count * 4;
-			}
-		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		int base;
-		int offset;
-		int *registers = &frame->tf_r0;
-	
-/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
-
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
-
-/* Only need to fix registers if write back is turned on */
-
-		if ((fault_instruction & (1 << 21)) != 0) {
-			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
-				return ABORT_FIXUP_FAILED;
-			if (base == 15)
-				return ABORT_FIXUP_FAILED;
-
-			offset = (fault_instruction & 0xff) << 2;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-			if ((fault_instruction & (1 << 23)) != 0)
-				offset = -offset;
-			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
-		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
-		return ABORT_FIXUP_FAILED;
+	}
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
@@ -931,9 +856,14 @@ late_abort_fixup(arg)
 		 */
 	}
 
-	return(ABORT_FIXUP_OK);
+	/*
+	 * Now let the early-abort fixup routine have a go, in case it
+	 * was an LDM, STM, LDC or STC that faulted.
+	 */
+
+	return early_abort_fixup(arg);
 }
-#endif	/* CPU_ARM7 */
+#endif	/* CPU_ARM6(LATE)/7 */
 
 /*
  * CPU Setup code
