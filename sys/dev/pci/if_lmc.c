@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.17 2001/11/13 07:48:43 lukem Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.18 2002/01/04 12:21:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.17 2001/11/13 07:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.18 2002/01/04 12:21:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.17 2001/11/13 07:48:43 lukem Exp $");
 #endif
 
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 #include <net/if_sppp.h>
+#elif defined(__NetBSD__)
+#include <net/if_spppvar.h>
 #endif
 
 #if defined(__bsdi__)
