@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 1998/10/01 02:09:12 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.2 1998/10/22 18:13:02 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,5 +41,7 @@
 
 #define LINUX_M_I386		100
 #define LINUX_MID_MACHINE	LINUX_M_I386
+
+#define LINUX_GCC_SIGNATURE	1
 
 #endif /* !_I386_LINUX_EXEC_H */
