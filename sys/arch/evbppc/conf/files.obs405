@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.4 2003/11/19 14:27:24 scw Exp $
+#	$NetBSD: files.obs405,v 1.5 2004/03/30 00:54:34 simonb Exp $
 #
 # obs405-specific configuration info
 
@@ -23,15 +23,3 @@ include "dev/wscons/files.wscons"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
-
-#
-# Machine-independent CardBus drivers
-#
-
-# XXX dev/pcmcia needs fdc
-device fdc {drive = -1}
-
-include "dev/cardbus/files.cardbus"
-include "dev/pcmcia/files.pcmcia"
-
-file arch/macppc/macppc/rbus_machdep.c		cardbus
