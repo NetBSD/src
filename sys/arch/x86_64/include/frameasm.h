@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.3 2002/06/03 18:23:16 fvdl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.4 2002/07/14 12:20:45 fvdl Exp $	*/
 
 #ifndef _X86_64_MACHINE_FRAMEASM_H
 #define _X86_64_MACHINE_FRAMEASM_H
@@ -11,52 +11,64 @@
 /*
  * These are used on interrupt or trap entry or exit.
  */
-#define INTR_SAVEARGS \
- 	pushq	%rax		; \
-	pushq	%rcx		; \
-	pushq	%rdx		; \
-	pushq	%rbx		; \
-	pushq	%rbp		; \
-	pushq	%rsi		; \
-	pushq	%rdi		; \
-	pushq	%r8		; \
-	pushq	%r9		; \
-	pushq	%r10		; \
-	pushq	%r11		; \
-	pushq	%r12		; \
-	pushq	%r13		; \
-	pushq	%r14		; \
-	pushq	%r15
+#define INTR_SAVE_GPRS \
+	subq	$120,%rsp	; \
+	movq	%r15,0(%rsp)	; \
+	movq	%r14,8(%rsp)	; \
+	movq	%r13,16(%rsp)	; \
+	movq	%r12,24(%rsp)	; \
+	movq	%r11,32(%rsp)	; \
+	movq	%r10,40(%rsp)	; \
+	movq	%r9,48(%rsp)	; \
+	movq	%r8,56(%rsp)	; \
+	movq	%rdi,64(%rsp)	; \
+	movq	%rsi,72(%rsp)	; \
+	movq	%rbp,80(%rsp)	; \
+	movq	%rbx,88(%rsp)	; \
+	movq	%rdx,96(%rsp)	; \
+	movq	%rcx,104(%rsp)	; \
+	movq	%rax,112(%rsp)
 
-#define	INTR_RESTOREARGS \
-	popq	%r15		; \
-	popq	%r14		; \
-	popq	%r13		; \
-	popq	%r12		; \
-	popq	%r11		; \
-	popq	%r10		; \
-	popq	%r9		; \
-	popq	%r8		; \
-	popq	%rdi		; \
-	popq	%rsi		; \
-	popq	%rbp		; \
-	popq	%rbx		; \
-	popq	%rdx		; \
-	popq	%rcx		; \
-	popq	%rax
+#define	INTR_RESTORE_GPRS \
+	movq	0(%rsp),%r15	; \
+	movq	8(%rsp),%r14	; \
+	movq	16(%rsp),%r13	; \
+	movq	24(%rsp),%r12	; \
+	movq	32(%rsp),%r11	; \
+	movq	40(%rsp),%r10	; \
+	movq	48(%rsp),%r9	; \
+	movq	56(%rsp),%r8	; \
+	movq	64(%rsp),%rdi	; \
+	movq	72(%rsp),%rsi	; \
+	movq	80(%rsp),%rbp	; \
+	movq	88(%rsp),%rbx	; \
+	movq	96(%rsp),%rdx	; \
+	movq	104(%rsp),%rcx	; \
+	movq	112(%rsp),%rax	; \
+	addq	$120,%rsp
 
 #define	INTRENTRY \
-	testq	$SEL_UPL,24(%rsp)	; \
+	subq	$32,%rsp		; \
+	testq	$SEL_UPL,56(%rsp)	; \
 	je	98f			; \
 	swapgs				; \
-98:	INTR_SAVEARGS
+	movw	%gs,0(%rsp)		; \
+	movw	%fs,8(%rsp)		; \
+	movw	%ds,16(%rsp)		; \
+	movw	%es,24(%rsp)		; \
+98: 	INTR_SAVE_GPRS
 
 #define INTRFASTEXIT \
-	INTR_RESTOREARGS 		; \
-	addq	$16,%rsp		; \
-	testq	$SEL_UPL,8(%rsp)	;\
-	je	99f			;\
-	swapgs				;\
-99:	iretq
+	INTR_RESTORE_GPRS 		; \
+	testq	$SEL_UPL,56(%rsp)	; \
+	je	99f			; \
+	cli				; \
+	swapgs				; \
+	movw	0(%rsp),%gs		; \
+	movw	8(%rsp),%fs		; \
+	movw	16(%rsp),%ds		; \
+	movw	24(%rsp),%es		; \
+99:	addq	$48,%rsp		; \
+	iretq
 
 #endif /* _X86_64_MACHINE_FRAMEASM_H */
