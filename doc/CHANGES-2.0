@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.57 2004/04/08 19:41:31 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.58 2004/04/08 20:27:06 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -607,4 +607,26 @@ src/lib/libc/include/namespace.h		1.85
 
 	Weak aliases for sysctlfoobar() functions.
 	[atatat, ticket #90]
+
+src/lib/libc/gen/sysctl.c			1.24
+
+	Descriptions for user.* sysctl nodes.  Mostly copied from sysctl(3).
+	[atatat, ticket #89]
+
+src/share/man/man4/dmoverio.4			r1.6
+
+	The device is called /dev/dmoverio, not /dev/dmover.
+	[atatat, ticket #91]
+
+src/sbin/sysctl/sysctl.c			1.89
+
+	Don't copy the size that sysctl gave back directly, copy the size of
+	the description.
+	[atatat, ticket #92]
+
+src/sbin/sysctl/sysctl.c			1.90
+
+	Don't copy the size that sysctl gave back directly, copy the size of
+	the description.  *thwap*
+	[atatat, ticket #94]
 
