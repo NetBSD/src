@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.130 2004/08/10 15:29:56 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.131 2004/08/10 16:04:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.130 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.131 2004/08/10 16:04:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,6 +767,7 @@ fail_3:
 	pcmcia_function_disable(psc->sc_pf);
 fail_2:
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 fail_1:
 	return (1);
 }
