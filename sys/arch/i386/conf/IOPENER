@@ -1,11 +1,11 @@
-#	$NetBSD: IOPENER,v 1.1 2000/04/08 21:27:07 tsarna Exp $
+#	$NetBSD: IOPENER,v 1.2 2000/04/14 23:14:25 tsarna Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.1 $"
+#ident 		"IOPENER-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -165,6 +165,10 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
+# Make F1 ("Back") -> Escape, F2-F12 ("Forward" to "Home") -> F1-F11
+options 	PCKBD_LAYOUT="(KB_US | KB_IOPENER)"
+
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
