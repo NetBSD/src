@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.2 1996/09/27 03:38:27 cgd Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.3 1996/10/07 21:43:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -47,7 +47,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_exec.h>
