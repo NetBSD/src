@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.16 2003/03/22 11:15:50 jdolecek Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.17 2003/07/13 07:44:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.16 2003/03/22 11:15:50 jdolecek Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.17 2003/07/13 07:44:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,19 +227,24 @@ kill_cleaner(name)
 	int off;
 
 	/* Parent first */
-	pidname = malloc(strlen(name) + 20 + strlen(_PATH_VARRUN));
-	sprintf(pidname, "%slfs_cleanerd:m:%s.pid", _PATH_VARRUN, name);
+	asprintf(&pidname, "%slfs_cleanerd:m:%s.pid", _PATH_VARRUN, name);
+	if (!pidname)
+		err(1, "malloc");
 	off = strlen(_PATH_VARRUN);
 	while((cp = strchr(pidname + off, '/')) != NULL)
 		*cp = '|';
 	kill_daemon(pidname);
+	free(pidname);
 
 	/* Then child */
-	sprintf(pidname, "%slfs_cleanerd:s:%s.pid", _PATH_VARRUN, name);
+	asprintf(&pidname, "%slfs_cleanerd:s:%s.pid", _PATH_VARRUN, name);
+	if (!pidname)
+		err(1, "malloc");
 	off = strlen(_PATH_VARRUN);
 	while((cp = strchr(pidname + off, '/')) != NULL)
 		*cp = '|';
 	kill_daemon(pidname);
+	free(pidname);
 }
 
 static void
