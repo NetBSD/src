@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.215 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: GENERIC,v 1.216 1999/01/29 00:00:17 cjs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -48,7 +48,7 @@ options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
