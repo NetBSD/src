@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.49 2003/09/23 23:50:05 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.50 2003/09/25 01:35:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.49 2003/09/23 23:50:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.50 2003/09/25 01:35:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,14 +1229,14 @@ twe_poll(struct twe_softc *sc)
 		cmdid = twe_inl(sc, TWE_REG_RESP_QUEUE);
 		cmdid = (cmdid & TWE_RESP_MASK) >> TWE_RESP_SHIFT;
 		if (cmdid >= TWE_MAX_QUEUECNT) {
-			printf("%s: bad completion\n", sc->sc_dv.dv_xname);
+			printf("%s: bad cmdid %d\n", sc->sc_dv.dv_xname, cmdid);
 			continue;
 		}
 
 		ccb = sc->sc_ccbs + cmdid;
 		if ((ccb->ccb_flags & TWE_CCB_ACTIVE) == 0) {
-			printf("%s: bad completion (not active)\n",
-			    sc->sc_dv.dv_xname);
+			printf("%s: CCB for cmdid %d not active\n",
+			    sc->sc_dv.dv_xname, cmdid);
 			continue;
 		}
 		ccb->ccb_flags ^= TWE_CCB_COMPLETE | TWE_CCB_ACTIVE;
@@ -1335,8 +1335,11 @@ twe_ccb_alloc(struct twe_softc *sc, int flags)
 		SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
 	}
 #ifdef DIAGNOSTIC
+	if ((long)(ccb - sc->sc_ccbs) == 0 && (flags & TWE_CCB_AEN) == 0)
+		panic("twe_ccb_alloc: got reserved CCB for non-AEN");
 	if ((ccb->ccb_flags & TWE_CCB_ALLOCED) != 0)
-		panic("twe_ccb_alloc: CCB already allocated");
+		panic("twe_ccb_alloc: CCB %ld already allocated",
+		    (long)(ccb - sc->sc_ccbs));
 	flags |= TWE_CCB_ALLOCED;
 #endif
 	splx(s);
@@ -1362,7 +1365,8 @@ twe_ccb_alloc_wait(struct twe_softc *sc, int flags)
 	SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
 #ifdef DIAGNOSTIC
 	if ((ccb->ccb_flags & TWE_CCB_ALLOCED) != 0)
-		panic("twe_ccb_alloc_wait: CCB already allocated");
+		panic("twe_ccb_alloc_wait: CCB %ld already allocated",
+		    (long)(ccb - sc->sc_ccbs));
 	flags |= TWE_CCB_ALLOCED;
 #endif
 	splx(s);
@@ -1380,7 +1384,6 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 	int s;
 
 	s = splbio();
-	ccb->ccb_flags = 0;
 	if ((ccb->ccb_flags & TWE_CCB_AEN) == 0) {
 		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
 		if (__predict_false((sc->sc_flags & TWEF_WAIT_CCB) != 0)) {
@@ -1388,6 +1391,7 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 			wakeup(&sc->sc_ccb_freelist);
 		}
 	}
+	ccb->ccb_flags = 0;
 	splx(s);
 }
 
@@ -1584,6 +1588,11 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    (caddr_t)ccb->ccb_cmd - sc->sc_cmds, sizeof(struct twe_cmd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+#ifdef DIAGNOSTIC
+		if ((ccb->ccb_flags & TWE_CCB_ALLOCED) == 0)
+			panic("%s: CCB %ld not ALLOCED\n",
+			    sc->sc_dv.dv_xname, (long)(ccb - sc->sc_ccbs));
+#endif
 		ccb->ccb_flags |= TWE_CCB_ACTIVE;
 		pa = sc->sc_cmds_paddr +
 		    ccb->ccb_cmdid * sizeof(struct twe_cmd);
@@ -1639,6 +1648,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct twe_param *param;
 	struct twe_usercommand *tu;
 	struct twe_paramcommand *tp;
+	struct twe_drivecommand *td;
 	union twe_statrequest *ts;
 	void *pdata = NULL;
 	int rv, s, error = 0;
@@ -1652,6 +1662,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	twe = device_lookup(&twe_cd, minor(dev));
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
+	td = (struct twe_drivecommand *)data;
 	ts = (union twe_statrequest *)data;
 
 	/* Hmm, compatible with FreeBSD */
@@ -1756,11 +1767,11 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case TWEIO_ADD_UNIT:
 		/* XXX mutex */
-		return (twe_add_unit(twe, *(int *)data));
+		return (twe_add_unit(twe, td->td_unit));
 
 	case TWEIO_DEL_UNIT:
 		/* XXX mutex */
-		return (twe_del_unit(twe, *(int *)data));
+		return (twe_del_unit(twe, td->td_unit));
 
 	default:
 		return EINVAL;
