@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.48 2003/01/07 15:15:06 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.49 2003/01/07 16:03:04 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -221,6 +221,7 @@ kdb_kbd_trap(tf)
 
 /* struct cpu_info of CPU being investigated */
 struct cpu_info *ddb_cpuinfo;
+db_regs_t *ddb_regp;
 
 #ifdef MULTIPROCESSOR
 
@@ -231,7 +232,6 @@ static void db_resume_others(void);
 void ddb_suspend(struct trapframe *tf);
 
 __cpu_simple_lock_t db_lock;
-db_regs_t *ddb_regp = 0;
 int ddb_cpu = NOCPU;
 
 static int
@@ -269,12 +269,13 @@ db_resume_others(void)
 void
 ddb_suspend(struct trapframe *tf)
 {
-	volatile db_regs_t regs;
+	volatile db_regs_t dbregs;
 
-	regs.db_tf = *tf;
-	regs.db_fr = *(struct frame *)tf->tf_out[6];
+	/* Initialise local dbregs storage from trap frame */
+	dbregs.db_tf = *tf;
+	dbregs.db_fr = *(struct frame *)tf->tf_out[6];
 
-	cpuinfo.ci_ddb_regs = &regs;
+	cpuinfo.ci_ddb_regs = &dbregs;
 	while (cpuinfo.flags & CPUFLG_PAUSED) /*void*/;
 	cpuinfo.ci_ddb_regs = NULL;
 }
@@ -288,9 +289,7 @@ kdb_trap(type, tf)
 	int	type;
 	struct trapframe *tf;
 {
-#ifdef MULTIPROCESSOR
-	db_regs_t dbreg;
-#endif
+	db_regs_t dbregs;
 	int s;
 
 #if NFB > 0
@@ -314,14 +313,16 @@ kdb_trap(type, tf)
 		ddb_suspend(tf);
 		return 1;
 	}
-	curcpu()->ci_ddb_regs = ddb_regp = &dbreg;
 #endif
+	/* Initialise local dbregs storage from trap frame */
+	dbregs.db_tf = *tf;
+	dbregs.db_fr = *(struct frame *)tf->tf_out[6];
+
+	/* Setup current cpu & reg pointers */
 	ddb_cpuinfo = curcpu();
+	curcpu()->ci_ddb_regs = ddb_regp = &dbregs;
 
 	/* Should switch to kdb`s own stack here. */
-
-	ddb_regs.db_tf = *tf;
-	ddb_regs.db_fr = *(struct frame *)tf->tf_out[6];
 
 	s = splhigh();
 	db_active++;
@@ -331,14 +332,13 @@ kdb_trap(type, tf)
 	db_active--;
 	splx(s);
 
-#ifdef MULTIPROCESSOR
-	*(struct frame *)tf->tf_out[6] = dbreg.db_fr;
-	*tf = dbreg.db_tf;
+	/* Update trap frame from local dbregs storage */
+	*(struct frame *)tf->tf_out[6] = dbregs.db_fr;
+	*tf = dbregs.db_tf;
 	curcpu()->ci_ddb_regs = ddb_regp = 0;
+
+#ifdef MULTIPROCESSOR
 	db_resume_others();
-#else
-	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
-	*tf = ddb_regs.db_tf;
 #endif
 
 	return (1);
@@ -591,7 +591,7 @@ db_branch_taken(inst, pc, regs)
 	db_regs_t *regs;
 {
     union instr insn;
-    db_addr_t npc = ddb_regs.db_tf.tf_npc;
+    db_addr_t npc = ddb_regp->db_tf.tf_npc;
 
     insn.i_int = inst;
 
