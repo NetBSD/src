@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.7 2000/06/03 07:55:17 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.8 2000/06/05 07:59:52 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.7 2000/06/03 07:55:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.8 2000/06/05 07:59:52 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,13 +80,6 @@ static void asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach xasc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
-};
-
-static struct scsipi_device asc_ioasic_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
@@ -162,7 +155,7 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_freq /= 1000000;
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
-		(int (*)(void *))ncr53c9x_intr, sc);
+		ncr53c9x_intr, sc);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -197,9 +190,7 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_ioasic_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 void

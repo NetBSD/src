@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.16 2000/06/05 00:09:20 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.17 2000/06/05 07:59:54 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.16 2000/06/05 00:09:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.17 2000/06/05 07:59:54 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,13 +107,6 @@ static void asc_vsbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_vsbus_ca = {
 	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
-};
-
-static struct scsipi_device asc_vsbus_dev = {
-	NULL,			/* Use the default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* use the default done handler */
 };
 
 /*
@@ -313,9 +306,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_vsbus_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*
