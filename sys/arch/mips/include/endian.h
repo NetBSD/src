@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.9 1997/10/09 15:42:24 bouyer Exp $	*/
+/*	$NetBSD: endian.h,v 1.10 1997/10/17 04:44:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -35,8 +35,8 @@
  *	@(#)endian.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _ENDIAN_H_
-#define	_ENDIAN_H_
+#ifndef _MIPS_ENDIAN_H_
+#define	_MIPS_ENDIAN_H_
 
 /*
  * Define _NOQUAD if the compiler does NOT support 64-bit integers.
@@ -58,7 +58,13 @@
 #define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
 #define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
-#define	BYTE_ORDER	LITTLE_ENDIAN
+#ifndef BYTE_ORDER
+# error  Define MIPS target CPU endian-ness in port-specific header file
+#endif
+
+
+#ifndef _LOCORE
+/* C-family endian-ness definitions */
 
 #include <sys/cdefs.h>
 #include <mips/types.h>
@@ -90,12 +96,31 @@ __END_DECLS
 #define	HTONL(x)	(x)
 #define	HTONS(x)	(x)
 
-#else
+#else	/* LITTLE_ENDIAN || !defined(lint) */
 
 #define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
 #define	NTOHS(x)	(x) = ntohs((in_port_t)x)
 #define	HTONL(x)	(x) = htonl((in_addr_t)x)
 #define	HTONS(x)	(x) = htons((in_port_t)x)
-#endif
+#endif	/* LITTLE_ENDIAN || !defined(lint) */
+
+#else /* _LOCORE */
+
+/* Assembly-code endian-independent aliases for unaligned memory accesses */
+#if BYTE_ORDER == LITTLE_ENDIAN
+# define LWHI lwr
+# define LWLO lwl
+# define SWHI swr
+# define SWLO swl
+#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+
+#if BYTE_ORDER == BIG_ENDIAN
+# define LWHI lwl
+# define LWLO lwr
+# define SWHI swl
+# define SWLO swr
+#endif /* BYTE_ORDER == BIG_ENDIAN */
+
+#endif /* _LOCORE */
 #endif /* ! _POSIX_SOURCE */
-#endif /* !_ENDIAN_H_ */
+#endif /* !_MIPS_ENDIAN_H_ */
