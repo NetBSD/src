@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.2.2.5 1993/12/01 10:45:39 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.2.2.6 1993/12/02 06:25:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -62,10 +62,14 @@ msdosfs_mount(mp, path, data, ndp, p)
 	if (error = copyin(data, (caddr_t) & args, sizeof(struct msdosfs_args)))
 		return error;
 
+#ifndef __NetBSD__
 	/*
 	 * Check to see if they want it to be an exportable filesystem via
 	 * nfs.  And, if they do, should it be read only, and what uid is
 	 * root to be mapped to.
+	 *
+	 * This is done in a completely different (and fs-indepdent) way
+	 * in NetBSD.
 	 */
 	if ((args.exflags & MNT_EXPORTED) || (mp->mnt_flag & MNT_EXPORTED)) {
 		if (args.exflags & MNT_EXPORTED)
@@ -78,6 +82,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 			mp->mnt_flag &= ~MNT_EXRDONLY;
 		mp->mnt_exroot = args.exroot;
 	}
+#endif /* __NetBSD__ */
 
 	/*
 	 * If they just want to update then be sure we can do what is
