@@ -1,4 +1,5 @@
-/*      $NetBSD: ata.c,v 1.20 2003/10/08 10:58:12 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.21 2003/12/14 02:45:48 thorpej Exp $      */
+
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.20 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.21 2003/12/14 02:45:48 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -65,10 +66,8 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 
 /* Get the disk's parameters */
 int
-ata_get_params(drvp, flags, prms)
-	struct ata_drive_datas *drvp;
-	u_int8_t flags;
-	struct ataparams *prms;
+ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
+    struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
 	struct wdc_command wdc_c;
@@ -147,10 +146,7 @@ ata_get_params(drvp, flags, prms)
 }
 
 int
-ata_set_mode(drvp, mode, flags)
-	struct ata_drive_datas *drvp;
-	u_int8_t mode;
-	u_int8_t flags;
+ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
 	struct wdc_command wdc_c;
 
@@ -173,8 +169,7 @@ ata_set_mode(drvp, mode, flags)
 }
 
 void
-ata_dmaerr(drvp, flags)
-	struct ata_drive_datas *drvp;
+ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 {
 	/*
 	 * Downgrade decision: if we get NERRS_MAX in NXFER.
