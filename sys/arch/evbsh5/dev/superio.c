@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.11 2002/10/19 08:39:50 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.12 2002/10/22 15:19:08 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,7 +42,6 @@
 
 #include "locators.h"
 #include "com.h"
-#include "sm_superio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +55,6 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/ic/smc91cxxreg.h>
 
 #if NCOM > 0
 #include <evbsh5/evbsh5/machdep.h>
@@ -76,7 +74,6 @@ struct superio_softc {
 
 static int superiomatch(struct device *, struct cfdata *, void *);
 static void superioattach(struct device *, struct device *, void *);
-static int superiosubmatch(struct device *, struct cfdata *, void *);
 static int superioprint(void *, const char *);
 
 CFATTACH_DECL(superio, sizeof(struct superio_softc),
@@ -200,21 +197,6 @@ superiomatch(struct device *parent, struct cfdata *cf, void *args)
 	return (strcmp(sa->sa_name, superio_cd.cd_name) == 0);
 }
 
-static int
-superiosubmatch(struct device *parent, struct cfdata *cf, void *args)
-{
-	struct superio_attach_args *saa = args;
-
-	/*
-	 * This works for the isabus_attach_args, as it also has
-	 * a "char *name" as the first member.
-	 */
-	if (strcmp(cf->cf_name, saa->saa_name) == 0)
-		return (config_match(parent, cf, args));
-
-	return (0);
-}
-
 /*ARGSUSED*/
 static void
 superioattach(struct device *parent, struct device *self, void *args)
@@ -222,9 +204,6 @@ superioattach(struct device *parent, struct device *self, void *args)
 	struct superio_softc *sc = (struct superio_softc *)self;
 	struct sysfpga_attach_args *sa = args;
 	struct isabus_attach_args iba;
-#if NSM_SUPERIO > 0
-	struct superio_attach_args saa;
-#endif
 	int i;
 
 	superio_bus_space_tag.bs_cookie = sc; 
@@ -294,19 +273,7 @@ superioattach(struct device *parent, struct device *self, void *args)
 	iba.iba_memt = NULL;
 	iba.iba_dmat = NULL;/* XXX Should be able to do DMA thru dmac */
 	iba.iba_ic = (void *)sc;
-	config_found_sm(self, &iba, superioprint, superiosubmatch);
-
-#if NSM_SUPERIO > 0
-	/*
-	 * Attach the onboard network interface
-	 */
-	saa.saa_name = "sm";
-	saa.saa_offset = sa->sa_offset;
-	saa._saa_base = sa->sa_offset;
-	saa.saa_irq = SUPERIOCF_IRQ_DEFAULT;
-	saa.saa_bust = sc->sc_bust;
-	config_found_sm(self, &saa, superioprint, superiosubmatch);
-#endif
+	config_found(self, &iba, superioprint);
 }
 
 static int
@@ -316,14 +283,6 @@ superioprint(void *arg, const char *cp)
 
 	if (cp)
 		printf("%s at %s", saa->saa_name, cp);
-
-#if NSM_SUPERIO > 0
-	if (strcmp(saa->saa_name, "isa") != 0) {
-		printf(" offset 0x%x", saa->saa_offset - saa->_saa_base);
-		if (saa->saa_irq != SUPERIOCF_IRQ_DEFAULT)
-			printf(" irq %d", saa->saa_irq);
-	}
-#endif
 
 	return (UNCONF);
 }
@@ -517,37 +476,32 @@ superio_isa_irq_to_inum(int irq, int *level)
 
 	switch (irq) {
 	case 1:
-		inum = SYSFPGA_SUPERIO_INUM_KBD;
+		inum = SYSFPGA_IRL1_INUM_KBD;
 		*level = IPL_TTY;
 		break;
 
 	case 3:
-		inum = SYSFPGA_SUPERIO_INUM_UART2;
+		inum = SYSFPGA_IRL1_INUM_UART2;
 		*level = IPL_SERIAL;
 		break;
 
 	case 4:
-		inum = SYSFPGA_SUPERIO_INUM_UART1;
+		inum = SYSFPGA_IRL1_INUM_UART1;
 		*level = IPL_SERIAL;
 		break;
 
 	case 7:
-		inum = SYSFPGA_SUPERIO_INUM_LPT;
+		inum = SYSFPGA_IRL1_INUM_LPT;
 		*level = IPL_TTY;
 		break;
 
-	case 10:
-		inum = SYSFPGA_SUPERIO_INUM_LAN;
-		*level = IPL_NET;
-		break;
-
 	case 12:
-		inum = SYSFPGA_SUPERIO_INUM_MOUSE;
+		inum = SYSFPGA_IRL1_INUM_MOUSE;
 		*level = IPL_TTY;
 		break;
 
 	case 14:
-		inum = SYSFPGA_SUPERIO_INUM_IDE;
+		inum = SYSFPGA_IRL1_INUM_IDE;
 		*level = IPL_BIO;
 		break;
 
@@ -577,7 +531,7 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 	if ((inum = superio_isa_irq_to_inum(irq, &dummy)) < 0)
 		return (NULL);
 
-	return (sysfpga_intr_evcnt(SYSFPGA_IGROUP_SUPERIO, inum));
+	return (sysfpga_intr_evcnt(SYSFPGA_IGROUP_IRL1, inum));
 }
 
 int
@@ -604,7 +558,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
 	KDASSERT(level == shlev);
 
-	ih = sysfpga_intr_establish(SYSFPGA_IGROUP_SUPERIO, shlev, inum,
+	ih = sysfpga_intr_establish(SYSFPGA_IGROUP_IRL1, shlev, inum,
 	    handler, arg);
 
 	return (ih);

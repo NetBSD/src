@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.2 2002/10/14 14:19:29 scw Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.3 2002/10/22 15:19:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -296,10 +296,10 @@ cayman_intr_establish(void *arg, pci_intr_handle_t handle,
 		inum = SH5PCI_IH_LINE(handle) & 0x03;
 
 		if (CAYMAN_INTR_IS_P1(handle)) {
-			group = SYSFPGA_IGROUP_PCI1;
+			group = SYSFPGA_IGROUP_IRL2;
 			gname = "pci1";
 		} else {
-			group = SYSFPGA_IGROUP_PCI2;
+			group = SYSFPGA_IGROUP_IRL3;
 			gname = "pci2";
 		}
 
