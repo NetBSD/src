@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.34 2002/12/01 23:00:51 matt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.35 2003/02/26 06:31:18 matt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -510,6 +510,7 @@ extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
 extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
 
+extern struct mowner nfs_mowner;
 extern struct nfsstats nfsstats;
 extern int nfs_numasync;
 
