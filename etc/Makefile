@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.234 2002/12/17 15:54:59 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.235 2002/12/19 12:35:01 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -271,7 +271,8 @@ install-etc-files: check_DESTDIR
 
 distrib-dirs: check_DESTDIR
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
-	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
+	${MTREE} -def mtree/NetBSD.dist -N ${.CURDIR} \
+	    -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 	rm -f ${DESTDIR}/sys
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 ${BASE_PKG} \
 	    usr/src/sys ${DESTDIR}/sys
@@ -402,7 +403,7 @@ kernset-${configfile}:
 				fi; \
 			done; \
 		done ) | GZIP=-9 ${PAX} -zw \
-		    -M ${UNPRIVED:D-N${NETBSDSRCDIR}/etc} \
+		    -M -N ${NETBSDSRCDIR}/etc \
 		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
 .endfor	# KERNEL_SETS							# }
 
