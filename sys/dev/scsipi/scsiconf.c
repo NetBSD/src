@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.147.2.3 2001/10/25 17:54:42 he Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.147.2.4 2001/11/13 21:37:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -511,6 +511,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "JVC     ", "R2626",            ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "MICROP",   "1548-15MZ1077801", "HZ2P"}, SDEV_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
