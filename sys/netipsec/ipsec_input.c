@@ -1,9 +1,9 @@
-/*	$NetBSD: ipsec_input.c,v 1.2 2003/08/15 03:50:21 jonathan Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.2 2003/08/15 03:50:21 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $");
 
 /*
  * IPsec input processing.
@@ -261,7 +261,10 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
+#ifdef __FreeBSD__
+		/* On FreeBSD, ip_off and ip_len assumed in host endian. */
 		ip->ip_off = htons(ip->ip_off);
+#endif
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 	} else {
