@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.687 2005/01/25 00:55:25 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.688 2005/01/27 13:33:36 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.688 2005/01/25 00:55:00 matt Exp 
+ *	NetBSD: pcidevs,v 1.689 2005/01/27 13:31:45 kent Exp 
  */
 
 /*
@@ -7228,6 +7228,26 @@ const struct pci_product pci_products[] = {
 	    "GeForce 6800 GT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS,
+	    "nForce4 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
+	    "nForce4 ATA133 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
+	    "nForce4 Serial ATA 1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
+	    "nForce4 Serial ATA 2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC,
+	    "nForce4 AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
 	    "nForce2 PCI-ISA bridge",
 	},
@@ -10004,4 +10024,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1922;
+const int pci_nproducts = 1927;
