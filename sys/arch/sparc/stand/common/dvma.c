@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.8 2000/06/18 23:03:45 fvdl Exp $	*/
+/*	$NetBSD: dvma.c,v 1.9 2000/10/31 23:28:11 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -63,9 +63,13 @@ dvma_init()
 	int nseg;
 	extern int start;
 
-	/* Align our address base with the DVMA segment */
+	/*
+	 * Align our address base with the DVMA segment.
+	 * Allocate one DVMA segment to cover the stack, which
+	 * grows downward from `start'.
+	 */
 	dmava = DVMA_BASE;
-	base_va = segva = (((int)&start) & DVMA_BASE) - 0x40000;
+	base_va = segva = (((int)&start) & -NBPSG) - NBPSG;
 
 	/* Then double-map the DVMA adresses */
 	nseg = (DVMA_MAPLEN + NBPSG - 1) >> SGSHIFT;
@@ -91,7 +95,7 @@ dvma_mapin(addr, len)
 #ifndef BOOTXX
 	/* Make sure the address is in the DVMA map. */
 	if (va < 0 || va >= DVMA_MAPLEN)
-		panic("dvma_mapin");
+		panic("dvma_mapin: va %x (DMA base %x)", va+base_va, base_va);
 #endif
 
 	va += DVMA_BASE;
@@ -114,7 +118,7 @@ dvma_mapout(addr, len)
 #ifndef BOOTXX
 	/* Make sure the address is in the DVMA map. */
 	if (va < 0 || va >= DVMA_MAPLEN)
-		panic("dvma_mapout");
+		panic("dvma_mapout: va %x (DMA base %x)", va+base_va, base_va);
 #endif
 
 	va += base_va;
