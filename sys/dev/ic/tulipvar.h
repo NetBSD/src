@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.8 1999/09/14 05:52:22 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.9 1999/09/14 22:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ struct tulip_softc {
 	tulip_chip_t	sc_chip;	/* chip type */
 	int		sc_rev;		/* chip revision */
 	int		sc_flags;	/* misc flags. */
+	char		sc_name[16];	/* board name */
 	u_int32_t	sc_cacheline;	/* cache line size */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -385,7 +386,7 @@ extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;
 extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 
-void	tlp_attach __P((struct tulip_softc *, const char *, const u_int8_t *));
+void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
 int	tlp_intr __P((void *));
 void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int16_t *));
 int	tlp_srom_crcok __P((u_int8_t *));

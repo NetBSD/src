@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.7 1999/09/14 05:59:53 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.8 1999/09/14 22:25:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,26 @@ struct tulip_pci_softc {
 
 	/* PCI-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
+
+	pci_chipset_tag_t sc_pc;	/* our PCI chipset */
+	pcitag_t sc_pcitag;		/* our PCI tag */
+
+	int	sc_pcidev;		/* PCI device number */
+
+	int	sc_flags;		/* flags; see below */
+
+	LIST_HEAD(, tulip_pci_softc) sc_intrslaves;
+	LIST_ENTRY(tulip_pci_softc) sc_intrq;
+
+	/* Our {ROM,interrupt} master. */
+	struct tulip_pci_softc *sc_master;
 };
+
+/* sc_flags */
+#define	TULIP_PCI_SHAREDINTR	0x01	/* interrupt is shared */
+#define	TULIP_PCI_SLAVEINTR	0x02	/* interrupt is slave */
+#define	TULIP_PCI_SHAREDROM	0x04	/* ROM is shared */
+#define	TULIP_PCI_SLAVEROM	0x08	/* slave of shared ROM */
 
 int	tlp_pci_match __P((struct device *, struct cfdata *, void *));
 void	tlp_pci_attach __P((struct device *, struct device *, void *));
@@ -171,10 +190,38 @@ const struct tulip_pci_product {
 	  TULIP_CHIP_INVALID },
 };
 
+struct tlp_pci_quirks {
+	void		(*tpq_func) __P((struct tulip_pci_softc *,
+			    const u_int8_t *));
+	u_int8_t	tpq_oui[3];
+};
+
+void	tlp_pci_znyx_21040_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+void	tlp_pci_smc_21040_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+void	tlp_pci_cogent_21040_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+void	tlp_pci_accton_21040_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+
+const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
+	{ tlp_pci_znyx_21040_quirks,	{ 0x00, 0xc0, 0x95 } },
+	{ tlp_pci_smc_21040_quirks,	{ 0x00, 0x00, 0xc0 } },
+	{ tlp_pci_cogent_21040_quirks,	{ 0x00, 0x00, 0x92 } },
+	{ tlp_pci_accton_21040_quirks,	{ 0x00, 0x00, 0xe8 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
+
 const char *tlp_pci_chip_names[] = TULIP_CHIP_NAMES;
+
+int	tlp_pci_shared_intr __P((void *));
 
 const struct tulip_pci_product *tlp_pci_lookup
     __P((const struct pci_attach_args *));
+void tlp_pci_get_quirks __P((struct tulip_pci_softc *, const u_int8_t *,
+    const struct tlp_pci_quirks *));
+void tlp_pci_check_slaved __P((struct tulip_pci_softc *, int, int));
 
 const struct tulip_pci_product *
 tlp_pci_lookup(pa)
@@ -190,6 +237,54 @@ tlp_pci_lookup(pa)
 			return (tpp);
 	}
 	return (NULL);
+}
+
+void
+tlp_pci_get_quirks(psc, enaddr, tpq)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+	const struct tlp_pci_quirks *tpq;
+{
+
+	for (; tpq->tpq_func != NULL; tpq++) {
+		if (tpq->tpq_oui[0] == enaddr[0] &&
+		    tpq->tpq_oui[1] == enaddr[1] &&
+		    tpq->tpq_oui[2] == enaddr[2]) {
+			(*tpq->tpq_func)(psc, enaddr);
+			return;
+		}
+	}
+}
+
+void
+tlp_pci_check_slaved(psc, shared, slaved)
+	struct tulip_pci_softc *psc;
+	int shared, slaved;
+{
+	extern struct cfdriver tlp_cd;
+	struct tulip_pci_softc *cur, *best = NULL;
+	struct tulip_softc *sc = &psc->sc_tulip;
+	int i;
+
+	/*
+	 * First of all, find the lowest pcidev numbered device on our
+	 * bus marked as a shared ROM.  That should be our master.
+	 */
+	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
+		if ((cur = tlp_cd.cd_devs[i]) == NULL)
+			continue;
+		if (cur->sc_tulip.sc_dev.dv_parent != sc->sc_dev.dv_parent)
+			continue;
+		if ((cur->sc_flags & shared) == 0)
+			continue;
+		if (best == NULL || best->sc_pcidev > cur->sc_pcidev)
+			best = cur;
+	}
+
+	if (best != NULL) {
+		psc->sc_master = best;
+		psc->sc_flags |= (shared | slaved);
+	}
 }
 
 int
@@ -223,7 +318,12 @@ tlp_pci_attach(parent, self, aux)
 	const struct tulip_pci_product *tpp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
-	const char *name = NULL;
+
+	psc->sc_pcidev = pa->pa_device;
+	psc->sc_pc = pa->pa_pc;
+	psc->sc_pcitag = pa->pa_tag;
+
+	LIST_INIT(&psc->sc_intrslaves);
 
 	/*
 	 * Map the device.
@@ -382,14 +482,28 @@ tlp_pci_attach(parent, self, aux)
 	 */
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
+		/* Check for a slaved ROM on a multi-port board. */
+		tlp_pci_check_slaved(psc, TULIP_PCI_SHAREDROM,
+		    TULIP_PCI_SLAVEROM);
+		if (psc->sc_flags & TULIP_PCI_SLAVEROM)
+			memcpy(sc->sc_srom, psc->sc_master->sc_tulip.sc_srom,
+			    sizeof(sc->sc_srom));
+
 		/*
-		 * None of the 21040 boards have the new-style SROMs.
+		 * Parse the Ethernet Address ROM.
 		 */
 		if (tlp_parse_old_srom(sc, enaddr) == 0) {
-			printf("%s: unable to decode old-style SROM\n",
+			printf("%s: unable to decode Ethernet Address ROM\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+
+		/*
+		 * If we have a slaved ROM, adjust the Ethernet address.
+		 */
+		if (psc->sc_flags & TULIP_PCI_SLAVEROM)
+			enaddr[5] +=
+			    psc->sc_pcidev - psc->sc_master->sc_pcidev;
 
 		/*
 		 * All 21040 boards start out with the same
@@ -398,9 +512,9 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_mediasw = &tlp_21040_mediasw;
 
 		/*
-		 * XXX Eventually we should attempt to identify
-		 * XXX other boards, and set the media appropriately.
+		 * Deal with any quirks this board might have.
 		 */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21040_quirks);
 		break;
 
 	case TULIP_CHIP_82C168:
@@ -438,27 +552,191 @@ tlp_pci_attach(parent, self, aux)
 	}
 
 	/*
-	 * Map and establish our interrupt.
+	 * Handle shared interrupts.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
-		return;
+	if (psc->sc_flags & TULIP_PCI_SHAREDINTR) {
+		if (psc->sc_master)
+			psc->sc_flags |= TULIP_PCI_SLAVEINTR;
+		else {
+			tlp_pci_check_slaved(psc, TULIP_PCI_SHAREDINTR,
+			    TULIP_PCI_SLAVEINTR);
+			if (psc->sc_master == NULL)
+				psc->sc_master = psc;
+		}
+		LIST_INSERT_HEAD(&psc->sc_master->sc_intrslaves,
+		    psc, sc_intrq);
 	}
-	intrstr = pci_intr_string(pc, ih); 
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, tlp_intr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
+
+	if (psc->sc_flags & TULIP_PCI_SLAVEINTR) {
+		printf("%s: sharing interrupt with %s\n",
+		    sc->sc_dev.dv_xname,
+		    psc->sc_master->sc_tulip.sc_dev.dv_xname);
+	} else {
+		/*
+		 * Map and establish our interrupt.
+		 */
+		if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+		    pa->pa_intrline, &ih)) {
+			printf("%s: unable to map interrupt\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		intrstr = pci_intr_string(pc, ih); 
+		psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET,
+		    (psc->sc_flags & TULIP_PCI_SHAREDINTR) ?
+		    tlp_pci_shared_intr : tlp_intr, sc);
+		if (psc->sc_ih == NULL) {
+			printf("%s: unable to establish interrupt",
+			    sc->sc_dev.dv_xname);
+			if (intrstr != NULL)
+				printf(" at %s", intrstr);
+			printf("\n");
+			return;
+		}
+		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		    intrstr);
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/*
 	 * Finish off the attach.
 	 */
-	tlp_attach(sc, name, enaddr);
+	tlp_attach(sc, enaddr);
+}
+
+int
+tlp_pci_shared_intr(arg)
+	void *arg;
+{
+	struct tulip_pci_softc *master = arg, *slave;
+	int rv = 0;
+
+	for (slave = LIST_FIRST(&master->sc_intrslaves);
+	     slave != NULL;
+	     slave = LIST_NEXT(slave, sc_intrq))
+		rv |= tlp_intr(&slave->sc_tulip);
+	
+	return (rv);
+}
+
+void
+tlp_pci_znyx_21040_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+	u_int16_t id = 0;
+
+	if (sc->sc_srom[32] == 0x4a && sc->sc_srom[33] == 0x52) {
+		id = sc->sc_srom[37] | (sc->sc_srom[36] << 8);
+		switch (id) {
+ zx312:
+		case 0x0602:	/* ZX312 */
+			strcpy(sc->sc_name, "ZNYX ZX312");
+			return;
+
+		case 0x0622:	/* ZX312T */
+			strcpy(sc->sc_name, "ZNYX ZX312T");
+			sc->sc_mediasw = &tlp_21040_tp_mediasw;
+			return;
+
+ zx314_inta:
+		case 0x0701:	/* ZX314 INTA */
+			psc->sc_flags |= TULIP_PCI_SHAREDINTR;
+			/* FALLTHROUGH */
+		case 0x0711:	/* ZX314 */
+			strcpy(sc->sc_name, "ZNYX ZX314");
+			psc->sc_flags |= TULIP_PCI_SHAREDROM;
+			sc->sc_mediasw = &tlp_21040_tp_mediasw;
+			return;
+
+ zx315_inta:
+		case 0x0801:	/* ZX315 INTA */
+			psc->sc_flags |= TULIP_PCI_SHAREDINTR;
+			/* FALLTHROUGH */
+		case 0x0811:	/* ZX315 */
+			strcpy(sc->sc_name, "ZNYX ZX315");
+			psc->sc_flags |= TULIP_PCI_SHAREDROM;
+			return;
+
+		default:
+			id = 0;
+		}
+	}
+
+	/*
+	 * Deal with boards that have broken ROMs.
+	 */
+	if (id == 0) {
+		if ((enaddr[3] & ~3) == 0xf0 && (enaddr[5] & 3) == 0x00)
+			goto zx314_inta;
+		if ((enaddr[3] & ~3) == 0xf4 && (enaddr[5] & 1) == 0x00)
+			goto zx315_inta;
+		if ((enaddr[3] & ~3) == 0xec)
+			goto zx312;
+	}
+
+	strcpy(sc->sc_name, "ZNYX ZX31x");
+}
+
+void
+tlp_pci_smc_21040_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+	u_int16_t id1, id2, ei;
+	int auibnc = 0, utp = 0;
+	char *cp;
+
+	id1 = sc->sc_srom[0x60] | (sc->sc_srom[0x61] << 8);
+	id2 = sc->sc_srom[0x62] | (sc->sc_srom[0x63] << 8);
+	ei  = sc->sc_srom[0x66] | (sc->sc_srom[0x67] << 8);
+
+	strcpy(sc->sc_name, "SMC 8432");
+	cp = &sc->sc_name[8];
+
+	if ((id1 & 1) == 0) {
+		*cp++ = 'B';
+		auibnc = 1;
+	}
+	if ((id1 & 0xff) > 0x32) {
+		*cp++ = 'T';
+		utp = 1;
+	}
+	if ((id1 & 0x4000) == 0) {
+		*cp++ = 'A';
+		auibnc = 1;
+	}
+	if (id2 == 0x15) {
+		sc->sc_name[7] = '4';
+		*cp++ = '-';
+		*cp++ = 'C';
+		*cp++ = 'H';
+		*cp++ = ei ? '2' : '1';
+	}
+	*cp = '\0';
+
+	if (utp != 0 && auibnc == 0)
+		sc->sc_mediasw = &tlp_21040_tp_mediasw;
+	else if (utp == 0 && auibnc != 0)
+		sc->sc_mediasw = &tlp_21040_auibnc_mediasw;
+}
+
+void
+tlp_pci_cogent_21040_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+
+	strcpy(psc->sc_tulip.sc_name, "Cogent multi-port");
+	psc->sc_flags |= TULIP_PCI_SHAREDINTR|TULIP_PCI_SHAREDROM;
+}
+
+void
+tlp_pci_accton_21040_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+
+	strcpy(psc->sc_tulip.sc_name, "ACCTON EN1203");
 }
