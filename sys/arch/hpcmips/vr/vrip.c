@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.3 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.4 1999/12/28 03:15:18 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -82,7 +82,7 @@ static struct intrhand {
 	bus_addr_t	ih_hreg;
 	bus_addr_t	ih_mhreg;
 } intrhand[MAX_LEVEL1] = {
-	[5] = { 0, 0, 0, 0, PIUINT_REG_W,	MPIUINT_REG_W	},
+	[5] = { 0, 0, 0, 0, ICUPIUINT_REG_W,	MPIUINT_REG_W	},
 	[6] = { 0, 0, 0, 0, AIUINT_REG_W,	MAIUINT_REG_W	},
 	[7] = { 0, 0, 0, 0, KIUINT_REG_W,	MKIUINT_REG_W	},
 	[8] = { 0, 0, 0, 0, GIUINT_L_REG_W,	MGIUINT_L_REG_W, GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
