@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2004/01/31 20:53:55 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.22 2004/02/10 01:31:41 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.21 2004/01/31 20:53:55 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.22 2004/02/10 01:31:41 matt Exp $");
 #endif
 
 #include <string.h>
@@ -323,9 +323,9 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		printf(" advice = %d,\n", vme->advice);
 		printf("%*s    flags = %x <%s%s%s > }\n", indent(2), "",
 		       vme->flags,
-		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
-		       vme->flags & UVM_MAP_KMAPENT ? " KMAPENT" : "",
-		       vme->flags & UVM_MAP_FIRST ? " FIRST" : "");
+		       vme->flags & UVM_MAP_KMEM ? " KMEM" : "",
+		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
+		       vme->flags & UVM_MAP_NOMERGE ? " NOMERGE" : "");
 	}
 
 	if ((debug & PRINT_VM_AMAP) && (vme->aref.ar_amap != NULL)) {
