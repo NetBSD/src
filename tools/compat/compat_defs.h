@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.43 2004/06/23 11:08:01 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.44 2004/11/28 06:57:14 jmc Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -297,6 +297,12 @@ int gettemp(char *, int *, int);
 #if !HAVE_PREAD
 ssize_t pread(int, void *, size_t, off_t);
 #endif
+
+#if !HAVE_HEAPSORT
+int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
+#endif
+/* Make them use our version */
+#  define heapsort __nbcompat_heapsort
 
 #if !HAVE_PWCACHE_USERDB
 int uid_from_user(const char *, uid_t *);
