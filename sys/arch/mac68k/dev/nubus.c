@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nubus.c,v 1.5 1994/02/22 01:11:33 briggs Exp $
+ * $Id: nubus.c,v 1.6 1994/02/23 04:38:24 briggs Exp $
  *
  */
 
@@ -435,7 +435,7 @@ int GetRsrcs(struct slot *Slot,unsigned char *p,struct dir *Dir,int maxdir)
 	int i=0;
 /* MF if you alias memory here you will be fucked. */
 	
-	if (p==NULL) return;
+	if (p==NULL) return 1;
 	
 	while(maxdir--)
 	{
@@ -495,17 +495,14 @@ int InitNubusSlot(unsigned long slotaddr,struct slot *newSlot)
 	unsigned char *c;
 	unsigned char *e;
 	unsigned char *g;
-	unsigned char *data;
 
 	unsigned long slotend;
 
 	
 
 	slotend=slotaddr+NBMEMSIZE-1;
-	data=(unsigned char *)slotend-100;
 
-
-	for(i=0;i<100;i++)
+	for(i=5;i<100;i++)
 	{
 /* lets be quite clear here, if magic is not on the card, then
    we will quite likely bus error, because we will read a long
@@ -519,9 +516,9 @@ int InitNubusSlot(unsigned long slotaddr,struct slot *newSlot)
    same format, and let it crash most heiniously on bizzare cards
    from hell, which I hear has lots of luke warm fresca on tap.
 */
-		if (Slot.size=FindMagic( (unsigned long *)(data+i) ) )
+		if (Slot.size=FindMagic( (unsigned long *)(slotend-i) ) )
 		{
-			GetHeader(&Slot,slotend-100+i);
+			GetHeader(&Slot,slotend-i);
 			break;
 		}
 	}
@@ -656,7 +653,7 @@ find_nubus(void)
       nu->addr = (caddr_t)(NBBASE + nubus_num * NBMEMSIZE);
       nu->rom = nu->addr + NBROMOFFSET;
 
-      if(!badbaddr(nu->rom))
+      if(!badbaddr(nu->addr+NBMEMSIZE-1))
       {
 	 InitNubusSlot((unsigned long) nu->addr, &(nu->Slot));
 
