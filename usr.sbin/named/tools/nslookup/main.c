@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.42 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 17:58:11 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1994/03/24 07:56:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -91,13 +91,6 @@ static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 17:58:11 mycroft Exp $";
 #define		ROOT_SERVER "ns.nic.ddn.mil."
 #endif
 char		rootServerName[NAME_LEN] = ROOT_SERVER;
-
-
-/*
- *  Import the state information from the resolver library.
- */
-
-extern struct state _res;
 
 
 /*

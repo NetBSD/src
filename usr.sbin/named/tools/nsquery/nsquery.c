@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nsquery.c	4.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nsquery.c,v 1.2 1993/08/01 17:57:58 mycroft Exp $";
+static char rcsid[] = "$Id: nsquery.c,v 1.3 1994/03/24 07:56:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern struct state _res;
 	register struct hostent *hp;
 	register char *s;
 
