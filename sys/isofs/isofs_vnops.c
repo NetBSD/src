@@ -1,12 +1,5 @@
 /*
- *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00040
- * --------------------         -----   ----------------------
- *
- * 10 Aug 92	Scott Burris		Fixed "delete from CD-ROM" bug
+ *	$Id: isofs_vnops.c,v 1.3 1993/05/20 03:30:57 cgd Exp $
  */
 #include "param.h"
 #include "systm.h"

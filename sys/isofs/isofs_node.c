@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isofs_inode.c
+ *	from: @(#)isofs_inode.c
+ *	$Id: isofs_node.c,v 1.3 1993/05/20 03:30:49 cgd Exp $
  */
 
 #include "param.h"

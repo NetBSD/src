@@ -1,3 +1,7 @@
+/*
+ *	$Id: iso.h,v 1.2 1993/05/20 03:30:43 cgd Exp $
+ */
+
 #define ISODCL(from, to) (to - from + 1)
 
 struct iso_volume_descriptor {
