@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.22 2000/02/05 18:20:08 chopps Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.23 2000/02/06 08:14:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -455,7 +455,7 @@ pccbbattach(parent, self, aux)
 	 * not kill pcic-compatible port.
 	 */
 	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
-		printf(" Do not use %s because of intr unconfig.\n",
+    		printf("%s: NOT USED because of unconfigured interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -467,8 +467,7 @@ pccbbattach(parent, self, aux)
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 #if notyet
 	if (((busreg >> 8) & 0xff) == 0) {
-		printf
-		    (" CardBus on %s will not be configured, because of bus no unconfig.\n",
+    		printf("%s: CardBus support disabled because of unconfigured bus number\n",
 		    sc->sc_dev.dv_xname);
 		flags |= PCCBB_PCMCIA_16BITONLY;
 	}
@@ -479,8 +478,8 @@ pccbbattach(parent, self, aux)
 #if defined CBB_DEBUG
 	{
 		static char *intrname[5] = { "NON", "A", "B", "C", "D" };
-		printf(" intrpin %s, intrtag %d\n", intrname[pa->pa_intrpin],
-		    pa->pa_intrline);
+		printf("%s: intrpin %s, intrtag %d\n", sc->sc_dev.dv_xname,
+		    intrname[pa->pa_intrpin], pa->pa_intrline);
 	}
 #endif
 
