@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.265 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.266 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -606,3 +606,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		and auto LF on CR via lptctl(8), dropped compatibility minor
 		number bit mapping [jdolecek 20040203]
 	build.sh: add -x and -X to control building of xsrc.  [lukem 20040206]
+	locate(1): Make locate.updatedb customizable by configuration file
+		/etc/locate.conf.  [itohy 20040206]
