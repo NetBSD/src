@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.66 2003/11/13 22:29:09 scw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.67 2003/11/14 22:33:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.66 2003/11/13 22:29:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.67 2003/11/14 22:33:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1574,7 +1574,8 @@ vr_attach(parent, self, aux)
 	 *         causes) I'm going to retain the old behaviour for the
 	 *         other parts.
 	 */
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105) {
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6105 &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT6102) {
 		VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
 		DELAY(200);
 	}
