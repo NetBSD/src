@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.541 2003/03/04 12:26:26 tshiozak Exp $
+#	$NetBSD: mi,v 1.542 2003/03/05 09:37:21 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1095,6 +1095,7 @@
 ./usr/share/man/cat1/objcopy.0		comp-util-catman
 ./usr/share/man/cat1/objdump.0		comp-util-catman
 ./usr/share/man/cat1/ranlib.0		comp-util-catman
+./usr/share/man/cat1/readelf.0		comp-util-catman
 ./usr/share/man/cat1/rpcgen.0		comp-c-catman
 ./usr/share/man/cat1/size.0		comp-util-catman
 ./usr/share/man/cat1/strings.0		comp-util-catman
@@ -4142,6 +4143,7 @@
 ./usr/share/man/man1/objcopy.1		comp-util-man
 ./usr/share/man/man1/objdump.1		comp-util-man
 ./usr/share/man/man1/ranlib.1		comp-util-man
+./usr/share/man/man1/readelf.1		comp-util-man
 ./usr/share/man/man1/rpcgen.1		comp-c-man
 ./usr/share/man/man1/size.1		comp-util-man
 ./usr/share/man/man1/strings.1		comp-util-man
