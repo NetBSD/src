@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.42 2002/02/12 20:50:47 martin Exp $	*/
+/*	$NetBSD: psycho.c,v 1.43 2002/03/08 06:03:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -643,7 +643,9 @@ psycho_ue(arg)
 			(long long)((afar - is->is_ptsb) * NBPG + is->is_dvmabase),
 			(long long)ldxa(afar, ASI_PHYS_CACHED));
 	}
+#ifdef DDB
 	Debugger();
+#endif
 	regs->psy_ue_afar = 0;
 	regs->psy_ue_afsr = 0;
 	return (1);
