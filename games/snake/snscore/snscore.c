@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.9 1999/09/08 21:18:00 jsm Exp $	*/
+/*	$NetBSD: snscore.c,v 1.10 1999/09/09 17:28:00 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.9 1999/09/08 21:18:00 jsm Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.10 1999/09/09 17:28:00 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,8 +98,9 @@ main()
 			if (p == NULL)
 				continue;
 			q = p -> pw_name;
-			players[noplayers].name = malloc(strlen(q) + 1);
-			strcpy(players[noplayers].name, q);
+			players[noplayers].name = strdup(q);
+			if (players[noplayers].name == NULL)
+				errx(1, "out of memory");
 			noplayers++;
 		}
 	}

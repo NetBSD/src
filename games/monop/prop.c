@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
+/*	$NetBSD: prop.c,v 1.6 1999/09/09 17:27:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
+__RCSID("$NetBSD: prop.c,v 1.6 1999/09/09 17:27:59 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,8 @@ add_list(plr, head, op_sqr)
 	OWN *op;
 
 	op = (OWN *)calloc(1, sizeof (OWN));
+	if (op == NULL)
+		errx(1, "out of memory");
 	op->sqr = &board[op_sqr];
 	val = value(op->sqr);
 	last_tp = NULL;

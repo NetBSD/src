@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.8 1999/09/08 21:45:30 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.9 1999/09/09 17:27:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.8 1999/09/08 21:45:30 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.9 1999/09/09 17:27:59 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,6 +332,8 @@ env_get_value(s, e, add_blank)
 		}
 	}
 	*s = md_malloc(MAX_OPT_LEN + 2);
+	if (*s == NULL)
+		clean_up("out of memory");
 	(void) strncpy(*s, t, i);
 	if (add_blank) {
 		(*s)[i++] = ' ';
@@ -346,6 +348,8 @@ init_str(str, dflt)
 {
 	if (!(*str)) {
 		*str = md_malloc(MAX_OPT_LEN + 2);
+		if (*str == NULL)
+			clean_up("out of memory");
 		(void) strcpy(*str, dflt);
 	}
 }
