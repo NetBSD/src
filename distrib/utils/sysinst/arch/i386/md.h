@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.46 2003/07/25 08:26:27 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.47 2003/07/27 20:25:07 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <machine/cpu.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/bootblock.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -83,9 +84,6 @@
  * disks, "ed" IBM ESDI disks
  */
 #define DISK_NAMES "wd", "sd", "ld", "ed"
-
-/* Bootblock type */
-EXTERN const char *boottype INIT("");
 
 /*
  * Machine-specific command to write a new label to a disk.

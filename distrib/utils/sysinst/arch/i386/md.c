@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.93 2003/07/25 08:26:27 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.94 2003/07/27 20:25:07 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,6 @@
 #include "endian.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-#include <sys/bootblock.h>
 
 #ifdef NO_LBA_READS		/* for testing */
 #undef BIFLAG_EXTINT13
@@ -283,15 +282,38 @@ md_post_newfs(void)
 	int len;
 	int td, sd;
 	char bootxx[8192 + 4];
+	static struct i386_boot_params boottype =
+		{sizeof boottype, 0, 10, 0, 9600, ""};
+	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
+	struct termios t;
+	dev_t condev;
 #define bp (*(struct i386_boot_params *)(bootxx + 512 * 2 + 8))
+
+	/*
+	 * Get console device, should either be ttyE0 or tty0n.
+	 * Too hard to double check, so just 'know' the device numbers.
+	 */
+	len = sizeof condev;
+	if (sysctl(conmib, nelem(conmib), &condev, &len, NULL, 0) != -1
+	    && (condev & ~3) == 0x800) {
+		/* Motherboard serial port */
+		boottype.bp_consdev = (condev & 3) + 1;
+		td = open("/dev/console", O_RDONLY, 0);
+		if (td != -1) {
+			if (tcgetattr(td, &t) != -1)
+				boottype.bp_conspeed = t.c_ispeed;
+			close(td);
+		}
+	}
+
+	process_menu(MENU_getboottype, &boottype);
+	msg_display(MSG_dobootblks, diskdev);
+	if (bp.bp_consdev == ~0)
+		return 0;
 
 	ret = cp_to_target("/usr/mdec/biosboot", "/boot");
 	if (ret)
 		return ret;
-
-	msg_display(MSG_getboottype);
-	process_menu(MENU_getboottype, NULL);
-	msg_display(MSG_dobootblks, diskdev);
 
 	/* Copy bootstrap in by hand - /sbin/installboot explodes ramdisks */
 	ret = 1;
@@ -308,10 +330,8 @@ md_post_newfs(void)
 	if (*(uint32_t *)(bootxx + 512 * 2 + 4) != X86_BOOT_MAGIC_1)
 		goto bad_bootxx;
 
-	if (!strncmp(boottype, "serial", 6)) {
-		bp.bp_consdev = 1;	/* com0 */
-		bp.bp_conspeed = atoi(boottype + 6);
-	}
+	boottype.bp_length = bp.bp_length;
+	memcpy(&bp, &boottype, min(boottype.bp_length, sizeof boottype));
 
 	if (pwrite(td, bootxx, 512, 0) != 512)
 		goto bad_bootxx;
