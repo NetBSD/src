@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.2 1997/10/18 04:01:18 lukem Exp $	*/
+/*	$NetBSD: lockd.c,v 1.3 1999/06/06 03:13:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.2 1997/10/18 04:01:18 lukem Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.3 1999/06/06 03:13:13 thorpej Exp $");
 #endif
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: lockd.c,v 1.2 1997/10/18 04:01:18 lukem Exp $");
 #include <stdlib.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
@@ -149,6 +150,7 @@ main(argc, argv)
 		err(1, "cannot fork");
 		/* NOTREACHED */
 	}
+	pidfile(NULL);
 
 	openlog("rpc.lockd", 0, LOG_DAEMON);
 	if (debug_level)
