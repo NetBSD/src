@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.228 2003/12/30 12:33:23 pk Exp $	*/
+/*	$NetBSD: init_main.c,v 1.229 2004/01/01 00:00:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.228 2003/12/30 12:33:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.229 2004/01/01 00:00:05 mycroft Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -167,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.228 2003/12/30 12:33:23 pk Exp $");
 #include <net/raw_cb.h>
 
 const char copyright[] =
-"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003\n"
+"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004\n"
 "    The NetBSD Foundation, Inc.  All rights reserved.\n"
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
 "    The Regents of the University of California.  All rights reserved.\n"
