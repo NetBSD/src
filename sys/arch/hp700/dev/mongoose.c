@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.2 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -562,13 +562,13 @@ mgmatch(parent, cf, aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_EISA)
 		return 0;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE, IOMOD_HPASIZE,
-			  0, &ioh))
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE, 
+			  sizeof(struct mongoose_regs), 0, &ioh))
 		return 0;
 
 	/* XXX check EISA signature */
 
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
+	bus_space_unmap(ca->ca_iot, ioh, sizeof(struct mongoose_regs));
 
 	return 1;
 }
@@ -584,11 +584,18 @@ mgattach(parent, self, aux)
 	struct hppa_bus_space_tag *bt;
 	union mongoose_attach_args ea;
 	char brid[EISA_IDSTRINGLEN];
+	bus_space_handle_t ioh;
 
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_iomap = ca->ca_hpa;
-	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
-	sc->sc_ctrl = (struct mongoose_ctrl *)(ca->ca_hpa + MONGOOSE_CTRL);
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
+			  sizeof(struct mongoose_regs), 0, &ioh))
+		panic("mgattach: can't map registers");
+	sc->sc_regs = (struct mongoose_regs *)ioh;
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_CTRL,
+			  sizeof(struct mongoose_ctrl), 0, &ioh))
+		panic("mgattach: can't map control registers");
+	sc->sc_ctrl = (struct mongoose_ctrl *)ioh;
 
 	viper_eisa_en();
 
@@ -601,7 +608,8 @@ mgattach(parent, self, aux)
 	/* determine eisa board id */
 	{
 		u_int8_t id[4], *p;
-		p = (u_int8_t *)(ca->ca_hpa + EISA_SLOTOFF_VID);
+		/* XXX this is awful */
+		p = (u_int8_t *)(ioh + EISA_SLOTOFF_VID);
 		id[0] = *p++;
 		id[1] = *p++;
 		id[2] = *p++;

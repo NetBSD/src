@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.2 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: lasi.c,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -63,6 +63,10 @@ struct lasi_trs {
 	u_int32_t lasi_iar;	/* int acquire? register */
 };
 
+#define	LASI_BANK_SZ	0x200000
+#define	LASI_REG_INT	0x100000
+#define	LASI_REG_MISC	0x10c000
+
 struct lasi_softc {
 	struct device sc_dev;
 	
@@ -88,6 +92,7 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 {
 	struct lasi_softc *sc = _sc;
 	hppa_hpa_t module_offset;
+	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 
 	/*
 	 * Determine this module's interrupt bit.
@@ -105,6 +110,16 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 	LASI_IRQ(0x8000, 26);	/* pckbc */
 	LASI_IRQ(0xa000, 20);	/* fdc */
 #undef LASI_IRQ
+
+	/*
+	 * If this is the Ethernet adapter, get its Ethernet address.
+	 */
+	if (module_offset == 0x7000) {
+		if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
+		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) == 0)
+			memcpy(ga->ga_ether_address, pdc_mac.addr,
+				sizeof(ga->ga_ether_address));
+	}
 }
 
 int
@@ -123,6 +138,12 @@ lasimatch(parent, cf, aux)
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
 
+	/*
+	 * Forcibly mask the HPA down to the start of the LASI
+	 * chip address space.
+	 */
+	ca->ca_hpa &= ~(LASI_BANK_SZ - 1);
+
 	return 1;
 }
 
@@ -138,16 +159,21 @@ lasiattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	int s, in;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
-			  IOMOD_HPASIZE, 0, &ioh)) {
-#ifdef DEBUG
-		printf("lasiattach: can't map IO space\n");
-#endif
-		return;
-	}
+	/*
+	 * Map the LASI interrupt registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_INT,
+			  sizeof(struct lasi_trs), 0, &ioh))
+		panic("lasiattach: can't map interrupt registers");
+	sc->sc_trs = (struct lasi_trs *)ioh;
 
-	sc->sc_trs = (struct lasi_trs *)ca->ca_hpa;
-	sc->sc_hw = (struct lasi_hwr *)(ca->ca_hpa + 0xc000);
+	/*
+	 * Map the LASI miscellaneous registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_MISC,
+			  sizeof(struct lasi_hwr), 0, &ioh))
+		panic("lasiattach: can't map misc registers");
+	sc->sc_hw = (struct lasi_hwr *)ioh;
 
 	/* XXX should we reset the chip here? */
 

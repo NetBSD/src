@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2002/08/19 18:58:29 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2002/08/25 20:20:01 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,10 @@
 #include <compat/hpux/hpux.h>
 #endif
 
+#ifdef	KGDB
+#include "com.h"
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
@@ -209,7 +213,7 @@ dev_t	bootdev;
 int	totalphysmem, physmem, esym;
 /*
  * XXX note that 0x12000 is the old kernel text start
- * address.  Memory below this are assumed to belong
+ * address.  Memory below this is assumed to belong
  * to the firmware.  This value is converted into pages 
  * by hppa_init and used as pages in pmap_bootstrap().
  */
@@ -224,8 +228,8 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
  * Things for MI glue to stick on.
  */
 struct user *proc0paddr;
-long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct extent *hppa_ex;
+struct extent *hp700_io_extent;
+static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -258,6 +262,11 @@ struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 struct pdc_pim pdc_pim PDC_ALIGNMENT;
 struct pdc_model pdc_model PDC_ALIGNMENT;
+
+/*
+ * Debugger info.
+ */
+int hp700_kgdb_attached;
 
 /*
  * Whatever CPU types we support
@@ -450,7 +459,7 @@ hppa_init(start)
 	/* Calculate the OS_HPMC handler checksums. */
 	p = &os_hpmc;
 	if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
-		*p = 0;
+		*p = 0x08000240;
 	p[7] = ((caddr_t) &os_hpmc_cont_end) - ((caddr_t) &os_hpmc_cont);
 	p[6] = (u_int) &os_hpmc_cont;
 	p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
@@ -671,12 +680,10 @@ hptsize=256;	/* XXX one page for now */
 #endif
 
 	/* we hope this won't fail */
-	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)mem_ex_storage, sizeof(mem_ex_storage),
+	hp700_io_extent = extent_create("io",
+	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
+	    (caddr_t)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	if (extent_alloc_region(hppa_ex, 0, (vaddr_t)PAGE0->imm_max_mem,
-	    EX_NOWAIT))
-		panic("cannot reserve main memory");
 
 	vstart = hppa_round_page(start);
 	vend = VM_MAX_KERNEL_ADDRESS;
@@ -780,12 +787,32 @@ do {									\
 	hppa_fpu_bootstrap(pdc_coproc.ccr_enable);
 
 	/* they say PDC_COPROC might turn fault light on */
-	pdc_call((iodcio_t)pdc, PDC_CHASSIS, PDC_CHASSIS_DISP,
+	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
 	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
 
 	/* Bootstrap interrupt masking and dispatching. */
 	hp700_intr_bootstrap();
 
+	/*
+	 * Initialize any debugger.
+	 */
+#ifdef KGDB
+	/*
+	 * XXX note that we're not virtual yet, yet these
+	 * KGDB attach functions will be using bus_space(9)
+	 * to map and manipulate their devices.  This only 
+	 * works because, currently, the mainbus.c bus_space 
+	 * implementation directly-maps things in I/O space.
+	 */
+	hp700_kgdb_attached = FALSE;
+#if NCOM > 0
+	if (!strcmp(KGDB_DEVNAME, "com")) {
+		int com_gsc_kgdb_attach __P((void));
+		if (com_gsc_kgdb_attach() == 0)
+			hp700_kgdb_attached = TRUE;
+	}
+#endif /* NCOM > 0 */
+#endif /* KGDB */
 #ifdef DDB
 	{
 		extern int end[];
@@ -1275,7 +1302,7 @@ hppa_btlb_reload(void)
  * This purges a BTLB entry.
  */
 int
-hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t size)
+hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t *sizep)
 {
 	struct btlb_slot *btlb_slot, *btlb_slot_end;
 	int error;
@@ -1304,6 +1331,13 @@ hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t size)
 #endif
 				return (error);
 			}
+
+			/*
+			 * Tell our caller how many bytes were mapped
+			 * by this slot, then free the slot.
+			 */
+			*sizep = (btlb_slot->btlb_slot_frames << PGSHIFT);
+			btlb_slot->btlb_slot_frames = 0;
 		}
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.4 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -108,14 +108,12 @@ osiop_gsc_match(parent, match, aux)
 	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI))
 		return 0;
 
-	if (bus_space_map(ga->ga_iot, ga->ga_hpa, IOMOD_HPASIZE, 0, &ioh))
+	if (bus_space_map(ga->ga_iot, ga->ga_hpa, 
+			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		return 0;
-	ioh |= OSIOP_GSC_OFFSET;
 
 
-
-	ioh &= ~OSIOP_GSC_OFFSET;
-	bus_space_unmap(ga->ga_iot, ioh, IOMOD_HPASIZE);
+	bus_space_unmap(ga->ga_iot, ioh, OSIOP_GSC_OFFSET + OSIOP_NREGS);
 	return rv;
 }
 
@@ -130,8 +128,8 @@ osiop_gsc_attach(parent, self, aux)
 
 	sc->sc_bst = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
-	if (bus_space_map(sc->sc_bst, ga->ga_hpa, IOMOD_HPASIZE,
-			  0, &ioh))
+	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
+			  OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
 		panic("osiop_gsc_attach: couldn't map I/O ports");
 	if (bus_space_subregion(sc->sc_bst, ioh, 
 				OSIOP_GSC_OFFSET, OSIOP_NREGS, &sc->sc_reg))
