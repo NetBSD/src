@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.9 2001/01/18 20:59:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.9 2001/01/18 20:59:43 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		return;
 	wts1 = wts = ftbl[0].weights;
 	if ((!UNIQUE) && SINGL_FLD) {
-		if (ftbl[0].flags & F && ftbl[0].flags & R)
+		if ((ftbl[0].flags & F) && (ftbl[0].flags & R))
 			wts1 = Rascii;
 		else if (ftbl[0].flags & F)
 			wts1 = ascii;
