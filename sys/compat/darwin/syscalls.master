@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2003/06/05 12:26:28 manu Exp $
+	$NetBSD: syscalls.master,v 1.14 2003/09/02 21:31:04 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -89,8 +89,8 @@
 16	NODEF		{ int bsd_sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+18	STD		{ int darwin_sys_getfsstat(struct darwin_statfs *buf, \
+			    long bufsize, int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	STD		{ pid_t darwin_sys_getpid(void); }
@@ -319,9 +319,10 @@
 #endif
 156	NOARGS    	{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	NODEF		{ int bsd_sys_statfs(const char *path, \
-			    struct statfs *buf); }
-158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
+157	STD		{ int darwin_sys_statfs(const char *path, \
+			    struct darwin_statfs *buf); }
+158	STD		{ int darwin_sys_fstatfs(int fd, \
+			    struct darwin_statfs *buf); }
 159	UNIMPL		unmount
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
