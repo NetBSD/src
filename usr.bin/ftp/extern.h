@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.63 2005/01/03 09:50:09 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.64 2005/02/09 23:17:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -129,11 +129,8 @@ void	delete(int, char **);
 void	disconnect(int, char **);
 void	do_chmod(int, char **);
 void	do_umask(int, char **);
-char   *docase(char *);
 void	domacro(int, char **);
-char   *domap(char *);
 void	doproxy(int, char **);
-char   *dotrans(char *);
 void	feat(int, char **);
 void	fget(int, char **);
 int	fileindir(const char *, const char *);
