@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108 1999/03/14 14:04:40 drochner Exp $
+#	$NetBSD: Makefile,v 1.109 1999/03/24 20:12:21 drochner Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -72,8 +72,8 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	newsyslog.conf nsswitch.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
 	rc.shutdown rc.wscons remote rpc security security.conf services \
-	shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
-	etc.${MACHINE}/disktab
+	shells syslog.conf weekly weekly.conf wscons.conf \
+	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
