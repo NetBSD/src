@@ -1,5 +1,7 @@
+.\"	$NetBSD: ibus.4,v 1.1 2001/09/21 09:11:46 gmcgarry Exp $
 .\"
-.\" Copyright (c) 1996 Jonathan Stone.
+.\" Copyright (c) 1998 MINOURA Makoto
+.\" Copyright (c) 1998 NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -12,7 +14,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"      This product includes software developed by Jonathan Stone.
+.\"    This product includes software developed by Minoura Makoto.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -27,48 +29,47 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sii.4,v 1.10 2001/09/21 09:11:48 gmcgarry Exp $
-.\"
-.Dd August 26, 2001
-.Dt SII 4 pmax
+.Dd September 12, 2001
+.Dt IBUS 4 pmax
 .Os
 .Sh NAME
-.Nm sii
-.Nd
-SII SCSI adaptor
+.Nm ibus
+.Nd pmax internal I/O space driver
 .Sh SYNOPSIS
-.Cd "sii* at ibus0 addr ?
-.Cd "scsibus* at sii?"
+.Cd "ibus0 at mainbus0"
+.Cd "ibus0 at tc? slot ? offset ?
 .Sh DESCRIPTION
-The
 .Nm
-driver provides support for the
-.Tn DEC
-SII SCSI adaptor ASIC used in
-the DECstation 2100, 3100, and 5100, and in the VAXstation 3100.
+is a virtual device corresponding to the pmax internal I/O space found
+on DEC 2100, 3100, 5100 and 5000/200 systems.
 .Pp
-The
+Internal I/O space spans the pmax physical address space, and is
+mapped permanently in the kernel virtual space at the very early time
+of the kernel startup procedure.
+.Pp
 .Nm
-is a medium-performance implementation of the SCSI-I common command set
-supporting synchronous and asynchronous SCSI devices.
+driver manages the internal I/O space of pmax.
 .Pp
-The SII cabling is unusual: the bulkhead connector is very similar
-to a standard submicro wide SCSI-II connector, but has the other gender.
+.Bl -bullet -offset indent -tag
+.It
+Address range management to avoid confliction of address space of
+which devices probe by touching hardware port is difficult.
+.It
+Interrupt vector management.
+.It
+.Xr bus_space 9
+and
+.Xr bus_dma 9
+implementation.
+.It
+Other utility functions.
+.El
 .Pp
-The
 .Nm
-chip only supports DMA to or from a fixed window in memory.
-The driver uses this "window" area as a bounce buffer, copying data
-to and from the DMA region.
+is always required to run the
+.Nx
+kernel.
 .Sh SEE ALSO
-.Xr cd 4 ,
-.Xr ch 4 ,
-.Xr ibus 4 ,
 .Xr intro 4 ,
-.Xr sd 4 ,
-.Xr st 4
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Bx 4.4 .
+.Xr bus_space 9 ,
+.Xr bus_dma 9
