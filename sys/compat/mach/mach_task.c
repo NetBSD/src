@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.30 2003/11/11 17:26:32 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.31 2003/11/12 00:00:28 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.30 2003/11/11 17:26:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.31 2003/11/12 00:00:28 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,7 +130,8 @@ mach_ports_lookup(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_emuldata *med;
-	struct mach_right *msp[7];
+	struct mach_right *mr;
+	mach_port_name_t mnp[7];
 	vaddr_t va;
 	int error;
 
@@ -147,28 +148,28 @@ mach_ports_lookup(args)
 		return mach_msg_error(args, error);
 
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
-	msp[0] = MACH_PORT_DEAD;
-	msp[3] = MACH_PORT_DEAD;
-	msp[5] = MACH_PORT_DEAD;
-	msp[6] = MACH_PORT_DEAD;
+	mnp[0] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[3] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[5] = (mach_port_name_t)MACH_PORT_DEAD;
+	mnp[6] = (mach_port_name_t)MACH_PORT_DEAD;
 
-	msp[MACH_TASK_KERNEL_PORT] = 
-	    mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-	msp[MACH_TASK_HOST_PORT] = 
-	    mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
-	msp[MACH_TASK_BOOTSTRAP_PORT] = 
-	    mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
+	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_KERNEL_PORT] = mr->mr_name;
+	mr = mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_HOST_PORT] = mr->mr_name;
+	mr = mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
+	mnp[MACH_TASK_BOOTSTRAP_PORT] = mr->mr_name;
 
 #ifdef DEBUG_MACH
 	printf("mach_ports_lookup: kernel %08x, host %08x, boostrap %08x\n",
-	    msp[MACH_TASK_KERNEL_PORT]->mr_name, 
-	    msp[MACH_TASK_HOST_PORT]->mr_name,
-	    msp[MACH_TASK_BOOTSTRAP_PORT]->mr_name);
+	    mnp[MACH_TASK_KERNEL_PORT],
+	    mnp[MACH_TASK_HOST_PORT],
+	    mnp[MACH_TASK_BOOTSTRAP_PORT]);
 #endif
 	/*
 	 * On Darwin, the data seems always null...
 	 */
-	if ((error = copyout(&msp[0], (void *)va, sizeof(msp))) != 0)
+	if ((error = copyout(mnp, (void *)va, sizeof(mnp))) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -293,11 +294,11 @@ mach_task_threads(args)
 	size_t size;
 	int i;
 	struct mach_right *mr;
-	mach_msg_port_descriptor_t *mpd;
+	mach_port_name_t *mnp;
 
 	med = l->l_proc->p_emuldata;
 
-	size = l->l_proc->p_nlwps * sizeof(*mpd);
+	size = l->l_proc->p_nlwps * sizeof(*mnp);
 	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
 
 	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
@@ -306,18 +307,17 @@ mach_task_threads(args)
 	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-	mpd = malloc(size, M_TEMP, M_WAITOK);
+	mnp = malloc(size, M_TEMP, M_WAITOK);
 	for (i = 0; i < l->l_proc->p_nlwps; i++) {
 		/* XXX each thread should have a kernel port */
 		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
-		mpd[i].name = mr->mr_name;
-		mpd[i].disposition = 0x11;
+		mnp[i] = mr->mr_name;
 	}
-	if ((error = copyout(mpd, (void *)va, size)) != 0) {
-		free(mpd, M_TEMP);
+	if ((error = copyout(mnp, (void *)va, size)) != 0) {
+		free(mnp, M_TEMP);
 		return mach_msg_error(args, error);
 	}
-	free(mpd, M_TEMP);
+	free(mnp, M_TEMP);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -328,7 +328,9 @@ mach_task_threads(args)
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_list.address = (void *)va;
 	rep->rep_list.count = l->l_proc->p_nlwps;
+	rep->rep_list.copy = 0x02;
 	rep->rep_list.disposition = 0x11;
+	rep->rep_list.type = 0x02;
 	rep->rep_count = l->l_proc->p_nlwps;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
