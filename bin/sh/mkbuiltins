@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkbuiltins,v 1.17 2002/11/24 22:35:41 christos Exp $
+#	$NetBSD: mkbuiltins,v 1.18 2003/02/02 21:10:45 dsl Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ do
 	}
 	echo 'int '"$func"'(int, char **);' >&4
 	while
-		[ $# != 0 ]
+		[ $# != 0 -a "$1" != '#' ]
 	do
 		[ "$1" = '-s' ] && {
 			specials="$specials $2 $func"
