@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
+.\"	$NetBSD: pci.4,v 1.30 2000/04/27 16:27:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -144,6 +144,8 @@ NE2000-compatible
 interfaces.
 .It ntwoc
 SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
+.It rtk
+RealTek 8129/8139 based Ethernet interfaces.
 .It tl
 Texas Instruments ThunderLAN-based
 .Tn Ethernet
@@ -232,6 +234,7 @@ USB UHCI host controller
 .Xr pcic 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
+.Xr rtk 4 ,
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr usb 4
