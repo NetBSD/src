@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 386
 #
-#	$Id: TDR,v 1.9 1993/05/21 11:39:18 cgd Exp $
+#	$Id: TDR,v 1.10 1993/05/22 11:29:08 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,12 +9,11 @@ cpu		"I486_CPU"
 ident		TDR
 timezone	7 dst
 maxusers	10
-options		INET,NFSSERVER,NFSCLIENT,GATEWAY,NFS
+options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options		SCSI,ISOFS
+options		SCSI
 options 	DDB
-options		"MATH_EMULATE"
 
 config		netbsd	root on wd0 swap on wd0
 
@@ -22,15 +21,10 @@ controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
 disk		wd0	at wdc0 drive 0
 disk		wd1	at wdc0 drive 1
-controller	wdc1	at isa? port "IO_WD2" bio irq 7 vector wdintr
-disk		wd2	at wdc1 drive 0
-disk		wd3	at wdc1 drive 1
 
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		fd0	at fdc0 drive 0
 disk		fd1	at fdc0 drive 1
-disk		fd2	at fdc0 drive 2
-disk		fd3	at fdc0 drive 3
 
 #controller	wds0	at isa? port "IO_WDS" bio irq 15 drq 6 vector wdsintr
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 7 vector ahaintr
@@ -48,22 +42,15 @@ disk		cd1	at aha0	flags 2 drive ?
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
-#device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
-#device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 device		we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
-#device		ne0 at isa? port 0x300 net irq 2 vector neintr
-#device		ec0 at isa? port 0x250 net irq 2 iomem 0xd8000 iosiz 8192 vector ecintr
-#device		is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
-
-#device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
 
 pseudo-device	loop
 pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	8
-pseudo-device	bpfilter 16
+pseudo-device	bpfilter 4
 
 pseudo-device	swappager
 pseudo-device	vnodepager
