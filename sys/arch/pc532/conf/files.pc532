@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.13 1995/08/25 07:58:23 phil Exp $
+#	$NetBSD: files.pc532,v 1.14 1995/08/29 22:48:02 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -55,7 +55,6 @@ file	scsi/su.c			su needs-flag
 
 file	dev/cons.c
 file	dev/cninit.c
-file	netinet/in_cksum.c		inet
 file	scsi/scsiconf.c			scsi
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
@@ -65,12 +64,12 @@ file	arch/pc532/pc532/db_interface.c	ddb
 file	arch/pc532/pc532/db_trace.c	ddb
 file	arch/pc532/pc532/disksubr.c	disk
 file	arch/pc532/pc532/icuinit.c
+file	arch/pc532/pc532/in_cksum.c	inet
 file	arch/pc532/pc532/intr.c
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
 file	arch/pc532/pc532/ns_cksum.c	ns
 file	arch/pc532/pc532/ntoh.s
-file	arch/pc532/pc532/oc_cksum.s	inet
 file	arch/pc532/pc532/pmap.c
 file	arch/pc532/pc532/process_machdep.c
 file 	arch/pc532/pc532/random.s
