@@ -68,7 +68,7 @@ __warn_references(idea_set_encrypt_key,
 __warn_references(idea_set_decrypt_key,
     "IDEA is a patented algorithm; link against libcrypto_idea.a")
 
-void idea_set_encrypt_key(unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 {
 
 	fprintf(stderr,

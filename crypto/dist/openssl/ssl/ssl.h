@@ -59,11 +59,14 @@
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
 
+#include <openssl/comp.h>
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/safestack.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/safestack.h>
 
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
@@ -140,12 +143,20 @@ extern "C" {
 #define SSL_SENT_SHUTDOWN	1
 #define SSL_RECEIVED_SHUTDOWN	2
 
+#ifdef __cplusplus
+}
+#endif
+
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #define SSL_FILETYPE_ASN1	X509_FILETYPE_ASN1
 #define SSL_FILETYPE_PEM	X509_FILETYPE_PEM
@@ -185,7 +196,7 @@ typedef struct ssl_method_st
 	int (*ssl_accept)(SSL *s);
 	int (*ssl_connect)(SSL *s);
 	int (*ssl_read)(SSL *s,void *buf,int len);
-	int (*ssl_peek)(SSL *s,char *buf,int len);
+	int (*ssl_peek)(SSL *s,void *buf,int len);
 	int (*ssl_write)(SSL *s,const void *buf,int len);
 	int (*ssl_shutdown)(SSL *s);
 	int (*ssl_renegotiate)(SSL *s);
@@ -314,6 +325,9 @@ typedef struct ssl_session_st
  * the misconception that non-blocking SSL_write() behaves like
  * non-blocking write(): */
 #define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002L
+/* Never bother the application with retries if the transport
+ * is blocking: */
+#define SSL_MODE_AUTO_RETRY 0x00000004L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -339,15 +353,11 @@ typedef struct ssl_session_st
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT	(1024*20)
 
 typedef struct ssl_comp_st
-{
-    int id;
-    char *name;
-#ifdef HEADER_COMP_H
-    COMP_METHOD *method;
-#else
-    char *method;
-#endif
-} SSL_COMP;
+	{
+	int id;
+	char *name;
+	COMP_METHOD *method;
+	} SSL_COMP;
 
 DECLARE_STACK_OF(SSL_COMP)
 
@@ -529,16 +539,10 @@ struct ssl_st
 	 * same.  This is so data can be read and written to different
 	 * handlers */
 
-#ifdef HEADER_BIO_H
 	BIO *rbio; /* used by SSL_read */
 	BIO *wbio; /* used by SSL_write */
-	BIO *bbio; /* used during session-id reuse to concatinate
+	BIO *bbio; /* used during session-id reuse to concatenate
 		    * messages */
-#else
-	char *rbio; /* used by SSL_read */
-	char *wbio; /* used by SSL_write */
-	char *bbio;
-#endif
 	/* This holds a variable that indicates what we were doing
 	 * when a 0 or -1 is returned.  This is needed for
 	 * non-blocking IO so we know what request needs re-doing when
@@ -593,19 +597,11 @@ struct ssl_st
 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
 	const EVP_MD *read_hash;		/* used for mac generation */
-#ifdef HEADER_COMP_H
 	COMP_CTX *expand;			/* uncompress */
-#else
-	char *expand;
-#endif
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	const EVP_MD *write_hash;		/* used for mac generation */
-#ifdef HEADER_COMP_H
 	COMP_CTX *compress;			/* compression */
-#else
-	char *compress;	
-#endif
 
 	/* session info */
 
@@ -651,10 +647,18 @@ struct ssl_st
 				 * SSLv3/TLS rollback check */
 	};
 
+#ifdef __cplusplus
+}
+#endif
+
 #include <openssl/ssl2.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h> /* This is mostly sslv3 with a few tweaks */
 #include <openssl/ssl23.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 /* compatibility */
 #define SSL_set_app_data(s,arg)		(SSL_set_ex_data(s,0,(char *)arg))
@@ -879,7 +883,6 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 #define SSL_add_dir_cert_subjects_to_stack SSL_add_dir_cert_sub_to_stack
 #endif
 
-#ifdef HEADER_BIO_H
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
 BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
@@ -887,7 +890,6 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
 int BIO_ssl_copy_session_id(BIO *to,BIO *from);
 void BIO_ssl_shutdown(BIO *ssl_bio);
 
-#endif
 
 int	SSL_CTX_set_cipher_list(SSL_CTX *,const char *str);
 SSL_CTX *SSL_CTX_new(SSL_METHOD *meth);
@@ -911,16 +913,12 @@ const char  * SSL_get_cipher_list(SSL *s,int n);
 char *	SSL_get_shared_ciphers(SSL *s, char *buf, int len);
 int	SSL_get_read_ahead(SSL * s);
 int	SSL_pending(SSL *s);
-#ifndef NO_SOCK
 int	SSL_set_fd(SSL *s, int fd);
 int	SSL_set_rfd(SSL *s, int fd);
 int	SSL_set_wfd(SSL *s, int fd);
-#endif
-#ifdef HEADER_BIO_H
 void	SSL_set_bio(SSL *s, BIO *rbio,BIO *wbio);
 BIO *	SSL_get_rbio(SSL *s);
 BIO *	SSL_get_wbio(SSL *s);
-#endif
 int	SSL_set_cipher_list(SSL *s, const char *str);
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(SSL *s);
@@ -936,7 +934,6 @@ int	SSL_use_PrivateKey_ASN1(int pk,SSL *ssl, unsigned char *d, long len);
 int	SSL_use_certificate(SSL *ssl, X509 *x);
 int	SSL_use_certificate_ASN1(SSL *ssl, unsigned char *d, int len);
 
-#ifndef NO_STDIO
 int	SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_certificate_file(SSL *ssl, const char *file, int type);
@@ -949,7 +946,6 @@ int	SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					    const char *file);
 int	SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 					   const char *dir);
-#endif
 
 void	ERR_load_SSL_strings(void );
 void	SSL_load_error_strings(void );
@@ -966,12 +962,8 @@ void	SSL_copy_session_id(SSL *to,SSL *from);
 SSL_SESSION *SSL_SESSION_new(void);
 unsigned long SSL_SESSION_hash(SSL_SESSION *a);
 int	SSL_SESSION_cmp(SSL_SESSION *a,SSL_SESSION *b);
-#ifndef NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,SSL_SESSION *ses);
-#endif
-#ifdef HEADER_BIO_H
 int	SSL_SESSION_print(BIO *fp,SSL_SESSION *ses);
-#endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
 int	SSL_set_session(SSL *to, SSL_SESSION *session);
@@ -1025,9 +1017,9 @@ int SSL_set_trust(SSL *s, int trust);
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
-int 	SSL_read(SSL *ssl,char *buf,int num);
-int 	SSL_peek(SSL *ssl,char *buf,int num);
-int 	SSL_write(SSL *ssl,const char *buf,int num);
+int 	SSL_read(SSL *ssl,void *buf,int num);
+int 	SSL_peek(SSL *ssl,void *buf,int num);
+int 	SSL_write(SSL *ssl,const void *buf,int num);
 long	SSL_ctrl(SSL *ssl,int cmd, long larg, char *parg);
 long	SSL_callback_ctrl(SSL *, int, void (*)());
 long	SSL_CTX_ctrl(SSL_CTX *ctx,int cmd, long larg, char *parg);
@@ -1142,7 +1134,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void );
 #define SSL_CTX_get_read_ahead(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_READ_AHEAD,0,NULL)
 #define SSL_CTX_set_read_ahead(ctx,m) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,0,NULL)
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_READ_AHEAD,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
 void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
@@ -1159,16 +1151,13 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 				 DH *(*dh)(SSL *ssl,int is_export,
 					   int keylength));
 
-#ifdef HEADER_COMP_H
 int SSL_COMP_add_compression_method(int id,COMP_METHOD *cm);
-#else
-int SSL_COMP_add_compression_method(int id,char *cm);
-#endif
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
+void ERR_load_SSL_strings(void);
 
 /* Error codes for the SSL functions. */
 
@@ -1193,12 +1182,15 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL23_CONNECT				 117
 #define SSL_F_SSL23_GET_CLIENT_HELLO			 118
 #define SSL_F_SSL23_GET_SERVER_HELLO			 119
+#define SSL_F_SSL23_PEEK				 237
 #define SSL_F_SSL23_READ				 120
 #define SSL_F_SSL23_WRITE				 121
 #define SSL_F_SSL2_ACCEPT				 122
 #define SSL_F_SSL2_CONNECT				 123
 #define SSL_F_SSL2_ENC_INIT				 124
+#define SSL_F_SSL2_PEEK					 234
 #define SSL_F_SSL2_READ					 125
+#define SSL_F_SSL2_READ_INTERNAL			 236
 #define SSL_F_SSL2_SET_CERTIFICATE			 126
 #define SSL_F_SSL2_WRITE				 127
 #define SSL_F_SSL3_ACCEPT				 128
@@ -1223,6 +1215,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL3_GET_SERVER_DONE			 145
 #define SSL_F_SSL3_GET_SERVER_HELLO			 146
 #define SSL_F_SSL3_OUTPUT_CERT_CHAIN			 147
+#define SSL_F_SSL3_PEEK					 235
 #define SSL_F_SSL3_READ_BYTES				 148
 #define SSL_F_SSL3_READ_N				 149
 #define SSL_F_SSL3_SEND_CERTIFICATE_REQUEST		 150
@@ -1431,6 +1424,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_R_READ_WRONG_PACKET_TYPE			 212
 #define SSL_R_RECORD_LENGTH_MISMATCH			 213
 #define SSL_R_RECORD_TOO_LARGE				 214
+#define SSL_R_RECORD_TOO_SMALL				 1093
 #define SSL_R_REQUIRED_CIPHER_MISSING			 215
 #define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 216
 #define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 217
@@ -1518,4 +1512,3 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 }
 #endif
 #endif
-

@@ -59,21 +59,18 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.
 #endif
 
-#include <stdio.h>
 #include <sys/types.h>
 #define	DES_LONG	u_int32_t
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];
@@ -148,14 +145,14 @@ void des_ecb_encrypt(const_des_cblock *input,des_cblock *output,
 	Data is a pointer to 2 unsigned long's and ks is the
 	des_key_schedule to use.  enc, is non zero specifies encryption,
 	zero if decryption. */
-void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
+void des_encrypt1(DES_LONG *data,des_key_schedule ks, int enc);
 
-/* 	This functions is the same as des_encrypt() except that the DES
+/* 	This functions is the same as des_encrypt1() except that the DES
 	initial permutation (IP) and final permutation (FP) have been left
-	out.  As for des_encrypt(), you should not use this function.
+	out.  As for des_encrypt1(), you should not use this function.
 	It is used by the routines in the library that implement triple DES.
 	IP() des_encrypt2() des_encrypt2() des_encrypt2() FP() is the same
-	as des_encrypt() des_encrypt() des_encrypt() except faster :-). */
+	as des_encrypt1() des_encrypt1() des_encrypt1() except faster :-). */
 void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
 
 void des_encrypt3(DES_LONG *data, des_key_schedule ks1,
