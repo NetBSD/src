@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.15 1997/03/15 18:12:00 is Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.16 1997/03/17 03:19:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -54,6 +54,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>

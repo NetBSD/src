@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 1997/03/15 18:11:11 is Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 1997/03/17 03:17:40 thorpej Exp $	*/
 
 #define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -52,6 +52,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #if INET
 #include <netinet/in.h>
