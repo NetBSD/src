@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2002/05/09 12:37:59 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2003/01/18 23:20:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	__asm__ __volatile__(
 		"jmp	@%0;"
 		"mov	%1, sp"
-		:: "r"(main),"r"(proc0.p_md.md_pcb->pcb_sf.sf_r7_bank));
+		:: "r"(main),"r"(lwp0.l_md.md_pcb->pcb_sf.sf_r7_bank));
 	/* NOTREACHED */
 	while (1)
 		;
@@ -330,7 +330,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curlwp)
 		savectx(curpcb);
 
 	/* If system is cold, just halt. */
