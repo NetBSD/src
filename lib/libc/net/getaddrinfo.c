@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.56 2002/06/26 06:00:26 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.57 2002/06/27 10:22:07 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.56 2002/06/26 06:00:26 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.57 2002/06/27 10:22:07 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1731,7 +1731,7 @@ res_queryN(name, target)
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
-				printf(";; rcode = %d, ancount=%d\n", hp->rcode,
+				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 				    ntohs(hp->ancount));
 #endif
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.32 2000/12/20 20:51:08 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.33 2002/06/27 10:22:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.32 2000/12/20 20:51:08 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.33 2002/06/27 10:22:12 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -156,7 +156,7 @@ res_query(name, class, type, answer, anslen)
 	if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf(";; rcode = %d, ancount=%d\n", hp->rcode,
+			printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 			    ntohs(hp->ancount));
 #endif
 		switch (hp->rcode) {

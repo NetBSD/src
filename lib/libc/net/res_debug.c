@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.31 2002/04/16 19:17:17 groo Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.32 2002/06/27 10:22:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.31 2002/04/16 19:17:17 groo Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.32 2002/06/27 10:22:10 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -303,7 +303,7 @@ __fp_nquery(msg, len, file)
 	cp = msg + HFIXEDSZ;
 	endMark = msg + len;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX) || hp->rcode) {
-		fprintf(file, ";; ->>HEADER<<- opcode: %s, status: %s, id: %d",
+		fprintf(file, ";; ->>HEADER<<- opcode: %s, status: %s, id: %u",
 			_res_opcodes[hp->opcode],
 			_res_resultcodes[hp->rcode],
 			ntohs(hp->id));
@@ -331,10 +331,10 @@ __fp_nquery(msg, len, file)
 			fprintf(file, " cd");
 	}
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD1)) {
-		fprintf(file, "; Ques: %d", ntohs(hp->qdcount));
-		fprintf(file, ", Ans: %d", ntohs(hp->ancount));
-		fprintf(file, ", Auth: %d", ntohs(hp->nscount));
-		fprintf(file, ", Addit: %d", ntohs(hp->arcount));
+		fprintf(file, "; Ques: %u", ntohs(hp->qdcount));
+		fprintf(file, ", Ans: %u", ntohs(hp->ancount));
+		fprintf(file, ", Auth: %u", ntohs(hp->nscount));
+		fprintf(file, ", Addit: %u", ntohs(hp->arcount));
 	}
 	if ((!_res.pfcode) || (_res.pfcode & 
 		(RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1))) {
@@ -571,7 +571,7 @@ __p_rr(cp, msg, file)
 				cp += sizeof(u_char);
 				port = _getshort(cp);
 				cp += sizeof(u_int16_t);
-				fprintf(file, "\t%s\t; proto %d, port %d",
+				fprintf(file, "\t%s\t; proto %u, port %u",
 					address, protocol, port);
 			}
 			break;
@@ -643,14 +643,14 @@ __p_rr(cp, msg, file)
 	case T_MX:
 	case T_AFSDB:
 	case T_RT:
-		fprintf(file, "\t%d ", _getshort(cp));
+		fprintf(file, "\t%u ", _getshort(cp));
 		cp += INT16SZ;
 		if ((cp = p_fqname(cp, msg, file)) == NULL)
 			return (NULL);
 		break;
 
 	case T_PX:
-		fprintf(file, "\t%d ", _getshort(cp));
+		fprintf(file, "\t%u ", _getshort(cp));
 		cp += INT16SZ;
 		if ((cp = p_fqname(cp, msg, file)) == NULL)
 			return (NULL);
@@ -826,7 +826,7 @@ __p_rr(cp, msg, file)
 	        type = _getshort((const u_char *)cp);
 		cp += INT16SZ;
 		fprintf(file, " %s", p_type(type));
-		fprintf(file, "\t%d", *cp++);	/* algorithm */
+		fprintf(file, "\t%u", *cp++);	/* algorithm */
 		/* Check label value and print error if wrong. */
 		n = *cp++;
 		c = dn_count_labels (rrname);
