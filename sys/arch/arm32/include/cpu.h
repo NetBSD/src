@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.4 1996/03/08 19:08:28 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.5 1996/03/13 21:18:06 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -61,7 +61,7 @@
  */
 
 #ifndef CPU_ARM6
-#  define CPU_LATE_ABORTS
+#define CPU_LATE_ABORTS
 #endif
 
 #define COPY_SIGCODE    /* copy sigcode above user stack in exec */
@@ -154,9 +154,9 @@
 	ldmfd	sp!, {r0}		
 
 #else
-#  define IRQdisable SetCPSR(I32_bit | F32_bit, I32_bit | F32_bit);
-#  define IRQenable SetCPSR(I32_bit | F32_bit, 0);
-#endif
+#define IRQdisable SetCPSR(I32_bit | F32_bit, I32_bit | F32_bit);
+#define IRQenable SetCPSR(I32_bit | F32_bit, 0);
+#endif	/* _LOCORE */
 
 /*
  * Return TRUE/FALSE (1/0) depending on whether the frame came from USR
@@ -169,12 +169,10 @@
 
 #define CLKF_PC(frame) (frame->if_pc)
 
-#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_IRQ32_MODE)
+/*#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_IRQ32_MODE)*/
 
 /* Hack to treat FPE time as interrupt time so we can measure it */
-/*#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)*/
-
-#define cpu_set_init_frame(p, frame) (p->p_md.md_regs = frame)
+#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
 /*
  * definitions of cpu-dependent requirements
