@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.16 1998/03/23 06:44:34 mrg Exp $	*/
+/*	$NetBSD: ctype.h,v 1.17 1998/05/10 16:57:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -42,6 +42,9 @@
 
 #ifndef _CTYPE_H_
 #define _CTYPE_H_
+
+#include <sys/featuretest.h>
+
 #include <sys/cdefs.h>
 
 #define	_U	0x01
@@ -73,12 +76,17 @@ extern int	isxdigit __P ((int));
 extern int	tolower __P ((int));
 extern int	toupper __P ((int));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int	isblank __P ((int));
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 extern int	isascii __P ((int));
 extern int	toascii __P ((int));
 extern int	_tolower __P ((int));
 extern int	_toupper __P ((int));
+#endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+extern int	isblank __P ((int));
 #endif
 __END_DECLS
 
@@ -96,14 +104,19 @@ __END_DECLS
 #define	tolower(c)	((int)((_tolower_tab_ + 1)[(int)(c)]))
 #define	toupper(c)	((int)((_toupper_tab_ + 1)[(int)(c)]))
 
-#if !defined(_ANSI_SOURCE) && !defined (_POSIX_SOURCE)
-#if notyet
-#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
-#endif
+#if !defined(_ANSI_SOURCE) && !defined (_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 #define	isascii(c)	((unsigned)(c) <= 0177)
 #define	toascii(c)	((c) & 0177)
 #define _tolower(c)	((c) - 'A' + 'a')
 #define _toupper(c)	((c) - 'a' + 'A')
+#endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+#if notyet
+#define isblank(c)	((int)((_ctype_ + 1)[(int)(c)] & _B))
+#endif
 #endif
 
 #ifdef _CTYPE_PRIVATE
