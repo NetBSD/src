@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.23 1996/02/01 00:40:44 jtc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.24 1996/02/09 21:48:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,8 +63,11 @@
 #include <nfs/nfsmount.h>
 #include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
+#include <nfs/nfs_var.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#include <vm/vm.h>
 
 #include <netinet/in.h>
 #ifdef ISO
@@ -266,6 +269,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 /*
  * copies mbuf chain to the uio scatter/gather list
  */
+int
 nfsm_mbuftouio(mrep, uiop, siz, dpos)
 	struct mbuf **mrep;
 	register struct uio *uiop;
@@ -340,6 +344,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 /*
  * copies a uio scatter/gather list to an mbuf chain...
  */
+int
 nfsm_uiotombuf(uiop, mq, siz, bpos)
 	register struct uio *uiop;
 	struct mbuf **mq;
@@ -427,6 +432,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
  * This is used by the macros nfsm_dissect and nfsm_dissecton for tough
  * cases. (The macros use the vars. dpos and dpos2)
  */
+int
 nfsm_disct(mdp, dposp, siz, left, cp2)
 	struct mbuf **mdp;
 	caddr_t *dposp;
@@ -489,6 +495,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 /*
  * Advance the position in the mbuf chain.
  */
+int
 nfs_adv(mdp, dposp, offs, left)
 	struct mbuf **mdp;
 	caddr_t *dposp;
@@ -515,13 +522,14 @@ nfs_adv(mdp, dposp, offs, left)
 /*
  * Copy a string into mbufs for the hard cases...
  */
+int
 nfsm_strtmbuf(mb, bpos, cp, siz)
 	struct mbuf **mb;
 	char **bpos;
 	char *cp;
 	long siz;
 {
-	register struct mbuf *m1, *m2;
+	register struct mbuf *m1 = NULL, *m2;
 	long left, xfer, len, tlen;
 	u_int32_t *tl;
 	int putsize;
@@ -580,6 +588,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 /*
  * Called once to initialize data structures...
  */
+void
 nfs_init()
 {
 	register int i;
@@ -632,7 +641,7 @@ nfs_init()
 	 * Initialize reply list and start timer
 	 */
 	TAILQ_INIT(&nfs_reqq);
-	nfs_timer();
+	nfs_timer(NULL);
 }
 
 #ifdef NFSCLIENT
@@ -650,6 +659,7 @@ nfs_init()
  * Iff vap not NULL
  *    copy the attributes to *vaper
  */
+int
 nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	struct vnode **vpp;
 	struct mbuf **mdp;
@@ -659,7 +669,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	register struct vnode *vp = *vpp;
 	register struct vattr *vap;
 	register struct nfsv2_fattr *fp;
-	extern int (**spec_nfsv2nodeop_p)();
+	extern int (**spec_nfsv2nodeop_p) __P((void *));
 	register struct nfsnode *np;
 	register struct nfsnodehashhead *nhpp;
 	register int32_t t1;
@@ -676,7 +686,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	dpos = *dposp;
 	t1 = (mtod(md, caddr_t) + md->m_len) - dpos;
 	isnq = (VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS);
-	if (error = nfsm_disct(&md, &dpos, NFSX_FATTR(isnq), t1, &cp2))
+	error = nfsm_disct(&md, &dpos, NFSX_FATTR(isnq), t1, &cp2);
+	if (error)
 		return (error);
 	fp = (struct nfsv2_fattr *)cp2;
 	vtyp = nfstov_type(fp->fa_type);
@@ -705,7 +716,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 			vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
 #ifdef FIFO
-			extern int (**fifo_nfsv2nodeop_p)();
+			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
 #else
 			return (EOPNOTSUPP);
@@ -713,7 +724,8 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		}
 		if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
-			if (nvp = checkalias(vp, (dev_t)rdev, vp->v_mount)) {
+			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
+			if (nvp) {
 				/*
 				 * Discard unneeded vnode, but save its nfsnode.
 				 */
@@ -808,6 +820,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
  * If the cache is valid, copy contents to *vap and return 0
  * otherwise return an error
  */
+int
 nfs_getattrcache(vp, vaper)
 	register struct vnode *vp;
 	struct vattr *vaper;
@@ -865,6 +878,7 @@ nfs_getattrcache(vp, vaper)
 /*
  * Set up nameidata for a lookup() call and do it
  */
+int
 nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 	register struct nameidata *ndp;
 	fhandle_t *fhp;
@@ -915,7 +929,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 	if (len > 0) {
 		if (rem >= len)
 			*dposp += len;
-		else if (error = nfs_adv(mdp, dposp, len, rem))
+		else if ((error = nfs_adv(mdp, dposp, len, rem)) != 0)
 			goto out;
 	}
 	ndp->ni_pathlen = tocp - cnp->cn_pnbuf;
@@ -923,8 +937,9 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 	/*
 	 * Extract and set starting directory.
 	 */
-	if (error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
-	    nam, &rdonly))
+	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+			     nam, &rdonly);
+	if (error)
 		goto out;
 	if (dp->v_type != VDIR) {
 		vrele(dp);
@@ -940,7 +955,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, p)
 	 * And call lookup() to do the real work
 	 */
 	cnp->cn_proc = p;
-	if (error = lookup(ndp))
+	if ((error = lookup(ndp)) != 0)
 		goto out;
 	/*
 	 * Check for encountering a symbolic link
@@ -1025,7 +1040,7 @@ nfsm_adj(mp, len, nul)
 		}
 		count -= m->m_len;
 	}
-	while (m = m->m_next)
+	while ((m = m->m_next) != NULL)
 		m->m_len = 0;
 }
 
@@ -1036,6 +1051,7 @@ nfsm_adj(mp, len, nul)
  *	- if cred->cr_uid == 0 or MNT_EXPORTANON set it to credanon
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
+int
 nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 	fhandle_t *fhp;
 	int lockflag;
@@ -1054,7 +1070,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 	*vpp = (struct vnode *)0;
 	if ((mp = getvfs(&fhp->fh_fsid)) == NULL)
 		return (ESTALE);
-	if (error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon))
+	error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon);
+	if (error)
 		return (error);
 	/*
 	 * Check/setup credentials.
@@ -1097,6 +1114,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
  * The AF_INET family is handled as a special case so that address mbufs
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */
+int
 netaddr_match(family, haddr, nam)
 	int family;
 	union nethostaddr *haddr;
