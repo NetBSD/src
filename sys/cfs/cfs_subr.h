@@ -1,4 +1,4 @@
-/*	$NetBSD: cfs_subr.h,v 1.2 1998/09/08 17:12:47 rvb Exp $	*/
+/*	$NetBSD: cfs_subr.h,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
 
 /*
  * 
@@ -31,17 +31,17 @@
  * 	@(#) cfs/cfs_subr.h,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
-struct cnode *cfs_alloc(void);
-void  cfs_free(struct cnode *cp);
-struct cnode *cfs_find(ViceFid *fid);
-void cfs_flush(enum dc_status dcstat);
-void cfs_testflush(void);
-int  cfs_checkunmounting(struct mount *mp);
-int  cfs_cacheprint(struct mount *whoIam);
-void cfs_debugon(void);
-void cfs_debugoff(void);
-int  cfs_kill(struct mount *whoIam, enum dc_status dcstat);
-void cfs_save(struct cnode *cp);
-void cfs_unsave(struct cnode *cp);
+struct cnode *coda_alloc(void);
+void  coda_free(struct cnode *cp);
+struct cnode *coda_find(ViceFid *fid);
+void coda_flush(enum dc_status dcstat);
+void coda_testflush(void);
+int  coda_checkunmounting(struct mount *mp);
+int  coda_cacheprint(struct mount *whoIam);
+void coda_debugon(void);
+void coda_debugoff(void);
+int  coda_kill(struct mount *whoIam, enum dc_status dcstat);
+void coda_save(struct cnode *cp);
+void coda_unsave(struct cnode *cp);
 
 

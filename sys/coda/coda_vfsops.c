@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.2 1998/09/08 17:12:47 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_vfsops.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) cfs/coda_vfsops.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
 /* 
@@ -47,6 +47,10 @@
 /*
  * HISTORY
  * $Log: coda_vfsops.c,v $
+ * Revision 1.3  1998/09/12 15:05:49  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
  * Revision 1.2  1998/09/08 17:12:47  rvb
  * Pass2 complete
  *
@@ -69,13 +73,13 @@
  * Fixes up mainly to flush iopen and friends
  * 
  * Revision 1.7  98/01/23  11:53:45  rvb
- * Bring RVB_CFS1_1 to HEAD
+ * Bring RVB_CODA1_1 to HEAD
  * 
  * Revision 1.6.2.6  98/01/23  11:21:07  rvb
  * Sync with 2.2.5
  * 
  * Revision 1.6.2.5  98/01/22  13:05:33  rvb
- * Move makecfsnode ctlfid later so vfsp is known
+ * Move make_coda_node ctlfid later so vfsp is known
  * 
  * Revision 1.6.2.4  97/12/19  14:26:05  rvb
  * session id
@@ -96,7 +100,7 @@
  * Final cfs_venus.c w/o macros, but one locking bug
  * 
  * Revision 1.5.14.7  97/11/21  13:22:03  rvb
- * Catch a few cfscalls in cfs_vfsops.c
+ * Catch a few coda_calls in coda_vfsops.c
  * 
  * Revision 1.5.14.6  97/11/20  11:46:48  rvb
  * Capture current cfs_venus
@@ -134,7 +138,7 @@
  * Added support for Coda MiniCache and raw inode calls (final commit)
  *
  * Revision 1.1.2.1  1995/12/20 01:57:32  bnoble
- * Added CFS-specific files
+ * Added CODA-specific files
  *
  * Revision 3.1.1.1  1995/03/04  19:08:02  bnoble
  * Branch for NetBSD port revisions
@@ -162,7 +166,7 @@
  * merge kernel/latest and alpha/src/cfs
  * 
  * Revision 2.3  92/09/30  14:16:32  mja
- * 	Added call to cfs_flush to cfs_unmount.
+ * 	Added call to coda_flush to coda_unmount.
  * 	[90/12/15            dcs]
  * 
  * 	Added contributors blurb.
@@ -178,7 +182,7 @@
  * 
  */ 
 
-#include <vcfs.h>
+#include <vcoda.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,65 +202,65 @@
 /* for VN_RDEV */
 #include <miscfs/specfs/specdev.h>
 
-int cfsdebug = 0;
+int codadebug = 0;
 
-int cfs_vfsop_print_entry = 0;
-#define ENTRY if(cfs_vfsop_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
+int coda_vfsop_print_entry = 0;
+#define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
 
-struct vnode *cfs_ctlvp;
-struct cfs_mntinfo cfs_mnttbl[NVCFS]; /* indexed by minor device number */
+struct vnode *coda_ctlvp;
+struct coda_mntinfo coda_mnttbl[NVCODA]; /* indexed by minor device number */
 
 /* structure to keep statistics of internally generated/satisfied calls */
 
-struct cfs_op_stats cfs_vfsopstats[CFS_VFSOPS_SIZE];
+struct coda_op_stats coda_vfsopstats[CODA_VFSOPS_SIZE];
 
-#define MARK_ENTRY(op) (cfs_vfsopstats[op].entries++)
-#define MARK_INT_SAT(op) (cfs_vfsopstats[op].sat_intrn++)
-#define MARK_INT_FAIL(op) (cfs_vfsopstats[op].unsat_intrn++)
-#define MRAK_INT_GEN(op) (cfs_vfsopstats[op].gen_intrn++)
+#define MARK_ENTRY(op) (coda_vfsopstats[op].entries++)
+#define MARK_INT_SAT(op) (coda_vfsopstats[op].sat_intrn++)
+#define MARK_INT_FAIL(op) (coda_vfsopstats[op].unsat_intrn++)
+#define MRAK_INT_GEN(op) (coda_vfsopstats[op].gen_intrn++)
 
-extern int cfsnc_initialized;     /* Set if cache has been initialized */
+extern int coda_nc_initialized;     /* Set if cache has been initialized */
 extern int vc_nb_open __P((dev_t, int, int, struct proc *));
-extern struct cdevsw cdevsw[];    /* For sanity check in cfs_mount */
-extern struct vnodeopv_desc cfs_vnodeop_opv_desc;
+extern struct cdevsw cdevsw[];    /* For sanity check in coda_mount */
+extern struct vnodeopv_desc coda_vnodeop_opv_desc;
 
-struct vnodeopv_desc *cfs_vnodeopv_descs[] = {
-	&cfs_vnodeop_opv_desc,
+struct vnodeopv_desc *coda_vnodeopv_descs[] = {
+	&coda_vnodeop_opv_desc,
 	NULL,
 };
 
-struct vfsops cfs_vfsops = {
-    MOUNT_CFS,
-    cfs_mount,
-    cfs_start,
-    cfs_unmount,
-    cfs_root,
-    cfs_quotactl,
-    cfs_nb_statfs,
-    cfs_sync,
-    cfs_vget,
+struct vfsops coda_vfsops = {
+    MOUNT_CODA,
+    coda_mount,
+    coda_start,
+    coda_unmount,
+    coda_root,
+    coda_quotactl,
+    coda_nb_statfs,
+    coda_sync,
+    coda_vget,
     (int (*) (struct mount *, struct fid *, struct mbuf *, struct vnode **,
 	      int *, struct ucred **))
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
-    cfs_init,
-    cfs_sysctl,
+    coda_init,
+    coda_sysctl,
     (int (*)(void)) eopnotsupp,
-    cfs_vnodeopv_descs,
+    coda_vnodeopv_descs,
     0
 };
 
 int
-cfs_vfsopstats_init(void)
+coda_vfsopstats_init(void)
 {
 	register int i;
 	
-	for (i=0;i<CFS_VFSOPS_SIZE;i++) {
-		cfs_vfsopstats[i].opcode = i;
-		cfs_vfsopstats[i].entries = 0;
-		cfs_vfsopstats[i].sat_intrn = 0;
-		cfs_vfsopstats[i].unsat_intrn = 0;
-		cfs_vfsopstats[i].gen_intrn = 0;
+	for (i=0;i<CODA_VFSOPS_SIZE;i++) {
+		coda_vfsopstats[i].opcode = i;
+		coda_vfsopstats[i].entries = 0;
+		coda_vfsopstats[i].sat_intrn = 0;
+		coda_vfsopstats[i].unsat_intrn = 0;
+		coda_vfsopstats[i].gen_intrn = 0;
 	}
 	
 	return 0;
@@ -268,7 +272,7 @@ cfs_vfsopstats_init(void)
  */
 /*ARGSUSED*/
 int
-cfs_mount(vfsp, path, data, ndp, p)
+coda_mount(vfsp, path, data, ndp, p)
     struct mount *vfsp;		/* Allocated and initialized by mount(2) */
     const char *path;		/* path covered: ignored by the fs-layer */
     void *data;			/* Need to define a data type for this in netbsd? */
@@ -278,7 +282,7 @@ cfs_mount(vfsp, path, data, ndp, p)
     struct vnode *dvp;
     struct cnode *cp;
     dev_t dev;
-    struct cfs_mntinfo *mi;
+    struct coda_mntinfo *mi;
     struct vnode *rootvp;
     ViceFid rootfid;
     ViceFid ctlfid;
@@ -286,12 +290,12 @@ cfs_mount(vfsp, path, data, ndp, p)
 
     ENTRY;
 
-    cfs_vfsopstats_init();
-    cfs_vnodeopstats_init();
+    coda_vfsopstats_init();
+    coda_vnodeopstats_init();
     
-    MARK_ENTRY(CFS_MOUNT_STATS);
-    if (CFS_MOUNTED(vfsp)) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+    MARK_ENTRY(CODA_MOUNT_STATS);
+    if (CODA_MOUNTED(vfsp)) {
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(EBUSY);
     }
     
@@ -302,18 +306,18 @@ cfs_mount(vfsp, path, data, ndp, p)
     dvp = ndp->ni_vp;
 
     if (error) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return (error);
     }
     if (dvp->v_type != VCHR) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	vrele(dvp);
 	return(ENXIO);
     }
     dev = dvp->v_specinfo->si_rdev;
     vrele(dvp);
     if (major(dev) >= nchrdev || major(dev) < 0) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
 
@@ -322,54 +326,54 @@ cfs_mount(vfsp, path, data, ndp, p)
      */
     if (cdevsw[major(dev)].d_open != vc_nb_open)
     {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
     
-    if (minor(dev) >= NVCFS || minor(dev) < 0) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+    if (minor(dev) >= NVCODA || minor(dev) < 0) {
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
     
     /*
      * Initialize the mount record and link it to the vfs struct
      */
-    mi = &cfs_mnttbl[minor(dev)];
+    mi = &coda_mnttbl[minor(dev)];
     
     if (!VC_OPEN(&mi->mi_vcomm)) {
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENODEV);
     }
     
     /* No initialization (here) of mi_vcomm! */
     vfsp->mnt_data = (qaddr_t)mi;
     vfsp->mnt_stat.f_fsid.val[0] = 0;
-    vfsp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CFS);
+    vfsp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CODA);
     mi->mi_vfsp = vfsp;
     
     /*
      * Make a root vnode to placate the Vnode interface, but don't
-     * actually make the CFS_ROOT call to venus until the first call
-     * to cfs_root in case a server is down while venus is starting.
+     * actually make the CODA_ROOT call to venus until the first call
+     * to coda_root in case a server is down while venus is starting.
      */
     rootfid.Volume = 0;
     rootfid.Vnode = 0;
     rootfid.Unique = 0;
-    cp = makecfsnode(&rootfid, vfsp, VDIR);
+    cp = make_coda_node(&rootfid, vfsp, VDIR);
     rootvp = CTOV(cp);
     rootvp->v_flag |= VROOT;
 	
     ctlfid.Volume = CTL_VOL;
     ctlfid.Vnode = CTL_VNO;
     ctlfid.Unique = CTL_UNI;
-/*  cp = makecfsnode(&ctlfid, vfsp, VCHR);
+/*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
     The above code seems to cause a loop in the cnode links.
     I don't totally understand when it happens, it is caught
     when closing down the system.
  */
-    cp = makecfsnode(&ctlfid, 0, VCHR);
+    cp = make_coda_node(&ctlfid, 0, VCHR);
 
-    cfs_ctlvp = CTOV(cp);
+    coda_ctlvp = CTOV(cp);
 
     /* Add vfs and rootvp to chain of vfs hanging off mntinfo */
     mi->mi_vfsp = vfsp;
@@ -380,18 +384,18 @@ cfs_mount(vfsp, path, data, ndp, p)
 
     /* error is currently guaranteed to be zero, but in case some
        code changes... */
-    CFSDEBUG(1,
-	     myprintf(("cfs_mount returned %d\n",error)););
+    CODADEBUG(1,
+	     myprintf(("coda_mount returned %d\n",error)););
     if (error)
-	MARK_INT_FAIL(CFS_MOUNT_STATS);
+	MARK_INT_FAIL(CODA_MOUNT_STATS);
     else
-	MARK_INT_SAT(CFS_MOUNT_STATS);
+	MARK_INT_SAT(CODA_MOUNT_STATS);
     
     return(error);
 }
 
 int
-cfs_start(vfsp, flags, p)
+coda_start(vfsp, flags, p)
     struct mount *vfsp;
     int flags;
     struct proc *p;
@@ -401,18 +405,18 @@ cfs_start(vfsp, flags, p)
 }
 
 int
-cfs_unmount(vfsp, mntflags, p)
+coda_unmount(vfsp, mntflags, p)
     struct mount *vfsp;
     int mntflags;
     struct proc *p;
 {
-    struct cfs_mntinfo *mi = vftomi(vfsp);
+    struct coda_mntinfo *mi = vftomi(vfsp);
     int active, error = 0;
     
     ENTRY;
-    MARK_ENTRY(CFS_UMOUNT_STATS);
-    if (!CFS_MOUNTED(vfsp)) {
-	MARK_INT_FAIL(CFS_UMOUNT_STATS);
+    MARK_ENTRY(CODA_UMOUNT_STATS);
+    if (!CODA_MOUNTED(vfsp)) {
+	MARK_INT_FAIL(CODA_UMOUNT_STATS);
 	return(EINVAL);
     }
     
@@ -421,13 +425,13 @@ cfs_unmount(vfsp, mntflags, p)
 	    return (EBUSY); 	/* Venus is still running */
 
 #ifdef	DEBUG
-	printf("cfs_unmount: ROOT: vp %p, cp %p\n", mi->mi_rootvp, VTOC(mi->mi_rootvp));
+	printf("coda_unmount: ROOT: vp %p, cp %p\n", mi->mi_rootvp, VTOC(mi->mi_rootvp));
 #endif
 	vrele(mi->mi_rootvp);
 
-	active = cfs_kill(vfsp, NOT_DOWNCALL);
+	active = coda_kill(vfsp, NOT_DOWNCALL);
 	error = vflush(mi->mi_vfsp, NULLVP, FORCECLOSE);
-	printf("cfs_unmount: active = %d, vflush active %d\n", active, error);
+	printf("coda_unmount: active = %d, vflush active %d\n", active, error);
 	error = 0;
 
 	/* I'm going to take this out to allow lookups to go through. I'm
@@ -440,9 +444,9 @@ cfs_unmount(vfsp, mntflags, p)
 	mi->mi_rootvp = NULL;
 
 	if (error)
-	    MARK_INT_FAIL(CFS_UMOUNT_STATS);
+	    MARK_INT_FAIL(CODA_UMOUNT_STATS);
 	else
-	    MARK_INT_SAT(CFS_UMOUNT_STATS);
+	    MARK_INT_SAT(CODA_UMOUNT_STATS);
 
 	return(error);
     }
@@ -453,18 +457,18 @@ cfs_unmount(vfsp, mntflags, p)
  * find root of cfs
  */
 int
-cfs_root(vfsp, vpp)
+coda_root(vfsp, vpp)
 	struct mount *vfsp;
 	struct vnode **vpp;
 {
-    struct cfs_mntinfo *mi = vftomi(vfsp);
+    struct coda_mntinfo *mi = vftomi(vfsp);
     struct vnode **result;
     int error;
     struct proc *p = curproc;    /* XXX - bnoble */
     ViceFid VFid;
 
     ENTRY;
-    MARK_ENTRY(CFS_ROOT_STATS);
+    MARK_ENTRY(CODA_ROOT_STATS);
     result = NULL;
     
     if (vfsp == mi->mi_vfsp) {
@@ -476,7 +480,7 @@ cfs_root(vfsp, vpp)
 		/* On Mach, this is vref.  On NetBSD, VOP_LOCK */
 		vref(*vpp);
 		vn_lock(*vpp, LK_EXCLUSIVE);
-		MARK_INT_SAT(CFS_ROOT_STATS);
+		MARK_INT_SAT(CODA_ROOT_STATS);
 		return(0);
 	    }
     }
@@ -488,34 +492,34 @@ cfs_root(vfsp, vpp)
 	 * Save the new rootfid in the cnode, and rehash the cnode into the
 	 * cnode hash with the new fid key.
 	 */
-	cfs_unsave(VTOC(mi->mi_rootvp));
+	coda_unsave(VTOC(mi->mi_rootvp));
 	VTOC(mi->mi_rootvp)->c_fid = VFid;
-	cfs_save(VTOC(mi->mi_rootvp));
+	coda_save(VTOC(mi->mi_rootvp));
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
 	vn_lock(*vpp, LK_EXCLUSIVE);
-	MARK_INT_SAT(CFS_ROOT_STATS);
+	MARK_INT_SAT(CODA_ROOT_STATS);
 	goto exit;
     } else if (error == ENODEV) {
 	/* Gross hack here! */
 	/*
-	 * If Venus fails to respond to the CFS_ROOT call, cfscall returns
+	 * If Venus fails to respond to the CODA_ROOT call, coda_call returns
 	 * ENODEV. Return the uninitialized root vnode to allow vfs
 	 * operations such as unmount to continue. Without this hack,
 	 * there is no way to do an unmount if Venus dies before a 
-	 * successful CFS_ROOT call is done. All vnode operations 
+	 * successful CODA_ROOT call is done. All vnode operations 
 	 * will fail.
 	 */
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
 	vn_lock(*vpp, LK_EXCLUSIVE);
-	MARK_INT_FAIL(CFS_ROOT_STATS);
+	MARK_INT_FAIL(CODA_ROOT_STATS);
 	error = 0;
 	goto exit;
     } else {
-	CFSDEBUG( CFS_ROOT, myprintf(("error %d in CFS_ROOT\n", error)); );
-	MARK_INT_FAIL(CFS_ROOT_STATS);
+	CODADEBUG( CODA_ROOT, myprintf(("error %d in CODA_ROOT\n", error)); );
+	MARK_INT_FAIL(CODA_ROOT_STATS);
 		
 	goto exit;
     }
@@ -524,7 +528,7 @@ cfs_root(vfsp, vpp)
 }
 
 int
-cfs_quotactl(vfsp, cmd, uid, arg, p)
+coda_quotactl(vfsp, cmd, uid, arg, p)
     struct mount *vfsp;
     int cmd;
     uid_t uid;
@@ -539,15 +543,15 @@ cfs_quotactl(vfsp, cmd, uid, arg, p)
  * Get file system statistics.
  */
 int
-cfs_nb_statfs(vfsp, sbp, p)
+coda_nb_statfs(vfsp, sbp, p)
     register struct mount *vfsp;
     struct statfs *sbp;
     struct proc *p;
 {
     ENTRY;
-/*  MARK_ENTRY(CFS_STATFS_STATS); */
-    if (!CFS_MOUNTED(vfsp)) {
-/*	MARK_INT_FAIL(CFS_STATFS_STATS);*/
+/*  MARK_ENTRY(CODA_STATFS_STATS); */
+    if (!CODA_MOUNTED(vfsp)) {
+/*	MARK_INT_FAIL(CODA_STATFS_STATS);*/
 	return(EINVAL);
     }
     
@@ -567,10 +571,10 @@ cfs_nb_statfs(vfsp, sbp, p)
     sbp->f_files = NB_SFS_SIZ;
     sbp->f_ffree = NB_SFS_SIZ;
     bcopy((caddr_t)&(vfsp->mnt_stat.f_fsid), (caddr_t)&(sbp->f_fsid), sizeof (fsid_t));
-    strncpy(sbp->f_fstypename, MOUNT_CFS, MFSNAMELEN-1);
+    strncpy(sbp->f_fstypename, MOUNT_CODA, MFSNAMELEN-1);
     strcpy(sbp->f_mntonname, "/coda");
-    strcpy(sbp->f_mntfromname, "CFS");
-/*  MARK_INT_SAT(CFS_STATFS_STATS); */
+    strcpy(sbp->f_mntfromname, "CODA");
+/*  MARK_INT_SAT(CODA_STATFS_STATS); */
     return(0);
 }
 
@@ -578,20 +582,20 @@ cfs_nb_statfs(vfsp, sbp, p)
  * Flush any pending I/O.
  */
 int
-cfs_sync(vfsp, waitfor, cred, p)
+coda_sync(vfsp, waitfor, cred, p)
     struct mount *vfsp;
     int    waitfor;
     struct ucred *cred;
     struct proc *p;
 {
     ENTRY;
-    MARK_ENTRY(CFS_SYNC_STATS);
-    MARK_INT_SAT(CFS_SYNC_STATS);
+    MARK_ENTRY(CODA_SYNC_STATS);
+    MARK_INT_SAT(CODA_SYNC_STATS);
     return(0);
 }
 
 int
-cfs_vget(vfsp, ino, vpp)
+coda_vget(vfsp, ino, vpp)
     struct mount *vfsp;
     ino_t ino;
     struct vnode **vpp;
@@ -606,7 +610,7 @@ cfs_vget(vfsp, ino, vpp)
  * a type-specific fid.  
  */
 int
-cfs_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
+coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     register struct mount *vfsp;    
     struct fid *fhp;
     struct mbuf *nam;
@@ -623,33 +627,33 @@ cfs_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 
     ENTRY;
     
-    MARK_ENTRY(CFS_VGET_STATS);
+    MARK_ENTRY(CODA_VGET_STATS);
     /* Check for vget of control object. */
     if (IS_CTL_FID(&cfid->cfid_fid)) {
-	*vpp = cfs_ctlvp;
-	vref(cfs_ctlvp);
-	MARK_INT_SAT(CFS_VGET_STATS);
+	*vpp = coda_ctlvp;
+	vref(coda_ctlvp);
+	MARK_INT_SAT(CODA_VGET_STATS);
 	return(0);
     }
     
     error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, p, &VFid, &vtype);
     
     if (error) {
-	CFSDEBUG(CFS_VGET, myprintf(("vget error %d\n",error));)
+	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)
 	    *vpp = (struct vnode *)0;
     } else {
-	CFSDEBUG(CFS_VGET, 
+	CODADEBUG(CODA_VGET, 
 		 myprintf(("vget: vol %lx vno %lx uni %lx type %d result %d\n",
 			VFid.Volume, VFid.Vnode, VFid.Unique, vtype, error)); )
 	    
-	cp = makecfsnode(&VFid, vfsp, vtype);
+	cp = make_coda_node(&VFid, vfsp, vtype);
 	*vpp = CTOV(cp);
     }
     return(error);
 }
 
 int
-cfs_vptofh(vnp, fidp)
+coda_vptofh(vnp, fidp)
     struct vnode *vnp;
     struct fid   *fidp;
 {
@@ -658,13 +662,13 @@ cfs_vptofh(vnp, fidp)
 }
 
 void
-cfs_init(void)
+coda_init(void)
 {
     ENTRY;
 }
 
 int
-cfs_sysctl(name, namelen, oldp, oldlp, newp, newl, p)
+coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
@@ -700,7 +704,7 @@ getNewVnode(vpp)
      struct vnode **vpp;
 {
     struct cfid cfid;
-    struct cfs_mntinfo *mi = vftomi((*vpp)->v_mount);
+    struct coda_mntinfo *mi = vftomi((*vpp)->v_mount);
     
     ENTRY;
 
@@ -714,7 +718,7 @@ getNewVnode(vpp)
     if (mi->mi_vfsp == NULL)
 	return ENODEV;
     
-    return cfs_fhtovp(mi->mi_vfsp, (struct fid*)&cfid, NULL, vpp,
+    return coda_fhtovp(mi->mi_vfsp, (struct fid*)&cfid, NULL, vpp,
 		      NULL, NULL);
 }
 
