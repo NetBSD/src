@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.9 1999/09/08 21:17:57 jsm Exp $	*/
+/*	$NetBSD: move.c,v 1.10 2002/01/31 17:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.9 1999/09/08 21:17:57 jsm Exp $");
+__RCSID("$NetBSD: move.c,v 1.10 2002/01/31 17:35:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,10 @@ teleport:
 			Running = FALSE;
 			mvaddch(My_pos.y, My_pos.x, ' ');
 			My_pos = *rnd_pos();
+			telmsg(1);
+			refresh();
+			sleep(1);
+			telmsg(0);
 			mvaddch(My_pos.y, My_pos.x, PLAYER);
 			leaveok(stdscr, FALSE);
 			refresh();
