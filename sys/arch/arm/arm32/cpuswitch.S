@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.11 2002/08/05 23:08:55 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.12 2002/08/06 17:45:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -313,7 +313,7 @@ ENTRY(cpu_switch)
 
 	/* First phase : find a new lwp */
 
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
 
 Lswitch_search:
 	IRQdisable
@@ -453,7 +453,7 @@ switch_resume:
 	mov	r4, #0x00000001
 
 	/*
-	 * If the curlwp on entry to cpu_switch was zero then the
+	 * If the old lwp on entry to cpu_switch was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
@@ -461,20 +461,20 @@ switch_resume:
 	teq	r1, #0x00000000
 	beq	switch_exited
 
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
-	/* Remember the old process in r0 */
+	/* Remember the old lwp in r0 */
 	mov	r0, r1
 
-	/* Get the user structure for the old process. */
+	/* Get the user structure for the old lwp. */
 	ldr	r1, [r1, #(L_ADDR)]
 
-	/* Save all the registers in the old process's pcb */
+	/* Save all the registers in the old lwp's pcb */
 	add	r7, r1, #(PCB_R8)
 	stmia	r7, {r8-r13}
 
@@ -491,7 +491,7 @@ switch_resume:
 
         msr	cpsr_all, r3		/* Restore the old mode */
 
-	/* rem: r0 = old proc */
+	/* rem: r0 = old lwp */
 	/* rem: r1 = old pcb */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
@@ -697,7 +697,6 @@ ENTRY(switch_exit)
 	 */
 
 	mov	r3, r0
- 	ldr	r1, Llwp0
 
 	/* In case we fault */
 	ldr	r0, Lcurlwp
@@ -753,7 +752,7 @@ Lse_context_switched:
 	ldr	r1, Lcurlwp
 	str	r0, [r1]
 
-	ldr	r1, Llwp0
+	mov	r1, #0x00000000		/* r1 = old lwp = NULL */
 	b	Lswitch_search
 
 /*
@@ -770,7 +769,6 @@ ENTRY(switch_lwp_exit)
 	 */
 
 	mov	r3, r0
- 	ldr	r1, Llwp0
 
 	/* In case we fault */
 	mov	r2, #0x00000000
@@ -826,7 +824,7 @@ Lsle_context_switched:
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
-	ldr	r1, Llwp0
+	mov	r1, #0x00000000		/* r1 = old lwp = NULL */
 	b	Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
