@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.53 2001/05/28 21:06:18 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.53.18.1 2002/06/01 22:45:33 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,10 +64,10 @@
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef	_SUN3_
-#include <machine/param3.h>
+#include <arch/sun3/include/param3.h>
 #endif	/* SUN3 */
 #ifdef	_SUN3X_
-#include <machine/param3x.h>
+#include <arch/sun3/include/param3x.h>
 #endif	/* SUN3X */
 #endif	/* _KERNEL */
 
