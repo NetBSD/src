@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.5 2002/12/19 09:58:24 jmc Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.6 2003/10/18 12:47:28 enami Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.5 2002/12/19 09:58:24 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.6 2003/10/18 12:47:28 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -316,7 +316,5 @@ sbpscsi_minphys(bp)
         struct buf *bp;
 {
 
-        if (bp->b_bcount > SBP2_MAXPHYS)
-                bp->b_bcount = SBP2_MAXPHYS;
 	minphys(bp);
 }
