@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 1996/03/27 10:20:44 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.17 1996/05/26 20:50:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,9 +50,17 @@
  */
 
 #include "assym.h"
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	.text
+	.globl  _kernel_text
+_kernel_text:
+
 #include <atari/atari/vectors.s>
 
-	.text
 /*
  * This is where we wind up if the kernel jumps to location 0.
  * (i.e. a bogus PC)  This is known to immediately follow the vector
