@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/11/19 05:31:01 jmc Exp $
+#	$NetBSD: Makefile,v 1.15 2001/12/02 01:43:12 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -38,7 +38,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	vnconfig -v -c ${VND} ${IMAGE}.tmp 512/${RAMDISKSPC}/1/${RAMDISKCYLS}
 	-disklabel ${VND} >tmplabel
 	disklabel -r -R ${VND} tmplabel
-	newfs -B le -m 0 -o space -i 5050 -c 80 ${VND_RDEV} 
+	newfs -B le -m 0 -o space -i 4800 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -52,7 +52,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
