@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.6 1993/06/17 16:34:25 brezak Exp $
+ *	$Id: vm_swap.c,v 1.7 1993/06/27 06:34:41 andrew Exp $
  */
 
 #include "param.h"
@@ -60,6 +60,7 @@ struct rlist *swapmap = NULL;
  * to buffers, but rather to pages that
  * are being swapped in and out.
  */
+void
 swapinit()
 {
 	register int i;
@@ -101,6 +102,7 @@ swapinit()
 	sp->av_forw = NULL;
 }
 
+int
 swstrategy(bp)
 	register struct buf *bp;
 {

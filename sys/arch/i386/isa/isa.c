@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.20 1993/06/20 07:24:53 deraadt Exp $
+ *	$Id: isa.c,v 1.21 1993/06/27 06:27:29 andrew Exp $
  */
 
 /*
@@ -57,6 +57,7 @@
 #include "malloc.h"
 #include "rlist.h"
 #include "machine/segments.h"
+#include "machine/cpufunc.h"
 #include "vm/vm.h"
 #include "i386/isa/isa_device.h"
 #include "i386/isa/isa.h"
@@ -87,10 +88,12 @@ u_short *Crtat = (u_short *)MONO_BUF;
 
 int config_isadev(struct isa_device *, u_int *);
 void config_attach(struct isa_driver *, struct isa_device *);
+static void sysbeepstop(int);
 
 /*
  * Configure all ISA devices
  */
+void
 isa_configure() {
 	struct isa_device *dvp;
 	struct isa_driver *dp;
@@ -129,6 +132,7 @@ isa_configure() {
 /*
  * Configure an ISA device.
  */
+int
 config_isadev(isdp, mp)
 	struct isa_device *isdp;
 	u_int *mp;
@@ -247,6 +251,7 @@ extern	IDTVEC(intrdefault);
  * Fill in default interrupt table (in case of spuruious interrupt
  * during configuration of kernel, setup interrupt control unit
  */
+void
 isa_defaultirq() {
 	int i;
 
@@ -269,7 +274,9 @@ isa_defaultirq() {
 #endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU1, 0x0a);		/* default to IRR on read */
+#ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
+#endif
 
 	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
 	outb(IO_ICU2+1, NRSVIDT+8);	/* staring at this vector index */
@@ -297,7 +304,8 @@ static short dmapageport[8] =
  * isa_dmacascade(): program 8237 DMA controller channel to accept
  * external dma control by a board.
  */
-void isa_dmacascade(unsigned chan)
+void
+isa_dmacascade(unsigned chan)
 {
 	if (chan > 7)
 		panic("isa_dmacascade: impossible request"); 
@@ -316,7 +324,8 @@ void isa_dmacascade(unsigned chan)
  * isa_dmastart(): program 8237 DMA controller channel, avoid page alignment
  * problems by using a bounce buffer.
  */
-void isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
+void
+isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 {	vm_offset_t phys;
 	int waport;
 	caddr_t newaddr;
@@ -396,7 +405,8 @@ void isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 	}
 }
 
-void isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
+void
+isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
 {
 
 	/* copy bounce buffer on read */
@@ -414,6 +424,7 @@ void isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
  * Return true if special handling needed.
  */
 
+int
 isa_dmarangecheck(caddr_t va, unsigned length, unsigned chan) {
 	vm_offset_t phys, priorpage = 0, endva;
 	u_int dma_pgmsk = (chan & 4) ?  ~(128*1024-1) : ~(64*1024-1);
@@ -484,6 +495,7 @@ isa_freephysmem(caddr_t va, unsigned length) {
  * Handle a NMI, possibly a machine check.
  * return true to panic system, false to ignore.
  */
+int
 isa_nmi(cd) {
 
 	log(LOG_CRIT, "\nNMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
@@ -493,6 +505,7 @@ isa_nmi(cd) {
 /*
  * Caught a stray interrupt, notify
  */
+void
 isa_strayintr(d) {
 
 	/* DON'T BOTHER FOR NOW! */
@@ -526,7 +539,8 @@ isa_strayintr(d) {
 
 extern int hz;                        /* XXX - should be elsewhere */
 
-int DELAY(n)
+void
+DELAY(n)
 	int n;
 {
 	int counter_limit;
@@ -591,6 +605,7 @@ int DELAY(n)
 #endif
 }
 
+int
 gettick() {
 	int high;
 	int low;
@@ -616,8 +631,8 @@ gettick() {
 }
 
 static beeping;
-static
-sysbeepstop(f)
+static void
+sysbeepstop(int f)
 {
 	int s = splhigh();
 
@@ -633,7 +648,8 @@ sysbeepstop(f)
 	splx(s);
 }
 
-void sysbeep(int pitch, int period)
+void
+sysbeep(int pitch, int period)
 {
 	int s = splhigh();
 	static int last_pitch, last_period;
@@ -663,8 +679,9 @@ void sysbeep(int pitch, int period)
 /*
  * Pass command to keyboard controller (8042)
  */
-unsigned kbc_8042cmd(val) {
-	
+unsigned
+kbc_8042cmd(int val)
+{
 	while (inb(KBSTATP)&KBS_IBF);
 	if (val) outb(KBCMDP, val);
 	while (inb(KBSTATP)&KBS_IBF);
