@@ -1,0 +1,4 @@
+# $NetBSD: md.sparc64,v 1.1 2003/10/26 09:50:21 tron Exp $
+./usr/X11R6/lib/libXxf86dga.so
+./usr/X11R6/lib/libXxf86dga.so.1
+./usr/X11R6/lib/libXxf86dga.so.1.0

@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.4 2003/10/18 18:08:07 tron Exp $
+# $NetBSD: shl.elf,v 1.5 2003/10/26 09:50:21 tron Exp $
 ./usr/X11R6/lib/libFS.so
 ./usr/X11R6/lib/libFS.so.6
 ./usr/X11R6/lib/libGL.so
@@ -38,8 +38,6 @@
 ./usr/X11R6/lib/libXv.so.1
 ./usr/X11R6/lib/libXvMC.so
 ./usr/X11R6/lib/libXvMC.so.1
-./usr/X11R6/lib/libXxf86dga.so
-./usr/X11R6/lib/libXxf86dga.so.1
 ./usr/X11R6/lib/libXxf86misc.so
 ./usr/X11R6/lib/libXxf86misc.so.1
 ./usr/X11R6/lib/libXxf86vm.so
