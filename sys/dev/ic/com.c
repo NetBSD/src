@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.189 2001/09/17 02:47:13 briggs Exp $	*/
+/*	$NetBSD: com.c,v 1.190 2001/11/05 21:39:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2452,6 +2452,13 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
 	if (res)
 		return (res);
+
+	/*
+	 * XXXfvdl this shouldn't be needed, but the cn_magic goo
+	 * expects this to be initialized
+	 */
+	cn_init_magic(&com_cnm_state);
+	cn_set_magic("\047\001");
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
