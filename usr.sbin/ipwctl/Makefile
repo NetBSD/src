@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/08/23 11:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/08/23 13:25:40 wiz Exp $
 
 PROG=	ipwctl
-MAN=	ipw.4 ipwctl.8
+MAN=	ipwctl.8
 
 .include <bsd.prog.mk>
