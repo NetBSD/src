@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.35 2002/10/21 22:49:35 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.36 2002/10/22 03:16:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -659,13 +659,11 @@ static int
 sa_newcachelwp(struct lwp *l)
 {
 	struct proc *p;
-	struct sadata *sa;
 	struct lwp *l2;
 	vaddr_t uaddr;
 	int s;
 
 	p = l->l_proc;
-	sa = p->p_sa;
 
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
 	if (__predict_false(uaddr == 0)) {
