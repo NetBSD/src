@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.36 2002/03/11 01:19:17 enami Exp $	*/
+/*	$NetBSD: pool.h,v 1.37 2002/03/13 10:57:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,8 +55,18 @@
 #endif
 
 #define PR_HASHTABSIZE		8
+#define	PCG_NOBJECTS		16
 
 #ifdef __POOL_EXPOSE
+/* The pool cache group. */
+struct pool_cache_group {
+	TAILQ_ENTRY(pool_cache_group)
+		pcg_list;	/* link in the pool cache's group list */
+	u_int	pcg_avail;	/* # available objects */
+				/* pointers to the objects */
+	void	*pcg_objects[PCG_NOBJECTS];
+};
+
 struct pool_cache {
 	TAILQ_ENTRY(pool_cache)
 			pc_poollist;	/* entry on pool's group list */
