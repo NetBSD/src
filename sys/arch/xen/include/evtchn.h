@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.1.2.4 2005/03/08 19:31:39 bouyer Exp $	*/
 
 /*
  *
@@ -46,12 +46,14 @@ void events_default_setup(void);
 void init_events(void);
 unsigned int do_event(int, struct intrframe *);
 int event_set_handler(int, ev_handler_t, void *, int);
+int event_remove_handler(int, ev_handler_t, void *);
 
 int bind_virq_to_irq(int);
 int bind_pirq_to_irq(int);
 void unbind_pirq_from_irq(int);
 void unbind_virq_from_irq(int);
 int bind_evtchn_to_irq(int);
+int unbind_evtchn_to_irq(int);
 
 struct pintrhand {
 	int pirq;
