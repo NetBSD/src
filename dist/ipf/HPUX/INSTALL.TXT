@@ -1,0 +1,46 @@
+Installation instructions:
+========================= 
+
+1. Update HP-UX Kernel
+----------------------
+The first step is to update your /usr/conf/lib/libnet.a used for building
+kernels.  As yet (8th June 2000), there is not an official HP patch that
+addresses this.  In the mean time, the required files can be downloaded
+from:
+
+http://coombs.anu.edu.au/~avalon/stcpmap.tgz
+
+If you unpack this archive, the directory "stcpmap" will have the
+appropriate files in it.  Run the "install" script from that directory.
+
+WARNING: It will build and install a new kernel.
+
+After this, you *MUST* reboot so that the new kernel is in place when
+you proceed to install later components.
+
+2. Build and Install pfil
+-------------------------
+Next, you need to download and install "pfil".  This is a STREAMS interface
+for packet filtering that removes the need for packet filtering code to be
+written as a STREAMS module.  This can be downloaded from
+
+http://coombs.anu.edu.au/~avalon/pfil.tar.gz
+
+Unpack this and type "make" in the pfil directory.  Once compelte, type
+"make install" to kick off the installation.
+
+3. Build and Install IP Filter
+------------------------------
+Having got this far, you now need to download the latest IP Filter package
+and compile/install that.  The source code for IP Filter can be obtained
+from:
+http://coombs.anu.edu.au/~avalon/ip_fil4.0alpha6.tar.gz
+This should be unpacked into the same directory as "pfil" is.  The
+directory layout will look like this:
+
+/directory/ip_fil4.0alpha6
+/directory/pfil
+
+This complete, do a "make hpux" in the ip_fil4.0alpha6 directory, followed
+by a "make install".  You will need to reboot for it to become active.
+
