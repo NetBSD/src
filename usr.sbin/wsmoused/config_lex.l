@@ -1,4 +1,4 @@
-/* $NetBSD: config_lex.l,v 1.1 2003/03/04 14:33:55 jmmv Exp $ */
+/* $NetBSD: config_lex.l,v 1.2 2003/03/04 22:31:15 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.1 2003/03/04 14:33:55 jmmv Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.2 2003/03/04 22:31:15 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ int yylex(void);
 %option noyywrap
 
 STRING		[\$A-Za-z\.\/_\-0-9]*
-MODE_PROPS	device|fifo|lefthanded|nodaemon|slowdown_x|slowdown_y|ttystat|xconsole
+MODE_PROPS	device|fifo|lefthanded|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
 EVENT_PROPS	button|do
 
 %%
