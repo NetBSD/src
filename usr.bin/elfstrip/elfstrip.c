@@ -1,3 +1,5 @@
+/* $NetBSD: elfstrip.c,v 1.2 1996/09/29 22:01:47 jonathan Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)
@@ -63,7 +65,7 @@ int main (int argc, char **argv)
   /* Check args... */
   if (argc != 2)
     {
-      fprintf (stderr, "usage: dirtyelfstrip <elf executable>\n");
+      fprintf (stderr, "usage: elfstrip <elf executable>\n");
       exit (1);
     }
 
