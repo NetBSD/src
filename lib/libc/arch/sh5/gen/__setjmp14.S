@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.3 2002/07/11 14:23:05 scw Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1 2002/07/11 14:23:05 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,11 +45,11 @@
  * will generate a "return(v)" from
  * the last call to
  *	setjmp(a)
- * by restoring registers from the stack.
- * The previous signal state is NOT restored.
+ * by restoring registers from the stack,
+ * and the previous signal state.
  */
 
-ENTRY_NOPROFILE(_setjmp)
+ENTRY_NOPROFILE(__setjmp14)
 	/* Save callee-saved register */
 	getcon	usr, r1
 	st.q	r2, _JB_R10, r10
@@ -59,7 +59,7 @@ ENTRY_NOPROFILE(_setjmp)
 	st.q	r2, _JB_R14, r14
 	st.q	r2, _JB_R15, r15
 	st.q	r2, _JB_R18, r18
-	LDUC32(0xBADBABE5, r0)
+	LDUC32(0xACEBABE5, r0)
 	st.q	r2, _JB_R24, r0		/* sigcontext magic number */
 	st.q	r2, _JB_R26, r26
 	st.q	r2, _JB_R27, r27
@@ -127,87 +127,58 @@ ENTRY_NOPROFILE(_setjmp)
 	movi	3, r0			/* Regs saved/used */
 1:	st.l	r2, _JB_SIGFPSTATE, r0
 	st.q	r2, _JB_USR, r1
+
+	or	r2, r63, r28		/* r28 is a safe-haven for jmpbuf */
+
+	/* Get signal information */
+	pta/l	_C_LABEL(__sigprocmask14), tr0
+	movi	0, r2			/* how */
+	movi	0, r3			/* set (NULL) */
+	movi	_JB_SIGMASK, r0
+	add	r28, r0, r4		/* point to mask in jmpbuf */
+	blink	tr0, r18
+
+	/* Prepare to fetch the current signal stack state */
+	pta/l	_C_LABEL(__sigaltstack14), tr0
+#ifndef _LP64
+	addi	r15, -12, r15		/* sizeof(struct sigaltstack) */
+#else
+	addi	r15, -24, r15		/* sizeof(struct sigaltstack) */
+#endif
+	movi	0, r2			/* ss = NULL */
+	or	r15, r63, r3		/* oss -> sigaltstack created above */
+	blink	tr0, r18
+#ifndef _LP64
+	ld.l	r15, 8, r0		/* Fetch oss->ss_flags */
+	addi	r15, 12, r15		/* Clear stack */
+#else
+	ld.l	r15, 16, r0		/* Fetch oss->ss_flags */
+	addi	r15, 24, r15		/* Clear stack */
+#endif
+	ld.q	r28, _JB_R18, r18	/* Restore return address */
+	pta/u	Lbotch, tr0		/* Exit on error */
+	bgt/u	r63, r2, tr0
+	andi	r0, 1, r0		/* Get SA_ONSTACK flag */
+	st.l	r28, _JB_SIGONSTACK, r0	/* Save it in sc_onstack */
+	st.l	r28, _JB_SIGMASK13, r63	/* Zero unused fields */
+	st.l	r28, _JB_SIGPAD, r63
+	ld.l	r28, _JB_R18, r18	/* Restore return address */
+	ld.l	r28, _JB_R28, r28	/* Restore r28 */
 	ptabs/l	r18, tr0
 	movi	0, r2
 	blink	tr0, r63
 
 
-ENTRY_NOPROFILE(_longjmp)
-	pta/u	Lbotch, tr0
-	ld.q	r2, _JB_R24, r0		/* Check if jmp_buf was saved by a */
-	LDUC32(0xBADBABE5, r1)		/* call to _setjmp, above */
-	bne/u	r0, r1, tr0		/* Punt if not */
+ENTRY_NOPROFILE(__longjmp14)
+	LINK_FRAME(0)
+	pta/l	_C_LABEL(__sigreturn14), tr0
 	cmpeq	r3, r63, r3		/* Ensure a non-zero return value */
-
-	/* Restore callee-saved register */
-	ld.q	r2, _JB_R10, r10
-	ld.q	r2, _JB_R11, r11
-	ld.q	r2, _JB_R12, r12
-	ld.q	r2, _JB_R13, r13
-	ld.q	r2, _JB_R14, r14
-	ld.q	r2, _JB_R15, r15
-	ld.q	r2, _JB_R18, r18
-	ld.q	r2, _JB_R26, r26
-	ld.q	r2, _JB_R27, r27
-	ld.q	r2, _JB_R28, r28
-	ld.q	r2, _JB_R29, r29
-	ld.q	r2, _JB_R30, r30
-	ld.q	r2, _JB_R31, r31
-	ld.q	r2, _JB_R32, r32
-	ld.q	r2, _JB_R33, r33
-	ld.q	r2, _JB_R34, r34
-	ld.q	r2, _JB_R35, r35
-	ld.q	r2, _JB_R44, r44
-	ld.q	r2, _JB_R45, r45
-	ld.q	r2, _JB_R46, r46
-	ld.q	r2, _JB_R47, r47
-	ld.q	r2, _JB_R48, r48
-	ld.q	r2, _JB_R49, r49
-	ld.q	r2, _JB_R50, r50
-	ld.q	r2, _JB_R51, r51
-	ld.q	r2, _JB_R52, r52
-	ld.q	r2, _JB_R53, r53
-	ld.q	r2, _JB_R54, r54
-	ld.q	r2, _JB_R55, r55
-	ld.q	r2, _JB_R56, r56
-	ld.q	r2, _JB_R57, r57
-	ld.q	r2, _JB_R58, r58
-	ld.q	r2, _JB_R59, r59
-	ld.q	r2, _JB_TR5, r0		/* Could take an IADDERR exception */
-	ptabs/u	r0, tr5			/* here if the jmp_buf is corrupt... */
-	ld.q	r2, _JB_TR6, r0
-	ptabs/u	r0, tr6
-	ld.q	r2, _JB_TR7, r0
-	ptabs/u	r0, tr7
-	ld.l	r2, _JB_SIGFPSTATE, r0	/* Were any FP regs saved? */
-	pta/u	1f, tr0
-	andi	r0, 3, r0
-	beq/u	r0, r63, tr0		/* Skip if not. */
-	fld.d	r2, _JB_DR12, dr12	/* Quicker to save all callee-saved */
-	fld.d	r2, _JB_DR14, dr14	/* than check USR bits */
-	fld.d	r2, _JB_DR36, dr36
-	fld.d	r2, _JB_DR38, dr38
-	fld.d	r2, _JB_DR40, dr40
-	fld.d	r2, _JB_DR42, dr42
-	fld.d	r2, _JB_DR44, dr44
-	fld.d	r2, _JB_DR46, dr46
-	fld.d	r2, _JB_DR48, dr48
-	fld.d	r2, _JB_DR50, dr50
-	fld.d	r2, _JB_DR52, dr52
-	fld.d	r2, _JB_DR54, dr54
-	fld.d	r2, _JB_DR56, dr56
-	fld.d	r2, _JB_DR58, dr58
-	fld.d	r2, _JB_DR60, dr60
-	fld.d	r2, _JB_DR62, dr62
-	fld.d	r2, _JB_FPSCR, dr0
-	fputscr	fr0
-1:	ld.q	r2, _JB_USR, r1
-	putcon	r1, usr
-	or	r3, r63, r2		/* Fix up return value */
-	ptabs/l	r18, tr0
-	blink	tr0, r63
+	st.q	r2, _JB_R2, r3		/* Modify jmp_buf's copy of r2 */
+	blink	tr0, r18
+	UNLINK_FRAME(0)
 
 Lbotch:	pta/l	_C_LABEL(longjmperror), tr0
 	blink	tr0, r18
 	pta/l	_C_LABEL(abort), tr0
 	blink	tr0, r63
+
