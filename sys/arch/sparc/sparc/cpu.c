@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.82 1998/10/13 11:33:36 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.83 1998/10/13 13:37:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,8 @@
  *	@(#)cpu.c	8.5 (Berkeley) 11/23/93
  *
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 1998/10/08 22:27:33 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.35 1998/10/13 13:37:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
+#include "opt_multiprocessor.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
 
