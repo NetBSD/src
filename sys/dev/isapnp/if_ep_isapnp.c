@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.12 1998/06/09 07:28:30 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.13 1998/07/05 00:51:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h" 
  
 #include <sys/param.h>

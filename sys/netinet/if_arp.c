@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.50 1998/07/04 22:18:52 jonathan Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.51 1998/07/05 00:51:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 
 #ifdef INET
 

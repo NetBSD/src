@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.20 1998/06/09 07:25:02 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.21 1998/07/05 00:51:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

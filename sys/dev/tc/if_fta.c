@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.14 1998/05/21 20:44:03 matt Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.15 1998/07/05 00:51:25 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -35,6 +35,7 @@
  *   This module supports the DEC DEFTA TurboChannel FDDI Controller
  */
 
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

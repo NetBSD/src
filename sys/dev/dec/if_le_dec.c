@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.8 1997/07/22 04:32:21 jonathan Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.9 1998/07/05 00:51:17 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jonathan Stone. All rights reserved.
@@ -40,6 +40,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

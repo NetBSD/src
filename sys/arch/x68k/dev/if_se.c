@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.4 1996/10/13 03:34:52 christos Exp $	*/
+/*	$NetBSD: if_se.c,v 1.5 1998/07/05 00:51:16 jonathan Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -18,6 +18,7 @@
  *	Cayman Systems GatorCard
  */
 
+#include "opt_inet.h"
 #include "se.h"
 #if NSE > 0
 /* bpfilter included here in case it is needed in future net includes */

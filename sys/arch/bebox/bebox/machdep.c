@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1998/07/04 22:18:22 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1998/07/05 00:51:08 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 #include "opt_uvm.h"
 #include "ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.2 1998/07/05 00:51:14 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -96,7 +96,7 @@ Mode of operation:
    to every interrupt they generate.
 
 */
-
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

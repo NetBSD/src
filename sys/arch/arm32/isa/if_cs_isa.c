@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.3 1998/06/20 20:38:33 mark Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.4 1998/07/05 00:51:07 jonathan Exp $	*/
 
 /*
  * Copyright 1997
@@ -191,6 +191,8 @@
  * INCLUDE DEFINITIONS
  *
  */
+#include "opt_inet.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>

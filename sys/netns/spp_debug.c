@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.8 1996/10/13 01:59:57 christos Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.9 1998/07/05 00:51:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)spp_debug.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

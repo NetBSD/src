@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.13 1998/06/04 20:35:44 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.14 1998/07/05 00:51:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ Mode of operation:
    the synchronization.
 */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

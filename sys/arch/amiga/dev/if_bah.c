@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.33 1998/05/24 19:32:34 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.34 1998/07/05 00:51:06 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -47,6 +47,7 @@
 #undef BAHASMCOPY
 #endif
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

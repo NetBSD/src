@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 1998/01/24 14:17:02 ragge Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 1998/07/05 00:51:15 jonathan Exp $	*/
 
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
 
@@ -41,6 +41,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

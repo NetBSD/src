@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 1998/03/29 05:10:45 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.26 1998/07/05 00:51:13 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
+#include "opt_inet.h"
+#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

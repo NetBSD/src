@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.20 1998/07/04 22:18:16 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.21 1998/07/05 00:51:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -34,6 +34,7 @@
  * SMC 91C90 Single-Chip Ethernet Controller
  */
 #include "opt_ddb.h"
+#include "opt_inet.h"
 
 #include "bpfilter.h"
 

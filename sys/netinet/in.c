@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.40 1998/05/29 15:34:24 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.41 1998/07/05 00:51:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
  *	@(#)in.c	8.4 (Berkeley) 1/9/95
  */
 
+#include "opt_inet.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>

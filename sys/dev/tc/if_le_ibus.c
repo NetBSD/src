@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.9 1998/04/19 13:04:24 jonathan Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.10 1998/07/05 00:51:25 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -18,6 +18,7 @@
 /*
  * LANCE on Decstation kn01/kn220(?) baseboard.
  */
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

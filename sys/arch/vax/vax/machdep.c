@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.58 1998/07/04 22:18:45 jonathan Exp $	 */
+/* $NetBSD: machdep.c,v 1.59 1998/07/05 00:51:16 jonathan Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -46,6 +46,8 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
+#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
