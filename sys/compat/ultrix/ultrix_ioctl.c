@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.7 1996/10/13 00:46:55 christos Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.8 1997/04/06 21:33:44 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -527,15 +527,13 @@ ultrix_sys_ioctl(p, v, retval)
 
 		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
-	case _IOW('t', 130, int):
+	case _IOW('t', 118, int):
 		SCARG(uap, com) = TIOCSPGRP;
 		break;
-	case _IOR('t', 131, int):
+	case _IOR('t', 119, int):
 		SCARG(uap, com) = TIOCGPGRP;
 		break;
-	case _IO('t', 132):
-		SCARG(uap, com) = TIOCSCTTY;
-		break;
+
 	/* Emulate termio or termios tcget() */	
 	case ULTRIX_TCGETA:
 	case ULTRIX_TCGETS: 
@@ -632,7 +630,7 @@ ultrix_sys_ioctl(p, v, retval)
 			return error;
 		return (*ctl)(fp, TIOCSIG, (caddr_t)&sig, p);
 	}
-	
+
 /*
  * Socket ioctl translations.
  */
@@ -693,28 +691,35 @@ ultrix_sys_ioctl(p, v, retval)
 		/* SIOCGIFFLAGS */
 		break;
 
-	case _IOW('i', 21, struct ifreq):
-		IFREQ_IN(SIOCSIFMTU);
-
-	case _IOWR('i', 22, struct ifreq):
-		IFREQ_INOUT(SIOCGIFMTU);
-
-	case _IOWR('i', 23, struct ifreq):
+	case _IOWR('i', 18, struct ifreq):
 		IFREQ_INOUT(SIOCGIFBRDADDR);
 
-	case _IOW('i', 24, struct ifreq):
-		IFREQ_IN(SIOCSIFBRDADDR);
+	case _IOWR('i', 19, struct ifreq):
+		IFREQ_INOUT(SIOCSIFBRDADDR);
 
-	case _IOWR('i', 25, struct ifreq):
+	case _IOWR('i', 21, struct ifreq):
 		IFREQ_INOUT(OSIOCGIFNETMASK);
 
-	case _IOW('i', 26, struct ifreq):
+	case _IOW('i', 22, struct ifreq):
 		IFREQ_IN(SIOCSIFNETMASK);
 
-	case _IOWR('i', 27, struct ifreq):
+	/* 18: _IOWR('i', 18, struct ifreq):  Ultrix SIOCGIFBRDADDR */
+	/* 19: _IOW('i',  19, struct ifreq):  Ultrix SIOCSIFBRDADDR */
+	/* 20: _IOWR('i', 20, struct ifreq):  Ultrix SIOCSIFCONF */
+	/* 21: _IOWR('i', 21, struct ifreq):  Ultrix SIOCGIFNETMASK */
+	/* 22: _IOW('i',  22, struct ifreq):  Ultrix SIOCSIFNETMASK */
+	/* 23: _IOWR('i', 23, struct ifreq):  Ultrix SIOCSPHYADDR */
+	/* 24: _IOWR('i', 24, struct ifreq):  Ultrix SIOCSADDMULTI */
+	/* 25: _IOWR('i', 25, struct ifreq):  Ultrix SIOCSDELMULTI */
+
+	/* 30: _IOWR('i', 30, struct arpreq):  Ultrix SIOCSARP */
+	/* 31: _IOWR('i', 31, struct arpreq):  Ultrix SIOCGARP */
+	/* 32: _IOWR('i', 32, struct arpreq):  Ultrix SIOCDARP */
+	
+	case _IOWR('i', 41, struct ifreq):
 		IFREQ_INOUT(SIOCGIFMETRIC);
 
-	case _IOWR('i', 28, struct ifreq):
+	case _IOWR('i', 42, struct ifreq):
 		IFREQ_IN(SIOCSIFMETRIC);
 
 	case _IOW('i', 30, struct arpreq):
@@ -729,15 +734,19 @@ ultrix_sys_ioctl(p, v, retval)
 		/* SIOCDARP */
 		break;
 
-	case _IOW('i', 18, struct ifreq):	/* SIOCSIFMEM */
-	case _IOWR('i', 19, struct ifreq):	/* SIOCGIFMEM */
-	case _IOW('i', 40, struct ifreq):	/* SIOCUPPER */
-	case _IOW('i', 41, struct ifreq):	/* SIOCLOWER */
+	case _IOW('i',  26, struct ifreq):	/* SIOCSIFRDCTRS? */
+	case _IOWR('i', 27, struct ifreq):	/* SIOCGIFZCTRS? */
+	case _IOWR('i', 28, struct ifreq):	/* read physaddr ? */
+
+	case _IOW('i', 40, struct ifreq):	/* SIOCARPREQ */
 	case _IOW('i', 44, struct ifreq):	/* SIOCSETSYNC */
 	case _IOWR('i', 45, struct ifreq):	/* SIOCGETSYNC */
 	case _IOWR('i', 46, struct ifreq):	/* SIOCSDSTATS */
 	case _IOWR('i', 47, struct ifreq):	/* SIOCSESTATS */
 	case _IOW('i', 48, int):		/* SIOCSPROMISC */
+		return EOPNOTSUPP;
+
+	/* emulate for vat, vic tools */
 	case _IOW('i', 49, struct ifreq):	/* SIOCADDMULTI */
 	case _IOW('i', 50, struct ifreq):	/* SIOCDELMULTI */
 		return EOPNOTSUPP;
@@ -751,11 +760,12 @@ ultrix_sys_ioctl(p, v, retval)
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		if ((error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
-				     sizeof (ifconf))) != 0)
+		error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
+		    sizeof (ifconf));
+		if (error)
 			return error;
-		if ((error = (*ctl)(fp, OSIOCGIFCONF,
-				    * (caddr_t)&ifconf, p)) !=0 )
+		error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p);
+		if (error)
 			return error;
 		return copyout ((caddr_t)&ifconf, SCARG(uap, data),
 		    sizeof (ifconf));
