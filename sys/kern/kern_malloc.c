@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.39 1998/12/02 20:35:28 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.40 1999/01/22 07:55:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -496,7 +496,7 @@ free(addr, type)
 	/*
 	 * Check if we're freeing a locked simple lock.
 	 */
-	simple_lock_freecheck(addr, addr + size);
+	simple_lock_freecheck(addr, (char *)addr + size);
 #endif
 	/*
 	 * Copy in known text to detect modification after freeing
