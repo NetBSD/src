@@ -20,7 +20,6 @@ instead and are marked with *.
 9.  cleanup video DRAM support on machine with VRAM
 10. clean up prototype declarations
 11. support reading and writing the rtc device UNDER DEVELOPMENT
-12. debug kernel profiling. UNDER DEVELOPMENT
 13. debug / replace console code
 14. fix FPA probing. UNDER DEVELOPMENT
 15. optimise ARM FPE glue code. UNDER DEVELOPMENT
@@ -47,6 +46,11 @@ instead and are marked with *.
 36. Reorganise kernel VM space
 37. Implement DMA transfers to buffer memory for the asc driver.
 38. Add interrupt and DMA support to the cosc driver
-39. Write ADFS filesystem
-40. Strong ARM support UNDER DEVELOPMENT
-41.
+39. Write ADFS filesystem (*)
+40. Optimise Strong ARM support UNDER DEVELOPMENT
+41. Debug multiple mappings in pmap.c
+42. Optimise data xfers for the ea and eb drivers
+43. Debug printer support
+44. Implement new bus space macros
+45. Develop ICS IDE driver
+46. Develop Cumana SCSI I driver
