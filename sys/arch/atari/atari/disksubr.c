@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1997/04/25 19:16:30 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1998/03/06 09:06:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
