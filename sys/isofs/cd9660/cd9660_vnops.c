@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.12 1994/07/19 23:34:01 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.13 1994/07/20 06:09:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -575,7 +575,8 @@ cd9660_readdir(ap)
 		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			idp->curroff = (idp->curroff + bmask) & ~bmask;
+			idp->curroff =
+			    (idp->curroff & ~bmask) + imp->logical_block_size;
 			continue;
 		}
 
