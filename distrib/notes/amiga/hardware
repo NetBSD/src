@@ -52,6 +52,7 @@ Supported devices include:
 
 	Audio I/O:
 		Amiga builtin (currently 8bit-mode only)
+		Melody Mpeg-audio layer 2 board
 		
 	Ethernet controllers:
 		A2065 Ethernet
