@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.27 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.28 2003/12/07 00:40:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.27 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.28 2003/12/07 00:40:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -333,15 +333,15 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTLTYPE_STRUCT, "uvmexp2", NULL,
 		       sysctl_vm_uvmexp2, 0, NULL, 0,
 		       CTL_VM, VM_UVMEXP2, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "anonmin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonminpct, 0,
 		       CTL_VM, VM_ANONMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "execmin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.execminpct, 0,
 		       CTL_VM, VM_EXECMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "filemin", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.fileminpct, 0,
 		       CTL_VM, VM_FILEMIN, CTL_EOL);
@@ -353,15 +353,15 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTLTYPE_INT, "uspace", NULL,
 		       NULL, USPACE, NULL, 0,
 		       CTL_VM, VM_USPACE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "anonmax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonmaxpct, 0,
 		       CTL_VM, VM_ANONMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "execmax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.execmaxpct, 0,
 		       CTL_VM, VM_EXECMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "filemax", NULL,
 		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
 		       CTL_VM, VM_FILEMAX, CTL_EOL);
