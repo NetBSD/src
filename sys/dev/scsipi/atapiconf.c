@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.46 2001/12/03 00:20:24 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.47 2001/12/22 13:29:50 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.46 2001/12/03 00:20:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.47 2001/12/22 13:29:50 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,9 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 					PQUIRK_NO_FLEX_PAGE },
 	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
 	  "eUSB", "MultiMediaCard", ""},	PQUIRK_NO_FLEX_PAGE },
+	{{T_DIRECT, T_REMOV,
+	  "FUJIFILM", "USB-DRIVEUNIT", "1.00"},	PQUIRK_NO_FLEX_PAGE |
+						PQUIRK_NOSENSE },
 };
 
 int
