@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.35 1998/04/01 21:07:03 kleink Exp $	*/
+/*	$NetBSD: cmds.c,v 1.36 1998/05/20 00:52:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.35 1998/04/01 21:07:03 kleink Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.36 1998/05/20 00:52:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: cmds.c,v 1.35 1998/04/01 21:07:03 kleink Exp $");
 #include <arpa/ftp.h>
 
 #include <ctype.h>
+#include <signal.h>
 #include <err.h>
 #include <glob.h>
 #include <netdb.h>
@@ -337,14 +338,15 @@ mput(argc, argv)
 			if (mflag && confirm(argv[0], cp)) {
 				tp = cp;
 				if (mcase) {
-					while (*tp && !islower(*tp)) {
+					while (*tp &&
+					       !islower((unsigned char)*tp)) {
 						tp++;
 					}
 					if (!*tp) {
 						tp = cp;
 						tp2 = tmpbuf;
 						while ((*tp2 = *tp) != '\0') {
-						     if (isupper(*tp2)) {
+						     if (isupper((unsigned char)*tp2)) {
 							    *tp2 =
 								tolower(*tp2);
 						     }
@@ -483,14 +485,14 @@ usage:
 	if (loc && mcase) {
 		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
 
-		while (*tp && !islower(*tp)) {
+		while (*tp && !islower((unsigned char)*tp)) {
 			tp++;
 		}
 		if (!*tp) {
 			tp = argv[2];
 			tp2 = tmpbuf;
 			while ((*tp2 = *tp) != '\0') {
-				if (isupper(*tp2)) {
+				if (isupper((unsigned char)*tp2)) {
 					*tp2 = tolower(*tp2);
 				}
 				tp++;
@@ -1834,7 +1836,8 @@ domap(name)
 				break;
 			case '[':
 LOOP:
-				if (*++cp2 == '$' && isdigit(*(cp2+1))) {
+				if (*++cp2 == '$' &&
+				    isdigit((unsigned char)*(cp2+1))) {
 					if (*++cp2 == '0') {
 						char *cp3 = name;
 
@@ -1859,7 +1862,7 @@ LOOP:
 							cp2++;
 						}
 						else if (*cp2 == '$' &&
-   						        isdigit(*(cp2+1))) {
+						    isdigit((unsigned char)*(cp2+1))) {
 							if (*++cp2 == '0') {
 							   char *cp3 = name;
 
@@ -1913,7 +1916,7 @@ LOOP:
 				}
 				break;
 			case '$':
-				if (isdigit(*(cp2 + 1))) {
+				if (isdigit((unsigned char)*(cp2 + 1))) {
 					if (*++cp2 == '0') {
 						char *cp3 = name;
 
@@ -2005,10 +2008,18 @@ restart(argc, argv)
 		return;
 	}
 	if (argc == 2) {
+#ifndef NO_QUAD
 		quad_t	rp;
+#else
+		long	rp;
+#endif
 		char *ep;
 
+#ifndef NO_QUAD
 		rp = strtoq(argv[1], &ep, 10);
+#else
+		rp = strtol(argv[1], &ep, 10);
+#endif
 		if (rp < 0 || *ep != '\0')
 			printf("restart: Invalid offset `%s'\n", argv[1]);
 		else
@@ -2017,8 +2028,13 @@ restart(argc, argv)
 	if (restart_point == 0)
 		puts("No restart point defined");
 	else
+#ifndef NO_QUAD
 		printf("Restarting at %qd for next get, put or append\n",
 		    (long long)restart_point);
+#else
+		printf("Restarting at %ld for next get, put or append\n",
+		    (long)restart_point);
+#endif
 }
 
 /* 
@@ -2111,7 +2127,11 @@ sizecmd(argc, argv)
 	}
 	size = remotesize(argv[1], 1);
 	if (size != -1)
+#ifndef NO_QUAD
 		printf("%s\t%qd\n", argv[1], (long long)size);
+#else
+		printf("%s\t%ld\n", argv[1], (long)size);
+#endif
 	code = size;
 }
 
