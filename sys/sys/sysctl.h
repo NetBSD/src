@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.54 2000/07/14 07:21:22 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.55 2000/07/22 14:59:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,12 +44,10 @@
 /*
  * These are for the eproc structure defined below.
  */
-#ifndef _KERNEL
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
-#endif
 
 /*
  * Definitions for sysctl call.  The sysctl call uses a hierarchical name
