@@ -8,6 +8,8 @@ maxusers 2 8 64
 device mainbus { [base = -1], [dack = -1], [irq = -1] }
 attach mainbus at root
 file	arch/arm32/mainbus/mainbus.c		mainbus
+file	arch/arm32/mainbus/mainbus_io.c		mainbus
+file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
 
 device hydrabus { [slot = -1] }
 attach hydrabus at mainbus
@@ -172,7 +174,7 @@ file	arch/arm32/podulebus/sfas.c		sfas
 # Cumana specific layer for sfas
 device	csc: scsi, sfas
 attach	csc at podulebus
-file	arch/arm32/podulebus/exp/csc.c		csc
+file	arch/arm32/podulebus/nda/csc.c		csc
 
 device	ptsc: scsi, sfas
 attach	ptsc at podulebus
@@ -185,7 +187,7 @@ file	arch/arm32/podulebus/ncr5380sbc.c	ncr
 # Oak specific layer for ncr
 device	oak: scsi, ncr
 attach	oak at podulebus
-file	arch/arm32/podulebus/oak.c	oak
+file	arch/arm32/podulebus/oak.c		oak
 
 device  vidcvideo
 attach	vidcvideo at mainbus
