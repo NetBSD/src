@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2002/07/26 01:00:40 wiz Exp $ */
+/*	$NetBSD: md.c,v 1.15 2002/08/02 05:11:32 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,6 +268,8 @@ md_make_bsd_partitions(void)
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[A].pi_bsize  = 8192;
+	bsdlabel[A].pi_fsize  = 1024;
 	bsdlabel[B].pi_fstype = FS_SWAP;
 	bsdlabel[E].pi_fstype = FS_UNUSED;
 	bsdlabel[F].pi_fstype = FS_UNUSED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.62 2002/07/26 00:42:04 grant Exp $ */
+/*	$NetBSD: md.c,v 1.63 2002/08/02 05:11:33 grant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -272,6 +272,8 @@ editlab:
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[A].pi_bsize  = 8192;
+	bsdlabel[A].pi_fsize  = 1024;
 	bsdlabel[B].pi_fstype = FS_SWAP;
 	bsdlabel[E].pi_fstype = FS_UNUSED;
 	bsdlabel[F].pi_fstype = FS_UNUSED;
@@ -306,8 +308,6 @@ editlab:
 				   dlcylsize) - partstart;
 		bsdlabel[A].pi_offset = partstart;
 		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 

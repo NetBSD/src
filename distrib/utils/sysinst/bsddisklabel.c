@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.5 2001/01/14 23:45:16 mrg Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.6 2002/08/02 05:11:29 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,6 +87,8 @@ make_bsd_partitions(void)
 
 	/* We _always_ have a root partition */
 	bsdlabel[PART_ROOT].pi_fstype = FS_BSDFFS;
+	bsdlabel[PART_ROOT].pi_bsize  = 8192;
+	bsdlabel[PART_ROOT].pi_fsize  = 1024;
 
 	/* Whole disk partition */
 	bsdlabel[PART_RAW].pi_offset = 0;
