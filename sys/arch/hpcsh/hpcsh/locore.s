@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 2001/01/17 05:21:49 itojun Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2001/01/29 22:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -58,6 +58,7 @@
 
 #ifdef SH4
 #define SHREG_BBRA	0xff200008
+#define SHREG_CCR	0xff00001c
 #define SHREG_EXPEVT	0xff000024
 #define SHREG_INTEVT	0xff000028
 #define SHREG_MMUCR	0xff000010
@@ -417,7 +418,7 @@ XLKernelStack:	.long	KernelStack
 XLinitSH3:	.long	_C_LABEL(initSH3)
 XLmain:		.long	_C_LABEL(main)
 XLtoP2:		.long	0x20000000
-XL_SHREG_CCR:	.long	0xff00001c
+XL_SHREG_CCR:	.long	SHREG_CCR
 #ifdef SH4
 #if 1
 XL_CCRVAL:	.long	0x0909 /* Operand cache ON */
