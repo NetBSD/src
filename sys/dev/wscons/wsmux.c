@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.11 2001/10/13 15:56:16 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.12 2001/10/13 20:03:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include "wsmux.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
+#include "wsmouse.h"
 
 #if NWSMUX > 0 || (NWSDISPLAY > 0 && NWSKBD > 0)
 
@@ -92,6 +93,10 @@ int wsmuxdoclose(struct device *, int, int, struct proc *);
 int wsmux_set_display(struct device *, struct wsmux_softc *);
 
 #if NWSMUX > 0
+
+#define WSMUXDEV(n) ((n) & 0x7f)
+#define WSMUXCTL(n) ((n) & 0x80)
+
 cdev_decl(wsmux);
 
 void wsmuxattach(int);
@@ -191,17 +196,27 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wsmux_softc *sc;
 	struct wsplink *m;
-	int unit, error, nopen, lasterror;
+	int munit, unit, error, nopen, lasterror;
 
-	unit = minor(dev);
-	if (unit >= nwsmux ||	/* make sure it was attached */
-	    (sc = wsmuxdevs[unit]) == NULL)
+	munit = minor(dev);
+	unit = WSMUXDEV(munit);
+	sc = wsmux_getmux(unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	DPRINTF(("wsmuxopen: %s: sc=%p\n", sc->sc_dv.dv_xname, sc));
-	if (!(flags & FREAD)) {
-		/* Not opening for read, only ioctl is available. */
+	if (WSMUXCTL(munit)) {
+		/* This is the control device which does not allow reads. */
+		if (flags & FREAD)
+			return (EINVAL);
 		return (0);
+	}
+
+	if (sc->sc_mux) {
+		/* Grab the mux out of the greedy hands of the parent mux. */
+		int error = wsmux_rem_mux(unit, sc->sc_mux);
+		if (error)
+			return (error);
 	}
 
 	if (sc->sc_events.io)
@@ -245,13 +260,25 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 int
 wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	return wsmuxdoclose(&wsmuxdevs[minor(dev)]->sc_dv, flags, mode, p);
+	int munit = minor(dev);
+
+	if (WSMUXCTL(munit)) {
+		/* control device */
+		return (0);
+	}
+	return wsmuxdoclose(&wsmuxdevs[WSMUXDEV(munit)]->sc_dv, flags, mode, p);
 }
 
 int
 wsmuxread(dev_t dev, struct uio *uio, int flags)
 {
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+	int munit = minor(dev);
+	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(munit)];
+
+	if (WSMUXCTL(munit)) {
+		/* control device */
+		return (EINVAL);
+	}
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -262,13 +289,21 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
 int
 wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return wsmuxdoioctl(&wsmuxdevs[minor(dev)]->sc_dv, cmd, data, flag, p);
+	int unit = WSMUXDEV(minor(dev));
+
+	return wsmuxdoioctl(&wsmuxdevs[unit]->sc_dv, cmd, data, flag, p);
 }
 
 int
 wsmuxpoll(dev_t dev, int events, struct proc *p)
 {
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+	int munit = minor(dev);
+	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(munit)];
+
+	if (WSMUXCTL(munit)) {
+		/* control device */
+		return (EINVAL);
+	}
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -281,7 +316,8 @@ wsmux_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmux_softc *sc, *m;
 
-	if (unit < 0 || unit >= nwsmux || (sc = wsmuxdevs[unit]) == NULL)
+	sc = wsmux_getmux(unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	DPRINTF(("wsmux_add_mux: %s(%p) to %s(%p)\n", sc->sc_dv.dv_xname, sc,
@@ -445,10 +481,6 @@ wsmuxdoclose(struct device *dv, int flags, int mode, struct proc *p)
 	struct wsplink *m;
 
 	DPRINTF(("wsmuxclose: %s: sc=%p\n", sc->sc_dv.dv_xname, sc));
-	if (!(flags & FREAD)) {
-		/* Nothing to do, because open didn't do anything. */
-		return (0);
-	}
 
 	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {
 		if (*m->sc_muxp == sc) {
