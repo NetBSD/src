@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.85 1999/11/28 06:32:05 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.86 1999/12/03 06:10:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.85 1999/11/28 06:32:05 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.86 1999/12/03 06:10:01 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -1377,7 +1377,7 @@ isipv6addr(addr)
 	if (debug)
 		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
 #endif
-	return rv;
+	return (rv == 1) ? 1 : 0;
 }
 
 
