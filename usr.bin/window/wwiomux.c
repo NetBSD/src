@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.7 2002/06/14 01:06:59 wiz Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.8 2003/04/09 16:25:10 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwiomux.c,v 1.7 2002/06/14 01:06:59 wiz Exp $");
+__RCSID("$NetBSD: wwiomux.c,v 1.8 2003/04/09 16:25:10 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,6 +176,8 @@ wwiomux(void)
 							w->ww_ob;
 					}
 				}
+				if (w->ww_type == WWT_PTY)
+					*p = c;
 			}
 		}
 		/*
