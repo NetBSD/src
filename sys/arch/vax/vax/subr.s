@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.31 1998/11/26 21:21:06 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,7 +34,6 @@
 
 #include "assym.h"
 #include "opt_ddb.h"
-#include "opt_uvm.h"
 #include "opt_compat_ultrix.h"
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>

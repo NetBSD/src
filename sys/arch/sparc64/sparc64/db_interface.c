@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 1999/03/22 05:35:40 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.17 1999/03/25 00:41:47 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -808,7 +808,6 @@ db_dump_buf(addr, have_addr, count, modif)
 	db_printf("\nvp:%p dirtyoff:%x dirtyend:%x\n", buf->b_vp, buf->b_dirtyoff, buf->b_dirtyend);
 }
 
-#include "opt_uvm.h"
 #include <uvm/uvm.h>
 
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));

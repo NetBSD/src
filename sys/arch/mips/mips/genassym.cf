@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1999/02/27 02:54:05 jonathan Exp $
+#	$NetBSD: genassym.cf,v 1.10 1999/03/25 00:41:47 mrg Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -39,8 +39,6 @@
 #	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
 #
 
-include "opt_uvm.h"
-
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/map.h>
@@ -50,9 +48,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <mips/regnum.h>
 include <mips/vmparam.h>
