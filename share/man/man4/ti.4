@@ -29,7 +29,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" FreeBSD Id: src/share/man/man4/ti.4,v 1.5 2000/01/23 16:13:24 asmodai Exp
-.\" $NetBSD: ti.4,v 1.1 2000/02/09 14:21:06 drochner Exp $
+.\" $NetBSD: ti.4,v 1.2 2000/07/09 13:43:42 jhawk Exp $
 .\"
 .Dd March 4, 1999
 .Dt TI 4
@@ -168,7 +168,7 @@ the network connection (cable).
 The
 .Nm
 device driver first appeared in
-.Nx 1.5/1.4.2 .
+.Nx 1.4.2 .
 .Sh AUTHORS
 The
 .Nm
@@ -180,4 +180,6 @@ This mapping (BUS_SPACE_MAP_LINEAR) fails on systems where the corresponding
 PCI memory range is located in "sparse" space only.
 .Pp
 VLAN tagging is not supported in 
+.Pp
+This driver currently does not work on big-endian systems.
 .Nx .
