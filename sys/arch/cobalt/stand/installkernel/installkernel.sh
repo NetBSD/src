@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: installkernel.sh,v 1.1 2000/06/20 00:24:11 soren Exp $
+# $NetBSD: installkernel.sh,v 1.1.24.1 2002/09/01 14:04:45 lukem Exp $
 
 EXT2_MOUNT=/stand
 NETBSD_KERNEL=netbsd
@@ -17,7 +17,7 @@ if [ ! -d ${EXT2_MOUNT}/boot ]; then
 	exit 1
 fi
 
-gzip -2 -c /${NETBSD_KERNEL} > ${EXT2_MOUNT}/boot/netbsd.gz
+gzip -4 -c /${NETBSD_KERNEL} > ${EXT2_MOUNT}/boot/netbsd.gz
 
 for KERNEL in ${FW_KERNELS}; do
 	rm -f ${EXT2_MOUNT}/boot/${KERNEL}
