@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.134 2000/02/14 18:37:39 erh Exp $
+#	$NetBSD: Makefile,v 1.135 2000/02/20 03:10:50 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -282,38 +282,24 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 #
 .if !target(snap_kern)
 snap_kern:
-	cd ${KERNCONFDIR} && ${CONFIG} \
-		-b ${KERNOBJDIR}/GENERIC -s ${KERNSRCDIR} GENERIC
-.ifndef UPDATE
-	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
-.endif
-	cd ${KERNOBJDIR}/GENERIC && ${MAKE} depend && ${MAKE} ${_J}
-	cd ${KERNOBJDIR}/GENERIC &&	\
-		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
-		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
-# XXX use same loop for ${EXTRA_KERNELS} and ${BUILD_KERNELS} but
-# XXX only install ${EXTRA_KERNELS} in binary/kernel???
-.for configfile in ${EXTRA_KERNELS}
+.for configfile in GENERIC ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
 .endif
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
+.endfor # kernels
+	cd ${KERNOBJDIR}/GENERIC &&	\
+		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
+		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
+.for configfile in GENERIC ${EXTRA_KERNELS}
 	cd ${KERNOBJDIR}/${configfile} &&	\
 		for kernel in `${GETKERNELAWK} \
 			${KERNCONFDIR}/${configfile}` ; {   \
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
 .endfor # EXTRA_KERNELS
-.for configfile in ${BUILD_KERNELS}
-	cd ${KERNCONFDIR} && ${CONFIG} \
-		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
-.ifndef UPDATE
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
-.endif
-	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
-.endfor # BUILD_KERNELS
 .endif # no target(snap_kern)
 
 .endif # RELEASEDIR check
