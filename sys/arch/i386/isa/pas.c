@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.3 1995/03/14 18:41:36 brezak Exp $	*/
+/*	$NetBSD: pas.c,v 1.4 1995/03/25 00:01:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.3 1995/03/14 18:41:36 brezak Exp $
+ *	$Id: pas.c,v 1.4 1995/03/25 00:01:19 mycroft Exp $
  */
 /*
  * Todo:
@@ -106,7 +106,7 @@ int	pasopen __P((dev_t, int));
 int	pasprobe();
 void	pasattach();
 
-int	pas_getdev __P((caddr_t, struct audio_device *));
+int	pas_getdev __P((void *, struct audio_device *));
 
 
 /*
@@ -465,7 +465,7 @@ pasattach(parent, self, aux)
 	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
 	sprintf(pas_device.version, "%d", sc->rev);
 
-	if (audio_hardware_attach(&pas_hw_if, (caddr_t)&sc->sc_sbdsp) != 0)
+	if (audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp) != 0)
 		printf("pas: could not attach to audio pseudo-device driver\n");
 }
 
@@ -489,7 +489,7 @@ pasopen(dev, flags)
 
 int
 pas_getdev(addr, retp)
-	caddr_t addr;
+	void *addr;
 	struct audio_device *retp;
 {
 	*retp = pas_device;

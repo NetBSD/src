@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.1 1995/02/21 01:36:59 brezak Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.2 1995/03/25 00:04:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
- *	$Id: audiovar.h,v 1.1 1995/02/21 01:36:59 brezak Exp $
+ *	$Id: audiovar.h,v 1.2 1995/03/25 00:04:18 mycroft Exp $
  */
 
 /*
@@ -85,7 +85,7 @@ struct audio_buffer {
  * Software state, per audio device.
  */
 struct audio_softc {
-	caddr_t	hw_hdl;		/* Hardware driver handle */
+	void	*hw_hdl;		/* Hardware driver handle */
 	struct	audio_hw_if *hw_if; /* Hardware interface */
 	u_char	sc_open;	/* single use device */
 #define AUOPEN_READ	0x01

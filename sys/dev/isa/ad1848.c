@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.1 1995/02/21 02:26:39 brezak Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.2 1995/03/25 00:00:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848.c,v 1.1 1995/02/21 02:26:39 brezak Exp $
+ *	$Id: ad1848.c,v 1.2 1995/03/25 00:00:53 mycroft Exp $
  */
 
 /*
@@ -440,8 +440,8 @@ ad1848_attach(sc)
     sc->precision = 8;
     sc->channels = 1;
     sc->encoding = AUDIO_ENCODING_ULAW;
-    (void) ad1848_set_in_sr((caddr_t)sc, sc->sc_irate);
-    (void) ad1848_set_out_sr((caddr_t)sc, sc->sc_orate);
+    (void) ad1848_set_in_sr(sc, sc->sc_irate);
+    (void) ad1848_set_out_sr(sc, sc->sc_orate);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -557,10 +557,10 @@ ad1848_get_mon_gain(sc, gp)
 
 void
 ad1848_mute_monitor(addr, mute)
-    caddr_t addr;
+    void *addr;
     int mute;
 {
-    struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    struct ad1848_softc *sc = addr;
     u_char reg;
 
     if (mute) {
@@ -661,10 +661,10 @@ ad1848_get_aux2_gain(sc, gp)
 
 int
 ad1848_set_in_sr(addr, sr)
-    caddr_t addr;
+    void *addr;
     u_long sr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     DPRINTF(("ad1848_set_in_sr: %d\n", sr));
 
@@ -676,19 +676,19 @@ ad1848_set_in_sr(addr, sr)
 
 u_long
 ad1848_get_in_sr(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     return(sc->sc_irate);
 }
 
 int
 ad1848_set_out_sr(addr, sr)
-    caddr_t addr;
+    void *addr;
     u_long sr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     DPRINTF(("ad1848_set_out_sr: %d\n", sr));
 
@@ -700,16 +700,16 @@ ad1848_set_out_sr(addr, sr)
 
 u_long
 ad1848_get_out_sr(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     return(sc->sc_orate);
 }
 
 int
 ad1848_query_encoding(addr, fp)
-    caddr_t addr;
+    void *addr;
     struct audio_encoding *fp;
 {
     switch (fp->index) {
@@ -738,10 +738,10 @@ ad1848_query_encoding(addr, fp)
 
 int
 ad1848_set_encoding(addr, enc)
-    caddr_t addr;
+    void *addr;
     u_int enc;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 	
     DPRINTF(("ad1848_set_encoding: %d\n", enc));
 
@@ -766,19 +766,19 @@ ad1848_set_encoding(addr, enc)
 
 int
 ad1848_get_encoding(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     return(sc->encoding);
 }
 
 int
 ad1848_set_precision(addr, prec)
-    caddr_t addr;
+    void *addr;
     u_int prec;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 	
     DPRINTF(("ad1848_set_precision: %d\n", prec));
 
@@ -795,19 +795,19 @@ ad1848_set_precision(addr, prec)
 
 int
 ad1848_get_precision(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     return(sc->precision);
 }
 
 int
 ad1848_set_channels(addr, chans)
-    caddr_t addr;
+    void *addr;
     int chans;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
     int mode;
 	
     DPRINTF(("ad1848_set_channels: %d\n", chans));
@@ -822,9 +822,9 @@ ad1848_set_channels(addr, chans)
 
 int
 ad1848_get_channels(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     return(sc->channels);
 }
@@ -872,10 +872,10 @@ ad1848_get_rec_port(sc)
 
 int
 ad1848_round_blocksize(addr, blk)
-    caddr_t addr;
+    void *addr;
     int blk;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
 
     sc->sc_lastcc = -1;
 
@@ -946,9 +946,9 @@ ad1848_open(sc, dev, flags)
 
 void
 ad1848_close(addr)
-    caddr_t addr;
+    void *addr;
 {
-    struct ad1848_softc *sc = (struct ad1848_softc *) addr;
+    struct ad1848_softc *sc = addr;
     register u_char r;
     int s = splaudio();
     
@@ -979,14 +979,14 @@ ad1848_close(addr)
  */
 int
 ad1848_commit_settings(addr)
-    caddr_t addr;
+    void *addr;
 {
-    struct ad1848_softc *sc = (void *)addr;
+    struct ad1848_softc *sc = addr;
     int timeout;
     u_char fs;
     int s = splaudio();
     
-    ad1848_mute_monitor((caddr_t)sc, 1);
+    ad1848_mute_monitor(sc, 1);
     
     ad_set_MCE(sc, 1);		/* Enables changes to the format select reg */
 
@@ -1020,7 +1020,7 @@ ad1848_commit_settings(addr)
     ad_set_MCE(sc, 0);
     wait_for_calibration(sc);
 
-    ad1848_mute_monitor((caddr_t)sc, 0);
+    ad1848_mute_monitor(sc, 0);
 
     sc->sc_lastcc = -1;
 
@@ -1165,9 +1165,9 @@ ad1848_set_format(sc, fmt, prec)
  */
 int
 ad1848_halt_out_dma(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc*) addr;
+    register struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_halt_out_dma\n"));
@@ -1181,9 +1181,9 @@ ad1848_halt_out_dma(addr)
 
 int
 ad1848_halt_in_dma(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc*) addr;
+    register struct ad1848_softc *sc = addr;
     u_char reg;
     
     DPRINTF(("ad1848: ad1848_halt_in_dma\n"));
@@ -1197,9 +1197,9 @@ ad1848_halt_in_dma(addr)
 
 int
 ad1848_cont_out_dma(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc*) addr;
+    register struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_cont_out_dma %s\n", sc->sc_locked?"(locked)":""));
@@ -1212,9 +1212,9 @@ ad1848_cont_out_dma(addr)
 
 int
 ad1848_cont_in_dma(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc*) addr;
+    register struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_cont_in_dma %s\n", sc->sc_locked?"(locked)":""));
@@ -1227,13 +1227,13 @@ ad1848_cont_in_dma(addr)
 
 int
 ad1848_dma_input(addr, p, cc, intr, arg)
-    caddr_t addr;
+    void *addr;
     void *p;
     int cc;
     void (*intr)();
     void *arg;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
     register u_short iobase;
     register u_char reg;
     int s;
@@ -1288,13 +1288,13 @@ ad1848_dma_input(addr, p, cc, intr, arg)
 
 int
 ad1848_dma_output(addr, p, cc, intr, arg)
-    caddr_t addr;
+    void *addr;
     void *p;
     int cc;
     void (*intr)();
     void *arg;
 {
-    register struct ad1848_softc *sc = (struct ad1848_softc *)addr;
+    register struct ad1848_softc *sc = addr;
     register u_short iobase;
     register u_char reg;
     

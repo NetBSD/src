@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.21 1995/03/15 16:43:09 glass Exp $	*/
+/*	$NetBSD: sb.c,v 1.22 1995/03/25 00:01:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.21 1995/03/15 16:43:09 glass Exp $
+ *	$Id: sb.c,v 1.22 1995/03/25 00:01:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ int	sbopen __P((dev_t, int));
 int	sbprobe();
 void	sbattach();
 
-int	sb_getdev __P((caddr_t, struct audio_device *));
+int	sb_getdev __P((void *, struct audio_device *));
 
 /*
  * Define our interface to the higher level audio driver.
@@ -288,7 +288,7 @@ sbattach(parent, self, aux)
 		SBVER_MAJOR(sc->sc_sbdsp.sc_model),
 		SBVER_MINOR(sc->sc_sbdsp.sc_model));
 
-	if (audio_hardware_attach(&sb_hw_if, (caddr_t)&sc->sc_sbdsp) != 0)
+	if (audio_hardware_attach(&sb_hw_if, &sc->sc_sbdsp) != 0)
 		printf("sb: could not attach to audio pseudo-device driver\n");
 }
 
@@ -316,7 +316,7 @@ sbopen(dev, flags)
 
 int
 sb_getdev(addr, retp)
-	caddr_t addr;
+	void *addr;
 	struct audio_device *retp;
 {
 	*retp = sb_device;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.2 1995/03/21 14:05:28 brezak Exp $	*/
+/*	$NetBSD: pss.c,v 1.3 1995/03/25 00:01:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.2 1995/03/21 14:05:28 brezak Exp $
+ *	$Id: pss.c,v 1.3 1995/03/25 00:01:10 mycroft Exp $
  */
 
 /*
@@ -168,18 +168,18 @@ int	spopen __P((dev_t, int));
 int	pssintr __P((struct pss_softc *));
 int	mpuintr __P((struct mpu_softc *));
 
-int	pss_speaker_ctl __P((caddr_t, int));
+int	pss_speaker_ctl __P((void *, int));
 
-int	pss_getdev __P((caddr_t, struct audio_device *));
-int	pss_setfd __P((caddr_t, int));
+int	pss_getdev __P((void *, struct audio_device *));
+int	pss_setfd __P((void *, int));
 
-int	pss_set_out_port __P((caddr_t, int));
-int	pss_get_out_port __P((caddr_t));
-int	pss_set_in_port __P((caddr_t, int));
-int	pss_get_in_port __P((caddr_t));
-int	pss_mixer_set_port __P((caddr_t, mixer_ctrl_t *));
-int	pss_mixer_get_port __P((caddr_t, mixer_ctrl_t *));
-int	pss_query_devinfo __P((caddr_t, mixer_devinfo_t *));
+int	pss_set_out_port __P((void *, int));
+int	pss_get_out_port __P((void *));
+int	pss_set_in_port __P((void *, int));
+int	pss_get_in_port __P((void *));
+int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
+int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
+int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
 
 /*
  * Define our interface to the higher level audio driver.
@@ -880,7 +880,7 @@ spprobe(parent, match, aux)
     outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_drq]));
 
     pc->ad1848_sc = sc;
-    sc->parent = (caddr_t)pc;
+    sc->parent = pc;
     
     return 1;
 }
@@ -1021,7 +1021,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    if (audio_hardware_attach(&pss_audio_if, (caddr_t)sc->ad1848_sc) != 0)
+    if (audio_hardware_attach(&pss_audio_if, sc->ad1848_sc) != 0)
 	printf("pss: could not attach to audio pseudo-device driver\n");
 }
 
@@ -1297,7 +1297,7 @@ pss_get_bass(sc, bp)
 
 int
 pss_speaker_ctl(addr, newstate)
-    caddr_t addr;
+    void *addr;
     int newstate;
 {
     return(0);
@@ -1341,7 +1341,7 @@ mpuintr(sc)
 
 int
 pss_getdev(addr, retp)
-    caddr_t addr;
+    void *addr;
     struct audio_device *retp;
 {
     DPRINTF(("pss_getdev: retp=0x%x\n", retp));
@@ -1352,7 +1352,7 @@ pss_getdev(addr, retp)
 
 int
 pss_setfd(addr, flag)
-    caddr_t addr;
+    void *addr;
     int flag;
 {
     /* Can't do full-duplex */
@@ -1361,11 +1361,11 @@ pss_setfd(addr, flag)
 
 int
 pss_set_out_port(addr, port)
-    caddr_t addr;
+    void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
 	
     DPRINTF(("pss_set_out_port: %d\n", port));
 
@@ -1379,10 +1379,10 @@ pss_set_out_port(addr, port)
 
 int
 pss_get_out_port(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
 
     DPRINTF(("pss_get_out_port: %d\n", sc->out_port));
 
@@ -1391,11 +1391,11 @@ pss_get_out_port(addr)
 
 int
 pss_set_in_port(addr, port)
-    caddr_t addr;
+    void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
 	
     DPRINTF(("pss_set_in_port: %d\n", port));
 
@@ -1419,10 +1419,10 @@ pss_set_in_port(addr, port)
 
 int
 pss_get_in_port(addr)
-    caddr_t addr;
+    void *addr;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
     int port = PSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -1444,11 +1444,11 @@ pss_get_in_port(addr)
 
 int
 pss_mixer_set_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -1553,11 +1553,11 @@ pss_mixer_set_port(addr, cp)
 
 int
 pss_mixer_get_port(addr, cp)
-    caddr_t addr;
+    void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -1672,11 +1672,11 @@ pss_mixer_get_port(addr, cp)
 
 int
 pss_query_devinfo(addr, dip)
-    caddr_t addr;
+    void *addr;
     register mixer_devinfo_t *dip;
 {
-    register struct ad1848_softc *ac = (struct ad1848_softc *)addr;
-    register struct pss_softc *sc = (struct pss_softc *)ac->parent;
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
 
     DPRINTF(("pss_query_devinfo: index=%d\n", dip->index));
 
