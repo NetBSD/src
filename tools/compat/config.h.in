@@ -1,0 +1,43 @@
+/*	$NetBSD: config.h.in,v 1.1 2001/12/11 21:17:58 tv Exp $	*/
+
+#ifndef	__NETBSD_COMPAT_CONFIG_H__
+#define	__NETBSD_COMPAT_CONFIG_H__
+
+/* Values set by "configure" based on available functions in the host. */
+
+#undef HAVE_STDDEF_H
+#undef HAVE_SYS_TYPES_H
+
+#undef HAVE_ERRX
+#undef HAVE_FPARSELN
+#undef HAVE_SETPROGNAME
+
+/* System headers needed for function prototypes. */
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_STDDEF_H
+#include <stddef.h>
+#endif
+#include <stdio.h>
+
+/* Prototypes for replacement functions. */
+
+#ifndef HAVE_ERRX
+void err(int, const char *, ...);
+void errx(int, const char *, ...);
+void warn(const char *, ...);
+void warnx(const char *, ...);
+#endif
+
+#ifndef HAVE_FPARSELN
+char *fparseln(FILE *, size_t *, size_t *, const char [3], int);
+#endif
+
+#ifndef HAVE_SETPROGNAME
+const char *getprogname(void);
+void setprogname(const char *);
+#endif
+
+#endif	/* !__NETBSD_COMPAT_CONFIG_H__ */

@@ -1,0 +1,3 @@
+#	$NetBSD: defs.mk.in,v 1.1 2001/12/11 21:17:59 tv Exp $
+
+LDADD+=		@LIBS@
