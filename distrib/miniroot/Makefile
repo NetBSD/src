@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2002/03/17 22:30:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.53 2002/03/18 04:08:47 lukem Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 .include <bsd.own.mk>
@@ -34,6 +34,9 @@ release: check_RELEASEDIR .WAIT image
 		-t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
 
 image:	${IMAGE} image_md_post
+
+image_md_post:
+# nothing here; refer to machine-dependant ${ARCHDIR}/Makefile.inc
 
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
