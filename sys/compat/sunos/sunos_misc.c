@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.52 1995/07/05 13:14:09 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.53 1995/08/15 17:28:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1145,7 +1145,6 @@ sunos_sigvec(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	extern struct emul emul_sunos;
 	struct sigvec vec;
 	register struct sigacts *ps = p->p_sigacts;
 	register struct sigvec *sv;
@@ -1175,16 +1174,17 @@ sunos_sigvec(p, uap, retval)
 		    sizeof (vec)))
 			return (error);
 		/*
-		 * SunOS uses this bit (4, aka SA_DISABLE) as SV_RESETHAND,
-		 * `reset to SIG_DFL on delivery'. We have no such option
-		 * now or ever!
+		 * SunOS uses the mask 0x0004 as SV_RESETHAND
+		 * meaning: `reset to SIG_DFL on delivery'.
+		 * We support only the bits in: 0xF
+		 * (those bits are the same as ours)
 		 */
-		if (p->p_emul == &emul_sunos) {
-			if (sv->sv_flags & SA_DISABLE)
-				return (EINVAL);
-			sv->sv_flags |= SA_USERTRAMP;
-		}
-		sv->sv_flags ^= SA_RESTART;	/* opposite of SV_INTERRUPT */
+		if (sv->sv_flags & ~0xF)
+			return (EINVAL);
+		/* SunOS binaries have a user-mode trampoline. */
+		sv->sv_flags |= SA_USERTRAMP;
+		/* Convert sigvec:SV_INTERRUPT to sigaction:SA_RESTART */
+		sv->sv_flags ^= SA_RESTART;	/* same bit, inverted */
 		setsigvec(p, signum, (struct sigaction *)sv);
 	}
 	return (0);
