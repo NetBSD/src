@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.7 2001/05/29 23:03:21 bjh21 Exp $
+#	$NetBSD: files.netwinder,v 1.8 2001/06/09 05:38:24 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -19,6 +19,7 @@ defopt	XSERVER
 defopt	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
+defopt	EBSA285
 defopt	NETWINDER
 
 define todservice {}
@@ -72,10 +73,11 @@ include "dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {cd = 26}
 
-# Generic MD files
-file	arch/arm32/arm32/autoconf.c
-file	arch/arm32/arm32/bus_dma.c
+file	arch/netwinder/netwinder/autoconf.c
 file	arch/netwinder/netwinder/conf.c
+
+# Generic MD files
+file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/stubs.c
 file	arch/arm32/arm32/exception.S
