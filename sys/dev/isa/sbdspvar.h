@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.20 1997/05/09 22:16:42 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.21 1997/05/19 23:14:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,29 +34,27 @@
  *
  */
 
-#define SB_MIC_PORT	0
-#define SB_SPEAKER	1
-#define SB_INPUT_CLASS	2
-#define SB_OUTPUT_CLASS	3
-#define SB_LINE_IN_PORT	4
-#define SB_DAC_PORT	5
-#define SB_FM_PORT	6
-#define SB_CD_PORT	7
-#define SB_MASTER_VOL	8
-#define SB_TREBLE	9
-#define SB_BASS		10
-#define SB_NDEVS	11		/* XXX include classes above for
-					   contiguous number space on
-					   original SB */
+#define SB_MASTER_VOL	0
+#define SB_MIDI_VOL	1
+#define SB_CD_VOL	2
+#define SB_VOICE_VOL	3
+#define SB_OUTPUT_CLASS	4
 
-/*#define SB_OUTPUT_MODE	9
-#define 	SB_SPKR_MONO	0
-#define 	SB_SPKR_STEREO	1*/
+#define SB_MIC_VOL	5
+#define SB_LINE_IN_VOL	6
+#define	SB_RECORD_SOURCE 7
+#define SB_TREBLE	8
+#define SB_BASS		9
+#define SB_RECORD_CLASS	10
 
-#define	SB_RECORD_SOURCE 11
+#define SB_PCSPEAKER	11
+#define SB_INPUT_GAIN	12
+#define SB_OUTPUT_GAIN	13
+#define SB_AGC		14
+#define SB_INPUT_CLASS	15
+#define SB_EQUALIZATION_CLASS 16
 
-#define SB_RECORD_CLASS	12
-
+#define SB_NDEVS	17
 
 /*
  * Software state, per SoundBlaster card.
@@ -87,11 +85,13 @@ struct sbdsp_softc {
 
 	u_short	sc_open;		/* reference count of open calls */
 
-	u_int	gain[SB_NDEVS];		/* kept in SB levels: right/left each
-					   in a nibble */
+	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
+#define SB_LEFT 0
+#define SB_RIGHT 1
 	
 	u_int	out_port;		/* output port */
-	u_int	in_port;		/* input port */
+	u_int	in_mask;		/* input ports */
+	u_int	in_port;		/* XXX needed for MI interface */
 	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
 
 	u_int	spkr_state;		/* non-null is on */
@@ -128,6 +128,12 @@ struct sbdsp_softc {
 #define SBVER_MINOR(v)	((v)&0xff)
 
 #define MODEL_JAZZ16 0x80000000
+
+	u_int	sc_mixer_model;
+#define SBM_NONE	0
+#define SBM_CT1335	1
+#define SBM_CT1345	2
+#define SBM_CT1745	3
 };
 
 #define	ISSB2CLASS(sc) \
@@ -163,8 +169,6 @@ int	sbdsp_set_monitor_gain __P((void *, u_int));
 int	sbdsp_get_monitor_gain __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
 int	sbdsp_set_params __P((void *, int, struct audio_params *, struct audio_params *));
-int	sbdsp_set_ifilter __P((void *, int));
-int	sbdsp_get_ifilter __P((void *));
 int	sbdsp_round_blocksize __P((void *, int));
 int	sbdsp_set_out_port __P((void *, int));
 int	sbdsp_get_out_port __P((void *));
