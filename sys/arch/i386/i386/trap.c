@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.16 1993/11/14 05:17:32 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.17 1993/11/14 05:19:22 mycroft Exp $
  */
 
 /*
@@ -167,7 +167,7 @@ trap(frame)
 		p = &proc0;
 	/* can't use curpcb, as it might be NULL; and we have p in a register
 	   anyway */
-	pcb = &p->paddr->u_pcb;
+	pcb = &p->p_addr->u_pcb;
 
 	if (pcb == 0)
 		goto we_re_toast;

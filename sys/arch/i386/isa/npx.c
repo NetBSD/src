@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.11 1993/11/08 20:18:55 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.12 1993/11/14 05:19:26 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -426,7 +426,7 @@ npxdna()
 	if (npxproc != NULL) {
 		printf("npxdna: npxproc = %lx, curproc = %lx\n",
 		       (u_long) npxproc, (u_long) curproc);
-		npxsave(&((struct pcb *)npxproc->p_addr)->pcb_savefpu);
+		npxsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
 	}
 #endif
 
