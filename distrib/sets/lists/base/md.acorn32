@@ -1,2 +1,4 @@
-# $NetBSD: md.acorn32,v 1.5 2002/04/01 23:22:08 thorpej Exp $
+# $NetBSD: md.acorn32,v 1.6 2003/08/02 17:59:04 bjh21 Exp $
 ./usr/bin/fdformat		base-util-bin
+./usr/mdec/boot32		base-sysutil-bin
+./usr/mdec/boot32,ffa		base-sysutil-bin
