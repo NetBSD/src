@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.7 1995/01/13 20:46:33 mycroft Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.8 1995/06/24 15:57:18 pk Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -118,8 +118,9 @@ main(argc, argv)
 }
 
 void *
-wallproc_wall_1(s)
+wallproc_wall_1_svc(s, rqstp )
 	char **s;
+	struct svc_req *rqstp;
 {
 	FILE *pfp;
 
@@ -141,8 +142,8 @@ wallprog_1(rqstp, transp)
 		char *wallproc_wall_1_arg;
 	} argument;
 	char *result;
-	bool_t (*xdr_argument)(), (*xdr_result)();
-	char *(*local)();
+	bool_t (*xdr_argument) __P((...)), (*xdr_result) __P((...));
+	char *(*local) __P((char **, struct svc_req *));
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -152,7 +153,8 @@ wallprog_1(rqstp, transp)
 	case WALLPROC_WALL:
 		xdr_argument = xdr_wrapstring;
 		xdr_result = xdr_void;
-		local = (char *(*)()) wallproc_wall_1;
+		local = (char *(*) __P((char **, struct svc_req *)))
+			wallproc_wall_1_svc;
 		break;
 
 	default:
@@ -164,7 +166,7 @@ wallprog_1(rqstp, transp)
 		svcerr_decode(transp);
 		goto leave;
 	}
-	result = (*local)(&argument, rqstp);
+	result = (*local)((char **)&argument, rqstp);
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
