@@ -1,4 +1,4 @@
-/* $NetBSD: rwall.c,v 1.13 2000/10/02 03:28:42 taca Exp $ */
+/* $NetBSD: rwall.c,v 1.14 2001/08/16 01:00:31 enami Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.13 2000/10/02 03:28:42 taca Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.14 2001/08/16 01:00:31 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ makemsg(fname)
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
-	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))
+	if ((fd = mkstemp(tmpname)) == -1 || (fp = fdopen(fd, "r+")) == NULL)
 		err(1, "can't open temporary file.");
 	(void)unlink(tmpname);
 
