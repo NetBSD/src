@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 1999/03/20 00:13:51 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.2 1999/05/02 18:26:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -73,8 +73,8 @@ const Obj_Entry *__mainprog_obj;
  * if we happen to be compiling without -static but with without any
  * shared libs present, things will still work.
  */
-asm(".weak _DYNAMIC");
 extern int _DYNAMIC;
+__weak_extern(_DYNAMIC);
 #endif /* DYNAMIC */
 
 #ifdef MCRT0
