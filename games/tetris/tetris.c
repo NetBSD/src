@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.11 1999/09/08 21:45:31 jsm Exp $	*/
+/*	$NetBSD: tetris.c,v 1.12 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 
 #include <sys/time.h>
 
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +61,8 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include "scores.h"
 #include "screen.h"
 #include "tetris.h"
+
+gid_t	gid, egid;
 
 static	void	elide __P((void));
 static	void	setup_board __P((void));
@@ -121,6 +124,16 @@ main(argc, argv)
 	register int level = 2;
 	char key_write[6][10];
 	int ch, i, j;
+	int fd;
+
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
+
+	fd = open("/dev/null", O_RDONLY);
+	if (fd < 3)
+		exit(1);
+	close(fd);
 
 	keys = "jkl pq";
 

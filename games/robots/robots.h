@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.11 1999/09/08 21:17:57 jsm Exp $	*/
+/*	$NetBSD: robots.h,v 1.12 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,6 +39,7 @@
 # include	<ctype.h>
 # include	<curses.h>
 # include	<err.h>
+# include	<errno.h>
 # include	<fcntl.h>
 # include	<pwd.h>
 # include	<setjmp.h>
@@ -137,7 +138,7 @@ void	quit __P((int)) __attribute__((__noreturn__));
 void	reset_count __P((void));
 int	rnd __P((int));
 COORD  *rnd_pos __P((void));
-void	score __P((void));
+void	score __P((int));
 void	set_name __P((SCORE *));
 void	show_score __P((void));
 int	sign __P((int));

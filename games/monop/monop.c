@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.8 1999/09/09 17:27:59 jsm Exp $	*/
+/*	$NetBSD: monop.c,v 1.9 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.8 1999/09/09 17:27:59 jsm Exp $");
+__RCSID("$NetBSD: monop.c,v 1.9 1999/09/12 09:02:22 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,9 @@ main(ac, av)
 	int ac;
 	char *av[];
 {
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
+
 	srand(getpid());
 	if (ac > 1) {
 		if (!rest_f(av[1]))
