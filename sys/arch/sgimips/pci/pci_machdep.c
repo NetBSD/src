@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2003/07/15 03:35:54 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2003/07/15 03:35:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,6 +87,7 @@ pci_bus_maxdevs(pc, busno)
 	pci_chipset_tag_t pc;
 	int busno;
 {
+
 	return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
 }
 
@@ -95,6 +96,7 @@ pci_make_tag(pc, bus, device, function)
 	pci_chipset_tag_t pc;
 	int bus, device, function;
 {
+
 	return (bus << 16) | (device << 11) | (function << 8);
 }
 
@@ -104,6 +106,7 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	pcitag_t tag;
 	int *bp, *dp, *fp;
 {
+
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;
 	if (dp != NULL)
@@ -118,6 +121,7 @@ pci_conf_read(pc, tag, reg)
 	pcitag_t tag;
 	int reg;
 {
+
 	return (*pc->pc_conf_read)(pc, tag, reg);
 }
 
@@ -128,6 +132,7 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
+
 	(*pc->pc_conf_write)(pc, tag, reg, data);
 }
 
@@ -145,24 +150,24 @@ pci_intr_map(pa, ihp)
 
 	if (dev < 3 && pin != PCI_INTERRUPT_PIN_A)
 		panic("SCSI0 and SCSI1 must be hardwired!");
-		
+
 	switch (pin) {
 	case PCI_INTERRUPT_PIN_NONE:
 		return -1;
 
 	case PCI_INTERRUPT_PIN_A:
-		/* 
+		/*
 		 * Each of SCSI{0,1}, & slots 0 - 2 has dedicated interrupt
 		 * for pin A?
 		 */
 		*ihp = dev + 7;
 		return 0;
 
-	case PCI_INTERRUPT_PIN_B: 
-		start = 0; 
+	case PCI_INTERRUPT_PIN_B:
+		start = 0;
 		break;
 	case PCI_INTERRUPT_PIN_C:
-		start = 1; 
+		start = 1;
 		break;
 	case PCI_INTERRUPT_PIN_D:
 		start = 2;
@@ -204,6 +209,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func)(void *);
 	void *arg;
 {
+
 	return crime_intr_establish(ih, 0, 0, func, arg);
 }
 
@@ -212,7 +218,6 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
-	panic("pci_intr_disestablish: not implemented");
 
-	return;
+	panic("pci_intr_disestablish: not implemented");
 }
