@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.1 2003/04/01 17:36:45 hpeyerl Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.2 2003/04/03 16:41:23 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -119,7 +119,11 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	x &= ~(OHCI_HCFS_MASK);
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_CONTROL, x);
 	delay(10);
+	/*  Need to read USBH_ENABLE twice in succession according to
+         *  au1500 Errata #7.
+         */
 	for (x = 100; x; x--) {
+		bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE);
 		tmp = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE);
 		if (tmp&UE_RD)
 			break;
