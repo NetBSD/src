@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.9 2001/05/29 02:20:23 mrg Exp $
+#	$NetBSD: Makefile.luna68k,v 1.10 2001/10/23 19:26:45 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,8 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/luna68k/conf/Makefile.luna68k
 # after which config should be rerun for all machines of that type.
+
+MACHINE_ARCH=m68k
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

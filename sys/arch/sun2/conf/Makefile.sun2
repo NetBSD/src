@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.5 2001/09/06 20:04:16 fredette Exp $
+# $NetBSD: Makefile.sun2,v 1.6 2001/10/23 19:26:46 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -18,12 +18,10 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
+MACHINE_ARCH=m68000
+
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
-
-# XXX - Make cross-build work...
-MACHINE_ARCH=m68000
-MACHINE=sun2
 
 AR?=	ar
 AS?=	as

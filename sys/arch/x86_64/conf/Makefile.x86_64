@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.2 2001/06/19 13:19:54 fvdl Exp $
+#	$NetBSD: Makefile.x86_64,v 1.3 2001/10/23 19:26:47 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,8 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/x86_64/conf/Makefile.x86_64
 # after which config should be rerun for all machines of that type.
+
+MACHINE_ARCH=x86_64
 
 .include <bsd.own.mk>
 
