@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.1 2001/09/03 17:05:20 drochner Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.1.2.1 2001/09/07 04:45:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -49,8 +49,8 @@ wsfontattach(n)
 }
 
 int
-wsfontopen(dev, flag, mode, p)
-	dev_t dev;
+wsfontopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -62,8 +62,8 @@ wsfontopen(dev, flag, mode, p)
 }
 
 int
-wsfontclose(dev, flag, mode, p)
-	dev_t dev;
+wsfontclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -73,8 +73,8 @@ wsfontclose(dev, flag, mode, p)
 }
 
 int
-wsfontioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+wsfontioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;

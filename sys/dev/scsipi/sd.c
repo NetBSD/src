@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.178 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.178.2.1 2001/09/07 04:45:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
 #include <sys/rnd.h>
 #endif
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -98,7 +100,7 @@ int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
 void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
-void	sdgetdisklabel __P((struct sd_softc *));
+void	sdgetdisklabel __P((struct vnode *));
 void	sdstart __P((struct scsipi_periph *));
 void	sddone __P((struct scsipi_xfer *));
 void	sd_shutdown __P((void *));
@@ -341,8 +343,8 @@ sdunlock(sd)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int
-sdopen(dev, flag, fmt, p)
-	dev_t dev;
+sdopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -352,7 +354,7 @@ sdopen(dev, flag, fmt, p)
 	int unit, part;
 	int error;
 
-	unit = SDUNIT(dev);
+	unit = SDUNIT(devvp->v_rdev);
 	if (unit >= sd_cd.cd_ndevs)
 		return (ENXIO);
 	sd = sd_cd.cd_devs[unit];
@@ -362,13 +364,15 @@ sdopen(dev, flag, fmt, p)
 	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
+	devvp->v_devcookie = sd;
+
 	periph = sd->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
-	part = SDPART(dev);
+	part = SDPART(devvp->v_rdev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sd_cd.cd_ndevs, part));
+	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n",
+	    devvp->v_rdev, unit, sd_cd.cd_ndevs, part));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -444,7 +448,7 @@ sdopen(dev, flag, fmt, p)
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(sd);
+			sdgetdisklabel(devvp);
 			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel loaded "));
 		}
 	}
@@ -496,15 +500,15 @@ bad4:
  * device.  Convenient now but usually a pain.
  */
 int 
-sdclose(dev, flag, fmt, p)
-	dev_t dev;
+sdclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = devvp->v_devcookie;
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
-	int part = SDPART(dev);
+	int part = SDPART(devvp->v_rdev);
 	int error;
 
 	if ((error = sdlock(sd)) != 0)
@@ -566,7 +570,7 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = bp->b_devvp->v_devcookie;
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct disklabel *lp;
 	daddr_t blkno;
@@ -613,7 +617,8 @@ sdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (SDPART(bp->b_dev) != RAW_PART &&
+	if (SDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, lp,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
@@ -628,10 +633,11 @@ sdstrategy(bp)
 		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
- 
-	if (SDPART(bp->b_dev) != RAW_PART)
-		blkno += lp->d_partitions[SDPART(bp->b_dev)].p_offset;
- 
+
+	if (SDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	    (bp->b_flags & B_DKLABEL) == 0)
+		blkno += lp->d_partitions[SDPART(bp->b_devvp->v_rdev)].p_offset;
+
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
@@ -833,7 +839,7 @@ void
 sdminphys(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = bp->b_devvp->v_devcookie;
 	long max;
 
 	/*
@@ -860,23 +866,23 @@ sdminphys(bp)
 }
 
 int
-sdread(dev, uio, ioflag)
-	dev_t dev;
+sdread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 
-	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
+	return (physio(sdstrategy, NULL, devvp, B_READ, sdminphys, uio));
 }
 
 int
-sdwrite(dev, uio, ioflag)
-	dev_t dev;
+sdwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 
-	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
+	return (physio(sdstrategy, NULL, devvp, B_WRITE, sdminphys, uio));
 }
 
 /*
@@ -884,16 +890,16 @@ sdwrite(dev, uio, ioflag)
  * Knows about the internals of this device
  */
 int
-sdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+sdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = devvp->v_devcookie;
 	struct scsipi_periph *periph = sd->sc_periph;
-	int part = SDPART(dev);
+	int part = SDPART(devvp->v_rdev);
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -981,9 +987,8 @@ sdioctl(dev, cmd, addr, flag, p)
 			    || cmd == ODIOCWDINFO
 #endif
 			   )
-				error = writedisklabel(SDLABELDEV(dev),
-				    sdstrategy, sd->sc_dk.dk_label,
-				    sd->sc_dk.dk_cpulabel);
+				error = writedisklabel(devvp, sdstrategy,
+				    sd->sc_dk.dk_label, sd->sc_dk.dk_cpulabel);
 		}
 
 		sd->flags &= ~SDF_LABELLING;
@@ -1051,7 +1056,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, devvp, cmd, addr, flag, p));
 	}
 
 #ifdef DIAGNOSTIC
@@ -1108,9 +1113,10 @@ sdgetdefaultlabel(sd, lp)
  * Load the label information on the named device
  */
 void
-sdgetdisklabel(sd)
-	struct sd_softc *sd;
+sdgetdisklabel(devvp)
+	struct vnode *devvp;
 {
+	struct sd_softc *sd = devvp->v_devcookie;
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	char *errstring;
 
@@ -1126,8 +1132,8 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(devvp, sdstrategy, lp,
+	    sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
@@ -1254,6 +1260,7 @@ sdsize(dev)
 	dev_t dev;
 {
 	struct sd_softc *sd;
+	struct vnode *vp;
 	int part, unit, omask;
 	int size;
 
@@ -1270,8 +1277,16 @@ sdsize(dev)
 	part = SDPART(dev);
 	omask = sd->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
+	/* XXXDEVVP */
+
+	if (omask == 0) {
+		if (bdevvp(dev, &vp) != 0)
+			return (-1);
+		if (sdopen(vp, 0, S_IFBLK, NULL) != 0) {
+			vrele(vp);
+			return (-1);
+		}
+	}
 	if ((sd->sc_periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 		size = -1;
 	else if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
@@ -1279,8 +1294,11 @@ sdsize(dev)
 	else
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
 		    (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
+	if (omask == 0) {
+		if (sdclose(vp, 0, S_IFBLK, NULL) != 0)
+			size = -1;
+		vrele(vp);
+	}
 	return (size);
 }
 

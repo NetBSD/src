@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 2001/07/08 18:06:46 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,10 +121,13 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/vnode.h>
 #include <sys/conf.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -294,7 +297,7 @@ void fdcpseudointr __P((void *arg));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline const struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
-int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+int fdformat __P((struct vnode *, struct ne7_fd_formb *, struct proc *));
 
 void	fd_mountroot_hook __P((struct device *));
 
@@ -577,7 +580,7 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
+	struct fd_softc *fd = bp->b_devvp->v_devcookie;
 	int sz;
  	int s;
 
@@ -697,23 +700,23 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -813,8 +816,8 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, p)
-	dev_t dev;
+fdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
@@ -822,17 +825,19 @@ fdopen(dev, flags, mode, p)
 	struct fd_softc *fd;
 	const struct fd_type *type;
 
-	fd = device_lookup(&fd_cd, FDUNIT(dev));
+	fd = device_lookup(&fd_cd, FDUNIT(devvp->v_rdev));
 	if (fd == NULL)
 		return (ENXIO);
 
-	type = fd_dev_to_type(fd, dev);
+	type = fd_dev_to_type(fd, devvp->v_rdev);
 	if (type == NULL)
 		return ENXIO;
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
 	    memcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
+
+	devvp->v_devcookie = fd;
 
 	fd->sc_type_copy = *type;
 	fd->sc_type = &fd->sc_type_copy;
@@ -843,13 +848,13 @@ fdopen(dev, flags, mode, p)
 }
 
 int
-fdclose(dev, flags, mode, p)
-	dev_t dev;
+fdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = devvp->v_devcookie;
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1317,14 +1322,14 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = devvp->v_devcookie;
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1348,7 +1353,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(devvp, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
 
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1389,7 +1394,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(devvp, fdstrategy, &buffer, NULL);
 		return error;
 	}
 
@@ -1504,7 +1509,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(devvp, fd_formb, p);
 		free(fd_formb, M_TEMP);
 		return error;
 
@@ -1526,13 +1531,13 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
+fdformat(devvp, finfo, p)
+	struct vnode *devvp;
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
 	int rv = 0, s;
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = devvp->v_devcookie;
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -1543,7 +1548,7 @@ fdformat(dev, finfo, p)
 	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/*
 	 * calculate a fake blkno, so fdstrategy() would initiate a

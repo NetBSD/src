@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.30 2001/04/25 17:53:42 bouyer Exp $	*/
+/*	$NetBSD: uk.c,v 1.30.4.1 2001/09/07 04:45:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -162,8 +164,8 @@ ukdetach(self, flags)
  * open the device.
  */
 int
-ukopen(dev, flag, fmt, p)
-	dev_t dev;
+ukopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -172,18 +174,20 @@ ukopen(dev, flag, fmt, p)
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
 
-	unit = UKUNIT(dev);
+	unit = UKUNIT(devvp->v_rdev);
 	if (unit >= uk_cd.cd_ndevs)
 		return (ENXIO);
 	uk = uk_cd.cd_devs[unit];
 	if (uk == NULL)
 		return (ENXIO);
 
+	devvp->v_devcookie = uk;
+
 	periph = uk->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", devvp->v_rdev, unit,
 		uk_cd.cd_ndevs));
 
 	/*
@@ -207,12 +211,12 @@ ukopen(dev, flag, fmt, p)
  * occurence of an open device
  */
 int
-ukclose(dev, flag, fmt, p)
-	dev_t dev;
+ukclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = devvp->v_devcookie;
 	struct scsipi_periph *periph = uk->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -231,14 +235,14 @@ ukclose(dev, flag, fmt, p)
  * Only does generic scsi ioctls.
  */
 int
-ukioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+ukioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = devvp->v_devcookie;
 
-	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(uk->sc_periph, devvp, cmd, addr, flag, p));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.80 2001/07/18 05:34:37 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.80.2.1 2001/09/07 04:45:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,8 @@
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1192,7 +1194,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-filedescopen(dev_t dev, int mode, int type, struct proc *p)
+filedescopen(struct vnode *devvp, int mode, int type, struct proc *p)
 {
 
 	/*
@@ -1203,7 +1205,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
-	p->p_dupfd = minor(dev);
+	p->p_dupfd = minor(devvp->v_rdev);
 	return (ENODEV);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.23 2001/07/07 16:13:47 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.23.4.1 2001/09/07 04:45:25 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -30,12 +30,15 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
+
+#include <miscfs/specfs/specdev.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -258,17 +261,19 @@ cy_getport(dev_t dev)
  * open routine. returns zero if successfull, else error code
  */
 int
-cyopen(dev_t dev, int flag, int mode, struct proc *p)
+cyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
 	struct tty *tp;
 	int s, error;
 
-	cy = CY_PORT(dev);
+	cy = CY_PORT(devvp->v_rdev);
 	if (cy == NULL)
 		return (ENXIO);
 	sc = CY_BOARD(cy);
+
+	devvp->v_devcookie = cy;
 
 	s = spltty();
 	if (cy->cy_tty == NULL) {
@@ -285,7 +290,7 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 	tp = cy->cy_tty;
 	tp->t_oproc = cystart;
 	tp->t_param = cyparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -351,7 +356,7 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 		cd_write_reg(sc, cy->cy_chip, CD1400_SRER,
 		    CD1400_SRER_MDMCH | CD1400_SRER_RXDATA);
 
-		if (CY_DIALOUT(dev) ||
+		if (CY_DIALOUT(devvp->v_rdev) ||
 		    ISSET(cy->cy_openflags, TIOCFLAG_SOFTCAR) ||
 		    ISSET(tp->t_cflag, MDMBUF) ||
 		    ISSET(cy->cy_carrier_stat, CD1400_MSVR2_CD))
@@ -380,21 +385,21 @@ cyopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 	splx(s);
 
-	return (*tp->t_linesw->l_open) (dev, tp);
+	return (*tp->t_linesw->l_open) (devvp, tp);
 }
 
 /*
  * close routine. returns zero if successfull, else error code
  */
 int
-cyclose(dev_t dev, int flag, int mode, struct proc *p)
+cyclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
 	struct tty *tp;
 	int s;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
@@ -425,12 +430,12 @@ cyclose(dev_t dev, int flag, int mode, struct proc *p)
  * Read routine
  */
 int
-cyread(dev_t dev, struct uio *uio, int flag)
+cyread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 	tp = cy->cy_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -440,12 +445,12 @@ cyread(dev_t dev, struct uio *uio, int flag)
  * Write routine
  */
 int
-cywrite(dev_t dev, struct uio *uio, int flag)
+cywrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 	tp = cy->cy_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -455,15 +460,15 @@ cywrite(dev_t dev, struct uio *uio, int flag)
  * Poll routine
  */
 int
-cypoll(dev, events, p)
-	dev_t dev;
+cypoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 	tp = cy->cy_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
@@ -473,11 +478,11 @@ cypoll(dev, events, p)
  * return tty pointer
  */
 struct tty *
-cytty(dev_t dev)
+cytty(struct vnode *devvp)
 {
 	struct cy_port *cy;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 
 	return (cy->cy_tty);
 }
@@ -486,14 +491,15 @@ cytty(dev_t dev)
  * ioctl routine
  */
 int
-cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+cyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
 	struct tty *tp;
 	int error;
 
-	cy = CY_PORT(dev);
+	cy = devvp->v_devcookie;
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
@@ -544,7 +550,7 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case TIOCGFLAGS:
 		*((int *) data) = cy->cy_openflags |
-			(CY_DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0);
+			(CY_DIALOUT(devvp->v_rdev) ? TIOCFLAG_SOFTCAR : 0);
 		break;
 
 	case TIOCSFLAGS:
@@ -574,7 +580,7 @@ cystart(struct tty *tp)
 	struct cy_port *cy;
 	int s;
 
-	cy = CY_PORT(tp->t_dev);
+	cy = tp->t_devvp->v_devcookie;
 	sc = cy->cy_softc;
 
 	s = spltty();
@@ -611,7 +617,7 @@ cystop(struct tty *tp, int flag)
 	struct cy_port *cy;
 	int s;
 
-	cy = CY_PORT(tp->t_dev);
+	cy = tp->t_devvp->v_devcookie;
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -638,7 +644,7 @@ cyparam(struct tty *tp, struct termios *t)
 	struct cy_port *cy;
 	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
 
-	cy = CY_PORT(tp->t_dev);
+	cy = tp->t_devvp->v_devcookie;
 	sc = CY_BOARD(cy);
 
 	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr, cy->cy_clock) < 0)
@@ -995,7 +1001,7 @@ cy_poll(void *arg)
 				    "(card %d, port %d, carrier %d)\n",
 				    card, port, carrier);
 #endif
-				if (CY_DIALOUT(tp->t_dev) == 0 &&
+				if (CY_DIALOUT(tp->t_devvp->v_rdev) == 0 &&
 				    !(*tp->t_linesw->l_modem)(tp, carrier))
 					cy_modem_control(sc, cy,
 					    TIOCM_DTR, DMBIC);

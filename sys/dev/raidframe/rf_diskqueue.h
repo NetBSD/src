@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.5 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.5.10.1 2001/09/07 04:45:28 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,7 +74,6 @@ struct RF_DiskQueueData_s {
 	RF_DiskQueueData_t *next;
 	RF_DiskQueueData_t *prev;
 	caddr_t buf2;		/* for read-op-write */
-	dev_t   dev;		/* the device number for in-kernel version */
 	RF_DiskQueue_t *queue;	/* the disk queue to which this req is
 				 * targeted */
 	RF_DiskQueueDataFlags_t flags;	/* flags controlling operation */
@@ -127,7 +126,6 @@ struct RF_DiskQueue_s {
 				 * user-level only */
 	RF_DiskQueueFlags_t flags;	/* terminate, locked */
 	RF_Raid_t *raidPtr;	/* associated array */
-	dev_t   dev;		/* device number for kernel version */
 	RF_SectorNum_t last_deq_sector;	/* last sector number dequeued or
 					 * dispatched */
 	int     row, col;	/* debug only */
@@ -201,7 +199,7 @@ rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
 int 
 rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
 		      RF_RowCol_t, RF_DiskQueueSW_t *,
-		      RF_SectorCount_t, dev_t, int, 
+		      RF_SectorCount_t, int, 
 		      RF_ShutdownList_t **,
 		      RF_AllocListElem_t *);
 

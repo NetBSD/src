@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.57 2001/06/28 05:45:49 atatat Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.57.4.1 2001/09/07 04:45:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -891,7 +891,7 @@ pollscan(struct proc *p, struct pollfd *fds, int nfd, register_t *retval)
 
 /*ARGSUSED*/
 int
-seltrue(dev_t dev, int events, struct proc *p)
+seltrue(struct vnode *devvp, int events, struct proc *p)
 {
 
 	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));

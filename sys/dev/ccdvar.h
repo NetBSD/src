@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.20 2001/08/05 11:20:14 jdolecek Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.20.2.1 2001/09/07 04:45:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@ struct ccd_ioctl {
  */
 struct ccdcinfo {
 	struct vnode	*ci_vp;			/* device's vnode */
-	dev_t		ci_dev;			/* XXX: device's dev_t */
 	size_t		ci_size; 		/* size */
 	char		*ci_path;		/* path to component */
 	size_t		ci_pathlen;		/* length of component path */

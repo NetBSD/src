@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.42 2001/04/16 00:18:06 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.42.4.1 2001/09/07 04:45:34 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -467,20 +469,22 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, struct proc *p)
+ulptopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	u_char flags = ULPTFLAGS(dev);
+	u_char flags = ULPTFLAGS(devvp->v_rdev);
 	struct ulpt_softc *sc;
 	usbd_status err;
 	int spin, error;
 
-	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
+	USB_GET_SC_OPEN(ulpt, ULPTUNIT(devvp->v_rdev), sc);
 
 	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
 		return (ENXIO);
 
 	if (sc->sc_state)
 		return (EBUSY);
+
+	devvp->v_devcookie = sc;
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
@@ -586,11 +590,11 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, struct proc *p)
+ulptclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct ulpt_softc *sc;
 
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	if (sc->sc_state != ULPT_OPEN)
 		/* We are being forced to close before the open completed. */
@@ -658,12 +662,12 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 }
 
 int
-ulptwrite(dev_t dev, struct uio *uio, int flags)
+ulptwrite(struct vnode *devvp, struct uio *uio, int flags)
 {
 	struct ulpt_softc *sc;
 	int error;
 
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -676,7 +680,8 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ulptioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.27 2001/07/19 16:25:25 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.27.2.1 2001/09/07 04:45:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -119,15 +122,8 @@ void eshwatchdog __P((struct ifnet *));
 
 /* Routines to support FP operation */
 
-int esh_fpopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-int esh_fpclose __P((dev_t dev, int fflag, int devtype, struct proc *));
-int esh_fpread __P((dev_t dev, struct uio *uio, int ioflag));
-int esh_fpwrite __P((dev_t dev, struct uio *uio, int ioflag));
-static void esh_fpstrategy __P((struct buf *bp));
-int esh_fpioctl __P((dev_t dev, u_long cmd, caddr_t data,
-		     int fflag, struct proc *p));
-void esh_fpstop __P((struct tty *tp, int rw));
-int esh_fppoll __P((dev_t dev, int events, struct proc *p));
+bdev_decl(esh_fp);
+cdev_decl(esh_fp);
 
 #ifdef MORE_DONE
 paddr_t esh_fpmmap __P((dev_t, off_t, int));
@@ -697,8 +693,8 @@ bad_init:
  */
 
 int 
-esh_fpopen(dev, oflags, devtype, p)
-	dev_t dev;
+esh_fpopen(devvp, oflags, devtype, p)
+	struct vnode *devvp;
 	int oflags;
 	int devtype;
 	struct proc *p;
@@ -706,15 +702,17 @@ esh_fpopen(dev, oflags, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *recv;
-	int ulp = ESHULP(dev);
+	int ulp = ESHULP(devvp->v_rdev);
 	int error = 0;
 	bus_size_t size;
 	int rseg;
 	int s;
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	sc = device_lookup(&esh_cd, ESHUNIT(devvp->v_rdev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 #ifdef ESH_PRINTF
 	printf("esh_fpopen:  opening board %d, ulp %d\n",
@@ -919,8 +917,8 @@ bad_fp_dmamem_alloc:
 
 
 int 
-esh_fpclose(dev, fflag, devtype, p)
-	dev_t dev;
+esh_fpclose(devvp, fflag, devtype, p)
+	struct vnode *devvp;
 	int fflag;
 	int devtype;
 	struct proc *p;
@@ -928,13 +926,13 @@ esh_fpclose(dev, fflag, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *ring;
-	int ulp = ESHULP(dev);
+	int ulp = ESHULP(devvp->v_rdev);
 	int index;
 	int error = 0;
 	int s;
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
-	if (sc == NULL || ulp == HIPPI_ULP_802)
+	sc = devvp->v_devcookie;
+	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
 	s = splnet();
@@ -994,8 +992,8 @@ esh_fpclose(dev, fflag, devtype, p)
 }
 
 int 
-esh_fpread(dev, uio, ioflag)
-	dev_t dev;
+esh_fpread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -1004,7 +1002,7 @@ esh_fpread(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_fp_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int ulp = ESHULP(dev);
+	int ulp = ESHULP(devvp->v_rdev);
 	int error;
 	int i;
 	int s;
@@ -1013,8 +1011,8 @@ esh_fpread(dev, uio, ioflag)
 	printf("esh_fpread:  dev %x\n", dev);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
-	if (sc == NULL || ulp == HIPPI_ULP_802)
+	sc = devvp->v_devcookie;
+	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
 	s = splnet();
@@ -1154,8 +1152,8 @@ fpread_done:
 
 
 int 
-esh_fpwrite(dev, uio, ioflag)
-	dev_t dev;
+esh_fpwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -1164,7 +1162,7 @@ esh_fpwrite(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_send_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int ulp = ESHULP(dev);
+	int ulp = ESHULP(devvp->v_rdev);
 	int error;
 	int len;
 	int i;
@@ -1174,8 +1172,8 @@ esh_fpwrite(dev, uio, ioflag)
 	printf("esh_fpwrite:  dev %x\n", dev);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
-	if (sc == NULL || ulp == HIPPI_ULP_802)
+	sc = devvp->v_devcookie;
+	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
 	s = splnet();
@@ -1308,16 +1306,16 @@ fpwrite_done:
 	return error;
 
 /* To shut up compiler */
-	error = physio(esh_fpstrategy, NULL, dev, B_WRITE, minphys, uio);
+	error = physio(esh_fpstrategy, NULL, devvp, B_WRITE, minphys, uio);
 	return error;
 }
 
-static void 
+void 
 esh_fpstrategy(bp)
 	struct buf *bp;
 {
 	struct esh_softc *sc;
-	int ulp = ESHULP(bp->b_dev);
+	int ulp = ESHULP(bp->b_devvp->v_rdev);
 	int error = 0;
 	int s;
 
@@ -1327,10 +1325,10 @@ esh_fpstrategy(bp)
 		bp->b_bcount, bp->b_flags, bp->b_dev, unit, ulp);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(bp->b_dev));
+	sc = bp->b_devvp->v_devcookie;
 
 	s = splnet();
-	if (sc == NULL || ulp == HIPPI_ULP_802) {
+	if (ulp == HIPPI_ULP_802) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -1415,8 +1413,8 @@ done:
 
 
 int 
-esh_fpioctl(dev, cmd, data, fflag, p)
-	dev_t dev;
+esh_fpioctl(devvp, cmd, data, fflag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int fflag;
@@ -1434,8 +1432,8 @@ esh_fpstop(tp, rw)
 }
 
 int 
-esh_fppoll(dev, events, p)
-	dev_t dev;
+esh_fppoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {

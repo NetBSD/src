@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.4.1 2001/09/07 04:45:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -62,11 +62,19 @@
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
 
+#include <miscfs/specfs/specdev.h>
+
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
 static void	ttyecho(int, struct tty *);
 static void	ttyrubo(struct tty *, int);
 static int	proc_compare(struct proc *, struct proc *);
+
+static int ttnread __P((struct tty *));
+static void ttyblock __P((struct tty *));
+static void ttyecho __P((int, struct tty *));
+static void ttyrubo __P((struct tty *, int));
+static int proc_compare __P((struct proc *, struct proc *));
 
 /* Symbolic sleep message strings. */
 const char	ttclos[] = "ttycls";
@@ -225,12 +233,12 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
  * Initial open of tty, or (re)entry to standard tty line discipline.
  */
 int
-ttylopen(dev_t device, struct tty *tp)
+ttylopen(struct vnode *devvp, struct tty *tp)
 {
 	int	s;
 
 	s = spltty();
-	tp->t_dev = device;
+	tp->t_devvp = devvp;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		memset(&tp->t_winsize, 0, sizeof(tp->t_winsize));
@@ -434,7 +442,7 @@ ttyinput(int c, struct tty *tp)
 			if (CCEQ(cc[VSTOP], c)) {
 				if (!ISSET(tp->t_state, TS_TTSTOP)) {
 					SET(tp->t_state, TS_TTSTOP);
-					(*cdevsw[major(tp->t_dev)].d_stop)(tp,
+					(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp,
 					   0);
 					return (0);
 				}
@@ -925,7 +933,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 	case TIOCSLINED: {		/* set line discipline */
 		char *name = (char *)data;
-		dev_t device;
+		struct vnode *devvp;
 
 		/* Null terminate to prevent buffer overflow */
 		name[TTLINEDNAMELEN] = 0; 
@@ -936,12 +944,12 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (ENXIO);
 
 		if (lp != tp->t_linesw) {
-			device = tp->t_dev;
+			devvp = tp->t_devvp;
 			s = spltty();
 			(*tp->t_linesw->l_close)(tp, flag);
-			error = (*lp->l_open)(device, tp);
+			error = (*lp->l_open)(devvp, tp);
 			if (error) {
-				(void)(*tp->t_linesw->l_open)(device, tp);
+				(void)(*tp->t_linesw->l_open)(devvp, tp);
 				splx(s);
 				return (error);
 			}
@@ -971,7 +979,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		s = spltty();
 		if (!ISSET(tp->t_state, TS_TTSTOP)) {
 			SET(tp->t_state, TS_TTSTOP);
-			(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+			(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, 0);
 		}
 		splx(s);
 		break;
@@ -1120,7 +1128,7 @@ ttyflush(struct tty *tp, int rw)
 	}
 	if (rw & FWRITE) {
 		CLR(tp->t_state, TS_TTSTOP);
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, rw);
+		(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.6.1 2001/09/07 04:45:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.6.1 2001/09/07 04:45:35 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $");
 #include <sys/device.h>
 #include <sys/vnode.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/wseventvar.h>
@@ -136,6 +138,8 @@ struct wsmouse_softc {
 	struct wsmux_softc *sc_mux;
 #endif
 };
+
+int	wsmouse_major = -1;
 
 int	wsmouse_match __P((struct device *, struct cfdata *, void *));
 void	wsmouse_attach __P((struct device *, struct device *, void *));
@@ -204,11 +208,20 @@ wsmouse_attach(parent, self, aux)
 	sc->sc_accesscookie = ap->accesscookie;
 	sc->sc_ready = 0;				/* sanity */
 
+	if (wsmouse_major == -1) {
+		int maj;
+
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == wsmouseopen)
+				break;
+		wsmouse_major = maj;
+	}
+
 #if NWSMUX > 0
 	mux = sc->sc_dv.dv_cfdata->wsmousedevcf_mux;
 	if (mux != WSMOUSEDEVCF_MUX_DEFAULT) {
 		wsmux_attach(mux, WSMUX_MOUSE, &sc->sc_dv, &sc->sc_events,
-			     &sc->sc_mux, &wsmouse_muxops);
+			     &sc->sc_mux, &wsmouse_muxops, wsmouse_major);
 		printf(" mux %d", mux);
 	}
 #endif
@@ -240,8 +253,7 @@ wsmouse_detach(self, flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wseventvar *evar;
-	int maj, mn;
-	int s;
+	int s, mn;
 #if NWSMUX > 0
 	int mux;
 #endif
@@ -270,14 +282,9 @@ wsmouse_detach(self, flags)
 		splx(s);
 	}
 
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsmouseopen)
-			break;
-
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(wsmouse_major, mn, mn, VCHR);
 
 	return (0);
 }
@@ -436,8 +443,8 @@ out:
 }
 
 int
-wsmouseopen(dev, flags, mode, p)
-	dev_t dev;
+wsmouseopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -445,7 +452,7 @@ wsmouseopen(dev, flags, mode, p)
 	struct wsmouse_softc *sc;
 	int error, unit;
 
-	unit = minor(dev);
+	unit = minor(devvp->v_rdev);
 	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -464,6 +471,8 @@ wsmouseopen(dev, flags, mode, p)
 
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
+
+	devvp->v_devcookie = sc;
 
 	sc->sc_events.io = p;
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
@@ -489,14 +498,13 @@ wsmouseopen(dev, flags, mode, p)
 }
 
 int
-wsmouseclose(dev, flags, mode, p)
-	dev_t dev;
+wsmouseclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	return (wsmousedoclose(wsmouse_cd.cd_devs[minor(dev)], 
-			       flags, mode, p));
+	return (wsmousedoclose(devvp->v_devcookie, flags, mode, p));
 #else
 	return (ENXIO);
 #endif /* NWSMOUSE > 0 */
@@ -524,13 +532,13 @@ wsmousedoclose(dv, flags, mode, p)
 #endif /* NWSMOUSE > 0 */
 
 int
-wsmouseread(dev, uio, flags)
-	dev_t dev;
+wsmouseread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
+	struct wsmouse_softc *sc = devvp->v_devcookie;
 	int error;
 
 	if (sc->sc_dying)
@@ -549,16 +557,15 @@ wsmouseread(dev, uio, flags)
 }
 
 int
-wsmouseioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+wsmouseioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	return (wsmousedoioctl(wsmouse_cd.cd_devs[minor(dev)],
-			       cmd, data, flag, p));
+	return (wsmousedoioctl(devvp->v_devcookie, cmd, data, flag, p));
 #else
 	return (ENXIO);
 #endif /* NWSMOUSE > 0 */
@@ -625,13 +632,13 @@ wsmouse_do_ioctl(sc, cmd, data, flag, p)
 #endif /* NWSMOUSE > 0 */
 
 int
-wsmousepoll(dev, events, p)
-	dev_t dev;
+wsmousepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
+	struct wsmouse_softc *sc = devvp->v_devcookie;
 
 	return (wsevent_poll(&sc->sc_events, events, p));
 #else
@@ -655,7 +662,7 @@ wsmouse_add_mux(unit, muxsc)
 		return (EBUSY);
 
 	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-				&sc->sc_mux, &wsmouse_muxops));
+				&sc->sc_mux, &wsmouse_muxops, wsmouse_major));
 }
 
 int

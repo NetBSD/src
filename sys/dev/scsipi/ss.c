@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.36 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.36.2.1 2001/09/07 04:45:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -44,6 +44,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/scanio.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -222,7 +224,7 @@ ssactivate(struct device *self, enum devact act)
  * open the device.
  */
 int
-ssopen(dev_t dev, int flag, int mode, struct proc *p)
+ssopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	int unit;
 	u_int ssmode;
@@ -231,17 +233,19 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
 
-	unit = SSUNIT(dev);
+	unit = SSUNIT(devvp->v_rdev);
 	if (unit >= ss_cd.cd_ndevs)
 		return (ENXIO);
 	ss = ss_cd.cd_devs[unit];
 	if (!ss)
 		return (ENXIO);
 
+	devvp->v_devcookie = ss;
+
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
-	ssmode = SSMODE(dev);
+	ssmode = SSMODE(devvp->v_rdev);
 
 	periph = ss->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -294,16 +298,16 @@ bad:
  * occurence of an open device
  */
 int
-ssclose(dev_t dev, int flag, int mode, struct proc *p)
+ssclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = devvp->v_devcookie;
 	struct scsipi_periph *periph = ss->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int error;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("closing\n"));
 
-	if (SSMODE(dev) == MODE_REWIND) {
+	if (SSMODE(devvp->v_rdev) == MODE_REWIND) {
 		if (ss->special && ss->special->rewind_scanner) {
 			/* call special handler to rewind/abort scan */
 			error = (ss->special->rewind_scanner)(ss);
@@ -333,7 +337,7 @@ ssclose(dev_t dev, int flag, int mode, struct proc *p)
 void
 ssminphys(struct buf *bp)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = bp->b_devvp->v_devcookie;
 	struct scsipi_periph *periph = ss->sc_periph;
 
 	(*periph->periph_channel->chan_adapter->adapt_minphys)(bp);
@@ -354,12 +358,12 @@ ssminphys(struct buf *bp)
  * via physio for the actual transfer.
  */
 int
-ssread(dev, uio, flag)
-	dev_t dev;
+ssread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = devvp->v_devcookie;
 	int error;
 
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -375,7 +379,7 @@ ssread(dev, uio, flag)
 		ss->flags |= SSF_TRIGGERED;
 	}
 
-	return (physio(ssstrategy, NULL, dev, B_READ, ssminphys, uio));
+	return (physio(ssstrategy, NULL, devvp, B_READ, ssminphys, uio));
 }
 
 /*
@@ -387,7 +391,7 @@ void
 ssstrategy(bp)
 	struct buf *bp;
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = bp->b_devvp->v_devcookie;
 	struct scsipi_periph *periph = ss->sc_periph;
 	int s;
 
@@ -504,14 +508,14 @@ ssstart(periph)
  * knows about the internals of this device
  */
 int
-ssioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+ssioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = devvp->v_devcookie;
 	int error = 0;
 	struct scan_io *sio;
 
@@ -560,7 +564,7 @@ ssioctl(dev, cmd, addr, flag, p)
 		break;
 #endif
 	default:
-		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
+		return (scsipi_do_ioctl(ss->sc_periph, devvp, cmd, addr,
 		    flag, p));
 	}
 	return (error);

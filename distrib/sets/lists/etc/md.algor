@@ -1,3 +1,0 @@
-# $NetBSD: md.algor,v 1.1 2001/08/25 16:21:24 thorpej Exp $
-./etc/fstab.sd		etc-sys-etc
-./etc/fstab.wd		etc-sys-etc

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.10.1 2001/09/07 04:45:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -52,8 +52,8 @@
 
 /*ARGSUSED*/
 int
-cttyopen(dev, flag, mode, p)
-	dev_t dev;
+cttyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -83,8 +83,8 @@ cttyopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-cttyread(dev, uio, flag)
-	dev_t dev;
+cttyread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -101,8 +101,8 @@ cttyread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-cttywrite(dev, uio, flag)
-	dev_t dev;
+cttywrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -119,8 +119,8 @@ cttywrite(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-cttyioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+cttyioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -144,14 +144,14 @@ cttyioctl(dev, cmd, addr, flag, p)
 
 /*ARGSUSED*/
 int
-cttypoll(dev, events, p)
-	dev_t dev;
+cttypoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct vnode *ttyvp = cttyvp(p);
 
 	if (ttyvp == NULL)
-		return (seltrue(dev, events, p));
+		return (seltrue(devvp, events, p));
 	return (VOP_POLL(ttyvp, events, p));
 }

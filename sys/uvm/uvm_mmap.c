@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.55 2001/08/17 05:52:46 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.55.2.1 2001/09/07 04:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -582,6 +582,11 @@ sys___msync13(p, v, retval)
 	else
 		uvmflags |= PGO_SYNCIO;	 /* XXXCDC: force sync for now! */
 
+	/*
+	 * doit!
+	 */
+	rv = uvm_map_clean(map, addr, addr+size, uvmflags);
+
 	error = uvm_map_clean(map, addr, addr+size, uvmflags);
 	return error;
 }
@@ -1073,7 +1078,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			/* XXX for now, attach doesn't gain a ref */
 			VREF(vp);
 		} else {
-			uobj = udv_attach((void *) &vp->v_rdev,
+			uobj = udv_attach(vp,
 			    (flags & MAP_SHARED) ? maxprot :
 			    (maxprot & ~VM_PROT_WRITE), foff, size);
 			/*
@@ -1083,11 +1088,14 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 */
 			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
 				maxprot &= ~VM_PROT_EXECUTE;
-				uobj = udv_attach((void *)&vp->v_rdev,
+				uobj = udv_attach(vp,
 				    (flags & MAP_SHARED) ? maxprot :
 				    (maxprot & ~VM_PROT_WRITE), foff, size);
 			}
 			advice = UVM_ADV_RANDOM;
+
+			/* XXX for now, attach doesn't gain a ref */
+			VREF(vp);
 		}
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);

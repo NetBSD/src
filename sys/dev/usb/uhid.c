@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.43 2001/08/15 00:06:49 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.43.2.1 2001/09/07 04:45:34 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -379,17 +381,19 @@ uhid_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, struct proc *p)
+uhidopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 	usbd_status err;
 
-	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
+	USB_GET_SC_OPEN(uhid, UHIDUNIT(devvp->v_rdev), sc);
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
 
 	if (sc->sc_dying)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	if (sc->sc_state & UHID_OPEN)
 		return (EBUSY);
@@ -424,11 +428,11 @@ uhidopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, struct proc *p)
+uhidclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
@@ -512,12 +516,12 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 }
 
 int
-uhidread(dev_t dev, struct uio *uio, int flag)
+uhidread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
@@ -558,12 +562,12 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 }
 
 int
-uhidwrite(dev_t dev, struct uio *uio, int flag)
+uhidwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
@@ -684,12 +688,13 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+uhidioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
 {
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
@@ -699,13 +704,13 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-uhidpoll(dev_t dev, int events, struct proc *p)
+uhidpoll(struct vnode *devvp, int events, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	if (sc->sc_dying)
 		return (EIO);
