@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.45 1999/09/07 18:20:40 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.46 1999/11/12 20:45:44 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -539,25 +539,46 @@ svr4_fasttrap(frame)
 	switch (frame.tf_eax) {
 	case SVR4_TRAP_GETHRTIME:
 		/*
-		 * this list like gethrtime(3). To implement this
-		 * correctly we need a timer that does not get affected
-		 * adjtime(), or settimeofday(). For now we use
-		 * microtime, and convert to nanoseconds...
-		 */
-		/*FALLTHROUGH*/
-	case SVR4_TRAP_GETHRVTIME:
-		/*
-		 * This is like gethrvtime(3). Since we don't have lwp
-		 * we massage microtime() output
+		 * This is like gethrtime(3), returning the time expressed
+		 * in nanoseconds since an arbitrary time in the past and
+		 * guaranteed to be monotonically increasing, which we
+		 * obtain from mono_time(9).
 		 */
 		{
-			struct timeval  tv;
-			u_quad_t tm;
+			struct timeval tv;
+			quad_t tm;
+			int s;
 
-			microtime(&tv);
+			s = splclock();
+			tv = mono_time;
+			splx(s);
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
+			frame.tf_edx = ((u_int32_t *) &tm)[0];
+			frame.tf_eax = ((u_int32_t *) &tm)[1];
+		}
+		break;
+
+	case SVR4_TRAP_GETHRVTIME:
+		/*
+		 * This is like gethrvtime(3). returning the LWP's (now:
+		 * proc's) virtual time expressed in nanoseconds. It is
+		 * supposedly guaranteed to be monotonically increasing, but
+		 * for now using the process's real time augmented with its
+		 * current runtime is the best we can do.
+		 */
+		{
+			struct timeval tv;
+			quad_t tm;
+
+			microtime(&tv);
+
+			tm =
+			    (u_quad_t) (p->p_rtime.tv_sec +
+			                tv.tv_sec - runtime.tv_sec) * 1000000 +
+			    (u_quad_t) (p->p_rtime.tv_usec +
+			                tv.tv_usec - runtime.tv_usec) * 1000;
 			frame.tf_edx = ((u_int32_t *) &tm)[0];
 			frame.tf_eax = ((u_int32_t *) &tm)[1];
 		}
