@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2000/04/28 19:25:56 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2000/04/30 23:30:47 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2000/04/28 19:25:56 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2000/04/30 23:30:47 soren Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1655,20 +1655,6 @@ pmap_zero_page_uncached(phys)
 		p[15] = 0;
 		p += 16;
 	} while (p != end);
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-	/*
-	 * If we have a virtually-indexed, physically-tagged WB cache,
-	 * and no L2 cache to warn of aliased mappings,	we must force a
-	 * writeback of the destination out of the L1 cache.  If we don't,
-	 * later reads (from virtual addresses mapped to the destination PA)
-	 * might read old stale DRAM footprint, not the just-written data.
-	 */
-	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-	}
-#endif
 }
 
 /*
@@ -1704,7 +1690,7 @@ pmap_copy_page(src, dst)
 	 * XXX invalidate any cached lines of the destination PA
 	 *     here also?
 	 *
-	 * It would be better to probably map the destination as a
+	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
