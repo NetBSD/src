@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 1997/04/12 23:57:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.39 1997/06/11 11:21:39 bouyer Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -23,6 +23,7 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
+SUBDIR+= mount_ext2fs fsck_ext2fs
 
 .if   make(clean) || make(cleandir)
 SUBDIR+= bim edlabel fdisk
