@@ -1,4 +1,4 @@
-/*	$NetBSD: gnum4.c,v 1.2 2002/01/21 21:49:57 tv Exp $	*/
+/*	$NetBSD: gnum4.c,v 1.2.4.1 2004/06/22 07:16:11 tron Exp $	*/
 /* $OpenBSD: gnum4.c,v 1.15 2001/10/13 20:18:48 espie Exp $ */
 
 /*
@@ -25,6 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 /* 
  * functions needed to support gnu-m4 extensions, including a fake freezing
