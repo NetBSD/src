@@ -1,12 +1,11 @@
-#
+#	$NetBSD: ttys,v 1.6 1995/09/30 22:01:04 thorpej Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.5 1993/08/23 04:59:38 cgd Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console "/usr/libexec/getty Pc"		pc3	on secure
+console "/usr/libexec/getty Pc"		hp300h	on secure
 
 # on the i386, the 'console' line above should be commented out and 
 # the following lines should be uncommented:
