@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.9 1994/11/22 18:57:25 dean Exp $
+#	$NetBSD: Makefile.pmax,v 1.10 1994/12/12 19:34:59 dean Exp $
 
 #	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
@@ -38,16 +38,12 @@ COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dpmax -D__NetBSD__ -G0
 CPPOPTS=${INCLUDES} ${IDENT} -DKERNEL -Dpmax -D__NetBSD__
 CFLAGS=	-O ${COPTS}
 
-.if defined(XXX)
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
 .else
 LIBKERN=	${KERNLIB_PROF}
-.endif
-.else
-LIBKERN = ../libkern.a
 .endif
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
