@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.16 2000/05/02 16:06:53 sjg Exp $
+#	$NetBSD: Makefile,v 1.17 2000/06/01 06:54:57 matt Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -77,6 +78,5 @@ clean cleandir distclean:
 # XXX!
 depend:
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include "../Makefile.inc"
