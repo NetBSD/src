@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.10 2003/04/24 21:21:07 drochner Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.11 2003/05/05 13:21:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 #define	NQNFS_VER3	3
 #define	NQNFS_EVICTSIZ	156	/* Size of eviction request in bytes */
 
+#ifdef _KERNEL
 /*
  * Definitions used for saving the "last lease expires" time in Non-volatile
  * RAM on the server. The default definitions below assume that NOVRAM is not
@@ -201,7 +202,6 @@ extern int nqsrv_writeslack;
 #define	NQNFS_EXPIRED	500
 #define	NQNFS_TRYLATER	501
 
-#ifdef _KERNEL
 void	nqnfs_lease_updatetime __P((int));
 int	nqsrv_cmpnam __P((struct nfssvc_sock *,struct mbuf *,struct nqhost *));
 int	nqsrv_getlease __P((struct vnode *, u_int32_t *, int,
@@ -212,6 +212,6 @@ int	nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
 		caddr_t));
 int	nqnfs_clientd __P((struct nfsmount *, struct ucred *,
 		struct nfsd_cargs *, int, caddr_t, struct lwp *));
-#endif
+#endif /* _KERNEL */
 
-#endif
+#endif /* _NFS_NQNFS_H_ */
