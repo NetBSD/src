@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.23 1998/03/21 20:34:58 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.24 1998/03/30 14:21:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ auxregattach_mainbus(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t hp;
 
-	if (sparc_bus_map(ma->ma_bustag,
+	if (bus_space_map2(ma->ma_bustag,
 			  ma->ma_iospace,
 			  (bus_addr_t)ma->ma_paddr,
 			  sizeof(long),
