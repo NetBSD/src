@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.67 1995/03/09 23:31:07 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.68 1995/03/10 06:15:10 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -45,7 +45,7 @@ errlst.o errlst.po:
 
 .endif	# _NOTDEF_XXX_
 
-MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 daemon.3 \
+MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 fts.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
@@ -57,11 +57,9 @@ MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 daemon.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 syslog.3 tcgetpgrp.3 \
 	tcsendbreak.3 tcsetattr.3 tcsetpgrp.3 time.3 times.3 timezone.3 \
-	tolower.3 toupper.3 ttyname.3 tzset.3 ualarm.3 uname.3 unvis.3 \
+	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
 	usleep.3 utime.3 valloc.3 vis.3
 
-MLINKS+=ctime.3 asctime.3 ctime.3 difftime.3 ctime.3 gmtime.3 \
-	ctime.3 localtime.3 ctime.3 mktime.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
 	directory.3 telldir.3
@@ -109,5 +107,4 @@ MLINKS+=tcsetattr.3 tcgetattr.3 tcsetattr.3 cfgetispeed.3 \
 	tcsetattr.3 cfsetispeed.3 tcsetattr.3 cfsetospeed.3 \
 	tcsetattr.3 cfsetspeed.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
-MLINKS+=tzset.3 tzsetwall.3
 MLINKS+=vis.3 strvis.3 vis.3 strvisx.3 unvis.3 strunvis.3
