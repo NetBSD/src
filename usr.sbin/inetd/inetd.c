@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.77 2002/05/31 14:28:20 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.78 2002/06/01 00:15:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.77 2002/05/31 14:28:20 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.78 2002/06/01 00:15:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -387,6 +387,11 @@ uint32_t	machtime __P((void));
 int 		port_good_dg __P((struct sockaddr *sa));
 static int	getline __P((int, char *, int));
 int		main __P((int, char *[]));
+#ifdef MULOG
+void		dolog __P((struct servtab *, int));
+static void	timeout __P((int));
+char		*rfc931_name __P((struct sockaddr *, int));
+#endif
 
 struct biltin {
 	char	*bi_service;		/* internally provided service name */
@@ -1825,7 +1830,8 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 	struct servtab *sep;
 {
 	char buffer[BUFSIZE];
-	int i, size;
+	int i;
+	socklen_t size;
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
 
@@ -1920,7 +1926,8 @@ chargen_dg(s, sep)		/* Character generator */
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
 	static char *rs;
-	int len, size;
+	int len;
+	socklen_t size;
 	char text[LINESIZ+2];
 
 	if (endring == 0) {
@@ -1993,7 +2000,7 @@ machtime_dg(s, sep)
 	uint32_t result;
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
-	int size;
+	socklen_t size;
 
 	sa = (struct sockaddr *)&ss;
 	size = sizeof(ss);
@@ -2031,7 +2038,8 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 	time_t clock;
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
-	int size, len;
+	socklen_t size;
+	int len;
 
 	clock = time((time_t *) 0);
 
@@ -2054,6 +2062,7 @@ print_service(action, sep)
 	char *action;
 	struct servtab *sep;
 {
+
 	if (isrpcservice(sep))
 		fprintf(stderr,
 		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait:max=%d.%d, user:group=%s.%s builtin=%lx server=%s"
@@ -2184,18 +2193,16 @@ reject:
 	_exit(1);
 }
 
-
 #ifdef MULOG
+void
 dolog(sep, ctrl)
 	struct servtab *sep;
 	int		ctrl;
 {
 	struct sockaddr_storage	ss;
 	struct sockaddr		*sa = (struct sockaddr *)&ss;
-	struct sockaddr_in	*sin = (struct sockaddr_in *)&ss;
-	int			len = sizeof(ss);
-	struct hostent		*hp;
-	char			*host, *dp, buf[BUFSIZ], *rfc931_name();
+	socklen_t		len = sizeof(ss);
+	char			*host, *dp, buf[BUFSIZ];
 	int			connected = 1;
 
 	switch (sep->se_family) {
@@ -2204,7 +2211,7 @@ dolog(sep, ctrl)
 	case AF_INET6:
 #endif
 		break;
-	default;
+	default:
 		return;
 	}
 
@@ -2225,12 +2232,12 @@ dolog(sep, ctrl)
 	case AF_INET6:
 #endif
 		break;
-	default;
+	default:
 		syslog(LOG_ERR, "unexpected address family %u", sa->sa_family);
 		return;
 	}
 
-	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0) != 0)
+	if (getnameinfo(sa, len, buf, sizeof(buf), NULL, 0, 0) != 0)
 		strcpy(buf, "?");
 	host = buf;
 
@@ -2282,8 +2289,9 @@ static jmp_buf timebuf;
 
 /* timeout - handle timeouts */
 
-static void timeout(sig)
-int     sig;
+static void
+timeout(sig)
+	int     sig;
 {
 	longjmp(timebuf, sig);
 }
@@ -2292,12 +2300,12 @@ int     sig;
 
 char *
 rfc931_name(there, ctrl)
-struct sockaddr *there;		/* remote link information */
-int	ctrl;
+	struct sockaddr *there;		/* remote link information */
+	int	ctrl;
 {
 	struct sockaddr_storage here;	/* local link information */
 	struct sockaddr_storage sin;	/* for talking to RFC931 daemon */
-	int		length;
+	socklen_t	length;
 	int		s;
 	unsigned	remote;
 	unsigned	local;
@@ -2327,11 +2335,11 @@ int	ctrl;
 	}
 	switch (there->sa_family) {
 	case AF_INET:
-		hisport = ((struct sockaddr_in *)sa)->sin_port;
+		hisport = ((struct sockaddr_in *)&there)->sin_port;
 		break;
 #ifdef INET6
 	case AF_INET6:
-		hisport = ((struct sockaddr_in6 *)sa)->sin6_port;
+		hisport = ((struct sockaddr_in6 *)&there)->sin6_port;
 		break;
 #endif
 	}
@@ -2420,7 +2428,7 @@ int	ctrl;
 		&& ntohs(myport) == local) {
 
 		/* Strip trailing carriage return. */
-		if (cp = strchr(user, '\r'))
+		if ((cp = strchr(user, '\r')) != NULL)
 			*cp = 0;
 		result = user;
 	}
