@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.48 2003/10/25 16:50:37 jdolecek Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.49 2003/10/25 19:49:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,8 +34,10 @@
 #ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */
 #define	_SYS_SIGNALVAR_H_
 
+#include <sys/siginfo.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+
 /*
  * Kernel signal definitions and data structures,
  * not exported to user programs.
