@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.7 2003/08/01 17:04:01 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.8 2003/10/18 15:33:59 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -35,15 +35,20 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
 ${OBJS}: ${DPSRCS}
 
 lib${HOSTLIB}.a: ${OBJS} ${DPADD}
-	-rm -f ${.TARGET}
+	${_MKMSG} "  build  ${.TARGET}"
+	${_MKCMD}\
+	rm -f ${.TARGET}
+	${_MKCMD}\
 	${HOST_AR} cq ${.TARGET} ${OBJS}
-	@${HOST_RANLIB} ${.TARGET}
+	${_MKCMD}\
+	${HOST_RANLIB} ${.TARGET}
 
 .endif	# defined(OBJS) && !empty(OBJS)
 
 realall: lib${HOSTLIB}.a
 
 cleanlib:
+	${_MKCMD}\
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    lib${HOSTLIB}.a ${OBJS} ${CLEANFILES}
 

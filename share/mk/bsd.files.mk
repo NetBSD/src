@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.24 2003/09/20 06:20:41 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.25 2003/10/18 15:33:59 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -63,7 +63,10 @@ filesinstall::	${_F}
 BUILDSYMLINKS.s+=	${_SL}
 BUILDSYMLINKS.t+=	${_TL}
 ${_TL}: ${_SL}
+	${_MKMSG} " create  ${.TARGET}"
+	${_MKCMD}\
 	rm -f ${.TARGET}
+	${_MKCMD}\
 	ln -s ${.ALLSRC} ${.TARGET}
 .endfor
 
@@ -72,6 +75,7 @@ realall: ${BUILDSYMLINKS.t}
 .PHONY:   cleanbuildsymlinks
 cleandir: cleanbuildsymlinks
 cleanbuildsymlinks:
+	${_MKCMD}\
 	rm -f ${BUILDSYMLINKS.t}
 
 .endif								# }
