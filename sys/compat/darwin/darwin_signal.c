@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.12 2003/12/09 12:13:44 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.13 2003/12/16 13:38:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.12 2003/12/09 12:13:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.13 2003/12/16 13:38:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,4 +186,23 @@ darwin_sigfilter(l, ksi)
 	}
 
 	return EINVAL;
+}
+
+void 
+native_to_darwin_siginfo(ksi, dsi)
+	const struct ksiginfo *ksi;
+	struct darwin___siginfo *dsi;
+{
+	dsi->darwin_si_signo = ksi->ksi_signo;
+	dsi->darwin_si_errno = ksi->ksi_errno;
+	dsi->darwin_si_code = ksi->ksi_code;
+	dsi->darwin_si_pid = ksi->ksi_pid;
+	dsi->darwin_si_uid = ksi->ksi_uid;
+	dsi->darwin_si_status = ksi->ksi_status;
+	dsi->darwin_si_addr = ksi->ksi_addr;
+	(void)memcpy(&dsi->darwin_si_value, 
+	    &ksi->ksi_sigval, sizeof(dsi->darwin_si_value));
+	dsi->darwin_si_band = ksi->ksi_band;
+
+	return;
 }
