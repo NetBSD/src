@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2000/06/17 21:44:46 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.32 2000/07/24 10:04:10 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -29,7 +29,6 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
-file-system 	KERNFS		# /kern
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
