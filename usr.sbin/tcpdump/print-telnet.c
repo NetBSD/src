@@ -1,4 +1,4 @@
-/*	$NetBSD: print-telnet.c,v 1.1 1999/09/30 14:49:13 sjg Exp $ 	*/
+/*	$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $ 	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.1 1999/09/30 14:49:13 sjg Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.2 1999/10/11 12:40:12 sjg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -90,6 +90,7 @@ telnet_print(register const u_char *sp, u_int length)
 	u_char	*osp;
 
 	off = 0;
+	x = 0;
 	
 	while (length > 0 && *sp == IAC) {
 		osp = (u_char *) sp;
