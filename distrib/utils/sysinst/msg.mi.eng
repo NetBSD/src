@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.9 1997/11/25 00:53:03 thorpej Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.10 1997/12/04 11:44:47 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -585,3 +585,14 @@ message etc_hosts
 %s %s.%s %s
 127.0.0.1 localhost
 }
+
+message partitions_overlap
+{partitions %c and %c overlap.}
+
+message edit_partitions_again
+{
+
+You can either edit the partition table by hand, or give up and return
+to the main menu.
+
+Edit the partition table again?}
