@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.8 1999/06/23 17:32:32 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.9 1999/06/23 17:42:11 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -293,6 +293,30 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 				msg_beep ();
 		} else if (ch == 0x15) {	/* ^U; line kill */
 			while (count > 0) {
+				count--;
+				if (do_echo) {
+					getyx(msg_win, y, x);
+					x--;
+					wmove(msg_win, y, x);
+					wdelch(msg_win);
+				}
+			}
+		} else if (ch == 0x17) {        /* ^W; word kill */
+			/*
+			 * word kill kills the spaces and the 'word'
+			 * (non-spaces) last typed.  the spaces before
+			 * the 'word' aren't killed.
+			 */
+			while (count > 0 && isspace(ibuf[count - 1])) {
+				count--;
+				if (do_echo) {
+					getyx(msg_win, y, x);
+					x--;
+					wmove(msg_win, y, x);
+					wdelch(msg_win);
+				}
+			}
+			while (count > 0 && !isspace(ibuf[count - 1])) {
 				count--;
 				if (do_echo) {
 					getyx(msg_win, y, x);
