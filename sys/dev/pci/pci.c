@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.46 2000/03/30 12:45:35 augustss Exp $	*/
+/*	$NetBSD: pci.c,v 1.47 2000/05/08 10:52:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -369,7 +369,19 @@ pci_get_capability(pc, tag, capid, offset, value)
 	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
 		return (0);
 
-	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG));
+	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(reg)) {
+	case 0:	/* standard device header */
+		ofs = PCI_CAPLISTPTR_REG;
+		break;
+	case 2:	/* PCI-CardBus Bridge header */
+		ofs = PCI_CARDBUS_CAPLISTPTR_REG;
+		break;
+	default:
+		return (0);
+	}
+
+	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
 #ifdef DIAGNOSTIC
 		if ((ofs & 3) || (ofs < 0x40))
