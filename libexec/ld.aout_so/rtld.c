@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.11 1993/12/20 22:45:01 pk Exp $
+ *	$Id: rtld.c,v 1.12 1994/01/12 19:19:09 pk Exp $
  */
 
 #include <sys/param.h>
@@ -220,6 +220,7 @@ struct link_dynamic	*dp;
 
 	/* Fill in some field in main's __DYNAMIC structure */
 	crtp->crt_dp->ld_entry = &ld_entry;
+	crtp->crt_dp->ld_un.ld_2->ld_loaded = link_map_head->lm_next;
 
 	ldp = crtp->crt_dp->ldd;
 	ldp->ldd_cp = rt_symbol_head;
