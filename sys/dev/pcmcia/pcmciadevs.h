@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.133 2001/07/31 17:01:34 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.134 2001/08/07 13:57:41 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.133 2001/07/31 17:01:15 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
+#define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
 #define	PCMCIA_VENDOR_ROLAND	0xc00c	/* Roland */
@@ -506,6 +507,12 @@
 #define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11	0x0305
 #define	PCMCIA_STR_BUFFALO_WLI_PCM_S11	"BUFFALO AirStation 11Mbps WLAN"
+
+/* ZONET */
+#define	PCMCIA_CIS_ZONET_ZEN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
+#define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
+
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
