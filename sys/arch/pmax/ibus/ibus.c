@@ -1,4 +1,4 @@
-/* $NetBSD: ibus.c,v 1.3 1999/11/23 20:07:40 thorpej Exp $ */
+/* $NetBSD: ibus.c,v 1.4 1999/11/24 00:04:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.3 1999/11/23 20:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.4 1999/11/24 00:04:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ ibusattach(parent, self, aux)
 {
         struct ibus_softc *sc = (struct ibus_softc *)self;
 	struct ibus_dev_attach_args *ida = aux;
+	struct ibus_attach_args *ia;
         int i;
 
         printf("\n");
@@ -60,9 +61,18 @@ ibusattach(parent, self, aux)
         sc->sc_intr_establish = ida->ida_establish;
         sc->sc_intr_disestablish = ida->ida_disestablish;
 
-	for (i = 0; i < ida->ida_ndevs; i++)
-		(void) config_found_sm(self, &ida->ida_devs[i], ibusprint,
-		    ibussubmatch);
+	/*
+	 * Loop through the devices and attach them.  If a probe-size
+	 * is specified, it's an optional item on the platform and
+	 * do a badaddr() test to make sure it's there.
+	 */
+	for (i = 0; i < ida->ida_ndevs; i++) {
+		ia = &ida->ida_devs[i];
+		if (ia->ia_basz != 0 &&
+		    badaddr((caddr_t)ia->ia_addr, ia->ia_basz) != 0)
+			continue;
+		(void) config_found_sm(self, ia, ibusprint, ibussubmatch);
+	}
 }
 
 int
