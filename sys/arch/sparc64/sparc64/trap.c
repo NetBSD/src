@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2000/05/27 00:40:41 sommerfeld Exp $ */
+/*	$NetBSD: trap.c,v 1.42 2000/06/06 18:52:45 soren Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,6 +51,7 @@
 #define NEW_FPSTATE
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137 2000/06/03 13:16:02 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.138 2000/06/06 18:52:40 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2000/06/03 13:16:02 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2000/06/06 18:52:40 soren Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2000/06/03 13:16:02 shin Exp $");
 #include "opt_natm.h"
 #include "opt_ktrace.h"
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.55 2000/05/31 05:14:30 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.56 2000/06/06 18:52:30 soren Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,10 +98,11 @@
 #include "opt_ktrace.h"
 #include "opt_compat_osf1.h"
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2000/05/31 05:14:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2000/06/06 18:52:30 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
