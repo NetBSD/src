@@ -808,7 +808,7 @@ extern struct timeout *timeouts;
 void discover_interfaces PROTO ((int));
 struct interface_info *setup_fallback PROTO ((void));
 void reinitialize_interfaces PROTO ((void));
-void dispatch PROTO ((void));
+void dispatch PROTO ((int (*) PROTO ((void))));
 int locate_network PROTO ((struct packet *));
 void got_one PROTO ((struct protocol *));
 void add_timeout PROTO ((TIME, void (*) PROTO ((void *)), void *));
