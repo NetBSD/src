@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.8 2001/12/12 01:49:47 tv Exp $
+#	$NetBSD: Makefile.booters,v 1.9 2002/05/28 19:32:42 bjh21 Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -52,9 +52,10 @@ PROGLINKOBJS?=	${PROGDEPENDS}
 ${PROG}: machine m68k ${PROGDEPENDS}
 	${LD} -N -Ttext ${RELOC} -o $@ ${PROGLINKOBJS}
 
+.include <bsd.own.mk>
+
 LIB_SA_DIR=	${.CURDIR}/../libsa
-LIBSA_DIR!=cd ${LIB_SA_DIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
 LIBSA=${LIBSA_DIR}/libsa.a
 
 .PHONY: ${LIBSA}
@@ -69,8 +70,7 @@ ${SRTOBJ}:
 	@cd ${LIB_SA_DIR} && ${MAKE} SRT0.o
 
 LIB_BUG_DIR=	${.CURDIR}/../libbug
-LIBBUG_DIR!=cd ${LIB_BUG_DIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBBUG_DIR!=	cd ${LIB_BUG_DIR} && ${PRINTOBJDIR}
 LIBBUG=${LIBBUG_DIR}/libbug.a
 
 .PHONY: ${LIBBUG}
@@ -86,8 +86,7 @@ $(BUGCRT):
 	@(cd ${LIB_BUG_DIR}; ${MAKE} bugstart.o)
 
 WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
-WRTVID_DIR!=cd ${WRTVID_BOOT_DIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}
 WRTVID=${WRTVID_DIR}/wrtvid
 
 .PHONY: ${WRTVID}
