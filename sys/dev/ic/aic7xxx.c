@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.14 2001/04/02 16:58:59 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.15 2001/04/03 10:05:31 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -3963,6 +3963,8 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 				FALSE, FALSE);
 		}
 		splx(s);
+		if ((xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_WIDE16)) == 0)
+			ahc_update_xfer_mode(ahc, &devinfo);
 	}
 	}
 }
