@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.216 2000/04/26 17:30:59 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.217 2000/04/28 20:54:40 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.211 2000/04/26 17:30:35 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.212 2000/04/28 20:54:10 augustss Exp 
  */
 
 /*
@@ -1366,6 +1366,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI Gameport Joystick",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
+	    0,
+	    "Creative Labs",
+	    "Ectiva 1938",
+	},
+	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
 	    0,
 	    "Cyclades",
@@ -1592,6 +1598,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ensoniq",
 	    "AudioPCI 97",
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_CT5880,
+	    0,
+	    "Ensoniq",
+	    "CT5880",
 	},
 	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
