@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.19 2004/04/23 21:13:07 itojun Exp $	*/
+/*	$NetBSD: yds.c,v 1.20 2004/07/09 01:02:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.19 2004/04/23 21:13:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.20 2004/07/09 01:02:32 mycroft Exp $");
 
 #include "mpu.h"
 
@@ -1209,8 +1209,6 @@ yds_close(addr)
 {
 	struct yds_softc *sc = addr;
 
-	yds_halt_output(sc);
-	yds_halt_input(sc);
 	yds_halt(sc);
 }
 
