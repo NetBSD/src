@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.1 2003/01/27 18:21:29 thorpej Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.2 2003/01/27 20:18:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -72,7 +72,6 @@ struct ld_ataraid_softc {
 	struct ld_softc sc_ld;
 
 	struct ataraid_array_info *sc_aai;
-	struct iinfo *sc_itable;
 	struct vnode *sc_vnodes[ATA_RAID_MAX_DISKS];
 
 	void	(*sc_iodone)(struct buf *);
