@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.13 2003/12/16 13:38:25 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.14 2003/12/16 16:13:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.13 2003/12/16 13:38:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.14 2003/12/16 16:13:59 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,6 +186,58 @@ darwin_sigfilter(l, ksi)
 	}
 
 	return EINVAL;
+}
+
+int
+darwin_sys_sigprocmask(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct darwin_sys_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(sigset13_t *) set;
+		syscallarg(sigset13_t *) oset;
+	} */ *uap = v;
+	struct sys___sigprocmask14_args cup;
+	struct proc *p = l->l_proc;
+	int error;
+	sigset13_t kdset, kdoset;
+	sigset_t kbset, kboset;
+	sigset_t *ubset;
+	sigset_t *uboset = NULL;
+
+	caddr_t sg = stackgap_init(p, 0);
+	ubset = stackgap_alloc(p, &sg, sizeof(*ubset));
+	if (SCARG(uap, oset) != NULL)
+		uboset = stackgap_alloc(p, &sg, sizeof(*uboset));
+	
+	if ((error = copyin(SCARG(uap, set), &kdset, sizeof(kdset))) != 0)
+		return error;
+
+	native_sigset13_to_sigset(&kdset, &kbset);
+
+	if ((error = copyout(&kbset, ubset, sizeof(kbset))) != 0)
+		return error;
+
+	SCARG(&cup, how) = SCARG(uap, how);
+	SCARG(&cup, set) = ubset;
+	SCARG(&cup, oset) = uboset;
+	if ((error = sys___sigprocmask14(l, &cup, retval)) != 0)
+		return error;
+	
+	if (SCARG(uap, oset) != NULL) {
+		if ((error = copyin(uboset, &kboset, sizeof(kboset))) != 0)
+			return error;
+
+		native_sigset_to_sigset13(&kboset, &kdoset);
+
+		if ((error = copyout(&kdoset, 
+		    SCARG(uap, oset), sizeof(kdoset))) != 0)
+			return error;
+	}
+
+	return 0;
 }
 
 void 
