@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.33 1994/05/05 02:04:10 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.34 1994/05/05 06:03:26 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -493,7 +493,7 @@ kvm_doprocs(what, arg, buff)
 	}
 
 again:
-	for (; p; p = proc.p_nxt) {
+	for (; p; p = proc.p_next) {
 		if (kvm_read(p, &proc, sizeof (struct proc)) == -1) {
 			seterr("can't read proc at %x", p);
 			return (-1);
