@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.109 2000/06/30 16:44:33 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.110 2000/07/02 08:04:10 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -515,16 +515,6 @@ tcp6_input(mp, offp, proto)
 	int *offp, proto;
 {
 	struct mbuf *m = *mp;
-
-#if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* XXX send icmp6 host/port unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-	}
-#endif
 
 	/*
 	 * draft-itojun-ipv6-tcp-to-anycast

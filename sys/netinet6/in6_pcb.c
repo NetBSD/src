@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.26 2000/06/08 13:51:33 itojun Exp $	*/
-/*	$KAME: in6_pcb.c,v 1.45 2000/06/05 00:41:58 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.27 2000/07/02 08:04:11 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.55 2000/07/02 07:50:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -807,10 +807,6 @@ in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg, faith)
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	for (in6p = head->in6p_next; in6p != head; in6p = in6p->in6p_next) {
-#if defined(NFAITH) && NFAITH > 0
-		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
-			continue;
-#endif
 		/* find exact match on both source and dest */
 		if (in6p->in6p_fport != fport)
 			continue;
