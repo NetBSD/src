@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 1994/10/25 23:03:33 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.19 1994/10/26 01:03:43 deraadt Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
 ; NetBSD COMPAT_SUNOS system call name/number "master" file.
@@ -36,7 +36,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
-#include <compat/sunos/syscallargs.h>
+#include <compat/sunos/sunos_syscallargs.h>
 
 0	NOARGS		{ int nosys(void); } syscall
 1	NOARGS		{ int exit(int rval); }
