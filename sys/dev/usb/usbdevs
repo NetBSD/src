@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.163 2001/04/15 09:28:12 augustss Exp $
+$NetBSD: usbdevs,v 1.164 2001/04/15 22:33:23 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -535,16 +535,24 @@ product HP 4100C		0x0101	Scanjet 4100C
 product HP S20			0x0102	Photosmart S20
 product HP 880C			0x0104	DeskJet 880C
 product HP 4200C		0x0105	ScanJet 4200C
+product HP CDWRITERPLUS		0x0107	CD-Writer Plus
+product HP KBDHUB		0x010c	Multimedia Keyboard Hub
 product HP 6200C		0x0201	ScanJet 6200C
 product HP S20b			0x0202	PhotoSmart S20
 product HP 815C			0x0204	DeskJet 815C
 product HP 3300C		0x0205	ScanJet 3300C
+product HP CDW8200		0x0207	CD-Writer Plus 8200e
 product HP 810C			0x0304	DeskJet 810C/812C
+product HP G85XI		0x0311	OfficeJet G85xi
 product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
+product HP 3400CSE		0x0405	ScanJet 3400cse
 product HP 6300C		0x0601	Scanjet 6300C
+product HP 840C			0x0604	DeskJet 840c
 product HP 5300C		0x0701	Scanjet 5300C
 product HP 970CSE		0x1004	Deskjet 970Cse
+product HP 930C			0x1204	DeskJet 930c
+product HP 640C			0x2004	DeskJet 640c
 product HP P1100		0x3102	Photosmart P1100
 
 /* HP products */
