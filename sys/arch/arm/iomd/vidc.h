@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.6 2002/10/05 17:04:44 chs Exp $	*/
+/*	$NetBSD: vidc.h,v 1.7 2003/12/31 14:41:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -132,6 +132,11 @@ extern int *vidc_base;
 #define SIR_RIGHT_67  0x05
 #define SIR_RIGHT_83  0x06
 #define SIR_RIGHT_100 0x07
+
+#define SCR_SCLR	0x08
+#define SCR_SDAC	0x04
+#define SCR_SERIAL	0x02
+#define SCR_CLKSEL	0x01
 
 /* Video display addresses */
 
