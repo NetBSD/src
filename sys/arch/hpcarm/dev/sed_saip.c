@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.3 2001/06/22 14:38:44 toshii Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.4 2001/06/23 09:13:06 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,11 +33,6 @@
  * SUCH DAMAGE.
  *
  */
-#define FBDEBUG
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: sed_saip.c,v 1.3 2001/06/22 14:38:44 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +46,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -60,6 +57,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/hpc/hpcfbvar.h>
 #include <dev/hpc/hpcfbio.h>
 #include <dev/hpc/hpccmapvar.h>
+
+#include <arch/hpcarm/dev/sed1356var.h>
 
 #define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
 
@@ -71,31 +70,9 @@ void	sed1356attach(struct device *, struct device *, void *);
 int	sed1356_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	sed1356_mmap(void *, off_t, int);
 
-struct sed1356_softc {
-	struct device		sc_dev;
-	struct hpcfb_fbconf	sc_fbconf;
-	struct hpcfb_dspconf	sc_dspconf;
-
-	void			*sc_powerhook;	/* power management hook */
-	int			sc_powerstate;
-#define PWRSTAT_SUSPEND		(1<<0)
-#define PWRSTAT_VIDEOOFF	(1<<1)
-#define PWRSTAT_LCD		(1<<2)
-#define PWRSTAT_BACKLIGHT	(1<<3)
-#define PWRSTAT_ALL		(0xffffffff)
-	int			sc_lcd_inited;
-#define BACKLIGHT_INITED	(1<<0)
-#define BRIGHTNESS_INITED	(1<<1)
-#define CONTRAST_INITED		(1<<2)
-	int			sc_brightness;
-	int			sc_brightness_save;
-	int			sc_max_brightness;
-	int			sc_contrast;
-	int			sc_max_contrast;
-
-};
 
 extern	struct bus_space sa11x0_bs_tag;
+extern	int j720lcdpower(void *, int, long, void *);	/* XXX */
 
 static int sed1356_init(struct hpcfb_fbconf *);
 static void sed1356_power(int, void *);
@@ -153,6 +130,14 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_iot = &sa11x0_bs_tag;
+	sc->sc_parent = (struct sa11x0_softc *)parent;
+	if (bus_space_map(sc->sc_iot, (bus_addr_t)bootinfo->fb_addr & ~0x3fffff,
+			  0x200, 0, &sc->sc_regh)) {
+		printf("%s: unable to map register\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	printf("%s: Epson SED1356", sc->sc_dev.dv_xname);
 	if (console_flag) {
 		printf(", console");
@@ -183,6 +168,13 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	ha.ha_curdspconf = 0;
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
+
+	/* XXX */
+	if (platid_match(&platid, &platid_mask_MACH_HP_JORNADA_7XX)) {
+		config_hook(CONFIG_HOOK_POWERCONTROL,
+			    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			    CONFIG_HOOK_SHARE, j720lcdpower, sc);
+	}
 
 	config_found(self, &ha, hpcfbprint);
 }
@@ -221,6 +213,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 					/* configuration name		*/
 	fb->hf_height		= bootinfo->fb_height;
 	fb->hf_width		= bootinfo->fb_width;
+
 	if (bus_space_map(&sa11x0_bs_tag, (bus_addr_t)bootinfo->fb_addr,
 			   bootinfo->fb_height * bootinfo->fb_line_bytes,
 			   0, &fb->hf_baseaddr)) {
