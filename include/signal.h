@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 2003/07/17 09:01:54 martin Exp $	*/
+/*	$NetBSD: signal.h,v 1.28 2003/07/17 22:39:43 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,7 +60,8 @@ extern __const int sys_nsig __RENAME(__sys_nsig14);
 
 __BEGIN_DECLS
 int	raise __P((int));
-#ifndef	_ANSI_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 int	kill __P((pid_t, int));
 
 struct pthread_st;
@@ -198,7 +199,7 @@ int	sigsetmask __P((int));
 int	sigvec __P((int, struct sigvec *, struct sigvec *));
 #endif /* _NETBSD_SOURCE */
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 __END_DECLS
 
 #endif	/* !_SIGNAL_H_ */
