@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.56 2003/10/21 16:52:08 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.57 2003/10/22 15:50:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.56 2003/10/21 16:52:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.57 2003/10/22 15:50:39 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -322,6 +322,7 @@ do {									\
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
 #define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
+#define	WM_F_EEPROM_SPI		0x04	/* EEPROM is SPI */
 #define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
 #define	WM_F_BUS64		0x20	/* bus is 64-bit */
 #define	WM_F_PCIX		0x40	/* bus is PCI-X */
@@ -555,6 +556,31 @@ const struct wm_product {
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
 #endif
+#if 0 /* not yet... */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
+	  "Intel i82541EI Mobile 1000BASE-T Ethernet",
+	  WM_T_82541,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541ER,
+	  "Intel i82541ER 1000BASE-T Ethernet",
+	  WM_T_82541_2,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541GI,
+	  "Intel i82541GI 1000BASE-T Ethernet",
+	  WM_T_82541_2,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541GI_MOBILE,
+	  "Intel i82541GI Mobile 1000BASE-T Ethernet",
+	  WM_T_82541_2,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI,
+	  "Intel i82547EI 1000BASE-T Ethernet",
+	  WM_T_82547,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,
+	  "Intel i82547GI 1000BASE-T Ethernet",
+	  WM_T_82547_2,		WMP_F_1000T },
+#endif /* not yet... */
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -926,7 +952,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	eetype = "MicroWire";
 	if (sc->sc_type >= WM_T_82540)
 		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 	if (sc->sc_type <= WM_T_82544)
@@ -937,7 +962,23 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_ee_addrbits = 8;
 		else
 			sc->sc_ee_addrbits = 6;
+	} else if (sc->sc_type <= WM_T_82547_2) {
+		reg = CSR_READ(sc, WMREG_EECD);
+		if (reg & EECD_EE_TYPE) {
+			sc->sc_flags |= WM_F_EEPROM_SPI;
+			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+		} else
+			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
+	} else {
+		/* Assume everything else is SPI. */
+		reg = CSR_READ(sc, WMREG_EECD);
+		sc->sc_flags |= WM_F_EEPROM_SPI;
+		sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 	}
+	if (sc->sc_flags & WM_F_EEPROM_SPI)
+		eetype = "SPI";
+	else
+		eetype = "MicroWire";
 	aprint_verbose("%s: %u word (%d address bits) %s EEPROM\n",
 	    sc->sc_dev.dv_xname, 1U << sc->sc_ee_addrbits,
 	    sc->sc_ee_addrbits, eetype);
@@ -2637,6 +2678,77 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 }
 
 /*
+ * wm_spi_eeprom_ready:
+ *
+ *	Wait for a SPI EEPROM to be ready for commands.
+ */
+static int
+wm_spi_eeprom_ready(struct wm_softc *sc)
+{
+	uint32_t val;
+	int usec;
+
+	for (usec = 0; usec < SPI_MAX_RETRIES; delay(5), usec += 5) {
+		wm_eeprom_sendbits(sc, SPI_OPC_RDSR, 8);
+		wm_eeprom_recvbits(sc, &val, 8);
+		if ((val & SPI_SR_RDY) == 0)
+			break;
+	}
+	if (usec >= SPI_MAX_RETRIES) {
+		aprint_error("%s: EEPROM failed to become ready\n",
+		    sc->sc_dev.dv_xname);
+		return (1);
+	}
+	return (0);
+}
+
+/*
+ * wm_read_eeprom_spi:
+ *
+ *	Read a work from the EEPROM using the SPI protocol.
+ */
+static int
+wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
+{
+	uint32_t reg, val;
+	int i;
+	uint8_t opc;
+
+	/* Clear SK and CS. */
+	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_CS);
+	CSR_WRITE(sc, WMREG_EECD, reg);
+	delay(2);
+
+	if (wm_spi_eeprom_ready(sc))
+		return (1);
+
+	/* Toggle CS to flush commands. */
+	CSR_WRITE(sc, WMREG_EECD, reg | EECD_CS);
+	delay(2);
+	CSR_WRITE(sc, WMREG_EECD, reg);
+	delay(2);
+
+	opc = SPI_OPC_READ;
+	if (sc->sc_ee_addrbits == 8 && word >= 128)
+		opc |= SPI_OPC_A8;
+
+	wm_eeprom_sendbits(sc, opc, 8);
+	wm_eeprom_sendbits(sc, word << 1, sc->sc_ee_addrbits);
+
+	for (i = 0; i < wordcnt; i++) {
+		wm_eeprom_recvbits(sc, &val, 16);
+		data[i] = ((val >> 8) & 0xff) | ((val & 0xff) << 8);
+	}
+
+	/* Raise CS and clear SK. */
+	reg = (CSR_READ(sc, WMREG_EECD) & ~EECD_SK) | EECD_CS;
+	CSR_WRITE(sc, WMREG_EECD, reg);
+	delay(2);
+
+	return (0);
+}
+
+/*
  * wm_read_eeprom:
  *
  *	Read data from the serial EEPROM.
@@ -2649,7 +2761,10 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	if (wm_acquire_eeprom(sc))
 		return (1);
 
-	rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
+	if (sc->sc_flags & WM_F_EEPROM_SPI)
+		rv = wm_read_eeprom_spi(sc, word, wordcnt, data);
+	else
+		rv = wm_read_eeprom_uwire(sc, word, wordcnt, data);
 
 	wm_release_eeprom(sc);
 	return (rv);
