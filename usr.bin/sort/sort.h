@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.9 2001/01/12 19:41:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -141,11 +141,11 @@ typedef void (*put_func_t) __P((const struct recheader *, FILE *));
 
 extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
-extern u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern const char *tmpdir;
 extern int stable_sort;
+extern u_char gweights[NBINS];
 
 #include "extern.h"
