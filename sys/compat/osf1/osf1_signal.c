@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.8 1999/04/24 07:09:49 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.9 1999/04/24 07:13:23 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,11 +216,7 @@ osf1_sys_sigaction(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_sigaction_args /* {
-		syscallarg(int) signum;
-		syscallarg(struct osf1_sigaction *) nsa;
-		syscallarg(struct osf1_sigaction *) osa;
-	} */ *uap = v;
+	struct osf1_sys_sigaction_args *uap = v;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
 	struct sigaction *nbsa, *obsa, tmpbsa;
 	struct sys___sigaction14_args sa;
@@ -270,10 +266,7 @@ osf1_sys_sigaltstack(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_sigaltstack_args /* {
-		syscallarg(struct osf1_sigaltstack *) nss;
-		syscallarg(struct osf1_sigaltstack *) oss;
-	} */ *uap = v;
+	struct osf1_sys_sigaltstack_args *uap = v;
 	struct osf1_sigaltstack *noss, *ooss, tmposs;
 	struct sigaltstack *nbss, *obss, tmpbss;
 	struct sys___sigaltstack14_args sa;
@@ -323,10 +316,7 @@ osf1_sys_signal(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_signal_args /* {
-		syscallarg(int) signum;
-		syscallarg(osf1_sig_t) handler;
-	} */ *uap = v;
+	struct osf1_sys_signal_args *uap = v;
 	int signum = osf1_to_bsd_sig[OSF1_SIGNO(SCARG(uap, signum))];
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -445,11 +435,7 @@ osf1_sys_sigprocmask(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_sigprocmask_args /* {
-		syscallarg(int) how;
-		syscallarg(osf1_sigset_t *) set;
-		syscallarg(osf1_sigset_t *) oset;
-	} */ *uap = v;
+	struct osf1_sys_sigprocmask_args *uap = v;
 	osf1_sigset_t oss;
 	sigset_t bss;
 	int error = 0;
@@ -501,9 +487,7 @@ osf1_sys_sigpending(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_sigpending_args /* {
-		syscallarg(osf1_sigset_t *) mask;
-	} */ *uap = v;
+	struct osf1_sys_sigpending_args *uap = v;
 	sigset_t bss;
 	osf1_sigset_t oss;
 
@@ -519,9 +503,7 @@ osf1_sys_sigsuspend(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_sigsuspend_args /* {
-		syscallarg(osf1_sigset_t *) ss;
-	} */ *uap = v;
+	struct osf1_sys_sigsuspend_args *uap = v;
 	osf1_sigset_t oss;
 	sigset_t bss;
 	struct sys_sigsuspend_args sa;
@@ -542,10 +524,7 @@ osf1_sys_kill(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_kill_args /* {
-		syscallarg(int) pid;
-		syscallarg(int) signum;
-	} */ *uap = v;
+	struct osf1_sys_kill_args *uap = v;
 	struct sys_kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
