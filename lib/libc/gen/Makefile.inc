@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.38 1994/04/14 03:13:39 cgd Exp $
+#	$Id: Makefile.inc,v 1.39 1994/05/05 23:13:19 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -8,8 +8,8 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	cuserid.c daemon.c difftime.c \
 	directory.c disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
 	frexp.c fstab.c fts.c \
-	getbsize.c getcap.c getcwd.c getgrent.c getloadavg.c getlogin.c \
-	getmntinfo.c \
+	getbsize.c getcap.c getcwd.c getgrent.c getgrouplist.c \
+	getloadavg.c getlogin.c getmntinfo.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
 	infinity.c initgroups.c isatty.c isctype.c isinf.c  \
 	lfind.c lsearch.c \
@@ -50,8 +50,8 @@ SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 
 MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 \
 	daemon.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
-	getbsize.0 getcap.0 getcwd.0 getdiskbyname.0 getfsent.0 \
-	getgrent.0 getloadavg.0 getmntinfo.0 getpass.0 getpwent.0 \
+	getbsize.0 getcap.0 getcwd.0 getdiskbyname.0 getfsent.0 getgrent.0 \
+	getgrouplist.0 getloadavg.0 getmntinfo.0 getpass.0 getpwent.0 \
 	getsubopt.0 getttyent.0 getusershell.0 glob.0 \
 	initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
