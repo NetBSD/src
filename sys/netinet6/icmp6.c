@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.38 2000/07/28 04:06:58 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.39 2000/07/30 05:30:37 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.120 2000/07/06 11:47:20 itojun Exp $	*/
 
 /*
@@ -2532,14 +2532,6 @@ icmp6_ctloutput(op, so, level, optname, mp)
  * Returns 0 if it is okay to send the icmp6 packet.
  * Returns 1 if the router SHOULD NOT send this icmp6 packet due to rate
  * limitation.
- *
- * There are two limitations defined:
- * - pps limit: ICMPv6 error packet cannot exceed defined packet-per-second.
- *   we measure it every 0.2 second, since fasttimo works every 0.2 second.
- * - rate limit: ICMPv6 error packet cannot appear more than once per
- *   defined interval.
- * In any case, if we perform rate limitation, we'll see jitter in the ICMPv6
- * error packets.
  *
  * XXX per-destination/type check necessary?
  */
