@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/22 12:34:41 augustss Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/22 19:39:42 augustss Exp $
 
 .include <bsd.own.mk>
 
 PROG=	usbhidctl
 SRCS=	usbhid.c
 
-LDADD+=	-lusbhid
+LDADD+=	-lusb
 DPADD+=	${LIBUSB}
 
 .include <bsd.prog.mk>
