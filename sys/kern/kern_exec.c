@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.180 2003/12/20 19:01:30 fvdl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.181 2004/02/05 22:26:52 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.180 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.181 2004/02/05 22:26:52 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1303,7 +1303,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	uobj = *e->e_sigobject;
 	if (uobj == NULL) {
 		uobj = uao_create(sz, 0);
-		uao_reference(uobj);
+		(*uobj->pgops->pgo_reference)(uobj);
 		va = vm_map_min(kernel_map);
 		if ((error = uvm_map(kernel_map, &va, round_page(sz),
 		    uobj, 0, 0,
