@@ -1576,6 +1576,12 @@
 ./usr/share/man/cat3/hash.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
+./usr/share/man/cat3/hesiod.0
+./usr/share/man/cat3/hesiod_end.0
+./usr/share/man/cat3/hesiod_free_list.0
+./usr/share/man/cat3/hesiod_init.0
+./usr/share/man/cat3/hesiod_resolve.0
+./usr/share/man/cat3/hesiod_to_bind.0
 ./usr/share/man/cat3/history.0
 ./usr/share/man/cat3/history_end.0
 ./usr/share/man/cat3/history_init.0
@@ -2579,6 +2585,12 @@
 ./usr/share/man/man3/hash.3
 ./usr/share/man/man3/heapsort.3
 ./usr/share/man/man3/herror.3
+./usr/share/man/man3/hesiod.3
+./usr/share/man/man3/hesiod_end.3
+./usr/share/man/man3/hesiod_free_list.3
+./usr/share/man/man3/hesiod_init.3
+./usr/share/man/man3/hesiod_resolve.3
+./usr/share/man/man3/hesiod_to_bind.3
 ./usr/share/man/man3/history.3
 ./usr/share/man/man3/history_end.3
 ./usr/share/man/man3/history_init.3
