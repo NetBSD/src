@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.c,v 1.203 2005/03/04 06:01:21 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.204 2005/03/04 06:01:52 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.203 2005/03/04 06:01:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.204 2005/03/04 06:01:52 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
