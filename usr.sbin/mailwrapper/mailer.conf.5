@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.6 2001/06/08 23:57:43 wiz Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.7 2002/01/19 03:25:12 wiz Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -37,7 +37,6 @@
 .Nd configuration file for
 .Xr mailwrapper 8
 .Sh DESCRIPTION
-.Pp
 The file
 .Pa /etc/mailer.conf
 contains a series of pairs. The first member of each pair is the name
@@ -53,6 +52,8 @@ would be set up this way.)
 The second member of each pair is the name of the program to
 actually execute when the first name is invoked. The file may also
 contain comments, denoted by a # mark in the first column of any line.
+.Sh FILES
+/etc/mailer.conf
 .Sh EXAMPLES
 The following is an example of how to set up
 .Nm
@@ -70,7 +71,7 @@ purgestat	/usr/libexec/sendmail/sendmail
 .Ed
 .Pp
 This example shows how to invoke the
-.Sy postfix
+.Xr postfix 1
 MTA suite in place of
 .Xr sendmail 8 .
 .Bd -literal
@@ -80,20 +81,19 @@ send-mail	/usr/libexec/postfix/sendmail
 mailq		/usr/libexec/postfix/sendmail
 newaliases	/usr/libexec/postfix/sendmail
 .Ed
-.Sh FILES
-/etc/mailer.conf
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,
-.Xr mailwrapper 8 ,
 .Xr newaliases 1 ,
+.Xr postfix 1 ,
+.Xr mailwrapper 8 ,
 .Xr sendmail 8
 .Sh HISTORY
 .Nm
 appeared in
 .Nx 1.4 .
 .Sh AUTHORS
-Perry E. Metzger <perry@piermont.com>
+.An Perry E. Metzger Aq perry@piermont.com
 .Sh BUGS
 The entire reason this program exists is a crock. Instead, a command
 for how to submit mail should be standardized, and all the "behave
