@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 1999/07/31 05:22:05 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.43 1999/09/22 14:23:03 ws Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -306,7 +306,8 @@ do_depend(nv)
 {
 	struct nvlist *nextnv;
 
-	if (nv != NULL) {
+	if (nv != NULL && !(nv->nv_flags & NV_DEPENDED)) {
+		nv->nv_flags |= NV_DEPENDED;
 		if (ht_lookup(opttab, nv->nv_name) == NULL)
 			addoption(nv->nv_name, NULL);
 		if ((nextnv = find_declared_option(nv->nv_name)) != NULL)
