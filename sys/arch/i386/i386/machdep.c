@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 1996/10/13 03:19:45 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211 1996/10/17 08:31:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -158,8 +158,8 @@ static	vm_offset_t avail_next;
  * will indicate that it's safe to use malloc() to dynamically allocate
  * region descriptors.
  */
-static	char ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)];
-static	char iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)];
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 static	struct extent *ioport_ex;
 static	struct extent *iomem_ex;
 static	ioport_malloc_safe;
@@ -1125,10 +1125,10 @@ init386(first_avail)
 	 */
 	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
 	    ioport_ex_storage, sizeof(ioport_ex_storage),
-	    EX_NOBLOB|EX_NOWAIT);
+	    EX_NOCOALESCE|EX_NOWAIT);
 	iomem_ex = extent_create("iomem", 0x0a0000, 0x100000, M_DEVBUF,
 	    iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOBLOB|EX_NOWAIT);
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
