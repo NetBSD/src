@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2002/07/31 17:34:24 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2002/08/14 20:50:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -633,6 +633,11 @@ bs_c_8_proto(f);
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+
+/*
+ * Private flags stored in the DMA map.
+ */
+#define	ARM32_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
