@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.134 2000/03/01 14:11:25 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.135 2000/03/02 10:26:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3755,3 +3755,8 @@ usr.sbin/bind/include/namespace.h		delete
 distrib/notes/common/contents			patch
 
   Update distribution set sizes for pmax.
+
+sys/netinet/ip_input.c				1.104
+
+  Work around a compiler bug that causes a security vulnerability
+  in our IP stack on some platforms.
