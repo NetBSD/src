@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.11 2000/02/14 03:17:43 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.12 2000/05/30 06:56:16 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.11 2000/02/14 03:17:43 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.12 2000/05/30 06:56:16 aidan Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -59,19 +59,20 @@ __RCSID("$NetBSD: k5login.c,v 1.11 2000/02/14 03:17:43 aidan Exp $");
 krb5_context kcontext;
 
 int notickets;
-char *krbtkfile_env;
+char *krb5tkfile_env;
 extern char *tty;
+extern int login_krb5_forwardable_tgt;
+extern int has_ccache;
 
 static char tkt_location[MAXPATHLEN];
 static krb5_creds forw_creds;
 int have_forward;
 static krb5_principal me, server;
-int use_krb5;
 
 int k5_read_creds __P((char *));
 int k5_write_creds __P((void));
-int klogin __P((struct passwd *, char *, char *, char *));
-void kdestroy __P((void));
+int k5login __P((struct passwd *, char *, char *, char *));
+void k5destroy __P((void));
 
 #ifndef krb5_realm_length
 #define krb5_realm_length(r)	((r).length)
@@ -93,9 +94,6 @@ k5_read_creds(username)
 	krb5_error_code code;
 	krb5_creds mcreds;
 	krb5_ccache ccache;
-
-	if (! use_krb5)
-		return(1);
 
 	have_forward = 0;
 	memset((char*) &mcreds, 0, sizeof(forw_creds));
@@ -136,7 +134,8 @@ k5_read_creds(username)
 	have_forward = 1;
 
 	strcpy(tkt_location, getenv("KRB5CCNAME"));
-	krbtkfile_env = tkt_location;
+	krb5tkfile_env = tkt_location;
+	has_ccache = 1;
 	notickets = 0;
 
 nuke_ccache:
@@ -150,8 +149,6 @@ k5_write_creds()
 	krb5_error_code code;
 	krb5_ccache ccache;
 
-	if (! use_krb5)
-		return(1);
 	if (!have_forward)
 		return(1);
 	code = krb5_cc_default(kcontext, &ccache);
@@ -184,7 +181,7 @@ nuke_ccache_contents:
  *	  1 if Kerberos failed (try local password in login)
  */
 int
-klogin(pw, instance, localhost, password)
+k5login(pw, instance, localhost, password)
 	struct passwd *pw;
 	char *instance, *localhost, *password;
 {
@@ -197,6 +194,9 @@ klogin(pw, instance, localhost, password)
 	char *realm, *client_name;
 	char *principal;
 
+	if (login_krb5_forwardable_tgt)
+		options |= KDC_OPT_FORWARDABLE;
+
 	/*
 	 * Root logins don't use Kerberos.
 	 * If we have a realm, try getting a ticket-granting ticket
@@ -205,8 +205,7 @@ klogin(pw, instance, localhost, password)
 	 * for a password.  If that's ok, log the user in
 	 * without issuing any tickets.
 	 */
-	if (! use_krb5 ||
-	    strcmp(pw->pw_name, "root") == 0 ||
+	if (strcmp(pw->pw_name, "root") == 0 ||
 	    krb5_get_default_realm(kcontext, &realm))
 		return (1);
 
@@ -222,7 +221,8 @@ klogin(pw, instance, localhost, password)
 	else
 	    (void)snprintf(tkt_location, sizeof tkt_location,
 		"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
-	krbtkfile_env = tkt_location;
+	krb5tkfile_env = tkt_location;
+	has_ccache = 1;
 
 	principal = (char *)malloc(strlen(pw->pw_name)+strlen(instance)+2);
 	strcpy(principal, pw->pw_name);	/* XXX strcpy is safe */
@@ -317,15 +317,15 @@ klogin(pw, instance, localhost, password)
  * Remove any credentials
  */
 void
-kdestroy()
+k5destroy()
 {
         krb5_error_code code;
 	krb5_ccache ccache = NULL;
 
-	if (! use_krb5 || krbtkfile_env == NULL)
+	if (krb5tkfile_env == NULL)
 	    return;
 
-	code = krb5_cc_resolve(kcontext, krbtkfile_env, &ccache);
+	code = krb5_cc_resolve(kcontext, krb5tkfile_env, &ccache);
 	if (!code)
 	    code = krb5_cc_destroy(kcontext, ccache);
 }
