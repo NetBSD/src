@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.21 1998/05/19 18:35:12 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.22 1998/06/11 05:09:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,9 +100,10 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_KWE		ALPHA_PTE_KW
 #define	PG_UWE		ALPHA_PTE_UW
 #define	PG_PROT		ALPHA_PTE_PROT
-#define	PG_RSVD		0x000000000000cc80	/* Reserved fpr hardware */
+#define	PG_RSVD		0x000000000000cc80	/* Reserved for hardware */
 #define	PG_WIRED	0x0000000000010000	/* Wired. [SOFTWARE] */
 #define	PG_PVLIST	0x0000000000020000	/* on pv list [SOFTWARE] */
+#define	PG_EXEC		0x0000000000040000	/* execute perms [SOFTWARE] */
 #define	PG_FRAME	ALPHA_PTE_RAME
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
