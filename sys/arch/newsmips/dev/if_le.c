@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1999/12/17 06:05:40 tsubai Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 2000/01/23 15:49:11 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,28 +136,11 @@ le_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int addr;
 
 	if (strcmp(ca->ca_name, "le"))
 		return 0;
 
-	switch(cf->cf_unit) {
-
-	case 0:
-		addr = LANCE_PORT;
-		break;
-	case 1:
-		addr = LANCE_PORT1;
-		break;
-	case 2:
-		addr = LANCE_PORT2;
-		break;
-
-	default:
-		return 0;
-	}
-
-	if (badaddr((void *)addr, 1))
+	if (badaddr((void *)cf->cf_addr, 1))
 		return 0;
 
 	return 1;
@@ -170,38 +153,38 @@ le_attach(parent, self, aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	/*struct confargs *ca = aux;*/
+	struct cfdata *cf = self->dv_cfdata;
 	int intlevel;
 	u_char *p;
 
-	intlevel = self->dv_cfdata->cf_level;
+	intlevel = cf->cf_level;
 	if (intlevel == -1) {
 		printf(": interrupt level not configured\n");
 		return;
 	}
 	printf(" level %d", intlevel);
 
-	switch (sc->sc_dev.dv_unit) {
+	switch (cf->cf_addr) {
 
-	case 0:
-		lesc->sc_r1 = (void *)LANCE_PORT;
+	case LANCE_PORT:
 		sc->sc_mem = (void *)LANCE_MEMORY;
 		p = (u_char *)(ETHER_ID+16);
 		break;
-	case 1:
-		lesc->sc_r1 = (void *)LANCE_PORT1;
+	case LANCE_PORT1:
 		sc->sc_mem = (void *)LANCE_MEMORY1;
 		p = (u_char *)(ETHER_ID1+16);
 		break;
-	case 2:
-		lesc->sc_r1 = (void *)LANCE_PORT2;
+	case LANCE_PORT2:
 		sc->sc_mem = (void *)LANCE_MEMORY2;
 		p = (u_char *)(ETHER_ID2+16);
 		break;
 
 	default:
-		panic("le_attach");
+		printf(": unknown LANCE addr\n");
+		return;
 	}
+
+	lesc->sc_r1 = (void *)cf->cf_addr;
 
 	sc->sc_memsize = 0x4000;	/* 16K */
 	sc->sc_addr = (int)sc->sc_mem & 0x00ffffff;
@@ -231,13 +214,5 @@ le_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	am7990_config(&lesc->sc_am7990);
-
-	switch (sc->sc_dev.dv_unit) {
-	case 0:
-		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
-		break;
-	default:
-		hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
-		break;
-	}
+	hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
 }
