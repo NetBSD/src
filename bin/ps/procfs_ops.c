@@ -1,4 +1,4 @@
-/*  $NetBSD: procfs_ops.c,v 1.4 1999/03/28 00:46:47 bgrayson Exp $ */
+/*	$NetBSD: procfs_ops.c,v 1.4.2.1 1999/11/08 06:40:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -42,6 +42,7 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h> /* for rusage */
 
 #include <fcntl.h>
 #include <dirent.h>
@@ -52,136 +53,168 @@
 #include <err.h>
 #include <kvm.h>
 
-/*  Assume that no process status file will ever be larger than this.  */
+#include "ps.h"
+
+/* Assume that no process status file will ever be larger than this. */
 #define STATUS_SIZE	8192
 
-/* Handy macro for only printing a warning once.  Notice that
+/*
+ * Handy macro for only printing a warning once.  Notice that
  * one needs to use two sets of parentheses when invoking the
- * macro:  WARNX_ONLY_ONCE(("mesgstr", arg1, arg2, ...));  */
-#define WARNX_ONLY_ONCE(x)	{	\
-	static int firsttime=1;		\
-	if (firsttime) {		\
-		firsttime=0;		\
-		warnx x ;		\
-	}				\
+ * macro:  WARNX_ONLY_ONCE(("mesgstr", arg1, arg2, ...));
+ */
+#define WARNX_ONLY_ONCE(x)						\
+{									\
+	static int firsttime = 1;					\
+	if (firsttime) {						\
+		firsttime = 0;						\
+		warnx x ;						\
+	}								\
 }
 
-static int		verify_procfs_fd __P((int, const char *));
-static int		parsekinfo __P((const char *, struct kinfo_proc *));
-struct kinfo_proc *	procfs_getprocs __P((int, int, int *));
+static int verify_procfs_fd __P((int, const char *));
+static int parsekinfo __P((const char *, KINFO *));
 
 static int
-verify_procfs_fd (fd, path)
-	int fd;
+verify_procfs_fd(fd, path)
+	int     fd;
 	const char *path;
 {
 	struct statfs procfsstat;
 
-	/*  If the fstatfs fails, die immediately.  Since we
-	 *  already have the FD open, any error is probably one
-	 *  that can't be worked around.  */
-	if (fstatfs(fd, &procfsstat)) {
+	/*
+	 * If the fstatfs fails, die immediately.  Since we already have the
+	 * FD open, any error is probably one that can't be worked around.
+	 */
+	if (fstatfs(fd, &procfsstat))
 		err(1, "fstatfs on %s", path);
-	}
-	/*  Now verify that the open file is truly on a procfs
-	 *  filesystem.  */
+
+	/* Now verify that the open file is truly on a procfs filesystem. */
 	if (strcmp(procfsstat.f_fstypename, MOUNT_PROCFS)) {
-		warnx("%s is on a '%s' filesystem, not 'procfs'???", path,
-				procfsstat.f_fstypename);
+		warnx("%s is on a `%s' filesystem, not `procfs'", path,
+		    procfsstat.f_fstypename);
 		return -1;
 	}
 	return 0;
 }
 
 static int
-parsekinfo (path, kp)
+parsekinfo(path, ki)
 	const char *path;
-	struct kinfo_proc *kp;
+	KINFO *ki;
 {
-	char fullpath[MAXPATHLEN];
-	int dirfd, fd, nbytes, devmajor, devminor;
+	char    fullpath[MAXPATHLEN];
+	int     dirfd, fd, nbytes, devmajor, devminor;
 	struct timeval usertime, systime, starttime;
-	char buff[STATUS_SIZE];
-	char flagstr[256];
+	char    buff[STATUS_SIZE];
+	char    flagstr[256];
+	struct kinfo_proc *kp = ki->ki_p;
 
-	/*  Verify that /proc/<pid> is a procfs file (and that no
-	 *  one has mounted anything on top of it).  If we didn't
-	 *  do this, an intruder could hide processes by simply
-	 *  mount_null'ing /tmp on top of the /proc/<pid>
-	 *  directory.  (And we can't just print warnings if we fail
-	 *  to open /proc/<pid>/status, because the process may
-	 *  have died since our getdents() call.)  */
+	/*
+	 * Verify that /proc/<pid> is a procfs file (and that no one has
+	 * mounted anything on top of it).  If we didn't do this, an intruder
+	 * could hide processes by simply mount_null'ing /tmp on top of the
+	 * /proc/<pid> directory.  (And we can't just print warnings if we
+	 * fail to open /proc/<pid>/status, because the process may have died
+	 * since our getdents() call.)
+	 */
 	snprintf(fullpath, MAXPATHLEN, "/proc/%s", path);
-	dirfd=open(fullpath, O_RDONLY, 0);
+	dirfd = open(fullpath, O_RDONLY, 0);
 	if (verify_procfs_fd(dirfd, fullpath)) {
 		close(dirfd);
 		return -1;
 	}
-	/*  Open /proc/"path"/status, and parse it into the kinfo_proc.  */
+
+	/* Open /proc/<pid>/status, and parse it into the kinfo_proc. */
 	snprintf(fullpath, MAXPATHLEN, "/proc/%s/status", path);
-	fd=open(fullpath, O_RDONLY, 0);
+	fd = open(fullpath, O_RDONLY, 0);
 	close(dirfd);
 	if (fd == -1) {
-	  	/*  Don't print warning, as the process may have
-		 *  died since our scan of the directory entries.  */
-		/*warn("Open failed for %s", fullpath);*/
-		close(fd);
-		return -1;  /*  Process may no longer exist.  */
+		/*
+		 * Don't print warning, as the process may have died since our
+		 * scan of the directory entries.
+		 */
+		return -1;	/* Process may no longer exist. */
 	}
-	/*  Bail out for this process attempt if it isn't on a
-	 *  procfs.  Some intruder could have mounted something
-	 *  on top of portions of /proc.  */
+
+	/*
+	 * Bail out for this process attempt if it isn't on a procfs.  Some
+	 * intruder could have mounted something on top of portions of /proc.
+	 */
 	if (verify_procfs_fd(fd, fullpath)) {
 		close(fd);
 		return -1;
 	}
-	nbytes=read(fd, buff, STATUS_SIZE);
+
+	nbytes = read(fd, buff, STATUS_SIZE - 1);
 	close(fd);
 	if (nbytes <= 0) {
-	  	/*  Don't print warning, as the process may have
-		 *  died since our scan of the directory entries.  */
-		/*warn("Read failed for %s", fullpath);*/
-		return -1;  /*  Process may no longer exist.  */
+		/*
+		 * Don't print warning, as the process may have died since our
+		 * scan of the directory entries.
+		 */
+		return -1;	/* Process may no longer exist. */
 	}
-	/*  Terminate the buffer.  */
+
+	/* Make sure the buffer is terminated. */
 	buff[nbytes] = '\0';
+
 	sscanf(buff, "%s %d %d %d %d %d,%d %s %ld,%ld %ld,%ld %ld,%ld %s %d",
-			kp->kp_proc.p_comm, &kp->kp_proc.p_pid,
-			&kp->kp_eproc.e_ppid, &kp->kp_eproc.e_pgid,
-			&kp->kp_eproc.e_sid, &devmajor, &devminor,
-			flagstr, &starttime.tv_sec, &starttime.tv_usec,
-			&usertime.tv_sec, &usertime.tv_usec,
-			&systime.tv_sec, &systime.tv_usec,
-			kp->kp_eproc.e_wmesg, &kp->kp_eproc.e_ucred.cr_uid);
+	    kp->kp_proc.p_comm, &kp->kp_proc.p_pid,
+	    &kp->kp_eproc.e_ppid, &kp->kp_eproc.e_pgid,
+	    &kp->kp_eproc.e_sid, &devmajor, &devminor,
+	    flagstr, &starttime.tv_sec, &starttime.tv_usec,
+	    &usertime.tv_sec, &usertime.tv_usec,
+	    &systime.tv_sec, &systime.tv_usec,
+	    kp->kp_eproc.e_wmesg, &kp->kp_eproc.e_ucred.cr_uid);
+
 	kp->kp_proc.p_wmesg = kp->kp_eproc.e_wmesg;
-	kp->kp_proc.p_wchan = (void*)1;	/*  Set it to _something_.  */
+	kp->kp_proc.p_wchan = (void *) 1;	/* XXX Set it to _something_. */
 	kp->kp_eproc.e_tdev = makedev(devmajor, devminor);
-	/*  Put both user and sys time into rtime field.  */
+
+	/* Put both user and sys time into rtime field.  */
 	kp->kp_proc.p_rtime.tv_sec = usertime.tv_sec + systime.tv_sec;
 	kp->kp_proc.p_rtime.tv_usec = usertime.tv_usec + systime.tv_usec;
-	/*  CPU time isn't shown unless the ki_u.u_valid flag is
-	 *  set.  Unfortunately, we don't have access to that here.  */
-	/*  Set the flag for whether or not there is
-	 *  a controlling terminal.  */
+
+	/* if starttime.[u]sec is != -1, it's in-memory process */
+	if (starttime.tv_sec != -1 && starttime.tv_usec != -1) {
+		kp->kp_proc.p_flag |= P_INMEM;
+		ki->ki_u.u_valid = 1;
+		ki->ki_u.u_start.tv_sec = starttime.tv_sec;
+		ki->ki_u.u_start.tv_usec = starttime.tv_usec;
+	}
+
+	/*
+	 * CPU time isn't shown unless the ki_u.u_valid flag is set.
+	 * Unfortunately, we don't have access to that here.
+	 */
+
+	/* Set the flag for whether or not there is a controlling terminal. */
 	if (strstr(flagstr, "ctty"))
 		kp->kp_proc.p_flag |= P_CONTROLT;
+
+	/* Set the flag for whether or not this process is session leader */
+	if (strstr(flagstr, "sldr"))
+		kp->kp_eproc.e_flag |= EPROC_SLEADER;
+
 	return 0;
 }
 
-struct kinfo_proc *
-procfs_getprocs(op, arg, cnt)
-	int op, arg;
-	int *cnt;
+KINFO *
+getkinfo_procfs(op, arg, cnt)
+	int     op, arg;
+	int    *cnt;
 {
 	struct stat statbuf;
-	int procdirfd, nbytes, knum=0, maxknum=0;
-	char *direntbuff;
+	int     procdirfd, nbytes, knum = 0, maxknum = 0;
+	char   *direntbuff;
 	struct kinfo_proc *kp;
-	int mib[4];
-	size_t len;
+	KINFO	*ki;
+	int     mib[4];
+	size_t  len;
 	struct statfs procfsstat;
 
-	/*  First, make sure that /proc is a procfs filesystem.  */
+	/* First, make sure that /proc is a procfs filesystem. */
 	if (statfs("/proc", &procfsstat)) {
 		warn("statfs on /proc failed");
 		return 0;
@@ -191,12 +224,15 @@ procfs_getprocs(op, arg, cnt)
 		return 0;
 	}
 
-	/* Try to stat /proc/1/status.  If we can't do
-	 * that, then just return right away. */
+	/*
+	 * Try to stat /proc/1/status.  If we can't do that, then just return
+	 * right away.
+	 */
 	if (stat("/proc/1/status", &statbuf)) {
 		warn("stat of /proc/1/status");
 		return 0;
 	}
+
 	/* Now, try to open /proc, and read in all process' information. */
 	procdirfd = open("/proc", O_RDONLY, 0);
 	if (procdirfd == -1) {
@@ -215,75 +251,82 @@ procfs_getprocs(op, arg, cnt)
 		close(procdirfd);
 		return 0;
 	}
-	/* Use sysctl to find out the total number of processes.
-	 * There's still a race condition -- once we do the
-	 * sysctl, someone could use a sysctl to bump it, and
-	 * fork off a lot of processes.  So, to be _really_
-	 * safe, let's allocate twice as much memory. */
+
+	/*
+	 * Use sysctl to find out the total number of processes. There's still
+	 * a race condition -- once we do the sysctl, someone could use a
+	 * sysctl to bump it, and fork off a lot of processes.  So, to be
+	 * _really_ safe, let's allocate twice as much memory.
+	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXPROC;
 	len = sizeof(maxknum);
-	if (sysctl(mib, 2, &maxknum, &len, NULL, 0) == -1) {
-	  err(1,"sysctl to fetch maxproc");
-	}
-	maxknum *= 2;	/*  Double it, to be really paranoid.  */
+	if (sysctl(mib, 2, &maxknum, &len, NULL, 0) == -1)
+		err(1, "sysctl to fetch maxproc");
+	maxknum *= 2;		/* Double it, to be really paranoid.  */
 
-	kp = (struct kinfo_proc *) malloc(sizeof(struct kinfo_proc)*maxknum);
-	memset(kp, 0, sizeof(struct kinfo_proc)*maxknum);
+	kp = (struct kinfo_proc *) calloc(sizeof(struct kinfo_proc)*maxknum, 1);
+	ki = (KINFO *) calloc(sizeof(KINFO)*maxknum, 1);
 
-	/*  Read in a batch of entries at a time.  */
-	while ((knum < maxknum) && 
-		(nbytes = getdents(procdirfd, direntbuff,
-				   statbuf.st_blksize)) != 0) {
-		int i;
+	/* Read in a batch of entries at a time.  */
+	while ((knum < maxknum) &&
+	    (nbytes = getdents(procdirfd, direntbuff,
+	     statbuf.st_blksize)) != 0) {
+		int     i;
 		struct dirent *dp;
-		for (i=0; i<nbytes; /* nothing */) {
-			dp = (struct dirent *) &direntbuff[i];
+		for (i = 0; i < nbytes; /* nothing */ ) {
+			dp = (struct dirent *) & direntbuff[i];
 			i += dp->d_reclen;
-			if (!strcmp(dp->d_name, ".")) continue;
-			if (!strcmp(dp->d_name, "..")) continue;
-			if (!strcmp(dp->d_name, "curproc")) continue;
-			if (parsekinfo(dp->d_name, &kp[knum]) != 0) continue;
-			/* Now check some of the flags.  If the
-			 * newest entry doesn't match the flag
-			 * settings, then don't bump the pointer
-			 * past it!  */
+			if (strcmp(dp->d_name, ".") == 0)
+				continue;
+			if (strcmp(dp->d_name, "..") == 0)
+				continue;
+			if (strcmp(dp->d_name, "curproc") == 0)
+				continue;
+			ki[knum].ki_p = &kp[knum];
+			if (parsekinfo(dp->d_name, &ki[knum]) != 0)
+				continue;
+			/*
+			 * Now check some of the flags.  If the newest entry
+			 * doesn't match the flag settings, then don't bump
+			 * the pointer past it!
+			 */
 			switch (op) {
-				case KERN_PROC_PID:
-					if (kp[knum].kp_proc.p_pid == arg)
-						knum++;
-					break;
-				case KERN_PROC_PGRP:
-					if (kp[knum].kp_eproc.e_pgid == arg)
-						knum++;
-					break;
-				case KERN_PROC_SESSION:
-					if (kp[knum].kp_eproc.e_sid == arg)
-						knum++;
-					break;
-				case KERN_PROC_TTY:
-					if (kp[knum].kp_eproc.e_tdev == arg)
-						knum++;
-					break;
-				case KERN_PROC_UID:
-					if (kp[knum].kp_eproc.e_ucred.cr_uid == arg)
-						knum++;
-					break;
-				case KERN_PROC_RUID:
-					WARNX_ONLY_ONCE(("KERN_PROC_RUID flag "
-						"not implemented.  Returning "
-						"info for all processes."));
+			case KERN_PROC_PID:
+				if (kp[knum].kp_proc.p_pid == arg)
 					knum++;
-					break;
-				case KERN_PROC_ALL:
+				break;
+			case KERN_PROC_PGRP:
+				if (kp[knum].kp_eproc.e_pgid == arg)
 					knum++;
-					break;
-				default:
-					WARNX_ONLY_ONCE(("Bad switch case!  "
-						"Returning info for "
-						"all processes."));
+				break;
+			case KERN_PROC_SESSION:
+				if (kp[knum].kp_eproc.e_sid == arg)
 					knum++;
-					break;
+				break;
+			case KERN_PROC_TTY:
+				if (kp[knum].kp_eproc.e_tdev == arg)
+					knum++;
+				break;
+			case KERN_PROC_UID:
+				if (kp[knum].kp_eproc.e_ucred.cr_uid == arg)
+					knum++;
+				break;
+			case KERN_PROC_RUID:
+				WARNX_ONLY_ONCE(("KERN_PROC_RUID flag "
+					"not implemented.  Returning "
+					"info for all processes."));
+				knum++;
+				break;
+			case KERN_PROC_ALL:
+				knum++;
+				break;
+			default:
+				WARNX_ONLY_ONCE(("Bad switch case!  "
+					"Returning info for "
+					"all processes."));
+				knum++;
+				break;
 			}
 			if (knum > maxknum) {
 				WARNX_ONLY_ONCE(("Warning:  only reporting "
@@ -291,11 +334,84 @@ procfs_getprocs(op, arg, cnt)
 					"processes!", maxknum));
 				break;
 			}
-
 		}
 	}
 
 	*cnt = knum;
 	close(procdirfd);
-	return kp;
+	/* free unused memory */
+	if (knum < maxknum) {
+		kp = realloc(kp, sizeof(*kp) * knum);
+		ki = realloc(ki, sizeof(*ki) * knum);
+		for(; knum >= 0; knum--)
+			ki[knum].ki_p = &kp[knum];
+	}
+	return ki;
 }
+
+/*
+ * return process arguments, possibly ones used when exec()ing
+ * the process; return the array as two element array, first is
+ * argv[0], second element is all the other args separated by spaces
+ */
+char **
+procfs_getargv(kp, nchr)
+	const struct kinfo_proc *kp;
+	int nchr;
+{
+	char    fullpath[MAXPATHLEN], *buf, *name, *args, **argv;
+	int fd, num;
+	ssize_t len;
+	size_t idx;
+
+	/* Open /proc/<pid>/cmdline, and parse it into the argv array */
+	snprintf(fullpath, MAXPATHLEN, "/proc/%d/cmdline", kp->kp_proc.p_pid);
+	fd = open(fullpath, O_RDONLY, 0);
+	if (fd == -1 || verify_procfs_fd(fd, fullpath)) {
+		/*
+		 * Don't print warning, as the process may have died since our
+		 * scan of the directory entries.
+		 */
+		return NULL;	/* Process may no longer exist. */
+	}
+
+	buf = (char *)malloc(nchr+1);
+	len = read(fd, buf, nchr);
+	close(fd);
+	if (len == -1) {
+		warnx("procfs_getargv");
+		return NULL;
+	}
+	
+	num = 1;
+	args = NULL;
+	name = buf;
+	/* substitute any \0's with space */
+	for(idx=0; idx < len; idx++) {
+		if (buf[idx] == '\0') {
+			if (!args)
+				args = &buf[idx+1];
+			else
+				buf[idx] = ' ';
+			num++;
+		}
+	}
+	buf[len] = '\0'; /* end the string */
+
+	/* if the name is the same as the p_comm, just enclosed
+	 * in parentheses, just return NULL - the code in command()
+	 * will DTRT */
+	if (num == 1 && name[0] == '(' && name[len-1] == ')'
+		&& strncmp(name+1, kp->kp_proc.p_comm, len-2) == 0)
+	{
+		return (NULL);
+	}
+	
+	argv = (char **) malloc(3*sizeof(char *));
+	argv[0] = name;
+	argv[1] = args;
+	argv[2] = NULL;
+
+	return argv;
+}
+
