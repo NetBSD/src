@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.11 1996/06/13 21:52:12 cgd Exp $	*/
+/*	$NetBSD: lpt.c,v 1.12 1996/09/02 12:42:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -681,7 +681,7 @@ plipinput(struct lpt_softc *sc)
 		if (plipreceive(i8255, minibuf, 2) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[0];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) {
-			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_softc);
+			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_xname);
 			goto err;
 		}
 		if ((cksum = plipreceive(i8255, p, len)) < 0) goto err;
