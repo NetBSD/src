@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2000/12/09 06:33:15 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.149 2000/12/09 11:21:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/userret.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
@@ -121,40 +122,11 @@
 
 #include "npx.h"
 
-static __inline void userret __P((struct proc *, int, u_quad_t));
 void trap __P((struct trapframe));
 #if defined(I386_CPU)
 int trapwrite __P((unsigned));
 #endif
 void syscall __P((struct trapframe));
-
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-static __inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
-{
-	int sig;
-
-	/* Take pending signals. */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
