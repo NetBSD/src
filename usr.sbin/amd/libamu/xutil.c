@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.2 1998/11/17 18:14:18 kleink Exp $	*/
+/*	$NetBSD: xutil.c,v 1.3 1999/02/01 19:05:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.1 1997-1998/01/11 21:06:22 ezk Exp ezk 
+ * Id: xutil.c,v 1.3 1999/01/10 21:54:39 ezk Exp 
  *
  */
 
@@ -51,6 +51,15 @@
 #include <amu.h>
 
 FILE *logfp = stderr;		/* Log errors to stderr initially */
+
+static char *am_progname = "unknown";	/* "amd" */
+static char am_hostname[MAXHOSTNAMELEN + 1] = "unknown"; /* Hostname */
+pid_t am_mypid = -1;		/* process ID */
+serv_state amd_state;		/* amd's state */
+int foreground = 1;		/* 1 == this is the top-level server */
+#ifdef DEBUG
+int debug_flags = 0;
+#endif /* DEBUG */
 
 #ifdef HAVE_SYSLOG
 int syslogging;
@@ -113,6 +122,43 @@ struct opt_tab xlog_opt[] =
   {"warning", XLOG_WARNING},	/* Warnings */
   {0, 0}
 };
+
+
+void
+am_set_progname(char *pn)
+{
+  am_progname = pn;
+}
+
+
+const char *
+am_get_progname(void)
+{
+  return am_progname;
+}
+
+
+void
+am_set_hostname(char *hn)
+{
+  strncpy(am_hostname, hn, MAXHOSTNAMELEN);
+  am_hostname[MAXHOSTNAMELEN] = '\0';
+}
+
+
+const char *
+am_get_hostname(void)
+{
+  return am_hostname;
+}
+
+
+pid_t
+am_set_mypid(void)
+{
+  am_mypid = getpid();
+  return am_mypid;
+}
 
 
 voidp
@@ -211,7 +257,7 @@ checkup_mem(void)
     if (orig_mem_bytes == 0)
       mem_bytes = orig_mem_bytes = uordbytes;
     else {
-      fprintf(logfp, "%s[%ld]: ", progname, (long) mypid);
+      fprintf(logfp, "%s[%ld]: ", am_get_progname(), (long) am_mypid);
       if (mem_bytes < uordbytes) {
 	fprintf(logfp, "ALLOC: %ld bytes", uordbytes - mem_bytes);
       } else {
@@ -227,7 +273,7 @@ checkup_mem(void)
 
 
 /*
- * Take a log format string and expand occurences of %m
+ * Take a log format string and expand occurrences of %m
  * with the current error code taken from errno.
  */
 static void
@@ -304,9 +350,9 @@ show_time_host_and_name(int lvl)
     break;
   }
   fprintf(logfp, "%15.15s %s %s[%ld]/%s ",
-	  last_ctime + 4, hostname,
-	  progname,
-	  (long) mypid,
+	  last_ctime + 4, am_get_hostname(),
+	  am_get_progname(),
+	  (long) am_mypid,
 	  sev);
 }
 
@@ -536,7 +582,7 @@ cmdoption(char *s, struct opt_tab *optb, int *flags)
        * This will log to stderr when parsing the command line
        * since any -l option will not yet have taken effect.
        */
-      plog(XLOG_USER, "option \"%s\" not recognised", s);
+      plog(XLOG_USER, "option \"%s\" not recognized", s);
       errs++;
     }
 
@@ -576,6 +622,7 @@ switch_option(char *opt)
   return rc;
 }
 
+#ifdef LOG_DAEMON
 /*
  * get syslog facility to use.
  * logfile can be "syslog", "syslog:daemon", "syslog:local7", etc.
@@ -607,10 +654,10 @@ get_syslog_facility(const char *logfile)
   if (STREQ(facstr, "mail"))
       return LOG_MAIL;
 #endif /* not LOG_MAIL */
-#ifdef LOG_DAEMON
+
   if (STREQ(facstr, "daemon"))
       return LOG_DAEMON;
-#endif /* not LOG_DAEMON */
+
 #ifdef LOG_AUTH
   if (STREQ(facstr, "auth"))
       return LOG_AUTH;
@@ -672,13 +719,14 @@ get_syslog_facility(const char *logfile)
   plog(XLOG_WARNING, "unknown syslog facility \"%s\", using LOG_DAEMON", facstr);
   return LOG_DAEMON;
 }
+#endif /* not LOG_DAEMON */
 
 
 /*
  * Change current logfile
  */
 int
-switch_to_logfile(char *logfile)
+switch_to_logfile(char *logfile, int old_umask)
 {
   FILE *new_logfp = stderr;
 
@@ -694,7 +742,7 @@ switch_to_logfile(char *logfile)
 #ifdef HAVE_SYSLOG
       syslogging = 1;
       new_logfp = stderr;
-      openlog(progname,
+      openlog(am_get_progname(),
 	      LOG_PID
 # ifdef LOG_CONS
 	      | LOG_CONS
@@ -711,7 +759,7 @@ switch_to_logfile(char *logfile)
 #endif /* not HAVE_SYSLOG */
 
     } else {
-      (void) umask(orig_umask);
+      (void) umask(old_umask);
       new_logfp = fopen(logfile, "a");
       umask(0);
     }
@@ -803,6 +851,7 @@ amu_release_controlling_tty(void)
 #endif /* TIOCNOTTY */
 
 #ifdef HAVE_SETSID
+  /* XXX: one day maybe use vhangup(2) */
   if (setsid() < 0) {
     plog(XLOG_WARNING, "Could not release controlling tty using setsid(): %m");
   } else {

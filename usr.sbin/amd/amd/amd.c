@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.10 1998/12/01 12:03:16 msaitoh Exp $	*/
+/*	$NetBSD: amd.c,v 1.11 1999/02/01 19:05:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.c,v 5.2.2.1 1992/02/09 15:08:15 jsp beta 
+ * Id: amd.c,v 1.4 1999/01/13 23:30:57 ezk Exp 
  *
  */
 
@@ -57,23 +57,29 @@
 struct amu_global_options gopt;	/* where global options are stored */
 
 char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
+#if 0
 char *progname;			/* "amd" */
+#endif
 char *hostdomain = "unknown.domain";
-char hostname[MAXHOSTNAMELEN + 1] = "localhost";	/* Hostname */
-char hostd[2 * MAXHOSTNAMELEN + 1];	/* Host+domain */
+#if 0
+char hostname[MAXHOSTNAMELEN + 1] = "localhost"; /* Hostname */
+#endif
+char hostd[2 * MAXHOSTNAMELEN + 1]; /* Host+domain */
 char *endian = ARCH_ENDIAN;	/* Big or Little endian */
 char *cpu = HOST_CPU;		/* CPU type */
 char *PrimNetName;		/* name of primary network */
 char *PrimNetNum;		/* number of primary network */
 
-int foreground = 1;		/* This is the top-level server */
 int immediate_abort;		/* Should close-down unmounts be retried */
-int orig_umask;
+int orig_umask = 022;
 int select_intr_valid;
 
 jmp_buf select_intr;
+#if 0
 pid_t mypid;			/* Current process id */
 serv_state amd_state;
+int foreground = 1;		/* This is the top-level server */
+#endif
 struct amd_stats amd_stats;	/* Server statistics */
 struct in_addr myipaddr;	/* (An) IP address of this host */
 time_t do_mapc_reload = 0;	/* mapc_reload() call required? */
@@ -170,7 +176,7 @@ daemon_mode(void)
      */
     for (;;)
       pause();
-    /* should never reache here */
+    /* should never reach here */
   }
 #ifdef HAVE_SIGACTION
   sigaction(SIGQUIT, &osa, NULL);
@@ -183,7 +189,7 @@ daemon_mode(void)
    */
   if (gopt.flags & CFM_PRINT_PID) {
     if (STREQ(gopt.pid_file, "/dev/stdout")) {
-      printf("%ld\n", (long) mypid);
+      printf("%ld\n", (long) am_mypid);
       fflush(stdout);
       /* do not fclose stdout */
     } else {
@@ -192,7 +198,7 @@ daemon_mode(void)
 
       f = fopen(gopt.pid_file, "w");
       if (f) {
-	fprintf(f, "%ld\n", (long) mypid);
+	fprintf(f, "%ld\n", (long) am_mypid);
 	(void) fclose(f);
       } else {
 	fprintf(stderr, "cannot open %s (errno=%d)\n", gopt.pid_file, errno);
@@ -309,6 +315,8 @@ main(int argc, char *argv[])
   char *domdot, *verstr;
   int ppid = 0;
   int error;
+  char *progname = NULL;		/* "amd" */
+  char hostname[MAXHOSTNAMELEN + 1] = "localhost"; /* Hostname */
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
@@ -336,13 +344,14 @@ main(int argc, char *argv[])
   }
   if (!progname)
     progname = "amd";
+  am_set_progname(progname);
 
   /*
-   * Initialise process id.  This is kept
+   * Initialize process id.  This is kept
    * cached since it is used for generating
    * and using file handles.
    */
-  mypid = getpid();
+  am_set_mypid();
 
   /*
    * Get local machine name
@@ -361,13 +370,18 @@ main(int argc, char *argv[])
     going_down(1);
   }
 
+#ifdef DEBUG
+  /* initialize debugging flags (Register AMQ, Enter daemon mode) */
+  debug_flags = D_AMQ | D_DAEMON;
+#endif /* DEBUG */
+
   /*
    * Initialize global options structure.
    */
   init_global_options();
 
   /*
-   * Partially initialise hostd[].  This
+   * Partially initialize hostd[].  This
    * is completed in get_args().
    */
   if ((domdot = strchr(hostname, '.'))) {
@@ -380,6 +394,7 @@ main(int argc, char *argv[])
     hostdomain = domdot;
   }
   strcpy(hostd, hostname);
+  am_set_hostname(hostname);
 
   /*
    * Trap interrupts for shutdowns.
@@ -477,7 +492,7 @@ main(int argc, char *argv[])
    * can mount the automounter.
    */
   amu_get_myaddress(&myipaddr);
-  plog(XLOG_INFO, "My ip addr is 0x%x", htonl(myipaddr.s_addr));
+  plog(XLOG_INFO, "My ip addr is %s", inet_ntoa(myipaddr));
 
   /* avoid hanging on other NFS servers if started elsewhere */
   if (chdir("/") < 0)
@@ -487,7 +502,7 @@ main(int argc, char *argv[])
    * Now check we are root.
    */
   if (geteuid() != 0) {
-    plog(XLOG_FATAL, "Must be root to mount filesystems (euid = %d)", geteuid());
+    plog(XLOG_FATAL, "Must be root to mount filesystems (euid = %ld)", (long) geteuid());
     going_down(1);
   }
 
@@ -521,7 +536,7 @@ main(int argc, char *argv[])
 #endif /* DEBUG */
     ppid = daemon_mode();
 
-  sprintf(pid_fsname, "%s:(pid%ld)", hostname, (long) mypid);
+  sprintf(pid_fsname, "%s:(pid%ld)", am_get_hostname(), (long) am_mypid);
 
   do_mapc_reload = clocktime() + ONE_HOUR;
 

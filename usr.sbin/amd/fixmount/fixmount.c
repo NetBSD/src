@@ -1,7 +1,7 @@
-/*	$NetBSD: fixmount.c,v 1.5 1998/08/08 22:33:34 christos Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.6 1999/02/01 19:05:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fixmount.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
+ * Id: fixmount.c,v 1.3 1999/01/10 21:54:26 ezk Exp 
  *
  */
 
@@ -89,11 +89,14 @@ void print_dump(mountlist);
 void usage(void);
 
 /* dummy variables */
+#if 0
 char *progname;
 char hostname[MAXHOSTNAMELEN];
-int orig_umask, foreground, debug_flags;
 pid_t mypid;
 serv_state amd_state;
+int foreground, orig_umask;
+int debug_flags;
+#endif
 
 void
 usage(void)

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_start.c,v 1.8 1998/08/08 22:33:30 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.9 1999/02/01 19:05:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_start.c,v 5.2.2.1 1992/02/09 15:08:51 jsp beta 
+ * Id: nfs_start.c,v 1.3 1999/01/13 23:31:00 ezk Exp 
  *
  */
 
@@ -88,12 +88,12 @@ checkup(void)
   }
   if (max_mem < next_mem) {
 #ifdef HAVE_GETPAGESIZE
-    dlog("%#x bytes of memory allocated; total is %#x (%ld pages)",
-	 next_mem - max_mem, next_mem,
+    dlog("%#lx bytes of memory allocated; total is %#lx (%ld pages)",
+	 (long) (next_mem - max_mem), (unsigned long) next_mem,
 	 ((long) next_mem + getpagesize() - 1) / getpagesize());
 #else /* not HAVE_GETPAGESIZE */
-    dlog("%#x bytes of memory allocated; total is %#x",
-	 next_mem - max_mem, next_mem);
+    dlog("%#lx bytes of memory allocated; total is %#lx",
+	 (long) (next_mem - max_mem), (unsigned long) next_mem);
 #endif /* not HAVE_GETPAGESIZE */
     max_mem = next_mem;
 
@@ -267,7 +267,7 @@ run_rpc(void)
       tvv.tv_sec = SELECT_MAXWAIT;
 #ifdef DEBUG
     if (tvv.tv_sec) {
-      dlog("Select waits for %ds", tvv.tv_sec);
+      dlog("Select waits for %ds", (int) tvv.tv_sec);
     } else {
       dlog("Select waits for Godot");
     }
