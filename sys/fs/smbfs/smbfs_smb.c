@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.4 2003/02/19 12:44:47 martin Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.5 2003/02/19 13:51:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -90,7 +90,7 @@ smbfs_getino(struct smbnode *dnp, const char *name, int nmlen)
 }
 
 static int
-smbfs_smb_lockandx(struct smbnode *np, int op, u_int32_t pid, off_t start, off_t end,
+smbfs_smb_lockandx(struct smbnode *np, int op, caddr_t id, off_t start, off_t end,
 	struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
@@ -106,18 +106,18 @@ smbfs_smb_lockandx(struct smbnode *np, int op, u_int32_t pid, off_t start, off_t
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
-	mb_put_uint8(mbp, 0xff);		/* secondary command */
+	mb_put_uint8(mbp, 0xff);	/* secondary command */
 	mb_put_uint8(mbp, 0);		/* MBZ */
 	mb_put_uint16le(mbp, 0);
 	mb_put_mem(mbp, (caddr_t)&np->n_fid, 2, MB_MSYSTEM);
 	mb_put_uint8(mbp, ltype);	/* locktype */
 	mb_put_uint8(mbp, 0);		/* oplocklevel - 0 seems is NO_OPLOCK */
-	mb_put_uint32le(mbp, 0);		/* timeout - break immediately */
+	mb_put_uint32le(mbp, 0);	/* timeout - break immediately */
 	mb_put_uint16le(mbp, op == SMB_LOCK_RELEASE ? 1 : 0);
 	mb_put_uint16le(mbp, op == SMB_LOCK_RELEASE ? 0 : 1);
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
-	mb_put_uint16le(mbp, pid);
+	mb_put_uint16le(mbp, (((long) id) & 0xffff));	/* process ID */
 	mb_put_uint32le(mbp, start);
 	mb_put_uint32le(mbp, end - start);
 	smb_rq_bend(rqp);
@@ -127,7 +127,7 @@ smbfs_smb_lockandx(struct smbnode *np, int op, u_int32_t pid, off_t start, off_t
 }
 
 int
-smbfs_smb_lock(struct smbnode *np, int op, int id,
+smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
 	off_t start, off_t end,	struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
