@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp $
+$NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
 product FUJITSU LA10S		0x1003 Fujitsu Compact Flash Ethernet
 
 /* IBM Products */
+product IBM MICRODRIVE		0x0000 IBM Microdrive
 product IBM 3270		0x0001 IBM 3270 Emulation
 product IBM INFOMOVER		0x0002 IBM InfoMover
 product IBM 5250		0x000b IBM 5250 Emulation
