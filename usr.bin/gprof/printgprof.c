@@ -1,4 +1,4 @@
-/*	$NetBSD: printgprof.c,v 1.8 1998/03/15 17:14:51 mrg Exp $	*/
+/*	$NetBSD: printgprof.c,v 1.9 1998/03/30 02:25:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: printgprof.c,v 1.8 1998/03/15 17:14:51 mrg Exp $");
+__RCSID("$NetBSD: printgprof.c,v 1.9 1998/03/30 02:25:00 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: printgprof.c,v 1.8 1998/03/15 17:14:51 mrg Exp $");
 void
 printprof()
 {
-    register nltype	*np;
+    nltype		*np;
     nltype		**sortednlp;
     int			index;
 
@@ -126,7 +126,7 @@ flatprofheader()
 
 void
 flatprofline( np )
-    register nltype	*np;
+    nltype	*np;
 {
 
     if ( onlist( Elist , np -> name ) )
@@ -179,7 +179,7 @@ gprofheader()
 
 void
 gprofline( np )
-    register nltype	*np;
+    nltype	*np;
 {
     char	kirkbuffer[ BUFSIZ ];
 
@@ -712,7 +712,7 @@ void
 printindex()
 {
     nltype		**namesortnlp;
-    register nltype	*nlp;
+    nltype		*nlp;
     int			index, nnames, todo, i, j;
     char		peterbuffer[ BUFSIZ ];
 

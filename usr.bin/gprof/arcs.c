@@ -1,4 +1,4 @@
-/*	$NetBSD: arcs.c,v 1.7 1998/02/22 12:55:44 christos Exp $	*/
+/*	$NetBSD: arcs.c,v 1.8 1998/03/30 02:24:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: arcs.c,v 1.7 1998/02/22 12:55:44 christos Exp $");
+__RCSID("$NetBSD: arcs.c,v 1.8 1998/03/30 02:24:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,11 +363,11 @@ timepropagate( parentp )
 void
 cyclelink()
 {
-    register nltype	*nlp;
-    register nltype	*cyclenlp;
-    int			cycle;
-    nltype		*memberp;
-    arctype		*arcp;
+    nltype	*nlp;
+    nltype	*cyclenlp;
+    int		cycle;
+    nltype	*memberp;
+    arctype	*arcp;
 
 	/*
 	 *	Count the number of cycles, and initialze the cycle lists
