@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -38,6 +38,8 @@
 #include <machine/pte.h>
 #include <machine/fp.h>
 
+struct trapframe;
+
 struct pcb {
 	pd_entry_t	*pcb_pagedir;		/* PT hooks */
 	u_int	pcb_flags;			/* Flags */
@@ -61,6 +63,7 @@ struct pcb {
 	u_int	pcb_und_sp;
 	caddr_t	pcb_onfault;			/* On fault handler */
 	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
+	struct	trapframe *pcb_tf;
 };
 
 /*

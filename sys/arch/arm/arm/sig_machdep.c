@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3 2001/02/27 17:42:16 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.4 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2001/02/27 17:42:16 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4 2001/02/28 18:15:43 bjh21 Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -67,11 +67,7 @@ static __inline struct trapframe *
 process_frame(struct proc *p)
 {
 
-#ifdef arm26
 	return p->p_addr->u_pcb.pcb_tf;
-#else /* arm32 */
-	return (p->p_md.md_regs);
-#endif
 }
 
 /*

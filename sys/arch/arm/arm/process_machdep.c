@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2001/02/27 17:57:55 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 2001/02/28 18:15:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.5 2001/02/27 17:57:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2001/02/28 18:15:42 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -92,11 +92,7 @@ static __inline struct trapframe *
 process_frame(struct proc *p)
 {
 
-#ifdef arm26
 	return p->p_addr->u_pcb.pcb_tf;
-#else /* arm32 */
-	return (p->p_md.md_regs);
-#endif
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 2001/02/23 21:23:48 reinoud Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -39,7 +39,7 @@
  * Machine-dependent part of the proc structure for arm.
  */
 struct mdproc {
-	struct trapframe *md_regs;	/* registers on current frame */
-	int	__spare;
+	struct trapframe *__spare0;
+	int	__spare1;
 };
 #endif

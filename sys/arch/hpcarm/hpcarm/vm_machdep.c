@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 2001/02/26 16:33:10 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 2001/02/28 18:15:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -171,8 +171,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif	/* ARMFPE */
 
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
-	*tf = *p1->p_md.md_regs;
+	p2->p_addr->u_pcb.pcb_tf = tf = (struct trapframe *)pcb->pcb_sp - 1;
+	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	/*
 	 * If specified, give the child a different stack.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/02/25 15:45:23 toshii Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/02/28 18:15:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -463,7 +463,7 @@ cpu_startup()
 	(void) pmap_extract(kernel_pmap, (vaddr_t)(kernel_pmap)->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);
 
-	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_sp - 1;
+	curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;
 }
 
 /*
@@ -500,7 +500,7 @@ setregs(p, pack, stack)
 		    pack->ep_entry, stack, p);
 #endif
 
-	tf = p->p_md.md_regs;
+	tf = p->p_addr->u_pcb.pcb_tf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= -1)
@@ -588,7 +588,7 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = p->p_addr->u_pcb.pcb_tf;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -707,7 +707,7 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = p->p_addr->u_pcb.pcb_tf;
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;
