@@ -823,15 +823,7 @@ legitimate_pic_operand_p(xbar, strict)
      register rtx xbar;
      int strict;
 {
-  if (GET_CODE (xbar) == PLUS 
-      && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
-	   && GET_CODE (XEXP (xbar, 0)) == REG)
-	  || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
-	      && GET_CODE (XEXP (xbar, 1)) == REG)
-	  || (GET_CODE (XEXP (xbar, 0)) == MULT
-	      && GET_CODE (XEXP (xbar, 1)) == MEM)))
-    return 0;
-  return INDIRECTABLE_CONSTANT_P (xbar);
+  return INDIRECTABLE_CONSTANT_ADDRESS_P (xbar);
 }
 /*
  * reg
@@ -844,8 +836,6 @@ legitimate_address_p(mode, xbar, strict)
      register rtx xbar;
      int strict;
 {
-  if (flag_pic && !legitimate_pic_operand_p(xbar, mode))
-    return 0;
   GO_IF_LEGITIMATE_ADDRESS2(mode, xbar, win, strict);
   return 0;
  win:
@@ -854,6 +844,12 @@ legitimate_address_p(mode, xbar, strict)
       if (GET_CODE (xbar) == PLUS 
 	  && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
 	       && GET_CODE (XEXP (xbar, 0)) == REG)
+	      || (GET_CODE (XEXP (xbar, 0)) == MEM
+		  && GET_CODE (XEXP (XEXP (xbar, 0), 0)) == SYMBOL_REF
+		  && GET_CODE (XEXP (xbar, 1)) == REG)
+	      || (GET_CODE (XEXP (xbar, 1)) == MEM
+		  && GET_CODE (XEXP (XEXP (xbar, 1), 0)) == SYMBOL_REF
+		  && GET_CODE (XEXP (xbar, 0)) == MULT)
 	      || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
 		  && GET_CODE (XEXP (xbar, 1)) == REG)))
 	return 0;
@@ -872,13 +868,67 @@ legitimate_address_p(mode, xbar, strict)
 	       || (GET_CODE (XEXP (xbar, 1)) == REG
 		   && GET_CODE (XEXP (xbar, 0)) == CONST_INT))))
     {
-      fprintf(stderr, "===== Legitimate Address Operand\n");
+      fprintf(stderr, "\n===== Legitimate Address Operand\n");
       debug_rtx(xbar);
     }
   return 1;
 }
 
 
+int
+vax_double_indirect_operand (op, mode)
+     register rtx op;
+     enum machine_mode mode;
+{
+  int count = 0;
+ retry:
+  /* Before reload, a SUBREG isn't in memory (see memory_operand, above).  */
+  if (! reload_completed
+      && GET_CODE (op) == SUBREG && GET_CODE (SUBREG_REG (op)) == MEM)
+    {
+      register int offset = SUBREG_WORD (op) * UNITS_PER_WORD;
+      rtx inner = SUBREG_REG (op);
+
+      if (BYTES_BIG_ENDIAN)
+	offset -= (MIN (UNITS_PER_WORD, GET_MODE_SIZE (GET_MODE (op)))
+		   - MIN (UNITS_PER_WORD, GET_MODE_SIZE (GET_MODE (inner))));
+
+      if (mode != VOIDmode && GET_MODE (op) != mode)
+	return 0;
+
+      /* The only way that we can have a general_operand as the resulting
+	 address is if OFFSET is zero and the address already is an operand
+	 or if the address is (plus Y (const_int -OFFSET)) and Y is an
+	 operand.  */
+
+      if (offset == 0)
+	op = XEXP (inner, 0);
+      else if (GET_CODE (XEXP (inner, 0)) == PLUS
+		&& GET_CODE (XEXP (XEXP (inner, 0), 1)) == CONST_INT
+		&& INTVAL (XEXP (XEXP (inner, 0), 1)) == -offset)
+	op = XEXP (XEXP (inner, 0), 0);
+      else
+	return 0;
+    }
+  else if (GET_CODE (op) == MEM && memory_operand (op, mode))
+    {
+      op = XEXP (op, 0);
+    }
+  else
+    return 0;
+  if (!general_operand (op, Pmode))
+    return 0;
+  mode = Pmode;
+  if (count == 0)
+    {
+      count++;
+      goto retry;
+    }
+  if (count == 1)
+    return 1;
+  return 0;
+}
+
 /*
  * Like memory_operand exit when pic where
  * we can't allow a double derefernce.
@@ -890,16 +940,39 @@ call_operand (op, mode)
 {
   if (!memory_operand (op, mode))
     return 0;
-  if ((flag_pic || TARGET_HALFPIC) && GET_CODE (op) == MEM && GET_CODE (XEXP (op, 0)) == MEM)
+  if (flag_pic && vax_double_indirect_operand (op, mode))
     return 0;
   if (TARGET_DEBUGADDR)
     {
-      fprintf(stderr, "===== Call Operand\n");
+      fprintf(stderr, "\n===== Call Operand\n");
       debug_rtx(op);
     }
 #if 0
   debug_rtx(op);
 #endif
+  return 1;
+}
+
+/*
+ * Like memory_operand exit when pic where
+ * we can't allow a double derefernce.
+ */
+int
+vax_general_operand (op, mode)
+    register rtx op;
+    enum machine_mode mode;
+{
+  if (!general_operand (op, mode))
+    return 0;
+  if (!(flag_pic || TARGET_HALFPIC))
+    return 1;
+  if (flag_pic && vax_double_indirect_operand (op, mode))
+    return 0;
+  if (TARGET_DEBUGADDR)
+    {
+      fprintf(stderr, "\n===== VAX Generic Operand\n");
+      debug_rtx(op);
+    }
   return 1;
 }
 
@@ -908,24 +981,28 @@ compare_operand (op, mode)
     register rtx op;
     enum machine_mode mode;
 {
-  if (!general_operand (op, mode))
+  if (!vax_general_operand (op, mode))
     return 0;
   if (!(flag_pic || TARGET_HALFPIC))
     return 1;
-  if (GET_CODE (op) == PLUS 
-      && ((GET_CODE (XEXP (op, 1)) == SYMBOL_REF
-	   && GET_CODE (XEXP (op, 0)) == REG)
-	  || (GET_CODE (XEXP (op, 0)) == SYMBOL_REF
-	      && GET_CODE (XEXP (op, 1)) == REG)))
-    return 0;
   if (!INDIRECTABLE_CONSTANT_P (op))
     return 0;
   if (TARGET_DEBUGADDR)
     {
-      fprintf(stderr, "===== Compare Operand\n");
+      fprintf(stderr, "\n===== Compare Operand\n");
       debug_rtx(op);
     }
   return 1;
+}
+
+/* Return 1 if OP is a general operand that is not an immediate operand.  */
+
+int
+vax_nonimmediate_operand (op, mode)
+     register rtx op;
+     enum machine_mode mode;
+{
+  return (vax_general_operand (op, mode) && ! CONSTANT_P (op));
 }
 
 /* Returns 1 if OP is a sum of a symbol reference and a constant.  */
