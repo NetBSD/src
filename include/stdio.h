@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.12 1994/05/21 09:42:20 cgd Exp $
+ *	$Id: stdio.h,v 1.13 1994/05/22 23:14:10 cgd Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -251,9 +251,9 @@ int	 sscanf __P((const char *, const char *, ...));
 FILE	*tmpfile __P((void));
 char	*tmpnam __P((char *));
 int	 ungetc __P((int, FILE *));
-int	 vfprintf __P((FILE *, const char *, _VA_LIST_));
-int	 vprintf __P((const char *, _VA_LIST_));
-int	 vsprintf __P((char *, const char *, _VA_LIST_));
+int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
+int	 vprintf __P((const char *, _BSD_VA_LIST_));
+int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 __END_DECLS
 
 /*
@@ -287,11 +287,11 @@ int	 setlinebuf __P((FILE *));
 char	*tempnam __P((const char *, const char *));
 int	 snprintf __P((char *, size_t, const char *, ...))
 		__attribute__((format (printf, 3, 4)));
-int	 vsnprintf __P((char *, size_t, const char *, _VA_LIST_))
+int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
 		__attribute__((format (printf, 3, 0)));
-int	 vscanf __P((const char *, _VA_LIST_))
+int	 vscanf __P((const char *, _BSD_VA_LIST_))
 		__attribute__((format (scanf, 1, 0)));
-int	 vsscanf __P((const char *, const char *, _VA_LIST_))
+int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
 		__attribute__((format (scanf, 2, 0)));
 __END_DECLS
 
@@ -321,7 +321,7 @@ __END_DECLS
  */
 __BEGIN_DECLS
 int	__srget __P((FILE *));
-int	__svfscanf __P((FILE *, const char *, _VA_LIST_));
+int	__svfscanf __P((FILE *, const char *, _BSD_VA_LIST_));
 int	__swbuf __P((int, FILE *));
 __END_DECLS
 

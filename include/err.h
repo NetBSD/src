@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)err.h	8.1 (Berkeley) 6/2/93
- *	$Id: err.h,v 1.8 1994/01/27 01:27:30 jtc Exp $
+ *	$Id: err.h,v 1.9 1994/05/22 23:14:07 cgd Exp $
  */
 
 #ifndef _ERR_H_
@@ -50,19 +50,19 @@
 __BEGIN_DECLS
 __dead void	err __P((int, const char *, ...))
 			__attribute__((format (printf, 2, 3)));
-__dead void	verr __P((int, const char *, _VA_LIST_))
+__dead void	verr __P((int, const char *, _BSD_VA_LIST_))
 			__attribute__((format (printf, 2, 0)));
 __dead void	errx __P((int, const char *, ...))
 			__attribute__((format (printf, 2, 3)));
-__dead void	verrx __P((int, const char *, _VA_LIST_))
+__dead void	verrx __P((int, const char *, _BSD_VA_LIST_))
 			__attribute__((format (printf, 2, 0)));
 void		warn __P((const char *, ...))
 			__attribute__((format (printf, 1, 2)));
-void		vwarn __P((const char *, _VA_LIST_))
+void		vwarn __P((const char *, _BSD_VA_LIST_))
 			__attribute__((format (printf, 1, 0)));
 void		warnx __P((const char *, ...))
 			__attribute__((format (printf, 1, 2)));
-void		vwarnx __P((const char *, _VA_LIST_))
+void		vwarnx __P((const char *, _BSD_VA_LIST_))
 			__attribute__((format (printf, 1, 0)));
 __END_DECLS
 

@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.9 1993/11/04 02:26:10 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.10 1994/05/22 23:21:41 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -161,7 +161,7 @@ int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
-	_VA_LIST_ ap;
+	_BSD_VA_LIST_ ap;
 {
 	register char *fmt;	/* format string */
 	register int ch;	/* character from fmt */
