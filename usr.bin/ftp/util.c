@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.72 1999/10/05 01:16:14 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.73 1999/10/05 13:05:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.72 1999/10/05 01:16:14 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.73 1999/10/05 13:05:42 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -901,6 +901,21 @@ ptransfer(siginfo)
 }
 
 /*
+ * Print transfer stats if a transfer is in progress
+ */
+void
+psummary(notused)
+	int notused;
+{
+	int oerrno;
+
+	oerrno = errno;
+	if (bytes > 0)
+		ptransfer(1);
+	errno = oerrno;
+}
+
+/*
  * List words in stringlist, vertically arranged
  */
 void
@@ -961,6 +976,9 @@ setttywidth(a)
 	errno = oerrno;
 }
 
+/*
+ * Change the rate limit up (SIGUSR1) or down (SIGUSR2)
+ */
 void
 crankrate(int sig)
 {
@@ -1245,7 +1263,10 @@ xsignal(sig, func)
 	 */
 
 	switch(sig) {
+#ifdef SIGINFO
 	case SIGINFO:
+#endif
+	case SIGQUIT:
 	case SIGUSR1:
 	case SIGUSR2:
 	case SIGWINCH:
@@ -1255,7 +1276,6 @@ xsignal(sig, func)
 	case SIGALRM:
 	case SIGINT:
 	case SIGPIPE:
-	case SIGQUIT:
 		restartable = 0;
 		break;
 
