@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp 
+ *	NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp 
  */
 
 /*
@@ -60,7 +60,7 @@ static struct podule_description podules_cconcepts[] = {
 };
 
 static struct podule_description podules_armadillo[] = {
-	{ PODULE_ARMADILLO_A448,	"A447 sound sampler" },
+	{ PODULE_ARMADILLO_A448,	"A448 sound sampler" },
 	{ 0x0000, NULL }
 };
 
@@ -123,6 +123,12 @@ static struct podule_description podules_aleph1[] = {
 static struct podule_description podules_icubed[] = {
 	{ PODULE_ICUBED_ETHERH,	"etherlan 600 network slot interface" },
 	{ PODULE_ICUBED_ETHERHFLASH,	"etherlan 600 network slot interface" },
+	{ PODULE_ICUBED_ETHERLAN500,	"etherlen 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN500A,	"etherlen 500 interface" },
+	{ PODULE_ICUBED_ETHERLAN200,	"etherlen 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN200A,	"etherlen 200 interface" },
+	{ PODULE_ICUBED_ETHERLAN100,	"etherlen 100 interface" },
+	{ PODULE_ICUBED_ETHERLAN100A,	"etherlen 100 interface" },
 	{ 0x0000, NULL }
 };
 
@@ -135,6 +141,7 @@ static struct podule_description podules_brini[] = {
 static struct podule_description podules_ant[] = {
 	{ PODULE_ANT_ETHER3,	"ether 3/5 interface" },
 	{ PODULE_ANT_ETHERB,	"ether B network slot interface" },
+	{ PODULE_ANT_ETHERM,	"ether M dual interface NIC" },
 	{ 0x0000, NULL }
 };
 

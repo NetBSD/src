@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.1 1997/02/04 05:50:22 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.1.4.1 1997/03/11 21:53:08 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,6 +54,12 @@ pc	.req	r15
 	.align	0
 
 ENTRY(_cpufunc_nullop)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mov	pc, lr
 
 /*
@@ -67,14 +73,32 @@ ENTRY(_cpufunc_nullop)
  */
 
 ENTRY(_cpufunc_id)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrc	15, 0, r0, c0, c0, 0
 	mov	pc, lr
 
 ENTRY(_cpufunc_faultstatus)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrc	15, 0, r0, c5, c0, 0
 	mov	pc, lr
 
 ENTRY(_cpufunc_faultaddress)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrc	15, 0, r0, c6, c0, 0
 	mov	pc, lr
 
@@ -90,10 +114,22 @@ ENTRY(_cpufunc_faultaddress)
  */
  
 ENTRY(_cpufunc_control)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mcr	15, 0, r0, c1, c0, 0
 	mov	pc, lr
 
 ENTRY(_cpufunc_domains)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mcr	15, 0, r0, c3, c0, 0
 	mov	pc, lr
 
@@ -220,6 +256,12 @@ ENTRY(_sa110_cache_cleanD_E)
 
 ENTRY(_sa110_cache_cleanID)
 ENTRY(_sa110_cache_cleanD)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
@@ -238,6 +280,12 @@ Lsa110_cache_cleanD_loop:
 	mov	pc, lr	
 
 ENTRY(_sa110_cache_purgeID)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
@@ -257,6 +305,12 @@ Lsa110_cache_purgeID_loop:
 	mov	pc, lr	
 
 ENTRY(_sa110_cache_purgeD)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
@@ -309,6 +363,12 @@ ENTRY(_sa110_drain_writebuf)
  */
 
 ENTRY(_sa110_cache_syncI)
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0

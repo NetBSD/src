@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.71 1997/01/31 22:55:44 mhitch Exp $
+#	$NetBSD: GENERIC,v 1.71.4.1 1997/03/11 21:25:41 is Exp $
 
 #
 # GENERIC AMIGA
@@ -40,8 +40,7 @@ options		INET		# IP networking support (Required)
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
 #options	PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
-#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
-				# if you enable the pseudo-device ipfilter).
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 #
 # File systems

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6 1997/02/04 19:42:29 thorpej Exp $
+$NetBSD: version,v 1.6.4.1 1997/03/11 20:59:45 is Exp $
 
 1.1:		Initial version
 1.2:		Added support for network booting
@@ -6,3 +6,4 @@ $NetBSD: version,v 1.6 1997/02/04 19:42:29 thorpej Exp $
 1.4:		Added support for HP-IB cartridge tapes
 1.5:		Reorganization of boot block code
 1.6:		Add support for booting gzip'd kernels
+1.7:		Round load address to 8k boundary

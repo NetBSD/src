@@ -1,7 +1,7 @@
-/* $NetBSD: frame.h,v 1.3 1996/03/13 21:06:34 mark Exp $ */
+/* $NetBSD: frame.h,v 1.3.6.1 1997/03/11 21:53:22 is Exp $ */
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -45,6 +45,8 @@
 
 #ifndef _ARM32_FRAME_H_
 #define _ARM32_FRAME_H_
+
+#ifndef _LOCORE
 
 #include <sys/signal.h>
 
@@ -134,6 +136,97 @@ struct frame {
 #ifdef _KERNEL
 void validate_trapframe __P((trapframe_t *, int));
 #endif /* _KERNEL */
+
+#else /* _LOCORE */
+
+/*
+ * ASM macros for pushing and pulling trapframes from the stack
+ *
+ * These macros are used to handle the irqframe and trapframe structures
+ * defined above.
+ */
+
+/*
+ * PUSHFRAME - macro to push a trap frame on the stack in the current mode
+ * Since the current mode is used, the SVC R14 field is not defined.
+ *
+ * NOTE: r13 and r14 are stored separately as a work around for the
+ * SA110 rev 2 STM^ bug
+ */
+
+#define PUSHFRAME							   \
+	str	lr, [sp, #-4]!;		/* Push the return address */	   \
+	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */		   \
+	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
+	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
+	str	r0, [sp, #-4]!;
+
+/*
+ * PULLFRAME - macro to pull a trap frame from the stack in the current mode
+ * Since the current mode is used, the SVC R14 field is ignored.
+ */
+
+#define PULLFRAME							   \
+        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */	   \
+        msr     spsr_all, r0;						   \
+        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+ 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */		   \
+ 	ldr	lr, [sp], #0x0004;	/* Pull the return address */
+
+/*
+ * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
+ * This should only be used if the processor is not currently in SVC32
+ * mode. The processor mode is switched to SVC mode and the trap frame is
+ * stored. The SVC R14 field is used to store the previous value of
+ * R14 in SVC mode.  
+ *
+ * NOTE: r13 and r14 are stored separately as a work around for the
+ * SA110 rev 2 STM^ bug
+ */
+
+#define PUSHFRAMEINSVC							   \
+	stmdb	sp, {r0-r3};		/* Save 4 registers */		   \
+	mov	r0, lr;			/* Save xxx32 r14 */		   \
+	mov	r1, sp;			/* Save xxx32 sp */		   \
+	mrs	r3, spsr_all;		/* Save xxx32 spsr */		   \
+	mrs     r2, cpsr_all; 		/* Get the CPSR */		   \
+	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
+	orr     r2, r2, #(PSR_SVC32_MODE);				   \
+	msr     cpsr_all, r2;		/* Punch into SVC mode */	   \
+	str	r0, [sp, #-4]!;		/* Push return address */	   \
+	str	lr, [sp, #-4]!;		/* Push SVC r14 */		   \
+	msr     spsr_all, r3;		/* Restore correct spsr */	   \
+	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
+	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
+	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
+	str	r0, [sp, #-4]!
+
+/*
+ * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
+ * in SVC32 mode and restore the saved processor mode and PC.
+ * This should be used when the SVC R14 register needs to be restored on
+ * exit.
+ */
+
+#define PULLFRAMEFROMSVCANDEXIT						   \
+        ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
+        msr     spsr_all, r0;		/* restore SPSR */		   \
+        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+        mov     r0, r0;	  		/* NOP for previous instruction */ \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	ldmia	sp!, {lr, pc}^		/* Restore lr and exit */
+
+#endif _LOCORE
 
 #endif /* _ARM32_FRAME_H_ */
   
