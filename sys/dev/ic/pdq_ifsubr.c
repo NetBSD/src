@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.22 1998/09/20 02:36:08 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.23 1998/09/28 17:13:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -208,11 +208,6 @@ pdq_ifstart(
 		break;
 	}
 #endif
-	if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET) {
-	    m->m_data += PDQ_RX_FC_OFFSET - PDQ_OS_HDR_OFFSET;
-	    m->m_len  -= PDQ_RX_FC_OFFSET - PDQ_OS_HDR_OFFSET;
-	    m->m_pkthdr.len -= PDQ_RX_FC_OFFSET - PDQ_OS_HDR_OFFSET;
-	}
 
 	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE)
 	    break;

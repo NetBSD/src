@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.21 1998/09/20 02:36:09 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.22 1998/09/28 17:13:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -898,22 +898,33 @@ pdq_queue_transmit_data(
 #endif
 
   again:
+    if (PDQ_RX_FC_OFFSET == PDQ_OS_HDR_OFFSET) {
+	freecnt = tx->tx_free - 1;
+    } else {
+	freecnt = tx->tx_free;
+    }
     /*
      * Need 2 or more descriptors to be able to send.
      */
-    if (tx->tx_free <= 1) {
+    if (freecnt == 0) {
 	pdq->pdq_intrmask |= PDQ_HOST_INT_TX_ENABLE;
 	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
 	return PDQ_FALSE;
     }
 
-    dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;
-    PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[producer], sizeof(pdq_txdesc_t));
-    PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
+    if (PDQ_RX_FC_OFFSET == PDQ_OS_HDR_OFFSET) {
+	dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;
+	PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[producer], sizeof(pdq_txdesc_t));
+	PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
+    } else {
+	PDQ_OS_DATABUF_PTR(pdu)[0] = PDQ_FDDI_PH0;
+	PDQ_OS_DATABUF_PTR(pdu)[1] = PDQ_FDDI_PH1;
+	PDQ_OS_DATABUF_PTR(pdu)[2] = PDQ_FDDI_PH2;
+    }
 
 #if defined(PDQ_BUS_DMA)
     map = M_GETCTX(pdu, bus_dmamap_t);
-    if ((freecnt = tx->tx_free - 1) >= map->dm_nsegs) {
+    if (freecnt >= map->dm_nsegs) {
 	int idx;
 	for (idx = 0; idx < map->dm_nsegs; idx++) {
 	    /*
@@ -985,6 +996,8 @@ pdq_queue_transmit_data(
      * Everything went fine.  Finish it up.
      */
     tx->tx_descriptor_count[tx->tx_producer] = tx->tx_free - freecnt;
+    if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET)
+	dbp->pdqdb_transmits[tx->tx_producer].txd_sop = 1;
     eop->txd_eop = 1;
     PDQ_OS_DATABUF_ENQUEUE(&tx->tx_txq, pdu);
     tx->tx_producer = producer;
