@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.108.4.2 2003/08/26 14:38:01 tron Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.108.4.3 2003/08/27 08:01:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.2 2003/08/26 14:38:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.3 2003/08/27 08:01:48 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -151,7 +151,6 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
-	size_t *oldlenp;
 
 	/*
 	 * all top-level sysctl names are non-terminal
@@ -216,11 +215,10 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 	 * XXX Hey, we wire `old', but what about `new'?
 	 */
 
-	oldlenp = SCARG(uap, oldlenp);
-	if (oldlenp) {
-		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
+	if (SCARG(uap, oldlenp)) {
+		if ((error = copyin(SCARG(uap, oldlenp), &oldlen,
+		    sizeof(oldlen))))
 			return (error);
-		oldlenp = &oldlen;
 	}
 	if (SCARG(uap, old) != NULL) {
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
@@ -234,7 +232,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
-	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
+	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, SCARG(uap, old), savelen);
 		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
