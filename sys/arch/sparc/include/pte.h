@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 1995/06/25 23:15:58 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.12 1995/07/05 17:53:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,9 +137,9 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
 extern int mmu_3l;
 #endif
 
-#define	NBPRG	(1 << 24)	/* bytes per segment */
-#define	RGSHIFT	24		/* log2(NBPSG) */
-#define	RGOFSET	(NBPRG - 1)	/* mask for segment offset */
+#define	NBPRG	(1 << 24)	/* bytes per region */
+#define	RGSHIFT	24		/* log2(NBPRG) */
+#define	RGOFSET	(NBPRG - 1)	/* mask for region offset */
 #define NSEGRG	(NBPRG / NBPSG)	/* segments per region */
 
 #define	NBPSG	(1 << 18)	/* bytes per segment */
@@ -275,12 +275,12 @@ struct pte {
 #define SRPTE_ACCMASK	0x0000001c		/* Access rights mask */
 #define SRPTE_ACCSHIFT	2			/* Access rights shift */
 #define SRPTE_TYPEMASK	0x00000003		/* PTE Type */
-#define SRPTE_PTE	0x00000002		/* A PTE */
-#define SRPTE_PTE	0x00000001		/* A PTP */
+#define SRPTE_PTE	0x00000002		/* A PTE (Page Table Entry) */
+#define SRPTE_PTP	0x00000001		/* A PTP (Page Table Pointer) */
 
 /*
  * Reference MMU access permission bits.
- *  format (stolen from Amoeba): SRACC_sssuuu,
+ *  format: SRACC_sssuuu,
  *	where <sss> denote the supervisor rights
  *	and <uuu> denote the user rights
  */
