@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1999/02/26 22:37:58 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 1999/03/16 16:30:21 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

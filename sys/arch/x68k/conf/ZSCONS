@@ -1,7 +1,7 @@
-#	$NetBSD: GENERIC,v 1.28 1999/03/16 16:30:16 minoura Exp $
+# 	$NetBSD: ZSCONS,v 1.2 1999/03/16 16:30:17 minoura Exp $
 
 #
-#	GENERIC
+#	ZSCONS -- like GENERIC, but use zs console.
 #
 
 include "arch/x68k/conf/std.x68k"
@@ -20,14 +20,15 @@ options 	M68060
 
 #### System options specific to the x68k port
 
-options 	UVM			# new virtual memory system
+#options 	UVM			# new virtual memory system
 options 	MACHINE_NONCONTIG	# support for noncontiguous memory
+options 	MACHINE_NEW_NONCONTIG	# new i/f for noncontig memory support
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
 options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
-#options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
+options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
 
 #### System options that are the same for all ports
@@ -128,8 +129,6 @@ options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
-#options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -186,10 +185,8 @@ grfbus0	at mainbus0			# bitmapped displays
 grf0	at grfbus0			# multiplane graphics
 grf1	at grfbus0			# flexible graphics
 
-kbd0	at mfp0				# standard keyboard
-ite0	at grf0				# internal terminal emulator
-#options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
-					# see /sys/arch/x68k/dev/itevar.h
+#kbd0	at mfp0				# standard keyboard
+#ite0	at grf0				# internal terminal emulator
 #!pow0	at mfp0 flags 0			# power switch status; intr enabled
 #!pow1	at mfp0 flags 1			# power switch status; read only
 pseudo-device	pow		2	#! software power switch
