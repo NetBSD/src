@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.23 1996/01/25 19:50:39 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.24 1996/02/01 02:37:15 phil Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -262,7 +262,7 @@ int data_bits;			/* 5, 6, 7, or 8 */
     WR_ADR (u_char, rs->speed_port, ((in_code & 0x0f) << 4) 
     					| (out_code & 0x0f));
   }
-  DELAY(96000/out_speed);
+  DELAY(96000/out_speed * 10000);
 
   splx(x);
   return (0);
@@ -300,7 +300,7 @@ scnattach(parent, self, aux)
   long uart_base;
   long scn_first_adr;
 
-  if (unit == 0)  DELAY(5);  /* Let the output go out.... */
+  if (unit == 0)  DELAY(5*10000);  /* Let the output go out.... */
 
   sc->scn_swflags |= SCN_SW_SOFTCAR;
  
@@ -394,10 +394,10 @@ scnattach(parent, self, aux)
   	 (rs->uart->speed_grp << 7) | rs->uart->acr_int_bits);
 #ifdef CONSOLE_SPEED
   if (unit == 0)
-{ printf ("scn_config on unit 0\n");    
+    { 
     scn_config(unit, CONSOLE_SPEED, CONSOLE_SPEED,
 	       LC_NONE, LC_STOP1, LC_BITS8);
-}
+  }
   else
 #endif
     scn_config(unit, scndefaultrate, scndefaultrate,
@@ -531,7 +531,7 @@ scnclose(dev, flag, mode, p)
 	if (tp->t_cflag&HUPCL || tp->t_state&TS_WOPEN || 
 	    (tp->t_state&TS_ISOPEN) == 0) {
 		WR_ADR (u_char, rs->opclr_port, DTR_BIT << rs->a_or_b);
-		DELAY (10);
+		DELAY (10*10000);
 		WR_ADR (u_char, rs->opset_port, DTR_BIT << rs->a_or_b);
 	}
 	ttyclose(tp);
@@ -874,7 +874,7 @@ scnparam(tp, t)
   /* Is this a hang up? */
   if (t->c_ospeed == B0) {
 	WR_ADR (u_char, rs->opclr_port, DTR_BIT << rs->a_or_b);
-	DELAY (10);
+	DELAY (10*10000);
 	WR_ADR (u_char, rs->opset_port, DTR_BIT << rs->a_or_b);
 	return(0);
   }
@@ -1058,8 +1058,10 @@ scnselect(dev, rw, p)
 #endif
 
 
+#ifdef VERYLOWDEBUG
 /* So the kernel can write in unmapped mode! */
-int _mapped = 0;
+extern int _mapped;
+#endif
 
 /*
  * Console kernel input character routine.
@@ -1098,17 +1100,21 @@ scncnputc (dev_t dev, char c)
   int x = spltty();
 
   if (c == '\n') scncnputc(dev,'\r');
+#ifdef VERYLOWDEBUG
   if (_mapped) {
+#endif
     while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_TX_RDY));
     WR_ADR (u_char, SCN_CON_MAP_DATA, c);
     while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_TX_RDY));
     RD_ADR(u_char, SCN_CON_MAP_ISR);  
+#ifdef VERYLOWDEBUG
   } else {
     while (0 == (RD_ADR (u_char, SCN_CON_STAT) & SR_TX_RDY));
     WR_ADR (u_char, SCN_CON_DATA, c);
     while (0 == (RD_ADR (u_char, SCN_CON_STAT) & SR_TX_RDY));
     RD_ADR(u_char, SCN_CON_ISR);  
   }
+#endif
 #ifdef KERN_MORE
   if (c == '\n' && ___lines >= 0)
     {
