@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.h,v 1.2 1996/03/10 11:42:37 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.h,v 1.3 1996/09/16 06:43:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -35,8 +35,6 @@
 /*
  * Struct to hold the values for the different video modes
  */
-
-
 struct videl {
     u_short video_mode;		/* video mode			    */
     u_char  vd_syncmode;	/* Syncronisation		    */
@@ -62,4 +60,24 @@ struct videl {
     u_short vd_fal_mode;	/* Falcon video mode	            */
 };
 
+
+/*
+ * Colormap related macro's
+ */
+#define CM_L2FAL(v) \
+    (((0x003f0000 & (v)) << 10) | ((0x00003f00 & (v)) << 10) |\
+      (0x0000003f & (v)) << 2)
+#define CM_FAL2L(v) \
+    (((((0xfc000000 & (v)) >> 10) * 0xff / 0x3f) & 0x00ff0000) |\
+     ((((0x00fc0000 & (v)) >> 10) * 0xff / 0x3f) & 0x0000ff00) |\
+       ((0x000000fc & (v)) >>  2) * 0xff / 0x3f)
+#define CM_L2ST(v) \
+    (((0x000e0000 & (v)) >> 9) | ((0x00000e00 & (v)) >> 5) |\
+      (0x0000000e & (v)) >> 1)
+#define CM_ST2L(v) \
+    (((((0x00000700 & (v)) * 0xff / 0x7) << 8) & 0x00ff0000) |\
+     ((((0x00000070 & (v)) * 0xff / 0x7) << 4) & 0x0000ff00) |\
+        (0x00000007 & (v)) * 0xff / 0x7)
+
+void falcon_probe_video __P((MODES *));
 #endif /*  _GRFABS_FAL_H */
