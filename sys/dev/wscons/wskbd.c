@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.6 1998/06/09 07:34:22 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.7 1998/06/11 22:08:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.6 1998/06/09 07:34:22 thorpej Exp $";
+    "$NetBSD: wskbd.c,v 1.7 1998/06/11 22:08:57 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,6 +107,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+
+#include "opt_wsdisplay_compat.h"
 
 #include "wskbd.h"
 
@@ -183,7 +185,7 @@ int	wskbd_match __P((struct device *, struct cfdata *, void *));
 void	wskbd_attach __P((struct device *, struct device *, void *));
 static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
-static void internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
+static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
 static char *wskbd_translate __P((struct wskbd_internal *, u_int, int));
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
 
@@ -434,6 +436,19 @@ wskbd_input(dev, type, value)
 	sc->sc_events.put = put;
 	WSEVENT_WAKEUP(&sc->sc_events);
 }
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+wskbd_rawinput(dev, buf, len)
+	struct device *dev;
+	char *buf;
+	int len;
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
+
+	wsdisplay_kbdinput(sc->sc_displaydv, buf, len);
+}
+#endif
 
 static void
 wskbd_holdscreen(sc, hold)
@@ -752,7 +767,23 @@ getkeyrepeat:
 	 * -1 if we didn't recognize the request.
 	 */
 /* printf("kbdaccess\n"); */
-	return ((*sc->ioctl)(sc->id->t_accesscookie, cmd, data, flag, p));
+	error = (*sc->ioctl)(sc->id->t_accesscookie, cmd, data, flag, p);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (!error && cmd == WSKBDIO_SETMODE && *(int *)data == WSKBD_RAW) {
+		int s = spltty();
+		sc->id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R
+					 | MOD_CONTROL_L | MOD_CONTROL_R
+					 | MOD_META_L | MOD_META_R
+					 | MOD_COMMAND
+					 | MOD_COMMAND1 | MOD_COMMAND2);
+		if (sc->sc_repeating) {
+			sc->sc_repeating = 0;
+			untimeout(wskbd_repeat, sc);
+		}
+		splx(s);
+	}
+#endif
+	return (error);
 }
 
 int
@@ -894,7 +925,7 @@ update_modifier(id, type, toggle, mask)
 	}
 }
 
-static void
+static int
 internal_command(sc, type, ksym)
 	struct wskbd_softc *sc;
 	u_int *type;
@@ -917,7 +948,7 @@ internal_command(sc, type, ksym)
 	if (*type != WSCONS_EVENT_KEY_DOWN ||
 	    (! MOD_ONESET(sc->id, MOD_COMMAND) &&
 	     ! MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2)))
-		return;
+		return (0);
 
 	switch (ksym) {
 #ifdef DDB
@@ -926,7 +957,7 @@ internal_command(sc, type, ksym)
 			Debugger();
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
-		break;
+		return (1);
 #endif
 
 	case KS_Cmd_Screen0:
@@ -939,9 +970,10 @@ internal_command(sc, type, ksym)
 	case KS_Cmd_Screen7:
 	case KS_Cmd_Screen8:
 	case KS_Cmd_Screen9:
-		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0);
-		break;
+		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
+		return (1);
 	}
+	return (0);
 }
 
 static char *
@@ -953,6 +985,7 @@ wskbd_translate(id, type, value)
 	struct wskbd_softc *sc = id->t_sc;
 	keysym_t ksym, res, *group;
 	struct wscons_keymap kpbuf, *kp;
+	int iscommand = 0;
 	static char result[2];
 
 	if (sc != NULL) {
@@ -972,7 +1005,7 @@ wskbd_translate(id, type, value)
 
 	/* if this key has a command, process it first */
 	if (sc != NULL && kp->command != KS_voidSymbol)
-	    internal_command(sc, &type, kp->command);
+		iscommand = internal_command(sc, &type, kp->command);
 
 	/* Now update modifiers */
 	switch (kp->group1[0]) {
@@ -1025,8 +1058,7 @@ wskbd_translate(id, type, value)
 	}
 
 	/* If this is a key release or we are in command mode, we are done */
-	if (type != WSCONS_EVENT_KEY_DOWN || MOD_ONESET(id, MOD_COMMAND) ||
-	    MOD_ALLSET(id, MOD_COMMAND1 | MOD_COMMAND2)) {
+	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
 		update_leds(id);
 		return(NULL);
 	}
