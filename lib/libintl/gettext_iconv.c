@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_iconv.c,v 1.1 2004/01/18 08:40:40 yamt Exp $	*/
+/*	$NetBSD: gettext_iconv.c,v 1.2 2004/01/18 08:53:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Citrus Project,
@@ -115,13 +115,23 @@ __gettext_iconv(const char *origmsg, struct domainbinding *db)
 	size_t nvalid;
 	int savederrno = errno;
 
+	/*
+	 * static buffer for converted texts.
+	 *
+	 * note:
+	 * we never free buffers once returned to callers.
+	 * because of interface design of gettext, we can't know
+	 * the lifetime of them.
+	 */
 	static char *buffer;
 	static size_t bufferlen;
 
 	tocode = db->codeset;
 	if (tocode == NULL) {
 		/*
-		 * convert to current LC_MESSAGE's codeset.
+		 * codeset isn't specified explicitly by
+		 * bind_textdomain_codeset().
+		 * use current locale(LC_MESSAGE)'s codeset.
 		 *
 		 * XXX maybe wrong; it can mismatch with
 		 * environment variable setting.
