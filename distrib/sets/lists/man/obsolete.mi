@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.68 2003/05/15 18:53:35 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.69 2003/05/25 20:01:35 jmc Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -104,6 +104,7 @@
 ./usr/share/man/cat4/rtpphy.0
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sun3/le.0
+./usr/share/man/cat4/vax/rx.0
 ./usr/share/man/cat4/veriexec.0
 ./usr/share/man/cat5/i386
 ./usr/share/man/cat5/i386/keycap.0
@@ -273,6 +274,7 @@
 ./usr/share/man/man4/rtpphy.4
 ./usr/share/man/man4/sparc/le.4
 ./usr/share/man/man4/sun3/le.4
+./usr/share/man/man4/vax/rx.4
 ./usr/share/man/man4/veriexec.4
 ./usr/share/man/man5/i386
 ./usr/share/man/man5/i386/keycap.5
