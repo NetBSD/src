@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.5 1999/03/27 18:16:23 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.6 1999/03/28 10:35:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -47,12 +47,19 @@
 
 int main __P((int, char *[]));
 void usage __P((void));
-ssize_t audioctl_write_fromhdr __P((void *, size_t, int, int));
+ssize_t audioctl_write_fromhdr __P((void *, size_t, int));
 
 audio_info_t	info;
-int	volume = 0;
-int	balance = 0;
-int	port = 0;
+int	volume;
+int	balance;
+int	port;
+int	fflag;
+int	sample_rate;
+int	encoding;
+char	*encoding_str;
+int	precision;
+int	channels;
+
 char	const *play_errstring = NULL;
 
 int
@@ -70,24 +77,40 @@ main(argc, argv)
 	char	*device = 0;
 	char	*ctldev = 0;
 
-	while ((ch = getopt(argc, argv, "b:C:d:hiqp:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
 		case 'b':
 			decode_int(optarg, &balance);
 			if (balance < 0 || balance > 64)
-				errx(1, "balance must be between 0 and 64\n");
+				errx(1, "balance must be between 0 and 64");
 			break;
+		case 'c':
+			decode_int(optarg, &channels);
+			if (channels < 0)
+				errx(1, "channels must be positive");
 		case 'C':
 			ctldev = optarg;
 			break;
 		case 'd':
 			device = optarg;
 			break;
+		case 'e':
+			encoding_str = optarg;
+			break;
+		case 'f':
+			fflag = 1;
+			break;
 		case 'i':
 			iflag++;
 			break;
 		case 'q':
 			qflag++;
+			break;
+		case 'P':
+			decode_int(optarg, &precision);
+			if (precision != 8 && precision != 16 &&
+			    precision != 24 && precision != 32)
+				errx(1, "precision must be between 8, 16, 24 or 32");
 			break;
 		case 'p':
 			len = strlen(optarg);
@@ -101,6 +124,11 @@ main(argc, argv)
 			else
 				errx(1,
 			    "port must be `speaker', `headphone', or `line'");
+			break;
+		case 's':
+			decode_int(optarg, &sample_rate);
+			if (sample_rate < 0 || sample_rate > 48000 * 2)	/* XXX */
+				errx(1, "sample rate must be between 0 and 96000\n");
 			break;
 		case 'V':
 			verbose++;
@@ -118,6 +146,12 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (encoding_str) {
+		encoding = audio_enc_to_val(encoding_str);
+		if (encoding == -1)
+			errx(1, "unknown encoding, bailing...");
+	}
 
 	if (device == NULL)
 		device = _PATH_AUDIO;
@@ -165,7 +199,7 @@ main(argc, argv)
 				err(1, "could not mmap %s", *argv);
 
 			if ((hdrlen = audioctl_write_fromhdr(addr,
-			    (size_t)filesize, ctlfd, 1)) < 0) {
+			    (size_t)filesize, ctlfd)) < 0) {
 play_error:
 				if (play_errstring)
 					errx(1, "%s: %s", play_errstring, *argv);
@@ -205,7 +239,7 @@ play_error:
 		if (n == 0)
 			errx(1, "EOF on standard input");
 
-		hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd, 1);
+		hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd);
 		if (hdrlen < 0)
 			goto play_error;
 
@@ -239,11 +273,10 @@ play_error:
  * uses the local "info" variable. blah... fix me!
  */
 ssize_t
-audioctl_write_fromhdr(hdr, fsz, fd, unknown_ok)
+audioctl_write_fromhdr(hdr, fsz, fd)
 	void	*hdr;
 	size_t	fsz;
 	int	fd;
-	int	unknown_ok;
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len;
@@ -258,20 +291,11 @@ audioctl_write_fromhdr(hdr, fsz, fd, unknown_ok)
 			return (-1);
 		}
 
-		info.play.sample_rate = ntohl(sunhdr->sample_rate);
-		info.play.channels = ntohl(sunhdr->channels);
-		if (port)
-			info.play.port = port;
-		if (volume)
-			info.play.gain = volume;
-		if (balance)
-			info.play.balance = balance;
-		info.mode = AUMODE_PLAY_ALL;
+		sample_rate = ntohl(sunhdr->sample_rate);
+		channels = ntohl(sunhdr->channels);
+		hdr_len = ntohl(sunhdr->hdr_size); 
 
-		if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
-			err(1, "failed to set audio info");
-
-		return (ntohl(sunhdr->hdr_size));
+		goto set_audio_mode;
 	}
 
 	hdr_len = audio_parse_wav_hdr(hdr, fsz, &info.play.encoding,
@@ -282,28 +306,43 @@ audioctl_write_fromhdr(hdr, fsz, fd, unknown_ok)
 	case AUDIO_EWAVUNSUPP:
 	case AUDIO_EWAVBADPCM:
 	case AUDIO_EWAVNODATA:
-		if (unknown_ok == 0)
-			play_errstring = audio_errstring(hdr_len);
+		play_errstring = audio_errstring(hdr_len);
 		/* FALL THROUGH */
 	case AUDIO_ENOENT:
 		break;
 	default:
 		if (hdr_len < 1)
 			break;
-		if (port)
-			info.play.port = port;
-		if (volume)
-			info.play.gain = volume;
-		if (balance)
-			info.play.balance = balance;
-		info.mode = AUMODE_PLAY_ALL;
-
-		if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
-			err(1, "failed to set audio info");
-
-		return (hdr_len);
+		goto set_audio_mode;
 	}
-	return (unknown_ok ? 0 : -1);
+	/*
+	 * if we don't know it, bail unless we are forcing.
+	 */
+	if (fflag == 0)
+		return (-1);
+set_audio_mode:
+	if (port)
+		info.play.port = port;
+	if (volume)
+		info.play.gain = volume;
+	if (balance)
+		info.play.balance = balance;
+	if (fflag) {
+		if (sample_rate)
+			info.play.gain = sample_rate;
+		if (channels)
+			info.play.gain = channels;
+		if (encoding)
+			info.play.encoding = encoding;
+		if (precision)
+			info.play.encoding = precision;
+	}
+	info.mode = AUMODE_PLAY_ALL;
+
+	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
+		err(1, "failed to set audio info");
+	
+	return (hdr_len);
 }
 
 void
@@ -316,6 +355,11 @@ usage()
 	    "-C audio control device\n\t"
 	    "-b balance (0-63)\n\t"
 	    "-d audio device\n\t"
+	    "-f force settings\n\t"
+	    "\t-c forced channels\n\t"
+	    "\t-e forced encoding\n\t"
+	    "\t-P forced precision\n\t"
+	    "\t-s forced sample rate\n\t"
 	    "-i header information\n\t"
 	    "-m monitor volume\n\t"
 	    "-p output port\n\t"
