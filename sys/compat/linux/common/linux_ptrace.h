@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.h,v 1.2 1999/12/16 15:09:49 tron Exp $	*/
+/*	$NetBSD: linux_ptrace.h,v 1.3 2000/11/01 21:02:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,6 +49,10 @@
 #define LINUX_PTRACE_CONT		 7
 #define LINUX_PTRACE_KILL		 8
 #define LINUX_PTRACE_SINGLESTEP		 9
+#define LINUX_PTRACE_GETREGS		12
+#define LINUX_PTRACE_SETREGS		13
+#define LINUX_PTRACE_GETFPREGS		14
+#define LINUX_PTRACE_SETFPREGS		15
 #define LINUX_PTRACE_ATTACH		16
 #define LINUX_PTRACE_DETACH		17
 #define LINUX_PTRACE_SYSCALL		24
