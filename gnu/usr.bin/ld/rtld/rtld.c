@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.35 1995/06/20 23:07:03 pk Exp $
+ *	$Id: rtld.c,v 1.36 1995/08/31 22:07:25 pk Exp $
  */
 
 #include <sys/param.h>
@@ -528,22 +528,22 @@ again:
 	}
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
-	         PROT_READ|PROT_EXEC,
-	         MAP_COPY, fd, 0)) == (caddr_t)-1) {
+			 PROT_READ|PROT_EXEC,
+			 MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
 
 	if (mprotect(addr + hdr.a_text, hdr.a_data,
-	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
+		     PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
 		(void)close(fd);
 		return NULL;
 	}
 
-	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
-		 PROT_READ|PROT_WRITE|PROT_EXEC,
-		 MAP_ANON|MAP_COPY|MAP_FIXED,
-		 anon_fd, 0) == (caddr_t)-1) {
+	if (hdr.a_bss && mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
+			      PROT_READ|PROT_WRITE|PROT_EXEC,
+			      MAP_ANON|MAP_COPY|MAP_FIXED,
+			      anon_fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
