@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2003/09/27 20:01:58 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2003/10/21 17:07:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2003/09/27 20:01:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2003/10/21 17:07:20 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -258,7 +258,7 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 
-	if (fputype != NULL)
+	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
 
 	/*
@@ -413,7 +413,7 @@ setregs(l, pack, stack)
 
 	/* restore a null state frame */
 	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype)
+	if (fputype != FPU_NONE)
 		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
 }
 
