@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.64 2000/10/04 14:12:34 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.65 2000/10/04 16:29:21 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1394,3 +1394,9 @@ lib/libc/locale/setlocale.c			1.20-1.21
 lib/libutil/passwd.c				1.25
 
   Close possible format-string hole.
+
+lib/libkvm/kvm.c				1.68
+lib/libkvm/kvm_private.h			1.10
+lib/libkvm/kvm_proc.c				1.41 via patch
+
+  Format string audit.
