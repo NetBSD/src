@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.8 2002/04/22 06:10:16 gmcgarry Exp $
+# $NetBSD: RAMDISK,v 1.9 2003/01/23 21:37:28 jdolecek Exp $
 #
 # RAMDISK machine description file
 #
@@ -11,5 +11,5 @@ include 	"arch/hp300/conf/INSTALL"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no mdconfig(8) support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# size, in blocks (1.44MB)
+options 	MEMORY_DISK_ROOT_SIZE=2888	# size, in blocks (1.44MB)
 pseudo-device 	md	1			# memory disk device
