@@ -9,13 +9,13 @@ top \- display and update information about the top CPU processes
 .SH SYNOPSIS
 .B top
 [
-.B \-SbiInquv
+.B \-bIinqSuv
 ] [
 .BI \-d count
 ] [
-.BI \-s time
-] [
 .BI \-o field
+] [
+.BI \-s time
 ] [
 .BI \-U username
 ] [
