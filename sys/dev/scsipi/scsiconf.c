@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.159 2001/07/18 20:19:24 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.160 2001/08/31 06:54:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -573,6 +573,9 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "Y-E DATA", "USB-FDU",          "3.04"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FD-05PUB",             "1026"}, PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_REMOV,
+	 "M-Sys", "DiskOnKey",           "2.01"}, PQUIRK_NOMODESENSE
+	      | PQUIRK_NODOORLOCK | PQUIRK_ONLYBIG},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
