@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.477 2002/10/24 06:40:07 grant Exp $
+$NetBSD: pcidevs,v 1.478 2002/10/25 15:54:33 kent Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -547,6 +547,7 @@ vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
+vendor ENE		0x1524	ENE Technology, Inc.
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
@@ -566,6 +567,7 @@ vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
+vender ICOMPRESSION	0x4444	Conexant (iCompression)
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
@@ -800,8 +802,8 @@ product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
 product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
-product AMD PBC8111_AC	0x764d	AMD8111 AC97 Audio
 product AMD PBC8111_IDE	0x7469	AMD8111 IDE Controller
+product AMD PBC8111_AC	0x746d	AMD8111 AC97 Audio
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -1193,6 +1195,9 @@ product ELSA	QS1PCI	0x1000	QuickStep 1000 ISDN card
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
+/* ENE Technology Inc. products */
+product	ENE CB1410	0x1410	CB1410 Cardbus Controller
+
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ENSONIQ AUDIOPCI97	0x1371	AudioPCI 97
@@ -1307,6 +1312,9 @@ product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM GXT800P	0x005e	GXT-800P
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
+
+/* Conexant (iCompression, GlobeSpan) products */
+product ICOMPRESSION ITVC15	0x0803	iTVC15 MPEG2 codec
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
