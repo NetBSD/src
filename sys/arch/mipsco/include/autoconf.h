@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2000/08/16 21:54:43 wdk Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 2003/03/22 14:26:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 #define _MIPSCO_AUTOCONF_H_
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 2001/06/10 05:26:59 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 2003/03/22 14:26:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 #include <machine/bus.h>
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 struct mainbus_attach_args {
 	const char *ma_name;		/* device name */

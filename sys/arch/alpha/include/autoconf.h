@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.19 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.20 2003/03/22 14:26:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 struct mainbus_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.17 2000/01/09 15:34:41 ad Exp $ */
+/*	$NetBSD: autoconf.h,v 1.18 2003/03/22 14:26:43 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 #define	_PMAX_AUTOCONF_H_
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 struct mainbus_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 2001/06/13 14:58:43 soda Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 2003/03/22 14:26:42 simonb Exp $	*/
 /*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
@@ -30,7 +30,7 @@
  */
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 #ifndef _ARC_AUTOCONF_H_
