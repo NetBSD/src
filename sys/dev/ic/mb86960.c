@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.44 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.45 2001/01/20 07:31:00 lukem Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -431,7 +431,7 @@ mb86960_stop(sc)
 	if (sc->stop_card)
 		(*sc->stop_card)(sc);
 
-#if DEBUG >= 3
+#if FE_DEBUG >= 3
 	log(LOG_INFO, "%s: end of mb86960_stop()\n", sc->sc_dev.dv_xname);
 	mb86960_dump(LOG_INFO, sc);
 #endif
@@ -1269,7 +1269,7 @@ mb86960_ioctl(ifp, cmd, data)
 			 */
 			mb86960_setmode(sc);
 		}
-#if DEBUG >= 1
+#if FE_DEBUG >= 1
 		/* "ifconfig fe0 debug" to print register dump. */
 		if (ifp->if_flags & IFF_DEBUG) {
 			log(LOG_INFO, "%s: SIOCSIFFLAGS(DEBUG)\n",
