@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.3 1997/01/24 00:53:40 cgd Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.4 1997/06/13 14:29:50 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -138,7 +138,7 @@ cd9660_open(path, f)
 	daddr_t bno;
 	int parent, ent;
 	struct ptable_ent *pp;
-	struct iso_directory_record *dp;
+	struct iso_directory_record *dp = 0;
 	int rc;
 	
 	/* First find the volume descriptor */
