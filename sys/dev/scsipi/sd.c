@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.63 1995/03/23 12:11:12 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.64 1995/03/25 19:45:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -293,15 +293,6 @@ sdopen(dev, flag, fmt)
 
 		sdunlock(sd);
 	}
-
-#if 0
-	/* Check for read-only media. */
-	if ((flag & FWRITE) != 0 &&
-	    (sd->flags & SDF_WRITEPROT) != 0) {
-		error = EROFS;
-		goto bad;
-	}
-#endif
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
