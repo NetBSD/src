@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.16 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.17 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.16 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.17 2003/12/29 03:33:48 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -243,7 +243,7 @@ rf_ConfigureParityLogging(
 	}
 	for (i = 0; i < raidPtr->numParityLogs; i++) {
 		if (i == 0) {
-			RF_Calloc(raidPtr->parityLogPool.parityLogs, 1, 
+			RF_Malloc(raidPtr->parityLogPool.parityLogs,
 				  sizeof(RF_ParityLog_t), (RF_ParityLog_t *));
 			if (raidPtr->parityLogPool.parityLogs == NULL) {
 				RF_Free(raidPtr->parityLogBufferHeap, 
@@ -254,7 +254,7 @@ rf_ConfigureParityLogging(
 			}
 			l = raidPtr->parityLogPool.parityLogs;
 		} else {
-			RF_Calloc(l->next, 1, sizeof(RF_ParityLog_t), 
+			RF_Malloc(l->next, sizeof(RF_ParityLog_t), 
 				  (RF_ParityLog_t *));
 			if (l->next == NULL) {
 				RF_Free(raidPtr->parityLogBufferHeap, 
