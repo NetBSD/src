@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.conf.5,v 1.4 2003/08/06 18:07:53 jmmv Exp $
+.\" $NetBSD: wsmoused.conf.5,v 1.5 2003/08/06 22:11:50 jmmv Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm wsmoused.conf
-.Nd mouse daemon configuration
+.Nd multipurpose mouse daemon configuration
 .Sh SYNOPSIS
 .Nm
 .Sh DESCRIPTION
@@ -86,9 +86,12 @@ mode mode_name {
 }
 .Ed
 .Pp
-Actually, there is only one recognized mode, the
-.Ql selection
-mode.
+There are two recognized modes,
+.Ql action
+and
+.Ql selection .
+.Xr wsmoused 8
+describes what they do in detail.
 .Ss Properties common to all modes
 The following properties can be defined in the global scope, thus
 affecting all modes, or inside the mode definition, to override global
@@ -114,6 +117,30 @@ and have the
 .Sq .pid
 extension automatically added.
 By default it is set to daemon's program name.
+.El
+.Ss Properties specific to the action mode
+The following properties are only useful when running in the
+.Em action
+mode:
+.Bl -tag -width indent
+.It button_<number>_<status> = "command";
+Assigns a command to a button, which will be executed using the
+.Xr system 3
+call.
+The
+.Sq number
+part selects a button to which the command is assigned; the first button
+is numbered
+.Sq 0
+and the maximun depends on the mouse type.
+The
+.Sq status
+part can be either
+.Sq down
+or
+.Sq up ,
+representing the events emmited when the button is pressed and released,
+respectively.
 .El
 .Ss Properties specific to the selection mode
 The following properties are only useful when running in the
@@ -157,6 +184,7 @@ Default configuration file.
 Location of sample files.
 .El
 .Sh SEE ALSO
+.Xr system 3 ,
 .Xr wsdisplay 4 ,
 .Xr wsmouse 4 ,
 .Xr wsmoused 8
