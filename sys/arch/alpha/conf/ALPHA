@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.135 2000/11/19 14:14:31 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.136 2000/11/19 14:23:34 tsutsui Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.135 $"
+ident		"ALPHA-$Revision: 1.136 $"
 
 maxusers 32
 
@@ -171,13 +171,13 @@ lpt*	at	jensenio? port ?
 mcclock* at	jensenio? port ?
 pckbc*	at	jensenio? port ?
 
-# TurboChannel host bus adapter support
+# TURBOchannel host bus adapter support
 tcasic*	at	mainbus0
 
-# TurboChannel bus support
+# TURBOchannel bus support
 tc*	at	tcasic?
 
-# TurboChannel devices
+# TURBOchannel devices
 ioasic*	at	tc? slot ? offset ?
 mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
@@ -203,12 +203,12 @@ tsp*	at	tsc?
 #ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?  
-#sableio* at	ttwopci? bus ?  
-#com*	at	sableio? port ? 
-#lpt*	at	sableio? port ? 
-#pckbc*	at	sableio? port ? 
-#fdc*	at	sableio? port ? 
+#ttwopci* at	ttwoga? hose ?
+#sableio* at	ttwopci? bus ?
+#com*	at	sableio? port ?
+#lpt*	at	sableio? port ?
+#pckbc*	at	sableio? port ?
+#fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
