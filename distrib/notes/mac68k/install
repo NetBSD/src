@@ -87,6 +87,26 @@ Installation of base files:
 
 **** Booting the system
 
+Prior to attempting to boot NetBSD/mac68k, please verify that all of
+the following are true:
+
+	1) 32-bit addressing is enabled[*] in the Memory control panel;
+
+	2) All forms of virtual memory are disabled (the Memory control
+	   panel, RAM Doubler, or other software-based memory enhancement
+	   products); and
+
+	3) Your system is in B&W mode (1-bit color or grayscale) as shown
+	   by the Monitors control panel.
+
+You may have to restart your Macintosh for changes to take effect before
+proceding.
+
+[* NOTE:  If you have an older II-class system (including the II, the IIx,
+and the IIcx), it is necessary to install Connectix's MODE32 to work around
+ROM issues which prevent you from enabling 32-bit addressing.  Please see
+<http://www.netbsd.org/Ports/mac68k/faq/faq.html> for more information.]
+
 Double-click on the NetBSD/mac68k Booter icon to start the application.
 Check that the options in the Booting dialog look sane -- especially the
 SCSI ID.  If not, correct them to your preference.  When you are satisfied
