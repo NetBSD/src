@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.4 2001/06/07 13:44:49 wiz Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.5 2001/06/09 11:02:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.4 2001/06/07 13:44:49 wiz Exp $
+ *	$Id: overlay_vnops.c,v 1.5 2001/06/09 11:02:08 wiz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -82,8 +82,8 @@
  * (See mount_overlay(8) for more information.)
  *
  * The overlay layer has two purposes.  First, it serves as a demonstration
- * of layering by providing a layer which really does nothing.  (the null
- * layer makes the underlying files appear elsewhere in the file hierarchy)
+ * of layering by providing a layer which really does nothing (the null
+ * layer makes the underlying files appear elsewhere in the file hierarchy).
  * Second, the overlay layer can serve as a prototype layer. Since it
  * provides all necessary layer framework, new file system layers can be
  * created very easily by starting with an overlay layer.
