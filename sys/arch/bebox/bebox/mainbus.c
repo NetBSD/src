@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1998/02/03 04:38:53 sakamoto Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5.14.1 2001/03/12 13:27:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,11 +31,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 
+#include "opt_pci.h"
 #include "pci.h"
 #include <dev/pci/pcivar.h>
 
@@ -74,6 +77,9 @@ mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	union mainbus_attach_args mba;
+#if defined(PCI_NETBSD_CONFIGURE)
+	struct extent *ioext, *memext;
+#endif
 
 	printf("\n");
 
@@ -84,9 +90,19 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
+#if defined(PCI_NETBSD_CONFIGURE)
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+	pci_configure_bus(0, ioext, memext, NULL);
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif
 	mba.mba_pba.pba_busname = "pci";
 	mba.mba_pba.pba_iot = (bus_space_tag_t)BEBOX_BUS_SPACE_IO;
 	mba.mba_pba.pba_memt = (bus_space_tag_t)BEBOX_BUS_SPACE_MEM;
+	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED |
 	    PCI_FLAGS_MEM_ENABLED;

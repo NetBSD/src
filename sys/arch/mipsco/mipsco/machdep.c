@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.5 2001/02/11 19:11:08 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.6 2001/03/12 13:29:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.5 2001/02/11 19:11:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.6 2001/03/12 13:29:04 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -114,14 +114,19 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int		physmem;		/* max supported memory, changes to actual */
-char		*bootinfo = NULL;	/* pointer to bootinfo structure */
+int	physmem;		/* max supported memory, changes to actual */
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 void to_monitor __P((int)) __attribute__((__noreturn__));
 void prom_halt __P((int)) __attribute__((__noreturn__));
+
+#ifdef	KGDB
+void zs_kgdb_init __P((void));
+void kgdb_connect __P((int));
+#endif
 
 struct evcnt soft_evcnt[IPL_NSOFT];
 
@@ -235,7 +240,7 @@ mach_init(argc, argv, envp, bim, bip)
 
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
-	bzero(edata, kernend - edata);
+	bzero(edata, end - edata);
 
 #ifdef DDB
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
@@ -307,6 +312,11 @@ mach_init(argc, argv, envp, bim, bip)
 		ddb_init(esym - ssym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef KGDB
+	zs_kgdb_init();			/* XXX */
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
 #endif
 
 #ifdef MFS
@@ -673,7 +683,7 @@ caddr_t first;
 static unsigned
 unimpl_clkread()
 {
-	panic("sysconf.init didn't set clkread");
+	return 0;	/* No microtime available */
 }
 
 static void
@@ -787,23 +797,6 @@ memsize_scan(first)
 	*vp0 = tmp0;
 	return mem;
 }
-
-
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
-
-int
-cpu_exec_ecoff_hook(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	extern struct emul emul_netbsd;
-
-	epp->ep_emul = &emul_netbsd;
-
-	return 0;
-}
-#endif
 
 /*
  * Console initialization: called early on from main,

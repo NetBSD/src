@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.101.2.1 2000/11/20 11:41:20 bouyer Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.101.2.2 2001/03/12 13:30:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,6 +228,8 @@ static	int sbdsp_adjust __P((int, int));
 
 int	sbdsp_midi_intr __P((void *));
 
+static void	sbdsp_powerhook __P((int, void*));
+
 #ifdef AUDIO_DEBUG
 void	sb_printsc __P((struct sbdsp_softc *));
 
@@ -425,6 +427,25 @@ sbdsp_attach(sc)
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8)
 		sc->sc_drq16_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_drq16);
+
+	powerhook_establish (sbdsp_powerhook, sc);
+}
+
+static void
+sbdsp_powerhook (why, arg)
+	int why;
+	void *arg;
+{
+	struct sbdsp_softc *sc = arg;
+	int i;
+
+	if (!sc || why != PWR_RESUME)
+		return;
+
+	/* Reset the mixer. */
+	sbdsp_mix_write(sc, SBP_MIX_RESET, SBP_MIX_RESET);
+	for (i = 0; i < SB_NDEVS; i++)
+		sbdsp_set_mixer_gain (sc, i);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.3.2.3 2001/02/11 19:12:30 bouyer Exp $	*/
+/*	$NetBSD: iommu.c,v 1.3.2.4 2001/03/12 13:29:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -140,7 +140,9 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
-static	int iommu_strbuf_flush __P((struct iommu_state *));
+#define iommu_strbuf_flush(i,v) bus_space_write_8((i)->is_bustag, \
+	(bus_space_handle_t)(u_long)&(i)->is_sb->strbuf_pgflush, 0, (v))
+static	int iommu_strbuf_flush_done __P((struct iommu_state *));
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -301,13 +303,12 @@ iommu_enter(is, va, pa, flags)
 #endif
 
 	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
+			(flags&BUS_DMA_STREAMING));
 	
 	/* Is the streamcache flush really needed? */
 	if (is->is_sb) {
-		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
-				  &is->is_sb->strbuf_pgflush, 0, va);
-		iommu_strbuf_flush(is);
+		iommu_strbuf_flush(is, va);
+		iommu_strbuf_flush_done(is);
 	}
 	DPRINTF(IDB_IOMMU, ("Clearing TSB slot %d for va %p\n", 
 		       (int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va));
@@ -357,10 +358,9 @@ iommu_remove(is, va, len)
 			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
-			bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
-					  &is->is_sb->strbuf_pgflush, 0, va);
+			iommu_strbuf_flush(is, va);
 			if (len <= NBPG)
-				iommu_strbuf_flush(is);
+				iommu_strbuf_flush_done(is);
 			DPRINTF(IDB_IOMMU, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (void *)(u_long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
@@ -382,7 +382,7 @@ iommu_remove(is, va, len)
 }
 
 static int 
-iommu_strbuf_flush(is)
+iommu_strbuf_flush_done(is)
 	struct iommu_state *is;
 {
 	struct timeval cur, flushtimeout;
@@ -424,7 +424,7 @@ iommu_strbuf_flush(is)
 	cur = flushtimeout;
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 	
-	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
+	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
 		       (long)is->is_flush, (long)&is->is_flush, 
 		       (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
 		       flushtimeout.tv_sec, flushtimeout.tv_usec));
@@ -436,7 +436,7 @@ iommu_strbuf_flush(is)
 
 #ifdef DIAGNOSTIC
 	if (!ldxa(is->is_flushpa, ASI_PHYS_CACHED)) {
-		printf("iommu_strbuf_flush: flush timeout %p at %p\n",
+		printf("iommu_strbuf_flush_done: flush timeout %p at %p\n",
 		    (void *)(u_long)is->is_flush, 
 		    (void *)(u_long)is->is_flushpa); /* panic? */
 #ifdef DDB
@@ -444,7 +444,7 @@ iommu_strbuf_flush(is)
 #endif
 	}
 #endif
-	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush: flushed\n"));
+	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flushed\n"));
 	return (is->is_flush);
 }
 
@@ -810,11 +810,9 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 				DPRINTF(IDB_BUSDMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "
 				     "bytes left\n", (void *)(u_long)va, (u_long)len));
-				bus_space_write_8(is->is_bustag, 
-						  (bus_space_handle_t)(u_long)
-						  &is->is_sb->strbuf_pgflush, 0, va);
+				iommu_strbuf_flush(is, va);
 				if (len <= NBPG) {
-					iommu_strbuf_flush(is);
+					iommu_strbuf_flush_done(is);
 					len = 0;
 				} else
 					len -= NBPG;
@@ -825,7 +823,20 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
-		/* Nothing to do */;
+		/* if we have a streaming buffer, flush it here first */
+		if (is->is_sb)
+			while (len > 0) {
+				DPRINTF(IDB_BUSDMA,
+				    ("iommu_dvmamap_sync: flushing va %p, %lu "
+				     "bytes left\n", (void *)(u_long)va, (u_long)len));
+				iommu_strbuf_flush(is, va);
+				if (len <= NBPG) {
+					iommu_strbuf_flush_done(is);
+					len = 0;
+				} else
+					len -= NBPG;
+				va += NBPG;
+			}
 	}
 	if (ops & BUS_DMASYNC_POSTWRITE) {
 		DPRINTF(IDB_BUSDMA,

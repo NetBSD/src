@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.8.2.1 2000/11/20 20:03:56 bouyer Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.8.2.2 2001/03/12 13:27:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -164,8 +164,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     vm_offset_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt,
-    pv_addr_t kernel_ptpt));
 void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -173,7 +171,6 @@ void undefinedinstruction_bounce	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 extern void dumpsys		__P((void));
@@ -726,7 +723,7 @@ initarm(bootinfo)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap(kernel_l1pt.pv_va, kernel_ptpt);
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */
 	printf("irq ");

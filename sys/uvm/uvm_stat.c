@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.12.8.3 2001/02/11 19:17:51 bouyer Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.12.8.4 2001/03/12 13:32:15 bouyer Exp $	 */
 
 /*
  *
@@ -218,7 +218,10 @@ uvmexp_print(void (*pr)(const char *, ...))
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
 	    uvmexp.free);
-	(*pr)("    %d anon, %d vnode, %d vtext\n",
+	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
+	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
+	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
+	(*pr)("  pages  %d anon, %d vnode, %d vtext\n",
 	    uvmexp.anonpages, uvmexp.vnodepages, uvmexp.vtextpages);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,

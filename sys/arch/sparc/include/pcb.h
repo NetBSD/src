@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 1995/03/28 18:19:56 jtc Exp $ */
+/*	$NetBSD: pcb.h,v 1.4.32.1 2001/03/12 13:29:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,3 @@ struct md_coredump {
 	struct	trapframe md_tf;
 	struct	fpstate md_fpstate;
 };
-
-#ifdef _KERNEL
-extern struct pcb *cpcb;
-#endif /* _KERNEL */

@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.9.2.6 2001/02/11 19:12:28 bouyer Exp $
+# 	$NetBSD: GENERIC32,v 1.9.2.7 2001/03/12 13:29:27 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.9.2.6 $"
+#ident 		"GENERIC-$Revision: 1.9.2.7 $"
 
 maxusers	64
 
@@ -11,8 +11,7 @@ maxusers	64
 
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
-options 	SUN4U		# sun4u - Ultra 140 and 170
-options 	__ELF__		# we use elf 
+options 	SUN4U		# sun4u - UltraSPARC
 #options 	_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
@@ -132,7 +131,7 @@ options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
+#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
@@ -194,19 +193,11 @@ cpu0	at mainbus0
 
 sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
-psycho0	at mainbus0				# Darwin, Ultra5	
-psycho*	at mainbus0				# U2P
-pci0	at psycho0
+psycho*	at mainbus0				# Darwin, Ultra5
 pci*	at psycho?
 pci*	at simba?
 simba*	at pci? dev ? function ?		# `APB' support.
 ebus*	at pci?					# ebus devices
-
-# Ultra5/10/AXi
-simba0	at pci0 dev 1 function 0
-pci1	at simba0
-simba1	at pci0 dev 1 function 1
-pci2	at simba1
 
 #### Standard system devices -- all required for a given architecture
 
@@ -238,19 +229,13 @@ zstty*	at zs? channel ?			# ttya
 kbd0	at zstty?
 ms0	at zstty?
 
-## Old scheme -- deprecated.
-#zs	at sbus? slot ? offset ?
-#kbd0	at zs1 channel 0			# keyboard
-#ms0	at zs1 channel 1			# mouse
-
 ## PCI machines have serial ports:
 ##	Siemens SAB82532 controller: ttya and ttyb (`su'; sab)
 ##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (`se'; com)
 
-## These are two SAB82532 controllers
-#sab0	at ebus?				# ttya/ttyb
-#sabtty0	at sab0 channel 0		# ttya
-#sabtty1	at sab0 channel 1		# ttyb
+## The SAB82532 controller has two serial ports
+#sab*	at ebus?				# ttya/ttyb
+#sabtty*	at sab? channel ?
 
 ## Part of a PC87332VLJ
 com*	at ebus?				# `com' driver for `su'
@@ -291,6 +276,7 @@ st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
+ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
@@ -352,7 +338,6 @@ le*		at lebuffer?			# SBus
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
 hme*		at pci?	dev ? function ?	# network "hme" compatible
-hme0		at pci2	dev 1 function 1	# U5/U10 on-board
 
 # MII/PHY support
 # XXX: only nsphy "tested"

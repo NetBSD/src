@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.4.2.6 2001/02/11 19:16:07 bouyer Exp $	*/
+/*	$NetBSD: twe.c,v 1.4.2.7 2001/03/12 13:31:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
 	pa = aux;
 
 	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&	 
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE);
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE_ASIC));
 }
 
 /*
@@ -460,12 +461,17 @@ twe_intr(void *arg)
 	 * state change has occured.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
-		rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
-		    2, twe_aen_handler, NULL);
-		if (rv != 0) {
-			printf("%s: unable to retrieve AEN (%d)\n",
-			    sc->sc_dv.dv_xname, rv);
-			TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+		if ((sc->sc_flags & TWEF_AEN) == 0) {
+			rv = twe_param_get(sc, TWE_PARAM_AEN,
+			    TWE_PARAM_AEN_UnitCode, 2, twe_aen_handler,
+			    NULL);
+			if (rv != 0) {
+				printf("%s: unable to retrieve AEN (%d)\n",
+				    sc->sc_dv.dv_xname, rv);
+				TWE_OUTL(sc, TWE_REG_CTL,
+				    TWE_CTL_CLEAR_ATTN_INTR);
+			} else
+				sc->sc_flags |= TWEF_AEN;
 		}
 		caught = 1;
 	}
@@ -518,6 +524,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 
 	if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY) {
 		TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+		sc->sc_flags &= ~TWEF_AEN;
 		return;
 	}
 
@@ -705,7 +712,7 @@ static int
 twe_status_wait(struct twe_softc *sc, u_int32_t status, int timo)
 {
 
-	for (; timo != 0; timo--) {
+	for (timo *= 10; timo != 0; timo--) {
 		if ((TWE_INL(sc, TWE_REG_STS) & status) == status)
 			break;
 		delay(100000);
@@ -827,7 +834,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	 * Map the data buffer into bus space and build the S/G list.
 	 */
 	rv = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer, data,
-	    ccb->ccb_datasize, NULL, BUS_DMA_NOWAIT);
+	    ccb->ccb_datasize, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 	if (rv != 0) {
 		if (ccb->ccb_abuf != (vaddr_t)0) {
 			s = splvm();

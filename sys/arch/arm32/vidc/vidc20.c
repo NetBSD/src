@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.3 1998/01/18 03:48:37 mark Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.3.14.1 2001/03/12 13:27:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,7 +50,7 @@
 #include <machine/bus.h>
 #include <machine/vidc.h>
 #include <machine/io.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 
 #include "locators.h"
 
@@ -63,6 +63,13 @@ static int  vidcmatch  __P((struct device *self, struct cfdata *cf, void *aux));
 static void vidcattach __P((struct device *parent, struct device *self, void *aux));
 static int  vidcprint  __P((void *aux, const char *name));
 static int  vidcsearch __P((struct device *, struct cfdata *, void *));
+
+/*
+ * vidc_base gives the base of the VIDC chip in memory; this is for the rest isnt
+ * busspaceified yet. Initialised with VIDC_BASE for backwards compatibility.
+ */
+int *vidc_base = (int *) VIDC_BASE;
+
 
 struct cfattach vidc_ca = {
 	sizeof (struct vidc20_softc), vidcmatch, vidcattach

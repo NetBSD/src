@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.47.2.2 2001/01/05 17:34:05 bouyer Exp $
+#	$NetBSD: Makefile.arm32,v 1.47.2.3 2001/03/12 13:27:37 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,9 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
-LINKFLAGS=	-Ttext F0000000 -e start
+
+LOADADDRESS=	0xF0000000
+LINKFLAGS=	-Ttext ${LOADADDRESS} -e start
 STRIPFLAGS=	-g
 
 %INCLUDES

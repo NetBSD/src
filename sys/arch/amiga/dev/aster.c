@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.4.8.2 2001/02/11 19:08:46 bouyer Exp $ */
+/*	$NetBSD: aster.c,v 1.4.8.3 2001/03/12 13:27:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -119,32 +119,37 @@ asterattach(parent, self, auxp)
 	astrsc->sc_bst.absm = &amiga_bus_stride_2;
 	supa.supio_ipl = 2;	/* could be 6. isic_supio will decide. */
 
-	if (zap->manid == 5001 && zap->prodid == 1) {
-		cardname = "Blaster";
+	switch (zap->manid) {
+	case 5001:
+		cardname = "VMC ISDN Blaster";
 		supa.supio_name = "isic31";
-	} else if (zap->manid == 2092) {
-		cardname = "Master";
+		break;
+	case 2092:
+		cardname = "BSC ISDN Master/Master II";
 		supa.supio_name = "isic31";
-	} else if (zap->manid == 5000 && zap->prodid == 1) {
-		cardname = "Master II";
+		break;
+	case 5000:
+		cardname = "ITH ISDN Master II";
 		supa.supio_name = "isic13";
-	} else if (zap->manid == 2189 && zap->prodid == 3) {
-		cardname = "link";
+		break;
+	case 2189:
+		cardname = "Zeus ISDN Link";
 		supa.supio_name = "isic@B";
-	} else /* if (zap->manid == 4626 && zap->prodid == 5 &&
-		    zap->serno == 0) */{
-		cardname = "Surfer";
-		supa.supio_name = "isic1C";
-
-		((volatile u_int8_t *)zap->va)[0x00fe] = 0xff;
-
-		if (((volatile u_int8_t *)zap->va)[0x00fe] & 0x80)
-			supa.supio_ipl = 6;
+		break;
+	case 4626:
+		if (zap->serno == 0) {
+			cardname = "Individual Comp. ISDN Surfer";
+			supa.supio_name = "isic1C";
+			((volatile u_int8_t *)zap->va)[0x00fe] = 0xff;
+			if (((volatile u_int8_t *)zap->va)[0x00fe] & 0x80)
+				supa.supio_ipl = 6;
+			break;
+		}
+		/* FALLTHROUGH */
 	}
 
 	if (parent)
-		printf(": ISDN %s\n", cardname);
-
+		printf(" IPL %d: %s\n", supa.supio_ipl, cardname);
 
 	supa.supio_iot = &astrsc->sc_bst;
 

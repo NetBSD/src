@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.12.2.2 2000/11/22 16:00:00 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.12.2.3 2001/03/12 13:27:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -88,13 +88,6 @@ cdev_decl(raid);
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
-#define cdev_cpu_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
 #define cdev_vidcvid_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
@@ -131,14 +124,13 @@ cdev_decl(raid);
 cdev_decl(mm);
 
 cdev_decl(physcon);
-cdev_decl(vidcvideo);
+cdev_decl(vidcconsole);
 cdev_decl(com);
 cdev_decl(lpt);
 cdev_decl(qms);
 cdev_decl(pms);
 cdev_decl(beep);
 cdev_decl(kbd);
-cdev_decl(cpu);
 cdev_decl(iic);
 cdev_decl(rtc);
 cdev_decl(fcom);

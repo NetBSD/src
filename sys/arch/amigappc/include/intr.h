@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.3 2001/01/18 09:22:11 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.4 2001/03/12 13:27:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -112,9 +112,7 @@ static __inline int spllower __P((int));
 static __inline void splx __P((int));
 static __inline void softintr __P((int));
 
-/*
 extern volatile int cpl, ipending, astpending, tickspending;
-*/
 extern int imask[];
 
 /*
@@ -129,10 +127,8 @@ splraise(ncpl)
 	int ocpl;
 
 	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
-/*
 	ocpl = cpl;
 	cpl = ocpl | ncpl;
-*/
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	return (ocpl);
 }
@@ -141,13 +137,10 @@ static __inline void
 splx(ncpl)
 	int ncpl;
 {
-
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-/*
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		do_pending_int();
-*/
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
 
@@ -158,12 +151,10 @@ spllower(ncpl)
 	int ocpl;
 
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-/*
 	ocpl = cpl;
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		do_pending_int();
-*/
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	return (ocpl);
 }
@@ -178,7 +169,7 @@ softintr(ipl)
 
 	__asm__ volatile("mfmsr %0" : "=r"(msrsave));
 	__asm__ volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-//	ipending |= 1 << ipl;
+	ipending |= 1 << ipl;
 	__asm__ volatile("mtmsr %0" :: "r"(msrsave));
 }
 

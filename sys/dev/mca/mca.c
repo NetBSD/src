@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.1.6.2 2000/11/20 11:41:30 bouyer Exp $	*/
+/*	$NetBSD: mca.c,v 1.1.6.3 2001/03/12 13:30:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ mca_print(aux, pnp)
 		printf("%s slot %d: %s", pnp, ma->ma_slot + 1, devinfo);
 	}
 
-	return (mca_issupp(ma->ma_id)) ? UNCONF : UNSUPP;
+	return (UNCONF);
 }
 
 int

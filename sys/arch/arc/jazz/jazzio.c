@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.1.2.2 2001/01/05 17:33:58 bouyer Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.1.2.3 2001/03/12 13:27:17 bouyer Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -195,6 +195,11 @@ struct pica_dev *pica_cpu_devs[] = {
 	nec_rd94_cpu,		/* NEC-RA'94 */
 	nec_rd94_cpu,		/* NEC-RD94 */
 	nec_rd94_cpu,		/* NEC-R96 */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	nec_rd94_cpu,		/* NEC-JC94 */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
@@ -250,6 +255,7 @@ jazzioattach(parent, self, aux)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		set_intr(MIPS_INT_MASK_1, rd94_iointr, 2);
 		break;
 	}
@@ -313,6 +319,7 @@ jazzio_intr_establish(slot, handler, val)
 		case NEC_RAx94:
 		case NEC_RD94:
 		case NEC_R96:
+		case NEC_JC94:
 			set_intr(MIPS_INT_MASK_3, rd94_clkintr, 1);
 			break;
 		}
@@ -338,6 +345,7 @@ jazzio_intr_establish(slot, handler, val)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		/* XXX: I don't know why, but firmware does. */
 		if (in32(0xe0000560) != 0)
 			out16(RD94_SYS_LB_IE+2, local_int_mask);

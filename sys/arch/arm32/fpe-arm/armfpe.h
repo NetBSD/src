@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe.h,v 1.8 1998/02/22 23:38:18 mark Exp $ */
+/* $NetBSD: armfpe.h,v 1.8.14.1 2001/03/12 13:27:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -41,6 +41,10 @@
  * Created      : 04/01/96
  */
 
+#ifndef _ARMFPE_H_
+#define _ARMFPE_H_
+
+#include <machine/cpus.h>
 #include <machine/fp.h>
 #include <machine/ieeefp.h>
 #include <machine/reg.h>
@@ -133,3 +137,4 @@ void arm_fpe_post_proc_glue	__P((void));
 void arm_fpe_set_exception_mask	__P((fp_except));
 
 #endif	/* _KERNEL */
+#endif /* _ARMFPE_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.22 1999/10/05 03:18:32 hubertf Exp $ */
+/* $NetBSD: installboot.c,v 1.22.2.1 2001/03/12 13:27:07 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -80,16 +80,14 @@ static u_int16_t compute_sparc(const u_int16_t *);
 static void sun_bootstrap(struct boot_block * const);
 static void set_bootstrap(const char *disk, const char *bootstrap);
 
-extern char *__progname;
-
 int sunrewrite, sunflag, verbose, nowrite;
 
 static void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-nsv] disk bootstrap\n", __progname);
-	fprintf(stderr, "\t%s [-nsv] -c disk\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] disk bootstrap\n", getprogname());
+	fprintf(stderr, "\t%s [-nsv] -c disk\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.15.2.4 2000/12/13 15:50:01 bouyer Exp $	*/
+/*	$NetBSD: cac.c,v 1.15.2.5 2001/03/12 13:30:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -288,7 +288,8 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 
 	if ((flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
 		bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer,
-		    (void *)data, datasize, NULL, BUS_DMA_NOWAIT);
+		    (void *)data, datasize, NULL, BUS_DMA_NOWAIT |
+		    BUS_DMA_STREAMING);
 
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0, datasize,
 		    (flags & CAC_CCB_DATA_IN) != 0 ? BUS_DMASYNC_PREREAD :

@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.5.2.3 2000/11/22 16:01:32 bouyer Exp $
+#	$NetBSD: INDY,v 1.5.2.4 2001/03/12 13:29:18 bouyer Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -118,3 +118,4 @@ pseudo-device	pty
 pseudo-device	bpfilter	8
 pseudo-device	vnd		4
 #pseudo-device	md		1
+pseudo-device	rnd

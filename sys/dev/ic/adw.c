@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.12.2.6 2000/11/22 16:03:10 bouyer Exp $	 */
+/* $NetBSD: adw.c,v 1.12.2.7 2001/03/12 13:30:12 bouyer Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -700,13 +700,15 @@ adw_build_req(sc, ccb)
 		if (xs->xs_control & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 				ccb->dmamap_xfer, (struct uio *) xs->data,
-				BUS_DMA_NOWAIT);
+			        ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			         BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		} else
 #endif		/* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-				BUS_DMA_NOWAIT);
+			      ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			       BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		}
 
 		switch (error) {
@@ -786,7 +788,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 
 			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
-				sg_block->sg_cnt = i + i;
+				sg_block->sg_cnt = i + 1;
 				sg_block->sg_ptr = NULL; /* next link = NULL */
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.7.2.4 2001/01/18 09:23:53 bouyer Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.7.2.5 2001/03/12 13:31:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -457,7 +457,7 @@ token_output(ifp, m0, dst, rt0)
 send:
 #endif
 
-	len = m->m_flags;
+	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splimp();
 	/*

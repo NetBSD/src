@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.2.2.1 2000/11/20 20:11:36 bouyer Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.2.2.2 2001/03/12 13:28:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -99,7 +99,7 @@ fpu_int(fe)
 
   fpu_shr(x, rsh - FP_NG);	/* shift to the right */
 
-  if (round(fe, x) == 1 /* rounded up */ &&
+  if (fpu_round(fe, x) == 1 /* rounded up */ &&
       x->fp_mant[2 - (FP_NMANT-rsh)/32] & (1 << ((FP_NMANT-rsh)%32))
       /* x >= 2.0 */) {
     rsh--;			/* reduce shift count by 1 */

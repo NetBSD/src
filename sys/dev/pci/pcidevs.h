@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.166.2.6 2001/02/11 19:16:01 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.166.2.7 2001/03/12 13:31:12 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
+ *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
  */
 
 /*
@@ -564,6 +564,7 @@
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
+#define	PCI_VENDOR_NETMOS	0x9710		/* Netmos */
 #define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -618,6 +619,7 @@
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID (ASIC) */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
@@ -922,6 +924,7 @@
 #define	PCI_PRODUCT_CMEDIA_CMI8338A	0x0100		/* CMI8338A PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_CMI8338B	0x0101		/* CMI8338B PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_CMI8738	0x0111		/* CMI8738/C3DX PCI Audio Device */
+#define	PCI_PRODUCT_CMEDIA_CMI8738B	0x0112		/* CMI8738B PCI Audio Device */
 #define	PCI_PRODUCT_CMEDIA_HSP56	0x0211		/* HSP56 Audiomodem Riser */
 
 /* Cogent Data Technologies products */
@@ -1079,6 +1082,7 @@
 #define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
@@ -1191,6 +1195,7 @@
 #define	PCI_PRODUCT_INTEL_82801BA_ACA	0x2445		/* 82801BA AC-97 Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_ACM	0x2446		/* 82801BA AC-97 PCI Modem */
 #define	PCI_PRODUCT_INTEL_82801BA_LAN	0x2449		/* 82801BA LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801BAM_IDE	0x244a		/* 82801BAM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_IDE	0x244B		/* 82801BA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_HPB	0x244E		/* 82801BA Hub-to-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
@@ -1320,6 +1325,15 @@
 #define	PCI_PRODUCT_MYLEX_RAID_V3	0x0002		/* DAC960 RAID (v3 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V4	0x0010		/* DAC960 RAID (v4 interface) */
 #define	PCI_PRODUCT_MYLEX_RAID_V5	0x0020		/* DAC960 RAID (v5 interface) */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID (i960) */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID	0xba56		/* eXtremeRAID (StrongARM) */
+
+/* Mylex subsystem IDs */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_352	0x0050		/* AcceleRAID 352 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_170	0x0052		/* AcceleRAID 170 */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID_160	0x0054		/* AcceleRAID 160 */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_2000	0x0040		/* eXtremeRAID 2000 */
+#define	PCI_PRODUCT_MYLEX_EXTREMERAID_3000	0x0030		/* eXtremeRAID 3000 */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
@@ -1352,6 +1366,7 @@
 #define	PCI_PRODUCT_SYMBIOS_1010	0x0020		/* 53c1010 */
 #define	PCI_PRODUCT_SYMBIOS_1010_2	0x0021		/* 53c1010 (66MHz) */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
+#define	PCI_PRODUCT_SYMBIOS_FC909	0x0621		/* FC909 */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
@@ -1379,6 +1394,9 @@
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 1000baseSX Gigabit Ethernet */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620 1000baseT Gigabit Ethernet */
+
+/* Netmos products */
+#define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
 
 /* Network Security Technologies, Inc. */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
@@ -1837,6 +1855,8 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
+#define	PCI_PRODUCT_WINBOND_W83C553F_0	0x0565		/* W83C553F PCI-ISA Bridge */
+#define	PCI_PRODUCT_WINBOND_W83C553F_1	0x0105		/* W83C553F IDE Controller */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
@@ -1847,6 +1867,7 @@
 #define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
+#define	PCI_PRODUCT_XIRCOM_WINGLOBAL	0x000c		/* WinGlobal Modem */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 Audio */

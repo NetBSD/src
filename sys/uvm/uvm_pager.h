@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.10.2.2 2000/12/08 09:21:04 bouyer Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.10.2.3 2001/03/12 13:32:14 bouyer Exp $	*/
 
 /*
  *
@@ -165,33 +165,11 @@ void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t));
-int		uvm_errno2vmerror __P((int));
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
 #define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */
 #define	UVMPAGER_MAPIN_WRITE	0x00	/* device -> host (pseudo flag) */
-
-/*
- * get/put return values
- * OK	   operation was successful
- * BAD	   specified data was out of the accepted range
- * FAIL	   specified data was in range, but doesn't exist
- * PEND	   operations was initiated but not completed
- * ERROR   error while accessing data that is in range and exists
- * AGAIN   temporary resource shortage prevented operation from happening
- * UNLOCK  unlock the map and try again
- * REFAULT [uvm_fault internal use only!] unable to relock data structures,
- *         thus the mapping needs to be reverified before we can procede
- */
-#define	VM_PAGER_OK		0
-#define	VM_PAGER_BAD		1
-#define	VM_PAGER_FAIL		2
-#define	VM_PAGER_PEND		3
-#define	VM_PAGER_ERROR		4
-#define VM_PAGER_AGAIN		5
-#define VM_PAGER_UNLOCK		6
-#define VM_PAGER_REFAULT	7
 
 /*
  * XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.2.4.5 2001/01/18 09:23:50 bouyer Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.2.4.6 2001/03/12 13:31:47 bouyer Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +72,11 @@
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#endif
+
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
@@ -88,6 +94,10 @@ extern struct protosw in_gif_protosw;
 #endif
 #ifdef INET6
 extern struct ip6protosw in6_gif_protosw;
+#endif
+#ifdef ISO
+static int gif_eon_encap(struct mbuf **);
+static int gif_eon_decap(struct ifnet *, struct mbuf **);
 #endif
 
 /*
@@ -230,6 +240,10 @@ gif_encapcheck(m, off, proto, arg)
 	case IPPROTO_IPV6:
 		break;
 #endif
+#ifdef ISO
+	case IPPROTO_EON:
+		break;
+#endif
 	default:
 		return 0;
 	}
@@ -264,7 +278,7 @@ gif_output(ifp, m, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;	/* added in net2 */
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
 
@@ -303,7 +317,7 @@ gif_output(ifp, m, dst, rt)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;
@@ -319,8 +333,21 @@ gif_output(ifp, m, dst, rt)
 	ifp->if_opackets++;	
 	ifp->if_obytes += m->m_pkthdr.len;
 
+	/* inner AF-specific encapsulation */
+	switch (dst->sa_family) {
+#ifdef ISO
+	case AF_ISO:
+		error = gif_eon_encap(&m);
+		if (error)
+			goto end;
+#endif
+	default:
+		break;
+	}
+
 	/* XXX should we check if our outer source is legal? */
 
+	/* dispatch to output logic based on outer AF */
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -350,7 +377,7 @@ gif_input(m, af, gifp)
 	struct ifnet *gifp;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if (gifp == NULL) {
 		/* just in case */
@@ -370,11 +397,11 @@ gif_input(m, af, gifp)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = AF_INET6;
+		u_int32_t af1 = af;
 		
 		m0.m_next = m;
 		m0.m_len = 4;
-		m0.m_data = (char *)&af;
+		m0.m_data = (char *)&af1;
 		
 #ifdef HAVE_OLD_BPF
 		bpf_mtap(gifp, &m0);
@@ -407,6 +434,17 @@ gif_input(m, af, gifp)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
+		break;
+#endif
+#ifdef ISO
+	case AF_ISO:
+		if (gif_eon_decap(gifp, &m)) {
+			if (m)
+			       m_freem(m);
+			return;
+		}
+		ifq = &clnlintrq;
+		isr = NETISR_ISO;
 		break;
 #endif
 	default:
@@ -494,6 +532,7 @@ gif_ioctl(ifp, cmd, data)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
+	case SIOCSLIFPHYADDR:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
 		switch (cmd) {
@@ -503,12 +542,6 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct in_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_dstaddr);
-			if (src->sa_len != sizeof(struct sockaddr_in) ||
-			    dst->sa_len != sizeof(struct sockaddr_in))
-				return EINVAL;
-			if (src->sa_family != AF_INET ||
-			    dst->sa_family != AF_INET)
-				return EAFNOSUPPORT;
 			break;
 #endif
 #ifdef INET6
@@ -517,14 +550,68 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct in6_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_dstaddr);
-			if (src->sa_len != sizeof(struct sockaddr_in6) ||
-			    dst->sa_len != sizeof(struct sockaddr_in6))
-				return EINVAL;
-			if (src->sa_family != AF_INET6 ||
-			    dst->sa_family != AF_INET6)
-				return EAFNOSUPPORT;
 			break;
 #endif
+		case SIOCSLIFPHYADDR:
+			src = (struct sockaddr *)
+				&(((struct if_laddrreq *)data)->addr);
+			dst = (struct sockaddr *)
+				&(((struct if_laddrreq *)data)->dstaddr);
+		}
+
+		/* sa_family must be equal */
+		if (src->sa_family != dst->sa_family)
+			return EINVAL;
+
+		/* validate sa_len */
+		switch (src->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if (src->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			if (src->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			break;
+#endif
+		default:
+			return EAFNOSUPPORT;
+		}
+		switch (dst->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if (dst->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			if (dst->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			break;
+#endif
+		default:
+			return EAFNOSUPPORT;
+		}
+
+		/* check sa_family looks sane for the cmd */
+		switch (cmd) {
+		case SIOCSIFPHYADDR:
+			if (src->sa_family == AF_INET)
+				break;
+			return EAFNOSUPPORT;
+#ifdef INET6
+		case SIOCSIFPHYADDR_IN6:
+			if (src->sa_family == AF_INET6)
+				break;
+			return EAFNOSUPPORT;
+#endif /* INET6 */
+		case SIOCSLIFPHYADDR:
+			/* checks done in the above */
+			break;
 		}
 
 		for (sc2 = LIST_FIRST(&gif_softc_list); sc2 != NULL;
@@ -567,44 +654,19 @@ gif_ioctl(ifp, cmd, data)
 #endif
 		}
 
-		if (src->sa_family != dst->sa_family ||
-		    src->sa_len != dst->sa_len) {
-			error = EINVAL;
-			break;
-		}
-		switch (src->sa_family) {
-#ifdef INET
-		case AF_INET:
-			size = sizeof(struct sockaddr_in);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			size = sizeof(struct sockaddr_in6);
-			break;
-#endif
-		default:
-			error = EAFNOSUPPORT;
-			goto bad;
-		}
-		if (src->sa_len != size) {
-			error = EINVAL;
-			break;
-		}
-
 		if (sc->gif_psrc)
 			free((caddr_t)sc->gif_psrc, M_IFADDR);
-		sa = (struct sockaddr *)malloc(size, M_IFADDR, M_WAITOK);
-		bcopy((caddr_t)src, (caddr_t)sa, size);
+		sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
+		bcopy((caddr_t)src, (caddr_t)sa, src->sa_len);
 		sc->gif_psrc = sa;
 
 		if (sc->gif_pdst)
 			free((caddr_t)sc->gif_pdst, M_IFADDR);
-		sa = (struct sockaddr *)malloc(size, M_IFADDR, M_WAITOK);
-		bcopy((caddr_t)dst, (caddr_t)sa, size);
+		sa = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
+		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
 
-		ifp->if_flags |= IFF_UP;
+		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
 		if_up(ifp);		/* send up RTM_IFINFO */
 
 		error = 0;
@@ -682,6 +744,31 @@ gif_ioctl(ifp, cmd, data)
 		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 
+	case SIOCGLIFPHYADDR:
+		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+			error = EADDRNOTAVAIL;
+			goto bad;
+		}
+
+		/* copy src */
+		src = sc->gif_psrc;
+		dst = (struct sockaddr *)
+			&(((struct if_laddrreq *)data)->addr);
+		size = sizeof(((struct if_laddrreq *)data)->addr);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+
+		/* copy dst */
+		src = sc->gif_pdst;
+		dst = (struct sockaddr *)
+			&(((struct if_laddrreq *)data)->dstaddr);
+		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		break;
+
 	case SIOCSIFFLAGS:
 		/* if_ioctl() takes care of it */
 		break;
@@ -714,4 +801,68 @@ gif_delete_tunnel(sc)
 
 	splx(s);
 }
+
+#ifdef ISO
+struct eonhdr {
+	u_int8_t version;
+	u_int8_t class;
+	u_int16_t cksum;
+};
+
+/*
+ * prepend EON header to ISO PDU
+ */
+static int
+gif_eon_encap(struct mbuf **m)
+{
+	struct eonhdr *ehdr;
+
+	M_PREPEND(*m, sizeof(*ehdr), M_DONTWAIT);
+	if (*m && (*m)->m_len < sizeof(*ehdr))
+		*m = m_pullup(*m, sizeof(*ehdr));
+	if (*m == NULL) {
+		printf("ENOBUFS in gif_eon_encap %d\n", __LINE__);
+		return ENOBUFS;
+	}
+	ehdr = mtod(*m, struct eonhdr *);
+	ehdr->version = 1;
+	ehdr->class = 0;		/* always unicast */
+#if 0
+	/* calculate the checksum of the eonhdr */
+	{
+		struct mbuf mhead;
+		memset(&mhead, 0, sizeof(mhead));
+		ehdr->cksum = 0;
+		mhead.m_data = (caddr_t)ehdr;
+		mhead.m_len = sizeof(*ehdr);
+		mhead.m_next = 0;
+		iso_gen_csum(&mhead, offsetof(struct eonhdr, cksum),
+		    mhead.m_len);
+	}
+#else
+	/* since the data is always constant we'll just plug the value in */
+	ehdr->cksum = htons(0xfc02);
+#endif
+	return (0);
+}
+
+/*
+ * remove EON header and check checksum
+ */
+static int
+gif_eon_decap(struct ifnet *gifp, struct mbuf **m)
+{
+	struct eonhdr *ehdr;
+
+	if ((*m)->m_len < sizeof(*ehdr) &&
+	    (*m = m_pullup(*m, sizeof(*ehdr))) == 0) {
+		gifp->if_ierrors++;
+		return (EINVAL);
+	}
+	if (iso_check_csum(*m, sizeof(struct eonhdr)))
+		return (EINVAL);
+	m_adj(*m, sizeof(*ehdr));
+	return (0);
+}
+#endif /*ISO*/
 #endif /*NGIF > 0*/

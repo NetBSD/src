@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.19.2.2 2001/02/11 19:17:49 bouyer Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.19.2.3 2001/03/12 13:32:11 bouyer Exp $	*/
 
 /*
  *
@@ -353,15 +353,15 @@ uvm_loananon(ufi, output, flags, anon)
 	 * unlocked everything and returned an error code.
 	 */
 
-	if (result != VM_PAGER_OK) {
+	if (result != 0) {
 
 		/* need to refault (i.e. refresh our lookup) ? */
-		if (result == VM_PAGER_REFAULT)
+		if (result == ERESTART)
 			return(0);
 
 		/* "try again"?   sleep a bit and retry ... */
-		if (result == VM_PAGER_AGAIN) {
-			tsleep((caddr_t)&lbolt, PVM, "loanagain", 0);
+		if (result == EAGAIN) {
+			tsleep(&lbolt, PVM, "loanagain", 0);
 			return(0);
 		}
 
@@ -426,7 +426,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_LOCKED);
 	} else {
-		result = VM_PAGER_ERROR;
+		result = EIO;
 	}
 
 	/*
@@ -434,7 +434,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * then we fail the loan.
 	 */
 
-	if (result != VM_PAGER_OK && result != VM_PAGER_UNLOCK) {
+	if (result != 0 && result != EBUSY) {
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return(-1);
 	}
@@ -443,7 +443,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * if we need to unlock for I/O, do so now.
 	 */
 
-	if (result == VM_PAGER_UNLOCK) {
+	if (result == EBUSY) {
 		uvmfault_unlockall(ufi, amap, NULL, NULL);
 		
 		npages = 1;
@@ -456,9 +456,9 @@ uvm_loanuobj(ufi, output, flags, va)
 		 * check for errors
 		 */
 
-		if (result != VM_PAGER_OK) {
-			 if (result == VM_PAGER_AGAIN) {
-				tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
+		if (result != 0) {
+			 if (result == EAGAIN) {
+				tsleep(&lbolt, PVM, "fltagain2", 0);
 				return(0); /* redo the lookup and try again */
 			} 
 			return(-1);	/* total failure */

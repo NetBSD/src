@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.29.2.4 2001/01/05 17:37:03 bouyer Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.29.2.5 2001/03/12 13:32:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -627,10 +627,9 @@ sys_swapctl(p, v, retval)
 	case SWAP_DUMPDEV:
 		if (vp->v_type != VBLK) {
 			error = ENOTBLK;
-			goto out;
+			break;
 		}
 		dumpdev = vp->v_rdev;
-		
 		break;
 
 	case SWAP_CTL:
@@ -734,9 +733,7 @@ sys_swapctl(p, v, retval)
 		/*
 		 * do the real work.
 		 */
-		if ((error = swap_off(p, sdp)) != 0)
-			goto out;
-
+		error = swap_off(p, sdp);
 		break;
 
 	default:
@@ -1002,13 +999,7 @@ swap_off(p, sdp)
 		simple_unlock(&uvm.swap_data_lock);
 		return ENOMEM;
 	}
-
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse != sdp->swd_npgbad) {
-		panic("swap_off: sdp %p - %d pages still in use (%d bad)\n",
-		      sdp, sdp->swd_npginuse, sdp->swd_npgbad);
-	}
-#endif
+	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
 	 * done with the vnode and saved creds.
@@ -1426,11 +1417,7 @@ sw_reg_iodone(bp)
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
-#ifdef DIAGNOSTIC
-		if (vnx->vx_pending != 0)
-			panic("sw_reg_iodone: vnx pending: %d",vnx->vx_pending);
-#endif
-
+		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
@@ -1571,6 +1558,7 @@ uvm_swap_free(startslot, nslots)
 	/*
 	 * ignore attempts to free the "bad" slot.
 	 */
+
 	if (startslot == SWSLOT_BAD) {
 		return;
 	}
@@ -1580,30 +1568,19 @@ uvm_swap_free(startslot, nslots)
 	 * in the extent, and return.   must hold pri lock to do 
 	 * lookup and access the extent.
 	 */
+
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
-
-#ifdef DIAGNOSTIC
-	if (uvmexp.nswapdev < 1)
-		panic("uvm_swap_free: uvmexp.nswapdev < 1\n");
-	if (sdp == NULL) {
-		printf("uvm_swap_free: startslot %d, nslots %d\n", startslot,
-		    nslots);
-		panic("uvm_swap_free: unmapped address\n");
-	}
-#endif
+	KASSERT(uvmexp.nswapdev >= 1);
+	KASSERT(sdp != NULL);
+	KASSERT(sdp->swd_npginuse >= nslots);
 	if (extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
 			EX_MALLOCOK|EX_NOWAIT) != 0) {
 		printf("warning: resource shortage: %d pages of swap lost\n",
 			nslots);
 	}
-
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse < 0)
-		panic("uvm_swap_free: inuse < 0");
-#endif
 	simple_unlock(&uvm.swap_data_lock);
 }
 
@@ -1642,18 +1619,15 @@ uvm_swap_get(page, swslot, flags)
 	int	result;
 
 	uvmexp.nswget++;
-#ifdef DIAGNOSTIC
-	if ((flags & PGO_SYNCIO) == 0)
-		printf("uvm_swap_get: ASYNC get requested?\n");
-#endif
-
+	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
-		return VM_PAGER_ERROR;
+		return EIO;
 	}
 
 	/*
 	 * this page is (about to be) no longer only in swap.
 	 */
+
 	simple_lock(&uvm.swap_data_lock);
 	uvmexp.swpgonly--;
 	simple_unlock(&uvm.swap_data_lock);
@@ -1661,10 +1635,12 @@ uvm_swap_get(page, swslot, flags)
 	result = uvm_swap_io(&page, swslot, 1, B_READ | 
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
 
-	if (result != VM_PAGER_OK && result != VM_PAGER_PEND) {
+	if (result != 0) {
+
 		/*
 		 * oops, the read failed so it really is still only in swap.
 		 */
+
 		simple_lock(&uvm.swap_data_lock);
 		uvmexp.swpgonly++;
 		simple_unlock(&uvm.swap_data_lock);
@@ -1685,7 +1661,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, mapinflags, pflag;
+	int	error, s, mapinflags, pflag;
 	boolean_t write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1710,7 +1686,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 		mapinflags |= UVMPAGER_MAPIN_WAITOK;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
 	if (kva == 0)
-		return (VM_PAGER_AGAIN);
+		return (EAGAIN);
 
 	/* 
 	 * now allocate a buf for the i/o.
@@ -1725,7 +1701,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * if we failed to get a buf, return "try again"
 	 */
 	if (bp == NULL)
-		return (VM_PAGER_AGAIN);
+		return (EAGAIN);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
@@ -1775,13 +1751,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 */
 	VOP_STRATEGY(bp);
 	if (async)
-		return (VM_PAGER_PEND);
+		return 0;
 
 	/*
 	 * must be sync i/o.   wait for it to finish
 	 */
-	(void) biowait(bp);
-	result = (bp->b_flags & B_ERROR) ? VM_PAGER_ERROR : VM_PAGER_OK;
+	error = biowait(bp);
 
 	/*
 	 * kill the pager mapping
@@ -1802,6 +1777,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * finally return.
 	 */
-	UVMHIST_LOG(pdhist, "<- done (sync)  result=%d", result, 0, 0, 0);
-	return (result);
+	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
+	return (error);
 }

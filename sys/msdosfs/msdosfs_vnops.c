@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.87.2.3 2001/02/11 19:17:07 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.87.2.4 2001/03/12 13:31:46 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -486,7 +486,7 @@ msdosfs_read(v)
 
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
-			bytelen = min(dep->de_FileSize - uio->uio_offset,
+			bytelen = MIN(dep->de_FileSize - uio->uio_offset,
 				      uio->uio_resid);
 
 			if (bytelen == 0)
@@ -506,7 +506,7 @@ msdosfs_read(v)
 	do {
 		lbn = de_cluster(pmp, uio->uio_offset);
 		on = uio->uio_offset & pmp->pm_crbomask;
-		n = min((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
+		n = MIN(pmp->pm_bpcluster - on, uio->uio_resid);
 		if (uio->uio_offset >= dep->de_FileSize)
 			return (0);
 		/* file size (and hence diff) may be up to 4GB */
@@ -525,7 +525,7 @@ msdosfs_read(v)
 		 * vnode for the directory.
 		 */
 		error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
-		n = min(n, pmp->pm_bpcluster - bp->b_resid);
+		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -646,7 +646,7 @@ msdosfs_write(v)
 			error = ENOSPC;
 			break;
 		}
-		bytelen = min(dep->de_FileSize - oldoff, uio->uio_resid);
+		bytelen = MIN(dep->de_FileSize - oldoff, uio->uio_resid);
 
 		/*
 		 * XXXUBC if file is mapped and this is the last block,
@@ -1549,11 +1549,11 @@ msdosfs_readdir(v)
 	while (uio->uio_resid > 0) {
 		lbn = de_cluster(pmp, offset - bias);
 		on = (offset - bias) & pmp->pm_crbomask;
-		n = min(pmp->pm_bpcluster - on, uio->uio_resid);
+		n = MIN(pmp->pm_bpcluster - on, uio->uio_resid);
 		diff = dep->de_FileSize - (offset - bias);
 		if (diff <= 0)
 			break;
-		n = min(n, diff);
+		n = MIN(n, diff);
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
@@ -1561,7 +1561,7 @@ msdosfs_readdir(v)
 			brelse(bp);
 			return (error);
 		}
-		n = min(n, blsize - bp->b_resid);
+		n = MIN(n, blsize - bp->b_resid);
 
 		/*
 		 * Convert from dos directory entries to fs-independent

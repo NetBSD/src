@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.7.2.5 2001/01/05 17:36:02 bouyer Exp $	*/
+/*	$NetBSD: auvia.c,v 1.7.2.6 2001/03/12 13:31:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -307,6 +307,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 			{ AudioCoutputs, AudioNmaster},
 			{ AudioCinputs, AudioNdac},
 			{ AudioCinputs, AudioNcd},
+			{ AudioCinputs, AudioNline},
 			{ AudioCrecord, AudioNvolume},
 		};
 		

@@ -1,7 +1,7 @@
-/*	$Id: vrc4172pwmvar.h,v 1.2.2.3 2001/01/05 17:34:27 bouyer Exp $	*/
+/*	$Id: vrc4172pwmvar.h,v 1.2.2.4 2001/03/12 13:28:49 bouyer Exp $	*/
 
 /*
- * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
+ * Copyright (c) 2000,2001 SATO Kazumi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,12 +25,18 @@
  * SUCH DAMAGE.
  */
 
-#define VRC2_PWM_N_BRIGHTNESS	8
+#define VRC2_PWM_N_BRIGHTNESS	16
 #define VRC2_PWM_MAX_BRIGHTNESS	(VRC2_PWM_N_BRIGHTNESS-1)
+#define VRC2_PWM_N_CONTRAST	32
+#define VRC2_PWM_MAX_CONTRAST	(VRC2_PWM_N_CONTRAST-1)
+
 
 struct vrc4172pwm_param {
+	int brokenprobe;
 	int n_brightness;
-	int values[VRC2_PWM_N_BRIGHTNESS];
+	int bvalues[VRC2_PWM_N_BRIGHTNESS];
+	int n_contrast;
+	int cvalues[VRC2_PWM_N_CONTRAST];
 };
 
 struct vrc4172pwm_softc {
@@ -43,9 +49,11 @@ struct vrc4172pwm_softc {
 	config_hook_tag sc_getmaxhook;
 	config_hook_tag sc_sethook;
 	config_hook_tag sc_pmhook;
-	int sc_brightness;
-	int sc_raw_duty;
-	int sc_raw_freq;
+	int sc_light;			/* backlight on/off */
+	int sc_light_save;		/* backlight on/off value when suspend*/
+	int sc_brightness;		/* backlight brightness */
+	int sc_raw_duty;		/* backlight plus gen. duty */
+	int sc_raw_freq;		/* backligjy plus gen. freq. */
 	struct vrc4172pwm_param *sc_param;
 };
 

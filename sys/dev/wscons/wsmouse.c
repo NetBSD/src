@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.9.2.1 2000/11/20 11:43:38 bouyer Exp $ */
+/* $NetBSD: wsmouse.c,v 1.9.2.2 2001/03/12 13:31:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.9.2.1 2000/11/20 11:43:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.9.2.2 2001/03/12 13:31:33 bouyer Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,6 +322,7 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 	 * of changes or out of room.  As events get delivered,
 	 * mark them `unchanged'.
 	 */
+	ub = sc->sc_ub;
 	any = 0;
 	get = evar->get;
 	put = evar->put;
@@ -409,7 +410,6 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 	}
 
 	mb = sc->sc_mb;
-	ub = sc->sc_ub;
 	while ((d = mb ^ ub) != 0) {
 		/*
 		 * Mouse button change.  Find the first change and drop

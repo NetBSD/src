@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.4 2001/02/11 19:11:21 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.6.5 2001/03/12 13:29:09 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ OBJCOPY?= objcopy
 
 S= ${.CURDIR}/../../../..
 
-LDFLAGS= -x -N -Ttext 3e0000
+LDFLAGS= -x -N -Ttext 3e0000 -e start
 CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE # -DBOOT_DEBUG

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.6 2001/02/11 19:16:03 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.7 2001/03/12 13:31:13 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
+ *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
  */
 
 /*
@@ -272,6 +272,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3ware",
 	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID (ASIC)",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -1642,6 +1648,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CMI8738/C3DX PCI Audio Device",
 	},
 	{
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738B,
+	    0,
+	    "C-Media Electronics Inc",
+	    "CMI8738B PCI Audio Device",
+	},
+	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56,
 	    0,
 	    "C-Media Electronics Inc",
@@ -2218,6 +2230,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "GT-64130 System Controller",
 	},
 	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
+	    0,
+	    "Galileo Technology",
+	    "GT-64260 System Controller",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
 	    0,
 	    "Hewlett-Packard",
@@ -2792,6 +2810,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_IDE,
+	    0,
+	    "Intel",
+	    "82801BAM IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
@@ -3400,6 +3424,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "DAC960 RAID (v5 interface)",
 	},
 	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
+	    0,
+	    "Mylex",
+	    "AcceleRAID (i960)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID (StrongARM)",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_352,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 352",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_170,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 170",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_160,
+	    0,
+	    "Mylex",
+	    "AcceleRAID 160",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID 2000",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000,
+	    0,
+	    "Mylex",
+	    "eXtremeRAID 3000",
+	},
+	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
 	    0,
 	    "Mutech",
@@ -3532,6 +3598,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "53c875J",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909,
+	    0,
+	    "Symbios Logic",
+	    "FC909",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
 	    0,
 	    "Symbios Logic",
@@ -3644,6 +3716,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620 1000baseT Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
+	    0,
+	    "Netmos",
+	    "Dual UART and 1284 Printer port",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -5650,6 +5728,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "W83769F",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0,
+	    0,
+	    "Winbond Electronics",
+	    "W83C553F PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1,
+	    0,
+	    "Winbond Electronics",
+	    "W83C553F IDE Controller",
+	},
+	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
 	    0,
 	    "Winbond Electronics",
@@ -5678,6 +5768,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL,
+	    0,
+	    "Xircom",
+	    "WinGlobal Modem",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
@@ -8791,6 +8887,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATRONICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Atronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETMOS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Netmos",
 	    NULL,
 	},
 	{

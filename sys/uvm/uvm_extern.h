@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.34.2.3 2001/02/11 19:17:48 bouyer Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.34.2.4 2001/03/12 13:32:11 bouyer Exp $	*/
 
 /*
  *
@@ -251,9 +251,12 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
-	/* XXX: Adding anything before this line will break binary
-	 *      compatibility with top(1) on NetBSD 1.5.
+
+	/* 
+	 * Adding anything before this line will break binary compatibility
+	 * with top(1) on NetBSD 1.5.
 	 */
+
 	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel;	/* number of pages reserved for kernel */
@@ -266,6 +269,12 @@ struct uvmexp {
 	int freetarg;   /* target number of free pages */
 	int inactarg;   /* target number of inactive pages */
 	int wiredmax;   /* max number of wired pages */
+	int anonmin;	/* min threshold for anon pages */
+	int vtextmin;	/* min threshold for vtext pages */
+	int vnodemin;	/* min threshold for vnode pages */
+	int anonminpct;	/* min percent anon pages */
+	int vtextminpct;/* min percent vtext pages */
+	int vnodeminpct;/* min percent vnode pages */
 
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
@@ -333,6 +342,9 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
+	int pdreanon;	/* anon pages reactivated due to min threshold */
+	int pdrevnode;	/* vnode pages reactivated due to min threshold */
+	int pdrevtext;	/* vtext pages reactivated due to min threshold */
 
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;

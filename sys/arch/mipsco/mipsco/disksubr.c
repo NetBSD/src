@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5.2.3 2000/11/22 16:00:48 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.2.4 2001/03/12 13:29:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -73,7 +73,8 @@ readdisklabel(dev, strat, lp, clp)
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
-	int i;
+	struct mips_volheader *mvp;
+	int i, err;
 
 	/* minimum requirements for disk label */
 	if (lp->d_secperunit == 0)
@@ -88,46 +89,46 @@ readdisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 
 	bp->b_dev = dev;
-	bp->b_blkno = MIPS_VHSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
-	(*strat)(bp);
-
-	if(biowait(bp))
-		goto ioerror;
-
-	/* Save copy of primary (MIPS or RISC/os) label */
-	bcopy(bp->b_data, &clp->cd_volhdr, sizeof(clp->cd_volhdr));
-
-	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags &= ~(B_DONE);
 	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
-
-	if (biowait(bp))
-		goto ioerror;
-
+	err = biowait(bp);
 	brelse(bp);
+	
+	if (err)
+		return "error reading disklabel";
 
 	/* Check for NetBSD label in second sector */
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
 			bcopy(dlp, lp, LABELSIZE(dlp));
-			return NULL;
+			return NULL;	/* NetBSD label found */
 		}
 
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+	bp->b_blkno = MIPS_VHSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
+	(*strat)(bp);
+	err = biowait(bp);
+	brelse(bp);
+
+	if (err)
+		return "error reading volume header";
+
+	mvp = (struct mips_volheader *)bp->b_un.b_addr;
 	/* Check for MIPS RISC/os volume header */
-	if (clp->cd_volhdr.vh_magic == MIPS_VHMAGIC)
-		return disklabel_mips_to_bsd(&clp->cd_volhdr, lp);
+	if (mvp->vh_magic == MIPS_VHMAGIC)
+		return disklabel_mips_to_bsd(mvp, lp);
 
 	/* Search for NetBSD label in first sector */
 	for (i=0; i <= lp->d_secsize - sizeof(*dlp); i += sizeof(long)) {
-		dlp = (struct disklabel *) ((char *)&clp->cd_volhdr + i);
+		dlp = (struct disklabel *) ((char *)mvp + i);
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
 			if (dlp->d_npartitions > MAXPARTITIONS ||
 			    dkcksum(dlp) != 0)
@@ -139,10 +140,6 @@ readdisklabel(dev, strat, lp, clp)
 		}
 	}
 	return "no disk label";
-
-  ioerror:
-	brelse(bp);
-	return "disk label read error";
 }
 
 /*
@@ -213,36 +210,41 @@ writedisklabel(dev, strat, lp, clp)
 		labelpart = 0;
 	}
 
-	error = disklabel_bsd_to_mips(lp, &clp->cd_volhdr);
-	if (error)
-		return (error);
-	
-	/* Get a buffer and copy the new label into it. */
+	/* Read RISC/os volume header before merging NetBSD partition info*/
 	bp = geteblk((int)lp->d_secsize);
 
-	bcopy(&clp->cd_volhdr, bp->b_data, sizeof(clp->cd_volhdr));
-
-	/* Write MIPS RISC/os label to first sector */
 	bp->b_dev = dev;
 	bp->b_blkno = MIPS_VHSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
+	(*strat)(bp);
+
+	if((error = biowait(bp)) != 0)
+		goto ioerror;
+
+	if ((error = disklabel_bsd_to_mips(lp, (void *)bp->b_data)) != 0)
+		goto ioerror;
+
+	/* Write MIPS RISC/os label to first sector */
+	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags |= B_WRITE;
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		goto ioerror;
+	
+	/* Write NetBSD disk label to second sector */
+	bzero(bp->b_data, lp->d_secsize);
+	bcopy(lp, bp->b_data, sizeof(*lp));
+	bp->b_blkno = LABELSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
+	bp->b_flags &= ~(B_READ | B_DONE);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	
-	/* Write NetBSD disk label to second sector */
-	if (!error) {
-		bzero(bp->b_data, lp->d_secsize);
-		bcopy(lp, bp->b_data, sizeof(*lp));
-		bp->b_blkno = LABELSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
-		bp->b_flags |= B_WRITE;
-		(*strat)(bp);
-		error = biowait(bp);
-	}
 
+ioerror:
 	brelse(bp);
 	return error;
 }
@@ -388,7 +390,7 @@ disklabel_bsd_to_mips(lp, vh)
 	int  i, bp, mp;
 	struct partition *lpp;
 
-	if (vh->vh_magic != MIPS_VHMAGIC) {
+	if (vh->vh_magic != MIPS_VHMAGIC || mipsvh_cksum(vh) != 0) {
 #if DIAGNOSTIC
 		printf("Warning: writing MIPS compatible label\n");
 #endif

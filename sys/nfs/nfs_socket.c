@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.53.2.3 2001/01/05 17:36:57 bouyer Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.53.2.4 2001/03/12 13:32:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -121,7 +121,7 @@ extern int nfs_ticks;
  * 3 - read
  * 4 - write
  */
-static int proct[NFS_NPROCS] = {
+static const int proct[NFS_NPROCS] = {
 	0, 1, 0, 2, 1, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
 	0, 0, 0,
 };
@@ -141,7 +141,7 @@ static int proct[NFS_NPROCS] = {
  */
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
-static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
+static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 

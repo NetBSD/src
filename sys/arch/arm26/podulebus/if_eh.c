@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.1.2.5 2001/02/11 19:09:00 bouyer Exp $ */
+/* $NetBSD: if_eh.c,v 1.1.2.6 2001/03/12 13:27:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.5 2001/02/11 19:09:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.6 2001/03/12 13:27:30 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -110,6 +110,7 @@ struct eh_softc {
 #define EHF_16BIT	0x01
 #define EHF_MAU		0x02
 	int			sc_type;
+	int			sc_mediaset;
 	u_int8_t		sc_ctrl; /* Current control reg state */
 };
 
@@ -123,6 +124,8 @@ void	eh_readmem(struct eh_softc *, int, u_int8_t *, size_t);
 static void eh_init_card(struct dp8390_softc *);
 static int eh_availmedia(struct eh_softc *);
 /*static*/ int eh_identifymau(struct eh_softc *);
+
+void	eh_media_init(struct dp8390_softc *);
 
 /* if_media glue */
 static int eh_mediachange(struct dp8390_softc *);
@@ -173,8 +176,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	struct podulebus_attach_args *pa = aux;
 	struct eh_softc *sc = (struct eh_softc *)self;
 	struct dp8390_softc *dsc = &sc->sc_dp;
-	int *media;
-	int mediaset, mautype, nmedia;
+	int mediaset, mautype;
 	int i;
 	char *ptr;
 	u_int8_t *myaddr;
@@ -245,6 +247,8 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	/* dsc->sc_disable */
 	dsc->sc_mediachange = eh_mediachange;
 	dsc->sc_mediastatus = eh_mediastatus;
+	dsc->sc_media_init = eh_media_init;
+	/* dsc->sc_media_fini */
 
 	for (i = 0; i < 16; i++)
 		dsc->sc_reg_map[i] = i;
@@ -281,8 +285,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 	}
-	media = media_switch[mediaset].media;
-	nmedia = media_switch[mediaset].nmedia;
+	sc->sc_mediaset = mediaset;
 	printf("\n");
 
 	/* i-cubed put everything behind the loader. */
@@ -312,7 +315,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	dp8390_config(dsc, media, nmedia, media[0]);
+	dp8390_config(dsc);
 	dp8390_stop(dsc);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -771,6 +774,19 @@ eh_identifymau(struct eh_softc *sc)
 		DELAY(10);
 	}
 	return id;
+}
+
+void
+eh_media_init(struct dp8390_softc *dsc)
+{
+	struct eh_softc *sc = (struct eh_softc *) dsc;
+	int i;
+
+	ifmedia_init(&dsc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	for (i = 0; i < media_switch[sc->sc_mediaset].nmedia; i++)
+		ifmedia_add(&dsc->sc_media,
+		    media_switch[sc->sc_mediaset].media[i], 0, NULL);
+	ifmedia_set(&dsc->sc_media, media_switch[sc->sc_mediaset].media[0]);
 }
 
 /*

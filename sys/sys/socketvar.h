@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.39.2.2 2000/12/13 15:50:41 bouyer Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.39.2.3 2001/03/12 13:32:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_SOCKETVAR_H_
-#define _SYS_SOCKETVAR_H_
+#define	_SYS_SOCKETVAR_H_
 
 #include <sys/select.h>			/* for struct selinfo */
 #include <sys/queue.h>
@@ -54,12 +54,12 @@ TAILQ_HEAD(soqhead, socket);
  * private data and error information.
  */
 struct socket {
-	short	so_type;		/* generic type, see socket.h */
-	short	so_options;		/* from socket call, see socket.h */
-	short	so_linger;		/* time to linger while closing */
-	short	so_state;		/* internal state flags SS_*, below */
-	void	*so_pcb;		/* protocol control block */
-	struct	protosw *so_proto;	/* protocol handle */
+	short		so_type;	/* generic type, see socket.h */
+	short		so_options;	/* from socket call, see socket.h */
+	short		so_linger;	/* time to linger while closing */
+	short		so_state;	/* internal state flags SS_*, below */
+	void		*so_pcb;	/* protocol control block */
+	struct protosw	*so_proto;	/* protocol handle */
 /*
  * Variables for connection queueing.
  * Socket where accepts occur is so_head in all subsidiary sockets.
@@ -71,29 +71,29 @@ struct socket {
  * We allow connections to queue up based on current queue lengths
  * and limit on number of queued connections for this socket.
  */
-	struct	socket *so_head;	/* back pointer to accept socket */
-	struct	soqhead *so_onq;	/* queue (q or q0) that we're on */
-	struct	soqhead so_q0;		/* queue of partial connections */
-	struct	soqhead so_q;		/* queue of incoming connections */
+	struct socket	*so_head;	/* back pointer to accept socket */
+	struct soqhead	*so_onq;	/* queue (q or q0) that we're on */
+	struct soqhead	so_q0;		/* queue of partial connections */
+	struct soqhead	so_q;		/* queue of incoming connections */
 	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
-	short	so_q0len;		/* partials on so_q0 */
-	short	so_qlen;		/* number of connections on so_q */
-	short	so_qlimit;		/* max number queued connections */
-	short	so_timeo;		/* connection timeout */
-	u_short	so_error;		/* error affecting connection */
-	pid_t	so_pgid;		/* pgid for signals */
-	u_long	so_oobmark;		/* chars to oob mark */
+	short		so_q0len;	/* partials on so_q0 */
+	short		so_qlen;	/* number of connections on so_q */
+	short		so_qlimit;	/* max number queued connections */
+	short		so_timeo;	/* connection timeout */
+	u_short		so_error;	/* error affecting connection */
+	pid_t		so_pgid;	/* pgid for signals */
+	u_long		so_oobmark;	/* chars to oob mark */
 /*
  * Variables for socket buffering.
  */
-	struct	sockbuf {
+	struct sockbuf {
 		u_long	sb_cc;		/* actual chars in buffer */
 		u_long	sb_hiwat;	/* max actual char count */
 		u_long	sb_mbcnt;	/* chars of mbufs used */
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
-		struct	mbuf *sb_mb;	/* the mbuf chain */
-		struct	selinfo sb_sel;	/* process selecting read/write */
+		struct mbuf *sb_mb;	/* the mbuf chain */
+		struct selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
@@ -110,16 +110,18 @@ struct socket {
 #define	SB_UPCALL	0x20		/* someone wants an upcall */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
-	void	*so_internal;		/* Space for svr4 stream data */
-	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
-	caddr_t	so_upcallarg;		/* Arg for above */
-	int	(*so_send) __P((struct socket *so, struct mbuf *addr,
-				struct uio *uio, struct mbuf *top,
-				struct mbuf *control, int flags));
-	int	(*so_receive) __P((struct socket *so, struct mbuf **paddr,
-				   struct uio *uio, struct mbuf **mp0,
-				   struct mbuf **controlp, int *flagsp));
-	uid_t	so_uid;			/* who opened the socket */
+	void		*so_internal;	/* Space for svr4 stream data */
+	void		(*so_upcall) __P((struct socket *so, caddr_t arg,
+					int waitf));
+	caddr_t		so_upcallarg;	/* Arg for above */
+	int		(*so_send) __P((struct socket *so, struct mbuf *addr,
+					struct uio *uio, struct mbuf *top,
+					struct mbuf *control, int flags));
+	int		(*so_receive) __P((struct socket *so,
+					struct mbuf **paddr,
+					struct uio *uio, struct mbuf **mp0,
+					struct mbuf **controlp, int *flagsp));
+	uid_t		so_uid;		/* who opened the socket */
 };
 
 /*
@@ -137,8 +139,10 @@ struct socket {
 #define	SS_NBIO			0x080	/* non-blocking ops */
 #define	SS_ASYNC		0x100	/* async i/o notify */
 #define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
-#define	SS_MORETOCOME		0x400	/* hint from sosend to lower layer;
-					   more data coming */
+#define	SS_MORETOCOME		0x400	/*
+					 * hint from sosend to lower layer;
+					 * more data coming
+					 */
 
 
 /*
@@ -148,7 +152,8 @@ struct socket {
 /*
  * Do we need to notify the other side when I/O is possible?
  */
-#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC|SB_UPCALL)) != 0)
+#define	sb_notify(sb)	(((sb)->sb_flags & \
+	(SB_WAIT | SB_SEL | SB_ASYNC | SB_UPCALL)) != 0)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
@@ -157,80 +162,86 @@ struct socket {
  * overflow and return 0.  Should use "lmin" but it doesn't exist now.
  */
 #define	sbspace(sb) \
-    ((long) imin((int)((sb)->sb_hiwat - (sb)->sb_cc), \
+	((long) imin((int)((sb)->sb_hiwat - (sb)->sb_cc), \
 	 (int)((sb)->sb_mbmax - (sb)->sb_mbcnt)))
 
 /* do we have to send all at once on a socket? */
 #define	sosendallatonce(so) \
-    ((so)->so_proto->pr_flags & PR_ATOMIC)
+	((so)->so_proto->pr_flags & PR_ATOMIC)
 
 /* can we read something from so? */
 #define	soreadable(so) \
-    ((so)->so_rcv.sb_cc >= (so)->so_rcv.sb_lowat || \
-	((so)->so_state & SS_CANTRCVMORE) || \
-	(so)->so_qlen || (so)->so_error)
+	((so)->so_rcv.sb_cc >= (so)->so_rcv.sb_lowat || \
+	    ((so)->so_state & SS_CANTRCVMORE) || \
+	    (so)->so_qlen || (so)->so_error)
 
 /* can we write something to so? */
 #define	sowriteable(so) \
-    ((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
-	(((so)->so_state&SS_ISCONNECTED) || \
-	  ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \
-     ((so)->so_state & SS_CANTSENDMORE) || \
-     (so)->so_error)
+	((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
+	    (((so)->so_state&SS_ISCONNECTED) || \
+	      ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \
+	 ((so)->so_state & SS_CANTSENDMORE) || \
+	 (so)->so_error)
 
 /* adjust counters in sb reflecting allocation of m */
-#define	sballoc(sb, m) { \
-	(sb)->sb_cc += (m)->m_len; \
-	(sb)->sb_mbcnt += MSIZE; \
-	if ((m)->m_flags & M_EXT) \
-		(sb)->sb_mbcnt += (m)->m_ext.ext_size; \
-}
+#define	sballoc(sb, m)							\
+do {									\
+	(sb)->sb_cc += (m)->m_len;					\
+	(sb)->sb_mbcnt += MSIZE;					\
+	if ((m)->m_flags & M_EXT)					\
+		(sb)->sb_mbcnt += (m)->m_ext.ext_size;			\
+} while (0)
 
 /* adjust counters in sb reflecting freeing of m */
-#define	sbfree(sb, m) { \
-	(sb)->sb_cc -= (m)->m_len; \
-	(sb)->sb_mbcnt -= MSIZE; \
-	if ((m)->m_flags & M_EXT) \
-		(sb)->sb_mbcnt -= (m)->m_ext.ext_size; \
-}
+#define	sbfree(sb, m)							\
+do {									\
+	(sb)->sb_cc -= (m)->m_len;					\
+	(sb)->sb_mbcnt -= MSIZE;					\
+	if ((m)->m_flags & M_EXT)					\
+		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
+} while (0)
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
  */
-#define sblock(sb, wf) ((sb)->sb_flags & SB_LOCK ? \
-		(((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) : \
-		((sb)->sb_flags |= SB_LOCK), 0)
+#define	sblock(sb, wf)							\
+	((sb)->sb_flags & SB_LOCK ?					\
+	    (((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) :		\
+	    ((sb)->sb_flags |= SB_LOCK), 0)
 
 /* release lock on sockbuf sb */
-#define	sbunlock(sb) { \
-	(sb)->sb_flags &= ~SB_LOCK; \
-	if ((sb)->sb_flags & SB_WANT) { \
-		(sb)->sb_flags &= ~SB_WANT; \
-		wakeup((caddr_t)&(sb)->sb_flags); \
-	} \
-}
+#define	sbunlock(sb)							\
+do {									\
+	(sb)->sb_flags &= ~SB_LOCK;					\
+	if ((sb)->sb_flags & SB_WANT) {					\
+		(sb)->sb_flags &= ~SB_WANT;				\
+		wakeup((caddr_t)&(sb)->sb_flags);			\
+	}								\
+} while (0)
 
-#define	sorwakeup(so)	do { \
-			  if (sb_notify(&(so)->so_rcv)) \
-			    sowakeup((so), &(so)->so_rcv); \
-			} while (0)
+#define	sorwakeup(so)							\
+do {									\
+	if (sb_notify(&(so)->so_rcv))					\
+		sowakeup((so), &(so)->so_rcv);				\
+} while (0)
 
-#define	sowwakeup(so)	do { \
-			  if (sb_notify(&(so)->so_snd)) \
-			    sowakeup((so), &(so)->so_snd); \
-			} while (0)
+#define	sowwakeup(so)							\
+do {									\
+	if (sb_notify(&(so)->so_snd))					\
+		sowakeup((so), &(so)->so_snd);				\
+} while (0)
 
 #ifdef _KERNEL
-extern	u_long sb_max;
+extern u_long		sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
 
 /* strings for sleep message: */
-extern	const char netio[], netcon[], netcls[];
+extern const char	netio[], netcon[], netcls[];
 
-extern struct pool socket_pool;
+extern struct pool	socket_pool;
 
 struct mbuf;
 struct sockaddr;
@@ -241,77 +252,72 @@ struct stat;
 /*
  * File operations on sockets.
  */
-int	soo_read __P((struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags));
-int	soo_write __P((struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags));
-int	soo_fcntl __P((struct file *fp, u_int cmd, caddr_t data,
-	    struct proc *p));
-int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
-	    struct proc *p));
-int	soo_poll __P((struct file *fp, int events, struct proc *p));
-int 	soo_close __P((struct file *fp, struct proc *p));
-int	soo_stat __P((struct socket *, struct stat *));
-int	uipc_usrreq __P((struct socket *, int , struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct proc *));
-int	uipc_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
-int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
-	    struct mbuf *m0, struct mbuf *control));
-int	sbappendcontrol __P((struct sockbuf *sb, struct mbuf *m0,
-	    struct mbuf *control));
-void	sbappendrecord __P((struct sockbuf *sb, struct mbuf *m0));
-void	sbcheck __P((struct sockbuf *sb));
-void	sbcompress __P((struct sockbuf *sb, struct mbuf *m, struct mbuf *n));
+int	soo_read(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+int	soo_write(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+int	soo_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p);
+int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
+int	soo_poll(struct file *fp, int events, struct proc *p);
+int 	soo_close(struct file *fp, struct proc *p);
+int	soo_stat(struct socket *, struct stat *);
+int	uipc_usrreq(struct socket *, int , struct mbuf *,
+	    struct mbuf *, struct mbuf *, struct proc *);
+int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
+void	sbappend(struct sockbuf *sb, struct mbuf *m);
+int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,
+	    struct mbuf *m0, struct mbuf *control);
+int	sbappendcontrol(struct sockbuf *sb, struct mbuf *m0,
+	    struct mbuf *control);
+void	sbappendrecord(struct sockbuf *sb, struct mbuf *m0);
+void	sbcheck(struct sockbuf *sb);
+void	sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n);
 struct mbuf *
-	sbcreatecontrol __P((caddr_t p, int size, int type, int level));
-void	sbdrop __P((struct sockbuf *sb, int len));
-void	sbdroprecord __P((struct sockbuf *sb));
-void	sbflush __P((struct sockbuf *sb));
-void	sbinsertoob __P((struct sockbuf *sb, struct mbuf *m0));
-void	sbrelease __P((struct sockbuf *sb));
-int	sbreserve __P((struct sockbuf *sb, u_long cc));
-int	sbwait __P((struct sockbuf *sb));
-int	sb_lock __P((struct sockbuf *sb));
-void	soinit __P((void));
-int	soabort __P((struct socket *so));
-int	soaccept __P((struct socket *so, struct mbuf *nam));
-int	sobind __P((struct socket *so, struct mbuf *nam, struct proc *));
-void	socantrcvmore __P((struct socket *so));
-void	socantsendmore __P((struct socket *so));
-int	soclose __P((struct socket *so));
-int	soconnect __P((struct socket *so, struct mbuf *nam));
-int	soconnect2 __P((struct socket *so1, struct socket *so2));
-int	socreate __P((int dom, struct socket **aso, int type, int proto));
-int	sodisconnect __P((struct socket *so));
-void	sofree __P((struct socket *so));
-int	sogetopt __P((struct socket *so, int level, int optname,
-	    struct mbuf **mp));
-void	sohasoutofband __P((struct socket *so));
-void	soisconnected __P((struct socket *so));
-void	soisconnecting __P((struct socket *so));
-void	soisdisconnected __P((struct socket *so));
-void	soisdisconnecting __P((struct socket *so));
-int	solisten __P((struct socket *so, int backlog));
+	sbcreatecontrol(caddr_t p, int size, int type, int level);
+void	sbdrop(struct sockbuf *sb, int len);
+void	sbdroprecord(struct sockbuf *sb);
+void	sbflush(struct sockbuf *sb);
+void	sbinsertoob(struct sockbuf *sb, struct mbuf *m0);
+void	sbrelease(struct sockbuf *sb);
+int	sbreserve(struct sockbuf *sb, u_long cc);
+int	sbwait(struct sockbuf *sb);
+int	sb_lock(struct sockbuf *sb);
+void	soinit(void);
+int	soabort(struct socket *so);
+int	soaccept(struct socket *so, struct mbuf *nam);
+int	sobind(struct socket *so, struct mbuf *nam, struct proc *);
+void	socantrcvmore(struct socket *so);
+void	socantsendmore(struct socket *so);
+int	soclose(struct socket *so);
+int	soconnect(struct socket *so, struct mbuf *nam);
+int	soconnect2(struct socket *so1, struct socket *so2);
+int	socreate(int dom, struct socket **aso, int type, int proto);
+int	sodisconnect(struct socket *so);
+void	sofree(struct socket *so);
+int	sogetopt(struct socket *so, int level, int optname, struct mbuf **mp);
+void	sohasoutofband(struct socket *so);
+void	soisconnected(struct socket *so);
+void	soisconnecting(struct socket *so);
+void	soisdisconnected(struct socket *so);
+void	soisdisconnecting(struct socket *so);
+int	solisten(struct socket *so, int backlog);
 struct socket *
-	sonewconn1 __P((struct socket *head, int connstatus));
-void	soqinsque __P((struct socket *head, struct socket *so, int q));
-int	soqremque __P((struct socket *so, int q));
-int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
-		       struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
-int	soreserve __P((struct socket *so, u_long sndcc, u_long rcvcc));
-void	sorflush __P((struct socket *so));
-int	sosend __P((struct socket *so, struct mbuf *addr, struct uio *uio,
-	    struct mbuf *top, struct mbuf *control, int flags));
-int	sosetopt __P((struct socket *so, int level, int optname,
-	    struct mbuf *m0));
-int	soshutdown __P((struct socket *so, int how));
-void	sowakeup __P((struct socket *so, struct sockbuf *sb));
-int	sockargs __P((struct mbuf **, const void *, int, int));
+	sonewconn1(struct socket *head, int connstatus);
+void	soqinsque(struct socket *head, struct socket *so, int q);
+int	soqremque(struct socket *so, int q);
+int	soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
+	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp);
+int	soreserve(struct socket *so, u_long sndcc, u_long rcvcc);
+void	sorflush(struct socket *so);
+int	sosend(struct socket *so, struct mbuf *addr, struct uio *uio,
+	    struct mbuf *top, struct mbuf *control, int flags);
+int	sosetopt(struct socket *so, int level, int optname, struct mbuf *m0);
+int	soshutdown(struct socket *so, int how);
+void	sowakeup(struct socket *so, struct sockbuf *sb);
+int	sockargs(struct mbuf **, const void *, int, int);
 
-int	sendit __P((struct proc *, int, struct msghdr *, int, register_t *));
-int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
-		    register_t *));
+int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
+int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
 
 #endif /* _KERNEL */
 

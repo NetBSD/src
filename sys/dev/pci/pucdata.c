@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.6.2.2 2001/01/05 17:36:17 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.6.2.3 2001/03/12 13:31:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -579,6 +579,18 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Lava Computers Octopus-550 serial ports */
+	{   "Lava Computers Octopus-550 8-port serial",
+	    {	0x1407,	0x0180,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
 	/* US Robotics (3Com) PCI Modems */
 	{   "US Robotics (3Com) 3CP5609 PCI 16550 Modem",
 	    {	0x12b9,	0x1008,	0,	0	},
@@ -625,6 +637,17 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 2S1P PCI 16C650 : 2S, 1P */
+	{   "NetMos NM9835 Dual UART and 1284 Printer port",
+	    {	0x9710,	0x9835,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 

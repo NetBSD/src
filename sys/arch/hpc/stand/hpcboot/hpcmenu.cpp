@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.1.2.2 2001/02/11 19:09:54 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -255,9 +255,30 @@ public:
 	virtual void command(int id, int msg) {
 		HpcMenuInterface &menu = HpcMenuInterface::Instance();
 		struct HpcMenuInterface::cons_hook_args *hook = 0;
-		int arg = 0;
+		int bit;
 
 		switch(id) {
+		case IDC_CONS_CHK0:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK1:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK2:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK3:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK4:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK5:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK6:
+			/* FALLTHROUGH */
+		case IDC_CONS_CHK7:
+			bit = 1 << (id - IDC_CONS_CHK_);
+			if (SendDlgItemMessage(_window, id, BM_GETCHECK, 0, 0))
+				menu._cons_parameter |= bit;
+			else
+				menu._cons_parameter &= ~bit;
+			break;
 		case IDC_CONS_BTN0:
 			/* FALLTHROUGH */
 		case IDC_CONS_BTN1:
@@ -265,14 +286,10 @@ public:
 		case IDC_CONS_BTN2:
 			/* FALLTHROUGH */
 		case IDC_CONS_BTN3:
-			for (int i = 0; i < IDC_CONS_CHK_END; i++)
-				if (SendDlgItemMessage(_window,
-						       IDC_CONS_CHK_ + i,
-						       BM_GETCHECK, 0, 0))
-					arg |=(1 << i);
 			hook = &menu._cons_hook[id - IDC_CONS_BTN_];
 			if (hook->func)
-				hook->func(hook->arg, arg);
+				hook->func(hook->arg, menu._cons_parameter);
+			
 			break;
 		}
 	}
@@ -528,10 +545,10 @@ __END_MACRO
 	case 0:	// wd0
 		break;
 	case 1:	// sd0
-		strncpy(loc, "b=sd0", 5);
-		len = strlen("b=sd0") + 1;
-		loc += len;
-		locp += len;
+		argv[argc++] = ptokv(locp);
+		strncpy(loc, "b=sd0", 6);
+		loc += 6;
+		locp += 6;
 		break;
 	case 2:	// memory disk
 		w = _pref.rootfs_file;

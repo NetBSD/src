@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.19.2.3 2001/01/18 09:23:20 bouyer Exp $ */
+/* $NetBSD: ispmbox.h,v 1.19.2.4 2001/03/12 13:30:30 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -568,7 +568,7 @@ typedef struct isp_icb {
 #define	ICBOPT_PREVLOOP		0x0800
 #define	ICBOPT_STOP_ON_QFULL	0x1000
 #define	ICBOPT_FULL_LOGIN	0x2000
-#define	ICBOPT_USE_PORTNAME	0x4000
+#define	ICBOPT_BOTH_WWNS	0x4000
 #define	ICBOPT_EXTENDED		0x8000
 
 #define	ICBXOPT_CLASS2_ACK0	0x0200
@@ -619,6 +619,22 @@ typedef struct isp_icb {
 	array[ICB_NNM5] = (u_int8_t) ((wwn >> 40) & 0xff), \
 	array[ICB_NNM6] = (u_int8_t) ((wwn >> 48) & 0xff), \
 	array[ICB_NNM7] = (u_int8_t) ((wwn >> 56) & 0xff)
+
+/*
+ * FC-AL Position Map
+ *
+ * This is an at most 128 byte map that returns either
+ * the LILP or Firmware generated list of ports.
+ *
+ * We deviate a bit from the returned qlogic format to
+ * use an extra bit to say whether this was a LILP or
+ * f/w generated map.
+ */
+typedef struct {
+	u_int8_t	fwmap	: 1,
+			count	: 7;
+	u_int8_t	map[127];
+} fcpos_map_t;
 
 /*
  * Port Data Base Element

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4.2.4 2001/02/11 19:11:09 bouyer Exp $	*/
+/*	$NetBSD: zs.c,v 1.4.2.5 2001/03/12 13:29:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,9 @@ int zs_major = 1;
 
 #define PCLK		10000000	/* PCLK pin input clock rate */
 
+#ifndef ZS_DEFSPEED
 #define ZS_DEFSPEED	9600
+#endif
 
 /*
  * Define interrupt levels.
@@ -164,9 +166,9 @@ extern struct	cfdriver zsc_cd;
 static int	zshard __P((void *));
 static void	zssoft __P((void *));
 static int	zs_get_speed __P((struct zs_chanstate *));
-static struct	zschan *zs_get_chan_addr (int zs_unit, int channel);
-static int	zs_getc __P((void *));
-static void	zs_putc __P((void *, int));
+struct		zschan *zs_get_chan_addr (int zs_unit, int channel);
+int		zs_getc __P((void *));
+void		zs_putc __P((void *, int));
 
 /*
  * Is the zs chip present?
@@ -570,9 +572,31 @@ zs_abort(cs)
 #endif
 }
 
-/*
- * Polled input char.
- */
+
+/*********************************************************/
+/*  Polled character I/O functions for console and KGDB  */
+/*********************************************************/
+
+struct zschan *
+zs_get_chan_addr(zs_unit, channel)
+        int zs_unit, channel;
+{
+        struct zsdevice *addr;
+        struct zschan *zc;
+
+        if (zs_unit >= NZS)
+                return NULL;
+ 
+        addr = (struct zsdevice *) ZS0_ADDR;
+        
+        if (channel == 0) {
+                zc = &addr->zs_chan_a;
+        } else {
+                zc = &addr->zs_chan_b;
+        }
+        return (zc);
+}      
+
 int
 zs_getc(arg)
 	void *arg;
@@ -597,7 +621,7 @@ zs_getc(arg)
 /*
  * Polled output char.
  */
-static void
+void
 zs_putc(arg, c)
 	void *arg;
 	int c;
@@ -618,7 +642,7 @@ zs_putc(arg, c)
 	splx(s);
 }
 
-/*****************************************************************/
+/***************************************************************/
 
 static void zscnprobe __P((struct consdev *));
 static void zscninit __P((struct consdev *));
@@ -678,24 +702,4 @@ zscnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
-}
-
-static struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
-{
-	struct zsdevice *addr;
-	struct zschan *zc;
-
-	if (zs_unit >= NZS)
-		return NULL;
-
-	addr = (struct zsdevice *) ZS0_ADDR;
-
-	if (channel == 0) {
-		zc = &addr->zs_chan_a;
-	} else {
-		zc = &addr->zs_chan_b;
-	}
-	return (zc);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.9 2001/01/05 17:35:41 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.10 2001/03/12 13:30:29 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -84,7 +84,7 @@
 
 
 #define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
@@ -116,7 +116,6 @@ struct isposinfo {
 
 #define	INLINE			inline
 
-#define	ISP2100_FABRIC		1
 #define	ISP2100_SCRLEN		0x400
 
 #define	MEMZERO			bzero
@@ -394,7 +393,7 @@ isp_wait_complete(isp)
 		if (isp->isp_mboxbsy != 0) {
 			isp_prt(isp, ISP_LOGWARN,
 			    "Polled Mailbox Command (0x%x) Timeout",
-			    isp->isp_mboxtmp[0]);
+			    isp->isp_lastmbxcmd);
 		}
 	} else {
 		int rv = 0;
@@ -416,7 +415,7 @@ isp_wait_complete(isp)
 			isp->isp_osinfo.mboxwaiting = 0;
 			isp_prt(isp, ISP_LOGWARN,
 			    "Interrupting Mailbox Command (0x%x) Timeout",
-			    isp->isp_mboxtmp[0]);
+			    isp->isp_lastmbxcmd);
 		}
 	}
 }
@@ -584,6 +583,13 @@ static inline void
 isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 {
 	int index;
+	/*
+	 * Don't even think about asking. This. Is. So. Lame.
+	 */
+	if (IS_2200(isp) &&
+	    ISP_FW_REVX(isp->isp_fwrev) == ISP_FW_REV(2, 1, 26)) {
+		nwords = 128;
+	}
 	for (index = 0; index < nwords; index++) {
 		resp->snscb_data[index] = bswap16(resp->snscb_data[index]);
 	}

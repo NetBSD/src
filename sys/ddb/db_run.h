@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.5 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_run.h,v 1.5.2.1 2001/03/12 13:30:00 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,4 +53,4 @@ void db_trace_until_call_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_trace_until_matching_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_continue_cmd __P((db_expr_t, int, db_expr_t, char *));
 
-#endif	_DDB_DB_RUN_
+#endif	/* _DDB_DB_RUN_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.86.2.3 2001/01/05 17:36:04 bouyer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.86.2.4 2001/03/12 13:31:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5873,11 +5873,10 @@ tulip_pci_attach(
 	    intr_rtn = tulip_intr_shared;
 
 #if defined(__NetBSD__)
+	printf("\n");
 	if ((sc->tulip_features & TULIP_HAVE_SLAVEDINTR) == 0) {
 	    pci_intr_handle_t intrhandle;
 	    const char *intrstr;
-
-	    printf("\n");
 
 	    if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->tulip_dev.dv_xname);

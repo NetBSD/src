@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155.2.3 2001/02/11 19:12:23 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.155.2.4 2001/03/12 13:29:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ cpu_startup()
 #endif
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	paddr_t pa;
 	char pbuf[9];
 
 #ifdef DEBUG
@@ -181,19 +182,82 @@ cpu_startup()
 #endif
 
 	/*
-	 * Map the message buffer (physical location 0).
+	 * Re-map the message buffer from its temporary address
+	 * at KERNBASE to MSGBUF_VA.
 	 */
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0,
-	    VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+#if !defined(MSGBUFSIZE) || MSGBUFSIZE <= 8192
+	/*
+	 * We use the free page(s) in front of the kernel load address.
+	 */
+	size = 8192;
+
+	/* Get physical address of the message buffer */
+	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &pa);
+
+	/* Invalidate the current mapping at KERNBASE. */
+	pmap_kremove((vaddr_t)KERNBASE, size);
+
+	/* Enter the new mapping */
+	pmap_map(MSGBUF_VA, pa, pa + size, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
-	 * XXX - sun4
-	 * Some boot programs mess up physical page 0, which
-	 * is where we want to put the msgbuf. There's some
-	 * room, so shift it over half a page.
+	 * Re-initialize the message buffer.
 	 */
-	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
+	initmsgbuf((caddr_t)MSGBUF_VA, size);
+#else /* MSGBUFSIZE */
+	{
+	struct pglist mlist;
+	vm_page_t m;
+	vaddr_t va0, va;
+
+	/*
+	 * We use the free page(s) in front of the kernel load address,
+	 * and then allocate some more.
+	 */
+	size = round_page(MSGBUFSIZE);
+
+	/* Get physical address of first 8192 chunk of the message buffer */
+	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &pa);
+
+	/* Allocate additional physical pages */
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(size - 8192,
+			    vm_first_phys, vm_first_phys+vm_num_phys,
+			    0, 0, &mlist, 1, 0) != 0)
+		panic("cpu_start: no memory for message buffer");
+
+	/* Invalidate the current mapping at KERNBASE. */
+	pmap_kremove((vaddr_t)KERNBASE, 8192);
+
+	/* Allocate virtual memory space */
+	va0 = va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("cpu_start: no virtual memory for message buffer");
+
+	/* Map first 8192 */
+	while (va < va0 + 8192) {
+		pmap_enter(pmap_kernel(), va, pa,
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pa += PAGE_SIZE;
+		va += PAGE_SIZE;
+	}
+
+	/* Map the rest of the pages */
+	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		if (va >= va0 + size)
+			panic("cpu_start: memory buffer size botch");
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa,
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		va += PAGE_SIZE;
+	}
+
+	/*
+	 * Re-initialize the message buffer.
+	 */
+	initmsgbuf((caddr_t)va0, size);
+	}
+#endif /* MSGBUFSIZE */
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -255,8 +319,8 @@ cpu_startup()
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+				   VM_PAGE_TO_PHYS(pg),
+				   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1630,8 +1694,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;

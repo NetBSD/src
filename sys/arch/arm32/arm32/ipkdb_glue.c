@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.2.16.1 2000/11/20 20:03:52 bouyer Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.2.16.2 2001/03/12 13:27:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -170,10 +170,10 @@ ipkdbfbyte(src)
 	unsigned char *src;
 {
 	pt_entry_t *ptep;
-	vm_offset_t va;
+	vaddr_t va;
 	int ch;
 
-	va = (unsigned long)src & (~PGOFSET);
+	va = (vaddr_t)src & (~PGOFSET);
 	ptep = vtopte(va);
 
 	if ((*ptep & L2_MASK) == L2_INVAL)
@@ -191,9 +191,9 @@ ipkdbsbyte(dst, ch)
 	int ch;
 {
 	pt_entry_t *ptep, pte, pteo;
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = (unsigned long)dst & (~PGOFSET);
+	va = (vaddr_t)dst & (~PGOFSET);
 	ptep = vtopte(va);
 
 	if ((*ptep & L2_MASK) == L2_INVAL)

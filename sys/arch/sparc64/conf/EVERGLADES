@@ -1,7 +1,8 @@
-# 	$NetBSD: EVERGLADES,v 1.7.2.2 2000/11/20 20:26:40 bouyer Exp $
+# 	$NetBSD: EVERGLADES,v 1.7.2.3 2001/03/12 13:29:27 bouyer Exp $
 
 include "arch/sparc64/conf/EVERGLADES32"
 
 options 	_LP64		# we're using a 64-bit compiler
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
+options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.1.2.2 2001/02/11 19:09:54 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ public:
 		void(*func)(void *, unsigned char);
 		void *arg;
 	} _cons_hook [4];
+	int _cons_parameter; // Console tab window check buttons.
 
 private:
 	static HpcMenuInterface *_instance;
@@ -170,6 +171,7 @@ protected:
 		_pref._version		= HPCBOOT_VERSION;
 		_pref._size			= sizeof(HpcMenuPreferences);
     
+		_cons_parameter = 0;
 		memset(_cons_hook, 0, sizeof(struct cons_hook_args) * 4);
 		memset(&_boot_hook, 0, sizeof(struct boot_hook_args));
 	}

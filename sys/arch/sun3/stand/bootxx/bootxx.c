@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.9 1998/09/05 15:28:06 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.9.12.1 2001/03/12 13:29:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,12 +47,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/exec.h>
 #include <machine/mon.h>
 
 #include <stand.h>
 #include "libsa.h"
+
+/*
+ * This is the address where we load the second-stage boot loader.
+ */
+#define LOADADDR	0x4000
 
 /* This determines the largest boot program we can load. */
 #define MAXBLOCKNUM	64
@@ -68,6 +71,7 @@ int     	block_count = MAXBLOCKNUM;	/* length of table */
 daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 
+void
 main()
 {
 	struct open_file	f;
@@ -105,17 +109,6 @@ copyboot(fp, addr)
 {
 	int	n, i, blknum;
 	char *buf;
-
-#ifdef	sparc
-	/*
-	 * On the sparc, the 2nd stage boot has an a.out header.
-	 * On the sun3, (by tradition) the 2nd stage boot programs
-	 * have the a.out header stripped off.  (1st stage boot
-	 * programs have the header stripped by installboot.)
-	 */
-	/* XXX - This assumes OMAGIC format! */
-	addr -= sizeof(struct exec); /* XXX */
-#endif
 
 	/* Need to use a buffer that can be mapped into DVMA space. */
 	buf = alloc(block_size);

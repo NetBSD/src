@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.65.2.3 2001/02/11 19:17:39 bouyer Exp $	*/
+/*	$NetBSD: vnode.h,v 1.65.2.4 2001/03/12 13:32:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_VNODE_H_
-#define _SYS_VNODE_H_
+#define	_SYS_VNODE_H_
 
 #include <sys/lock.h>
 #include <sys/queue.h>
@@ -85,40 +85,40 @@ LIST_HEAD(buflists, buf);
  */
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
-#define v_flag v_uvm.u_flags
-#define v_usecount v_uvm.u_obj.uo_refs
-#define v_interlock v_uvm.u_obj.vmobjlock
-#define v_numoutput v_uvm.u_nio
-	long	v_writecount;			/* reference count of writers */
-	long	v_holdcnt;			/* page & buffer references */
-	daddr_t	v_lastr;			/* last read (read-ahead) */
-	u_long	v_id;				/* capability identifier */
-	struct	mount *v_mount;			/* ptr to vfs we are in */
-	int 	(**v_op) __P((void *));		/* vnode operations vector */
+#define	v_flag		v_uvm.u_flags
+#define	v_usecount	v_uvm.u_obj.uo_refs
+#define	v_interlock	v_uvm.u_obj.vmobjlock
+#define	v_numoutput	v_uvm.u_nio
+	long		v_writecount;		/* reference count of writers */
+	long		v_holdcnt;		/* page & buffer references */
+	daddr_t		v_lastr;		/* last read (read-ahead) */
+	u_long		v_id;			/* capability identifier */
+	struct mount	*v_mount;		/* ptr to vfs we are in */
+	int		(**v_op) __P((void *));	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
-	struct	buflists v_cleanblkhd;		/* clean blocklist head */
-	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
+	struct buflists	v_cleanblkhd;		/* clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
-	enum	vtype v_type;			/* vnode type */
+	enum vtype	v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
-	struct	nqlease *v_lease;		/* Soft reference to lease */
-	daddr_t	v_lastw;			/* last write (write cluster) */
-	daddr_t	v_cstart;			/* start block of cluster */
-	daddr_t	v_lasta;			/* last allocation */
-	int	v_clen;				/* length of current cluster */
-	int	v_ralen;			/* Read-ahead length */
-	daddr_t	v_maxra;			/* last readahead block */
-	struct	lock	v_lock;			/* lock for this vnode */
-	struct	lock	v_glock;		/* getpage lock */
-	struct	lock *v_vnlock;			/* pointer to vnode lock */
-	enum	vtagtype v_tag;			/* type of underlying data */
-	void 	*v_data;			/* private data for fs */
+	struct nqlease	*v_lease;		/* Soft reference to lease */
+	daddr_t		v_lastw;		/* last write (write cluster) */
+	daddr_t		v_cstart;		/* start block of cluster */
+	daddr_t		v_lasta;		/* last allocation */
+	int		v_clen;			/* length of current cluster */
+	int		v_ralen;		/* Read-ahead length */
+	daddr_t		v_maxra;		/* last readahead block */
+	struct lock	v_lock;			/* lock for this vnode */
+	struct lock	v_glock;		/* getpage lock */
+	struct lock	*v_vnlock;		/* pointer to vnode lock */
+	enum vtagtype	v_tag;			/* type of underlying data */
+	void 		*v_data;		/* private data for fs */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -151,11 +151,11 @@ struct vnode {
 #define	VBWAIT		0x0400	/* waiting for output to complete */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
-#define VLAYER		0x2000	/* vnode is on a layer filesystem */
+#define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
-#define VDIRTY		0x8000	/* vnode possibly has dirty pages */
+#define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 
-#define VSIZENOTSET	((voff_t)-1)
+#define	VSIZENOTSET	((voff_t)-1)
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -187,7 +187,7 @@ struct vattr {
  * Flags for va_vaflags.
  */
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
-#define VA_EXCLUSIVE	0x02		/* exclusive create request */
+#define	VA_EXCLUSIVE	0x02		/* exclusive create request */
 
 /*
  * Flags for ioflag.
@@ -218,10 +218,10 @@ struct vattr {
  * defines mode word of stat structure in terms of inode formats).
  */
 extern enum vtype	iftovt_tab[];
-extern int		vttoif_tab[];
-#define IFTOVT(mode)	(iftovt_tab[((mode) & S_IFMT) >> 12])
-#define VTTOIF(indx)	(vttoif_tab[(int)(indx)])
-#define MAKEIMODE(indx, mode)	(int)(VTTOIF(indx) | (mode))
+extern const int	vttoif_tab[];
+#define	IFTOVT(mode)	(iftovt_tab[((mode) & S_IFMT) >> 12])
+#define	VTTOIF(indx)	(vttoif_tab[(int)(indx)])
+#define	MAKEIMODE(indx, mode)	(int)(VTTOIF(indx) | (mode))
 
 /*
  * Flags to various vnode functions.
@@ -235,22 +235,22 @@ extern int		vttoif_tab[];
 /*
  * Flags to various vnode operations.
  */
-#define REVOKEALL	0x0001		/* revoke: revoke all aliases */
+#define	REVOKEALL	0x0001		/* revoke: revoke all aliases */
 
-#define FSYNC_WAIT	0x0001		/* fsync: wait for completion */
-#define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
-#define FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
-#define FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+#define	FSYNC_WAIT	0x0001		/* fsync: wait for completion */
+#define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
+#define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
+#define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
 
-#define UPDATE_WAIT	0x0001		/* update: wait for completion */
-#define UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
+#define	UPDATE_WAIT	0x0001		/* update: wait for completion */
+#define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
 #define	VREF(vp)	vref(vp)
 TAILQ_HEAD(freelst, vnode);
-extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
-extern struct freelst vnode_free_list;	/* vnode free list */
+extern struct freelst	vnode_hold_list; /* free vnodes referencing buffers */
+extern struct freelst	vnode_free_list; /* vnode free list */
 extern struct simplelock vnode_free_list_slock;
 
 #ifdef DIAGNOSTIC
@@ -259,9 +259,9 @@ extern struct simplelock vnode_free_list_slock;
 #define	ilstatic static
 #endif
 
-ilstatic void holdrele __P((struct vnode *));
-ilstatic void vhold __P((struct vnode *));
-ilstatic void vref __P((struct vnode *));
+ilstatic void holdrele(struct vnode *);
+ilstatic void vhold(struct vnode *);
+ilstatic void vref(struct vnode *);
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
@@ -272,9 +272,9 @@ ilstatic void vref __P((struct vnode *));
  * decrease buf or page ref
  */
 static __inline void
-holdrele(vp)
-	struct vnode *vp;
+holdrele(struct vnode *vp)
 {
+
 	simple_lock(&vp->v_interlock);
 	vp->v_holdcnt--;
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
@@ -291,9 +291,9 @@ holdrele(vp)
  * increase buf or page ref
  */
 static __inline void
-vhold(vp)
-	struct vnode *vp;
+vhold(struct vnode *vp)
 {
+
 	simple_lock(&vp->v_interlock);
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
@@ -310,9 +310,9 @@ vhold(vp)
  * increase reference
  */
 static __inline void
-vref(vp)
-	struct vnode *vp;
+vref(struct vnode *vp)
 {
+
 	simple_lock(&vp->v_interlock);
 	vp->v_usecount++;
 	simple_unlock(&vp->v_interlock);
@@ -324,14 +324,14 @@ vref(vp)
 /*
  * Global vnode data.
  */
-extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
-extern	int desiredvnodes;		/* number of vnodes desired */
-extern	long numvnodes;			/* current number of vnodes */
-extern	time_t syncdelay;		/* max time to delay syncing data */
-extern	time_t filedelay;		/* time to delay syncing files */
-extern	time_t dirdelay;		/* time to delay syncing directories */
-extern	time_t metadelay;		/* time to delay syncing metadata */
-extern	struct vattr va_null;		/* predefined null vattr structure */
+extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
+extern int		desiredvnodes;	/* number of vnodes desired */
+extern long		numvnodes;	/* current number of vnodes */
+extern time_t		syncdelay;	/* max time to delay syncing data */
+extern time_t		filedelay;	/* time to delay syncing files */
+extern time_t		dirdelay;	/* time to delay syncing directories */
+extern time_t		metadelay;	/* time to delay syncing metadata */
+extern struct vattr	va_null;	/* predefined null vattr structure */
 
 /*
  * Macro/function to check for client cache inconsistency w.r.t. leasing.
@@ -349,36 +349,36 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
 /*
  * Flags for vdesc_flags:
  */
-#define VDESC_MAX_VPS		8
+#define	VDESC_MAX_VPS		8
 /* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
-#define VDESC_VP0_WILLRELE	0x00000001
-#define VDESC_VP1_WILLRELE	0x00000002
-#define VDESC_VP2_WILLRELE	0x00000004
-#define VDESC_VP3_WILLRELE	0x00000008
-#define VDESC_VP0_WILLUNLOCK	0x00000100
-#define VDESC_VP1_WILLUNLOCK	0x00000200
-#define VDESC_VP2_WILLUNLOCK	0x00000400
-#define VDESC_VP3_WILLUNLOCK	0x00000800
-#define VDESC_VP0_WILLPUT	0x00000101
-#define VDESC_VP1_WILLPUT	0x00000202
-#define VDESC_VP2_WILLPUT	0x00000404
-#define VDESC_VP3_WILLPUT	0x00000808
-#define VDESC_NOMAP_VPP		0x00010000
-#define VDESC_VPP_WILLRELE	0x00020000
+#define	VDESC_VP0_WILLRELE	0x00000001
+#define	VDESC_VP1_WILLRELE	0x00000002
+#define	VDESC_VP2_WILLRELE	0x00000004
+#define	VDESC_VP3_WILLRELE	0x00000008
+#define	VDESC_VP0_WILLUNLOCK	0x00000100
+#define	VDESC_VP1_WILLUNLOCK	0x00000200
+#define	VDESC_VP2_WILLUNLOCK	0x00000400
+#define	VDESC_VP3_WILLUNLOCK	0x00000800
+#define	VDESC_VP0_WILLPUT	0x00000101
+#define	VDESC_VP1_WILLPUT	0x00000202
+#define	VDESC_VP2_WILLPUT	0x00000404
+#define	VDESC_VP3_WILLPUT	0x00000808
+#define	VDESC_NOMAP_VPP		0x00010000
+#define	VDESC_VPP_WILLRELE	0x00020000
 
 /*
  * VDESC_NO_OFFSET is used to identify the end of the offset list
  * and in places where no such field exists.
  */
-#define VDESC_NO_OFFSET -1
+#define	VDESC_NO_OFFSET -1
 
 /*
  * This structure describes the vnode operation taking place.
  */
 struct vnodeop_desc {
-	int	vdesc_offset;		/* offset in vector--first for speed */
-	const char    *vdesc_name;	/* a readable name for debugging */
-	int	vdesc_flags;		/* VDESC_* flags */
+	int		vdesc_offset;	/* offset in vector--first for speed */
+	const char	*vdesc_name;	/* a readable name for debugging */
+	int		vdesc_flags;	/* VDESC_* flags */
 
 	/*
 	 * These ops are used by bypass routines to map and locate arguments.
@@ -387,28 +387,28 @@ struct vnodeop_desc {
 	 * Nameidata is useful because it has a cred in it.
 	 */
 	const int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
-	int	vdesc_vpp_offset;	/* return vpp location */
-	int	vdesc_cred_offset;	/* cred location, if any */
-	int	vdesc_proc_offset;	/* proc location, if any */
-	int	vdesc_componentname_offset; /* if any */
+	int		vdesc_vpp_offset;	/* return vpp location */
+	int		vdesc_cred_offset;	/* cred location, if any */
+	int		vdesc_proc_offset;	/* proc location, if any */
+	int		vdesc_componentname_offset; /* if any */
 	/*
 	 * Finally, we've got a list of private data (about each operation)
 	 * for each transport layer.  (Support to manage this list is not
 	 * yet part of BSD.)
 	 */
-	caddr_t	*vdesc_transports;
+	caddr_t		*vdesc_transports;
 };
 
 #ifdef _KERNEL
 /*
  * A list of all the operation descs.
  */
-extern struct vnodeop_desc *vnodeop_descs[];
+extern struct vnodeop_desc	*vnodeop_descs[];
 
 /*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
-extern struct simplelock mntvnode_slock;
+extern struct simplelock	mntvnode_slock;
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
@@ -417,11 +417,11 @@ extern struct simplelock mntvnode_slock;
  * Crays, so if you decide to port this to such a serious machine,
  * you might want to consult Intrisics.h's XtOffset{,Of,To}.
  */
-#define VOPARG_OFFSET(p_type,field) \
-        ((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
-#define VOPARG_OFFSETOF(s_type,field) \
+#define	VOPARG_OFFSET(p_type,field) \
+	((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
+#define	VOPARG_OFFSETOF(s_type,field) \
 	VOPARG_OFFSET(s_type*,field)
-#define VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
+#define	VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
 	((S_TYPE)(((char*)(STRUCT_P))+(S_OFFSET)))
 
 
@@ -429,19 +429,19 @@ extern struct simplelock mntvnode_slock;
  * This structure is used to configure the new vnodeops vector.
  */
 struct vnodeopv_entry_desc {
-	const struct vnodeop_desc *opve_op;   /* which operation this is */
-	int (*opve_impl) __P((void *));	/* code implementing this operation */
+	const struct vnodeop_desc *opve_op;	/* which operation this is */
+	int (*opve_impl)(void *);	/* code implementing this operation */
 };
 struct vnodeopv_desc {
 			/* ptr to the ptr to the vector where op should go */
-	int (***opv_desc_vector_p) __P((void *));
-	const struct vnodeopv_entry_desc *opv_desc_ops;   /* null terminated list */
+	int (***opv_desc_vector_p)(void *);
+	const struct vnodeopv_entry_desc *opv_desc_ops; /* null terminated list */
 };
 
 /*
  * A default routine which just returns an error.
  */
-int vn_default_error __P((void *));
+int vn_default_error(void *);
 
 /*
  * A generic structure.
@@ -461,14 +461,14 @@ struct vop_generic_args {
  * actually, vclean doesn't use it anymore, but nfs does,
  * for device specials and fifos.
  */
-#define VOCALL(OPSV,OFF,AP) (( *((OPSV)[(OFF)])) (AP))
+#define	VOCALL(OPSV,OFF,AP) (( *((OPSV)[(OFF)])) (AP))
 
 /*
  * This call works for vnodes in the kernel.
  */
-#define VCALL(VP,OFF,AP) VOCALL((VP)->v_op,(OFF),(AP))
-#define VDESC(OP) (& __CONCAT(OP,_desc))
-#define VOFFSET(OP) (VDESC(OP)->vdesc_offset)
+#define	VCALL(VP,OFF,AP) VOCALL((VP)->v_op,(OFF),(AP))
+#define	VDESC(OP) (& __CONCAT(OP,_desc))
+#define	VOFFSET(OP) (VDESC(OP)->vdesc_offset)
 
 /*
  * Finally, include the default set of vnode operations.
@@ -489,69 +489,67 @@ struct uio;
 struct vattr;
 struct vnode;
 
-int 	bdevvp __P((dev_t dev, struct vnode **vpp));
-int 	cdevvp __P((dev_t dev, struct vnode **vpp));
-int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
-			 int (**vops) __P((void *)), struct vnode **vpp));
-void	ungetnewvnode __P((struct vnode *));
-int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
-void	vfs_getnewfsid __P((struct mount *));
-int	speedup_syncer __P((void));
-void 	vattr_null __P((struct vattr *vap));
-int 	vcount __P((struct vnode *vp));
-void	vclean __P((struct vnode *, int, struct proc *));
-int	vfinddev __P((dev_t, enum vtype, struct vnode **));
-void	vflushbuf __P((struct vnode *vp, int sync));
-int	vflush __P((struct mount *mp, struct vnode *vp, int flags));
-void	vntblinit __P((void));
-void	vwakeup __P((struct buf *));
-void	vdevgone __P((int, int, int, enum vtype));
-int 	vget __P((struct vnode *vp, int lockflag));
-void 	vgone __P((struct vnode *vp));
-void	vgonel __P((struct vnode *vp, struct proc *p));
-int	vinvalbuf __P((struct vnode *vp, int save, struct ucred *cred,
-	    struct proc *p, int slpflag, int slptimeo));
-int	vtruncbuf __P((struct vnode *vp, daddr_t lbn,
-	    int slpflag, int slptimeo));
-void	vprint __P((char *label, struct vnode *vp));
-int	vrecycle __P((struct vnode *vp, struct simplelock *inter_lkp,
-	    struct proc *p));
-int	vn_bwrite __P((void *ap));
-int 	vn_close __P((struct vnode *vp,
-	    int flags, struct ucred *cred, struct proc *p));
-int 	vn_closefile __P((struct file *fp, struct proc *p));
-int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
-	    struct proc *p));
-int	vn_fcntl __P((struct file *fp, u_int com, caddr_t data,
-	    struct proc *p));
-int	vn_lock __P((struct vnode *vp, int flags));
-u_int	vn_setrecurse __P((struct vnode *vp));
-void	vn_restorerecurse __P((struct vnode *vp, u_int flags));
-int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
-int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
+int 	bdevvp(dev_t dev, struct vnode **vpp);
+int 	cdevvp(dev_t dev, struct vnode **vpp);
+int 	getnewvnode(enum vtagtype tag, struct mount *mp,
+			 int (**vops)(void *), struct vnode **vpp);
+void	ungetnewvnode(struct vnode *);
+int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
+void	vfs_getnewfsid(struct mount *);
+int	speedup_syncer(void);
+void 	vattr_null(struct vattr *vap);
+int 	vcount(struct vnode *vp);
+void	vclean(struct vnode *, int, struct proc *);
+int	vfinddev(dev_t, enum vtype, struct vnode **);
+void	vflushbuf(struct vnode *vp, int sync);
+int	vflush(struct mount *mp, struct vnode *vp, int flags);
+void	vntblinit(void);
+void	vwakeup(struct buf *);
+void	vdevgone(int, int, int, enum vtype);
+int 	vget(struct vnode *vp, int lockflag);
+void 	vgone(struct vnode *vp);
+void	vgonel(struct vnode *vp, struct proc *p);
+int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
+	    struct proc *p, int slpflag, int slptimeo);
+int	vtruncbuf(struct vnode *vp, daddr_t lbn,
+	    int slpflag, int slptimeo);
+void	vprint(char *label, struct vnode *vp);
+int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
+	    struct proc *p);
+int	vn_bwrite(void *ap);
+int 	vn_close(struct vnode *vp,
+	    int flags, struct ucred *cred, struct proc *p);
+int 	vn_closefile(struct file *fp, struct proc *p);
+int	vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
+int	vn_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p);
+int	vn_lock(struct vnode *vp, int flags);
+u_int	vn_setrecurse(struct vnode *vp);
+void	vn_restorerecurse(struct vnode *vp, u_int flags);
+int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
+int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, size_t *aresid, struct proc *p));
-int	vn_read __P((struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags));
-int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
-	    int *done, struct proc *p, off_t **cookies, int *ncookies));
-int	vn_poll __P((struct file *fp, int events, struct proc *p));
-int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
-void	vn_syncer_add_to_worklist __P((struct vnode *vp, int delay));
-void	vn_syncer_remove_from_worklist __P((struct vnode *vp));
-int	vn_write __P((struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags));
-int	vn_writechk __P((struct vnode *vp));
-void	vn_marktext __P((struct vnode *vp));
-int	vn_isunder __P((struct vnode *dvp, struct vnode *rvp, struct proc *p));
+	    struct ucred *cred, size_t *aresid, struct proc *p);
+int	vn_read(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
+	    int *done, struct proc *p, off_t **cookies, int *ncookies);
+int	vn_poll(struct file *fp, int events, struct proc *p);
+int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
+void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
+void	vn_syncer_remove_from_worklist(struct vnode *vp);
+int	vn_write(struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags);
+int	vn_writechk(struct vnode *vp);
+void	vn_marktext(struct vnode *vp);
+int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 struct vnode *
-	checkalias __P((struct vnode *vp, dev_t nvp_rdev, struct mount *mp));
-void 	vput __P((struct vnode *vp));
-void 	vrele __P((struct vnode *vp));
-int	vaccess __P((enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
-		     mode_t acc_mode, struct ucred *cred));
+	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
+void 	vput(struct vnode *vp);
+void 	vrele(struct vnode *vp);
+int	vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
+		     mode_t acc_mode, struct ucred *cred);
 #ifdef DDB
-void	vfs_vnode_print __P((struct vnode *, int, void (*)(const char *, ...)));
+void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 #endif /* DDB */
 #endif /* _KERNEL */
 

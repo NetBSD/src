@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.1 1997/10/14 11:16:39 mark Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.1.16.1 2001/03/12 13:27:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -48,6 +48,8 @@
 #include <machine/irqhandler.h>
 #include <arm32/dev/qmsvar.h>
 #include <arm32/iomd/iomdvar.h>
+
+extern int iomd_found;
 
 #define TIMER1_COUNT 40000		/* 50Hz */
 
@@ -121,6 +123,8 @@ qms_iomd_intenable(sc, enable)
 void
 qms_console_freeze()
 {
+	if (!iomd_found) return;
+
 	/* Middle mouse button freezes the display while active */
 	while ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_MIDDLE) == 0);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.14 1999/04/05 05:48:12 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.14.8.1 2001/03/12 13:27:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,13 +100,11 @@ int		loadblocknums_passthru __P((char *, int, unsigned long));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
-extern	char *__progname;
-
 static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: %s [-n] [-v] -b blkno boot proto dev\n", __progname);
+	    "usage: %s [-n] [-v] -b blkno boot proto dev\n", getprogname());
 	exit(1);
 }
 

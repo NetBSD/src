@@ -1,4 +1,4 @@
-/* $NetBSD: printf.s,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: printf.s,v 1.3.8.1 2001/03/12 13:27:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,39 +40,37 @@
  * printf calling exec's RawDoFmt
  * Beware! You have to explicitly use %ld etc. for 32bit integers!
  */
+#include <machine/asm.h>
 	.text
-	.globl	_printf
-	.globl	_putchar, _SysBase
-
+	.even
 Lputch:
-	movl	d0,sp@-
-	bsr	_putchar
-	addql	#4,sp
+	movl	%d0,%sp@-
+	bsr	_C_LABEL(putchar)
+	addql	#4,%sp
 	rts
 
-_printf:
-	movml	#0x0032,sp@-
-	lea	pc@(Lputch:w),a2
-	lea	sp@(20),a1
-	movl	sp@(16),a0
-	movl	pc@(_SysBase:w),a6
-	jsr	a6@(-0x20a)
-	movml	sp@+, #0x4c00
+ENTRY_NOPROFILE(printf)
+	movml	#0x0032,%sp@-
+	lea	%pc@(Lputch:w),%a2
+	lea	%sp@(20),%a1
+	movl	%sp@(16),%a0
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x20a)
+	movml	%sp@+, #0x4c00
 	rts
 #if 0
 Lstorech:
-	movb	d0, a3@+
+	movb	%d0, %a3@+
 	rts
 
-	.globl _sprintf
-_sprintf:
-	movml	#0x0032,sp@-
-	movl	sp@(16),a3
-	lea	pc@(Lstorech:w),a2
-	lea	sp@(24),a1
-	movl	sp@(20),a0
-	movl	pc@(_SysBase:w),a6
-	jsr	a6@(-0x20a)
-	movml	sp@+, #0x4c00
+ENTRY_NOPROFILE(sprintf)
+	movml	#0x0032,%sp@-
+	movl	%sp@(16),%a3
+	lea	%pc@(Lstorech:w),%a2
+	lea	%sp@(24),%a1
+	movl	%sp@(20),%a0
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x20a)
+	movml	%sp@+, #0x4c00
 	rts
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5.2.2 2000/11/22 16:00:40 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5.2.3 2001/03/12 13:29:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -184,14 +184,19 @@ whichType(part)
 		if ((*s >= 'a') && (*s <= 'z'))
 			*s = (*s - 'a' + 'A');
 
-	if (strcmp(PART_TYPE_DRIVER, typestr) == 0 ||
+	if (strncmp(PART_TYPE_DRIVER, typestr, strlen(PART_TYPE_DRIVER)) == 0 ||
 	    strcmp(PART_TYPE_DRIVER43, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVERATA, typestr) == 0 ||
 	    strcmp(PART_TYPE_DRIVERIOKIT, typestr) == 0 ||
+	    strcmp(PART_TYPE_FWDRIVER, typestr) == 0 ||
 	    strcmp(PART_TYPE_FWB_COMPONENT, typestr) == 0 ||
 	    strcmp(PART_TYPE_PARTMAP, typestr) == 0 ||
 	    strcmp(PART_TYPE_PATCHES, typestr) == 0)
 		type = 0;
+	else if (strcmp(PART_TYPE_NBSD_PPCBOOT, typestr) == 0)
+		type = ROOT_PART;
+	else if (strcmp(PART_TYPE_NETBSD, typestr) == 0)
+		type = UFS_PART;
 	else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
 		/* unix part, swap, root, usr */
 		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
@@ -258,6 +263,10 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
 			setpartition(part + i, &lp->d_partitions[1], FS_SWAP);
 			if (*maxslot < 1)
 				*maxslot = 1;
+		} else if (type == HFS_PART) {
+			setpartition(part + i, &lp->d_partitions[3], FS_HFS);
+			if (*maxslot < 3)
+				*maxslot = 3;
 		} else
 			printf("disksubr.c: can't do type %d\n", type);
 
@@ -328,6 +337,7 @@ read_mac_label(dev, strat, lp, osdep)
 	if (getNamedType(part, NUM_PARTS, lp, UFS_PART, 0, &maxslot))
 		getNamedType(part, NUM_PARTS, lp, UFS_PART, -1, &maxslot);
 	getNamedType(part, NUM_PARTS, lp, SWAP_PART, -1, &maxslot);
+	getNamedType(part, NUM_PARTS, lp, HFS_PART, -1, &maxslot);
 
 	/* Now get as many of the rest of the partitions as we can */
 	for (i = 0; i < NUM_PARTS; i++) {
@@ -665,41 +675,4 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return 0;
-}
-
-/*
- * This is called by main to set dumplo and dumpsize.
- */
-void
-cpu_dumpconf()
-{
-	int nblks;		/* size of dump device */
-	int skip;
-	int maj;
-
-	if (dumpdev == NODEV)
-		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
-
-	dumpsize = physmem;
-
-	/* Skip enough blocks at start of disk to preserve an eventual disklabel. */
-	skip = LABELSECTOR + 1;
-	skip += ctod(1) - 1;
-	skip = ctod(dtoc(skip));
-	if (dumplo < skip)
-		dumplo = skip;
-
-	/* Put dump at end of partition */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
 }

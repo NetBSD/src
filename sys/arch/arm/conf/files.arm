@@ -1,0 +1,67 @@
+#	$NetBSD: files.arm,v 1.6.2.2 2001/03/12 13:27:21 bouyer Exp $
+
+# temporary define to allow easy moving to ../arch/arm/arm32
+defopt	ARM32
+
+# What mode are we running in?  These are mutually exclusive for now.
+defopt	opt_progmode.h	PROG26 PROG32
+# CPU types
+defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3 : PROG26
+defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
+			CPU_SA1110 : PROG32
+
+# Floating point emulator
+defopt	ARMFPE
+
+# MI console support
+file	dev/cons.c
+
+# generic networking files
+file	arch/arm/arm/in_cksum_arm.c		inet
+file	netinet/in4_cksum.c			inet
+file	netns/ns_cksum.c			ns
+
+# DDB
+file	arch/arm/arm/db_disasm.c		ddb
+file	arch/arm/arm32/db_interface.c		ddb & arm32
+file	arch/arm/arm32/db_trace.c		ddb & arm32
+file	arch/arm/arm32/db_machdep.c		ddb & arm32
+
+
+# mainbus files
+device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach	mainbus at root
+file	arch/arm/mainbus/mainbus.c		mainbus & arm32
+file	arch/arm/mainbus/mainbus_io.c		mainbus & arm32
+file	arch/arm/mainbus/mainbus_io_asm.S	mainbus & arm32
+
+device	cpu { }
+attach	cpu at mainbus
+file	arch/arm/mainbus/cpu.c			cpu & arm32
+
+# files related to debugging
+file	arch/arm/arm/disassem.c
+
+file	arch/arm/arm/arm_machdep.c
+file	arch/arm/arm/compat_13_machdep.c	compat_13
+file	arch/arm/arm/process_machdep.c
+file	arch/arm/arm/sig_machdep.c
+file	arch/arm/arm/sigcode.S
+file	arch/arm/arm/undefined.c
+file	arch/arm/arm/vm_machdep_arm.c
+
+file	arch/arm/arm/disksubr.c			disk
+file	arch/arm/arm/disksubr_acorn.c		disk
+file	arch/arm/arm/disksubr_mbr.c		disk
+
+# files common to arm32 implementations
+file	arch/arm/arm32/ast.c			arm32
+file	arch/arm/arm32/pmap.c			arm32
+file	arch/arm/arm32/syscall.c		arm32
+file	arch/arm/arm32/sys_machdep.c		arm32
+
+# arm32 library functions
+file	arch/arm/arm32/strstr.c			arm32
+file	arch/arm/arm32/bcopy_page.S		arm32
+file	arch/arm/arm32/bcopyinout.S		arm32
+file	arch/arm/arm32/copystr.S		arm32

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.25.2.4 2001/02/11 19:11:03 bouyer Exp $
+#	$NetBSD: files.macppc,v 1.25.2.5 2001/03/12 13:29:00 bouyer Exp $
 #
 # macppc-specific configuration info
 
@@ -67,8 +67,8 @@ major {ofdisk = 0}
 #
 # Machine-independent I2O drivers
 #
-
 include "dev/i2o/files.i2o"
+major {ld = 13}
 
 #
 # System bus types
@@ -187,6 +187,11 @@ file arch/macppc/dev/wdc_obio.c			wdc_obio
 device awacs: audio, auconv, mulaw
 attach awacs at obio
 file arch/macppc/dev/awacs.c			awacs
+
+device gpio {}
+attach gpio at obio with gpio_obio
+attach gpio at gpio with gpio_gpio
+file arch/macppc/dev/gpio.c			gpio
 
 define grfdev {}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94.2.3 2001/02/11 19:12:21 bouyer Exp $ */
+/*	$NetBSD: cpu.c,v 1.94.2.4 2001/03/12 13:29:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -65,6 +65,7 @@
 #include <machine/reg.h>
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 
 #include <machine/oldmon.h>
@@ -85,9 +86,10 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
 
-int	ncpu;
+int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
 #define CPU_MID2CPUNO(mid) ((mid) - 8)
+static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
 /* The CPU configuration driver. */
@@ -198,7 +200,7 @@ alloc_cpuinfo()
 		va += NBPG;
 	}
 
-	bzero((void *)cpi, sizeof(struct cpu_info));
+	bzero((void *)cpi, sz);
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
 	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
 
@@ -268,7 +270,6 @@ cpu_attach(parent, self, aux)
 	void *aux;
 {
 static	struct cpu_softc *bootcpu;
-static	int cpu_instance;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct cpu_info *cpi;
@@ -320,7 +321,11 @@ static	int cpu_instance;
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 		cpi->ci_self = cpi;
 		cpi->curpcb = cpi->idle_u;
-		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
+		cpi->curpcb->pcb_wim = 1;
+		/*
+		 * Note: `idle_u' and `eintstack' are set in alloc_cpuinfo().
+		 * The %wim register will be initialized in cpu_hatch().
+		 */
 		getcpuinfo(cpi, node);
 #else
 		printf(": no SMP support in kernel\n");
@@ -336,6 +341,7 @@ static	int cpu_instance;
 	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
+	simple_lock_init(&cpi->msg.lock);
 
 	if (ncpu > 1)
 		printf(": mid %d", mid);
@@ -361,21 +367,24 @@ static	int cpu_instance;
 
 	cache_print(sc);
 
-	if (cpu_instance == ncpu) {
+	if (ncpu > 1 && cpu_instance == ncpu) {
+		int n;
 		/*
-		 * Install MP cache flush functions on boot cpu, unless
-		 * the single-processor versions are no-ops.
+		 * Install MP cache flush functions, unless the
+		 * single-processor versions are no-ops.
 		 */
-		if (cpuinfo.cache_flush != noop_cache_flush)
-			cpuinfo.cache_flush = smp_cache_flush;
-		if (cpuinfo.vcache_flush_page != noop_vcache_flush_page)
-			cpuinfo.vcache_flush_page = smp_vcache_flush_page;
-		if (cpuinfo.vcache_flush_segment != noop_vcache_flush_segment)
-			cpuinfo.vcache_flush_segment = smp_vcache_flush_segment;
-		if (cpuinfo.vcache_flush_region != noop_vcache_flush_region)
-			cpuinfo.vcache_flush_region = smp_vcache_flush_region;
-		if (cpuinfo.vcache_flush_context != noop_vcache_flush_context)
-			cpuinfo.vcache_flush_context = smp_vcache_flush_context;
+		for (n = 0; n < ncpu; n++) {
+			struct cpu_info *cpi = cpus[n];
+			if (cpi == NULL)
+				continue;
+#define SET_CACHE_FUNC(x) \
+	if (cpi->x != __CONCAT(noop_,x)) cpi->x = __CONCAT(smp_,x)
+			SET_CACHE_FUNC(cache_flush);
+			SET_CACHE_FUNC(vcache_flush_page);
+			SET_CACHE_FUNC(vcache_flush_segment);
+			SET_CACHE_FUNC(vcache_flush_region);
+			SET_CACHE_FUNC(vcache_flush_context);
+		}
 	}
 #endif /* MULTIPROCESSOR */
 }
@@ -394,6 +403,12 @@ cpu_boot_secondary_processors()
 	 * XXX semaphore that all those secondary processors are anxiously
 	 * XXX waiting on.
 	 */
+
+	if (cpu_instance != ncpu) {
+		printf("NOTICE: only %d out of %d CPUs were configured\n",
+			cpu_instance, ncpu);
+		return;
+	}
 }
 #endif /* MULTIPROCESSOR */
 
@@ -434,10 +449,10 @@ void
 cpu_spinup(sc)
 	struct cpu_softc *sc;
 {
-#if defined(SUN4M)
+#if defined(MULTIPROCESSOR)
 	struct cpu_info *cpi = sc->sc_cpuinfo;
 	int n;
-extern void cpu_hatch __P((void));
+extern void cpu_hatch __P((void));	/* in locore.s */
 	caddr_t pc = (caddr_t)cpu_hatch;
 	struct openprom_addr oa;
 
@@ -480,14 +495,16 @@ extern void cpu_hatch __P((void));
 void
 mp_pause_cpus()
 {
-#ifdef SUN4M
+#if defined(MULTIPROCESSOR)
 	int n;
+
+	if (cpus == NULL)
+		return;
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
-
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		raise_ipi(cpi);
@@ -498,8 +515,11 @@ mp_pause_cpus()
 void
 mp_resume_cpus()
 {
-#ifdef SUN4M
+#if defined(MULTIPROCESSOR)
 	int n;
+
+	if (cpus == NULL)
+		return;
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
@@ -748,10 +768,15 @@ cpumatch_sun4(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
+	extern struct idprom *idprom;
+	/*
+	 * XXX - for e.g. myetheraddr(), which in sun4 can be called
+	 *	 before the clock attaches.
+	 */
+	idprom = &sun4_idprom_store;
 
 	getidprom(&sun4_idprom_store, sizeof(struct idprom));
 	switch (sun4_idprom_store.id_machine) {
-	/* XXX: don't know about Sun4 types */
 	case ID_SUN4_100:
 		sc->cpu_type = CPUTYP_4_100;
 		sc->classlvl = 100;
@@ -1507,24 +1532,14 @@ getcpuinfo(sc, node)
 		MPCOPY(copy_page);
 #undef MPCOPY
 		/*
-		 * On the boot cpu we use the single-processor cache flush
-		 * functions until all CPUs are initialized.
+		 * Use the single-processor cache flush functions until
+		 * all CPUs are initialized.
 		 */
-		if (sc->master) {
-			sc->cache_flush = sc->sp_cache_flush;
-			sc->vcache_flush_page = sc->sp_vcache_flush_page;
-			sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
-			sc->vcache_flush_region = sc->sp_vcache_flush_region;
-			sc->vcache_flush_context = sc->sp_vcache_flush_context;
-		} else {
-#if defined(MULTIPROCESSOR)
-			sc->cache_flush = smp_cache_flush;
-			sc->vcache_flush_page = smp_vcache_flush_page;
-			sc->vcache_flush_segment = smp_vcache_flush_segment;
-			sc->vcache_flush_region = smp_vcache_flush_region;
-			sc->vcache_flush_context = smp_vcache_flush_context;
-#endif
-		}
+		sc->cache_flush = sc->sp_cache_flush;
+		sc->vcache_flush_page = sc->sp_vcache_flush_page;
+		sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
+		sc->vcache_flush_region = sc->sp_vcache_flush_region;
+		sc->vcache_flush_context = sc->sp_vcache_flush_context;
 		return;
 	}
 	panic("Out of CPUs");

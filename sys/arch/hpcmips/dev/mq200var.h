@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.1.4.2 2000/11/20 20:46:04 bouyer Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.1.4.3 2001/03/12 13:28:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -35,8 +35,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 struct mq200_softc {
 	struct device		sc_dev;
@@ -46,6 +46,17 @@ struct mq200_softc {
 	void			*sc_powerhook;	/* power management hook */
 	config_hook_tag		sc_hardpowerhook;
 	int			sc_powerstate;
+#define	PWRSTAT_SUSPEND		(1<<0)
+#define	PWRSTAT_VIDEOOFF	(1<<1)
+#define	PWRSTAT_LCD		(1<<2)
+#define	PWRSTAT_BACKLIGHT	(1<<3)
+#define PWRSTAT_ALL		(0xffffffff)
+	int			sc_brightness;
+	int			sc_brightness_save;
+	int			sc_max_brightness;
+	int			sc_contrast;
+	int			sc_max_contrast;
+	int			sc_mq200pwstate; /* mq200 power state */
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
 };

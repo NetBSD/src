@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.2.2.2 2000/11/20 20:47:51 bouyer Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.2.2.3 2001/03/12 13:28:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -41,7 +41,7 @@
 #include <hpcmips/dev/mq200var.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <hpcmips/dev/bivideovar.h>     
+#include <dev/hpc/bivideovar.h>     
 #endif
 
 

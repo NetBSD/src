@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.1 1998/09/30 21:36:23 erh Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.1.12.1 2001/03/12 13:29:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,12 @@
 
 #ifndef _ALPHA_LINUX_ERRNO_H
 #define _ALPHA_LINUX_ERRNO_H
+
+/*
+ * Linux/Alpha returns negative errors to userland  
+ * The libc makes the errno positive.  
+ */
+#define LINUX_SCERR_SIGN -
 
 /* Linux switches EDEADLK and EAGAIN. */
 #undef	LINUX_EDEADLK

@@ -40,8 +40,8 @@ CPP=clmips.exe
 # PROP Output_Dir "WMIPSRel"
 # PROP Intermediate_Dir "WMIPSRel"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /ML /W3 /O2 /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
-# ADD CPP /nologo /ML /W3 /O2 %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" %%% CPPDEFS %%% /QMRWCE /c
+# ADD BASE CPP /nologo /ML /W3 /O2 /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
+# ADD CPP /nologo /ML /W3 /O2 %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" %%% CPPDEFS %%% /QMRWCE /c
 # SUBTRACT CPP /YX
 BSC32=bscmake.exe
 # ADD BASE BSC32 /NOLOGO
@@ -62,8 +62,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "WMIPSDbg"
 # PROP Intermediate_Dir "WMIPSDbg"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MLd /W3 /Zi /Od /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
-# ADD CPP /nologo /MLd /W3 /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" %%% CPPDEFS %%% /QMRWCE /c
+# ADD BASE CPP /nologo /MLd /W3 /Zi /Od /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
+# ADD CPP /nologo /MLd /W3 /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" %%% CPPDEFS %%% /QMRWCE /c
 # SUBTRACT CPP /YX
 BSC32=bscmake.exe
 # ADD BASE BSC32 /NOLOGO

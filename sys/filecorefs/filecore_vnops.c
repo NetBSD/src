@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.8.2.3 2001/02/11 19:16:40 bouyer Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.8.2.4 2001/03/12 13:31:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -167,7 +167,7 @@ filecore_read(v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
-			vsize_t bytelen = min(ip->i_size - uio->uio_offset,
+			vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
 					      uio->uio_resid);
 
 			if (bytelen == 0) {
@@ -187,8 +187,7 @@ filecore_read(v)
 	do {
 		lbn = lblkno(fcmp, uio->uio_offset);
 		on = blkoff(fcmp, uio->uio_offset);
-		n = min((u_int)(blksize(fcmp, ip, lbn) - on),
-			uio->uio_resid);
+		n = MIN(blksize(fcmp, ip, lbn) - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
@@ -199,7 +198,7 @@ filecore_read(v)
 		if (ip->i_dirent.attr & FILECORE_ATTR_DIR) {
 			error = filecore_dbread(ip, &bp);
 			on = uio->uio_offset;
-			n = min(FILECORE_DIR_SIZE-on, uio->uio_resid);
+			n = MIN(FILECORE_DIR_SIZE - on, uio->uio_resid);
 			size = FILECORE_DIR_SIZE;
 		} else {
 			if (vp->v_lastr + 1 == lbn &&
@@ -220,7 +219,7 @@ filecore_read(v)
 			}
 		}
 		vp->v_lastr = lbn;
-		n = min(n, size - bp->b_resid);
+		n = MIN(n, size - bp->b_resid);
 		if (error) {
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vn1\n", bp);

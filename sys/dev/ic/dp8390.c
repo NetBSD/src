@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.27.2.3 2001/01/05 17:35:35 bouyer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.27.2.4 2001/03/12 13:30:17 bouyer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -80,21 +80,29 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
 
-int	dp8390_mediachange __P((struct ifnet *));
-void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
-
 int	dp8390_debug = 0;
+
+/*
+ * Standard media init routine for the dp8390.
+ */
+void
+dp8390_media_init(struct dp8390_softc *sc)
+{
+
+	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+}
 
 /*
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc, media, nmedia, defmedia)
+dp8390_config(sc)
 	struct dp8390_softc *sc;
-	int *media, nmedia, defmedia;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	int i, rv;
+	int rv;
 
 	rv = 1;
 
@@ -134,16 +142,12 @@ dp8390_config(sc, media, nmedia, defmedia)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* Print additional info when attached. */
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
+
 	/* Initialize media goo. */
-	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
-	if (media != NULL) {
-		for (i = 0; i < nmedia; i++)
-			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
-		ifmedia_set(&sc->sc_media, defmedia);
-	} else {
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-	}
+	(*sc->sc_media_init)(sc);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -158,10 +162,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
-
-	/* Print additional info when attached. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
 
 	/* The attach is successful. */
 	sc->sc_flags |= DP8390_ATTACHED;
@@ -245,6 +245,9 @@ dp8390_stop(sc)
 	while (((NIC_GET(regt, regh,
 	    ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
 		DELAY(1);
+
+	if (sc->stop_card != NULL)
+		(*sc->stop_card)(sc);
 }
 
 /*
@@ -1327,7 +1330,10 @@ dp8390_detach(sc, flags)
 	/* dp8390_disable() checks sc->sc_enabled */
 	dp8390_disable(sc);
 
-	/* Delete all media. */
+	if (sc->sc_media_fini != NULL)
+		(*sc->sc_media_fini)(sc);
+
+	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 #if NRND > 0

@@ -1,14 +1,19 @@
+/*	$NetBSD: README,v 1.1.2.3 2001/03/12 13:29:16 bouyer Exp $	*/
+
 Overview
 
 This is a port to the Motorola "SandPoint" evaluation system.  The
 SandPoint is the successor to the "Yellowknife" system.  The system
 can be fitted with different PMCs (Processor Mezzanine Cards).  This
 port is specifically for the rev X2 motherboard system with the PPC
-8240 PMC rev X4 installed.
+8240 PMC rev X4 installed.  It also works with the Altimus X2 PMC
+(MPC7400 with MPC107).
 
 All references (cf) listed here are for the MPC8240 Integrated Processor
 User's Manual.
 
+Information on the Sandpoint can be found on Motorola's web site:
+http://www.mot.com/SPS/PowerPC/teksupport/refdesigns/sandpoint.html
 
 
 SandPoint Hardware Configuration
@@ -74,13 +79,13 @@ This is a host-mode port, so the inbound and output translation windows
 are unused.
 
 The Embedded Utilities Memory Block (EUMB) is set to be 1M below the end
-of the PCI memory space: FCF0 0000, so EUMBBAR is FCF0 0000, giving us
+of the PCI memory space: FC00 0000, so EUMBBAR is FC00 0000, giving us
 
-Message unit (I2O) base	: FCF0 0000	(cf. 10.2, 10.2.3, 10.3)
-DMA base		: FCF0 1000	(cf. 9.2)
-ATU base		: FCF0 2000	(cf. 4.3.3)
-I2C base		: FCF0 3000	(cf. 11.3)
-EPIC base		: FCF4 0000	(cf. 12.2)
+Message unit (I2O) base	: FC00 0000	(cf. 10.2, 10.2.3, 10.3)
+DMA base		: FC00 1000	(cf. 9.2)
+ATU base		: FC00 2000	(cf. 4.3.3)
+I2C base		: FC00 3000	(cf. 11.3)
+EPIC base		: FC04 0000	(cf. 12.2)
 
 
 
@@ -98,7 +103,7 @@ settings (for console rate, auto boot, bootp, etc), and that might
 be provided at some point, but that's not available as of this
 writing.
 
-So, the kernel is hard-coded to boot w/ 64MB for now.
+So, the kernel is hard-coded to boot w/ 32MB for now.
 
 
 

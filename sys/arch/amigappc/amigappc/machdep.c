@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6.2.2 2000/11/20 19:59:35 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.6.2.3 2001/03/12 13:27:13 bouyer Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,6 +73,10 @@ extern struct user *proc0paddr;
 char cpu_model[80];
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
+
+/* XXX: should be in extintr.c */
+volatile int cpl, ipending, astpending, tickspending;
+int imask[NIPL];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -331,6 +335,13 @@ mem_regions(memp, availp)
 	*availp = PPCavail;
 }
 
+
+/* XXX */
+void
+do_pending_int(void)
+{
+	asm volatile ("sync");
+}
 
 
 /*
@@ -616,7 +627,8 @@ identifycpu()
 {
 	register int pvr, hid1;
 	char *mach, *pup, *cpu;
-
+	const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
+			30, 55, 40, 50, 15, 60, 35, 0};
 	const char *p5type_p = (const char *)0xf00010;
 	int cpuclock, busclock;
 
@@ -624,11 +636,17 @@ identifycpu()
 	if (is_a4000()) {
 		mach = "Amiga 4000";
 	}
+	else if (is_a3000()) {
+		mach = "Amiga 3000";
+	}
 	else {
 		mach = "Amiga 1200";
 	}
+
+	asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
+
 	/* XXX removethis */printf("p5serial = %8s\n", p5type_p);
-	switch(p5type_p[0]) {
+	switch (p5type_p[0]) {
 	case 'D':
 		pup = "[PowerUP]";
 		break;
@@ -646,30 +664,25 @@ identifycpu()
 		break;
 	}
 
-	switch(p5type_p[1]) {
+	switch (p5type_p[1]) {
 	case 'A':
-		cpuclock = 150;
 		busclock = 60000000/4;
+		cpuclock = 600;
 		break;
-	case 'B':
-		cpuclock = 180;
-		busclock = 66000000/4;
-		break;
-	case 'C':
-		cpuclock = 200;
-		busclock = 66000000/4;
-		break;
-	case 'D':
-		cpuclock = 233;
-		busclock = 66000000/4;
-		break;
+	/* case B, C, D */
 	default:
-		cpuclock = 0;
+		busclock = 66000000/4;
+		cpuclock = 666;
 		break;
 	}
+	/*
+	 * compute cpuclock based on PLL configuration in HID1
+	 * XXX: based on 604e, should work for 603e
+	 */
+	hid1 = hid1>>28 & 0xf;
+	cpuclock = cpuclock*pll[hid1]/100;
 
 	/* find CPU type */
-	asm ("mfpvr %0" : "=r"(pvr));
 	switch (pvr >> 16) {
 	case 1:
 		cpu = "601";
@@ -693,6 +706,7 @@ identifycpu()
 		cpu = "750";
 		break;
 	case 9:
+	case 10:
 		cpu = "604e";
 		break;
 	case 12:
@@ -707,8 +721,8 @@ identifycpu()
 	}
 
 	snprintf(cpu_model, sizeof(cpu_model), 
-	    "%s %s (%s rev.%x %d MHz, busclk %d kHz)",
-	    mach, pup, cpu, pvr & 0xffff, cpuclock, busclock / 1000);
+		"%s %s (%s v%d.%d %d MHz, busclk %d kHz)", mach, pup, cpu,
+		pvr>>8 & 0xff, pvr & 0xff, cpuclock, busclock / 1000);
 	printf("%s\n", cpu_model);
 }
 
@@ -823,11 +837,6 @@ cpu_startup()
 	bufinit();
 }
 
-void
-cpu_dumpconf()
-{
-}
-
 /*
  * consinit
  * Initialize system console.
@@ -841,80 +850,6 @@ consinit()
 	*/
 	cninit();
 }
-
-/*
- * Set set up registers on exec.
- */
-void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-{
-	struct trapframe *tf = trapframe(p);
-	struct ps_strings arginfo;
-	paddr_t pa;
-
-	bzero(tf, sizeof *tf);
-	tf->fixreg[1] = -roundup(-stack + 8, 16);
-
-	/*
-	 * XXX Machine-independent code has already copied arguments and
-	 * XXX environment to userland.  Get them back here
-	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof(arginfo));
-
-	/*
-	 * Set up arguments for _start():
-	 *      _start(argc, argv, envp, obj, cleanup, ps_strings);
-	 * Notes:
-	 *      - obj and cleanup are the auxilliary and termination
-	 *        vectors.  They are fixed up by ld.elf_so.
-	 *      - ps_strings is a NetBSD extention, and will be
-	 *        ignored by executables which are strictly
-	 *        compliant with the SVR4 ABI.
-	 *
-	 * XXX We have to set both regs and retval here due to different
-	 * XXX calling convention in trap.c and init_main.c.
-	 */
-	tf->fixreg[3] = arginfo.ps_nargvstr;
-	tf->fixreg[4] = (register_t)arginfo.ps_argvstr;
-	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
-	tf->fixreg[6] = 0;			/* auxillary vector */
-	tf->fixreg[7] = 0;			/* termination vector */
-	tf->fixreg[8] = (register_t)PS_STRINGS;	/* NetBSD extension */
-
-	tf->srr0 = pack->ep_entry;
-	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
-	p->p_addr->u_pcb.pcb_flags = 0;
-}
-
-/*
- * Machine dependent system variables
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1) {
-		return ENOTDIR;
-	}
-
-	switch (name[0]) {
-	case CPU_CACHELINE:
-		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto
@@ -935,4 +870,30 @@ lcsplx(ipl)
 	int ipl;
 {
 	return spllower(ipl);   /* XXX */
+}
+
+/*
+ * Convert kernel VA to physical address
+ */
+int
+kvtop(addr)
+	caddr_t addr;
+{
+	vaddr_t va;
+	paddr_t pa;
+	int off;
+	extern char end[];
+
+	if (addr < end)
+		return (int)addr;
+
+	va = trunc_page((vaddr_t)addr);
+	off = (int)addr - va;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
+		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
+		return (int)addr;
+	}
+
+	return((int)pa + off);
 }

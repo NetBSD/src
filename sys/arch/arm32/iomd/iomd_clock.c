@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.19.2.3 2000/12/13 15:49:22 bouyer Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.19.2.4 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -328,7 +328,7 @@ delay(n)
 
 	if (n == 0) return;
 	while (--n > 0) {
-		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
+		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
 		else
 			for (i = 8; --i;);

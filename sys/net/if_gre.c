@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.8.2.5 2001/01/18 09:23:50 bouyer Exp $ */
+/*	$NetBSD: if_gre.c,v 1.8.2.6 2001/03/12 13:31:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (ifp->if_bpf) {
 		/* see comment of other if_foo.c files */
 		struct mbuf m0;
-		u_int af = dst->sa_family;
+		u_int32_t af = dst->sa_family;
 
 		m0.m_next = m;
 		m0.m_len = 4;

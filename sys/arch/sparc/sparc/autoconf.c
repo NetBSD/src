@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.125.2.3 2001/02/11 19:12:19 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125.2.4 2001/03/12 13:29:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -214,6 +214,17 @@ bootstrap()
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
 
+#if !defined(MSGBUFSIZE) || MSGBUFSIZE == 8192
+	/*
+	 * Now that the kernel map has been set up, we can enable
+	 * the message buffer at the first physical page in the
+	 * memory bank where we were loaded. There are 8192
+	 * bytes available for the buffer at this location (see the
+	 * comment in locore.s at the top of the .text segment).
+	 */
+	initmsgbuf((caddr_t)KERNBASE, 8192);
+#endif
+
 	/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 #ifdef DDB
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
@@ -319,8 +330,7 @@ bootstrap()
 		/* Map Interrupt Enable Register */
 		pmap_enter(pmap_kernel(), INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}

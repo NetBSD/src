@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.9.2.3 2001/01/05 17:33:53 bouyer Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.9.2.4 2001/03/12 13:27:15 bouyer Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -144,6 +144,7 @@ mcclock_attach(parent, self, aux)
 	case NEC_R94:
 	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_JC94:
 		csc->sc_init = mcclock_init_rd94;
 		csc->sc_data = &mcclockdata_rd94;
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);

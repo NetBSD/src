@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.52.2.6 2001/02/11 19:16:13 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.52.2.7 2001/03/12 13:31:21 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -67,6 +67,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
+#define	PCMCIA_VENDOR_DLINK_2	0x0143	/* D-Link */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
@@ -165,6 +166,11 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* D-Link Products */
+#define	PCMCIA_CIS_DLINK_2_DMF560TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_2_DMF560TX	0xc0ab
+#define	PCMCIA_STR_DLINK_2_DMF560TX	"D-Link DMF-650TX"
 
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
@@ -492,6 +498,7 @@
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -618,3 +625,6 @@
 #define	PCMCIA_CIS_NTT_ME_WLAN	{ "NTT-ME", "11Mbps Wireless LAN PC Card", NULL, NULL }
 #define	PCMCIA_PRODUCT_NTT_ME_WLAN	-1
 #define	PCMCIA_STR_NTT_ME_WLAN	"NTT-ME 11Mbps Wireless LAN PC Card"
+#define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
+#define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
+#define	PCMCIA_STR_SYNERGY21_S21810	"Synergy 21 S21810+ NE2000 Compatible Card"

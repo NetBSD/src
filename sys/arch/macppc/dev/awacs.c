@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.2.2.4 2001/02/11 19:11:04 bouyer Exp $	*/
+/*	$NetBSD: awacs.c,v 1.2.2.5 2001/03/12 13:29:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -186,7 +186,8 @@ struct audio_device awacs_device = {
 /* cc0 */
 #define AWACS_DEFAULT_CD_GAIN	0x000000bb
 #define AWACS_INPUT_CD		0x00000200
-#define AWACS_INPUT_MIC		0x00000400
+#define AWACS_INPUT_LINE	0x00000400
+#define AWACS_INPUT_MICROPHONE	0x00000800
 #define AWACS_INPUT_MASK	0x00000e00
 
 /* cc1 */
@@ -258,14 +259,21 @@ awacs_attach(parent, self, aux)
 	awacs_set_speaker_volume(sc, 80, 80);
 
 	/* Set loopback (for CD?) */
-	sc->sc_codecctl1 |= 0x440;
+	/* sc->sc_codecctl1 |= 0x440; */
+	sc->sc_codecctl1 |= 0x40;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
+	/* default output to speakers */
 	sc->sc_output_mask = 1 << 0;
-
 	sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
 	sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
 	awacs_write_codec(sc, sc->sc_codecctl1);
+
+	/* default input from CD */
+	sc->sc_record_source = 1 << 0;
+	sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
+	sc->sc_codecctl0 |= AWACS_INPUT_CD;
+	awacs_write_codec(sc, sc->sc_codecctl0);
 
 	/* Enable interrupts and looping mode. */
 	/* XXX ... */
@@ -550,6 +558,10 @@ enum {
 	AWACS_VOL_HEADPHONE,
 	AWACS_OUTPUT_CLASS,
 	AWACS_MONITOR_CLASS,
+	AWACS_INPUT_SELECT,
+	AWACS_VOL_INPUT,
+	AWACS_INPUT_CLASS,
+	AWACS_RECORD_CLASS,
 	AWACS_ENUM_LAST
 };
 
@@ -582,7 +594,7 @@ awacs_set_port(h, mc)
 			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
 			awacs_write_codec(sc, sc->sc_codecctl1);
 			break;
-		default: /* XXX */
+		default: /* invalid argument */
 			return -1;
 		}
 		sc->sc_output_mask = mc->un.mask;
@@ -594,6 +606,38 @@ awacs_set_port(h, mc)
 
 	case AWACS_VOL_HEADPHONE:
 		awacs_set_ext_volume(sc, l, r);
+		return 0;
+
+	case AWACS_VOL_INPUT:
+		sc->sc_codecctl0 &= ~0xff;
+		sc->sc_codecctl0 |= (l & 0xf0) | (r >> 4);
+		awacs_write_codec(sc, sc->sc_codecctl0);
+		return 0;
+
+	case AWACS_INPUT_SELECT:
+		/* no change necessary? */
+		if (mc->un.mask == sc->sc_record_source)
+			return 0;
+		switch(mc->un.mask) {
+		case 1<<0: /* CD */
+			sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
+			sc->sc_codecctl0 |= AWACS_INPUT_CD;
+			awacs_write_codec(sc, sc->sc_codecctl0);
+			break;
+		case 1<<1: /* microphone */
+			sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
+			sc->sc_codecctl0 |= AWACS_INPUT_MICROPHONE;
+			awacs_write_codec(sc, sc->sc_codecctl0);
+			break;
+		case 1<<2: /* line in */
+			sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
+			sc->sc_codecctl0 |= AWACS_INPUT_LINE;
+			awacs_write_codec(sc, sc->sc_codecctl0);
+			break;
+		default: /* invalid argument */
+			return -1;
+		}
+		sc->sc_record_source = mc->un.mask;
 		return 0;
 	}
 
@@ -620,6 +664,7 @@ awacs_get_port(h, mc)
 		l = (15 - ((vol & 0x3c0) >> 6)) * 16;
 		r = (15 - (vol & 0x0f)) * 16;
 		mc->un.mask = 1 << 0;
+		mc->un.value.num_channels = 2;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
 		return 0;
@@ -629,6 +674,21 @@ awacs_get_port(h, mc)
 		l = (15 - ((vol & 0x3c0) >> 6)) * 16;
 		r = (15 - (vol & 0x0f)) * 16;
 		mc->un.mask = 1 << 1;
+		mc->un.value.num_channels = 2;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
+		return 0;
+
+	case AWACS_INPUT_SELECT:
+		mc->un.mask = sc->sc_record_source;
+		return 0;
+
+	case AWACS_VOL_INPUT:
+		vol = sc->sc_codecctl0 & 0xff;
+		l = (vol & 0xf0);
+		r = (vol & 0x0f) << 4;
+		mc->un.mask = sc->sc_record_source;
+		mc->un.value.num_channels = 2;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
 		return 0;
@@ -680,6 +740,29 @@ awacs_query_devinfo(h, dip)
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 
+	case AWACS_INPUT_SELECT:
+		dip->mixer_class = AWACS_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNinput);
+		dip->type = AUDIO_MIXER_SET;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.s.num_mem = 3;
+		strcpy(dip->un.s.member[0].label.name, AudioNcd);
+		dip->un.s.member[0].mask = 1 << 0;
+		strcpy(dip->un.s.member[1].label.name, AudioNmicrophone);
+		dip->un.s.member[1].mask = 1 << 1;
+		strcpy(dip->un.s.member[2].label.name, AudioNline);
+		dip->un.s.member[2].mask = 1 << 2;
+		return 0;
+
+	case AWACS_VOL_INPUT:
+		dip->mixer_class = AWACS_INPUT_CLASS;
+		strcpy(dip->label.name, AudioNmaster);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		return 0;
+
 	case AWACS_MONITOR_CLASS:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioCmonitor);
@@ -690,6 +773,20 @@ awacs_query_devinfo(h, dip)
 	case AWACS_OUTPUT_CLASS:
 		dip->mixer_class = AWACS_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioCoutputs);
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case AWACS_RECORD_CLASS:
+		dip->mixer_class = AWACS_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioCrecord);
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case AWACS_INPUT_CLASS:
+		dip->mixer_class = AWACS_INPUT_CLASS;
+		strcpy(dip->label.name, AudioCinputs);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;

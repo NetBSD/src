@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.7.12.1 2000/11/20 20:03:59 bouyer Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.7.12.2 2001/03/12 13:27:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -86,7 +86,8 @@ typedef struct _BootConfig {
 	u_int display_phys;
 } BootConfig;
 
-#define BOOTCONFIG_MAGIC 0x42301068
+#define OLD_BOOTCONFIG_MAGIC 0x42301068
+#define BOOTCONFIG_MAGIC     0x43112233
 
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && (RISCPC || RC7500) */

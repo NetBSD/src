@@ -1,0 +1,72 @@
+/*	$NetBSD: sa1111_reg.h,v 1.1.2.2 2001/03/12 13:28:31 bouyer Exp $	*/
+
+/*-
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by IWAMOTO Toshihiro.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* Interrupt Controller */
+
+/* number of interrupt bits */
+#define SACCIC_LEN	55
+
+#define SACCIC_INTTEST0		0x1600
+#define SACCIC_INTTEST1		0x1604
+#define SACCIC_INTEN0		0x1608
+#define SACCIC_INTEN1		0x160C
+#define SACCIC_INTPOL0		0x1610
+#define SACCIC_INTPOL1		0x1614
+#define SACCIC_INTTSTSEL	0x1618
+#define SACCIC_INTSTATCLR0	0x161C
+#define SACCIC_INTSTATCLR1	0x1620
+#define SACCIC_INTSET0		0x1624
+#define SACCIC_INTSET1		0x1628
+#define SACCIC_WAKE_EN0		0x162C
+#define SACCIC_WAKE_EN1		0x1630
+#define SACCIC_WAKE_POL0	0x1634
+#define SACCIC_WAKE_POL1	0x1638
+
+/* GPIO registers */
+#define SACCGPIOA_DDR		0x1000		/* data direction */
+#define SACCGPIOA_DVR		0x1004		/* data value */
+#define SACCGPIOA_SDR		0x1008		/* sleep direction */
+#define SACCGPIOA_SSR		0x100C		/* sleep state */
+#define SACCGPIOB_DDR		0x1010
+#define SACCGPIOB_DVR		0x1014
+#define SACCGPIOB_SDR		0x1018
+#define SACCGPIOB_SSR		0x101C
+#define SACCGPIOC_DDR		0x1020
+#define SACCGPIOC_DVR		0x1024
+#define SACCGPIOC_SDR		0x1028
+#define SACCGPIOC_SSR		0x102C

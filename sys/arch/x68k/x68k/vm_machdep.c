@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26.2.1 2000/11/20 20:30:27 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.2.2 2001/03/12 13:29:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,7 +212,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & PGOFSET)
+	if (m68k_page_offset(size))
 		panic("pagemove");
 #endif
 	while (size > 0) {
@@ -279,8 +279,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern vm_map_t phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18.2.3 2001/01/18 09:22:25 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18.2.4 2001/03/12 13:27:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -39,16 +39,18 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>
+#define _ATARI_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/bswap.h>
-#include <machine/bus.h>
 
 #include <atari/atari/device.h>
 #include <atari/pci/pci_vga.h>
@@ -91,6 +93,24 @@ struct pci_memreg {
 };
 
 typedef LIST_HEAD(pci_memreg_head, pci_memreg) PCI_MEMREG;
+
+/*
+ * Entry points for PCI DMA.  Use only the 'standard' functions.
+ */
+int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *));
+struct atari_bus_dma_tag pci_bus_dma_tag = {
+	0,
+	0x80000000, /* XXX */
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+};
 
 int	pcibusprint __P((void *auxp, const char *));
 int	pcibusmatch __P((struct device *, struct cfdata *, void *));
@@ -149,7 +169,7 @@ void		*auxp;
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	pba.pba_dmat	= BUS_PCI_DMA_TAG;
+	pba.pba_dmat	= &pci_bus_dma_tag;
 	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
 	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);
 	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {

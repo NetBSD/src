@@ -1,0 +1,7 @@
+|
+| $NetBSD: !Boot,v 1.1.4.2 2001/03/12 13:27:49 bouyer Exp $
+| boot file for !BtNetBSD application
+|
+IconSprites <Obey$Dir>.!Sprites
+Set File$Type_fe6 Unix
+Set BtNetBSD$Dir <Obey$Dir>

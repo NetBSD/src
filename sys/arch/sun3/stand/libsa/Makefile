@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.8.2 2001/02/11 19:12:46 bouyer Exp $
+#	$NetBSD: Makefile,v 1.21.8.3 2001/03/12 13:29:37 bouyer Exp $
 
 LIB=sa
 
@@ -30,17 +30,17 @@ DEFS= -Dsun3 -D_STANDALONE
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
 CFLAGS= -O2 -msoft-float -fno-defer-pop
 CPPFLAGS= ${DEFS} ${DBG} ${INCL}
-CLEANFILES= SRT0.o SRT1.o machine m68k
+CLEANFILES= SRT0.o SRT1.o machine m68k vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
-SRC_sa = alloc.c bcopy.c close.c getfile.c memcpy.c open.c \
+SRC_sa = alloc.c bcopy.c close.c getfile.c loadfile.c lseek.c memcpy.c open.c \
 	 printf.c read.c sprintf.c strerror.c subr_prf.c twiddle.c
 
 SRC_kern= ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
-	strcmp.c strlen.c strncmp.c
+	memcmp.c memset.c strcmp.c strlen.c strncmp.c
 
-SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
+SRC_here= clock.c dev_disk.c devopen.c \
 	 gets.c idprom.c netif_sun.c panic.c \
 	 promboot.c promcons.c promdev.c \
 	 sun3.c sun3x.c vers.c xxboot.c

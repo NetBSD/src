@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.10.8.2 2000/12/08 09:20:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.10.8.3 2001/03/12 13:32:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -113,7 +113,7 @@ ext2fs_read(v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 
-			bytelen = min(ip->i_e2fs_size - uio->uio_offset,
+			bytelen = MIN(ip->i_e2fs_size - uio->uio_offset,
 			    uio->uio_resid);
 
 			if (bytelen == 0) {
@@ -268,7 +268,7 @@ ext2fs_write(v)
 		while (uio->uio_resid > 0) {
 			oldoff = uio->uio_offset;
 			blkoffset = blkoff(fs, uio->uio_offset);
-			bytelen = min(fs->e2fs_bsize - blkoffset,
+			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
 			/*
@@ -309,7 +309,7 @@ ext2fs_write(v)
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = min(fs->e2fs_bsize - blkoffset, uio->uio_resid);
+		xfersize = MIN(fs->e2fs_bsize - blkoffset, uio->uio_resid);
 		if (xfersize < fs->e2fs_bsize)
 			flags |= B_CLRBUF;
 		else

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.51.2.4 2001/02/11 19:12:55 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.51.2.5 2001/03/12 13:29:44 bouyer Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.51.2.4 $"
+#ident 		"GENERIC-$Revision: 1.51.2.5 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -241,3 +241,4 @@ pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	leds			# control the leds on vaxstations.

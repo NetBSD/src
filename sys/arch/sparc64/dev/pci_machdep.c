@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3.4.4 2001/02/11 19:12:30 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.4.5 2001/03/12 13:29:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -58,6 +58,9 @@ int sparc_pci_debug = 0x0;
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
+
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
@@ -83,7 +86,7 @@ pci_attach_hook(parent, self, pba)
 	struct psycho_registers *pr;
 	pcitag_t tag;
 	char *name, *devtype;
-	u_int32_t hi, mid, lo, intr;
+	u_int32_t hi, mid, lo, intr, line;
 	u_int32_t dev, fn, bus;
 	int node, i, n, *ip, *ap;
 
@@ -187,6 +190,7 @@ pci_attach_hook(parent, self, pba)
 			    pp->pp_intmap[i].phys_lo != lo ||
 			    pp->pp_intmap[i].intr != intr)
 				continue;
+			intr = pp->pp_intmap[i].child_intr;
 			DPRINTF(SPDB_INTFIX, ("... BINGO! ..."));
 			
 		bingo:
@@ -194,14 +198,16 @@ pci_attach_hook(parent, self, pba)
 			 * OK!  we found match.  pull out the old interrupt
 			 * register, patch in the new value, and put it back.
 			 */
-			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-			DPRINTF(SPDB_INTFIX, ("\n\t    ; read %x from intreg", intr));
+			line = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+			DPRINTF(SPDB_INTFIX, ("\n\t    ; read %x from intreg", line));
 
-			intr = (intr & ~PCI_INTERRUPT_LINE_MASK) |
-			       (pp->pp_intmap[i].child_intr & PCI_INTERRUPT_LINE_MASK);
-			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; gonna write %x to intreg", intr));
+			line = PCI_INTERRUPT_CODE(PCI_INTERRUPT_LATENCY(line),
+						  PCI_INTERRUPT_GRANT(line),
+						  PCI_INTERRUPT_PIN(line),
+						  PCI_INTERRUPT_LINE(intr));
+
+			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; gonna write %x to intreg", line));
 			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
-			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; reread %x from intreg", intr));
 			break;
 		}
 		if (i == pp->pp_nintmap) {
@@ -220,7 +226,9 @@ pci_attach_hook(parent, self, pba)
 				DPRINTF((SPDB_INTFIX|SPDB_INTMAP),
 		("\n\t; PSYCHO: no match but obio interrupt in parent format"));
 
-				i = -1; goto bingo; /* XXX - hackish.. */
+				intr = *ip;
+				i = -1;
+				goto bingo; /* hackish */
 			}
 		}
 
@@ -250,6 +258,73 @@ pci_bus_maxdevs(pc, busno)
 
 	return 32;
 }
+
+#ifdef __PCI_BUS_DEVORDER
+int
+pci_bus_devorder(pc, busno, devs)
+	pci_chipset_tag_t pc;
+	int busno;
+	char *devs;
+{
+	struct ofw_pci_register reg0;
+	int node, len, device, i = 0;
+	u_int32_t done = 0;
+
+	for (node = OF_child(pc->node); node; node = OF_peer(node)) {
+		len = OF_getproplen(node, "reg");
+		if (len < sizeof(reg0))
+			continue;
+		if (OF_getprop(node, "reg", (void *)&reg0, sizeof(reg0)) != len)
+			panic("pci_probe_bus: OF_getprop len botch");
+
+		device = OFW_PCI_PHYS_HI_DEVICE(reg0.phys_hi);
+
+		if (done & (1 << device))
+			continue;
+
+		devs[i++] = device;
+		done |= 1 << device;
+		if (i == 32)
+			break;
+	}
+	if (i < 32)
+		devs[i] = -1;
+
+	return i;
+}
+#endif
+
+#ifdef __PCI_DEV_FUNCORDER
+int
+pci_dev_funcorder(pc, busno, device, funcs)
+	pci_chipset_tag_t pc;
+	int busno;
+	int device;
+	char *funcs;
+{
+	struct ofw_pci_register reg0;
+	int node, len, i = 0;
+
+	for (node = OF_child(pc->node); node; node = OF_peer(node)) {
+		len = OF_getproplen(node, "reg");
+		if (len < sizeof(reg0))
+			continue;
+		if (OF_getprop(node, "reg", (void *)&reg0, sizeof(reg0)) != len)
+			panic("pci_probe_bus: OF_getprop len botch");
+
+		if (device != OFW_PCI_PHYS_HI_DEVICE(reg0.phys_hi))
+			continue;
+
+		funcs[i++] = OFW_PCI_PHYS_HI_FUNCTION(reg0.phys_hi);
+		if (i == 8)
+			break;
+	}
+	if (i < 8)
+		funcs[i] = -1;
+
+	return i;
+}
+#endif
 
 pcitag_t
 pci_make_tag(pc, b, d, f)
@@ -363,41 +438,40 @@ pci_conf_write(pc, tag, reg, data)
 
 /*
  * interrupt mapping foo.
+ * XXX: how does this deal with multiple interrupts for a device?
  */
 int
 pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-#if 0
-	pci_chipset_tag_t pc = pa->pa_pc;
-#endif
-	pcitag_t tag = pa->pa_intrtag;
-	int pin = pa->pa_intrpin;
-	int line = pa->pa_intrline;
-	int rv;
+	int rv, pin, line;
 
+	pin = pa->pa_intrpin;
+	line = pa->pa_intrline;
+
+	DPRINTF(SPDB_INTMAP, ("pci_intr_map: dev %u fn %u: ", pa->pa_device,
+	    pa->pa_function));
 	/*
 	 * XXX
-	 * UltraSPARC IIi PCI does not use PCI_INTERRUPT_REG, but we have
+	 * UltraSPARC PCI does not use PCI_INTERRUPT_REG, but we have
 	 * used this space for our own purposes...
 	 */
-	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", 
-		(long)tag, pin, line));
-#if 1
-	if (line == 255) {
+	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; line %d",
+	    (long)pa->pa_intrtag, line));
+
+	if (line >= 0x40) {
 		*ihp = -1;
 		rv = 1;
 		goto out;
 	}
-#endif
 	if (pin > 4)
 		panic("pci_intr_map: pin > 4");
 
-	rv = psycho_intr_map(tag, pin, line, ihp);
-
+	(*ihp) = line & 0x3f;
+	rv = 0;
 out:
-	DPRINTF(SPDB_INTR, ("; handle = %d; returning %d\n", (int)*ihp, rv));
+	DPRINTF(SPDB_INTR, ("; handle = %x; returning %d\n", (u_int)*ihp, rv));
 	return (rv);
 }
 
@@ -409,11 +483,11 @@ pci_intr_string(pc, ih)
 	static char str[16];
 
 	DPRINTF(SPDB_INTR, ("pci_intr_string: ih %u", ih));
-	if (ih < 0 || ih > 0x32) {
+	if (ih < 0 || ih >= 0x40) {
 		printf("\n");	/* i'm *so* beautiful */
 		panic("pci_intr_string: bogus handle\n");
 	}
-	sprintf(str, "vector %u", ih);
+	sprintf(str, "ipl %u", ih);
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);

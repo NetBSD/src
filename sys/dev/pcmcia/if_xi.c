@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.6.2.5 2001/01/18 09:23:31 bouyer Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.6.2.6 2001/03/12 13:31:20 bouyer Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -198,7 +198,7 @@ static void xi_start __P((struct ifnet *));
 static void xi_statchg __P((struct device *));
 static void xi_stop __P((struct xi_softc *));
 static void xi_watchdog __P((struct ifnet *));
-struct xi_pcmcia_product *xi_pcmcia_identify __P((struct device *,
+const struct xi_pcmcia_product *xi_pcmcia_identify __P((struct device *,
 						struct pcmcia_attach_args *));
 
 /* flags */
@@ -206,7 +206,7 @@ struct xi_pcmcia_product *xi_pcmcia_identify __P((struct device *,
 #define XIFLAGS_DINGO	0x002		/* realport cards ??? */
 #define XIFLAGS_MODEM	0x004		/* modem also present */
 
-struct xi_pcmcia_product {
+const struct xi_pcmcia_product {
 	u_int32_t	xpp_vendor;	/* vendor ID */
 	u_int32_t	xpp_product;	/* product ID */
 	int		xpp_expfunc;	/* expected function number */
@@ -262,12 +262,12 @@ struct xi_pcmcia_product {
 };
 
 
-struct xi_pcmcia_product *
+const struct xi_pcmcia_product *
 xi_pcmcia_identify(dev, pa)
 	struct device *dev;
         struct pcmcia_attach_args *pa;
 {
-	struct xi_pcmcia_product *xpp;
+	const struct xi_pcmcia_product *xpp;
         u_int8_t id;
 	u_int32_t prod;
 
@@ -365,7 +365,7 @@ xi_pcmcia_attach(parent, self, aux)
 	struct xi_softc *sc = &psc->sc_xi;
 	struct pcmcia_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct xi_pcmcia_product *xpp;
+	const struct xi_pcmcia_product *xpp;
 
 	if (xi_pcmcia_cis_quirks(pa->pf) < 0) {
 		printf(": function enable failed\n");

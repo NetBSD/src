@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.2.2.3 2001/02/11 19:14:12 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.2.2.4 2001/03/12 13:29:53 bouyer Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -82,6 +82,8 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 		free((void *)bp, M_TEMP);
 	}
 	epp->ep_flags |= EXEC_32;
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = USRSTACK32;
 	*pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
 }

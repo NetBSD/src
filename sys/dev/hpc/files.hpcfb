@@ -1,0 +1,17 @@
+#	$NetBSD: files.hpcfb,v 1.1.4.2 2001/03/12 13:30:04 bouyer Exp $
+#	H/PC framebuffer interface for wsdisplay
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+define	hpcfbif {}
+device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops15, rasops16
+attach	hpcfb at hpcfbif
+file	dev/hpc/hpcfb.c		hpcfb		needs-flag
+
+device	bivideo: hpcfbif
+attach	bivideo at mainbus
+file	dev/hpc/bivideo.c	bivideo		needs-flag
+file	dev/hpc/hpccmap.c	bivideo
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42.2.1 2000/11/20 20:25:40 bouyer Exp $ */
+/*	$NetBSD: pmap.h,v 1.42.2.2 2001/03/12 13:29:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -186,7 +186,13 @@ struct kvm_cpustate {
 #define PMAP_NULL	((pmap_t)0)
 
 extern struct pmap	kernel_pmap_store;
-extern paddr_t		vm_first_phys, vm_num_phys;
+
+/*
+ * Bounds on managed physical addresses. Used by (MD) users
+ * of uvm_pglistalloc() to provide search hints.
+ */
+extern paddr_t		vm_first_phys, vm_last_phys;
+extern psize_t		vm_num_phys;
 
 /*
  * Since PTEs also contain type bits, we have to have some way
@@ -229,7 +235,6 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
-#define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
 
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 

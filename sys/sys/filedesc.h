@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.18.2.1 2000/11/20 18:11:31 bouyer Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.18.2.2 2001/03/12 13:32:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _SYS_FILEDESC_H_
-#define _SYS_FILEDESC_H_
+#define	_SYS_FILEDESC_H_
 
 /*
  * This structure is used for the management of descriptors.  It may be
@@ -52,23 +52,23 @@
  * should be selected to be the biggest multiple of OFILESIZE (see below)
  * that will fit in a power-of-two sized piece of memory.
  */
-#define NDFILE		20
-#define NDEXTENT	50		/* 250 bytes in 256-byte alloc. */
+#define	NDFILE		20
+#define	NDEXTENT	50		/* 250 bytes in 256-byte alloc */
 
 struct filedesc {
-	struct	file **fd_ofiles;	/* file structures for open files */
-	char	*fd_ofileflags;		/* per-process open file flags */
-	int	fd_nfiles;		/* number of open files allocated */
-	int	fd_lastfile;		/* high-water mark of fd_ofiles */
-	int	fd_freefile;		/* approx. next free file */
-	int	fd_refcnt;		/* reference count */
+	struct file	**fd_ofiles;	/* file structures for open files */
+	char		*fd_ofileflags;	/* per-process open file flags */
+	int		fd_nfiles;	/* number of open files allocated */
+	int		fd_lastfile;	/* high-water mark of fd_ofiles */
+	int		fd_freefile;	/* approx. next free file */
+	int		fd_refcnt;	/* reference count */
 };
 
 struct cwdinfo {
-	struct	vnode *cwdi_cdir;	/* current directory */
-	struct	vnode *cwdi_rdir;	/* root directory */
-	u_short	cwdi_cmask;		/* mask for file creation */
-	u_short cwdi_refcnt;		/* reference count */
+	struct vnode	*cwdi_cdir;	/* current directory */
+	struct vnode	*cwdi_rdir;	/* root directory */
+	u_short		cwdi_cmask;	/* mask for file creation */
+	u_short		cwdi_refcnt;	/* reference count */
 };
 
 
@@ -77,13 +77,13 @@ struct cwdinfo {
  * one of the above, plus arrays for NDFILE descriptors.
  */
 struct filedesc0 {
-	struct	filedesc fd_fd;
+	struct filedesc	fd_fd;
 	/*
 	 * These arrays are used when the number of open files is
 	 * <= NDFILE, and are then pointed to by the pointers above.
 	 */
-	struct	file *fd_dfiles[NDFILE];
-	char	fd_dfileflags[NDFILE];
+	struct file	*fd_dfiles[NDFILE];
+	char		fd_dfileflags[NDFILE];
 };
 
 /*
@@ -95,36 +95,35 @@ struct filedesc0 {
 /*
  * Storage required per open file descriptor.
  */
-#define OFILESIZE (sizeof(struct file *) + sizeof(char))
+#define	OFILESIZE (sizeof(struct file *) + sizeof(char))
 
 #ifdef _KERNEL
 /*
  * Kernel global variables and routines.
  */
-int	dupfdopen __P((struct proc *p, int indx, int dfd, int mode,
-	    int error));
-int	fdalloc __P((struct proc *p, int want, int *result));
-int	fdavail __P((struct proc *p, int n));
-int	falloc __P((struct proc *p, struct file **resultfp, int *resultfd));
-void	ffree __P((struct file *));
-struct	filedesc *fdcopy __P((struct proc *p));
-struct	filedesc *fdinit __P((struct proc *p));
-void	fdshare __P((struct proc *p1, struct proc *p2));
-void	fdunshare __P((struct proc *p));
-void	fdinit1 __P((struct filedesc0 *newfdp));
-void	fdclear __P((struct proc *p));
-void	fdfree __P((struct proc *p));
-void	fdremove __P((struct filedesc *, int));
-int	fdrelease __P((struct proc *p, int));
-void	fdcloseexec __P((struct proc *));
+int	dupfdopen(struct proc *p, int indx, int dfd, int mode, int error);
+int	fdalloc(struct proc *p, int want, int *result);
+int	fdavail(struct proc *p, int n);
+int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
+void	ffree(struct file *);
+struct filedesc *fdcopy(struct proc *p);
+struct filedesc *fdinit(struct proc *p);
+void	fdshare(struct proc *p1, struct proc *p2);
+void	fdunshare(struct proc *p);
+void	fdinit1(struct filedesc0 *newfdp);
+void	fdclear(struct proc *p);
+void	fdfree(struct proc *p);
+void	fdremove(struct filedesc *, int);
+int	fdrelease(struct proc *p, int);
+void	fdcloseexec(struct proc *);
 
-struct cwdinfo *cwdinit __P((struct proc *));
-void	cwdshare __P((struct proc *, struct proc *));
-void	cwdunshare __P((struct proc *));
-void	cwdfree __P((struct proc *));
+struct cwdinfo *cwdinit(struct proc *);
+void	cwdshare(struct proc *, struct proc *);
+void	cwdunshare(struct proc *);
+void	cwdfree(struct proc *);
 
-int	closef __P((struct file *, struct proc *));
-int	getsock __P((struct filedesc *, int, struct file **));
+int	closef(struct file *, struct proc *);
+int	getsock(struct filedesc *, int, struct file **);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_FILEDESC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.20.8.1 2000/11/20 20:04:01 bouyer Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.20.8.2 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -80,7 +80,7 @@ Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
 /*
- * Regsister usage
+ * Register usage
  *
  *  r6  - Address of current handler
  *  r7  - Pointer to handler pointer list
@@ -89,6 +89,9 @@ Lspl_masks:
  *  r10 - Base address of IOMD
  */
 
+Liomd_base:
+	.word	_C_LABEL(iomd_base)
+
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
@@ -96,7 +99,8 @@ ASENTRY_NP(irq_entry)
 
 	/* Load r8 with the IOMD interrupt requests */
 
- 	mov	r10, #(IOMD_BASE)	/* Point to the IOMD */
+	ldr	r10, Liomd_base
+ 	ldr	r10, [r10]			/* Point to the IOMD */
 	ldrb	r8, [r10, #(IOMD_IRQRQA << 2)]	/* Get IRQ request A */
 	ldrb	r9, [r10, #(IOMD_IRQRQB << 2)]	/* Get IRQ request B */
 	orr	r8, r8, r9, lsl #8
@@ -337,7 +341,8 @@ ENTRY(irq_setmasks)
 	ldr	r2, [r2]
 	bic	r1, r1, r2
 
- 	mov	r0, #(IOMD_BASE)	/* Point to the IOMD */
+	ldr	r0, Liomd_base
+ 	ldr	r0, [r0]			/* Point to the IOMD */
 	strb	r1, [r0, #(IOMD_IRQMSKA << 2)]	/* Set IRQ mask A */
 	mov	r1, r1, lsr #8
 	strb	r1, [r0, #(IOMD_IRQMSKB << 2)]	/* Set IRQ mask B */

@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.3.2.2 2001/01/18 09:23:37 bouyer Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.3.2.3 2001/03/12 13:31:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if defined(pmax)
 #define	STIC_KSEG_TO_PHYS(x)	MIPS_KSEG0_TO_PHYS(x)
 #elif defined(alpha)
-#define	STIC_KSEG_TO_PHYS(x)	ALPHA_K0SEG_TO_PHYS(x)
+#define	STIC_KSEG_TO_PHYS(x)	ALPHA_K0SEG_TO_PHYS((vaddr_t)x)
 #else No support for your architecture
 #endif
 
@@ -74,9 +74,9 @@ struct stic_screen {
 
 #define	SS_ALLOCED		0x01
 #define	SS_ACTIVE		0x02
+#define	SS_CURENB		0x04
 
 struct stic_info {
-	u_int32_t	*si_slotkva;
 	u_int32_t	*si_stamp;
 	u_int32_t	*si_buf;
 	u_int32_t	*si_vdac;
@@ -120,8 +120,6 @@ struct stic_info {
 #define	SI_CMAP_CHANGED		0x0008
 #define	SI_ALL_CHANGED		0x000f
 
-#define	SI_CURENB		0x0100
-
 void	stic_init(struct stic_info *);
 void	stic_attach(struct device *, struct stic_info *, int);
 void	stic_cnattach(struct stic_info *);
@@ -146,7 +144,6 @@ struct stic_xinfo {
 #define	STICIO_RESET	_IO('S', 1)
 #define	STICIO_START860	_IO('S', 2)
 #define	STICIO_RESET860	_IO('S', 3)
-#define	STICIO_RESTORE	_IO('S', 4)
 
 struct stic_xmap {
 	u_int8_t	sxm_stic[NBPG];

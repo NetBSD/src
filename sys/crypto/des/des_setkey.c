@@ -1,4 +1,4 @@
-/*	$NetBSD: des_setkey.c,v 1.3.2.3 2000/11/22 16:03:06 bouyer Exp $	*/
+/*	$NetBSD: des_setkey.c,v 1.3.2.4 2001/03/12 13:29:58 bouyer Exp $	*/
 /*	$KAME: des_setkey.c,v 1.5 2000/11/06 13:58:09 itojun Exp $	*/
 
 /* crypto/des/set_key.c */
@@ -101,7 +101,7 @@ des_cblock (*key);
  * (and actual cblock values).
  */
 #define NUM_WEAK_KEY	16
-static des_cblock weak_keys[NUM_WEAK_KEY]={
+static const des_cblock weak_keys[NUM_WEAK_KEY]={
 	/* weak keys */
 	{0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01},
 	{0xFE,0xFE,0xFE,0xFE,0xFE,0xFE,0xFE,0xFE},
@@ -156,7 +156,7 @@ int des_set_key(key, schedule)
 des_cblock (*key);
 des_key_schedule schedule;
 	{
-	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
+	static const int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s;
 	register unsigned char *in;
 	register DES_LONG *k;

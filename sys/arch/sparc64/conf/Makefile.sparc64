@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.12.2.3 2001/01/05 17:35:03 bouyer Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.12.2.4 2001/03/12 13:29:27 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -74,8 +74,15 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 #
 
 LINKFLAGS=	-Ttext 01000000 -Tdata 01400000 -e start
-
 #LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
+
+LINKFLAGS+=	-n -T ${SPARC64}/conf/${KERN_LDSCRIPT}
+.if ${MACHINE_ARCH} == "sparc64"
+KERN_LDSCRIPT?= kern.ldscript
+.else
+KERN_LDSCRIPT?= kern32.ldscript
+.endif
+
 STRIPFLAGS=	-g
 
 %INCLUDES

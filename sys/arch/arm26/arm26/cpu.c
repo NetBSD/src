@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.1.6.6 2001/02/11 19:08:52 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.1.6.7 2001/03/12 13:27:26 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.6 2001/02/11 19:08:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.7 2001/03/12 13:27:26 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.6 2001/02/11 19:08:52 bouyer Exp $");
 #include <sys/time.h>
 #include <sys/user.h>
 #include <arm/armreg.h>
+#include <arm/undefined.h>
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 
@@ -63,7 +64,7 @@ struct cpu_softc {
 	struct device sc_dev;
 };
 
-struct cfattach cpu_ca = {
+struct cfattach cpu_root_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
 };
 
@@ -132,15 +133,25 @@ cpu_search(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
+static label_t undef_jmp;
+
+static int
+cpu_undef_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
+{
+
+	longjmp(&undef_jmp);
+}
+
 static register_t
 cpu_identify()
 {
-	label_t here;
 	register_t dummy;
 	volatile register_t id;
+	void *cp0, *cp15;
 
-	if (setjmp(&here) == 0) {
-		curproc->p_addr->u_pcb.pcb_onundef_lj = &here;
+	if (setjmp(&undef_jmp) == 0) {
+		cp0 = install_coproc_handler(0, cpu_undef_handler);
+		cp15 = install_coproc_handler(15, cpu_undef_handler);
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
 		asm volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
@@ -148,7 +159,8 @@ cpu_identify()
 		/* ARM3 has an internal coprocessor 15 with an ID register. */
 		asm volatile ("mrc 15, 0, %0, cr0, cr0" : "=r" (id));
 	}
-	curproc->p_addr->u_pcb.pcb_onundef_lj = NULL;
+	remove_coproc_handler(cp0);
+	remove_coproc_handler(cp15);
 	return id;
 }
 

@@ -1,0 +1,11 @@
+REM >checkro403
+REM $NetBSD: checkro403,v 1.1.4.2 2001/03/12 13:27:50 bouyer Exp $
+REM
+REM This program checks the build date of RISC OS to see if it is the one
+REM with the bug in OS_Module 7 (RO 4.03 for the Castle Kinetic Card). If
+REM so, it ensures that the memfix module has been loaded
+:
+ON ERROR ERROR EXT 0,"This version of RISC OS 4.03 needs the memfix module. NetBSD will not boot without it": END
+SYS"XOS_ReadSysInfo",9,1 TO build$;flags%
+IF (flags% AND 1)<>0 THEN END    :REM SWI returned with the V flag set
+IF build$="20000507-001" THEN OSCLI"rmensure memfix 0.11 rmload <BtNetBSD$Dir>.memfix"

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6.2.4 2001/01/18 09:23:34 bouyer Exp $	*/
+/*	$NetBSD: be.c,v 1.6.2.5 2001/03/12 13:31:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -335,15 +335,6 @@ beattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-
-	/* Load the buffer */
-	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
-				&seg, rseg, size, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			self->dv_xname, error);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
-	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA memory in CPU addressable space */
@@ -352,8 +343,18 @@ beattach(parent, self, aux)
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			self->dv_xname, error);
-		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
+		return;
+	}
+
+	/* Load the buffer */
+	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
+				     sc->sc_rb.rb_membase, size, NULL,
+				     BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_unmap(dmatag, sc->sc_rb.rb_membase, size);
+		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 

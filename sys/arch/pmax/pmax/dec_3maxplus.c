@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.26.2.1 2000/11/20 20:20:35 bouyer Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.26.2.2 2001/03/12 13:29:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.26.2.1 2000/11/20 20:20:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.26.2.2 2001/03/12 13:29:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ dec_3maxplus_init()
 	platform.memsize = memsize_scan;
 	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
- 
+
 	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
@@ -137,14 +137,14 @@ dec_3maxplus_init()
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
-	 */ 
+	 */
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
 	splvec.splimp = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;	 
+	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
-	
+
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
@@ -191,9 +191,7 @@ dec_3maxplus_bus_reset()
 
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	kn03_wbflush();
-
 }
-
 
 static void
 dec_3maxplus_cons_init()
@@ -272,7 +270,6 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	kn03_wbflush();
 }
 
-
 #define CHECKINTR(vvv, bits)					\
     do {							\
 	if (can_serve & (bits)) {				\
@@ -302,8 +299,7 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 
 		__asm __volatile("lbu $0,48(%0)" ::
 			"r"(ioasic_base + IOASIC_SLOT_8_START));
-		latched_cycle_cnt =
-			*(u_int32_t *)(ioasic_base + IOASIC_CTR);
+		latched_cycle_cnt = *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -316,16 +312,16 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 	/* If clock interrups were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
+#ifdef notdef
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful
 	 * to do so only after calling hardclock(), due to logging cost.
 	 * Even then, logging dropped ticks just causes more clock
 	 * ticks to be missed.
 	 */
-#ifdef notdef
 	if ((ipending & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
 		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
-  		if(msgbufmapped && 0)
+  		if (msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}
@@ -383,16 +379,15 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 					= intr &~ xxxintr;
 			}
 		} while (ifound);
-        }
+	}
 	if (ipending & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-
 /*
- * Handle Memory error.   3max, 3maxplus has ECC.
+ * Handle Memory error. 3max, 3maxplus has ECC.
  * Correct single-bit error, panic on  double-bit error.
  * XXX on double-error on clean user page, mark bad and reload frame?
  */

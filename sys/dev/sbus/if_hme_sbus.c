@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.1.4.1 2000/11/20 11:43:05 bouyer Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.1.4.2 2001/03/12 13:31:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ hmematch_sbus(parent, cf, aux)
 	struct sbus_attach_args *sa = aux;
 
 	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	    strcmp("SUNW,qfe", sa->sa_name) == 0 ||
 	    strcmp("SUNW,hme", sa->sa_name) == 0);
 }
 

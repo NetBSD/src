@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24.2.7 2000/11/22 16:03:10 bouyer Exp $	*/
+/*	$NetBSD: aha.c,v 1.24.2.8 2001/03/12 13:30:12 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1202,13 +1202,16 @@ aha_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat,
 				    ccb->dmamap_xfer, (struct uio *)xs->data,
-				    BUS_DMA_NOWAIT);
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 			} else
 #endif
 			{
 				error = bus_dmamap_load(dmat,
 				    ccb->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, BUS_DMA_NOWAIT);
+				    NULL,
+				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 			}
 
 			switch (error) {
@@ -1222,8 +1225,14 @@ aha_scsipi_request(chan, req, arg)
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				printf("%s: error %d loading DMA map\n",
-				    sc->sc_dev.dv_xname, error);
+				if (error == EFBIG) {
+					printf("%s: aha_scsi_cmd, more than %d"
+					    " dma segments\n",
+					    sc->sc_dev.dv_xname, AHA_NSEG);
+				} else {
+					printf("%s: error %d loading DMA map\n",
+					    sc->sc_dev.dv_xname, error);
+				}
 out_bad:
 				aha_free_ccb(sc, ccb);
 				scsipi_done(xs);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.4.2.1 2000/11/20 20:04:01 bouyer Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.4.2.2 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -46,6 +46,7 @@
 #include <machine/irqhandler.h>
 #include <machine/pmap.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #include <arm32/iomd/iomd_dma.h>
 
 #ifndef CPU_ARM7500
@@ -310,7 +311,7 @@ dma_init(ch, extp, dmasize, ipl)
 	dp->dc_ih.ih_arg = dp;
 	dp->dc_ih.ih_level = ipl;
 	dp->dc_ih.ih_name = "dma";
-	dp->dc_ih.ih_maskaddr = IOMD_ADDRESS(IOMD_DMARQ);
+	dp->dc_ih.ih_maskaddr = (u_int) IOMD_ADDRESS(IOMD_DMARQ);
 	dp->dc_ih.ih_maskbits = (1 << ch);
 
 	if (irq_claim(IRQ_DMACH0 + ch, &dp->dc_ih))

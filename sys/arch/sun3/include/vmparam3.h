@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.26.2.1 2000/11/20 20:27:55 bouyer Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.26.2.2 2001/03/12 13:29:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -121,3 +121,5 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+#define	PAGER_MAP_SIZE (4 * 1024 * 1024)

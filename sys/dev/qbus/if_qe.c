@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.38.2.3 2001/01/05 17:36:25 bouyer Exp $ */
+/*      $NetBSD: if_qe.c,v 1.38.2.4 2001/03/12 13:31:22 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -102,15 +102,15 @@ struct	qe_softc {
 	int		sc_setup;	/* Setup packet in queue	*/
 };
 
-static	int	qematch __P((struct device *, struct cfdata *, void *));
-static	void	qeattach __P((struct device *, struct device *, void *));
-static	void	qeinit __P((struct qe_softc *));
-static	void	qestart __P((struct ifnet *));
-static	void	qeintr __P((void *));
-static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	qe_add_rxbuf __P((struct qe_softc *, int));
-static	void	qe_setup __P((struct qe_softc *));
-static	void	qetimeout __P((struct ifnet *));
+static	int	qematch(struct device *, struct cfdata *, void *);
+static	void	qeattach(struct device *, struct device *, void *);
+static	void	qeinit(struct qe_softc *);
+static	void	qestart(struct ifnet *);
+static	void	qeintr(void *);
+static	int	qeioctl(struct ifnet *, u_long, caddr_t);
+static	int	qe_add_rxbuf(struct qe_softc *, int);
+static	void	qe_setup(struct qe_softc *);
+static	void	qetimeout(struct ifnet *);
 
 struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
@@ -129,10 +129,7 @@ struct	cfattach qe_ca = {
  * and wait for interrupt.
  */
 int
-qematch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+qematch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	bus_dmamap_t	cmap;
 	struct	qe_softc ssc;
@@ -214,9 +211,7 @@ qematch(parent, cf, aux)
  * to accept packets.
  */
 void
-qeattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+qeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
@@ -406,8 +401,7 @@ qeattach(parent, self, aux)
  * Initialization of interface.
  */
 void
-qeinit(sc)
-	struct qe_softc *sc;
+qeinit(struct qe_softc *sc)
 {
 	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct qe_cdata *qc = sc->sc_qedata;
@@ -467,15 +461,14 @@ qeinit(sc)
  * Start output on interface.
  */
 void
-qestart(ifp)
-	struct ifnet *ifp;
+qestart(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct qe_cdata *qc = sc->sc_qedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
 	int idx, len, s, i, totlen, error;
-	short orword;
+	short orword, csr;
 
 	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
 		return;
@@ -559,7 +552,8 @@ qestart(ifp)
 		/*
 		 * Kick off the transmit logic, if it is stopped.
 		 */
-		if (QE_RCSR(QE_CSR_CSR) & QE_XL_INVALID) {
+		csr = QE_RCSR(QE_CSR_CSR);
+		if (csr & QE_XL_INVALID) {
 			QE_WCSR(QE_CSR_XMTL,
 			    LOWORD(&sc->sc_pqedata->qc_xmit[sc->sc_nexttx]));
 			QE_WCSR(QE_CSR_XMTH,
@@ -576,13 +570,11 @@ out:	if (sc->sc_inq)
 }
 
 static void
-qeintr(arg)
-	void *arg;
+qeintr(void *arg)
 {
 	struct qe_softc *sc = arg;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 	int csr, status1, status2, len;
 
@@ -595,6 +587,7 @@ qeintr(arg)
 		while (qc->qc_recv[sc->sc_nextrx].qe_status1 != QE_NOTYET) {
 			status1 = qc->qc_recv[sc->sc_nextrx].qe_status1;
 			status2 = qc->qc_recv[sc->sc_nextrx].qe_status2;
+
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = ((status1 & QE_RBL_HI) |
 			    (status2 & QE_RBL_LO)) + 60;
@@ -603,15 +596,17 @@ qeintr(arg)
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
 #endif
-			(*ifp->if_input)(ifp, m);
+			if ((status1 & QE_ESETUP) == 0)
+				(*ifp->if_input)(ifp, m);
+			else
+				m_freem(m);
 		}
 
-	if (csr & QE_XMIT_INT) {
+	if (csr & (QE_XMIT_INT|QE_XL_INVALID)) {
 		while (qc->qc_xmit[sc->sc_lastack].qe_status1 != QE_NOTYET) {
 			int idx = sc->sc_lastack;
 
@@ -653,10 +648,7 @@ qeintr(arg)
  * Process an ioctl request.
  */
 int
-qeioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -734,9 +726,7 @@ qeioctl(ifp, cmd, data)
  * Add a receive buffer to the indicated descriptor.
  */
 int
-qe_add_rxbuf(sc, i) 
-	struct qe_softc *sc;
-	int i;
+qe_add_rxbuf(struct qe_softc *sc, int i) 
 {
 	struct mbuf *m;
 	struct qe_ring *rp;
@@ -785,8 +775,7 @@ qe_add_rxbuf(sc, i)
  * Create a setup packet and put in queue for sending.
  */
 void
-qe_setup(sc)
-	struct qe_softc *sc;
+qe_setup(struct qe_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -871,8 +860,7 @@ qe_setup(sc)
  * Check for dead transmit logic. Not uncommon.
  */
 void
-qetimeout(ifp)
-	struct ifnet *ifp;
+qetimeout(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 

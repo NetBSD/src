@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15.2.4 2001/02/11 19:11:02 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.15.2.5 2001/03/12 13:29:00 bouyer Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -115,6 +115,8 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+gpio*	at obio?			# gpio
+gpio*	at gpio?			# extint
 adb*	at obio?			# Apple Desktop Bus
 akbd*	at adb?				# ADB keyboard
 zsc*	at obio?

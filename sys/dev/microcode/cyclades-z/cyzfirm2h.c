@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.1.6.2 2000/11/20 11:41:36 bouyer Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.1.6.3 2001/03/12 13:30:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int	main(int argc, char *argv[]);
@@ -95,7 +96,7 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.1.6.2 2000/11/20 11:41:36 bouyer Exp $\t*/\n\n");
+	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.1.6.3 2001/03/12 13:30:45 bouyer Exp $\t*/\n\n");
 	fprintf(out_file, "\
 /*
  * Firmware for Cyclades Z series multiport serial boards.
@@ -129,8 +130,7 @@ main(int argc, char *argv[])
 void
 usage()
 {
-	extern const char *__progname;
 
-	fprintf(stderr, "usage: %s infile outfile\n", __progname);
+	fprintf(stderr, "usage: %s infile outfile\n", getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.22.2.3 2001/02/11 19:17:47 bouyer Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.22.2.4 2001/03/12 13:32:09 bouyer Exp $	*/
 
 /*
  *
@@ -255,11 +255,7 @@ amap_free(amap)
 {
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
-#ifdef DIAGNOSTIC
-	if (amap->am_ref || amap->am_nused)
-		panic("amap_free");
-#endif
-
+	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	free(amap->am_slots, M_UVMAMAP);
@@ -384,11 +380,7 @@ amap_extend(entry, addsize)
 	newover = malloc(slotneed * sizeof(struct vm_anon *),
 	    M_UVMAMAP, M_WAITOK);
 	amap_lock(amap);			/* re-lock! */
-
-#ifdef DIAGNOSTIC
-	if (amap->am_maxslot >= slotneed)
-		panic("amap_extend: amap changed during malloc");
-#endif
+	KASSERT(amap->am_maxslot < slotneed);
 
 	/*
 	 * now copy everything over to new malloc'd areas...

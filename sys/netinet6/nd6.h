@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.h,v 1.5.2.3 2001/02/11 19:17:28 bouyer Exp $	*/
-/*	$KAME: nd6.h,v 1.46 2001/02/08 10:57:00 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.5.2.4 2001/03/12 13:31:56 bouyer Exp $	*/
+/*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -54,7 +54,14 @@ struct	llinfo_nd6 {
 };
 
 #define ND6_LLINFO_NOSTATE	-2
-#define ND6_LLINFO_WAITDELETE	-1
+/*
+ * We don't need the WAITDELETE state any more, but we keep the definition
+ * in a comment line instead of removing it. This is necessary to avoid
+ * unintentionally reusing the value for another purpose, which might
+ * affect backward compatibility with old applications.
+ * (20000711 jinmei@kame.net)
+ */
+/* #define ND6_LLINFO_WAITDELETE	-1 */
 #define ND6_LLINFO_INCOMPLETE	0
 #define ND6_LLINFO_REACHABLE	1
 #define ND6_LLINFO_STALE	2
@@ -233,6 +240,7 @@ extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_useloopback;
 extern int nd6_maxnudhint;
+extern int nd6_gctimer;
 extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;

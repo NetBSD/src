@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4.14.1 2000/11/20 20:27:56 bouyer Exp $ */
+/*	$NetBSD: boot.c,v 1.4.14.2 2001/03/12 13:29:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,6 +40,7 @@
 #include <machine/mon.h>
 
 #include <stand.h>
+#include <loadfile.h>
 #include "libsa.h"
 
 /*
@@ -56,9 +57,13 @@
 char	defname[32] = "1";
 char	line[80];
 
+void
 main()
 {
 	char *cp, *file;
+	void *entry;
+	u_long marks[MARK_MAX];
+	int fd;
 
 	printf(">> %s tapeboot [%s]\n", bootprog_name, bootprog_rev);
 	prom_get_boot_info();
@@ -89,8 +94,16 @@ main()
 		} else
 			printf("tapeboot: loading segment %s\n", file);
 
-		exec_sun(file, (char *)LOADADDR);
+		marks[MARK_START] = KERN_LOADADDR;
+		if ((fd = loadfile(file, marks, LOAD_KERNEL)) != -1) {
+			break;
+		}
 		printf("tapeboot: segment %s: %s\n", file, strerror(errno));
 		prom_boothow |= RB_ASKNAME;
 	}
+	close(fd);
+
+	entry = (void *)marks[MARK_ENTRY];
+	printf("Starting program at 0x%x\n", entry);
+	chain_to(entry);
 }

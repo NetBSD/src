@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.1.1.1.4.2 2000/11/20 20:05:31 bouyer Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.1.1.1.4.3 2001/03/12 13:27:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,12 +50,15 @@
 #define	BLPM            ((1024 * 1024) / DEV_BSIZE)
 #define	UNITS_SECTORS	0
 #define	UNITS_CTS	1
+#define	PART_ROOT	0
+#define	PART_START	1
+#define	PART_END	2
 
 int		 main (int, char*[]);
 void		 show_parts (struct ahdi_ptable*, int, int, int);
-void		 get_input (char *, int);
+int		 get_input (char *, int);
 char		*sec_to_cts (struct ahdi_ptable*, u_int32_t, char *);
-u_int32_t	 read_sector (struct ahdi_ptable*,char *);
+u_int32_t	 read_sector (struct ahdi_ptable*, char *, int, int);
 void		 change_part (struct ahdi_ptable*, int, int);
 
 int
@@ -71,7 +74,7 @@ main (argc, argv)
 		exit (EXIT_FAILURE);
 	}
 	
-	flags = 0;
+	flags = AHDI_IGN_CKSUM;
 	while ((rv = ahdi_readlabel(&ptable, argv[1], flags)) != 1) {
 		switch (rv) {
 		case -1:
@@ -86,9 +89,9 @@ main (argc, argv)
 			exit (EXIT_FAILURE);
 			break;
 		case -3:
+			(void) fpurge(stdin);
 			printf ("No AHDI partitions found.  Continue (y/N)?");
 			if (toupper(getchar()) == 'Y') {
-				(void) fpurge(stdin);
 				flags |= FORCE_AHDI;
 			} else
 				exit (EXIT_FAILURE);
@@ -96,11 +99,11 @@ main (argc, argv)
 		case -4:
 		case -5:
 		case -6:
+			(void) fpurge(stdin);
 			printf ("Errors reading AHDI partition table.  Override (y/N)? ");
 			if (toupper(getchar()) == 'Y') {
-				(void) fpurge(stdin);
 				flags |= AHDI_IGN_EXISTS | AHDI_IGN_EXT |
-				    AHDI_IGN_CKSUM | AHDI_IGN_SPU;
+				    AHDI_IGN_SPU;
 			} else
 				exit (EXIT_FAILURE);
 			break;
@@ -114,32 +117,50 @@ main (argc, argv)
 	}
 
 	units = UNITS_SECTORS;
+	flags = AHDI_KEEP_BOOT | AHDI_KEEP_BSL;
 	show_parts (&ptable, 0, ptable.nparts, units);
+	printf ("Preserve boot sector - ");
+	flags & AHDI_KEEP_BOOT ? printf ("yes\n") :
+	    printf ("no\n");
+	printf ("Preserve bad sector list - ");
+	flags & AHDI_KEEP_BSL ? printf ("yes\n") :
+	    printf ("no\n");
 	key = 0;
 	while (key != 'Q') {
 		(void) fpurge(stdin);
-		printf ("Change [a-p], r)ecalculate, s)how, u)nits, w)rite or q)uit ");
+		printf ("Change [a-p], r)ecalculate, s)how, u)nits, w)rite, z)ero or q)uit ");
 		key = toupper(getchar());
 		if (key == EOF)
 			key = 'Q';
-		if (key >= 'A' && key <= 'P') {
+		if (key >= 'A' && key <= 'P')
 			change_part (&ptable, key - 'A', units);
-		}
 		if (key == 'R') {
-			if (ahdi_buildlabel (&ptable))
+			if (ahdi_buildlabel (&ptable)) {
 				printf ("Partiton table adjusted\n");
+			} else {
+				printf ("No changes necessary\n");
+			}
 		}
 		if (key == 'S') {
 			show_parts (&ptable, 0, ptable.nparts, units);
+			printf ("Preserve boot sector - ");
+			flags & AHDI_KEEP_BOOT ? printf ("yes\n") :
+			    printf ("no\n");
+			printf ("Preserve bad sector list - ");
+			flags & AHDI_KEEP_BSL ? printf ("yes\n") :
+			    printf ("no\n");
 		}
 		if (key == 'U') {
-			if (units == UNITS_SECTORS)
+			if (units == UNITS_SECTORS) {
+				printf ("Units now cylinder/track/sector\n");
 				units = UNITS_CTS;
-			else
+			} else {
+				printf ("Units now sector\n");
 				units = UNITS_SECTORS;
+			}
 		}
 		if (key == 'W') {
-			if ((rv = ahdi_writelabel (&ptable, argv[1], 0)) < 0) {
+			if ((rv = ahdi_writelabel (&ptable, argv[1], flags)) < 0) {
 				if (rv == -1)
 					perror ("\0");
 				if (rv == -2)
@@ -166,6 +187,30 @@ main (argc, argv)
 					    ahdi_errp2 + 'a');
 			}
 		}
+		if (key == 'Z') {
+			(void) fpurge(stdin);
+			printf ("Preserve boot sector? ");
+			if (flags & AHDI_KEEP_BOOT) {
+				printf ("[y] ");
+				if (toupper (getchar ()) == 'N')
+					flags &= ~AHDI_KEEP_BOOT;
+			} else {
+				printf ("[n] ");
+				if (toupper (getchar ()) == 'Y')
+					flags |= AHDI_KEEP_BOOT;
+			}
+			(void) fpurge(stdin);
+			printf ("Preserve bad sector list? ");
+			if (flags & AHDI_KEEP_BSL) {
+				printf ("[y] ");
+				if (toupper (getchar ()) == 'N')
+					flags &= ~AHDI_KEEP_BSL;
+			} else {
+				printf ("[n] ");
+				if (toupper (getchar ()) == 'Y')
+					flags |= AHDI_KEEP_BSL;
+			}
+		}
 	}
 	return (0);
 }
@@ -187,6 +232,11 @@ show_parts (ptable, start, finish, units)
 	if (units == UNITS_SECTORS) {
 		printf ("  #  id      root     start       end      size   MBs\n");
 		for (i = start; i < finish; i++) {
+			if (finish - start > 10 && i - start == 8) {
+				(void) fpurge(stdin);
+				printf ("-- Press return for more -- ");
+				(void) getchar();
+			}
 			printf ("  %c %c%c%c  %8u  %8u  %8u  %8u  (%4u)\n",
 			    i + 'a', ptable->parts[i].id[0],
 			    ptable->parts[i].id[1], ptable->parts[i].id[2],
@@ -201,6 +251,11 @@ show_parts (ptable, start, finish, units)
 		u_int32_t	cylinder, track, sector;
 		printf ("  #  id          root         start           end          size    MBs\n");
 		for (i = start; i < finish; i++) {
+			if (finish - start > 10 && i - start == 8) {
+				(void) fpurge(stdin);
+				printf ("-- Press return for more -- ");
+				(void) getchar();
+			}
 			printf ("  %c %c%c%c  ", i + 'a',
 			    ptable->parts[i].id[0], ptable->parts[i].id[1],
 			    ptable->parts[i].id[2]);
@@ -236,7 +291,7 @@ show_parts (ptable, start, finish, units)
 	}
 }
 
-void
+int
 get_input (buf, len)
 	char	*buf;
 	int	 len;
@@ -245,12 +300,12 @@ get_input (buf, len)
 
 	count = 0;
 	(void) fpurge(stdin);
-	while (count < (len - 1) && key != '\n' && key != '\r') {
-		key = getchar();
+	while (count < (len - 1) && (key = getchar()) != '\n' && key != '\r') {
 		buf[count] = key;
 		count++;
 	}
 	buf[count] = '\0';
+	return(count);
 }
 
 char *
@@ -270,11 +325,13 @@ sec_to_cts (ptable, sector, cts)
 }
 
 u_int32_t
-read_sector (ptable, buf)
+read_sector (ptable, buf, part, se)
 	struct ahdi_ptable	*ptable;
-	char	*buf;
+	char			*buf;
+	int			 part, se;
 {
 	u_int32_t	sector, track, cylinder;
+	int		i;
 
 	sector = track = cylinder = 0;
 	if ((strchr (buf, '/') != NULL) &&
@@ -288,8 +345,39 @@ read_sector (ptable, buf)
 		sector += ptable->secpercyl * cylinder;
 		return (sector);
 	}
-	if (sscanf (buf, "%u", &sector) == 1)
+	if (buf[0] == '-' && buf[1]) {
+		if (buf[1] == '1' && se == PART_END)
+			/* Extend to end of disk */
+			return (ptable->secperunit -
+			    ptable->parts[part].start);
+		i = (int) (toupper (buf[1]) - 'A');
+		if (i >= 0 && i <= ptable->nparts ) {
+			if (se == PART_ROOT && part > i)
+				/* Root after partition ... */
+				return (ptable->parts[i].start +
+				    ptable->parts[i].size);
+			if (se == PART_START && part > i) {
+				/* Start after partition ... */
+				if (ptable->parts[part].root)
+					return (ptable->parts[i].start +
+					    ptable->parts[i].size + 1);
+				else
+					return (ptable->parts[i].start +
+					    ptable->parts[i].size);
+			}
+			if (se == PART_END && part < i)
+				/* End before partition ... */
+				return (ptable->parts[i].root -
+				    ptable->parts[part].start);
+		}
+		return (0);
+	}
+	if (sscanf (buf, "%u", &sector) == 1) {
+		if (buf[strlen (buf) - 1] == 'm' ||
+		    buf[strlen (buf) - 1] == 'M')
+			sector *= BLPM;
 		return (sector);
+	}
 	return (0);
 }
 
@@ -314,8 +402,7 @@ change_part (ptable, part, units)
 
 	printf ("id [%c%c%c] ", ptable->parts[part].id[0],
 	    ptable->parts[part].id[1], ptable->parts[part].id[2]);
-	get_input (&buf[0], BUFLEN);
-	if (buf[0] != '\n' && buf[0] != '\r') {
+	if (get_input (&buf[0], BUFLEN) > 2) {
 		ptable->parts[part].id[0] = buf[0];
 		ptable->parts[part].id[1] = buf[1];
 		ptable->parts[part].id[2] = buf[2];
@@ -323,34 +410,30 @@ change_part (ptable, part, units)
 
 	printf ("root [%8u (%s)] ", ptable->parts[part].root,
 	    sec_to_cts (ptable, ptable->parts[part].root, &cts[0]));
-	get_input (&buf[0], BUFLEN);
-	if (buf[0] != '\n' && buf[0] != '\r') {
-		sector = read_sector (ptable, buf);
-			ptable->parts[part].root = sector;
+	if (get_input (&buf[0], BUFLEN)) {
+		sector = read_sector (ptable, buf, part, PART_ROOT);
+		ptable->parts[part].root = sector;
 	}
 
 	printf ("start [%8u (%s)] ", ptable->parts[part].start,
 	    sec_to_cts (ptable, ptable->parts[part].start, &cts[0]));
-	get_input (&buf[0], BUFLEN);
-	if (buf[0] != '\n' && buf[0] != '\r') {
-		sector = read_sector (ptable, buf);
-		if (sector)
-			ptable->parts[part].start = sector;
+	if (get_input (&buf[0], BUFLEN)) {
+		sector = read_sector (ptable, buf, part, PART_START);
+		ptable->parts[part].start = sector;
 	}
 
-	printf ("size [%8u (%s)] ", ptable->parts[part].size,
-	    sec_to_cts (ptable, ptable->parts[part].size, &cts[0]));
-	get_input (&buf[0], BUFLEN);
-	if (buf[0] != '\n' && buf[0] != '\r') {
-		sector = read_sector (ptable, buf);
-		if (sector)
-			ptable->parts[part].size = sector;
+	printf ("size [%8u (%s) (%4uM)] ", ptable->parts[part].size,
+	    sec_to_cts (ptable, ptable->parts[part].size, &cts[0]),
+	    (ptable->parts[part].size + (BLPM >> 1)) / BLPM);
+	if (get_input (&buf[0], BUFLEN)) {
+		sector = read_sector (ptable, buf, part, PART_END);
+		ptable->parts[part].size = sector;
 	}
 
 /*
 	printf ("NetBSD disk letter [%c] ", ptable->parts[part].letter + 'a');
-	get_input (&buf[0], BUFLEN);
-	if (buf[0] != '\n' && buf[0] != '\r')
+	if (get_input (&buf[0], BUFLEN)) {
+		buf[0] = tolower(buf[0]);
 		if (buf[0] == 'a' || (buf[0] >= 'd' && buf[0] <= 'p'))
 			ptable->parts[part].letter = buf[0] - 'a';
 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.4 1999/04/20 00:45:24 simonb Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.4.2.1 2001/03/12 13:31:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,15 +40,24 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_4.S,v 1.4 1999/04/20 00:45:24 simonb Exp $")
+	ASMSTR("$NetBSD: byte_swap_4.S,v 1.4.2.1 2001/03/12 13:31:41 bouyer Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#if 0 && defined(ABICALLS)
+#undef _LOCORE
+#define _LOCORE		/* XXX not really, just assembly-code source */
+#include <machine/endian.h>
+
+#ifdef _KERNEL
+#define	BSWAP32_NAME	bswap32
+#else
+#ifdef ABICALLS
 	.abicalls
 #endif
+#define	BSWAP32_NAME	__bswap32
+#endif
 
-NLEAF(bswap32)				# a0 = 0x11223344, return 0x44332211
-#ifdef MIPSEL
+NLEAF(BSWAP32_NAME)			# a0 = 0x11223344, return 0x44332211
+#if BYTE_ORDER == LITTLE_ENDIAN
 ALEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 #endif
@@ -62,8 +71,9 @@ ALEAF(ntohl)
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	or	v0, v0, v1
 	j	ra
-END(bswap32)
-#ifdef MIPSEB
+END(BSWAP32_NAME)
+
+#if BYTE_ORDER == BIG_ENDIAN
 NLEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 	move	v0, a0

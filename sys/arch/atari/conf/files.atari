@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.66.2.3 2001/01/18 09:22:24 bouyer Exp $
+#	$NetBSD: files.atari,v 1.66.2.4 2001/03/12 13:27:55 bouyer Exp $
 
 maxpartitions 16
 
@@ -148,6 +148,7 @@ include "dev/pci/files.pci"
 # ISA-devices
 #
 file	arch/atari/isa/isa_machdep.c	isa
+file	arch/atari/isa/isa_dma.c	isadma
 
 device	isabus
 attach	isabus at mainbus

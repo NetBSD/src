@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.1.2.2 2001/02/11 19:09:52 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_MIPS_VR_4111, PLATID_MACH_SHARP_TRIPAD_PV6000         ,        8,      640,      480,      640, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E100      ,       16,      240,      320,      512, 0xaa200000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500      ,       16,      240,      320,      512, 0xaa200000 },
+	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET,  16,      320,      240,     1024, 0xaa200000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300      ,        8,      640,      480,      640, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300      ,       16,      640,      480,     1280, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT310      ,        8,      640,      480,      640, 0xaa000000 },
@@ -108,9 +109,12 @@ FrameBufferInfo::_table[] =
 #endif // SHx
 #ifdef ARM
 	// SA-1100 (can't determine frame buffer address)
-	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820     ,       16,      640,      480,        0, 0x00000000 },
-	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820JP   ,       16,      640,      480,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820     ,        8,      640,      480,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820JP   ,        8,      640,      480,        0, 0x00000000 },
 	// SA-1110
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720     ,       16,      640,      240,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720JP   ,       16,      640,      240,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_COMPAQ_IPAQ_H3600  ,       16,      240,      320,        0, 0x00000000 },
 #endif // ARM
 	{ 0, 0, 0, 0, 0, 0, 0 } // TERMINATOR
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.33.2.1 2000/11/20 18:09:14 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.33.2.2 2001/03/12 13:31:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -87,8 +87,7 @@ const char	netcls[] = "netcls";
  */
 
 void
-soisconnecting(so)
-	struct socket *so;
+soisconnecting(struct socket *so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTED|SS_ISDISCONNECTING);
@@ -96,11 +95,11 @@ soisconnecting(so)
 }
 
 void
-soisconnected(so)
-	struct socket *so;
+soisconnected(struct socket *so)
 {
-	struct socket *head = so->so_head;
+	struct socket	*head;
 
+	head = so->so_head;
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && soqremque(so, 0)) {
@@ -115,8 +114,7 @@ soisconnected(so)
 }
 
 void
-soisdisconnecting(so)
-	struct socket *so;
+soisdisconnecting(struct socket *so)
 {
 
 	so->so_state &= ~SS_ISCONNECTING;
@@ -127,8 +125,7 @@ soisdisconnecting(so)
 }
 
 void
-soisdisconnected(so)
-	struct socket *so;
+soisdisconnected(struct socket *so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
@@ -150,13 +147,12 @@ soisdisconnected(so)
  * to catch calls that are missing the (new) second parameter.
  */
 struct socket *
-sonewconn1(head, connstatus)
-	struct socket *head;
-	int connstatus;
+sonewconn1(struct socket *head, int connstatus)
 {
-	struct socket *so;
-	int soqueue = connstatus ? 1 : 0;
+	struct socket	*so;
+	int		soqueue;
 
+	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return ((struct socket *)0);
 	so = pool_get(&socket_pool, PR_NOWAIT);
@@ -191,9 +187,7 @@ sonewconn1(head, connstatus)
 }
 
 void
-soqinsque(head, so, q)
-	struct socket *head, *so;
-	int q;
+soqinsque(struct socket *head, struct socket *so, int q)
 {
 
 #ifdef DIAGNOSTIC
@@ -213,12 +207,11 @@ soqinsque(head, so, q)
 }
 
 int
-soqremque(so, q)
-	struct socket *so;
-	int q;
+soqremque(struct socket *so, int q)
 {
-	struct socket *head = so->so_head;
+	struct socket	*head;
 
+	head = so->so_head;
 	if (q == 0) {
 		if (so->so_onq != &head->so_q0)
 			return (0);
@@ -245,8 +238,7 @@ soqremque(so, q)
  */
 
 void
-socantsendmore(so)
-	struct socket *so;
+socantsendmore(struct socket *so)
 {
 
 	so->so_state |= SS_CANTSENDMORE;
@@ -254,8 +246,7 @@ socantsendmore(so)
 }
 
 void
-socantrcvmore(so)
-	struct socket *so;
+socantrcvmore(struct socket *so)
 {
 
 	so->so_state |= SS_CANTRCVMORE;
@@ -266,8 +257,7 @@ socantrcvmore(so)
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int
-sbwait(sb)
-	struct sockbuf *sb;
+sbwait(struct sockbuf *sb)
 {
 
 	sb->sb_flags |= SB_WAIT;
@@ -281,10 +271,9 @@ sbwait(sb)
  * return any error returned from sleep (EINTR).
  */
 int
-sb_lock(sb)
-	struct sockbuf *sb;
+sb_lock(struct sockbuf *sb)
 {
-	int error;
+	int	error;
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
@@ -304,11 +293,9 @@ sb_lock(sb)
  * if the socket has the SS_ASYNC flag set.
  */
 void
-sowakeup(so, sb)
-	struct socket *so;
-	struct sockbuf *sb;
+sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	struct proc *p;
+	struct proc	*p;
 
 	selwakeup(&sb->sb_sel);
 	sb->sb_flags &= ~SB_SEL;
@@ -359,9 +346,7 @@ sowakeup(so, sb)
  */
 
 int
-soreserve(so, sndcc, rcvcc)
-	struct socket *so;
-	u_long sndcc, rcvcc;
+soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
 	if (sbreserve(&so->so_snd, sndcc) == 0)
@@ -375,9 +360,9 @@ soreserve(so, sndcc, rcvcc)
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
-bad2:
+ bad2:
 	sbrelease(&so->so_snd);
-bad:
+ bad:
 	return (ENOBUFS);
 }
 
@@ -387,9 +372,7 @@ bad:
  * if buffering efficiency is near the normal case.
  */
 int
-sbreserve(sb, cc)
-	struct sockbuf *sb;
-	u_long cc;
+sbreserve(struct sockbuf *sb, u_long cc)
 {
 
 	if (cc == 0 || cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
@@ -405,8 +388,7 @@ sbreserve(sb, cc)
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
-sbrelease(sb)
-	struct sockbuf *sb;
+sbrelease(struct sockbuf *sb)
 {
 
 	sbflush(sb);
@@ -445,11 +427,9 @@ sbrelease(sb)
  * discarded and mbufs are compacted where possible.
  */
 void
-sbappend(sb, m)
-	struct sockbuf *sb;
-	struct mbuf *m;
+sbappend(struct sockbuf *sb, struct mbuf *m)
 {
-	struct mbuf *n;
+	struct mbuf	*n;
 
 	if (m == 0)
 		return;
@@ -468,12 +448,13 @@ sbappend(sb, m)
 
 #ifdef SOCKBUF_DEBUG
 void
-sbcheck(sb)
-	struct sockbuf *sb;
+sbcheck(struct sockbuf *sb)
 {
-	struct mbuf *m;
-	int len = 0, mbcnt = 0;
+	struct mbuf	*m;
+	int		len, mbcnt;
 
+	len = 0;
+	mbcnt = 0;
 	for (m = sb->sb_mb; m; m = m->m_next) {
 		len += m->m_len;
 		mbcnt += MSIZE;
@@ -495,11 +476,9 @@ sbcheck(sb)
  * begins a new record.
  */
 void
-sbappendrecord(sb, m0)
-	struct sockbuf *sb;
-	struct mbuf *m0;
+sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 {
-	struct mbuf *m;
+	struct mbuf	*m;
 
 	if (m0 == 0)
 		return;
@@ -530,12 +509,9 @@ sbappendrecord(sb, m0)
  * but after any other OOB data.
  */
 void
-sbinsertoob(sb, m0)
-	struct sockbuf *sb;
-	struct mbuf *m0;
+sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 {
-	struct mbuf *m;
-	struct mbuf **mp;
+	struct mbuf	*m, **mp;
 
 	if (m0 == 0)
 		return;
@@ -575,16 +551,16 @@ sbinsertoob(sb, m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(sb, asa, m0, control)
-	struct sockbuf *sb;
-	struct sockaddr *asa;
-	struct mbuf *m0, *control;
+sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
+	struct mbuf *control)
 {
-	struct mbuf *m, *n;
-	int space = asa->sa_len;
+	struct mbuf	*m, *n;
+	int		space;
 
-if (m0 && (m0->m_flags & M_PKTHDR) == 0)
-panic("sbappendaddr");
+	space = asa->sa_len;
+
+	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
+		panic("sbappendaddr");
 	if (m0)
 		space += m0->m_pkthdr.len;
 	for (n = control; n; n = n->m_next) {
@@ -623,13 +599,12 @@ panic("sbappendaddr");
 }
 
 int
-sbappendcontrol(sb, m0, control)
-	struct sockbuf *sb;
-	struct mbuf *m0, *control;
+sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
-	struct mbuf *m, *n;
-	int space = 0;
+	struct mbuf	*m, *n;
+	int		space;
 
+	space = 0;
 	if (control == 0)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
@@ -660,13 +635,12 @@ sbappendcontrol(sb, m0, control)
  * is null, the buffer is presumed empty.
  */
 void
-sbcompress(sb, m, n)
-	struct sockbuf *sb;
-	struct mbuf *m, *n;
+sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 {
-	int eor = 0;
-	struct mbuf *o;
+	int		eor;
+	struct mbuf	*o;
 
+	eor = 0;
 	while (m) {
 		eor |= m->m_flags & M_EOR;
 		if (m->m_len == 0 &&
@@ -681,7 +655,8 @@ sbcompress(sb, m, n)
 		      n->m_data + n->m_len + m->m_len <= &n->m_dat[MLEN]) ||
 		     ((~n->m_flags & (M_EXT|M_CLUSTER)) == 0 &&
 		      !MCLISREFERENCED(n) &&
-		      n->m_data + n->m_len + m->m_len <= &n->m_ext.ext_buf[MCLBYTES]))) {
+		      n->m_data + n->m_len + m->m_len <=
+		       &n->m_ext.ext_buf[MCLBYTES]))) {
 			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
@@ -712,8 +687,7 @@ sbcompress(sb, m, n)
  * Check that all resources are reclaimed.
  */
 void
-sbflush(sb)
-	struct sockbuf *sb;
+sbflush(struct sockbuf *sb)
 {
 
 	if (sb->sb_flags & SB_LOCK)
@@ -728,12 +702,9 @@ sbflush(sb)
  * Drop data from (the front of) a sockbuf.
  */
 void
-sbdrop(sb, len)
-	struct sockbuf *sb;
-	int len;
+sbdrop(struct sockbuf *sb, int len)
 {
-	struct mbuf *m, *mn;
-	struct mbuf *next;
+	struct mbuf	*m, *mn, *next;
 
 	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
 	while (len > 0) {
@@ -772,10 +743,9 @@ sbdrop(sb, len)
  * and move the next record to the front.
  */
 void
-sbdroprecord(sb)
-	struct sockbuf *sb;
+sbdroprecord(struct sockbuf *sb)
 {
-	struct mbuf *m, *mn;
+	struct mbuf	*m, *mn;
 
 	m = sb->sb_mb;
 	if (m) {
@@ -792,13 +762,10 @@ sbdroprecord(sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(p, size, type, level)
-	caddr_t p;
-	int size;
-	int type, level;
+sbcreatecontrol(caddr_t p, int size, int type, int level)
 {
-	struct cmsghdr *cp;
-	struct mbuf *m;
+	struct cmsghdr	*cp;
+	struct mbuf	*m;
 
 	if (CMSG_SPACE(size) > MCLBYTES) {
 		printf("sbcreatecontrol: message too large %d\n", size);

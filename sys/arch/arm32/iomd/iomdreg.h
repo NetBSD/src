@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.10 1998/04/10 06:53:08 mark Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.10.14.1 2001/03/12 13:27:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -196,13 +196,13 @@
 #define MOUSE_BUTTON_MIDDLE 0x20
 #define MOUSE_BUTTON_LEFT   0x40
 
-#define FREQCON	(IOMD_BASE + 0x40000)
+#define FREQCON	(iomd_base + 0x40000)
 
 #define RPC600_IOMD_ID		0xd4e7
 #define ARM7500_IOC_ID		0x5b98
 #define ARM7500FE_IOC_ID	0xaa7c
 
-#define IOMD_ADDRESS(reg)	(IOMD_BASE + (reg << 2))
+#define IOMD_ADDRESS(reg)	(iomd_base + (reg << 2))
 #define IOMD_WRITE_BYTE(reg, val)	\
 	(*((volatile unsigned char *)(IOMD_ADDRESS(reg))) = (val))
 #define IOMD_WRITE_WORD(reg, val)	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.8 2001/01/18 09:23:35 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.9 2001/03/12 13:31:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -414,11 +414,14 @@ sdopen(dev, flag, fmt, p)
 
 		periph->periph_flags |= PERIPH_OPEN;
 
-		/* Lock the pack in. */
-		error = scsipi_prevent(periph, PR_PREVENT,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
-		if (error)
-			goto bad;
+		if (periph->periph_flags & PERIPH_REMOVABLE) {
+			/* Lock the pack in. */
+			error = scsipi_prevent(periph, PR_PREVENT,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_MEDIA_CHANGE);
+			if (error)
+				goto bad;
+		}
 
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
 			periph->periph_flags |= PERIPH_MEDIA_LOADED;
@@ -536,8 +539,11 @@ sdclose(dev, flag, fmt, p)
 
 		scsipi_wait_drain(periph);
 
-		scsipi_prevent(periph, PR_ALLOW,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
+		if (periph->periph_flags & PERIPH_REMOVABLE) {
+			scsipi_prevent(periph, PR_ALLOW,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_NOT_READY);
+		}
 		periph->periph_flags &= ~PERIPH_OPEN;
 
 		scsipi_wait_drain(periph);

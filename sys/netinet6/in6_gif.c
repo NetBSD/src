@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_gif.c,v 1.7.2.2 2001/02/11 19:17:22 bouyer Exp $	*/
-/*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.7.2.3 2001/03/12 13:31:54 bouyer Exp $	*/
+/*	$KAME: in6_gif.c,v 1.45 2001/02/20 08:37:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,11 +30,8 @@
  * SUCH DAMAGE.
  */
 
-/*
- * in6_gif.c
- */
-
 #include "opt_inet.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +117,12 @@ in6_gif_output(ifp, family, m, rt)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
+#endif
+#ifdef ISO
+	case AF_ISO:
+		proto = IPPROTO_EON;
+		itos = 0;
+		break;
 #endif
 	default:
 #ifdef DEBUG
@@ -279,6 +282,11 @@ int in6_gif_input(mp, offp, proto)
 			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6->ip6_flow);
 		break;
 	    }
+#endif
+#ifdef ISO
+	case IPPROTO_EON:
+		af = AF_ISO;
+		break;
 #endif
 	default:
 		ip6stat.ip6s_nogif++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.103.2.6 2001/02/11 19:16:45 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.103.2.7 2001/03/12 13:31:35 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -72,46 +72,47 @@
  * Functions for specific exec types should be defined in their own
  * header file.
  */
-extern const struct execsw execsw_builtin[];
-extern int nexecs_builtin;
-static const struct execsw **execsw = NULL;
-static int nexecs;
-int exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
+extern const struct execsw	execsw_builtin[];
+extern int			nexecs_builtin;
+static const struct execsw	**execsw = NULL;
+static int			nexecs;
+
+int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
 
 #ifdef LKM
 /* list of supported emulations */
 static
 LIST_HEAD(emlist_head, emul_entry) el_head = LIST_HEAD_INITIALIZER(el_head);
 struct emul_entry {
-	LIST_ENTRY(emul_entry) el_list;
-	const struct emul *el_emul;
-	int ro_entry;
+	LIST_ENTRY(emul_entry)	el_list;
+	const struct emul	*el_emul;
+	int			ro_entry;
 };
 
 /* list of dynamically loaded execsw entries */
 static
 LIST_HEAD(execlist_head, exec_entry) ex_head = LIST_HEAD_INITIALIZER(ex_head);
 struct exec_entry {
-	LIST_ENTRY(exec_entry) ex_list;
-	const struct execsw *es;
+	LIST_ENTRY(exec_entry)	ex_list;
+	const struct execsw	*es;
 };
 
 /* structure used for building execw[] */
 struct execsw_entry {
-	struct execsw_entry *next;
-	const struct execsw *es;
+	struct execsw_entry	*next;
+	const struct execsw	*es;
 };
 #endif /* LKM */
 
 /* NetBSD emul struct */
-extern char sigcode[], esigcode[];
+extern char	sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
 #ifdef __HAVE_SYSCALL_INTERN
-void syscall_intern __P((struct proc *));
+void syscall_intern(struct proc *);
 #else
-void syscall __P((void));
+void syscall(void);
 #endif
 
 const struct emul emul_netbsd = {
@@ -149,8 +150,8 @@ const struct emul emul_netbsd = {
 struct lock exec_lock;
  
 #ifdef LKM
-static const struct emul *	emul_search __P((const char *));
-static void link_es __P((struct execsw_entry **, const struct execsw *));
+static const struct emul * emul_search(const char *);
+static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
 /*
@@ -181,10 +182,10 @@ static void link_es __P((struct execsw_entry **, const struct execsw *));
 int
 check_exec(struct proc *p, struct exec_package *epp)
 {
-	int error, i;
-	struct vnode *vp;
+	int		error, i;
+	struct vnode	*vp;
 	struct nameidata *ndp;
-	size_t resid;
+	size_t		resid;
 
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
@@ -229,6 +230,14 @@ check_exec(struct proc *p, struct exec_package *epp)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
+	/*
+	 * Set up default address space limits.  Can be overridden
+	 * by individual exec packages.
+	 * 
+	 * XXX probably shoul be all done in the exec pakages.
+	 */
+	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;
 	/*
 	 * set up the vmcmds for creation of the process
 	 * address space
@@ -299,27 +308,29 @@ int
 sys_execve(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
-		syscallarg(const char *) path;
-		syscallarg(char * const *) argp;
-		syscallarg(char * const *) envp;
+		syscallarg(const char *)	path;
+		syscallarg(char * const *)	argp;
+		syscallarg(char * const *)	envp;
 	} */ *uap = v;
-	int error, i;
-	struct exec_package pack;
-	struct nameidata nid;
-	struct vattr attr;
-	struct ucred *cred = p->p_ucred;
-	char *argp;
-	char * const *cpp;
-	char *dp, *sp;
-	long argc, envc;
-	size_t len;
-	char *stack;
-	struct ps_strings arginfo;
-	struct vmspace *vm;
-	char **tmpfap;
-	int szsigcode;
-	struct exec_vmcmd *base_vcp = NULL;
+	int			error, i;
+	struct exec_package	pack;
+	struct nameidata	nid;
+	struct vattr		attr;
+	struct ucred		*cred;
+	char			*argp;
+	char * const		*cpp;
+	char			*dp, *sp;
+	long			argc, envc;
+	size_t			len;
+	char			*stack;
+	struct ps_strings	arginfo;
+	struct vmspace		*vm;
+	char			**tmpfap;
+	int			szsigcode;
+	struct exec_vmcmd	*base_vcp;
 
+	cred = p->p_ucred;
+	base_vcp = NULL;
 	/*
 	 * Init the namei data to point the file user's program name.
 	 * This is done here rather than in check_exec(), so that it's
@@ -453,7 +464,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p, VM_MIN_ADDRESS, (vaddr_t)pack.ep_minsaddr);
+	uvmspace_exec(p, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -533,7 +544,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
 #ifdef DEBUG
-		printf("execve: ps_strings copyout failed\n");
+		printf("execve: ps_strings copyout %p->%p size %ld failed\n",
+		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo));
 #endif
 		goto exec_abort;
 	}
@@ -654,7 +666,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	return (EJUSTRETURN);
 
-bad:
+ bad:
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
@@ -669,13 +681,13 @@ bad:
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
-freehdr:
+ freehdr:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 
 	free(pack.ep_hdr, M_EXEC);
 	return error;
 
-exec_abort:
+ exec_abort:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 
 	/*
@@ -703,25 +715,19 @@ exec_abort:
 
 void *
 copyargs(struct exec_package *pack, struct ps_strings *arginfo,
-    void *stack, void *argp)
+	void *stack, void *argp)
 {
-	char **cpp = stack;
-	char *dp, *sp;
-	size_t len;
-	void *nullp = NULL;
-	long argc = arginfo->ps_nargvstr;
-	long envc = arginfo->ps_nenvstr;
+	char	**cpp, *dp, *sp;
+	size_t	len;
+	void	*nullp;
+	long	argc, envc;
 
-#ifdef __sparc_v9__
-	/* XXX Temporary hack for argc format conversion. */
-	argc <<= 32;
-#endif
+	cpp = stack;
+	nullp = NULL;
+	argc = arginfo->ps_nargvstr;
+	envc = arginfo->ps_nenvstr;
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
-#ifdef __sparc_v9__
-	/* XXX Temporary hack for argc format conversion. */
-	argc >>= 32;
-#endif
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_es->es_arglen);
 	sp = argp;
@@ -755,8 +761,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo,
  * Find an emulation of given name in list of emulations.
  */
 static const struct emul *
-emul_search(name)
-	const char *name;
+emul_search(const char *name)
 {
 	struct emul_entry *it;
 
@@ -772,13 +777,12 @@ emul_search(name)
  * Add an emulation to list, if it's not there already.
  */
 int
-emul_register(emul, ro_entry)
-	const struct emul *emul;
-	int ro_entry;
+emul_register(const struct emul *emul, int ro_entry)
 {
-	struct emul_entry *ee;
-	int error = 0;
+	struct emul_entry	*ee;
+	int			error;
 
+	error = 0;
 	lockmgr(&exec_lock, LK_SHARED, NULL);
 
 	if (emul_search(emul->e_name)) {
@@ -792,7 +796,7 @@ emul_register(emul, ro_entry)
 	ee->ro_entry = ro_entry;
 	LIST_INSERT_HEAD(&el_head, ee, el_list);
 
-    out:
+ out:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 	return error;
 }
@@ -801,14 +805,14 @@ emul_register(emul, ro_entry)
  * Remove emulation with name 'name' from list of supported emulations.
  */
 int
-emul_unregister(name)
-	const char *name;
+emul_unregister(const char *name)
 {
-	struct emul_entry *it;
-	int i, error = 0;
 	const struct proclist_desc *pd;
-	struct proc *ptmp;
+	struct emul_entry	*it;
+	int			i, error;
+	struct proc		*ptmp;
 
+	error = 0;
 	lockmgr(&exec_lock, LK_SHARED, NULL);
 
 	LIST_FOREACH(it, &el_head, el_list) {
@@ -858,7 +862,7 @@ emul_unregister(name)
 	LIST_REMOVE(it, el_list);
 	FREE(it, M_EXEC);
 
-    out:
+ out:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 	return error;
 }
@@ -867,13 +871,12 @@ emul_unregister(name)
  * Add execsw[] entry.
  */
 int
-exec_add(esp, e_name)
-	struct execsw *esp;
-	const char *e_name;
+exec_add(struct execsw *esp, const char *e_name)
 {
-	struct exec_entry *it;
-	int error = 0;
+	struct exec_entry	*it;
+	int			error;
 
+	error = 0;
 	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
 
 	if (!esp->es_emul) {
@@ -903,7 +906,7 @@ exec_add(esp, e_name)
 	/* update execsw[] */
 	exec_init(0);
 
-    out:
+ out:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 	return error;
 }
@@ -912,12 +915,12 @@ exec_add(esp, e_name)
  * Remove execsw[] entry.
  */
 int
-exec_remove(esp)
-	const struct execsw *esp;
+exec_remove(const struct execsw *esp)
 {
-	struct exec_entry *it;
-	int error = 0;
+	struct exec_entry	*it;
+	int			error;
 
+	error = 0;
 	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
@@ -939,15 +942,13 @@ exec_remove(esp)
 	/* update execsw[] */
 	exec_init(0);
 
-    out:
+ out:
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 	return error;
 }
 
 static void
-link_es(listp, esp)
-	struct execsw_entry **listp;
-	const struct execsw *esp;
+link_es(struct execsw_entry **listp, const struct execsw *esp)
 {
 	struct execsw_entry *et, *e1;
 
@@ -995,13 +996,12 @@ link_es(listp, esp)
  * i.e. via exec_{add|remove}().
  */
 int
-exec_init(init_boot)
-	int init_boot;
+exec_init(int init_boot)
 {
-	const struct execsw **new_es, * const *old_es;
-	struct execsw_entry *list, *e1;
-	struct exec_entry *e2;
-	int i, es_sz;
+	const struct execsw	**new_es, * const *old_es;
+	struct execsw_entry	*list, *e1;
+	struct exec_entry	*e2;
+	int			i, es_sz;
 
 	if (init_boot) {
 		/* do one-time initializations */
@@ -1074,8 +1074,7 @@ exec_init(init_boot)
  * exec_maxhdrsz and execsw[].
  */
 int
-exec_init(init_boot)
-	int init_boot;
+exec_init(int init_boot)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.8 1999/06/01 03:37:02 mark Exp $	*/
+/*	$NetBSD: vidc.h,v 1.8.2.1 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -62,8 +62,15 @@
 /* VIDC20 Base addresses */
 
 #define VIDC_HW_BASE 0x03400000
-
 #define VIDC_BASE    0xf6100000
+
+/*
+ * Current VIDC base set in initarm()
+ * since the current code isnt busspaceified, we need to set it manually ...
+ * this is to allow the VIDC to be moved.
+ */
+extern int *vidc_base;
+
 
 /* Video registers */
 
@@ -154,12 +161,12 @@
 /* Video display addresses */
 
 /* Where the display memory is mapped */
-
-#define VMEM_VBASE 0xf4000000
-
+/* note that there's not normally more than 2MB */
+#define VMEM_VBASE 0xf7000000
+ 
 /* Where the VRAM will be found */
 
-#define VRAM_BASE 0x02000000
+#define VRAM_BASE  0x02000000
 
 #ifndef _LOCORE
 

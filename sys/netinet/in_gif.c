@@ -1,5 +1,5 @@
-/*	$NetBSD: in_gif.c,v 1.6.2.2 2001/02/11 19:17:13 bouyer Exp $	*/
-/*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.6.2.3 2001/03/12 13:31:49 bouyer Exp $	*/
+/*	$KAME: in_gif.c,v 1.51 2001/02/20 08:31:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,16 +30,8 @@
  * SUCH DAMAGE.
  */
 
-/*
- * in_gif.c
- */
-
-#ifdef __FreeBSD__
-#include "opt_mrouting.h"
-#endif
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,18 +39,8 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/kernel.h>
-#include <sys/sysctl.h>
-#endif
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
-#endif
 #include <sys/syslog.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -95,10 +77,6 @@
 int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
-#endif
-#ifdef __FreeBSD__
-SYSCTL_INT(_net_inet_ip, IPCTL_GIF_TTL, gifttl, CTLFLAG_RW,
-	&ip_gif_ttl,	0, "");
 #endif
 
 int
@@ -155,6 +133,12 @@ in_gif_output(ifp, family, m, rt)
 		break;
 	    }
 #endif /*INET6*/
+#ifdef ISO
+	case AF_ISO:
+		proto = IPPROTO_EON;
+		tos = 0;
+		break;
+#endif
 	default:
 #ifdef DEBUG
 		printf("in_gif_output: warning: unknown family %d passed\n",
@@ -240,11 +224,7 @@ in_gif_output(ifp, family, m, rt)
 #endif
 	}
 
-#ifndef __OpenBSD__
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
-#else
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
-#endif
 	return(error);
 }
 
@@ -260,21 +240,16 @@ in_gif_input(m, va_alist)
 	int off, proto;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
-	int af;
 	va_list ap;
+	int af;
 	u_int8_t otos;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
-#ifndef __OpenBSD__
 	proto = va_arg(ap, int);
-#endif
 	va_end(ap);
 
 	ip = mtod(m, struct ip *);
-#ifdef __OpenBSD__
-	proto = ip->ip_p;
-#endif
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
@@ -324,6 +299,11 @@ in_gif_input(m, va_alist)
 		break;
 	    }
 #endif /* INET6 */
+#ifdef ISO
+	case IPPROTO_EON:
+		af = AF_ISO;
+		break;
+#endif
 	default:
 		ipstat.ips_nogif++;
 		m_freem(m);
@@ -379,14 +359,7 @@ gif_encapcheck4(m, off, proto, arg)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
-#elif (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-	for (ia4 = TAILQ_FIRST(&in_ifaddrhead); ia4;
-	     ia4 = TAILQ_NEXT(ia4, ia_link))
-#else
-	for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
-#endif
 	{
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
@@ -404,11 +377,7 @@ gif_encapcheck4(m, off, proto, arg)
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_addr = ip.ip_src;
-#ifdef __FreeBSD__
-		rt = rtalloc1((struct sockaddr *)&sin, 0, 0UL);
-#else
 		rt = rtalloc1((struct sockaddr *)&sin, 0);
-#endif
 		if (!rt || rt->rt_ifp != m->m_pkthdr.rcvif) {
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "

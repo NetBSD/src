@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.1.2.2 2001/02/11 19:10:12 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.1.2.3 2001/03/12 13:28:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,16 +56,18 @@ class SHArchitecture : public Architecture {
 protected:
 	typedef void(*boot_func_t)(struct BootArgs *, struct PageTag *);
   
-	u_int8_t reg_read8(paddr_t reg) {
+	u_int8_t reg_read_1(paddr_t reg) {
 		return REG_READ <u_int8_t>(reg);
 	}
-	u_int16_t reg_read16(paddr_t reg) {
+	u_int16_t reg_read_2(paddr_t reg) {
 		return REG_READ <u_int16_t>(reg);
 	}
-	u_int32_t reg_read(paddr_t reg) {
+	u_int32_t reg_read_4(paddr_t reg) {
 		return REG_READ <u_int32_t>(reg);
 	}
-	void hd64461_framebuffer_test(void);
+	void hd64461_dump(platid_t &);
+	void bsc_dump(void);
+	void pfc_dump(void);
 	void icu_dump(void);
 	void icu_priority(void);
 	void icu_control(void);

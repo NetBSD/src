@@ -1,44 +1,44 @@
-# $NetBSD: files.pnpbios,v 1.8.6.3 2001/02/11 19:10:57 bouyer Exp $
+# $NetBSD: files.pnpbios,v 1.8.6.4 2001/03/12 13:28:57 bouyer Exp $
 
-defopt PNPBIOSVERBOSE
+defopt	PNPBIOSVERBOSE
 
-device pnpbios { [index = -1] }
-attach pnpbios at mainbus
-file arch/i386/pnpbios/pnpbios.c pnpbios needs-flag
-file arch/i386/pnpbios/pnpbioscall.s pnpbios
+device	pnpbios { [index = -1] }
+attach	pnpbios at mainbus
+file	arch/i386/pnpbios/pnpbios.c		pnpbios		needs-flag
+file	arch/i386/pnpbios/pnpbioscall.s		pnpbios
 
-attach com at pnpbios with com_pnpbios
-file arch/i386/pnpbios/com_pnpbios.c com_pnpbios
+attach	com at pnpbios with com_pnpbios
+file	arch/i386/pnpbios/com_pnpbios.c		com_pnpbios
 
-attach lpt at pnpbios with lpt_pnpbios
-file arch/i386/pnpbios/lpt_pnpbios.c lpt_pnpbios
+attach	lpt at pnpbios with lpt_pnpbios
+file	arch/i386/pnpbios/lpt_pnpbios.c		lpt_pnpbios
 
-attach sb at pnpbios with sb_pnpbios
-file arch/i386/pnpbios/sb_pnpbios.c sb_pnpbios
+attach	sb at pnpbios with sb_pnpbios
+file	arch/i386/pnpbios/sb_pnpbios.c		sb_pnpbios
 
-attach wss at pnpbios with wss_pnpbios
-file arch/i386/pnpbios/wss_pnpbios.c wss_pnpbios
+attach	wss at pnpbios with wss_pnpbios
+file	arch/i386/pnpbios/wss_pnpbios.c		wss_pnpbios
 
-attach ym at pnpbios with ym_pnpbios
-file arch/i386/pnpbios/ym_pnpbios.c ym_pnpbios
+attach	ym at pnpbios with ym_pnpbios
+file	arch/i386/pnpbios/ym_pnpbios.c		ym_pnpbios
 
-attach ess at pnpbios with ess_pnpbios
-file arch/i386/pnpbios/ess_pnpbios.c ess_pnpbios
+attach	ess at pnpbios with ess_pnpbios
+file	arch/i386/pnpbios/ess_pnpbios.c		ess_pnpbios
 
-attach pciide at pnpbios with pciide_pnpbios
-file arch/i386/pnpbios/pciide_pnpbios.c pciide_pnpbios needs-flag
+attach	pciide at pnpbios with pciide_pnpbios
+file	arch/i386/pnpbios/pciide_pnpbios.c	pciide_pnpbios	needs-flag
 
-attach lm at pnpbios with lm_pnpbios
-file arch/i386/pnpbios/lm_pnpbios.c lm_pnpbios
+attach	lm at pnpbios with lm_pnpbios
+file	arch/i386/pnpbios/lm_pnpbios.c		lm_pnpbios
 
-attach pckbc at pnpbios with pckbc_pnpbios
-file arch/i386/pnpbios/pckbc_pnpbios.c pckbc_pnpbios
+attach	pckbc at pnpbios with pckbc_pnpbios
+file	arch/i386/pnpbios/pckbc_pnpbios.c	pckbc_pnpbios
 
-attach fdc at pnpbios with fdc_pnpbios
-file arch/i386/pnpbios/fdc_pnpbios.c fdc_pnpbios
+attach	fdc at pnpbios with fdc_pnpbios
+file	arch/i386/pnpbios/fdc_pnpbios.c		fdc_pnpbios
 
-attach npx at pnpbios with npx_pnpbios
-file arch/i386/pnpbios/npx_pnpbios.c npx_pnpbios
+attach	npx at pnpbios with npx_pnpbios
+file	arch/i386/pnpbios/npx_pnpbios.c		npx_pnpbios
 
-attach joy at pnpbios with joy_pnpbios
-file arch/i386/pnpbios/joy_pnpbios.c joy_pnpbios
+attach	joy at pnpbios with joy_pnpbios
+file	arch/i386/pnpbios/joy_pnpbios.c		joy_pnpbios

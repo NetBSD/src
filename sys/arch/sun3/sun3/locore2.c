@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.74.14.2 2001/02/11 19:12:48 bouyer Exp $	*/
+/*	$NetBSD: locore2.c,v 1.74.14.3 2001/03/12 13:29:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,8 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
-#include <sys/exec_aout.h>
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -67,7 +68,8 @@ extern char kernel_text[];
 
 /* These are defined by the linker */
 extern char etext[], edata[], end[];
-char *esym;	/* DDB */
+int nsym;
+char *ssym, *esym;
 
 /* Basically a flag: "Do we have a VAC?" */
 int cache_size;
@@ -101,87 +103,69 @@ struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
-void _bootstrap __P((struct exec));
+void _bootstrap __P((void));
 
 static void _verify_hardware __P((void));
-static void _vm_init __P((struct exec *kehp));
+static void _vm_init __P((void));
 
 #if defined(DDB) && !defined(SYMTAB_SPACE)
-static void _save_symtab __P((struct exec *kehp));
+static void _save_symtab __P((void));
 
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
 static void
-_save_symtab(kehp)
-	struct exec *kehp;	/* kernel exec header */
+_save_symtab()
 {
-	int x, *symsz, *strsz;
-	char *endp, *errdesc;
-
-	/* Initialize */
-	endp = end;
-	symsz = (int*)end;
+	int i;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shp;
+	vaddr_t minsym, maxsym;
 
 	/*
-	 * Sanity-check the exec header.
+	 * Check the ELF headers.
 	 */
-	errdesc = "bad magic";
-	if ((kehp->a_midmag & 0xFFF0) != 0x0100)
-		goto err;
 
-	/* Boundary between text and data varries a little. */
-	errdesc = "bad header";
-	x = kehp->a_text + kehp->a_data;
-	if (x != (edata - kernel_text))
-		goto err;
-	if (kehp->a_bss != (end - edata))
-		goto err;
-	if (kehp->a_entry != (int)kernel_text)
-		goto err;
-	if (kehp->a_trsize || kehp->a_drsize)
-		goto err;
-	/* The exec header looks OK... */
+	ehdr = (void *)end;
+	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+		mon_printf("_save_symtab: bad ELF magic\n");
+		return;
+	}
 
-	/* Check the symtab length word. */
-	errdesc = "bad symbols/strings";
-	if (kehp->a_syms != *symsz)
-		goto err;
-	endp += sizeof(int);	/* past length word */
-	endp += *symsz;			/* past nlist array */
+	/*
+	 * Find the end of the symbols and strings.
+	 */
 
-	/* Sanity-check the string table length. */
-	strsz = (int*)endp;
-	if ((*strsz < 4) || (*strsz > 0x80000))
-		goto err;
-	/* OK, we have a valid symbol table. */
-	endp += *strsz;			/* past strings */
+	maxsym = 0;
+	minsym = ~maxsym;
+	shp = (Elf_Shdr *)(end + ehdr->e_shoff);
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		if (shp[i].sh_type != SHT_SYMTAB &&
+		    shp[i].sh_type != SHT_STRTAB) {
+			continue;
+		}
+		minsym = min(minsym, (vaddr_t)end + shp[i].sh_offset);
+		maxsym = max(maxsym, (vaddr_t)end + shp[i].sh_offset +
+			     shp[i].sh_size);
+	}
 
-#ifdef	_SUN3_
 	/*
 	 * The Sun3/50 has further restrictions on the
 	 * size of the kernel boot image.  If preserving
 	 * the symbol table would take us over the limit,
 	 * then just ignore the symbols.
 	 */
+
 	if ((cpu_machine_id == SUN3_MACH_50) &&
-	    ((long)endp > (KERNBASE+OBMEM_BW50_ADDR-USPACE))) {
-	  errdesc = "too large for 3/50";
-	  goto err;
+	    ((vaddr_t)maxsym > (KERNBASE + OBMEM_BW50_ADDR - USPACE))) {
+		mon_printf("_save_symtab: too large for 3/50");
+		return;
 	}
-#endif	/* SUN3 */
 
-	/* Success!  Advance esym past the symbol data. */
-	esym = endp;
-	return;
-
- err:
-	/*
-	 * Make sure the later call to ddb_init()
-	 * will pass zero as the symbol table size.
-	 */
-	*symsz = 0;
-	mon_printf("_save_symtab: %s\n", errdesc);
+	nsym = 1;
+	ssym = (char *)ehdr;
+	esym = (char *)maxsym;
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -195,8 +179,7 @@ _save_symtab(kehp)
  * usual preparations for our use of the MMU.
  */
 static void
-_vm_init(kehp)
-	struct exec *kehp;	/* kernel exec header */
+_vm_init()
 {
 	vm_offset_t nextva;
 
@@ -208,7 +191,7 @@ _vm_init(kehp)
 	esym = end + 4;
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* This will advance esym past the symbols. */
-	_save_symtab(kehp);
+	_save_symtab();
 #endif
 
 	/*
@@ -324,8 +307,7 @@ _verify_hardware()
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
 void
-_bootstrap(keh)
-	struct exec keh;	/* kernel exec header */
+_bootstrap()
 {
 
 	/* First, Clear BSS. */
@@ -341,7 +323,7 @@ _bootstrap(keh)
 	_verify_hardware();
 
 	/* Handle kernel mapping, pmap_bootstrap(), etc. */
-	_vm_init(&keh);
+	_vm_init();
 
 	/*
 	 * Find and save OBIO mappings needed early,

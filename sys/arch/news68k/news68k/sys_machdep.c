@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2.2.3 2001/01/05 17:34:51 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2.2.4 2001/03/12 13:29:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -100,7 +100,7 @@ cachectl1(req, addr, len, p)
 				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = addr & ~PGOFSET;
+				addr = m68k_trunc_page(addr);
 				inc = NBPG;
 			}
 		}
@@ -111,7 +111,7 @@ cachectl1(req, addr, len, p)
 			 * entire cache (XXX is this a rational thing to do?)
 			 */
 			if (!doall &&
-			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+			    (pa == 0 || m68k_page_offset(addr) == 0)) {
 				if (pmap_extract(p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;

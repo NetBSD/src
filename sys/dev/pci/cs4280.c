@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.7.2.6 2001/02/11 19:15:48 bouyer Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.7.2.7 2001/03/12 13:31:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -208,10 +208,11 @@ cs4280_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
+	pcireg_t reg;
 	char devinfo[256];
 	mixer_ctrl_t ctl;
 	u_int32_t mem;
+	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -232,10 +233,25 @@ cs4280_attach(parent, self, aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
+	/* Check and set Power State */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pci_pwrmgmt_cap_reg, 0)) {
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    pci_pwrmgmt_csr_reg);
+		DPRINTF(("%s: Power State is %d\n", 
+		    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK));
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+		}
+	}
+
 	/* Enable the device (set bus master flag) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
+		       reg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* LATENCY_TIMER setting */
 	mem = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);

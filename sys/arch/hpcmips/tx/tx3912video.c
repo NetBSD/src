@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.20.2.3 2000/12/08 09:26:32 bouyer Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.20.2.4 2001/03/12 13:28:49 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,11 +64,11 @@
 /* CLUT */
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <arch/hpcmips/dev/video_subr.h>
+#include <dev/hpc/video_subr.h>
 
 #include <dev/wscons/wsconsio.h>
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 #ifdef TX3912VIDEO_DEBUG
 int	tx3912video_debug = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.1.1.1.2.2 2000/11/22 16:00:13 bouyer Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.1.1.1.2.3 2001/03/12 13:28:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -36,24 +36,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/termios.h>
-#include <sys/select.h>
-#include <sys/tty.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 
+#include <sys/termios.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-/* For serial console */
+
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/config_hook.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.3 2001/02/11 19:08:41 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.4 2001/03/12 13:27:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,6 +69,10 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+
+#if defined(DDB) && defined(__ELF__)
+#include <sys/exec_elf.h>
+#endif
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -185,7 +189,12 @@ consinit()
 		extern int end[];
 		extern int *esym;
 
+#ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		    (void *)&end, esym);
+#endif
 	}
         if (boothowto & RB_KDB)
                 Debugger();
@@ -428,7 +437,7 @@ identifycpu()
 	fpu = NULL;
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
-		asm(".word 0x4e7a,0x0808; movl d0,%0" : "=d"(pcr) : : "d0");
+		asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
 		sprintf(cpubuf, "68%s060 rev.%d",
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
@@ -856,7 +865,7 @@ initcpu()
 			/* ... and mark FPU as absent for identifyfpu() */
 			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
 		}
-		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+		asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
 			"d"(m68060_pcr_init):"d0" );
 
 		/* bus/addrerr vectors */

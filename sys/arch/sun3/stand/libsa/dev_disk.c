@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.7 1998/09/05 15:28:07 pk Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.7.12.1 2001/03/12 13:29:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,14 +48,13 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-
+#include <machine/stdarg.h>
 #include <stand.h>
 
 #include "libsa.h"
 #include "dvma.h"
 #include "saio.h"
-
-/* #include "dev_disk.h" XXX - stdarg woes */
+#include "dev_disk.h"
 
 #define RETRY_COUNT 5
 
@@ -63,17 +62,21 @@ int disk_opencount;
 struct saioreq disk_ioreq;
 
 int
-disk_open(f, devname)
-	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+disk_open(struct open_file *f, ...)
 {
 	struct bootparam *bp;
 	struct saioreq *si;
-	int	error;
+	int error;
 
 #ifdef DEBUG_PROM
+	char *devname;		/* Device part of file name (or NULL). */
+	va_list ap;
+
+	va_start(ap, f);
+	devname = va_arg(ap, char *);
 	if (debug)
 		printf("disk_open: %s\n", devname);
+	va_end(ap);
 #endif
 
 	si = &disk_ioreq;
@@ -121,9 +124,9 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
 	daddr_t	dblk;
-	u_int	size;
-	char	*buf;
-	u_int	*rsize;
+	size_t	size;
+	void	*buf;
+	size_t	*rsize;
 {
 	struct saioreq *si;
 	struct boottab *ops;
@@ -149,7 +152,7 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 	do {
 		si->si_bn = dblk;
 		si->si_ma = dmabuf;
-		si->si_cc =	size;
+		si->si_cc = size;
 		xcnt = (*ops->b_strategy)(si, si_flag);
 	} while ((xcnt <= 0) && (--retry > 0));
 
@@ -169,7 +172,10 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-disk_ioctl()
+disk_ioctl(f, cmd, data)
+	struct open_file *f;
+	u_long cmd;
+	void *data;
 {
 	return EIO;
 }

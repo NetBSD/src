@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.18.2.3 2001/02/11 19:17:36 bouyer Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.18.2.4 2001/03/12 13:32:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -494,6 +494,11 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	ntmp->ntm_mode = argsp->mode;
 	ntmp->ntm_flag = argsp->flag;
 	mp->mnt_data = (qaddr_t)ntmp;
+
+	/* set file name encode/decode hooks XXX utf-8 only for now */
+	ntmp->ntm_wget = ntfs_utf8_wget;
+	ntmp->ntm_wput = ntfs_utf8_wput;
+	ntmp->ntm_wcmp = ntfs_utf8_wcmp;
 
 	dprintf(("ntfs_mountfs(): case-%s,%s uid: %d, gid: %d, mode: %o\n",
 		(ntmp->ntm_flag & NTFS_MFLAG_CASEINS)?"insens.":"sens.",

@@ -1,0 +1,17 @@
+CPP=clmips.exe
+# ADD BASE CPP /nologo /MTd /W3 /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /QMRWCE %%% CPPDEFS %%% /c
+# ADD CPP /nologo /MTd /W3 /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /QMRWCE %%% CPPDEFS %%% /c
+RSC=rc.exe
+# ADD BASE RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"
+# ADD RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"
+MTL=midl.exe
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
+LINK32=link.exe
+# ADD BASE LINK32 commctrl.lib coredll.lib %%% LIBRARIES %%% /nologo /debug /machine:MIPS /subsystem:$(CESubsystem)
+# SUBTRACT BASE LINK32 /pdb:none /nodefaultlib
+# ADD LINK32 commctrl.lib coredll.lib %%% LIBRARIES %%% /nologo /debug /machine:MIPS /subsystem:$(CESubsystem)
+# SUBTRACT LINK32 /pdb:none /nodefaultlib
+PFILE=pfile.exe
+# ADD BASE PFILE COPY
+# ADD PFILE COPY

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.1.2.2 2001/01/05 17:33:57 bouyer Exp $	*/
+/*	$NetBSD: dma.c,v 1.1.2.3 2001/03/12 13:27:17 bouyer Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ picaDmaInit()
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		jazz_dmatlb_init(&pica_bus, RD94_SYS_TL_BASE);
 		break;
 	}
@@ -273,6 +274,7 @@ fdc_dma_init(dma_softc_t *sc)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		sc->dma_reg = (pDmaReg)RD94_SYS_DMA0_REGS;
 		break;
 	default:

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.1.1.1.2.3 2001/02/11 19:10:26 bouyer Exp $
+#	$NetBSD: files.hpcmips,v 1.1.1.1.2.4 2001/03/12 13:28:35 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -50,52 +50,25 @@ file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/bus_space.c
 file	arch/hpcmips/hpcmips/bus_dma.c
-file	arch/hpcmips/hpcmips/disksubr.c	disk
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
 #
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
+file	arch/hpc/hpc/disksubr.c			disk
 include "dev/hpc/files.bicons"
+include "dev/hpc/files.hpcfb"
+include "dev/hpc/files.hpckbd"
+include "dev/hpc/files.hpctp"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 #
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
-file	dev/pckbc/wskbdmap_mfii.c		btnmgr | hpckbd
-file	arch/hpcmips/dev/pckbd_encode.c		btnmgr | hpckbd
-defopt	PCKBD_LAYOUT
-
-#	Simple framebuffer interface for wsdisplay
-define	hpcfbif {}
-device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops15, rasops16
-attach	hpcfb at hpcfbif
-file	arch/hpcmips/dev/hpcfb.c	hpcfb needs-flag
-
-#	Simple keyboard interface for wskbd
-device hpckbdif {}
-device hpckbd: wskbddev
-attach hpckbd at hpckbdif
-file arch/hpcmips/dev/hpckbd.c		hpckbd
-
-device	bivideo: hpcfbif
-file	arch/hpcmips/dev/bivideo.c	bivideo needs-flag
-file	arch/hpcmips/dev/hpccmap.c	bivideo
-attach	bivideo at mainbus
-
-device btnmgr: wskbddev
-attach btnmgr at mainbus
-file	arch/hpcmips/dev/btnmgr.c	btnmgr
-
-file	arch/hpcmips/dev/video_subr.c	tx3912video | plumvideo
 
 #
 # power management
@@ -113,7 +86,7 @@ include "dev/isa/files.isa"
 #
 #  Vr41x1 integrated peripherals
 #
-device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1] }
+device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1], [platform = -1] }
 attach vrip at mainbus
 file arch/hpcmips/vr/vrip.c		vrip needs-flag
 
@@ -169,10 +142,6 @@ device vrled
 attach vrled at vrip
 file arch/hpcmips/vr/vrled.c			vrled needs-flag
 
-define	tpcalib
-file arch/hpcmips/dev/tpcalib.c			tpcalib
-file arch/hpcmips/dev/mra.c			tpcalib
-
 device vrpiu: wsmousedev
 attach vrpiu at vrip: tpcalib
 file arch/hpcmips/vr/vrpiu.c			vrpiu
@@ -189,6 +158,10 @@ device ite8181video: hpcfbif
 attach ite8181video at vrip with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
+
+device vrc4172pwm
+attach vrc4172pwm at vrip
+file arch/hpcmips/vr/vrc4172pwm.c		vrc4172pwm needs-flag
 
 #
 #	TOSHIBA TX3912/3922
@@ -340,6 +313,8 @@ file	arch/hpcmips/dev/plumohci.c	plumohci	needs-flag
 #device txisab: isabus
 #attach txisab at txcsbus
 #file arch/hpcmips/isa/txisa_machdep.c	txisab
+
+file	dev/hpc/video_subr.c		tx3912video | plumvideo
 
 #
 #	Real-time clock (not optional)

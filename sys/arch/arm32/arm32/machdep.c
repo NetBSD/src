@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71.2.2 2001/01/05 17:34:04 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.2.3 2001/03/12 13:27:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,6 @@
  * Created      : 17/09/94
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_footbridge.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -53,7 +52,6 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/map.h>
-#include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/msgbuf.h>
@@ -106,45 +104,33 @@ struct cpu_info cpu_info_store;
 
 extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;
-extern vm_offset_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
+extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
 
 struct user *proc0paddr;
 
+char *booted_kernel;
+
 /* Prototypes */
 
 void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
 			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_pagetable	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry		__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry_nc	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry_ro	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
-extern void pmap_postinit	__P((void));
 extern void dumpsys	__P((void));
-#ifdef PMAP_DEBUG
-extern void pmap_debug	__P((int level));
-#endif	/* PMAP_DEBUG */
 
-#if defined(SHARK)
-int shark_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	void *newp, size_t newlen, struct proc *p);
-#endif
 /*
  * Debug function just to park the CPU
  */
@@ -190,9 +176,9 @@ bootsync(void)
 
 void
 map_section(pagetable, va, pa, cacheable)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 	int cacheable;
 {
 #ifdef	DIAGNOSTIC
@@ -211,9 +197,9 @@ map_section(pagetable, va, pa, cacheable)
 
 void
 map_pagetable(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 #ifdef	DIAGNOSTIC
 	if ((pa & 0xc00) != 0)
@@ -230,19 +216,19 @@ map_pagetable(pagetable, va, pa)
 	     L1_PTE((pa & PG_FRAME) + 0xc00);
 }
 
-vm_size_t
+vsize_t
 map_chunk(pd, pt, va, pa, size, acc, flg)
-	vm_offset_t pd;
-	vm_offset_t pt;
-	vm_offset_t va;
-	vm_offset_t pa;
-	vm_size_t size;
+	vaddr_t pd;
+	vaddr_t pt;
+	vaddr_t va;
+	paddr_t pa;
+	vsize_t size;
 	u_int acc;
 	u_int flg;
 {
 	pd_entry_t *l1pt = (pd_entry_t *)pd;
 	pt_entry_t *l2pt = (pt_entry_t *)pt;
-	vm_size_t remain;
+	vsize_t remain;
 	u_int loop;
 
 	remain = (size + (NBPG - 1)) & ~(NBPG - 1);
@@ -298,9 +284,9 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 
 void
 map_entry(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KRW);
@@ -309,9 +295,9 @@ map_entry(pagetable, va, pa)
 
 void
 map_entry_nc(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
@@ -320,9 +306,9 @@ map_entry_nc(pagetable, va, pa)
 
 void
 map_entry_ro(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KR);
@@ -340,11 +326,11 @@ void
 cpu_startup()
 {
 	int loop;
-	vm_offset_t minaddr;
-	vm_offset_t maxaddr;
+	paddr_t minaddr;
+	paddr_t maxaddr;
 	caddr_t sysbase;
 	caddr_t size;
-	vm_size_t bufsize;
+	vsize_t bufsize;
 	int base, residual;
 	char pbuf[9];
 
@@ -373,7 +359,7 @@ cpu_startup()
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
+		    (vaddr_t)msgbufaddr + loop * NBPG,
 		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
@@ -405,12 +391,12 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	bufsize = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(bufsize),
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(bufsize),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate UVM space for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -419,11 +405,11 @@ cpu_startup()
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (loop = 0; loop < nbuf; ++loop) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
-		curbuf = (vm_offset_t) buffers + (loop * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (loop * MAXBSIZE);
 		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -475,7 +461,7 @@ cpu_startup()
 	(void) pmap_extract(kernel_pmap, (vaddr_t)(kernel_pmap)->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);
 
-	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_sp - 1;
+        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;
 }
 
 #ifndef FOOTBRIDGE
@@ -495,58 +481,6 @@ consinit(void)
 	cninit();
 }
 #endif
-
-/*
- * Clear registers on exec
- */
-
-void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-{
-	struct trapframe *tf;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= -1)
-		printf("setregs: ip=%08lx sp=%08lx proc=%p\n",
-		    pack->ep_entry, stack, p);
-#endif
-
-	tf = p->p_md.md_regs;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= -1)
-		printf("mdregs=%08x pc=%08x lr=%08x sp=%08x\n",
-		    (u_int) tf, tf->tf_pc, tf->tf_usr_lr, tf->tf_usr_sp);
-#endif
-
-	tf->tf_r0 = (u_int)PS_STRINGS;
-	tf->tf_r1 = 0;
-	tf->tf_r2 = 0;
-	tf->tf_r3 = 0;
-	tf->tf_r4 = 0;
-	tf->tf_r5 = 0;
-	tf->tf_r6 = 0;
-	tf->tf_r7 = 0;
-	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
-	tf->tf_r10 = 0;
-	tf->tf_r11 = 0;				/* bottom of the fp chain */
-#ifdef COMPAT_13
-	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#else
-	tf->tf_r12 = 0;
-#endif
-	tf->tf_usr_sp = stack;
-	tf->tf_usr_lr = pack->ep_entry;
-	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
-	tf->tf_pc = pack->ep_entry;
-	tf->tf_spsr = PSR_USR32_MODE;
-
-	p->p_addr->u_pcb.pcb_flags = 0;
-}
 
 
 /*
@@ -580,178 +514,6 @@ zero_page_readwrite()
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
-
-/*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user specified pc.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	struct proc *p = curproc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	int onstack;
-
-	tf = p->p_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_usr_sp;
-	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
-
-	/* Save register context. */
-	frame.sf_sc.sc_r0     = tf->tf_r0;
-	frame.sf_sc.sc_r1     = tf->tf_r1;
-	frame.sf_sc.sc_r2     = tf->tf_r2;
-	frame.sf_sc.sc_r3     = tf->tf_r3;
-	frame.sf_sc.sc_r4     = tf->tf_r4;
-	frame.sf_sc.sc_r5     = tf->tf_r5;
-	frame.sf_sc.sc_r6     = tf->tf_r6;
-	frame.sf_sc.sc_r7     = tf->tf_r7;
-	frame.sf_sc.sc_r8     = tf->tf_r8;
-	frame.sf_sc.sc_r9     = tf->tf_r9;
-	frame.sf_sc.sc_r10    = tf->tf_r10;
-	frame.sf_sc.sc_r11    = tf->tf_r11;
-	frame.sf_sc.sc_r12    = tf->tf_r12;
-	frame.sf_sc.sc_usr_sp = tf->tf_usr_sp;
-	frame.sf_sc.sc_usr_lr = tf->tf_usr_lr;
-	frame.sf_sc.sc_svc_lr = tf->tf_svc_lr;
-	frame.sf_sc.sc_pc     = tf->tf_pc;
-	frame.sf_sc.sc_spsr   = tf->tf_spsr;
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
-
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_r0 = frame.sf_signum;
-	tf->tf_r1 = frame.sf_code;
-	tf->tf_r2 = (int)frame.sf_scp;
-	tf->tf_r3 = (int)frame.sf_handler;
-	tf->tf_usr_sp = (int)fp;
-	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
-	cpu_cache_syncI();
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psr to gain improper privileges or to cause
- * a machine fault.
- */
-int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, context;
-	struct trapframe *tf;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/* Make sure the processor mode has not been tampered with. */
-	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE)
-		return (EINVAL);
-
-	/* Restore register context. */
-	tf = p->p_md.md_regs;
-	tf->tf_r0    = context.sc_r0;
-	tf->tf_r1    = context.sc_r1;
-	tf->tf_r2    = context.sc_r2;
-	tf->tf_r3    = context.sc_r3;
-	tf->tf_r4    = context.sc_r4;
-	tf->tf_r5    = context.sc_r5;
-	tf->tf_r6    = context.sc_r6;
-	tf->tf_r7    = context.sc_r7;
-	tf->tf_r8    = context.sc_r8;
-	tf->tf_r9    = context.sc_r9;
-	tf->tf_r10   = context.sc_r10;
-	tf->tf_r11   = context.sc_r11;
-	tf->tf_r12   = context.sc_r12;
-	tf->tf_usr_sp = context.sc_usr_sp;
-	tf->tf_usr_lr = context.sc_usr_lr;
-	tf->tf_svc_lr = context.sc_svc_lr;
-	tf->tf_pc    = context.sc_pc;
-	tf->tf_spsr  = context.sc_spsr;
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
-
-	return (EJUSTRETURN);
-}
 
 /*
  * machine dependent system variables.
@@ -790,15 +552,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
 	}
-#if defined(SHARK)
 	case CPU_BOOTED_KERNEL: {
-		extern char *boot_kernel;
-		if (boot_kernel != NULL && boot_kernel[0] != '\0')
+		if (booted_kernel != NULL && booted_kernel[0] != '\0')
 			return sysctl_rdstring(oldp, oldlenp, newp,
-			    boot_kernel);
+			    booted_kernel);
 		return (EOPNOTSUPP);
 	}
-#endif
 
 	default:
 		return (EOPNOTSUPP);

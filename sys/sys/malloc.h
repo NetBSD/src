@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.47.2.3 2001/01/18 09:24:02 bouyer Exp $	*/
+/*	$NetBSD: malloc.h,v 1.47.2.4 2001/03/12 13:32:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -121,57 +121,57 @@
 #define	M_MISCFSNODE	65	/* miscfs vnode private part */
 #define	M_ADOSFSMNT	66	/* adosfs mount structures */
 #define	M_ADOSFSNODE	67	/* adosfs vnode private part */
-#define	M_ANODE		68	/* adosfs anode structures and tables. */
+#define	M_ANODE		68	/* adosfs anode structures and tables */
 #define	M_IPQ		69	/* IP packet queue entry */
 #define	M_AFS		70	/* Andrew File System */
 #define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
 #define	M_NFSRVDESC	72	/* NFS server descriptor */
 #define	M_NFSDIROFF	73	/* NFS directory cookies */
 #define	M_NFSBIGFH	74	/* NFS big filehandle */
-#define M_EXT2FSNODE	75	/* EXT2FS vnode private part */
-#define M_VMSWAP	76	/* VM swap structures */
-#define M_VMPAGE	77	/* VM page structures */
-#define M_VMPBUCKET	78	/* VM page buckets */
+#define	M_EXT2FSNODE	75	/* EXT2FS vnode private part */
+#define	M_VMSWAP	76	/* VM swap structures */
+#define	M_VMPAGE	77	/* VM page structures */
+#define	M_VMPBUCKET	78	/* VM page buckets */
 /*
  * Why are 79-81 empty?
  */
-#define M_UVMAMAP	82	/* UVM amap and related structs */
-#define M_UVMAOBJ	83	/* UVM aobj and related structs */
+#define	M_UVMAMAP	82	/* UVM amap and related structs */
+#define	M_UVMAOBJ	83	/* UVM aobj and related structs */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_DMAMAP	85	/* bus_dma(9) structures */
 #define	M_IPFLOW	86	/* IP flow entries */
 #define	M_USB		87	/* USB general */
 #define	M_USBDEV	88	/* USB device driver */
 #define	M_POOL		89	/* memory pool structs */
-#define	M_CODA		90	/* Coda file system structures and tables. */
-#define	M_FILECOREMNT	91	/* Filcore FS mount structures */
-#define	M_FILECORENODE	92	/* Filcore FS vnode private part */
+#define	M_CODA		90	/* Coda file system structures and tables */
+#define	M_FILECOREMNT	91	/* Filecore FS mount structures */
+#define	M_FILECORENODE	92	/* Filecore FS vnode private part */
 #define	M_RAIDFRAME	93	/* RAIDframe structures */
-#define M_USBHC		94	/* USB host controller */
+#define	M_USBHC		94	/* USB host controller */
 #define	M_SECA		95	/* security associations, key management */
 #define	M_IP6OPT	96	/* IPv6 options */
 #define	M_IP6NDP	97	/* IPv6 Neighbour Discovery */
 #define	M_NTFS		98	/* Windows NT file system structures */
-#define M_PAGEDEP	99	/* File page dependencies */
-#define M_INODEDEP	100	/* Inode dependencies */
-#define M_NEWBLK	101	/* New block allocation */
-#define M_BMSAFEMAP	102	/* Block or frag allocated from cyl group map */
-#define M_ALLOCDIRECT	103	/* Block or frag dependency for an inode */
-#define M_INDIRDEP	104	/* Indirect block dependencies */
-#define M_ALLOCINDIR	105	/* Block dependency for an indirect block */
-#define M_FREEFRAG	106	/* Previously used frag for an inode */
-#define M_FREEBLKS	107	/* Blocks freed from an inode */
-#define M_FREEFILE	108	/* Inode deallocated */
-#define M_DIRADD	109	/* New directory entry */
-#define M_MKDIR		110	/* New directory */
-#define M_DIRREM	111 	/* Directory entry deleted */
+#define	M_PAGEDEP	99	/* File page dependencies */
+#define	M_INODEDEP	100	/* Inode dependencies */
+#define	M_NEWBLK	101	/* New block allocation */
+#define	M_BMSAFEMAP	102	/* Block or frag allocated from cyl group map */
+#define	M_ALLOCDIRECT	103	/* Block or frag dependency for an inode */
+#define	M_INDIRDEP	104	/* Indirect block dependencies */
+#define	M_ALLOCINDIR	105	/* Block dependency for an indirect block */
+#define	M_FREEFRAG	106	/* Previously used frag for an inode */
+#define	M_FREEBLKS	107	/* Blocks freed from an inode */
+#define	M_FREEFILE	108	/* Inode deallocated */
+#define	M_DIRADD	109	/* New directory entry */
+#define	M_MKDIR		110	/* New directory */
+#define	M_DIRREM	111 	/* Directory entry deleted */
 #define	M_IP6RR		112	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	113	/* IPv6 Router Renumbering Ifid */
-#define M_SOFTINTR	114	/* Softinterrupt structures */
-#define M_EMULDATA	115	/* Per-process emulation data */
-#define M_1394CTL	116	/* IEEE 1394 control structures */
-#define M_1394DATA	117	/* IEEE 1394 data buffers */
-#define M_LAST		118	/* Must be last type + 1 */
+#define	M_SOFTINTR	114	/* Softinterrupt structures */
+#define	M_EMULDATA	115	/* Per-process emulation data */
+#define	M_1394CTL	116	/* IEEE 1394 control structures */
+#define	M_1394DATA	117	/* IEEE 1394 data buffers */
+#define	M_LAST		118	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -386,56 +386,58 @@ struct kmembuckets {
 #define	FREE(addr, type) free((caddr_t)(addr), type)
 
 #else /* do not collect statistics */
-#define	MALLOC(space, cast, size, type, flags) do { \
-	register struct kmembuckets *kbp = &bucket[BUCKETINDX(size)]; \
-	long s = splvm(); \
-	if (kbp->kb_next == NULL) { \
-		(space) = (cast)malloc((u_long)(size), type, flags); \
-	} else { \
-		(space) = (cast)kbp->kb_next; \
-		kbp->kb_next = *(caddr_t *)(space); \
-	} \
-	splx(s); \
+#define	MALLOC(space, cast, size, type, flags)				\
+do {									\
+	register struct kmembuckets *kbp = &bucket[BUCKETINDX(size)];	\
+	long s = splvm();						\
+	if (kbp->kb_next == NULL) {					\
+		(space) = (cast)malloc((u_long)(size), type, flags);	\
+	} else {							\
+		(space) = (cast)kbp->kb_next;				\
+		kbp->kb_next = *(caddr_t *)(space);			\
+	}								\
+	splx(s);							\
 } while (0)
 
-#define	FREE(addr, type) do { \
-	register struct kmembuckets *kbp; \
-	register struct kmemusage *kup = btokup(addr); \
-	long s = splvm(); \
-	if (1 << kup->ku_indx > MAXALLOCSAVE) { \
-		free((caddr_t)(addr), type); \
-	} else { \
-		kbp = &bucket[kup->ku_indx]; \
-		if (kbp->kb_next == NULL) \
-			kbp->kb_next = (caddr_t)(addr); \
-		else \
-			*(caddr_t *)(kbp->kb_last) = (caddr_t)(addr); \
-		*(caddr_t *)(addr) = NULL; \
-		kbp->kb_last = (caddr_t)(addr); \
-	} \
-	splx(s); \
+#define	FREE(addr, type)						\
+do {									\
+	register struct kmembuckets *kbp;				\
+	register struct kmemusage *kup = btokup(addr);			\
+	long s = splvm();						\
+	if (1 << kup->ku_indx > MAXALLOCSAVE) {				\
+		free((caddr_t)(addr), type);				\
+	} else {							\
+		kbp = &bucket[kup->ku_indx];				\
+		if (kbp->kb_next == NULL)				\
+			kbp->kb_next = (caddr_t)(addr);			\
+		else							\
+			*(caddr_t *)(kbp->kb_last) = (caddr_t)(addr);	\
+		*(caddr_t *)(addr) = NULL;				\
+		kbp->kb_last = (caddr_t)(addr);				\
+	}								\
+	splx(s);							\
 } while(0)
 #endif /* do not collect statistics */
 
-extern struct kmemstats kmemstats[];
-extern struct kmemusage *kmemusage;
-extern char *kmembase;
-extern struct kmembuckets bucket[];
+extern struct kmemstats		kmemstats[];
+extern struct kmemusage		*kmemusage;
+extern char			*kmembase;
+extern struct kmembuckets	bucket[];
 
 #ifdef MALLOCLOG
-extern void *_malloc __P((unsigned long size, int type, int flags,
-	const char *file, long line));
-extern void _free __P((void *addr, int type, const char *file, long line));
+extern void	*_malloc(unsigned long size, int type, int flags,
+		    const char *file, long line);
+extern void	_free(void *addr, int type, const char *file, long line);
 #define	malloc(size, type, flags) \
-	_malloc((size), (type), (flags), __FILE__, __LINE__)
+		    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
-	_free((addr), (type), __FILE__, __LINE__)
+		    _free((addr), (type), __FILE__, __LINE__)
 #else
-extern void *malloc __P((unsigned long size, int type, int flags));
-extern void free __P((void *addr, int type));
+extern void	*malloc(unsigned long size, int type, int flags);
+extern void	free(void *addr, int type);
 #endif /* MALLOCLOG */
 
-extern void *realloc __P((void *curaddr, unsigned long newsize, int type,
-			int flags));
+extern void	*realloc(void *curaddr, unsigned long newsize, int type,
+		    int flags);
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

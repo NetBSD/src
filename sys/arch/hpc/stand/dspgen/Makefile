@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1.2.2 2001/02/11 19:09:35 bouyer Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2001/03/12 13:28:14 bouyer Exp $
 
 BUILD_ARCH	= ARM SH3 MIPS
 
 vc5: clean
-	TYPE=application sh gen_template.sh vc5 SH3 MIPS
-	TYPE=static_library sh gen_template.sh vc5 SH3 MIPS
+	TYPE=application sh gen_template.sh vc5 SH MIPS
+	TYPE=static_library sh gen_template.sh vc5 SH MIPS
 
 vc6: clean
 	TYPE=application sh gen_template.sh vc6 $(BUILD_ARCH)

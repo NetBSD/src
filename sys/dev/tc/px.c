@@ -1,7 +1,7 @@
-/* 	$NetBSD: px.c,v 1.3.2.1 2001/01/05 17:36:27 bouyer Exp $	*/
+/* 	$NetBSD: px.c,v 1.3.2.2 2001/03/12 13:31:25 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -188,7 +188,6 @@ px_init(struct stic_info *si, int bootstrap)
 
 	kva = (caddr_t)TC_PHYS_TO_UNCACHED(si->si_slotbase);
 
-	si->si_slotkva = (u_int32_t *)kva;
 	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);
 	si->si_vdac_reset = (u_int32_t *)(kva + PX_VDAC_RESET_OFFSET);
 	si->si_stic = (volatile struct stic_regs *)(kva + PX_STIC_OFFSET);
@@ -225,12 +224,6 @@ px_intr(void *cookie)
 		stic_flush(si);
 	}
 
-	if ((state & STIC_INT_P) != 0) {
-		sr->sr_ipdvint = 
-		    STIC_INT_P_WE | (sr->sr_ipdvint & STIC_INT_P_EN);
-		tc_wmb();
-	}
-
 #ifdef DEBUG
 	if ((sr->sr_ipdvint & STIC_INT_E) != 0) {
 		printf("%s: error intr, %x %x %x %x %x", si->si_dv.dv_xname,
@@ -246,10 +239,6 @@ static u_int32_t *
 px_pbuf_get(struct stic_info *si)
 {
 
-	/*
-	 * XXX We should be synchronizing with STIC_INT_P so that an ISR
-	 * doesn't blow us up.
-	 */
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
 	return ((u_int32_t *)((caddr_t)si->si_buf + si->si_pbuf_select));
 }
@@ -257,25 +246,32 @@ px_pbuf_get(struct stic_info *si)
 static int
 px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 {
-	volatile u_int32_t *poll;
+	volatile u_int32_t *poll, junk;
+	volatile struct stic_regs *sr;
 	u_long v;
 	int c;
+
+	sr = si->si_stic;
 
 	/* Get address of poll register for this buffer. */
 	v = (u_long)STIC_KSEG_TO_PHYS(buf);
 	v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
-	poll = (volatile u_int32_t *)((caddr_t)si->si_slotkva + (v >> 9));
+	poll = (volatile u_int32_t *)((caddr_t)si->si_slotbase + (v >> 9));
 
 	/*
 	 * Read the poll register and make sure the stamp wants to accept
 	 * our packet.  This read will initiate the DMA.  Don't wait for
 	 * ever, just in case something's wrong.
 	 */
-	tc_syncbus();
+	tc_mb();
 
 	for (c = STAMP_RETRIES; c != 0; c--) {
-		if (*poll == STAMP_OK)
+		if ((sr->sr_ipdvint & STIC_INT_P) != 0) {
+			sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+			tc_wmb();
+			junk = *poll;
 			return (0);
+		}
 		DELAY(STAMP_DELAY);
 	}
 

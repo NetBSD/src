@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.2.2 2000/11/22 16:00:39 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.3 2001/03/12 13:29:01 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -116,13 +116,16 @@ cpumatch(parent, cf, aux)
 }
 
 #define MPC601		1
+#define MPC602		5
 #define MPC603		3
-#define MPC604		4
 #define MPC603e		6
 #define MPC603ev	7
-#define MPC750		8
+#define MPC604		4
 #define MPC604ev	9
+#define MPC620		20
+#define MPC750		8
 #define MPC7400		12
+#define MPC7400_2	0x800c
 
 void
 cpuattach(parent, self, aux)
@@ -149,6 +152,7 @@ cpuattach(parent, self, aux)
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
+		case MPC7400_2:
 			asm volatile ("mtspr 1023,%0" :: "r"(id));
 		}
 		identifycpu(model);
@@ -177,6 +181,7 @@ cpuattach(parent, self, aux)
 	case MPC603ev:
 	case MPC750:
 	case MPC7400:
+	case MPC7400_2:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -191,6 +196,7 @@ cpuattach(parent, self, aux)
 	switch (vers) {
 	case MPC750:
 	case MPC7400:
+	case MPC7400_2:
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP;
@@ -204,6 +210,7 @@ cpuattach(parent, self, aux)
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
 	case MPC7400:
+	case MPC7400_2:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
@@ -223,7 +230,7 @@ cpuattach(parent, self, aux)
 	/*
 	 * Display cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400) {
+	if (vers == MPC750 || vers == MPC7400 || vers == MPC7400_2) {
 		printf("%s", self->dv_xname);
 		config_l2cr();
 	} else if (OF_finddevice("/bandit/ohare") != -1) {
@@ -237,24 +244,25 @@ struct cputab {
 	char *name;
 };
 static struct cputab models[] = {
-	{ MPC601,   "601" },
-	{ MPC603,   "603" },
-	{ MPC604,   "604" },
-	{ 5,	    "602" },
-	{ MPC603e,  "603e" },
-	{ MPC603ev, "603ev" },
-	{ MPC750,   "750" },
-	{ MPC604ev, "604ev" },
-	{ MPC7400,  "7400" },
-	{ 20,	    "620" },
-	{ 0,	    NULL }
+	{ MPC601,     "601" },
+	{ MPC602,     "602" },
+	{ MPC603,     "603" },
+	{ MPC603e,    "603e" },
+	{ MPC603ev,   "603ev" },
+	{ MPC604,     "604" },
+	{ MPC604ev,   "604ev" },
+	{ MPC620,     "620" },
+	{ MPC750,     "750" },
+	{ MPC7400,   "7400" },
+	{ MPC7400_2, "7400" },
+	{ 0,	       NULL }
 };
 
 void
 identifycpu(cpu_model)
 	char *cpu_model;
 {
-	int pvr, vers, rev;
+	u_int pvr, vers, rev;
 	struct cputab *cp = models;
 
 	asm ("mfpvr %0" : "=r"(pvr));

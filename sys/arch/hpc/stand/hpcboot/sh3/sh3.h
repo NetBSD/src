@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3.h,v 1.1.2.2 2001/02/11 19:10:11 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3.h,v 1.1.2.3 2001/03/12 13:28:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -169,8 +169,56 @@
 #define ICU_ICR2_PINT1S		0x0002
 #define ICU_ICR2_PINT0S		0x0001
 
-
 #define ICU_IPR_MASK		0xf
+
+/*
+ * Bus State Controller
+ */
+#define SH3_BSC_BCR1_REG		0xffffff60
+#define SH3_BSC_BCR2_REG		0xffffff62
+#define SH3_BSC_WCR1_REG		0xffffff64
+#define SH3_BSC_WCR2_REG		0xffffff66
+#define SH3_BSC_MCR_REG			0xffffff68
+#define SH3_BSC_DCR_REG			0xffffff6a
+#define SH3_BSC_PCR_REG			0xffffff6c
+#define SH3_BSC_RTCSR_REG		0xffffff6e
+#define SH3_BSC_RTCNT_REG		0xffffff70
+#define SH3_BSC_RTCOR_REG		0xffffff72
+#define SH3_BSC_RFCR_REG		0xffffff74
+#define SH3_BSC_BCR3_REG		0xffffff7e
+
+/*
+ * Pin Function Controller
+ */
+#define SH3_PACR_REG16			0xa4000100
+#define SH3_PBCR_REG16			0xa4000102
+#define SH3_PCCR_REG16			0xa4000104
+#define SH3_PDCR_REG16			0xa4000106
+#define SH3_PECR_REG16			0xa4000108
+#define SH3_PFCR_REG16			0xa400010a
+#define SH3_PGCR_REG16			0xa400010c
+#define SH3_PHCR_REG16			0xa400010e
+#define SH3_PJCR_REG16			0xa4000110
+#define SH3_PKCR_REG16			0xa4000112
+#define SH3_PLCR_REG16			0xa4000114
+#define SH3_SCPCR_REG16			0xa4000116
+
+/*
+ * I/O port
+ */
+#define SH3_PADR_REG8			0xa4000120
+#define SH3_PBDR_REG8			0xa4000122
+#define SH3_PCDR_REG8			0xa4000124
+#define SH3_PDDR_REG8			0xa4000126
+#define SH3_PEDR_REG8			0xa4000128
+#define SH3_PFDR_REG8			0xa400012a
+#define SH3_PGDR_REG8			0xa400012c
+#define SH3_PHDR_REG8			0xa400012e
+#define SH3_PJDR_REG8			0xa4000130
+#define SH3_PKDR_REG8			0xa4000132
+#define SH3_PLDR_REG8			0xa4000134
+#define SH3_SCPDR_REG8			0xa4000136
+
 
 /*   suspend/resume external Interrupt. 
  *  (don't block) use under privilege mode.
@@ -242,10 +290,5 @@ __END_MACRO
 #include <sh3/sh_7707.h>
 #include <sh3/sh_7709.h>
 #include <sh3/sh_7709a.h>
-
-/*
- * HD64461 (SH companion chip for Windows CE)
- */
-#define	HD64461_FB_ADDR		0xb2000000
 
 #endif // _HPCBOOT_SH3_H_

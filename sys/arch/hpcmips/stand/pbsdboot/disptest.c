@@ -1,4 +1,4 @@
-/*	$NetBSD: disptest.c,v 1.2.2.1 2000/11/20 20:39:22 bouyer Exp $	*/
+/*	$NetBSD: disptest.c,v 1.2.2.2 2001/03/12 13:28:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -133,6 +133,186 @@ gpio_test()
 			}
 		}
 	}
+}
+
+static struct regdesc {
+	TCHAR *name;
+	int physaddr;
+	int size;
+	int mask;
+	//void *addr;
+	unsigned long val;
+	unsigned long preval;
+} test_regs[] = {
+#if 0
+	/*
+	 * Vrc4172 GPIO and PWM
+	 */
+	{ TEXT("EXGPDATA0"),	0x15001080,	2,	0xfffd		},
+	{ TEXT("EXGPDATA1"),	0x150010c0,	2,	0xffff		},
+	{ TEXT("LCDDUTYEN"),	0x15003880,	2,	0xffff		},
+	{ TEXT("LCDFREQ"),	0x15003882,	2,	0xffff		},
+	{ TEXT("LCDDUTY"),	0x15003884,	2,	0xffff		},
+#endif
+
+#if 0
+	/*
+	 * Vr41xx GPIO
+	 */
+	{ TEXT("GIUPIODL"),	0x0b000104,	2,	0xffff		},
+	{ TEXT("GIUPIODH"),	0x0b000106,	2,	0xffff		},
+	{ TEXT("GIUPODATL"),	0x0b00011c,	2,	0xffff		},
+	{ TEXT("GIUPODATH"),	0x0b00011e,	2,	0xffff		},
+	{ TEXT("GIUUSEUPDN"),	0x0b0002e0,	2,	0xffff		},
+	{ TEXT("GIUTERMUPDN"),	0x0b0002e2,	2,	0xffff		},
+#endif
+
+	/*
+	 * MQ200
+	 */
+	{ TEXT("PM00R"),	0x0a600000,	4,	0xffffffff	},
+	{ TEXT("PM01R"),	0x0a600004,	4,	0xffffffff	},
+	{ TEXT("PM02R"),	0x0a600008,	4,	0xffffffff	},
+	{ TEXT("PM06R"),	0x0a600018,	4,	0xffffffff	},
+	{ TEXT("PM07R"),	0x0a60001c,	4,	0xffffffff	},
+
+	{ TEXT("CC00R"),	0x0a602000,	4,	0x0000003f	},
+	{ TEXT("CC01R"),	0x0a602004,	4,	0x00000000	},
+
+	{ TEXT("MM00R"),	0x0a604000,	4,	0x00000007	},
+	{ TEXT("MM01R"),	0x0a604004,	4,	0xffffffff	},
+	{ TEXT("MM02R"),	0x0a604008,	4,	0xffffffff	},
+	{ TEXT("MM03R"),	0x0a60400c,	4,	0x00000001	},
+	{ TEXT("MM04R"),	0x0a604010,	4,	0x00000001	},
+
+	{ TEXT("IN00R"),	0x0a608000,	4,	0x0000001f	},
+	{ TEXT("IN01R"),	0x0a608004,	4,	0x0000ffff	},
+	{ TEXT("IN02R"),	0x0a608008,	4,	0x00000000	},
+	{ TEXT("IN03R"),	0x0a60800c,	4,	0x00000000	},
+
+	{ TEXT("GC00R"),	0x0a60a000,	4,	0xfffff9ff	},
+	{ TEXT("GC01R"),	0x0a60a004,	4,	0x10ffffff	},
+	{ TEXT("GC20R"),	0x0a60a080,	4,	0xffffffff	},
+	{ TEXT("GC21R"),	0x0a60a084,	4,	0x0000007f	},
+
+	{ TEXT("FP00R"),	0x0a60e000,	4,	0xffffffff	},
+	{ TEXT("FP01R"),	0x0a60e004,	4,	0xffffffff	},
+	{ TEXT("FP02R"),	0x0a60e008,	4,	0x007fffff	},
+	{ TEXT("FP03R"),	0x0a60e00c,	4,	0x0707003f	},
+	{ TEXT("FP04R"),	0x0a60e010,	4,	0xffff3fff	},
+	{ TEXT("FP05R"),	0x0a60e014,	4,	0xffffffff	},
+	{ TEXT("FP0FR"),	0x0a60e03c,	4,	0xffffffff	},
+
+	{ TEXT("DC00R"),	0x0a614000,	4,	0xffffffff	},
+	{ TEXT("DC01R"),	0x0a614004,	4,	0x0000003f	},
+	{ TEXT("DC02R"),	0x0a614008,	4,	0xffffffff	},
+	{ TEXT("DC03R"),	0x0a61400c,	4,	0xffffffff	},
+
+	{ TEXT("PC00R"),	0x0a616000,	4,	0xffffffff	},
+	{ TEXT("PC04R"),	0x0a616004,	4,	0xffffffff	},
+	{ TEXT("PC08R"),	0x0a616008,	4,	0xffffffff	},
+	{ TEXT("PC0CR"),	0x0a61600c,	4,	0xffffffff	},
+	{ TEXT("PC10R"),	0x0a616010,	4,	0xffffffff	},
+	{ TEXT("PC14R"),	0x0a616014,	4,	0xffffffff	},
+	{ TEXT("PC2CR"),	0x0a61602c,	4,	0xffffffff	},
+	{ TEXT("PC3CR"),	0x0a61603c,	4,	0xffffffff	},
+	{ TEXT("PC40R"),	0x0a616040,	4,	0xffffffff	},
+	{ TEXT("PC44R"),	0x0a616044,	4,	0x00000003	},
+};
+
+extern int SetKMode(int);
+static void
+regfetch(struct regdesc* desc)
+{
+	SetKMode(1);
+	switch (desc->size) {
+	case 1:
+		desc->val = *(unsigned char*)(desc->physaddr | 0xa0000000);
+		break;
+	case 2:
+		desc->val = *(unsigned short*)(desc->physaddr | 0xa0000000);
+		break;
+	case 4:
+		desc->val = *(unsigned long*)(desc->physaddr | 0xa0000000);
+		break;
+	default:
+		win_printf(TEXT("Invalid size"));
+		break;
+	}
+	SetKMode(0);
+	desc->val &= desc->mask;
+}
+
+static void
+register_test()
+{
+    int i;
+    int nregs = sizeof(test_regs)/sizeof(*test_regs);
+
+    for (i = 0; i < nregs; i++) {
+	regfetch(&test_regs[i]);
+	test_regs[i].preval = test_regs[i].val;
+    }
+
+    while (1) {
+	for (i = 0; i < nregs; i++) {
+	    regfetch(&test_regs[i]);
+	    if (test_regs[i].val != test_regs[i].preval) {
+		win_printf(TEXT("%20s(%08x) %08x -> %08x\n"),
+		    test_regs[i].name,
+		    test_regs[i].physaddr,
+		    test_regs[i].preval,
+		    test_regs[i].val);
+		test_regs[i].preval = test_regs[i].val;
+	    }
+	}
+	Sleep(10); /* 10 msec */
+    }
+}
+
+static void
+dump_memory()
+{
+	HANDLE fh = INVALID_HANDLE_VALUE;
+#define UNICODE_MEMORY_CARD \
+	TEXT('\\'), 0xff92, 0xff93, 0xff98, TEXT(' '), 0xff76, 0xff70, \
+	0xff84, 0xff9e
+	TCHAR filename[] = { UNICODE_MEMORY_CARD,  TEXT('2'), TEXT('\\'),
+			     TEXT('d'), TEXT('u'),  TEXT('m'), TEXT('p'), 0 };
+	unsigned long *addr;
+	int found;
+
+	win_printf(TEXT("dump to %s\n"), filename);
+	fh = CreateFile(
+		filename,      	/* file name */
+		GENERIC_WRITE,	/* access (read-write) mode */
+		FILE_SHARE_WRITE,/* share mode */
+		NULL,		/* pointer to security attributes */
+		CREATE_ALWAYS,	/* how to create */
+		FILE_ATTRIBUTE_NORMAL,	/* file attributes*/
+		NULL		/* handle to file with attributes to */
+	    );
+	if (fh == INVALID_HANDLE_VALUE) {
+		return;
+	}
+
+	for (addr = (unsigned long*)0xbe000000;
+	    addr < (unsigned long*)0xbfffffff;
+	    addr += 2048) {
+		char buf[2048];
+		DWORD n;
+
+		SetKMode(1);
+		memcpy(buf, addr, 2048);
+		SetKMode(0);
+		if (WriteFile(fh, buf, 2048, &n, NULL) == 0 ||
+		    n != 2048) {
+			win_printf(TEXT("dump failed\n"));
+			break;
+		}
+	}
+
+	CloseHandle(fh);
 }
 
 static void
@@ -340,13 +520,18 @@ void
 hardware_test()
 {
 	int do_gpio_test = 0;
+	int do_register_test = 0;
 	int do_serial_test = 0;
 	int do_display_draw = 0;
 	int do_display_search = 0;
 	int do_pcic_search = 0;
+	int do_dump_memory = 0;
 
 	if (do_gpio_test) {
 		gpio_test();
+	}
+	if (do_register_test) {
+		register_test();
 	}
 	if (do_serial_test) {
 		serial_test();
@@ -359,5 +544,8 @@ hardware_test()
 	}
 	if (do_pcic_search) {
 		pcic_search();
+	}
+	if (do_dump_memory) {
+		dump_memory();
 	}
 }

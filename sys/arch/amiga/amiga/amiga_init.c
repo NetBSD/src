@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.67.2.3 2001/01/18 09:22:07 bouyer Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.67.2.4 2001/03/12 13:27:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -837,11 +837,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		if (id & AMIGA_68060) {
 			/* do i need to clear the branch cache? */
 			asm volatile (	".word 0x4e7a,0x0002;" 
-					"orl #0x400000,d0;" 
+					"orl #0x400000,%%d0;" 
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
 
-		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
+		asm volatile ("movel %0,%%a0; .word 0x4e7b,0x8807"
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
 		asm volatile (".word 0xf518" : : );
 
@@ -855,7 +855,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 ((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
 #endif
 
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" 
+		asm volatile ("movel #0xc000,%%d0; .word 0x4e7b,0x0003" 
 		    : : :"d0" );
 	} else
 #endif
@@ -866,14 +866,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 * nolimit, share global, 4 byte PTE's
 		 */
 		(RELOC(protorp[0], u_int)) = 0x80000202;
-		asm volatile ("pmove %0@,srp" : : "a" (&RELOC(protorp, u_int)));
+		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
-		asm volatile ("pmove %0@,tc" : : "a" (&tc));
+		asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
 #ifdef DEBUG_KERNEL_START
 #ifdef DRACO

@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2000/11/20 20:05:31 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/03/12 13:27:56 bouyer Exp $
 
 PROG=	ahdilabel
 SRCS=	ahdilabel.c build.c check.c cksum.c magic.c openraw.c read.c write.c \
 	writedtab.c
 
-MAN=	ahdilabel.8
-MANSUBDIR=	/atari
+MKMAN=	no
 BINDIR=	/sbin
 
 WARNS=	1
 
+.if defined(DEBUG)
 CFLAGS += -g
+CPPFLAGS+=-DDEBUG
+.endif
 .include <bsd.prog.mk>

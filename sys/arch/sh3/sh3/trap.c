@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.2.3 2000/12/08 09:30:26 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.2.4 2001/03/12 13:29:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -279,8 +279,8 @@ trap(p1, p2, p3, p4, frame)
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
-		printf("trap type %x spc %x ssr %x \n",
-			   type, frame.tf_spc, frame.tf_ssr);
+		printf("trap type %x spc %x ssr %x (%s)\n",
+			   type, frame.tf_spc, frame.tf_ssr, p->p_comm);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
@@ -601,7 +601,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 	struct trapframe frame;
 {
 	vaddr_t va;
-	int pde_index;
+	int pde_index, sig;
 	unsigned long *pde;
 	unsigned long pte;
 	unsigned long *pd_top;
@@ -611,13 +611,11 @@ tlb_handler(p1, p2, p3, p4, frame)
 	vm_map_t map;
 	int rv = 0;
 	u_quad_t sticks = 0;
-	int type = 0;
 	vm_prot_t ftype;
 	extern vm_map_t kernel_map;
-	unsigned int nss;
 	vaddr_t	va_save;
 	unsigned long pteh_save;
-	int exptype;
+	int exptype, user;
 #ifdef RECURSE_TLB_HANDLER
 	int reentrant = 0;
 #endif
@@ -710,71 +708,42 @@ tlb_handler(p1, p2, p3, p4, frame)
 		printf("tlb_handler#:va(0x%lx),curproc(%p)\n", va, curproc);
 #endif
 
+	user = !KERNELMODE(frame.tf_r15);
+
 	pteh_save = SHREG_PTEH;
 	va_save = va;
 	p = curproc;
 	if (p == NULL) {
 		rv = KERN_FAILURE;
-		goto nogo;
+		goto dopanic;
 	} else {
-#if 1
-		if (!KERNELMODE(frame.tf_r15)) {
-#else
-		if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
-#endif
-			type = T_USER;
+		if (user) {
 			sticks = p->p_sticks;
 			p->p_md.md_regs = &frame;
-		}
-		else
+		} else
 			sticks = 0;
 	}
 
-	vm = p->p_vmspace;
 	/*
 	 * It is only a kernel address space fault iff:
-	 *	1. (type & T_USER) == 0  and
+	 *	1. !user and
 	 *	2. pcb_onfault not set or
-	 *	3. pcb_onfault set but supervisor space fault
+	 *	3. pcb_onfault set but supervisor space data fault
 	 * The last can occur during an exec() copyin where the
 	 * argument space is lazy-allocated.
 	 */
-	if (va >= KERNBASE)
+	if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS ||
+	    p->p_addr->u_pcb.pcb_onfault == 0))
 		map = kernel_map;
-	else
+	else {
+		vm = p->p_vmspace;
 		map = &vm->vm_map;
+	}
 
-	/* exptype = SHREG_EXPEVT; */
 	if (exptype == T_TLBMISSW || exptype == T_TLBPRIVW)
-		ftype = VM_PROT_READ | VM_PROT_WRITE;
+		ftype = VM_PROT_WRITE;
 	else
 		ftype = VM_PROT_READ;
-
-	nss = 0;
-
-#ifdef SH4
-	if (vm != NULL && (caddr_t)va >= vm->vm_maxsaddr
-	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-	    && map != kernel_map) {
-#else
-	if ((caddr_t)va >= vm->vm_maxsaddr
-	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-	    && map != kernel_map) {
-#endif
-		nss = btoc(USRSTACK-(unsigned)va);
-		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			/*
-			 * We used to fail here. However, it may
-			 * just have been an mmap()ed page low
-			 * in the stack, which is legal. If it
-			 * wasn't, uvm_fault() will fail below.
-			 *
-			 * Set nss to 0, since this case is not
-			 * a "stack extension".
-			 */
-			nss = 0;
-		}
-	}
 
 #ifdef RECURSE_TLB_HANDLER
 	if (((PSL_BL | PSL_IMASK) & frame.tf_ssr) == 0)
@@ -790,15 +759,32 @@ tlb_handler(p1, p2, p3, p4, frame)
 	if (reentrant)
 		disable_ext_intr();
 #endif
-	if (rv == KERN_SUCCESS) {
-#ifdef SH4
-		if (vm != NULL && nss > vm->vm_ssize)
-			vm->vm_ssize = nss;
-#else
-		if (nss > vm->vm_ssize)
-			vm->vm_ssize = nss;
-#endif
 
+	/*
+	 * If this was a stack access, we keep track of the
+	 * maximum accessed stack size.  Also, if uvm_fault()
+	 * gets a protection failure, it is due to accessing
+	 * the stack region outside the current limit and
+	 * we need to reflect that as an access error.
+	 */
+	if (map != kernel_map &&
+#ifdef SH4
+	    /* XXX What is this about?  --thorpej */
+	    vm != NULL &&
+#endif
+	    va >= (vaddr_t) vm->vm_maxsaddr &&
+	    va < USRSTACK) {
+		if (rv == KERN_SUCCESS) {
+			u_int nss;
+
+			nss = btoc(USRSTACK - va);
+			if (nss > vm->vm_ssize)
+				vm->vm_ssize = nss;
+		} else if (rv == KERN_PROTECTION_FAILURE)
+			rv = KERN_INVALID_ADDRESS;
+	}
+
+	if (rv == KERN_SUCCESS) {
 		va = va_save;
 		SHREG_PTEH = pteh_save;
 		pde_index = pdei(va);
@@ -862,39 +848,48 @@ tlb_handler(p1, p2, p3, p4, frame)
 
 				SHREG_PTEL = pte & PTEL_VALIDBITS;
 #endif
-
-				return;
 			}
 		}
+		if (user)
+			userret(p, frame.tf_spc, sticks);
+		return;
 	}
 
- nogo:
-	if (p != NULL) {
-		struct pcb *pcb = &p->p_addr->u_pcb;
-		if (pcb->pcb_onfault != 0) {
-			frame.tf_spc = (int)pcb->pcb_onfault;
+	if (user == 0) {
+		/* Check for copyin/copyout fault. */
+		if (p != NULL &&
+		    p->p_addr->u_pcb.pcb_onfault != 0) {
+			frame.tf_spc = (int) p->p_addr->u_pcb.pcb_onfault;
 			return;
 		}
+		goto dopanic;
 	}
 
-#ifdef	DEBUG
-	if (trapdebug) {
-		printf("tlb_handler#NOGO:va(0x%lx),spc=%x\n",
-		       va, frame.tf_spc);
-	}
-#endif
 	if (rv == KERN_RESOURCE_SHORTAGE) {
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 		       p->p_pid, p->p_comm,
 		       p->p_cred && p->p_ucred ?
 		       p->p_ucred->cr_uid : -1);
-		trapsignal(p, SIGKILL, T_TLBINVALIDR);
+		sig = SIGKILL;
 	} else
-		trapsignal(p, SIGSEGV, T_TLBINVALIDR);
+		sig = SIGSEGV;
+#ifdef DEBUG
+	if (trapdebug) {
+		printf("tlb_handler: fatal user fault: va 0x%lx, spc 0x%x, "
+		    "exptype 0x%x (%s)\n", va, frame.tf_spc, exptype,
+		    p->p_comm);
+	}
+#endif
+	trapsignal(p, sig, T_TLBINVALIDR);
+	userret(p, frame.tf_spc, sticks);
+	return;
 
-	if ((type & T_USER) == 0)
-		return;
-
-	if (p != NULL)
-		userret(p, frame.tf_spc, sticks);
+ dopanic:
+	printf("tlb_handler: va 0x%lx, spc 0x%x, exptype 0x%x (%s)\n",
+	    va, frame.tf_spc, exptype, p != NULL ? p->p_comm : "no curproc");
+#if defined(DDB)
+	Debugger();
+#else
+	panic("tlb_handler");
+#endif
 }

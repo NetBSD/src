@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.29.2.4 2001/02/11 19:17:10 bouyer Exp $	*/
+/*	$NetBSD: route.c,v 1.29.2.5 2001/03/12 13:31:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 {
 	struct rtentry *rt;
 	int error = 0;
-	short *stat = 0;
+	u_quad_t *stat = 0;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.8.2.5 2000/12/13 15:50:07 bouyer Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.8.2.6 2001/03/12 13:30:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ static void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *, int);
 static void fwohci_atrs_output(struct fwohci_softc *, int, struct fwohci_pkt *,
 		struct fwohci_pkt *);
 
+static int  fwohci_guidrom_init(struct fwohci_softc *);
 static void fwohci_configrom_init(struct fwohci_softc *);
 
 static void fwohci_selfid_init(struct fwohci_softc *);
@@ -170,26 +171,10 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	printf("%s: OHCI %u.%u", sc->sc_sc1394.sc1394_dev.dv_xname,
 	    OHCI_Version_GET_Version(val), OHCI_Version_GET_Revision(val));
 
-	/* Is the Global UID ROM present?
-	 */
-	if ((val & OHCI_Version_GUID_ROM) == 0) {
-		printf("\n%s: fatal: no global UID ROM\n", sc->sc_sc1394.sc1394_dev.dv_xname);
+	if (fwohci_guidrom_init(sc) != 0) {
+		printf("\n%s: fatal: no global UID ROM\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
-	} else {
-
-		/* Extract the Global UID
-		 */
-		val = OHCI_CSR_READ(sc, OHCI_REG_GUIDHi);
-		sc->sc_sc1394.sc1394_guid[0] = (val >> 24) & 0xff;
-		sc->sc_sc1394.sc1394_guid[1] = (val >> 16) & 0xff;
-		sc->sc_sc1394.sc1394_guid[2] = (val >>  8) & 0xff;
-		sc->sc_sc1394.sc1394_guid[3] = (val >>  0) & 0xff;
-
-		val = OHCI_CSR_READ(sc, OHCI_REG_GUIDLo);
-		sc->sc_sc1394.sc1394_guid[4] = (val >> 24) & 0xff;
-		sc->sc_sc1394.sc1394_guid[5] = (val >> 16) & 0xff;
-		sc->sc_sc1394.sc1394_guid[6] = (val >>  8) & 0xff;
-		sc->sc_sc1394.sc1394_guid[7] = (val >>  0) & 0xff;
 	}
 
 	printf(", %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
@@ -1589,6 +1574,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 					len = m->m_ext.ext_size;
 				m_copydata(pkt->fp_m, off, len,
 				    mtod(m, caddr_t));
+				m->m_len = len;
 				ndesc++;
 			}
 			m_freem(pkt->fp_m);
@@ -1699,6 +1685,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 	fc->fc_bufcnt++;
 	TAILQ_INSERT_TAIL(&fc->fc_buf, fb, fb_list);
+	pkt->fp_m = NULL;
 	return 0;
 }
 
@@ -1798,6 +1785,63 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 /*
  * APPLICATION LAYER SERVICES
  */
+
+/*
+ * Retrieve Global UID from GUID ROM
+ */
+static int
+fwohci_guidrom_init(struct fwohci_softc *sc)
+{
+	int i, n, off;
+	u_int32_t val1, val2;
+
+	/* Extract the Global UID
+	 */
+	val1 = OHCI_CSR_READ(sc, OHCI_REG_GUIDHi);
+	val2 = OHCI_CSR_READ(sc, OHCI_REG_GUIDLo);
+
+	if (val1 != 0 || val2 != 0) {
+		sc->sc_sc1394.sc1394_guid[0] = (val1 >> 24) & 0xff;
+		sc->sc_sc1394.sc1394_guid[1] = (val1 >> 16) & 0xff;
+		sc->sc_sc1394.sc1394_guid[2] = (val1 >>  8) & 0xff;
+		sc->sc_sc1394.sc1394_guid[3] = (val1 >>  0) & 0xff;
+		sc->sc_sc1394.sc1394_guid[4] = (val2 >> 24) & 0xff;
+		sc->sc_sc1394.sc1394_guid[5] = (val2 >> 16) & 0xff;
+		sc->sc_sc1394.sc1394_guid[6] = (val2 >>  8) & 0xff;
+		sc->sc_sc1394.sc1394_guid[7] = (val2 >>  0) & 0xff;
+	} else {
+		val1 = OHCI_CSR_READ(sc, OHCI_REG_Version);
+		if ((val1 & OHCI_Version_GUID_ROM) == 0)
+			return -1;
+		OHCI_CSR_WRITE(sc, OHCI_REG_Guid_Rom, OHCI_Guid_AddrReset);
+		for (i = 0; i < OHCI_LOOP; i++) {
+			val1 = OHCI_CSR_READ(sc, OHCI_REG_Guid_Rom);
+			if (!(val1 & OHCI_Guid_AddrReset))
+				break;
+		}
+		off = ((val1 & OHCI_Guid_MiniROM_MASK)
+		    >> OHCI_Guid_MiniROM_BITPOS) + 4;
+		val2 = 0;
+		for (n = 0; n < off + sizeof(sc->sc_sc1394.sc1394_guid); n++) {
+			OHCI_CSR_WRITE(sc, OHCI_REG_Guid_Rom,
+			    OHCI_Guid_RdStart);
+			for (i = 0; i < OHCI_LOOP; i++) {
+				val1 = OHCI_CSR_READ(sc, OHCI_REG_Guid_Rom);
+				if (!(val1 & OHCI_Guid_RdStart))
+					break;
+			}
+			if (n < off)
+				continue;
+			val1 = (val1 & OHCI_Guid_RdData_MASK)
+				>> OHCI_Guid_RdData_BITPOS;
+			sc->sc_sc1394.sc1394_guid[n - off] = val1;
+			val2 |= val1;
+		}
+		if (val2 == 0)
+			return -1;
+	}
+	return 0;
+}
 
 /*
  * Initialization for Configuration ROM (no DMA context)
@@ -2319,6 +2363,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return IEEE1394_RCODE_COMPLETE;
+	m->m_len = 16;
 	if (len + m->m_len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -2326,7 +2371,6 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 			return IEEE1394_RCODE_COMPLETE;
 		}
 	}
-	m->m_len = 16;
 	n = (pkt->fp_hdr[1] >> 16) & OHCI_NodeId_NodeNumber;
 	if (sc->sc_uidtbl == NULL || n > sc->sc_rootid ||
 	    sc->sc_uidtbl[n].fu_valid != 0x3) {
@@ -2508,7 +2552,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	splx(s);
 	m0 = pkt.fp_m;
   end:
-	if (error) {
+	if (m0 != NULL) {
 		if (callback)
 			(*callback)(sc->sc_sc1394.sc1394_if, m0);
 		else

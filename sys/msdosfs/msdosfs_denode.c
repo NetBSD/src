@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36.8.5 2001/02/11 19:17:07 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.8.6 2001/03/12 13:31:45 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -634,7 +634,9 @@ msdosfs_inactive(v)
 		(vp->v_mount->mnt_flag & MNT_RDONLY) ? "MNT_RDONLY" : "");
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
+		if (dep->de_FileSize != 0) {
+			error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
+		}
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);

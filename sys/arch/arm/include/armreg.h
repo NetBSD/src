@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.1.2.2 2001/02/11 19:08:51 bouyer Exp $	*/
+/*	$NetBSD: armreg.h,v 1.1.2.3 2001/03/12 13:27:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -117,6 +117,11 @@
 #define CPU_ID_DEC		0x44000000 /* 'D' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
 
+/* How to decide what format the CPUID is in. */
+#define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
+#define CPU_ID_IS7(x)		(((x) & 0x0000f000) == 0x00007000)
+#define CPU_ID_ISNEW(x)		(!CPU_ID_ISOLD(x) && !CPU_ID_IS7(x))
+
 /* On ARM3 and ARM6, this byte holds the foundry ID. */
 #define CPU_ID_FOUNDRY_MASK	0x00ff0000
 #define CPU_ID_FOUNDRY_VLSI	0x00560000
@@ -139,10 +144,12 @@
 
 /* Next three nybbles are part number */
 #define CPU_ID_PARTNO_MASK	0x0000fff0
-#define CPU_ID_CPU_MASK		CPU_ID_PARTNO_MASK
 
 /* And finally, the revision number. */
 #define CPU_ID_REVISION_MASK	0x0000000f
+
+/* Individual CPUs are probably best IDed by everything but the revision. */
+#define CPU_ID_CPU_MASK		0xfffffff0
 
 /* Fake CPU IDs for ARMs without CP15 */
 #define CPU_ID_ARM2		0x41560200
@@ -155,8 +162,11 @@
 #define CPU_ID_ARM620		0x41560620
 
 /* ARM7 CPUs -- [15:12] == 7 */
+#define CPU_ID_ARM700		0x41007000 /* XXX This is a guess. */
 #define CPU_ID_ARM710		0x41007100
-#define CPU_ID_ARM7100		0x41047100
+#define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess. */
+#define CPU_ID_ARM710A		0x41047100 /* inc ARM7100 */
+#define CPU_ID_ARM7500FE	0x41077100
 #define CPU_ID_ARM710T		0x41807100
 #define CPU_ID_ARM720T		0x41807200
 #define CPU_ID_ARM740T8K	0x41807400 /* XXX no MMU, 8KB cache */
@@ -174,8 +184,6 @@
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_I80200		0x69052000 /* XScale core */
-
-#define CPU_ID_ARM700		0x00007000
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1

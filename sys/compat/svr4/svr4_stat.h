@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.h,v 1.7 1999/03/23 14:57:01 kleink Exp $	 */
+/*	$NetBSD: svr4_stat.h,v 1.7.8.1 2001/03/12 13:29:55 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -50,51 +50,66 @@ struct svr4_stat {
 	svr4_o_uid_t	st_uid;
 	svr4_o_gid_t	st_gid;
 	svr4_o_dev_t	st_rdev;
-	svr4_off_t	st_size;
-	svr4_time_t	st_atim;
-	svr4_time_t	st_mtim;
-	svr4_time_t	st_ctim;
+	svr4_off32_t	st_size;
+	svr4_time32_t	st_atim;
+	svr4_time32_t	st_mtim;
+	svr4_time32_t	st_ctim;
 };
 
 struct svr4_xstat {
 	svr4_dev_t		st_dev;
+#ifndef __LP64__
 	long			st_pad1[3];
+#endif
 	svr4_ino_t		st_ino;
 	svr4_mode_t		st_mode;
 	svr4_nlink_t		st_nlink;
 	svr4_uid_t		st_uid;
 	svr4_gid_t		st_gid;
 	svr4_dev_t		st_rdev;
+#ifndef __LP64__
 	long			st_pad2[2];
+#endif
 	svr4_off_t		st_size;
+#ifndef __LP64__
 	long			st_pad3;
+#endif
 	svr4_timestruc_t	st_atim;
 	svr4_timestruc_t	st_mtim;
 	svr4_timestruc_t	st_ctim;
-	long			st_blksize;
+
+	int			st_blksize;
 	svr4_blkcnt_t		st_blocks;
 	char			st_fstype[16];
+#ifndef __LP64__
 	long			st_pad4[8];
+#endif
 };
 
 struct svr4_stat64 {
 	svr4_dev_t		st_dev;
+#ifndef __LP64__
 	long			st_pad1[3];
+#endif
 	svr4_ino64_t		st_ino;
 	svr4_mode_t		st_mode;
 	svr4_nlink_t		st_nlink;
 	svr4_uid_t		st_uid;
 	svr4_gid_t		st_gid;
 	svr4_dev_t		st_rdev;
+#ifndef __LP64__
 	long			st_pad2[2];
+#endif
 	svr4_off64_t		st_size;
 	svr4_timestruc_t	st_atim;
 	svr4_timestruc_t	st_mtim;
 	svr4_timestruc_t	st_ctim;
-	long			st_blksize;
+	int			st_blksize;
 	svr4_blkcnt64_t		st_blocks;
 	char			st_fstype[16];
+#ifndef __LP64__
 	long			st_pad4[8];
+#endif
 };
 
 #define	SVR4_PC_LINK_MAX		1

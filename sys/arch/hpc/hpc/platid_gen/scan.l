@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.2.2.2 2001/02/11 19:09:30 bouyer Exp $	*/
+/*	$NetBSD: scan.l,v 1.2.2.3 2001/03/12 13:28:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -49,7 +49,7 @@ void	getcomment __P((void));
 %}
 
 %%
-#[^\n]*\n		{ yylval.str = strdup(yytext); return DIRECTIVE; }
+#[^\n]*\n		{ yylval.str = strdup(yytext); yyline++; return DIRECTIVE; }
 \"([^"]|\\\")*\"	{ yylval.str = getstr(yytext); return NAME; }
 [a-zA-Z][0-9a-zA-Z]*	{ yylval.str = strdup(yytext); return FSYM; }
 [a-zA-Z][_0-9a-zA-Z]*	{ yylval.str = strdup(yytext); return MOD; }

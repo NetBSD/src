@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3.2.2 2000/11/20 20:02:33 bouyer Exp $	*/
+/*	$NetBSD: mem.c,v 1.3.2.3 2001/03/12 13:27:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,6 +119,8 @@ mmrw(dev, uio, flags)
 			 * mapped in at another address and can just
 			 * use that.
 			 */
+			v = uio->uio_offset;
+			c = min(iov->iov_len, MAXPHYS);
 			/* XXX Should use pmap_find(). */
 			if (v < 0 ||
 			    (caddr_t)v + c > MEMC_PHYS_BASE + ptoa(physmem))

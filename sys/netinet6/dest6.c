@@ -1,5 +1,5 @@
-/*	$NetBSD: dest6.c,v 1.4.2.2 2001/02/11 19:17:20 bouyer Exp $	*/
-/*	$KAME: dest6.c,v 1.14 2001/01/23 05:16:28 itojun Exp $	*/
+/*	$NetBSD: dest6.c,v 1.4.2.3 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,22 +89,20 @@ dest6_input(mp, offp, proto)
 
 	/* search header for all options. */
 	for (optlen = 0; dstoptlen > 0; dstoptlen -= optlen, opt += optlen) {
+		if (*opt != IP6OPT_PAD1 &&
+		    (dstoptlen < IP6OPT_MINLEN || *(opt + 1) + 2 > dstoptlen)) {
+			ip6stat.ip6s_toosmall++;
+			goto bad;
+		}
+
 		switch (*opt) {
 		case IP6OPT_PAD1:
 			optlen = 1;
 			break;
 		case IP6OPT_PADN:
-			if (dstoptlen < IP6OPT_MINLEN) {
-				ip6stat.ip6s_toosmall++;
-				goto bad;
-			}
 			optlen = *(opt + 1) + 2;
 			break;
 		default:		/* unknown option */
-			if (dstoptlen < IP6OPT_MINLEN) {
-				ip6stat.ip6s_toosmall++;
-				goto bad;
-			}
 			optlen = ip6_unknown_opt(opt, m,
 			    opt - mtod(m, u_int8_t *));
 			if (optlen == -1)

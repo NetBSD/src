@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32.8.2 2001/01/18 09:22:19 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.32.8.3 2001/03/12 13:27:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -188,12 +188,21 @@ ENTRY_NP(cpu_reset)
 Lboot_cache_purged:
 
 	/*
+	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
+	 * necessary.
+	 */
+
+	ldr	r1, Lcpu_reset_needs_v4_MMU_disable
+	ldr	r1, [r1]
+	cmp	r1, #0
+
+	/*
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
-	mcr     15, 0, r0, c8, c7, 0
+	mcrne   15, 0, r0, c8, c7, 0 	/* only when v4 MMU disable is asked for */
 	mov     pc, r4
 
 	/*
@@ -201,9 +210,18 @@ Lboot_cache_purged:
 	 * the cpu reset after turning the MMU off
 	 * This variable is provided by the hardware specific code
 	 */
-
 Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
+
+	/*
+	 * cpu_reset_needs_v4_MMU_disable contains a flag that signals if the
+	 * v4 MMU disable instruction needs executing... it is an illegal instruction
+	 * on f.e. ARM6/7 that locks up the computer in an endless illegal
+	 * instruction / data-abort / reset loop.
+	 */
+Lcpu_reset_needs_v4_MMU_disable:
+	.word	_C_LABEL(cpu_reset_needs_v4_MMU_disable)
+
 #endif	/* OFW */
 
 #ifdef IPKDB

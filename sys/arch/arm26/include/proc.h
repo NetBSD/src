@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.1.6.2 2000/11/20 20:02:44 bouyer Exp $ */
+/* $NetBSD: proc.h,v 1.1.6.3 2001/03/12 13:27:29 bouyer Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -33,6 +33,7 @@
 /* arm26-specific part of struct proc */
 
 struct mdproc {
+	int	mdp_dummy; /* Zero-sized structs are bad, apparently. */
 };
 
 #endif

@@ -1,0 +1,16 @@
+#
+# kernel config file for memory(RAM) disk
+#
+# 	$NetBSD: RAMDISK,v 1.2.4.2 2001/03/12 13:28:50 bouyer Exp $
+#
+
+include "arch/hpcsh/conf/JORNADA690"
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.1.2.3 2001/02/11 19:15:18 bouyer Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.1.2.4 2001/03/12 13:30:01 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.16 2001/03/08 04:24:41 thorpej Exp 
  */
 
 /*
@@ -51,6 +51,7 @@
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_HITACHI	0x1054		/* Hitachi */
 #define	CARDBUS_VENDOR_3COM	0x10b7		/* 3Com */
+#define	CARDBUS_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_IODATA	0x10fc		/* IO Data */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
@@ -81,6 +82,9 @@
 #define	CARDBUS_PRODUCT_3COM_3C656_E	0x6560		/* 3CCFEM656 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_3COM_3C656B_E	0x6562		/* 3CCFEM656B 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_3COM_3C656C_E	0x6564		/* 3CXFEM656C 10/100 Ethernet */
+
+/* Advanced System Products products */
+#define	CARDBUS_PRODUCT_ADVSYS_ULTRA	0x1300		/* Ultra SCSI */
 
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */

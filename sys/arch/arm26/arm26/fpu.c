@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1.2.3 2001/01/18 09:22:13 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.2.4 2001/03/12 13:27:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,14 +33,17 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.2.3 2001/01/18 09:22:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.2.4 2001/03/12 13:27:27 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <arm/undefined.h>
 #include <machine/fpureg.h>
 #include <machine/pcb.h>
+
+
 #include <arch/arm26/arm26/fpuvar.h>
 
 #include "opt_fputypes.h"
@@ -104,19 +107,27 @@ fpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: FPU type not supported by kernel\n",
 		       self->dv_xname);
 }
-	
+
+static label_t undef_jmp;
+
+static int
+fpu_undef_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
+{
+
+	longjmp(&undef_jmp);
+}
+
 static register_t
 fpu_identify()
 {
-	label_t here;
 	volatile register_t fpsr;
 
-	if (setjmp(&here) == 0) {
-		curproc->p_addr->u_pcb.pcb_onundef_lj = &here;
+	if (setjmp(&undef_jmp) == 0) {
+		install_coproc_handler(1, fpu_undef_handler);
 		fpsr = 0;
 		asm volatile ("rfs %0" : "=r" (fpsr));
 	}
-	curproc->p_addr->u_pcb.pcb_onundef_lj = NULL;
+	install_coproc_handler(1, NULL);
 	return fpsr & FPSR_SYSID_MASK;
 }
 

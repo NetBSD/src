@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.20.2.3 2001/01/18 09:23:26 bouyer Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.20.2.4 2001/03/12 13:31:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -439,6 +439,7 @@ tlp_pci_attach(parent, self, aux)
 
 		default:
 			/* Unknown -- use default. */
+			break;
 		}
 		break;
 
@@ -454,6 +455,7 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
@@ -479,6 +481,7 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	/*
@@ -508,6 +511,7 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
 		/* Nothing. */
+		break;
 	}
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
@@ -1053,6 +1057,7 @@ tlp_pci_znyx_21040_quirks(psc, enaddr)
 
 		default:
 			id = 0;
+			break;
 		}
 	}
 

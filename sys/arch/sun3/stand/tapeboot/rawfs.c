@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.2 1998/02/05 04:57:22 gwr Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.2.14.1 2001/03/12 13:29:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -58,10 +58,10 @@ struct file {
 	char		fs_buf[RAWFS_BSIZE];
 };
 
-static int
-rawfs_get_block __P((struct open_file *));
+static int rawfs_get_block __P((struct open_file *));
 
-int	rawfs_open(path, f)
+int
+rawfs_open(path, f)
 	char *path;
 	struct open_file *f;
 {
@@ -84,13 +84,14 @@ int	rawfs_open(path, f)
 	return (0);
 }
 
-int	rawfs_close(f)
+int
+rawfs_close(f)
 	struct open_file *f;
 {
 	struct file *fs;
 
 	fs = (struct file *) f->f_fsdata;
-	f->f_fsdata = (void *)0;
+	f->f_fsdata = NULL;
 
 #ifdef	DEBUG_RAWFS
 	if (debug) {
@@ -99,13 +100,14 @@ int	rawfs_close(f)
 	}
 #endif
 
-	if (fs != (struct file *)0)
+	if (fs != NULL)
 		free(fs, sizeof(*fs));
 
 	return (0);
 }
 
-int	rawfs_read(f, start, size, resid)
+int
+rawfs_read(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	u_int size;
@@ -140,7 +142,8 @@ int	rawfs_read(f, start, size, resid)
 	return (error);
 }
 
-int	rawfs_write(f, start, size, resid)
+int
+rawfs_write(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	size_t size;
@@ -152,7 +155,8 @@ int	rawfs_write(f, start, size, resid)
 	return (EROFS);
 }
 
-off_t	rawfs_seek(f, offset, where)
+off_t
+rawfs_seek(f, offset, where)
 	struct open_file *f;
 	off_t offset;
 	int where;
@@ -163,7 +167,8 @@ off_t	rawfs_seek(f, offset, where)
 	return (EFTYPE);
 }
 
-int	rawfs_stat(f, sb)
+int
+rawfs_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {

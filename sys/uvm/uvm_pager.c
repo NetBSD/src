@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.23.2.4 2001/02/11 19:17:50 bouyer Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.23.2.5 2001/03/12 13:32:14 bouyer Exp $	*/
 
 /*
  *
@@ -293,11 +293,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			hi = mhi;
 	}
 	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
-#ifdef DIAGNOSTIC
-		printf("uvm_mk_pcluster uobj %p npages %d lo 0x%llx hi 0x%llx "
-		       "flags 0x%x\n", uobj, *npages, (long long)lo,
-		       (long long)hi, flags);
-#endif
 		pps[0] = center;
 		*npages = 1;
 		return(pps);
@@ -401,22 +396,22 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
  * => flags (first two for non-swap-backed pages)
  *	PGO_ALLPAGES: all pages in uobj are valid targets
  *	PGO_DOACTCLUST: include "PQ_ACTIVE" pages as valid targets
- *	PGO_SYNCIO: do SYNC I/O (no async)
+ *	PGO_SYNCIO: wait for i/o to complete
  *	PGO_PDFREECLUST: pagedaemon: drop cluster on successful I/O
  * => start/stop: if (uobj && !PGO_ALLPAGES) limit targets to this range
  *		  if (!uobj) start is the (daddr_t) of the starting swapblk
  * => return state:
- *	1. we return the VM_PAGER status code of the pageout
+ *	1. we return the error code of the pageout
  *	2. we return with the page queues unlocked
  *	3. if (uobj != NULL) [!swap_backed] we return with
  *		uobj locked _only_ if PGO_PDFREECLUST is set 
- *		AND result != VM_PAGER_PEND.   in all other cases
+ *		AND result == 0 AND async.   in all other cases
  *		we return with uobj unlocked.   [this is a hack
  *		that allows the pagedaemon to save one lock/unlock
  *		pair in the !swap_backed case since we have to
  *		lock the uobj to drop the cluster anyway]
  *	4. on errors we always drop the cluster.   thus, if we return
- *		!PEND, !OK, then the caller only has to worry about
+ *		an error, then the caller only has to worry about
  *		un-busying the main page (not the cluster pages).
  *	5. on success, if !PGO_PDFREECLUST, we return the cluster
  *		with all pages busy (caller must un-busy and check
@@ -433,6 +428,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 {
 	int result;
 	daddr_t swblk;
+	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	struct vm_page **ppsp = *ppsp_ptr;
 	UVMHIST_FUNC("uvm_pager_put"); UVMHIST_CALLED(ubchist);
 
@@ -507,20 +503,21 @@ ReTry:
 	 *  i/o is done...]
 	 */
 
-	if (result == VM_PAGER_PEND || result == VM_PAGER_OK) {
-		if (result == VM_PAGER_OK && (flags & PGO_PDFREECLUST)) {
+	if (result == 0) {
+		if (flags & PGO_PDFREECLUST && !async) {
+
 			/*
-			 * drop cluster and relock object (only if I/O is
-			 * not pending)
+			 * drop cluster and relock object for sync i/o.
 			 */
+
 			if (uobj)
 				/* required for dropcluster */
 				simple_lock(&uobj->vmobjlock);
 			if (*npages > 1 || pg == NULL)
 				uvm_pager_dropcluster(uobj, pg, ppsp, npages,
 				    PGO_PDFREECLUST);
-			/* if (uobj): object still locked, as per
-			 * return-state item #3 */
+
+			/* if (uobj): object still locked, as per #3 */
 		}
 		return (result);
 	}
@@ -545,7 +542,7 @@ ReTry:
 		 */
 
 		if (uobj == NULL && pg != NULL) {
-			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
+			int nswblk = (result == EAGAIN) ? swblk : 0;
 			if (pg->pqflags & PQ_ANON) {
 				simple_lock(&pg->uanon->an_lock);
 				pg->uanon->an_swslot = nswblk;
@@ -558,7 +555,7 @@ ReTry:
 				simple_unlock(&pg->uobject->vmobjlock);
 			}
 		}
-		if (result == VM_PAGER_AGAIN) {
+		if (result == EAGAIN) {
 
 			/*
 			 * for transient failures, free all the swslots that
@@ -689,22 +686,14 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 			 * pgo_releasepg will dump the page for us
 			 */
 
-#ifdef DIAGNOSTIC
-			if (ppsp[lcv]->uobject->pgops->pgo_releasepg == NULL)
-				panic("uvm_pager_dropcluster: no releasepg "
-				    "function");
-#endif
 			saved_uobj = ppsp[lcv]->uobject;
 			obj_is_alive =
 			    saved_uobj->pgops->pgo_releasepg(ppsp[lcv], NULL);
 			
-#ifdef DIAGNOSTIC
 			/* for normal objects, "pg" is still PG_BUSY by us,
 			 * so obj can't die */
-			if (uobj && !obj_is_alive)
-				panic("uvm_pager_dropcluster: object died "
-				    "with active page");
-#endif
+			KASSERT(!uobj || obj_is_alive);
+
 			/* only unlock the object if it is still alive...  */
 			if (obj_is_alive && saved_uobj != uobj)
 				simple_unlock(&saved_uobj->vmobjlock);
@@ -798,12 +787,12 @@ uvm_aio_aiodone(bp)
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[npages];
 	struct uvm_object *uobj;
-	int s, i;
-	boolean_t release, write, swap;
+	int s, i, error;
+	boolean_t write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
-	release = (bp->b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
+	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
 	write = (bp->b_flags & B_READ) == 0;
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
 	if (write && !(bp->b_flags & B_NOCACHE) && bioops.io_pageiodone) {
@@ -840,26 +829,25 @@ uvm_aio_aiodone(bp)
 		 * PG_RELEASED so that uvm_page_unbusy() will free them.
 		 */
 
-		if (release) {
+		if (!write && error) {
 			pg->flags |= PG_RELEASED;
 			continue;
 		}
 		KASSERT(!write || (pgs[i]->flags & PG_FAKE) == 0);
 
 		/*
-		 * if this is a read and the page is PG_FAKE
-		 * or this was a write, mark the page PG_CLEAN and not PG_FAKE.
+		 * if this is a read and the page is PG_FAKE,
+		 * or this was a successful write,
+		 * mark the page PG_CLEAN and not PG_FAKE.
 		 */
 
-		if (pgs[i]->flags & PG_FAKE || write) {
+		if ((pgs[i]->flags & PG_FAKE) || (write && error != ENOMEM)) {
 			pmap_clear_reference(pgs[i]);
 			pmap_clear_modify(pgs[i]);
 			pgs[i]->flags |= PG_CLEAN;
 			pgs[i]->flags &= ~PG_FAKE;
 		}
-		if (pg->wire_count == 0) {
-			uvm_pageactivate(pg);
-		}
+		uvm_pageactivate(pg);
 		if (swap) {
 			if (pg->pqflags & PQ_ANON) {
 				simple_unlock(&pg->uanon->an_lock);
@@ -879,30 +867,4 @@ uvm_aio_aiodone(bp)
 	}
 	pool_put(&bufpool, bp);
 	splx(s);
-}
-
-/*
- * translate unix errno values to VM_PAGER_*.
- */
-
-int
-uvm_errno2vmerror(errno)
-	int errno;
-{
-	switch (errno) {
-	case 0:
-		return VM_PAGER_OK;
-	case EINVAL:
-		return VM_PAGER_BAD;
-	case EINPROGRESS:
-		return VM_PAGER_PEND;
-	case EIO:
-		return VM_PAGER_ERROR;
-	case EAGAIN:
-		return VM_PAGER_AGAIN;
-	case EBUSY:
-		return VM_PAGER_UNLOCK;
-	default:
-		return VM_PAGER_ERROR;
-	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69.2.3 2000/12/08 09:30:46 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.69.2.4 2001/03/12 13:29:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -67,64 +67,60 @@ ASGLOBAL(start)
 | First we need to set it up so we can access the sun MMU, and be otherwise
 | undisturbed.  Until otherwise noted, all code must be position independent
 | as the boot loader put us low in memory, but we are linked high.
-	movw	#PSL_HIGHIPL, sr	| no interrupts
-	moveq	#FC_CONTROL, d0		| make movs access "control"
-	movc	d0, sfc			| space where the sun3 designers
-	movc	d0, dfc			| put all the "useful" stuff
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+	moveq	#FC_CONTROL,%d0		| make movs access "control"
+	movc	%d0,%sfc		| space where the sun3 designers
+	movc	%d0,%dfc		| put all the "useful" stuff
 
 | Set context zero and stay there until pmap_bootstrap.
-	moveq	#0, d0
-	movsb	d0, CONTEXT_REG
+	moveq	#0,%d0
+	movsb	%d0,CONTEXT_REG
 
 | In order to "move" the kernel to high memory, we are going to copy the
 | first 4 Mb of pmegs such that we will be mapped at the linked address.
 | This is all done by copying in the segment map (top-level MMU table).
 | We will unscramble which PMEGs we actually need later.
 
-	movl	#(SEGMAP_BASE+0), a0		| src
-	movl	#(SEGMAP_BASE+KERNBASE), a1	| dst
-	movl	#(0x400000/NBSG), d0		| count
+	movl	#(SEGMAP_BASE+0),%a0		| src
+	movl	#(SEGMAP_BASE+KERNBASE),%a1	| dst
+	movl	#(0x400000/NBSG),%d0		| count
 
 L_per_pmeg:
-	movsb	a0@, d1			| copy segmap entry
-	movsb	d1, a1@
-	addl	#NBSG, a0		| increment pointers
-	addl	#NBSG, a1
-	subql	#1, d0			| decrement count
+	movsb	%a0@,%d1		| copy segmap entry
+	movsb	%d1,%a1@
+	addl	#NBSG,%a0		| increment pointers
+	addl	#NBSG,%a1
+	subql	#1,%d0			| decrement count
 	bgt	L_per_pmeg
 
 | Kernel is now double mapped at zero and KERNBASE.
 | Force a long jump to the relocated code (high VA).
-	movl	#IC_CLEAR, d0		| Flush the I-cache
-	movc	d0, cacr
-	jmp L_high_code:l		| long jump
+	movl	#IC_CLEAR,%d0		| Flush the I-cache
+	movc	%d0,%cacr
+	jmp	L_high_code:l		| long jump
 
 L_high_code:
 | We are now running in the correctly relocated kernel, so
 | we are no longer restricted to position-independent code.
 
 | Do bootstrap stuff needed before main() gets called.
-| Our boot loader leaves a copy of the kernel's exec header
-| just before the start of the kernel text segment, so the
-| kernel can sanity-check the DDB symbols at [end...esym].
-| Pass the struct exec at tmpstk-32 to _bootstrap().
-| Also, make sure the initial frame pointer is zero so that
+| Make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
-	lea	_ASM_LABEL(tmpstk)-32, sp
-	movl	#0,a6
+	lea	_ASM_LABEL(tmpstk),%sp
+	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 
 | Now that _bootstrap() is done using the PROM functions,
-| we can safely set the sfc/dfc to something != FC_CONTROL
-	moveq	#FC_USERD, d0		| make movs access "user data"
-	movc	d0, sfc			| space for copyin/copyout
-	movc	d0, dfc
+| we can safely set the %sfc/dfc to something != FC_CONTROL
+	moveq	#FC_USERD,%d0		| make movs access "user data"
+	movc	%d0,%sfc		| space for copyin/copyout
+	movc	%d0,%dfc
 
 | Setup process zero user/kernel stacks.
-	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
-	lea	a1@(USPACE-4),sp	| set SSP to last word
-	movl	#USRSTACK-4,a2
-	movl	a2,usp			| init user SP
+	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
+	lea	%a1@(USPACE-4),%sp	| set SSP to last word
+	movl	#USRSTACK-4,%a2
+	movl	%a2,%usp		| init user SP
 
 | Note curpcb was already set in _bootstrap().
 | Will do fpu initialization during autoconfig (see fpu.c)
@@ -141,27 +137,27 @@ L_high_code:
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
  */
-	clrw	sp@-			| tf_format,tf_vector
-	clrl	sp@-			| tf_pc (filled in later)
-	movw	#PSL_USER,sp@-		| tf_sr for user mode
-	clrl	sp@-			| tf_stackadj
-	lea	sp@(-64),sp		| tf_regs[16]
-	movl	sp,a1			| a1=trapframe
-	lea	_C_LABEL(proc0),a0	| proc0.p_md.md_regs = 
-	movl	a1,a0@(P_MDREGS)	|   trapframe
-	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
-	pea	a1@			| push &trapframe
+	clrw	%sp@-			| tf_format,tf_vector
+	clrl	%sp@-			| tf_pc (filled in later)
+	movw	#PSL_USER,%sp@-		| tf_sr for user mode
+	clrl	%sp@-			| tf_stackadj
+	lea	%sp@(-64),%sp		| tf_regs[16]
+	movl	%sp,%a1			| %a1=trapframe
+	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
+	movl	%a1,%a0@(P_MDREGS)	|   trapframe
+	movl	%a2,%a1@(FR_SP)		| a2 == usp (from above)
+	pea	%a1@			| push &trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
-	addql	#4,sp			| help DDB backtrace
+	addql	#4,%sp			| help DDB backtrace
 	trap	#15			| should not get here
 
 | This is used by cpu_fork() to return to user mode.
 | It is called with SP pointing to a struct trapframe.
 GLOBAL(proc_do_uret)
-	movl	sp@(FR_SP),a0		| grab and load
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
-	addql	#8,sp			| pop SSP and stack adjust count
+	movl	%sp@(FR_SP),%a0		| grab and load
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| load most registers (all but SSP)
+	addql	#8,%sp			| pop SSP and stack adjust count
 	rte
 
 /*
@@ -180,9 +176,9 @@ GLOBAL(proc_do_uret)
  * return using the switchframe that remains on the stack.
  */
 GLOBAL(proc_trampoline)
-	movl	sp@+,a0			| function pointer
-	jbsr	a0@			| (*func)(arg)
-	addql	#4,sp			| toss the arg
+	movl	%sp@+,%a0		| function pointer
+	jbsr	%a0@			| (*func)(arg)
+	addql	#4,%sp			| toss the arg
 	rts				| as cpu_switch would do
 
 | That is all the assembly startup code we need on the sun3!
@@ -196,54 +192,54 @@ GLOBAL(proc_trampoline)
 GLOBAL(buserr)
 	tstl	_C_LABEL(nofault)	| device probe?
 	jeq	_C_LABEL(addrerr)	| no, handle as usual
-	movl	_C_LABEL(nofault),sp@-	| yes,
+	movl	_C_LABEL(nofault),%sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
 GLOBAL(addrerr)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-	moveq	#0,d0
-	movw	a1@(10),d0		| grab SSW for fault processing
-	btst	#12,d0			| RB set?
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save user registers
+	movl	%usp,%a0		| save the user SP
+	movl	%a0,%sp@(FR_SP)		|   in the savearea
+	lea	%sp@(FR_HW),%a1		| grab base of HW berr frame
+	moveq	#0,%d0
+	movw	%a1@(10),%d0		| grab SSW for fault processing
+	btst	#12,%d0			| RB set?
 	jeq	LbeX0			| no, test RC
-	bset	#14,d0			| yes, must set FB
-	movw	d0,a1@(10)		| for hardware too
+	bset	#14,%d0			| yes, must set FB
+	movw	%d0,%a1@(10)		| for hardware too
 LbeX0:
-	btst	#13,d0			| RC set?
+	btst	#13,%d0			| RC set?
 	jeq	LbeX1			| no, skip
-	bset	#15,d0			| yes, must set FC
-	movw	d0,a1@(10)		| for hardware too
+	bset	#15,%d0			| yes, must set FC
+	movw	%d0,%a1@(10)		| for hardware too
 LbeX1:
-	btst	#8,d0			| data fault?
+	btst	#8,%d0			| data fault?
 	jeq	Lbe0			| no, check for hard cases
-	movl	a1@(16),d1		| fault address is as given in frame
+	movl	%a1@(16),%d1		| fault address is as given in frame
 	jra	Lbe10			| thats it
 Lbe0:
-	btst	#4,a1@(6)		| long (type B) stack frame?
+	btst	#4,%a1@(6)		| long (type B) stack frame?
 	jne	Lbe4			| yes, go handle
-	movl	a1@(2),d1		| no, can use save PC
-	btst	#14,d0			| FB set?
+	movl	%a1@(2),%d1		| no, can use save PC
+	btst	#14,%d0			| FB set?
 	jeq	Lbe3			| no, try FC
-	addql	#4,d1			| yes, adjust address
+	addql	#4,%d1			| yes, adjust address
 	jra	Lbe10			| done
 Lbe3:
-	btst	#15,d0			| FC set?
+	btst	#15,%d0			| FC set?
 	jeq	Lbe10			| no, done
-	addql	#2,d1			| yes, adjust address
+	addql	#2,%d1			| yes, adjust address
 	jra	Lbe10			| done
 Lbe4:
-	movl	a1@(36),d1		| long format, use stage B address
-	btst	#15,d0			| FC set?
+	movl	%a1@(36),%d1		| long format, use stage B address
+	btst	#15,%d0			| FC set?
 	jeq	Lbe10			| no, all done
-	subql	#2,d1			| yes, adjust address
+	subql	#2,%d1			| yes, adjust address
 Lbe10:
-	movl	d1,sp@-			| push fault VA
-	movl	d0,sp@-			| and padded SSW
-	movw	a1@(6),d0		| get frame format/vector offset
-	andw	#0x0FFF,d0		| clear out frame format
-	cmpw	#12,d0			| address error vector?
+	movl	%d1,%sp@-		| push fault VA
+	movl	%d0,%sp@-		| and padded SSW
+	movw	%a1@(6),%d0		| get frame format/vector offset
+	andw	#0x0FFF,%d0		| clear out frame format
+	cmpw	#12,%d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 
 /*
@@ -256,41 +252,41 @@ Lbe10:
  * [this code replaces similarly mmu specific code in the hp300 code]
  */
 sun3_mmu_specific:
-	clrl d0				| make sure top bits are cleard too
-	movl d1, sp@-			| save d1
-	movc sfc, d1			| save sfc to d1
-	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
-	movc d0, sfc
-	movsb BUSERR_REG, d0		| get value of bus error register
-	movc d1, sfc			| restore sfc
-	movl sp@+, d1			| restore d1
-	andb #BUSERR_MMU, d0 		| is this an MMU fault?
+	clrl %d0			| make sure top bits are cleard too
+	movl %d1,%sp@-			| save %d1
+	movc %sfc,%d1			| save %sfc to %d1
+	moveq #FC_CONTROL,%d0		| %sfc = FC_CONTROL
+	movc %d0,%sfc
+	movsb BUSERR_REG,%d0		| get value of bus error register
+	movc %d1,%sfc			| restore %sfc
+	movl %sp@+,%d1			| restore %d1
+	andb #BUSERR_MMU,%d0 		| is this an MMU fault?
 	jeq Lisberr			| non-MMU bus error
 /* End of sun3 specific code. */
 
 Lismerr:
-	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisaerr:
-	movl	#T_ADDRERR,sp@-		| mark address error
+	movl	#T_ADDRERR,%sp@-	| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisberr:
-	movl	#T_BUSERR,sp@-		| mark bus error
+	movl	#T_BUSERR,%sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*
  * FP exceptions.
  */
 GLOBAL(fpfline)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save registers
+	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
 	jra	_ASM_LABEL(fault)	| do it
 
 GLOBAL(fpunsupp)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save registers
+	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
 	jra	_ASM_LABEL(fault)	| do it
 
 /*
@@ -300,23 +296,23 @@ GLOBAL(fpunsupp)
  * after the trap call.
  */
 GLOBAL(fpfault)
-	clrl	sp@-		| stack adjust count
-	moveml	#0xFFFF,sp@-	| save user registers
-	movl	usp,a0		| and save
-	movl	a0,sp@(FR_SP)	|   the user stack pointer
-	clrl	sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),a0	| current pcb
-	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
-	fsave	a0@		| save state
-	tstb	a0@		| null state frame?
+	clrl	%sp@-		| stack adjust count
+	moveml	#0xFFFF,%sp@-	| save user registers
+	movl	%usp,%a0	| and save
+	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
+	clrl	%sp@-		| no VA arg
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
+	fsave	%a0@		| save state
+	tstb	%a0@		| null state frame?
 	jeq	Lfptnull	| yes, safe
-	clrw	d0		| no, need to tweak BIU
-	movb	a0@(1),d0	| get frame size
-	bset	#3,a0@(0,d0:w)	| set exc_pend bit of BIU
+	clrw	%d0		| no, need to tweak BIU
+	movb	%a0@(1),%d0	| get frame size
+	bset	#3,%a0@(0,%d0:w) | set exc_pend bit of BIU
 Lfptnull:
-	fmovem	fpsr,sp@-	| push fpsr as code argument
-	frestore a0@		| restore state
-	movl	#T_FPERR,sp@-	| push type arg
+	fmovem	%fpsr,%sp@-	| push fpsr as code argument
+	frestore %a0@		| restore state
+	movl	#T_FPERR,%sp@-	| push type arg
 	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
 /*
@@ -324,42 +320,42 @@ Lfptnull:
  * no post-trap stack adjustment.
  */
 GLOBAL(badtrap)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save std frame regs
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save std frame regs
 	jbsr	_C_LABEL(straytrap)	| report
-	moveml	sp@+,#0xFFFF		| restore regs
-	addql	#4, sp			| stack adjust count
+	moveml	%sp@+,#0xFFFF		| restore regs
+	addql	#4,%sp			| stack adjust count
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap 0 is for system calls
  */
 GLOBAL(trap0)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	d0,sp@-			| push syscall number
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save user registers
+	movl	%usp,%a0		| save the user SP
+	movl	%a0,%sp@(FR_SP)		|   in the savearea
+	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,sp			| pop syscall arg
-	movl	sp@(FR_SP),a0		| grab and restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| restore most registers
-	addql	#8,sp			| pop SP and stack adjust
+	addql	#4,%sp			| pop syscall arg
+	movl	%sp@(FR_SP),%a0		| grab and restore
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most registers
+	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
+ * command in %d0, addr in %a1, length in %d1
  */
 GLOBAL(trap12)
-	movl	_C_LABEL(curproc),sp@-	| push curproc pointer
-	movl	d1,sp@-			| push length
-	movl	a1,sp@-			| push addr
-	movl	d0,sp@-			| push command
+	movl	_C_LABEL(curproc),%sp@-	| push curproc pointer
+	movl	%d1,%sp@-		| push length
+	movl	%a1,%sp@-		| push addr
+	movl	%d0,%sp@-		| push command
 	jbsr	_C_LABEL(cachectl1)	| do it
-	lea	sp@(16),sp		| pop args
+	lea	%sp@(16),%sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -367,9 +363,9 @@ GLOBAL(trap12)
  * User mode traps are simply passed on to trap().
  */
 GLOBAL(trace)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-
-	moveq	#T_TRACE,d0
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_TRACE,%d0
 
 	| Check PSW and see what happen.
 	|   T=0 S=0	(should not happen)
@@ -377,9 +373,9 @@ GLOBAL(trace)
 	|   T=0 S=1	trace trap on a trap instruction
 	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
 
-	movw	sp@(FR_HW),d1		| get PSW
-	notw	d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	movw	%sp@(FR_HW),%d1		| get PSW
+	notw	%d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,%d1		| from system mode (T=1, S=1)?
 	jeq	_ASM_LABEL(kbrkpt)	|  yes, kernel brkpt
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
@@ -391,33 +387,33 @@ GLOBAL(trace)
  * User mode traps are simply passed to trap().
  */
 GLOBAL(trap15)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-
-	moveq	#T_TRAP15,d0
-	btst	#5,sp@(FR_HW)		| was supervisor mode?
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_TRAP15,%d0
+	btst	#5,%sp@(FR_HW)		| was supervisor mode?
 	jne	_ASM_LABEL(kbrkpt)	|  yes, kernel brkpt
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 ASLOCAL(kbrkpt)
-	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+	| Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	| Save the system sp rather than the user sp.
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	lea	sp@(FR_SIZE),a6		| Save stack pointer
-	movl	a6,sp@(FR_SP)		|  from before trap
+	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
+	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
+	movl	%a6,%sp@(FR_SP)		|  from before trap
 
 	| If we are not on tmpstk switch to it.
 	| (so debugger can change the stack pointer)
-	movl	a6,d1
-	cmpl	#_ASM_LABEL(tmpstk),d1
+	movl	%a6,%d1
+	cmpl	#_ASM_LABEL(tmpstk),%d1
 	jls	Lbrkpt2 		| already on tmpstk
 	| Copy frame to the temporary stack
-	movl	sp,a0			| a0=src
-	lea	_ASM_LABEL(tmpstk)-96,a1	| a1=dst
-	movl	a1,sp			| sp=new frame
-	moveq	#FR_SIZE,d1
+	movl	%sp,%a0			| %a0=src
+	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
+	movl	%a1,%sp			| sp=new frame
+	moveq	#FR_SIZE,%d1
 Lbrkpt1:
-	movl	a0@+,a1@+
-	subql	#4,d1
+	movl	%a0@+,%a1@+
+	subql	#4,%d1
 	bgt	Lbrkpt1
 
 Lbrkpt2:
@@ -425,21 +421,21 @@ Lbrkpt2:
 	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
-	movl	d0,sp@-			| push trap type
+	movl	%d0,%sp@-		| push trap type
 	jbsr	_C_LABEL(trap_kdebug)
-	addql	#4,sp			| pop args
+	addql	#4,%sp			| pop args
 
 	| The stack pointer may have been modified, or
 	| data below it modified (by kgdb push call),
 	| so push the hardware frame at the current sp
 	| before restoring registers and returning.
-	movl	sp@(FR_SP),a0		| modified sp
-	lea	sp@(FR_SIZE),a1		| end of our frame
-	movl	a1@-,a0@-		| copy 2 longs with
-	movl	a1@-,a0@-		| ... predecrement
-	movl	a0,sp@(FR_SP)		| sp = h/w frame
-	moveml	sp@+,#0x7FFF		| restore all but sp
-	movl	sp@,sp			| ... and sp
+	movl	%sp@(FR_SP),%a0		| modified sp
+	lea	%sp@(FR_SIZE),%a1	| end of our frame
+	movl	%a1@-,%a0@-		| copy 2 longs with
+	movl	%a1@-,%a0@-		| ... predecrement
+	movl	%a0,%sp@(FR_SP)		| sp = h/w frame
+	moveml	%sp@+,#0x7FFF		| restore all but sp
+	movl	%sp@,%sp		| ... and sp
 	rte				| all done
 
 /* Use common m68k sigreturn */
@@ -449,14 +445,14 @@ Lbrkpt2:
  * Interrupt handlers.  Most are auto-vectored,
  * and hard-wired the same way on all sun3 models.
  * Format in the stack is:
- *   d0,d1,a0,a1, sr, pc, vo
+ *   %d0,%d1,%a0,%a1, sr, pc, vo
  */
 
 #define INTERRUPT_SAVEREG \
-	moveml	#0xC0C0,sp@-
+	moveml	#0xC0C0,%sp@-
 
 #define INTERRUPT_RESTORE \
-	moveml	sp@+,#0x0303
+	moveml	%sp@+,#0x0303
 
 /*
  * This is the common auto-vector interrupt handler,
@@ -534,35 +530,35 @@ ASGLOBAL(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
 	jeq	Ldorte			| no, done
 Lrei1:
-	btst	#5,sp@			| yes, are we returning to user mode?
+	btst	#5,%sp@			| yes, are we returning to user mode?
 	jne	Ldorte			| no, done
-	movw	#PSL_LOWIPL,sr		| lower SPL
-	clrl	sp@-			| stack adjust
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_ASTFLT,sp@-		| type == async system trap
+	movw	#PSL_LOWIPL,%sr		| lower SPL
+	clrl	%sp@-			| stack adjust
+	moveml	#0xFFFF,%sp@-		| save all registers
+	movl	%usp,%a1		| including
+	movl	%a1,%sp@(FR_SP)		|    the users SP
+	clrl	%sp@-			| VA == none
+	clrl	%sp@-			| code == none
+	movl	#T_ASTFLT,%sp@-		| type == async system trap
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore user SP
-	movl	a0,usp			|   from save area
-	movw	sp@(FR_ADJ),d0		| need to adjust stack?
+	lea	%sp@(12),%sp		| pop value args
+	movl	%sp@(FR_SP),%a0		| restore user SP
+	movl	%a0,%usp		|   from save area
+	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
 	jne	Laststkadj		| yes, go to it
-	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,sp			| toss SP and stack adjust
+	moveml	%sp@+,#0x7FFF		| no, restore most user regs
+	addql	#8,%sp			| toss SP and stack adjust
 	rte				| and do real RTE
 Laststkadj:
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	addql	#8,a1			| source pointer
-	movl	a1,a0			| source
-	addw	d0,a0			|  + hole size = dest pointer
-	movl	a1@-,a0@-		| copy
-	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(FR_SP)		| new SSP
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
+	lea	%sp@(FR_HW),%a1		| pointer to HW frame
+	addql	#8,%a1			| source pointer
+	movl	%a1,%a0			| source
+	addw	%d0,%a0			|  + hole size = dest pointer
+	movl	%a1@-,%a0@-		| copy
+	movl	%a1@-,%a0@-		|  8 bytes
+	movl	%a0,%sp@(FR_SP)		| new SSP
+	moveml	%sp@+,#0x7FFF		| restore user registers
+	movl	%sp@,%sp		| and our SP
 Ldorte:
 	rte				| real return
 
@@ -621,15 +617,15 @@ ASBSS(nullpcb,SIZEOF_PCB)
  * old stack and u-area will be freed by the reaper.
  */
 ENTRY(switch_exit)
-	movl	sp@(4),a0		| struct proc *p
+	movl	%sp@(4),%a0		| struct proc *p
 					| save state into garbage pcb
 	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea	_ASM_LABEL(tmpstk),sp	| goto a tmp stack
+	lea	_ASM_LABEL(tmpstk),%sp	| goto a tmp stack
 
 	/* Schedule the vmspace and stack to be freed. */
-	movl	a0,sp@-			| exit2(p)
+	movl	%a0,%sp@-		| exit2(p)
 	jbsr	_C_LABEL(exit2)
-	lea	sp@(4),sp		| pop args
+	lea	%sp@(4),%sp		| pop args
 
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
@@ -649,17 +645,17 @@ Lidle:
 #endif
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				| See clock.c
-	movw	#PSL_HIGHIPL,sr
+	movw	#PSL_HIGHIPL,%sr
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	jbsr	_C_LABEL(sched_lock_idle)
 #endif
-	movl	_C_LABEL(sched_whichqs),d0
+	movl	_C_LABEL(sched_whichqs),%d0
 	jeq	Lidle
 	jra	Lsw1
 
 Lbadsw:
-	movl	#Lsw0,sp@-
+	movl	#Lsw0,%sp@-
 	jbsr	_C_LABEL(panic)
 	/*NOTREACHED*/
 
@@ -668,10 +664,10 @@ Lbadsw:
  * Hacked for sun3
  */
 ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),a0	| current pcb
-	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
 #ifdef notyet
-	movl	_C_LABEL(curproc),sp@-	| remember last proc running
+	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
 #endif
 	clrl	_C_LABEL(curproc)
 
@@ -716,61 +712,61 @@ Lsw1:
 	movl	%d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	a0,_C_LABEL(curproc)
+	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
+	movl	%a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
-	movl	sp@+,a1			| XXX - Make this work!
-	cmpl	a0,a1			| switching to same proc?
+	movl	%sp@+,%a1		| XXX - Make this work!
+	cmpl	%a0,%a1			| switching to same proc?
 	jeq	Lswdone			| yes, skip save and restore
 #endif
 	/*
 	 * Save state of previous process in its pcb.
 	 */
-	movl	_C_LABEL(curpcb),a1
-	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-	movl	usp,a2			| grab USP (a2 has been saved)
-	movl	a2,a1@(PCB_USP)		| and save it
+	movl	_C_LABEL(curpcb),%a1
+	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
+	movl	%usp,%a2		| grab USP (a2 has been saved)
+	movl	%a2,%a1@(PCB_USP)	| and save it
 
 	tstl	_C_LABEL(fputype)	| Do we have an fpu?
 	jeq	Lswnofpsave		| No?  Then don't try save.
-	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
-	fsave	a2@			| save FP state
-	tstb	a2@			| null state frame?
+	lea	%a1@(PCB_FPCTX),%a2	| pointer to FP save area
+	fsave	%a2@			| save FP state
+	tstb	%a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
-	fmovem	fp0-fp7,a2@(FPF_REGS)		| save FP general regs
-	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR)	| save FP control regs
+	fmovem	%fp0-%fp7,%a2@(FPF_REGS)	| save FP general regs
+	fmovem	%fpcr/%fpsr/%fpi,%a2@(FPF_FPCR)	| save FP control regs
 Lswnofpsave:
 
 	/*
 	 * Now that we have saved all the registers that must be
 	 * preserved, we are free to use those registers until
 	 * we load the registers for the switched-to process.
-	 * In this section, keep:  a0=curproc, a1=curpcb
+	 * In this section, keep:  %a0=curproc, %a1=curpcb
 	 */
 
-	clrl	a0@(P_BACK)		| clear back link
-	movl	a0@(P_ADDR),a1		| get p_addr
-	movl	a1,_C_LABEL(curpcb)
+	clrl	%a0@(P_BACK)		| clear back link
+	movl	%a0@(P_ADDR),%a1	| get p_addr
+	movl	%a1,_C_LABEL(curpcb)
 
 #if defined(LOCKDEBUG)
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
-	movl	%a0,sp@-		| not args...
-	movl	%a1,sp@-		| ...just saving
+	movl	%a0,%sp@-		| not args...
+	movl	%a1,%sp@-		| ...just saving
 	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	sp@+,%a1
-	movl	sp@+,%a0
+	movl	%sp@+,%a1
+	movl	%sp@+,%a0
 #endif
 
 	/*
 	 * Load the new VM context (new MMU root pointer)
 	 */
-	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
+	movl	%a0@(P_VMSPACE),%a2	| vm = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a2			| vm == VM_MAP_NULL?
+	tstl	%a2			| vm == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
 #if 1	/* XXX: PMAP_DEBUG */
@@ -778,44 +774,45 @@ Lswnofpsave:
 	 * Just call _pmap_switch() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
-	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
-	pea	a2@			| push pmap
+	movl	%a2@(VM_PMAP),%a2 	| pmap = vm->vm_map.pmap
+	pea	%a2@			| push pmap
 	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
-	addql	#4,sp
-	movl	_C_LABEL(curpcb),a1	| restore p_addr
+	addql	#4,%sp
+	movl	_C_LABEL(curpcb),%a1	| restore p_addr
 | Note: pmap_switch will clear the cache if needed.
 #else
 	/* XXX - Later, use this unfinished inline.. */
 	XXX	XXX	(PM_CTXNUM)
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate cache(s)
+	movl	#IC_CLEAR,%d0
+	movc	%d0,%cacr		| invalidate cache(s)
 #endif
 
 	/*
 	 * Reload the registers for the new process.
-	 * After this point we can only use d0,d1,a0,a1
+	 * After this point we can only use %d0,%d1,%a0,%a1
 	 */
-	moveml	a1@(PCB_REGS),#0xFCFC	| reload registers
-	movl	a1@(PCB_USP),a0
-	movl	a0,usp			| and USP
+	moveml	%a1@(PCB_REGS),#0xFCFC	| reload registers
+	movl	%a1@(PCB_USP),%a0
+	movl	%a0,%usp		| and USP
 
 	tstl	_C_LABEL(fputype)	| If we don't have an fpu,
 	jeq	Lres_skip		|  don't try to restore it.
-	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
-	tstb	a0@			| null state frame?
+	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
+	tstb	%a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
-	fmovem	a0@(FPF_FPCR),fpcr/fpsr/fpi	| restore FP control regs
-	fmovem	a0@(FPF_REGS),fp0-fp7		| restore FP general regs
+	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control regs
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general regs
 Lresfprest:
-	frestore a0@			| restore state
+	frestore %a0@			| restore state
 Lres_skip:
-	movw	a1@(PCB_PS),d0		| no, restore PS
+	movw	%a1@(PCB_PS),%d0	| no, restore PS
 #ifdef DIAGNOSTIC
-	btst	#13,d0			| supervisor mode?
+	btst	#13,%d0			| supervisor mode?
 	jeq	Lbadsw			| no? panic!
 #endif
-	movw	d0,sr			| OK, restore PS
-	moveq	#1,d0			| return 1 (for alternate returns)
+	movw	%d0,%sr			| OK, restore PS
+	moveq	#1,%d0			| return 1 (for alternate returns)
+	movl	%d0,%a0
 	rts
 
 /*
@@ -823,22 +820,23 @@ Lres_skip:
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
-	movl	sp@(4),a1
-	movw	sr,a1@(PCB_PS)
-	movl	usp,a0			| grab USP
-	movl	a0,a1@(PCB_USP)		| and save it
-	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
+	movl	%sp@(4),%a1
+	movw	%sr,%a1@(PCB_PS)
+	movl	%usp,%a0		| grab USP
+	movl	%a0,%a1@(PCB_USP)	| and save it
+	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
 
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
 	jeq	Lsavedone		| No?  Then don't save state.
-	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
-	fsave	a0@			| save FP state
-	tstb	a0@			| null state frame?
+	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
+	fsave	%a0@			| save FP state
+	tstb	%a0@			| null state frame?
 	jeq	Lsavedone		| yes, all done
-	fmovem	fp0-fp7,a0@(FPF_REGS)		| save FP general regs
-	fmovem	fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control regs
+	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general regs
+	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control regs
 Lsavedone:
-	moveq	#0,d0			| return 0
+	moveq	#0,%d0			| return 0
+	movl	%d0,%a0
 	rts
 
 /* suline() */
@@ -848,8 +846,8 @@ Lsavedone:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr			| invalidate i-cache
+	movl	#IC_CLEAR,%d0
+	movc	%d0,%cacr		| invalidate i-cache
 	rts
 
 /* DCIA, DCIS */
@@ -872,25 +870,28 @@ ENTRY(DCIU)
  * [I don't think the ENTRY() macro will do the right thing with this -- glass]
  */
 GLOBAL(getsp)
-	movl	sp,d0			| get current SP
-	addql	#4,d0			| compensate for return address
+	movl	%sp,%d0			| get current SP
+	addql	#4,%d0			| compensate for return address
+	movl	%d0,%a0
 	rts
 
 ENTRY(getsfc)
-	movc	sfc,d0
+	movc	%sfc,%d0
+	movl	%d0,%a0
 	rts
 
 ENTRY(getdfc)
-	movc	dfc,d0
+	movc	%dfc,%d0
+	movl	%d0,%a0
 	rts
 
 ENTRY(getvbr)
-	movc vbr, d0
+	movc	%vbr,%a0
 	rts
 
 ENTRY(setvbr)
-	movl sp@(4), d0
-	movc d0, vbr
+	movl	%sp@(4),%d0
+	movc	%d0,%vbr
 	rts
 
 /* loadustp, ptest_addr */
@@ -903,26 +904,27 @@ ENTRY(setvbr)
  */
 
 ENTRY(_getsr)
-	clrl	d0
-	movw	sr,d0
+	clrl	%d0
+	movw	%sr,%d0
+	movl	%d0,%a0
 	rts
 
 ENTRY(_spl)
-	clrl	d0
-	movw	sr,d0
-	movl	sp@(4),d1
-	movw	d1,sr
+	clrl	%d0
+	movw	%sr,%d0
+	movl	%sp@(4),%d1
+	movw	%d1,%sr
 	rts
 
 ENTRY(_splraise)
-	clrl	d0
-	movw	sr,d0
-	movl	d0,d1
-	andl	#PSL_HIGHIPL,d1 	| old &= PSL_HIGHIPL
-	cmpl	sp@(4),d1		| (old - new)
+	clrl	%d0
+	movw	%sr,%d0
+	movl	%d0,%d1
+	andl	#PSL_HIGHIPL,%d1 	| old &= PSL_HIGHIPL
+	cmpl	%sp@(4),%d1		| (old - new)
 	bge	Lsplr
-	movl	sp@(4),d1
-	movw	d1,sr
+	movl	%sp@(4),%d1
+	movw	%d1,%sr
 Lsplr:
 	rts
 
@@ -930,23 +932,23 @@ Lsplr:
  * Save and restore 68881 state.
  */
 ENTRY(m68881_save)
-	movl	sp@(4),a0		| save area pointer
-	fsave	a0@			| save state
-	tstb	a0@			| null state frame?
+	movl	%sp@(4),%a0		| save area pointer
+	fsave	%a0@			| save state
+	tstb	%a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(FPF_REGS)		| save FP general regs
-	fmovem fpcr/fpsr/fpi,a0@(FPF_FPCR)	| save FP control regs
+	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general regs
+	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control regs
 Lm68881sdone:
 	rts
 
 ENTRY(m68881_restore)
-	movl	sp@(4),a0		| save area pointer
-	tstb	a0@			| null state frame?
+	movl	%sp@(4),%a0		| save area pointer
+	tstb	%a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
-	fmovem	a0@(FPF_FPCR),fpcr/fpsr/fpi	| restore FP control regs
-	fmovem	a0@(FPF_REGS),fp0-fp7		| restore FP general regs
+	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control regs
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general regs
 Lm68881rdone:
-	frestore a0@			| restore state
+	frestore %a0@			| restore state
 	rts
 
 /*
@@ -958,10 +960,10 @@ Lm68881rdone:
  * XXX: but this should be determined at run time...
  */
 GLOBAL(_delay)
-	| d0 = arg = (usecs << 8)
-	movl	sp@(4),d0
-	| d1 = delay_divisor;
-	movl	_C_LABEL(delay_divisor),d1
+	| %d0 = arg = (usecs << 8)
+	movl	%sp@(4),%d0
+	| %d1 = delay_divisor;
+	movl	_C_LABEL(delay_divisor),%d1
 	jra	L_delay			/* Jump into the loop! */
 
 	/*
@@ -973,10 +975,9 @@ GLOBAL(_delay)
 	 */
 	.align	8
 L_delay:
-	subl	d1,d0
+	subl	%d1,%d0
 	jgt	L_delay
 	rts
-
 
 | Define some addresses, mostly so DDB can print useful info.
 | Not using _C_LABEL() here because these symbols are never

@@ -1,13 +1,13 @@
-#	$NetBSD: files.i2o,v 1.1.2.3 2000/12/08 09:12:18 bouyer Exp $
+#	$NetBSD: files.i2o,v 1.1.2.4 2001/03/12 13:30:10 bouyer Exp $
 
 defopt	opt_i2o.h	I2OVERBOSE I2ODEBUG
 
 device	iop {tid = -1}
-file	dev/i2o/iop.c		iop		needs-flag
+file	dev/i2o/iop.c			iop			needs-flag
 
 attach	ld at iop with ld_iop
-file	dev/i2o/ld_iop.c	ld_iop
+file	dev/i2o/ld_iop.c		ld_iop
 
 device	iopsp: scsi
 attach	iopsp at iop
-file	dev/i2o/iopsp.c		iopsp
+file	dev/i2o/iopsp.c			iopsp

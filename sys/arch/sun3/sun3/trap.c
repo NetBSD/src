@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85.8.4 2001/02/11 19:12:51 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.8.5 2001/03/12 13:29:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,6 +45,7 @@
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_compat_aout_m68k.h"
 #include "opt_compat_sunos.h"
 
 #include <sys/param.h>
@@ -76,6 +77,10 @@
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
+#endif
+
+#ifdef COMPAT_AOUT_M68K
+extern struct emul emul_netbsd_aoutm68k;
 #endif
 
 /*

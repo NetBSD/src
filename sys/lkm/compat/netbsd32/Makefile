@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.3 2001/02/11 19:16:54 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.4 2001/03/12 13:31:43 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -19,7 +19,9 @@ KMOD=	compat_netbsd32
 SRCS+=	lkminit_emul.c
 SRCS+=	netbsd32_compat_09.c netbsd32_compat_10.c netbsd32_compat_12.c \
 	netbsd32_compat_13.c netbsd32_compat_14.c netbsd32_compat_43.c \
-	netbsd32_netbsd.c netbsd32_syscalls.c netbsd32_sysent.c \
-	netbsd32_ioctl.c
+	netbsd32_netbsd.c netbsd32_execve.c netbsd32_fs.c netbsd32_ioctl.c \
+	netbsd32_ipc.c netbsd32_select.c netbsd32_signal.c netbsd32_socket.c \
+	netbsd32_sysctl.c netbsd32_time.c netbsd32_wait.c netbsd32_syscalls.c \
+	netbsd32_sysent.c
 
 .include <bsd.kmod.mk>

@@ -1,0 +1,5 @@
+#	$NetBSD: GENERIC_SUN4U,v 1.1.4.2 2001/03/12 13:29:19 bouyer Exp $
+#
+# Build a 32-bit `sparc64' kernel, that is compatible with our userland.
+
+include "arch/sparc64/conf/GENERIC32"

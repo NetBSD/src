@@ -1,4 +1,4 @@
-/*      $NetBSD: bzero.s,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/*      $NetBSD: bzero.s,v 1.3.8.1 2001/03/12 13:27:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,17 +39,15 @@
 /*
  * Lightweight bzero.
  */
+#include <machine/asm.h>
 
-	.text
-	.even
-	.globl _bzero
-_bzero:
-	movel sp@(4),a0
-	movel sp@(8),d0
+ENTRY_NOPROFILE(bzero)
+	movel %sp@(4),%a0
+	movel %sp@(8),%d0
 	jeq L3
 L4:
-	clrb a0@+
-	subql #1,d0
+	clrb %a0@+
+	subql #1,%d0
 	jne L4
 L3:
 	rts

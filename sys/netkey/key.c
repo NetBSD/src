@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.11.2.2 2001/01/18 09:23:58 bouyer Exp $	*/
-/*	$KAME: key.c,v 1.180 2001/01/10 16:35:27 sakane Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.3 2001/03/12 13:31:58 bouyer Exp $	*/
+/*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,18 +145,18 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 struct key_cb key_cb;
 
 /* search order for SAs */
-static u_int saorder_state_valid[] = {
+static const u_int saorder_state_valid[] = {
 	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 	/*
 	 * This order is important because we must select a oldest SA
 	 * for outbound processing.  For inbound, This is not important.
 	 */
 };
-static u_int saorder_state_alive[] = {
+static const u_int saorder_state_alive[] = {
 	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
 };
-static u_int saorder_state_any[] = {
+static const u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
@@ -5034,6 +5034,9 @@ key_getmsgbuf_x1(m, mhp)
 	return n;
 }
 
+static int key_delete_all __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *, u_int16_t));
+
 /*
  * SADB_DELETE processing
  * receive
@@ -5070,17 +5073,33 @@ key_delete(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
-	if (mhp->ext[SADB_EXT_SA] == NULL ||
-	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
 #ifdef IPSEC_DEBUG
 		printf("key_delete: invalid message is passed.\n");
 #endif
 		return key_senderror(so, m, EINVAL);
 	}
-	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
-	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+
+	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+#ifdef IPSEC_DEBUG
+		printf("key_delete: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	if (mhp->ext[SADB_EXT_SA] == NULL) {
+		/*
+		 * Caller wants us to delete all non-LARVAL SAs
+		 * that match the src/dst.  This is used during
+		 * IKE INITIAL-CONTACT.
+		 */
+#ifdef IPSEC_DEBUG
+		printf("key_delete: doing delete all.\n");
+#endif
+		return key_delete_all(so, m, mhp, proto);
+	} else if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa)) {
 #ifdef IPSEC_DEBUG
 		printf("key_delete: invalid message is passed.\n");
 #endif
@@ -5124,6 +5143,84 @@ key_delete(so, m, mhp)
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
 	    SADB_EXT_SA, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
+
+	if (n->m_len < sizeof(struct sadb_msg)) {
+		n = m_pullup(n, sizeof(struct sadb_msg));
+		if (n == NULL)
+			return key_senderror(so, m, ENOBUFS);
+	}
+	newmsg = mtod(n, struct sadb_msg *);
+	newmsg->sadb_msg_errno = 0;
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
+    }
+}
+
+/*
+ * delete all SAs for src/dst.  Called from key_delete().
+ */
+static int
+key_delete_all(so, m, mhp, proto)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+	u_int16_t proto;
+{
+	struct sadb_address *src0, *dst0;
+	struct secasindex saidx;
+	struct secashead *sah;
+	struct secasvar *sav, *nextsav;
+	u_int stateidx, state;
+
+	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
+	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
+			continue;
+		if (key_cmpsaidx_withoutmode(&sah->saidx, &saidx) == 0)
+			continue;
+
+		/* Delete all non-LARVAL SAs. */
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_alive);
+		     stateidx++) {
+			state = saorder_state_alive[stateidx];
+			if (state == SADB_SASTATE_LARVAL)
+				continue;
+			for (sav = LIST_FIRST(&sah->savtree[state]);
+			     sav != NULL; sav = nextsav) {
+				nextsav = LIST_NEXT(sav, chain);
+				/* sanity check */
+				if (sav->state != state) {
+#ifdef IPSEC_DEBUG
+					printf("key_delete_all: "
+					       "invalid sav->state "
+					       "(queue: %d SA: %d)\n",
+					       state, sav->state);
+#endif
+					continue;
+				}
+				
+				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+				key_freesav(sav);
+			}
+		}
+	}
+    {
+	struct mbuf *n;
+	struct sadb_msg *newmsg;
+
+	/* create new sadb_msg to reply. */
+	n = key_gather_mbuf(m, mhp, 1, 3, SADB_EXT_RESERVED,
+	    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 

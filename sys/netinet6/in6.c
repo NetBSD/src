@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.7.2.4 2001/02/11 19:17:21 bouyer Exp $	*/
+/*	$NetBSD: in6.c,v 1.7.2.5 2001/03/12 13:31:54 bouyer Exp $	*/
 /*	$KAME: in6.c,v 1.175 2001/02/10 15:44:58 jinmei Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ in6_control(so, cmd, data, ifp, p)
 					htons(ifp->if_index);
 			} else if (sa6->sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
-				return(EINVAL);	/* ifid is contradict */
+				return(EINVAL);	/* ifid contradicts */
 			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
@@ -597,7 +597,7 @@ in6_control(so, cmd, data, ifp, p)
 			} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				ia->ia_dstaddr = oldaddr;
-				return(EINVAL);	/* ifid is contradict */
+				return(EINVAL);	/* ifid contradicts */
 			}
 		}
 
@@ -741,7 +741,7 @@ in6_control(so, cmd, data, ifp, p)
 				} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 					    htons(ifp->if_index)) {
 					ia->ia_dstaddr = oldaddr;
-					return(EINVAL);	/* ifid is contradict */
+					return(EINVAL);	/* ifid contradicts */
 				}
 			}
 			prefixIsNew = 1; /* We lie; but effect's the same */

@@ -1,0 +1,7 @@
+| $NetBSD: Settype,v 1.1.4.2 2001/03/12 13:27:48 bouyer Exp $
+|
+|  !!!! please *settype Obey me and run me
+|
+
+*Set rel$dir <Obey$dir>
+*Exec <obey$Dir>.misc.SettScr

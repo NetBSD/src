@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_pi.h,v 1.1.1.1.6.2 2000/11/20 22:21:42 bouyer Exp $	*/
+/*	$NetBSD: bf_pi.h,v 1.1.1.1.6.3 2001/03/12 13:29:57 bouyer Exp $	*/
 /*	$KAME: bf_pi.h,v 1.3 2000/03/27 04:36:26 sumikawa Exp $	*/
 
 /* crypto/bf/bf_pi.h */
@@ -59,7 +59,7 @@
  * [including the GNU Public Licence.]
  */
 
-static BF_KEY bf_init= {
+static const BF_KEY bf_init= {
 	{
 	0x243f6a88L, 0x85a308d3L, 0x13198a2eL, 0x03707344L,
 	0xa4093822L, 0x299f31d0L, 0x082efa98L, 0xec4e6c89L,

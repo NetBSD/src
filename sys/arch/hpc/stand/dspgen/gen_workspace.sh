@@ -1,4 +1,4 @@
-# $NetBSD: gen_workspace.sh,v 1.1.2.2 2001/02/11 19:09:37 bouyer Exp $
+# $NetBSD: gen_workspace.sh,v 1.1.2.3 2001/03/12 13:28:14 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -43,6 +43,10 @@ SORTED_PROJECTS=`(for project in $*; do
 
 (
 case $vc_ver in
+"vc5")
+    echo "Microsoft Developer Studio Workspace File, Format Version 5.00"
+    suffix=dsp
+    ;;
 "vc6")
     echo "Microsoft Developer Studio Workspace File, Format Version 6.00"
     suffix=dsp

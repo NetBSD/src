@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181var.h,v 1.1.2.2 2000/11/20 20:46:02 bouyer Exp $	*/
+/*	$NetBSD: ite8181var.h,v 1.1.2.3 2001/03/12 13:28:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -33,8 +33,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 struct ite8181_softc {
 	struct device		sc_dev;
@@ -47,10 +47,17 @@ struct ite8181_softc {
 	void			*sc_powerhook;	/* power management hook */
 	config_hook_tag		sc_hardpowerhook;
 	int			sc_powerstate;
-#define	ITE8181_POWERSTATE_D0	0
-#define	ITE8181_POWERSTATE_D1	1
-#define	ITE8181_POWERSTATE_D2	2
-#define	ITE8181_POWERSTATE_D3	3
+#define       PWRSTAT_SUSPEND         (1<<0)
+#define       PWRSTAT_VIDEOOFF        (1<<1)
+#define       PWRSTAT_LCD             (1<<2)
+#define       PWRSTAT_BACKLIGHT       (1<<3)
+#define PWRSTAT_ALL           (0xffffffff)
+	int			sc_brightness;
+	int			sc_brightness_save;
+	int			sc_max_brightness;
+	int			sc_contrast;
+	int			sc_max_contrast;
+
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
 	int			sc_lcd; /* lcd on/off */

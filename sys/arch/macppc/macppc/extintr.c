@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10.2.5 2001/02/11 19:11:05 bouyer Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10.2.6 2001/03/12 13:29:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -111,7 +111,7 @@ mapirq(irq)
 	int v;
 
 	if (irq < 0 || irq >= ICU_LEN)
-		panic("invalid irq");
+		panic("invalid irq %d", irq);
 	if (virq[irq])
 		return virq[irq];
 
@@ -362,7 +362,7 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: can't malloc handler info");
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
+		panic("intr_establish: bogus irq (%d) or type (%d), irq, type");
 
 	switch (intrtype[irq]) {
 	case IST_NONE:
@@ -424,7 +424,7 @@ intr_disestablish(arg)
 	struct intrhand **p, *q;
 
 	if (!LEGAL_IRQ(irq))
-		panic("intr_disestablish: bogus irq");
+		panic("intr_disestablish: bogus irq %d", irq);
 
 	/*
 	 * Remove the handler from the chain.

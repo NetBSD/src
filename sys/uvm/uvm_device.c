@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.16.2.2 2000/12/08 09:20:52 bouyer Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.16.2.3 2001/03/12 13:32:10 bouyer Exp $	*/
 
 /*
  *
@@ -402,7 +402,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
 		entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-		return(VM_PAGER_ERROR);
+		return(EIO);
 	}
 
 	/*
@@ -428,7 +428,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 * loop over the page range entering in as needed
 	 */
 
-	retval = VM_PAGER_OK;
+	retval = 0;
 	for (lcv = 0 ; lcv < npages ; lcv++, curr_offset += PAGE_SIZE,
 	    curr_va += PAGE_SIZE) {
 		if ((flags & PGO_ALLPAGES) == 0 && lcv != centeridx)
@@ -439,7 +439,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 
 		mdpgno = (*mapfn)(device, curr_offset, access_type);
 		if (mdpgno == -1) {
-			retval = VM_PAGER_ERROR;
+			retval = EIO;
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
@@ -462,7 +462,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
 			uvm_wait("udv_fault");
-			return (VM_PAGER_REFAULT);
+			return (ERESTART);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86.2.3 2000/12/08 09:30:31 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.86.2.4 2001/03/12 13:29:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -267,11 +267,13 @@ trap(type, psr, pc, tf)
 	int n;
 	char bits[64];
 	u_quad_t sticks;
+	int sig;
+	u_long ucode;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-	uvmexp.traps++;
+	uvmexp.traps++;		/* XXXSMP */
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -333,6 +335,9 @@ trap(type, psr, pc, tf)
 	}
 #endif
 
+	sig = 0;
+	ucode = 0;
+
 	switch (type) {
 
 	default:
@@ -342,7 +347,8 @@ trap(type, psr, pc, tf)
 			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
 			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
 			       PSR_BITS, bits, sizeof(bits)));
-			trapsignal(p, SIGILL, type);
+			sig = SIGILL;
+			ucode = type;
 			break;
 		}
 #if defined(COMPAT_SVR4)
@@ -354,7 +360,8 @@ badtrap:
 		uprintf("%s[%d]: unimplemented software trap 0x%x\n",
 			p->p_comm, p->p_pid, type);
 #endif
-		trapsignal(p, SIGILL, type);
+		sig = SIGILL;
+		ucode = type;
 		break;
 
 #ifdef COMPAT_SVR4
@@ -375,15 +382,16 @@ badtrap:
 
 	case T_ILLINST:
 	case T_UNIMPLFLUSH:
-		if ((n = emulinstr(pc, tf)) == 0) {
+		if ((sig = emulinstr(pc, tf)) == 0) {
 			ADVANCE;
 			break;
 		}
-		trapsignal(p, n, 0);	/* XXX code?? */
+		/* XXX - ucode? */
 		break;
 
 	case T_PRIVINST:
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		sig = SIGILL;
+		/* XXX - ucode? */
 		break;
 
 	case T_FPDISABLED: {
@@ -398,6 +406,7 @@ badtrap:
 		}
 #endif
 
+		KERNEL_PROC_LOCK(p);
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
@@ -410,11 +419,12 @@ badtrap:
 		if (!cpuinfo.fpupresent) {
 #ifdef notyet
 			fpu_emulate(p, tf, fs);
-			break;
 #else
-			trapsignal(p, SIGFPE, 0);	/* XXX code?? */
-			break;
+			sig = SIGFPE;
+			/* XXX - ucode? */
 #endif
+			KERNEL_PROC_UNLOCK(p);
+			break;
 		}
 		/*
 		 * We may have more FPEs stored up and/or ops queued.
@@ -423,9 +433,10 @@ badtrap:
 		 */
 		if (fs->fs_qsize) {
 			fpu_cleanup(p, fs);
+			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-#if NEW
+#if notyet
 		simple_lock(&cpuinfo.fplock);
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
 			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
@@ -477,6 +488,7 @@ badtrap:
 			p->p_md.md_fpumid = cpuinfo.mid;
 		}
 #endif
+		KERNEL_PROC_UNLOCK(p);
 		tf->tf_psr |= PSR_EF;
 		break;
 	}
@@ -498,6 +510,7 @@ badtrap:
 		 * nsaved to -1.  If we decide to deliver a signal on
 		 * our way out, we will clear nsaved.
 		 */
+		KERNEL_PROC_LOCK(p);
 		if (pcb->pcb_uw || pcb->pcb_nsaved)
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
@@ -510,6 +523,7 @@ badtrap:
 		if (pcb->pcb_nsaved)
 			panic("trap T_RWRET 2");
 		pcb->pcb_nsaved = -1;		/* mark success */
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case T_WINUF:
@@ -522,6 +536,7 @@ badtrap:
 		 * in the pcb.  The restore's window may still be in
 		 * the cpu; we need to force it out to the stack.
 		 */
+		KERNEL_PROC_LOCK(p);
 #ifdef DEBUG
 		if (rwindow_debug)
 			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
@@ -540,15 +555,21 @@ badtrap:
 		if (pcb->pcb_nsaved)
 			panic("trap T_WINUF");
 		pcb->pcb_nsaved = -1;		/* mark success */
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case T_ALIGN:
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
-		    fixalign(p, tf) == 0) {
-			ADVANCE;
-			break;
+		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
+			KERNEL_PROC_LOCK(p);
+			n = fixalign(p, tf);
+			KERNEL_PROC_UNLOCK(p);
+			if (n == 0) {
+				ADVANCE;
+				break;
+			}
 		}
-		trapsignal(p, SIGBUS, 0);	/* XXX code?? */
+		sig = SIGBUS;
+		/* XXX - ucode? */
 		break;
 
 	case T_FPE:
@@ -560,12 +581,14 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
+		KERNEL_PROC_LOCK(p);
 		if (p != cpuinfo.fpproc)
 			panic("fpe without being the FP user");
 		savefpstate(p->p_md.md_fpstate);
 		cpuinfo.fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(p, p->p_md.md_fpstate);
+		KERNEL_PROC_UNLOCK(p);
 		/* fpu_cleanup posts signals if needed */
 #if 0		/* ??? really never??? */
 		ADVANCE;
@@ -573,29 +596,34 @@ badtrap:
 		break;
 
 	case T_TAGOF:
-		trapsignal(p, SIGEMT, 0);	/* XXX code?? */
+		sig = SIGEMT;
+		/* XXX - ucode? */
 		break;
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		sig = SIGILL;
+		/* XXX - ucode? */
 		break;
 
 	case T_BREAKPOINT:
-		trapsignal(p, SIGTRAP, 0);
+		sig = SIGTRAP;
 		break;
 
 	case T_DIV0:
 	case T_IDIV0:
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTDIV_TRAP);
+		sig = SIGFPE;
+		ucode = FPE_INTDIV_TRAP;
 		break;
 
 	case T_FLUSHWIN:
 		write_user_windows();
 #ifdef probably_slower_since_this_is_usually_false
+		KERNEL_PROC_LOCK(p);
 		if (pcb->pcb_nsaved && rwindow_save(p))
 			sigexit(p, SIGILL);
+		KERNEL_PROC_UNLOCK(p);
 #endif
 		ADVANCE;
 		break;
@@ -608,7 +636,8 @@ badtrap:
 	case T_RANGECHECK:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		sig = SIGILL;
+		/* XXX - ucode? */
 		break;
 
 	case T_FIXALIGN:
@@ -623,8 +652,14 @@ badtrap:
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP);
+		sig = SIGFPE;
+		ucode = FPE_INTOVF_TRAP;
 		break;
+	}
+	if (sig != 0) {
+		KERNEL_PROC_LOCK(p);
+		trapsignal(p, sig, ucode);
+		KERNEL_PROC_UNLOCK(p);
 	}
 	userret(p, pc, sticks);
 	share_fpu(p, tf);
@@ -724,6 +759,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
+
+	if ((psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(p);
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
@@ -866,6 +904,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		KERNEL_PROC_UNLOCK(p);
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
 	}
@@ -873,12 +912,7 @@ out:
 }
 
 #if defined(SUN4M)	/* 4m version of mem_access_fault() follows */
-
 static int tfaultaddr = (int) 0xdeadbeef;
-
-#ifdef DEBUG
-int dfdebug = 0;
-#endif
 
 void
 mem_access_fault4m(type, sfsr, sfva, tf)
@@ -897,7 +931,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	u_quad_t sticks;
 	char bits[64];
 
-	uvmexp.traps++;
+	uvmexp.traps++;	/* XXXSMP */
+
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -917,6 +952,9 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
 
+	if ((psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(p);
+
 	/*
 	 * Our first priority is handling serious faults, such as
 	 * parity errors or async faults that might have come through here.
@@ -934,11 +972,15 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 */
 	if (type == T_STOREBUFFAULT ||
 	    (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0)) {
+		if ((psr & PSR_PS) == 0)
+			KERNEL_PROC_UNLOCK(p);
 		(*cpuinfo.memerr)(type, sfsr, sfva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
 		 */
+		if ((psr & PSR_PS) == 0)
+			KERNEL_PROC_LOCK(p);
 		goto out;
 	}
 
@@ -982,10 +1024,13 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	}
 
 	if ((sfsr & SFSR_FT) == SFSR_FT_TRANSERR) {
-		/* Translation errors are always fatal, as they indicate
+		/*
+		 * Translation errors are always fatal, as they indicate
 		 * a corrupt translation (page) table hierarchy.
 		 */
 		rv = KERN_PROTECTION_FAILURE;
+
+		/* XXXSMP - why bother with this anyway? */
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
 			goto fault;
 		tfaultaddr = sfva;
@@ -993,6 +1038,10 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		    SRMMU_TETYPE) != SRMMU_TEPTE)
 			goto fault;	/* Translation bad */
 		lda(SRMMU_SFSR, ASI_SRMMU);
+#ifdef DEBUG
+		printf("mem_access_fault4m: SFSR_FT_TRANSERR: "
+			"pid %d, va 0x%x: retrying\n", p->p_pid, sfva);
+#endif
 		goto out;	/* Translation OK, retry operation */
 	}
 
@@ -1111,6 +1160,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		KERNEL_PROC_UNLOCK(p);
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
 	}
@@ -1141,8 +1191,11 @@ syscall(code, tf, pc)
 	register_t rval[2];
 	u_quad_t sticks;
 
-	uvmexp.syscalls++;
+	uvmexp.syscalls++;	/* XXXSMP */
 	p = curproc;
+
+	KERNEL_PROC_LOCK(p);
+
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
 		panic("syscall");
@@ -1268,10 +1321,14 @@ syscall(code, tf, pc)
 		break;
 	}
 
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, pc, sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 	share_fpu(p, tf);
 }
@@ -1288,10 +1345,14 @@ child_return(arg)
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, p->p_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }

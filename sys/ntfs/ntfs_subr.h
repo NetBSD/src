@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.8 1999/10/10 14:48:37 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.8.2.1 2001/03/12 13:32:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -80,7 +80,6 @@ int ntfs_filesize __P(( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64
 int ntfs_times __P(( struct ntfsmount *, struct ntnode *, ntfs_times_t *));
 struct timespec	ntfs_nttimetounix __P(( u_int64_t ));
 int ntfs_ntreaddir __P(( struct ntfsmount *, struct fnode *, u_int32_t, struct attr_indexentry **));
-char ntfs_u28 __P((wchar));
 int ntfs_runtovrun __P(( cn_t **, cn_t **, u_long *, u_int8_t *));
 int ntfs_attrtontvattr __P(( struct ntfsmount *, struct ntvattr **, struct attr * ));
 void ntfs_freentvattr __P(( struct ntvattr * ));
@@ -103,3 +102,8 @@ int ntfs_toupper_use __P((struct mount *, struct ntfsmount *));
 void ntfs_toupper_unuse __P((void));
 int ntfs_fget __P((struct ntfsmount *, struct ntnode *, int, char *, struct fnode **));
 void ntfs_frele __P((struct fnode *));
+
+/* ntfs_conv.c stuff */
+ntfs_wget_func_t ntfs_utf8_wget;
+ntfs_wput_func_t ntfs_utf8_wput;
+ntfs_wcmp_func_t ntfs_utf8_wcmp;

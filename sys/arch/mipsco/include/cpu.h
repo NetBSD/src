@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2.2.2 2000/11/20 20:14:03 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.2.3 2001/03/12 13:29:04 bouyer Exp $	*/
 
 #ifndef _MIPSCO_CPU_H_
 #define _MIPSCO_CPU_H_
@@ -25,6 +25,7 @@ extern struct cpu_info cpu_info_store;
 
 #define	curcpu()		(&cpu_info_store)
 #define	cpu_number()		0
+
 #endif /* _KERNEL */
 #endif /* !_LOCORE */
 

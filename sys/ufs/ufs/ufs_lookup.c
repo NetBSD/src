@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.26.2.1 2000/11/20 18:11:54 bouyer Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.26.2.2 2001/03/12 13:32:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,7 +195,7 @@ ufs_lookup(v)
 	 */
 	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-	    dp->i_diroff > dp->i_ffs_size) {
+	    dp->i_diroff >= dp->i_ffs_size) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
@@ -340,7 +340,6 @@ searchloop:
 				}
 				dp->i_ino = ufs_rw32(ep->d_ino, needswap);
 				dp->i_reclen = ufs_rw16(ep->d_reclen, needswap);
-				brelse(bp);
 				goto found;
 			}
 		}
@@ -441,13 +440,14 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep, needswap) >
+	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep, needswap) >
 		dp->i_ffs_size) {
 		ufs_dirbad(dp, dp->i_offset, "i_size too small");
-		dp->i_ffs_size = entryoffsetinblock +
+		dp->i_ffs_size = dp->i_offset +
 			DIRSIZ(FSFMT(vdp), ep, needswap);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+	brelse(bp);
 
 	/*
 	 * Found component in pathname.

@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.11.2.2 2001/02/11 19:17:29 bouyer Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.65 2001/02/08 18:36:17 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.11.2.3 2001/03/12 13:31:57 bouyer Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,6 +182,16 @@ rip6_input(mp, offp, proto)
 		}
 		if (last) {
 			struct	mbuf *n;
+
+#ifdef IPSEC
+			/*
+			 * Check AH/ESP integrity.
+			 */
+			if (ipsec6_in_reject(m, last)) {
+				ipsec6stat.in_polvio++;
+				/* do not inject data into pcb */
+			} else
+#endif /*IPSEC*/
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -201,6 +211,17 @@ rip6_input(mp, offp, proto)
 		}
 		last = in6p;
 	}
+#ifdef IPSEC
+	/*
+	 * Check AH/ESP integrity.
+	 */
+	if (last && ipsec6_in_reject(m, last)) {
+		m_freem(m);
+		ipsec6stat.in_polvio++;
+		ip6stat.ip6s_delivered--;
+		/* do not inject data into pcb */
+	} else
+#endif /*IPSEC*/
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
@@ -448,9 +469,8 @@ rip6_output(m, va_alist)
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
-		struct mbuf *n;
 		int off;
-		u_int16_t *p;
+		u_int16_t sum;
 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
@@ -465,16 +485,10 @@ rip6_output(m, va_alist)
 		}
 		off += sizeof(struct ip6_hdr);
 
-		n = m;
-		while (n && n->m_len <= off) {
-			off -= n->m_len;
-			n = n->m_next;
-		}
-		if (!n)
-			goto bad;
-		p = (u_int16_t *)(mtod(n, caddr_t) + off);
-		*p = 0;
-		*p = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		sum = 0;
+		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
 	}
 
 #ifdef IPSEC

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.4 2001/02/11 19:11:20 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.5 2001/03/12 13:29:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -106,8 +105,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-extern paddr_t avail_end;
-
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -117,12 +114,10 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int	safepri = PSL_LOWIPL;
 
-extern	u_int lowram;
-extern	short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
+extern paddr_t avail_start, avail_end;
+extern char *kernel_text, *etext;
+extern int end, *esym;
+extern u_int lowram;
 
 /* prototypes for local functions */
 void	identifycpu __P((void));
@@ -168,8 +163,6 @@ news68k_init()
 {
 	int i;
 
-	extern paddr_t avail_start, avail_end;
-
 	/*
 	 * Tell the VM system about available physical memory.  The
 	 * news68k only has one segment.
@@ -213,7 +206,6 @@ news68k_init()
 void
 cpu_startup()
 {
-	extern char *kernel_text, *etext;
 	unsigned i;
 	caddr_t v;
 	int base, residual;
@@ -514,7 +506,6 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	extern int end;
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
 
@@ -1195,37 +1186,16 @@ extern struct consdev consdev_bm, consdev_zs;
 
 int tty00_is_console = 0;
 
-#if NFB > 0
-void bmcons_putc(int);
-
-extern void fbbm_probe(), vt100_open(), setup_fnt(), setup_fnt24();
-extern int vt100_write();
-
-#include "fb.h"
-#endif /* NFB > 0 */
-
 void
 consinit()
 {
 
 	int dipsw = *dip_switch;
 
-#if NFB > 0
-	fbbm_probe(dipsw);
-	vt100_open();
-	setup_fnt();
-	setup_fnt24();
-#else
 	dipsw &= ~SW_CONSOLE;
-#endif /* NFB > 0 */
 
 	switch (dipsw & SW_CONSOLE) {
-	    default:
-#if NFB > 0
-		cn_tab = &consdev_bm;
-		(*cn_tab->cn_init)(cn_tab);
-		break;
-#endif /* NFB > 0 */
+	    default: /* XXX no fb support yet */
 	    case 0:
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
@@ -1234,9 +1204,6 @@ consinit()
 	}
 #ifdef DDB
 	{
-		extern int end;
-		extern int *esym;
-
 #ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 #else
@@ -1248,15 +1215,3 @@ consinit()
 		Debugger();
 #endif
 }
-
-#if NFB > 0
-void
-bmcons_putc(c)
-	int c;
-{
-	char cnbuf[1];
-
-	cnbuf[0] = (char)c;
-	vt100_write(0, cnbuf, 1);
-}
-#endif /* NFB > 0 */

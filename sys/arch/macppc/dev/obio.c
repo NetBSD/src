@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6.2.2 2000/11/22 16:00:38 bouyer Exp $	*/
+/*	$NetBSD: obio.c,v 1.6.2.3 2001/03/12 13:29:00 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -126,6 +126,10 @@ obio_attach(parent, self, aux)
 	ca.ca_baseaddr = reg[2];
 
 	printf(": addr 0x%x\n", ca.ca_baseaddr);
+
+	/* Enable CD and microphone sound input. */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
+		out8(ca.ca_baseaddr + 0x37, 0x03);
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));

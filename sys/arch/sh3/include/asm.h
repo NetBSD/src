@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.2.2 2001/01/05 17:35:00 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.2.3 2001/03/12 13:29:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,11 +48,18 @@
 #define PIC_GOT(x)	x
 #define PIC_GOTOFF(x)	x
 
+#ifdef __ELF__
+#define __LEADING_UNDERSCORE
+#endif
 
+#if (defined(__ELF__) && !defined(__LEADING_UNDERSCORE))
+# define _C_LABEL(x)	x
+#else
 #ifdef __STDC__
 # define _C_LABEL(x)	_ ## x
 #else
 # define _C_LABEL(x)	_/**/x
+#endif
 #endif
 #define	_ASM_LABEL(x)	x
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23.2.2 2001/02/11 19:12:44 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23.2.3 2001/03/12 13:29:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -97,7 +97,7 @@ struct clockframe {
 	u_short	cf_sr;		/* sr at time of interrupt */
 	u_long	cf_pc;		/* pc at time of interrupt */
 	u_short	cf_vo;		/* vector offset (4-word frame) */
-};
+} __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->cf_sr & PSL_IPL) == 0)

@@ -1,8 +1,8 @@
-/*	$NetBSD: bus.h,v 1.19.2.2 2001/02/11 19:09:11 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.19.2.3 2001/03/12 13:27:58 bouyer Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -922,6 +922,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
+#define	BUS_DMA_STREAMING	0x08	/* hint: sequential, unidirectional */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40

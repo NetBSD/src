@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.23.2.3 2000/12/13 15:50:05 bouyer Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.23.2.4 2001/03/12 13:30:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,10 +105,9 @@ void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
 
 int
-ne2000_attach(nsc, myea, media, nmedia, defmedia)
+ne2000_attach(nsc, myea)
 	struct ne2000_softc *nsc;
 	u_int8_t *myea;
-	int *media, nmedia, defmedia;
 {
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	bus_space_tag_t nict = dsc->sc_regt;
@@ -282,7 +281,10 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
 	NIC_BARRIER(nict, nich);
 
-	if (dp8390_config(dsc, media, nmedia, defmedia)) {
+	if (dsc->sc_media_init == NULL)
+		dsc->sc_media_init = dp8390_media_init;
+
+	if (dp8390_config(dsc)) {
 		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
 		return (1);
 	}

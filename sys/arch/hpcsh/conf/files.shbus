@@ -1,0 +1,38 @@
+#	$NetBSD: files.shbus,v 1.1.2.2 2001/03/12 13:28:50 bouyer Exp $
+#
+# Config file and device description for machine-independent SHBus code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+device	shb {[port = -1], [size = 0],
+	     [iomem = -1], [iosiz = 0],
+	     [irq = -1], [drq = -1], [drq2 = -1]}
+attach	shb at mainbus
+
+file arch/hpcsh/hpcsh/shb.c		shb needs-flag
+
+# Misc devices
+
+device	wdog
+attach	wdog at shb
+file	arch/sh3/dev/wdog.c		wdog	needs-flag
+
+#
+# Serial drivers
+#
+
+defopt	opt_sci.h	SCICONSOLE SCICN_SPEED
+device	sci
+attach	sci at shb
+file	arch/sh3/dev/sci.c		sci needs-flag
+
+defopt	opt_scif.h	SCIFCONSOLE SCIFCN_SPEED
+device	scif
+attach	scif at shb
+file	arch/sh3/dev/scif.c		scif needs-flag
+
+#
+# Machine-independent PCMCIA drivers
+#
+device	fdc {drive = -1}
+include "dev/pcmcia/files.pcmcia"

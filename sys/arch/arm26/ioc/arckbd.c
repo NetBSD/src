@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.4.2.5 2001/02/11 19:08:58 bouyer Exp $ */
+/* $NetBSD: arckbd.c,v 1.4.2.6 2001/03/12 13:27:30 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.4.2.5 2001/02/11 19:08:58 bouyer Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.4.2.6 2001/03/12 13:27:30 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -85,7 +85,9 @@ static const char *arckbd_statenames[] = {
 static int arckbd_match(struct device *parent, struct cfdata *cf, void *aux);
 static void arckbd_attach(struct device *parent, struct device *self,
     void *aux);
+#if 0 /* XXX should be used */
 static kbd_t arckbd_pick_layout(int kbid);
+#endif
 static int arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux);
 static void arcwskbd_attach(struct device *parent, struct device *self,
     void *aux);
@@ -255,6 +257,7 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &aka, NULL);
 }
 
+#if 0 /* XXX should be used */
 static kbd_t
 arckbd_pick_layout(int kbid)
 {
@@ -266,7 +269,7 @@ arckbd_pick_layout(int kbid)
 	}
 	return KB_UK;
 }
-	       
+#endif
 
 /* ARGSUSED */
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.25.2.5 2001/02/11 19:17:50 bouyer Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.25.2.6 2001/03/12 13:32:12 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,6 +77,7 @@
 #include <sys/malloc.h>
 #include <sys/sched.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>
@@ -151,11 +152,7 @@ uvm_pageinsert(pg)
 	struct pglist *buck;
 	int s;
 
-#ifdef DIAGNOSTIC
-	if (pg->flags & PG_TABLED)
-		panic("uvm_pageinsert: already inserted");
-#endif
-
+	KASSERT((pg->flags & PG_TABLED) == 0);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
 	s = splvm();
 	simple_lock(&uvm.hashlock);
@@ -190,8 +187,11 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-	if (UVM_OBJ_IS_VNODE(pg->uobject))
+	if (UVM_OBJ_IS_VTEXT(pg->uobject)) {
+		uvmexp.vtextpages--;
+	} else if (UVM_OBJ_IS_VNODE(pg->uobject)) {
 		uvmexp.vnodepages--;
+	}
 
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
@@ -218,8 +218,9 @@ uvm_page_init(kvm_startp, kvm_endp)
 	paddr_t paddr;
 
 	/*
-	 * step 1: init the page queues and page queue locks
+	 * init the page queues and page queue locks
 	 */
+
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		for (i = 0; i < PGFL_NQUEUES; i++)
 			TAILQ_INIT(&uvm.page_free[lcv].pgfl_queues[i]);
@@ -231,8 +232,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	simple_lock_init(&uvm.fpageqlock);
 
 	/*
-	 * step 2: init the <obj,offset> => <page> hash table. for now
-	 * we just have one bucket (the bootstrap bucket).   later on we
+	 * init the <obj,offset> => <page> hash table.  for now
+	 * we just have one bucket (the bootstrap bucket).  later on we
 	 * will allocate new buckets as we dynamically resize the hash table.
 	 */
 
@@ -243,7 +244,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	simple_lock_init(&uvm.hashlock);	/* init hash table lock */
 
 	/* 
-	 * step 3: allocate vm_page structures.
+	 * allocate vm_page structures.
 	 */
 
 	/*
@@ -285,8 +286,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 					 
 	/*
-	 * step 4: init the vm_page structures and put them in the correct
-	 * place...
+	 * init the vm_page structures and put them in the correct place.
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
@@ -297,6 +297,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 			panic("uvm_page_init");  /* XXXCDC: shouldn't happen? */
 			/* n = pagecount; */
 		}
+
 		/* set up page array pointers */
 		vm_physmem[lcv].pgs = pagearray;
 		pagearray += n;
@@ -317,7 +318,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	}
 
 	/*
-	 * step 5: pass up the values of virtual_space_start and
+	 * pass up the values of virtual_space_start and
 	 * virtual_space_end (obtained by uvm_pageboot_alloc) to the upper
 	 * layers of the VM.
 	 */
@@ -326,23 +327,30 @@ uvm_page_init(kvm_startp, kvm_endp)
 	*kvm_endp = trunc_page(virtual_space_end);
 
 	/*
-	 * step 6: init locks for kernel threads
+	 * init locks for kernel threads
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
 	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
-	 * step 7: init reserve thresholds
+	 * init various thresholds.
 	 * XXXCDC - values may need adjusting
 	 */
+
 	uvmexp.reserve_pagedaemon = 1;
 	uvmexp.reserve_kernel = 5;
+	uvmexp.anonminpct = 10;
+	uvmexp.vnodeminpct = 10;
+	uvmexp.vtextminpct = 5;
+	uvmexp.anonmin = uvmexp.anonminpct * 256 / 100;
+	uvmexp.vnodemin = uvmexp.vnodeminpct * 256 / 100;
+	uvmexp.vtextmin = uvmexp.vtextminpct * 256 / 100;
 
 	/*
-	 * step 8: determine if we should zero pages in the idle
-	 * loop.
+	 * determine if we should zero pages in the idle loop.
 	 */
+
 	uvm.page_idle_zero = vm_page_zero_enable;
 
 	/*

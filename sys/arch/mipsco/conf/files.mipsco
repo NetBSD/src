@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.4.2.3 2001/01/18 09:22:45 bouyer Exp $
+#	$NetBSD: files.mipsco,v 1.4.2.4 2001/03/12 13:29:03 bouyer Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -37,6 +37,7 @@ file arch/mipsco/obio/i82072.c		fd needs-count
 device zsc { [channel = -1] }
 attach zsc at obio
 file arch/mipsco/obio/zs.c		zsc needs-count
+file arch/mipsco/obio/zs_kgdb.c		kgdb
 file dev/ic/z8530sc.c			zsc
 
 device zstty: tty

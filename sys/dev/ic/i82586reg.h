@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586reg.h,v 1.7 1998/02/28 01:07:45 pk Exp $	*/
+/*	$NetBSD: i82586reg.h,v 1.7.14.1 2001/03/12 13:30:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -384,8 +384,8 @@ struct __ie_tdr_cmd {
 
 #define IE_TDR_SUCCESS	0x8000	/* TDR succeeded without error */
 #define IE_TDR_XCVR	0x4000	/* detected a transceiver problem */
-#define IE_TDR_OPEN	0x2000	/* detected an open */
-#define IE_TDR_SHORT	0x1000	/* TDR detected a short */
+#define IE_TDR_OPEN	0x2000	/* detected an incorrect termination ("open") */
+#define IE_TDR_SHORT	0x1000	/* TDR detected a short circuit */
 #define IE_TDR_TIME	0x07ff	/* mask for reflection time */
 
 /*

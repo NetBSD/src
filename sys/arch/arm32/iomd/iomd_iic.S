@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_iic.S,v 1.2.14.1 2000/11/20 20:04:01 bouyer Exp $	*/
+/*	$NetBSD: iomd_iic.S,v 1.2.14.2 2001/03/12 13:27:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,9 @@
 
 #define IIC_BITDELAY 10
 
+Liomd_base:
+	.word	_C_LABEL(iomd_base)
+
 ENTRY(iic_set_state)
 	/*
 	 * Parameters
@@ -71,7 +74,8 @@ ENTRY(iic_set_state)
 
 	/* Get address of IOMD control register */
 
-	mov	r2, #(IOMD_BASE)
+	ldr	r2, Liomd_base
+	ldr	r2, [r2]
 
 	/* Get the current CPSR */
 /*	mrs     r4, cpsr_all
@@ -139,7 +143,8 @@ ENTRY(iic_set_state_and_ack)
 
 	/* Get address of IOMD control register */
 
-	mov	r2, #(IOMD_BASE)
+	ldr	r2, Liomd_base
+	ldr	r2, [r2]
 
 	/* Get the current CPSR */
 /*	mrs     r4, cpsr_all
@@ -199,7 +204,8 @@ ENTRY(iic_delay)
 
 	/* Load address of IOMD */
 
-	mov	r2, #(IOMD_BASE)
+	ldr	r2, Liomd_base
+	ldr	r2, [r2]
 
 	/* Latch current value of timer 1 */
 
@@ -236,7 +242,8 @@ Liic_delay_loop:
 ENTRY(iic_getstate)
 	/* Load address of IOMD */
 
-	mov	r2, #(IOMD_BASE)
+	ldr	r2, Liomd_base
+	ldr	r2, [r2]
 
 	/* Read IOCR */
 

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.14.2 2000/11/22 16:03:07 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3.14.3 2001/03/12 13:30:01 bouyer Exp $
 
-SUBDIR=	ata dec eisa i2c i2o ic isa isapnp microcode mii \
+SUBDIR=	ata dec eisa hpc i2c i2o ic isa isapnp microcode mii \
 	ofisa ofw pckbc pcmcia pci rcons sbus scsipi \
 	sun tc usb wscons vme
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.11.2.1 1999/10/19 17:47:29 thorpej Exp $        */
+/*      $NetBSD: advlib.h,v 1.11.2.2 2001/03/12 13:30:11 bouyer Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -839,6 +839,8 @@ typedef struct asc_softc
 {
 	struct device		sc_dev;
 
+	struct device		*sc_child;
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -846,6 +848,9 @@ typedef struct asc_softc
 	void			*sc_ih;
 
 	struct adv_control	*sc_control;	/* control structures */
+
+	bus_dma_segment_t	sc_control_seg;
+	int			sc_control_nsegs;
 
 	struct adv_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;

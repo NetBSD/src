@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.41.2.1 2000/11/20 11:42:35 bouyer Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.41.2.2 2001/03/12 13:31:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -68,10 +68,6 @@ struct pcibus_attach_args {
 
 	int		pba_bus;	/* PCI bus number */
 
-#ifdef __PCI_OFW_BINDING
-	int		pba_node;	/* OFW node */
-#endif
-
 	/*
 	 * Interrupt swizzling information.  These fields
 	 * are only used by secondary busses.
@@ -94,10 +90,6 @@ struct pci_attach_args {
 	u_int		pa_function;
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
-
-#ifdef __PCI_OFW_BINDING
-	int		pa_node;	/* OFW node */
-#endif
 
 	/*
 	 * Interrupt information.
@@ -140,7 +132,9 @@ struct pci_quirkdata {
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
 
+#ifdef _KERNEL
 #include "locators.h"
+#endif
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.

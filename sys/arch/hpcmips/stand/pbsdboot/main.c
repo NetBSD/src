@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6.2.3 2001/02/11 19:10:36 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.6.2.4 2001/03/12 13:28:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.17.0 2001.01.07\r\n")
+	TEXT("Version 1.17.2 2001.03.04\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -265,6 +265,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("E-500"), BIFB_D16_FFFF,
 		240, 320, 512, 0xa200000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500 },
+	{ TEXT("PocketPostPet"), BIFB_D16_FFFF,
+		320, 240, 1024, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET },
 	{ TEXT("INTERTOP CX300"), BIFB_D8_00,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
@@ -322,9 +325,9 @@ struct fb_setting fb_settings[] = {
 #define UNICODE_MEMORY_CARD \
 	TEXT('\\'), 0xff92, 0xff93, 0xff98, TEXT(' '), 0xff76, 0xff70, \
 	0xff84, 0xff9e
-TCHAR unicode_memory_card[] = { UNICODE_MEMORY_CARD,  TEXT('\\') };
-TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD,  TEXT('1'), TEXT('\\') };
-TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD,  TEXT('2'), TEXT('\\') };
+TCHAR unicode_memory_card[] = { UNICODE_MEMORY_CARD,  TEXT('\\'), 0 };
+TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD, TEXT('1'),TEXT('\\'),0 };
+TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD, TEXT('2'),TEXT('\\'),0 };
 #endif
 
 #define LANGID_DEFAULT MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT)
@@ -418,7 +421,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	WNDCLASS     wc;
 	HDC hdc;
 	int i, idx,width,height;
-	
+
 #if ( 200 <= _WIN32_WCE )
 	OSVERSIONINFO	osverinfo;
 

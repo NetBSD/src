@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.3.2.3 2001/01/05 17:33:44 bouyer Exp $
+# $NetBSD: TCWSCONS,v 1.3.2.4 2001/03/12 13:27:05 bouyer Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.3.2.3 $"
+#ident 		"GENERIC-$Revision: 1.3.2.4 $"
 
 maxusers 32
 
@@ -14,6 +14,7 @@ options 	DEC_3000_300	# Pelican etc:	3000/300*
 
 # Standard system options
 options 	KTRACE			# System call tracing support
+options 	NTP			# kernel PLL for NTP
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
@@ -131,6 +132,9 @@ tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
+#sfbp*	at	tc? slot ? offset ?
+#px*	at	tc? slot ? offset ?
+#pxg*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
 fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
@@ -150,6 +154,8 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
 wsdisplay*	at	sfb?
+#wsdisplay*	at	px?
+#wsdisplay*	at	pxg?
 wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 

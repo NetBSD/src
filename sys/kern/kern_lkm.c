@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.49.2.3 2000/12/13 15:50:20 bouyer Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.49.2.4 2001/03/12 13:31:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -522,6 +522,9 @@ lkmioctl(dev, cmd, data, flag, p)
 			error = ENOENT;
 			break;
 		}
+
+		if ((error = (*curp->entry)(curp, LKM_E_STAT, curp->ver)))
+			break;
 
 		/*
 		 * Copy out stat information for this module...

@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.28.2.3 2001/02/11 19:15:45 bouyer Exp $
+$NetBSD: isapnpdevs,v 1.28.2.4 2001/03/12 13:30:42 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ devlogic	tr	TCM3190		0	3Com TokenLink Velocity ISA
  */
 devlogic	wdc	AZT0000		0	Aztech AZT2320 IDE CDROM
 devlogic	wdc	OPT0007		0	OPTi Audio 16 IDE controller
+devlogic	wdc	ESS0002		0	ES1868 IDE Controller
 devcompat	wdc	PNP0600		0	Western Digital Compatible Controller
 
 /*

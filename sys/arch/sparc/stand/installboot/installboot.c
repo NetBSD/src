@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4.2.1 2000/11/20 20:25:50 bouyer Exp $ */
+/*	$NetBSD: installboot.c,v 1.4.2.2 2001/03/12 13:29:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,18 +94,18 @@ int 		main __P((int, char *[]));
 static void
 usage()
 {
-	extern char *__progname;
+	const char *progname = getprogname();
 
 	if (sparc64)
 		(void)fprintf(stderr,
 		    "Usage: %s [-nv] <bootblk> <device>\n"
 		    "       %s -U [-nv] <boot> <proto> <device>\n",
-		    __progname, __progname);
+		    progname, progname);
 	else
 		(void)fprintf(stderr,
 		    "Usage: %s [-nv] <boot> <proto> <device>\n"
 		    "       %s -u [-n] [-v] <bootblk> <device>\n",
-		    __progname, __progname);
+		    progname, progname);
 	exit(1);
 }
 

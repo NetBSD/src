@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.3 2001/01/05 17:35:17 bouyer Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71.2.4 2001/03/12 13:29:46 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -1105,6 +1105,7 @@ pmap_clear_reference(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
+	int ref = 0;
 
 #ifdef DEBUG
 	if (IOSPACE(pa))
@@ -1115,6 +1116,9 @@ pmap_clear_reference(pg)
 	if (startpmapdebug)
 		printf("pmap_clear_reference: pa %lx pv_entry %p\n", pa, pv);
 #endif
+
+	if (pv->pv_attr & PG_V)
+		ref++;
 
 	pv->pv_attr &= ~PG_V;
 
@@ -1132,7 +1136,7 @@ pmap_clear_reference(pg)
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
-	return TRUE; /* XXX */
+	return ref;
 }
 
 /*

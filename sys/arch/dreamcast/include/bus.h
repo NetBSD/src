@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.2.3 2001/02/11 19:09:19 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.4 2001/03/12 13:28:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -457,6 +457,7 @@ do {									\
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x04	/* map memory to not require sync */
+#define	BUS_DMA_STREAMING	0x08	/* hint: sequential, unidirectional */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40

@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.7.4.4 2001/02/11 19:16:39 bouyer Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.7.4.5 2001/03/12 13:31:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7.4.4 2001/02/11 19:16:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7.4.5 2001/03/12 13:31:34 bouyer Exp $");
 
 #include "opt_wsfont.h"
 
@@ -202,9 +202,9 @@ wsfont_revbit(font)
 	
 	p = (u_char *)font->data;
 	m = p + font->stride * font->numchars * font->fontheight;
-	
-	while (p < m)
-		*p++ = reverse[*p];
+
+	for (; p < m; p++)	
+		*p = reverse[*p];
 }
 
 /*

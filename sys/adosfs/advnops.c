@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.52.2.3 2001/02/11 19:08:29 bouyer Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52.2.4 2001/03/12 13:27:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -273,7 +273,7 @@ adosfs_read(v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
-			vsize_t bytelen = min(ap->fsize - uio->uio_offset,
+			vsize_t bytelen = MIN(ap->fsize - uio->uio_offset,
 					      uio->uio_resid);
 
 			if (bytelen == 0) {
@@ -298,7 +298,7 @@ adosfs_read(v)
 		size = amp->dbsize;
 		lbn = uio->uio_offset / size;
 		on = uio->uio_offset % size;
-		n = min((u_int)(size - on), uio->uio_resid);
+		n = MIN(size - on, uio->uio_resid);
 		diff = ap->fsize - uio->uio_offset;
 		/* 
 		 * check for EOF
@@ -346,7 +346,7 @@ adosfs_read(v)
 #ifdef ADOSFS_DIAGNOSTIC
 		printf(" %d+%d-%d+%d", lbn, on, lbn, n);
 #endif
-		n = min(n, (u_int)size - bp->b_resid);
+		n = MIN(n, size - bp->b_resid);
 		error = uiomove(bp->b_data + on +
 				amp->bsize - amp->dbsize, (int)n, uio);
 		brelse(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.5.2.6 2001/02/11 19:17:09 bouyer Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5.2.7 2001/03/12 13:31:48 bouyer Exp $	*/
 /*	$KAME: if_stf.c,v 1.51 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 /*
- * 6to4 interface, based on draft-ietf-ngtrans-6to4-06.txt.
+ * 6to4 interface, based on RFC3056.
  *
  * 6to4 interface is NOT capable of link-layer (I mean, IPv4) multicasting.
  * There is no address mapping defined from IPv6 multicast address to IPv4
@@ -60,12 +60,13 @@
  * ICMPv6:
  * - Redirects cannot be used due to the lack of link-local address.
  *
- * Starting from 04 draft, the specification suggests how to construct
- * link-local address for 6to4 interface.
- * However, it seems to have no real use and does not help the above symptom
- * much.  Even if we assign link-locals to interface, we cannot really
- * use link-local unicast/multicast on top of 6to4 cloud, and the above
- * analysis does not change.
+ * stf interface does not have, and will not need, a link-local address.  
+ * It seems to have no real benefit and does not help the above symptoms much.
+ * Even if we assign link-locals to interface, we cannot really
+ * use link-local unicast/multicast on top of 6to4 cloud (since there's no
+ * encapsulation defined for link-local address), and the above analysis does
+ * not change.  RFC3056 does not mandate the assignment of link-local address
+ * either.
  *
  * 6to4 interface has security issues.  Refer to
  * http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
@@ -650,7 +651,7 @@ in_stf_input(m, va_alist)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = AF_INET6;
+		u_int32_t af = AF_INET6;
 		
 		m0.m_next = m;
 		m0.m_len = 4;

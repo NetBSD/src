@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.h,v 1.5 1998/01/18 05:24:38 gwr Exp $	*/
+/*	$NetBSD: saio.h,v 1.5.16.1 2001/03/12 13:29:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct boottab {
 	int	(*b_strategy)();	/* strategy(iobp,rw) --> -1 or 0 */
 	char	*b_desc;		/* Printable string describing dev */
 	struct devinfo *b_devinfo;	/* Information to configure device */
-};
+} __attribute__((packed));
 
 /*
  * This table gives information about the resources needed by a device.  
@@ -114,6 +114,7 @@ struct devinfo {
  */
 struct saioreq {
 	char	si_flgs;
+	char	si_pad1;
 	struct boottab *si_boottab;	/* Points to boottab entry if any */
 	char	*si_devdata;		/* Device-specific data pointer */
 	int	si_ctlr;		/* Controller number or address */
@@ -127,7 +128,7 @@ struct saioreq {
 	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
 	char 	*si_devaddr;		/* Points to mapped in device */
 	char	*si_dmaaddr;		/* Points to allocated DMA space */
-};
+} __attribute__((packed));
 
 #define SAIO_F_READ	0x01
 #define SAIO_F_WRITE	0x02

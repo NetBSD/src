@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46.2.5 2001/02/11 19:12:35 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.46.2.6 2001/03/12 13:29:30 bouyer Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -1005,15 +1005,15 @@ TABLE/**/syscall:
 	STRAP(0x128); STRAP(0x129); STRAP(0x12a); STRAP(0x12b); STRAP(0x12c); STRAP(0x12d); STRAP(0x12e); STRAP(0x12f)
 	STRAP(0x130); STRAP(0x131); STRAP(0x132); STRAP(0x133); STRAP(0x134); STRAP(0x135); STRAP(0x136); STRAP(0x137)
 	STRAP(0x138); STRAP(0x139); STRAP(0x13a); STRAP(0x13b); STRAP(0x13c); STRAP(0x13d); STRAP(0x13e); STRAP(0x13f)
-	STRAP(0x140); STRAP(0x141); STRAP(0x142); STRAP(0x143); STRAP(0x144); STRAP(0x145); STRAP(0x146); STRAP(0x147)
+	SYSCALL			! 0x140 SVID syscall (Solaris 2.7)
+	SYSCALL			! 0x141 SPARC International syscall
+	SYSCALL			! 0x142	OS Vendor syscall
+	SYSCALL			! 0x143 HW OEM syscall
+	STRAP(0x144); STRAP(0x145); STRAP(0x146); STRAP(0x147)
 	STRAP(0x148); STRAP(0x149); STRAP(0x14a); STRAP(0x14b); STRAP(0x14c); STRAP(0x14d); STRAP(0x14e); STRAP(0x14f)
 	STRAP(0x150); STRAP(0x151); STRAP(0x152); STRAP(0x153); STRAP(0x154); STRAP(0x155); STRAP(0x156); STRAP(0x157)
 	STRAP(0x158); STRAP(0x159); STRAP(0x15a); STRAP(0x15b); STRAP(0x15c); STRAP(0x15d); STRAP(0x15e); STRAP(0x15f)
-	STRAP(0x160); STRAP(0x161); STRAP(0x162); STRAP(0x163);
-	SYSCALL			! 0x164 SVID syscall (Solaris 2.7)
-	SYSCALL			! 0x165 SPARC International syscall
-	SYSCALL			! 0x166	OS Vendor syscall
-	SYSCALL			! 0x167 HW OEM syscall
+	STRAP(0x160); STRAP(0x161); STRAP(0x162); STRAP(0x163); STRAP(0x164); STRAP(0x165); STRAP(0x166); STRAP(0x167)
 	STRAP(0x168); STRAP(0x169); STRAP(0x16a); STRAP(0x16b); STRAP(0x16c); STRAP(0x16d); STRAP(0x16e); STRAP(0x16f)
 	STRAP(0x170); STRAP(0x171); STRAP(0x172); STRAP(0x173); STRAP(0x174); STRAP(0x175); STRAP(0x176); STRAP(0x177)
 	STRAP(0x178); STRAP(0x179); STRAP(0x17a); STRAP(0x17b); STRAP(0x17c); STRAP(0x17d); STRAP(0x17e); STRAP(0x17f)
@@ -6254,7 +6254,7 @@ _C_LABEL(blast_icache):
 	.proc 1
 	FTYPE(dcache_flush_page)
 _C_LABEL(dcache_flush_page):
-#ifdef _LP64
+#ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
 
@@ -6812,7 +6812,7 @@ _C_LABEL(sunos_sigcode):
 _C_LABEL(sunos_esigcode):
 #endif /* COMPAT_SUNOS */
 
-#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
+#if (defined(COMPAT_SVR4) && !defined(_LP64)) || defined(COMPAT_SVR4_32)
 /*
  * This code is still 32-bit only.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.21.2.1 2000/11/20 20:20:35 bouyer Exp $ */
+/* $NetBSD: dec_3min.c,v 1.21.2.2 2001/03/12 13:29:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21.2.1 2000/11/20 20:20:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.21.2.2 2001/03/12 13:29:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ dec_3min_init()
 	 * TURBOchannel option slots, just splhigh().
 	 */
 	splvec.splbio = MIPS_SPL_0_1_2_3;
-	splvec.splnet = MIPS_SPL_0_1_2_3; 
+	splvec.splnet = MIPS_SPL_0_1_2_3;
 	splvec.spltty = MIPS_SPL_0_1_2_3;
 	splvec.splimp = MIPS_SPL_0_1_2_3;
 	splvec.splclock = MIPS_SPL_0_1_2_3;
@@ -150,17 +150,17 @@ dec_3min_init()
 
 	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
-	/* calibrate cpu_mhz value */ 
+	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_3);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-#if 0	
+#if 0
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
-#endif	
-  
+#endif
+
 	/* sanitize interrupt mask */
 	kmin_tc3_imask = (KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT);
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
@@ -311,12 +311,12 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 }
 
 
-#define CHECKINTR(slot, bits)                                   \
+#define CHECKINTR(slot, bits)					\
     do {							\
-        if (can_serve & (bits)) {                               \
-                intrcnt[slot] += 1;                             \
-                (*intrtab[slot].ih_func)(intrtab[slot].ih_arg); \
-        }							\
+	if (can_serve & (bits)) {				\
+		intrcnt[slot] += 1;				\
+		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
+	}							\
     } while (0)
 
 static void

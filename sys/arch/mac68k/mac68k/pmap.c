@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.2 2001/01/18 09:22:40 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.3 2001/03/12 13:28:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -302,6 +302,7 @@ void	pmap_collect_pv __P((void));
  * Internal routines
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
+void	pmap_do_remove __P((pmap_t, vaddr_t, vaddr_t, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
 void	pmap_changebit	__P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
@@ -888,9 +889,17 @@ pmap_remove(pmap, sva, eva)
 	pmap_t pmap;
 	vaddr_t sva, eva;
 {
+	pmap_do_remove(pmap, sva, eva, 1);
+}
+
+void
+pmap_do_remove(pmap, sva, eva, remove_wired)
+	pmap_t pmap;
+	vaddr_t sva, eva;
+	int remove_wired;
+{
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	boolean_t firstpage, needcflush;
 	int flags;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
@@ -899,8 +908,6 @@ pmap_remove(pmap, sva, eva)
 	if (pmap == NULL)
 		return;
 
-	firstpage = TRUE;
-	needcflush = FALSE;
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
 		nssva = mac68k_trunc_seg(sva) + MAC_SEG_SIZE;
@@ -916,22 +923,18 @@ pmap_remove(pmap, sva, eva)
 		}
 		/*
 		 * Invalidate every valid mapping within this segment.
+		 * If remove_wired is zero, skip the wired pages.
 		 */
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
-			if (pmap_pte_v(pte)) {
+			if (pmap_pte_v(pte) &&
+			    (remove_wired || !pmap_pte_w(pte))) {
 				pmap_remove_mapping(pmap, sva, pte, flags);
-				firstpage = FALSE;
 			}
 			pte++;
 			sva += NBPG;
 		}
 	}
-	/*
-	 * Didn't do anything, no need for cache flushes
-	 */
-	if (firstpage)
-		return;
 }
 
 /*
@@ -1503,7 +1506,7 @@ pmap_collect(pmap)
 		 * entire address space.  Note: pmap_remove() performs
 		 * all necessary locking.
 		 */
-		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+		pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 0);
 	}
 
 #ifdef notyet

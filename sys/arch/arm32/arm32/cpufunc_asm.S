@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.9.8.1 2000/11/20 20:03:50 bouyer Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.9.8.2 2001/03/12 13:27:32 bouyer Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -521,6 +521,7 @@ Lsa110_cache_cleanD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_cleanD_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -550,6 +551,7 @@ Lsa110_cache_purgeID_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeID_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
@@ -579,6 +581,7 @@ Lsa110_cache_purgeD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeD_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -588,12 +591,14 @@ Lsa110_cache_purgeD_loop:
 
 ENTRY(sa110_cache_purgeID_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 */
@@ -634,6 +639,7 @@ Lsa110_cache_syncI_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_syncI_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
@@ -657,10 +663,11 @@ sa110_cache_cleanD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_cleanD_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeID)
 
 	and	r2, r0, #0x1f
@@ -674,12 +681,13 @@ sa110_cache_purgeID_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeID_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeD)
 
 	and	r2, r0, #0x1f
@@ -693,6 +701,7 @@ sa110_cache_purgeD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeD_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_syncI_rng)
@@ -709,6 +718,7 @@ sa110_cache_syncI_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_syncI_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr

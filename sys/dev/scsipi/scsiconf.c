@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.9 2001/02/11 19:16:19 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.10 2001/03/12 13:31:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -473,13 +473,16 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "JVC     ", "R2626",            ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "VMware", "Virtual",           "1.0"},
+				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "2217-15MQ1091501", ""},     PQUIRK_NOSYNCCACHE},
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, PQUIRK_NOLUNS},
-
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ","CD-ROM XM-3401TA", "0283"},  PQUIRK_CDROM|PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -560,6 +563,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST34501FC       ", ""},     PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "VMware", "Virtual",           "1.0"},
+				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
+
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,

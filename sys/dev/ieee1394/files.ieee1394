@@ -1,4 +1,4 @@
-#	$NetBSD: files.ieee1394,v 1.2.2.2 2000/11/22 16:03:40 bouyer Exp $
+#	$NetBSD: files.ieee1394,v 1.2.2.3 2001/03/12 13:30:35 bouyer Exp $
 
 file	dev/ieee1394/fwlynx.c		fwlynx
 file	dev/ieee1394/fwohci.c		fwohci
@@ -9,7 +9,7 @@ attach	fwnode at fwbus
 #file	dev/ieee1394/fw_node.c		fwbus
 #file	dev/ieee1394/fw_kthread.c	fwbus
 
-device  fw: arp, ieee1394, ifnet
+device	fw: arp, ieee1394, ifnet
 attach	fw at fwbus
 
 file	dev/ieee1394/if_fw.c		fw

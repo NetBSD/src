@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.12 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_watch.h,v 1.12.2.1 2001/03/12 13:30:00 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -54,4 +54,4 @@ void db_set_watchpoints __P((void));
 void db_clear_watchpoints __P((void));
 boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
 
-#endif	_DDB_DB_WATCH_
+#endif	/* _DDB_DB_WATCH_ */

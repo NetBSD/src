@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.84.2.4 2001/02/11 19:17:35 bouyer Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.84.2.5 2001/03/12 13:32:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -148,16 +148,12 @@ nfs_statfs(mp, sbp, p)
 #endif
 	struct mbuf *mreq, *mrep = NULL, *md, *mb, *mb2;
 	struct ucred *cred;
-	struct nfsnode *np;
 	u_quad_t tquad;
 
 #ifndef nolint
 	sfp = (struct nfs_statfs *)0;
 #endif
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
-	if (error)
-		return (error);
-	vp = NFSTOV(np);
+	vp = nmp->nm_vnode;
 	cred = crget();
 	cred->cr_ngroups = 0;
 	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
@@ -207,7 +203,6 @@ nfs_statfs(mp, sbp, p)
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	nfsm_reqdone;
-	vput(vp);
 	crfree(cred);
 	return (error);
 }
@@ -682,8 +677,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_deadthresh = NQ_DEADTHRESH;
 	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
-	nmp->nm_fhsize = argp->fhsize;
-	memcpy((caddr_t)nmp->nm_fh, (caddr_t)argp->fh, argp->fhsize);
 #ifdef COMPAT_09
 	mp->mnt_stat.f_type = 2;
 #else
@@ -718,7 +711,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
+	error = nfs_nget(mp, (nfsfh_t *)argp->fh, argp->fhsize, &np);
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
@@ -741,6 +734,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 * number == ROOTINO (2). So, just unlock, but no rele.
 	 */
 
+	nmp->nm_vnode = *vpp;
 	VOP_UNLOCK(*vpp, 0);
 
 	return (0);
@@ -761,7 +755,6 @@ nfs_unmount(mp, mntflags, p)
 	struct proc *p;
 {
 	struct nfsmount *nmp;
-	struct nfsnode *np;
 	struct vnode *vp;
 	int error, flags = 0;
 
@@ -782,10 +775,11 @@ nfs_unmount(mp, mntflags, p)
 	 * the remote root.  See comment in mountnfs().  The VFS unmount()
 	 * has done vput on this vnode, otherwise we would get deadlock!
 	 */
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
-	if (error)
-		return(error);
-	vp = NFSTOV(np);
+	vp = nmp->nm_vnode;
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
+
 	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 2) {
 		vput(vp);
 		return (EBUSY);
@@ -839,14 +833,13 @@ nfs_root(mp, vpp)
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
-	struct nfsnode *np;
 	int error;
 
 	nmp = VFSTONFS(mp);
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
-	if (error)
-		return (error);
-	vp = NFSTOV(np);
+	vp = nmp->nm_vnode;
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
 	vp->v_flag = VROOT;

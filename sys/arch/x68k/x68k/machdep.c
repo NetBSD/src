@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72.2.3 2001/01/05 17:35:19 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.4 2001/03/12 13:29:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_m680x0.h"
 #include "opt_fpuemulate.h"
@@ -120,22 +119,18 @@ vm_map_t phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail;
+extern u_int lowram;
+extern int end, *esym;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
-
-extern	u_int lowram;
-extern	short exframesize[];
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */
 void    identifycpu __P((void));
@@ -194,12 +189,7 @@ consinit()
 	zs_kgdb_init();			/* XXX */
 #endif
 #ifdef DDB
-	{
-		extern int end;
-		extern int *esym;
-
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-	}
+	ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -585,7 +575,6 @@ cpu_reboot(howto, bootstr)
 void
 cpu_init_kcore_hdr()
 {
-	extern int end;
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
@@ -860,7 +849,6 @@ initcpu()
 #endif
 
 #ifdef MAPPEDCOPY
-	extern u_int mappedcopysize;
 
 	/*
 	 * Initialize lower bound for doing copyin/copyout using

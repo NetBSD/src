@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.4.2.5 2001/02/11 19:09:02 bouyer Exp $ */
+/* $NetBSD: arcvideo.c,v 1.4.2.6 2001/03/12 13:27:31 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.4.2.5 2001/02/11 19:09:02 bouyer Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.4.2.6 2001/03/12 13:27:31 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: arcvideo.c,v 1.4.2.5 2001/02/11 19:09:02 bouyer Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
+#include <machine/machdep.h>
 #include <machine/memcreg.h>
 
 #include <arch/arm26/iobus/iocreg.h>
@@ -80,7 +81,7 @@ static int arcvideo_alloc_screen(void *cookie, const struct wsscreen_descr *scr,
 				      void **scookiep, int *curxp, int *curyp,
 				      long *defattrp);
 static void arcvideo_free_screen(void *cookie, void *scookie);
-static void arcvideo_show_screen(void *cookie, void *scookie, int waitok,
+static int arcvideo_show_screen(void *cookie, void *scookie, int waitok,
 				      void (*cb)(void *, int, int),
 				      void *cbarg);
 static int arcvideo_load_font(void *cookie, void *scookie,
@@ -449,7 +450,7 @@ arcvideo_free_screen(void *cookie, void *scookie)
 	panic("arcvideo_free_screen not implemented");
 }
 
-static void
+static int
 arcvideo_show_screen(void *cookie, void *scookie, int waitok,
     void (*cb)(void *cbarg, int error, int waitok), void *cbarg)
 {
