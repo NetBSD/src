@@ -1,4 +1,6 @@
-/*	$NetBSD: gayle.c,v 1.1 2000/01/23 20:53:18 aymeric Exp $	*/
+/*	$NetBSD: gayle.c,v 1.2 2000/09/27 08:24:02 aymeric Exp $	*/
+
+/* public domain */
 
 /*
  * Gayle management routines
