@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.5 2000/05/22 15:54:53 matt Exp $ */
+/*	$NetBSD: start.s,v 1.6 2000/06/17 01:00:17 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,25 +60,17 @@ _start:	.globl _start		# this is the symbolic name for the start
 .org	0x08			#
 	brb	from_0x08	# skip ...
 
-.org	0x0A			# uVAX booted from disk starts here
-	brb	from_0x0A	# skip ...
-
 .org	0x0C			# 11/750  & 8200 starts here
 	movzbl	$1,_from	# We booted from "old" rom.
 	brw	cont_750
 
 
 from_0x00:			# uVAX from TK50 
-from_0x0A:			# uVAX from disk
-	movzbl	$2,_from	# Booted from subset-VMB
 	brw	start_uvax	# all uVAXen continue there
 
 from_0x08:			# Any machine from VMB
 	movzbl	$4,_from		# Booted from full VMB
 	halt			# Cannot handle this...
-
-_from:	.long	0		# boot prog type
-	.globl	_from
 
 # the complete area reserved for label
 # must be empty (i.e. filled with zeroes).
@@ -88,10 +80,10 @@ _from:	.long	0		# boot prog type
 /*
  * Parameter block for uVAX boot.
  */
-#define VOLINFO         0       /* 1=single-sided  81=double-sided volumes */
-#define SISIZE          16      /* size in blocks of secondary image */
-#define SILOAD          0       /* load offset (usually 0) from the default */
-#define SIOFF           0x0A    /* byte offset into secondary image */
+#define VOLINFO         0	/* 1=single-sided  81=double-sided volumes */
+#define SISIZE          16	/* size in blocks of secondary image */
+#define SILOAD          0	/* load offset (usually 0) from the default */
+#define SIOFF           0x200	/* byte offset into secondary image */
 
 .org    LABELOFFSET + d_end_
 	.byte	0x18		# must be 0x18 
@@ -109,6 +101,7 @@ _from:	.long	0		# boot prog type
 	.long	SILOAD		# load offset (usually 0) 
 	.long 	SIOFF		# byte offset into secondary image 
 	.long	(SISIZE + SILOAD + SIOFF)	# sum of previous 3 
+
 
 /*
  * After bootblock (LBN0) has been loaded into the first page 
@@ -130,7 +123,6 @@ _from:	.long	0		# boot prog type
  *
  * cont_750 reads in LBN1-15 for further execution.
  */
-	.align 2
 cont_750:
 	movl	$_start, sp	# move stack to avoid clobbering the code
 	pushr	$0x131		# save clobbered registers
@@ -150,9 +142,19 @@ cont_750:
 	popr	$0x131		# restore clobbered registers
 	brw	start_all	# Ok, continue...
 
+/* uVAX main entry is at the start of the second disk block.  This is
+ * needed for multi-arch CD booting where multiple architecture need
+ * to shove stuff in boot block 0.
+ */
+	.org	0x200		# uVAX booted from disk starts here
 
 start_uvax:
+	movzbl	$2,_from	# Booted from subset-VMB
 	brb	start_all
+
+	.align	2
+	.globl	_from
+_from:	.long	0
 
 /*
  * start_all: stack already at RELOC, we save registers, move ourself
