@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.45 2001/09/22 23:07:29 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.46 2001/12/29 20:59:22 sommerfeld Exp $	*/
 
 /*
  *
@@ -58,6 +58,9 @@
  *     done by Alessandro Forin (CMU/Mach) and Chris Demetriou
  *     (NetBSD/alpha).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.46 2001/12/29 20:59:22 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3403,6 +3406,17 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 		simple_lock(&pq->pq_slock);
 
+		/*
+		 * If there's a global flush already queued, or a
+		 * non-global flush, and this pte doesn't have the G
+		 * bit set, don't bother.
+		 */
+		if (pq->pq_flushg > 0 ||
+		    (pq->pq_flushu > 0 && (pte & pmap_pg_g) == 0)) {
+			simple_unlock(&pq->pq_slock);
+			continue;
+		}
+
 #ifdef I386_CPU
 		/*
 		 * i386 CPUs can't invalidate a single VA, only
@@ -3484,23 +3498,26 @@ pmap_do_tlb_shootdown(struct cpu_info *ci)
 		pq->pq_flushg = 0;
 		pq->pq_flushu = 0;
 		pmap_tlb_shootdown_q_drain(pq);
-	} else if (pq->pq_flushu) {
-		COUNT(flushu);
-		tlbflush();
-		pq->pq_flushu = 0;
-		pmap_tlb_shootdown_q_drain(pq);
 	} else {
+		/*
+		 * TLB flushes for PTEs with PG_G set may be in the queue
+		 * after a flushu, they need to be dealt with.
+		 */
+		if (pq->pq_flushu) {
+			COUNT(flushu);
+			tlbflush();
+		}
 		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
 			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
 
-			if (pmap_is_curpmap(pj->pj_pmap) ||
-			    (pj->pj_pte & PG_G))
+			if ((!pq->pq_flushu && pmap_is_curpmap(pj->pj_pmap)) ||
+			    (pj->pj_pte & pmap_pg_g))
 				pmap_update_pg(pj->pj_va);
 
 			pmap_tlb_shootdown_job_put(pq, pj);
 		}
 
-		pq->pq_pte = 0;
+		pq->pq_flushu = pq->pq_pte = 0;
 	}
 	simple_unlock(&pq->pq_slock);
 #if 0
