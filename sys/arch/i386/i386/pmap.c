@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 1999/07/28 06:54:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 1999/08/18 03:59:36 chs Exp $	*/
 
 /*
  *
@@ -406,7 +406,6 @@ static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
 static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static void		 pmap_kremove1 __P((vaddr_t));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
@@ -432,8 +431,6 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 
-void			pmap_kenter_pa0 __P((vaddr_t, paddr_t, vm_prot_t,
-					     boolean_t));
 void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
 
@@ -545,6 +542,11 @@ pmap_map_ptes(pmap)
 {
 	pd_entry_t opde;
 
+	/* the kernel's pmap is always accessible */
+	if (pmap == pmap_kernel()) {
+		return(PTE_BASE);
+	}
+
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
 		simple_lock(&pmap->pm_obj.vmobjlock);
@@ -578,6 +580,9 @@ __inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
+	if (pmap == pmap_kernel()) {
+		return;
+	}
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
@@ -607,31 +612,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-
-	pmap_kenter_pa0(va, pa, prot, FALSE);
-}
-
-void
-pmap_kenter_pa0(va, pa, prot, islocked)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	boolean_t islocked;
-{
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte, opte;
-	int s;
-
-	if (islocked == FALSE) {
-		s = splimp();
-		simple_lock(&pm->pm_obj.vmobjlock);
-	}
-	pm->pm_stats.resident_count++;
-	pm->pm_stats.wired_count++;
-	if (islocked == FALSE) {
-		simple_unlock(&pm->pm_obj.vmobjlock);
-		splx(s);
-	}
 
 	pte = vtopte(va);
 	opte = *pte;
@@ -657,67 +638,26 @@ pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte;
-	int s;
 
-	len = len / NBPG;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-
+	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
 		pte = vtopte(va);
-
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
 			      va);
 #endif
-
-		pm->pm_stats.resident_count--;
-		pm->pm_stats.wired_count--;
-
 		*pte = 0;		/* zap! */
 #if defined(I386_CPU)
 		if (cpu_class != CPUCLASS_386)
 #endif
 			pmap_update_pg(va);
 	}
-
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
-
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
 		pmap_update();
 #endif
-}
-
-/*
- * pmap_kremove1: inline one page version of above
- */
-
-__inline static void
-pmap_kremove1(va)
-	vaddr_t va;
-{
-	struct pmap *pm = pmap_kernel();
-	pt_entry_t *pte;
-	int s;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-
-	pm->pm_stats.resident_count--;
-	pm->pm_stats.wired_count--;
-
-	pte = vtopte(va);
-	*pte = 0;		/* zap! */
-	pmap_update_pg(va);
-
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
 }
 
 /*
@@ -730,20 +670,12 @@ pmap_kenter_pgs(va, pgs, npgs)
 	struct vm_page **pgs;
 	int npgs;
 {
-	struct pmap *pm = pmap_kernel();
 	pt_entry_t *pte, opte;
-	int s, lcv;
+	int lcv;
 	vaddr_t tva;
 #if defined(I386_CPU)
 	boolean_t need_update = FALSE;
 #endif
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-	pm->pm_stats.resident_count += npgs;
-	pm->pm_stats.wired_count += npgs;
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
 
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
 		tva = va + lcv * NBPG;
@@ -760,7 +692,6 @@ pmap_kenter_pgs(va, pgs, npgs)
 		if (pmap_valid_entry(opte))
 			pmap_update_pg(tva);
 	}
-
 #if defined(I386_CPU)
 	if (need_update && cpu_class == CPUCLASS_386)
 		pmap_update();
@@ -1223,8 +1154,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa0(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
-	    (pmap == pmap_kernel()) ? TRUE : FALSE);
+	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = NULL;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -2461,10 +2391,9 @@ pmap_remove(pmap, sva, eva)
 		ptppa = (pmap->pm_pdir[pdei(sva)] & PG_FRAME);
 
 		/* get PTP if non-kernel mapping */
-
 		if (pmap == pmap_kernel()) {
-			ptp = NULL;		/* we never free kernel PTPs */
-
+			/* we never free kernel PTPs */
+			ptp = NULL;
 		} else {
 			if (pmap->pm_ptphint &&
 			    VM_PAGE_TO_PHYS(pmap->pm_ptphint) == ptppa) {
@@ -3530,8 +3459,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		if (opte & PG_PVLIST) {
 			bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 			if (bank == -1)
-				panic("pmap_enter: PG_PVLIST mapping "
-				      "with unmanaged page");
+				panic("pmap_enter: PG_PVLIST mapping with "
+				      "unmanaged page");
 			pvh = &vm_physmem[bank].pmseg.pvhead[off];
 			simple_lock(&pvh->pvh_lock);
 			pve = pmap_remove_pv(pvh, pmap, va);
