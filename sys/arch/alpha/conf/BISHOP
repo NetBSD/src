@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.11 1999/07/29 10:37:12 augustss Exp $
+#	$NetBSD: BISHOP,v 1.12 1999/12/03 07:03:43 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -6,7 +6,13 @@
 
 include	"arch/alpha/conf/std.alpha"
 
+prefix ../crypto-us/sys
+cinclude "conf/files.crypto-us"
+prefix
+
 maxusers 64
+
+makeoptions	COPTS="-O2 -mcpu=ev56"
 
 # CPU Support
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
@@ -32,13 +38,19 @@ file-system	NFS		# Sun NFS-compatible file system client
 file-system	PROCFS		# /proc file system
 file-system	KERNFS		# /kern file system
 file-system	FDESC		# /dev/fd file system
+#file-system	CODA		# CODA file system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	SOFTDEP		# FFS soft dependencies
 options 	NFS_BOOT_DHCP	# use DHCP for NFS root
 
 # Networking options
 options 	INET		# Internet protocol suite
+options 	INET6		# IPv6
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security encryption support
+#options 	IPSEC_DEBUG	# IP security debugging
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43
@@ -50,6 +62,14 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+
+options 	COMPAT_OSF1	# OSF/1 binary compatibility
+
+# System V-like message queues
+options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
 
 # System V-like shared memory
 options 	SYSVSHM
@@ -88,18 +108,32 @@ bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
+ex*	at	pci? dev ? function ?		# 3COM 3c90xB Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10/100B (unt.)
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+ne*	at	pci? dev ? function ?		# NE2000 PCI clones
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+vr*	at	pci? dev ? function ?		# VIA Rhine Ethernet
+options TLP_MATCH_21040
+options TLP_MATCH_21041
+options TLP_MATCH_21140
+options TLP_MATCH_21142
+tlp0	at	pci? dev 6 function 0
+tlp1	at	pci? dev 8 function 0
+tlp2	at	pci? dev 11 function 0
+tlp3	at	pci? dev 12 function 0
+tlp*	at	pci? dev ? function ?		# DECchip 21x4x Ethernet
+sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
+sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 
 # ISA/EISA bus support
 isa*	at	pceb?
@@ -118,11 +152,11 @@ pcppi*	at	isa? port ?			# PC prog. periph. interface
 spkr*	at	pcppi?				# PC speaker (IBM BASIC'ish)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
-fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #audio*	at	wss?
 
@@ -130,10 +164,15 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 isapnp*	at	isa?
 
 # MII/PHY support
+exphy*	at	mii? phy ?
 inphy*	at	mii? phy ?
 nsphy*	at	mii? phy ?
+icsphy*	at	mii? phy ?
+lxtphy*	at	mii? phy ?
+sqphy*	at	mii? phy ?
 qsphy*	at	mii? phy ?
 tlphy*	at	mii? phy ?
+ukphy*	at	mii? phy ?
 
 # SCSI bus support
 scsibus* at	ahc?
@@ -173,3 +212,7 @@ pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	pty		64
 pseudo-device	vnd		4
+#pseudo-device	vcoda		4
+pseudo-device	wsmux		4
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
