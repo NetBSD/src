@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.8 1997/06/08 06:00:06 lukem Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.9 1997/07/14 01:49:25 mikel Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ If no
 .Sy domain
 entry is present, the domain is determined
 from the local host name returned by
-.Xr gethostname 2 ;
+.Xr gethostname 3 ;
 the domain part is taken to be everything after the first `.'.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
