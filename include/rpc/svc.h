@@ -34,8 +34,9 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#ifndef __SVC_HEADER__
-#define __SVC_HEADER__
+#ifndef _RPC_SVC_H
+#define _RPC_SVC_H
+#include <sys/cdefs.h>
 
 /*
  * This interface must manage two items concerning remote procedure calling:
@@ -153,7 +154,9 @@ struct svc_req {
  *	void (*dispatch)();
  *	int protocol;  /* like TCP or UDP, zero means do not register 
  */
-extern bool_t	svc_register();
+__BEGIN_DECLS
+extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long, void (*)(), int));
+__END_DECLS
 
 /*
  * Service un-registration
@@ -162,7 +165,9 @@ extern bool_t	svc_register();
  *	u_long prog;
  *	u_long vers;
  */
-extern void	svc_unregister();
+__BEGIN_DECLS
+extern void	svc_unregister __P((u_long, u_long));
+__END_DECLS
 
 /*
  * Transport registration.
@@ -170,7 +175,9 @@ extern void	svc_unregister();
  * xprt_register(xprt)
  *	SVCXPRT *xprt;
  */
-extern void	xprt_register();
+__BEGIN_DECLS
+extern void	xprt_register	__P((SVCXPRT *));
+__END_DECLS
 
 /*
  * Transport un-register
@@ -178,7 +185,9 @@ extern void	xprt_register();
  * xprt_unregister(xprt)
  *	SVCXPRT *xprt;
  */
-extern void	xprt_unregister();
+__BEGIN_DECLS
+extern void	xprt_unregister	__P((SVCXPRT *));
+__END_DECLS
 
 
 
@@ -209,14 +218,16 @@ extern void	xprt_unregister();
  * deadlock the caller and server processes!
  */
 
-extern bool_t	svc_sendreply();
-extern void	svcerr_decode();
-extern void	svcerr_weakauth();
-extern void	svcerr_noproc();
-extern void	svcerr_progvers();
-extern void	svcerr_auth();
-extern void	svcerr_noprog();
-extern void	svcerr_systemerr();
+__BEGIN_DECLS
+extern bool_t	svc_sendreply	__P((SVCXPRT *, xdrproc_t, char *));
+extern void	svcerr_decode	__P((SVCXPRT *));
+extern void	svcerr_weakauth	__P((SVCXPRT *));
+extern void	svcerr_noproc	__P((SVCXPRT *));
+extern void	svcerr_progvers	__P((SVCXPRT *, u_long, u_long));
+extern void	svcerr_auth	__P((SVCXPRT *, enum auth_stat));
+extern void	svcerr_noprog	__P((SVCXPRT *));
+extern void	svcerr_systemerr __P((SVCXPRT *));
+__END_DECLS
     
 /*
  * Lowest level dispatching -OR- who owns this process anyway.
@@ -246,9 +257,11 @@ extern int svc_fds;
  */
 extern void rpctest_service();
 
-extern void	svc_getreq();
-extern void	svc_getreqset();	/* takes fdset instead of int */
-extern void	svc_run(); 	 /* never returns */
+__BEGIN_DECLS
+extern void	svc_getreq	__P((int));
+extern void	svc_getreqset	__P((fd_set *));
+extern void	svc_run		__P((void));
+__END_DECLS
 
 /*
  * Socket to use on svcxxx_create call to get default socket
@@ -262,19 +275,25 @@ extern void	svc_run(); 	 /* never returns */
 /*
  * Memory based rpc for testing and timing.
  */
-extern SVCXPRT *svcraw_create();
+__BEGIN_DECLS
+extern SVCXPRT *svcraw_create __P((void));
+__END_DECLS
+
 
 /*
  * Udp based rpc.
  */
-extern SVCXPRT *svcudp_create();
-extern SVCXPRT *svcudp_bufcreate();
+__BEGIN_DECLS
+extern SVCXPRT *svcudp_create __P((int));
+extern SVCXPRT *svcudp_bufcreate __P((int, u_int, u_int));
+__END_DECLS
+
 
 /*
  * Tcp based rpc.
  */
-extern SVCXPRT *svctcp_create();
+__BEGIN_DECLS
+extern SVCXPRT *svctcp_create __P((int, u_int, u_int));
+__END_DECLS
 
-
-
-#endif !__SVC_HEADER__
+#endif /* !_RPC_SVC_H */

@@ -35,13 +35,15 @@
  * Copyright (C) 1986, Sun Microsystems, Inc.
  */
 
+#ifndef _RPC_PMAPRMT_H
+#define _RPC_PMAPRMT_H
+#include <sys/cdefs.h>
+
 struct rmtcallargs {
 	u_long prog, vers, proc, arglen;
 	caddr_t args_ptr;
 	xdrproc_t xdr_args;
 };
-
-bool_t xdr_rmtcall_args();
 
 struct rmtcallres {
 	u_long *port_ptr;
@@ -50,4 +52,9 @@ struct rmtcallres {
 	xdrproc_t xdr_results;
 };
 
-bool_t xdr_rmtcallres();
+__BEGIN_DECLS
+extern bool_t xdr_rmtcall_args	__P((XDR *, struct rmtcallargs *));
+extern bool_t xdr_rmtcallres	__P((XDR *, struct rmtcallres *));
+__END_DECLS
+
+#endif /* !_RPC_PMAPRMT_H */
