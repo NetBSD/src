@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.31 1997/03/27 22:50:12 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.32 1997/04/03 02:07:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.31 1997/03/27 22:50:12 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.32 1997/04/03 02:07:59 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ static char rcsid[] = "$NetBSD: ifconfig.c,v 1.31 1997/03/27 22:50:12 thorpej Ex
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <netatalk/at.h>
 
 #define	NSIP
 #include <netns/ns.h>
@@ -111,6 +113,8 @@ struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
 struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
+struct	netrange	at_nr;		/* AppleTalk net range */
+
 char	name[30];
 int	flags, metric, setaddr, setipdst, doalias;
 int	clearaddr, s;
@@ -124,22 +128,27 @@ void 	notrailers __P((char *, int));
 void 	setifaddr __P((char *, int));
 void 	setifdstaddr __P((char *, int));
 void 	setifflags __P((char *, int));
-void 	setifbroadaddr __P((char *));
-void 	setifipdst __P((char *));
-void 	setifmetric __P((char *));
-void 	setifnetmask __P((char *));
-void 	setnsellength __P((char *));
-void 	setsnpaoffset __P((char *));
-void	setmedia __P((char *));
-void	setmediaopt __P((char *));
-void	unsetmediaopt __P((char *));
+void 	setifbroadaddr __P((char *, int));
+void 	setifipdst __P((char *, int));
+void 	setifmetric __P((char *, int));
+void 	setifnetmask __P((char *, int));
+void 	setnsellength __P((char *, int));
+void 	setsnpaoffset __P((char *, int));
+void	setatrange __P((char *, int));
+void	setatphase __P((char *, int));
+void	checkatrange __P ((struct sockaddr_at *));
+void	setmedia __P((char *, int));
+void	setmediaopt __P((char *, int));
+void	unsetmediaopt __P((char *, int));
+void	fixnsel __P((struct sockaddr_iso *));
+int	main __P((int, char *[]));
 
 #define	NEXTARG		0xffffff
 
 struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
-	void	(*c_func)();
+	void	(*c_func) __P((char *, int));
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
@@ -162,6 +171,8 @@ struct	cmd {
 	{ "broadcast",	NEXTARG,	setifbroadaddr },
 	{ "ipdst",	NEXTARG,	setifipdst },
 #ifndef INET_ONLY
+	{ "range",	NEXTARG,	setatrange },
+	{ "phase",	NEXTARG,	setatphase },
 	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
 	{ "nsellength",	NEXTARG,	setnsellength },
 #endif	/* INET_ONLY */
@@ -178,13 +189,13 @@ struct	cmd {
 	{ 0,		0,		setifdstaddr },
 };
 
-void 	adjust_nsellength();
+void 	adjust_nsellength __P((void));
 int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
 void	printall __P((void));
 void 	printb __P((char *, unsigned short, char *));
 void 	status __P((const u_int8_t *, int));
-void 	usage();
+void 	usage __P((void));
 
 void	domediaopt __P((char *, int));
 int	get_media_subtype __P((int, char *));
@@ -198,6 +209,8 @@ void	print_media_word __P((int));
  */
 void	in_status __P((int));
 void 	in_getaddr __P((char *, int));
+void	at_status __P((int));
+void	at_getaddr __P((char *, int));
 void 	xns_status __P((int));
 void 	xns_getaddr __P((char *, int));
 void 	iso_status __P((int));
@@ -207,8 +220,8 @@ void 	iso_getaddr __P((char *, int));
 struct afswtch {
 	char *af_name;
 	short af_af;
-	void (*af_status)();
-	void (*af_getaddr)();
+	void (*af_status) __P((int));
+	void (*af_getaddr) __P((char *, int));
 	u_long af_difaddr;
 	u_long af_aifaddr;
 	caddr_t af_ridreq;
@@ -218,6 +231,8 @@ struct afswtch {
 	{ "inet", AF_INET, in_status, in_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 #ifndef INET_ONLY	/* small version, for boot media */
+	{ "atalk", AF_APPLETALK, at_status, at_getaddr,
+	     SIOCDIFADDR, SIOCAIFADDR, C(addreq), C(addreq) },
 	{ "ns", AF_NS, xns_status, xns_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 	{ "iso", AF_ISO, iso_status, iso_getaddr,
@@ -277,10 +292,11 @@ main(argc, argv)
 			afp = lookup_af(argv[0]);
 			if (afp == NULL)
 				usage();
-		} else
-			afp = afs;
-		af = ifr.ifr_addr.sa_family = afp->af_af;
-
+		}
+		if (afp)
+			af = ifr.ifr_addr.sa_family = afp->af_af;
+		else
+			af = ifr.ifr_addr.sa_family = afs[0].af_af;
 		printall();
 		exit(0);
 	}
@@ -288,7 +304,7 @@ main(argc, argv)
 	/* Make sure there's an interface name. */
 	if (argc < 1)
 		usage();
-	strncpy(name, argv[0], sizeof(name));
+	(void) strncpy(name, argv[0], sizeof(name));
 	argc--; argv++;
 
 	/* Check for address family. */
@@ -306,7 +322,7 @@ main(argc, argv)
 	af = ifr.ifr_addr.sa_family = afp->af_af;
 
 	/* Get information about the interface. */
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (getinfo(&ifr) < 0)
 		exit(1);
 
@@ -330,7 +346,7 @@ main(argc, argv)
 				if (argc < 2)
 					errx(1, "'%s' requires argument",
 					    p->c_name);
-				(*p->c_func)(argv[1]);
+				(*p->c_func)(argv[1], 0);
 				argc--, argv++;
 			} else
 				(*p->c_func)(argv[0], p->c_parameter);
@@ -342,6 +358,10 @@ main(argc, argv)
 
 	if (af == AF_ISO)
 		adjust_nsellength();
+
+	if (af == AF_APPLETALK)
+		checkatrange((struct sockaddr_at *) &addreq.ifra_addr);
+
 	if (setipdst && af==AF_NS) {
 		struct nsip_req rq;
 		int size = sizeof(rq);
@@ -357,7 +377,7 @@ main(argc, argv)
 
 	if (clearaddr) {
 		int ret;
-		strncpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
+		(void) strncpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
 		if ((ret = ioctl(s, afp->af_difaddr, afp->af_ridreq)) < 0) {
 			if (errno == EADDRNOTAVAIL && (doalias >= 0)) {
 				/* means no previous address for interface */
@@ -366,7 +386,7 @@ main(argc, argv)
 		}
 	}
 	if (newaddr) {
-		strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
+		(void) strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
 	}
@@ -411,12 +431,12 @@ getinfo(ifr)
 	if (s < 0)
 		err(1, "socket");
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-		warn("SIOCGIFFLAGS");
+		warn("SIOCGIFFLAGS %s", ifr->ifr_name);
 		return (-1);
 	}
 	flags = ifr->ifr_flags;
 	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
-		warn("SIOCGIFMETRIC");
+		warn("SIOCGIFMETRIC %s", ifr->ifr_name);
 		metric = 0;
 	} else
 		metric = ifr->ifr_metric;
@@ -452,7 +472,7 @@ printall()
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
 			     sizeof(ifr->ifr_name)))
 			continue;
-		strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
+		(void) strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
 		ifreq = *ifr;
 
 		/*
@@ -501,22 +521,25 @@ setifaddr(addr, param)
 }
 
 void
-setifnetmask(addr)
+setifnetmask(addr, d)
 	char *addr;
+	int d;
 {
 	(*afp->af_getaddr)(addr, MASK);
 }
 
 void
-setifbroadaddr(addr)
+setifbroadaddr(addr, d)
 	char *addr;
+	int d;
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
 void
-setifipdst(addr)
+setifipdst(addr, d)
 	char *addr;
+	int d;
 {
 	in_getaddr(addr, DSTADDR);
 	setipdst++;
@@ -532,9 +555,8 @@ notealias(addr, param)
 	int param;
 {
 	if (setaddr && doalias == 0 && param < 0)
-		memcpy(rqtosa(af_ridreq),
-		       rqtosa(af_addreq),
-		       rqtosa(af_addreq)->sa_len);
+		(void) memcpy(rqtosa(af_ridreq), rqtosa(af_addreq),
+		    rqtosa(af_addreq)->sa_len);
 	doalias = param;
 	if (param < 0) {
 		clearaddr = 1;
@@ -568,7 +590,7 @@ setifflags(vname, value)
 {
  	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		err(1, "SIOCGIFFLAGS");
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
  	flags = ifr.ifr_flags;
 
 	if (value < 0) {
@@ -582,24 +604,26 @@ setifflags(vname, value)
 }
 
 void
-setifmetric(val)
+setifmetric(val, d)
 	char *val;
+	int d;
 {
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	ifr.ifr_metric = atoi(val);
 	if (ioctl(s, SIOCSIFMETRIC, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMETRIC");
 }
 
 void
-setmedia(val)
+setmedia(val, d)
 	char *val;
+	int d;
 {
 	struct ifmediareq ifmr;
 	int first_type, subtype;
 
-	memset(&ifmr, 0, sizeof(ifmr));
-	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 	ifmr.ifm_count = 1;
 	ifmr.ifm_ulist = &first_type;
@@ -635,15 +659,17 @@ setmedia(val)
 }
 
 void
-setmediaopt(val)
+setmediaopt(val, d)
 	char *val;
+	int d;
 {
 
 	domediaopt(val, 0);
 }
 
 void
-unsetmediaopt(val)
+unsetmediaopt(val, d)
+	int d;
 	char *val;
 {
 
@@ -658,8 +684,8 @@ domediaopt(val, clear)
 	struct ifmediareq ifmr;
 	int *mwords, options;
 
-	memset(&ifmr, 0, sizeof(ifmr));
-	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 	/*
 	 * We must go through the motions of reading all
@@ -830,7 +856,7 @@ get_media_options(type, val)
 	struct ifmedia_description *desc;
 	struct ifmedia_type_to_subtype *ttos;
 	char *optlist;
-	int option, i, rval = 0;
+	int option = 0, i, rval = 0;
 
 	/* We muck with the string, so copy it. */
 	optlist = strdup(val);
@@ -969,8 +995,8 @@ status(ap, alen)
 		putchar('\n');
 	}
 
-	memset(&ifmr, 0, sizeof(ifmr));
-	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	(void) memset(&ifmr, 0, sizeof(ifmr));
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
 	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
 		/*
@@ -1048,7 +1074,6 @@ in_status(force)
 	int force;
 {
 	struct sockaddr_in *sin;
-	char *inet_ntoa();
 
 	getsock(AF_INET);
 	if (s < 0) {
@@ -1056,35 +1081,36 @@ in_status(force)
 			return;
 		err(1, "socket");
 	}
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		} else
 			warn("SIOCGIFADDR");
 	}
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFNETMASK");
-		memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+		(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 	} else
 		netmask.sin_addr =
 		    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
 	if (flags & IFF_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+			    (void) memset(&ifr.ifr_addr, 0,
+				sizeof(ifr.ifr_addr));
 			else
 			    warn("SIOCGIFDSTADDR");
 		}
-		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
 		printf("--> %s ", inet_ntoa(sin->sin_addr));
 	}
@@ -1092,11 +1118,12 @@ in_status(force)
 	if (flags & IFF_BROADCAST) {
 		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+				(void) memset(&ifr.ifr_addr, 0,
+				    sizeof(ifr.ifr_addr));
 			else
 			    warn("SIOCGIFBRDADDR");
 		}
-		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_addr;
 		if (sin->sin_addr.s_addr != 0)
 			printf("broadcast %s", inet_ntoa(sin->sin_addr));
@@ -1105,6 +1132,63 @@ in_status(force)
 }
 
 #ifndef INET_ONLY
+
+void
+at_status(force)
+	int force;
+{
+	struct sockaddr_at *sat, null_sat;
+	struct netrange *nr;
+
+	getsock(AF_APPLETALK);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
+			return;
+		err(1, "socket");
+	}
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
+			if (!force)
+				return;
+			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+		} else
+			warn("SIOCGIFADDR");
+	}
+	(void) strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+	sat = (struct sockaddr_at *)&ifr.ifr_addr;
+
+	(void) memset(&null_sat, 0, sizeof(null_sat));
+
+	nr = (struct netrange *) &sat->sat_zero;
+	printf("\tatalk %d.%d range %d-%d phase %d",
+	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
+	if (flags & IFF_POINTOPOINT) {
+		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
+			if (errno == EADDRNOTAVAIL)
+			    (void) memset(&ifr.ifr_addr, 0,
+				sizeof(ifr.ifr_addr));
+			else
+			    warn("SIOCGIFDSTADDR");
+		}
+		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+		sat = (struct sockaddr_at *)&ifr.ifr_dstaddr;
+		if (!sat)
+			sat = &null_sat;
+		printf("--> %d.%d",
+		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
+	}
+	if (flags & IFF_BROADCAST) {
+		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
+		sat = (struct sockaddr_at *)&ifr.ifr_broadaddr;
+		if (sat)
+			printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
+			    sat->sat_addr.s_node);
+	}
+	putchar('\n');
+}
 
 void
 xns_status(force)
@@ -1118,8 +1202,8 @@ xns_status(force)
 			return;
 		err(1, "socket");
 	}
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
@@ -1128,7 +1212,7 @@ xns_status(force)
 		} else
 			warn("SIOCGIFADDR");
 	}
-	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+	(void) strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	sns = (struct sockaddr_ns *)&ifr.ifr_addr;
 	printf("\tns %s ", ns_ntoa(sns->sns_addr));
 	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
@@ -1138,7 +1222,7 @@ xns_status(force)
 			else
 			    warn("SIOCGIFDSTADDR");
 		}
-		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sns = (struct sockaddr_ns *)&ifr.ifr_dstaddr;
 		printf("--> %s ", ns_ntoa(sns->sns_addr));
 	}
@@ -1157,17 +1241,17 @@ iso_status(force)
 			return;
 		err(1, "socket");
 	}
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		} else
 			warn("SIOCGIFADDR");
 	}
-	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+	(void) strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	siso = (struct sockaddr_iso *)&ifr.ifr_addr;
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
@@ -1185,7 +1269,7 @@ iso_status(force)
 			else
 			    warn("SIOCGIFDSTADDR");
 		}
-		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
+		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		siso = (struct sockaddr_iso *)&ifr.ifr_addr;
 		printf("--> %s ", iso_ntoa(&siso->siso_addr));
 	}
@@ -1193,8 +1277,6 @@ iso_status(force)
 }
 
 #endif	/* INET_ONLY */
-
-struct	in_addr inet_makeaddr();
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
 struct sockaddr_in *sintab[] = {
@@ -1215,9 +1297,9 @@ in_getaddr(s, which)
 		sin->sin_family = AF_INET;
 
 	if (inet_aton(s, &sin->sin_addr) == 0) {
-		if (hp = gethostbyname(s))
-			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-		else if (np = getnetbyname(s))
+		if ((hp = gethostbyname(s)) != NULL)
+			(void) memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
+		else if ((np = getnetbyname(s)) != NULL)
 			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
 		else
 			errx(1, "%s: bad value", s);
@@ -1243,7 +1325,7 @@ printb(s, v, bits)
 	bits++;
 	if (bits) {
 		putchar('<');
-		while (i = *bits++) {
+		while ((i = *bits++) != 0) {
 			if (v & (1 << (i-1))) {
 				if (any)
 					putchar(',');
@@ -1260,6 +1342,73 @@ printb(s, v, bits)
 
 #ifndef INET_ONLY
 
+void
+at_getaddr(addr, which)
+	char *addr;
+	int which;
+{
+	struct sockaddr_at *sat = (struct sockaddr_at *) &addreq.ifra_addr;
+	u_int net, node;
+
+	sat->sat_family = AF_APPLETALK;
+	sat->sat_len = sizeof(*sat);
+	if (which == MASK)
+		errx(1, "AppleTalk does not use netmasks\n");
+	if (sscanf(addr, "%u.%u", &net, &node) != 2
+	    || net == 0 || net > 0xffff || node == 0 || node > 0xfe)
+		errx(1, "%s: illegal address", addr);
+	sat->sat_addr.s_net = htons(net);
+	sat->sat_addr.s_node = node;
+}
+
+void
+setatrange(range, d)
+	char *range;
+	int d;
+{
+	u_short	first = 123, last = 123;
+
+	if (sscanf(range, "%hu-%hu", &first, &last) != 2
+	    || first == 0 || first > 0xffff
+	    || last == 0 || last > 0xffff || first > last)
+		errx(1, "%s: illegal net range: %u-%u", range, first, last);
+	at_nr.nr_firstnet = htons(first);
+	at_nr.nr_lastnet = htons(last);
+}
+
+void
+setatphase(phase, d)
+	char *phase;
+	int d;
+{
+	if (!strcmp(phase, "1"))
+		at_nr.nr_phase = 1;
+	else if (!strcmp(phase, "2"))
+		at_nr.nr_phase = 2;
+	else
+		errx(1, "%s: illegal phase", phase);
+}
+
+void
+checkatrange(sat)
+	struct sockaddr_at *sat;
+{
+	if (at_nr.nr_phase == 0)
+		at_nr.nr_phase = 2;	/* Default phase 2 */
+	if (at_nr.nr_firstnet == 0)
+		at_nr.nr_firstnet =	/* Default range of one */
+		at_nr.nr_lastnet = sat->sat_addr.s_net;
+	printf("\tatalk %d.%d range %d-%d phase %d\n",
+	ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+	ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
+	if ((u_short) ntohs(at_nr.nr_firstnet) >
+			(u_short) ntohs(sat->sat_addr.s_net)
+		    || (u_short) ntohs(at_nr.nr_lastnet) <
+			(u_short) ntohs(sat->sat_addr.s_net))
+		errx(1, "AppleTalk address is not in range");
+	*((struct netrange *) &sat->sat_zero) = at_nr;
+}
+
 #define SNS(x) ((struct sockaddr_ns *) &(x))
 struct sockaddr_ns *snstab[] = {
 SNS(ridreq.ifr_addr), SNS(addreq.ifra_addr),
@@ -1271,7 +1420,6 @@ xns_getaddr(addr, which)
 	int which;
 {
 	struct sockaddr_ns *sns = snstab[which];
-	struct ns_addr ns_addr();
 
 	sns->sns_family = AF_NS;
 	sns->sns_len = sizeof(*sns);
@@ -1291,7 +1439,6 @@ iso_getaddr(addr, which)
 	int which;
 {
 	register struct sockaddr_iso *siso = sisotab[which];
-	struct iso_addr *iso_addr();
 	siso->siso_addr = *iso_addr(addr);
 
 	if (which == MASK) {
@@ -1304,15 +1451,17 @@ iso_getaddr(addr, which)
 }
 
 void
-setsnpaoffset(val)
+setsnpaoffset(val, d)
 	char *val;
+	int d;
 {
 	iso_addreq.ifra_snpaoffset = atoi(val);
 }
 
 void
-setnsellength(val)
+setnsellength(val, d)
 	char *val;
+	int d;
 {
 	nsellength = atoi(val);
 	if (nsellength < 0)
