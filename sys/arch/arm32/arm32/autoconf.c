@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1998/10/05 01:17:55 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1998/10/09 00:17:20 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -66,11 +66,6 @@ extern void	startrtclock __P((void));
 #include <machine/ofw.h>
 #endif
 
-#include "wdc.h"
-#include "fdc.h"
-#include "md.h"
-#include "sd.h"
-#include "cd.h"
 #include "podulebus.h"
 
 static	struct device *booted_device;
