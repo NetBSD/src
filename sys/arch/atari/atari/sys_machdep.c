@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 1997/05/19 10:14:54 veego Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 1997/06/04 14:33:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -51,6 +51,9 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+
+#include <m68k/cpu.h>
+#include <m68k/cacheops.h>
 
 #ifdef TRACE
 int	nvualarm;

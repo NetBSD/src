@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.25 1997/04/06 12:42:44 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.26 1997/06/04 14:34:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -40,6 +40,8 @@
 #include <scsi/scsiconf.h>
 
 #include <m68k/asm_single.h>
+#include <m68k/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <atari/atari/stalloc.h>
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.39 1997/05/25 12:41:56 leo Exp $
+#	$NetBSD: files.atari,v 1.40 1997/06/04 14:34:02 leo Exp $
 
 maxpartitions 16
 
@@ -164,6 +164,7 @@ file	arch/atari/atari/db_memrw.c		ddb
 file	arch/atari/atari/fpu.c
 file	arch/atari/dev/ym2149.c
 file	arch/atari/atari/intr.c
+file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/sig_machdep.c
 
 # Emulation modules
