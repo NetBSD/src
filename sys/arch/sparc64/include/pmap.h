@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1999/12/30 16:21:25 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2000/09/11 23:27:22 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,7 +118,8 @@ struct pmap {
 	 * !!! Only touch this through pseg_get() and pseg_set() !!!
 	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
-	int64_t *pm_segs;  
+	int64_t *pm_segs;
+	struct simplelock pm_lock;
 };
 
 /*
