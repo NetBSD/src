@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.16 2001/02/02 06:00:38 marcus Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.16 2001/02/02 06:00:38 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -146,7 +146,7 @@ static struct font *list, builtin_fonts[] = {
 	{ NULL, NULL, &sony12x24, 0, 10, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_OMRON12x20
-	{ NULL, NULL, &omron12x20, 0, 10, WSFONT_STATIC | WSFONT_BUILTIN },
+	{ NULL, NULL, &omron12x20, 0, 11, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ NULL, NULL, NULL, 0 },
 };
