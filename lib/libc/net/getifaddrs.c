@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.9 2002/08/09 04:26:07 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.10 2002/08/09 04:29:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.9 2002/08/09 04:26:07 itojun Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.10 2002/08/09 04:29:29 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -193,8 +193,8 @@ getifaddrs(struct ifaddrs **pif)
 				names += dl->sdl_nlen + 1;
 
 				ift->ifa_addr = (struct sockaddr *)(void *)data;
-				memcpy(data, dl,
-				    ((struct sockaddr *)(void *)dl)->sa_len);
+				memcpy(data, dl, (size_t)((struct sockaddr *)
+				    (void *)dl)->sa_len);
 				data += SA_RLEN((struct sockaddr *)(void *)dl);
 
 				/* ifm_data needs to be aligned */
