@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1995/01/18 17:16:54 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 1995/01/24 06:03:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -220,6 +220,7 @@ trap(type, code, v, frame)
 
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
+		(void)splhigh();	/* XXX - return will restore it */
 		if (kdb_trap(type, &frame))
 			return;
 	}
