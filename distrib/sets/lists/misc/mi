@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.96 2004/01/11 09:53:28 lukem Exp $
+# $NetBSD: mi,v 1.97 2004/01/11 23:42:27 lukem Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -175,99 +175,99 @@
 ./usr/share/doc/html/postfix/uce.html		misc-postfix-htmldoc	postfix
 ./usr/share/doc/html/postfix/virtual.5.html	misc-postfix-htmldoc	postfix
 ./usr/share/doc/html/postfix/virtual.8.html	misc-postfix-htmldoc	postfix
-./usr/share/doc/psd/00.contents			misc-psd-doc
-./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.1.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.2.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.3.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.4.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.5.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.6.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/1.7.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.0.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.1.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.2.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.3.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.4.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/2.5.t		misc-psd-doc
-./usr/share/doc/psd/05.sysman/Makefile		misc-psd-doc
-./usr/share/doc/psd/05.sysman/a.t		misc-psd-doc
-./usr/share/doc/psd/12.make/Makefile		misc-psd-doc
-./usr/share/doc/psd/12.make/tutorial.ms		misc-psd-doc
-./usr/share/doc/psd/18.gprof/Makefile		misc-psd-doc
-./usr/share/doc/psd/18.gprof/abstract.me	misc-psd-doc
-./usr/share/doc/psd/18.gprof/gathering.me	misc-psd-doc
-./usr/share/doc/psd/18.gprof/header.me		misc-psd-doc
-./usr/share/doc/psd/18.gprof/intro.me		misc-psd-doc
-./usr/share/doc/psd/18.gprof/postp.me		misc-psd-doc
-./usr/share/doc/psd/18.gprof/postp1.pic		misc-psd-doc
-./usr/share/doc/psd/18.gprof/postp2.pic		misc-psd-doc
-./usr/share/doc/psd/18.gprof/postp3.pic		misc-psd-doc
-./usr/share/doc/psd/18.gprof/pres1.pic		misc-psd-doc
-./usr/share/doc/psd/18.gprof/pres2.pic		misc-psd-doc
-./usr/share/doc/psd/18.gprof/present.me		misc-psd-doc
-./usr/share/doc/psd/18.gprof/profiling.me	misc-psd-doc
-./usr/share/doc/psd/18.gprof/refs.me		misc-psd-doc
-./usr/share/doc/psd/19.curses/Makefile		misc-psd-doc
-./usr/share/doc/psd/19.curses/Master		misc-psd-doc
-./usr/share/doc/psd/19.curses/appen.A		misc-psd-doc
-./usr/share/doc/psd/19.curses/appen.B		misc-psd-doc
-./usr/share/doc/psd/19.curses/appen.C		misc-psd-doc
-./usr/share/doc/psd/19.curses/c_macros		misc-psd-doc
-./usr/share/doc/psd/19.curses/doc.I		misc-psd-doc
-./usr/share/doc/psd/19.curses/doc.II		misc-psd-doc
-./usr/share/doc/psd/19.curses/doc.III		misc-psd-doc
-./usr/share/doc/psd/19.curses/doc.IV		misc-psd-doc
-./usr/share/doc/psd/19.curses/ex1.c		misc-psd-doc
-./usr/share/doc/psd/19.curses/ex2.c		misc-psd-doc
-./usr/share/doc/psd/19.curses/fns.doc		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.0		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.1		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.2		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.3		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.4		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.5		misc-psd-doc
-./usr/share/doc/psd/19.curses/intro.6		misc-psd-doc
-./usr/share/doc/psd/19.curses/life.c		misc-psd-doc
-./usr/share/doc/psd/19.curses/macros		misc-psd-doc
-./usr/share/doc/psd/19.curses/twinkle1.c	misc-psd-doc
-./usr/share/doc/psd/19.curses/twinkle2.c	misc-psd-doc
-./usr/share/doc/psd/19.curses/win_st.c		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/Makefile		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/dgramread.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/dgramsend.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/fig2.pic		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/fig3.pic		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/fig8.pic		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/pipe.c		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/socketpair.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/strchkread.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/streamread.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/streamwrite.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/tutor.me		misc-psd-doc
-./usr/share/doc/psd/20.ipctut/udgramread.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/udgramsend.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/ustreamread.c	misc-psd-doc
-./usr/share/doc/psd/20.ipctut/ustreamwrite.c	misc-psd-doc
-./usr/share/doc/psd/21.ipc/0.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/1.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/2.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/3.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/4.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/5.t			misc-psd-doc
-./usr/share/doc/psd/21.ipc/Makefile		misc-psd-doc
-./usr/share/doc/psd/Makefile			misc-psd-doc
-./usr/share/doc/psd/Title			misc-psd-doc
-./usr/share/doc/smm/00.contents			misc-smm-doc
-./usr/share/doc/smm/01.setup/0.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/1.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/2.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/3.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/4.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/5.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/6.t		misc-smm-doc
-./usr/share/doc/smm/01.setup/Makefile		misc-smm-doc
+./usr/share/doc/psd/00.contents			misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/0.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.0.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.1.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.2.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.3.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.4.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.5.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.6.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/1.7.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.0.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.1.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.2.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.3.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.4.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/2.5.t		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/05.sysman/a.t		misc-psd-doc		doc
+./usr/share/doc/psd/12.make/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/12.make/tutorial.ms		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/abstract.me	misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/gathering.me	misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/header.me		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/intro.me		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/postp.me		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/postp1.pic		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/postp2.pic		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/postp3.pic		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/pres1.pic		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/pres2.pic		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/present.me		misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/profiling.me	misc-psd-doc		doc
+./usr/share/doc/psd/18.gprof/refs.me		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/Master		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/appen.A		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/appen.B		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/appen.C		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/c_macros		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/doc.I		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/doc.II		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/doc.III		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/doc.IV		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/ex1.c		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/ex2.c		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/fns.doc		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.0		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.1		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.2		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.3		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.4		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.5		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/intro.6		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/life.c		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/macros		misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/twinkle1.c	misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/twinkle2.c	misc-psd-doc		doc
+./usr/share/doc/psd/19.curses/win_st.c		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/dgramread.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/dgramsend.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/fig2.pic		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/fig3.pic		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/fig8.pic		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/pipe.c		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/socketpair.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/strchkread.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/streamread.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/streamwrite.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/tutor.me		misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/udgramread.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/udgramsend.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/ustreamread.c	misc-psd-doc		doc
+./usr/share/doc/psd/20.ipctut/ustreamwrite.c	misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/0.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/1.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/2.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/3.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/4.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/5.t			misc-psd-doc		doc
+./usr/share/doc/psd/21.ipc/Makefile		misc-psd-doc		doc
+./usr/share/doc/psd/Makefile			misc-psd-doc		doc
+./usr/share/doc/psd/Title			misc-psd-doc		doc
+./usr/share/doc/smm/00.contents			misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/0.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/1.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/2.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/3.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/4.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/5.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/6.t		misc-smm-doc		doc
+./usr/share/doc/smm/01.setup/Makefile		misc-smm-doc		doc
 ./usr/share/doc/smm/03.fsck			misc-smm-doc		obsolete
 ./usr/share/doc/smm/03.fsck/0.t			misc-smm-doc		obsolete
 ./usr/share/doc/smm/03.fsck/1.t			misc-smm-doc		obsolete
@@ -275,134 +275,134 @@
 ./usr/share/doc/smm/03.fsck/3.t			misc-smm-doc		obsolete
 ./usr/share/doc/smm/03.fsck/4.t			misc-smm-doc		obsolete
 ./usr/share/doc/smm/03.fsck/Makefile		misc-smm-doc		obsolete
-./usr/share/doc/smm/03.fsck_ffs/0.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/1.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/2.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/3.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/4.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/Makefile	misc-smm-doc
-./usr/share/doc/smm/04.quotas/Makefile		misc-smm-doc
-./usr/share/doc/smm/04.quotas/quotas.ms		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/0.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/1.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/2.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/3.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/4.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/5.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/6.t		misc-smm-doc
-./usr/share/doc/smm/05.fastfs/Makefile		misc-smm-doc
-./usr/share/doc/smm/06.nfs/0.t			misc-smm-doc
-./usr/share/doc/smm/06.nfs/1.t			misc-smm-doc
-./usr/share/doc/smm/06.nfs/2.t			misc-smm-doc
-./usr/share/doc/smm/06.nfs/Makefile		misc-smm-doc
-./usr/share/doc/smm/06.nfs/ref.t		misc-smm-doc
-./usr/share/doc/smm/07.lpd/0.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/1.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/2.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/3.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/4.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/5.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/6.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/7.t			misc-smm-doc
-./usr/share/doc/smm/07.lpd/Makefile		misc-smm-doc
-./usr/share/doc/smm/08.sendmailop/Makefile	misc-smm-doc		sendmail
-./usr/share/doc/smm/08.sendmailop/op.me		misc-smm-doc		sendmail
+./usr/share/doc/smm/03.fsck_ffs/0.t		misc-smm-doc		doc
+./usr/share/doc/smm/03.fsck_ffs/1.t		misc-smm-doc		doc
+./usr/share/doc/smm/03.fsck_ffs/2.t		misc-smm-doc		doc
+./usr/share/doc/smm/03.fsck_ffs/3.t		misc-smm-doc		doc
+./usr/share/doc/smm/03.fsck_ffs/4.t		misc-smm-doc		doc
+./usr/share/doc/smm/03.fsck_ffs/Makefile	misc-smm-doc		doc
+./usr/share/doc/smm/04.quotas/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/04.quotas/quotas.ms		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/0.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/1.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/2.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/3.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/4.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/5.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/6.t		misc-smm-doc		doc
+./usr/share/doc/smm/05.fastfs/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/06.nfs/0.t			misc-smm-doc		doc
+./usr/share/doc/smm/06.nfs/1.t			misc-smm-doc		doc
+./usr/share/doc/smm/06.nfs/2.t			misc-smm-doc		doc
+./usr/share/doc/smm/06.nfs/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/06.nfs/ref.t		misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/0.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/1.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/2.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/3.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/4.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/5.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/6.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/7.t			misc-smm-doc		doc
+./usr/share/doc/smm/07.lpd/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/08.sendmailop/Makefile	misc-smm-doc		sendmail,doc
+./usr/share/doc/smm/08.sendmailop/op.me		misc-smm-doc		sendmail,doc
 ./usr/share/doc/smm/09.sendmail/Makefile	misc-smm-doc		obsolete
 ./usr/share/doc/smm/09.sendmail/intro.me	misc-smm-doc		obsolete
-./usr/share/doc/smm/10.named/00macs.me		misc-smm-doc
-./usr/share/doc/smm/10.named/00title.me		misc-smm-doc
-./usr/share/doc/smm/10.named/Makefile		misc-smm-doc
-./usr/share/doc/smm/10.named/ack.me		misc-smm-doc
-./usr/share/doc/smm/10.named/build.me		misc-smm-doc
-./usr/share/doc/smm/10.named/files.me		misc-smm-doc
-./usr/share/doc/smm/10.named/intro.me		misc-smm-doc
-./usr/share/doc/smm/10.named/manage.me		misc-smm-doc
-./usr/share/doc/smm/10.named/named.boot.cache	misc-smm-doc
-./usr/share/doc/smm/10.named/named.boot.primary	misc-smm-doc
-./usr/share/doc/smm/10.named/named.boot.secondary	misc-smm-doc
-./usr/share/doc/smm/10.named/named.local	misc-smm-doc
-./usr/share/doc/smm/10.named/ns.me		misc-smm-doc
-./usr/share/doc/smm/10.named/resolv.conf	misc-smm-doc
-./usr/share/doc/smm/10.named/root.cache		misc-smm-doc
-./usr/share/doc/smm/10.named/setup.me		misc-smm-doc
-./usr/share/doc/smm/10.named/types.me		misc-smm-doc
-./usr/share/doc/smm/10.named/ucbhosts		misc-smm-doc
-./usr/share/doc/smm/10.named/ucbhosts.rev	misc-smm-doc
-./usr/share/doc/smm/11.timedop/Makefile		misc-smm-doc
-./usr/share/doc/smm/11.timedop/timed.ms		misc-smm-doc
-./usr/share/doc/smm/12.timed/Makefile		misc-smm-doc
-./usr/share/doc/smm/12.timed/timed.ms		misc-smm-doc
-./usr/share/doc/smm/18.net/0.t			misc-smm-doc
-./usr/share/doc/smm/18.net/1.t			misc-smm-doc
-./usr/share/doc/smm/18.net/2.t			misc-smm-doc
-./usr/share/doc/smm/18.net/3.t			misc-smm-doc
-./usr/share/doc/smm/18.net/4.t			misc-smm-doc
-./usr/share/doc/smm/18.net/5.t			misc-smm-doc
-./usr/share/doc/smm/18.net/6.t			misc-smm-doc
-./usr/share/doc/smm/18.net/7.t			misc-smm-doc
-./usr/share/doc/smm/18.net/8.t			misc-smm-doc
-./usr/share/doc/smm/18.net/9.t			misc-smm-doc
-./usr/share/doc/smm/18.net/Makefile		misc-smm-doc
-./usr/share/doc/smm/18.net/a.t			misc-smm-doc
-./usr/share/doc/smm/18.net/b.t			misc-smm-doc
-./usr/share/doc/smm/18.net/c.t			misc-smm-doc
-./usr/share/doc/smm/18.net/d.t			misc-smm-doc
-./usr/share/doc/smm/18.net/e.t			misc-smm-doc
-./usr/share/doc/smm/18.net/f.t			misc-smm-doc
-./usr/share/doc/smm/Makefile			misc-smm-doc
-./usr/share/doc/smm/Title			misc-smm-doc
-./usr/share/doc/usd/00.contents			misc-usd-doc
-./usr/share/doc/usd/04.csh/Makefile		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.1		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.2		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.3		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.4		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.a		misc-usd-doc
-./usr/share/doc/usd/04.csh/csh.g		misc-usd-doc
-./usr/share/doc/usd/04.csh/tabs			misc-usd-doc
-./usr/share/doc/usd/07.mail/Makefile		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail0.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail1.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail2.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail3.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail4.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail5.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail6.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail7.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail8.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/mail9.nr		misc-usd-doc
-./usr/share/doc/usd/07.mail/maila.nr		misc-usd-doc
-./usr/share/doc/usd/11.edit/Makefile		misc-usd-doc
+./usr/share/doc/smm/10.named/00macs.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/00title.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/ack.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/build.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/files.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/intro.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/manage.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/named.boot.cache	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/named.boot.primary	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/named.boot.secondary	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/named.local	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/ns.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/resolv.conf	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/root.cache		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/setup.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/types.me		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/ucbhosts		misc-smm-doc		doc
+./usr/share/doc/smm/10.named/ucbhosts.rev	misc-smm-doc		doc
+./usr/share/doc/smm/11.timedop/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/11.timedop/timed.ms		misc-smm-doc		doc
+./usr/share/doc/smm/12.timed/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/12.timed/timed.ms		misc-smm-doc		doc
+./usr/share/doc/smm/18.net/0.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/1.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/2.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/3.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/4.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/5.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/6.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/7.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/8.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/9.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/Makefile		misc-smm-doc		doc
+./usr/share/doc/smm/18.net/a.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/b.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/c.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/d.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/e.t			misc-smm-doc		doc
+./usr/share/doc/smm/18.net/f.t			misc-smm-doc		doc
+./usr/share/doc/smm/Makefile			misc-smm-doc		doc
+./usr/share/doc/smm/Title			misc-smm-doc		doc
+./usr/share/doc/usd/00.contents			misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.1		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.2		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.3		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.4		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.a		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/csh.g		misc-usd-doc		doc
+./usr/share/doc/usd/04.csh/tabs			misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail0.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail1.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail2.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail3.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail4.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail5.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail6.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail7.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail8.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/mail9.nr		misc-usd-doc		doc
+./usr/share/doc/usd/07.mail/maila.nr		misc-usd-doc		doc
+./usr/share/doc/usd/11.edit/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/11.edit/edit.vindex		misc-usd-doc		obsolete
-./usr/share/doc/usd/11.edit/edittut.ms		misc-usd-doc
-./usr/share/doc/usd/12.ex/Makefile		misc-usd-doc
-./usr/share/doc/usd/12.ex/ex.rm			misc-usd-doc
-./usr/share/doc/usd/12.ex/ex.summary		misc-usd-doc
-./usr/share/doc/usd/12.vi/Makefile		misc-usd-doc
+./usr/share/doc/usd/11.edit/edittut.ms		misc-usd-doc		doc
+./usr/share/doc/usd/12.ex/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/12.ex/ex.rm			misc-usd-doc		doc
+./usr/share/doc/usd/12.ex/ex.summary		misc-usd-doc		doc
+./usr/share/doc/usd/12.vi/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/12.vi/vi.apwh.ms		misc-usd-doc		obsolete
-./usr/share/doc/usd/12.vi/vi.chars		misc-usd-doc
-./usr/share/doc/usd/12.vi/vi.in			misc-usd-doc
+./usr/share/doc/usd/12.vi/vi.chars		misc-usd-doc		doc
+./usr/share/doc/usd/12.vi/vi.in			misc-usd-doc		doc
 ./usr/share/doc/usd/12.vi/vi.summary		misc-usd-doc		obsolete
-./usr/share/doc/usd/13.viref/Makefile		misc-usd-doc
-./usr/share/doc/usd/13.viref/ex.cmd.roff	misc-usd-doc
+./usr/share/doc/usd/13.viref/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/13.viref/ex.cmd.roff	misc-usd-doc		doc
 ./usr/share/doc/usd/13.viref/merge.awk		misc-usd-doc		obsolete
-./usr/share/doc/usd/13.viref/ref.so		misc-usd-doc
-./usr/share/doc/usd/13.viref/set.opt.roff	misc-usd-doc
+./usr/share/doc/usd/13.viref/ref.so		misc-usd-doc		doc
+./usr/share/doc/usd/13.viref/set.opt.roff	misc-usd-doc		doc
 ./usr/share/doc/usd/13.viref/spell.ok		misc-usd-doc		obsolete
-./usr/share/doc/usd/13.viref/vi.cmd.roff	misc-usd-doc
-./usr/share/doc/usd/13.viref/vi.ref		misc-usd-doc
-./usr/share/doc/usd/18.msdiffs/Makefile		misc-usd-doc
-./usr/share/doc/usd/18.msdiffs/ms.diffs		misc-usd-doc
-./usr/share/doc/usd/19.memacros/Makefile	misc-usd-doc
-./usr/share/doc/usd/19.memacros/intro.me	misc-usd-doc
-./usr/share/doc/usd/20.meref/Makefile		misc-usd-doc
-./usr/share/doc/usd/20.meref/ref.me		misc-usd-doc
-./usr/share/doc/usd/30.rogue/Makefile		misc-usd-doc
-./usr/share/doc/usd/30.rogue/rogue.me		misc-usd-doc
-./usr/share/doc/usd/31.trek/Makefile		misc-usd-doc
-./usr/share/doc/usd/31.trek/trek.me		misc-usd-doc
-./usr/share/doc/usd/Makefile			misc-usd-doc
-./usr/share/doc/usd/Title			misc-usd-doc
+./usr/share/doc/usd/13.viref/vi.cmd.roff	misc-usd-doc		doc
+./usr/share/doc/usd/13.viref/vi.ref		misc-usd-doc		doc
+./usr/share/doc/usd/18.msdiffs/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/18.msdiffs/ms.diffs		misc-usd-doc		doc
+./usr/share/doc/usd/19.memacros/Makefile	misc-usd-doc		doc
+./usr/share/doc/usd/19.memacros/intro.me	misc-usd-doc		doc
+./usr/share/doc/usd/20.meref/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/20.meref/ref.me		misc-usd-doc		doc
+./usr/share/doc/usd/30.rogue/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/30.rogue/rogue.me		misc-usd-doc		doc
+./usr/share/doc/usd/31.trek/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/31.trek/trek.me		misc-usd-doc		doc
+./usr/share/doc/usd/Makefile			misc-usd-doc		doc
+./usr/share/doc/usd/Title			misc-usd-doc		doc
 ./usr/share/doc/xntp				misc-ntp-doc		obsolete
 ./usr/share/examples/amd/amd.conf		misc-amd-examples
 ./usr/share/examples/amd/cd			misc-amd-examples
