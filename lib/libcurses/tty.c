@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.7 1997/07/22 07:37:11 mikel Exp $	*/
+/*	$NetBSD: tty.c,v 1.8 1997/09/12 21:08:26 phil Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.5 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: tty.c,v 1.7 1997/07/22 07:37:11 mikel Exp $");
+__RCSID("$NetBSD: tty.c,v 1.8 1997/09/12 21:08:26 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ int __tcaction = 0;
 #endif
 
 struct termios __orig_termios, __baset;
+int __endwin;
 static struct termios cbreakt, rawt, *curt;
 static int useraw;
 
@@ -249,23 +250,8 @@ __startwin()
 int
 endwin()
 {
-	__restore_stophandler();
-
-	if (curscr != NULL) {
-		if (curscr->flags & __WSTANDOUT) {
-			tputs(SE, 0, __cputchar);
-			curscr->flags &= ~__WSTANDOUT;
-		}
-		__mvcur(curscr->cury, curscr->cury, curscr->maxy - 1, 0, 0);
-	}
-
-	(void)tputs(VE, 0, __cputchar);
-	(void)tputs(TE, 0, __cputchar);
-	(void)fflush(stdout);
-	(void)setvbuf(stdout, NULL, _IOLBF, 0);
-
-	return (tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
+	__endwin = 1;
+	return __stopwin();
 }
 
 /*

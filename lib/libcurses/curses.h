@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.18 1997/07/22 07:36:18 mikel Exp $	*/
+/*	$NetBSD: curses.h,v 1.19 1997/09/12 21:08:22 phil Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -326,6 +326,8 @@ int	 __touchline __P((WINDOW *, int, int, int, int));
 int	 __touchwin __P((WINDOW *));
 char	*__tscroll __P((const char *, int, int));
 int	 __waddch __P((WINDOW *, __LDATA *));
+int	 __stopwin __P((void));
+void	 __restartwin __P((void));
 
 /* Private #defines. */
 #define	min(a,b)	(a < b ? a : b)

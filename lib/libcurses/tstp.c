@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.9 1997/07/22 07:37:09 mikel Exp $	*/
+/*	$NetBSD: tstp.c,v 1.10 1997/09/12 21:08:25 phil Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.9 1997/07/22 07:37:09 mikel Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.10 1997/09/12 21:08:25 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,12 +57,7 @@ void
 __stop_signal_handler(signo)
 	int signo;
 {
-	struct termios save;
 	sigset_t oset, set;
-
-	/* Get the current terminal state (which the user may have changed). */
-	if (tcgetattr(STDIN_FILENO, &save))
-		return;
 
 	/*
 	 * Block window change and timer signals.  The latter is because
@@ -77,7 +72,7 @@ __stop_signal_handler(signo)
 	 * End the window, which also resets the terminal state to the
 	 * original modes.
 	 */
-	endwin();
+	__stopwin();
 
 	/* Unblock SIGTSTP. */
 	(void)sigemptyset(&set);
@@ -85,23 +80,12 @@ __stop_signal_handler(signo)
 	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
 
 	/* Stop ourselves. */
-	__restore_stophandler();
 	(void)kill(0, SIGTSTP);
 
 	/* Time passes ... */
 
-	/* Reset the curses SIGTSTP signal handler. */
-	__set_stophandler();
-
-	/* save the new "default" terminal state */
-	(void)tcgetattr(STDIN_FILENO, &__orig_termios);
-
-	/* Reset the terminal state to the mode just before we stopped. */
-	(void)tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save);
-
-	/* Restart the screen. */
-	__startwin();
+	/* restart things */
+	__restartwin();
 
 	/* Repaint the screen. */
 	wrefresh(curscr);
@@ -128,4 +112,53 @@ void
 __restore_stophandler()
 {
 	(void)signal(SIGTSTP, otstpfn);
+}
+
+
+/* To allow both SIGTSTP and endwin() to come back nicely, we provide
+   the following routines. */
+
+static struct termios save;
+
+int
+__stopwin() 
+{
+	/* Get the current terminal state (which the user may have changed). */
+	(void)tcgetattr(STDIN_FILENO, &save);
+
+	__restore_stophandler();
+
+	if (curscr != NULL) {
+		if (curscr->flags & __WSTANDOUT) {
+			tputs(SE, 0, __cputchar);
+			curscr->flags &= ~__WSTANDOUT;
+		}
+		__mvcur(curscr->cury, curscr->cury, curscr->maxy - 1, 0, 0);
+	}
+
+	(void)tputs(VE, 0, __cputchar);
+	(void)tputs(TE, 0, __cputchar);
+	(void)fflush(stdout);
+	(void)setvbuf(stdout, NULL, _IOLBF, 0);
+
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
+}
+
+
+void
+__restartwin()
+{
+	/* Reset the curses SIGTSTP signal handler. */
+	__set_stophandler();
+
+	/* save the new "default" terminal state */
+	(void)tcgetattr(STDIN_FILENO, &__orig_termios);
+
+	/* Reset the terminal state to the mode just before we stopped. */
+	(void)tcsetattr(STDIN_FILENO, __tcaction ?
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save);
+
+	/* Restart the screen. */
+	__startwin();
 }
