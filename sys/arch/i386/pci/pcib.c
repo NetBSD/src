@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 1996/11/28 02:53:45 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2 1997/05/18 05:30:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,6 +124,10 @@ pcib_callback(arg)
 
 	/*
 	 * Attach the ISA bus behind this bridge.
+	 *
+	 * NOTE: The bus dma tag is not provided here, since
+	 * it will be picked up by isa_attach_hook().  (We don't
+	 * have access to it, anyhow.)
 	 */
 	bzero(&iba, sizeof(iba));
 	iba.iba_busname = "isa";
