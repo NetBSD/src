@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.26 2002/09/04 04:11:17 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.27 2002/09/04 04:12:28 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1396,3 +1396,6 @@ sys/dev/tc/xcfb.c				1.29
 sys/dev/pci/pucdata.c				1.31 via patch
   Add Siig 20x 8 ports and and Oxford x952 cards. From Paul Shupak in
   kern/17790.
+
+sys/dev/scsipi/scsiconf.c			1.186 via patch
+  add quirk entry for yet another broken sony cdrom. Fix kern/17773
