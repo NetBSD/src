@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.8 1998/05/29 17:57:11 gwr Exp $	
+	$NetBSD: contents,v 1.9 1999/01/25 23:34:23 garbled Exp $	
 
 The sun3-specific portion of the NetBSD _VER release is found in the
 "sun3" subdirectory of the distribution.  That subdirectory is laid
@@ -137,10 +137,4 @@ is, if you want to extract the binaries "into" your system, i.e.
 replace the system binaries with them, you have to run the commands:
 
 	cd /
-	tar --unlink -zxvpf set.tar.gz
-
-Note that the "--unlink" flags is very important!  If you upgrade or
-install this way, those programs that you are using at the time will
-NOT be replaced unless you run "tar" with the "--unlink" option.  If
-you follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+	pax -zrvpe -f set.tar.gz

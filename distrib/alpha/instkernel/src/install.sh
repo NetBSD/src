@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.sh,v 1.1 1998/10/16 00:40:54 ross Exp $
+#	$NetBSD: install.sh,v 1.2 1999/01/25 23:34:20 garbled Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -474,7 +474,7 @@ fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
-$DONTDOIT tar --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -Xrwpe . /mnt
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
 echo	""

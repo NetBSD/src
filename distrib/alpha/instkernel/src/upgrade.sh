@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.sh,v 1.1 1998/10/16 00:40:55 ross Exp $
+#	$NetBSD: upgrade.sh,v 1.2 1999/01/25 23:34:20 garbled Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -239,7 +239,7 @@ echo	"Done."
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
 $DONTDOIT cp /mnt/.profile /mnt/.profile.bak
-$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -s '#^\./etc/.*##' -Xrwpe . /mnt
 $DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 

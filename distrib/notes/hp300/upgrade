@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.7 1999/01/13 07:30:04 ross Exp $	
+.\"	$NetBSD: upgrade,v 1.8 1999/01/25 23:34:22 garbled Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,13 +95,8 @@ Make sure you are in the root filesystem and extract
 the `base' binary set:
 .Bd -literal -offset indent
 cd /
-tar --unlink -zxvpf /path/to/base.tgz
+pax -zrvpe -f /path/to/base.tgz
 .Ed
-.(tag Em Note:
-.No The Cm --unlink
-option is
-.Em very No important!
-.tag)
 .It
 Install a new boot block:
 .D1 Ic cd /usr/mdec
@@ -115,7 +110,7 @@ you may have placed on local filesystems, or you may
 wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
 .D1 cd /
-.D1 tar --unlink -zxvpf Ar path_to_set
+.D1 pax -zrvpe -f Ar path_to_set
 .El
 NOTE: you SHOULD NOT extract the
 .Sy etc
