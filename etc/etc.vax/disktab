@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.5 2000/05/17 21:44:15 matt Exp $
+#	$NetBSD: disktab,v 1.6 2000/05/18 02:03:36 matt Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -524,6 +524,6 @@ bootroot|fake-type used in install boot:\
 	:pc#192:bc#8192:fc#1024:
 
 miniroot|fake-type used when installation:\
-	:ty=fake:nt#1:ns#2000:nc#1:\
-	:pa#2000:ba#4096:fa#512:ta=4.2BSD:\
-	:pc#2000:bc#4096:fc#512:
+	:ty=fake:nt#1:ns#2048:nc#7:\
+	:pa#14336:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#14336:bc#4096:fc#512:
