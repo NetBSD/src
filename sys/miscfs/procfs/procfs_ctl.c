@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.1 1994/01/05 07:51:15 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.2 1994/01/08 10:47:02 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/ptrace.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/resource.h>
@@ -60,13 +61,6 @@
 	((p)->p_stat == SSTOP && \
 	 (p)->p_pptr == (curp) && \
 	 ((p)->p_flag & STRC))
-
-#define FIX_SSTEP(p) { \
-	if ((p)->p_stat & SSSTEP) { \
-		procfs_fix_sstep(p); \
-		(p)->p_stat &= ~SSSTEP; \
-	} \
-}
 
 #define PROCFS_CTL_ATTACH	1
 #define PROCFS_CTL_DETACH	2
@@ -204,7 +198,7 @@ procfs_control(curp, p, op)
 	 * Step.  Let the target process execute a single instruction.
 	 */
 	case PROCFS_CTL_STEP:
-		procfs_sstep(p);
+		process_sstep(p);
 		break;
 
 	/*
