@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.20 2003/07/06 22:56:08 dyoung Exp $
+#	$NetBSD: files.cardbus,v 1.21 2003/10/14 17:47:03 ichiro Exp $
 #
 # files.cardbus
 #
@@ -87,3 +87,9 @@ file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
 #
 attach	adv at cardbus with adv_cardbus
 file	dev/cardbus/adv_cardbus.c	adv_cardbus
+
+#
+# Atheros Wireless LAN
+#
+attach	ath at cardbus with ath_cardbus
+file	dev/cardbus/if_ath_cardbus.c	ath_cardbus
