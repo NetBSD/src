@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.24 1998/07/28 11:41:51 mycroft Exp $	*/
+/*	$NetBSD: rm.c,v 1.25 1999/06/30 10:18:59 is Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.24 1998/07/28 11:41:51 mycroft Exp $");
+__RCSID("$NetBSD: rm.c,v 1.25 1999/06/30 10:18:59 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,8 @@ check(path, name, sp)
 		 * because their permissions are meaningless.  Check stdin_ok
 		 * first because we may not have stat'ed the file.
 		 */
-		if (!stdin_ok || S_ISLNK(sp->st_mode) || !access(name, W_OK))
+		if (!stdin_ok || S_ISLNK(sp->st_mode) ||
+			!(access(name, W_OK) && (errno != ETXTBSY)))
 			return (1);
 		strmode(sp->st_mode, modep);
 		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
