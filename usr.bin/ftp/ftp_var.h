@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp_var.h,v 1.8 1996/11/25 05:13:25 lukem Exp $      */
+/*      $NetBSD: ftp_var.h,v 1.9 1996/11/28 03:12:39 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -58,6 +58,7 @@ int	verbose;		/* print messages coming back from server */
 int	connected;		/* connected to server */
 int	fromatty;		/* input is from a terminal */
 int	interactive;		/* interactively prompt on m* cmds */
+int	confirmrest;		/* confirm rest of current m* cmd */
 int	debug;			/* debugging level */
 int	bell;			/* ring bell on cmd completion */
 int	doglob;			/* glob local file names */
@@ -69,6 +70,7 @@ int	runique;		/* store local files with unique name */
 int	mcase;			/* map upper to lower case for mget names */
 int	ntflag;			/* use ntin ntout tables for name translation */
 int	mapflag;		/* use mapin mapout templates on file names */
+int	preserve;		/* preserve modification time on files */
 int	code;			/* return/reply code for ftp command */
 int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[64];		/* passive port for proxy data connection */
