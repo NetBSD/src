@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getword.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: getword.c,v 1.2 1993/08/01 18:54:25 mycroft Exp $";
+static char rcsid[] = "$Id: getword.c,v 1.3 1994/06/29 21:22:50 deraadt Exp $";
 #endif /* not lint */
 
 # include	"hangman.h"
@@ -76,18 +76,4 @@ cont:		;
 		wp++;
 	}
 	*gp = '\0';
-}
-
-/*
- * abs:
- *	Return the absolute value of an integer
- */
-off_t
-abs(i)
-off_t	i;
-{
-	if (i < 0)
-		return -(off_t) i;
-	else
-		return (off_t) i;
 }
