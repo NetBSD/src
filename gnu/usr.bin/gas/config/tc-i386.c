@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.7 1994/04/07 19:21:36 mycroft Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.8 1994/05/25 13:52:48 pk Exp $";
 #endif
 
 #include "as.h"
@@ -637,7 +637,7 @@ char *line;
 							       ordinal_names[i.operands]);
 							return;
 						} else break;		/* we are done */
-					} else if (! is_operand_char(*l)) {
+					} else if (! is_operand_char(*l) && ! is_space_char(*l)) {
 						as_bad("invalid character %s in %s operand",
 						       output_invalid(*l),
 						       ordinal_names[i.operands]);
@@ -1406,6 +1406,7 @@ char *operand_string;
 		save_input_line_pointer = input_line_pointer;
 		/* must advance op_string! */
 		input_line_pointer = ++op_string;
+		SKIP_WHITESPACE ();
 
 		exp_seg = expression(exp);
 		input_line_pointer = save_input_line_pointer;
