@@ -2,7 +2,7 @@
 
 PROG=	iostat
 .if (${MACHINE_ARCH} == "m68k")
-CFLAGS+=-D${MACHINE}
+CFLAGS+=-D${MACHINE} -I${.CURDIR}/../../sys/arch
 .endif
 CFLAGS+=-I${DESTDIR}/sys -I${.CURDIR}/../../usr.bin/vmstat
 MAN8=	iostat.0
