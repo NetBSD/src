@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.14 1997/01/13 00:46:51 mark Exp $	*/
+/*	$NetBSD: lpt.c,v 1.15 1997/07/28 18:07:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -70,6 +70,8 @@
 
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/lptreg.h>
+
+#include "locators.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -212,6 +214,10 @@ lptprobe(parent, match, aux)
 #else
 #define	ABORT	goto out
 #endif
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 	iot = mb->mb_iot;
 	base = mb->mb_iobase;
