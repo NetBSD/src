@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.8 1994/07/01 19:40:23 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.9 1994/07/02 06:45:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,6 +73,7 @@ struct _dom_binding {
 	CLIENT *dom_client;
 	long int dom_vers;
 	time_t dom_check_t;
+	time_t dom_ask_t;
 	int dom_lockfd;
 	int dom_alive;
 };
@@ -119,6 +120,7 @@ CLIENT *clnt;
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
 	char path[MAXPATHLEN];
+	time_t now;
 
 	bzero((char *)&res, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
@@ -145,25 +147,26 @@ CLIENT *clnt;
 	if(ypdb->dom_alive==0)
 		return NULL;
 
-#if 0
-	delta = ypdb->dom_check_t - ypdb->dom_ask_t;
-	if( !(ypdb->dom_ask_t==0 || delta > 5)) {
-		ypdb->dom_ask_t = time(NULL);
+#ifdef HEURISTIC
+	time(&now);
+	if (now < ypdb->dom_ask_t + 5) {
 		/*
-		 * Hmm. More than 2 requests in 5 seconds have indicated that my
-		 * binding is possibly incorrect. Ok, make myself unalive, and
-		 * find out what the actual state is.
+		 * Hmm. More than 2 requests in 5 seconds have indicated
+		 * that my binding is possibly incorrect.
+		 * Ok, do an immediate poll of the server.
+		 * 
+		 * This might be a bit of a crock. It depends on our
+		 * implementation of YP: programs first use the binding
+		 * file to get the ypserv address, and only if RPC to
+		 * the ypserv fails do they contact ypbind via RPC.
 		 */
-		if(ypdb->dom_lockfd!=-1)
-			close(ypdb->dom_lockfd);
-		ypdb->dom_lockfd = -1;
-		ypdb->dom_alive = 0;
-		ypdb->dom_lockfd = -1;
-		sprintf(path, "%s/%s.%d", BINDINGDIR, ypdb->dom_domain, ypdb->dom_vers);
-		unlink(path);
-		check++;
-		return NULL;
+		if (ypdb->dom_check_t >= now) {
+			/* don't flood it */
+			ypdb->dom_check_t = 0;
+			check++;
+		}
 	}
+	ypdb->dom_ask_t = now;
 #endif
 
 answer:
@@ -400,12 +403,14 @@ char **argv;
 }
 
 /*
+ * State transition is done like this: 
+ *
  * STATE	EVENT		ACTION		NEWSTATE	TIMEOUT
- * 1 no binding	timeout		broadcast	no binding	5 sec
- * 2 no binding	answer		--		binding		60 sec
- * 3 binding	timeout		check server	checking	5 sec
- * 4 checking	answer		--		binding		60 sec
- * 5 checking	timeout		broadcast	no binding	5 sec
+ * no binding	timeout		broadcast 	no binding	5 sec
+ * no binding	answer		--		binding		30 sec
+ * binding	timeout		check server	checking	5 sec
+ * checking	timeout		broadcast	no binding	5 sec
+ * checking	answer		--		binding		30 sec
  */
 checkwork()
 {
@@ -416,7 +421,7 @@ checkwork()
 
 	time(&t);
 	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext) {
-		if(ypdb->dom_alive!=1 || ypdb->dom_check_t < t) {
+		if(ypdb->dom_check_t < t) {
 			ping(ypdb);
 			time(&t);
 			ypdb->dom_check_t = t + 5;
@@ -430,6 +435,7 @@ ping(ypdb)
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg rpcmsg;
 	char buf[1400], inbuf[8192];
+	char path[MAXPATHLEN];
 	enum clnt_stat st;
 	struct timeval tv;
 	int outlen, i, sock, len;
@@ -442,10 +448,6 @@ ping(ypdb)
 
 	rmtca.xdr_args = xdr_domainname;
 	rmtca.args_ptr = dom;
-
-	bzero((char *)&bsin, sizeof bsin);
-	bsin.sin_family = AF_INET;
-	bsin.sin_port = htons(PMAPPORT);
 
 	bzero((char *)&rpcxdr, sizeof rpcxdr);
 	bzero((char *)&rpcmsg, sizeof rpcmsg);
@@ -488,21 +490,33 @@ ping(ypdb)
 	if (ypdb->dom_alive == 1) {
 		/* no need to broadcast, only send to my server */
 		ypdb->dom_alive = 2;
+		bsin = ypdb->dom_server_addr;
+		bsin.sin_port = htons(PMAPPORT);
 		if (sendto(rpcsock, buf, outlen, 0,
-		    (struct sockaddr *)&ypdb->dom_server_addr,
-		    sizeof ypdb->dom_server_addr) < 0)
+		    (struct sockaddr *)&bsin, sizeof bsin) < 0)
 			perror("sendto");
 		return 0;
 	}
 
+	if(ypdb->dom_lockfd!=-1) {
+		close(ypdb->dom_lockfd);
+		ypdb->dom_lockfd = -1;
+		sprintf(path, "%s/%s.%d", BINDINGDIR,
+		    ypdb->dom_domain, ypdb->dom_vers);
+		unlink(path);
+	}
 	ypdb->dom_alive = 0;
+
+	bzero((char *)&bsin, sizeof bsin);
+	bsin.sin_family = AF_INET;
+	bsin.sin_port = htons(PMAPPORT);
 
 	/* find all networks and send the RPC packet out them all */
 	if( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
 	}
-
+	
 	ifc.ifc_len = sizeof inbuf;
 	ifc.ifc_buf = inbuf;
 	if( ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
@@ -638,15 +652,15 @@ int force;
 		if (bcmp((char *)raddrp, (char *)&ypdb->dom_server_addr,
 		    sizeof ypdb->dom_server_addr) == 0) {
 			ypdb->dom_alive = 1;
-			/* recheck binding in 60 sec */
-			ypdb->dom_check_t = time(NULL) + 60;
+			/* recheck binding in 30 sec */
+			ypdb->dom_check_t = time(NULL) + 30;
 		}
 		return;
 	}
 	
 	bcopy((char *)raddrp, (char *)&ypdb->dom_server_addr,
 		sizeof ypdb->dom_server_addr);
-	ypdb->dom_check_t = time(NULL) + 60;	/* recheck binding in 60 seconds */
+	ypdb->dom_check_t = time(NULL) + 30;	/* recheck binding in 30 seconds */
 	ypdb->dom_vers = YPVERS;
 	ypdb->dom_alive = 1;
 
@@ -689,6 +703,7 @@ int force;
 	if( writev(ypdb->dom_lockfd, iov, 2) != iov[0].iov_len + iov[1].iov_len) {
 		perror("write");
 		close(ypdb->dom_lockfd);
+		unlink(path);
 		ypdb->dom_lockfd = -1;
 		return;
 	}
