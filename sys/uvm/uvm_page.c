@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.41 2000/09/21 17:46:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.42 2000/10/05 00:37:50 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -255,7 +255,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 */
 
 	if (vm_nphysseg == 0)
-		panic("vm_page_bootstrap: no memory pre-allocated");
+		panic("uvm_page_bootstrap: no memory pre-allocated");
 	
 	/*
 	 * first calculate the number of free pages...  
@@ -493,7 +493,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 	{
 
 		if (uvm.page_init_done == TRUE)
-			panic("vm_page_physget: called _after_ bootstrap");
+			panic("uvm_page_physget: called _after_ bootstrap");
 
 		if (vm_physmem[lcv].free_list != freelist)
 			continue;
@@ -508,7 +508,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_start ==
 			    vm_physmem[lcv].end) {
 				if (vm_nphysseg == 1)
-				    panic("vm_page_physget: out of memory!");
+				    panic("vum_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
@@ -527,7 +527,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_end ==
 			    vm_physmem[lcv].start) {
 				if (vm_nphysseg == 1)
-				    panic("vm_page_physget: out of memory!");
+				    panic("uvm_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
@@ -557,7 +557,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 		/* nothing left?   nuke it */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
 			if (vm_nphysseg == 1)
-				panic("vm_page_physget: out of memory!");
+				panic("uvm_page_physget: out of memory!");
 			vm_nphysseg--;
 			for (x = lcv ; x < vm_nphysseg ; x++)
 				/* structure copy */
@@ -603,7 +603,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	struct vm_physseg *ps;
 
 	if (uvmexp.pagesize == 0)
-		panic("vm_page_physload: page size not set!");
+		panic("uvm_page_physload: page size not set!");
 
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
 		panic("uvm_page_physload: bad free list %d\n", free_list);
@@ -615,7 +615,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	 * do we have room?
 	 */
 	if (vm_nphysseg == VM_PHYSSEG_MAX) {
-		printf("vm_page_physload: unable to load physical memory "
+		printf("uvm_page_physload: unable to load physical memory "
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
@@ -637,7 +637,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	 */
 	if (!preload) {
 #if defined(VM_PHYSSEG_NOADD)
-		panic("vm_page_physload: tried to add RAM after vm_mem_init");
+		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
 #else
 		/* XXXCDC: need some sort of lockout for this case */
 		paddr_t paddr;
@@ -645,7 +645,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		pgs = malloc(sizeof(struct vm_page) * npages,
 		    M_VMPAGE, M_NOWAIT);
 		if (pgs == NULL) {
-			printf("vm_page_physload: can not malloc vm_page "
+			printf("uvm_page_physload: can not malloc vm_page "
 			    "structs for segment\n");
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
@@ -713,7 +713,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 
 #else
 
-	panic("vm_page_physload: unknown physseg strategy selected!");
+	panic("uvm_page_physload: unknown physseg strategy selected!");
 
 #endif
 
