@@ -49,7 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
-
+#include "sem.h"
 /*
  * Make the Makefile.
  */
@@ -150,9 +150,11 @@ emitdefs(fp)
 		return (1);
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
-		if (fprintf(fp, "%s-D%s%s%s", sp, nv->nv_name,
-		    nv->nv_str ? "=" : "", nv->nv_str ? nv->nv_str : "") < 0)
-			return (1);
+		if (fprintf(fp, "%s-D%s", sp, nv->nv_name) < 0)
+		    return 1;
+		if (nv->nv_str)
+		    if (fprintf(fp, "=\"%s\"", nv->nv_str) < 0)
+			return 1;
 		sp = " ";
 	}
 	if (putc('\n', fp) < 0)
@@ -254,9 +256,13 @@ emitfiles(fp, suffix)
 	if (suffix == 'c') {
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 			if (cf->cf_root == NULL)
+			    if (cf->cf_swap->nv_str == s_generic)
 				(void)sprintf(swapname,
 				    "$S/arch/%s/%s/swapgeneric.c",
 				    machine, machine);
+			    else
+				(void)sprintf(swapname,
+				    "$S/nfs/swapnfs.c");
 			else
 				(void)sprintf(swapname, "swap%s.c",
 				    cf->cf_name);
@@ -334,7 +340,9 @@ emitload(fp)
 		return (1);
 	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
 		nm = cf->cf_name;
-		swname = cf->cf_root != NULL ? cf->cf_name : "generic";
+		swname =
+		    cf->cf_root != NULL ? cf->cf_name :
+			(cf->cf_swap->nv_str == s_generic ? "generic" : "nfs");
 		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
 			return (1);
 		if (first) {
@@ -353,8 +361,13 @@ swap%s.o: ", swname, swname) < 0)
 			if (fprintf(fp, "swap%s.c\n", nm) < 0)
 				return (1);
 		} else {
+		    if (cf->cf_swap->nv_str == s_generic) {
 			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
 			    machine, machine) < 0)
+				return (1);
+		    }
+		    else 
+			if (fprintf(fp, "$S/nfs/swapnfs.c\n") < 0)
 				return (1);
 		}
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)

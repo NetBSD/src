@@ -89,7 +89,7 @@
 #include "if_le.h"
 #include "if_le_subr.h"
 
-int	ledebug = 0;		/* console error messages */
+int	ledebug = 1;		/* console error messages */
 
 int	leintr(), leinit(), leioctl(), lestart(), ether_output();
 struct	mbuf *leget();
@@ -102,6 +102,8 @@ int lematch __P((struct device *, struct cfdata *, void *args));
 
 struct cfdriver lecd = 
 { NULL, "le", lematch, leattach, DV_DULL, sizeof(struct le_softc), 0};
+
+#define ISQUADALIGN(a) ((a & 0x3) == 0)
 
 int lematch(parent, cf, args)
      struct device *parent;
@@ -121,7 +123,7 @@ void leattach(parent, self, args)
      void *args;
 {
 	register struct lereg2 *ler2;
-	struct lereg2 *lemem = 0;
+	unsigned int a;
 	struct le_softc *le = (struct le_softc *) self;
 	struct ifnet *ifp = &le->sc_if;
 	char *cp;
@@ -156,10 +158,16 @@ void leattach(parent, self, args)
 	ler2->ler2_ladrf0 = 0;
 	ler2->ler2_ladrf1 = 0;
 #endif
-	ler2->ler2_rlen = LE_RLEN;
-	ler2->ler2_rdra = (int)lemem->ler2_rmd;
-	ler2->ler2_tlen = LE_TLEN;
-	ler2->ler2_tdra = (int)lemem->ler2_tmd;
+	a = LANCE_ADDR(ler2->ler2_rmd);
+	if (!ISQUADALIGN(a))
+	    panic("rdra not quad aligned");
+	ler2->ler2_rlen = LE_RLEN | (a >> 16);
+	ler2->ler2_rdra = a & LE_ADDR_LOW_MASK; 
+	a = LANCE_ADDR(ler2->ler2_tmd);
+	if (!ISQUADALIGN(a))
+	    panic("tdra not quad aligned");
+	ler2->ler2_tlen = LE_TLEN | (a >> 16);
+	ler2->ler2_tdra = a & LE_ADDR_LOW_MASK;
 
 	ifp->if_unit = unit;
 	ifp->if_name = "le";
@@ -178,18 +186,30 @@ void leattach(parent, self, args)
 ledrinit(ler2)
 	register struct lereg2 *ler2;
 {
-	register struct lereg2 *lemem = 0;
+        unsigned int a;
 	register int i;
 
 	for (i = 0; i < LERBUF; i++) {
-		ler2->ler2_rmd[i].rmd0 = (int)lemem->ler2_rbuf[i];
-		ler2->ler2_rmd[i].rmd1 = LE_OWN;
+	        a = LANCE_ADDR(&ler2->ler2_rbuf[i][0]);
+#if 0
+		if (!ISQUADALIGN(a))
+		    panic("rbuf not quad aligned");
+#endif
+		ler2->ler2_rmd[i].rmd0 = a & LE_ADDR_LOW_MASK;
+		ler2->ler2_rmd[i].rmd1_bits = LE_OWN;
+		ler2->ler2_rmd[i].rmd1_hadr = a >> 16;
 		ler2->ler2_rmd[i].rmd2 = -LEMTU;
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
-		ler2->ler2_tmd[i].tmd0 = (int)lemem->ler2_tbuf[i];
-		ler2->ler2_tmd[i].tmd1 = 0;
+	        a = LANCE_ADDR(&ler2->ler2_rbuf[i][0]);
+#if 0
+		if (!ISQUADALIGN(a))
+		    panic("rbuf not quad aligned");
+#endif
+		ler2->ler2_tmd[i].tmd0 = a & LE_ADDR_LOW_MASK;
+		ler2->ler2_tmd[i].tmd1_bits = 0;
+		ler2->ler2_tmd[i].tmd1_hadr = a >> 16;
 		ler2->ler2_tmd[i].tmd2 = 0;
 		ler2->ler2_tmd[i].tmd3 = 0;
 	}
@@ -198,9 +218,10 @@ ledrinit(ler2)
 lereset(unit)
 	register int unit;
 {
-	register struct le_softc *le = (struct le_softc *) &lecd.cd_devs[unit];
+        register struct le_softc *le = (struct le_softc *) lecd.cd_devs[unit];
 	register struct lereg1 *ler1 = le->sc_r1;
-	register struct lereg2 *lemem = 0;
+	register struct lereg2 *ler2 = le->sc_r2;
+	unsigned int a;
 	register int timo = 100000;
 	register int stat;
 
@@ -214,14 +235,18 @@ lereset(unit)
 	else
 		le->sc_r2->ler2_mode = LE_MODE;
 #endif
+	if (ledebug)
+	    printf("le: resetting unit %d, reg %x, ram %x\n",
+		   unit, le->sc_r1, le->sc_r2);
 	LERDWR(le, LE_CSR0, ler1->ler1_rap);
 	LERDWR(le, LE_STOP, ler1->ler1_rdp);
 	ledrinit(le->sc_r2);
 	le->sc_rmd = 0;
 	LERDWR(le, LE_CSR1, ler1->ler1_rap);
-	LERDWR(le, (int)&lemem->ler2_mode, ler1->ler1_rdp);
+	a = LANCE_ADDR(ler2);
+	LERDWR(le, a & LE_ADDR_LOW_MASK, ler1->ler1_rdp);
 	LERDWR(le, LE_CSR2, ler1->ler1_rap);
-	LERDWR(le, 0, ler1->ler1_rdp);
+	LERDWR(le, a >> 16, ler1->ler1_rdp);
 	LERDWR(le, LE_CSR0, ler1->ler1_rap);
 	LERDWR(le, LE_INIT, ler1->ler1_rdp);
 	do {
@@ -255,6 +280,9 @@ leinit(unit)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();
+		if (ledebug)
+		    printf("le: initializing unit %d, reg %x, ram %x\n",
+			   unit, le->sc_r1, le->sc_r2);
 		ifp->if_flags |= IFF_RUNNING;
 		lereset(unit);
 	        (void) lestart(ifp);
@@ -292,7 +320,7 @@ lestart(ifp)
 	tmd = le->sc_r2->ler2_tmd;
 	tmd->tmd3 = 0;
 	tmd->tmd2 = -len;
-	tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
+	tmd->tmd1_bits = LE_OWN | LE_STP | LE_ENP;
 	le->sc_if.if_flags |= IFF_OACTIVE;
 	return (0);
 }
@@ -357,11 +385,11 @@ lexint(unit)
 		le->sc_xint++;
 		return;
 	}
-	if (tmd->tmd1 & LE_OWN) {
+	if (tmd->tmd1_bits & LE_OWN) {
 		le->sc_xown++;
 		return;
 	}
-	if (tmd->tmd1 & LE_ERR) {
+	if (tmd->tmd1_bits & LE_ERR) {
 err:
 		lexerror(unit);
 		le->sc_if.if_oerrors++;
@@ -377,9 +405,9 @@ err:
 	else if (tmd->tmd3 & LE_TBUFF)
 		/* XXX documentation says BUFF not included in ERR */
 		goto err;
-	else if (tmd->tmd1 & LE_ONE)
+	else if (tmd->tmd1_bits & LE_ONE)
 		le->sc_if.if_collisions++;
-	else if (tmd->tmd1 & LE_MORE)
+	else if (tmd->tmd1_bits & LE_MORE)
 		/* what is the real number? */
 		le->sc_if.if_collisions += 2;
 	else
@@ -407,7 +435,7 @@ lerint(unit)
 	/*
 	 * Out of sync with hardware, should never happen?
 	 */
-	if (rmd->rmd1 & LE_OWN) {
+	if (rmd->rmd1_bits & LE_OWN) {
 		LERDWR(le->sc_r0, LE_RINT|LE_INEA, le->sc_r1->ler1_rdp);
 		return;
 	}
@@ -415,17 +443,17 @@ lerint(unit)
 	/*
 	 * Process all buffers with valid data
 	 */
-	while ((rmd->rmd1 & LE_OWN) == 0) {
+	while ((rmd->rmd1_bits & LE_OWN) == 0) {
 		int len = rmd->rmd3;
 
 		/* Clear interrupt to avoid race condition */
 		LERDWR(le->sc_r0, LE_RINT|LE_INEA, le->sc_r1->ler1_rdp);
 
-		if (rmd->rmd1 & LE_ERR) {
+		if (rmd->rmd1_bits & LE_ERR) {
 			le->sc_rmd = bix;
 			lererror(unit, "bad packet");
 			le->sc_if.if_ierrors++;
-		} else if ((rmd->rmd1 & (LE_STP|LE_ENP)) != (LE_STP|LE_ENP)) {
+		} else if ((rmd->rmd1_bits & (LE_STP|LE_ENP)) != (LE_STP|LE_ENP)) {
 			/*
 			 * Find the end of the packet so we can see how long
 			 * it was.  We still throw it away.
@@ -434,9 +462,9 @@ lerint(unit)
 				LERDWR(le->sc_r0, LE_RINT|LE_INEA,
 				       le->sc_r1->ler1_rdp);
 				rmd->rmd3 = 0;
-				rmd->rmd1 = LE_OWN;
+				rmd->rmd1_bits = LE_OWN;
 				LENEXTRMP;
-			} while (!(rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)));
+			} while (!(rmd->rmd1_bits & (LE_OWN|LE_ERR|LE_STP|LE_ENP)));
 			le->sc_rmd = bix;
 			lererror(unit, "chained buffer");
 			le->sc_rxlen++;
@@ -444,7 +472,7 @@ lerint(unit)
 			 * If search terminated without successful completion
 			 * we reset the hardware (conservative).
 			 */
-			if ((rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)) !=
+			if ((rmd->rmd1_bits & (LE_OWN|LE_ERR|LE_STP|LE_ENP)) !=
 			    LE_ENP) {
 				lereset(unit);
 				return;
@@ -452,7 +480,7 @@ lerint(unit)
 		} else
 			leread(unit, le->sc_r2->ler2_rbuf[bix], len);
 		rmd->rmd3 = 0;
-		rmd->rmd1 = LE_OWN;
+		rmd->rmd1_bits = LE_OWN;
 		LENEXTRMP;
 	}
 	le->sc_rmd = bix;
@@ -795,11 +823,11 @@ lererror(unit, msg)
 	rmd = &le->sc_r2->ler2_rmd[le->sc_rmd];
 	len = rmd->rmd3;
 	log(LOG_WARNING,
-	    "le%d: ierror(%s): from %s: buf=%d, len=%d, rmd1=%b\n",
+	    "le%d: ierror(%s): from %s: buf=%d, len=%d, rmd1_bits=%b\n",
 	    unit, msg,
 	    len > 11 ? ether_sprintf(&le->sc_r2->ler2_rbuf[le->sc_rmd][6]) : "unknown",
 	    le->sc_rmd, len,
-	    rmd->rmd1,
+	    rmd->rmd1_bits,
 	    "\20\20OWN\17ERR\16FRAM\15OFLO\14CRC\13RBUF\12STP\11ENP");
 }
 
@@ -816,11 +844,11 @@ lexerror(unit)
 	tmd = le->sc_r2->ler2_tmd;
 	len = -tmd->tmd2;
 	log(LOG_WARNING,
-	    "le%d: oerror: to %s: buf=%d, len=%d, tmd1=%b, tmd3=%b\n",
+	    "le%d: oerror: to %s: buf=%d, len=%d, tmd1_bits=%b, tmd3=%b\n",
 	    unit,
 	    len > 5 ? ether_sprintf(&le->sc_r2->ler2_tbuf[0][0]) : "unknown",
 	    0, len,
-	    tmd->tmd1,
+	    tmd->tmd1_bits,
 	    "\20\20OWN\17ERR\16RES\15MORE\14ONE\13DEF\12STP\11ENP",
 	    tmd->tmd3,
 	    "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY");

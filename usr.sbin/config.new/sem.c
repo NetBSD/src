@@ -56,7 +56,8 @@
 
 #define	NAMESIZE	100	/* local name buffers */
 
-static const char *s_generic;
+const char *s_generic;
+const char *s_nfs;
 static const char *s_qmark;
 
 static struct hashtab *attrtab;		/* for attribute lookup */
@@ -108,6 +109,7 @@ initsem()
 	nextpseudo = &allpseudo;
 
 	s_generic = intern("generic");
+	s_nfs = intern("nfs");
 	s_qmark = intern("?");
 }
 
@@ -530,28 +532,36 @@ addconf(cf0)
 	 * Look for "swap generic".
 	 */
 	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-		if (nv->nv_str == s_generic)
-			break;
+	    if ((nv->nv_str == s_generic) || (nv->nv_str == s_nfs))
+		break;
 	if (nv != NULL) {
 		/*
 		 * Make sure no root or dump device specified, and no
 		 * other swap devices.  Note single | here (check all).
 		 */
-		nv = cf->cf_swap;
-		if (exclude(cf->cf_root, name, "root device") |
-		    exclude(nv->nv_next, name, "additional swap devices") |
-		    exclude(cf->cf_dump, name, "dump device"))
-			goto bad;
-	} else {
-		nv = cf->cf_root;
-		if (nv == NULL) {
-			error("%s: no root device specified", name);
+	        nv = cf->cf_swap;
+	        if (nv->nv_str == s_generic) {
+		    if (exclude(cf->cf_root, name, "root device") |
+			exclude(nv->nv_next, name, "additional swap devices") |
+			exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
 		}
-		if (resolve(&cf->cf_root, name, "root", nv, 'a') |
-		    lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
-		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
+		else {
+		    if (exclude(cf->cf_root, name, "root device") |
+			exclude(nv->nv_next, name, "additional swap devices") |
+			exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
+		}
+	} else {
+	    nv = cf->cf_root;
+	    if (nv == NULL) {
+		error("%s: no root device specified", name);
+		goto bad;
+	    }
+	    if (resolve(&cf->cf_root, name, "root", nv, 'a') |
+		lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
+		resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
+		goto bad;
 	}
 	*nextcf = cf;
 	nextcf = &cf->cf_next;

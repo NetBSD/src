@@ -44,6 +44,7 @@
 #define	LETBUF		1
 #define	LETBUFLOG2	0
 #define	LE_TLEN		(LETBUFLOG2 << 13)
+#define LE_ADDR_LOW_MASK 0xFFFF
 
 #define vu_char		volatile u_char
 
@@ -74,14 +75,16 @@ struct lereg2 {
 	/* receive message descriptors */
 	struct	lermd {			/* +0x0018 */
 		u_short	rmd0;
-		u_short	rmd1;
+		u_char	rmd1_bits;
+		u_char	rmd1_hadr;
 		short	rmd2;
 		u_short	rmd3;
 	} ler2_rmd[LERBUF];
 	/* transmit message descriptors */
 	struct	letmd {			/* +0x0058 */
 		u_short	tmd0;
-		u_short	tmd1;
+		u_char	tmd1_bits;
+		u_char	tmd1_hadr;
 		short	tmd2;
 		u_short	tmd3;
 	} ler2_tmd[LETBUF];
@@ -130,18 +133,18 @@ struct lereg2 {
 /*
  * Control and status bits -- lereg2
  */
-#define	LE_OWN		0x8000
-#define	LE_ERR		0x4000
-#define	LE_STP		0x0200
-#define	LE_ENP		0x0100
+#define	LE_OWN		0x80
+#define	LE_ERR		0x40
+#define	LE_STP		0x02
+#define	LE_ENP		0x01
 
-#define	LE_FRAM		0x2000
-#define	LE_OFLO		0x1000
-#define	LE_CRC		0x0800
-#define	LE_RBUFF	0x0400
-#define	LE_MORE		0x1000
-#define	LE_ONE		0x0800
-#define	LE_DEF		0x0400
+#define	LE_FRAM		0x20
+#define	LE_OFLO		0x10
+#define	LE_CRC		0x08
+#define	LE_RBUFF	0x04
+#define	LE_MORE		0x10
+#define	LE_ONE		0x08
+#define	LE_DEF		0x04
 #define	LE_TBUFF	0x8000
 #define	LE_UFLO		0x4000
 #define	LE_LCOL		0x1000
