@@ -128,7 +128,7 @@ fdprobe(struct isa_device *dev)
 	}
 	out_fdc(0xDF);
 	out_fdc(2);
-	return 1;
+	return 8;
 }
 
 /*

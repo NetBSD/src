@@ -209,7 +209,7 @@ wdprobe(struct isa_device *dvp)
 	bzero(&wdtab[du->dk_ctrlr], sizeof(struct buf));
 
 	free(du, M_TEMP);
-	return (1);
+	return (8);
 
 nodevice:
 	free(du, M_TEMP);
