@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.51 2002/04/25 15:06:40 atatat Exp $
+#	$NetBSD: INSTALL,v 1.52 2002/07/05 13:40:19 abs Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.51 $"
+#ident 		"INSTALL-$Revision: 1.52 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -78,7 +78,8 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	LKM
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM
@@ -177,7 +178,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

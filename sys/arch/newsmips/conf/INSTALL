@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.14 2002/04/25 15:06:34 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.15 2002/07/05 13:40:15 abs Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -24,6 +24,7 @@ options 	CPU_SINGLE		# no I/O processor
 
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Compatibility options
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
@@ -39,7 +40,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# Internet protocols
