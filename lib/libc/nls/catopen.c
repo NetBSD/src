@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.14 1998/11/15 17:42:36 christos Exp $	*/
+/*	$NetBSD: catopen.c,v 1.14.2.1 2000/10/04 14:07:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ _catopen(name, oflag)
 	const char *name;
 	int oflag;
 {
-	char tmppath[PATH_MAX];
+	char tmppath[PATH_MAX+1];
 	char *nlspath;
 	char *lang;
 	char *s, *t;
@@ -75,14 +75,9 @@ _catopen(name, oflag)
 	if (strchr(name, '/'))
 		return load_msgcat(name);
 
-	/*
-	 * XXX potential security problem here if this is used in a
-	 * set-id program, and NLSPATH or LANG are set to read files
-	 * the user normally does not have access to.
-	 */
-	if ((nlspath = getenv("NLSPATH")) == NULL)
+	if (issetugid() || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
-	if ((lang = getenv("LANG")) == NULL)
+	if ((lang = getenv("LANG")) == NULL || strchr(lang, '/'))
 		lang = NLS_DEFAULT_LANG;
 
 	s = nlspath;
