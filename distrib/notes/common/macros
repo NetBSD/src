@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.7 2000/10/10 22:03:42 lukem Exp $
+.\"	$NetBSD: macros,v 1.8 2000/10/11 12:18:45 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -181,7 +181,7 @@
 .
 .ds A \*M
 .if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
-.if \n[arc]:\n[cobolt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
+.if \n[arc]:\n[cobalt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
 .if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .ds A powerpc
 .if \n[evbsh3]:\n[mmeye] .ds A sh3
 .if !r\*A .nr \*A 1
