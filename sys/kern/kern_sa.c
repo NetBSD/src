@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.33 2002/09/26 19:45:55 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.34 2002/10/09 16:57:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <uvm/uvm_extern.h>
 
 static int sa_newcachelwp(struct lwp *);
+static struct lwp *sa_vp_repossess(struct lwp *l);
 
 void sa_upcall_getstate(struct sadata_upcall *, struct lwp *, struct lwp *);
 
@@ -184,7 +185,9 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	sa->sa_nstacks += count;
-	
+	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d, nrstacks   = %d\n",
+	    l->l_proc->p_pid, l->l_lid, count, sa->sa_nstacks, sa->sa_nrstacks));
+
 	*retval = count;
 	return (0);
 }
@@ -373,6 +376,8 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		return (ENOMEM);
 	}
 	st = sa->sa_stacks[--sa->sa_nstacks];
+	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d, nrstacks   = %d\n", 
+	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks, sa->sa_nrstacks));
 
 	return sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
 }
@@ -504,18 +509,15 @@ sa_switch(struct lwp *l, int type)
 		 */
 		if (sa->sa_nstacks < 2) {
 #ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d): Not enough stacks.\n",
-			    p->p_pid, l->l_lid, error);
+			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
+			    p->p_pid, l->l_lid, l->l_flag);
 #endif
 			goto sa_upcall_failed;
 		}
 
 		st = sa->sa_stacks[--sa->sa_nstacks];
-		DPRINTFN(9, ("sa_switch(%d.%d) nrstacks++ from %d\n",
-		    p->p_pid, l->l_lid, sa->sa_nrstacks));
 		sa->sa_rstacks[sa->sa_nrstacks++] = 
 		    sa->sa_stacks[--sa->sa_nstacks];
-
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
@@ -534,11 +536,7 @@ sa_switch(struct lwp *l, int type)
 			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
 			    p->p_pid, l->l_lid, error);
 #endif
-		sa_upcall_failed:
-			/* Put the lwp back */
-			sa_putcachelwp(p, l2);
-			mi_switch(l, NULL);
-			return;
+			goto sa_upcall_failed;
 		}
 		
 		l->l_flag |= L_SA_BLOCKING;
@@ -581,6 +579,7 @@ sa_switch(struct lwp *l, int type)
 			mi_switch(l, NULL);
 			return;
 		}
+	sa_upcall_failed:
 		cpu_setfunc(l2, sa_yieldcall, l2);
 
 		l2->l_priority = l2->l_usrpri;
@@ -593,27 +592,31 @@ sa_switch(struct lwp *l, int type)
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
 	mi_switch(l, l2);
 
-	DPRINTFN(4,("sa_switch(%d.%d) returned.\n", p->p_pid, l->l_lid));
+	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n", p->p_pid, l->l_lid, l->l_flag));
 	KDASSERT(l->l_wchan == 0);
 
 	SCHED_ASSERT_UNLOCKED();
 	if (sa->sa_woken == l)
 		sa->sa_woken = NULL;
 
-	/*
-	 * Okay, now we've been woken up. This means that it's time
-	 * for a SA_UNBLOCKED upcall when we get back to userlevel.  */
 
 	/* 
-	 * ... unless we're trying to exit. In this case, the last thing
+	 * The process is trying to exit. In this case, the last thing
 	 * we want to do is put something back on the cache list.
 	 * It's also not useful to make the upcall at all, so just punt.
 	 */
-
 	if (p->p_flag & P_WEXIT)
 		return;
 
-	l->l_flag |= L_SA_UPCALL;
+	/*
+	 * Okay, now we've been woken up. This means that it's time
+	 * for a SA_UNBLOCKED upcall when we get back to userlevel, provided
+	 * that the SA_BLOCKED upcall happened.
+	 */
+	if (l->l_flag & L_SA_BLOCKING)
+		l->l_flag |= L_SA_UPCALL;
+	else
+		sa_vp_repossess(l);
 }
 
 void
@@ -752,52 +755,22 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d)\n", p->p_pid, l->l_lid));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
+	    l->l_flag));
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
 		struct lwp *l2;
-		int s;
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",
 		    p->p_pid, l->l_lid));
-		/*
-		 * Put ourselves on the virtual processor and note that the
-		 * previous occupant of that position was interrupted.
-		 */
-		l2 = sa->sa_vp;
-		sa->sa_vp = l;
-		if (sa->sa_idle == l2)
-			sa->sa_idle = NULL;
 
-		KDASSERT(l2 != l);
-		if (l2) {
-			SCHED_LOCK(s);
-			switch (l2->l_stat) {
-			case LSRUN:
-				remrunqueue(l2);
-				p->p_nrlwps--;
-				break;
-			case LSSLEEP:
-				unsleep(l2);
-				break;
-#ifdef DIAGNOSTIC
-			default:
-				panic("SA VP %d.%d is in state %d, not running"
-				    " or sleeping\n", p->p_pid, l2->l_lid, 
-				    l2->l_stat);
-#endif
-			}
-			sa_putcachelwp(p, l2);
-			SCHED_UNLOCK(s);
-		}
+		l2 = sa_vp_repossess(l);
 		
 		l->l_flag &= ~L_SA;
 		sau = sadata_upcall_alloc(1);
 		l->l_flag |= L_SA;
 		
 		KDASSERT(sa->sa_nrstacks > 0);
-		DPRINTFN(9, ("sa_userret(%d.%d) decrementing nrstacks from %d\n",
-		    p->p_pid, l->l_lid, sa->sa_nrstacks));
 		st = sa->sa_rstacks[--sa->sa_nrstacks];
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL, sau, 
 		    &st) != 0) {
@@ -809,7 +782,7 @@ sa_upcall_userret(struct lwp *l)
 			printf("sa_upcall_userret: out of upcall resources"
 			    " for %d.%d\n", p->p_pid, l->l_lid);
 #endif
-			sigexit(l, SIGILL);
+			sigexit(l, SIGABRT);
 			/* NOTREACHED */
 		}	
 		l->l_flag &= ~L_SA_BLOCKING;
@@ -935,6 +908,48 @@ sa_upcall_userret(struct lwp *l)
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 }
 
+static struct lwp *
+sa_vp_repossess(struct lwp *l)
+{
+	struct lwp *l2;
+	struct proc *p = l->l_proc;
+	struct sadata *sa = p->p_sa;
+	int s;
+
+	/*
+	 * Put ourselves on the virtual processor and note that the
+	 * previous occupant of that position was interrupted.
+	 */
+	l2 = sa->sa_vp;
+	sa->sa_vp = l;
+	if (sa->sa_idle == l2)
+		sa->sa_idle = NULL;
+	
+	KDASSERT(l2 != l);
+	if (l2) {
+		SCHED_LOCK(s);
+		switch (l2->l_stat) {
+		case LSRUN:
+			remrunqueue(l2);
+			p->p_nrlwps--;
+			break;
+		case LSSLEEP:
+			unsleep(l2);
+			break;
+#ifdef DIAGNOSTIC
+		default:
+			panic("SA VP %d.%d is in state %d, not running"
+			    " or sleeping\n", p->p_pid, l2->l_lid, 
+			    l2->l_stat);
+#endif
+		}
+		sa_putcachelwp(p, l2);
+		SCHED_UNLOCK(s);
+	}
+	return l2;
+}
+
+
 #ifdef DEBUG
 int debug_print_sa(struct proc *);
 int debug_print_lwp(struct lwp *);
@@ -973,6 +988,8 @@ debug_print_sa(struct proc *p)
 		if (sa->sa_idle)
 			printf("SA idle: %d\n", sa->sa_idle->l_lid);
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
+		printf("%d upcall stacks, %d reserved (unblock) stacks\n",
+		    sa->sa_nstacks, sa->sa_nrstacks);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
 	}
