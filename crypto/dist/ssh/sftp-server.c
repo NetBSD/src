@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.4 2001/01/17 11:35:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sftp-server.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.4 2001/01/17 11:35:38 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -554,7 +554,8 @@ process_read(void)
 	len = get_int();
 
 	off = (((u_int64_t) off_high) << 32) + off_low;
-	TRACE("read id %d handle %d off %lld len %d", id, handle, off, len);
+	TRACE("read id %d handle %d off %llu len %d", id, handle,
+	    (unsigned long long)off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
 		log("read change len %d", len);
@@ -596,7 +597,8 @@ process_write(void)
 	data = get_string(&len);
 
 	off = (((u_int64_t) off_high) << 32) + off_low;
-	TRACE("write id %d handle %d off %lld len %d", id, handle, off, len);
+	TRACE("write id %d handle %d off %llu len %d", id, handle,
+	    (unsigned long long)off, len);
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
 		if (lseek(fd, off, SEEK_SET) < 0) {
