@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 2001/04/06 14:36:08 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 2001/04/10 12:29:10 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -768,8 +768,10 @@ Lswnofpsave:
 	 */
 	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a2			| vm == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
+| XXX fredette - tstl with an address register EA not supported
+| on the 68010, too lazy to fix this instance now.
+|	tstl	a2			| vm == VM_MAP_NULL?
+|	jeq	Lbadsw			| panic
 #endif
 	/*
 	 * Call _pmap_switch().
@@ -831,26 +833,6 @@ ENTRY(savectx)
 Lsavedone:
 	moveq	#0,d0			| return 0
 	rts
-
-/* suline() */
-/* TBIA, TBIS, TBIAS, TBIAU */
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	rts
-
-/* DCIA, DCIS */
-
-/*
- * Invalidate data cache.
- */
-ENTRY(DCIU)
-	rts
-
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
-/* PCIA, ecacheon, ecacheoff */
 
 /*
  * Get callers current SP value.
