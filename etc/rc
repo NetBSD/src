@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.32 1994/01/30 17:15:52 mycroft Exp $
+#	$Id: rc,v 1.33 1994/02/01 00:36:34 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -149,7 +149,6 @@ if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	echo preserving editor files
 	for i in $virecovery; do
 		sendmail -t < $i
-		rm -f $i
 	done
 fi
 
