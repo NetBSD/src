@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1996/04/18 08:51:17 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 1996/04/19 20:33:01 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -988,7 +988,8 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if ((ptpmap == curproc->p_vmspace->vm_map.pmap))
+				if ((curproc != NULL) &&
+				    (ptpmap == curproc->p_vmspace->vm_map.pmap))
 					PMAP_ACTIVATE(ptpmap,
 						(struct pcb *)curproc->p_addr,
 						1);
