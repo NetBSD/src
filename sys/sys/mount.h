@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.92 2001/11/29 21:20:17 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.93 2002/01/09 00:18:02 deberg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -114,6 +114,7 @@ struct statfs {
 #define	MOUNT_CODA	"coda"		/* Coda Filesystem */
 #define	MOUNT_FILECORE	"filecore"	/* Acorn Filecore Filesystem */
 #define	MOUNT_NTFS	"ntfs"		/* Windows/NT Filesystem */
+#define	MOUNT_SMBFS	"smbfs"		/* CIFS (SMB) */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

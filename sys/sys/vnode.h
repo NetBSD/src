@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.93 2001/10/30 15:32:04 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.94 2002/01/09 00:18:02 deberg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@ enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
 	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
 	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA, VT_FILECORE, VT_NTFS, VT_VFS,
-	VT_OVERLAY
+	VT_OVERLAY, VT_SMBFS
 };
 
 /*
