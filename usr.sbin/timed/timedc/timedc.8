@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)timedc.8	6.6 (Berkeley) 3/16/91
-.\"	$Id: timedc.8,v 1.2 1993/08/01 07:23:20 mycroft Exp $
+.\"     @(#)timedc.8	6.7 (Berkeley) 5/11/93
 .\"
-.Dd March 16, 1991
+.Dd May 11, 1993
 .Dt TIMEDC 8
 .Os BSD 4.3
 .ad
@@ -78,6 +77,7 @@ recognized commands are:
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic \&? Op Ar command ...
+.Pp
 .It Ic help Op Ar command ...
 Print a short description of each command specified in the argument list,
 or, if no arguments are given, a list of the recognized commands.
@@ -85,6 +85,9 @@ or, if no arguments are given, a list of the recognized commands.
 .It Ic clockdiff Ar host ...
 Compute the differences between the clock of the host machine
 and the clocks of the machines given as arguments.
+.Pp
+.It Ic msite Op Ar host ...
+Show the master time server for specified host(s).
 .Pp
 .It Xo
 .Ic trace
@@ -95,6 +98,11 @@ Enable or disable the tracing of incoming messages to
 .Xr timed
 in the file
 .Pa /var/log/timed.log.
+.Pp
+.It Ic election Ar host
+Asks the daemon
+on the target host to reset its "election" timers and to ensure that
+a time master has been elected.
 .Pp
 .It Ic quit
 Exit from timedc.
