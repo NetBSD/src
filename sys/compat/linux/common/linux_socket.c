@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.24 2000/05/03 21:41:43 thorpej Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.24.4.1 2001/03/30 21:43:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -597,7 +597,42 @@ linux_ioctl_socket(p, uap, retval)
 	register_t *retval;
 {
 	u_long com;
+	int error = 0, isdev = 0, dosys = 1;
 	struct sys_ioctl_args ia;
+	struct file *fp;
+	struct filedesc *fdp;
+	struct vnode *vp;
+	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	struct ioctl_pt pt;
+
+        fdp = p->p_fd;
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	if (fp->f_type == DTYPE_VNODE) {
+		vp = (struct vnode *)fp->f_data;
+		isdev = vp->v_type == VCHR;
+	}
+
+	/*
+	 * Don't try to interpret socket ioctl calls that are done
+	 * on a device filedescriptor, just pass them through, to
+	 * emulate Linux behaviour. Use PTIOCLINUX so that the
+	 * device will only handle these if it's prepared to do
+	 * so, to avoid unexpected things from happening.
+	 */
+	if (isdev) {
+		dosys = 0;
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = SCARG(uap, data);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		goto out;
+	}
 
 	com = SCARG(uap, com);
 	retval[0] = 0;
@@ -608,6 +643,9 @@ linux_ioctl_socket(p, uap, retval)
 		break;
 	case LINUX_SIOCGIFFLAGS:
 		SCARG(&ia, com) = SIOCGIFFLAGS;
+		break;
+	case LINUX_SIOCSIFFLAGS:
+		SCARG(&ia, com) = SIOCSIFFLAGS;
 		break;
 	case LINUX_SIOCGIFADDR:
 		SCARG(&ia, com) = OSIOCGIFADDR;
@@ -628,15 +666,23 @@ linux_ioctl_socket(p, uap, retval)
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
-	        return linux_getifhwaddr(p, retval, SCARG(uap, fd),
+	        error = linux_getifhwaddr(p, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
+		break;
 	default:
-		return EINVAL;
+		error = EINVAL;
 	}
 
-	SCARG(&ia, fd) = SCARG(uap, fd);
-	SCARG(&ia, data) = SCARG(uap, data);
-	return sys_ioctl(p, &ia, retval);
+out:
+	FILE_UNUSE(fp, p);
+
+	if (error ==0 && dosys) {
+		SCARG(&ia, fd) = SCARG(uap, fd);
+		SCARG(&ia, data) = SCARG(uap, data);
+		error = sys_ioctl(p, &ia, retval);
+	}
+
+	return error;
 }
 
 int
