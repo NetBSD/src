@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1999/01/13 08:42:57 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/19 19:40:31 ross Exp $
 
-EXTRA= contrib
+EXTRA= ${.CURDIR}/contrib
 
 .include <bsd.prog.mk>
