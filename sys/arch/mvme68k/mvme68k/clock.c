@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.18 2003/07/15 02:43:49 lukem Exp $	*/
+/*      $NetBSD: clock.c,v 1.19 2003/07/18 21:41:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2003/07/15 02:43:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2003/07/18 21:41:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,12 +100,12 @@ clock_config(dev, ca, ev)
 }
 
 void
-clock_rtc_config(todr)
+todr_attach(todr)
 	todr_chip_handle_t todr;
 {
 
 	if (todr_handle)
-		panic("clock_config: clock already configured");
+		panic("todr_attach: clock already configured");
 
 	todr_handle = todr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.9 2003/07/18 19:20:57 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.10 2003/07/18 21:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,6 +104,6 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
  * Machine-dependent function that machine-independent RTC drivers can
  * use to register their todr_chip_handle_t with inittodr()/resettodr().
  */
-void	clock_rtc_config(todr_chip_handle_t);
+void	todr_attach(todr_chip_handle_t);
 
 #endif /* _DEV_CLOCK_SUBR_H_ */
