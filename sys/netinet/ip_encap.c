@@ -1,5 +1,5 @@
-/*	$NetBSD: ip_encap.c,v 1.3 2000/07/05 21:32:51 thorpej Exp $	*/
-/*	$KAME: ip_encap.c,v 1.30 2000/04/19 04:29:37 itojun Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.4 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$KAME: ip_encap.c,v 1.39 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,21 +56,8 @@
  */
 /* XXX is M_NETADDR correct? */
 
-#ifdef __FreeBSD__
-# include "opt_mrouting.h"
-# if __FreeBSD__ == 3
-#  include "opt_inet.h"
-# endif
-# if __FreeBSD__ >= 4
-#  include "opt_inet.h"
-#  include "opt_inet6.h"
-# endif
-#else
-# ifdef __NetBSD__
-#  include "opt_mrouting.h"
-#  include "opt_inet.h"
-# endif
-#endif
+#include "opt_mrouting.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +66,7 @@
 #include <sys/mbuf.h>
 #include <sys/errno.h>
 #include <sys/protosw.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -91,9 +79,6 @@
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif /* MROUTING */
-#ifdef __OpenBSD__
-#include <netinet/ip_ipsp.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -103,24 +88,16 @@
 
 #include <machine/stdarg.h>
 
-#ifdef __NetBSD__
-# include "ipip.h"
-# if NIPIP > 0
-#  include <netinet/ip_ipip.h>
-# else
-#  ifdef MROUTING
-#   include <netinet/ip_mroute.h>
-#  endif
+#include "ipip.h"
+#if NIPIP > 0
+# include <netinet/ip_ipip.h>
+#else
+# ifdef MROUTING
+#  include <netinet/ip_mroute.h>
 # endif
 #endif
 
 #include <net/net_osdep.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
-#endif
 
 static void encap_add __P((struct encaptab *));
 static int mask_match __P((const struct encaptab *, const struct sockaddr *,
@@ -136,7 +113,7 @@ encap_init()
 #if 0
 	/*
 	 * we cannot use LIST_INIT() here, since drivers may want to call
-	 * encap_attach(), on driver attach.  encap_init() wlil be called
+	 * encap_attach(), on driver attach.  encap_init() will be called
 	 * on AF_INET{,6} initialization, which happens after driver
 	 * initialization - using LIST_INIT() here can nuke encap_attach()
 	 * from drivers.
@@ -145,7 +122,7 @@ encap_init()
 #endif
 }
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 4)
+#ifdef INET
 void
 #if __STDC__
 encap4_input(struct mbuf *m, ...)
@@ -158,21 +135,17 @@ encap4_input(m, va_alist)
 	int off, proto;
 	struct ip *ip;
 	struct sockaddr_in s, d;
+	const struct protosw *psw;
 	struct encaptab *ep, *match;
 	va_list ap;
 	int prio, matchprio;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
-#ifndef __OpenBSD__
 	proto = va_arg(ap, int);
-#endif
 	va_end(ap);
 
 	ip = mtod(m, struct ip *);
-#ifdef __OpenBSD__
-	proto = ip->ip_p;
-#endif
 
 	bzero(&s, sizeof(s));
 	s.sin_family = AF_INET;
@@ -229,22 +202,23 @@ encap4_input(m, va_alist)
 
 	if (match) {
 		/* found a match, "match" has the best one */
-		if (match->psw && match->psw->pr_input) {
+		psw = match->psw;
+		if (psw && psw->pr_input) {
 			encap_fillarg(m, match);
-			(*match->psw->pr_input)(m, off, proto);
+			(*psw->pr_input)(m, off, proto);
 		} else
 			m_freem(m);
 		return;
 	}
 
-	/* backward compatibility clauses */
+	/* for backward compatibility */
 #ifdef MROUTING
 	if (proto == IPPROTO_IPV4 && mrt_ipip_input(m, off)) {
 		/*
 		 * Multicast routing code claimed this one.  No
 		 * more processing at this level.
 		 */
-		return;
+  		return;
 	}
 #endif
 
@@ -263,7 +237,7 @@ encap6_input(mp, offp, proto)
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6;
 	struct sockaddr_in6 s, d;
-	struct ip6protosw *psw;
+	const struct ip6protosw *psw;
 	struct encaptab *ep, *match;
 	int prio, matchprio;
 
@@ -307,7 +281,7 @@ encap6_input(mp, offp, proto)
 
 	if (match) {
 		/* found a match */
-		psw = (struct ip6protosw *)match->psw;
+		psw = (const struct ip6protosw *)match->psw;
 		if (psw && psw->pr_input) {
 			encap_fillarg(m, match);
 			return (*psw->pr_input)(mp, offp, proto);
@@ -348,11 +322,7 @@ encap_attach(af, proto, sp, sm, dp, dm, psw, arg)
 	int error;
 	int s;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	/* sanity check on args */
 	if (sp->sa_len > sizeof(ep->src) || dp->sa_len > sizeof(ep->dst)) {
 		error = EINVAL;
@@ -431,11 +401,7 @@ encap_attach_func(af, proto, func, psw, arg)
 	int error;
 	int s;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	/* sanity check on args */
 	if (!func) {
 		error = EINVAL;
@@ -493,7 +459,8 @@ mask_match(ep, sp, dp)
 	struct sockaddr_storage s;
 	struct sockaddr_storage d;
 	int i;
-	u_int8_t *p, *q, *r;
+	const u_int8_t *p, *q;
+	u_int8_t *r;
 	int matchlen;
 
 	if (sp->sa_len > sizeof(s) || dp->sa_len > sizeof(d))
@@ -505,8 +472,8 @@ mask_match(ep, sp, dp)
 
 	matchlen = 0;
 
-	p = (u_int8_t *)sp;
-	q = (u_int8_t *)&ep->srcmask;
+	p = (const u_int8_t *)sp;
+	q = (const u_int8_t *)&ep->srcmask;
 	r = (u_int8_t *)&s;
 	for (i = 0 ; i < sp->sa_len; i++) {
 		r[i] = p[i] & q[i];
@@ -514,8 +481,8 @@ mask_match(ep, sp, dp)
 		matchlen += (q[i] ? 8 : 0);
 	}
 
-	p = (u_int8_t *)dp;
-	q = (u_int8_t *)&ep->dstmask;
+	p = (const u_int8_t *)dp;
+	q = (const u_int8_t *)&ep->dstmask;
 	r = (u_int8_t *)&d;
 	for (i = 0 ; i < dp->sa_len; i++) {
 		r[i] = p[i] & q[i];
