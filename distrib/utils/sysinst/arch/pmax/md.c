@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1997/11/10 01:52:46 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.11 1997/11/10 06:08:55 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -355,26 +355,42 @@ void	md_post_disklabel (void)
 void	md_copy_filesystem (void)
 {
 	/*
-	 * Make sure any binaries in a diskimage /usrbin get copied 
+	 * Make sure any binaries in a diskimage /usr.install get copied 
 	 * into the current root's /usr/bin. (may be same as target /usr/bin.)
 	 * The rest of sysinst uses /usr/bin/{tar,ftp,chgrp}.
 	 * We cannot ship those in /usr/bin, because if we did
 	 * an install with target root == current root, they'd
 	 * be be hidden under the  target's /usr filesystem.
+	 *
+	 * Now copy them into the standard  location under /usr.
+	 * (the target /usr is already mounted so they always end
+	 * up in the correct place.
 	 */
- 	run_prog (
-           "tar --one-file-system -cf - -C /usrbin . | tar -xpf - -C /usr/bin"
-		  );
+
+	/*  diskimage location of  /usr subset  -- patchable. */
+	const char *diskimage_usr = "/usr.install";
+	int dir_exists;
+
+
+	/* test returns 0  on success */
+	dir_exists = (run_prog("test -d %s", diskimage_usr) == 0);
+	if (dir_exists) {
+		run_prog (
+		  "tar --one-file-system -cf - -C %s . | tar -xpf - -C /usr",
+		  diskimage_usr);
+	}
 
 	if (target_already_root()) {
 
-	  	/* the /usr/bin has served its purpose. */
-		run_prog("rm -fr /usr/bin 2> /dev/null");
-
+	  	/* The diskimage /usr subset has served its purpose. */
+	  	/* (but leave it for now, in case of errors.) */
+#if 0
+		run_prog("rm -fr %s 2> /dev/null", diskimage_usr);
+#endif
 		return;
 	}
 
-	/* Copy the diskimage/ramdisk binaries to the target disk. */
+	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
 	run_prog ("tar --one-file-system -cf - / |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
