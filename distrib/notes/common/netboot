@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.4.2.2 2002/06/10 16:11:08 tv Exp $
+.\"	$NetBSD: netboot,v 1.4.2.3 2002/06/19 00:56:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,6 +55,7 @@ You may either netboot the installer so you can install onto a locally
 attached disk, or you may run your system entirely over the network.
 .\}
 .Pp
+.ie !\n[walnut] \{\
 Briefly, the netboot
 process involves discovery, bootstrap, kernel and filesystem stages.
 In the first stage, the client discovers information
@@ -64,6 +65,14 @@ The bootstrap program goes through another discovery phase to determine
 where the kernel is located.
 The bootstrap program tries to mount the NFS share containing the kernel.
 Once the kernel is loaded, it starts executing.
+.\}
+.el \{\
+Briefly, the netboot
+process involves discovery, kernel and filesystem stages.
+In the first stage, the client discovers information
+about where to find the kernel image.
+Once the kernel is loaded, it starts executing.
+.\}
 .ie !\n[next68k] \{\
 For RAM disk kernels, it mounts the RAM disk filesystem and begins
 executing the installer from the RAM disk.  For normal
@@ -80,7 +89,7 @@ All supported \*M systems use HP's proprietary RMP (the
 daemon) for the first discovery stage and bootstrap download stages.  The
 bootstrap program uses DHCP for its discovery stage.
 .\}
-.el .ie \n[macppc]:\n[next68k] \{\
+.el .ie \n[macppc]:\n[next68k]:\n[walnut] \{\
 All \*M systems use BOOTP for the discovery stage.
 .\}
 .el .ie \n[sparc] \{\
@@ -88,21 +97,38 @@ All \*M systems use a combination of RARP and BOOTP for the discovery stage.
 In the past, these systems used RARP and BOOTPARAMS.
 .\}
 .if !\n[hp300] \{\
-TFTP is used in the bootstrap phase to download the bootstrap program, 
+TFTP is used in the bootstrap phase to download
 .ie \n[macppc] \{\
+the bootstrap program,
 .Pa ofwboot.xcf .
 .\}
 .el .ie \n[next68k] \{\
+the bootstrap program,
 .Pa boot .
 .\}
 .el .ie \n[sparc] \{\
+the bootstrap program,
 .Pa boot.net ,
 which has been linked to a file name appropriate to the client's
 architecture and IP address as described in the TFTP section below.
 .\}
+.el .ie \n[walnut] \{\
+the kernel via the on-board Ethernet card by the firmware.
+Thus,
+.Nx
+support for the on-board card is not needed in this step.
+For NFS mounting a filesystem on the other hand,
+.Nx
+support for the Ethernet card is needed, and the on-board one
+will not suffice; you have to provide a second Ethernet card
+supported by
+.Nx "" .
+.\}
 .\} \" ! !\n[hp300]
+.if !\n[walnut] \{\
 NFS is used in both the kernel and filesystem stages to download the
 kernel, and to access files on the file server.
+.\} \" !\n[walnut]
 .Pp
 We will use 
 .Sq Li "CC:CC:CC:CC:CC:CC"
@@ -161,7 +187,7 @@ or later, you can achieve this with:
 .Pp
 .It
 .\} \" ! \n[hp300]
-.if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc] \{\
+.if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]:\n[walnut] \{\
 .ie !\n[hp300] \{\
 .Xr dhcpd 8 
 in 
@@ -215,7 +241,18 @@ group {
                 # doesn't resolve to a simple name).
                 #
                 option host-name        "client";
-.if !\n[hp300]:!\n[sparc] \{\ 
+.if !\n[hp300] \{\
+.ie \n[walnut] \{\
+
+                #
+                # Name of the kernel image to download via tftp.
+                # Note: Plain (ELF) kernels won't work, you
+                # have to use the corresponding *.img file.
+                #
+                filename                "netbsd.INSTALL.img"
+.\}
+.el .if !\n[sparc] \{\ 
+
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
@@ -223,15 +260,16 @@ group {
 .ie \n[macppc] \{\ 
                 filename                "ofwboot.xcf";
 .\}
-.el .ie \n[next68k] \{\ 
+.el .if \n[next68k] \{\ 
                 filename                "boot";
-.\}
-.\}
+.\} \" \n[next68k]
+.\} \" !\n[hp300]
                 #
                 # The path on the NFS server.
                 #
                 option root-path        "/export/client/root";
 .if \n[next68k] \{\ 
+
                 #
                 #next68k machines require non-RFC1048 BOOTP
                 #
@@ -262,7 +300,7 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/dhcpd restart"
 .disp)
 .Pp
-.\} \" ! \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]
+.\} \" ! \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc]:\n[walnut]
 .if \n[sparc] \{\
 .Pp
 .It
@@ -302,7 +340,7 @@ or later, you can achieve this with:
 .It
 .Xr tftpd 8
 .Pp
-The deafult configuration of the TFTP server is to run in a 
+The default configuration of the TFTP server is to run in a 
 .Xr chroot 8
 environment in the
 .Pa /tftpboot
@@ -310,12 +348,14 @@ directory.  Thus, the first order of business is to create this directory:
 .(disp
 .No # Ic "mkdir -p /tftpboot"
 .disp)
+.Pp
 Next, edit
 .Pa /etc/inetd.conf
 and uncomment the line with the TFTP daemon:
 .(disp
 tftp            dgram   udp     wait    root    /usr/libexec/tftpd tftpd -l  -s /tftpboot
 .disp)
+.Pp
 Now, restart 
 .Xr inetd 8 .
 If the server is running
@@ -326,7 +366,8 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/inetd restart"  
 .disp)
 .Pp
-Now, you need to copy the bootloader for your \*M machine to 
+.ie \n[walnut] Now, you need to copy the kernel for your \*M machine to 
+.el Now, you need to copy the bootloader for your \*M machine to 
 .Pa /tftpboot .
 .ie \n[macppc] \{\
 Get
@@ -415,9 +456,18 @@ ethernet address to its IP address:
 .Xr mountd 8 ,
 and
 .Xr rpcbind 8
+.ie !\n[walnut] \{\
 .Pp
 Now your system should be able to load the bootstrap program and start
-looking for the kernel.  Let's set up the NFS server.  Create the
+looking for the kernel.
+.\}
+.el \{\
+.Pp
+You can either boot a kernel, or the RAM disk-based installer
+.Pa binary/kernel/netbsd.INSTALL.img.gz .
+In the first case you'll also need an NFS-mounted userland.
+.\}
+Let's set up the NFS server.  Create the
 directory you are exporting for the netboot client:
 .Pp
 .(disp
@@ -454,11 +504,13 @@ or later, you can achieve this with:
 kernel
 .if !\n[next68k] and installation tools
 .Pp
+.if !\n[walnut] \{\
 Now, if you place a kernel named
 .Pa netbsd
 in
 .Pa /export/client/root
 your client should boot the kernel.
+.\} \" !\n[walnut]
 .ie \n[hp300] \{\
 If you are netbooting the installer, you can use either 
 the traditional miniroot-based installer
@@ -471,7 +523,7 @@ netboot server.  This procedure does
 .Em not
 work on any operating system other than
 .Nx .
-You'll also need to either set up a new NFS share point or an FTP sever
+You'll also need to either set up a new NFS share point or an FTP server
 for the distribution files, as they won't fit inside the miniroot
 filesystem.
 .Pp
@@ -542,8 +594,22 @@ the client's root directory and extract the tools from
 .No # Ic "cd /export/client/root"
 .No # Ic "tar -xpzf rootfs.tgz"
 .disp)
-.\} \" ! \n[sparc]
+.\}
+.el .if \n[walnut] \{\
+If you are netbooting the installer, use
+.Pa binary/kernel/netbsd.INSTALL.img.gz 
+(this has the installation tools in a RAM disk).
+Also, copy the distribution files to the client's root directory.
 .Pp
+.(disp
+.No # Ic "cp *tgz /export/client/root"
+.No # Ic "gunzip netbsd.INSTALL.img.gz"
+.No # Ic "mv netbsd.INSTALL.img /export/client/root/netbsd"
+.disp)
+.Pp
+If you are running your \*M diskless, simply use
+.Pa binary/kernel/netbsd.img-WALNUT.gz .
+.\}
 .It
 Client filesystem
 .Pp
