@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.40 2002/06/21 02:19:12 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.41 2002/08/02 04:49:35 soren Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.40 2002/06/21 02:19:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.41 2002/08/02 04:49:35 soren Exp $");
 
 #include "opt_ktrace.h"
 
@@ -388,9 +388,9 @@ dirloop:
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	{ char c = *cp;
-	*cp = '\0';
+	*(char *)cp = '\0';
 	printf("{%s}: ", cnp->cn_nameptr);
-	*cp = c; }
+	*(char *)cp = c; }
 #endif
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
@@ -667,7 +667,7 @@ relookup(dvp, vpp, cnp)
 	int error = 0;
 #ifdef NAMEI_DIAGNOSTIC
 	int newhash;			/* DEBUG: check name hash */
-	char *cp;			/* DEBUG: check name ptr/len */
+	const char *cp;			/* DEBUG: check name ptr/len */
 #endif
 
 	/*
