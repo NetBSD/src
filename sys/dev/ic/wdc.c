@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.34 1998/10/13 15:02:42 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.35 1998/10/13 15:18:47 bouyer Exp $ */
 
 
 /*
@@ -770,6 +770,7 @@ wdc_probe_caps(drvp)
 			printf("\n");
 			return;
 		}
+		drvp->drive_flags |= DRIVE_MODE;
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
