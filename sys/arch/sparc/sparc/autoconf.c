@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.79 1997/09/27 18:01:35 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.80 1997/10/18 00:01:42 gwr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -225,9 +225,7 @@ bootstrap()
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
 
-#ifdef KGDB
-	zs_kgdb_init();		/* XXX */
-#endif
+	/* Moved zs_kgdb_init() to dev/zs.c:consinit(). */
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
@@ -444,12 +442,14 @@ bootpath_build()
 			break;
 
 		case 'd':	/* kgdb - always on zs	XXX */
-#ifdef KGDB
+#if defined(KGDB)
 			boothowto |= RB_KDB;	/* XXX unused */
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
+#elif defined(DDB)
+			Debugger();
 #else
-			printf("kernel not compiled with KGDB\n");
+			printf("kernel has no debugger\n");
 #endif
 			break;
 
