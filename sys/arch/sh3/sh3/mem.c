@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11.2.1 2002/05/17 13:35:36 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.11.2.2 2002/06/06 03:00:32 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;

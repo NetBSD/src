@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8.2.1 2002/05/17 15:41:00 gehenna Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.2.2 2002/06/06 03:00:32 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -45,6 +45,7 @@
 #include <sys/disk.h>
 #include <sys/cdio.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/sysasicvar.h>
 
