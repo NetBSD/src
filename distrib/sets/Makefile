@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/11 16:23:17 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2002/02/27 10:51:47 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -31,6 +31,10 @@ check_releasedir: .PHONY
 	@true
 .endif
 
+SETSENV=	DESTDIR=${DESTDIR:Q} \
+		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+		MAKE=${MAKE:Q} MTREE=${MTREE:Q} PAX=${PAX:Q} 
+
 print_machine: .PHONY
 	@echo ${MACHINE}
 
@@ -55,8 +59,7 @@ print_x11_version: .PHONY
 
 # This target has debugging value only, really.
 makeflist: .PHONY check_destdir
-	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
-	    MAKE=${MAKE} sh ${.CURDIR}/makeflist
+	${SETSENV} sh ${.CURDIR}/makeflist
 
 #
 # SET BUILDING TARGETS
@@ -64,21 +67,20 @@ makeflist: .PHONY check_destdir
 
 .PRECIOUS: checkflist
 checkflist: check_destdir
-	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
-	    MAKE=${MAKE} sh ${.CURDIR}/checkflist
+	${SETSENV} sh ${.CURDIR}/checkflist
 
 .PRECIOUS: checkflist
 checkflist-x11: check_destdir
-	DESTDIR=${DESTDIR} MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
-	    MAKE=${MAKE} sh ${.CURDIR}/checkflist -x11
+	${SETSENV} sh ${.CURDIR}/checkflist -x11
 
 .PRECIOUS: maketars
 maketars: check_destdir check_releasedir
-	sh ${.CURDIR}/maketars -d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
+	${SETSENV} sh ${.CURDIR}/maketars ${UNPRIVED:D-M ${METALOG}} \
+		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 
 .PRECIOUS: makesums
 makesums: check_releasedir
-	sh ${.CURDIR}/makesums -t ${RELEASEDIR}/binary/sets
+	${SETSENV} sh ${.CURDIR}/makesums -t ${RELEASEDIR}/binary/sets
 
 #
 # MAIN ENTRY POINTS
