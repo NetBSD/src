@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/16 04:07:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2004/05/20 03:25:13 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	cvs
 
 DIST=	${IDIST}/src
-.PATH:	${DIST} ${IDIST}/man
+.PATH:	${DIST} ${IDIST}/doc ${IDIST}/man
 
 MAN=	cvs.1 cvs.5
 SRCS=	add.c admin.c annotate.c buffer.c checkin.c checkout.c classify.c \
