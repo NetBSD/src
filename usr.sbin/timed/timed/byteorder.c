@@ -31,12 +31,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)byteorder.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: byteorder.c,v 1.5 1997/10/17 14:19:12 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"

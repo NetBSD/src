@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.8 1997/10/17 08:56:53 mrg Exp $	*/
+/*	$NetBSD: timed.c,v 1.9 1997/10/17 14:19:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,18 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1985, 1993 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
+#else
+__RCSID("$NetBSD: timed.c,v 1.9 1997/10/17 14:19:48 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -168,9 +173,7 @@ main(int argc, char **argv)
 #endif /* HAVENIS */
 #endif /* sgi */
 
-#ifdef lint
 	ntip = NULL;
-#endif
 
 	on = 1;
 	nflag = OFF;
@@ -457,7 +460,7 @@ main(int argc, char **argv)
 			if (ntohl(ntp->net.s_addr) == nt->net)
 				break;
 		}
-		if (nflag && !nt || iflag && nt)
+		if ((nflag && !nt) || (iflag && nt))
 			continue;
 
 		ntp->next = NULL;
@@ -570,9 +573,7 @@ main(int argc, char **argv)
 		slave();
 	}
 	/* NOTREACHED */
-#ifdef lint
 	return(0);
-#endif
 }
 
 
@@ -753,8 +754,8 @@ setstatus()
 	status &= ~IGNORE;
 	if (trace)
 		fprintf(fd,
-			"\tnets=%d masters=%d slaves=%d ignored=%d delay2=%d\n",
-			nnets, nmasternets, nslavenets, nignorednets, delay2);
+		    "\tnets=%d masters=%d slaves=%d ignored=%d delay2=%ld\n",
+		    nnets, nmasternets, nslavenets, nignorednets, (long)delay2);
 }
 
 void
@@ -893,9 +894,11 @@ get_goodgroup(int force)
 # define NG_DELAY (30*60*CLK_TCK)	/* 30 minutes */
 	static unsigned long last_update = -NG_DELAY;
 	unsigned long new_update;
-	struct hosttbl *htp;
 	struct goodhost *ghp, **ghpp;
+#ifdef HAVENIS
+	struct hosttbl *htp;
 	char *mach, *usr, *dom;
+#endif
 	struct tms tm;
 
 
