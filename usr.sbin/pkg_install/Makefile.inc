@@ -1,12 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.13 2000/10/27 11:49:23 hubertf Exp $
+# $NetBSD: Makefile.inc,v 1.14 2001/01/07 08:00:58 enami Exp $
 # Original from FreeBSD, no rcs id.
 
-.if exists(/etc/mk.conf)
-.include "/etc/mk.conf"
-.endif
+.include <bsd.own.mk>
 
-LIBINSTALL != cd ${.CURDIR}/../lib;\
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 
 .if !defined(OPSYS)

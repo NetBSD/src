@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/10/25 06:58:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/01/07 08:00:58 enami Exp $
 
-LIBCOMMON != cd ${.CURDIR}/../common_source;\
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+LIBCOMMON != cd ${.CURDIR}/../common_source && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common_source
 DPADD+=	${LIBCOMMON}/libcommon.a
 LDADD+=	-L${LIBCOMMON} -lcommon

@@ -1,17 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.15 2000/11/21 02:03:26 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2001/01/07 08:00:57 enami Exp $
 
 WARNS?=	1
 WFORMAT=2
 
+.include <bsd.own.mk>
+
 IDIST=	${.CURDIR}/../../../dist/am-utils
 
-LIBAMUOBJDIR!=cd ${.CURDIR}/../libamu; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+LIBAMUOBJDIR!=cd ${.CURDIR}/../libamu && ${PRINTOBJDIR}
 
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/libamu \
 	-I${IDIST}/include -I${LIBAMUOBJDIR}
-
-.include <bsd.own.mk>
 
 .if !defined(LIB) || empty(LIB)
 LDADD+=	-L${LIBAMUOBJDIR} -lamu

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/11/20 00:24:42 wiz Exp $
+#	$NetBSD: Makefile,v 1.19 2001/01/07 08:00:54 enami Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,8 +22,7 @@ SRCS=	am_ops.c amd.c amfs_auto.c amfs_direct.c amfs_error.c amfs_host.c \
 #	info_ldap.c info_nisplus.c ops_cachefs.c ops_efs.c ops_lofs.c ops_xfs.c
 MAN+=	amd.8
 
-AMDOBJDIR!=cd ${.CURDIR}; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+AMDOBJDIR!=cd ${.CURDIR} && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${DIST} -I${AMDOBJDIR}
 LDADD+=		${LIBAMU} -lrpcsvc
