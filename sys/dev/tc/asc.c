@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.32 1996/12/10 21:57:17 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.33 1997/03/29 05:03:01 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1241,7 +1241,7 @@ abort:
 #if 0
 	panic("asc_intr");
 #else
-	boot(4, NULL); /* XXX */
+	cpu_reboot(RB_NOSYNC, NULL); /* XXX */
 #endif
 }
 
@@ -2058,7 +2058,7 @@ asc_timeout(arg)
 #if 0
 	panic("asc_timeout");
 #else
-	boot(4, NULL); /* XXX */
+	cpu_reboot(RB_NOSYNC, NULL); /* XXX */
 #endif
 }
 
