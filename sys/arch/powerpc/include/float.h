@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.2 1998/02/03 01:26:31 mycroft Exp $	*/
+/*	$NetBSD: float.h,v 1.3 1998/02/18 11:01:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -48,7 +48,7 @@ __END_DECLS
 #define FLT_ROUNDS	__flt_rounds()
 
 #define FLT_MANT_DIG	24		/* p */
-#define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
+#define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
 #define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
 #define FLT_MIN_EXP	(-125)		/* emin */
 #define FLT_MIN		1.17549435E-38F	/* b**(emin-1) */
