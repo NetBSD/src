@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.10 1998/11/19 15:38:25 mrg Exp $ */
+/* $NetBSD: tga.c,v 1.11 1999/01/11 21:35:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -108,7 +108,6 @@ static int	tga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	tga_free_screen __P((void *, void *));
 static void	tga_show_screen __P((void *, void *));
-static int	tga_load_font __P((void *, void *, int, int, int, void *));
 
 struct wsdisplay_accessops tga_accessops = {
 	tga_ioctl,
@@ -116,7 +115,7 @@ struct wsdisplay_accessops tga_accessops = {
 	tga_alloc_screen,
 	tga_free_screen,
 	tga_show_screen,
-	tga_load_font
+	0 /* load_font */
 };
 
 void	tga_blank __P((struct tga_devconfig *));
@@ -478,16 +477,6 @@ tga_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-}
-
-static int
-tga_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return (EINVAL);
 }
 
 int
