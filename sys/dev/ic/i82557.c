@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.12 1999/11/12 18:14:18 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.13 1999/11/19 15:19:14 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ int	fxp_add_rfabuf __P((struct fxp_softc *, bus_dmamap_t, int));
 int	fxp_mdi_read __P((struct device *, int, int));
 void	fxp_statchg __P((struct device *));
 void	fxp_mdi_write __P((struct device *, int, int, int));
+void	fxp_autosize_eeprom __P((struct fxp_softc*));
 void	fxp_read_eeprom __P((struct fxp_softc *, u_int16_t *, int, int));
 void	fxp_get_info __P((struct fxp_softc *, u_int8_t *));
 void	fxp_tick __P((void *));
@@ -484,30 +485,14 @@ fxp_get_info(sc, enaddr)
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(10);
 
-	/*
-	 * Figure out EEPROM size.
-	 *
-	 * Cards can have either 64-word or 256-word EEPROMs, with
-	 * addresses fed in using a bit-at-a-time protocol, MSB first.
-	 *
-	 * XXX this is probably not the best way to do this; the linux
-	 * driver does a checksum of the eeprom, but there is
-	 * (AFAIK) no on-line documentation on what this checksum
-	 * should look like (you could just steal the code from
-	 * linux, but that's cheating); for now we just use the fact
-	 * that the upper two bits of word 10 should be 01
-	 */
-	for(sc->sc_eeprom_size = 6; 
-	    sc->sc_eeprom_size <= 8; 
-	    sc->sc_eeprom_size += 2) {
-		fxp_read_eeprom(sc, &data, 10, 1);
-		if((data & 0xc000) == 0x4000)
-			break;
+	sc->sc_eeprom_size = 0;
+	fxp_autosize_eeprom(sc);
+	if(sc->sc_eeprom_size == 0) {
+	    printf("%s: failed to detect EEPROM size", sc->sc_dev.dv_xname);
+	    sc->sc_eeprom_size = 6; /* XXX panic here? */
 	}
-	if(sc->sc_eeprom_size > 8)
-		panic("%s: failed to get EEPROM size", sc->sc_dev.dv_xname);
 #ifdef DEBUG
-	printf("%s: assuming %d word EEPROM\n", 
+	printf("%s: detected %d word EEPROM\n", 
 	       sc->sc_dev.dv_xname, 
 	       1 << sc->sc_eeprom_size);
 #endif
@@ -525,6 +510,83 @@ fxp_get_info(sc, enaddr)
 	 */
 	fxp_read_eeprom(sc, myea, 0, 3);
 	bcopy(myea, enaddr, ETHER_ADDR_LEN);
+}
+
+/*
+ * Figure out EEPROM size.
+ *
+ * 559's can have either 64-word or 256-word EEPROMs, the 558
+ * datasheet only talks about 64-word EEPROMs, and the 557 datasheet
+ * talks about the existance of 16 to 256 word EEPROMs.
+ *
+ * The only known sizes are 64 and 256, where the 256 version is used
+ * by CardBus cards to store CIS information.
+ *
+ * The address is shifted in msb-to-lsb, and after the last
+ * address-bit the EEPROM is supposed to output a `dummy zero' bit,
+ * after which follows the actual data. We try to detect this zero, by
+ * probing the data-out bit in the EEPROM control register just after
+ * having shifted in a bit. If the bit is zero, we assume we've
+ * shifted enough address bits. The data-out should be tri-state,
+ * before this, which should translate to a logical one.
+ *
+ * Other ways to do this would be to try to read a register with known
+ * contents with a varying number of address bits, but no such
+ * register seem to be available. The high bits of register 10 are 01
+ * on the 558 and 559, but apparently not on the 557.
+ * 
+ * The Linux driver computes a checksum on the EEPROM data, but the
+ * value of this checksum is not very well documented.
+ */
+
+void
+fxp_autosize_eeprom(sc)
+	struct fxp_softc *sc;
+{
+	u_int16_t reg;
+	int x;
+
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	/*
+	 * Shift in read opcode.
+	 */
+	for (x = 3; x > 0; x--) {
+		if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
+			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+		} else {
+			reg = FXP_EEPROM_EECS;
+		}
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
+			    reg | FXP_EEPROM_EESK);
+		DELAY(1);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(1);
+	}
+	/*
+	 * Shift in address, wait for the dummy zero following a correct
+	 * address shift.
+	 */
+	for (x = 1; x <=  8; x++) {
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
+			    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
+		DELAY(1);
+		if((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & 
+		    FXP_EEPROM_EEDO) == 0)
+			break;
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		DELAY(1);
+	}
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+	DELAY(1);
+	if(x != 6 && x != 8) {
+#ifdef DEBUG
+		printf("%s: strange EEPROM size (%d)\n", 
+		       sc->sc_dev.dv_xname, 1 << x);
+#endif
+	} else
+		sc->sc_eeprom_size = x;
 }
 
 /*
@@ -567,13 +629,13 @@ fxp_read_eeprom(sc, data, offset, words)
 		 */
 		for (x = sc->sc_eeprom_size; x > 0; x--) {
 			if ((i + offset) & (1 << (x - 1))) {
-				reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+			    reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
 			} else {
-				reg = FXP_EEPROM_EECS;
+			    reg = FXP_EEPROM_EECS;
 			}
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
+				    reg | FXP_EEPROM_EESK);
 			DELAY(1);
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			DELAY(1);
