@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.7 1997/09/28 11:22:40 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.8 1997/10/01 23:38:34 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -35,7 +35,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # 
 # ONLY_FOR_ARCHS - If a port only makes sense to certain architectures, this
 #				  is a list containing the names for them.  It is checked
-#				  against the predefined ${MACHINE} value
+#				  against the predefined ${MACHINE_ARCH} value
 # ARCH			- The architecture, as returned by "uname -m".
 # OPSYS			- Portability clause.  This is the operating system the
 #				  makefile is being used on.  Automatically set to
@@ -276,7 +276,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 
 .if defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
-.if ${MACHINE} == "${__ARCH}"
+.if ${MACHINE_ARCH} == "${__ARCH}"
 __ARCH_OK=	1
 .endif
 .endfor
@@ -289,7 +289,7 @@ __ARCH_OK=	1
 
 fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
 	@echo "This port is only for ${ONLY_FOR_ARCHS},"
-	@echo "and you are running ${MACHINE}."
+	@echo "and you are running ${MACHINE_ARCH}."
 .else
 
 # Get the architecture
@@ -337,7 +337,7 @@ PACKAGES?=		${PORTSDIR}/packages
 TEMPLATES?=		${PORTSDIR}/templates
 .if !defined(NO_WRKDIR)
 .if defined(OBJMACHINE)
-WRKDIR?=		${.CURDIR}/work.${MACHINE}
+WRKDIR?=		${.CURDIR}/work.${MACHINE_ARCH}
 .else
 WRKDIR?=		${.CURDIR}/work
 .endif
