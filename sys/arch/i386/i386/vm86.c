@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.11 1996/04/18 20:36:35 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.12 1996/04/18 21:21:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -285,14 +285,14 @@ vm86_gpfault(p, type)
 	int type;
 {
 	struct trapframe *tf = p->p_md.md_regs;
-	int trace;
 	/*
 	 * we want to fetch some stuff from the current user virtual
 	 * address space for checking.  remember that the frame's
 	 * segment selectors are real-mode style selectors.
 	 */
-	u_char tmpbyte;
 	u_long cs, ip, ss, sp;
+	u_char tmpbyte;
+	int trace;
 
 	cs = CS(tf) << 4;
 	ip = IP(tf);
@@ -370,7 +370,7 @@ vm86_gpfault(p, type)
 		goto bad;
 	}
 
-	if (trace)
+	if (trace && tf->tf_eflags & PSL_VM)
 		trapsignal(p, SIGTRAP, T_TRCTRAP);
 	return;
 
