@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1 1996/04/12 02:00:46 cgd Exp $ */
+/*	$NetBSD: kbd.c,v 1.2 1996/09/15 17:15:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -286,10 +286,10 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 }
 
 int
-kbdselect(dev_t dev, int rw, struct proc *p)
+kbdpoll(dev_t dev, int events, struct proc *p)
 {
 
-	return (ev_select(&kbd_softc.k_events, rw, p));
+	return (ev_poll(&kbd_softc.k_events, events, p));
 }
 
 /* Ring the console bell.  (For wscons terminal emulator and other code) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.2 1996/05/29 22:24:47 cgd Exp $ */
+/*	$NetBSD: event.c,v 1.3 1996/09/15 17:15:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,8 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <machine/vuid_event.h>
 #include <alpha/wscons/event_var.h>
@@ -84,7 +86,7 @@ ev_fini(ev)
 }
 
 /*
- * User-level interface: read, select.
+ * User-level interface: read, poll.
  * (User cannot write an event queue.)
  */
 int
@@ -145,28 +147,20 @@ ev_read(ev, uio, flags)
 }
 
 int
-ev_select(ev, rw, p)
+ev_poll(ev, events, p)
 	register struct evvar *ev;
-	int rw;
+	int events;
 	struct proc *p;
 {
+	int revents = 0;
 	int s = splev();
 
-	switch (rw) {
+        if (events & (POLLIN | POLLRDNORM))
+		if (ev->ev_get != ev->ev_put)
+                        revents |= events & (POLLIN | POLLRDNORM);
+                else
+                        selrecord(p, &ev->ev_sel);
 
-	case FREAD:
-		/* succeed if there is something to read */
-		if (ev->ev_get != ev->ev_put) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &ev->ev_sel);
-		break;
-
-	case FWRITE:
-		splx(s);
-		return (1);	/* always fails => never blocks */
-	}
 	splx(s);
-	return (0);
+	return (revents);
 }
