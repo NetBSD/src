@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.60 1995/06/04 14:01:37 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.61 1995/07/02 18:13:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1098,7 +1098,7 @@ ttylclose(tp, flag)
 	int flag;
 {
 
-	if (flag & IO_NDELAY)
+	if (flag & FNONBLOCK)
 		ttyflush(tp, FREAD | FWRITE);
 	else
 		ttywflush(tp);
