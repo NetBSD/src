@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gssapi.h,v 1.1.1.1.2.3 2001/01/25 16:06:18 jhawk Exp $ */
+/* $Id: gssapi.h,v 1.1.1.1.2.4 2001/01/26 02:41:14 jhawk Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -98,6 +98,7 @@ typedef struct gss_cred_id_t_desc_struct {
   OM_uint32 lifetime;
   gss_cred_usage_t usage;
   gss_OID_set mechanisms;
+  struct krb5_ccache_data *ccache;
 } gss_cred_id_t_desc;
 
 typedef gss_cred_id_t_desc *gss_cred_id_t;
