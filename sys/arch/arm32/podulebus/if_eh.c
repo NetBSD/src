@@ -1,11 +1,11 @@
-/* $NetBSD: if_eh.c,v 1.10 1996/10/13 03:06:41 christos Exp $ */
+/* $NetBSD: if_eh.c,v 1.11 1996/10/14 23:55:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
  * All rights reserved.
  *
  * Essential things to do
- *  - BPF and multicast support
+ *  - Multicast support
  *  - Testing
  *  - 16-bit dma's
  *  - Buffer overflow handling (This must be done a certain way) [Nuts]
@@ -68,6 +68,7 @@
 #include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/if_ehreg.h>
+#include <arm32/podulebus/podules.h>
 
 /* Includes for interfacing with the network subsystem **********************/
 
@@ -94,12 +95,15 @@
 #include <netns/ns_if.h>
 #endif
 
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+
 /****************************************************************************/
 /* Some useful definitions **************************************************/
 /****************************************************************************/
-
-#define MY_MANUFACTURER	(0x46)
-#define MY_PODULE	(0xec)
 
 #define TXBUF_SIZE	(1522)
 #define NTXBUF		(1)
@@ -199,9 +203,6 @@ struct cfdriver eh_cd = {
 #define	REMOTE_DMA(n)	SetReg ( EH_COMMAND, 	\
 		((GetReg(EH_COMMAND)&(COM_MASK_DMA))|n) )
 
-extern char *boot_args;
-char *strstr		__P((char */*s1*/, char */*s2*/));
-
 /****************************************************************************/
 /* Bus attachment code ******************************************************/
 /****************************************************************************/
@@ -216,7 +217,7 @@ ehprobe(parent, match, aux)
 
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERH, -1) == 0)
 		return(0);
 
 	return(1);
@@ -270,7 +271,7 @@ ehattach(parent, self, aux)
 	eh_stop_controller(sc);
 	SetReg(EH_COMMAND, 0x20);	     /* This is wrong */
 
-	SetReg(EH_ISR, 0xf );	             /* Clear any previous work */
+	SetReg(EH_ISR, 0xf);	             /* Clear any previous work */
 
 	temp = GetReg(EH_CONFIGA);
 	temp = GetReg(EH_CONFIGA);
@@ -279,6 +280,13 @@ ehattach(parent, self, aux)
 
 	temp = GetReg(EH_CONFIGA);
 	temp = GetReg(EH_CONFIGA);
+
+#ifdef ETHERH_TP
+	/* Select TP */
+	temp = GetReg(EH_CONFIGB);
+	temp &= ~7;			/* Enable link test and TP */
+	SetReg(EH_CONFIGB, temp);
+#endif	/* ETHERH_TP */
 
 	/* Make the thing interrupt and test it */
 
@@ -382,16 +390,6 @@ ehattach(parent, self, aux)
 
 	/* Get out ethernet address */
 
-	/* Ok this is how Nut set the ethernet address */
-	/*
-	sc->sc_arpcom.ac_enaddr[0] = 0x00;
-	sc->sc_arpcom.ac_enaddr[1] = 0x00;
-	sc->sc_arpcom.ac_enaddr[2] = 0xc0;
-	sc->sc_arpcom.ac_enaddr[3] = 0x41;
-	sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
-	sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
-	*/
-
 	/*
 	 * The machine id is a 24 bit number so two bytes worth is
 	 * not good enough for uniqueness.
@@ -400,8 +398,8 @@ ehattach(parent, self, aux)
 
 	sc->sc_arpcom.ac_enaddr[0] = 0x00;
 	sc->sc_arpcom.ac_enaddr[1] = 0x00;
-	sc->sc_arpcom.ac_enaddr[2] = bootconfig.machine_id[3];
-	sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2];
+	sc->sc_arpcom.ac_enaddr[2] = 0xa4;
+	sc->sc_arpcom.ac_enaddr[3] = bootconfig.machine_id[2] + 0x10;
 	sc->sc_arpcom.ac_enaddr[4] = bootconfig.machine_id[1];
 	sc->sc_arpcom.ac_enaddr[5] = bootconfig.machine_id[0];
 
@@ -425,6 +423,12 @@ ehattach(parent, self, aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	/* Attach to bpf filter if it is present. */
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 
 	/* Not print some stuff for the attach line, starting with the address */
 
@@ -522,6 +526,12 @@ ehstart(ifp)
 		if ( !m )
 			break;
 
+		/* Give the packet to the bpf, if any. */
+#if NBPFILTER > 0
+		if (sc->sc_arpcom.ac_if.if_bpf)
+			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+#endif
+
 	        buffer = txbuf;
 
 	        len = 0;
@@ -536,7 +546,10 @@ ehstart(ifp)
 
 	        /* And blat it to the card */
 
-		eh_copyout ( sc, txbuf, sc->sc_tbs[nextbuf], len );
+		if (eh_copyout ( sc, txbuf, sc->sc_tbs[nextbuf], len ) == 0) {
+			printf("ehstart: failed to load packet\n");
+			continue;
+		}
 
 #ifdef PIPELINE_TRANSMIT
 		sc->sc_txlst = nextbuf;
@@ -573,7 +586,7 @@ ehioctl(ifp, cmd, data)
 {
 	struct eh_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s = splimp ();
+	int s = splimp();
 	int error = 0;
 
 	switch (cmd) {
@@ -612,7 +625,7 @@ ehioctl(ifp, cmd, data)
 		error = EINVAL;
 	}
 
-	splx (s);
+	splx(s);
 	return error;
 }
 
@@ -697,7 +710,7 @@ eh_ensure_dma_ok(sc)
 }
 
 inline int
-eh_ensure_dma_competed(sc, type)
+eh_ensure_dma_completed(sc, type)
 	struct eh_softc *sc;
 	int type;
 {
@@ -760,7 +773,7 @@ eh_copyin(sc, src, dest, len)
 	int s;
 	short *dst = (short *)dest;
 
-	s = splhigh();		/* Erm, maybe not needed now */
+	s = splimp();		/* Erm, maybe not needed now */
 
 	if (len & 1)
 		len++;
@@ -790,7 +803,7 @@ eh_copyin(sc, src, dest, len)
 
 	splx(s);
 
-	if ( eh_ensure_dma_competed ( sc, COM_READ ) )
+	if ( eh_ensure_dma_completed ( sc, COM_READ ) )
 		return 0;
 
 	return len;
@@ -814,7 +827,7 @@ eh_copyout(sc, src, dest, len)
 		dest++;
 	}
 
-	s = splhigh();		/* Erm, maybe not needed now */
+	s = splimp();		/* Erm, maybe not needed now */
 
 	/* Remote DMA to the DP83905 must be done with care.  If we dont */
 	/* do it exactly right, it punishes us by locking the bus. 	     */
@@ -839,7 +852,7 @@ eh_copyout(sc, src, dest, len)
 
 	splx(s);
 
-	if ( eh_ensure_dma_competed ( sc, COM_WRITE ) )
+	if ( eh_ensure_dma_completed ( sc, COM_WRITE ) )
 		return 0;
 
 	return len;
@@ -978,6 +991,7 @@ eh_rint(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
 	struct ether_header eh;
+/*	struct ether_header *eh;*/
 	struct eh_rxhdr hdr;
 	int status = GetReg(EH_RSR);
 	int rxstatus=0;
@@ -1086,7 +1100,57 @@ eh_rint(sc)
 
 			m = top;
 			ifp->if_ipackets++;
-			ether_input(ifp, &eh, m );
+			/* We assume the the header fits in one mbuf */
+/*			eh = mtod(m, struct ether_header *);*/
+
+#if NBPFILTER > 0
+			/*
+			 * Check if there's a BPF listener on this interface.
+			 * If so, hand off the raw packet to bpf.
+			 */
+			if (ifp->if_bpf) {
+/*				char buf[1600];
+				char *buffer = buf;
+				int len;
+				struct mbuf *m0;
+
+				bcopy(&eh, buffer, sizeof(struct ether_header));
+				buffer += sizeof(struct ether_header);
+
+			        len = 16;
+				for ( m0=m; m0 && (len + m0->m_len) < 1600; m0=m0->m_next ) {
+					bcopy(mtod(m,caddr_t), buffer, m0->m_len);
+					buffer+=m0->m_len;
+					len+=m0->m_len;
+				}
+
+				bpf_tap(sc->sc_arpcom.ac_if.if_bpf, buf, len);*/
+
+				struct mbuf m0;
+				m0.m_len = sizeof(struct ether_header);
+				m0.m_data = (caddr_t)&eh;
+				m0.m_next = m;
+
+				bpf_mtap(ifp->if_bpf, &m0);
+
+				/*
+				 * Note that the interface cannot be in promiscuous mode if
+				 * there are no BPF listeners.  And if we are in promiscuous
+				 * mode, we have to check if this packet is really ours.
+				 */
+				if ((ifp->if_flags & IFF_PROMISC) &&
+				    (eh.ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+				    bcmp(eh.ether_dhost, sc->sc_arpcom.ac_enaddr,
+					    sizeof(eh.ether_dhost)) != 0) {
+					m_freem(m);
+					goto skip;
+				}
+			}
+#endif
+
+			/* We assume the the header fits in one mbuf */
+/*			m_adj(m, sizeof(struct ether_header));*/
+			ether_input(ifp, &eh, m);
 skip:
 
 			/* Ok, I'm done with this packet */
