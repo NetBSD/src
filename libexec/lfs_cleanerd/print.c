@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.12 2002/04/30 00:28:58 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.13 2003/01/24 21:55:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.12 2002/04/30 00:28:58 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.13 2003/01/24 21:55:05 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,13 @@ extern u_long cksum(void *, size_t);	/* XXX */
  * Returns a pointer to the array of inode addresses.
  */
 
+/* XXX ondisk32 */
 int
-dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr_t addr)
+dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, int32_t **iaddrp, daddr_t addr)
 {
 	int i, j, blk, numblocks, accino=0;
-	daddr_t *dp, ddp, *idp;
+	/* XXX ondisk32 */
+	int32_t *dp, ddp, *idp;
 	u_int32_t *datap;
 	int size;
 	FINFO *fp;
@@ -110,7 +112,8 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 	if (flags & DUMP_INODE_ADDRS)
                 syslog(LOG_DEBUG, "    Inode addresses:");
 
-	idp = dp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
+	/* XXX ondisk32 */
+	idp = dp = (int32_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--idp;
 	for (--dp, i = 0; i < howmany(sp->ss_ninos,INOPB(lfsp)); --dp) {
 		if (flags & DUMP_INODE_ADDRS)

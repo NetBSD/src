@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 2000/12/09 22:33:24 scw Exp $ */
+/*	$NetBSD: installboot.c,v 1.8 2003/01/24 21:55:14 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,8 @@ struct nlist nl[] = {
 
 int *block_size_p;		/* block size var. in prototype image */
 int *block_count_p;		/* block count var. in prototype image */
-daddr_t	*block_table;		/* block number array in prototype image */
+/* XXX ondisk32 */
+int32_t	*block_table;		/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
@@ -215,7 +216,8 @@ loadprotoblocks(fname, size)
 	/* Calculate the symbols' locations within the proto file */
 	block_size_p  =   (int *) (bp + (nl[X_BLOCK_SIZE ].n_value - offs));
 	block_count_p =   (int *) (bp + (nl[X_BLOCK_COUNT].n_value - offs));
-	block_table = (daddr_t *) (bp + (nl[X_BLOCK_TABLE].n_value - offs));
+	/* XXX ondisk32 */
+	block_table = (int32_t *) (bp + (nl[X_BLOCK_TABLE].n_value - offs));
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
@@ -339,7 +341,8 @@ int	devfd;
 	 */
 	blk = fsbtodb(fs, ip->di_ib[0]);
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
-	ap = (daddr_t *)buf;
+	/* XXX ondisk32 */
+	ap = (int32_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		if (verbose)

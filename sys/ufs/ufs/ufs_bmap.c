@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.18 2003/01/24 21:55:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.17 2002/05/11 12:23:53 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.18 2003/01/24 21:55:30 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ ufs_bmap(v)
 int
 ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	ufs_daddr_t bn;
-	ufs_daddr_t *bnp;
+	daddr_t bn;
+	daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
@@ -116,8 +116,8 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct indir a[NIADDR + 1], *xap;
-	ufs_daddr_t daddr;
-	long metalbn;
+	daddr_t daddr;
+	daddr_t metalbn;
 	int error, maxrun = 0, num;
 
 	ip = VTOI(vp);
@@ -216,15 +216,17 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 				return (error);
 			}
 		}
-		daddr = ufs_rw32(((ufs_daddr_t *)bp->b_data)[xap->in_off],
+		/* XXX ondisk32 */
+		daddr = ufs_rw32(((int32_t *)bp->b_data)[xap->in_off],
 		    UFS_MPNEEDSWAP(mp));
+		/* XXX ondisk32 */
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 			    bn < MNINDIR(ump) && *runp < maxrun &&
 			    is_sequential(ump,
-			        ufs_rw32(((ufs_daddr_t *)bp->b_data)[bn - 1],
+			        ufs_rw32(((int32_t *)bp->b_data)[bn - 1],
 			            UFS_MPNEEDSWAP(mp)),
-			        ufs_rw32(((ufs_daddr_t *)bp->b_data)[bn],
+			        ufs_rw32(((int32_t *)bp->b_data)[bn],
 			            UFS_MPNEEDSWAP(mp)));
 			    ++bn, ++*runp);
 	}
@@ -248,11 +250,11 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 int
 ufs_getlbns(vp, bn, ap, nump)
 	struct vnode *vp;
-	ufs_daddr_t bn;
+	daddr_t bn;
 	struct indir *ap;
 	int *nump;
 {
-	long metalbn, realbn;
+	daddr_t metalbn, realbn;
 	struct ufsmount *ump;
 	int64_t blockcnt;
 	int lbc;
@@ -263,8 +265,8 @@ ufs_getlbns(vp, bn, ap, nump)
 		*nump = 0;
 	numlevels = 0;
 	realbn = bn;
-	if ((long)bn < 0)
-		bn = -(long)bn;
+	if (bn < 0)
+		bn = -bn;
 	KASSERT(bn >= NDADDR);
 
 	/* 

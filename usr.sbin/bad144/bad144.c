@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.19 2002/06/13 15:27:09 wiz Exp $	*/
+/*	$NetBSD: bad144.c,v 1.20 2003/01/24 21:55:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.19 2002/06/13 15:27:09 wiz Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.20 2003/01/24 21:55:30 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,8 +185,8 @@ main(int argc, char *argv[])
 	argv++;
 	if (argc == 0) {
 		sn = getold(f, &oldbad);
-		printf("bad block information at sector %d in %s:\n",
-		    sn, name);
+		printf("bad block information at sector %lld in %s:\n",
+		    (long long)sn, name);
 		printf("cartridge serial number: %d(10)\n", oldbad.bt_csn);
 		switch (oldbad.bt_flag) {
 
@@ -206,7 +206,8 @@ main(int argc, char *argv[])
 			bad = (bt->bt_cyl<<16) + bt->bt_trksec;
 			if (bad < 0)
 				break;
-			printf("sn=%d, cn=%d, tn=%d, sn=%d\n", badsn(bt),
+			printf("sn=%lld, cn=%d, tn=%d, sn=%d\n",
+			    (long long)badsn(bt),
 			    bt->bt_cyl, bt->bt_trksec>>8, bt->bt_trksec&0xff);
 			bt++;
 		}
@@ -250,8 +251,8 @@ main(int argc, char *argv[])
 		sn = atoi(*argv++);
 		argc--;
 		if (sn < 0 || sn >= size) {
-			printf("%d: out of range [0,%d) for disk %s\n",
-			    sn, size, dp->d_typename);
+			printf("%lld: out of range [0,%lld) for disk %s\n",
+			    (long long)sn, (long long)size, dp->d_typename);
 			errs++;
 			continue;
 		}
@@ -293,8 +294,8 @@ main(int argc, char *argv[])
 		    SEEK_SET) < 0)
 			err(4, "lseek");
 		if (verbose)
-			printf("write badsect file at %d\n",
-				size - dp->d_nsectors + i);
+			printf("write badsect file at %lld\n",
+				(long long)size - dp->d_nsectors + i);
 		if (nflag == 0 && write(f, (caddr_t)&curbad, sizeof(curbad)) !=
 		    sizeof(curbad))
 			err(4, "write bad sector file %d", i/2);
@@ -341,7 +342,7 @@ getold(int f, struct dkbad *bad)
 				printf("Using bad-sector file %d\n", i/2);
 			return(sn);
 		}
-		warn("read bad sector file at sn %d", sn);
+		warn("read bad sector file at sn %lld", (long long)sn);
 		if (badfile != -1)
 			break;
 	}
@@ -374,8 +375,8 @@ checkold(void)
 		    ((bt->bt_trksec >> 8) >= dp->d_ntracks) ||
 		    ((bt->bt_trksec & 0xff) >= dp->d_nsectors)) {
 			warnx("cyl/trk/sect out of range in existing entry: "
-			    "sn=%d, cn=%d, tn=%d, sn=%d",
-			    badsn(bt), bt->bt_cyl, bt->bt_trksec>>8,
+			    "sn=%lld, cn=%d, tn=%d, sn=%d",
+			    (long long)badsn(bt), bt->bt_cyl, bt->bt_trksec>>8,
 			    bt->bt_trksec & 0xff);
 			errors++;
 		}
@@ -388,7 +389,8 @@ checkold(void)
 		    warned++;
 		}
 		if (i > 0 && sn == lsn) {
-		    warnx("bad sector file contains duplicates (sn %d)", sn);
+		    warnx("bad sector file contains duplicates (sn %lld)",
+			(long long)sn);
 		    errors++;
 		}
 		lsn = sn;
@@ -426,8 +428,8 @@ shift(int f, int new, int old)
 				blkzero(f, repl - new);
 		} else {
 			if (blkcopy(f, repl - old, repl - new) == 0)
-			    warnx("Can't copy replacement sector %d to %d",
-				repl-old, repl-new);
+			    warnx("Can't copy replacement sector %lld to %lld",
+				(long long)repl-old, (long long)repl-new);
 			old--;
 		}
 		new--;
@@ -457,17 +459,17 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 	}
 	if (n != dp->d_secsize) {
 		if (n < 0)
-			err(4, "can't read sector, %d", s1);
+			err(4, "can't read sector, %lld", (long long)s1);
 		else
-			errx(4, "can't read sector, %d", s1);
+			errx(4, "can't read sector, %lld", (long long)s1);
 		return(0);
 	}
 	if (lseek(f, (off_t)(dp->d_secsize * s2), SEEK_SET) < 0)
 		err(4, "lseek");
 	if (verbose)
-		printf("copying %d to %d\n", s1, s2);
+		printf("copying %lld to %lld\n", (long long)s1, (long long)s2);
 	if (nflag == 0 && write(f, buf, dp->d_secsize) != dp->d_secsize) {
-		warn("can't write replacement sector, %d", s2);
+		warn("can't write replacement sector, %lld", (long long)s2);
 		return(0);
 	}
 	return(1);
@@ -484,9 +486,10 @@ blkzero(int f, daddr_t sn)
 	if (lseek(f, (off_t)(dp->d_secsize * sn), SEEK_SET) < 0)
 		err(4, "lseek");
 	if (verbose)
-		printf("zeroing %d\n", sn);
+		printf("zeroing %lld\n", (long long)sn);
 	if (nflag == 0 && write(f, zbuf, dp->d_secsize) != dp->d_secsize)
-		warn("can't write replacement sector, %d", sn);
+		warn("can't write replacement sector, %lld",
+		    (long long)sn);
 }
 
 int

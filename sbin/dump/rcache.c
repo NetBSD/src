@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $	*/
+/*	$NetBSD: rcache.c,v 1.12 2003/01/24 21:55:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.12 2003/01/24 21:55:06 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -205,11 +205,11 @@ rawread(daddr_t blkno, char *buf, int size)
 		goto loop;
 	}
 	if (cnt == -1)
-		msg("read error from %s: %s: [block %d]: count=%d\n",
-			disk, strerror(errno), blkno, size);
+		msg("read error from %s: %s: [block %lld]: count=%d\n",
+			disk, strerror(errno), (long long)blkno, size);
 	else
-		msg("short read error from %s: [block %d]: count=%d, got=%d\n",
-			disk, blkno, size, cnt);
+		msg("short read error from %s: [block %lld]: count=%d, got=%d\n",
+			disk, (long long)blkno, size, cnt);
 err:
 	if (++breaderrors > BREADEMAX) {
 		msg("More than %d block read errors from %s\n",
@@ -235,13 +235,13 @@ err:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %d]: count=%ld: "
-			    "%s\n", disk, strerror(errno), blkno, dev_bsize,
-			    strerror(errno));
+			msg("read error from %s: %s: [sector %lld]: count=%ld: "
+			    "%s\n", disk, strerror(errno), (long long)blkno,
+			    dev_bsize, strerror(errno));
 			continue;
 		}
-		msg("short read error from %s: [sector %d]: count=%ld, got=%d\n",
-		    disk, blkno, dev_bsize, cnt);
+		msg("short read error from %s: [sector %lld]: count=%ld, got=%d\n",
+		    disk, (long long)blkno, dev_bsize, cnt);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.40 2002/12/15 07:25:37 yamt Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.41 2003/01/24 21:55:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.40 2002/12/15 07:25:37 yamt Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.41 2003/01/24 21:55:04 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -737,23 +737,24 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			syslog(LOG_DEBUG,"segment %d is empty, as claimed", id);
 	}
 	/* XXX KS - check for misplaced blocks */
+	/* XXX ondisk32 */
 	for(i=0; i<num_blocks; i++) {
 		if(tba[i].bi_daddr
-		   && tba[i].bi_daddr != (long)seg_addr +
+		   && tba[i].bi_daddr != seg_addr +
 				btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf)
 		   && dtosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
 		{
-			syslog(LOG_ERR, "bi_daddr = 0x%x = %db; %p - %p = %ld",
+			syslog(LOG_ERR, "bi_daddr = 0x%x = %lldb; %p - %p = %ld",
 				tba[i].bi_daddr,
-				fsbtob(lfsp, tba[i].bi_daddr - seg_addr),
+				(long long)fsbtob(lfsp, tba[i].bi_daddr - seg_addr),
 				tba[i].bi_bp, seg_buf,
 				(long)(((char *)(tba[i].bi_bp) - seg_buf)));
-			syslog(LOG_ERR, "seg %d (0x%x), ino %d lbn %d, 0x%x != 0x%lx",
-			       id, seg_addr,
+			syslog(LOG_ERR, "seg %d (0x%llx), ino %d lbn %d, 0x%x != 0x%llx",
+			       id, (long long)seg_addr,
 			       tba[i].bi_inode,
 			       tba[i].bi_lbn,
 			       tba[i].bi_daddr,
-			       (long)seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
+			       seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
 			error = EFAULT;
 			goto out;
 
@@ -763,6 +764,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			 * segment from where we thought, we need to reload
 			 * the *right* inode, not the first one in the block.
 			 */
+			/* XXX ondisk32 */
 			if(tba[i].bi_lbn == LFS_UNUSED_LBN) {
 				dip = (struct dinode *)(seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr));
 				for(j=INOPB(lfsp)-1;j>=0;j--) {
@@ -809,6 +811,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			syslog(LOG_DEBUG, "BLOCK INFOS");
 		for (_bip = tba, i=0; i < num_blocks; ++_bip, ++i) {
 			PRINT_BINFO(_bip);
+			/* XXX ondisk32? */
 			lp = (u_long *)_bip->bi_bp;
 		}
 	}

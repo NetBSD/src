@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.46 2002/12/28 14:39:10 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.47 2003/01/24 21:55:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.46 2002/12/28 14:39:10 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.47 2003/01/24 21:55:30 fvdl Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -78,7 +78,7 @@ READ(void *v)
 	void *win;
 	vsize_t bytelen;
 	struct buf *bp;
-	ufs_daddr_t lbn, nextlbn;
+	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
@@ -201,7 +201,7 @@ WRITE(void *v)
 	struct buf *bp;
 	struct proc *p;
 	struct ucred *cred;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	int bsize, aflag;
