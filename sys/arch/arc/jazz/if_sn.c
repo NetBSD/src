@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.2 2001/06/12 15:17:16 wiz Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.3 2001/06/13 15:08:06 soda Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -28,6 +28,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -66,6 +67,7 @@
 
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
 
+#include <arc/arc/arcbios.h>	/* arc_product_id */
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/dma.h>
@@ -773,9 +775,7 @@ sngetaddr(sc, ap)
 	sc->sc_csr->s_cr = 0;
 	wbflush();
 #else
-	extern u_int8_t prodid[]; /* XXX */
-
-	bcopy(prodid, ap, ETHER_ADDR_LEN);
+	memcpy(ap, arc_product_id, ETHER_ADDR_LEN);
 #endif	
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2001/04/13 23:29:58 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2001/06/13 15:08:06 soda Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -128,7 +128,7 @@ extern struct splvec splvec;
 extern u_long intrcnt[];
 
 struct clockframe;
-void set_intr __P((int, int(*)(u_int, struct clockframe *), int));
+void arc_set_intr __P((int, int(*)(u_int, struct clockframe *), int));
 
 /* XXX - revisit here */
 int imask[NIPL];
