@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.4 2001/12/19 23:54:16 tv Exp $
+#	$NetBSD: tc.mi,v 1.5 2002/05/05 01:24:24 thorpej Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -157,19 +157,4 @@
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-cxx-include
-./usr/lib/libbfd.so.4				comp-c-lib
-./usr/lib/libbfd.so.4.0				comp-c-lib
-./usr/lib/libg2c.so				comp-c-lib
-./usr/lib/libg2c.so.1				comp-c-lib
-./usr/lib/libg2c.so.1.0				comp-c-lib
-./usr/lib/libg2c_pic.a				comp-c-lib
-./usr/lib/libgcc_p.a				comp-c-lib
-./usr/lib/libgcc_pic.a				comp-c-lib
-./usr/lib/libobjc.so				comp-c-lib
-./usr/lib/libobjc.so.1				comp-c-lib
-./usr/lib/libobjc.so.1.0			comp-c-lib
-./usr/lib/libobjc_pic.a				comp-c-lib
-./usr/lib/libstdc++.so				comp-c-lib
-./usr/lib/libstdc++.so.4			comp-c-lib
-./usr/lib/libstdc++.so.4.0			comp-c-lib
-./usr/lib/libstdc++_pic.a			comp-c-lib
+./usr/lib/libgcc_p.a				comp-c-proflib
