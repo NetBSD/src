@@ -90,10 +90,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.14 1994/07/22 05:08:04 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.15 1994/10/19 03:07:18 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(i386) || defined(ns32k)
+#if defined(i386) || defined(ns32k) || defined(alpha)
 #define IEEE_8087
 #endif
 #if defined(hp300) || defined(sparc) || defined(amiga) || defined(mc68000)
@@ -103,9 +103,8 @@ static char *rcsid = "$Id: strtod.c,v 1.14 1994/07/22 05:08:04 jtc Exp $";
 #define VAX
 #endif
 
-#ifndef Long
-#define Long long
-#endif
+#define Long	int32_t
+#define ULong	u_int32_t
 
 #ifdef DEBUG
 #include "stdio.h"
@@ -208,11 +207,11 @@ Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 #endif
 
 #ifdef IEEE_8087
-#define word0(x) ((unsigned Long *)&x)[1]
-#define word1(x) ((unsigned Long *)&x)[0]
+#define word0(x) ((ULong *)&x)[1]
+#define word1(x) ((ULong *)&x)[0]
 #else
-#define word0(x) ((unsigned Long *)&x)[0]
-#define word1(x) ((unsigned Long *)&x)[1]
+#define word0(x) ((ULong *)&x)[0]
+#define word1(x) ((ULong *)&x)[1]
 #endif
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
@@ -357,7 +356,7 @@ extern "C" char *__dtoa(double d, int mode, int ndigits,
 Bigint {
 	struct Bigint *next;
 	int k, maxwds, sign, wds;
-	unsigned Long x[1];
+	ULong x[1];
 	};
 
  typedef struct Bigint Bigint;
@@ -414,9 +413,9 @@ multadd
 #endif
 {
 	int i, wds;
-	unsigned Long *x, y;
+	ULong *x, y;
 #ifdef Pack_32
-	unsigned Long xi, z;
+	ULong xi, z;
 #endif
 	Bigint *b1;
 
@@ -453,9 +452,9 @@ multadd
  static Bigint *
 s2b
 #ifdef KR_headers
-	(s, nd0, nd, y9) CONST char *s; int nd0, nd; unsigned Long y9;
+	(s, nd0, nd, y9) CONST char *s; int nd0, nd; ULong y9;
 #else
-	(CONST char *s, int nd0, int nd, unsigned Long y9)
+	(CONST char *s, int nd0, int nd, ULong y9)
 #endif
 {
 	Bigint *b;
@@ -491,9 +490,9 @@ s2b
  static int
 hi0bits
 #ifdef KR_headers
-	(x) register unsigned Long x;
+	(x) register ULong x;
 #else
-	(register unsigned Long x)
+	(register ULong x)
 #endif
 {
 	register int k = 0;
@@ -525,13 +524,13 @@ hi0bits
  static int
 lo0bits
 #ifdef KR_headers
-	(y) unsigned Long *y;
+	(y) ULong *y;
 #else
-	(unsigned Long *y)
+	(ULong *y)
 #endif
 {
 	register int k;
-	register unsigned Long x = *y;
+	register ULong x = *y;
 
 	if (x & 7) {
 		if (x & 1)
@@ -596,10 +595,10 @@ mult
 {
 	Bigint *c;
 	int k, wa, wb, wc;
-	unsigned Long carry, y, z;
-	unsigned Long *x, *xa, *xae, *xb, *xbe, *xc, *xc0;
+	ULong carry, y, z;
+	ULong *x, *xa, *xae, *xb, *xbe, *xc, *xc0;
 #ifdef Pack_32
-	unsigned Long z2;
+	ULong z2;
 #endif
 
 	if (a->wds < b->wds) {
@@ -725,7 +724,7 @@ lshift
 {
 	int i, k1, n, n1;
 	Bigint *b1;
-	unsigned Long *x, *x1, *xe, z;
+	ULong *x, *x1, *xe, z;
 
 #ifdef Pack_32
 	n = k >> 5;
@@ -783,7 +782,7 @@ cmp
 	(Bigint *a, Bigint *b)
 #endif
 {
-	unsigned Long *xa, *xa0, *xb, *xb0;
+	ULong *xa, *xa0, *xb, *xb0;
 	int i, j;
 
 	i = a->wds;
@@ -820,7 +819,7 @@ diff
 	Bigint *c;
 	int i, wa, wb;
 	Long borrow, y;	/* We need signed shifts here. */
-	unsigned Long *xa, *xae, *xb, *xbe, *xc;
+	ULong *xa, *xae, *xb, *xbe, *xc;
 #ifdef Pack_32
 	Long z;
 #endif
@@ -937,11 +936,11 @@ b2d
 	(Bigint *a, int *e)
 #endif
 {
-	unsigned Long *xa, *xa0, w, y, z;
+	ULong *xa, *xa0, w, y, z;
 	int k;
 	double d;
 #ifdef VAX
-	unsigned Long d0, d1;
+	ULong d0, d1;
 #else
 #define d0 word0(d)
 #define d1 word1(d)
@@ -1009,9 +1008,9 @@ d2b
 {
 	Bigint *b;
 	int de, i, k;
-	unsigned Long *x, y, z;
+	ULong *x, y, z;
 #ifdef VAX
-	unsigned Long d0, d1;
+	ULong d0, d1;
 	d0 = word0(d) >> 16 | word0(d) << 16;
 	d1 = word1(d) >> 16 | word1(d) << 16;
 #else
@@ -1209,7 +1208,7 @@ strtod
 	CONST char *s, *s0, *s1;
 	double aadj, aadj1, adj, rv, rv0;
 	Long L;
-	unsigned Long y, z;
+	ULong y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
 
 #ifndef KR_headers
@@ -1747,11 +1746,11 @@ quorem
 {
 	int n;
 	Long borrow, y;
-	unsigned Long carry, q, ys;
-	unsigned Long *bx, *bxe, *sx, *sxe;
+	ULong carry, q, ys;
+	ULong *bx, *bxe, *sx, *sxe;
 #ifdef Pack_32
 	Long z;
-	unsigned Long si, zs;
+	ULong si, zs;
 #endif
 
 	n = S->wds;
@@ -1926,7 +1925,7 @@ __dtoa
 	Long L;
 #ifndef Sudden_Underflow
 	int denorm;
-	unsigned Long x;
+	ULong x;
 #endif
 	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
 	double d2, ds, eps;
@@ -2101,8 +2100,8 @@ __dtoa
 			if (i <= 0)
 				i = 1;
 		}
-	j = sizeof(unsigned Long);
-	for(result_k = 0; sizeof(Bigint) - sizeof(unsigned Long) + j <= i;
+	j = sizeof(ULong);
+	for(result_k = 0; sizeof(Bigint) - sizeof(ULong) + j <= i;
 		j <<= 1) result_k++;
 	result = Balloc(result_k);
 	s = s0 = (char *)result;
