@@ -1,8 +1,8 @@
-.\"	$NetBSD: hardware,v 1.7 1999/04/03 14:15:00 minoura Exp $	
+.\"	$NetBSD: hardware,v 1.8 1999/06/29 03:07:01 minoura Exp $	
 .
 NetBSD/x68k \*V runs on the Sharp X68030 series PCs with a
 .Em true
-MC68030 MPU (not the original MC68EC030) and an FPU.  Since the processor of
+MC68030 MPU (not the original MC68EC030).  Since the processor of
 the X68030 series is the MC68EC030, you need to replace it with an
 MC68030. Simply remove the old chip and put in the new one instead.
 The largest difficulty might be to open your X68030.
@@ -24,6 +24,9 @@ This means all models of X680x0 series PC except for CZ-600C
 and CZ-674C, by using the appropriate accelerator, can run NetBSD!!
 Note that the processor for the Xellent30 series is MC68EC030, so
 you need to replace your processor as well as for X68030.
+.Pp
+For 68030 systems, installing MC68881 or MC68882 FPCP is highly recommended
+but not required.
 .Pp
 The minimal configuration requires 4M of RAM and about 100M of
 disk space.  To install the entire system requires much more disk space,
