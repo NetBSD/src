@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.25 1999/08/22 12:54:03 kleink Exp $	*/
+/*	$NetBSD: malloc.c,v 1.26 1999/09/10 10:38:06 kleink Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1083,7 +1083,7 @@ malloc(size_t size)
     UTRACE(0, size, r);
     malloc_active--;
     THREAD_UNLOCK();
-    if (r == NULL) {
+    if (r == NULL && (size != 0 || !malloc_sysv)) {
 	if (malloc_xmalloc)
 	    wrterror("out of memory.\n");
 	errno = ENOMEM;
@@ -1138,7 +1138,7 @@ realloc(void *ptr, size_t size)
     UTRACE(ptr, size, r);
     malloc_active--;
     THREAD_UNLOCK();
-    if (r == NULL) {
+    if (r == NULL && (size != 0 || !malloc_sysv)) {
 	if (malloc_xmalloc)
 	    wrterror("out of memory.\n");
 	errno = ENOMEM;
