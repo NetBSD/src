@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.28 1997/07/30 03:43:21 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.28.2.1 1997/11/02 00:19:50 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.28 1997/07/30 03:43:21 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.28.2.1 1997/11/02 00:19:50 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -1365,7 +1365,7 @@ msdosfs_root()
 	int fd = -1;
 	struct stat st;
 	pid_t pid;
-	int status, i;
+	int status;
 	void *ptr;
 	struct statfs sfs;
 
@@ -1395,8 +1395,8 @@ msdosfs_root()
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
 	case 0:
-		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "18000",
-		    "-s", "192", "-b", "4096", "-f", "512", "swap", "/dev",
+		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "256",
+		    "-s", "384", "-b", "4096", "-f", "512", "swap", "/dev",
 		    NULL);
 		goto done;
 
@@ -1410,16 +1410,6 @@ msdosfs_root()
 			goto done;
 		break;
 	}
-
-	/* Make sure that the mfs is up and running */
-	for (i = 0; i < 10; i++) {
-		if (access("/dev/MAKEDEV", F_OK) != 0) 
-			break;
-		sleep(1);
-	}
-
-	if (i == 10)
-		return;
 
 	/* Create a MAKEDEV script in /dev */
 	if ((fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC, 0755)) == -1)
