@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2000/07/02 16:13:22 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.19 2000/07/03 17:56:08 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -229,6 +229,7 @@ define	IH_FUN		offsetof(struct intrhand, ih_fun)
 define	IH_ARG		offsetof(struct intrhand, ih_arg)
 define	IH_NUMBER	offsetof(struct intrhand, ih_number)
 define	IH_PIL		offsetof(struct intrhand, ih_pil)
+define	IH_PEND		offsetof(struct intrhand, ih_pending)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
