@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.27 2003/06/03 11:54:48 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.28 2003/06/09 19:06:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,10 +36,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.27 2003/06/03 11:54:48 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.28 2003/06/09 19:06:48 dsl Exp $");
 #endif
 
 #include <sys/types.h>
+#include <stddef.h>
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -51,6 +52,13 @@ __RCSID("$NetBSD: label.c,v 1.27 2003/06/03 11:54:48 dsl Exp $");
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+struct ptn_menu_info {
+	int	menu_no;
+	int	flags;
+#define PIF_SHOW_UNUSED		1
+	char	texts[MAXPARTITIONS][70];
+};
 
 /*
  * local prototypes
@@ -143,6 +151,71 @@ checklabel(lp, nparts, rawpart, bsdpart, ovly1, ovly2)
 	return (0);
 }
 
+static int
+show_all_unused(menudesc *m, menu_ent *opt, void *arg)
+{
+	struct ptn_menu_info *pi = arg;
+
+	pi->flags |= PIF_SHOW_UNUSED;
+	return 0;
+}
+
+static int
+edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
+{
+
+	editpart = opt - menu->opts;
+	process_menu(MENU_edfspart, NULL);
+
+	return 0;
+}
+
+static void
+set_label_texts(menudesc *menu, void *arg)
+{
+	struct ptn_menu_info *pi = arg;
+	menu_ent *m;
+	int ptn, last_used_ptn;
+	int rawptn = getrawpartition();
+	int maxpart = getmaxpartitions();
+
+	msg_display(MSG_fspart, multname);
+	msg_table_add(MSG_fspart_header);
+
+	for (last_used_ptn = 0, ptn = 0; ptn < maxpart; ptn++) {
+		if (bsdlabel[ptn].pi_fstype != FS_UNUSED)
+			last_used_ptn = ptn;
+		m = &menu->opts[ptn];
+		m->opt_menu = OPT_NOMENU;
+		m->opt_flags = 0;
+		m->opt_name = pi->texts[ptn];
+		if (ptn == rawptn
+#ifdef PART_BOOT
+		    || ptn == PART_BOOT
+#endif
+		    || ptn == C) {
+			m->opt_action = NULL;
+		} else
+			m->opt_action = edit_ptn;
+		fmt_fspart(pi->texts[ptn], sizeof pi->texts[0], ptn);
+	}
+
+	if (!(pi->flags & PIF_SHOW_UNUSED) && ptn != ++last_used_ptn) {
+		ptn = last_used_ptn;
+		m = &menu->opts[ptn];
+		m->opt_name = msg_string(MSG_show_all_unused_partitions);
+		m->opt_action = show_all_unused;
+		ptn++;
+	}
+
+	m = &menu->opts[ptn];
+	m->opt_menu = MENU_sizechoice; 
+	m->opt_flags = OPT_SUB; 
+	m->opt_action = NULL;
+	m->opt_name = msg_string(MSG_askunits);
+
+	set_menu_numopts(pi->menu_no, ptn + 1);
+}
 
 /*
  * Check a disklabel.
@@ -156,11 +229,34 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 	int rawpart;
 	int bsdpart;
 {
+	static struct menu_ent *menu;
+	static struct ptn_menu_info *pi;
+	int maxpart = getmaxpartitions();
+
+	if (menu == NULL) {
+		menu = malloc((maxpart + 1) * sizeof *menu);
+		pi = malloc(offsetof(struct ptn_menu_info, texts[maxpart]) );
+		if (!menu || !pi)
+			return 1;
+
+		pi->flags = 0;
+		current_cylsize = dlcylsize;
+
+		pi->menu_no = new_menu(0, menu, maxpart + 1,
+			0, 6, maxpart + 2, 74,
+			MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
+			set_label_texts, NULL, NULL,
+			msg_string(MSG_partition_sizes_ok));
+	}
+
+	if (pi->menu_no < 0)
+		return 1;
+
 	for (;;) {
 		int i, j;
 
 		/* first give the user the option to edit the label... */
-		process_menu(MENU_fspartok, NULL);
+		process_menu(pi->menu_no, pi);
 
 		/* User thinks the label is OK. check for overlaps */
 		if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
@@ -381,30 +477,36 @@ getpartsize(msg_no, partstart, defpartsize)
  */
 
 void
-atofsb(str, val, localsizemult)
+atofsb(str, p_val, localsizemult)
 	const char *str;
-	int *val;
+	int *p_val;
 	int *localsizemult;
 {
 	int i;
+	int val;
 
 	*localsizemult = sizemult;
 	if (str[0] == '\0') {
-		*val = -1;
+		*p_val = -1;
 		return;
 	}
-	*val = 0;
+	val = 0;
 	for (i = 0; str[i] != '\0'; i++) {
 		if (str[i] >= '0' && str[i] <= '9') {
-			*val = (*val) * 10 + str[i] - '0';
+			val = val * 10 + str[i] - '0';
 			continue;
 		}
 		if (str[i + 1] != '\0') {
 			/* A non-digit caracter, not at the end */
-			*val = -1;
+			val = -1;
 			return;
 		}
-		if (str[i] == 'M') {
+		if (str[i] == 'G' || str[i] == 'g') {
+			val *= 1024;
+			*localsizemult = MEG / sectorsize;
+			break;
+		}
+		if (str[i] == 'M' || str[i] == 'm') {
 			*localsizemult = MEG / sectorsize;
 			break;
 		}
@@ -417,9 +519,9 @@ atofsb(str, val, localsizemult)
 			break;
 		}
 		/* not a known unit */
-		*val = -1;
+		*p_val = -1;
 		return;
 	}
-	*val = (*val) * (*localsizemult);
+	*p_val = val * (*localsizemult);
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.100 2003/06/06 18:57:13 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.101 2003/06/09 19:06:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -176,8 +176,7 @@ message layout
 into multiple BSD partitions.  You must now set up your BSD disklabel.
 You have several choices.  They are summarized below. 
 -- Standard: the BSD disklabel partitions are computed by this program. 
--- Standard with X: twice the swap space, space for X binaries. 
--- Custom: you specify the sizes of all the BSD disklabel partitions. 
+-- Standard with X: additional space for X binaries. 
 -- Use existing: use current partitions. You must assign mount points. 
 
 The NetBSD part of your disk is %.2f Megabytes. 
@@ -198,8 +197,8 @@ cylinder size.
 }
 
 message defaultunit
-{Unless specified with 'M' (megabytes), 'c' (cylinders) or 's' sector
-at the end of input, sizes and offsets are in %s.
+{Unless specified with 'M' (megabytes), 'G' (gigabytes), 'c' (cylinders)
+or 's' sector at the end of input, sizes and offsets are in %s.
 }
 
 message ptnsizes
@@ -244,26 +243,33 @@ partition size has been truncated to %d %s.
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as (Start, End and Size in %s):
+{We now have your BSD-disklabel partitions as (Start, End and Size in %s).
+This is your last chance to change it.
 
 }
 
 message fspart_header
-{   Start     End       Size      FStype Bsize Fsize Preserve Mount point
+{       Start       End      Size FStype Bsize Fsize Preserve Mount point
    --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
 message fspart_row_start
-{%c: %-9d %-9d %-9d %-6s }
+{%9d %9d %9d %-6s }
 
 message fspart_row_end_bsd
-{%-5d %-5d %-8s %s\n}
+{%5d %5d %-8s %s\n}
 
 message fspart_row_end_msdos
 {                     %s\n}
 
 message fspart_row_end_other
 {\n}
+
+message show_all_unused_partitions
+{Show all unused partitions}
+
+message partition_sizes_ok
+{Partition sizes ok}
 
 message edfspart
 {You should set the file system (FS) kind first.  Then set the other values.

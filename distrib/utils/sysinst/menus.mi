@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.2 2003/06/04 20:05:12 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.3 2003/06/09 19:06:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,12 +71,6 @@ sysinst_menu_init(void)
 				m->opts[opt].opt_name = msg_string(m->opts[opt].opt_name);
 	}
 	return 0;
-}
-
-void
-set_menu_numopts(int menu, int numopts)
-{
-	menus[menu].numopts = numopts;
 }
 }
 

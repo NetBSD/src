@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.83 2003/06/06 21:37:13 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.84 2003/06/09 19:06:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,6 +281,7 @@ void	toplevel(void);
 
 /* from disks.c */
 int	find_disks(void);
+void	fmt_fspart(char *, size_t, int);
 void	disp_cur_fspart(int, int);
 int	write_disklabel(void);
 int	make_filesystems(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.13 2003/06/06 18:57:14 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.14 2003/06/09 19:06:48 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -178,8 +178,7 @@ message layout
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
 Masz kilka mozliwosci. Sa one opisane ponizej. 
 -- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
--- Standard z Xami: podwojona partycja wymiany, miejsce na binaria X.
--- Wlasna: sam ustawiasz rozmiary wszystkich partycji BSD disklabel. 
+-- Standard z Xami: miejsce na binaria X.
 -- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamountowac.
 
 Dysk NetBSD to %.2f Megabajtow. 
@@ -200,8 +199,8 @@ rozmiaru cylindra.
 }
 
 message defaultunit
-{Jezeli nie wybrales 'M' (megabajty), 'c' (cylindry) lub 's' sektory
-rozmiary i przesuniecia podawane sa w %s.
+{Jezeli nie wybrales 'M' (megabajty), 'G' (gigabajty), 'c' (cylindry)
+lub 's' sektory rozmiary i przesuniecia podawane sa w %s.
 }
 
 message ptnsizes	/* XXX translate */
@@ -248,24 +247,31 @@ twojej partycji zostal zmniejszony do %d %s.
 message fspart
 {Mamy teraz twoje partycje BSD-disklabel jako (Rozmiar i Przesuniecie w %s):
 
+
 }
 
 message fspart_header
-{   Rozmiar  Przesun.   Koniec   Typ SP Bsize Fsize  Ochrona Mountpoint 
+{     Rozmiar  Przesun.    Koniec Typ SP Bsize Fsize  Ochrona Mountpoint 
    --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
 message fspart_row_start
-{%c: %-9d %-9d %-9d %-6s }
+{%9d %9d %9d %-6s }
 
 message fspart_row_end_bsd
-{%-5d %-5d %-8s %s\n}
+{%5d %5d %-8s %s\n}
 
 message fspart_row_end_msdos
 {                     %s\n}
 
 message fspart_row_end_other
 {\n}
+
+message show_all_unused_partitions	/* XXX translate */
+{Show all unused partitions}
+
+message partition_sizes_ok		/* XXX translate */
+{Partition sizes ok}
 
 message edfspart
 {Powinienes najpierw ustawic rodzaj systemu plikow (SP). Pozniej inne wartosci.

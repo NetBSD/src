@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.56 2003/06/06 21:37:13 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.57 2003/06/09 19:06:48 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -185,6 +185,51 @@ find_disks(void)
 	return numdisks;
 }
 
+void
+fmt_fspart(char *buf, size_t len, int ptn)
+{
+	int poffset, psize, pend;
+	int l;
+	const char *desc;
+
+	poffset = bsdlabel[ptn].pi_offset / sizemult;
+	psize = bsdlabel[ptn].pi_size / sizemult;
+	if (psize == 0)
+		pend = 0;
+	else
+		pend = (bsdlabel[ptn].pi_offset +
+			bsdlabel[ptn].pi_size) / sizemult - 1;
+
+	desc = fstypenames[bsdlabel[ptn].pi_fstype];
+#ifdef PART_BOOT
+	if (ptn == PART_BOOT)
+		desc = msg_string(MSG_Boot_partition_cant_change);
+#endif
+	if (ptn == getrawpartition())
+		desc = msg_string(MSG_Whole_disk_cant_change);
+	else {
+		if (ptn == C)
+			desc = msg_string(MSG_NetBSD_partition_cant_change);
+	}
+
+	l = snprintf(buf, len, msg_string(MSG_fspart_row_start),
+			poffset, pend, psize, desc);
+	buf += l;
+	len -= l;
+	if (len <= 0)
+		return;
+	if (PI_ISBSDFS(&bsdlabel[ptn]))
+		snprintf(buf, len, msg_string(MSG_fspart_row_end_bsd),
+			    bsdlabel[ptn].pi_bsize,
+			    bsdlabel[ptn].pi_fsize,
+			    bsdlabel[ptn].pi_newfs ? "No" : "Yes",
+			    bsdlabel[ptn].pi_mount);
+	else if (bsdlabel[ptn].pi_fstype == FS_MSDOS)
+		snprintf(buf, len, msg_string(MSG_fspart_row_end_msdos),
+				bsdlabel[ptn].pi_mount);
+	else
+		snprintf(buf, len, msg_string(MSG_fspart_row_end_other));
+}
 
 void
 disp_cur_fspart(int disp, int showall)
@@ -211,8 +256,9 @@ disp_cur_fspart(int disp, int showall)
 			else
 				pend = (bsdlabel[i].pi_offset +
 				bsdlabel[i].pi_size) / sizemult - 1;
+			msg_table_add("%c: ", 'a' + i);
 			msg_table_add(MSG_fspart_row_start,
-					'a' + i, poffset, pend, psize,
+					poffset, pend, psize,
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (PI_ISBSDFS(&bsdlabel[i]))
 				msg_table_add(MSG_fspart_row_end_bsd,
@@ -284,14 +330,28 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char dev_name[STRSIZE];
 	int error;
+	const char *newfs;
 
-	if (*mountpoint && bsdlabel[partno].pi_newfs)
+	if (!*mountpoint)
+		return 0;
+
+	if (bsdlabel[partno].pi_newfs) {
+		switch (bsdlabel[partno].pi_fstype) {
+		case FS_BSDFFS:
+			newfs = "/sbin/newfs";
+			break;
+		case FS_BSDLFS:
+			newfs = "/sbin/newfs_lfs";
+			break;
+		default:
+			return 0;
+		}
 		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s /dev/r%s",
-		    bsdlabel[partno].pi_fstype == FS_BSDFFS ?
-		    "/sbin/newfs" : "/sbin/newfs_lfs", partname);
-	else
+		    newfs, partname);
+	} else
 		error = 0;
-	if (*mountpoint && error == 0) {
+
+	if (error == 0) {
 		snprintf(dev_name, sizeof(dev_name), "/dev/%s", partname);
 		if (partno > 0)	/* XXX strcmp(mountpoint, "/") ? XXX */
 			make_target_dir(mountpoint);
@@ -330,37 +390,45 @@ make_fstab(void)
 		f = stdout;
 #endif
 	}
-	for (i = 0; i < getmaxpartitions(); i++)
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
-			char *s = "#";
 
-			if (*bsdlabel[i].pi_mount != '\0')
-				s++;
-			scripting_fprintf(f, "%s/dev/%s%c %s ffs rw 1 %d\n", s,
-				       diskdev, 'a' + i, bsdlabel[i].pi_mount,
-				       fsck_num(bsdlabel[i].pi_mount));
-		} else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
-			char *s = "#";
+	for (i = 0; i < getmaxpartitions(); i++) {
+		const char *s = "";
+		const char *mp = bsdlabel[i].pi_mount;
+		const char *fstype = "ffs";
 
+		if (!*mp) {
+			/*
+			 * No mount point specified, comment out line and
+			 * use /mnt as a placeholder for the mount point.
+			 */
+			s = "# ";
+			mp = "/mnt";
+		}
+
+		switch (bsdlabel[i].pi_fstype) {
+		case FS_BSDLFS:
 			/* If there is no LFS, just comment it out. */
-			if (!check_lfs_progs() && *bsdlabel[i].pi_mount != '\0')
-				s++;
-			scripting_fprintf(f, "%s/dev/%s%c %s lfs rw 1 %d\n", s,
-				       diskdev, 'a' + i, bsdlabel[i].pi_mount,
-				       fsck_num(bsdlabel[i].pi_mount));
-		} else if (bsdlabel[i].pi_fstype == FS_MSDOS) {
-			char *s = "#";
-
-			if (*bsdlabel[i].pi_mount != '\0')
-				s++;
-			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n", s,
-				       diskdev, 'a' + i, bsdlabel[i].pi_mount);
-		} else if (bsdlabel[i].pi_fstype == FS_SWAP) {
+			if (check_lfs_progs())
+				s = "# ";
+			fstype = "lfs";
+			/* FALLTHROUGH */
+		case FS_BSDFFS:
+			scripting_fprintf(f, "%s/dev/%s%c %s %s rw 1 %d\n",
+			       s, diskdev, 'a' + i, mp, fstype, fsck_num(mp));
+			break;
+		case FS_MSDOS:
+			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n",
+			       s, diskdev, 'a' + i, mp);
+			break;
+		case FS_SWAP:
 			if (swap_dev == -1)
 				swap_dev = i;
 			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n",
 				diskdev, 'a' + i);
+			break;
 		}
+	}
+
 	if (tmp_mfs_size != 0) {
 		if (swap_dev != -1)
 			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw,-s=%d\n",
@@ -369,15 +437,17 @@ make_fstab(void)
 			scripting_fprintf(f, "swap /tmp mfs rw,-s=%d\n,
 				tmp_mfs_size");
 	}
+
+	/* Add /kern to fstab and make mountpoint. */
 	scripting_fprintf(script, "/kern /kern kernfs rw\n");
+	make_target_dir("/kern");
+
 	scripting_fprintf(NULL, "EOF\n");
 
 #ifndef DEBUG
 	fclose(f);
 	fflush(NULL);
 #endif
-	/* We added /kern to fstab,  make mountpoint. */
-	make_target_dir("/kern");
 	return 0;
 }
 
