@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.29 2005/01/31 23:06:42 reinoud Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.29 2005/01/31 23:06:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.30 2005/02/01 00:19:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -463,7 +463,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	struct mustek_read_cmd cmd;
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph = ss->sc_periph;
-	uint32_t lines_to_read;
+	u_long lines_to_read;
 	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_read: start\n"));
@@ -483,7 +483,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	 */
 	xs = scsipi_make_xs(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
-	    (uint8_t *) bp->b_data, bp->b_bcount,
+	    (u_char *) bp->b_data, bp->b_bcount,
 	    MUSTEK_RETRIES, 10000, bp,
 	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
 	if (xs == NULL) {

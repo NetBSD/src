@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.28 2005/01/31 23:06:41 reinoud Exp $ */
+/*	$NetBSD: ses.c,v 1.29 2005/02/01 00:19:34 reinoud Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.28 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.29 2005/02/01 00:19:34 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -157,9 +157,9 @@ struct ses_softc {
 	encvec		ses_vec;	/* vector to handlers */
 	void *		ses_private;	/* per-type private data */
 	encobj *	ses_objmap;	/* objects */
-	uint32_t	ses_nobjects;	/* number of objects */
+	u_int32_t	ses_nobjects;	/* number of objects */
 	ses_encstat	ses_encstat;	/* overall status */
-	uint8_t	ses_flags;
+	u_int8_t	ses_flags;
 };
 #define	SES_FLAG_INVALID	0x01
 #define	SES_FLAG_OPEN		0x02
@@ -352,7 +352,7 @@ sesclose(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-sesioctl(dev_t dev, ulong cmd, caddr_t arg_addr, int flag, struct proc *p)
+sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct proc *p)
 {
 	ses_encstat tmp;
 	ses_objstat objs;
@@ -502,7 +502,7 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 	flg |= XS_CTL_SILENT;
 #endif
 	error = scsipi_command(ssc->sc_periph, &sgen, cdbl,
-	    (uint8_t *) dptr, dl, SCSIPIRETRIES, 30000, NULL, flg);
+	    (u_char *) dptr, dl, SCSIPIRETRIES, 30000, NULL, flg);
 
 	if (error == 0 && dptr)
 		*dlenp = 0;

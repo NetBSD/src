@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.25 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.26 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -84,18 +84,18 @@ struct sd_softc {
 	struct scsipi_periph *sc_periph;/* contains our targ, lun, etc. */
 
 	struct disk_parms {
-		uint32_t	heads;		/* number of heads */
-		uint32_t	cyls;		/* number of cylinders */
-		uint32_t	sectors;	/* number of sectors/track */
-		uint32_t	blksize;	/* number of bytes/sector */
-		uint32_t	rot_rate;	/* rotational rate, in RPM */
-		uint64_t disksize;	/* total number sectors */
-		uint64_t disksize512;	/* total number sectors */
+		u_long	heads;		/* number of heads */
+		u_long	cyls;		/* number of cylinders */
+		u_long	sectors;	/* number of sectors/track */
+		u_long	blksize;	/* number of bytes/sector */
+		u_long	rot_rate;	/* rotational rate, in RPM */
+		u_int64_t disksize;	/* total number sectors */
+		u_int64_t disksize512;	/* total number sectors */
 	} params;
 
 	struct bufq_state buf_queue;
 	struct callout sc_callout;
-	uint8_t type;
+	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
 
 	void *sc_sdhook;		/* our shutdown hook */

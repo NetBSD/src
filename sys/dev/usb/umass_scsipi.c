@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.22 2005/01/31 23:06:42 reinoud Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.23 2005/02/01 00:19:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.22 2005/01/31 23:06:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.23 2005/02/01 00:19:35 reinoud Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -98,7 +98,7 @@ Static void umass_scsipi_minphys(struct buf *bp);
 Static int umass_scsipi_ioctl(struct scsipi_channel *, u_long,
 			      caddr_t, int, usb_proc_ptr );
 Static int umass_scsipi_getgeom(struct scsipi_periph *periph,
-				struct disk_parms *, uint32_t sectors);
+				struct disk_parms *, u_long sectors);
 
 Static void umass_scsipi_cb(struct umass_softc *sc, void *priv,
 			    int residue, int status);
@@ -387,7 +387,7 @@ umass_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
 
 Static int
 umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
-		     uint32_t sectors)
+		     u_long sectors)
 {
 	struct umass_softc *sc =
 	    (void *)periph->periph_channel->chan_adapter->adapt_dev;

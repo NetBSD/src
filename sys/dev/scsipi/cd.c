@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.217 2005/01/31 23:39:02 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.218 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.217 2005/01/31 23:39:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.218 2005/02/01 00:19:34 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -116,7 +116,7 @@ static void	cdgetdisklabel(struct cd_softc *);
 static void	cddone(struct scsipi_xfer *, int);
 static void	cdbounce(struct buf *);
 static int	cd_interpret_sense(struct scsipi_xfer *);
-static uint32_t	cd_size(struct cd_softc *, int);
+static u_long	cd_size(struct cd_softc *, int);
 static int	cd_play(struct cd_softc *, int, int);
 static int	cd_play_tracks(struct cd_softc *, int, int, int, int);
 static int	cd_play_msf(struct cd_softc *, int, int, int, int, int, int);
@@ -137,9 +137,9 @@ static int	dvd_read_bca(struct cd_softc *, dvd_struct *);
 static int	dvd_read_manufact(struct cd_softc *, dvd_struct *);
 static int	dvd_read_struct(struct cd_softc *, dvd_struct *);
 
-static int	cd_mode_sense(struct cd_softc *, uint8_t, void *, size_t, int,
+static int	cd_mode_sense(struct cd_softc *, u_int8_t, void *, size_t, int,
 		    int, int *);
-static int	cd_mode_select(struct cd_softc *, uint8_t, void *, size_t,
+static int	cd_mode_select(struct cd_softc *, u_int8_t, void *, size_t,
 		    int, int);
 static int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 static int	cd_getvol(struct cd_softc *, struct ioc_vol *, int);
@@ -838,7 +838,7 @@ cdstart(struct scsipi_periph *periph)
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
 		xs = scsipi_make_xs(periph, cmdp, cmdlen,
-		    (uint8_t *)bp->b_data, bp->b_bcount,
+		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
 		if (__predict_false(xs == NULL)) {
 			/*
@@ -1070,9 +1070,9 @@ cdwrite(dev_t dev, struct uio *uio, int ioflag)
  * addresses format
  */
 static void
-lba2msf(uint32_t lba, uint8_t *m, uint8_t *s, uint8_t *f)
+lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
 {   
-	uint32_t tmp;
+	u_long tmp;
 
 	tmp = lba + CD_BLOCK_OFFSET;	/* offset of first logical frame */
 	tmp &= 0xffffff;		/* negative lbas use only 24 bits */
@@ -1082,8 +1082,8 @@ lba2msf(uint32_t lba, uint8_t *m, uint8_t *s, uint8_t *f)
 	*f = tmp % CD_FRAMES;
 }
 
-static uint32_t
-msf2lba(uint8_t m, uint8_t s, uint8_t f)
+static u_long
+msf2lba(u_char m, u_char s, u_char f)
 {
 
 	return ((((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET);
@@ -1125,7 +1125,7 @@ cdreadmsaddr(struct cd_softc *cd, int *addr)
  * Knows about the internals of this device
  */
 static int
-cdioctl(dev_t dev, ulong cmd, caddr_t addr, int flag, struct proc *p)
+cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -1297,7 +1297,7 @@ bad:
 		struct ioc_read_subchannel *args =
 		    (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
-		uint len = args->data_len;
+		u_int len = args->data_len;
 
 		if (len > sizeof(data) ||
 		    len < sizeof(struct cd_sub_channel_header))
@@ -1330,7 +1330,7 @@ bad:
 		    (struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
 		struct cd_toc_entry *cte;
-		uint len = te->data_len;
+		u_int len = te->data_len;
 		int ntracks;
 
 		th = &toc.header;
@@ -1571,13 +1571,13 @@ error:
 /*
  * Find out from the device what it's capacity is
  */
-static uint32_t
+static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
 	struct scsipi_read_cd_capacity cmd;
 	struct scsipi_read_cd_cap_data data;
 	int blksize;
-	uint32_t size;
+	u_long size;
 
 	if (cd->sc_periph->periph_quirks & PQUIRK_NOCAPACITY) {
 		/*
@@ -1619,7 +1619,7 @@ cd_size(struct cd_softc *cd, int flags)
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
-	cd->params.disksize512 = ((uint64_t)cd->params.disksize * blksize) / DEV_BSIZE;
+	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
 	    ("cd_size: %d %ld\n", blksize, size));
@@ -1839,7 +1839,7 @@ static int
 dvd_auth(struct cd_softc *cd, dvd_authinfo *a)
 {
 	struct scsipi_generic cmd;
-	uint8_t buf[20];
+	u_int8_t buf[20];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
@@ -1987,7 +1987,7 @@ static int
 dvd_read_physical(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	uint8_t buf[4 + 4 * 20], *bufp;
+	u_int8_t buf[4 + 4 * 20], *bufp;
 	int error;
 	struct dvd_layer *layer;
 	int i;
@@ -2027,7 +2027,7 @@ static int
 dvd_read_copyright(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	uint8_t buf[8];
+	u_int8_t buf[8];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
@@ -2050,7 +2050,7 @@ static int
 dvd_read_disckey(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	uint8_t *buf;
+	u_int8_t *buf;
 	int error;
 
 	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
@@ -2074,7 +2074,7 @@ static int
 dvd_read_bca(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	uint8_t buf[4 + 188];
+	u_int8_t buf[4 + 188];
 	int error;
 
 	memset(cmd.bytes, 0, 15);
@@ -2098,7 +2098,7 @@ static int
 dvd_read_manufact(struct cd_softc *cd, dvd_struct *s)
 {
 	struct scsipi_generic cmd;
-	uint8_t *buf;
+	u_int8_t *buf;
 	int error;
 
 	buf = malloc(4 + 2048, M_TEMP, M_WAITOK|M_ZERO);
@@ -2143,7 +2143,7 @@ dvd_read_struct(struct cd_softc *cd, dvd_struct *s)
 }
 
 static int
-cd_mode_sense(struct cd_softc *cd, uint8_t byte2, void *sense, size_t size,
+cd_mode_sense(struct cd_softc *cd, u_int8_t byte2, void *sense, size_t size,
     int page, int flags, int *big)
 {
 
@@ -2161,7 +2161,7 @@ cd_mode_sense(struct cd_softc *cd, uint8_t byte2, void *sense, size_t size,
 }
 
 static int
-cd_mode_select(struct cd_softc *cd, uint8_t byte2, void *sense, size_t size,
+cd_mode_select(struct cd_softc *cd, u_int8_t byte2, void *sense, size_t size,
     int flags, int big)
 {
 
@@ -2210,11 +2210,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((char *) &data.header.big +
+		page = (void *)((u_long)&data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((char *) &data.header.small +
+		page = (void *)((u_long)&data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2256,11 +2256,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((char *) &data.header.big +
+		page = (void *)((u_long)&data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((char *) &data.header.small +
+		page = (void *)((u_long)&data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2301,11 +2301,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((char *) &data.header.big +
+		page = (void *)((u_long)&data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((char *) &data.header.small +
+		page = (void *)((u_long)&data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2347,17 +2347,17 @@ try_again:
 		return (error);
 
 	if (big) {
-		page = (void *)((char *) &data.header.big +
+		page = (void *)((u_long)&data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
-		page2 = (void *)((char *) &mask.header.big +
+		page2 = (void *)((u_long)&mask.header.big +
 				sizeof mask.header.big +
 				_2btol(mask.header.big.blk_desc_len));
 	} else {
-		page = (void *)((char *) &data.header.small +
+		page = (void *)((u_long)&data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
-		page2 = (void *)((char *) &mask.header.small +
+		page2 = (void *)((u_long)&mask.header.small +
 				sizeof mask.header.small +
 				mask.header.small.blk_desc_len);
 	}

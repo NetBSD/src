@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.90 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.91 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.90 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.91 2005/02/01 00:19:34 reinoud Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -914,7 +914,7 @@ wdc_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ATADEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
-	    (uint)xfer->c_flags), DEBUG_XFERS);
+	    (u_int)xfer->c_flags), DEBUG_XFERS);
 	callout_stop(&chp->ch_callout);
 	/* mark controller inactive and free the command */
 	chp->ch_queue->active_xfer = NULL;
