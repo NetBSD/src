@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.128 2004/12/18 03:08:48 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.129 2004/12/31 14:54:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -161,7 +161,6 @@ struct vnode {
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
-#define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 
 #define VNODE_FLAGBITS \
     "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP" \
