@@ -18,27 +18,22 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.4 1994/05/08 12:16:22 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.5 1994/05/30 01:18:49 paulus Exp $";
 #endif
 
 /*
  * TODO:
- * Option tracing.
- * Test restart.
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
+#include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-
-#include <net/if.h>
-#include <net/if_ppp.h>
 #include <netinet/in.h>
-
-#include <string.h>
 
 #include "pppd.h"
 #include "ppp.h"
@@ -57,6 +52,13 @@ lcp_options lcp_allowoptions[NPPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NPPP];	/* Options that we ack'd */
 u_long xmit_accm[NPPP][8];		/* extended transmit ACCM */
 
+static u_long lcp_echos_pending = 0;    /* Number of outstanding echo msgs */
+static u_long lcp_echo_number   = 0;    /* ID number of next echo frame */
+static u_long lcp_echo_timer_running = 0;  /* TRUE if a timer is running */
+
+u_long lcp_echo_interval = 0;
+u_long lcp_echo_fails = 0;
+
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
@@ -73,6 +75,17 @@ static void lcp_starting __ARGS((fsm *));	/* We need lower layer up */
 static void lcp_finished __ARGS((fsm *));	/* We need lower layer down */
 static int  lcp_extcode __ARGS((fsm *, int, int, u_char *, int));
 static void lcp_rprotrej __ARGS((fsm *, u_char *, int));
+
+/*
+ * routines to send LCP echos to peer
+ */
+
+static void lcp_echo_lowerup __ARGS((int));
+static void lcp_echo_lowerdown __ARGS((int));
+static void LcpEchoTimeout __ARGS((caddr_t));
+static void lcp_received_echo_reply __ARGS((fsm *, int, u_char *, int));
+static void LcpSendEchoRequest __ARGS((fsm *));
+static void LcpLinkFailure __ARGS((fsm *));
 
 static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_resetci,		/* Reset our Configuration Information */
@@ -183,7 +196,20 @@ void
 lcp_close(unit)
     int unit;
 {
-    fsm_close(&lcp_fsm[unit]);
+    fsm *f = &lcp_fsm[unit];
+
+    if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
+	/*
+	 * This action is not strictly according to the FSM in RFC1548,
+	 * but it does mean that the program terminates if you do a
+	 * lcp_close(0) in passive/silent mode when a connection hasn't
+	 * been established.
+	 */
+	f->state = CLOSED;
+	lcp_finished(f);
+
+    } else
+	fsm_close(&lcp_fsm[unit]);
 }
 
 
@@ -197,7 +223,7 @@ lcp_lowerup(unit)
     sifdown(unit);
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, MTU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, MTU, 0, 0, 0);
+    ppp_recv_config(unit, MTU, 0x00000000, 0, 0);
     peer_mru[unit] = MTU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
 
@@ -239,19 +265,28 @@ lcp_extcode(f, code, id, inp, len)
     u_char *inp;
     int len;
 {
+    u_char *magp;
+
     switch( code ){
     case PROTREJ:
 	lcp_rprotrej(f, inp, len);
 	break;
     
     case ECHOREQ:
-	if( f->state != OPENED )
+	if (f->state != OPENED)
 	    break;
 	LCPDEBUG((LOG_INFO, "lcp: Echo-Request, Rcvd id %d", id));
+	magp = inp;
+	PUTLONG(lcp_gotoptions[f->unit].magicnumber, magp);
+	if (len < CILEN_LONG)
+	    len = CILEN_LONG;
 	fsm_sdata(f, ECHOREP, id, inp, len);
 	break;
     
     case ECHOREP:
+	lcp_received_echo_reply(f, id, inp, len);
+	break;
+
     case DISCREQ:
 	break;
 
@@ -686,12 +721,12 @@ lcp_nakci(f, p, len)
      * to stop asking for LQR.  We haven't got any other protocol.
      * If they Nak the reporting period, take their value XXX ?
      */
-    NAKCILONG(CI_QUALITY, neg_lqr,
-	      if (cishort != LQR)
-		  try.neg_lqr = 0;
-	      else
-	          try.lqr_period = cilong;
-	      );
+    NAKCILQR(CI_QUALITY, neg_lqr,
+	     if (cishort != LQR)
+		 try.neg_lqr = 0;
+	     else
+		 try.lqr_period = cilong;
+	     );
     /*
      * Check for a looped-back line.
      */
@@ -881,7 +916,7 @@ lcp_rejci(f, p, len)
 	GETSHORT(cishort, p); \
 	GETLONG(cilong, p); \
 	/* Check rejected value. */ \
-	if (cishort != LQR || cichar != val) \
+	if (cishort != LQR || cilong != val) \
 	    goto bad; \
 	try.neg = 0; \
 	LCPDEBUG((LOG_INFO,"lcp_rejci rejected LQR opt %d", opt)); \
@@ -1218,6 +1253,11 @@ lcp_up(f)
     lcp_options *go = &lcp_gotoptions[f->unit];
     lcp_options *ao = &lcp_allowoptions[f->unit];
 
+    if (!go->neg_magicnumber)
+	go->magicnumber = 0;
+    if (!ho->neg_magicnumber)
+	ho->magicnumber = 0;
+
     /*
      * Set our MTU to the smaller of the MTU we wanted and
      * the MRU our peer wanted.  If we negotiated an MRU,
@@ -1237,6 +1277,7 @@ lcp_up(f)
     ChapLowerUp(f->unit);	/* Enable CHAP */
     upap_lowerup(f->unit);	/* Enable UPAP */
     ipcp_lowerup(f->unit);	/* Enable IPCP */
+    lcp_echo_lowerup(f->unit);  /* Enable echo messages */
 
     link_established(f->unit);
 }
@@ -1251,13 +1292,14 @@ static void
 lcp_down(f)
     fsm *f;
 {
+    lcp_echo_lowerdown(f->unit);
     ipcp_lowerdown(f->unit);
     ChapLowerDown(f->unit);
     upap_lowerdown(f->unit);
 
     sifdown(f->unit);
     ppp_send_config(f->unit, MTU, 0xffffffff, 0, 0);
-    ppp_recv_config(f->unit, MTU, 0, 0, 0);
+    ppp_recv_config(f->unit, MTU, 0x00000000, 0, 0);
     peer_mru[f->unit] = MTU;
 
     link_down(f->unit);
@@ -1420,4 +1462,147 @@ lcp_printpkt(p, plen, printer, arg)
     }
 
     return p - pstart;
+}
+
+/*
+ * Time to shut down the link because there is nothing out there.
+ */
+
+static
+void LcpLinkFailure (f)
+    fsm *f;
+{
+    if (f->state == OPENED) {
+        syslog (LOG_NOTICE, "Excessive lack of response to LCP echo frames.");
+        lcp_lowerdown(f->unit);		/* Reset connection */
+    }
+}
+
+/*
+ * Timer expired for the LCP echo requests from this process.
+ */
+
+static void
+LcpEchoCheck (f)
+    fsm *f;
+{
+    u_long             delta;
+
+    LcpSendEchoRequest (f);
+    delta = lcp_echo_interval;
+
+/*
+ * Start the timer for the next interval.
+ */
+    assert (lcp_echo_timer_running==0);
+    TIMEOUT (LcpEchoTimeout, (caddr_t) f, delta);
+    lcp_echo_timer_running = 1;
+}
+
+/*
+ * LcpEchoTimeout - Timer expired on the LCP echo
+ */
+
+static void
+LcpEchoTimeout (arg)
+    caddr_t arg;
+{
+    if (lcp_echo_timer_running != 0) {
+        lcp_echo_timer_running = 0;
+        LcpEchoCheck ((fsm *) arg);
+    }
+}
+
+/*
+ * LcpEchoReply - LCP has received a reply to the echo
+ */
+
+static void
+lcp_received_echo_reply (f, id, inp, len)
+    fsm *f;
+    int id; u_char *inp; int len;
+{
+    u_long magic;
+
+    /* Check the magic number - don't count replies from ourselves. */
+    if (len < CILEN_LONG)
+	return;
+    GETLONG(magic, inp);
+    if (lcp_gotoptions[f->unit].neg_magicnumber
+	&& magic == lcp_gotoptions[f->unit].magicnumber)
+	return;
+
+    /* Reset the number of outstanding echo frames */
+    lcp_echos_pending = 0;
+}
+
+/*
+ * LcpSendEchoRequest - Send an echo request frame to the peer
+ */
+
+static void
+LcpSendEchoRequest (f)
+    fsm *f;
+{
+    u_long lcp_magic;
+    u_char pkt[4], *pktp;
+
+/*
+ * Detect the failure of the peer at this point.
+ */
+    if (lcp_echo_fails != 0) {
+        if (lcp_echos_pending++ >= lcp_echo_fails) {
+            LcpLinkFailure(f);
+	    lcp_echos_pending = 0;
+	}
+    }
+/*
+ * Make and send the echo request frame.
+ */
+    if (f->state == OPENED) {
+        lcp_magic = lcp_gotoptions[f->unit].neg_magicnumber
+	            ? lcp_gotoptions[f->unit].magicnumber
+	            : 0L;
+	pktp = pkt;
+	PUTLONG(lcp_magic, pktp);
+      
+        fsm_sdata(f, ECHOREQ,
+		  lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+    }
+}
+
+/*
+ * lcp_echo_lowerup - Start the timer for the LCP frame
+ */
+
+static void
+lcp_echo_lowerup (unit)
+    int unit;
+{
+    fsm *f = &lcp_fsm[unit];
+
+    /* Clear the parameters for generating echo frames */
+    lcp_echos_pending      = 0;
+    lcp_echo_number        = 0;
+    lcp_echo_timer_running = 0;
+  
+    /* If a timeout interval is specified then start the timer */
+    if (lcp_echo_interval != 0)
+        LcpEchoCheck (f);
+}
+
+/*
+ * lcp_echo_lowerdown - Stop the timer for the LCP frame
+ */
+
+static void
+lcp_echo_lowerdown (unit)
+    int unit;
+{
+    fsm *f = &lcp_fsm[unit];
+
+    if (lcp_echo_timer_running != 0) {
+        UNTIMEOUT (LcpEchoTimeout, (caddr_t) f);
+        lcp_echo_timer_running = 0;
+    }
 }
