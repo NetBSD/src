@@ -1,5 +1,7 @@
+/*	$NetBSD: demand.c,v 1.4 1997/03/12 20:17:39 christos Exp $	*/
+
 /*
- * demand.c - PPP authentication and phase control.
+ * demand.c - Support routines for demand-dialling.
  *
  * Copyright (c) 1993 The Australian National University.
  * All rights reserved.
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: demand.c,v 1.3 1996/12/18 16:54:59 christos Exp $";
+#if 0
+static char rcsid[] = "Id: demand.c,v 1.5 1996/08/28 06:40:03 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: demand.c,v 1.4 1997/03/12 20:17:39 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -36,8 +42,10 @@ static char rcsid[] = "$Id: demand.c,v 1.3 1996/12/18 16:54:59 christos Exp $";
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#ifdef PPP_FILTER
 #include <net/bpf.h>
 #include <pcap.h>
+#endif
 
 #include "pppd.h"
 #include "fsm.h"
@@ -59,6 +67,8 @@ struct packet {
 
 struct packet *pend_q;
 struct packet *pend_qtail;
+
+static int active_packet __P((unsigned char *, int));
 
 /*
  * demand_conf - configure the interface for doing dial-on-demand.
@@ -85,7 +95,9 @@ demand_conf()
     ppp_send_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
     ppp_recv_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
 
+#ifdef PPP_FILTER
     set_filters(&pass_filter, &active_filter);
+#endif
 
     /*
      * Call the demand_conf procedure for each protocol that's got one.
@@ -256,12 +268,12 @@ loop_frame(frame, len)
 {
     struct packet *pkt;
 
+    /* log_packet(frame, len, "from loop: "); */
     if (len < PPP_HDRLEN)
 	return 0;
     if ((PPP_PROTOCOL(frame) & 0x8000) != 0)
 	return 0;		/* shouldn't get any of these anyway */
-    if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+    if (!active_packet(frame, len))
 	return 0;
 
     pkt = (struct packet *) malloc(sizeof(struct packet) + len);
@@ -307,4 +319,35 @@ demand_rexmit(proto)
     pend_qtail = prev;
     if (prev != NULL)
 	prev->next = NULL;
+}
+/*
+ * Scan a packet to decide whether it is an "active" packet,
+ * that is, whether it is worth bringing up the link for.
+ */
+static int
+active_packet(p, len)
+    unsigned char *p;
+    int len;
+{
+    int proto, i;
+    struct protent *protp;
+
+    if (len < PPP_HDRLEN)
+	return 0;
+    proto = PPP_PROTOCOL(p);
+#ifdef PPP_FILTER
+    if (active_filter.bf_len != 0
+	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+	return 0;
+#endif
+    for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+	if (protp->protocol < 0xC000 && (protp->protocol & ~0x8000) == proto) {
+	    if (!protp->enabled_flag)
+		return 0;
+	    if (protp->active_pkt == NULL)
+		return 1;
+	    return (*protp->active_pkt)(p, len);
+	}
+    }
+    return 0;			/* not a supported protocol !!?? */
 }

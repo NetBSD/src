@@ -1,3 +1,5 @@
+/*	$NetBSD: ipxcp.c,v 1.2 1997/03/12 20:17:50 christos Exp $	*/
+
 /*
  * ipxcp.c - PPP IPX Control Protocol.
  *
@@ -19,7 +21,11 @@
 
 #ifdef IPX_CHANGE
 #ifndef lint
-static char rcsid[] = "$Id: ipxcp.c,v 1.1.1.1 1997/03/12 19:38:16 christos Exp $";
+#if 0
+static char rcsid[] = "Id: ipxcp.c,v 1.5 1997/03/04 03:39:32 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: ipxcp.c,v 1.2 1997/03/12 20:17:50 christos Exp $";
+#endif
 #endif
 
 /*

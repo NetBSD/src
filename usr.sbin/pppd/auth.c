@@ -1,3 +1,5 @@
+/*	$NetBSD: auth.c,v 1.14 1997/03/12 20:17:21 christos Exp $	*/
+
 /*
  * auth.c - PPP authentication and phase control.
  *
@@ -33,7 +35,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.13 1996/04/09 05:29:25 cgd Exp $";
+#if 0
+static char rcsid[] = "Id: auth.c,v 1.30 1997/03/04 03:37:21 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: auth.c,v 1.14 1997/03/12 20:17:21 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -51,6 +57,19 @@ static char rcsid[] = "$Id: auth.c,v 1.13 1996/04/09 05:29:25 cgd Exp $";
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#if defined(SVR4) || defined(_linux_)
+#include <crypt.h>
+#else
+#if defined(SUNOS4) || defined(ULTRIX)
+extern char *crypt();
+#endif
+#endif
+
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
+#endif
+
 #ifdef HAS_SHADOW
 #include <shadow.h>
 #include <shadow/pwauth.h>
@@ -65,11 +84,10 @@ static char rcsid[] = "$Id: auth.c,v 1.13 1996/04/09 05:29:25 cgd Exp $";
 #include "ipcp.h"
 #include "upap.h"
 #include "chap.h"
+#ifdef CBCP_SUPPORT
+#include "cbcp.h"
+#endif
 #include "pathnames.h"
-
-#if defined(sun) && defined(sparc)
-#include <alloca.h>
-#endif /*sparc*/
 
 /* Used for storing a sequence of words.  Usually malloced. */
 struct wordlist {
@@ -86,11 +104,17 @@ struct wordlist {
 #define FALSE	0
 #define TRUE	1
 
+/* The name by which the peer authenticated itself to us. */
+char peer_authname[MAXNAMELEN];
+
 /* Records which authentication operations haven't completed yet. */
 static int auth_pending[NUM_PPP];
 
 /* Set if we have successfully called login() */
 static int logged_in;
+
+/* Set if we have run the /etc/ppp/auth-up script. */
+static int did_authup;
 
 /* List of addresses which the peer may use. */
 static struct wordlist *addresses[NUM_PPP];
@@ -101,9 +125,12 @@ static int num_np_open;
 /* Number of network protocols which have come up. */
 static int num_np_up;
 
+/* Set if we got the contents of passwd[] from the pap-secrets file. */
+static int passwd_from_file;
+
 /* Bits in auth_pending[] */
-#define UPAP_WITHPEER	1
-#define UPAP_PEER	2
+#define PAP_WITHPEER	1
+#define PAP_PEER	2
 #define CHAP_WITHPEER	4
 #define CHAP_PEER	8
 
@@ -111,16 +138,22 @@ static int num_np_up;
 
 static void network_phase __P((int));
 static void check_idle __P((caddr_t));
+static void connect_time_expired __P((caddr_t));
 static int  login __P((char *, char *, char **, int *));
 static void logout __P((void));
 static int  null_login __P((int));
-static int  get_upap_passwd __P((void));
-static int  have_upap_secret __P((void));
+static int  get_pap_passwd __P((char *));
+static int  have_pap_secret __P((void));
 static int  have_chap_secret __P((char *, char *, u_int32_t));
 static int  ip_addr_check __P((u_int32_t, struct wordlist *));
 static int  scan_authfile __P((FILE *, char *, char *, u_int32_t, char *,
 			       struct wordlist **, char *));
 static void free_wordlist __P((struct wordlist *));
+static void auth_script __P((char *));
+static void set_allowed_addrs __P((int, struct wordlist *));
+#ifdef CBCP_SUPPORT
+static void callback_phase __P((int));
+#endif
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
@@ -158,17 +191,22 @@ link_down(unit)
     int i;
     struct protent *protp;
 
+    if (did_authup) {
+	auth_script(_PATH_AUTHDOWN);
+	did_authup = 0;
+    }
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 	if (!protp->enabled_flag)
 	    continue;
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
 	    (*protp->lowerdown)(unit);
         if (protp->protocol < 0xC000 && protp->close != NULL)
-	    (*protp->close)(unit, "LCP link down");
+	    (*protp->close)(unit, "LCP down");
     }
     num_np_open = 0;
     num_np_up = 0;
-    phase = PHASE_TERMINATE;
+    if (phase != PHASE_DEAD)
+	phase = PHASE_TERMINATE;
 }
 
 /*
@@ -203,7 +241,6 @@ link_established(unit)
 	if (!wo->neg_upap || !null_login(unit)) {
 	    syslog(LOG_WARNING, "peer refused to authenticate");
 	    lcp_close(unit, "peer refused to authenticate");
-	    phase = PHASE_TERMINATE;
 	    return;
 	}
     }
@@ -215,14 +252,19 @@ link_established(unit)
 	auth |= CHAP_PEER;
     } else if (go->neg_upap) {
 	upap_authpeer(unit);
-	auth |= UPAP_PEER;
+	auth |= PAP_PEER;
     }
     if (ho->neg_chap) {
-	ChapAuthWithPeer(unit, our_name, ho->chap_mdtype);
+	ChapAuthWithPeer(unit, user, ho->chap_mdtype);
 	auth |= CHAP_WITHPEER;
     } else if (ho->neg_upap) {
+	if (passwd[0] == 0) {
+	    passwd_from_file = 1;
+	    if (!get_pap_passwd(passwd))
+		syslog(LOG_ERR, "No secret found for PAP login");
+	}
 	upap_authwithpeer(unit, user, passwd);
-	auth |= UPAP_WITHPEER;
+	auth |= PAP_WITHPEER;
     }
     auth_pending[unit] = auth;
 
@@ -239,10 +281,32 @@ network_phase(unit)
 {
     int i;
     struct protent *protp;
+    lcp_options *go = &lcp_gotoptions[unit];
+
+    /*
+     * If the peer had to authenticate, run the auth-up script now.
+     */
+    if ((go->neg_chap || go->neg_upap) && !did_authup) {
+	auth_script(_PATH_AUTHUP);
+	did_authup = 1;
+    }
+
+#ifdef CBCP_SUPPORT
+    /*
+     * If we negotiated callback, do it now.
+     */
+    if (go->neg_cbcp) {
+	phase = PHASE_CALLBACK;
+	(*cbcp_protent.open)(unit);
+	return;
+    }
+#endif
 
     phase = PHASE_NETWORK;
+#if 0
     if (!demand)
 	set_filters(&pass_filter, &active_filter);
+#endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         if (protp->protocol < 0xC000 && protp->enabled_flag
 	    && protp->open != NULL) {
@@ -263,15 +327,16 @@ auth_peer_fail(unit, protocol)
      * Authentication failure: take the link down
      */
     lcp_close(unit, "Authentication failed");
-    phase = PHASE_TERMINATE;
 }
 
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
 void
-auth_peer_success(unit, protocol)
+auth_peer_success(unit, protocol, name, namelen)
     int unit, protocol;
+    char *name;
+    int namelen;
 {
     int bit;
 
@@ -280,7 +345,7 @@ auth_peer_success(unit, protocol)
 	bit = CHAP_PEER;
 	break;
     case PPP_PAP:
-	bit = UPAP_PEER;
+	bit = PAP_PEER;
 	break;
     default:
 	syslog(LOG_WARNING, "auth_peer_success: unknown protocol %x",
@@ -289,8 +354,16 @@ auth_peer_success(unit, protocol)
     }
 
     /*
+     * Save the authenticated name of the peer for later.
+     */
+    if (namelen > sizeof(peer_authname) - 1)
+	namelen = sizeof(peer_authname) - 1;
+    BCOPY(name, peer_authname, namelen);
+    peer_authname[namelen] = 0;
+
+    /*
      * If there is no more authentication still to be done,
-     * proceed to the network phase.
+     * proceed to the network (or callback) phase.
      */
     if ((auth_pending[unit] &= ~bit) == 0)
         network_phase(unit);
@@ -303,6 +376,8 @@ void
 auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
+    if (passwd_from_file)
+	BZERO(passwd, MAXSECRETLEN);
     /*
      * We've failed to authenticate ourselves to our peer.
      * He'll probably take the link down, and there's not much
@@ -324,7 +399,9 @@ auth_withpeer_success(unit, protocol)
 	bit = CHAP_WITHPEER;
 	break;
     case PPP_PAP:
-	bit = UPAP_WITHPEER;
+	if (passwd_from_file)
+	    BZERO(passwd, MAXSECRETLEN);
+	bit = PAP_WITHPEER;
 	break;
     default:
 	syslog(LOG_WARNING, "auth_peer_success: unknown protocol %x",
@@ -334,7 +411,7 @@ auth_withpeer_success(unit, protocol)
 
     /*
      * If there is no more authentication still being done,
-     * proceed to the network phase.
+     * proceed to the network (or callback) phase.
      */
     if ((auth_pending[unit] &= ~bit) == 0)
 	network_phase(unit);
@@ -350,6 +427,13 @@ np_up(unit, proto)
 {
     if (num_np_up == 0 && idle_time_limit > 0) {
 	TIMEOUT(check_idle, NULL, idle_time_limit);
+
+	/*
+	 * Set a timeout to close the connection once the maximum
+	 * connect time has expired.
+	 */
+	if (maxconnect > 0)
+	    TIMEOUT(connect_time_expired, 0, maxconnect);
     }
     ++num_np_up;
 }
@@ -396,10 +480,22 @@ check_idle(arg)
     if (itime >= idle_time_limit) {
 	/* link is idle: shut it down. */
 	syslog(LOG_INFO, "Terminating connection due to lack of activity.");
+	need_holdoff = 0;
 	lcp_close(0, "Link inactive");
     } else {
 	TIMEOUT(check_idle, NULL, idle_time_limit - itime);
     }
+}
+
+/*
+ * connect_time_expired - log a message and close the connection.
+ */
+static void
+connect_time_expired(arg)
+    caddr_t arg;
+{
+    syslog(LOG_INFO, "Connect time expired");
+    lcp_close(0, "Connect time expired");	/* Close connection */
 }
 
 /*
@@ -409,7 +505,7 @@ void
 auth_check_options()
 {
     lcp_options *wo = &lcp_wantoptions[0];
-    lcp_options *ao = &lcp_allowoptions[0];
+    int can_auth;
     ipcp_options *ipwo = &ipcp_wantoptions[0];
     u_int32_t remote;
 
@@ -427,24 +523,67 @@ auth_check_options()
 
     /*
      * Check whether we have appropriate secrets to use
-     * to authenticate ourselves and/or the peer.
+     * to authenticate the peer.
      */
-    if (ao->neg_upap && passwd[0] == 0 && !get_upap_passwd())
-	ao->neg_upap = 0;
-    if (wo->neg_upap && !uselogin && !have_upap_secret())
-	wo->neg_upap = 0;
-    if (ao->neg_chap && !have_chap_secret(our_name, remote_name, (u_int32_t)0))
-	ao->neg_chap = 0;
-    if (wo->neg_chap) {
+    can_auth = wo->neg_upap && (uselogin || have_pap_secret());
+    if (!can_auth && wo->neg_chap) {
 	remote = ipwo->accept_remote? 0: ipwo->hisaddr;
-	if (!have_chap_secret(remote_name, our_name, remote))
-	    wo->neg_chap = 0;
+	can_auth = have_chap_secret(remote_name, our_name, remote);
     }
 
-    if (auth_required && !wo->neg_chap && !wo->neg_upap) {
-	fprintf(stderr, "\
-pppd: peer authentication required but no suitable secret(s) found\n");
+    if (auth_required && !can_auth) {
+	option_error("peer authentication required but no suitable secret(s) found\n");
+	if (remote_name[0] == 0)
+	    option_error("for authenticating any peer to us (%s)\n", our_name);
+	else
+	    option_error("for authenticating peer %s to us (%s)\n",
+			 remote_name, our_name);
 	exit(1);
+    }
+
+    /*
+     * Check whether the user tried to override certain values
+     * set by root.
+     */
+    if (!auth_required && auth_req_info.priv > 0) {
+	if (!default_device && devnam_info.priv == 0) {
+	    option_error("can't override device name when noauth option used");
+	    exit(1);
+	}
+	if ((connector != NULL && connector_info.priv == 0)
+	    || (disconnector != NULL && disconnector_info.priv == 0)
+	    || (welcomer != NULL && welcomer_info.priv == 0)) {
+	    option_error("can't override connect, disconnect or welcome");
+	    option_error("option values when noauth option used");
+	    exit(1);
+	}
+    }
+}
+
+/*
+ * auth_reset - called when LCP is starting negotiations to recheck
+ * authentication options, i.e. whether we have appropriate secrets
+ * to use for authenticating ourselves and/or the peer.
+ */
+void
+auth_reset(unit)
+    int unit;
+{
+    lcp_options *go = &lcp_gotoptions[unit];
+    lcp_options *ao = &lcp_allowoptions[0];
+    ipcp_options *ipwo = &ipcp_wantoptions[0];
+    u_int32_t remote;
+
+    ao->neg_upap = !refuse_pap && (passwd[0] != 0 || get_pap_passwd(NULL));
+    ao->neg_chap = !refuse_chap
+	&& have_chap_secret(user, remote_name, (u_int32_t)0);
+
+    if (go->neg_upap && !uselogin && !have_pap_secret())
+	go->neg_upap = 0;
+    if (go->neg_chap) {
+	remote = ipwo->accept_remote? 0: ipwo->hisaddr;
+	if (!have_chap_secret(remote_name, our_name, remote))
+	    go->neg_chap = 0;
     }
 
 }
@@ -487,9 +626,10 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     passwd[passwdlen] = '\0';
     BCOPY(auser, user, userlen);
     user[userlen] = '\0';
+    *msg = (char *) 0;
 
     /*
-     * Open the file of upap secrets and scan for a suitable secret
+     * Open the file of pap secrets and scan for a suitable secret
      * for authenticating this user.
      */
     filename = _PATH_UPAPFILE;
@@ -497,10 +637,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     ret = UPAP_AUTHACK;
     f = fopen(filename, "r");
     if (f == NULL) {
-	if (!uselogin) {
-	    syslog(LOG_ERR, "Can't open PAP password file %s: %m", filename);
-	    ret = UPAP_AUTHNAK;
-	}
+	syslog(LOG_ERR, "Can't open PAP password file %s: %m", filename);
+	ret = UPAP_AUTHNAK;
 
     } else {
 	check_access(f, filename);
@@ -523,7 +661,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     }
 
     if (ret == UPAP_AUTHNAK) {
-	*msg = "Login incorrect";
+        if (*msg == (char *) 0)
+	    *msg = "Login incorrect";
 	*msglen = strlen(*msg);
 	/*
 	 * Frustrate passwd stealer programs.
@@ -542,16 +681,30 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
 
     } else {
 	attempts = 0;			/* Reset count */
-	*msg = "Login ok";
+	if (*msg == (char *) 0)
+	    *msg = "Login ok";
 	*msglen = strlen(*msg);
-	if (addresses[unit] != NULL)
-	    free_wordlist(addresses[unit]);
-	addresses[unit] = addrs;
+	set_allowed_addrs(unit, addrs);
     }
+
+    BZERO(passwd, sizeof(passwd));
+    BZERO(secret, sizeof(secret));
 
     return ret;
 }
 
+/*
+ * This function is needed for PAM. However, it should not be called.
+ * If it is, return the error code.
+ */
+
+#ifdef USE_PAM
+static int pam_conv(int num_msg, const struct pam_message **msg,
+		    struct pam_response **resp, void *appdata_ptr)
+{
+    return PAM_CONV_ERR;
+}
+#endif
 
 /*
  * login - Check the user name and password against the system
@@ -562,6 +715,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
  *	UPAP_AUTHACK: Login succeeded.
  * In either case, msg points to an appropriate message.
  */
+
 static int
 login(user, passwd, msg, msglen)
     char *user;
@@ -569,46 +723,84 @@ login(user, passwd, msg, msglen)
     char **msg;
     int *msglen;
 {
-    struct passwd *pw;
-    char *epasswd;
     char *tty;
+
+#ifdef USE_PAM
+    struct pam_conv pam_conversation;
+    pam_handle_t *pamh;
+    int pam_error;
+    char *pass;
+    char *dev;
+/*
+ * Fill the pam_conversion structure
+ */
+    memset (&pam_conversation, '\0', sizeof (struct pam_conv));
+    pam_conversation.conv = &pam_conv;
+
+    pam_error = pam_start ("ppp", user, &pam_conversation, &pamh);
+    if (pam_error != PAM_SUCCESS) {
+        *msg = (char *) pam_strerror (pam_error);
+	return UPAP_AUTHNAK;
+    }
+/*
+ * Define the fields for the credintial validation
+ */
+    (void) pam_set_item (pamh, PAM_AUTHTOK, passwd);
+    (void) pam_set_item (pamh, PAM_TTY,     devnam);
+/*
+ * Validate the user
+ */
+    pam_error = pam_authenticate (pamh, PAM_SILENT);
+    if (pam_error == PAM_SUCCESS)
+        pam_error = pam_acct_mgmt (pamh, PAM_SILENT);
+
+    *msg = (char *) pam_strerror (pam_error);
+/*
+ * Clean up the mess
+ */
+    (void) pam_end (pamh, pam_error);
+
+    if (pam_error != PAM_SUCCESS)
+        return UPAP_AUTHNAK;
+/*
+ * Use the non-PAM methods directly
+ */
+#else /* #ifdef USE_PAM */
+
+    struct passwd *pw;
 
 #ifdef HAS_SHADOW
     struct spwd *spwd;
     struct spwd *getspnam();
+    extern int isexpired (struct passwd *, struct spwd *); /* in libshadow.a */
 #endif
 
-    if ((pw = getpwnam(user)) == NULL) {
+    pw = getpwnam(user);
+    if (pw == NULL) {
 	return (UPAP_AUTHNAK);
     }
 
 #ifdef HAS_SHADOW
-    if ((spwd = getspnam(user)) == NULL) {
-        pw->pw_passwd = "";
-    } else {
+    spwd = getspnam(user);
+    endspent();
+    if (spwd) {
+	/* check the age of the password entry */
+	if (isexpired(pw, spwd)) {
+	    syslog(LOG_WARNING,"Expired password for %s",user);
+	    return (UPAP_AUTHNAK);
+	}
 	pw->pw_passwd = spwd->sp_pwdp;
     }
 #endif
 
     /*
-     * XXX If no passwd, let them login without one.
+     * If no passwd, don't let them login.
      */
-    if (pw->pw_passwd == '\0') {
-	return (UPAP_AUTHACK);
-    }
+    if (pw->pw_passwd == NULL || *pw->pw_passwd == '\0'
+	|| strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) != 0)
+	return (UPAP_AUTHNAK);
 
-#ifdef HAS_SHADOW
-    if ((pw->pw_passwd && pw->pw_passwd[0] == '@'
-	 && pw_auth (pw->pw_passwd+1, pw->pw_name, PW_PPP, NULL))
-	|| !valid (passwd, pw)) {
-	return (UPAP_AUTHNAK);
-    }
-#else
-    epasswd = crypt(passwd, pw->pw_passwd);
-    if (strcmp(epasswd, pw->pw_passwd)) {
-	return (UPAP_AUTHNAK);
-    }
-#endif
+#endif /* #ifdef USE_PAM */
 
     syslog(LOG_INFO, "user %s logged in", user);
 
@@ -656,7 +848,7 @@ null_login(unit)
     char secret[MAXWORDLEN];
 
     /*
-     * Open the file of upap secrets and scan for a suitable secret.
+     * Open the file of pap secrets and scan for a suitable secret.
      * We don't accept a wildcard client.
      */
     filename = _PATH_UPAPFILE;
@@ -668,12 +860,12 @@ null_login(unit)
 
     i = scan_authfile(f, "", our_name, (u_int32_t)0, secret, &addrs, filename);
     ret = i >= 0 && (i & NONWILD_CLIENT) != 0 && secret[0] == 0;
+    BZERO(secret, sizeof(secret));
 
-    if (ret) {
-	if (addresses[unit] != NULL)
-	    free_wordlist(addresses[unit]);
-	addresses[unit] = addrs;
-    }
+    if (ret)
+	set_allowed_addrs(unit, addrs);
+    else
+	free_wordlist(addrs);
 
     fclose(f);
     return ret;
@@ -681,12 +873,13 @@ null_login(unit)
 
 
 /*
- * get_upap_passwd - get a password for authenticating ourselves with
+ * get_pap_passwd - get a password for authenticating ourselves with
  * our peer using PAP.  Returns 1 on success, 0 if no suitable password
  * could be found.
  */
 static int
-get_upap_passwd()
+get_pap_passwd(passwd)
+    char *passwd;
 {
     char *filename;
     FILE *f;
@@ -699,21 +892,25 @@ get_upap_passwd()
     if (f == NULL)
 	return 0;
     check_access(f, filename);
-    if (scan_authfile(f, user, remote_name, (u_int32_t)0,
-		      secret, NULL, filename) < 0)
+    if (scan_authfile(f, user,
+		      remote_name[0]? remote_name: NULL,
+		      (u_int32_t)0, secret, NULL, filename) < 0)
 	return 0;
-    strncpy(passwd, secret, MAXSECRETLEN);
-    passwd[MAXSECRETLEN-1] = 0;
+    if (passwd != NULL) {
+	strncpy(passwd, secret, MAXSECRETLEN);
+	passwd[MAXSECRETLEN-1] = 0;
+    }
+    BZERO(secret, sizeof(secret));
     return 1;
 }
 
 
 /*
- * have_upap_secret - check whether we have a PAP file with any
+ * have_pap_secret - check whether we have a PAP file with any
  * secrets that we could possibly use for authenticating the peer.
  */
 static int
-have_upap_secret()
+have_pap_secret()
 {
     FILE *f;
     int ret;
@@ -808,11 +1005,8 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
     if (ret < 0)
 	return 0;
 
-    if (save_addrs) {
-	if (addresses[unit] != NULL)
-	    free_wordlist(addresses[unit]);
-	addresses[unit] = addrs;
-    }
+    if (save_addrs)
+	set_allowed_addrs(unit, addrs);
 
     len = strlen(secbuf);
     if (len > MAXSECRETLEN) {
@@ -820,9 +1014,45 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
 	len = MAXSECRETLEN;
     }
     BCOPY(secbuf, secret, len);
+    BZERO(secbuf, sizeof(secbuf));
     *secret_len = len;
 
     return 1;
+}
+
+/*
+ * set_allowed_addrs() - set the list of allowed addresses.
+ */
+static void
+set_allowed_addrs(unit, addrs)
+    int unit;
+    struct wordlist *addrs;
+{
+    if (addresses[unit] != NULL)
+	free_wordlist(addresses[unit]);
+    addresses[unit] = addrs;
+
+    /*
+     * If there's only one authorized address we might as well
+     * ask our peer for that one right away
+     */
+    if (addrs != NULL && addrs->next == NULL) {
+	char *p = addrs->word;
+	struct ipcp_options *wo = &ipcp_wantoptions[unit];
+	u_int32_t a;
+	struct hostent *hp;
+
+	if (wo->hisaddr == 0 && *p != '!' && *p != '-'
+	    && strchr(p, '/') == NULL) {
+	    hp = gethostbyname(p);
+	    if (hp != NULL && hp->h_addrtype == AF_INET)
+		a = *(u_int32_t *)hp->h_addr;
+	    else
+		a = inet_addr(p);
+	    if (a != (u_int32_t) -1)
+		wo->hisaddr = a;
+	}
+    }
 }
 
 /*
@@ -853,13 +1083,15 @@ ip_addr_check(addr, addrs)
 	return 0;
 
     if (addrs == NULL)
-	return 1;		/* no restriction */
+	return !auth_required;		/* no addresses authorized */
 
     for (; addrs != NULL; addrs = addrs->next) {
-	/* "-" means no addresses authorized */
+	/* "-" means no addresses authorized, "*" means any address allowed */
 	ptr_word = addrs->word;
 	if (strcmp(ptr_word, "-") == 0)
 	    break;
+	if (strcmp(ptr_word, "*") == 0)
+	    return 1;
 
 	accept = 1;
 	if (*ptr_word == '!') {
@@ -885,34 +1117,36 @@ ip_addr_check(addr, addrs)
 
 	hp = gethostbyname(ptr_word);
 	if (hp != NULL && hp->h_addrtype == AF_INET) {
-	    a    = *(u_int32_t *)hp->h_addr;
-	    mask = ~ (u_int32_t) 0;	/* are we sure we want this? */
+	    a = *(u_int32_t *)hp->h_addr;
 	} else {
 	    np = getnetbyname (ptr_word);
-	    if (np != NULL && np->n_addrtype == AF_INET)
+	    if (np != NULL && np->n_addrtype == AF_INET) {
 		a = htonl (*(u_int32_t *)np->n_net);
-	    else
+		if (ptr_mask == NULL) {
+		    /* calculate appropriate mask for net */
+		    ah = ntohl(a);
+		    if (IN_CLASSA(ah))
+			mask = IN_CLASSA_NET;
+		    else if (IN_CLASSB(ah))
+			mask = IN_CLASSB_NET;
+		    else if (IN_CLASSC(ah))
+			mask = IN_CLASSC_NET;
+		}
+	    } else {
 		a = inet_addr (ptr_word);
-	    if (ptr_mask == NULL) {
-		/* calculate appropriate mask for net */
-		ah = ntohl(a);
-		if (IN_CLASSA(ah))
-		    mask = IN_CLASSA_NET;
-		else if (IN_CLASSB(ah))
-		    mask = IN_CLASSB_NET;
-		else if (IN_CLASSC(ah))
-		    mask = IN_CLASSC_NET;
 	    }
 	}
 
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (a == 0xffffffff)
+	if (a == -1L)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
 	else
+	    /* Here a and addr are in network byte order,
+	       and mask is in host order. */
 	    if (((addr ^ a) & htonl(mask)) == 0)
 		return accept;
     }
@@ -1118,4 +1352,37 @@ free_wordlist(wp)
 	free(wp);
 	wp = next;
     }
+}
+
+/*
+ * auth_script - execute a script with arguments
+ * interface-name peer-name real-user tty speed
+ */
+static void
+auth_script(script)
+    char *script;
+{
+    char strspeed[32];
+    struct passwd *pw;
+    char struid[32];
+    char *user_name;
+    char *argv[8];
+
+    if ((pw = getpwuid(getuid())) != NULL && pw->pw_name != NULL)
+	user_name = pw->pw_name;
+    else {
+	sprintf(struid, "%d", getuid());
+	user_name = struid;
+    }
+    sprintf(strspeed, "%d", baud_rate);
+
+    argv[0] = script;
+    argv[1] = ifname;
+    argv[2] = peer_authname;
+    argv[3] = user_name;
+    argv[4] = devnam;
+    argv[5] = strspeed;
+    argv[6] = NULL;
+
+    run_program(script, argv, 0);
 }
