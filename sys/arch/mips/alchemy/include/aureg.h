@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.1 2002/07/29 15:39:15 simonb Exp $ */
+/* $NetBSD: aureg.h,v 1.2 2002/11/17 04:57:34 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -318,7 +318,7 @@
 #define	MACENx_SIZE		0x04
 
 #define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, difference on Au1500 */
-#define	AU1500_MAC1_ENABLE	0x11520000	/* Grr, difference on Au1500 */
+#define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, difference on Au1500 */
 
 #if 0
 #define	  ME_DR			  0x40		/* DMA reset */
