@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.27 1999/07/02 15:11:53 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.28 1999/07/12 22:10:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.27 1999/07/02 15:11:53 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.28 1999/07/12 22:10:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -2321,7 +2321,7 @@ tn(argc, argv)
 		perror("setsockopt (source route)");
 	}
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-    	if (ipsec_policy) {
+	if (ipsec_policy) {
 		int len;
 		char *buf;
 		int level;
