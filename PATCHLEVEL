@@ -259,3 +259,7 @@ sense buffer.
 [ kernel/i386 ] Fix bug that caused arguments to be left on the stack.
 
 [ C Library/YP ] Fix bug in ypserv and RPC timeout code.
+
+[ fsck_ffs(8) ] Check for (and remove) holes in directories.
+
+[ netstat(8) ] Fix printing of Unix-domain socket addresses.
