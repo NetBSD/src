@@ -1,4 +1,4 @@
-/*  $NetBSD: bswap64.c,v 1.3 2003/07/26 19:24:42 salo Exp $    */
+/*  $NetBSD: bswap64.c,v 1.4 2003/08/09 22:37:49 martin Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap64.c,v 1.3 2003/07/26 19:24:42 salo Exp $");
+__RCSID("$NetBSD: bswap64.c,v 1.4 2003/08/09 22:37:49 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -19,10 +19,27 @@ u_int64_t
 bswap64(x)
 	u_int64_t x;
 {
-	u_int32_t *p = (u_int32_t*)(void *)&x;
-	u_int32_t t;
-	t = bswap32(p[0]);
-	p[0] = bswap32(p[1]);
-	p[1] = t;
-	return x;
+#ifdef _LP64
+	/*
+	 * Assume we have wide enough registers to do it without touching
+	 * memory.
+	 */
+	return  ( (x << 56) & 0xff00000000000000UL ) |
+		( (x << 40) & 0x00ff000000000000UL ) |
+		( (x << 24) & 0x0000ff0000000000UL ) |
+		( (x <<  8) & 0x000000ff00000000UL ) |
+		( (x >>  8) & 0x00000000ff000000UL ) |
+		( (x >> 24) & 0x0000000000ff0000UL ) |
+		( (x >> 40) & 0x000000000000ff00UL ) |
+		( (x >> 56) & 0x00000000000000ffUL );
+#else
+	/*
+	 * Split the operation in two 32bit steps.
+	 */
+	u_int32_t tl, th;
+
+	th = bswap32(x & 0x00000000ffffffffUL);
+	tl = bswap32((x >> 32) & 0x00000000ffffffffUL);
+	return ((u_int64_t)th << 32) | tl;
+#endif
 }
