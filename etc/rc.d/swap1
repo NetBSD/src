@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: swap1,v 1.7 2002/03/21 23:08:36 lukem Exp $
+# $NetBSD: swap1,v 1.8 2002/03/24 15:52:41 lukem Exp $
 #
 
 # PROVIDE: localswap
@@ -27,7 +27,7 @@ swap1_start()
 #
 swap1_stop()
 {
-	if checkyesno swapoff; then
+	if checkyesno swapoff || [ -n "$rc_force" ]; then
 		echo "Removing block-type swap devices"
 		swapctl -U -t blk
 	fi
