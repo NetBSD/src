@@ -1,5 +1,4 @@
 #	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.m68k,v 1.3 1993/12/05 00:55:05 cgd Exp $
+#	$Id: Makefile.m68k,v 1.4 1993/12/06 00:03:50 paulus Exp $
 
-CFLAGS+=	-Dm68851
 SRCS+=		tc-m68k.c atof-ieee.c
