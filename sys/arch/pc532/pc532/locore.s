@@ -304,7 +304,6 @@ ENTRY(low_level_reboot)
 	addr	xxxlow(pc), r0		/* jump to low memory */
 	andd	~KERNBASE, r0
 	movd	r0, tos
-	lmr	ptb0, _rebootPTD(pc)	/* get the right map */
 	ret	0
 xxxlow:
 	lmr	mcr, 0 			/* Turn off mapping. */
