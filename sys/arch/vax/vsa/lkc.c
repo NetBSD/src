@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.6 1998/07/04 22:18:45 jonathan Exp $ */
+/*	$NetBSD: lkc.c,v 1.7 1998/08/05 16:50:39 kleink Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,6 @@
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
