@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 05:58:56 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2003/09/30 06:41:31 lukem Exp $
 
 NOMAN=		1
 
@@ -17,7 +17,7 @@ YHEADER=	1
 
 pswpriv.h: pswparser.h
 
-#	Can't use -I${DESTDIR}/${X11INCDIR} since pswrap is needed
+#	Can't use -I${DESTDIR}${X11INCDIR} since pswrap is needed
 #	to create some header files.
 #
 BUILDSYMLINKS=	${X11SRCDIR.xc}/include X11

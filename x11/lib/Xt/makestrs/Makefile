@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/30 06:41:31 lukem Exp $
 
 NOMAN=	1
 
@@ -7,6 +7,6 @@ NOMAN=	1
 .PATH:	${X11SRCDIR.xc}/config/util
 
 HOSTPROG=	makestrs
-HOST_CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}
+HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}
 
 .include <bsd.hostprog.mk>
