@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1999/08/10 21:08:09 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2000/05/26 21:20:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,6 +47,10 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 #ifdef _KERNEL
 
 /*
@@ -60,6 +64,19 @@
  * The name "cpu" is historical, and used in the common
  * code to identify machine-dependent functions, etc.
  */
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements

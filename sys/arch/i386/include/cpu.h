@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2000/04/21 18:37:22 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63 2000/05/26 21:19:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,12 +41,32 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Definitions unique to i386 cpu support.
  */
 #include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
+#endif
 
 /*
  * definitions of cpu-dependent requirements

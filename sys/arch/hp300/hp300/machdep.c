@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2000/03/28 23:57:26 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2000/05/26 21:19:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,6 +108,9 @@
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;

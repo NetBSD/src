@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2000/01/19 20:05:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2000/05/26 21:20:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,6 +101,9 @@
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;

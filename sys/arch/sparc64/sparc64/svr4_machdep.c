@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.12 2000/04/10 13:34:20 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.13 2000/05/26 21:20:21 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -633,6 +633,8 @@ svr4_trap(type, p)
 		 * current runtime is the best we can do.
 		 */
 		{
+			struct schedstate_percpu *spc =
+			    &curcpu()->ci_schedstate;
 			struct timeval tv;
 			quad_t tm;
 
@@ -640,9 +642,13 @@ svr4_trap(type, p)
 
 			tm =
 			    (u_quad_t) (p->p_rtime.tv_sec +
-			                tv.tv_sec - runtime.tv_sec) * 1000000 +
+			                tv.tv_sec -
+			                    spc->spc_runtime.tv_sec)
+			                * 1000000 +
 			    (u_quad_t) (p->p_rtime.tv_usec +
-			                tv.tv_usec - runtime.tv_usec) * 1000;
+			                tv.tv_usec -
+			                    spc->spc_runtime.tv_usec)
+			                * 1000;
 			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
 			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
 		}

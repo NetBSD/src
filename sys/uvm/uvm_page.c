@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.34 2000/04/24 17:12:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.35 2000/05/26 21:20:34 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -73,7 +73,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
+#include <sys/sched.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -1298,5 +1298,5 @@ uvm_pageidlezero()
 		uvmexp.free++;
 		uvmexp.zeropages++;
 		uvm_unlock_fpageq(s);
-	} while (whichqs == 0);
+	} while (sched_whichqs == 0);
 }

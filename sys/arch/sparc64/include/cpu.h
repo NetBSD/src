@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2000/03/16 02:36:58 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.17 2000/05/26 21:20:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,10 +63,28 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+#if !defined(_LKM)
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
+
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/intr.h>
 #include <sparc64/sparc64/intreg.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.55 2000/05/26 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.56 2000/05/26 21:20:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -383,13 +383,19 @@ calcru(p, up, sp, ip)
 	usec = p->p_rtime.tv_usec;
 	if (p->p_stat == SONPROC) {
 		/*
+		 * XXX curcpu() is wrong -- needs to be the CPU the
+		 * XXX process is running on. --thorpej
+		 */
+		struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+
+		/*
 		 * Adjust for the current time slice.  This is actually fairly
 		 * important since the error here is on the order of a time
 		 * quantum, which is much greater than the sampling error.
 		 */
 		microtime(&tv);
-		sec += tv.tv_sec - runtime.tv_sec;
-		usec += tv.tv_usec - runtime.tv_usec;
+		sec += tv.tv_sec - spc->spc_runtime.tv_sec;
+		usec += tv.tv_usec - spc->spc_runtime.tv_usec;
 	}
 	u = (u_quad_t) sec * 1000000 + usec;
 	st = (u * st) / tot;

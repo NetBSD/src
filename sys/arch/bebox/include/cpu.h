@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1999/08/10 21:08:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2000/05/26 21:19:36 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,9 +33,28 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()		(&cpu_info_store)
+#endif
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)

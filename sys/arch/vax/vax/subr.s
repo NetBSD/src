@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.39 2000/05/26 00:36:51 thorpej Exp $	   */
+/*	$NetBSD: subr.s,v 1.40 2000/05/26 21:20:26 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -236,22 +236,22 @@ JSBENTRY(Setrq)
 setrq:	.asciz	"setrunqueue"
 #endif
 1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
-	movaq	_qs[r1],r2		# get address of queue
+	movaq	_sched_qs[r1],r2	# get address of queue
 	insque	(r0),*4(r2)		# put proc last in queue
-	bbss	r1,_whichqs,1f		# set queue bit.
+	bbss	r1,_sched_whichqs,1f	# set queue bit.
 1:	rsb
 
 JSBENTRY(Remrq)
 	extzv	$2,$6,P_PRIORITY(r0),r1
 #ifdef DIAGNOSTIC
-	bbs	r1,_whichqs,1f
+	bbs	r1,_sched_whichqs,1f
 	pushab	remrq
 	calls	$1,_panic
 remrq:	.asciz	"remrunqueue"
 #endif
 1:	remque	(r0),r2
 	bneq	1f		# Not last process on queue
-	bbsc	r1,_whichqs,1f
+	bbsc	r1,_sched_whichqs,1f
 1:	clrl	4(r0)		# saftey belt
 	rsb
 
@@ -266,7 +266,7 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 #if 0
 	calls	$0,_uvm_pageidlezero
 #endif
-2:	tstl	_whichqs		# Anything ready to run?
+2:	tstl	_sched_whichqs		# Anything ready to run?
 	beql	1b			# no, continue to loop
 	brb	Swtch			# Yes, goto switch again.
 
@@ -285,10 +285,10 @@ JSBENTRY(Swtch)
 	clrl	_curproc		# Stop process accounting
 #endif
 	mtpr	$0x1f,$PR_IPL		# block all interrupts
-	ffs	$0,$32,_whichqs,r3	# Search for bit set
+	ffs	$0,$32,_sched_whichqs,r3	# Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
-	movaq	_qs[r3],r1		# get address of queue head
+	movaq	_sched_qs[r3],r1	# get address of queue head
 	remque	*(r1),r2		# remove proc pointed to by queue head
 #ifdef DIAGNOSTIC
 	bvc	1f			# check if something on queue
@@ -297,7 +297,7 @@ JSBENTRY(Swtch)
 noque:	.asciz	"swtch"
 #endif
 1:	bneq	2f			# more processes on queue?
-	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
+	bbsc	r3,_sched_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
 	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 #if defined(MULTIPROCESSOR)

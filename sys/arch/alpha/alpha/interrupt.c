@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.45 2000/05/26 21:19:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.45 2000/05/26 21:19:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ machine_check(mces, framep, vector, param)
 	const char *type;
 	struct mchkinfo *mcp;
 
-	mcp = cpu_mchkinfo();
+	mcp = &curcpu()->ci_mcinfo;
 	/* Make sure it's an error we know about. */
 	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
 		type = "fatal machine check or error (unknown type)";
@@ -257,7 +257,7 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	void *rptr;
 {
-	struct mchkinfo *mcp = cpu_mchkinfo();
+	struct mchkinfo *mcp = &curcpu()->ci_mcinfo;
 	long rcpt;
 	int rv;
 

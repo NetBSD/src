@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2000/03/26 20:42:30 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2000/05/26 21:19:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,6 +96,9 @@
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 /*
  * Global variables used here and there

@@ -1,4 +1,4 @@
-/* $Id: cpu.h,v 1.1 2000/01/05 08:48:57 nisimura Exp $ */
+/* $NetBSD: cpu.h,v 1.2 2000/05/26 21:19:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,11 +45,29 @@
 #ifndef _MACHINE_CPU_H
 #define _MACHINE_CPU_H
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
 #define M68K_MMU_MOTOROLA
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -122,6 +140,8 @@ extern unsigned char ssir;
 
 #define setsoftnet()	siron(SIR_NET)
 #define setsoftclock()	siron(SIR_CLOCK)
+
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 2000/05/24 16:48:39 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.131 2000/05/26 21:19:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2000/05/24 16:48:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2000/05/26 21:19:56 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -212,7 +212,7 @@ userret(p, pc, sticks)
 
 		addupc_task(p, pc, (int)(p->p_sticks - sticks) * psratio);
 	}
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 #define DELAYBRANCH(x) ((int)(x)<0)

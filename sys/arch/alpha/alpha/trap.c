@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.53 2000/05/26 21:19:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2000/05/26 21:19:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static void

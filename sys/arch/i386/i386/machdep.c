@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.385 2000/05/19 04:34:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.386 2000/05/26 21:19:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,9 @@ char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
+
+/* Our exported CPU info; we have only one right now. */  
+struct cpu_info cpu_info_store;
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;

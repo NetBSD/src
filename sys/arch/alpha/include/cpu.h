@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.38 2000/04/03 01:47:29 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.39 2000/05/26 21:19:24 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,6 +84,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
 
 /*
@@ -93,6 +94,7 @@
 #include <machine/alpha_cpu.h>
 
 #ifdef _KERNEL
+#include <sys/sched.h>
 #include <machine/frame.h>
 
 /*
@@ -103,25 +105,26 @@ struct mchkinfo {
 	__volatile int mc_received;	/* machine check was received */
 };
 
-#if defined(MULTIPROCESSOR)
-
-#include <sys/lock.h>			/* will also get LOCKDEBUG */
-
 struct cpu_info {
 	/*
 	 * Public members.
 	 */
-	struct proc *ci_curproc;	/* current owner of the processor */
-	struct simplelock ci_slock;	/* lock on this data structure */
-	cpuid_t ci_cpuid;		/* our CPU ID */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 
+#if defined(MULTIPROCESSOR)
+	struct proc *ci_curproc;	/* current owner of the processor */
+#endif
+
 	/*
 	 * Private members.
 	 */
+	struct mchkinfo ci_mcinfo;	/* machine check info */
+	cpuid_t ci_cpuid;		/* our CPU ID */
+#if defined(MULTIPROCESSOR)
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
@@ -129,9 +132,10 @@ struct cpu_info {
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
 	struct device *ci_dev;		/* pointer to our device */
-	struct mchkinfo ci_mcinfo;	/* machine check info */
+#endif /* MULTIPROCESSOR */
 };
 
+#if defined(MULTIPROCESSOR)
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
@@ -144,15 +148,13 @@ extern	struct cpu_info cpu_info[];
 #define	fpcurproc	curcpu()->ci_fpcurproc
 #define	curpcb		curcpu()->ci_curpcb
 
-#define	cpu_mchkinfo()	(&curcpu()->ci_mcinfo)
-
 void	cpu_boot_secondary_processors __P((void));
-#else
+#else /* ! MULTIPROCESSOR */
 extern	struct proc *fpcurproc;		/* current owner of FPU */
 extern	paddr_t curpcb;			/* PA of current HW context */
-extern	struct mchkinfo mchkinfo_store;	/* mchkifo for single-cpu configs */
+extern	struct cpu_info cpu_info_store;
 
-#define	cpu_mchkinfo()	(&mchkinfo_store)
+#define	curcpu()	(&cpu_info_store)
 #endif /* MULTIPROCESSOR */
 
 extern	u_long cpu_implver;		/* from IMPLVER instruction */

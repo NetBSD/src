@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2000/04/18 21:06:08 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2000/05/26 21:20:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,6 +117,9 @@ int badbaddr __P((caddr_t));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;

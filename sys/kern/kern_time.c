@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.45 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.46 2000/05/26 21:20:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ settime(tv)
 	struct timeval *tv;
 {
 	struct timeval delta;
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	int s;
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -127,7 +128,7 @@ settime(tv)
 	time = *tv;
 	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
-	timeradd(&runtime, &delta, &runtime);
+	timeradd(&spc->spc_runtime, &delta, &spc->spc_runtime);
 #	if defined(NFS) || defined(NFSSERVER)
 		nqnfs_lease_updatetime(delta.tv_sec);
 #	endif

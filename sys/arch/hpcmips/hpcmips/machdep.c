@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2000/05/14 03:16:11 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2000/05/26 21:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2000/05/14 03:16:11 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2000/05/26 21:19:43 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -124,6 +124,9 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];	
 
 char	cpu_name[40];			/* set cpu depend xx_init() */
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 /* verbose boot message */
 int	hpcmips_verbose = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 2000/05/26 00:36:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 2000/05/26 21:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1090,7 +1090,7 @@ ENTRY(qsetjmp)
 	moveq	#0,d0		| return 0
 	rts
 
-	.globl	_whichqs,_qs,_panic
+	.globl	_sched_whichqs,_sched_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
@@ -1142,7 +1142,7 @@ Lidle:
 Idle:
 idle:
 	movw	#PSL_HIGHIPL,sr
-	tstl	_whichqs
+	tstl	_sched_whichqs
 	jeq	Lidle
 	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
@@ -1177,7 +1177,7 @@ Lsw1:
 	 * then take the first proc from that queue.
 	 */
 	clrl	d0
-	lea	_whichqs,a0
+	lea	_sched_whichqs,a0
 	movl	a0@,d1
 Lswchk:
 	btst	d0,d1
@@ -1204,7 +1204,7 @@ Lswfnd:
 Lswok:
 	movl	d0,d1
 	lslb	#3,d1			| convert queue number to index
-	addl	#_qs,d1			| locate queue (q)
+	addl	#_sched_qs,d1		| locate queue (q)
 	movl	d1,a1
 	cmpl	a1@(P_FORW),a1		| anyone on queue?
 	jeq	Lbadsw			| no, panic
@@ -1220,9 +1220,9 @@ Lswok:
 	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
 	cmpl	a0@(P_FORW),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
-	movl	_whichqs,d1
+	movl	_sched_whichqs,d1
 	bset	d0,d1			| yes, reset bit
-	movl	d1,_whichqs
+	movl	d1,_sched_whichqs
 Lsw2:
 	movb	#SONPROC,a0@(P_STAT)		| p->p_stat = SONPROC
 	movl	a0,_curproc

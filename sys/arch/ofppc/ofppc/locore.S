@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2000/05/26 00:36:49 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2000/05/26 21:20:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -239,8 +239,8 @@ ASENTRY(Idle)
 					   manipulating runque */
 	mtmsr	3
 
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	bne-	.Lsw1			/* at least one queue non-empty */
@@ -305,15 +305,15 @@ ENTRY(cpu_switch)
 	mtmsr	3
 	isync
 
-	lis	8,_C_LABEL(whichqs)@ha
-	lwz	9,_C_LABEL(whichqs)@l(8)
+	lis	8,_C_LABEL(sched_whichqs)@ha
+	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	beq-	_ASM_LABEL(Idle)	/* all queues empty */
 .Lsw1:
 	cntlzw	10,9
-	lis	4,_C_LABEL(qs)@ha
-	addi	4,4,_C_LABEL(qs)@l
+	lis	4,_C_LABEL(sched_qs)@ha
+	addi	4,4,_C_LABEL(sched_qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
 	
@@ -328,7 +328,7 @@ ENTRY(cpu_switch)
 	lis	3,0x80000000@h
 	srw	3,3,10
 	andc	9,9,3
-	stw	9,_C_LABEL(whichqs)@l(8) /* mark it empty */
+	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
 1:
 	/* just did this resched thing */

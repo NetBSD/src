@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2000/05/24 16:48:35 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2000/05/26 21:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,7 +257,7 @@ again:
 		}
 	}
 #endif
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static void

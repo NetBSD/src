@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2000/03/28 23:57:28 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2000/05/26 21:19:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2000/03/28 23:57:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2000/05/26 21:19:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2000/03/28 23:57:28 simonb Exp $");
  */
 char	machine[] = MACHINE;
 char	cpu_model[60];
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 extern char kernel_text[];
 extern char etext[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2000/05/24 16:48:43 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.89 2000/05/26 21:20:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -214,7 +214,7 @@ userret(p, tf, oticks)
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.66 2000/05/10 02:16:15 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.67 2000/05/26 21:20:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			if (p->p_schedflags & PSCHED_SHOULDYIELD)
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD)
 				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.108 2000/05/24 08:14:01 soren Exp $	*/
+/*	$NetBSD: systm.h,v 1.109 2000/05/26 21:20:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -103,8 +103,6 @@ extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
 
 extern int selwait;		/* select timeout address */
-
-extern u_char curpriority;	/* priority of current process */
 
 extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */

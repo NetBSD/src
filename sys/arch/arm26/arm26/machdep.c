@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2000/05/26 21:19:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2000/05/26 21:19:30 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -48,6 +48,9 @@ int physmem;
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
 char cpu_model[] = "Archimedes";
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t phys_map = NULL;

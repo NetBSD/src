@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.4 2000/05/24 16:48:37 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.5 2000/05/26 21:19:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.4 2000/05/24 16:48:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.5 2000/05/26 21:19:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -215,7 +215,7 @@ again:
 		}
 	}
 #endif
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*

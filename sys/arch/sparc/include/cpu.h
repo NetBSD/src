@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 1999/12/16 20:24:59 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.36 2000/05/26 21:20:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,9 +65,11 @@
 
 #if !defined(_LKM)
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <machine/psl.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
 
 /*
@@ -82,6 +84,9 @@
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));
 #endif
+
+#define	curcpu()	(&cpuinfo)
+#define	curproc		(curcpu()->ci_curproc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the

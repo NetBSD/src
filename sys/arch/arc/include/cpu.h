@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2000/05/09 07:27:04 soda Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2000/05/26 21:19:29 thorpej Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -11,6 +11,28 @@
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
+
+#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
+#define	cpu_number()	(0)
+#endif
+#endif /* !_LOCORE */
 
 /*
  * definitions of cpu-dependent requirements

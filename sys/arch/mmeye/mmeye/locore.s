@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 2000/05/26 08:40:10 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 2000/05/26 21:19:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -459,7 +459,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_C_LABEL(whichqs), _C_LABEL(qs)
+	.globl	_C_LABEL(sched_whichqs), _C_LABEL(sched_qs)
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -872,8 +872,8 @@ switch_return:
 	nop
 
 	.align	2
-XLqs:		.long	_C_LABEL(qs)
-XLwhichqs:	.long	_C_LABEL(whichqs)
+XLqs:		.long	_C_LABEL(sched_qs)
+XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXLcurproc:	.long	_C_LABEL(curproc)
 XL_KernelSp:	.long	KernelSp

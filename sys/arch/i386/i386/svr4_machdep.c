@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.46 1999/11/12 20:45:44 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.47 2000/05/26 21:19:46 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -569,6 +569,8 @@ svr4_fasttrap(frame)
 		 * current runtime is the best we can do.
 		 */
 		{
+			struct schedstate_percpu *spc =
+			    &curcpu()->ci_schedstate;
 			struct timeval tv;
 			quad_t tm;
 
@@ -576,9 +578,13 @@ svr4_fasttrap(frame)
 
 			tm =
 			    (u_quad_t) (p->p_rtime.tv_sec +
-			                tv.tv_sec - runtime.tv_sec) * 1000000 +
+			                tv.tv_sec -
+			                    spc->spc_runtime.tv_sec)
+			                * 1000000 +
 			    (u_quad_t) (p->p_rtime.tv_usec +
-			                tv.tv_usec - runtime.tv_usec) * 1000;
+			                tv.tv_usec -
+			                    spc->spc_runtime.tv_usec)
+			                * 1000;
 			frame.tf_edx = ((u_int32_t *) &tm)[0];
 			frame.tf_eax = ((u_int32_t *) &tm)[1];
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.32 2000/05/26 00:36:44 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.33 2000/05/26 21:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -78,10 +78,10 @@
 	.text
 
 Lwhichqs:
-	.word	_C_LABEL(whichqs)
+	.word	_C_LABEL(sched_whichqs)
 
 Lqs:
-	.word	_C_LABEL(qs)
+	.word	_C_LABEL(sched_qs)
 
 /*
  * On entry

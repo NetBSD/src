@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2000/05/24 16:48:43 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.40 2000/05/26 21:20:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -450,7 +450,7 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2000/03/28 23:57:24 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 2000/05/26 21:19:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -201,6 +201,9 @@ extern	u_int lowram;
 char	*cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
  
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce

@@ -1,12 +1,31 @@
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
 
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
+
 u_long	clkread	__P((void));
 void	physaccess	__P((caddr_t, caddr_t, int, int));
+
+#endif /* _KERNEL */
 
 /* ADAM: taken from macppc/cpu.h */
 #define CLKF_USERMODE(frame)    (((frame)->srr1 & PSL_PR) != 0)

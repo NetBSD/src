@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.17 2000/05/24 16:48:35 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.18 2000/05/26 21:19:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -269,7 +269,7 @@ undefinedinstruction(frame)
 			    (int)(p->p_sticks - sticks) * psratio);
 		}
 
-		curpriority = p->p_priority;
+		curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 	}
 
 #else

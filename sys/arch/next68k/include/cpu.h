@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2000/05/26 21:20:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,10 @@
 #ifndef _CPU_MACHINE_
 #define _CPU_MACHINE_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 /*
  * Exported definitions unique to next68k/68k cpu support.
  */
@@ -61,6 +65,20 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
 
 /*
  * definitions of cpu-dependent requirements
@@ -118,7 +136,6 @@ extern int want_resched; /* resched() was called */
 int	astpending;	/* need to trap before returning to user mode */
 int	want_resched;	/* resched() was called */
 
-#ifdef _KERNEL
 extern	volatile char *intiobase;
 extern  volatile char *intiolimit;
 extern	volatile char *monobase;

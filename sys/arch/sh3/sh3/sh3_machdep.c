@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.5 2000/04/25 12:17:07 tsubai Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.6 2000/05/26 21:20:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@
 #include <uvm/uvm_extern.h>
 
 char cpu_model[120];
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;

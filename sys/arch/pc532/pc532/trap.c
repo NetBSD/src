@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2000/05/24 17:28:05 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2000/05/26 21:20:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -125,7 +125,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}                   
 
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 char	*trap_type[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 2000/05/26 00:36:44 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 2000/05/26 21:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -39,9 +39,10 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.2 2000/05/26 00:36:44 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3 2000/05/26 21:19:29 thorpej Exp $");
 
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
@@ -50,8 +51,6 @@ __RCSID("$NetBSD: Locore.c,v 1.2 2000/05/26 00:36:44 thorpej Exp $");
 #include <machine/machdep.h>
 
 static void idle(void);
-
-volatile int whichqs;
 
 /*
  * Put process p on the run queue indicated by its priority.
@@ -68,8 +67,8 @@ setrunqueue(struct proc *p)
 	if (p->p_back)
 		panic("setrunqueue");
 #endif
-	q = &qs[which];
-	whichqs |= 1 << which;
+	q = &sched_qs[which];
+	sched_whichqs |= 1 << which;
 	p->p_forw = (struct proc *)q;
 	p->p_back = oldlast = q->ph_rlink;
 	q->ph_rlink = p;
@@ -88,15 +87,15 @@ remrunqueue(struct proc *p)
 	struct prochd *q;
 
 #ifdef	DIAGNOSTIC	
-	if (!(whichqs & (1 << which)))
+	if (!(sched_whichqs & (1 << which)))
 		panic("remrunqueue");
 #endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
-	q = &qs[which];
+	q = &sched_qs[which];
 	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(1 << which);
+		sched_whichqs &= ~(1 << which);
 }
 
 /*
@@ -107,7 +106,7 @@ idle()
 {
 
 	spl0();
-	while (whichqs == 0)
+	while (sched_whichqs == 0)
 		continue;
 	splhigh();
 }
@@ -130,10 +129,10 @@ cpu_switch(struct proc *p1)
 #endif
 	curproc = NULL;
 	s = splhigh();
-	while (whichqs == 0)
+	while (sched_whichqs == 0)
 		idle();
-	which = ffs(whichqs) - 1;
-	q = &qs[which];
+	which = ffs(sched_whichqs) - 1;
+	q = &sched_qs[which];
 	p2 = q->ph_link;
 	remrunqueue(p2);
 	want_resched = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2000/03/24 17:05:33 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2000/05/26 21:20:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,6 +66,9 @@
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 /*
  * Global variables used here and there

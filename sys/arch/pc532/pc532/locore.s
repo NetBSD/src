@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2000/05/26 00:36:49 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2000/05/26 21:20:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -674,8 +674,8 @@ KENTRY(setrunqueue, 4)
 #endif
 	movzbd	P_PRIORITY(r0),r1
 	lshd	-2,r1
-	sbitd	r1,_C_LABEL(whichqs)(pc) /* set queue full bit */
-	addr	_C_LABEL(qs)(pc)[r1:q],r1 /* locate q hdr */
+	sbitd	r1,_C_LABEL(sched_whichqs)(pc) /* set queue full bit */
+	addr	_C_LABEL(sched_qs)(pc)[r1:q],r1 /* locate q hdr */
 	movd	P_BACK(r1),r2		/* locate q tail */
 	movd	r1,P_FORW(r0)		/* set p->p_forw */
 	movd	r0,P_BACK(r1)		/* update q's p_back */
@@ -695,7 +695,7 @@ KENTRY(remrunqueue, 4)
 	movzbd	P_PRIORITY(r1),r0
 #ifdef DIAGNOSTIC
 	lshd	-2,r0
-	tbitd	r0,_C_LABEL(whichqs)(pc)
+	tbitd	r0,_C_LABEL(sched_whichqs)(pc)
 	bfc	1f
 #endif
 	movd	P_BACK(r1),r2		/* Address of prev. item */
@@ -708,7 +708,7 @@ KENTRY(remrunqueue, 4)
 #ifndef DIAGNOSTIC
 	lshd	-2,r0
 #endif
-	cbitd	r0,_C_LABEL(whichqs)(pc) /* mark q as empty */
+	cbitd	r0,_C_LABEL(sched_whichqs)(pc) /* mark q as empty */
 2:	ret	ARGS
 #ifdef DIAGNOSTIC
 1:	PANIC("remrunqueue")		/* No queue entry! */
@@ -728,7 +728,7 @@ ENTRY_NOPROFILE(idle)
 	enter	[r3,r4,r5,r6,r7],0
 #endif
 0:	ints_off
-	ffsd	_C_LABEL(whichqs)(pc),r0
+	ffsd	_C_LABEL(sched_whichqs)(pc),r0
 	bfc	sw1
 	ints_on				/* We may lose a tick here ... */
 	wait				/* Wait for interrupt. */
@@ -778,11 +778,11 @@ KENTRY(cpu_switch, 4)
 	ints_off
 
 	movqd	0,r0
-	ffsd	_C_LABEL(whichqs)(pc),r0 /* find a full q */
+	ffsd	_C_LABEL(sched_whichqs)(pc),r0 /* find a full q */
 	bfs	0b			/* if none, idle */
 
 sw1:	/* Get the process and unlink it from the queue. */
-	addr	_C_LABEL(qs)(pc)[r0:q],r1 /* address of qs entry! */
+	addr	_C_LABEL(sched_qs)(pc)[r0:q],r1 /* address of qs entry! */
 
 	movd	P_FORW(r1),r2		/* unlink from front of process q */
 #ifdef	DIAGNOSTIC
@@ -796,7 +796,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 	cmpd	r1,r3			/* q empty? */
 	bne	3f
 
-	cbitd	r0,_C_LABEL(whichqs)(pc) /* queue is empty, turn off whichqs. */
+	cbitd	r0,_C_LABEL(sched_whichqs)(pc) /* queue is empty, turn off whichqs. */
 
 3:	movqd	0,_C_LABEL(want_resched)(pc) /* We did a resched! */
 

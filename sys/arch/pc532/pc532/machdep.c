@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2000/02/09 05:48:32 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2000/05/26 21:20:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -154,6 +154,9 @@ int _mapped = 0;
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[] = "ns32532";
+
+/* Our exported CPU info; we can have only one. */  
+struct cpu_info cpu_info_store;
 
 struct user *proc0paddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.167 2000/05/26 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.168 2000/05/26 21:20:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -138,7 +138,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
-struct	timeval runtime;
 
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -467,7 +466,8 @@ main()
 	s = splclock();		/* so we can read time */
 	for (p = LIST_FIRST(&allproc); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
-		p->p_stats->p_start = runtime = mono_time = boottime = time;
+		p->p_stats->p_start = curcpu()->ci_schedstate.spc_runtime =
+		    mono_time = boottime = time;
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 	splx(s);
