@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.11 1996/10/10 23:12:51 christos Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.12 1996/10/13 02:03:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -105,10 +105,10 @@ tcp_trace(act, ostate, tp, ti, req)
 	if (tcpconsdebug == 0)
 		return;
 	if (tp)
-		kprintf("%x %s:", tp, tcpstates[ostate]);
+		printf("%x %s:", tp, tcpstates[ostate]);
 	else
-		kprintf("???????? ");
-	kprintf("%s ", tanames[act]);
+		printf("???????? ");
+	printf("%s ", tanames[act]);
 	switch (act) {
 
 	case TA_INPUT:
@@ -127,37 +127,37 @@ tcp_trace(act, ostate, tp, ti, req)
 		if (act == TA_OUTPUT)
 			len -= sizeof (struct tcphdr);
 		if (len)
-			kprintf("[%x..%x)", seq, seq+len);
+			printf("[%x..%x)", seq, seq+len);
 		else
-			kprintf("%x", seq);
-		kprintf("@%x, urp=%x", ack, ti->ti_urp);
+			printf("%x", seq);
+		printf("@%x, urp=%x", ack, ti->ti_urp);
 		flags = ti->ti_flags;
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define pf(f) { if (ti->ti_flags&TH_/**/f) { kprintf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
-			kkprintf(">");
+			kprintf(">");
 		}
 		break;
 
 	case TA_USER:
-		kprintf("%s", prurequests[req&0xff]);
+		printf("%s", prurequests[req&0xff]);
 		if ((req & 0xff) == PRU_SLOWTIMO)
-			kprintf("<%s>", tcptimers[req>>8]);
+			printf("<%s>", tcptimers[req>>8]);
 		break;
 	}
 	if (tp)
-		kprintf(" -> %s", tcpstates[tp->t_state]);
+		printf(" -> %s", tcpstates[tp->t_state]);
 	/* print out internal state of tp !?! */
-	kprintf("\n");
+	printf("\n");
 	if (tp == 0)
 		return;
-	kprintf("\trcv_(nxt,wnd,up) (%x,%x,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
+	printf("\trcv_(nxt,wnd,up) (%x,%x,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
 	    tp->rcv_nxt, tp->rcv_wnd, tp->rcv_up, tp->snd_una, tp->snd_nxt,
 	    tp->snd_max);
-	kprintf("\tsnd_(wl1,wl2,wnd) (%x,%x,%x)\n",
+	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%x)\n",
 	    tp->snd_wl1, tp->snd_wl2, tp->snd_wnd);
 #endif /* TCPDEBUG */
 }
