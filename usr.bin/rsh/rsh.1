@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.17 2003/08/07 11:15:43 agc Exp $
+.\"	$NetBSD: rsh.1,v 1.18 2004/09/05 08:38:23 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,15 +37,13 @@
 .Nd remote shell
 .Sh SYNOPSIS
 .Nm
-.Op Fl Kdnx
-.Op Fl k Ar realm
+.Op Fl dn
 .Op Fl l Ar username
 .Op Fl p Ar port
 .Ar host
 .Op command
 .Nm
-.Op Fl Kdnx
-.Op Fl k Ar realm
+.Op Fl dn
 .Op Fl p Ar port
 .Ar username@host
 .Op command
@@ -74,19 +72,6 @@ option turns on socket debugging (using
 on the
 .Tn TCP
 sockets used for communication with the remote host.
-.It Fl K
-The
-.Fl K
-option turns off all Kerberos authentication.
-.It Fl k Ar realm
-The
-.Fl k
-option causes
-.Nm
-to obtain tickets for the remote host in
-.Ar realm
-instead of the remote host's realm as determined by
-.Xr krb_realmofhost 3 .
 .It Fl l Ar username
 By default, the remote username is the same as the local username.
 The
@@ -94,8 +79,6 @@ The
 option or the
 .Ar username@host
 format allow the remote name to be specified.
-Kerberos authentication is used, and authorization is determined as in
-.Xr rlogin 1 .
 .It Fl n
 The
 .Fl n
@@ -119,13 +102,6 @@ instead of
 running on the server; you want to pass the
 .Xr rshd 8
 port number in that case.
-.It Fl x
-The
-.Fl x
-option turns on
-.Tn DES
-encryption for all data exchange.
-This may introduce a significant delay in response time.
 .El
 .Pp
 If no
@@ -167,13 +143,10 @@ to
 .Sh SEE ALSO
 .Xr rcmd 1 ,
 .Xr rlogin 1 ,
-.Xr krb_realmofhost 3 ,
-.Xr krb_sendauth 3 ,
 .Xr rcmd 3 ,
 .Xr hosts.equiv 5 ,
 .Xr rhosts 5 ,
-.Xr environ 7 ,
-.Xr kerberos 8
+.Xr environ 7 .
 .Sh HISTORY
 The
 .Nm
