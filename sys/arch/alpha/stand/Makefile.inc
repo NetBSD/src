@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.14 1999/04/05 03:35:24 cgd Exp $
+# $NetBSD: Makefile.inc,v 1.15 1999/04/05 03:42:50 cgd Exp $
 
 .include <bsd.own.mk>
 
@@ -7,5 +7,5 @@ WARNS?=			1
 
 MKMAN=			no
 
-CFLAGS+=		-I${.CURDIR}/../..
+CPPFLAGS+=		-I${.CURDIR}/../..
 LDSTATIC?=		-static
