@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.9 2002/04/22 07:59:38 itojun Exp $	*/
-/*	$OpenBSD: channels.h,v 1.67 2002/03/26 22:50:39 markus Exp $	*/
+/*	$NetBSD: channels.h,v 1.10 2002/06/24 05:48:29 itojun Exp $	*/
+/*	$OpenBSD: channels.h,v 1.69 2002/06/23 21:06:41 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -206,7 +206,7 @@ int	 channel_setup_remote_fwd_listener(const char *, u_short, int);
 /* x11 forwarding */
 
 int	 x11_connect_display(void);
-int	 x11_create_display_inet(int, int, int);
+int	 x11_create_display_inet(int, int, int, u_int *);
 void     x11_input_open(int, u_int32_t, void *);
 void	 x11_request_forwarding_with_spoofing(int, const char *, const char *);
 void	 deny_input_open(int, u_int32_t, void *);
@@ -214,9 +214,6 @@ void	 deny_input_open(int, u_int32_t, void *);
 /* agent forwarding */
 
 void	 auth_request_forwarding(void);
-char	*auth_get_socket_name(void);
-void	 auth_sock_cleanup_proc(void *);
-int	 auth_input_request_forwarding(struct passwd *);
 void	 auth_input_open_request(int, u_int32_t, void *);
 
 /* channel close */

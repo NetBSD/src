@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.14 2002/03/08 02:00:56 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.15 2002/06/24 05:48:37 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.35 2002/03/04 18:30:23 stevesk Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.36 2002/06/16 21:30:58 itojun Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -582,7 +582,7 @@ conloop(void)
 	con *c;
 
 	gettimeofday(&now, NULL);
-	c = tq.tqh_first;
+	c = TAILQ_FIRST(&tq);
 
 	if (c && (c->c_tv.tv_sec > now.tv_sec ||
 	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec > now.tv_usec))) {
@@ -615,12 +615,12 @@ conloop(void)
 	xfree(r);
 	xfree(e);
 
-	c = tq.tqh_first;
+	c = TAILQ_FIRST(&tq);
 	while (c && (c->c_tv.tv_sec < now.tv_sec ||
 	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
 		int s = c->c_fd;
 
-		c = c->c_link.tqe_next;
+		c = TAILQ_NEXT(c, c_link);
 		conrecycle(s);
 	}
 }
