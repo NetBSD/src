@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.10 1997/12/21 18:11:20 kleink Exp $
+.\"	$NetBSD: chown.8,v 1.11 1998/10/05 21:37:38 kim Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHOWN 8
@@ -86,15 +86,6 @@ If
 is a symbolic link, the owner and/or group of the link is changed.
 .El
 .Pp
-If
-.Fl h
-is not given, unless the
-.Fl H
-or 
-.Fl L 
-option is set,
-.Nm
-on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
 .Fl L
@@ -105,6 +96,12 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+.Pp
+The
+.Fl L
+option cannot be used together with the
+.Fl h
+option.
 .Pp
 The
 .Ar owner

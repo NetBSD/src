@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.14 1997/12/21 18:34:30 kleink Exp $");
+__RCSID("$NetBSD: chown.c,v 1.15 1998/10/05 21:37:39 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,12 +132,11 @@ main(argc, argv)
 
 	fts_options = FTS_PHYSICAL;
 	if (Rflag) {
-		if (hflag)
-			errx(1,
-		"the -R and -h options may not be specified together.");
 		if (Hflag)
 			fts_options |= FTS_COMFOLLOW;
 		if (Lflag) {
+			if (hflag)
+				errx(1, "the -L and -h options may not be specified together.");
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
