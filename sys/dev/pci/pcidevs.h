@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.193 2000/01/24 15:50:16 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.194 2000/01/25 09:06:50 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.186 2000/01/24 15:49:50 joda Exp 
+ *	NetBSD: pcidevs,v 1.187 2000/01/25 09:04:03 haya Exp 
  */
 
 /*
@@ -1326,6 +1326,7 @@
 #define	PCI_PRODUCT_TI_PCI1251B	0xac1f		/* PCI1251B PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-PCI Bridge */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus Bridge */
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
