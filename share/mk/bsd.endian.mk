@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.2 2002/05/30 21:55:14 itojun Exp $
+#	$NetBSD: bsd.endian.mk,v 1.3 2002/06/05 02:47:56 thorpej Exp $
 
 .include <bsd.init.mk>
 
@@ -7,7 +7,8 @@
 .if exists(${DESTDIR}/usr/include/sys/endian.h)
 TARGET_ENDIANNESS!= \
 	printf '\#include <sys/endian.h>\n_BYTE_ORDER\n' | \
-	${CC} -I${DESTDIR}/usr/include -E - | tail -1 | awk '{print $$1}'
+	${CC} -nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -E - | \
+	tail -1 | awk '{print $$1}'
 .else
 TARGET_ENDIANNESS=
 .endif
