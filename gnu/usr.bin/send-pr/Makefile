@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1998/09/27 17:22:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/12 12:56:27 tv Exp $
 
 #
 # Makefile for building a standalone send-pr.
@@ -99,4 +99,8 @@ FILESDIR_categories=${LIBDIR}/gnats
 FILESNAME_categories=${GNATS_SITE}
 .endif
 
+TEXINFO=	send-pr.texi
+INFOFLAGS=	-I${.CURDIR}
+
+.include <bsd.info.mk>
 .include <bsd.prog.mk>
