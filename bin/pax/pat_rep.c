@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.15 2002/10/15 16:16:30 christos Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.16 2002/10/23 19:39:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.15 2002/10/15 16:16:30 christos Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.16 2002/10/23 19:39:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -677,11 +677,13 @@ mod_name(ARCHD *arcn)
 				arcn->name);
 			return 1;
 		}
+#ifdef notdef
 		if (checkdotdot(arcn->ln_name)) {
 			tty_warn(0, "Ignoring link containing `..' (%s)",
 				arcn->ln_name);
 			return 1;
 		}
+#endif
 	}
 
 	/*
