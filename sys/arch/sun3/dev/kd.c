@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.32 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.33 2000/05/21 14:36:16 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ kdcninit(cn)
 	prom_cons_channel.cc_dev = NULL;
 	prom_cons_channel.cc_iopen = kd_rom_iopen;
 	prom_cons_channel.cc_iclose = kd_rom_iclose;
-	cons_attach_input(&prom_cons_channel);
+	cons_attach_input(&prom_cons_channel, cn);
 
 	/* Indicate that it is OK to use the PROM fbwrite */
 	kd_is_console = 1;
