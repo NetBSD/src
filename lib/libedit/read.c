@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.12 1999/07/02 15:21:26 simonb Exp $	*/
+/*	$NetBSD: read.c,v 1.13 1999/08/02 01:01:55 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.12 1999/07/02 15:21:26 simonb Exp $");
+__RCSID("$NetBSD: read.c,v 1.13 1999/08/02 01:01:55 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -350,7 +350,7 @@ el_gets(el, nread)
 
 	while (read_char(el, cp) == 1) {
 		cp++;
-		if (cp == el->el_line.limit || *cp == '\r' || *cp == '\n') {
+		if (cp == el->el_line.limit || cp[-1] == '\r' || cp[-1] == '\n') {
 			--cp;
 			break;
 		}
@@ -381,6 +381,26 @@ el_gets(el, nread)
 #endif /* FIONREAD */
 
     re_refresh(el);			/* print the prompt */
+
+    if (el->el_flags & EDIT_DISABLED) {
+	char *cp = el->el_line.buffer;
+
+	term__flush();
+
+	while (read_char(el, cp) == 1) {
+		cp++;
+		if ((cp == el->el_line.limit) || (cp[-1] == '\r') || (cp[-1] == '\n')) {
+			--cp;
+			break;
+		}
+	}
+	el->el_line.cursor = el->el_line.lastchar = cp;
+	*cp = '\0';
+	if (nread)
+		*nread = el->el_line.cursor - el->el_line.buffer;
+	return el->el_line.buffer;
+    }
+    
 
     for (num = OKCMD; num == OKCMD;) {	/* while still editing this line */
 #ifdef DEBUG_EDIT

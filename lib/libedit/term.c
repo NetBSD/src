@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.16 1999/07/02 15:21:27 simonb Exp $	*/
+/*	$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.16 1999/07/02 15:21:27 simonb Exp $");
+__RCSID("$NetBSD: term.c,v 1.17 1999/08/02 01:01:56 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -841,6 +841,9 @@ term_set(el, term)
 
     if (!term || !term[0])
 	term = "dumb";
+
+    if (strcmp(term, "emacs") == 0)
+	el->el_flags |= EDIT_DISABLED;
 
     memset(el->el_term.t_cap, 0, TC_BUFSIZE);
 
