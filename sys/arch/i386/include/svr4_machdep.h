@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.12 2000/12/11 05:29:00 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.13 2001/10/31 18:20:13 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -121,9 +121,13 @@ struct svr4_ssd {
 /*
  * Fast syscall gate traps.
  */
-#define	SVR4_TRAP_GETHRTIME	3
-#define	SVR4_TRAP_GETHRVTIME	4
-#define	SVR4_TRAP_CLOCK_SETTIME	5
+#define	SVR4_TRAP_FNULL		0	/* Null trap, for testing */
+#define	SVR4_TRAP_FGETFP	1	/* Get emulated FP context */
+#define	SVR4_TRAP_FSETFP	2	/* Set emulated FP context */
+#define	SVR4_TRAP_GETHRTIME	3	/* implements gethrtime(2) */
+#define	SVR4_TRAP_GETHRVTIME	4	/* implements gethrvtime(2) */
+#define	SVR4_TRAP_CLOCK_SETTIME	5	/* implements clock_settime(2) */
+					/* Solaris calls this T_GETHRESTIME */
 
 void svr4_syscall_intern __P((struct proc *));
 
