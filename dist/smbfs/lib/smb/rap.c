@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#include <sys/endian.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -44,13 +45,9 @@
 #include <stdlib.h>
 #include <sysexits.h>
 
-#include <sys/mchain.h>
-
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_rap.h>
-
-/*#include <sys/ioctl.h>*/
 
 static int
 smb_rap_parserqparam(const char *s, char **next, int *rlen)
@@ -289,7 +286,7 @@ smb_rap_getNparam(struct smb_rap *rap, long *value)
 		return error;
 	switch (ptype) {
 	    case 'h':
-		*value = letohs(*(u_int16_t*)rap->r_npbuf);
+		*value = ntohs(*(u_int16_t*)rap->r_npbuf);
 		break;
 	    default:
 		return EINVAL;
@@ -319,8 +316,8 @@ smb_rap_request(struct smb_rap *rap, struct smb_ctx *ctx)
 	if (error)
 		return error;
 	rp = (u_int16_t*)rap->r_pbuf;
-	rap->r_result = letohs(*rp++);
-	conv = letohs(*rp++);
+	rap->r_result = le16toh(*rp++);
+	conv = le16toh(*rp++);
 	rap->r_npbuf = (char*)rp;
 	rap->r_entries = entries = 0;
 	done = 0;
@@ -328,7 +325,7 @@ smb_rap_request(struct smb_rap *rap, struct smb_ctx *ctx)
 		ptype = *p;
 		switch (ptype) {
 		    case 'e':
-			rap->r_entries = entries = letohs(*(u_int16_t*)rap->r_npbuf);
+			rap->r_entries = entries = le16toh(*(u_int16_t*)rap->r_npbuf);
 			rap->r_npbuf += 2;
 			p++;
 			break;
