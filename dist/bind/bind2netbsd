@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.11 2000/04/28 03:37:55 itojun Exp $
+#	$NetBSD: bind2netbsd,v 1.12 2000/11/10 09:23:42 itojun Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,10 +84,21 @@ make clean
 cd $d/lib
 rm -r bsd cylink dnssafe
 
+### Remove yacc/lex-generated files
+cd $d/bin
+rm -f named/ns_parser.c
+rm -f nslookup/commands.c
+
 ### Remove .cvsignore, Makefiles and *.mdoc files
 find $d -name '.cvsignore' -exec rm {} \;
 find $d -name 'Makefile' -exec rm {} \;
 cd $d/lib/isc && rm *.mdoc
+
+### Remove the $'s around the Header:
+find $d -type f -print | while read f; do
+	sed -e ' s/\$\(Header.*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
+	echo removed \$Header tag from $f
+done
 
 ### Remove the $'s around the Id:
 find $d -type f -print | while read f; do
