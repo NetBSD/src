@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.14 1994/12/05 07:22:12 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.15 1994/12/05 07:32:24 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -878,7 +878,7 @@ semexit(p)
 		/*
 		 * Yes (i.e. we are in case 3 or 4).
 		 *
-		 * If we didn't find an undo record associated with this
+		 * If we didn't find an undo vector associated with this
 		 * process than we can just return (i.e. we are in case 3).
 		 *
 		 * Note that we know that someone else is holding the lock so
@@ -908,13 +908,18 @@ semexit(p)
 		/*
 		 * No (i.e. we are in case 1 or 2).
 		 *
-		 * If there is no undo record, skip to the end and unlock the
+		 * If there is no undo vector, skip to the end and unlock the
 		 * semaphore facility if necessary.
 		 */
 
 		if (suptr == NULL)
 			goto unlock;
 	}
+
+	/*
+	 * We are now in case 1 or 2, and we have an undo vector for this
+	 * process.
+	 */
 
 #ifdef SEM_DEBUG
 	printf("proc @%08x has undo structure with %d entries\n", p,
