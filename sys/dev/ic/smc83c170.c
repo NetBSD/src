@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.37 2000/11/08 15:20:29 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.38 2000/11/14 18:21:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
- 
+
+#include <uvm/uvm_extern.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -134,7 +136,7 @@ epic_attach(sc)
 	 * DMA map for it.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct epic_control_data), NBPG, 0, &seg, 1, &rseg,
+	    sizeof(struct epic_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

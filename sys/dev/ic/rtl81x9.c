@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.16 2000/10/15 19:59:22 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.17 2000/11/14 18:21:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -99,6 +99,8 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -667,7 +669,7 @@ rtk_attach(sc)
 	eaddr[5] = val >> 8;
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    RTK_RXBUFLEN + 32, NBPG, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
+	    RTK_RXBUFLEN + 32, PAGE_SIZE, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't allocate recv buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
