@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.15 1997/06/25 00:48:09 lukem Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.16 1998/07/08 19:31:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,6 +38,8 @@
 #ifndef _SYS_SYSLIMITS_H_
 #define _SYS_SYSLIMITS_H_
 
+#include <sys/featuretest.h>
+
 #if !defined(_ANSI_SOURCE)
 #define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
 #define	CHILD_MAX		   80	/* max simultaneous processes */
@@ -60,6 +62,11 @@
 #define	EXPR_NEST_MAX		   32	/* max expressions nested in expr(1) */
 #define	LINE_MAX		 2048	/* max bytes in an input line */
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
+
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#define	NZERO			   20	/* default "nice" */
+#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+
 #endif /* !_ANSI_SOURCE */
 
 #endif /* !_SYS_SYSLIMITS_H_ */
