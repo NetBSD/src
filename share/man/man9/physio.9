@@ -1,4 +1,4 @@
-.\"	$NetBSD: physio.9,v 1.6 2000/03/21 02:24:30 oster Exp $
+.\"	$NetBSD: physio.9,v 1.7 2001/06/19 12:59:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ returns 0.
 .Er EFAULT
 is returned if the address range described by
 .Fa uio
-is not accessable by the requesting process.
+is not accessible by the requesting process.
 .Fn physio
 will return any error resulting from calls to the device strategy routine,
 by examining the
