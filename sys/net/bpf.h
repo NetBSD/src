@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.14 1996/05/02 00:57:28 cgd Exp $	*/
+/*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -172,6 +172,7 @@ struct bpf_hdr {
 #define DLT_SLIP	8	/* Serial Line IP */
 #define DLT_PPP		9	/* Point-to-point Protocol */
 #define DLT_FDDI	10	/* FDDI */
+#define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
 
 /*
  * The instruction encondings.
