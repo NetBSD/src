@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.4 2000/07/18 11:35:03 pk Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.5 2001/03/06 08:09:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -120,7 +120,5 @@ bus_space_tag_t psycho_alloc_bus_tag __P((struct psycho_pbm *, int));
 #define psycho_alloc_config_tag(pp) psycho_alloc_bus_tag((pp), PCI_CONFIG_BUS_SPACE)
 #define psycho_alloc_mem_tag(pp) psycho_alloc_bus_tag((pp), PCI_MEMORY_BUS_SPACE)
 #define psycho_alloc_io_tag(pp) psycho_alloc_bus_tag((pp), PCI_IO_BUS_SPACE)
-
-int psycho_intr_map __P((pcitag_t, int, int, pci_intr_handle_t *));
 
 #endif /* _SPARC64_DEV_PSYCHOVAR_H_ */
