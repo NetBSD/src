@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 1999/03/25 17:49:43 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 1999/03/26 04:29:22 eeh Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -5577,7 +5577,7 @@ _C_LABEL(sigcode):
 _C_LABEL(esigcode):
 #endif
 	
-#if defined(COMPAT_SPARC32) || ! defined(_LP64)
+#if defined(COMPAT_NETBSD32) || ! defined(_LP64)
 /*
  * The following code is copied to the top of the user stack when each
  * process is exec'ed, and signals are `trampolined' off it.

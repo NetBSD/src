@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4 1999/01/31 09:21:18 mrg Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5 1999/03/26 04:29:21 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
+#include <sparc64/sparc64/sigdebug.h>
 
 /*
  * System call to cleanup state after a signal
@@ -77,12 +78,33 @@ compat_13_sys_sigreturn(p, v, retval)
 	/* Make sure our D$ is not polluted w/bad data */
 	blast_vcache();
 #endif
-	if (rwindow_save(p))
+	if (rwindow_save(p)) {
+#ifdef DEBUG
+		printf("compat_13_sys_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
+		Debugger();
+#endif
 		sigexit(p, SIGILL);
+	}
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("compat_13_sys_sigreturn: %s[%d], sigcntxp %p\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 
 	scp = SCARG(uap, sigcntxp);
 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+#ifdef DEBUG
+	{
+		printf("compat_13_sys_sigreturn: copyin failed: scp=%p\n", scp);
+		Debugger();
 		return (EFAULT);
+	}
+#else
+		return (EFAULT);
+#endif
+
 	scp = &sc;
 
 	tf = p->p_md.md_tf;
@@ -94,7 +116,7 @@ compat_13_sys_sigreturn(p, v, retval)
 	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
 #ifdef DEBUG
 	{
-		printf("sigreturn13: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		printf("compat_13_sys_sigreturn: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
 		Debugger();
 		return (EINVAL);
 	}
@@ -111,6 +133,13 @@ compat_13_sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("compat_13_sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
+		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 
 	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;

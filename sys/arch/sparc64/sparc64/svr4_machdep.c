@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.6 1999/01/21 23:03:10 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.7 1999/03/26 04:29:26 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -78,12 +78,7 @@ svr4_setregs(p, epp, stack)
 }
 
 #ifdef DEBUG
-extern int sigdebug;
-extern int sigpid;
-#define SDB_FOLLOW	0x01	/* XXX: dup from machdep.c */
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#define SDB_DDB		0x08
+#include <sparc64/sparc64/sigdebug.h>
 #endif
 
 #ifdef DEBUG_SVR4
@@ -480,7 +475,7 @@ svr4_sendsig(catcher, sig, mask, code)
 						       psp->ps_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
-	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
+	fp = (struct svr4_sigframe *) ((long) (fp - 1) & ~7);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.35 1999/03/09 21:02:38 kleink Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.36 1999/03/26 04:29:27 eeh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -38,7 +38,7 @@
 #include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
 #include "opt_compat_svr4.h"
-#include "opt_compat_sparc32.h"
+#include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
 
 #include <sys/param.h>
@@ -88,8 +88,8 @@
 #include <compat/m68k4k/m68k4k_exec.h>
 #endif
 
-#ifdef COMPAT_SPARC32
-#include <compat/sparc32/sparc32_exec.h>
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32_exec.h>
 #endif
 
 #ifdef COMPAT_VAX1K
@@ -146,8 +146,8 @@ struct execsw execsw[] = {
 #ifdef COMPAT_M68K4K
 	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
 #endif
-#ifdef COMPAT_SPARC32
-	{ sizeof(struct sparc32_exec), exec_sparc32_makecmds, }, /* sparc 32 bit */
+#ifdef COMPAT_NETBSD32
+	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, }, /* sparc 32 bit */
 #endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */

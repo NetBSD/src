@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.14 1999/03/25 17:57:22 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.15 1999/03/26 04:29:26 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -51,7 +51,7 @@
 #include <compat/netbsd32/netbsd32_syscall.h>
 
 #include <machine/frame.h>
-#include <machine/netbsd32.h>
+#include <machine/netbsd32_machdep.h>
 
 const char netbsd32_emul_path[] = "/emul/netbsd32";
 extern char netbsd32_sigcode[], netbsd32_esigcode[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.5 1998/11/16 06:51:36 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.6 1999/03/26 04:29:23 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -56,12 +56,7 @@
 #include <machine/cpu.h>
 
 #ifdef DEBUG
-extern int sigdebug;
-extern int sigpid;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#define SDB_DDB		0x08
+#include <sparc64/sparc64/sigdebug.h>
 #endif
 
 struct sunos_sigcontext {
@@ -225,6 +220,13 @@ sunos_sys_sigreturn(p, v, retval)
 #endif
 	if (rwindow_save(p))
 		sigexit(p, SIGILL);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sunos_sigreturn: %s[%d], sigcntxp %p\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 
 	scp = (struct sunos_sigcontext *)SCARG(uap, sigcntxp);
 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
@@ -240,7 +242,7 @@ sunos_sys_sigreturn(p, v, retval)
 	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
 #ifdef DEBUG
 	{
-		printf("sigreturn13: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		printf("sunos_sigreturn: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
 		Debugger();
 		return (EINVAL);
 	}
@@ -253,6 +255,13 @@ sunos_sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sunos_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
+		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 
 	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;

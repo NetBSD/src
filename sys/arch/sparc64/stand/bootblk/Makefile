@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1999/03/26 04:29:26 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -6,13 +6,10 @@ S=	${CURDIR}/../../../..
 #
 # Override normal settings
 #
-CC=cc
-LORDER=lorder 
-TSORT=tsort 
-NM=nm
 
-PROG=		bootblk bootblk.text
+SCRIPTS=	bootblk bootblk.text
 SRCS=		bootblk.fth
+CLEANFILES=	assym.fth.h machine bootblk bootblk.text
 
 MKMAN=		no
 
@@ -56,4 +53,4 @@ fake: bootblk bootblk.text
 	../fakeboot/fakeboot -elf32 <bootblk >/bootblk
 	../fakeboot/fakeboot -elf32 <bootblk.text >/bootblk.text
 
-
+#.include <bsd.prog.mk>
