@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.15 2000/02/11 21:36:38 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.16 2000/04/11 07:08:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -669,7 +669,7 @@ et_sv_reg_t	*et_regs;
 	et_regs->aux_mode    = RSeq(ba, SEQ_ID_AUXILIARY_MODE);
 	et_regs->seg_sel     = vgar(ba, GREG_SEGMENTSELECT);
 
-	s = splx(s);
+	splx(s);
 }
 
 void
@@ -720,5 +720,5 @@ et_sv_reg_t	*et_regs;
 	i = et_regs->seq[SEQ_ID_CLOCKING_MODE] & ~0x20;
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, i);
 
-	s = splx(s);
+	splx(s);
 }
