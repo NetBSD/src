@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.21 1998/05/16 15:12:26 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.22 1998/07/28 05:15:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.21 1998/05/16 15:12:26 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.22 1998/07/28 05:15:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ printlong(dp)
 	NAMES *np;
 	char buf[20];
 
-	time(&now);
+	now = time(NULL);
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %qu\n",
@@ -198,7 +198,7 @@ printcol(dp)
 			if ((base += numrows) >= num)
 				break;
 			while (chcnt++ < colwidth)
-				putchar(' ');
+				(void)putchar(' ');
 		}
 		(void)putchar('\n');
 	}
@@ -240,14 +240,14 @@ printacol(dp)
 			continue;
 		if (col >= numcols) {
 			chcnt = col = 0;
-			putchar('\n');
+			(void)putchar('\n');
 		}
 		chcnt = printaname(p, dp->s_inode, dp->s_block);
 		while (chcnt++ < colwidth)
-			putchar(' ');
+			(void)putchar(' ');
 		col++;
 	}
-	putchar('\n');
+	(void)putchar('\n');
 }
 
 /*
