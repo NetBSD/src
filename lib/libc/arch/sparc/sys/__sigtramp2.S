@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/10/12 14:42:03 pk Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/12 14:42:03 pk Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,38 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
+#include <machine/asm.h>
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: __sigtramp2.S,v 1.1 2003/10/12 14:42:03 pk Exp $")
+#endif /* SYSLIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <signal.h>
-#include <errno.h>
+#include "SYS.h"
 
-#include "extern.h"
-
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	int rv;
-	extern void __sigtramp_sigcontext_1(void);
-	extern void __sigtramp_siginfo_2(void);
-
-	/*
-	 * We select the compatibility SIGCONTEXT trampoline if SA_SIGINFO
-	 * is not set in the sigaction.
-	 */
-	if (act && (act->sa_flags & SA_SIGINFO) == 0) {
-		rv =  __sigaction_sigtramp(sig, act, oact,
-					   __sigtramp_sigcontext_1, 1);
-		/*
-		 * EINVAL might indicate that trampoline version 1 is
-		 * not supported by the kernel; fall back on native
-		 * SIGINFO trampoline.
-		 */
-		if (rv >= 0 || errno != EINVAL)
-			return rv;
-	}
-
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
-}
+/*
+ * When this code is run, the stack looks like:
+ *	[%sp]			struct frame
+ *	[%sp + 96]		siginfo_t
+ *	[%sp + 96 + 128]	ucontext_t
+ *	    .
+ *	    .
+ */
+ENTRY_NOPROFILE(__sigtramp_siginfo_2)
+	add	%sp, 96 + 128, %o0	/* get pointer to ucontext */
+	mov	SYS_setcontext, %g1
+	t	ST_SYSCALL		/* call setcontext */
+	mov	SYS_exit, %g1		/* exit with errno */
+	t	ST_SYSCALL		/* if sigreturn fails */
