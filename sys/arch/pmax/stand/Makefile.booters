@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.33 2002/02/23 21:43:58 gmcgarry Exp $
+# $NetBSD: Makefile.booters,v 1.34 2002/03/20 20:15:18 gmcgarry Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -17,6 +17,12 @@ mips:
 	ln -s $S/arch/mips/include mips
 
 BINMODE?=	444
+
+.if ${USETOOLS} == "yes"
+ELF2ECOFF?=	${TOOLDIR}/bin/nbmips-elf2ecoff
+.else
+ELF2ECOFF?=	elf2ecoff
+.endif
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL
@@ -114,11 +120,7 @@ ${PROG}: machine mips pmax ${OBJS} ${LIBS}
 .if defined(DO_ECOFF_BINARY)
 	@echo -n "Creating ECOFF binary... "
 	@mv ${PROG} ${PROG}.elf
-.if defined(USETOOLS)
-	@${TOOLDIR}/bin/nbmips-elf2ecoff ${PROG}.elf ${PROG}
-.else
-	@elf2ecoff ${PROG}.elf ${PROG}
-.endif
+	@${ELF2ECOFF} ${PROG}.elf ${PROG}
 	@echo done.
 .endif
 
