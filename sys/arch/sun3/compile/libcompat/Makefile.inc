@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1996/06/20 03:12:11 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1996/07/11 16:52:10 thorpej Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 COMPATDIR=	$S/compat/common
 
 COMPAT__SRCS=  compat_exec.c compat_util.c kern_exit_43.c kern_info_09.c \
- kern_info_43.c kern_prot_43.c kern_resource_43.c kern_sig_43.c \
- tty_43.c uipc_syscalls_43.c vfs_syscalls_43.c vm_43.c kern_ipc_10.c
+ kern_info_43.c kern_resource_43.c kern_sig_43.c tty_43.c uipc_syscalls_43.c \
+ vfs_syscalls_43.c vm_43.c kern_ipc_10.c
 
 COMPAT_OBJS   = ${COMPAT__SRCS:.c=.o}
 COMPAT_DEPENDS= ${COMPAT__SRCS:S@^@${COMPATDIR}/@g}
@@ -14,7 +14,7 @@ COMPAT_DEPENDS= ${COMPAT__SRCS:S@^@${COMPATDIR}/@g}
 libcompat.a: ${COMPAT_OBJS}
 	@echo building compat library
 	@rm -f $@
-	@${AR} cq $@ ${COMPATOBJS}
+	@${AR} cq $@ ${COMPAT_OBJS}
 	${RANLIB} $@
 
 clean::
