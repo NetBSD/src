@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.9 2002/09/27 07:25:17 wiz Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.10 2002/09/27 07:28:18 wiz Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.9 2002/09/27 07:25:17 wiz Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.10 2002/09/27 07:28:18 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -73,9 +73,9 @@ struct symbols {
 
 #define	CHUNKSIZE	(64 * 1024)
 
-int		main __P((int, char *[]));
-static void	usage __P((void)) __attribute__((noreturn));
-static int	find_md_root __P((bfd *, struct symbols symbols[]));
+int		main(int, char *[]);
+static void	usage(void) __attribute__((noreturn));
+static int	find_md_root(bfd *, struct symbols symbols[]);
 
 int	verbose;
 int	extract;
@@ -88,9 +88,7 @@ static const char *progname;
 #define	getprogname()	(progname)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, kfd, fsfd, rv;
 	struct stat ksb, fssb;
@@ -254,12 +252,12 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char **list;
 
 	fprintf(stderr,
-	    "usage: %s [-svx] [-b bfdname] kernel_file fsimage_file\n",
+	    "usage: %s [-svx] [-b bfdname] kernel image\n",
 	    getprogname());
 	fprintf(stderr, "supported targets:");
 	for (list = bfd_target_list(); *list != NULL; list++)
@@ -269,9 +267,7 @@ usage()
 }
 
 static int
-find_md_root(abfd, symbols)
-	bfd *abfd;
-	struct symbols symbols[];
+find_md_root(bfd *abfd, struct symbols symbols[])
 {
 	long i;
 	long storage_needed;
