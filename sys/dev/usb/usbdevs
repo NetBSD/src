@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.331 2003/06/26 00:18:08 jschauma Exp $
+$NetBSD: usbdevs,v 1.332 2003/06/30 12:41:38 martin Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1335,6 +1335,7 @@ product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
+product	SONY MSC_U03		0x0069	MSC memory stick slot MSC-U03
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
 product SONY CLIE_S360		0x0095	Sony Clie s360
 product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
