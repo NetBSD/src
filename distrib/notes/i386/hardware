@@ -33,10 +33,10 @@ Supported devices include:
 		Buslogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
-                Seagate/Future Domain ISA SCSI adapter cards, including
-                        ST01/02
-                        Future Domain TMC-885
-                        Future Domain TMC-950
+		Seagate/Future Domain ISA SCSI adapter cards, including
+			ST01/02
+			Future Domain TMC-885
+			Future Domain TMC-950
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters:
 			Acculogic PCIpport
 			ASUS SC-200 (requires NCR BIOS on motherboard)
@@ -44,10 +44,10 @@ Supported devices include:
 			DEC Celebris XL/590 onboard SCSI
 			Lomas Data SCSI adapters
 			NCR/SYM 8125 (and its many clones; be careful, some
-				      of these cards have a jumper to set
-				      the PCI interrupt; leave it on INT A!)
+					of these cards have a jumper to set
+					the PCI interrupt; leave it on INT A!)
 			Promise DC540 (a particularly common OEM model of
-				       the SYM 8125)
+					the SYM 8125)
 			Tyan Yorktown
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI host adapters (ISA cards only)
@@ -93,11 +93,11 @@ Supported devices include:
 			Digital (DEC) PCI Ethernet/Fast Ethernet adapters (all)
 			JCIS Condor JC1260
 			Linksys PCI Fast Ethernet
-                        SMC EtherPower 10, 10/100 (PCI only!)
-                        SMC EtherPower^2 [b]
+			SMC EtherPower 10, 10/100 (PCI only!)
+			SMC EtherPower^2 [b]
 			SVEC PN0455
 			SVEC FD1000-TP
-                        Znyx ZX34X
+			Znyx ZX34X
 		Digital EtherWORKS III ISA adapters (DE203/DE204/DE205)
 		BICC Isolan [* and not recently tested]
 		Intel EtherExpress 16
@@ -117,6 +117,11 @@ Supported devices include:
 			[Note: The Mitsumi driver device probe is known 
 			to cause trouble with several devices!]
 		Most SCSI CD-ROM drives
+		Most ATAPI CD-ROM drives.
+			[ Note: Some low-priced IDE CDROM drives are known
+			 for being not or not fully ATAPI compliant, and thus
+			 requires some hack (generally an entry to a quirk
+			 table) to work with NetBSD.]
 	Mice:
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
@@ -151,11 +156,11 @@ have this support, or can acquire it via a BIOS upgrade.
 Hardware the we do NOT currently support, but get many questions
 about:
 	AMD PCscsi SCSI host adapters (though the PCnet portion of the
-				       PCnet-SCSI works fine)
-        Intel EtherExpress 100 Fast Ethernet adapters.
-        Multiprocessor Pentium and Pentium Pro systems.  (Though they should
-                run fine using one processor only.)
-        NCR 5380-based SCSI host adapters.
+					PCnet-SCSI works fine)
+	Intel EtherExpress 100 Fast Ethernet adapters.
+	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
+		run fine using one processor only.)
+	NCR 5380-based SCSI host adapters.
 	PCI WD-7000 SCSI host adapters.
 	PCMCIA ("PC Card") devices, including some miniature "IDE" hard disks.
 	 [Note: some higly experimental PCMCIA support is available on our
@@ -178,9 +183,6 @@ Parallel ports	lpt0	0x378	7		[interrupt-driven or polling]
 		lpt1	0x278			[polling only]
 		lpt2	0x3bc			[polling only]
 
-MFM/ESDI/IDE/RLL hard disk controller
-		wdc0	0x1f0	14		[supports two disks]
-
 Floppy controller
 		fdc0	0x3f0	6	2	[supports two disks]
 
@@ -189,65 +191,67 @@ AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
 		aha1	0x334	any	any
 
 AHA-174x SCSI host adapters (in enhanced mode)
-		ahb0	any	any	any
+		ahb0	any  	any	any
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
-                aic0    0x340   11      6
+		aic0	0x340	11	6
 
 AHA-2X4X or AIC-7XXX-based SCSI host adapters
-                ahc0    any     any     any
+		ahc0	any  	any any
 
 Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
-		bt0	0x330	any	any
-		bt1	0x334	any	any
+		bt0 	0x330	any	any
+		bt1 	0x334	any	any
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
-		ncr0	any	any	any
+		ncr0	any  	any	any
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
-                uha0    0x330   any     any
+		uha0	0x330	any	any
 		uha1	0x334	any	any
 
 Western Digital WD7000 based ISA SCSI host adapters
 		wds0	0x350	15	6
 		wds1	0x358	11	5
 
-SCSI disks	sd0	first SCSI disk (by SCSI id)
-		sd1	second SCSI disk (by SCSI id)
-		sd2	third SCSI disk (by SCSI id)
-		sd3	fourth SCSI disk (by SCSI id)
+MFM/ESDI/IDE/RLL hard disk controllers
+		wdc0	0x1f0	14		[supports two devices]
+		wdc1	0x170	15		[supports two devices]
 
-SCSI tapes	st0	first SCSI tape (by SCSI id)
-		st1	second SCSI tape (by SCSI id)
-
-SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
-		cd1	second SCSI CD-ROM (by SCSI id)
+ATA disks	wd0, wd1, ...
+SCSI disks	sd0, sd1, ...
+SCSI tapes	st0, st1, ...
+SCSI and ATAPI CD-ROMs cd0, cd1, ...
+	For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
+	present on the bus are probed in increasing id order for SCSI and
+	master/slave order for ATA(PI). So the first SCSI drive found will
+	be called sd0, the second sd1, and so on ...
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards, 3c503,
 Novell NE1000, or NE2000 Ethernet boards
-		ed0	0x280	2		iomem 0xd0000
-		ed1	0x250	2		iomem 0xd8000
-		ed2	0x300	10		iomem 0xcc000
+		ed0 	0x280	2		iomem 0xd0000
+		ed1 	0x250	2		iomem 0xd8000
+		ed2 	0x300	10		iomem 0xcc000
 
 3COM 3c509 or 3COM 3c579 Ethernet boards
-		ep0	any	any
+		ep0 	any  	any
 
 3COM 3x59X PCI Ethernet boards
-		ep0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+		ep0 	any  	any	[you must assign an interrupt in your
+		    	    	   	 PCI BIOS, or let it do so for you]
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
 EtherExpress 16 Ethernet boards
-		ie0	0x360	7		iomem 0xd0000
-		ie1	0x300	10		iomem 0xd0000
+		ie0 	0x360	7		iomem 0xd0000
+		ie1 	0x300	10		iomem 0xd0000
 
 PCnet-PCI based Ethernet boards; see above for partial list
-		le0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+		le0 	any  	any	[you must assign an interrupt in your
+		    	    	   	 PCI BIOS, or let it do so for you]
 
 DC21x4x based Ethernet boards; see above for partial list
-		de0	any	any 	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+		de0 	any  	any	[you must assign an interrupt in your
+		    	     	   	 PCI BIOS, or let it do so for you]
 
 Digital EtherWORKS III (DE203/DE204/DE205)
-		lc0	any	any
+		lc0 	any  	any
