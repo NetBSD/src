@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.11 1999/11/09 15:06:38 drochner Exp $	*/
+/*	$NetBSD: xstr.c,v 1.12 2001/02/19 23:03:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.11 1999/11/09 15:06:38 drochner Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.12 2001/02/19 23:03:54 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -509,8 +509,8 @@ onintr(dummy)
 static void
 usage()
 {
-	extern char *__progname;
+
 	(void)fprintf(stderr, "Usage: %s [-vc] [-l array] [-] [<name> ...]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }

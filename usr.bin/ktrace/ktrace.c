@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.20 2000/11/13 21:35:38 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.21 2001/02/19 23:03:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.20 2000/11/13 21:35:38 jdolecek Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.21 2001/02/19 23:03:48 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,6 @@ rpid(p)
 void
 usage()
 {
-	extern char *__progname;
 #ifdef KTRUSS
 # define LONG_OPTION "[-e emulation] [-m maxdata] [-o outfile] "
 # define SHRT_OPTION "RT"
@@ -262,8 +261,8 @@ usage()
 #endif
 	(void)fprintf(stderr,
 "Usage:\t%s [-aCcid%s] %s[-f trfile] [-g pgid] [-p pid] [-t [cenisw+]]\n\t%s [-aCcid%s] %s[-f trfile] [-t [cenisw+]] command\n",
-	__progname, SHRT_OPTION, LONG_OPTION,
-	__progname, SHRT_OPTION, LONG_OPTION);
+	getprogname(), SHRT_OPTION, LONG_OPTION,
+	getprogname(), SHRT_OPTION, LONG_OPTION);
 	exit(1);
 }
 

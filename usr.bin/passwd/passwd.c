@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.20 2000/07/06 11:19:40 ad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.21 2001/02/19 23:03:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.20 2000/07/06 11:19:40 ad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.21 2001/02/19 23:03:50 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,6 @@ static struct pw_module_s {
  
 void	usage __P((void)); 
 
-extern	char *__progname;		/* from crt0.o */
-
 int	main __P((int, char **));
 
 int
@@ -129,7 +127,7 @@ main(argc, argv)
 			 * matches against a particular progname, but does NOT
 			 * match this one, don't use that module.
 			 */
-			if ((strcmp(__progname, pw_modules[i].argv0) == 0) &&
+			if ((strcmp(getprogname(), pw_modules[i].argv0) == 0) &&
 			    use_always == 0) {
 				for (j = 0; j < i; j++) {
 					pw_modules[j].invalid |= INIT_INVALID;
@@ -144,7 +142,7 @@ main(argc, argv)
 		if (pw_modules[i].invalid)
 			continue;
 
-		pw_modules[i].invalid |= (*pw_modules[i].pw_init)(__progname) ?
+		pw_modules[i].invalid |= (*pw_modules[i].pw_init)(getprogname()) ?
 		    /* zero on success, non-zero on error */
 		    INIT_INVALID : 0;
 
@@ -270,7 +268,7 @@ usage()
 	fprintf(stderr, "usage:\n");
 	for (i = 0; pw_modules[i].pw_init != NULL; i++)
 		if (! (pw_modules[i].invalid & INIT_INVALID))
-			fprintf(stderr, "\t%s %s [user]\n", __progname,
+			fprintf(stderr, "\t%s %s [user]\n", getprogname(),
 			    pw_modules[i].usage);
 	exit(1);
 }

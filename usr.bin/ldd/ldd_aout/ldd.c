@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.17 1998/12/16 23:14:02 thorpej Exp $	*/
+/*	$NetBSD: ldd.c,v 1.18 2001/02/19 23:03:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,9 +56,8 @@ void	usage __P((void));
 void
 usage()
 {
-	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s <filename> ...\n", __progname);
+	fprintf(stderr, "Usage: %s <filename> ...\n", getprogname());
 	exit(1);
 }
 

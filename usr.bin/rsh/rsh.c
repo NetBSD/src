@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.13 2000/01/31 14:19:34 itojun Exp $	*/
+/*	$NetBSD: rsh.c,v 1.14 2001/02/19 23:03:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.13 2000/01/31 14:19:34 itojun Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.14 2001/02/19 23:03:51 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ void	warning __P((const char *, ...));
 /*
  * rsh - remote shell
  */
-extern	char *__progname;		/* XXX */
 int	remerr;
 
 static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
@@ -131,11 +130,13 @@ main(argc, argv)
 	 * If called as something other than "rsh" use it as the host name,
 	 * only for rsh.
 	 */
-	p = __progname;
-	if (strcmp(p, "rsh") == 0)
+	if (strcmp(getprogname(), "rsh") == 0)
 		asrsh = 1;
-	else
-		host = p;
+	else {
+		host = strdup(getprogname());
+		if (host == NULL)
+			err(1, NULL);
+	}
 #endif /* IN_RCMD */
 
 	/* handle "rsh host flags" */
@@ -568,7 +569,8 @@ warning(va_alist)
 	va_start(ap, fmt);
 #endif
 
-	(void) fprintf(stderr, "%s: warning, using standard rsh: ", __progname);
+	(void) fprintf(stderr, "%s: warning, using standard rsh: ",
+	    getprogname());
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void) fprintf(stderr, ".\n");
@@ -602,7 +604,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-nd%s]%s[-l login]%s [login@]host %s\n", __progname,
+	    "usage: %s [-nd%s]%s[-l login]%s [login@]host %s\n", getprogname(),
 #ifdef KERBEROS
 #ifdef CRYPT
 	    "x", " [-k realm] ",

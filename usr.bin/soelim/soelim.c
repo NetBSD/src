@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.7 1999/11/09 15:06:36 drochner Exp $	*/
+/*	$NetBSD: soelim.c,v 1.8 2001/02/19 23:03:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.7 1999/11/09 15:06:36 drochner Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.8 2001/02/19 23:03:52 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -143,7 +143,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *__progname;
 	struct path p;
 	int c;
 
@@ -157,7 +156,8 @@ main(argc, argv)
 			break;
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [-I<dir>] [files...]\n", __progname);
+			    "Usage: %s [-I<dir>] [files...]\n",
+			    getprogname());
 			exit(1);
 		}
 

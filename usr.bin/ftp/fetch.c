@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.125 2000/09/28 12:29:23 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.126 2001/02/19 23:03:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.125 2000/09/28 12:29:23 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.126 2001/02/19 23:03:45 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -1377,7 +1377,7 @@ fetch_ftp(const char *url)
 			/* Set up the connection */
 	if (connected)
 		disconnect(0, NULL);
-	xargv[0] = __progname;
+	xargv[0] = (char *)getprogname();	/* XXX discards const */
 	xargv[1] = host;
 	xargv[2] = NULL;
 	xargc = 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.9 2001/02/05 01:20:12 christos Exp $	*/
+/*	$NetBSD: apply.c,v 1.10 2001/02/19 23:03:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.9 2001/02/05 01:20:12 christos Exp $");
+__RCSID("$NetBSD: apply.c,v 1.10 2001/02/19 23:03:42 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,6 @@ __RCSID("$NetBSD: apply.c,v 1.9 2001/02/05 01:20:12 christos Exp $");
 int	main __P((int, char **));
 void	usage __P((void));
 int	shell_system __P((const char *));
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -240,8 +238,9 @@ shell_system(command)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "Usage: %s [-a magic] [-0123456789] command arguments ...\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.21 2001/02/05 01:23:24 christos Exp $	*/
+/*	$NetBSD: play.c,v 1.22 2001/02/19 23:03:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -67,8 +67,6 @@ char	const *play_errstring = NULL;
 size_t	bufsize;
 int	audiofd, ctlfd;
 int	exitstatus = EXIT_SUCCESS;
-
-extern char *__progname;
 
 int
 main(argc, argv)
@@ -410,7 +408,8 @@ set_audio_mode:
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", __progname);
+
+	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());
 	fprintf(stderr, "Options:\n\t"
 	    "-C audio control device\n\t"
 	    "-b balance (0-63)\n\t"

@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.45 2001/01/05 04:59:21 mjl Exp $	*/
+/*	$NetBSD: w.c,v 1.46 2001/02/19 23:03:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.45 2001/01/05 04:59:21 mjl Exp $");
+__RCSID("$NetBSD: w.c,v 1.46 2001/02/19 23:03:52 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,6 @@ int	main(int, char **);
 int
 main(int argc, char **argv)
 {
-	extern char *__progname;
 	struct kinfo_proc2 *kp;
 	struct hostent *hp;
 	struct stat *stp;
@@ -134,13 +133,14 @@ main(int argc, char **argv)
 	time_t touched;
 	int ch, i, nentries, nusers, wcmd, lognamelen;
 	char *memf, *nlistf, *p, *x;
+	const char *progname;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
 
 	/* Are we w(1) or uptime(1)? */
-	p = __progname;
-	if (*p == '-')
-		p++;
-	if (*p == 'u') {
+	progname = getprogname();
+	if (*progname == '-')
+		progname++;
+	if (*progname == 'u') {
 		wcmd = 0;
 		p = "";
 	} else {

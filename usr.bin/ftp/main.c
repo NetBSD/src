@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2001/01/09 22:25:55 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2001/02/19 23:03:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.76 2001/01/09 22:25:55 jdolecek Exp $");
+__RCSID("$NetBSD: main.c,v 1.77 2001/02/19 23:03:46 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,10 +241,10 @@ main(int argc, char *argv[])
 			warnx("unknown $FTPMODE '%s'; using defaults", cp);
 	}
 
-	if (strcmp(__progname, "pftp") == 0) {
+	if (strcmp(getprogname(), "pftp") == 0) {
 		passivemode = 1;
 		activefallback = 0;
-	} else if (strcmp(__progname, "gate-ftp") == 0)
+	} else if (strcmp(getprogname(), "gate-ftp") == 0)
 		gatemode = 1;
 
 	gateserver = getenv("FTPSERVER");
@@ -506,7 +506,8 @@ main(int argc, char *argv[])
 				user = host;
 				host = cp + 1;
 			}
-			xargv[0] = __progname;
+			/* XXX discards const */
+			xargv[0] = (char *)getprogname();
 			xargv[1] = host;
 			xargv[2] = argv[1];
 			xargv[3] = NULL;
@@ -1004,11 +1005,13 @@ setupoption(char *name, char *value, char *defaultvalue)
 void
 usage(void)
 {
+	const char *progname = getprogname();
+
 	(void)fprintf(stderr,
 "usage: %s [-AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-r retry]\n"
 "           [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
 "           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
-"       %s -u url file [...]\n", __progname, __progname);
+"       %s -u url file [...]\n", progname, progname);
 	exit(1);
 }

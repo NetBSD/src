@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.20 2000/08/15 20:24:58 jhawk Exp $	*/
+/*	$NetBSD: netstat.h,v 1.21 2001/02/19 23:03:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,6 @@ int	interval;	/* repeat interval for i/f stats */
 char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
 
 int	af;		/* address family */
-
-extern	char *__progname; /* program name, from crt0.o */
 
 
 int	kread __P((u_long addr, char *buf, int size));

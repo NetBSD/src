@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.25 2001/02/05 01:22:22 christos Exp $	*/
+/*	$NetBSD: ctl.c,v 1.26 2001/02/19 23:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,8 +61,6 @@ void usage (void);
 int main (int argc, char **argv);
 
 FILE *out = stdout;
-
-char *prog;
 
 audio_device_t adev;
 
@@ -154,8 +152,6 @@ static struct {
 	{ "independent",	AUDIO_PROP_INDEPENDENT },
 	{ 0 }
 };
-
-extern char *__progname;
 
 struct field *
 findfield(name)
@@ -332,6 +328,7 @@ getinfo(fd)
 void
 usage()
 {
+	const char *prog = getprogname();
 
 	fprintf(stderr, "Usage: %s [-f file] [-n] name ...\n", prog);
 	fprintf(stderr, "Usage: %s [-f file] [-n] -w name=value ...\n", prog);
@@ -353,8 +350,6 @@ main(argc, argv)
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
 		file = _PATH_AUDIOCTL;
-
-	prog = __progname;
     
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch(ch) {

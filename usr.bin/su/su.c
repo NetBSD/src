@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.46 2001/01/10 21:33:13 sjg Exp $	*/
+/*	$NetBSD: su.c,v 1.47 2001/02/19 23:03:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.46 2001/01/10 21:33:13 sjg Exp $");
+__RCSID("$NetBSD: su.c,v 1.47 2001/02/19 23:03:52 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *__progname;
 	extern char **environ;
 	struct passwd *pwd;
 	char *p;
@@ -168,7 +167,7 @@ main(argc, argv)
 		default:
 			(void)fprintf(stderr,
 			    "Usage: %s [%s] [login [shell arguments]]\n",
-			    __progname, ARGSTR);
+			    getprogname(), ARGSTR);
 			exit(1);
 		}
 	argv += optind;

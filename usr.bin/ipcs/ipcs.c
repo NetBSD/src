@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.26 2001/02/19 23:03:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@ void	show_shminfo(time_t, time_t, time_t, int, u_int64_t, mode_t, uid_t,
 void	show_shminfo_hdr(void);
 void	show_shmtotal(struct shminfo *);
 void	usage(void);
-
-extern	char *__progname;		/* from crt0.o */
 
 char *
 fmt_perm(u_short mode)
@@ -862,6 +860,6 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-abcmopqstMQST] [-C corefile] [-N namelist]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }

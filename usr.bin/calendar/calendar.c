@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.24 2000/12/20 01:03:16 cgd Exp $	*/
+/*	$NetBSD: calendar.c,v 1.25 2001/02/19 23:03:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.24 2000/12/20 01:03:16 cgd Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.25 2001/02/19 23:03:44 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,8 +77,6 @@ unsigned short lookahead = 1, weekend = 2;
 char *fname = "calendar", *datestr = NULL;
 struct passwd *pw;
 int doall;
-
-extern char *__progname;
 
 void	 atodays __P((char, char *, unsigned short *));
 void	 cal __P((void));
@@ -453,7 +451,7 @@ atodays(char ch, char *optarg, unsigned short *days)
 	if ((u < 0) || (u > 366)) {
 		fprintf(stderr,
 			"%s: warning: -%c %d out of range 0-366, ignored.\n",
-			__progname, ch, u);
+			getprogname(), ch, u);
 	} else {
 		*days = u;
 	}
@@ -507,7 +505,7 @@ getmmdd(struct tm *tp, char *ds)
 	} else {
 		fprintf(stderr,
 			"%s: warning: can't convert %s to date, ignored.\n",
-			__progname, ds);
+			getprogname(), ds);
 		usage();
 	}
 }
@@ -516,6 +514,6 @@ void
 usage()
 {
 	(void)fprintf(stderr, "Usage: %s [-a] [-d MMDD[[YY]YY]" \
-		" [-f fname] [-l days] [-w days]\n", __progname);
+		" [-f fname] [-l days] [-w days]\n", getprogname());
 	exit(1);
 }

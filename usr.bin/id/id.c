@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.17 2001/01/05 03:08:23 itohy Exp $");
+__RCSID("$NetBSD: id.c,v 1.18 2001/02/19 23:03:47 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,14 +77,13 @@ main(argc, argv)
 	struct passwd *pw;
 	int ch, id;
 	int Gflag, gflag, nflag, pflag, rflag, uflag;
-	extern const char *__progname;
 
 	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
 
-	if (!strcmp(__progname, "groups")) {
+	if (!strcmp(getprogname(), "groups")) {
 		Gflag = 1;
 		nflag = 1;
-	} else if (!strcmp(__progname, "whoami")) {
+	} else if (!strcmp(getprogname(), "whoami")) {
 		uflag = 1;
 		nflag = 1;
 	}

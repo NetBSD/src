@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.59 2000/11/15 00:11:03 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.60 2001/02/19 23:03:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -333,8 +333,6 @@ GLOBAL	int	 data;
 
 extern	struct cmd	cmdtab[];
 extern	struct option	optiontab[];
-
-extern	char	*__progname;		/* from crt0.o */
 
 
 #define	EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
