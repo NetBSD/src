@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.6 2001/05/04 12:58:34 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.7 2001/05/14 07:35:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -931,7 +931,7 @@ edmcadump(dev, blkno, va, size)
 {
 	struct ed_softc *ed;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */
-	int part; // , err;
+	int part;
 	int nblks;	/* total number of sectors left to write */
 
 	/* Check if recursive dump; if so, punt. */
