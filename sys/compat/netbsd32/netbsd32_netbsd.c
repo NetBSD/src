@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.28 2000/05/30 20:54:26 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.29 2000/06/26 14:21:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -76,7 +76,9 @@
 #include <sys/namei.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>

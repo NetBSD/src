@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.30 2000/05/20 03:36:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.31 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  *
@@ -46,8 +46,6 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #define UVM_PAGER
 #include <uvm/uvm.h>

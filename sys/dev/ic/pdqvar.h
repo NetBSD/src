@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.27 2000/05/03 19:17:54 thorpej Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.28 2000/06/26 14:21:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -69,7 +69,8 @@ enum _pdq_type_t {
 #endif /* M_CAST */
 #include <sys/malloc.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #define	PDQ_USE_MBUFS
 #if defined(__NetBSD__)

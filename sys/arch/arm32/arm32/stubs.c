@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.28 2000/06/05 23:44:57 jhawk Exp $	*/
+/*	$NetBSD: stubs.c,v 1.29 2000/06/26 14:20:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -47,8 +47,6 @@
 #include <sys/conf.h>
 #include <sys/msgbuf.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>

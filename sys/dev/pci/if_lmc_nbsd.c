@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.3 2000/05/03 21:08:03 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.4 2000/06/26 14:21:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -97,8 +97,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <net/if_sppp.h>

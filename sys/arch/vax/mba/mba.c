@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.22 2000/06/05 00:09:19 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.23 2000/06/26 14:21:05 mrg Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,6 @@
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/bus.h>
 #include <machine/scb.h>

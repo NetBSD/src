@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.21 2000/04/20 18:55:50 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.22 2000/06/26 14:21:06 mrg Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -46,8 +46,8 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/ka650.h>
 #include <machine/clock.h>

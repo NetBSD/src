@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.36 2000/06/18 05:20:27 simonb Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.37 2000/06/26 14:21:17 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,8 +84,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.14 1999/11/13 00:32:19 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.15 2000/06/26 14:21:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,8 +88,6 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 

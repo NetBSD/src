@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.4 2000/06/26 14:20:46 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.4 2000/06/26 14:20:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2000/06/26 14:20:46 mrg Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

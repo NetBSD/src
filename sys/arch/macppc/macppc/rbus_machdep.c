@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.4 2000/02/03 19:27:45 tsubai Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.5 2000/06/26 14:20:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -32,8 +32,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

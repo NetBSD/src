@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.50 2000/03/28 06:26:22 simonb Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.51 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -65,8 +65,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

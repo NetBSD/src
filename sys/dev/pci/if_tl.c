@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.32 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.33 2000/06/26 14:21:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -84,8 +84,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>

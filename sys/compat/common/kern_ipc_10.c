@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.9 1999/08/25 04:47:12 thorpej Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.10 2000/06/26 14:21:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -45,9 +45,6 @@
 #include <compat/common/compat_util.h>
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
 
 #ifdef SYSVSEM
 int

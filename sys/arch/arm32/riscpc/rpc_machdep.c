@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.33 2000/03/24 17:05:32 ws Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.34 2000/06/26 14:20:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -63,7 +63,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/signal.h>

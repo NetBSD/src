@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.1 2000/03/25 15:08:26 uch Exp $ */
+/*	$NetBSD: plumohci.c,v 1.2 2000/06/26 14:20:43 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -44,7 +44,6 @@
 /* busdma */
 #include <sys/mbuf.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _HPCMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>

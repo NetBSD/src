@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.2 2000/02/21 18:27:50 aymeric Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.3 2000/06/26 14:20:30 mrg Exp $	*/
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -10,8 +10,9 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
 #include <uvm/uvm.h>
+
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 

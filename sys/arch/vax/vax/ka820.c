@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.25 2000/06/12 11:26:26 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.26 2000/06/26 14:21:06 mrg Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -52,7 +52,6 @@
 #include <sys/conf.h>
 
 #include <vm/vm.h> 
-#include <vm/vm_kern.h>
 
 #include <machine/ka820.h>
 #include <machine/cpu.h>

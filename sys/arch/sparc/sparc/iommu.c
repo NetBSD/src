@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.46 2000/06/26 04:56:06 simonb Exp $ */
+/*	$NetBSD: iommu.c,v 1.47 2000/06/26 14:20:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -43,9 +43,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE

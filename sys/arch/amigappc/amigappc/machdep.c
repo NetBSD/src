@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2000/06/19 19:49:51 is Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2000/06/26 14:20:31 mrg Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,7 +49,8 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/powerpc.h>
 #include <machine/bat.h>

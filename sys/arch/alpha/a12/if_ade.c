@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.4 1999/12/04 21:19:52 ragge Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.5 2000/06/26 14:20:26 mrg Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -130,8 +130,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #if defined(__FreeBSD__)
 #include <vm/pmap.h>

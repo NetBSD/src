@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2000/06/26 04:56:12 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.36 2000/06/26 14:21:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,8 +55,6 @@
 #include <sys/uio.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 

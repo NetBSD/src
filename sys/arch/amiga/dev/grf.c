@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.35 2000/06/26 04:55:23 simonb Exp $	*/
+/*	$NetBSD: grf.c,v 1.36 2000/06/26 14:20:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,9 +59,7 @@
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pager.h>
+#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <amiga/amiga/color.h>	/* DEBUG */

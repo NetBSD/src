@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2000/06/06 18:52:33 soren Exp $	*/
+/*	$NetBSD: syscall.c,v 1.29 2000/06/26 14:20:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -56,7 +56,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.79 2000/05/27 00:11:12 sommerfeld Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.80 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,6 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

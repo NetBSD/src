@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2000/06/04 12:12:13 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 2000/06/26 14:20:55 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,6 @@
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

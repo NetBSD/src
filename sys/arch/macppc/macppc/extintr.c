@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.12 2000/02/14 12:45:52 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.13 2000/06/26 14:20:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>

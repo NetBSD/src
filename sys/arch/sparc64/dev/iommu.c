@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.17 2000/06/24 20:48:36 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.18 2000/06/26 14:21:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -120,7 +120,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.16 1999/10/24 22:19:47 mark Exp $	*/
+/*	$NetBSD: sfas.c,v 1.17 2000/06/26 14:20:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -60,8 +60,6 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

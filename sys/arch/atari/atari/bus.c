@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.20 2000/06/26 04:55:33 simonb Exp $	*/
+/*	$NetBSD: bus.c,v 1.21 2000/06/26 14:20:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/mbuf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>

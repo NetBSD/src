@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2000/06/26 04:55:42 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 2000/06/26 14:20:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 #include <sys/mbuf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
+#include <uvm/uvm_extern.h>
 
 #define _HPCMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>

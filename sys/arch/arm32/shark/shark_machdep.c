@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.17 2000/06/07 04:59:30 matt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.18 2000/06/26 14:20:38 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -54,8 +54,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <machine/frame.h>
 #include <machine/bootconfig.h>

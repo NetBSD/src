@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.23 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.24 2000/06/26 14:20:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -53,8 +53,6 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 #include <machine/pmap.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>

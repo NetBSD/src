@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.25 2000/06/26 04:56:33 simonb Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.26 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
@@ -48,8 +48,6 @@
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>

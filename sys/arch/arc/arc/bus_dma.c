@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2000/06/26 04:55:24 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2000/06/26 14:20:32 mrg Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -44,8 +44,8 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
+#include <uvm/uvm_extern.h>
 
 #define _ARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.11 1999/09/17 19:59:41 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.12 2000/06/26 14:20:41 mrg Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/intr.h>
 #include <machine/psl.h>

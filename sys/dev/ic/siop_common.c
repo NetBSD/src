@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.3 2000/06/12 20:13:41 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.4 2000/06/26 14:21:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -44,8 +44,6 @@
 #include <machine/bus.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_message.h>

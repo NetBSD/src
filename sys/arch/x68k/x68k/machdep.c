@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2000/06/05 23:45:03 jhawk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2000/06/26 14:21:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,8 +96,6 @@
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

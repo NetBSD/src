@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2000/06/18 07:12:39 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 2000/06/26 14:21:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -52,7 +52,6 @@ int sparc_pci_debug = 0x0;
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

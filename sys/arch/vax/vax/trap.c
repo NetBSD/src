@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 2000/05/29 20:00:55 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.55 2000/06/26 14:21:06 mrg Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -46,8 +46,8 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/mtpr.h>
 #include <machine/pte.h>

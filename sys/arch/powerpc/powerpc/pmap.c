@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2000/03/26 20:42:36 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2000/06/26 14:20:54 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,7 +39,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

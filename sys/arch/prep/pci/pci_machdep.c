@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2000/06/21 14:09:33 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2000/06/26 14:20:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +46,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _PREP_BUS_DMA_PRIVATE
 #include <machine/bus.h>

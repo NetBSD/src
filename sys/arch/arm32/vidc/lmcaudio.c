@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.25 2000/03/23 06:35:17 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.26 2000/06/26 14:20:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -51,7 +51,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

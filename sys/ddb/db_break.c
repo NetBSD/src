@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.13 2000/05/25 19:57:36 jhawk Exp $	*/
+/*	$NetBSD: db_break.c,v 1.14 2000/06/26 14:21:09 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -261,7 +261,7 @@ db_listbreak_cmd(addr, have_addr, count, modif)
 	db_list_breakpoints();
 }
 
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 /*
  *	We want ddb to be usable before most of the kernel has been

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2000/05/27 00:40:40 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2000/06/26 14:20:55 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,6 @@
 #include <sys/ktrace.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

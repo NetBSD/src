@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2000/06/02 17:46:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2000/06/26 14:20:53 mrg Exp $	*/
 
 /*
  *
@@ -70,8 +70,6 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.15 2000/06/26 04:56:09 simonb Exp $	*/
+/*	$NetBSD: psycho.c,v 1.16 2000/06/26 14:21:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -58,7 +58,6 @@ int psycho_debug = 0x0;
 #include <sys/time.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

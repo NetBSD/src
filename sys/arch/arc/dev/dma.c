@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.15 2000/06/09 05:22:24 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.16 2000/06/26 14:20:32 mrg Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <mips/locore.h>
 #include <machine/cpu.h>

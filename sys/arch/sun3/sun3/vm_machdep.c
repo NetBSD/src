@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2000/05/28 05:49:04 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 2000/06/26 14:21:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -54,7 +54,6 @@
 #include <sys/exec.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2000/06/24 04:24:10 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.46 2000/06/26 14:21:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,8 +73,8 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-/* #include <uvm/uvm_fault.h> */
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -153,7 +153,7 @@ int	rwindow_debug = RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
+int	trapdebug = 2/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/;
 /* #define __inline */
 #endif
 
@@ -1486,7 +1486,7 @@ text_access_fault(type, pc, tf)
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d tl %d text_access_fault(%x, %x, %x)\n",
+		printf("%d tl %d text_access_fault(%x, %lx, %x)\n",
 		       curproc?curproc->p_pid:-1, tl(), type, pc, tf); 
 		Debugger();
 	}
@@ -1511,7 +1511,7 @@ text_access_fault(type, pc, tf)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		printf("text_access_fault: pc=%lx\n", pc);
+		printf("text_access_fault: pc=%lx va=%lx\n", pc, va);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */
@@ -1520,12 +1520,12 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("text_access_fault: uvm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vaddr_t)va, 0, rv);
+		       &vm->vm_map, va, 0, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum

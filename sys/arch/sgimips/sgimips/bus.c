@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 2000/06/26 04:56:01 simonb Exp $	*/
+/*	$NetBSD: bus.c,v 1.3 2000/06/26 14:20:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 
