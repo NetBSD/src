@@ -502,7 +502,7 @@ shminit()
 
 	/* actually this *should* be pageable.  SHM_{LOCK,UNLOCK} */
 	sysvshm_map = kmem_suballoc(kernel_map, &garbage1, &garbage2,
-				    shminfo.shmall * NBPG, FALSE);
+				    shminfo.shmall * NBPG, TRUE);
 	for (i = 0; i < shminfo.shmmni; i++) {
 		shmsegs[i].shm_perm.mode = SHMSEG_FREE;
 		shmsegs[i].shm_perm.seq = 0;
