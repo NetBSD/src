@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 2000/03/14 08:49:50 shin Exp $
+# $NetBSD: mi,v 1.153 2000/03/14 09:06:50 shin Exp $
 .
 ./altroot
 ./bin
@@ -906,6 +906,7 @@
 ./usr/share/man/cat8
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
+./usr/share/man/cat8/arc
 ./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/bebox
@@ -968,6 +969,7 @@
 ./usr/share/man/man8
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
+./usr/share/man/man8/arc
 ./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/bebox
