@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.22 1997/10/15 01:56:55 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.23 1997/10/20 16:08:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,10 +32,6 @@
 
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.22 1997/10/15 01:56:55 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 #include <stdlib.h>
 
@@ -224,6 +220,10 @@ __call()
 #endif
 
 #include "common.c"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: crt0.c,v 1.23 1997/10/20 16:08:28 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
 __asm__ ("
