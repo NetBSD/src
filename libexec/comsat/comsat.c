@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.19 2001/02/19 22:46:13 cgd Exp $	*/
+/*	$NetBSD: comsat.c,v 1.20 2001/03/14 04:39:42 atatat Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.19 2001/02/19 22:46:13 cgd Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.20 2001/03/14 04:39:42 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ jkfprintf(FILE *tp, char name[], off_t offset)
 {
 	FILE *fi;
 	int linecnt, charcnt, inheader;
-	char line[BUFSIZ], visline[BUFSIZ*4];
+	char line[BUFSIZ], visline[BUFSIZ*4], *nl;
 
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
@@ -276,6 +276,7 @@ jkfprintf(FILE *tp, char name[], off_t offset)
 	charcnt = 560;
 	inheader = 1;
 	while (fgets(line, sizeof(line), fi) != NULL) {
+		line[sizeof(line) - 1] = '\0';
 		if (inheader) {
 			if (line[0] == '\n') {
 				inheader = 0;
@@ -291,9 +292,12 @@ jkfprintf(FILE *tp, char name[], off_t offset)
 			(void)fclose(fi);
 			return;
 		}
+		if ((nl = strchr(line, '\n')) != NULL)
+			*nl = '\0';
 		/* strip weird stuff so can't trojan horse stupid terminals */
 		(void)strvis(visline, line, VIS_CSTYLE);
-		fputs(visline, tp);
+		(void)fputs(visline, tp);
+		(void)fputs(cr, tp);
 		--linecnt;
 	}
 	(void)fprintf(tp, "----%s\n", cr);
