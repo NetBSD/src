@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.24 2000/03/13 23:52:34 soren Exp $ */
+/*	$NetBSD: sbus.c,v 1.25 2000/04/08 04:17:31 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/vaddrs.h>
+#include <sparc64/sparc64/cache.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>
@@ -270,8 +271,6 @@ sbus_attach(parent, self, aux)
 	int node0, error;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
-	char *busname = "sbus";
-
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -904,9 +903,8 @@ sbus_dmamap_unload(t, map)
 	if (error != 0)
 		printf("warning: %ld of DVMA space lost\n", (long)sgsize);
 
-	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
+	cache_flush((caddr_t)(u_long)dvmaddr, (u_int)sgsize);	
 }
-
 
 void
 sbus_dmamap_sync(t, map, offset, len, ops)
@@ -1020,7 +1018,7 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 #if 1
 		s = splhigh();
 		if (extent_alloc(sc->sc_is.is_dvmamap, segs[0].ds_len, alignment,
-				 boundary, EX_NOWAIT, (u_long *)&dvmaddr)) {
+				 boundary, EX_NOWAIT, &dvmaddr)) {
 			splx(s);
 				/* Free what we got and exit */
 			bus_dmamem_free(t->_parent, segs, nsegs);
