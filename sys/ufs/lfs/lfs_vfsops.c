@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.7 2004/09/21 13:39:20 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.8 2004/10/27 06:24:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.7 2004/09/21 13:39:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.8 2004/10/27 06:24:02 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1477,7 +1477,7 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
 #ifdef QUOTA
-	qsync(l, mp);
+	qsync(mp);
 #endif
 	return (error);
 }

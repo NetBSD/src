@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.47.2.6 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.47.2.7 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.6 2004/09/21 13:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.7 2004/10/27 06:24:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1148,10 +1148,9 @@ ufs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ufs_checkpath(source, target, cred, l)
+ufs_checkpath(source, target, cred)
 	struct inode *source, *target;
 	struct ucred *cred;
-	struct lwp *l;
 {
 	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;

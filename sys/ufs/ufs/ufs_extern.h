@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.36.2.5 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.36.2.6 2004/10/27 06:24:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -129,7 +129,7 @@ int ufs_direnter __P((struct vnode *, struct vnode *, struct direct *,
 int ufs_dirremove __P((struct vnode *, struct inode *, int, int));
 int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int, int));
 int ufs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *, struct lwp *));
+int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ufs_quota.c */
 int getinoquota __P((struct inode *));
@@ -143,7 +143,7 @@ int quotaoff __P((struct lwp *, struct mount *, int));
 int getquota __P((struct mount *, u_long, int, caddr_t));
 int setquota __P((struct mount *, u_long, int, caddr_t));
 int setuse __P((struct mount *, u_long, int, caddr_t));
-int qsync __P((struct lwp *, struct mount *));
+int qsync __P((struct mount *));
 int dqget __P((struct vnode *, u_long, struct ufsmount *, int,
 	       struct dquot **));
 void dqref __P((struct dquot *));
