@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.30 2000/04/12 14:22:28 pk Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.31 2000/06/12 23:45:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.30 2000/04/12 14:22:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.31 2000/06/12 23:45:45 sommerfeld Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -150,7 +150,7 @@ rasops_init(ri, wantrows, wantcols)
 
 	/* This should never happen in reality... */
 #ifdef DEBUG
-	if ((int)ri->ri_bits & 3) {
+	if ((long)ri->ri_bits & 3) {
 		printf("rasops_init: bits not aligned on 32-bit boundary\n");
 		return (-1);
 	}
