@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.4 2004/05/20 19:43:39 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.5 2004/05/21 15:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -101,12 +101,13 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.4 2004/04/13 06:53:20 marka Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.4 2004/05/20 19:43:39 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.5 2004/05/21 15:35:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -138,6 +139,13 @@ static const char *precsize_ntoa(u_int32_t);
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];
 
+#ifdef __weak_alias
+__weak_alias(res_pquery,__res_pquery)
+__weak_alias(res_nametoclass,__res_nametoclass)
+__weak_alias(res_nametotype,__res_nametotype)
+#endif
+
+#ifndef _LIBC
 /*
  * Print the current options.
  */
@@ -151,6 +159,7 @@ fp_resstat(const res_state statp, FILE *file) {
 			fprintf(file, " %s", p_option(mask));
 	putc('\n', file);
 }
+#endif
 
 static void
 do_section(const res_state statp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.89 2004/05/10 16:47:11 drochner Exp $	*/
+/*	$NetBSD: namespace.h,v 1.90 2004/05/21 15:35:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -390,6 +390,17 @@
 #define registerrpc		_registerrpc
 #define res_init		_res_init
 #define res_mkquery		_res_mkquery
+#define res_nclose		_res_nclose
+#define res_ndestroy		_res_ndestroy
+#define res_ninit		_res_ninit
+#define res_nmkquery		_res_nmkquery
+#define res_nmkquery		_res_nmkquery
+#define res_nopt		_res_nopt
+#define res_nquery		_res_nquery
+#define res_nquery		_res_nquery
+#define res_nsearch		_res_nsearch
+#define res_opt			_res_opt
+#define res_query		_res_query
 #define res_query		_res_query
 #define res_search		_res_search
 #define rewinddir		_rewinddir
