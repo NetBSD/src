@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.24 2001/10/19 02:57:34 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.25 2001/10/22 07:11:46 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 19, 2001
+.Dd October 22, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -419,6 +419,11 @@ followed by the keyword's value, without
 whitespace characters.
 These values override, without changing, the global value of the
 corresponding keyword.
+.Pp
+The first path name entry listed must be a directory named
+.Ql \&. ,
+as this ensures that intermixing full and relative path names will
+work consistently and correctly.
 .Pp
 A path name that contains a slash
 .Pq Ql /
