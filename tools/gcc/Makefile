@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/08/01 02:44:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2003/08/21 23:53:12 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ MODULE=		gcc
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
+		--enable-long-long \
 		--disable-multilib \
 		--enable-threads \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
@@ -25,7 +26,7 @@ INSTALL_TARGET=	install-gcc
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -isystem-cxx ${DESTDIR}/usr/include/g++ -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 
@@ -65,6 +66,7 @@ native-gcc: .native/.configure_done
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes \
 			sh ${GNUHOSTDIST}/configure \
+			--enable-long-long \
 			--disable-multilib \
 			--enable-threads \
 			--build=`${.CURDIR}/../../gnu/dist/gcc/config.guess` \
