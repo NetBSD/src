@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.197 2002/06/29 17:27:43 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.198 2002/07/09 09:04:51 tshiozak Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -382,6 +382,7 @@
 ./usr/share/locale/ru_RU.CP866
 ./usr/share/locale/ru_RU.ISO8859-5
 ./usr/share/locale/ru_RU.KOI8-R
+./usr/share/locale/sk_SK.ISO8859-2
 ./usr/share/locale/sl
 ./usr/share/locale/sl/LC_MESSAGES
 ./usr/share/locale/sl_SI.ISO8859-2
