@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 2001/07/08 16:32:16 abs Exp $
+#	$NetBSD: GENERIC,v 1.4 2001/08/25 18:37:20 chs Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -61,6 +61,7 @@ options 	INET		# Internet protocols
 #options 	MAPPEDCOPY	# different copyin/copyout for large copies
 
 options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
+options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 
 # Debugging options
 options 	DIAGNOSTIC	# Extra kernel sanity checks
