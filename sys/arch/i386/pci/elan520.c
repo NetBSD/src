@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.3 2002/10/01 12:57:15 fvdl Exp $	*/
+/*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.3 2002/10/01 12:57:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,5 +282,5 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	elansc_wdogctl_reset(sc);
 }
 
-CFATTACH_DECL(elansc, sizeof(struct elansc_softc), elansc_match,
-    elansc_attach, NULL, NULL)
+CFATTACH_DECL(elansc, sizeof(struct elansc_softc),
+    elansc_match, elansc_attach, NULL, NULL);

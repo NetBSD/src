@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.156 2002/10/01 12:57:13 fvdl Exp $	*/
+/*	$NetBSD: pccons.c,v 1.157 2002/10/02 05:47:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.156 2002/10/01 12:57:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.157 2002/10/02 05:47:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -210,7 +210,8 @@ void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
 
-CFATTACH_DECL(pc, sizeof(struct pc_softc), pcprobe, pcattach, NULL, NULL)
+CFATTACH_DECL(pc, sizeof(struct pc_softc),
+    pcprobe, pcattach, NULL, NULL);
 
 extern struct cfdriver pc_cd;
 
