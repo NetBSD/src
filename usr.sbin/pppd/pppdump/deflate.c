@@ -25,7 +25,7 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  *
- * $Id: deflate.c,v 1.2 2002/05/29 19:06:34 christos Exp $
+ * $Id: deflate.c,v 1.3 2002/05/29 21:47:08 christos Exp $
  */
 
 #include <sys/types.h>
@@ -327,7 +327,6 @@ z_incomp(arg, mi)
     rlen = mi->buf + mi->len - rptr;
     state->strm.next_in = rptr;
     state->strm.avail_in = rlen;
-/*###327 [cc] warning: implicit declaration of function `inflateIncomp'%%%*/
     r = inflateIncomp(&state->strm);
     if (r != Z_OK) {
 	/* gak! */
