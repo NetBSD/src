@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.186.2.4 2004/07/10 14:29:06 tron Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.186.2.5 2004/07/10 14:31:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186.2.4 2004/07/10 14:29:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186.2.5 2004/07/10 14:31:15 tron Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2724,8 +2724,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				    newvp = vp;
 				    np = dnp;
 				} else {
-				    error = nfs_nget(vp->v_mount, fhp,
-					fhsize, &np);
+				    error = nfs_nget1(vp->v_mount, fhp,
+					fhsize, &np, LK_NOWAIT);
 				    if (!error)
 					newvp = NFSTOV(np);
 				}
