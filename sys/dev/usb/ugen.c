@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.65 2003/06/29 22:30:56 fvdl Exp $	*/
+/*	$NetBSD: ugen.c,v 1.66 2003/09/04 03:47:03 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.65 2003/06/29 22:30:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.66 2003/09/04 03:47:03 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -866,8 +866,8 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		return;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-	DPRINTFN(5,("ugen_isoc_rintr: xfer %d, count=%d\n", req - sce->isoreqs,
-		    count));
+	DPRINTFN(5,("ugen_isoc_rintr: xfer %ld, count=%d\n",
+	    (long)(req - sce->isoreqs), count));
 
 	/* throw away oldest input if the buffer is full */
 	if(sce->fill < sce->cur && sce->cur <= sce->fill + count) {
