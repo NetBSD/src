@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.18 1999/07/01 05:56:53 darrenr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.19 2000/02/01 22:52:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -153,8 +153,9 @@ struct protosw {
 #define	PRU_SLOWTIMO		19	/* 500ms timeout */
 #define	PRU_PROTORCV		20	/* receive from below */
 #define	PRU_PROTOSEND		21	/* send to below */
+#define	PRU_PURGEADDR		22	/* purge specified ifaddr */
 
-#define	PRU_NREQ		22
+#define	PRU_NREQ		23
 
 #ifdef PRUREQUESTS
 char *prurequests[] = {
@@ -163,7 +164,7 @@ char *prurequests[] = {
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
 	"SENSE",	"RCVOOB",	"SENDOOB",	"SOCKADDR",
 	"PEERADDR",	"CONNECT2",	"FASTTIMO",	"SLOWTIMO",
-	"PROTORCV",	"PROTOSEND",
+	"PROTORCV",	"PROTOSEND",	"PURGEADDR",
 };
 #endif
 

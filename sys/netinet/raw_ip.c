@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.48 2000/01/31 14:18:55 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.49 2000/02/01 22:52:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -430,6 +430,11 @@ rip_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
+
+	if (req == PRU_PURGEADDR) {
+		in_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+		return (0);
+	}
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
