@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.8 2001/11/27 00:53:11 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.9 2002/01/07 21:40:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -236,7 +236,6 @@ extern void dumpsys		__P((void));
 
 extern u_int spl_mask;
 extern u_int current_mask;
-extern u_int arm700bugcount;
 
 void
 cpu_reboot(howto, bootstr)
@@ -254,10 +253,6 @@ cpu_reboot(howto, bootstr)
 	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
-
-	/* Did we encounter the ARM700 bug we discovered ? */
-	if (arm700bugcount > 0)
-		printf("ARM700 PREFETCH/SWI bug count = %d\n", arm700bugcount);
 #endif	/* DIAGNOSTIC */
 
 	/*
