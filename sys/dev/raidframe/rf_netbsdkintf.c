@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.4 1998/12/03 15:14:40 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.5 1998/12/22 20:03:14 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -714,12 +714,13 @@ raidstrategy(bp)
 	struct disklabel *lp;
 	int wlabel;
 
-	db1_printf(("Strategy: 0x%x 0x%x\n",(int)bp,(int)bp->b_data));
+#if 0
+	db1_printf(("Strategy: 0x%x 0x%x\n",bp,bp->b_data));
 	db1_printf(("Strategy(2): bp->b_bufsize%d\n", (int)bp->b_bufsize));
 	db1_printf(("bp->b_count=%d\n",(int)bp->b_bcount));
 	db1_printf(("bp->b_resid=%d\n",(int)bp->b_resid));
 	db1_printf(("bp->b_blkno=%d\n",(int)bp->b_blkno));
-#if 0
+
 	if (bp->b_flags&B_READ) 
 		db1_printf(("READ\n"));
 	else
@@ -775,9 +776,11 @@ raidstrategy(bp)
 			    bp->b_error));
 	}
 	splx(s);
+#if 0
 	db1_printf(("Strategy exiting: 0x%x 0x%x %d %d\n",
-		    (int)bp,(int)bp->b_data, 
+		    bp,bp->b_data, 
 		    (int)bp->b_bcount,(int)bp->b_resid));
+#endif
 }
 
 /* ARGSUSED */
@@ -958,8 +961,10 @@ raidioctl(dev, cmd, data, flag, p)
 		   Store the sum of all the bytes in the last byte?
 		   */
 
+#if 0
 		db1_printf(("Considering configuring the system.:%d 0x%x\n",
-			    unit,(int)p));
+			    unit,p));
+#endif
 
 		/* We need the pointer to this a little deeper, so
 		   stash it here... */
@@ -1542,8 +1547,10 @@ int rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 			      0, raid_addr, num_blocks, bp->b_un.b_addr, 
 			      bp, NULL, NULL, RF_DAG_NONBLOCKING_IO|flags, 
 			      NULL, cbFunc, cbArg);
-	db1_printf(("After call to DoAccess: 0x%x 0x%x %d\n",(int)bp,
-	       (int)bp->b_data,(int)bp->b_resid));
+#if 0
+	db1_printf(("After call to DoAccess: 0x%x 0x%x %d\n",bp,
+	       bp->b_data,(int)bp->b_resid));
+#endif
 	return(retcode);
 }
 
@@ -1691,7 +1698,9 @@ static void KernelWakeupFunc(vbp)
   req = raidbp->req;
 
   bp = raidbp->rf_obp;
-  db1_printf(("bp=0x%x\n",(int)bp));
+#if 0
+  db1_printf(("bp=0x%x\n",bp));
+#endif
 
   queue = (RF_DiskQueue_t *) req->queue;
 
@@ -1704,10 +1713,12 @@ static void KernelWakeupFunc(vbp)
 		  raidbp->rf_buf.b_error : EIO;
   }
 
+#if 0
   db1_printf(("raidbp->rf_buf.b_bcount=%d\n",(int)raidbp->rf_buf.b_bcount));
   db1_printf(("raidbp->rf_buf.b_bufsize=%d\n",(int)raidbp->rf_buf.b_bufsize));
   db1_printf(("raidbp->rf_buf.b_resid=%d\n",(int)raidbp->rf_buf.b_resid));
-  db1_printf(("raidbp->rf_buf.b_data=0x%x\n",(int)raidbp->rf_buf.b_data));
+  db1_printf(("raidbp->rf_buf.b_data=0x%x\n",raidbp->rf_buf.b_data));
+#endif
 
   /* XXX methinks this could be wrong... */
 #if 1
@@ -1796,7 +1807,9 @@ static void InitBP(
 	bp->b_dev         = dev;
 	db1_printf(("bp->b_dev is %d\n", dev));
 	bp->b_un.b_addr   = buf;  
-	db1_printf(("bp->b_data=0x%x\n",(int)bp->b_data));
+#if 0
+	db1_printf(("bp->b_data=0x%x\n",bp->b_data));
+#endif
 
 	bp->b_blkno       = startSect;
 	bp->b_resid       = bp->b_bcount; /* XXX is this right!??!?!! */
@@ -1965,8 +1978,6 @@ raidlookup(path, p, vpp)
 	struct vnode *vp;
 	struct vattr va;
 	int error;
-
-	db1_printf(("Doing raidlookup...: %s 0x%x\n",path,(int)p));
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
