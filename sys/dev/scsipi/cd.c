@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.26 1994/05/09 07:40:47 chopps Exp $
+ *      $Id: cd.c,v 1.27 1994/05/11 09:53:52 mycroft Exp $
  */
 
 /*
@@ -1104,8 +1104,17 @@ cd_get_parms(cd, flags)
 }
 
 int
-cdsize(dev_t dev)
+cdsize(dev)
+	dev_t dev;
 {
 
 	return -1;
+}
+
+int
+cddump()
+{
+
+	/* Not implemented. */
+	return EINVAL;
 }
