@@ -58,6 +58,7 @@
 ./usr/include/machine/pmap.h
 ./usr/include/machine/proc.h
 ./usr/include/machine/profile.h
+./usr/include/machine/psc.h
 ./usr/include/machine/psl.h
 ./usr/include/machine/pte.h
 ./usr/include/machine/ptrace.h
