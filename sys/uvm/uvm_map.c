@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.42 1999/05/25 00:09:00 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.43 1999/05/25 20:30:09 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1012,40 +1012,35 @@ uvm_unmap_remove(map, start, end, entry_list)
 			 *
 			 * uvm_km_pgremove currently does the following: 
 			 *   for pages in the kernel object in range: 
-			 *     - pmap_page_protect them out of all pmaps
+			 *     - drops the swap slot
 			 *     - uvm_pagefree the page
 			 *
-			 * note that in case [1] the pmap_page_protect call
-			 * in uvm_km_pgremove may very well be redundant
-			 * because we have already removed the mappings
-			 * beforehand with pmap_remove (or pmap_kremove).
-			 * in the PMAP_NEW case, the pmap_page_protect call
-			 * may not do anything, since PMAP_NEW allows the
-			 * kernel to enter/remove kernel mappings without
-			 * bothing to keep track of the mappings (e.g. via
-			 * pv_entry lists).    XXX: because of this, in the
-			 * future we should consider removing the
-			 * pmap_page_protect from uvm_km_pgremove some time
-			 * in the future.
+			 * note there is version of uvm_km_pgremove() that
+			 * is used for "intrsafe" objects.
 			 */
 
 			/*
-			 * remove mappings from pmap
+			 * remove mappings from pmap and drop the pages
+			 * from the object.  offsets are always relative
+			 * to vm_map_min(kernel_map).
 			 */
+			if (UVM_OBJ_IS_INTRSAFE_OBJECT(entry->object.uvm_obj)) {
 #if defined(PMAP_NEW)
-			pmap_kremove(entry->start, len);
+				pmap_kremove(entry->start, len);
 #else
-			pmap_remove(pmap_kernel(), entry->start,
-			    entry->start+len);
+				pmap_remove(pmap_kernel(), entry->start,
+				    entry->start + len);
 #endif
-
-			/*
-			 * remove pages from a kernel object (offsets are
-			 * always relative to vm_map_min(kernel_map)).
-			 */
-			uvm_km_pgremove(entry->object.uvm_obj, 
-			entry->start - vm_map_min(kernel_map),
-			entry->end - vm_map_min(kernel_map));
+				uvm_km_pgremove_intrsafe(entry->object.uvm_obj,
+				    entry->start - vm_map_min(kernel_map),
+				    entry->end - vm_map_min(kernel_map));
+			} else {
+				pmap_remove(pmap_kernel(), entry->start,
+				    entry->start + len);
+				uvm_km_pgremove(entry->object.uvm_obj,
+				    entry->start - vm_map_min(kernel_map),
+				    entry->end - vm_map_min(kernel_map));
+			}
 
 			/*
 			 * null out kernel_object reference, we've just
