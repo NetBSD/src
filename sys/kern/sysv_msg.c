@@ -16,7 +16,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_msg.c,v 1.5 1994/02/15 13:35:53 mycroft Exp $
+ *	$Id: sysv_msg.c,v 1.6 1994/05/25 02:14:33 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -257,7 +257,7 @@ msgctl(p, uap, retval)
 		break;
 
 	case IPC_STAT:
-		if ((eval = ipcaccess(&msqptr->msg_perm, IPC_R, cred))) {
+		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 #ifdef MSG_DEBUG_OK
 			printf("requester doesn't have read access\n");
 #endif
@@ -317,8 +317,7 @@ msgget(p, uap, retval)
 #endif
 				return(EEXIST);
 			}
-			if ((eval = ipcaccess(&msqptr->msg_perm, msgflg & 0700,
-			    cred))) {
+			if ((eval = ipcperm(cred, &msqptr->msg_perm, msgflg & 0700 ))) {
 #ifdef MSG_DEBUG_OK
 				printf("requester doesn't have 0%o access\n",
 				    msgflg & 0700);
@@ -437,7 +436,7 @@ msgsnd(p, uap, retval)
 		return(EINVAL);
 	}
 
-	if ((eval = ipcaccess(&msqptr->msg_perm, IPC_W, cred))) {
+	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_W))) {
 #ifdef MSG_DEBUG_OK
 		printf("requester doesn't have write access\n");
 #endif
@@ -774,7 +773,7 @@ msgrcv(p, uap, retval)
 		return(EINVAL);
 	}
 
-	if ((eval = ipcaccess(&msqptr->msg_perm, IPC_R, cred))) {
+	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 #ifdef MSG_DEBUG_OK
 		printf("requester doesn't have read access\n");
 #endif
