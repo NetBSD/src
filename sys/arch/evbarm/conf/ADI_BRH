@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.1 2003/01/25 02:00:15 thorpej Exp $
+#	$NetBSD: ADI_BRH,v 1.2 2003/04/08 20:48:03 thorpej Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -131,10 +131,12 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=210000
 
 config		netbsd		root on ? type ?
 config		netbsd-fxp0	root on fxp0 type nfs
+config		netbsd-wd0	root on wd0 type ffs
+config		netbsd-sd0	root on sd0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -149,13 +151,36 @@ obio*		at mainbus?
 com0		at obio? addr 0x03000000 irq 24
 com1		at obio? addr 0x03100000 irq 25
 
-# i80312 Companion I/O support
+# Big Endian Companion Chip support
 becc*		at mainbus?
 pci0		at becc? bus ?
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
 pci*		at ppb? bus ?
+
+#
+# Storage devices
+#
+
+# PCI IDE/S-ATA controllers and devices
+pciide*		at pci? dev ? function ? flags 0x0000
+wd*		at pciide? channel ? drive ? flags 0x0000
+
+# PCI SCSI controllers
+ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+isp*		at pci? dev ? function ?	# Qlogic ISP SCSI
+siop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
+esiop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
+
+scsibus*	at scsi?
+
+# SCSI devices
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+st*		at scsibus? target ? lun ?	# SCSI tape drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*		at scsibus? target ? lun ?	# SCSI media changers
+#uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 #
 # Networking devices
