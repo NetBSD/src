@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.124 2003/06/29 22:32:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.125 2003/07/02 13:40:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.124 2003/06/29 22:32:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.125 2003/07/02 13:40:52 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -583,19 +583,16 @@ lfs_segwrite(struct mount *mp, int flags)
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		lfs_writevnodes(fs, mp, sp, VN_REG);
 		if (!fs->lfs_dirops || !fs->lfs_flushvp) {
-			while (fs->lfs_dirops)
-				if ((error = tsleep(&fs->lfs_writer, PRIBIO + 1,
-						"lfs writer", 0)))
-				{
-					printf("segwrite mysterious error\n");
-					/* XXX why not segunlock? */
-					pool_put(&fs->lfs_bpppool, sp->bpp);
-					sp->bpp = NULL;
-					pool_put(&fs->lfs_segpool, sp);
-					sp = fs->lfs_sp = NULL;
-					return (error);
-				}
-			fs->lfs_writer++;
+			error = lfs_writer_enter(fs, "lfs writer");
+			if (error) {
+				printf("segwrite mysterious error\n");
+				/* XXX why not segunlock? */
+				pool_put(&fs->lfs_bpppool, sp->bpp);
+				sp->bpp = NULL;
+				pool_put(&fs->lfs_segpool, sp);
+				sp = fs->lfs_sp = NULL;
+				return (error);
+			}
 			writer_set = 1;
 			lfs_writevnodes(fs, mp, sp, VN_DIROP);
 			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
@@ -694,8 +691,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	
 	/* Note Ifile no longer needs to be written */
 	fs->lfs_doifile = 0;
-	if (writer_set && --fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
+	if (writer_set)
+		lfs_writer_leave(fs);
 
 	/*
 	 * If we didn't write the Ifile, we didn't really do anything.

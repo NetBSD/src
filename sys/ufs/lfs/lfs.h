@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.64 2003/04/23 07:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.65 2003/07/02 13:40:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -976,5 +976,11 @@ struct lfs_fcntl_markv {
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
+
+#ifdef _KERNEL
+/* XXX MP */
+#define	LFS_SEGLOCK_HELD(fs) \
+	((fs)->lfs_seglock != 0 && (fs)->lfs_lockpid == curproc->p_pid)
+#endif /* _KERNEL */
 
 #endif /* !_UFS_LFS_LFS_H_ */
