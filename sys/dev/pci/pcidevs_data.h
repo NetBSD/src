@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.632 2004/07/21 16:39:51 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.633 2004/07/25 16:05:05 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.633 2004/07/21 16:39:38 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.634 2004/07/25 16:04:22 christos Exp 
  */
 
 /*
@@ -10028,6 +10028,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8231 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR,
+	    0,
+	    "VIA Technologies",
+	    "VT8231 Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,

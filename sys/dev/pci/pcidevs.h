@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.634 2004/07/21 16:39:51 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.635 2004/07/25 16:05:05 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.633 2004/07/21 16:39:38 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.634 2004/07/25 16:04:22 christos Exp 
  */
 
 /*
@@ -2701,6 +2701,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8237	0x3227		/* VT8237 (Apollo KT600) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8231	0x8231		/* VT8231 IDE Controller */
+#define	PCI_PRODUCT_VIATECH_VT8231_PWR	0x8235		/* VT8231 Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_PPB	0x8305		/* VT8363 KT133 PCI to AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501AGP	0x8501		/* VT8501 CPU-AGP Bridge */
