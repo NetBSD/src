@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.31 2004/07/18 21:24:52 chs Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.32 2004/07/20 12:40:53 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.31 2004/07/18 21:24:52 chs Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.32 2004/07/20 12:40:53 he Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -396,7 +396,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 
 				SDPRINTF((" normal"));
 				psrp = pthread__switch_return_point;
-				pc = (fptr_t)pthread__uc_pc(victim->pt_uc);
+				pc = (fptr_t)((intptr_t)
+					pthread__uc_pc(victim->pt_uc));
 				if ((victim->pt_spinlocks == 0) &&
 				    ((victim->pt_switchto != NULL) ||
 					(pc == psrp))) {
