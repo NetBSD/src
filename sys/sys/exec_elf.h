@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.77 2004/12/26 23:37:29 mycroft Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.78 2004/12/27 21:35:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -420,6 +420,8 @@ typedef struct {
 /* Symbol Table index of the undefined symbol */
 #define	ELF_SYM_UNDEFINED	0
 
+#define STN_UNDEF		0	/* undefined index */
+
 /* st_info: Symbol Bindings */
 #define	STB_LOCAL		0	/* local symbol */
 #define	STB_GLOBAL		1	/* global symbol */
@@ -759,6 +761,16 @@ struct netbsd_elfcore_procinfo {
 
 #define	AuxInfo		Aux64Info
 #endif
+
+#define	ELF32_ST_BIND(info)		ELF_ST_BIND(info)
+#define	ELF32_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define	ELF32_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define	ELF32_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
+
+#define	ELF64_ST_BIND(info)		ELF_ST_BIND(info)
+#define	ELF64_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define	ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define	ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
 
 #ifdef _KERNEL
 
