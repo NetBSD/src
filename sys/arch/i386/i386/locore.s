@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.20 2001/01/08 15:21:56 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.21 2001/01/09 03:29:51 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2554,7 +2554,7 @@ IDTVEC(trap07)
 	GET_CPUINFO(%eax)
 	pushl	%eax
 #else
-	pushl	_C_LABEL(cpu_info_primary)		
+	pushl	$_C_LABEL(cpu_info_primary)		
 #endif
 	call	_C_LABEL(npxdna)
 	addl	$4,%esp

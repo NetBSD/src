@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.8 2000/08/25 03:56:24 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.9 2001/01/09 03:29:49 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -379,8 +379,12 @@ npxdna(struct cpu_info *ci)
 	}
 
 	s = splipi();		/* lock out IPI's while we clean house.. */
+#ifdef MULTIPROCESSOR
 	p = ci->ci_curproc;
-
+#else
+	p = curproc;
+#endif
+	
 	IPRINTF(("%s: dna for %p\n", ci->ci_dev.dv_xname, p));	
 	/*
 	 * If someone else was using our FPU, save their state (which does an
