@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/14 15:27:11 briggs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2001/11/20 18:31:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -56,6 +56,6 @@ pthread__sp(void)
  *    For a good time, see comments in pthread_switch.S and
  *    ../i386/pthread_switch.S about STACK_SWITCH.
  */
-#define STACKSPACE	8	/* room for 2 integer values */
+#define STACKSPACE	16	/* room for 4 integer values */
 
 #endif /* _LIB_PTHREAD_POWERPC_MD_H */
