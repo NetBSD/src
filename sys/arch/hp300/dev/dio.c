@@ -1,7 +1,7 @@
-/*	$NetBSD: dio.c,v 1.10 1997/10/09 09:06:49 jtc Exp $	*/
+/*	$NetBSD: dio.c,v 1.11 1998/01/11 21:53:04 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -146,6 +146,7 @@ dioattach(parent, self, aux)
 
 		/* Fill out attach args. */
 		bzero(&da, sizeof(da));
+		da.da_bst = HP300_BUS_SPACE_DIO;
 		da.da_scode = scode;
 		da.da_id = DIO_ID(va);
 
