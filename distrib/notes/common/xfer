@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.15 2001/04/07 17:44:49 jhawk Exp $
+.\"	$NetBSD: xfer,v 1.16 2001/04/07 18:29:54 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,7 +127,7 @@ or other
 machines) to write the floppy images to disks, you should use the
 .Xr dd 1
 command to copy the file system image(s)
-(.fs file) directly to the raw floppy disk.
+(.fs file(s)) directly to the raw floppy disk.
 It is suggested that you read the
 .Xr dd 1
 manual page or ask your system administrator to determine the correct
