@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.23 1998/08/28 20:02:19 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.24 1998/08/31 20:00:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -440,10 +440,19 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	bus_size_t sgsize;
-	bus_addr_t dvmaddr, curaddr;
-	vaddr_t vaddr = (vaddr_t)buf;
+	bus_size_t sgsize, oversize;
+	bus_addr_t sdva, dva;
+	bus_addr_t boundary;
+	vaddr_t va = (vaddr_t)buf;
+	u_long align, voff;
 	pmap_t pmap;
+
+	/*
+	 * Remember page offset, then truncate the buffer address to
+	 * a page boundary.
+	 */
+	voff = va & PGOFSET;
+	va &= ~PGOFSET;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -453,11 +462,43 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	sgsize = round_page(buflen + (vaddr & PGOFSET));
+	sgsize = (buflen + voff + PGOFSET) & ~PGOFSET;
+	align = dvma_cachealign ? dvma_cachealign : NBPG;
+	boundary = map->_dm_boundary;
 
-	if (extent_alloc(iommu_dvmamap, sgsize, NBPG, map->_dm_boundary,
-            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+	/*
+	 * Find a region of DVMA addresses that can accomodate
+	 * our aligment requirements.
+	 */
+	oversize = sgsize + align - NBPG;
+	if (boundary != 0 && oversize > boundary) {
+		printf("iommu: alignment collision\n");
+		return (EINVAL);
+	}
+
+	if (extent_alloc(iommu_dvmamap, oversize, NBPG, boundary,
+			 EX_NOWAIT, (u_long *)&sdva) != 0)
 		return (ENOMEM);
+
+	/*
+	 * Compute start of aligned region.
+	 */
+	dva = sdva;
+	dva += ((va & (align - 1)) + align - dva) & (align - 1);
+
+	/*
+	 * Return excess addresses.
+	 */
+	if (dva != sdva) {
+		if (extent_free(iommu_dvmamap, sdva, dva-sdva, EX_NOWAIT) != 0)
+			printf("warning: %ld of DVMA space lost\n", dva - sdva);
+	}
+	if (dva + sgsize != sdva + oversize) {
+		if (extent_free(iommu_dvmamap, dva + sgsize,
+				sdva + oversize - dva - sgsize, EX_NOWAIT) != 0)
+			printf("warning: %ld of DVMA space lost\n",
+				sdva + oversize - dva - sgsize);
+	}
 
 	cpuinfo.cache_flush(buf, buflen);
 
@@ -466,7 +507,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_addr = dva + voff;
 	map->dm_segs[0].ds_len = sgsize /*was:buflen*/;
 
 	if (p != NULL)
@@ -474,25 +515,19 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	else
 		pmap = pmap_kernel();
 
-	for (; buflen > 0; ) {
+	for (; sgsize != 0; ) {
 		/*
 		 * Get the physical address for this page.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, vaddr);
+		paddr_t pa = pmap_extract(pmap, va);
 
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = NBPG - (vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
+		iommu_enter(dva, pa);
 
-		iommu_enter(dvmaddr, curaddr & ~PGOFSET);
-
-		dvmaddr += NBPG;
-		vaddr += sgsize;
-		buflen -= sgsize;
+		dva += NBPG;
+		va += NBPG;
+		sgsize -= NBPG;
 	}
+
 	return (0);
 }
 
@@ -600,7 +635,7 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	paddr_t pa;
-	bus_addr_t dvmaddr;
+	bus_addr_t dva;
 	vm_page_t m;
 	int error;
 	struct pglist *mlist;
@@ -613,14 +648,14 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 
 	if (extent_alloc(iommu_dvmamap, size, alignment, boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dvmaddr) != 0)
+			 (u_long *)&dva) != 0)
 		return (ENOMEM);
 
 	/*
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_addr = dva;
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
@@ -629,8 +664,8 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		iommu_enter(dvmaddr, pa);
-		dvmaddr += PAGE_SIZE;
+		iommu_enter(dva, pa);
+		dva += PAGE_SIZE;
 	}
 
 	return (0);
@@ -684,8 +719,6 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int cbit;
 	size_t oversize;
 	u_long align;
-	extern int has_iocache;
-	extern u_long dvma_cachealign;
 
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
