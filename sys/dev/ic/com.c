@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.17 1994/02/01 03:42:08 cgd Exp $
+ *	$Id: com.c,v 1.18 1994/02/01 04:38:03 cgd Exp $
  */
 
 #include "com.h"
@@ -273,7 +273,7 @@ comwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = com_tty[unit];
+	register struct tty *tp = com_tty[UNIT(dev)];
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
