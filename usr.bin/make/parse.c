@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.31 1997/05/07 13:12:33 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.32 1997/05/08 21:24:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.31 1997/05/07 13:12:33 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.32 1997/05/08 21:24:48 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,7 @@ typedef enum {
     Main,	    /* .MAIN and we don't have anything user-specified to
 		     * make */
     NoExport,	    /* .NOEXPORT */
+    NoPath,	    /* .NOPATH */
     Not,	    /* Not special */
     NotParallel,    /* .NOTPARALELL */
     Null,   	    /* .NULL */
@@ -215,6 +216,7 @@ static struct {
 { ".MAKE",  	  Attribute,   	OP_MAKE },
 { ".MAKEFLAGS",	  MFlags,   	0 },
 { ".MFLAGS",	  MFlags,   	0 },
+{ ".NOPATH",	  NoPath,	OP_NOPATH },
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
 { ".NO_PARALLEL", NotParallel,	0 },
@@ -653,7 +655,7 @@ ParseAddDir(path, name)
     ClientData	  path;
     ClientData    name;
 {
-    Dir_AddDir((Lst) path, (char *) name);
+    (void) Dir_AddDir((Lst) path, (char *) name);
     return(0);
 }
 
@@ -835,6 +837,7 @@ ParseDoDependency (line)
 		 *	    	    	use Make_HandleUse to actually
 		 *	    	    	apply the .DEFAULT commands.
 		 *	.PHONY		The list of targets
+		 *	.NOPATH		Don't search for file in the path
 		 *	.BEGIN
 		 *	.END
 		 *	.INTERRUPT  	Are not to be considered the
@@ -1542,7 +1545,7 @@ void
 Parse_AddIncludeDir (dir)
     char    	  *dir;	    /* The name of the directory to add */
 {
-    Dir_AddDir (parseIncPath, dir);
+    (void) Dir_AddDir (parseIncPath, dir);
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.15 1997/05/06 22:06:58 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.16 1997/05/08 21:24:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.15 1997/05/06 22:06:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.16 1997/05/08 21:24:50 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -2065,7 +2065,7 @@ sfnd_abort:
 	 * on the lhs of a dependency operator or [XXX] it has neither
 	 * children or commands) as the old pmake did.
 	 */
-	if ((gn->type & OP_PHONY) == 0) {
+	if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
 	    gn->path = Dir_FindFile(gn->name,
 				    (targ == NULL ? dirSearchPath :
 				     targ->suff->searchPath));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 1997/05/08 05:19:46 cjs Exp $	*/
+/*	$NetBSD: main.c,v 1.36 1997/05/08 21:24:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.35 1997/05/08 05:19:46 cjs Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.36 1997/05/08 21:24:44 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			break;
 		case 'm':
 			mkIncPath = TRUE;
-			Dir_AddDir(sysIncPath, optarg);
+			(void) Dir_AddDir(sysIncPath, optarg);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -584,15 +584,18 @@ main(argc, argv)
 	 * for the reading of inclusion paths and variable settings on the
 	 * command line
 	 */
-	Dir_Init();		/* Initialize directory structures so -I flags
-				 * can be processed correctly */
+
+	/*
+	 * Initialize directory structures so -I flags can be processed
+	 * correctly, if we have a different objdir, then let the directory
+	 * know our curdir.
+	 */
+	Dir_Init(curdir != objdir ? curdir : NULL);
 	Parse_Init();		/* Need to initialize the paths of #include
 				 * directories */
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
-        str_init();
-	if (objdir != curdir)
-		Dir_AddDir(dirSearchPath, curdir);
+	str_init();
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
@@ -660,10 +663,10 @@ main(argc, argv)
 			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 				continue;
 			if (*cp == '\0') {
-				Dir_AddDir(sysIncPath, start);
+				(void) Dir_AddDir(sysIncPath, start);
 			} else {
 				*cp++ = '\0';
-				Dir_AddDir(sysIncPath, start);
+				(void) Dir_AddDir(sysIncPath, start);
 			}
 		}
 	}
@@ -735,7 +738,7 @@ main(argc, argv)
 			savec = *cp;
 			*cp = '\0';
 			/* Add directory to search path */
-			Dir_AddDir(dirSearchPath, path);
+			(void) Dir_AddDir(dirSearchPath, path);
 			*cp = savec;
 			path = cp + 1;
 		} while (savec == ':');
