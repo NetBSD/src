@@ -221,7 +221,7 @@
 /* syscall: "fsync" ret: "int" args: "int" */
 #define	HPUX_SYS_fsync	95
 
-/* syscall: "sigreturn" ret: "int" args: "struct sigcontext *" */
+/* syscall: "sigreturn" ret: "int" args: "struct hpuxsigcontext *" */
 #define	HPUX_SYS_sigreturn	103
 
 /* syscall: "sigvec" ret: "int" args: "int" "struct sigvec *" "struct sigvec *" */
