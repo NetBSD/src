@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.20 2001/12/28 17:49:32 augustss Exp $ */
+/*      $NetBSD: usbhid.c,v 1.21 2001/12/29 21:23:24 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -467,19 +467,30 @@ varop_display(struct hid_item *item, struct Susbvar *var,
 	      u_int32_t const *collist, size_t collen, u_char *buf)
 {
 	size_t colitem;
+	int val, i;
 
-	for (colitem = 0; colitem < collen; colitem++) {
+	for (i = 0; i < item->report_count; i++) {
+		for (colitem = 0; colitem < collen; colitem++) {
+			if (var->mflags & MATCH_SHOWPAGENAME)
+				printf("%s:",
+				    hid_usage_page(HID_PAGE(collist[colitem])));
+			printf("%s.", hid_usage_in_page(collist[colitem]));
+		}
 		if (var->mflags & MATCH_SHOWPAGENAME)
-			printf("%s:",
-			       hid_usage_page(HID_PAGE(collist[colitem])));
-		printf("%s.", hid_usage_in_page(collist[colitem]));
+			printf("%s:", hid_usage_page(HID_PAGE(item->usage)));
+		val = hid_get_data(buf, item);
+		item->pos += item->report_size;
+		if (item->usage_minimum != 0 || item->usage_maximum != 0) {
+			val += item->usage_minimum;
+			printf("%s=1", hid_usage_in_page(val));
+		} else {
+			printf("%s=%d%s", hid_usage_in_page(item->usage),
+			       val, item->flags & HIO_CONST ? " (const)" : "");
+		}
+		if (item->report_count > 1)
+			printf(" [%d]", i);
+		printf("\n");
 	}
-
-	if (var->mflags & MATCH_SHOWPAGENAME)
-		printf("%s:", hid_usage_page(HID_PAGE(item->usage)));
-	printf("%s=%d%s\n", hid_usage_in_page(item->usage),
-	       hid_get_data(buf, item),
-	       (item->flags & HIO_CONST) ? " (const)" : "");
 	return 0;
 }
 
