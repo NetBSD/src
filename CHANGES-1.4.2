@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.44 1999/09/27 05:08:49 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.45 1999/09/27 05:29:29 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -561,3 +561,11 @@ usr.bin/audio/play/play.c			1.13
 
   Honor the "-f" flag even if we appear to recognize a broken Sun audio
   file, and fix an error message on little-endian hosts.
+
+usr.bin/audio/common/audio.c			1.9
+
+  Fix an off-by-one error in the error message array.
+
+usr.bin/audio/record/record.c			1.7-1.8
+
+  Fix audiorecord(1)'s "-t" option so that it actually works.
