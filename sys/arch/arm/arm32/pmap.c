@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2003/10/13 20:50:34 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2003/10/13 20:50:34 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2003/10/26 23:11:15 chris Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4979,7 +4979,6 @@ pmap_dump(pmap_t pm)
 	pt_entry_t *ptep, pte;
 	vaddr_t l2_va, l2b_va, va;
 	int i, j, k, occ, rows = 0;
-	char ch;
 
 	if (pm == pmap_kernel())
 		printf("pmap_kernel (%p): ", pm);
@@ -5011,6 +5010,7 @@ pmap_dump(pmap_t pm)
 			occ = l2b->l2b_occupancy;
 			va = l2b_va + (k * 4096);
 			for (; k < 256; k++, va += 0x1000) {
+				char ch = ' ';
 				if ((k % 64) == 0) {
 					if ((rows % 8) == 0) {
 						printf(

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35 2003/09/06 09:46:37 rearnsha Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.36 2003/10/26 23:11:15 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2003/09/06 09:46:37 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2003/10/26 23:11:15 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -673,7 +673,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	struct arm32_dma_range *dr;
-	int error, i;
+	int error = 0, i;
 
 #ifdef DEBUG_DMA
 	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx "

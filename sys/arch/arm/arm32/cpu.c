@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.53 2003/09/06 09:42:12 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2003/09/06 09:42:12 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2003/10/26 23:11:15 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -399,7 +399,7 @@ void
 identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 {
 	u_int cpuid;
-	enum cpu_class cpu_class;
+	enum cpu_class cpu_class = CPU_CLASS_NONE;
 	int i;
 
 	cpuid = ci->ci_arm_cpuid;
