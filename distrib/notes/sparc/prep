@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.16 2001/07/24 18:14:34 nra Exp $
+.\"	$NetBSD: prep,v 1.17 2002/04/29 23:33:41 mbw Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -38,14 +38,20 @@ kernel relies on some of the functionality provided by the OpenBoot PROM.
 If your machine gives you a `\*>' prompt instead of an `ok' prompt,
 type:
 .Pp
-.Dl \*> Ic n
-.Dl ok Ic setenv sunmon-compat? false
-.Dl ok
+.(disp
+.No \*> Ic n
+.No ok Ic "setenv sunmon-compat? false"
+.No ok
+.disp)
 .Pp
 Next, if you are using any security features of OpenBoot PROM, you should
-turn them off - NetBSD can't deal well with this.
+turn them off - 
+.Nx
+can't deal well with this.
 .Pp
-.Dl ok Ic setenv security-mode none
+.(disp
+.No ok Ic "setenv security-mode none"
+.disp)
 .Pp
 The OpenBoot PROM 1 machines (SPARCstation/server 1, SPARCstation/server 1+,
 IPC, and SLC) have an odd SCSI quirk you should be aware of.
@@ -122,7 +128,9 @@ To get OpenBoot PROM 1 to number the SCSI
 .Sq unit
 numbers the same as the SCSI target IDs, you need to run this command:
 .Pp
-.Dl ok Ic "setenv sd-targets 01234567"
+.(disp
+.No ok Ic "setenv sd-targets 01234567"
+.disp)
 .Pp
 This may, however, cause problems if you were to later attempt to use
 .Tn SunOS
@@ -151,7 +159,7 @@ This is also a concern when you start building your own customised kernels.
 .Note)
 .Pp
 The machines with OpenBoot PROM 2 (SPARCstation/server 2,
-ELC, IPX, and all sun4m models) have s similar SCSI target mapping in the
+ELC, IPX, and all sun4m models) have a similar SCSI target mapping in the
 form of a
 .Ic devalias
 entry.  That is, the device alias
@@ -221,12 +229,16 @@ etc.
 Therefore, to boot from the swap partition on the internal hard drive
 (first SCSI bus, target 0, lun 0, partition 1), one would use:
 .Pp
-.Dl ok Ic "boot sd(0,0,1)"
+.(disp
+.No ok Ic "boot sd(0,0,1)"
+.disp)
 .Pp
 To boot from a CD-ROM (first SCSI bus, target 6,
 lun 0, partition dynamically determined), one would use:
 .Pp
-.Dl ok Ic "boot sd(0,30,)"
+.(disp
+.No ok Ic "boot sd(0,30,)"
+.disp)
 .Pp
 And, to boot from a kernel named
 .Li netbsd-GENERIC
@@ -237,7 +249,9 @@ often the
 partition) on an external hard drive (first SCSI bus, target 2, lun 0,
 partition 3), one would use:
 .Pp
-.Dl ok Ic "boot sd(0,10,3)netbsd-GENERIC"
+.(disp
+.No ok Ic "boot sd(0,10,3)netbsd-GENERIC"
+.disp)
 .Pp
 Now, for OpenBoot PROM 2, SCSI devices are specified by an OpenBOOT
 .Ic devalias
@@ -250,12 +264,16 @@ Therefore, to boot from the swap partition on the internal hard drive
 (OpenBoot PROM 2 assumes the internal hard drive is at target 3), one would
 use:
 .Pp
-.Dl ok Ic "boot disk:b"
+.(disp
+.No ok Ic "boot disk:b"
+.disp)
 .Pp
 To boot from a CD-ROM (OpenBoot PROM 2 assumes the CD-ROM is at target 6),
 one would use:
 .Pp
-.Dl ok Ic "boot cdrom"
+.(disp
+.No ok Ic "boot cdrom"
+.disp)
 .Pp
 And, to boot from a kernel named
 .Li netbsd-GENERIC
@@ -265,7 +283,9 @@ often the
 .Pa /usr
 partition) on an external hard drive (target 2, partition 3), one would use:
 .Pp
-.Dl ok Ic "boot disk2:d netbsd-GENERIC"
+.(disp
+.No ok Ic "boot disk2:d netbsd-GENERIC"
+.disp)
 .Pp
 The full device path specifier for OpenBoot PROM 2 depends on how OpenBoot
 PROM 2 recognizes
@@ -273,18 +293,122 @@ your SCSI controller. Typically, one would use something like:
 .Pa /sbus/esp/sd@ Ns Ar t,p
 where t is the SCSI target and p is the partition number.
 .
+.Ss2 Determining how to boot from an SBUS card
+.
+Some SBUS cards have firmware that lets you use them as a boot device.
+These cards do not automatically create a 
+.Ic devalias
+entry, so you must traverse the device tree to figure out what the 
+OpenBoot PROM calls your card.  You will be using OpenBoot PROM commands
+at the `ok' prompt. First `cd' to the top of the device tree and list the
+nodes there.  The following is the procedure to boot from an HME card in a
+SPARC Classic.
+.(disp
+.No ok Ic "cd /"
+.No ok Ic "ls"
+ffd3b790 TI,TMS390S10@0,f8fffffc
+ffd2d254 virtual-memory@0,0
+ffd2d198 memory@0,0
+ffd2b65c obio
+ffd2b310 iommu@0,10000000
+ffd2b2a0 openprom
+ffd24af0 aliases
+ffd24abc options
+ffd24a88 packages
+.disp)
+Usually, you can simply type in the name before the at (@) sign and the
+OpenBoot PROM will fill in the rest.
+.(disp
+.No ok Ic "cd iommu"
+.No ok Ic "ls"
+ffd2b454 sbus@0,10001000
+.No ok Ic "cd sbus"
+.No ok Ic "ls"
+ffd467e8 cgthree@3,0
+ffd42a1c SUNW,hme@1,8c00000
+ffd4297c le@0,c00000
+ffd40d28 ledma@4,8400010
+ffd40c9c SUNW,bpp@4,c800000
+ffd40c00 audio@4,1300000
+ffd3dc68 espdma@4,8400000
+.No ok Ic "cd SUNW,hme"
+.No ok Ic "ls"
+.No ok Ic "pwd"
+/iommu@0,10000000/sbus@0,10001000/SUNW,hme@1,8c00000
+.disp)
+OK, now we know the path to the HME device in this example.  Now, we need
+to determine if it's capable of booting.  If it is, it will have the 
+.Ic word
+`open'.
+.(disp
+.No ok Ic "words"
+reset         seek          load          open          close
+watch-net     selftest      obp-selftest  write         read
+preamble-32   enable-link-pulse           disable-link-pulse
+force-speeds  reset-transceiver           use-bit-bang-mode
+use-frame-mode              dump-phys     transfer-speed=10
+transfer-speed=100          mii-write     mii-read
+create-rev-id
+.disp)
+Great!  Also, in case you're interested in further details about your
+hardware, you can use the `.attributes' command.
+.(disp
+.No ok Ic ".attributes"
+hm-rev                   00000022
+version                  1.18
+model                    SUNW,501-2919
+device_type              network
+intr                     00000037  00000000
+interrupts               00000004
+address-bits             00000030
+max-frame-size           00004000
+reg                      00000001  08c00000  00000108
+                         00000001  08c02000  00002000
+                         00000001  08c04000  00002000
+                         00000001  08c06000  00002000
+                         00000001  08c07000  00000020
+name                     SUNW,hme
+ok
+.disp)
+So, when it's time to type in a boot command, use the shortened version of the
+.Ic pwd
+command.  In this example, you'd type:
+.(disp
+.No ok Ic "boot /iommu/sbus/SUNW,hme"
+.disp)
+And when the kernel is done booting, it may not automatically use your
+card as the root device -- you may need to type in the 
+.Nx*M
+name for
+that device:
+.(disp
+root on sd0a dumps on sd0b
+no file system for sd0 (dev 0x700)
+cannot mount root, error = 79
+.No "root device (default sd0a):" Ic "?"
+use one of: fd0[a-h] le0 le1 hme0 sd0[a-h] halt
+.No "root device (default sd0a):" Ic "hme0"
+.No "dump device:" Ic "hme0"
+.No "file system (default generic):" Ic "nfs"
+root on hme0
+.disp)
+.
 .Ss2 Deciding on partition sizes
 .
 If you're installing
 .Nx*M
 for the first time it's a good idea
-to look at the partition sizes of disk you intend installing NetBSD on.
+to look at the partition sizes of disk you intend installing 
+.Nx*M
+on.
 .Pp
 Assuming a classic partition scheme with
 .Pa /
 (root) and
 .Pa /usr
-filesystems, a comfortable size for the NetBSD root filesystem partition is
+filesystems, a comfortable size for the 
+.Nx
+root filesystem partition is
 about 20 MB; a good initial size for the swap partition is twice the amount
 of physical memory in your machine (though, unlike
 .Tn SunOS 4.x ,
@@ -301,7 +425,9 @@ beyond the first 2 GB of your disk.
 Some network devices (i.e. the built-in
 .Em le
 interface on sun4m machines)
-allow a choice between operating on a UTP or a AUI port. The
+allow a choice between operating on a UTP or a AUI port once the 
+.Nx
+kernel is running. The
 .Em le
 driver supports automatic detection of the port which is actually connected to
 the wire. Additionally, some of the Fast ethernet devices (such as
