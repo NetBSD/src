@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2003/08/24 17:52:37 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.140 2003/09/07 20:41:05 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2003/08/24 17:52:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2003/09/07 20:41:05 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -252,6 +252,10 @@ userret(l, pc, oticks)
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
+
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
 	while (l->l_flag & L_SA_UPCALL)
