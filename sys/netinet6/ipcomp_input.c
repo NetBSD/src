@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.20 2002/09/11 02:41:27 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.21 2003/07/02 13:55:13 itojun Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20 2002/09/11 02:41:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.21 2003/07/02 13:55:13 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ ipcomp4_input(m, va_alist)
 	}
 
 	md = m_pulldown(m, off, sizeof(*ipcomp), NULL);
-	if (!m) {
+	if (!md) {
 		m = NULL;	/* already freed */
 		ipseclog((LOG_DEBUG, "IPv4 IPComp input: assumption failed "
 		    "(pulldown failure)\n"));
