@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.10 1998/03/01 02:22:41 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.11 1999/03/30 00:13:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,7 +77,7 @@ cvtstat(st, ost)
 
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
-	ost->st_mode = st->st_mode;
+	ost->st_mode = st->st_mode & 0xffff;
 	ost->st_nlink = st->st_nlink;
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
