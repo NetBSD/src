@@ -1,5 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.10 1997/06/16 07:32:15 thorpej Exp $
-.\"
+.\"	$NetBSD: diskless.8,v 1.11 1997/06/16 07:50:35 mrg Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -54,7 +53,7 @@ The PROM (or stage-1 bootstrap) loads a boot program.
 .It 2.
 The boot program loads a kernel.
 .It 3.
-The kernel does NFS mounts for root and swap.
+The kernel does NFS mounts for root.
 .El
 .Pp
 Each of these phases are described in further detail below.
@@ -112,7 +111,7 @@ read calls on the kernel file handle.
 transfers control to the kernel entry point.
 .El
 .Pp
-In phase 3, the kernel does NFS mounts for root and swap.
+In phase 3, the kernel does NFS mounts for root.
 The kernel repeats much of the work done by the boot program
 because there is no standard way for the boot program to pass
 the information it gathered on to the kernel.
@@ -132,12 +131,6 @@ The kernel calls the
 .Tn NFS
 getattr function to get the last-modified time of the root
 directory, and uses it to check the system clock.
-.It 3.4
-If the kernel is configured for swap on
-.Tn NFS ,
-it uses the same mechanism as for root, but uses the
-.Tn NFS
-getattr function to determine the size of the swap area.
 .El
 .Sh CONFIGURATION
 Before a client can boot over the network,
@@ -188,10 +181,10 @@ See the
 manual page for more information.
 .Pp
 .It 4.
-If booting a Sun machine, install a copy of the appropriate diskless boot
+If booting a SPARC machine, install a copy of the appropriate diskless boot
 loader (such as
-.Pa boot.sun4.sunos.4.1.1
-from the SunOS media) in the
+.Pa /usr/mdec/boot )
+in the
 .Pa /tftpboot
 directory.
 Make a link such that the boot program is
@@ -200,7 +193,7 @@ in HEX, a dot, and the architecture name (all upper case).
 For example:
 .Bd -literal -offset indent -compact
 # cd /tftpboot
-# ln -s boot.sun4.sunos.4.1.1 C0C5600C.SUN4
+# ln -s boot C0C5600C.SUN4
 .Ed
 .Pp
 For a Sun3 machine, the name would be just C0C5600C
@@ -295,15 +288,15 @@ Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
 .Pp
 .It 10.
-Correct the critical mount points in the client's
+Correct the critical mount points and the swap file in the client's
 .Pa /etc/fstab
 (which will be
 .Pa /export/myclient/root/etc/fstab )
 ie.
 .Bd -literal -offset indent -compact
 myserver:/export/myclient/root / nfs rw 0 0
-myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap 0 0
 myserver:/usr /usr nfs rw 0 0
+myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap
 .Ed
 .Pp
 Note, you must specify the swap file in
@@ -315,7 +308,7 @@ or it will not be used!
 .It Pa /etc/ethers
 Ethernet addresses of known clients
 .It Pa /etc/bootparams
-client root and swap pathnames
+client root pathname
 .It Pa /etc/exports
 exported NFS mount points
 .It Pa /etc/rbootd.conf
