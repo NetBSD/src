@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.20 2001/10/09 04:50:01 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.21 2001/10/18 05:06:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.20 2001/10/09 04:50:01 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.21 2001/10/18 05:06:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,9 @@ vwalk(void)
 	FTSENT *p;
 	NODE *ep, *level;
 	int ftsdepth, specdepth, rval;
-	char *argv[2];
+	char  dot[] = ".";		/* XXX: work around gcc warning */
+	char *argv[] = { dot, NULL };
 
-	argv[0] = ".";
-	argv[1] = NULL;
 	if ((t = fts_open(argv, ftsoptions, NULL)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	level = root;
