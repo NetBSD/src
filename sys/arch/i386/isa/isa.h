@@ -83,7 +83,11 @@ unsigned kbd_8042cmd(int);
 
 #define IO_LPT2		0x278		/* Parallel Port #2 */
 
-					/* 0x280 - 0x2F7 Open */
+					/* 0x280 - 0x2E7 Open */
+
+#define	IO_COM4		0x2e8		/* COM4 i/o address */
+
+					/* 0x2F0 - 0x2F7 Open */
 
 #define IO_COM2		0x2f8		/* COM2 i/o address */
 
@@ -111,13 +115,41 @@ unsigned kbd_8042cmd(int);
 #define IO_VGA		0x3C0		/* E/VGA Ports */
 #define IO_CGA		0x3D0		/* CGA Ports */
 
-					/* 0x3E0 - 0x3EF Open */
+					/* 0x3E0 - 0x3E7 Open */
 
+#define	IO_COM3		0x3e8		/* COM3 i/o address */
 #define IO_FD1		0x3f0		/* primary base i/o address */
 #define IO_COM1		0x3f8		/* COM1 i/o address */
 
 #define	IO_ISAEND	0x3FF		/* - 0x3FF End of I/O Registers */
 #endif	IO_ISABEGIN
+
+/*
+ * Input / Output Port Sizes - these are from several sources, and tend
+ * to be the larger of what was found, ie COM ports can be 4, but some
+ * boards do not fully decode the address, thus 8 ports are used.
+ */
+
+#ifndef	IO_ISASIZES
+#define	IO_ISASIZES
+
+#define	IO_COMSIZE	8	/* 8250, 16X50 com controllers (
+#define	IO_CGASIZE	16	/* CGA controllers */
+#define	IO_DMASIZE	16	/* 8237 DMA controllers */
+#define	IO_DPGSIZE	32	/* 74LS612 DMA page reisters */
+#define	IO_FDCSIZE	8	/* Nec765 floppy controllers */
+#define	IO_WDCSIZE	8	/* WD compatible disk controller
+#define	IO_GAMSIZE	16	/* AT compatible game controller
+#define	IO_ICUSIZE	16	/* 8259A interrupt controllers *
+#define	IO_KBDSIZE	16	/* 8042 Keyboard controllers */
+#define	IO_LPTSIZE	8	/* LPT controllers, some use onl
+#define	IO_MDASIZE	16	/* Monochrome display controller
+#define	IO_RTCSIZE	16	/* CMOS real time clock, NMI con
+#define	IO_TMRSIZE	16	/* 8253 programmable timers */
+#define	IO_NPXSIZE	16	/* 80387/80487 NPX registers */
+#define	IO_VGASIZE	16	/* VGA controllers */
+
+#endif	/* IO_ISASIZES */
 
 /*
  * Input / Output Memory Physical Addresses
