@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.40 1998/06/05 02:15:38 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.41 1998/06/05 17:24:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.40 1998/06/05 02:15:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.41 1998/06/05 17:24:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,31 @@ ciaattach(parent, self, aux)
 		printf("%s: using BWX for PCI config and device access\n",
 		    self->dv_xname);
 #endif
+
+	if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev < 1) {
+		/*
+		 * Pass 1 Pyxis chips have a bug: DMA cannot cross
+		 * an 8k boundary!  Make sure PCI read prefetching
+		 * is disabled on these chips.  Note that secondary
+		 * PCI busses don't have this problem, because of
+		 * the way PPBs handle PCI read requests.
+		 *
+		 * XXX We also need to deal with this boundary constraint
+		 * XXX in the PCI bus 0 (and ISA) DMA tags, but some
+		 * XXX drivers are going to need to be changed first.
+		 */
+		u_int32_t ctrl;
+
+		/* XXX no bets... */
+		printf("%s: WARNING: Pyxis pass 1 DMA bug; no bets...\n",
+		    self->dv_xname);
+
+		alpha_mb();
+		ctrl = REGVAL(CIA_CSR_CTRL);
+		ctrl &= ~(CTRL_RD_TYPE|CTRL_RL_TYPE|CTRL_RM_TYPE);
+		REGVAL(CIA_CSR_CTRL) = ctrl;
+		alpha_mb();
+	}
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_KN20AA
