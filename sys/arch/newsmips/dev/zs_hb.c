@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.10 2003/02/11 17:25:15 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.11 2003/04/26 18:43:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@ struct zsdevice {
 };
 
 extern int zs_def_cflag;
-extern void (*zs_delay) __P((void));
 
 static struct zsdevice *zsaddr[NZS];
 
@@ -128,8 +127,6 @@ static void zs_hb_delay __P((void));
 static int zshard_hb __P((void *));
 static int zs_getc __P((void *));
 static void zs_putc __P((void *, int));
-int zshard __P((void *));
-int zs_get_speed __P((struct zs_chanstate *));
 
 struct zschan *
 zs_get_chan_addr(zs_unit, channel)
@@ -151,9 +148,10 @@ zs_get_chan_addr(zs_unit, channel)
 	return (zc);
 }
 
-void
+static void
 zs_hb_delay()
 {
+
 	ZS_DELAY();
 }
 
@@ -164,7 +162,6 @@ zs_hb_delay()
 /* Definition of the driver for autoconfig. */
 int zs_hb_match __P((struct device *, struct cfdata *, void *));
 void zs_hb_attach __P((struct device *, struct device *, void *));
-int zs_print __P((void *, const char *name));
 
 CFATTACH_DECL(zsc_hb, sizeof(struct zsc_softc),
     zs_hb_match, zs_hb_attach, NULL, NULL);
@@ -335,8 +332,8 @@ int
 zs_getc(arg)
 	void *arg;
 {
-	register volatile struct zschan *zc = arg;
-	register int s, c, rr0;
+	volatile struct zschan *zc = arg;
+	int s, c, rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -364,8 +361,8 @@ zs_putc(arg, c)
 	void *arg;
 	int c;
 {
-	register volatile struct zschan *zc = arg;
-	register int s, rr0;
+	volatile struct zschan *zc = arg;
+	int s, rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
@@ -385,24 +382,27 @@ static void zscnprobe __P((struct consdev *));
 static void zscninit __P((struct consdev *));
 static int  zscngetc __P((dev_t));
 static void zscnputc __P((dev_t, int));
-static void zscnpollc __P((dev_t, int));
 
 struct consdev consdev_zs = {
 	zscnprobe,
 	zscninit,
 	zscngetc,
 	zscnputc,
-	zscnpollc,
+	nullcnpollc,
 	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_DEAD
 };
 
-void
+static void
 zscnprobe(cn)
 	struct consdev *cn;
 {
 }
 
-void
+static void
 zscninit(cn)
 	struct consdev *cn;
 {
@@ -413,24 +413,19 @@ zscninit(cn)
 	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
 }
 
-int
+static int
 zscngetc(dev)
 	dev_t dev;
 {
+
 	return zs_getc((void *)SCCPORT0A);
 }
 
-void
+static void
 zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	zs_putc((void *)SCCPORT0A, c);
-}
 
-void
-zscnpollc(dev, on)
-	dev_t dev;
-	int on;
-{
+	zs_putc((void *)SCCPORT0A, c);
 }
