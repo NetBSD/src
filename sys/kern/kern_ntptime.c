@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.1 1996/02/27 04:20:38 jonathan Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -61,7 +61,11 @@
 
 #include <machine/cpu.h>
 
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
 #ifdef NTP
+
 /*
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
