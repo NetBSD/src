@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.s,v 1.3 1995/10/29 19:54:15 cgd Exp $	*/
+/*	$NetBSD: crt0.s,v 1.4 1995/11/04 00:30:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -63,7 +63,7 @@ LEAF(__start, 0)		/* XXX */
 #ifdef MCRT0
 eprol:
 	lda	a0, eprol
-	lda	a1, _etext
+	lda	a1, etext
 	CALL(monstartup)	/* monstartup(eprol, etext); */
 	lda	a0, _mcleanup
 	CALL(atexit)		/* atext(_mcleanup); */
@@ -102,6 +102,6 @@ LEAF(moncontrol, 0)
 END(moncontrol)
 
 LEAF(_mcount, 0)
-        ret     $zero, ($at_reg), 1
+        ret     zero, (at_reg), 1
 END(_mcount)
 #endif
