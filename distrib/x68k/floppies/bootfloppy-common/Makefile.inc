@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1999/04/07 14:30:52 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1999/07/06 16:22:59 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -13,6 +13,7 @@ VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		xxx-${REV}.fs
 KERN?=		netbsd-xxx
 KERNNAME?=	netbsd.xxx
+KERNSRC?=	${.CURDIR}/../../../../sys
 GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -59,6 +60,10 @@ ${KERNNAME}: ${KERN} ${RAMDISK}
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	mv -f netbsd.tmp ${.TARGET}
 
+${KERN}:
+	config -s ${KERNSRC} -b ${KERNDIR} ${KERNCNF}
+	( cd ${KERNDIR} ; make depend && make )
+
 ${GZNAME}: ${KERNNAME}
 	gzip -cv9 ${KERNNAME} > ${.TARGET}
 
@@ -66,4 +71,3 @@ clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
