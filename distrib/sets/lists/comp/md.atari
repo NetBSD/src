@@ -7,6 +7,7 @@
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
+./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
@@ -19,6 +20,7 @@
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/machine/acia.h
+./usr/include/machine/ahdilabel.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/cdefs.h
@@ -33,8 +35,10 @@
 ./usr/include/machine/frame.h
 ./usr/include/machine/ieeefp.h
 ./usr/include/machine/iomap.h
+./usr/include/machine/kcore.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/mfp.h
+./usr/include/machine/msioctl.h
 ./usr/include/machine/mtpr.h
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
@@ -49,7 +53,6 @@
 ./usr/include/machine/setjmp.h
 ./usr/include/machine/signal.h
 ./usr/include/machine/stdarg.h
-./usr/include/machine/tospart.h
 ./usr/include/machine/trap.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h

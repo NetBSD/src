@@ -1,4 +1,14 @@
-./usr/lib/libc.so.12.4
+./sbin/edahdi
+./sbin/edlabel
+./usr/mdec/bootxx
+./usr/mdec/fdboot
+./usr/mdec/installboot
+./usr/mdec/sdb00t.ahdi
+./usr/mdec/sdboot
+./usr/mdec/wdb00t.ahdi
+./usr/mdec/wdboot
+./usr/mdec/xxboot.ahdi
+./usr/lib/libc.so.12.5
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -13,6 +23,6 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
-./usr/lib/libutil.so.3.1
+./usr/lib/libutil.so.3.2
 ./usr/libexec/ld.so
 ./usr/sbin/iteconfig

@@ -22,6 +22,7 @@
 ./usr/share/man/cat1/chflags.0
 ./usr/share/man/cat1/chfn.0
 ./usr/share/man/cat1/chgrp.0
+./usr/share/man/cat1/chio.0
 ./usr/share/man/cat1/chmod.0
 ./usr/share/man/cat1/chpass.0
 ./usr/share/man/cat1/chsh.0
@@ -404,6 +405,8 @@
 ./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
+./usr/share/man/cat8/fsck_ffs.0
+./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
 ./usr/share/man/cat8/fsinfo.0
 ./usr/share/man/cat8/ftpd.0
