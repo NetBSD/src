@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.6 2001/01/22 01:07:33 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.7 2001/01/23 02:01:56 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -914,7 +914,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	} else {
 		field->buf0_status = TRUE;
 		field->cursor_xpos++;
-		if (field->cursor_xpos >= field->cols - 1) {
+		if (field->cursor_xpos > field->cols - 1) {
 			field->start_char++;
 			field->cursor_xpos = field->cols - 1;
 		}
