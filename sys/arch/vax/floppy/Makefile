@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/03/02 17:57:34 ragge Exp $
+#	$NetBSD: Makefile,v 1.1.66.1 2004/06/22 07:51:49 tron Exp $
 #	@(#)Makefile	7.2 (Berkeley) 5/9/91
 
 # Make a 780 rx01 floppy
@@ -31,7 +31,7 @@ update:	${OBJS}
 	-mkdir fromdec
 	cd fromdec; arff xf ${FLOPPY}; rm -f ${FROMDEC} ${OBJS} ${DEFBOO}; \
 		flcopy -t3 -f ${FLOPPY}; rm -f floppy; arff crf ${FLOPPY} *
-	rm -rf fromdec
+	-rm -rf fromdec
 	arff rf ${FLOPPY} ${OBJS}
 	-rm -f defboo.cmd
 
