@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 1996/10/13 03:19:58 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.42 1996/11/13 07:00:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -163,9 +163,11 @@ startrtclock()
 	outb(IO_TIMER1, TIMER_DIV(hz) / 256);
 
 	/* Check diagnostic status */
-	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
-		printf("RTC BIOS diagnostic error %b\n", (unsigned int) s, 
-		    NVRAM_DIAG_BITS);
+	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0) { /* XXX softc */
+		char bits[128];
+		printf("RTC BIOS diagnostic error %s\n",
+		    bitmask_snprintf(s, NVRAM_DIAG_BITS, bits, sizeof(bits)));
+	}
 }
 
 int

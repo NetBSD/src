@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.5 1996/10/30 00:24:37 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.6 1996/11/13 07:05:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,6 +173,7 @@ memerr_interrupt(arg)
 	u_char csr, ctx, err;
 	u_int pa, va;
 	int pte;
+	char bits[64];
 
 	csr = me->me_csr;
 	if ((csr & ME_CSR_IPEND) == 0)
@@ -188,7 +189,8 @@ memerr_interrupt(arg)
 		(ctx & 8) ? "DVMA" : "CPU");
 	printf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
 		   (ctx & 7), va, pa);
-	printf(" csr=%b\n", csr, sc->sc_csrbits);
+	printf(" csr=%s\n", bitmask_snprintf(csr, sc->sc_csrbits,
+	    bits, sizeof(bits)));
 
 	/*
 	 * If we have parity-checked memory, there is
