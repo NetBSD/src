@@ -1,7 +1,9 @@
 #!/bin/csh -f
 #
-# Copyright (c) 1980 The Regents of the University of California.
-# All rights reserved.
+#	$NetBSD: vgrind.sh,v 1.3 1994/11/17 08:28:06 jtc Exp $
+#
+# Copyright (c) 1980, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)vgrind.sh	5.7 (Berkeley) 4/16/91
+#       @(#)vgrind.sh	8.1 (Berkeley) 6/6/93
 #
 
 set voptions=
@@ -116,10 +118,10 @@ if (-r index) then
     else
 	if ("$head" != "") then
 	    $vf $options -h "$head" $files | \
-		sh -c "troff -rx1 $voptions -i -mvgrind 2>> xindex"
+		sh -c "psroff -rx1 $voptions -i -mvgrind 2>> xindex"
 	else
 	    $vf $options $files | \
-		sh -c "troff -rx1 $voptions -i -mvgrind 2>> xindex"
+		sh -c "psroff -rx1 $voptions -i -mvgrind 2>> xindex"
 	endif
     endif
     sort -df +0 -2 xindex >index
@@ -133,9 +135,9 @@ else
 	endif
     else
 	if ("$head" != "") then
-	    $vf $options -h "$head" $files | troff -i $voptions -mvgrind
+	    $vf $options -h "$head" $files | psroff -i $voptions -mvgrind
 	else
-	    $vf $options $files | troff -i $voptions -mvgrind
+	    $vf $options $files | psroff -i $voptions -mvgrind
 	endif
     endif
 endif
