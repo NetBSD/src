@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.7 1995/11/10 05:01:08 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.8 1996/02/16 08:07:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -80,7 +80,6 @@ struct sbdsp_softc {
 	int	sc_drq;			/* DMA */
 
 	u_short	sc_open;		/* reference count of open calls */
-	u_short	sc_locked;		/* true when doing HS DMA  */
  	u_short	sc_adacmode;		/* low/high speed mode indicator */
 
 	u_long	sc_irate;		/* Sample rate for input */
@@ -107,11 +106,12 @@ struct sbdsp_softc {
 	int	dmaflags;
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
-	int	sc_last_hsw_size;	/* last HS dma size */
-	int	sc_last_hsr_size;	/* last HS dma size */
+	int	sc_last_hs_size;	/* last HS dma size */
 	int	sc_chans;		/* # of channels */
-	char	sc_dmain_inprogress;	/* DMA input in progress? */
-	char	sc_dmaout_inprogress;	/* DMA output in progress? */
+	int	sc_dmadir;		/* DMA direction */
+#define	SBP_DMA_NONE	0
+#define	SBP_DMA_IN	1
+#define	SBP_DMA_OUT	2
 
 	u_int	sc_model;		/* DSP model */
 #define SBVER_MAJOR(v)	((v)>>8)
