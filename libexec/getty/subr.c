@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.25 2001/11/10 17:35:54 thorpej Exp $	*/
+/*	$NetBSD: subr.c,v 1.26 2002/09/18 20:04:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.25 2001/11/10 17:35:54 thorpej Exp $");
+__RCSID("$NetBSD: subr.c,v 1.26 2002/09/18 20:04:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: subr.c,v 1.25 2001/11/10 17:35:54 thorpej Exp $");
 #define COMPAT_43
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -682,23 +683,20 @@ portselector(void)
 char *
 autobaud(void)
 {
-	int rfds;
-	struct timeval timeout;
+	struct pollfd set[1];
+	struct timespec timeout;
 	char c, *type = "9600-baud";
 
 	(void)tcflush(0, TCIOFLUSH);
-	rfds = 1 << 0;
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
-	if (select(32, (fd_set *)&rfds, (fd_set *)NULL,
-	    (fd_set *)NULL, &timeout) <= 0)
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
+	if (poll(set, 1, 5000) <= 0)
 		return (type);
 	if (read(STDIN_FILENO, &c, 1) != 1)
 		return (type);
 	timeout.tv_sec = 0;
-	timeout.tv_usec = 20;
-	(void) select(32, (fd_set *)NULL, (fd_set *)NULL,
-	    (fd_set *)NULL, &timeout);
+	timeout.tv_nsec = 20000;
+	(void)nanosleep(&timeout, NULL);
 	(void)tcflush(0, TCIOFLUSH);
 	switch (c & 0377) {
 
