@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.22 1994/05/29 06:58:27 chopps Exp $
+ *	$Id: locore.s,v 1.23 1994/06/01 19:34:32 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1647,6 +1647,37 @@ __DCIAS:
 	.word	0xf468		| cpushl dc,a0@
 Ldciasx:
 	rts
+/*
+ * 040 only stuff from hp300 (380) locore.s
+ */
+ENTRY(ICPL)	/* invalidate instruction physical cache line */
+        movl    sp@(4),a0               | address
+        .word   0xf488                  | cinvl ic,a0@
+        rts
+ENTRY(ICPP)	/* invalidate instruction physical cache page */
+        movl    sp@(4),a0               | address
+        .word   0xf490                  | cinvp ic,a0@
+        rts
+ENTRY(DCPL)	/* invalidate data physical cache line */
+        movl    sp@(4),a0               | address
+        .word   0xf448                  | cinvl dc,a0@
+        rts
+ENTRY(DCPP)	/* invalidate data physical cache page */
+        movl    sp@(4),a0               | address
+        .word   0xf450                  | cinvp dc,a0@
+        rts
+ENTRY(DCPA)	/* invalidate data physical all */
+        .word   0xf458                  | cinva dc
+        rts
+ENTRY(DCFL)
+        movl    sp@(4),a0               | address
+        .word   0xf468                  | cpushl dc,a0@
+        rts
+ENTRY(DCFP)
+        movl    sp@(4),a0               | address
+        .word   0xf470                  | cpushp dc,a0@
+        rts
+/* end of 040 only stuff */
 
 ENTRY(PCIA)
 	tstl	_cpu040

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.5 1994/05/08 05:54:00 chopps Exp $
+ *	$Id: pte.h,v 1.6 1994/06/01 19:34:45 chopps Exp $
  */
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
@@ -103,6 +103,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	PG_CI		0x00000040
 #define PG_CC		0x00000020	/* Cachable, copyback */
 #define PG_CIN		0x00000060	/* Cache inhibited, nonserialized */
+#define PG_CMASK	0x00000060	/* Cache mask for 040 */
 #define PG_FRAME	0xffffe000
 #define PG_SHIFT	13
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
