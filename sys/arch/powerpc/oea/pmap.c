@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2004/03/17 14:14:02 aymeric Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2004/03/21 10:25:59 aymeric Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2004/03/17 14:14:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2004/03/21 10:25:59 aymeric Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1231,9 +1231,11 @@ pmap_release(pmap_t pm)
 	
 	if (pm->pm_sr[0] == 0)
 		panic("pmap_release");
-	idx = VSID_TO_HASH(pm->pm_vsid) & (NPMAPS-1);
+	idx = pm->pm_vsid & (NPMAPS-1);
 	mask = 1 << (idx % VSID_NBPW);
 	idx /= VSID_NBPW;
+
+	KASSERT(pmap_vsid_bitmap[idx] & mask);
 	pmap_vsid_bitmap[idx] &= ~mask;
 }
 
