@@ -1,4 +1,4 @@
-/*	$NetBSD: krb.h,v 1.3 1996/01/04 17:19:43 tls Exp $	*/
+/*	$NetBSD: krb.h,v 1.4 1996/01/04 22:25:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,8 +43,6 @@ void	 des_clear_key __P(());
 int	 des_read __P((int, char *, int));
 int	 des_write __P((int, char *, int));
 int	 krb_net_read __P((int, char *, int));
-	    u_long, MSG_DAT *, CREDENTIALS *, Key_schedule,
-	    struct sockaddr_in *, struct sockaddr_in *, char *));
 int	 krcmd __P((char **, u_short, char *, char *, int *, char *));
 int	 krcmd_mutual __P((char **, u_short, char *, char *, int *,
 	    char *, CREDENTIALS *, Key_schedule));
