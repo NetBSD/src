@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_lock.c,v 1.2 1997/07/06 12:35:33 fvdl Exp $	*/
+
 /* 
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -40,6 +42,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
+#include <sys/systm.h>
 #include <machine/cpu.h>
 
 /*
@@ -392,8 +395,8 @@ lockmgr(lkp, flags, interlkp, p)
 		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0); ) {
 			lkp->lk_flags |= LK_WAITDRAIN;
 			simple_unlock(&lkp->lk_interlock);
-			if (error = tsleep((void *)&lkp->lk_flags, lkp->lk_prio,
-			    lkp->lk_wmesg, lkp->lk_timo))
+			if ((error = tsleep((void *)&lkp->lk_flags,
+			    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo)))
 				return (error);
 			if ((extflags) & LK_SLEEPFAIL)
 				return (ENOLCK);
@@ -425,6 +428,7 @@ lockmgr(lkp, flags, interlkp, p)
  * Print out information about state of a lock. Used by VOP_PRINT
  * routines to display ststus about contained locks.
  */
+void
 lockmgr_printinfo(lkp)
 	struct lock *lkp;
 {
@@ -472,7 +476,9 @@ _simple_lock(alp, id, l)
 			panic("%s:%d: simple_lock: lock held", id, l);
 		printf("%s:%d: simple_lock: lock held\n", id, l);
 		if (lockpausetime == 1) {
+#ifdef BACKTRACE
 			BACKTRACE(curproc);
+#endif
 		} else if (lockpausetime > 1) {
 			printf("%s:%d: simple_lock: lock held...", id, l);
 			tsleep(&lockpausetime, PCATCH | PPAUSE, "slock",
@@ -516,7 +522,9 @@ _simple_unlock(alp, id, l)
 			panic("%s:%d: simple_unlock: lock not held", id, l);
 		printf("%s:%d: simple_unlock: lock not held\n", id, l);
 		if (lockpausetime == 1) {
+#ifdef BACKTRACE
 			BACKTRACE(curproc);
+#endif
 		} else if (lockpausetime > 1) {
 			printf("%s:%d: simple_unlock: lock not held...", id, l);
 			tsleep(&lockpausetime, PCATCH | PPAUSE, "sunlock",
