@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.5 1998/07/05 06:49:12 jonathan Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.6 1998/07/07 02:02:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 
-#include "assym.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
