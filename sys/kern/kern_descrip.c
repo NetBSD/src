@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.104 2003/03/01 09:19:53 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.105 2003/03/17 07:57:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.104 2003/03/01 09:19:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.105 2003/03/17 07:57:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 	fdp = p->p_fd;
 
 	if ((u_int) fd >= fdp->fd_nfiles)
-		return (NULL);
+		return (EBADF);
 #if 0
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
