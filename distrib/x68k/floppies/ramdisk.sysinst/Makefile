@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:57 sjg Exp $
+#	$NetBSD: Makefile,v 1.5 2000/06/18 10:33:19 minoura Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -25,14 +25,18 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-DISKTYPE=	floppy3
+RAMDISKSPT=	36
+RAMDISKCYLS=	80
+RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS} \* 2
 
-all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} count=2880
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/18/2/80
+realall: ${IMAGE}
+
+${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} passwd
+	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} 512/${RAMDISKTPC}/2/${RAMDISKCYLS}
 	newfs -B be -m 0 -o space -i 5120 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
@@ -41,6 +45,12 @@ all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+
+passwd:
+	-/bin/mkdir ${.OBJDIR}/etc
+	/bin/cp -pf ${.CURDIR}/../../../../etc/master.passwd ${.OBJDIR}/etc
+	pwd_mkdb -p -d ${.OBJDIR} ${.OBJDIR}/etc/master.passwd
+	/bin/cp -pf ${.OBJDIR}/etc/passwd ${.OBJDIR}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -60,7 +70,8 @@ HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 # turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o localeconv.o perror.o setlocale.o strerror.o strsignal.o utmp.o yplib.o
+DBG=	-Os
 
 # Used in building bootfloppy
 echoimage:
