@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.34 1996/02/10 00:48:10 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.35 1996/02/10 17:12:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -93,7 +93,7 @@ static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
 static struct proc *svr4_pfind __P((pid_t pid));
 
 static int svr4_mknod __P((struct proc *, register_t *, char *,
-			   svr4_dev_t, svr4_mode_t));
+			   svr4_mode_t, svr4_dev_t));
 
 int
 svr4_sys_wait(p, v, retval)
@@ -367,12 +367,12 @@ svr4_sys_fchroot(p, v, retval)
 }
 
 static int
-svr4_mknod(p, retval, path, dev, mode)
+svr4_mknod(p, retval, path, mode, dev)
 	struct proc *p;
 	register_t *retval;
 	char *path;
-	svr4_dev_t dev;
 	svr4_mode_t mode;
+	svr4_dev_t dev;
 {
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -401,7 +401,7 @@ svr4_sys_mknod(p, v, retval)
 {
 	struct svr4_sys_mknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, dev), SCARG(uap, mode));
+			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
 }
 
 
@@ -413,7 +413,7 @@ svr4_sys_xmknod(p, v, retval)
 {
 	struct svr4_sys_xmknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, dev), SCARG(uap, mode));
+			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
 }
 
 
