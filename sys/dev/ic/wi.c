@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $	*/
+/*	$NetBSD: wi.c,v 1.131 2003/07/06 07:15:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.131 2003/07/06 07:15:55 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -272,12 +272,20 @@ wi_attach(struct wi_softc *sc)
 			setbit(ic->ic_chan_avail, i + 1);
 	}
 
-	sc->sc_dbm_adjust = 100; /* default */
+	if (sc->sc_firmware_type == WI_LUCENT) {
+		sc->sc_min_rssi = WI_LUCENT_MIN_RSSI;
+		sc->sc_max_rssi = WI_LUCENT_MAX_RSSI;
+		sc->sc_dbm_offset = WI_LUCENT_DBM_OFFSET;
+	} else {
+		sc->sc_min_rssi = WI_PRISM_MIN_RSSI;
+		sc->sc_max_rssi = WI_PRISM_MAX_RSSI;
 
-	buflen = sizeof(val);
-	if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
-	    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0) {
-		sc->sc_dbm_adjust = le16toh(val);
+		buflen = sizeof(val);
+		if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
+		    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0)
+			sc->sc_dbm_offset = le16toh(val);
+		else
+			sc->sc_dbm_offset = WI_PRISM_DBM_OFFSET;
 	}
 
 	/* Find default IBSS channel */
@@ -1285,8 +1293,8 @@ wi_rx_intr(struct wi_softc *sc)
 
 		M_COPY_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)&frmhdr;
-		frmhdr.wi_rx_signal -= sc->sc_dbm_adjust;
-		frmhdr.wi_rx_silence -= sc->sc_dbm_adjust;
+		frmhdr.wi_rx_signal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
+		frmhdr.wi_rx_silence = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
 		mb.m_len = (char *)&frmhdr.wi_whdr - (char *)&frmhdr;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
@@ -1648,7 +1656,7 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    &len);
 			break;
 		}
-		wreq.wi_val[0] = htole16(sc->sc_dbm_adjust);
+		wreq.wi_val[0] = htole16(sc->sc_dbm_offset);
 		len = sizeof(u_int16_t);
 		break;
 
