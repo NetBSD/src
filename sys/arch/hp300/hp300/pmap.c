@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 1999/03/30 00:12:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 1999/04/01 20:50:52 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2359,7 +2359,6 @@ pmap_changebit(pa, set, mask)
 			if (set == PG_RO) {
 				if (va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
-#endif
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
