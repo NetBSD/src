@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.10 2004/09/08 17:44:53 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.11 2004/09/08 19:09:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.10 2004/09/08 17:44:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.11 2004/09/08 19:09:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.10 2004/09/08 17:44:53 jdolecek Exp 
 
 #define WD_8003		0x01
 #define WD_ELITE	0x02
-#define WD_MEMSIZE	16384	/* all supported cards have 16K Bytes memory */
 
 int we_mca_probe __P((struct device *, struct cfdata *, void *));
 void we_mca_attach __P((struct device *, struct device *, void *));
@@ -111,9 +110,9 @@ static const struct we_mca_product {
 	{ MCA_PRODUCT_WD_8013WP, "EtherCard PLUS Elite 10T/A (8013WP/A)",
 		WD_ELITE,	WE_TYPE_WD8013EP, "WD8013WP/A" },
 	{ MCA_PRODUCT_IBM_WD_2,"IBM PS/2 Adapter/A for Ethernet Networks (UTP)",
-		WD_ELITE, WE_TYPE_WD8013EP, "WD8013WP/A"}, /* XXX */
+		WD_ELITE, WE_TYPE_WD8013EP, "WD8013WP/A"},
 	{ MCA_PRODUCT_IBM_WD_T,"IBM PS/2 Adapter/A for Ethernet Networks (BNC)",
-		WD_ELITE, WE_TYPE_WD8013EP, "WD8013WP/A"}, /* XXX */
+		WD_ELITE, WE_TYPE_WD8013EP, "WD8013WP/A"},
 	{ MCA_PRODUCT_WD_8003E,	"WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A)",
 		WD_8003,	WE_TYPE_WD8003E, "WD8003E/A or WD8003ET/A" },
 	{ MCA_PRODUCT_WD_8003ST,"WD StarCard PLUS/A (WD8003ST/A)",
@@ -121,39 +120,13 @@ static const struct we_mca_product {
 	{ MCA_PRODUCT_WD_8003W,	"WD EtherCard PLUS 10T/A (WD8003W/A)",
 		WD_8003,	WE_TYPE_WD8003W, "WD8003W/A" },
 	{ MCA_PRODUCT_IBM_WD_O, "IBM PS/2 Adapter/A for Ethernet Networks",
-		WD_8003,	WE_TYPE_WD8003W, "IBM PS/2 Adapter/A" },/*XXX*/
+		WD_8003,	WE_TYPE_WD8003W, "IBM PS/2 Adapter/A" },
 	{ 0x0000,			NULL },
 };
 
 /* see POS description in we_mca_attach() */
 static const int we_mca_irq[] = {
 	3, 4, 10, 15,
-};
-
-/* memory position and shared RAM sizes for WD8013-type of cards */
-static const struct {
-	u_int8_t id;
-	int maddr;
-	int memsize;
-} we_mca_elite_mem[] = {
-	{ 0x10,	0x0C0000, 16384 },
-	{ 0x12,	0x0C4000, 16384 },
-	{ 0x14,	0x0C8000, 16384 },
-	{ 0x16,	0x0CC000, 16384 },
-	{ 0x18,	0x0D0000, 16384 },
-	{ 0x1A,	0x0D4000, 16384 },
-	{ 0x1C,	0x0D8000, 16384 },
-	{ 0x1E,	0x0DC000, 16384 },
-	{ 0x90,	0xFC0000, 16384 },
-	{ 0x94,	0xFC8000, 16384 },
-	{ 0x98,	0xFD0000, 16384 },
-	{ 0x9A, 0xFD8000, 16384 },
-	{ 0x9C,	0x0C0000, 16384 },
-	{ 0x00,	0x0C0000, 8192 },
-	{ 0x01,	0x0C2000, 8192 },
-	{ 0x02,	0x0C4000, 8192 },
-	{ 0x03,	0x0C6000, 8192 },
-	{ 0, 0, 0 },
 };
 
 static const struct we_mca_product *we_mca_lookup __P((int));
@@ -230,8 +203,14 @@ we_mca_attach(parent, self, aux)
 	 *
 	 * 8013: POS register 3: (adf pos1)
 	 * 7 6 5 4 3 2 1 0
-	 *   X 0             Shared Ram Base Address - mask 0x9f
-	 *                     see wd_elite_mem[] array for details
+	 * | X 0 | \_____/
+	 * |     |       \__ Shared RAM Base Address
+	 * |     |                0xc0000 + ((xx & 0x0f) * 0x2000)
+	 * |      \____________ Ram size: 0 = 8k, 1 = 16k
+	 * |                      some size and address combinations are
+	 * |                        not supported, varies by card :(
+	 *  \__________________ If set, add 0xf00000 to shared RAM base addr
+	 *                      puts shared RAM near top of 16MB address space
 	 *
 	 * 8013: POS register 5: (adf pos3)
 	 * 7 6 5 4 3 2 1 0
@@ -254,27 +233,14 @@ we_mca_attach(parent, self, aux)
 		iobase = 0x200 + (((pos2 & 0x0e) >> 1) * 0x020);
 		maddr  = 0xC0000 + (((pos3 & 0x1c) >> 2) * 0x04000);
 		irq = we_mca_irq[(pos5 & 0x03)];
-		sc->mem_size = WD_MEMSIZE;
+		sc->mem_size = 16384;
 	} else {
 		/* SMC Elite */
-		int i, id;
-
 		iobase = 0x800 + (((pos2 & 0xf0) >> 4) * 0x1000);
+		maddr = 0xC0000 + ((pos3 & 0x0f) * 0x2000)
+		    + ((pos3 & 0x80) ? 0xF00000 : 0);
 		irq = we_mca_irq[(pos5 & 0x0c) >> 2];
-
-		/* find location of shared mem and it's size */
-		id = (pos3 & 0x9f);
-		for(i=0; we_mca_elite_mem[i].maddr; i++)
-			if (we_mca_elite_mem[i].id == id)
-				break;
-		if (we_mca_elite_mem[i].maddr == 0) {
-			printf("\n%s: cannot find Shared Ram Base Address\n",
-				sc->sc_dev.dv_xname);
-			return;
-		}
-
-		maddr = we_mca_elite_mem[i].maddr;
-		sc->mem_size = we_mca_elite_mem[i].memsize;
+		sc->mem_size = (pos3 & 0x10) ? 16384 : 8192;
 	}
 
 	nict = asict = ma->ma_iot;
