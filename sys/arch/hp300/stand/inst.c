@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.1 1996/06/26 17:44:29 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.2 1996/06/26 18:11:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -108,7 +108,7 @@ main()
 
 	printf("\n>> NetBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: inst.c,v 1.1 1996/06/26 17:44:29 thorpej Exp $\n");
+	printf(">> $NetBSD: inst.c,v 1.2 1996/06/26 18:11:24 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -580,7 +580,23 @@ resetsys()
 }
 
 void
-machdep_start(entry, howto, loadaddr, ssym, esym)
+machdep_start_net(entry, howto, loadaddr, ssym, esym)
+	char *entry;
+	int howto;
+	char *loadaddr;
+	char *ssym, *esym;
+{
+
+	asm("movl %0,d7" : : "m" (howto));
+	asm("movl #0,d6");	/* tell setroot we've netbooted */
+	asm("movl %0,d5" : : "m" (cons_scode));
+	asm("movl %0,a5" : : "a" (loadaddr));
+	asm("movl %0,a4" : : "a" (esym));
+	(*((int (*)())entry))();
+}
+
+void
+machdep_start_disk_tape(entry, howto, loadaddr, ssym, esym)
 	char *entry;
 	int howto;
 	char *loadaddr;
@@ -593,4 +609,15 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();
+}
+
+void
+machdep_start(entry, howto, loadaddr, ssym, esym)
+	char *entry;
+	int howto;
+	char *loadaddr;
+	char *ssym, *esym;
+{
+
+	(*__machdep_start)(entry, howto, loadaddr, ssym, esym);
 }
