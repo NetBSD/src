@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.20 1999/03/24 05:51:33 mrg Exp $	*/
+/*	$NetBSD: vm.h,v 1.21 1999/04/10 13:52:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -49,14 +49,8 @@ typedef struct vm_map_entry *vm_map_entry_t;
 struct vm_map;
 typedef struct vm_map *vm_map_t;
 
-struct vm_object;
-typedef struct vm_object *vm_object_t;
-
 struct vm_page;
 typedef struct vm_page  *vm_page_t;
-
-struct pager_struct;
-typedef struct pager_struct *vm_pager_t;
 
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
@@ -65,7 +59,8 @@ typedef struct pager_struct *vm_pager_t;
 #include <vm/vm_prot.h>
 #include <vm/vm_inherit.h>
 #include <vm/vm_map.h>
-#include <vm/vm_object.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
 

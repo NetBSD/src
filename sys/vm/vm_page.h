@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.31 1999/03/24 05:51:35 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.32 1999/04/10 13:52:11 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -241,29 +241,6 @@ extern int vm_nphysseg;
 
 static struct vm_page *PHYS_TO_VM_PAGE __P((paddr_t));
 static int vm_physseg_find __P((paddr_t, int *));
-
-void		 vm_page_activate __P((vm_page_t));
-vm_page_t	 vm_page_alloc __P((vm_object_t, vaddr_t));
-vm_page_t	 vm_page_alloc1 __P((void));
-int		 vm_page_alloc_memory __P((psize_t size, paddr_t low,
-			paddr_t high, paddr_t alignment, paddr_t boundary,
-			struct pglist *rlist, int nsegs, int waitok));
-void		 vm_page_free_memory __P((struct pglist *list));
-void		 vm_page_bootstrap __P((vaddr_t *, vaddr_t *));
-void		 vm_page_copy __P((vm_page_t, vm_page_t));
-void		 vm_page_deactivate __P((vm_page_t));
-void		 vm_page_free __P((vm_page_t));
-void		 vm_page_free1 __P((vm_page_t));
-void		 vm_page_insert __P((vm_page_t, vm_object_t, vaddr_t));
-vm_page_t	 vm_page_lookup __P((vm_object_t, vaddr_t));
-void		 vm_page_physload __P((paddr_t, paddr_t,
-					paddr_t, paddr_t));
-void		 vm_page_physrehash __P((void));
-void		 vm_page_remove __P((vm_page_t));
-void		 vm_page_rename __P((vm_page_t, vm_object_t, vaddr_t));
-void		 vm_page_unwire __P((vm_page_t));
-void		 vm_page_wire __P((vm_page_t));
-boolean_t	 vm_page_zero_fill __P((vm_page_t));
 
 /*
  * macros and inlines
