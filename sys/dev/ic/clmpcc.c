@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.10 2000/03/19 10:38:43 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.11 2000/07/06 01:47:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -496,12 +496,10 @@ clmpccopen(dev, flag, mode, p)
 	struct tty *tp;
 	int oldch;
 	int error;
-	int unit;
- 
-	if ( (unit = CLMPCCUNIT(dev)) >= clmpcc_cd.cd_ndevs ||
-	     (sc = clmpcc_cd.cd_devs[unit]) == NULL ) {
-		return ENXIO;
-	}
+
+	sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 
@@ -600,7 +598,8 @@ clmpccclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct clmpcc_softc	*sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc	*sc =
+		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan	*ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty		*tp = ch->ch_tty;
 	int s;
@@ -634,7 +633,7 @@ clmpccread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -646,7 +645,7 @@ clmpccwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -656,7 +655,7 @@ struct tty *
 clmpcctty(dev)
 	dev_t dev;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 
 	return (sc->sc_chans[CLMPCCCHAN(dev)].ch_tty);
 }
@@ -669,7 +668,7 @@ clmpccioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
@@ -828,7 +827,8 @@ clmpcc_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_char cor;
 	u_char oldch;
@@ -1019,7 +1019,8 @@ static void
 clmpcc_start(tp)
 	struct tty *tp;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_int oldch;
 	int s;
@@ -1066,7 +1067,8 @@ clmpccstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	int s;
 

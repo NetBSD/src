@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.56 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.57 2000/07/06 01:47:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -123,7 +123,6 @@ lptopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
 	bus_space_tag_t iot;
@@ -132,9 +131,7 @@ lptopen(dev, flag, mode, p)
 	int error;
 	int spin;
 
-	if (unit >= lpt_cd.cd_ndevs)
-		return ENXIO;
-	sc = lpt_cd.cd_devs[unit];
+	sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
@@ -251,8 +248,7 @@ lptclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
+	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -345,7 +341,7 @@ lptwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	size_t n;
 	int error = 0;
 
