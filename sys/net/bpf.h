@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.36 2004/04/15 15:17:11 darrenr Exp $	*/
+/*	$NetBSD: bpf.h,v 1.37 2004/04/30 22:07:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -250,6 +250,7 @@ struct bpf_dltlist {
 int	 bpf_validate __P((struct bpf_insn *, int));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
+void	 bpf_mtap2 __P((caddr_t, void *, u_int, struct mbuf *));
 void	 bpfattach __P((struct ifnet *, u_int, u_int));
 void	 bpfattach2 __P((struct ifnet *, u_int, u_int, caddr_t *));
 void	 bpfdetach __P((struct ifnet *));
