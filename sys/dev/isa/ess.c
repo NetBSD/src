@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.17 1998/08/09 06:38:30 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.18 1998/08/09 06:52:57 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -535,21 +535,9 @@ void
 ess_setup(sc)
 	struct ess_softc *sc;
 {
+
 	ess_config_irq(sc);
 	ess_config_drq(sc);
-	if (IS16BITDRQ(sc->sc_out.drq))
-		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-				  ESS_AUDIO2_CTRL1_XFER_SIZE);
-	else
-		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-				    ESS_AUDIO2_CTRL1_XFER_SIZE);
-
-#if 0
-	/* Use 8 bytes per output DMA. */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1, ESS_AUDIO2_CTRL1_DEMAND_8);
-	/* Use 4 bytes per input DMA. */
-	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL, ESS_DEMAND_CTRL_DEMAND_4);
-#endif
 
 	DPRINTFN(2,("ess_setup: done\n"));
 }
@@ -1221,6 +1209,17 @@ ess_dma_output(addr, p, cc, intr, arg)
 	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTLO, cc);
 	ess_write_mix_reg(sc, ESS_MREG_XFER_COUNTHI, cc >> 8);
 
+	if (IS16BITDRQ(sc->sc_out.drq))
+		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
+		    ESS_AUDIO2_CTRL1_XFER_SIZE);
+	else
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
+		    ESS_AUDIO2_CTRL1_XFER_SIZE);
+
+	/* Use 8 bytes per output DMA. */
+	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
+	    ESS_AUDIO2_CTRL1_DEMAND_8);
+
 	/* Start auto-init DMA */
 	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
 			  ESS_AUDIO2_CTRL1_DAC_ENABLE |
@@ -1319,6 +1318,10 @@ ess_dma_input(addr, p, cc, intr, arg)
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTLO, cc);
 	ess_write_x_reg(sc, ESS_XCMD_XFER_COUNTHI, cc >> 8);
 
+	/* Use 4 bytes per input DMA. */
+	ess_set_xreg_bits(sc, ESS_XCMD_DEMAND_CTRL,
+	    ESS_DEMAND_CTRL_DEMAND_4);
+
 	/* Start auto-init DMA */
 	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
 			  ESS_AUDIO1_CTRL2_DMA_READ |
@@ -1339,7 +1342,8 @@ ess_halt_output(addr)
 	DPRINTF(("ess_halt_output: sc=%p\n", sc));
 
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-			    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+	    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+
 	return (0);
 }
 
@@ -1352,7 +1356,8 @@ ess_halt_input(addr)
 	DPRINTF(("ess_halt_input: sc=%p\n", sc));
 
 	ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-			    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
+	    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
+
 	return (0);
 }
 
