@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.33 2002/01/27 12:41:08 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.34 2002/01/28 03:12:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.33 2002/01/27 12:41:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.34 2002/01/28 03:12:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -609,8 +609,7 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	memset(&sdisk, 0, sizeof(sdisk));
 
 	simple_lock(&disklist_slock);
-	for (diskp = TAILQ_FIRST(&disklist); diskp != NULL;
-	    diskp = TAILQ_NEXT(diskp, dk_link)) {
+	TAILQ_FOREACH(diskp, &disklist, dk_link) {
 		if (left < sizeof(struct disk_sysctl))
 			break;
 		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));;
