@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
 #ifdef notdef
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: ffs.S,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $"
+	.asciz "$NetBSD: ffs.S,v 1.2 1998/11/26 19:32:10 eeh Exp $"
 #endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -64,9 +64,9 @@
  */
 ENTRY(ffs)
 #ifdef PIC
-	PICCY_SET(ffstab, %o2, %o5)
+	PICCY_SET(_C_LABEL(__ffstab), %o2, %o5)
 #else
-	set	ffstab, %o2
+	set	_C_LABEL(__ffstab), %o2
 #endif
 	andcc	%o0, 0xff, %o1	! get low byte
 	be,a	1f		! try again if 0
@@ -98,8 +98,8 @@ ENTRY(ffs)
 	retl
 	 add	%o0, 24, %o0
 	
-	.globl	ffstab
-ffstab:
+	.globl	_C_LABEL(__ffstab)
+_C_LABEL(__ffstab):
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */
