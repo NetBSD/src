@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.1.4.3 1996/06/03 05:32:12 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.1.4.4 1996/12/05 06:22:19 rat Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1257,7 +1257,8 @@ zstty_stint(cs)
 		zst->zst_tx_stopped = 1;
 	}
 
-	cs->cs_rr0_new = rr0;
+	cs->cs_rr0_changes |= cs->cs_rr0 ^ rr0;
+	cs->cs_rr0 = rr0;
 	zst->zst_st_check = 1;
 
 	/* Ask for softint() call. */
@@ -1373,9 +1374,9 @@ zstty_softint(cs)
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
 
-		rr0 = cs->cs_rr0_new;
-		delta = rr0 ^ cs->cs_rr0;
-		cs->cs_rr0 = rr0;
+		rr0 = cs->cs_rr0;
+		delta = cs->cs_rr0_changes;
+		cs->cs_rr0_changes = 0;
 		if ((delta & ZSRR0_DCD) &&
 		    ~(zst->zst_hwflags & ZS_HWFLAG_IGDCD)) {
 			c = ((rr0 & ZSRR0_DCD) != 0);
