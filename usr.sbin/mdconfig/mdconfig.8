@@ -1,5 +1,5 @@
 .\"
-.\"	$NetBSD: mdconfig.8,v 1.7 2000/07/05 15:45:32 msaitoh Exp $
+.\"	$NetBSD: mdconfig.8,v 1.8 2002/01/19 03:27:06 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Gordon W. Ross
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 The
 .Nm
 command configures memory disk devices.
-It will associate the special file 
+It will associate the special file
 .Ar special_file
 with a range of user-virtual memory allocated by the
 .Nm
@@ -59,17 +59,16 @@ process started earlier.
 .It Pa /dev/md??
 .El
 .Sh EXAMPLES
-.Pp
 .Dl mdconfig /dev/md0c 2048 &
 .Pp
 Configures the memory disk
 .Pa md0c
 with one megabyte of user-space memory.
+.Sh SEE ALSO
+.Xr mount 8 ,
+.Xr swapon 8 ,
+.Xr umount 8
 .Sh BUGS
 The special device will become inoperative if the
 .Nm
 process is killed while the special device is open.
-.Sh SEE ALSO
-.Xr swapon 8 ,
-.Xr mount 8 ,
-.Xr umount 8
