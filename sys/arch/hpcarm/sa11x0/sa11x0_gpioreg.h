@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.4 2001/03/11 06:00:42 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.5 2001/03/11 07:27:36 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -72,28 +72,47 @@
  * iPAQ H3600 specific parameter
  */
 /*
-port	I/O(Active)	desc
-0	I(L)	button detect: power-on
-1	I(L)	cpu-interrupt
-2...9	O	LCD DATA(8-15)
-10	I(L)	PCMCIA Socket1 inserted detection
-11	I(L)	PCMCIA slot1 IRQ
-12	O	clock select 0 for audio codec
-13	O	clock select 1 for audio codec
-14	I/O	UDA1341 L3DATA
-15	O	UDA1341 L3MODE
-16	O	UDA1341 L3SCLK
-17	I(L)	PCMCIA Socket0 inserted detection
-18	I(L)	button detect: center button
-19	I	Stereo audio codev external clock
-20	I(H)	Battery fault
-21	I(L)	PCMCIA slot0 IRQ	
-22	I(L)	expansion pack lock/unlock signal
-23	I(H)	RS-232 DCD
-24	I(H)	expansion pach shared IRQ
-25	I(H)	RS-232 CTS
-26	O(H)	RS-232 RTS
-27	O(L)	Indicates presence of expansion pack inserted
+port	I/O(Active)	name 	desc
+0	I(L)	PWR_ON#		button detect: power-on
+1	I(L)	IP_IRQ#		cpu-interrupt
+2...9	O	LDD{8..15}	LCD DATA(8-15)
+10	I(L)	CARD_IND1#	PCMCIA Socket1 inserted detection
+11	I(L)	CARD_IRQ1#	PCMCIA slot1 IRQ
+12	O	CLK_SET0	clock select 0 for audio codec
+13	O	CLK_SET1	clock select 1 for audio codec
+14	I/O	L3_SDA		UDA1341 L3DATA
+15	O	L3_MODE		UDA1341 L3MODE
+16	O	L3_SCLK		UDA1341 L3SCLK
+17	I(L)	CARD_IND0#	PCMCIA Socket0 inserted detection
+18	I(L)	KEY_ACT#	button detect: center button
+19	I	SYS_CLK		Stereo audio codev external clock
+20	I(H)	BAT_FAULT	Battery fault
+21	I(L)	CARD_IRQ0#	PCMCIA slot0 IRQ	
+22	I(L)	LOCK#		expansion pack lock/unlock signal
+23	I(H)	COM_DCD		RS-232 DCD
+24	I(H)	OPT_IRQ		expansion pach shared IRQ
+25	I(H)	COM_CTS		RS-232 CTS
+26	O(H)	COM_RTS		RS-232 RTS
+27	O(L)	OPT_DETECT#	Indicates presence of expansion pack inserted
+
+Extended GPIO
+0	O(H)	VPEN		Enables programming and erasing of Flash
+1	O(H)	CARD_RESET	CF/PCMCIA card reset signal
+2	O(H)	OPT_RESET	Expansion pack reset signal 
+3	O(L)	CODEC_RESET#	onboard codec reset signal
+4	O(H)	OPT_NVRAM_ON	Enables power supply to the NVRAM of the
+				Expansion pack.(=OPT_ON)
+5	O(H)	OPT_ON		Enables full power supply to the Expansion pack.
+6	O(H)	LCD_ON		Enables LCD 3.3V power supply
+7	O(H)	RS232_ON	Enables RS232
+8	O(H)	LCD_PCI		Enables power to LCD control IC
+9	O(H)	IR_ON		Enables power to IR module
+10	O(H)	AUD_ON		Enables power to audio output amp.
+11	O(H)	AUD_PWR_ON	Enables power to all audio modules.
+12	O(H)	QMUTE		Mutes yhe onboard audio codec
+13	O	IR_FSEL		FIR mode selection:H=FIR,L=SIR
+14	O(H)	LCD_5V_ON	Enables 5V to the LCD module
+15	O(H)	LVDD_ON		Enables 9V and -6.5V to the LCD module
  */
 
 #define GPIO_H3600_POWER_BUTTON	GPIO (0)
