@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.2 1996/02/05 21:25:42 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.3 1996/03/08 21:21:47 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Machine dependant vm stuff
  *
  * Created      : 20/09/94
- * Last updated : 02/06/95
- *
- *    $Id: pmap.c,v 1.2 1996/02/05 21:25:42 mark Exp $
  */
 
 /*
@@ -793,9 +790,11 @@ pmap_allocpagedir(pmap)
 
 /* Allocate a page table to map all the page tables for this pmap */
 
-			pmap->pm_vptpt = kmem_alloc(kernel_map, NBPG);
-			pmap->pm_pptpt = pmap_extract(kernel_pmap,
-			    pmap->pm_vptpt) & PG_FRAME;
+			if (pmap->pm_vptpt == 0) {
+				pmap->pm_vptpt = kmem_alloc(kernel_map, NBPG);
+				pmap->pm_pptpt = pmap_extract(kernel_pmap,
+				    pmap->pm_vptpt) & PG_FRAME;
+			}
 
 /*			printf("pagetable = V%08x P%08x\n", pagetable,
 			    pmap_extract(kernel_pmap, pagetable));
@@ -905,7 +904,6 @@ pmap_pinit(pmap)
  * do next. We could start randomly killing processes or process groups.
  * Since this process is only part formed it is not easy to kill. The
  * best thing may be to kill it parent.
- * Need to chat to ws about this.
  */
 
 /* What we should do here is start swapping out processes. That way
@@ -950,6 +948,24 @@ pmap_destroy(pmap)
 }
 
 
+void
+pmap_freepagedir(pmap)
+	register pmap_t pmap;
+{
+	int index;
+
+	index = (((u_int) pmap->pm_pdir) - PAGE_DIRS_BASE - PD_SIZE) / PD_SIZE;
+	if (pagedirectories[index] != pmap)
+		panic("pm_pdir inconsistancy found\n");
+
+	pagedirectories[index] = 0;
+
+/* Wake up any sleeping processes waiting for a l1 page table */
+
+	wakeup((caddr_t)pagedirectories);
+}
+
+
 /*
  * Release any resources held by the given physical map.
  * Called when a pmap initialized by pmap_pinit is being released.
@@ -960,27 +976,17 @@ void
 pmap_release(pmap)
 	register pmap_t pmap;
 {
-	int index;
-
 	if (pmap_debug_level >= 0)
 		printf("pmap_release: pmap=%08x\n", (int) pmap);
 
 	if (pmap->pm_count != 1)		/* XXX: needs sorting */
 		panic("pmap_release count");
 
-	index = (((u_int) pmap->pm_pdir) - PAGE_DIRS_BASE - PD_SIZE) / PD_SIZE;
-	if (pagedirectories[index] != pmap)
-		panic("pm_pdir inconsistancy found\n");
-
-	pagedirectories[index] = 0;
-
 /* Free the memory used for the page table mapping */
 
 	kmem_free(kernel_map, (vm_offset_t)pmap->pm_vptpt, NBPG);
 
-/* Wake up any sleeping processes waiting for a l1 page table */
-
-	wakeup((caddr_t)pagedirectories);
+	pmap_freepagedir(pmap);
 }
 
 
