@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)modf.s	5.5 (Berkeley) 3/18/91
- *	$Id: modf.S,v 1.2 1993/10/21 01:40:01 jtc Exp $
+ *	$Id: modf.S,v 1.3 1994/01/27 06:34:05 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: modf.S,v 1.2 1993/10/21 01:40:01 jtc Exp $"
+	.asciz "$Id: modf.S,v 1.3 1994/01/27 06:34:05 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -54,26 +54,26 @@
 
 /* With CHOP mode on, frndint behaves as TRUNC does.  Useful. */
 ENTRY(modf)
-	pushl %ebp
-	movl %esp,%ebp
-	subl $16,%esp
-	fnstcw -12(%ebp)
-	movw -12(%ebp),%dx
-	orw $3072,%dx
-	movw %dx,-16(%ebp)
-	fldcw -16(%ebp)
-	fldl 8(%ebp)
+	pushl	%ebp
+	movl	%esp,%ebp
+	subl	$16,%esp
+	fnstcw	-12(%ebp)
+	movw	-12(%ebp),%dx
+	orw	$3072,%dx
+	movw	%dx,-16(%ebp)
+	fldcw	-16(%ebp)
+	fldl	8(%ebp)
 	frndint
-	fstpl -8(%ebp)
-	fldcw -12(%ebp)
-	movl 16(%ebp),%eax
-	movl -8(%ebp),%edx
-	movl -4(%ebp),%ecx
-	movl %edx,(%eax)
-	movl %ecx,4(%eax)
-	fldl 8(%ebp)
-	fsubl -8(%ebp)
-	jmp L1
+	fstpl	-8(%ebp)
+	fldcw	-12(%ebp)
+	movl	16(%ebp),%eax
+	movl	-8(%ebp),%edx
+	movl	-4(%ebp),%ecx
+	movl	%edx,(%eax)
+	movl	%ecx,4(%eax)
+	fldl	8(%ebp)
+	fsubl	-8(%ebp)
+	jmp	L1
 L1:
 	leave
 	ret
