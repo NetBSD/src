@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.12 2003/09/13 16:07:44 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.13 2003/09/13 16:35:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.12 2003/09/13 16:07:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.13 2003/09/13 16:35:47 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -443,7 +443,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 
 	case WSCONS_EVENT_MOUSE_DELTA_Y:
 		hidevt->die_type = DARWIN_NX_MOUSEMOVED;
-		py += wsevt->value;
+		py -= wsevt->value;
 		hidevt->die_data.mouse_move.dy = wsevt->value;
 		hidevt->die_location_y = py;
 		break;
