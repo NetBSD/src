@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.45 1999/02/28 17:09:25 explorer Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.46 1999/03/25 23:21:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -95,10 +95,6 @@
 #else
 #define DPRINTF(x)
 #endif
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define ETHER_ADDR_LEN	6
 
 #define EG_INLEN  	10
 #define EG_BUFLEN	0x0670
