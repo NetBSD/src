@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.24 1997/01/22 07:09:24 mikel Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.24.6.1 1997/05/14 01:24:24 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -115,6 +115,7 @@ struct socket {
 #define	SS_NBIO			0x080	/* non-blocking ops */
 #define	SS_ASYNC		0x100	/* async i/o notify */
 #define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
+#define SS_FORCE		0x400	/* force tcpcb to be allocated */
 
 
 /*
