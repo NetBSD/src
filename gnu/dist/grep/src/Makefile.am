@@ -8,6 +8,7 @@ base_sources = grep.c grep.h \
                dfa.c dfa.h \
                kwset.c  kwset.h \
                obstack.c obstack.h \
+	       regex.c regex.h \
 	       savedir.c savedir.h \
                getopt.c getopt1.c getopt.h \
                search.c getpagesize.h system.h
@@ -20,7 +21,7 @@ datadir = $(prefix)/@DATADIRNAME@
 localedir = $(datadir)/locale
 INCLUDES = -I../intl -DLOCALEDIR=\"$(localedir)\"
 
-EXTRA_DIST = regex.h regex.c \
+EXTRA_DIST = \
              dosbuf.c \
              vms_fab.c vms_fab.h
 
