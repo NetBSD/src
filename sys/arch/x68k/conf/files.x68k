@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.6 1999/02/02 23:47:11 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.7 1999/02/13 17:58:43 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -49,22 +49,6 @@ include "arch/m68k/fpe/files.fpe"
 
 # 68060 software support package
 include "arch/m68k/060sp/files.060sp"
-
-#
-# SCSI drivers
-#
-include "dev/scsipi/files.scsipi"
-major	{cd = 7}
-major	{sd = 4}
-major	{st = 5}
-
-device	spc: scsi
-attach	spc at mainbus
-file	arch/x68k/dev/spc.c		spc needs-count
-
-device	mha: scsi
-attach	mha at mainbus
-file	arch/x68k/dev/mha.c		mha needs-count
 
 device	xcom: tty
 attach	xcom at mainbus
@@ -157,6 +141,23 @@ attach	fdc at intio
 device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
+
+#
+# SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+major	{cd = 7}
+major	{sd = 4}
+major	{st = 5}
+
+device	spc: scsi
+attach	spc at intio with spc_intio
+file	arch/x68k/dev/spc.c		spc_intio needs-flag
+file	dev/ic/mb89352.c		spc
+
+device	mha: scsi
+attach	mha at mainbus
+file	arch/x68k/dev/mha.c		mha needs-count
 
 pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.6.4 1999/02/02 23:46:43 minoura Exp $
+#	$NetBSD: INSTALL,v 1.7.6.5 1999/02/13 17:58:42 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -201,10 +201,8 @@ fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
-#!spc0	at intio0 addr 0xe96020 intr 108	# genuin SCSI
-#!spc1	at intio0 addr 0xea0000 intr 246	# genuin SCSI
-spc0	at mainbus0				#! builtin scsi
-spc1	at mainbus0				#! external scsi
+spc0	at intio0 addr 0xe96020 intr 108	# genuin SCSI
+spc1	at intio0 addr 0xea0000 intr 246	# genuin SCSI
 scsibus* at spc?
 #!mha0	at intio0 addr 0xea0000 intr 246	# Mankai MK-HA1 (Mach-2)
 mha0	at mainbus0				#! MK-HA1 mach-2 SCSI
