@@ -1,4 +1,4 @@
-.\"	$NetBSD: badsect.8,v 1.12 2000/10/02 21:17:04 hubertf Exp $
+.\"	$NetBSD: badsect.8,v 1.13 2001/05/06 12:30:05 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ refuses to attach a block that
 resides in a critical area or is out of range of the file system.
 A warning is issued if the block is already in use.
 .Sh BUGS
-If more than one sector which comprise a file system fragment are bad,
+If more than one of the sectors in a file system fragment are bad,
 you should specify only one of them to
 .Nm "" ,
 as the blocks in the bad sector files actually cover all the sectors in a
