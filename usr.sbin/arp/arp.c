@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.25 2000/09/28 01:11:31 erh Exp $ */
+/*	$NetBSD: arp.c,v 1.26 2000/10/11 20:23:48 is Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.25 2000/09/28 01:11:31 erh Exp $");
+__RCSID("$NetBSD: arp.c,v 1.26 2000/10/11 20:23:48 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,18 +454,14 @@ sdl_print(sdl)
 {
 	int i;
 	u_int8_t *p;
-	const char *hexfmt = "%x";
-
-	if (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_FDDI)
-		hexfmt = "%02x";
 
 	i = sdl->sdl_alen;
 	p = LLADDR(sdl);
 
-	(void)printf(hexfmt, *p);
+	(void)printf("%02x", *p);
 	while (--i > 0) {
 		putchar(':');
-		(void)printf(hexfmt, *++p);
+		(void)printf("%02x", *++p);
 	}
 }
 

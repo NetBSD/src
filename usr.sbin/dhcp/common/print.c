@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.7 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.2 2000/10/11 20:23:50 is Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -154,7 +154,7 @@ void dump_raw (buf, len)
 	for (i = 0; i < len; i++) {
 		if ((i & 15) == 0) {
 			if (lbix)
-				log_info (lbuf);
+				log_info ("%s", lbuf);
 			sprintf (lbuf, "%03x:", i);
 			lbix = 4;
 		} else if ((i & 7) == 0)
@@ -162,7 +162,7 @@ void dump_raw (buf, len)
 		sprintf (&lbuf [lbix], " %02x", buf [i]);
 		lbix += 3;
 	}
-	log_info (lbuf);
+	log_info ("%s", lbuf);
 }
 
 void hash_dump (table)
@@ -182,7 +182,7 @@ void hash_dump (table)
 			if (bp -> len)
 				dump_raw (bp -> name, bp -> len);
 			else
-				log_info ((const char *)bp -> name);
+				log_info ("%s", (const char *)bp -> name);
 		}
 	}
 }
@@ -1193,8 +1193,8 @@ void print_dns_status (int status, ns_updque *uq)
 		*s++ = '.';
 	*s++ = 0;
 	if (errorp)
-		log_error (obuf);
+		log_error ("%s", obuf);
 	else
-		log_info (obuf);
+		log_info ("%s", obuf);
 }
 #endif /* NSUPDATE */

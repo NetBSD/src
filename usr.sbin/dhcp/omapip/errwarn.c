@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.3 2000/09/04 23:10:32 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.2 2000/10/11 20:23:51 is Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -68,7 +68,8 @@ void log_fatal (const char * fmt, ... )
   do_percentm (fbuf, fmt);
 
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -114,7 +115,8 @@ int log_error (const char * fmt, ...)
   do_percentm (fbuf, fmt);
 
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -138,7 +140,8 @@ int log_info (const char *fmt, ...)
   do_percentm (fbuf, fmt);
 
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
@@ -162,7 +165,8 @@ int log_debug (const char *fmt, ...)
   do_percentm (fbuf, fmt);
 
   va_start (list, fmt);
-  vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+  fmt = fbuf;
+  vsnprintf (mbuf, sizeof mbuf, fmt, list);
   va_end (list);
 
 #ifndef DEBUG
