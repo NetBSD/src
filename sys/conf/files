@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.478 2001/12/03 23:28:20 augustss Exp $
+#	$NetBSD: files,v 1.479 2001/12/05 04:05:37 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -729,10 +729,10 @@ file	dev/ic/cs89x0.c		cs
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
-define	wsdisplaydev		{[kbdmux = -1]}
-define	wsemuldisplaydev	{[console = -1], [kbdmux = -1]}
-define	wskbddev		{[console = -1], [mux = -1]}
-define	wsmousedev		{[mux = -1]}
+define	wsdisplaydev		{[kbdmux = 1]}
+define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
+define	wskbddev		{[console = -1], [mux = 1]}
+define	wsmousedev		{[mux = 0]}
 # attribute to pull in raster support
 #
 define	wsrasteremulops
