@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdep.c,v 1.2 1999/03/18 22:01:48 sommerfe Exp $	*/
+/*	$NetBSD: mkdep.c,v 1.3 1999/03/31 11:26:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.2 1999/03/18 22:01:48 sommerfe Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.3 1999/03/31 11:26:45 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,19 +62,19 @@ __RCSID("$NetBSD: mkdep.c,v 1.2 1999/03/18 22:01:48 sommerfe Exp $");
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
 
-void	usage __P((void));
-char   *findcc __P((const char *));
-int	main __P((int, char **));
+static void	usage __P((void));
+static char    *findcc __P((const char *));
+int		main __P((int, char **));
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: mkdep [-a] [-p] [-f file ...] flags file ...\n");
+	    "usage: mkdep [-a] [-p] [-f file] flags file ...\n");
 	exit(EXIT_FAILURE);
 }
 
-char *
+static char *
 findcc(progname)
 	const char	*progname;
 {
@@ -116,9 +116,11 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
+	/* LINTED local definition of index */
 	int 	aflag, pflag, index, tmpfd, status;
 	pid_t	cpid, pid;
 	char   *filename, *CC, *pathname, tmpfilename[MAXPATHLEN], **args;
+	/* LINTED local definition of tmpfile */
 	FILE   *tmpfile, *dependfile;
 	char	buffer[32768];
 
@@ -170,13 +172,6 @@ main(argc, argv)
 		return EXIT_FAILURE;
 	}
 
-#ifdef __GNUC__			/* to shut up gcc warnings */
-	(void)&aflag;
-	(void)&pflag;
-	(void)&filename;
-	(void)&pathname;
-#endif
-
 	switch (cpid = vfork()) {
 	case 0:
 	    (void)dup2(tmpfd, STDOUT_FILENO);
@@ -184,6 +179,7 @@ main(argc, argv)
 
 	    (void)execv(pathname, args);
 	    _exit(EXIT_FAILURE);
+	    /* NOTREACHED */
 
 	case -1:
 	    (void)fputs("mkdep: unable to fork.\n", stderr);
@@ -201,7 +197,7 @@ main(argc, argv)
 	    return EXIT_FAILURE;
 	}
 
-	(void)lseek(tmpfd, 0, SEEK_SET);
+	(void)lseek(tmpfd, (off_t)0, SEEK_SET);
 	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
 	    (void)fprintf(stderr,
 			  "mkdep: unable to read temporary file %s\n",
