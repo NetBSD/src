@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.6 1998/03/09 21:52:31 christos Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.7 1998/03/31 08:13:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -89,6 +89,9 @@ int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int	ep_pcmcia_enable __P((struct ep_softc *));
 void	ep_pcmcia_disable __P((struct ep_softc *));
 
+int	ep_pcmcia_enable1 __P((struct ep_softc *));
+void	ep_pcmcia_disable1 __P((struct ep_softc *));
+
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */
 
@@ -132,7 +135,6 @@ ep_pcmcia_enable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
-	int ret;
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
@@ -142,9 +144,20 @@ ep_pcmcia_enable(sc)
 		return (1);
 	}
 
+	return (ep_pcmcia_enable1(sc));
+}
+
+int
+ep_pcmcia_enable1(sc)
+	struct ep_softc *sc;
+{
+	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
+	struct pcmcia_function *pf = psc->sc_pf;
+	int ret;
+
 	if ((ret = pcmcia_function_enable(pf)))
-	    return(ret);
-	
+		return (ret);
+
 	if (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) {
 		int reg;
 
@@ -152,8 +165,8 @@ ep_pcmcia_enable(sc)
 
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		if (reg & 0x08) {
-		    reg &= ~0x08;
-		    pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			reg &= ~0x08;
+			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 		}
 
 	}
@@ -167,9 +180,17 @@ ep_pcmcia_disable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
-	pcmcia_function_disable(psc->sc_pf);
-
+	ep_pcmcia_disable1(sc);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+}
+
+void
+ep_pcmcia_disable1(sc)
+	struct ep_softc *sc;
+{
+	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
+
+	pcmcia_function_disable(psc->sc_pf);
 }
 
 void
@@ -191,7 +212,7 @@ ep_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (ep_pcmcia_enable(sc))
+	if (ep_pcmcia_enable1(sc))
 		printf(": function enable failed\n");
 
 	sc->enabled = 1;
@@ -274,7 +295,7 @@ ep_pcmcia_attach(parent, self, aux)
 
 	sc->enabled = 0;
 
-	ep_pcmcia_disable(sc);
+	ep_pcmcia_disable1(sc);
 }
 
 int
