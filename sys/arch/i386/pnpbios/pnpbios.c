@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.6 1999/11/30 15:54:55 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.7 1999/12/13 20:12:22 drochner Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -604,6 +604,38 @@ pnp_scan(bufp, maxlen, r, in_depends)
 					idstr[i] = NEXTBYTE(p);
 				idstr[len] = '\0';
 				r->longname = idstr;
+				break;
+			case 0x05:  /* 32bit memory descriptor */
+				if (len != 17) {
+					printf("pnp_scan: bad mem32 desc\n");
+					return (-1);
+				}
+
+				mem = malloc(sizeof(struct pnp_mem),
+					     M_DEVBUF, M_WAITOK);
+				mem->flags = NEXTBYTE(p);
+				mem->minbase = NEXTBYTE(p);
+				mem->minbase |= NEXTBYTE(p) << 8;
+				mem->minbase |= NEXTBYTE(p) << 16;
+				mem->minbase |= NEXTBYTE(p) << 24;
+				mem->maxbase = NEXTBYTE(p);
+				mem->maxbase |= NEXTBYTE(p) << 8;
+				mem->maxbase |= NEXTBYTE(p) << 16;
+				mem->maxbase |= NEXTBYTE(p) << 24;
+				mem->align = NEXTBYTE(p);
+				mem->align |= NEXTBYTE(p) << 8;
+				mem->align |= NEXTBYTE(p) << 16;
+				mem->align |= NEXTBYTE(p) << 24;
+				mem->len = NEXTBYTE(p);
+				mem->len |= NEXTBYTE(p) << 8;
+				mem->len |= NEXTBYTE(p) << 16;
+				mem->len |= NEXTBYTE(p) << 24;
+				SIMPLEQ_INSERT_TAIL(&r->mem, mem, next);
+				r->nummem++;
+#ifdef PNPBIOSDEBUG
+				if (mem->len == 0)
+					printf("ZERO mem descriptor\n");
+#endif
 				break;
 			case 0x06: /* 32bit fixed memory descriptor */
 				if (len != 9) {
