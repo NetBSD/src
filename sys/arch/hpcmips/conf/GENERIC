@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.31 2000/02/19 15:01:33 jun Exp $
+# 	$NetBSD: GENERIC,v 1.32 2000/03/05 06:24:33 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	8
 
@@ -225,9 +225,9 @@ options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #button5 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP3 active 0 port 11
 #button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
 #button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
-#vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 isaportoffset 0xc000
-#isa4    at vrisab4
-#wdc0    at isa4 port 0x170 irq 0x00090003 flags 0x0010  # AT_POLL
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 isaportoffset 0xc000
+isa4    at vrisab4
+wdc0    at isa4 port 0x170 irq 0x00090003 flags 0x0010  # AT_POLL
 
 #
 # Fujitsu INTERTOP CX300
@@ -263,6 +263,8 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+awi*	at pcmcia? function ?		# WLI-PCM
 
 com*	at pcmcia? function ?		# Modems and serial cards
 
