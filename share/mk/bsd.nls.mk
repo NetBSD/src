@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.nls.mk,v 1.44 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.45 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		cleannls nlsinstall
 cleandir:	cleannls
 realinstall:	nlsinstall
 
@@ -31,6 +30,8 @@ realall:	${NLSALL}
 
 ##### Install rules
 nlsinstall::	# ensure existence
+.PHONY:		nlsinstall
+
 .if ${MKNLS} != "no"
 
 __nlsinstall: .USE
@@ -61,7 +62,7 @@ nlsinstall::	${_F}
 .endif # ${MKNLS} != "no"
 
 ##### Clean rules
-cleannls:
+cleannls: .PHONY
 .if ${MKNLS} != "no" && !empty(NLS)
 	rm -f ${NLSALL}
 .endif
