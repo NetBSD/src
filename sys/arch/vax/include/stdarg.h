@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.7 1995/12/25 22:22:11 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.8 1995/12/25 23:15:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,8 +48,8 @@ typedef _BSD_VA_LIST_	va_list;
 #define va_start(ap, last) \
 	((ap) = (va_list)&(last) + __va_size(last))
 
-#define va_arg(ap, type) \
-	((type *)(ap += __va_size(type), ap - __va_size(type)))[0]
+#define	va_arg(ap, type) \
+	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
 #define va_end(ap)	((void)0)
 
