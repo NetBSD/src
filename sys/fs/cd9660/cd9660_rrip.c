@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.2 2003/05/16 05:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.2 2003/05/16 05:09:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ cd9660_rrip_defname(v, ana)
 		*ana->outlen = 1;
 		break;
 	case 1:
-		strcpy(ana->outbuf, "..");
+		strlcpy(ana->outbuf, "..", ana->maxlen - *ana->outlen);
 		*ana->outlen = 2;
 		break;
 	}
