@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.47 2004/03/28 22:13:04 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.48 2004/03/28 22:14:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -285,3 +285,8 @@ sys/arch/vax/include/stdarg.h		1.16
 
 	Fix == vs = typo from rev. 1.13 in __va_copy. PR#24846
 	[kleink, ticket #1634]
+
+lib/libc/time/strptime.3		1.16-1.17 via patch
+
+	% doesn't write anything; a literal  0s matched.
+	[kleink, ticket #1635]
