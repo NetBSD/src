@@ -1,7 +1,7 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:39 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp.S,v 1.1 2002/09/12 18:28:22 ragge Exp $	*/
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 2002 Anders Magnusson, (ragge@netbsd.org).
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,18 +27,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Signal trampoline; registers when called:
+ *	sp, pc, psl - obvious
+ *	ap - points to argument list, see machdep.c:sendsig()
+ *	fp - address of signal handler
+ */
+
 #include "SYS.h"
 
 	.text
 	_ALIGN_TEXT
 
-	.globl	_C_LABEL(__sigtramp_sigcontext_1)
-_C_LABEL(__sigtramp_sigcontext_1):
-	pushr	$0x3f
-	subl2	$0xc,%sp
-	movl	0x24(%sp),%r0
-	calls	$3,(%r0)
-	popr	$0x3f
-	SYSTRAP(__sigreturn14)
-	SYSTRAP(exit)
-	halt	
+	.globl	_C_LABEL(__sigtramp_sigcontext_2)
+_C_LABEL(__sigtramp_sigcontext_2):
+	pushr $(R0|R1|R2|R3|R4|R5)	# save scratch registers
+	callg (%ap),(%fp)		# use global arg list
+	popr $(R0|R1|R2|R3|R4|R5)	# restore regs
+	movab 8(%ap),%ap		# arg is pointer to sigctx
+	SYSTRAP(__sigreturn14)		# exit from here
+	halt				# illegal insn
