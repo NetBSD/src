@@ -1,7 +1,7 @@
-/* $NetBSD: sgmap_common.c,v 1.3 1997/09/02 13:18:46 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.4 1998/01/17 03:37:22 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.3 1997/09/02 13:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.4 1998/01/17 03:37:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.3 1997/09/02 13:18:46 thorpej Exp
 #include <alpha/common/sgmapvar.h>
 
 void
-alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva)
+alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
+    minptalign)
 	bus_dma_tag_t t;
 	struct alpha_sgmap *sgmap;
 	const char *name;
@@ -63,6 +64,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva)
 	bus_size_t sgvasize;
 	size_t ptesize;
 	void *ptva;
+	bus_size_t minptalign;
 {
 	bus_dma_segment_t seg;
 	size_t ptsize;
@@ -84,17 +86,21 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva)
 		sgmap->aps_ptpa = 0;
 	} else {
 		/*
-		 * Compute the page table size and allocate it.  It must
-		 * be aligned to its size.
+		 * Compute the page table size and allocate it.  At minimum,
+		 * this must be aligned to the page table size.  However,
+		 * some platforms have more strict alignment reqirements.
 		 */
 		ptsize = (sgvasize / NBPG) * ptesize;
-		if (bus_dmamem_alloc(t, ptsize, ptsize, 0, &seg, 1, &rseg,
+		if (minptalign != 0) {
+			if (minptalign < ptsize)
+				minptalign = ptsize;
+		} else
+			minptalign = ptsize;
+		if (bus_dmamem_alloc(t, ptsize, minptalign, 0, &seg, 1, &rseg,
 		    BUS_DMA_NOWAIT))
 			panic("alpha_sgmap_init: can't allocate page table");
-		if (bus_dmamem_map(t, &seg, rseg, ptsize,
-		    (caddr_t *)&sgmap->aps_pt, BUS_DMA_NOWAIT))
-			panic("alpha_sgmap_init: can't map page table");
 		sgmap->aps_ptpa = seg.ds_addr;
+		sgmap->aps_pt = (caddr_t)ALPHA_PHYS_TO_K0SEG(sgmap->aps_ptpa);
 	}
 
 	/*
