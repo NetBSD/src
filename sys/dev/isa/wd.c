@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.128 1995/01/13 10:46:32 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.129 1995/01/13 12:30:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -118,6 +118,7 @@ struct wd_softc {
 	int sc_bcount;		/* byte count left */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently transferring */
+	int sc_nbytes;		/* number of bytes currently transferring */
 
 	int sc_drive;		/* physical unit number */
 	int sc_state;		/* control state */
@@ -388,8 +389,8 @@ wdstrategy(bp)
 	if (unit >= wdcd.cd_ndevs ||
 	    (wd = wdcd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    (bp->b_bcount % DEV_BSIZE) != 0 ||
-	    (bp->b_bcount / DEV_BSIZE) >= (1 << NBBY)) {
+	    (bp->b_bcount % wd->sc_dk.dk_label.d_secsize) != 0 ||
+	    (bp->b_bcount / wd->sc_dk.dk_label.d_secsize) >= (1 << NBBY)) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -504,6 +505,7 @@ wdcstart(wdc)
 {
 	struct wd_softc *wd;	/* disk unit for IO */
 	struct buf *bp;
+	struct disklabel *lp;
 	int nblks;
 
 	/*
@@ -564,9 +566,11 @@ loop:
 		}
 	}
 
+	lp = &wd->sc_dk.dk_label;
+
 	if (wd->sc_skip == 0) {
-		struct disklabel *lp = &wd->sc_dk.dk_label;
 		int part = WDPART(bp->b_dev);
+		daddr_t blkno;
 
 #ifdef WDDEBUG
 		printf("\n%s: wdcstart %s %d@%d; map ", wd->sc_dev.dv_xname,
@@ -574,9 +578,10 @@ loop:
 		    bp->b_blkno);
 #endif
 		wd->sc_bcount = bp->b_bcount;
-		wd->sc_blkno = bp->b_blkno;
+		blkno = bp->b_blkno;
 		if (part != RAW_PART)
-			wd->sc_blkno += lp->d_partitions[part].p_offset;
+			blkno += lp->d_partitions[part].p_offset;
+		wd->sc_blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 #ifdef INSTRUMENT
 		dk_busy |= (1 << wd->sc_dev.dv_unit);
 		dk_wds[wd->sc_dev.dv_unit] += bp->b_bcount >> 6;
@@ -588,8 +593,8 @@ loop:
 	}
 
 	/* If starting a multisector transfer, or doing single transfers. */
-	if (wd->sc_skip == 0 || (wdc->sc_flags & WDCF_SINGLE) != 0) {
-		struct disklabel *lp = &wd->sc_dk.dk_label;
+	if (wd->sc_skip == 0 || (wdc->sc_flags & WDCF_SINGLE) != 0 ||
+	    wd->sc_mode == WDM_DMA) {
 		daddr_t blkno = wd->sc_blkno;
 		long cylin, head, sector;
 		int command;
@@ -597,9 +602,9 @@ loop:
 		if ((wdc->sc_flags & WDCF_SINGLE) != 0)
 			nblks = 1;
 		else if (wd->sc_mode != WDM_DMA)
-			nblks = wd->sc_bcount / DEV_BSIZE;
+			nblks = wd->sc_bcount / lp->d_secsize;
 		else
-			nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
+			nblks = min(wd->sc_bcount / lp->d_secsize, 8);
 
 		/* Check for bad sectors and adjust transfer, if necessary. */
 		if ((lp->d_flags & D_BADSECT) != 0
@@ -649,6 +654,15 @@ loop:
 		++dk_xfer[wd->sc_dev.dv_unit];
 #endif
 
+		if (wd->sc_mode == WDM_PIOSINGLE ||
+		    (wdc->sc_flags & WDCF_SINGLE) != 0)
+			wd->sc_nblks = 1;
+		else if (wd->sc_mode == WDM_PIOMULTI)
+			wd->sc_nblks = min(nblks, wd->sc_multiple);
+		else
+			wd->sc_nblks = nblks;
+		wd->sc_nbytes = wd->sc_nblks * lp->d_secsize;
+    
 #ifdef B_FORMAT
 		if (bp->b_flags & B_FORMAT) {
 			sector = lp->d_gap3;
@@ -662,7 +676,7 @@ loop:
 			    WDCC_READDMA : WDCC_WRITEDMA;
 			isa_dmastart(bp->b_flags & B_READ,
 			    bp->b_data + wd->sc_skip,
-			    nblks * DEV_BSIZE, wdc->sc_drq);
+			    wd->sc_nbytes, wdc->sc_drq);
 			break;
 		case WDM_PIOMULTI:
 			command = (bp->b_flags & B_READ) ?
@@ -685,17 +699,14 @@ loop:
 		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
 		    cylin, head, bp->b_data, inb(wd->sc_iobase+wd_altsts));
 #endif
+	} else if (wd->sc_nblks > 1) {
+		nblks = wd->sc_bcount / lp->d_secsize;
+		if (wd->sc_nblks > nblks) {
+			wd->sc_nblks = nblks;
+			wd->sc_nbytes = wd->sc_bcount;
+		}
 	}
 
-	if (wd->sc_mode == WDM_PIOSINGLE ||
-	    (wdc->sc_flags & WDCF_SINGLE) != 0)
-		nblks = 1;
-	else if (wd->sc_mode != WDM_DMA)
-		nblks = min(wd->sc_bcount / DEV_BSIZE, wd->sc_multiple);
-	else
-		nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
-	wd->sc_nblks = nblks;
-    
 	/* If this was a write and not using DMA, push the data. */
 	if (wd->sc_mode != WDM_DMA &&
 	    (bp->b_flags & B_READ) == 0) {
@@ -708,10 +719,10 @@ loop:
 		/* Then send it! */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
 			outsw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip,
-			    nblks * DEV_BSIZE / sizeof(short));
+			    wd->sc_nbytes >> 1);
 		else
 			outsl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip,
-			    nblks * DEV_BSIZE / sizeof(long));
+			    wd->sc_nbytes >> 2);
 	}
 
 	wdc->sc_flags |= WDCF_ACTIVE;
@@ -730,7 +741,6 @@ wdcintr(wdc)
 {
 	struct wd_softc *wd;
 	struct buf *bp;
-	int nblks;
 
 	if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
 		/* Clear the pending interrupt. */
@@ -763,11 +773,9 @@ wdcintr(wdc)
 		return 1;
 	}
 
-	nblks = wd->sc_nblks;
-    
 	if (wd->sc_mode == WDM_DMA)
 		isa_dmadone(bp->b_flags & B_READ, bp->b_data + wd->sc_skip,
-		    nblks * DEV_BSIZE, wdc->sc_drq);
+		    wd->sc_nbytes, wdc->sc_drq);
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
@@ -811,10 +819,10 @@ wdcintr(wdc)
 		/* Suck in data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
 			insw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip, 
-			    nblks * DEV_BSIZE / sizeof(short));
+			    wd->sc_nbytes >> 1);
 		else
 			insl(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip, 
-			    nblks * DEV_BSIZE / sizeof(long));
+			    wd->sc_nbytes >> 2);
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
@@ -824,9 +832,9 @@ wdcintr(wdc)
 	}
     
 	/* Ready for the next block, if any. */
-	wd->sc_blkno += nblks;
-	wd->sc_skip += nblks * DEV_BSIZE;
-	wd->sc_bcount -= nblks * DEV_BSIZE;
+	wd->sc_blkno += wd->sc_nblks;
+	wd->sc_skip += wd->sc_nbytes;
+	wd->sc_bcount -= wd->sc_nbytes;
 
 	/* See if more to transfer. */
 	if (wd->sc_bcount > 0)
