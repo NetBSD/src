@@ -228,3 +228,5 @@ $ SIGUSR1
 30 Signal utilisateur 1
 $ SIGUSR2
 31 Signal utilisateur 2
+$ SIGPWR
+32 Coupure/reprise d'alimentation
