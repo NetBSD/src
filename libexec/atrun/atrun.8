@@ -1,4 +1,4 @@
-.\" $NetBSD: atrun.8,v 1.9 2000/07/05 15:45:30 msaitoh Exp $
+.\" $NetBSD: atrun.8,v 1.10 2000/11/07 06:43:25 lukem Exp $
 .\" $OpenBSD: atrun.8,v 1.4 1998/05/22 22:16:29 deraadt Exp $
 .\" $FreeBSD: atrun.man,v 1.3 1997/02/22 14:20:55 peter Exp $
 .Dd April 12, 1995
@@ -12,7 +12,7 @@
 .Op Fl l Ar load_avg
 .Op Fl d
 .Sh DESCRIPTION
-.Nm Atrun
+.Nm
 runs jobs queued by
 .Xr at 1 .
 Root's
@@ -31,7 +31,7 @@ At every invocation, every job in lowercase queues whose starting time
 has passed is started.
 A maximum of one batch job (denoted by uppercase queues) is started
 each time
-.Nm atrun
+.Nm
 is invoked.
 .Sh OPTIONS
 .Bl -tag -width indent
@@ -44,7 +44,7 @@ Debug; print error messages to standard error instead of using
 .El
 .Sh WARNINGS
 For
-.Nm atrun
+.Nm
 to work, you have to start up a
 .Xr cron 8
 daemon.
@@ -63,7 +63,7 @@ Directory containing job files
 .Xr syslog 3
 .Sh BUGS
 The functionality of 
-.Nm atrun
+.Nm
 should be merged into
 .Xr cron 8 .
 .Sh AUTHOR
