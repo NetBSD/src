@@ -1,18 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/17 14:52:39 minoura Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/15 05:02:29 itohy Exp $
 
-PROG=	aout2hux
-MKMAN=	no			# See share/man/man1/man1.x68k/aout2hux.1
+HOSTPROG=	aout2hux
+MKMAN=		no		# See share/man/man1/man1.x68k/aout2hux.1
 
-# only needed during build
-proginstall::
-
-# Override these rules for cross-compilation
-.c.o:
-	${HOST_COMPILE.c} ${.IMPSRC}
-
-${PROG}: ${OBJS}
-	${HOST_LINK.c} -o ${.TARGET} ${OBJS}
-
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
 
 ${OBJS}: aout68k.h hux.h type_local.h
