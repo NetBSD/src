@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.20 1995/01/26 12:05:52 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.21 1995/07/12 09:42:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -140,6 +140,7 @@ struct scsi_link {
 #define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
+#define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
 /* 12*/	struct	scsi_device *device;	/* device entry points etc. */
 /* 16*/	void	*device_softc;		/* needed for call to foo_start */
 /* 20*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
