@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.416 2002/03/11 23:19:01 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.417 2002/03/19 22:03:06 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp 
+ *	NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp 
  */
 
 /*
@@ -766,6 +766,13 @@
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC766_USB	0x7414		/* AMD766 USB Host Controller */
+#define	PCI_PRODUCT_AMD_PBC768_ISA	0x7440		/* AMD768 PCI to ISA/LPC Bridge */
+#define	PCI_PRODUCT_AMD_PBC768_IDE	0x7441		/* AMD768 EIDE Controller */
+#define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* AMD768 Power Management Controller */
+#define	PCI_PRODUCT_AMD_PBC768_AC	0x7445		/* AMD768 AC97 Audio */
+#define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
+#define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
+#define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
