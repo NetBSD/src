@@ -1,11 +1,12 @@
-.\"	$NetBSD: whatis,v 1.1.2.3 2002/07/02 04:20:08 lukem Exp $
+.\"	$NetBSD: whatis,v 1.1.2.4 2002/07/09 06:16:16 lukem Exp $
 .
-This is the non-official release of
+This is the first major release of
 .Nx*M .
 .Pp
 .Nx*M
 brings the
-NetBSD operating system to
+.Nx
+operating system to
 Hitachi SH-3/4 based
 .Tn "Windows CE"
 PDA machines.

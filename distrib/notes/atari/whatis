@@ -1,9 +1,9 @@
-.\"	$NetBSD: whatis,v 1.11.2.1 2002/07/02 04:20:03 lukem Exp $
+.\"	$NetBSD: whatis,v 1.11.2.2 2002/07/09 06:16:14 lukem Exp $
 .
 The \*M release was imported into
 .Nx
 in in March 1995.
-The first official release was
+The first major release was
 .Nx 1.1 .
 About a year later,
 .Nx 1.2
@@ -20,11 +20,7 @@ ethernet and Falcon IDE support.
 .Nx 1.4
 was released a couple of years later, and added support for various
 devices.
+.Nx 1.5 was released in late 2000. and add
 And now,
 .Nx \*V
 is emerging!
-.Pp
-New port-specific features include:
-.(bullet
-Support for ESS Technology Solo-1 PCI Soundcard on the Hades.
-.bullet)
