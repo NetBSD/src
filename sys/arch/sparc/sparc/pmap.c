@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.281 2004/04/10 19:22:59 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.282 2004/04/10 19:40:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2004/04/10 19:22:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2004/04/10 19:40:19 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -487,17 +487,10 @@ static u_int segfixmask = 0xffffffff; /* all bits valid to start */
 #define	setregmap(va, smeg)	stha((va)+2, ASI_REGMAP, (smeg << 8))
 
 #if defined(SUN4M) || defined(SUN4D)
-void		setpgt4m(int *ptep, int pte);
 void		setpte4m(vaddr_t va, int pte);
-#if defined(MULTIPROCESSOR)
+void		setpgt4m(int *ptep, int pte);
 void		setpgt4m_va(vaddr_t, int *, int, int, int, u_int);
-#else
-#define		setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset) do { \
-	if ((pageflush)) \
-		tlb_flush_page(va, ctx, 0); \
-	setpgt4m((ptep), (pte)); \
-} while (0)
-#endif /* !MULTIPROCESSOR */
+int		updatepte4m(vaddr_t, int *, int, int, int, u_int);
 #endif /* SUN4M || SUN4D */
 
 #if defined(MULTIPROCESSOR)
@@ -732,54 +725,6 @@ smp_tlb_flush_all()
 #define tlb_flush_all()			sp_tlb_flush_all()
 #endif /* MULTIPROCESSOR */
 
-/*
- * Atomically update a PTE entry, coping with hardware updating the
- * PTE at the same time we are.  This is the procedure that is
- * recommended in the SuperSPARC user's manual.
- */
-int updatepte4m (vaddr_t, int *, int, int, int, u_int);
-static struct simplelock pte4m_lock = SIMPLELOCK_INITIALIZER;
-
-int
-updatepte4m(va, pte, bic, bis, ctx, cpuset)
-	vaddr_t va;
-	int *pte;
-	int bic;
-	int bis;
-	int ctx;
-	u_int cpuset;
-{
-	int oldval, swapval;
-	volatile int *vpte = (volatile int *)pte;
-
-	/*
-	 * Can only be one of these happening in the system
-	 * at any one time.
-	 */
-	simple_lock(&pte4m_lock);
-
-	/*
-	 * The idea is to loop swapping zero into the pte, flushing
-	 * it, and repeating until it stays zero.  At this point,
-	 * there should be no more hardware accesses to this PTE
-	 * so we can modify it without losing any mod/ref info.
-	 */
-	oldval = 0;
-	do {
-		swapval = 0;
-		swap(vpte, swapval);
-		tlb_flush_page(va, ctx, cpuset);
-		oldval |= swapval;
-	} while (*vpte != 0);
-
-	swapval = (oldval & ~bic) | bis;
-	swap(vpte, swapval);
-
-	simple_unlock(&pte4m_lock);
-
-	return (oldval);
-}
-
 static u_int	VA2PA(caddr_t);
 static u_long	srmmu_bypass_read(u_long);
 
@@ -833,6 +778,53 @@ VA2PA(addr)
 #endif
 }
 
+/*
+ * Atomically update a PTE entry, coping with hardware updating the
+ * PTE at the same time we are.  This is the procedure that is
+ * recommended in the SuperSPARC user's manual.
+ */
+static struct simplelock pte4m_lock = SIMPLELOCK_INITIALIZER;
+
+int
+updatepte4m(va, pte, bic, bis, ctx, cpuset)
+	vaddr_t va;
+	int *pte;
+	int bic;
+	int bis;
+	int ctx;
+	u_int cpuset;
+{
+	int oldval, swapval;
+	volatile int *vpte = (volatile int *)pte;
+
+	/*
+	 * Can only be one of these happening in the system
+	 * at any one time.
+	 */
+	simple_lock(&pte4m_lock);
+
+	/*
+	 * The idea is to loop swapping zero into the pte, flushing
+	 * it, and repeating until it stays zero.  At this point,
+	 * there should be no more hardware accesses to this PTE
+	 * so we can modify it without losing any mod/ref info.
+	 */
+	oldval = 0;
+	do {
+		swapval = 0;
+		swap(vpte, swapval);
+		tlb_flush_page(va, ctx, cpuset);
+		oldval |= swapval;
+	} while (*vpte != 0);
+
+	swapval = (oldval & ~bic) | bis;
+	swap(vpte, swapval);
+
+	simple_unlock(&pte4m_lock);
+
+	return (oldval);
+}
+
 __inline void
 setpgt4m(ptep, pte)
 	int *ptep;
@@ -842,7 +834,6 @@ setpgt4m(ptep, pte)
 	swap(ptep, pte);
 }
 
-#if defined(MULTIPROCESSOR)
 __inline void
 setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 	vaddr_t va;
@@ -852,10 +843,14 @@ setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 	int ctx;
 	u_int cpuset;
 {
-
+#if defined(MULTIPROCESSOR)
 	updatepte4m(va, ptep, 0xffffffff, pte, pageflush ? ctx : 0, cpuset);
-}
+#else
+	if (pageflush)
+		tlb_flush_page(va, ctx, 0);
+	setpgt4m(ptep, pte);
 #endif /* MULTIPROCESSOR */
+}
 
 /* Set the page table entry for va to pte. */
 void
