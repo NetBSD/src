@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.26 1998/05/18 17:25:17 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.27 1998/05/28 02:26:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -52,7 +52,13 @@
 
 static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
+static void pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
+    const pcireg_t *regs, int));
+static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
+    const pcireg_t *regs));
 static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
+    const pcireg_t *regs));
+static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
 
 /*
@@ -326,6 +332,8 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 
 #define	i2o(i)	((i) * 4)
 #define	o2i(o)	((o) / 4)
+#define	onoff(str, bit)							\
+	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
 
 static void
 pci_conf_print_common(pc, tag, regs)
@@ -362,9 +370,6 @@ pci_conf_print_common(pc, tag, regs)
 	else
 		printf("    Device ID: 0x%04x\n", PCI_PRODUCT(rval));
 #endif /* PCIVERBOSE */
-
-#define	onoff(str, bit)							\
-	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
 
 	rval = regs[o2i(PCI_COMMAND_STATUS_REG)];
 
@@ -409,8 +414,6 @@ pci_conf_print_common(pc, tag, regs)
 	onoff("Asserted System Error (SERR)", PCI_STATUS_SPECIAL_ERROR);
 	onoff("Parity error detected", PCI_STATUS_PARITY_DETECT);
 
-#undef onoff
-
 	rval = regs[o2i(PCI_CLASS_REG)];
 	for (classp = pci_class; classp->name != NULL; classp++) {
 		if (PCI_CLASS(rval) == classp->val)
@@ -447,79 +450,90 @@ pci_conf_print_common(pc, tag, regs)
 }
 
 static void
-pci_conf_print_type1(pc, tag, regs)
+pci_conf_print_bar(pc, tag, regs, reg)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	const pcireg_t *regs;
+	int reg;
+{
+	int s;
+	pcireg_t mask, rval;
+
+	/*
+	 * Section 6.2.5.1, `Address Maps', tells us that:
+	 *
+	 * 1) The builtin software should have already mapped the
+	 * device in a reasonable way.
+	 *
+	 * 2) A device which wants 2^n bytes of memory will hardwire
+	 * the bottom n bits of the address to 0.  As recommended,
+	 * we write all 1s and see what we get back.
+	 */
+	rval = regs[o2i(reg)];
+	if (rval != 0) {
+		/*
+		 * The following sequence seems to make some devices
+		 * (e.g. host bus bridges, which don't normally
+		 * have their space mapped) very unhappy, to
+		 * the point of crashing the system.
+		 *
+		 * Therefore, if the mapping register is zero to
+		 * start out with, don't bother trying.
+		 */
+		s = splhigh();
+		pci_conf_write(pc, tag, reg, 0xffffffff);
+		mask = pci_conf_read(pc, tag, reg);
+		pci_conf_write(pc, tag, reg, rval);
+		splx(s);
+	} else
+		mask = 0;
+
+	printf("    Base address register at 0x%02x: ", reg);
+	if (rval == 0) {
+		printf("not implemented(?)\n");
+	} else if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
+		const char *type, *cache;
+
+		switch (PCI_MAPREG_MEM_TYPE(rval)) {
+		case PCI_MAPREG_MEM_TYPE_32BIT:
+			type = "32-bit";
+			break;
+		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+			type = "32-bit-1M";
+			break;
+		case PCI_MAPREG_MEM_TYPE_64BIT:
+			type = "64-bit";
+			break;
+		default:
+			type = "unknown (XXX)";
+			break;
+		}
+		if (PCI_MAPREG_MEM_CACHEABLE(rval))
+			cache = "";
+		else
+			cache = "non";
+		printf("%s %scacheable memory\n", type, cache);
+		printf("      base address: 0x%08x, size: 0x%08x\n",
+		    PCI_MAPREG_MEM_ADDR(rval),
+		    PCI_MAPREG_MEM_SIZE(mask));
+	} else {
+		printf("i/o\n");
+		printf("      base address: 0x%08x, size: 0x%08x\n",
+		    PCI_MAPREG_IO_ADDR(rval),
+		    PCI_MAPREG_IO_SIZE(mask));
+	}
+}
+static void
+pci_conf_print_type0(pc, tag, regs)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
 {
-	int off, s;
-	pcireg_t mask, rval;
+	int off;
+	pcireg_t rval;
 
-	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4) {
-		/*
-		 * Section 6.2.5.1, `Address Maps', tells us that:
-		 *
-		 * 1) The builtin software should have already mapped the
-		 * device in a reasonable way.
-		 *
-		 * 2) A device which wants 2^n bytes of memory will hardwire
-		 * the bottom n bits of the address to 0.  As recommended,
-		 * we write all 1s and see what we get back.
-		 */
-		rval = regs[o2i(off)];
-		if (rval != 0) {
-			/*
-			 * The following sequence seems to make some devices
-			 * (e.g. host bus bridges, which don't normally
-			 * have their space mapped) very unhappy, to
-			 * the point of crashing the system.
-			 *
-			 * Therefore, if the mapping register is zero to
-			 * start out with, don't bother trying.
-			 */
-			s = splhigh();
-			pci_conf_write(pc, tag, off, 0xffffffff);
-			mask = pci_conf_read(pc, tag, off);
-			pci_conf_write(pc, tag, off, rval);
-			splx(s);
-		} else
-			mask = 0;
-
-		printf("    Mapping register at 0x%02x: ", off);
-		if (rval == 0) {
-			printf("not implemented(?)\n");
-		} else if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
-			const char *type, *cache;
-
-			switch (PCI_MAPREG_MEM_TYPE(rval)) {
-			case PCI_MAPREG_MEM_TYPE_32BIT:
-				type = "32-bit";
-				break;
-			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-				type = "32-bit-1M";
-				break;
-			case PCI_MAPREG_MEM_TYPE_64BIT:
-				type = "64-bit";
-				break;
-			default:
-				type = "unknown (XXX)";
-				break;
-			}
-			if (PCI_MAPREG_MEM_CACHEABLE(rval))
-				cache = "";
-			else
-				cache = "non";
-			printf("%s %scacheable memory\n", type, cache);
-			printf("      base address: 0x%08x, size: 0x%08x\n",
-			    PCI_MAPREG_MEM_ADDR(rval),
-			    PCI_MAPREG_MEM_SIZE(mask));
-		} else {
-			printf("i/o\n");
-			printf("      base address: 0x%08x, size: 0x%08x\n",
-			    PCI_MAPREG_IO_ADDR(rval),
-			    PCI_MAPREG_IO_SIZE(mask));
-		}
-	}
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4)
+		pci_conf_print_bar(pc, tag, regs, off);
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -535,26 +549,271 @@ pci_conf_print_type1(pc, tag, regs)
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
 	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
 	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
-	printf("    Interrupt pin: 0x%02x", PCI_INTERRUPT_PIN(rval));
+	printf("    Interrupt pin: 0x%02x ", PCI_INTERRUPT_PIN(rval));
 	switch (PCI_INTERRUPT_PIN(rval)) {
 	case PCI_INTERRUPT_PIN_NONE:
-		printf(" (none)");
+		printf("(none)");
 		break;
 	case PCI_INTERRUPT_PIN_A:
-		printf(" (pin A)");
+		printf("(pin A)");
 		break;
 	case PCI_INTERRUPT_PIN_B:
-		printf(" (pin B)");
+		printf("(pin B)");
 		break;
 	case PCI_INTERRUPT_PIN_C:
-		printf(" (pin C)");
+		printf("(pin C)");
 		break;
 	case PCI_INTERRUPT_PIN_D:
-		printf(" (pin D)");
+		printf("(pin D)");
+		break;
+	default:
+		printf("(???)");
 		break;
 	}
 	printf("\n");
 	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
+}
+
+static void
+pci_conf_print_type1(pc, tag, regs)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	const pcireg_t *regs;
+{
+	int off;
+	pcireg_t rval;
+
+	/*
+	 * XXX these need to be printed in more detail, need to be
+	 * XXX checked against specs/docs, etc.
+	 *
+	 * This layout was cribbed from the TI PCI2030 PCI-to-PCI
+	 * Bridge chip documentation, and may not be correct with
+	 * respect to various standards. (XXX)
+	 */
+
+	for (off = 0x10; off < 0x18; off += 4)
+		pci_conf_print_bar(pc, tag, regs, off);
+
+	printf("    Primary bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 0) & 0xff);
+	printf("    Secondary bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 8) & 0xff);
+	printf("    Subordinate bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 16) & 0xff);
+	printf("    Secondary bus latency timer: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 24) & 0xff);
+
+	rval = (regs[o2i(0x1c)] >> 16) & 0xffff;
+	printf("    Secondary status register: 0x%04x\n", rval); /* XXX bits */
+	onoff("66 MHz capable", 0x0020);
+	onoff("User Definable Features (UDF) support", 0x0040);
+	onoff("Fast back-to-back capable", 0x0080);
+	onoff("Data parity error detected", 0x0100);
+
+	printf("      DEVSEL timing: ");
+	switch (rval & 0x0600) {
+	case 0x0000:
+		printf("fast");
+		break;
+	case 0x0200:
+		printf("medium");
+		break;
+	case 0x0400:
+		printf("slow");
+		break;
+	default:
+		printf("unknown/reserved");	/* XXX */
+		break;
+	}
+	printf(" (0x%x)\n", (rval & 0x0600) >> 9);
+
+	onoff("Signaled Target Abort", 0x0800);
+	onoff("Received Target Abort", 0x1000);
+	onoff("Received Master Abort", 0x2000);
+	onoff("System Error", 0x4000);
+	onoff("Parity Error", 0x8000);
+
+	/* XXX Print more prettily */
+	printf("    I/O region:\n");
+	printf("      base register:  0x%02x\n", (regs[o2i(0x1c)] >> 0) & 0xff);
+	printf("      limit register: 0x%02x\n", (regs[o2i(0x1c)] >> 8) & 0xff);
+	printf("      base upper 16 bits register:  0x%04x\n",
+	    (regs[o2i(0x30)] >> 0) & 0xffff);
+	printf("      limit upper 16 bits register: 0x%04x\n",
+	    (regs[o2i(0x30)] >> 16) & 0xffff);
+
+	/* XXX Print more prettily */
+	printf("    Memory region:\n");
+	printf("      base register:  0x%04x\n",
+	    (regs[o2i(0x20)] >> 0) & 0xffff);
+	printf("      limit register: 0x%04x\n",
+	    (regs[o2i(0x20)] >> 16) & 0xffff);
+
+	/* XXX Print more prettily */
+	printf("    Prefetchable memory region:\n");
+	printf("      base register:  0x%04x\n",
+	    (regs[o2i(0x24)] >> 0) & 0xffff);
+	printf("      limit register: 0x%04x\n",
+	    (regs[o2i(0x24)] >> 16) & 0xffff);
+	printf("      base upper 32 bits register:  0x%08x\n", regs[o2i(0x28)]);
+	printf("      limit upper 32 bits register: 0x%08x\n", regs[o2i(0x2c)]);
+
+	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+	/* XXX */
+	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x38)]);
+
+	printf("    Interrupt line: 0x%02x\n",
+	    (regs[o2i(0x3c)] >> 0) & 0xff);
+	printf("    Interrupt pin: 0x%02x ",
+	    (regs[o2i(0x3c)] >> 8) & 0xff);
+	switch ((regs[o2i(0x3c)] >> 8) & 0xff) {
+	case PCI_INTERRUPT_PIN_NONE:
+		printf("(none)");
+		break;
+	case PCI_INTERRUPT_PIN_A:
+		printf("(pin A)");
+		break;
+	case PCI_INTERRUPT_PIN_B:
+		printf("(pin B)");
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		printf("(pin C)");
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		printf("(pin D)");
+		break;
+	default:
+		printf("(???)");
+		break;
+	}
+	printf("\n");
+	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
+	printf("    Bridge control register: 0x%04x\n", rval); /* XXX bits */
+	onoff("Parity error response", 0x0001);
+	onoff("Secondary SERR forwarding", 0x0002);
+	onoff("ISA enable", 0x0004);
+	onoff("VGA enable", 0x0008);
+	onoff("Master abort reporting", 0x0020);
+	onoff("Secondary bus reset", 0x0040);
+	onoff("Fast back-to-back capable", 0x0080);
+}
+
+static void
+pci_conf_print_type2(pc, tag, regs)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	const pcireg_t *regs;
+{
+	int off;
+	pcireg_t rval;
+
+	/*
+	 * XXX these need to be printed in more detail, need to be
+	 * XXX checked against specs/docs, etc.
+	 *
+	 * This layout was cribbed from the TI PCI1130 PCI-to-CardBus
+	 * controller chip documentation, and may not be correct with
+	 * respect to various standards. (XXX)
+	 */
+
+	for (off = 0x10; off < 0x14; off += 4)
+		pci_conf_print_bar(pc, tag, regs, off);
+
+	printf("    Reserved @ 0x14: 0x%04x\n",
+	    (regs[o2i(0x14)] >> 0) & 0xffff);
+	rval = (regs[o2i(0x14)] >> 16) & 0xffff;
+	printf("    Secondary status register: 0x%04x\n", rval);
+	onoff("66 MHz capable", 0x0020);
+	onoff("User Definable Features (UDF) support", 0x0040);
+	onoff("Fast back-to-back capable", 0x0080);
+	onoff("Data parity error detection", 0x0100);
+
+	printf("      DEVSEL timing: ");
+	switch (rval & 0x0600) {
+	case 0x0000:
+		printf("fast");
+		break;
+	case 0x0200:
+		printf("medium");
+		break;
+	case 0x0400:
+		printf("slow");
+		break;
+	default:
+		printf("unknown/reserved");	/* XXX */
+		break;
+	}
+	printf(" (0x%x)\n", (rval & 0x0600) >> 9);
+	onoff("PCI target aborts terminate CardBus bus master transactions",
+	    0x0800);
+	onoff("CardBus target aborts terminate PCI bus master transactions",
+	    0x1000);
+	onoff("Bus initiator aborts terminate initiator transactions",
+	    0x2000);
+	onoff("System error", 0x4000);
+	onoff("Parity error", 0x8000);
+
+	printf("    PCI bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 0) & 0xff);
+	printf("    CardBus bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 8) & 0xff);
+	printf("    Subordinate bus number: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 16) & 0xff);
+	printf("    CardBus latency timer: 0x%02x\n",
+	    (regs[o2i(0x18)] >> 24) & 0xff);
+
+	/* XXX Print more prettily */
+	printf("    CardBus memory region 0:\n");
+	printf("      base register:  0x%08x\n", regs[o2i(0x1c)]);
+	printf("      limit register: 0x%08x\n", regs[o2i(0x20)]);
+	printf("    CardBus memory region 1:\n");
+	printf("      base register:  0x%08x\n", regs[o2i(0x24)]);
+	printf("      limit register: 0x%08x\n", regs[o2i(0x28)]);
+	printf("    CardBus I/O region 0:\n");
+	printf("      base register:  0x%08x\n", regs[o2i(0x2c)]);
+	printf("      limit register: 0x%08x\n", regs[o2i(0x30)]);
+	printf("    CardBus I/O region 1:\n");
+	printf("      base register:  0x%08x\n", regs[o2i(0x34)]);
+	printf("      limit register: 0x%08x\n", regs[o2i(0x38)]);
+
+	printf("    Interrupt line: 0x%02x\n",
+	    (regs[o2i(0x3c)] >> 0) & 0xff);
+	printf("    Interrupt pin: 0x%02x ",
+	    (regs[o2i(0x3c)] >> 8) & 0xff);
+	switch ((regs[o2i(0x3c)] >> 8) & 0xff) {
+	case PCI_INTERRUPT_PIN_NONE:
+		printf("(none)");
+		break;
+	case PCI_INTERRUPT_PIN_A:
+		printf("(pin A)");
+		break;
+	case PCI_INTERRUPT_PIN_B:
+		printf("(pin B)");
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		printf("(pin C)");
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		printf("(pin D)");
+		break;
+	default:
+		printf("(???)");
+		break;
+	}
+	printf("\n");
+	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
+	printf("    Bridge control register: 0x%04x\n", rval);
+	onoff("Parity error response", 0x0001);
+	onoff("CardBus SERR forwarding", 0x0002);
+	onoff("ISA enable", 0x0004);
+	onoff("VGA enable", 0x0008);
+	onoff("CardBus master abort reporting", 0x0020);
+	onoff("CardBus reset", 0x0040);
+	onoff("Functional interrupts routed by ExCA registers", 0x0080);
+	onoff("Memory window 0 prefetchable", 0x0100);
+	onoff("Memory window 1 prefetchable", 0x0200);
+	onoff("Write posting enable", 0x0400);
 }
 
 void
@@ -565,6 +824,7 @@ pci_conf_print(pc, tag, printfn)
 {
 	pcireg_t regs[o2i(256)];
 	int off, hdrtype;
+	const char *typename;
 	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
 
 	printf("PCI configuration registers:\n");
@@ -587,19 +847,33 @@ pci_conf_print(pc, tag, printfn)
 
 	/* type-dependent header */
 	hdrtype = PCI_HDRTYPE_TYPE(regs[o2i(PCI_BHLC_REG)]);
-	printf("  Type %d header:\n", hdrtype);
+	switch (hdrtype) {		/* XXX make a table, eventually */
+	case 0:
+		/* Standard device header */
+		typename = "\"normal\" device";
+		typeprintfn = &pci_conf_print_type0;
+		break;
+	case 1:
+		/* PCI-PCI bridge header */
+		typename = "PCI-PCI bridge";
+		typeprintfn = &pci_conf_print_type1;
+		break;
+	case 2:
+		/* PCI-CardBus bridge header */
+		typename = "PCI-CardBus bridge";
+		typeprintfn = &pci_conf_print_type2;
+		break;
+	default:
+		typename = NULL;
+		typeprintfn = 0;
+	}
+	printf("  Type %d ", hdrtype);
+	if (typename != NULL)
+		printf("(%s) ", typename);
+	printf("header:\n");
 	for (off = 16; off < 64; off += 16)
 		print16regs(off);
 	printf("\n");
-	switch (hdrtype) {		/* XXX make a table, eventually */
-	case 0:
-		typeprintfn = &pci_conf_print_type1;
-		break;
-	case 1:
-		/* XXX */
-	default:
-		typeprintfn = 0;
-	}
 	if (typeprintfn)
 		(*typeprintfn)(pc, tag, regs);
 	else
