@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.29 2001/10/04 16:02:08 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.30 2002/03/21 00:27:11 simonb Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ main(argc,argv)
 	struct stat st;
 	int fd;
 	int force;
+	int openmode;
 
 	num_options = 0;
 	action = 0;
@@ -117,6 +118,7 @@ main(argc,argv)
 	do_rewrite = 0;
 	is_clean = 0;
 	force = 0;
+	openmode = O_RDWR;	/* default to read/write */
 
 	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv")) 
 	       != -1)
@@ -162,10 +164,12 @@ main(argc,argv)
 		case 'g':
 			action = RAIDFRAME_GET_COMPONENT_LABEL;
 			strncpy(component, optarg, PATH_MAX);
+			openmode = O_RDONLY;
 			num_options++;
 			break;
 		case 'G':
 			action = RAIDFRAME_GET_INFO;
+			openmode = O_RDONLY;
 			do_output = 1;
 			num_options++;
 			break;
@@ -195,14 +199,17 @@ main(argc,argv)
 			break;
 		case 's':
 			action = RAIDFRAME_GET_INFO;
+			openmode = O_RDONLY;
 			num_options++;
 			break;
 		case 'S':
 			action = RAIDFRAME_CHECK_RECON_STATUS_EXT;
+			openmode = O_RDONLY;
 			num_options++;
 			break;
 		case 'p':
 			action = RAIDFRAME_CHECK_PARITY;
+			openmode = O_RDONLY;
 			num_options++;
 			break;
 		case 'P':
@@ -230,7 +237,7 @@ main(argc,argv)
 		usage();
 
 	strncpy(name,argv[0],PATH_MAX);
-	fd = opendisk(name, O_RDWR, dev_name, sizeof(dev_name), 1);
+	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 1);
 	if (fd == -1) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
 			getprogname(), name);
