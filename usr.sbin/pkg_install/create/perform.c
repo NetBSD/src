@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.22.4.1 2000/12/15 04:06:32 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.22.4.2 2001/03/20 18:00:37 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.22.4.1 2000/12/15 04:06:32 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.22.4.2 2001/03/20 18:00:37 he Exp $");
 #endif
 #endif
 
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: perform.c,v 1.22.4.1 2000/12/15 04:06:32 he Exp $");
 
 #include <err.h>
 #include <signal.h>
-#include <sys/syslimits.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -275,6 +274,9 @@ pkg_perform(lpkg_head_t *pkgs)
 
 	/* Slurp in the packing list */
 	read_plist(&plist, pkg_in);
+
+	if (pkg_in != stdin)
+		fclose(pkg_in);
 
 	/* Prefix should override the packing list */
 	if (Prefix) {
