@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2 1998/01/26 21:49:13 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,37 +34,13 @@
  * Prototypes for OpenFirmware Interface Routines
  */
 
-#include <sys/param.h>
-#include <sys/device.h>
-
-int openfirmware __P((void *));
-
-extern char *OF_buf;
-
-int OF_peer __P((int phandle));
-int OF_child __P((int phandle));
-int OF_parent __P((int phandle));
-int OF_instance_to_package __P((int ihandle));
-int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
-int OF_finddevice __P((char *name));
-int OF_instance_to_path __P((int ihandle, char *buf, int buflen));
-int OF_package_to_path __P((int phandle, char *buf, int buflen));
-int OF_call_method_1 __P((char *method, int ihandle, int nargs, ...));
-int OF_call_method __P((char *method, int ihandle, int nargs, int nreturns, ...));
-int OF_open __P((char *dname));
-void OF_close __P((int handle));
-int OF_read __P((int handle, void *addr, int len));
-int OF_write __P((int handle, void *addr, int len));
-int OF_seek __P((int handle, u_quad_t pos));
-void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
-void OF_enter __P((void));
-void OF_exit __P((void)) __attribute__((__noreturn__));
-void (*OF_set_callback __P((void (*newfunc)(void *)))) ();
+#include <sys/param.h>				/* XXX */
+#include <sys/device.h>				/* XXX */
 
 /*
- * Some generic routines for OpenFirmware handling.
+ * Machine-independent OpenFirmware-related structures.
+ * XXX THESE DO NOT BELONG HERE.
  */
-int ofnmmatch __P((char *cp1, char *cp2));
 
 /*
  * Generic OpenFirmware probe argument.
@@ -92,3 +68,36 @@ struct ofb_softc {
 	int sc_phandle;
 	int sc_unit;		/* Might be missing for non-disk devices */
 };
+
+
+/*
+ * Functions and variables provided by machine-dependent code.
+ */
+extern char *OF_buf;
+
+int	OF_peer __P((int phandle));
+int	OF_child __P((int phandle));
+int	OF_parent __P((int phandle));
+int	OF_instance_to_package __P((int ihandle));
+int	OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+int	OF_finddevice __P((char *name));
+int	OF_instance_to_path __P((int ihandle, char *buf, int buflen));
+int	OF_package_to_path __P((int phandle, char *buf, int buflen));
+int	OF_call_method_1 __P((char *method, int ihandle, int nargs, ...));
+int	OF_call_method __P((char *method, int ihandle, int nargs,
+	    int nreturns, ...));
+int	OF_open __P((char *dname));
+void	OF_close __P((int handle));
+int	OF_read __P((int handle, void *addr, int len));
+int	OF_write __P((int handle, void *addr, int len));
+int	OF_seek __P((int handle, u_quad_t pos));
+void	OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
+void	OF_enter __P((void));
+void	OF_exit __P((void)) __attribute__((__noreturn__));
+void	(*OF_set_callback __P((void (*newfunc)(void *)))) ();
+int	openfirmware __P((void *));
+
+/*
+ * Functions and variables provided by machine-independent code.
+ */
+int	of_decode_int __P((const unsigned char *buf));
