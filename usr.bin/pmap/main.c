@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2003/09/17 22:06:50 yamt Exp $ */
+/*	$NetBSD: main.c,v 1.14 2004/01/06 14:01:19 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2003/09/17 22:06:50 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2004/01/06 14:01:19 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ struct nchashhead *nchashtbl;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
 void *kernel_floor;
 struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
-struct vm_map *st_map, *pt_map, *lkm_map;
+struct vm_map *st_map, *pt_map, *lkm_map, *buf_map;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose, recurse, page_size;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
@@ -132,6 +132,8 @@ struct nlist kmaps[] = {
 #define NL_pt_map		6
 	{ "_lkm_map" },
 #define NL_lkm_map		7
+	{ "_buf_map" },
+#define NL_buf_map		8
 	{ NULL }
 };
 
@@ -492,9 +494,10 @@ load_symbols(kvm_t *kd)
 	 */
 	(void)kvm_nlist(kd, &kmaps[0]);
 
-#define get_map_address(m) \
+#define get_map_address(m) do {\
 	if (kmaps[CONCAT(NL_,m)].n_value != 0) \
-		_KDEREF(kd, kmaps[CONCAT(NL_,m)].n_value, &m, sizeof(m))
+		_KDEREF(kd, kmaps[CONCAT(NL_,m)].n_value, &m, sizeof(m)); \
+	} while (0)
 
 	get_map_address(kmem_map);
 	get_map_address(mb_map);
@@ -504,6 +507,7 @@ load_symbols(kvm_t *kd)
 	get_map_address(st_map);
 	get_map_address(pt_map);
 	get_map_address(lkm_map);
+	get_map_address(buf_map);
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PAGESIZE;
@@ -534,6 +538,8 @@ mapname(void *addr)
 		return ("pt_map");
 	else if (addr == lkm_map)
 		return ("lkm_map");
+	else if (addr == buf_map)
+		return ("buf_map");
 	else
 		return (NULL);
 }
