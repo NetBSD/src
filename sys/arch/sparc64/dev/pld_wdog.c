@@ -1,7 +1,7 @@
-/*	$NetBSD: pld_wdog.c,v 1.2 2003/07/24 09:10:43 petrov Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.3 2003/07/30 07:00:32 petrov Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,6 +175,8 @@ pldwdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pldwdog_softc *sc = (struct pldwdog_softc *)self;
 	struct ebus_attach_args *ea = aux;
+
+	printf("\n");
 
 	sc->sc_btag = ea->ea_bustag;
 
