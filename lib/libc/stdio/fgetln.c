@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.3 1997/07/13 20:14:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,15 +36,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: fgetln.c,v 1.3 1997/07/13 20:14:54 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+
+int __slbexpand __P((FILE *, size_t));
 
 /*
  * Expand the line buffer.  Return -1 on error.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.8 1997/07/07 17:47:00 phil Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.9 1997/07/13 20:15:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: mktemp.c,v 1.9 1997/07/13 20:15:16 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: mktemp.c,v 1.8 1997/07/07 17:47:00 phil Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,8 +49,10 @@ static char rcsid[] = "$NetBSD: mktemp.c,v 1.8 1997/07/07 17:47:00 phil Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
+#include "local.h"
 
-static int _gettemp();
+static int _gettemp __P((char *, int *));
 
 int
 mkstemp(path)
@@ -81,7 +85,6 @@ _gettemp(path, doopen)
 	char *path;
 	register int *doopen;
 {
-	extern int errno;
 	register char *start, *trv;
 	struct stat sbuf;
 	u_int pid;

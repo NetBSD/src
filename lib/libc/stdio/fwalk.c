@@ -1,4 +1,4 @@
-/*	$NetBSD: fwalk.c,v 1.5 1996/03/29 23:29:12 jtc Exp $	*/
+/*	$NetBSD: fwalk.c,v 1.6 1997/07/13 20:15:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fwalk.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: fwalk.c,v 1.6 1997/07/13 20:15:09 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: fwalk.c,v 1.5 1996/03/29 23:29:12 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -50,7 +52,7 @@ static char rcsid[] = "$NetBSD: fwalk.c,v 1.5 1996/03/29 23:29:12 jtc Exp $";
 
 int
 _fwalk(function)
-	register int (*function)();
+	register int (*function) __P((FILE *));
 {
 	register FILE *fp;
 	register int n, ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.4 1995/02/02 02:09:44 jtc Exp $	*/
+/*	$NetBSD: funopen.c,v 1.5 1997/07/13 20:15:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: funopen.c,v 1.5 1997/07/13 20:15:07 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: funopen.c,v 1.4 1995/02/02 02:09:44 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,13 +52,10 @@ static char rcsid[] = "$NetBSD: funopen.c,v 1.4 1995/02/02 02:09:44 jtc Exp $";
 FILE *
 funopen(cookie, readfn, writefn, seekfn, closefn)
 	const void *cookie;
-	int (*readfn)(), (*writefn)();
-#if __STDC__
-	fpos_t (*seekfn)(void *cookie, fpos_t off, int whence);
-#else
-	fpos_t (*seekfn)();
-#endif
-	int (*closefn)();
+	int (*readfn) __P((void *, char *, int));
+	int (*writefn) __P((void *, const char *, int));
+	fpos_t (*seekfn) __P((void *, fpos_t, int));
+	int (*closefn) __P((void *));
 {
 	register FILE *fp;
 	int flags;

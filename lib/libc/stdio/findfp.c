@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.6 1995/02/02 02:09:17 jtc Exp $	*/
+/*	$NetBSD: findfp.c,v 1.7 1997/07/13 20:14:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
+#else
+__RCSID("$NetBSD: findfp.c,v 1.7 1997/07/13 20:14:58 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: findfp.c,v 1.6 1995/02/02 02:09:17 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -70,6 +72,9 @@ FILE __sF[3] = {
 	std(__SWR|__SNBF, STDERR_FILENO)	/* stderr */
 };
 struct glue __sglue = { &uglue, 3, __sF };
+
+static struct glue *moreglue __P((int));
+void f_prealloc __P((void));
 
 static struct glue *
 moreglue(n)
