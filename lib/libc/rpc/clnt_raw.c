@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.8 1998/02/11 07:50:07 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.9 1998/02/11 11:52:53 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.8 1998/02/11 07:50:07 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.9 1998/02/11 11:52:53 lukem Exp $");
 #endif
 #endif
 
@@ -67,11 +67,11 @@ __weak_alias(clntraw_create,_clntraw_create);
  * This is the "network" we will be moving stuff over.
  */
 static struct clntraw_private {
-	CLIENT	client_object;
-	XDR	xdr_stream;
-	char	_raw_buf[UDPMSGSIZE];
-	char	mashl_callmsg[MCALL_MSG_SIZE];
-	size_t	mcnt;
+	CLIENT		client_object;
+	XDR		xdr_stream;
+	char		_raw_buf[UDPMSGSIZE];
+	char		mashl_callmsg[MCALL_MSG_SIZE];
+	u_int32_t	mcnt;
 } *clntraw_private;
 
 
