@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.17 2000/11/20 11:52:37 pk Exp $
+#	$NetBSD: install.md,v 1.18 2002/05/07 12:27:26 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,8 +97,10 @@ md_get_partition_range() {
 }
 
 md_installboot() {
+	# $1 is the boot disk
 	echo "Installing boot block..."
-	/usr/mdec/binstall ffs /mnt
+	cp -p /usr/mdec/boot /mnt/boot
+	/usr/sbin/installboot -v /dev/r${1}a /usr/mdec/bootxx /boot
 }
 
 md_native_fstype() {
