@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/11/22 16:38:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2003/03/30 08:52:23 tsutsui Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -25,6 +25,7 @@ CPPFLAGS+= -DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+= -DSUN_BOOTPARAMS
 CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I${COMMON} -I${S}
+CPPFLAGS+= -D__daddr_t=int32_t
 
 AFLAGS= -D_LOCORE -mno-abicalls
 
