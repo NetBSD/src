@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.14 2001/07/27 01:28:06 lukem Exp $	*/
+/*	$NetBSD: fs.h,v 1.15 2001/08/30 08:31:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,8 +64,8 @@
  * The first boot and super blocks are given in absolute disk addresses.
  * The byte-offset forms are preferred, as they don't imply a sector size.
  */
-#define BBSIZE		8192
-#define SBSIZE		8192
+#define	BBSIZE		8192
+#define	SBSIZE		8192
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
 #define	BBLOCK		((ufs_daddr_t)(0))
@@ -73,9 +73,9 @@
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
- * of `blocks'. File system blocks of at most size MAXBSIZE can 
+ * of `blocks'. File system blocks of at most size MAXBSIZE can
  * be optionally broken into 2, 4, or 8 pieces, each of which is
- * addressible; these pieces may be DEV_BSIZE, or some multiple of
+ * addressable; these pieces may be DEV_BSIZE, or some multiple of
  * a DEV_BSIZE unit.
  *
  * Large files consist of exclusively large data blocks.  To avoid
@@ -99,14 +99,14 @@
  * Note that super blocks are always of size SBSIZE,
  * and that both SBSIZE and MAXBSIZE must be >= MINBSIZE.
  */
-#define MINBSIZE	4096
+#define	MINBSIZE	4096
 
 /*
  * The path name on which the file system is mounted is maintained
  * in fs_fsmnt. MAXMNTLEN defines the amount of space allocated in
  * the super block for this name.
  */
-#define MAXMNTLEN	512
+#define	MAXMNTLEN	512
 
 /*
  * The limit on the amount of summary information per file system
@@ -124,7 +124,7 @@
  * value of fs_maxcontig. To conserve space, a maximum summary size
  * is set by FS_MAXCONTIG.
  */
-#define FS_MAXCONTIG	16
+#define	FS_MAXCONTIG	16
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
@@ -138,8 +138,8 @@
  * default value. With 10% free space, fragmentation is not a
  * problem, so we choose to optimize for time.
  */
-#define MINFREE		5
-#define DEFAULTOPT	FS_OPTTIME
+#define	MINFREE		5
+#define	DEFAULTOPT	FS_OPTTIME
 
 /*
  * Per cylinder group information; summarized in blocks allocated
@@ -235,7 +235,7 @@ struct fs {
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
 	int32_t	 fs_sparecon[49];	/* reserved for future constants */
 	int32_t	 fs_fscktime;		/* last time fsck(8)ed */
-	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
+	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */
 	u_int64_t fs_maxfilesize;	/* maximum representable file size */
@@ -252,15 +252,15 @@ struct fs {
 };
 
 /*
- * Filesystem identification
+ * File system identification
  */
-#define	FS_MAGIC	0x011954	/* the fast filesystem magic number */
+#define	FS_MAGIC	0x011954	/* the fast file system magic number */
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
-#define FS_42INODEFMT	-1		/* 4.2BSD inode format */
-#define FS_44INODEFMT	2		/* 4.4BSD inode format */
+#define	FS_42INODEFMT	-1		/* 4.2BSD inode format */
+#define	FS_44INODEFMT	2		/* 4.4BSD inode format */
 
 /*
- * Filesystem clean flags
+ * File system clean flags
  */
 #define	FS_ISCLEAN	0x01
 #define	FS_WASCLEAN	0x02
@@ -268,35 +268,36 @@ struct fs {
 /*
  * Preference for optimization.
  */
-#define FS_OPTTIME	0	/* minimize allocation time */
-#define FS_OPTSPACE	1	/* minimize disk fragmentation */
+#define	FS_OPTTIME	0	/* minimize allocation time */
+#define	FS_OPTSPACE	1	/* minimize disk fragmentation */
 
 /*
- * Filesystem flags.
+ * File system flags
  */
-#define FS_UNCLEAN	0x01	/* filesystem not clean at mount (unused) */
-#define FS_DOSOFTDEP	0x02	/* filesystem using soft dependencies */
+#define	FS_UNCLEAN	0x01	/* file system not clean at mount (unused) */
+#define	FS_DOSOFTDEP	0x02	/* file system using soft dependencies */
 
 /*
- * Filesystem internal flags, also in fs_flags
+ * File system internal flags, also in fs_flags.
+ * (Pick highest number to avoid conflicts with others)
  */
-#define FS_SWAPPED	0x80	/* pick highest, avoid conflicts with others */
-#define FS_INTERNAL	0x80	/* mask for internal flags */
+#define	FS_SWAPPED	0x80	/* file system is endian swapped */
+#define	FS_INTERNAL	0x80	/* mask for internal flags */
 
 /*
  * Rotational layout table format types
  */
-#define FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
-#define FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
+#define	FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
+#define	FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
 /*
  * Macros for access to superblock array structures
  */
-#define fs_postbl(fs, cylno) \
+#define	fs_postbl(fs, cylno) \
     (((fs)->fs_postblformat == FS_42POSTBLFMT) \
     ? ((fs)->fs_opostbl[cylno]) \
     : ((int16_t *)((u_int8_t *)(fs) + \
 	(fs)->fs_postbloff) + (cylno) * (fs)->fs_nrpos))
-#define fs_rotbl(fs) \
+#define	fs_rotbl(fs) \
     (((fs)->fs_postblformat == FS_42POSTBLFMT) \
     ? ((fs)->fs_space) \
     : ((u_int8_t *)((u_int8_t *)(fs) + (fs)->fs_rotbloff)))
@@ -307,7 +308,7 @@ struct fs {
  * Its size is derived from the size of the maps maintained in the
  * cylinder group and the (struct cg) size.
  */
-#define CGSIZE(fs) \
+#define	CGSIZE(fs) \
     /* base cg */	(sizeof(struct cg) + sizeof(int32_t) + \
     /* blktot size */	(fs)->fs_cpg * sizeof(int32_t) + \
     /* blks size */	(fs)->fs_cpg * (fs)->fs_nrpos * sizeof(int16_t) + \
@@ -322,7 +323,7 @@ struct fs {
  *
  * N.B. This macro assumes that sizeof(struct csum) is a power of two.
  */
-#define fs_cs(fs, indx) \
+#define	fs_cs(fs, indx) \
 	fs_csp[(indx) >> (fs)->fs_csshift][(indx) & ~(fs)->fs_csmask]
 
 /*
@@ -358,35 +359,35 @@ struct cg {
 /*
  * Macros for access to cylinder group array structures
  */
-#define cg_blktot(cgp, ns) \
+#define	cg_blktot(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_btot) \
     : ((int32_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_btotoff, (ns)))))
-#define cg_blks(fs, cgp, cylno, ns) \
+#define	cg_blks(fs, cgp, cylno, ns) \
     ((ufs_rw32((cgp)->cg_magic, ns) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_b[cylno]) \
     : ((int16_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_boff, (ns))) + \
 	(cylno) * (fs)->fs_nrpos))
-#define cg_inosused(cgp, ns) \
+#define	cg_inosused(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_iused) \
     : ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_iusedoff, (ns)))))
-#define cg_blksfree(cgp, ns) \
+#define	cg_blksfree(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) \
     ? (((struct ocg *)(cgp))->cg_free) \
     : ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_freeoff, (ns)))))
-#define cg_chkmagic(cgp, ns) \
+#define	cg_chkmagic(cgp, ns) \
     (ufs_rw32((cgp)->cg_magic, (ns)) == CG_MAGIC || \
 	ufs_rw32(((struct ocg *)(cgp))->cg_magic, (ns)) == \
 	CG_MAGIC)
-#define cg_clustersfree(cgp, ns) \
+#define	cg_clustersfree(cgp, ns) \
     ((u_int8_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_clusteroff, (ns))))
-#define cg_clustersum(cgp, ns) \
+#define	cg_clustersum(cgp, ns) \
     ((int32_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_clustersumoff, (ns))))
 
@@ -419,7 +420,7 @@ struct ocg {
  * Turn file system block numbers into disk block addresses.
  * This maps file system blocks to device size blocks.
  */
-#define fsbtodb(fs, b)	((b) << (fs)->fs_fsbtodb)
+#define	fsbtodb(fs, b)	((b) << (fs)->fs_fsbtodb)
 #define	dbtofsb(fs, b)	((b) >> (fs)->fs_fsbtodb)
 
 /*
@@ -431,7 +432,7 @@ struct ocg {
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
 #define	cgtod(fs, c)	(cgstart(fs, c) + (fs)->fs_cblkno)	/* cg block */
-#define cgstart(fs, c)							\
+#define	cgstart(fs, c)							\
 	(cgbase(fs, c) + (fs)->fs_cgoffset * ((c) & ~((fs)->fs_cgmask)))
 
 /*
@@ -457,11 +458,11 @@ struct ocg {
  * Extract the bits for a block from a map.
  * Compute the cylinder and rotational position of a cyl block addr.
  */
-#define blkmap(fs, map, loc) \
+#define	blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
-#define cbtocylno(fs, bno) \
+#define	cbtocylno(fs, bno) \
     ((bno) * NSPF(fs) / (fs)->fs_spc)
-#define cbtorpos(fs, bno) \
+#define	cbtorpos(fs, bno) \
     (((bno) * NSPF(fs) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
      (bno) * NSPF(fs) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
      (fs)->fs_nsect * (fs)->fs_nrpos / (fs)->fs_npsect)
@@ -471,49 +472,49 @@ struct ocg {
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define blkoff(fs, loc)		/* calculates (loc % fs->fs_bsize) */ \
+#define	blkoff(fs, loc)		/* calculates (loc % fs->fs_bsize) */ \
 	((loc) & (fs)->fs_qbmask)
-#define fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
+#define	fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
 	((loc) & (fs)->fs_qfmask)
-#define lblktosize(fs, blk)	/* calculates (blk * fs->fs_bsize) */ \
+#define	lblktosize(fs, blk)	/* calculates (blk * fs->fs_bsize) */ \
 	((blk) << (fs)->fs_bshift)
-#define lblkno(fs, loc)		/* calculates (loc / fs->fs_bsize) */ \
+#define	lblkno(fs, loc)		/* calculates (loc / fs->fs_bsize) */ \
 	((loc) >> (fs)->fs_bshift)
-#define numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
+#define	numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
 	((loc) >> (fs)->fs_fshift)
-#define blkroundup(fs, size)	/* calculates roundup(size, fs->fs_bsize) */ \
+#define	blkroundup(fs, size)	/* calculates roundup(size, fs->fs_bsize) */ \
 	(((size) + (fs)->fs_qbmask) & (fs)->fs_bmask)
-#define fragroundup(fs, size)	/* calculates roundup(size, fs->fs_fsize) */ \
+#define	fragroundup(fs, size)	/* calculates roundup(size, fs->fs_fsize) */ \
 	(((size) + (fs)->fs_qfmask) & (fs)->fs_fmask)
-#define fragstoblks(fs, frags)	/* calculates (frags / fs->fs_frag) */ \
+#define	fragstoblks(fs, frags)	/* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->fs_fragshift)
-#define blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
+#define	blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
 	((blks) << (fs)->fs_fragshift)
-#define fragnum(fs, fsb)	/* calculates (fsb % fs->fs_frag) */ \
+#define	fragnum(fs, fsb)	/* calculates (fsb % fs->fs_frag) */ \
 	((fsb) & ((fs)->fs_frag - 1))
-#define blknum(fs, fsb)		/* calculates rounddown(fsb, fs->fs_frag) */ \
+#define	blknum(fs, fsb)		/* calculates rounddown(fsb, fs->fs_frag) */ \
 	((fsb) &~ ((fs)->fs_frag - 1))
 
 /*
  * Determine the number of available frags given a
  * percentage to hold in reserve.
  */
-#define freespace(fs, percentreserved) \
+#define	freespace(fs, percentreserved) \
 	(blkstofrags((fs), (fs)->fs_cstotal.cs_nbfree) + \
 	(fs)->fs_cstotal.cs_nffree - ((fs)->fs_dsize * (percentreserved) / 100))
 
 /*
  * Determining the size of a file block in the file system.
  */
-#define blksize(fs, ip, lbn) \
+#define	blksize(fs, ip, lbn) \
 	(((lbn) >= NDADDR || (ip)->i_ffs_size >= ((lbn) + 1) << (fs)->fs_bshift) \
 	    ? (fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs_size))))
-#define dblksize(fs, dip, lbn) \
+#define	dblksize(fs, dip, lbn) \
 	(((lbn) >= NDADDR || (dip)->di_size >= ((lbn) + 1) << (fs)->fs_bshift) \
 	    ? (fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
-#define sblksize(fs, size, lbn) \
+#define	sblksize(fs, size, lbn) \
 	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
 	    ? (fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (size)))))
