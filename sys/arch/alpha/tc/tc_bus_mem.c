@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.5 1996/06/11 21:20:08 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.6 1996/06/11 21:28:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -132,9 +132,9 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 		return (1);
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
-		*nmemh = memh + (off << 1);
+		*nmemh = memh + (offset << 1);
 	else
-		*nmemh = memh + off;
+		*nmemh = memh + offset;
 
 	return (0);
 }
