@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.23 2005/03/31 03:07:38 xtraeme Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.24 2005/03/31 15:55:57 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.23 2005/03/31 03:07:38 xtraeme Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.24 2005/03/31 15:55:57 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,9 +109,9 @@ mount_lfs(int argc, char *argv[])
 		case 'd':
 			cleaner_debug = 1;
 			break;
-                case 'i':
-                        fs_idle = 1;
-                        break;
+		case 'i':
+			fs_idle = 1;
+			break;
 		case 'n':
 			noclean = 1;
 			break;
@@ -269,8 +269,8 @@ invoke_cleaner(char *name)
 		*ap++ = "-s";
 	if (cleaner_debug)
 		*ap++ = "-d";
-        if (fs_idle)
-                *ap++ = "-f";
+	if (fs_idle)
+		*ap++ = "-f";
 	*ap++ = name;
 	*ap = NULL;
 
