@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.14 1994/06/25 04:58:01 briggs Exp $
+#     $Id: GENERIC,v 1.15 1994/06/26 12:53:36 briggs Exp $
 
 include	"std.mac68k"
 
@@ -52,6 +52,8 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
+options		MC68040
+options		MC68030		# Includes the 020+851
 options		FPCOPROC
 options		FPSP
 options		COMPAT_NOMID
@@ -62,7 +64,8 @@ config		netbsd	swap generic
 
 ae0	at nubus0	slot -1   id ?   claimed 0
 
-ncr0	at mainbus?		# SCSI NCR 5380
+ncrscsi0	at mainbus?		# SCSI NCR 5380
+ncr96scsi0	at mainbus?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
