@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.76 2002/06/03 16:17:57 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.77 2002/06/05 00:15:33 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.76 2002/06/03 16:17:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.77 2002/06/05 00:15:33 mjacob Exp $");
 
 #include "opt_scsi.h"
 
@@ -1540,17 +1540,21 @@ scsipi_complete(xs)
 		error = ERESTART;
 		break;
 
+	case XS_SELTIMEOUT:
 	case XS_TIMEOUT:
-		if (xs->xs_retries != 0) {
+		/*
+		 * If the device hasn't gone away, honor retry counts.
+		 *
+		 * Note that if we're in the middle of probing it,
+		 * it won't be found because it isn't here yet so
+		 * we won't honor the retry count in that case.
+		 */
+		if (scsipi_lookup_periph(chan, periph->periph_target,
+		    periph->periph_lun) && xs->xs_retries != 0) {
 			xs->xs_retries--;
 			error = ERESTART;
 		} else
 			error = EIO;
-		break;
-
-	case XS_SELTIMEOUT:
-		/* XXX Disable device? */
-		error = EIO;
 		break;
 
 	case XS_RESET:
