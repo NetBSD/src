@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)am.h	5.6 (Berkeley) 6/6/93
- *	$Id: am.h,v 1.3 1994/06/13 20:50:34 mycroft Exp $
+ *	$Id: am.h,v 1.4 1996/02/19 20:57:56 christos Exp $
  *
  */
 
@@ -48,10 +48,16 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
-#include "nfs_prot.h"
+#include <sys/mount.h>
 #ifdef MNTENT_HDR
 #include MNTENT_HDR
 #endif /* MNTENT_HDR */
+#ifndef NFS_PROTOCOL_VERSION
+#if NFS_ARGSVERSION >= 3
+#define NFS_PROTOCOL_VERSION 3
+#endif /* NFS_ARGSVERSION >= 3 */
+#endif /* NFS_PROTOCOL_VERSION */
+#include "nfs_prot.h"
 #include <assert.h>
 
 #ifdef DEBUG_MEM
@@ -268,7 +274,7 @@ extern int mapc_search P((mnt_map*, char*, char**));
 extern void mapc_reload(P_void);
 extern void mapc_showtypes P((FILE*));
 extern int mkdirs P((char*, int));
-extern void mk_fattr P((am_node*, enum ftype));
+extern void mk_fattr P((am_node*, int));
 extern void mnt_free P((struct mntent*));
 extern int mount_auto_node P((char*, voidp));
 extern int mount_automounter P((int));

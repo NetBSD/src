@@ -36,25 +36,35 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	8.1 (Berkeley) 6/6/93
- *	$Id: mount.h,v 1.2 1994/06/13 20:50:54 mycroft Exp $
+ *	$Id: mount.h,v 1.3 1996/02/19 20:57:59 christos Exp $
  *
  */
 
 #define MNTPATHLEN 1024
 #define MNTNAMLEN 255
-#define FHSIZE 32
 
+#if NFS_PROTOCOL_VERSION < 3
+#define FHSIZE 32
 typedef char fhandle[FHSIZE];
+typedef struct fhstatus {
+	u_int fhs_stat;
+	fhandle fhs_fhandle;
+} fhstatus;
+#else
+#define FHSIZE NFSX_V3FHMAX
+typedef char fhandle[NFSX_V3FHMAX];
+typedef struct fhstatus {
+	u_long		fhs_stat;
+ 	long		fhs_vers;
+	long		fhs_auth;
+	long		fhs_size;
+	fhandle		fhs_fhandle;
+} fhstatus;
+#endif
+
 bool_t xdr_fhandle();
 
 
-struct fhstatus {
-	u_int fhs_status;
-	union {
-		fhandle fhs_fhandle;
-	} fhstatus_u;
-};
-typedef struct fhstatus fhstatus;
 bool_t xdr_fhstatus();
 
 
