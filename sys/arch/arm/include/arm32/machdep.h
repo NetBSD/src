@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.3 2002/01/20 03:41:48 thorpej Exp $ */
+/* $NetBSD: machdep.h,v 1.4 2002/02/20 00:10:18 thorpej Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -11,7 +11,6 @@ void prefetch_abort_handler __P((trapframe_t *));
 void undefinedinstruction_bounce __P((trapframe_t *));
 void dumpsys	__P((void));
 
-void	map_section(vaddr_t, vaddr_t, paddr_t, int);
 void	map_pagetable(vaddr_t, vaddr_t, paddr_t);
 void	map_entry(vaddr_t, vaddr_t, paddr_t);
 void	map_entry_nc(vaddr_t, vaddr_t, paddr_t);
