@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1998/03/04 22:22:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1998/04/30 14:12:15 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 1998/03/04 22:22:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 1998/04/30 14:12:15 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -283,7 +283,8 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	switch (i) {
 
 #ifdef news3400
-	case 6:
+	case 3: /* NWS-3401 */
+	case 6: /* NWS-3470 */
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
