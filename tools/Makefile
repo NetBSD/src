@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.80 2003/12/11 14:52:46 matt Exp $
+#	$NetBSD: Makefile,v 1.81 2004/01/03 14:04:27 lukem Exp $
 
 .include <bsd.own.mk>
 
-.if ${TOOLCHAIN_MISSING} != "yes"
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS= binutils .WAIT
 .  if ${USE_TOOLS_TOOLCHAIN} != "yes"
 TOOLCHAIN_BITS+= gcc
