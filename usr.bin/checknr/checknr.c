@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: checknr.c,v 1.14 2004/07/09 11:41:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.13 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.14 2004/07/09 11:41:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,9 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	printf("usage: checknr -s -f -a.xx.yy.xx.yy... -c.xx.xx.xx...\n");
+	(void)fprintf(stderr,
+	    "usage: %s [-fs] [-a.xx.yy.xx.yy...] [-c.xx.xx.xx...] file\n",
+	    getprogname());
 	exit(1);
 }
 
