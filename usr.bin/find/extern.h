@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1999/01/12 00:18:50 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1999/01/16 13:27:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,7 +50,9 @@ struct stat;
 void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
 
+PLAN	*c_amin __P((char ***, int));
 PLAN	*c_atime __P((char ***, int));
+PLAN	*c_cmin __P((char ***, int));
 PLAN	*c_ctime __P((char ***, int));
 PLAN	*c_depth __P((char ***, int));
 PLAN	*c_exec __P((char ***, int));
@@ -61,6 +63,8 @@ PLAN	*c_group __P((char ***, int));
 PLAN	*c_inum __P((char ***, int));
 PLAN	*c_links __P((char ***, int));
 PLAN	*c_ls __P((char ***, int));
+PLAN	*c_mmin __P((char ***, int));
+PLAN	*c_mtime __P((char ***, int));
 PLAN	*c_name __P((char ***, int));
 PLAN	*c_newer __P((char ***, int));
 PLAN	*c_nogroup __P((char ***, int));
@@ -77,7 +81,6 @@ PLAN	*c_user __P((char ***, int));
 PLAN	*c_xdev __P((char ***, int));
 PLAN	*c_openparen __P((char ***, int));
 PLAN	*c_closeparen __P((char ***, int));
-PLAN	*c_mtime __P((char ***, int));
 PLAN	*c_not __P((char ***, int));
 PLAN	*c_or __P((char ***, int));
 PLAN	*c_null __P((char ***, int));
