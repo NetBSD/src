@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.25 2003/08/07 11:16:01 agc Exp $	*/
+/*	$NetBSD: forward.c,v 1.26 2004/02/16 21:57:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.25 2003/08/07 11:16:01 agc Exp $");
+__RCSID("$NetBSD: forward.c,v 1.26 2004/02/16 21:57:04 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: forward.c,v 1.25 2003/08/07 11:16:01 agc Exp $");
 #include <string.h>
 #include "extern.h"
 
-static int rlines(FILE *, long, struct stat *);
+static int rlines(FILE *, off_t, struct stat *);
 
 /* defines for inner loop actions */
 #define	USE_SLEEP	0
@@ -85,7 +85,7 @@ static int rlines(FILE *, long, struct stat *);
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  */
 void
-forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
+forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 {
 	int ch, n;
 	int kq=-1, action=USE_SLEEP;
@@ -105,7 +105,7 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 		if (S_ISREG(sbp->st_mode)) {
 			if (sbp->st_size < off)
 				off = sbp->st_size;
-			if (fseek(fp, off, SEEK_SET) == -1) {
+			if (fseeko(fp, off, SEEK_SET) == -1) {
 				ierr();
 				return;
 			}
@@ -136,7 +136,7 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 	case RBYTES:
 		if (S_ISREG(sbp->st_mode)) {
 			if (sbp->st_size >= off &&
-			    fseek(fp, -off, SEEK_END) == -1) {
+			    fseeko(fp, -off, SEEK_END) == -1) {
 				ierr();
 				return;
 			}
@@ -277,7 +277,7 @@ forward(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
  * Non-zero return means than a (non-fatal) error occurred.
  */
 static int
-rlines(FILE *fp, long int off, struct stat *sbp)
+rlines(FILE *fp, off_t off, struct stat *sbp)
 {
 	off_t file_size;
 	off_t file_remaining;
