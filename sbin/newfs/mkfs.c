@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.34 1999/03/11 20:23:58 wrstuden Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.35 1999/03/16 21:52:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.34 1999/03/11 20:23:58 wrstuden Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.35 1999/03/16 21:52:34 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -896,6 +896,8 @@ fsinit(utime)
 	node.di_size = sblock.fs_bsize;
 	node.di_db[0] = alloc(node.di_size, node.di_mode);
 	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
+	node.di_uid = geteuid();
+	node.di_gid = getegid();
 	wtfs(fsbtodb(&sblock, node.di_db[0]), node.di_size, buf);
 	iput(&node, LOSTFOUNDINO);
 #endif
@@ -913,6 +915,8 @@ fsinit(utime)
 		node.di_size = makedir(root_dir, PREDEFDIR);
 	node.di_db[0] = alloc(sblock.fs_fsize, node.di_mode);
 	node.di_blocks = btodb(fragroundup(&sblock, node.di_size));
+	node.di_uid = geteuid();
+	node.di_gid = getegid();
 	wtfs(fsbtodb(&sblock, node.di_db[0]), sblock.fs_fsize, buf);
 	iput(&node, ROOTINO);
 }
