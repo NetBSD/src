@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.8 1995/11/15 22:49:56 pk Exp $	*/
+/*	$NetBSD: printjob.c,v 1.9 1996/04/30 00:07:00 jtc Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -1377,7 +1377,7 @@ setty()
 			i.set = 1;
 		}
 		if (XS) {
-			sttysetlflags(&i.t, XC);
+			sttysetlflags(&i.t, XS);
 			i.set = 1;
 		}
 	}
