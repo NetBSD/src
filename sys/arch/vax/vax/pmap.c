@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2000/08/27 17:14:44 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.89 2000/10/31 20:15:09 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -746,12 +746,6 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-#ifdef DIAGNOSTIC
-	/* No mapping change. Not allowed to happen. */
-	if (newpte == oldpte)
-		panic("pmap_enter onto myself");
-#endif
-
 	pv = pv_table + (p >> PGSHIFT);
 
 	/* wiring change? */
@@ -760,6 +754,12 @@ if (startpmapdebug)
 		RECURSEEND;
 		return (KERN_SUCCESS);
 	}
+#ifdef DIAGNOSTIC
+	/* No mapping change. Not allowed to happen. */
+	if (newpte == oldpte)
+		panic("pmap_enter onto myself");
+#endif
+
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
 	if ((newpte & PG_FRAME) == oldpte) {
@@ -1309,6 +1309,9 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 {
 	int *pte;
 
+#ifdef PMAPDEBUG
+if(startpmapdebug) printf("pmap_unwire: pmap %p v %lx\n", pmap, v);
+#endif
 	if (v & KERNBASE) {
 		pte = (int *)kvtopte(v);
 	} else {
