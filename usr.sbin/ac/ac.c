@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.19 2004/01/06 13:28:20 wiz Exp $ */
+/* $NetBSD: ac.c,v 1.20 2004/04/02 09:58:33 jmmv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.19 2004/01/06 13:28:20 wiz Exp $");
+__RCSID("$NetBSD: ac.c,v 1.20 2004/04/02 09:58:33 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: ac.c,v 1.19 2004/01/06 13:28:20 wiz Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <time.h>
 #include <utmp.h>
 #include <ttyent.h>
