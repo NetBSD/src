@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 1998/09/12 00:47:13 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 1998/09/12 10:48:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -54,7 +54,8 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-struct	sigcontext {
+#if defined(__LIBC13_SOURCE__) || defined(_KERNEL)
+struct sigcontext13 {
 	int	sc_gs;
 	int	sc_fs;
 	int	sc_es;
@@ -74,12 +75,39 @@ struct	sigcontext {
 	int	sc_ss;
 
 	int	sc_onstack;		/* sigstack state to restore */
-	sigset13_t sc_oldmask;		/* signal mask to restore (old style) */
+	sigset13_t sc_mask;		/* signal mask to restore (old style) */
+
+	int	sc_trapno;		/* XXX should be above */
+	int	sc_err;
+};
+#endif
+
+struct sigcontext {
+	int	sc_gs;
+	int	sc_fs;
+	int	sc_es;
+	int	sc_ds;
+	int	sc_edi;
+	int	sc_esi;
+	int	sc_ebp;
+	int	sc_ebx;
+	int	sc_edx;
+	int	sc_ecx;
+	int	sc_eax;
+	/* XXX */
+	int	sc_eip;
+	int	sc_cs;
+	int	sc_eflags;
+	int	sc_esp;
+	int	sc_ss;
+
+	int	sc_onstack;		/* sigstack state to restore */
+	int	__sc_unused;
 
 	int	sc_trapno;		/* XXX should be above */
 	int	sc_err;
 
-	sigset_t sc_mask;		/* signal mask to restore */
+	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
 #define sc_sp sc_esp

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.1 1998/09/12 00:47:12 mycroft Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.2 1998/09/12 10:48:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@ compat_13_sys_sigreturn(p, v, retval)
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
+		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp, context;
+	struct sigcontext13 *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;
 
@@ -120,7 +120,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	native_sigset13_to_sigset(&context.sc_oldmask, &mask);
+	native_sigset13_to_sigset(&context.sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
