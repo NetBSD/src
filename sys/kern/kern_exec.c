@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.119 2000/08/02 20:36:33 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.120 2000/08/03 20:41:22 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -181,7 +181,7 @@ bad2:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(vp, FREAD, p->p_ucred, p);
 	vput(vp);
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 
 bad1:
@@ -190,7 +190,7 @@ bad1:
 	 * (which we don't yet have open).
 	 */
 	vput(vp);				/* was still locked */
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 }
 
@@ -513,7 +513,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
@@ -546,7 +546,7 @@ bad:
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
@@ -563,7 +563,7 @@ exec_abort:
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
 		free(pack.ep_emul_arg, M_TEMP);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);

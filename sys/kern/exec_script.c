@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.25 2000/08/01 04:57:29 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.26 2000/08/03 20:41:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -252,7 +252,7 @@ check_shell:
 		}
 
 		/* free the old pathname buffer */
-		FREE(oldpnbuf, M_NAMEI);
+		PNBUF_PUT(oldpnbuf);
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
@@ -288,7 +288,7 @@ fail:
 		vput(scriptvp);
 	}
 
-        FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+        PNBUF_PUT(epp->ep_ndp->ni_cnd.cn_pnbuf);
 
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {

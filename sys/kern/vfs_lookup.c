@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.34 2000/05/27 00:40:47 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.35 2000/08/03 20:41:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,6 +58,8 @@
 #include <sys/ktrace.h>
 #endif
 
+struct pool pnbuf_pool;		/* pathname buffer pool */
+
 /*
  * Convert a pathname into a pointer to a locked inode.
  *
@@ -106,7 +108,7 @@ namei(ndp)
 	 * name into the buffer.
 	 */
 	if ((cnp->cn_flags & HASBUF) == 0)
-		MALLOC(cnp->cn_pnbuf, caddr_t, MAXPATHLEN, M_NAMEI, M_WAITOK);
+		cnp->cn_pnbuf = PNBUF_GET();
 	if (ndp->ni_segflg == UIO_SYSSPACE)
 		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
@@ -121,7 +123,7 @@ namei(ndp)
 		error = ENOENT;
 
 	if (error) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		ndp->ni_vp = NULL;
 		return (error);
 	}
@@ -151,7 +153,7 @@ namei(ndp)
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
 		if ((error = lookup(ndp)) != 0) {
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(cnp->cn_pnbuf);
 			return (error);
 		}
 		/*
@@ -159,7 +161,7 @@ namei(ndp)
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
-				FREE(cnp->cn_pnbuf, M_NAMEI);
+				PNBUF_PUT(cnp->cn_pnbuf);
 			else
 				cnp->cn_flags |= HASBUF;
 			return (0);
@@ -177,7 +179,7 @@ namei(ndp)
 				break;
 		}
 		if (ndp->ni_pathlen > 1)
-			MALLOC(cp, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+			cp = PNBUF_GET();
 		else
 			cp = cnp->cn_pnbuf;
 		aiov.iov_base = cp;
@@ -193,7 +195,7 @@ namei(ndp)
 		if (error) {
 		badlink:
 			if (ndp->ni_pathlen > 1)
-				FREE(cp, M_NAMEI);
+				PNBUF_PUT(cp);
 			break;
 		}
 		linklen = MAXPATHLEN - auio.uio_resid;
@@ -207,7 +209,7 @@ namei(ndp)
 		}
 		if (ndp->ni_pathlen > 1) {
 			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(cnp->cn_pnbuf);
 			cnp->cn_pnbuf = cp;
 		} else
 			cnp->cn_pnbuf[linklen] = '\0';
@@ -223,7 +225,7 @@ namei(ndp)
 			VREF(dp);
 		}
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vrele(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;
