@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.40 2004/04/27 02:25:06 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.41 2004/04/27 11:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.40 2004/04/27 02:25:06 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.41 2004/04/27 11:26:28 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: gzip.c,v 1.40 2004/04/27 02:25:06 mrg Exp $");
  *	- use mmap where possible
  *	- handle some signals better (remove outfile?)
  *	- audit maybe_err()/maybe_warn() usage
+ *	- make bzip2/compress -v/-t/-l support work as well as possible
  */
 
 #include <sys/param.h>
@@ -107,7 +108,7 @@ static	const char	gzip_version[] = "NetBSD gzip 20040427";
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
 static	int	lflag;			/* list mode */
-static	int	numflag = 5;		/* gzip -1..-9 value */
+static	int	numflag = 6;		/* gzip -1..-9 value */
 
 #ifndef SMALL
 static	int	fflag;			/* force mode */
