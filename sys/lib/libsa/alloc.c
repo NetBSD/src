@@ -61,8 +61,10 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- * $Id: alloc.c,v 1.1 1994/01/26 02:03:35 brezak Exp $
+ * $Id: alloc.c,v 1.2 1994/07/27 07:39:17 cgd Exp $
  */
+
+#include <sys/param.h>
 
 /*
  *	Dynamic memory allocator
@@ -88,7 +90,7 @@ alloc(size)
 	}
 	if (f == (struct fl *)0) {
 		f = (struct fl *)top;
-		top += (size + 3) & ~3;
+		top += ALIGN(size);
 	} else
 		*prev = f->next;
 	return ((void *)f);
@@ -101,7 +103,7 @@ free(ptr, size)
 {
 	register struct fl *f = (struct fl *)ptr;
 
-	f->size = (size + 3) & ~3;
+	f->size = ALIGN(size);
 	f->next = freelist;
 	freelist = f;
 }
