@@ -22,7 +22,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include "system.h"
 #include <stdio.h>
 #include <signal.h>
-#include <getopt.h>
+#include "getopt.h"
 
 /* Size of chunks read from files which must be parsed into lines. */
 #define SDIFF_BUFSIZE ((size_t) 65536)
