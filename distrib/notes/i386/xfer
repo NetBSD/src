@@ -90,14 +90,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base12"
-	and "etc12" distributions on tape (in order to do the absolute
-	minimum installation to a new disk), you would do the
-	following:
+	wish to place on the tape.  For instance, to put the
+	"kern12D", "base12D" and "etc12D" distributions on tape (in
+	order to do the absolute minimum installation to a new disk),
+	you would do the following:
 
-		cd .../NetBSD-1.2		# the top of the tree
+		cd .../NetBSD-1.2D		# the top of the tree
 		cd i386/binary
-		tar cf <tape_device> base12 etc12
+		tar cf <tape_device> base12D etc12D kern12D
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -170,13 +170,14 @@ NetBSD by putting the new distribution sets somewhere in your existing
 file system, and using them from there.  To do that, you must do the
 following:
 
-	Place the distribution sets you wish to upgrade somewhere in
-	your current file system tree.  At a bare minimum, you must
-	upgrade the "base" binary distribution, and so must put the
-	"base12" set somewhere in your file system.  If you wish,
-	you can do the other sets, as well, but you should NOT upgrade
-	the "etc" distribution; the "etc" distribution contains system
-	configuration files that you should review and update by hand.
+        Place the distribution sets you wish to upgrade somewhere in
+        your current file system tree.  At a bare minimum, you must
+        upgrade the "base" and "kern" binary distribution, and so must
+        put the "base12D" and "kern12D" sets somewhere in your file
+        system.  If you wish, you can do the other sets, as well, but
+        you should NOT upgrade the "etc" distribution; the "etc"
+        distribution contains system configuration files that you
+        should review and update by hand.
 
 	Once you have done this, you can proceed to the next step in
 	the upgrade process, actually upgrading your system.
