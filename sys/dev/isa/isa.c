@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.93 1996/12/08 00:14:03 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.94 1997/01/26 03:49:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -151,22 +151,13 @@ void
 isascan(parent, match)
 	struct device *parent;
 	void *match;
-#else
-int
-isasearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-#endif
 {
 	struct isa_softc *sc = (struct isa_softc *)parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
-#endif
 	struct isa_attach_args ia;
 
-#if defined(__BROKEN_INDIRECT_CONFIG) && defined(__i386__)
+#if defined(__i386__)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
 #endif
@@ -182,17 +173,44 @@ isasearch(parent, cf, aux)
 	ia.ia_drq = cf->cf_loc[5];
 	ia.ia_delaybah = sc->sc_delaybah;
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
 		config_attach(parent, match, &ia, isaprint);
 	else
 		free(dev, M_DEVBUF);
-#else
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
-		config_attach(parent, cf, &ia, isaprint);
-	return (0);
-#endif
 }
+#else /* !__BROKEN_INDIRECT_CONFIG */
+int
+isasearch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct isa_softc *sc = (struct isa_softc *)parent;
+	struct isa_attach_args ia;
+	int tryagain;
+
+	do {
+		ia.ia_iot = sc->sc_iot;
+		ia.ia_memt = sc->sc_memt;
+		ia.ia_ic = sc->sc_ic;
+		ia.ia_iobase = cf->cf_loc[0];
+		ia.ia_iosize = 0x666;
+		ia.ia_maddr = cf->cf_loc[2];
+		ia.ia_msize = cf->cf_loc[3];
+		ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
+		ia.ia_drq = cf->cf_loc[5];
+		ia.ia_delaybah = sc->sc_delaybah;
+
+		tryagain = 0;
+		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
+			config_attach(parent, cf, &ia, isaprint);
+			tryagain = (cf->cf_fstate == FSTATE_STAR);
+		}
+	} while (tryagain);
+
+	return (0);
+}
+#endif /* __BROKEN_INDIRECT_CONFIG */
 
 char *
 isa_intr_typename(type)
