@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.2 1993/10/11 02:28:25 deraadt Exp $
+ * $Id: cpu.h,v 1.3 1994/02/01 06:01:25 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -87,6 +87,7 @@ struct clockframe {
 	u_int	ipl;		/* actual interrupt priority level */
 	u_int	fp;		/* %fp at interrupt */
 };
+typedef struct clockframe clockframe;
 
 extern int eintstack[];
 #define enablertclock()		/* TDR: delete this soon */
@@ -125,7 +126,7 @@ int	want_resched;		/* resched() was called */
  * buffer pages are invalid.  On the sparc, request an ast to send us 
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, want_ast = 1)
+#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, want_ast = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,

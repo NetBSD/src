@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.5 1993/11/25 00:14:19 deraadt Exp $
+ * $Id: autoconf.c,v 1.6 1994/02/01 06:01:34 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -950,6 +950,8 @@ gotswap:
 		swdevt[1].sw_dev = NODEV;
 		return;
 	}
+
+printf("boothowto = %8x, bootdv = %8x\n", boothowto, bootdv);
 
 	/* XXX currently there's no way to set RB_DFLTROOT... */
 	if (boothowto & RB_DFLTROOT || bootdv == NULL)

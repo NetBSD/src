@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.15 1994/01/27 19:00:13 pk Exp $
+ * $Id: machdep.c,v 1.16 1994/02/01 06:01:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -186,14 +186,12 @@ cpu_startup()
 		vm_map_simplify(buffer_map, curbuf);
 	}
 
-#ifdef notdef
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16*NCARGS, TRUE);
-#endif
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -870,59 +868,4 @@ cpu_exec_aout_makecmds(p, epp)
 		return 0;
 #endif
 	return error;
-}
-
-int
-ptrace_set_pc(p, addr)
-struct proc *p;
-u_long addr;
-{
-	/* TDR: IMPLIMENT! */
-	return EINVAL;
-}
-
-int
-ptrace_getregs(p, addr)
-struct proc *p;
-u_long *addr;
-{
-	return copyout(p->p_md.md_tf, addr, sizeof(struct trapframe));
-}
-
-int
-ptrace_setregs(p, addr)
-struct proc *p;
-u_long *addr;
-{
-	int error;
-
-	if (error = copyin(addr, p->p_md.md_tf, sizeof(struct trapframe)))
-		return error;
-}
-
-int
-ptrace_single_step(p)
-struct proc *p;
-{
-	/* TDR: IMPLIMENT! */
-	return EINVAL;
-}
-
-int
-ptrace_getfpregs(p, addr)
-struct proc *p;
-u_long *addr;
-{
-	return copyout(p->p_md.md_fpstate, addr, sizeof(struct fpstate));
-}
-
-int
-ptrace_setfpregs(p, addr)
-struct proc *p;
-u_long *addr;
-{
-	int error;
-
-	if (error = copyin(addr, p->p_md.md_fpstate, sizeof(struct fpstate)))
-		return error;
 }

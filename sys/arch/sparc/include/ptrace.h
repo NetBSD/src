@@ -42,7 +42,7 @@
  *	@(#)ptrace.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ptrace.h,v 1.6 92/11/26 02:04:43 torek Exp  (LBL)
- * $Id: ptrace.h,v 1.1 1993/10/02 10:23:23 deraadt Exp $
+ * $Id: ptrace.h,v 1.2 1994/02/01 06:01:26 deraadt Exp $
  */
 
 /*
@@ -50,6 +50,5 @@
  */
 #define	PT_GETREGS	(PT_FIRSTMACH + 0)
 #define	PT_SETREGS	(PT_FIRSTMACH + 1)
-#define	PT_GETFPREGS	(PT_FIRSTMACH + 2)
-#define	PT_SETFPREGS	(PT_FIRSTMACH + 3)
-
+/*#define	PT_GETFPREGS	(PT_FIRSTMACH + 2)*/
+/*#define	PT_SETFPREGS	(PT_FIRSTMACH + 3)*/

@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.4 1993/11/24 02:39:31 deraadt Exp $
+ * $Id: locore.s,v 1.5 1994/02/01 06:01:43 deraadt Exp $
  */
 
 #define	LOCORE
@@ -2566,6 +2566,53 @@ _esigcode:
 #define	ALTENTRY(x)	.globl _##x; _##x:
 
 /*
+ * update profiling information for the user
+ * addupc(pc, &u.u_prof, ticks)
+ */
+	.globl	_addupc
+_addupc:
+	save	%sp, -CCFSZ, %sp
+
+	! %i0 = pc, %i1 = profp, %i2 = ticks
+	ld	[%i1 + 8], %l2		! get pr->pr_off
+	sub	%i0, %l2, %l0
+	bneg,a	Lauexit			! if(pc<pr_off) skip out
+	 nop
+	ld	[%i1 + 12], %l3		! scale = pr->pr_scale
+	sll	%i0, 1, %o0		! pc /= 2
+	sll	%l3, 1, %o1		! scale /= 2
+	call	.umul			! praddr = pc * scale
+	 nop
+	ld	[%i1 + 4], %l3		! get pr->pr_size
+	sll	%o0, 15, %l5		! praddr <<= 15
+	andn	%l5, 1, %l5		! praddr &= ~1
+	cmp	%l5, %l3		! if(praddr > pr_size) skip out
+	bge,a	Lauexit
+	 nop
+	ld	[%i1], %o0		! get pr->pr_base
+	add	%l5, %o0, %l5		! praddr += pr_base
+	mov	%l5, %o0
+	call	_fusword		! count = fusword(praddr)
+	 nop
+	cmp	%o0, -1			! error, fail.
+	beq,a	Lauerror
+	 nop
+	add	%o0, 1, %o1		! count++
+	mov	%l5, %o0		! reload praddr
+	call	_susword		! susword(praddr, count)
+	 nop
+	cmp	%o0, -1
+	beq,a	Lauerror
+	 nop
+Lauexit:
+	ret
+	restore
+Lauerror:
+	st	%g0, [%i1 + 12]		! turn off profiling
+	ret
+	restore
+
+/*
  * copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *
  * Copy a null terminated string from the user address space into
@@ -2932,21 +2979,20 @@ Lsw_panic_srun:
 	ALIGN
 
 /*
- * cpu_swtch() picks a process to run and runs it, saving the current
+ * swtch() picks a process to run and runs it, saving the current
  * one away.  On the assumption that (since most workstations are
  * single user machines) the chances are quite good that the new
  * process will turn out to be the current process, we defer saving
  * it here until we have found someone to load.  If that someone
  * is the current process we avoid both store and load.
  *
- * cpu_swtch() is always entered at splstatclock or splhigh.
+ * swtch() is always entered at splstatclock or splhigh.
  *
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-	.globl	_runtime
-	.globl	_time
-ENTRY(cpu_swtch)
+ENTRY(swtch)
+	INCR(_cnt+V_SWTCH)		! cnt.v_switch++;
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%g1 = oldpsr (excluding ipl bits)
@@ -2973,28 +3019,10 @@ ENTRY(cpu_swtch)
 	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
 
-	/*
-	 * In all the fiddling we did to get this far, the thing we are
-	 * waiting for might have come ready, so let interrupts in briefly
-	 * before checking for other processes.  Note that we still have
-	 * curproc set---we have to fix this or we can get in trouble with
-	 * the run queues below.
-	 */
-	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
-	wr	%g1, 0, %psr			! (void) spl0();
-	nop; nop; nop				! paranoia
 	wr	%g1, PIL_CLOCK <<8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
-	/*
-	 * We're about to run a (possibly) new process.  Set runtime
-	 * to indicate its start time.
-	 */
-	sethi	%hi(_time), %o0
-	ldd	[%o0 + %lo(_time)], %o2
-	sethi	%hi(_runtime), %o0
-	std	%o2, [%o0 + %lo(_runtime)]
 
 	ld	[%g2 + %lo(_whichqs)], %o3
 
