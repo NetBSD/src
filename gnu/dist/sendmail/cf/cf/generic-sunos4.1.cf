@@ -16,14 +16,14 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@horsey.gshapiro.net on Wed Jun 7 10:00:59 PDT 2000
-##### in /usr/local/src/sendmail/devel/8.10/OpenSource/sendmail-8.10.2/cf/cf
+##### built by gshapiro@monkeyboy.gshapiro.net on Wed Jul 19 15:52:20 PDT 2000
+##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.0/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
 ######################################################################
 
-#####  Id: cfhead.m4,v 8.76 2000/03/21 23:56:59 gshapiro Exp  #####
+#####  Id: cfhead.m4,v 8.76.4.9 2000/07/11 23:50:30 geir Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
 #####  Id: generic-sunos4.1.mc,v 8.11 1999/02/07 07:26:03 gshapiro Exp  #####
 
@@ -38,7 +38,7 @@
 
 
 
-#####  Id: proto.m4,v 8.446 2000/04/06 06:29:45 gshapiro Exp  #####
+#####  Id: proto.m4,v 8.446.2.5.2.12 2000/07/19 21:41:19 gshapiro Exp  #####
 
 
 # level 9 config file format
@@ -87,6 +87,8 @@ Kresolve host -a<OK> -T<TEMP>
 # Hosts that will permit relaying ($=R)
 FR-o /etc/mail/relay-domains
 
+# arithmetic map
+Karith arith
 
 # who I send unqualified names to (null means deliver locally)
 DR
@@ -114,7 +116,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.10.2
+DZ8.11.0
 
 
 ###############
@@ -435,6 +437,22 @@ O MaxHeadersLength=32768
 
 
 
+# CA directory
+#O CACERTPath
+# CA file
+#O CACERTFile
+# Server Cert
+#O ServerCertFile
+# Server private key
+#O ServerKeyFile
+# Client Cert
+#O ClientCertFile
+# Client private key
+#O ClientKeyFile
+# DHParameters (only required if DSA/DH is used)
+#O DHParameters
+# Random data source (required for systems without /dev/urandom under OpenSSL)
+#O RandFile
 
 
 
@@ -464,8 +482,9 @@ Tuucp
 
 H?P?Return-Path: <$g>
 HReceived: $?sfrom $s $.$?_($?s$|from $.$_)
-	$.$?{auth_type}(authenticated)
-	$.by $j ($v/$Z)$?r with $r$. id $i$?u
+	$.$?{auth_type}(authenticated$?{auth_ssf} (${auth_ssf} bits)$.)
+	$.by $j ($v/$Z)$?r with $r$. id $i$?{tls_version}
+	(using ${tls_version} with cipher ${cipher} (${cipher_bits} bits) verified ${verify})$.$?u
 	for $u; $|;
 	$.$b
 H?D?Resent-Date: $a
@@ -658,6 +677,7 @@ R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "553 Colon illegal in host name part"
 R<> $*			$1
 R$* < @ . $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
 R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "553 Invalid host name"
+R$* , $~O $*		$#error $@ 5.1.2 $: "553 Invalid route address"
 
 # now delete the local info -- note $=O to find characters that cause forwarding
 R$* < @ > $*		$@ $>Parse0 $>canonify $1	user@ => user
@@ -676,6 +696,7 @@ R$* < @ *LOCAL* >	$: $1
 #
 
 SParse1
+
 
 # handle numeric address spec
 R$* < @ [ $+ ] > $*	$: $>ParseLocal $1 < @ [ $2 ] > $3	numeric internet spec
@@ -907,6 +928,11 @@ R$*			$: < ${deliveryMode} > $1
 R< d > $*		$@ deferred
 R< $* > $*		$: $2
 
+# authenticated?
+R$*			$: $1 $| $>"tls_client" $&{verify} $| MAIL
+R$* $| $#$+		$#$2
+R$* $| $*		$: $1
+
 R<>			$@ <OK>			we MUST accept <> (RFC 1123)
 R$+			$: <?> $1
 R<?><$+>		$: <@> <$1>
@@ -973,6 +999,11 @@ R$*			$: $>ParseRecipient $1		strip relayable hosts
 
 
 
+# authenticated?
+R$*		$: $1 $| $>RelayAuth $1 $| $&{verify}	client authenticated?
+R$* $| $# $+		$# $2				error/ok?
+R$* $| $*		$: $1				no
+
 # authenticated by a trusted mechanism?
 R$*			$: $1 $| $&{auth_type}
 R$* $|			$: $1
@@ -1032,6 +1063,25 @@ R$*			$#error $@ 5.7.1 $: "550 " $&{auth_authen} " not allowed to act as " $&{au
 SLocal_trust_auth
 
 
+# is connection with client "good" enough? (done in server)
+# input: ${verify} $| (MAIL|STARTTLS)
+Stls_client
+R$* $| $*	$@ $>"tls_connection" $1
+
+# is connection with server "good" enough? (done in client)
+# input: ${verify}
+Stls_server
+R$*		$@ $>"tls_connection" $1
+
+Stls_connection
+RSOFTWARE	$#error $@ 4.7.0 $: "403 TLS handshake."
+
+SRelayAuth
+# authenticated?
+R$* $| OK		$: $1
+R$* $| $*		$@ NO		not authenticated
+
+
 #
 ######################################################################
 ######################################################################
@@ -1046,7 +1096,7 @@ SLocal_trust_auth
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-#####  Id: local.m4,v 8.50 1999/11/21 19:02:08 ca Exp  #####
+#####  Id: local.m4,v 8.50.16.1 2000/06/12 18:25:40 gshapiro Exp  #####
 
 #
 #  Envelope sender rewriting
@@ -1095,7 +1145,7 @@ Mprog,		P=/bin/sh, F=lsDFMoqeu9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=$z:/,
 ###   SMTP Mailer specification   ###
 #####################################
 
-#####  Id: smtp.m4,v 8.56 2000/04/03 20:54:55 ca Exp  #####
+#####  Id: smtp.m4,v 8.56.2.1.2.2 2000/07/18 15:31:24 gshapiro Exp  #####
 
 #
 #  common sender and masquerading recipient rewriting
@@ -1169,16 +1219,16 @@ R$+			$: $>MasqHdr $1
 
 Msmtp,		P=[IPC], F=mDFMuX, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
 		T=DNS/RFC822/SMTP,
-		A=IPC $h
+		A=TCP $h
 Mesmtp,		P=[IPC], F=mDFMuXa, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
 		T=DNS/RFC822/SMTP,
-		A=IPC $h
+		A=TCP $h
 Msmtp8,		P=[IPC], F=mDFMuX8, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
 		T=DNS/RFC822/SMTP,
-		A=IPC $h
+		A=TCP $h
 Mdsmtp,		P=[IPC], F=mDFMuXa%, S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP, E=\r\n, L=990,
 		T=DNS/RFC822/SMTP,
-		A=IPC $h
+		A=TCP $h
 Mrelay,		P=[IPC], F=mDFMuXa8, S=EnvFromSMTP/HdrFromSMTP, R=MasqSMTP, E=\r\n, L=2040,
 		T=DNS/RFC822/SMTP,
-		A=IPC $h
+		A=TCP $h

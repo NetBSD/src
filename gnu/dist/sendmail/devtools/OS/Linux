@@ -1,12 +1,14 @@
-#	Id: Linux,v 8.18 2000/04/04 22:25:21 carlalex Exp
+#	Id: Linux,v 8.18.4.2 2000/07/17 22:04:11 gshapiro Exp
 define(`confDEPEND_TYPE', `CC-M')
 define(`confMANROOT', `/usr/man/man')
 define(`confLIBS', `-ldl')
 define(`confEBINDIR', `/usr/sbin')
 APPENDDEF(`confLIBSEARCH', `crypt nsl')
 
+define(`confLD', `ld')
 define(`confMTLDOPTS', `-lpthread')
 define(`confLDOPTS_SO', `-shared')
+define(`confSONAME',`-soname')
 
 
 ifelse(confBLDVARIANT, `DEBUG',
@@ -28,5 +30,3 @@ dnl default
 `
 	define(`confOPTIMIZE',`-O')
 ')
-
-
