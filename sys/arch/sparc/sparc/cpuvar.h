@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.38.6.6 2002/12/19 00:38:01 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.38.6.7 2002/12/29 19:40:23 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct module_info {
 
 struct xpmsg {
 	struct simplelock	lock;
-	int tag;
+	__volatile int tag;
 #define	XPMSG_SAVEFPU			1
 #define	XPMSG_PAUSECPU			2
 #define	XPMSG_RESUMECPU			3
@@ -105,7 +105,7 @@ struct xpmsg {
 #define	XPMSG_VCACHE_FLUSH_CONTEXT	23
 #define	XPMSG_VCACHE_FLUSH_RANGE	24
 
-	union {
+	__volatile union {
 		struct xpmsg_func {
 			int	(*func)(int, int, int, int);
 			int	arg0;
@@ -221,13 +221,13 @@ struct cpu_info {
 	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* various flags to workaround anomalies in chips */
-	int		flags;		/* see CPUFLG_xxx, below */
+	__volatile int	flags;		/* see CPUFLG_xxx, below */
 
 	/* Per processor counter register (sun4m only) */
-	struct counter_4m	*counterreg_4m;
+	__volatile struct counter_4m	*counterreg_4m;
 
 	/* Per processor interrupt mask register (sun4m only) */
-	struct icr_pi		*intreg_4m;
+	__volatile struct icr_pi	*intreg_4m;
 #define raise_ipi(cpi)	do {				\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(15);	\
 } while (0)
@@ -241,7 +241,7 @@ struct cpu_info {
 	struct	lwp	*ci_curlwp;		/* CPU owner */
 	struct	lwp 	*fplwp;			/* FPU owner */
 	/* XXX */
-	void		*ci_ddb_regs;		/* DDB regs */
+	__volatile void	*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * Idle PCB and Interrupt stack;
@@ -399,6 +399,7 @@ struct cpu_info {
 #define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
 #define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
 					   uncached access */
+#define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an IPI */
 #define CPUFLG_READY		0x8000	/* CPU available for IPI */
@@ -410,8 +411,8 @@ struct cpu_info {
 /*
  * Useful macros.
  */
-#define CPU_READY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
-			    ((cpi)->flags & CPUFLG_READY) == 0)
+#define CPU_NOTREADY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
+				    ((cpi)->flags & CPUFLG_READY) == 0)
 
 /*
  * Related function prototypes
@@ -422,7 +423,8 @@ void pmap_alloc_cpu (struct cpu_info *);
 void pmap_globalize_boot_cpu (struct cpu_info *);
 #if defined(MULTIPROCESSOR)
 void raise_ipi_wait_and_unlock (struct cpu_info *);
-void cross_call (int (*)(int, int, int, int), int, int, int, int, int);
+typedef int (*xcall_func_t)(int, int, int, int);
+void xcall (xcall_func_t, int, int, int, int, int);
 #endif
 
 extern struct cpu_info **cpus;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 1999/01/20 00:15:08 pk Exp $ */
+/*	$NetBSD: trap.h,v 1.11.26.1 2002/12/29 19:40:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +109,7 @@
 #define	T_SVR4_SYSCALL	0x88	/* SVR4 system call */
 #define	T_BSD_SYSCALL	0x89	/* BSD system call */
 #define	T_KGDB_EXEC	0x8a	/* for kernel gdb */
+#define	T_DBPAUSE	0x8b	/* for smp kernel debugging */
 
 /* 0x8b..0xff are currently unallocated, except the following */
 #define T_SVR4_GETCC		0xa0

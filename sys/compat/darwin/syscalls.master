@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2.2.2 2002/12/11 06:37:08 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.2.2.3 2002/12/29 19:43:50 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -92,11 +92,7 @@
 			    int flags); }
 19	NOARGS		{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
-#ifdef COMPAT_43
-20	NOARGS 		{ pid_t sys_getpid_with_ppid(void); } getpid
-#else
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-#endif
+20	STD		{ pid_t darwin_sys_getpid(void); }
 21	NODEF		{ int bsd_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
 22	NODEF		{ int bsd_sys_unmount(const char *path, int flags); }
@@ -519,7 +515,7 @@
 328	UNIMPL		__pthread_kill
 329	UNIMPL		pthread_sigmask
 330	UNIMPL		sigwait
-331	UNIMPL
+331	STD		{ void darwin_sys_pthread_exit(void *value_ptr); }
 332	UNIMPL
 333	UNIMPL
 334	UNIMPL

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.15 2002/10/18 02:40:08 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.16 2002/12/29 19:41:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5123,7 +5123,6 @@ badregs:
 	.globl	_C_LABEL(endtrapcode)
 _C_LABEL(endtrapcode):
 
-#ifdef DDB
 !!!
 !!! Dump the DTLB to phys address in %o0 and print it
 !!!
@@ -5151,6 +5150,29 @@ dump_dtlb:
 	retl
 	 nop
 
+	.globl	dump_itlb
+dump_itlb:
+	clr	%o1
+	add	%o1, (64 * 8), %o3
+1:
+	ldxa	[%o1] ASI_IMMU_TLB_TAG, %o2
+	membar	#Sync
+	stx	%o2, [%o0]
+	membar	#Sync
+	inc	8, %o0
+	ldxa	[%o1] ASI_IMMU_TLB_DATA, %o4
+	membar	#Sync
+	inc	8, %o1
+	stx	%o4, [%o0]
+	cmp	%o1, %o3
+	membar	#Sync
+	bl	1b
+	 inc	8, %o0
+
+	retl
+	 nop
+
+#ifdef DDB
 #ifdef _LP64
 	.globl	print_dtlb
 print_dtlb:

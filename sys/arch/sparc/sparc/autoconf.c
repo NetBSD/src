@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.12 2002/12/19 00:38:00 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.13 2002/12/29 19:40:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -136,6 +136,7 @@ static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
 static	struct bootpath	*bootpath_store __P((int, struct bootpath *));
 int	find_cpus __P((void));
+char	machine_model[100];
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
@@ -1171,10 +1172,13 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 
 	if (CPU_ISSUN4)
-		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
+		snprintf(machine_model, sizeof machine_model, "SUN-4/%d series",
+		    cpuinfo.classlvl);
 	else
-		printf(": %s\n", PROM_getpropstringA(findroot(), "name",
-						namebuf, sizeof(namebuf)));
+		snprintf(machine_model, sizeof machine_model, "%s",
+		    PROM_getpropstringA(findroot(), "name", namebuf,
+		    sizeof(namebuf)));
+	printf(": %s\n", machine_model);
 
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
