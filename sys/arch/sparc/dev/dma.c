@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.11 1995/10/24 16:26:54 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.12 1995/11/03 16:34:12 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -204,6 +204,7 @@ void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
+	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
 	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
@@ -304,7 +305,7 @@ dmaintr(sc)
 	volatile caddr_t esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
-	ESP_DMA(("%s: intr\n", sc->sc_dev.dv_xname));
+	ESP_DMA(("%s: intr: <csr %x>", sc->sc_dev.dv_xname, DMACSR(sc)));
 
 	if (DMACSR(sc) & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
