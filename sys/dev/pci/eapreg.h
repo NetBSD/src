@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.3 2002/11/04 16:34:25 pooka Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.4 2002/11/11 22:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define  EAP_M_SBB		0x00004000
 #define  E1371_SYNC_RES		0x00004000
 #define  EAP_MSFMTSEL		0x00008000
-#define  EAP_EN(i)		(EAP_DAC2_EN << (i))
+#define  EAP_DAC_EN(i)		(EAP_DAC2_EN << (i))
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
