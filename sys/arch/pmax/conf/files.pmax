@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.51 1998/03/25 04:17:09 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.52 1998/03/29 01:12:14 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -41,10 +41,9 @@ file	arch/pmax/pmax/dec_maxine.c	dec_maxine	# DS5000/1xx, maxine
 #file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 #file	arch/pmax/pmax/dec_5800.c	dec_5800	# 5800, isis
 
+# handlers for memory subsystems shared across models..
 file	arch/pmax/pmax/dec_kn02_subr.c	dec_3min|dec_maxine
-
-#
-# 
+file	arch/pmax/pmax/dec_3max_subr.c	dec_3max|dec_3maxplus
 
 #
 # Bus-independent support for DEC devices
