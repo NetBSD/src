@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.10 2004/06/24 16:52:03 drochner Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.10 2004/06/24 16:52:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.11 2004/12/27 18:14:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,17 +681,16 @@ ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
 	size_t astrlen;
 {
 	size_t  i;
-	int             res;
-	const char *astrend = astr + astrlen;
+	int res;
 
-	for (i = 0; i < ustrlen && astr < astrend; i++) {
+	for (i = 0; i < ustrlen && astrlen > 0; i++) {
 		res = (*ntmp->ntm_wcmp)(NTFS_TOUPPER(ustr[i]),
-				NTFS_TOUPPER((*ntmp->ntm_wget)(&astr)) );
+		    NTFS_TOUPPER((*ntmp->ntm_wget)(&astr, &astrlen)) );
 		if (res)
 			return res;
 	}
 
-	if (i == ustrlen && astr == astrend)
+	if (i == ustrlen && astrlen == 0)
 		return 0;
 	else if (i == ustrlen)
 		return -1;
@@ -710,17 +709,17 @@ ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
 	const char *astr;
 	size_t astrlen;
 {
-	size_t             i;
-	int             res;
-	const char *astrend = astr + astrlen;
+	size_t i;
+	int res;
 
-	for (i = 0; (i < ustrlen) && (astr < astrend); i++) {
-		res = (*ntmp->ntm_wcmp)(ustr[i], (*ntmp->ntm_wget)(&astr));
+	for (i = 0; (i < ustrlen) && astrlen > 0; i++) {
+		res = (*ntmp->ntm_wcmp)(ustr[i],
+		     (*ntmp->ntm_wget)(&astr, &astrlen));
 		if (res)
 			return res;
 	}
 
-	if (i == ustrlen && astr == astrend)
+	if (i == ustrlen && astrlen == 0)
 		return 0;
 	else if (i == ustrlen)
 		return -1;
