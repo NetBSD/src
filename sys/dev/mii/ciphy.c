@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.2 2005/02/27 00:27:31 perry Exp $ */
+/* $NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.2 2005/02/27 00:27:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -57,11 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.2 2005/02/27 00:27:31 perry Exp $");
 
 #include <dev/mii/ciphyreg.h>
 
-static int ciphy_match(struct device *, struct cfdata *, void *);
-static void ciphy_attach(struct device *, struct device *, void *);
+static int ciphymatch(struct device *, struct cfdata *, void *);
+static void ciphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ciphy, sizeof(struct mii_softc),
-    ciphy_match, ciphy_attach, mii_phy_detach, mii_phy_activate);
+    ciphymatch, ciphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	ciphy_service(struct mii_softc *, struct mii_data *, int);
 static void	ciphy_status(struct mii_softc *);
@@ -72,35 +72,45 @@ static const struct mii_phy_funcs ciphy_funcs = {
 	ciphy_service, ciphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc ciphys[] = {
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201,
+	  MII_STR_CICADA_CS8201 },
+
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201A,
+	  MII_STR_CICADA_CS8201A },
+
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
+	  MII_STR_CICADA_CS8201B },
+
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
+	  MII_STR_xxCICADA_CS8201B },
+
+	{ 0,				0,
+	  NULL },
+};
+
 static int
-ciphy_match(struct device *parent, struct cfdata *match, void *aux)
+ciphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201) {
-		return(1);
-	}
+	if (mii_phy_match(ma, ciphys) != NULL)
+		return (10);
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201A) {
-		return(1);
-	}
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201B) {
-		return(1);
-	}
-
-	return(0);
+	return (0);
 }
 
 static void
-ciphy_attach(struct device *parent, struct device *self, void *aux)
+ciphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
+
+	mpd = mii_phy_match(ma, ciphys);
+	aprint_naive(": Media interface\n");
+	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
