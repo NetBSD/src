@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.28 2001/11/13 02:08:53 lukem Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.28.8.1 2002/05/16 04:29:37 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.28 2001/11/13 02:08:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.28.8.1 2002/05/16 04:29:37 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -113,18 +113,18 @@ linux_sys_ioctl(p, v, retval)
 		struct filedesc *fdp;
 		struct vnode *vp;
 		struct vattr va;
-		extern int sequencerioctl 
-			__P((dev_t, u_long, caddr_t, int, struct proc *));
+		extern const struct cdevsw sequencer_cdevsw;
+		const struct cdevsw *cdev;
 
 		fdp = p->p_fd;
+		cdev = cdevsw_lookup(va.va_rdev);
 		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 			return EBADF;
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
 		    VOP_GETATTR(vp, &va, p->p_ucred, p) == 0 &&
-		    major(va.va_rdev) < nchrdev &&
-		    cdevsw[major(va.va_rdev)].d_ioctl == &sequencerioctl)
+		    cdev == &sequencer_cdevsw)
 			return oss_ioctl_sequencer(p, (void*)LINUX_TO_OSS(uap),
 						   retval);
 		else
