@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2001/11/10 17:35:54 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2001/12/14 15:06:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.41 2001/11/10 17:35:54 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2001/12/14 15:06:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,6 +536,16 @@ getname(void)
 			continue;
 		*np++ = c;
 		putchr(cs);
+ 
+		/*
+		 * An MS-Windows direct connect PPP "client" won't send its
+		 * first PPP packet until we respond to its "CLIENT" poll
+		 * with a CRLF sequence.  We cater to yet another broken
+		 * implementation of a previously-standard protocol...
+		 */
+		*np = '\0';
+		if (strstr(name, "CLIENT"))
+		       putf("\r\n");
 	}
 	signal(SIGINT, SIG_IGN);
 	*np = 0;
