@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.8 2001/02/07 17:35:56 itojun Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.9 2002/09/22 16:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -98,6 +98,8 @@ struct pcap {
 	struct bpf_program fcode;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
+	int dlt_count;
+	int *dlt_list;
 };
 
 /*
