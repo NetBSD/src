@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.20 2001/04/24 04:31:14 thorpej Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.21 2001/09/05 12:37:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 label_t *nofault;
 
 /* These are defined in pmap.c */
-extern vm_offset_t tmp_vpages[];
+extern vaddr_t tmp_vpages[];
 extern int tmp_vpages_inuse;
 
 static const struct {
@@ -88,7 +88,7 @@ void *
 bus_tmapin(bustype, pa)
 	int bustype, pa;
 {
-	vm_offset_t pgva;
+	vaddr_t pgva;
 	int off, s;
 
 	if ((bustype < 0) || (bustype >= BUS__NTYPES))
@@ -118,7 +118,7 @@ bus_tmapin(bustype, pa)
 void bus_tmapout(vp)
 	void *vp;
 {
-	vm_offset_t pgva;
+	vaddr_t pgva;
 	int s;
 
 	pgva = m68k_trunc_page(vp);
@@ -139,7 +139,7 @@ void *
 bus_mapin(bustype, pa, sz)
 	int bustype, pa, sz;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	int off;
 
 	if ((bustype < 0) || (bustype >= BUS__NTYPES))
@@ -152,7 +152,7 @@ bus_mapin(bustype, pa, sz)
 
 	/* Borrow PROM mappings if we can. */
 	if (bustype == BUS_OBIO) {
-		va = (vm_offset_t) obio_find_mapping(pa, sz);
+		va = (vaddr_t) obio_find_mapping(pa, sz);
 		if (va != 0)
 			goto done;
 	}
@@ -178,10 +178,10 @@ bus_mapout(ptr, sz)
 	void *ptr;
 	int sz;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	int off;
 
-	va = (vm_offset_t)ptr;
+	va = (vaddr_t)ptr;
 
 	/* If it was a PROM mapping, do NOT free it! */
 	if ((va >= SUN3X_MONSTART) && (va < SUN3X_MONEND))
