@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              $Revision: 1.3 $
+ *              xRevision: 119 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.3 2002/06/15 01:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
 
 #define __NSEVAL_C__
 
@@ -498,7 +498,7 @@ AcpiNsExecuteControlMethod (
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
 
-    ACPI_DUMP_PATHNAME (MethodNode, "NsExecuteControlMethod: Executing",
+    ACPI_DUMP_PATHNAME (MethodNode, "Execute Method:",
         ACPI_LV_INFO, _COMPONENT);
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Method at AML address %p Length %X\n",
@@ -605,7 +605,8 @@ AcpiNsGetObjectValue (
         {
             Status = AE_CTRL_RETURN_VALUE;
             *ReturnObjDesc = ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, ResolvedNode);
-            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Returning obj %p\n", ResolvedNode));
+            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Returning object %p [%s]\n",
+                *ReturnObjDesc, AcpiUtGetObjectTypeName (*ReturnObjDesc)));
         }
     }
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       $Revision: 1.2 $
+ *       xRevision: 149 $
  *
  *****************************************************************************/
 
@@ -185,11 +185,13 @@ AcpiUtValidateFadt (
  * UtGlobal - Global data structures and procedures
  */
 
-#if defined(ACPI_DEBUG) || defined(ENABLE_DEBUGGER)
+#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
 NATIVE_CHAR *
 AcpiUtGetMutexName (
     UINT32                  MutexId);
+
+#endif
 
 NATIVE_CHAR *
 AcpiUtGetTypeName (
@@ -198,9 +200,6 @@ AcpiUtGetTypeName (
 NATIVE_CHAR *
 AcpiUtGetObjectTypeName (
     ACPI_OPERAND_OBJECT     *ObjDesc);
-
-#endif
-
 
 NATIVE_CHAR *
 AcpiUtGetRegionName (
@@ -230,7 +229,7 @@ AcpiUtAllocateOwnerId (
 
 #ifndef ACPI_USE_SYSTEM_CLIBRARY
 
-UINT32
+ACPI_SIZE
 AcpiUtStrlen (
     const NATIVE_CHAR       *String);
 
@@ -243,15 +242,15 @@ NATIVE_CHAR *
 AcpiUtStrncpy (
     NATIVE_CHAR             *DstString,
     const NATIVE_CHAR       *SrcString,
-    NATIVE_UINT             Count);
+    ACPI_SIZE               Count);
 
 int
 AcpiUtStrncmp (
     const NATIVE_CHAR       *String1,
     const NATIVE_CHAR       *String2,
-    NATIVE_UINT             Count);
+    ACPI_SIZE               Count);
 
-UINT32
+int
 AcpiUtStrcmp (
     const NATIVE_CHAR       *String1,
     const NATIVE_CHAR       *String2);
@@ -265,7 +264,7 @@ NATIVE_CHAR *
 AcpiUtStrncat (
     NATIVE_CHAR             *DstString,
     const NATIVE_CHAR       *SrcString,
-    NATIVE_UINT             Count);
+    ACPI_SIZE               Count);
 
 UINT32
 AcpiUtStrtoul (
@@ -282,13 +281,13 @@ void *
 AcpiUtMemcpy (
     void                    *Dest,
     const void              *Src,
-    NATIVE_UINT             Count);
+    ACPI_SIZE               Count);
 
 void *
 AcpiUtMemset (
     void                    *Dest,
     NATIVE_UINT             Value,
-    NATIVE_UINT             Count);
+    ACPI_SIZE               Count);
 
 int
 AcpiUtToUpper (
@@ -316,6 +315,9 @@ extern const UINT8 _acpi_ctype[];
 #define ACPI_IS_XDIGIT(c) (_acpi_ctype[(unsigned char)(c)] & (_ACPI_XD))
 #define ACPI_IS_UPPER(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_UP))
 #define ACPI_IS_LOWER(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO))
+#define ACPI_IS_PRINT(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP | _ACPI_DI | _ACPI_SP | _ACPI_PU))
+#define ACPI_IS_ALPHA(c)  (_acpi_ctype[(unsigned char)(c)] & (_ACPI_LO | _ACPI_UP))
+#define ACPI_IS_ASCII(c)  ((c) < 0x80)
 
 #endif /* ACPI_USE_SYSTEM_CLIBRARY */
 
@@ -537,6 +539,13 @@ AcpiUtDeleteInternalObjectList (
 
 
 ACPI_STATUS
+AcpiUtEvaluateObject (
+    ACPI_NAMESPACE_NODE     *PrefixNode,
+    NATIVE_CHAR             *Path,
+    UINT32                  ExpectedReturnBtypes,
+    ACPI_OPERAND_OBJECT     **ReturnDesc);
+
+ACPI_STATUS
 AcpiUtEvaluateNumericObject (
     NATIVE_CHAR             *ObjectName,
     ACPI_NAMESPACE_NODE     *DeviceNode,
@@ -619,6 +628,10 @@ AcpiUtDeleteObjectDesc (
 BOOLEAN
 AcpiUtValidInternalObject (
     void                    *Object);
+
+ACPI_OPERAND_OBJECT *
+AcpiUtCreateBufferObject (
+    ACPI_SIZE               BufferSize);
 
 
 /*
@@ -726,6 +739,11 @@ AcpiUtDeleteObjectCache (
  * utmisc
  */
 
+void
+AcpiUtPrintString (
+    char                    *String,
+    UINT8                   MaxLength);
+
 ACPI_STATUS
 AcpiUtDivide (
     ACPI_INTEGER            *InDividend,
@@ -775,10 +793,11 @@ void
 AcpiUtSetIntegerWidth (
     UINT8                   Revision);
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 void
 AcpiUtDisplayInitPathname (
-    ACPI_HANDLE             ObjHandle,
+    UINT8                   Type,
+    ACPI_NAMESPACE_NODE     *ObjHandle,
     char                    *Path);
 
 #endif

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwtimer.c - ACPI Power Management Timer Interface
- *              $Revision: 1.3 $
+ *              xRevision: 21 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.3 2002/06/15 01:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwtimer.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
 
 #include "acpi.h"
 

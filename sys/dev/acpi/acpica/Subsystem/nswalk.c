@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nswalk - Functions for walking the ACPI namespace
- *              $Revision: 1.3 $
+ *              xRevision: 33 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.3 2002/06/15 01:47:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nswalk.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
 
 #define __NSWALK_C__
 

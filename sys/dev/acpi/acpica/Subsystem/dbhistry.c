@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              $Revision: 1.3 $
+ *              xRevision: 25 $
  *
  *****************************************************************************/
 
@@ -115,14 +115,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.3 2002/06/15 01:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.4 2002/12/23 00:22:07 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbhistry")
 
 
@@ -289,5 +289,5 @@ AcpiDbGetFromHistory (
 }
 
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */
 

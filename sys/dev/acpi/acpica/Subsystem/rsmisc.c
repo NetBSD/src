@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              $Revision: 1.3 $
+ *              xRevision: 24 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.3 2002/06/15 01:47:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.4 2002/12/23 00:22:15 kanaoka Exp $");
 
 #define __RSMISC_C__
 

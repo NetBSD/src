@@ -135,6 +135,10 @@ AcpiEnableSubsystem (
     UINT32                  Flags);
 
 ACPI_STATUS
+AcpiInitializeObjects (
+    UINT32                  Flags);
+
+ACPI_STATUS
 AcpiTerminate (
     void);
 
@@ -368,7 +372,7 @@ AcpiInstallGpeHandler (
 
 ACPI_STATUS
 AcpiAcquireGlobalLock (
-    UINT32                  Timeout,
+    UINT16                  Timeout,
     UINT32                  *Handle);
 
 ACPI_STATUS

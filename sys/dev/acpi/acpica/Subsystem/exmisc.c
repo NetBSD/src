@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.3 $
+ *              xRevision: 113 $
  *
  *****************************************************************************/
 
@@ -117,14 +117,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.3 2002/06/15 01:47:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
 
 #define __EXMISC_C__
 
 #include "acpi.h"
 #include "acinterp.h"
 #include "amlcode.h"
-#include "acdispat.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -135,8 +134,9 @@ __KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.3 2002/06/15 01:47:19 thorpej Exp $");
  *
  * FUNCTION:    AcpiExGetObjectReference
  *
- * PARAMETERS:  ObjDesc         - Create a reference to this object
- *              ReturnDesc         - Where to store the reference
+ * PARAMETERS:  ObjDesc             - Create a reference to this object
+ *              ReturnDesc          - Where to store the reference
+ *              WalkState           - Current state
  *
  * RETURN:      Status
  *
@@ -151,68 +151,79 @@ AcpiExGetObjectReference (
     ACPI_OPERAND_OBJECT     **ReturnDesc,
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_STATUS             Status = AE_OK;
+    ACPI_OPERAND_OBJECT     *ReferenceObj;
+    ACPI_OPERAND_OBJECT     *ReferencedObj;
 
 
     ACPI_FUNCTION_TRACE_PTR ("ExGetObjectReference", ObjDesc);
 
 
+    *ReturnDesc = NULL;
+
     switch (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc))
     {
     case ACPI_DESC_TYPE_OPERAND:
 
-        if (ACPI_GET_OBJECT_TYPE (ObjDesc) != INTERNAL_TYPE_REFERENCE)
+        if (ACPI_GET_OBJECT_TYPE (ObjDesc) != ACPI_TYPE_LOCAL_REFERENCE)
         {
-            *ReturnDesc = NULL;
-            Status = AE_TYPE;
-            goto Cleanup;
+            return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
 
         /*
-         * Not a Name -- an indirect name pointer would have
-         * been converted to a direct name pointer in AcpiExResolveOperands
+         * Must be a reference to a Local or Arg
          */
         switch (ObjDesc->Reference.Opcode)
         {
         case AML_LOCAL_OP:
         case AML_ARG_OP:
 
-            Status = AcpiDsMethodDataGetNode (ObjDesc->Reference.Opcode,
-                            ObjDesc->Reference.Offset, WalkState,
-                            ACPI_CAST_INDIRECT_PTR (ACPI_NAMESPACE_NODE, ReturnDesc));
+            /* The referenced object is the pseudo-node for the local/arg */
+
+            ReferencedObj = ObjDesc->Reference.Object;
             break;
 
         default:
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "(Internal) Unknown Ref subtype %02x\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unknown Reference subtype %X\n",
                 ObjDesc->Reference.Opcode));
-            *ReturnDesc = NULL;
-            Status = AE_AML_INTERNAL;
-            goto Cleanup;
+            return_ACPI_STATUS (AE_AML_INTERNAL);
         }
         break;
 
 
     case ACPI_DESC_TYPE_NAMED:
 
-        /* Must be a named object;  Just return the Node */
-
-        *ReturnDesc = ObjDesc;
+        /*
+         * A named reference that has already been resolved to a Node
+         */
+        ReferencedObj = ObjDesc;
         break;
 
 
     default:
 
-        *ReturnDesc = NULL;
-        Status = AE_TYPE;
-        break;
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Invalid descriptor type %X in %p\n",
+            ACPI_GET_DESCRIPTOR_TYPE (ObjDesc), ObjDesc));
+        return_ACPI_STATUS (AE_TYPE);
     }
 
 
-Cleanup:
+    /* Create a new reference object */
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p Ref=%p\n", ObjDesc, *ReturnDesc));
-    return_ACPI_STATUS (Status);
+    ReferenceObj = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
+    if (!ReferenceObj)
+    {
+        return_ACPI_STATUS (AE_NO_MEMORY);
+    }
+
+    ReferenceObj->Reference.Opcode = AML_REF_OF_OP;
+    ReferenceObj->Reference.Object = ReferencedObj;
+    *ReturnDesc = ReferenceObj;
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Object %p Type [%s], returning Reference %p\n",
+        ObjDesc, AcpiUtGetObjectTypeName (ObjDesc), *ReturnDesc));
+
+    return_ACPI_STATUS (AE_OK);
 }
 
 
@@ -237,9 +248,8 @@ AcpiExConcatTemplate (
     ACPI_OPERAND_OBJECT     **ActualReturnDesc,
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_STATUS             Status;
     ACPI_OPERAND_OBJECT     *ReturnDesc;
-    NATIVE_CHAR             *NewBuf;
+    UINT8                   *NewBuf;
     UINT8                   *EndTag1;
     UINT8                   *EndTag2;
     ACPI_SIZE               Length1;
@@ -258,56 +268,36 @@ AcpiExConcatTemplate (
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
     }
 
-    /* Create a new buffer object for the result */
-
-    ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_BUFFER);
-    if (!ReturnDesc)
-    {
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
-
-    /* Allocate a new buffer for the result */
+    /* Compute the length of each part */
 
     Length1 = ACPI_PTR_DIFF (EndTag1, ObjDesc1->Buffer.Pointer);
     Length2 = ACPI_PTR_DIFF (EndTag2, ObjDesc2->Buffer.Pointer) +
                              2; /* Size of END_TAG */
 
-    NewBuf = ACPI_MEM_ALLOCATE (Length1 + Length2);
-    if (!NewBuf)
+    /* Create a new buffer object for the result */
+
+    ReturnDesc = AcpiUtCreateBufferObject (Length1 + Length2);
+    if (!ReturnDesc)
     {
-        ACPI_REPORT_ERROR
-            (("ExConcatTemplate: Buffer allocation failure\n"));
-        Status = AE_NO_MEMORY;
-        goto Cleanup;
+        return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
     /* Copy the templates to the new descriptor */
 
+    NewBuf = ReturnDesc->Buffer.Pointer;
     ACPI_MEMCPY (NewBuf, ObjDesc1->Buffer.Pointer, Length1);
     ACPI_MEMCPY (NewBuf + Length1, ObjDesc2->Buffer.Pointer, Length2);
 
-    /* Complete the buffer object initialization */
-
-    ReturnDesc->Common.Flags   = AOPOBJ_DATA_VALID;
-    ReturnDesc->Buffer.Pointer = (UINT8 *) NewBuf;
-    ReturnDesc->Buffer.Length  = (UINT32) (Length1 + Length2);
-
     /* Compute the new checksum */
 
-    NewBuf[ReturnDesc->Buffer.Length - 1] = (NATIVE_CHAR)
+    NewBuf[ReturnDesc->Buffer.Length - 1] =
             AcpiUtGenerateChecksum (ReturnDesc->Buffer.Pointer,
-                                    (ReturnDesc->Buffer.Length - 1));
+                                   (ReturnDesc->Buffer.Length - 1));
 
     /* Return the completed template descriptor */
 
     *ActualReturnDesc = ReturnDesc;
     return_ACPI_STATUS (AE_OK);
-
-
-Cleanup:
-
-    AcpiUtRemoveReference (ReturnDesc);
-    return_ACPI_STATUS (Status);
 }
 
 
@@ -345,7 +335,7 @@ AcpiExDoConcatenate (
 
     /*
      * There are three cases to handle:
-     * 
+     *
      * 1) Two Integers concatenated to produce a new Buffer
      * 2) Two Strings concatenated to produce a new String
      * 3) Two Buffers concatenated to produce a new Buffer
@@ -355,24 +345,15 @@ AcpiExDoConcatenate (
     case ACPI_TYPE_INTEGER:
 
         /* Result of two Integers is a Buffer */
+        /* Need enough buffer space for two integers */
 
-        ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_BUFFER);
+        ReturnDesc = AcpiUtCreateBufferObject (AcpiGbl_IntegerByteWidth * 2);
         if (!ReturnDesc)
         {
             return (AE_NO_MEMORY);
         }
 
-        /* Need enough buffer space for two integers */
-
-        ReturnDesc->Buffer.Length = AcpiGbl_IntegerByteWidth * 2;
-        NewBuf = ACPI_MEM_CALLOCATE (ReturnDesc->Buffer.Length);
-        if (!NewBuf)
-        {
-            ACPI_REPORT_ERROR
-                (("ExDoConcatenate: Buffer allocation failure\n"));
-            Status = AE_NO_MEMORY;
-            goto Cleanup;
-        }
+        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
 
         /* Convert the first integer */
 
@@ -392,10 +373,6 @@ AcpiExDoConcatenate (
             ThisInteger >>= 8;
         }
 
-        /* Complete the buffer object initialization */
-
-        ReturnDesc->Common.Flags   = AOPOBJ_DATA_VALID;
-        ReturnDesc->Buffer.Pointer = (UINT8 *) NewBuf;
         break;
 
 
@@ -411,8 +388,8 @@ AcpiExDoConcatenate (
 
         /* Operand0 is string  */
 
-        NewBuf = ACPI_MEM_ALLOCATE ((ACPI_SIZE) ObjDesc1->String.Length +
-                                    (ACPI_SIZE) ObjDesc2->String.Length + 1);
+        NewBuf = ACPI_MEM_CALLOCATE ((ACPI_SIZE) ObjDesc1->String.Length +
+                                     (ACPI_SIZE) ObjDesc2->String.Length + 1);
         if (!NewBuf)
         {
             ACPI_REPORT_ERROR
@@ -439,21 +416,15 @@ AcpiExDoConcatenate (
 
         /* Result of two Buffers is a Buffer */
 
-        ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_BUFFER);
+        ReturnDesc = AcpiUtCreateBufferObject (
+                            (ACPI_SIZE) ObjDesc1->Buffer.Length +
+                            (ACPI_SIZE) ObjDesc2->Buffer.Length);
         if (!ReturnDesc)
         {
             return (AE_NO_MEMORY);
         }
 
-        NewBuf = ACPI_MEM_ALLOCATE ((ACPI_SIZE) ObjDesc1->Buffer.Length +
-                                    (ACPI_SIZE) ObjDesc2->Buffer.Length);
-        if (!NewBuf)
-        {
-            ACPI_REPORT_ERROR
-                (("ExDoConcatenate: Buffer allocation failure\n"));
-            Status = AE_NO_MEMORY;
-            goto Cleanup;
-        }
+        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
 
         /* Concatenate the buffers */
 
@@ -462,12 +433,6 @@ AcpiExDoConcatenate (
         ACPI_MEMCPY (NewBuf + ObjDesc1->Buffer.Length, ObjDesc2->Buffer.Pointer,
                          ObjDesc2->Buffer.Length);
 
-        /* Complete the buffer object initialization */
-
-        ReturnDesc->Common.Flags   = AOPOBJ_DATA_VALID;
-        ReturnDesc->Buffer.Pointer = (UINT8 *) NewBuf;
-        ReturnDesc->Buffer.Length  = ObjDesc1->Buffer.Length +
-                                     ObjDesc2->Buffer.Length;
         break;
 
 

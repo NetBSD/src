@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
- *              $Revision: 1.3 $
+ *              xRevision: 42 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.3 2002/06/15 01:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -182,14 +182,14 @@ AcpiHwEnableGpe (
      * Read the current value of the register, set the appropriate bit
      * to enable the GPE, and write out the new register.
      */
-    Status = AcpiHwLowLevelRead (8, &InByte, 
+    Status = AcpiHwLowLevelRead (8, &InByte,
                     &AcpiGbl_GpeRegisterInfo[RegisterIndex].EnableAddress, 0);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
     }
 
-    Status = AcpiHwLowLevelWrite (8, (InByte | BitMask), 
+    Status = AcpiHwLowLevelWrite (8, (InByte | BitMask),
                     &AcpiGbl_GpeRegisterInfo[RegisterIndex].EnableAddress, 0);
 
     return (Status);
@@ -279,7 +279,7 @@ AcpiHwDisableGpe (
         return (Status);
     }
 
-    Status = AcpiHwLowLevelWrite (8, (InByte & ~BitMask), 
+    Status = AcpiHwLowLevelWrite (8, (InByte & ~BitMask),
                     &AcpiGbl_GpeRegisterInfo[RegisterIndex].EnableAddress, 0);
     if (ACPI_FAILURE (Status))
     {
@@ -366,7 +366,7 @@ AcpiHwClearGpe (
      * Write a one to the appropriate bit in the status register to
      * clear this GPE.
      */
-    Status = AcpiHwLowLevelWrite (8, BitMask, 
+    Status = AcpiHwLowLevelWrite (8, BitMask,
                     &AcpiGbl_GpeRegisterInfo[RegisterIndex].StatusAddress, 0);
 
     return (Status);
@@ -489,7 +489,7 @@ AcpiHwDisableNonWakeupGpes (
          * Read the enabled status of all GPEs. We
          * will be using it to restore all the GPEs later.
          */
-        Status = AcpiHwLowLevelRead (8, &InValue, 
+        Status = AcpiHwLowLevelRead (8, &InValue,
                     &GpeRegisterInfo->EnableAddress, 0);
         if (ACPI_FAILURE (Status))
         {
@@ -501,7 +501,7 @@ AcpiHwDisableNonWakeupGpes (
         /*
          * Disable all GPEs except wakeup GPEs.
          */
-        Status = AcpiHwLowLevelWrite (8, GpeRegisterInfo->WakeEnable, 
+        Status = AcpiHwLowLevelWrite (8, GpeRegisterInfo->WakeEnable,
                 &GpeRegisterInfo->EnableAddress, 0);
         if (ACPI_FAILURE (Status))
         {

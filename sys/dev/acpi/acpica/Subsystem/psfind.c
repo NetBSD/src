@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: psfind - Parse tree search routine
- *              $Revision: 1.3 $
+ *              xRevision: 42 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.3 2002/06/15 01:47:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
 
 #define __PSFIND_C__
 
@@ -303,6 +303,19 @@ AcpiPsFind (
 
     AcpiGbl_PsFindCount++;
 
+#if 0 
+    if ((Create) && (Opcode == AML_SCOPE_OP))
+    {
+        Op = AcpiPsAllocOp (AML_SCOPE_OP);
+        if (Op)
+        {
+            AcpiPsSetName (Op, 'XXXX');
+            AcpiPsAppendArg (Scope, Op);
+        }
+/*        return_PTR (Op);*/
+    }
+#endif
+
     /* Handle all prefixes in the name path */
 
     while (AcpiPsIsPrefixChar (ACPI_GET8 (Path)))
@@ -338,6 +351,7 @@ AcpiPsFind (
         Unprefixed = FALSE;
         Path++;
     }
+
 
     /* get name segment count */
 
@@ -380,6 +394,7 @@ AcpiPsFind (
     ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
         "Search scope %p Segs=%d Opcode=%4.4hX Create=%d\n",
         Scope, SegCount, Opcode, Create));
+
 
     /* match each name segment */
 

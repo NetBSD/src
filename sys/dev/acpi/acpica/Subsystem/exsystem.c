@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exsystem - Interface to OS services
- *              $Revision: 1.3 $
+ *              xRevision: 74 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.3 2002/06/15 01:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
 
 #define __EXSYSTEM_C__
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.3 2002/06/15 01:47:21 thorpej Exp $")
 ACPI_STATUS
 AcpiExSystemWaitSemaphore (
     ACPI_HANDLE             Semaphore,
-    UINT32                  Timeout)
+    UINT16                  Timeout)
 {
     ACPI_STATUS             Status;
     ACPI_STATUS             Status2;
@@ -303,12 +303,12 @@ AcpiExSystemAcquireMutex (
      */
     if (ObjDesc->Mutex.Semaphore == AcpiGbl_GlobalLockSemaphore)
     {
-        Status = AcpiEvAcquireGlobalLock ((UINT32) TimeDesc->Integer.Value);
+        Status = AcpiEvAcquireGlobalLock ((UINT16) TimeDesc->Integer.Value);
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiExSystemWaitSemaphore (ObjDesc->Mutex.Semaphore,
-                                         (UINT32) TimeDesc->Integer.Value);
+                                         (UINT16) TimeDesc->Integer.Value);
     return_ACPI_STATUS (Status);
 }
 
@@ -418,7 +418,7 @@ AcpiExSystemWaitEvent (
     if (ObjDesc)
     {
         Status = AcpiExSystemWaitSemaphore (ObjDesc->Event.Semaphore,
-                                             (UINT32) TimeDesc->Integer.Value);
+                                             (UINT16) TimeDesc->Integer.Value);
     }
 
     return_ACPI_STATUS (Status);

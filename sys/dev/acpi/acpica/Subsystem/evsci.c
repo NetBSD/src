@@ -2,7 +2,7 @@
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              $Revision: 1.3 $
+ *              xRevision: 86 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.3 2002/06/15 01:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acevents.h"

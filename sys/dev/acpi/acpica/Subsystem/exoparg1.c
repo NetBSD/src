@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              $Revision: 1.2 $
+ *              xRevision: 146 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.2 2002/06/15 01:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.3 2002/12/23 00:22:11 kanaoka Exp $");
 
 #define __EXOPARG1_C__
 
@@ -153,7 +153,6 @@ __KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.2 2002/06/15 01:52:19 thorpej Exp $")
  * The AcpiExOpcode* functions are called via the Dispatcher component with
  * fully resolved operands.
 !*/
-
 
 /*******************************************************************************
  *
@@ -309,7 +308,6 @@ AcpiExOpcode_1A_1T_1R (
     ACPI_FUNCTION_TRACE_STR ("ExOpcode_1A_1T_1R", AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
-
     /* Examine the AML opcode */
 
     switch (WalkState->Opcode)
@@ -458,16 +456,10 @@ AcpiExOpcode_1A_1T_1R (
                  * return FALSE
                  */
                 ReturnDesc->Integer.Value = 0;
-
-                /*
-                 * Must delete the result descriptor since there is no reference
-                 * being returned
-                 */
-                AcpiUtRemoveReference (Operand[1]);
                 goto Cleanup;
             }
 
-            /* Get the object reference and store it */
+            /* Get the object reference, store it, and remove our reference */
 
             Status = AcpiExGetObjectReference (Operand[0], &ReturnDesc2, WalkState);
             if (ACPI_FAILURE (Status))
@@ -476,6 +468,7 @@ AcpiExOpcode_1A_1T_1R (
             }
 
             Status = AcpiExStore (ReturnDesc2, Operand[1], WalkState);
+            AcpiUtRemoveReference (ReturnDesc2);
 
             /* The object exists in the namespace, return TRUE */
 
@@ -503,14 +496,19 @@ AcpiExOpcode_1A_1T_1R (
             return_ACPI_STATUS (Status);
         }
 
-        /*
-         * Normally, we would remove a reference on the Operand[0] parameter;
-         * But since it is being used as the internal return object
-         * (meaning we would normally increment it), the two cancel out,
-         * and we simply don't do anything.
-         */
-        WalkState->ResultObj = Operand[0];
-        WalkState->Operands[0] = NULL;  /* Prevent deletion */
+        /* It is possible that the Store already produced a return object */
+
+        if (!WalkState->ResultObj)
+        {
+            /*
+             * Normally, we would remove a reference on the Operand[0] parameter;
+             * But since it is being used as the internal return object
+             * (meaning we would normally increment it), the two cancel out,
+             * and we simply don't do anything.
+             */
+            WalkState->ResultObj = Operand[0];
+            WalkState->Operands[0] = NULL;  /* Prevent deletion */
+        }
         return_ACPI_STATUS (Status);
 
 
@@ -575,7 +573,10 @@ AcpiExOpcode_1A_1T_1R (
 
 Cleanup:
 
-    WalkState->ResultObj = ReturnDesc;
+    if (!WalkState->ResultObj)
+    {
+        WalkState->ResultObj = ReturnDesc;
+    }
 
     /* Delete return object on error */
 
@@ -681,78 +682,12 @@ AcpiExOpcode_1A_0T_1R (
 
     case AML_TYPE_OP:               /* ObjectType (SourceObject) */
 
-        if (ACPI_GET_OBJECT_TYPE (Operand[0]) == INTERNAL_TYPE_REFERENCE)
+        /* Get the type of the base object */
+
+        Status = AcpiExResolveMultiple (WalkState, Operand[0], &Type, NULL);
+        if (ACPI_FAILURE (Status))
         {
-            /*
-             * Not a Name -- an indirect name pointer would have
-             * been converted to a direct name pointer in ResolveOperands
-             */
-            switch (Operand[0]->Reference.Opcode)
-            {
-            case AML_DEBUG_OP:
-
-                /* The Debug Object is of type "DebugObject" */
-
-                Type = ACPI_TYPE_DEBUG_OBJECT;
-                break;
-
-
-            case AML_INDEX_OP:
-
-                /* Get the type of this reference (index into another object) */
-
-                Type = Operand[0]->Reference.TargetType;
-                if (Type == ACPI_TYPE_PACKAGE)
-                {
-                    /*
-                     * The main object is a package, we want to get the type
-                     * of the individual package element that is referenced by
-                     * the index.
-                     */
-                    Type = ACPI_GET_OBJECT_TYPE (*(Operand[0]->Reference.Where));
-                }
-                break;
-
-
-            case AML_LOCAL_OP:
-            case AML_ARG_OP:
-
-                Type = AcpiDsMethodDataGetType (Operand[0]->Reference.Opcode,
-                                Operand[0]->Reference.Offset, WalkState);
-                break;
-
-
-            default:
-
-                ACPI_REPORT_ERROR (("AcpiExOpcode_1A_0T_1R/TypeOp: Unknown Reference subtype %X\n",
-                    Operand[0]->Reference.Opcode));
-                Status = AE_AML_INTERNAL;
-                goto Cleanup;
-            }
-        }
-        else
-        {
-            /*
-             * It's not a Reference, so it must be a direct name pointer.
-             */
-            Type = AcpiNsGetType ((ACPI_NAMESPACE_NODE *) Operand[0]);
-
-            /* Convert internal types to external types */
-
-            switch (Type)
-            {
-            case INTERNAL_TYPE_REGION_FIELD:
-            case INTERNAL_TYPE_BANK_FIELD:
-            case INTERNAL_TYPE_INDEX_FIELD:
-
-                Type = ACPI_TYPE_FIELD_UNIT;
-                break;
-
-            default:
-                /* No change to Type required */
-                break;
-            }
-
+            goto Cleanup;
         }
 
         /* Allocate a descriptor to hold the type. */
@@ -770,43 +705,38 @@ AcpiExOpcode_1A_0T_1R (
 
     case AML_SIZE_OF_OP:            /* SizeOf (SourceObject)  */
 
-        TempDesc = Operand[0];
-        if (ACPI_GET_DESCRIPTOR_TYPE (Operand[0]) == ACPI_DESC_TYPE_NAMED)
+        /* Get the base object */
+
+        Status = AcpiExResolveMultiple (WalkState, Operand[0], &Type, &TempDesc);
+        if (ACPI_FAILURE (Status))
         {
-            TempDesc = AcpiNsGetAttachedObject ((ACPI_NAMESPACE_NODE *) Operand[0]);
+            goto Cleanup;
         }
 
-        if (!TempDesc)
+        /*
+         * Type is guaranteed to be a buffer, string, or package at this
+         * point (even if the original operand was an object reference, it
+         * will be resolved and typechecked during operand resolution.)
+         */
+        switch (Type)
         {
-            Value = 0;
-        }
-        else
-        {
-            /*
-             * Type is guaranteed to be a buffer, string, or package at this
-             * point (even if the original operand was an object reference, it
-             * will be resolved and typechecked during operand resolution.)
-             */
-            switch (ACPI_GET_OBJECT_TYPE (TempDesc))
-            {
-            case ACPI_TYPE_BUFFER:
-                Value = TempDesc->Buffer.Length;
-                break;
+        case ACPI_TYPE_BUFFER:
+            Value = TempDesc->Buffer.Length;
+            break;
 
-            case ACPI_TYPE_STRING:
-                Value = TempDesc->String.Length;
-                break;
+        case ACPI_TYPE_STRING:
+            Value = TempDesc->String.Length;
+            break;
 
-            case ACPI_TYPE_PACKAGE:
-                Value = TempDesc->Package.Count;
-                break;
+        case ACPI_TYPE_PACKAGE:
+            Value = TempDesc->Package.Count;
+            break;
 
-            default:
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "SizeOf, Not Buf/Str/Pkg - found type %s\n",
-                    AcpiUtGetObjectTypeName (TempDesc)));
-                Status = AE_AML_OPERAND_TYPE;
-                goto Cleanup;
-            }
+        default:
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "SizeOf, Not Buf/Str/Pkg - found type %s\n",
+                AcpiUtGetTypeName (Type)));
+            Status = AE_AML_OPERAND_TYPE;
+            goto Cleanup;
         }
 
         /*
@@ -842,7 +772,7 @@ AcpiExOpcode_1A_0T_1R (
         {
             switch (ACPI_GET_OBJECT_TYPE (Operand[0]))
             {
-            case INTERNAL_TYPE_REFERENCE:
+            case ACPI_TYPE_LOCAL_REFERENCE:
                 /*
                  * This is a DerefOf (LocalX | ArgX)
                  *
@@ -870,6 +800,15 @@ AcpiExOpcode_1A_0T_1R (
                     Operand[0] = TempDesc;
                     break;
 
+                case AML_REF_OF_OP:
+
+                    /* Get the object to which the reference refers */
+
+                    TempDesc = Operand[0]->Reference.Object;
+                    AcpiUtRemoveReference (Operand[0]);
+                    Operand[0] = TempDesc;
+                    break;
+
                 default:
 
                     /* Must be an Index op - handled below */
@@ -887,8 +826,8 @@ AcpiExOpcode_1A_0T_1R (
                  * 2) Dereference the node to an actual object.  Could be a Field, so we nee
                  *    to resolve the node to a value.
                  */
-                Status = AcpiNsGetNodeByPath (Operand[0]->String.Pointer, 
-                                WalkState->ScopeInfo->Scope.Node, ACPI_NS_SEARCH_PARENT, 
+                Status = AcpiNsGetNodeByPath (Operand[0]->String.Pointer,
+                                WalkState->ScopeInfo->Scope.Node, ACPI_NS_SEARCH_PARENT,
                                 ACPI_CAST_INDIRECT_PTR (ACPI_NAMESPACE_NODE, &ReturnDesc));
                 if (ACPI_FAILURE (Status))
                 {
@@ -936,20 +875,10 @@ AcpiExOpcode_1A_0T_1R (
                 {
                 case ACPI_TYPE_BUFFER_FIELD:
 
-                    /* Ensure that the Buffer arguments are evaluated */
-
                     TempDesc = Operand[0]->Reference.Object;
-#if 0
-                    
-                    Status = AcpiDsGetBufferArguments (TempDesc);
-                    if (ACPI_FAILURE (Status))
-                    {
-                        goto Cleanup;
-                    }
-#endif
 
                     /*
-                     * Create a new object that contains one element of the 
+                     * Create a new object that contains one element of the
                      * buffer -- the element pointed to by the index.
                      *
                      * NOTE: index into a buffer is NOT a pointer to a
@@ -975,17 +904,8 @@ AcpiExOpcode_1A_0T_1R (
 
                 case ACPI_TYPE_PACKAGE:
 
-#if 0
-                    /* Ensure that the Package arguments are evaluated */
-
-                    Status = AcpiDsGetPackageArguments (Operand[0]->Reference.Object);
-                    if (ACPI_FAILURE (Status))
-                    {
-                        goto Cleanup;
-                    }
-#endif
                     /*
-                     * Return the referenced element of the package.  We must add 
+                     * Return the referenced element of the package.  We must add
                      * another reference to the referenced object, however.
                      */
                     ReturnDesc = *(Operand[0]->Reference.Where);
@@ -1019,6 +939,12 @@ AcpiExOpcode_1A_0T_1R (
             case AML_REF_OF_OP:
 
                 ReturnDesc = Operand[0]->Reference.Object;
+
+                if (ACPI_GET_DESCRIPTOR_TYPE (ReturnDesc) == ACPI_DESC_TYPE_NAMED)
+                {
+
+                    ReturnDesc = AcpiNsGetAttachedObject ((ACPI_NAMESPACE_NODE *) ReturnDesc);
+                }
 
                 /* Add another reference to the object! */
 

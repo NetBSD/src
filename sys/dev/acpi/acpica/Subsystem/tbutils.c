@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbutils - Table manipulation utilities
- *              $Revision: 1.3 $
+ *              xRevision: 57 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.3 2002/06/15 01:47:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
 
 #define __TBUTILS_C__
 
@@ -221,7 +221,8 @@ AcpiTbValidateTableHeader (
             "Table signature at %p [%p] has invalid characters\n",
             TableHeader, &Signature));
 
-        ACPI_REPORT_WARNING (("Invalid table signature found: [%4.4s]\n", (char *) &Signature));
+        ACPI_REPORT_WARNING (("Invalid table signature found: [%4.4s]\n",
+            (char *) &Signature));
         ACPI_DUMP_BUFFER (TableHeader, sizeof (ACPI_TABLE_HEADER));
         return (AE_BAD_SIGNATURE);
     }
@@ -234,101 +235,13 @@ AcpiTbValidateTableHeader (
             "Invalid length in table header %p name %4.4s\n",
             TableHeader, (char *) &Signature));
 
-        ACPI_REPORT_WARNING (("Invalid table header length (0x%X) found\n", TableHeader->Length));
+        ACPI_REPORT_WARNING (("Invalid table header length (0x%X) found\n",
+            (UINT32) TableHeader->Length));
         ACPI_DUMP_BUFFER (TableHeader, sizeof (ACPI_TABLE_HEADER));
         return (AE_BAD_HEADER);
     }
 
     return (AE_OK);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiTbMapAcpiTable
- *
- * PARAMETERS:  PhysicalAddress         - Physical address of table to map
- *              *Size                   - Size of the table.  If zero, the size
- *                                        from the table header is used.
- *                                        Actual size is returned here.
- *              **LogicalAddress        - Logical address of mapped table
- *
- * RETURN:      Logical address of the mapped table.
- *
- * DESCRIPTION: Maps the physical address of table into a logical address
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiTbMapAcpiTable (
-    ACPI_PHYSICAL_ADDRESS   PhysicalAddress,
-    ACPI_SIZE               *Size,
-    ACPI_TABLE_HEADER       **LogicalAddress)
-{
-    ACPI_TABLE_HEADER       *Table;
-    ACPI_SIZE               TableSize = *Size;
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_NAME ("TbMapAcpiTable");
-
-
-    /* If size is zero, look at the table header to get the actual size */
-
-    if ((*Size) == 0)
-    {
-        /* Get the table header so we can extract the table length */
-
-        Status = AcpiOsMapMemory (PhysicalAddress, sizeof (ACPI_TABLE_HEADER),
-                                    (void **) &Table);
-        if (ACPI_FAILURE (Status))
-        {
-            return (Status);
-        }
-
-        /* Extract the full table length before we delete the mapping */
-
-        TableSize = (ACPI_SIZE) Table->Length;
-
-#if 0
-/* We don't want to validate the header here.  */
-        /*
-         * Validate the header and delete the mapping.
-         * We will create a mapping for the full table below.
-         */
-        Status = AcpiTbValidateTableHeader (Table);
-#endif
-
-        /* Always unmap the memory for the header */
-
-        AcpiOsUnmapMemory (Table, sizeof (ACPI_TABLE_HEADER));
-
-#if 0
-        /* Exit if header invalid */
-
-        if (ACPI_FAILURE (Status))
-        {
-            return (Status);
-        }
-#endif
-    }
-
-    /* Map the physical memory for the correct length */
-
-    Status = AcpiOsMapMemory (PhysicalAddress, TableSize, 
-                                (void **) &Table);
-    if (ACPI_FAILURE (Status))
-    {
-        return (Status);
-    }
-
-    ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "Mapped memory for ACPI table, length=%d(%X) at %p\n",
-        TableSize, TableSize, Table));
-
-    *Size = TableSize;
-    *LogicalAddress = Table;
-    return (Status);
 }
 
 
@@ -364,8 +277,8 @@ AcpiTbVerifyTableChecksum (
 
     if (Checksum)
     {
-        ACPI_REPORT_WARNING (("Invalid checksum (%X) in table %4.4s\n",
-            Checksum, TableHeader->Signature));
+        ACPI_REPORT_WARNING (("Invalid checksum in table [%4.4s] (%02X, sum %02X is not zero)\n",
+            TableHeader->Signature, (UINT32) TableHeader->Checksum, (UINT32) Checksum));
 
         Status = AE_BAD_CHECKSUM;
     }

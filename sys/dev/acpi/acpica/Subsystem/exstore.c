@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              $Revision: 1.3 $
+ *              xRevision: 174 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.3 2002/06/15 01:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
 
 #define __EXSTORE_C__
 
@@ -178,7 +178,7 @@ AcpiExStore (
     {
         /*
          * Dest is a namespace node,
-         * Storing an object into a Name "container"
+         * Storing an object into a Named node.
          */
         Status = AcpiExStoreObjectToNode (SourceDesc,
                     (ACPI_NAMESPACE_NODE *) DestDesc, WalkState);
@@ -189,8 +189,8 @@ AcpiExStore (
     /* Destination object must be a Reference or a Constant object */
 
     switch (ACPI_GET_OBJECT_TYPE (DestDesc))
-    {  
-    case INTERNAL_TYPE_REFERENCE:
+    {
+    case ACPI_TYPE_LOCAL_REFERENCE:
         break;
 
     case ACPI_TYPE_INTEGER:
@@ -202,7 +202,7 @@ AcpiExStore (
             return_ACPI_STATUS (AE_OK);
         }
 
-        /*lint: -fallthrough */
+        /*lint -fallthrough */
 
     default:
 
@@ -230,6 +230,7 @@ AcpiExStore (
     switch (RefDesc->Reference.Opcode)
     {
     case AML_NAME_OP:
+    case AML_REF_OF_OP:
 
         /* Storing an object into a Name "container" */
 
@@ -389,6 +390,13 @@ AcpiExStoreObjectToIndex (
         {
             AcpiUtRemoveReference (ObjDesc);
             *(IndexDesc->Reference.Where) = NewDesc;
+
+            /* If same as the original source, add a reference */
+
+            if (NewDesc == SourceDesc)
+            {
+                AcpiUtAddReference (NewDesc);
+            }
         }
         break;
 
@@ -529,14 +537,14 @@ AcpiExStoreObjectToNode (
     switch (TargetType)
     {
     case ACPI_TYPE_BUFFER_FIELD:
-    case INTERNAL_TYPE_REGION_FIELD:
-    case INTERNAL_TYPE_BANK_FIELD:
-    case INTERNAL_TYPE_INDEX_FIELD:
+    case ACPI_TYPE_LOCAL_REGION_FIELD:
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+    case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
         /*
          * For fields, copy the source data to the target field.
          */
-        Status = AcpiExWriteDataToField (SourceDesc, TargetDesc);
+        Status = AcpiExWriteDataToField (SourceDesc, TargetDesc, &WalkState->ResultObj);
         break;
 
 
@@ -562,8 +570,12 @@ AcpiExStoreObjectToNode (
              * Store the new NewDesc as the new value of the Name, and set
              * the Name's type to that of the value being stored in it.
              * SourceDesc reference count is incremented by AttachObject.
+             *
+             * Note: This may change the type of the node if an explicit store
+             * has been performed such that the node/object type has been
+             * changed.
              */
-            Status = AcpiNsAttachObject (Node, NewDesc, TargetType);
+            Status = AcpiNsAttachObject (Node, NewDesc, NewDesc->Common.Type);
 
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
                 "Store %s into %s via Convert/Attach\n",
