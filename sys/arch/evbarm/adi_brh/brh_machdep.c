@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.16 2003/06/15 17:45:24 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.17 2003/06/15 18:43:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -842,6 +842,13 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
+
+	/*
+	 * brh_start() has mapped the console devices for us per
+	 * the devmap, so register it now so drivers can map the
+	 * console device.
+	 */
+	pmap_devmap_register(brh_devmap);
 
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, comcnaddrs[comcnunit], comcnspeed,
