@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.3 2002/03/24 20:35:58 martin Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.4 2002/03/25 14:44:46 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.3 2002/03/24 20:35:58 martin Exp $ 
+ *	$Id: i4b_l2.h,v 1.4 2002/03/25 14:44:46 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -41,7 +41,6 @@
 #define _I4B_L2_H_
 
 typedef struct l2_softc {
-	SIMPLEQ_ENTRY(l2_softc) briq;
 	const struct isdn_layer1_bri_driver * driver;
 	void*	l1_token;
 	int	bri;

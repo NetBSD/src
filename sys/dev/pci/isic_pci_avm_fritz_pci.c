@@ -35,14 +35,14 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.8 2002/03/25 14:44:46 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.8 2002/03/25 14:44:46 martin Exp $");
 
 #include "opt_isicpci.h"
 #ifdef ISICPCI_AVM_A1
@@ -804,6 +804,7 @@ void
 isic_attach_fritzPci(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 {
 	struct isic_softc *sc = &psc->sc_isic;
+	struct isdn_l3_drvier *drv;
 	u_int v;
 
 	/* setup io mappings */
@@ -936,10 +937,12 @@ isic_attach_fritzPci(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 	sc->sc_freeflag2 = 0;
 
 	/* init higher protocol layers */
-	sc->sc_l3token = isdn_attach_bri(sc->sc_dev.dv_xname, 
+	drv = isdn_attach_bri(sc->sc_dev.dv_xname, 
 	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver);
+	sc->sc_l3token = drv;
 	sc->sc_l2.driver = &isic_std_driver;
 	sc->sc_l2.l1_token = sc;
+	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
 }
 
