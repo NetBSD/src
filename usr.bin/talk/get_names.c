@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
+/*	$NetBSD: get_names.c,v 1.5 1997/10/20 00:23:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,28 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $";
+__RCSID("$NetBSD: get_names.c,v 1.5 1997/10/20 00:23:20 lukem Exp $");
 #endif /* not lint */
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <protocols/talkd.h>
-#include <pwd.h>
-#include <string.h>
 #include "talk.h"
+#include <sys/param.h>
+#include <pwd.h>
+#include <unistd.h>
 
-char	*getlogin();
-char	*ttyname();
-char	*rindex();
 extern	CTL_MSG msg;
 
 /*
  * Determine the local and remote user, tty, and machines
  */
+void
 get_names(argc, argv)
 	int argc;
 	char *argv[];
@@ -62,8 +59,8 @@ get_names(argc, argv)
 	char hostname[MAXHOSTNAMELEN];
 	char *his_name, *my_name;
 	char *my_machine_name, *his_machine_name;
-	char *my_tty, *his_tty;
-	register char *cp;
+	char *his_tty;
+	char *cp;
 	char *names;
 
 	if (argc < 2 ) {
@@ -87,7 +84,7 @@ get_names(argc, argv)
 	my_machine_name = hostname;
 	/* check for, and strip out, the machine name of the target */
 	names = strdup(argv[1]);
-	for (cp = names; *cp && !index("@:!.", *cp); cp++)
+	for (cp = names; *cp && !strchr("@:!.", *cp); cp++)
 		;
 	if (*cp == '\0') {
 		/* this is a local to local talk */

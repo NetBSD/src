@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.4 1997/10/20 00:23:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,19 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $";
+__RCSID("$NetBSD: ctl_transact.c,v 1.4 1997/10/20 00:23:16 lukem Exp $");
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "talk.h"
 #include <sys/time.h>
-#include <netinet/in.h>
-#include <protocols/talkd.h>
 #include <errno.h>
+#include <unistd.h>
 #include "talk_ctl.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */
@@ -55,19 +54,23 @@ static char rcsid[] = "$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp
  * not recieved an acknowledgement within a reasonable amount
  * of time
  */
+void
 ctl_transact(target, msg, type, rp)
 	struct in_addr target;
 	CTL_MSG msg;
 	int type;
 	CTL_RESPONSE *rp;
 {
-	int read_mask, ctl_mask, nready, cc;
+	fd_set read_mask, ctl_mask;
+	int nready, cc;
 	struct timeval wait;
 
+	nready = 0;
 	msg.type = type;
 	daemon_addr.sin_addr = target;
 	daemon_addr.sin_port = daemon_port;
-	ctl_mask = 1 << ctl_sockt;
+	FD_ZERO(&ctl_mask);
+	FD_SET(ctl_sockt, &ctl_mask);
 
 	/*
 	 * Keep sending the message until a response of
