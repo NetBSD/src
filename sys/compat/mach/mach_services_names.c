@@ -1,14 +1,14 @@
-/* $NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $ */
 
 /*
  * Mach services names. This file is not built
  * by the kernel, it is included by kdump sources.
  *
- * created from  $NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $
+ * created from  $NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.2 2003/11/16 01:14:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $");
 
 struct mach_service_name {
 	int srv_id;
@@ -17,14 +17,14 @@ struct mach_service_name {
 
 struct mach_service_name mach_services_names[] = {
 	{64, "obsolete notify_first"},
-	{65, "unimpl. notify_port_deleted"},
+	{65, "notify_port_deleted"},
 	{66, "obsolete notify_msg_accepted"},
 	{67, "obsolete notify_ownership_rights"},
 	{68, "obsolete notify_receive_rights"},
-	{69, "unimpl. notify_port_destroyed"},
-	{70, "unimpl. notify_port_no_senders"},
-	{71, "unimpl. notify_port_send_once"},
-	{72, "unimpl. notify_port_dead_name"},
+	{69, "notify_port_destroyed"},
+	{70, "notify_port_no_senders"},
+	{71, "notify_port_send_once"},
+	{72, "notify_port_dead_name"},
 	{200, "host_info"},
 	{201, "unimpl. host_kernel_version"},
 	{202, "host_page_size"},
@@ -108,9 +108,9 @@ struct mach_service_name mach_services_names[] = {
 	{2283, "unimpl. default_pager_add_file"},
 	{2284, "unimpl. default_pager_triggers"},
 	{2295, "unimpl. default_pager_space_alert"},
-	{2401, "unimpl. exception_raise"},
-	{2402, "unimpl. exception_raise_state"},
-	{2403, "unimpl. exception_raise_state_identity"},
+	{2401, "exception_raise"},
+	{2402, "exception_raise_state"},
+	{2403, "exception_raise_state_identity"},
 	{2450, "unimpl. samples"},
 	{2451, "unimpl. notices"},
 	{2800, "io_object_get_class"},

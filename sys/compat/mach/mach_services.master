@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.3 2003/11/15 22:55:35 manu Exp $
+ $NetBSD: mach_services.master,v 1.4 2003/11/17 01:52:14 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -24,14 +24,14 @@
 ; Port Notification messages
 ;
 64	OBSOL	notify_first
-65	UNIMPL	notify_port_deleted
+65	NODEF	notify_port_deleted
 66	OBSOL	notify_msg_accepted
 67	OBSOL	notify_ownership_rights
 68	OBSOL	notify_receive_rights
-69	UNIMPL	notify_port_destroyed
-70	UNIMPL	notify_port_no_senders
-71	UNIMPL	notify_port_send_once
-72	UNIMPL	notify_port_dead_name
+69	NODEF	notify_port_destroyed
+70	NODEF	notify_port_no_senders
+71	NODEF	notify_port_send_once
+72	NODEF	notify_port_dead_name
 
 ;
 ; Host subsystem
@@ -166,9 +166,9 @@
 ;
 ; Mach exception interface
 ;
-2401	UNIMPL	exception_raise
-2402	UNIMPL	exception_raise_state
-2403	UNIMPL	exception_raise_state_identity
+2401	NODEF	exception_raise
+2402	NODEF	exception_raise_state
+2403	NODEF	exception_raise_state_identity
 
 ;
 ; Profiling

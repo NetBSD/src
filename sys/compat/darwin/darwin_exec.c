@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.22 2003/10/25 10:43:45 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.23 2003/11/17 01:52:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.22 2003/10/25 10:43:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.23 2003/11/17 01:52:14 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -110,7 +110,7 @@ const struct emul emul_darwin = {
 	NULL,
 #endif
 	darwin_sendsig,
-	trapsignal,
+	darwin_trapsignal,
 #if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
 	sigcode,
 	esigcode,

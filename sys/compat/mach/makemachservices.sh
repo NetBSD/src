@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makemachservices.sh,v 1.3 2003/11/15 22:55:35 manu Exp $
+#	$NetBSD: makemachservices.sh,v 1.4 2003/11/17 01:52:14 manu Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -108,6 +108,11 @@ BEGIN{
 	    "sizeof(mach_%s_request_t), sizeof(mach_%s_reply_t)},\n", \
 	    $1, $3, $3, $3, $3) > table;
 	printf("int mach_%s(struct mach_trap_args *);\n", $3) > headers;
+	printf("	{%d, \"%s\"},\n", $1, $3) > names;
+}
+(intable && $2 == "NODEF") {
+	printf("	{%d, NULL, \"%s\", 0, 0},\n", \
+	    $1, $3, $3, $3, $3) > table;
 	printf("	{%d, \"%s\"},\n", $1, $3) > names;
 }
 (intable && $2 == "UNIMPL") {
