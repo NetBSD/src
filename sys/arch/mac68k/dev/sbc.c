@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.5 1996/05/05 06:17:13 briggs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.6 1996/05/08 03:44:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -147,15 +147,16 @@ struct sbc_softc {
  * mechanism.  The sc_options member of the softc is OR'd with
  * the value in sbc_options.
  */     
-#define	SBC_INTR	0x01	/* Allow SCSI IRQ/DRQ interrupts */
-#define	SBC_RESELECT	0x02	/* Allow disconnect/reselect */
-#define	SBC_OPTIONS_MASK	(SBC_INTR|SBC_RESELECT)
-#define	SBC_OPTIONS_BITS	"\10\2RESELECT\1INTR"
-int sbc_options = 0;
+#define	SBC_PDMA	0x01	/* Use PDMA for polled transfers */
+#define	SBC_INTR	0x02	/* Allow SCSI IRQ/DRQ interrupts */
+#define	SBC_RESELECT	0x04	/* Allow disconnect/reselect */
+#define	SBC_OPTIONS_MASK	(SBC_RESELECT|SBC_INTR|SBC_PDMA)
+#define	SBC_OPTIONS_BITS	"\10\3RESELECT\2INTR\1PDMA"
+int sbc_options = SBC_PDMA;
 
-static	int	sbc_print __P((void *, char *));
 static	int	sbc_match __P((struct device *, void *, void *));
 static	void	sbc_attach __P((struct device *, struct device *, void *));
+static	int	sbc_print __P((void *, char *));
 static	void	sbc_minphys __P((struct buf *bp));
 
 static	int	sbc_wait_busy __P((struct ncr5380_softc *));
@@ -205,42 +206,27 @@ struct cfdriver sbc_cd = {
 
 
 static int
-sbc_print(aux, name)
-	void *aux;
-	char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
-static int
 sbc_match(parent, match, args)
-	struct device	*parent;
-	void		*match, *args;
+	struct device *parent;
+	void *match, *args;
 {
-	struct device   *self = match;	/* XXX mainbus is "indirect" */
-	struct confargs *ca = args;
-
 	if (!mac68k_machine.scsi80)
-		return 0;
-	if (self->dv_cfdata->cf_unit != 0)
 		return 0;
 	return 1;
 }
 
 static void
 sbc_attach(parent, self, args)
-	struct device	*parent, *self;
-	void		*args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
 	extern vm_offset_t SCSIBase;
 
 	/* Pull in the options flags. */ 
-	sc->sc_options =
-	((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options) & SBC_OPTIONS_MASK);
+	sc->sc_options = ((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options)
+	    & SBC_OPTIONS_MASK);
 
 	/*
 	 * Set up base address of 5380
@@ -284,9 +270,6 @@ sbc_attach(parent, self, args)
 	ncr_sc->sc_flags = 0;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * MD function pointers used by the MI code.
-	 */
 	if ((sc->sc_options & SBC_INTR) == 0) {
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	} else {
@@ -324,7 +307,7 @@ sbc_attach(parent, self, args)
 	if (sc->sc_options & SBC_INTR)
 		sbc_intr_enable(ncr_sc);
 
-#ifdef	SBC_DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug)
 		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
 		    sc, sc->sc_regs);
@@ -339,6 +322,15 @@ sbc_attach(parent, self, args)
 	config_found(self, &(ncr_sc->sc_link), sbc_print);
 }
 
+static int
+sbc_print(aux, name)
+	void *aux;
+	char *name;
+{
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
+}
 
 static void
 sbc_minphys(struct buf *bp)
@@ -432,7 +424,6 @@ sbc_intr_enable(ncr_sc)
 	int s;
 
 	s = splhigh();
-	*sc->sc_iflag   = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	*sc->sc_ienable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	splx(s);
 }
@@ -453,21 +444,11 @@ void
 sbc_irq_intr(p)
 	void *p;
 {
-	static int handling_sbc_intr = 0;
 	register struct ncr5380_softc *ncr_sc = p;
 	register int claimed = 0;
 
 	/* How we ever arrive here without IRQ set is a mystery... */
 	if (*ncr_sc->sci_csr & SCI_CSR_INT) {
-		/*
-		 * For some reason, the hardware sometimes generates a
-		 * spurious selection interrupt.  I don't know why this
-		 * happens, but the following hack works around it.  --sar
-		 */
-		if (handling_sbc_intr)
-			return;
-		handling_sbc_intr++;
-
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_INTR)
 			decode_5380_intr(ncr_sc);
@@ -485,9 +466,6 @@ sbc_irq_intr(p)
 			}
 #endif
 		}
-
-		/* We can handle another interrupt from the SBC now. */
-		handling_sbc_intr = 0;
 	}
 }
 
@@ -542,11 +520,10 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 	register volatile u_char *byte_data = sc->sc_nodrq_addr;
 	register int len = count;
 
-	if (count < ncr_sc->sc_min_dma_len)
+	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
 		return ncr5380_pio_out(ncr_sc, phase, count, data);
 
 	if (sbc_wait_busy(ncr_sc) == 0) {
-		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
 		*ncr_sc->sci_dma_send = 0;
@@ -620,11 +597,10 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 	register volatile u_char *byte_data = sc->sc_nodrq_addr;
 	register int len = count;
 
-	if (count < ncr_sc->sc_min_dma_len)
+	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
 		return ncr5380_pio_in(ncr_sc, phase, count, data);
 
 	if (sbc_wait_busy(ncr_sc) == 0) {
-		*ncr_sc->sci_mode &= ~SCI_MODE_MONBSY;	/* XXX */
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd |= SCI_ICMD_DATA;
 		*ncr_sc->sci_irecv = 0;
@@ -798,8 +774,8 @@ sbc_drq_intr(p)
 		/*
 		 * Get the source address aligned.
 		 */
-		resid = count = min(dh->dh_len,
-			4 - (((int) dh->dh_addr) & 0x3));
+		resid =
+		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
 		if (count && count < 4) {
 			data = (u_int8_t *) dh->dh_addr;
 			drq = (u_int8_t *) sc->sc_drq_addr;
@@ -844,8 +820,8 @@ sbc_drq_intr(p)
 		/*
 		 * Get the dest address aligned.
 		 */
-		resid = count = min(dh->dh_len,
-			4 - (((int) dh->dh_addr) & 0x3));
+		resid =
+		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
 		if (count && count < 4) {
 			data = (u_int8_t *) dh->dh_addr;
 			drq = (u_int8_t *) sc->sc_drq_addr;
@@ -926,7 +902,7 @@ sbc_dma_alloc(ncr_sc)
 	struct sbc_pdma_handle *dh;
 	int		i, xlen;
 
-#ifdef	DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
 		panic("sbc_dma_alloc: already have PDMA handle");
 #endif
@@ -935,9 +911,11 @@ sbc_dma_alloc(ncr_sc)
 	if (sr->sr_flags & SR_IMMED)
 		return;
 
+#ifndef SBCTEST
 	/* XXX - we don't trust PDMA writes yet! */
 	if (xs->flags & SCSI_DATA_OUT)
 		return;
+#endif
 
 	xlen = ncr_sc->sc_datalen;
 
@@ -975,7 +953,7 @@ sbc_dma_free(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 
-#ifdef	DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (sr->sr_dma_hand == NULL)
 		panic("sbc_dma_free: no DMA handle");
 #endif
@@ -1003,7 +981,7 @@ sbc_dma_poll(ncr_sc)
 	 * for the transfer.  This forces the polled PDMA code
 	 * to handle the request...
 	 */
-#ifdef	SBC_DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("%s: lost DRQ interrupt?\n", ncr_sc->sc_dev.dv_xname);
 #endif
@@ -1043,7 +1021,7 @@ sbc_dma_start(ncr_sc)
 	}
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
-#ifdef	SBC_DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("%s: PDMA started, va=%p, len=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, dh->dh_addr, dh->dh_len);
