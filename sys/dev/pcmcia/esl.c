@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.7 2001/12/25 02:37:39 jmcneill Exp $	*/
+/*	$NetBSD: esl.c,v 1.8 2001/12/25 03:47:46 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.7 2001/12/25 02:37:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.8 2001/12/25 03:47:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,16 +257,6 @@ esl_set_params(void *hdl, int setmode, int usemode,
 {
 	struct esl_pcmcia_softc *sc = hdl;
 	int rate;
-
-	/*
-	 * I'm too lazy to make this do anything other than play
-	 *  -- jmcneill
-	 */
-	if ((setmode & AUMODE_PLAY) == 0) {
-		printf("%s: esl_set_params: only AUMODE_PLAY is supported\n",
-		    sc->sc_esl.sc_dev.dv_xname);
-		return (EINVAL);
-	}
 
 	if (play->sample_rate < ESS_MINRATE ||
 	    play->sample_rate > ESS_MAXRATE ||
