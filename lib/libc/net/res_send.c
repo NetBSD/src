@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.24 2000/01/23 01:55:17 mycroft Exp $	*/
+/*	$NetBSD: res_send.c,v 1.25 2000/04/25 08:51:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.24 2000/01/23 01:55:17 mycroft Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.25 2000/04/25 08:51:39 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ static int af = 0;	/* address family of socket */
 			fprintf args;\
 			__fp_nquery(query, size, stdout);\
 		} else {}
-    static char abuf[INET6_ADDRSTRLEN];
+    static char abuf[NI_MAXHOST];
     static char pbuf[32];
     static void Aerror __P((FILE *, char *, int, struct sockaddr *));
     static void Perror __P((FILE *, char *, int));
@@ -145,7 +145,7 @@ static int af = 0;	/* address family of socket */
 	if (_res.options & RES_DEBUG) {
 		getnameinfo(address, (size_t)address->sa_len, abuf,
 		    sizeof(abuf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST|NI_NUMERICSERV);
+		    NI_NUMERICHOST|NI_NUMERICSERV|NI_WITHSCOPEID);
 		fprintf(file, "res_send: %s ([%s].%s): %s\n",
 			string, abuf, pbuf, strerror(error));
 	}
@@ -189,6 +189,37 @@ res_send_setrhook(hook)
 	Rhook = hook;
 }
 
+#ifdef INET6
+static struct sockaddr * get_nsaddr __P((size_t));
+
+/*
+ * pick appropriate nsaddr_list for use.  see res_init() for initialization.
+ */
+static struct sockaddr *
+get_nsaddr(n)
+	size_t n;
+{
+
+	if (!_res.nsaddr_list[n].sin_family) {
+		/*
+		 * - _res_ext.nsaddr_list[n] holds an address that is larger
+		 *   than struct sockaddr, and
+		 * - user code did not update _res.nsaddr_list[n].
+		 */
+		return (struct sockaddr *)&_res_ext.nsaddr_list[n];
+	} else {
+		/*
+		 * - user code updated _res.nsaddr_list[n], or
+		 * - _res.nsaddr_list[n] has the same content as
+		 *   _res_ext.nsaddr_list[n].
+		 */
+		return (struct sockaddr *)&_res.nsaddr_list[n];
+	}
+}
+#else
+#define get_nsaddr(n)	((struct sockaddr *)&_res.nsaddr_list[(n)])
+#endif
+
 /* int
  * res_isourserver(ina)
  *	looks up "ina" in _res.ns_addr_list[]
@@ -205,22 +236,21 @@ res_isourserver(inp)
 #ifdef INET6
 	const struct sockaddr_in6 *in6p = (const struct sockaddr_in6 *)inp;
 	const struct sockaddr_in6 *srv6;
+#endif
 	const struct sockaddr_in *srv;
-#else /* INET6 */
-	struct sockaddr_in ina;
-#endif /* INET6 */
 	int ns, ret;
 
 	_DIAGASSERT(inp != NULL);
 
-#ifdef INET6
 	ret = 0;
 	switch (inp->sin_family) {
+#ifdef INET6
 	case AF_INET6:
 		for (ns = 0; ns < _res.nscount; ns++) {
-			srv6 = (struct sockaddr_in6 *)&_res_ext.nsaddr_list[ns];
+			srv6 = (struct sockaddr_in6 *)get_nsaddr(ns);
 			if (srv6->sin6_family == in6p->sin6_family &&
 			    srv6->sin6_port == in6p->sin6_port &&
+			    srv6->sin6_scope_id == in6p->sin6_scope_id &&
 			    (memcmp(&srv6->sin6_addr, &in6addr_any,
 				    sizeof(struct in6_addr)) == 0 ||
 			     memcmp(&srv6->sin6_addr, &in6p->sin6_addr,
@@ -230,9 +260,10 @@ res_isourserver(inp)
 			}
 		}
 		break;
+#endif
 	case AF_INET:
 		for (ns = 0; ns < _res.nscount; ns++) {
-			srv = (struct sockaddr_in *)&_res_ext.nsaddr_list[ns];
+			srv = (struct sockaddr_in *)get_nsaddr(ns);
 			if (srv->sin_family == inp->sin_family &&
 			    srv->sin_port == inp->sin_port &&
 			    (srv->sin_addr.s_addr == INADDR_ANY ||
@@ -243,21 +274,6 @@ res_isourserver(inp)
 		}
 		break;
 	}
-#else /* INET6 */
-	ina = *inp;
-	ret = 0;
-	for (ns = 0;  ns < _res.nscount;  ns++) {
-		const struct sockaddr_in *srv = &_res.nsaddr_list[ns];
-
-		if (srv->sin_family == ina.sin_family &&
-		    srv->sin_port == ina.sin_port &&
-		    (srv->sin_addr.s_addr == INADDR_ANY ||
-		     srv->sin_addr.s_addr == ina.sin_addr.s_addr)) {
-			ret++;
-			break;
-		}
-	}
-#endif /* INET6 */
 	return (ret);
 }
 
@@ -377,13 +393,8 @@ res_send(buf, buflen, ans, anssiz)
 	 */
 	for (try = 0; try < _res.retry; try++) {
 	    for (ns = 0; ns < _res.nscount; ns++) {
-#ifdef INET6
-		struct sockaddr *nsap = (struct sockaddr *)
-				&_res_ext.nsaddr_list[ns];
-#else /* INET6 */
-		struct sockaddr *nsap = (struct sockaddr *)
-				&_res.nsaddr_list[ns];
-#endif
+		struct sockaddr *nsap = get_nsaddr(ns);
+
     same_ns:
 		if (badns & (1 << ns)) {
 			res_close();
