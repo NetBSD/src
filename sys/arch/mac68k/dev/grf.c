@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.17 1995/04/10 07:56:46 mycroft Exp $	*/
+/*	$NetBSD: grf.c,v 1.18 1995/04/13 04:04:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -526,7 +526,7 @@ grfunmap(dev, addr, p)
 
 static char zero = 0;
 
-static int
+static void
 macvideo_intr(int unit, int slot)
 {
 	struct grf_softc *gp = &grf_softc[unit];

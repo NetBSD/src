@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.17 1995/04/08 13:16:33 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.18 1995/04/13 04:05:10 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -50,7 +50,7 @@ long	via1_noint(), via2_noint();
 long	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
 long	via2_nubus_intr();
 long	rbv_nubus_intr();
-int	slot_noint();
+void	slot_noint(void *, int);
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
 long (*via1itab[7])()={
@@ -81,7 +81,7 @@ void		(*real_via2_intr)(struct frame *);
 int		mac68k_trip_debugger=0;
 
 /* nubus slot interrupt routines */
-int (*slotitab[6])() = {
+void (*slotitab[6])(void *, int) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
@@ -90,7 +90,7 @@ int (*slotitab[6])() = {
 	slot_noint
 };
 
-int slotutab[6];
+void	*slotptab[6];
 
 void VIA_initialize()
 {
@@ -244,10 +244,10 @@ long via2_noint(int bitnum)
 static int	nubus_intr_mask = 0;
 
 int
-add_nubus_intr(addr, func, unit)
-int addr;
-int (*func)();
-int unit;
+add_nubus_intr(addr, func, client_data)
+int	addr;
+void	(*func)();
+void	*client_data;
 {
 	int	s = splhigh();
 	int	slot;
@@ -256,7 +256,7 @@ int unit;
 	if (slot < 0) return 0;
 
 	slotitab[slot-9] = func;
-	slotutab[slot-9] = unit;
+	slotptab[slot-9] = client_data;
 
 	nubus_intr_mask |= (1 << (slot-9));
 
@@ -282,7 +282,7 @@ try_again:
 		i = 6;
 		while (i--) {
 			if (ints & mask) {
-				(*slotitab[i])(slotutab[i], i+9);
+				(*slotitab[i])(slotptab[i], i+9);
 			}
 			mask >>= 1;
 		}
@@ -308,7 +308,7 @@ try_again:
 		i = 6;
 		while (i--) {
 			if (ints & mask) {
-				(*slotitab[i])(slotutab[i], i+9);
+				(*slotitab[i])(slotptab[i], i+9);
 			}
 			mask >>= 1;
 		}
@@ -321,8 +321,8 @@ try_again:
 	goto try_again;
 }
 
-int
-slot_noint(int unit, int slot)
+void
+slot_noint(void *client_data, int slot)
 {
 	printf("slot_noint() slot %x\n", slot);
 }
