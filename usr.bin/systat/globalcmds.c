@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.6 2000/01/08 23:12:37 itojun Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.7 2000/01/08 23:34:17 itojun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -81,6 +81,7 @@ global_help(args)
 			continue;
 		if (cur && prev && strcmp(cur, prev) == 0) {
 			free(cur);
+			cur = NULL;
 			continue;
 		}
 		len = strlen(cur);
@@ -92,10 +93,14 @@ global_help(args)
 		if (prev)
 			free(prev);
 		prev = cur;
+		cur = NULL;
 	}
 	if (col == 0 && args) {
 		standout();
-		addstr("help: no matches");
+		if (strlen(args) < COLS - 25)
+			printw("help: no matches for `%s.*'", args);
+		else
+			printw("help: no matches");
 		standend();
 	}
 	clrtoeol();
