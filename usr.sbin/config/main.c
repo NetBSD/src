@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.79 2003/06/25 07:02:04 heas Exp $	*/
+/*	$NetBSD: main.c,v 1.80 2003/06/27 18:42:11 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -933,7 +933,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 	for ( ; *npp != NULL; npp = &(*npp)->nv_next) {
 		if ((*npp)->nv_name != name)
 			continue;
-		if (next != NULL && *next == (struct nvlist **) *npp)
+		if (next != NULL && *next == &(*npp)->nv_next)
 			*next = npp;
 		nv = (*npp)->nv_next;
 		nvfree(*npp);
