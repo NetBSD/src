@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.4 1995/01/05 07:22:44 chopps Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.5 1995/02/12 19:19:21 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@ struct	sbic_pending {
 
 struct	sbic_softc {
 	struct	device sc_dev;
+	struct	isr sc_isr;
 	struct	target_sync {
 		u_char	state;
 		u_char	period;

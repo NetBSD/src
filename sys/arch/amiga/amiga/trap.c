@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1994/12/01 17:24:32 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 1995/02/12 19:18:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -616,39 +616,6 @@ trap(type, code, v, frame)
 	 */
 	case T_ASTFLT|T_USER:
 		astpending = 0;
-		/*
-		 * We check for software interrupts first.  This is because
-		 * they are at a higher level than ASTs, and on a VAX would
-		 * interrupt the AST.  We assume that if we are processing
-		 * an AST that we must be at IPL0 so we don't bother to
-		 * check.  Note that we ensure that we are at least at SIR
-		 * IPL while processing the SIR.
-		 */
-		spl1();
-		/*FALLTHROUGH*/
-	/*
-	 * Software interrupt
-	 */
-	case T_SSIR:
-	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			siroff(SIR_NET);
-			cnt.v_soft++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			cnt.v_soft++;
-			/* XXXX softclock(&frame.f_stackadj); */
-			softclock();
-		}
-		/*
-		 * If this was not an AST trap, we are all done.
-		 */
-		if (type != (T_ASTFLT|T_USER)) {
-			cnt.v_trap--;
-			return;
-		}
 		spl0();
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;

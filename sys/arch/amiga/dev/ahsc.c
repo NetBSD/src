@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.7 1995/01/05 07:22:32 chopps Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.8 1995/02/12 19:19:01 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
@@ -57,7 +58,7 @@ int ahscmatch __P((struct device *, struct cfdata *, void *));
 void ahsc_dmafree __P((struct sbic_softc *));
 void ahsc_dmastop __P((struct sbic_softc *));
 int ahsc_dmanext __P((struct sbic_softc *));
-int ahsc_dmaintr __P((void));
+int ahsc_dmaintr __P((struct sbic_softc *));
 int ahsc_dmago __P((struct sbic_softc *, char *, int, int));
 
 struct scsi_adapter ahsc_scsiswitch = {
@@ -144,8 +145,10 @@ ahscattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
+	sc->sc_isr.isr_intr = ahsc_dmaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
 
 	/*
 	 * attach all scsi units on us
@@ -230,7 +233,7 @@ ahsc_dmago(dev, addr, count, flags)
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;
-  
+
 	return(dev->sc_tcnt);
 }
 
@@ -270,47 +273,42 @@ ahsc_dmastop(dev)
 }
 
 int
-ahsc_dmaintr()
+ahsc_dmaintr(dev)
+	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	struct sbic_softc *dev;
-	int i, stat, found;
+	int stat, found;
 
-	found = 0;
-	for (i = 0; i < ahsccd.cd_ndevs; i++) {
-		dev = ahsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		sdp = dev->sc_cregs;
-		stat = sdp->ISTR;
-      
-		if ((stat & (ISTR_INT_F|ISTR_INT_P)) == 0)
-			continue;
-  
+	sdp = dev->sc_cregs;
+	stat = sdp->ISTR;
+
+	if ((stat & (ISTR_INT_F|ISTR_INT_P)) == 0)
+		return (0);
+
 #ifdef DEBUG
-		if (ahsc_dmadebug & DDB_FOLLOW)
-			printf("ahsc_dmaintr (%d, 0x%x)\n", i, stat);
+	if (ahsc_dmadebug & DDB_FOLLOW)
+		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 
-		/*
-		 * both, SCSI and DMA interrupts arrive here. I chose
-		 * arbitrarily that DMA interrupts should have higher
-		 * precedence than SCSI interrupts.
-		 */
-		if (stat & ISTR_E_INT) {
-			found++;
-	  
-			sdp->CINT = 1;	/* clear possible interrupt */
-	
-			/*
-			 * check for SCSI ints in the same go and 
-			 * eventually save an interrupt
-			 */
-		}
+	/*
+	 * both, SCSI and DMA interrupts arrive here. I chose
+	 * arbitrarily that DMA interrupts should have higher
+	 * precedence than SCSI interrupts.
+	 */
+	found = 0;
+	if (stat & ISTR_E_INT) {
+		++found;
 
-		if (dev->sc_flags & SBICF_INTR && stat & ISTR_INTS)
-			found += sbicintr(dev);
+		sdp->CINT = 1;	/* clear possible interrupt */
+
+		/*
+		 * check for SCSI ints in the same go and 
+		 * eventually save an interrupt
+		 */
 	}
+
+	if (dev->sc_flags & SBICF_INTR && stat & ISTR_INTS)
+		found += sbicintr(dev);
 	return(found);
 }
 
@@ -350,7 +348,7 @@ ahsc_dmanext(dev)
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int)dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;
-      
+
 	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 	return(dev->sc_tcnt);
 }

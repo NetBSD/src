@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.9 1995/01/05 07:22:55 chopps Exp $	*/
+/*	$NetBSD: zssc.c,v 1.10 1995/02/12 19:19:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -45,6 +45,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
@@ -53,6 +54,7 @@ int zsscprint __P((void *auxp, char *));
 void zsscattach __P((struct device *, struct device *, void *));
 int zsscmatch __P((struct device *, struct cfdata *, void *));
 int siopintr __P((struct siop_softc *));
+int zssc_dmaintr __P((struct siop_softc *));
 
 struct scsi_adapter zssc_scsiswitch = {
 	siop_scsicmd,
@@ -125,10 +127,11 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-#if 1
-	custom.intreq = INTF_EXTER;
-	custom.intena = INTF_SETCLR | INTF_EXTER;
-#endif
+
+	sc->sc_isr.isr_intr = zssc_dmaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 6;
+	add_isr(&sc->sc_isr);
 
 	/*
 	 * attach all scsi units on us
@@ -158,35 +161,26 @@ zsscprint(auxp, pnp)
  * can be deferred until splbio is unblocked.
  */
 
-#if 0
 int
-zssc_dmaintr()
-#else
-int
-siopintr6 ()
-#endif
+zssc_dmaintr(sc)
+	struct siop_softc *sc;
 {
 	siop_regmap_p rp;
-	struct siop_softc *dev;
-	int i, istat, found;
+	int istat;
 
-	found = 0;
-	for (i = 0; i < zssccd.cd_ndevs; i++) {
-		dev = zssccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		rp = dev->sc_siopp;
-		istat = rp->siop_istat;
-		if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
-			continue;
-		if ((dev->sc_flags & (SIOP_DMA | SIOP_SELECTED)) == SIOP_SELECTED)
-			continue;	/* doing non-interrupt I/O */
-		found++;
-		dev->sc_istat = istat;
-		dev->sc_dstat = rp->siop_dstat;
-		dev->sc_sstat0 = rp->siop_sstat0;
-		custom.intreq = INTF_EXTER;
-		add_sicallback (siopintr, dev, NULL);
-	}
-	return(found);
+	rp = sc->sc_siopp;
+	istat = rp->siop_istat;
+	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+		return(0);
+	if ((rp->siop_sien | rp->siop_dien) == 0)
+		return(0);	/* no interrupts enabled */
+	/*
+	 * save interrupt status, DMA status, and SCSI status 0
+	 * (may need to deal with stacked interrupts?)
+	 */
+	sc->sc_istat = istat;
+	sc->sc_dstat = rp->siop_dstat;
+	sc->sc_sstat0 = rp->siop_sstat0;
+	add_sicallback (siopintr, sc, NULL);
+	return(1);
 }

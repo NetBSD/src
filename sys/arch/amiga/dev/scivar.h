@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.5 1995/01/05 07:22:47 chopps Exp $	*/
+/*	$NetBSD: scivar.h,v 1.6 1995/02/12 19:19:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,6 +48,7 @@ struct	sci_pending {
 
 struct	sci_softc {
 	struct	device sc_dev;
+	struct	isr sc_isr;
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	TAILQ_HEAD(,sci_pending) sc_xslist;
 	struct	sci_pending sc_xsstore[8][8];
