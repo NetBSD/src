@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.51 1996/07/17 21:43:24 explorer Exp $	*/
+/*	$NetBSD: systm.h,v 1.52 1996/08/16 01:23:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -153,6 +153,18 @@ void	bcopy __P((const void *from, void *to, size_t len));
 void	ovbcopy __P((const void *from, void *to, size_t len));
 void	bzero __P((void *buf, size_t len));
 int	bcmp __P((const void *b1, const void *b2, size_t len));
+
+int      memcmp __P((const void *, const void *, size_t));
+void    *memcpy __P((void *, const void *, size_t));
+void    *memmove __P((void *, const void *, size_t));
+void    *memset __P((void *, int, size_t));
+
+#if 0		/* XXX not ready for this yet */
+#define bcopy(s,t,n)	memcpy(t,s,n)
+#define ovbcopy(s,t,n)	memmove(t,s,n)
+#define bzero(s,n)	memset(s,0,n)
+#define bcmp(s,t,n)	memcmp(s,t,n)
+#endif
 
 int	copystr __P((void *kfaddr, void *kdaddr, size_t len, size_t *done));
 int	copyinstr __P((void *udaddr, void *kaddr, size_t len, size_t *done));
