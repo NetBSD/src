@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.153 2004/01/21 03:02:06 atatat Exp $
+#       $NetBSD: Makefile,v 1.154 2004/01/28 17:44:25 jdolecek Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -9,7 +9,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_idle.9 \
 	cpu_fork.9 \
 	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
-	cpu_startup.9 cpu_swapout.9 cpu_wait.9 \
+	cpu_startup.9 cpu_swapout.9 \
 	cred.9 ctxsw.9 curproc.9 \
 	delay.9 disk.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
