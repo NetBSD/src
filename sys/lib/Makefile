@@ -1,5 +1,8 @@
-#	$Id: Makefile,v 1.3 1993/12/04 03:13:31 cgd Exp $
+#	$Id: Makefile,v 1.4 1994/07/27 03:10:37 brezak Exp $
 
+.if exists(libsa)
+SUBDIR+= libsa
+.endif
 .if exists(libc_sa)
 SUBDIR+= libc_sa
 .endif
