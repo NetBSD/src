@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.7 1998/11/06 20:03:08 christos Exp $	*/
+/*	$NetBSD: map3270.c,v 1.8 2000/07/06 14:30:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.7 1998/11/06 20:03:08 christos Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.8 2000/07/06 14:30:08 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ typedef struct {
     char	array[500];	/* character string */
 } stringWithLength;
 
-#define	panic(s)	{ fprintf(stderr, s); exit(1); }
+#define	panic(s)	{ fprintf(stderr, "%s", s); exit(1); }
 
 static state firstentry = { 0, STATE_NULL, 0, 0 };
 static state *headOfQueue = &firstentry;
