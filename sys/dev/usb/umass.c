@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.17 1999/09/12 02:40:59 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.18 1999/09/13 21:35:08 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,10 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h> 
 
+#if defined(USB_DEBUG) && !defined(UMASS_DEBUG)
+#define UMASS_DEBUG 1
+#endif
+
 #ifdef UMASS_DEBUG
 #define	DPRINTF(m, x)	if (umassdebug & (m)) logprintf x
 #define UDMASS_SCSI	0x00020000
@@ -142,6 +146,7 @@ typedef struct umass_softc {
 
 	device_ptr_t		sc_child;	/* child device, for detach */
 
+	int			sc_refcnt;
 	char			sc_dying;
 } umass_softc_t;
 
@@ -402,7 +407,7 @@ umass_detach(self, flags)
 	int flags;
 {
 	struct umass_softc *sc = (struct umass_softc *) self;
-	int rv = 0;
+	int s, rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_detach: flags 0x%x\n",
 	    USBDEVNAME(sc->sc_dev), flags));
@@ -410,15 +415,29 @@ umass_detach(self, flags)
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 	
-	if (rv == 0) {
-		if (sc->sc_bulkin_pipe != NULL) {
-			usbd_abort_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-		}
-		if (sc->sc_bulkout_pipe != NULL) {
-			usbd_abort_pipe(sc->sc_bulkout_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
-		}
+	if (rv != 0)
+		return (rv);
+
+	/* Abort the pipes to wake up any waiting processes. */
+	if (sc->sc_bulkin_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	if (sc->sc_bulkout_pipe != NULL)
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+
+	s = splusb();
+	if (--sc->sc_refcnt >= 0) {
+		/* Wait for processes to go away. */
+		usb_detach_wait(USBDEV(sc->sc_dev));
+	}
+	splx(s);
+
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
 	}
 
 	return (rv);
@@ -454,7 +473,7 @@ umass_usb_transfer(umass_softc_t *sc, usbd_pipe_handle pipe,
 		return USBD_NOMEM;
 	}
 
-	usbd_setup_request(reqh, pipe, 0, buf, buflen,flags, 3000 /*ms*/, NULL);
+	usbd_setup_request(reqh, pipe, 0, buf, buflen,flags, 3000/*ms*/, NULL);
 	err = usbd_sync_transfer(reqh);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: transfer failed: %s\n",
@@ -570,12 +589,16 @@ umass_bulk_reset(umass_softc_t *sc)
 	usbd_clear_endpoint_stall(sc->sc_bulkout_pipe);
 	usbd_clear_endpoint_stall(sc->sc_bulkin_pipe);
 
+#if 0
 	/*
 	 * XXX we should convert this into a more friendly delay.
 	 * Perhaps a tsleep (or is this routine run from int context?)
 	 */
 
 	DELAY(2500000 /*us*/);
+#else
+	usbd_delay_ms(dev, 2500);
+#endif
 
 	return(USBD_NORMAL_COMPLETION);
 }
@@ -679,7 +702,8 @@ umass_bulk_transfer(umass_softc_t *sc, int lun, void *cmd, int cmdlen,
 		 * device may STALL both bulk endpoints and require a
 		 * Bulk-Only MS Reset
 		 */
-		umass_bulk_reset(sc);
+		if (!sc->sc_dying)
+			umass_bulk_reset(sc);
 		return(USBD_IOERROR);
 	}
 
@@ -833,6 +857,9 @@ umass_scsipi_scsi_cmd(xs)
 		}
 	}
 
+	/* Make sure we don't lose our softc. */
+	sc->sc_refcnt++;
+
 	err = umass_bulk_transfer(sc, sc_link->scsipi_scsi.lun,
 	    xs->cmd, xs->cmdlen, xs->data, xs->datalen, dir, &residue);
 
@@ -845,9 +872,12 @@ umass_scsipi_scsi_cmd(xs)
 	 * XXX This is however more based on empirical evidence than on
 	 * hard proof from the Bulk-Only spec.
 	 */
-	if (err == USBD_NORMAL_COMPLETION)
+	if (err == USBD_NORMAL_COMPLETION) {
 		xs->error = XS_NOERROR;
-	else {
+	} else if (sc->sc_dying) {
+		/* We are being detached, no use talking to the device. */
+		xs->error = XS_DRIVER_STUFFUP;
+	} else {
 		DPRINTF(UDMASS_USB|UDMASS_SCSI, ("%s: bulk transfer completed "
 		    "with error %s\n", USBDEVNAME(sc->sc_dev),
 		    usbd_errstr(err)));
@@ -879,6 +909,10 @@ umass_scsipi_scsi_cmd(xs)
 
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+
+	/* We are done with the softc for now. */
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
 	/*
 	 * XXXJRT We must return successfully queued if we're an
