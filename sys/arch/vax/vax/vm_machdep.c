@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62 2000/05/28 05:49:04 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.63 2000/05/28 18:17:59 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -106,6 +106,7 @@ pagemove(caddr_t from, caddr_t to, size_t size)
  * We also take away mapping for the fourth page after pcb, so that
  * we get something like a "red zone" for the kernel stack.
  */
+void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
