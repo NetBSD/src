@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.17 1997/01/11 02:04:38 tls Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.18 1997/04/11 23:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: miscbltin.c,v 1.17 1997/01/11 02:04:38 tls Exp $";
+static char rcsid[] = "$NetBSD: miscbltin.c,v 1.18 1997/04/11 23:08:15 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$NetBSD: miscbltin.c,v 1.17 1997/01/11 02:04:38 tls Exp $
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -359,7 +360,11 @@ ulimitcmd(argc, argv)
 			else
 			{
 				val /= l->factor;
+#ifdef BSD4_4
 				out1fmt("%qd\n", (quad_t) val);
+#else
+				out1fmt("%ld\n", (long) val);
+#endif
 			}
 		}
 		return 0;
@@ -384,7 +389,11 @@ ulimitcmd(argc, argv)
 		else
 		{
 			val /= l->factor;
+#ifdef BSD4_4
 			out1fmt("%qd\n", (quad_t) val);
+#else
+			out1fmt("%ld\n", (long) val);
+#endif
 		}
 	}
 	return 0;
