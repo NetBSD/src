@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1998/05/23 20:51:08 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 1998/05/24 19:32:36 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -75,8 +75,6 @@
  *	and to when physical maps must be made correct.
  */
 
-#include "opt_m68kcpu.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -89,7 +87,6 @@
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
 #include <amiga/amiga/memlist.h>
-
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
  * and not yet converted.  XXX.
@@ -211,10 +208,6 @@ int	protection_codes[8];
 #ifndef NKPTADDSHIFT
 #define NKPTADDSHIFT 24
 #endif
-#ifndef NPKTADD
-#define NKPTADD 2
-#endif
-int	nkptadd = NKPTADD;
 
 struct kpt_page {
 	struct kpt_page *kpt_next;	/* link on either used or free list */
@@ -542,9 +535,10 @@ pmap_init()
 	 */
 	npages = howmany(((maxproc + 16) * AMIGA_UPTSIZE / NPTEPG), NBPG);
 #ifdef NKPTADD
-	npages += nkptadd;
-#endif
+	npages += NKPTADD;
+#else
 	npages += mem_size >> NKPTADDSHIFT;
+#endif
 #if 1/*def DEBUG*/
 	printf("Maxproc %d, mem_size %ld MB: allocating %ld KPT pages\n",
 	    maxproc, mem_size>>20, npages);
@@ -2396,7 +2390,7 @@ pmap_enter_ptpage(pmap, va)
 	}
 
 #ifdef M68060
-	if (machineid & AMIGA_68060) {
+	if (machineid & M68060) {
 		pmap_changebit(ptpa, PG_CCB, 0);
 		pmap_changebit(ptpa, PG_CI, 1);
 		DCIS();
