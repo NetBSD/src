@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.7 2000/06/29 08:53:01 mrg Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.8 2001/11/27 01:06:28 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,7 +83,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];
