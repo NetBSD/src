@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.8 2002/03/17 09:46:02 martin Exp $
+ *	$Id: i4b_tel.c,v 1.9 2002/03/17 20:54:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.8 2002/03/17 09:46:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.9 2002/03/17 20:54:05 martin Exp $");
 
 #include "isdntel.h"
 
@@ -118,7 +118,6 @@ typedef struct tel_softc {
 
 	/* used only in func = FUNCTEL */
 
-	drvr_link_t		drvr_linktab;	/* driver linktab */
 	isdn_link_t 		*isdn_linktab;	/* isdn linktab	*/
 	int 			audiofmt;	/* audio format conversion */
 	u_char			*rcvttab;	/* conversion table on read */
@@ -162,10 +161,14 @@ static tel_sc_t tel_sc[NISDNTEL][NOFUNCS];
 
 static void tel_rx_data_rdy(void *softc);
 static void tel_tx_queue_empty(void *softc);
-static void tel_init_linktab(int unit);
 static void tel_connect(void *softc, void *cdp);
 static void tel_disconnect(void *softc, void *cdp);
 static void tel_tone(tel_sc_t *sc);
+static void tel_activity(void *softc, int rxtx);
+static void tel_updown(void *softc, int updown);
+static void tel_dialresponse(void *softc, int status, cause_t cause);
+static void* tel_get_softc(int unit);
+static void tel_set_linktab(void *softc, isdn_link_t *ilt);
 
 /* audio format conversion tables */
 static unsigned char a2u_tab[];
@@ -297,6 +300,22 @@ dummy_i4btelattach(struct device *parent, struct device *self, void *aux)
 
 #endif /* __bsdi__ */
 
+static const struct isdn_l4_driver_functions
+tel_driver = {
+	tel_rx_data_rdy,
+	tel_tx_queue_empty,
+	tel_activity,
+	tel_connect,
+	tel_disconnect,
+	tel_dialresponse,
+	tel_updown,
+	tel_get_softc,
+	tel_set_linktab,
+	NULL
+};
+
+static int isdntel_driver_id = -1;
+
 /*---------------------------------------------------------------------------*
  *	interface attach routine
  *---------------------------------------------------------------------------*/
@@ -308,6 +327,8 @@ isdntelattach()
 #endif
 {
 	int i, j;
+
+	isdntel_driver_id = isdn_l4_driver_attach("isdntel", NISDNTEL, &tel_driver);
 
 	for(i=0; i < NISDNTEL; i++)
 	{
@@ -353,7 +374,6 @@ isdntelattach()
 #endif
 #endif
 		}
-		tel_init_linktab(i);		
 	}
 }
 
@@ -766,11 +786,11 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 
 		if(cmdbuf[0] == CMD_DIAL)
 		{
-			i4b_l4_dialoutnumber(BDRV_TEL, unit, len-1, &cmdbuf[1]);
+			i4b_l4_dialoutnumber(isdntel_driver_id, unit, len-1, &cmdbuf[1]);
 		}
 		else if(cmdbuf[0] == CMD_HUP)
 		{
-			i4b_l4_drvrdisc(BDRV_TEL, unit);
+			i4b_l4_drvrdisc(sc->cdp->cdid);
 		}
 	}
 	else
@@ -1158,48 +1178,22 @@ tel_activity(void *softc, int rxtx)
 }
 
 /*---------------------------------------------------------------------------*
- *	return this drivers linktab address
- *---------------------------------------------------------------------------*/
-drvr_link_t *
-tel_ret_linktab(int unit)
-{
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
-	
-	tel_init_linktab(unit);
-	return(&sc->drvr_linktab);
-}
-
-/*---------------------------------------------------------------------------*
  *	setup the isdn_linktab for this driver
  *---------------------------------------------------------------------------*/
-void
-tel_set_linktab(int unit, isdn_link_t *ilt)
+static void
+tel_set_linktab(void *softc, isdn_link_t *ilt)
 {
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
+	tel_sc_t *sc = softc;
 	sc->isdn_linktab = ilt;
 }
 
-static const struct isdn_l4_driver_functions
-tel_driver = {
-	tel_rx_data_rdy,
-	tel_tx_queue_empty,
-	tel_activity,
-	tel_connect,
-	tel_disconnect,
-	tel_dialresponse,
-	tel_updown
-};
-
 /*---------------------------------------------------------------------------*
- *	initialize this drivers linktab
+ *	return the instance
  *---------------------------------------------------------------------------*/
-static void
-tel_init_linktab(int unit)
+static void*
+tel_get_softc(int unit)
 {
-	tel_sc_t *sc = &tel_sc[unit][FUNCTEL];
-	
-	sc->drvr_linktab.l4_driver_softc = sc;
-	sc->drvr_linktab.l4_driver = &tel_driver;
+	return &tel_sc[unit][FUNCTEL];
 }
 
 /*===========================================================================*

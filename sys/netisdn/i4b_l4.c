@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.10 2002/03/17 11:08:32 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.11 2002/03/17 20:54:05 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.11 2002/03/17 20:54:05 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -56,20 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
 #endif
-
-#if defined(__FreeBSD__)
-#include "i4bing.h"
-#endif
-
-#ifdef __bsdi__
-#define NI4BISPPP 0
-#include "ibc.h"
-#else
-#include "ippp.h"
-#endif
-
-#include "isdnbchan.h"
-#include "isdntel.h"
 
 #ifdef __FreeBSD__
 #include <machine/i4b_debug.h>
@@ -104,6 +90,69 @@ static time_t i4b_get_idletime(call_desc_t *cd);
 extern time_t i4bisppp_idletime(int);
 #endif
 
+static int next_l4_driver_id = 0;
+
+struct l4_driver_desc {
+	SIMPLEQ_ENTRY(l4_driver_desc) l4drvq;
+	char name[L4DRIVER_NAME_SIZ];
+	int driver_id;
+	const struct isdn_l4_driver_functions *driver;
+	int units;
+};
+static SIMPLEQ_HEAD(, l4_driver_desc) l4_driver_registry
+    = SIMPLEQ_HEAD_INITIALIZER(l4_driver_registry);
+
+int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driver_functions *driver)
+{
+	struct l4_driver_desc * new_driver;
+
+	new_driver = malloc(sizeof(struct l4_driver_desc), M_DEVBUF, 0);
+	memset(new_driver, 0, sizeof(struct l4_driver_desc));
+	strncpy(new_driver->name, name, L4DRIVER_NAME_SIZ);
+	new_driver->name[L4DRIVER_NAME_SIZ-1] = 0;
+	new_driver->driver_id =	next_l4_driver_id++;
+	new_driver->driver = driver;
+	new_driver->units = units;
+	SIMPLEQ_INSERT_HEAD(&l4_driver_registry, new_driver, l4drvq);
+	return new_driver->driver_id;
+}
+
+int isdn_l4_driver_detatch(const char *name)
+{
+	/* XXX - not yet implemented */
+	return 0;
+}
+
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit)
+{
+	struct l4_driver_desc * d;
+	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (strcmp(d->name, name) == 0) {
+			return d->driver;
+		}
+	return NULL;
+}
+
+int isdn_l4_find_driverid(const char *name)
+{
+	struct l4_driver_desc * d;
+	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (strcmp(d->name, name) == 0) {
+			return d->driver_id;
+		}
+	return -1;
+}
+
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit)
+{
+	struct l4_driver_desc * d;
+	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+		if (d->driver_id == driver_id) {
+			return d->driver;
+		}
+	return NULL;
+}
+
 /*---------------------------------------------------------------------------*
  *	send MSG_PDEACT_IND message to userland
  *---------------------------------------------------------------------------*/
@@ -125,9 +174,9 @@ i4b_l4_pdeact(int controller, int numactive)
 				STOP_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd);
 			}
 			
-			if(cd->dlt != NULL)
+			if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
 			{
-				(*cd->dlt->l4_driver->line_disconnected)(cd->dlt->l4_driver_softc, (void *)cd);
+				(*cd->l4_driver->line_disconnected)(cd->l4_driver_softc, (void *)cd);
 				i4b_unlink_bchandrvr(cd);
 			}
 		
@@ -291,7 +340,7 @@ i4b_l4_ifstate_changed(call_desc_t *cd, int new_state)
  *	send MSG_DRVRDISC_REQ message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_drvrdisc(int driver, int driver_unit)
+i4b_l4_drvrdisc(int cdid)
 {
 	struct mbuf *m;
 
@@ -300,10 +349,7 @@ i4b_l4_drvrdisc(int driver, int driver_unit)
 		msg_drvrdisc_req_t *md = (msg_drvrdisc_req_t *)m->m_data;
 
 		md->header.type = MSG_DRVRDISC_REQ;
-		md->header.cdid = -1;
-
-		md->driver = driver;
-		md->driver_unit = driver_unit;	
+		md->header.cdid = cdid;
 
 		i4bputqueue(m);
 	}
@@ -396,7 +442,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	
 	i4b_link_bchandrvr(cd);
 
-	(*cd->dlt->l4_driver->line_connected)(cd->dlt->l4_driver_softc, (void *)cd);
+	(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
 	
@@ -429,9 +475,9 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 	if(cd->timeout_active)
 		STOP_TIMER(cd->idle_timeout_handle, i4b_idle_check, cd);
 
-	if(cd->dlt != NULL)
+	if (cd->l4_driver != NULL && cd->l4_driver_softc != NULL)
 	{
-		(*cd->dlt->l4_driver->line_disconnected)(cd->dlt->l4_driver_softc, (void *)cd);
+		(*cd->l4_driver->line_disconnected)(cd->l4_driver_softc, (void *)cd);
 		i4b_unlink_bchandrvr(cd);
 	}
 
@@ -601,102 +647,24 @@ i4b_link_bchandrvr(call_desc_t *cd)
 			cd->channelid);
 	}
 
-	switch(cd->bchan_driver_index)
-	{
-#if NISDNBCHAN > 0
-		case BDRV_RBCH:
-			cd->dlt = rbch_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
-		
-#if NISDNTEL > 0
-		case BDRV_TEL:
-			cd->dlt = tel_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
+	cd->l4_driver = isdn_l4_get_driver(cd->bchan_driver_index, cd->bchan_driver_unit);
+	if (cd->l4_driver != NULL)
+		cd->l4_driver_softc = cd->l4_driver->get_softc(cd->bchan_driver_unit);
+	else
+		cd->l4_driver_softc = NULL;
 
-#if NIRIP > 0
-		case BDRV_IPR:
-			cd->dlt = ipr_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
-
-#if NIPPP > 0
-		case BDRV_ISPPP:
-			cd->dlt = i4bisppp_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
-
-#if defined(__bsdi__) && NIBC > 0
-		case BDRV_IBC:
-			cd->dlt = ibc_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
-
-#if NI4BING > 0
-		case BDRV_ING:
-			cd->dlt = ing_ret_linktab(cd->bchan_driver_unit);
-			break;
-#endif
-
-		default:
-			cd->dlt = NULL;
-			break;
-	}
-
-	if(cd->dlt == NULL || cd->ilt == NULL)
+	if(cd->l4_driver == NULL || cd->l4_driver_softc == NULL || cd->ilt == NULL)
 		return(-1);
 
-	if(t >= 0 && t < CTRL_NUMTYPES && ctrl_types[t].set_linktab != NULL)
+	if(t >= 0 && t < CTRL_NUMTYPES && ctrl_types[t].set_l4_driver != NULL)
 	{
-		ctrl_types[t].set_linktab(
+		ctrl_types[t].set_l4_driver(
 				ctrl_desc[cd->bri].l1_token,
 				cd->channelid,
-				cd->dlt);
+				cd->l4_driver, cd->l4_driver_softc);
 	}
 
-	switch(cd->bchan_driver_index)
-	{
-#if NISDNBCHAN > 0
-		case BDRV_RBCH:
-			rbch_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NISDNTEL > 0
-		case BDRV_TEL:
-			tel_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NIRIP > 0
-		case BDRV_IPR:
-			ipr_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NIPPP > 0
-		case BDRV_ISPPP:
-			i4bisppp_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-#if defined(__bsdi__) && NIBC > 0
-		case BDRV_IBC:
-			ibc_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-#if NI4BING > 0
-		case BDRV_ING:
-			ing_set_linktab(cd->bchan_driver_unit, cd->ilt);
-			break;
-#endif
-
-		default:
-			return(0);
-			break;
-	}
+	cd->l4_driver->set_linktab(cd->l4_driver_softc, cd->ilt);
 
 	/* activate B channel */
 		
@@ -775,17 +743,11 @@ idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
 static time_t
 i4b_get_idletime(call_desc_t *cd)
 {
-	switch (cd->bchan_driver_index) {
-#if NIPPP > 0
-		case BDRV_ISPPP:
-			return i4bisppp_idletime(cd->bchan_driver_unit);
-		break;
-#endif
-		default:
-			return cd->last_active_time;
-		break;
-	}
+	if (cd->l4_driver->get_idletime)
+		return cd->l4_driver->get_idletime(cd->l4_driver_softc);
+	return cd->last_active_time;
 }
+
 /*---------------------------------------------------------------------------*
  *	B channel idle check timeout setup
  *---------------------------------------------------------------------------*/ 
