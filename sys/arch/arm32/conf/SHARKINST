@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.1 1999/06/26 07:00:44 cgd Exp $
+#	$NetBSD: SHARKINST,v 1.2 1999/06/26 07:29:18 cgd Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -203,6 +203,6 @@ pseudo-device	vnd	4		# paging to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-#pseudo-device	md	1		# Ramdisk driver
+pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
