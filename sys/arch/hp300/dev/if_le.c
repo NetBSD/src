@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.6 1994/02/05 06:58:08 mycroft Exp $
+ *	$Id: if_le.c,v 1.7 1994/02/05 15:04:18 mycroft Exp $
  */
 
 #include "le.h"
@@ -329,7 +329,7 @@ lereset(sc)
 	ler2->ler2_padr[5] = sc->sc_addr[4];
 	lesetladrf(sc);
 	ledrinit(ler2);
-	sc->sc_rmd = sc->sc_tmd = 0;
+	sc->sc_rmd = sc->sc_tmd = sc->sc_txcnt = 0;
 
 	LERDWR(ler0, LE_CSR1, ler1->ler1_rap);
 	LERDWR(ler0, (int)&lemem->ler2_mode, ler1->ler1_rdp);
