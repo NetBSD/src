@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.1.2.2 1997/09/27 02:33:18 marc Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.1.2.3 1997/10/16 22:52:17 thorpej Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -16,20 +16,18 @@
  * PCI constants.
  * XXX These should be in a common file!
  */
-#define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBIO		0x10    /* Configuration Base IO Address */
+#define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int pcic_pci_match __P((struct device *, void *, void *));
+int	pcic_pci_match __P((struct device *, void *, void *));
 #else
-int pcic_pci_match __P((struct device *, struct cfdata *, void *));
+int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
 #endif
-void pcic_pci_attach __P((struct device *, struct device *, void *));
+void	pcic_pci_attach __P((struct device *, struct device *, void *));
 
-void *pcic_pci_chip_intr_establish __P((pcmcia_chipset_handle_t,
-					struct pcmcia_function *, int,
-					int (*)(void *), void *));
-void pcic_pci_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
+void	*pcic_pci_chip_intr_establish __P((pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *));
+void	pcic_pci_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 struct cfattach pcic_pci_ca = {
 	sizeof(struct pcic_softc), pcic_pci_match, pcic_pci_attach
@@ -59,23 +57,23 @@ pcic_pci_match(parent, match, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
-	struct cfdata *match;
+	struct cfdata  *match;
 #endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CIRRUS)
-		return 0;
+		return (0);
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_CIRRUS_CL_GD6729:
 		break;
 	default:
-		return 0;
+		return (0);
 	}
 
-	return 1;
+	return (1);
 }
 
 void
@@ -83,7 +81,7 @@ pcic_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcic_softc *sc = (void *)self;
+	struct pcic_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
@@ -98,20 +96,22 @@ pcic_pci_attach(parent, self, aux)
 		return;
 	}
 
-	/* XXX need some memory for mapping pcmcia cards into.
-           Ideally, this would be completely dynamic.  Practically
-           this doesn't work, because the extent mapper doesn't know
-           about all the devices all the time.  With ISA we could
-           finesse the issue by specifying the memory region in the
-           config line.  We can't do that here, so we cheat for now.
-	   Jason Thorpe, you are my Savior, come up with a fix :-) */
+	/*
+	 * XXX need some memory for mapping pcmcia cards into. Ideally, this
+	 * would be completely dynamic.  Practically this doesn't work,
+	 * because the extent mapper doesn't know about all the devices all
+	 * the time.  With ISA we could finesse the issue by specifying the
+	 * memory region in the config line.  We can't do that here, so we
+	 * cheat for now. Jason Thorpe, you are my Savior, come up with a fix
+	 * :-)
+	 */
 
 	/* Map mem space. */
 	if (bus_space_map(memt, 0xd0000, 0x4000, 0, &memh))
 		panic("pcic_isa_attach: can't map i/o space");
 
 	sc->membase = 0xd0000;
-	sc->subregionmask = (1<<(0x4000/PCIC_MEM_PAGESIZE))-1;
+	sc->subregionmask = (1 << (0x4000 / PCIC_MEM_PAGESIZE)) - 1;
 
 	/* same deal for io allocation */
 
@@ -121,7 +121,7 @@ pcic_pci_attach(parent, self, aux)
 	/* end XXX */
 
 	sc->intr_est = pc;
-	sc->pct = (pcmcia_chipset_tag_t) &pcic_pci_functions;
+	sc->pct = (pcmcia_chipset_tag_t) & pcic_pci_functions;
 
 	sc->memt = memt;
 	sc->memh = memh;
@@ -154,7 +154,7 @@ pcic_pci_attach(parent, self, aux)
 	sc->ih = pci_intr_establish(pc, ih, IPL_NET, pcic_intr, sc);
 	if (sc->ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		    sc->dev.dv_xname);
+		       sc->dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -165,54 +165,60 @@ pcic_pci_attach(parent, self, aux)
 	pcic_attach_sockets(sc);
 }
 
-/* XXX */
+/*
+ * XXX This is almost totally wrong!  We need to map to PCI interupts,
+ * XXX which themselves map to somthing else.
+ */
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 void *
 pcic_pci_chip_intr_establish(pch, pf, ipl, fct, arg)
-     pcmcia_chipset_handle_t pch;
-     struct pcmcia_function *pf;
-     int ipl;
-     int (*fct)(void *);
-     void *arg;
+	pcmcia_chipset_handle_t pch;
+	struct pcmcia_function *pf;
+	int ipl;
+	int (*fct) (void *);
+	void *arg;
 {
-    struct pcic_handle *h = (struct pcic_handle *) pch;
-    int irq;
-    pci_intr_handle_t piht;
-    void *ih;
-    int reg;
+	struct pcic_handle *h = (struct pcic_handle *) pch;
+	int irq;
+	pci_intr_handle_t piht;
+	void *ih;
+	int reg;
 
-    /* XXX this will work for x86, but is guaranteed to lose
-       elsewhere.  Hopefully Jason can bail me out of this one,
-       too.  */
+	/*
+	 * XXX this will work for x86, but is guaranteed to lose elsewhere.
+	 * Hopefully Jason can bail me out of this one, too.
+	 */
 
-    isa_intr_alloc(NULL, 0xffff, IST_PULSE, &irq);
+	isa_intr_alloc(NULL, 0xffff, IST_PULSE, &irq);
 
-    if (pci_intr_map(h->sc->intr_est, pci_make_tag(NULL,0,0,0),
-		     1, irq, &piht)) {
-	    printf("%s: couldn't map interrupt\n", h->sc->dev.dv_xname);
-	    return(NULL);
-    }
+	if (pci_intr_map(h->sc->intr_est, pci_make_tag(NULL, 0, 0, 0),
+	    1, irq, &piht)) {
+		printf("%s: couldn't map interrupt\n", h->sc->dev.dv_xname);
+		return (NULL);
+	}
+	if ((ih = pci_intr_establish(h->sc->intr_est, piht, ipl, fct,
+	    arg)) == NULL)
+		return (NULL);
 
-    if (!(ih = pci_intr_establish(h->sc->intr_est, piht, ipl, fct, arg)))
-	    return(NULL);
+	reg = pcic_read(h, PCIC_INTR);
+	reg |= PCIC_INTR_ENABLE;
+	reg |= irq;
+	pcic_write(h, PCIC_INTR, reg);
 
-    reg = pcic_read(h, PCIC_INTR);
-    reg |= PCIC_INTR_ENABLE;
-    reg |= irq;
-    pcic_write(h, PCIC_INTR, reg);
+	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
 
-    printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
-
-    return(ih);
+	return (ih);
 }
 
-void pcic_pci_chip_intr_disestablish(pch, ih)
-     pcmcia_chipset_handle_t pch;
-     void *ih;
+void 
+pcic_pci_chip_intr_disestablish(pch, ih)
+	pcmcia_chipset_handle_t pch;
+	void *ih;
 {
-    struct pcic_handle *h = (struct pcic_handle *) pch;
+	struct pcic_handle *h = (struct pcic_handle *) pch;
 
-    pci_intr_disestablish(h->sc->intr_est, ih);
+	pci_intr_disestablish(h->sc->intr_est, ih);
 }
