@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.15 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.15.2.1 1999/04/19 04:41:34 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -1687,10 +1687,12 @@ mha_dataio_dma(dw, cw, sc, p, n)
   if (sc->sc_dmasize > 0)
     panic("DMA request while another DMA transfer is in pregress");
 
-  memcpy(sc->sc_dmabuf, p, n);
-  bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n,
-		  (cw == CMD_SEND_FROM_DMA)?BUS_DMASYNC_PREWRITE
-					   :BUS_DMASYNC_PREREAD);
+  if (cw == CMD_SEND_FROM_DMA) {
+    memcpy(sc->sc_dmabuf, p, n);
+    bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREWRITE);
+  } else {
+    bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREREAD);
+  }
   sc->sc_p = p;
   sc->sc_dmasize = n;
 
