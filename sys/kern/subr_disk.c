@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.47 2002/11/04 03:50:07 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.48 2002/11/05 13:22:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.47 2002/11/04 03:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.48 2002/11/05 13:22:32 mrg Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -397,25 +399,30 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	size_t tocopy, left;
 	int error;
 
+	/*
+	 * The original hw.diskstats call was broken and did not require
+	 * the userland to pass in it's size of struct disk_sysctl.  This
+	 * was fixed after NetBSD 1.6 was released, and any applications
+	 * that do not pass in the size are given an error only, unless
+	 * we care about 1.6 compatibility.
+	 */
+#define SIZE_NETBSD16	offsetof(struct disk_sysctl, dk_rxfer)
+
 	if (where == NULL) {
 		if (namelen == 0)
-			*sizep = disk_count * sizeof(sdisk);
+#ifdef COMPAT_16
+			*sizep = disk_count * SIZE_NETBSD16;
+#else
+			return (EINVAL);
+#endif
 		else
 			*sizep = disk_count * name[0];
 		return (0);
 	}
 
 	if (namelen == 0)
-		/*
-		 * The original hw.diskstats call was broken and did not
-		 * require the userland to pass in it's size of struct
-		 * disk_sysctl.  This was fixed after NetBSD 1.6 was
-		 * released, and any applications that do not pass in
-		 * the size are given an error only, unless we care about
-		 * 1.6 compatibility.
-		 */
 #ifdef COMPAT_16
-		tocopy = offsetof(struct disk_sysctl, dk_rxfer);
+		tocopy = SIZE_NETBSD16;
 #else
 		return (EINVAL);
 #endif
