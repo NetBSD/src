@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.4 1995/05/17 20:24:39 cgd Exp $
+ * $Id: skeylogin.c,v 1.5 1995/06/05 19:48:38 pk Exp $
  */
 
 #include <sys/param.h>
@@ -20,20 +20,21 @@
 #include <sys/timeb.h>
 #include <sys/resource.h>
 
- 
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <errno.h>
+
 #include "skey.h"
 
-#define	KEYFILE	"/etc/skeykeys"
+#define	_PATH_KEYFILE	"/etc/skeykeys"
 
-char *skipspace();
-int skeylookup __ARGS((struct skey *mp,char *name));
-
+char *skipspace __ARGS((char *));
+int skeylookup __ARGS((struct skey *, char *));
 
 /* Issue a skey challenge for user 'name'. If successful,
  * fill in the caller's skey structure and return 0. If unsuccessful
@@ -44,16 +45,16 @@ int skeylookup __ARGS((struct skey *mp,char *name));
  */
 int
 getskeyprompt(mp,name,prompt)
-struct skey *mp;
-char *name;
-char *prompt;
+	struct skey *mp;
+	char *name;
+	char *prompt;
 {
 	int rval;
 
 	sevenbit(name);
 	rval = skeylookup(mp,name);
 	strcpy(prompt,"s/key 55 latour1\n");
-	switch(rval){
+	switch (rval) {
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
@@ -64,7 +65,8 @@ char *prompt;
 		return -1;
 	}
 	return -1;	/* Can't happen */
-}	
+}
+
 /* Return  a skey challenge string for user 'name'. If successful,
  * fill in the caller's skey structure and return 0. If unsuccessful
  * (e.g., if name is unknown) return -1.
@@ -74,9 +76,9 @@ char *prompt;
  */
 int
 skeychallenge(mp,name, ss)
-struct skey *mp;
-char *name;
-char *ss;
+	struct skey *mp;
+	char *name;
+	char *ss;
 {
 	int rval;
 
@@ -102,8 +104,8 @@ char *ss;
  */
 int
 skeylookup(mp,name)
-struct skey *mp;
-char *name;
+	struct skey *mp;
+	char *name;
 {
 	int found;
 	int len;
@@ -111,48 +113,48 @@ char *name;
 	char *cp;
 	struct stat statbuf;
 
-	/* See if the KEYFILE exists, and create it if not */
+	/* See if the _PATH_KEYFILE exists, and create it if not */
 
-	if(stat(KEYFILE,&statbuf) == -1 && errno == ENOENT) {
-		mp->keyfile = fopen(KEYFILE,"w+");
-		if(mp->keyfile)
-			chmod(KEYFILE, 0644);
+	if (stat(_PATH_KEYFILE,&statbuf) == -1 && errno == ENOENT) {
+		mp->keyfile = fopen(_PATH_KEYFILE,"w+");
+		if (mp->keyfile)
+			chmod(_PATH_KEYFILE, 0644);
 	} else {
 		/* Otherwise open normally for update */
-		mp->keyfile = fopen(KEYFILE,"r+");
+		mp->keyfile = fopen(_PATH_KEYFILE,"r+");
 	}
-	if(mp->keyfile == NULL)
+	if (mp->keyfile == NULL)
 		return -1;
 
 	/* Look up user name in database */
 	len = strlen(name);
 	if( len > 8 ) len = 8;		/*  Added 8/2/91  -  nmh */
 	found = 0;
-	while(!feof(mp->keyfile)){
+	while (!feof(mp->keyfile)) {
 		recstart = ftell(mp->keyfile);
 		mp->recstart = recstart;
-		if(fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf){
+		if (fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf) {
 			break;
 		}
 		rip(mp->buf);
-		if(mp->buf[0] == '#')
+		if (mp->buf[0] == '#')
 			continue;	/* Comment */
-		if((mp->logname = strtok(mp->buf," \t")) == NULL)
+		if ((mp->logname = strtok(mp->buf," \t")) == NULL)
 			continue;
-		if((cp = strtok(NULL," \t")) == NULL)
+		if ((cp = strtok(NULL," \t")) == NULL)
 			continue;
 		mp->n = atoi(cp);
-		if((mp->seed = strtok(NULL," \t")) == NULL)
+		if ((mp->seed = strtok(NULL," \t")) == NULL)
 			continue;
-		if((mp->val = strtok(NULL," \t")) == NULL)
+		if ((mp->val = strtok(NULL," \t")) == NULL)
 			continue;
-		if(strlen(mp->logname) == len
+		if (strlen(mp->logname) == len
 		 && strncmp(mp->logname,name,len) == 0){
 			found = 1;
 			break;
 		}
 	}
-	if(found){
+	if (found) {
 		fseek(mp->keyfile,recstart,0);
 		return 0;
 	} else
@@ -169,34 +171,29 @@ char *name;
  */
 int
 skeyverify(mp,response)
-struct skey *mp;
-char *response;
+	struct skey *mp;
+	char *response;
 {
- struct timeval startval;
- struct timeval endval;
-long microsec;
 	char key[8];
 	char fkey[8];
 	char filekey[8];
 	time_t now;
 	struct tm *tm;
-	char tbuf[27],buf[60];
-	char me[80];
-	int rval;
+	char tbuf[27];
 	char *cp;
 
 	time(&now);
 	tm = localtime(&now);
 	strftime(tbuf, sizeof(tbuf), " %b %d,%Y %T", tm);
 
-	if(response == NULL){
+	if (response == NULL) {
 		fclose(mp->keyfile);
 		return -1;
 	}
-	rip (response);
+	rip(response);
 
 	/* Convert response to binary */
-	if(etob(key, response) != 1 && atob8(key, response) != 0){
+	if (etob(key, response) != 1 && atob8(key, response) != 0) {
 		/* Neither english words or ascii hex */
 		fclose(mp->keyfile);
 		return -1;
@@ -207,18 +204,19 @@ long microsec;
         fflush (stdout);
 
 	f(fkey);
-	/* in order to make the window of update as short as possible
-           we must do the comparison here and if OK write it back
-           other wise the same password can be used twice to get in
-  	   to the system
-	*/
+	/*
+	 * in order to make the window of update as short as possible
+	 * we must do the comparison here and if OK write it back
+	 * other wise the same password can be used twice to get in
+	 * to the system
+	 */
 
 	setpriority(PRIO_PROCESS, 0, -4);
 
 	/* reread the file record NOW*/
 
 	fseek(mp->keyfile,mp->recstart,0);
-	if(fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf){
+	if (fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf){
 		setpriority(PRIO_PROCESS, 0, 0);
 		fclose(mp->keyfile);
 		return -1;
@@ -234,22 +232,23 @@ long microsec;
 	/* Do actual comparison */
         fflush (stdout);
 
-	if(memcmp(filekey,fkey,8) != 0){
+	if (memcmp(filekey,fkey,8) != 0){
 		/* Wrong response */
 		setpriority(PRIO_PROCESS, 0, 0);
 		fclose(mp->keyfile);
 		return 1;
 	}
 
-	/* Update key in database by overwriting entire record. Note
+	/*
+	 * Update key in database by overwriting entire record. Note
 	 * that we must write exactly the same number of bytes as in
 	 * the original record (note fixed width field for N)
 	 */
 	btoa8(mp->val,key);
 	mp->n--;
 	fseek(mp->keyfile,mp->recstart,0);
-	fprintf(mp->keyfile,"%s %04d %-16s %s %-21s\n",mp->logname,mp->n,mp->seed,
-	 mp->val, tbuf);
+	fprintf(mp->keyfile, "%s %04d %-16s %s %-21s\n",
+		mp->logname,mp->n,mp->seed, mp->val, tbuf);
 
 	fclose(mp->keyfile);
 	
@@ -258,79 +257,6 @@ long microsec;
 }
 
 
-/* Convert 8-byte hex-ascii string to binary array
- * Returns 0 on success, -1 on error
- */
-atob8(out,in)
-register char *out,*in;
-{
-	register int i;
-	register int val;
-
-	if (in == NULL || out == NULL)
-		return -1;
-
-	for(i=0;i<8;i++){
-		if((in = skipspace(in)) == NULL)
-			return -1;
-		if((val = htoi(*in++)) == -1)
-			return -1;
-		*out = val << 4;
-
-		if((in = skipspace(in)) == NULL)
-			return -1;
-		if((val = htoi(*in++)) == -1)
-			return -1;
-		*out++ |= val;
-	}
-	return 0;
-}
-
-char *
-skipspace(cp)
-register char *cp;
-{
-	while(*cp == ' ' || *cp == '\t')
-		cp++;
-
-	if(*cp == '\0')
-		return NULL;
-	else
-		return cp;
-}
-
-/* Convert 8-byte binary array to hex-ascii string */
-int
-btoa8(out,in)
-register char *out,*in;
-{
-	register int i;
-
-	if(in == NULL || out == NULL)
-		return -1;
-
-	for(i=0;i<8;i++){
-		sprintf(out,"%02x",*in++ & 0xff);
-		out += 2;
-	}
-	return 0;
-}
-
-
-/* Convert hex digit to binary integer */
-int
-htoi(c)
-register char c;
-{
-	if('0' <= c && c <= '9')
-		return c - '0';
-	if('a' <= c && c <= 'f')
-		return 10 + c - 'a';
-	if('A' <= c && c <= 'F')
-		return 10 + c - 'A';
-	return -1;
-}
-
 /*
  * skey_haskey ()
  *
@@ -338,13 +264,14 @@ register char c;
  *
  */
  
+int
 skey_haskey (username)
-  char *username;
+	char *username;
 {
-  int i;
-  struct skey skey;
+	int i;
+	struct skey skey;
  
-  return (skeylookup (&skey, username));
+	return (skeylookup (&skey, username));
 }
  
 /*
@@ -354,19 +281,19 @@ skey_haskey (username)
  * seed for the passed user.
  *
  */
-char *skey_keyinfo (username)
-  char *username;
+char *
+skey_keyinfo (username)
+	char *username;
 {
-  int i;
-  static char str [50];
- 
-  struct skey skey;
- 
-  i = skeychallenge (&skey, username, str);
-  if (i == -1)
-     return 0;
+	int i;
+	static char str [50];
+	struct skey skey;
 
-  return str;
+	i = skeychallenge (&skey, username, str);
+	if (i == -1)
+		return 0;
+
+	return str;
 }
  
 /*
@@ -379,21 +306,21 @@ char *skey_keyinfo (username)
  *
  */
  
+int
 skey_passcheck (username, passwd)
-  char *username, *passwd;
+	char *username, *passwd;
 {
-  int i;
-  struct skey skey;
- 
-  i = skeylookup (&skey, username);
- 
-  if (i == -1 || i == 1)
-      return -1;
- 
-  if (skeyverify (&skey, passwd) == 0)
-      return skey.n;
- 
-  return -1;
+	int i;
+	struct skey skey;
+
+	i = skeylookup (&skey, username);
+	if (i == -1 || i == 1)
+		return -1;
+
+	if (skeyverify (&skey, passwd) == 0)
+		return skey.n;
+
+	return -1;
 }
 
 /*
@@ -406,36 +333,34 @@ skey_passcheck (username, passwd)
  *
  */
  
+int
 skey_authenticate (username)
-  char *username;
+	char *username;
 {
-  int i;
-  char pbuf [256], skeyprompt [50];
-  struct skey skey;
- 
-  /* Attempt a S/Key challenge */
-  i = skeychallenge (&skey, username, skeyprompt);
- 
-  if (i == -2)
-    return 0;
- 
-  printf ("[%s]\n", skeyprompt);
-  fflush (stdout);
- 
-  printf ("Response: ");
-  readskey (pbuf, sizeof (pbuf));
-  rip (pbuf);
- 
-  /* Is it a valid response? */
-  if (i == 0 && skeyverify (&skey, pbuf) == 0)
-  {
-    if (skey.n < 5)
-    {
-      printf ("\nWarning! Key initialization needed soon.  ");
-      printf ("(%d logins left)\n", skey.n);
-    }
-    return 0;
-  }
-  return -1;
-}
+	int i;
+	char pbuf[256], skeyprompt[50];
+	struct skey skey;
 
+	/* Attempt a S/Key challenge */
+	i = skeychallenge (&skey, username, skeyprompt);
+
+	if (i == -2)
+		return 0;
+
+	printf("[%s]\n", skeyprompt);
+	fflush(stdout);
+
+	printf("Response: ");
+	readskey(pbuf, sizeof (pbuf));
+	rip(pbuf);
+
+	/* Is it a valid response? */
+	if (i == 0 && skeyverify (&skey, pbuf) == 0) {
+		if (skey.n < 5) {
+			printf ("\nWarning! Key initialization needed soon.  ");
+			printf ("(%d logins left)\n", skey.n);
+		}
+		return 0;
+	}
+	return -1;
+}
