@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1998/03/06 09:13:02 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1998/07/26 19:43:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -106,8 +106,8 @@ int uidtb_start __P((void));
 int gidtb_start __P((void));
 int usrtb_start __P((void));
 int grptb_start __P((void));
-char * name_uid __P((uid_t, int));
-char * name_gid __P((gid_t, int));
+const char * name_uid __P((uid_t, int));
+const char * name_gid __P((gid_t, int));
 int uid_name __P((char *, uid_t *));
 int gid_name __P((char *, gid_t *));
 
@@ -168,8 +168,8 @@ int next_file __P((ARCHD *));
  */
 void ls_list __P((ARCHD *, time_t));
 void ls_tty __P((ARCHD *));
-void zf_strncpy __P((char *, char *, int));
-int l_strncpy __P((char *, char *, int));
+void zf_strncpy __P((char *, const char *, int));
+int l_strncpy __P((char *, const char *, int));
 u_long asc_ul __P((char *, int, int));
 int ul_asc __P((u_long, char *, int, int));
 #ifndef NET2_STAT
