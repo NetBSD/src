@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.149 2001/12/05 11:41:16 wiz Exp $
+#	$NetBSD: files.pci,v 1.150 2001/12/05 15:51:11 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -479,6 +479,6 @@ file	dev/pci/isic_pci_avm_fritz_pci.c isic_pci
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver
-device oboe: irbus
+device oboe: irbus, irdasir
 attach oboe at pci
 file	dev/pci/oboe.c			oboe

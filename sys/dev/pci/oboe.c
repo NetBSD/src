@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.3 2001/12/04 19:56:18 augustss Exp $	*/
+/*	$NetBSD: oboe.c,v 1.4 2001/12/05 15:51:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <dev/ir/ir.h>
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
+#include <dev/ir/sir.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -107,9 +108,10 @@ struct oboe_softc {
 	int			sc_speeds;
 	int			sc_flags;
 	int			sc_speed;
+	int			sc_ebofs;
 	
 	struct oboe_dma		*sc_dmas;
-	struct OboeTaskFile *	sc_taskfile;    /* The taskfile   */
+	struct OboeTaskFile	*sc_taskfile;    /* The taskfile   */
 	u_char *		sc_xmit_bufs[TX_SLOTS];
 	u_char *		sc_recv_bufs[RX_SLOTS];
 	void *			sc_xmit_stores[TX_SLOTS];  
@@ -362,6 +364,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 {
 	struct oboe_softc *sc = h;
 	int error = 0;
+	int n;
 	int s = splir();
 
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
@@ -385,11 +388,13 @@ oboe_write(void *h, struct uio *uio, int flag)
 		DPRINTF(("oboe_write: slot overrun\n"));
 	}
 		
-	sc->sc_taskfile->xmit[sc->sc_txs].len = uio->uio_resid;
-	error = uiomove(sc->sc_xmit_bufs[sc->sc_txs], 
-			uio->uio_resid, uio);
-	if (error)
+	n = irda_sir_frame(sc->sc_xmit_bufs[sc->sc_txs], TX_BUF_SZ, uio,
+			   sc->sc_ebofs);
+	if (n < 0) {
+		error = -n;
 		goto err;
+	}
+	sc->sc_taskfile->xmit[sc->sc_txs].len = n;
 
 	OUTB(sc, 0, OBOE_RST);
 	OUTB(sc, 0x1e, OBOE_REG_11);
@@ -419,6 +424,7 @@ oboe_set_params(void *h, struct irda_params *p)
 	if (p->speed > 0) {
 		oboe_setbaud(sc, p->speed);
 	}
+	sc->sc_ebofs = p->ebofs;
 
 	splx(s);
 
@@ -554,7 +560,7 @@ oboe_intr(void *p)
 	return (1);
 }
 
-
+/* XXX vtophys must go! */
 static void
 oboe_init_taskfile(struct oboe_softc *sc)
 {
