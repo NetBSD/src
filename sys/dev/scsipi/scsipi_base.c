@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.117 2004/09/18 00:21:03 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.118 2004/09/18 18:00:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.117 2004/09/18 00:21:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.118 2004/09/18 18:00:05 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -2006,7 +2006,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * completed asynchronously, just return now.
 	 */
 	if (async)
-		return (EJUSTRETURN);
+		return (0);
 
 	/*
 	 * Not an asynchronous command; wait for it to complete.
@@ -2035,7 +2035,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * don't return an error here. It has already been handled
 	 */
 	if (oasync)
-		error = EJUSTRETURN;
+		error = 0;
 	/*
 	 * Command completed successfully or fatal error occurred.  Fall
 	 * into....
