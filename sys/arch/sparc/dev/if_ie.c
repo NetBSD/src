@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.7 1994/11/25 23:11:23 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.8 1994/11/29 22:35:20 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -385,8 +385,7 @@ ie_ack(sc, mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
-	scb->ie_command = scb->ie_status & mask;
-	(sc->chan_attn)(sc);
+	command_and_wait(sc, scb->ie_status & mask, 0, 0);
 }
 
 
