@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23 2002/06/07 04:03:49 gmcgarry Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.24 2002/10/25 12:00:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -132,6 +132,11 @@
 #define CPUID_MASK2	0x00ffe000
 #define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40B31"
 #define CPUID_MASK3	0xff000000
+
+#define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
+#define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
+#define CPUID2STEPPING(cpuid)	((cpuid) & 15)
+
 
 /*
  * Model-specific registers for the i386 family
