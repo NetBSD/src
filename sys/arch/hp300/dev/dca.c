@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.5 1993/05/29 19:41:40 cgd Exp $
+ *	$Id: dca.c,v 1.6 1993/06/06 23:04:42 cgd Exp $
  */
 
 #include "dca.h"
@@ -562,12 +562,12 @@ dcastart(tp)
 	if (RB_LEN(&tp->t_out) == 0)
 		goto out;
 	if (dca->dca_lsr & LSR_TXRDY) {
-		c = getc(&tp->t_out);
+		c = rbgetc(&tp->t_out);
 		tp->t_state |= TS_BUSY;
 		dca->dca_data = c;
 		if (dca_hasfifo & (1 << unit)) {
 			for (c = 1; c < 16 && RB_LEN(&tp->t_out); ++c)
-				dca->dca_data = getc(&tp->t_out);
+				dca->dca_data = rbgetc(&tp->t_out);
 #ifdef DEBUG
 			if (c > 16)
 				fifoout[0]++;
