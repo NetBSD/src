@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.155 1999/09/11 06:27:25 soren Exp $
+$NetBSD: pcidevs,v 1.156 1999/09/27 23:45:57 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -845,7 +845,7 @@ product DELTA 8139	0x1360	8139 Ethernet
 product DIAMOND VIPER	0x9001	Viper/PCI
 
 /* Distributed Processing Technology products */
-product DPT SC_RAID	0xa400	SmartCache/Raid
+product DPT SC_RAID	0xa400	SmartCache/SmartRAID
 
 /* Dolphin products */
 product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
