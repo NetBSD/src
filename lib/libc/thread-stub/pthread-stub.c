@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.9 2002/03/11 21:12:23 nathanw Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.10 2002/03/25 03:40:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -42,25 +42,25 @@
  */
 
 #ifdef __weak_alias
-__weak_alias(pthread_mutex_init, _pthread_mutex_init)
-__weak_alias(pthread_mutex_lock, _pthread_mutex_lock)
-__weak_alias(pthread_mutex_unlock, _pthread_mutex_unlock)
+__weak_alias(_libc_pthread_mutex_init, _pthread_mutex_init)
+__weak_alias(_libc_pthread_mutex_lock, _pthread_mutex_lock)
+__weak_alias(_libc_pthread_mutex_unlock, _pthread_mutex_unlock)
 #if 0
-__weak_alias(pthread_rwlock_init, _pthread_rwlock_init)
-__weak_alias(pthread_rwlock_rdlock, _pthread_rwlock_rdlock)
-__weak_alias(pthread_rwlock_wrlock, _pthread_rwlock_wrlock)
-__weak_alias(pthread_rwlock_unlock, _pthread_rwlock_unlock)
+__weak_alias(_libc_pthread_rwlock_init, _pthread_rwlock_init)
+__weak_alias(_libc_pthread_rwlock_rdlock, _pthread_rwlock_rdlock)
+__weak_alias(_libc_pthread_rwlock_wrlock, _pthread_rwlock_wrlock)
+__weak_alias(_libc_pthread_rwlock_unlock, _pthread_rwlock_unlock)
 #endif
-__weak_alias(pthread_once, _pthread_once)
-__weak_alias(pthread_cond_init, _pthread_cond_init)
-__weak_alias(pthread_cond_wait, _pthread_cond_wait)
-__weak_alias(pthread_cond_signal, _pthread_cond_signal)
-__weak_alias(pthread_key_create, _pthread_key_create)
-__weak_alias(pthread_setspecific, _pthread_setspecific)
-__weak_alias(pthread_getspecific, _pthread_getspecific)
-__weak_alias(pthread_self, _pthread_self)
-__weak_alias(pthread_sigmask, _pthread_sigmask)
-__weak_alias(pthread__errno, _pthread__errno)
+__weak_alias(_libc_pthread_once, _pthread_once)
+__weak_alias(_libc_pthread_cond_init, _pthread_cond_init)
+__weak_alias(_libc_pthread_cond_wait, _pthread_cond_wait)
+__weak_alias(_libc_pthread_cond_signal, _pthread_cond_signal)
+__weak_alias(_libc_pthread_key_create, _pthread_key_create)
+__weak_alias(_libc_pthread_setspecific, _pthread_setspecific)
+__weak_alias(_libc_pthread_getspecific, _pthread_getspecific)
+__weak_alias(_libc_pthread_self, _pthread_self)
+__weak_alias(_libc_pthread_sigmask, _pthread_sigmask)
+__weak_alias(_libc_pthread__errno, _pthread__errno)
 #endif
 
 int _pthread_mutex_init(pthread_mutex_t *, pthread_mutexattr_t *);
