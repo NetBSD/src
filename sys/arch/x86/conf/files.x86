@@ -1,7 +1,7 @@
-#	$NetBSD: files.x86,v 1.3 2003/02/27 01:50:40 fvdl Exp $
+#	$NetBSD: files.x86,v 1.4 2003/03/01 22:55:02 fvdl Exp $
 
 # options for MP configuration through the MP spec
-defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUGA
+defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
 
 # MTRR support
 defflag                 MTRR
@@ -9,13 +9,14 @@ defflag                 MTRR
 define  mainbus { [apid = -1] }
 
 file	arch/x86/x86/apic.c		ioapic | lapic
+file	arch/x86/x86/bus_machdep.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
-file	arch/x86/x86/softintr.c
-file	arch/x86/x86/bus_machdep.c
 file	arch/x86/x86/ipi.c		multiprocessor
+file	arch/x86/x86/lock_machdep.c	lockdebug
 file	arch/x86/x86/mtrr_i686.c	mtrr
+file	arch/x86/x86/softintr.c
 
 define lapic
 file	arch/x86/x86/lapic.c		lapic needs-flag
