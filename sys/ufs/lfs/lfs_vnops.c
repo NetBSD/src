@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.136 2005/03/08 00:18:21 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137 2005/03/08 04:49:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.136 2005/03/08 00:18:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137 2005/03/08 04:49:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1202,14 +1202,14 @@ lfs_flush_dirops(struct lfs *fs)
 int
 lfs_fcntl(void *v)
 {
-        struct vop_fcntl_args /* {
-                struct vnode *a_vp;
-                u_long a_command;
-                caddr_t  a_data;
-                int  a_fflag;
-                struct ucred *a_cred;
-                struct proc *a_p;
-        } */ *ap = v;
+	struct vop_fcntl_args /* {
+		struct vnode *a_vp;
+		u_long a_command;
+		caddr_t  a_data;
+		int  a_fflag;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;

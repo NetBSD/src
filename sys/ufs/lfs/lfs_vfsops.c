@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.166 2005/03/08 00:18:21 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167 2005/03/08 04:49:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.166 2005/03/08 00:18:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167 2005/03/08 04:49:35 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1930,9 +1930,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	 * XXXUBC that last statement is an oversimplification of course.
 	 */
 	if (!(fs->lfs_seglock) || fs->lfs_lockpid != curproc->p_pid ||
-		(ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) ||
-		(pgs[0]->offset & fs->lfs_bmask) != 0) {
-                goto tryagain;
+	    (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) ||
+	    (pgs[0]->offset & fs->lfs_bmask) != 0) {
+		goto tryagain;
 	}
 
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
@@ -2111,45 +2111,45 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	return (0);
 
     tryagain:
-        /*
-         * We can't write the pages, for whatever reason.
-         * Clean up after ourselves, and make the caller try again.
-         */
-        simple_lock(&vp->v_interlock);
+	/*
+	 * We can't write the pages, for whatever reason.
+	 * Clean up after ourselves, and make the caller try again.
+	 */
+	simple_lock(&vp->v_interlock);
 
 	/* Tell why we're here, if we know */
-        if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE)
-                DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
-        else if ((pgs[0]->offset & fs->lfs_bmask) != 0)
+	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE)
+		DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
+	else if ((pgs[0]->offset & fs->lfs_bmask) != 0)
 		DLOG((DLOG_PAGE, "lfs_gop_write: not on block boundary\n"));
-        else
-                DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
+	else
+		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
 
-        uvm_lock_pageq();
-        for (i = 0; i < npages; i++) {
-                pg = pgs[i];
+	uvm_lock_pageq();
+	for (i = 0; i < npages; i++) {
+		pg = pgs[i];
 
-                if (pg->flags & PG_PAGEOUT)
-                        uvmexp.paging--;
-                if (pg->flags & PG_DELWRI) {
-                        uvm_pageunwire(pg);
-                }
-                uvm_pageactivate(pg);
-                pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
-                DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));
+		if (pg->flags & PG_PAGEOUT)
+			uvmexp.paging--;
+		if (pg->flags & PG_DELWRI) {
+			uvm_pageunwire(pg);
+		}
+		uvm_pageactivate(pg);
+		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));
 		DLOG((DLOG_PAGE, "pg[%d]->pqflags = %x\n", i, pg->pqflags));
-                DLOG((DLOG_PAGE, "pg[%d]->uanon = %p\n", i, pg->uanon));
-                DLOG((DLOG_PAGE, "pg[%d]->uobject = %p\n", i, pg->uobject));
-                DLOG((DLOG_PAGE, "pg[%d]->wire_count = %d\n", i,
+		DLOG((DLOG_PAGE, "pg[%d]->uanon = %p\n", i, pg->uanon));
+		DLOG((DLOG_PAGE, "pg[%d]->uobject = %p\n", i, pg->uobject));
+		DLOG((DLOG_PAGE, "pg[%d]->wire_count = %d\n", i,
 		      pg->wire_count));
-                DLOG((DLOG_PAGE, "pg[%d]->loan_count = %d\n", i,
+		DLOG((DLOG_PAGE, "pg[%d]->loan_count = %d\n", i,
 		      pg->loan_count));
-        }
-        /* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
-        uvm_page_unbusy(pgs, npages);
-        uvm_unlock_pageq();
-        simple_unlock(&vp->v_interlock);
-        return EAGAIN;
+	}
+	/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
+	uvm_page_unbusy(pgs, npages);
+	uvm_unlock_pageq();
+	simple_unlock(&vp->v_interlock);
+	return EAGAIN;
 }
 
 /*
@@ -2243,24 +2243,24 @@ warn_ifile_size(struct lfs *fs)
 	    LFS_MAX_BUFS) {
 		fs->lfs_flags |= LFS_WARNED;
 		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
-			         PRId64 " cannot fit in %d buffers\n",
-			         fs->lfs_ivnode->v_size -
-			         (fs->lfs_segtabsz << fs->lfs_bshift),
-			         LFS_MAX_BUFS);
+				 PRId64 " cannot fit in %d buffers\n",
+				 fs->lfs_ivnode->v_size -
+				 (fs->lfs_segtabsz << fs->lfs_bshift),
+				 LFS_MAX_BUFS);
 		log(LOG_WARNING, "lfs_mountfs: please consider increasing NBUF"
-			         " to at least %" PRId64 "\n",
-			         LFS_INVERSE_MAX_BUFS((fs->lfs_ivnode->v_size >>
+				 " to at least %" PRId64 "\n",
+				 LFS_INVERSE_MAX_BUFS((fs->lfs_ivnode->v_size >>
 						       fs->lfs_bshift) -
 						      fs->lfs_segtabsz));
 	} else if ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) > LFS_MAX_BUFS) {
 		/* Same thing but LOG_NOTICE */
 		fs->lfs_flags |= LFS_WARNED;
 		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %"
-			        PRId64 " cannot fit in %d buffers\n",
-			        fs->lfs_ivnode->v_size, LFS_MAX_BUFS);
+				PRId64 " cannot fit in %d buffers\n",
+				fs->lfs_ivnode->v_size, LFS_MAX_BUFS);
 		log(LOG_NOTICE, "lfs_mountfs: please consider increasing NBUF"
-			        " to at least %" PRId64 "\n",
-			        LFS_INVERSE_MAX_BUFS(fs->lfs_ivnode->v_size >>
+				" to at least %" PRId64 "\n",
+				LFS_INVERSE_MAX_BUFS(fs->lfs_ivnode->v_size >>
 						     fs->lfs_bshift));
 	}
 
@@ -2268,24 +2268,24 @@ warn_ifile_size(struct lfs *fs)
 	    LFS_MAX_BYTES) {
 		fs->lfs_flags |= LFS_WARNED;
 		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
-			         PRId64 " cannot fit in %lu bytes\n",
-			         fs->lfs_ivnode->v_size - (fs->lfs_segtabsz <<
-						           fs->lfs_bshift),
-			         LFS_MAX_BYTES);
+				 PRId64 " cannot fit in %lu bytes\n",
+				 fs->lfs_ivnode->v_size - (fs->lfs_segtabsz <<
+							   fs->lfs_bshift),
+				 LFS_MAX_BYTES);
 		log(LOG_WARNING, "lfs_mountfs: please consider increasing"
-			         " BUFPAGES to at least %" PRId64 "\n",
-			         LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
+				 " BUFPAGES to at least %" PRId64 "\n",
+				 LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
 						       (fs->lfs_segtabsz <<
-						        fs->lfs_bshift)) >>
+							fs->lfs_bshift)) >>
 				 PAGE_SHIFT);
 	} else if(fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
 		fs->lfs_flags |= LFS_WARNED;
 		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %" PRId64
-			        " cannot fit in %lu buffer bytes\n",
-			        fs->lfs_ivnode->v_size, LFS_MAX_BYTES);
+				" cannot fit in %lu buffer bytes\n",
+				fs->lfs_ivnode->v_size, LFS_MAX_BYTES);
 		log(LOG_NOTICE, "lfs_mountfs: please consider increasing"
-			        " BUFPAGES to at least %" PRId64 "\n",
-			        LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
+				" BUFPAGES to at least %" PRId64 "\n",
+				LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
 						      (fs->lfs_segtabsz <<
 						       fs->lfs_bshift)) >>
 				PAGE_SHIFT);
