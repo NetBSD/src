@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.8 1998/02/05 18:49:23 perry Exp $
+.\"	$NetBSD: fseek.3,v 1.9 1998/04/28 06:00:53 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,9 +123,9 @@ and
 ), setting and storing the current value of
 the file offset into or from the object referenced by 
 .Fa pos .
-On some
-.Pq non- Ns Tn UNIX
-systems an
+On systems other than
+.Ux ,
+an
 .Dq Fa fpos_t
 object may be a complex object
 and these routines may be the only way to portably reposition a text stream.

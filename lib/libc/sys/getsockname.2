@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
+.\"	$NetBSD: getsockname.2,v 1.7 1998/04/28 06:00:53 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,9 @@ process address space.
 .Xr bind 2 ,
 .Xr socket 2
 .Sh BUGS
-Names bound to sockets in the UNIX domain are inaccessible;
+Names bound to sockets in the
+.Ux
+domain are inaccessible;
 .Xr getsockname
 returns a zero length name.
 .Sh HISTORY
