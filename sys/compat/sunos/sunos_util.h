@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_util.h,v 1.5 1998/09/05 14:50:27 christos Exp $	*/
+/*	$NetBSD: sunos_util.h,v 1.6 1999/02/09 20:29:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,5 +72,8 @@ extern const char sunos_emul_path[];
 
 #define SUNOS_CHECK_ALT_EXIST(p, sgp, path) \
     CHECK_ALT_EXIST(p, sgp, sunos_emul_path, path)
+
+#define SUNOS_CHECK_ALT_CREAT(p, sgp, path) \
+    CHECK_ALT_CREAT(p, sgp, sunos_emul_path, path)
 
 #endif /* !_SUNOS_UTIL_H_ */
