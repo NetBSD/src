@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.140 2004/10/15 08:49:28 daniel Exp $
+.\"	$NetBSD: sysctl.3,v 1.141 2004/10/15 15:19:02 enami Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -531,7 +531,7 @@ If
 .Xr fork 2
 system call fails due to limit on number of processes (either
 the global maxproc limit or user's one), wait for this many
-miliseconds before returning
+milliseconds before returning
 .Er EAGAIN
 error to process.
 Useful to keep heavily forking runaway processes in bay.
@@ -1074,8 +1074,8 @@ Returns the default TCP send buffer size.
 .It Li tcp.recvspace
 Returns the default TCP receive buffer size.
 .It Li tcp.mssdflt
-Returns the default maximum segment size both advertized to the peer
-and to use when either the peer does not advertize a maximum segment size to
+Returns the default maximum segment size both advertised to the peer
+and to use when either the peer does not advertise a maximum segment size to
 us during connection setup or Path MTU Discovery
 .Li ( ip.mtudisc )
 is disabled.
@@ -1698,7 +1698,7 @@ at any one time.
 The minimum maximum number of types supported for the name of a
 timezone.
 .It Li USER_ATEXIT_MAX
-The maximum namber of functions that may be registered with
+The maximum number of functions that may be registered with
 .Xr atexit 3 .
 .El
 .Sh CTL_VM
@@ -1743,7 +1743,7 @@ The amount of kernel memory that is being used by the buffer cache.
 The minimum amount of kernel memory to reserve for the
 buffer cache.
 .It Li VM_BUFMEM_HIWATER
-The maximum amount of kernel memort to be used for the
+The maximum amount of kernel memory to be used for the
 buffer cache.
 .It Li VM_EXECMAX
 The percentage of physical memory which will be reclaimed
@@ -2142,7 +2142,7 @@ desc.sysctl_desc = "audio debug control knob";
 sysctl(mib, 2, NULL, NULL, \*[Am]desc, sizeof(desc));
 .Ed
 .Pp
-Upon successully setting a description, the new description will be
+Upon successfully setting a description, the new description will be
 returned in the space indicated by the
 .Fa oldp
 and
