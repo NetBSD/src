@@ -1,4 +1,4 @@
-/*	$NetBSD: tranputil.c,v 1.1.1.6 1999/02/01 18:45:49 christos Exp $	*/
+/*	$NetBSD: tranputil.c,v 1.1.1.6.2.1 1999/09/21 04:58:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: transp_sockets.c,v 1.4 1999/01/13 23:31:14 ezk Exp 
+ * Id: transp_sockets.c,v 1.5 1999/08/22 21:12:31 ezk Exp 
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -181,21 +181,6 @@ amu_svc_getcaller(SVCXPRT *xprt)
 
 
 /*
- * Bind NFS to a reserved port.
- */
-static int
-bindnfs_port(int so, u_short *nfs_portp)
-{
-  u_short port;
-  int error = bind_resv_port(so, &port);
-
-  if (error == 0)
-    *nfs_portp = port;
-  return error;
-}
-
-
-/*
  * Create the nfs service for amd
  */
 int
@@ -204,13 +189,17 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
 
   *soNFSp = socket(AF_INET, SOCK_DGRAM, 0);
 
-  if (*soNFSp < 0 || bindnfs_port(*soNFSp, nfs_portp) < 0) {
+  if (*soNFSp < 0 || bind_resv_port(*soNFSp, NULL) < 0) {
     plog(XLOG_FATAL, "Can't create privileged nfs port");
     return 1;
   }
   if ((*nfs_xprtp = svcudp_create(*soNFSp)) == NULL) {
     plog(XLOG_FATAL, "cannot create rpc/udp service");
     return 2;
+  }
+  if ((*nfs_portp = (*nfs_xprtp)->xp_port) >= IPPORT_RESERVED) {
+    plog(XLOG_FATAL, "Can't create privileged nfs port");
+    return 1;
   }
   if (!svc_register(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, 0)) {
     plog(XLOG_FATAL, "unable to register (NFS_PROGRAM, NFS_VERSION, 0)");
