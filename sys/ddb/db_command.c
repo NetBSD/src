@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.66 2002/08/26 11:34:28 scw Exp $	*/
+/*	$NetBSD: db_command.c,v 1.67 2003/01/20 07:20:01 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.66 2002/08/26 11:34:28 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.67 2003/01/20 07:20:01 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -300,7 +300,7 @@ db_cmd_search(const char *name, const struct db_command *table,
 static void
 db_cmd_list(const struct db_command *table)
 {
-	int	 i, j, w, columns, lines, width=0, items, numcmds;
+	int	 i, j, w, columns, lines, width=0, numcmds;
 	const char	*p;
 
 	for (numcmds = 0; table[numcmds].name != NULL; numcmds++) {
@@ -309,7 +309,6 @@ db_cmd_list(const struct db_command *table)
 			width = w;
 	}
 	width = DB_NEXT_TAB(width);
-	items = 0;
 
 	columns = db_max_width / width;
 	if (columns == 0)
