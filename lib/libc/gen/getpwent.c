@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.28 1998/08/10 02:43:09 perry Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.29 1998/08/26 00:38:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.28 1998/08/10 02:43:09 perry Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.29 1998/08/26 00:38:40 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -181,7 +181,7 @@ __ypproto_set()
 	/* name */
 	if(pw->pw_name && (pw->pw_name)[0]) {
 		ptr = (char *)ALIGN(ptr);
-		memcpy(ptr, pw->pw_name, strlen(pw->pw_name) + 1);
+		memmove(ptr, pw->pw_name, strlen(pw->pw_name) + 1);
 		__ypproto->pw_name = ptr;
 		ptr += (strlen(pw->pw_name) + 1);
 	} else
@@ -190,7 +190,7 @@ __ypproto_set()
 	/* password */
 	if(pw->pw_passwd && (pw->pw_passwd)[0]) {
 		ptr = (char *)ALIGN(ptr);
-		memcpy(ptr, pw->pw_passwd, strlen(pw->pw_passwd) + 1);
+		memmove(ptr, pw->pw_passwd, strlen(pw->pw_passwd) + 1);
 		__ypproto->pw_passwd = ptr;
 		ptr += (strlen(pw->pw_passwd) + 1);
 	} else
@@ -211,7 +211,7 @@ __ypproto_set()
 	/* gecos */
 	if(pw->pw_gecos && (pw->pw_gecos)[0]) {
 		ptr = (char *)ALIGN(ptr);
-		memcpy(ptr, pw->pw_gecos, strlen(pw->pw_gecos) + 1);
+		memmove(ptr, pw->pw_gecos, strlen(pw->pw_gecos) + 1);
 		__ypproto->pw_gecos = ptr;
 		ptr += (strlen(pw->pw_gecos) + 1);
 	} else
@@ -220,7 +220,7 @@ __ypproto_set()
 	/* dir */
 	if(pw->pw_dir && (pw->pw_dir)[0]) {
 		ptr = (char *)ALIGN(ptr);
-		memcpy(ptr, pw->pw_dir, strlen(pw->pw_dir) + 1);
+		memmove(ptr, pw->pw_dir, strlen(pw->pw_dir) + 1);
 		__ypproto->pw_dir = ptr;
 		ptr += (strlen(pw->pw_dir) + 1);
 	} else
@@ -229,7 +229,7 @@ __ypproto_set()
 	/* shell */
 	if(pw->pw_shell && (pw->pw_shell)[0]) {
 		ptr = (char *)ALIGN(ptr);
-		memcpy(ptr, pw->pw_shell, strlen(pw->pw_shell) + 1);
+		memmove(ptr, pw->pw_shell, strlen(pw->pw_shell) + 1);
 		__ypproto->pw_shell = ptr;
 		ptr += (strlen(pw->pw_shell) + 1);
 	} else
@@ -396,7 +396,7 @@ again:
 				data = NULL;
 				goto again;
 			}
-			memcpy(line, data, datalen);
+			memmove(line, data, datalen);
 			free(data);
 			data = NULL;
 			break;
@@ -423,7 +423,7 @@ again:
 					free(data);
 				goto again;
 			}
-			memcpy(line, data, datalen);
+			memmove(line, data, datalen);
 			free(data);
 			data = NULL;
 			break;
@@ -441,7 +441,7 @@ again:
 						free(data);
 					goto again;
 				}
-				memcpy(line, data, datalen);
+				memmove(line, data, datalen);
 				free(data);
 				data = (char *)NULL;
 			} else {		/* XXX */
@@ -463,7 +463,7 @@ again:
 
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
-	memcpy(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+	memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = sizeof(_pw_keynum) + 1;
 	if(__hashpw(&key)) {
@@ -567,7 +567,7 @@ getpwnam(name)
 
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
-			memcpy(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+			memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
 			key.data = (u_char *)bf;
 			key.size = sizeof(_pw_keynum) + 1;
 			if(__hashpw(&key) == 0)
@@ -653,7 +653,7 @@ pwnam_netgrp:
 					}
 					break;
 				}
-				memcpy(line, __ypcurrent, __ypcurrentlen);
+				memmove(line, __ypcurrent, __ypcurrentlen);
 				line[__ypcurrentlen] = '\0';
 				if(__ypparse(&_pw_passwd, line)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
@@ -715,7 +715,7 @@ pwnam_netgrp:
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen(name);
 	len = MIN(len, MAXLOGNAME);
-	memcpy(bf + 1, name, len);
+	memmove(bf + 1, name, len);
 	key.data = (u_char *)bf;
 	key.size = len + 1;
 	rval = __hashpw(&key);
@@ -753,7 +753,7 @@ getpwuid(uid)
 		snprintf(uidbuf, sizeof(uidbuf), "%u", uid);
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
-			memcpy(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+			memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
 			key.data = (u_char *)bf;
 			key.size = sizeof(_pw_keynum) + 1;
 			if(__hashpw(&key) == 0)
@@ -838,7 +838,7 @@ pwuid_netgrp:
 					}
 					break;
 				}
-				memcpy(line, __ypcurrent, __ypcurrentlen);
+				memmove(line, __ypcurrent, __ypcurrentlen);
 				line[__ypcurrentlen] = '\0';
 				if(__ypparse(&_pw_passwd, line)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
@@ -899,7 +899,7 @@ pwuid_netgrp:
 
 	bf[0] = _PW_KEYBYUID;
 	keyuid = uid;
-	memcpy(bf + 1, &keyuid, sizeof(keyuid));
+	memmove(bf + 1, &keyuid, sizeof(keyuid));
 	key.data = (u_char *)bf;
 	key.size = sizeof(keyuid) + 1;
 	rval = __hashpw(&key);

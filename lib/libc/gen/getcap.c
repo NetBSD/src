@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.22 1998/08/10 02:43:09 perry Exp $	*/
+/*	$NetBSD: getcap.c,v 1.23 1998/08/26 00:38:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.22 1998/08/10 02:43:09 perry Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.23 1998/08/26 00:38:40 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -280,7 +280,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 				/* save the data; close frees it */
 				clen = strlen(record);
 				cbuf = malloc(clen + 1);
-				memcpy(cbuf, record, clen + 1);
+				memmove(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
 					free(cbuf);
 					return (-2);
@@ -552,8 +552,8 @@ tc_exp:	{
 			 * Insert tc'ed record into our record.
 			 */
 			s = tcstart + newilen;
-			memcpy(s, tcend,  (size_t)(rp - tcend));
-			memcpy(tcstart, newicap, newilen);
+			memmove(s, tcend,  (size_t)(rp - tcend));
+			memmove(tcstart, newicap, newilen);
 			rp += diff;
 			free(icap);
 
