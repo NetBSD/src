@@ -101,6 +101,11 @@ if [ "${shared}" = "true" ]; then
   fi
 
   case "${host}" in
+  alpha-*-netbsd*)
+    PICFLAG=-fPIC
+    HLDFLAGS='-rpath $(libdir)'
+    SHLIB_CFLAGS='-shared -Wl,-soname,$(SONAME)'
+    ;;
   *-dec-osf*)
     # -fpic is not needed on the Alpha.
     PICFLAG=
