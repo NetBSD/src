@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.10 1997/05/26 16:03:58 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.11 1997/07/13 18:09:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -104,7 +104,23 @@ void tzset __P((void));
 char *strptime __P((const char *, const char *, struct tm *));
 char *timezone __P((int, int));
 void tzsetwall __P((void));
+struct tm *offtime __P((const time_t *const, const long));
+time_t timelocal __P((struct tm *const));
+time_t timegm __P((struct tm *const));
+time_t timeoff __P((struct tm *const, const long));
+long gtime __P((struct tm *const));
+time_t time2posix __P((time_t));
+time_t posix2time __P((time_t));
 #endif /* neither ANSI nor POSIX */
+
+struct sigevent;
+struct itimerspec;
+int timer_create __P((clockid_t, struct sigevent *, timer_t *));
+int timer_delete __P((timer_t));
+int timer_getoverrun __P((timer_t));
+int timer_gettime __P((timer_t, struct itimerspec *));
+int timer_settime __P((timer_t, int, const struct itimerspec *, 
+    struct itimerspec *));
 __END_DECLS
 
 #endif /* !_TIME_H_ */
