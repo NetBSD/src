@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2002/12/06 16:04:12 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.53 2002/12/09 16:13:58 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,17 +124,6 @@ extern int eintstack[];
 #else
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 #endif
-
-#if defined(SUN4M)
-extern void	raise __P((int, int));
-#if !(defined(SUN4) || defined(SUN4C))
-#define setsoftint()	raise(0,1)
-#else /* both defined */
-#define setsoftint()	(cputyp == CPU_SUN4M ? raise(0,1) : ienab_bis(IE_L1))
-#endif /* !4,!4c */
-#else	/* 4m not defined */
-#define setsoftint()	ienab_bis(IE_L1)
-#endif /* SUN4M */
 
 void	softintr_init __P((void));
 void	*softnet_cookie;
