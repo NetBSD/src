@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2004/01/19 00:32:26 sjg Exp $
+# $Id: Makefile,v 1.11 2004/02/20 09:03:26 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -8,56 +8,29 @@
 # accept: move generated output to expected results
 #
 # Adding a test case.  
-# Each feature should get its own set of tests which should be hooked
-# into the 'all' target.
+# Each feature should get its own set of tests in its own suitably
+# named makefile which should be added to SUBFILES to hook it in.
 # 
 
 .MAIN: all
 
 UNIT_TESTS:= ${.PARSEDIR}
 
-all: mod-ts varcmd modword ternary
+# Simple sub-makefiles - we run them as a black box
+# keep the list sorted.
+SUBFILES= \
+	modmatch \
+	modts \
+	modword \
+	ternary \
+	varcmd
 
-LIST= one two three
-LIST+= four five six
+all: ${SUBFILES}
 
-FU_mod-ts = a / b / cool
-
-AAA= a a a
-B.aaa= Baaa
-
-mod-ts:
-	@echo 'LIST="${LIST}"'
-	@echo 'LIST:ts,="${LIST:ts,}"'
-	@echo 'LIST:ts/:tu="${LIST:ts/:tu}"'
-	@echo 'LIST:ts::tu="${LIST:ts::tu}"'
-	@echo 'LIST:ts:tu="${LIST:ts:tu}"'
-	@echo 'LIST:tu:ts/="${LIST:tu:ts/}"'
-	@echo 'LIST:ts:="${LIST:ts:}"'
-	@echo 'LIST:ts="${LIST:ts}"'
-	@echo 'LIST:ts:S/two/2/="${LIST:ts:S/two/2/}"'
-	@echo 'LIST:S/two/2/:ts="${LIST:S/two/2/:ts}"'
-	@echo 'LIST:ts/:S/two/2/="${LIST:ts/:S/two/2/}"'
-	@echo "Pretend the '/' in '/n' etc. below are back-slashes."
-	@echo 'LIST:ts/n="${LIST:ts\n}"'
-	@echo 'LIST:ts/t="${LIST:ts\t}"'
-	@echo 'LIST:ts/012:tu="${LIST:ts\012:tu}"'
-	@echo 'LIST:tx="${LIST:tx}"'
-	@echo 'LIST:ts/x:tu="${LIST:ts\x:tu}"'
-	@echo 'FU_$@="${FU_${@:ts}:ts}"'
-	@echo 'FU_$@:ts:T="${FU_${@:ts}:ts:T}" == cool?'
-	@echo 'B.$${AAA:ts}="${B.${AAA:ts}}" == Baaa?'
-
-# Some tests are best handled via a sub-make
-.PHONY: varcmd modword
-varcmd modword:
+# the tests are actually done with sub-makes.
+.PHONY: ${SUBFILES}
+${SUBFILES}:
 	@${.MAKE} -k -f ${UNIT_TESTS}/$@
-
-.PHONY:	ternary
-ternary:
-	@${.MAKE} -k -f ${UNIT_TESTS}/$@
-	@${.MAKE} -k -f ${UNIT_TESTS}/$@ A=
-	@${.MAKE} -k -f ${UNIT_TESTS}/$@ A=42
 
 clean:
 	rm -f *.out *.fail *.core
@@ -66,7 +39,9 @@ clean:
 
 TEST_MAKE?= ${MAKE}
 
-# here is the driver
+# The driver.
+# We always pretend .MAKE was called 'make' so the results
+# can be compared.
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
 	@cd ${.OBJDIR} && ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
