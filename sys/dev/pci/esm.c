@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.1 2001/01/08 19:54:31 rh Exp $	*/
+/*	$NetBSD: esm.c,v 1.2 2001/01/09 06:36:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -216,8 +216,8 @@ struct esm_reg_info {
 	{ -1, -1 }
 };
 
-static
-void esm_dump_regs(struct esm_softc *ess)
+static void
+esm_dump_regs(struct esm_softc *ess)
 {
 	int i = 0;
 
