@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.6 2003/01/18 17:40:27 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.7 2003/01/24 11:55:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -405,13 +405,6 @@ intr_calculatemasks()
 			cpc700_enable_irq(irq);
 		else
 			cpc700_disable_irq(irq);
-		
-#if 0
-	{
-	extern void print_intr_regs(void);
-	print_intr_regs();
-	}
-#endif
 }
 
 void
