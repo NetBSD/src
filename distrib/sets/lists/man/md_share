@@ -285,6 +285,7 @@
 ./usr/share/man/cat8/x68k/makedev.0
 ./usr/share/man/cat8/x68k/poffd.0
 ./usr/share/man/cat8/x68k/rtcalarm.0
+./usr/share/man/cat9/i386/bioscall.0
 ./usr/share/man/cat9/sun3/isr_add.0
 ./usr/share/man/cat9/sun3/isr_add_autovect.0
 ./usr/share/man/cat9/sun3/isr_add_custom.0
@@ -576,6 +577,7 @@
 ./usr/share/man/man8/x68k/makedev.8
 ./usr/share/man/man8/x68k/poffd.8
 ./usr/share/man/man8/x68k/rtcalarm.8
+./usr/share/man/man9/i386/bioscall.9
 ./usr/share/man/man9/sun3/isr_add.9
 ./usr/share/man/man9/sun3/isr_add_autovect.9
 ./usr/share/man/man9/sun3/isr_add_custom.9
