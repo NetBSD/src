@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.244 2003/04/15 19:14:58 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.245 2003/04/16 00:07:17 darrenr Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.244 2003/04/15 19:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.245 2003/04/16 00:07:17 darrenr Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -548,8 +548,10 @@ wdstrategy(bp)
 
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
 			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
-			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max))
+			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max)){
+				bp->b_error = EIO;
 				goto bad;
+			}
 	}
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
