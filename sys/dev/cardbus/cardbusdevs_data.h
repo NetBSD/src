@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.24 2003/10/24 17:04:35 mycroft Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.25 2004/07/22 17:32:15 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.27 2003/10/24 17:04:16 mycroft Exp 
+ *	NetBSD: cardbusdevs,v 1.28 2004/07/22 17:32:02 mycroft Exp 
  */
 
 /*
@@ -92,16 +92,34 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3CCFEM656 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656_M,
+	    0,
+	    "3Com",
+	    "3CCFEM656 56k Modem",
+	},
+	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656B_E,
 	    0,
 	    "3Com",
 	    "3CCFEM656B 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656B_M,
+	    0,
+	    "3Com",
+	    "3CCFEM656B 56k Modem",
+	},
+	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656C_E,
 	    0,
 	    "3Com",
 	    "3CXFEM656C 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656C_M,
+	    0,
+	    "3Com",
+	    "3CXFEM656C 56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_ADVSYS, CARDBUS_PRODUCT_ADVSYS_ULTRA,
