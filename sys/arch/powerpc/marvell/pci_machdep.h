@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2003/03/06 07:15:46 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 2003/03/15 19:50:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -85,20 +85,9 @@ struct pci_chipset_functions {
 	void (*pcf_intr_disestablish)(pci_chipset_tag_t, void *);
 };
 
-struct pci_chipset_md {
-	int mdpc_busno;
-	bus_space_handle_t mdpc_cfgaddr;
-	bus_space_handle_t mdpc_cfgdata;
-	bus_space_handle_t mdpc_syncreg;
-	void *mdpc_gt;
-	bus_space_tag_t mdpc_io_bs;
-	bus_space_tag_t mdpc_mem_bs;
-};
-
 struct pci_chipset {
 	struct device *pc_parent;
 	const struct pci_chipset_functions *pc_funcs;
-	struct pci_chipset_md pc_md;
 };
 
 /*
