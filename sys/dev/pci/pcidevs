@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp $
+$NetBSD: pcidevs,v 1.136 1999/07/15 14:52:48 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -491,6 +491,7 @@ vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
+vendor CCUBE		0x123f	C-Cube Microsystems
 vendor AVM		0x1244	AVM
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
@@ -695,6 +696,9 @@ product AVANCE AVL2301	0x2301	AVL2301
 product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
+
+/* CCUBE products */
+product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
 
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
