@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.18 2002/10/01 16:48:34 wiz Exp $
+.\"	$NetBSD: directory.3,v 1.19 2003/03/02 14:02:35 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -163,9 +163,10 @@ is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");
-if (dirp) {
+if (dirp != NULL) {
 	while ((dp = readdir(dirp)) != NULL)
-		if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am] !strcmp(dp-\*[Gt]d_name, name)) {
+		if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am]
+		    !strcmp(dp-\*[Gt]d_name, name)) {
 			(void)closedir(dirp);
 			return (FOUND);
 		}
