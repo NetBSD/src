@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.31 2000/06/05 21:36:34 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.31.2.1 2000/09/01 16:38:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.31 2000/06/05 21:36:34 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.31.2.1 2000/09/01 16:38:18 ad Exp $");
 #endif /* not lint */
 
 /*
@@ -94,14 +94,14 @@ extern struct _disk	cur;
 
 static	enum state { BOOT, TIME, RUN } state = TIME;
 
-static void allocinfo __P((struct Info *));
-static void copyinfo __P((struct Info *, struct Info *));
-static float cputime __P((int));
-static void dinfo __P((int, int));
-static void getinfo __P((struct Info *, enum state));
-static void putint __P((int, int, int, int));
-static void putfloat __P((double, int, int, int, int, int));
-static int ucount __P((void));
+static void allocinfo(struct Info *);
+static void copyinfo(struct Info *, struct Info *);
+static float cputime(int);
+static void dinfo(int, int);
+static void getinfo(struct Info *, enum state);
+static void putint(int, int, int, int);
+static void putfloat(double, int, int, int, int, int);
+static int ucount(void);
 
 static	int ut;
 static	char buf[26];
@@ -116,7 +116,7 @@ static	int nextintsrow;
 struct	utmp utmp;
 
 WINDOW *
-openkre()
+openvmstat(void)
 {
 
 	ut = open(_PATH_UTMP, O_RDONLY);
@@ -126,8 +126,7 @@ openkre()
 }
 
 void
-closekre(w)
-	WINDOW *w;
+closevmstat(WINDOW *w)
 {
 
 	(void) close(ut);
@@ -187,7 +186,7 @@ static struct nlist namelist[] = {
 #endif
 
 int
-initkre()
+initvmstat(void)
 {
 	char *intrnamebuf, *cp;
 	int i;
@@ -252,7 +251,7 @@ initkre()
 }
 
 void
-fetchkre()
+fetchvmstat(void)
 {
 	time_t now;
 
@@ -263,7 +262,7 @@ fetchkre()
 }
 
 void
-labelkre()
+labelvmstat(void)
 {
 	int i, j;
 
@@ -342,7 +341,7 @@ static	char cpuchar[CPUSTATES] = { '=' , '>', '-', '%', ' ' };
 static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_INTR, CP_IDLE };
 
 void
-showkre()
+showvmstat(void)
 {
 	float f1, f2;
 	int psiz, inttotal;
@@ -485,16 +484,14 @@ showkre()
 }
 
 void
-vmstat_boot (args)
-	char *args;
+vmstat_boot(char *args)
 {
 	copyinfo(&z, &s1);
 	state = BOOT;
 }
 
 void
-vmstat_run (args)
-	char *args;
+vmstat_run(char *args)
 {
 	copyinfo(&s1, &s2);
 	state = RUN;
@@ -508,8 +505,7 @@ vmstat_time (args)
 }
 
 void
-vmstat_zero (args)
-	char *args;
+vmstat_zero(char *args)
 {
 	if (state == RUN)
 		getinfo(&s1, RUN);
@@ -517,7 +513,7 @@ vmstat_zero (args)
 
 /* calculate number of users on the system */
 static int
-ucount()
+ucount(void)
 {
 	int nusers = 0, onusers = -1;
 
@@ -539,8 +535,7 @@ ucount()
 }
 
 static float
-cputime(indx)
-	int indx;
+cputime(int indx)
 {
 	double t;
 	int i;
@@ -554,8 +549,7 @@ cputime(indx)
 }
 
 static void
-putint(n, l, c, w)
-	int n, l, c, w;
+putint(int n, int l, int c, int w)
 {
 	char b[128];
 
@@ -573,9 +567,7 @@ putint(n, l, c, w)
 }
 
 static void
-putfloat(f, l, c, w, d, nz)
-	double f;
-	int l, c, w, d, nz;
+putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
 
@@ -593,9 +585,7 @@ putfloat(f, l, c, w, d, nz)
 }
 
 static void
-getinfo(s, st)
-	struct Info *s;
-	enum state st;
+getinfo(struct Info *s, enum state st)
 {
 	int mib[2];
 	size_t size;
@@ -621,8 +611,7 @@ getinfo(s, st)
 }
 
 static void
-allocinfo(s)
-	struct Info *s;
+allocinfo(struct Info *s)
 {
 
 	if ((s->intrcnt = malloc(nintr * sizeof(long))) == NULL) {
@@ -632,8 +621,7 @@ allocinfo(s)
 }
 
 static void
-copyinfo(from, to)
-	struct Info *from, *to;
+copyinfo(struct Info *from, struct Info *to)
 {
 	long *intrcnt;
 
@@ -643,8 +631,7 @@ copyinfo(from, to)
 }
 
 static void
-dinfo(dn, c)
-	int dn, c;
+dinfo(int dn, int c)
 {
 	double words, atime;
 
