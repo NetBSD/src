@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.72 2000/02/09 16:24:03 itojun Exp $
+#	$NetBSD: netstart,v 1.73 2000/02/11 08:09:56 itojun Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -73,7 +73,13 @@ ifconfig lo0 inet 127.0.0.1
 # frequently need to specify a media type, as in "media UTP", for
 # interface cards with multiple media connections that do not autoconfigure.
 # see the ifconfig manual page for details.
-
+#
+# Note that /etc/ifconfig.xxN takes multiple lines.  The following
+# configuration is possible:
+#	inet 10.1.1.1 netmask 0xffffff00
+#	inet 10.1.1.2 netmask 0xffffff00 alias
+#	inet6 fec0::1 prefixlen 64 alias
+#
 if [ "$net_interfaces" != NO ]; then
 	if checkyesno auto_ifconfig; then
 		tmp="`ifconfig -l`"
@@ -121,8 +127,8 @@ fi
 # The variable contains a list of "address netmask" pairs, with "netmask"
 # set to "-" if the interface default netmask is to be used.
 #
-# Note that $ifaliases_xxN works only with IPv4 addresses and considered
-# not recommended.  See below (/etc/ifaliases section) for alternative.
+# Note that $ifaliases_xxN works only with certain configurations and
+# considered not recommended.  Use /etc/ifconfig.xxN if possible.
 # 
 if [ -n "$configured_interfaces" ]; then
 	echo 'adding interface aliases:';
@@ -150,12 +156,8 @@ done
 # that contain
 #	address interface netmask
 #
-# Note that /etc/ifaliases works only with IPv4 addresses and considered
-# not recommended.  Recommend using /etc/ifconfig.xxN like below instead
-# (/etc/ifconfig.xxN allows multiple lines):
-#	inet 10.1.1.1 netmask 0xffffff00
-#	inet 10.1.1.2 netmask 0xffffff00 alias
-#	inet6 fec0::1 prefixlen 64 alias
+# Note that /etc/ifaliases works only with certain cases only and considered
+# not recommended.  Use /etc/ifconfig.xxN instead.
 #
 if [ -f /etc/ifaliases ]; then
 (
