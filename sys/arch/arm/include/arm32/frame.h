@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 2002/10/19 00:10:54 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 2003/10/23 08:59:10 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -83,7 +83,6 @@ typedef struct irqframe {
  */
 
 struct switchframe {
-	int	sf_spl;
 	u_int	sf_r4;
 	u_int	sf_r5;
 	u_int	sf_r6;
