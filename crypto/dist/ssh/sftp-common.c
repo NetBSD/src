@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.6 2002/10/01 14:07:39 itojun Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.7 2002/10/03 07:41:10 petrov Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -207,7 +207,7 @@ ls_file(char *name, struct stat *st, int remote)
 		tbuf[0] = '\0';
 	ulen = MAX(strlen(user), 8);
 	glen = MAX(strlen(group), 8);
-	snprintf(buf, sizeof buf, "%s %3d %-*s %-*s %8llu %s %s", mode,
+	snprintf(buf, sizeof buf, "%s %3d %-*s %-*s %8" PRIu64 " %s %s", mode,
 	    st->st_nlink, ulen, user, glen, group,
 	    (u_int64_t)st->st_size, tbuf, name);
 	return xstrdup(buf);
