@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.11 2000/10/04 19:24:59 mjl Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.12 2004/10/30 16:55:06 dsl Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.11 2000/10/04 19:24:59 mjl Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.12 2004/10/30 16:55:06 dsl Exp $");
 #endif
 #endif
 
@@ -226,7 +226,7 @@ token(void)
 		 * we'll continue, which puts us up at the top of the while loop
 		 * to fetch the next argument in
 		 */
-		while (isspace(*sct))
+		while (isspace((unsigned char)*sct))
 			++sct;
 		if (!*sct) {
 			need = 1;
@@ -241,13 +241,13 @@ token(void)
 		/*
 		 * then see what it is
 		 */
-		if (isdigit(sc_token[0])) {
-			while (isdigit(*sct))
+		if (isdigit((unsigned char)sc_token[0])) {
+			while (isdigit((unsigned char)*sct))
 				sc_token[++idx] = *sct++;
 			sc_token[++idx] = 0;
 			return ((sc_tokid = NUMBER));
-		} else if (isalpha(sc_token[0])) {
-			while (isalpha(*sct))
+		} else if (isalpha((unsigned char)sc_token[0])) {
+			while (isalpha((unsigned char)*sct))
 				sc_token[++idx] = *sct++;
 			sc_token[++idx] = 0;
 			return (parse_token(sc_token));
