@@ -47,25 +47,25 @@ NoticeNoSlashHere
 % cat /p/gzcat//tmp/rc.gz9 | cksum
 1896381655 10514
 
-% cat /p/ftp/ftp.netbsd.org:pub/NetBSD/README
+% cat /p/ftp/ftp.NetBSD.org:pub/NetBSD/README
   <contents deleted>
 
-% cat /p/http://www.netbsd.org/index.html
+% cat /p/http://www.NetBSD.org/index.html
   <contents deleted>
 
 # And now for some more creative uses...
 % cd /tmp
 # Both formats of FTP commands work:
-% cp /p/ftp/ftp.netbsd.org:pub/NetBSD/NetBSD-current/tar_files/src/bin.tar.gz .
+% cp /p/ftp/ftp.NetBSD.org:pub/NetBSD/NetBSD-current/tar_files/src/bin.tar.gz .
 
-% cp /p/ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/src/sbin.tar.gz .
+% cp /p/ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-current/tar_files/src/sbin.tar.gz .
 
 % tar xzf sbin.tar.gz
 
 # Or, we can be fancier.  Tar tries to convert /p/ftp/a:b into a
 # request for file b from host /p/ftp/a, so we need to
 # circumvent that by using cat.
-% cat /p/gzcat//p/ftp/ftp.netbsd.org:pub/NetBSD/NetBSD-current/tar_files/src/sbin.tar.gz | tar xf -
+% cat /p/gzcat//p/ftp/ftp.NetBSD.org:pub/NetBSD/NetBSD-current/tar_files/src/sbin.tar.gz | tar xf -
 
 # Or, we can bzip all of our man pages and still access them
 # without changing the man program:
