@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.32 2004/03/22 00:46:06 martin Exp $
+# $NetBSD: HACKS,v 1.33 2004/04/26 09:17:16 uwe Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -253,15 +253,6 @@ port	sh3
 		with optimization for SuperH.  Hack is to build with -O0.
 	kcah
 
-	hack	gcc3-optimization-11937
-	cdate	Sun Feb 22 04:25:39 MSK 2004
-	who	uwe
-	file	gnu/usr.bin/gcc3/backend/Makefile	: 1.14 : 58 : 61
-	pr	toolchain/22489
-	descr
-		Work around toolchain/22489 (gcc optimization/11937)
-		by compiling function.c with -O0.
-	kcah
 
 port	sh5
 
