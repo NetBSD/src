@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.34 1997/11/02 14:25:26 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -103,6 +103,8 @@ cpu_fork(p1, p2)
 	struct pcb *nyproc;
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
+	extern vm_map_t pte_map;
+	int bytesiz;
 
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
@@ -116,20 +118,14 @@ cpu_fork(p1, p2)
 	*p2pte = 0; 
 #endif
 
-#ifdef notyet
 	/* Set up internal defs in PCB, and alloc PTEs. */
-	nyproc->P0BR = kmem_alloc_wait(pte_map,
-	    (opmap->pm_pcb->P0LR & ~AST_MASK) * 4);
-	nyproc->P1BR = kmem_alloc_wait(pte_map,
-	    (0x800000 - (pmap->pm_pcb->P1LR * 4))) - 0x800000;
-	nyproc->P0LR = opmap->pm_pcb->P0LR;
-	nyproc->P1LR = opmap->pm_pcb->P1LR;
-#else
-	nyproc->P0BR = (void *)0x80000000;
-	nyproc->P1BR = (void *)0x80000000;
-	nyproc->P0LR = AST_PCB;
-	nyproc->P1LR = 0x200000;
-#endif
+	bytesiz = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE + MAXSSIZ) *
+	    sizeof(struct pte);
+	nyproc->P0BR = (void *)kmem_alloc_wait(pte_map, bytesiz);
+	nyproc->P0LR = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
+	nyproc->P1BR = (void *)nyproc->P0BR + bytesiz - 0x800000;
+	nyproc->P1LR = (0x200000 - btoc(MAXSSIZ));
+
 	nyproc->iftrap = NULL;
 	nyproc->KSP = (u_int)p2->p_addr + USPACE;
 
@@ -145,7 +141,6 @@ cpu_fork(p1, p2)
 	nyproc->R[1] = 1;
 
 	return; /* Child is ready. Parent, return! */
-
 }
 
 /*
@@ -600,11 +595,9 @@ vmapbuf(bp, len)
         tmap = vm_map_pmap(phys_map);
         len = len >> PGSHIFT;
         while (len--) {
-		volatile int i = *(int *)faddr;
-
                 pa = pmap_extract(fmap, faddr);
                 if (pa == 0)
-                       	panic("vmapbuf: null page frame for %x", faddr);
+                       	panic("vmapbuf: null page frame for %x", (u_int)faddr);
 
                 pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
                            VM_PROT_READ|VM_PROT_WRITE, TRUE);
