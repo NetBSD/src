@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.8 1998/09/05 23:57:24 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.9 1999/01/10 23:32:57 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,9 +100,6 @@
 #include <machine/ctlreg.h>
 #include <machine/cpu.h>
 #include <machine/sparc64.h>
-
-/* XXXXX -- Needed to allow dvma_mapin to work -- need to switch to bus_dma_* */
-struct sbus_softc *sbus0;
 
 #ifdef DEBUG
 #define SDB_DVMA	0x1
@@ -242,7 +239,7 @@ sbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct sbus_softc *sc = sbus0 = (struct sbus_softc *)self;
+	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	int node = ma->ma_node;
 
@@ -890,6 +887,8 @@ sbus_intr_establish(t, level, flags, handler, arg)
 			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[INTVEC(vec)];
 			/* Enable the interrupt */
 			vec |= INTMAP_V;
+			/* Insert IGN */
+			vec |= sc->sc_ign;
 			bus_space_write_8(sc->sc_bustag, ih->ih_map, 0, vec);
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
