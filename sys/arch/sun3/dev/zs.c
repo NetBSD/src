@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45 1997/01/18 19:49:01 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.46 1997/01/31 00:07:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -301,6 +301,11 @@ zsc_attach(parent, self, aux)
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+		cs->cs_rr0_cts = ZSRR0_CTS;
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = ZSWR5_RTS;
+
 		/*
 		 * Clear the master interrupt enable.
 		 * The INTENA is common to both channels,
@@ -509,13 +514,16 @@ zs_set_modes(cs, cflag)
 	 * status interrupt to detect CTS changes.
 	 */
 	s = splzs();
+#if 0	/* XXX - See below. */
 	if (cflag & CLOCAL) {
 		cs->cs_rr0_dcd = 0;
 		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
 	} else {
+		/* XXX - Need to notice DCD change here... */
 		cs->cs_rr0_dcd = ZSRR0_DCD;
 		cs->cs_preg[15] |= ZSWR15_DCD_IE;
 	}
+#endif	/* XXX */
 	if (cflag & CRTSCTS) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = ZSWR5_RTS;
