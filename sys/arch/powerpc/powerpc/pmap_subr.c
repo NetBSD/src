@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.6 2002/08/20 06:04:38 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.7 2002/11/13 21:08:50 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 #include "opt_pmap.h"
 #include <sys/param.h>
@@ -246,6 +247,9 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 void
 pmap_syncicache(paddr_t pa, psize_t len)
 {
+#ifdef MULTIPROCESSOR
+	__syncicache((void *)pa, len);
+#else
 	const size_t linewidth = curcpu()->ci_ci.icache_line_size;
 	register_t msr;
 	size_t i;
@@ -295,6 +299,7 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 * sync and isync).
 	 */
 	MTMSR(msr);
+#endif	/* !MULTIPROCESSOR */
 }
 
 boolean_t
