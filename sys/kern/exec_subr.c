@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.38 2003/08/08 18:53:14 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.39 2003/08/21 15:17:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.38 2003/08/08 18:53:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.39 2003/08/21 15:17:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,8 +342,11 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	noaccess_size = max_stack_size - access_size;
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
 	    access_size), noaccess_size);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-	    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
 	    access_linear_min, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
