@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.2 1998/10/26 19:20:00 ender Exp $	*/
+/*	$Id: aed.c,v 1.3 1998/11/24 08:34:37 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -152,6 +152,7 @@ aed_input(event)
 			aed_dokeyupdown(&new_event);
 		break;
 	case ADBADDR_MS:
+		new_event.u.m.buttons |= aed_sc->sc_buttons;
 		aed_handoff(&new_event);
 		break;
 	default:                /* God only knows. */
