@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.10 1993/12/22 04:13:50 cgd Exp $
+ *	$Id: nfs_socket.c,v 1.11 1994/04/10 06:45:59 cgd Exp $
  */
 
 /*
@@ -137,23 +137,21 @@ nfs_connect(nmp)
 	register struct nfsmount *nmp;
 {
 	register struct socket *so;
-	struct sockaddr *saddr;					/* 08 Sep 92*/
+	struct sockaddr *saddr;
 	int s, error, bufsize;
 	struct mbuf *m;
-	struct sockaddr_in *sin;				/* 08 Sep 92*/
-	u_short tport;						/* 08 Sep 92*/
+	struct sockaddr_in *sin;
+	u_short tport;
 
 	nmp->nm_so = (struct socket *)0;
-	saddr = mtod(nmp->nm_nam, struct sockaddr *);		/* 08 Sep 92*/
-	if (error = socreate(saddr->sa_family,			/* 08 Sep 92*/
+	saddr = mtod(nmp->nm_nam, struct sockaddr *);
+	if (error = socreate(saddr->sa_family,
 		&nmp->nm_so, nmp->nm_sotype, nmp->nm_soproto))
 		goto bad;
 	so = nmp->nm_so;
 	nmp->nm_soflags = so->so_proto->pr_flags;
 
 	/*
-	 * 08 Sep 92
-	 *
 	 * Some servers require that the client port be a reserved port number.
 	 */
 	if (saddr->sa_family == AF_INET) {

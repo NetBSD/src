@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *	$Id: nfs_serv.c,v 1.12 1994/03/12 01:31:32 cgd Exp $
+ *	$Id: nfs_serv.c,v 1.13 1994/04/10 06:45:56 cgd Exp $
  */
 
 /*
@@ -600,7 +600,7 @@ nfsrv_write(mrep, md, dpos, cred, xid, mrq, repstat, p)
 
 /*
  * nfs create service
- * if it already exists, just set length		* 28 Aug 92*
+ * if it already exists, just set length
  * do NOT truncate unconditionally !
  */
 nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
@@ -639,7 +639,7 @@ nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	VATTR_NULL(vap);
 	nfsm_disect(tl, u_long *, NFSX_SATTR);
 	/*
-	 * If it doesn't exist, create it		* 28 Aug 92*
+	 * If it doesn't exist, create it
 	 * otherwise just set length from attributes
 	 *   should I set the mode too ??
 	 */
@@ -705,8 +705,9 @@ nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 		else
 			vput(nd.ni_dvp);
 		VOP_ABORTOP(&nd);
-		vap->va_size = fxdr_unsigned(long, *(tl+3));	/* 28 Aug 92*/
-/* 08 Sep 92*/	if (vap->va_size != -1 && (error = VOP_SETATTR(vp, vap, cred, p))) {
+		vap->va_size = fxdr_unsigned(long, *(tl+3));
+		if (vap->va_size != -1 &&
+		    (error = VOP_SETATTR(vp, vap, cred, p))) {
 			vput(vp);
 			nfsm_reply(0);
 		}
@@ -1493,10 +1494,10 @@ nfsrv_noop(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	struct proc *p;
 {
 	caddr_t bpos;
-	int error;					/* 08 Sep 92*/
+	int error;
 	struct mbuf *mb, *mreq;
 
-	if (*repstat)					/* 08 Sep 92*/
+	if (*repstat)
 		error = *repstat;
 	else
 		error = EPROCUNAVAIL;
