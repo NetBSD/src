@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.125 2000/10/15 17:53:17 explorer Exp $
+$NetBSD: usbdevs,v 1.126 2000/10/24 14:51:24 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -341,6 +341,7 @@ product ANCHOR EZLINK		0x2720	EZLINK
 product AOX USB101		0x0008	USB ethernet controller engine
 
 /* Apple Computer products */
+product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* ATen products */
