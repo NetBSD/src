@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.3 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: main.c,v 1.5 1994/12/28 02:21:46 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.6 1995/02/20 18:42:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -312,17 +312,20 @@ obsolete(argcp, argvp)
 	argv += 2;
 
 	for (flags = 0; *ap; ++ap) {
-		switch(*ap) {
+		switch (*ap) {
 		case 'b':
 		case 'f':
 		case 's':
+			if (*argv == NULL) {
+				warnx("option requires an argument -- %c", *ap);
+				usage();
+			}
 			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
 				err(1, NULL);
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
 			(void)strcpy(&nargv[0][2], *argv);
-			if (*argv != NULL)
-				++argv;
+			++argv;
 			++nargv;
 			break;
 		default:
@@ -343,4 +346,7 @@ obsolete(argcp, argvp)
 
 	/* Copy remaining arguments. */
 	while (*nargv++ = *argv++);
+
+	/* Update argument count. */
+	*argcp = nargv - *argvp - 1;
 }
