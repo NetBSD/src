@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.4 2000/07/26 11:07:45 pk Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.5 2000/09/01 19:04:50 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,14 +78,13 @@ void	clock_secs_to_ymdhms __P((time_t, struct clock_ymdhms *));
  */
 struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
+	void	*bus_cookie;	/* Bus specific data */
 
 	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_getcal)(struct todr_chip_handle *, int *);
 	int	(*todr_setcal)(struct todr_chip_handle *, int);
-#if notyet
-	int	(*todr_setwen)(struct todr_chip_handle *, int (*)(int));
-#endif
+	int	(*todr_setwen)(struct todr_chip_handle *, int);
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
@@ -93,3 +92,5 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
 #define todr_settime(ct, t)	((*(ct)->todr_settime)(ct, t))
 #define todr_getcal(ct, vp)	((*(ct)->todr_gettime)(ct, vp))
 #define todr_setcal(ct, v)	((*(ct)->todr_settime)(ct, v))
+#define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
+					((*(ct)->todr_setwen)(ct, v))
