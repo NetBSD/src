@@ -29,7 +29,7 @@ AINC+=		-nostdinc -idirafter ${DESTDIR}/usr/include
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
 	getcontext.S \
-	ptrace.S sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
+	ptrace.S sbrk.S __semctl.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
 	syscall.S __syscall.S __clone.S cerror.S
 
@@ -68,7 +68,7 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 	rmdir.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
 	sendto.S setegid.S setcontext.S seteuid.S setgid.S setgroups.S setitimer.S \
-	setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
+	__setlogin.S setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
 	setsid.S setsockopt.S setuid.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S __sigaction14.S \
 	__sigaltstack14.S __sigpending14.S __sigprocmask14.S \
