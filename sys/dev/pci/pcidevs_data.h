@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.554 2003/07/23 10:18:08 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.555 2003/07/27 01:41:46 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.554 2003/07/23 10:16:16 kleink Exp 
+ *	NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp 
  */
 
 /*
@@ -2128,6 +2128,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-VME Interface Mod. 2706",
 	},
 	{
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5501,
+	    0,
+	    "Bluesteel Networks",
+	    "5501",
+	},
+	{
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601,
+	    0,
+	    "Bluesteel Networks",
+	    "5601",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700,
 	    0,
 	    "Broadcom Corporation",
@@ -2198,6 +2210,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM4401 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801,
+	    0,
+	    "Broadcom Corporation",
+	    "5801 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5802,
+	    0,
+	    "Broadcom Corporation",
+	    "5802 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805,
+	    0,
+	    "Broadcom Corporation",
+	    "5805 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5820,
+	    0,
+	    "Broadcom Corporation",
+	    "5820 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821,
+	    0,
+	    "Broadcom Corporation",
+	    "5821 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822,
+	    0,
+	    "Broadcom Corporation",
+	    "5822 Security processor",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5823,
+	    0,
+	    "Broadcom Corporation",
+	    "5823 Security processor",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -12625,6 +12679,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GEOCAST, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Geocast Network Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_BLUESTEEL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Bluesteel Networks",
 	    NULL,
 	},
 	{
