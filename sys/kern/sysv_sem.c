@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.16 1994/12/05 07:54:48 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.17 1994/12/05 08:28:53 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -45,7 +45,7 @@ seminit()
 }
 
 void
-semwait(p)
+semlock(p)
 	struct proc *p;
 {
 
@@ -78,7 +78,7 @@ semconfig(p, uap, retval)
 {
 	int eval = 0;
 
-	semwait();
+	semlock(p);
 
 	switch (SCARG(uap, flag)) {
 	case SEM_CONFIG_FREEZE:
@@ -296,7 +296,7 @@ __semctl(p, uap, retval)
 	printf("call to semctl(%d, %d, %d, 0x%x)\n", semid, semnum, cmd, arg);
 #endif
 
-	semwait();
+	semlock(p);
 
 	semid = IPCID_TO_IX(semid);
 	if (semid < 0 || semid >= seminfo.semmsl)
@@ -455,7 +455,7 @@ semget(p, uap, retval)
 	printf("semget(0x%x, %d, 0%o)\n", key, nsems, semflg);
 #endif
 
-	semwait();
+	semlock(p);
 
 	if (key != IPC_PRIVATE) {
 		for (semid = 0; semid < seminfo.semmni; semid++) {
@@ -573,7 +573,7 @@ semop(p, uap, retval)
 	printf("call to semop(%d, 0x%x, %d)\n", semid, sops, nsops);
 #endif
 
-	semwait();
+	semlock(p);
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -828,6 +828,17 @@ semexit(p)
 	register struct sem_undo **supptr;
 
 	/*
+	 * Go through the chain of undo vectors looking for one associated with
+	 * this process.
+	 */
+
+	for (supptr = &semu_list; (suptr = *supptr) != NULL;
+	    supptr = &suptr->un_next) {
+		if (suptr->un_proc == p)
+			break;
+	}
+
+	/*
 	 * There are a few possibilities to consider here ...
 	 *
 	 * 1) The semaphore facility isn't currently locked.  In this case,
@@ -867,17 +878,6 @@ semexit(p)
 		/*
 		 * Yes (i.e. we are in case 3 or 4).
 		 *
-		 * Go through the chain of undo vectors looking for one
-		 * associated with this process.
-		 */
-
-		for (supptr = &semu_list; (suptr = *supptr) != NULL;
-		    supptr = &suptr->un_next) {
-			if (suptr->un_proc == p)
-				break;
-		}
-
-		/*
 		 * If we didn't find an undo vector associated with this
 		 * process than we can just return (i.e. we are in case 3).
 		 *
@@ -905,30 +905,34 @@ semexit(p)
 		 * above.
 		 *
 		 * We look up the undo vector again, in case the list changed
-		 * while we were asleep.
+		 * while we were asleep, and the parent is now different.
 		 */
+
+		for (supptr = &semu_list; (suptr = *supptr) != NULL;
+		    supptr = &suptr->un_next) {
+			if (suptr->un_proc == p)
+				break;
+		}
+
+		if (suptr == NULL)
+			panic("semexit: undo vector disappeared");
+	} else {
+		/*
+		 * No (i.e. we are in case 1 or 2).
+		 *
+		 * If there is no undo vector, skip to the end and unlock the
+		 * semaphore facility if necessary.
+		 */
+
+		if (suptr == NULL)
+			goto unlock;
 	}
 
 	/*
-	 * We are now in case 1 or 2.
-	 *
-	 * Go through the chain of undo vectors looking for one associated with
-	 * this process.
+	 * We are now in case 1 or 2, and we have an undo vector for this
+	 * process.
 	 */
 
-	for (supptr = &semu_list; (suptr = *supptr) != NULL;
-	    supptr = &suptr->un_next) {
-		if (suptr->un_proc == p)
-			break;
-	}
-
-	/*
-	 * If there is no undo vector, skip to the end and unlock the semaphore
-	 * facility if necessary.
-	 */
-
-	if (suptr == NULL)
-		goto unlock;
 
 #ifdef SEM_DEBUG
 	printf("proc @%08x has undo structure with %d entries\n", p,
