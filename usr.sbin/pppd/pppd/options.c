@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.17 1997/05/17 22:14:24 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.18 1997/07/01 19:28:01 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.38 1997/04/30 05:55:54 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.17 1997/05/17 22:14:24 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.18 1997/07/01 19:28:01 christos Exp $";
 #endif
 #endif
 
@@ -1835,6 +1835,7 @@ setnetmask(argv)
 	return 0;
     }
 
+    netmask = mask;
     return (1);
 }
 
