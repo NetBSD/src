@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/11/23 10:52:49 blymn Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/26 12:46:35 jdolecek Exp $
 
 PROG=	veriexecctl
 MAN=	veriexecctl.8
@@ -8,7 +8,5 @@ YHEADER=	1
 CPPFLAGS+=	-I.
 DPADD+=		${LIBL}
 LDADD+=		-ll
-
-LDSTATIC=	-static
 
 .include <bsd.prog.mk>
