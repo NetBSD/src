@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2002/09/04 15:26:29 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2002/09/10 11:11:44 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,7 +70,9 @@ struct pmap {
 	struct pmap_statistics pm_stats;
 };
 
-#define	PMAP_ASID_RESERVED	0
+#define	PMAP_ASID_UNASSIGNED	((u_int)(-1))
+#define	PMAP_ASID_KERNEL	0
+#define	PMAP_ASID_USER_START	1
 
 typedef struct pmap *pmap_t;
 
