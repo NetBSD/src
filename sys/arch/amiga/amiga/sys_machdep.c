@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1995/09/19 23:06:34 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 1995/10/09 04:34:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -55,7 +55,7 @@
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, v, retval)
+sys_vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -271,7 +271,7 @@ dma_cachectl(addr, len)
 }
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
