@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.5 1999/11/01 06:19:13 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.6 1999/11/09 01:44:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,6 +56,7 @@
 #include "raid.h"
 #include "sd.h"
 #include "st.h"
+#include "vcoda.h"
 #include "vnd.h"
 
 /* No cdev for md */
@@ -156,6 +157,7 @@ cdev_decl(wsdisplay);
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
+cdev_decl(vc_nb_);
 
 dev_decl(filedesc,open);
 
@@ -208,6 +210,7 @@ struct cdevsw	cdevsw[] =
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 45: ws multiplexor */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
+	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -294,6 +297,9 @@ static int chrtoblktab[] = {
 	/* 42 */	20,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 dev_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.8.2.3 1999/11/02 06:46:13 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.8.2.4 1999/11/09 01:44:12 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -220,8 +220,6 @@ struct adbCommand {
 	u_int	ack_only;	/* 1 for no special processing */
 };
 extern	void	adb_pass_up __P((struct adbCommand *));
-
-extern int adb_polling;		/* Are we polling?  (Debugger mode) */
 
 #if 0
 /*
