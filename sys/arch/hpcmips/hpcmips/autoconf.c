@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1999/09/25 00:18:10 shin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 1999/09/25 00:18:10 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 1999/09/25 03:09:01 takemura Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -68,11 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 1999/09/25 00:18:10 shin Exp $");
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
 int	cpuspeed = 7;	/* approx # instr per usec. */
 
 static char booted_device_name[16];
