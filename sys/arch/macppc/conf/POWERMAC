@@ -1,9 +1,9 @@
-#	$NetBSD: POWERMAC,v 1.1 1998/05/15 10:15:46 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.2 1998/05/29 10:32:49 tsubai Exp $
 #
 # POWERMAC config file
 #
 
-machine		macppc
+machine		macppc powerpc
 
 maxusers	32
 
