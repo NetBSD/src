@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2000/01/08 17:02:46 tron Exp $
+	$NetBSD: syscalls.master,v 1.8 2000/01/31 15:53:01 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -593,10 +593,10 @@
 300	NOARGS		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
-301	NOARGS		{ int sys___semctl13(int semid, int semnum, int cmd, \
-			    union __semun arg); }
+301	NOARGS		{ int sys_____semctl13(int semid, int semnum, int cmd, \
+			    ... union __semun *arg); }
 #else
-301	EXCL		__semctl13
+301	EXCL		____semctl13
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
 302	NOARGS		{ int sys___msgctl13(int msqid, int cmd, \
