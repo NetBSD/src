@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2001/06/19 11:56:28 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2003/10/06 06:41:45 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 #include <sys/reboot.h>
 #include <sys/boot_flag.h>
 #include <machine/bootinfo.h>
