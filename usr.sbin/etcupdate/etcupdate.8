@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.8 2003/04/02 03:07:30 perry Exp $
+.\"	$NetBSD: etcupdate.8,v 1.9 2003/04/02 16:47:40 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2003
+.Dd April 2, 2003
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -54,48 +54,25 @@
 .Op Fl w Ar width
 .Sh DESCRIPTION
 .Nm
-is a tool to update the configuration and startup files in
+is a tool that lets the administrator update the configuration and
+startup files in
 .Pa /etc
 (and some other directories like
 .Pa /dev ,
 .Pa /root
 and
 .Pa /var )
-without the need of manually checking and modifying every file.
-The user should run this script after performing an operating system
-update (e.g. after running
+without having to manually check and modify every file.
+The administrator should run this script after performing an operating
+system update (e.g. after running
 .Pa make build
 in
 .Pa /usr/src
-or after extracting the binary distribution files)
-to use the latest configuration and startup files.
-.Pp
-If the user is updating from sources (which is the default mode),
-.Nm
-will first create a copy of the new configuration and startup files
-by running
-.Pa make distribution
-in
-.Pa /usr/src/etc .
-.Pp
-Instead of using sources, the user can also extract one or more binary
-distribution sets and use those files to update the currently installed
-files (see usage of the
-.Fl b Ar srcdir
-argument later in this manual page).
-Files in
-.Pa srcdir
-will be removed by
-.Nm
-when using the
-.Fl b Ar srcdir
-argument (as the
-.Pa srcdir
-directory is treated like
-.Pa temproot ) .
+or after extracting new binary distribution files)
+to update to the latest configuration and startup files.
 .Pp
 .Nm
-compares the new files against the currently installed files.
+compares the new configuration files against the currently installed files.
 The user is given the option of installing, merging or deleting each
 modified or missing file.
 .Nm
@@ -106,6 +83,39 @@ from the
 file.
 .Pp
 .Nm
+needs a clean set of new configuration files to compare the 
+existing files against.
+These files, called the
+.Dq reference files
+in this manual, may be derived from either a source or binary
+distribution of
+.Nx .
+.Pp
+If the user is updating from sources (which is the default mode),
+.Nm
+will first create a copy of the reference files
+by running
+.Pa make distribution
+in
+.Pa /usr/src/etc ,
+installing the files to a so-called
+.Pa temproot .
+(See usage of the
+.Fl s Ar srcdir ,
+and
+.Fl t Ar temproot
+options later in this manual page.)
+.Pp
+Instead of using sources, the user can also extract one or more binary
+distribution sets in a special location and use those as the reference
+files (see usage of the
+.Fl b Ar srcdir
+option later in this manual page).
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+.Nm
 can automatically update files which have not been modified locally.
 The
 .Fl a
@@ -115,65 +125,102 @@ to store MD5 checksums in
 .Pa /var/etcupdate
 and use these checksums to determine if there have been any
 local modifications.
-.Pp
-Inversely, if given the
-.Fl l
-flag,
+.It Fl b
+Location of reference files extracted from a binary distribution of
+.Nx .
+Note that reference files in
+.Pa srcdir
+will be altered and removed by
 .Nm
-will automatically skip files which have been modified strictly
-locally.
-(As an exception, files distributed without RCS IDs will not be
-skipped, since the logic for this flag requires their presence.)
+when using the
+.Fl b Ar srcdir
+option (as the
+.Pa srcdir
+directory is treated like
+.Pa temproot ) .
+.It Fl h
+Prints a help text.
+.It Fl l
+Automatically skip files with unchanged RCS IDs.
+This has the effect of leaving alone files that have been altered
+locally but which have not been changed in the 
+reference files.
+Since this works using RCS IDs, files without RCS IDs will not be
+skipped even if only modified locally.
 This flag may be used together with the
 .Fl a
 flag described above.
-.Sh ENVIRONMENT
-.Bl -tag -width TEMPROOT
-.It Ev TEMPROOT
-The temporary files created from
-.Pa /usr/src/etc
-will be stored here.
-These files will then be compared
-against the currently installed files in the
-.Pa /etc
-directory.
-By default this is
-.Pa /tmp/temproot
-but it can be changed either with the
-.Fl t Ar temproot
-argument or by defining the
-.Ev TEMPROOT
-variable.
-.It Ev SRCDIR
-The location of the
-.Nx
-sources files.
-By default this is
-.Pa /usr/src/etc
-but it can be changed either with the
-.Fl s Ar srcdir
-argument or by defining the
-.Ev SRCDIR
-variable.
-.It Ev PAGER
+.It Fl p
 The pager to use when displaying files.
 By default this is
 .Xr more 1
-but it can be changed either with the
-.Fl p Ar pager
-argument or by defining the
+but it can be changed either with this option
+or by defining the
 .Ev PAGER
 variable.
-.It Ev WIDTH
-The screen width used during interactive merge.
-By default this is 80 but it can be changed either with the
-.Fl w Ar width
-argument or by defining the
+.It Fl s
+The location of the
+.Nx
+sources files used to create the reference files.
+By default this is
+.Pa /usr/src/etc
+but it can be changed either with this option
+or the
+.Ev SRCDIR
+variable.
+.It Fl t
+Specifies the location of the
+.Pa temproot
+directory.
+The temporary reference files created from
+.Pa /usr/src/etc
+will be stored there.
+By default this is
+.Pa /tmp/temproot
+but can be changed either with this option or the
+.Ev TEMPROOT
+environment variable.
+.It Fl v
+Makes
+.Nm
+verbose about its actions.
+.It Fl w
+Sets screen width used during interactive merge.
+By default this is the number of columns
+.Xr stty 1
+reports but it can be changed either with this
+option or by defining the
 .Ev WIDTH
 variable.
 This is useful for
 .Xr xterm 1
 users with wider shell windows.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width TEMPROOT
+.It Ev TEMPROOT
+Sets a default value for
+.Pa temproot .
+See
+.Fl t
+above.
+.It Ev SRCDIR
+The location of the
+.Nx
+sources files.
+See
+.Fl s
+above.
+.It Ev PAGER
+The pager to use when displaying files.
+See
+.Fl p
+above.
+.It Ev WIDTH
+The screen width used during interactive merge.
+See
+.Fl w
+above.
 .It Ev IGNOREFILES
 A list of files that
 .Nm
@@ -230,6 +277,13 @@ To get a better idea what's going on, use the
 flag:
 .Pp
 .Dl etcupdate -v
+.Sh SEE ALSO
+.Xr cmp 1 ,
+.Xr more 1 ,
+.Xr rcs 1 ,
+.Xr sdiff 1 ,
+.Xr stty 1 ,
+.Xr aliases 5
 .Sh HISTORY
 The
 .Nm
@@ -249,7 +303,7 @@ came from the
 mergemaster (by Douglas Barton).
 Unlike the
 .Fx
-mergemaster, this does not use CVS version tags to compare if
+mergemaster, this does not use CVS version tags by default to compare if
 the files need to be updated.
 Files are compared with
 .Xr cmp 1
