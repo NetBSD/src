@@ -1,4 +1,4 @@
-.\"	$NetBSD: makecontext.3,v 1.1 2003/01/21 12:39:08 wiz Exp $
+.\"	$NetBSD: makecontext.3,v 1.2 2003/04/16 13:34:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]ucontext.h\*[Gt]
+.In ucontext.h
 .Ft void
 .Fn makecontext "ucontext_t *ucp" "void (*func)()" "int argc" ...
 .Ft int

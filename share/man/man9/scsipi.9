@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.13 2003/04/06 15:56:59 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.14 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -38,8 +38,8 @@
 .Nm scsipi
 .Nd SCSI/ATAPI middle-layer interface
 .Sh SYNOPSIS
-.Fd #include \*[Lt]dev/scsipi/atapiconf.h\*[Gt]
-.Fd #include \*[Lt]dev/scsipi/scsiconf.h\*[Gt]
+.In dev/scsipi/atapiconf.h
+.In dev/scsipi/scsiconf.h
 .Ft void
 .Fn scsipi_async_event "struct scsipi_channel *chan" "scsipi_async_event_t event" "void *arg"
 .Ft void

@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.8 2003/04/14 18:34:26 kleink Exp $
+.\"     $NetBSD: cardbus.9,v 1.9 2003/04/16 13:35:25 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,10 +64,10 @@
 .Nm Cardbus_conf_write
 .Nd support for Cardbus PC-Card devices
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/cardbus/cardbusvar.h\*[Gt]
-.Fd #include \*[Lt]dev/cardbus/cardbusreg.h\*[Gt]
-.Fd #include \*[Lt]dev/cardbus/cardbusdevs.h\*[Gt]
+.In machine/bus.h
+.In dev/cardbus/cardbusvar.h
+.In dev/cardbus/cardbusreg.h
+.In dev/cardbus/cardbusdevs.h
 .Ft int
 .Fn cardbus_attach_card "struct cardbus_softc *csc"
 .Ft void

@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bzero.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bzero.9,v 1.5 2002/02/13 08:18:38 ross Exp $
+.\"	$NetBSD: bzero.9,v 1.6 2003/04/16 13:35:25 wiz Exp $
 .\"
 .Dd July 7, 2001
 .Dt BZERO 9
@@ -42,7 +42,7 @@
 .Nm bzero
 .Nd write zeroes to a byte string
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/systm.h
 .Ft void
 .Fn bzero "void *b" "size_t len"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.9 2003/03/31 03:02:22 perry Exp $
+.\"	$NetBSD: clone.2,v 1.10 2003/04/16 13:34:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sched.h\*[Gt]
+.In sched.h
 .Ft pid_t
 .Fn clone "int (*func)(void *arg)" "void *stack" "int flags" "void *arg"
 .Ft pid_t

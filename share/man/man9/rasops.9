@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.7 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: rasops.9,v 1.8 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Nm rasops_reconfig
 .Nd raster display operations
 .Sh SYNOPSIS
-.Fd #include \*[Lt]dev/wscons/wsdisplayvar.h\*[Gt]
-.Fd #include \*[Lt]dev/rasops/rasops.h\*[Gt]
+.In dev/wscons/wsdisplayvar.h
+.In dev/rasops/rasops.h
 .Ft int
 .Fn rasops_init "struct rasops_info *ri" "int wantrows" "int wantcols"
 .Ft int

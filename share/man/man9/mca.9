@@ -1,4 +1,4 @@
-.\"     $NetBSD: mca.9,v 1.6 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: mca.9,v 1.7 2003/04/16 13:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,9 +46,9 @@
 .Nm mca_conf_write
 .Nd MicroChannel Architecture bus
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/mca/mcavar.h\*[Gt]
-.Fd #include \*[Lt]dev/mca/mcadevs.h\*[Gt]
+.In machine/bus.h
+.In dev/mca/mcavar.h
+.In dev/mca/mcadevs.h
 .Ft void *
 .Fn mca_intr_establish "mca_chipset_tag_t mc" "mca_intr_handle_t hdl" \
 "int level" "int (*handler)(void *)" "void *arg"

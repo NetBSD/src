@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.4 2002/10/01 17:02:57 wiz Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.5 2003/04/16 13:34:40 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.Fd #include \*[Lt]wchar.h\*[Gt]
+.In wchar.h
 .Ft size_t
 .Fn mbsrtowcs "wchar_t * restrict pwcs" "const char ** restrict s" "size_t n" \
 "mbstate_t * restrict ps"

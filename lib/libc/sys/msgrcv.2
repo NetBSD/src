@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.15 2003/01/18 11:33:08 thorpej Exp $
+.\"	$NetBSD: msgrcv.2,v 1.16 2003/04/16 13:34:54 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/msg.h\*[Gt]
+.In sys/msg.h
 .Ft ssize_t
 .Fn msgrcv "int msqid" "void *msgp" "size_t msgsz" "long msgtyp" "int msgflg"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.7 2003/04/06 16:00:28 wiz Exp $
+.\"     $NetBSD: wsmouse.9,v 1.8 2003/04/16 13:35:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Nm wsmousedevprint
 .Nd wscons mouse support
 .Sh SYNOPSIS
-.Fd #include \*[Lt]dev/wscons/wsconsio.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsmousevar.h\*[Gt]
+.In dev/wscons/wsconsio.h
+.In dev/wscons/wsmousevar.h
 .Ft void
 .Fn wsmouse_input "struct device *msdev" "u_int btns" \
 "int x" "int y" "int z" "u_int flags"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.22 2003/03/18 06:44:23 wiz Exp $
+.\"	$NetBSD: connect.2,v 1.23 2003/04/16 13:34:51 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.In sys/socket.h
 .Ft int
 .Fn connect "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
