@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.2 1997/10/13 00:48:21 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3 1997/10/13 10:24:21 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,8 @@ typedef struct {
 #define RND_TYPE_DISK		1	/* source is physical disk */
 #define RND_TYPE_NET		2	/* source is a network device */
 #define RND_TYPE_TAPE		3	/* source is a tape drive */
-#define RND_TYPE_MAX		3	/* last type id used */
+#define RND_TYPE_TTY		4	/* source is a tty device */
+#define RND_TYPE_MAX		4	/* last type id used */
 
 #ifdef _KERNEL
 typedef struct __rndsource_element rndsource_element_t;
