@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.63 2003/05/01 09:23:30 bjh21 Exp $ */
+/*	$NetBSD: fdisk.c,v 1.64 2003/05/14 11:24:05 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.63 2003/05/01 09:23:30 bjh21 Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.64 2003/05/14 11:24:05 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1853,8 +1853,6 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			fl = DEC_SEC;
 			if (start % dos_cylindersectors == dos_sectors)
 				fl |= DEC_RND_DOWN;
-			printf("start %lld, cps %d\n",
-				start, dos_cylindersectors);
 			if (start == 2 * dos_sectors)
 				fl |= DEC_RND_DOWN | DEC_RND_DOWN_2;
 			size = decimal("size", size, fl, 0, lim);
