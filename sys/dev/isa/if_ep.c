@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.69 1995/01/29 07:37:04 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.70 1995/02/19 06:13:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -684,11 +684,9 @@ epintr(sc)
 	int ret = 0;
 
 	for (;;) {
-		status = inw(BASE + EP_STATUS);
+		outw(BASE + EP_COMMAND, C_INTR_LATCH);
 
-		if ((status & S_INTR_LATCH) == 0)
-			/* Not from this card; maybe a chained interrupt? */
-			return;
+		status = inw(BASE + EP_STATUS);
 
 		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
 			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0)
@@ -713,7 +711,6 @@ epintr(sc)
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
 			       sc->sc_dev.dv_xname, status);
-			outw(BASE + EP_COMMAND, C_INTR_LATCH);
 			epreset(sc);
 			return (1);
 		}
@@ -724,7 +721,6 @@ epintr(sc)
 	}	
 
 	/* no more interrupts */
-	outw(BASE + EP_COMMAND, C_INTR_LATCH);
 	return (ret);
 }
 
