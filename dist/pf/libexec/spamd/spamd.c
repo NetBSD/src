@@ -1,4 +1,4 @@
-/*	$NetBSD: spamd.c,v 1.3 2004/06/25 15:54:31 itojun Exp $	*/
+/*	$NetBSD: spamd.c,v 1.4 2004/11/11 11:27:34 yamt Exp $	*/
 /*	$OpenBSD: spamd.c,v 1.64 2004/03/17 14:42:20 beck Exp $	*/
 
 /*
@@ -587,17 +587,10 @@ closecon(struct con *cp)
 	time_t t;
 
 	time(&t);
-#ifdef HAVE_SYSLOG_R
 	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.%s%s",
 	    cp->addr, (long)(t - cp->s),
 	    ((cp->lists == NULL) ? "" : " lists:"),
 	    ((cp->lists == NULL) ? "": cp->lists));
-#else
-	syslog(LOG_INFO, "%s: disconnected after %ld seconds.%s%s",
-	    cp->addr, (long)(t - cp->s),
-	    ((cp->lists == NULL) ? "" : " lists:"),
-	    ((cp->lists == NULL) ? "": cp->lists));
-#endif
 	if (debug > 0)
 		printf("%s connected for %ld seconds.\n", cp->addr,
 		    (long)(t - cp->s));
@@ -697,21 +690,12 @@ nextstate(struct con *cp)
 			cp->state = 6;
 			cp->w = t + cp->stutter;
 			if (cp->mail[0] && cp->rcpt[0]) {
-				if (verbose) {
-#ifdef HAVE_SYSLOG_R
+				if (verbose)
 					syslog_r(LOG_DEBUG, &sdata,
 					    "(%s) %s: %s -> %s",
 					    cp->blacklists ? "BLACK" : "GREY",
 					    cp->addr, cp->mail,
 					    cp->rcpt);
-#else
-					syslog(LOG_DEBUG,
-					    "(%s) %s: %s -> %s",
-					    cp->blacklists ? "BLACK" : "GREY",
-					    cp->addr, cp->mail,
-					    cp->rcpt);
-#endif
-				}
 				if (debug)
 					fprintf(stderr, "(%s) %s: %s -> %s\n",
 					    cp->blacklists ? "BLACK" : "GREY",
@@ -747,11 +731,7 @@ nextstate(struct con *cp)
 			cp->state = 60;
 			if (window && setsockopt(cp->fd, SOL_SOCKET, SO_RCVBUF,
 			    &window, sizeof(window)) == -1) {
-#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_DEBUG, &sdata,"setsockopt: %m");
-#else
-				syslog(LOG_DEBUG,"setsockopt: %m");
-#endif
 				/* don't fail if this doesn't work. */
 			}
 		} else {
@@ -774,25 +754,13 @@ nextstate(struct con *cp)
 		}
 		if (!cp->data_body && !*cp->ibuf)
 			cp->data_body = 1;
-		if (verbose && cp->data_body && *cp->ibuf) {
-#ifdef HAVE_SYSLOG_R
+		if (verbose && cp->data_body && *cp->ibuf)
 			syslog_r(LOG_DEBUG, &sdata, "%s: Body: %s", cp->addr,
 			    cp->ibuf);
-#else
-			syslog(LOG_DEBUG, "%s: Body: %s", cp->addr,
-			    cp->ibuf);
-#endif
-		}
 		else if (verbose && (match(cp->ibuf, "FROM:") ||
-		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:"))) {
-#ifdef HAVE_SYSLOG_R
+		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:")))
 			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
 			    cp->ibuf);
-#else
-			syslog(LOG_INFO, "%s: %s", cp->addr,
-			    cp->ibuf);
-#endif
-		}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->r = t;
@@ -844,15 +812,9 @@ handler(struct con *cp)
 			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
-		if (verbose) {
-#ifdef HAVE_SYSLOG_R
+		if (verbose)
 			syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
 			    cp->ibuf);
-#else
-			syslog(LOG_DEBUG, "%s: says '%s'", cp->addr,
-			    cp->ibuf);
-#endif
-		}
 		nextstate(cp);
 	}
 }
@@ -915,9 +877,7 @@ main(int argc, char *argv[])
 	long p, g, w;
 
 	tzset();
-#ifdef HAVE_SYSLOG_R
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
-#endif
 
 	if ((ent = getservbyname("spamd", "tcp")) == NULL)
 		errx(1, "Can't find service \"spamd\" in /etc/services");
@@ -1128,11 +1088,7 @@ jail:
 
 	if (debug != 0)
 		printf("listening for incoming connections.\n");
-#ifdef HAVE_SYSLOG_R
 	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
-#else
-	syslog(LOG_WARNING, "listening for incoming connections.");
-#endif
 
 	while (1) {
 		struct timeval tv, *tvp;
@@ -1231,7 +1187,6 @@ jail:
 				close(s2);
 			else {
 				initcon(&con[i], s2, &sin);
-#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_INFO, &sdata,
 				    "%s: connected (%d/%d)%s%s",
 				    con[i].addr, clients, blackcount,
@@ -1239,15 +1194,6 @@ jail:
 				    ", lists:"),
 				    ((con[i].lists == NULL) ? "":
 				    con[i].lists));
-#else
-				syslog(LOG_INFO,
-				    "%s: connected (%d/%d)%s%s",
-				    con[i].addr, clients, blackcount,
-				    ((con[i].lists == NULL) ? "" :
-				    ", lists:"),
-				    ((con[i].lists == NULL) ? "":
-				    con[i].lists));
-#endif
 			}
 		}
 		if (FD_ISSET(conflisten, fdsr)) {
