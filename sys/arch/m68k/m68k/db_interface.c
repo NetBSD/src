@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 1995/01/18 17:10:47 gwr Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 1995/02/13 00:44:33 chopps Exp $	*/
 
 /* 
  * Mach Operating System
@@ -142,7 +142,7 @@ Debugger()
 	asm ("trap #15");
 }
 
-#ifndef	sun3
+#if !defined(sun3) && !defined(amiga)
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -185,4 +185,4 @@ db_write_bytes(addr, size, data)
 		*dst++ = *data++;
 
 }
-#endif	/* !sun3 */
+#endif	/* !defined(sun3) && !defined(amiga) */
