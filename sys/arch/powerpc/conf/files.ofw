@@ -1,10 +1,8 @@
-#	$NetBSD: files.ofw,v 1.4 2000/11/14 21:22:43 matt Exp $
+#	$NetBSD: files.ofw,v 1.5 2000/11/15 00:39:32 matt Exp $
 
 file	arch/powerpc/powerpc/ofw_machdep.c
 file	arch/powerpc/powerpc/ofwmagic.S
 file	arch/powerpc/powerpc/openfirm.c
-defpseudo openfirm
-file	dev/ofw/openfirmio.c			openfirm needs-flag
 
 # Firmworks OpenFirmware Bug Workarounds
 file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs
