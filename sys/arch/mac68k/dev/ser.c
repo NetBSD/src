@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.15 1994/11/03 16:15:27 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.16 1994/11/29 03:38:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -871,7 +871,7 @@ sercnprobe(struct consdev *cp)
         goto nosercon;
 
     cp->cn_pri = CN_NORMAL;     /* Lower than CN_INTERNAL */
-    if (!(mac68k_machine.serial_console & 0x01))
+    if (mac68k_machine.serial_console & 0x01)
         cp->cn_pri = CN_REMOTE; /* Higher than CN_INTERNAL */
 
     unit = (mac68k_machine.serial_console & 0x02) ? 1 : 0;
