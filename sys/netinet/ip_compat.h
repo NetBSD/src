@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.12 1998/02/10 01:26:48 perry Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.13 1998/05/17 17:07:25 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.31.2.4 1997/11/12 10:48:43 darrenr Exp 
+ * Id: ip_compat.h,v 2.0.2.31.2.10 1998/05/08 15:09:15 darrenr Exp 
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -52,17 +52,18 @@ struct  ether_addr {
 };
 #endif
 
-#ifdef __sgi
-# ifdef IPFILTER_LKM
-#  define IPL_PRFX ipl
-#  define IPL_EXTERN(ep) ipl##ep
-# else
-#  define IPL_PRFX ipfilter
+#if defined(__sgi) && !defined(IPFILTER_LKM)
+# ifdef __STDC__
 #  define IPL_EXTERN(ep) ipfilter##ep
+# else
+#  define IPL_EXTERN(ep) ipfilter/**/ep
 # endif
 #else
-# define IPL_PRFX ipl
-# define IPL_EXTERN(ep) ipl##ep
+# ifdef __STDC__
+#  define IPL_EXTERN(ep) ipl##ep
+# else
+#  define IPL_EXTERN(ep) ipl/**/ep
+# endif
 #endif
 
 #ifdef	linux
@@ -112,7 +113,8 @@ struct  ether_addr {
 /*
  * These operating systems already take care of the problem for us.
  */
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__sgi)
 typedef u_int32_t       u_32_t;
 #else
 /*
@@ -123,7 +125,7 @@ typedef unsigned int    u_32_t;
 # else
 typedef unsigned long   u_32_t;
 # endif
-#endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ */
+#endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ || __sgi */
 
 #ifndef	MAX
 #define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
@@ -369,6 +371,9 @@ typedef struct mbuf mb_t;
  * not be in other places or maybe one day linux will grow up and some
  * of these will turn up there too.
  */
+#ifndef	ICMP_MINLEN
+# define	ICMP_MINLEN	8
+#endif
 #ifndef	ICMP_UNREACH
 # define	ICMP_UNREACH	ICMP_DEST_UNREACH
 #endif
@@ -680,6 +685,12 @@ typedef	struct	uio	{
 #  undef UINT_MAX
 #  undef LONG_MAX
 #  undef ULONG_MAX
+#  define	s8 __s8
+#  define	u8 __u8
+#  define	s16 __s16
+#  define	u16 __u16
+#  define	s32 __s32
+#  define	u32 __u32
 #  include <linux/netdevice.h>
 #  undef	__KERNEL__
 # endif
@@ -691,6 +702,7 @@ typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
 typedef	struct	ether_header	ether_header_t;
 #endif /* linux */
+typedef	struct	tcpiphdr	tcpiphdr_t;
 
 #if defined(hpux) || defined(linux)
 struct	ether_addr	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.10 1998/02/10 01:27:01 perry Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.11 1998/05/17 17:07:26 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_proxy.h,v 2.0.2.10 1997/10/19 15:39:23 darrenr Exp 
+ * Id: ip_proxy.h,v 2.0.2.10.2.1 1997/11/27 09:33:27 darrenr Exp 
  */
 
 #ifndef _NETINET_IP_PROXY_H_
