@@ -1,6 +1,7 @@
-/*	$NetBSD: crt0.c,v 1.21 1996/10/18 05:36:51 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.22 1996/12/07 22:34:09 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
  *
@@ -32,40 +33,44 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.21 1996/10/18 05:36:51 thorpej Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.22 1996/12/07 22:34:09 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/syscall.h>
+
 #include <stdlib.h>
 
 #include "common.h"
 
-extern void	start __P((void)) asm("start");
+extern unsigned char	etext;
+extern unsigned char	eprol asm("eprol");
+extern void		start __P((void)) asm("start");
 
+__asm("
+	.text
+	.align	2
+	.globl	start
+start:
+	movl	%ebx,___ps_strings
+	movl	(%esp),%eax
+	leal	8(%esp,%eax,4),%ecx
+	leal	4(%esp),%edx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%eax
+	call	___start
+");
+	
 void
-start()
+__start(argc, argv, envp)
+	int argc;
+	char *argv[];
+	char *envp[];
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
-	register struct kframe *kfp;
-	register char **argv, *ap;
+	char *ap;
 
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	/* just above the saved frame pointer */
-	asm ("lea 4(%%ebp), %0" : "=r" (kfp) );
-#endif /* not lint */
-	argv = &kfp->kargv[0];
-	environ = argv + kfp->kargc + 1;
+	environ = envp;
 
 	if (ap = argv[0])
 		if ((__progname = _strrchr(ap, '/')) == NULL)
@@ -83,35 +88,39 @@ start()
 		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 
-asm("eprol:");
-
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
-#endif MCRT0
+#endif /* MCRT0 */
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-	exit(main(kfp->kargc, argv, environ));
+__asm("__callmain:");		/* Defined for the benefit of debuggers */
+	exit(main(argc, argv, envp));
 }
 
 #ifdef DYNAMIC
-	asm("	___syscall:");
-	asm("		popl %ecx");
-	asm("		popl %eax");
-	asm("		pushl %ecx");
-	asm("		int $0x80");
-	asm("		pushl %ecx");
-	asm("		jc 1f");
-	asm("		ret");
-	asm("	1:");
-	asm("		movl $-1,%eax");
-	asm("		ret");
-
+asm("
+	.text
+	.align	2
+___syscall:
+	popl	%ecx
+	popl	%eax
+	pushl	%ecx
+	int	$0x80
+	pushl	%ecx
+	jc	1f
+	ret
+1:
+	movl	$-1,%eax
+	ret
+");
 #endif /* DYNAMIC */
 
 #include "common.c"
 
 #ifdef MCRT0
-asm ("	.text");
-asm ("_eprol:");
-#endif
+__asm("
+	.text
+	.align	2
+eprol:
+");
+#endif /* MCRT0 */
