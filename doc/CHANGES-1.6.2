@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.142 2003/09/09 20:35:18 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.143 2003/09/09 21:38:47 lukem Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -328,7 +328,7 @@ sys/dev/pci/if_bgereg.h				1.7
 	to 32-bit device registers. Add (untested) NetBSD fix for big-endian
 	hosts.  From FreeBSD versions:
 		if_bge.c:	1.26 and 1.27
-		if_bgereg.h: 1.12
+		if_bgereg.h:	1.12
 
 	FreeBSD (MFC) comment:
 
@@ -1482,8 +1482,8 @@ usr.sbin/cron/crontab.c				1.19
 	Fixes PR 21705.
 	[hubertf, ticket #1450]
 
-src/sys/arch/i386/i386/procfs_machdep.c:	patch
-src/sys/arch/i386/include/cpu.h:		patch
+src/sys/arch/i386/i386/procfs_machdep.c		patch
+src/sys/arch/i386/include/cpu.h			patch
 
 	Make output of CPU features look nicer on new Pentium IV CPUs.
 	[drochner, ticket #1344]
@@ -1529,3 +1529,9 @@ usr.sbin/rpc.yppasswdd/rpc.yppasswdd.8		1.13-1.14
 	Added a note about pwd_mkdb when using the -d switch.
 	[martti, tickets #1433, #1436]
 
+sys/arch/sun3/include/param.h			patch
+
+	Apply patch from Matthias Scheler to fix the sun3 build after the
+	pullup of ticket 1434 broke it.
+	[tron, ticket #1453]
+			
