@@ -33,36 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.6 1994/04/22 22:11:52 jtc Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.7 1994/05/25 01:20:19 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#define _LOCALE_PRIVATE
+#include <locale.h>
 #include <string.h>
 #include <tzfile.h>
 #include <time.h>
-
-static const char *const abday[] = {
-	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
-};
-static const char *const day[] = {
-	"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-	"Saturday",
-};
-static const char *const abmon[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
-	"Oct", "Nov", "Dec",
-};
-static const char *const mon[] = {
-	"January", "February", "March", "April", "May", "June", "July",
-	"August", "September", "October", "November", "December",
-};
-static const char *const ampm[] = {
-	"AM", "PM",
-};
-
-static const char *d_t_fmt = "%a %b %e %H:%M:%S %Y";
-static const char *d_fmt = "%m/%d/%y";
-static const char *t_fmt = "%H:%M:%S";
-static const char *t_fmt_ampm = "%I:%M:%S %p";
 
 static size_t gsize;
 static char *pt;
@@ -114,26 +92,26 @@ _fmt(format, t)
 			case 'A':
 				if (t->tm_wday < 0 || t->tm_wday > 6)
 					return(0);
-				if (!_add(day[t->tm_wday]))
+				if (!_add(_CurrentTimeLocale->day[t->tm_wday]))
 					return(0);
 				continue;
 			case 'a':
 				if (t->tm_wday < 0 || t->tm_wday > 6)
 					return(0);
-				if (!_add(abday[t->tm_wday]))
+				if (!_add(_CurrentTimeLocale->abday[t->tm_wday]))
 					return(0);
 				continue;
 			case 'B':
 				if (t->tm_mon < 0 || t->tm_mon > 11)
 					return(0);
-				if (!_add(mon[t->tm_mon]))
+				if (!_add(_CurrentTimeLocale->mon[t->tm_mon]))
 					return(0);
 				continue;
 			case 'b':
 			case 'h':
 				if (t->tm_mon < 0 || t->tm_mon > 11)
 					return(0);
-				if (!_add(abmon[t->tm_mon]))
+				if (!_add(_CurrentTimeLocale->abmon[t->tm_mon]))
 					return(0);
 				continue;
 			case 'C':
@@ -142,7 +120,7 @@ _fmt(format, t)
 					return(0);
 				continue;
 			case 'c':
-				if (!_fmt(d_t_fmt, t))
+				if (!_fmt(_CurrentTimeLocale->d_t_fmt, t))
 					return(0);
 				continue;
 			case 'D':
@@ -192,7 +170,7 @@ _fmt(format, t)
 					return(0);
 				continue;
 			case 'p':
-				if (!_add(ampm[t->tm_hour >= 12]))
+				if (!_add(_CurrentTimeLocale->am_pm[t->tm_hour >= 12]))
 					return(0);
 				continue;
 			case 'R':
@@ -200,7 +178,7 @@ _fmt(format, t)
 					return(0);
 				continue;
 			case 'r':
-				if (!_fmt(t_fmt_ampm, t))
+				if (!_fmt(_CurrentTimeLocale->t_fmt_ampm, t))
 					return(0);
 				continue;
 			case 'S':
@@ -257,11 +235,11 @@ _fmt(format, t)
 					return(0);
 				continue;
 			case 'x':
-				if (!_fmt(d_fmt, t))
+				if (!_fmt(_CurrentTimeLocale->d_fmt, t))
 					return(0);
 				continue;
 			case 'X':
-				if (!_fmt(t_fmt, t))
+				if (!_fmt(_CurrentTimeLocale->t_fmt, t))
 					return(0);
 				continue;
 			case 'y':
