@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.81 1998/09/29 21:03:03 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.82 1998/10/03 19:25:37 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -74,6 +74,7 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvm.h"
 #endif
+#include <machine/endian.h>
 
 struct device;
 struct proc;
@@ -132,7 +133,13 @@ extern struct sysent {		/* system call table */
 	int	(*sy_call) __P((struct proc *, void *, register_t *));
 } sysent[];
 extern int nsysent;
-#define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
+#if	BYTE_ORDER == BIG_ENDIAN
+#define	SCARG(p,k)	((p)->k.be.datum)	/* get arg from args pointer */
+#elif	BYTE_ORDER == LITTLE_ENDIAN
+#define	SCARG(p,k)	((p)->k.le.datum)	/* get arg from args pointer */
+#else
+#error	"what byte order is this machine?"
+#endif
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 
