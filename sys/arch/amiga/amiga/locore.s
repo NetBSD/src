@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1995/05/11 23:04:48 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1995/05/13 05:57:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -366,39 +366,6 @@ _trap0:
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
-
-/*
- * void call_finish_child(void) invokes finish_child().  Basically
- * this function is the post-syscall() part of trap0 for fork()ed
- * children.
- */
-	.globl	_finish_child
-	.globl	_call_finish_child
-_call_finish_child:
-	jbsr	_finish_child		| call finish child
-	movl	sp@(FR_SP),a0		| usp to a0
-	movl	a0,usp			| setup user stack pointer
-	moveml	sp@+,#0x7FFF		| restore all but sp
-	addql	#8,sp			| pop sp and stack adjust
-	jra	rei			| all done
-
-/*
- * proc_trampoline call function in register a2 with a3 as an arg
- * and then rei.  Note we restore the stack before calling thus giving
- * "a2" more stack  (e.g. if curproc had a deeply nested call chain...)
- */
-	.globl	_proc_trampoline
-_proc_trampoline:
-	movl	a3@(P_MD + MD_REGS),sp	| process' frame pointer in sp
-	movl	a3,sp@-			| push function arg (curproc)
-	jbsr	a2@			| call function
-	addql	#4,sp			| pop arg
-	movl	sp@(FR_SP),a0		| usp to a0
-	movl	a0,usp			| setup user stack pointer
-	moveml	sp@+,#0x7FFF		| restore all but sp
-	addql	#8,sp			| pop sp and stack adjust
-	jra	rei			| all done
-
 
 /*
  * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
@@ -877,6 +844,26 @@ Lnoflush:
   	rte
 
 /*
+ * proc_trampoline call function in register a2 with a3 as an arg
+ * and then rei.  Note we restore the stack before calling thus giving
+ * "a2" more stack  (e.g. if curproc had a deeply nested call chain...)
+ * cpu_fork() also depends on struct frame being a second arg to the
+ * function in a2.
+ */
+	.globl	_proc_trampoline
+_proc_trampoline:
+	movl	a3@(P_MD + MD_REGS),sp	| process' frame pointer in sp
+	movl	a3,sp@-			| push function arg (curproc)
+	jbsr	a2@			| call function
+	addql	#4,sp			| pop arg
+	movl	sp@(FR_SP),a0		| usp to a0
+	movl	a0,usp			| setup user stack pointer
+	moveml	sp@+,#0x7FFF		| restore all but sp
+	addql	#8,sp			| pop sp and stack adjust
+	jra	rei			| all done
+
+
+/*
  * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
  *
  * Stack looks like:
@@ -1101,22 +1088,19 @@ pcbflag:
 	.text
 
 /*
- * At exit of a process, delete p->p_addr and do a cpu_switch
- * for the last time.
- * The ipl is high enough to prevent the memory from being reallocated.
+ * At exit of a process, do a switch for the last time.
+ * Switch to a safe stack and PCB, and deallocate the process's user area.
  */
-	.globl	_kmem_free
-	.globl	_kernel_map
 ENTRY(switch_exit)
-	movl	sp@(4),a2		| save proc pointer in a2
+	movl	sp@(4),a0
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
 
-	/* free kernel stack area of exiting process */
-	movl	#USPACE,sp@-		| push size of allocation
-	movl	a2@(P_ADDR),sp@-	| push user area/stack
-	movl	_kernel_map,sp@-	| push map allocated from
-	jbsr	_kmem_free		| free the memory
+	/* Free old process's user area. */
+	movl	#USPACE,sp@-		| size of u-area
+	movl	a0@(P_ADDR),sp@-	| address of process's u-area
+	movl	_kernel_map,sp@-	| map it was allocated in
+	jbsr	_kmem_free		| deallocate it
 	lea	sp@(12),sp		| pop args
 
 	jra	_cpu_switch
