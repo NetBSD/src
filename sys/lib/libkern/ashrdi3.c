@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.6 1998/03/27 01:29:59 cgd Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.7 1999/09/10 13:21:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashrdi3.c,v 1.6 1998/03/27 01:29:59 cgd Exp $");
+__RCSID("$NetBSD: ashrdi3.c,v 1.7 1999/09/10 13:21:15 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,12 +71,15 @@ __ashrdi3(a, shift)
 		 * LONG_BITS is undefined, so we shift (LONG_BITS-1),
 		 * then 1 more, to get our answer.
 		 */
+		/* LINTED inherits machine dependency */
 		s = (aa.sl[H] >> (LONG_BITS - 1)) >> 1;
+		/* LINTED inherits machine dependency*/
 		aa.ul[L] = aa.sl[H] >> (shift - LONG_BITS);
 		aa.ul[H] = s;
 	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
 		    (aa.ul[H] << (LONG_BITS - shift));
+		/* LINTED inherits machine dependency */
 		aa.sl[H] >>= shift;
 	}
 	return (aa.q);
