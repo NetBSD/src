@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.9 1994/02/27 16:40:38 briggs Exp $
+ *	$Id: machdep.c,v 1.10 1994/03/01 15:22:08 briggs Exp $
  */
 
 #include <param.h>
@@ -402,45 +402,50 @@ identifycpu()
 
 	printf("Apple Macintosh ");
 	switch (machineid) {
-		case MACH_MAC2:
-			printf("II ");
-			break;
-		case MACH_MAC2X:
-			printf("IIx ");
-			break;
-		case MACH_MAC2SI:
-			printf("IIsi ");
-			break;
-		case MACH_MAC2CI:
-			printf("IIci ");
-			break;
-		case MACH_MAC2CX:
-			printf("IIcx ");
-			break;
-		case MACH_MAC2FX:
-			printf("IIfx ");
-			break;
-		case MACH_MACSE30:
-			printf("SE/30 ");
-			break;
-		case MACH_MACQ700:
-			printf("Quadra 700 ");
-			break;
-		case MACH_MACQ900:
-			printf("Quadra 900 ");
-			break;
-		case MACH_MACPB140:
-			printf("PowerBook 140 ");
-			break;
-		case MACH_MACPB170:
-			printf("PowerBook 170 ");
-			break;
-		case MACH_MACLCII:
-			printf("LC II ");
-			break;
-		case MACH_MACCLASSIC2:
-			printf("Classic II ");
-			break;
+		case MACH_MACII: printf("II "); break;
+		case MACH_MACIIX: printf("IIx "); break;
+		case MACH_MACIISI: printf("IIsi "); break;
+		case MACH_MACIICI: printf("IIci "); break;
+		case MACH_MACIICX: printf("IIcx "); break;
+		case MACH_MACIIFX: printf("IIfx "); break;
+		case MACH_MACSE30: printf("SE/30 "); break;
+		case MACH_MACQ700: printf("Quadra 700 "); break;
+		case MACH_MACQ900: printf("Quadra 900 "); break;
+		case MACH_MACPB140: printf("PowerBook 140 "); break;
+		case MACH_MACPB100: printf("PowerBook 100 "); break;
+		case MACH_MACPB170: printf("PowerBook 170 "); break;
+		case MACH_MACCLASSICII: printf("Classic II "); break;
+		case MACH_MACQ950: printf("Quadra 950 "); break;
+		case MACH_MACLCIII: printf("LC III "); break;
+		case MACH_MACPB210: printf("PowerBook 950 "); break;
+		case MACH_MACC650: printf("Centris 650 "); break;
+		case MACH_MACPB230: printf("PowerBook 230 "); break;
+		case MACH_MACPB180: printf("PowerBook 180 "); break;
+		case MACH_MACPB160: printf("PowerBook 160 "); break;
+		case MACH_MACQ800: printf("Quadra 800 "); break;
+		case MACH_MACQ650: printf("Quadra 650 "); break;
+		case MACH_MACLCII: printf("LC II "); break;
+		case MACH_MACPB250: printf("PowerBook 250 "); break;
+		case MACH_MACIIVI: printf("IIvi "); break;
+		case MACH_MACP600: printf("Performa 600 "); break;
+		case MACH_MACIIVX: printf("IIvx "); break;
+		case MACH_MACCCLASSIC: printf("Classic "); break;
+		case MACH_MACPB165C: printf("PowerBook 165c "); break;
+		case MACH_MACC610: printf("Centris 610 "); break;
+		case MACH_MACQ610: printf("Quadra 610 "); break;
+		case MACH_MACPB145: printf("PowerBook 950 "); break;
+		case MACH_MACLC520: printf("LC 520 "); break;
+		case MACH_MACC660AV: printf("Centris 660AV "); break;
+		case MACH_MACP460: printf("Performa 460 "); break;
+		case MACH_MACPB180C: printf("PowerBook 180c "); break;
+		case MACH_MACPB270: printf("PowerBook 270 "); break;
+		case MACH_MACQ840AV: printf("Quadra 840AV "); break;
+		case MACH_MACP550: printf("Performa 550 "); break;
+		case MACH_MACPB165: printf("PowerBook 165 "); break;
+		case MACH_MACTV: printf("TV "); break;
+		case MACH_MACLC475: printf("LC 475 "); break;
+		case MACH_MACLC575: printf("LC 575 "); break;
+		case MACH_MACQ605: printf("Quadra 605 "); break;
 		default:
 			printf("Pentium (gestalt %d) ", machineid);
 			break;
@@ -2327,10 +2332,10 @@ void setmachdep(void)
 	/* Set up any machine specific stuff that we have to before */
 	/*  ANYTHING else happens */
 	switch(machineid){	/* remove bit overlap */
-		case MACH_MAC2:
+		case MACH_MACII:
 		case MACH_MACSE30:
-		case MACH_MAC2X:
-		case MACH_MAC2CX:
+		case MACH_MACIIX:
+		case MACH_MACIICX:
 		case MACH_MACLCII:
 			VIA2 = 1;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
@@ -2344,7 +2349,7 @@ void setmachdep(void)
 			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 			via1itab[2] = adb_intr_PB;
 			break;
-		case MACH_MAC2CI:
+		case MACH_MACIICI:
 			VIA2 = 0x13;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
@@ -2358,7 +2363,7 @@ void setmachdep(void)
 			}
 			via1itab[2] = adb_intr_II;
 			break;
-		case MACH_MAC2SI:		/* I'm really not sure about IIsi. */
+		case MACH_MACIISI:		/* I'm really not sure about IIsi. */
 			VIA2 = 0x13;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
@@ -2374,7 +2379,7 @@ void setmachdep(void)
 			break;
 		case MACH_MACQ700:		/* These three are guesses */
 		case MACH_MACQ900:
-		case MACH_MACCLASSIC2:
+		case MACH_MACCLASSICII:
 			VIA2 = 0x13;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
