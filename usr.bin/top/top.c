@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.10 2001/06/21 21:27:51 wiz Exp $	*/
+/*	$NetBSD: top.c,v 1.11 2002/03/23 01:28:10 thorpej Exp $	*/
 
 char *copyright =
     "Copyright (c) 1984 through 1996, William LeFebvre";
@@ -78,6 +78,7 @@ void (*d_loadave) __P((int, double *)) = i_loadave;
 void (*d_procstates) __P((int, int *)) = i_procstates;
 void (*d_cpustates) __P((int *)) = i_cpustates;
 void (*d_memory) __P((int *)) = i_memory;
+void (*d_swap) __P((int *)) = i_swap;
 void (*d_message) __P((void)) = i_message;
 void (*d_header) __P((char *)) = i_header;
 void (*d_process) __P((int, char *)) = i_process;
@@ -534,6 +535,9 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	/* display memory stats */
 	(*d_memory)(system_info.memory);
 
+	/* display swap stats */
+	(*d_swap)(system_info.swap); 
+
 	/* handle message area */
 	(*d_message)();
 
@@ -594,6 +598,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 		    d_procstates = u_procstates;
 		    d_cpustates = u_cpustates;
 		    d_memory = u_memory;
+		    d_swap = u_swap;
 		    d_message = u_message;
 		    d_header = u_header;
 		    d_process = u_process;
@@ -903,6 +908,7 @@ reset_display()
     d_procstates = i_procstates;
     d_cpustates  = i_cpustates;
     d_memory     = i_memory;
+    d_swap       = i_swap;
     d_message	 = i_message;
     d_header	 = i_header;
     d_process	 = i_process;
