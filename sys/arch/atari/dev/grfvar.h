@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.4 1996/09/16 06:43:38 leo Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.5 1996/09/25 15:03:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,7 +116,7 @@ struct	grf_softc {
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_select(grfselect);
+dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 int  grf_mode __P((struct grf_softc *, int, void *, int, int));
