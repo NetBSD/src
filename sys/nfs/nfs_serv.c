@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.86 2003/11/05 10:18:38 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.87 2004/01/07 12:17:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.86 2003/11/05 10:18:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.87 2004/01/07 12:17:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,13 +570,6 @@ out:
 }
 
 /*
- * XXX UBC temp limit
- * maximum number of pages we can do VOP_GETPAGES and loan-out at once.
- * should be <= MAX_READ_AHEAD in genfs_vnops.c
- */
-#define	NFSD_READ_GETPAGES_CHUNK	16
-
-/*
  * nfs read service
  */
 int
@@ -671,81 +664,48 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		if (nfsd_use_loan) {
 			struct vm_page **pgpp;
 			voff_t pgoff = trunc_page(off);
-			int orignpages, nleftpages;
-			vaddr_t lva, curlva;
+			int npages;
+			vaddr_t lva;
 
-			orignpages = (round_page(off + cnt) - pgoff)
-			    >> PAGE_SHIFT;
-			KASSERT(orignpages <= M_EXT_MAXPAGES); /* XXX */
+			npages = (round_page(off + cnt) - pgoff) >> PAGE_SHIFT;
+			KASSERT(npages <= M_EXT_MAXPAGES); /* XXX */
 
-			lva = sokvaalloc(orignpages << PAGE_SHIFT, slp->ns_so);
+			/* allocate kva for mbuf data */
+			lva = sokvaalloc(npages << PAGE_SHIFT, slp->ns_so);
 			if (lva == 0) {
 				/* fall back to VOP_READ */
 				goto loan_fail;
 			}
 
+			/* allocate mbuf */
 			m = m_get(M_WAIT, MT_DATA);
+			MCLAIM(m, &nfs_mowner);
 			pgpp = m->m_ext.ext_pgs;
 
-			curlva = lva;
-			nleftpages = orignpages;
-			while (nleftpages > 0) {
-				int npages = nleftpages;
-				if (npages > NFSD_READ_GETPAGES_CHUNK)
-					npages = NFSD_READ_GETPAGES_CHUNK;
-again:
-				simple_lock(&vp->v_interlock);
-				error = VOP_GETPAGES(vp, pgoff, pgpp, &npages,
-				    0, VM_PROT_READ, 0, PGO_SYNCIO);
-				if (error == EAGAIN) {
-					tsleep(&lbolt, PVM, "nfsread", 0);
-					goto again;
-				}
-				if (error) {
-					uvm_unloan(m->m_ext.ext_pgs,
-					    orignpages - nleftpages,
-					    UVM_LOAN_TOPAGE);
-					sokvafree(lva,
-					    orignpages << PAGE_SHIFT);
-					m_free(m);
-					goto read_error;
-				}
-				
-				/* loan and unbusy pages */
-				simple_lock(&vp->v_interlock);
-				for (i = 0; i < npages; i++) {
-					if (pgpp[i]->flags & PG_RELEASED) {
-						uvm_lock_pageq();
-						uvm_page_unbusy(pgpp, npages);
-						uvm_unlock_pageq();
-						simple_unlock(&vp->v_interlock);
-						continue;
-					}
-				}
-				uvm_loanuobjpages(pgpp, npages);
-				simple_unlock(&vp->v_interlock);
-
-				/* map pages */
-				for (i = 0; i < npages; i++) {
-					pmap_kenter_pa(curlva,
-					    VM_PAGE_TO_PHYS(pgpp[i]),
-					    VM_PROT_READ);
-					curlva += PAGE_SIZE;
-				}
-				nleftpages -= npages;
-				pgpp += npages;
-				pgoff += npages << PAGE_SHIFT;
+			/* loan pages */
+			error = uvm_loanuobjpages(&vp->v_uobj, pgoff, npages,
+			    pgpp);
+			if (error) {
+				sokvafree(lva, npages << PAGE_SHIFT);
+				m_free(m);
+				goto read_error;
 			}
 
-			lva += off & PAGE_MASK;
-
-			MCLAIM(m, &nfs_mowner);
-			MEXTADD(m, (void *)lva, cnt, M_MBUF, soloanfree,
-			    slp->ns_so);
+			/* associate kva to mbuf */
+			MEXTADD(m, (void *)(lva + ((vaddr_t)off & PAGE_MASK)),
+			    cnt, M_MBUF, soloanfree, slp->ns_so);
 			m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
 			m->m_len = cnt;
 
+			/* map pages */
+			for (i = 0; i < npages; i++) {
+				pmap_kenter_pa(lva, VM_PAGE_TO_PHYS(pgpp[i]),
+				    VM_PROT_READ);
+				lva += PAGE_SIZE;
+			}
+
 			pmap_update(pmap_kernel());
+
 			mb->m_next = m;
 			mb = m;
 			error = 0;
