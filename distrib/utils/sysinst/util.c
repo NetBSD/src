@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.48 1999/07/04 22:31:37 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.49 1999/07/04 22:33:54 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -634,13 +634,17 @@ cleanup_dist(name)
 	/* XXX doesn't work, too many files printed ! */
 	msg_display(MSG_deleting_files);
 	for (current = head; current != NULL; current = current->next) {
-		if (current->type != S_IFDIR)
+		if (current->type != S_IFDIR) {
+			/* XXX msg_printf_add going/gone away */
 			msg_printf_add("%s ", current->name);
+		}
 	}
 	msg_display_add(MSG_deleting_dirs);
 	for (current = head; current != NULL; current = current->next) {
-		if (current->type == S_IFDIR)
+		if (current->type == S_IFDIR) {
+			/* XXX msg_printf_add going/gone away */
 			msg_printf_add("%s ", current->name);
+		}
 	}
 	process_menu(MENU_ok);
 #endif
