@@ -185,6 +185,7 @@
 ./usr/bin/fsplit
 ./usr/bin/fstat
 ./usr/bin/ftp
+./usr/bin/gcov
 ./usr/bin/gcpp
 ./usr/bin/gencat
 ./usr/bin/getconf

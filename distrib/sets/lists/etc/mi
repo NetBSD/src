@@ -57,6 +57,7 @@
 ./etc/rc.local
 ./etc/rc.shutdown
 ./etc/rc.subr
+./etc/rc.wscons
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
