@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.23 1997/10/18 15:28:08 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.24 1997/10/20 00:00:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.23 1997/10/18 15:28:08 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.24 1997/10/20 00:00:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,18 +532,25 @@ nfs_filestat(vp, fsp)
 	struct filestat *fsp;
 {
 	struct nfsnode nfsnode;
+	struct vattr va;
 	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
-		dprintf(stderr, "can't read nfsnode at %lx for pid %d\n",
-			(long)VTONFS(vp), Pid);
+		dprintf(stderr, "can't read nfsnode at 0x%lx for pid %d\n",
+			(u_long)VTONFS(vp), Pid);
 		return 0;
 	}
-	fsp->fsid = nfsnode.n_vattr.va_fsid;
-	fsp->fileid = nfsnode.n_vattr.va_fileid;
+	if (!KVM_READ(nfsnode.n_vattr, &va, sizeof(va))) {
+		dprintf(stderr,
+		    "can't read vnode attributes at 0x%lx for pid %d\n",
+		    (u_long)nfsnode.n_vattr, Pid);
+		return 0;
+	}
+	fsp->fsid = va.va_fsid;
+	fsp->fileid = va.va_fileid;
 	fsp->size = nfsnode.n_size;
-	fsp->rdev = nfsnode.n_vattr.va_rdev;
-	mode = (mode_t)nfsnode.n_vattr.va_mode;
+	fsp->rdev = va.va_rdev;
+	mode = (mode_t)va.va_mode;
 	switch (vp->v_type) {
 	case VREG:
 		mode |= S_IFREG;
