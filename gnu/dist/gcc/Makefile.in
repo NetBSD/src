@@ -280,6 +280,8 @@ includedir = $(local_prefix)/include
 assertdir = $(tooldir)/include
 # where the info files go
 infodir = @infodir@
+# Where cpp should go besides $prefix/bin if necessary
+cpp_install_dir = @cpp_install_dir@
 # Extension (if any) to put in installed man-page filename.
 manext = .1
 objext = .o
@@ -382,6 +384,10 @@ LIB1FUNCS_EXTRA =
 # List of extra C and assembler files to add to libgcc2.a.
 # Assembler files should have names ending in `.asm'.
 LIB2FUNCS_EXTRA = 
+
+# Handle cpp installation.
+INSTALL_CPP=
+UNINSTALL_CPP=
 
 # Default float.h source to use for cross-compiler.
 # This is overridden by configure.
@@ -1429,7 +1435,7 @@ integrate.o : integrate.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) flags.h \
 
 jump.o : jump.c $(CONFIG_H) system.h $(RTL_H) flags.h hard-reg-set.h $(REGS_H) \
    insn-config.h insn-flags.h $(RECOG_H) $(EXPR_H) real.h except.h \
-   toplev.h
+   toplev.h insn-attr.h
 stupid.o : stupid.c $(CONFIG_H) system.h $(RTL_H) $(REGS_H) hard-reg-set.h \
    flags.h toplev.h
 
@@ -2259,7 +2265,8 @@ install: $(INSTALL_TARGET) ; @true
 # Install the driver last so that the window when things are
 # broken is small.
 install-normal: install-common $(INSTALL_HEADERS) $(INSTALL_LIBGCC) \
-    install-man install-info lang.install-normal install-driver
+    $(INSTALL_CPP) install-man install-info lang.install-normal \
+    install-driver
 
 # Do nothing while making gcc with a cross-compiler. The person who
 # makes gcc for the target machine has to know how to put a complete
@@ -2270,6 +2277,25 @@ install-build: force
 # Run this on the target machine
 # to finish installation of cross compiler.
 install-cross-rest: install-float-h-cross
+
+# Handle cpp installation.
+install-cpp: cpp.sh
+	-rm -f $(bindir)/cpp
+	$(INSTALL_PROGRAM) -m 755 cpp.sh $(bindir)/cpp
+	if [ x$(cpp_install_dir) != x ]; then \
+	  rm -f $(cpp_install_dir)/cpp; \
+	  $(INSTALL_PROGRAM) -m 755 cpp.sh $(cpp_install_dir)/cpp; \
+	else true; fi
+
+cpp.sh: $(srcdir)/cpp.in Makefile
+	sed -e 's%@GCC@%'$(GCC_INSTALL_NAME)'%' $(srcdir)/cpp.in > xcpp.T
+	mv -f xcpp.T cpp.sh
+
+uninstall-cpp:
+	-rm -f $(bindir)/cpp
+	-if [ x$(cpp_install_dir) != x ]; then \
+	  rm -f $(cpp_install_dir)/cpp; \
+	else true; fi
 
 # Install float.h for cross compiler.
 # Run this on the target machine!
@@ -2501,7 +2527,7 @@ install-collect2: collect2 installdirs
 	$(INSTALL_PROGRAM) xgcc$(exeext) $(libsubdir)/gcc$(exeext)
 
 # Cancel installation by deleting the installed files.
-uninstall: lang.uninstall
+uninstall: lang.uninstall $(UNINSTALL_CPP)
 	-rm -rf $(libsubdir)
 	-rm -rf $(bindir)/$(GCC_INSTALL_NAME)$(exeext)
 	-rm -rf $(bindir)/$(GCC_CROSS_NAME)$(exeext)
@@ -2746,9 +2772,11 @@ compare compare3 compare4 compare-lean compare3-lean compare4-lean: force
 	for dir in tmp-foo $(SUBDIRS); do \
 	  if [ "`echo $$dir/*$(objext)`" != "$$dir/*$(objext)" ] ; then \
 	    for file in $$dir/*$(objext); do \
-	      tail +16c ./$$file > tmp-foo1; \
-	      tail +16c stage$$stage/$$file > tmp-foo2 \
-	        && (cmp tmp-foo1 tmp-foo2 > /dev/null 2>&1 || echo $$file differs >> .bad_compare) || true; \
+	      if [ $$file != objc/NXConstStr.o -a $$file != objc/Object.o -a $$file != objc/Protocol.o -a $$file != objc/linking.o ] ; then \
+		tail +16c ./$$file > tmp-foo1; \
+		tail +16c stage$$stage/$$file > tmp-foo2 \
+		  && (cmp tmp-foo1 tmp-foo2 > /dev/null 2>&1 || echo $$file differs >> .bad_compare) || true; \
+	      else true; fi; \
 	    done; \
 	  fi; \
 	done
@@ -2779,7 +2807,9 @@ gnucompare gnucompare3 gnucompare4 gnucompare-lean gnucompare3-lean gnucompare4-
 	for dir in tmp-foo $(SUBDIRS); do \
 	  if [ "`echo $$dir/*$(objext)`" != "$$dir/*$(objext)" ] ; then \
 	    for file in $$dir/*$(objext); do \
-	      (cmp --ignore-initial=16 $$file stage$$stage/$$file > /dev/null 2>&1 || echo $$file differs >> .bad_compare) || true; \
+	      if [ $$file != objc/NXConstStr.o -a $$file != objc/Object.o -a $$file != objc/Protocol.o -a $$file != objc/linking.o ] ; then \
+	        (cmp --ignore-initial=16 $$file stage$$stage/$$file > /dev/null 2>&1 || echo $$file differs >> .bad_compare) || true; \
+	      else true; fi; \
 	    done; \
 	  fi; \
 	done
