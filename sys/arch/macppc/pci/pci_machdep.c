@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2004/02/24 15:16:04 wiz Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 2004/04/08 23:58:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2004/02/24 15:16:04 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2004/04/08 23:58:24 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -423,7 +423,10 @@ again:
 		 */
 		iparent = *mp++;
 		len -= 4;
-		if (OF_getprop(iparent, "#address-cells", &acells, 4) != 4)
+		i = OF_getprop(iparent, "#address-cells", &acells, 4);
+		if (i <= 0)
+			acells = 0;
+		else if (i != 4)
 			return -1;
 		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
 			return -1;
