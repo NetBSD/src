@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.89 2003/02/06 11:22:35 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.90 2003/02/06 11:46:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.89 2003/02/06 11:22:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.90 2003/02/06 11:46:49 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,14 +422,10 @@ bdwrite(bp)
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
 
 	/* If this is a tape block, write the block now. */
-	/* XXX NOTE: the memory filesystem usurpes major device */
-	/* XXX       number 4095, which is a bad idea.		*/
-	if (bp->b_dev != NODEV && major(bp->b_dev) != 4095) {
-		bdev = bdevsw_lookup(bp->b_dev);
-		if (bdev != NULL && bdev->d_type == D_TAPE) {
-			bawrite(bp);
-			return;
-		}
+	bdev = bdevsw_lookup(bp->b_dev);
+	if (bdev != NULL && bdev->d_type == D_TAPE) {
+		bawrite(bp);
+		return;
 	}
 
 	/*
