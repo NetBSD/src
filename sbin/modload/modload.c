@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.37 2003/04/11 07:49:31 jdolecek Exp $	*/
+/*	$NetBSD: modload.c,v 1.38 2003/04/24 20:18:31 ragge Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.37 2003/04/11 07:49:31 jdolecek Exp $");
+__RCSID("$NetBSD: modload.c,v 1.38 2003/04/24 20:18:31 ragge Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -348,6 +348,19 @@ main(int argc, char **argv)
 		} else
 			errx(1, "entry point _%s not found in %s", entry,
 			    modobj);
+	}
+
+	/*
+	 * Check if /dev/ksyms can be used.
+	 */
+	if (kname == NULL) {
+		int fd = open(_PATH_KSYMS, O_RDONLY);
+		if (fd < 0) {
+			warn("%s", _PATH_KSYMS);
+		} else {
+			close(fd);
+			kname = _PATH_KSYMS;
+		}
 	}
 
 	/*
