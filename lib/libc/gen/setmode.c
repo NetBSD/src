@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setmode.c	5.6 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: setmode.c,v 1.3 1993/08/26 00:45:02 jtc Exp $";
+static char *rcsid = "$Id: setmode.c,v 1.4 1993/12/23 23:14:43 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -216,7 +216,7 @@ setmode(p)
 	mode_t mask;
 	struct bitcmd *set, *saveset, *endset;
 	int permXbits, setlen;
-	static int compress_mode();
+	static void compress_mode();
 
 	/*
 	 * Get a copy of the mask for the permissions that are mask relative.
@@ -390,7 +390,7 @@ dumpmode(set)
  * 'g' and 'o' commands continue to be separate.  They could probably be 
  * compacted, but it's not worth the effort.
  */
-static
+static void
 compress_mode(set)
 	register struct bitcmd *set;
 {

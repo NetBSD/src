@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: toupper_.c,v 1.3 1993/09/05 22:29:50 mycroft Exp $
+ *	$Id: toupper_.c,v 1.4 1993/12/23 23:14:51 jtc Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-static char *rcsid = "$Id: toupper_.c,v 1.3 1993/09/05 22:29:50 mycroft Exp $";
+static char *rcsid = "$Id: toupper_.c,v 1.4 1993/12/23 23:14:51 jtc Exp $";
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
@@ -80,6 +80,7 @@ const short _C_toupper_[1 + 256] = {
 const short *_toupper_tab_ = _C_toupper_;
 
 #undef toupper
+int
 toupper(c)
 	int c;
 {
