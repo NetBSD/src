@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.33 2004/07/17 20:05:39 mycroft Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.34 2004/08/07 17:13:27 mycroft Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.33 2004/07/17 20:05:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.34 2004/08/07 17:13:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ wi_pci_attach(parent, self, aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -349,15 +349,14 @@ wi_pci_attach(parent, self, aux)
 	psc->psc_ih = ih;
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt", self->dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 	switch (wpp->wpp_chip) {
 	case CHIP_PLX_OTHER:
@@ -381,10 +380,10 @@ wi_pci_attach(parent, self, aux)
 		break;
 	}
 
-	printf("%s:", sc->sc_dev.dv_xname);
-	if (wi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-			sc->sc_dev.dv_xname);
+	printf("%s:", self->dv_xname);
+
+	if (wi_attach(sc, 0) != 0) {
+		printf("%s: failed to attach controller\n", self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}
@@ -395,8 +394,8 @@ wi_pci_attach(parent, self, aux)
 	/* Add a suspend hook to restore PCI config state */
 	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
-		printf ("%s: WARNING: unable to establish pci power hook\n",
-		        sc->sc_dev.dv_xname);
+		printf("%s: WARNING: unable to establish pci power hook\n",
+		    self->dv_xname);
 }
 
 static void
