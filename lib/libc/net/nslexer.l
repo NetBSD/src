@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.6 2002/11/11 19:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nslexer.l,v 1.5 2002/03/19 00:04:09 lukem Exp $");
+__RCSID("$NetBSD: nslexer.l,v 1.6 2002/11/11 19:29:03 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -81,7 +81,7 @@ STRING		[a-zA-Z][a-zA-Z0-9_]*
 
 {STRING}	{
 			char *p;
-			int i;
+			size_t i;
 
 			if ((p = strdup(yytext)) == NULL)
 				err(1, "nsdispatch: memory allocation failure");
