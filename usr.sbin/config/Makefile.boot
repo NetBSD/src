@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.2 1999/04/02 06:36:30 gwr Exp $
+#	$NetBSD: Makefile.boot,v 1.3 1999/08/19 02:27:02 hubertf Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 #
 # a very simple makefile...
@@ -48,5 +48,5 @@ lex.yy.o : gram.h
 	${CC} ${CFLAGS} -c $<
 
 clean:
-	rm -f *.o config lex.yy.c y.tab.[ch]
+	rm -f *.o config lex.yy.c y.tab.[ch] gram.[ch]
 
