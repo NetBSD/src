@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.4 2003/11/26 21:15:47 itojun Exp $
+#	$NetBSD: files.netinet,v 1.5 2003/11/26 21:26:56 itojun Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -19,7 +19,7 @@ file	netinet/in_pcb.c	inet
 file	netinet/in_proto.c	inet
 file	netinet/ip_flow.c	inet & gateway
 file	netinet/ip_icmp.c	inet
-file	netinet/ip_id.c		random_ip_id
+file	netinet/ip_id.c		inet
 file	netinet/ip_input.c	inet
 file	netinet/ip_mroute.c	inet & mrouting
 file	netinet/ip_output.c	inet
