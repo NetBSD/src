@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.1 1996/05/17 20:59:53 chuck Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.2 1997/12/17 21:33:10 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -65,12 +65,29 @@ devopen(f, fname, file)
 
 	/*
 	 * Extract partition # from boot device string.
+	 * The Bug command line format of this is:
+	 *
+	 *   147-Bug> bo [drive],,[<d>:][kernel_name] [options]
+	 *
+	 * Where:
+	 *       [drive]         The bug LUN number, eg. 0
+	 *       [<d>:]          <d> is partition # ('a' to 'h')
+	 *       [kernel_name]   Eg. netbsd or /netbsd
+	 *       [options]       Eg. -s
+	 *
+	 * At this time, all we need do is scan for a ':', and assume the
+	 * preceding letter is a partition id.
 	 */
-	for (cp = dev; *cp; cp++) /* void */;
-	while (*cp != '/' && cp > dev) {
-		if (*cp == ':')
-			pn = *(cp+1) - 'a';
-		--cp;
+	for (cp = dev + 1; *cp && cp <= bugargs.arg_end; cp++) {
+		if ( *cp == ':' ) {
+			pn = *(cp - 1) - 'a';
+			break;
+		}
+	}
+
+	if ( pn < 0 || pn >= MAXPARTITIONS ) {
+		printf("Invalid partition number; defaulting to 'a'\n");
+		pn = 0;
 	}
 
 	pp->fd = bugscopen(f);
