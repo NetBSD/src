@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2003/05/16 22:40:56 scw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.6 2003/06/13 08:07:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -68,17 +68,49 @@
  */
 ENTRY(pthread__switch)
 	PIC_PROLOGUE
-	PIC_PTAL(_C_LABEL(_swapcontext_u), r0, tr0)
-	movi	RND_CTXSIZE+8, r0
+	movi	RND_CTXSIZE+24, r0
 	sub	r15, r0, r15
-	st.q	r15, RND_CTXSIZE, r18
-	STPTR	r2, PT_UC, r15
-	LDPTR	r3, PT_UC, r3
+	st.q	r15, RND_CTXSIZE, r28
+	st.q	r15, RND_CTXSIZE+8, r29
+	st.q	r15, RND_CTXSIZE+16, r18
+
+	/*
+	 * Keep r2-r3 safe for later.
+	 */
+	PIC_PTAL(_C_LABEL(_getcontext_u), r0, tr0)
+	or	r2, r63, r28		/* self */
+	or	r3, r63, r29		/* next */
+
+	/* Save the current context */
 	or	r15, r63, r2
 	blink	tr0, r18
-	ld.q	r15, RND_CTXSIZE, r18
+
+	/*
+	 * Edit the context so that it continues below, rather than here.
+	 */
+	PIC_LEAF(_C_LABEL(pthread__switch_return_point), r0)
+	or	r15, r63 ,r3
+	st.q	r15, UC_REGS_PC, r0
+
+	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
+
+	STACK_SWITCH(r29, r2)		/* r2 = next->pt_uc */
+
+	STPTR	r28, PT_UC, r3		/* self->pt_uc = ctx */
+
+	/*
+	 * Restore 'next's context
+	 */
+	blink	tr0, r63
+	/* NOTREACHED */
+
+ENTRY_NOPROFILE(pthread__switch_return_point)
+	/* We're back on the original stack. */
+	ld.q	r15, RND_CTXSIZE+16, r18
+	movi	RND_CTXSIZE+24, r0
 	ptabs/l	r18, tr0
-	movi	RND_CTXSIZE+8, r0
+	ld.q	r15, RND_CTXSIZE+8, r29
+	ld.q	r15, RND_CTXSIZE, r28
 	add	r15, r0, r15
 	PIC_EPILOGUE
 	blink	tr0, r63
@@ -148,9 +180,9 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	STPTR	r28, PT_SWITCHTO, r29		/* self->pt_switchto = next */
-	STPTR	r28, PT_SWITCHTOUC, r2		/* self->pt_switchtouc = uc */
 	STPTR	r28, PT_HELDLOCK, r30		/* self->pt_heldlock = lock */
+	STPTR	r28, PT_SWITCHTOUC, r2		/* self->pt_switchtouc = uc */
+	STPTR	r28, PT_SWITCHTO, r29		/* self->pt_switchto = next */
 	ld.l	r28, PT_SPINLOCKS, r0
 	addi	r0, -1, r0
 	st.l	r28, PT_SPINLOCKS, r0
@@ -199,8 +231,8 @@ Llocked_no_old_preempt:
 	beq/l	r1, r63, tr0		/* _setcontext() if not preempted */
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	STPTR	r29, PT_SWITCHTO, r29	/* next->pt_switchto = next */
 	STPTR	r29, PT_SWITCHTOUC, r2
+	STPTR	r29, PT_SWITCHTO, r29	/* next->pt_switchto = next */
 	STACK_SWITCH(r1, r2)
 	blink	tr0, r63
 	/* NOTREACHED */
@@ -244,9 +276,9 @@ ENTRY(pthread__upcall_switch)
 	 * switch to, and go to the next thread in the chain.
 	 */
 	movi	PT_STATE_RECYCLABLE, r0
-	STPTR	r2, PT_SWITCHTO, r3
-	STPTR	r2, PT_SWITCHTOUC, r28
 	st.l	r2, PT_STATE, r0
+	STPTR	r2, PT_SWITCHTOUC, r28
+	STPTR	r2, PT_SWITCHTO, r3
 	PIC_PTAL(_C_LABEL(_setcontext_u), r0, tr0)
 	STACK_SWITCH(r1, r2)
 	ld.l	r3, PT_SPINLOCKS, r0
@@ -271,7 +303,7 @@ Lupcall_no_old_preempt:
 	beq/l	r1, r63, tr0
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	STPTR	r29, PT_SWITCHTO, r29
 	STPTR	r29, PT_SWITCHTOUC, r2
+	STPTR	r29, PT_SWITCHTO, r29
 	STACK_SWITCH(r1, r2)
 	blink	tr0, r63
