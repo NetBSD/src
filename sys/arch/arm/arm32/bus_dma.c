@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33 2003/07/15 00:24:40 lukem Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.34 2003/07/24 16:22:01 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2003/07/15 00:24:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 2003/07/24 16:22:01 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,8 +932,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 					}
 				}
 			}
-		} else
+		} else {
 			(void) pmap_extract(pmap, vaddr, &curaddr);
+			map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
+		}
 
 		/*
 		 * Make sure we're in an allowed DMA range.
