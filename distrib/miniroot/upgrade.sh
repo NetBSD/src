@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.4 1996/05/27 13:32:01 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.5 1996/05/30 06:57:17 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,9 +68,6 @@ MODE="upgrade"
 # include common subroutines
 . install.sub
 
-# include version number
-. VERSION
-
 get_reldir() {
 	while : ; do
 	    echo -n "Enter the pathname where the sets are stored [$RELDIR] "
@@ -90,10 +87,15 @@ get_reldir() {
 				;;
 		esac
 	    fi
-	    if [ -f "/mnt/$RELDIR/base.tar.gz" ]; then
+	    if dir_has_sets "/mnt/$RELDIR" $UPGRSETS
+	    then
 		break
 	    else
-		echo -n "The directory $RELDIR does not exist, retry? [y] "
+		cat << \__get_reldir_1
+The directory $RELDIR does not exist, or does not hold any of the
+upgrade sets."
+__get_reldir_1
+		echo -n "Re-enter pathname? [y] "
 		getresp "y"
 		case "$resp" in
 			y*|Y*)

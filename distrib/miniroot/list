@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 1996/05/27 15:50:53 leo Exp $
+#	$NetBSD: list,v 1.7 1996/05/30 06:57:16 leo Exp $
 
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -45,15 +45,11 @@ SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
 SYMLINK	../../instbin		usr/sbin/chroot
 SYMLINK	../../instbin		usr/bin/ftp
 SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-SYMLINK	../../instbin		usr/bin/less usr/bin/more
 SYMLINK	../../instbin		usr/bin/sed
 SYMLINK	../../instbin		usr/bin/sort
 SYMLINK	../../instbin		usr/bin/tar
 SYMLINK	../../instbin		usr/bin/tip
 SYMLINK	../../instbin		usr/sbin/update
-
-# crunchgen source directory specials
-CRUNCHSPECIAL	less srcdir /usr/src/usr.bin/less/less
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
@@ -74,4 +70,5 @@ COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${CURDIR}/install.sub		install.sub
 COPY	${CURDIR}/install.sh		install
 COPY	${CURDIR}/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/05/27 15:46:41 leo Exp $
+#	$NetBSD: Makefile,v 1.6 1996/05/30 06:57:12 leo Exp $
 
 # Revision is 1.1B
 REV=		11B
@@ -28,8 +28,7 @@ all: ${CBIN}
 	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	echo "VERSION=${REV}; export VERSION" > ${MOUNT_POINT}/VERSION
-	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
+	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
