@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.18 2000/01/17 08:34:04 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.19 2000/01/17 15:57:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -477,7 +477,9 @@ explore_fqdn(pai, hostname, servname, res)
 	const char *servname;
 	struct addrinfo **res;
 {
+#if 0
 	int s;
+#endif
 	struct hostent *hp;
 	int h_error;
 	int af;
@@ -495,6 +497,7 @@ explore_fqdn(pai, hostname, servname, res)
 	sentinel.ai_next = NULL;
 	cur = &sentinel;
 
+#if 0
 	/*
 	 * filter out AFs that are not supported by the kernel
 	 * XXX errno?
@@ -505,6 +508,7 @@ explore_fqdn(pai, hostname, servname, res)
 			return 0;
 	} else
 		close(s);
+#endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
