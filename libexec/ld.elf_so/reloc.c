@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.9 1999/02/22 17:06:11 pk Exp $	*/
+/*	$NetBSD: reloc.c,v 1.10 1999/02/24 12:20:30 pk Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -697,7 +697,7 @@ _rtld_bind(
 	rela = (const Elf_RelA *) ((caddr_t) obj->pltrela + reloff);
     }
 
-    if (__rtld_relocate_plt_object(obj, rela, true) < 0)
+    if (_rtld_relocate_plt_object(obj, rela, true) < 0)
 	_rtld_die();
 
     return *(caddr_t *)(obj->relocbase + rela->r_offset);
