@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.181 2000/01/10 17:18:04 kleink Exp $
+# $NetBSD: mi,v 1.182 2000/01/19 06:10:11 mycroft Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -516,6 +516,7 @@
 ./usr/include/link_aout.h
 ./usr/include/link_elf.h
 ./usr/include/locale.h
+./usr/include/login_cap.h
 ./usr/include/machine
 ./usr/include/malloc.h
 ./usr/include/math.h
@@ -848,6 +849,7 @@
 ./usr/include/sys/errno.h
 ./usr/include/sys/exec.h
 ./usr/include/sys/exec_aout.h
+./usr/include/sys/exec_coff.h
 ./usr/include/sys/exec_ecoff.h
 ./usr/include/sys/exec_elf.h
 ./usr/include/sys/exec_script.h
@@ -1959,6 +1961,7 @@
 ./usr/share/man/cat3/logbf.0
 ./usr/share/man/cat3/logf.0
 ./usr/share/man/cat3/login.0
+./usr/share/man/cat3/login_cap.0
 ./usr/share/man/cat3/login_tty.0
 ./usr/share/man/cat3/logout.0
 ./usr/share/man/cat3/logwtmp.0
@@ -2118,6 +2121,7 @@
 ./usr/share/man/cat3/scalbnf.0
 ./usr/share/man/cat3/scandir.0
 ./usr/share/man/cat3/scanf.0
+./usr/share/man/cat3/securepath.0
 ./usr/share/man/cat3/seed48.0
 ./usr/share/man/cat3/seekdir.0
 ./usr/share/man/cat3/setbuf.0
@@ -3432,6 +3436,7 @@
 ./usr/share/man/man3/logbf.3
 ./usr/share/man/man3/logf.3
 ./usr/share/man/man3/login.3
+./usr/share/man/man3/login_cap.3
 ./usr/share/man/man3/login_tty.3
 ./usr/share/man/man3/logout.3
 ./usr/share/man/man3/logwtmp.3
@@ -3591,6 +3596,7 @@
 ./usr/share/man/man3/scalbnf.3
 ./usr/share/man/man3/scandir.3
 ./usr/share/man/man3/scanf.3
+./usr/share/man/man3/securepath.3
 ./usr/share/man/man3/seed48.3
 ./usr/share/man/man3/seekdir.3
 ./usr/share/man/man3/setbuf.3
