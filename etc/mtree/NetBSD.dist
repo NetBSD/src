@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.110.2.5 2000/09/29 02:08:45 simonb Exp $
+#	$NetBSD: NetBSD.dist,v 1.110.2.6 2000/10/02 03:11:46 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -29,9 +29,9 @@ fd
 # ./etc
 etc
 
-# ./etc/default
-default
-# ./etc/default
+# ./etc/defaults
+defaults
+# ./etc/defaults
 ..
 
 # ./etc/disklabels
