@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.66 2001/04/07 04:24:31 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.67 2001/04/10 21:45:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 
 #include <sys/queue.h>
 #include <net/dlt.h>
+#include <net/pfil.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
@@ -275,6 +276,7 @@ struct ifnet {				/* and the entries */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
+	struct pfil_head if_pfil;	/* filterint point */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
