@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.12 2001/10/26 05:56:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.13 2001/11/08 02:39:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_balloc.c	8.4 (Berkeley) 9/23/93
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.13 2001/11/08 02:39:06 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.5 2001/10/26 05:56:08 lukem Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.6 2001/11/08 02:39:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_subr.c	8.2 (Berkeley) 9/21/93
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.6 2001/11/08 02:39:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
