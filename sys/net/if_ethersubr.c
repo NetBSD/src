@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75.2.12 2003/01/15 18:59:03 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.75.2.13 2003/01/17 16:37:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.12 2003/01/15 18:59:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.13 2003/01/17 16:37:16 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -661,7 +661,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	u_int16_t etype;
 	int s;
 	struct ether_header *eh;
-	struct mbuf *n;
+	struct m_tag *mtag;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -763,7 +763,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * provided us with the tag.
 	 */
 	if (ec->ec_nvlans &&
-	    (n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN)) != NULL) {
+	    (mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()

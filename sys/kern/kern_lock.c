@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.15 2002/12/11 06:43:04 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.16 2003/01/17 16:36:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.15 2002/12/11 06:43:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.16 2003/01/17 16:36:13 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -340,13 +340,16 @@ do {									\
 void
 lock_printf(const char *fmt, ...)
 {
+	char b[150];
 	va_list ap;
 
 	va_start(ap, fmt);
 	if (lock_debug_syslog)
 		vlog(LOG_DEBUG, fmt, ap);
-	else
-		vprintf(fmt, ap);
+	else {
+		vsnprintf(b, sizeof(b), fmt, ap);
+		printf_nolog("%s", b);
+	}
 	va_end(ap);
 }
 #endif /* LOCKDEBUG */
