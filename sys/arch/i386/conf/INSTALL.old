@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.old,v 1.2 1995/07/24 03:33:16 mycroft Exp $
+#	$NetBSD: INSTALL.old,v 1.3 1995/08/22 19:43:15 jtc Exp $
 #
 #	INSTALL -- somewhat generic kernel with a snowball's chance of
 #		   fitting on an install floppy.
@@ -20,7 +20,7 @@ options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
-#options	DUMMY_NOPS	# speed hack; recommanded
+#options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
 options		MACHINE_NONCONTIG

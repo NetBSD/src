@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.58 1995/08/06 16:14:29 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.59 1995/08/22 19:43:30 jtc Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -10,7 +10,7 @@ options		I386_CPU	# CPU classes; at least one is REQUIRED
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 
