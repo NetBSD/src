@@ -1,3 +1,5 @@
+/*	$NetBSD: vmstat.c,v 1.2 1995/01/20 08:52:16 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,10 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
+#endif
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.2 1995/01/20 08:52:16 jtc Exp $";
 #endif /* not lint */
 
 /*
