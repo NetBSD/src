@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.9 1995/01/07 23:14:51 mycroft Exp $
+#	$Id: Makefile,v 1.10 1995/02/12 17:45:54 phil Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
@@ -20,6 +20,9 @@ CFLAGS+= -DKERBEROS -DCRYPT
 DPADD+=	${LIBKRB} ${LIBDES}
 LDADD+=	-lkrb -ldes
 .endif
+
+LINKS=	${BINDIR}/passwd ${BINDIR}/yppasswd
+MLINKS=	passwd.1 yppasswd.1
 
 BINOWN=	root
 BINMODE=4555

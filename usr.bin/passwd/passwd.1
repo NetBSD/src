@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
-.\"	$Id: passwd.1,v 1.4 1994/01/11 18:26:14 jtc Exp $
+.\"	$Id: passwd.1,v 1.5 1995/02/12 17:45:56 phil Exp $
 .\"
 .Dd July 24, 1991
 .Dt PASSWD 1
@@ -43,6 +43,8 @@
 .Op Fl l
 .Op Fl k
 .Op Fl y
+.Op Ar user
+.Nm yppasswd
 .Op Ar user
 .Sh DESCRIPTION
 .Nm Passwd
@@ -77,6 +79,12 @@ This forces the YP password database entry to be changed, even if
 the user has an entry in the local database.  The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
+.Nm yppasswd
+is the equivalent of
+.Nm passwd
+with the
+.Fl y
+flag.
 .El
 .Pp
 This is the behavior if no flags are specified:
