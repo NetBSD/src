@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 1995/10/03 20:18:58 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.23 1995/10/10 01:29:15 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -42,6 +42,7 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 options		COMPAT_SVR4	# binary compatibility with SVR4
 options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options		COMPAT_LINUX	# binary compatibility with Linux
+options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
@@ -111,6 +112,8 @@ aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
+ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
