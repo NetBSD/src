@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.71 1997/06/24 23:43:33 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.72 1997/07/20 23:31:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1343,7 +1343,7 @@ vfs_hang_addrlist(mp, nep, argp)
 	struct netexport *nep;
 	struct export_args *argp;
 {
-	register struct netcred *np;
+	register struct netcred *np, *enp;
 	register struct radix_node_head *rnh;
 	register int i;
 	struct radix_node *rn;
@@ -1398,7 +1398,25 @@ vfs_hang_addrlist(mp, nep, argp)
 	rn = (*rnh->rnh_addaddr)((caddr_t)saddr, (caddr_t)smask, rnh,
 		np->netc_rnodes);
 	if (rn == 0 || np != (struct netcred *)rn) { /* already exists */
-		error = EPERM;
+		if (rn == 0) {
+			enp = (struct netcred *)(*rnh->rnh_lookup)(saddr,
+				smask, rnh);
+			if (enp == 0) {
+				error = EPERM;
+				goto out;
+			}
+		} else 
+			enp = (struct netcred *)rn;
+
+		if (enp->netc_exflags != argp->ex_flags ||
+		    enp->netc_anon.cr_uid != argp->ex_anon.cr_uid ||
+		    enp->netc_anon.cr_gid != argp->ex_anon.cr_gid ||
+		    enp->netc_anon.cr_ngroups != argp->ex_anon.cr_ngroups ||
+		    bcmp(&enp->netc_anon.cr_groups, &argp->ex_anon.cr_groups,
+			enp->netc_anon.cr_ngroups))
+				error = EPERM;
+		else
+			error = 0;
 		goto out;
 	}
 	np->netc_exflags = argp->ex_flags;
