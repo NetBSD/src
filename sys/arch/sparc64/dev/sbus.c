@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.57 2002/12/10 13:44:52 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.58 2003/01/01 02:22:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -153,13 +153,13 @@ sbus_print(args, busname)
 	int i;
 
 	if (busname)
-		printf("%s at %s", sa->sa_name, busname);
-	printf(" slot %ld offset 0x%lx", (long)sa->sa_slot, 
+		aprint_normal("%s at %s", sa->sa_name, busname);
+	aprint_normal(" slot %ld offset 0x%lx", (long)sa->sa_slot, 
 	       (u_long)sa->sa_offset);
 	for (i = 0; i < sa->sa_nintr; i++) {
 		struct openprom_intr *sbi = &sa->sa_intr[i];
 
-		printf(" vector %lx ipl %ld", 
+		aprint_normal(" vector %lx ipl %ld", 
 		       (u_long)sbi->oi_vec, 
 		       (long)INTLEV(sbi->oi_pri));
 	}

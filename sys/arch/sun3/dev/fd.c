@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.33 2002/11/01 11:31:54 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.34 2003/01/01 02:26:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -337,7 +337,7 @@ fdprint(aux, fdc)
 	struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		aprint_normal(" drive %d", fa->fa_drive);
 	return (QUIET);
 }
 
