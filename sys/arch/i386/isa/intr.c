@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.10 1993/10/31 20:05:43 mycroft Exp $
+ *	$Id: intr.c,v 1.11 1993/10/31 20:11:31 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -252,7 +252,13 @@ isa_discoverintr(force, aux)
 	force(aux);
 	while (time > 0) {
 		register unsigned irr;
+		disable_intr();
+		outb(IO_ICU1, 0x0a);
+		outb(IO_ICU2, 0x0a);
 		irr = inb(IO_ICU1) | (inb(IO_ICU2) << 8) | ipending;
+		outb(IO_ICU1, 0x0b);
+		outb(IO_ICU2, 0x0b);
+		enable_intr();
 		irr &= ~(IRQ_SLAVE | IRQ0);
 		if (irr)
 			return 1 << (ffs(irr) - 1);
