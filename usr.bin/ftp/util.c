@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.88 2000/01/25 06:45:18 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.89 2000/01/26 10:15:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.88 2000/01/25 06:45:18 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.89 2000/01/26 10:15:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -678,14 +678,19 @@ remotemodtime(file, noisy)
 			fprintf(ttyout, "Converted to `%s'\n", timestr);
 		}
 		if (strlen(timestr) != 14 ||
-		    strptime(timestr, "%Y%m%d%H%M%S", &timebuf) == NULL) {
+		    strptime(timestr, "%Y %m %d %H %M %S", &timebuf) == NULL) {
  bad_parse_time:
 			fprintf(ttyout, "Can't parse time %s.\n", timestr);
 			goto cleanup_parse_time;
 		}
 		rtime = timegm(&timebuf);
-		if (rtime == -1 && (noisy || debug != 0))
-			goto bad_parse_time;
+		if (rtime == -1) {
+			if (noisy || debug != 0)
+				goto bad_parse_time;
+			else
+				goto cleanup_parse_time;
+		} else if (debug)
+			fprintf(ttyout, "parsed date as: %s", ctime(&rtime));
 	} else if (noisy && debug == 0) {
 		fputs(reply_string, ttyout);
 		putc('\n', ttyout);
