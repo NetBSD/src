@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.2.1 2002/06/15 02:20:09 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.2 2002/06/18 13:57:53 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -80,6 +80,8 @@ ${TARG}.HTML.toc: ${SRCS}
 	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
+# needs to be created twice to take into account the space taken
+# by the TOC itself
 ${TARG}.more.toc: ${SRCS}
 	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
