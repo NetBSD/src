@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.343 1999/03/12 01:01:41 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.344 1999/03/19 04:58:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -152,7 +152,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/mc146818reg.h>
-#include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
 
 #ifdef DDB

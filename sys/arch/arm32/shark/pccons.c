@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.7 1998/11/19 15:38:21 mrg Exp $       */
+/*      $NetBSD: pccons.c,v 1.8 1999/03/19 04:58:45 cgd Exp $       */
 
 /*
  * Copyright 1997
@@ -138,12 +138,6 @@
 #include <dev/isa/isavar.h>
 #include <arm32/shark/i8042reg.h>
 #include <arm32/shark/ns87307reg.h>
-
-#ifdef arm32
-#include <arm32/isa/isa_machdep.h>
-#else
-#include <i386/isa/isa_machdep.h>
-#endif
 
 #ifdef	OFW
 #include <dev/ofw/openfirm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_cats_machdep.c,v 1.2 1999/02/27 11:12:44 mark Exp $	*/
+/*	$NetBSD: isa_cats_machdep.c,v 1.3 1999/03/19 04:58:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 #include <dev/isa/isadmavar.h>
-#include <arm32/isa/isa_machdep.h>
 #include <arm32/isa/icu.h>
 #include <arm32/footbridge/dc21285reg.h>
 #include <arm32/footbridge/dc21285mem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.3 1998/08/15 10:18:15 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4 1999/03/19 04:58:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <bebox/isa/isa_machdep.h>
 #include <bebox/isa/icu.h>
 
 /*

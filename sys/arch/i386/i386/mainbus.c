@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 1998/08/05 02:45:09 perry Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 1999/03/19 04:58:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,6 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/isa/isareg.h>		/* for ISA_HOLE_VADDR */
-#include <i386/isa/isa_machdep.h>
 
 #include "pci.h"
 #include "eisa.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.41 1999/01/08 18:10:35 augustss Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.42 1999/03/19 04:58:46 cgd Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -93,7 +93,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/isa_machdep.h>
 #include <i386/isa/icu.h>
 
 #include <vm/vm.h>

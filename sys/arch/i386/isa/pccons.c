@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.134 1999/02/06 18:46:21 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.135 1999/03/19 04:58:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/pckbc/pckbdreg.h>
 
