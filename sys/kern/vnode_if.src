@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.16 1999/03/22 16:57:37 sommerfe Exp $
+#	$NetBSD: vnode_if.src,v 1.17 1999/06/21 02:28:46 sommerfeld Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,8 @@
 #
 #    More details:
 #     On success, adds a reference to *vpp so it doesn't evaporate.
-#     If LOCKPARENT is set in cnp, dvp is returned locked even on failure.
+#     On failure, *vpp is NULL, and *dvp is left locked.
+#     If LOCKPARENT is set in cnp, dvp is returned locked even on success.
 #     otherwise it is unlocked (unless *vpp == dvp on return)
 #	
 #     *vpp is always locked on return if the operation succeeds.
