@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.7 1994/02/10 18:01:28 cgd Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.8 1994/04/06 08:34:46 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -340,6 +340,11 @@ main(argc, argv)
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		       loginname, s, loginfile);
 		(void) ioctl(0, TIOCSETD, (caddr_t)&odisc);
+#ifdef POSIX
+		(void) tcsetattr(0, TCSAFLUSH, &otios);
+#else
+		(void) ioctl(0, TIOCSETP, (caddr_t)&otty);
+#endif
 		exit(6);
 	}
 
