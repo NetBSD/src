@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
+/*	$NetBSD: master.c,v 1.11 2002/08/02 02:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
+__RCSID("$NetBSD: master.c,v 1.11 2002/08/02 02:13:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: master.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
 #include <sys/types.h>
 #include <sys/times.h>
 #include <setjmp.h>
-#include <utmp.h>
 
 #include "pathnames.h"
 
