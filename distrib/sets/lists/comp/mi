@@ -133,6 +133,8 @@
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
 ./usr/include/dev/ic/smc93cx6var.h
+./usr/include/dev/ic/rrunnerreg.h
+./usr/include/dev/ic/rrunnervar.h
 ./usr/include/dev/ic/st16650reg.h
 ./usr/include/dev/ic/tms320av110reg.h
 ./usr/include/dev/ic/tms320av110var.h
