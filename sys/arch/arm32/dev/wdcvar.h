@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.1 1997/02/04 02:04:51 mark Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2 1997/10/14 19:13:58 mark Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,9 +38,13 @@
  *	@(#)wdreg.h	7.1 (Berkeley) 5/9/91
  */
 
+/*
+ * softc structure for the wdc device
+ */
+
 struct wdc_softc {
-	struct device sc_dev;
-	void *sc_ih;
+	struct device sc_dev;		/* device node */
+	void *sc_ih;			/* interrupt pointer */
 
 	bus_space_tag_t sc_iot;		/* Bus space tag */
 	bus_space_handle_t sc_ioh;	/* handle for drive registers */
@@ -60,14 +64,19 @@ struct wdc_softc {
 #define	WDCF_WANTED	0x08		/* XXX locking for wd_get_parms() */
 #define WDCF_QUIET	0x10		/* Be quiet about errors */
 #define WDCF_32BIT	0x20		/* Use 32bit xfers */
+#define WDCF_NORESET	0x10000		/* Don't reset bus */
 	int sc_errors;			/* errors during current transfer */
 	u_char sc_status;		/* copy of status register */
 	u_char sc_error;		/* copy of error register */
 };
 
-int wdcprobe_internal __P((bus_space_tag_t iot, bus_space_handle_t ioh,
+int  wdcprobe_internal __P((bus_space_tag_t iot, bus_space_handle_t ioh,
     bus_space_handle_t aux_ioh, bus_space_handle_t data_ioh,
     bus_space_handle_t data32_ioh, char *name));
 void wdcattach_internal __P((struct wdc_softc *wdc, bus_space_tag_t iot, bus_space_handle_t ioh,
     bus_space_handle_t aux_ioh, bus_space_handle_t data_ioh,
     bus_space_handle_t data32_ioh,  int drq));
+
+int  wdcintr __P((void *));
+
+/* End of wdcvar.h */
