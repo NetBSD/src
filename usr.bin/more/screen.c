@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)screen.c	5.8 (Berkeley) 6/28/92"; */
-static char *rcsid = "$Id: screen.c,v 1.4 1994/04/17 02:45:13 andrew Exp $";
+static char *rcsid = "$Id: screen.c,v 1.5 1994/12/24 17:17:13 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$Id: screen.c,v 1.4 1994/04/17 02:45:13 andrew Exp $";
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 #ifdef TERMIOS

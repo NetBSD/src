@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)output.c	5.10 (Berkeley) 7/24/91"; */
-static char *rcsid = "$Id: output.c,v 1.3 1994/04/06 17:54:35 cgd Exp $";
+static char *rcsid = "$Id: output.c,v 1.4 1994/12/24 17:17:11 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -42,6 +42,7 @@ static char *rcsid = "$Id: output.c,v 1.3 1994/04/06 17:54:35 cgd Exp $";
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 int errmsgs;	/* Count of messages displayed by error() */
