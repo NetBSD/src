@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 1995/02/13 00:44:33 chopps Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 1995/05/24 20:23:05 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,6 +40,7 @@
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
 
+short	exframesize[];
 extern jmp_buf	*db_recover;
 
 int	db_active = 0;
@@ -65,6 +66,8 @@ kdb_trap(type, regs)
 	int	type;
 	register struct mc68020_saved_state *regs;
 {
+	int fsize;
+
 	switch (type) {
 	case T_TRACE:		/* single-step */
 	case T_BREAKPOINT:	/* breakpoint */
@@ -88,15 +91,16 @@ kdb_trap(type, regs)
 
 	/* Get System Stack Pointer (SSP) */
 	ddb_regs_ssp = (int)(&regs[1]);
+	fsize = exframesize[regs->stkfmt];
+	if (fsize > 0)
+		ddb_regs_ssp += fsize;
 
 	db_active++;
-	cnpollc(TRUE);
-#if 0
-	/* XXX - Should do this in cnpollc() if needed. */
-	(void) setvideoenable(1);
-#endif
-	db_trap(type, 0);
-	cnpollc(FALSE);
+	cnpollc(TRUE);	/* set polling mode, unblank video */
+
+	db_trap(type, 0);	/* where the work happens */
+
+	cnpollc(FALSE);	/* resume interrupt mode */
 	db_active--;
 
 	/* Can't easily honor change in ssp.  Oh well. */
@@ -109,12 +113,14 @@ kdb_trap(type, regs)
 	 * trace bit in the current SR (and trapping while exiting KDB).
 	 */
 	(void) spl7();
-/*	if (!USERMODE(regs->sr) && (regs->sr & SR_T1) && (current_thread())) {
+#if 0
+	if (!USERMODE(regs->sr) && (regs->sr & SR_T1) && (current_thread())) {
 		current_thread()->pcb->pcb_flag |= TRACE_KDB;
-	}*/
-/*	if ((regs->sr & SR_T1) && (current_thread())) {
+	}
+	if ((regs->sr & SR_T1) && (current_thread())) {
 		current_thread()->pcb->flag |= TRACE_KDB;
-	}*/
+	}
+#endif
 
 	return(1);
 }
@@ -147,7 +153,7 @@ Debugger()
 /*
  * Read bytes from kernel address space for debugger.
  * XXX - Each port should provide one of these...
- * See arch/sun3/sun3/db_memrw.c for an example. -gwr
+ * (See arch/sun3/sun3/db_machdep.c for example.)
  */
 void
 db_read_bytes(addr, size, data)
@@ -165,7 +171,7 @@ db_read_bytes(addr, size, data)
 /*
  * Write bytes to kernel address space for debugger.
  * XXX - Each port should provide one of these...
- * See arch/sun3/sun3/db_memrw.c for an example. -gwr
+ * (See arch/sun3/sun3/db_machdep.c for example.)
  */
 void
 db_write_bytes(addr, size, data)
