@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.3 2003/07/15 03:36:21 lukem Exp $	*/
+/*	$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.3 2003/07/15 03:36:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -104,7 +104,11 @@ void *vector_table[NVECTORS] = {
 	illinst,
 #endif
 	trap2,				/* 34: trace */
+#ifdef COMPAT_16
 	trap3,				/* 35: sigreturn special syscall */
+#else
+	illinst,
+#endif
 	illinst,			/* 36: TRAP instruction vector */
 	illinst,			/* 37: TRAP instruction vector */
 	illinst,			/* 38: TRAP instruction vector */
