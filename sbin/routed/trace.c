@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.18 1997/09/15 11:52:00 lukem Exp $	*/
+/*	$NetBSD: trace.c,v 1.19 1997/09/16 08:37:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.18 1997/09/15 11:52:00 lukem Exp $");
+__RCSID("$NetBSD: trace.c,v 1.19 1997/09/16 08:37:16 mrg Exp $");
 #endif
 
 #define	RIPCMDS
@@ -672,14 +672,14 @@ trace_upslot(struct rt_entry *rt,
 	lastlog();
 	if (gate == 0) {
 		(void)fprintf(ftrace, "Del #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
 		print_rts(&new, 0,0,0,0,
 			  rts != rt->rt_spares || AGE_RT(rt->rt_state,ifp));
 
 	} else if (rts->rts_gate != RIP_DEFAULT) {
 		(void)fprintf(ftrace, "Chg #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
 		print_rts(rts, 0,0,
 			  rts->rts_gate != gate,
@@ -700,7 +700,7 @@ trace_upslot(struct rt_entry *rt,
 
 	} else {
 		(void)fprintf(ftrace, "Add #%d %-35s ",
-			      rts - rt->rt_spares,
+			      (int)(rts - rt->rt_spares),
 			      rtname(rt->rt_dst, rt->rt_mask, gate));
 		print_rts(&new, 0,0,0,0,
 			  rts != rt->rt_spares || AGE_RT(rt->rt_state,ifp));
@@ -798,7 +798,7 @@ trace_change(struct rt_entry *rt,
 	trace_bits(rs_bits, rt->rt_state, rt->rt_state != state);
 
 	(void)fprintf(ftrace, "\n%*s %19s%-16s ",
-		      strlen(label), "", "",
+		      (int)strlen(label), "", "",
 		      rt->rt_gate != gate ? naddr_ntoa(gate) : "");
 	print_rts(&new,
 		  -(metric == rt->rt_metric),

@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.5 1997/09/15 10:38:21 lukem Exp $	*/
+/*	$NetBSD: table.c,v 1.6 1997/09/16 08:37:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.5 1997/09/15 10:38:21 lukem Exp $");
+__RCSID("$NetBSD: table.c,v 1.6 1997/09/16 08:37:15 mrg Exp $");
 #endif
 
 #include "defs.h"
@@ -1703,7 +1703,7 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)sprintf(label, "Use #%d", rts - rt->rt_spares);
+	(void)sprintf(label, "Use #%d", (int)(rts - rt->rt_spares));
 	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC),
 		 rts->rts_gate, rts->rts_router, rts->rts_metric,
 		 rts->rts_tag, rts->rts_ifp, rts->rts_time, label);

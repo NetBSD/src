@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.14 1997/09/16 06:41:22 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.15 1997/09/16 08:37:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.14 1997/09/16 06:41:22 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.15 1997/09/16 08:37:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ statussig(notused)
 	(void)snprintf(msgbuf, sizeof(msgbuf),
 	    "%3.2f%% done at %ld KB/s, finished in %d:%02d\n",
 	    (blockswritten * 100.0) / tapesize,
-	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
+	    (long)((spcl.c_tapea - tapea_volume) / (tnow - tstart_volume)),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 }

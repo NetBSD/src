@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.28 1997/09/14 14:36:37 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.29 1997/09/16 08:37:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.28 1997/09/14 14:36:37 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.29 1997/09/16 08:37:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ setup(dev)
 	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
 		if (sblock.fs_maxfilesize != maxfilesize) {
 			pwarn("INCORRECT MAXFILESIZE=%qd IN SUPERBLOCK",
-				sblock.fs_maxfilesize);
+			    (unsigned long long)sblock.fs_maxfilesize);
 			sblock.fs_maxfilesize = maxfilesize;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -256,7 +256,7 @@ setup(dev)
 		}
 		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
 			pwarn("INCORRECT QBMASK=%qx IN SUPERBLOCK",
-				sblock.fs_qbmask);
+			    (unsigned long long)sblock.fs_qbmask);
 			sblock.fs_qbmask = ~sblock.fs_bmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -267,7 +267,7 @@ setup(dev)
 		}
 		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
 			pwarn("INCORRECT QFMASK=%qx IN SUPERBLOCK",
-				sblock.fs_qfmask);
+			    (unsigned long long)sblock.fs_qfmask);
 			sblock.fs_qfmask = ~sblock.fs_fmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -366,7 +366,7 @@ setup(dev)
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n", 
-		    (unsigned)(maxino + 1) * sizeof(int16_t));
+		    (unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
 	numdirs = sblock.fs_cstotal.cs_ndir;
@@ -378,7 +378,7 @@ setup(dev)
 	    sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n", 
-		    (unsigned)numdirs * sizeof(struct inoinfo *));
+		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
 	bufinit();
@@ -480,8 +480,8 @@ readsb(listerr)
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %d, original %ld, alternate %ld\n",
-				    olp - (long *)&sblock, *olp, *nlp);
+				printf("offset %ld, original %ld, alternate %ld\n",
+				    (long)(olp - (long *)&sblock), *olp, *nlp);
 			}
 		}
 		badsb(listerr,
