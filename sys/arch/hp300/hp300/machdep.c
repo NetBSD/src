@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1996/03/13 19:04:04 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1996/03/13 23:42:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1494,7 +1494,7 @@ findparerror()
 	 * level invocation.
 	 */
 	if (looking)
-		longjmp(&parcatch, 1);
+		longjmp(&parcatch);
 	s = splhigh();
 	/*
 	 * If setjmp returns true, the parity error we were searching
