@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.14 1998/10/08 01:36:04 wsanchez Exp $	*/
+/*	$NetBSD: man.c,v 1.15 1998/11/06 22:33:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.14 1998/10/08 01:36:04 wsanchez Exp $");
+__RCSID("$NetBSD: man.c,v 1.15 1998/11/06 22:33:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,7 +439,7 @@ manual(page, tag, pg)
 			for (found = 0;
 			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
 				for (p = e_sufp->s;
-				    *p != '\0' && !isspace(*p); ++p);
+				    *p != '\0' && !isspace((unsigned char)*p); ++p);
 				if (*p == '\0')
 					continue;
 				*p = '\0';
@@ -540,7 +540,8 @@ build_page(fmt, pathp)
 		intmpp = addlist("_intmp");
 
 	/* Move to the printf(3) format string. */
-	for (; *fmt && isspace(*fmt); ++fmt);
+	for (; *fmt && isspace((unsigned char)*fmt); ++fmt)
+		continue;
 
 	/*
 	 * Get a temporary file and build a version of the file
@@ -609,7 +610,8 @@ how(fname)
 		else {
 			for(; lcnt; --lcnt)
 				(void)putchar('\n');
-			for (p = buf; isspace(*p); ++p);
+			for (p = buf; isspace((unsigned char)*p); ++p)
+				continue;
 			(void)fputs(p, stdout);
 		}
 	}
@@ -660,13 +662,14 @@ check_pager(name)
 	 * if the user uses "more", we make it "more -s"; watch out for
 	 * PAGER = "mypager /usr/ucb/more"
 	 */
-	for (p = name; *p && !isspace(*p); ++p);
+	for (p = name; *p && !isspace((unsigned char)*p); ++p)
+		continue;
 	for (; p > name && *p != '/'; --p);
 	if (p != name)
 		++p;
 
 	/* make sure it's "more", not "morex" */
-	if (!strncmp(p, "more", 4) && (!p[4] || isspace(p[4]))){
+	if (!strncmp(p, "more", 4) && (!p[4] || isspace((unsigned char)p[4]))){
 		save = name;
 		/* allocate space to add the "-s" */
 		if (!(name =
@@ -749,7 +752,9 @@ cleanup()
 static void
 usage()
 {
+	extern char *__progname;
 	(void)fprintf(stderr,
-    "usage: man [-achw] [-C file] [-M path] [-m path] [section] title ...\n");
+    "Usage: %s [-achw] [-C file] [-M path] [-m path] [section] title ...\n",
+	    __progname);
 	exit(1);
 }

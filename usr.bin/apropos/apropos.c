@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.13 1998/07/06 14:23:31 kleink Exp $	*/
+/*	$NetBSD: apropos.c,v 1.14 1998/11/06 22:29:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.13 1998/07/06 14:23:31 kleink Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.14 1998/11/06 22:29:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ lowstr(from, to)
 	char ch;
 
 	while ((ch = *from++) && ch != '\n')
-		*to++ = isupper(ch) ? tolower(ch) : ch;
+		*to++ = isupper((unsigned char)ch) ? tolower(ch) : ch;
 	*to = '\0';
 }
 
@@ -240,7 +240,10 @@ void
 usage()
 {
 
+	extern char *__progname;
+
 	(void)fprintf(stderr,
-	    "usage: apropos [-C file] [-M path] [-m path] keyword ...\n");
+	    "Usage: %s [-C file] [-M path] [-m path] keyword ...\n",
+	    __progname);
 	exit(1);
 }

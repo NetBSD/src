@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.8 1997/10/17 06:42:09 mikel Exp $	*/
+/*	$NetBSD: config.c,v 1.9 1998/11/06 22:33:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.8 1997/10/17 06:42:09 mikel Exp $");
+__RCSID("$NetBSD: config.c,v 1.9 1998/11/06 22:33:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,12 @@ config(fname)
 		p[len - 1] = '\0';		/* Terminate the line. */
 
 						/* Skip leading space. */
-		for (; *p != '\0' && isspace(*p); ++p);
+		for (; *p != '\0' && isspace((unsigned char)*p); ++p);
 						/* Skip empty/comment lines. */
 		if (*p == '\0' || *p == '#')
 			continue;
 						/* Find first token. */
-		for (t = p; *t && !isspace(*t); ++t);
+		for (t = p; *t && !isspace((unsigned char)*t); ++t);
 		if (*t == '\0')			/* Need more than one token.*/
 			continue;
 		*t = '\0';
@@ -117,7 +117,7 @@ config(fname)
 		 * has only a single token on it.
 		 */
 		if (!strcmp(p, "_build")) {
-			while (*++t && isspace(*t));
+			while (*++t && isspace((unsigned char)*t));
 			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 			    (ep->s = strdup(t)) == NULL)
 				err(1, "malloc");
