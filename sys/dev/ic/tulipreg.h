@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.10 1999/09/29 18:50:39 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.11 1999/09/30 17:41:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,38 +47,65 @@
  *	- Macronix 98713, 98713A, 98715, 98715A, 98725 (PMAC):
  *
  *	  These chips are fairly straight-forward Tulip clones.
- *	  The 98713 and 98713A have an MII.  All have an internal
- *	  transciever capable of NWAY.  The 98713A, 98715A, and
- *	  98725 support power management.
+ *	  The 98713 is a very close 21140A clone.  It has GPR
+ *	  and MII media, and a GPIO facility, and uses the ISV
+ *	  SROM format (or, at least, should, because of the GPIO
+ *	  facility).  The 98713A has MII, no GPIO facility, and
+ *	  an internal NWay block.  The 98715, 98715A, and 98725
+ *	  have only GPR media and the NWay block.  The 98715,
+ *	  98715A, and 98725 support power management.
+ *
+ *	- Lite-On 82C115 (PNIC II):
+ *
+ *	  A clone of the Macronix MX98725, with the following differences:
+ *
+ *		- Wake-On-LAN support
+ *		- 128-bit multicast hash table rather than the
+ *		  standard 512-bit hash table
+ *		- 802.3x flow control
  *		
  *	- Lite-On 82C168, 82C169 (PNIC):
  *
- *	  These are Tulip clones with a few small differences; the
- *	  EEPROM is accessed totally differently, as is the MII.
- *	  The PNIC also has a built-in NWAY transciever.
+ *	  Pretty close, with only a few minor differences:
+ *
+ *		- EEPROM is accessed completely differently.
+ *		- MII is accessed completely differently.
+ *		- No SIO facility (due to the above two differences).
+ *		- GPIO interface is different than the 21140's.
+ *		- Boards that lack PHYs use the internal NWay block
+ *		  and transciever.
  *
  *	- Winbond 89C840F
  *
- *	  Fairly straight-forward Tulip clone, with the exception
- *	  that registers don't have a pad longword between them,
- *	  and the receive filter is set up differently: instead of
- *	  a setup packet, we have 2 32-bit multicast hash table
- *	  registers, and 2 station address registers.
+ *	  Less similar, but still roughly compatible (enough so
+ *	  that the driver can be adapted, at least):
+ *
+ *		- Registers lack the pad word between them.
+ *		- Instead of a setup frame, there are two station
+ *		  address registers and two multicast hash table
+ *		  registers (64-bit multicast hash table).
+ *		- Only supported media interface is MII-over-SIO.
+ *		- Different OPMODE register bits for various things
+ *		  (mostly media related).
  *
  *	- ADMtek AL981
  *
- *	  These clones have power management, Wake-On-Lan, and don't
- *	  use a setup frame to program the receive filter.  Instead,
- *	  we have station address and multicast hash registers.  We
- *	  talk to the network over a built-in PHY which we communicate
- *	  with over special PHY access registers.  Note that starting
- *	  at CSR16, the AL981 registers no longer have the pad word!
- *	  That is to say, CSR16 is in the normal place, and CSR17 is
- *	  CSR16 + 4.
+ *	  Another pretty-close clone:
+ *
+ *		- Wake-On-LAN support
+ *		- Instead of a setup frame, there are two station
+ *		  address registers and two multicast hash table
+ *		  registers (64-bit multicast hash table).
+ *		- 802.3x flow control
+ *		- Only supported media interface is built-in PHY
+ *		  which is accessed through a set of special registers.
+ *		- Not all registers have the pad word between them,
+ *		  but luckily, there are all AL981-specific registers,
+ *		  so this is easy to deal with.
  *
  * Some of the clone chips have different registers, and some have
  * different bits in the same registers.  These will be denoted by
- * PMAC, PNIC, WINB, and ADM in the register/bit names.
+ * PMAC, PNICII, PNIC, WINB, and ADM in the register/bit names.
  */
 
 /*
@@ -209,6 +236,7 @@ struct tulip_desc {
 #define	TULIP_SETUP_PACKET_LEN	192
 #define	TULIP_MAXADDRS		16
 #define	TULIP_MCHASHSIZE	512
+#define	TULIP_PNICII_HASHSIZE	128
 
 /*
  * Maximum size of a Tulip Ethernet Address ROM or SROM.
@@ -328,6 +356,17 @@ struct tulip_desc {
 #define	TULIP_CSR18	0x90
 #define	TULIP_CSR19	0x98
 #define	TULIP_CSR20	0xa0
+#define	TULIP_CSR21	0xa8
+#define	TULIP_CSR22	0xb0
+#define	TULIP_CSR23	0xb8
+#define	TULIP_CSR24	0xc0
+#define	TULIP_CSR25	0xc8
+#define	TULIP_CSR26	0xd0
+#define	TULIP_CSR27	0xd8
+#define	TULIP_CSR28	0xe0
+#define	TULIP_CSR29	0xe8
+#define	TULIP_CSR30	0xf0
+#define	TULIP_CSR31	0xf8
 
 #define	TULIP_CSR_INDEX(csr)	((csr) >> 3)
 
@@ -406,6 +445,7 @@ struct tulip_desc {
 #define	STATUS_RWT		0x00000200	/* receive watchdog timeout */
 #define	STATUS_AT		0x00000400	/* SIA AUI/TP pin changed
 						   (21040) */
+#define	STATUS_PMAC_ETI		0x00000400	/* early transmit interrupt */
 #define	STATUS_WINB_TEI		0x00000400	/* transmit early interrupt */
 #define	STATUS_FD		0x00000800	/* full duplex short frame
 						   received (21040) */
@@ -449,6 +489,8 @@ struct tulip_desc {
 #define	STATUS_EB_MABT		0x00800000	/* master abort */
 #define	STATUS_EB_TABT		0x01000000	/* target abort */
 #define	STATUS_PNIC_TXABORT	0x04000000	/* transmit aborted */
+#define	STATUS_PMAC_LC		0x08000000	/* 100baseTX link change */
+#define	STATUS_PMAC_WKUPI	0x10000000	/* wake up event */
 
 
 /* CSR6 - Operation Mode */
@@ -559,6 +601,15 @@ struct tulip_desc {
 						   0 = PHY in write */
 #define	MIIROM_MDI		0x00080000	/* MII data in */
 #define	MIIROM_DN		0x80000000	/* data not valid (21040) */
+
+#define	MIIROM_PMAC_LED0SEL	0x10000000	/* 0 == LED0 activity (def)
+						   1 == LED0 speed */
+#define	MIIROM_PMAC_LED1SEL	0x20000000	/* 0 == LED1 link (def)
+						   1 == LED1 link/act */
+#define	MIIROM_PMAC_LED2SEL	0x40000000	/* 0 == LED2 speed (def)
+						   1 == LED2 collision */
+#define	MIIROM_PMAC_LED3SEL	0x80000000	/* 0 == LED3 receive (def)
+						   1 == LED3 full duplex */
 
 	/* SROM opcodes */
 #define	TULIP_SROM_OPC_ERASE	0x04
@@ -883,7 +934,8 @@ struct tulip_desc {
 
 
 /*
- * Macronix 98713, 98713A, 98715, 98715A, 98725 registers.
+ * Macronix 98713, 98713A, 98715, 98715A, 98725 and
+ * Lite-On 82C115 registers.
  */
 
 	/*
@@ -914,7 +966,7 @@ struct tulip_desc {
 #define	PMAC_10TSTAT_ANS_ABD	   0x00002000	/*     ability detect */
 #define	PMAC_10TSTAT_ANS_ACKD	   0x00003000	/*     acknowledge detect */
 #define	PMAC_10TSTAT_ANS_ACKC	   0x00004000	/*     complete acknowledge */
-#define	PMAC_10TSTAT_ANS_FPLGOOD   0x00005000	/*     FLP link good */
+#define	PMAC_10TSTAT_ANS_FLPGOOD   0x00005000	/*     FLP link good */
 #define	PMAC_10TSTAT_ANS_LINKCHECK 0x00006000	/*     link check */
 #define	PMAC_10TSTAT_LPN	   0x00008000	/* link partner negotiable
 						   (21041) */
@@ -925,13 +977,16 @@ struct tulip_desc {
 
 /* CSR13 - NWAY Reset Register */
 #define	CSR_PMAC_NWAYRESET	TULIP_CSR13
-#define	PMAC_NWAYRESET_RESET	0x00000000	/* NWAY reset */
+#define	PMAC_NWAYRESET_RESET	0x00000000	/* NWay reset */
+#define	PMAC_NWAYRESET_100TXRESET 0x00000002	/* 100base PMD reset */
 
 
 /* CSR14 - 10base-T Control Port */
 #define	CSR_PMAC_10TCTL		TULIP_CSR14
 #define	PMAC_10TCTL_LBK		0x00000002	/* loopback */
-#define	PMAC_10TCTL_PWD10	0x00000004	/* power down 10base-T */
+#define	PMAC_10TCTL_PWD10	0x00000004	/* power down 10base-T:
+						   0 == power down
+						   1 == normal operation */
 #define	PMAC_10TCTL_HDE		0x00000040	/* half-duplex enable */
 #define	PMAC_10TCTL_ANE		0x00000080	/* autonegotiation enable */
 #define	PMAC_10TCTL_RSQ		0x00000100	/* receive squelch enable */
@@ -939,6 +994,10 @@ struct tulip_desc {
 #define	PMAC_10TCTL_TXH		0x00010000	/* adv. 100tx */
 #define	PMAC_10TCTL_TXF		0x00020000	/* adv. 100tx-fdx */
 #define	PMAC_10TCTL_T4		0x00040000	/* adv. 100t4 */
+
+
+/* CSR15 - Watchdog Timer Register */
+	/* See 21140 CSR15 */
 
 
 /* CSR16 - Test Operation Register (a.k.a. Magic Packet Register) */
@@ -949,11 +1008,102 @@ struct tulip_desc {
 
 /* CSR20 - NWAY Status */
 #define	CSR_PMAC_NWAYSTAT	TULIP_CSR20
+	/*
+	 * Note: the MX98715A manual claims that EQTEST and PCITEST
+	 * must be set to 1 by software for normal operation, but
+	 * this does not appear to be necessary.  This is probably
+	 * one of the things that frobbing the Test Operation Register
+	 * does.
+	 */
+#define	PMAC_NWAYSTAT_EQTEST	0x00001000	/* EQ test */
+#define	PMAC_NWAYSTAT_PCITEST	0x00010000	/* PCI test */
 #define	PMAC_NWAYSTAT_10TXH	0x08000000	/* 10t accepted */
 #define	PMAC_NWAYSTAT_10TXF	0x10000000	/* 10t-fdx accepted */
 #define	PMAC_NWAYSTAT_100TXH	0x20000000	/* 100tx accepted */
 #define	PMAC_NWAYSTAT_100TXF	0x40000000	/* 100tx-fdx accepted */
 #define	PMAC_NWAYSTAT_T4	0x80000000	/* 100t4 accepted */
+
+
+/* CSR21 - Flow Control Register */
+#define	CSR_PNICII_FLOWCTL	TULIP_CSR21
+#define	PNICII_FLOWCTL_WKFCATEN	0x00000010	/* enable wake-up frame
+						   catenation feature */
+#define	PNICII_FLOWCTL_NFCE	0x00000020	/* accept flow control result
+						   from NWay */
+#define	PNICII_FLOWCTL_FCTH0	0x00000040	/* rx flow control thresh 0 */
+#define	PNICII_FLOWCTL_FCTH1	0x00000080	/* rx flow control thresh 1 */
+#define	PNICII_FLOWCTL_REJECTFC	0x00000100	/* abort rx flow control */
+#define	PNICII_FLOWCTL_STOPTX	0x00000200	/* tx flow stopped */
+#define	PNICII_FLOWCTL_RUFCEN	0x00000400	/* send flow control when
+						   RU interrupt occurs */
+#define	PNICII_FLOWCTL_RXFCEN	0x00000800	/* rx flow control enable */
+#define	PNICII_FLOWCTL_TXFCEN	0x00001000	/* tx flow control enable */
+#define	PNICII_FLOWCTL_RESTOP	0x00002000	/* restop mode */
+#define	PNICII_FLOWCTL_RESTART	0x00004000	/* restart mode */
+#define	PNICII_FLOWCTL_TEST	0x00008000	/* test flow control timer */
+#define	PNICII_FLOWCTL_TMVAL	0xffff0000	/* timer value in flow
+						   control frame */
+
+#define	PNICII_FLOWCTL_TH_512	(PNICII_FLOWCTL_FCTH0|PNICII_FLOWCTL_FCTH1)
+#define	PNICII_FLOWCTL_TH_256	(PNICII_FLOWCTL_FCTH1)
+#define	PNICII_FLOWCTL_TH_128	(PNICII_FLOWCTL_FCTH0)
+#define	PNICII_FLOWCTL_TH_OVFLW	(0)
+
+
+/* CSR22 - MAC ID Byte 3-0 Register */
+#define	CSR_PNICII_MACID0	TULIP_CSR22
+#define	PNICII_MACID_1		0	/* shift */
+#define	PNICII_MACID_0		8	/* shift */
+#define	PNICII_MACID_3		16	/* shift */
+#define	PNICII_MACID_2		24	/* shift */
+
+
+/* CSR23 - Magic ID Byte 5,4/MACID Byte 5,4 Register */
+#define	PNICII_MACID_5		0	/* shift */
+#define	PNICII_MACID_4		8	/* shift */
+#define	PNICII_MAGID_5		16	/* shift */
+#define	PNICII_MAGIC_4		24	/* shift */
+
+
+/* CSR24 - Magic ID Byte 3-0 Register */
+#define	PNICII_MAGID_1		0	/* shift */
+#define	PNICII_MAGID_0		8	/* shift */
+#define	PNICII_MAGID_3		16	/* shift */
+#define	PNICII_MAGID_2		24	/* shift */
+
+
+/* CSR25 - CSR28 - Filter Byte Mask Registers */
+#define	CSR_PNICII_MASK0	TULIP_CSR25
+
+#define	CSR_PNICII_MASK1	TULIP_CSR26
+
+#define	CSR_PNICII_MASK2	TULIP_CSR27
+
+#define	CSR_PNICII_MASK3	TULIP_CSR28
+
+
+/* CSR29 - Filter Offset Register */
+#define	CSR_PNICII_FILOFF	TULIP_CSR29
+#define	PNICII_FILOFF_PAT0	0x0000007f	/* pattern 0 offset */
+#define	PNICII_FILOFF_EN0	0x00000080	/* enable pattern 0 */
+#define	PNICII_FILOFF_PAT1	0x00007f00	/* pattern 1 offset */
+#define	PNICII_FILOFF_EN1	0x00008000	/* enable pattern 1 */
+#define	PNICII_FILOFF_PAT2	0x007f0000	/* pattern 2 offset */
+#define	PNICII_FILOFF_EN2	0x00800000	/* enable pattern 2 */
+#define	PNICII_FILOFF_PAT3	0x7f000000	/* pattern 3 offset */
+#define	PNICII_FILOFF_EN3	0x80000000	/* enable pattern 3 */
+
+
+/* CSR30 - Filter 1 and 0 CRC-16 Register */
+#define	CSR_PNICII_FIL01	TULIP_CSR30
+#define	PNICII_FIL01_CRC0	0x0000ffff	/* CRC-16 of pattern 0 */
+#define	PNICII_FIL01_CRC1	0xffff0000	/* CRC-16 of pattern 1 */
+
+
+/* CSR31 = Filter 3 and 2 CRC-16 Register */
+#define	CSR_PNICII_FIL23	TULIP_CSR31
+#define	PNICII_FIL23_CRC2	0x0000ffff	/* CRC-16 of pattern 2 */
+#define	PNICII_FIL23_CRC3	0xffff0000	/* CRC-16 of pattern 3 */
 
 
 /*
@@ -1111,12 +1261,19 @@ struct tulip_desc {
 
 /* CSR23 - Transmit Burst Count/Time Out Register */
 #define	CSR_ADM_TXBR		0x9c
-	/* XXX */
+#define	ADM_TXBR_TTO		0x00000fff	/* transmit timeout */
+#define	ADM_TXBR_TBCNT		0x001f0000	/* transmit burst count */
 
 
 /* CSR24 - Flash ROM Port Register */
 #define	CSR_ADM_FROM		0xa0
-	/* XXX */
+#define	ADM_FROM_DATA		0x000000ff	/* data to/from Flash */
+#define	ADM_FROM_ADDR		0x01ffff00	/* Flash address */
+#define	ADM_FROM_ADDR_SHIFT	8
+#define	ADM_FROM_WEN		0x04000000	/* write enable */
+#define	ADM_FROM_REN		0x08000000	/* read enable */
+#define	ADM_FROM_bra16on	0x80000000	/* pin 87 is brA16, else
+						   pin 87 is fd/col LED pin */
 
 
 /* CSR25 - Physical Address Register 0 */
@@ -1147,14 +1304,50 @@ struct tulip_desc {
 
 /* XCVR Mode Control Register */
 #define	CSR_ADM_XMC		0xd0
+#define	ADM_XMC_LD		0x00000800	/* long distance mode
+						   (low squelch enable) */
+
 
 /* XCVR Configuration Information and Interrupt Status Register */
 #define	CSR_ADM_XCIIS		0xd4
+#define	ADM_XCIIS_REF		0x0001		/* 64 error packets received */
+#define	ADM_XCIIS_ANPR		0x0002		/* autoneg page received */
+#define	ADM_XCIIS_PDF		0x0004		/* parallel detection fault */
+#define	ADM_XCIIS_ANAR		0x0008		/* autoneg ACK */
+#define	ADM_XCIIS_LS		0x0010		/* link status (1 == fail) */
+#define	ADM_XCIIS_RFD		0x0020		/* remote fault */
+#define	ADM_XCIIS_ANC		0x0040		/* autoneg completed */
+#define	ADM_XCIIS_PAUSE		0x0080		/* PAUSE enabled */
+#define	ADM_XCIIS_DUPLEX	0x0100		/* full duplex */
+#define	ADM_XCIIS_SPEED		0x0200		/* 100Mb/s */
+
 
 /* XCVR Interrupt Enable Register */
 #define	CSR_ADM_XIE		0xd8
+	/* Bits are as for XCIIS */
+
 
 /* XCVR 100baseTX PHY Control/Status Register */
 #define	CSR_ADM_100CTR		0xdc
+#define	ADM_100CTR_DISCRM	0x0001		/* disable scrambler */
+#define	ADM_100CTR_DISMLT	0x0002		/* disable MLT3 ENDEC */
+#define	ADM_100CTR_CMODE	0x001c		/* current operating mode */
+#define	ADM_100CTR_CMODE_AUTO	0x0000		/*   in autoneg */
+#define	ADM_100CTR_CMODE_10	0x0004		/*   10baseT */
+#define	ADM_100CTR_CMODE_100	0x0008		/*   100baseTX */
+			/*	0x000c		     reserved */
+			/*	0x0010		     reserved */
+#define	ADM_100CTR_CMODE_10FD	0x0014		/*   10baseT-FDX */
+#define	ADM_100CTR_CMODE_100FD	0x0018		/*   100baseTX-FDX */
+#define	ADM_100CTR_CMODE_ISO	0x001c		/*   isolated */
+#define	ADM_100CTR_ISOTX	0x0020		/* transmit isolation */
+#define	ADM_100CTR_ENRZI	0x0080		/* enable NRZ <> NRZI conv. */
+#define	ADM_100CTR_ENDCR	0x0100		/* enable DC restoration */
+#define	ADM_100CTR_ENRLB	0x0200		/* enable remote loopback */
+#define	ADM_100CTR_RXVPP	0x0800		/* peak Rx voltage:
+						   0 == 1.0 VPP
+						   1 == 1.4 VPP */
+#define	ADM_100CTR_ANC		0x1000		/* autoneg completed */
+#define	ADM_100CTR_DISRER	0x2000		/* disable Rx error counter */
 
 #endif /* _DEV_IC_TULIPREG_H_ */
