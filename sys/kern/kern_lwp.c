@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.11 2003/07/17 19:05:30 fvdl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.12 2003/07/28 23:35:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.11 2003/07/17 19:05:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.12 2003/07/28 23:35:20 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -325,6 +325,10 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 		error = EBUSY;
 		goto exit;
 	}
+	/*
+	 * Tell ltsleep to wakeup.
+	 */
+	t->l_flag |= L_CANCELLED;
 
 	setrunnable(t);
 	error = 0;
