@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $	*/
+/*	$NetBSD: perform.c,v 1.24 1999/08/19 13:30:01 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $");
+__RCSID("$NetBSD: perform.c,v 1.24 1999/08/19 13:30:01 agc Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ pkg_do(char *pkg)
 			    err(1, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
-			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
+			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
 		} else
 			strcpy(fname, pkg);
 		cp = fname;
@@ -139,7 +139,7 @@ pkg_do(char *pkg)
 	if (Flags & SHOW_INDEX) {
 		char            tmp[FILENAME_MAX];
 
-		snprintf(tmp, FILENAME_MAX, "%-19s ", pkg);
+		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(tmp, COMMENT_FNAME);
 	} else {
 		/* Start showing the package contents */
@@ -221,7 +221,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	    return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
 	}
 	/* simple match */
-	snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
+	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
 	error = (stat(buf, &st) < 0);
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
@@ -279,7 +279,7 @@ pkg_perform(lpkg_head_t *pkgs)
 				    strcmp(dp->d_name, "..")==0)
 					continue;
 
-				snprintf(tmp2, FILENAME_MAX, "%s/%s",
+				(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
 					 tmp, dp->d_name);
 				if (isfile(tmp2))
 					continue;

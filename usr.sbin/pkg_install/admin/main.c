@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.5 1999/05/30 16:08:24 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1999/08/19 13:30:01 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 1999/05/30 16:08:24 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1999/08/19 13:30:01 agc Exp $");
 #endif
 
 /*
@@ -84,7 +84,7 @@ static void check1pkg(const char *pkgdir)
 		abort();
 	    }
 		
-	    snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
+	    (void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
 
 	    if (!isfile(file))
 		warnx("%s: File %s is in %s but not on filesystem!", PkgName, file, CONTENTS_FNAME);
@@ -112,7 +112,7 @@ static void check1pkg(const char *pkgdir)
 	    if (strcmp(p->name, ".") != 0)
 		dirp = p->name;
 	    else {
-		snprintf(dir, FILENAME_MAX, "%s/%s", _pkgdb_getPKGDB_DIR(), pkgdir);
+		(void) snprintf(dir, sizeof(dir), "%s/%s", _pkgdb_getPKGDB_DIR(), pkgdir);
 		dirp = dir;
 	    }
 	    break;
@@ -208,7 +208,7 @@ static void rebuild(void)
 		    abort();
 		}
 		
-		snprintf(file, FILENAME_MAX, "%s/%s", dirp, p->name);
+		(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
 
 		if (!isfile(file))
 		    warnx("%s: File %s is in %s but not on filesystem!",
@@ -222,7 +222,7 @@ static void rebuild(void)
 		if (strcmp(p->name, ".") != 0)
 		    dirp = p->name;
 		else {
-		    snprintf(dir, FILENAME_MAX, "%s/%s", PkgDBDir, de->d_name);
+		    (void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, de->d_name);
 		    dirp = dir;
 		}
 		break;

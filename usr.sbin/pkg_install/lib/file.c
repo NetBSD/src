@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.27 1999/06/15 06:32:01 cgd Exp $	*/
+/*	$NetBSD: file.c,v 1.28 1999/08/19 13:30:02 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.27 1999/06/15 06:32:01 cgd Exp $");
+__RCSID("$NetBSD: file.c,v 1.28 1999/08/19 13:30:02 agc Exp $");
 #endif
 #endif
 
@@ -401,7 +401,7 @@ fileFindByPath(char *base, char *fname)
     while (cp) {
 	char *cp2 = strsep(&cp, ":");
 
-	snprintf(tmp, FILENAME_MAX, "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+	(void) snprintf(tmp, sizeof(tmp), "%s/%s.tgz", cp2 ? cp2 : cp, fname);
 	if (ispkgpattern(tmp)) {
 	    char *s;
 	    s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
@@ -516,9 +516,9 @@ copy_file(char *dir, char *fname, char *to)
     char cmd[FILENAME_MAX];
 
     if (fname[0] == '/')
-	snprintf(cmd, FILENAME_MAX, "cp -p -r %s %s", fname, to);
+	(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s %s", fname, to);
     else
-	snprintf(cmd, FILENAME_MAX, "cp -p -r %s/%s %s", dir, fname, to);
+	(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s/%s %s", dir, fname, to);
     if (vsystem(cmd)) {
 	cleanup(0);
 	errx(2, "could not perform '%s'", cmd);
@@ -531,9 +531,9 @@ move_file(char *dir, char *fname, char *to)
     char cmd[FILENAME_MAX];
 
     if (fname[0] == '/')
-	snprintf(cmd, FILENAME_MAX, "mv %s %s", fname, to);
+	(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
     else
-	snprintf(cmd, FILENAME_MAX, "mv %s/%s %s", dir, fname, to);
+	(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
     if (vsystem(cmd)) {
 	cleanup(0);
 	errx(2, "could not perform '%s'", cmd);
@@ -557,11 +557,10 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 	/* If absolute path, use it */
 	if (*fname == '/')
 	    dir = "/";
-	snprintf(cmd, sizeof(cmd), "%s cf - -C %s %s | %s xpf -",
+	(void) snprintf(cmd, sizeof(cmd), "%s cf - -C %s %s | %s xpf -",
  		 TAR_CMD, dir, fname, TAR_CMD);
-    }
-    else
-	snprintf(cmd, sizeof(cmd), "%s cf - %s | %s xpf - -C %s",
+    } else
+	(void) snprintf(cmd, sizeof(cmd), "%s cf - %s | %s xpf - -C %s",
  		 TAR_CMD, fname, dir, TAR_CMD);
 #ifdef DEBUG
     printf("Using '%s' to copy trees.\n", cmd);

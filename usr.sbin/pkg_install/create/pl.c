@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.14 1999/07/10 20:17:21 christos Exp $	*/
+/*	$NetBSD: pl.c,v 1.15 1999/08/19 13:30:01 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.14 1999/07/10 20:17:21 christos Exp $");
+__RCSID("$NetBSD: pl.c,v 1.15 1999/08/19 13:30:01 agc Exp $");
 #endif
 #endif
 
@@ -141,7 +141,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			{
 			    char *s, t[FILENAME_MAX];
 			    
-			    snprintf(t, FILENAME_MAX, "%s/%s", cwd, p->name);
+			    (void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
 			    
 			    s=pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
