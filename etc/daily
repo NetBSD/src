@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.56 2003/12/10 09:25:36 lukem Exp $
+#	$NetBSD: daily,v 1.57 2003/12/28 16:34:03 atatat Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -256,7 +256,7 @@ if checkyesno run_security; then
 			echo "Nothing to report on $date" > "$SECOUT"
 		else
 			echo ""
-			echo "Supressing empty security report."
+			echo "Suppressing empty security report."
 		fi
 	fi
 	if [ -s "$SECOUT" ]; then
