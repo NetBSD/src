@@ -62,3 +62,4 @@ now doesn't work because it's done in an interrupt context.
 Rewrite HID driver to handle report IDs properly.  Perhaps there should
 be a hiddev to which hid with different IDs can attach?
 
+Get rid of hcpriv.
