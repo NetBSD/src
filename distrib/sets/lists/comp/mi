@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.344 2001/05/26 08:11:19 wiz Exp $
+#	$NetBSD: mi,v 1.345 2001/05/31 21:56:23 tron Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -158,6 +158,7 @@
 ./usr/include/dev/sbus/mbppio.h		comp-c-include
 ./usr/include/dev/scsipi		comp-c-include
 ./usr/include/dev/scsipi/scsi_all.h		comp-c-include
+./usr/include/dev/scsipi/scsi_cd.h		comp-c-include
 ./usr/include/dev/scsipi/scsi_disk.h		comp-c-include
 ./usr/include/dev/scsipi/scsiconf.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_all.h		comp-c-include
