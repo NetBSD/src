@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.39 2001/11/24 02:54:50 thorpej Exp $
+# $NetBSD: makeflist,v 1.40 2001/11/24 03:06:17 thorpej Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -43,7 +43,7 @@ while : ; do
 Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
-	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$arch]
+	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$machine_arch]
 	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
 	-s setsdir	directory to find sets [$setd]
 	[setname ...]	sets to build [$lists]
