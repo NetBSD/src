@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.5 2003/04/20 21:25:59 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.6 2003/04/21 16:52:07 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -371,7 +371,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		} else
 			first = 0;
 
-		if (xm->xm_mode & PERIPH_CAP_WIDE16)
+		if (xm->xm_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 			width = MSG_EXT_WDTR_BUS_16_BIT;
 		else
 			width = MSG_EXT_WDTR_BUS_8_BIT;
@@ -381,7 +381,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 			width = tinfo->user.width;
 		tinfo->goal.width = width;
 
-		if (!(xm->xm_mode & PERIPH_CAP_SYNC)) {
+		if (!(xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT))) {
 			tinfo->goal.period = 0;
 			tinfo->goal.offset = 0;
 			tinfo->goal.ppr_options = 0;
@@ -1045,6 +1045,8 @@ ahc_send_async(struct ahc_softc *ahc, char channel, u_int target, u_int lun,
 			xm.xm_mode |= PERIPH_CAP_SYNC;
 		if (tstate->tagenable & devinfo.target_mask)
 			xm.xm_mode |= PERIPH_CAP_TQING;
+		if (tinfo->curr.ppr_options & MSG_EXT_PPR_DT_REQ)
+			xm.xm_mode |= PERIPH_CAP_DT;
 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, &xm);
 		break;
 	case AC_BUS_RESET:
