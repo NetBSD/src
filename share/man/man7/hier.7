@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.44 2002/05/30 23:41:39 augustss Exp $
+.\"	$NetBSD: hier.7,v 1.45 2002/08/22 01:40:07 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd October 15, 2001
+.Dd August 22, 2002
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -327,12 +327,23 @@ see
 .It Sy /home/
 mount point for the automounter; see
 .Xr amd 8
+.It Sy /lib/
+dynamic linked libraries and shared linker used by dynamic linked programs
+(such as those in
+.Pa /bin
+and
+.Pa /sbin )
+that cannot rely upon
+.Pa /usr/lib
+being available.
 .It Sy /mnt/
 empty directory commonly used by
 system administrators as a temporary mount point
 .It Sy /netbsd
 pure kernel executable (the operating system loaded into memory
 at boot time).
+.It Sy /rescue/
+statically linked rescue tools, for use in system recovery
 .It Sy /root/
 home directory for the super-user
 .Pp
@@ -357,8 +368,11 @@ symbolic link to the operating system source
 .It Sy /tmp/
 temporary files, usually a
 .Xr mfs 8
-memory-based filesystem (the contents
-of /tmp are usually NOT preserved across a system reboot)
+memory-based filesystem (the contents of
+.Pa /tmp
+are usually
+.Em not
+preserved across a system reboot)
 .It Sy /usr/
 contains the majority of the system utilities and files
 .Pp
