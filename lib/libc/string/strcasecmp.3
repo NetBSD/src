@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcasecmp.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strcasecmp.3,v 1.8 1998/02/05 18:50:42 perry Exp $
+.\"	$NetBSD: strcasecmp.3,v 1.9 1998/10/23 17:49:29 tron Exp $
 .\"
 .Dd June 9, 1993
 .Dt STRCASECMP 3
@@ -87,5 +87,9 @@ The
 .Fn strcasecmp
 and
 .Fn strncasecmp
-functions first appeared in
-.Bx 4.4 .
+.Sh NOTES
+If
+.Fa len 
+is zero
+.Fn strncasecmp
+returns always 0.
