@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.16.2.8 1994/02/01 20:39:14 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.9 1994/02/01 20:44:11 mycroft Exp $
  */
 
 /*
@@ -1062,16 +1062,16 @@ stioctl(dev, cmd, arg, flag)
 		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
 		bzero(g, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
-		g->mt_density = st->density;
 		g->mt_blksiz = st->blksiz;
-		g->mt_density[0] = st->modes[0].density;
-		g->mt_density[1] = st->modes[1].density;
-		g->mt_density[2] = st->modes[2].density;
-		g->mt_density[3] = st->modes[3].density;
-		g->mt_blksiz[0] = st->modes[0].blksiz;
-		g->mt_blksiz[1] = st->modes[1].blksiz;
-		g->mt_blksiz[2] = st->modes[2].blksiz;
-		g->mt_blksiz[3] = st->modes[3].blksiz;
+		g->mt_density = st->density;
+		g->mt_mblksiz[0] = st->modes[0].blksiz;
+		g->mt_mblksiz[1] = st->modes[1].blksiz;
+		g->mt_mblksiz[2] = st->modes[2].blksiz;
+		g->mt_mblksiz[3] = st->modes[3].blksiz;
+		g->mt_mdensity[0] = st->modes[0].density;
+		g->mt_mdensity[1] = st->modes[1].density;
+		g->mt_mdensity[2] = st->modes[2].density;
+		g->mt_mdensity[3] = st->modes[3].density;
 		break;
 	}
 	case MTIOCTOP: {
