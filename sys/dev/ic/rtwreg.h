@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.8 2005/01/02 04:23:03 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.9 2005/01/02 04:29:36 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -1066,13 +1066,19 @@ struct rtw_rxdesc {
  * Registers for RTL8180L's built-in baseband modem.
  */
 #define RTW_BBP_SYS1		0x00
-#define RTW_BBP_TXAGC		0x03
-#define RTW_BBP_LNADET		0x04
-#define RTW_BBP_IFAGCINI	0x05
-#define RTW_BBP_IFAGCLIMIT	0x06
-#define RTW_BBP_IFAGCDET	0x07
+#define RTW_BBP_TXAGC		0x03	/* guess: transmit auto gain control */
+#define RTW_BBP_LNADET		0x04	/* guess: low-noise amplifier activation
+					 * threshold
+					 */
+#define RTW_BBP_IFAGCINI	0x05	/* guess: intermediate frequency (IF)
+					 * auto-gain control (AGC) initial value
+					 */
+#define RTW_BBP_IFAGCLIMIT	0x06	/* guess: IF AGC maximum value */
+#define RTW_BBP_IFAGCDET	0x07	/* guess: activation threshold for
+					 * IF AGC loop
+					 */
 
-#define RTW_BBP_ANTATTEN	0x10
+#define RTW_BBP_ANTATTEN	0x10	/* guess: antenna & attenuation */
 #define RTW_BBP_ANTATTEN_PHILIPS_MAGIC		0x91
 #define RTW_BBP_ANTATTEN_INTERSIL_MAGIC		0x92
 #define RTW_BBP_ANTATTEN_RFMD_MAGIC		0x93
@@ -1080,7 +1086,9 @@ struct rtw_rxdesc {
 #define	RTW_BBP_ANTATTEN_DFLANTB		0x40
 #define	RTW_BBP_ANTATTEN_CHAN14			0x0c
 
-#define RTW_BBP_TRL			0x11
+#define RTW_BBP_TRL			0x11	/* guess: transmit/receive
+						 * switch latency
+						 */
 #define RTW_BBP_SYS2			0x12
 #define RTW_BBP_SYS2_ANTDIV		0x80	/* enable antenna diversity */
 #define RTW_BBP_SYS2_RATE_MASK		BITS(5,4)	/* loopback rate?
@@ -1092,6 +1100,9 @@ struct rtw_rxdesc {
 #define RTW_BBP_SYS3			0x13
 /* carrier-sense threshold */
 #define RTW_BBP_SYS3_CSTHRESH_MASK	BITS(0,3)
-#define RTW_BBP_CHESTLIM	0x19
-#define RTW_BBP_CHSQLIM		0x1a
-
+#define RTW_BBP_CHESTLIM	0x19	/* guess: channel energy-detect
+					 * threshold
+					 */
+#define RTW_BBP_CHSQLIM		0x1a	/* guess: channel signal-quality
+					 * threshold
+					 */
