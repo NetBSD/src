@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.57 2003/02/26 19:01:54 fredb Exp $	*/
+/*	$NetBSD: w.c,v 1.58 2003/02/26 19:10:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.57 2003/02/26 19:01:54 fredb Exp $");
+__RCSID("$NetBSD: w.c,v 1.58 2003/02/26 19:10:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,8 @@ struct	entry {
 	struct timeval tv;
 	dev_t	tdev;			/* dev_t of terminal */
 	time_t	idle;			/* idle time of terminal in seconds */
-	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
+	struct	kinfo_proc2 *tp;	/* `most interesting' tty proc */
+	struct	kinfo_proc2 *pp;	/* pid proc */
 	pid_t	pid;			/* pid or ~0 if not known */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
@@ -298,20 +299,18 @@ main(int argc, char **argv)
 			continue;
 
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev != 0) {
-				if (ep->tdev == kp->p_tdev &&
-				    kp->p__pgid == kp->p_tpgid) {
-					/*
-					 * Proc is in foreground of this
-					 * terminal
-					 */
-					if (proc_compare(ep->kp, kp)) {
-						ep->kp = kp;
-					}
-					break;
-				}
-			} else if (ep->pid != 0 && ep->pid == kp->p_pid) {
-				ep->kp = kp;
+			if (ep->tdev != 0 && ep->tdev == kp->p_tdev &&
+			    kp->p__pgid == kp->p_tpgid) {
+				/*
+				 * Proc is in foreground of this
+				 * terminal
+				 */
+				if (proc_compare(ep->tp, kp))
+					ep->tp = kp;
+				break;
+			} 
+			if (ep->pid != 0 && ep->pid == kp->p_pid) {
+				ep->pp = kp;
 				break;
 			}
 		}
@@ -407,13 +406,17 @@ main(int argc, char **argv)
 			(void)snprintf(buf, sizeof(buf), "%s:%s", p, x);
 			p = buf;
 		}
-		if (ep->kp == NULL) {
+		if (ep->tp != NULL)
+			kp = ep->tp;
+		else if (ep->pp != NULL)
+			kp = ep->pp;
+		else {
 			warnx("Stale utmp%s entry: %s %s %s",
 			    ep->type, ep->name, ep->line, ep->host);
 			continue;
 		}
 		(void)printf("%-*s %-2.2s %-*.*s ",
-		    maxname, ep->kp->p_login,
+		    maxname, kp->p_login,
 		    (strncmp(ep->line, "tty", 3) &&
 		    strncmp(ep->line, "dty", 3)) ?
 		    ep->line : ep->line + 3,
@@ -421,7 +424,7 @@ main(int argc, char **argv)
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
 		pr_idle(ep->idle);
-		pr_args(ep->kp);
+		pr_args(kp);
 		(void)printf("\n");
 	}
 	exit(0);
