@@ -1,7 +1,7 @@
-/*	$NetBSD: xebec.c,v 1.7 2003/07/14 15:44:47 lukem Exp $	*/
+/*	$NetBSD: xebec.c,v 1.8 2005/02/11 06:21:21 simonb Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xebec.c,v 1.7 2003/07/14 15:44:47 lukem Exp $");
+__RCSID("$NetBSD: xebec.c,v 1.8 2005/02/11 06:21:21 simonb Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -211,7 +211,7 @@ case 37: {
 } break;
 
 case 38: {
- transno ++; 
+ transno++; 
 } break;
 
 case 39: {

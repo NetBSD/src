@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.23 2004/03/17 20:27:57 scw Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.24 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.23 2004/03/17 20:27:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.24 2005/02/11 06:21:21 simonb Exp $");
 
 #include "opt_pci.h"
 
@@ -479,7 +479,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 		    pb->next_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
 		pci_conf_write(pb->pc, tag, PCI_BUSNUM, busreg);
 
-		pb->next_busno ++;
+		pb->next_busno++;
 		break;
 	default:
 		return -1;

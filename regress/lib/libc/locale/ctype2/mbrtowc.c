@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtowc.c,v 1.4 2004/06/21 21:20:05 itojun Exp $	*/
+/*	$NetBSD: mbrtowc.c,v 1.5 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -99,7 +99,7 @@ int test_mbrtowc(char const *text)
 
 			printf("(%x) ", (u_int)*dst);
 			src += rv;
-			dst ++;
+			dst++;
 		}
 		printf("\n");
 	}

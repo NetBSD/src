@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: utilities.c,v 1.13 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.13 2005/02/11 06:21:21 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ allocblk(void)
 		if (testbmap(i))
 				continue;
 		setbmap(i);
-		n_blks ++;
+		n_blks++;
 		return (i);
 	}
 	return (0);
