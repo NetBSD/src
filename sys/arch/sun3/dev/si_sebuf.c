@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.10 2000/03/18 16:13:25 mycroft Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.11 2000/03/25 15:27:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -262,6 +262,8 @@ se_attach(parent, self, args)
 	ncr_sc->sci_r5 = &regs->ncrregs[5];
 	ncr_sc->sci_r6 = &regs->ncrregs[6];
 	ncr_sc->sci_r7 = &regs->ncrregs[7];
+
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
 
 	/*
 	 * Allocate DMA handles.
