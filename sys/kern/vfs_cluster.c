@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.2 1994/06/29 06:33:49 cgd Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.3 1994/08/21 06:38:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -204,10 +204,12 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			     ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
 				goto skip_readahead;
 			/*
-			 * Adjust readahead as above
+			 * Adjust readahead as above.
+			 * Don't check alreadyincore, we know it is 0 from
+			 * the previous conditional.
 			 */
 			if (num_ra) {
-				if (!alreadyincore && ioblkno <= vp->v_maxra)
+				if (ioblkno <= vp->v_maxra)
 					vp->v_ralen = max(vp->v_ralen >> 1, 1);
 				else if (num_ra > vp->v_ralen &&
 					 lblkno != vp->v_lastr)
@@ -320,17 +322,12 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 
 	inc = btodb(size);
 	for (bn = blkno + inc, i = 1; i <= run; ++i, bn += inc) {
-		if (incore(vp, lbn + i)) {
-			if (i == 1) {
-				bp->b_saveaddr = b_save->bs_saveaddr;
-				bp->b_flags &= ~B_CALL;
-				bp->b_iodone = NULL;
-				allocbuf(bp, size);
-				free(b_save, M_SEGMENT);
-			} else
-				allocbuf(bp, size * i);
+		/*
+		 * A component of the cluster is already in core,
+		 * terminate the cluster early.
+		 */
+		if (incore(vp, lbn + i))
 			break;
-		}
 		tbp = getblk(vp, lbn + i, 0, 0, 0);
 		/*
 		 * getblk may return some memory in the buffer if there were
@@ -343,8 +340,18 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		if (tbp->b_bufsize != 0) {
 			caddr_t bdata = (char *)tbp->b_data;
 
-			if (tbp->b_bufsize + size > MAXBSIZE)
-				panic("cluster_rbuild: too much memory");
+			/*
+			 * No room in the buffer to add another page,
+			 * terminate the cluster early.
+			 */
+			if (tbp->b_bufsize + size > MAXBSIZE) {
+#ifdef DIAGNOSTIC
+				if (tbp->b_bufsize != MAXBSIZE)
+					panic("cluster_rbuild: too much memory");
+#endif
+				brelse(tbp);
+				break;
+			}
 			if (tbp->b_bufsize > size) {
 				/*
 				 * XXX if the source and destination regions
@@ -365,6 +372,20 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		tbp->b_flags |= flags | B_READ | B_ASYNC;
 		++b_save->bs_nchildren;
 		b_save->bs_children[i - 1] = tbp;
+	}
+	/*
+	 * The cluster may have been terminated early, adjust the cluster
+	 * buffer size accordingly.  If no cluster could be formed,
+	 * deallocate the cluster save info.
+	 */
+	if (i <= run) {
+		if (i == 1) {
+			bp->b_saveaddr = b_save->bs_saveaddr;
+			bp->b_flags &= ~B_CALL;
+			bp->b_iodone = NULL;
+			free(b_save, M_SEGMENT);
+		}
+		allocbuf(bp, size * i);
 	}
 	return(bp);
 }
