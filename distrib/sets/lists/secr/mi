@@ -144,7 +144,6 @@
 ./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
-./usr/share/man/cat8/telnetd.0
 ./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/compile_et.1
 ./usr/share/man/man1/kdestroy.1
@@ -216,5 +215,4 @@
 ./usr/share/man/man8/kerberos.8
 ./usr/share/man/man8/ksrvutil.8
 ./usr/share/man/man8/kstash.8
-./usr/share/man/man8/telnetd.8
 ./usr/share/man/whatis.db
