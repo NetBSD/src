@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.235 2004/04/03 15:47:16 darcy Exp $
+.\"	$NetBSD: options.4,v 1.236 2004/04/03 16:08:54 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 2, 2004
+.Dd April 3, 2004
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -341,16 +341,28 @@ support for some older pre
 .Bx 4.4
 socket calls.
 .It Cd options COMPAT_AOUT
-This option enables support for a.out format executables.  See
-.Em man a.out(5)
-for details on the ancient format.  Note that include
-.Em COMPAT_AOUT
-is
-.Em NOT
-required to run a.out binaries and that doing so may have extremely
-undesirable effects.  it is a deprecated interface that actually is
-harmful to system binaries.  If you use this option you should know
-what you are doing.
+This option is deprecated.
+It was used in the
+.Xr a.out 5
+to
+.Xr elf 5
+transition phase to enable
+.Xr a.out 5
+binaries to find their shared libraries.
+This has been fixed in
+.Xr ld.so 1
+in the meantime.
+The effect is that for
+.Xr a.out 5
+binaries, each name lookup will first search in
+.Pa /emul/aout .
+This causes problems with programs like
+.Xr a.out 5
+shells and emulations that use
+.Xr a.out 5
+(like
+.Tn BSD/OS ) .
+If you use this option you should know what you are doing.
 .It Cd options COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
