@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/03/19 21:41:58 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2005/03/21 00:55:04 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ INCSDIR=${X11INCDIR}/freetype2/freetype
 INCS=	freetype.h ftbbox.h ftbdf.h ftcache.h ftchapters.h fterrdef.h \
 	fterrors.h ftglyph.h ftgzip.h ftimage.h ftincrem.h ftlist.h \
 	ftlzw.h ftmac.h ftmm.h ftmoderr.h ftmodapi.h ftoutln.h ftpfr.h \
-	ftrender.h ftsizes.h ftsnames.h ftsynth.h ftsysio.h \
+	ftrender.h ftsizes.h ftsnames.h ftstroke.h ftsynth.h ftsysio.h \
 	ftsysmem.h ftsystem.h fttrigon.h fttypes.h ftwinfnt.h ftxf86.h \
 	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h
 
