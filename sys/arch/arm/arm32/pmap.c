@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2002/04/03 23:33:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2002/04/04 02:06:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2002/04/03 23:33:28 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2002/04/04 02:06:46 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1544,9 +1544,11 @@ pmap_destroy(struct pmap *pmap)
 	LIST_REMOVE(pmap, pm_list);
 	simple_unlock(&pmaps_lock);
 	
-	/* Remove the zero page mapping */
-	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update(pmap);
+	if (vector_page < KERNEL_BASE) {
+		/* Remove the vector page mapping */
+		pmap_remove(pmap, vector_page, vector_page + NBPG);
+		pmap_update(pmap);
+	}
 
 	/*
 	 * Free any page tables still mapped
@@ -2637,7 +2639,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	npte = (pa & PG_FRAME);
 
 	/* VA 0 is magic. */
-	if (pmap != pmap_kernel() && va != 0)
+	if (pmap != pmap_kernel() && va != vector_page)
 		npte |= PT_AP(AP_U);
 
 	if (pg != NULL) {
