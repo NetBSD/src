@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.5 1997/07/15 11:23:07 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.6 1997/09/17 18:21:41 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -31,17 +31,17 @@ Author: Martin Renters.
 #include <machine/pio.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
 #include <pcivar.h>
+#include <bootinfo.h>
 
 #include "etherdrv.h"
 #include "3c509.h"
 
 #define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
 #define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
-
-char etherdev[20];
 
 int ether_medium;
 unsigned short eth_base;
@@ -61,6 +61,8 @@ static struct mtabentry {
     {1, 0x20, "AUI"},
     {6, 0x40, "MII"},
 };
+
+static struct btinfo_netif bi_netif;
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
@@ -99,8 +101,6 @@ char *myadr;
 	}
 	eth_base = iobase & 0xfffffffc;
 
-	ether_medium = ETHERMEDIUM_BNC; /* XXX */
-
 	/* test for presence of connectors */
 	GO_WINDOW(3);
 	i = inb(IS_BASE + EP_W3_RESET_OPTIONS);
@@ -136,9 +136,17 @@ ok:
 	  GO_WINDOW(2);
 	  outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
 	}
-	for(i = 0; i < 6; i++) myadr[i] = eth_myaddr[i];
+	for(i = 0; i < 6; i++)
+		bi_netif.hw_addr[i] = myadr[i] = eth_myaddr[i];
+
 	epreset();
 
-	sprintf(etherdev, "ep@pci,0x%x", eth_base);
+
+	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
+	bi_netif.bus = BI_BUS_PCI;
+	bi_netif.addr = eth_base;
+
+	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+
 	return(1);
 }
