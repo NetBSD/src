@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.28 1999/08/05 04:04:28 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.29 2000/02/06 02:54:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,45 +132,57 @@ domaininit()
 	timeout(pfslowtimo, NULL, 1);
 }
 
+struct domain *
+pffinddomain(family)
+	int family;
+{
+	struct domain *dp;
+
+	for (dp = domains; dp != NULL; dp = dp->dom_next)
+		if (dp->dom_family == family)
+			return (dp);
+	return (NULL);
+}
+
 struct protosw *
 pffindtype(family, type)
 	int family, type;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (0);
-found:
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (NULL);
+
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_type && pr->pr_type == type)
 			return (pr);
-	return (0);
+
+	return (NULL);
 }
 
 struct protosw *
 pffindproto(family, protocol, type)
 	int family, protocol, type;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
-	struct protosw *maybe = 0;
+	struct domain *dp;
+	struct protosw *pr;
+	struct protosw *maybe = NULL;
 
 	if (family == 0)
-		return (0);
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (0);
-found:
+		return (NULL);
+
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (NULL);
+
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 		if ((pr->pr_protocol == protocol) && (pr->pr_type == type))
 			return (pr);
 
 		if (type == SOCK_RAW && pr->pr_type == SOCK_RAW &&
-		    pr->pr_protocol == 0 && maybe == (struct protosw *)0)
+		    pr->pr_protocol == 0 && maybe == NULL)
 			maybe = pr;
 	}
 	return (maybe);
@@ -186,8 +198,8 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 	int family, protocol;
 
 	/*
@@ -203,11 +215,11 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	if (family == 0)
 		return (0);
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (ENOPROTOOPT);
-found:
+
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (ENOPROTOOPT);
+
 	switch (family) {
 #ifdef IPSEC
 	case PF_KEY:
