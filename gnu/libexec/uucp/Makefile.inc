@@ -29,6 +29,10 @@ newconfigdir=	/etc/uucp
 # V2 (when using HAVE_V2_CONFIG) style configuration files.
 oldconfigdir=	/etc/uucp
 
+# this is sick, but much easier than putting in the individual programs'
+# makefiles.
+.if defined(PROG)
 # use gnu malloc
 LDADD+=	-lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
+.endif
