@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.11 1999/02/03 20:22:28 mycroft Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.12 1999/03/27 01:22:36 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -104,6 +104,7 @@ struct zs_chanstate {
 	u_char	cs_rr0_mask;		/* rr0 bits that stop output */
 	u_char	cs_rr0_dcd;		/* which bit to read as DCD */
 	u_char	cs_rr0_cts;		/* which bit to read as CTS */
+	u_char	cs_rr0_pps;		/* which bit to use for PPS */
 	/* the above is set only while CRTSCTS is enabled. */
 
 	u_char	cs_wr5_dtr;		/* which bit to write as DTR */
@@ -112,7 +113,6 @@ struct zs_chanstate {
 
 	char	cs_softreq;		/* need soft interrupt call */
 	char	cs_spare1;  	/* (for skippy :) */
-	char	cs_spare2;  	/* (for skippy :) */
 	/* MD code might define a larger variant of this. */
 };
 
