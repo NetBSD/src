@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.26 1998/07/06 07:50:19 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.27 1998/07/06 21:23:40 fair Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.26 1998/07/06 07:50:19 mrg Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.27 1998/07/06 21:23:40 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ __RCSID("$NetBSD: fstat.c,v 1.26 1998/07/06 07:50:19 mrg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #define	TEXT	-1
 #define	CDIR	-2
