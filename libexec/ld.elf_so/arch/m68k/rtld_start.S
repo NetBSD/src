@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:18:39 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2003/02/28 07:06:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -45,14 +45,13 @@
 .rtld_start:
 	subql	#8,%sp			| storage for obj and cleanup
 
-	lea	(%pc,_GLOBAL_OFFSET_TABLE_@GOTPC),%a5
-	movel	_GLOBAL_OFFSET_TABLE_@GOT.w(%a5),%d0
-	movel	_DYNAMIC@GOT.w(%a5),%d1
-	subl	%d0,%a5
+	lea	(%pc,_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
+	lea	(%pc,_DYNAMIC),%a1
+	movel	%a1,%a5
+	subl	(%a0),%a5
 
 	movel	%a5,-(%sp)		| relocbase
-	addl	%a5,%d1
-	movel	%d1,-(%sp)		| &_DYNAMIC
+	movel	%a1,-(%sp)		| &_DYNAMIC
 	jbsr	_rtld_relocate_nonplt_self@PLTPC
 	addql	#8,%sp			| pop arguments
 
