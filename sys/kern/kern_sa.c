@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.18 2003/07/17 20:34:41 fvdl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.19 2003/07/21 19:21:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.18 2003/07/17 20:34:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.19 2003/07/21 19:21:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,10 +159,8 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		simple_lock_init(&sa->sa_lock);
 		sa->sa_flag = SCARG(uap, flags) & SA_FLAG_ALL;
 		sa->sa_vp = NULL;
-		
 		sa->sa_old_lwp = NULL;
 		sa->sa_vp_wait_count = 0;
-
 		sa->sa_idle = NULL;
 		sa->sa_woken = NULL;
 		sa->sa_concurrency = 1;
@@ -1204,13 +1202,10 @@ sa_vp_repossess(struct lwp *l)
 	l->l_flag |= L_SA_WANTS_VP;
 	sa->sa_vp_wait_count++;
 
-	if(sa->sa_idle != NULL)
-	{
+	if(sa->sa_idle != NULL) {
 		/* XXXUPSXXX Simple but slow */
 		wakeup(sa->sa_idle);
-	}
-	else
-	{
+	} else {
 		SCHED_LOCK(s);
 		sa->sa_vp->l_flag |= L_SA_UPCALL;
 		/* kick the process */
@@ -1218,15 +1213,10 @@ sa_vp_repossess(struct lwp *l)
 		SCHED_UNLOCK(s);
 	}
 
-	
 	SCHED_ASSERT_UNLOCKED();
 
-	while(sa->sa_vp != l)
-	{
-	
-
-		tsleep((caddr_t) l, PWAIT, 
-		       "sa processor", 0);
+	while(sa->sa_vp != l) {
+		tsleep((caddr_t) l, PWAIT, "sa processor", 0);
 		
 		/* XXXUPSXXX NEED TO STOP THE LWP HERE ON REQUEST ??? */
 	       	if (p->p_flag & P_WEXIT) {
@@ -1253,15 +1243,10 @@ sa_vp_donate(struct lwp *l)
 	SCHED_ASSERT_UNLOCKED();
 
 	if (sa->sa_vp_wait_count == 0)
-	{
 		return;
-	}
 
-	LIST_FOREACH(l2, &p->p_lwps, l_sibling)
-	{
-		if(l2->l_flag &  L_SA_WANTS_VP)
-		{
-		
+	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+		if(l2->l_flag &  L_SA_WANTS_VP) {
 			SCHED_LOCK(s);
 			
 			sa_putcachelwp(p, l);
@@ -1290,7 +1275,6 @@ sa_vp_donate(struct lwp *l)
 			splx(s);
 
 			KERNEL_PROC_LOCK(l);
-
 
 			KDASSERT(p->p_flag & P_WEXIT);
 			/* mostly NOTREACHED */
