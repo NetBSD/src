@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 1996/01/07 22:02:59 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 1996/01/11 21:18:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1456,7 +1456,7 @@ fdioctl(dev, cmd, addr, flag)
 		auxregbisc(AUXIO_FDS, AUXIO_FEJ);
 		delay(10);
 		auxregbisc(AUXIO_FEJ, AUXIO_FDS);
-		/* FALLTHROUGH */
+		return 0;
 
 #ifdef DEBUG
 	case _IO('f', 100):
