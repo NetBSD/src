@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2001/06/14 22:56:57 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2001/09/04 06:19:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,9 +41,25 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
+#include <sys/sched.h>
+
 /*
  * Exported definitions unique to NetBSD/mips cpu support.
  */
+
+#ifndef _LOCORE
+#if defined(_KERNEL_OPT)
+#include "opt_lockdebug.h"
+#endif
+
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
+};
+#endif /* !defined(_LOCORE) */
 
 /*
  * CTL_MACHDEP definitions.
@@ -69,6 +85,10 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
+#define	cpu_number()	(0)
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
