@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.24 1995/05/15 03:29:54 cgd Exp $	*/
+/*	$NetBSD: eval.c,v 1.25 1995/05/19 15:08:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)eval.c	8.7 (Berkeley) 5/15/95";
+static char sccsid[] = "@(#)eval.c	8.8 (Berkeley) 5/19/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.24 1995/05/15 03:29:54 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/eval.c,v 1.25 1995/05/19 15:08:55 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,7 @@ evalcommand(cmd, flags, backcmd)
 	} else {
 		find_command(argv[0], &cmdentry, 1);
 		if (cmdentry.cmdtype == CMDUNKNOWN) {	/* command not found */
-			exitstatus = 2;
+			exitstatus = 1;
 			flushout(&errout);
 			return;
 		}
@@ -691,7 +691,7 @@ evalcommand(cmd, flags, backcmd)
 					break;
 				if ((cmdentry.u.index = find_builtin(*argv)) < 0) {
 					outfmt(&errout, "%s: not found\n", *argv);
-					exitstatus = 2;
+					exitstatus = 1;
 					flushout(&errout);
 					return;
 				}
