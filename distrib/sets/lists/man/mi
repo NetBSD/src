@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.196 2000/01/24 07:25:05 mycroft Exp $
+# $NetBSD: mi,v 1.197 2000/01/24 15:15:21 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -471,6 +471,7 @@
 ./usr/share/man/cat4/puc.0
 ./usr/share/man/cat4/qsphy.0
 ./usr/share/man/cat4/raid.0
+./usr/share/man/cat4/ray.0
 ./usr/share/man/cat4/rmidi.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
@@ -1401,6 +1402,7 @@
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/qsphy.4
 ./usr/share/man/man4/raid.4
+./usr/share/man/man4/ray.4
 ./usr/share/man/man4/rmidi.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
