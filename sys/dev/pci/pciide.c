@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.31 2002/02/09 18:07:19 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.32 2002/03/25 17:57:01 he Exp $	*/
 
 
 /*
@@ -287,6 +287,11 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC766_IDE,
 	  0,
 	  "Advanced Micro Devices AMD766 IDE Controller",
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_AMD_PBC768_IDE,
+	  0,
+	  "Advanced Micro Devices AMD768 IDE Controller",
 	  amd7x6_chip_map
 	},
 	{ 0,
@@ -1851,10 +1856,14 @@ amd7x6_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_AMD_PBC766_IDE)
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_AMD_PBC766_IDE:
+	case PCI_PRODUCT_AMD_PBC768_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
-	else
+		break;
+	default:
 		sc->sc_wdcdev.UDMA_cap = 4;
+	}
 	sc->sc_wdcdev.set_modes = amd7x6_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
