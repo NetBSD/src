@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.54 2004/06/15 21:49:36 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.55 2004/06/15 21:52:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.54 2004/06/15 21:49:36 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.55 2004/06/15 21:52:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: tar.c,v 1.54 2004/06/15 21:49:36 christos Exp $");
  */
 
 static int expandname(char *, size_t,  char **, const char *, size_t);
-static void longlink(ARCHD *);
+static void longlink(ARCHD *, int);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
@@ -965,7 +965,7 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 }
 
 static void
-longlink(ARCHD *arcn)
+longlink(ARCHD *arcn, int type)
 {
 	ARCHD larc;
 
@@ -975,14 +975,14 @@ longlink(ARCHD *arcn)
 	case PAX_SLK:
 	case PAX_HRG:
 	case PAX_HLK:
-		larc.type = PAX_GLL;
-		larc.ln_nlen = strlcpy(larc.ln_name, LONG_LINK,
+		larc.type = type;
+		larc.nlen = strlcpy(larc.name, LONG_LINK,
 		    sizeof(larc.ln_name));
 		gnu_hack_string = arcn->ln_name;
 		gnu_hack_len = arcn->ln_nlen + 1;
 		break;
 	default:
-		larc.type = PAX_GLF;
+		larc.type = type;
 		larc.nlen = strlcpy(larc.name, LONG_LINK, sizeof(larc.name));
 		gnu_hack_string = arcn->name;
 		gnu_hack_len = arcn->nlen + 1;
@@ -1031,7 +1031,7 @@ ustar_wr(ARCHD *arcn)
 		 */
 		if (arcn->ln_nlen >= sizeof(hd->linkname)) {
 			if (is_gnutar) {
-				longlink(arcn);
+				longlink(arcn, PAX_GLL);
 			} else {
 				tty_warn(1, "Link name too long for ustar %s",
 				    arcn->ln_name);
@@ -1049,7 +1049,7 @@ ustar_wr(ARCHD *arcn)
 	 */
 	if ((pt = name_split(arcn->name, arcn->nlen)) == NULL) {
 		if (is_gnutar) {
-			longlink(arcn);
+			longlink(arcn, PAX_GLF);
 			pt = arcn->name;
 		} else {
 			tty_warn(1, "File name too long for ustar %s",
