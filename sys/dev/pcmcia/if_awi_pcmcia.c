@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.32 2004/08/10 18:43:49 mycroft Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.33 2004/08/10 22:49:12 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.32 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.33 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ struct awi_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 
 	int sc_state;
-#define	AWI_PCMCIA_ATTACH1	1
-#define	AWI_PCMCIA_ATTACH2	2
 #define	AWI_PCMCIA_ATTACHED	3
 };
 
@@ -133,11 +131,6 @@ awi_pcmcia_enable(sc)
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
-
-	if (psc->sc_state == AWI_PCMCIA_ATTACH1) {
-		psc->sc_state = AWI_PCMCIA_ATTACH2;
-		return (0);
-	}
 
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, awi_intr, sc);
@@ -230,6 +223,7 @@ awi_pcmcia_attach(parent, self, aux)
 	error = awi_pcmcia_enable(sc);
         if (error)
                 goto fail;
+	sc->sc_enabled = 1;
 
 	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);
 	if (memcmp(sc->sc_banner, "PCnetMobile:", 12))
@@ -240,22 +234,19 @@ awi_pcmcia_attach(parent, self, aux)
 
 	sc->sc_cansleep = 1;
 
-	psc->sc_state = AWI_PCMCIA_ATTACH1;
-	sc->sc_enabled = 1;
 	if (awi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n", self->dv_xname);
 		goto fail2;
 	}
 
-	if (psc->sc_state == AWI_PCMCIA_ATTACH1)
-		awi_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
+	awi_pcmcia_disable(sc);
 	psc->sc_state = AWI_PCMCIA_ATTACHED;
 	return;
 
 fail2:
-	awi_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
+	awi_pcmcia_disable(sc);
 fail:
 	pcmcia_function_unconfigure(pa->pf);
 }
