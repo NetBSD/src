@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.16 1996/02/09 23:30:19 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.17 1996/02/11 02:06:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -2020,10 +2020,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	}
 	ip = VTOI(tvp);
 	ip->i_gid = pdir->i_gid;
-	if ((mode & IFMT) == IFLNK)
-		ip->i_uid = pdir->i_uid;
-	else
-		ip->i_uid = cnp->cn_cred->cr_uid;
+	ip->i_uid = cnp->cn_cred->cr_uid;
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
