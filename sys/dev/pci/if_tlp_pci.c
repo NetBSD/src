@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.5 1999/09/14 00:55:39 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.6 1999/09/14 05:52:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -254,10 +254,15 @@ tlp_pci_attach(parent, self, aux)
 	sc->sc_chip = tpp->tpp_chip;
 
 	/*
+	 * By default, Tulip registers are 8 bytes long (4 bytes
+	 * followed by a 4 byte pad).
+	 */
+	sc->sc_regshift = 3;
+
+	/*
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	sc->sc_regshift = 0;
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
 		if (sc->sc_rev >= 0x20)
