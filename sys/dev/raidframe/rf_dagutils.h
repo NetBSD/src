@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.7 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.8 2004/02/27 02:55:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -67,6 +67,9 @@ int     rf_ConfigureDAGs(RF_ShutdownList_t ** listp);
 RF_DagHeader_t *rf_AllocDAGHeader(void);
 
 void    rf_FreeDAGHeader(RF_DagHeader_t * dh);
+
+RF_DagList_t *rf_AllocDAGList(void);
+void rf_FreeDAGList(RF_DagList_t *);
 
 void   *rf_AllocBuffer(RF_Raid_t * raidPtr, RF_DagHeader_t * dag_h,
 		       RF_PhysDiskAddr_t * pda, 
