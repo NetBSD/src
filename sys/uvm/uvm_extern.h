@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.37 2000/02/11 19:22:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.38 2000/03/26 20:54:46 kleink Exp $	*/
 
 /*
  *
@@ -112,7 +112,7 @@
 	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
 
 /* magic offset value */
-#define UVM_UNKNOWN_OFFSET ((vaddr_t) -1)
+#define UVM_UNKNOWN_OFFSET ((voff_t) -1)
 				/* offset not known(obj) or don't care(!obj) */
 
 /*
@@ -334,7 +334,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 
 /* uvm_map.c */
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
-				struct uvm_object *, vaddr_t, uvm_flag_t));
+				struct uvm_object *, voff_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
@@ -361,16 +361,16 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t, vsize_t));
+				caddr_t, voff_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
-				vaddr_t, struct vm_anon *, int, int, int));
+				voff_t, struct vm_anon *, int, int, int));
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagerealloc __P((struct vm_page *, 
-					     struct uvm_object *, vaddr_t));
+					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
 void			uvm_page_physload __P((paddr_t, paddr_t,
 					       paddr_t, paddr_t, int));
@@ -401,7 +401,7 @@ int			uvm_coredump32 __P((struct proc *, struct vnode *,
 int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 
 /* uvm_vnode.c */
-void			uvm_vnp_setsize __P((struct vnode *, u_quad_t));
+void			uvm_vnp_setsize __P((struct vnode *, voff_t));
 void			uvm_vnp_sync __P((struct mount *));
 void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
