@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.109.2.2 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.109.2.3 2004/08/24 17:36:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -334,7 +334,6 @@ int	vfs_setpublicfs			    /* set publicly exported fs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((struct lwp *));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *, int, struct simplelock *));
 int	vfs_rootmountalloc __P((char *, char *, struct mount **));
