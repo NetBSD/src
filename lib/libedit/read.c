@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.32 2004/02/21 16:42:30 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.33 2004/02/27 14:52:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.32 2004/02/21 16:42:30 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.33 2004/02/27 14:52:18 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -351,7 +351,7 @@ el_getc(EditLine *el, char *cp)
 }
 
 protected void
-read_prepare_tty(EditLine *el)
+read_prepare(EditLine *el)
 {
 	if (el->el_flags & HANDLE_SIGNALS)
 		sig_set(el);
@@ -359,14 +359,6 @@ read_prepare_tty(EditLine *el)
 		return;
 	if ((el->el_flags & (UNBUFFERED|EDIT_DISABLED)) == UNBUFFERED)
 		tty_rawmode(el);
-}
-
-protected void
-read_prepare(EditLine *el)
-{
-	read_prepare_tty(el);
-	if (el->el_flags & NO_TTY)
-		return;
 
 	/* This is relatively cheap, and things go terribly wrong if
 	   we have the wrong size. */
