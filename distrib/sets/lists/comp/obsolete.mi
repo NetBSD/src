@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.19.2.1 2000/06/21 06:41:21 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.19.2.2 2000/07/07 16:22:16 itojun Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -339,6 +339,7 @@
 /usr/share/man/cat2/swapon.0
 /usr/share/man/cat3/getpw.0
 /usr/share/man/cat3/regsterrpc.0
+/usr/share/man/cat3/securepath.0
 /usr/share/man/cat3/setgrfile.0
 /usr/share/man/cat3/setpwfile.0
 /usr/share/man/cat3/setregid.0
@@ -352,6 +353,7 @@
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/man3/getpw.3
 /usr/share/man/man3/regsterrpc.3
+/usr/share/man/man3/securepath.3
 /usr/share/man/man3/svc_getreg.3
 /usr/share/man/man3/svc_getregset.3
 /usr/share/man/man3/vlimit.3
