@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.5 1998/08/01 11:22:51 scw Exp $	*/
+/*	$NetBSD: prom.h,v 1.6 2000/11/29 09:10:10 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -158,13 +158,13 @@ struct mvmeprom_args {
 #define MVMEPROM_CALL(x) \
 	__asm__ __volatile (__CONCAT("trap #15; .short ", __STRING(x)) )
 #define MVMEPROM_NOARG() \
-	__asm__ __volatile ("clrl sp@-")
+	__asm__ __volatile ("clrl %%sp@-")
 #define MVMEPROM_ARG1(arg) \
-	__asm__ __volatile ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_ARG2(arg) \
-	__asm__ __volatile ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_GETRES(ret) \
-	__asm__ __volatile ("movel sp@+,%0": "=d" (ret):)
+	__asm__ __volatile ("movel %%sp@+,%0": "=d" (ret):)
 #define MVMEPROM_RETURN(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (ret);			/* return a value (int) */
