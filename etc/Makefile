@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 1999/03/29 16:40:44 perry Exp $
+#	$NetBSD: Makefile,v 1.113 1999/04/03 09:40:38 fair Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -149,6 +149,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/cron/log
 	${INSTALL} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
+	${INSTALL} -c -o uucp -g dialer -m 640 /dev/null \
+		${DESTDIR}/var/log/aculog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
