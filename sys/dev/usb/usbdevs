@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.85 2000/03/16 21:51:23 augustss Exp $
+$NetBSD: usbdevs,v 1.86 2000/03/20 01:31:10 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom Corp. Ltd.
+vendor YEDATA		0x057b	Y-E Data
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROCKFIRE		0x0583	Rockfire
 vendor IOMEGA		0x059b	Iomega Corp.
@@ -307,6 +308,9 @@ product	IODATA	USBETTX		0x0904
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
 
+/* Kawasaki products */
+product KLSI USB101		0x0008	USB ethernet controller engine
+
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
 
@@ -471,6 +475,9 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM INTUOSA5		0x0021	Intuos A5
+
+/* Y-E data products */
+product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Zoom Telephonics Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
