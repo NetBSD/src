@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 1999/09/29 20:46:41 ad Exp $
+# $NetBSD: mi,v 1.164 1999/10/05 03:53:07 itohy Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -142,7 +142,7 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
-./usr/include/dev/ic/opl3sa3.h
+./usr/include/dev/ic/opl3sa3reg.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pcdisplayvar.h
 ./usr/include/dev/ic/pdqreg.h
