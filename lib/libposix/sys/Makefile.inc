@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2002/01/29 19:03:01 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.1 2002/11/15 00:09:41 lukem Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -21,5 +21,5 @@ DPSRCS+=	LintSysPseudo.c
 
 LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
-	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
+	CPP=${CPP:Q} sh ${NETBSDSRCDIR}/lib/libc/sys/makelintstub \
+	    -o ${.TARGET} -p -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
