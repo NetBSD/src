@@ -1,7 +1,7 @@
-/*	$NetBSD: ld_amr.c,v 1.4 2002/10/02 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.5 2003/05/04 16:15:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.4 2002/10/02 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.5 2003/05/04 16:15:36 ad Exp $");
 
 #include "rnd.h"
 
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.4 2002/10/02 16:51:43 thorpej Exp $");
 
 #include <dev/ldvar.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/amrreg.h>
 #include <dev/pci/amrvar.h>
 
@@ -82,19 +84,6 @@ int	ld_amr_start(struct ld_softc *, struct buf *);
 CFATTACH_DECL(ld_amr, sizeof(struct ld_amr_softc),
     ld_amr_match, ld_amr_attach, NULL, NULL);
 
-struct {
-	const char	*ds_descr;
-	int	ds_enable;
-} static const ld_amr_dstate[] = {
-	{ "offline",	0 },
-	{ "degraded",	LDF_ENABLED },
-	{ "optimal",	LDF_ENABLED },
-	{ "online",	LDF_ENABLED },
-	{ "failed",	0 },
-	{ "rebuilding",	LDF_ENABLED },
-	{ "hotspare",	0 },
-};
-
 int
 ld_amr_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -110,7 +99,7 @@ ld_amr_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_softc *ld;
 	struct amr_softc *amr;
 	const char *statestr;
-	int state;
+	int happy;
 
 	sc = (struct ld_amr_softc *)self;
 	ld = &sc->sc_ld;
@@ -118,8 +107,9 @@ ld_amr_attach(struct device *parent, struct device *self, void *aux)
 	amra = aux;
 
 	sc->sc_hwunit = amra->amra_unit;
-	ld->sc_maxxfer = AMR_MAX_XFER;
-	ld->sc_maxqueuecnt = amr->amr_maxqueuecnt / amr->amr_numdrives;
+	ld->sc_maxxfer = amr_max_xfer;
+	ld->sc_maxqueuecnt = (amr->amr_maxqueuecnt - AMR_NCCB_RESV)
+	    / amr->amr_numdrives;
 	ld->sc_secperunit = amr->amr_drive[sc->sc_hwunit].al_size;
 	ld->sc_secsize = AMR_SECTOR_SIZE;
 	ld->sc_start = ld_amr_start;
@@ -131,16 +121,11 @@ ld_amr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Print status information and attach to the ld driver proper.
 	 */
-	state = AMR_DRV_CURSTATE(amr->amr_drive[sc->sc_hwunit].al_state);
-	if (state >= sizeof(ld_amr_dstate) / sizeof(ld_amr_dstate[0])) {
+	statestr = amr_drive_state(amr->amr_drive[sc->sc_hwunit].al_state,
+	    &happy);
+	if (happy)
 		ld->sc_flags = LDF_ENABLED;
-		statestr = "status unknown";
-	} else {
-		ld->sc_flags = ld_amr_dstate[state].ds_enable;
-		statestr = ld_amr_dstate[state].ds_descr;
-	}
-
-	printf(": RAID %d, %s\n",
+	aprint_normal(": RAID %d, %s\n",
 	    amr->amr_drive[sc->sc_hwunit].al_properties & AMR_DRV_RAID_MASK,
 	    statestr);
 
@@ -153,7 +138,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 {
 	struct amr_ccb *ac;
 	struct amr_softc *amr;
-	struct amr_mailbox *mb;
+	struct amr_mailbox_cmd *mb;
 	int s, rv;
 
 	amr = (struct amr_softc *)sc->sc_ld.sc_dv.dv_parent;
@@ -161,7 +146,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	if ((rv = amr_ccb_alloc(amr, &ac)) != 0)
 		return (rv);
 
-	mb = &ac->ac_mbox;
+	mb = &ac->ac_cmd;
 	mb->mb_command = (dowrite ? AMR_CMD_LWRITE : AMR_CMD_LREAD);
 	mb->mb_drive = sc->sc_hwunit;
 	mb->mb_blkcount = htole16(datasize / AMR_SECTOR_SIZE);
