@@ -1,4 +1,4 @@
-.\" $NetBSD: rpcbind.8,v 1.6 2002/02/02 01:44:31 wiz Exp $
+.\" $NetBSD: rpcbind.8,v 1.7 2002/08/12 18:47:07 itojun Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
@@ -61,6 +61,15 @@ reports the condition and terminates.
 .Pp
 .Nm
 can only be started by the super-user.
+.Pp
+Access control is provided by
+.Pa /etc/hosts.allow
+and
+.Pa /etc/hosts.deny ,
+as described in
+.Xr hosts_access 5
+with daemon name
+.Nm "" .
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl d
@@ -103,7 +112,15 @@ All RPC servers must be restarted if
 .Nm
 is restarted.
 .Sh FILES
-.Pa /var/run/rpcbind.sock
+.Bl -tag -width "/var/run/rpcbind.sock" -compact
+.It Pa /var/run/rpcbind.sock
+.It Pa /etc/hosts.allow
+explicit remote host access list.
+.It Pa /etc/hosts.deny
+explicit remote host denial of service list.
+.El
 .Sh SEE ALSO
 .Xr rpcbind 3 ,
+.Xr hosts_access 5 ,
+.Xr hosts_options 5 ,
 .Xr rpcinfo 8
