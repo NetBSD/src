@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.57 2002/11/29 12:58:14 lukem Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.58 2003/03/01 15:59:02 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -99,6 +99,7 @@ extern size_t __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
 
 __BEGIN_DECLS
+__dead	 void _Exit __P((int)) __attribute__((__noreturn__));
 __dead	 void abort __P((void)) __attribute__((__noreturn__));
 __pure	 int abs __P((int));
 int	 atexit __P((void (*)(void)));

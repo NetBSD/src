@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.137 2003/02/15 21:11:49 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.138 2003/03/01 15:59:03 bjh21 Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -153,6 +153,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 undelete.2 \
 	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
 
+MLINKS+=_exit.2 _Exit.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=clone.2 __clone.2
 MLINKS+=dup.2 dup2.2
