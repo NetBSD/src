@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 1995/02/05 13:07:54 mycroft Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9 1995/02/05 13:59:38 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -243,8 +243,8 @@ struct inst	db_inst_0fax[] = {
 };
 
 struct inst	db_inst_0fbx[] = {
-/*b0*/	{ "",      FALSE, NONE,  0,	      0 },
-/*b1*/	{ "",      FALSE, NONE,  0,	      0 },
+/*b0*/	{ "cmpxchg",TRUE, BYTE,	 op2(R, E),   0 },
+/*b1*/	{ "cmpxchg",TRUE, LONG,	 op2(R, E),   0 },
 /*b2*/	{ "lss",   TRUE,  LONG,  op2(E, R),   0 },
 /*b3*/	{ "btr",   TRUE,  LONG,  op2(R, E),   0 },
 /*b4*/	{ "lfs",   TRUE,  LONG,  op2(E, R),   0 },
@@ -281,25 +281,6 @@ struct inst	db_inst_0fcx[] = {
 /*cf*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
 };
 
-struct inst	db_inst_0fdx[] = {
-/*c0*/	{ "cmpxchg",TRUE, BYTE,	 op2(R, E),   0 },
-/*c1*/	{ "cmpxchg",TRUE, LONG,	 op2(R, E),   0 },
-/*c2*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c3*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c7*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c8*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c9*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*ca*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cb*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cc*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cd*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*ce*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cf*/	{ "",	   FALSE, NONE,	 0,	      0 },
-};
-
 struct inst *db_inst_0f[] = {
 	db_inst_0f0x,
 	0,
@@ -314,7 +295,7 @@ struct inst *db_inst_0f[] = {
 	db_inst_0fax,
 	db_inst_0fbx,
 	db_inst_0fcx,
-	db_inst_0fdx,
+	0,
 	0,
 	0
 };
