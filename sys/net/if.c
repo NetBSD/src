@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.32 1996/03/12 13:07:52 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.33 1996/04/22 01:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -523,7 +523,7 @@ ifioctl(so, cmd, data, p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX)
+#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4)
 		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			(struct mbuf *) cmd, (struct mbuf *) data,
 			(struct mbuf *) ifp));
@@ -606,7 +606,7 @@ ifconf(cmd, data)
 	ifrp = ifc->ifc_req;
 	ep = ifr.ifr_name + sizeof (ifr.ifr_name) - 2;
 	for (ifp = ifnet.tqh_first;
-	    space > sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
+	    space >= sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
 		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
 		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
 			continue;
@@ -622,9 +622,9 @@ ifconf(cmd, data)
 				break;
 			space -= sizeof (ifr), ifrp++;
 		} else 
-		    for (; space > sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+		    for (; space >= sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			register struct sockaddr *sa = ifa->ifa_addr;
-#if defined(COMPAT_43) || defined(COMPAT_LINUX)
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =
 					 (struct osockaddr *)&ifr.ifr_addr;
