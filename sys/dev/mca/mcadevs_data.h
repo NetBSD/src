@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.2.6.2 2000/11/20 11:41:31 bouyer Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.2.6.3 2001/03/27 15:32:06 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.1 2000/05/11 15:42:05 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.7 2001/03/24 09:48:11 jdolecek Exp 
  */
 
 /*-
@@ -110,7 +110,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6018,	"Gateway Comms. G/Ethernet Adapter" },
     { 0x601F,	"HP Scanner Interface Adapter" },
     { 0x602F,	"Arcmaster ARCnet Adapter" },
-    { 0x6042,	"3Com 3C523 Ethernet Adapter" },
+    { 0x6042,	"3Com EtherLink/MC Ethernet Adapter (3C523)" },
     { 0x6060,	"IDEAcomm 5251 7 LU Adapter" },
     { 0x6091,	"Stallion ONboard2 Terminal Adapter" },
     { 0x609E,	"Microtek MS-PS/2 Interface Adapter" },
@@ -123,10 +123,13 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x613F,	"SONIC Model 50" },
     { 0x6157,	"Novell Remote III Adapter" },
     { 0x616A,	"NewPort WNIC Adapter" },
+    { 0x616E,	"Computone PS6" },
     { 0x617E,	"Computone PS8 8-port Adapter" },
     { 0x61BF,	"Intel SatisFAXtion Adapter" },
-    { 0x61C8,	"WD/SMC 8013EP/A Ethernet Adapter" },
-    { 0x61C9,	"WD/SMC 8013WP/A Ethernet Adapter" },
+    { 0x61C8,	"EtherCard PLUS Elite/A (8013EP/A)" },
+    { 0x61C9,	"EtherCard PLUS Elite 10T/A (8013WP/A)" },
+    { 0x61F2,	"Computone IntelliPort-II MC-8" },
+    { 0x61F3,	"Computone IntelliPort-IIEX MC-CEX" },
     { 0x61FD,	"Computone PSCC Cluster Controller" },
     { 0x6201,	"Quadport PS/Q I/O Adapter" },
     { 0x6203,	"Quadport PS/Q I/O Adapter" },
@@ -150,6 +153,10 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x63CA,	"HP 27246 Ethernet Adapter" },
     { 0x6406,	"AT&T GIS 8-Port Serial Controller/MC" },
     { 0x6407,	"Stargate Adapter" },
+    { 0x6410,	"ATI AT1720T" },
+    { 0x6413,	"ATI AT1720BT" },
+    { 0x6416,	"ATI AT1720AT" },
+    { 0x6419,	"ATI AT1720FT" },
     { 0x64B6,	"Thomas-Conrad ARC-CARD/MC" },
     { 0x64B7,	"Thomas-Conrad TCNS/MC" },
     { 0x651B,	"Racore Token-Ring Adapter" },
@@ -227,9 +234,9 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6F77,	"Lantana Tamarix/2 Ethernet Adapter" },
     { 0x6FB6,	"Canmax DLC 01 Serial Comms Adapter" },
     { 0x6FBF,	"Natural MicroSystems WATSON" },
-    { 0x6FC0,	"WD 8003E/A Ethernet Adapter" },
-    { 0x6FC1,	"WD 8003ST/A Starlan Adapter" },
-    { 0x6FC2,	"WD 8003W/A Ethernet Adapter" },
+    { 0x6FC0,	"WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A)" },
+    { 0x6FC1,	"WD StarCard PLUS/A (WD8003ST/A)" },
+    { 0x6FC2,	"WD EtherCard PLUS 10T/A (WD8003W/A)" },
     { 0x6FE4,	"DigiBoard PS-COM/16" },
     { 0x6FE5,	"DigiBoard PS-COM/8" },
     { 0x6FE6,	"DigiBoard PS-COM/4" },
@@ -346,11 +353,11 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0xEEFF,	"IBM Dual Async Adapter" },
     { 0xEF7F,	"IBM 8514/A Display Adapter" },
     { 0xEFCF,	"IBM Store Loop Adapter/A" },
-    { 0xEFD4,	"IBM Ethernet Adapter/A (10base2)" },
-    { 0xEFD5,	"IBM Ethernet Adapter/A (10baseT)" },
+    { 0xEFD4,	"IBM PS/2 Adapter/A for Ethernet Networks (UTP)" },
+    { 0xEFD5,	"IBM PS/2 Adapter/A for Ethernet Networks (BNC)" },
     { 0xEFDC,	"Intel DS2 Adapter" },
     { 0xEFDF,	"ARCnet ASTER/2 Adapter" },
-    { 0xEFE5,	"IBM Ethernet Adapter/A" },
+    { 0xEFE5,	"IBM PS/2 Adapter/A for Ethernet Networks" },
     { 0xEFEF,	"IBM PC Network Adapter" },
     { 0xEFF0,	"IBM Realtime I/f Co-proc. Multiport/2 or X.25/2" },
     { 0xEFF5,	"UB NIC-PS/2 Ethernet Adapter" },

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.1.2.4 2001/03/27 15:30:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _HPCDEFS_H_
 #define _HPCDEFS_H_
 
-#define HPCBOOT_VERSION		0x0101
+#define HPCBOOT_VERSION		0x0102
 
 #define STRICT
 #include <windows.h>

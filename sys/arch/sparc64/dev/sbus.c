@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.20.2.3 2000/12/08 09:30:33 bouyer Exp $ */
+/*	$NetBSD: sbus.c,v 1.20.2.4 2001/03/27 15:31:34 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
@@ -143,6 +144,7 @@ static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *, int));
 static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
+static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
 		bus_type_t,
@@ -269,6 +271,8 @@ sbus_attach(parent, self, aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct mainbus_attach_args *ma = aux;
+	struct intrhand *ih;
+	int ipl;
 	char *name;
 	int node = ma->ma_node;
 
@@ -324,6 +328,18 @@ sbus_attach(parent, self, aux)
 
 	iommu_init(name, &sc->sc_is, 0);
 
+	/* Enable the over temp intr */
+	ih = (struct intrhand *)
+		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	ih->ih_map = &sc->sc_sysio->therm_int_map;
+	ih->ih_clr = NULL; /* &sc->sc_sysio->therm_clr_int; */
+	ih->ih_fun = sbus_overtemp;
+	ipl = 1;
+	ih->ih_pil = (1<<ipl);
+	ih->ih_number = INTVEC(*(ih->ih_map));
+	intr_establish(ipl, ih);
+	*(ih->ih_map) |= INTMAP_V;
+	
 	/*
 	 * Loop through ROM children, fixing any relative addresses
 	 * and then configuring each device.
@@ -538,6 +554,24 @@ sbusreset(sbus)
 	}
 	/* Reload iommu regs */
 	iommu_reset(&sc->sc_is);
+}
+
+/*
+ * Handle an overtemp situation.
+ *
+ * SPARCs have temperature sensors which generate interrupts
+ * if the machine's temperature exceeds a certain threshold.
+ * This handles the interrupt and powers off the machine.
+ * The same needs to be done to PCI controller drivers.
+ */
+int
+sbus_overtemp(arg)
+	void *arg;
+{
+	/* Should try a clean shutdown first */
+	printf("DANGER: OVER TEMPERATURE detected\nShutting down...\n");
+	delay(20);
+	cpu_reboot(RB_POWERDOWN|RB_HALT, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.49.2.7 2001/03/12 13:31:21 bouyer Exp $
+$NetBSD: pcmciadevs,v 1.49.2.8 2001/03/27 15:32:15 bouyer Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -74,6 +74,7 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor IODATA2			0x028a	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
@@ -161,6 +162,7 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 
 /* Farallon */
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless

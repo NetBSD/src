@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.3.2.3 2001/03/12 13:27:12 bouyer Exp $ */
+/* $NetBSD: isic_supio.c,v 1.3.2.4 2001/03/27 15:30:15 bouyer Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -73,6 +73,9 @@
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/hscx.h>
 #include <dev/ic/isac.h>
+
+/* XXX I think the following line should be elsewhere ... -is */
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 /*static*/ int isic_supio_match __P((struct device *, struct cfdata *, void *));
 /*static*/ void isic_supio_attach __P((struct device *, struct device *, void *));
@@ -276,7 +279,6 @@ supio_isicattach(struct l1_softc *sc)
 		"Unknown Version"
 	};
 
-	l1_sc[sc->sc_unit] = sc;		
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
@@ -318,9 +320,8 @@ supio_isicattach(struct l1_softc *sc)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
-	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
@@ -351,7 +352,8 @@ supio_isicattach(struct l1_softc *sc)
 
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);	
+	/* MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp); */
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 
 	/* announce chip versions */
 	

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.7 2001/03/12 13:31:13 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.8 2001/03/27 15:32:11 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
+ *	NetBSD: pcidevs,v 1.312 2001/03/21 18:10:13 soren Exp 
  */
 
 /*
@@ -2434,16 +2434,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/1000 Gigabit Ethernet (i82452)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LIVENGOOD,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (LIVENGOOD)",
+	    "PRO/1000 Gigabit Ethernet (i82453)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_SC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82452-SC)",
+	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -3190,31 +3190,31 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044A,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044a,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044B,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044b,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044C,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044c,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044D,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044d,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044E,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044e,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
@@ -3280,7 +3280,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045a,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
@@ -4096,6 +4096,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Trio32/64",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P,
 	    0,
 	    "S3",
@@ -4588,6 +4594,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCIO Happy Meal Ethernet",
 	},
 	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
+	    0,
+	    "Sun Microsystems",
+	    "PCIO Ebus2 (US III)",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "ERI Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE,
+	    0,
+	    "Sun Microsystems",
+	    "FireWire controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB,
+	    0,
+	    "Sun Microsystems",
+	    "USB controller",
+	},
+	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
 	    0,
 	    "Sun Microsystems",
@@ -4838,6 +4868,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI1451 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-800H",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
@@ -8713,6 +8749,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COMPAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "COMPAL Electronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TITAN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Titan Electronics, Inc.",
 	    NULL,
 	},
 	{

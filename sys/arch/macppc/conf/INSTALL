@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15.2.5 2001/03/12 13:29:00 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.15.2.6 2001/03/27 15:31:08 bouyer Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -39,7 +39,7 @@ options 	NMBCLUSTERS=1024
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
-#options 	FONT_GALLANT12x22
+options 	FONT_SONY8x16
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -53,11 +53,9 @@ mainbus* at root
 cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
-uninorth* at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
-pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -77,7 +75,6 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
-#gm*	at pci? dev ? function ?	# gmac ethernet
 pciide*	at pci? dev ? function ?	# PCI IDE Controller
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
@@ -95,7 +92,6 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
@@ -115,8 +111,6 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
-gpio*	at obio?			# gpio
-gpio*	at gpio?			# extint
 adb*	at obio?			# Apple Desktop Bus
 akbd*	at adb?				# ADB keyboard
 zsc*	at obio?
@@ -155,5 +149,4 @@ wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
-#pseudo-device	sl		2	# Serial Line IP
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

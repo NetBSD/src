@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.8.2.1 2001/03/12 13:27:43 bouyer Exp $	*/
+/*	$NetBSD: vidc.h,v 1.8.2.2 2001/03/27 15:30:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -220,7 +220,7 @@ struct vidc_mode {
     int pixel_rate;
     int hswr, hbsr, hdsr, hder, hber, hcr;
     int vswr, vbsr, vdsr, vder, vber, vcr;
-    int bitsperpixel;
+    int log2_bpp;
     int sync_pol;
     int frame_rate;
 };
@@ -240,7 +240,7 @@ typedef struct
 
 #define XRES mode.hder
 #define YRES mode.vder
-#define BITSPERPIXEL mode.bitsperpixel
+#define NUMCOLOURS (1 << mode.log2_bpp)
 
 struct vidc_info
   {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3.4.2 2001/03/12 13:27:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.4.3 2001/03/27 15:30:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1986,10 +1986,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
 	    va, pa, pmap, prot, wired));
 
-	/* Valid pmap ? */
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
-
 #ifdef DIAGNOSTIC
 	/* Valid address ? */
 	if (va >= (KERNEL_VM_BASE + KERNEL_VM_SIZE))
@@ -2170,7 +2166,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void

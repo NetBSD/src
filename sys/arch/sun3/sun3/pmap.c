@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115.2.5 2001/02/11 19:12:50 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115.2.6 2001/03/27 15:31:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2116,8 +2116,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int new_pte, s;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_ENTER) ||
 		(va == pmap_db_watchva))
@@ -2151,7 +2149,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_enter_user(pmap, va, new_pte, wired);
 	}
 	splx(s);
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 static void
@@ -2544,12 +2542,12 @@ _pmap_fault(map, va, ftype)
 			 * Most pages below virtual_avail are read-only,
 			 * so I will assume it is a protection failure.
 			 */
-			return KERN_PROTECTION_FAILURE;
+			return EACCES;
 		}
 	} else {
 		/* User map.  Try reload shortcut. */
 		if (pmap_fault_reload(pmap, va, ftype))
-			return KERN_SUCCESS;
+			return 0;
 	}
 	rv = uvm_fault(map, va, 0, ftype);
 

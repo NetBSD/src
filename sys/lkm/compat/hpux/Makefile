@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/01/08 14:57:04 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/03/27 15:32:26 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/hpux $S/arch/${MACHINE}/${MACHINE}
 
-CPPFLAGS+=	-DVM86 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_HPUX
+CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_HPUX
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.16.2.1 2000/11/20 20:29:57 bouyer Exp $	*/
+/*	$NetBSD: grf.c,v 1.16.2.2 2001/03/27 15:31:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -579,7 +579,6 @@ grfunmap(dev, addr, p)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 	vsize_t size;
-	int rv;
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
@@ -589,9 +588,9 @@ grfunmap(dev, addr, p)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
+	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
 	    (vaddr_t)addr + size);
-	return(rv == KERN_SUCCESS ? 0 : EINVAL);
+	return 0;
 }
 
 #ifdef COMPAT_HPUX

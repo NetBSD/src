@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.12.2.3 2001/03/12 13:27:40 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.12.2.4 2001/03/27 15:30:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,70 +54,27 @@ cdev_decl(raid);
 
 /* Character device declarations */
 
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_physcon_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), 0 }
+/* open, close, read, write, ioctl, tty, mmap -- XXX should be a tty */
+#define cdev_physcon_init(c,n)	cdev__ttym_init(c,n,0)
 
-/* open, close, write, ioctl */
-#define cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+/* open, close, ioctl */
+#define cdev_beep_init(c,n)	cdev__oci_init(c,n)
 
 /* open, close, read, ioctl */
-#define	cdev_joy_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+#define cdev_kbd_init(c,n)	cdev__ocri_init(c,n)
 
-/* open, close, write, ioctl */
-#define cdev_beep_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_kbd_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
+/* open, close, ioctl, mmap */
 #define cdev_vidcvid_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, dev_init(c,n,mmap), 0 }
+	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
+	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
+	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap), 0 }
 
-/* open, close, write, ioctl */
-#define cdev_iic_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+/* open, close, read, write, ioctl */
+#define cdev_iic_init(c,n)	cdev__ocrwi_init(c,n)
+#define cdev_rtc_init(c,n)	cdev__ocrwi_init(c,n)
 
 /* open, close, read, ioctl */
-#define cdev_prof_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
+#define cdev_prof_init(c,n)	cdev__ocri_init(c,n)
 
 #define mmread  mmrw
 #define mmwrite mmrw

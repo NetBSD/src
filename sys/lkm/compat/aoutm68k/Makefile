@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/01/08 14:57:03 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/03/27 15:32:25 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/aoutm68k
 
-CPPFLAGS+=	-DVM86 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_AOUT_M68K \
-		-DCOMPAT_43
+CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_AOUT_M68K -DCOMPAT_43
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}

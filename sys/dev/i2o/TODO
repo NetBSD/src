@@ -1,10 +1,6 @@
-$NetBSD: TODO,v 1.1.2.3 2000/12/08 09:12:18 bouyer Exp $
+$NetBSD: TODO,v 1.1.2.4 2001/03/27 15:31:51 bouyer Exp $
 
-o Release MFA if CANT_PROCESS is set?
-o Handle device control & private space issues.
-o Rid us of kvtop()
-o Overhaul message allocation and queueing
-o Immediate transfer via the SGL for small payloads, if useful
+o Handle device control & private space issues
+o Resolve portability issues
 o ld_iop: handle removable and non-direct access devices
-o iopsp: use maxdevices from parameter group or default
-o Driver for LAN class devices
+o Driver for LAN class device (some code exists already)

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.1.2.4 2001/03/27 15:30:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -115,7 +115,14 @@ public:
 		BOOL	pause_before_boot;
 		BOOL	load_debug_info;
 		BOOL	safety_message;
+		// serial console speed
+		int	serial_speed;
 	};
+	struct support_status {
+		u_int32_t cpu, machine;
+		const TCHAR *cause;
+	};
+	static struct support_status _unsupported[];
 
 	RootWindow		*_root;
 	MainTabWindow		*_main;
@@ -137,7 +144,6 @@ public:
 private:
 	static HpcMenuInterface *_instance;
 
-	BOOL _find_pref_dir(TCHAR *);
 	void _set_default_pref(void) {
 		// set default.
 		_pref._magic		= HPCBOOT_MAGIC;
@@ -147,7 +153,7 @@ private:
 		_pref.platid_hi		= 0;
 		_pref.platid_lo		= 0;
 		_pref.rootfs		= 0;
-
+		wsprintf(_pref.rootfs_file, TEXT("miniroot.fs"));
 		_pref.boot_serial	= FALSE;
 		_pref.boot_verbose	= FALSE;
 		_pref.boot_single_user	= FALSE;
@@ -156,6 +162,11 @@ private:
 		_pref.reverse_video	= FALSE;
 		_pref.pause_before_boot	= TRUE;
 		_pref.safety_message	= TRUE;
+#ifdef MIPS
+		_pref.serial_speed	= 9600; // historical reason.
+#else
+		_pref.serial_speed	= 19200;
+#endif
 	}
 	enum _platform_op {
 		_PLATFORM_OP_GET,
@@ -195,10 +206,7 @@ public:
 		_boot_hook = arg;
 	}
 	// call architecture dependent boot function.
-	void boot(void) {
-		if (_boot_hook.func)
-			_boot_hook.func(_boot_hook.arg, _pref);
-	}
+	void boot(void);
 	// Progress bar.
 	void progress(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.37.2.3 2000/12/13 15:50:21 bouyer Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.37.2.4 2001/03/27 15:32:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -86,23 +86,6 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	error = 0;
 	flags &= B_READ | B_WRITE | B_ORDERED;
 
-	/*
-	 * [check user read/write access to the data buffer]
-	 *
-	 * Check each iov one by one.  Note that we know if we're reading or
-	 * writing, so we ignore the uio's rw parameter.  Also note that if
-	 * we're doing a read, that's a *write* to user-space.
-	 */
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		for (i = 0; i < uio->uio_iovcnt; i++) {
-			/* XXXCDC: map not locked, rethink */
-			if (__predict_false(!uvm_useracc(uio->uio_iov[i].iov_base,
-				     uio->uio_iov[i].iov_len,
-				     (flags == B_READ) ? B_WRITE : B_READ)))
-				return (EFAULT);
-		}
-	}
-
 	/* Make sure we have a buffer, creating one if necessary. */
 	if ((nobuf = (bp == NULL)) != 0) {
 
@@ -128,7 +111,6 @@ physio(strategy, bp, dev, flags, minphys, uio)
 
 		/* [lower the priority level] */
 		splx(s);
-
 	}
 
 	/* [set up the fixed part of the buffer for a transfer] */
@@ -145,6 +127,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {
+
 			/*
 			 * [mark the buffer busy for physical I/O]
 			 * (i.e. set B_PHYS (because it's an I/O to user
@@ -182,12 +165,13 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
-			if (__predict_false(uvm_vslock(p, bp->b_data, todo,
-			    (flags & B_READ) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
-			    != KERN_SUCCESS)) {
+			error = uvm_vslock(p, bp->b_data, todo,
+					   (flags & B_READ) ?
+					   VM_PROT_READ | VM_PROT_WRITE :
+					   VM_PROT_READ);
+			if (error) {
 				bp->b_flags |= B_ERROR;
-				bp->b_error = EFAULT;
+				bp->b_error = error;
 				goto after_vsunlock;
 			}
 			vmapbuf(bp, todo);
@@ -233,12 +217,9 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 *    of data to transfer]
 			 */
 			done = bp->b_bcount - bp->b_resid;
-#ifdef DIAGNOSTIC
-			if (__predict_false(done < 0))
-				panic("done < 0; strategy broken");
-			if (__predict_false(done > todo))
-				panic("done > todo; strategy broken");
-#endif
+			KASSERT(done >= 0);
+			KASSERT(done <= todo);
+
 			iovp->iov_len -= done;
 			iovp->iov_base = (caddr_t)iovp->iov_base + done;
 			uio->uio_offset += done;

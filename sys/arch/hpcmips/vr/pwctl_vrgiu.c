@@ -1,9 +1,9 @@
-/*	$NetBSD: pwctl_vrgiu.c,v 1.5.2.2 2000/11/20 20:47:51 bouyer Exp $	*/
+/*	$NetBSD: pwctl_vrgiu.c,v 1.5.2.3 2001/03/27 15:30:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
- * Copyright (c) 2000
+ * Copyright (c) 2000,2001
  *         SATO Kazumi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ struct pwctl_vrgiu_softc {
 	int sc_on, sc_off;
 	config_hook_tag sc_hook_tag;
 	config_hook_tag sc_hook_hardpower;
+	config_hook_tag sc_ghook_tag;
 	int sc_save;
 	int sc_initvalue;
 };
@@ -78,6 +79,8 @@ static int	pwctl_vrgiu_match __P((struct device *, struct cfdata *,
 static void	pwctl_vrgiu_attach __P((struct device *, struct device *,
 					void *));
 static int	pwctl_vrgiu_hook __P((void *ctx, int type, long id,
+				      void *msg));
+static int	pwctl_vrgiu_ghook __P((void *ctx, int type, long id,
 				      void *msg));
 int	pwctl_vrgiu_hardpower __P((void *, int, long, void *));
 
@@ -135,6 +138,9 @@ pwctl_vrgiu_attach(parent, self, aux)
 		sc->sc_hook_tag = config_hook(CONFIG_HOOK_POWERCONTROL,
 					      sc->sc_id, CONFIG_HOOK_SHARE,
 					      pwctl_vrgiu_hook, sc);
+		sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
+					      sc->sc_id, CONFIG_HOOK_SHARE,
+					      pwctl_vrgiu_ghook, sc);
 		sc->sc_hook_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
 						CONFIG_HOOK_PMEVENT_HARDPOWER,
 						CONFIG_HOOK_SHARE,
@@ -161,6 +167,24 @@ pwctl_vrgiu_hook(ctx, type, id, msg)
 	sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port,
 				msg ? sc->sc_on : sc->sc_off);
 	return (0);
+}
+
+int
+pwctl_vrgiu_ghook(ctx, type, id, msg)
+	void *ctx;
+	int type;
+	long id;
+	void *msg;
+{
+	struct pwctl_vrgiu_softc *sc = ctx;
+
+	if (CONFIG_HOOK_VALUEP(msg))
+		return 1;
+
+	*(int*)msg = sc->sc_gf->gf_portread(sc->sc_gc, sc->sc_port) == sc->sc_on;
+	DPRINTF(("pwctl ghook: port %d %s(%d)", sc->sc_port,
+		 *(int*)msg? "ON" : "OFF", *(int*)msg ? sc->sc_on : sc->sc_off));
+	return 0;
 }
 
 int

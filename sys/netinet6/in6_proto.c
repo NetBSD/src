@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.8.2.3 2001/03/12 13:31:55 bouyer Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.8.2.4 2001/03/27 15:32:37 bouyer Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ struct ip6protosw inet6sw[] = {
   0,		0,		0,
   udp6_sysctl,
 },
-{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN,
+{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */

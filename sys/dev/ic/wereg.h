@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wereg.h,v 1.1 1997/11/03 21:22:50 thorpej Exp $	*/
+/*	$NetBSD: wereg.h,v 1.1.2.2 2001/03/27 15:32:02 bouyer Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -162,7 +162,7 @@
 
 /*
  * General Control Register (GCR)
- * Eanbled with SWH bit == 1 in HWR register
+ * Enabled with SWH bit == 1 in HWR register
  */
 #define	WE790_GCR	0x0d
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.61.2.4 2001/01/05 17:35:26 bouyer Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.61.2.5 2001/03/27 15:31:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
@@ -228,21 +229,16 @@ linux_sys_brk(p, v, retval)
 	char *nbrk = SCARG(uap, nsize);
 	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	caddr_t oldbrk;
+	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
 
-	oldbrk = vm->vm_daddr + ctob(vm->vm_dsize);
-	/*
-	 * XXX inconsistent.. Linux always returns at least the old
-	 * brk value, but it will be page-aligned if this fails,
-	 * and possibly not page aligned if it succeeds (the user
-	 * supplied pointer is returned).
-	 */
 	SCARG(&oba, nsize) = nbrk;
 
-	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(p, &oba, retval) == 0)
-		retval[0] = (register_t)nbrk;
-	else
-		retval[0] = (register_t)oldbrk;
+	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(p, &oba, retval) == 0) 
+		ed->p_break = (char*)nbrk;
+	else 
+		nbrk = ed->p_break;
+
+	retval[0] = (register_t)nbrk;
 
 	return 0;
 }

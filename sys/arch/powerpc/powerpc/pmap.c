@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26.2.4 2001/03/12 13:29:14 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26.2.5 2001/03/27 15:31:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1038,7 +1038,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	/*
@@ -1051,7 +1051,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void
@@ -1420,7 +1420,7 @@ pmap_activate(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap, rpm;
-	int psl, i, ksr, seg;
+	int psl, i, seg;
 
 	/*
 	 * XXX Normally performed in cpu_fork().
@@ -1440,22 +1440,19 @@ pmap_activate(p)
 		/* Store pointer to new current pmap. */
 		curpm = pcb->pcb_pmreal;
 
-		/* Save kernel SR. */
-		__asm __volatile("mfsr %0,14" : "=r"(ksr) :);
-
 		/*
 		 * Set new segment registers.  We use the pmap's real
 		 * address to avoid accessibility problems.
 		 */
 		rpm = pcb->pcb_pmreal;
 		for (i = 0; i < 16; i++) {
+			/* Do not reload the kernel segment register. */
+			if (i == KERNEL_SR) continue;
+
 			seg = rpm->pm_sr[i];
 			__asm __volatile("mtsrin %0,%1"
 			    :: "r"(seg), "r"(i << ADDR_SR_SHFT));
 		}
-
-		/* Restore kernel SR. */
-		__asm __volatile("mtsr 14,%0" :: "r"(ksr));
 
 		/* Interrupts are OK again. */
 		psl |= PSL_EE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63.2.1 2000/11/20 20:27:57 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.63.2.2 2001/03/27 15:31:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -45,14 +45,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-/* XXX: Move this to sys/conf.h? */
-/* open, close, write, ioctl (not a tty) */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	(dev_type_read((*))) enodev, dev_init(c,n,write), \
-	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /*
  * Device headers and declarations:

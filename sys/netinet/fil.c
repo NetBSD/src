@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.27.8.3 2001/02/11 19:17:11 bouyer Exp $	*/
+/*	$NetBSD: fil.c,v 1.27.8.4 2001/03/27 15:32:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.27.8.3 2001/02/11 19:17:11 bouyer Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.27.8.4 2001/03/27 15:32:28 bouyer Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp";
 #endif
 #endif
 
@@ -139,6 +139,8 @@ struct	frgroup *ipfgroups[3][2];
 int	fr_flags = IPF_LOGGING;
 int	fr_active = 0;
 int	fr_chksrc = 0;
+int	fr_minttl = 3;
+int	fr_minttllog = 1;
 #if defined(IPFILTER_DEFAULT_BLOCK)
 int	fr_pass = FR_NOMATCH|FR_BLOCK;
 #else
@@ -272,33 +274,75 @@ fr_info_t *fin;
 
 	switch (p)
 	{
+#ifdef USE_INET6
+	case IPPROTO_ICMPV6 :
+	{
+		int minicmpsz = sizeof(struct icmp6_hdr);
+		struct icmp6_hdr *icmp6;
+
+		if (fin->fin_dlen > 1) {
+			fin->fin_data[0] = *(u_short *)tcp;
+
+			icmp6 = (struct icmp6_hdr *)tcp;
+
+			switch (icmp6->icmp6_type)
+			{
+			case ICMP6_ECHO_REPLY :
+			case ICMP6_ECHO_REQUEST :
+				minicmpsz = ICMP6ERR_MINPKTLEN;
+				break;
+			case ICMP6_DST_UNREACH :
+			case ICMP6_PACKET_TOO_BIG :
+			case ICMP6_TIME_EXCEEDED :
+			case ICMP6_PARAM_PROB :
+				minicmpsz = ICMP6ERR_IPICMPHLEN;
+				break;
+			default :
+				break;
+			}
+		}
+
+		if (!(plen >= hlen + minicmpsz))
+			fi->fi_fl |= FI_SHORT;
+
+		break;
+	}
+#endif
 	case IPPROTO_ICMP :
 	{
 		int minicmpsz = sizeof(struct icmp);
 		icmphdr_t *icmp;
 
-		icmp = (icmphdr_t *)tcp;
+		if (!off && (fin->fin_dlen > 1)) {
+			fin->fin_data[0] = *(u_short *)tcp;
 
-		if (!off && (icmp->icmp_type == ICMP_ECHOREPLY ||
-		     icmp->icmp_type == ICMP_ECHO))
-			minicmpsz = ICMP_MINLEN;
+			icmp = (icmphdr_t *)tcp;
 
-		/* type(1) + code(1) + cksum(2) + id(2) seq(2) +
-		 * 3*timestamp(3*4) */
-		else if (!off && (icmp->icmp_type == ICMP_TSTAMP ||
-		    icmp->icmp_type == ICMP_TSTAMPREPLY))
-			minicmpsz = 20;
+			if (icmp->icmp_type == ICMP_ECHOREPLY ||
+			    icmp->icmp_type == ICMP_ECHO)
+				minicmpsz = ICMP_MINLEN;
 
-		/* type(1) + code(1) + cksum(2) + id(2) seq(2) + mask(4) */
-		else if (!off && (icmp->icmp_type == ICMP_MASKREQ ||
-		    icmp->icmp_type == ICMP_MASKREPLY))
-			minicmpsz = 12;
+			/*
+			 * type(1) + code(1) + cksum(2) + id(2) seq(2) +
+			 * 3*timestamp(3*4)
+			 */
+			else if (icmp->icmp_type == ICMP_TSTAMP ||
+				 icmp->icmp_type == ICMP_TSTAMPREPLY)
+				minicmpsz = 20;
+
+			/*
+			 * type(1) + code(1) + cksum(2) + id(2) seq(2) +
+			 * mask(4)
+			 */
+			else if (icmp->icmp_type == ICMP_MASKREQ ||
+				 icmp->icmp_type == ICMP_MASKREPLY)
+				minicmpsz = 12;
+		}
 
 		if ((!(plen >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
 			fi->fi_fl |= FI_SHORT;
-		if (fin->fin_dlen > 1)
-			fin->fin_data[0] = *(u_short *)tcp;
+
 		break;
 	}
 	case IPPROTO_TCP :
@@ -787,6 +831,7 @@ int out;
 #endif
 
 #ifdef	_KERNEL
+	int p, len, drop = 0, logit = 0;
 	mb_t *mc = NULL;
 # if !defined(__SVR4) && !defined(__svr4__)
 #  ifdef __sgi
@@ -812,16 +857,26 @@ int out;
 	}
 #  endif /* CSUM_DELAY_DATA */
 
-	/* at this moment, ipfilter supports IPv4 traffic only. */
-	if (ip->ip_v != 4)
-		return 0;
+# ifdef	USE_INET6
+	if (v == 6) {
+		len = ntohs(((ip6_t*)ip)->ip6_plen);
+		p = ((ip6_t *)ip)->ip6_nxt;
+	} else
+# endif
+	{
+		p = ip->ip_p;
+		len = ip->ip_len;
+	}
 
-	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
-	     ip->ip_p == IPPROTO_ICMP)) {
+	if ((p == IPPROTO_TCP || p == IPPROTO_UDP || p == IPPROTO_ICMP
+# ifdef USE_INET6
+	    || (v == 6 && p == IPPROTO_ICMPV6)
+# endif
+	   )) {
 		int plen = 0;
 
-		if ((ip->ip_off & IP_OFFMASK) == 0)
-			switch(ip->ip_p)
+		if ((v == 6) || (ip->ip_off & IP_OFFMASK) == 0)
+			switch(p)
 			{
 			case IPPROTO_TCP:
 				plen = sizeof(tcphdr_t);
@@ -833,8 +888,17 @@ int out;
 			case IPPROTO_ICMP:
 				plen = ICMPERR_MAXPKTLEN - sizeof(ip_t);
 				break;
+# ifdef USE_INET6
+	    		case IPPROTO_ICMPV6 :
+				/*
+				 * XXX does not take intermediate header
+				 * into account
+				 */
+				plen = ICMP6ERR_MINPKTLEN + 8 - sizeof(ip6_t);
+				break;
+# endif
 			}
-		up = MIN(hlen + plen, ip->ip_len);
+		up = MIN(hlen + plen, len);
 
 		if (up > m->m_len) {
 #  ifdef __sgi
@@ -881,8 +945,8 @@ int out;
 		ip->ip_id = ntohs(ip->ip_id);
 
 	changed = 0;
-	fin->fin_v = v;
 	fin->fin_ifp = ifp;
+	fin->fin_v = v;
 	fin->fin_out = out;
 	fin->fin_mp = mp;
 	fr_makefrip(hlen, ip, fin);
@@ -891,22 +955,37 @@ int out;
 # ifdef	USE_INET6
 	if (v == 6) {
 		ATOMIC_INCL(frstats[0].fr_ipv6[out]);
+		if (((ip6_t *)ip)->ip6_hlim < fr_minttl) {
+			ATOMIC_INCL(frstats[0].fr_badttl);
+			if (fr_minttllog)
+				logit = -2;
+		}
 	} else
 # endif
-# ifdef	IPFILTER_LOG
-		if (!out && fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
+	if (!out) {
+		if (fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
 			ATOMIC_INCL(frstats[0].fr_badsrc);
-			if (fr_chksrc == 2) {
-				fin->fin_group = -2;
-				pass = FR_INQUE|FR_NOMATCH|FR_LOGB;
-				(void) IPLLOG(pass, ip, fin, m);
-			}
-# if !SOLARIS
-			m_freem(m);
-# endif
-			return error;
+			if (fr_chksrc == 2)
+				logit = -2;
+		} else if (ip->ip_ttl < fr_minttl) {
+			ATOMIC_INCL(frstats[0].fr_badttl);
+			if (fr_minttllog)
+				logit = -3;
+		}
+	}
+	if (drop) {
+# ifdef	IPFILTER_LOG
+		if (logit) {
+			fin->fin_group = logit;
+			pass = FR_INQUE|FR_NOMATCH|FR_LOGB;
+			(void) IPLLOG(pass, ip, fin, m);
 		}
 # endif
+# if !SOLARIS
+		m_freem(m);
+# endif
+		return error;
+	}
 #endif
 	pass = fr_pass;
 	if (fin->fin_fi.fi_fl & FI_SHORT) {
@@ -1427,7 +1506,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp
+ * Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1906,7 +1985,7 @@ size_t c;
 	int err;
 
 #if SOLARIS
-	if (copyin(a, &ca, sizeof(ca)))
+	if (copyin(a, (char *)&ca, sizeof(ca)))
 		return EFAULT;
 #else
 	bcopy(a, &ca, sizeof(ca));
@@ -1926,7 +2005,7 @@ size_t c;
 	int err;
 
 #if SOLARIS
-	if (copyin(b, &ca, sizeof(ca)))
+	if (copyin(b, (char *)&ca, sizeof(ca)))
 		return EFAULT;
 #else
 	bcopy(b, &ca, sizeof(ca));
@@ -2020,6 +2099,15 @@ friostat_t *fiop;
 	fiop->f_acctin6[1] = ipacct6[0][1];
 	fiop->f_acctout6[0] = ipacct6[1][0];
 	fiop->f_acctout6[1] = ipacct6[1][1];
+#else
+	fiop->f_fin6[0] = NULL;
+	fiop->f_fin6[1] = NULL;
+	fiop->f_fout6[0] = NULL;
+	fiop->f_fout6[1] = NULL;
+	fiop->f_acctin6[0] = NULL;
+	fiop->f_acctin6[1] = NULL;
+	fiop->f_acctout6[0] = NULL;
+	fiop->f_acctout6[1] = NULL;
 #endif
 	fiop->f_active = fr_active;
 	fiop->f_froute[0] = ipl_frouteok[0];

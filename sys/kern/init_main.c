@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157.2.5 2001/01/05 17:36:37 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.6 2001/03/27 15:32:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -585,8 +585,7 @@ start_init(void *arg)
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,
-                    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
-		!= KERN_SUCCESS)
+                    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
 

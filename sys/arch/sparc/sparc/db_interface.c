@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.3 2001/02/11 19:12:22 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.30.2.4 2001/03/27 15:31:29 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -32,13 +32,17 @@
  * Interface to new debugger.
  */
 #include "opt_ddb.h"			/* XXX ddb vs kgdb */
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
 #include <dev/cons.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 
@@ -57,6 +61,7 @@
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
 #include <machine/ctlreg.h>
+#include <machine/pmap.h>
 #include <sparc/sparc/asm.h>
 
 #include "fb.h"
@@ -163,6 +168,13 @@ extern char *trap_type[];
 
 void kdb_kbd_trap __P((struct trapframe *));
 void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
+void db_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_simple_lock_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
+void db_cpu_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_page_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 /*
  * Received keyboard interrupt sequence.
@@ -229,6 +241,86 @@ kdb_trap(type, tf)
 }
 
 void
+db_proc_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct proc *p;
+
+	p = curproc;
+	if (have_addr) 
+		p = (struct proc*) addr;
+	if (p == NULL) {
+		db_printf("no current process\n");
+		return;
+	}
+	db_printf("process %p:", p);
+	db_printf("pid:%d cpu:%d vmspace:%p ", p->p_pid, p->p_cpu->ci_cpuid, p->p_vmspace);
+	db_printf("pmap:%p ctx:%p wchan:%p pri:%d upri:%d\n",
+		  p->p_vmspace->vm_map.pmap, 
+		  p->p_vmspace->vm_map.pmap->pm_ctx,
+		  p->p_wchan, p->p_priority, p->p_usrpri);
+	db_printf("thread @ %p = %p ", &p->p_thread, p->p_thread);
+	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
+		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
+		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
+	db_printf("profile timer: %ld sec %ld usec\n",
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
+		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+	db_printf("pcb: %p\n", &p->p_addr->u_pcb);
+	return;
+}
+
+void
+db_dump_pcb(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct pcb *pcb;
+	char bits[64];
+	int i;
+
+	if (have_addr) 
+		pcb = (struct pcb *) addr;
+	else
+		pcb = curcpu()->curpcb;
+
+	db_printf("pcb@%p sp:%p pc:%p psr:%s onfault:%p\nfull windows:\n",
+		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, 
+		  bitmask_snprintf(pcb->pcb_psr, PSR_BITS, bits, sizeof(bits)),
+		  (void *)pcb->pcb_onfault);
+	
+	for (i=0; i<pcb->pcb_nsaved; i++) {
+		db_printf("win %d: at %llx local, in\n", i, 
+			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[7]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[7]);
+	}
+}
+
+void
 db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -238,8 +330,99 @@ db_prom_cmd(addr, have_addr, count, modif)
 	prom_abort();
 }
 
+void
+db_page_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+
+	if (!have_addr) {
+		db_printf("Need paddr for page\n");
+		return;
+	}
+
+	db_printf("pa %llx pg %p\n", (unsigned long long)addr,
+	    PHYS_TO_VM_PAGE(addr));
+}
+
+void
+db_lock_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	lock_t l;
+
+	if (!have_addr) {
+		db_printf("What lock address?\n");
+		return;
+	}
+
+	l = (lock_t)addr;
+	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
+	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
+	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
+	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
+	    l->lk_recurselevel);
+}
+
+void
+db_simple_lock_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	simple_lock_t l;
+
+	if (!have_addr) {
+		db_printf("What lock address?\n");
+		return;
+	}
+
+	l = (simple_lock_t)addr;
+	db_printf("lock_data=%d", l->lock_data);
+#ifdef LOCKDEBUG
+	db_printf(" holder=%ld\n"
+	    " last locked=%s:%d\n last unlocked=%s:%d\n",
+	    l->lock_holder, l->lock_file, l->lock_line, l->unlock_file,
+	    l->unlock_line);
+#endif
+	db_printf("\n");
+}
+
+#include <uvm/uvm.h>
+
+extern void uvmhist_dump __P((struct uvm_history *));
+extern struct uvm_history_head uvm_histories;
+
+void
+db_uvmhistdump(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+
+	uvmhist_dump(uvm_histories.lh_first);
+}
+
 const struct db_command db_machine_command_table[] = {
 	{ "prom",	db_prom_cmd,	0,	0 },
+	{ "proc",	db_proc_cmd,	0,	0 },
+	{ "pcb",	db_dump_pcb,	0,	0 },
+	{ "lock",	db_lock_cmd,	0,	0 },
+	{ "slock",	db_simple_lock_cmd,	0,	0 },
+	{ "page",	db_page_cmd,	0,	0 },
+	{ "uvmdump",	db_uvmhistdump,	0,	0 },
+#if 0
+#ifdef MULTIPROCESSOR
+	{ "cpu",	db_cpu_cmd,	0,	0 },
+#endif
+#endif
 	{ (char *)0, }
 };
 #endif /* DDB */
@@ -476,3 +659,47 @@ db_inst_store(inst)
 	return 0;
     }
 }
+
+#if 0
+#ifdef MULTIPROCESSOR
+extern void cpu_debug_dump(void); /* XXX */
+
+void
+db_cpu_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	struct cpu_info *ci;
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+	
+	if ((addr < 0) || (addr >= ncpu)) {
+		db_printf("%ld: cpu out of range\n", addr);
+		return;
+	}
+	ci = cpus[addr];
+	if (ci == NULL) {
+		db_printf("cpu %ld not configured\n", addr);
+		return;
+	}
+#if 0
+	if (ci != curcpu()) {
+		if (!(ci->ci_flags & CPUF_PAUSE)) {
+			db_printf("cpu %ld not paused\n", addr);
+			return;
+		}
+	}
+#endif
+	if (ci->ci_ddb_regs == 0) {
+		db_printf("cpu %ld has no saved regs\n", addr);
+		return;
+	}
+	db_printf("using cpu %ld", addr);
+	ddb_regp = ci->ci_ddb_regs;
+}
+#endif
+#endif

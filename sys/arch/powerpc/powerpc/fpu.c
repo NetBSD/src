@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1.28.1 2000/11/20 20:31:15 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.28.2 2001/03/27 15:31:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -132,4 +132,6 @@ save_fpu(p)
 	     "stfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
 	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm volatile ("mtmsr %0; isync" :: "r"(msr));
+	pcb->pcb_fpcpu = NULL;
+	fpuproc = NULL;
 }

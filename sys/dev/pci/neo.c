@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.4.2.4 2001/01/05 17:36:11 bouyer Exp $	*/
+/*	$NetBSD: neo.c,v 1.4.2.5 2001/03/27 15:32:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -514,6 +514,14 @@ neo_match(struct device *parent, struct cfdata *match, void *aux)
 			case 0x0007:
 				return (0);
 			}
+			break;
+
+		case PCI_VENDOR_IBM:
+			switch (PCI_PRODUCT(subdev)) {
+			case 0x00dd:
+				return (0);
+			}
+			break;
 		}
 		return (1);
 

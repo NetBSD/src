@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.1.2.3 2001/03/12 13:28:16 bouyer Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.1.2.4 2001/03/27 15:30:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,9 +179,15 @@ HttpFile::open(const TCHAR *name, u_int32_t flag)
 size_t
 HttpFile::_read_from_cache(void *buf, size_t bytes, off_t ofs)
 {
-	size_t transfer = ofs + bytes > _buffer_size
-		? _buffer_size - ofs : bytes;
+	size_t transfer;
+
+	if (ofs >= _buffer_size)
+		return 0;
+
+	transfer = ofs + bytes > _buffer_size ? _buffer_size - ofs : bytes;
+
 	memcpy(buf, &_buffer[ofs], transfer);
+
 	return transfer;
 }
 

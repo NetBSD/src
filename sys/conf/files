@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.324.2.8 2001/03/12 13:29:57 bouyer Exp $
+#	$NetBSD: files,v 1.324.2.9 2001/03/27 15:31:49 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -524,6 +524,10 @@ file	dev/ic/intersil7170.c		intersil7170
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
+
+# WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
+device	we: ether, ifnet, arp, dp8390nic
+file	dev/ic/we.c			we
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1165,7 +1169,8 @@ file	netisdn/i4b_rbch.c		i4brbch			needs-count
 file	netisdn/i4b_tel.c		i4btel			needs-count
 file	netisdn/i4b_trace.c		i4btrc			needs-count
 
-file	netisdn/i4b_mbuf.c		i4btrc			needs-count
+file	netisdn/i4b_l1l2.c		passive_isdn
+file	netisdn/i4b_mbuf.c		passive_isdn
 file	netisdn/i4b_l2.c		passive_isdn
 file	netisdn/i4b_l2fsm.c		passive_isdn
 file	netisdn/i4b_uframe.c		passive_isdn

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.2 2001/01/05 17:34:40 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.3 2001/03/27 15:31:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -83,10 +83,18 @@ cpu_number()
 	return pir;
 }
 
+static __inline struct cpu_info *
+curcpu()
+{
+	struct cpu_info *ci;
+
+	asm volatile ("mfsprg %0,0" : "=r"(ci));
+	return ci;
+}
+
 extern struct cpu_info cpu_info[];
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define curcpu()		(&cpu_info[cpu_number()])
 #define curproc			curcpu()->ci_curproc
 #define fpuproc			curcpu()->ci_fpuproc
 #define curpcb			curcpu()->ci_curpcb

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12.2.1 2000/11/20 20:13:00 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12.2.2 2001/03/27 15:31:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -455,7 +455,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < avail_start || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
+			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}

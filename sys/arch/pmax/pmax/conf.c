@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33.2.2 2001/03/12 13:29:12 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.33.2.3 2001/03/27 15:31:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,14 +174,9 @@ cdev_decl(scc);
 cdev_decl(tz);
 
 /* a framebuffer with an attached mouse: */
+
 /* open, close, ioctl, poll, mmap */
-
-#define	cdev_fbm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
+#define	cdev_fbm_init(c,n)	cdev__ocipm_init(c,n)
 
 struct cdevsw	cdevsw[] =
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.21.2.3 2001/02/11 19:17:40 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.21.2.4 2001/03/27 15:32:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1281,8 +1281,9 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
+			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vput(vp);
+			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*

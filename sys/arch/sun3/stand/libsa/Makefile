@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.8.3 2001/03/12 13:29:37 bouyer Exp $
+#	$NetBSD: Makefile,v 1.21.8.4 2001/03/27 15:31:38 bouyer Exp $
 
 LIB=sa
 
@@ -12,14 +12,11 @@ LOBJS=SRT0.o SRT1.o
 MKLINT=no
 MKPIC=no
 MKPROFILE=no
-NOPROFILE=
-NOPIC=
-NOLINT=
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
-DIR_SA=$S/lib/libsa
-DIR_KERN=$S/lib/libkern
+DIR_SA=${S}/lib/libsa
+DIR_KERN=${S}/lib/libkern
 
 .PATH:  ${DIR_SA} ${DIR_KERN}
 
@@ -30,7 +27,7 @@ DEFS= -Dsun3 -D_STANDALONE
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
 CFLAGS= -O2 -msoft-float -fno-defer-pop
 CPPFLAGS= ${DEFS} ${DBG} ${INCL}
-CLEANFILES= SRT0.o SRT1.o machine m68k vers.c
+CLEANFILES= SRT0.o SRT1.o vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
@@ -59,8 +56,6 @@ POBJS=
 SOBJS=
 
 # Customized rules...
-
-${OBJS} SRT0.o SRT1.o : machine m68k
 
 vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "sun3"

@@ -1,6 +1,7 @@
-#	$NetBSD: std.news68k,v 1.2.2.2 2000/11/20 20:16:09 bouyer Exp $
+#	$NetBSD: std.news68k,v 1.2.2.3 2001/03/27 15:31:15 bouyer Exp $
 
 machine news68k m68k
 
 options	EXEC_AOUT	# exec a.out binaries
+options	EXEC_ELF32	# exec ELF binaries
 options	EXEC_SCRIPT	# exec #! scripts

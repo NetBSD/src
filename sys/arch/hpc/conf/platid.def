@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.2.2.3 2001/03/12 13:28:09 bouyer Exp $	*/
+/*	$NetBSD: platid.def,v 1.2.2.4 2001/03/27 15:30:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -127,8 +127,8 @@ Everex {
 }
 #endif /* hpcmips */
 
-#ifdef hpcmips
 CASIO {
+#ifdef hpcmips
   CassiopeiaE " Cassiopeia" {
     EXX {
       CPU=MIPS_VR_4111 E10 E11 E15
@@ -144,8 +144,16 @@ CASIO {
     CPU=MIPS_VR_4121
     PocketPostPet -" PocketPostPet"
   }
-}
 #endif /* hpcmips */
+#ifdef hpcsh
+  CassiopeiaA " Cassiopeia" {
+    AXX {
+      CPU=SH_3_7709
+		      A55V -" A-55V"
+    }
+  }
+#endif /* hpcsh */
+}
 
 #ifdef hpcmips
 Sharp {
@@ -267,8 +275,12 @@ HP {
 			CPU=SH_3_7709A 
 			680
 			680JP -" 680 (Japanese)"
+			680HU -" 680 (Hungarian)"
+			680DE -" 680 (German)"
 			690
 			690JP -" 690 (Japanese)"
+			690HU -" 690 (Hungarian)"
+			690DE -" 690 (German)"
 		}
 #endif /* hpcsh */
 #ifdef hpcarm
@@ -291,6 +303,9 @@ HITACHI {
 	PERSONA {
 		CPU=SH_3_7709
 			HPW230JC
+			HPW50PAD
+		CPU=SH_4_7750
+			HPW650PA
 	}
 }
 #endif /* hpcsh */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86.2.4 2001/03/12 13:29:25 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.86.2.5 2001/03/27 15:31:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -106,7 +106,8 @@ int	rwindow_debug = 0;
  */
 struct	fpstate initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
-	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 },
+	0, 0,
 };
 
 /*
@@ -273,7 +274,7 @@ trap(type, psr, pc, tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-	uvmexp.traps++;		/* XXXSMP */
+	uvmexp.traps++;	/* XXXSMP */
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -410,7 +411,6 @@ badtrap:
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
-			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
 		}
 		/*
@@ -494,8 +494,10 @@ badtrap:
 	}
 
 	case T_WINOF:
+		KERNEL_PROC_LOCK(p);
 		if (rwindow_save(p))
 			sigexit(p, SIGILL);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 #define read_rw(src, dst) \
@@ -749,7 +751,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
-	int rv;
+	int rv = EFAULT;
 	vm_prot_t atype;
 	int onfault;
 	u_quad_t sticks;
@@ -787,7 +789,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (type == T_TEXTFAULT)
 		v = pc;
 	if (VA_INHOLE(v)) {
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 		goto fault;
 	}
 	atype = ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
@@ -816,7 +818,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
+			rv = uvm_fault(kernel_map, va, 0, atype);
+			if (rv == 0)
 				return;
 			goto kfault;
 		}
@@ -832,7 +835,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	rv = mmu_pagein(vm->vm_map.pmap, va,
 			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0) {
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 		goto fault;
 	}
 	if (rv > 0)
@@ -840,6 +843,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	if (rv == EACCES) {
+		rv = EFAULT;
+	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -854,15 +860,12 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur +
 		 SUNOS_MAXSADDR_SLOP)
 #endif
-	    ) {
-		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+	    && rv == 0) {
+		vaddr_t nss = btoc(USRSTACK - va);
+		if (nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
 	}
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		/*
 		 * pmap_enter() does not enter all requests made from
 		 * vm_fault into the MMU (as that causes unnecessary
@@ -891,9 +894,10 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
+			tf->tf_out[0] = rv;
 			return;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -924,8 +928,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	int pc, psr;
 	struct proc *p;
 	struct vmspace *vm;
-	vaddr_t va=0;
-	int rv;
+	vaddr_t va;
+	int rv = EFAULT;
 	vm_prot_t atype;
 	int onfault;
 	u_quad_t sticks;
@@ -952,9 +956,6 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	pc = tf->tf_pc;			/* These are needed below */
 	psr = tf->tf_psr;
 
-	if ((psr & PSR_PS) == 0)
-		KERNEL_PROC_LOCK(p);
-
 	/*
 	 * Our first priority is handling serious faults, such as
 	 * parity errors or async faults that might have come through here.
@@ -972,17 +973,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 */
 	if (type == T_STOREBUFFAULT ||
 	    (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0)) {
-		if ((psr & PSR_PS) == 0)
-			KERNEL_PROC_UNLOCK(p);
 		(*cpuinfo.memerr)(type, sfsr, sfva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
 		 */
-		if ((psr & PSR_PS) == 0)
-			KERNEL_PROC_LOCK(p);
-		goto out;
+		goto out_nounlock;
 	}
+
+	if ((psr & PSR_PS) == 0)
+		KERNEL_PROC_LOCK(p);
+	else
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 	/*
 	 * Figure out what to pass the VM code. We cannot ignore the sfva
@@ -1018,7 +1020,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (type == T_TEXTFAULT)
 			sfva = pc;
 		else {
-			rv = KERN_PROTECTION_FAILURE;
+			rv = EACCES;
 			goto fault;
 		}
 	}
@@ -1028,7 +1030,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 * Translation errors are always fatal, as they indicate
 		 * a corrupt translation (page) table hierarchy.
 		 */
-		rv = KERN_PROTECTION_FAILURE;
+		rv = EACCES;
 
 		/* XXXSMP - why bother with this anyway? */
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
@@ -1062,7 +1064,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
 			if (uvm_fault(&vm->vm_map, trunc_page(pc),
-				     0, VM_PROT_READ) != KERN_SUCCESS)
+				      0, VM_PROT_READ) != 0)
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1099,8 +1101,11 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == KERN_SUCCESS)
+			rv = uvm_fault(kernel_map, va, 0, atype);
+			if (rv == 0) {
+				KERNEL_UNLOCK();
 				return;
+			}
 			goto kfault;
 		}
 	} else
@@ -1110,6 +1115,9 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	if (rv == EACCES) {
+		rv = EFAULT;
+	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1118,15 +1126,12 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+	if ((caddr_t)va >= vm->vm_maxsaddr && rv == 0) {
+		vaddr_t nss = btoc(USRSTACK - va);
+		if (nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
@@ -1147,9 +1152,11 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
+			tf->tf_out[0] = rv;
+			KERNEL_UNLOCK();
 			return;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -1161,9 +1168,12 @@ kfault:
 out:
 	if ((psr & PSR_PS) == 0) {
 		KERNEL_PROC_UNLOCK(p);
+out_nounlock:
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
 	}
+	else
+		KERNEL_UNLOCK();
 }
 #endif
 
@@ -1194,7 +1204,6 @@ syscall(code, tf, pc)
 	uvmexp.syscalls++;	/* XXXSMP */
 	p = curproc;
 
-	KERNEL_PROC_LOCK(p);
 
 #ifdef DIAGNOSTIC
 	if (tf->tf_psr & PSR_PS)
@@ -1275,6 +1284,14 @@ syscall(code, tf, pc)
 		}
 		copywords(ap, args.i, i * sizeof(register_t));
 	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args.i);
+#endif /* SYSCALL_DEBUG */
+
+	/* Lock the kernel if the syscall isn't MP-safe. */
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_LOCK(p);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args.i);
@@ -1282,6 +1299,9 @@ syscall(code, tf, pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
+
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_UNLOCK(p);
 
 	switch (error) {
 	case 0:
@@ -1321,7 +1341,9 @@ syscall(code, tf, pc)
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif /* SYSCALL_DEBUG */
 	userret(p, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {

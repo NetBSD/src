@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.35.2.1 2000/11/20 20:08:04 bouyer Exp $	*/
+/*	$NetBSD: grf.c,v 1.35.2.2 2001/03/27 15:30:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -664,9 +664,8 @@ grfunmap(dev, addr, p)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
-	    (vaddr_t)addr + size);
-	return(rv == KERN_SUCCESS ? 0 : EINVAL);
+	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr, (vaddr_t)addr + size);
+	return 0;
 }
 
 #ifdef COMPAT_HPUX

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74.2.6 2001/02/18 18:27:11 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.7 2001/03/27 15:32:01 bouyer Exp $ */
 
 
 /*
@@ -464,6 +464,7 @@ wdcattach(chp)
 	 * led on)
 	 */
 	if ((chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+		delay(50);
 		wdcreset(chp, VERBOSE);
 		/*
 		 * Read status registers to avoid spurious interrupts.

@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.4.2.6 2001/02/11 19:08:54 bouyer Exp $ */
+/* $NetBSD: start.c,v 1.4.2.7 2001/03/27 15:30:22 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.6 2001/02/11 19:08:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.7 2001/03/27 15:30:22 bouyer Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.6 2001/02/11 19:08:54 bouyer Exp $")
 #include <sys/systm.h>
 
 #include <arm/armreg.h>
+#include <arm/undefined.h>
 #include <machine/boot.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>
@@ -187,6 +188,9 @@ start(initbootconfig)
 
 	/* Get the MEMC set up and map zero page */
 	pmap_bootstrap(bootconfig.npages, ZP_PHYSADDR);
+
+	/* Set up the undefined instruction handlers. */
+	undefined_init();
 
 	/*
 	 * This is a nasty bit.  Because the kernel uses a 26-bit APCS

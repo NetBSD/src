@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.2.3 2001/02/11 19:09:07 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.2.4 2001/03/27 15:30:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,7 +226,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -288,8 +288,7 @@ cpu_startup()
 	 * XXX This is bogus; should just fix KERNBASE and
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE)
-	    != KERN_SUCCESS)
+	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE) != 0)
 		panic("can't mark page 0 off-limits");
 
 	/*
@@ -300,7 +299,7 @@ cpu_startup()
 	 * XXX of NBPG.
 	 */
 	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
+	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
 		panic("can't protect kernel text");
 
 #ifdef DEBUG

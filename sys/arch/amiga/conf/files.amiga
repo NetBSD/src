@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.93.2.4 2001/03/12 13:27:11 bouyer Exp $
+#	$NetBSD: files.amiga,v 1.93.2.5 2001/03/27 15:30:14 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -44,6 +44,9 @@ file	arch/amiga/amiga/amiga_bus_simple_1word.c
 
 define	amibus_b16
 file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
+
+define	amibus_b800
+file	arch/amiga/amiga/amiga_bus_simple_0x800.c	amibus_b800
 
 # zorro expansion bus.
 device	zbus {}

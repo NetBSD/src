@@ -476,14 +476,14 @@ pmap_init()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)) != 0)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, ATARI_KPTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+				UVM_FLAG_FIXED)) != 0) {
 		/*
 		 * If this fails, it is probably because the static
 		 * portion of the kernel page table isn't big enough
@@ -575,11 +575,9 @@ pmap_init()
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
+	if (rv != 0 || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
+	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -1106,11 +1104,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		       pmap, va, pa, prot, wired);
-#endif
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
-
-#ifdef DEBUG
 	if (pmap == pmap_kernel())
 		enter_stats.kernel++;
 	else
@@ -1344,7 +1337,7 @@ validate:
 	}
 #endif
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void
@@ -2516,7 +2509,7 @@ pmap_enter_ptpage(pmap, va)
 #endif
 		s = uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
 						VM_PROT_READ|VM_PROT_WRITE);
-		if (s != KERN_SUCCESS) {
+		if (s != 0) {
 			printf("uvm_fault_wire(pt_map, 0x%lx, 0%lx, RW) "
 				"-> %d\n", va, va + PAGE_SIZE, s);
 			panic("pmap_enter: uvm_fault_wire failed");

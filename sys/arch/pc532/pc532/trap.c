@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36.2.2 2001/01/05 17:34:56 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.36.2.3 2001/03/27 15:31:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -393,14 +393,13 @@ trap(frame)
 		    && map != kernel_map) {
 			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				rv = KERN_FAILURE;
-				goto nogo;
+				nss = 0;
 			}
 		}
 
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, 0, ftype);
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
@@ -409,7 +408,6 @@ trap(frame)
 			goto out;
 		}
 
-	nogo:
 		if (type == T_ABT) {
 			if (pcb->pcb_onfault != 0) {
 			copyfault:
@@ -420,7 +418,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?

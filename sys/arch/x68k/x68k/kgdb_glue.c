@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.1.1.1.32.1 2001/03/27 15:31:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -56,7 +56,7 @@
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.1.1.1.32.1 2001/03/27 15:31:45 bouyer Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800
@@ -64,8 +64,8 @@ static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.1.1.1 1996/05/05 12:17:03 oki Ex
 
 u_long kgdb_stack[KGDB_STACKWORDS];
 
-#define getsp(v) asm("movl sp, %0" : "=r" (v))
-#define setsp(v) asm("movl %0, sp" :: "r" (v))
+#define getsp(v) asm("movl %%sp, %0" : "=r" (v))
+#define setsp(v) asm("movl %0, %%sp" :: "r" (v))
 
 static inline void
 copywords(src, dst, nbytes)
@@ -139,7 +139,7 @@ kgdb_trap_glue(type, frame)
 	 * unneeded usp (we trapped from kernel mode) and pad word,
 	 * and return to the trapped thread.
 	 */
-	asm("moveml sp@+,#0x7FFF; addql #8,sp; rte");
+	asm("moveml %sp@+,#0x7FFF; addql #8,sp; rte");
 }
 
 int kgdb_testval;

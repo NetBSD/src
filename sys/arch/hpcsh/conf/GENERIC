@@ -1,0 +1,149 @@
+#	$NetBSD: GENERIC,v 1.1.2.2 2001/03/27 15:30:57 bouyer Exp $
+#
+#	GENERIC kernel for SH3+HD64461 based machines.
+#
+
+include "arch/hpcsh/conf/std.hpcsh.el"
+
+maxusers	32			# estimated number of users
+
+options		SH7709A			# 133MHz
+options		SH7709A_BROKEN_IPR
+options		PCLOCK=22000000		# 22MHz
+
+options 	DDB			# in-kernel debugger
+options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DEBUG			# extra kernel debugging support
+options 	KTRACE			# system call tracing support
+options		MSGBUFSIZE=65534
+
+#options		USE_RTCCLK
+
+# Standard system options
+
+options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+options 	HZ=50		# clock interrupt generates every 1/HZ sec 
+
+# Compatibility options
+options 	COMPAT_43
+
+options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+
+# Executable format options
+options 	EXEC_COFF	# 32-bit COFF executables
+options 	EXEC_ELF32	# 32-bit ELF executables
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	MFS		# memory file system
+file-system	NFS		# Sun NFS-compatible filesystem client
+file-system 	UNION		# union file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
+
+# File system options
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	NFS_BOOT_DHCP
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+options 	WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_VT220L8x10
+options 	WS_KERNEL_FG=WSCOL_BROWN
+options 	WS_KERNEL_BG=WSCOL_BLUE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+#
+# Device configuration
+#
+mainbus0 at root
+
+shb0 at mainbus? id HP
+shb1 at mainbus? id HITACHI
+
+#
+# Workstation Console attachments
+#
+bivideo*	at mainbus? id HP
+hpcfb*		at bivideo?
+
+wsdisplay*	at hpcfb?
+pfckbd*		at mainbus? id HP
+hpckbd*		at pfckbd?
+wskbd*		at hpckbd? mux 1
+
+#
+# HP Jornada
+#
+# Serial Devices
+# don't need to define SCICONSOLE. you can select from bootloader.
+options SCIFCN_SPEED=19200
+scif0 at shb0 port 0xa4000008 irq 12
+
+hd64461if0 at shb0 irq 4
+hd64461pcmcia*	at hd64461if0
+
+#
+# HITACHI PERSONA
+#
+hd64461if1 at shb1 irq 4
+com*		at hd64461if1
+
+#
+# machine independent part
+#
+# PCMCIA bus support
+pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
+pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
+
+# PCMCIA network interfaces
+ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
+ep*	at pcmcia0 function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
+#wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
+#mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
+
+# PCMCIA SCSI interfaces
+#aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
+
+#scsibus* at aic?
+
+# PCMCIA IDE disk
+# PC-Card slot
+wdc1	at pcmcia0 function ?
+wd*	at wdc1 channel ? drive ? flags 0x0000
+# Compact Flash slot (only memory mapped mode CF can attach) 
+wdc0	at pcmcia1 function ?
+wd*	at wdc0 channel ? drive ? flags 0x0000
+
+# SCSI devices
+#sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# Network Interfaces
+
+# Pseudo-Devices
+pseudo-device	biconsdev	1	# build-in console device
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2

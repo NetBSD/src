@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.32.12.2 2001/03/12 13:27:45 bouyer Exp $ */
+/* $NetBSD: podulebus.c,v 1.32.12.3 2001/03/27 15:30:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -59,8 +59,8 @@
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
-#include <arm32/podulebus/podule_data.h>
+#include <dev/podulebus/podules.h>
+#include <dev/podulebus/podule_data.h>
 
 #include "locators.h"
 
@@ -115,9 +115,9 @@ podulebusprint(aux, name)
 	}
 
 	if (pa->pa_podule->slottype == SLOT_POD)
-		printf(" [ podule %d ]:", pa->pa_podule_number);
+		printf(" [ podule %d ]", pa->pa_podule_number);
 	else if (pa->pa_podule->slottype == SLOT_NET)
-		printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
+		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
 	else
 		panic("Invalid slot type\n");
 
@@ -599,6 +599,7 @@ podulebusattach(parent, self, aux)
 				    podules[loop].product);
 				podules[loop].slottype = SLOT_POD;
 				pa.pa_podule_number = loop;
+				pa.pa_ih = pa.pa_podule_number;
 				pa.pa_podule = &podules[loop];
 				pa.pa_iot = &podulebus_bs_tag;
 				config_found_sm(self, &pa, podulebusprint,
@@ -613,6 +614,7 @@ podulebusattach(parent, self, aux)
 		
 		if (podules[loop].slottype != SLOT_NONE) {
 			pa.pa_podule_number = loop;
+			pa.pa_ih = pa.pa_podule_number;
 			pa.pa_podule = &podules[loop];
 			pa.pa_iot = &podulebus_bs_tag;
 			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
@@ -699,6 +701,41 @@ netslot_ea(buffer)
 	buffer[3] = bootconfig.machine_id[2] + 0x10;
 	buffer[4] = bootconfig.machine_id[1];
 	buffer[5] = bootconfig.machine_id[0];
+}
+
+void *
+podulebus_irq_establish(ih, ipl, func, arg, ev)
+	podulebus_intr_handle_t ih;
+	int ipl;
+	int (*func) __P((void *));
+	void *arg;
+	struct evcnt *ev;
+{
+
+	/* XXX We don't actually use the evcnt supplied, just its name. */
+	return intr_claim(podules[ih].interrupt, ipl, ev->ev_group, func,
+	    arg);
+}
+
+/*
+ * Generate a bus_space_tag_t with the specified address-bus shift.
+ */
+void
+podulebus_shift_tag(tag, shift, tagp)
+	bus_space_tag_t tag, *tagp;
+	u_int shift;
+{
+
+	/*
+	 * For the podulebus, the bus tag cookie is the shift to apply
+	 * to registers, so duplicate the bus space tag and change the
+	 * cookie.
+	 */
+
+	/* XXX never freed, but podules are never detached anyway. */
+        *tagp = malloc(sizeof(struct bus_space), M_DEVBUF, M_WAITOK);
+	**tagp = *tag;
+	(*tagp)->bs_cookie = (void *)shift;
 }
 
 /* End of podulebus.c */

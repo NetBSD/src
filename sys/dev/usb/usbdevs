@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.9 2001/03/12 13:31:29 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.10 2001/03/27 15:32:19 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ vendor MYSON		0x04cf	Myson Technology Inc.
 vendor DIGI2		0x04d0	Digi International
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing Technologies, Inc.
+vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
@@ -135,6 +136,7 @@ vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom Corp. Ltd.
+vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM GmbH
@@ -269,6 +271,7 @@ vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical Co., Ltd.
 vendor BOCASYSTEMS	0x0a43	Boca Systems, Inc.
 vendor BROADCOM		0x0a5c	Broadcom Corp.
+vendor GREENHOUSE	0x0a6b	GREENHOUSE Co., Ltd.
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
@@ -360,6 +363,7 @@ product ATEN UC232A		0x2008	Serial adapter
 
 /* Atmel Comp. products */
 product ATMEL UHB124		0x3301	UHB124 hub
+product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
@@ -379,6 +383,7 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 
 /* Canon, Inc. products */
 product CANON S10		0x3041	PowerShot S10
+product CANON N656U		0x2206	CANOSCAN N656U
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
@@ -479,6 +484,9 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
+/* GREENHOUSE products */
+product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
+
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 
@@ -493,6 +501,9 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
+
+/* Hauppauge Computer Works */
+product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV USB FM
 
 /* HP products */
 product HP 4100C		0x0101	Scanjet 4100C
@@ -627,6 +638,9 @@ product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
+/* Microtech products */
+product MICROTECH DPCM		0x0006	USB CameraMate
+
 /* Microtek products */
 product MICROTEK 336CX		0x0094	Phantom 336CX - C3 scanner
 product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
@@ -675,8 +689,11 @@ product NIKON E990		0x0102	Digital Camera E990
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
 
-/* Palm Computing, Inc. */
+/* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
+
+/* Panasonic products */
+product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
 
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40.2.3 2001/01/18 09:22:23 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.40.2.4 2001/03/27 15:30:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -52,7 +52,7 @@
 
 #define	bdev_md_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,strategy), \
-	dev_init(c,n,ioctl), (dev_type_dump((*))) enxio, dev_size_init(c,n), 0 }
+	dev_init(c,n,ioctl), dev_noimpl(dump,enxio), dev_size_init(c,n), 0 }
 
 #include "vnd.h"
 bdev_decl(vnd);
@@ -96,82 +96,18 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,poll), dev_init(c,n,mmap) }
-
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_view_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,poll), dev_init(c,n,mmap) }
-
 /* open, close, write, ioctl */
-#define	cdev_lp_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	(dev_type_read((*))) enodev, dev_init(c,n,write), \
-	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0}
+#define	cdev_lp_init(c,n)	cdev__ocwi_init(c,n)
 
 /* open, close, read, ioctl */
-#define	cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+#define	cdev_ss_init(c,n)	cdev__ocri_init(c,n)
 
 /* open, close, read, write */
-#define	cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write),(dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+#define	cdev_rtc_init(c,n)	cdev__ocrw_init(c,n)
 
 /* open, close, read, write, ioctl, mmap */
-#define cdev_et_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	dev_init(c,n,mmap) }
-
-/* open, close, ioctl */
-#define cdev_i4bctl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4brbch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4btel_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
-
-/* open, close, read, ioctl */
-#define cdev_i4btrc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl, poll */
-#define cdev_i4b_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }	
+#define cdev_et_init(c,n)	cdev__ocrwim_init(c,n)
+#define cdev_leo_init(c,n)	cdev__ocrwim_init(c,n)
 
 #include "i4b.h"
 #include "i4bctl.h"
@@ -183,13 +119,6 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
-
-/* open, close, read, write, ioctl, mmap */
-#define cdev_leo_init(c,n) { \
-       dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-       dev_init(c,n,write), dev_init(c,n,ioctl), \
-       (dev_type_stop((*))) enodev, 0, seltrue, \
-       dev_init(c,n,mmap) }
 
 #include "audio.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.5 2001/02/11 19:12:39 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.2.6 2001/03/27 15:31:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ cpu_startup()
         if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-                                UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+                                UVM_ADV_NORMAL, 0)) != 0)
         	panic("cpu_startup: cannot allocate VM for buffers");
 
         minaddr = (vaddr_t) buffers;
@@ -1341,7 +1341,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		if (__predict_false(uvm_vslock(p, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
-			    != KERN_SUCCESS)) {
+			    != 0)) {
 				goto after_vsunlock;
 			}
 		
@@ -1621,7 +1621,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0));
-	if (r != KERN_SUCCESS)
+	if (r != 0)
 		return (ENOMEM);
 
 	/* Compute start of aligned region */

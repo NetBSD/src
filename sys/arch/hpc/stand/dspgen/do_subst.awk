@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.awk,v 1.1.2.3 2001/03/12 13:28:14 bouyer Exp $
+# $NetBSD: do_subst.awk,v 1.1.2.4 2001/03/27 15:30:46 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -82,6 +82,7 @@ BEGIN {
 
 	SRCFILES_ARM = setup_md_files("ARM", "SRCFILE_LIST_ARM", SRCFILES_ARM)
 	SRCFILES_SH3 = setup_md_files("SH3", "SRCFILE_LIST_SH3", SRCFILES_SH3)
+	SRCFILES_SH4 = setup_md_files("SH4", "SRCFILE_LIST_SH3", SRCFILES_SH3)
 	SRCFILES_SH = setup_md_files("SH", "SRCFILE_LIST_SH3", SRCFILES_SH3)
 	SRCFILES_MIPS = setup_md_files("MIPS", "SRCFILE_LIST_MIPS",
 				       SRCFILES_MIPS)
@@ -191,6 +192,7 @@ BEGIN {
 	gsub("%%% SRCFILES %%%", SRCFILES)
 	gsub("%%% SRCFILES_ARM %%%", SRCFILES_ARM)
 	gsub("%%% SRCFILES_SH3 %%%", SRCFILES_SH3)
+	gsub("%%% SRCFILES_SH4 %%%", SRCFILES_SH4)
 	gsub("%%% SRCFILES_SH %%%", SRCFILES_SH)
 	gsub("%%% SRCFILES_MIPS %%%", SRCFILES_MIPS)
 	gsub("%%% CPPDEFS %%%", CPPDEFS)

@@ -27,7 +27,7 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.1.4.2 2001/03/12 13:30:19 bouyer Exp $ 
+ *	$Id: hscx.c,v 1.1.4.3 2001/03/27 15:31:54 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
@@ -202,13 +202,11 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 		
 				if(sc->sc_trace & TRACE_B_RX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					i4b_trace_hdr hdr;
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				(*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
@@ -276,13 +274,11 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 
 				if(sc->sc_trace & TRACE_B_RX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					i4b_trace_hdr hdr;
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr,chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				/* silence detection */
@@ -368,13 +364,11 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 
 				if(sc->sc_trace & TRACE_B_TX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					i4b_trace_hdr hdr;
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 				
 				if(chan->bprot == BPROT_NONE)
@@ -425,13 +419,11 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 	
 					if(sc->sc_trace & TRACE_B_TX)
 					{
-						i4b_trace_hdr_t hdr;
-						hdr.unit = sc->sc_unit;
+						i4b_trace_hdr hdr;
 						hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 						hdr.dir = FROM_TE;
 						hdr.count = ++sc->sc_trace_bcount;
-						MICROTIME(hdr.time);
-						MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+						isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 					}
 				}
 				else

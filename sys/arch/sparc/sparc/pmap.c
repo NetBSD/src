@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152.2.4 2001/03/12 13:29:24 bouyer Exp $ */
+/*	$NetBSD: pmap.c,v 1.152.2.5 2001/03/27 15:31:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -380,6 +380,9 @@ vaddr_t prom_vend;
  * Memory pool for pmap structures.
  */
 static struct pool pmap_pmap_pool;
+static struct pool_cache pmap_pmap_pool_cache;
+static int	pmap_pmap_pool_ctor __P((void *, void *, int));
+static void	pmap_pmap_pool_dtor __P((void *, void *));
 
 #if defined(SUN4)
 /*
@@ -1942,10 +1945,6 @@ pv_changepte4_4c(pv0, bis, bic)
 	ctx = getcontext4();
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
-#ifdef DIAGNOSTIC
-		if(pm == NULL)
-			panic("pv_changepte: pm == NULL");
-#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -2262,10 +2261,6 @@ pv_changepte4m(pv0, bis, bic)
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		int tpte;
 		pm = pv->pv_pmap;
-#ifdef DIAGNOSTIC
-		if (pm == NULL)
-			panic("pv_changepte: pm == NULL");
-#endif
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		rp = &pm->pm_regmap[vr];
@@ -2763,6 +2758,12 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 	TAILQ_INIT(&kernel_pmap_store.pm_seglist);
 
+	/*
+	 * Set up pm_regmap for kernel to point NUREG *below* the beginning
+	 * of kernel regmap storage. Since the kernel only uses regions
+	 * above NUREG, we save storage space and can index kernel and
+	 * user regions in the same way.
+	 */
 	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
 	for (i = NKREG; --i >= 0;) {
 #if defined(SUN4_MMU3L)
@@ -3108,7 +3109,7 @@ pmap_bootstrap4m(void)
 	 * Set up pm_regmap for kernel to point NUREG *below* the beginning
 	 * of kernel regmap storage. Since the kernel only uses regions
 	 * above NUREG, we save storage space and can index kernel and
-	 * user regions in the same way
+	 * user regions in the same way.
 	 */
 	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
 	bzero(kernel_regmap_store, NKREG * sizeof(struct regmap));
@@ -3577,10 +3578,13 @@ pmap_init()
 	 * region table pointers & physical addresses
 	 */
 	sizeof_pmap = ALIGN(sizeof(struct pmap)) +
+		      ALIGN(NUREG * sizeof(struct regmap)) +
 		      ncpu * sizeof(int *) +		/* pm_reg_ptps */
 		      ncpu * sizeof(int);		/* pm_reg_ptps_pa */
 	pool_init(&pmap_pmap_pool, sizeof_pmap, 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_cache_init(&pmap_pmap_pool_cache, &pmap_pmap_pool,
+			pmap_pmap_pool_ctor, pmap_pmap_pool_dtor, NULL);
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
@@ -3624,23 +3628,76 @@ pmap_map(va, pa, endpa, prot)
 	return (va);
 }
 
-/*
- * Create and return a physical map.
- *
- * If size is nonzero, the map is useless. (ick)
- */
-struct pmap *
-pmap_create()
-{
-	struct pmap *pm;
-	u_long addr;
-	void *urp;
-
-	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
 #ifdef DEBUG
-	if (pmapdebug & PDB_CREATE)
-		printf("pmap_create: created %p\n", pm);
+/*
+ * Check a pmap for spuriously lingering mappings
+ */
+static __inline__ void pmap_quiet_check(struct pmap *pm)
+{
+	int vs, vr;
+
+	if (CPU_ISSUN4OR4C) {
+#if defined(SUN4_MMU3L)
+		if (pm->pm_reglist.tqh_first)
+			panic("pmap_destroy: region list not empty");
 #endif
+		if (pm->pm_seglist.tqh_first)
+			panic("pmap_destroy: segment list not empty");
+	}
+
+	for (vr = 0; vr < NUREG; vr++) {
+		struct regmap *rp = &pm->pm_regmap[vr];
+
+		if (CPU_ISSUN4OR4C) {
+#if defined(SUN4_MMU3L)
+			if (HASSUN4_MMU3L) {
+				if (rp->rg_smeg != reginval)
+					printf("pmap_chk: spurious smeg in "
+						"user region %d\n", vr);
+			}
+#endif
+		}
+		if (CPU_ISSUN4M) {
+			int n;
+#if defined(MULTIPROCESSOR)
+			for (n = 0; n < ncpu; n++)
+#else
+			n = 0;
+#endif
+			{
+				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
+					printf("pmap_chk: spurious PTP in user "
+						"region %d on cpu %d\n", vr, n);
+			}
+		}
+		if (rp->rg_nsegmap != 0)
+			printf("pmap_chk: %d segments remain in "
+				"region %d\n", rp->rg_nsegmap, vr);
+		if (rp->rg_segmap != NULL) {
+			printf("pmap_chk: segments still "
+				"allocated in region %d\n", vr);
+			for (vs = 0; vs < NSEGRG; vs++) {
+				struct segmap *sp = &rp->rg_segmap[vs];
+				if (sp->sg_npte != 0)
+					printf("pmap_chk: %d ptes "
+					     "remain in segment %d\n",
+						sp->sg_npte, vs);
+				if (sp->sg_pte != NULL) {
+					printf("pmap_chk: ptes still "
+					     "allocated in segment %d\n", vs);
+				}
+			}
+		}
+	}
+}
+#endif /* DEBUG */
+
+int
+pmap_pmap_pool_ctor(void *arg, void *object, int flags)
+{
+	struct pmap *pm = object;
+	u_long addr;
+
 	bzero(pm, sizeof *pm);
 
 	/*
@@ -3648,18 +3705,16 @@ pmap_create()
 	 * region table pointer arrays.
 	 */
 	addr = (u_long)pm + ALIGN(sizeof(struct pmap));
+	pm->pm_regmap = (void *)addr;
+	addr += ALIGN(NUREG * sizeof(struct regmap));
 	pm->pm_reg_ptps = (int **)addr;
 	addr += ncpu * sizeof(int *);
 	pm->pm_reg_ptps_pa = (int *)addr;
 
-	pm->pm_regstore = urp = malloc(NUREG * sizeof(struct regmap),
-					M_VMPMAP, M_WAITOK);
-	qzero((caddr_t)urp, NUREG * sizeof(struct regmap));
+	qzero((caddr_t)pm->pm_regmap, NUREG * sizeof(struct regmap));
 
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
-	pm->pm_refcount = 1;
-	pm->pm_regmap = urp;
 
 	if (CPU_ISSUN4OR4C) {
 		TAILQ_INIT(&pm->pm_seglist);
@@ -3692,7 +3747,7 @@ pmap_create()
 		{
 			int *upt, *kpt;
 
-			upt = pool_get(&L1_pool, PR_WAITOK);
+			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
 			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
 
@@ -3708,74 +3763,30 @@ pmap_create()
 		}
 	}
 #endif
-
-	return (pm);
+	return (0);
 }
 
-/*
- * Retire the given pmap from service.
- * Should only be called if the map contains no valid mappings.
- */
 void
-pmap_destroy(pm)
-	struct pmap *pm;
+pmap_pmap_pool_dtor(void *arg, void *object)
 {
-	int count;
-
-	if (pm == NULL)
-		return;
-#ifdef DEBUG
-	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_destroy(%p)\n", pm);
-#endif
-	simple_lock(&pm->pm_lock);
-	count = --pm->pm_refcount;
-	simple_unlock(&pm->pm_lock);
-	if (count == 0) {
-		pmap_release(pm);
-		pool_put(&pmap_pmap_pool, pm);
-	}
-}
-
-/*
- * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
- */
-void
-pmap_release(pm)
-	struct pmap *pm;
-{
+	struct pmap *pm = object;
 	union ctxinfo *c;
 	int s = splvm();	/* paranoia */
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
-		printf("pmap_release(%p)\n", pm);
+		printf("pmap_pmap_pool_dtor(%p)\n", pm);
 #endif
 
-	if (CPU_ISSUN4OR4C) {
-#if defined(SUN4_MMU3L)
-		if (pm->pm_reglist.tqh_first)
-			panic("pmap_release: region list not empty");
-#endif
-		if (pm->pm_seglist.tqh_first)
-			panic("pmap_release: segment list not empty");
-
-		if ((c = pm->pm_ctx) != NULL) {
-			if (pm->pm_ctxnum == 0)
-				panic("pmap_release: releasing kernel");
-			ctx_free(pm);
-		}
+	if ((c = pm->pm_ctx) != NULL) {
+		if (pm->pm_ctxnum == 0)
+			panic("pmap_pmap_pool_dtor: releasing kernel");
+		ctx_free(pm);
 	}
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		int n;
-		if ((c = pm->pm_ctx) != NULL) {
-			if (pm->pm_ctxnum == 0)
-				panic("pmap_release: releasing kernel");
-			ctx_free(pm);
-		}
 #if defined(MULTIPROCESSOR)
 		for (n = 0; n < ncpu; n++)
 #else
@@ -3790,36 +3801,54 @@ pmap_release(pm)
 	}
 #endif
 	splx(s);
-
-#ifdef DEBUG
-if (pmapdebug) {
-	int vs, vr;
-	for (vr = 0; vr < NUREG; vr++) {
-		struct regmap *rp = &pm->pm_regmap[vr];
-		if (rp->rg_nsegmap != 0)
-			printf("pmap_release: %d segments remain in "
-				"region %d\n", rp->rg_nsegmap, vr);
-		if (rp->rg_segmap != NULL) {
-			printf("pmap_release: segments still "
-				"allocated in region %d\n", vr);
-			for (vs = 0; vs < NSEGRG; vs++) {
-				struct segmap *sp = &rp->rg_segmap[vs];
-				if (sp->sg_npte != 0)
-					printf("pmap_release: %d ptes "
-					     "remain in segment %d\n",
-						sp->sg_npte, vs);
-				if (sp->sg_pte != NULL) {
-					printf("pmap_release: ptes still "
-					     "allocated in segment %d\n", vs);
-				}
-			}
-		}
-	}
 }
+
+/*
+ * Create and return a physical map.
+ */
+struct pmap *
+pmap_create()
+{
+	struct pmap *pm;
+
+	pm = pool_cache_get(&pmap_pmap_pool_cache, PR_WAITOK);
+	pm->pm_refcount = 1;
+#ifdef DEBUG
+	if (pmapdebug & PDB_CREATE)
+		printf("pmap_create: created %p\n", pm);
+	pmap_quiet_check(pm);
 #endif
 
-	if (pm->pm_regstore)
-		free(pm->pm_regstore, M_VMPMAP);
+	return (pm);
+}
+
+/*
+ * Retire the given pmap from service.
+ * Should only be called if the map contains no valid mappings.
+ */
+void
+pmap_destroy(pm)
+	struct pmap *pm;
+{
+	int count;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_DESTROY)
+		printf("pmap_destroy(%p)\n", pm);
+#endif
+	simple_lock(&pm->pm_lock);
+	count = --pm->pm_refcount;
+	simple_unlock(&pm->pm_lock);
+#ifdef DIAGNOSTIC
+	if (count < 0)
+		panic("pmap_destroy(%p): count = %d", pm, count);
+#endif
+	if (count == 0) {
+#ifdef DEBUG
+		pmap_quiet_check(pm);
+#endif
+		pool_cache_put(&pmap_pmap_pool_cache, pm);
+	}
 }
 
 /*
@@ -3851,9 +3880,6 @@ pmap_remove(pm, va, endva)
 	vaddr_t nva;
 	int vr, vs, s, ctx;
 	void (*rm)(struct pmap *, vaddr_t, vaddr_t, int, int);
-
-	if (pm == NULL)
-		return;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
@@ -4618,9 +4644,6 @@ pmap_protect4_4c(pm, sva, eva, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL || prot & VM_PROT_WRITE)
-		return;
-
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -4962,9 +4985,6 @@ pmap_protect4m(pm, sva, eva, prot)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL || prot & VM_PROT_WRITE)
-		return;
-
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -5139,15 +5159,12 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	u_int pfn;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pm == NULL)
-		return (KERN_SUCCESS);
-
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
 		printf("pmap_enter: pm %p, va 0x%lx, pa 0x%lx: in MMU hole\n",
 			pm, va, pa);
 #endif
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 #ifdef DEBUG
@@ -5179,7 +5196,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	else
 		pmap_enu4_4c(pm, va, prot, wired, pv, pteproto);
 	setcontext4(ctx);
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5540,9 +5557,6 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	u_int pfn;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pm == NULL)
-		return (KERN_SUCCESS);
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter[curpid %d, ctx %d]"
@@ -5592,7 +5606,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 		pmap_enu4m(pm, va, prot, wired, pv, pteproto);
 
 	setcontext4m(ctx);
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5911,13 +5925,6 @@ pmap_extract4_4c(pm, va, pap)
 	struct regmap *rp;
 	struct segmap *sp;
 
-	if (pm == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("pmap_extract: null pmap\n");
-#endif
-		return (FALSE);
-	}
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -5986,14 +5993,6 @@ pmap_extract4m(pm, va, pap)
 	struct regmap *rm;
 	struct segmap *sm;
 	int pte;
-
-	if (pm == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("pmap_extract: null pmap\n");
-#endif
-		return (FALSE);
-	}
 
 	if ((rm = pm->pm_regmap) == NULL) {
 #ifdef DEBUG

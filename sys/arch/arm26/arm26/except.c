@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13.2.8 2001/03/12 13:27:27 bouyer Exp $ */
+/* $NetBSD: except.c,v 1.13.2.9 2001/03/27 15:30:20 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.8 2001/03/12 13:27:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.9 2001/03/27 15:30:20 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -447,22 +447,23 @@ void
 do_fault(struct trapframe *tf, struct proc *p,
     vm_map_t map, vaddr_t va, vm_prot_t atype)
 {
-	int ret;
+	int error;
 	struct pcb *curpcb;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 	for (;;) {
-		ret = uvm_fault(map, va, 0, atype);
-		if (ret != KERN_RESOURCE_SHORTAGE)
+		error = uvm_fault(map, va, 0, atype);
+		if (error != ENOMEM)
 			break;
 		log(LOG_WARNING, "pid %d: VM shortage, sleeping\n", p->p_pid);
 		tsleep(&lbolt, PVM, "abtretry", 0);
 	}
 
-	if (ret != KERN_SUCCESS) {
+	if (error != 0) {
 #ifdef DEBUG
-		printf("unhandled fault at %p (ret = %d)\n", (void *)va, ret);
+		printf("unhandled fault at %p (error = %d)\n",
+		    (void *)va, error);
 		printregs(tf);
 		printf("pc -> ");
 		disassemble(tf->tf_r15 & R15_PC);
@@ -472,7 +473,7 @@ do_fault(struct trapframe *tf, struct proc *p,
 #endif
 		curpcb = &p->p_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
-			tf->tf_r0 = EFAULT;
+			tf->tf_r0 = error;
 			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
 			    (register_t)curpcb->pcb_onfault;
 			return;

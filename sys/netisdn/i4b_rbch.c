@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.1.1.1.2.3 2001/02/11 19:17:32 bouyer Exp $
+ *	$Id: i4b_rbch.c,v 1.1.1.1.2.4 2001/03/27 15:32:42 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -599,7 +599,7 @@ i4brbchwrite(dev_t dev, struct uio * uio, int ioflag)
 			IF_ENQUEUE(isdn_linktab[unit]->tx_queue, m);
 		}
 
-		(*isdn_linktab[unit]->bch_tx_start)(isdn_linktab[unit]->unit, isdn_linktab[unit]->channel);
+		(*isdn_linktab[unit]->bch_tx_start)(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel);
 	}
 
 	splx(s);
@@ -835,7 +835,7 @@ rbch_timeout(struct rbch_softc *sc)
 	/* get # of bytes in and out from the HSCX driver */ 
 	
 	(*isdn_linktab[unit]->bch_stat)
-		(isdn_linktab[unit]->unit, isdn_linktab[unit]->channel, &bs);
+		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;

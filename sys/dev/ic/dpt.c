@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.13 2001/03/23 11:32:16 bouyer Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.14 2001/03/27 15:31:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.13 2001/03/23 11:32:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.14 2001/03/27 15:31:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

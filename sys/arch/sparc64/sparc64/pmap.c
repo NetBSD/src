@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.7 2001/02/11 19:12:40 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.8 2001/03/27 15:31:36 bouyer Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2111,7 +2111,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		prom_printf("pmap_enter: va=%08x pa=%x:%08x in locked TLB\r\n", 
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
-		return (KERN_SUCCESS);
+		return 0;
 	}
 #endif
 
@@ -2190,7 +2190,7 @@ pmap_enter(pm, va, pa, prot, flags)
 			printf("pmap_enter: wired but not readable\n");
 			Debugger();
 		}
-		return (KERN_SUCCESS);
+		return 0;
 	}
 #endif
 	if (wired) tte.data.data |= TLB_TSB_LOCK;
@@ -2277,7 +2277,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*

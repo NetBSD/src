@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.14.3 2001/03/12 13:29:40 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.14.4 2001/03/27 15:31:39 bouyer Exp $
 
 SA_PROG= ufsboot
 
@@ -10,7 +10,6 @@ SRCS+= ufs.c
 
 PROG=	${SA_PROG}
 MKMAN= no
-NOMAN= yes
 
 .include <bsd.prog.mk>
 .PATH: ${S}/lib/libsa

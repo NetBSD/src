@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.14.2.3 2001/03/12 13:31:31 bouyer Exp $	*/
+/*	$NetBSD: xy.c,v 1.14.2.4 2001/03/27 15:32:21 bouyer Exp $	*/
 
 /*
  *
@@ -314,8 +314,7 @@ xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 		return (error);
 	}
 
-	if ((error = bus_dmamap_load(tag, map
-				     *kvap, len, NULL,
+	if ((error = bus_dmamap_load(tag, map, *kvap, len, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
 		bus_dmamem_unmap(tag, *kvap, len);
 		bus_dmamem_free(tag, seg, nseg);

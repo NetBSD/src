@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.h,v 1.2.2.3 2000/11/22 16:04:32 bouyer Exp $	*/
+/*	$NetBSD: bktr_os.h,v 1.2.2.4 2001/03/27 15:32:14 bouyer Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp */
 
@@ -66,14 +66,6 @@ void            free_bktr_mem(bktr_ptr_t, bus_dmamap_t, vm_offset_t);
 /************************************/
 /* *** Interrupt Enable/Disable *** */
 /************************************/
-#if defined(__FreeBSD__)
-#define DECLARE_INTR_MASK(s)	intrmask_t s
-#define DISABLE_INTR(s)		s=spltty()
+#define DECLARE_INTR_MASK(s)	int s
+#define DISABLE_INTR(s)		s = spltty()
 #define ENABLE_INTR(s)		splx(s)
-#else
-#define DECLARE_INTR_MASK(s)	/* no need to declare 's' */
-#define DISABLE_INTR(s)		disable_intr()
-#define ENABLE_INTR(s)		enable_intr()
-#endif
-
-

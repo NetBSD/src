@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.2.4 2001/02/11 19:12:16 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.2.5 2001/03/27 15:31:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1303,8 +1303,8 @@ pmap_free_pvpage()
 
 		/* unmap the page */
 		dead_entries = NULL;
-		(void)uvm_unmap_remove(map, (vaddr_t) pvp,
-				       ((vaddr_t) pvp) + NBPG, &dead_entries);
+		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + NBPG,
+		    &dead_entries);
 		vm_map_unlock(map);
 
 		if (dead_entries != NULL)
@@ -3196,7 +3196,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return (KERN_RESOURCE_SHORTAGE);
+				return ENOMEM;
 			}
 			panic("pmap_enter: get ptp failed");
 		}
@@ -3293,7 +3293,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					error = KERN_RESOURCE_SHORTAGE;
+					error = ENOMEM;
 					goto out;
 				}
 				panic("pmap_enter: no pv entries available");
@@ -3364,7 +3364,7 @@ enter_now:
 	if ((opte & ~(PG_M|PG_U)) != npte && pmap_is_curpmap(pmap))
 		pmap_update_pg(va);
 
-	error = KERN_SUCCESS;
+	error = 0;
 
 out:
 	pmap_unmap_ptes(pmap);

@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.1.1.1.2.3 2001/02/11 19:17:33 bouyer Exp $ 
+ *	$Id: i4b_util.c,v 1.1.1.1.2.4 2001/03/27 15:32:43 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -63,7 +63,6 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -247,8 +246,8 @@ i4b_print_frame(int len, u_char *buf)
 void
 i4b_print_l2var(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_ERROR, "unit%d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
-		l2sc->unit,
+	NDBGL2(L2_ERROR, "bri %d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
+		l2sc->bri,
 		l2sc->vr,
 		l2sc->vs,
 		l2sc->va,
@@ -300,7 +299,7 @@ i4b_l1_activate(l2_softc_t *l2sc)
 	if(l2sc->ph_active == PH_INACTIVE)
 	{
 		l2sc->ph_active = PH_ACTIVEPEND;
-		PH_Act_Req(l2sc->unit);
+		l2sc->driver->ph_activate_req(l2sc->l1_token);
 	}
 };
 

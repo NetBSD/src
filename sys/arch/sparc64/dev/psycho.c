@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.2.2.5 2001/03/12 13:29:28 bouyer Exp $	*/
+/*	$NetBSD: psycho.c,v 1.2.2.6 2001/03/27 15:31:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -645,7 +645,8 @@ psycho_get_registers(node, rp, np)
 
 	if (getprop(node, "reg", sizeof(**rp), np, (void **)rp))
 		panic("could not get psycho registers");
-	DPRINTF(PDB_PROM, ("psycho debug: got `reg' for node %08x: %d entries\n", node, *np));
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: got `reg' for node %08x: %d entries\n", node, *np));
 }
 
 static void
@@ -655,9 +656,14 @@ psycho_get_intmap(node, imp, np)
 	int *np;
 {
 
-	if (getprop(node, "interrupt-map", sizeof(**imp), np, (void **)imp))
-		panic("could not get psycho interrupt-map");
-	DPRINTF(PDB_PROM, ("psycho debug: got `interupt-map' for node %08x\n", node));
+	if (getprop(node, "interrupt-map", sizeof(**imp), np, (void **)imp)) {
+		DPRINTF(PDB_PROM,
+		    ("psycho debug: no `interupt-map' for node %08x\n", node));
+		*imp = 0;
+		*np = 0;
+	} else
+		DPRINTF(PDB_PROM,
+		    ("psycho debug: got `interupt-map' for node %08x\n", node));
 }
 
 static void
@@ -668,11 +674,16 @@ psycho_get_intmapmask(node, immp)
 	int n;
 
 	if (getprop(node, "interrupt-map-mask", sizeof(*immp), &n,
-	    (void **)&immp))
-		panic("could not get psycho interrupt-map-mask");
+	    (void **)&immp)) {
+		DPRINTF(PDB_PROM,
+		    ("psycho debug: no `interrupt-map-mask' for node %08x\n",
+		    node));
+		return;
+	}
 	if (n != 1)
 		panic("broken psycho interrupt-map-mask");
-	DPRINTF(PDB_PROM, ("psycho debug: got `interrupt-map-mask' for node %08x\n", node));
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: got `interrupt-map-mask' for node %08x\n", node));
 }
 
 /*

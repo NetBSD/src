@@ -1,4 +1,4 @@
-/*	$NetBSD: console.cpp,v 1.1.2.2 2001/02/11 19:09:49 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.1.2.3 2001/03/27 15:30:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,8 +84,11 @@ SerialConsole::setupBuffer()
 }
 
 BOOL
-SerialConsole::openCOM1(void)
+SerialConsole::openCOM1()
 {
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
+	int speed = menu._pref.serial_speed;
+
 	if (_handle == INVALID_HANDLE_VALUE) {
 		_handle = CreateFile(TEXT("COM1:"),
 				     GENERIC_READ | GENERIC_WRITE,
@@ -101,9 +104,10 @@ SerialConsole::openCOM1(void)
 			goto bad;
 		}
       
-		dcb.BaudRate = CBR_19200;
+		dcb.BaudRate = speed;
 		if (!SetCommState(_handle, &dcb)) {
-			Console::print(TEXT("couldn't set baud rate to 19200.\n"));
+			Console::print(TEXT("couldn't set baud rate to %s.\n"),
+				       speed);
 			goto bad;
 		}
 
@@ -120,4 +124,18 @@ SerialConsole::openCOM1(void)
 	CloseHandle(_handle);
 	_handle = INVALID_HANDLE_VALUE;
 	return FALSE;
+}
+
+void
+SerialConsole::genericPrint(const char *buf)
+{
+	unsigned long wrote;
+	int i;
+	
+	for (i = 0; *buf != '\0'; buf++) {
+		char c = *buf;
+		if (c == '\n')
+			WriteFile(_handle, "\r", 1, &wrote, 0);
+		WriteFile(_handle, &c, 1, &wrote, 0);
+	}
 }

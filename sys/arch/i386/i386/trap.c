@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.2.5 2001/02/11 19:10:55 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.6 2001/03/27 15:31:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ trap(frame)
 	struct trapframe *vframe;
 	int resume;
 	caddr_t onfault;
+	int error;
 
 	uvmexp.traps++;
 
@@ -230,8 +231,11 @@ trap(frame)
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
-		copyfault:
+copyefault:
+			error = EFAULT;
+copyfault:
 			frame.tf_eip = (int)pcb->pcb_onfault;
+			frame.tf_eax = error;
 			return;
 		}
 
@@ -340,7 +344,7 @@ trap(frame)
 		 * from inside the profiling interrupt.
 		 */
 		if (pcb->pcb_onfault == fusubail)
-			goto copyfault;
+			goto copyefault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame.tf_err & PGEX_P)
@@ -352,7 +356,6 @@ trap(frame)
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
-		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss;
@@ -406,9 +409,9 @@ trap(frame)
 		/* Fault the original page in. */
 		onfault = p->p_addr->u_pcb.pcb_onfault;
 		p->p_addr->u_pcb.pcb_onfault = NULL;
-		rv = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, 0, ftype);
 		p->p_addr->u_pcb.pcb_onfault = onfault;
-		if (rv == KERN_SUCCESS) {
+		if (error == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
@@ -416,15 +419,18 @@ trap(frame)
 				return;
 			goto out;
 		}
+		if (error == EACCES) {
+			error = EFAULT;
+		}
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-			    map, va, ftype, rv);
+			    map, va, ftype, error);
 			goto we_re_toast;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (error == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -518,8 +524,7 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
-	    != KERN_SUCCESS)
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE) != 0)
 		return 1;
 
 	if (nss > vm->vm_ssize)

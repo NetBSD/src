@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46.2.3 2001/03/12 13:29:49 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46.2.4 2001/03/27 15:31:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -409,14 +409,14 @@ pmap_init()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)) != 0)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, X68K_MAX_PTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+				UVM_FLAG_FIXED)) != 0) {
 		/*
 		 * If this fails, it is probably because the static
 		 * portion of the kernel page table isn't big enough
@@ -490,11 +490,9 @@ pmap_init()
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
+	if (rv != 0 || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
+	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -1201,9 +1199,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 	    pmap, va, pa, prot, wired));
 
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
-
 #ifdef DIAGNOSTIC
 	/*
 	 * pmap_enter() should never be used for CADDR1 and CADDR2.
@@ -1475,7 +1470,7 @@ validate:
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
 #endif
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /*
@@ -2201,9 +2196,9 @@ pmap_mapmulti(pmap, va)
 	if (*ste == SG_NV && (*bste & SG_V)) {
 		*ste = *bste;
 		TBIAU();
-		return (KERN_SUCCESS);
+		return 0;
 	}
-	return (KERN_INVALID_ADDRESS);
+	return EFAULT;
 }
 #endif /* COMPAT_HPUX */
 
@@ -2802,7 +2797,7 @@ pmap_enter_ptpage(pmap, va)
 		    ("enter: about to fault UPT pg at %lx\n", va));
 		s = uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-		if (s != KERN_SUCCESS) {
+		if (s != 0) {
 			printf("uvm_fault_wire(pt_map, 0x%lx, 0x%lx, RW) "
 			    "-> %d\n", va, va + PAGE_SIZE, s);
 			panic("pmap_enter: uvm_fault_wire failed");

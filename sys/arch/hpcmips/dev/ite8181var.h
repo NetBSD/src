@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181var.h,v 1.1.2.3 2001/03/12 13:28:37 bouyer Exp $	*/
+/*	$NetBSD: ite8181var.h,v 1.1.2.4 2001/03/27 15:30:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -46,12 +46,16 @@ struct ite8181_softc {
 	int			sc_sba;	/* Graphics base offset */
 	void			*sc_powerhook;	/* power management hook */
 	config_hook_tag		sc_hardpowerhook;
-	int			sc_powerstate;
-#define       PWRSTAT_SUSPEND         (1<<0)
-#define       PWRSTAT_VIDEOOFF        (1<<1)
-#define       PWRSTAT_LCD             (1<<2)
-#define       PWRSTAT_BACKLIGHT       (1<<3)
+ 	int			sc_powerstate; /* power state related by LCD */
+#define PWRSTAT_SUSPEND         (1<<0)
+#define PWRSTAT_VIDEOOFF        (1<<1)
+#define PWRSTAT_LCD             (1<<2)
+#define PWRSTAT_BACKLIGHT       (1<<3)
 #define PWRSTAT_ALL           (0xffffffff)
+	int			sc_lcd_inited;
+#define	BACKLIGHT_INITED	(1<<0)
+#define	BRIGHTNESS_INITED	(1<<1)
+#define	CONTRAST_INITED		(1<<2)
 	int			sc_brightness;
 	int			sc_brightness_save;
 	int			sc_max_brightness;

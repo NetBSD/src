@@ -1,8 +1,8 @@
-/* $NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $ */
+/* $NetBSD: seeq8005.c,v 1.6.2.5 2001/03/27 15:32:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
- * Copyright (c) 1995 Mark Brinicombe
+ * Copyright (c) 1995-1998 Mark Brinicombe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -40,15 +41,20 @@
  * SEEQ 8005 Advanced Ethernet Data Link Controller
  */
 /*
+ * More information on the 8004 and 8005 AEDLC controllers can be found in
+ * the SEEQ Technology Inc 1992 Data Comm Devices data book.
+ *
+ * This data book may no longer be available as these are rather old chips
+ * (1991 - 1993)
+ */
+/*
  * This driver is based on the arm32 ea(4) driver, hence the names of many
  * of the functions.
  */
 /*
  * Bugs/possible improvements:
  *	- Does not currently support DMA
- *	- Does not currently support multicasts
  *	- Does not transmit multiple packets in one go
- *	- Does not support big-endian hosts
  *	- Does not support 8-bit busses
  */
 
@@ -58,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.6.2.5 2001/03/27 15:32:00 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -73,6 +79,7 @@ __RCSID("$NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $");
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -99,24 +106,24 @@ __RCSID("$NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $");
 #include <dev/ic/seeq8005reg.h>
 #include <dev/ic/seeq8005var.h>
 
-#ifndef EA_TIMEOUT
-#define EA_TIMEOUT	60
-#endif
-
-#define EA_TX_BUFFER_SIZE	0x4000
-#define EA_RX_BUFFER_SIZE	0xC000
-
-/*#define EA_TX_DEBUG*/
-/*#define EA_RX_DEBUG*/
-/*#define EA_DEBUG*/
-/*#define EA_PACKET_DEBUG*/
+/*#define SEEQ_DEBUG*/
 
 /* for debugging convenience */
-#ifdef EA_DEBUG
-#define dprintf(x) printf x
+#ifdef SEEQ_DEBUG
+#define SEEQ_DEBUG_MISC		1
+#define SEEQ_DEBUG_TX		2
+#define SEEQ_DEBUG_RX		4
+#define SEEQ_DEBUG_PKT		8
+#define SEEQ_DEBUG_TXINT	16
+#define SEEQ_DEBUG_RXINT	32
+int seeq_debug = 0;
+#define DPRINTF(f, x) { if (seeq_debug & (f)) printf x; }
 #else
-#define dprintf(x)
+#define DPRINTF(f, x)
 #endif
+#define dprintf(x) DPRINTF(SEEQ_DEBUG_MISC, x)
+
+#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> MAX_ETHER_LEN) */
 
 /*
  * prototypes
@@ -133,74 +140,34 @@ static int ea_stoprx(struct seeq8005_softc *);
 static void ea_stop(struct ifnet *, int);
 static void ea_await_fifo_empty(struct seeq8005_softc *);
 static void ea_await_fifo_full(struct seeq8005_softc *);
-static void ea_writebuf(struct seeq8005_softc *, u_char *, u_int, size_t);
-static void ea_readbuf(struct seeq8005_softc *, u_char *, u_int, size_t);
+static void ea_writebuf(struct seeq8005_softc *, u_char *, int, size_t);
+static void ea_readbuf(struct seeq8005_softc *, u_char *, int, size_t);
 static void ea_select_buffer(struct seeq8005_softc *, int);
 static void ea_set_address(struct seeq8005_softc *, int, const u_int8_t *);
-static void earead(struct seeq8005_softc *, int, int);
-static struct mbuf *eaget(struct seeq8005_softc *, int, int, struct ifnet *);
-static void eagetpackets(struct seeq8005_softc *);
+static void ea_read(struct seeq8005_softc *, int, int);
+static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
+static void ea_getpackets(struct seeq8005_softc *);
 static void eatxpacket(struct seeq8005_softc *);
+static int ea_writembuf(struct seeq8005_softc *, struct mbuf *, int);
 static void ea_mc_reset(struct seeq8005_softc *);
+static void ea_mc_reset_8004(struct seeq8005_softc *);
+static void ea_mc_reset_8005(struct seeq8005_softc *);
+static int ea_mediachange(struct ifnet *);
+static void ea_mediastatus(struct ifnet *, struct ifmediareq *);
 
-
-#ifdef EA_PACKET_DEBUG
-void ea_dump_buffer(struct seeq8005_softc *, int);
-#endif
-
-
-#ifdef EA_PACKET_DEBUG
-/*
- * Dump the interface buffer
- */
-
-void
-ea_dump_buffer(struct seeq8005_softc *sc, u_int offset)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int addr;
-	int loop, ctrl, ptr;
-	size_t size;
-	
-	addr = offset;
-
-	do {
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				 sc->sc_command | EA_CMD_FIFO_READ);
-		bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-				  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
-		bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
-
-		ptr = bus_space_read_2(iot, ioh, EA_8005_BUFWIN);
-		ctrl = bus_space_read_2(iot, ioh, EA_8005_BUFWIN);
-		ptr = ((ptr & 0xff) << 8) | ((ptr >> 8) & 0xff);
-
-		if (ptr == 0) break;
-		size = ptr - addr;
-
-		printf("addr=%04x size=%04x ", addr, size);
-		printf("cmd=%02x st=%02x\n", ctrl & 0xff, ctrl >> 8);
-
-		for (loop = 0; loop < size - 4; loop += 2)
-			printf("%04x ",
-			       bus_space_read_2(iot, ioh, EA_8005_BUFWIN));
-		printf("\n");
-		addr = ptr;
-	} while (size != 0);
-}
-#endif
 
 /*
  * Attach chip.
  */
 
 void
-seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
+seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
+    int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int id;
 
+	KASSERT(myaddr != NULL);
 	printf(" address %s", ether_sprintf(myaddr));
 
 	/* Stop the board. */
@@ -209,14 +176,55 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 
 	/* Get the product ID */
 	
-	ea_select_buffer(sc, EA_BUFCODE_PRODUCTID);
-	id = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EA_8005_BUFWIN);
+	ea_select_buffer(sc, SEEQ_BUFCODE_PRODUCTID);
+	id = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN);
 
-	if ((id & 0xf0) == 0xa0) {
-		sc->sc_flags |= SEEQ8005_80C04;
-		printf(", SEEQ 80C04 rev %02x", id);
-	} else
-		printf(", SEEQ 8005");
+	switch (id & SEEQ_PRODUCTID_MASK) {
+	case SEEQ_PRODUCTID_8004:
+		sc->sc_variant = SEEQ_8004;
+		break;
+	default:	/* XXX */
+		sc->sc_variant = SEEQ_8005;
+		break;
+	}
+
+	switch (sc->sc_variant) {
+	case SEEQ_8004:
+		printf(", SEEQ80C04 rev %x\n",
+		    id & SEEQ_PRODUCTID_REV_MASK);
+		break;
+	case SEEQ_8005:
+		if (id != 0xff)
+			printf(", SEEQ8005 rev %x\n", id);
+		else
+			printf(", SEEQ8005\n");
+		break;
+	default:
+		printf(", Unknown ethernet controller\n");
+		return;
+	}
+
+	/* Both the 8004 and 8005 are designed for 64K Buffer memory */
+	sc->sc_buffersize = SEEQ_MAX_BUFFER_SIZE;
+
+	/*
+	 * Set up tx and rx buffers.
+	 *
+	 * We use approximately a quarter of the packet memory for TX
+	 * buffers and the rest for RX buffers
+	 */
+	/* sc->sc_tx_bufs = sc->sc_buffersize / SEEQ_TX_BUFFER_SIZE / 4; */
+	sc->sc_tx_bufs = 1;
+	sc->sc_tx_bufsize = sc->sc_tx_bufs * SEEQ_TX_BUFFER_SIZE;
+	sc->sc_rx_bufsize = sc->sc_buffersize - sc->sc_tx_bufsize;
+	sc->sc_enabled = 0;
+
+	/* Test the RAM */
+	ea_ramtest(sc);
+
+	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
+	    sc->sc_dev.dv_xname, sc->sc_buffersize >> 10,
+	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10); 
 
 	/* Initialise ifnet structure. */
 
@@ -228,19 +236,61 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 	ifp->if_stop = ea_stop;
 	ifp->if_watchdog = ea_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOTRAILERS;
+	if (sc->sc_variant == SEEQ_8004)
+		ifp->if_flags |= IFF_SIMPLEX;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	/* Initialize media goo. */
+	ifmedia_init(&sc->sc_media, 0, ea_mediachange, ea_mediastatus);
+	if (media != NULL) {
+		int i;
+
+		for (i = 0; i < nmedia; i++)
+			ifmedia_add(&sc->sc_media, media[i], 0, NULL);
+		ifmedia_set(&sc->sc_media, defmedia);
+	} else {
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	}
 
 	/* Now we can attach the interface. */
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 
-	/* Test the RAM */
-	ea_ramtest(sc);
-
 	printf("\n");
 }
 
+/*
+ * Media change callback.
+ */
+static int
+ea_mediachange(struct ifnet *ifp)
+{
+	struct seeq8005_softc *sc = ifp->if_softc;
+
+	if (sc->sc_mediachange)
+		return ((*sc->sc_mediachange)(sc));
+	return (EINVAL);
+}
+
+/*
+ * Media status callback.
+ */
+static void
+ea_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct seeq8005_softc *sc = ifp->if_softc;
+
+	if (sc->sc_enabled == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
+
+	if (sc->sc_mediastatus)
+		(*sc->sc_mediastatus)(sc, ifmr);
+}
 
 /*
  * Test the RAM on the ethernet card.
@@ -263,31 +313,31 @@ ea_ramtest(struct seeq8005_softc *sc)
 
 	/* Set up the whole buffer RAM for writing */
 
-	ea_select_buffer(sc, EA_BUFCODE_TX_EAP);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, (EA_BUFFER_SIZE >> 8) - 1);
-	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
-	bus_space_write_2(iot, ioh, EA_8005_RX_PTR, EA_BUFFER_SIZE - 2);
+	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, (SEEQ_MAX_BUFFER_SIZE >> 8) - 1);
+	bus_space_write_2(iot, ioh, SEEQ_TX_PTR, 0x0000);
+	bus_space_write_2(iot, ioh, SEEQ_RX_PTR, SEEQ_MAX_BUFFER_SIZE - 2);
 
-#define EA_RAMTEST_LOOP(value)						\
+#define SEEQ_RAMTEST_LOOP(value)						\
 do {									\
 	/* Set the write start address and write a pattern */		\
 	ea_writebuf(sc, NULL, 0x0000, 0);				\
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)		\
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN, (value));	\
+	for (loop = 0; loop < SEEQ_MAX_BUFFER_SIZE; loop += 2)		\
+		bus_space_write_2(iot, ioh, SEEQ_BUFWIN, (value));	\
 									\
 	/* Set the read start address and verify the pattern */		\
 	ea_readbuf(sc, NULL, 0x0000, 0);				\
-	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)		\
-		if (bus_space_read_2(iot, ioh, EA_8005_BUFWIN) != (value)) \
+	for (loop = 0; loop < SEEQ_MAX_BUFFER_SIZE; loop += 2)		\
+		if (bus_space_read_2(iot, ioh, SEEQ_BUFWIN) != (value)) \
 			++sum;						\
 	if (sum != 0)							\
 		dprintf(("sum=%d\n", sum));				\
 } while (/*CONSTCOND*/0)
 
-	EA_RAMTEST_LOOP(loop);
-	EA_RAMTEST_LOOP(loop ^ (EA_BUFFER_SIZE - 1));
-	EA_RAMTEST_LOOP(0xaa55);
-	EA_RAMTEST_LOOP(0x55aa);
+	SEEQ_RAMTEST_LOOP(loop);
+	SEEQ_RAMTEST_LOOP(loop ^ (SEEQ_MAX_BUFFER_SIZE - 1));
+	SEEQ_RAMTEST_LOOP(0xaa55);
+	SEEQ_RAMTEST_LOOP(0x55aa);
 
 	/* Report */
 
@@ -311,26 +361,30 @@ ea_stoptx(struct seeq8005_softc *sc)
 	int timeout;
 	int status;
 
-	dprintf(("ea_stoptx()\n"));
+	DPRINTF(SEEQ_DEBUG_TX, ("seeq_stoptx()\n"));
 
-	status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
-	if (!(status & EA_STATUS_TX_ON))
+	sc->sc_enabled = 0;
+
+	status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
+	if (!(status & SEEQ_STATUS_TX_ON))
 		return 0;
 
 	/* Stop any tx and wait for confirmation */
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_TX_OFF);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_TX_OFF);
 
 	timeout = 20000;
 	do {
-		status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
-	} while ((status & EA_STATUS_TX_ON) && --timeout > 0);
-	if (timeout == 0)
-		dprintf(("ea_stoptx: timeout waiting for tx termination\n"));
+		status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
+		delay(1);
+	} while ((status & SEEQ_STATUS_TX_ON) && --timeout > 0);
+ 	if (timeout == 0)
+		log(LOG_ERR, "%s: timeout waiting for tx termination\n",
+		    sc->sc_dev.dv_xname);
 
 	/* Clear any pending tx interrupt */
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-		   sc->sc_command | EA_CMD_TX_INTACK);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+		   sc->sc_command | SEEQ_CMD_TX_INTACK);
 	return 1;
 }
 
@@ -349,28 +403,29 @@ ea_stoprx(struct seeq8005_softc *sc)
 	int timeout;
 	int status;
 
-	dprintf(("ea_stoprx()\n"));
+	DPRINTF(SEEQ_DEBUG_RX, ("seeq_stoprx()\n"));
 
-	status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
-	if (!(status & EA_STATUS_RX_ON))
+	status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
+	if (!(status & SEEQ_STATUS_RX_ON))
 		return 0;
 
 	/* Stop any rx and wait for confirmation */
 
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_RX_OFF);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_RX_OFF);
 
 	timeout = 20000;
 	do {
-		status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
-	} while ((status & EA_STATUS_RX_ON) && --timeout > 0);
+		status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
+	} while ((status & SEEQ_STATUS_RX_ON) && --timeout > 0);
 	if (timeout == 0)
-		dprintf(("ea_stoprx: timeout waiting for rx termination\n"));
+		log(LOG_ERR, "%s: timeout waiting for rx termination\n",
+		    sc->sc_dev.dv_xname);
 
 	/* Clear any pending rx interrupt */
 
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-		   sc->sc_command | EA_CMD_RX_INTACK);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+		   sc->sc_command | SEEQ_CMD_RX_INTACK);
 	return 1;
 }
 
@@ -387,21 +442,27 @@ ea_stop(struct ifnet *ifp, int disable)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	
-	dprintf(("ea_stop()\n"));
+	DPRINTF(SEEQ_DEBUG_MISC, ("seeq_stop()\n"));
 
 	/* Stop all IO */
 	ea_stoptx(sc);
 	ea_stoprx(sc);
 
 	/* Disable rx and tx interrupts */
-	sc->sc_command &= (EA_CMD_RX_INTEN | EA_CMD_TX_INTEN);
+	sc->sc_command &= (SEEQ_CMD_RX_INTEN | SEEQ_CMD_TX_INTEN);
 
 	/* Clear any pending interrupts */
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_RX_INTACK |
-			  EA_CMD_TX_INTACK | EA_CMD_DMA_INTACK |
-			  EA_CMD_BW_INTACK);
-	dprintf(("st=%08x", bus_space_read_2(iot, ioh, EA_8005_STATUS)));
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_RX_INTACK |
+			  SEEQ_CMD_TX_INTACK | SEEQ_CMD_DMA_INTACK |
+			  SEEQ_CMD_BW_INTACK);
+
+	if (sc->sc_variant == SEEQ_8004) {
+		/* Put the chip to sleep */
+		ea_select_buffer(sc, SEEQ_BUFCODE_CONFIG3);
+		bus_space_write_2(iot, ioh, SEEQ_BUFWIN,
+		    sc->sc_config3 | SEEQ_CFG3_SLEEP);
+	}
 
 	/* Cancel any watchdog timer */
        	sc->sc_ethercom.ec_if.if_timer = 0;
@@ -419,16 +480,17 @@ ea_chipreset(struct seeq8005_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	dprintf(("ea_chipreset()\n"));
+	DPRINTF(SEEQ_DEBUG_MISC, ("seeq_chipreset()\n"));
 
 	/* Reset the controller. Min of 4us delay here */
 
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, EA_CFG2_RESET);
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, SEEQ_CFG2_RESET);
 	delay(4);
 
 	sc->sc_command = 0;
 	sc->sc_config1 = 0;
 	sc->sc_config2 = 0;
+	sc->sc_config3 = 0;
 }
 
 
@@ -445,11 +507,11 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 	int timeout;
 	
 	timeout = 20000;
-	if ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-	     EA_STATUS_FIFO_DIR) != 0)
+	if ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
+	     SEEQ_STATUS_FIFO_DIR) != 0)
 		return; /* FIFO is reading anyway. */
-	while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-		EA_STATUS_FIFO_EMPTY) == 0 &&
+	while ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
+		SEEQ_STATUS_FIFO_EMPTY) == 0 &&
 	       --timeout > 0)
 		continue;
 }
@@ -465,8 +527,8 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
 	int timeout;
 
 	timeout = 20000;
-	while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-		EA_STATUS_FIFO_FULL) == 0 &&
+	while ((bus_space_read_2(iot, ioh, SEEQ_STATUS) &
+		SEEQ_STATUS_FIFO_FULL) == 0 &&
 	       --timeout > 0)
 		continue;
 }
@@ -482,34 +544,36 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
  */
 
 static void
-ea_writebuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
+ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	dprintf(("writebuf: st=%04x\n",
-		 bus_space_read_2(iot, ioh, EA_8005_STATUS)));
+		 bus_space_read_2(iot, ioh, SEEQ_STATUS)));
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
 		panic("%s: unaligned writebuf", sc->sc_dev.dv_xname);
 #endif
-	if (__predict_false(addr >= EA_BUFFER_SIZE))
+	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
 		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
 
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
 		len++;
 
-	ea_await_fifo_empty(sc);
+	if (addr != -1) {
+		ea_await_fifo_empty(sc);
 
-	ea_select_buffer(sc, EA_BUFCODE_LOCAL_MEM);
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_FIFO_WRITE);
-       	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
+		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
+		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+		    sc->sc_command | SEEQ_CMD_FIFO_WRITE);
+		bus_space_write_2(iot, ioh, SEEQ_DMA_ADDR, addr);
+	}
 
 	if (len > 0)
-		bus_space_write_multi_2(iot, ioh, EA_8005_BUFWIN,
+		bus_space_write_multi_2(iot, ioh, SEEQ_BUFWIN,
 					(u_int16_t *)buf, len / 2);
 	/* Leave FIFO to empty in the background */
 }
@@ -526,37 +590,39 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
  */
 
 static void
-ea_readbuf(struct seeq8005_softc *sc, u_char *buf, u_int addr, size_t len)
+ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 {
 
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	dprintf(("readbuf: st=%04x addr=%04x len=%d\n",
-		 bus_space_read_2(iot, ioh, EA_8005_STATUS), addr, len));
+		 bus_space_read_2(iot, ioh, SEEQ_STATUS), addr, len));
 
 #ifdef DIAGNOSTIC
 	if (!ALIGNED_POINTER(buf, u_int16_t))
 		panic("%s: unaligned readbuf", sc->sc_dev.dv_xname);
 #endif
-	if (addr >= EA_BUFFER_SIZE)
+	if (addr >= SEEQ_MAX_BUFFER_SIZE)
 		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
 
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
 		len++;
 
-	ea_await_fifo_empty(sc);
+	if (addr != -1) {
+		ea_await_fifo_empty(sc);
 
-	ea_select_buffer(sc, EA_BUFCODE_LOCAL_MEM);
-	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_FIFO_READ);
+		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
+		bus_space_write_2(iot, ioh, SEEQ_DMA_ADDR, addr);
+		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+		    sc->sc_command | SEEQ_CMD_FIFO_READ);
 
-	ea_await_fifo_full(sc);
+		ea_await_fifo_full(sc);
+	}
 
 	if (len > 0)
-		bus_space_read_multi_2(iot, ioh, EA_8005_BUFWIN,
+		bus_space_read_multi_2(iot, ioh, SEEQ_BUFWIN,
 				       (u_int16_t *)buf, len / 2);
 }
 
@@ -564,7 +630,7 @@ static void
 ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
 {
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_CONFIG1,
 			  sc->sc_config1 | bufcode);
 }
 
@@ -574,9 +640,9 @@ ea_set_address(struct seeq8005_softc *sc, int which, u_int8_t const *ea)
 {
 	int i;
 
-	ea_select_buffer(sc, EA_BUFCODE_STATION_ADDR0 + which);
+	ea_select_buffer(sc, SEEQ_BUFCODE_STATION_ADDR0 + which);
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_BUFWIN,
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN,
 				  ea[i]);
 }
 
@@ -605,72 +671,84 @@ ea_init(struct ifnet *ifp)
 
 	/* Set up defaults for the registers */
 
-	sc->sc_command = 0x00;
-	sc->sc_config1 = 0x00; /* XXX DMA settings? */
+	sc->sc_command = 0;
+	sc->sc_config1 = 0;
 #if BYTE_ORDER == BIG_ENDIAN
-	sc->sc_config2 = EA_CFG2_BYTESWAP
+	sc->sc_config2 = SEEQ_CFG2_BYTESWAP;
 #else
 	sc->sc_config2 = 0;
 #endif
+	sc->sc_config3 = 0;
 
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, sc->sc_config1);
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
-
-	/* Split board memory into Rx and Tx. */
-	ea_select_buffer(sc, EA_BUFCODE_TX_EAP);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-			  (EA_TX_BUFFER_SIZE >> 8) - 1);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND, sc->sc_command);
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG1, sc->sc_config1);
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
+	if (sc->sc_variant == SEEQ_8004) {
+		ea_select_buffer(sc, SEEQ_BUFCODE_CONFIG3);
+		bus_space_write_2(iot, ioh, SEEQ_BUFWIN, sc->sc_config3);
+	}
 
 	/* Write the station address - the receiver must be off */
 	ea_set_address(sc, 0, LLADDR(ifp->if_sadl));
 
+	/* Split board memory into Rx and Tx. */
+	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, (sc->sc_tx_bufsize>> 8) - 1);
+
+	if (sc->sc_variant == SEEQ_8004)
+		sc->sc_config2 |= SEEQ_CFG2_RX_TX_DISABLE;
+
 	/* Configure rx. */
-	dprintf(("Configuring rx...\n"));
+	ea_mc_reset(sc);
 	if (ifp->if_flags & IFF_PROMISC)
-		sc->sc_config1 = EA_CFG1_PROMISCUOUS;
+		sc->sc_config1 = SEEQ_CFG1_PROMISCUOUS;
+	else if ((ifp->if_flags & IFF_ALLMULTI) || sc->sc_variant == SEEQ_8004)
+		sc->sc_config1 = SEEQ_CFG1_MULTICAST;
 	else
-		sc->sc_config1 = EA_CFG1_BROADCAST;
-	sc->sc_config1 |= EA_CFG1_STATION_ADDR0;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG1, sc->sc_config1);
+		sc->sc_config1 = SEEQ_CFG1_BROADCAST;
+	sc->sc_config1 |= SEEQ_CFG1_STATION_ADDR0;
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG1, sc->sc_config1);
 
 	/* Setup the Rx pointers */
-	sc->sc_rx_ptr = EA_TX_BUFFER_SIZE;
+	sc->sc_rx_ptr = sc->sc_tx_bufsize;
 
-	bus_space_write_2(iot, ioh, EA_8005_RX_PTR, sc->sc_rx_ptr);
-	bus_space_write_2(iot, ioh, EA_8005_RX_END, sc->sc_rx_ptr >> 8);
+	bus_space_write_2(iot, ioh, SEEQ_RX_PTR, sc->sc_rx_ptr);
+	bus_space_write_2(iot, ioh, SEEQ_RX_END, sc->sc_rx_ptr >> 8);
 
 
 	/* Place a NULL header at the beginning of the receive area */
 	ea_writebuf(sc, NULL, sc->sc_rx_ptr, 0);
 		
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-
-
-	/* Turn on Rx */
-	sc->sc_command |= EA_CMD_RX_INTEN;
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_RX_ON);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
 
 
 	/* Configure TX. */
 	dprintf(("Configuring tx...\n"));
 
-	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
+	bus_space_write_2(iot, ioh, SEEQ_TX_PTR, 0x0000);
 
-	sc->sc_config2 |= EA_CFG2_OUTPUT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+	sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
 
+	/* Reset tx buffer pointers */
+	sc->sc_tx_cur = 0;
+	sc->sc_tx_used = 0;
+	sc->sc_tx_next = 0;
 
 	/* Place a NULL header at the beginning of the transmit area */
 	ea_writebuf(sc, NULL, 0x0000, 0);
 		
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
+	bus_space_write_2(iot, ioh, SEEQ_BUFWIN, 0x0000);
 
-	sc->sc_command |= EA_CMD_TX_INTEN;
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND, sc->sc_command);
+	sc->sc_command |= SEEQ_CMD_TX_INTEN;
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND, sc->sc_command);
+
+	/* Turn on Rx */
+	sc->sc_command |= SEEQ_CMD_RX_INTEN;
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_RX_ON);
 
 	/* TX_ON gets set by ea_txpacket when there's something to transmit. */
 
@@ -678,10 +756,7 @@ ea_init(struct ifnet *ifp)
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	dprintf(("init: st=%04x\n",
-		 bus_space_read_2(iot, ioh, EA_8005_STATUS)));
-
+	sc->sc_enabled = 1;
 
 	/* And start output. */
 	ea_start(ifp);
@@ -689,7 +764,6 @@ ea_init(struct ifnet *ifp)
 	splx(s);
 	return 0;
 }
-
 
 /*
  * Start output on interface. Get datagrams from the queue and output them,
@@ -704,7 +778,7 @@ ea_start(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
-#ifdef EA_TX_DEBUG
+#ifdef SEEQ_TX_DEBUG
 	dprintf(("ea_start()...\n"));
 #endif
 
@@ -735,10 +809,8 @@ eatxpacket(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct mbuf *m, *m0;
+	struct mbuf *m0;
 	struct ifnet *ifp;
-	int len, nextpacket;
-	u_int8_t hdr[4];
 
 	ifp = &sc->sc_ethercom.ec_if;
 
@@ -748,9 +820,9 @@ eatxpacket(struct seeq8005_softc *sc)
 	/* If there's nothing to send, return. */
 	if (!m0) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->sc_config2 |= EA_CFG2_OUTPUT;
-		bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
-#ifdef EA_TX_DEBUG
+		sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
+		bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
+#ifdef SEEQ_TX_DEBUG
 		dprintf(("tx finished\n"));
 #endif
 		return;
@@ -762,80 +834,86 @@ eatxpacket(struct seeq8005_softc *sc)
 		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-#ifdef EA_TX_DEBUG
+#ifdef SEEQ_TX_DEBUG
 	dprintf(("Tx new packet\n"));
 #endif
 
-	sc->sc_config2 &= ~EA_CFG2_OUTPUT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+	sc->sc_config2 &= ~SEEQ_CFG2_OUTPUT;
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
+
+	ea_writembuf(sc, m0, 0x0000);
+	m_freem(m0);
+
+	bus_space_write_2(iot, ioh, SEEQ_TX_PTR, 0x0000);
+
+/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));*/
+
+#ifdef SEEQ_PACKET_DEBUG
+	ea_dump_buffer(sc, 0);
+#endif
+
+
+	/* Now transmit the datagram. */
+/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));*/
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_TX_ON);
+#ifdef SEEQ_TX_DEBUG
+	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, SEEQ_STATUS)));
+	dprintf(("tx: queued\n"));
+#endif
+}
+
+/*
+ * Copy a packet from an mbuf to the transmit buffer on the card.
+ *
+ * Puts a valid Tx header at the start of the packet, and a null header at
+ * the end.
+ */
+static int
+ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
+{
+	struct mbuf *m;
+	int len, nextpacket;
+	u_int8_t hdr[4];
 
 	/*
-	 * Copy the frame to the start of the transmit area on the card,
-	 * leaving four bytes for the transmit header.
+	 * Copy the datagram to the packet buffer.
 	 */
+	ea_writebuf(sc, NULL, bufstart + 4, 0);
+
 	len = 0;
 	for (m = m0; m; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		ea_writebuf(sc, mtod(m, caddr_t), 4 + len, m->m_len);
+		ea_writebuf(sc, mtod(m, caddr_t), -1, m->m_len);
 		len += m->m_len;
 	}
-	m_freem(m0);
-
 
 	/* If packet size is odd round up to the next 16 bit boundry */
 	if (len % 2)
 		++len;
 
 	len = max(len, ETHER_MIN_LEN);
-	
-	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-		log(LOG_WARNING, "%s: oversize packet = %d bytes\n",
-		    sc->sc_dev.dv_xname, len);
 
-#if 0 /*def EA_TX_DEBUG*/
-	dprintf(("ea: xfr pkt length=%d...\n", len));
-
-	dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
-	dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
-#endif
-
-/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, EA_8005_STATUS)));*/
-
+	ea_writebuf(sc, NULL, bufstart + 4 + len, 0);
 	/* Follow it with a NULL packet header */
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
-	bus_space_write_2(iot, ioh, EA_8005_BUFWIN, 0x0000);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
 
+	/* Ok we now have a packet len bytes long in our packet buffer */
+	DPRINTF(SEEQ_DEBUG_TX, ("seeq_writembuf: length=%d\n", len));
 
 	/* Write the packet header */
-
 	nextpacket = len + 4;
 	hdr[0] = (nextpacket >> 8) & 0xff;
 	hdr[1] = nextpacket & 0xff;
-	hdr[2] = EA_PKTHDR_TX | EA_PKTHDR_DATA_FOLLOWS |
-		EA_TXHDR_XMIT_SUCCESS_INT | EA_TXHDR_COLLISION_INT;
+	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
+		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
 	hdr[3] = 0; /* Status byte -- will be update by hardware. */
 	ea_writebuf(sc, hdr, 0x0000, 4);
 
-	bus_space_write_2(iot, ioh, EA_8005_TX_PTR, 0x0000);
-
-/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, EA_8005_STATUS)));*/
-
-#ifdef EA_PACKET_DEBUG
-	ea_dump_buffer(sc, 0);
-#endif
-
-
-	/* Now transmit the datagram. */
-/*	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, EA_8005_STATUS)));*/
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_TX_ON);
-#ifdef EA_TX_DEBUG
-	dprintf(("st=%04x\n", bus_space_read_2(iot, ioh, EA_8005_STATUS)));
-	dprintf(("tx: queued\n"));
-#endif
+	return len;
 }
-
 
 /*
  * Ethernet controller interrupt.
@@ -848,7 +926,7 @@ seeq8005intr(void *arg)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int status, s, handled;
+	int status, handled;
 	u_int8_t txhdr[4];
 	u_int txstatus;
 
@@ -857,96 +935,119 @@ seeq8005intr(void *arg)
 
 
 	/* Get the controller status */
-	status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
+	status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
         dprintf(("st=%04x ", status));	
 
 
 	/* Tx interrupt ? */
-	if (status & EA_STATUS_TX_INT) {
+	if (status & SEEQ_STATUS_TX_INT) {
 		dprintf(("txint "));
 		handled = 1;
 
 		/* Acknowledge the interrupt */
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				  sc->sc_command | EA_CMD_TX_INTACK);
+		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+				  sc->sc_command | SEEQ_CMD_TX_INTACK);
 
 		ea_readbuf(sc, txhdr, 0x0000, 4);
 
-#ifdef EA_TX_DEBUG		
+#ifdef SEEQ_TX_DEBUG		
 		dprintf(("txstatus=%02x %02x %02x %02x\n",
 			 txhdr[0], txhdr[1], txhdr[2], txhdr[3]));
 #endif
 		txstatus = txhdr[3];
 
 		/*
-		 * Did it succeed ? Did we collide ?
+		 * If SEEQ_TXSTAT_COLLISION is set then we received at least
+		 * one collision. On the 8004 we can find out exactly how many
+		 * collisions occurred.
 		 *
-		 * The exact proceedure here is not clear. We should get
-		 * an interrupt on a sucessfull tx or on a collision.
-		 * The done flag is set after successfull tx or 16 collisions
-		 * We should thus get a interrupt for each of collision
-		 * and the done bit should not be set. However it does appear
-		 * to be set at the same time as the collision bit ...
+		 * The SEEQ_PKTSTAT_DONE will be set if the transmission has
+		 * completed.
 		 *
-		 * So we will count collisions and output errors and will
-		 * assume that if the done bit is set the packet was
-		 * transmitted. Stats may be wrong if 16 collisions occur on
-		 * a packet as the done flag should be set but the packet
-		 * may not have been transmitted. so the output count might
-		 * not require incrementing if the 16 collisions flags is
-		 * set. I don;t know abou this until it happens.
+		 * If SEEQ_TXSTAT_COLLISION16 is set then 16 collisions
+		 * occurred and the packet transmission was aborted.
+		 * This situation is untested as present.
+		 *
+		 * The SEEQ_TXSTAT_BABBLE should never be set and is untested
+		 * as we should never xmit oversized packets.
 		 */
+		if (txstatus & SEEQ_TXSTAT_COLLISION) {
+			switch (sc->sc_variant) {
+			case SEEQ_8004: {
+				int colls;
 
-		if (txstatus & EA_TXHDR_COLLISION)
-			ifp->if_collisions++;
-		else if (txstatus & EA_TXHDR_ERROR_MASK)
+				/*
+				 * The 8004 contains a 4 bit collision count
+				 * in the status register.
+				 */
+
+				/* This appears to be broken on 80C04.AE */
+/*				ifp->if_collisions +=
+				    (txstatus >> SEEQ_TXSTAT_COLLISIONS_SHIFT)
+				    & SEEQ_TXSTAT_COLLISION_MASK;*/
+				    
+				/* Use the TX Collision register */
+				ea_select_buffer(sc, SEEQ_BUFCODE_TX_COLLS);
+				colls = bus_space_read_1(iot, ioh,
+				    SEEQ_BUFWIN);
+				ifp->if_collisions += colls;
+				break;
+			}
+			case SEEQ_8005:
+				/* We known there was at least 1 collision */
+				ifp->if_collisions++;
+				break;
+			}
+		} else if (txstatus & SEEQ_TXSTAT_COLLISION16) {
+			printf("seeq_intr: col16 %x\n", txstatus);
+			ifp->if_collisions += 16;
 			ifp->if_oerrors++;
+		} else if (txstatus & SEEQ_TXSTAT_BABBLE) {
+			ifp->if_oerrors++;
+		}
 
-#if 0
-		if (txstatus & EA_TXHDR_ERROR_MASK)
-			log(LOG_WARNING, "tx packet error =%02x\n", txstatus);
-#endif
+		/* Have we completed transmission on the packet ? */
+		if (txstatus & SEEQ_PKTSTAT_DONE) {
+			/* Clear watchdog timer. */
+			ifp->if_timer = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
 
-		if (txstatus & EA_PKTHDR_DONE) {
+			/* Update stats */
 			ifp->if_opackets++;
 
 			/* Tx next packet */
 
-			s = splnet();
 			eatxpacket(sc);
-			splx(s);
 		}
+
 	}
 
 
 	/* Rx interrupt ? */
-	if (status & EA_STATUS_RX_INT) {
+	if (status & SEEQ_STATUS_RX_INT) {
 		dprintf(("rxint "));
 		handled = 1;
 
 		/* Acknowledge the interrupt */
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				  sc->sc_command | EA_CMD_RX_INTACK);
-
-		/* Install a watchdog timer needed atm to fixed rx lockups */
-		ifp->if_timer = EA_TIMEOUT;
+		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+				  sc->sc_command | SEEQ_CMD_RX_INTACK);
 
 		/* Processes the received packets */
-		eagetpackets(sc);
+		ea_getpackets(sc);
 
 
 #if 0
 		/* Make sure the receiver is on */
-		if ((status & EA_STATUS_RX_ON) == 0) {
-			bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-					  sc->sc_command | EA_CMD_RX_ON);
+		if ((status & SEEQ_STATUS_RX_ON) == 0) {
+			bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+					  sc->sc_command | SEEQ_CMD_RX_ON);
 			printf("rxintr: rx is off st=%04x\n",status);
 		}
 #endif
 	}
 
-#ifdef EA_DEBUG
-	status = bus_space_read_2(iot, ioh, EA_8005_STATUS);
+#ifdef SEEQ_DEBUG
+	status = bus_space_read_2(iot, ioh, SEEQ_STATUS);
         dprintf(("st=%04x\n", status));
 #endif
 
@@ -955,7 +1056,7 @@ seeq8005intr(void *arg)
 
 
 void
-eagetpackets(struct seeq8005_softc *sc)
+ea_getpackets(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -973,8 +1074,8 @@ eagetpackets(struct seeq8005_softc *sc)
 
 	/* We start from the last rx pointer position */
 	addr = sc->sc_rx_ptr;
-	sc->sc_config2 &= ~EA_CFG2_OUTPUT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+	sc->sc_config2 &= ~SEEQ_CFG2_OUTPUT;
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
 
 	do {
 		/* Read rx header */
@@ -985,7 +1086,7 @@ eagetpackets(struct seeq8005_softc *sc)
 		ctrl = rxhdr[2];
 		status = rxhdr[3];
 
-#ifdef EA_RX_DEBUG
+#ifdef SEEQ_RX_DEBUG
 		dprintf(("addr=%04x ptr=%04x ctrl=%02x status=%02x\n",
 			 addr, ptr, ctrl, status));
 #endif
@@ -999,28 +1100,28 @@ eagetpackets(struct seeq8005_softc *sc)
        		len = (ptr - addr) - 4;
 
 		if (len < 0)
-			len += EA_RX_BUFFER_SIZE;
+			len += sc->sc_rx_bufsize;
 
-#ifdef EA_RX_DEBUG
+#ifdef SEEQ_RX_DEBUG
 		dprintf(("len=%04x\n", len));
 #endif
 
 
 		/* Has the packet rx completed ? if not then exit */
-		if ((status & EA_PKTHDR_DONE) == 0)
+		if ((status & SEEQ_PKTSTAT_DONE) == 0)
 			break;
 
 		/*
 		 * Did we have any errors? then note error and go to
 		 * next packet
 		 */
-		if (__predict_false(status & 0x0f)) {
+		if (__predict_false(status & SEEQ_RXSTAT_ERROR_MASK)) {
 			++ifp->if_ierrors;
 			log(LOG_WARNING,
 			    "%s: rx packet error (%02x) - dropping packet\n",
 			    sc->sc_dev.dv_xname, status & 0x0f);
-			sc->sc_config2 |= EA_CFG2_OUTPUT;
-			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
+			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
+			bus_space_write_2(iot, ioh, SEEQ_CONFIG2,
 					  sc->sc_config2);
 			ea_init(ifp);
 			return;
@@ -1034,8 +1135,8 @@ eagetpackets(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_WARNING, "%s: rx packet size error len=%d\n",
 			    sc->sc_dev.dv_xname, len);
-			sc->sc_config2 |= EA_CFG2_OUTPUT;
-			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
+			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
+			bus_space_write_2(iot, ioh, SEEQ_CONFIG2,
 					  sc->sc_config2);
 			ea_init(ifp);
 			return;
@@ -1043,27 +1144,27 @@ eagetpackets(struct seeq8005_softc *sc)
 
 		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
-		earead(sc, addr + 4, len);
+		ea_read(sc, addr + 4, len);
 
 		addr = ptr;
 		++pack;
 	} while (len != 0);
 
-	sc->sc_config2 |= EA_CFG2_OUTPUT;
-	bus_space_write_2(iot, ioh, EA_8005_CONFIG2, sc->sc_config2);
+	sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
+	bus_space_write_2(iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
 
-#ifdef EA_RX_DEBUG
+#ifdef SEEQ_RX_DEBUG
 	dprintf(("new rx ptr=%04x\n", addr));
 #endif
 
 
 	/* Store new rx pointer */
 	sc->sc_rx_ptr = addr;
-	bus_space_write_2(iot, ioh, EA_8005_RX_END, sc->sc_rx_ptr >> 8);
+	bus_space_write_2(iot, ioh, SEEQ_RX_END, sc->sc_rx_ptr >> 8);
 
 	/* Make sure the receiver is on */
-	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-			  sc->sc_command | EA_CMD_RX_ON);
+	bus_space_write_2(iot, ioh, SEEQ_COMMAND,
+			  sc->sc_command | SEEQ_CMD_RX_ON);
 
 }
 
@@ -1073,7 +1174,7 @@ eagetpackets(struct seeq8005_softc *sc)
  */
 
 static void
-earead(struct seeq8005_softc *sc, int addr, int len)
+ea_read(struct seeq8005_softc *sc, int addr, int len)
 {
 	struct mbuf *m;
 	struct ifnet *ifp;
@@ -1081,11 +1182,11 @@ earead(struct seeq8005_softc *sc, int addr, int len)
 	ifp = &sc->sc_ethercom.ec_if;
 
 	/* Pull packet off interface. */
-	m = eaget(sc, addr, len, ifp);
+	m = ea_get(sc, addr, len, ifp);
 	if (m == 0)
 		return;
 
-#ifdef EA_RX_DEBUG
+#ifdef SEEQ_RX_DEBUG
 	dprintf(("%s-->", ether_sprintf(eh->ether_shost)));
 	dprintf(("%s\n", ether_sprintf(eh->ether_dhost)));
 #endif
@@ -1109,7 +1210,7 @@ earead(struct seeq8005_softc *sc, int addr, int len)
  */
 
 struct mbuf *
-eaget(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
+ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 {
         struct mbuf *top, **mp, *m;
         int len;
@@ -1164,8 +1265,8 @@ eaget(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 			m->m_data = newdata;
 		}
                 ea_readbuf(sc, mtod(m, u_char *),
-			   cp < EA_BUFFER_SIZE ? cp : cp - EA_RX_BUFFER_SIZE,
-			   len);
+		    cp < SEEQ_MAX_BUFFER_SIZE ? cp : cp - sc->sc_rx_bufsize,
+		    len);
                 cp += len;
                 *mp = m;
                 mp = &m->m_next;
@@ -1207,15 +1308,104 @@ ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 /* Must be called at splnet() */
+
 static void
 ea_mc_reset(struct seeq8005_softc *sc)
+{
+
+	switch (sc->sc_variant) {
+	case SEEQ_8004:
+		ea_mc_reset_8004(sc);
+		return;
+	case SEEQ_8005:
+		ea_mc_reset_8005(sc);
+		return;
+	}
+}
+
+static void
+ea_mc_reset_8004(struct seeq8005_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
+	struct ether_multi *enm;
+	u_int8_t *cp, c;
+	u_int32_t crc;
+	int i, len;
+	struct ether_multistep step;
+	u_int8_t af[8];
+
+	/*
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using bits 2 - 7 as an index
+	 * into the 64 bit logical address filter.  The high order bits
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
+	 */
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		for (i = 0; i < 8; i++)
+			af[i] = 0xff;
+		return;
+	}
+	for (i = 0; i < 8; i++)
+		af[i] = 0;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    sizeof(enm->enm_addrlo)) != 0) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			ifp->if_flags |= IFF_ALLMULTI;
+			for (i = 0; i < 8; i++)
+				af[i] = 0xff;
+			break;
+		}
+		cp = enm->enm_addrlo;
+		crc = 0xffffffff;
+		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
+			c = *cp++;
+			for (i = 8; --i >= 0;) {
+				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
+					crc <<= 1;
+					crc ^= 0x04c11db6 | 1;
+				} else
+					crc <<= 1;
+				c >>= 1;
+			}
+		}
+		/* Just want the 6 most significant bits. */
+		crc = (crc >> 2) & 0x3f;
+
+		/* Turn on the corresponding bit in the filter. */
+		af[crc >> 3] |= 1 << (crc & 0x7);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	ea_select_buffer(sc, SEEQ_BUFCODE_MULTICAST);
+		for (i = 0; i < 8; ++i)
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    SEEQ_BUFWIN, af[i]);
+}
+
+static void
+ea_mc_reset_8005(struct seeq8005_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int naddr, maxaddrs;
 
 	naddr = 0;
-	maxaddrs = (sc->sc_flags & SEEQ8005_80C04) ? 5 : 0;
+	maxaddrs = 5;
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (enm != NULL) {
 		/* Have we got space? */
@@ -1225,14 +1415,14 @@ ea_mc_reset(struct seeq8005_softc *sc)
 			ea_ioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS, NULL);
 			return;
 		}
-		ea_set_address(sc, naddr, enm->enm_addrlo);
-		sc->sc_config1 |= EA_CFG1_STATION_ADDR0 << naddr;
+		ea_set_address(sc, 1 + naddr, enm->enm_addrlo);
+		sc->sc_config1 |= SEEQ_CFG1_STATION_ADDR1 << naddr;
 		naddr++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	for (; naddr < maxaddrs; naddr++)
-		sc->sc_config1 &= ~(EA_CFG1_STATION_ADDR0 << naddr);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
+		sc->sc_config1 &= ~(SEEQ_CFG1_STATION_ADDR1 << naddr);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SEEQ_CONFIG1,
 			  sc->sc_config1);
 }
 
@@ -1257,13 +1447,13 @@ ea_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 	dprintf(("ea_watchdog: "));
 	dprintf(("st=%04x\n",
-		 bus_space_read_2(sc->sc_iot, sc->sc_ioh, EA_8005_STATUS)));
+		 bus_space_read_2(sc->sc_iot, sc->sc_ioh, SEEQ_STATUS)));
 
 	/* Kick the interface */
 
 	ea_init(ifp);
 
-/*	ifp->if_timer = EA_TIMEOUT;*/
+/*	ifp->if_timer = SEEQ_TIMEOUT;*/
 	ifp->if_timer = 0;
 }
 

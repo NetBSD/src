@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.2.2.5 2001/03/12 13:31:07 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2.2.6 2001/03/27 15:32:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1872,13 +1872,13 @@ sip_dp83815_set_filter(sc)
 
 	/*
 	 * Initialize the prototype RFCR.
-	 * Enable the receive filter, and accept ARP
-	 * and on Perfect (destination address) Match
+	 * Enable the receive filter, and accept on
+	 *    Perfect (destination address) Match
 	 * If IFF_BROADCAST, also accept all broadcast packets.
 	 * If IFF_PROMISC, accept all unicast packets (and later, set
 	 *    IFF_ALLMULTI and accept all multicast, too).
 	 */
-	sc->sc_rfcr = RFCR_RFEN | RFCR_AARP | RFCR_APM;
+	sc->sc_rfcr = RFCR_RFEN | RFCR_APM;
 	if (ifp->if_flags & IFF_BROADCAST)
 		sc->sc_rfcr |= RFCR_AAB;
 	if (ifp->if_flags & IFF_PROMISC) {

@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.1.1.1.2.2 2001/01/08 14:57:50 bouyer Exp $ 
+ *	$Id: i4b_l2if.c,v 1.1.1.1.2.3 2001/03/27 15:32:41 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -64,10 +64,11 @@
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_q931.h>
@@ -129,51 +130,29 @@ make_q931_cause(cause_t cause)
 int
 i4b_get_dl_stat(call_desc_t *cd)
 {
-	return(ctrl_desc[cd->controller].dl_est);
+	return(ctrl_desc[cd->bri].dl_est);
 }
 
 /*---------------------------------------------------------------------------*
  *	DL ESTABLISH INDICATION from Layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_establish_ind(int unit)
+i4b_dl_establish_ind(int bri)
 {
-	int i;
-	int found = 0;
-	
-	NDBGL2(L2_PRIM, "DL-ESTABLISH-IND unit %d",unit);
+	int i, found;
+	NDBGL2(L2_PRIM, "DL-ESTABLISH-IND bri %d", bri);
 
 	/* first set DL up in controller descriptor */
+	NDBGL3(L3_MSG, "unit=%d DL established!", bri);
+	ctrl_desc[bri].dl_est = DL_UP;
 	
-	for(i=0; i < nctrl; i++)
-	{
-		if((ctrl_desc[i].ctrl_type == CTRL_PASSIVE) &&
-		   (ctrl_desc[i].unit == unit))
-                {
-                 	NDBGL3(L3_MSG, "unit=%d DL established!",unit);
-			ctrl_desc[i].dl_est = DL_UP;
-			found = 1;
-		}
-	}
-
-	if(found == 0)
-	{
-	       	NDBGL3(L3_ERR, "ERROR, controller not found for unit=%d!",unit);
-		return(-1);	       	
-	}
-
 	found = 0;
 
 	/* second, inform all (!) active call of the event */
 	
 	for(i=0; i < N_CALL_DESC; i++)
 	{
-		if( (call_desc[i].cdid != 0) &&
-		    (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-		    (ctrl_desc[call_desc[i].controller].unit == unit))
-                {
-                 	NDBGL3(L3_MSG, "unit=%d, index=%d cdid=%u cr=%d",
-					unit, i, call_desc[i].cdid, call_desc[i].cr);
+		if( (call_desc[i].cdid != 0) && call_desc[i].bri == bri) {
 			next_l3state(&call_desc[i], EV_DLESTIN);
 			found++;
 		}
@@ -181,7 +160,7 @@ i4b_dl_establish_ind(int unit)
 	
 	if(found == 0)
 	{
-		NDBGL3(L3_ERR, "ERROR, no cdid for unit %d found!", unit);
+		NDBGL3(L3_ERR, "ERROR, no cdid for bri %d found!", bri);
 		return(-1);
 	}
 	else
@@ -194,24 +173,17 @@ i4b_dl_establish_ind(int unit)
  *	DL ESTABLISH CONFIRM from Layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_establish_cnf(int unit)
+i4b_dl_establish_cnf(int bri)
 {
 	int i;
 	int found = 0;
 
-	NDBGL2(L2_PRIM, "DL-ESTABLISH-CONF unit %d",unit);
+	NDBGL2(L2_PRIM, "DL-ESTABLISH-CONF bri %d", bri);
 	
 	for(i=0; i < N_CALL_DESC; i++)
 	{
-		if( (call_desc[i].cdid != 0) &&
-		    (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-		    (ctrl_desc[call_desc[i].controller].unit == unit))
-                {
-			ctrl_desc[call_desc[i].controller].dl_est = DL_UP;
-
-                 	NDBGL3(L3_MSG, "unit=%d, index=%d cdid=%u cr=%d",
-					unit, i, call_desc[i].cdid, call_desc[i].cr);
-
+		if(call_desc[i].cdid != 0 && call_desc[i].bri == bri) {
+			ctrl_desc[bri].dl_est = DL_UP;
 			next_l3state(&call_desc[i], EV_DLESTCF);
 			found++;
 		}
@@ -219,7 +191,7 @@ i4b_dl_establish_cnf(int unit)
 	
 	if(found == 0)
 	{
-		NDBGL3(L3_ERR, "ERROR, no cdid for unit %d found!", unit);
+		NDBGL3(L3_ERR, "ERROR, no cdid for bri %d found!", bri);
 		return(-1);
 	}
 	else
@@ -232,31 +204,16 @@ i4b_dl_establish_cnf(int unit)
  *	DL RELEASE INDICATION from Layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_release_ind(int unit)
+i4b_dl_release_ind(int bri)
 {
 	int i;
 	int found = 0;
 
-	NDBGL2(L2_PRIM, "DL-RELEASE-IND unit %d",unit);
+	NDBGL2(L2_PRIM, "DL-RELEASE-IND bri %d", bri);
 	
 	/* first set controller to down */
 	
-	for(i=0; i < nctrl; i++)
-	{
-		if((ctrl_desc[i].ctrl_type == CTRL_PASSIVE) &&
-		   (ctrl_desc[i].unit == unit))
-                {
-                 	NDBGL3(L3_MSG, "unit=%d DL released!",unit);
-			ctrl_desc[i].dl_est = DL_DOWN;
-			found = 1;
-		}
-	}
-
-	if(found == 0)
-	{
-	       	NDBGL3(L3_ERR, "ERROR, controller not found for unit=%d!",unit);
-		return(-1);
-	}
+	ctrl_desc[bri].dl_est = DL_DOWN;
 	
 	found = 0;
 
@@ -264,12 +221,7 @@ i4b_dl_release_ind(int unit)
 	
 	for(i=0; i < N_CALL_DESC; i++)
 	{
-		if( (call_desc[i].cdid != 0) &&
-		    (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-		    (ctrl_desc[call_desc[i].controller].unit == unit))
-                {
-                 	NDBGL3(L3_MSG, "unit=%d, index=%d cdid=%u cr=%d",
-					unit, i, call_desc[i].cdid, call_desc[i].cr);
+		if(call_desc[i].cdid != 0 && call_desc[i].bri == bri) {
 			next_l3state(&call_desc[i], EV_DLRELIN);
 			found++;
 		}
@@ -278,7 +230,7 @@ i4b_dl_release_ind(int unit)
 	if(found == 0)
 	{
 		/* this is not an error since it might be a normal call end */
-		NDBGL3(L3_MSG, "no cdid for unit %d found", unit);
+		NDBGL3(L3_MSG, "no cdid for bri %d found", bri);
 	}
 	return(0);
 }
@@ -287,36 +239,21 @@ i4b_dl_release_ind(int unit)
  *	DL RELEASE CONFIRM from Layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_release_cnf(int unit)
+i4b_dl_release_cnf(int bri)
 {
-	int i;
+	NDBGL2(L2_PRIM, "DL-RELEASE-CONF unit %d", bri);
 	
-	NDBGL2(L2_PRIM, "DL-RELEASE-CONF unit %d",unit);
-	
-	for(i=0; i < nctrl; i++)
-	{
-		if((ctrl_desc[i].ctrl_type == CTRL_PASSIVE) &&
-		   (ctrl_desc[i].unit == unit))
-                {
-                 	NDBGL3(L3_MSG, "unit=%d DL released!",unit);
-			ctrl_desc[i].dl_est = DL_DOWN;
-			return(0);
-		}
-	}
-       	NDBGL3(L3_ERR, "ERROR, controller not found for unit=%d!",unit);
-	return(-1);
+	ctrl_desc[bri].dl_est = DL_DOWN;
+	return(0);
 }
 
 /*---------------------------------------------------------------------------*
  *	i4b_dl_data_ind - process a rx'd I-frame got from layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_data_ind(int unit, struct mbuf *m)
+i4b_dl_data_ind(int bri, struct mbuf *m)
 {
-#ifdef NOTDEF
-	NDBGL2(L2_PRIM, "DL-DATA-IND unit %d",unit);
-#endif
-	i4b_decode_q931(unit, m->m_len, m->m_data);
+	i4b_decode_q931(bri, m->m_len, m->m_data);
 	i4b_Dfreembuf(m);
 	return(0);
 }
@@ -325,12 +262,9 @@ i4b_dl_data_ind(int unit, struct mbuf *m)
  *	dl_unit_data_ind - process a rx'd U-frame got from layer 2
  *---------------------------------------------------------------------------*/
 int
-i4b_dl_unit_data_ind(int unit, struct mbuf *m)
+i4b_dl_unit_data_ind(int bri, struct mbuf *m)
 {
-#ifdef NOTDEF
-	NDBGL2(L2_PRIM, "DL-UNIT-DATA-IND unit %d",unit);
-#endif
-	i4b_decode_q931(unit, m->m_len, m->m_data);
+	i4b_decode_q931(bri, m->m_len, m->m_data);
 	i4b_Dfreembuf(m);
 	return(0);
 }
@@ -341,10 +275,11 @@ i4b_dl_unit_data_ind(int unit, struct mbuf *m)
 void
 i4b_l3_tx_connect(call_desc_t *cd)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_connect: can't allocate mbuf\n");
@@ -356,7 +291,7 @@ i4b_l3_tx_connect(call_desc_t *cd)
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = CONNECT;		/* message type = connect */
 	
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -365,6 +300,7 @@ i4b_l3_tx_connect(call_desc_t *cd)
 void
 i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_COMPLETE_LEN;
@@ -372,13 +308,13 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 	if(send_cause_flag == 0)
 	{
 		len -= 4;
-		NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x",
-			ctrl_desc[cd->controller].unit, cd->cr);
+		NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x",
+			cd->bri, cd->cr);
 	}
 	else
 	{
-		NDBGL3(L3_PRIM, "unit=%d, cr=0x%02x, cause=0x%x",
-			ctrl_desc[cd->controller].unit, cd->cr, cd->cause_out);
+		NDBGL3(L3_PRIM, "bri=%d, cr=0x%02x, cause=0x%x",
+			cd->bri, cd->cr, cd->cause_out);
 	}
 		
 	if((m = i4b_Dgetmbuf(len)) == NULL)
@@ -399,7 +335,7 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 		*ptr++ = make_q931_cause(cd->cause_out);
 	}
 
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -408,10 +344,11 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 void
 i4b_l3_tx_disconnect(call_desc_t *cd)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_DISCONNECT_LEN)) == NULL)
 		panic("i4b_l3_tx_disconnect: can't allocate mbuf\n");
@@ -428,7 +365,7 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 	*ptr++ = CAUSE_STD_LOC_OUT;
 	*ptr++ = make_q931_cause(cd->cause_out);
 
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -437,6 +374,7 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 void
 i4b_l3_tx_setup(call_desc_t *cd)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int slen = strlen(cd->src_telno);
@@ -449,7 +387,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	 *       mechanism should be used in future. (-hm)
 	 */
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
 			    (cd->bprot == BPROT_NONE ? 1 : 0))) == NULL)
@@ -527,7 +465,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	strncpy(ptr, cd->dst_telno, dlen);
 	ptr += dlen;
 	
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -536,10 +474,11 @@ i4b_l3_tx_setup(call_desc_t *cd)
 void
 i4b_l3_tx_connect_ack(call_desc_t *cd)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_CONNECT_ACK_LEN)) == NULL)
 		panic("i4b_l3_tx_connect_ack: can't allocate mbuf\n");
@@ -551,7 +490,7 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = CONNECT_ACKNOWLEDGE;	/* message type = connect ack */
 
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -560,10 +499,11 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 void
 i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_STATUS_LEN)) == NULL)
 		panic("i4b_l3_tx_status: can't allocate mbuf\n");
@@ -584,7 +524,7 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 	*ptr++ = CALLSTATE_LEN;
 	*ptr++ = i4b_status_tab[cd->Q931state];
 		
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -593,11 +533,12 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 void
 i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_LEN;
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	if(send_cause_flag == 0)
 		len -= 4;
@@ -620,7 +561,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 		*ptr++ = make_q931_cause(cd->cause_out);
 	}
 
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 /*---------------------------------------------------------------------------*
@@ -629,13 +570,14 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 void
 i4b_l3_tx_alert(call_desc_t *cd)
 {
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
 	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_ALERT_LEN)) == NULL)
 		panic("i4b_l3_tx_alert: can't allocate mbuf\n");
 
-	NDBGL3(L3_PRIM, "unit %d, cr = 0x%02x", ctrl_desc[cd->controller].unit, cd->cr);
+	NDBGL3(L3_PRIM, "bri %d, cr = 0x%02x", cd->bri, cd->cr);
 	
 	ptr = m->m_data + I_FRAME_HDRLEN;
 	
@@ -644,7 +586,7 @@ i4b_l3_tx_alert(call_desc_t *cd)
 	*ptr++ = setup_cr(cd, cd->cr);	/* call reference value */
 	*ptr++ = ALERT;			/* message type = alert */
 
-	DL_Data_Req(ctrl_desc[cd->controller].unit, m);
+	i4b_dl_data_req(l2sc, m);
 }
 
 #endif /* NI4BQ931 > 0 */

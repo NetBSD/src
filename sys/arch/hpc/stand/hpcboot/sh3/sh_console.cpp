@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_console.cpp,v 1.1.2.2 2001/02/11 19:10:13 bouyer Exp $	*/
+/*	$NetBSD: sh_console.cpp,v 1.1.2.3 2001/03/27 15:30:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,69 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hpcmenu.h>
 #include <sh3/sh_console.h>
+#include <sh3/hd64461.h>
+
+#define BI_CNUSE_SCI		2
+#define BI_CNUSE_SCIF		3
+#define BI_CNUSE_HD64461COM	4
 
 SHConsole *SHConsole::_instance = 0;
+
+struct SHConsole::console_info
+SHConsole::_console_info[] = {
+	{ PLATID_CPU_SH_3        , PLATID_MACH_HP                          , SCIFPrint       , BI_CNUSE_SCIF },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI                     , HD64461COMPrint , BI_CNUSE_HD64461COM },
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , 0               , BI_CNUSE_BUILTIN },
+	{ 0, 0, 0 } // terminator.
+};
+
+SHConsole::SHConsole()
+{
+	_print = 0;
+}
+
+SHConsole::~SHConsole()
+{
+}
+
+SHConsole *
+SHConsole::Instance()
+{
+	if (!_instance)
+		_instance = new SHConsole();
+
+	return _instance;
+}
+
+BOOL
+SHConsole::init()
+{
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
+	struct console_info *tab = _console_info;
+	platid_mask_t target, entry;
+	
+	_kmode = SetKMode(1);
+	
+	target.dw.dw0 = menu._pref.platid_hi;
+	target.dw.dw1 = menu._pref.platid_lo;
+
+	// search apriori setting if any.
+	for (; tab->cpu; tab++) {
+		entry.dw.dw0 = tab->cpu;
+		entry.dw.dw1 = tab->machine;
+		if (platid_match(&target, &entry)) {
+			_print = tab->print;
+			_boot_console = tab->boot_console;
+			break;
+		}
+	}
+
+	// always open COM1 to supply clock and power for the
+	// sake of kernel serial driver 
+	return openCOM1();
+}
 
 void
 SHConsole::print(const TCHAR *fmt, ...)
@@ -51,5 +111,28 @@ SHConsole::print(const TCHAR *fmt, ...)
 	if (!setupBuffer())
 		return;
 
-	PRINT(_bufm);
+	if (_print == 0)
+		SerialConsole::genericPrint(_bufm);
+	else
+		_print(_bufm);
 }
+
+void
+SHConsole::SCIPrint(const char *buf)
+{
+	SCI_PRINT(buf);
+}
+
+void
+SHConsole::SCIFPrint(const char *buf)
+{
+	SCIF_PRINT(buf);
+}
+
+void
+SHConsole::HD64461COMPrint(const char *buf)
+{
+	HD64461COM_PRINT(buf);
+}
+
+

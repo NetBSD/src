@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.1.2.3 2001/03/12 13:28:17 bouyer Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.1.2.4 2001/03/27 15:30:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <sh3/sh_arch.h>
 #include <sh3/hd64461.h>
 #include "scifreg.h"
+
+static void __tmu_channel_info(int, paddr_t, paddr_t, paddr_t);
 
 struct SHArchitecture::intr_priority SHArchitecture::ipr_table[] = {
 	{ "TMU0",	ICU_IPRA_REG16, 12 },
@@ -209,11 +211,14 @@ SHArchitecture::systemInfo()
 	print_stack_pointer();
 	icu_dump();
 
+	// TMU
+	tmu_dump();
+
 	// PFC , I/O port
 	pfc_dump();
 
 	// SCIF
-	scif_dump(19200);
+	scif_dump(menu._pref.serial_speed);
 
 	// HD64461
 	platid_t platform;
@@ -428,6 +433,73 @@ SHArchitecture::pfc_dump()
 #undef DUMP_IOPORT_REG
 	DPRINTF((TEXT("SCPDR :")));
 	bitdisp(reg_read_1(SH3_SCPDR_REG8));
+}
+
+void
+SHArchitecture::tmu_dump()
+{
+	u_int8_t r8;
+	
+	DPRINTF((TEXT("<<<TMU>>>\n")));
+	/* Common */
+	/* TOCR  timer output control register */
+	r8 = reg_read_1(SH3_TOCR_REG8);
+	DPRINTF((TEXT("TCLK = %S\n"),
+		 r8 & TOCR_TCOE ? "RTC output" : "input"));
+	/* TSTR */
+	r8 = reg_read_1(SH3_TSTR_REG8);
+	DPRINTF((TEXT("Timer start(#0:2) [%c][%c][%c]\n"),
+		 r8 & TSTR_STR0 ? 'x' : '_',
+		 r8 & TSTR_STR1 ? 'x' : '_',
+		 r8 & TSTR_STR2 ? 'x' : '_'));
+
+#define CHANNEL_DUMP(a, x)						\
+	tmu_channel_dump(x, SH##a##_TCOR##x##_REG,			\
+			 SH##a##_TCNT##x##_REG,				\
+			 SH##a##_TCR##x##_REG16)
+	CHANNEL_DUMP(3, 0);
+	CHANNEL_DUMP(3, 1);
+	CHANNEL_DUMP(3, 2);
+#undef	CHANNEL_DUMP
+	DPRINTF((TEXT("\n")));
+}
+
+void
+SHArchitecture::tmu_channel_dump(int unit, paddr_t tcor, paddr_t tcnt,
+				 paddr_t tcr)
+{
+	u_int32_t r32;
+	u_int16_t r16;
+
+	DPRINTF((TEXT("TMU#%d:"), unit));
+#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, TCR_##m, #m)
+	/* TCR*/
+	r16 = reg_read_2(tcr);
+	DBG_BIT_PRINT(r16, UNF);
+	DBG_BIT_PRINT(r16, UNIE);
+	DBG_BIT_PRINT(r16, CKEG1);
+	DBG_BIT_PRINT(r16, CKEG0);
+	DBG_BIT_PRINT(r16, TPSC2);
+	DBG_BIT_PRINT(r16, TPSC1);
+	DBG_BIT_PRINT(r16, TPSC0);
+	/* channel 2 has input capture. */
+	if (unit == 2) {
+		DBG_BIT_PRINT(r16, ICPF);
+		DBG_BIT_PRINT(r16, ICPE1);
+		DBG_BIT_PRINT(r16, ICPE0);
+	}
+#undef DBG_BIT_PRINT
+	/* TCNT0  timer counter */
+	r32 = reg_read_4(tcnt);
+	DPRINTF((TEXT("\ncnt=0x%08x"), r32));
+	/* TCOR0  timer constant register */
+	r32 = reg_read_4(tcor);
+	DPRINTF((TEXT(" constant=0x%04x"), r32));
+
+	if (unit == 2)
+		DPRINTF((TEXT(" input capture=0x%08x\n"), SH3_TCPR2_REG));
+	else
+		DPRINTF((TEXT("\n")));
 }
 
 void

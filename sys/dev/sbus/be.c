@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6.2.5 2001/03/12 13:31:23 bouyer Exp $	*/
+/*	$NetBSD: be.c,v 1.6.2.6 2001/03/27 15:32:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -335,7 +335,6 @@ beattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
@@ -357,6 +356,7 @@ beattach(parent, self, aux)
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/*
 	 * Initialize our media structures and MII info.

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.h,v 1.1.2.2 2001/02/11 19:09:48 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: arch.h,v 1.1.2.3 2001/03/27 15:30:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ protected:
 	Console	*&_cons;
 	MemoryManager *&_mem;
 	paddr_t _loader_addr;
+	struct BootArgs *_boot_arg;
 	BOOL _debug;
 
 	/* debug utility */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44.2.7 2001/03/12 13:31:14 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44.2.8 2001/03/27 15:32:12 bouyer Exp $	*/
 
 
 /*
@@ -925,7 +925,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 
 	error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_xfer,
-	    databuf, datalen, NULL, BUS_DMA_NOWAIT);
+	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 	if (error) {
 		printf("%s:%d: unable to load xfer DMA map for"
 		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
@@ -3243,11 +3243,7 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	if (PDC_IS_265(sc)) {
-		/* the BIOS set it up this way */
-		mode = PDC2xx_SCR_SET_GEN(mode, 0x3);
-		mode |= 0x80000000;
-	} else if (PDC_IS_262(sc)) {
+	if (PDC_IS_262(sc)) {
 		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
 	} else {
 		/* the BIOS set it up this way */

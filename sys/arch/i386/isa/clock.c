@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61.8.1 2000/11/20 20:09:31 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.61.8.2 2001/03/27 15:31:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -182,7 +182,7 @@ static int ticks[6];
 
 /*
  * i8254 latch check routine:
- *     National Geode (formerly Cyrix MediaGX) has a sirious bug in
+ *     National Geode (formerly Cyrix MediaGX) has a serious bug in
  *     its built-in i8254-compatible clock module.
  *     Set the variable 'clock_broken_latch' to indicate it.
  *     XXX check only cpu_id

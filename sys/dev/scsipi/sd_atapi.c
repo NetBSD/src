@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.5.2.3 2000/11/20 09:59:27 bouyer Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.5.2.4 2001/03/27 15:32:17 bouyer Exp $	*/
 
 /*
  * Copyright 1998
@@ -159,6 +159,10 @@ sd_atapibus_get_parms(sd, dp, flags)
 	case ATAPI_CAP_DESC_CODE_FORMATTED:
 		break;
 
+	case 0:
+		if (sd->sc_periph->periph_quirks & PQUIRK_BYTE5_ZERO)
+			break;
+
 	default:
 #ifdef DIAGNOSTIC
 		printf("%s: strange capacity descriptor byte5 0x%x\n",
@@ -186,6 +190,8 @@ sd_atapibus_get_parms(sd, dp, flags)
 	 *
 	 * XXX Rigid geometry page?
 	 */
+	if (sd->sc_periph->periph_quirks & PQUIRK_NO_FLEX_PAGE)
+		return (SDGP_RESULT_OK);
 	error = atapi_mode_sense(sd->sc_periph, ATAPI_FLEX_GEOMETRY_PAGE,
 	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 20000);

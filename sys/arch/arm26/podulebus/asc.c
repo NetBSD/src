@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.6.5 2001/02/11 19:09:00 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.6.6 2001/03/27 15:30:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -64,7 +64,7 @@
 #include <arm26/podulebus/sbicvar.h>
 #include <arm26/podulebus/ascreg.h>
 #include <arm26/podulebus/ascvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, struct cfdata *, void *));
@@ -143,7 +143,7 @@ ascattach(pdp, dp, auxp)
 	 * eveything is a valid dma address
 	 */
 	sbic->sc_dmamask = 0;
-	sbic->sc_sbicp = (sbic_regmap_p) (pa->pa_memc_h + ASC_SBIC);
+	sbic->sc_sbicp = (sbic_regmap_p) (pa->pa_mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
 	sbic->sc_adapter.adapt_dev = &sbic->sc_dev;
@@ -185,9 +185,8 @@ ascattach(pdp, dp, auxp)
 	if (!asc_poll) {
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    dp->dv_xname, "intr");
-		sc->sc_ih =
-		    podulebus_irq_establish(sc->sc_softc.sc_dev.dv_parent,
-		    pa->pa_slotnum, IPL_BIO, asc_intr, sc, &sc->sc_intrcnt);
+		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    asc_intr, sc, &sc->sc_intrcnt);
 		irq_enable(sc->sc_ih);
 	}
 

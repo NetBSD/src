@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.7.14.1 2000/11/20 20:04:05 bouyer Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.7.14.2 2001/03/27 15:30:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -79,8 +79,8 @@ struct bus_space podulebus_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
-	bs_notimpl_bs_rr_2,
+	podulebus_bs_rr_1,
+	podulebus_bs_rr_2,
 	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
@@ -97,8 +97,8 @@ struct bus_space podulebus_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
-	bs_notimpl_bs_wr_2,
+	podulebus_bs_wr_1,
+	podulebus_bs_wr_2,
 	bs_notimpl_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
@@ -109,8 +109,8 @@ struct bus_space podulebus_bs_tag = {
 	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
-	bs_notimpl_bs_sr_2,
+	podulebus_bs_sr_1,
+	podulebus_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
@@ -197,3 +197,67 @@ podulebus_bs_barrier(t, bsh, offset, len, flags)
 	int flags;
 {
 }	
+
+/* Rough-and-ready implementations from arm26 */
+
+void
+podulebus_bs_rr_1(void *cookie, bus_space_handle_t bsh,
+			bus_size_t offset, u_int8_t *datap, bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		datap[i] = podulebus_bs_r_1(cookie, bsh, offset + i);
+}
+
+void
+podulebus_bs_rr_2(void *cookie, bus_space_handle_t bsh,
+			bus_size_t offset, u_int16_t *datap, bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		datap[i] = podulebus_bs_r_2(cookie, bsh, offset + i);
+}
+
+void
+podulebus_bs_wr_1(void *cookie, bus_space_handle_t bsh,
+			 bus_size_t offset, u_int8_t const *datap,
+			 bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		podulebus_bs_w_1(cookie, bsh, offset + i, datap[i]);
+}
+
+void
+podulebus_bs_wr_2(void *cookie, bus_space_handle_t bsh,
+			 bus_size_t offset, u_int16_t const *datap,
+			 bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		podulebus_bs_w_2(cookie, bsh, offset + i, datap[i]);
+}
+
+void
+podulebus_bs_sr_1(void *cookie, bus_space_handle_t bsh,
+		       bus_size_t offset, u_int8_t value, bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		podulebus_bs_w_1(cookie, bsh, offset + i, value);
+}
+
+void
+podulebus_bs_sr_2(void *cookie, bus_space_handle_t bsh,
+		       bus_size_t offset, u_int16_t value, bus_size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		podulebus_bs_w_2(cookie, bsh, offset + i, value);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.2.2.2 2001/03/12 13:28:52 bouyer Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.2.2.3 2001/03/27 15:30:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -233,6 +233,18 @@ static void set_bus_width(enum controller_channel, int);
 #ifdef DEBUG
 static void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 #endif
+/* fix SH3 Area[56] bug */
+static void fixup_sh3_pcmcia_area(bus_space_tag_t);
+#define _BUS_SPACE_ACCESS_HOOK()					\
+{									\
+	u_int8_t dummy __attribute__((__unused__)) =			\
+	 *(volatile u_int8_t *)0xba000000;				\
+}
+_BUS_SPACE_WRITE(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_WRITE_MULTI(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_WRITE_REGION(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
+#undef _BUS_SPACE_ACCESS_HOOK
 
 #define DELAY_MS(x)	delay((x) * 1000)
 
@@ -364,18 +376,21 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	/* Attibute/Common memory extent */
 	membase = (channel == CHANNEL_0)
 		? HD64461_PCC0_MEMBASE : HD64461_PCC1_MEMBASE;
-	ch->ch_memt = bus_space_create("PCMCIA attribute memory",
+
+	ch->ch_memt = bus_space_create(0, "PCMCIA attribute memory",
 				       membase, 0x01000000); /* 16MB */
-	bus_space_alloc(ch->ch_memt, 0, 0x01000000, 0x01000000,
+	bus_space_alloc(ch->ch_memt, 0, 0x00ffffff, 0x01000000,
 			0x01000000, 0x01000000, 0, &ch->ch_membase_addr,
 			&ch->ch_memh);
+	fixup_sh3_pcmcia_area(ch->ch_memt);
 
 	/* Common memory space extent */
 	ch->ch_memsize = 0x01000000;
 	for (i = 0; i < MEMWIN_16M_MAX; i++) {
-		ch->ch_cmemt[i] = bus_space_create("PCMCIA common memory",
+		ch->ch_cmemt[i] = bus_space_create(0, "PCMCIA common memory",
 						   membase + 0x01000000,
 						   ch->ch_memsize);
+		fixup_sh3_pcmcia_area(ch->ch_cmemt[i]);
 	}
 
 	/* I/O port extent and interrupt staff */
@@ -384,10 +399,10 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	if (channel == CHANNEL_0) {
 		ch->ch_iobase = 0;
 		ch->ch_iosize = HD64461_PCC0_IOSIZE;
-		ch->ch_iot = bus_space_create("PCMCIA I/O port", 
+		ch->ch_iot = bus_space_create(0, "PCMCIA I/O port", 
 					      HD64461_PCC0_IOBASE,
 					      ch->ch_iosize);
-		
+		fixup_sh3_pcmcia_area(ch->ch_iot);
 
 		hd64461_intr_establish(HD64461_IRQ_PCC0, IST_LEVEL, IPL_TTY,
 				       hd64461pcmcia_channel0_intr, ch);
@@ -615,7 +630,7 @@ _chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 				  &cookie->wc_handle) != 0)
 			goto bad;
 		
-		// XXX bogus. bus_space_tag should be vtbl...
+		// XXX bogus. check window per common memory access.
 		memory_window_16(ch->ch_channel, window);
 		*offsetp = ofs + 0x01000000; /* skip attribute area */
 		cookie->wc_window = window;
@@ -664,7 +679,7 @@ _chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 		DPRINTF("map %#lx+%#lx\n", start, size);
 	} else {
 		if (bus_space_alloc(ch->ch_iot, ch->ch_iobase,
-				    ch->ch_iobase + ch->ch_iosize,
+				    ch->ch_iobase + ch->ch_iosize - 1,
 				    size, align, 0, 0, &pcihp->addr, 
 				    &pcihp->ioh)) {
 			DPRINTF("couldn't allocate %#lx\n", size);
@@ -1026,6 +1041,17 @@ set_bus_width(enum controller_channel channel, int width)
 	SHREG_BCR2 = r16;
 }
 
+static void
+fixup_sh3_pcmcia_area(bus_space_tag_t t)
+{
+	struct hpcsh_bus_space *hbs = (void *)t;
+
+	hbs->hbs_w_1	= _sh3_pcmcia_bug_write_1;
+	hbs->hbs_wm_1	= _sh3_pcmcia_bug_write_multi_1;
+	hbs->hbs_wr_1	= _sh3_pcmcia_bug_write_region_1;
+	hbs->hbs_sm_1	= _sh3_pcmcia_bug_set_multi_1;
+}
+
 #ifdef DEBUG
 static void
 hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
@@ -1207,4 +1233,3 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	dbg_banner_end();
 }
 #endif /* DEBUG */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.10 2001/01/22 17:43:03 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.11 2001/03/27 15:32:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -424,8 +424,10 @@ struct scsipi_periph {
 #define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
 #define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
-#define	PQUIRK_NOSENSE		0x00004000	/* can't REQUSET SENSE */
+#define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
+#define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
+#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom page */
 
 
 /*
@@ -443,7 +445,6 @@ typedef enum {
 	XS_RESET,		/* bus was reset; possible retry command  */
 	XS_REQUEUE,		/* requeue this command */
 } scsipi_xfer_result_t;
-
 
 /*
  * Each scsipi transaction is fully described by one of these structures

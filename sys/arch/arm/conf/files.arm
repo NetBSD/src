@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.6.2.2 2001/03/12 13:27:21 bouyer Exp $
+#	$NetBSD: files.arm,v 1.6.2.3 2001/03/27 15:30:18 bouyer Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -49,10 +49,6 @@ file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/undefined.c
 file	arch/arm/arm/vm_machdep_arm.c
-
-file	arch/arm/arm/disksubr.c			disk
-file	arch/arm/arm/disksubr_acorn.c		disk
-file	arch/arm/arm/disksubr_mbr.c		disk
 
 # files common to arm32 implementations
 file	arch/arm/arm32/ast.c			arm32

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.2.4 2001/01/18 09:22:45 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.113.2.5 2001/03/27 15:31:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.2.4 2001/01/18 09:22:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.2.5 2001/03/27 15:31:11 bouyer Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -358,17 +358,17 @@ trap(status, cause, vaddr, opc, frame)
 		 * error.
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				unsigned nss;
 
 				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
-			else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (type & T_USER) {
 				userret(p);
 			}
@@ -376,15 +376,14 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		if ((type & T_USER) == 0)
 			goto copyfault;
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
 			sig = SIGKILL;
 		} else {
-			sig = (rv == KERN_PROTECTION_FAILURE) ?
-				SIGBUS : SIGSEGV;
+			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
 		}
 		ucode = vaddr;
 		break; /* SIGNAL */
@@ -396,7 +395,7 @@ trap(status, cause, vaddr, opc, frame)
 
 		va = trunc_page(vaddr);
 		rv = uvm_fault(kernel_map, va, 0, ftype);
-		if (rv == KERN_SUCCESS)
+		if (rv == 0)
 			return; /* KERN */
 		/*FALLTHROUGH*/
 	    }
@@ -472,7 +471,7 @@ trap(status, cause, vaddr, opc, frame)
 			ea = round_page(va + sizeof(int) - 1);
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
@@ -747,7 +746,7 @@ mips_singlestep(p)
 		ea = round_page(va + sizeof(int) - 1);
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_DEFAULT, FALSE);
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);

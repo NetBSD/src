@@ -27,7 +27,7 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.1.4.2 2001/03/12 13:30:25 bouyer Exp $ 
+ *	$Id: isic.c,v 1.1.4.3 2001/03/27 15:31:54 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
@@ -56,9 +56,6 @@
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
-
-/* XXX - hack, going away soon! */
-struct l1_softc *l1_sc[ISIC_MAXUNIT];
 
 /*---------------------------------------------------------------------------*
  *	isic - device driver interrupt routine

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.4.2.5 2001/01/05 17:36:04 bouyer Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.4.2.6 2001/03/27 15:32:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,55 +71,63 @@ struct cfattach fwohci_pci_ca = {
 static int
 fwohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-        struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-        if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
-            PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
-            PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
-                return 1;
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
+	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
+		return 1;
  
-        return 0;
+	return 0;
 }
 
 static void
 fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-        struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	struct fwohci_pci_softc *psc = (struct fwohci_pci_softc *) self;
-        char devinfo[256];
+	char devinfo[256];
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	u_int32_t csr;
 
-        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-        printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	psc->psc_sc.sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
 
-        /* Map I/O registers */
-        if (pci_mapreg_map(pa, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
-                           &psc->psc_sc.sc_memt, &psc->psc_sc.sc_memh,
-			   NULL, &psc->psc_sc.sc_memsize)) {
-                printf("%s: can't map OCHI register space\n", self->dv_xname);
-                return;
-        }
+	/* Map I/O registers */
+	if (pci_mapreg_map(pa, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
+	    &psc->psc_sc.sc_memt, &psc->psc_sc.sc_memh,
+	    NULL, &psc->psc_sc.sc_memsize)) {
+		printf("%s: can't map OCHI register space\n", self->dv_xname);
+		return;
+	}
 
-        /* Disable interrupts, so we don't get any spurious ones. */
-        OHCI_CSR_WRITE(&psc->psc_sc, OHCI_REG_IntMaskClear, OHCI_Int_MasterEnable);
+	/* Disable interrupts, so we don't get any spurious ones. */
+	OHCI_CSR_WRITE(&psc->psc_sc, OHCI_REG_IntMaskClear,
+	    OHCI_Int_MasterEnable);
 
-        /* Enable the device. */
-        csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-        pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-                       csr | PCI_COMMAND_MASTER_ENABLE);
+	/* Enable the device. */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_MASTER_ENABLE);
+
+#if BYTE_ORDER == BIG_ENDIAN
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_OHCI_CONTROL_REGISTER,
+	    csr | PCI_GLOBAL_SWAP_BE);
+#endif
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-        	printf("%s: couldn't map interrupt\n", self->dv_xname);
+		printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr, &psc->psc_sc);
+	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
+	    &psc->psc_sc);
 	if (psc->psc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", self->dv_xname);
 		if (intrstr != NULL)

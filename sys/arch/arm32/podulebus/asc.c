@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.26.2.1 2001/02/11 19:09:04 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.26.2.2 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -68,7 +68,7 @@
 #include <arm32/podulebus/sbicvar.h>
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, struct cfdata *, void *));
@@ -171,7 +171,7 @@ ascattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "asc.hostid",
 	    BOOTOPT_TYPE_INT, &sbic->sc_link.scsipi_scsi.adapter_target);
 
-	printf(" hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
+	printf(": hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
 
 #if ASC_POLL > 0
         if (boot_args) {
@@ -201,18 +201,17 @@ ascattach(pdp, dp, auxp)
 
 /* If we are polling only then we don't need a interrupt handler */
 
-	sc->sc_ih.ih_func = asc_intr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_BIO;
-	sc->sc_ih.ih_name = "scsi: asc";
-	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
-	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
-
 #ifdef ASC_POLL
 	if (!asc_poll)
 #endif
-	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih))
-		panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+	{
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    dp->dv_xname, "intr");
+		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    asc_intr, sc, &sc->sc_intrcnt);
+		if (sc->sc_ih == NULL)
+			panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
+	}
 
 	/*
 	 * attach all scsi units on us

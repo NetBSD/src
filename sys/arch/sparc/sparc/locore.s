@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125.2.2 2001/03/12 13:29:22 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.125.2.3 2001/03/27 15:31:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2161,6 +2161,7 @@ bpt:
 	bz	slowtrap		! no, go do regular trap
 	 nop
 
+/* XXXSMP */
 	/*
 	 * Build a trap frame for kgdb_trap_glue to copy.
 	 * Enable traps but set ipl high so that we will not
@@ -2506,6 +2507,12 @@ sparc_interrupt_common:
 	st	%o0, [%l4 + %l5]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
+
+#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	call	_C_LABEL(intr_lock_kernel)
+	 nop
+#endif
+
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2533,7 +2540,12 @@ sparc_interrupt_common:
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
-4:	mov	%l7, %g1
+4:
+#if defined(MULTIPROCESSOR) && defined(SUN4M) /* XXX */
+	call	_C_LABEL(intr_unlock_kernel)
+	 nop
+#endif
+	mov	%l7, %g1
 	wr	%l6, 0, %y
 	ldd	[%sp + CCFSZ + 24], %g2
 	ldd	[%sp + CCFSZ + 32], %g4
@@ -4187,7 +4199,7 @@ ENTRY(copyoutstr)
 Lcsdocopy:
 !	sethi	%hi(cpcb), %o4		! (done earlier)
 	ld	[%o4 + %lo(cpcb)], %o4	! catch faults
-	set	Lcsfault, %g1
+	set	Lcsdone, %g1
 	st	%g1, [%o4 + PCB_ONFAULT]
 
 ! XXX should do this in bigger chunks when possible
@@ -4214,10 +4226,6 @@ Lcsdone:				! done:
 3:
 	retl				! cpcb->pcb_onfault = 0;
 	 st	%g0, [%o4 + PCB_ONFAULT]! return (error);
-
-Lcsfault:
-	b	Lcsdone			! error = EFAULT;
-	 mov	EFAULT, %o0		! goto ret;
 
 /*
  * copystr(fromaddr, toaddr, maxlength, &lencopied)
@@ -4310,9 +4318,8 @@ Ldocopy:
 Lcopyfault:
 	sethi	%hi(cpcb), %o3
 	ld	[%o3 + %lo(cpcb)], %o3
-	st	%g0, [%o3 + PCB_ONFAULT]
 	jmp	%g7 + 8
-	 mov	EFAULT, %o0
+	 st	%g0, [%o3 + PCB_ONFAULT]
 
 
 /*
@@ -4453,6 +4460,7 @@ ENTRY(switchexit)
 	mov	%g5, %l6		! %l6 = _idle_u
 	SET_SP_REDZONE(%l6, %l5)
 #endif
+
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	call	_C_LABEL(exit2)		! exit2(p)
 	 mov	%g2, %o0
@@ -4891,7 +4899,7 @@ ENTRY(fuword)
 	st	%o3, [%o2 + PCB_ONFAULT]
 	ld	[%o0], %o0		! fetch the word
 	retl				! phew, made it, return the word
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 Lfserr:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
@@ -5705,9 +5713,8 @@ Lkcopy_done:
 	/* NOTREACHED */
 
 Lkcerr:
-	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
-	 mov	EFAULT, %o0	! delay slot: return error indicator
+	 st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	/* NOTREACHED */
 
 /*

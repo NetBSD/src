@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.4 1998/08/04 20:09:37 mark Exp $	*/
+/*	$NetBSD: amps.c,v 1.4.12.1 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,10 +62,10 @@
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/ampsreg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#include <dev/podulebus/podules.h>
 
 #include "locators.h"
 
@@ -107,7 +107,7 @@ struct amps_attach_args {
 	bus_space_tag_t aa_iot;			/* bus space tag */
 	unsigned int aa_base;			/* base address for port */
 	int aa_port;      			/* serial port number */
-	int aa_irq;				/* IRQ number */
+	podulebus_intr_handle_t aa_irq;		/* IRQ number */
 };
 
 /*
@@ -221,6 +221,7 @@ amps_shutdown(arg)
 struct com_amps_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
 	void	*sc_ih;			/* interrupt handler */
+	struct	evcnt sc_intrcnt;	/* interrupt count */
 };
 
 /* Prototypes for functions */
@@ -313,6 +314,8 @@ com_amps_attach(parent, self, aux)
 	sc->sc_frequency = AMPS_FREQ;
 	com_attach_subr(sc);
 
-	asc->sc_ih = intr_claim(aa->aa_irq, IPL_SERIAL, "com",
-	    comintr, sc);
+	evcnt_attach_dynamic(&asc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	asc->sc_ih = podulebus_irq_establish(aa->aa_irq, IPL_SERIAL, comintr,
+	    sc, &asc->sc_intrcnt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2.10.2 2000/12/08 09:30:16 bouyer Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.10.3 2001/03/27 15:31:22 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,7 @@ struct pcb {
 		double fpr[32];
 		double fpscr;	/* FPSCR stored as double for easier access */
 	} pcb_fpu;		/* Floating point processor */
+	struct cpu_info *pcb_fpcpu; /* CPU with our FP state */
 	struct vreg *pcb_vr;
 };
 

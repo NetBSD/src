@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.2.12.3 2001/03/12 13:27:45 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.2.12.4 2001/03/27 15:30:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,9 @@
 #include <dev/ic/ne2000var.h>
 
 #include <arch/arm32/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
 #include <arch/arm32/podulebus/if_ne_pbusreg.h>
+
+#include <dev/podulebus/podules.h>
 
 /*
  * ne_pbus_softc: ne2000_softc plus podule, interrupt and bs tag info
@@ -90,6 +91,7 @@ struct ne_pbus_softc {
 	podule_t		*sc_podule;
 	struct bus_space	sc_tag;			/* Patched tag */
 	void			*sc_ih;			/* Interrupt handler */
+	struct evcnt		sc_intrcnt;		/* Interrupt count */
 	int			sc_mediatype;		/* Media Info */
 #define NE_MEDIA_AUTO		0 
 #define	NE_MEDIA_10BASET	1
@@ -251,7 +253,7 @@ ne_pbus_attach(parent, self, aux)
 	}
 
 	/* Report the interface name */
-	printf(" %s ethernet\n", ne->name);
+	printf(": %s ethernet\n", ne->name);
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
@@ -310,8 +312,10 @@ ne_pbus_attach(parent, self, aux)
 		ne->postattach(npsc);
 
 	/* Install an interrupt handler */
-	npsc->sc_ih = intr_claim(npsc->sc_podule->interrupt, IPL_NET,
-	    "if_ne", dp8390_intr, dsc);
+	evcnt_attach_dynamic(&npsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	npsc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
+	    dsc, &npsc->sc_intrcnt);
 	if (npsc->sc_ih == NULL)
 		panic("%s: Cannot install interrupt handler",
 		   dsc->sc_dev.dv_xname);

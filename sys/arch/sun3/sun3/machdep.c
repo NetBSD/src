@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132.2.3 2001/03/12 13:29:41 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132.2.4 2001/03/27 15:31:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -229,7 +229,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
 	minaddr = (vm_offset_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -296,7 +296,7 @@ cpu_startup()
 	 */
 	if (uvm_map_protect(kernel_map, (vm_offset_t) kernel_text,
 	    m68k_trunc_page((vm_offset_t) etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != KERN_SUCCESS)
+	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
 		panic("can't protect kernel text");
 
 	/*

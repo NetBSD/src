@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.9.2.6 2001/02/11 19:16:34 bouyer Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.9.2.7 2001/03/27 15:32:21 bouyer Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -163,6 +163,11 @@ static const struct scanner_id {
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6200 },
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8100 },
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8600 },
+
+#if NOT_TEST
+	/* Canon */
+	{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U },
+#endif
 
 	{ 0, 0 }
 };

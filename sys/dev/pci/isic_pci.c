@@ -33,7 +33,7 @@
  *	isic_pci.c - pcmcia bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.2.4.2 2001/03/12 13:31:08 bouyer Exp $ 
+ *	$Id: isic_pci.c,v 1.2.4.3 2001/03/27 15:32:08 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -79,10 +79,13 @@
 #include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_l1l2.h>
 #include <dev/pci/isic_pci.h>
 
 #include "opt_isicpci.h"
+
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 static int isic_pci_match __P((struct device *, struct cfdata *, void *));
 static void isic_pci_attach __P((struct device *, struct device *, void *));
@@ -228,8 +231,6 @@ isic_pci_isdn_attach(psc, pa)
 		"Unknown Version"
 	};
 
-	l1_sc[sc->sc_unit] = sc;	/* XXX - hack! */
-
 	sc->sc_isac_version = 0;
 	sc->sc_hscx_version = 0;
 	
@@ -318,9 +319,9 @@ isic_pci_isdn_attach(psc, pa)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
 	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
@@ -351,6 +352,6 @@ isic_pci_isdn_attach(psc, pa)
 	
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 }
 #endif

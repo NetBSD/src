@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.2.2.4 2001/02/15 13:36:12 bouyer Exp $
+ *	$Id: i4b_trace.c,v 1.2.2.5 2001/03/27 15:32:43 bouyer Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -56,30 +56,15 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#ifdef __FreeBSD__
-
-#ifdef DEVFS
-#include <sys/devfsext.h>
-#endif
-
-#include <machine/i4b_trace.h>
-#include <machine/i4b_ioctl.h>
-
-#else
-
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_ioctl.h>
 
-#endif
-
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_l3l4.h>
-
-/* XXX */
-/* #ifndef __FreeBSD__ */
-/*  #define	memcpy(d,s,l)	bcopy(s,d,l) */
-/* #endif */
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_l2.h>
 
 static struct ifqueue trace_queue[NI4BTRC];
 static int device_state[NI4BTRC];
@@ -87,127 +72,17 @@ static int device_state[NI4BTRC];
 #define ST_ISOPEN	0x01
 #define ST_WAITDATA	0x02
 
-#if defined(__FreeBSD__) && __FreeBSD__ == 3
-#ifdef DEVFS
-static void *devfs_token[NI4BTRC];
-#endif
-#endif
-
-static int analyzemode = 0;
-static int rxunit = -1;
-static int txunit = -1;
-static int outunit = -1;
-
-#ifndef __FreeBSD__
+static int analyzemode = 0;			/* we are in anlyzer mode */
+static int rxunit = -1;				/* l2 bri of receiving driver */
+static int txunit = -1;				/* l2 bri of transmitting driver */
+static int outunit = -1;			/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
 void i4btrcattach __P((void));
 int i4btrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4btrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4btrcread __P((dev_t dev, struct uio * uio, int ioflag));
-
-#ifdef __bsdi__
-int i4btrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
-#else
 int i4btrcioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-#endif
-
-#endif
-
-#if BSD > 199306 && defined(__FreeBSD__)
-#define	PDEVSTATIC static
-static d_open_t	i4btrcopen;
-static d_close_t i4btrcclose;
-static d_read_t i4btrcread;
-static d_ioctl_t i4btrcioctl;
-
-#ifdef OS_USES_POLL
-static d_poll_t i4btrcpoll;
-#define POLLFIELD i4btrcpoll
-#else
-#define POLLFIELD noselect
-#endif
-
-#define CDEV_MAJOR 59
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 4
-static struct cdevsw i4btrc_cdevsw = {
-	/* open */      i4btrcopen,
-        /* close */     i4btrcclose,
-        /* read */      i4btrcread,
-        /* write */     nowrite,
-        /* ioctl */     i4btrcioctl,
-        /* poll */      POLLFIELD,
-        /* mmap */      nommap,
-        /* strategy */  nostrategy,
-        /* name */      "i4btrc",
-        /* maj */       CDEV_MAJOR,
-        /* dump */      nodump,
-        /* psize */     nopsize,
-        /* flags */     0,
-        /* bmaj */      -1
-};
-#else
-static struct cdevsw i4btrc_cdevsw = {
-	i4btrcopen,	i4btrcclose,	i4btrcread,	nowrite,
-  	i4btrcioctl,	nostop,		noreset,	nodevtotty,
-	POLLFIELD,	nommap, 	NULL, "i4btrc", NULL, -1
-};
-#endif
-
-/*---------------------------------------------------------------------------*
- *	interface init routine
- *---------------------------------------------------------------------------*/
-static
-void i4btrcinit(void *unused)
-{
-#if defined(__FreeBSD__) && __FreeBSD__ >= 4
-	cdevsw_add(&i4btrc_cdevsw);
-#else
-	dev_t dev = makedev(CDEV_MAJOR, 0);
-	cdevsw_add(&dev, &i4btrc_cdevsw, NULL);
-#endif
-}
-
-SYSINIT(i4btrcdev, SI_SUB_DRIVERS,
-	SI_ORDER_MIDDLE+CDEV_MAJOR, &i4btrcinit, NULL);
-
-static void i4btrcattach(void *);
-PSEUDO_SET(i4btrcattach, i4b_trace);
-
-#endif /* BSD > 199306 && defined(__FreeBSD__) */
-
-#ifdef __bsdi__
-#include <sys/device.h>
-int i4btrcmatch(struct device *parent, struct cfdata *cf, void *aux);
-void dummy_i4btrcattach(struct device*, struct device *, void *);
-
-#define CDEV_MAJOR 60
-
-static struct cfdriver i4btrccd =
-	{ NULL, "i4btrc", i4btrcmatch, dummy_i4btrcattach, DV_DULL,
-	  sizeof(struct cfdriver) };
-struct devsw i4btrcsw = 
-	{ &i4btrccd,
-	  i4btrcopen,	i4btrcclose,	i4btrcread,	nowrite,
-	  i4btrcioctl,	seltrue,	nommap,		nostrat,
-	  nodump,	nopsize,	0,		nostop
-};
-
-int
-i4btrcmatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-	printf("i4btrcmatch: aux=0x%x\n", aux);
-	return 1;
-}
-void
-dummy_i4btrcattach(struct device *parent, struct device *self, void *aux)
-{
-	printf("dummy_i4btrcattach: aux=0x%x\n", aux);
-}
-#endif /* __bsdi__ */
-
-int get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf);
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
@@ -249,21 +124,24 @@ i4btrcattach()
 }
 
 /*---------------------------------------------------------------------------*
- *	get_trace_data_from_l1()
- *	------------------------
+ *	isdn_layer2_trace_ind
+ *	---------------------
  *	is called from layer 1, adds timestamp to trace data and puts
  *	it into a queue, from which it can be read from the i4btrc
  *	device. The unit number in the trace header selects the minor
  *	device's queue the data is put into.
  *---------------------------------------------------------------------------*/
 int
-get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf)
+isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
+	struct l2_softc *sc = (struct l2_softc*)t;
 	struct mbuf *m;
-	int x;
-	int unit;
+	int bri, x;
 	int trunc = 0;
-	int totlen = len + sizeof(i4b_trace_hdr_t);
+	int totlen = len + sizeof(i4b_trace_hdr);
+
+	MICROTIME(hdr->time);
+	hdr->bri = sc->bri;
 
 	/*
 	 * for telephony (or better non-HDLC HSCX mode) we get 
@@ -289,11 +167,11 @@ get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf)
 	
 	hdr->length = totlen;
 	
-	/* check valid unit no */
+	/* check valid interface */
 	
-	if((unit = hdr->unit) > NI4BTRC)
+	if((bri = hdr->bri) > NI4BTRC)
 	{
-		printf("i4b_trace: get_trace_data_from_l1 - unit > NI4BTRC!\n"); 
+		printf("i4b_trace: get_trace_data_from_l1 - bri > NI4BTRC!\n"); 
 		return(0);
 	}
 
@@ -307,43 +185,43 @@ get_trace_data_from_l1(i4b_trace_hdr_t *hdr, int len, char *buf)
 
 	/* check if we are in analyzemode */
 	
-	if(analyzemode && (unit == rxunit || unit == txunit))
+	if(analyzemode && (bri == rxunit || bri == txunit))
 	{
-		if(unit == rxunit)
+		if(bri == rxunit)
 			hdr->dir = FROM_NT;
 		else
 			hdr->dir = FROM_TE;
-		unit = outunit;			
+		bri = outunit;			
 	}
 
-	if(IF_QFULL(&trace_queue[unit]))
+	if(IF_QFULL(&trace_queue[bri]))
 	{
 		struct mbuf *m1;
 
 		x = splnet();
-		IF_DEQUEUE(&trace_queue[unit], m1);
+		IF_DEQUEUE(&trace_queue[bri], m1);
 		splx(x);		
 
 		i4b_Bfreembuf(m1);
 	}
 	
 	/* copy trace header */
-	memcpy(m->m_data, hdr, sizeof(i4b_trace_hdr_t));
+	memcpy(m->m_data, hdr, sizeof(i4b_trace_hdr));
 
 	/* copy trace data */
 	if(trunc)
-		memcpy(&m->m_data[sizeof(i4b_trace_hdr_t)], buf, totlen-sizeof(i4b_trace_hdr_t));
+		memcpy(&m->m_data[sizeof(i4b_trace_hdr)], buf, totlen-sizeof(i4b_trace_hdr));
 	else
-		memcpy(&m->m_data[sizeof(i4b_trace_hdr_t)], buf, len);
+		memcpy(&m->m_data[sizeof(i4b_trace_hdr)], buf, len);
 
 	x = splnet();
 	
-	IF_ENQUEUE(&trace_queue[unit], m);
+	IF_ENQUEUE(&trace_queue[bri], m);
 	
-	if(device_state[unit] & ST_WAITDATA)
+	if(device_state[bri] & ST_WAITDATA)
 	{
-		device_state[unit] &= ~ST_WAITDATA;
-		wakeup((caddr_t) &trace_queue[unit]);
+		device_state[bri] &= ~ST_WAITDATA;
+		wakeup((caddr_t) &trace_queue[bri]);
 	}
 
 	splx(x);
@@ -368,6 +246,7 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if(analyzemode && (unit == outunit || unit == rxunit || unit == txunit))
 		return(EBUSY);
+	
 
 	x = splnet();
 	
@@ -384,43 +263,37 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 PDEVSTATIC int
 i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int unit = minor(dev);
-	int i, x;
-	int cno = -1;
+	int bri = minor(dev);
+	int x;
 
-	for(i=0; i < nctrl; i++)
-	{
-		if((ctrl_desc[i].ctrl_type == CTRL_PASSIVE) &&
-			(ctrl_desc[i].unit == unit))
-		{
-			cno = i;
-			break;
-		}
-	}
-
-	if(analyzemode && (unit == outunit))
-	{
+	if (analyzemode && (bri == outunit)) {
+		l2_softc_t * rx_l2sc, * tx_l2sc;
 		analyzemode = 0;		
 		outunit = -1;
 		
-		if(cno >= 0)
-		{
-			(*ctrl_desc[cno].N_MGMT_COMMAND)(rxunit, CMR_SETTRACE, TRACE_OFF);
-			(*ctrl_desc[cno].N_MGMT_COMMAND)(txunit, CMR_SETTRACE, TRACE_OFF);
-		}
+		rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
+		tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+
+		if (rx_l2sc != NULL)
+			rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+		if (tx_l2sc != NULL)
+			tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+
+		x = splnet();
+		device_state[rxunit] = ST_IDLE;
+		device_state[txunit] = ST_IDLE;
+		splx(x);
 		rxunit = -1;
 		txunit = -1;
+	} else {
+		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+		if (l2sc != NULL) {
+			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
+			x = splnet();
+			device_state[bri] = ST_IDLE;
+			splx(x);
+		}
 	}
-	
-	if(cno >= 0)
-	{
-			(*ctrl_desc[cno].N_MGMT_COMMAND)(ctrl_desc[cno].unit, CMR_SETTRACE, TRACE_OFF);
-	}
-
-	x = splnet();
-	device_state[unit] = ST_IDLE;
-	splx(x);
-	
 	return(0);
 }
 
@@ -493,29 +366,16 @@ i4btrcioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 #endif
 {
 	int error = 0;
-	int unit = minor(dev);
+	int bri = minor(dev);
 	i4b_trace_setupa_t *tsa;
-	int i;
-	int cno = -1;
+	l2_softc_t * l2sc = isdn_find_l2_by_bri(bri);
 
-	/* find the first passive controller matching our unit no */
-
-	for(i=0; i < nctrl; i++)
-	{
-		if((ctrl_desc[i].ctrl_type == CTRL_PASSIVE) &&
-			(ctrl_desc[i].unit == unit))
-		{
-			cno = i;
-			break;
-		}
-	}
-	
 	switch(cmd)
 	{
 		case I4B_TRC_SET:
-			if(cno < 0)
+			if (l2sc == NULL)
 				return ENOTTY;
-			(*ctrl_desc[cno].N_MGMT_COMMAND)(ctrl_desc[cno].unit, CMR_SETTRACE, (void *)*(unsigned long *)data);
+			l2sc->driver->n_mgmt_command(l2sc->l1_token, CMR_SETTRACE, (void *)*(unsigned long *)data);
 			break;
 
 		case I4B_TRC_SETA:
@@ -539,13 +399,17 @@ i4btrcioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			}
 			else
 			{
-				if(cno < 0)
+				l2_softc_t * rx_l2sc, * tx_l2sc;
+				rx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(rxunit);
+				tx_l2sc = (l2_softc_t*)isdn_find_l2_by_bri(txunit);
+
+				if (l2sc == NULL || rx_l2sc == NULL || tx_l2sc == NULL)
 					return ENOTTY;
 					
-				outunit = unit;
+				outunit = bri;
 				analyzemode = 1;
-				(*ctrl_desc[cno].N_MGMT_COMMAND)(rxunit, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
-				(*ctrl_desc[cno].N_MGMT_COMMAND)(txunit, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				rx_l2sc->driver->n_mgmt_command(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				tx_l2sc->driver->n_mgmt_command(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
 			}
 			break;
 

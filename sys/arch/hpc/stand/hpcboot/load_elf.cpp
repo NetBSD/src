@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.1.2.2 2001/02/11 19:09:56 bouyer Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.1.2.3 2001/03/27 15:30:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,13 +55,18 @@ ElfLoader::~ElfLoader(void)
 BOOL
 ElfLoader::setFile(File *&file)
 {
+	size_t sz;
 	Loader::setFile(file);
 
 	/* read ELF header and check it */
 	if (!read_header())
 		return FALSE;
+	/* read section header */
+	sz = _eh.e_shnum * _eh.e_shentsize;
+	_file->read(_sh, _eh.e_shentsize * _eh.e_shnum, _eh.e_shoff);
+
 	/* read program header */
-	size_t sz = _eh.e_phnum * _eh.e_phentsize;
+	sz = _eh.e_phnum * _eh.e_phentsize;
 
 	return _file->read(_ph, sz, _eh.e_phoff) == sz;
 }
@@ -81,6 +86,9 @@ ElfLoader::memorySize()
 			sz += _mem->roundPage(filesz);
 		}
 	}
+	/* XXX reserve 192kB for symbols */
+	sz += 0x30000;
+
 	DPRINTF((TEXT(" = 0x%x byte\n"), sz));
 	return sz;
 }
@@ -96,6 +104,11 @@ BOOL
 ElfLoader::load()
 {
 	Elf_Phdr *ph;
+	Elf_Shdr *sh, *shstr, *shsym;
+	off_t stroff = 0, symoff = 0, off;
+	vaddr_t kv;
+	size_t shstrsize;
+	char buf[1024];
 	int i;
   
 	_load_segment_start();
@@ -104,13 +117,62 @@ ElfLoader::load()
 		if (ph->p_type == PT_LOAD) {
 			size_t filesz = ph->p_filesz;
 			size_t memsz = ph->p_memsz;
-			vaddr_t kv = ph->p_vaddr;
+			kv = ph->p_vaddr;
 			off_t fileofs = ph->p_offset;
 			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
 				 i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
+			kv += memsz;
 		}
 	}
+
+	/*
+	 * Prepare ELF headers for symbol table.
+	 *
+	 *   ELF header
+	 *   section header
+	 *   shstrtab
+	 *   strtab
+	 *   symtab
+	 */
+	memcpy(buf, &_eh, sizeof(_eh));
+	((Elf_Ehdr *)buf)->e_phoff = 0;
+	((Elf_Ehdr *)buf)->e_phnum = 0;
+	((Elf_Ehdr *)buf)->e_entry = 0;
+	((Elf_Ehdr *)buf)->e_shoff = sizeof(_eh);
+	off = ((Elf_Ehdr *)buf)->e_shoff;
+	memcpy(buf + off, _sh, _eh.e_shentsize * _eh.e_shnum);
+	sh = (Elf_Shdr *)(buf + off);
+	off += _eh.e_shentsize * _eh.e_shnum;
+
+	/* load shstrtab and find desired sections */
+	shstrsize = (sh[_eh.e_shstrndx].sh_size + 3) & ~0x3;
+	_file->read(buf + off, shstrsize, sh[_eh.e_shstrndx].sh_offset);
+	for(i = 0; i < _eh.e_shnum; i++, sh++) {
+		if (strcmp(".strtab", buf + off + sh->sh_name) == 0) {
+			stroff = sh->sh_offset;
+			shstr = sh;
+		} else if (strcmp(".symtab", buf + off + sh->sh_name) == 0) {
+			symoff = sh->sh_offset;
+			shsym = sh;
+		}
+		if (i == _eh.e_shstrndx)
+			sh->sh_offset = off;
+		else
+			sh->sh_offset = 0;
+	}
+	/* silently return if strtab or symtab can't be found */
+	if (! stroff || ! symoff)
+		return TRUE;
+
+	shstr->sh_offset = off + shstrsize;
+	shsym->sh_offset = off + shstrsize + ((shstr->sh_size + 3) & ~0x3);
+	_load_memory(kv, off + shstrsize, buf);
+	kv += off + shstrsize;
+	_load_segment(kv, shstr->sh_size, stroff, shstr->sh_size);
+	kv += (shstr->sh_size + 3) & ~0x3;
+	_load_segment(kv, shsym->sh_size, symoff, shsym->sh_size);
+
 	/* tag chain still opening */
 
 	return TRUE;

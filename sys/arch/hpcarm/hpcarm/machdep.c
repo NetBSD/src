@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.2 2001/03/12 13:28:21 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.3 2001/03/27 15:30:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -105,6 +105,8 @@ extern int pmap_debug_level;
 int kernel_debug = 0;
 
 struct user *proc0paddr;
+
+extern char booted_kernel[];
 
 /* Prototypes */
 
@@ -393,7 +395,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(bufsize),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+	    UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate UVM space for buffers");
 	minaddr = (vm_offset_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -722,6 +724,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
+	}
+
+	case CPU_BOOTED_KERNEL: {
+		if (booted_kernel != NULL && booted_kernel[0] != '\0')
+			return sysctl_rdstring(oldp, oldlenp, newp,
+			    booted_kernel);
+		return (EOPNOTSUPP);
 	}
 
 	default:
