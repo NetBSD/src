@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.9 1997/11/16 22:34:23 lukem Exp $	*/
+/*	$NetBSD: util.h,v 1.10 1997/12/01 02:25:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -36,16 +36,22 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-#include <stdio.h>
-#include <pwd.h>
-#include <utmp.h>
-#include <termios.h>
+#include <sys/cdefs.h>
 #include <sys/ttycom.h>
 #include <sys/types.h>
-#include <sys/cdefs.h>
+#include <stdio.h>
+#include <pwd.h>
+#include <termios.h>
+#include <utmp.h>
 
 #define	PIDLOCK_NONBLOCK	1
 #define PIDLOCK_USEHOSTNAME	2
+
+#define	FPARSELN_UNESCESC	0x01
+#define	FPARSELN_UNESCCONT	0x02
+#define	FPARSELN_UNESCCOMM	0x04
+#define	FPARSELN_UNESCREST	0x08
+#define	FPARSELN_UNESCALL	0x0f
 
 __BEGIN_DECLS
 void	login __P((struct utmp *));
@@ -64,7 +70,7 @@ int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
 void	pw_error __P((const char *name, int err, int eval));
 int	openpty __P((int *, int *, char *, struct termios *,
 		     struct winsize *));
-char   *fparseln __P((FILE *, size_t *, size_t *, const char[3]));
+char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
 pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
