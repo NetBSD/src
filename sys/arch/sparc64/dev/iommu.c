@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.50 2002/03/20 18:54:47 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.51 2002/05/13 21:01:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -821,7 +821,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 				panic("iommu_dmamap_load_raw: size botch");
 
 			/* Now map a series of pages. */
-			while (dvmaddr < sgend) {
+			while (dvmaddr <= sgend) {
 				DPRINTF(IDB_BUSDMA,
 					("iommu_dvmamap_load_raw: map %p "
 						"loading va %lx at pa %lx\n",
