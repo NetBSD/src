@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.58 2002/08/27 11:25:29 agc Exp $ */
+/* $NetBSD: user.c,v 1.59 2002/08/27 12:38:02 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.58 2002/08/27 11:25:29 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.59 2002/08/27 12:38:02 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: user.c,v 1.58 2002/08/27 11:25:29 agc Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
@@ -456,6 +457,7 @@ creategid(char *group, int gid, const char *name)
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
+	syslog(LOG_INFO, "new group added: name=%s, gid=%d", group, gid);
 	return 1;
 }
 
@@ -527,6 +529,11 @@ modify_gid(char *group, char *newent)
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
+	if (newent == NULL) {
+		syslog(LOG_INFO, "group deleted: name=%s", group);
+	} else {
+		syslog(LOG_INFO, "group information modified: name=%s", group);
+	}
 	return 1;
 }
 
@@ -1076,6 +1083,8 @@ adduser(char *login_name, user_t *up)
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 #endif
+	syslog(LOG_INFO, "new user added: name=%s, uid=%d, gid=%d, home=%s, shell=%s", 
+		login_name, up->u_uid, gid, home, up->u_shell);
 	return 1;
 }
 
@@ -1396,7 +1405,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
-
+	if (up == NULL) {
+		syslog(LOG_INFO, "user removed: name=%s", login_name);
+	} else if (strcmp(login_name, newlogin) == 0) {
+		syslog(LOG_INFO, "user information modified: name=%s, uid=%d, gid=%d, home=%s, shell=%s", 
+			login_name, pwp->pw_uid, pwp->pw_gid, pwp->pw_dir, pwp->pw_shell);
+	} else {
+		syslog(LOG_INFO, "user information modified: name=%s, new name=%s, uid=%d, gid=%d, home=%s, shell=%s", 
+			login_name, newlogin, pwp->pw_uid, pwp->pw_gid, pwp->pw_dir, pwp->pw_shell);
+	}
 	return 1;
 }
 
@@ -1612,6 +1629,7 @@ useradd(int argc, char **argv)
 		usermgmt_usage("useradd");
 	}
 	checkeuid();
+	openlog("useradd", LOG_PID, LOG_USER);
 	return adduser(*argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -1718,6 +1736,7 @@ usermod(int argc, char **argv)
 		usermgmt_usage("usermod");
 	}
 	checkeuid();
+	openlog("usermod", LOG_PID, LOG_USER);
 	return moduser(*argv, (have_new_user) ? newuser : *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -1795,11 +1814,13 @@ userdel(int argc, char **argv)
 		password[0] = '*';
 		memsave(&u.u_password, password, PasswordLength);
 		u.u_flags |= F_PASSWORD;
+		openlog("userdel", LOG_PID, LOG_USER);
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 	if (!rm_user_from_groups(*argv)) {
 		return 0;
 	}
+	openlog("userdel", LOG_PID, LOG_USER);
 	return moduser(*argv, *argv, NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -1852,6 +1873,7 @@ groupadd(int argc, char **argv)
 	if (!valid_group(*argv)) {
 		warnx("warning - invalid group name `%s'", *argv);
 	}
+	openlog("groupadd", LOG_PID, LOG_USER);
 	if (!creategid(*argv, gid, "")) {
 		errx(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
@@ -1885,6 +1907,7 @@ groupdel(int argc, char **argv)
 		usermgmt_usage("groupdel");
 	}
 	checkeuid();
+	openlog("groupdel", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
@@ -1964,6 +1987,7 @@ groupmod(int argc, char **argv)
 			(cpp[1] == NULL) ? "" : ",");
 	}
 	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
+	openlog("groupmod", LOG_PID, LOG_USER);
 	if (!modify_gid(*argv, buf)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
