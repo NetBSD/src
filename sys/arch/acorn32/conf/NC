@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.20 2004/01/17 21:49:24 bjh21 Exp $
+#	$NetBSD: NC,v 1.21 2004/01/22 13:27:07 bjh21 Exp $
 #
 #	NC - with vidcconsole
 #
@@ -172,7 +172,6 @@ vt1	at vidc?
 pioc0	at mainbus? base 0x00210000
 
 # IDE disk controller
-#wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
 
 # ATA (IDE) bus support
@@ -185,19 +184,17 @@ atabus* at ata?
 
 # Floppy disk controller
 #fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
-#fdc*	at pioc? offset 0x0370 irq -1 dack 0x2000
 #fd0	at fdc? drive ?
 
 # Serial ports
 #com*	at pioc? offset 0x03f8 irq 10
-#com*	at pioc? offset 0x02f8 irq -1
-#com*	at pioc? offset 0x0338 irq -1
-#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-lpt*	at pioc? offset 0x0278 irq 0
-#lpt*	at pioc? offset 0x0378 irq -1
-#lpt*	at pioc? offset 0x03bc irq -1
+lpt*	at pioc? offset 0x0278 irq 0	# Old driver
+#atppc*	at pioc? offset 0x0278 irq 0	# New driver
+#ppbus*	at atppc?
+#lpt*	at ppbus?		# Parallel printer
+#plip*	at ppbus?		# Parallel line IP
 
 # Crude sound device
 beep0	at vidc?
