@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2001/11/18 08:19:39 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 2001/11/22 14:22:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -85,7 +85,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* system bus_space */
 	ma.ma_iot = hpcmips_system_bus_space();
-	hpcmips_init_bus_space(ma.ma_iot, NULL, "main bus", 0, 0xffffffff);
+	hpcmips_init_bus_space((struct bus_space_tag_hpcmips *)ma.ma_iot,
+	    NULL, "main bus", 0, 0xffffffff);
+
 
 	/* search and attach devices in order */
 	for (i = 0; i < sizeof(devnames) / sizeof(devnames[0]); i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.18 2001/11/18 08:19:40 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19 2001/11/22 14:22:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,16 +155,20 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	iba.iba_dmat    = 0; /* XXX not yet */
 
 	/* Allocate ISA memory space */
-	iba.iba_memt    = hpcmips_alloc_bus_space_tag();
+	memt = hpcmips_alloc_bus_space_tag();
 	offset = sc->sc_dev.dv_cfdata->cf_loc[VRISABIFCF_ISAMEMOFFSET];
-	hpcmips_init_bus_space(iba.iba_memt, haa->haa_iot, "ISA mem",
+	hpcmips_init_bus_space(memt,
+	    (struct bus_space_tag_hpcmips *)haa->haa_iot, "ISA mem",
 	    VR_ISA_MEM_BASE + offset, VR_ISA_MEM_SIZE - offset);
+	iba.iba_memt = &memt->bst;
 
 	/* Allocate ISA port space */
-	iba.iba_iot     = hpcmips_alloc_bus_space_tag();
+	iot = hpcmips_alloc_bus_space_tag();
 	offset = sc->sc_dev.dv_cfdata->cf_loc[VRISABIFCF_ISAPORTOFFSET];
-	hpcmips_init_bus_space(iba.iba_iot, haa->haa_iot, "ISA port",
+	hpcmips_init_bus_space(iot,
+	    (struct bus_space_tag_hpcmips *)haa->haa_iot, "ISA port",
 	    VR_ISA_PORT_BASE + offset, VR_ISA_PORT_SIZE - offset);
+	iba.iba_iot = &iot->bst;
 
 #ifdef DEBUG_FIND_PCIC
 #warning DEBUG_FIND_PCIC
@@ -173,8 +177,6 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	/* Initialize ISA IRQ <-> GPIO mapping */
 	for (i = 0; i < INTR_NIRQS; i++)
 		sc->sc_intr_map[i] = -1;
-	iot = (struct bus_space_tag_hpcmips *)iba.iba_iot;
-	memt = (struct bus_space_tag_hpcmips *)iba.iba_memt;
 	printf(": ISA port %#x-%#x mem %#x-%#x\n",
 	    iot->base, iot->base + iot->size,
 	    memt->base, memt->base + memt->size);
