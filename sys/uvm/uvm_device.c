@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.18 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.19 2000/03/26 20:46:59 kleink Exp $	*/
 
 /*
  *
@@ -69,7 +69,6 @@ static simple_lock_data_t udv_lock;
  */
 
 static void		udv_init __P((void));
-struct uvm_object 	*udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
 static void             udv_reference __P((struct uvm_object *));
 static void             udv_detach __P((struct uvm_object *));
 static int		udv_fault __P((struct uvm_faultinfo *, vaddr_t,
