@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.9 1997/10/13 16:13:39 lukem Exp $	*/
+/*	$NetBSD: rain.c,v 1.10 1997/10/13 22:01:54 cjs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.9 1997/10/13 16:13:39 lukem Exp $");
+__RCSID("$NetBSD: rain.c,v 1.10 1997/10/13 22:01:54 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rain.c,v 1.9 1997/10/13 16:13:39 lukem Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termcap.h>
 #include <termios.h>
 
