@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.23 2003/08/08 18:53:13 christos Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.24 2005/01/29 20:14:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.23 2003/08/08 18:53:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.24 2005/01/29 20:14:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,10 @@ exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, eap->bsize,
-	    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (eap->bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, eap->bsize,
+		    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return 0;
 }
