@@ -8,6 +8,14 @@ NOOBJ=	noobj
 all clean cleandir depend lint tags:
 
 install:
+	@@if [ ! -d ${DESTDIR}${BINDIR}/dict ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR}/dict ; \
+                mkdir -p ${DESTDIR}${BINDIR}/dict ; \
+                chown root.wheel ${DESTDIR}${BINDIR}/dict ; \
+                chmod 755 ${DESTDIR}${BINDIR}/dict ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}/dict
 

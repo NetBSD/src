@@ -10,6 +10,14 @@ SUBDIR=	04.pascal 06.sysman 07.ipctut \
 	18.curses
 
 beforeinstall:
+	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR} ; \
+                mkdir -p ${DESTDIR}${BINDIR} ; \
+                chown root.wheel ${DESTDIR}${BINDIR} ; \
+                chmod 755 ${DESTDIR}${BINDIR} ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 
