@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.10 2001/03/13 21:24:27 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.11 2001/05/06 22:18:47 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -18,6 +18,7 @@ won't be speedy. Note that until you have around 16 MB of RAM, getting
 more RAM is more important than getting a faster CPU.)
 .
 .Ss2 Supported devices
+Explanation of bracketted footnote tags [] is follows this listing.
 .(bullet -offset indent
 Floppy controllers.
 .It
@@ -86,7 +87,7 @@ AMD PCscsi-PCI (Am53c974) based SCSI adapters, including Tekram DC-390
 .It
 BusLogic 54x (Adaptec AHA-154x clones)
 .It
-BusLogic 445, 74x, 9xx  (But not the new
+BusLogic 445, 74x, 9xx (but not the new
 .Sq FlashPoint
 series of BusLogic SCSI adapters)
 .It
@@ -303,7 +304,7 @@ Compaq Netelligent 10 T (untested)
 Compaq Integrated NetFlex 3/P
 .It
 Compaq NetFlex 3/P in baseboard variant (the PCI
-variant doesn't use the same chip !)
+variant doesn't use the same chip!)
 .It
 Compaq Dual Port Netelligent 10/100 TX
 .It
@@ -312,7 +313,7 @@ Compaq Deskpro 4000 5233MMX (untested)
 Texas Instruments TravelMate 5000 series laptop docking station Ethernet board
 .bullet)
 .It
-VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards
+VIA VT3043 (Rhine) and VT86C100A (Rhine-II) based ethernet boards
 .(bullet -compact
 D-Link DFE530TX
 .bullet)
@@ -355,9 +356,9 @@ Auto 16/4 Token-Ring ISA Adapter [+]
 .It
 Wireless network adapters
 .(bullet -compact
-AT\*&T/Lucent WaveLan IEEE (802.11) PCMCIA cards
+AT\*&T/Lucent/Agere WaveLAN/ORiNOCO IEEE (802.11) PCMCIA cards
 .It
-BayStack 650 802.11FH PCMIA cards [*] [+]
+BayStack 650 802.11FH PCMCIA cards [*] [+]
 .It
 NetWave AirSurfer PCMCIA cards [*] [+]
 .It
@@ -423,29 +424,32 @@ Serial mice (no kernel support necessary)
 .It
 Sound Cards
 .(bullet -compact
-SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
+Aria based sound cards [*]
+.It
+Cirrus Logic CS461x, CS4280 and CS4281 audio [*] [+]
+.It
+Ensoniq AudioPCI [*] [+]
+.It
+ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 2/2E and
+Solo-1 ES1938/1946
+.It
+Gravis Ultrasound Plug\*&Play [*] [+]
 .It
 Gravis Ultrasound and Ultrasound Max [*] [+]
-.It
-Windows Sound System [*] [+]
-.Pp
-.Em The following drivers have not been extensively tested
 .It
 Personal Sound System [*] [+]
 .It
 ProAudio Spectrum [*] [+]
 .It
-Gravis Ultrasound Plug\*&Play [*] [+]
-.It
-Ensoniq AudioPCI [*] [+]
-.It
-Yamaha OPL3-SA3 [*] [+]
-.It
-Aria based sound cards [*]
-.It
 S3 SonicVibes [*] [+]
 .It
-ESS Technology ES1777/1868/1869/1887/1888/888 and Solo-1 ES1938/1946
+SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
+.It
+VIA VT82C686A southbridge integrated AC'97 audio [*] [+]
+.It
+Windows Sound System [*] [+]
+.It
+Yamaha OPL3-SA3 [*] [+]
 audio [*] [+]
 .bullet)
 .It
