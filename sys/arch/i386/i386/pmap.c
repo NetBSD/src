@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.12 2000/11/18 22:48:10 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.13 2000/11/18 23:10:52 sommerfeld Exp $	*/
 
 /*
  *
@@ -2259,6 +2259,7 @@ pmap_zero_page(pa)
 #endif
 
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	memset(zerova, 0, NBPG);			/* zero */
 	*zpte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
@@ -2288,6 +2289,7 @@ pmap_zero_page_uncached(pa)
 
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	memset(zerova, 0, NBPG);			/* zero */
 	*zpte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
