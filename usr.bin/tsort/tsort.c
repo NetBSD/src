@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tsort.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tsort.c,v 1.3 1993/11/17 12:01:04 cgd Exp $";
+static char rcsid[] = "$Id: tsort.c,v 1.4 1993/11/17 12:05:46 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,7 +183,7 @@ add_arc(s1, s2)
 {
 	register NODE *n1;
 	NODE *n2;
-	int bsize;
+	int bsize, i;
 
 	n1 = find_node(s1);
 	if (!n1)
