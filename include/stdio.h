@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.47 2002/12/20 20:59:22 atatat Exp $	*/
+/*	$NetBSD: stdio.h,v 1.48 2003/01/18 10:32:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -251,6 +251,8 @@ FILE	*tmpfile __P((void));
 int	 ungetc __P((int, FILE *));
 int	 vfprintf __P((FILE * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_));
+int	 vfprintf_unlocked __P((FILE * __restrict, const char * __restrict,
+	    _BSD_VA_LIST_));
 int	 vprintf __P((const char * __restrict, _BSD_VA_LIST_));
 
 #ifndef __AUDIT__
@@ -294,11 +296,9 @@ __END_DECLS
      !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
 __BEGIN_DECLS
-#if 0 /* not yet */
 void	flockfile __P((FILE *));
 int	ftrylockfile __P((FILE *));
 void	funlockfile __P((FILE *));
-#endif /* 0 */
 int	getc_unlocked __P((FILE *));
 int	getchar_unlocked __P((void));
 int	putc_unlocked __P((int, FILE *));

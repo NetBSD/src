@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.20 2002/12/10 20:56:30 fvdl Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.21 2003/01/18 10:38:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.20 2002/12/10 20:56:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.21 2003/01/18 10:38:38 thorpej Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -408,7 +408,8 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #if defined(__i386__)
 #if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_FREEBSD)
 		{
-		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
+			/* XXX NJWLWP */
+		struct trapframe *fp = (struct trapframe *)curlwp->l_md.md_regs;
 		if (cmd == KDENABIO)
 			fp->tf_eflags |= PSL_IOPL;
 		else

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2002/09/18 06:17:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.106 2003/01/18 10:32:11 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -12,14 +12,14 @@ INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	getopt.h glob.h grp.h ifaddrs.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
-	login_cap.h malloc.h math.h md2.h md4.h md5.h \
+	login_cap.h lwp.h malloc.h math.h md2.h md4.h md5.h \
 	memory.h mpool.h ndbm.h netconfig.h netdb.h netgroup.h nlist.h \
 	nl_types.h \
 	nsswitch.h paths.h pwd.h ranlib.h re_comp.h regex.h regexp.h \
-	resolv.h rmd160.h rmt.h sched.h search.h setjmp.h sgtty.h sha1.h \
+	resolv.h rmd160.h rmt.h sa.h sched.h search.h setjmp.h sgtty.h sha1.h \
 	signal.h stab.h stddef.h stdio.h stdlib.h string.h strings.h \
 	stringlist.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h \
-	ulimit.h unistd.h util.h utime.h utmp.h utmpx.h vis.h wchar.h wctype.h
+	ucontext.h ulimit.h unistd.h util.h utime.h utmp.h utmpx.h vis.h wchar.h wctype.h
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/telnet.h arpa/tftp.h
 INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
 	protocols/talkd.h protocols/timed.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.78 2002/11/16 23:34:30 itojun Exp $	*/
+/*	$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,12 +42,13 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.78 2002/11/16 23:34:30 itojun Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/user.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -236,6 +237,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->alive = KVM_ALIVE_DEAD;
 	kd->procbase = 0;
 	kd->procbase2 = 0;
+	kd->lwpbase = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
@@ -719,6 +721,8 @@ kvm_close(kd)
 		free((void *)kd->procbase);
 	if (kd->procbase2 != 0)
 		free((void *)kd->procbase2);
+	if (kd->lwpbase != 0)
+		free((void *)kd->lwpbase);
 	if (kd->swapspc != 0)
 		free((void *)kd->swapspc);
 	if (kd->argspc != 0)
