@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.7 1998/07/12 09:14:20 mrg Exp $	*/
+/*	$NetBSD: v831.c,v 1.8 1998/12/19 23:02:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v831.c,v 1.7 1998/07/12 09:14:20 mrg Exp $");
+__RCSID("$NetBSD: v831.c,v 1.8 1998/12/19 23:02:21 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -257,7 +257,7 @@ sanitize(s)
         char *cp;
 
         for (cp = buf; *s && buf + sizeof buf - cp > 1; s++) {
-		if (!isdigit(*s) && *s == '<' && *s != '_')
+		if (!isdigit((unsigned char)*s) && *s == '<' && *s != '_')
 			continue;
 		if (*s == '_')
 			*s = '=';
