@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.10 1999/04/26 09:23:21 nisimura Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.11 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -128,8 +128,7 @@ extern unsigned (*clkread) __P((void));
 void
 dec_3100_init()
 {
-
-	platform.iobus = "ibus";
+	platform.iobus = "baseboard";
 
 	platform.os_init = dec_3100_os_init;
 	platform.bus_reset = dec_3100_bus_reset;
@@ -150,19 +149,20 @@ dec_3100_os_init()
 	 */
 	mips_hardware_intr = dec_3100_intr;
 	tc_enable_interrupt = dec_3100_enable_intr; /*XXX*/
-	Mach_splbio = cpu_spl0;
-	Mach_splnet = cpu_spl1;
-	Mach_spltty = cpu_spl2;
-	Mach_splimp = splhigh; /*XXX Mach_spl1(), if not for malloc()*/
-	Mach_splclock = cpu_spl3;
-	Mach_splstatclock = cpu_spl3;
-
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;
+
+	splvec.splbio = MIPS_SPL0;
+	splvec.splnet = MIPS_SPL_0_1;
+	splvec.spltty = MIPS_SPL_0_1_2;
+	splvec.splimp = MIPS_SPLHIGH;				/* ??? */
+	splvec.splclock = MIPS_SPL_0_1_2_3;
+	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+
+	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 }
 
 
@@ -244,7 +244,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_3));
+	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_3));
 
 #if NSII > 0
 	if (mask & MIPS_INT_MASK_0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.15 1999/05/21 01:09:50 nisimura Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.16 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.15 1999/05/21 01:09:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.16 1999/05/25 04:17:57 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -140,8 +140,7 @@ extern unsigned (*clkread) __P((void));
 void
 dec_3min_init()
 {
-
-	platform.iobus = "tcbus";
+	platform.iobus = "tc3min";
 
 	platform.os_init = dec_3min_os_init;
 	platform.bus_reset = dec_3min_bus_reset;
@@ -170,7 +169,6 @@ dec_3min_bus_reset()
 
 	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 	kn02ba_wbflush();
-
 }
 
 
@@ -182,6 +180,11 @@ dec_3min_os_init()
 	tc_enable_interrupt = dec_3min_enable_intr;
 	kmin_tc3_imask = (KMIN_INTR_CLOCK | KMIN_INTR_PSWARN |
 		KMIN_INTR_TIMEOUT);
+	mcclock_addr = (volatile struct chiptime *)
+		MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
+
+	/* R4000 3MIN can ultilize on-chip counter */
+	clkread = kn02ba_clkread;
 
 	/*
 	 * All the baseboard interrupts come through the I/O ASIC
@@ -189,14 +192,13 @@ dec_3min_os_init()
 	 * Since we don't know what kinds of devices are in the
 	 * turbochannel option slots, just block them all.
 	 */
-	Mach_splbio = cpu_spl3;
-	Mach_splnet = cpu_spl3;
-	Mach_spltty = cpu_spl3;
-	Mach_splimp = cpu_spl3;
-	Mach_splclock = cpu_spl3;
-	Mach_splstatclock = cpu_spl3;
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
+	splvec.splbio = MIPS_SPL_0_1_2_3;
+	splvec.splnet = MIPS_SPL_0_1_2_3;
+	splvec.spltty = MIPS_SPL_0_1_2_3;
+	splvec.splimp = MIPS_SPL_0_1_2_3;
+	splvec.splclock = MIPS_SPL_0_1_2_3;
+	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+
 	dec_3min_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
 
 	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
@@ -209,8 +211,8 @@ dec_3min_os_init()
 	/*
 	 * Initialize interrupts.
 	 */
-	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = KMIN_IM0;
-	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+	*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) = KMIN_IM0;
+	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 
 	/* clear any memory errors from probes */
 
@@ -229,12 +231,9 @@ dec_3min_os_init()
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
-	* (volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK) =
+	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK) =
 	  kmin_tc3_imask |
 	  (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
-
-	/* R4000 3MIN can ultilize on-chip counter */
-	clkread = kn02ba_clkread;
 }
 
 
@@ -416,7 +415,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
 			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
 			kn02ba_wbflush();
-			splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_3));
+			_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_3));
 		}
 
 		if (intr_depth > 1)
