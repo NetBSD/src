@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.30.8.1 2002/05/16 12:07:28 gehenna Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.30.8.2 2002/06/08 09:09:04 gehenna Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.1 2002/05/16 12:07:28 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.2 2002/06/08 09:09:04 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.30.8.1 2002/05/16 12:07:28 gehenna E
 #include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -341,18 +342,20 @@ done:
 }
 
 int
-raread(dev, uio)
+raread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(rastrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-rawrite(dev, uio)
+rawrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(rastrategy, NULL, dev, B_WRITE, minphys, uio));
