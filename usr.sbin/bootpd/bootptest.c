@@ -125,8 +125,7 @@ main(argc, argv)
 	char *servername = NULL;
 	char *vendor_file = NULL;
 	char *bp_file = NULL;
-	int32 server_addr;			/* inet addr, network order */
-	int s;						/* Socket file descriptor */
+	int s;				/* Socket file descriptor */
 	int n, tolen, fromlen, recvcnt;
 	int use_hwa = 0;
 	int32 vend_magic;
@@ -233,24 +232,22 @@ main(argc, argv)
 	 * Set up server socket address (for send)
 	 */
 	if (servername) {
-		if (isdigit(servername[0]))
-			server_addr = inet_addr(servername);
-		else {
+		if (inet_aton(servername, &sin_server.sin_addr) == 0) {
 			hep = gethostbyname(servername);
 			if (!hep) {
 				fprintf(stderr, "%s: unknown host\n", servername);
 				exit(1);
 			}
-			bcopy(hep->h_addr, &server_addr, sizeof(server_addr));
+			memcpy(&sin_server.sin_addr, hep->h_addr,
+			    sizeof(sin_server.sin_addr));
 		}
 	} else {
 		/* Get broadcast address */
 		/* XXX - not yet */
-		server_addr = INADDR_ANY;
+		sin_server.sin_addr.s_addr = INADDR_ANY;
 	}
 	sin_server.sin_family = AF_INET;
 	sin_server.sin_port = htons(bootps_port);
-	sin_server.sin_addr.s_addr = server_addr;
 
 	/*
 	 * Get client's listening port number
