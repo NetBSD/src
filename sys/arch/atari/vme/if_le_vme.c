@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: if_le_vme.c,v 1.2 1997/03/10 10:22:34 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
