@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.25 2000/04/10 04:59:47 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.26 2000/04/10 11:38:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1038,33 +1038,6 @@ LEAF(mips1_TLBFlushPID)
 END(mips1_TLBFlushPID)
 #endif
 
-/*
- * void mips1_TBIS(vaddr_t va)
- *
- * Invalidate a TLB entry for given virtual address if found in TLB.
- */
-LEAF(mips1_TBIS)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
-	nop
-
-	mtc0	a0, MIPS_COP_0_TLB_HI		# look for addr & PID
-	nop
-	tlbp					# Probe for the entry.
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
-	li	t1, MIPS_KSEG0_START		# Load invalid entry.
-	bltz	v0, 1f				# index < 0 => !found
-	mtc0	t1, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
-	nop
-	tlbwi
-1:
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TBIS)
-
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBUpdate --
@@ -1760,9 +1733,9 @@ END(mips1_proc_trampoline)
 /*
  * void mips1_cpu_switch_resume(struct proc *newproc)
  *
- * Wiredown the USPACE of newproc with TLB entry#0.  Check
- * whether target USPACE is already refered by some TLB entry(s)
- * before that, and make sure TBIS(them) in the case.
+ * Wiredown the USPACE of newproc with TLB entry#0 and #1.  Check
+ * if target USPACE is already refered by any TLB entry before
+ * doing that, and make sure TBIS(them) in the case.
  */
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
@@ -1820,10 +1793,37 @@ resume:
 	END(mips1_cpu_switch_resume)
 
 /*
+ * void mips1_TBIS(vaddr_t va)
+ *
+ * Invalidate a TLB entry for given virtual address if found in TLB.
+ */
+LEAF(mips1_TBIS)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
+	nop
+
+	mtc0	a0, MIPS_COP_0_TLB_HI		# look for addr & PID
+	nop
+	tlbp					# probe the entry in question
+	mfc0	a0, MIPS_COP_0_TLB_INDEX	# see what we got
+	li	t1, MIPS_KSEG0_START		# load invalid address
+	bltz	a0, 1f				# index < 0 then skip
+	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
+	nop
+	tlbwi
+1:
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
+	END(mips1_TBIS)
+
+/*
  * void mips1_TBIAP(int sizeofTLB)
  *
  * Invalidate TLB entries belong to per process user spaces while
- * retaining entries for kernel space marked global.
+ * leaving entries for kernel space marked global intact.
  */
 LEAF(mips1_TBIAP)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
@@ -1831,19 +1831,20 @@ LEAF(mips1_TBIAP)
 
 	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
 	sll	t2, a0, MIPS1_TLB_INDEX_SHIFT
-	li	v0, MIPS_KSEG0_START
+	li	v0, MIPS_KSEG0_START		# invalid address
 
-	# Align the starting value (t1) and the upper bound (t2)
+	# do {} while (t1 < t2)
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	nop
 	tlbr					# obtain an entry
-	mfc0	t0, MIPS_COP_0_TLB_LOW
+	mfc0	a0, MIPS_COP_0_TLB_LOW
 	nop
-	andi	t0, v0, MIPS1_PG_G		# check PG_G bit
-	bnez	t0, 2f
-	mtc0	v0, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
+	andi	a0, a0, MIPS1_PG_G		# check to see it has G bit
+	bnez	a0, 2f
+	nop
+	mtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 	nop
 	tlbwi					# invalidate the TLB entry
 2:
@@ -1851,9 +1852,9 @@ LEAF(mips1_TBIAP)
 	bne	t1, t2, 1b
 	nop
 
-	j	ra				# new TLBPID will be set soon
+	j	ra				# new TLBpid will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_TBIAP)
+	END(mips1_TBIAP)
 
 /*
  * void mips1_TBIA(int sizeofTLB)
@@ -1865,21 +1866,22 @@ LEAF(mips1_TBIA)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	li	t1, MIPS_KSEG0_START
-	mtc0	t1, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
+	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 
-	# Align the starting value (t1) and the upper bound (t2).
 	move	t1, zero
-	sll	t2, a0, MIPS1_TLB_INDEX_SHIFT
+	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
+
+	# do {} while (t1 < a0)
 1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLB index
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
-	bne	t1, t2, 1b
-	tlbwi					# invalidate the TLB entry
+	bne	t1, a0, 1b
+	tlbwi					# invalidate the entry
 
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_TBIA)
+	END(mips1_TBIA)
 
 	.data
 mips1_excausesw:
