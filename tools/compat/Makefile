@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/18 21:15:08 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2002/09/13 19:07:01 thorpej Exp $
 
 HOSTLIB=	nbcompat
 
@@ -10,7 +10,7 @@ SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
 		snprintf.c strlcat.c strlcpy.c strmode.c strsep.c \
 		unvis.c vis.c \
 		_err.c _errx.c _verr.c _verrx.c _vwarn.c _vwarnx.c \
-		_warn.c _warnx.c __fts13.c
+		_warn.c _warnx.c __fts13.c __glob13.c
 
 # -D_FILE_OFFSET_BITS=64 produces a much more amenable `struct stat', and
 # other file ops, on many systems, without changing function names.
