@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 1996/10/15 23:52:52 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.10 1996/10/17 02:55:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -139,7 +139,6 @@ typedef struct {
 	vm_offset_t virtual;
 } pv_addr_t;
 
-extern pv_addr_t kernelstack;
 #if NHYDRABUS > 0
 extern pv_addr_t hydrascratch;
 #endif
@@ -154,11 +153,11 @@ extern pv_addr_t hydrascratch;
 
 /* Local function prototypes (not used outside this file) */
 
-pt_entry_t *pmap_pte __P((pmap_t /*pmap*/, vm_offset_t /*va*/));
-int pmap_page_index __P((vm_offset_t /*pa*/)); 
-void map_pagetable __P((vm_offset_t /*pagetable*/, vm_offset_t /*va*/,
-    vm_offset_t /*pa*/, unsigned int /*flags*/));
-void pmap_copy_on_write __P((vm_offset_t /*pa*/));
+pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
+int pmap_page_index __P((vm_offset_t pa)); 
+void map_pagetable __P((vm_offset_t pagetable, vm_offset_t va,
+    vm_offset_t pa, unsigned int flags));
+void pmap_copy_on_write __P((vm_offset_t pa));
 
 void bzero_page __P((vm_offset_t));
 void bcopy_page __P((vm_offset_t, vm_offset_t));
@@ -619,10 +618,6 @@ pmap_init()
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
- 
- 	printf("kernel_map=%08x\n", kernel_map);
-	vm_map_print(kernel_map, 1);
-
  
 /*	avail_start = pmap_page_index(physical_start) * NBPG;
 	avail_end = pmap_page_index(physical_freeend) * NBPG;*/
@@ -1090,9 +1085,11 @@ pmap_zero_page(phys)
 	printf("pmap_zero_page: pa = %08x", phys);
 #endif
 
+	cache_clean();	/* We need to clean as the page may have dirty cache entries */
+
 	/* Hook the physical page into the memory at our special hook point */
 
-	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
+	*page_hook0.pte = L2_PTE_NC(phys & PG_FRAME, AP_KRW);
 
 	/* Flush the tlb - eventually this can be a purge tlb */
 
@@ -1107,7 +1104,7 @@ pmap_zero_page(phys)
 
 	/* XXX we should purge just this page */
 	/* XXX we can use sync rather than clean as nothing else will use this va */
-	sync_caches();
+/*	sync_caches();*/
 	drain_writebuf();
 
 #if PMAPDEBUG > 4
@@ -1132,10 +1129,12 @@ pmap_copy_page(src, dest)
 		printf("pmap_copy_page: src=P%08x dest=P%08x\n",
 		    (int) src, (int) dest);
 
+	cache_clean();	/* We need to clean as the page may have dirty cache entries */
+
 	/* Hook the physical page into the memory at our special hook point */
 
-	*page_hook0.pte = L2_PTE(src & PG_FRAME, AP_KRW);
-	*page_hook1.pte = L2_PTE(dest & PG_FRAME, AP_KRW);
+	*page_hook0.pte = L2_PTE_NC(src & PG_FRAME, AP_KRW);
+	*page_hook1.pte = L2_PTE_NC(dest & PG_FRAME, AP_KRW);
 
 	/* Flush the tlb - eventually this can be a purge tlb */
 
@@ -1146,7 +1145,7 @@ pmap_copy_page(src, dest)
 	bcopy_page(page_hook0.va, page_hook1.va);
 	/* XXX we should purge just this page */
 	/* XXX we can use sync rather than clean as nothing else will use this va */
-	sync_caches();
+/*	sync_caches();*/
 	drain_writebuf();
 }
 
