@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.c,v 1.12 1994/10/27 04:14:41 cgd Exp $	*/
+/*	$NetBSD: sys.c,v 1.13 1995/01/09 22:13:12 ws Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -34,6 +34,7 @@
 
 char mapbuf[MAXBSIZE], iobuf[MAXBSIZE], fsbuf[SBSIZE];
 int mapblock = 0;
+char pathname[MAXPATHLEN + 1];
 
 void bcopy(), pcpy();
 
@@ -81,9 +82,10 @@ find(path)
 	char *path;
 {
 	char *rest, ch;
-	int block, off, loc, ino = ROOTINO;
+	int block, off, loc, ino = ROOTINO, parent;
 	struct dirent *dp;
-
+	int nlinks = 0;
+	
 loop:
 	iodest = iobuf;
 	cnt = fs->fs_bsize;
@@ -92,12 +94,34 @@ loop:
 	bcopy(&((struct dinode *)iodest)[ino_to_fsbo(fs,ino)],
 	      &inode.i_din,
 	      sizeof(struct dinode));
+	if ((inode.i_mode & IFMT) == IFLNK) {
+		int link_len = inode.i_size;
+		int len = strlen(path);
+		
+		if (link_len + len > MAXPATHLEN ||
+		    ++ nlinks > MAXSYMLINKS)
+			return 0;
+		bcopy(path, &pathname[link_len], len + 1);
+		if (link_len < fs->fs_maxsymlinklen)
+			bcopy(inode.i_shortlink, pathname, link_len);
+		else {
+			poff = 0;
+			read(pathname,link_len);
+		}
+		path = pathname;
+		if (*pathname == '/')
+			ino = ROOTINO;
+		else
+			ino = parent;
+		goto loop;
+	}
 	if (!*path)
 		return 1;
 	while (*path == '/')
 		path++;
 	if (!inode.i_size || ((inode.i_mode & IFMT) != IFDIR))
 		return 0;
+	parent = ino;
 	for (rest = path; (ch = *rest) && ch != '/'; rest++);
 	*rest = 0;
 	loc = 0;
