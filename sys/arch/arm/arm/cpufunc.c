@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.54 2002/08/20 02:30:51 briggs Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.55 2003/03/18 11:20:56 bsh Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1025,8 +1025,10 @@ set_cpufuncs()
 	}
 #endif /* CPU_XSCALE_80321 */
 #ifdef CPU_XSCALE_PXA2X0
-	if (cputype == CPU_ID_PXA250A || cputype == CPU_ID_PXA210A ||
-	    cputype == CPU_ID_PXA250B || cputype == CPU_ID_PXA210B) {
+	/* ignore core revision to test PXA2xx CPUs */
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA250 ||
+	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA210) {
+
 		cpufuncs = xscale_cpufuncs;
 #if defined(PERFCTRS)
 		xscale_pmu_init();
