@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.6 1994/11/15 00:00:24 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.7 1995/02/21 02:28:10 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
+ *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
+ *	$Id: sbreg.h,v 1.7 1995/02/21 02:28:10 brezak Exp $
  */
 
 /*
@@ -58,21 +59,57 @@
  * either base I/O address 0x220 or 0x240.  The encodings below give
  * the offsets to specific SB ports.  SBP stands for SB port offset.
  */
-#ifdef SBPRO
 #define SBP_LFM_STATUS		0	/* R left FM status port */
 #define SBP_LFM_ADDR		0	/* W left FM address register */
 #define SBP_LFM_DATA		1	/* RW left FM data port */
 #define SBP_RFM_STATUS		2	/* R right FM status port */
 #define SBP_RFM_ADDR		2	/* W right FM address register */
 #define SBP_RFM_DATA		3	/* RW right FM data port */
-#endif
+
 #define SBP_FM_STATUS		8	/* R FM status port */
 #define SBP_FM_ADDR		8	/* W FM address register */
 #define SBP_FM_DATA		9	/* RW FM data port */
-#ifdef SBPRO
 #define SBP_MIXER_ADDR		4	/* W mixer address register */
 #define SBP_MIXER_DATA		5	/* RW mixer data port */
-#endif
+#define	SBP_MIX_RESET		0	/* mixer reset port, value */
+#define	SBP_MASTER_VOL		0x22
+#define	SBP_FM_VOL		0x26
+#define	SBP_CD_VOL		0x28
+#define	SBP_LINE_VOL		0x2E
+#define	SBP_DAC_VOL		0x04
+#define	SBP_MIC_VOL		0x0A	/* warning: only one channel of
+					   volume... */
+#define SBP_SPEAKER_VOL		0x42
+#define SBP_TREBLE_EQ		0x44
+#define SBP_BASS_EQ		0x46
+
+#define	SBP_RECORD_SOURCE	0x0C
+#define	SBP_STEREO		0x0E
+#define		SBP_PLAYMODE_STEREO	0x2
+#define		SBP_PLAYMODE_MONO	0x0
+#define		SBP_PLAYMODE_MASK	0x2
+#define	SBP_OUTFILTER		0x0E
+#define	SBP_INFILTER		0x0C
+
+#define	SBP_RECORD_FROM(src, filteron, high) ((src) | (filteron) | (high))
+#define		SBP_FILTER_ON		0x0
+#define		SBP_FILTER_OFF		0x20
+#define		SBP_FILTER_MASK		0x20
+#define		SBP_FILTER_LOW		0
+#define		SBP_FILTER_HIGH		0x08
+#define		SBP_FROM_MIC		0x00
+#define		SBP_FROM_CD		0x02
+#define		SBP_FROM_LINE		0x06
+#define sbdsp_stereo_vol(left, right) (((left) << 4) | (right))
+#define SBP_MAXVOL 0xf			/* per channel */
+#define SBP_MINVOL 0x0			/* per channel */
+#define SBP_AGAIN_TO_SBGAIN(again)	((again) >> 4) /* per channel */
+#define SBP_AGAIN_TO_MICGAIN(again)	((again) >> 5) /* mic has only 3 bits,
+							  sorry! */
+#define SBP_LEFTGAIN(sbgain)		(sbgain & 0xf0)	/* left channel */
+#define SBP_RIGHTGAIN(sbgain)		((sbgain & 0xf) << 4) /* right channel */
+#define SBP_SBGAIN_TO_AGAIN(sbgain)	SBP_LEFTGAIN(sbgain)
+#define SBP_MICGAIN_TO_AGAIN(micgain)	(micgain << 5)
 #define SBP_DSP_RESET		6	/* W reset port */
 #define 	SB_MAGIC	0xaa	/* card outputs on successful reset */
 #define SBP_DSP_READ		10 	/* R read port */
@@ -81,17 +118,13 @@
 #define SBP_DSP_RSTAT		14	/* R read status */
 #define 	SB_DSP_BUSY	0x80
 #define 	SB_DSP_READY	0x80
-#ifdef SBPRO
 #define SBP_CDROM_DATA		16	/* RW send cmds/recv data */
 #define SBP_CDROM_STATUS	17	/* R status port */
 #define SBP_CDROM_RESET		18	/* W reset register */
 #define SBP_CDROM_ENABLE	19	/* W enable register */
-#endif
-#ifdef SBPRO
-#define SB_NPORT 24
-#else
+
+#define SBP_NPORT 24
 #define SB_NPORT 16
-#endif
 
 /*
  * DSP commands.  This unit handles MIDI and audio capabilities.
@@ -119,6 +152,8 @@
 #define SB_DSP_SILENCE		0x80	/* send a block of silence */
 #define SB_DSP_HS_OUTPUT	0x91	/* set high speed mode for wdma */
 #define SB_DSP_HS_INPUT		0x99	/* set high speed mode for rdma */
+#define SB_DSP_RECORD_MONO	0xA0	/* set mono recording */
+#define SB_DSP_RECORD_STEREO	0xA8	/* set stereo recording */
 #define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
@@ -140,13 +175,15 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
-#ifdef SBPRO
-#define SB_IRQ_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10)
-#define SB_DRQ_VALID(drq)  ((drq) == 0 || (drq) == 1 || (drq) == 3)
-#else /* !SBPRO */
-#define SB_IRQ_VALID(irq)  ((irq) == 3 || (irq) == 5 || (irq) == 7 || (irq) == 9)
-#define SB_DRQ_VALID(drq)  ((drq) == 1)
-#endif /* !SBPRO */
+#define SB_IRQ_MASK 	0x00ac	/* IRQ 2,3,5,7 */
+#define SBP_IRQ_MASK	0x04a4	/* IRQ 2,5,7,10 */
+
+#define SBP_IRQ_VALID(mask)  ((mask) & SBP_IRQ_MASK)
+#define SB_IRQ_VALID(mask)  ((mask) & SB_IRQ_MASK)
+
+#define SBP_DRQ_VALID(chan)  ((chan) == 0 || (chan) == 1 || (chan) == 3)
+#define SB_DRQ_VALID(chan)  ((chan) == 1)
+
 #define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240)
 
 #define SB_INPUT_RATE	0
