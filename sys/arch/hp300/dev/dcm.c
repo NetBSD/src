@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.26 1996/03/03 16:48:54 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.27 1996/05/17 15:08:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -284,11 +284,11 @@ dcmmatch(hd)
 	while ((dcm->dcm_ic & IC_IR) == 0)
 		if (++timo == 20000)
 			return (0);
-	DELAY(50000)	/* XXX why is this needed ???? */
+	DELAY(50000);	/* XXX why is this needed ???? */
 	while ((dcm->dcm_iir & IIR_SELFT) == 0)
 		if (++timo == 400000)
 			return (0);
-	DELAY(50000)	/* XXX why is this needed ???? */
+	DELAY(50000);	/* XXX why is this needed ???? */
 	if (dcm->dcm_stcon != ST_OK) {
 		if (hd->hp_args->hw_sc != conscode)
 			printf("dcm%d: self test failed: %x\n",
