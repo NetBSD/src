@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.2 1993/09/24 08:48:57 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.3 1993/09/30 17:32:53 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -169,7 +169,7 @@ nvram(pos)
 	u_short iobase;
 
 	if (clockcd.cd_ndevs < 1 ||
-	    !(sc = (struct clock_softc *)clockcd.cd_devs[0]))
+	    !(sc = clockcd.cd_devs[0]))
 		panic("nvram: no clock");
 	iobase = sc->sc_iobase;
 
@@ -266,7 +266,7 @@ cpu_initclocks(void)
 	struct timer_softc *sc;
 
 	if (timercd.cd_ndevs < 1 ||
-	    !(sc = (struct timer_softc *)timercd.cd_devs[0]))
+	    !(sc = timercd.cd_devs[0]))
 		panic("cpu_initclocks: no timer");
 
 	sc->sc_ih.ih_fun = timerintr;
@@ -334,7 +334,7 @@ delay(n)
 	u_short limit, tick, otick;
 
 	if (timercd.cd_ndevs < 1 ||
-	    !(sc = (struct timer_softc *)timercd.cd_devs[0]))
+	    !(sc = timercd.cd_devs[0]))
 		panic("cpu_initclocks: no timer");
 	
 	iobase = sc->sc_iobase;
@@ -387,7 +387,7 @@ int
 rtcget(struct rtc_st *rtc_regs)
 {
 	/* we would have panicked earlier if clock0 didn't exist */
-	struct clock_softc *sc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *sc = clockcd.cd_devs[0];
 	u_short iobase = sc->sc_iobase;
         u_char *regs = (u_char *)rtc_regs;
 	int i;
@@ -409,7 +409,7 @@ void
 rtcput(struct rtc_st *rtc_regs)
 {
 	/* we would have panicked earlier if clock0 didn't exist */
-	struct clock_softc *sc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *sc = clockcd.cd_devs[0];
 	u_short iobase = sc->sc_iobase;
         u_char omode, *regs = (u_char *)rtc_regs;
 	int i;

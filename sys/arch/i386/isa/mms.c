@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.1 1993/09/29 15:24:15 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.2 1993/09/30 17:33:03 mycroft Exp $
  */
 
 #include "param.h"
@@ -49,7 +49,11 @@
 #define	MMS_BSIZE	1024	/* buffer size */
 
 struct mms_softc {		/* Driver status information */
-	struct ringbuf {	/* Input queue */
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
+
+	struct	ringbuf {	/* Input queue */
 		int rb_count, rb_first, rb_last;
 		char rb_data[MMS_BSIZE];
 	} sc_q;
@@ -127,6 +131,8 @@ mmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
+	printf(": Microsoft mouse\n");
+
 	/* XXXX isa_establishintr */
 }
 
@@ -141,7 +147,7 @@ mmsopen(dev, flag)
 
 	if (unit >= mmscd.cd_ndevs)
 		return ENXIO;
-	sc = (struct mms_softc *)mmscd.cd_devs[unit];
+	sc = mmscd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -167,7 +173,7 @@ mmsclose(dev, flag)
 	int flag;
 {
 	int	unit = MMSUNIT(dev);
-	struct	mms_softc *sc = (struct mms_softc *)mmscd.cd_devs[unit];
+	struct	mms_softc *sc = mmscd.cd_devs[unit];
 
 	/* disable interrupts */
 	outb(sc->sc_iobase + MMS_ADDR, 0x87);
@@ -184,7 +190,7 @@ mmsread(dev, uio, flag)
 	int flag;
 {
 	int	unit = MMSUNIT(dev);
-	struct	mms_softc *sc = (struct mms_softc *)mmscd.cd_devs[unit];
+	struct	mms_softc *sc = mmscd.cd_devs[unit];
 	int	s;
 	int	error;
 	size_t	length;
@@ -248,7 +254,7 @@ mmsioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	int	unit = MMSUNIT(dev);
-	struct	mms_softc *sc = (struct mms_softc *)mmscd.cd_devs[unit];
+	struct	mms_softc *sc = mmscd.cd_devs[unit];
 	struct	mouseinfo info;
 	int	s;
 	int	error;
@@ -378,7 +384,7 @@ mmsselect(dev, rw, p)
 	struct proc *p;
 {
 	int	unit = MMSUNIT(dev);
-	struct	mms_softc *sc = (struct mms_softc *)mmscd.cd_devs[unit];
+	struct	mms_softc *sc = mmscd.cd_devs[unit];
 	int	s;
 	int	ret;
 
