@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.80 1999/09/29 00:44:01 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.81 1999/09/30 12:18:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.80 1999/09/29 00:44:01 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.81 1999/09/30 12:18:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -401,6 +401,8 @@ cleanup_parse_url:
 	}
 	if (tport != NULL);
 		*port = xstrdup(tport);
+	if (*path == NULL)
+		*path = xstrdup("");
 
 	if (debug)
 		fprintf(ttyout,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.63 1999/09/28 06:47:38 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.64 1999/09/30 12:18:03 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.63 1999/09/28 06:47:38 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.64 1999/09/30 12:18:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,6 @@ __RCSID("$NetBSD: cmds.c,v 1.63 1999/09/28 06:47:38 lukem Exp $");
 
 jmp_buf	jabort;
 char   *mname;
-char   *home = "/";
 
 struct	types {
 	char	*t_name;
@@ -1042,8 +1041,10 @@ lcd(argc, argv)
 	char buf[MAXPATHLEN];
 	char *locdir;
 
-	if (argc < 2)
-		argc++, argv[1] = home;
+	if (argc < 2) {
+		argc++;
+		argv[1] = home;
+	}
 	if (argc != 2) {
 		fprintf(ttyout, "usage: %s local-directory\n", argv[0]);
 		code = -1;

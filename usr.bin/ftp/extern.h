@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.38 1999/09/28 06:47:40 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.39 1999/09/30 12:18:03 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -211,7 +211,7 @@ sig_t	xsignal __P((int, void (func) __P((int))));
 extern struct	cmd cmdtab[];
 extern FILE    *cout;
 extern int	data;
-extern char    *home;
+extern char	home[];
 extern int	proxy;
 extern char	reply_string[];
 extern int	NCMDS;
