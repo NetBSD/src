@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.586 2003/06/05 15:59:41 jwise Exp $
+# $NetBSD: mi,v 1.587 2003/06/30 19:09:06 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1284,9 +1284,6 @@
 ./usr/share/man/cat7/intro.0			man-reference-catman
 ./usr/share/man/cat7/lint.0			man-reference-catman
 ./usr/share/man/cat7/mailaddr.0			man-reference-catman
-./usr/share/man/cat7/mandoc.0			man-reference-catman
-./usr/share/man/cat7/mdoc.0			man-reference-catman
-./usr/share/man/cat7/msafer.0			man-reference-catman
 ./usr/share/man/cat7/nls.0			man-reference-catman
 ./usr/share/man/cat7/packages.0			man-reference-catman
 ./usr/share/man/cat7/re_format.0		man-reference-catman
@@ -3096,9 +3093,6 @@
 ./usr/share/man/man7/intro.7			man-reference-man
 ./usr/share/man/man7/lint.7			man-reference-man
 ./usr/share/man/man7/mailaddr.7			man-reference-man
-./usr/share/man/man7/mandoc.7			man-reference-man
-./usr/share/man/man7/mdoc.7			man-reference-man
-./usr/share/man/man7/msafer.7			man-reference-man
 ./usr/share/man/man7/nls.7			man-reference-man
 ./usr/share/man/man7/packages.7			man-reference-man
 ./usr/share/man/man7/re_format.7		man-reference-man

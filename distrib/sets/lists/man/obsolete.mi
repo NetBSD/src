@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.69 2003/05/25 20:01:35 jmc Exp $
+# $NetBSD: obsolete.mi,v 1.70 2003/06/30 19:09:06 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -116,7 +116,10 @@
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/uuencode.format.0
 ./usr/share/man/cat5/ypserv.acl.0
+./usr/share/man/cat7/mandoc.0
+./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/miscellaneous.0
+./usr/share/man/cat7/msafer.0
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/installboot.old.0
 ./usr/share/man/cat8/arm26/BBBB.0
@@ -286,6 +289,9 @@
 ./usr/share/man/man5/securenet.5
 ./usr/share/man/man5/uuencode.format.5
 ./usr/share/man/man5/ypserv.acl.5
+./usr/share/man/man7/mandoc.7
+./usr/share/man/man7/mdoc.7
+./usr/share/man/man7/msafer.7
 ./usr/share/man/man8/alpha/installboot.8
 ./usr/share/man/man8/alpha/installboot.old.8
 ./usr/share/man/man8/arm26/BBBB.8
