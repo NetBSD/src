@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.6 2002/12/18 19:46:48 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.7 2002/12/25 00:58:01 lukem Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd December 8, 2002
+.Dd December 25, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -517,7 +517,14 @@ and do not affect manually building subtrees of the
 .Nx
 source code.
 .
-.Bl -tag -width "NODISTRIBDIRS"
+.Bl -tag -width "INSTALLWORLDDIR"
+.
+.It Sy INSTALLWORLDDIR
+Location for the
+.Dq make installworld
+target to install to.
+.DFLT
+.Dq /
 .
 .It Sy MKOBJDIRS
 .YorN
@@ -734,7 +741,7 @@ building the entire
 .Nx
 source tree.
 .
-.Bl -tag -width "dependall"
+.Bl -tag -width "distribution"
 .
 .It Sy build
 Build the entire
@@ -742,6 +749,34 @@ Build the entire
 system.
 This orders portions of the source tree such that prerequisites
 will be built in the proper order.
+.
+.It Sy distribution
+Do a
+.Dq make build ,
+and then install a full distribution into
+.Sy DESTDIR .
+.
+.It Sy buildworld
+As per
+.Dq make distribution ,
+except that it ensures that
+.Sy DESTDIR
+is not the root directory.
+.
+.
+.It Sy installworld
+Install the distribution from
+.Sy DESTDIR
+to
+.Sy INSTALLWORLDDIR
+(which defaults to the root directory).
+Ensures that
+.Sy INSTALLWORLDDIR
+is the not root directory if cross compiling.
+.Pp
+.Em Note :
+It is highly recommended that you upgrade your kernel and reboot
+before performing this operation.
 .
 .It Sy release
 Do a
@@ -850,6 +885,15 @@ Set
 mode;
 .Sy DESTDIR
 does not have to be set to a non-root path for builds when this is set.
+.
+.It Fl i Ar installworlddir
+Install the contents of
+.Dv DESTDIR
+to
+.Ar installworlddir
+after all other operations have completed, using the top level
+.Dq installworld
+target.
 .
 .It Fl j Ar njob
 Passed through to 
