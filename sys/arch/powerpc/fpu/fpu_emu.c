@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.5 2002/11/25 02:45:46 thorpej Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.6 2002/11/25 02:46:10 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -390,7 +390,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					("fpu_execute: Store SNG at %p\n",
 						(void *)addr));
 				fpu_explode(fe, fp = &fe->fe_f1, FTYPE_DBL, rt);
-				fpu_implode(fe, fp, type, (u_int *)&buf);
+				fpu_implode(fe, fp, type, (void *)&buf);
 				if (copyout(&buf, (void *)addr, size))
 					return (FAULT);
 			} else {
