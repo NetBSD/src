@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/12/17 05:41:12 mhitch Exp $
+#	$NetBSD: Makefile,v 1.25 2002/01/26 13:17:58 aymeric Exp $
 
 ### what we need:
 
@@ -33,7 +33,7 @@ DEFS += -D__INTERNAL_LIBSA_CREAD
 SOBJS += cread.o
 SOBJS += crc32.o inflate.o adler32.o infblock.o infcodes.o inftrees.o # XXX need libz!!!
 SOBJS += inffast.o infutil.o
-#DEFS += -DBOOT_ELF -DBOOT_AOUT
+#DEFS += -DBOOT_ELF32 -DBOOT_AOUT
 SOBJS += loadfile.o loadfile_aout.o loadfile_elf32.o
 
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
