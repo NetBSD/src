@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.13 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: pcppi.c,v 1.14 2005/03/21 10:51:52 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.14 2005/03/21 10:51:52 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,7 @@ static void pcppi_bell_stop(void*);
 #define PCPPIPRI (PZERO - 1)
 
 int
-pcppi_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcppi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ppi_ioh, pit1_ioh;
@@ -164,9 +161,7 @@ lose:
 }
 
 void
-pcppi_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcppi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcppi_softc *sc = (struct pcppi_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -195,10 +190,7 @@ pcppi_attach(parent, self, aux)
 }
 
 void
-pcppi_bell(self, pitch, period, slp)
-	pcppi_tag_t self;
-	int pitch, period;
-	int slp;
+pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 {
 	struct pcppi_softc *sc = self;
 	int s1, s2;
@@ -251,8 +243,7 @@ pcppi_bell(self, pitch, period, slp)
 }
 
 static void
-pcppi_bell_stop(arg)
-	void *arg;
+pcppi_bell_stop(void *arg)
 {
 	struct pcppi_softc *sc = arg;
 	int s;
@@ -272,10 +263,7 @@ pcppi_bell_stop(arg)
 
 #if NPCKBD > 0
 void
-pcppi_pckbd_bell(arg, pitch, period, volume, poll)
-	void *arg;
-	u_int pitch, period, volume;
-	int poll;
+pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 {
 
 	/*
