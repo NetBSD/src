@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.6 2002/06/19 23:12:14 bjh21 Exp $ */
+/* $NetBSD: wsqms.c,v 1.7 2002/06/19 23:49:14 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -44,6 +44,8 @@
 
 #include <sys/param.h>
 
+__KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.7 2002/06/19 23:49:14 bjh21 Exp $");
+
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h> 
@@ -83,17 +85,18 @@ static struct wsmouse_accessops wsqms_accessops = {
 
 
 void
-wsqms_attach(struct wsqms_softc *sc, struct device *self)
+wsqms_attach(struct wsqms_softc *sc)
 {
 	struct wsmousedev_attach_args wsmouseargs;
 
 	/* set up wsmouse attach arguments */
 	wsmouseargs.accessops = &wsqms_accessops;
-	wsmouseargs.accesscookie = self;
+	wsmouseargs.accesscookie = sc;
 
 	printf("\n");
 
-	sc->sc_wsmousedev = config_found(self, &wsmouseargs, wsmousedevprint);
+	sc->sc_wsmousedev =
+	    config_found(&sc->sc_dev, &wsmouseargs, wsmousedevprint);
 
 	callout_init(&sc->sc_callout);
 }
@@ -104,8 +107,6 @@ wsqms_enable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
 
-	sc->sc_flags |= WSQMS_ENABLED;
-
 	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 	return 0;
 }
@@ -115,8 +116,6 @@ static void
 wsqms_disable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
-
-	sc->sc_flags &= ~WSQMS_ENABLED;
 
 	callout_stop(&sc->sc_callout);
 }
