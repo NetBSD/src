@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1 1998/03/25 03:57:55 jonathan Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 1998/03/25 06:22:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -29,14 +29,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* the following is used externally (sysctl_hw) */
 
+/* the following is used externally (sysctl_hw) */
 extern char machine[];
 extern char cpu_model[];
 
-/* XXXjrs  replace uses with calls to bus_reset */
 
-extern u_long	ioasic_base;		/* Base address of I/O asic */
+/* XXX ioasic hardware initialization. */
+void	ioasic_init __P((int flags));	/* chip revision flag */
+
 
 /*
  * Interrupt-blocking functions defined in locore. These names aren't used
@@ -61,10 +62,6 @@ extern void prom_haltbutton __P((void));
 
 /* high-res clock ticks.  Need better timer support. */
 u_long latched_cycle_cnt;
-
-/* XXX ioasic hardware initialization. */
-
-void asic_init __P((int isa_maxine));
 
 /* XXX max memory */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */

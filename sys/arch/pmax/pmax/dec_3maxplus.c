@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -89,9 +89,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.1 1998/03/25 03:57:54 jonathan Ex
 #include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mclock CPUspeed eetimation */
 
+/* all these to get ioasic_base */
+#include <sys/device.h>			/* struct cfdata for.. */
+#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/ioasicvar.h>		/* ioasic_base */
+
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/asic.h>
-#include <pmax/pmax/turbochannel.h> 
+#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h> 
 #include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
 
@@ -120,11 +125,13 @@ const char*	dec_3maxplus_model_name __P((void));
 static void 	dec_3maxplus_errintr __P ((void));
 
 
+
 /*
  * Local declarations
  */
 u_long	kn03_tc3_imask;
 void	dec_3maxplus_tc_reset __P((void));		/* XXX unused? */
+tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
 /*
@@ -181,7 +188,7 @@ dec_3maxplus_os_init()
 		MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
-	asic_init(0);
+	ioasic_init(0);
 	/*
 	 * Initialize interrupts.
 	 */

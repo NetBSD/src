@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.24 1998/03/25 03:57:56 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.25 1998/03/25 06:22:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 #include <machine/bus.h>			/* wbflush() */
 #include <machine/autoconf.h>
 
-#if 0
+#ifdef alpha
 #include <machine/rpb.h>
 #include <alpha/tc/tc.h>
 #include <alpha/tc/asic.h>
@@ -45,15 +45,13 @@
 
 #ifdef pmax
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>		/* XXX ioasic_init( */
 #include <pmax/pmax/asic.h>
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/turbochannel.h>	/* interrupt enable declaration */
 
-#include <pmax/pmax/kn03.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/nameglue.h>
 
@@ -101,6 +99,9 @@ struct asic_slot {
 
 struct asic_slot *asic_slots;
 #include "ds-asic-conf.c"
+
+extern tc_addr_t	ioasic_base;
+tc_addr_t	ioasic_base = 0;
 #endif	/*pmax*/
 
 
@@ -417,4 +418,24 @@ ioasic_lance_dma_setup(v)
 	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
+}
+
+void ioasic_init(int flag);
+
+/*
+ * Initialize the I/O asic
+ */
+void
+ioasic_init(isa_maxine)
+	int isa_maxine;
+{
+	volatile u_int *decoder;
+
+	/* These are common between 3min and maxine */
+	decoder = (volatile u_int *)IOASIC_REG_LANCE_DECODE(ioasic_base);
+	*decoder = KMIN_LANCE_CONFIG;
+
+	/* set the SCSI DMA configuration map */
+	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
+	(*decoder) = 0x00000000e;
 }
