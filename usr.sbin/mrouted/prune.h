@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.h,v 1.3 1995/12/10 10:07:11 mycroft Exp $	*/
+/*	$NetBSD: prune.h,v 1.4 1999/01/14 21:54:10 he Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -119,14 +119,22 @@ struct tr_resp {
 #define TR_SCOPED	4
 #define TR_NO_RTE	5
 #define TR_NO_FWD	7
+#define TR_RP_OR_CORE	8
+#define TR_RPF_INT	9
+#define TR_NO_MULTICAST	10
 #define TR_NO_SPACE	0x81
 #define TR_OLD_ROUTER	0x82
+#define TR_ADMIN_DENY	0x83
 
 /* fields for tr_rproto (routing protocol) */
 #define PROTO_DVMRP	1
 #define PROTO_MOSPF	2
 #define PROTO_PIM	3
 #define PROTO_CBT	4
+#define PROTO_PIM_SPEC	5
+#define PROTO_PIM_STAT	6
+#define PROTO_DVMRP_STAT 7
+#define PROTO_PIM_MBGP	8
 
 #define MASK_TO_VAL(x, i) { \
 			u_int32_t _x = ntohl(x); \

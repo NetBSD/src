@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.11 1998/08/27 18:03:45 ross Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.11 1998/08/27 18:03:45 ross Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.12 1999/01/14 21:54:11 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -239,6 +239,14 @@ proto_type(type)
 	return ("PIM");
       case PROTO_CBT:
 	return ("CBT");
+      case PROTO_PIM_SPEC:
+	return ("PIM-special");
+      case PROTO_PIM_STAT:
+	return ("PIM-static");
+      case PROTO_DVMRP_STAT:
+	return ("DVMRP-static");
+      case PROTO_PIM_MBGP:
+	return ("PIM/MBGP");
       default:
 	(void)snprintf(buf, sizeof buf, "Unknown protocol code %d", type);
 	return (buf);
@@ -271,6 +279,14 @@ flag_type(type)
 	return ("Not forwarding");
       case TR_NO_SPACE:
 	return ("No space in packet");
+      case TR_RP_OR_CORE:
+	return ("RP/Core");
+      case TR_RPF_INT:
+	return ("Trace packet on RPT interface");
+      case TR_NO_MULTICAST:
+	return ("Trace packet on non-MC interface");
+      case TR_ADMIN_DENY:
+	return ("Trace admin-denied");
       default:
 	(void)snprintf(buf, sizeof buf, "Unknown error code %d", type);
 	return (buf);
