@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 1996/08/10 04:01:33 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.20 1996/09/09 18:03:46 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -12,7 +12,7 @@ KERNMAKE= \
 	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
 	    AS='${AS}' AFLAGS='${AFLAGS}' \
-	    LD='${LD}' \
+	    LD='${LD}' STRIP='${STRIP}' \
 	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
 	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.$@-I${.OBJDIR}@}'
 
