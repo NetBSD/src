@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.27 1997/05/12 04:11:43 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.27.2.1 1997/05/13 03:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>
@@ -845,6 +846,8 @@ gusattach(parent, self, aux)
 	sc->sc_mixcontrol =
 		(m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN);
 
+	/* XXX WILL THIS ALWAYS WORK THE WAY THEY'RE OVERLAYED?! */
+	sc->sc_codec.sc_isa = sc->sc_dev.dv_parent;
 
  	if (sc->sc_revision >= 5 && sc->sc_revision <= 9) {
  		sc->sc_flags |= GUS_MIXER_INSTALLED;
@@ -1351,7 +1354,8 @@ gus_dmaout_timeout(arg)
     outb(sc->sc_iobase+GUS_DATA_HIGH, 0);
 
 #if 0
-    isa_dmaabort(sc->sc_drq);		/* XXX we will dmadone below? */
+    /* XXX we will dmadone below? */
+    isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
 #endif
 
     gus_dmaout_dointr(sc);
@@ -1391,10 +1395,7 @@ gus_dmaout_dointr(sc)
 	register int port = sc->sc_iobase;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
-	isa_dmadone(DMAMODE_WRITE,
-		    sc->sc_dmaoutaddr,
-		    sc->sc_dmaoutcnt - 1,
-		    sc->sc_drq);
+	isa_dmadone(sc->sc_dev.dv_parent, sc->sc_drq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
 	DMAPRINTF(("gus_dmaout_dointr %d @ %x\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
@@ -1903,7 +1904,8 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
-	isa_dmastart(DMAMODE_WRITE, buffaddr, length, sc->sc_drq);
+	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_drq, buffaddr, length,
+	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 	/*
 	 * Set up DMA address - use the upper 16 bits ONLY
@@ -3036,7 +3038,8 @@ gus_dma_input(addr, buf, size, callback, arg)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
-	isa_dmastart(DMAMODE_READ, (caddr_t) buf, size, sc->sc_recdrq);
+	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_recdrq, buf, size,
+	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
 	sc->sc_flags |= GUS_DMAIN_ACTIVE;
@@ -3063,8 +3066,7 @@ gus_dmain_intr(sc)
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
-	    isa_dmadone(DMAMODE_READ, sc->sc_dmainaddr, sc->sc_dmaincnt - 1,
-			sc->sc_recdrq);
+	    isa_dmadone(sc->sc_dev.dv_parent, sc->sc_recdrq);
 	    callback = sc->sc_dmainintr;
 	    arg = sc->sc_inarg;
 
@@ -3135,7 +3137,7 @@ gus_halt_out_dma(addr)
 	outb(sc->sc_iobase+GUS_DATA_HIGH, 0);
 
 	untimeout(gus_dmaout_timeout, sc);
-	isa_dmaabort(sc->sc_drq);
+	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3170,7 +3172,7 @@ gus_halt_in_dma(addr)
 	outb(port+GUS_DATA_HIGH,
 	     inb(port+GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
 
-	isa_dmaabort(sc->sc_recdrq);
+	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_recdrq);
 	sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = 0;
 	sc->sc_inarg = 0;
