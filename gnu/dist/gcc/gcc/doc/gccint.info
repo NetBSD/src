@@ -59,7 +59,7 @@ Introduction
 
    This manual documents the internals of the GNU compilers, including
 how to port them to new targets and some information about how to write
-front ends for new languages.  It corresponds to GCC version 3.3.1.
+front ends for new languages.  It corresponds to GCC version 3.3.2.
 The use of the GNU compilers is documented in a separate manual.  *Note
 Introduction: (gcc)Top.
 
@@ -18358,6 +18358,21 @@ Output and Generation of Labels
      You may wish to use `ASM_OUTPUT_TYPE_DIRECTIVE' and/or
      `ASM_OUTPUT_SIZE_DIRECTIVE' in the definition of this macro.
 
+`ASM_DECLARE_CONSTANT_NAME (STREAM, NAME, EXP, SIZE)'
+     A C statement (sans semicolon) to output to the stdio stream
+     STREAM any text necessary for declaring the name NAME of a
+     constant which is being defined.  This macro is responsible for
+     outputting the label definition (perhaps using
+     `ASM_OUTPUT_LABEL').  The argument EXP is the value of the
+     constant, and SIZE is the size of the constant in bytes.  NAME
+     will be an internal label.
+
+     If this macro is not defined, then the NAME is defined in the
+     usual manner as a label (by means of `ASM_OUTPUT_LABEL').
+
+     You may wish to use `ASM_OUTPUT_TYPE_DIRECTIVE' in the definition
+     of this macro.
+
 `ASM_DECLARE_REGISTER_GLOBAL (STREAM, DECL, REGNO, NAME)'
      A C statement (sans semicolon) to output to the stdio stream
      STREAM any text necessary for claiming a register REGNO for a
@@ -23185,6 +23200,7 @@ Index
 * ASM_COMMENT_START:                     File Framework.
 * ASM_CV_QUAL:                           Function Bodies.
 * ASM_DECLARE_CLASS_REFERENCE:           Label Output.
+* ASM_DECLARE_CONSTANT_NAME:             Label Output.
 * ASM_DECLARE_FUNCTION_NAME:             Label Output.
 * ASM_DECLARE_FUNCTION_SIZE:             Label Output.
 * ASM_DECLARE_OBJECT_NAME:               Label Output.
@@ -25443,40 +25459,40 @@ Node: File Framework780256
 Node: Data Output785116
 Node: Uninitialized Data792711
 Node: Label Output798111
-Node: Initialization816207
-Node: Macros for Initialization822188
-Node: Instruction Output828357
-Node: Dispatch Tables837403
-Node: Exception Region Output839958
-Node: Alignment Output843620
-Node: Debugging Info847641
-Node: All Debuggers848302
-Node: DBX Options851185
-Node: DBX Hooks856560
-Node: File Names and DBX860383
-Node: SDB and DWARF862359
-Node: VMS Debug866405
-Node: Floating Point866953
-Node: Mode Switching871756
-Node: Target Attributes875006
-Node: MIPS Coprocessors878856
-Node: Misc880419
-Node: Host Config911520
-Node: Fragments917556
-Node: Target Fragment918699
-Node: Host Fragment924150
-Node: Collect2925586
-Node: Header Dirs928140
-Node: Type Information929567
-Node: GTY Options930588
-Node: GGC Roots937178
-Node: Files937879
-Node: Funding940725
-Node: GNU Project943236
-Node: Copying943890
-Node: GNU Free Documentation License963101
-Node: Contributors985513
-Node: Option Index1011910
-Node: Index1013710
+Node: Initialization816900
+Node: Macros for Initialization822881
+Node: Instruction Output829050
+Node: Dispatch Tables838096
+Node: Exception Region Output840651
+Node: Alignment Output844313
+Node: Debugging Info848334
+Node: All Debuggers848995
+Node: DBX Options851878
+Node: DBX Hooks857253
+Node: File Names and DBX861076
+Node: SDB and DWARF863052
+Node: VMS Debug867098
+Node: Floating Point867646
+Node: Mode Switching872449
+Node: Target Attributes875699
+Node: MIPS Coprocessors879549
+Node: Misc881112
+Node: Host Config912213
+Node: Fragments918249
+Node: Target Fragment919392
+Node: Host Fragment924843
+Node: Collect2926279
+Node: Header Dirs928833
+Node: Type Information930260
+Node: GTY Options931281
+Node: GGC Roots937871
+Node: Files938572
+Node: Funding941418
+Node: GNU Project943929
+Node: Copying944583
+Node: GNU Free Documentation License963794
+Node: Contributors986206
+Node: Option Index1012603
+Node: Index1014403
 
 End Tag Table

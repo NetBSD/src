@@ -60,7 +60,7 @@ Introduction
 
    This manual documents how to use the GNU compilers, as well as their
 features and incompatibilities, and how to report bugs.  It corresponds
-to GCC version 3.3.1.  The internals of the GNU compilers, including
+to GCC version 3.3.2.  The internals of the GNU compilers, including
 how to port them to new targets and some information about how to write
 front ends for new languages, are documented in a separate manual.
 *Note Introduction: (gccint)Top.
@@ -18055,8 +18055,8 @@ you can also use most of the C language extensions in your C++
 programs).  If you want to write code that checks whether these
 features are available, you can test for the GNU compiler the same way
 as for C programs: check for a predefined macro `__GNUC__'.  You can
-also use `__GNUG__' to test specifically for GNU C++ (*note Standard
-Predefined Macros: (cpp.info)Standard Predefined.).
+also use `__GNUG__' to test specifically for GNU C++ (*note Predefined
+Macros: (cpp)Common Predefined Macros.).
 
 * Menu:
 
@@ -24851,58 +24851,58 @@ Node: Thread-Local729522
 Node: C99 Thread-Local Edits731613
 Node: C++98 Thread-Local Edits733614
 Node: C++ Extensions737048
-Node: Min and Max738609
-Node: Volatiles739993
-Node: Restricted Pointers743363
-Node: Vague Linkage744945
-Node: C++ Interface748603
-Ref: C++ Interface-Footnote-1753691
-Node: Template Instantiation753830
-Node: Bound member functions760967
-Node: C++ Attributes762518
-Node: Java Exceptions764122
-Node: Deprecated Features765519
-Node: Backwards Compatibility767485
-Node: Objective-C768833
-Node: Executing code before main769412
-Node: What you can and what you cannot do in +load772050
-Node: Type encoding774216
-Node: Garbage Collection777468
-Node: Constant string objects780132
-Node: compatibility_alias782645
-Node: Compatibility783524
-Node: Gcov790111
-Node: Gcov Intro790580
-Node: Invoking Gcov793302
-Node: Gcov and Optimization801750
-Node: Gcov Data Files803187
-Node: Trouble807894
-Node: Actual Bugs809488
-Node: Cross-Compiler Problems810396
-Node: Interoperation811906
-Node: External Bugs822048
-Node: Incompatibilities823484
-Node: Fixed Headers831931
-Node: Standard Libraries834240
-Node: Disappointments835610
-Node: C++ Misunderstandings840104
-Node: Static Definitions840830
-Node: Temporaries841877
-Node: Copy Assignment843854
-Node: Protoize Caveats845676
-Node: Non-bugs849631
-Node: Warnings and Errors859499
-Node: Bugs861259
-Node: Bug Criteria861822
-Node: Bug Reporting864013
-Node: Service864394
-Node: Contributing865212
-Node: Funding865955
-Node: GNU Project868459
-Node: Copying869110
-Node: GNU Free Documentation License888318
-Node: Contributors910727
-Node: Option Index937121
-Node: Keyword Index1013126
+Node: Min and Max738600
+Node: Volatiles739984
+Node: Restricted Pointers743354
+Node: Vague Linkage744936
+Node: C++ Interface748594
+Ref: C++ Interface-Footnote-1753682
+Node: Template Instantiation753821
+Node: Bound member functions760958
+Node: C++ Attributes762509
+Node: Java Exceptions764113
+Node: Deprecated Features765510
+Node: Backwards Compatibility767476
+Node: Objective-C768824
+Node: Executing code before main769403
+Node: What you can and what you cannot do in +load772041
+Node: Type encoding774207
+Node: Garbage Collection777459
+Node: Constant string objects780123
+Node: compatibility_alias782636
+Node: Compatibility783515
+Node: Gcov790102
+Node: Gcov Intro790571
+Node: Invoking Gcov793293
+Node: Gcov and Optimization801741
+Node: Gcov Data Files803178
+Node: Trouble807885
+Node: Actual Bugs809479
+Node: Cross-Compiler Problems810387
+Node: Interoperation811897
+Node: External Bugs822039
+Node: Incompatibilities823475
+Node: Fixed Headers831922
+Node: Standard Libraries834231
+Node: Disappointments835601
+Node: C++ Misunderstandings840095
+Node: Static Definitions840821
+Node: Temporaries841868
+Node: Copy Assignment843845
+Node: Protoize Caveats845667
+Node: Non-bugs849622
+Node: Warnings and Errors859490
+Node: Bugs861250
+Node: Bug Criteria861813
+Node: Bug Reporting864004
+Node: Service864385
+Node: Contributing865203
+Node: Funding865946
+Node: GNU Project868450
+Node: Copying869101
+Node: GNU Free Documentation License888309
+Node: Contributors910718
+Node: Option Index937112
+Node: Keyword Index1013117
 
 End Tag Table
