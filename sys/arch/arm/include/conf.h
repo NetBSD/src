@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 2001/09/09 09:54:13 toshii Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 2001/09/16 17:41:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -115,10 +115,17 @@ cdev_decl(urio);
 cdev_decl(uscanner);
 cdev_decl(vc_nb_);
 cdev_decl(wsdisplay);
+cdev_decl(wsfont);
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
 cdev_decl(scsibus);
 cdev_decl(openfirm);
+cdev_decl(pci);
+cdev_decl(agp);
+cdev_decl(iop);
+cdev_decl(ld);
+cdev_decl(mlx);
+cdev_decl(mly);
 
 #endif	/* _ARM_CONF_H_ */
