@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: algorithm.c,v 1.5 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: algorithm.c,v 1.6 2003/10/21 03:06:55 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -298,7 +298,7 @@ alg_oakley_hashdef_hashlen(doi)
 
 	f = alg_oakley_hashdef(doi);
 	if (f == NULL || f->hashlen == NULL)
-		return NULL;
+		return 0;
 
 	return (f->hashlen)();
 }
