@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.17 1998/07/05 00:51:26 jonathan Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.18 1998/07/05 22:48:07 jonathan Exp $       */
 
 /*
  *
@@ -38,6 +38,7 @@
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
+#include "opt_natm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

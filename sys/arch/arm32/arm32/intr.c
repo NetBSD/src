@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 1998/07/05 06:49:04 jonathan Exp $	*/
+/*	$NetBSD: intr.c,v 1.11 1998/07/05 22:48:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -41,6 +41,7 @@
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_natm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
