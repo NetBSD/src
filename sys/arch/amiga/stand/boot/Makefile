@@ -88,7 +88,7 @@ libboot.a: $(OBJS)
 
 ### install what we need: ###
 
-install:: all catinstall
+install: all catinstall
 	install -o $(BINOWN) -g $(BINGRP) installboot ${DESTDIR}/usr/sbin
 	install -o $(BINOWN) -g $(BINGRP) $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
 
