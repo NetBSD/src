@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.7 2002/10/12 21:10:31 elric Exp $
+.\" $NetBSD: cgdconfig.8,v 1.8 2002/10/13 01:30:29 elric Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -276,8 +276,3 @@ Since
 uses
 .Xr getpass 3
 to read in the passphrase, it is limited to 128 characters.
-.Pp
-At present, there is no mechanism to validate that the key supplied
-matches that used to encrypt the disk.
-An option to validate the checksum of a disklabel inside the cgd device
-may be added shortly.
