@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.185 2004/03/04 00:05:58 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.186 2004/03/11 22:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.185 2004/03/04 00:05:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.186 2004/03/11 22:34:26 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1161,7 +1161,8 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		}
 	}
 
-	if (p->p_stat == SACTIVE) {
+	switch (p->p_stat) {
+	case SACTIVE:
 
 		if (l != NULL && (p->p_flag & P_TRACED))
 			goto run;
@@ -1219,7 +1220,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		 */
 		goto runfast;
 		/*NOTREACHED*/
-	} else if (p->p_stat == SSTOP) {
+	case SSTOP:
 		/* Process is stopped */
 		/*
 		 * If traced process is already stopped,
@@ -1283,7 +1284,11 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		if (l)
 			goto run;
 		goto out;
-	} else {
+	case SIDL:
+		/* Process is being created by fork */
+		/* XXX: We are not ready to receive signals yet */
+		goto done;
+	default:
 		/* Else what? */
 		panic("psignal: Invalid process state %d.", p->p_stat);
 	}
