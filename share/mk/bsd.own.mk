@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.236 2001/12/15 01:50:33 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.237 2001/12/16 20:31:09 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -19,7 +19,14 @@ NEED_OWN_INSTALL_TARGET?=	yes
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE} == "next68k" || \
+    ${MACHINE} == "sun3" || \
+    ${MACHINE} == "mvme68k" || \
+    ${MACHINE} == "hp300" || \
+    ${MACHINE} == "news68k" || \
+    ${MACHINE} == "cesfic" || \
+    ${MACHINE} == "atari"
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 .endif
