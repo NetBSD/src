@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.149 2003/10/03 15:33:42 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.150 2003/10/19 01:44:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.149 2003/10/03 15:33:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.150 2003/10/19 01:44:49 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -865,7 +865,6 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		else
 			ptmp->p_flag &= ~P_STOPFORK;
 		return (0);
-		break;
 
 	case PROC_PID_STOPEXEC:
 		if (namelen != 2)
@@ -878,7 +877,6 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		else
 			ptmp->p_flag &= ~P_STOPEXEC;
 		return (0);
-		break;
 
 	case PROC_PID_CORENAME:
 		if (namelen != 2)
@@ -950,7 +948,6 @@ cleanup:
 		if (tmps)
 			free(tmps, M_TEMP);
 		return (error);
-		break;
 
 	case PROC_PID_LIMIT:
 		if (namelen != 4 || name[2] < 1 ||
@@ -973,11 +970,9 @@ cleanup:
 			error = dosetrlimit(ptmp, p->p_cred,
 			    name[2] - 1, &alim);
 		return (error);
-		break;
 
 	default:
 		return (EINVAL);
-		break;
 	}
 	/* NOTREACHED */
 	return (EINVAL);

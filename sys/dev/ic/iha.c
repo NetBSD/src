@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.22 2003/05/03 18:11:18 wiz Exp $ */
+/*	$NetBSD: iha.c,v 1.23 2003/10/19 01:44:48 simonb Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22 2003/05/03 18:11:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.23 2003/10/19 01:44:48 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1492,11 +1492,9 @@ iha_data_over_run(scb)
 	case 0xbe: /* Report Basic Redundancy         SCC-2 */
 
 		return (HOST_OK);
-		break;
 
 	default:
 		return (HOST_DO_DU);
-		break;
 	}
 }
 

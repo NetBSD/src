@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.107 2003/07/25 06:40:29 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.108 2003/10/19 01:44:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.107 2003/07/25 06:40:29 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.108 2003/10/19 01:44:48 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2361,7 +2361,6 @@ again:
 			sc->sc_dev.dv_xname, sc->sc_state, sc->sc_espintr);
 		ncr53c9x_init(sc, 1);
 		goto out;
-		break;
 
 	case NCR_IDENTIFIED:
 		ecb = sc->sc_nexus;
@@ -2381,8 +2380,6 @@ again:
 			goto out;
 		} else
 			goto msgin;
-
-		break;
 
 	case NCR_IDLE:
 	case NCR_SELECTING:
@@ -2700,7 +2697,6 @@ msgin:
 		}
 		sc->sc_prevphase = MESSAGE_IN_PHASE;
 		goto shortcut;	/* i.e. expect data to be ready */
-		break;
 
 	case COMMAND_PHASE:
 		/*
@@ -2783,7 +2779,6 @@ msgin:
 		NCRCMD(sc, NCRCMD_ICCS);
 		sc->sc_prevphase = STATUS_PHASE;
 		goto shortcut;	/* i.e. expect status results soon */
-		break;
 
 	case INVALID_PHASE:
 		break;
