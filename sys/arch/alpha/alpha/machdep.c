@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19.4.6 1996/09/10 20:07:37 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.4.7 1996/12/05 06:14:58 rat Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -94,6 +94,7 @@
 
 #include <net/netisr.h>
 #include "ether.h"
+#include "ppp.h"
 
 #include "le_ioasic.h"			/* for le_iomem creation */
 
@@ -1301,7 +1302,7 @@ netintr()
 		ccittintr();
 	}
 #endif
-#ifdef PPP
+#if NPPP > 0
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
