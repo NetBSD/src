@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.7 1995/06/19 22:50:42 jtc Exp $	*/
+/*	$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tput.c	8.2 (Berkeley) 3/19/94";
+static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: tput.c,v 1.7 1995/06/19 22:50:42 jtc Exp $";
+static char rcsid[] = "$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $";
 #endif /* not lint */
 
 #include <termios.h>
