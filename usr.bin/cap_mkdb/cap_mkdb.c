@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.11 2000/10/04 20:00:47 mjl Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.12 2000/10/04 20:02:26 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.11 2000/10/04 20:00:47 mjl Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.12 2000/10/04 20:02:26 mjl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,10 +57,9 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.11 2000/10/04 20:00:47 mjl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	db_build __P((char **));
-void	dounlink __P((void));
-int	main __P((int, char **));
-void	usage __P((void));
+void	db_build (char **);
+void	dounlink (void);
+void	usage (void);
 
 DB *capdbp;
 int verbose;
@@ -83,9 +82,7 @@ HASHINFO openinfo = {
  * the correct record is stored.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, byteorder;
 
@@ -142,7 +139,7 @@ main(argc, argv)
 }
 
 void
-dounlink()
+dounlink(void)
 {
 	if (capname != NULL)
 		(void)unlink(capname);
@@ -161,8 +158,7 @@ dounlink()
  * details above.
  */
 void
-db_build(ifiles)
-	char **ifiles;
+db_build(char **ifiles)
 {
 	DBT key, data;
 	recno_t reccnt;
@@ -265,7 +261,7 @@ db_build(ifiles)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: cap_mkdb [-b|-l] [-v] [-f outfile] file1 [file2 ...]\n");
