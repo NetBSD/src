@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323 1998/09/21 22:58:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.324 1998/10/03 18:08:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1863,7 +1863,7 @@ init386(first_avail)
 	    SDT_SYS386CGT, SEL_UPL);
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
-	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
 	for (x = 0; x < 32; x++)
