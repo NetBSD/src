@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.6 2001/04/12 00:42:50 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.6 2001/04/12 00:42:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.6 2001/04/12 00:42:50 reinoud Exp $"
 #include <machine/vidc.h>
 #include <arm32/vidc/vidc20config.h>
 #include <machine/bootconfig.h>
+extern videomemory_t videomemory;
 
 #define machine_btop(x) arm_byte_to_page(x)
 #define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
@@ -323,25 +324,23 @@ vidcvideo_attach(parent, self, aux)
 	const u_int8_t *p;
 	int index;
 
-	if (vidcvideo_is_console) {
-		if (sc->nscreens == 0) {
+	if (sc->nscreens == 0) {
+		if (vidcvideo_is_console) {
 			sc->sc_dc = &vidcvideo_console_dc;
-			sc->nscreens = 1;
 		} else {
-			printf(": vidcvideo is console ; can't cope with extra attachment\n");
+			printf(" : non console vidcvideo fb ... can't cope with this\n");
 			return;
+			/*
+			 * sc->sc_dc = (struct fb_devconfig *)
+			 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
+			 * vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
+			 */
 		};
-	}
-	else {
-		printf(" : can't handle non console vidcvideo fb's yet\n");
-		return;
-		/*
-		 *	struct mainbus_attach_args *mb = aux;
-		 *	sc->sc_dc = (struct fb_devconfig *)
-		 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
-		 *	vidcvideo_getdevconfig(mb->mb_aux, mb->mb_iobase, sc->sc_dc);
-		 */
-	}
+		sc->nscreens = 1;
+	} else {
+			printf(": allready attached ... can't cope with this\n");
+			return;
+	};
 
 	vidcvideo_printdetails();
 	printf(": using %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
@@ -444,6 +443,18 @@ vidcvideoioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+#if 0
+	/* XXX There are no way to know framebuffer pa from a user program. */
+	/* XXX imported from macppc fb buffer for X support... dunno if this works yet */
+	case GRFIOCGINFO:
+		gm = (void *)data;
+		bzero(gm, sizeof(struct grfinfo));
+		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
+		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
+		return 0;
+#endif
+
 	}
 	return ENOTTY;
 }
