@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/06/13 13:25:25 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.4 1997/07/26 01:51:01 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -46,7 +46,8 @@
 int             errno;
 static char    *consdev;
 
-extern char     version[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
+		bootprog_maker[];
 extern char     etherdev[];
 
 #ifdef SUPPORT_NFS		/* XXX */
@@ -254,11 +255,11 @@ awaitkey(void)
 static void
 print_banner(void)
 {
-	printf("\n"
-	       ">> NetBSD BOOT: %d/%d k [%s]\n",
-	       getbasemem(),
-	       getextmem(),
-	       version);
+
+	printf("\n");
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 }
 
 int

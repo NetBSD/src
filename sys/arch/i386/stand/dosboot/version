@@ -1,0 +1,7 @@
+$NetBSD: version,v 1.1 1997/07/26 01:50:54 thorpej Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important.  Make sure the current version number is on line 6.
+
+1.1:	New welcoming banner.
+1.0:	Matthias Drochner's new DOS boot program.

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/07/02 13:20:36 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1997/07/26 01:50:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -52,7 +52,8 @@ int errno;
 static char *consdev;
 extern int boot_biosdev;
 
-extern char version[];
+extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
+	bootprog_maker[];
 
 char *names[] = {
     "netbsd", "netbsd.gz",
@@ -393,10 +394,12 @@ void
 print_banner(void)
 {
 
-	printf("\n" ">> NetBSD BOOT: %d/%d k [%s]\n"
-	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-	    "press return to boot now, any other key for boot menu\n",
-	    getbasemem(), getextmem(), version);
+	printf("\n");
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+	printf("Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
+	    "Press return to boot now, any other key for boot menu\n");
 }
 
 

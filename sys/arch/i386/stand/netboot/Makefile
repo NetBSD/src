@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.8 1997/07/15 11:23:11 drochner Exp $
+#	$NetBSD: Makefile,v 1.9 1997/07/26 01:50:59 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
 PROG= netboot
 NOMAN=
+NEWVERSWHAT=	"Network Boot"
 
-SRCS= main.c devopen.c conf.c dev_net.c version.c
+SRCS= main.c devopen.c conf.c dev_net.c
 
 CLEANFILES+= ${ROMSTART} ${PROG}.bin ${PROG}.rom ${PROG}.sym ${PROG}.list
 
