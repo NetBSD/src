@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.79.4.3 2000/07/21 18:55:56 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.79.4.4 2000/12/31 17:57:33 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.79.4.3 2000/07/21 18:55:56 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.79.4.4 2000/12/31 17:57:33 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ int	clearaddr, s;
 int	newaddr = -1;
 int	nsellength = 1;
 int	af;
-int	Aflag, aflag, bflag, dflag, lflag, mflag, sflag, uflag;
+int	Aflag, aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -179,6 +179,8 @@ void	setmedia __P((const char *, int));
 void	setmediaopt __P((const char *, int));
 void	unsetmediaopt __P((const char *, int));
 void	setmediainst __P((const char *, int));
+void	clone_create __P((const char *, int));
+void	clone_destroy __P((const char *, int));
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
 
@@ -253,6 +255,11 @@ const struct cmd {
 	{ "tunnel",	NEXTARG2,	0,		NULL,
 							settunnel } ,
 	{ "deletetunnel", 0,		0,		deletetunnel },
+#if 0
+	/* XXX `create' special-cased below */
+	{ "create",	0,		0,		clone_create } ,
+#endif
+	{ "destroy",	0,		0,		clone_destroy } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -273,6 +280,7 @@ int	getinfo __P((struct ifreq *));
 int	carrier __P((void));
 void	getsock __P((int));
 void	printall __P((void));
+void	list_cloners __P((void));
 void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
 void 	status __P((const u_int8_t *, int));
@@ -367,7 +375,7 @@ main(argc, argv)
 
 	/* Parse command-line options */
 	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "Aabdlmsu"
+	while ((ch = getopt(argc, argv, "AabCdlmsu"
 #ifdef INET6
 					"L"
 #endif
@@ -385,6 +393,11 @@ main(argc, argv)
 			bflag = 1;
 			break;
 			
+
+		case 'C':
+			Cflag = 1;
+			break;
+
 		case 'd':
 			dflag = 1;
 			break;
@@ -424,14 +437,25 @@ main(argc, argv)
 	 * -l means "list all interfaces", and is mutally exclusive with
 	 * all other flags/commands.
 	 *
+	 * -C means "list all names of cloners", and it mutually exclusive
+	 * with all other flags/commands.
+	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if (lflag && (aflag || mflag || Aflag || argc))
+	if ((lflag || Cflag) && (aflag || mflag || Aflag || argc))
 		usage();
 #ifdef INET6
-	if (lflag && Lflag)
+	if ((lflag || Cflag) && Lflag)
 		usage();
 #endif
+	if (lflag && Cflag)
+		usage();
+	if (Cflag) {
+		if (argc)
+			usage();
+		list_cloners();
+		exit(0);
+	}
 	if (aflag || lflag) {
 		if (argc > 1)
 			usage();
@@ -453,6 +477,17 @@ main(argc, argv)
 		usage();
 	(void) strncpy(name, argv[0], sizeof(name));
 	argc--; argv++;
+
+	/*
+	 * NOTE:  We must special-case the `create' command right
+	 * here as we would otherwise fail in getinfo().
+	 */
+	if (argc > 0 && strcmp(argv[0], "create") == 0) {
+		clone_create(argv[0], 0);
+		argc--, argv++;
+		if (argc == 0)
+			exit(0);
+	}
 
 	/* Check for address family. */
 	afp = NULL;
@@ -776,6 +811,74 @@ printall()
 	if (lflag)
 		putchar('\n');
 #endif
+}
+
+void
+list_cloners(void)
+{
+	struct if_clonereq ifcr;
+	char *cp, *buf;
+	int idx;
+
+	memset(&ifcr, 0, sizeof(ifcr));
+
+	getsock(AF_INET);
+
+	if (ioctl(s, SIOCIFGCLONERS, &ifcr) < 0)
+		err(1, "SIOCIFGCLONERS for count");
+
+	buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
+	if (buf == NULL)
+		err(1, "unable to allocate cloner name buffer");
+
+	ifcr.ifcr_count = ifcr.ifcr_total;
+	ifcr.ifcr_buffer = buf;
+
+	if (ioctl(s, SIOCIFGCLONERS, &ifcr) < 0)
+		err(1, "SIOCIFGCLONERS for names");
+
+	/*
+	 * In case some disappeared in the mean time, clamp it down.
+	 */
+	if (ifcr.ifcr_count > ifcr.ifcr_total)
+		ifcr.ifcr_count = ifcr.ifcr_total;
+
+	for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
+		if (idx > 0)
+			putchar(' ');
+		printf("%s", cp);
+	}
+
+	putchar('\n');
+	free(buf);
+	return;
+}
+
+/*ARGSUSED*/
+void
+clone_create(addr, param)
+	const char *addr;
+	int param;
+{
+
+	/* We're called early... */
+	getsock(AF_INET);
+
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCIFCREATE, &ifr) < 0)
+		err(1, "SIOCIFCREATE");
+}
+
+/*ARGSUSED*/
+void
+clone_destroy(addr, param)
+	const char *addr;
+	int param;
+{
+
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCIFDESTROY, &ifr) < 0)
+		err(1, "SIOCIFDESTROY");
 }
 
 #define RIDADDR 0
@@ -2626,8 +2729,10 @@ usage()
 		"\t[ instance minst ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       %s -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n"
-		"       %s -l [ -d ] [ -u ]\n",
-		__progname, __progname, __progname);
+		"       %s -l [ -d ] [ -u ]\n"
+		"       %s interface create\n"
+		"       %s interface destroy\n",
+		__progname, __progname, __progname, __progname, __progname);
 	exit(1);
 }
 
