@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.89 2003/03/04 01:50:08 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.90 2003/03/05 19:58:37 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1878,6 +1878,17 @@ gnu/dist/sendmail/sendmail/main.c		1.10
 gnu/dist/sendmail/sendmail/parseaddr.c		1.9
 gnu/dist/sendmail/sendmail/sendmail.h		1.11
 
-  Apply patch from sendmail.org, for critical buffer overrun in header parsing.
-  [atatat, ticket #28]
+  	Apply patch from sendmail.org, for critical buffer overrun in 
+	header parsing.
+  	[atatat, ticket #28]
 
+lib/libz/gzio.c                                 1.14
+
+        Fix for potential buffer overflow in snprintf() (from OpenBSD)
+        [groo, ticket #29]
+
+lib/libz/gzio.c                                 1.15
+
+        Remove the HAS_* ifdefs which select [v]s{,n}printf.  Always choose 
+        the n version.
+        [groo, ticket #30]
