@@ -1,3 +1,4 @@
+/*	$NetBSD: inetd.c,v 1.10 1995/06/02 15:02:18 pk Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.9 1994/12/23 16:45:11 cgd Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.10 1995/06/02 15:02:18 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -1365,7 +1366,6 @@ daytime_stream(s, sep)		/* Return human-readable time of day */
 {
 	char buffer[256];
 	time_t time(), clock;
-	char *ctime();
 
 	clock = time((time_t *) 0);
 
@@ -1382,7 +1382,6 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 	time_t time(), clock;
 	struct sockaddr sa;
 	int size;
-	char *ctime();
 
 	clock = time((time_t *) 0);
 
