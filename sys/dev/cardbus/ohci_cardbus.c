@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.8 2001/05/09 12:07:01 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.9 2001/05/09 19:33:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,9 +185,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 }
 
 int
-ohci_cardbus_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+ohci_cardbus_detach(device_ptr_t self, int flags)
 {
 	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
 	struct cardbus_devfunc *ct = sc->sc_ct;
