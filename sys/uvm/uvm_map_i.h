@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.12 1999/05/03 08:53:24 mrg Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.13 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -86,15 +86,15 @@
  */
 
 MAP_INLINE vm_map_t
-uvm_map_create(pmap, min, max, pageable)
+uvm_map_create(pmap, min, max, flags)
 	pmap_t pmap;
 	vaddr_t min, max;
-	boolean_t pageable;
+	int flags;
 {
 	vm_map_t result;
 
 	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
-	uvm_map_setup(result, min, max, pageable);
+	uvm_map_setup(result, min, max, flags);
 	result->pmap = pmap;
 	return(result);
 }
@@ -106,10 +106,10 @@ uvm_map_create(pmap, min, max, pageable)
  */
 
 MAP_INLINE void
-uvm_map_setup(map, min, max, pageable)
+uvm_map_setup(map, min, max, flags)
 	vm_map_t map;
 	vaddr_t min, max;
-	boolean_t pageable;
+	int flags;
 {
 
 	map->header.next = map->header.prev = &map->header;
@@ -118,7 +118,7 @@ uvm_map_setup(map, min, max, pageable)
 	map->ref_count = 1;
 	map->min_offset = min;
 	map->max_offset = max;
-	map->entries_pageable = pageable;
+	map->flags = flags;
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;

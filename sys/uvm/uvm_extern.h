@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.26 1999/05/26 01:05:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.27 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
  *
@@ -302,7 +302,7 @@ void			uvm_km_free_wakeup __P((vm_map_t, vaddr_t,
 vaddr_t			uvm_km_kmemalloc __P((vm_map_t, struct uvm_object *,
 						vsize_t, int));
 struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
-				vaddr_t *, vsize_t, boolean_t,
+				vaddr_t *, vsize_t, int,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));

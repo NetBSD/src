@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 1999/05/23 23:03:44 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.65 1999/05/26 19:16:35 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -290,7 +290,7 @@ pmap_init()
 {
 	/* reserve place on SPT for UPT */
 	pte_map = uvm_km_suballoc(kernel_map, &ptemapstart, &ptemapend, 
-	    USRPTSIZE * 4 * maxproc, TRUE, FALSE, &pte_map_store);
+	    USRPTSIZE * 4 * maxproc, 0, FALSE, &pte_map_store);
 }
 
 

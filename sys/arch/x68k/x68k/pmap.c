@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1999/05/21 15:32:38 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -486,8 +486,8 @@ pmap_init()
 	 * Allocate the segment table map and the page table map.
 	 */
 	s = maxproc * X68K_STSIZE;
-	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
-	    FALSE, &st_map_store);
+	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
+	    &st_map_store);
 
 	addr = X68K_PTBASE;
 	if ((X68K_PTMAXSIZE / X68K_MAX_PTSIZE) < maxproc) {
@@ -501,7 +501,7 @@ pmap_init()
 		maxproc = (X68K_PTMAXSIZE / X68K_MAX_PTSIZE);
 	} else
 		s = (maxproc * X68K_MAX_PTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
 	    TRUE, &pt_map_store);
 
 #if defined(M68040) || defined(M68060)
