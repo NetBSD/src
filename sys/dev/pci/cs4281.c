@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.20 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.21 2004/11/02 00:40:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.20 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21 2004/11/02 00:40:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,6 +364,7 @@ cs4281_intr(p)
 		if ((sc->sc_ri & 1) == 0)
 			empty_dma += sc->hw_blocksize;
 		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+		sc->sc_rn += sc->hw_blocksize;
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
 		if (sc->sc_rrun) {
@@ -687,7 +688,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rn = sc->sc_rs;
 
 	dma_count = sc->dma_size;
-	if (param->precision * param->factor == 8)
+	if (param->precision * param->factor != 8)
 		dma_count /= 2;
 	if (param->channels > 1)
 		dma_count /= 2;
