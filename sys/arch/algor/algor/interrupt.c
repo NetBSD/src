@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2001/05/28 18:19:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,8 +124,11 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		(*algor_iointr)(status, cause, pc, ipending);
 	}
 
-	if ((ipending & (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)) == 0)
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
 		return;
+
+	_clrsoftintr(ipending);
 
 	for (i = _IPL_NSOFT - 1; i >= 0; i--) {
 		if ((ipending & ipl_si_to_sr[i]) == 0)
@@ -154,7 +157,6 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 			(*sih->sih_fn)(sih->sih_arg);
 		}
 	}
-	_clrsoftintr(MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 }
 
 /*
