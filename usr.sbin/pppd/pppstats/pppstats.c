@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.18 1998/05/02 14:31:10 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.19 1998/06/18 08:03:08 lukem Exp $	*/
 
 /*
  * print PPP statistics:
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp ";
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.18 1998/05/02 14:31:10 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.19 1998/06/18 08:03:08 lukem Exp $");
 #endif
 #endif
 
@@ -325,26 +325,26 @@ intpr()
 		       W(d.comp_packets),
 		       KBPS(W(d.inc_bytes)),
 		       W(d.inc_packets),
-		       ccs.d.ratio * 256.0);
+		       ccs.d.ratio / 256.0);
 		printf(" | %8.3f %6u %8.3f %6u %6.2f",
 		       KBPS(W(c.comp_bytes)),
 		       W(c.comp_packets),
 		       KBPS(W(c.inc_bytes)),
 		       W(c.inc_packets),
-		       ccs.c.ratio * 256.0);
+		       ccs.c.ratio / 256.0);
 	    } else {
 		printf("%8u %6u %8u %6u %6.2f",
 		       W(d.comp_bytes),
 		       W(d.comp_packets),
 		       W(d.inc_bytes),
 		       W(d.inc_packets),
-		       ccs.d.ratio * 256.0);
+		       ccs.d.ratio / 256.0);
 		printf(" | %8u %6u %8u %6u %6.2f",
 		       W(c.comp_bytes),
 		       W(c.comp_packets),
 		       W(c.inc_bytes),
 		       W(c.inc_packets),
-		       ccs.c.ratio * 256.0);
+		       ccs.c.ratio / 256.0);
 	    }
 	
 	} else {
