@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.4 2002/09/27 20:38:35 thorpej Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.5 2002/10/02 02:09:18 thorpej Exp $	*/
 /* 
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.4 2002/09/27 20:38:35 thorpej Exp $
+ * $Id: if_ntwoc_isa.c,v 1.5 2002/10/02 02:09:18 thorpej Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.4 2002/09/27 20:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.5 2002/10/02 02:09:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,8 @@ static	void ntwoc_isa_get_clock __P((struct sca_port *, u_int8_t, u_int8_t,
 static	void ntwoc_isa_setup_memory(struct sca_softc *sc);
 static	void ntwoc_isa_shutdown __P((void *sc));
 
-const struct cfattach ntwoc_isa_ca = {
-	sizeof(struct ntwoc_isa_softc), ntwoc_isa_probe, ntwoc_isa_attach,
-};
+CFATTACH_DECL(ntwoc_isa, sizeof(struct ntwoc_isa_softc),
+	ntwoc_isa_probe, ntwoc_isa_attach, NULL, NULL);
 
 /*
  * Names for daughter card types.  These match the NTWOC_DB_* defines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.14 2002/09/27 20:38:19 thorpej Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.15 2002/10/02 02:09:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.14 2002/09/27 20:38:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.15 2002/10/02 02:09:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.14 2002/09/27 20:38:19 thorpej Exp $
 int com_multi_probe __P((struct device *, struct cfdata *, void *));
 void com_multi_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach com_multi_ca = {
-	sizeof(struct com_softc), com_multi_probe, com_multi_attach
-};
+CFATTACH_DECL(com_multi, sizeof(struct com_multi_softc),
+	com_multi_probe, com_multi_attach, NULL, NULL);
 
 int
 com_multi_probe(parent, match, aux)
