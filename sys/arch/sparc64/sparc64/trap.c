@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2003/01/18 06:55:26 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.88 2003/01/21 20:42:03 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -843,6 +843,7 @@ badtrap:
 		trapsignal(l, SIGTRAP, 0);
 		break;
 
+	case T_IDIV0:
 	case T_DIV0:
 		ADVANCE;
 		trapsignal(l, SIGFPE, FPE_INTDIV_TRAP);
