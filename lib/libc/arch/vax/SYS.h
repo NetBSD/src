@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7 2002/01/14 00:55:57 thorpej Exp $ */
+/*	$NetBSD: SYS.h,v 1.8 2002/05/26 11:48:04 wiz Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +37,7 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef __STDC__
 #define SYSTRAP(x)	chmk $ SYS_ ## x
-#else
-#define SYSTRAP(x)	chmk $ SYS_/**/x
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x,0);							\
