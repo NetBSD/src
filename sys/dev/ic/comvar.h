@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.28 1998/09/21 00:33:17 matt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.29 1998/11/18 23:58:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -134,6 +134,8 @@ int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
 int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
 	bus_space_handle_t *));
+int com_detach __P((struct device *, int));
+int com_activate __P((struct device *, enum devact));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #if defined(arc)
