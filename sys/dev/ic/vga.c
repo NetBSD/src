@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.10 1998/12/30 13:54:04 augustss Exp $ */
+/* $NetBSD: vga.c,v 1.11 1999/01/09 15:29:26 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -69,6 +69,8 @@ struct vga_config {
 	int nscreens;
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
+	const struct wsscreen_descr *currenttype;
+	int currentfontset;
 
 	int vc_biosmapped;
 	bus_space_tag_t vc_biostag;
@@ -364,6 +366,8 @@ vga_init(vc, iot, memt)
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
+	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+	vc->currentfontset = 0;
 }
 
 void
@@ -407,7 +411,7 @@ vga_cnattach(iot, memt, type, check)
 
 	/* set up bus-independent VGA configuration */
 	vga_init(&vga_console_vc, iot, memt);
-	scr = vga_console_vc.hdl.vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+	scr = vga_console_vc.currenttype;
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	vga_console_screen.pcs.active = 1;
@@ -513,6 +517,7 @@ vga_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	if (vc->nscreens == 1) {
 		scr->pcs.active = 1;
 		vc->active = scr;
+		vc->currenttype = type;
 	} else {
 		scr->pcs.mem = malloc(type->ncols * type->nrows * 2,
 				      M_DEVBUF, M_WAITOK);
@@ -532,12 +537,16 @@ vga_free_screen(v, cookie)
 	void *cookie;
 {
 	struct vgascreen *vs = cookie;
+	struct vga_config *vc = vs->cfg;
 
 	LIST_REMOVE(vs, next);
 	if (vs != &vga_console_screen)
 		free(vs, M_DEVBUF);
 	else
 		panic("vga_free_screen: console");
+
+	if (vc->active == vs)
+		vc->active = 0;
 }
 
 void
@@ -548,14 +557,16 @@ vga_show_screen(v, cookie)
 	struct vgascreen *scr = cookie, *oldscr;
 	struct vga_config *vc = scr->cfg;
 	struct vga_handle *vh = &vc->hdl;
-	const struct wsscreen_descr *type = scr->pcs.type, *oldtype;
-	int i;
+	const struct wsscreen_descr *type = scr->pcs.type;
 
-	oldscr = vc->active;
-	oldtype = oldscr->pcs.type;
+	oldscr = vc->active; /* can be NULL! */
 #ifdef DIAGNOSTIC
-	if (!oldscr->pcs.active)
-		panic("vga_show_screen: not active");
+	if (oldscr) {
+		if (!oldscr->pcs.active)
+			panic("vga_show_screen: not active");
+		if (oldscr->pcs.type != vc->currenttype)
+			panic("vga_show_screen: bad type");
+	}
 #endif
 	if (scr == oldscr) {
 		return;
@@ -565,30 +576,36 @@ vga_show_screen(v, cookie)
 		panic("vga_show_screen: active");
 #endif
 
-	oldscr->pcs.active = 0;
+	if (oldscr) {
+		const struct wsscreen_descr *oldtype = oldscr->pcs.type;
 
-	for (i = 0; i < oldtype->ncols * oldtype->nrows; i++)
-		oldscr->pcs.mem[i] = bus_space_read_2(vh->vh_memt, vh->vh_memh,
-						oldscr->pcs.dispoffset + i * 2);
+		oldscr->pcs.active = 0;
+		bus_space_read_region_2(vh->vh_memt, vh->vh_memh,
+					oldscr->pcs.dispoffset, oldscr->pcs.mem,
+					oldtype->ncols * oldtype->nrows);
+	}
 
-	if (oldtype != type)
+	if (vc->currenttype != type) {
 		vga_setscreentype(vh, type);
-	if (oldscr->fontset != scr->fontset)
+		vc->currenttype = type;
+	}
+	if (vc->currentfontset != scr->fontset) {
 		vga_setfontset(vh, scr->fontset);
-	/* swich colours */
+		vc->currentfontset = scr->fontset;
+	}
+	/* XXX swich colours! */
 
 	scr->pcs.dispoffset = scr->mindispoffset;
-	if (scr->pcs.dispoffset != oldscr->pcs.dispoffset) {
+	if (!oldscr || (scr->pcs.dispoffset != oldscr->pcs.dispoffset)) {
 		vga_6845_write(vh, startadrh, scr->pcs.dispoffset >> 9);
 		vga_6845_write(vh, startadrl, scr->pcs.dispoffset >> 1);
 	}
 
-	for (i = 0; i < type->ncols * type->nrows; i++)
-		bus_space_write_2(vh->vh_memt, vh->vh_memh,
-				  scr->pcs.dispoffset + i * 2,
-				  scr->pcs.mem[i]);
-
+	bus_space_write_region_2(vh->vh_memt, vh->vh_memh,
+				scr->pcs.dispoffset, scr->pcs.mem,
+				type->ncols * type->nrows);
 	scr->pcs.active = 1;
+
 	vc->active = scr;
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
