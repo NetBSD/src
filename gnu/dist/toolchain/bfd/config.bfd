@@ -79,10 +79,6 @@ case "${targ}" in
   alpha*-*-*)
     targ_defvec=ecoffalpha_little_vec
     ;;
-  sparc64-*-netbsd*)
-    targ_defvec=bfd_elf64_sparc_vec
-    targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
-    ;;
 #endif /* BFD64 */
 
   arc-*-elf*)
@@ -528,18 +524,13 @@ case "${targ}" in
     targ_defvec=ecoff_big_vec
     targ_selvecs=ecoff_little_vec
     ;;
-  mips*el*-*-netbsd*aout*)
-    targ_defvec=mipselnetbsd_vec
-    targ_selvecs="bfd_elf32_littlemips_vec bfd_elf32_bigmips_vec ecoff_little_vec ecoff_big_vec"
-    targ_underscore=yes
-    ;;
-  mips*el*-*-netbsd* | mips*-dec-netbsd*)
+  mipsel*-*-netbsd*)
     targ_defvec=bfd_elf32_littlemips_vec
-    targ_selvecs="bfd_elf32_bigmips_vec ecoff_little_vec ecoff_big_vec mipselnetbsd_vec"
+    targ_selvecs="mipselnetbsd_vec bfd_elf32_bigmips_vec ecoff_little_vec ecoff_big_vec"
     ;;
-  mips*eb*-*-netbsd* | mips*-sony-netbsd*)
+  mipseb*-*-netbsd*)
     targ_defvec=bfd_elf32_bigmips_vec
-    targ_selvecs="bfd_elf32_littlemips_vec ecoff_big_vec ecoff_little_vec mipselnetbsd_vec"
+    targ_selvecs="bfd_elf32_littlemips_vec mipselnetbsd_vec ecoff_big_vec ecoff_little_vec"
     ;;
   mips*-dec-bsd*)
     targ_defvec=aout_mips_little_vec
@@ -641,11 +632,15 @@ case "${targ}" in
   powerpc-*-aix* | powerpc-*-beos*)
     targ_defvec=rs6000coff_vec
     ;;
+  powerpc-*-netbsd*)
+    targ_defvec=bfd_elf32_powerpc_vec
+    targ_selvecs="rs6000coff_vec bfd_elf32_powerpcle_vec ppcboot_vec pmac_xcoff_vec"
+    ;;
   powerpc-*-*bsd* | powerpc-*-elf* | powerpc-*-sysv4* | powerpc-*-eabi* | \
   powerpc-*-solaris2* | powerpc-*-linux-gnu* | powerpc-*-rtems* | \
   powerpc-*-vxworks*)
     targ_defvec=bfd_elf32_powerpc_vec
-    targ_selvecs="rs6000coff_vec bfd_elf32_powerpcle_vec ppcboot_vec pmac_xcoff_vec"
+    targ_selvecs="rs6000coff_vec bfd_elf32_powerpcle_vec ppcboot_vec"
     ;;
   powerpc-*-macos* | powerpc-*-mpw*)
     targ_defvec=pmac_xcoff_vec
@@ -715,9 +710,13 @@ case "${targ}" in
     targ_defvec=bfd_elf32_sparc_vec
     targ_selvecs="sparcnetbsd_vec sunos_big_vec"
     ;;
-  sparc-*-netbsd* | sparc-*-openbsd*)
+  sparc-*-netbsd*)
     targ_defvec=sparcnetbsd_vec
     targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
+    targ_underscore=yes
+    ;;
+  sparc-*-openbsd*)
+    targ_defvec=sparcnetbsd_vec
     targ_underscore=yes
     ;;
   sparc-*-elf* | sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
