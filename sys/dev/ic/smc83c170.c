@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.35 2000/10/15 20:00:50 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.36 2000/10/18 16:49:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -255,6 +255,11 @@ epic_attach(sc)
 	ifp->if_watchdog = epic_watchdog;
 	ifp->if_init = epic_init;
 	ifp->if_stop = epic_stop;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
