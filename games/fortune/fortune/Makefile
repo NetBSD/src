@@ -1,12 +1,4 @@
-#	%W% (Berkeley) %G%
-#
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       90001 
-# --------------------         -----   ----------------------
-#
-# 29 Sep 92	Terry Lambert		Set NO_REGEX flag
-#
+#	$Id: Makefile,v 1.4 1993/08/02 17:16:08 mycroft Exp $
 
 PROG=	fortune
 MAN6=	fortune.0
