@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.58 2001/11/13 03:04:50 uwe Exp $ */
+/*	$NetBSD: cache.c,v 1.59 2001/12/04 00:05:06 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,6 +59,7 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
