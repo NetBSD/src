@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2000/08/08 08:26:21 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2000/08/20 17:07:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,9 @@
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
+#define _MVME68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#undef _MVME68K_BUS_DMA_PRIVATE
 #include <machine/reg.h>
 #include <machine/prom.h>
 #include <machine/psl.h>
@@ -273,6 +275,11 @@ mvme147_init()
 	bus_space_handle_t bh;
 
 	/*
+	 * Set up the correct bus dma map sync function for the '147
+	 */
+	_bus_dmamap_sync = _bus_dmamap_sync_030;
+
+	/*
 	 * Set up a temporary mapping to the PCC's registers
 	 */
 	bus_space_map(bt, MAINBUS_PCC_OFFSET + PCC_REG_OFF, PCCREG_SIZE, 0, &bh);
@@ -328,6 +335,11 @@ mvme167_init()
 {
 	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
 	bus_space_handle_t bh;
+
+	/*
+	 * Set up the correct bus dma map sync function for the '167
+	 */
+	_bus_dmamap_sync = _bus_dmamap_sync_0460;
 
 	/*
 	 * Set up a temporary mapping to the PCCChip2's registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.1 2000/08/13 17:00:52 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.2 2000/08/20 17:07:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,19 @@ static const char *mvmebus_mod_string(vme_addr_t, vme_size_t,
 
 static int mvmebus_dmamap_load_common(struct mvmebus_softc *, bus_dmamap_t);
 
+static vme_am_t	mvmebus_am_cap[] = {
+	MVMEBUS_AM_CAP_BLKD64 | MVMEBUS_AM_CAP_USER,
+	MVMEBUS_AM_CAP_DATA   | MVMEBUS_AM_CAP_USER,
+	MVMEBUS_AM_CAP_PROG   | MVMEBUS_AM_CAP_USER,
+	MVMEBUS_AM_CAP_BLK    | MVMEBUS_AM_CAP_USER,
+	MVMEBUS_AM_CAP_BLKD64 | MVMEBUS_AM_CAP_SUPER,
+	MVMEBUS_AM_CAP_DATA   | MVMEBUS_AM_CAP_SUPER,
+	MVMEBUS_AM_CAP_PROG   | MVMEBUS_AM_CAP_SUPER,
+	MVMEBUS_AM_CAP_BLK    | MVMEBUS_AM_CAP_SUPER
+};
+
+#define MVMEBUS_AM2CAP(am)	(mvmebus_am_cap[((am) & \
+				    (VME_AM_MODEMASK | VME_AM_PRIVMASK))])
 
 void
 mvmebus_attach(sc)
@@ -91,6 +104,20 @@ mvmebus_attach(sc)
 		printf("%s: Master#%d: 0x%08lx -> %s\n",
 		    sc->sc_dev.dv_xname, i,
 		    vr->vr_locstart + (vr->vr_vmestart & vr->vr_mask),
+		    mvmebus_mod_string(vr->vr_vmestart,
+			(vr->vr_vmeend - vr->vr_vmestart) + 1,
+			vr->vr_am, vr->vr_datasize));
+	}
+
+	for (i = 0; i < sc->sc_nslaves; i++) {
+		struct mvmebus_range *vr = &sc->sc_slaves[i];
+		if (vr->vr_am == MVMEBUS_AM_DISABLED) {
+			printf("%s:  Slave#%d: disabled\n",
+			    sc->sc_dev.dv_xname, i);
+			continue;
+		}
+		printf("%s:  Slave#%d: 0x%08lx -> %s\n",
+		    sc->sc_dev.dv_xname, i, vr->vr_locstart,
 		    mvmebus_mod_string(vr->vr_vmestart,
 			(vr->vr_vmeend - vr->vr_vmestart) + 1,
 			vr->vr_am, vr->vr_datasize));
@@ -401,14 +428,19 @@ mvmebus_dmamap_create(vsc, len, am, datasize, swap, nsegs,
 	struct mvmebus_softc *sc = vsc;
 	struct mvmebus_dmamap *vmap;
 	struct mvmebus_range *vr;
+	vme_am_t cap, am2;
 	int i, rv;
+
+	cap = MVMEBUS_AM2CAP(am);
+	am2 = am & VME_AM_ADRSIZEMASK;
 
 	/*
 	 * Verify that we even stand a chance of satisfying
 	 * the VMEbus address space and datasize requested.
 	 */
-	for (i = 0, vr = &sc->sc_slaves[0]; i < sc->sc_nslaves; i++, vr++) {
-		if (am == vr->vr_am && datasize <= vr->vr_datasize &&
+	for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
+		if (am2 == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+		    cap == (vr->vr_am & cap) && datasize <= vr->vr_datasize &&
 		    len <= (vr->vr_vmeend - vr->vr_vmestart))
 			break;
 	}
@@ -454,11 +486,73 @@ mvmebus_dmamap_load_common(sc, map)
 	struct mvmebus_softc *sc;
 	bus_dmamap_t map;
 {
-	/* TBD. */
+	struct mvmebus_dmamap *vmap = map->_dm_cookie;
+	struct mvmebus_range *vr = vmap->vm_slave;
+	bus_dma_segment_t *ds;
+	vme_am_t cap, am;
+	int i;
 
-	/* XXX Also deal with bounce buffers */
+	cap = MVMEBUS_AM2CAP(vmap->vm_am);
+	am = vmap->vm_am & VME_AM_ADRSIZEMASK;
 
-	return (-1);
+	/*
+	 * Traverse the list of segments which make up this map, and
+	 * convert the cpu-relative addresses therein to VMEbus addresses.
+	 */
+	for (ds = &map->dm_segs[0]; ds < &map->dm_segs[map->dm_nsegs]; ds++) {
+		/*
+		 * First, see if this map's slave image can access the
+		 * segment, otherwise we have to waste time scanning all
+		 * the slave images.
+		 */
+		vr = vmap->vm_slave;
+		if (am == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+		    cap == (vr->vr_am & cap) &&
+		    vmap->vm_datasize <= vr->vr_datasize &&
+		    ds->_ds_cpuaddr >= vr->vr_locstart &&
+		    ds->ds_len <= (vr->vr_vmeend - vr->vr_vmestart))
+			goto found;
+
+		for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
+			/*
+			 * Filter out any slave images which don't have the
+			 * same VMEbus address modifier and datasize as
+			 * this DMA map, and those which don't cover the
+			 * physical address region containing the segment.
+			 */
+			if (vr != vmap->vm_slave &&
+			    am == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+			    cap == (vr->vr_am & cap) &&
+			    vmap->vm_datasize <= vr->vr_datasize &&
+			    ds->_ds_cpuaddr >= vr->vr_locstart &&
+			    ds->ds_len <= (vr->vr_vmeend - vr->vr_vmestart))
+				break;
+		}
+
+		/*
+		 * Did we find an applicable slave image which covers this
+		 * segment?
+		 */
+		if (i == sc->sc_nslaves) {
+			/*
+			 * XXX TODO:
+			 *
+			 * Bounce this segment via a bounce buffer allocated
+			 * from this DMA map.
+			 */
+			printf("mvmebus_dmamap_load_common: bounce needed!\n");
+			return (EINVAL);
+		}
+
+found:
+		/*
+		 * Generate the VMEbus address of this segment
+		 */
+		ds->ds_addr = (ds->_ds_cpuaddr - vr->vr_locstart) +
+		    vr->vr_vmestart;
+	}
+
+	return (0);
 }
 
 int
@@ -526,6 +620,11 @@ mvmebus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	struct mvmebus_softc *sc = t->_cookie;
 	int rv;
 
+	/*
+	 * mvmebus_dmamem_alloc() will ensure that the physical memory
+	 * backing these segments is 100% accessible in at least one
+	 * of the board's VMEbus slave images.
+	 */
 	rv = bus_dmamap_load_raw(sc->sc_dmat, map, segs, nsegs, size, flags);
 	if (rv != 0)
 		return rv;
@@ -540,7 +639,7 @@ mvmebus_dmamap_unload(t, map)
 {
 	struct mvmebus_softc *sc = t->_cookie;
 
-	/* XXX Deal with bounce buffers? */
+	/* XXX Deal with bounce buffers */
 
 	bus_dmamap_unload(sc->sc_dmat, map);
 }
@@ -607,13 +706,18 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	struct mvmebus_range *vr;
 	bus_addr_t low, high;
 	bus_size_t bound;
+	vme_am_t cap;
 	int i;
+
+	cap = MVMEBUS_AM2CAP(am);
+	am &= VME_AM_ADRSIZEMASK;
 
 	/*
 	 * Find a slave mapping in the requested VMEbus address space.
 	 */
-	for (i = 0, vr = &sc->sc_slaves[0]; i < sc->sc_nslaves; i++, vr++) {
-		if (am == vr->vr_am && datasize <= vr->vr_datasize &&
+	for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
+		if (am == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+		    cap == (vr->vr_am & cap) && datasize <= vr->vr_datasize &&
 		    len <= (vr->vr_vmeend - vr->vr_vmestart))
 			break;
 	}
@@ -627,6 +731,11 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	low = max(vr->vr_locstart, avail_start);
 	high = vr->vr_locstart + (vr->vr_vmeend - vr->vr_vmestart) + 1;
 	bound = (bus_size_t) vr->vr_mask + 1;
+
+#ifdef DEBUG
+	printf("mvmebus_dmamem_alloc: high=0x%08lx,low=0x%08lx,bound=0x%08lx\n",
+		high, low, bound);
+#endif
 
 	/*
 	 * Allocate physical memory.
@@ -726,9 +835,25 @@ mvmebus_mod_string(addr, len, am, ds)
 
 	sprintf(mstring, fmt, addr, addr + len - 1);
 	strcat(mstring, dsiz[ds & 0x7]);
-	strcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
-	    "USER," : "SUPER,");
-	strcat(mstring, mode[am & VME_AM_MODEMASK]);
+
+	if (MVMEBUS_AM_HAS_CAP(am)) {
+		if (am & MVMEBUS_AM_CAP_DATA)
+			strcat(mstring, "D");
+		if (am & MVMEBUS_AM_CAP_PROG)
+			strcat(mstring, "P");
+		if (am & MVMEBUS_AM_CAP_USER)
+			strcat(mstring, "U");
+		if (am & MVMEBUS_AM_CAP_SUPER)
+			strcat(mstring, "S");
+		if (am & MVMEBUS_AM_CAP_BLK)
+			strcat(mstring, "B");
+		if (am & MVMEBUS_AM_CAP_BLKD64)
+			strcat(mstring, "6");
+	} else {
+		strcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
+		    "USER," : "SUPER,");
+		strcat(mstring, mode[am & VME_AM_MODEMASK]);
+	}
 
 	return (mstring);
 }
