@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.232 1999/04/17 16:50:26 drochner Exp $
+#	$NetBSD: GENERIC,v 1.233 1999/04/17 16:52:06 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -552,7 +552,7 @@ opl*	at sb?
 opl*	at sv?
 
 # Audio support
-audio*	at aria?
+#audio*	at aria?
 audio*	at eap?
 audio*	at ess?
 audio*	at gus?
