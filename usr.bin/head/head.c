@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.14 2001/02/19 23:03:47 cgd Exp $	*/
+/*	$NetBSD: head.c,v 1.15 2003/04/18 03:21:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.14 2001/02/19 23:03:47 cgd Exp $");
+__RCSID("$NetBSD: head.c,v 1.15 2003/04/18 03:21:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch(ch) {
 		case 'n':
+			errno = 0;
 			linecnt = strtol(optarg, &ep, 10);
 			if ((linecnt == LONG_MIN || linecnt == LONG_MAX) &&
 			    errno == ERANGE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.11 2001/09/01 02:17:29 simonb Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.12 2003/04/18 03:21:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.11 2001/09/01 02:17:29 simonb Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.12 2003/04/18 03:21:02 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -183,8 +183,10 @@ static size_t
 get_number(const char *str, int ch)
 {
 	char *estr;
-	long number = strtol(str, &estr, 0);
+	long number;
 
+	errno = 0;
+	number = strtol(str, &estr, 0);
 	if ((number == LONG_MIN || number == LONG_MAX) && errno == ERANGE)
 		err(1, "bad -%c argument `%s'", ch, str);
 	if (*estr)
