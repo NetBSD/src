@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.13 1999/09/16 11:45:21 lukem Exp $	*/
+/*	$NetBSD: regerror.c,v 1.14 1999/09/17 09:33:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.13 1999/09/16 11:45:21 lukem Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.14 1999/09/17 09:33:34 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,10 +139,10 @@ size_t errbuf_size;
 	const char *s;
 	char convbuf[50];
 
-	_DIAGASSERT(preg != NULL);
+	_DIAGASSERT(errcode != REG_ATOI || preg != NULL);
 	_DIAGASSERT(errbuf != NULL);
 #ifdef _DIAGNOSTIC
-	if (preg == NULL || errbuf == NULL)
+	if ((errcode == REG_ATOI && preg == NULL) || errbuf == NULL)
 		return(0);
 #endif
 
@@ -185,9 +185,6 @@ char *localbuf;
 size_t buflen;
 {
 	const struct rerr *r;
-
-	_DIAGASSERT(preg != NULL);
-	_DIAGASSERT(localbuf != NULL);
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)
