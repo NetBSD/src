@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 1996/12/09 17:53:07 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 1997/06/10 18:24:34 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ db_read_data(src)
 	u_int *pte;
 	vm_offset_t pgva;
 
-	pgva = amiga_trunc_page((long)src);
+	pgva = m68k_trunc_page((long)src);
 	pte = kvtopte(pgva);
 
 	if ((*pte & PG_V) == 0) {
