@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: rindex.S,v 1.1 1998/02/22 07:21:53 mycroft Exp $")
+	RCSID("$NetBSD: rindex.S,v 1.2 1999/08/23 09:07:35 kleink Exp $")
 #endif
 
 #ifdef STRRCHR
@@ -18,7 +18,7 @@ ENTRY(rindex)
 	movl	8(%esp),%edx
 	movb	12(%esp),%cl
 	xorl	%eax,%eax		/* init pointer to null */
-	.align 2,0x90
+	_ALIGN_TEXT,0x90
 L1:
 	movb	(%edx),%bl
 	cmpb	%bl,%cl
