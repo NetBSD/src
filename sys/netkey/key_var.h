@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.13 2003/09/12 00:27:59 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.14 2003/09/12 07:38:11 itojun Exp $	*/
 /*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
@@ -51,7 +51,10 @@
 #define KEYCTL_ESP_KEYMIN		9
 #define KEYCTL_ESP_AUTH			10
 #define KEYCTL_AH_KEYMIN		11
-#define KEYCTL_MAXID			12
+/* 12: reserved */
+#define KEYCTL_DUMPSA			13
+#define KEYCTL_DUMPSP			14
+#define KEYCTL_MAXID			15
 
 #define KEYCTL_NAMES { \
 	{ 0, 0 }, \
@@ -66,6 +69,9 @@
 	{ "esp_keymin", CTLTYPE_INT }, \
 	{ "esp_auth", CTLTYPE_INT }, \
 	{ "ah_keymin", CTLTYPE_INT }, \
+	{ 0, 0, }, \
+	{ 0, 0, }, \
+	{ 0, 0, }, \
 }
 
 #ifdef _KERNEL
