@@ -26,7 +26,7 @@
  */
 
 #ifndef	lint
-static char rcsid[] = "$Id: softmagic.c,v 1.4 1993/08/06 01:47:19 deraadt Exp $";
+static char rcsid[] = "$Id: softmagic.c,v 1.5 1993/11/03 04:04:22 mycroft Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -38,7 +38,10 @@ static char rcsid[] = "$Id: softmagic.c,v 1.4 1993/08/06 01:47:19 deraadt Exp $"
 
 static int match	__P((unsigned char *));
 static int mcheck	__P((unsigned char	*, struct magic *));
-static void mprint	__P((struct magic *, unsigned char *));
+static void mprint	__P((unsigned char *, struct magic *, unsigned long));
+extern unsigned long signextend	__P((struct magic *, unsigned long));
+
+static int need_separator;
 
 /*
  * softmagic - lookup one file in database 
@@ -90,18 +93,11 @@ unsigned char	*s;
 {
 	int magindex = 0;
 	int cont_level = 0;
-	int need_separator = 0;
 
 	while (magindex < nmagic) {
 		/* if main entry matches, print it... */
+		need_separator = 0;
 		if (mcheck(s, &magic[magindex])) {
-			mprint(&magic[magindex],s);
-			/*
-			 * If we printed something, we'll need to print
-			 * a blank before we print something else.
-			 */
-			if (magic[magindex].desc[0])
-				need_separator = 1;
 			/* and any continuations that match */
 			cont_level++;
 			while (magic[magindex+1].cont_level != 0 &&
@@ -122,24 +118,6 @@ unsigned char	*s;
 					if (mcheck(s, &magic[magindex])) {
 						/*
 						 * This continuation matched.
-						 * Print its message, with
-						 * a blank before it if
-						 * the previous item printed
-						 * and this item isn't empty.
-						 */
-						/* space if previous printed */
-						if (need_separator
-						   && (magic[magindex].nospflag == 0)
-						   && (magic[magindex].desc[0] != '\0')
-						   ) {
-							(void) putchar(' ');
-							need_separator = 0;
-						}
-						mprint(&magic[magindex],s);
-						if (magic[magindex].desc[0])
-							need_separator = 1;
-
-						/*
 						 * If we see any continuations
 						 * at a higher level,
 						 * process them.
@@ -162,49 +140,29 @@ unsigned char	*s;
 }
 
 static void
-mprint(m, s)
-struct magic *m;
+mprint(s, m, v)
 unsigned char *s;
+struct magic *m;
+unsigned long v;
 {
 	register union VALUETYPE *p = (union VALUETYPE *)(s+m->offset);
 	char *pp, *rt;
 
-	/* correct byte order dependancies */
-	switch (m->type) {
-	case BESHORT:
-		p->h = (short)((p->hs[0]<<8)|(p->hs[1]));
-		break;
-	case BELONG:
-	case BEDATE:
-		p->l = (long)
-		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
-		break;
-	case LESHORT:
-		p->h = (short)((p->hs[1]<<8)|(p->hs[0]));
-		break;
-	case LELONG:
-	case LEDATE:
-		p->l = (long)
-		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
-		break;
+	if (m->desc[0]) {
+		if (need_separator && !m->nospflag)
+			(void) putchar(' ');
+		need_separator = 1;
 	}
 
   	switch (m->type) {
   	case BYTE:
- 		(void) printf(m->desc,
- 			      (m->reln & MASK) ? p->b & m->mask : p->b);
-  		break;
   	case SHORT:
   	case BESHORT:
   	case LESHORT:
- 		(void) printf(m->desc,
- 			      (m->reln & MASK) ? p->h & m->mask : p->h);
-  		break;
   	case LONG:
   	case BELONG:
   	case LELONG:
- 		(void) printf(m->desc,
- 			      (m->reln & MASK) ? p->l & m->mask : p->l);
+ 		(void) printf(m->desc, v);
   		break;
   	case STRING:
 		if ((rt=strchr(p->s, '\n')) != NULL)
@@ -216,7 +174,7 @@ unsigned char *s;
 	case DATE:
 	case BEDATE:
 	case LEDATE:
-		pp = ctime((time_t*) &p->l);
+		pp = ctime((time_t*) &v);
 		if ((rt = strchr(pp, '\n')) != NULL)
 			*rt = '\0';
 		(void) printf(m->desc, pp);
@@ -235,19 +193,21 @@ unsigned char	*s;
 struct magic *m;
 {
 	register union VALUETYPE *p = (union VALUETYPE *)(s+m->offset);
-	register long l = m->value.l;
-	register long mask = m->mask;
-	register long v;
+	register unsigned long l = m->value.l;
+	register unsigned long v;
+	register int matched;
 
 	if (debug) {
 		(void) printf("mcheck: %10.10s ", s);
 		mdump(m);
 	}
 
+#if 0
 	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
 		printf("BOINK");
 		return 1;
 	}
+#endif
 
 	switch (m->type) {
 	case BYTE:
@@ -276,19 +236,19 @@ struct magic *m;
 		}
 		break;
 	case BESHORT:
-		v = (short)((p->hs[0]<<8)|(p->hs[1]));
+		v = (unsigned short)((p->hs[0]<<8)|(p->hs[1]));
 		break;
 	case BELONG:
 	case BEDATE:
-		v = (long)
+		v = (unsigned long)
 		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
 		break;
 	case LESHORT:
-		v = (short)((p->hs[1]<<8)|(p->hs[0]));
+		v = (unsigned short)((p->hs[1]<<8)|(p->hs[0]));
 		break;
 	case LELONG:
 	case LEDATE:
-		v = (long)
+		v = (unsigned long)
 		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
 		break;
 	default:
@@ -296,32 +256,40 @@ struct magic *m;
 		return -1;/*NOTREACHED*/
 	}
 
-	if (m->mask != 0L)
+	v = signextend(m, v);
+
+	if (m->flag & MASK)
 		v &= m->mask;
 
 	switch (m->reln) {
 	case 'x':
-		return 1;
+		matched = 1; break;
 	case '!':
-		return v != l;
+		matched = v != l; break;
 	case '=':
-		return v == l;
+		matched = v == l; break;
 	case '>':
-		return v > l;
+		if (m->flag & UNSIGNED)
+			matched = v > l;
+		else
+			matched = (long)v > (long)l;
+		break;
 	case '<':
-		return v < l;
+		if (m->flag & UNSIGNED)
+			matched = v < l;
+		else
+			matched = (long)v < (long)l;
+		break;
 	case '&':
-		return (v & l) == l;
+		matched = (v & l) == l; break;
 	case '^':
-		return (v & l) != l;
-	case MASK | '=':
-		return (v & mask) == l;
-	case MASK | '>':
-		return (v & mask) > l;
-	case MASK | '<':
-		return (v & mask) < l;
+		matched = (v & l) != l; break;
 	default:
 		error("mcheck: can't happen: invalid relation %d.\n", m->reln);
 		return -1;/*NOTREACHED*/
 	}
+
+	if (matched)
+		mprint(s, m, v);
+	return matched;
 }

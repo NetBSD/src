@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: print.c,v 1.4 1993/08/06 01:47:19 deraadt Exp $";
+static char rcsid[] = "$Id: print.c,v 1.5 1993/11/03 04:04:20 mycroft Exp $";
 #endif  /* not lint */
 
 #include <stdio.h>
@@ -45,31 +45,27 @@ void
 mdump(m)
 struct magic *m;
 {
-	static char *offs[] = {  "absolute", "offset", 
-				 "indirect", "indirect-offset" };
 	static char *typ[] = {   "invalid", "byte", "short", "invalid",
 				 "long", "string", "date", "beshort",
 				 "belong", "bedate", "leshort", "lelong",
 				 "ledate" };
-	(void) fprintf(stderr, "[%s,%d,%s,%s%c,",
-		(m->flag >= 0 && m->flag < 4 ? offs[m->flag]: "*bad*"),
-		m->offset,
-		(m->type >= 0 && m->type < 13 ? 
-				typ[(unsigned char) m->type] : "*bad*"),
-		m->reln & MASK ? "&" : "",
-		m->reln & ~MASK);
+	printf(">>>>>>>>%d" + 8 - m->cont_level, m->offset);
 	if (m->flag & INDIR)
-	    (void) fprintf(stderr, "(%s,%d)",
-		(m->in.type >= 0 && 
-		m->in.type < 6 ? typ[(unsigned char) m->in.type] : "*bad*"),
+	    printf("(%s,%d)",
+		(m->in.type >= 0 && m->in.type < 6 ?
+				typ[(unsigned char) m->in.type] : "*bad*"),
 		m->in.offset);
-
+	printf(" %s%s", m->flag & UNSIGNED ? "u" : "",
+		(m->type >= 0 && m->type < 13 ? 
+				typ[(unsigned char) m->type] : "*bad*"));
+	if (m->flag & MASK)
+		printf("&%d", m->mask);
+	printf(" %c", m->reln);
 	if (m->type == STRING)
 		showstr(m->value.s);
 	else
-		(void) fprintf(stderr, "%d",m->value.l);
-	(void) fprintf(stderr, ",%s", m->desc);
-	(void) fputs("]\n", stderr);
+		printf("%d", m->value.l);
+	printf(" %s\n", m->desc);
 }
 
 /*
