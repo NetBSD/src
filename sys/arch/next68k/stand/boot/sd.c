@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*      $NetBSD: sd.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -64,6 +64,10 @@ void	scsi_init(void);
 int	scsiicmd(char, char, u_char *, int, char *, int);
 int	sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 		   void *buf, size_t *rsize);
+int sdprobe(char target, char lun);
+int sdgetinfo(struct sd_softc *ss);
+int sdopen(struct open_file *f, char count, char lun, char part);
+int sdclose(struct open_file *f);
 
 int
 sdprobe(char target, char lun)

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1999/03/26 06:54:40 dbj Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -31,6 +31,11 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
+
+int atoi __P((const char *cp));
+int devlookup __P((const char *d, int len));
+int devparse __P((const char *fname, int *dev,
+	 char *count, char *lun, char *part, char **file));
 
 int
 atoi(const char *cp)

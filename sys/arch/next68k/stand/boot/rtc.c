@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*      $NetBSD: rtc.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -33,6 +33,11 @@
 #include <next68k/dev/clockreg.h>
 #include <machine/cpu.h>
 #include <stand.h>
+
+u_char rtc_read __P((u_char reg));
+void rtc_init __P((void));
+time_t getsecs __P((void));
+
 
 /* ### where shall I put this definition? */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
