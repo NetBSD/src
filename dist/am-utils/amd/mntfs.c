@@ -1,4 +1,4 @@
-/*	$NetBSD: mntfs.c,v 1.1.1.6 2003/03/09 01:13:11 christos Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.2 2003/03/10 00:03:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -124,7 +124,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 {
   mntfs *mf;
 
-  dlog("Locating mntfs reference to %s", mp);
+  dlog("Locating mntfs reference to %s with %s", mp, info);
 
   ITER(mf, mntfs, &mfhead) {
     if (STREQ(mf->mf_mount, mp) && STREQ(mf->mf_info, info)) {
