@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.2 2002/08/02 16:51:48 explorer Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.3 2002/08/18 07:45:04 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.2 2002/08/02 16:51:48 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.3 2002/08/18 07:45:04 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ acpibat_get_status(void *arg)
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
 	if (rv != AE_OK) {
-		printf("bat: failed to evaluate _BIF: %x\n", rv);
+		printf("bat: failed to evaluate _BST: %x\n", rv);
 		return;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
@@ -266,7 +266,8 @@ acpibat_get_status(void *arg)
 		               (sc->sc_status & 2) ? "charging" : "idle"),
 		       ACM_SCALE(sc->sc_mv),
 		       ACM_SCALE(sc->sc_capacity), ACM_CAPUNIT(sc),
-		       (sc->sc_capacity * 100) / sc->sc_design_capacity,
+		       (sc->sc_design_capacity == 0) ? 0 : 
+			    (sc->sc_capacity * 100) / sc->sc_design_capacity,
 		       ACM_SCALE(sc->sc_rate), ACM_RATEUNIT(sc));
 	}
 out:
