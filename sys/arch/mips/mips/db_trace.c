@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2000/03/30 14:36:30 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2000/05/26 03:34:27 jhawk Exp $	*/
 
 /*
  * Mach Operating System
@@ -126,11 +126,12 @@ struct db_variable db_regs[] = {
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	boolean_t	have_addr;
 	db_expr_t	count;
 	char		*modif;
+	void		(*pr) __P((const char *, ...));
 {
 #ifndef DDB_TRACE
 	stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1],
@@ -139,7 +140,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			ddb_regs.f_regs[SP],
 			ddb_regs.f_regs[S8],	/* non-virtual frame pointer */
 			ddb_regs.f_regs[RA],
-			db_printf);
+			pr);
 #else
 /*
  * Imcomplete but practically useful stack backtrace.
@@ -189,20 +190,20 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		db_find_sym_and_offset(func, &name, &offset);
 		if (name == 0)
 			name = "?";
-		db_printf("%s()+0x%x, called by %p, stack size %d\n",
+		(*pr)("%s()+0x%x, called by %p, stack size %d\n",
 			name, pc - func, (void *)ra, stacksize);
 
 		if (ra == pc) {
-			db_printf("-- loop? --\n");
+			("*pr)("-- loop? --\n");
 			return;
 		}
 		sp += stacksize;
 		pc = ra;
 	} while (pc > (unsigned)verylocore);
 	if (pc < 0x80000000)
-		db_printf("-- user process --\n");
+		(*pr)("-- user process --\n");
 	else
-		db_printf("-- kernel entry --\n");
+		(*pr)("-- kernel entry --\n");
 #endif
 }
 
