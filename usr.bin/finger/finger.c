@@ -34,6 +34,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Mail status reporting added 931007 by Luke Mewburn, <zak@rmit.edu.au>.
+ */
+
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
@@ -42,7 +46,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$Id: finger.c,v 1.2 1993/08/01 18:16:02 mycroft Exp $";
+static char rcsid[] = "$Id: finger.c,v 1.3 1993/10/07 19:58:29 brezak Exp $";
 #endif /* not lint */
 
 /*
