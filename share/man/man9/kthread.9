@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.7 2002/03/08 23:03:23 kleink Exp $
+.\"     $NetBSD: kthread.9,v 1.8 2002/10/09 15:27:23 itojun Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ kernel thread.  Kernel threads are not swapped out during memory
 congestion.  The VM space and limits are shared with proc0 (usually swapper).
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn kthread_create1 "func" "arg" "newpp" "fmt" "..."
+.It Fn kthread_create1 "void (*func)(void *)" "void *arg" "struct proc **newpp" "const char *fmt" "..."
 Fork a kernel thread.
 .Fa newpp
 is a pointer the the new proc structure for the kernel thread.
@@ -70,7 +70,7 @@ to commence execution.
 .Fa fmt
 is a string containing format information used to display the kernel
 thread name.
-.It Fn kthread_create "void (*func)(void)" "void *arg"
+.It Fn kthread_create "void (*func)(void *)" "void *arg"
 Register function
 .Fa func
 to defer creation of the kernel thread.  Deferral of kernel thread
