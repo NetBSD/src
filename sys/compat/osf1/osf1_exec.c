@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.2 1999/04/27 01:45:03 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.3 1999/04/27 03:19:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -45,8 +45,12 @@
 #include <sys/stat.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_exec.h>
+#include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_syscall.h>
+
+/* XXX BELONGS IN A 'PUBLIC' HEADER */
+int     osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp);
+
 
 struct osf1_exec_emul_arg {
 	int	flags;
@@ -62,10 +66,6 @@ static void *osf1_copyargs(struct exec_package *pack,
 static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
 
 #define	MAX_AUX_ENTRIES		4	/* max we'll ever push (right now) */
-
-#define	COMPAT_OSF1_EMUL_LOADER_NAME					\
-    "/emul/osf1" OSF1_LDR_EXEC_DEFAULT_LOADER
-
 
 extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
@@ -104,13 +104,13 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 	epp->ep_emul_arg = emul_arg;
 
 	emul_arg->flags = 0;
-	/* XXX? includes /emul/osf1 if appropriate */
+	/* includes /emul/osf1 if appropriate */
 	strncpy(emul_arg->exec_name, epp->ep_ndp->ni_cnd.cn_pnbuf,
 	    MAXPATHLEN + 1);
 
 	/* do any special object file handling */
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
-	case OBJECT_TYPE_SHARABLE:
+	case ECOFF_OBJECT_TYPE_SHARABLE:
 		/* can't exec a shared library! */
 #if 1
 		uprintf("can't execute OSF/1 shared libraries\n");
@@ -118,7 +118,7 @@ osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp)
 		error = ENOEXEC;
 		break;
 
-	case OBJECT_TYPE_CALL_SHARED:
+	case ECOFF_OBJECT_TYPE_CALL_SHARED:
 		error = osf1_exec_ecoff_dynamic(p, epp);
 		break;
 
@@ -137,7 +137,21 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	uprintf("OSF/1 dynamically linked binaries not yet supported\n");
 	return ENOEXEC;
 #else
-	not yet implemented.  DUH!
+	struct osf1_exec_emul_arg *emul_arg = epp->ep_emul_arg;
+	const char *pathbuf;
+	int error;
+
+	error = emul_find(p, NULL, osf1_emul_path,
+	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
+	/* includes /emul/osf1 if appropriate */
+	strncpy(emul_arg->loader_name, pathbuf, MAXPATHLEN + 1);
+	emul_arg->flags |= OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER;
+	if (!error)
+		free((char *)pathbuf, M_TEMP);
+
+	uprintf("loader is %s\n", emul_arg->loader_name);
+
+	return ENOEXEC;
 #endif
 }
 
