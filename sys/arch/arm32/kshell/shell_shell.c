@@ -1,4 +1,4 @@
-/* $NetBSD: shell_shell.c,v 1.10 1996/10/15 21:08:37 mark Exp $ */
+/* $NetBSD: shell_shell.c,v 1.11 1996/10/17 02:43:38 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,7 +42,7 @@
  *
  * Created      : 09/10/94
  */
-#define HISTOGRAM
+
 /* Include standard header files */
 
 #include <sys/param.h>
@@ -92,9 +92,8 @@ void pmap_dump_pvs	__P((void));
 void pmap_dump_mpvs	__P((void));
 #if NASC > 0
 void asc_dump		__P((void));
-#endif
+#endif	/* NASC */
 void pmap_pagedir_dump	__P((void));
-void checkinodes	__P((void));
 
 /* Now for the main code */
 
@@ -648,8 +647,6 @@ shell()
 			shell_vnode(args, argv);
 		else if (strcmp(argv[0], "wakeup") == 0)
 			shell_wakeup(args, argv);
-		else if (strcmp(argv[0], "checkinodes") == 0)
-			checkinodes();
 #if NASC > 0
 		else if (strcmp(argv[0], "ascdump") == 0)
 			asc_dump();
@@ -685,10 +682,9 @@ shell()
 			printf("vnode <vp>\r\n");
 			printf("buf <bp>\r\n");
 			printf("wakeup <ident>\r\n");
-			printf("checkinodes\r\n");
 #if NASC > 0
 			printf("ascdump\r\n");
-#endif
+#endif	/* NASC */
 		}
 	} while (!quit);
 
