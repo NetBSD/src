@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.112 2004/04/25 19:38:27 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.113 2004/05/25 11:51:11 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.112 2004/04/25 19:38:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.113 2004/05/25 11:51:11 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ static const struct ne2000dev {
     { PCMCIA_STR_RPTI_EP400,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_RPTI_EP400,
-      0, -1, { 0x00, 0x40, 0x95 } },
+      0, 0x110, { 0x00, 0x40, 0x95 } },
 
     { PCMCIA_STR_RPTI_EP401,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
