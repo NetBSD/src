@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.38 1996/10/13 03:07:32 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -67,7 +67,7 @@
 #if NSER > 0
 
 void serattach __P((struct device *, struct device *, void *));
-int sermatch __P((struct device *, void *, void *));
+int sermatch __P((struct device *, struct cfdata *, void *));
 
 struct ser_softc {
 	struct device dev;
@@ -171,11 +171,11 @@ long	sermintcount[16];
 void	sermint __P((register int unit));
 
 int
-sermatch(pdp, match, auxp)
+sermatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (matchname("ser", (char *)auxp) == 0 || cfp->cf_unit != 0)
 		return(0);

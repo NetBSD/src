@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.13 1996/12/10 21:27:23 thorpej Exp $	*/
+/*	$NetBSD: flsc.c,v 1.14 1996/12/23 09:10:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -58,7 +58,7 @@
 #include <amiga/dev/flscvar.h>
 
 void flscattach __P((struct device *, struct device *, void *));
-int  flscmatch  __P((struct device *, void *, void *));
+int  flscmatch  __P((struct device *, struct cfdata *, void *));
 
 struct scsi_adapter flsc_scsiswitch = {
 	sfas_scsicmd,
@@ -97,9 +97,10 @@ void flsc_led		 __P((struct sfas_softc *sc, int mode));
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-flscmatch(pdp, match, auxp)
+flscmatch(pdp, cfp, auxp)
 	struct device	*pdp;
-	void		*match, *auxp;
+	struct cfdata	*cfp;
+	void		*auxp;
 {
 	struct zbus_args *zap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.16 1996/12/10 21:27:27 thorpej Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.17 1996/12/23 09:10:27 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,7 +48,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void otgscattach __P((struct device *, struct device *, void *));
-int otgscmatch __P((struct device *, void *, void *));
+int otgscmatch __P((struct device *, struct cfdata *, void *));
 
 int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -92,9 +92,10 @@ struct cfdriver otgsc_cd = {
  * if we are my Hacker's SCSI board we are here.
  */
 int
-otgscmatch(pdp, match, auxp)
+otgscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

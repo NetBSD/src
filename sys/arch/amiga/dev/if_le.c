@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1996/05/07 00:35:07 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 1996/12/23 09:10:18 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,7 +70,7 @@
 /* offsets for:	   ID,   REGS,    MEM */
 int	lestd[] = { 0, 0x4000, 0x8000 };
 
-int le_zbus_match __P((struct device *, void *, void *));
+int le_zbus_match __P((struct device *, struct cfdata *, void *));
 void le_zbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_zbus_ca = {
@@ -105,9 +105,10 @@ lerdcsr(sc, port)
 }
 
 int
-le_zbus_match(parent, match, aux)
+le_zbus_match(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap = aux;
 

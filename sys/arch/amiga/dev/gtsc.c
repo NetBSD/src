@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.19 1996/10/13 03:07:11 christos Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.20 1996/12/23 09:10:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,7 +53,7 @@
 #include <amiga/dev/gvpbusvar.h>
 
 void gtscattach __P((struct device *, struct device *, void *));
-int gtscmatch __P((struct device *, void *, void *));
+int gtscmatch __P((struct device *, struct cfdata *, void *));
 
 void gtsc_enintr __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
@@ -97,9 +97,10 @@ struct cfdriver gtsc_cd = {
 };
 
 int
-gtscmatch(pdp, match, auxp)
+gtscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct gvpbus_args *gap;
 

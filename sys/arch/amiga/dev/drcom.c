@@ -1,4 +1,4 @@
-/*	$NetBSD: drcom.c,v 1.1 1996/11/30 00:43:02 is Exp $	*/
+/*	$NetBSD: drcom.c,v 1.2 1996/12/23 09:09:56 veego Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -137,7 +137,7 @@ static u_char tiocm_xxx2mcr __P((int));
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
-int drcommatch __P((struct device *, void *, void *));
+int drcommatch __P((struct device *, struct cfdata *, void *));
 void drcomattach __P((struct device *, struct device *, void *));
 
 struct cfattach drcom_ca = {
@@ -206,16 +206,16 @@ drcomspeed(speed)
 }
 
 int
-drcommatch(parent, match, auxp)
+drcommatch(parent, cfp, auxp)
 	struct device *parent;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cdp = (struct cfdata *)match;
 
 	/* Exactly two of us live on the DraCo */
 
 	if (is_draco() && matchname(auxp, "drcom") &&
-	    (cdp->cf_unit >= 0) && (cdp->cf_unit < 2))
+	    (cfp->cf_unit >= 0) && (cfp->cf_unit < 2))
 		return 1;
 
 	return 0;

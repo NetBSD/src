@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1996/12/17 11:43:12 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 1996/12/23 09:15:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,7 +44,7 @@ void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, void *, void *));
+int mbmatch __P((struct device *, struct cfdata *, void *));
 
 int cold;	/* 1 if still booting */
 #include <sys/kernel.h>
@@ -221,11 +221,11 @@ struct cfdriver mainbus_cd = {
 };
 
 int
-mbmatch(pdp, match, auxp)
-	struct device *pdp;
-	void *match, *auxp;
+mbmatch(pdp, cfp, auxp)
+	struct device	*pdp;
+	struct cfdata	*cfp;
+	void		*auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (cfp->cf_unit > 0)
 		return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.13 1996/10/13 03:07:26 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.14 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
  * based on:
@@ -73,7 +73,7 @@
 #include <machine/conf.h>
 
 void msattach __P((struct device *, struct device *, void *));
-int msmatch __P((struct device *, void *, void *));
+int msmatch __P((struct device *, struct cfdata *, void *));
 
 void msintr __P((void *));
 void ms_enable __P((dev_t));
@@ -101,11 +101,11 @@ struct cfdriver ms_cd = {
 };
 
 int
-msmatch(pdp, match, auxp)
+msmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = (struct cfdata *)match;
 
 	if (matchname((char *)auxp, "ms") &&
 	    cfp->cf_unit >= 0 && cfp->cf_unit <= 1) /* only two units */

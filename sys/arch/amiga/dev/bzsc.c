@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.13 1996/10/13 03:06:50 christos Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.14 1996/12/23 09:09:53 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -58,7 +58,7 @@
 #include <amiga/dev/bzscvar.h>
 
 void bzscattach __P((struct device *, struct device *, void *));
-int  bzscmatch  __P((struct device *, void *, void *));
+int  bzscmatch  __P((struct device *, struct cfdata *, void *));
 
 struct scsi_adapter bzsc_scsiswitch = {
 	sfas_scsicmd,
@@ -96,9 +96,10 @@ void bzsc_led_dummy	__P((struct sfas_softc *sc, int mode));
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-bzscmatch(pdp, match, auxp)
+bzscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 	vu_char *ta;

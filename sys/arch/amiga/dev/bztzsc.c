@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.1 1996/12/16 16:17:29 is Exp $	*/
+/*	$NetBSD: bztzsc.c,v 1.2 1996/12/23 09:09:54 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -56,7 +56,7 @@
 #include <amiga/dev/bztzscvar.h>
 
 void bztzscattach __P((struct device *, struct device *, void *));
-int  bztzscmatch  __P((struct device *, void *, void *));
+int  bztzscmatch  __P((struct device *, struct cfdata *, void *));
 
 struct scsi_adapter bztzsc_scsiswitch = {
 	sfas_scsicmd,
@@ -93,9 +93,10 @@ void bztzsc_led		 __P((struct sfas_softc *sc, int mode));
  * If we are an Phase 5 Devices Blizzard-2060 SCSI option:
  */
 int
-bztzscmatch(pdp, match, auxp)
+bztzscmatch(pdp, cfp, auxp)
 	struct device	*pdp;
-	void		*match, *auxp;
+	struct cfdata	*cfp;
+	void		*auxp;
 {
 	struct zbus_args *zap;
 	volatile u_int8_t *ta;

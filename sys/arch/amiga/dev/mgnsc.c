@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.23 1996/12/10 21:27:26 thorpej Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.24 1996/12/23 09:10:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,7 +51,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void mgnscattach __P((struct device *, struct device *, void *));
-int mgnscmatch __P((struct device *, void *, void *));
+int mgnscmatch __P((struct device *, struct cfdata *, void *));
 int mgnsc_dmaintr __P((void *));
 #ifdef DEBUG
 void mgnsc_dump __P((void));
@@ -87,9 +87,10 @@ struct cfdriver mgnsc_cd = {
  * if we are a CSA Magnum 40 SCSI
  */
 int
-mgnscmatch(pdp, match, auxp)
+mgnscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

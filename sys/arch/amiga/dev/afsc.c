@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.19 1996/12/10 21:27:18 thorpej Exp $	*/
+/*	$NetBSD: afsc.c,v 1.20 1996/12/23 09:09:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,7 +52,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void afscattach __P((struct device *, struct device *, void *));
-int afscmatch __P((struct device *, void *, void *));
+int afscmatch __P((struct device *, struct cfdata *, void *));
 int afsc_dmaintr __P((void *));
 #ifdef DEBUG
 void afsc_dump __P((void));
@@ -96,9 +96,10 @@ struct cfdriver aftsc_cd = {
  * if we are a Commodore Amiga A4091 or possibly an A4000T
  */
 int
-afscmatch(pdp, match, auxp)
+afscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 	siop_regmap_p rp;

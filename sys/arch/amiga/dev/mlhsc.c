@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.15 1996/12/10 21:27:27 thorpej Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.16 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -48,7 +48,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void mlhscattach __P((struct device *, struct device *, void *));
-int mlhscmatch __P((struct device *, void *, void *));
+int mlhscmatch __P((struct device *, struct cfdata *, void *));
 
 int mlhsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -90,9 +90,10 @@ struct cfdriver mlhsc_cd = {
  * if we are my Hacker's SCSI board we are here.
  */
 int
-mlhscmatch(pdp, match, auxp)
+mlhscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

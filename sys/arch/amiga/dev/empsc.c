@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.12 1996/12/10 21:27:22 thorpej Exp $	*/
+/*	$NetBSD: empsc.c,v 1.13 1996/12/23 09:09:58 veego Exp $	*/
 
 /*
 
@@ -50,7 +50,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void empscattach __P((struct device *, struct device *, void *));
-int empscmatch __P((struct device *, void *, void *));
+int empscmatch __P((struct device *, struct cfdata *, void *));
 int empsc_intr __P((void *));
 
 struct scsi_adapter empsc_scsiswitch = {
@@ -85,9 +85,10 @@ struct cfdriver empsc_cd = {
  * if this is an EMPLANT board
  */
 int
-empscmatch(pdp, match, auxp)
+empscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 

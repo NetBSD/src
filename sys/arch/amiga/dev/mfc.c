@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.17 1996/10/13 03:07:23 christos Exp $ */
+/*	$NetBSD: mfc.c,v 1.18 1996/12/23 09:10:23 veego Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -181,10 +181,10 @@ struct mfc_args {
 
 int	mfcprint __P((void *auxp, const char *));
 void	mfcattach __P((struct device *, struct device *, void *));
-int	mfcmatch __P((struct device *, void *, void *));
+int	mfcmatch __P((struct device *, struct cfdata *, void *));
 
 #if NMFCS > 0
-int	mfcsmatch __P((struct device *, void *, void *));
+int	mfcsmatch __P((struct device *, struct cfdata *, void *));
 void	mfcsattach __P((struct device *, struct device *, void *));
 int	mfcsparam __P(( struct tty *, struct termios *));
 int	mfcshwiflow __P((struct tty *, int));
@@ -197,7 +197,7 @@ void	mfcsmint __P((register int));
 
 #if NMFCP > 0
 void mfcpattach __P((struct device *, struct device *, void *));
-int mfcpmatch __P((struct device *, void *, void *));
+int mfcpmatch __P((struct device *, struct cfdata *, void *));
 #endif
 int mfcintr __P((void *));
 
@@ -320,9 +320,10 @@ struct speedtab mfcs2speedtab2[] = {
  * if we are an bsc/Alf Data MultFaceCard (I, II, and III)
  */
 int
-mfcmatch(pdp, match, auxp)
+mfcmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct zbus_args *zap;
 
@@ -401,9 +402,10 @@ mfcattach(pdp, dp, auxp)
  *
  */
 int
-mfcsmatch(pdp, match, auxp)
+mfcsmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	struct mfc_args *ma;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.31 1996/10/13 03:06:58 christos Exp $	*/
+/*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ int grfbanked_set __P((dev_t, int));
 #endif
 
 void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, void *, void *));
+int grfmatch __P((struct device *, struct cfdata *, void *));
 int grfprint __P((void *, const char *));
 /*
  * pointers to grf drivers device structs 
@@ -120,11 +120,11 @@ static struct cfdata *cfdata;
  * low level board driver.
  */
 int
-grfmatch(pdp, match, auxp)
+grfmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
 		return(0);

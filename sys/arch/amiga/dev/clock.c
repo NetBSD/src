@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 1996/12/17 11:43:10 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 1996/12/23 09:09:55 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,7 @@ struct CIA *clockcia;
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch __P((struct device *, void *, void *));
+int clockmatch __P((struct device *, struct cfdata *, void *));
 void clockattach __P((struct device *, struct device *, void *));
 void cpu_initclocks __P((void));
 void calibrate_delay __P((struct device *));
@@ -99,9 +99,10 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, NULL, 0 };
 
 int
-clockmatch(pdp, match, auxp)
+clockmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	if (matchname("clock", auxp))
 		return(1);

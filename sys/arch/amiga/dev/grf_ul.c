@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.22 1996/10/13 03:07:07 christos Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.23 1996/12/23 09:10:10 veego Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -440,7 +440,7 @@ int ul_mode __P((struct grf_softc *, u_long, void *, u_long, int));
 
 void grfulattach __P((struct device *, struct device *, void *));
 int grfulprint __P((void *, const char *));
-int grfulmatch __P((struct device *, void *, void *));
+int grfulmatch __P((struct device *, struct cfdata *, void *));
  
 struct cfattach grful_ca = {
 	sizeof(struct grf_ul_softc), grfulmatch, grfulattach
@@ -460,12 +460,12 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfulmatch(pdp, match, auxp)
+grfulmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 #ifdef ULOWELLCONSOLE
-	struct cfdata *cfp = match;
 	static int ulconunit = -1;
 #endif
 	struct zbus_args *zap;

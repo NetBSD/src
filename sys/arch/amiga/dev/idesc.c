@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.28 1996/12/10 21:27:24 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -237,7 +237,7 @@ struct idec_softc
 int ide_scsicmd __P((struct scsi_xfer *));
 
 void idescattach __P((struct device *, struct device *, void *));
-int idescmatch __P((struct device *, void *, void *));
+int idescmatch __P((struct device *, struct cfdata *, void *));
 
 int  ideicmd __P((struct idec_softc *, int, void *, int, void *, int));
 int  idego __P((struct idec_softc *, struct scsi_xfer *));
@@ -325,9 +325,10 @@ int ide_debug = 0;
  * if we are an A4000 we are here.
  */
 int
-idescmatch(pdp, match, auxp)
+idescmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
 	char *mbusstr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.8 1996/12/10 21:27:21 thorpej Exp $	*/
+/*	$NetBSD: drsc.c,v 1.9 1996/12/23 09:09:57 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -52,7 +52,7 @@
 #include <amiga/amiga/drcustom.h>
 
 void drscattach __P((struct device *, struct device *, void *));
-int drscmatch __P((struct device *, void *, void *));
+int drscmatch __P((struct device *, struct cfdata *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
 #ifdef DEBUG
 void drsc_dump __P((void));
@@ -92,12 +92,12 @@ static struct siop_softc *drsc_softc;
  * One of us is on every DraCo motherboard, 
  */
 int
-drscmatch(pdp, match, auxp)
+drscmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cdp = (struct cfdata *)match;
-	if (is_draco() && matchname(auxp, "drsc") && (cdp->cf_unit == 0))
+	if (is_draco() && matchname(auxp, "drsc") && (cfp->cf_unit == 0))
 		return(1);
 	return(0);
 }

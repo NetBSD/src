@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.28 1996/12/09 18:17:40 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.29 1996/12/23 09:10:32 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -179,7 +179,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 void zbusattach __P((struct device *, struct device *, void *));
 int zbusprint __P((void *, const char *));
-int zbusmatch __P((struct device *, void *, void *));
+int zbusmatch __P((struct device *, struct cfdata *, void *));
 caddr_t zbusmap __P((caddr_t, u_int));
 static char *aconflookup __P((int, int));
 
@@ -216,11 +216,11 @@ static struct cfdata *early_cfdata;
 
 /*ARGSUSED*/
 int
-zbusmatch(pdp, match, auxp)
+zbusmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
 
 	if (matchname(auxp, "zbus") == 0)
 		return(0);

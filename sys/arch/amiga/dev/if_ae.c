@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.11 1996/10/13 03:07:13 christos Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.12 1996/12/23 09:10:13 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -135,7 +135,7 @@ struct	ae_softc {
 int	aestd[] = { 0, 0x0370, 0x8000 };
 static u_int16_t	revision;
 
-int	aematch __P((struct device *, void *, void *));
+int	aematch __P((struct device *, struct cfdata *, void *));
 void	aeattach __P((struct device *, struct device *, void *));
 void	aewatchdog __P((struct ifnet *));
 void	aestop __P((struct ae_softc *));
@@ -164,9 +164,10 @@ struct cfdriver ae_cd = {
 };
 
 int
-aematch(parent, match, aux)
+aematch(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.9 1996/10/13 03:07:18 christos Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -156,7 +156,7 @@ struct	qn_softc {
 #endif
 
 
-int	qnmatch __P((struct device *, void *, void *));
+int	qnmatch __P((struct device *, struct cfdata *, void *));
 void	qnattach __P((struct device *, struct device *, void *));
 int	qnintr __P((void *));
 int	qnioctl __P((struct ifnet *, u_long, caddr_t));
@@ -185,9 +185,10 @@ struct cfdriver qn_cd = {
 
 
 int
-qnmatch(parent, match, aux)
+qnmatch(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 	struct zbus_args *zap;
 
