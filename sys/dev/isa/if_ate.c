@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.38 2002/10/05 17:52:32 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.39 2002/11/30 14:15:11 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.38 2002/10/05 17:52:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.39 2002/11/30 14:15:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,12 +412,12 @@ ate_attach(parent, self, aux)
 	printf(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
-	sc->sc_flags |= FE_FLAGS_ENABLED;
+	sc->sc_stat |= FE_STAT_ENABLED;
 
 	/*
 	 * Do generic MB86960 attach.
 	 */
-	mb86960_attach(sc, MB86960_TYPE_86965, myea);
+	mb86960_attach(sc, myea);
 
 	mb86960_config(sc, NULL, 0, 0);
 

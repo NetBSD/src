@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.8 2002/10/04 15:22:31 tsutsui Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.9 2002/11/30 14:15:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.8 2002/10/04 15:22:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.9 2002/11/30 14:15:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,12 +198,12 @@ ate_mca_attach(parent, self, aux)
 	type = atp->at_type;
 
 	/* This interface is always enabled. */
-	sc->sc_flags |= FE_FLAGS_ENABLED;
+	sc->sc_stat |= FE_STAT_ENABLED;
 
 	/*
 	 * Do generic MB86960 attach.
 	 */
-	mb86960_attach(sc, MB86960_TYPE_86965, myea);
+	mb86960_attach(sc, myea);
 
 	mb86960_config(sc, NULL, 0, 0);
 
