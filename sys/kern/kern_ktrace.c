@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.8 2004/09/24 10:53:42 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.9 2004/10/17 07:44:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.8 2004/09/24 10:53:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.9 2004/10/17 07:44:37 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -71,8 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.8 2004/09/24 10:53:42 skrll E
 
 struct ktrace_entry {
 	TAILQ_ENTRY(ktrace_entry) kte_list;
-	struct ktr_header kte_kth;
-	void *kte_buf;			/* ktr_buf */
+	union {
+		struct ktr_header un_kte_kth;
+		struct ktr_compat un_kte_ktc;
+	} kte_un;
+#define	kte_ktc kte_un.un_kte_ktc
+#define	kte_kth kte_un.un_kte_kth
+	void *kte_buf;
 };
 
 struct ktr_desc {
@@ -332,9 +337,8 @@ freekte:
 void
 ktefree(struct ktrace_entry *kte)
 {
-	struct ktr_header *kth = &kte->kte_kth;
 
-	if (kth->ktr_len > 0)
+	if (kte->kte_buf != NULL)
 		free(kte->kte_buf, M_KTRACE);
 	pool_put(&kte_pool, kte);
 }
@@ -382,12 +386,27 @@ void
 ktrinitheader(struct ktr_header *kth, struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
+	struct timeval tv;
 
 	(void)memset(kth, 0, sizeof(*kth));
 	kth->ktr_type = type;
-	microtime(&kth->ktr_time);
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
+
+	kth->ktr_type |= KTRFAC_VERSION(p->p_traceflag) << KTR_VER_SHIFT;
+
+	switch (KTRFAC_VERSION(p->p_traceflag)) {
+	case 0:
+		/* This is the original format */
+		break;
+	case 1:
+		kth->ktr_lid = l->l_lid;
+		break;
+	default:
+		break;
+	}
 }
 
 void
@@ -1089,8 +1108,10 @@ ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 	struct iovec aiov[64], *iov;
 	struct ktrace_entry *top = kte;
 	struct ktr_header *kth;
+	struct ktr_compat *ktc;
 	struct file *fp = ktd->ktd_fp;
 	struct proc *p;
+	int rl, hl;
 	int error;
 next:
 	auio.uio_iov = iov = &aiov[0];
@@ -1102,14 +1123,39 @@ next:
 	auio.uio_lwp = NULL;
 	do {
 		kth = &kte->kte_kth;
+
+		rl = kth->ktr_len;
+		hl = KTRv0_LEN;
+
+		switch (KTR_VERSION(kth)) {
+		case 0:
+			/*
+			 * Convert the old format fields to the new
+			 */
+			ktc = &kte->kte_ktc;
+			TIMESPEC_TO_TIMEVAL(&ktc->ktc_time, &kth->ktr_time);
+			ktc->ktc_unused = NULL;
+			hl = KTRv0_LEN;
+			break;
+		/*
+		 * Add in the incremental header size for later versions of
+		 * header records so that old kdump(1) binaries get the right
+		 * total record lenth.
+		 */
+		case 1:
+			kth->ktr_len += KTRv1_LEN - KTRv0_LEN;
+
+			hl = KTRv1_LEN;
+			break;
+		}
 		iov->iov_base = (caddr_t)kth;
-		iov++->iov_len = sizeof(struct ktr_header);
-		auio.uio_resid += sizeof(struct ktr_header);
+		iov++->iov_len = hl;
+		auio.uio_resid += hl;
 		auio.uio_iovcnt++;
-		if (kth->ktr_len > 0) {
+		if (rl > 0) {
 			iov->iov_base = kte->kte_buf;
-			iov++->iov_len = kth->ktr_len;
-			auio.uio_resid += kth->ktr_len;
+			iov++->iov_len = rl;
+			auio.uio_resid += rl;
 			auio.uio_iovcnt++;
 		}
 	} while ((kte = TAILQ_NEXT(kte, kte_list)) != NULL &&

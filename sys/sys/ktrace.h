@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.7 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.8 2004/10/17 07:44:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -48,16 +48,44 @@
 #define KTRFLAG_DESCEND		4	/* perform op on all children too */
 
 /*
+ * ktrace record compat header
+ */
+struct ktr_compat {
+	int	ktc_len;		/* length of ktr_buf */
+	short	ktc_type;		/* trace record type */
+	pid_t	ktc_pid;		/* process id */
+	char	ktc_comm[MAXCOMLEN+1];	/* command name */
+	struct	timeval ktc_time;	/* timestamp */
+	const void *ktc_unused;		/* unused */
+};
+
+/*
  * ktrace record header
  */
 struct ktr_header {
-	int	ktr_len;		/* length of ktr_buf */
-	short	ktr_type;		/* trace record type */
+	int	ktr_len;		/* length of record minus length of old header */
+	short	ktr_type;		/* trace record version and type */
+
+#define	KTR_MASK	0x0fff
+#define	KTR_VER_MASK	0xf000
+#define	KTR_VER_SHIFT	12
+#define	KTR_VERSION(kh)	(((kh)->ktr_type & KTR_VER_MASK) >> KTR_VER_SHIFT)
+
+#define	KTRv0	(0 << KTR_VER_SHIFT)
+#define	KTRv1	(1 << KTR_VER_SHIFT)
+
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
-	struct	timeval ktr_time;	/* timestamp */
-	const void *ktr_buf;
+
+	/* Changes to version 0 record start here */
+	struct	timespec ktr_time;	/* timestamp */
+	lwpid_t	ktr_lid;		/* lwp id */
 };
+
+#define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
+#define	KTRv0_LEN	sizeof(struct ktr_compat)
+#define	KTRv1_LEN	sizeof(struct ktr_header)
+
 
 /*
  * Test for kernel trace point
@@ -229,6 +257,13 @@ struct ktr_saupcall {
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
+#define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */
+#define	KTRFAC_VER_SHIFT	24	/* record version shift */
+
+#define	KTRFAC_VERSION(tf)	(((tf) & KTRFAC_VER_MASK) >> KTRFAC_VER_SHIFT)
+
+#define	KTRFACv0	(0 << KTRFAC_VER_SHIFT)
+#define	KTRFACv1	(1 << KTRFAC_VER_SHIFT)
 
 #ifndef	_KERNEL
 
