@@ -1,12 +1,12 @@
-.\"	$NetBSD: hardware,v 1.12 2002/07/24 02:47:52 lukem Exp $
+.\"	$NetBSD: hardware,v 1.13 2003/05/14 14:06:07 martin Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
 Sbus-based UltraSPARC systems (the Ultra 1, Ultra 1 Creator/Ultra1 Creator3D,
 Ultra 2/Ultra 2 Creator/Ultra 2 Creator 3D)
 .It
-PCI-based UltraSPARC systems (known to work on the Ultra 5, Ultra 10, Ultra 30
-and Blade 100, Netra X1, and may work on many other systems)
+PCI-based UltraSPARC systems (known to work on the Ultra 5, Ultra 10, Ultra 30,
+Ultra 60 and Blade 100, Netra X1, and may work on many other systems)
 .bullet)
 .
 .Ss2 Unsupported machines
@@ -71,10 +71,6 @@ PCI IDE host controllers
 .(bullet -compact
 CMD Tech PCI064[3689] IDE Controllers
 .Pq Em pciide
-.(Note
-Access to hard disks on the secondary PCIIDE channel currently do not work, but
-CD-ROM does.
-.Note)
 .bullet)
 .It
 Serial devices
@@ -84,6 +80,9 @@ Sbus z8530 serial
 .It
 PCI 16550-based su and su-pnp serial
 .Pq Em com
+.It
+SAB82532 dual UART as found onboard on many PCI based models
+.Pq Em sab
 .bullet)
 .It
 Parallel devices
@@ -97,7 +96,7 @@ PCI/Ebus parallel ports
 .It
 Audio devices
 .(bullet -compact
-PCI based system audio
+PCI and SBUS based system audio
 .Pq Em audiocs
 .bullet)
 .bullet)
@@ -110,17 +109,12 @@ been tested on UltraSPARC PCI systems that may
 .(bullet -offset indent
 Floppy drives
 .It
-Serial devices
-.(bullet -compact
-PCI based systems
-.Pq Em sab
-.bullet)
-.It
 Video devices
 .(bullet -compact
 Creator3D framebuffers
 .Pq Em ffb
 .It
-General PCI VGA support
+General PCI VGA support (currently experimental
+.Em machfb )
 .bullet)
 .bullet)

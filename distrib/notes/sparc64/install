@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 2002/11/18 12:39:52 lukem Exp $
+.\"	$NetBSD: install,v 1.19 2003/05/14 14:06:07 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,15 +102,21 @@ available during the installation process.
 .Pp
 Loading the miniroot onto your raw partition is simple.
 On
-.Nx
-as well as
 .Tn Solaris
 you use a command like:
 .Pp
 .Dl # Ic "dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k conv=sync"
 .Pp
+On
+.Nx
+the command is:
+.Pp
+.Dl # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync"
+.Pp
 (Here,
 .Li /dev/rdsk/c0t0d0s1
+or
+.Li /dev/rsd0b
 is assumed to be your swap partition.)
 There's a potential problem here if
 .Pa /dev/rdsk/c0t0d0s1
