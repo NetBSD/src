@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.9 2001/06/25 12:02:53 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.10 2001/09/11 12:25:18 onoe Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -72,6 +72,11 @@ struct ieee80211_frame_addr4 {
 #define	IEEE80211_FC1_MORE_DATA			0x20
 #define	IEEE80211_FC1_WEP			0x40
 #define	IEEE80211_FC1_ORDER			0x80
+
+#define	IEEE80211_SEQ_FRAG_MASK			0x000f
+#define	IEEE80211_SEQ_FRAG_SHIFT		0
+#define	IEEE80211_SEQ_SEQ_MASK			0xfff0
+#define	IEEE80211_SEQ_SEQ_SHIFT			4
 
 /*
  * Management Frames
