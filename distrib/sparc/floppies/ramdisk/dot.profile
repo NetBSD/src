@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1.1.1 1998/06/06 05:29:50 mrg Exp $
+#	$NetBSD: dot.profile,v 1.2 1998/06/20 12:05:32 mrg Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -45,6 +45,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
+
+	# mount root read-write
+	mount -u /dev/md0a /
 
 	# run update, so that installed software is written as it goes.
 	update
