@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.10 1999/01/19 17:01:59 hubertf Exp $	*/
+/*	$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.10 1999/01/19 17:01:59 hubertf Exp $");
+__RCSID("$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $");
 #endif
 #endif
 
@@ -154,7 +154,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 #endif
                             if (s && PlistOnly)
 				warnx("Overwriting %s - "
-				      "pkg %s bogus/conflicting?\n", t, s);
+				      "pkg %s bogus/conflicting?", t, s);
 			    else {
 				pkgdb_store(t, PkgName);
 #ifdef PKGDB_DEBUG
