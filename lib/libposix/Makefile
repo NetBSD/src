@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/24 15:10:16 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 1999/08/21 03:28:54 sommerfeld Exp $
 
 LIB=	posix
+
+.include <bsd.own.mk>
 
 CPPFLAGS+=-D_REENTRANT -I${.CURDIR}/../libc/include
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
