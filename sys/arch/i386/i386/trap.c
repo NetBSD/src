@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.22 2002/08/19 01:22:34 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.23 2002/08/19 01:32:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.22 2002/08/19 01:22:34 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.23 2002/08/19 01:32:44 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -129,6 +129,9 @@ int trapwrite __P((unsigned));
 #endif
 
 #ifdef KVM86
+#ifdef MULTIPROCESSOR
+#error KVM86 needs a rewrite to support MP systems.
+#endif
 #include <machine/kvm86.h>
 #define KVM86MODE (kvm86_incall)
 #else
