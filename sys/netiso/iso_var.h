@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.11 1999/04/01 06:51:48 chopps Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.12 2000/02/01 22:52:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -143,6 +143,7 @@ int iso_hash __P((struct sockaddr_iso *, struct afhash *));
 int iso_netof __P((struct iso_addr *, caddr_t));
 int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 		     struct proc *));
+void iso_purgeaddr __P((struct ifaddr *, struct ifnet *));
 void iso_ifscrub __P((struct ifnet *, struct iso_ifaddr *));
 int iso_ifinit __P((struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
 		    int ));

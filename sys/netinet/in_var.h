@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.35 1999/07/01 08:12:50 itojun Exp $	*/
+/*	$NetBSD: in_var.h,v 1.36 2000/02/01 22:52:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -301,6 +301,8 @@ struct in_multistep {
 	IN_NEXT_MULTI((step), (inm)); \
 }
 
+struct ifaddr;
+
 int	in_ifinit __P((struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int));
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
@@ -310,6 +312,7 @@ void	in_setmaxmtu __P((void));
 const char *in_fmtaddr __P((struct in_addr));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
+void	in_purgeaddr __P((struct ifaddr *, struct ifnet *));
 void	ip_input __P((struct mbuf *));
 int	ipflow_fastforward __P((struct mbuf *));
 
