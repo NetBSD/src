@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2001/07/14 07:38:31 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 2001/11/23 22:31:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -277,7 +277,7 @@ read_mac_label(dlbuf, lp, match)
 	*match = (-1);
 
 	/* the Macintosh partition table starts at sector #1 */
-	part = (struct part_map_entry *)(dlbuf + lp->d_secsize);
+	part = (struct part_map_entry *)(dlbuf + DEV_BSIZE);
 
 	/* Fill in standard partitions */
 	lp->d_npartitions = RAW_PART + 1;
@@ -400,8 +400,8 @@ read_bsd_label(dlbuf, lp, match)
 	msg = NULL;
 
 	blk_start = (struct disklabel *)dlbuf;
-	blk_end = (struct disklabel *)(dlbuf + NUM_PARTS * 
-	    lp->d_secsize - sizeof(struct disklabel));
+	blk_end = (struct disklabel *)(dlbuf + (NUM_PARTS << DEV_BSHIFT) -
+	    sizeof(struct disklabel));
 
 	for (dlp = blk_start; dlp <= blk_end; 
 	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
@@ -435,6 +435,7 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	char *msg;
+	int size;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -443,17 +444,20 @@ readdisklabel(dev, strat, lp, osdep)
 		return msg = "Zero secpercyl";
 
 	msg = NULL;
+
 	/* 
 	 * Read in the first #(NUM_PARTS + 1) blocks of the disk.
 	 * The native Macintosh partition table starts at 
 	 * sector #1, but we want #0 too for the BSD label.
 	 */
-	bp = geteblk((int)lp->d_secsize * (NUM_PARTS + 1));
+
+	size = roundup((NUM_PARTS + 1) << DEV_BSHIFT, lp->d_secsize);
+	bp = geteblk(size);
 
 	bp->b_dev = dev;
 	bp->b_blkno = 0;
 	bp->b_resid = 0;
-	bp->b_bcount = lp->d_secsize * (NUM_PARTS + 1);
+	bp->b_bcount = size;
 	bp->b_flags |= B_READ;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
