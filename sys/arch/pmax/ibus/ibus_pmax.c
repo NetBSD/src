@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.3 1999/11/17 03:42:21 nisimura Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.4 1999/11/19 01:28:08 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.3 1999/11/17 03:42:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.4 1999/11/19 01:28:08 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ ibus_pmax_match(parent, cfdata, aux)
 
 	if (ibus_attached)
 		return 0;
-	if (systype != DS_PMAX || systype != DS_MIPSMATE)
+	if (systype != DS_PMAX && systype != DS_MIPSMATE)
 		return 0;
 	if (strcmp(ma->ma_name, "baseboard") != 0)
 		return 0;
