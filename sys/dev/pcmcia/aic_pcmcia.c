@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.25 2004/08/10 06:08:58 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.26 2004/08/10 06:23:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.25 2004/08/10 06:08:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.26 2004/08/10 06:23:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-        if (pcmcia_product_lookup(pa, aic_pcmcia_products,
-            sizeof aic_pcmcia_products[0], NULL) != NULL)
+	if (pcmcia_product_lookup(pa, aic_pcmcia_products,
+	    sizeof aic_pcmcia_products[0], NULL) != NULL)
 		return (1);
 	return (0);
 }
@@ -127,20 +127,21 @@ aic_pcmcia_attach(parent, self, aux)
 	psc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, aic_pcmcia_validate_config);
-        if (error) {
-                aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
-                    error);
-                return;
-        }
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
+	}
 
 	cfe = pf->cfe;
 	sc->sc_iot = cfe->iospace[0].handle.iot;
 	sc->sc_ioh = cfe->iospace[0].handle.ioh;
 
-	if (aic_pcmcia_enable(self, 1)) {
-                aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-                    error);
-                goto fail;
+	error = aic_pcmcia_enable(self, 1);
+	if (error) {
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
+		goto fail;
 	}
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
@@ -169,7 +170,7 @@ aic_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct aic_pcmcia_softc *sc = (struct aic_pcmcia_softc *)self;
+	struct aic_pcmcia_softc *sc = (void *)self;
 	int error;
 
 	if (sc->sc_state != AIC_PCMCIA_ATTACHED)
@@ -192,13 +193,13 @@ aic_pcmcia_enable(self, onoff)
 	struct aic_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
-                /*
-                 * If attach is in progress, we already have the device
-                 * powered up.
-                 */
-                if (sc->sc_state == AIC_PCMCIA_ATTACH1) {
-                        sc->sc_state = AIC_PCMCIA_ATTACH2;
-                } else {
+		/*
+		 * If attach is in progress, we already have the device
+		 * powered up.
+		 */
+		if (sc->sc_state == AIC_PCMCIA_ATTACH1) {
+			sc->sc_state = AIC_PCMCIA_ATTACH2;
+		} else {
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 			    aicintr, &sc->sc_aic);
