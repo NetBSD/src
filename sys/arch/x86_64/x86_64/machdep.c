@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2002/12/10 20:45:31 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2002/12/13 02:52:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -650,6 +650,14 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_fs = context.sc_fs;
 	tf->tf_gs = context.sc_gs;
 	tf->tf_rflags = context.sc_rflags;
+	tf->tf_r15 = context.sc_r15;
+	tf->tf_r14 = context.sc_r14;
+	tf->tf_r13 = context.sc_r13;
+	tf->tf_r12 = context.sc_r12;
+	tf->tf_r11 = context.sc_r11;
+	tf->tf_r10 = context.sc_r10;
+	tf->tf_r9 = context.sc_r9;
+	tf->tf_r8 = context.sc_r8;
 	tf->tf_rdi = context.sc_rdi;
 	tf->tf_rsi = context.sc_rsi;
 	tf->tf_rbp = context.sc_rbp;
