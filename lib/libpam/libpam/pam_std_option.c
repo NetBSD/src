@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_std_option.c,v 1.2 2004/12/12 08:18:43 christos Exp $	*/
+
 /*-
  * Copyright 1998 Juniper Networks, Inc.
  * All rights reserved.
@@ -25,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/libpam/pam_std_option.c,v 1.10 2002/04/14 18:30:03 des Exp $");
+#else
+__RCSID("$NetBSD: pam_std_option.c,v 1.2 2004/12/12 08:18:43 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <string.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_chroot.c,v 1.2 2004/12/12 08:18:43 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
  * All rights reserved.
@@ -33,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_chroot/pam_chroot.c,v 1.3 2003/04/30 00:40:24 des Exp $");
+#else
+__RCSID("$NetBSD: pam_chroot.c,v 1.2 2004/12/12 08:18:43 christos Exp $");
+#endif
 
 #include <sys/param.h>
 

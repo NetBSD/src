@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:47 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 # Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -34,6 +35,8 @@
 #
 # $FreeBSD: src/lib/libpam/modules/pam_unix/Makefile,v 1.19 2004/11/13 20:40:29 bz Exp $
 
+.include <bsd.own.mk>
+
 LIB=	pam_unix
 SRCS=	pam_unix.c
 MAN=	pam_unix.8
@@ -41,10 +44,10 @@ MAN=	pam_unix.8
 DPADD= ${LIBUTIL} ${LIBCRYPT}
 LDADD= -lutil -lcrypt
 
-.if !defined(NO_NIS)
-CFLAGS+= -DYP
-DPADD+= ${LIBYPCLNT}
-LDADD+= -lypclnt
+.if (${USE_YP} != "no")
+CPPFLAGS+= -DYP
+LDADD+=	-lrpcsvc
+DPADD+= ${LIBRPCSVC}
 .endif
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"

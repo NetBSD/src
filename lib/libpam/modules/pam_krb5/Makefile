@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:45 christos Exp $
 # Copyright 2001 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -31,4 +32,4 @@ MAN=	pam_krb5.8
 DPADD=	${LIBKRB5} ${LIBASN1} ${LIBROKEN} ${LIBCOM_ERR} ${LIBCRYPT} ${LIBCRYPTO}
 LDADD=	-lkrb5 -lasn1 -lroken -lcom_err -lcrypt -lcrypto
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"

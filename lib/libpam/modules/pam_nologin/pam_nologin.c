@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+
 /*-
  * Copyright 2001 Mark R V Murray
  * All rights reserved.
@@ -35,7 +37,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_nologin/pam_nologin.c,v 1.10 2002/04/12 22:27:21 des Exp $");
+#else
+__RCSID("$NetBSD: pam_nologin.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/stat.h>

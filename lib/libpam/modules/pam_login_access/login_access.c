@@ -1,11 +1,13 @@
- /*
-  * This module implements a simple but effective form of login access
-  * control based on login names and on host (or domain) names, internet
-  * addresses (or network numbers), or on terminal line names in case of
-  * non-networked logins. Diagnostics are reported through syslog(3).
-  *
-  * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
-  */
+/*	$NetBSD: login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+
+/*
+ * This module implements a simple but effective form of login access
+ * control based on login names and on host (or domain) names, internet
+ * addresses (or network numbers), or on terminal line names in case of
+ * non-networked logins. Diagnostics are reported through syslog(3).
+ *
+ * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
+ */
 
 #if 0
 #ifndef lint
@@ -14,7 +16,11 @@ static char sccsid[] = "%Z% %M% %I% %E% %U%";
 #endif
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/login_access.c,v 1.12 2004/03/05 08:10:18 markm Exp $");
+#else
+__RCSID("$NetBSD: login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -79,7 +85,7 @@ login_access(const char *user, const char *from)
 	    }
 	    if (line[0] == '#')
 		continue;			/* comment line */
-	    while (end > 0 && isspace(line[end - 1]))
+	    while (end > 0 && isspace((unsigned char)line[end - 1]))
 		end--;
 	    line[end] = 0;			/* strip trailing whitespace */
 	    if (line[0] == 0)			/* skip blank lines */

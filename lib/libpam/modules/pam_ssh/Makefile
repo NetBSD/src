@@ -1,16 +1,19 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:47 christos Exp $
 # PAM module for SSH
 # $FreeBSD: src/lib/libpam/modules/pam_ssh/Makefile,v 1.18 2004/08/06 07:27:04 cperciva Exp $
 
-SSHSRC=	${.CURDIR}/../../../../crypto/openssh
+.include <bsd.own.mk>
+
+SSHSRC=	${NETBSDSRCDIR}/crypto/dist/ssh
 
 LIB=	pam_ssh
 MAN=	pam_ssh.8
 SRCS=	pam_ssh.c
 
-WARNS?=	0
-CFLAGS+= -I${SSHSRC}
+CPPFLAGS+= -I${SSHSRC}
 
-DPADD=	${LIBSSH} ${LIBCRYPTO} ${LIBCRYPT}
-LDADD=	-lssh -lcrypto -lcrypt
+# This does not work yet because we don't have libssh.
+DPADD=	${LIBCRYPTO} ${LIBCRYPT}
+LDADD=	-lcrypto -lcrypt
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"

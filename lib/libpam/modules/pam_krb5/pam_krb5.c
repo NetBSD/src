@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_krb5.c,v 1.2 2004/12/12 08:18:45 christos Exp $	*/
+
 /*-
  * This pam_krb5 module contains code that is:
  *   Copyright (c) Derrick J. Brashear, 1996. All rights reserved.
@@ -48,7 +50,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.20 2004/02/10 10:13:20 des Exp $");
+#else
+__RCSID("$NetBSD: pam_krb5.c,v 1.2 2004/12/12 08:18:45 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,8 +67,8 @@ __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.20 2004/02/10
 #include <syslog.h>
 #include <unistd.h>
 
-#include <krb5.h>
-#include <com_err.h>
+#include <krb5/krb5.h>
+#include <krb5/com_err.h>
 
 #define	PAM_SM_AUTH
 #define	PAM_SM_ACCOUNT

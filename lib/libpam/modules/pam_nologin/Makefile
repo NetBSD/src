@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:46 christos Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -31,4 +32,4 @@ MAN=	pam_nologin.8
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"
