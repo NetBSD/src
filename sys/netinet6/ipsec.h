@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.16 2000/09/22 16:55:04 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.17 2000/10/19 20:23:02 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.36 2000/08/02 17:58:25 sakane Exp $	*/
 
 /*
@@ -337,11 +337,7 @@ extern size_t ipsec4_hdrsiz __P((struct mbuf *, u_int, struct inpcb *));
 extern size_t ipsec4_hdrsiz_tcp __P((struct tcpcb *));
 #ifdef INET6
 extern size_t ipsec6_hdrsiz __P((struct mbuf *, u_int, struct in6pcb *));
-#ifndef TCP6
 extern size_t ipsec6_hdrsiz_tcp __P((struct tcpcb *));
-#else
-extern size_t ipsec6_hdrsiz_tcp __P((struct tcp6cb *));
-#endif
 #endif
 
 struct ip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.76 2000/10/18 17:09:15 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77 2000/10/19 20:23:00 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -630,7 +630,7 @@ int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_close __P((struct tcpcb *));
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
 #endif
 void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
@@ -645,7 +645,7 @@ void	 tcp_drain __P((void));
 void	 tcp_established __P((struct tcpcb *));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 int	 tcp6_input __P((struct mbuf **, int *, int));
 #endif
 void	 tcp_input __P((struct mbuf *, ...));
@@ -654,7 +654,7 @@ void	 tcp_mss_from_peer __P((struct tcpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((int, void *));
 void	 tcp_notify __P((struct inpcb *, int));
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 void	 tcp6_notify __P((struct in6pcb *, int));
 #endif
 u_int	 tcp_optlen __P((struct tcpcb *));
@@ -662,7 +662,7 @@ int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcphdr *, struct mbuf *, int));
 void	 tcp_quench __P((struct inpcb *, int));
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 void	 tcp6_quench __P((struct in6pcb *, int));
 #endif
 int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
