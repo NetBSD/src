@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.4 2002/10/02 04:49:10 thorpej Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.5 2003/07/18 19:20:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.4 2002/10/02 04:49:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.5 2003/07/18 19:20:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,7 +177,6 @@ mkclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mkclock_isa_softc *sc = (struct mkclock_isa_softc *)self;
-	extern void clock_rtc_config(todr_chip_handle_t);
 
 	/* Map I/O space. */
 	sc->sc_iot = ia->ia_iot;
