@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.2 2003/09/23 11:33:50 cl Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.3 2003/10/27 01:05:08 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -86,8 +86,8 @@ struct frame {
 		short	tf_stackadj;
 		u_short	tf_sr;
 		u_int	tf_pc;
-		u_short	tf_format:4,
-			tf_vector:12;
+		u_short /* BITFIELDTYPE */ tf_format:4,
+			/* BITFIELDTYPE */ tf_vector:12;
 	} __attribute__((packed)) F_t;
 	union F_u {
 		struct fmt2 {
