@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2003/09/17 21:59:52 yamt Exp $ */
+/*	$NetBSD: main.c,v 1.13 2003/09/17 22:06:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2003/09/17 21:59:52 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2003/09/17 22:06:50 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -446,10 +446,10 @@ not_using_lockdebug(kvm_t *kd)
 
 		/* we have entries, so there must be referential integrity */
 		if (D(vm_map_entry, vm_map_entry)->prev == P(header) &&
-		    D(header, vm_map_entry)->end <=
+		    vm_map_min(D(vm_map, vm_map)) <=
 		    D(vm_map_entry, vm_map_entry)->start &&
 		    D(vm_map_entry, vm_map_entry)->end <=
-		    D(header, vm_map_entry)->start)
+		    vm_map_max(D(vm_map, vm_map)))
 			return (0);
 	}
 
