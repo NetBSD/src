@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.2 2000/04/23 14:17:32 blymn Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.3 2000/04/24 14:09:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -28,6 +28,11 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: curs_set.c,v 1.3 2000/04/24 14:09:43 blymn Exp $");
+#endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
@@ -88,4 +93,13 @@ curs_set(int visibility)
 	return ERR;
 }
 
-			
+/*
+ * __restore_cursor_vis --
+ *     Restore the old cursor visibility.
+ */
+void
+__restore_cursor_vis(void)
+{
+	curs_set(old_mode);
+}
+
