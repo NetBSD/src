@@ -14,7 +14,7 @@
  * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
  * similar clones.
  *
- *	$Id: if_ed.c,v 1.55 1994/10/23 21:38:00 mycroft Exp $
+ *	$Id: if_ed.c,v 1.56 1994/10/23 23:24:56 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1194,9 +1194,6 @@ ed_init(sc)
 	sc->txb_new = 0;
 	sc->txb_next_tx = 0;
 
-	/* This variable is used below - don't move this assignment. */
-	sc->next_packet = sc->rec_page_start + 1;
-
 	/* Set interface for page 0, remote DMA complete, stopped. */
 	outb(sc->nic_addr + ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
@@ -1222,17 +1219,14 @@ ed_init(sc)
 	/* Place NIC in internal loopback mode. */
 	outb(sc->nic_addr + ED_P0_TCR, ED_TCR_LB0);
 
-	/* Initialize transmit/receive (ring-buffer) page start. */
-	outb(sc->nic_addr + ED_P0_TPSR, sc->tx_page_start);
-	outb(sc->nic_addr + ED_P0_PSTART, sc->rec_page_start);
-
 	/* Set lower bits of byte addressable framing to 0. */
 	if (sc->is790)
 		outb(sc->nic_addr + 0x09, 0);
 
-	/* Initialize receiver (ring-buffer) page stop and boundary. */
-	outb(sc->nic_addr + ED_P0_PSTOP, sc->rec_page_stop);
+	/* Initialize receive buffer ring. */
 	outb(sc->nic_addr + ED_P0_BNRY, sc->rec_page_start);
+	outb(sc->nic_addr + ED_P0_PSTART, sc->rec_page_start);
+	outb(sc->nic_addr + ED_P0_PSTOP, sc->rec_page_stop);
 
 	/*
 	 * Clear all interrupts.  A '1' in each bit position clears the
@@ -1257,13 +1251,17 @@ ed_init(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
 
-	/* Set current page pointer to next_packet (initialized above). */
-	outb(sc->nic_addr + ED_P1_CURR, sc->next_packet);
-
 	/* Set multicast filter on chip. */
 	ed_getmcaf(&sc->sc_arpcom, mcaf);
 	for (i = 0; i < 8; i++)
 		outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
+
+	/*
+	 * Set current page pointer to one page after the boundary pointer, as
+	 * recommended in the National manual.
+	 */
+	sc->next_packet = sc->rec_page_start + 1;
+	outb(sc->nic_addr + ED_P1_CURR, sc->next_packet);
 
 	/* Program command register for page 0. */
 	outb(sc->nic_addr + ED_P1_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
@@ -1498,6 +1496,7 @@ ed_rint(sc)
 	struct ed_ring packet_hdr;
 	caddr_t packet_ptr;
 
+loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
 	outb(sc->nic_addr + ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
 
@@ -1509,7 +1508,11 @@ ed_rint(sc)
 	 * until the logical beginning equals the logical end (or in other
 	 * words, until the ring-buffer is empty).
 	 */
-	while (sc->next_packet != inb(sc->nic_addr + ED_P1_CURR)) {
+	current = inb(sc->nic_addr + ED_P1_CURR);
+	if (sc->next_packet == current)
+		return;
+
+	do {
 		/* Get pointer to this buffer's header structure. */
 		packet_ptr = sc->mem_ring +
 		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
@@ -1592,13 +1595,9 @@ ed_rint(sc)
 		/* Set NIC to page 0 registers to update boundary register. */
 		outb(sc->nic_addr + ED_P1_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 		outb(sc->nic_addr + ED_P0_BNRY, boundary);
+	} while (sc->next_packet != current);
 
-		/*
-		 * Set NIC to page 1 registers before looping to top (prepare
-		 * to get 'CURR' current pointer).
-		 */
-		outb(sc->nic_addr + ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
-	}
+	goto loop;
 }
 
 /* Ethernet interface interrupt processor. */
