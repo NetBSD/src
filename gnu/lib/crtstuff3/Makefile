@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/08/24 20:52:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2004/08/26 19:01:20 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -23,9 +23,7 @@ GCFLAGS=	${GALLCFLAGS:N-D*:N-I*:N-i*:N./*}
 DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	cs-tconfig.h tconfig.h
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
-.endif
 
 SRCS+=		crtbegin.c crtend.c
 OBJS+=		crtbegin.o crtend.o
