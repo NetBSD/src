@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.18 1995/03/18 14:58:43 cgd Exp $	*/
+/*	$NetBSD: newfs.c,v 1.19 1995/06/28 02:21:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.18 1995/03/18 14:58:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.19 1995/06/28 02:21:02 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: newfs.c,v 1.18 1995/03/18 14:58:43 cgd Exp $";
 #include <sys/disklabel.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/sysctl.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -88,6 +89,8 @@ void	fatal(const char *fmt, ...);
 #else
 void	fatal();
 #endif
+
+int	getmaxpartitions __P((void));
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -201,7 +204,7 @@ main(argc, argv)
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
-	int fsi, fso, len, n;
+	int fsi, fso, len, n, maxpartitions;
 	char *cp, *s1, *s2, *special, *opstring, buf[BUFSIZ];
 
 	if (progname = strrchr(*argv, '/'))
@@ -213,6 +216,10 @@ main(argc, argv)
 		mfs = 1;
 		Nflag++;
 	}
+
+	maxpartitions = getmaxpartitions();
+	if (maxpartitions > 26)
+		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
@@ -412,7 +419,8 @@ main(argc, argv)
 			printf("%s: %s: not a character-special device\n",
 			    progname, special);
 		cp = strchr(argv[0], '\0') - 1;
-		if (cp == 0 || (*cp < 'a' || *cp > 'h') && !isdigit(*cp))
+		if (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit(*cp))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 #ifdef COMPAT
@@ -671,6 +679,21 @@ fatal(fmt, va_alist)
 	va_end(ap);
 	exit(1);
 	/*NOTREACHED*/
+}
+
+int
+getmaxpartitions()
+{
+	int maxpart, mib[2];
+	size_t varlen;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MAXPARTITIONS;
+	varlen = sizeof(maxpart);
+	if (sysctl(mib, 2, &maxpart, &varlen, NULL, 0) < 0)
+		fatal("getmaxpartitions: %s", strerror(errno));
+
+	return (maxpart);
 }
 
 usage()
