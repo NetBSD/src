@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: targets.c,v 1.4 1994/05/25 11:23:56 pk Exp $
+	$Id: targets.c,v 1.5 1995/06/05 15:22:42 ragge Exp $
 */
 
 #include "bfd.h"
@@ -386,6 +386,7 @@ extern bfd_target netbsd_sparc_vec;
 extern bfd_target netbsd_m68k_vec;
 extern bfd_target netbsd_m68k4k_vec;
 extern bfd_target netbsd_ns32k_vec;
+extern bfd_target netbsd_vax_vec;
 
 /* srec is always included.  */
 extern bfd_target srec_vec;
