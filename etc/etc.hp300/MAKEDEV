@@ -131,7 +131,7 @@ ct*|st*)
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
 	rm -f bpf$unit
-	mknod bpf$unit c 105 $unit
+	mknod bpf$unit c 22 $unit
 	chmod 600 bpf$unit
 	chown root.wheel bpf$unit
 	;;
@@ -139,7 +139,7 @@ bpf*)
 tun*)
 	unit=`expr $i : 'tun\(.*\)'`
 	rm -f tun$unit
-	mknod tun$unit c 40 $unit
+	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
 	;;
