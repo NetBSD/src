@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.2 1993/10/11 02:36:42 deraadt Exp $
+ * $Id: kbd.c,v 1.3 1994/02/27 09:09:50 deraadt Exp $
  */
 
 /*
@@ -583,6 +583,9 @@ kbdioctl(dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
 
 	case KIOCSDIRECT:
 		k->k_evmode = *(int *)data;
+		return (0);
+
+	case KIOCLAYOUT:
 		return (0);
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
