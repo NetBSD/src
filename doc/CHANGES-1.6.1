@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.42 2002/11/22 22:32:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.43 2002/11/22 22:42:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1446,6 +1446,11 @@ sys/arch/sparc64/include/bsd_openprom.h		1.4
 
 	* Refine the comment describing openprom_addr.
 	* Add openprom_range and openprom_intr structures.
+	[martin, ticket #948]
+
+sys/arch/sparc64/include/bsd_openprom.h		1.5
+
+	Protect against multiple inclusion.
 	[martin, ticket #948]
 
 sys/arch/sparc/dev/cgfourteen.c			1.25
