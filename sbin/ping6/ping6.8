@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: ping6.8,v 1.4 1999/12/15 05:02:39 itojun Exp $
-.\"     KAME Id: ping6.8,v 1.7 1999/12/15 04:59:13 itojun Exp
+.\"     $NetBSD: ping6.8,v 1.5 2000/01/31 14:24:24 itojun Exp $
+.\"     KAME Id: ping6.8,v 1.11 1999/12/23 17:39:45 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -39,9 +39,9 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm
 .\" without ipsec, or new ipsec
-.Op Fl dfnqRrvw
+.Op Fl dfnqRvw
 .\" old ipsec
-.\" .Op Fl AdEfnqRrvw
+.\" .Op Fl AdEfnqRvw
 .Op Fl a Ar addrtype
 .Op Fl b Ar bufsiz
 .Op Fl c Ar count
@@ -54,6 +54,7 @@ packets to network hosts
 .Op Fl P Ar policy
 .Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
+.Op Ar hops...
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -175,31 +176,19 @@ Quiet output.
 Nothing is displayed except the summary lines at startup time and
 when finished.
 .It Fl R
-Record route.
-Includes the
-.Tn RECORD_ROUTE
-option in the
-.Tn ECHO_REQUEST
-packet and displays
-the route buffer on returned packets.
-Note that the IP header is only large enough for nine such routes;
-the
-.Xr traceroute 8
-command is usually better at determining the route packets take to a
-particular destination.
-Many hosts ignore or discard the
-.Tn RECORD_ROUTE
-option.
-.It Fl r
-Bypass the normal routing tables and send directly to a host on an attached
-network.
-If the host is not on a directly-attached network, an error is returned.
-This option can be used to ping a local host through an interface
-that has no route through it 
+Make the kernel believe that the target
+.Ar host
 .Po
-e.g., after the interface was dropped by
-.Xr routed 8
-.Pc .
+or the first
+.Ar hop
+if you specify
+.Ar hops
+.Pc
+is reachable, by injecting upper-layer reachability confirmation hint.
+The option is meaningful only if the target
+.Ar host
+.Pq or the first hop
+is a neighbor.
 .It Fl S Ar sourceaddr
 Specifies the source address of request packets.
 The source address must be one of the unicast addresses of the sending
@@ -238,6 +227,11 @@ This option was remained for backward compatibility.
 has no effect if
 .Fl w
 is specified.
+.It Ar hops
+IPv6 addresses for intermediate nodes,
+which will be put into type 0 routing header.
+.It Ar host
+IPv6 adddress of the final destination node.
 .El
 .Pp
 When using
