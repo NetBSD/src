@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.2 2001/02/12 06:24:24 briggs Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.3 2001/05/27 17:50:40 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -230,7 +230,9 @@ probe_bus(pciconf_bus_t *pb)
 			if (pb->ndevs+1 < MAX_CONF_DEV) {
 				if (pci_conf_debug) {
 					print_tag(pb->pc, tag);
-					printf("Found dev--really probing.\n");
+					printf("Found dev 0x%04x 0x%04x -- "
+					    "really probing.\n",
+					PCI_VENDOR(id), PCI_PRODUCT(id));
 				}
 				if (pci_do_device_query(pb, tag, device,
 				    function))
@@ -385,6 +387,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 		cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
 		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 		pci_conf_write(pb->pc, tag, PCI_COMMAND_STATUS_REG, cmd);
+	} else if (pci_conf_debug) {
+		print_tag(pb->pc, tag);
+		printf("device is a bridge; not clearing enables\n");
 	}
 
 	if ((cmd & PCI_STATUS_BACKTOBACK_SUPPORT) == 0)
@@ -427,27 +432,36 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 
 	width = 4;
 	for (br = PCI_MAPREG_START; br < PCI_MAPREG_END; br += width) {
+#if 0
 		if (PCI_CLASS(class) == PCI_CLASS_MASS_STORAGE &&
 		    PCI_SUBCLASS(class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
 			break;
 		}
+#endif
 		bar = pci_conf_read(pb->pc, tag, br);
-		pci_conf_write(pb->pc, tag, br, 0xfffffffe);
+		pci_conf_write(pb->pc, tag, br, 0xffffffff);
 		mask = pci_conf_read(pb->pc, tag, br);
 		pci_conf_write(pb->pc, tag, br, bar);
 		width = 4;
 
-		if (mask == 0 || mask == 0xffffffff)
-			break;
-
 		if (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_IO) {
+			/* Upper 16 bits must be one. */
+			/* XXXJRT -- is this really true? */
+			mask |= 0xffff0000;
+
+			size = PCI_MAPREG_IO_SIZE(mask);
+			if (size == 0) {
+				if (pci_conf_debug) {
+					print_tag(pb->pc, tag);
+					printf("I/O BAR 0x%x is void\n", br);
+				}
+				continue;
+			}
+
 			if (pb->niowin >= MAX_CONF_IO) {
 				printf("pciconf: too many I/O windows");
 				return -1;
 			}
-
-			mask |= 0xffff0000;
-			size = PCI_MAPREG_IO_SIZE(mask);
 
 			pi = get_io_desc(pb, size);
 			pi->dev = pd;
@@ -457,7 +471,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 			pi->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
-				printf("Register %d, I/O size %llu\n",
+				printf("Register 0x%x, I/O size %llu\n",
 				    br, pi->size);
 			}
 			pb->niowin++;
@@ -484,11 +498,21 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 				continue;
 			}
 
+			if (size == 0) {
+				if (pci_conf_debug) {
+					print_tag(pb->pc, tag);
+					printf("MEM%d BAR 0x%x is void\n",
+					    PCI_MAPREG_MEM_TYPE(mask) ==
+						PCI_MAPREG_MEM_TYPE_64BIT ?
+						64 : 32, br);
+				}
+				continue;
+			}
+
 			if (pb->nmemwin >= MAX_CONF_MEM) {
 				printf("pciconf: too many memory windows");
 				return -1;
 			}
-
 
 			pm = get_mem_desc(pb, size);
 			pm->dev = pd;
@@ -498,7 +522,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 			pm->prefetch = PCI_MAPREG_MEM_PREFETCHABLE(mask);
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
-				printf("Register %d, memory size %llu\n",
+				printf("Register 0x%x, memory size %llu\n",
 				    br, pm->size);
 			}
 			pb->nmemwin++;
