@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 2002/01/02 10:38:29 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.6 2002/06/26 18:23:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.5 2002/01/02 10:38:29 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.6 2002/06/26 18:23:30 itojun Exp $");
 #endif
 #endif					/* not lint */
 
@@ -137,6 +137,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->curscr = NULL;
 	new_screen->__virtscr = NULL;
 	new_screen->curwin = 0;
+	new_screen->notty = FALSE;
 
 	if (_cursesi_gettmode(new_screen) == ERR)
 		goto error_exit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.21 2002/06/26 18:14:03 christos Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.22 2002/06/26 18:23:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -233,6 +233,7 @@ struct __screen {
 	char pad_char;
 	char ttytype[128];
 	int endwin;
+	int notty;
 };
 
 
