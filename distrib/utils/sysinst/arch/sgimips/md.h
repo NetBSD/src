@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/07/25 08:26:33 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/10/17 10:58:16 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,8 @@
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  */
-#define SET_KERNEL_1_NAME	"kern-GENERIC_INDY"
+#define SET_KERNEL_1_NAME	"kern-GENERIC_IP22"
+#define SET_KERNEL_2_NAME	"kern-GENERIC_IP32"
 #define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM)
 
 /*

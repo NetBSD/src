@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:49 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/10/17 10:58:16 sekiya Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/11/20 15:53:24 soren Exp */
 
@@ -58,4 +58,7 @@ message dobootblks
 }
 
 message set_kernel_1
-{Kernel (GENERIC_INDY)}
+{Kernel (GENERIC_IP22)}
+
+message set_kernel_2
+{Kernel (GENERIC_IP32)}
