@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1995/03/21 08:19:01 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 1997/05/28 00:32:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,5 +48,5 @@ void	 lostconn __P((int));
 void	 nospace __P((void));
 int	 okname __P((char *));
 void	 run_err __P((const char *, ...));
-int	 susystem __P((char *, int));
+int	 susystem __P((char *));
 void	 verifydir __P((char *));
