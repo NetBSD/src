@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.131 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.132 2005/03/09 05:07:19 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.131 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.132 2005/03/09 05:07:19 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1333,6 +1333,13 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       SYSCTL_DESCR("Perform UDP checksum on loopback"),
 		       NULL, 0, &udp_do_loopback_cksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_LOOPBACKCKSUM,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("UDP protocol control block list"),
+		       sysctl_inpcblist, 0, &udbtable, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_CREATE,
 		       CTL_EOL);
 }
 #endif

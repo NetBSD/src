@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.64 2004/12/15 04:25:21 thorpej Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.65 2005/03/09 05:07:19 atatat Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.64 2004/12/15 04:25:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.65 2005/03/09 05:07:19 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -451,5 +451,12 @@ SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 		       SYSCTL_DESCR("Perform UDP checksum on loopback"),
 		       NULL, 0, &udp_do_loopback_cksum, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_LOOPBACKCKSUM,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("UDP protocol control block list"),
+		       sysctl_inpcblist, 0, &udbtable, 0,
+		       CTL_NET, PF_INET6, IPPROTO_UDP, CTL_CREATE,
 		       CTL_EOL);
 }
