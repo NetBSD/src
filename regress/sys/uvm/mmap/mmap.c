@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.11 2000/05/19 04:56:48 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.12 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -427,8 +427,7 @@ check_residency(addr, npgs)
 void
 usage()
 {
-	extern const char *__progname;
 
-	fprintf(stderr, "usage: %s [-v] filename\n", __progname);
+	fprintf(stderr, "usage: %s [-v] filename\n", getprogname());
 	exit(1);
 }

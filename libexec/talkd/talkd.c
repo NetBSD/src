@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.11 2001/02/04 22:16:34 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.12 2001/02/19 22:46:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.11 2001/02/04 22:16:34 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.12 2001/02/19 22:46:14 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,6 @@ char	hostname[MAXHOSTNAMELEN + 1];
 static void timeout __P((int));
 int	main __P((int, char *[]));
 
-extern char *__progname;
-
 int
 main(argc, argv)
 	int argc;
@@ -107,7 +105,7 @@ main(argc, argv)
 			logging = 1;
 			break;
 		default:
-			syslog(LOG_ERR, "Usage: %s [-dl]", __progname);
+			syslog(LOG_ERR, "Usage: %s [-dl]", getprogname());
 			exit(1);
 		}
 
