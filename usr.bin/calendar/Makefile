@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	4.8 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1994/02/10 02:03:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1995/03/27 08:46:11 glass Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	calendar
 
