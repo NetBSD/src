@@ -1,9 +1,9 @@
-/*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*	$OpenBSD: endian.h,v 1.3 1997/04/04 03:05:29 millert Exp $	*/
+/*	$NetBSD: endian.h,v 1.1.1.2 2000/01/23 20:24:28 soda Exp $	*/
 
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1987, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,35 +33,66 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
+ *	@(#)endian.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _ENDIAN_H_
+#define	_ENDIAN_H_
 
 /*
- * AT floppy controller registers and bitfields
+ * Define _NOQUAD if the compiler does NOT support 64-bit integers.
  */
+/* #define _NOQUAD */
 
-/* uses NEC765 controller */
-#include <dev/ic/nec765reg.h>
+/*
+ * Define the order of 32-bit words in 64-bit words.
+ */
+#define _QUAD_HIGHWORD 1
+#define _QUAD_LOWWORD 0
 
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
+#ifndef _POSIX_SOURCE
+/*
+ * Definitions for byte order, according to byte significance from low
+ * address to high.
+ */
+#define	LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
+#define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
+#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
+#define	BYTE_ORDER	LITTLE_ENDIAN	/* ``... Beautiful SPIIIIM!'' */
 
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
+#include <sys/cdefs.h>
 
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
+typedef u_int32_t in_addr_t;
+typedef u_int16_t in_port_t;
 
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+__BEGIN_DECLS
+u_int32_t	htonl __P((u_int32_t));
+u_int16_t	htons __P((u_int16_t));
+u_int32_t	ntohl __P((u_int32_t));
+u_int16_t	ntohs __P((u_int16_t));
+__END_DECLS
+
+/*
+ * Macros for network/external number representation conversion.
+ */
+#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
+#define	ntohl(x)	(x)
+#define	ntohs(x)	(x)
+#define	htonl(x)	(x)
+#define	htons(x)	(x)
+
+#define	NTOHL(x)	(x)
+#define	NTOHS(x)	(x)
+#define	HTONL(x)	(x)
+#define	HTONS(x)	(x)
+
+#else
+
+#define	NTOHL(x)	(x) = ntohl((u_int32_t)x)
+#define	NTOHS(x)	(x) = ntohs((u_int16_t)x)
+#define	HTONL(x)	(x) = htonl((u_int32_t)x)
+#define	HTONS(x)	(x) = htons((u_int16_t)x)
+#endif
+#endif /* ! _POSIX_SOURCE */
+#endif /* !_ENDIAN_H_ */

@@ -1,9 +1,11 @@
-/*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*      $OpenBSD: profile.h,v 1.3 1997/05/11 16:24:13 pefo Exp $	*/
 
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,35 +35,50 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
+#define	_MCOUNT_DECL static void ___mcount
+
+/*XXX The cprestore instruction is a "dummy" to shut up as(1). */
+
+#define	MCOUNT \
+	__asm(".globl _mcount;"		\
+	".type _mcount,@function;"	\
+	"_mcount:;"			\
+	".set noreorder;"		\
+	".set noat;"			\
+	".cpload $25;"			\
+	".cprestore 4;"			\
+	"sw $4,8($29);"			\
+	"sw $5,12($29);"		\
+	"sw $6,16($29);"		\
+	"sw $7,20($29);"		\
+	"sw $1,0($29);"			\
+	"sw $31,4($29);"		\
+	"move $5,$31;"			\
+	"jal ___mcount;"		\
+	"move $4,$1;"			\
+	"lw $4,8($29);"			\
+	"lw $5,12($29);"		\
+	"lw $6,16($29);"		\
+	"lw $7,20($29);"		\
+	"lw $31,4($29);"		\
+	"lw $1,0($29);"			\
+	"addu $29,$29,8;"		\
+	"j $31;"			\
+	"move $31,$1;"			\
+	".set reorder;"			\
+	".set at");
+
+#ifdef _KERNEL
 /*
- * AT floppy controller registers and bitfields
+ * The following two macros do splhigh and splx respectively.
+ * They have to be defined this way because these are real
+ * functions on the MIPS, and we do not want to invoke mcount
+ * recursively.
  */
+#define	MCOUNT_ENTER	s = _splhigh()
 
-/* uses NEC765 controller */
-#include <dev/ic/nec765reg.h>
-
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
-
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
-
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
-
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
-
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+#define	MCOUNT_EXIT	_splx(s)
+#endif /* _KERNEL */

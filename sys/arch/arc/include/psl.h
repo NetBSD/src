@@ -1,9 +1,11 @@
-/*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*      $OpenBSD: psl.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
 
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,35 +35,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)psl.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <machine/cpu.h>
+
+#define	PSL_LOWIPL	(INT_MASK | SR_INT_ENAB)
+
+#define	PSL_USERSET (	\
+	SR_KSU_USER |	\
+	SR_INT_ENAB |	\
+	SR_EXL      |	\
+	INT_MASK)
+
+#define	PSL_USERCLR (	\
+	SR_COP_USABILITY |	\
+	SR_BOOT_EXC_VEC |	\
+	SR_TLB_SHUTDOWN |	\
+	SR_PARITY_ERR |	\
+	SR_CACHE_MISS |	\
+	SR_PARITY_ZERO |	\
+	SR_SWAP_CACHES |	\
+	SR_ISOL_CACHES |	\
+	SR_KU_CUR |	\
+	SR_INT_ENA_CUR |	\
+	SR_MBZ)
 
 /*
- * AT floppy controller registers and bitfields
+ * Macros to decode processor status word.
  */
-
-/* uses NEC765 controller */
-#include <dev/ic/nec765reg.h>
-
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
-
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
-
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
-
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
-
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+#define	USERMODE(ps)	(((ps) & SR_KSU_MASK) == SR_KSU_USER)
+#define	BASEPRI(ps)	(((ps) & (INT_MASK | SR_INT_ENA_PREV)) \
+			== (INT_MASK | SR_INT_ENA_PREV))

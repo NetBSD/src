@@ -1,7 +1,9 @@
-/*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1.1.1 2000/01/23 20:24:28 soda Exp $	*/
 
 /*
- * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1996 Leo Weppelman.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Per Fogelstrom.
+ *      This product includes software developed by Leo Weppelman.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,28 +31,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARC_PIO_H_
-#define _ARC_PIO_H_
-/*
- * I/O macros.
- */
+#ifndef _MIPS_KCORE_H_
+#define	_MIPS_KCORE_H_
 
-#define	outb(a,v)	(*(volatile unsigned char*)(a) = (v))
-#define	outw(a,v)	(*(volatile unsigned short*)(a) = (v))
-#define	out16(a,v)	outw(a,v)
-#define	outl(a,v)	(*(volatile unsigned int*)(a) = (v))
-#define	out32(a,v)	outl(a,v)
-#define	inb(a)		(*(volatile unsigned char*)(a))
-#define	inw(a)		(*(volatile unsigned short*)(a))
-#define	in16(a)		inw(a)
-#define	inl(a)		(*(volatile unsigned int*)(a))
-#define	in32(a)		inl(a)
+#define	NPHYS_RAM_SEGS	8
 
-void insb __P((u_int8_t *, u_int8_t *,int));
-void insw __P((u_int16_t *, u_int16_t *,int));
-void insl __P((u_int32_t *, u_int32_t *,int));
-void outsb __P((u_int8_t *, const u_int8_t *,int));
-void outsw __P((u_int16_t *, const u_int16_t *,int));
-void outsl __P((u_int32_t *, const u_int32_t *,int));
+typedef struct cpu_kcore_hdr {
+	vm_offset_t	kernel_pa;	/* Phys. address of kernel VA 0	*/
+	int		mmutype;
+	phys_ram_seg_t  ram_segs[NPHYS_RAM_SEGS];
+} cpu_kcore_hdr_t;
 
-#endif /*_ARC_PIO_H_*/
+#endif /* _MIPS_KCORE_H_ */

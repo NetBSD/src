@@ -1,9 +1,14 @@
-/*	$OpenBSD: fdreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
-/*	$NetBSD: fdreg.h,v 1.1.1.3 2000/01/23 20:24:27 soda Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.2 1996/07/30 20:24:29 pefo Exp $	*/
+/*	$NetBSD: varargs.h,v 1.1.1.2 2000/01/23 20:24:29 soda Exp $	*/
 
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,35 +38,32 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
+ *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-/*
- * AT floppy controller registers and bitfields
- */
+#ifndef _MIPS_VARARGS_H_
+#define	_MIPS_VARARGS_H_
 
-/* uses NEC765 controller */
-#include <dev/ic/nec765reg.h>
+#include <machine/ansi.h>
 
-/* registers */
-#define	fdout	2	/* Digital Output Register (W) */
-#define	FDO_FDSEL	0x03	/*  floppy device select */
-#define	FDO_FRST	0x04	/*  floppy controller reset */
-#define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
+typedef _BSD_VA_LIST_	va_list;
 
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
+#define	va_dcl	int va_alist; ...
 
-#define	fdctl	7	/* Control Register (W) */
-#define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
-#define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
-#define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
-#define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
+#define	va_start(ap) \
+	ap = (char *)&va_alist
 
-#define	fdin	7	/* Digital Input Register (R) */
-#define	FDI_DCHG	0x80	/* diskette has been changed */
+#ifdef _KERNEL
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type)))[-1]
+#else
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
+		sizeof(type) > sizeof(int) ? \
+		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
+		(abort(), 0)))[-1]
+#endif
 
-#define	FDC_BSIZE	512
-#define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
+#define	va_end(ap)	((void) 0)
+
+#endif /* !_MIPS_VARARGS_H_ */

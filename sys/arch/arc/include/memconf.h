@@ -1,7 +1,8 @@
-/*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.2 1996/09/14 15:58:26 pefo Exp $	*/
 
 /*
- * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1996 Per Fogelstrom
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,28 +30,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARC_PIO_H_
-#define _ARC_PIO_H_
 /*
- * I/O macros.
+ * Memory config list used by pmap_bootstrap.
  */
 
-#define	outb(a,v)	(*(volatile unsigned char*)(a) = (v))
-#define	outw(a,v)	(*(volatile unsigned short*)(a) = (v))
-#define	out16(a,v)	outw(a,v)
-#define	outl(a,v)	(*(volatile unsigned int*)(a) = (v))
-#define	out32(a,v)	outl(a,v)
-#define	inb(a)		(*(volatile unsigned char*)(a))
-#define	inw(a)		(*(volatile unsigned short*)(a))
-#define	in16(a)		inw(a)
-#define	inl(a)		(*(volatile unsigned int*)(a))
-#define	in32(a)		inl(a)
+#ifndef _MEMCONF_H_
+#define _MEMCONF_H_
 
-void insb __P((u_int8_t *, u_int8_t *,int));
-void insw __P((u_int16_t *, u_int16_t *,int));
-void insl __P((u_int32_t *, u_int32_t *,int));
-void outsb __P((u_int8_t *, const u_int8_t *,int));
-void outsw __P((u_int16_t *, const u_int16_t *,int));
-void outsl __P((u_int32_t *, const u_int32_t *,int));
+struct mem_descriptor {
+	vm_offset_t	mem_start;
+	u_int		mem_size;
+};
 
-#endif /*_ARC_PIO_H_*/
+#ifdef _KERNEL
+#define	MAXMEMSEGS	16
+extern struct mem_descriptor mem_layout[];
+#endif
+
+#endif
