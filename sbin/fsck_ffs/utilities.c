@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.42 2003/12/29 11:42:09 dbj Exp $	*/
+/*	$NetBSD: utilities.c,v 1.43 2004/01/09 19:12:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.42 2003/12/29 11:42:09 dbj Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.43 2004/01/09 19:12:31 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -648,14 +648,109 @@ inoinfo(ino_t inum)
 }
 
 void
-sb_oldfscompat_write(struct fs *fs)
+sb_oldfscompat_read(struct fs *fs, struct fs **fssave)
 {
-	if (fs->fs_magic != FS_UFS1_MAGIC)
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
 		return;
 
+	/* Save a copy of fields that may be modified for compatibility */
+	if (fssave) {
+		if (!*fssave)
+			*fssave = malloc(sizeof(struct fs));
+		if (!*fssave)
+			errx(EEXIT, "cannot allocate space for compat store");
+		memmove(*fssave, fs, sizeof(struct fs));
+
+		if (debug)
+			printf("detected ufs1 superblock not yet updated for ufs2 kernels\n");
+
+		if (doswap) {
+			uint16_t postbl[256];
+			int i, n;
+
+			if (fs->fs_old_postblformat == FS_42POSTBLFMT)
+				n = 256;
+			else
+				n = 128;
+
+			/* extract the postbl from the unswapped superblock */
+			if (!needswap)
+				ffs_sb_swap(*fssave, *fssave);
+			memmove(postbl, (&(*fssave)->fs_old_postbl_start), n);
+			if (!needswap)
+				ffs_sb_swap(*fssave, *fssave);
+
+			/* Now swap it */
+			for (i=0; i < n; i++)
+				postbl[i] = bswap16(postbl[i]);
+
+			/* And put it back such that it will get correctly
+			 * unscrambled if it is swapped again on the way out
+			 */
+			if (needswap)
+				ffs_sb_swap(*fssave, *fssave);
+			memmove((&(*fssave)->fs_old_postbl_start), postbl, n);
+			if (needswap)
+				ffs_sb_swap(*fssave, *fssave);
+		}
+
+	}
+
+	/* These fields will be overwritten by their
+	 * original values in fs_oldfscompat_write, so it is harmless
+	 * to modify them here.
+	 */
+	fs->fs_cstotal.cs_ndir =
+	    fs->fs_old_cstotal.cs_ndir;
+	fs->fs_cstotal.cs_nbfree =
+	    fs->fs_old_cstotal.cs_nbfree;
+	fs->fs_cstotal.cs_nifree =
+	    fs->fs_old_cstotal.cs_nifree;
+	fs->fs_cstotal.cs_nffree =
+	    fs->fs_old_cstotal.cs_nffree;
+	
+	fs->fs_maxbsize = fs->fs_bsize;
+	fs->fs_time = fs->fs_old_time;
+	fs->fs_size = fs->fs_old_size;
+	fs->fs_dsize = fs->fs_old_dsize;
+	fs->fs_csaddr = fs->fs_old_csaddr;
+	fs->fs_sblockloc = SBLOCK_UFS1;
+
+	fs->fs_flags = fs->fs_old_flags;
+
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
+		fs->fs_old_nrpos = 8;
+		fs->fs_old_npsect = fs->fs_old_nsect;
+		fs->fs_old_interleave = 1;
+		fs->fs_old_trackskew = 0;
+	}
+}
+
+void
+sb_oldfscompat_write(struct fs *fs, struct fs *fssave)
+{
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		return;
+
+	fs->fs_old_flags = fs->fs_flags;
 	fs->fs_old_time = fs->fs_time;
 	fs->fs_old_cstotal.cs_ndir = fs->fs_cstotal.cs_ndir;
 	fs->fs_old_cstotal.cs_nbfree = fs->fs_cstotal.cs_nbfree;
 	fs->fs_old_cstotal.cs_nifree = fs->fs_cstotal.cs_nifree;
 	fs->fs_old_cstotal.cs_nffree = fs->fs_cstotal.cs_nffree;
+
+	fs->fs_flags = fssave->fs_flags;
+
+	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
+		fs->fs_old_nrpos = fssave->fs_old_nrpos;
+		fs->fs_old_npsect = fssave->fs_old_npsect;
+		fs->fs_old_interleave = fssave->fs_old_interleave;
+		fs->fs_old_trackskew = fssave->fs_old_trackskew;
+	}
+
+	memmove(&fs->fs_old_postbl_start, &fssave->fs_old_postbl_start,
+	    ((fs->fs_old_postblformat == FS_42POSTBLFMT) ?
+	    512 : 256));
 }
