@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.1 1998/12/15 19:25:40 itohy Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.2 2001/02/11 20:24:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,11 @@
 
 #ifndef _M68K_LINUX_ERRNO_H
 #define _M68K_LINUX_ERRNO_H
+
+/*
+ * Return positive errnos to userland
+ */
+#define LINUX_SCERR_SIGN -
 
 /* Use common/linux_errno.h for #1-35 */
 
