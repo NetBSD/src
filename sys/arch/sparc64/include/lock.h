@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 1999/07/27 22:22:34 thorpej Exp $ */
+/*	$NetBSD: lock.h,v 1.4 1999/07/27 23:45:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
  * The value for SIMPLELOCK_LOCKED is what ldstub() naturally stores
  * `lock_data' given its address (and the fact that SPARC is big-endian).
  */
+#undef SIMPLELOCK_LOCKED
 #define	SIMPLELOCK_LOCKED	0xff000000
-#define	SIMPLELOCK_UNLOCKED	0
 
 static void	cpu_simple_lock_init __P((__volatile struct simplelock *));
 static void	cpu_simple_lock __P((__volatile struct simplelock *));
