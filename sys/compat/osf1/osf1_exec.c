@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.6 1999/04/30 01:46:09 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.7 1999/04/30 23:02:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -81,8 +81,8 @@ struct emul emul_osf1 = {
 	OSF1_SYS_MAXSYSCALL,
 	osf1_sysent,
 	osf1_syscallnames,
-	MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
-	    2 * (MAXPATHLEN + 1),		/* exec name & loader name */
+	howmany(MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
+	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
 	osf1_copyargs,
 	cpu_exec_ecoff_setregs,
 	osf1_sigcode,

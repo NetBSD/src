@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.13 1999/04/24 08:10:39 simonb Exp $	*/
+/*	$NetBSD: elf.c,v 1.14 1999/04/30 23:02:06 cgd Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -115,7 +115,7 @@ struct emul emul_elf = {
 #else
 	NULL,
 #endif
-	sizeof(Aux32Info) * 8,
+	sizeof(Aux32Info) * 8,			/* XXX cgd */
 	elf_copyargs,
 	setregs,
 	sigcode,
