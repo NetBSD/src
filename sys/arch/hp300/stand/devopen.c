@@ -25,7 +25,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: devopen.c,v 1.1 1994/01/26 02:38:29 brezak Exp $
+ *	$Id: devopen.c,v 1.1.2.1 1994/09/20 05:07:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ usage()
 {
     printf("\
 Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitonletter>:file\n\
+       <device><unit><partitionletter>:file\n\
 ");
 }
 
@@ -127,6 +127,8 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 
     /* second form */
     else if (*s == ':') {
+	int unit;
+
 	/* isolate device */
 	for (s = fname; *s != ':' && !isdigit(*s); s++);
 	
@@ -135,8 +137,10 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 	    goto baddev;
 
 	/* isolate unit */
-	if ((*unit = atoi(s)) > sizeof(char))
+	if ((unit = atoi(s)) > 255)
 	    goto bad;
+	*adapt = unit / 8;
+	*ctlr = unit % 8;
 	for (; isdigit(*s); s++);
 	
 	/* translate partition */
@@ -170,11 +174,11 @@ devopen(f, fname, file)
 	char **file;
 {
 	int n, error;
-	int dev, ctlr, unit, part;
-	int adapt = 0;	/* XXX not used on HP */
+	int dev, adapt, ctlr, unit, part;
 	struct devsw *dp = &devsw[0];
 
 	dev   = B_TYPE(bootdev);
+	adapt = B_ADAPTOR(bootdev);
 	ctlr  = B_CONTROLLER(bootdev);
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
@@ -191,7 +195,7 @@ devopen(f, fname, file)
 	
 	f->f_dev = dp;
     
-	if ((error = (*dp->dv_open)(f, ctlr, unit, part)) == 0)
+	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0)
 	    return(0);
 	
 	printf("%s(%d,%d,%d,%d): %s\n", devsw[dev].dv_name,
