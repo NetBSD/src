@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 1999/01/09 22:10:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 1999/01/15 07:43:48 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -181,6 +181,11 @@ int	nbuf = 0;
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
+#endif
+#ifdef BUFCACHE
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+#else
+int	bufcache = 0;		/* fallback to old algorithm */
 #endif
 
 int	maxphysmem = 0;
@@ -455,23 +460,49 @@ allocsys(v)
 #endif
 
 	/*
-	 * Determine how many buffers to allocate.  We use 10% of the
-	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
-	 * buffers.  We allocate 1/2 as many swap buffer headers as file
-	 * i/o buffers.
+	 * If necessary, determine the number of pages to use for the
+	 * buffer cache.  We allocate 1/2 as many swap buffer headers
+	 * as file I/O buffers.
 	 */
 	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
+		if (bufcache == 0) {		/* use old algorithm */
+			/*
+			 * Determine how many buffers to allocate. We use 10%
+			 * of the first 2MB of memory, and 5% of the rest, with
+			 * a minimum of 16 buffers.
+			 */
+			if (physmem < btoc(2 * 1024 * 1024))
+				bufpages = physmem / (10 * CLSIZE);
+			else
+				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+				    (20 * CLSIZE);
+		} else {
+			/*
+			 * Set size of buffer cache to physmem/bufcache * 100
+			 * (i.e., bufcache % of physmem).
+			 */
+			if (bufcache < 5 || bufcache > 95) {
+				printf(
+		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
+				    bufcache);
+				bufcache = 10;
+			}
+			bufpages= physmem / (CLSIZE * 100) * bufcache;
+		}
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/*
+	 * XXX stopgap measure to prevent wasting too much KVM on
+	 * the sparsely filled buffer cache.
+	 */
+	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
+		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -484,9 +515,9 @@ allocsys(v)
 	return v;
 }
 
-/*  
+/*
  * machine dependent system variables.
- */ 
+ */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -1376,7 +1407,7 @@ do_softclock(arg)
 {
 	softclock();
 }
-	
+
 /*
  * Network software interrupt routine
  */
@@ -1414,4 +1445,3 @@ softnet(arg)
 	if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
 }
-
