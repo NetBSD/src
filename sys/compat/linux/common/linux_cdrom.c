@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.7 2001/02/03 01:17:38 fvdl Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.8 2001/02/03 01:23:08 fvdl Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -243,9 +243,6 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 
-		printf("LINUX_CDROMSUBCHNL: format %d track %d\n",
-		    l_subchnl.cdsc_format, l_subchnl.cdsc_trk);
-	    
 		sg = stackgap_init(p->p_emul);
 		info = stackgap_alloc(&sg, sizeof *info);
 		t_subchannel.address_format = CD_MSF_FORMAT;
