@@ -1,4 +1,4 @@
-/*	$NetBSD: putdriver.c,v 1.5 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: putdriver.c,v 1.6 2001/11/13 01:10:52 lukem Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -13,6 +13,9 @@
  * writing his own driver and xebec should JUST produce
  * the tables.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: putdriver.c,v 1.6 2001/11/13 01:10:52 lukem Exp $");
 
 #include <stdio.h>
 #include "main.h"

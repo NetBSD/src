@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.54 2001/10/17 10:55:09 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.55 2001/11/13 00:57:04 lukem Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * Since we don't have BSD/OS version of net/route.c in our hand,
  * I left the code mostly as it was in 970310.  -- itojun
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.55 2001/11/13 00:57:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.6 2001/06/14 05:44:26 itojun Exp $
+ *	$Id: i4b_ipr.c,v 1.7 2001/11/13 01:06:21 lukem Exp $
  *
  * $FreeBSD$
  *
@@ -57,6 +57,9 @@
  *	sc->sc_outb		# of outgoing bytes before compression
  *
  *---------------------------------------------------------------------------*/ 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.7 2001/11/13 01:06:21 lukem Exp $");
 
 #include "i4bipr.h"
 
