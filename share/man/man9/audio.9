@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.27 2004/01/31 21:33:08 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.28 2005/01/11 07:19:28 kent Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2004
+.Dd January 11, 2005
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -55,8 +55,9 @@ struct audio_hw_if {
 
 	int	(*query_encoding)(void *, struct audio_encoding *);
 	int	(*set_params)(void *, int, int,
-		    struct audio_params *, struct audio_params *);
-	int	(*round_blocksize)(void *, int);
+		    audio_params_t *, audio_params_t *,
+		    stream_filter_list_t *, stream_filter_list_t *);
+	int	(*round_blocksize)(void *, int, int, const audio_params_t *);
 
 	int	(*commit_settings)(void *);
 
@@ -89,34 +90,19 @@ struct audio_hw_if {
 	int 	(*get_props)(void *);
 
 	int	(*trigger_output)(void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
+		    void (*)(void *), void *, const audio_params_t *);
 	int	(*trigger_input)(void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *);
+		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct proc *);
 };
 
-struct audio_params {
-	u_long	sample_rate;		/* sample rate */
-	u_int	encoding;		/* mu-law, linear, etc */
-	u_int	precision;		/* bits/sample */
-	u_int	channels;		/* mono(1), stereo(2) */
-	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_code)(void *, u_char *, int);
-	int	factor;			/* coding space change */
-	int	factor_denom;		/* denominator of factor */
-	/*
-	 * The following four members represent what format is used in a
-	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
-	 * channels, the audio framework converts data.  Encoding and
-	 * precision are converted in sw_code().
-	 * set_params() should set correct values to them if no conversion is
-	 * needed.
-	 */
-	u_long	hw_sample_rate;
-	u_int	hw_encoding;
-	u_int	hw_precision;
-	u_int	hw_channels;
-};
+typedef struct audio_params {
+	u_int	sample_rate;	/* sample rate */
+	u_int	encoding;	/* e.g. mu-law, linear, etc */
+	u_int	precision;	/* bits/subframe */
+	u_int	validbits;	/* valid bits in a subframe */
+	u_int	channels;	/* mono(1), stereo(2) */
+} audio_params_t;
 .Ed
 .Pp
 The high level audio driver attaches to the low level driver
@@ -159,7 +145,7 @@ are described in some more detail below.
 Some fields are optional and can be set to 0 if not needed.
 .Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
-is called when the audio device is opened.
+optional, is called when the audio device is opened.
 It should initialize the hardware for I/O.
 Every successful call to
 .Va open
@@ -167,7 +153,7 @@ is matched by a call to
 .Va close .
 Return 0 on success, otherwise an error code.
 .It Dv void close(void *hdl)
-is called when the audio device is closed.
+optional, is called when the audio device is closed.
 .It Dv int drain(void *hdl)
 optional, is called before the device is closed or when
 .Dv AUDIO_DRAIN
@@ -186,7 +172,9 @@ It should fill the
 structure and return 0 or, if there is no encoding with the
 given number, return EINVAL.
 .It Dv int set_params(void *hdl, int setmode, int usemode,
-.Dv "struct audio_params *play, struct audio_params *rec)"
+.Dv "audio_params_t *play, audio_params_t *rec,"
+.br
+.Dv "stream_filter_list_t *pfil, stream_filter_list_t *rfil)"
 .br
 Called to set the audio encoding mode.
 .Va setmode
@@ -202,76 +190,88 @@ mode of the device (i.e., the value of
 in the
 .Va audio_info
 struct).
+.Pp
 The
 .Va play
 and
 .Va rec
 structures contain the encoding parameters that should be set.
-.Pp
-If the hardware requires software assistance with some encoding
-(e.g., it might be lacking mu-law support) it should fill the
-.Va sw_code ,
-.Va factor
-and
-.Va factor_denom
-fields of these structures with translation information, and
-set to hw_* fields what format the hardware actually uses.
-For example, if
-.Va play
-requests [8000Hz, mu-law, 8bit, 1ch] and the hardware supports
-not 8bit mu-law but 16bit slinear_le, the driver should set
-.Va mulaw_to_slinear16_le
-to
-.Va sw_code ,
-2 to
-.Va factor ,
-1 to
-.Va factor_denom ,
-.Dv AUDIO_ENCODING_SLINEAR_LE
-to
-.Va hw_encoding
-and 16 to
-.Va hw_precision .
 The values of the structures may also be modified if the hardware
 cannot be set to exactly the requested mode (e.g., if the requested
 sampling rate is not supported, but one close enough is).
 .Pp
-The hardware driver can also request sampling rate conversion
-and mono-stereo conversion.
-If
-.Va set_params
-sets to
-.Va hw_sampling_rate
-a value which is different than
-.Va sampling_rate
-or sets to
-.Va hw_channels
-a value which is different than
-.Va channels ,
-and set
-.Dv AUDIO_ENCODING_SLINEAR_LE
-to
-.Va hw_encoding ,
-the hardware independent driver performs sampling rate and/or mono-stereo
-conversion.
-If such conversion is not needed,
-.Va set_params
-must keep
-.Va sampling_rate
-and
-.Va channels
-are the same as
-.Va hw_sampling_rate
-and
-.Va hw_channels
-respectively.
+If the hardware requires software assistance with some encoding
+(e.g., it might be lacking mu-law support) it should fill the
+.Va pfil
+for playing or
+.Va rfil
+for recording with conversion information.
+For example, if
+.Va play
+requests [8000Hz, mu-law, 8/8bit, 1ch] and the hardware supports
+not 8bit mu-law but 16bit slinear_le, the driver should call
+.Dv pfil->append()
+with
+.Va pfil ,
+.Va mulaw_to_slinear16 ,
+and audio_params_t representing [8000Hz, slinear_le, 16/16bit, 2ch].
+If the driver needs multiple conversions, a conversion nearest to the
+hardware should be set to the head of
+.Va pfil
+or
+.Va rfil .
+The definition of
+.Dv stream_filter_list_t
+follows:
+.Bd -literal
+typedef struct stream_filter_list {
+	void (*append)(struct stream_filter_list *,
+		       stream_filter_factory_t,
+		       const audio_params_t *);
+	void (*prepend)(struct stream_filter_list *,
+			stream_filter_factory_t,
+			const audio_params_t *);
+	void (*set)(struct stream_filter_list *, int,
+		    stream_filter_factory_t,
+		    const audio_params_t *);
+	int req_size;
+	struct stream_filter_req {
+		stream_filter_factory_t *factory;
+		audio_params_t param; /* from-param for recording,
+					 to-param for playing */
+	} filters[AUDIO_MAX_FILTERS];
+} stream_filter_list_t;
+.Ed
 .Pp
-Note: The order of conversion is
-.Va sw_code
-followed by sampling rate and mono-stereo in playing,
-and sampling rate and mono-stereo followed by
-.Va sw_code
-in recording.
+For playing, 
+.Va pfil
+constructs conversions as follows:
+.Bd -literal
+	(play) == write(2) input
+	  |	pfil->filters[pfil->req_size-1].factory
+	(pfil->filters[pfil->req_size-1].param)
+	  |	pfil->filters[pfil->req_size-2].factory
+	  :
+	  |	pfil->filters[1].factory
+	(pfil->filters[1].param)
+	  |	pfil->filters[0].factory
+	(pfil->filters[0].param)  == hardware input
+.Ed
+.Pp
+For recording, 
+.Va rfil
+constructs conversions as follows:
+.Bd -literal
+	(rfil->filters[0].param) == hardware output
+	  |	rfil->filters[0].factory
+	(rfil->filters[1].param)
+	  |	rfil->filters[1].factory
+	  :
+	  |	rfil->filters[rfil->req_size-2].factory
+	(rfil->filters[rfil->req_size-1].param)
+	  |	rfil->filters[rfil->req_size-1].factory
+	(rec)  == read(2) output
+.Ed
 .Pp
 If the device does not have the
 .Dv AUDIO_PROP_INDEPENDENT
@@ -286,10 +286,19 @@ is copied into
 after the call to
 .Va set_params .
 Return 0 on success, otherwise an error code.
-.It Dv int round_blocksize(void *hdl, int bs)
+.It Dv int round_blocksize(void *hdl, int bs, int mode,
+.Dv "const audio_params_t *param)"
+.br
 optional, is called with the block size,
 .Va bs ,
-that has been computed by the upper layer.
+that has been computed by the upper layer,
+.Va mode ,
+.Dv AUMODE_PLAY
+or
+.Dv AUMODE_RECORD ,
+and
+.Va param ,
+encoding parameters for the hardware.
 It should return a block size, possibly changed according to the needs
 of the hardware driver.
 .It Dv int commit_settings(void *hdl)
@@ -447,7 +456,7 @@ AUDIO_PROP_xxx.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "struct audio_params *param)"
+.Dv "const audio_params_t *param)"
 .br
 optional, is called to start the transfer of data from the circular buffer
 delimited by
@@ -471,7 +480,7 @@ Return 0 on success, otherwise an error code.
 .It Dv int trigger_input(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "struct audio_params *param)"
+.Dv "const audio_params_t *param)"
 .br
 optional, is called to start the transfer of data from the audio hardware,
 parameterized as in
