@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
  * XXX this file should be shared with the i386 code, the difference
  * can be hidden in macros.
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2003/01/18 06:23:34 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.19 2003/06/23 11:01:36 martin Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -36,6 +36,8 @@
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 #include "opt_multiprocessor.h"
+#include "opt_compat_linux.h"
+#include "opt_compat_mach.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2003/01/18 06:23:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2003/06/23 11:01:36 martin Exp $");
 
 void
 child_return(void *arg)

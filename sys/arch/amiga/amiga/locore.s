@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 2003/04/08 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 2003/06/23 11:01:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
  * Other contributors: Bryan Ford (kernel reload stuff)
  */
 
+#include "opt_fpu_emulate.h"
 #include "opt_bb060stupidrom.h"
 #include "opt_p5ppc68kboard.h"
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 2003/04/27 10:42:51 ragge Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 2003/06/23 11:01:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -56,6 +56,8 @@
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
+#include "opt_fpu_emulate.h"
+#include "opt_useleds.h"
 
 #include "assym.h"
 #include <machine/asm.h>

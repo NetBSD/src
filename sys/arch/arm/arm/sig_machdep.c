@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.17 2003/04/11 22:02:30 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.18 2003/06/23 11:01:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,10 +41,11 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_armfpe.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/04/11 22:02:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2003/06/23 11:01:06 martin Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.5 2002/08/25 20:19:59 fredette Exp $	*/
+/*	$NetBSD: trap.S,v 1.6 2003/06/23 11:01:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@
  *  Hewlett-Packard Company makes no representations about the
  *  suitability of this software for any purpose.
  */
+
+#include "opt_compat_osf1.h"
 
 /* 
  * NOTICE: This is not a standalone file.  To use it, #include it in

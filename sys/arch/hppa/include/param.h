@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2003/04/28 23:16:19 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2003/06/23 11:01:17 martin Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -25,6 +25,7 @@
  * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
 
+#include "opt_compat_hpux.h"
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)

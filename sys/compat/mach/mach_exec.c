@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.29 2003/04/06 17:58:49 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.30 2003/06/23 11:01:55 martin Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.29 2003/04/06 17:58:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.30 2003/06/23 11:01:55 martin Exp $");
+
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

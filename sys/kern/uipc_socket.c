@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.80 2003/05/03 17:53:17 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.81 2003/06/23 11:02:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,10 +72,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.80 2003/05/03 17:53:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.81 2003/06/23 11:02:07 martin Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
+#include "opt_mbuftrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

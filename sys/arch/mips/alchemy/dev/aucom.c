@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.4 2003/03/08 09:42:56 he Exp $	*/
+/*	$NetBSD: aucom.c,v 1.5 2003/06/23 11:01:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,11 +80,13 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.4 2003/03/08 09:42:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.5 2003/06/23 11:01:29 martin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

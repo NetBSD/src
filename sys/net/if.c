@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.119 2003/05/19 22:17:24 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.120 2003/06/23 11:02:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.119 2003/05/19 22:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.120 2003/06/23 11:02:08 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -110,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.119 2003/05/19 22:17:24 christos Exp $");
 #include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
+#include "opt_ccitt.h"
+#include "opt_natm.h"
 #include "opt_pfil_hooks.h"
 
 #include <sys/param.h>

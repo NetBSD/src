@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.2 2003/05/13 06:26:57 bsh Exp $ */
+/* $NetBSD: sscom_var.h,v 1.3 2003/06/23 11:01:09 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -65,6 +65,9 @@
 
 #ifndef _ARM_S3C2XX0_SSCOM_VAR_H
 #define _ARM_S3C2XX0_SSCOM_VAR_H
+
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

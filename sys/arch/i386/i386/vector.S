@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.8 2003/05/04 22:01:58 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.9 2003/06/23 11:01:22 martin Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -74,6 +74,7 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
+#include "opt_vm86.h"
 
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>

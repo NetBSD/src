@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.212 2003/06/18 04:35:23 bsh Exp $	*/
+/*	$NetBSD: com.c,v 1.213 2003/06/23 11:01:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,11 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.212 2003/06/18 04:35:23 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.213 2003/06/23 11:01:57 martin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

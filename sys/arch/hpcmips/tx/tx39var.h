@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.10 2002/01/29 18:53:19 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.11 2003/06/23 11:01:16 martin Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_use_poll.h"
 
 enum tx_chipset {
 	__TX391X,

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.160 2003/04/26 22:07:17 wiz Exp $	*/
+/*	$NetBSD: systm.h,v 1.161 2003/06/23 11:02:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -74,6 +74,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_syscall_debug.h"
 #endif
 
 #include <machine/endian.h>

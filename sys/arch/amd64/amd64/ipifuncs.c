@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.2 2003/06/23 11:01:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
