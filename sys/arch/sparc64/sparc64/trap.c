@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2002/06/17 16:33:18 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.79 2002/06/19 04:58:32 grant Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -1965,7 +1965,6 @@ syscall(tf, code, pc)
 				   callp->sy_argsize, (register_t *)args.i);
 #endif
 		}
-#endif
 #endif
 		if (error) {
 			goto bad;
