@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.11 2003/12/16 13:36:18 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.12 2003/12/16 13:38:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.11 2003/12/16 13:36:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.12 2003/12/16 13:38:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ darwin_sendsig(ksi, mask)
 		sig = 0;
 	}
 
-	sf.duc.si.darwin_si_signo = sig;
+	native_to_darwin_siginfo(ksi, &sf.duc.si);
 	sf.duc.uctx.uc_onstack = onstack;
 	native_sigset_to_sigset13(mask, &sf.duc.uctx.uc_sigmask);
 	sf.duc.uctx.uc_stack.ss_sp = (char *)sfp;
@@ -160,7 +160,10 @@ darwin_sendsig(ksi, mask)
 	/* Prepare registers */
 	tf->fixreg[1] = (u_long)sfp;
 	tf->fixreg[3] = (u_long)catcher;
-	tf->fixreg[4] = 1; /* 1 => without siginfo, 2 => with siginfo */
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
+		tf->fixreg[4] = 2; /* with siginfo */
+	else
+		tf->fixreg[4] = 1; /* without siginfo */
 	tf->fixreg[5] = (u_long)sig;
 	tf->fixreg[6] = (u_long)&sfp->duc.si;
 	tf->fixreg[7] = (u_long)&sfp->duc.uctx;
