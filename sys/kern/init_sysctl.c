@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.3 2003/12/06 09:36:34 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.4 2003/12/06 20:06:11 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
+#include "opt_posix.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -77,6 +78,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#include <machine/cpu.h>
 
 /*
  * try over estimating by 5 procs/lwps
