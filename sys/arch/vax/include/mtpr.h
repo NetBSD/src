@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.4 1995/02/13 00:43:24 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.5 1995/05/03 19:53:45 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -57,7 +57,7 @@
 #define PR_SBR    12 /* System Base Register */
 #define PR_SLR    13 /* System Limit Register */
 #define PR_PCBB   16 /* Process Control Block Base */
-#define PR_SCBB   17 /* System Control Block Base */
+#define PR_SCBB   17 /* System Control Block Base */ 
 #define PR_IPL    18 /* Interrupt Priority Level */
 #define PR_ASTLVL 19 /* AST Level */
 #define PR_SIRR   20 /* Software Interrupt Request */
@@ -81,11 +81,24 @@
 #define PR_MCESR  38 /* Machiune Check Error Summary Register 11/750 */
 #define PR_CAER   39 /* Cache Error Register 11/750 */
 #define PR_ACCS   40 /* Accelerator control register */
-#define PR_ACCR   41 /* Accelerator Maintenance register */
+#define PR_SAVISP 41 /* Console Saved ISP */
+#define PR_SAVPC  42 /* Console Saved PC */
+#define PR_SAVPSL 43 /* Console Saved PSL */
+#define PR_WCSA   44 /* WCS Address */
+#define PR_WCSB   45 /* WCS Data */
+#define PR_SBIFS  48 /* SBI Fault/Status */
+#define PR_SBIS   49 /* SBI Silo */
+#define PR_SBISC  50 /* SBI Silo Comparator */
+#define PR_SBIMT  51 /* SBI Silo Maintenance */
+#define PR_SBIER  52 /* SBI Error Register */
+#define PR_SBITA  53 /* SBI Timeout Address Register */
+#define PR_SBIQC  54 /* SBI Quadword Clear */
 #define PR_IUR    55 /* Initialize Unibus Register 11/750 */
 #define PR_MAPEN  56 /* Memory Management Enable */
 #define PR_TBIA   57 /* Trans. Buf. Invalidate All */
 #define PR_TBIS   58 /* Trans. Buf. Invalidate Single */
+#define PR_TBDATA 59 /* Translation Buffer Data */
+#define PR_MBRK   60 /* Microprogram Break */
 #define PR_PMR    61 /* Performance Monnitor Enable */
 #define PR_SID    62 /* System ID Register */
 #define PR_TBCHK  63 /* Translation Buffer Check */
