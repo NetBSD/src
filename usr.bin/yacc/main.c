@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2003/08/07 11:17:53 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.14.2.1 2004/06/22 07:19:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,6 +32,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California.\n"
@@ -42,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2003/08/07 11:17:53 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.2.1 2004/06/22 07:19:55 tron Exp $");
 #endif
 #endif /* not lint */
 
