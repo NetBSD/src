@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.6 2003/10/24 23:39:42 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.7 2003/10/26 12:42:55 he Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -680,8 +680,8 @@ tty[0-9]|tty0[0-9])
 	unit=$(($unit + 0))
 	makedev ttyZ${unit}
 	rm -f tty0$unit dty0$unit
-	ln ttyZ$unit tty0${unit}
-	ln dtyZ$unit dty0${unit}
+	ln -fs ttyZ$unit tty0${unit}
+	ln -fs dtyZ$unit dty0${unit}
 	;;
 
 tty0*|tty1*|tty[0-9])
