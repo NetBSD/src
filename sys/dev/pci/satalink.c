@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.15 2004/05/28 23:26:58 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.16 2004/06/23 14:40:13 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -374,6 +374,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, scs_cmd, cfgctl;
+	pcireg_t cls, reg40, reg44;
 	int channel;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -432,6 +433,36 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_dma_maxsegsz = 8192;
 		sc->sc_dma_boundary = 8192;
 	}
+
+	/*
+	 * When the Silicon Image 3112 retries a PCI memory read command,
+	 * it may retry it as a memory read multiple command under some
+	 * circumstances.  This can totally confuse some PCI controllers,
+	 * so ensure that it will never do this by making sure that the
+	 * Read Threshold (FIFO Read Request Control) field of the FIFO
+	 * Valid Byte Count and Control registers for both channels (BA5
+	 * offset 0x40 and 0x44) are set to be at least as large as the
+	 * cacheline size register.
+	 */
+	cls = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	cls = (cls >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK;
+	cls *= 4;
+	if (cls > 224) {
+		cls = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+		cls &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+		cls |= ((224/4) << PCI_CACHELINE_SHIFT);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, cls);
+		cls = 224;
+	}
+	if (cls < 32)
+		cls = 32;
+	cls = (cls + 31) / 32;
+	reg40 = ba5_read_4(sc, 0x40);
+	reg44 = ba5_read_4(sc, 0x44);
+	if ((reg40 & 0x7) < cls)
+		ba5_write_4(sc, 0x40, (reg40 & ~0x07) | cls);
+	if ((reg44 & 0x7) < cls)
+		ba5_write_4(sc, 0x44, (reg44 & ~0x07) | cls);
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
