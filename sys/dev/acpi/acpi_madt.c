@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.10 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.11 2004/03/24 12:49:45 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.10 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.11 2004/03/24 12:49:45 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.10 2004/02/13 11:36:20 wiz Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
-#include <dev/acpi/acpica/Subsystem/actables.h>
-#include <dev/acpi/acpica/Subsystem/acnamesp.h>
 #include <dev/acpi/acpi_madt.h>
 
 #ifdef ACPI_MADT_DEBUG
@@ -67,57 +65,34 @@ static void acpi_print_local_sapic(MADT_LOCAL_SAPIC *);
 static void acpi_print_platint(MADT_INTERRUPT_SOURCE *);
 #endif
 
-ACPI_TABLE_HEADER *AcpiGbl_MADT;
+static ACPI_TABLE_HEADER *madt_header;
 
 ACPI_STATUS
 acpi_madt_map(void)
 {
-	ACPI_TABLE_HEADER header;
-	XSDT_DESCRIPTOR *xp;
-	ACPI_POINTER Address;
-	ACPI_STATUS  Status = AE_OK;
-	int i, len;
+	ACPI_STATUS  rv;
 
-	if (AcpiGbl_XSDT == NULL)
-		return AE_NO_ACPI_TABLES;
-
-	if (AcpiGbl_MADT != NULL)
+	if (madt_header != NULL)
 		return AE_ALREADY_EXISTS;
 
-	xp = AcpiGbl_XSDT;
+	rv = AcpiGetFirmwareTable(APIC_SIG, 1, ACPI_LOGICAL_ADDRESSING,
+	    &madt_header);
 
-	Address.PointerType = AcpiGbl_TableFlags | ACPI_LOGICAL_ADDRESSING;
+	if (ACPI_FAILURE(rv))
+		return rv;
 
-	len = (xp->Length - sizeof (ACPI_TABLE_HEADER))
-		/ sizeof (xp->TableOffsetEntry[0]);
-
-	for (i = 0; i < len; i++) {
-		Address.Pointer.Value =
-		    ACPI_GET_ADDRESS(AcpiGbl_XSDT->TableOffsetEntry[i]);
-		Status = AcpiTbGetTableHeader(&Address, &header);
-		if (ACPI_FAILURE (Status))
-			return Status;
-		if (!strncmp(header.Signature, APIC_SIG, 4)) {
-			Status = AcpiOsMapMemory(Address.Pointer.Value,
-			    (ACPI_SIZE)header.Length, (void *)&AcpiGbl_MADT);
-			if (ACPI_FAILURE (Status))
-				return Status;
-			else
-				break;
-		}
-	}
 #ifdef ACPI_MADT_DEBUG
-	if (AcpiGbl_MADT != NULL)
-		acpi_madt_print();
+	acpi_madt_print();
 #endif
-	return AcpiGbl_MADT != NULL ? AE_OK : AE_NOT_FOUND;
+
+	return AE_OK;
 }
 
 void
 acpi_madt_unmap(void)
 {
-	AcpiOsUnmapMemory(AcpiGbl_MADT, AcpiGbl_MADT->Length);
-	AcpiGbl_MADT = NULL;
+	AcpiOsUnmapMemory(madt_header, madt_header->Length);
+	madt_header = NULL;
 }
 
 #ifdef ACPI_MADT_DEBUG
@@ -192,8 +167,8 @@ acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
 	char *madtend, *where;
 	APIC_HEADER *hdrp;
 
-	madtend = (char *)AcpiGbl_MADT + AcpiGbl_MADT->Length;
-	where = (char *)AcpiGbl_MADT + sizeof (MULTIPLE_APIC_TABLE);
+	madtend = (char *)madt_header + madt_header->Length;
+	where = (char *)madt_header + sizeof (MULTIPLE_APIC_TABLE);
 	while (where < madtend) {
 		hdrp = (APIC_HEADER *)where;
 		if (func(hdrp, aux) != AE_OK)
@@ -208,7 +183,7 @@ acpi_madt_print(void)
 {
 	MULTIPLE_APIC_TABLE *ap;
 
-	ap = (MULTIPLE_APIC_TABLE *)AcpiGbl_MADT;
+	ap = (MULTIPLE_APIC_TABLE *)madt_header;
 	printf("\n\nACPI MADT table:\n");
 	printf("default local APIC address: %x\n", ap->LocalApicAddress);
 	printf("system dual 8259%s present\n",
