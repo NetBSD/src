@@ -1,4 +1,4 @@
-.\" $NetBSD: mbrlen.3,v 1.1 2002/03/18 06:00:26 tshiozak Exp $
+.\" $NetBSD: mbrlen.3,v 1.2 2002/03/18 07:56:28 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Feb 3, 2002
+.Dd February 3, 2002
 .Dt MBRLEN 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -36,7 +36,7 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.Fd #include <wchar.h>
+.Fd #include \*[Lt]wchar.h\*[Gt]
 .Ft int
 .Fn mbrlen "const char * restrict s" "size_t n" "mbstate_t * restrict ps"
 .\" ----------------------------------------------------------------------
@@ -67,7 +67,7 @@ In state-dependent encodings,
 .Fa s
 may point the special sequence bytes to change the shift-state.
 Although such sequence bytes corresponds to no individual
-wide-character code, these affect the conversion state object pointed by 
+wide-character code, these affect the conversion state object pointed by
 .Fa ps ,
 and the
 .Fn mbrlen
@@ -97,7 +97,7 @@ The
 .Fn mbrlen
 sets the conversion state object pointed by
 .Fa ps
-to an initila state and always return 0.
+to an initial state and always return 0.
 Unlike
 .Xr mblen 3 ,
 the value returned does not indicate whether the current encoding of
@@ -186,9 +186,9 @@ points an invalid or uninitialized mbstate_t object.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr setlocale 3 ,
 .Xr mblen 3 ,
-.Xr mbrtowc 3 .
+.Xr mbrtowc 3 ,
+.Xr setlocale 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
