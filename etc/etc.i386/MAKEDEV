@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.146 2001/09/16 08:19:06 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.147 2001/09/21 23:44:22 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -130,6 +130,7 @@
 #	wsmux*	wscons event multiplexor
 #	agp*	AGP GART devices
 #	pci*	PCI bus access devices
+#	dpti*	DPT/Adaptec RAID management interface
 #
 
 dialin=0
@@ -828,6 +829,13 @@ pci*)
 	rm -f pci$unit
 	mknod pci$unit c 83 $unit
 	chmod 644 pci$unit
+	;;
+
+dpti*)
+	unit=${i#dpti};
+	rm -f dpti$unit
+	mknod dpti$unit c 84 $unit
+	chmod 600 dpti$unit
 	;;
 
 altq)
