@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.210 1998/12/16 11:42:07 christos Exp $
+#	$NetBSD: GENERIC,v 1.211 1998/12/20 17:56:18 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -184,6 +184,9 @@ pcmcia*	at pcic? controller ? socket ?
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# PCI PCMCIA controllers
+pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
