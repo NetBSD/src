@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2003/01/24 21:55:10 fvdl Exp $	 */
+/* $NetBSD: main.c,v 1.12 2003/01/28 05:17:13 mrg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -259,7 +259,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		 */
 		pwarn("%d files, %lld used, %lld free ",
 		      n_files, (long long)n_blks,
-		      (long long)n_ffree + sblock.lfs_frag * n_bfree);
+		      (long long)(n_ffree + sblock.lfs_frag * n_bfree));
 		putchar('\n');
 	}
 	if (debug) {
