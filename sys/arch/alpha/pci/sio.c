@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.26 1998/06/09 18:49:33 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.26.8.1 1999/11/20 17:32:38 he Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.26 1998/06/09 18:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.26.8.1 1999/11/20 17:32:38 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,10 @@ siomatch(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
+		return (1);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
 		return (1);
 
 	return (0);
