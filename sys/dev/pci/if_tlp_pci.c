@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.61 2002/03/16 18:44:17 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.62 2002/03/26 07:57:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.61 2002/03/16 18:44:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.62 2002/03/26 07:57:17 chs Exp $");
 
 #include "opt_tlp.h"
 
@@ -225,6 +225,8 @@ const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 
 void	tlp_pci_asante_21140_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
+void	tlp_pci_smc_21140_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
 
 const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
@@ -232,6 +234,7 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
+	{ tlp_pci_smc_21140_quirks,	{ 0x00, 0x00, 0xc0 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -1191,6 +1194,103 @@ tlp_pci_asante_21140_reset(sc)
 	TULIP_WRITE(sc, CSR_GPP, 0x8);
 	delay(100);
 	TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
+/*
+ * SMC 9332DST media switch.
+ */
+void	tlp_smc9332dst_tmsw_init __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_smc9332dst_mediasw = {
+	tlp_smc9332dst_tmsw_init,
+	tlp_21140_gpio_get,
+	tlp_21140_gpio_set
+};
+
+void
+tlp_pci_smc_21140_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	if (sc->sc_mediasw != NULL) {
+		return;
+	}
+	strcpy(psc->sc_tulip.sc_name, "SMC 9332DST");
+	sc->sc_mediasw = &tlp_smc9332dst_mediasw;
+}
+
+void
+tlp_smc9332dst_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_21x4x_media *tm;
+	const char *sep = "";
+	uint32_t reg;
+	int i, cnt;
+
+	sc->sc_gp_dir = GPP_SMC9332DST_PINS;
+	sc->sc_opmode = OPMODE_MBO | OPMODE_PS;
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+#define	ADD(m, c) \
+	tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);		\
+	tm->tm_opmode = (c);						\
+	tm->tm_gpdata = GPP_SMC9332DST_INIT;				\
+	ifmedia_add(&sc->sc_mii.mii_media, (m), 0, tm)
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0), OPMODE_TTM);
+	PRINT("10baseT");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, 0),
+	    OPMODE_TTM | OPMODE_FD);
+	PRINT("10baseT-FDX");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, 0),
+	    OPMODE_PS | OPMODE_PCS | OPMODE_SCR);
+	PRINT("100baseTX");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, 0),
+	    OPMODE_PS | OPMODE_PCS | OPMODE_SCR | OPMODE_FD);
+	PRINT("100baseTX-FDX");
+
+#undef ADD
+#undef PRINT
+
+	printf("\n");
+
+	tlp_reset(sc);
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode | OPMODE_PCS | OPMODE_SCR);
+	TULIP_WRITE(sc, CSR_GPP, GPP_GPC | sc->sc_gp_dir);
+	delay(10);
+	TULIP_WRITE(sc, CSR_GPP, GPP_SMC9332DST_INIT);
+	delay(200000);
+	cnt = 0;
+	for (i = 1000; i > 0; i--) {
+		reg = TULIP_READ(sc, CSR_GPP);
+		if ((~reg & (GPP_SMC9332DST_OK10 |
+			     GPP_SMC9332DST_OK100)) == 0) {
+			if (cnt++ > 100) {
+				break;
+			}
+		} else if ((reg & GPP_SMC9332DST_OK10) == 0) {
+			break;
+		} else {
+			cnt = 0;
+		}
+		delay(1000);
+	}
+	if (cnt > 100) {
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_100_TX);
+	} else {
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+	}
 }
 
 void	tlp_pci_cobalt_21142_reset __P((struct tulip_softc *));
