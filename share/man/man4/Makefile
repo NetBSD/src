@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.193 2001/04/19 08:16:06 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.194 2001/04/19 17:17:29 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
 	awi.4 bba.4 bha.4 bktr.4 bpf.4 cac.4 cardbus.4 ccd.4 \
-	cd.4 ch.4 clcs.4 clct.4 clnp.4 cltp.4 cmpci.4 cms.4 cnw.4 dasd.4 ddb.4 \
-	de.4 dpt.4 drum.4 eap.4 elmc.4 en.4 envsys.4 ep.4 esh.4 \
+	cd.4 ch.4 clcs.4 clct.4 clnp.4 cltp.4 cmpci.4 cms.4 cnw.4 ddb.4 \
+	de.4 dpt.4 drum.4 eap.4 edc.4 elmc.4 en.4 envsys.4 ep.4 esh.4 \
 	esis.4 esm.4 eso.4 exphy.4 fd.4 fpa.4 fms.4 fxp.4 gre.4 hme.4 icmp.4 \
 	icsphy.4 idp.4 ifmedia.4 inet.4 inphy.4 intersil7170.4 ioat.4 \
 	iop.4 iophy.4 iopsp.4 ip.4 ipip.4 ipkdb.4 iso.4 isp.4 \

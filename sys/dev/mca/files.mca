@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.9 2001/04/19 07:30:25 jdolecek Exp $
+# $NetBSD: files.mca,v 1.10 2001/04/19 17:17:29 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -41,10 +41,10 @@ attach	ate at mca with ate_mca
 file	dev/mca/if_ate_mca.c		ate_mca	
 
 # ESDI controllers & disks
-device	dasd { }
-attach	dasd at mca with dasd_mca
-file	dev/mca/dasd_mca.c		dasd_mca
+device	edc { }
+attach	edc at mca with edc_mca
+file	dev/mca/edc_mca.c		edc_mca
 
 device	ed: disk
-attach	ed at dasd with ed_mca
+attach	ed at edc with ed_mca
 file	dev/mca/ed_mca.c		ed_mca		needs-flag

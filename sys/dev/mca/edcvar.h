@@ -1,4 +1,4 @@
-/*	$NetBSD: dasdvar.h,v 1.1 2001/04/19 07:30:24 jdolecek Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.1 2001/04/19 17:17:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,6 @@ struct ed_attach_args {
 	bus_dma_tag_t sc_dmat;		/* DMA tag as passed by parent */
 };
 	
-int	dasd_run_cmd __P((struct dasd_mca_softc *, int,
+int	edc_run_cmd __P((struct edc_mca_softc *, int,
 				int, u_int16_t [], int, int));
-void	dasd_add_disk __P((struct dasd_mca_softc *, struct ed_softc *, int));
+void	edc_add_disk __P((struct edc_mca_softc *, struct ed_softc *, int));

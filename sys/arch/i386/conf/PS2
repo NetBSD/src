@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.15 2001/04/19 07:37:10 jdolecek Exp $
+#	$NetBSD: PS2,v 1.16 2001/04/19 17:17:28 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -117,8 +117,8 @@ we*	at mca? slot ?			# WD/SMC Ethernet
 ate*	at mca? slot ?			# Allied Telesis AT1720
 
 # MCA ESDI controllers & disks - EXPERIMENTAL
-dasd*	at mca? slot ?			# IBM DASD-compliant ESDI controllers
-ed*	at dasd?
+edc*	at mca? slot ?			# IBM ESDI Disk Controllers
+ed*	at edc?
 
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
