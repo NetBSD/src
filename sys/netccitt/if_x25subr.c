@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.32 2003/08/07 16:33:01 agc Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.33 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.32 2003/08/07 16:33:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.33 2003/11/11 20:25:26 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -622,7 +622,7 @@ x25_dg_rtinit(dst, ia, af)
 			 */
 			struct in_ifaddr *ina;
 
-			for (ina = in_ifaddr.tqh_first; ina != 0;
+			for (ina = in_ifaddrhead.tqh_first; ina != 0;
 			     ina = ina->ia_list.tqe_next)
 				if (ina->ia_ifp == ia->ia_ifp) {
 					my_addr = ina->ia_addr.sin_addr;

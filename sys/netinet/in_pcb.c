@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.90 2003/10/28 17:18:37 provos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.91 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.90 2003/10/28 17:18:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.91 2003/11/11 20:25:26 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -238,7 +238,7 @@ in_pcbbind(v, nam, p)
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (TAILQ_FIRST(&in_ifaddr) == 0)
+	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
@@ -390,7 +390,7 @@ in_pcbconnect(v, nam)
 		return (EAFNOSUPPORT);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
-	if (TAILQ_FIRST(&in_ifaddr) != 0) {
+	if (TAILQ_FIRST(&in_ifaddrhead) != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,
 		 * use any local address (likely loopback).
@@ -401,9 +401,9 @@ in_pcbconnect(v, nam)
 
 		if (in_nullhost(sin->sin_addr)) {
 			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
+			    TAILQ_FIRST(&in_ifaddrhead)->ia_addr.sin_addr;
 		} else if (sin->sin_addr.s_addr == INADDR_BROADCAST) {
-			TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 				if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
 					sin->sin_addr =
 					    ia->ia_broadaddr.sin_addr;
@@ -992,7 +992,7 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 		sin->sin_port = fport;
 		if (ia == 0) {
 			/* Find 1st non-loopback AF_INET address */
-			TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
 					break;
 			}

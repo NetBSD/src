@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.180 2003/11/10 20:03:29 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.181 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.180 2003/11/10 20:03:29 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.181 2003/11/11 20:25:26 jonathan Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -219,7 +219,7 @@ extern	struct domain inetdomain;
 int	ipqmaxlen = IFQ_MAXLEN;
 u_long	in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
-struct	in_ifaddrhead in_ifaddr;
+struct in_ifaddrhead in_ifaddrhead;	
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 u_long	in_multihash;				/* size of hash table - 1 */
 int	in_multientries;			/* total number of addrs */
@@ -360,7 +360,7 @@ ip_init()
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
 	ipintrq.ifq_maxlen = ipqmaxlen;
-	TAILQ_INIT(&in_ifaddr);
+	TAILQ_INIT(&in_ifaddrhead);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
 	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IPMADDR,
@@ -448,7 +448,7 @@ ip_input(struct mbuf *m)
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
 	 */
-	if (TAILQ_FIRST(&in_ifaddr) == 0)
+	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
 		goto bad;
 	ipstat.ips_total++;
 	/*
