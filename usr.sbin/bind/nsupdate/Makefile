@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/26 20:04:51 kim Exp $
 
 WARNS=	0
+BINDIR=	/usr/bin
 PROG=	nsupdate
 SRCS=	${PROG}.c
 CPPFLAGS+= ${INCLUDE}
