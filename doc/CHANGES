@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.277 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.278 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -615,6 +615,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	GCC: Import GCC 3.3.3-20040209.  [mrg 20040210]
 	sh3: Switch to GCC 3.3. [uwe 20040222]
 	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
+	amiga: Add wsfont pseudo-device. [jandberg 20040223]
 	progress(1): Allow printing custom text before (left of) the progress
 		bar. [hubertf 20040309]
 	dge(4): add support for Intel PRO/10GbE ethernet adapter.
