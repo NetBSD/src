@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.24 1998/02/04 20:10:17 thorpej Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.25 1998/05/20 00:32:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.24 1998/02/04 20:10:17 thorpej Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.25 1998/05/20 00:32:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ umaskcmd(argc, argv)
 			out1fmt("%.4o\n", mask);
 		}
 	} else {
-		if (isdigit(*ap)) {
+		if (isdigit((unsigned char)*ap)) {
 			mask = 0;
 			do {
 				if (*ap >= '8' || *ap < '0')
