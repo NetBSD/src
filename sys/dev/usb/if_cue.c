@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.31 2001/01/21 22:09:23 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.32 2001/01/23 17:04:30 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -513,10 +513,8 @@ USB_ATTACH(cue)
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 
-	sc->cue_tick_task.fun = cue_tick_task;
-	sc->cue_tick_task.arg = sc;
-	sc->cue_stop_task.fun = (void (*)(void *))cue_stop;
-	sc->cue_stop_task.arg = sc;
+	usb_init_task(&sc->cue_tick_task, cue_tick_task, sc);
+	usb_init_task(&sc->cue_stop_task, (void (*)(void *))cue_stop, sc);
 
 	err = usbd_device2interface_handle(dev, CUE_IFACE_IDX, &iface);
 	if (err) {
@@ -608,9 +606,11 @@ USB_DETACH(cue)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
 
 	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
-
-	/* Wait a little so an executing cue_tick_task can finish. */
-	usbd_delay_ms(sc->cue_udev, 50);
+	/*
+	 * Remove any pending task.  It cannot be executing because it run
+	 * in the same thread as detach.
+	 */
+	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */
