@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.18 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.19 1999/05/19 07:50:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -84,7 +84,7 @@ ENTRY(copyin)
 	/* Quick exit if length is zero */	
 	teq	r2, #0
 	moveq	r0, #0
-	moveq	lr, pc
+	moveq	pc, lr
 
 	/* Do the actual copy */
 	b	do_copyinout
