@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410reg.h,v 1.1 2003/07/31 19:49:43 bsh Exp $ */
+/* $NetBSD: s3c2410reg.h,v 1.2 2003/08/04 10:24:15 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -112,13 +112,13 @@
 #define	S3C2410_INT_TXD2	(S3C2410_SUBIRQ_MIN+7)	/* UART2 Tx interrupt */
 #define	S3C2410_INT_RXD2	(S3C2410_SUBIRQ_MIN+6)	/* UART2 Rx interrupt */
 /* cascaded to INT_UART1 */
-#define	S3C2410_INT_ERR1	(S3C2410_SUBIRQ_MIN+5)	/* UART2 Error interrupt */
-#define	S3C2410_INT_TXD1	(S3C2410_SUBIRQ_MIN+4)	/* UART2 Tx interrupt */
-#define	S3C2410_INT_RXD1	(S3C2410_SUBIRQ_MIN+3)	/* UART2 Rx interrupt */
+#define	S3C2410_INT_ERR1	(S3C2410_SUBIRQ_MIN+5)	/* UART1 Error interrupt */
+#define	S3C2410_INT_TXD1	(S3C2410_SUBIRQ_MIN+4)	/* UART1 Tx interrupt */
+#define	S3C2410_INT_RXD1	(S3C2410_SUBIRQ_MIN+3)	/* UART1 Rx interrupt */
 /* cascaded to INT_UART0 */
-#define	S3C2410_INT_ERR0	(S3C2410_SUBIRQ_MIN+2)	/* UART2 Error interrupt */
-#define	S3C2410_INT_TXD0	(S3C2410_SUBIRQ_MIN+1)	/* UART2 Tx interrupt */
-#define	S3C2410_INT_RXD0	(S3C2410_SUBIRQ_MIN+0)	/* UART2 Rx interrupt */
+#define	S3C2410_INT_ERR0	(S3C2410_SUBIRQ_MIN+2)	/* UART0 Error interrupt */
+#define	S3C2410_INT_TXD0	(S3C2410_SUBIRQ_MIN+1)	/* UART0 Tx interrupt */
+#define	S3C2410_INT_RXD0	(S3C2410_SUBIRQ_MIN+0)	/* UART0 Rx interrupt */
 
 
 /* Clock control: CLKCON register */
