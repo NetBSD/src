@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.5 1995/01/18 06:53:53 mellon Exp $	*/
+/*	$NetBSD: callvec.c,v 1.6 1995/09/25 21:06:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ const struct callback callvec = {
 	(long (*) __P((long *tod)))0,
 	(int (*) __P((jmp_buf env)))0,
 	(void (*) __P((jmp_buf env, int value)))0,
-	(int (*) __P((void)))0,
+	(int (*) __P(( char *fname)))0,
 	(int (*) __P((int b, void *buffer, int n)))0,
 	(int (*) __P((int b, void *buffer, int n)))0,
 	(int (*) __P((char *name, char *value)))DEC_PROM_SETENV2,
