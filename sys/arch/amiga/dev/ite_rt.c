@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.15 1996/04/21 21:12:01 veego Exp $	*/
+/*	$NetBSD: ite_rt.c,v 1.16 1996/04/23 22:53:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -57,6 +57,11 @@ void retina_clear __P((struct ite_softc *,int,int,int,int));
 void retina_putc __P((struct ite_softc *,int,int,int,int));
 void retina_init __P((struct ite_softc *));
 
+#ifdef RETINA_SPEED_HACK
+static void screen_up __P((struct ite_softc *, int, int, int));
+static void screen_down __P((struct ite_softc *, int, int, int));
+#endif
+
 /*
  * this function is called from grf_rt to init the grf_softc->g_conpri
  * field each time a retina is attached.
@@ -91,6 +96,7 @@ grfrt_iteinit(gp)
 	gp->g_itecursor = retina_cursor;
 }
 
+
 void
 retina_init(ip)
 	struct ite_softc *ip;
@@ -99,13 +105,16 @@ retina_init(ip)
 
 	ip->priv = ip->grf->g_data;
 	md = (struct MonDef *) ip->priv;
-  
+ 
 	ip->cols = md->TX;
 	ip->rows = md->TY;
 }
 
 
-void retina_cursor(struct ite_softc *ip, int flag)
+void
+retina_cursor(ip, flag)
+	struct ite_softc *ip;
+	int flag;
 {
       volatile caddr_t ba = ip->grf->g_regkva;
       
@@ -132,7 +141,13 @@ void retina_cursor(struct ite_softc *ip, int flag)
 
 
 
-static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
+#ifdef	RETINA_SPEED_HACK
+static void
+screen_up(ip, top, bottom, lines)
+	struct ite_softc *ip;
+	int top;
+	int bottom;
+	int lines;
 {	
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
@@ -171,13 +186,15 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	   by the NCR chip, it just replicates what it just read. */
 	
 		/* write to primary, read from secondary */
-	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA, (RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
+	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
 		/* clear extended chain4 mode */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
 	
 		/* set write mode 1, "[...] data in the read latches is written
 		   to memory during CPU memory write cycles. [...]" */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
+	WGfx (ba, GCT_ID_GRAPHICS_MODE,
+		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
 	
 	{
 		/* write to line TOP */	
@@ -221,35 +238,38 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0); 
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0); 
 		/* write mode 0 */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
+	WGfx (ba, GCT_ID_GRAPHICS_MODE,
+		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 		/* extended chain4 enable */
-	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
+	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR,
+		RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
 		/* read/write to primary on A0, secondary on B0 */
-	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA, (RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40 ); 
-	
-	
+	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40);
+
+
 	/* fill the free lines with spaces */
-	
+
 	{  /* feed latches with value */
 		unsigned short * f = (unsigned short *) fb;
-		
+
 		f += (1 + bottom - lines) * md->TX * 2;
 		*f = 0x2010;
 	}
-	
+
 	   /* clear extended chain4 mode */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
 	   /* set write mode 1, "[...] data in the read latches is written
 	      to memory during CPU memory write cycles. [...]" */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
-	
+
 	{
 		unsigned long * p = (unsigned long *) fb;
 		short x = (lines * (md->TX/16)) - 1;
 		const unsigned long dummyval = 0;
-		
+
 		p += (1 + bottom - lines) * (md->TX/4);
-		
+
 		do {
 			*p++ = dummyval;
 			*p++ = dummyval;
@@ -257,7 +277,7 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 			*p++ = dummyval;
 		} while (x--);
 	}
-	
+
 	   /* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
@@ -271,8 +291,14 @@ static void screen_up (struct ite_softc *ip, int top, int bottom, int lines)
 #endif
 };
 
-static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
-{	
+
+static void
+screen_down(ip, top, bottom, lines)
+	struct ite_softc *ip;
+	int top;
+	int bottom;
+	int lines;
+{
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
@@ -283,7 +309,7 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
 	  return;
-	  
+ 
 	if (top + lines >= bottom)
 	  {
 	    retina_clear (ip, top, 0, bottom - top, ip->cols);
@@ -299,14 +325,15 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	/* see screen_up() for explanation of chip-tricks */
 
 		/* write to primary, read from secondary */
-	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA, (RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
+	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0 ); 
 		/* clear extended chain4 mode */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
-	
+
 		/* set write mode 1, "[...] data in the read latches is written
 		   to memory during CPU memory write cycles. [...]" */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
-	
+
 	{
 		/* write to line TOP + LINES */	
 		long toloc = (top + lines) * (md->TX / 16);
@@ -319,7 +346,7 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 		WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, ((unsigned char)fromloc)); 
 		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ; 
 	}
-	
+
 	{
 		caddr_t p = (caddr_t)fb;
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
@@ -343,41 +370,43 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 			asm volatile("addqb #1,%0@-" : "=a" (p) : "0" (p)); 
 		} while (x--);
 	}
-	
+
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, 0); 
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, 0); 
 	WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, 0); 
 	WSeq (ba, SEQ_ID_SEC_HOST_OFF_LO, 0); 
-	
+
 		/* write mode 0 */
-	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
+	WGfx (ba, GCT_ID_GRAPHICS_MODE,
+		(RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 		/* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
 		/* read/write to primary on A0, secondary on B0 */
-	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA, (RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40 ); 
-	
+	WSeq (ba, SEQ_ID_EXTENDED_MEM_ENA,
+		(RSeq(ba, SEQ_ID_EXTENDED_MEM_ENA) & 0x1f) | 0x40 ); 
+
 	/* fill the free lines with spaces */
-	
+
 	{  /* feed latches with value */
 		unsigned short * f = (unsigned short *) fb;
-		
+
 		f += top * md->TX * 2;
 		*f = 0x2010;
 	}
-	
+
 	   /* clear extended chain4 mode */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR, RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) & ~0x02);  
 	   /* set write mode 1, "[...] data in the read latches is written
 	      to memory during CPU memory write cycles. [...]" */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 1); 
-	
+
 	{
 		unsigned long * p = (unsigned long *) fb;
 		short x = (lines * (md->TX/16)) - 1;
 		const unsigned long dummyval = 0;
-		
+
 		p += top * (md->TX/4);
-		
+
 		do {
 			*p++ = dummyval;
 			*p++ = dummyval;
@@ -385,12 +414,12 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 			*p++ = dummyval;
 		} while (x--);
 	}
-	
+
 	   /* write mode 0 */
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);  
-	
+
 #ifdef BANKEDDEVPAGER
 	/* restore former bank */
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
@@ -398,32 +427,50 @@ static void screen_down (struct ite_softc *ip, int top, int bottom, int lines)
 	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
 #endif
 };
+#endif	/* RETINA_SPEED_HACK */
 
-void retina_deinit(struct ite_softc *ip)
+
+void
+retina_deinit(ip)
+	struct ite_softc *ip;
 {
-  ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 
-void retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
+void
+retina_putc(ip, c, dy, dx, mode)
+	struct ite_softc *ip;
+	int c;
+	int dy;
+	int dx;
+	int mode;
 {
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	register u_char attr;
-	
+
 	attr = (mode & ATTR_INV) ? 0x21 : 0x10;
 	if (mode & ATTR_UL)     attr  = 0x01;	/* ???????? */
 	if (mode & ATTR_BOLD)   attr |= 0x08;
 	if (mode & ATTR_BLINK)	attr |= 0x80;
-	
+
 	fb += 4 * (dy * ip->cols + dx);
 	*fb++ = c; *fb = attr;
 }
 
-void retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
+
+void
+retina_clear(ip, sy, sx, h, w)
+	struct ite_softc *ip;
+	int sy;
+	int sx;
+	int h;
+	int w;
 {
 	u_short * fb = (u_short *) ip->grf->g_fbkva;
 	short x;
 	const u_short fillval = 0x2010;
+
 	/* could probably be optimized just like the scrolling functions !! */
 	fb += 2 * (sy * ip->cols + sx);
 	while (h--)
@@ -434,19 +481,25 @@ void retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	  }
 }
 
+
 /*
  * RETINA_SPEED_HACK code seems to work on some boards and on others
  * it causes text to smear horizontally
  */
 void
-retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
+retina_scroll(ip, sy, sx, count, dir)
+	struct ite_softc *ip;
+	int sy;
+	int sx;
+	int count;
+	int dir;
 {
 	volatile caddr_t ba;
 	u_long *fb;
 
 	ba = ip->grf->g_regkva;
 	fb = (u_long *)ip->grf->g_fbkva;
-	
+
 	retina_cursor(ip, ERASE_CURSOR);
 
 	if (dir == SCROLL_UP) {

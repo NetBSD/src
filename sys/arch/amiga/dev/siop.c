@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.30 1996/04/21 21:12:35 veego Exp $	*/
+/*	$NetBSD: siop.c,v 1.31 1996/04/23 22:53:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -359,13 +359,13 @@ siop_scsidone(acb, stat)
 	struct siop_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs;
+	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *slp;
 	struct siop_softc *sc;
 	int dosched = 0;
 
 #ifdef DIAGNOSTIC
-	if (acb == NULL || (xs = acb->xs) == NULL) {
+	if (acb == NULL || xs == NULL) {
 /*		panic("siop_scsidone"); */
 		printf("siop_scsidone: sc_nexus NULL\n");
 		Debugger();
@@ -703,11 +703,13 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 	int len;
 {
 	siop_regmap_p rp = sc->sc_siopp;
-	int i;
 	int nchain;
 	int count, tcount;
 	char *addr, *dmaend;
 	struct siop_acb *acb = sc->sc_nexus;
+#ifdef DEBUG
+	int i;
+#endif
 
 #ifdef DEBUG
 	if (siop_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
@@ -1276,10 +1278,10 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		return (0);
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff04) {
+#ifdef DEBUG
 		u_short ctest2 = rp->siop_ctest2;
 
 		/* reselect was interrupted (by Sig_P or select) */
-#ifdef DEBUG
 		if (siop_debug & 0x100 ||
 		    (ctest2 & SIOP_CTEST2_SIGP) == 0)
 			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x istat %x/%x\n",
