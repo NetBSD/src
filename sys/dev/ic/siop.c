@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.51 2002/04/05 18:27:54 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.52 2002/04/18 12:03:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.51 2002/04/05 18:27:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.52 2002/04/18 12:03:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.51 2002/04/05 18:27:54 bouyer Exp $");
 #include <dev/ic/siopreg.h>
 #include <dev/ic/siopvar.h>
 #include <dev/ic/siopvar_common.h>
+
+#include "opt_siop.h"
 
 #ifndef DEBUG
 #undef DEBUG
@@ -271,6 +273,15 @@ siop_reset(sc)
 			    E_abs_msgin_Used[j] * 4,
 			    sc->sc_scriptaddr + Ent_msgin_space);
 		}
+#ifdef SIOP_SYMLED
+		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh, Ent_led_on1,
+		    siop_led_on, sizeof(siop_led_on) / sizeof(siop_led_on[0]));
+		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh, Ent_led_on2,
+		    siop_led_on, sizeof(siop_led_on) / sizeof(siop_led_on[0]));
+		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh, Ent_led_off,
+		    siop_led_off,
+		    sizeof(siop_led_off) / sizeof(siop_led_off[0]));
+#endif
 	} else {
 		for (j = 0;
 		    j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
@@ -282,6 +293,23 @@ siop_reset(sc)
 			sc->sc_script[E_abs_msgin_Used[j]] =
 			    htole32(sc->sc_scriptaddr + Ent_msgin_space);
 		}
+#ifdef SIOP_SYMLED
+		for (j = 0;
+		    j < (sizeof(siop_led_on) / sizeof(siop_led_on[0])); j++)
+			sc->sc_script[
+			    Ent_led_on1 / sizeof(siop_led_on[0]) + j
+			    ] = htole32(siop_led_on[j]);
+		for (j = 0;
+		    j < (sizeof(siop_led_on) / sizeof(siop_led_on[0])); j++)
+			sc->sc_script[
+			    Ent_led_on2 / sizeof(siop_led_on[0]) + j
+			    ] = htole32(siop_led_on[j]);
+		for (j = 0;
+		    j < (sizeof(siop_led_off) / sizeof(siop_led_off[0])); j++)
+			sc->sc_script[
+			   Ent_led_off / sizeof(siop_led_off[0]) + j
+			   ] = htole32(siop_led_off[j]);
+#endif
 	}
 	sc->script_free_lo = sizeof(siop_script) / sizeof(siop_script[0]);
 	sc->script_free_hi = sc->ram_size / 4;
