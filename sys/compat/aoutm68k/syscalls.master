@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2002/05/03 00:20:56 eeh Exp $
+	$NetBSD: syscalls.master,v 1.8 2003/01/18 07:21:14 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/aoutm68k/aoutm68k_syscallargs.h>
 
@@ -191,7 +192,7 @@
 48	EXCL		compat_13_sys_sigprocmask
 #endif
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	NOARGS		{ int sys_setlogin(const char *namebuf); }
+50	NOARGS		{ int sys___setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
 #ifdef COMPAT_13
 52	NOARGS		{ int compat_13_sys_sigpending(void); } sigpending13
@@ -861,3 +862,5 @@
 #endif
 304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
 305	NOARGS		{ int sys_issetugid(void); }
+306	NOARGS		{ int sys_getcontext(struct __ucontext *ucp); }
+307	NOARGS		{ int sys_setcontext(const struct __ucontext *ucp); }

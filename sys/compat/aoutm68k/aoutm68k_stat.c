@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.6 2002/03/16 20:43:48 christos Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.7 2003/01/18 07:21:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.6 2002/03/16 20:43:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.7 2003/01/18 07:21:14 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.6 2002/03/16 20:43:48 christos E
 #include <sys/stat.h>
 
 #include <sys/syscall.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/aoutm68k/aoutm68k_util.h>
@@ -69,12 +70,13 @@ static void aoutm68k_stat13_convert(struct stat *, struct aoutm68k_stat *);
 
 #ifdef COMPAT_43
 int
-aoutm68k_compat_43_sys_stat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_43_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_43_sys_stat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_43_sys_stat_args cup;
 	struct aoutm68k_stat43 ast;
@@ -87,7 +89,7 @@ aoutm68k_compat_43_sys_stat(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = compat_43_sys_stat(p, &cup, retval)) != 0 ||
+	if ((error = compat_43_sys_stat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -97,12 +99,13 @@ aoutm68k_compat_43_sys_stat(p, v, retval)
 }
 
 int
-aoutm68k_compat_43_sys_fstat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_43_sys_fstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_43_sys_fstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_43_sys_fstat_args cup;
 	struct aoutm68k_stat43 ast;
@@ -112,7 +115,7 @@ aoutm68k_compat_43_sys_fstat(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = compat_43_sys_fstat(p, &cup, retval)) != 0 ||
+	if ((error = compat_43_sys_fstat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -122,12 +125,13 @@ aoutm68k_compat_43_sys_fstat(p, v, retval)
 }
 
 int
-aoutm68k_compat_43_sys_lstat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_43_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_43_sys_lstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_43_sys_lstat_args cup;
 	struct aoutm68k_stat43 ast;
@@ -140,7 +144,7 @@ aoutm68k_compat_43_sys_lstat(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = compat_43_sys_lstat(p, &cup, retval)) != 0 ||
+	if ((error = compat_43_sys_lstat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -152,12 +156,13 @@ aoutm68k_compat_43_sys_lstat(p, v, retval)
 
 #ifdef COMPAT_12
 int
-aoutm68k_compat_12_sys_stat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_12_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_12_sys_stat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_12_sys_stat_args cup;
 	struct aoutm68k_stat12 ast;
@@ -170,7 +175,7 @@ aoutm68k_compat_12_sys_stat(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = compat_12_sys_stat(p, &cup, retval)) != 0 ||
+	if ((error = compat_12_sys_stat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -180,12 +185,13 @@ aoutm68k_compat_12_sys_stat(p, v, retval)
 }
 
 int
-aoutm68k_compat_12_sys_fstat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_12_sys_fstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_12_sys_fstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_12_sys_fstat_args cup;
 	struct aoutm68k_stat12 ast;
@@ -195,7 +201,7 @@ aoutm68k_compat_12_sys_fstat(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = compat_12_sys_fstat(p, &cup, retval)) != 0 ||
+	if ((error = compat_12_sys_fstat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -205,12 +211,13 @@ aoutm68k_compat_12_sys_fstat(p, v, retval)
 }
 
 int
-aoutm68k_compat_12_sys_lstat(p, v, retval)
-	struct proc *p;
+aoutm68k_compat_12_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_compat_12_sys_lstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct compat_12_sys_lstat_args cup;
 	struct aoutm68k_stat12 ast;
@@ -223,7 +230,7 @@ aoutm68k_compat_12_sys_lstat(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = compat_12_sys_lstat(p, &cup, retval)) != 0 ||
+	if ((error = compat_12_sys_lstat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -234,12 +241,13 @@ aoutm68k_compat_12_sys_lstat(p, v, retval)
 #endif /* COMPAT_12 */
 
 int
-aoutm68k_sys___stat13(p, v, retval)
-	struct proc *p;
+aoutm68k_sys___stat13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys___stat13_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys___stat13_args cup;
 	struct aoutm68k_stat ast;
@@ -252,7 +260,7 @@ aoutm68k_sys___stat13(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(p, &cup, retval)) != 0 ||
+	if ((error = sys___stat13(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -262,12 +270,13 @@ aoutm68k_sys___stat13(p, v, retval)
 }
 
 int
-aoutm68k_sys___fstat13(p, v, retval)
-	struct proc *p;
+aoutm68k_sys___fstat13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys___fstat13_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys___fstat13_args cup;
 	struct aoutm68k_stat ast;
@@ -277,7 +286,7 @@ aoutm68k_sys___fstat13(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys___fstat13(p, &cup, retval)) != 0 ||
+	if ((error = sys___fstat13(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -288,12 +297,13 @@ aoutm68k_sys___fstat13(p, v, retval)
 }
 
 int
-aoutm68k_sys___lstat13(p, v, retval)
-	struct proc *p;
+aoutm68k_sys___lstat13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys___lstat13_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys___lstat13_args cup;
 	struct aoutm68k_stat ast;
@@ -306,7 +316,7 @@ aoutm68k_sys___lstat13(p, v, retval)
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(p, &cup, retval)) != 0 ||
+	if ((error = sys___lstat13(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return (error);
 
@@ -316,12 +326,13 @@ aoutm68k_sys___lstat13(p, v, retval)
 }
 
 int
-aoutm68k_sys_fhstat(p, v, retval)
-	struct proc *p;
+aoutm68k_sys_fhstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct aoutm68k_sys_fhstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_fhstat_args cup;
 	struct aoutm68k_stat ast;
@@ -331,7 +342,7 @@ aoutm68k_sys_fhstat(p, v, retval)
 	SCARG(&cup, fhp) = SCARG(uap, fhp);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys_fhstat(p, &cup, retval)) != 0 ||
+	if ((error = sys_fhstat(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 
