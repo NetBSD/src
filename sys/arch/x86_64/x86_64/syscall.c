@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2002/11/15 20:06:04 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2002/12/21 16:24:00 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ syscall_fancy(frame)
 		}
 	}
 
-	if ((error = trace_enter(p, code, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
