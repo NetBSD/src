@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.145 2001/11/15 09:48:18 lukem Exp $ */
+/*	$NetBSD: st.c,v 1.146 2001/12/01 00:03:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.145 2001/11/15 09:48:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.146 2001/12/01 00:03:45 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -270,18 +270,18 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},	        /* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
+	 "OnStream DI-30",      "",   "1.0"},  {ST_Q_NOFILEMARKS, 0, {
+		{0, 0, 0},                              /* minor 0-3 */
+		{0, 0, 0},                              /* minor 4-7 */
+		{0, 0, 0},                              /* minor 8-11 */
+		{0, 0, 0}                               /* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
 	 "NCR H621", "0-STD-03-46F880 ", ""},     {ST_Q_NOPREVENT, 0, {
 		{0, 0, 0},			       /* minor 0-3 */
 		{0, 0, 0},			       /* minor 4-7 */
 		{0, 0, 0},			       /* minor 8-11 */
 		{0, 0, 0}			       /* minor 12-15 */
-	}}},
-	{{T_SEQUENTIAL, T_REMOV,
-	 "OnStream DI-30",      "",   "1.0"},  {ST_Q_IGNORE_LOADS, 0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
 	}}},
 };
 
@@ -1681,7 +1681,14 @@ st_write_filemarks(st, number, flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
-	_lto3b(number, cmd.number);
+	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+		cmd.byte2 = SR_IMMED;
+	/*
+	 * The ATAPI Onstream DI-30 doesn't support writing filemarks, but
+	 * WRITE_FILEMARKS is still used to flush the buffer
+	 */
+	if ((st->quirks & ST_Q_NOFILEMARKS) == 0)
+		_lto3b(number, cmd.number);
 
 	return (scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
@@ -1756,6 +1763,8 @@ st_load(st, type, flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOAD;
+	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
 	error = scsipi_command(st->sc_periph,
@@ -1790,7 +1799,7 @@ st_rewind(st, immediate, flags)
 	st->flags &= ~ST_PER_ACTION;
 
 	/*
-	 * ATAPI tapes always need foo to be set
+	 * ATAPI tapes always need immediate to be set
 	 */
 	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
 		immediate = SR_IMMED;
@@ -1934,6 +1943,16 @@ st_interpret_sense(xs)
 	st->asc = sense->add_sense_code;
 	st->ascq = sense->add_sense_code_qual;
 	st->mt_resid = (short) info;
+
+	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
+		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */
+		scsipi_printaddr(periph);
+		printf("waiting for device to become ready\n");
+		scsipi_periph_freeze(periph, 1);
+		callout_reset(&periph->periph_callout,
+		    hz, scsipi_periph_timed_thaw, periph);
+		return (ERESTART);
+	}
 
 	/*
 	 * If the device is not open yet, let generic handle

@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.2 2001/06/18 09:05:05 bouyer Exp $ */
+/*	$NetBSD: stvar.h,v 1.3 2001/12/01 00:03:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct quirkdata {
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 #define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
 #define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
+#define	ST_Q_NOFILEMARKS	0x0080	/* can only write 0 filemarks */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
