@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2000/06/29 07:37:57 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.35 2000/07/03 14:38:05 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1017,7 +1017,7 @@ getdevunit(name, unit)
 #define BUSCLASS_FDC		9
 
 static int bus_class __P((struct device *));
-static char *bus_compatible __P((char *));
+static char *bus_compatible __P((char *, struct device *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
 static void nail_bootdev __P((struct device *, struct bootpath *));
 
@@ -1027,6 +1027,7 @@ static struct {
 } bus_class_tab[] = {
 	{ "mainbus",	BUSCLASS_MAINBUS },
 	{ "upa",	BUSCLASS_MAINBUS },
+	{ "psycho",	BUSCLASS_MAINBUS },
 	{ "obio",	BUSCLASS_OBIO },
 	{ "iommu",	BUSCLASS_IOMMU },
 	{ "sbus",	BUSCLASS_SBUS },
@@ -1035,7 +1036,6 @@ static struct {
 	{ "dma",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
-	{ "psycho",	BUSCLASS_PCI },
 	{ "simba",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
@@ -1051,23 +1051,31 @@ static struct {
  */
 static struct {
 	char	*bpname;
+	int	class;
 	char	*cfname;
 } dev_compat_tab[] = {
-	{ "espdma",	"dma" },
-	{ "QLGC,isp",	"isp" },
-	{ "PTI,isp",	"isp" },
-	{ "ptisp",	"isp" },
-	{ "SUNW,fdtwo",	"fdc" },
+	{ "espdma",	BUSCLASS_NONE,		"dma" },
+	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
+	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
+	{ "ptisp",	BUSCLASS_NONE,		"isp" },
+	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
+	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
+	{ "pci",	BUSCLASS_PCI,		"simba" },
+	{ "ide",	BUSCLASS_PCI,		"pciide" },
+	{ "disk",	BUSCLASS_NONE,		"wd" },
 };
 
 static char *
-bus_compatible(bpname)
+bus_compatible(bpname, dev)
 	char *bpname;
+	struct device *dev;
 {
-	int i;
+	int i, class = bus_class(dev);
 
 	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0)
+		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
+		    (class == BUSCLASS_NONE ||
+		     class == dev_compat_tab[i].class))
 			return (dev_compat_tab[i].cfname);
 	}
 
@@ -1207,10 +1215,10 @@ device_register(dev, aux)
 	/*
 	 * Translate PROM name in case our drivers are named differently
 	 */
-	bpname = bus_compatible(bp->name);
+	bpname = bus_compatible(bp->name, dev);
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
 
 	/* First, match by name */
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
 	if (strcmp(dvname, bpname) != 0)
 		return;
 
