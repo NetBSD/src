@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.1 2001/12/03 23:32:32 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.2 2001/12/04 19:56:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,12 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/file.h>
+#include <sys/vnode.h>
 #include <sys/poll.h>
 
 #include <dev/ir/ir.h>
@@ -57,14 +59,16 @@
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
+#define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x
+#define Static
 int irframetdebug = 1;
 #else
 #define DPRINTF(x)
+#define Static static
 #endif
 
 /* Protocol constants */
@@ -78,10 +82,40 @@ int irframetdebug = 1;
 
 #define MAX_IRDA_FRAME 5000	/* XXX what is it? */
 
+struct frame {
+	u_char *buf;
+	u_int len;
+};
+#define MAXFRAMES 4
+
 struct irframet_softc {
 	struct irframe_softc sc_irp;
 	struct tty *sc_tp;
+
+	int sc_state;
+#define	IRT_RSLP		0x01	/* waiting for data (read) */
+#if 0
+#define	IRT_WSLP		0x02	/* waiting for data (write) */
+#define IRT_CLOSING		0x04	/* waiting for output to drain */
+#endif
+
 	int sc_ebofs;
+
+	u_char* sc_inbuf;
+	int sc_maxsize;
+	int sc_framestate;
+#define FRAME_OUTSIDE    0
+#define FRAME_INSIDE     1
+#define FRAME_ESCAPE     2
+	int sc_inchars;
+	int sc_inFCS;
+	struct callout sc_timeout;
+
+	u_int sc_nframes;
+	u_int sc_framei;
+	u_int sc_frameo;
+	struct frame sc_frames[MAXFRAMES];
+	struct selinfo sc_rsel;
 };
 
 /* line discipline methods */
@@ -92,31 +126,83 @@ int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 int	irframetinput(int c, struct tty *tp);
 int	irframetstart(struct tty *tp);
 
-/* irframe methods */
-int	irframet_open(void *h, int flag, int mode, struct proc *p);
-int	irframet_close(void *h, int flag, int mode, struct proc *p);
-int	irframet_read(void *h, struct uio *uio, int flag);
-int	irframet_write(void *h, struct uio *uio, int flag);
-int	irframet_poll(void *h, int events, struct proc *p);
-int	irframet_set_params(void *h, struct irda_params *params);
-int	irframet_reset_params(void *h);
-int	irframet_get_speeds(void *h, int *speeds);
-int	irframet_get_turnarounds(void *h, int *times);
-
-int	irframet_write_buf(void *h, void *buf, size_t len);
-
+/* pseudo device init */
 void	irframettyattach(int);
 
-struct irframe_methods irframet_methods = {
+/* irframe methods */
+Static int	irframet_open(void *h, int flag, int mode, struct proc *p);
+Static int	irframet_close(void *h, int flag, int mode, struct proc *p);
+Static int	irframet_read(void *h, struct uio *uio, int flag);
+Static int	irframet_write(void *h, struct uio *uio, int flag);
+Static int	irframet_poll(void *h, int events, struct proc *p);
+Static int	irframet_set_params(void *h, struct irda_params *params);
+Static int	irframet_get_speeds(void *h, int *speeds);
+Static int	irframet_get_turnarounds(void *h, int *times);
+
+/* internal */
+Static int	irt_write_buf(void *h, void *buf, size_t len);
+Static int	irt_putc(int c, struct tty *tp);
+Static int	irt_putesc(int c, struct tty *tp);
+Static void	irt_frame(struct irframet_softc *sc, u_char *buf, u_int len);
+Static void	irt_timeout(void *v);
+
+Static struct irframe_methods irframet_methods = {
 	irframet_open, irframet_close, irframet_read, irframet_write,
-	irframet_poll, irframet_set_params, irframet_reset_params,
-	irframet_get_speeds, irframet_get_speeds
+	irframet_poll, irframet_set_params,
+	irframet_get_speeds, irframet_get_turnarounds
 };
 
 void
 irframettyattach(int n)
 {
 }
+
+/*
+ * CRC
+ */
+
+static const u_int16_t fcstab[] = {
+  0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
+  0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
+  0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
+  0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
+  0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
+  0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
+  0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
+  0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
+  0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
+  0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
+  0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
+  0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
+  0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
+  0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
+  0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
+  0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
+  0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
+  0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
+  0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
+  0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
+  0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
+  0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
+  0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
+  0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
+  0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
+  0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
+  0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
+  0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
+  0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
+  0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
+  0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
+  0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
+};
+
+static const u_int16_t INITFCS = 0xffff;
+static const u_int16_t GOODFCS = 0xf0b8;
+
+static __inline u_int16_t updateFCS(u_int16_t fcs, int c) {
+	return (fcs >> 8) ^ fcstab[(fcs^c) & 0xff];
+} 
+
 
 /*
  * Line specific open routine for async tty devices.
@@ -149,7 +235,7 @@ irframetopen(dev_t dev, struct tty *tp)
 		}
 	}
 
-	printf("%s attached at tty%d:", sc->sc_irp.sc_dev.dv_xname,
+	printf("%s attached at tty%02d:", sc->sc_irp.sc_dev.dv_xname,
 	    minor(tp->t_dev));
 	tp->t_sc = irframe_alloc(sizeof (struct irframet_softc),
 			&irframet_methods, tp);
@@ -161,6 +247,15 @@ irframetopen(dev_t dev, struct tty *tp)
 	ttyflush(tp, FREAD | FWRITE);
 
 	splx(s);
+
+	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
+	sc->sc_maxsize = 0;
+	sc->sc_framestate = FRAME_OUTSIDE;
+	sc->sc_nframes = 0;
+	sc->sc_framei = 0;
+	sc->sc_frameo = 0;
+	callout_init(&sc->sc_timeout);
+
 	return (0);
 }
 
@@ -175,15 +270,30 @@ irframetclose(struct tty *tp, int flag)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
+	int i;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+
+	callout_stop(&sc->sc_timeout);
+	s = splir();
+	if (sc->sc_inbuf != NULL) {
+		free(sc->sc_inbuf, M_DEVBUF);
+		sc->sc_inbuf = NULL;
+	}
+	for (i = 0; i < MAXFRAMES; i++) {
+		if (sc->sc_frames[i].buf != NULL) {
+			free(sc->sc_frames[i].buf, M_DEVBUF);
+			sc->sc_frames[i].buf = NULL;
+		}
+	}
+	splx(s);
 
 	s = spltty();
 	ttyflush(tp, FREAD | FWRITE);
 	tp->t_linesw = linesw[0]; /* default line discipline */
 	if (sc != NULL) {
 		tp->t_sc = NULL;
-		printf("%s detached from tty%d\n", sc->sc_irp.sc_dev.dv_xname,
+		printf("%s detached from tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
 		    minor(tp->t_dev));
 
 		if (sc->sc_tp == tp)
@@ -248,6 +358,41 @@ irframetstart(struct tty *tp)
 	return (0);
 }
 
+void
+irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
+{
+	if (sc->sc_nframes >= MAXFRAMES) {
+#ifdef IRFRAMET_DEBUG
+		printf("%s: dropped frame\n", __FUNCTION__);
+#endif
+		return;
+	}
+	if (sc->sc_frames[sc->sc_framei].buf == NULL)
+		return;
+	memcpy(sc->sc_frames[sc->sc_framei].buf, buf, len);
+	sc->sc_frames[sc->sc_framei].len = len;
+	sc->sc_framei = (sc->sc_framei+1) % MAXFRAMES;
+	sc->sc_nframes++;
+	if (sc->sc_state & IRT_RSLP) {
+		sc->sc_state &= ~IRT_RSLP;
+		DPRINTF(("%s: waking up reader\n", __FUNCTION__));
+		wakeup(sc->sc_frames);
+	}
+	selwakeup(&sc->sc_rsel);
+}
+
+void
+irt_timeout(void *v)
+{
+	struct irframet_softc *sc = v;
+
+#ifdef IRFRAMET_DEBUG
+	if (sc->sc_framestate != FRAME_OUTSIDE)
+		printf("%s: input frame timeout\n", __FUNCTION__);
+#endif
+	sc->sc_framestate = FRAME_OUTSIDE;
+}
+
 int
 irframetinput(int c, struct tty *tp)
 {
@@ -257,287 +402,58 @@ irframetinput(int c, struct tty *tp)
 
 	if (sc == NULL || tp != (struct tty *)sc->sc_tp)
 		return (0);
-#if 0
 
+	if (sc->sc_inbuf == NULL)
+		return (0);
 
-    ++tk_nin;
-    ++sc->sc_stats.irframe_ibytes;
-
-    if (c & TTY_FE) {
-	/* framing error or overrun on this char - abort packet */
-	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: bad char %x\n", sc->sc_if.if_xname, c);
-	goto flush;
-    }
-
-    c &= 0xff;
-
-    /*
-     * Handle software flow control of output.
-     */
-    if (tp->t_iflag & IXON) {
-	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
-	    if ((tp->t_state & TS_TTSTOP) == 0) {
-		tp->t_state |= TS_TTSTOP;
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
-	    }
-	    return 0;
-	}
-	if (c == tp->t_cc[VSTART] && tp->t_cc[VSTART] != _POSIX_VDISABLE) {
-	    tp->t_state &= ~TS_TTSTOP;
-	    if (tp->t_oproc != NULL)
-		(*tp->t_oproc)(tp);
-	    return 0;
-	}
-    }
-
-    s = spltty();
-    if (c & 0x80)
-	sc->sc_flags |= SC_RCV_B7_1;
-    else
-	sc->sc_flags |= SC_RCV_B7_0;
-    if (paritytab[c >> 5] & (1 << (c & 0x1F)))
-	sc->sc_flags |= SC_RCV_ODDP;
-    else
-	sc->sc_flags |= SC_RCV_EVNP;
-    splx(s);
-
-    if (sc->sc_flags & SC_LOG_RAWIN)
-	irframelogchar(sc, c);
-
-    if (c == IRFRAME_FLAG) {
-	ilen = sc->sc_ilen;
-	sc->sc_ilen = 0;
-
-	if (sc->sc_rawin_count > 0) 
-	    irframelogchar(sc, -1);
-
-	/*
-	 * If SC_ESCAPED is set, then we've seen the packet
-	 * abort sequence "}~".
-	 */
-	if (sc->sc_flags & (SC_FLUSH | SC_ESCAPED)
-	    || (ilen > 0 && sc->sc_fcs != IRFRAME_GOODFCS)) {
-	    s = spltty();
-	    sc->sc_flags |= SC_PKTLOST;	/* note the dropped packet */
-	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
-		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: bad fcs %x\n", sc->sc_if.if_xname,
-			sc->sc_fcs);
-		sc->sc_if.if_ierrors++;
-		sc->sc_stats.irframe_ierrors++;
-	    } else
-		sc->sc_flags &= ~(SC_FLUSH | SC_ESCAPED);
-	    splx(s);
-	    return 0;
-	}
-
-	if (ilen < IRFRAME_HDRLEN + IRFRAME_FCSLEN) {
-	    if (ilen) {
-		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: too short (%d)\n", sc->sc_if.if_xname, ilen);
-		s = spltty();
-		sc->sc_if.if_ierrors++;
-		sc->sc_stats.irframe_ierrors++;
-		sc->sc_flags |= SC_PKTLOST;
-		splx(s);
-	    }
-	    return 0;
-	}
-
-	/*
-	 * Remove FCS trailer.  Somewhat painful...
-	 */
-	ilen -= 2;
-	if (--sc->sc_mc->m_len == 0) {
-	    for (m = sc->sc_m; m->m_next != sc->sc_mc; m = m->m_next)
-		;
-	    sc->sc_mc = m;
-	}
-	sc->sc_mc->m_len--;
-
-	/* excise this mbuf chain */
-	m = sc->sc_m;
-	sc->sc_m = sc->sc_mc->m_next;
-	sc->sc_mc->m_next = NULL;
-
-	irframepktin(sc, m, sc->sc_flags & SC_PKTLOST);
-	if (sc->sc_flags & SC_PKTLOST) {
-	    s = spltty();
-	    sc->sc_flags &= ~SC_PKTLOST;
-	    splx(s);
-	}
-
-	irframegetm(sc);
-	return 0;
-    }
-
-    if (sc->sc_flags & SC_FLUSH) {
-	if (sc->sc_flags & SC_LOG_FLUSH)
-	    irframelogchar(sc, c);
-	return 0;
-    }
-
-    if (c < 0x20 && (sc->sc_rasyncmap & (1 << c)))
-	return 0;
-
-    s = spltty();
-    if (sc->sc_flags & SC_ESCAPED) {
-	sc->sc_flags &= ~SC_ESCAPED;
-	c ^= IRFRAME_TRANS;
-    } else if (c == IRFRAME_ESCAPE) {
-	sc->sc_flags |= SC_ESCAPED;
-	splx(s);
-	return 0;
-    }
-    splx(s);
-
-    /*
-     * Initialize buffer on first octet received.
-     * First octet could be address or protocol (when compressing
-     * address/control).
-     * Second octet is control.
-     * Third octet is first or second (when compressing protocol)
-     * octet of protocol.
-     * Fourth octet is second octet of protocol.
-     */
-    if (sc->sc_ilen == 0) {
-	/* reset the first input mbuf */
-	if (sc->sc_m == NULL) {
-	    irframegetm(sc);
-	    if (sc->sc_m == NULL) {
-		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: no input mbufs!\n", sc->sc_if.if_xname);
-		goto flush;
-	    }
-	}
-	m = sc->sc_m;
-	m->m_len = 0;
-	m->m_data = M_DATASTART(sc->sc_m);
-	sc->sc_mc = m;
-	sc->sc_mp = mtod(m, char *);
-	sc->sc_fcs = IRFRAME_INITFCS;
-	if (c != IRFRAME_ALLSTATIONS) {
-	    if (sc->sc_flags & SC_REJ_COMP_AC) {
-		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: garbage received: 0x%x (need 0xFF)\n",
-		    sc->sc_if.if_xname, c);
-		goto flush;
-	    }
-	    *sc->sc_mp++ = IRFRAME_ALLSTATIONS;
-	    *sc->sc_mp++ = IRFRAME_UI;
-	    sc->sc_ilen += 2;
-	    m->m_len += 2;
-	}
-    }
-    if (sc->sc_ilen == 1 && c != IRFRAME_UI) {
-	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: missing UI (0x3), got 0x%x\n",
-		sc->sc_if.if_xname, c);
-	goto flush;
-    }
-    if (sc->sc_ilen == 2 && (c & 1) == 1) {
-	/* a compressed protocol */
-	*sc->sc_mp++ = 0;
-	sc->sc_ilen++;
-	sc->sc_mc->m_len++;
-    }
-    if (sc->sc_ilen == 3 && (c & 1) == 0) {
-	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: bad protocol %x\n", sc->sc_if.if_xname,
-		(sc->sc_mp[-1] << 8) + c);
-	goto flush;
-    }
-
-    /* packet beyond configured mru? */
-    if (++sc->sc_ilen > sc->sc_mru + IRFRAME_HDRLEN + IRFRAME_FCSLEN) {
-	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: packet too big\n", sc->sc_if.if_xname);
-	goto flush;
-    }
-
-    /* is this mbuf full? */
-    m = sc->sc_mc;
-    if (M_TRAILINGSPACE(m) <= 0) {
-	if (m->m_next == NULL) {
-	    irframegetm(sc);
-	    if (m->m_next == NULL) {
-		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: too few input mbufs!\n", sc->sc_if.if_xname);
-		goto flush;
-	    }
-	}
-	sc->sc_mc = m = m->m_next;
-	m->m_len = 0;
-	m->m_data = M_DATASTART(m);
-	sc->sc_mp = mtod(m, char *);
-    }
-
-    ++m->m_len;
-    *sc->sc_mp++ = c;
-    sc->sc_fcs = IRFRAME_FCS(sc->sc_fcs, c);
-    return 0;
-
- flush:
-    if (!(sc->sc_flags & SC_FLUSH)) {
-	s = spltty();
-	sc->sc_if.if_ierrors++;
-	sc->sc_stats.irframe_ierrors++;
-	sc->sc_flags |= SC_FLUSH;
-	splx(s);
-	if (sc->sc_flags & SC_LOG_FLUSH)
-	    irframelogchar(sc, c);
-    }
+	switch (c) {
+	case SIR_BOF:
+		sc->sc_framestate = FRAME_INSIDE;
+		sc->sc_inchars = 0;
+		sc->sc_inFCS = INITFCS;
+		break;
+	case SIR_EOF:
+		if (sc->sc_framestate == FRAME_INSIDE &&
+		    sc->sc_inchars >= 4 && sc->sc_inFCS == GOODFCS) {
+			irt_frame(sc, sc->sc_inbuf, sc->sc_inchars - 2);
+		} else if (sc->sc_framestate != FRAME_OUTSIDE) {
+#ifdef IRFRAMET_DEBUG
+			printf("%s: malformed input frame\n", __FUNCTION__);
 #endif
-    return 0;
+		}
+		sc->sc_framestate = FRAME_OUTSIDE;
+		break;
+	case SIR_CE:
+		if (sc->sc_framestate == FRAME_INSIDE)
+			sc->sc_framestate = FRAME_ESCAPE;
+		break;
+	default:
+		if (sc->sc_framestate != FRAME_OUTSIDE) {
+			if (sc->sc_framestate == FRAME_ESCAPE) {
+				sc->sc_framestate = FRAME_INSIDE;
+				c ^= SIR_ESC_BIT;
+			}
+			if (sc->sc_inchars < sc->sc_maxsize + 2) {
+				sc->sc_inbuf[sc->sc_inchars++] = c;
+				sc->sc_inFCS = updateFCS(sc->sc_inFCS, c);
+			} else {
+				sc->sc_framestate = FRAME_OUTSIDE;
+#ifdef IRFRAMET_DEBUG
+				printf("%s: input frame overrun\n",
+				       __FUNCTION__);
+#endif
+			}
+		}
+		break;
+	}
+
+	if (sc->sc_framestate != FRAME_OUTSIDE) {
+		callout_reset(&sc->sc_timeout, hz/100, irt_timeout, sc);
+	}
+
+	return (0);
 }
 
-
-/**********************************************************************
- * CRC
- **********************************************************************/
-
-static const int fcstab[] = {
-  0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
-  0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
-  0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
-  0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
-  0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
-  0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
-  0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
-  0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
-  0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
-  0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
-  0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
-  0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
-  0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
-  0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
-  0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
-  0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
-  0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
-  0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
-  0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
-  0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
-  0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
-  0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
-  0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
-  0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
-  0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
-  0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
-  0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
-  0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
-  0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
-  0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
-  0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
-  0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
-};
-
-static const int INITFCS = 0xffff;
-static const int GOODFCS = 0xf0b8;
-
-static __inline int updateFCS(int fcs, int c) {
-	return (fcs >> 8) ^ fcstab[(fcs^c) & 0xff];
-} 
 
 /*** irframe methods ***/
 
@@ -565,14 +481,51 @@ int
 irframet_read(void *h, struct uio *uio, int flag)
 {
 	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int error = 0;
+	int s;
 
-	tp = tp;
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
-	return (0);
+	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
+		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
+		 (long)uio->uio_offset));
+
+	s = splir();	
+	while (sc->sc_nframes == 0) {
+		if (flag & IO_NDELAY) {
+			splx(s);
+			return (EWOULDBLOCK);
+		}
+		sc->sc_state |= IRT_RSLP;
+		DPRINTF(("%s: sleep\n", __FUNCTION__));
+		error = tsleep(sc->sc_frames, PZERO | PCATCH, "irtrd", 0);
+		DPRINTF(("%s: woke, error=%d\n", __FUNCTION__, error));
+		if (error) {
+			sc->sc_state &= ~IRT_RSLP;
+			break;
+		}
+	}
+
+	/* Do just one frame transfer per read */
+	if (!error) {
+		if (uio->uio_resid < sc->sc_frames[sc->sc_frameo].len) {
+			DPRINTF(("%s: uio buffer smaller than frame size (%d < %d)\n", __FUNCTION__, uio->uio_resid, sc->sc_frames[sc->sc_frameo].len));
+			error = EINVAL;
+		} else {
+			DPRINTF(("%s: moving %d bytes\n", __FUNCTION__,
+				 sc->sc_frames[sc->sc_frameo].len));
+				error = uiomove(sc->sc_frames[sc->sc_frameo].buf,
+					sc->sc_frames[sc->sc_frameo].len, uio);
+		}
+		sc->sc_frameo++;
+		sc->sc_nframes--;
+	}
+	splx(s);
+
+	return (error);
 }
 
-static int
-putch(int c, struct tty *tp)
+int
+irt_putc(int c, struct tty *tp)
 {
 	int s;
 	int error;
@@ -602,17 +555,17 @@ putch(int c, struct tty *tp)
 	return (0);
 }
 
-static int
-put_esc(int c, struct tty *tp)
+int
+irt_putesc(int c, struct tty *tp)
 {
 	int error;
 
 	if (c == SIR_BOF || c == SIR_EOF || c == SIR_CE) {
-		error = putch(SIR_CE, tp);
+		error = irt_putc(SIR_CE, tp);
 		if (!error)
-			error = putch(SIR_ESC_BIT^c, tp);
+			error = irt_putc(SIR_ESC_BIT^c, tp);
 	} else {
-		error = putch(c, tp);
+		error = irt_putc(c, tp);
 	}
 	return (error);
 }
@@ -632,11 +585,11 @@ irframet_write(void *h, struct uio *uio, int flag)
 	error = uiomove(buf, n, uio);
 	if (error)
 		return (error);
-	return (irframet_write_buf(h, buf, n));
+	return (irt_write_buf(h, buf, n));
 }
 
 int
-irframet_write_buf(void *h, void *buf, size_t len)
+irt_write_buf(void *h, void *buf, size_t len)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -649,23 +602,23 @@ irframet_write_buf(void *h, void *buf, size_t len)
 	error = 0;
 
 	for (i = 0; i < sc->sc_ebofs; i++)
-		putch(SIR_EXTRA_BOF, tp);
-	putch(SIR_BOF, tp);
+		irt_putc(SIR_EXTRA_BOF, tp);
+	irt_putc(SIR_BOF, tp);
 
 	while (len-- > 0) {
 		c = *cp++;
 		ofcs = updateFCS(ofcs, c);
-		error = put_esc(c, tp);
+		error = irt_putesc(c, tp);
 		if (error)
 			return (error);
 	}
 
 	ofcs = ~ofcs;
-	error = put_esc(ofcs & 0xff, tp);
+	error = irt_putesc(ofcs & 0xff, tp);
 	if (!error)
-		error = put_esc((ofcs >> 8) & 0xff, tp);
+		error = irt_putesc((ofcs >> 8) & 0xff, tp);
 	if (!error)
-		error = putch(SIR_EOF, tp);
+		error = irt_putc(SIR_EOF, tp);
 
 	irframetstart(tp);
 
@@ -675,7 +628,8 @@ irframet_write_buf(void *h, void *buf, size_t len)
 int
 irframet_poll(void *h, int events, struct proc *p)
 {
-	struct oboe_softc *sc = h;
+	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int revents = 0;
 	int s;
 
@@ -684,9 +638,8 @@ irframet_poll(void *h, int events, struct proc *p)
 	s = splir();
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
-#if 0
 	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_saved > 0) {
+		if (sc->sc_nframes > 0) {
 			DPRINTF(("%s: have data\n", __FUNCTION__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
@@ -694,7 +647,6 @@ irframet_poll(void *h, int events, struct proc *p)
 			selrecord(p, &sc->sc_rsel);
 		}
 	}
-#endif
 	splx(s);
 
 	return (revents);
@@ -705,25 +657,32 @@ irframet_set_params(void *h, struct irda_params *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int i;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
 	/* XXX speed */
 	sc->sc_ebofs = p->ebofs;
-	/* XXX maxsize */
-
-	return (0);
-}
-
-int
-irframet_reset_params(void *h)
-{
-	struct tty *tp = h;
-	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
-
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
-
-	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
+	if (sc->sc_maxsize != p->maxsize) {
+		sc->sc_maxsize = p->maxsize;
+		if (sc->sc_inbuf != NULL)
+			free(sc->sc_inbuf, M_DEVBUF);
+		for (i = 0; i < MAXFRAMES; i++)
+			if (sc->sc_frames[i].buf != NULL)
+				free(sc->sc_frames[i].buf, M_DEVBUF);
+		if (sc->sc_maxsize != 0) {
+			sc->sc_inbuf = malloc(sc->sc_maxsize+2, M_DEVBUF,
+					      M_WAITOK);
+			for (i = 0; i < MAXFRAMES; i++)
+				sc->sc_frames[i].buf = malloc(sc->sc_maxsize,
+							   M_DEVBUF, M_WAITOK);
+		} else {
+			sc->sc_inbuf = NULL;
+			for (i = 0; i < MAXFRAMES; i++)
+				sc->sc_frames[i].buf = NULL;
+		}
+	}
+	sc->sc_framestate = FRAME_OUTSIDE;
 
 	return (0);
 }
