@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1995/09/10 19:42:19 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 1995/10/08 19:30:51 thorpej Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1205,12 +1205,6 @@ _szicode:
 #include <machine/asm.h>
 
 /*
- * For gcc2
- */
-ENTRY(__main)
-	rts
-
-/*
  * copypage(fromaddr, toaddr)
  *
  * Optimized version of bcopy for a single page-aligned NBPG byte copy.
@@ -2021,70 +2015,6 @@ ENTRY(_remque)
 	movw	d0,sr
 	rts
 
-/*
- * bzero(addr, count)
- */
-ALTENTRY(blkclr, _bzero)
-ENTRY(bzero)
-	movl	sp@(4),a0	| address
-	movl	sp@(8),d0	| count
-	jeq	Lbzdone		| if zero, nothing to do
-	movl	a0,d1
-	btst	#0,d1		| address odd?
-	jeq	Lbzeven		| no, can copy words
-	clrb	a0@+		| yes, zero byte to get to even boundary
-	subql	#1,d0		| decrement count
-	jeq	Lbzdone		| none left, all done
-Lbzeven:
-	movl	d0,d1
-	andl	#31,d0
-	lsrl	#5,d1		| convert count to 8*longword count
-	jeq	Lbzbyte		| no such blocks, zero byte at a time
-Lbzloop:
-	clrl	a0@+; clrl	a0@+; clrl	a0@+; clrl	a0@+;
-	clrl	a0@+; clrl	a0@+; clrl	a0@+; clrl	a0@+;
-	subql	#1,d1		| one more block zeroed
-	jne	Lbzloop		| more to go, do it
-	tstl	d0		| partial block left?
-	jeq	Lbzdone		| no, all done
-Lbzbyte:
-	clrb	a0@+
-	subql	#1,d0		| one more byte cleared
-	jne	Lbzbyte		| more to go, do it
-Lbzdone:
-	rts
-
-/*
- * strlen(str)
- */
-ENTRY(strlen)
-	moveq	#-1,d0
-	movl	sp@(4),a0	| string
-Lslloop:
-	addql	#1,d0		| increment count
-	tstb	a0@+		| null?
-	jne	Lslloop		| no, keep going
-	rts
-
-/*
- * bcmp(s1, s2, len)
- *
- * WARNING!  This guy only works with counts up to 64K
- */
-ENTRY(bcmp)
-	movl	sp@(4),a0		| string 1
-	movl	sp@(8),a1		| string 2
-	moveq	#0,d0
-	movw	sp@(14),d0		| length
-	jeq	Lcmpdone		| if zero, nothing to do
-	subqw	#1,d0			| set up for DBcc loop
-Lcmploop:
-	cmpmb	a0@+,a1@+		| equal?
-	dbne	d0,Lcmploop		| yes, keep going
-	addqw	#1,d0			| +1 gives zero on match
-Lcmpdone:
-	rts
-	
 /*
  * {ov}bcopy(from, to, len)
  * memcpy(to, from len)
