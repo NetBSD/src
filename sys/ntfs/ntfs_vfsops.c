@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.34 2001/03/29 10:47:44 joda Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.35 2001/05/15 22:38:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -559,7 +559,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 		}
 
 		/* Alloc memory for attribute definitions */
-		MALLOC(ntmp->ntm_ad, struct ntvattrdef *,
+		ntmp->ntm_ad = (struct ntvattrdef *) malloc(
 			num * sizeof(struct ntvattrdef),
 			M_NTFSMNT, M_WAITOK);
 
@@ -696,7 +696,7 @@ ntfs_unmount(
 	dprintf(("ntfs_umount: freeing memory...\n"));
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	FREE(ntmp->ntm_ad, M_NTFSMNT);
+	free(ntmp->ntm_ad, M_NTFSMNT);
 	FREE(ntmp, M_NTFSMNT);
 	return (error);
 }
@@ -748,7 +748,7 @@ ntfs_calccfree(
 
 	bmsize = VTOF(vp)->f_size;
 
-	MALLOC(tmp, u_int8_t *, bmsize, M_TEMP, M_WAITOK);
+	tmp = (u_int8_t *) malloc(bmsize, M_TEMP, M_WAITOK);
 
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 			       0, bmsize, tmp, NULL);
@@ -761,7 +761,7 @@ ntfs_calccfree(
 	*cfreep = cfree;
 
     out:
-	FREE(tmp, M_TEMP);
+	free(tmp, M_TEMP);
 	return(error);
 }
 
