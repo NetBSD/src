@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.66 1995/04/10 18:28:09 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.67 1995/04/22 19:42:52 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -58,10 +58,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-
-#ifdef COPY_SIGCODE
-extern char sigcode[], esigcode[];
-#endif
 
 /*
  * check exec:
@@ -212,7 +208,7 @@ execve(p, uap, retval)
 	struct vattr attr;
 	struct ucred *cred = p->p_ucred;
 	char *argp;
-	char **cpp, *dp, *sp, *np;
+	char **cpp, *dp, *sp;
 	long argc, envc;
 	size_t len;
 	char *stack;
@@ -220,6 +216,7 @@ execve(p, uap, retval)
 	struct vmspace *vm = p->p_vmspace;
 	char **tmpfap;
 	int szsigcode;
+	extern struct emul emul_netbsd;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -244,18 +241,12 @@ execve(p, uap, retval)
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
-	pack.ep_setup = NULL;		/* assume no setup function */
-	pack.ep_setup_arg = NULL;
-	pack.ep_setup_arglen = 0;
+	pack.ep_emul_arg = NULL;
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
-	pack.ep_emul = EMUL_NETBSD;
+	pack.ep_emul = &emul_netbsd;
 	pack.ep_flags = 0;
-#ifdef COPY_SIGCODE
-	pack.ep_sigcode = sigcode;
-	pack.ep_esigcode = esigcode;
-#endif
 
 	/* see if we can run it. */
 	if (error = check_exec(p, &pack))
@@ -336,21 +327,13 @@ execve(p, uap, retval)
 
 	dp = (char *) ALIGN(dp);
 
-#ifdef COPY_SIGCODE
-	szsigcode = pack.ep_esigcode - pack.ep_sigcode;
-#else
-	szsigcode = 0;
-#endif
+	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
-	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
+	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
 	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
 	    sizeof(struct ps_strings)) - argp;
-#ifdef COMPAT_LINUX
-	/* XXXX need this for envp and argv on stack, and sigcode */
-	if (pack.ep_emul == EMUL_LINUX)
-		len += 2 * sizeof (char *);
-#endif
+
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
@@ -404,70 +387,20 @@ execve(p, uap, retval)
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
-	/* Now copy argc, args & environ to new stack */
 	stack = (char *) (USRSTACK - len);
-	cpp = (char **) stack;
-
-	if (copyout(&argc, cpp++, sizeof(argc)))
+	/* Now copy argc, args & environ to new stack */
+	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
 		goto exec_abort;
-#ifdef COMPAT_LINUX
-	/* XXXX Linux puts argv and envp on stack too, store argv now */
-	if (pack.ep_emul == EMUL_LINUX) {
-		char **argv_loc = cpp + 2, **stk = (char **) stack;
-
-		if (copyout(&argv_loc, &stk[1], sizeof (argv_loc)))
-			goto exec_abort;
-		/* leave room for envp and argv */
-		cpp += 2;
-	}
-#endif
-	dp = (char *) (cpp + argc + envc + 2 + pack.ep_setup_arglen);
-	sp = argp;
-	np = 0;
-
-	/* XXX don't copy them out, remap them! */
-	arginfo.ps_argvstr = dp; /* remember location of argv for later */
-	for (; --argc >= 0; sp += len, dp += len) {
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			goto exec_abort;
-	}
-	if (copyout(&np, cpp++, sizeof(np)))
-		goto exec_abort;
-
-#ifdef COMPAT_LINUX
-	/* XXXX Linux puts argv and envp on stack too, store envp now */
-	if (pack.ep_emul == EMUL_LINUX) {
-		char **envp_loc = cpp, **stk = (char **) stack;
-
-		if (copyout(&envp_loc, &stk[2], sizeof (envp_loc)))
-			goto exec_abort;
-	}
-#endif
-
-	arginfo.ps_envstr = dp;	/* remember location of envp for later */
-	for (; --envc >= 0; sp += len, dp += len) {
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			goto exec_abort;
-	}
-	if (copyout(&np, cpp++, sizeof(np)))
-		goto exec_abort;
-
-	if (pack.ep_setup != NULL)
-		(*pack.ep_setup)(EXEC_SETUP_ADDARGS, p, &pack, cpp);
 
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
 
-#ifdef COPY_SIGCODE
 	/* copy out the process's signal trapoline code */
-	if (copyout((char *) pack.ep_sigcode, ((char *) PS_STRINGS) - szsigcode,
-		szsigcode)) {
+	if (szsigcode && copyout((char *) pack.ep_emul->e_sigcode,
+				 ((char *) PS_STRINGS) - szsigcode,
+				 szsigcode))
 		goto exec_abort;
-	}
-#endif
 
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
@@ -527,9 +460,7 @@ execve(p, uap, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	setregs(p, pack.ep_entry, (u_long) stack, retval);
-	if (pack.ep_setup != NULL)
-		 (*pack.ep_setup)(EXEC_SETUP_FINISH, p, &pack, NULL);
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack, retval);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -539,8 +470,6 @@ execve(p, uap, retval)
 	return 0;
 
 bad:
-	if (pack.ep_setup != NULL)
-		(*pack.ep_setup)(EXEC_SETUP_CLEANUP, p, &pack, dp);
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
@@ -576,4 +505,49 @@ exec_abort:
 
 	/* NOTREACHED */
 	return 0;
+}
+
+
+void *
+copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	char **cpp = stack;
+	char *dp, *sp;
+	size_t len;
+	void *nullp = NULL;
+	int argc = arginfo->ps_nargvstr;
+	int envc = arginfo->ps_nenvstr;
+
+	if (copyout(&argc, cpp++, sizeof(argc)))
+		return NULL;
+
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	sp = argp;
+
+	/* XXX don't copy them out, remap them! */
+	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+
+	for (; --argc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	arginfo->ps_envstr = dp; /* remember location of envp for later */
+
+	for (; --envc >= 0; sp += len, dp += len)
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
+		return NULL;
+
+	return cpp;
 }

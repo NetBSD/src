@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.76 1995/03/25 22:05:15 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.77 1995/04/22 19:42:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/reboot.h>
 #include <sys/user.h>
 
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <ufs/ufs/quota.h>
@@ -99,6 +100,30 @@ static void start_pagedaemon __P((struct proc *));
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
 #endif
+
+extern char sigcode[], esigcode[];
+#ifdef SYSCALL_DEBUG
+extern char *syscallnames[];
+#endif
+
+struct emul emul_netbsd = {
+	"netbsd",
+	NULL,
+	sendsig,
+	SYS_syscall,
+	SYS_MAXSYSCALL,
+	sysent,
+#ifdef SYSCALL_DEBUG
+	syscallnames,
+#else
+	NULL,
+#endif
+	0,
+	copyargs,
+	setregs,
+	sigcode,
+	esigcode,
+};
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -159,6 +184,7 @@ main(framep)
 	p->p_flag = P_INMEM | P_SYSTEM;
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
+	p->p_emul = &emul_netbsd;
 	bcopy("swapper", p->p_comm, sizeof ("swapper"));
 
 	/* Create credentials. */
