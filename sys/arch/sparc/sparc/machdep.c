@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2002/03/28 15:45:01 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.193.4.1 2003/10/22 06:22:20 jmc Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -272,6 +272,19 @@ cpu_startup()
 	printf("total memory = %s\n", pbuf);
 
 	/*
+	 * Tune buffer cache variables based on the capabilities of the MMU
+	 * to cut down on VM space allocated for the buffer caches that    
+	 * would lead to MMU resource shortage.
+	 */
+	if (CPU_ISSUN4C) {
+		/* Clip UBC windows */
+		if (cpuinfo.mmu_nsegment <= 128) {
+			ubc_nwins = 256; 
+			/*ubc_winshift = 12; tune this too? */
+		}       
+	}       
+
+	/*      
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
