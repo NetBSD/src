@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.43 2000/06/02 21:47:02 matt Exp $    */
+/*      $NetBSD: param.h,v 1.43.2.1 2000/07/23 03:49:34 itojun Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -101,7 +101,7 @@
  */
 
 #ifndef	MSIZE
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
