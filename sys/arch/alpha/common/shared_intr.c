@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.12 2000/02/10 07:45:02 mjacob Exp $ */
+/* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.12 2000/02/10 07:45:02 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,6 +170,7 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 		break;
 	}
 
+	ih->ih_intrhead = intr;
 	ih->ih_fn = fn;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
