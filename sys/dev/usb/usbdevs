@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.306 2003/02/15 18:30:28 augustss Exp $
+$NetBSD: usbdevs,v 1.307 2003/02/24 13:06:45 nakayama Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ vendor IBM		0x04b3	IBM Corporation
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson
 vendor RAINBOW		0x04b9	Rainbow Technologies
-vendor IODATA		0x04bb	I/O Data
+vendor IODATA		0x04bb	I-O Data
 vendor TDK		0x04bf	TDK
 vendor 3COMUSR		0x04c1	U.S. Robotics
 vendor METHODE		0x04c2	Methode Electronics Far East
@@ -355,6 +355,7 @@ vendor DLINK		0x2001	D-Link
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
+vendor IODATA2		0x40bb	I-O Data
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -802,13 +803,14 @@ product INTEL TESTBOARD		0x9890	82930 test board
 /* Intersil products */
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
-/* I/O DATA products */
+/* I-O DATA products */
 product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
 product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
 product	IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
+product	IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
