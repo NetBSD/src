@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.23 2001/05/28 12:40:38 lukem Exp $ */
+/* $NetBSD: xlint.c,v 1.24 2001/10/24 02:31:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.23 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.24 2001/10/24 02:31:10 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -118,6 +118,10 @@ static	int	first = 1;
  */
 static	const	char *currfn;
 
+#if !defined(TARGET_PREFIX)
+#define	TARGET_PREFIX	""
+#endif
+static const char target_prefix[] = TARGET_PREFIX;
 
 static	void	appstrg(char ***, char *);
 static	void	appcstrg(char ***, const char *);
@@ -628,9 +632,15 @@ fname(const char *name, int last)
 	/* run lint1 */
 
 	if (!Bflag) {
-		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint1"));
-		(void)sprintf(path, "%s/lint1", PATH_LIBEXEC);
+		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint1") +
+		    strlen(target_prefix));
+		(void)sprintf(path, "%s/%slint1", PATH_LIBEXEC,
+		    target_prefix);
 	} else {
+		/*
+		 * XXX Unclear whether we should be using target_prefix
+		 * XXX here.  --thorpej@wasabisystems.com
+		 */
 		path = xmalloc(strlen(libexec_path) + sizeof ("/lint1"));
 		(void)sprintf(path, "%s/lint1", libexec_path);
 	}
@@ -756,9 +766,15 @@ lint2(void)
 	args = xcalloc(1, sizeof (char *));
 
 	if (!Bflag) {
-		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint2"));
-		(void)sprintf(path, "%s/lint2", PATH_LIBEXEC);
+		path = xmalloc(strlen(PATH_LIBEXEC) + sizeof ("/lint2") +
+		    strlen(target_prefix));
+		(void)sprintf(path, "%s/%slint2", PATH_LIBEXEC,
+		    target_prefix);
 	} else {
+		/*
+		 * XXX Unclear whether we should be using target_prefix
+		 * XXX here.  --thorpej@wasabisystems.com
+		 */
 		path = xmalloc(strlen(libexec_path) + sizeof ("/lint2"));
 		(void)sprintf(path, "%s/lint2", libexec_path);
 	}
