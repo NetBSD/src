@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/06/26 06:30:13 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/01 17:04:03 lukem Exp $
 
 .ifndef HOSTPROG
 .include <bsd.own.mk>
@@ -15,10 +15,8 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${NETBSDSRCDIR}/lib/libc \
 		-I${NETBSDSRCDIR}/lib/libc/citrus \
 		-I${NETBSDSRCDIR}/lib/libc/citrus/modules \
 		-DHOSTPROG
-YHEADER=
+YHEADER=	1
 MKMAN=		no
-
-lex.o:		yacc.h				# for parallel make.
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>

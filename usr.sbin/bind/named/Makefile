@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/06/28 16:27:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2003/08/01 17:04:07 lukem Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -41,12 +41,8 @@ pathnames.h: ${BIND_DIST_DIR}/bin/named/pathtemplate.h
 	    -e "s|%DESTRUN%|/var/run|" -e "s|%DESTEXEC%|/usr/libexec|" \
 	    < ${BIND_DIST_DIR}/bin/named/pathtemplate.h > pathnames.h
 
-CLEANFILES+=pathnames.h
-
-# mention explicit dependency, so pathnames.h will appear timely
-db_dump.c: pathnames.h
+DPSRCS+=	pathnames.h
+CLEANFILES+=	pathnames.h
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
-
-${OBJS}: pathnames.h

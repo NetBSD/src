@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/07/29 02:45:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2003/08/01 17:04:00 lukem Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,7 @@ PROG=		xdrtest
 RPCSRCS=	testbits.x
 SRCS=		${RPCSRCS:.x=_xdr.c} xdrtest.c
 DPSRCS=		${RPCSRCS:.x=.h}
-CLEANFILES+=	${RPCSRCS:.x=_xdr.c}
+CLEANFILES+=	${RPCSRCS:.x=.h} ${RPCSRCS:.x=_xdr.c}
 CPPFLAGS+=	-I.
 RPC_INCS=	${RPCSRCS:.x=.h}
 RPC_XDRFILES=	${RPCSRCS:.x=_xdr.c}

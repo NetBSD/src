@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.31 2003/07/28 23:54:24 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.32 2003/08/01 17:04:01 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -63,7 +63,8 @@ OBJHOSTMACHINE=	# set
 SRCS?=		${HOSTPROG}.c
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh)
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
@@ -73,7 +74,8 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
-${HOSTPROG}: ${DPSRCS} ${OBJS} ${DPADD}
+${OBJS} ${LOBJS}: ${DPSRCS}
+${HOSTPROG}: ${OBJS} ${DPADD}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(OBJS) && !empty(OBJS)

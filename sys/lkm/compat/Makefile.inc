@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2003/04/22 17:23:20 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2003/08/01 17:04:02 lukem Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -7,7 +7,8 @@ NOMAN=	# defined
 
 .include <bsd.own.mk>
 
-DPSRCS+= assym.h
+DPSRCS+=	assym.h
+CLEANFILES+=	assym.h
 
 .if (${MACHINE_ARCH} == "powerpc")
 .if (${MACHINE} == "macppc" || ${MACHINE} == "ofppc" || ${MACHINE} == "prep")

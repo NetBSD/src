@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/03/06 18:32:24 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2003/08/01 17:03:48 lukem Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	abs.S div.S labs.S ldiv.S llabs.S
 
-LSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c Lint_llabs.c
-DPSRCS+= Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c Lint_llabs.c
+SRCS.i386.stdlib=Lint_abs.c Lint_div.c Lint_labs.c Lint_ldiv.c Lint_llabs.c
+LSRCS+=		${SRCS.i386.stdlib}
+DPSRCS+=	${SRCS.i386.stdlib}
+CLEANFILES+=	${SRCS.i386.stdlib}

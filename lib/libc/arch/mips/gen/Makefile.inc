@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2003/05/17 15:05:53 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2003/08/01 17:03:49 lukem Exp $
 
 SRCS+=	fabs.S ldexp.S modf.S
 
@@ -20,8 +20,7 @@ SRCS+=	makecontext.c resumecontext.c _resumecontext.S swapcontext.S _lwp.c
 # mips abi builtin extensions (used by GCC for lexical-closure trampoline)
 SRCS+=	cacheflush.c
 
-LSRCS+= Lint_bswap16.c Lint_bswap32.c
-DPSRCS+= Lint_bswap16.c Lint_bswap32.c
-
-LSRCS+=	Lint_swapcontext.c
-DPSRCS+= Lint_swapcontext.c
+SRCS.mips.gen=	Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
+LSRCS+=		${SRCS.mips.gen}
+DPSRCS+=	${SRCS.mips.gen}
+CLEANFILES+=	${SRCS.mips.gen}

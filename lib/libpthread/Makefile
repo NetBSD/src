@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/07/24 07:50:24 wiz Exp $
+#	$NetBSD: Makefile,v 1.20 2003/08/01 17:03:59 lukem Exp $
 #
 
 WARNS=	2
@@ -25,6 +25,7 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 
 DPSRCS+=	assym.h
+CLEANFILES+=	assym.h
 
 assym.h: genassym.sh ${ARCHDIR}/genassym.cf
 	sh ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \

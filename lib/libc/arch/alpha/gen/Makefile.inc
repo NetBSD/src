@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2003/05/17 15:05:52 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2003/08/01 17:03:46 lukem Exp $
 
 SRCS+=	fabs.S 
 
@@ -14,10 +14,10 @@ SRCS+=	setjmp.S __setjmp14.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.c
 
-LSRCS+=	Lint_bswap16.c Lint_bswap32.c
-DPSRCS+= Lint_bswap16.c Lint_bswap32.c
+SRCS.alpha.gen=	Lint_bswap16.c Lint_bswap32.c Lint_swapcontext.c
+LSRCS+=		${SRCS.alpha.gen}
+DPSRCS+=	${SRCS.alpha.gen}
+CLEANFILES+=	${SRCS.alpha.gen}
 
 SRCS+=	makecontext.c resumecontext.c swapcontext.S _lwp.c
 
-LSRCS+=	Lint_swapcontext.c
-DPSRCS+= Lint_swapcontext.c

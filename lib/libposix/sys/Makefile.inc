@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2003/05/08 13:23:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2003/08/01 17:03:59 lukem Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -20,6 +20,7 @@ ${PSEUDO}: ${ASMDEPS}
 .if ${MKLINT} != "no"
 LSRCS+=		LintSysPseudo.c
 DPSRCS+=	LintSysPseudo.c
+CLEANFILES+=	LintSysPseudo.c
 .endif
 
 LintSysPseudo.c: ${NETBSDSRCDIR}/lib/libc/sys/makelintstub \

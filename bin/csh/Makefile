@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/07/29 01:34:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/08/01 17:03:41 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -20,9 +20,9 @@ MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
 	csh.1 foreach.1 csh.1 history.1 csh.1 jobs.1 csh.1 popd.1 \
 	csh.1 pushd.1 csh.1 rehash.1 csh.1 repeat.1 csh.1 suspend.1 \
 	csh.1 stop.1 csh.1 source.1
-CLEANFILES+=errnum.h const.h
 
-const.h: errnum.h
+DPSRCS+=	errnum.h const.h
+CLEANFILES+=	errnum.h const.h
 
 errnum.h: err.c
 	@rm -f ${.TARGET}
@@ -39,14 +39,9 @@ const.h: const.c
 	    sed -e 's/Char \([a-zA-Z0-9_]*\)\(.*\)/extern Char \1[];/' | \
 	    sort >> ${.TARGET}
 
-alloc.o const.o csh.o dir.o dol.o err.o exec.o exp.o file.o func.o glob.o \
-    hist.o init.o lex.o misc.o parse.o proc.o sem.o set.o str.o time.o: const.h
-
 .if make(install)
 SUBDIR+=USD.doc
 .endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
-
-${DEPENDSRCS} alloc.o: const.h errnum.h 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/07/29 19:25:02 fredb Exp $
+#	$NetBSD: Makefile,v 1.26 2003/08/01 17:04:02 lukem Exp $
 
 HOSTLIB=	nbcompat
 
@@ -38,7 +38,8 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H \
 		${.CURDIR}/../../usr.bin/lex
 
 DPSRCS+=	defs.mk
-CLEANFILES=	config.log config.status configure.lineno confdefs.h *.stamp
+CLEANFILES+=	defs.mk
+CLEANFILES+=	config.log config.status configure.lineno confdefs.h *.stamp
 
 # Get components of Berkeley DB.
 _CURDIR:=	${.CURDIR}

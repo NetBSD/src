@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2003/07/29 01:45:33 lukem Exp $
+# $NetBSD: Makefile,v 1.22 2003/08/01 17:03:58 lukem Exp $
 
 NOLINT=		# defined
 
@@ -22,6 +22,8 @@ kadm5_err.c kadm5_err.h: kadm5_err.et ${TOOL_COMPILE_ET}
 	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/kadm5/kadm5_err.et
 
 ERR_FILES=	kadm5_err.c
+DPSRCS+=	kadm5_err.h
+CLEANFILES+=	kadm5_err.h kadm5_err.c
 
 SRCS	 =					\
 	acl.c					\
@@ -87,10 +89,4 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=	-DNO_DLOPEN
 .endif
 
-${SRCS:.c=.o}: kadm5_err.h
-
-CLEANFILES=	kadm5_err.h kadm5_err.c
-
 .include <bsd.lib.mk>
-
-${DEPENDSRCS}:	kadm5_err.h

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.54 2003/08/01 00:55:43 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.55 2003/08/01 17:04:01 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -17,23 +17,18 @@ MKDEP?=		mkdep
 .if defined(SRCS)							# {
 __acpp_flags=	-traditional-cpp
 
-DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
-		${SRCS:M*.m}	${DPSRCS:M*.m}		\
-		${SRCS:M*.[sS]}	${DPSRCS:M*.[sS]}	\
-		${SRCS:M*.C}	${DPSRCS:M*.C}		\
-		${SRCS:M*.cc}	${DPSRCS:M*.cc}		\
-		${SRCS:M*.cpp}	${DPSRCS:M*.cpp}	\
-		${SRCS:M*.cxx}	${DPSRCS:M*.cxx}
-DEPENDSRCS.d=	${DEPENDSRCS.src:R:S/$/.d/g}
-DEPENDSRCS=	.depend ${DEPENDSRCS.d}
+__DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
+		${DPSRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
+__DPSRCS.d=	${__DPSRCS.all:O:u:M*.d}
+__DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 
-${DEPENDSRCS.d}: ${DPSRCS}
+.NOPATH: .depend ${__DPSRCS.d}
 
-.depend: ${DEPENDSRCS.d}
+${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
+
+.depend: ${__DPSRCS.d}
 	@rm -f .depend
-	cat ${DEPENDSRCS.d} > .depend
-
-.NOPATH: ${DEPENDSRCS}
+	cat ${__DPSRCS.d} > .depend
 
 .SUFFIXES: .d .c .m .s .S .C .cc .cpp .cxx
 
@@ -60,7 +55,7 @@ ${DEPENDSRCS.d}: ${DPSRCS}
 ##### Clean rules
 cleandepend:
 .if defined(SRCS)
-	rm -f ${DEPENDSRCS} ${.CURDIR}/tags ${CLEANDEPEND}
+	rm -f .depend ${__DPSRCS.d} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules

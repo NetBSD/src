@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/08/01 13:55:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2003/08/01 17:03:43 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -28,6 +28,7 @@ LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${G_LIB2ADD:M*.c:T}
 
+DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} tconfig.h
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
@@ -54,8 +55,6 @@ dp-bit.c: ${.CURDIR}/Makefile
 	${G_CONFIGDIR}
 
 .include <bsd.lib.mk>
-
-${OBJS} ${SOBJS} ${POBJS} ${DEPENDSRCS}: ${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 
 # XXX /bin/sh
 tconfig.h:

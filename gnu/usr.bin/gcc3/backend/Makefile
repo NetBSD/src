@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/29 00:16:46 uwe Exp $
+#	$NetBSD: Makefile,v 1.5 2003/08/01 17:03:45 lukem Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -12,6 +12,7 @@ SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
 CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .include <bsd.lib.mk>
 
@@ -210,6 +211,5 @@ insn-attrtab.c: ${G_HOST_RTLANAL:.o=.c}
 insn-attrtab.c insn-extract.c: insn-config.h
 insn-conditions.c: insn-constants.h tm_p.h tm-preds.h
 toplev.c: options.h
-${OBJS} ${DEPENDSRCS}: insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${G_out_file:H}

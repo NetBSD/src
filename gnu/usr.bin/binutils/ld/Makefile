@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/07/28 15:25:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2003/08/01 17:03:44 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,6 @@ stringify.sed: ${G_STRINGIFY}
 .include ".depend.${f}"
 .endif
 
-${DEPENDSRCS}: .depend.${f}
 .depend.${f}: ${f}.sh
 	(srcdir=${DIST}/ld . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
@@ -62,6 +61,7 @@ ${DEPENDSRCS}: .depend.${f}
 		echo "e${f}.c: $$temp_name $$script" \
 	) >$@
 
+DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed

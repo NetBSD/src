@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.140 2003/05/08 13:19:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.141 2003/08/01 17:03:58 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -18,8 +18,9 @@ _LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 .if ${MKLINT} != "no"
-LSRCS+=	${_LSRC}
-DPSRCS+=${_LSRC:MLintSys*.c}
+LSRCS+=		${_LSRC}
+DPSRCS+=	${_LSRC:MLintSys*.c}
+CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls

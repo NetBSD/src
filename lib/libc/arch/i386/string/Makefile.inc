@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/11/05 23:43:16 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2003/08/01 17:03:48 lukem Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S \
@@ -9,13 +9,12 @@ SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.S memcmp.S \
 SRCS+=	strcspn.c strncat.c strncpy.c strpbrk.c strsep.c strspn.c \
 	strstr.c
 
-LSRCS+=	Lint_bcmp.c Lint_bcopy.c Lint_bzero.c Lint_ffs.c Lint_index.c \
+SRCS.i386.string=\
+	Lint_bcmp.c Lint_bcopy.c Lint_bzero.c Lint_ffs.c Lint_index.c \
 	Lint_memchr.c Lint_memcmp.c Lint_memcpy.c Lint_memmove.c \
 	Lint_memset.c Lint_rindex.c Lint_strcat.c Lint_strchr.c \
 	Lint_strcmp.c Lint_strcpy.c Lint_strlen.c Lint_strncmp.c \
 	Lint_strrchr.c Lint_swab.c
-DPSRCS+= Lint_bcmp.c Lint_bcopy.c Lint_bzero.c Lint_ffs.c Lint_index.c \
-	Lint_memchr.c Lint_memcmp.c Lint_memcpy.c Lint_memmove.c \
-	Lint_memset.c Lint_rindex.c Lint_strcat.c Lint_strchr.c \
-	Lint_strcmp.c Lint_strcpy.c Lint_strlen.c Lint_strncmp.c \
-	Lint_strrchr.c Lint_swab.c
+LSRCS+=		${SRCS.i386.string}
+DPSRCS+=	${SRCS.i386.string}
+CLEANFILES+=	${SRCS.i386.string}
