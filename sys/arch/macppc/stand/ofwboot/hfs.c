@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.c,v 1.2 2001/07/22 11:29:48 wiz Exp $	*/
+/*	$NetBSD: hfs.c,v 1.3 2003/08/22 08:06:19 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,7 +37,7 @@ static int OF_fd;	/* XXX */
 
 int
 hfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	int chosen;
