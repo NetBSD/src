@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2003/10/20 05:47:52 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2003/12/18 14:15:55 pk Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2003/10/20 05:47:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2003/12/18 14:15:55 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -210,7 +210,7 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 		if (!pte) return (0);
 		/* Allocate a page XXXX this will sleep! */
 		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
+		    (uint *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	}
 	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
@@ -1556,7 +1556,7 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
+	va = (vaddr_t)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	loc = (int*)va;
 
 	pmap_extract(pmap_kernel(), va, &pa);
