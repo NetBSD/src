@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1994/12/28 09:25:00 chopps Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 1995/02/12 19:19:04 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -841,8 +841,11 @@ a2gettod()
 	 * hold clock
 	 */
 	rt->control1 |= A2CONTROL1_HOLD;
-	while (rt->control1 & A2CONTROL1_BUSY)
+	i = 0x1000;
+	while (rt->control1 & A2CONTROL1_BUSY && i--)
 		;
+	if (rt->control1 & A2CONTROL1_BUSY)
+		return (0);	/* Give up and say it's not there */
 
 	/*
 	 * read it

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1995/01/05 07:36:15 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1995/02/12 19:18:42 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,29 +91,10 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
-/* 
- * most of these can be killed by adding a server chain for 
- * int2 (PORTS)
- */
-#include "ite.h"
-#include "le.h"
-#include "ed.h"
-#include "ex.h"
+
 #include "fd.h"
-#include "ahsc.h"
-#include "atzsc.h"
-#include "gtsc.h"
-#include "zssc.h"
-#include "mgnsc.h"
-#include "wesc.h"
-#include "otgsc.h"
-#include "wstsc.h"
-#include "ivsc.h"
 #include "ser.h"
-#include "idesc.h"
-#include "flz3sc.h"
 #include "ether.h"
-#include "afsc.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -136,6 +117,12 @@ int	bufpages = 0;
 int	msgbufmapped;		/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+/*
+ * extender "register" for software interrupts. Moved here 
+ * from locore.s, since softints are no longer dealt with
+ * in locore.s.
+ */
+unsigned char ssir;
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -1075,7 +1062,7 @@ boot(howto)
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0)
 		bootsync();
-	splhigh();			/* extreme priority */
+	spl7();				/* extreme priority */
 	if (howto&RB_HALT) {
 		printf("halted\n\n");
 		asm("	stop	#0x2700");
@@ -1171,7 +1158,7 @@ void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splhigh();
+	int s = spl7();
 	static struct timeval lasttime;
 
 	*tvp = time;
@@ -1351,15 +1338,10 @@ add_sicallback (function, rock1, rock2)
 	splx(s);
 
 	/*
-	 * make sure we have software ints enabled at all..
-	 */
-	custom.intena = INTF_SETCLR | INTF_SOFTINT;
-
-	/*
-	 * and cause a software interrupt (spl1). This interrupt might
+	 * Cause a software interrupt (spl1). This interrupt might
 	 * happen immediately, or after returning to a safe enough level.
 	 */
-	custom.intreq = INTF_SETCLR | INTF_SOFTINT;
+	setsoftcback();
 }
 
 
@@ -1428,11 +1410,50 @@ call_sicallbacks()
 #endif
 }
 
+struct isr *isr_ports;
+struct isr *isr_exter;
+
+void
+add_isr(isr)
+	struct isr *isr;
+{
+	struct isr **p, *q;
+
+	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+	while ((q = *p) != NULL)
+		p = &q->isr_forw;
+	isr->isr_forw = NULL;
+	*p = isr;
+	/* enable interrupt */
+	custom.intena = isr->isr_ipl == 2 ? INTF_SETCLR | INTF_PORTS :
+	    INTF_SETCLR | INTF_EXTER;
+}
+
+void
+remove_isr(isr)
+	struct isr *isr;
+{
+	struct isr **p, *q;
+
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+	while ((q = *p) != NULL && q != isr)
+		p = &q->isr_forw;
+	if (q)
+		*p = q->isr_forw;
+	else
+		panic("remove_isr: handler not registered");
+	/* disable interrupt if no more handlers */
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+	if (*p == NULL)
+		custom.intena = isr->isr_ipl == 6 ? INTF_EXTER : INTF_PORTS;
+}
+
 intrhand(sr)
 	int sr;
 {
 	register unsigned int ipl;
 	register unsigned short ireq;
+	register struct isr **p, *q;
 
 	ipl = (sr >> 8) & 7;
 	ireq = custom.intreqr;
@@ -1456,89 +1477,49 @@ intrhand(sr)
 		if (ireq & INTF_SOFTINT) {
 			/*
 			 * first clear the softint-bit
-			 * then call installed callbacks, 
+			 * then process all classes of softints.
 			 * this order is dicated by the nature of 
 			 * software interrupts.  The other order
 			 * allows software interrupts to be missed
 			 */
-			custom.intreq = INTF_SOFTINT;
-			call_sicallbacks();
+			clrsoftint();
+			if (ssir & SIR_NET) {
+				siroff(SIR_NET);
+				cnt.v_soft++;
+				netintr();
+			}
+			if (ssir & SIR_CLOCK) {
+				siroff(SIR_CLOCK);
+				cnt.v_soft++;
+				/* XXXX softclock(&frame.f_stackadj); */
+				softclock();
+			}
+			if (ssir & SIR_CBACK) {
+				siroff(SIR_CBACK);
+				cnt.v_soft++;
+				call_sicallbacks();
+			}
 		}
 		break;
 
 	case 2:
-		/*
-		 * dmaintr() also calls scsiintr() if the
-		 * corresponding bit is set in the interrupt
-		 * status register of the sdmac
-		 */
-#if NAHSC > 0
-		if (ahsc_dmaintr())
-			goto intports_done;
-#endif
-#if NATZSC > 0
-		if (atzsc_dmaintr())
-			goto intports_done;
-#endif
-#if NGTSC > 0
-		if (gtsc_dmaintr())
-			goto intports_done;
-#endif
-#if NMGNSC > 0
-		if (mgnsc_dmaintr())
-			goto intports_done;
-#endif
-#if NWESC > 0
-		if (wesc_dmaintr())
-			goto intports_done;
-#endif
-#if NAFSC > 0
-		if (afsc_dmaintr())
-			goto intports_done;
-#endif
-#if NWSTSC > 0
-		if (wstsc_intr())
-			goto intports_done;
-#endif
-#if NOTGSSC > 0
-		if (otgssc_intr())
-			goto intports_done;
-#endif
-#if NIVSC > 0
-		if (ivsc_intr())
-			goto intports_done;
-#endif
-#if NLE > 0
-		if (leintr (0))
-			goto intports_done;
-#endif
-#if NED > 0
-		if (edintr (0))
-			goto intports_done;
-#endif
-#if NEX > 0
-		if (exintr (0))
-			goto intports_done;
-#endif
-#if NFLZ3SC > 0
-		if (flz3sc_intr())
-		  goto intports_done;
-#endif
-#if NIDESC > 0
-		if (idesc_intr ())
-			goto intports_done;
-#endif
-		ciaa_intr ();
-	intports_done:
+		p = &isr_ports;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		if (q == NULL)
+			ciaa_intr ();
 		custom.intreq = INTF_PORTS;
 		break;
     case 3: 
       /* VBL */
-		if (custom.intreqr& INTF_BLIT)  
+		if (ireq & INTF_BLIT)  
 			blitter_handler();
-		if (custom.intreqr & INTF_COPER)  
+		if (ireq & INTF_COPER)  
 			copper_handler();
-		if (custom.intreqr & INTF_VERTB) 
+		if (ireq & INTF_VERTB) 
 			vbl_handler();
 		break;
 #if 0

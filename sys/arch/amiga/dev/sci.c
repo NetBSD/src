@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.10 1995/01/05 07:22:46 chopps Exp $	*/
+/*	$NetBSD: sci.c,v 1.11 1995/02/12 19:19:23 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -46,6 +46,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -56,6 +58,7 @@
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
 
@@ -209,6 +212,10 @@ sci_scsidone(dev, stat)
 #ifdef DIAGNOSTIC
 	if (xs == NULL)
 		panic("sci_scsidone");
+#endif
+#if 1
+	if (((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
+		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 #endif
 	/*
 	 * is this right?

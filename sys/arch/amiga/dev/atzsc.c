@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.10 1995/01/05 07:22:34 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.11 1995/02/12 19:19:02 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
@@ -57,7 +58,7 @@ int atzscmatch __P((struct device *, struct cfdata *, void *));
 void atzsc_dmafree __P((struct sbic_softc *));
 void atzsc_dmastop __P((struct sbic_softc *));
 int atzsc_dmanext __P((struct sbic_softc *));
-int atzsc_dmaintr __P((void));
+int atzsc_dmaintr __P((struct sbic_softc *));
 int atzsc_dmago __P((struct sbic_softc *, char *, int, int));
 
 struct scsi_adapter atzsc_scsiswitch = {
@@ -81,7 +82,7 @@ int	atzsc_dmadebug = 0;
 #endif
 
 struct cfdriver atzsccd = {
-	NULL, "atzsc", (cfmatch_t)atzscmatch, atzscattach, 
+	NULL, "atzsc", (cfmatch_t)atzscmatch, atzscattach,
 	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
 
 /*
@@ -140,14 +141,14 @@ atzscattach(pdp, dp, auxp)
 	 */
 	sc->sc_flags |= SBICF_BADDMA;
 	sc->sc_dmamask = ~0x00ffffff;
-	/* 
+	/*
 	 * If the users kva space is not ztwo try and allocate a bounce buffer. 
 	 * XXX this needs to change if we move to multiple memory segments.
 	 */
 	if (kvtop(sc) & sc->sc_dmamask) {
 		sc->sc_dmabuffer = (char *)alloc_z2mem(MAXPHYS);
 		if (isztwomem(sc->sc_dmabuffer))
-			printf(" bounce pa 0x%x", ztwopa(sc->sc_dmabuffer));
+			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (sc->sc_dmabuffer)
 			printf(" bounce pa 0x%x",
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
@@ -166,8 +167,10 @@ atzscattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
+	sc->sc_isr.isr_intr = atzsc_dmaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
 
 	/*
 	 * attach all scsi units on us
@@ -252,7 +255,7 @@ atzsc_dmago(dev, addr, count, flags)
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;
-  
+
 	return(dev->sc_tcnt);
 }
 
@@ -292,47 +295,42 @@ atzsc_dmastop(dev)
 }
 
 int
-atzsc_dmaintr()
+atzsc_dmaintr(dev)
+	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	struct sbic_softc *dev;
-	int i, stat, found;
+	int stat, found;
 
-	found = 0;
-	for (i = 0; i < atzsccd.cd_ndevs; i++) {
-		dev = atzsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		sdp = dev->sc_cregs;
-		stat = sdp->ISTR;
-      
-		if ((stat & (ISTR_INT_F|ISTR_INT_P)) == 0)
-			continue;
-  
+	sdp = dev->sc_cregs;
+	stat = sdp->ISTR;
+
+	if ((stat & (ISTR_INT_F|ISTR_INT_P)) == 0)
+		return (0);
+
 #ifdef DEBUG
-		if (atzsc_dmadebug & DDB_FOLLOW)
-			printf("atzsc_dmaintr (%d, 0x%x)\n", i, stat);
+	if (atzsc_dmadebug & DDB_FOLLOW)
+		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 
-		/*
-		 * both, SCSI and DMA interrupts arrive here. I chose
-		 * arbitrarily that DMA interrupts should have higher
-		 * precedence than SCSI interrupts.
-		 */
-		if (stat & ISTR_E_INT) {
-			found++;
-	  
-			sdp->CINT = 1;	/* clear possible interrupt */
-	
-			/*
-			 * check for SCSI ints in the same go and 
-			 * eventually save an interrupt
-			 */
-		}
+	/*
+	 * both, SCSI and DMA interrupts arrive here. I chose
+	 * arbitrarily that DMA interrupts should have higher
+	 * precedence than SCSI interrupts.
+	 */
+	found = 0;
+	if (stat & ISTR_E_INT) {
+		found++;
 
-		if (dev->sc_flags & SBICF_INTR && stat & ISTR_INTS)
-			found += sbicintr(dev);
+		sdp->CINT = 1;	/* clear possible interrupt */
+	
+		/*
+		 * check for SCSI ints in the same go and 
+		 * eventually save an interrupt
+		 */
 	}
+
+	if (dev->sc_flags & SBICF_INTR && stat & ISTR_INTS)
+		found += sbicintr(dev);
 	return(found);
 }
 
@@ -372,7 +370,7 @@ atzsc_dmanext(dev)
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int)dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;
-      
+
 	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 	return(dev->sc_tcnt);
 }

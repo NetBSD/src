@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.7 1995/01/05 07:22:51 chopps Exp $	*/
+/*	$NetBSD: wesc.c,v 1.8 1995/02/12 19:19:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -45,6 +45,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
@@ -52,6 +53,7 @@
 int wescprint __P((void *auxp, char *));
 void wescattach __P((struct device *, struct device *, void *));
 int wescmatch __P((struct device *, struct cfdata *, void *));
+int wesc_dmaintr __P((struct siop_softc *));
 
 struct scsi_adapter wesc_scsiswitch = {
 	siop_scsicmd,
@@ -123,8 +125,10 @@ wescattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
+	sc->sc_isr.isr_intr = wesc_dmaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
 
 	/*
 	 * attach all scsi units on us
@@ -147,29 +151,25 @@ wescprint(auxp, pnp)
 
 
 int
-wesc_dmaintr()
+wesc_dmaintr(sc)
+	struct siop_softc *sc;
 {
 	siop_regmap_p rp;
-	struct siop_softc *dev;
-	int i, found;
 	u_char istat;
 
-	found = 0;
-	for (i = 0; i < wesccd.cd_ndevs; i++) {
-		dev = wesccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		rp = dev->sc_siopp;
-		istat = rp->siop_istat;
-		if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
-			continue;
-		if ((dev->sc_flags & (SIOP_DMA | SIOP_SELECTED)) == SIOP_SELECTED)
-			continue;	/* doing non-interrupt I/O */
-		found++;
-		dev->sc_istat = istat;
-		dev->sc_dstat = rp->siop_dstat;
-		dev->sc_sstat0 = rp->siop_sstat0;
-		siopintr(dev);
-	}
-	return(found);
+	rp = sc->sc_siopp;
+	istat = rp->siop_istat;
+	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+		return (0);
+	if ((rp->siop_sien | rp->siop_dien) == 0)
+		return(0);	/* no interrupts enabled */
+	/*
+	 * save interrupt status, DMA status, and SCSI status 0
+	 * (may need to deal with stacked interrupts?)
+	 */
+	sc->sc_istat = istat;
+	sc->sc_dstat = rp->siop_dstat;
+	sc->sc_sstat0 = rp->siop_sstat0;
+	siopintr(sc);
+	return(1);
 }

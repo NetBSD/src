@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1994/12/28 09:08:41 chopps Exp $	*/
+/*	$NetBSD: param.h,v 1.17 1995/02/12 19:19:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,9 +151,14 @@
 #define amiga_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
- * spl functions; all but spl0 are done in-line
+ * spl functions; all are normally done in-line
  */
 #include <machine/psl.h>
+
+/*
+ * point to the custom.intenar and custom.intenaw respectively.
+ */
+extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
 #if 0
 #define _debug_spl(s) \
@@ -197,7 +202,7 @@
 #define _spl _spl_no_check
 #endif
 
-/* spl0 requires checking for software interrupts */
+#define spl0()	_spl(PSL_S|PSL_IPL0)
 #define spl1()	_spl(PSL_S|PSL_IPL1)
 #define spl2()	_spl(PSL_S|PSL_IPL2)
 #define spl3()	_spl(PSL_S|PSL_IPL3)
@@ -211,18 +216,22 @@
 #define splnet()	spl1()
 #define splbio()	spl3()
 #define splimp()	spl3()
-/*
- * lowered to spl4 to allow for serial input into
- * private ringbuffer inspite of spltty
- */
 #define spltty()	spl4()
+#ifndef LEV6_DEFER
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splvm()		spl6()
 #define splhigh()	spl7()
 #define splsched()	spl7()
+#else
+#define splclock()	spl4()
+#define splstatclock()	spl4()
+#define splvm()		spl4()
+#define splhigh()	spl4()
+#define splsched()	spl4()
+#endif
 
-#define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
+#define splx(s)         _spl_no_check(s)
 
 #ifdef KERNEL
 int	cpuspeed;

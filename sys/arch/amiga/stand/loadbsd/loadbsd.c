@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.15 1994/10/26 02:07:01 cgd Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.16 1995/02/12 19:19:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -93,8 +93,12 @@ void warnx __P((const char *, ...));
  *	2.8	06/22/94 - Fix supervisor stack usage.
  *	2.9	06/26/94 - Use PAL flag for E clock freq on pre 2.0 WB
  *		Added AGA enable parameter
+ *	2.10	12/22/94 - Use FindResident() & OpenResource() for machine
+ *		type detection.
+ *		Add -n flag & option for non-contiguous memory.
+ *		01/28/95 - Corrected -n on usage & help messages.
  */
-static const char _version[] = "$VER: LoadBSD 2.9 (26.6.94)";
+static const char _version[] = "$VER: LoadBSD 2.10 (28.1.95)";
 
 /*
  * Kernel parameter passing version
@@ -136,7 +140,7 @@ int reqmemsz;
 int S_flag;
 u_long cpuid;
 long eclock_freq;
-long AGA_mode;
+long amiga_flags;
 char *program_name;
 char *kname;
 struct ExpansionBase *ExpansionBase;
@@ -168,7 +172,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:Dhkm:ptSV")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbc:Dhkm:n:ptSV")) != EOF) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -202,7 +206,14 @@ main(argc, argv)
 			cpuid = atoi(optarg) << 16;
 			break;
 		case 'A':
-			AGA_mode = 1;
+			amiga_flags |= 1;
+			break;
+		case 'n':
+			i = atoi(optarg);
+			if (i >= 0 && i <= 3)
+				amiga_flags |= i << 1;
+			else
+				err(20, "-n option must be 0, 1, 2, or 3");
 			break;
 		case 'h':
 			verbose_usage();
@@ -325,9 +336,9 @@ main(argc, argv)
 	/*
 	 * XXX AGA startup - may need more
 	 */
-	LoadView(NULL);		/* Don't do this if AGA_mode? */
+	LoadView(NULL);		/* Don't do this if AGA active? */
 	startit(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
-	    cpuid, eclock_freq, AGA_mode);
+	    cpuid, eclock_freq, amiga_flags);
 	/*NOTREACHED*/
 }
 
@@ -428,6 +439,7 @@ get_cpuid()
 {
 	u_long *rl;
 	struct Resident *rm;
+	struct Node *rn;		/* Resource node entry */
 
 	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if (cpuid & 0xffff0000) {
@@ -446,32 +458,18 @@ get_cpuid()
 			exit(1);
 		}
 	}
-	rl = (u_long *)SysBase->ResModules;
-	if (rl == NULL)
-		return;
-
-	while (*rl) {
-		rm = (struct Resident *) *rl;
-		if (strcmp(rm->rt_Name, "A4000 Bonus") == 0 ||
-		    strcmp(rm->rt_Name, "A1000 Bonus") == 0) {
-			cpuid |= 4000 << 16;
-			break;
-		}
-		if (strcmp(rm->rt_Name, "A3000 bonus") == 0 ||
-		    strcmp(rm->rt_Name, "A3000 Bonus") == 0) {
-			cpuid |= 3000 << 16;
-			break;
-		}
-		if (strcmp(rm->rt_Name, "card.resource") == 0) {
-			cpuid |= 1200 << 16;	/* or A600 :-) */
-			break;
-		}
-		++rl;
+	if (FindResident("A4000 Bonus") || FindResident("A1000 Bonus"))
+		cpuid |= 4000 << 16;
+	else if (FindResident("A3000 Bonus") || FindResident("A3000 bonus"))
+		cpuid |= 3000 << 16;
+	else if (OpenResource("card.resource")) {
+		/* Test for AGA? */
+		cpuid |= 1200 << 16;
 	}
 	/*
 	 * Nothing found, it's probably an A2000 or A500
 	 */
-	if (*rl == 0)
+	if ((cpuid >> 16) == 0)
 		cpuid |= 2000 << 16;
 }
 
@@ -514,7 +512,7 @@ start_super:
 	| a0:  fastmem-start
 	| d0:  fastmem-size
 	| d1:  chipmem-size
-	| d3:  AGA mode enable
+	| d3:  Amiga specific flags
 	| d4:  E clock frequency
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
@@ -533,7 +531,7 @@ start_super:
 	movel	a3@(32),a4		| esym
 	movel	a3@(36),d5		| cpuid
 	movel	a3@(40),d4		| E clock frequency
-	movel	a3@(44),d3		| AGA mode enable
+	movel	a3@(44),d3		| Amiga flags
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
@@ -597,7 +595,7 @@ zero:	.long	0
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-abkptADSV] [-c machine] [-m mem] kernel\n",
+	fprintf(stderr, "usage: %s [-abhkptADSV] [-c machine] [-m mem] [-n mode] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -610,17 +608,20 @@ verbose_usage()
 NAME
 \t%s - loads NetBSD from amiga dos.
 SYNOPSIS
-\t%s [-abkptDSV] [-c machine] [-m mem] kernel
+\t%s [-abhkptDSV] [-c machine] [-m mem] [-n flags] kernel
 OPTIONS
 \t-a  Boot up to multiuser mode.
 \t-b  Ask for which root device.
 \t    Its possible to have multiple roots and choose between them.
 \t-c  Set machine type. [e.g 3000]
+\t-h  This help message.
 \t-k  Reserve the first 4M of fast mem [Some one else
 \t    is going to have to answer what that it is used for].
 \t-m  Tweak amount of available memory, for finding minimum amount
 \t    of memory required to run. Sets fastmem size to specified
 \t    size in Kbytes.
+\t-n  Enable multiple non-contiguous memory: value = 0 (disabled),
+\t    1 (two segments), 2 (all avail segments), 3 (same as 2?).
 \t-p  Use highest priority fastmem segement instead of the largest
 \t    segment. The higher priority segment is usually faster
 \t    (i.e. 32 bit memory), but some people have smaller amounts

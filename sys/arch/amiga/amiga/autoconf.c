@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1994/12/28 09:06:37 chopps Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1995/02/12 19:18:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -65,6 +65,10 @@ configure()
 		panic("no mainbus found");
 	
 	custom.intena = INTF_SETCLR | INTF_INTEN;
+
+	/* also enable hardware aided software interrupts */
+	custom.intena = INTF_SETCLR | INTF_SOFTINT;
+
 #ifdef GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
 		setroot();

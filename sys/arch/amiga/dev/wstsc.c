@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.7 1995/01/05 07:22:53 chopps Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.8 1995/02/12 19:19:31 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
@@ -58,6 +59,7 @@ int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
 int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
+int wstsc_intr __P((struct sci_softc *));
 
 struct scsi_adapter wstsc_scsiswitch = {
 	sci_scsicmd,
@@ -151,6 +153,11 @@ wstscattach(pdp, dp, auxp)
 		sc->dma_xfer_in = wstsc_dma_xfer_in;
 		sc->dma_xfer_out = wstsc_dma_xfer_out;
 	}
+
+	sc->sc_isr.isr_intr = wstsc_intr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr(&sc->sc_isr);
 
 	scireset(sc);
 
@@ -512,21 +519,14 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 }
 
 int
-wstsc_intr()
-{
+wstsc_intr(dev)
 	struct sci_softc *dev;
+{
 	int i, found;
 	u_char stat;
 
-	found = 0;
-	for (i = 0; i < wstsccd.cd_ndevs; i++) {
-		dev = wstsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		if ((*(dev->sci_csr + 0x10) & SCI_CSR_INT) == 0)
-			continue;
-		++found;
-		stat = *(dev->sci_iack + 0x10);
-	}
-	return (found);
+	if ((*(dev->sci_csr + 0x10) & SCI_CSR_INT) == 0)
+		return (0);
+	stat = *(dev->sci_iack + 0x10);
+	return (1);
 }

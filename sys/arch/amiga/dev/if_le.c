@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1994/12/28 09:25:28 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 1995/02/12 19:19:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -79,6 +79,7 @@
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/if_lereg.h>
 
@@ -90,6 +91,7 @@
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	le_softc {
+	struct	isr sc_isr;
 	struct	arpcom sc_ac;	/* common Ethernet structures */
 #define	sc_if	sc_ac.ac_if	/* network-visible interface */
 #define	sc_addr	sc_ac.ac_enaddr	/* hardware Ethernet address */
@@ -260,6 +262,11 @@ leattach(pdp, dp, auxp)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	le->sc_isr.isr_intr = leintr;
+	le->sc_isr.isr_arg = le;
+	le->sc_isr.isr_ipl = 2;
+	add_isr (&le->sc_isr);
+
 	return;
 }
 
@@ -427,10 +434,14 @@ lestart(ifp)
 	return (0);
 }
 
-leintr(unit)
-	register int unit;
+leintr(le)
+	struct le_softc *le;
 {
+#if 0
 	register struct le_softc *le = &le_softc[unit];
+#else
+	int unit = le->sc_if.if_unit;
+#endif
 	register struct lereg1 *ler1;
 	register int stat;
 

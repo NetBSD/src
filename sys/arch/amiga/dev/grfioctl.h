@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.8 1994/12/28 09:25:19 chopps Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.9 1995/02/12 19:19:06 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,5 +211,5 @@ struct grf_bitblt {
   u_short mask;		/* bitmask to apply */
 };
 
-#define GRFIOCBITBLT	_IOR('G', 57, struct grf_bitblt)
+#define GRFIOCBITBLT	_IOW('G', 57, struct grf_bitblt)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.7 1995/01/05 07:22:41 chopps Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.8 1995/02/12 19:19:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -42,6 +42,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
@@ -54,6 +55,7 @@ int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
 int otgsc_dma_xfer_out __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
+int otgsc_intr __P((struct sci_softc *));
 
 struct scsi_adapter otgsc_scsiswitch = {
 	sci_scsicmd,
@@ -134,6 +136,11 @@ otgscattach(pdp, dp, auxp)
 
 	sc->dma_xfer_in = otgsc_dma_xfer_in;
 	sc->dma_xfer_out = otgsc_dma_xfer_out;
+
+	sc->sc_isr.isr_intr = otgsc_intr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr(&sc->sc_isr);
 
 	scireset(sc);
 
@@ -268,22 +275,14 @@ otgsc_dma_xfer_out (dev, len, buf, phase)
 }
 
 int
-otgsc_intr()
-{
+otgsc_intr(dev)
 	struct sci_softc *dev;
-	int i, found;
+{
 	u_char stat;
 
-	found = 0;
-	for (i = 0; i < otgsccd.cd_ndevs; i++) {
-		dev = otgsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		if ((*dev->sci_csr & SCI_CSR_INT) == 0)
-			continue;
-		++found;
-		stat = *dev->sci_iack;
-		*dev->sci_mode = 0;
-	}
-	return (found);
+	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
+		return (1);
+	stat = *dev->sci_iack;
+	*dev->sci_mode = 0;
+	return (1);
 }

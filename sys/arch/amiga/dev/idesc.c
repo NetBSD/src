@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.10 1995/01/05 07:22:36 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.11 1995/02/12 19:19:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -81,6 +81,7 @@
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
+#include <sys/dkstat.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -92,6 +93,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
 
 #define	b_cylin		b_resid
@@ -210,6 +212,8 @@ struct	ide_pending {
 struct idec_softc
 {
 	struct device sc_dev;
+	struct isr sc_isr;
+
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	ide_regmap_p	sc_cregs;	/* driver specific regs */
 	volatile u_char *sc_a1200;	/* A1200 interrupt control */
@@ -247,7 +251,7 @@ int idereset __P((struct idec_softc *));
 void idesetdelay __P((int));
 void ide_scsidone __P((struct idec_softc *, int));
 void ide_donextcmd __P((struct idec_softc *));
-int  idesc_intr __P((void));
+int  idesc_intr __P((struct idec_softc *));
 
 struct scsi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
@@ -399,8 +403,10 @@ idescattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
+	sc->sc_isr.isr_intr = idesc_intr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr (&sc->sc_isr);
 
 	/*
 	 * attach all "scsi" units on us
@@ -531,6 +537,10 @@ ide_scsidone(dev, stat)
 #ifdef DIAGNOSTIC
 	if (xs == NULL)
 		panic("ide_scsidone");
+#endif
+#if 1
+	if (((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
+		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 #endif
 	/*
 	 * is this right?
@@ -1073,17 +1083,22 @@ idestart(dev)
 
 
 int
-idesc_intr()
-{
+idesc_intr(dev)
 	struct idec_softc *dev;
+{
+#if 0
+	struct idec_softc *dev;
+#endif
 	ide_regmap_p regs;
 	struct ide_softc *ide;
 	short dummy;
 	short *bf;
 	int i;
 
+#if 0
 	if (idesccd.cd_ndevs == 0 || (dev = idesccd.cd_devs[0]) == NULL)
 		return (0);
+#endif
 	regs = dev->sc_cregs;
 	if (dev->sc_flags & IDECF_A1200) {
 		if (*dev->sc_a1200 & 0x80) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1994/10/26 02:05:59 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 1995/02/12 19:19:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,8 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
+/*#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)*/
+#define	CLKF_BASEPRI(framep)	(0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if 0
 /* We would like to do it this way... */
@@ -108,18 +109,8 @@ struct clockframe {
 int	astpending;		/* need trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-
+/* include support for software interrupts */
+#include <machine/mtpr.h>
 
 /*
  * The rest of this should probably be moved to ../amiga/amigacpu.h,

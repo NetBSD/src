@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.25 1994/12/28 09:25:52 chopps Exp $	*/
+/*	$NetBSD: ser.c,v 1.26 1995/02/12 19:19:26 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -71,8 +71,14 @@ struct cfdriver sercd = {
 	NULL, "ser", (cfmatch_t)sermatch, serattach, DV_TTY,
 	sizeof(struct device), NULL, 0 };
 
+#ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE 32
+#endif
+#ifndef SERIBUF_SIZE
 #define SERIBUF_SIZE 512
+#endif
+
+#define splser() spl5()
 
 int	serstart(), serparam(), serintr(), serhwiflow();
 int	ser_active;
@@ -446,7 +452,7 @@ ser_fastint()
 	if (sbwpt == serbuf + SERIBUF_SIZE)
 		sbwpt = serbuf;
 	++sbcnt;
-	if (sbcnt > SERIBUF_SIZE - 4)
+	if (sbcnt > SERIBUF_SIZE - 20)
 		CLRRTS(ciab.pra);	/* drop RTS if buffer almost full */
 }
 
@@ -475,7 +481,7 @@ serintr(unit)
 
 		ovfl = 0;
 		/* lock against ser_fastint() */
-		s2 = spl5();
+		s2 = splser();
 		sbcnt--;
 		if (sbrpt == serbuf + SERIBUF_SIZE)
 			sbrpt = serbuf;
@@ -998,7 +1004,7 @@ serinit(unit, rate)
 {
 	int s;
 
-	s = splhigh();
+	s = splser();
 	/*
 	 * might want to fiddle with the CIA later ???
 	 */
@@ -1011,7 +1017,7 @@ sercngetc(dev)
 	u_short stat;
 	int c, s;
 
-	s = splhigh();
+	s = splser();
 	/*
 	 * poll
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.7 1995/01/05 07:22:50 chopps Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.8 1995/02/12 19:19:29 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,6 +77,7 @@ struct siop_ds {			/* Data Structure for SCRIPTS */
 
 struct	siop_softc {
 	struct	device sc_dev;
+	struct	isr sc_isr;
 
 	u_char	sc_istat;
 	u_char	sc_dstat;

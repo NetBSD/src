@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.8 1995/01/05 07:22:38 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.9 1995/02/12 19:19:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -44,6 +44,7 @@
 #include <scsi/scsiconf.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
@@ -52,7 +53,7 @@ int ivscprint __P((void *auxp, char *));
 void ivscattach __P((struct device *, struct device *, void *));
 int ivscmatch __P((struct device *, struct cfdata *, void *));
 
-int ivsc_intr __P((void));
+int ivsc_intr __P((struct sci_softc *));
 #ifdef notyet
 int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
     register u_char *buf, int phase));
@@ -106,6 +107,7 @@ ivscmatch(pdp, cdp, auxp)
 	    (zap->prodid != 52 &&	/*   product = Trumpcard */
 	    zap->prodid != 243))	/*   product = Vector SCSI */
 		return(0);		/* didn't match */
+#if 0 /* shouldn't need this any more */
 	if (zap->prodid == 243) {
 		/*
 		 * XXXX Ouch! board addresss isn't Zorro II or Zorro III!
@@ -129,6 +131,7 @@ ivscmatch(pdp, cdp, auxp)
 			return (0);
 		}
 	}
+#endif
 	return(1);
 }
 
@@ -166,6 +169,11 @@ ivscattach(pdp, dp, auxp)
 	sc->dma_xfer_out = ivsc_dma_xfer_out;
 #endif
 
+	sc->sc_isr.isr_intr = ivsc_intr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr(&sc->sc_isr);
+
 	scireset(sc);
 
 	sc->sc_link.adapter_softc = sc;
@@ -174,9 +182,6 @@ ivscattach(pdp, dp, auxp)
 	sc->sc_link.device = &ivsc_scsidev;
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
-
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
 
 	/*
 	 * attach all scsi units on us
@@ -218,21 +223,12 @@ ivsc_dma_xfer_out (dev, len, buf, phase)
 #endif
 
 int
-ivsc_intr()
-{
+ivsc_intr(dev)
 	struct sci_softc *dev;
-	int i, found;
+{
 	u_char stat;
 
-	found = 0;
-	for (i = 0; i < ivsccd.cd_ndevs; i++) {
-		dev = ivsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		if ((*dev->sci_csr & SCI_CSR_INT) == 0)
-			continue;
-		++found;
-		stat = *dev->sci_iack;
-	}
-	return (found);
+	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
+		return(0);
+	stat = *dev->sci_iack;
 }

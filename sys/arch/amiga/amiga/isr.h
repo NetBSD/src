@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.5 1994/10/26 02:01:53 cgd Exp $	*/
+/*	$NetBSD: isr.h,v 1.6 1995/02/12 19:18:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982 Regents of the University of California.
@@ -39,7 +39,7 @@ struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
 	int	(*isr_intr)();
-	int	isr_arg;
+	void	*isr_arg;
 	int	isr_ipl;
 };
 

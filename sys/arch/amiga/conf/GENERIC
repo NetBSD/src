@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1995/02/03 12:24:35 chopps Exp $
+#	$NetBSD: GENERIC,v 1.32 1995/02/12 19:18:56 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -101,30 +101,35 @@ options		DDB		# Kernel debugger
 #
 # Amiga specific options
 #
+options		MACHINE_NONCONTIG # Non-contiguous memory support
 options		RETINACONSOLE	# enable code to allow retina to be console
 options		GRF_ECS		# Enhanced Chip Set
 options		GRF_NTSC	# NTSC
 options		GRF_PAL		# PAL
 options		"GRF_A2024"	# Support for the A2024
 options		GRF_AGA		# AGA Chip Set
+#options		GRF_CL5426	# Cirrus board support (not yet)
 #options	"KFONT_8X11"	# 8x11 font
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
+#grfcl0		at zbus0		# Picasso II/Piccalo/Spectrum
 
 grf0		at grfcc0
 grf1		at grfrt0
 grf2		at grfrh0
+#grf3		at grfcl0
 
 ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
+#ite3		at grf3			# terminal emulators for grf's
 
 mfc0		at zbus0		# MultiFaceCard I/O board
 mfcs0		at mfc0 unit 0		# MFC serial
 mfcs1		at mfc0 unit 1		# MFC serial
-#mfcp0		at mfc0 unit 0		# MFC parallel
+#mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
@@ -132,6 +137,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 
 le0		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
+es0		at zbus0		# SMC 91C90 ethernet
 
 # scsi stuff, all possible
 gvpbus0		at zbus0

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.9 1995/01/26 12:30:18 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10 1995/02/12 19:19:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -49,6 +49,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -59,6 +61,7 @@
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
@@ -117,6 +120,10 @@ int sbic_clock_override = 0;
 int sbic_no_dma = 0;
 
 #ifdef DEBUG
+int	sbicdma_ops = 0;	/* total DMA operations */
+int	sbicdma_bounces = 0;	/* number operations using bounce buffer */
+int	sbicdma_hits = 0;	/* number of DMA chains that were contiguous */
+int	sbicdma_misses = 0;	/* number of DMA chains that were not contiguous */
 #define QPRINTF(a) if (sbic_debug > 1) printf a
 int	sbic_debug = 0;
 int	sync_debug = 0;
@@ -242,6 +249,10 @@ sbic_scsidone(dev, stat)
 #ifdef DIAGNOSTIC
 	if (xs == NULL)
 		panic("sbic_scsidone");
+#endif
+#if 1
+	if (((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
+		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 #endif
 	/*
 	 * is this right?
@@ -1225,6 +1236,9 @@ out:
 	if (count > MAXPHYS)
 		printf("sbicgo: bp->b_bcount > MAXPHYS %08x\n", count);
 
+#ifdef DEBUG
+	++sbicdma_ops;			/* count total DMA operations */
+#endif
 	if (dev->sc_flags & SBICF_BADDMA && 
 	    sbiccheckdmap(addr, count, dev->sc_dmamask)) {
 		/*
@@ -1238,6 +1252,9 @@ out:
 			bcopy (addr, dev->sc_dmabuffer, count);
 		}
 		addr = dev->sc_dmabuffer;	/* and use dma buffer */
+#ifdef DEBUG
+		++sbicdma_bounces;		/* count number of bounced */
+#endif
 	}
 	tmpaddr = addr;
 	len = count;
@@ -1261,12 +1278,19 @@ out:
 		 * check if contigous, if not mark new end 
 		 * else increment end and count on previous.
 		 */
-		if (dcp->dc_addr != dmaend)
+		if (dcp->dc_addr != dmaend) {
 			dmaend = dcp->dc_addr + tcount;
-		else {
+#ifdef DEBUG
+			if (dcp != dev->sc_chain)
+				++sbicdma_misses;	/* count non-contiguous */
+#endif
+		} else {
 			dcp--;
 			dmaend += tcount;
 			dcp->dc_count += tcount >> 1;
+#ifdef DEBUG
+			++sbicdma_hits;	/* count contiguous */
+#endif
 		}
 	}
 
@@ -1347,9 +1371,13 @@ sbicintr(dev)
 		 * device driver look at what happened.
 		 */
 		sbicxfdone(dev, regs, dev->sc_xs->sc_link->target);
-		if (dev->sc_flags & SBICF_BBUF)
+		if (dev->sc_flags & SBICF_BBUF) {
 			bcopy(dev->sc_dmabuffer, dev->sc_dmausrbuf,
 			    dev->sc_dmausrlen);
+			if (dev->sc_dmausrbuf >= (u_char *)0xff000000)
+				printf("%s: WARNING - dmausrbuf = %x\n",
+				    dev->sc_dev.dv_xname, dev->sc_dmausrbuf);
+			}
 		/*
 		 * check for overlapping cache line, flush if so
 		 */

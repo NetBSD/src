@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1994/12/28 08:56:01 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 1995/02/12 19:18:44 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -281,6 +281,10 @@ pmap_bootstrap(firstaddr, loadaddr)
 	/* XXX: allow for msgbuf */
 	avail_end -= amiga_round_page(sizeof(struct msgbuf));
 #ifdef MACHINE_NONCONTIG
+	/*
+	 * first segment of memory is always the one loadbsd found
+	 * found for loading the kernel into.
+	 */
 	avail_next = avail_start;
 	avail_remaining = (avail_end - avail_start) >> PGSHIFT;
 	phys_segs[0].start = avail_start;
@@ -290,17 +294,26 @@ pmap_bootstrap(firstaddr, loadaddr)
 	i = 1;
 	for (; noncontig_enable && sp < esp; sp++) {
 		if ((sp->ms_attrib & MEMF_FAST) == 0)
-			continue;
+			continue;		/* skip if not FastMem */
 		if (avail_start >= sp->ms_start && avail_start <
 		    sp->ms_start + sp->ms_size)
-			continue;
+			continue;		/* skip kernel segment */
 		phys_segs[i].start = sp->ms_start;
 		phys_segs[i].end = sp->ms_start + sp->ms_size;
 #ifdef DEBUG_A4000
+		/*
+		 * My A4000 doesn't seem to like Zorro II memory - this
+		 * hack is to skip the motherboard memory and use the
+		 * Zorro II memory.  Only for trying to debug the problem.
+		 * Michael L. Hitch
+		 */
 		if (phys_segs[i].end == 0x08000000)
 			continue;	/* skip A4000 motherboard mem */
 #endif
-		/* deal with Zorro II memory stolen for DMA bounce buffers */
+		/*
+		 * Deal with Zorro II memory stolen for DMA bounce buffers.
+		 * This needs to be handled better.
+		 */
 		if (phys_segs[i].start == 0x00200000)
 			phys_segs[i].end -= MAXPHYS;
 		phys_segs[i].first_page = phys_segs[i - 1].first_page +
@@ -308,7 +321,8 @@ pmap_bootstrap(firstaddr, loadaddr)
 		avail_remaining += (phys_segs[i].end - phys_segs[i].start) / NBPG;
 		physmem += (phys_segs[i].end - phys_segs[i].start) / NBPG;
 		++i;
-		break;		/* XXX only two segments for now */
+		if (noncontig_enable == 1)
+			break;		/* Only two segments enabled */
 	}
 #endif
 

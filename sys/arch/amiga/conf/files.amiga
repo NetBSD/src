@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.16 1995/01/25 20:45:33 cgd Exp $
+#	$NetBSD: files.amiga,v 1.17 1995/02/12 19:18:57 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -70,7 +70,7 @@ device	grfrt at zbus: grfbus
 file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
 file	arch/amiga/dev/ite_rt.c		grfrt ite
 
-# cirrus grf (A2000 or Picasso)
+# cirrus grf
 device	grfcl at zbus: grfbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
 
@@ -79,11 +79,6 @@ device	grfrh at zbus: grfbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
 file	arch/amiga/dev/ite_rh.c		grfrh ite
   
-# cirrus grf (Zorro III boards)
-#device	grfcl at zbus: grfbus
-#device	grfclx at zbus: grfbus
-#file	arch/amiga/dev/grf_cl.c		grfcl grfclx needs-flag
-
 # handle gvp's odd autoconf info..
 device	gvpbus at zbus {}
 file	arch/amiga/dev/gvpbus.c		gvpbus
@@ -94,8 +89,8 @@ file	arch/amiga/dev/if_le.c		le needs-count
 device	ed at zbus:	ifnet, ether
 file	arch/amiga/dev/if_ed.c		ed needs-flag
 
-device	ex at zbus:	ifnet, ether
-file	arch/amiga/dev/if_ex.c		ex needs-count
+device	es at zbus:	ifnet, ether
+file	arch/amiga/dev/if_es.c		es needs-count
 
 # Alf Data MultiFaceCard 3
 #device	mfch at zbus: tty
@@ -214,6 +209,7 @@ file	arch/amiga/amiga/sys_machdep.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
+file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/m68k/m68k/copy.s
 file	compat/sunos/sunos_misc.c	compat_sunos
 file	compat/sunos/sunos_init_sysent.c	compat_sunos
