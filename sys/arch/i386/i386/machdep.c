@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.464 2001/12/27 15:28:34 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.465 2002/01/15 13:34:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.464 2001/12/27 15:28:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.465 2002/01/15 13:34:52 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -778,7 +778,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 6 (Palomino)",
+				"Athlon Model 7 (Morgan)", 0, 0, 0, 0,
+				0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
