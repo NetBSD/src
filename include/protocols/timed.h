@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.4 1996/04/06 01:53:29 cgd Exp $	*/
+/*	$NetBSD: timed.h,v 1.5 1996/04/09 20:40:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -51,8 +51,8 @@ struct tsp {
 	u_int16_t tsp_seq;
 	union {
 		struct {
-			u_int32_t tv_sec;
-			u_int32_t tv_usec;
+			int32_t tv_sec;
+			int32_t tv_usec;
 		} tspu_time;
 		char tspu_hopcnt;
 	} tsp_u;
