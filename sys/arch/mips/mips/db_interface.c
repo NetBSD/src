@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 1999/01/06 04:11:30 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9 1999/01/07 00:36:09 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -112,7 +112,7 @@ kdb_kbd_trap(tf)
 }
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  kdb_trap - field a BREAK exception
  */
 int
 kdb_trap(type, tf)
@@ -284,6 +284,9 @@ db_machine_init()
 	db_machine_commands_install(mips_db_command_table);
 }
 
+/*
+ * Determine whether the instruction involves a delay slot.
+ */
 boolean_t
 inst_branch(inst)
 	int inst;
@@ -320,6 +323,9 @@ inst_branch(inst)
 	return delay;
 }
 
+/*
+ * Determine whether the instruction calls a function.
+ */
 boolean_t
 inst_call(inst)
 	int inst;
@@ -338,6 +344,9 @@ inst_call(inst)
 	return call;
 }
 
+/*
+ * Determine whether the instruction makes a jump.
+ */
 boolean_t
 inst_unconditional_flow_transfer(inst)
 	int inst;
@@ -350,6 +359,10 @@ inst_unconditional_flow_transfer(inst)
 	return jump;
 }
 
+/*
+ * Return the next pc if the given branch is taken.
+ * MachEmulateBranch() runs analysis for branch delay slot.
+ */
 db_addr_t
 branch_taken(inst, pc, regs)
 	int inst;
@@ -364,6 +377,10 @@ branch_taken(inst, pc, regs)
 	return ra;
 }
 
+/*
+ * Return the next pc of arbitrary instructions.
+ * MachEmulateBranch() runs analysis for branch delay slots.
+ */
 db_addr_t
 next_instr_address(pc, bd)
 	db_addr_t pc;
