@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.27 1994/03/12 03:26:55 mycroft Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.28 1994/03/23 00:35:53 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -730,7 +730,8 @@ i386_ioconf()
       fprintf(fp, " %5s, %2d, C 0x%05x, %5d, %5s,  %2d, 0x%04x, %3d,",
 	      sirq(dp->d_irq), dp->d_drq, dp->d_maddr, dp->d_msize,
 	      shandler(dp), dp->d_unit, dp->d_flags,
-	      eq(mp->d_name, "isa") ? 0 : dp->d_drive);
+	      eq(mp->d_name, "isa") ? 0 :
+	      dp->d_drive == UNKNOWN ? dp->d_slave : dp->d_drive);
       if (eq(mp->d_name, "isa"))
         fprintf(fp, "  NULL,");
       else
