@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.69 2001/11/20 12:56:19 lukem Exp $
+# $NetBSD: Makefile.alpha,v 1.70 2001/11/23 05:19:01 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -27,17 +27,16 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ALPHA=		$S/arch/alpha
 GENASSYM=	${ALPHA}/alpha/genassym.cf
-MD_CPPFLAGS=	-Dalpha
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
-		${MD_CPPFLAGS}
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
-AFLAGS=		-traditional -D_LOCORE
-NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TARGET}
+CPPFLAGS+=	-Dalpha
+CFLAGS+=	-mno-fp-regs
+AFLAGS+=	-traditional
+
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | \
+		${AS} -o ${.TARGET}
 
 ##
 ## (3) libkern and compat
@@ -62,8 +61,6 @@ transfer.o: ${ALPHA}/alpha/transfer.s
 LINKFORMAT=	-N
 TEXTADDR?=	fffffc0000300000
 EXTRA_LINKFLAGS=	-G 4
-LINKFLAGS_DEBUG=	-X
-LINKFLAGS_NORMAL=	-S
 STRIPFLAGS=	-g -X
 
 ##

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.3 2001/11/16 16:15:08 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.4 2001/11/23 05:18:59 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -40,19 +40,17 @@ S!=	cd ../../../..; pwd
 ##
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
-INCLUDES?=	-I. ${MD_INCLUDES} -I$S/arch -I$S -nostdinc
-CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
-		-Wpointer-arith
+INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
+CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
+DEFCOPTS?=	-O2
+COPTS?=		${DEFCOPTS}
+CWARNFLAGS+=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wpointer-arith -Wno-main
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
-
-.if !defined(HAVE_EGCS)
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
-.endif
-.if (${HAVE_EGCS} != "")
-CWARNFLAGS+=	-Wno-main
-.endif
+CFLAGS+=	${DEBUG} ${COPTS} ${CWARNFLAGS}
+AFLAGS+=	-D_LOCORE
 
 # Define a set of xxx_G variables that will add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
@@ -141,12 +139,12 @@ LINKENTRY?=	-e ${ENTRYPOINT}
 LINKFLAGS?=	${LINKFORMAT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
-LINKFLAGS_DEBUG?=
+LINKFLAGS_DEBUG?=	-X
 SYSTEM_LD_TAIL_DEBUG?=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
-LINKFLAGS_NORMAL?=
+LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
 DEBUG?=
