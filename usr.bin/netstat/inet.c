@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.32 1998/07/12 03:20:14 mrg Exp $	*/
+/*	$NetBSD: inet.c,v 1.33 1998/07/20 21:03:37 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.32 1998/07/12 03:20:14 mrg Exp $");
+__RCSID("$NetBSD: inet.c,v 1.33 1998/07/20 21:03:37 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,16 +483,18 @@ inetprint(in, port, proto, numeric)
 	struct servent *sp = 0;
 	char line[80], *cp;
 	int width;
+	size_t space;
 
 	(void)snprintf(line, sizeof line, "%.*s.",
 	    (Aflag && !numeric) ? 12 : 16, inetname(in));
 	cp = strchr(line, '\0');
 	if (!numeric && port)
 		sp = getservbyport((int)port, proto);
+	space = sizeof line - (cp-line);
 	if (sp || port == 0)
-		(void)snprintf(cp, cp - line, "%.8s", sp ? sp->s_name : "*");
+		(void)snprintf(cp, space, "%.8s", sp ? sp->s_name : "*");
 	else
-		(void)snprintf(cp, cp - line, "%u", ntohs(port));
+		(void)snprintf(cp, space, "%u", ntohs(port));
 	width = Aflag ? 18 : 22;
 	(void)printf(" %-*.*s", width, width, line);
 }
