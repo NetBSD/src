@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.14 2003/12/13 01:33:41 sekiya Exp $
+# 	$NetBSD: LROUTER,v 1.15 2003/12/13 23:13:41 thorpej Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -148,6 +148,7 @@ hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
+satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
