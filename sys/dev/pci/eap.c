@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.25 1999/02/18 07:59:30 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.26 1999/07/10 16:46:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1298,13 +1298,13 @@ eap_free(addr, ptr, pool)
 	int pool;
 {
 	struct eap_softc *sc = addr;
-	struct eap_dma **p;
+	struct eap_dma **pp, *p;
 
-	for (p = &sc->sc_dmas; *p; p = &(*p)->next) {
-		if (KERNADDR(*p) == ptr) {
-			eap_freemem(sc, *p);
-			*p = (*p)->next;
-			free(*p, pool);
+	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
+		if (KERNADDR(p) == ptr) {
+			eap_freemem(sc, p);
+			*pp = p->next;
+			free(p, pool);
 			return;
 		}
 	}
