@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.1 2003/09/29 21:04:53 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.2 2003/09/29 22:24:53 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.1 2003/09/29 21:04:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2003/09/29 22:24:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -275,7 +275,7 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 #endif
 
 	tramp.sig = ksi->ksi_signo;
-	tramp.code = ksi->ksi_trap;
+	tramp.code = (register_t)ksi->ksi_addr;
 	/* Set up positions for structs on stack */
 	tramp.scp = sp;
 	/* r0..r5 are saved by the popr in the sigcode snippet but we need
@@ -339,7 +339,7 @@ setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Arguments given to the signal handler.  */
 	tramp.narg = 3;
 	tramp.sig = ksi->ksi_signo;
-	tramp.code = ksi->ksi_trap;
+	tramp.code = (register_t)ksi->ksi_addr;
 	tramp.scp = sp;
 	sp -= sizeof(tramp);
 
