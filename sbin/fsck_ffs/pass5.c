@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.29 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.30 2002/06/30 22:57:30 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.29 2002/05/06 03:17:43 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.30 2002/06/30 22:57:30 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ void
 pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos = 0;
+	int32_t savednpsect, savedinterleave;
 	int inomapsize, blkmapsize;
 	struct fs *fs = sblock;
 	ufs_daddr_t dbase, dmax;
@@ -136,7 +137,11 @@ pass5()
 		inomapsize = &ocg->cg_free[0] - (u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
 		savednrpos = fs->fs_nrpos;
+		savednpsect = fs->fs_npsect;
+		savedinterleave = fs->fs_interleave;
 		fs->fs_nrpos = 8;
+		fs->fs_npsect = fs->fs_nsect;
+		fs->fs_interleave = 1;
 		break;
 
 	case FS_DYNAMICPOSTBLFMT:
@@ -416,8 +421,11 @@ pass5()
                         cgdirty();
                 }
 	}
-	if (fs->fs_postblformat == FS_42POSTBLFMT)
+	if (fs->fs_postblformat == FS_42POSTBLFMT) {
 		fs->fs_nrpos = savednrpos;
+		fs->fs_npsect = savednpsect;
+		fs->fs_interleave = savedinterleave;
+	}
 	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0) {
 		if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);

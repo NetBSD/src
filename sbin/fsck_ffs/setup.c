@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.53 2002/06/30 22:57:31 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,8 +199,9 @@ setup(dev)
 			sbdirty();
 		}
 	}
-	if (sblock->fs_interleave < 1 || 
-	    sblock->fs_interleave > sblock->fs_nsect) {
+	if (sblock->fs_postblformat != FS_42POSTBLFMT &&
+	    (sblock->fs_interleave < 1 || 
+	    sblock->fs_interleave > sblock->fs_nsect)) {
 		pwarn("IMPOSSIBLE INTERLEAVE=%d IN SUPERBLOCK",
 			sblock->fs_interleave);
 		sblock->fs_interleave = 1;
@@ -211,8 +212,9 @@ setup(dev)
 			dirty(&asblk);
 		}
 	}
-	if (sblock->fs_npsect < sblock->fs_nsect || 
-	    sblock->fs_npsect > sblock->fs_nsect*2) {
+	if (sblock->fs_postblformat != FS_42POSTBLFMT &&
+	    (sblock->fs_npsect < sblock->fs_nsect || 
+	    sblock->fs_npsect > sblock->fs_nsect*2)) {
 		pwarn("IMPOSSIBLE NPSECT=%d IN SUPERBLOCK",
 			sblock->fs_npsect);
 		sblock->fs_npsect = sblock->fs_nsect;
@@ -324,6 +326,10 @@ setup(dev)
 		doinglevel1++;
 		sblock->fs_postblformat = FS_DYNAMICPOSTBLFMT;
 		sblock->fs_nrpos = 8;
+		if (sblock->fs_npsect < sblock->fs_nsect)
+			sblock->fs_npsect = sblock->fs_nsect;
+		if (sblock->fs_interleave < 1)
+			sblock->fs_interleave = 1;
 		sblock->fs_postbloff =
 		    (char *)(&sblock->fs_opostbl[0][0]) -
 		    (char *)(&sblock->fs_firstfield);
