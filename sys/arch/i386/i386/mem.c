@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.19 1994/05/21 15:57:30 mycroft Exp $
+ *	$Id: mem.c,v 1.20 1994/05/23 03:02:39 cgd Exp $
  */
 
 /*
@@ -117,15 +117,17 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			pmap_enter(pmap_kernel(), vmmap, v,
-				uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap, v,
+				uio->uio_rw == UIO_READ ? 
+				    VM_PROT_READ : VM_PROT_WRITE,
 				TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
 			c = MIN(c, (u_int)(NBPG - o));
 			c = MIN(c, (u_int)iov->iov_len);
 			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)&vmmap[NBPG]);
 			continue;
 
 /* minor device 1 is kernel memory */
