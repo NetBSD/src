@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.35 2000/10/25 09:32:11 haya Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.36 2000/12/18 17:21:11 abs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,16 +114,22 @@ struct wdc_pcmcia_product {
 	  PCMCIA_CIS_EXP_EXPMULTIMEDIA,
 	  PCMCIA_STR_EXP_EXPMULTIMEDIA },
 
-	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
+	/* Mobile Dock 2, neither vendor ID nor product ID */
 	{ -1, -1, 0,
 	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
 	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
 	},
 
-	/* Toshiba Portege 3110 CD, with neither vendor ID nor product ID */
+	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
 	{ -1, -1, 0,
 	  { "FREECOM", "PCCARD-IDE", NULL, NULL},
 	  "FREECOM PCCARD-IDE"
+	},
+
+	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
+	{ -1, -1, 0,
+	  { "PCMCIA", "CD-ROM", NULL, NULL},
+	  "PCMCIA CD-ROM"
 	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
