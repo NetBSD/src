@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.10 1997/10/06 13:18:52 enami Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.11 1997/10/14 00:47:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -159,12 +159,12 @@ com_pcmcia_attach(parent, self, aux)
 
 		if (cfe->iomask == 3) {
 			if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-			    &psc->sc_pcioh)) {
+			    cfe->iospace[0].length, &psc->sc_pcioh)) {
 				continue;
 			}
 		} else {
 			if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-			    cfe->iospace[0].length, &psc->sc_pcioh)) {
+			    cfe->iospace[0].length, 0, &psc->sc_pcioh)) {
 				continue;
 			}
 		}
