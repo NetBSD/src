@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.17 2004/12/20 23:03:39 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.17 2004/12/20 23:03:39 dyoung Exp $");
 #endif
 
 /*
@@ -1110,7 +1110,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int i, error = 0;
+	int i, error = 0, s;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey *nwkey;
 	struct ieee80211_power *power;
@@ -1342,9 +1342,14 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
 		break;
+	case SIOCG80211ZSTATS:
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
+		s = splnet();
 		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
+		if (cmd == SIOCG80211ZSTATS)
+			(void)memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
+		splx(s);
 		break;
 	case SIOCSIFMTU:
 		ifr = (struct ifreq *)data;
