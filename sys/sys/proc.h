@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.107 2000/11/13 21:32:19 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.108 2000/11/16 20:04:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -105,7 +105,7 @@ struct	emul {
 	char	*e_esigcode;		/* End of sigcode */
 
 	/* Per-process hooks */
-	void	(*e_proc_exec) __P((struct proc *));
+	void	(*e_proc_exec) __P((struct proc *, struct exec_package *));
 	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
 	void	(*e_proc_exit) __P((struct proc *));
 };
