@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.33 1997/07/18 23:08:45 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.34 1998/02/10 06:41:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.33 1997/07/18 23:08:45 thorpej Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.34 1998/02/10 06:41:00 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,10 +82,10 @@ struct _dom_binding {
 	struct _dom_binding *dom_pnext;
 	char dom_domain[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
-	unsigned short int dom_server_port;
+	in_port_t dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
-	long dom_vers;
+	u_int32_t dom_vers;
 	time_t dom_check_t;
 	time_t dom_ask_t;
 	int dom_lockfd;
@@ -120,7 +120,7 @@ static int rpcsock, pingsock;
 static struct rmtcallargs rmtca;
 static struct rmtcallres rmtcr;
 static bool_t rmtcr_outval;
-static u_long rmtcr_port;
+static u_int32_t rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
 int	_yp_invalid_domain __P((const char *));		/* from libc */
@@ -182,7 +182,7 @@ makelock(ypdb)
 	int fd;
 	char path[MAXPATHLEN];
 
-	(void) snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
+	(void) snprintf(path, sizeof(path), "%s/%s.%d", BINDINGDIR,
 	    ypdb->dom_domain, ypdb->dom_vers);
 
 	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
@@ -203,7 +203,7 @@ removelock(ypdb)
 {
 	char path[MAXPATHLEN];
 
-	(void) snprintf(path, sizeof(path), "%s/%s.%ld",
+	(void) snprintf(path, sizeof(path), "%s/%s.%d",
 	    BINDINGDIR, ypdb->dom_domain, ypdb->dom_vers);
 	(void) unlink(path);
 }
@@ -948,7 +948,7 @@ direct_set(buf, outlen, ypdb)
 	 * "been_set" if this happens, otherwise we'll never
 	 * bind again.
 	 */
-	snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
+	snprintf(path, sizeof(path), "%s/%s.%d", BINDINGDIR,
 	    ypdb->dom_domain, ypdb->dom_vers);
 
 	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
@@ -1024,7 +1024,7 @@ try_again:
 	if (xdr_replymsg(&xdr, &msg)) {
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
-			raddr.sin_port = htons((u_short)rmtcr_port);
+			raddr.sin_port = htons((in_port_t)rmtcr_port);
 			ypdb = xid2ypdb(msg.rm_xid);
 			if (ypdb != NULL)
 				rpc_received(ypdb->dom_domain, &raddr, 0);
@@ -1199,7 +1199,7 @@ unique_xid(ypdb)
 {
 	u_int32_t tmp_xid;
 
-	tmp_xid = (u_int32_t)(((u_long)ypdb) & 0xffffffff);
+	tmp_xid = (u_int32_t)(((u_int32_t)ypdb) & 0xffffffff);
 	while (xid2ypdb(tmp_xid) != NULL)
 		tmp_xid++;
 
