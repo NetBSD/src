@@ -36,13 +36,16 @@
 /*
  * ASC driver code and asc_ringbell() support
  *
- * $Id: asc.c,v 1.1 1993/12/21 03:16:05 briggs Exp $
+ * $Id: asc.c,v 1.2 1994/05/06 03:34:53 briggs Exp $
  *
  * 12/12/93 01:14:45 grantham
  *	initial revision
  *
  * $Log: asc.c,v $
- * Revision 1.1  1993/12/21 03:16:05  briggs
+ * Revision 1.2  1994/05/06 03:34:53  briggs
+ * Clean up some warnings, mainly w/ timeout().
+ *
+ * Revision 1.1  1993/12/21  03:16:05  briggs
  * Add basic sound support and a beeping (instead of flashing) console...
  * from Brad Grantham.
  *
@@ -178,5 +181,5 @@ int asc_ringbell()
 	}
 
 	bell_ringing++;
-	timeout((timeout_t)asc_bellstop, 0, bell_length);
+	timeout(asc_bellstop, 0, bell_length);
 }
