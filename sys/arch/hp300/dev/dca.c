@@ -1,7 +1,7 @@
-/*	$NetBSD: dca.c,v 1.33 1997/03/31 07:32:17 scottr Exp $	*/
+/*	$NetBSD: dca.c,v 1.34 1997/04/14 02:33:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -62,6 +62,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/cons.h>
 
@@ -69,7 +70,6 @@
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcareg.h>
-#include <hp300/hp300/isr.h>
 
 struct	dca_softc {
 	struct device		sc_dev;		/* generic device glue */
@@ -231,8 +231,8 @@ dcaattach(parent, self, aux)
 		sc->sc_flags |= DCA_HASFIFO;
 
 	/* Establish interrupt handler. */
-	(void) isrlink(dcaintr, sc, ipl,
-	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
+	(void) intr_establish(dcaintr, sc, ipl,
+	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
 	if (self->dv_cfdata->cf_flags)
