@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.26 2004/03/16 22:45:18 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.27 2004/03/17 10:48:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.26 2004/03/16 22:45:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.27 2004/03/17 10:48:21 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -200,7 +200,7 @@ int
 PROM_getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
-	int	size;
+	size_t	size;
 	int	*nitem;
 	void	*bufp;
 {

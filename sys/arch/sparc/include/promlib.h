@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.13 2004/03/16 22:55:47 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.14 2004/03/17 10:48:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,8 +140,8 @@ void		prom_getether(int, u_char *);
 void	prom_init	__P((void));	/* To setup promops */
 
 /* Utility routines */
-int	prom_prop	__P((int, char *, int, int *, void **));
-int	PROM_getprop		__P((int, char *, int, int *, void *));
+/*int	prom_prop	__P((int, char *, int, int *, void **));*/
+int	PROM_getprop		__P((int, char *, size_t, int *, void *));
 int	PROM_getpropint	__P((int node, char *name, int deflt));
 char	*PROM_getpropstring	__P((int node, char *name));
 char	*PROM_getpropstringA	__P((int node, char *name, char *, size_t));
