@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,46 +30,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_output.c	7.22 (Berkeley) 8/31/90
+ *	@(#)tcp_output.c	8.3 (Berkeley) 12/30/93
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "../net/route.h"
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "ip_var.h"
-#include "tcp.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
 #define	TCPOUTFLAGS
-#include "tcp_fsm.h"
-#include "tcp_seq.h"
-#include "tcp_timer.h"
-#include "tcp_var.h"
-#include "tcpip.h"
-#include "tcp_debug.h"
+#include <netinet/tcp_fsm.h>
+#include <netinet/tcp_seq.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/tcpip.h>
+#include <netinet/tcp_debug.h>
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
 #endif
 
-/*
- * Initial options.
- */
-u_char	tcp_initopt[4] = { TCPOPT_MAXSEG, 4, 0x0, 0x0, };
+
+#define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
 /*
  * Tcp output routine: figure out what should be sent and send it.
  */
+int
 tcp_output(tp)
 	register struct tcpcb *tp;
 {
@@ -78,7 +77,7 @@ tcp_output(tp)
 	int off, flags, error;
 	register struct mbuf *m;
 	register struct tcpiphdr *ti;
-	u_char *opt;
+	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
 	int idle, sendalot;
 
@@ -101,6 +100,7 @@ again:
 	off = tp->snd_nxt - tp->snd_una;
 	win = min(tp->snd_wnd, tp->snd_cwnd);
 
+	flags = tcp_outflags[tp->t_state];
 	/*
 	 * If in persist timeout with window of 0, send 1 byte.
 	 * Otherwise, if window is small but nonzero
@@ -108,15 +108,32 @@ again:
 	 * and go to transmit state.
 	 */
 	if (tp->t_force) {
-		if (win == 0)
+		if (win == 0) {
+			/*
+			 * If we still have some data to send, then
+			 * clear the FIN bit.  Usually this would
+			 * happen below when it realizes that we
+			 * aren't sending all the data.  However,
+			 * if we have exactly 1 byte of unset data,
+			 * then it won't clear the FIN bit below,
+			 * and if we are in persist state, we wind
+			 * up sending the packet without recording
+			 * that we sent the FIN bit.
+			 *
+			 * We can't just blindly clear the FIN bit,
+			 * because if we don't have any more data
+			 * to send then the probe will be the FIN
+			 * itself.
+			 */
+			if (off < so->so_snd.sb_cc)
+				flags &= ~TH_FIN;
 			win = 1;
-		else {
+		} else {
 			tp->t_timer[TCPT_PERSIST] = 0;
 			tp->t_rxtshift = 0;
 		}
 	}
 
-	flags = tcp_outflags[tp->t_state];
 	len = min(so->so_snd.sb_cc, win) - off;
 
 	if (len < 0) {
@@ -177,7 +194,13 @@ again:
 	 * window, then want to send a window update to peer.
 	 */
 	if (win > 0) {
-		long adv = win - (tp->rcv_adv - tp->rcv_nxt);
+		/* 
+		 * "adv" is the amount we can increase the window,
+		 * taking into account that we are limited by
+		 * TCP_MAXWIN << tp->rcv_scale.
+		 */
+		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
+			(tp->rcv_adv - tp->rcv_nxt);
 
 		if (adv >= (long) (2 * tp->t_maxseg))
 			goto send;
@@ -247,16 +270,64 @@ send:
 	 */
 	optlen = 0;
 	hdrlen = sizeof (struct tcpiphdr);
-	if (flags & TH_SYN && (tp->t_flags & TF_NOOPT) == 0) {
-		opt = tcp_initopt;
-		optlen = sizeof (tcp_initopt);
-		hdrlen += sizeof (tcp_initopt);
-		*(u_short *)(opt + 2) = htons((u_short) tcp_mss(tp, 0));
+	if (flags & TH_SYN) {
+		tp->snd_nxt = tp->iss;
+		if ((tp->t_flags & TF_NOOPT) == 0) {
+			u_short mss;
+
+			opt[0] = TCPOPT_MAXSEG;
+			opt[1] = 4;
+			mss = htons((u_short) tcp_mss(tp, 0));
+			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
+			optlen = 4;
+	 
+			if ((tp->t_flags & TF_REQ_SCALE) &&
+			    ((flags & TH_ACK) == 0 ||
+			    (tp->t_flags & TF_RCVD_SCALE))) {
+				*((u_long *) (opt + optlen)) = htonl(
+					TCPOPT_NOP << 24 |
+					TCPOPT_WINDOW << 16 |
+					TCPOLEN_WINDOW << 8 |
+					tp->request_r_scale);
+				optlen += 4;
+			}
+		}
+ 	}
+ 
+ 	/*
+	 * Send a timestamp and echo-reply if this is a SYN and our side 
+	 * wants to use timestamps (TF_REQ_TSTMP is set) or both our side
+	 * and our peer have sent timestamps in our SYN's.
+ 	 */
+ 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+ 	     (flags & TH_RST) == 0 &&
+ 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
+	     (tp->t_flags & TF_RCVD_TSTMP))) {
+		u_long *lp = (u_long *)(opt + optlen);
+ 
+ 		/* Form timestamp option as shown in appendix A of RFC 1323. */
+ 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+ 		*lp++ = htonl(tcp_now);
+ 		*lp   = htonl(tp->ts_recent);
+ 		optlen += TCPOLEN_TSTAMP_APPA;
+ 	}
+
+ 	hdrlen += optlen;
+ 
+	/*
+	 * Adjust data length if insertion of options will
+	 * bump the packet length beyond the t_maxseg length.
+	 */
+	 if (len > tp->t_maxseg - optlen) {
+		len = tp->t_maxseg - optlen;
+		sendalot = 1;
+	 }
+
+
 #ifdef DIAGNOSTIC
-	 	if (max_linkhdr + hdrlen > MHLEN)
-			panic("tcphdr too big");
+ 	if (max_linkhdr + hdrlen > MHLEN)
+		panic("tcphdr too big");
 #endif
-	}
 
 	/*
 	 * Grab a header mbuf, attaching a copy of data to
@@ -342,7 +413,23 @@ send:
 	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN && 
 	    tp->snd_nxt == tp->snd_max)
 		tp->snd_nxt--;
-	ti->ti_seq = htonl(tp->snd_nxt);
+	/*
+	 * If we are doing retransmissions, then snd_nxt will
+	 * not reflect the first unsent octet.  For ACK only
+	 * packets, we do not want the sequence number of the
+	 * retransmitted packet, we want the sequence number
+	 * of the next unsent octet.  So, if there is no data
+	 * (and no SYN or FIN), use snd_max instead of snd_nxt
+	 * when filling in ti_seq.  But if we are in persist
+	 * state, snd_max might reflect one byte beyond the
+	 * right edge of the window, so use snd_nxt in that
+	 * case, since we know we aren't doing a retransmission.
+	 * (retransmit and persist are mutually exclusive...)
+	 */
+	if (len || (flags & (TH_SYN|TH_FIN)) || tp->t_timer[TCPT_PERSIST])
+		ti->ti_seq = htonl(tp->snd_nxt);
+	else
+		ti->ti_seq = htonl(tp->snd_max);
 	ti->ti_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
 		bcopy((caddr_t)opt, (caddr_t)(ti + 1), optlen);
@@ -355,11 +442,11 @@ send:
 	 */
 	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)tp->t_maxseg)
 		win = 0;
-	if (win > TCP_MAXWIN)
-		win = TCP_MAXWIN;
+	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
+		win = (long)TCP_MAXWIN << tp->rcv_scale;
 	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
 		win = (long)(tp->rcv_adv - tp->rcv_nxt);
-	ti->ti_win = htons((u_short)win);
+	ti->ti_win = htons((u_short) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		ti->ti_urp = htons((u_short)(tp->snd_up - tp->snd_nxt));
 		ti->ti_flags |= TH_URG;
@@ -446,20 +533,27 @@ send:
 	 * the template, but need a way to checksum without them.
 	 */
 	m->m_pkthdr.len = hdrlen + len;
+#ifdef TUBA
+	if (tp->t_tuba_pcb)
+		error = tuba_output(m, tp);
+	else
+#endif
+    {
 	((struct ip *)ti)->ip_len = m->m_pkthdr.len;
 	((struct ip *)ti)->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
 #if BSD >= 43
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
-	    so->so_options & SO_DONTROUTE);
+	    so->so_options & SO_DONTROUTE, 0);
 #else
 	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
 	    so->so_options & SO_DONTROUTE);
 #endif
+    }
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcp_quench(tp->t_inpcb);
+			tcp_quench(tp->t_inpcb, 0);
 			return (0);
 		}
 		if ((error == EHOSTUNREACH || error == ENETDOWN)
@@ -479,12 +573,14 @@ out:
 	 */
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
+	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
 	if (sendalot)
 		goto again;
 	return (0);
 }
 
+void
 tcp_setpersist(tp)
 	register struct tcpcb *tp;
 {

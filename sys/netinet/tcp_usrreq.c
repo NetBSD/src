@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,40 +30,39 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
+ *	@(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
-#include "stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/stat.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "ip_var.h"
-#include "tcp.h"
-#include "tcp_fsm.h"
-#include "tcp_seq.h"
-#include "tcp_timer.h"
-#include "tcp_var.h"
-#include "tcpip.h"
-#include "tcp_debug.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_fsm.h>
+#include <netinet/tcp_seq.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/tcpip.h>
+#include <netinet/tcp_debug.h>
 
 /*
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
-struct	tcpcb *tcp_newtcpcb();
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -71,6 +70,7 @@ struct	tcpcb *tcp_newtcpcb();
  * (called from the software clock routine), then timertype tells which timer.
  */
 /*ARGSUSED*/
+int
 tcp_usrreq(so, req, m, nam, control)
 	struct socket *so;
 	int req;
@@ -186,6 +186,10 @@ tcp_usrreq(so, req, m, nam, control)
 			error = ENOBUFS;
 			break;
 		}
+		/* Compute window scaling to request.  */
+		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
+		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
+			tp->request_r_scale++;
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
@@ -222,16 +226,9 @@ tcp_usrreq(so, req, m, nam, control)
 	 * done at higher levels; just return the address
 	 * of the peer, storing through addr.
 	 */
-	case PRU_ACCEPT: {
-		struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-
-		nam->m_len = sizeof (struct sockaddr_in);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_port = inp->inp_fport;
-		sin->sin_addr = inp->inp_faddr;
+	case PRU_ACCEPT:
+		in_setpeeraddr(inp, nam);
 		break;
-		}
 
 	/*
 	 * Mark the connection as being incapable of further output.
@@ -336,19 +333,33 @@ tcp_usrreq(so, req, m, nam, control)
 	return (error);
 }
 
+int
 tcp_ctloutput(op, so, level, optname, mp)
 	int op;
 	struct socket *so;
 	int level, optname;
 	struct mbuf **mp;
 {
-	int error = 0;
-	struct inpcb *inp = sotoinpcb(so);
-	register struct tcpcb *tp = intotcpcb(inp);
+	int error = 0, s;
+	struct inpcb *inp;
+	register struct tcpcb *tp;
 	register struct mbuf *m;
+	register int i;
 
-	if (level != IPPROTO_TCP)
-		return (ip_ctloutput(op, so, level, optname, mp));
+	s = splnet();
+	inp = sotoinpcb(so);
+	if (inp == NULL) {
+		splx(s);
+		if (op == PRCO_SETOPT && *mp)
+			(void) m_free(*mp);
+		return (ECONNRESET);
+	}
+	if (level != IPPROTO_TCP) {
+		error = ip_ctloutput(op, so, level, optname, mp);
+		splx(s);
+		return (error);
+	}
+	tp = intotcpcb(inp);
 
 	switch (op) {
 
@@ -365,9 +376,15 @@ tcp_ctloutput(op, so, level, optname, mp)
 				tp->t_flags &= ~TF_NODELAY;
 			break;
 
-		case TCP_MAXSEG:	/* not yet */
+		case TCP_MAXSEG:
+			if (m && (i = *mtod(m, int *)) > 0 && i <= tp->t_maxseg)
+				tp->t_maxseg = i;
+			else
+				error = EINVAL;
+			break;
+
 		default:
-			error = EINVAL;
+			error = ENOPROTOOPT;
 			break;
 		}
 		if (m)
@@ -386,22 +403,24 @@ tcp_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
 		default:
-			error = EINVAL;
+			error = ENOPROTOOPT;
 			break;
 		}
 		break;
 	}
+	splx(s);
 	return (error);
 }
 
-u_long	tcp_sendspace = 1024*4;
-u_long	tcp_recvspace = 1024*4;
+u_long	tcp_sendspace = 1024*8;
+u_long	tcp_recvspace = 1024*8;
 
 /*
  * Attach TCP protocol to socket, allocating
  * internet protocol control block, tcp control block,
  * bufer space, and entering LISTEN state if to accept connections.
  */
+int
 tcp_attach(so)
 	struct socket *so;
 {
