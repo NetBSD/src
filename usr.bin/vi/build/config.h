@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.6 2000/05/25 06:47:53 jdc Exp $	*/
+/*	$NetBSD: config.h,v 1.7 2000/11/05 20:07:23 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -83,7 +83,7 @@
 #define HAVE_CURSES_KEYPAD 1
 
 /* Define if you have the curses(3) newterm function. */
-#ifdef __SVR4
+#if defined(__SVR4) || defined(__linux__)
 #define HAVE_CURSES_NEWTERM 1
 #endif
 
