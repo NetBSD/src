@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_util.c,v 1.5.2.4 1993/11/26 22:43:15 mycroft Exp $
+ *	$Id: isofs_util.c,v 1.5.2.5 1993/11/26 22:56:31 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -26,22 +26,25 @@
 #ifdef	__notanymore__
 int
 isonum_711 (p)
-unsigned char *p;
+	unsigned char *p;
 {
-	return (*p);
+
+	return *p;
 }
 
 int
 isonum_712 (p)
-signed char *p;
+	signed char *p;
 {
-	return (*p);
+
+	return *p;
 }
 
 int
 isonum_721 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
 	/* little endian short */
 #if BYTE_ORDER != LITTLE_ENDIAN
 	printf ("isonum_721 called on non little-endian machine!\n");
@@ -52,8 +55,9 @@ unsigned char *p;
 
 int
 isonum_722 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
         /* big endian short */
 #if BYTE_ORDER != BIG_ENDIAN
         printf ("isonum_722 called on non big-endian machine!\n");
@@ -64,8 +68,9 @@ unsigned char *p;
 
 int
 isonum_723 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
 #if BYTE_ORDER == BIG_ENDIAN
         return isonum_722 (p + 2);
 #elif BYTE_ORDER == LITTLE_ENDIAN
@@ -78,8 +83,9 @@ unsigned char *p;
 
 int
 isonum_731 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
         /* little endian long */
 #if BYTE_ORDER != LITTLE_ENDIAN
         printf ("isonum_731 called on non little-endian machine!\n");
@@ -90,8 +96,9 @@ unsigned char *p;
 
 int
 isonum_732 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
         /* big endian long */
 #if BYTE_ORDER != BIG_ENDIAN
         printf ("isonum_732 called on non big-endian machine!\n");
@@ -102,8 +109,9 @@ unsigned char *p;
 
 int
 isonum_733 (p)
-unsigned char *p;
+	unsigned char *p;
 {
+
 #if BYTE_ORDER == BIG_ENDIAN
         return isonum_732 (p + 4);
 #elif BYTE_ORDER == LITTLE_ENDIAN
@@ -120,7 +128,9 @@ unsigned char *p;
  * Note: Version number plus ';' may be omitted.
  */
 int
-isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
+isofncmp(fn, fnlen, isofn, isolen)
+	unsigned char *fn, *isofn;
+	int fnlen, isolen;
 {
 	int i, j;
 	char c;

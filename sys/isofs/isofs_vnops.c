@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.8.2.4 1993/11/26 22:43:19 mycroft Exp $
+ *	$Id: isofs_vnops.c,v 1.8.2.5 1993/11/26 22:56:34 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -90,6 +90,7 @@ isofs_open(vp, mode, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
+
 	return 0;
 }
 
@@ -105,6 +106,7 @@ isofs_close(vp, fflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
+
 	return 0;
 }
 
@@ -119,6 +121,7 @@ isofs_access(vp, mode, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
+
 	return 0;
 }
 
@@ -219,6 +222,7 @@ isofs_ioctl(vp, com, data, fflag, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
+
 	printf("You did ioctl for isofs !!\n");
 	return ENOTTY;
 }
@@ -538,7 +542,8 @@ typedef struct iso_directory_record ISODIR;
 typedef struct iso_node             ISONODE;
 typedef struct iso_mnt              ISOMNT;
 
-int isofs_readlink(vp, uio, cred)
+int
+isofs_readlink(vp, uio, cred)
 	struct vnode *vp;
 	struct uio   *uio;
 	struct ucred *cred;
@@ -675,7 +680,6 @@ isofs_islocked(vp)
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
  */
-
 isofs_strategy(bp)
 	register struct buf *bp;
 {
@@ -708,6 +712,7 @@ void
 isofs_print(vp)
 	struct vnode *vp;
 {
+
 	printf("tag VT_ISOFS, isofs vnode\n");
 }
 

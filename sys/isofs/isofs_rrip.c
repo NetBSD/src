@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.3.2.2 1993/11/26 22:43:13 mycroft Exp $
+ *	$Id: isofs_rrip.c,v 1.3.2.3 1993/11/26 22:56:29 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ isofs_rrip_attr(p,ana)
 	ISO_RRIP_ATTR *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	ana->inop->inode.iso_mode = isonum_731(p->mode_l);
 	ana->inop->inode.iso_uid = (uid_t)isonum_731(p->uid_l);
 	ana->inop->inode.iso_gid = (gid_t)isonum_731(p->gid_l);
@@ -68,6 +69,7 @@ isofs_rrip_defattr(isodir,ana)
 	struct iso_directory_record *isodir;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	/* But this is a required field! */
 	printf("RRIP without PX field?\n");
 	isofs_defattr(isodir,ana->inop,NULL);
@@ -255,6 +257,7 @@ isofs_rrip_defname(isodir,ana)
 	struct iso_directory_record *isodir;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	strcpy(ana->outbuf,"..");
 	switch (*isodir->name) {
 	default:
@@ -279,6 +282,7 @@ isofs_rrip_pclink(p,ana)
 	ISO_RRIP_CLINK  *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	*ana->inump = isonum_733(p->dir_loc) << ana->imp->im_bshift;
 	ana->fields &= ~(ISO_SUSP_CLINK|ISO_SUSP_PLINK);
 	return *p->h.type == 'C' ? ISO_SUSP_CLINK : ISO_SUSP_PLINK;
@@ -292,6 +296,7 @@ isofs_rrip_reldir(p,ana)
 	ISO_RRIP_RELDIR  *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	/* special hack to make caller aware of RE field */
 	*ana->outlen = 0;
 	ana->fields = 0;
@@ -360,6 +365,7 @@ isofs_rrip_deftstamp(isodir,ana)
 	struct iso_directory_record  *isodir;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	isofs_deftstamp(isodir,ana->inop,NULL);
 }
 
@@ -392,6 +398,7 @@ isofs_rrip_idflag(p,ana)
 	ISO_RRIP_IDFLAG *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	ana->fields &= isonum_711(p->flags)|~0xff; /* don't touch high bits */
 	/* special handling of RE field */
 	if (ana->fields&ISO_SUSP_RELDIR)
@@ -408,6 +415,7 @@ isofs_rrip_cont(p,ana)
 	ISO_RRIP_CONT *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	ana->iso_ce_blk = isonum_733(p->location);
 	ana->iso_ce_off = isonum_733(p->offset);
 	ana->iso_ce_len = isonum_733(p->length);
@@ -422,6 +430,7 @@ isofs_rrip_stop(p,ana)
 	ISO_SUSP_HEADER *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	/* stop analyzing */
 	ana->fields = 0;
 	return ISO_SUSP_STOP;
@@ -435,6 +444,7 @@ isofs_rrip_extref(p,ana)
 	ISO_RRIP_EXTREF *p;
 	ISO_RRIP_ANALYZE *ana;
 {
+
 	if (isonum_711(p->len_id) != 10
 	    || bcmp((char *)p + 8,"RRIP_1991A",10)
 	    || isonum_711(p->version) != 1)
@@ -635,7 +645,8 @@ isofs_rrip_getsymname(isodir,outbuf,outlen,imp)
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_SLINK;
 
-	return (isofs_rrip_loop(isodir,&analyze,rrip_table_getsymname)&ISO_SUSP_SLINK);
+	return isofs_rrip_loop(isodir,&analyze,rrip_table_getsymname)
+	       & ISO_SUSP_SLINK;
 }
 
 static RRIP_TABLE rrip_table_extref[] = {
