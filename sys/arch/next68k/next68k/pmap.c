@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1999/03/26 23:41:32 mycroft Exp $        */
+/*	$NetBSD: pmap.c,v 1.11 1999/03/27 03:34:08 mycroft Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -1793,10 +1793,11 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
 	kva = (vaddr_t) CADDR1;
-	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	zeropage((caddr_t)kva);
 	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
-			    PRM_TFLUSH|PRM_CFLUSH);
+	    PRM_TFLUSH|PRM_CFLUSH);
 }
 
 /*
@@ -1825,8 +1826,9 @@ pmap_copy_page(src, dst)
 #endif
 	skva = (vaddr_t) CADDR1;
 	dkva = (vaddr_t) CADDR2;
-	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE);
-	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE, VM_PROT_READ);
+	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
@@ -2578,7 +2580,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
+		    VM_PROT_DEFAULT);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);
