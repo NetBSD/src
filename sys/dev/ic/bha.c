@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.9 1997/01/17 22:09:09 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.10 1997/03/13 00:38:51 cgd Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -75,6 +75,13 @@
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bha.c)")
 #endif /* ! DDB */
+
+#ifdef alpha		/* XXX */
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
+extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
+#undef vtophys
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
+#endif	/* alpha */
 
 #define KVTOPHYS(x)	vtophys(x)
 
@@ -1181,7 +1188,7 @@ bha_scsi_cmd(xs)
 			    ("%d @0x%x:- ", xs->datalen, xs->data));
 
 			datalen = xs->datalen;
-			thiskv = (int)xs->data;
+			thiskv = (u_long)xs->data;
 			thisphys = KVTOPHYS(thiskv);
 
 			while (datalen && seg < BHA_NSEG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.7 1997/02/17 22:42:21 jonathan Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.8 1997/03/13 00:38:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,11 @@
 
 #define	PCI_CBIO	0x10
 
+#ifdef	__BROKEN_INDIRECT_CONFIG
 int	bha_pci_match __P((struct device *, void *, void *));
+#else
+int	bha_pci_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	bha_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach bha_pci_ca = {
@@ -63,7 +67,11 @@ struct cfattach bha_pci_ca = {
 int
 bha_pci_match(parent, match, aux)
 	struct device *parent;
+#ifdef	__BROKEN_INDIRECT_CONFIG
 	void *match, *aux;
+#else
+	struct cfdata *match; void *aux; 
+#endif
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot = pa->pa_iot;
