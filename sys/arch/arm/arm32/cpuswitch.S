@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.24 2002/10/14 22:32:50 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.25 2002/10/15 20:53:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -70,12 +70,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-/*
- * setrunqueue() and remrunqueue()
- *
- * Functions to add and remove a process for the run queue.
- */
-
 	.text
 
 .Lwhichqs:
@@ -83,123 +77,6 @@
 
 .Lqs:
 	.word	_C_LABEL(sched_qs)
-
-/*
- * On entry
- *	r0 = process
- */
-
-ENTRY(setrunqueue)
-	/*
-	 * Local register usage
-	 * 	r0 = process
-	 * 	r1 = queue
-	 * 	r2 = &qs[queue] and temp
-	 * 	r3 = temp
-	 *	r12 = whichqs
-	 */
-#ifdef DIAGNOSTIC
-	ldr	r1, [r0, #(P_BACK)]
-	teq	r1, #0x00000000
-	bne	.Lsetrunqueue_erg
-
-	ldr	r1, [r0, #(P_WCHAN)]
-	teq	r1, #0x00000000
-	bne	.Lsetrunqueue_erg
-#endif
-
-	/* Get the priority of the queue */
-	ldrb	r1, [r0, #(P_PRIORITY)]
-
-	/* Indicate that there is a process on this queue */
-	ldr	r12, .Lwhichqs
-	mov	r1, r1, lsr #2
-	ldr	r2, [r12]
-	mov	r3, #0x00000001
-	mov	r3, r3, lsl r1
-	orr	r2, r2, r3
-	str	r2, [r12]
-
-	/* Get the address of the queue */
-	ldr	r2, .Lqs
-	add	r1, r2, r1, lsl # 3
-
-	/* Hook the process in */
-	str	r1, [r0, #(P_FORW)]
-	ldr	r2, [r1, #(P_BACK)]
-
-	str	r0, [r1, #(P_BACK)]
-#ifdef DIAGNOSTIC
-	teq	r2, #0x00000000
-	beq	.Lsetrunqueue_erg
-#endif
-	str	r0, [r2, #(P_FORW)]
-	str	r2, [r0, #(P_BACK)]
-
-	mov	pc, lr
-
-#ifdef DIAGNOSTIC
-.Lsetrunqueue_erg:
-	mov	r2, r1
-	mov	r1, r0
-	adr	r0, .Ltext1
-	bl	_C_LABEL(printf)
-
-	ldr	r2, .Lqs
-	ldr	r1, [r2]
-	adr	r0, .Ltext2
-	b	_C_LABEL(panic)	
-
-.Ltext1:
-	.asciz	"setrunqueue : %08x %08x\n"
-.Ltext2:
-	.asciz	"setrunqueue : [qs]=%08x qs=%08x\n"
-	.align	0
-#endif
-
-/*
- * On entry
- *	r0 = process
- */
-
-ENTRY(remrunqueue)
-	/*
-	 * Local register usage
-	 *	r0 = oldproc
-	 * 	r1 = queue
-	 * 	r2 = &qs[queue] and scratch
-	 *	r3 = scratch
-	 *	r12 = whichqs
-	 */
-
-	/* Get the priority of the queue */
-	ldrb	r1, [r0, #(P_PRIORITY)]
-	mov	r1, r1, lsr #2
-
-	/* Unhook the process */
-	ldr	r2, [r0, #(P_FORW)]
-	ldr	r3, [r0, #(P_BACK)]
-
-	str	r3, [r2, #(P_BACK)]
-	str	r2, [r3, #(P_FORW)]
-
-	/* If the queue is now empty clear the queue not empty flag */
-	teq	r2, r3
-
-	/* This could be reworked to avoid the use of r4 */
-	ldreq	r12, .Lwhichqs
-	moveq	r3, #0x00000001
-	ldreq	r2, [r12]
-	moveq	r3, r3, lsl r1
-	biceq	r2, r2, r3
-	streq	r2, [r12]
-
-	/* Remove the back pointer for the process */
-	mov	r1, #0x00000000
-	str	r1, [r0, #(P_BACK)]
-
-	mov	pc, lr
-
 
 /*
  * cpuswitch()
