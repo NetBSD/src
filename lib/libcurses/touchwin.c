@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.17 2002/12/05 17:23:51 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.18 2003/02/17 11:07:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.17 2002/12/05 17:23:51 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.18 2003/02/17 11:07:21 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,7 +96,7 @@ int
 touchwin(WINDOW *win)
 {
 #ifdef DEBUG
-	__CTRACE("touchwin: (%0.2o)\n", win);
+	__CTRACE("touchwin: (%p)\n", win);
 #endif
 	return wtouchln(win, 0, win->maxy, 1);
 }
@@ -123,7 +123,7 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 	__LINE	*wlp;
 
 #ifdef DEBUG
-	__CTRACE("wtouchln: (%0.2o) %d, %d, %d\n", win, line, n, changed);
+	__CTRACE("wtouchln: (%p) %d, %d, %d\n", win, line, n, changed);
 #endif
 	for (y = line; y < line + n; y++) {
 		if (changed == 1)
@@ -150,7 +150,7 @@ __touchwin(WINDOW *win)
 	int     y, maxy;
 
 #ifdef DEBUG
-	__CTRACE("touchwin: (%0.2o)\n", win);
+	__CTRACE("touchwin: (%p)\n", win);
 #endif
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++)
@@ -162,7 +162,7 @@ int
 __touchline(WINDOW *win, int y, int sx, int ex)
 {
 #ifdef DEBUG
-	__CTRACE("touchline: (%0.2o, %d, %d, %d)\n", win, y, sx, ex);
+	__CTRACE("touchline: (%p, %d, %d, %d)\n", win, y, sx, ex);
 	__CTRACE("touchline: first = %d, last = %d\n",
 	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
