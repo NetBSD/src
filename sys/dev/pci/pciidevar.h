@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.20 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.21 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -45,20 +45,20 @@
 #define	PCIIDE_OPTIONS_DMA	0x01
 #define	PCIIDE_OPTIONS_NODMA	0x02
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
+#ifndef ATADEBUG
+#define ATADEBUG
 #endif
 
 #define DEBUG_DMA   0x01
 #define DEBUG_XFERS  0x02
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
-#ifdef WDCDEBUG
-extern int wdcdebug_pciide_mask;
-#define WDCDEBUG_PRINT(args, level) \
-	if (wdcdebug_pciide_mask & (level)) printf args
+#ifdef ATADEBUG
+extern int atadebug_pciide_mask;
+#define ATADEBUG_PRINT(args, level) \
+	if (atadebug_pciide_mask & (level)) printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 struct device;

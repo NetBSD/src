@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.9 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.10 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -185,7 +185,7 @@ cy693_setup_channel(struct wdc_channel *chp)
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int dma_mode = -1;
 
-	WDCDEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",
+	ATADEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)),DEBUG_PROBE);
 
 	cy_cmd_ctrl = idedma_ctl = 0;
@@ -233,6 +233,6 @@ cy693_setup_channel(struct wdc_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
-	WDCDEBUG_PRINT(("cy693_chip_map: new timings reg 0x%x\n",
+	ATADEBUG_PRINT(("cy693_chip_map: new timings reg 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)), DEBUG_PROBE);
 }

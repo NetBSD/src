@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.85 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.86 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.85 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.86 2004/08/13 04:10:49 thorpej Exp $");
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
+#ifndef ATADEBUG
+#define ATADEBUG
+#endif /* ATADEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,13 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.85 2004/08/13 03:12:59 thorpej Exp $
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 int wdcdebug_atapi_mask = 0;
-#define WDCDEBUG_PRINT(args, level) \
+#define ATADEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 #define ATAPI_DELAY 10	/* 10 ms, this is used only before sending a cmd */
@@ -200,7 +200,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 
 	/* if no ATAPI device detected at wdc attach time, skip */
 	if ((chp->ch_drive[drive].drive_flags & DRIVE_ATAPI) == 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
+		ATADEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
 		    drive), DEBUG_PROBE);
 		return -1;
 	}
@@ -218,7 +218,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		panic("wdc_atapi_get_params");
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
+		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    wdc->sc_dev.dv_xname, chp->ch_channel, drive, 
 		    ata_c.r_error), DEBUG_PROBE);
@@ -231,7 +231,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
 	if (ata_get_params(&chp->ch_drive[drive], AT_WAIT, id) != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
+		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    wdc->sc_dev.dv_xname, chp->ch_channel, drive, 
 		    ata_c.r_error), DEBUG_PROBE);
@@ -336,7 +336,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		periph = sc_xfer->xs_periph;
 		drive = periph->periph_target;
 
-		WDCDEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
+		ATADEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
 		if ((wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
@@ -411,7 +411,7 @@ wdc_atapi_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 	int wait_flags = (sc_xfer->xs_control & XS_CTL_POLL) ? AT_POLL : 0;
 	char *errstring;
 
-	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
+	ATADEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drvp->drive,
 	    sc_xfer->xs_control), DEBUG_XFERS);
 	if ((xfer->c_flags & C_DMA) && (drvp->n_xfers <= NXFER))
@@ -598,7 +598,7 @@ wdc_atapi_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	int dma_flags = 0;
 	void *cmd;
 
-	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
+	ATADEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_INTR);
 
@@ -665,14 +665,14 @@ again:
 	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_hi], 0);
 	ire = bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_ireason], 0);
 	phase = (ire & (WDCI_CMD | WDCI_IN)) | (chp->ch_status & WDCS_DRQ);
-	WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
+	ATADEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
 	    "ire 0x%x :", xfer->c_bcount,
 	    len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
 
 	switch (phase) {
 	case PHASE_CMDOUT:
 		cmd = sc_xfer->cmd;
-		WDCDEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
+		ATADEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			if ((*wdc->dma_init)(wdc->dma_arg,
@@ -701,7 +701,7 @@ again:
 
 	 case PHASE_DATAOUT:
 		/* write data */
-		WDCDEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
+		ATADEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
 		if ((sc_xfer->xs_control & XS_CTL_DATA_OUT) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
@@ -737,7 +737,7 @@ again:
 
 	case PHASE_DATAIN:
 		/* Read data */
-		WDCDEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
+		ATADEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
 		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 || 
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
@@ -771,7 +771,7 @@ again:
 
 	case PHASE_ABORTED:
 	case PHASE_COMPLETED:
-		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
+		ATADEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 		if (xfer->c_flags & C_DMA) {
 			xfer->c_bcount -= sc_xfer->datalen;
 		}
@@ -802,7 +802,7 @@ again:
 			return (1);
 		}
 	}
-	WDCDEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), error 0x%x "
+	ATADEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), error 0x%x "
 	    "sense 0x%x\n", sc_xfer->error, sc_xfer->sense.atapi_sense),
 	    DEBUG_INTR);
 	wdc_atapi_done(chp, xfer);
@@ -819,7 +819,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 
 	/* wait for DSC if needed */
 	if (drvp->drive_flags & DRIVE_ATAPIST) {
-		WDCDEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
+		ATADEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
 		    "polldsc %d\n", wdc->sc_dev.dv_xname, chp->ch_channel,
 		    xfer->c_drive, xfer->c_dscpoll), DEBUG_XFERS);
 #if 1
@@ -872,7 +872,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 		}
 	}
 	if (xfer->c_bcount != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
+		ATADEBUG_PRINT(("wdc_atapi_intr: bcount value is "
 		    "%d after io\n", xfer->c_bcount), DEBUG_XFERS);
 	}
 #ifdef DIAGNOSTIC
@@ -881,7 +881,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 		    "is %d after io\n", xfer->c_bcount);
 	}
 #endif
-	WDCDEBUG_PRINT(("wdc_atapi_phase_complete: wdc_atapi_done(), "
+	ATADEBUG_PRINT(("wdc_atapi_phase_complete: wdc_atapi_done(), "
 	    "error 0x%x sense 0x%x\n", sc_xfer->error,
 	    sc_xfer->sense.atapi_sense), DEBUG_INTR);
 	wdc_atapi_done(chp, xfer);
@@ -894,7 +894,7 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	int drive = xfer->c_drive;
 
-	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
+	ATADEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
 	callout_stop(&chp->ch_callout);
@@ -908,9 +908,9 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		wakeup(&chp->ch_queue->active_xfer);
 	}
 
-	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 	scsipi_done(sc_xfer);
-	WDCDEBUG_PRINT(("atastart from wdc_atapi_done, flags 0x%x\n",
+	ATADEBUG_PRINT(("atastart from wdc_atapi_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }

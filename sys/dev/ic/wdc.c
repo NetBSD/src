@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.203 2004/08/13 03:12:59 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.204 2004/08/13 04:10:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,11 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.203 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.204 2004/08/13 04:10:49 thorpej Exp $");
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
+#ifndef ATADEBUG
+#define ATADEBUG
+#endif /* ATADEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,12 +158,12 @@ static int	__wdcwait(struct wdc_channel *, int, int, int);
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
 #define DEBUG_DELAY  0x40
-#ifdef WDCDEBUG
-int wdcdebug_mask = 0;
+#ifdef ATADEBUG
+extern int atadebug_mask; /* init'ed in ata.c */
 int wdc_nxfer = 0;
-#define WDCDEBUG_PRINT(args, level)  if (wdcdebug_mask & (level)) printf args
+#define ATADEBUG_PRINT(args, level)  if (atadebug_mask & (level)) printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 /*
@@ -248,7 +248,7 @@ wdc_drvprobe(struct wdc_channel *chp)
 	if ((st1 & WDCS_DRDY) == 0)
 		chp->ch_drive[1].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
 
-	WDCDEBUG_PRINT(("%s:%d: wait DRDY st0 0x%x st1 0x%x\n",
+	ATADEBUG_PRINT(("%s:%d: wait DRDY st0 0x%x st1 0x%x\n",
 	    wdc->sc_dev.dv_xname,
 	    chp->ch_channel, st0, st1), DEBUG_PROBE);
 
@@ -298,7 +298,7 @@ wdc_drvprobe(struct wdc_channel *chp)
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
+			ATADEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    wdc->sc_dev.dv_xname,
 			    chp->ch_channel, i, error), DEBUG_PROBE);
 			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
@@ -321,7 +321,7 @@ wdc_drvprobe(struct wdc_channel *chp)
 				chp->cmd_iohs[wd_error], 0) == 0x58 ||
 			    bus_space_read_1(chp->cmd_iot,
 				chp->cmd_iohs[wd_cyl_lo], 0) != 0xa5) {
-				WDCDEBUG_PRINT(("%s:%d:%d: register "
+				ATADEBUG_PRINT(("%s:%d:%d: register "
 				    "writability failed\n",
 				    wdc->sc_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
@@ -329,7 +329,7 @@ wdc_drvprobe(struct wdc_channel *chp)
 				    continue;
 			}
 			if (wdc_wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
-				WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
+				ATADEBUG_PRINT(("%s:%d:%d: not ready\n",
 				    wdc->sc_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
@@ -339,7 +339,7 @@ wdc_drvprobe(struct wdc_channel *chp)
 			    chp->cmd_iohs[wd_command], 0, WDCC_RECAL);
 			delay(10);	/* 400ns delay */
 			if (wdc_wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
-				WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
+				ATADEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 				    wdc->sc_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
@@ -364,7 +364,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	/* Probe for the drives. */
 	(*wdc->drv_probe)(chp);
 
-	WDCDEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
+	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
 	    DEBUG_PROBE);
 
@@ -516,7 +516,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 		st1 = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_status], 0);
 
-		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
+		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->ch_channel, st0, st1), DEBUG_PROBE);
 
@@ -535,7 +535,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x02) {
-				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
+				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
 				    "got 0x%x != 0x02\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -548,7 +548,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
+				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo: "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -561,7 +561,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 0 wd_sector: "
+				ATADEBUG_PRINT(("%s:%d drive 0 wd_sector: "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -574,7 +574,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0);
 			if (cl != 0x02) {
-				WDCDEBUG_PRINT(("%s:%d drive 0 wd_sector: "
+				ATADEBUG_PRINT(("%s:%d drive 0 wd_sector: "
 				    "got 0x%x != 0x02\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -585,7 +585,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo(2): "
+				ATADEBUG_PRINT(("%s:%d drive 0 wd_cyl_lo(2): "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -605,7 +605,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x02) {
-				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
+				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
 				    "got 0x%x != 0x02\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -618,7 +618,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
+				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo: "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -631,7 +631,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 1 wd_sector: "
+				ATADEBUG_PRINT(("%s:%d drive 1 wd_sector: "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -644,7 +644,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0);
 			if (cl != 0x02) {
-				WDCDEBUG_PRINT(("%s:%d drive 1 wd_sector: "
+				ATADEBUG_PRINT(("%s:%d drive 1 wd_sector: "
 				    "got 0x%x != 0x02\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -655,7 +655,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 			cl = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0);
 			if (cl != 0x01) {
-				WDCDEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo(2): "
+				ATADEBUG_PRINT(("%s:%d drive 1 wd_cyl_lo(2): "
 				    "got 0x%x != 0x01\n",
 				    wdc != NULL ?
 				    wdc->sc_dev.dv_xname : "wdcprobe",
@@ -717,7 +717,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	splx(s);
 
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
-	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
+	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
 	    wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe", chp->ch_channel,
 	    ret_value), DEBUG_PROBE);
 
@@ -749,7 +749,7 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 		ch = bus_space_read_1(chp->cmd_iot,
 		     chp->cmd_iohs[wd_cyl_hi], 0);
 
-		WDCDEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
+		ATADEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
 		    wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->ch_channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
@@ -829,7 +829,7 @@ wdcdetach(struct device *self, int flags)
 
 	for (i = 0; i < wdc->nchannels; i++) {
 		chp = wdc->channels[i];
-		WDCDEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
+		ATADEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
 		    wdc->sc_dev.dv_xname, chp->atabus->dv_xname), DEBUG_DETACH);
 		error = config_detach(chp->atabus, flags);
 		if (error)
@@ -872,19 +872,19 @@ wdcintr(void *arg)
 	int ret;
 
 	if ((wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
-		WDCDEBUG_PRINT(("wdcintr: deactivated controller\n"),
+		ATADEBUG_PRINT(("wdcintr: deactivated controller\n"),
 		    DEBUG_INTR);
 		return (0);
 	}
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
-		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
+		ATADEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
 		/* try to clear the pending interrupt anyway */
 		(void)bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_status], 0);
 		return (0);
 	}
 
-	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
+	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
 	xfer = chp->ch_queue->active_xfer;
 #ifdef DIAGNOSTIC
 	if (xfer == NULL)
@@ -913,7 +913,7 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->ch_wdc;
-	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
+	ATADEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_FUNCS);
 
@@ -1092,7 +1092,7 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask, int poll)
 	struct wdc_softc *wdc = chp->ch_wdc;
 	int timeout, nloop;
 	u_int8_t st0 = 0, st1 = 0;
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
 	u_int8_t sc1 = 0, sn1 = 0, cl1 = 0, ch1 = 0;
 #endif
@@ -1111,7 +1111,7 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask, int poll)
 			delay(10);
 			st0 = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_status], 0);
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 			sc0 = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_seccnt], 0);
 			sn0 = bus_space_read_1(chp->cmd_iot,
@@ -1130,7 +1130,7 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask, int poll)
 			delay(10);
 			st1 = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_status], 0);
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 			sc1 = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_seccnt], 0);
 			sn1 = bus_space_read_1(chp->cmd_iot,
@@ -1171,16 +1171,16 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask, int poll)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT(("%s:%d:0: after reset, sc=0x%x sn=0x%x "
+	ATADEBUG_PRINT(("%s:%d:0: after reset, sc=0x%x sn=0x%x "
 	    "cl=0x%x ch=0x%x\n",
 	     wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe",
 	     chp->ch_channel, sc0, sn0, cl0, ch0), DEBUG_PROBE);
-	WDCDEBUG_PRINT(("%s:%d:1: after reset, sc=0x%x sn=0x%x "
+	ATADEBUG_PRINT(("%s:%d:1: after reset, sc=0x%x sn=0x%x "
 	    "cl=0x%x ch=0x%x\n",
 	     wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe",
 	     chp->ch_channel, sc1, sn1, cl1, ch1), DEBUG_PROBE);
 
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x st1=0x%x\n",
+	ATADEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x st1=0x%x\n",
 	    wdc != NULL ? wdc->sc_dev.dv_xname : "wdcprobe", chp->ch_channel,
 	    st0, st1), DEBUG_PROBE);
 
@@ -1198,7 +1198,7 @@ __wdcwait(struct wdc_channel *chp, int mask, int bits, int timeout)
 	u_char status;
 	int time = 0;
 
-	WDCDEBUG_PRINT(("__wdcwait %s:%d\n", wdc != NULL ?
+	ATADEBUG_PRINT(("__wdcwait %s:%d\n", wdc != NULL ?
 			wdc->sc_dev.dv_xname : "none",
 			chp->ch_channel), DEBUG_STATUS);
 	chp->ch_error = 0;
@@ -1211,7 +1211,7 @@ __wdcwait(struct wdc_channel *chp, int mask, int bits, int timeout)
 		if ((status & (WDCS_BSY | mask)) == bits)
 			break;
 		if (++time > timeout) {
-			WDCDEBUG_PRINT(("__wdcwait: timeout (time=%d), "
+			ATADEBUG_PRINT(("__wdcwait: timeout (time=%d), "
 			    "status %x error %x (mask 0x%x bits 0x%x)\n",
 			    time, status,
 			    bus_space_read_1(chp->cmd_iot,
@@ -1221,8 +1221,8 @@ __wdcwait(struct wdc_channel *chp, int mask, int bits, int timeout)
 		}
 		delay(WDCDELAY);
 	}
-#ifdef WDCDEBUG
-	if (time > 0 && (wdcdebug_mask & DEBUG_DELAY))
+#ifdef ATADEBUG
+	if (time > 0 && (atadebug_mask & DEBUG_DELAY))
 		printf("__wdcwait: did busy-wait, time=%d\n", time);
 #endif
 	if (status & WDCS_ERR)
@@ -1325,7 +1325,7 @@ wdctimeout(void *arg)
 	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int s;
 
-	WDCDEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
@@ -1366,7 +1366,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	struct ata_xfer *xfer;
 	int s, ret;
 
-	WDCDEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
+	ATADEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drvp->drive),
 	    DEBUG_FUNCS);
 
@@ -1419,7 +1419,7 @@ __wdccommand_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 	int drive = xfer->c_drive;
 	struct ata_command *ata_c = xfer->c_cmd;
 
-	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
+	ATADEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_FUNCS);
 
@@ -1477,7 +1477,7 @@ __wdccommand_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 	}
 
  again:
-	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
+	ATADEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR);
 	/*
@@ -1561,7 +1561,7 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	struct wdc_softc *wdc = chp->ch_wdc;
 	struct ata_command *ata_c = xfer->c_cmd;
 
-	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
+	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_FUNCS);
 
@@ -1653,7 +1653,7 @@ wdccommand(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 
-	WDCDEBUG_PRINT(("wdccommand %s:%d:%d: command=0x%x cylin=%d head=%d "
+	ATADEBUG_PRINT(("wdccommand %s:%d:%d: command=0x%x cylin=%d head=%d "
 	    "sector=%d count=%d features=%d\n", wdc->sc_dev.dv_xname,
 	    chp->ch_channel, drive, command, cylin, head, sector, count,
 	    features), DEBUG_FUNCS);
@@ -1688,7 +1688,7 @@ wdccommandext(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 
-	WDCDEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%d "
+	ATADEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%d "
 	    "count=%d\n", wdc->sc_dev.dv_xname,
 	    chp->ch_channel, drive, command, (u_int32_t) blkno, count),
 	    DEBUG_FUNCS);
@@ -1734,7 +1734,7 @@ wdccommandshort(struct wdc_channel *chp, int drive, int command)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 
-	WDCDEBUG_PRINT(("wdccommandshort %s:%d:%d command 0x%x\n",
+	ATADEBUG_PRINT(("wdccommandshort %s:%d:%d command 0x%x\n",
 	    wdc->sc_dev.dv_xname, chp->ch_channel, drive, command),
 	    DEBUG_FUNCS);
 

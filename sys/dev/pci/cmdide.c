@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.12 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.13 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -333,7 +333,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.set_modes = cmd0643_9_setup_channel;
 
-	WDCDEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
+	ATADEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x58)),
 		DEBUG_PROBE);
@@ -346,7 +346,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * bits
 	 */
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
-	WDCDEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
+	ATADEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x58)),
 	    DEBUG_PROBE);

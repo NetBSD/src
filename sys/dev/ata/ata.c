@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.46 2004/08/13 03:12:59 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.47 2004/08/13 04:10:49 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.46 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.47 2004/08/13 04:10:49 thorpej Exp $");
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
+#ifndef ATADEBUG
+#define ATADEBUG
+#endif /* ATADEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.46 2004/08/13 03:12:59 thorpej Exp $");
 #define DEBUG_PROBE  0x10
 #define DEBUG_DETACH 0x20
 #define	DEBUG_XFERS  0x40
-#ifdef WDCDEBUG
-extern int wdcdebug_mask; /* init'ed in wdc.c */
-#define WDCDEBUG_PRINT(args, level) \
-        if (wdcdebug_mask & (level)) \
+#ifdef ATADEBUG
+int atadebug_mask = 0;
+#define ATADEBUG_PRINT(args, level) \
+        if (atadebug_mask & (level)) \
 		printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL);
@@ -285,7 +285,7 @@ atabus_activate(struct device *self, enum devact act)
 
 		for (i = 0; i < 2; i++) {
 			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
-				WDCDEBUG_PRINT(("atabus_activate: %s: "
+				ATADEBUG_PRINT(("atabus_activate: %s: "
 				    "deactivating %s\n", sc->sc_dev.dv_xname,
 				    dev->dv_xname),
 				    DEBUG_DETACH);
@@ -299,12 +299,12 @@ atabus_activate(struct device *self, enum devact act)
  out:
 	splx(s);
 
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 	if (dev != NULL && error != 0)
-		WDCDEBUG_PRINT(("atabus_activate: %s: "
+		ATADEBUG_PRINT(("atabus_activate: %s: "
 		    "error %d deactivating %s\n", sc->sc_dev.dv_xname,
 		    error, dev->dv_xname), DEBUG_DETACH);
-#endif /* WDCDEBUG */
+#endif /* ATADEBUG */
 
 	return (error);
 }
@@ -333,7 +333,7 @@ atabus_detach(struct device *self, int flags)
 	 * Detach atapibus and its children.
 	 */
 	if ((dev = chp->atapibus) != NULL) {
-		WDCDEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
+		ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
 		    sc->sc_dev.dv_xname, dev->dv_xname), DEBUG_DETACH);
 		error = config_detach(dev, flags);
 		if (error)
@@ -347,7 +347,7 @@ atabus_detach(struct device *self, int flags)
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
 		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
-			WDCDEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
+			ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
 			    sc->sc_dev.dv_xname, dev->dv_xname),
 			    DEBUG_DETACH);
 			error = config_detach(dev, flags);
@@ -357,12 +357,12 @@ atabus_detach(struct device *self, int flags)
 	}
 
  out:
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 	if (dev != NULL && error != 0)
-		WDCDEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
+		ATADEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
 		    sc->sc_dev.dv_xname, error, dev->dv_xname),
 		    DEBUG_DETACH);
-#endif /* WDCDEBUG */
+#endif /* ATADEBUG */
 
 	return (error);
 }
@@ -387,7 +387,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	u_int16_t *p;
 #endif
 
-	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
@@ -404,7 +404,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		ata_c.r_st_pmask = 0;
 		ata_c.timeout = 10000; /* 10s */
 	} else {
-		WDCDEBUG_PRINT(("ata_get_parms: no disks\n"),
+		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
@@ -412,12 +412,12 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	ata_c.data = tb;
 	ata_c.bcount = DEV_BSIZE;
 	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
-		WDCDEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
+		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
+		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
@@ -460,7 +460,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
 	struct ata_command ata_c;
 
-	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
 	ata_c.r_command = SET_FEATURES;
@@ -508,7 +508,7 @@ void
 ata_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 
-	WDCDEBUG_PRINT(("ata_exec_xfer %p channel %d drive %d\n", xfer,
+	ATADEBUG_PRINT(("ata_exec_xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
 
 	/* complete xfer setup */
@@ -516,7 +516,7 @@ ata_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 
 	/* insert at the end of command list */
 	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-	WDCDEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
+	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }
@@ -566,7 +566,7 @@ atastart(struct wdc_channel *chp)
 		if (!(*wdc->claim_hw)(chp, 0))
 			return;
 
-	WDCDEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
+	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
 	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_RESET) {
 		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_RESET;

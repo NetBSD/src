@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.13 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.14 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -308,7 +308,7 @@ unknown:
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
-	WDCDEBUG_PRINT(("via_chip_map: old APO_IDECONF=0x%x, "
+	ATADEBUG_PRINT(("via_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc)),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC(sc)),
@@ -466,7 +466,7 @@ pio:		/* setup PIO mode */
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc), datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_UDMA(sc), udmatim_reg);
-	WDCDEBUG_PRINT(("via_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
+	ATADEBUG_PRINT(("via_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc)),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))), DEBUG_PROBE);
 }
@@ -483,7 +483,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	if (interface == 0) {
-		WDCDEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
+		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
 		    DEBUG_PROBE);
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);

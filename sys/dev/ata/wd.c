@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.288 2004/08/12 05:02:50 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.289 2004/08/13 04:10:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,11 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.288 2004/08/12 05:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.289 2004/08/13 04:10:49 thorpej Exp $");
 
-#ifndef WDCDEBUG
-#define WDCDEBUG
-#endif /* WDCDEBUG */
+#ifndef ATADEBUG
+#define ATADEBUG
+#endif /* ATADEBUG */
 
 #include "rnd.h"
 
@@ -122,13 +122,13 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.288 2004/08/12 05:02:50 thorpej Exp $");
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
-#ifdef WDCDEBUG
+#ifdef ATADEBUG
 int wdcdebug_wd_mask = 0x0; 
-#define WDCDEBUG_PRINT(args, level) \
+#define ATADEBUG_PRINT(args, level) \
 	if (wdcdebug_wd_mask & (level)) \
 		printf args
 #else
-#define WDCDEBUG_PRINT(args, level)
+#define ATADEBUG_PRINT(args, level)
 #endif
 
 int	wdprobe(struct device *, struct cfdata *, void *);
@@ -273,7 +273,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	int i, blank;
 	char buf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
-	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
+	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	lockinit(&wd->sc_lock, PRIBIO | PCATCH, "wdlock", 0, 0);
 
@@ -370,7 +370,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
 	    DEV_BSIZE, (unsigned long long)wd->sc_capacity);
 
-	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
+	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    self->dv_xname, wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
 	/*
@@ -480,7 +480,7 @@ wdstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s;
 
-	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
 	/* Valid request?  */
@@ -572,7 +572,7 @@ wdstart(void *arg)
 	struct wd_softc *wd = arg;
 	struct buf *bp = NULL;
 
-	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
@@ -729,7 +729,7 @@ wddone(void *v)
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
-	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
 	if (bp == NULL)
@@ -826,7 +826,7 @@ wdrestart(void *v)
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
 	int s;
-	WDCDEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 
 	s = splbio();
@@ -838,7 +838,7 @@ int
 wdread(dev_t dev, struct uio *uio, int flags)
 {
 
-	WDCDEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
 	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -846,7 +846,7 @@ int
 wdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
-	WDCDEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
 	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -856,7 +856,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	struct wd_softc *wd;
 	int part, error;
 
-	WDCDEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
 	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
@@ -940,7 +940,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int part = WDPART(dev);
 	int error;
 
-	WDCDEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
 	if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
@@ -972,7 +972,7 @@ void
 wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 {
 
-	WDCDEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
 	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
@@ -1018,7 +1018,7 @@ wdgetdisklabel(struct wd_softc *wd)
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	const char *errstring;
 
-	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
 	memset(wd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -1103,7 +1103,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 	struct disklabel *newlabel = NULL;
 #endif
 
-	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
 
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
@@ -1392,7 +1392,7 @@ wdsize(dev_t dev)
 	int part, omask;
 	int size;
 
-	WDCDEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
 	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
@@ -1540,7 +1540,7 @@ bad144intern(struct wd_softc *wd)
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	int i = 0;
 
-	WDCDEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
 
 	for (; i < NBT_BAD; i++) {
 		if (bt->bt_bad[i].bt_cyl == 0xffff)
