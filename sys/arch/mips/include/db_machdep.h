@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 1997/11/18 21:13:17 mhitch Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4.4.1 1998/11/19 06:44:50 nisimura Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -41,7 +41,7 @@
 #include <mips/proc.h>			/* register state */
 
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct frame db_regs_t;
