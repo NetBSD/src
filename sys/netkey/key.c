@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.59 2002/03/01 04:19:42 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.59 2002/03/01 04:19:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2290,7 +2290,7 @@ key_delsah(sah)
 		}
 	}
 
-	/* don't delete sah only if there are savs. */
+	/* delete sah only if there's no sav. */
 	if (zombie) {
 		splx(s);
 		return;
