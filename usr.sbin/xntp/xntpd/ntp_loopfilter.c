@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.4 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.5 1998/08/27 20:31:02 ross Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -719,14 +719,15 @@ loop_config(item, lfp_value)
 			msyslog(LOG_ERR,
 			    "sigaction() fails to restore SIGSYS trap: %m");
 #endif /* SIGSYS */
-		if (pll_control)
+		if (pll_control) {
 			NLOG(NLOG_SYSEVENT)	/* conditional syslog */
 			    msyslog(LOG_NOTICE,
 			    "using kernel phase-lock loop %04x", ntv.status);
-		else
+		} else {
 			NLOG(NLOG_SYSEVENT)	/* conditional syslog */
 			    msyslog(LOG_NOTICE,
 			    "using xntpd phase-lock loop");
+		}
 #endif /* KERNEL_PLL */
 		break;
 

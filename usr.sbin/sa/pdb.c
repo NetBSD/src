@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.5 1997/10/19 09:56:19 mrg Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.6 1998/08/27 20:31:01 ross Exp $");
 #endif
 
 #include <sys/types.h>
@@ -401,11 +401,12 @@ print_ci(cip, totalcip)
 		}
 	}
 
-	if (tflag)
+	if (tflag) {
 		if (!uflow)
 			printf("%8.2fre/cp ", cip->ci_etime / (double) (cip->ci_utime + cip->ci_stime));
 		else
 			printf("%8s ", "*ignore*");
+	}
 
 	if (Dflag)
 		printf("%10qutio ", (unsigned long long)cip->ci_io);

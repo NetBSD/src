@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.5 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.6 1998/08/27 20:31:02 ross Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -1610,13 +1610,14 @@ ctl_putclock(varid, clock, mustput)
 			    clock->fudgeval1);
 		break;
 	case CC_FUDGEVAL2:
-		if (mustput || (clock->haveflags & CLK_HAVEVAL2))
+		if (mustput || (clock->haveflags & CLK_HAVEVAL2)) {
 			if (clock->fudgeval1 > 1)
 				ctl_putadr(clock_var[CC_FUDGEVAL2].text,
 				    clock->fudgeval2);
 			else
 				ctl_putid(clock_var[CC_FUDGEVAL2].text,
 				    (char *)&clock->fudgeval2);
+		}
 		break;
 	case CC_FLAGS:
 		if (mustput || (clock->haveflags &

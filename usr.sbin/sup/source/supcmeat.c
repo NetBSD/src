@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.15 1997/10/19 19:54:02 mycroft Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.16 1998/08/27 20:31:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -564,7 +564,7 @@ void *dummy;
 		   changed on the server but the timestamp is right, we do an
 		   update.  (Update refers to updating stat information, i.e.
 		   timestamp, owner, mode bits, etc.) */
-		if (exists && (sbuf.st_mode&S_IFMT) == (t->Tmode&S_IFMT))
+		if (exists && (sbuf.st_mode&S_IFMT) == (t->Tmode&S_IFMT)) {
 			if (!S_ISREG(t->Tmode))
 				if (t->Tflags&FNEW)
 					fetch = FALSE;
@@ -572,10 +572,12 @@ void *dummy;
 			else if ((thisC->Cflags&CFKEEP) &&
 				 sbuf.st_mtime > t->Tmtime)
 				return (SCMOK);
-			else if (sbuf.st_mtime == t->Tmtime)
+			else if (sbuf.st_mtime == t->Tmtime) {
 				if (t->Tflags&FNEW)
 					fetch = FALSE;
 				else return (SCMOK);
+			}
+		}
 	}
 	/* If we get this far, we're either doing an update or a full fetch. */
 	newt = Tinsert (&needT,t->Tname,TRUE);
@@ -1475,11 +1477,12 @@ va_dcl
 		goawayreason = NULL;
 	va_end(ap);
 	(void) msggoaway ();
-	if (fmt)
+	if (fmt) {
 		if (thisC)
 			notify ("SUP: %s\n",buf);
 		else
 			printf ("SUP: %s\n",buf);
+	}
 	if (!dontjump)
 		longjmp (sjbuf,TRUE);
 }
