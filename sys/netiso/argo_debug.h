@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)argo_debug.h	7.4 (Berkeley) 5/6/91
- *	$Id: argo_debug.h,v 1.3 1993/05/20 05:26:42 cgd Exp $
+ *	from: @(#)argo_debug.h	8.1 (Berkeley) 6/10/93
+ *	$Id: argo_debug.h,v 1.4 1994/05/13 06:08:03 mycroft Exp $
  */
-
-#ifndef _NETISO_ARGO_DEBUG_H_
-#define _NETISO_ARGO_DEBUG_H_
 
 /*****************************************************************
 				Copyright IBM Corporation 1987
@@ -64,6 +61,9 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#ifndef _NETISO_ARGO_DEBUG_H_
+#define _NETISO_ARGO_DEBUG_H_
+
 #define dump_buf(a, b) Dump_buf((caddr_t)(a), (int)(b))
 
 /***********************************************
@@ -74,14 +74,14 @@ SOFTWARE.
  * lint can't handle the flaky vacuous definitions 
  * of IFDEBUG, ENDDEBUG, etc.
  */
-#endif	defined(lint)
+#endif	/* defined(lint) */
 
 /***********************************************
  * DEBUG ON:
  **********************************************/
 #ifndef ARGO_DEBUG
 #define ARGO_DEBUG
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
 
 #ifdef ARGO_DEBUG
@@ -101,7 +101,7 @@ unsigned char	argo_debug[128];
 	if(argo_debug[ascii]) { 
 #define ENDDEBUG  ; }
 
-#else  ARGO_DEBUG
+#else  /* ARGO_DEBUG */
 
 /***********************************************
  * DEBUG OFF:
@@ -109,11 +109,11 @@ unsigned char	argo_debug[128];
 
 #ifndef STAR
 #define STAR *
-#endif	STAR
+#endif	/* STAR */
 #define IFDEBUG(ascii)	 //*beginning of comment*/STAR
 #define ENDDEBUG	 STAR/*end of comment*//
 
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
 /***********************************************
  * ASSERT 
@@ -123,15 +123,15 @@ unsigned char	argo_debug[128];
 #ifndef lint
 #define ASSERT(phrase) \
 if( !(phrase) ) printf("ASSERTION NOT VALID at line %d file %s\n",__LINE__,__FILE__)
-#else lint
+#else /* lint */
 #define ASSERT(phrase) /* phrase */
-#endif lint
+#endif /* lint */
 
-#else ARGO_DEBUG
+#else /* ARGO_DEBUG */
 
 #define ASSERT(phrase) /* phrase */
 
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
 
 /***********************************************
@@ -275,7 +275,7 @@ void dump_mbuf();
 #define 	TPMT_PCB	0x23
 #define 	TPMT_PERF	0x45
 
-#else ARGO_DEBUG
+#else /* ARGO_DEBUG */
 
 #define 	TPMT_DATA	MT_DATA
 #define 	TPMT_RCVRTC	MT_DATA
@@ -288,6 +288,6 @@ void dump_mbuf();
 #define 	TPMT_PCB	MT_PCB
 #define 	TPMT_PERF	MT_PCB
 
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
-#endif /* !_NETISO_ARGO_DEBUG_H_ */
+#endif /* _NETISO_ARGO_DEBUG_H_ */

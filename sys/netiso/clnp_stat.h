@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_stat.h	7.4 (Berkeley) 5/6/91
- *	$Id: clnp_stat.h,v 1.3 1993/05/20 05:26:56 cgd Exp $
+ *	from: @(#)clnp_stat.h	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_stat.h,v 1.4 1994/05/13 06:08:24 mycroft Exp $
  */
-
-#ifndef _NETISO_CLNP_STAT_H_
-#define _NETISO_CLNP_STAT_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -63,6 +60,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#ifndef _NETISO_CLNP_STAT_H_
+#define _NETISO_CLNP_STAT_H_
 
 struct clnp_stat {
 	int cns_total;			/* total pkts received */
@@ -95,7 +95,7 @@ struct clnp_stat {
 
 #ifdef INCSTAT
 #undef INCSTAT
-#endif INCSTAT
+#endif /* INCSTAT */
 #define INCSTAT(x) clnp_stat./**/x/**/++
 
-#endif /* !_NETISO_CLNP_STAT_H_ */
+#endif /* _NETISO_CLNP_STAT_H_ */

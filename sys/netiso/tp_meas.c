@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_meas.c	7.4 (Berkeley) 5/6/91
- *	$Id: tp_meas.c,v 1.4 1993/12/18 00:43:40 mycroft Exp $
+ *	from: @(#)tp_meas.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_meas.c,v 1.5 1994/05/13 06:09:26 mycroft Exp $
  */
 
 /***********************************************************
@@ -66,7 +66,6 @@ SOFTWARE.
  */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/time.h>
 
 #include <netiso/argo_debug.h>
@@ -123,4 +122,4 @@ Tpmeas(ref, kind, timev, seq, win, size)
 	tpm->tpm_size = size;
 }
 
-#endif TP_PERF_MEAS
+#endif /* TP_PERF_MEAS */

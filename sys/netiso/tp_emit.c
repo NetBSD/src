@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_emit.c	7.9 (Berkeley) 5/9/91
- *	$Id: tp_emit.c,v 1.3 1993/12/18 00:43:31 mycroft Exp $
+ *	from: @(#)tp_emit.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_emit.c,v 1.4 1994/05/13 06:09:16 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * This file contains tp_emit() and tp_error_emit(), which
  * form TPDUs and hand them to ip.
  * They take data in the form of mbuf chain, allocate mbufs as
@@ -78,15 +76,13 @@ SOFTWARE.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/time.h>
-
-#include <net/if.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_pcb.h>
@@ -101,6 +97,7 @@ SOFTWARE.
 #include <netiso/tp_seq.h>
 #include <netiso/iso_errno.h>
 
+#include <net/if.h>
 #ifdef TRUE
 #undef FALSE
 #undef TRUE
@@ -174,6 +171,8 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 	int csum_offset=0;
 	int datalen = 0;
 	int error = 0;
+ 	SeqNum olduwe;
+	int acking_ooo;
 
 	/* NOTE:
 	 * here we treat tpdu_li as if it DID include the li field, up until
@@ -240,26 +239,21 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 
 		case CR_TPDU_type:
 			hdr->tpdu_CRdref_0 = 0;	/* must be zero */
+		case CC_TPDU_type: 
 			if (!tpcb->tp_cebit_off) {
 				tpcb->tp_win_recv = tp_start_win << 8;
 				LOCAL_CREDIT(tpcb);
 				CONG_INIT_SAMPLE(tpcb);
-				tpcb->tp_ackrcvd = 0;
-			}
-			else
+			} else
 				LOCAL_CREDIT(tpcb);
 
-
-		case CC_TPDU_type: 
-				{
+/* Case CC_TPDU_type used to be here */
+		{
 					u_char x;
 
 				hdr->tpdu_CCsref =  htons(tpcb->tp_lref); /* same as CRsref */
 
 				if( tpcb->tp_class > TP_CLASS_1 ) {
-/* ifdef CE_BIT, we did this in tp_input when the CR came in */
-					if (tpcb->tp_cebit_off)
-						LOCAL_CREDIT( tpcb );
 					tpcb->tp_sent_uwe = tpcb->tp_lcredit -1;
 					tpcb->tp_sent_rcvnxt = 1;
 					tpcb->tp_sent_lcdt = tpcb->tp_lcredit;
@@ -313,6 +307,19 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 					 |	(tpcb->tp_xpd_service? TPAO_USE_TXPD: 0);
 					ADDOPTION(TPP_addl_opt, hdr, 1, x);
 
+					if ((tpcb->tp_l_tpdusize ^ (1 << tpcb->tp_tpdusize)) != 0) {
+						u_short size_s = tpcb->tp_l_tpdusize >> 7;
+						u_char size_c = size_s;
+						ASSERT(tpcb->tp_l_tpdusize < 65536 * 128);
+						if (dutype == CR_TPDU_type)
+							tpcb->tp_ptpdusize = size_s;
+						if (size_s < 256) {
+							ADDOPTION(TPP_ptpdu_size, hdr, 1, size_c);
+						} else {
+							size_s = htons(size_s);
+							ADDOPTION(TPP_ptpdu_size, hdr, 2, size_s);
+						}
+					}
 				}
 					
 				if( (dutype == CR_TPDU_type) && (tpcb->tp_class != TP_CLASS_0)){
@@ -377,7 +384,7 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 				hdr->tpdu_seqeotX = htonl(seqeotX.s_seqeot);
 #else
 				hdr->tpdu_XAKseqX = seq;
-#endif BYTE_ORDER
+#endif /* BYTE_ORDER */
 			} else {
 				hdr->tpdu_XAKseq = seq;
 			}
@@ -398,7 +405,7 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 #else
 				hdr->tpdu_XPDseqX = seq;
 				hdr->tpdu_XPDeotX = 1; /* always 1 for XPD tpdu */
-#endif BYTE_ORDER
+#endif /* BYTE_ORDER */
 			} else {
 				hdr->tpdu_XPDseq = seq;
 				hdr->tpdu_XPDeot = 1; /* always 1 for XPD tpdu */
@@ -431,7 +438,7 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 #else
 				hdr->tpdu_DTseqX = seq;
 				hdr->tpdu_DTeotX = eot;
-#endif BYTE_ORDER
+#endif /* BYTE_ORDER */
 			} else if (tpcb->tp_class == TP_CLASS_0) {
 				IFDEBUG(D_EMIT)
 					printf("DT tpdu: class 0 m 0x%x hdr 0x%x\n", m, hdr);
@@ -457,68 +464,71 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 		case AK_TPDU_type:/* ak not used in class 0 */
 			ASSERT( tpcb->tp_class != TP_CLASS_0); 
 			data = (struct mbuf *)0;
-			{ 	SeqNum olduwe = tpcb->tp_sent_uwe;
+			olduwe = tpcb->tp_sent_uwe;
 
+			if (seq != tpcb->tp_sent_rcvnxt || tpcb->tp_rsycnt == 0) {
+				LOCAL_CREDIT( tpcb ); 
 				tpcb->tp_sent_uwe = 
 					SEQ(tpcb,tpcb->tp_rcvnxt + tpcb->tp_lcredit -1);
-				LOCAL_CREDIT( tpcb ); 
 				tpcb->tp_sent_lcdt = tpcb->tp_lcredit;
+				acking_ooo = 0;
+			} else
+				acking_ooo = 1;
 
-				IFDEBUG(D_RENEG)
-					/* occasionally fake a reneging so 
-						you can test subsequencing */
-					if( olduwe & 0x1 ) {
-						tpcb->tp_reneged = 1;
-						IncStat(ts_ldebug);
-					}
-				ENDDEBUG
-				/* Are we about to reneg on credit? 
-				 * When might we do so?
-				 *	a) when using optimistic credit (which we no longer do).
-				 *  b) when drain() gets implemented (not in the plans).
-				 *  c) when D_RENEG is on.
-				 *  d) when DEC BIT response is implemented.
-				 *	(not- when we do this, we'll need to implement flow control
-				 *	confirmation)
-				 */
-				if( SEQ_LT(tpcb, tpcb->tp_sent_uwe, olduwe) ) {
+			IFDEBUG(D_RENEG)
+				/* occasionally fake a reneging so 
+					you can test subsequencing */
+				if( olduwe & 0x1 ) {
 					tpcb->tp_reneged = 1;
-					IncStat(ts_lcdt_reduced);
-					IFTRACE(D_CREDIT)
-						tptraceTPCB(TPPTmisc, 
-							"RENEG: olduwe newuwe lcredit rcvnxt",
-							olduwe,
-							tpcb->tp_sent_uwe, tpcb->tp_lcredit,
-							tpcb->tp_rcvnxt);
-					ENDTRACE
+					IncStat(ts_ldebug);
 				}
-
-				IFPERF(tpcb)
-					/* new lwe is less than old uwe means we're
-					 * acking before we received a whole window full
-					 */
-					if( SEQ_LT( tpcb, tpcb->tp_rcvnxt, olduwe) ) {
-						/* tmp1 = number of pkts fewer than the full window */
-						register int tmp1 = 
-							(int) SEQ_SUB( tpcb, olduwe, tpcb->tp_rcvnxt);
-
-						if(tmp1 > TP_PM_MAX)
-							tmp1 = TP_PM_MAX;
-						IncPStat( tpcb,  tps_ack_early[tmp1] );
-
-						/* tmp1 = amt of new cdt we're advertising */
-						tmp1 = SEQ_SUB( tpcb, seq, tpcb->tp_sent_rcvnxt);
-						if(tmp1 > TP_PM_MAX )
-							tmp1 = TP_PM_MAX;
-
-						IncPStat( tpcb, 
-								tps_cdt_acked [ tmp1 ]
-								[ ((tpcb->tp_lcredit > TP_PM_MAX)?
-									TP_PM_MAX:tpcb->tp_lcredit) ] );
-
-					}
-				ENDPERF
+			ENDDEBUG
+			/* Are we about to reneg on credit? 
+			 * When might we do so?
+			 *	a) when using optimistic credit (which we no longer do).
+			 *  b) when drain() gets implemented (not in the plans).
+			 *  c) when D_RENEG is on.
+			 *  d) when DEC BIT response is implemented.
+			 *	(not- when we do this, we'll need to implement flow control
+			 *	confirmation)
+			 */
+			if( SEQ_LT(tpcb, tpcb->tp_sent_uwe, olduwe) ) {
+				tpcb->tp_reneged = 1;
+				IncStat(ts_lcdt_reduced);
+				IFTRACE(D_CREDIT)
+					tptraceTPCB(TPPTmisc, 
+						"RENEG: olduwe newuwe lcredit rcvnxt",
+						olduwe,
+						tpcb->tp_sent_uwe, tpcb->tp_lcredit,
+						tpcb->tp_rcvnxt);
+				ENDTRACE
 			}
+			IFPERF(tpcb)
+				/* new lwe is less than old uwe means we're
+				 * acking before we received a whole window full
+				 */
+				if( SEQ_LT( tpcb, tpcb->tp_rcvnxt, olduwe) ) {
+					/* tmp1 = number of pkts fewer than the full window */
+					register int tmp1 = 
+						(int) SEQ_SUB( tpcb, olduwe, tpcb->tp_rcvnxt);
+
+					if(tmp1 > TP_PM_MAX)
+						tmp1 = TP_PM_MAX;
+					IncPStat( tpcb,  tps_ack_early[tmp1] );
+
+					/* tmp1 = amt of new cdt we're advertising */
+					tmp1 = SEQ_SUB( tpcb, seq, tpcb->tp_sent_rcvnxt);
+					if(tmp1 > TP_PM_MAX )
+						tmp1 = TP_PM_MAX;
+
+					IncPStat( tpcb, 
+							tps_cdt_acked [ tmp1 ]
+							[ ((tpcb->tp_lcredit > TP_PM_MAX)?
+								TP_PM_MAX:tpcb->tp_lcredit) ] );
+
+				}
+			ENDPERF
+
 			IFTRACE(D_ACKSEND)
 				tptraceTPCB(TPPTack, seq, tpcb->tp_lcredit, tpcb->tp_sent_uwe, 
 					tpcb->tp_r_subseq, 0);
@@ -535,12 +545,13 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 				hdr->tpdu_cdt = 0; 
 				hdr->tpdu_AKseqX = seq;
 				hdr->tpdu_AKcdtX = tpcb->tp_lcredit;
-#endif BYTE_ORDER
+#endif /* BYTE_ORDER */
 			} else {
 				hdr->tpdu_AKseq = seq;
 				hdr->tpdu_AKcdt = tpcb->tp_lcredit;
 			}
-			if ((tpcb->tp_class == TP_CLASS_4) && tpcb->tp_reneged ) {
+			if ((tpcb->tp_class == TP_CLASS_4) &&
+				(tpcb->tp_reneged || acking_ooo)) {
 				/* 
 				 * Ack subsequence parameter req'd if WE reneged on 
 				 * credit offered.  (ISO 8073, 12.2.3.8.2, p. 74)
@@ -620,8 +631,14 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 			}
 			tpcb->tp_reneged = 0;
 			tpcb->tp_sent_rcvnxt = seq;
-			tp_ctimeout(tpcb->tp_refp, TM_sendack, 
-				(int)tpcb->tp_keepalive_ticks);
+			if (tpcb->tp_fcredit == 0) {
+				int timo = tpcb->tp_keepalive_ticks;
+				if (tpcb->tp_rxtshift < TP_MAXRXTSHIFT)
+					tpcb->tp_rxtshift++;
+				timo = min(timo, ((int)tpcb->tp_dt_ticks) << tpcb->tp_rxtshift);
+				tp_ctimeout(tpcb, TM_sendack, timo);
+			} else
+				tp_ctimeout(tpcb, TM_sendack, tpcb->tp_keepalive_ticks);
 			IncStat(ts_AK_sent);
 			IncPStat(tpcb, tps_AK_sent);
 			IFDEBUG(D_ACKSEND)
@@ -717,9 +734,13 @@ tp_emit(dutype,	tpcb, seq, eot, data)
 			tpcb->tp_nlproto->nlp_output, tpcb->tp_netservice, error, datalen); 
 	ENDTRACE
 done:
-	if( error == E_CO_QFULL ) {
-		tp_quench(tpcb, PRC_QUENCH);
-		return 0;
+	if (error) {
+		if (dutype == AK_TPDU_type)
+			tp_ctimeout(tpcb, TM_sendack, 1);
+		if (error == E_CO_QFULL) {
+			tp_quench(tpcb, PRC_QUENCH);
+			return 0;
+		}
 	}
 	return error;
 }
@@ -757,7 +778,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	struct mbuf 	*erdata;
 	int 			erlen;
 	struct tp_pcb 	*tpcb;
-	int 			cons_channel;
+	caddr_t			cons_channel;
 	int				(*dgout_routine)();
 {
 	int						dutype;
@@ -834,6 +855,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		IncStat(ts_ER_sent);
 		hdr->tpdu_li = 5; 
 		hdr->tpdu_ERreason = (char)error;
+		hdr->tpdu_ERdref = htons(sref);
 		break;
 
 	default:
@@ -899,8 +921,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	ENDTRACE
 
 	datalen = m_datalen( m);
-
-	if(tpcb) {
+	if (tpcb) {
 		if( tpcb->tp_use_checksum ) {
 			IFTRACE(D_ERROR_EMIT)
 				tptrace(TPPTmisc, "before gen csum datalen", datalen,0,0,0);
@@ -917,11 +938,27 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 			printf("OUTPUT: tpcb 0x%x, isop 0x%x, so 0x%x\n",
 				tpcb,  tpcb->tp_npcb,  tpcb->tp_sock);
 		ENDDEBUG
-		/* Problem: if packet comes in on ISO but sock is listening
-		 * in INET, this assertion will fail.
-		 * Have to believe the argument, not the nlp_proto.
-		ASSERT( tpcb->tp_nlproto->nlp_dgoutput == dgout_routine );
-		 */
+	}
+	if (cons_channel) {
+#ifdef TPCONS
+		struct pklcd *lcp = (struct pklcd *)cons_channel;
+		struct isopcb *isop = (struct isopcb *)lcp->lcd_upnext;
+
+		tpcons_dg_output(cons_channel, m, datalen);
+		/* was if (tpcb == 0) iso_pcbdetach(isop); */
+		/* but other side may want to try again over same VC,
+		   so, we'll depend on him closing it, but in case it gets forgotten
+		   we'll mark it for garbage collection */
+		lcp->lcd_flags |= X25_DG_CIRCUIT;
+		IFDEBUG(D_ERROR_EMIT)
+			printf("OUTPUT: dutype 0x%x channel 0x%x\n",
+				dutype, cons_channel);
+		ENDDEBUG
+#else
+		printf("TP panic! cons channel 0x%x but not cons configured\n",
+			cons_channel);
+#endif
+	} else if (tpcb) {
 
 		IFDEBUG(D_ERROR_EMIT)
 			printf("tp_error_emit 1 sending DG: Laddr\n");
@@ -934,38 +971,22 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 			&faddr->siso_addr, 
 			m, datalen, 
 					/* no route */	(caddr_t)0, !tpcb->tp_use_checksum); 
-	} else  {
-		if( cons_channel ) {
-#ifdef TPCONS
-			tpcons_dg_output(cons_channel, m, datalen);
-			pk_disconnect((struct pklcd *)cons_channel);
-			IFDEBUG(D_ERROR_EMIT)
-				printf("OUTPUT: dutype 0x%x channel 0x%x\n",
-					dutype, cons_channel);
-			ENDDEBUG
-#else
-			printf("TP panic! cons channel 0x%x but not cons configured\n",
-				cons_channel);
-#endif
-		} else {
-#ifndef notdef
+	} else if (dgout_routine) {
 			IFDEBUG(D_ERROR_EMIT)
 				printf("tp_error_emit sending DG: Laddr\n");
 				dump_addr((struct sockaddr *)laddr);
 				printf("Faddr\n");
 				dump_addr((struct sockaddr *)faddr);
 			ENDDEBUG
-			return (*dgout_routine)( &laddr->siso_addr, &faddr->siso_addr, 
-				m, datalen, /* no route */ 
-				(caddr_t)0, /* nochecksum==false */0);
-#else notdef
+				return (*dgout_routine)( &laddr->siso_addr, &faddr->siso_addr, 
+					m, datalen, /* no route */ 
+					(caddr_t)0, /* nochecksum==false */0);
+	} else {
 			IFDEBUG(D_ERROR_EMIT)
 				printf("tp_error_emit DROPPING \n", m);
 			ENDDEBUG
 			IncStat(ts_send_drop);
 			m_freem(m);
 			return 0;
-#endif notdef
-		}
 	}
 }

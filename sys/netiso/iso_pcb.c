@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_pcb.c	7.10 (Berkeley) 6/27/91
- *	$Id: iso_pcb.c,v 1.4 1994/01/06 23:57:36 mycroft Exp $
+ *	from: @(#)iso_pcb.c	8.1 (Berkeley) 6/10/93
+ *	$Id: iso_pcb.c,v 1.5 1994/05/13 06:08:56 mycroft Exp $
  */
 
 /***********************************************************
@@ -72,18 +72,16 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
-#include <sys/protosw.h>
-
-#include <net/if.h>
-#include <net/route.h>
-
-#include <netinet/in_systm.h>
 
 #include <netiso/argo_debug.h>
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#include <netinet/in_systm.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
+#include <sys/protosw.h>
 
 #ifdef TPCONS
 #include <netccitt/x25.h>
@@ -194,11 +192,6 @@ iso_pcbbind(isop, nam)
 	if( (nam->m_len < 2) || (nam->m_len < siso->siso_len)) {
 			return ENAMETOOLONG;
 	}
-	if (siso->siso_tlen) {
-			register char *cp = TSEL(siso);
-			suf.data[0] = cp[0];
-			suf.data[1] = cp[1];
-	}
 	if (siso->siso_nlen) {
 		/* non-zero net addr- better match one of our interfaces */
 		IFDEBUG(D_ISO)
@@ -218,13 +211,17 @@ iso_pcbbind(isop, nam)
 		isop->isop_laddr = mtod(nam, struct sockaddr_iso *);
 	}
 	bcopy((caddr_t)siso, (caddr_t)isop->isop_laddr, siso->siso_len);
-	if (suf.s || siso->siso_tlen != 2) {
-		if((suf.s < ISO_PORT_RESERVED) && (siso->siso_tlen <= 2) &&
+	if (siso->siso_tlen == 0)
+		goto noname;
+	if ((isop->isop_socket->so_options & SO_REUSEADDR) == 0 &&
+		iso_pcblookup(head, 0, (caddr_t)0, isop->isop_laddr))
+		return EADDRINUSE;
+	if (siso->siso_tlen <= 2) {
+		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
+		suf.s = ntohs(suf.s);
+		if((suf.s < ISO_PORT_RESERVED) &&
 		   (isop->isop_socket->so_state && SS_PRIV) == 0)
 			return EACCES;
-		if ((isop->isop_socket->so_options & SO_REUSEADDR) == 0 &&
-			iso_pcblookup(head, 0, (caddr_t)0, isop->isop_laddr))
-			return EADDRINUSE;
 	} else {
 		register char *cp;
 noname:
@@ -236,7 +233,7 @@ noname:
 			if (head->isop_lport++ < ISO_PORT_RESERVED ||
 			    head->isop_lport > ISO_PORT_USERRESERVED)
 				head->isop_lport = ISO_PORT_RESERVED;
-			suf.s = head->isop_lport;
+			suf.s = htons(head->isop_lport);
 			cp[0] = suf.data[0];
 			cp[1] = suf.data[1];
 		} while (iso_pcblookup(head, 0, (caddr_t)0, isop->isop_laddr));
@@ -457,12 +454,15 @@ iso_pcbdetach(isop)
 			isop, isop->isop_socket, so);
 	ENDDEBUG
 #ifdef TPCONS
-	if (isop->isop_refcnt) {
+	if (isop->isop_chan) {
 		register struct pklcd *lcp = (struct pklcd *)isop->isop_chan;
 		if (--isop->isop_refcnt > 0)
 			return;
-		if (lcp && lcp->lcd_state == DATA_TRANSFER)
+		if (lcp && lcp->lcd_state == DATA_TRANSFER) {
+			lcp->lcd_upper = 0;
+			lcp->lcd_upnext = 0;
 			pk_disconnect(lcp);
+		}
 		isop->isop_chan = 0;
 	}
 #endif
@@ -612,4 +612,4 @@ iso_pcblookup(head, fportlen, fport, laddr)
 	}
 	return (struct isopcb *)0;
 }
-#endif ISO
+#endif /* ISO */

@@ -1,4 +1,4 @@
-/* $Id: tp_states.init,v 1.2 1993/05/20 05:27:56 cgd Exp $ */
+/* $Id: tp_states.init,v 1.3 1994/05/13 06:09:43 mycroft Exp $ */
 
 {0x3,0x0},
 {0x6,0x1},

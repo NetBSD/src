@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cltp_usrreq.c	7.6 (Berkeley) 6/27/91
- *	$Id: cltp_usrreq.c,v 1.3 1993/12/18 00:42:56 mycroft Exp $
+ *	from: @(#)cltp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	$Id: cltp_usrreq.c,v 1.4 1994/05/13 06:08:30 mycroft Exp $
  */
 
 #ifndef CLTPOVAL_SRC /* XXX -- till files gets changed */
@@ -59,6 +59,7 @@
  * CLTP protocol implementation.
  * Per ISO 8602, December, 1987.
  */
+void
 cltp_init()
 {
 
@@ -69,6 +70,7 @@ int cltp_cksum = 1;
 
 
 /* ARGUSED */
+void
 cltp_input(m0, srcsa, dstsa, cons_channel, output)
 	struct mbuf *m0;
 	struct sockaddr *srcsa, *dstsa;
@@ -148,7 +150,6 @@ bad:
 		m_freem(dtom(src));
 	if (m0)
 		m_freem(m0);
-	return 0;
 }
 
 /*
@@ -163,6 +164,7 @@ cltp_notify(isop)
 	sowwakeup(isop->isop_socket);
 }
 
+void
 cltp_ctlinput(cmd, sa)
 	int cmd;
 	struct sockaddr *sa;
@@ -250,12 +252,6 @@ bad:
 	return (error);
 }
 
-#ifndef TP_LOCAL
-/* XXXX should go in iso.h maybe? from tp_param.h, in any case */
-#define		TP_LOCAL				22
-#define		TP_FOREIGN				33
-#endif
-
 u_long	cltp_sendspace = 9216;		/* really max datagram size */
 u_long	cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
 					/* 40 1K datagrams */
@@ -267,7 +263,7 @@ cltp_usrreq(so, req, m, nam, control)
 	int req;
 	struct mbuf *m, *nam, *control;
 {
-	struct isopcb *isop = sotoisopcb(so);
+	register struct isopcb *isop = sotoisopcb(so);
 	int s, error = 0;
 
 	if (req == PRU_CONTROL)
@@ -371,11 +367,15 @@ cltp_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_SOCKADDR:
-		iso_getnetaddr(isop, nam, TP_LOCAL);
+		if (isop->isop_laddr)
+			bcopy((caddr_t)isop->isop_laddr, mtod(m, caddr_t),
+				nam->m_len = isop->isop_laddr->siso_len);
 		break;
 
 	case PRU_PEERADDR:
-		iso_getnetaddr(isop, nam, TP_FOREIGN);
+		if (isop->isop_faddr)
+			bcopy((caddr_t)isop->isop_faddr, mtod(m, caddr_t),
+				nam->m_len = isop->isop_faddr->siso_len);
 		break;
 
 	case PRU_SENSE:

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_subr.c	7.9 (Berkeley) 6/27/91
- *	$Id: tp_subr.c,v 1.3 1993/12/18 00:43:57 mycroft Exp $
+ *	from: @(#)tp_subr.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_subr.c,v 1.4 1994/05/13 06:09:45 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * The main work of data transfer is done here.
  * These routines are called from tp.trans.
  * They include the routines that check the validity of acks and Xacks,
@@ -73,13 +71,14 @@ SOFTWARE.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/kernel.h>
 
 #include <netiso/tp_ip.h>
 #include <netiso/iso.h>
@@ -93,33 +92,10 @@ SOFTWARE.
 #include <netiso/tp_meas.h>
 #include <netiso/tp_seq.h>
 
-int 		tp_emit();
-static void tp_sbdrop();
-
-#define SMOOTH(newtype, alpha, old, new) \
-	(newtype) (((new - old)>>alpha) + (old))
-
-#define ABS(type, val) \
-	(type) (((int)(val)<0)?-(val):(val))
-
-#define TP_MAKE_RTC( Xreg, Xseq, Xeot, Xdata, Xlen, Xretval, Xtype) \
-{ 	struct mbuf *xxn;\
-	MGET(xxn, M_DONTWAIT, Xtype);\
-	if( xxn == (struct mbuf *)0 ) {\
-		printf("MAKE RTC FAILED: ENOBUFS\n");\
-		return (int)Xretval;\
-	}\
-	xxn->m_act=MNULL;\
-	Xreg = mtod(xxn, struct tp_rtc *);\
-	if( Xreg == (struct tp_rtc *)0 ) {\
-		return (int)Xretval;\
-	}\
-	Xreg->tprt_eot = Xeot;\
-	Xreg->tprt_seq = Xseq;\
-	Xreg->tprt_data = Xdata;\
-	Xreg->tprt_octets = Xlen;\
-}
-
+int		tp_emit(), tp_sbdrop();
+int		tprexmtthresh = 3;
+extern int	ticks;
+void	tp_send();
 
 /*
  * CALLED FROM:
@@ -139,7 +115,7 @@ tp_goodXack(tpcb, seq)
 
 	IFTRACE(D_XPD)
 		tptraceTPCB(TPPTgotXack, 
-			seq, tpcb->tp_Xuna, tpcb->tp_Xsndnxt, tpcb->tp_sndhiwat, 
+			seq, tpcb->tp_Xuna, tpcb->tp_Xsndnxt, tpcb->tp_sndnew, 
 			tpcb->tp_snduna); 
 	ENDTRACE
 
@@ -164,8 +140,7 @@ tp_goodXack(tpcb, seq)
 					(int)(tpcb->tp_Xsnd.sb_cc),
 					0,0,0);
 			ENDTRACE
-			sbdrop( &tpcb->tp_Xsnd, (int)(tpcb->tp_Xsnd.sb_cc));
-			CONG_ACK(tpcb, seq);
+			sbdroprecord(&tpcb->tp_Xsnd);
 			return 1;
 	} 
 	return 0;
@@ -176,33 +151,71 @@ tp_goodXack(tpcb, seq)
  *  tp_good_ack()
  * FUNCTION and ARGUMENTS:
  *  updates
- *  smoothed average round trip time (base_rtt)
- *  roundtrip time variance (base_rtv) - actually deviation, not variance
+ *  smoothed average round trip time (*rtt)
+ *  roundtrip time variance (*rtv) - actually deviation, not variance
  *  given the new value (diff)
  * RETURN VALUE:
  * void
  */
 
 void
-tp_rtt_rtv( base_rtt, base_rtv, newmeas )
-	struct 	timeval *base_rtt, *base_rtv, *newmeas;
+tp_rtt_rtv(tpcb)
+register struct tp_pcb *tpcb;
 {
-	/* update  rt variance (really just the deviation): 
-	 * 	rtv.smooth_ave =  SMOOTH( | oldrtt.smooth_avg - rtt.this_instance | )
+	int old = tpcb->tp_rtt;
+	int delta, elapsed = ticks - tpcb->tp_rttemit;
+
+	if (tpcb->tp_rtt != 0) {
+		/*
+		 * rtt is the smoothed round trip time in machine clock ticks (hz).
+		 * It is stored as a fixed point number, unscaled (unlike the tcp
+		 * srtt).  The rationale here is that it is only significant to the
+		 * nearest unit of slowtimo, which is at least 8 machine clock ticks
+		 * so there is no need to scale.  The smoothing is done according
+		 * to the same formula as TCP (rtt = rtt*7/8 + measured_rtt/8).
+		 */
+		delta = elapsed - tpcb->tp_rtt;
+		if ((tpcb->tp_rtt += (delta >> TP_RTT_ALPHA)) <= 0)
+			tpcb->tp_rtt = 1;
+		/*
+		 * rtv is a smoothed accumulated mean difference, unscaled
+		 * for reasons expressed above.
+		 * It is smoothed with an alpha of .75, and the round trip timer
+		 * will be set to rtt + 4*rtv, also as TCP does.
+		 */
+		if (delta < 0)
+			delta = -delta;
+		if ((tpcb->tp_rtv += ((delta - tpcb->tp_rtv) >> TP_RTV_ALPHA)) <= 0)
+			tpcb->tp_rtv = 1;
+	} else {
+		/* 
+		 * No rtt measurement yet - use the unsmoothed rtt.
+		 * Set the variance to half the rtt (so our first
+		 * retransmit happens at 3*rtt)
+		 */
+		tpcb->tp_rtt = elapsed;
+		tpcb->tp_rtv = elapsed >> 1;
+	}
+	tpcb->tp_rttemit = 0;
+	tpcb->tp_rxtshift = 0;
+	/*
+	 * Quoting TCP: "the retransmit should happen at rtt + 4 * rttvar.
+	 * Because of the way we do the smoothing, srtt and rttvar
+	 * will each average +1/2 tick of bias.  When we compute
+	 * the retransmit timer, we want 1/2 tick of rounding and
+	 * 1 extra tick because of +-1/2 tick uncertainty in the
+	 * firing of the timer.  The bias will give us exactly the
+	 * 1.5 tick we need.  But, because the bias is
+	 * statistical, we have to test that we don't drop below
+	 * the minimum feasible timer (which is 2 ticks)."
 	 */
-	base_rtv->tv_sec = 
-		SMOOTH( long,  TP_RTV_ALPHA, base_rtv->tv_sec, 
-			ABS( long, base_rtt->tv_sec - newmeas->tv_sec ));
-	base_rtv->tv_usec = 
-		SMOOTH( long,  TP_RTV_ALPHA, base_rtv->tv_usec, 
-			ABS(long, base_rtt->tv_usec - newmeas->tv_usec ));
-
-	/* update smoothed average rtt */
-	base_rtt->tv_sec = 
-		SMOOTH( long,  TP_RTT_ALPHA, base_rtt->tv_sec, newmeas->tv_sec);
-	base_rtt->tv_usec =
-		SMOOTH( long,  TP_RTT_ALPHA, base_rtt->tv_usec, newmeas->tv_usec);
-
+	TP_RANGESET(tpcb->tp_dt_ticks, TP_REXMTVAL(tpcb),
+		tpcb->tp_peer_acktime, 128 /* XXX */);
+	IFDEBUG(D_RTT)
+		printf("%s tpcb 0x%x, elapsed %d, delta %d, rtt %d, rtv %d, old %d\n",
+			"tp_rtt_rtv:",tpcb,elapsed,delta,tpcb->tp_rtt,tpcb->tp_rtv,old);
+	ENDDEBUG
+	tpcb->tp_rxtcur = tpcb->tp_dt_ticks;
 }
 
 /*
@@ -228,416 +241,460 @@ int
 tp_goodack(tpcb, cdt, seq, subseq)
 	register struct tp_pcb	*tpcb;
 	u_int					cdt;
-	register SeqNum			seq, subseq;
+	register SeqNum			seq;
+	u_int					subseq;
 {
-	int 	old_fcredit = tpcb->tp_fcredit; 
+	int 	old_fcredit; 
 	int 	bang = 0; 	/* bang --> ack for something heretofore unacked */
+	u_int	bytes_acked;
 
 	IFDEBUG(D_ACKRECV)
-		printf("goodack seq 0x%x cdt 0x%x snduna 0x%x sndhiwat 0x%x\n",
-			seq, cdt, tpcb->tp_snduna, tpcb->tp_sndhiwat);
+		printf("goodack tpcb 0x%x seq 0x%x cdt %d una 0x%x new 0x%x nxt 0x%x\n",
+			tpcb, seq, cdt, tpcb->tp_snduna, tpcb->tp_sndnew, tpcb->tp_sndnxt);
 	ENDDEBUG
 	IFTRACE(D_ACKRECV)
 		tptraceTPCB(TPPTgotack, 
-			seq,cdt, tpcb->tp_snduna,tpcb->tp_sndhiwat,subseq); 
+			seq,cdt, tpcb->tp_snduna,tpcb->tp_sndnew,subseq); 
 	ENDTRACE
 
 	IFPERF(tpcb)
 		tpmeas(tpcb->tp_lref, TPtime_ack_rcvd, (struct timeval *)0, seq, 0, 0);
 	ENDPERF
 
-	if ( subseq != 0 && (subseq <= tpcb->tp_r_subseq) ) {
-		/* discard the ack */
-		IFTRACE(D_ACKRECV)
-			tptraceTPCB(TPPTmisc, "goodack discard : subseq tp_r_subseq",
-				subseq, tpcb->tp_r_subseq, 0, 0);
-		ENDTRACE
-		return 0;
-	} else {
-		tpcb->tp_r_subseq = subseq;
-	}
-
-	if ( IN_SWINDOW(tpcb, seq, 
-			tpcb->tp_snduna, SEQ(tpcb, tpcb->tp_sndhiwat+1)) ) {
-
-		IFDEBUG(D_XPD)
-			dump_mbuf(tpcb->tp_sock->so_snd.sb_mb, 
-				"tp_goodack snd before sbdrop");
-		ENDDEBUG
-		tp_sbdrop(tpcb, SEQ_SUB(tpcb, seq, 1) );
-
-		/* increase congestion window but don't let it get too big */
-		{
-			register int maxcdt = tpcb->tp_xtd_format?0xffff:0xf;
-			CONG_ACK(tpcb, seq);
+	if (seq == tpcb->tp_snduna) {
+		if (subseq < tpcb->tp_r_subseq ||
+			(subseq == tpcb->tp_r_subseq && cdt <= tpcb->tp_fcredit)) {
+		discard_the_ack:
+			IFDEBUG(D_ACKRECV)
+				printf("goodack discard : tpcb 0x%x subseq %d r_subseq %d\n",
+					tpcb, subseq, tpcb->tp_r_subseq);
+			ENDDEBUG
+			goto done;
 		}
+		if (cdt == tpcb->tp_fcredit /*&& thus subseq > tpcb->tp_r_subseq */) {
+			tpcb->tp_r_subseq = subseq;
+			if (tpcb->tp_timer[TM_data_retrans] == 0)
+				tpcb->tp_dupacks = 0;
+			else if (++tpcb->tp_dupacks == tprexmtthresh) {
+				/* partner went out of his way to signal with different
+				   subsequences that he has the same lack of an expected
+				   packet.  This may be an early indiciation of a loss */
 
-		/* Compute smoothed round trip time.
-		 * Only measure rtt for tp_snduna if tp_snduna was among 
-		 * the last TP_RTT_NUM seq numbers sent, and if the data
-		 * were not retransmitted.
+				SeqNum onxt = tpcb->tp_sndnxt;
+				struct mbuf *onxt_m = tpcb->tp_sndnxt_m;
+				u_int win = min(tpcb->tp_fcredit,
+							tpcb->tp_cong_win / tpcb->tp_l_tpdusize) / 2;
+				IFDEBUG(D_ACKRECV)
+					printf("%s tpcb 0x%x seq 0x%x rttseq 0x%x onxt 0x%x\n",
+						"goodack dupacks:", tpcb, seq, tpcb->tp_rttseq, onxt);
+				ENDDEBUG
+				if (win < 2)
+					win = 2;
+				tpcb->tp_ssthresh = win * tpcb->tp_l_tpdusize;
+				tpcb->tp_timer[TM_data_retrans] = 0;
+				tpcb->tp_rttemit = 0;
+				tpcb->tp_sndnxt = tpcb->tp_snduna;
+				tpcb->tp_sndnxt_m = 0;
+				tpcb->tp_cong_win = tpcb->tp_l_tpdusize;
+				tp_send(tpcb);
+				tpcb->tp_cong_win = tpcb->tp_ssthresh +
+					tpcb->tp_dupacks * tpcb->tp_l_tpdusize;
+				if (SEQ_GT(tpcb, onxt, tpcb->tp_sndnxt)) {
+					tpcb->tp_sndnxt = onxt;
+					tpcb->tp_sndnxt_m = onxt_m;
+				}
+
+			} else if (tpcb->tp_dupacks > tprexmtthresh) {
+				tpcb->tp_cong_win += tpcb->tp_l_tpdusize;
+			}
+			goto done;
+		}
+	} else if (SEQ_LT(tpcb, seq, tpcb->tp_snduna))
+		goto discard_the_ack;
+	/*
+	 * If the congestion window was inflated to account
+	 * for the other side's cached packets, retract it.
+	 */
+	if (tpcb->tp_dupacks > tprexmtthresh &&
+		tpcb->tp_cong_win > tpcb->tp_ssthresh)
+			tpcb->tp_cong_win = tpcb->tp_ssthresh;
+	tpcb->tp_r_subseq = subseq;
+	old_fcredit = tpcb->tp_fcredit;
+	tpcb->tp_fcredit = cdt;
+	if (cdt > tpcb->tp_maxfcredit)
+		tpcb->tp_maxfcredit = cdt;
+	tpcb->tp_dupacks = 0;
+
+	if (IN_SWINDOW(tpcb, seq, tpcb->tp_snduna, tpcb->tp_sndnew)) {
+
+		tpsbcheck(tpcb, 0);
+		bytes_acked = tp_sbdrop(tpcb, seq);
+		tpsbcheck(tpcb, 1);
+		/*
+		 * If transmit timer is running and timed sequence
+		 * number was acked, update smoothed round trip time.
+		 * Since we now have an rtt measurement, cancel the
+		 * timer backoff (cf., Phil Karn's retransmit alg.).
+		 * Recompute the initial retransmit timer.
 		 */
-		if (SEQ_GEQ(tpcb, tpcb->tp_snduna, 
-			SEQ(tpcb, tpcb->tp_sndhiwat - TP_RTT_NUM))
-			&& SEQ_GT(tpcb, seq, SEQ_ADD(tpcb, tpcb->tp_retrans_hiwat, 1))) {
+		if (tpcb->tp_rttemit && SEQ_GT(tpcb, seq, tpcb->tp_rttseq))
+			tp_rtt_rtv(tpcb);
+		/*
+		 * If all outstanding data is acked, stop retransmit timer.
+		 * If there is more data to be acked, restart retransmit
+		 * timer, using current (possibly backed-off) value.
+		 * OSI combines the keepalive and persistance functions.
+		 * So, there is no persistance timer per se, to restart.
+		 */
+		if (tpcb->tp_class != TP_CLASS_0)
+			tpcb->tp_timer[TM_data_retrans] =
+				(seq == tpcb->tp_sndnew) ? 0 : tpcb->tp_rxtcur;
+		/*
+		 * When new data is acked, open the congestion window.
+		 * If the window gives us less than ssthresh packets
+		 * in flight, open exponentially (maxseg per packet).
+		 * Otherwise open linearly: maxseg per window
+		 * (maxseg^2 / cwnd per packet), plus a constant
+		 * fraction of a packet (maxseg/8) to help larger windows
+		 * open quickly enough.
+		 */
+		{
+			u_int cw = tpcb->tp_cong_win, incr = tpcb->tp_l_tpdusize;
 
-			struct timeval *t = &tpcb->tp_rttemit[tpcb->tp_snduna & TP_RTT_NUM];
-			struct timeval x;
-
-			GET_TIME_SINCE(t, &x);
-
-			tp_rtt_rtv( &(tpcb->tp_rtt), &(tpcb->tp_rtv), &x );
-
-			{	/* update the global rtt, rtv stats */
-				register int i =
-				   (int) tpcb->tp_flags & (TPF_PEER_ON_SAMENET | TPF_NLQOS_PDN);
-				tp_rtt_rtv( &(tp_stat.ts_rtt[i]), &(tp_stat.ts_rtv[i]), &x );
-
-				IFTRACE(D_RTT)
-					tptraceTPCB(TPPTmisc, "Global rtt, rtv: i", i, 0, 0, 0);
-				ENDTRACE
-			}
-
-			IFTRACE(D_RTT)
-				tptraceTPCB(TPPTmisc, 
-				"Smoothed rtt: tp_snduna, (time.sec, time.usec), peer_acktime",
-				tpcb->tp_snduna, time.tv_sec, time.tv_usec,
-					tpcb->tp_peer_acktime);
-
-				tptraceTPCB(TPPTmisc, 
-				"(secs): emittime diff(x) rtt, rtv",
-					t->tv_sec, 
-					x.tv_sec, 
-					tpcb->tp_rtt.tv_sec,
-					tpcb->tp_rtv.tv_sec);
-				tptraceTPCB(TPPTmisc, 
-				"(usecs): emittime diff(x) rtt rtv",
-					t->tv_usec, 
-					x.tv_usec, 
-					tpcb->tp_rtt.tv_usec,
-					tpcb->tp_rtv.tv_usec);
-			ENDTRACE
-
-			{
-				/* Update data retransmission timer based on the smoothed
-				 * round trip time, peer ack time, and the pseudo-arbitrary
-				 * number 4.
-				 * new ticks: avg rtt + 2*dev
-				 * rtt, rtv are in microsecs, and ticks are 500 ms
-				 * so 1 tick = 500*1000 us = 500000 us
-				 * so ticks = (rtt + 2 rtv)/500000
-				 * with ticks no les than peer ack time and no less than 4
-				 */
-
-				int rtt = tpcb->tp_rtt.tv_usec +
-					tpcb->tp_rtt.tv_sec*1000000;
-				int rtv = tpcb->tp_rtv.tv_usec +
-					tpcb->tp_rtv.tv_sec*1000000;
-
-				IFTRACE(D_RTT)
-					tptraceTPCB(TPPTmisc, "oldticks ,rtv, rtt, newticks",
-						tpcb->tp_dt_ticks, 
-						rtv, rtt,
-						(rtt/500000 + (2 * rtv)/500000));
-				ENDTRACE
-				tpcb->tp_dt_ticks = (rtt+ (2 * rtv))/500000;
-				tpcb->tp_dt_ticks = MAX( tpcb->tp_dt_ticks, 
-					tpcb->tp_peer_acktime);
-				tpcb->tp_dt_ticks = MAX( tpcb->tp_dt_ticks,  4);
-			}
+			incr = min(incr, bytes_acked);
+			if (cw > tpcb->tp_ssthresh)
+				incr = incr * incr / cw + incr / 8;
+			tpcb->tp_cong_win =
+				min(cw + incr, tpcb->tp_sock->so_snd.sb_hiwat);
 		}
 		tpcb->tp_snduna = seq;
-		tpcb->tp_retrans = tpcb->tp_Nretrans; /* CE_BIT */
-
+		if (SEQ_LT(tpcb, tpcb->tp_sndnxt, seq)) {
+				tpcb->tp_sndnxt = seq;
+				tpcb->tp_sndnxt_m = 0;
+		}
 		bang++;
 	} 
 
 	if( cdt != 0 && old_fcredit == 0 ) {
 		tpcb->tp_sendfcc = 1;
 	}
-	if( cdt == 0 && old_fcredit != 0 ) {
-		IncStat(ts_zfcdt);
+	if (cdt == 0) {
+		if (old_fcredit != 0)
+			IncStat(ts_zfcdt);
+		/* The following might mean that the window shrunk */
+		if (tpcb->tp_timer[TM_data_retrans]) {
+			tpcb->tp_timer[TM_data_retrans] = 0;
+			tpcb->tp_timer[TM_sendack] = tpcb->tp_dt_ticks;
+			if (tpcb->tp_sndnxt != tpcb->tp_snduna) {
+				tpcb->tp_sndnxt = tpcb->tp_snduna;
+				tpcb->tp_sndnxt_m = 0;
+			}
+		}
 	}
 	tpcb->tp_fcredit = cdt;
+	bang |= (old_fcredit < cdt);
 
+done:
 	IFDEBUG(D_ACKRECV)
-		printf("goodack returning 0x%x, bang 0x%x cdt 0x%x old_fcredit 0x%x\n",
-			(bang || (old_fcredit < cdt) ), bang, cdt, old_fcredit );
+		printf("goodack returns 0x%x, cdt 0x%x ocdt 0x%x cwin 0x%x\n",
+			bang, cdt, old_fcredit, tpcb->tp_cong_win);
 	ENDDEBUG
-
-	return (bang || (old_fcredit < cdt)) ;
+	/* if (bang) XXXXX Very bad to remove this test, but somethings broken */
+		tp_send(tpcb);
+	return (bang);
 }
 
 /*
  * CALLED FROM:
  *  tp_goodack()
  * FUNCTION and ARGUMENTS:
- *  drops everything up TO and INCLUDING seq # (seq)
+ *  drops everything up TO but not INCLUDING seq # (seq)
  *  from the retransmission queue.
  */
-static void
 tp_sbdrop(tpcb, seq) 
-	struct 	tp_pcb 			*tpcb;
+	register struct 	tp_pcb 			*tpcb;
 	SeqNum					seq;
 {
-	register struct tp_rtc	*s = tpcb->tp_snduna_rtc;
+	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
+	register int i = SEQ_SUB(tpcb, seq, tpcb->tp_snduna);
+	int	oldcc = sb->sb_cc, oldi = i;
 
+	if (i >= tpcb->tp_seqhalf)
+		printf("tp_spdropping too much -- should panic");
+	while (i-- > 0)
+		sbdroprecord(sb);
 	IFDEBUG(D_ACKRECV)
-		printf("tp_sbdrop up through seq 0x%x\n", seq);
+		printf("tp_sbdroping %d pkts %d bytes on %x at 0x%x\n",
+			oldi, oldcc - sb->sb_cc, tpcb, seq);
 	ENDDEBUG
-	while (s != (struct tp_rtc *)0 && (SEQ_LEQ(tpcb, s->tprt_seq, seq))) {
-		m_freem( s->tprt_data );
-		tpcb->tp_snduna_rtc = s->tprt_next;
-		(void) m_free( dtom( s ) );
-		s = tpcb->tp_snduna_rtc;
-	}
-	if(tpcb->tp_snduna_rtc == (struct tp_rtc *)0)
-		tpcb->tp_sndhiwat_rtc = (struct tp_rtc *) 0;
-
+	if (sb->sb_flags & SB_NOTIFY)
+		sowwakeup(tpcb->tp_sock);
+	return (oldcc - sb->sb_cc);
 }
 
 /*
  * CALLED FROM:
  * 	tp.trans on user send request, arrival of AK and arrival of XAK
  * FUNCTION and ARGUMENTS:
- * 	Emits tpdus starting at sequence number (lowseq).
+ * 	Emits tpdus starting at sequence number (tpcb->tp_sndnxt).
  * 	Emits until a) runs out of data, or  b) runs into an XPD mark, or
- * 			c) it hits seq number (highseq)
- * 	Removes the octets from the front of the socket buffer 
- * 	and repackages them in one mbuf chain per tpdu.
- * 	Moves the mbuf chain to the doubly linked list that runs from
- * 	tpcb->tp_sndhiwat_rtc to tpcb->tp_snduna_rtc.
- *
- * 	Creates tpdus that are no larger than <tpcb->tp_l_tpdusize - headersize>,
+ * 			c) it hits seq number (highseq) limited by cong or credit.
  *
  * 	If you want XPD to buffer > 1 du per socket buffer, you can
  * 	modifiy this to issue XPD tpdus also, but then it'll have
  * 	to take some argument(s) to distinguish between the type of DU to
- * 	hand tp_emit, the socket buffer from which to get the data, and
- * 	the chain of tp_rtc structures on which to put the data sent.
+ * 	hand tp_emit.
  *
  * 	When something is sent for the first time, its time-of-send
- * 	is stashed (the last RTT_NUM of them are stashed).  When the
- * 	ack arrives, the smoothed round-trip time is figured using this value.
- * RETURN VALUE:
- * 	the highest seq # sent successfully.
+ * 	is stashed (in system clock ticks rather than pf_slowtimo ticks).
+ *  When the ack arrives, the smoothed round-trip time is figured
+ *  using this value.
  */
+void
 tp_send(tpcb)
 	register struct tp_pcb	*tpcb;
 {
 	register int			len;
-	register struct mbuf	*m; /* the one we're inspecting now */
-	struct mbuf				*mb;/* beginning of this tpdu */
-	struct mbuf 			*nextrecord; /* NOT next tpdu but next sb record */
+	register struct mbuf	*m;
+	struct mbuf				*mb = 0;
 	struct 	sockbuf			*sb = &tpcb->tp_sock->so_snd;
-	int						maxsize = tpcb->tp_l_tpdusize 
-										- tp_headersize(DT_TPDU_type, tpcb)
-										- (tpcb->tp_use_checksum?4:0) ;
-	unsigned int			eotsdu_reached=0;
-	SeqNum					lowseq, highseq ;
-	SeqNum					lowsave; 
+	unsigned int			eotsdu = 0;
+	SeqNum					highseq, checkseq;
+	int						idle, idleticks, off, cong_win;
 #ifdef TP_PERF_MEAS
+	int			 			send_start_time = ticks;
+	SeqNum					oldnxt = tpcb->tp_sndnxt; 
+#endif /* TP_PERF_MEAS */
 
-	struct timeval 			send_start_time;
-	IFPERF(tpcb)
-		GET_CUR_TIME(&send_start_time);
-	ENDPERF
-#endif TP_PERF_MEAS
-
-	lowsave =  lowseq = SEQ(tpcb, tpcb->tp_sndhiwat + 1);
-
-	ASSERT( tpcb->tp_cong_win > 0 && tpcb->tp_cong_win < 0xffff);
-
-	if( tpcb->tp_rx_strat & TPRX_USE_CW ) {
-			/*first hiseq is temp vbl*/
-		highseq = MIN(tpcb->tp_fcredit, tpcb->tp_cong_win); 
-	} else {
-		highseq = tpcb->tp_fcredit;
+	idle = (tpcb->tp_snduna == tpcb->tp_sndnew);
+	if (idle) {
+		idleticks = tpcb->tp_inact_ticks - tpcb->tp_timer[TM_inact];
+		if (idleticks > tpcb->tp_dt_ticks)
+			/*
+			 * We have been idle for "a while" and no acks are
+			 * expected to clock out any data we send --
+			 * slow start to get ack "clock" running again.
+			 */
+			tpcb->tp_cong_win = tpcb->tp_l_tpdusize;
 	}
-	highseq = SEQ(tpcb, tpcb->tp_snduna + highseq);
-		
-	SEQ_DEC(tpcb, highseq);
 
+	cong_win = tpcb->tp_cong_win;
+	highseq = SEQ(tpcb, tpcb->tp_fcredit + tpcb->tp_snduna);
+	if (tpcb->tp_Xsnd.sb_mb)
+		highseq = SEQ_MIN(tpcb, highseq, tpcb->tp_sndnew);
+		
 	IFDEBUG(D_DATA)
-		printf( 
-			"tp_send enter tpcb 0x%x l %d -> h %d\ndump of sb_mb:\n",
-			tpcb, lowseq, highseq);
-		dump_mbuf(sb->sb_mb, "sb_mb:");
+		printf("tp_send enter tpcb 0x%x nxt 0x%x win %d high 0x%x\n",
+				tpcb, tpcb->tp_sndnxt, cong_win, highseq);
 	ENDDEBUG
 	IFTRACE(D_DATA)
-		tptraceTPCB( TPPTmisc, "tp_send lowsave sndhiwat snduna", 
-			lowsave, tpcb->tp_sndhiwat,  tpcb->tp_snduna, 0);
-		tptraceTPCB( TPPTmisc, "tp_send low high fcredit congwin", 
-			lowseq, highseq, tpcb->tp_fcredit,  tpcb->tp_cong_win);
+		tptraceTPCB( TPPTmisc, "tp_send sndnew snduna", 
+			tpcb->tp_sndnew,  tpcb->tp_snduna, 0, 0);
+		tptraceTPCB( TPPTmisc, "tp_send tpcb->tp_sndnxt win fcredit congwin", 
+			tpcb->tp_sndnxt, cong_win, tpcb->tp_fcredit, tpcb->tp_cong_win);
 	ENDTRACE
-
-
-	if	( SEQ_GT(tpcb, lowseq, highseq) )
-			return ; /* don't send, don't change hiwat, don't set timers */
-
-	ASSERT( SEQ_LEQ(tpcb, lowseq, highseq) );
-	SEQ_DEC(tpcb, lowseq);
-
 	IFTRACE(D_DATA)
-		tptraceTPCB( TPPTmisc, "tp_send 2 low high fcredit congwin", 
-			lowseq, highseq, tpcb->tp_fcredit,  tpcb->tp_cong_win);
+		tptraceTPCB( TPPTmisc, "tp_send 2 nxt high fcredit congwin", 
+			tpcb->tp_sndnxt, highseq, tpcb->tp_fcredit, cong_win);
 	ENDTRACE
 
-	while ((SEQ_LT(tpcb, lowseq, highseq)) && (mb = m = sb->sb_mb)) {
-		if (tpcb->tp_Xsnd.sb_mb) {
-			IFTRACE(D_XPD)
-				tptraceTPCB( TPPTmisc,
-					"tp_send XPD mark low high tpcb.Xuna", 
-					lowseq, highseq, tpcb->tp_Xsnd.sb_mb, 0);
-			ENDTRACE
-			/* stop sending here because there are unacked XPD which were 
-			 * given to us before the next data were.
-			 */
-			IncStat(ts_xpd_intheway);
-			break;
-		}
-		eotsdu_reached = 0;
-		nextrecord = m->m_act;
-		for (len = 0; m; m = m->m_next) {
-			len += m->m_len; 
-			if (m->m_flags & M_EOR)
-				eotsdu_reached = 1;
-			sbfree(sb, m); /* reduce counts in socket buffer */
-		}
-		sb->sb_mb = nextrecord;
-		IFTRACE(D_STASH)
-			tptraceTPCB(TPPTmisc, "tp_send whole mbuf: m_len len maxsize",
-				 0, mb->m_len, len, maxsize);
-		ENDTRACE
+	if (tpcb->tp_sndnxt_m)
+		m = tpcb->tp_sndnxt_m;
+	else {
+		off = SEQ_SUB(tpcb, tpcb->tp_sndnxt, tpcb->tp_snduna);
+		for (m = sb->sb_mb; m && off > 0; m = m->m_next)
+			off--;
+	}
+send:
+	/*
+	 * Avoid silly window syndrome here . . . figure out how!
+	 */
+	checkseq = tpcb->tp_sndnum;
+	if (idle && SEQ_LT(tpcb, tpcb->tp_sndnum, highseq))
+		checkseq = highseq; /* i.e. DON'T retain highest assigned packet */
 
-		if ( len == 0 && !eotsdu_reached) {
-			/* THIS SHOULD NEVER HAPPEN! */
-			ASSERT( 0 );
-			goto done;
-		}
+	while ((SEQ_LT(tpcb, tpcb->tp_sndnxt, highseq)) && m && cong_win > 0) {
 
-		/* If we arrive here one of the following holds:
-		 * 1. We have exactly <maxsize> octets of whole mbufs,
-		 * 2. We accumulated <maxsize> octets using partial mbufs,
-		 * 3. We found an TPMT_EOT or an XPD mark 
-		 * 4. We hit the end of a chain through m_next.
-		 *    In this case, we'd LIKE to continue with the next record,
-		 *    but for the time being, for simplicity, we'll stop here.
-		 * In all cases, m points to mbuf containing first octet to be
-		 * sent in the tpdu AFTER the one we're going to send now,
-		 * or else m is null.
-		 *
-		 * The chain we're working on now begins at mb and has length <len>.
-		 */
-
-		IFTRACE(D_STASH)
-			tptraceTPCB( TPPTmisc, 
-				"tp_send mcopy low high eotsdu_reached len", 
-				lowseq, highseq, eotsdu_reached, len);
-		ENDTRACE
-
+		eotsdu = (m->m_flags & M_EOR) != 0;
+		len = m->m_pkthdr.len;
+		if (tpcb->tp_sndnxt == checkseq && eotsdu == 0 &&
+			len < (tpcb->tp_l_tpdusize / 2))
+				break;  /* Nagle . . . . . */
+		cong_win -= len;
 		/* make a copy - mb goes into the retransmission list 
 		 * while m gets emitted.  m_copy won't copy a zero-length mbuf.
 		 */
-		if (len) {
-			if ((m = m_copy(mb, 0, len )) == MNULL)
-				goto done;
-		} else {
-			/* eotsdu reached */
-			MGET(m, M_WAIT, TPMT_DATA);
-			if (m == MNULL)
-				goto done;
-			m->m_len = 0;
-		}
-
-		SEQ_INC(tpcb,lowseq);	/* it was decremented at the beginning */
-		{
-			struct tp_rtc *t;
-			/* make an rtc and put it at the end of the chain */
-
-			TP_MAKE_RTC( t, lowseq, eotsdu_reached, mb, len, lowseq, 
-				TPMT_SNDRTC);
-			t->tprt_next = (struct tp_rtc *)0;
-
-			if ( tpcb->tp_sndhiwat_rtc != (struct tp_rtc *)0 )
-				tpcb->tp_sndhiwat_rtc->tprt_next = t;
-			else {
-				ASSERT( tpcb->tp_snduna_rtc == (struct tp_rtc *)0 );
-				tpcb->tp_snduna_rtc = t;
-			}
-
-			tpcb->tp_sndhiwat_rtc = t;
-		}
-
-		IFTRACE(D_DATA)
+		mb = m;
+		m = m_copy(mb, 0, M_COPYALL);
+		if (m == MNULL)
+				break;
+		IFTRACE(D_STASH)
 			tptraceTPCB( TPPTmisc, 
-				"tp_send emitting DT lowseq eotsdu_reached len",
-				lowseq, eotsdu_reached, len, 0);
+				"tp_send mcopy nxt high eotsdu len", 
+				tpcb->tp_sndnxt, highseq, eotsdu, len);
 		ENDTRACE
-		if( tpcb->tp_sock->so_error =
-			tp_emit(DT_TPDU_type, tpcb, lowseq, eotsdu_reached, m) )  {
+
+		IFDEBUG(D_DATA)
+			printf("tp_sending tpcb 0x%x nxt 0x%x\n",
+				tpcb, tpcb->tp_sndnxt);
+		ENDDEBUG
+		/* when headers are precomputed, may need to fill
+			   in checksum here */
+		if (tpcb->tp_sock->so_error =
+			tp_emit(DT_TPDU_type, tpcb, tpcb->tp_sndnxt, eotsdu, m)) {
 			/* error */
-			SEQ_DEC(tpcb, lowseq); 
-			goto done;
+			break;
 		}
-		/* set the transmit-time for computation of round-trip times */
-		bcopy( (caddr_t)&time, 
-				(caddr_t)&( tpcb->tp_rttemit[ lowseq & TP_RTT_NUM ] ), 
-				sizeof(struct timeval));
-
+		m = mb->m_nextpkt;
+		tpcb->tp_sndnxt_m = m;
+		if (tpcb->tp_sndnxt == tpcb->tp_sndnew) {
+			SEQ_INC(tpcb, tpcb->tp_sndnew);
+			/*
+			 * Time this transmission if not a retransmission and
+			 * not currently timing anything.
+			 */
+			if (tpcb->tp_rttemit == 0) {
+				tpcb->tp_rttemit = ticks;
+				tpcb->tp_rttseq = tpcb->tp_sndnxt;
+			}
+			tpcb->tp_sndnxt = tpcb->tp_sndnew;
+		} else
+			SEQ_INC(tpcb, tpcb->tp_sndnxt);
+		/*
+		 * Set retransmit timer if not currently set.
+		 * Initial value for retransmit timer is smoothed
+		 * round-trip time + 2 * round-trip time variance.
+		 * Initialize shift counter which is used for backoff
+		 * of retransmit time.
+		 */
+		if (tpcb->tp_timer[TM_data_retrans] == 0 &&
+			tpcb->tp_class != TP_CLASS_0) {
+			tpcb->tp_timer[TM_data_retrans] = tpcb->tp_dt_ticks;
+			tpcb->tp_timer[TM_sendack] = tpcb->tp_keepalive_ticks;
+			tpcb->tp_rxtshift = 0;
+		}
 	}
-
-done:
+	if (SEQ_GT(tpcb, tpcb->tp_sndnew, tpcb->tp_sndnum))
+		tpcb->tp_oktonagle = 0;
 #ifdef TP_PERF_MEAS
 	IFPERF(tpcb)
 		{
 			register int npkts;
-			struct timeval send_end_time;
-			register struct timeval *t;
+			int	 elapsed = ticks - send_start_time, *t;
+			struct timeval now;
 
-			npkts = lowseq;
-			SEQ_INC(tpcb, npkts);
-			npkts = SEQ_SUB(tpcb, npkts, lowsave);
+			npkts = SEQ_SUB(tpcb, tpcb->tp_sndnxt, oldnxt);
 
-			if(npkts > 0) 
+			if (npkts > 0) 
 				tpcb->tp_Nwindow++;
 
 			if (npkts > TP_PM_MAX) 
 				npkts = TP_PM_MAX; 
 
-			GET_TIME_SINCE(&send_start_time, &send_end_time);
 			t = &(tpcb->tp_p_meas->tps_sendtime[npkts]);
-			t->tv_sec =
-				SMOOTH( long, TP_RTT_ALPHA, t->tv_sec, send_end_time.tv_sec);
-			t->tv_usec =
-				SMOOTH( long, TP_RTT_ALPHA, t->tv_usec, send_end_time.tv_usec);
+			*t += (t - elapsed) >> TP_RTT_ALPHA;
 
-			if ( SEQ_LT(tpcb, lowseq, highseq) ) {
+			if (mb == 0) {
 				IncPStat(tpcb, tps_win_lim_by_data[npkts] );
 			} else {
 				IncPStat(tpcb, tps_win_lim_by_cdt[npkts] );
 				/* not true with congestion-window being used */
 			}
+			now.tv_sec = elapsed / hz;
+			now.tv_usec = (elapsed - (hz * now.tv_sec)) * 1000000 / hz;
 			tpmeas( tpcb->tp_lref, 
-					TPsbsend, &send_end_time, lowsave, tpcb->tp_Nwindow, npkts);
+					TPsbsend, &elapsed, newseq, tpcb->tp_Nwindow, npkts);
 		}
 	ENDPERF
-#endif TP_PERF_MEAS
+#endif /* TP_PERF_MEAS */
 
-	tpcb->tp_sndhiwat = lowseq;
 
-	if ( SEQ_LEQ(tpcb, lowsave, tpcb->tp_sndhiwat)  && 
-			(tpcb->tp_class != TP_CLASS_0) ) 
-			tp_etimeout(tpcb->tp_refp, TM_data_retrans, lowsave, 
-				tpcb->tp_sndhiwat,
-				(u_int)tpcb->tp_Nretrans, (int)tpcb->tp_dt_ticks);
 	IFTRACE(D_DATA)
 		tptraceTPCB( TPPTmisc, 
-			"tp_send at end: sndhiwat lowseq eotsdu_reached error",
-			tpcb->tp_sndhiwat, lowseq, eotsdu_reached, tpcb->tp_sock->so_error);
+			"tp_send at end: new nxt eotsdu error",
+			tpcb->tp_sndnew, tpcb->tp_sndnxt, eotsdu, tpcb->tp_sock->so_error);
 		
 	ENDTRACE
 }
+
+int TPNagleok;
+int TPNagled;
+
+tp_packetize(tpcb, m, eotsdu)
+register struct tp_pcb *tpcb;
+register struct mbuf *m;
+int eotsdu;
+{
+	register struct mbuf *n;
+	register struct sockbuf *sb = &tpcb->tp_sock->so_snd;
+	int	maxsize = tpcb->tp_l_tpdusize 
+			- tp_headersize(DT_TPDU_type, tpcb)
+			- (tpcb->tp_use_checksum?4:0) ;
+	int totlen = m->m_pkthdr.len;
+	struct mbuf *m_split();
+	/*
+	 * Pre-packetize the data in the sockbuf
+	 * according to negotiated mtu.  Do it here
+	 * where we can safely wait for mbufs.
+	 *
+	 * This presumes knowledge of sockbuf conventions.
+	 * TODO: allocate space for header and fill it in (once!).
+	 */
+	IFDEBUG(D_DATA)
+		printf("SEND BF: maxsize %d totlen %d eotsdu %d sndnum 0x%x\n",
+			maxsize, totlen, eotsdu, tpcb->tp_sndnum);
+	ENDTRACE
+	if (tpcb->tp_oktonagle) {
+		if ((n = sb->sb_mb) == 0)
+			panic("tp_packetize");
+		while (n->m_act)
+			n = n->m_act;
+		if (n->m_flags & M_EOR)
+			panic("tp_packetize 2");
+		SEQ_INC(tpcb, tpcb->tp_sndnum);
+		if (totlen + n->m_pkthdr.len < maxsize) {
+			/* There is an unsent packet with space, combine data */
+			struct mbuf *old_n = n;
+			tpsbcheck(tpcb,3);
+			n->m_pkthdr.len += totlen;
+			while (n->m_next)
+				n = n->m_next;
+			sbcompress(sb, m, n);
+			tpsbcheck(tpcb,4);
+			n = old_n;
+			TPNagled++;
+			goto out;
+		}
+	}
+	while (m) {
+		n = m;
+		if (totlen > maxsize) {
+			if ((m = m_split(n, maxsize, M_WAIT)) == 0)
+				panic("tp_packetize");
+		} else
+			m = 0;
+		totlen -= maxsize;
+		tpsbcheck(tpcb, 5);
+		sbappendrecord(sb, n);
+		tpsbcheck(tpcb, 6);
+		SEQ_INC(tpcb, tpcb->tp_sndnum);
+	}
+out:
+	if (eotsdu) {
+		n->m_flags |= M_EOR;  /* XXX belongs at end */
+		tpcb->tp_oktonagle = 0;
+	} else {
+		SEQ_DEC(tpcb, tpcb->tp_sndnum);
+		tpcb->tp_oktonagle = 1;
+		TPNagleok++;
+	}
+	IFDEBUG(D_DATA)
+		printf("SEND out: oktonagle %d sndnum 0x%x\n",
+			tpcb->tp_oktonagle, tpcb->tp_sndnum);
+	ENDTRACE
+	return 0;
+}
+
 
 /*
  * NAME: tp_stash()
@@ -659,21 +716,18 @@ done:
  * being in a reneged portion of the window.
  */
 
-int
-tp_stash( tpcb, e )
+tp_stash(tpcb, e)
 	register struct tp_pcb		*tpcb;
 	register struct tp_event	*e;
 {
 	register int		ack_reason= tpcb->tp_ack_strat & ACK_STRAT_EACH;
 									/* 0--> delay acks until full window */
 									/* 1--> ack each tpdu */
-	int		newrec = 0;
-
 #ifndef lint
 #define E e->ATTR(DT_TPDU)
-#else lint
+#else /* lint */
 #define E e->ev_union.EV_DT_TPDU
-#endif lint
+#endif /* lint */
 
 	if ( E.e_eot ) {
 		register struct mbuf *n = E.e_data;
@@ -693,7 +747,7 @@ tp_stash( tpcb, e )
 			E.e_seq, (u_int)PStat(tpcb, Nb_from_ll), (u_int)E.e_datalen);
 	ENDPERF
 
-	if( E.e_seq == tpcb->tp_rcvnxt ) {
+	if (E.e_seq == tpcb->tp_rcvnxt) {
 
 		IFDEBUG(D_STASH)
 			printf("stash EQ: seq 0x%x datalen 0x%x eot 0x%x\n", 
@@ -705,30 +759,29 @@ tp_stash( tpcb, e )
 			E.e_seq, E.e_datalen, E.e_eot, 0);
 		ENDTRACE
 
-		sbappend(&tpcb->tp_sock->so_rcv, E.e_data);
+		SET_DELACK(tpcb);
 
-		if (newrec = E.e_eot ) /* ASSIGNMENT */
-			ack_reason |= ACK_EOT;
+		sbappend(&tpcb->tp_sock->so_rcv, E.e_data);
 
 		SEQ_INC( tpcb, tpcb->tp_rcvnxt );
 		/* 
-		 * move chains from the rtc list to the socket buffer
-		 * and free the rtc header
+		 * move chains from the reassembly queue to the socket buffer
 		 */
-		{
-			register struct tp_rtc	**r =  &tpcb->tp_rcvnxt_rtc;
-			register struct tp_rtc	*s = tpcb->tp_rcvnxt_rtc;
+		if (tpcb->tp_rsycnt) {
+			register struct mbuf **mp;
+			struct mbuf **mplim;
 
-			while (s != (struct tp_rtc *)0 && s->tprt_seq == tpcb->tp_rcvnxt) {
-				*r = s->tprt_next;
+			mp = tpcb->tp_rsyq + (tpcb->tp_rcvnxt % tpcb->tp_maxlcredit);
+			mplim = tpcb->tp_rsyq + tpcb->tp_maxlcredit;
 
-				sbappend(&tpcb->tp_sock->so_rcv, s->tprt_data);
-
-				SEQ_INC( tpcb, tpcb->tp_rcvnxt );
-
-				(void) m_free( dtom( s ) );
-				s = *r;
+			while (tpcb->tp_rsycnt && *mp) {
+				sbappend(&tpcb->tp_sock->so_rcv, *mp);
+				tpcb->tp_rsycnt--;
+				*mp = 0;
+				SEQ_INC(tpcb, tpcb->tp_rcvnxt);
 				ack_reason |= ACK_REORDER;
+				if (++mp == mplim)
+					mp = tpcb->tp_rsyq;
 			}
 		}
 		IFDEBUG(D_STASH)
@@ -737,40 +790,22 @@ tp_stash( tpcb, e )
 		ENDDEBUG
 
 	} else {
-		register struct tp_rtc **s = &tpcb->tp_rcvnxt_rtc;
-		register struct tp_rtc *r = tpcb->tp_rcvnxt_rtc;
-		register struct tp_rtc *t;
+		register struct mbuf **mp;
+		SeqNum uwe;
 
 		IFTRACE(D_STASH)
 			tptraceTPCB(TPPTmisc, "stash Reseq: seq rcvnxt lcdt", 
 			E.e_seq, tpcb->tp_rcvnxt, tpcb->tp_lcredit, 0);
 		ENDTRACE
 
-		r = tpcb->tp_rcvnxt_rtc;
-		while (r != (struct tp_rtc *)0  && SEQ_LT(tpcb, r->tprt_seq, E.e_seq)) {
-			s = &r->tprt_next;
-			r = r->tprt_next;
-		}
-
-		if (r == (struct tp_rtc *)0 || SEQ_GT(tpcb, r->tprt_seq, E.e_seq) ) {
-			IncStat(ts_dt_ooo);
-
-			IFTRACE(D_STASH)
-				tptrace(TPPTmisc,
-				"tp_stash OUT OF ORDER- MAKE RTC: seq, 1st seq in list\n",
-					E.e_seq, r->tprt_seq,0,0);
-			ENDTRACE
-			IFDEBUG(D_STASH)
-				printf("tp_stash OUT OF ORDER- MAKE RTC\n");
-			ENDDEBUG
-			TP_MAKE_RTC(t, E.e_seq, E.e_eot, E.e_data, E.e_datalen, 0,
-				TPMT_RCVRTC);
-
-			*s = t;
-			t->tprt_next = (struct tp_rtc *)r;
+		if (tpcb->tp_rsyq == 0)
+			tp_rsyset(tpcb);
+		uwe = SEQ(tpcb, tpcb->tp_rcvnxt + tpcb->tp_maxlcredit);
+		if (tpcb->tp_rsyq == 0 ||
+						!IN_RWINDOW(tpcb, E.e_seq, tpcb->tp_rcvnxt, uwe)) {
 			ack_reason = ACK_DONT;
-			goto done;
-		} else {
+			m_freem(E.e_data);
+		} else if (*(mp = tpcb->tp_rsyq + (E.e_seq % tpcb->tp_maxlcredit))) {
 			IFDEBUG(D_STASH)
 				printf("tp_stash - drop & ack\n");
 			ENDDEBUG
@@ -781,35 +816,15 @@ tp_stash( tpcb, e )
 				IncPStat(tpcb, tps_n_ack_cuz_dup);
 			ENDPERF
 
-			m_freem( E.e_data );
+			m_freem(E.e_data);
 			ack_reason |= ACK_DUP;
-			goto done;
+		} else {
+			*mp = E.e_data;
+			tpcb->tp_rsycnt++;
+			ack_reason = ACK_DONT;
 		}
 	}
-
-
-	/*
-	 * an ack should be sent when at least one of the
-	 * following holds:
-	 * a) we've received a TPDU with EOTSDU set
-	 * b) the TPDU that just arrived represents the
-	 *    full window last advertised, or
-	 * c) when seq X arrives [ where
-	 * 		X = last_sent_uwe - 1/2 last_lcredit_sent 
-	 * 		(the packet representing 1/2 the last advertised window) ]
-	 * 		and lcredit at the time of X arrival >  last_lcredit_sent/2
-	 * 		In other words, if the last ack sent advertised cdt=8 and uwe = 8
-	 * 		then when seq 4 arrives I'd like to send a new ack
-	 * 		iff the credit at the time of 4's arrival is > 4.
-	 * 		The other end thinks it has cdt of 4 so if local cdt
-	 * 		is still 4 there's no point in sending an ack, but if
-	 * 		my credit has increased because the receiver has taken
-	 * 		some data out of the buffer (soreceive doesn't notify
-	 * 		me until the SYSTEM CALL finishes), I'd like to tell
-	 * 		the other end.  
-	 */
-
-done:
+	/* there were some comments of historical interest here. */
 	{
 		LOCAL_CREDIT(tpcb);
 
@@ -827,9 +842,6 @@ done:
 			return 0;
 		} else {
 			IFPERF(tpcb)
-				if(ack_reason & ACK_EOT) {
-					IncPStat(tpcb, tps_n_ack_cuz_eot);
-				} 
 				if(ack_reason & ACK_STRAT_EACH) {
 					IncPStat(tpcb, tps_n_ack_cuz_strat);
 				} else if(ack_reason & ACK_STRAT_FULLWIN) {
@@ -851,5 +863,81 @@ done:
 			}
 			return 1;
 		}
+	}
+}
+
+/*
+ * tp_rsyflush - drop all the packets on the reassembly queue.
+ * Do this when closing the socket, or when somebody has changed
+ * the space avaible in the receive socket (XXX).
+ */
+tp_rsyflush(tpcb)
+register struct tp_pcb *tpcb;
+{
+	register struct mbuf *m, **mp;
+	if (tpcb->tp_rsycnt) {
+		for (mp == tpcb->tp_rsyq + tpcb->tp_maxlcredit;
+									 --mp >= tpcb->tp_rsyq; )
+			if (*mp) {
+				tpcb->tp_rsycnt--;
+				m_freem(*mp);
+			}
+		if (tpcb->tp_rsycnt) {
+			printf("tp_rsyflush %x\n", tpcb);
+			tpcb->tp_rsycnt = 0;
+		}
+	}
+	free((caddr_t)tpcb->tp_rsyq, M_PCB);
+	tpcb->tp_rsyq = 0;
+}
+
+tp_rsyset(tpcb)
+register struct tp_pcb *tpcb;
+{
+	register struct socket *so = tpcb->tp_sock;
+	int maxcredit  = tpcb->tp_xtd_format ? 0xffff : 0xf;
+	int old_credit = tpcb->tp_maxlcredit;
+	caddr_t	rsyq;
+
+	tpcb->tp_maxlcredit = maxcredit = min(maxcredit,
+		  (so->so_rcv.sb_hiwat + tpcb->tp_l_tpdusize)/ tpcb->tp_l_tpdusize);
+
+	if (old_credit == tpcb->tp_maxlcredit && tpcb->tp_rsyq != 0)
+		return;
+	maxcredit *= sizeof(struct mbuf *);
+	if (tpcb->tp_rsyq)
+		tp_rsyflush(tpcb);
+	if (rsyq = (caddr_t)malloc(maxcredit, M_PCB, M_NOWAIT))
+		bzero(rsyq, maxcredit);
+	tpcb->tp_rsyq = (struct mbuf **)rsyq;
+}
+
+tpsbcheck(tpcb, i)
+struct tp_pcb *tpcb;
+{
+	register struct mbuf *n, *m;
+	register int len = 0, mbcnt = 0, pktlen;
+	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
+
+	for (n = sb->sb_mb; n; n = n->m_nextpkt) {
+		if ((n->m_flags & M_PKTHDR) == 0)
+			panic("tpsbcheck nohdr");
+		pktlen = len + n->m_pkthdr.len;
+	    for (m = n; m; m = m->m_next) {
+			len += m->m_len;
+			mbcnt += MSIZE;
+			if (m->m_flags & M_EXT)
+				mbcnt += m->m_ext.ext_size;
+		}
+		if (len != pktlen) {
+			printf("test %d; len %d != pktlen %d on mbuf 0x%x\n",
+				i, len, pktlen, n);
+			panic("tpsbcheck short");
+		}
+	}
+	if (len != sb->sb_cc || mbcnt != sb->sb_mbcnt) {
+		printf("test %d: cc %d != %d || mbcnt %d != %d\n", i, len, sb->sb_cc,
+		    mbcnt, sb->sb_mbcnt);
+		panic("tpsbcheck");
 	}
 }

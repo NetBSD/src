@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,36 +30,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnl.h	8.1 (Berkeley) 6/10/93
- *	$Id: clnl.h,v 1.4 1994/05/13 06:08:05 mycroft Exp $
+ *	from: @(#)tuba_table.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tuba_table.h,v 1.1 1994/05/13 06:10:07 mycroft Exp $
  */
 
-/***********************************************************
-		Copyright IBM Corporation 1987
-
-                      All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
-supporting documentation, and that the name of IBM not be
-used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
-
-IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
-IBM BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-SOFTWARE.
-
-******************************************************************/
-
-/*
- * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
- */
-struct clnl_protosw {
-	void (*clnl_input)();	/* input routine */
+struct tuba_cache {
+	struct	radix_node tc_nodes[2];		/* convenient lookup */
+	int	tc_refcnt;
+	int	tc_time;			/* last looked up */
+	int	tc_flags;
+#define TCF_PERM	1
+	int	tc_index;
+	u_short	tc_sum;				/* cksum of nsap inc. length */
+	u_short	tc_ssum;			/* swab(tc_sum) */
+	struct	sockaddr_iso tc_siso;		/* for responding */
 };
+
+#define ADDCARRY(x)  (x >= 65535 ? x -= 65535 : x)
+#define REDUCE(a, b) { union { u_short s[2]; long l;} l_util; long x; \
+	l_util.l = (b); x = l_util.s[0] + l_util.s[1]; ADDCARRY(x); \
+	if (x == 0) x = 0xffff; a = x;}
+#define SWAB(a, b) { union { u_char c[2]; u_short s;} s; u_char t; \
+	s.s = (b); t = s.c[0]; s.c[0] = s.c[1]; s.c[1] = t; a = s.s;}
+
+#ifdef KERNEL
+extern	int	tuba_table_size;
+extern	struct	tuba_cache **tuba_table;
+extern	struct	radix_node_head *tuba_tree;
+#endif

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_frag.c	7.12 (Berkeley) 5/6/91
- *	$Id: clnp_frag.c,v 1.3 1993/12/18 00:42:32 mycroft Exp $
+ *	from: @(#)clnp_frag.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_frag.c,v 1.4 1994/05/13 06:08:13 mycroft Exp $
  */
 
 /***********************************************************
@@ -62,6 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -242,7 +243,7 @@ struct rtentry *rt;			/* route if direct ether */
 			error = troll_output(ifp, frag_hdr, first_hop, rt);
 #else
 			error = (*ifp->if_output)(ifp, frag_hdr, first_hop, rt);
-#endif	TROLL
+#endif	/* TROLL */
 
 			/*
 			 *	Tough situation: if the error occured on the last 
@@ -281,7 +282,7 @@ struct rtentry *rt;			/* route if direct ether */
 					num_bytes *= troll_random();
 				frag_size -= num_bytes;
 			}
-#endif	TROLL
+#endif	/* TROLL */
 			total_len -= frag_size;
 			if (!last_frag) {
 				frag_base += frag_size;
@@ -854,4 +855,4 @@ struct rtentry *rt;
 	}
 }
 
-#endif	TROLL
+#endif	/* TROLL */

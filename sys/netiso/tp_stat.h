@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_stat.h	7.5 (Berkeley) 6/27/91
- *	$Id: tp_stat.h,v 1.3 1993/05/20 05:27:53 cgd Exp $
+ *	from: @(#)tp_stat.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_stat.h,v 1.4 1994/05/13 06:09:41 mycroft Exp $
  */
-
-#ifndef _NETISO_TP_STAT_H_
-#define _NETISO_TP_STAT_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,11 +61,12 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * Here are the data structures in which the global
  * statistics(counters) are gathered.
  */
+
+#ifndef _NETISO_TP_STAT_H_
+#define _NETISO_TP_STAT_H_
 
 struct tp_stat {
 	u_long ts_param_ignored;
@@ -144,6 +142,8 @@ struct tp_stat {
 	u_long	ts_Cset;
 	u_long	ts_Ccan_act;
 	u_long	ts_Ccan_inact;
+	u_long	ts_Fdelack;
+	u_long	ts_Fpruned;
 
 	u_long	ts_concat_rcvd;
 
@@ -174,8 +174,8 @@ struct tp_stat {
 	 * 2 --> tp_flags:  TPF_PEER_ON_SAMENET | ~TPF_NL_PDN
 	 * 3 --> tp_flags:  TPF_PEER_ON_SAMENET |  TPF_NL_PDN
 	 */
-	struct timeval ts_rtt[NRTT_CATEGORIES];
-	struct timeval ts_rtv[NRTT_CATEGORIES];
+	int ts_rtt[NRTT_CATEGORIES];
+	int ts_rtv[NRTT_CATEGORIES];
 
 	u_long ts_ackreason[_ACK_NUM_REASONS_];
 		/*  ACK_DONT 0 / ACK_STRAT_EACH 0x1 / ACK_STRAT_FULLWIN 0x4
@@ -217,7 +217,7 @@ struct tp_pmeas {
 		 * Each window size, we keep the running average of the time
 		 * taken by tp_sbsend() for each window size.
 		 */
-		struct timeval	tps_sendtime[TP_PM_MAX+1]; 
+		int	tps_sendtime[TP_PM_MAX+1]; 
 		/*
 		 * n_TMsendack: # times ack sent because timer went off
 		 * n_ack_cuz_eot: # times ack sent due to EOTSDU on incoming packet
@@ -274,6 +274,6 @@ int PStat_Junk;
 #define IFPERF(x)	if (0) {
 #define ENDPERF }
 
-#endif TP_PERF_MEAS
+#endif /* TP_PERF_MEAS */
 
-#endif /* !_NETISO_TP_STAT_H_ */
+#endif /* _NETISO_TP_STAT_H_ */

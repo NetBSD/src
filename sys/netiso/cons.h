@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cons.h	7.3 (Berkeley) 5/6/91
- *	$Id: cons.h,v 1.3 1993/05/20 05:27:02 cgd Exp $
+ *	from: @(#)cons.h	8.1 (Berkeley) 6/10/93
+ *	$Id: cons.h,v 1.4 1994/05/13 06:08:33 mycroft Exp $
  */
-
-#ifndef _NETISO_CONS_H_
-#define _NETISO_CONS_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -85,11 +82,9 @@ struct dte_addr {
 #define	CONS_NOT_DGM	0x0
 
 #ifndef	PRC_NCMDS
-#include "protosw.h"
-#endif	PRC_NCMDS
+#include <sys/protosw.h>
+#endif	/* PRC_NCMDS */
 
 #define PRC_CONS_SEND_DONE 2 /* something unused in protosw.h */
 
-#endif	KERNEL
-
-#endif /* !_NETISO_CONS_H_ */
+#endif	/* KERNEL */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_trace.h	7.5 (Berkeley) 6/27/91
- *	$Id: tp_trace.h,v 1.3 1993/05/20 05:28:06 cgd Exp $
+ *	from: @(#)tp_trace.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_trace.h,v 1.4 1994/05/13 06:09:56 mycroft Exp $
  */
-
-#ifndef _NETISO_TP_TRACE_H_
-#define _NETISO_TP_TRACE_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,10 +61,12 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * Definitions needed for the protocol trace mechanism.
  */
+
+#ifndef _NETISO_TP_TRACE_H_
+#define _NETISO_TP_TRACE_H_
+
 
 #define TPPTsendack	1
 #define TPPTgotack	2
@@ -85,13 +84,13 @@ SOFTWARE.
 #define TPPTdriver	14
 #define TPPTtpduout	15
 
-#include "../netiso/tp_pcb.h"
+#include <netiso/tp_pcb.h>
 
 /* this #if is to avoid lint */
 
 #if  defined(TP_TRACEFILE)||!defined(KERNEL)
 
-#include "../netiso/tp_tpdu.h"
+#include <netiso/tp_tpdu.h>
 
 #define TPTRACE_STRLEN 50
 
@@ -114,7 +113,7 @@ struct	tp_Trace {
 		struct inpcb	tpt_Inpcb; /* protocol control block */
 		struct tp_ref 	tpt_Ref; /* ref part of pcb */
 		struct tpdu 	tpt_Tpdu; /* header*/
-		struct tp_param tpt_Param; /* ?? bytes, make sure < 128??*/
+		struct tp_refinfo tpt_Param; /* ?? bytes, make sure < 128??*/
 		struct tp_timeval tpt_Time;
 		struct {
 			u_int tptm_2;
@@ -145,7 +144,7 @@ struct	tp_Trace {
 #define tpt_window tpt_stuff.tpt_Time.tptv_window
 #define tpt_size tpt_stuff.tpt_Time.tptv_size
 
-#endif defined(TP_TRACEFILE)||!defined(KERNEL)
+#endif /* defined(TP_TRACEFILE)||!defined(KERNEL) */
 
 
 #ifdef TPPT
@@ -173,8 +172,7 @@ int tp_Tracen = 0;
  */
 #define ENDTRACE  }
 
-
-#else  TPPT
+#else  /* TPPT */
 
 /***********************************************
  * NO TPPT TRACE STUFF
@@ -187,6 +185,6 @@ int tp_Tracen = 0;
 #define IFTRACE(ascii)	 if (0) {
 #define ENDTRACE	 }
 
-#endif TPPT
+#endif /* TPPT */
 
-#endif /* !_NETISO_TP_TRACE_H_ */
+#endif /* _NETISO_TP_TRACE_H_ */

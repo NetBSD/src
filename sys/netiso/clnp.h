@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp.h	7.8 (Berkeley) 5/6/91
- *	$Id: clnp.h,v 1.4 1994/04/12 08:15:38 cgd Exp $
+ *	from: @(#)clnp.h	8.2 (Berkeley) 4/16/94
+ *	$Id: clnp.h,v 1.5 1994/05/13 06:08:07 mycroft Exp $
  */
-
-#ifndef _NETISO_CLNP_H_
-#define _NETISO_CLNP_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -279,12 +276,13 @@ struct clnp_optidx {
 #define	CLNP_NO_ER		0x020	/* do not generate ERs */
 #define CLNP_SEND_RAW	0x080	/* send pkt as RAW DT rather than TP DT */
 #define	CLNP_NO_CKSUM	0x100	/* don't use clnp checksum */
-#define CLNP_ECHO		0x200	/* fake echo function */
+#define CLNP_ECHO		0x200	/* send echo request */
 #define	CLNP_NOCACHE	0x400	/* don't store cache information */
+#define CLNP_ECHOR		0x800	/* send echo reply */
 
 /* valid clnp flags */
 #define CLNP_VFLAGS		(CLNP_SEND_RAW|CLNP_NO_SEG|CLNP_NO_ER|CLNP_NO_CKSUM\
-	|CLNP_ECHO|CLNP_NOCACHE)
+	|CLNP_ECHO|CLNP_NOCACHE|CLNP_ECHOR)
 
 /* 
  *	Constants used by clnp
@@ -401,7 +399,7 @@ extern float troll_random;
 #define	SN_MTU(ifp, rt) (((rt && rt->rt_rmx.rmx_mtu) ?\
 	rt->rt_rmx.rmx_mtu : clnp_badmtu(ifp, rt, __LINE__, __FILE__)))
 
-#endif	TROLL
+#endif	/* TROLL */
 
 /*
  *	Macro to remove an address from a clnp header
@@ -460,7 +458,5 @@ struct iso_addr	*clnp_srcaddr();
 struct mbuf		*clnp_reass();
 #ifdef	TROLL
 struct troll	trollctl;
-#endif	TROLL
-#endif	KERNEL
-
-#endif /* !_NETISO_CLNP_H_ */
+#endif	/* TROLL */
+#endif	/* KERNEL */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_pcb.h	7.9 (Berkeley) 5/6/91
- *	$Id: tp_pcb.h,v 1.3 1993/05/20 05:27:51 cgd Exp $
+ *	from: @(#)tp_pcb.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_pcb.h,v 1.4 1994/05/13 06:09:37 mycroft Exp $
  */
-
-#ifndef _NETISO_TP_PCB_H_
-#define _NETISO_TP_PCB_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,18 +61,19 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * This file defines the transport protocol control block (tpcb).
  * and a bunch of #define values that are used in the tpcb.
  */
 
-#include "../netiso/tp_param.h"
-#include "../netiso/tp_timer.h"
-#include "../netiso/tp_user.h"
+#ifndef  _NETISO_TP_PCB_H_
+#define  _NETISO_TP_PCB_H_
+
+#include <netiso/tp_param.h>
+#include <netiso/tp_timer.h>
+#include <netiso/tp_user.h>
 #ifndef sblock
-#include "socketvar.h"
-#endif sblock
+#include <sys/socketvar.h>
+#endif /* sblock */
 
 /* NOTE: the code depends on REF_CLOSED > REF_OPEN > the rest, and
  * on REF_FREE being zero
@@ -106,31 +104,18 @@ SOFTWARE.
 #define REF_OPENING 1	/* in use (has a pcb) but no timers */
 #define REF_FREE 0		/* free to reallocate */
 
-#define N_CTIMERS 		4
-#define N_ETIMERS 		2
+#define TM_NTIMERS 		6
 
 struct tp_ref {
-	u_char	 			tpr_state; /* values REF_FROZEN, etc. above */
-	struct Ccallout 	tpr_callout[N_CTIMERS]; /* C timers */
-	struct Ecallout		tpr_calltodo;			/* list of active E timers */
 	struct tp_pcb 		*tpr_pcb;	/* back ptr to PCB */
 };
 
-struct tp_param {
-	/* PER system stuff (one static structure instead of a bunch of names) */
-	unsigned 	tpp_configed:1;			/* Has TP been initialized? */
-};
-
-
-/*
- * retransmission control and performance measurement 
- */
-struct tp_rtc {
-	struct tp_rtc	*tprt_next; /* ptr to next rtc structure in the list */
-	SeqNum 			tprt_seq;	/* seq # of this TPDU */
-	int				tprt_eot;	/* Will this TPDU have the eot bit set? */
-	int				tprt_octets;/* # octets in this TPDU */
-	struct mbuf		*tprt_data; /* ptr to the octets of data */
+/* PER system stuff (one static structure instead of a bunch of names) */
+struct tp_refinfo {
+	struct tp_ref		*tpr_base;
+	int					tpr_size;
+	int					tpr_maxopen;
+	int					tpr_numopen;
 };
 
 struct nl_protosw {
@@ -158,12 +143,12 @@ struct tp_pcb {
 	struct tp_pcb		*tp_next;
 	struct tp_pcb		*tp_prev;
 	struct tp_pcb		*tp_nextlisten; /* chain all listeners */
+	struct socket 		*tp_sock;		/* back ptr */
 	u_short 			tp_state;		/* state of fsm */
 	short 				tp_retrans;		/* # times can still retrans */
-	struct tp_ref 		*tp_refp;		/* rest of pcb	*/
 	caddr_t				tp_npcb;		/* to lower layer pcb */
 	struct nl_protosw	*tp_nlproto;	/* lower-layer dependent routines */
-	struct socket 		*tp_sock;		/* back ptr */
+	struct rtentry		**tp_routep;	/* obtain mtu; inside npcb */
 
 
 	RefNum				tp_lref;	 	/* local reference */
@@ -173,38 +158,37 @@ struct tp_pcb {
 	u_int				tp_seqbit;		/* bit for seq number wraparound */
 	u_int				tp_seqhalf;		/* half the seq space */
 
-	/* credit & sequencing info for SENDING */
-	u_short 			tp_fcredit;		/* current remote credit in # packets */
-
-	u_short				tp_cong_win;	/* congestion window : set to 1 on
-										 * source quench
-										 * Minimizes the amount of retrans-
-										 * missions (independently of the
-										 * retrans strategy).  Increased
-										 * by one for each good ack received.
-										 * Minimizes the amount sent in a
-										 * regular tp_send() also.
-										 */
-	u_int   tp_ackrcvd; /* ACKs received since the send window was updated */
-	SeqNum              tp_last_retrans;
-	SeqNum              tp_retrans_hiwat;
-	SeqNum				tp_snduna;		/* seq # of lowest unacked DT */
-	struct tp_rtc		*tp_snduna_rtc;	/* lowest unacked stuff sent so far */
-	SeqNum				tp_sndhiwat;	/* highest seq # sent so far */
-
-	struct tp_rtc		*tp_sndhiwat_rtc;	/* last stuff sent so far */
-	int					tp_Nwindow;		/* for perf. measurement */
 	struct mbuf			*tp_ucddata;	/* user connect/disconnect data */
 
+	/* credit & sequencing info for SENDING */
+	u_short 			tp_fcredit;		/* current remote credit in # packets */
+	u_short 			tp_maxfcredit;	/* max remote credit in # packets */
+	u_short				tp_dupacks;		/* intuit packet loss before rxt timo */
+	u_long				tp_cong_win;	/* congestion window in bytes.
+										 * see profuse comments in TCP code
+										 */
+	u_long				tp_ssthresh;	/* cong_win threshold for slow start
+										 * exponential to linear switch
+										 */
+	SeqNum				tp_snduna;		/* seq # of lowest unacked DT */
+	SeqNum				tp_sndnew;		/* seq # of lowest unsent DT  */
+	SeqNum				tp_sndnum;		/* next seq # to be assigned */
+	SeqNum				tp_sndnxt;		/* what to do next; poss. rxt */
+	struct mbuf			*tp_sndnxt_m;	/* packet corres. to sndnxt*/
+	int					tp_Nwindow;		/* for perf. measurement */
+
 	/* credit & sequencing info for RECEIVING */
+	SeqNum				tp_rcvnxt;		/* next DT seq # expect to recv */
 	SeqNum	 			tp_sent_lcdt;	/* cdt according to last ack sent */
 	SeqNum	 			tp_sent_uwe;	/* uwe according to last ack sent */
 	SeqNum	 			tp_sent_rcvnxt;	/* rcvnxt according to last ack sent 
 										 * needed for perf measurements only
 										 */
 	u_short				tp_lcredit;		/* current local credit in # packets */
-	SeqNum				tp_rcvnxt;		/* next DT seq # expect to recv */
-	struct tp_rtc		*tp_rcvnxt_rtc;	/* unacked stuff recvd out of order */
+	u_short				tp_maxlcredit;	/* needed for reassembly queue */
+	struct mbuf			**tp_rsyq;		/* unacked stuff recvd out of order */
+	int					tp_rsycnt;		/* number of packets "" "" "" ""    */
+	u_long				tp_rhiwat;		/* remember original RCVBUF size */
 
 	/* receiver congestion state stuff ...  */
 	u_int               tp_win_recv;
@@ -246,45 +230,47 @@ struct tp_pcb {
 #define	tp_dont_change_params _tp_param.p_dont_change_params
 #define	tp_netservice _tp_param.p_netservice
 #define	tp_version _tp_param.p_version
+#define	tp_ptpdusize _tp_param.p_ptpdusize
 
-	int tp_l_tpdusize;
+	int					tp_l_tpdusize;
 		/* whereas tp_tpdusize is log2(the negotiated max size)
 		 * l_tpdusize is the size we'll use when sending, in # chars
 		 */
 
-	struct timeval	tp_rtv;					/* max round-trip time variance */
-	struct timeval	tp_rtt; 					/* smoothed round-trip time */
-	struct timeval 	tp_rttemit[ TP_RTT_NUM + 1 ]; 
-					/* times that the last TP_RTT_NUM DT_TPDUs were emitted */
+	int					tp_rtv;			/* max round-trip time variance */
+	int					tp_rtt; 		/* smoothed round-trip time */
+	SeqNum				tp_rttseq;		/* packet being timed */
+	int					tp_rttemit;		/* when emitted, in ticks */
+	int					tp_idle;		/* last activity, in ticks */
+	short				tp_rxtcur;		/* current retransmit value */
+	short				tp_rxtshift;	/* log(2) of rexmt exp. backoff */
+	u_char				tp_cebit_off;	/* real DEC bit algorithms not in use */
+	u_char				tp_oktonagle;	/* Last unsent pckt may be append to */
+	u_char				tp_flags;		/* values: */
+#define TPF_NLQOS_PDN	 	TPFLAG_NLQOS_PDN
+#define TPF_PEER_ON_SAMENET	TPFLAG_PEER_ON_SAMENET
+#define TPF_GENERAL_ADDR	TPFLAG_GENERAL_ADDR
+#define TPF_DELACK			0x8
+#define TPF_ACKNOW			0x10
+
+#define PEER_IS_LOCAL(t)	(((t)->tp_flags & TPF_PEER_ON_SAME_NET) != 0)
+#define USES_PDN(t)			(((t)->tp_flags & TPF_NLQOS_PDN) != 0)
+
+
 	unsigned 
 		tp_sendfcc:1,			/* shall next ack include FCC parameter? */
 		tp_trace:1,				/* is this pcb being traced? (not used yet) */
 		tp_perf_on:1,			/* 0/1 -> performance measuring on  */
 		tp_reneged:1,			/* have we reneged on cdt since last ack? */
 		tp_decbit:3,			/* dec bit was set, we're in reneg mode  */
-		tp_cebit_off:1,			/* the real DEC bit algorithms not in use */
-		tp_flags:8,				/* values: */
-#define TPF_CONN_DATA_OUT	TPFLAG_CONN_DATA_OUT
-#define TPF_CONN_DATA_IN	TPFLAG_CONN_DATA_IN
-#define TPF_DISC_DATA_IN	TPFLAG_DISC_DATA_IN
-#define TPF_DISC_DATA_OUT	TPFLAG_DISC_DATA_OUT
-#define TPF_XPD_PRESENT 	TPFLAG_XPD_PRESENT 
-#define TPF_NLQOS_PDN	 	TPFLAG_NLQOS_PDN
-#define TPF_PEER_ON_SAMENET	TPFLAG_PEER_ON_SAMENET
-
-#define PEER_IS_LOCAL(t) \
-			(((t)->tp_flags & TPF_PEER_ON_SAME_NET)==TPF_PEER_ON_SAME_NET)
-#define USES_PDN(t)	\
-			(((t)->tp_flags & TPF_NLQOS_PDN)==TPF_NLQOS_PDN)
-
-		tp_unused:16;
-
+		tp_notdetached:1;		/* Call tp_detach before freeing XXXXXXX */
 
 #ifdef TP_PERF_MEAS
 	/* performance stats - see tp_stat.h */
 	struct tp_pmeas		*tp_p_meas;
 	struct mbuf			*tp_p_mbuf;
-#endif TP_PERF_MEAS
+#endif /* TP_PERF_MEAS */
+
 	/* addressing */
 	u_short				tp_domain;		/* domain (INET, ISO) */
 	/* for compatibility with the *old* way and with INET, be sure that
@@ -298,8 +284,12 @@ struct tp_pcb {
 #define SHORT_LSUFXP(tpcb) ((short *)((tpcb)->tp_lsuffix))
 #define SHORT_FSUFXP(tpcb) ((short *)((tpcb)->tp_fsuffix))
 
-	u_char 				tp_vers;		/* protocol version */
-	u_char 				tp_peer_acktime; /* used to compute DT retrans time */
+	/* Timer stuff */
+	u_char 				tp_vers;			/* protocol version */
+	u_char 				tp_peer_acktime;	/* used for DT retrans time */
+	u_char	 			tp_refstate;		/* values REF_FROZEN, etc. above */
+	struct tp_pcb		*tp_fasttimeo;		/* limit pcbs to examine */
+	u_int			 	tp_timer[TM_NTIMERS]; /* C timers */
 
 	struct sockbuf		tp_Xsnd;		/* for expedited data */
 /*	struct sockbuf		tp_Xrcv;		/* for expedited data */
@@ -323,7 +313,7 @@ u_int	tp_start_win;
 #define CONG_INIT_SAMPLE(pcb) \
 	pcb->tp_cong_sample.cs_received = \
     pcb->tp_cong_sample.cs_ce_set = 0; \
-    pcb->tp_cong_sample.cs_size = MAX(pcb->tp_lcredit, 1) << 1;
+    pcb->tp_cong_sample.cs_size = max(pcb->tp_lcredit, 1) << 1;
 
 #define CONG_UPDATE_SAMPLE(pcb, ce_bit) \
     pcb->tp_cong_sample.cs_received++; \
@@ -334,7 +324,7 @@ u_int	tp_start_win;
         if ((pcb->tp_cong_sample.cs_ce_set << 1) >=  \
                     pcb->tp_cong_sample.cs_size ) { \
             pcb->tp_win_recv -= pcb->tp_win_recv >> 3; /* multiply by .875 */ \
-            pcb->tp_win_recv = MAX(1 << 8, pcb->tp_win_recv); \
+            pcb->tp_win_recv = max(1 << 8, pcb->tp_win_recv); \
         } \
         else { \
             pcb->tp_win_recv += (1 << 8); /* add one to the scaled int */ \
@@ -343,29 +333,19 @@ u_int	tp_start_win;
         CONG_INIT_SAMPLE(pcb); \
     }
 
-#define CONG_ACK(pcb, seq) \
-{ int   newacks = SEQ_SUB(pcb, seq, pcb->tp_snduna); \
-	if (newacks > 0) { \
-		pcb->tp_ackrcvd += newacks; \
-		if (pcb->tp_ackrcvd >= MIN(pcb->tp_fcredit, pcb->tp_cong_win)) { \
-			++pcb->tp_cong_win; \
-			pcb->tp_ackrcvd = 0; \
-		} \
-	} \
-}
-
 #ifdef KERNEL
+extern struct tp_refinfo 	tp_refinfo;
 extern struct timeval 	time;
-extern struct tp_ref 	*tp_ref;
+extern struct tp_ref	*tp_ref;
 extern struct tp_param	tp_param;
 extern struct nl_protosw  nl_protosw[];
 extern struct tp_pcb	*tp_listeners;
-extern struct tp_pcb	*tp_intercepts;
+extern struct tp_pcb	*tp_ftimeolist;
 #endif
 
-#define	sototpcb(so) 	((struct tp_pcb *)(so->so_tpcb))
-#define	sototpref(so)	((struct tp_ref *)((so)->so_tpcb->tp_ref))
+#define	sototpcb(so) 	((struct tp_pcb *)(so->so_pcb))
+#define	sototpref(so)	((sototpcb(so)->tp_ref))
 #define	tpcbtoso(tp)	((struct socket *)((tp)->tp_sock))
 #define	tpcbtoref(tp)	((struct tp_ref *)((tp)->tp_ref))
 
-#endif /* !_NETISO_TP_PCB_H_ */
+#endif  /* _NETISO_TP_PCB_H_ */

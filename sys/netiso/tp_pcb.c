@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_pcb.c	7.11 (Berkeley) 5/6/91
- *	$Id: tp_pcb.c,v 1.3 1993/12/18 00:43:53 mycroft Exp $
+ *	from: @(#)tp_pcb.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_pcb.c,v 1.4 1994/05/13 06:09:34 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * This is the initialization and cleanup stuff - 
  * for the tp machine in general as well as  for the individual pcbs.
  * tp_init() is called at system startup.  tp_attach() and tp_getref() are
@@ -72,14 +70,14 @@ SOFTWARE.
  * tp_soisdisconnecting() and tp_soisdisconnected() are tp-specific 
  * versions of soisconnect*
  * and are called (obviously) during the closing phase.
- *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -95,10 +93,6 @@ SOFTWARE.
 #include <netiso/tp_meas.h>
 #include <netiso/tp_seq.h>
 #include <netiso/tp_clnp.h>
-
-struct tp_param tp_param = {
-	1,				/*  configured 		*/
-};
 
 /* ticks are in units of: 
  * 500 nano-fortnights ;-) or
@@ -267,7 +261,7 @@ int 	in_pcballoc();
 int 	tpip_output(); 
 int 	tpip_output_dg(); 
 struct inpcb	tp_inpcb;
-#endif INET
+#endif /* INET */
 #ifdef ISO
 int		iso_putnetaddr();
 int		iso_getnetaddr();
@@ -285,7 +279,7 @@ int 	tpclnp_output();
 int 	tpclnp_output_dg(); 
 int		iso_nlctloutput();
 struct isopcb	tp_isopcb;
-#endif ISO
+#endif /* ISO */
 #ifdef TPCONS
 int		iso_putnetaddr();
 int		iso_getnetaddr();
@@ -301,7 +295,7 @@ int 	iso_pcbdetach();
 int 	iso_pcballoc(); 
 int 	tpcons_output(); 
 struct isopcb	tp_isopcb;
-#endif TPCONS
+#endif /* TPCONS */
 
 
 struct nl_protosw nl_protosw[] = {
@@ -318,7 +312,7 @@ struct nl_protosw nl_protosw[] = {
 		},
 #else
 	{ 0 },
-#endif ISO
+#endif /* ISO */
 	/* IN_CLNS */
 #ifdef INET
 	{ AF_INET, in_putnetaddr, in_getnetaddr, in_cmpnetaddr,
@@ -332,7 +326,7 @@ struct nl_protosw nl_protosw[] = {
 		},
 #else
 	{ 0 },
-#endif INET
+#endif /* INET */
 	/* ISO_CONS */
 #if defined(ISO) && defined(TPCONS)
 	{ AF_ISO, iso_putnetaddr, iso_getnetaddr, iso_cmpnetaddr,
@@ -346,10 +340,13 @@ struct nl_protosw nl_protosw[] = {
 		},
 #else
 	{ 0 },
-#endif ISO_CONS
+#endif /* ISO_CONS */
 	/* End of protosw marker */
 	{ 0 }
 };
+
+u_long tp_sendspace = 1024 * 4;
+u_long tp_recvspace = 1024 * 4;
 
 /*
  * NAME:  tp_init()
@@ -366,15 +363,14 @@ struct nl_protosw nl_protosw[] = {
  * 
  * NOTES:
  */
-int
+void
 tp_init()
 {
 	static int 	init_done=0;
 	void	 	tp_timerinit();
 
 	if (init_done++)
-		return 0;
-
+		return;
 
 	/* FOR INET */
 	tp_inpcb.inp_next = tp_inpcb.inp_prev = &tp_inpcb;
@@ -385,7 +381,6 @@ tp_init()
 
 	tp_timerinit();
 	bzero((caddr_t)&tp_stat, sizeof(struct tp_stat));
-	return 0;
 }
 
 /*
@@ -458,7 +453,7 @@ tp_soisdisconnected(tpcb)
 
 	soisdisconnecting(so);
 	so->so_state &= ~SS_CANTSENDMORE;
-	IFPERF(sototpcb(so))
+	IFPERF(tpcb)
 		register struct tp_pcb *ttpcb = sototpcb(so);
 		u_int 	fsufx, lsufx;
 
@@ -471,12 +466,10 @@ tp_soisdisconnected(tpcb)
 		tpcb->tp_perf_on = 0; /* turn perf off */
 	ENDPERF
 
-	tpcb->tp_refp->tpr_state = REF_FROZEN;
-	tp_recycle_tsuffix( tpcb );
-	tp_etimeout(tpcb->tp_refp, TM_reference, 0,0,0, (int)tpcb->tp_refer_ticks);
+	tpcb->tp_refstate = REF_FROZEN;
+	tp_recycle_tsuffix(tpcb);
+	tp_etimeout(tpcb, TM_reference, (int)tpcb->tp_refer_ticks);
 }
-
-int tp_maxrefopen;  /* highest reference # of the set of open tp connections */
 
 /*
  * NAME:	tp_freeref()
@@ -497,33 +490,37 @@ int tp_maxrefopen;  /* highest reference # of the set of open tp connections */
  * NOTES:	better be called at clock priority !!!!!
  */
 void
-tp_freeref(r)
-	register struct tp_ref *r;
+tp_freeref(n)
+RefNum n;
 {
+	register struct tp_ref *r = tp_ref + n;
+	register struct tp_pcb *tpcb;
+
+	tpcb = r->tpr_pcb;
 	IFDEBUG(D_TIMER)
-		printf("tp_freeref called for ref %d maxrefopen %d\n", 
-		r - tp_ref, tp_maxrefopen);
+		printf("tp_freeref called for ref %d pcb %x maxrefopen %d\n", 
+		n, tpcb, tp_refinfo.tpr_maxopen);
 	ENDDEBUG
 	IFTRACE(D_TIMER)
-		tptrace(TPPTmisc, "tp_freeref ref tp_maxrefopen",
-		r - tp_ref, tp_maxrefopen, 0, 0);
+		tptrace(TPPTmisc, "tp_freeref ref maxrefopen pcb",
+		n, tp_refinfo.tpr_maxopen, tpcb, 0);
 	ENDTRACE
-	r->tpr_state = REF_FREE;
+	if (tpcb == 0)
+		return;
 	IFDEBUG(D_CONN)
-		printf("tp_freeref: CLEARING tpr_pcb 0x%x\n", r->tpr_pcb);
+		printf("tp_freeref: CLEARING tpr_pcb 0x%x\n", tpcb);
 	ENDDEBUG
 	r->tpr_pcb = (struct tp_pcb *)0;
+	tpcb->tp_refstate = REF_FREE;
 
-	r = &tp_ref[tp_maxrefopen];
-
-	while( tp_maxrefopen > 0 ) {
-		if(r->tpr_state )
+	for (r = tp_ref + tp_refinfo.tpr_maxopen; r > tp_ref; r--)
+		if (r->tpr_pcb)
 			break;
-		tp_maxrefopen--;
-		r--;
-	}
+	tp_refinfo.tpr_maxopen = r - tp_ref;
+	tp_refinfo.tpr_numopen--;
+
 	IFDEBUG(D_TIMER)
-		printf("tp_freeref ends w/ maxrefopen %d\n", tp_maxrefopen);
+		printf("tp_freeref ends w/ maxrefopen %d\n", tp_refinfo.tpr_maxopen);
 	ENDDEBUG
 }
 
@@ -545,27 +542,72 @@ tp_freeref(r)
  *
  * NOTES:
  */
-static RefNum
+u_long
 tp_getref(tpcb) 
 	register struct tp_pcb *tpcb;
 {
-	register struct tp_ref	*r = tp_ref; /* tp_ref[0] is never used */
-	register int 			i=1;
+	register struct tp_ref	*r, *rlim;
+	register int 			i;
+	caddr_t obase;
+	unsigned size;
 
+	if (++tp_refinfo.tpr_numopen < tp_refinfo.tpr_size)
+		for (r = tp_refinfo.tpr_base, rlim = r + tp_refinfo.tpr_size;
+								++r < rlim; ) 	/* tp_ref[0] is never used */
+			if (r->tpr_pcb == 0)
+				goto got_one;
+	/* else have to allocate more space */
 
-	while ((++r)->tpr_state != REF_FREE) {
-		if (++i == N_TPREF)
-			return TP_ENOREF;
-	}
-	r->tpr_state = REF_OPENING;
-	if (tp_maxrefopen < i) 
-		tp_maxrefopen = i;
+	obase = (caddr_t)tp_refinfo.tpr_base;
+	size = tp_refinfo.tpr_size * sizeof(struct tp_ref);
+	r = (struct tp_ref *) malloc(size + size, M_PCB, M_NOWAIT);
+	if (r == 0)
+		return (--tp_refinfo.tpr_numopen, TP_ENOREF);
+	tp_refinfo.tpr_base = tp_ref = r;
+	tp_refinfo.tpr_size *= 2;
+	bcopy(obase, (caddr_t)r, size);
+	free(obase, M_PCB);
+	r = (struct tp_ref *)(size + (caddr_t)r);
+	bzero((caddr_t)r, size);
+
+got_one:
 	r->tpr_pcb = tpcb;
-	tpcb->tp_refp = r;
-
-	return i;
+	tpcb->tp_refstate = REF_OPENING;
+	i = r - tp_refinfo.tpr_base;
+	if (tp_refinfo.tpr_maxopen < i) 
+		tp_refinfo.tpr_maxopen = i;
+	return (u_long)i;
 }
 
+/*
+ * NAME: tp_set_npcb()
+ *
+ * CALLED FROM:
+ *	tp_attach(), tp_route_to()
+ *
+ * FUNCTION and ARGUMENTS:
+ *  given a tpcb, allocate an appropriate lower-lever npcb, freeing
+ *  any old ones that might need re-assigning.
+ */
+tp_set_npcb(tpcb)
+register struct tp_pcb *tpcb;
+{
+	register struct socket *so = tpcb->tp_sock;
+	int error;
+
+	if (tpcb->tp_nlproto && tpcb->tp_npcb) {
+		short so_state = so->so_state;
+		so->so_state &= ~SS_NOFDREF;
+		tpcb->tp_nlproto->nlp_pcbdetach(tpcb->tp_npcb);
+		so->so_state = so_state;
+	}
+	tpcb->tp_nlproto = &nl_protosw[tpcb->tp_netservice];
+	/* xx_pcballoc sets so_pcb */
+	error = tpcb->tp_nlproto->nlp_pcballoc(so, tpcb->tp_nlproto->nlp_pcblist);
+	tpcb->tp_npcb = so->so_pcb;
+	so->so_pcb = (caddr_t)tpcb;
+	return (error);
+}
 /*
  * NAME: tp_attach()
  *
@@ -591,13 +633,14 @@ tp_getref(tpcb)
  *
  * NOTES:
  */
-tp_attach(so, dom)
-	struct socket 	*so;
-	int 			dom;
+tp_attach(so, protocol)
+	struct socket 			*so;
+	int 					protocol;
 {
 	register struct tp_pcb	*tpcb;
-	int 					error;
-	int 					protocol = so->so_proto->pr_protocol;
+	int 					error = 0;
+	int 					dom = so->so_proto->pr_domain->dom_family;
+	u_long					lref;
 	extern struct tp_conn_param tp_conn_param[];
 
 	IFDEBUG(D_CONN)
@@ -606,16 +649,13 @@ tp_attach(so, dom)
 	IFTRACE(D_CONN)
 		tptrace(TPPTmisc, "tp_attach:dom so", dom, so, 0, 0);
 	ENDTRACE
-	if ( ! tp_param.tpp_configed ) {
-		error = ENOPROTOOPT; /* protocol not available */
-		goto bad2;
-	}
 
 	if (so->so_pcb != NULL) { 
 		return EISCONN;	/* socket already part of a connection*/
 	}
 
-	error = soreserve(so, TP_SOCKBUFSIZE, TP_SOCKBUFSIZE);
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0)
+		error = soreserve(so, tp_sendspace, tp_recvspace);
 		/* later an ioctl will allow reallocation IF still in closed state */
 
 	if (error)
@@ -628,13 +668,16 @@ tp_attach(so, dom)
 	}
 	bzero( (caddr_t)tpcb, sizeof (struct tp_pcb) );
 
-	if ( ((tpcb->tp_lref = tp_getref(tpcb)) &  TP_ENOREF) != 0 ) { 
+	if ( ((lref = tp_getref(tpcb)) &  TP_ENOREF) != 0 ) { 
 		error = ETOOMANYREFS; 
 		goto bad3;
 	}
+	tpcb->tp_lref = lref;
 	tpcb->tp_sock =  so;
 	tpcb->tp_domain = dom;
-	if (protocol<ISOPROTO_TP4) {
+	tpcb->tp_rhiwat = so->so_rcv.sb_hiwat;
+	/* tpcb->tp_proto = protocol; someday maybe? */
+	if (protocol && protocol<ISOPROTO_TP4) {
 		tpcb->tp_netservice = ISO_CONS;
 		tpcb->tp_snduna = (SeqNum) -1;/* kludge so the pseudo-ack from the CR/CC
 								 * will generate correct fake-ack values
@@ -645,9 +688,9 @@ tp_attach(so, dom)
 	}
 	tpcb->_tp_param = tp_conn_param[tpcb->tp_netservice];
 
-	tpcb->tp_cong_win = 1;	
 	tpcb->tp_state = TP_CLOSED;
 	tpcb->tp_vers  = TP_VERSION;
+	tpcb->tp_notdetached = 1;
 
 		   /* Spec says default is 128 octets,
 			* that is, if the tpdusize argument never appears, use 128.
@@ -658,46 +701,21 @@ tp_attach(so, dom)
 			* we'll respond w/ this.
 			* Our maximum is 4096.  See tp_chksum.c comments.
 			*/
-	tpcb->tp_l_tpdusize = 1 << tpcb->tp_tpdusize;
+	tpcb->tp_cong_win = 
+		tpcb->tp_l_tpdusize = 1 << tpcb->tp_tpdusize;
 
 	tpcb->tp_seqmask  = TP_NML_FMT_MASK;
 	tpcb->tp_seqbit  =  TP_NML_FMT_BIT;
 	tpcb->tp_seqhalf  =  tpcb->tp_seqbit >> 1;
-	tpcb->tp_sndhiwat = (SeqNum) - 1; /* a kludge but it works */
-	tpcb->tp_s_subseq = 0;
 
 	/* attach to a network-layer protoswitch */
-	/* new way */
-	tpcb->tp_nlproto = & nl_protosw[tpcb->tp_netservice];
-	ASSERT( tpcb->tp_nlproto->nlp_afamily == tpcb->tp_domain);
-#ifdef notdef
-	/* OLD WAY */
-	/* TODO: properly, this search would be on the basis of 
-	* domain,netservice or just netservice only (if you have
-	* IN_CLNS, ISO_CLNS, and ISO_CONS)
-	*/
-	tpcb->tp_nlproto = nl_protosw;
-	while(tpcb->tp_nlproto->nlp_afamily != tpcb->tp_domain )  {
-		if( tpcb->tp_nlproto->nlp_afamily == 0 ) {
-			error = EAFNOSUPPORT;
-			goto bad4;
-		}
-		tpcb->tp_nlproto ++;
-	}
-#endif notdef
-
-	/* xx_pcballoc sets so_pcb */
-	if ( error =  (tpcb->tp_nlproto->nlp_pcballoc) ( 
-							so, tpcb->tp_nlproto->nlp_pcblist ) ) {
+	if ( error =  tp_set_npcb(tpcb))
 		goto bad4;
-	}
+	ASSERT( tpcb->tp_nlproto->nlp_afamily == tpcb->tp_domain);
 
+	/* nothing to do for iso case */
 	if( dom == AF_INET )
 		sotoinpcb(so)->inp_ppcb = (caddr_t) tpcb;
-		/* nothing to do for iso case */
-
-	tpcb->tp_npcb = (caddr_t) so->so_pcb;
-	so->so_tpcb = (caddr_t) tpcb;
 
 	return 0;
 
@@ -705,7 +723,7 @@ bad4:
 	IFDEBUG(D_CONN)
 		printf("BAD4 in tp_attach, so 0x%x\n", so);
 	ENDDEBUG
-	tp_freeref(tpcb->tp_refp);
+	tp_freeref(tpcb->tp_lref);
 
 bad3:
 	IFDEBUG(D_CONN)
@@ -719,7 +737,6 @@ bad2:
 		printf("BAD2 in tp_attach, so 0x%x\n", so);
 	ENDDEBUG
 	so->so_pcb = 0;
-	so->so_tpcb = 0;
 
 /*bad:*/
 	IFDEBUG(D_CONN)
@@ -755,7 +772,7 @@ void
 tp_detach(tpcb)
 	register struct tp_pcb 	*tpcb;
 {
-	void					tp_freeref();
+	void					tp_freeref(), tp_rsyflush();
 	register struct socket	 *so = tpcb->tp_sock;
 
 	IFDEBUG(D_CONN)
@@ -767,33 +784,6 @@ tp_detach(tpcb)
 			tpcb, so, *(u_short *)(tpcb->tp_lsuffix), 0);
 	ENDTRACE
 
-	if (so->so_head) {
-		if (!soqremque(so, 0) && !soqremque(so, 1))
-			panic("sofree dq");
-		so->so_head = 0;
-	}
-
-	IFDEBUG(D_CONN)
-		printf("tp_detach(freeing RTC list snduna 0x%x rcvnxt 0x%x)\n",
-		tpcb->tp_snduna_rtc,
-		tpcb->tp_rcvnxt_rtc);
-	ENDDEBUG
-
-#define FREE_RTC_LIST(XXX)\
-	{ register struct tp_rtc *xxr = XXX, *xxs; while (xxr) {\
-		xxs = xxr->tprt_next;\
-		m_freem( xxr->tprt_data );\
-		m_free( dtom(xxr) ); xxr = xxs; }\
-		XXX = (struct tp_rtc *)0;\
-	}
-
-	FREE_RTC_LIST( tpcb->tp_snduna_rtc );
-	tpcb->tp_sndhiwat_rtc = (struct tp_rtc *)0;
-
-	FREE_RTC_LIST( tpcb->tp_rcvnxt_rtc );
-
-#undef FREE_RTC_LIST
-
 	IFDEBUG(D_CONN)
 		printf("so_snd at 0x%x so_rcv at 0x%x\n", &so->so_snd, &so->so_rcv);
 		dump_mbuf(so->so_snd.sb_mb, "so_snd at detach ");
@@ -801,45 +791,60 @@ tp_detach(tpcb)
 				tpcb->tp_nlproto, tpcb->tp_nlproto->nlp_pcbdetach);
 	ENDDEBUG
 
-	if (so->so_snd.sb_cc != 0)
-		sbflush(&so->so_snd);
-	if (tpcb->tp_Xrcv.sb_cc != 0)
-		sbdrop(&tpcb->tp_Xrcv, (int)tpcb->tp_Xrcv.sb_cc);
+	if (tpcb->tp_Xsnd.sb_mb) {
+		printf("Unsent Xdata on detach; would panic");
+		sbflush(&tpcb->tp_Xsnd);
+	}
 	if (tpcb->tp_ucddata)
 		m_freem(tpcb->tp_ucddata);
 
 	IFDEBUG(D_CONN)
+		printf("reassembly info cnt %d rsyq 0x%x\n",
+		    tpcb->tp_rsycnt, tpcb->tp_rsyq);
+	ENDDEBUG
+	if (tpcb->tp_rsyq)
+		tp_rsyflush(tpcb);
+
+	if (tpcb->tp_next) {
+		remque(tpcb);
+		tpcb->tp_next = tpcb->tp_prev = 0;
+	}
+	tpcb->tp_notdetached = 0;
+
+	IFDEBUG(D_CONN)
 		printf("calling (...nlproto->...)(0x%x, so 0x%x)\n", 
-			so->so_pcb, so);
+			tpcb->tp_npcb, so);
 		printf("so 0x%x so_head 0x%x,  qlen %d q0len %d qlimit %d\n", 
 		so,  so->so_head,
 		so->so_q0len, so->so_qlen, so->so_qlimit);
 	ENDDEBUG
 
-
-	(tpcb->tp_nlproto->nlp_pcbdetach)(so->so_pcb);
-				/* does an sofree(so) */
+	(tpcb->tp_nlproto->nlp_pcbdetach)(tpcb->tp_npcb);
+				/* does an so->so_pcb = 0; sofree(so) */
 
 	IFDEBUG(D_CONN)
 		printf("after xxx_pcbdetach\n");
 	ENDDEBUG
 
-	if( tpcb->tp_refp->tpr_state == REF_OPENING ) {
+	if (tpcb->tp_state == TP_LISTENING) {
+		register struct tp_pcb **tt;
+		for (tt = &tp_listeners; *tt; tt = &((*tt)->tp_nextlisten))
+			if (*tt == tpcb)
+				break;
+		if (*tt)
+			*tt = tpcb->tp_nextlisten;
+		else
+			printf("tp_detach from listen: should panic\n");
+	}
+	if (tpcb->tp_refstate == REF_OPENING ) {
 		/* no connection existed here so no reference timer will be called */
 		IFDEBUG(D_CONN)
-			printf("SETTING ref %d, 0x%x to REF_FREE\n", tpcb->tp_lref,
-			tpcb->tp_refp - &tp_ref[0]);
+			printf("SETTING ref %d to REF_FREE\n", tpcb->tp_lref);
 		ENDDEBUG
 
-		tp_freeref(tpcb->tp_refp);
+		tp_freeref(tpcb->tp_lref);
 	}
-
-	if (tpcb->tp_Xsnd.sb_mb) {
-		printf("Unsent Xdata on detach; would panic");
-		sbflush(&tpcb->tp_Xsnd);
-	}
-	so->so_tpcb = (caddr_t)0;
-
+#ifdef TP_PERF_MEAS
 	/* 
 	 * Get rid of the cluster mbuf allocated for performance measurements, if
 	 * there is one.  Note that tpcb->tp_perf_on says nothing about whether or 
@@ -847,7 +852,6 @@ tp_detach(tpcb)
 	 * to one (that is, we need the TP_PERF_MEASs around the following section 
 	 * of code, not the IFPERFs)
 	 */
-#ifdef TP_PERF_MEAS
 	if (tpcb->tp_p_mbuf) {
 		register struct mbuf *m = tpcb->tp_p_mbuf;
 		struct mbuf *n;
@@ -861,10 +865,127 @@ tp_detach(tpcb)
 		tpcb->tp_p_meas = 0;
 		tpcb->tp_p_mbuf = 0;
 	}
-#endif TP_PERF_MEAS
+#endif /* TP_PERF_MEAS */
 
 	IFDEBUG(D_CONN)
 		printf( "end of detach, NOT single, tpcb 0x%x\n", tpcb);
 	ENDDEBUG
 	/* free((caddr_t)tpcb, M_PCB); WHere to put this ? */
+}
+
+struct que {
+	struct tp_pcb *next;
+	struct tp_pcb *prev;
+} tp_bound_pcbs =
+{(struct tp_pcb *)&tp_bound_pcbs, (struct tp_pcb *)&tp_bound_pcbs};
+
+u_short tp_unique;
+
+tp_tselinuse(tlen, tsel, siso, reuseaddr)
+caddr_t tsel;
+register struct sockaddr_iso *siso;
+{
+	struct tp_pcb *b = tp_bound_pcbs.next, *l = tp_listeners;
+	register struct tp_pcb *t;
+
+	for (;;) {
+		if (b != (struct tp_pcb *)&tp_bound_pcbs) {
+			t = b; b = t->tp_next;
+		} else if (l) {
+			t = l; l = t->tp_nextlisten;
+		} else
+			break;
+		if (tlen == t->tp_lsuffixlen && bcmp(tsel, t->tp_lsuffix, tlen) == 0) {
+			if (t->tp_flags & TPF_GENERAL_ADDR) {
+				if (siso == 0 || reuseaddr == 0)
+					return 1;
+			} else if (siso) {
+				if (siso->siso_family == t->tp_domain &&
+					t->tp_nlproto->nlp_cmpnetaddr(t->tp_npcb, siso, TP_LOCAL))
+						return 1;
+			} else if (reuseaddr == 0)
+						return 1;
+		}
+	}
+	return 0;
+
+}
+
+
+tp_pcbbind(tpcb, nam)
+register struct tp_pcb *tpcb;
+register struct mbuf *nam;
+{
+	register struct sockaddr_iso *siso = 0;
+	int tlen = 0, wrapped = 0;
+	caddr_t tsel;
+	u_short tutil;
+
+	if (tpcb->tp_state != TP_CLOSED)
+		return (EINVAL);
+	if (nam) {
+		siso = mtod(nam, struct sockaddr_iso *);
+		switch (siso->siso_family) {
+		default:
+			return (EAFNOSUPPORT);
+#ifdef ISO
+		case AF_ISO:
+			tlen = siso->siso_tlen;
+			tsel = TSEL(siso);
+			if (siso->siso_nlen == 0)
+				siso = 0;
+			break;
+#endif
+#ifdef INET
+		case AF_INET:
+			tsel = (caddr_t)&tutil;
+			if (tutil =  ((struct sockaddr_in *)siso)->sin_port) {
+				tlen = 2;
+			}
+			if (((struct sockaddr_in *)siso)->sin_addr.s_addr == 0)
+				siso = 0;
+		}
+#endif
+	}
+	if (tpcb->tp_lsuffixlen == 0) {
+		if (tlen) {
+			if (tp_tselinuse(tlen, tsel, siso,
+								tpcb->tp_sock->so_options & SO_REUSEADDR))
+				return (EINVAL);
+		} else {
+			for (tsel = (caddr_t)&tutil, tlen = 2;;){
+				if (tp_unique++ < ISO_PORT_RESERVED ||
+					tp_unique > ISO_PORT_USERRESERVED) {
+						if (wrapped++)
+							return ESRCH;
+						tp_unique = ISO_PORT_RESERVED;
+				}
+				tutil = htons(tp_unique);
+				if (tp_tselinuse(tlen, tsel, siso, 0) == 0)
+					break;
+			}
+			if (siso) switch (siso->siso_family) {
+#ifdef ISO
+				case AF_ISO:
+					bcopy(tsel, TSEL(siso), tlen);
+					siso->siso_tlen = tlen;
+					break;
+#endif
+#ifdef INET
+				case AF_INET:
+					((struct sockaddr_in *)siso)->sin_port = tutil;
+#endif
+				}
+		}
+		bcopy(tsel, tpcb->tp_lsuffix, (tpcb->tp_lsuffixlen = tlen));
+		insque(tpcb, &tp_bound_pcbs);
+	} else {
+		if (tlen || siso == 0)
+			return (EINVAL);
+	}
+	if (siso == 0) {
+		tpcb->tp_flags |= TPF_GENERAL_ADDR;
+		return (0);
+	}
+	return tpcb->tp_nlproto->nlp_pcbbind(tpcb->tp_npcb, nam);
 }

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_subr.c	7.13 (Berkeley) 5/6/91
- *	$Id: clnp_subr.c,v 1.3 1993/12/18 00:42:51 mycroft Exp $
+ *	from: @(#)clnp_subr.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_subr.c,v 1.4 1994/05/13 06:08:26 mycroft Exp $
  */
 
 /***********************************************************
@@ -63,7 +63,6 @@ SOFTWARE.
 
 #ifdef ISO
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -184,7 +183,7 @@ register struct iso_addr	*destp;		/* ptr to destination address buffer */
 	else
 		return (caddr_t) 0;
 }
-#endif	notdef
+#endif	/* notdef */
 
 /*
  * FUNCTION:		clnp_ours
@@ -363,7 +362,7 @@ struct snpa_hdr		*inbound_shp;	/* subnetwork header of inbound packet */
 			}
 		}
 	}
-#endif	DECBIT
+#endif	/* DECBIT */
 	
 	/*
 	 *	Dispatch the datagram if it is small enough, otherwise fragment
@@ -413,7 +412,7 @@ register struct iso_addr	*dstp;	/* ptr to dst addr */
 	return bufp;
 }
 
-#endif	notdef
+#endif	/* notdef */
 
 /*
  * FUNCTION:		clnp_route
@@ -577,6 +576,42 @@ struct iso_addr		*final_dst;		/* final destination */
 }
 
 /*
+ * FUNCTION:		clnp_echoreply
+ *
+ * PURPOSE:			generate an echo reply packet and transmit
+ *
+ * RETURNS:			result of clnp_output
+ *
+ * SIDE EFFECTS:	
+ */
+clnp_echoreply(ec_m, ec_len, ec_src, ec_dst, ec_oidxp)
+struct mbuf			*ec_m;		/* echo request */
+int					ec_len;		/* length of ec */
+struct sockaddr_iso	*ec_src;		/* src of ec */
+struct sockaddr_iso	*ec_dst; 	/* destination of ec (i.e., us) */
+struct clnp_optidx	*ec_oidxp;	/* options index to ec packet */
+{
+	struct isopcb	isopcb;
+	int				flags = CLNP_NOCACHE|CLNP_ECHOR;
+	int				ret;
+
+	/* fill in fake isopcb to pass to output function */
+	bzero(&isopcb, sizeof(isopcb));
+	isopcb.isop_laddr = ec_dst;
+	isopcb.isop_faddr = ec_src;
+
+	/* forget copying the options for now. If implemented, need only
+	 * copy record route option, but it must be reset to zero length */
+
+	ret = clnp_output(ec_m, &isopcb, ec_len, flags);
+
+	IFDEBUG(D_OUTPUT)
+		printf("clnp_echoreply: output returns %d\n", ret);
+	ENDDEBUG
+	return ret;
+}
+
+/*
  * FUNCTION:		clnp_badmtu
  *
  * PURPOSE:			print notice of route with mtu not initialized.
@@ -591,10 +626,10 @@ struct rtentry *rt; /* dst route */
 int line;			/* where the dirty deed occured */
 char *file;			/* where the dirty deed occured */
 {
-	printf("sending on route %x with no mtu, line %s of file %s\n",
+	printf("sending on route 0x%x with no mtu, line %d of file %s\n",
 		rt, line, file);
 #ifdef ARGO_DEBUG
-	printf("route dst is");
+	printf("route dst is ");
 	dump_isoaddr(rt_key(rt));
 #endif
 	return ifp->if_mtu;
@@ -619,4 +654,4 @@ u_int	len;		/* number of bytes */
 	while (len--)
 		*(to + len) = *(from + len);
 }
-#endif	ISO
+#endif	/* ISO */

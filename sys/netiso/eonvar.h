@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)eonvar.h	7.5 (Berkeley) 5/6/91
- *	$Id: eonvar.h,v 1.3 1993/05/20 05:27:05 cgd Exp $
+ *	from: @(#)eonvar.h	8.1 (Berkeley) 6/10/93
+ *	$Id: eonvar.h,v 1.4 1994/05/13 06:08:36 mycroft Exp $
  */
-
-#ifndef _NETISO_EONVAR_H_
-#define _NETISO_EONVAR_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -172,5 +169,3 @@ struct eon_llinfo {
 };
 #define el_iphdr el_ei.ei_ip
 #define el_eonhdr el_ei.ei_eh
-
-#endif /* !_NETISO_EONVAR_H_ */

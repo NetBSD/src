@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)esis.h	7.4 (Berkeley) 5/6/91
- *	$Id: esis.h,v 1.4 1994/05/05 07:56:35 cgd Exp $
+ *	from: @(#)esis.h	8.1 (Berkeley) 6/10/93
+ *	$Id: esis.h,v 1.5 1994/05/13 06:08:41 mycroft Exp $
  */
-
-#ifndef _NETISO_ESIS_H_
-#define _NETISO_ESIS_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -63,6 +60,8 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <machine/endian.h>
 
 #define	SNPAC_AGE		60			/* seconds */
 #define	ESIS_CONFIG		60			/* seconds */
@@ -116,6 +115,4 @@ struct esis_stat {
 
 #ifdef	KERNEL
 struct esis_stat esis_stat;
-#endif	KERNEL
-
-#endif /* !_NETISO_ESIS_H_ */
+#endif	/* KERNEL */

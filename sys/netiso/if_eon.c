@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.6 1994/02/11 06:41:51 mycroft Exp $
+ *	from: @(#)if_eon.c	8.1 (Berkeley) 6/10/93
+ *	$Id: if_eon.c,v 1.7 1994/05/13 06:08:46 mycroft Exp $
  */
 
 /***********************************************************
@@ -75,7 +75,6 @@ SOFTWARE.
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
 #include <sys/protosw.h>
@@ -104,8 +103,6 @@ SOFTWARE.
 #include <netiso/iso_errno.h>
 #include <netiso/eonvar.h>
 
-#include <machine/cpu.h>
-
 extern struct timeval time;
 extern struct ifnet loif;
 
@@ -115,8 +112,7 @@ int						eoninput();
 int						eonoutput();
 int						eonioctl();
 int						eonattach();
-int						eoninit();
-int						eonrtrequest();
+void						eonrtrequest();
 struct ifnet			eonif[1];
 
 eonprotoinit() {
@@ -195,7 +191,6 @@ eonioctl(ifp, cmd, data)
 			ifp->if_flags |= IFF_UP;
 			if (ifa->ifa_addr->sa_family != AF_LINK)
 				ifa->ifa_rtrequest = eonrtrequest;
-			ifa->ifa_llinfolen = sizeof(struct eon_llinfo);
 		}
 		break;
 	}
@@ -260,6 +255,7 @@ caddr_t loc;
  *
  * RETURNS:			nothing
  */
+void
 eonrtrequest(cmd, rt, gate)
 register struct rtentry *rt;
 register struct sockaddr *gate;
@@ -297,7 +293,7 @@ register struct sockaddr *gate;
 	if (gate || (gate = rt->rt_gateway)) switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)
-			if (SDL(gate)->sdl_alen = 1)
+			if (SDL(gate)->sdl_alen == 1)
 				el->el_snpaoffset = *(u_char *)LLADDR(SDL(gate));
 			else
 				ipaddrloc = LLADDR(SDL(gate));
@@ -315,21 +311,6 @@ register struct sockaddr *gate;
 		rt->rt_rmx.rmx_mtu = el->el_iproute.ro_rt->rt_rmx.rmx_mtu
 							- sizeof(el->el_ei);
 }
-
-/*
- * FUNCTION:		eoninit
- *
- * PURPOSE:			initialization
- *
- * RETURNS:			nothing
- */
-
-eoninit(unit)
-	int unit;
-{
-	printf("eon driver-init eon%d\n", unit);
-}
-
 
 /*
  * FUNCTION:		eonoutput
@@ -430,7 +411,7 @@ send:
 		dump_buf(ei, sizeof(struct eon_iphdr));
 	ENDDEBUG
 
-	error = ip_output(m, NULL, ro, 0, NULL);	/* XXX */
+	error = ip_output(m, (struct mbuf *)0, ro, 0, NULL);
 	m = 0;
 	if (error) {
 		ifp->if_oerrors++;

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_input.c	7.13 (Berkeley) 5/6/91
- *	$Id: clnp_input.c,v 1.5 1994/01/04 08:13:28 cgd Exp $
+ *	from: @(#)clnp_input.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_input.c,v 1.6 1994/05/13 06:08:15 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,7 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -94,13 +93,10 @@ struct clnl_protosw clnl_protox[256];
 int			clnpqmaxlen = IFQ_MAXLEN;	/* RAH? why is this a variable */
 struct mbuf	*clnp_data_ck();
 
-int	clnp_input();
-
-int	esis_input();
-
+void	clnp_input(), esis_input();
 #ifdef	ISO_X25ESIS
-int	x25esis_input();
-#endif	ISO_X25ESIS
+void	x25esis_input();
+#endif	/* ISO_X25ESIS */
 
 /*
  * FUNCTION:		clnp_init
@@ -114,6 +110,7 @@ int	x25esis_input();
  *
  * NOTES:			
  */
+void
 clnp_init()
 {
 	register struct protosw *pr;
@@ -279,6 +276,7 @@ next:
  *	TODO: I would like to make seg_part a pointer into the mbuf, but 
  *	will it be correctly aligned?
  */
+void
 clnp_input(m, shp)
 struct mbuf		*m;		/* ptr to first mbuf of pkt */
 struct snpa_hdr	*shp;	/* subnetwork header */
@@ -436,7 +434,7 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 			if (need_afrin)
 				INCSTAT(cns_congest_rcvd);
 		}
-#endif	DECBIT
+#endif	/* DECBIT */
 
 		if (errcode != 0) {
 			clnp_discard(m, (char)errcode);
@@ -534,60 +532,9 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 		IFDEBUG(D_INPUT)
 			printf("clnp_input: echoing packet\n");
 		ENDDEBUG
-		{
-			/*
-			 * Echo whole datagram in a new datagram, as per RFC 1139
-			 * and ISO/IEC 8473-1, 2nd edition.
-			 */
-			static struct clnp_fixed ecr_template = {
-				ISO8473_CLNP,	/* network identifier */
-				0,				/* length */
-				ISO8473_V1,		/* version */
-				CLNP_TTL,		/* ttl */
-				CLNP_ECR|CNF_SEG_OK,/* type & flags */
-				0,				/* segment length */
-				0				/* checksum */
-			};
-			struct clnp_segment		*seg;
-			register struct mbuf	*mnew;
-
-			/* Get header */
-			MGETHDR(mnew, M_DONTWAIT, MT_HEADER);
-			if (mnew == 0) {
-				m_freem(m);
-				INCSTAT(cns_odropped);
-				return;
-			}
-			mnew->m_next = m; /* chain in old datagram */
-
-			/* construct new CLNP PDU header */
-			clnp = mtod(mnew, struct clnp_fixed *);
-			*clnp = ecr_template;
-			hoff = (caddr_t)clnp + sizeof(struct clnp_fixed);
-
-			/* Insert addresses in reverse order from original PDU */
-			CLNP_INSERT_ADDR(hoff, src);
-			CLNP_INSERT_ADDR(hoff, dst);
-			/* Insert empty segmentation part */
-			seg = (struct clnp_segment*) hoff;
-			bzero((caddr_t)seg, sizeof(struct clnp_segment));
-			/* increment offset accordingly */
-			hoff += sizeof(struct clnp_segment);
-
-			/* Calculate length */
-			clnp->cnf_hdr_len = mnew->m_len = (u_char)(hoff - (caddr_t)clnp);
-			seg_len += clnp->cnf_hdr_len;
-			/* Stuff in packet at various places... */
-			seg->cng_tot_len = seg_len;
-			clnp->cnf_seglen_msb = (seg_len & 0xff00) >> 8;
-			clnp->cnf_seglen_lsb = (seg_len & 0x00ff);
-
-			/*
-			 * Forward (umm... really send new PDU) back to sender
-			 */
-			clnp_forward(mnew, (int)seg_len, &src, (struct clnp_optidx *)0,
-					/*seg_off*/0, (struct snpa_hdr *)0);
-		}
+		(void)clnp_echoreply(m,
+			(clnp->cnf_type & CNF_SEG_OK ? (int)seg_part.cng_tot_len : seg_len),
+			&source, &target, oidxp);
 		break;
 
 	default:
@@ -599,4 +546,4 @@ struct snpa_hdr	*shp;	/* subnetwork header */
  		break;
 	}
 }
-#endif ISO
+#endif /* ISO */

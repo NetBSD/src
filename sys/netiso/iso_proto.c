@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_proto.c	7.8 (Berkeley) 5/6/91
- *	$Id: iso_proto.c,v 1.3 1993/12/18 00:43:24 mycroft Exp $
+ *	from: @(#)iso_proto.c	8.1 (Berkeley) 6/10/93
+ *	$Id: iso_proto.c,v 1.4 1994/05/13 06:08:59 mycroft Exp $
  */
 
 /***********************************************************
@@ -60,36 +60,40 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* iso_proto.c : protocol switch tables in the ISO domain
+/*
+ * iso_proto.c : protocol switch tables in the ISO domain
  *
  * ISO protocol family includes TP, CLTP, CLNP, 8208
  * TP and CLNP are implemented here.
  */
 
 #ifdef	ISO
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 
+#include <net/radix.h>
+
 #include <netiso/iso.h>
 
-int clnp_output(), clnp_init(),clnp_slowtimo(),clnp_drain();
-int rclnp_input(), rclnp_output(), rclnp_ctloutput(), raw_usrreq();
-int	clnp_usrreq();
+int	clnp_output(), rclnp_output(), rclnp_ctloutput();
+int	raw_usrreq(), clnp_usrreq();
+void	clnp_init(), clnp_slowtimo(), clnp_drain(), rclnp_input();
 
-int	tp_ctloutput();
-int	tpclnp_ctlinput();
-int	tpclnp_input();
-int	tp_usrreq();
-int	tp_init(), tp_slowtimo(), tp_drain();
-int	cons_init(), tpcons_input();
+int	tp_ctloutput(), tp_usrreq(), tpcons_input();
+void	tp_init(), tp_fasttimo(), tp_slowtimo(), tp_drain(), cons_init();
+void	tpclnp_input(), tpclnp_ctlinput();
 
-int	esis_input(), esis_ctlinput(), esis_init(), esis_usrreq();
-int	cltp_input(), cltp_ctlinput(), cltp_init(), cltp_usrreq(), cltp_output();
-int isis_input();
+int	esis_usrreq(), idrp_usrreq(), cltp_usrreq(), cltp_output();
+void	esis_init(), idrp_init(), cltp_init(), isis_input(), esis_input();
+void	idrp_input(), cltp_input(), esis_ctlinput(), cltp_ctlinput();
+
+#ifdef TUBA
+int	tuba_usrreq(), tuba_ctloutput(), tuba_tcpinput(); 
+void	tuba_init(), tuba_slowtimo(), tuba_fasttimo();
+#endif
 
 struct protosw isosw[] = {
 /*
@@ -141,12 +145,27 @@ struct protosw isosw[] = {
   0,			0,				0,					0
 },
 
+/* ISOPROTO_IDRP */
+{ SOCK_DGRAM,	&isodomain,		ISOPROTO_IDRP,		PR_ATOMIC|PR_ADDR,
+  idrp_input,	0,				0,					0,
+  idrp_usrreq,
+  idrp_init,	0,				0,					0
+},
+
 /* ISOPROTO_TP */
 { SOCK_SEQPACKET,	&isodomain,	ISOPROTO_TP,		PR_CONNREQUIRED|PR_WANTRCVD,
-  tpclnp_input,		0,			tpclnp_ctlinput,	tp_ctloutput,
+  tpclnp_input,	0,				tpclnp_ctlinput,	tp_ctloutput,
   tp_usrreq,
-  tp_init,			0,			tp_slowtimo,		tp_drain,
+  tp_init,		tp_fasttimo,	tp_slowtimo,		tp_drain,
 },
+
+#ifdef TUBA
+{ SOCK_STREAM,	&isodomain,		ISOPROTO_TCP,		PR_CONNREQUIRED|PR_WANTRCVD,
+  tuba_tcpinput,	0,			0,					tuba_ctloutput,
+  tuba_usrreq,
+  tuba_init,	tuba_fasttimo,	tuba_fasttimo,		0
+},
+#endif
 
 #ifdef TPCONS
 /* ISOPROTO_TP */
@@ -159,15 +178,18 @@ struct protosw isosw[] = {
 
 };
 
-int	iso_init();
 
 struct domain isodomain = {
     AF_ISO, 			/* family */
 	"iso-domain", 		/* name */
-	iso_init,			/* initialize routine */
+	0,					/* initialize routine */
 	0,					/* externalize access rights */
 	0,					/* dispose of internalized rights */
 	isosw,				/* protosw */
-	&isosw[sizeof(isosw)/sizeof(isosw[0])] /* NPROTOSW */
+	&isosw[sizeof(isosw)/sizeof(isosw[0])], /* NPROTOSW */
+	0,					/* next */
+	rn_inithead,		/* rtattach */
+	48,					/* rtoffset */
+	sizeof(struct sockaddr_iso) /* maxkeylen */
 };
-#endif	ISO
+#endif	/* ISO */

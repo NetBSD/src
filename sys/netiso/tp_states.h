@@ -1,4 +1,4 @@
-/* $Id: tp_states.h,v 1.2 1993/05/20 05:27:55 cgd Exp $ */
+/* $Id: tp_states.h,v 1.3 1994/05/13 06:09:42 mycroft Exp $ */
 
 #define ST_ERROR 0x0
 #define TP_CLOSED 0x1

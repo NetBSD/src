@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso_pcb.h	7.5 (Berkeley) 5/6/91
- *	$Id: iso_pcb.h,v 1.3 1993/05/20 05:27:20 cgd Exp $
+ *	from: @(#)iso_pcb.h	8.1 (Berkeley) 6/10/93
+ *	$Id: iso_pcb.h,v 1.4 1994/05/13 06:08:58 mycroft Exp $
  */
-
-#ifndef _NETISO_ISO_PCB_H_
-#define _NETISO_ISO_PCB_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -86,6 +83,7 @@ struct isopcb {
 	caddr_t					isop_chan;		/* actually struct pklcb * */
 	u_short					isop_refcnt;		/* mult TP4 tpcb's -> here */
 	u_short					isop_lport;			/* MISLEADLING work var */
+	u_short					isop_tuba_cached;	/* for tuba address ref cnts */
 	int						isop_x25crud_len;	/* x25 call request ud */
 	char					isop_x25crud[MAXX25CRUDLEN];
 	struct ifaddr			*isop_ifa;		/* ESIS interface assoc w/sock */
@@ -112,5 +110,3 @@ struct rawisopcb {
 #ifdef KERNEL
 struct	isopcb *iso_pcblookup();
 #endif
-
-#endif /* !_NETISO_ISO_PCB_H_ */

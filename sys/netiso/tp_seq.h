@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_seq.h	7.5 (Berkeley) 5/6/91
- *	$Id: tp_seq.h,v 1.3 1993/05/20 05:27:52 cgd Exp $
+ *	from: @(#)tp_seq.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_seq.h,v 1.4 1994/05/13 06:09:39 mycroft Exp $
  */
-
-#ifndef _NETISO_TP_SEQ_H_
-#define _NETISO_TP_SEQ_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * These macros perform sequence number arithmetic modulo (2**7 or 2**31).
  * The relevant fields in the tpcb are:
  *  	tp_seqmask : the mask of bits that define the sequence space.
@@ -73,6 +68,9 @@ SOFTWARE.
  *  	tp_seqhalf : tp_seqbit / 2 or half the sequence space (rounded up)
  * Not exactly fast, but at least it's maintainable.
  */
+
+#ifndef _NETISO_TP_SEQ_H_
+#define _NETISO_TP_SEQ_H_
 
 #define SEQ(tpcb,x) \
 	((x) & (tpcb)->tp_seqmask)
@@ -119,4 +117,4 @@ SOFTWARE.
 #define IN_SWINDOW(tpcb, seq, lwe, uwe)\
 	( SEQ_GT(tpcb, seq, lwe) && SEQ_LEQ(tpcb, seq, uwe) )
 
-#endif /* !_NETISO_TP_SEQ_H_ */
+#endif /* _NETISO_TP_SEQ_H_ */

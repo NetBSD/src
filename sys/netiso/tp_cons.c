@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_cons.c	7.8 (Berkeley) 5/9/91
- *	$Id: tp_cons.c,v 1.4 1993/12/18 04:58:03 mycroft Exp $
+ *	from: @(#)tp_cons.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_cons.c,v 1.5 1994/05/13 06:09:12 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,8 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /* 
- * ARGO TP
- *
  * Here is where you find the iso- and cons-dependent code.  We've tried
  * keep all net-level and (primarily) address-family-dependent stuff
  * out of the tp source, and everthing here is reached indirectly
@@ -107,7 +105,6 @@ SOFTWARE.
 #include <netccitt/pk_var.h>
 
 #include <netiso/if_cons.c>
-
 int tpcons_output();
 
 /*
@@ -146,22 +143,24 @@ register struct mbuf *nam;
  * FUNCTION and ARGUMENTS:
  * THIS MAYBE BELONGS IN SOME OTHER PLACE??? but i think not -
  */
-ProtoHook
+void
 tpcons_ctlinput(cmd, siso, isop)
 	int cmd; 
 	struct sockaddr_iso *siso;
 	struct isopcb *isop;
 {
+	register struct tp_pcb *tpcb = 0;
+
+	if (isop->isop_socket)
+		tpcb = (struct tp_pcb *)isop->isop_socket->so_pcb;
 	switch (cmd) {
 
 	case PRC_CONS_SEND_DONE:
-		if( isop->isop_socket ) { /* tp 0 only */
-			register struct tp_pcb *tpcb = 
-				(struct tp_pcb *)isop->isop_socket->so_tpcb;
+		if (tpcb) {
 			struct 	tp_event 		E;
 			int 					error = 0;
 
-			if( tpcb->tp_class == TP_CLASS_0 ) {
+			if (tpcb->tp_class == TP_CLASS_0) {
 				/* only if class is exactly class zero, not
 				 * still in class negotiation
 				 */
@@ -184,18 +183,17 @@ tpcons_ctlinput(cmd, siso, isop)
 					tpcb->tp_sock->so_error = error;
 				}
 			} /* else ignore it */
-		} 
+		}
 		break;
 	case PRC_ROUTEDEAD:
-		if( isop->isop_socket ) { /* tp 0 only */
+		if (tpcb && tpcb->tp_class == TP_CLASS_0) {
 			tpiso_reset(isop);
 			break;
 		} /* else drop through */
 	default:
-		(void) tpclnp_ctlinput(cmd, siso);
+		tpclnp_ctlinput(cmd, siso);
 		break;
 	}
-	return 0;
 }
 
 /*
@@ -206,14 +204,14 @@ tpcons_ctlinput(cmd, siso, isop)
  *  ignore the socket argument, and call tp_input. 
  * No return value.  
  */
-ProtoHook
+void
 tpcons_input(m, faddr, laddr, channel)
 	struct mbuf 		*m;
 	struct sockaddr_iso	*faddr, *laddr;
 	caddr_t				channel;
 {
 	if( m == MNULL)
-		return 0;
+		return;
 
 	m = (struct mbuf *)tp_inputprep(m);
 
@@ -222,7 +220,6 @@ tpcons_input(m, faddr, laddr, channel)
 		dump_buf( m, 12+ m->m_len);
 	ENDDEBUG
 	tp_input(m, faddr, laddr, channel, tpcons_output, 0);
-	return 0;
 }
 
 
@@ -262,9 +259,25 @@ tpcons_output(isop, m0, datalen, nochksum)
 		m->m_next = m0;
 	}
 	m->m_pkthdr.len = datalen;
-	error = pk_send(isop->isop_chan, m);
-	IncStat(ts_tpdu_sent);
-
+	if (isop->isop_chan == 0) {
+		/* got a restart maybe? */
+		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *)0)) == 0) {
+			IFDEBUG(D_CCONS)
+				printf("tpcons_output: no pklcd\n");
+			ENDDEBUG
+			error = ENOBUFS;
+		}
+		if (error = cons_connect(isop)) {
+			pk_disconnect((struct pklcd *)isop->isop_chan);
+			isop->isop_chan = 0;
+			IFDEBUG(D_CCONS)
+				printf("tpcons_output: can't reconnect\n");
+			ENDDEBUG
+		}
+	} else {
+		error = pk_send(isop->isop_chan, m);
+		IncStat(ts_tpdu_sent);
+	}
 	return error;
 }
 /*
@@ -286,5 +299,5 @@ tpcons_dg_output(chan, m0, datalen)
 {
 	return tpcons_output(((struct pklcd *)chan)->lcd_upnext, m0, datalen, 0);
 }
-#endif TPCONS
-#endif ISO
+#endif /* TPCONS */
+#endif /* ISO */

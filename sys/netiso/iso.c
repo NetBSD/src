@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso.c	7.14 (Berkeley) 6/27/91
- *	$Id: iso.c,v 1.5 1994/02/14 06:42:43 cgd Exp $
+ *	from: @(#)iso.c	8.2 (Berkeley) 11/15/93
+ *	$Id: iso.c,v 1.6 1994/05/13 06:08:50 mycroft Exp $
  */
 
 /***********************************************************
@@ -64,8 +64,8 @@ SOFTWARE.
  * iso.c: miscellaneous routines to support the iso address family
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -83,36 +83,16 @@ SOFTWARE.
 #include <netiso/iso_pcb.h>
 #include <netiso/clnp.h>
 #include <netiso/argo_debug.h>
+#ifdef TUBA
+#include <netiso/tuba_table.h>
+#endif
 
 #ifdef ISO
 
 int	iso_interfaces = 0;		/* number of external interfaces */
 extern	struct ifnet loif;	/* loopback interface */
-int ether_output(), llc_rtrequest();
-
-
-/*
- * FUNCTION:		iso_init
- *
- * PURPOSE:			initialize the iso address family
- *
- * RETURNS:			nothing
- *
- * SIDE EFFECTS:	1) initializes the routing table.
- *
- *
- * NOTES:			
- */
-struct radix_node_head *iso_rnhead;
-iso_init()
-{
-	static iso_init_done;
-
-	if (iso_init_done == 0) {
-		iso_init_done++;
-		rn_inithead(&iso_rnhead, 48, AF_ISO);
-	}
-}
+int	ether_output();
+void	llc_rtrequest();
 
 /*
  * FUNCTION:		iso_addrmatch1
@@ -226,7 +206,7 @@ struct sockaddr_iso *sisoa, *sisob;
 
 	return ((lena == lenb) && (!bcmp(bufa, bufb, lena)));
 }
-#endif notdef
+#endif /* notdef */
 
 /*
  * FUNCTION:		iso_hashchar
@@ -280,6 +260,150 @@ register int		len;		/* length of buffer */
 
 	return(h);
 }
+#ifdef notdef
+/*
+ * FUNCTION:		iso_hash
+ *
+ * PURPOSE:			Fill in fields of afhash structure based upon addr passed.
+ *
+ * RETURNS:			none
+ *
+ * SIDE EFFECTS:	
+ *
+ * NOTES:			
+ */
+iso_hash(siso, hp)
+struct sockaddr_iso	*siso;		/* address to perform hash on */
+struct afhash		*hp;		/* RETURN: hash info here */
+{
+	u_long			buf[sizeof(struct sockaddr_iso)+1/4];
+	register int	bufsize;
+
+
+	bzero(buf, sizeof(buf));
+
+	bufsize = iso_netof(&siso->siso_addr, buf);
+	hp->afh_nethash = iso_hashchar((caddr_t)buf, bufsize);
+
+	IFDEBUG(D_ROUTE)
+		printf("iso_hash: iso_netof: bufsize = %d\n", bufsize);
+	ENDDEBUG
+
+	hp->afh_hosthash = iso_hashchar((caddr_t)&siso->siso_addr, 
+		siso->siso_addr.isoa_len);
+
+	IFDEBUG(D_ROUTE)
+		printf("iso_hash: %s: nethash = x%x, hosthash = x%x\n",
+			clnp_iso_addrp(&siso->siso_addr), hp->afh_nethash, 
+			hp->afh_hosthash);
+	ENDDEBUG
+}
+/*
+ * FUNCTION:		iso_netof
+ *
+ * PURPOSE:			Extract the network portion of the iso address.
+ *					The network portion of the iso address varies depending
+ *					on the type of address. The network portion of the
+ *					address will include the IDP. The network portion is:
+ *			
+ *						TYPE			DESC
+ *					t37					The AFI and x.121 (IDI)
+ *					osinet				The AFI, orgid, snetid
+ *					rfc986				The AFI, vers and network part of
+ *										internet address.
+ *
+ * RETURNS:			number of bytes placed into buf.
+ *
+ * SIDE EFFECTS:	
+ *
+ * NOTES:			Buf is assumed to be big enough
+ */
+iso_netof(isoa, buf)
+struct iso_addr	*isoa;		/* address */
+caddr_t			buf;		/* RESULT: network portion of address here */
+{
+	u_int		len = 1;	/* length of afi */
+
+	switch (isoa->isoa_afi) {
+		case AFI_37:
+			/*
+			 * Due to classic x.25 tunnel vision, there is no
+			 * net portion of an x.121 address.  For our purposes
+			 * the AFI will do, so that all x.25 -type addresses
+			 * map to the single x.25 SNPA. (Cannot have more than
+			 * one, obviously).
+			 */
+
+			break;
+
+/* 		case AFI_OSINET:*/
+		case AFI_RFC986: {
+			u_short	idi;	/* value of idi */
+
+			/* osinet and rfc986 have idi in the same place */
+			CTOH(isoa->rfc986_idi[0], isoa->rfc986_idi[1], idi);
+
+			if (idi == IDI_OSINET)
+/*
+ *	Network portion of OSINET address can only be the IDI. Clearly,
+ *	with one x25 interface, one could get to several orgids, and
+ *	several snetids.
+				len += (ADDROSINET_IDI_LEN + OVLOSINET_ORGID_LEN + 
+						OVLOSINET_SNETID_LEN);
+ */
+				len += ADDROSINET_IDI_LEN;
+			else if (idi == IDI_RFC986) {
+				u_long				inetaddr;
+				struct ovl_rfc986	*o986 = (struct ovl_rfc986 *)isoa;
+
+				/* bump len to include idi and version (1 byte) */
+				len += ADDRRFC986_IDI_LEN + 1;
+
+				/* get inet addr long aligned */
+				bcopy(o986->o986_inetaddr, &inetaddr, sizeof(inetaddr));
+				inetaddr = ntohl(inetaddr);	/* convert to host byte order */
+
+				IFDEBUG(D_ROUTE)
+					printf("iso_netof: isoa ");
+					dump_buf(isoa, sizeof(*isoa));
+					printf("iso_netof: inetaddr 0x%x ", inetaddr);
+				ENDDEBUG
+
+				/* bump len by size of network portion of inet address */
+				if (IN_CLASSA(inetaddr)) {
+					len += 4-IN_CLASSA_NSHIFT/8;
+					IFDEBUG(D_ROUTE)
+						printf("iso_netof: class A net len is now %d\n", len);
+					ENDDEBUG
+				} else if (IN_CLASSB(inetaddr)) {
+					len += 4-IN_CLASSB_NSHIFT/8;
+					IFDEBUG(D_ROUTE)
+						printf("iso_netof: class B net len is now %d\n", len);
+					ENDDEBUG
+				} else {
+					len += 4-IN_CLASSC_NSHIFT/8;
+					IFDEBUG(D_ROUTE)
+						printf("iso_netof: class C net len is now %d\n", len);
+					ENDDEBUG
+				}
+			} else
+				len = 0;
+		} break;
+
+		default:
+			len = 0;
+	}
+
+	bcopy((caddr_t)isoa, buf, len);
+	IFDEBUG(D_ROUTE)
+		printf("iso_netof: isoa ");
+		dump_buf(isoa, len);
+		printf("iso_netof: net ");
+		dump_buf(buf, len);
+	ENDDEBUG
+	return len;
+}
+#endif /* notdef */
 /*
  * Generic iso control operations (ioctl's).
  * Ifp is 0 if not an interface-specific ioctl.
@@ -324,6 +448,11 @@ iso_control(so, cmd, data, ifp)
 			struct iso_ifaddr *nia;
 			if (cmd == SIOCDIFADDR_ISO)
 				return (EADDRNOTAVAIL);
+#ifdef TUBA
+			/* XXXXXX can't be done in the proto init routines */
+			if (tuba_tree == 0)
+				tuba_table_init();
+#endif
 			MALLOC(nia, struct iso_ifaddr *, sizeof(*nia),
 				       M_IFADDR, M_WAITOK);
 			if (nia == (struct iso_ifaddr *)0)
@@ -430,7 +559,7 @@ iso_control(so, cmd, data, ifp)
 			else
 				printf("Didn't unlink isoifadr from list\n");
 		}
-		free((caddr_t)oia, M_IFADDR);
+		IFAFREE((&oia->ia_ifa));
 		break;
 
 	default:
@@ -482,7 +611,8 @@ iso_ifinit(ifp, ia, siso, scrub)
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl && (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, ia))) {
+	if (ifp->if_ioctl &&
+				(error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
 		splx(s);
 		ia->ia_addr = oldaddr;
 		return (error);
@@ -497,7 +627,6 @@ iso_ifinit(ifp, ia, siso, scrub)
 	if (ifp->if_output == ether_output) {
 		ia->ia_ifa.ifa_rtrequest = llc_rtrequest;
 		ia->ia_ifa.ifa_flags |= RTF_CLONING;
-		ia->ia_ifa.ifa_llinfolen = sizeof(struct llinfo_llc);
 	}
 	/*
 	 * Add route for the network.
@@ -576,7 +705,7 @@ iso_ifwithidi(addr)
 	return ((struct ifaddr *)0);
 }
 
-#endif notdef
+#endif /* notdef */
 /*
  * FUNCTION:		iso_ck_addr
  *
@@ -625,7 +754,7 @@ struct iso_addr	*isoab;		/* other addr to check */
 	}
 	return(0);
 }
-#endif notdef
+#endif /* notdef */
 /*
  * FUNCTION:		iso_localifa()
  *
@@ -681,7 +810,7 @@ iso_localifa(siso)
 
 #ifdef	TPCONS
 #include <netiso/cons.h>
-#endif	TPCONS
+#endif	/* TPCONS */
 /*
  * FUNCTION:		iso_nlctloutput
  *
@@ -742,15 +871,16 @@ struct mbuf	*m;			/* data for set, buffer for get */
 			bcopy(data, (caddr_t)isop->isop_x25crud, (unsigned)data_len);
 			isop->isop_x25crud_len = data_len;
 			break;
-#endif	TPCONS
+#endif	/* TPCONS */
 
 		default:
 			error = EOPNOTSUPP;
 	}
-
+	if (cmd == PRCO_SETOPT)
+		m_freem(m);
 	return error;
 }
-#endif ISO
+#endif /* ISO */
 
 #ifdef ARGO_DEBUG
 
@@ -784,4 +914,4 @@ dump_isoaddr(s)
 	}
 }
 
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
