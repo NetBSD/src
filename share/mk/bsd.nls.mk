@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.39 2003/07/10 10:34:36 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.40 2003/07/14 00:52:12 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -63,3 +63,7 @@ cleannls:
 .if ${MKNLS} != "no" && !empty(NLS)
 	rm -f ${NLSALL}
 .endif
+
+##### Pull in related .mk logic
+.include <bsd.obj.mk>
+.include <bsd.sys.mk>
