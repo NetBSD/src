@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.79 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.80 2003/11/13 01:48:13 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.79 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.80 2003/11/13 01:48:13 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -835,6 +835,7 @@ icmp_reflect(m)
 		bcopy((caddr_t)ip + optlen, (caddr_t)(ip + 1),
 			 (unsigned)(m->m_len - sizeof(struct ip)));
 	}
+	m_tag_delete_nonpersistent(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/*      
