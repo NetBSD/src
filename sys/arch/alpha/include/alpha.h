@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.10 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.10.2.1 2001/05/15 22:50:46 he Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
 #ifdef _KERNEL
 
 #include <machine/bus.h>
+#include <machine/stdarg.h>
 
 struct pcb;
 struct proc;
@@ -96,6 +97,7 @@ void	enable_nsio_ide(bus_space_tag_t);
 char *	dot_conv(unsigned long);
 
 /* Multiprocessor glue; cpu.c */
+
 struct cpu_info;
 int	cpu_iccb_send(long, const char *);
 void	cpu_iccb_receive(void);
@@ -104,6 +106,10 @@ void	cpu_halt_secondary(unsigned long);
 void	cpu_spinup_trampoline(void);				/* MAGIC */
 void	cpu_pause(unsigned long);
 void	cpu_resume(unsigned long);
+
+/* Security sensitive rate limiting printf */
+
+void rlprintf(struct timeval *t, const char *fmt, ...);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_H_ */
