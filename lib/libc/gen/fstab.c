@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.6 1995/02/27 03:43:12 cgd Exp $	*/
+/*	$NetBSD: fstab.c,v 1.7 1995/02/27 04:34:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -37,10 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: fstab.c,v 1.6 1995/02/27 03:43:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: fstab.c,v 1.7 1995/02/27 04:34:44 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <fstab.h>
 #include <stdio.h>
