@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.3 1998/09/05 01:30:02 mark Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.4 1998/09/22 01:47:53 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -260,7 +260,10 @@ isa_bs_subregion(t, bsh, offset, size, nbshp)
 	bus_size_t offset, size;
 	bus_space_handle_t *nbshp;
 {
-	panic("isa_subregion(): Help!\n");
+/*	printf("isa_subregion(tag=%p, bsh=%lx, off=%lx, sz=%lx)\n",
+	    t, bsh, offset, size);*/
+	*nbshp = bsh + offset;
+	return(0);
 }
 
 int
