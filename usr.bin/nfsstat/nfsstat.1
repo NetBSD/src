@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,12 +29,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)nfsstat.1	5.7 (Berkeley) 7/30/91
-.\"	$Id: nfsstat.1,v 1.4 1993/08/01 07:30:20 mycroft Exp $
+.\"     from: @(#)nfsstat.1	8.1 (Berkeley) 6/6/93
+.\"	$Id: nfsstat.1,v 1.5 1994/06/13 21:02:18 mycroft Exp $
 .\"
-.Dd July 30, 1991
+.Dd June 6, 1993
 .Dt NFSSTAT 1
-.Os
+.Os BSD 4.4
 .Sh NAME
 .Nm nfsstat
 .Nd display
@@ -59,7 +59,7 @@ instead of the default
 .Pa /dev/kmem .
 .It Fl N
 Extract the name list from the specified system instead of the default
-.Pa /netbsd .
+.Pa /vmunix .
 .It Fl w
 Display a shorter summary of
 .Tn NFS
@@ -69,10 +69,10 @@ second intervals.
 .El
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
+.It Pa /vmunix
+default kernel namelist
 .It Pa /dev/kmem
 default memory file
-.It Pa /netbsd
-default kernel namelist
 .El
 .Sh SEE ALSO
 .Xr fstat 1 ,
@@ -85,5 +85,5 @@ default kernel namelist
 .Sh HISTORY
 The
 .Nm nfsstat
-command is
-.Ud .
+command appears in
+.Bx 4.4 .
