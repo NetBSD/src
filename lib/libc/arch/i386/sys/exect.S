@@ -34,19 +34,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)exect.s	5.1 (Berkeley) 4/23/90
- *	$Id: exect.S,v 1.3 1993/12/06 23:28:09 pk Exp $
+ *	$Id: exect.S,v 1.4 1994/01/27 04:14:53 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: exect.S,v 1.3 1993/12/06 23:28:09 pk Exp $"
+	.asciz "$Id: exect.S,v 1.4 1994/01/27 04:14:53 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 #include <machine/psl.h>
 
 ENTRY(exect)
-	lea	SYS_execve,%eax
+	movl	$(SYS_execve),%eax
 	pushf
 	popl	%edx
 	orl	$PSL_T,%edx
