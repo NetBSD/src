@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.9 2000/11/21 00:37:53 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.10 2003/02/19 09:45:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -183,8 +183,6 @@ extern const struct emul emul_ibcs2;
 int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
 
 #ifdef EXEC_ELF32
-#define IBCS2_ELF_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 8, sizeof(char *))
-
 int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,
 			       void *, char *, vaddr_t *));
 #endif
