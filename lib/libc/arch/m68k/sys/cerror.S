@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.9 1999/01/14 22:48:20 kleink Exp $	*/
+/*	$NetBSD: cerror.S,v 1.10 1999/04/29 15:37:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,17 +43,16 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.9 1999/01/14 22:48:20 kleink Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.10 1999/04/29 15:37:21 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-	.even
 #ifdef	_REENTRANT
 	.globl	_C_LABEL(__errno)
 #else
 	.globl	_C_LABEL(errno)
 #endif
-CERROR:
+_ENTRY(CERROR)
 #ifdef	_REENTRANT
 	movl	d0,sp@-
 #ifdef	PIC
