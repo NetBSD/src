@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.13 1999/05/24 07:03:18 ross Exp $
+.\"	$NetBSD: contents,v 1.14 1999/05/24 16:47:25 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,334 +54,18 @@ conventions for indicating italic and bold display.
 .		It Pa sets/
 \*m binary distribution sets;
 see below.
-.if \n[amiga] \{\
-.		Bl -tag -compact -width diskimage/
-.		It Pa Split/
-\&.tgz files split for loading onto floppies.
-.		El
-.\}
-.if \n[amiga] \{\
-.		It Pa kernel/
-.No The Tn GENERIC No kernel.
-.\}
-.if \n[pmax] \{\
-.		It Pa kernel/
-\*m installation kernels.
-.\}
-.if \n[sparc] \{\
-.		It Pa kernel/
-.No Base Tn GENERIC No kernels.
-.\}
 .		It Pa security/
 \*m security distribution; see below.
 .	El
 .	It Pa installation/
 .\" BTW, .Bl ... .El is not allowed unless there is at least one .It.
 .
-.\"============================================ ALPHA INSTALLATION SUBTREE
-.
-.if \n[alpha] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa floppy/
-\*m boot and installation floppies; see below.
-.		It Pa diskimage/
-.		It Pa tapeimage/
-.No \&an image file Pa cdhdtape
-is included for the case where the installer is written to
-a CD, hard drive, or tape.
-This image file is the same for the CD, HD, and tape cases,
-.No but a separate Pa tapeimage/
-directory exists to hold a copy of the
-.Tn README No file and to meet the
-.Nx
-.Xr release 7
-standard.
-.		It Pa instkernel/
-.No contains a Pa netbsd.gz
-installation kernel; this is the same installer kernel as in all the
-other install
-images, but without the various boot program and filesystem wrappers.
-It can be netbooted or diskbooted from a previous installation. Note: there is
-no need to ungzip this image.
-
-.		It Pa misc/
-contains
-.Pa GENERIC.fs ,
-.No a Tn GENERIC
-kernel in a bootable filesystem image. This is used in some unusual
-installations as described in the next section.
-.	El
-.\}
-.
-.\"============================================ AMIGA INSTALLATION SUBTREE
-.
-.if \n[amiga] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa miniroot/
-\*[MACHINE] miniroot file system image; see below.
-.		It Pa misc/
-Miscellaneous \*[MACHINE] installation utilities; see
-installation section, below.
-.	El
-.\}
-.
-.\"============================================ ARM32 INSTALLATION SUBTREE
-.
-.if \n[arm32] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa kernels/
-\*m installation and other kernels; see below.
-.		It Ar platform/
-Miscellaneous arm32 installation utilities and
-supplementary documentation for
-.Ar platform ; No see installation section, below.
-.	El
-.\}
-.
-.\"============================================ HP300 INSTALLATION SUBTREE
-.
-.if \n[hp300] \{\
-.	Bl -tag -compact -width diskimage/
-.	It Pa miniroot/
-hp300 miniroot images; see below.
-.	It Pa misc/
-Miscellaneous hp300 installation helper utilities;
-see installation section below.
-.	El
-.\}
-.
-.\"============================================ I386 INSTALLATION SUBTREE
-.
-.if \n[i386] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa floppy/
-\*m boot and installation floppies; see below.
-.		It Pa misc/
-Miscellaneous \*[MACHINE] installation utilities; see
-installation section, below.
-.	El
-.\}
-.
-.
-.
-.\"============================================ MACPPC INSTALLATION SUBTREE
-.
-.if \n[macppc] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa floppy/
-\*m boot and installation floppies; see below.
-.	El
-.\}
-.
-.\"============================================ MVME68K INSTALLATION SUBTREE
-.
-.if \n[mvme68k] \{\
-.	Bl -tag -compact -width diskimage/
-.		It Pa miniroot/
-The miniroot filesystem image.
-.		It Pa netboot/
-Two programs needed to boot mvme68k kernels over the network.
-.		It Pa tapeimage/
-Tape boot programs, and a RAMDISK kernel.
-.	El
-.\}
-.
-.\"============================================ PC532 INSTALLATION SUBTREE
-.
-.if \n[pc532] \{\
-.	Bl -tag -compact -width floppy
-.		It Pa floppy/
-.		Bl -tag -compact -width floppy-144.fs.gz
-.			It Pa floppy-144.fs.gz
-Installation file system obtained via SCSI floppy or download to RAM.
-.		El
-.		It Pa misc/
-.		Bl -tag -compact -width floppy-144.fs.gz
-.			It Pa download.c.gz
-Source for the program to download inst-11.fs into memory via the
-pc532 ROM monitor.
-.		El
-.	El
-.\}
-.
-.\"============================================ PMAX INSTALLATION SUBTREE
-.
-.if \n[pmax] \{\
-.	Bl -tag -compact -width diskimage
-.		It Pa diskimage/
-\*m miniroot file system image; see below.
-.		It Pa misc/
-New bootblocks necessary for booting non
-.Ic a.out
-kernels.
-.		It Pa netboot/
-Server tar file for diskless machines.
-.	El
-.\}
-.
-.\"============================================ SPARC INSTALLATION SUBTREE
-.
-.if \n[sparc] \{\
-.	Bl -tag -compact -width miniroot/
-.		It Pa miniroot/
-Sparc miniroot boot-image.
-.		It Pa netboot/
-Server boot-file image for diskless machines.
-.		It Pa misc/
-Statically-linked versions of gzip (GNU gzip) and gtar (GNU tar).
-.	El
-.\}
-.
-.\"============================================ SUN3 INSTALLATION SUBTREE
-.
-.if \n[sun3] \{\
-.	Bl -tag -compact -width miniroot/
-.		It Pa miniroot/
-Sun3 miniroot boot-image.
-.		It Pa netboot/
-Server boot-file image for diskless machines.
-.		It Pa tapeboot/
-Scripts and boot block for making a boot tape.
-.	El
-.\}
-.
-.\"============================================ VAX INSTALLATION SUBTREE
-.
-.if \n[vax] \{\
-.\}
-.
-.\"============================================ X68K INSTALLATION SUBTREE
-.
-.if \n[x68k] \{\
-.	Bl -tag -compact -width floppy/
-.		It Pa floppy/
-\*m boot and installation floppies; see below.
-.		It Pa misc/
-Miscellaneous \*[MACHINE] installation utilities which run
-on Human68k; see installation section, below.
-.	El
-.\}
-.
-.
-.
 .
 .El
 .
 .
 .
-.if r_alpha \{\
-.Ss2 Bootable installation/upgrade floppies:
-.Pp
-There are three bootable images in the
-.Nx
-\*m distribution.
-One is for a dual-floppy boot and is split into two separate files.
-The other is a single-file image containing the same install kernel,
-but intended to be written to a CD, tape, or hard drive. The third
-image is a
-.Tn GENERIC
-kernel intended for production use in unusual cases.
-This can be useful at some sites when:
-.Bl -bullet
-.It
-You want to run diskless but SRM bugs prevent the firmware from
-netbooting. You can work around this problem by always booting the generic
-kernel from the floppy.
-.It
-SRM doesn't recognize your (hard) disk controller but
-.Nx
-does. This
-happens more frequently than you might think. SRM will usually only boot
-from
-.Xr ncr 4
-or
-.Xr isp 4
-SCSI devices, and on most platforms will not
-boot from an IDE drive.
-.Nx
-will happily operate
-with almost any SCSI root or an IDE root; the solution here is to netboot
-a kernel or always boot from floppy.
-.El
-.\}
 .
-.if r_amiga \{\
-.Ss2 Miniroot file system
-The Amiga now uses a single miniroot filesystem for both an initial
-installation and for an upgrade. A gzipped version is available, for easier
-downloading. (The gzipped version has the
-.Sy \&.gz
-extension added to
-their names.)
-.(tag Pa miniroot.fs
-This file contains a BSD root file system setup to help you
-install the rest of
-.Nx
-or to upgrade a previous version of
-.Nx .
-This includes formatting and mounting your root and
-/usr partitions and getting ready to extract (and possibly first
-fetching) the distribution sets. There is enough on this file
-system to allow you to make a SLIP or PPP connection, configure
-an Ethernet, mount an NFS file system or ftp. You can also load
-distribution sets from a SCSI tape or from one of your existing
-AmigaDOS partitions.
-.tag)
-.\}
-.
-.if r_arm32 \{\
-There are a collection of arm32 kernels in the "arm32/kernels"
-subdirectory of the
-.Nx \*V
-distribution. Some of these kernels
-contain a root file system image and should only be used for the
-initial installation. Some of the kernels only support a particular
-subset of the platforms that arm32 supports (See
-"arm32/kernels/README" for more details.)
-.\}
-.
-.if r_mvme68k \{\
-.Pp
-The NetBSD/mvme68k install distribution contains files that can be
-used to install NetBSD onto completely "bare" MVME147 and MVME167
-boards. The files
-in the "mvme68k/installation/*" directories are described below.
-.Bl -tag -width netbsd-rd.gz
-.It Pa miniroot.gz
-A gzipped copy of the miniroot filesystem.
-This image is to be un-gzipped and copied
-into the swap area of a disk.
-.It Pa netbsd-rd.gz
-A gzipped copy of the
-.Em RAMDISK kernel
-for installing the miniroot filesystem.
-.It Pa stboot
-A tape boot-block, in the form required to
-allow 1x7-Bug to boot from tape. This is the
-first segment of a boot tape.
-.It Pa bootst
-A copy of the tape boot program, used
-as the second segment of a boot tape.
-.It Pa sboot
-A copy of the MVME147 serial boot program. This is
-necessary if you don't have a tape drive,
-but you _do_ have another system which can
-act as a boot and NFS server. This is also
-useful if you are installing a diskless
-NetBSD system on an MVME147 board.
-.It Pa netboot
-A copy of the network boot program. Used
-in conjunction with sboot on the MVME147 to get your system
-booted over a network. The MVME167 can boot this file
-directly using 167Bug's builtin TFTP client.
-.El
-.Pp
-These files can be used to make a boot tape suitable for installing
-NetBSD/mvme68k. These files can also be used to configure an NFS server
-to support installation "over the network". See the section
-.Sx Getting the NetBSD System onto Useful Media
-for instructions on either method.
-.\}
 .
 .
 .Ss2 Binary Distribution Sets
@@ -729,7 +413,6 @@ Fonts needed by X.
 .if r_sparc .Em 5.7M gzipped, 7.0M uncompressed
 .if r_x68k .Em 5.7M gzipped, 7.0M uncompressed
 .
-.if r_atari \{\
 .Pp
 .It Sy xserver
 The Xservers and some programs not shared with the other m68k ports. Please
@@ -737,56 +420,6 @@ consult the X specific section in the atari FAQ as to which server you should
 use.
 .br
 .Em 6.3M gzipped, 15.7M uncompressed
-.\}
-.if r_i386 \{\
-.Pp
-.It Sy xserver
-All XFree86 X servers. Because all of them are
-included, this set is large. However, you will
-only need one of the servers provided in this
-set. (Typically, XF86_SVGA.)
-.br
-.Em 15.9M gzipped, 37.7M uncompressed
-.\}
-.if r_mac68k \{\
-.Pp
-.It Sy xserver
-.No The Xmac68k Em monochrome
-server with man pages.
-.br
-.Em 1.3M gzipped, 3.3M uncompressed
-.\}
-.if r_macppc \{\
-.Pp
-.It Sy xserver
-.No The Xmacppc
-server which supports 256 colors with man pages.
-.br
-.Em 1.7M gzipped, 4.4M uncompressed
-.\}
-.if r_pmax \{\
-.Pp
-.It Sy xserver
-.No The Xpmax
-server with man page.
-.Em 1.8M gzipped, 5.6M uncompressed
-.\}
-.if r_sparc \{\
-.Pp
-.It Sy xserver
-.No The Xsun, Xsun24, XsunMono and Xprt
-servers with man pages.
-.br
-.Em 3.3M gzipped, 8.4M uncompressed
-.\}
-.if r_x68k \{\
-.Pp
-.It Sy xserver
-.No The X68k and Xprt
-servers with man pages and the runtime configuration file.
-.br
-.Em 1.4M gzipped, 3.4M uncompressed
-.\}
 .
 .El
 .
@@ -801,12 +434,6 @@ named with the extension
 .
 .\" contrary to most old INSTALL docs, only i386 has Split/ sets
 .
-.
-.if r_i386 \{\
-They are also
-available in split form \- catted together, the members of a split set
-form a gzipped tar file.
-.\}
 .
 .
 .Pp
@@ -824,7 +451,6 @@ command from /.
 .
 .
 .
-.if r_atari \{\
 .Pp
 Additional kernels to those included in the distribution sets may be found
 in the
@@ -903,165 +529,7 @@ the 4th and subsequent partitions.
 The "loadbsd.ttp" program loads the NetBSD/\*m kernel from TOS
 (or MiNT, MultiTOS, etc.).
 .El
-.\}
 .
 .
 .
-.if r_hp300 \{\
 .
-.Pp
-The following are included in the
-.Pa hp300/installation No directory:
-.
-.
-.Bl -tag -width miniroot/xx
-.It Pa miniroot/
-.	Bl -tag -width miniroot.fs.gz
-.	It miniroot.fs.gz
-A copy of the miniroot filesystem.
-.	El
-.It Pa misc/
-.	Bl -tag -width miniroot.fs.gz
-.	It Pa HP-IB.geometry
-A file containing geometry for some
-HB-IB disk drives.
-.	It Pa SYS_INST.gz
-A gzipped copy of the SYS_INST
-miniroot installation program.
-.	It Pa SYS_UBOOT.gz
-A gzipped copy of the universal boot
-block. Supports Network, tape and
-disk booting. This is useful if you
-are installing a diskless NetBSD/hp300
-system.
-.	It Pa rbootd.tgz
-Source code for the rbootd program
-included with NetBSD. It requires that
-the server has a Berkeley Packet
-Filter (bpf). You will need to
-compile this version of rbootd if
-server system does not have this
-utility already.
-.	El
-.El
-.
-.
-The following are included in the
-.Pa hp300/binary/kernel No directory:
-.
-.Bl -tag -width netbsd.gdb.gzmmmmm
-.It Pa netbsd.gdb.gz
-A gzipped GENERIC kernel with debugging symbols.
-.It Pa netbsd.gz
-A gzipped GENERIC kernel.
-.El
-.
-.\}
-.
-.if r_mac68k \{\
-.Pp
-Additional kernels to those included in the distribution sets may be found
-in the
-.Pa mac68k/binary/kernels
-subdirectory of the
-.Nx \*V
-distribution tree. These kernels are generally named something like
-.Pa netbsd-GENERIC.gz
-or some other suitable name. Please note that these kernels are simply
-gzipped and are not in tar archives.
-.Pp
-The MacOS-based utilities necessary for installing and running
-.Nx
-can
-be found in the
-.Pa mac68k/installation/misc
-subdirectory of the
-.Nx \*V
-distribution tree. The important files in this directory are as
-follows:
-.
-.
-.Bl -tag -width Installer.sea.hqx
-.It Pa Booter.sea.hqx
-The NetBSD/Mac68k Booter utility. This program is used to boot the
-.Nx
-kernel from within MacOS.
-.br
-.Em 141 K archived
-.It Pa Installer.sea.hqx
-The NetBSD/Mac68k Installer utility. This
-program is used to install the distribution sets onto your
-.Nx
-partition(s).
-.br
-.Em 147 K archived
-.It Pa Mkfs.sea.hqx
-The Mkfs utility. This program is used to
-format your chosen partitions so that they
-can be used with NetBSD.
-.br
-.Em 76 K archived
-.El
-.Pp
-These files are all binhexed, self-extracting archives. If you need them,
-the sources for these utilities are in the
-.Pa src No subdirectory.
-.
-.
-.\}
-.
-.
-.if r_pc532 \{\
-.Pp
-The initial installation process on a pc532 without a previous
-.Nx
-installation is supported by the following files:
-.Bl -tag -width floppy-144.fs
-.It Pa floppy-144.fs
-A file system containing the boot loader and install kernel with
-a 2MB root.
-.It Pa download.c
-The source for a program to download
-.Pa inst-11.fs
-into memory via the pc532
-.Tn ROM No monitor .
-.El
-.Pp
-The upgrade process is supported by having a copy of a \*V kernel
-available. This file is:
-.(tag Pa kern.tgz
-Contains a kernel produced from the
-.Pa DEFAULT
-configuration file in
-.Pa pc532/conf .
-.tag)
-.\}
-.
-.
-.if r_sparc \{\
-.	(Note
-The distribution cannot be extracted using the SunOS
-.		Pa tar
-program so statically-linked SunOS versions of gzip (GNU gzip) and
-gtar (GNU tar) are provided in
-.		Pa sparc/installation/misc .
-.	Note)
-.\}
-.
-.if r_sun3 \{\
-.Pp
-There is a collection of Sun3 and Sun3X kernels in the
-.Pa sun3/binary/kernels
-subdirectory of the
-.Nx \*V
-distribution.  The ones named
-.Pa netbsd-ramdisk*.gz
-contain a root file system image and should only be used for the
-initial installation.  The others are included for convenience.
-(Most people will want to use
-.Pa netbsd-generic.gz
-or
-.Pa netbsd-generic3x.gz
-as appropriate.)  Please note that these kernels are simply gzipped
-and are not in tar archives.
-.\}
