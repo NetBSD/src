@@ -1,14 +1,13 @@
-# $NetBSD: md.evbppc,v 1.3 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: md.evbppc,v 1.4 2003/10/24 06:49:37 matt Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/evbppc			comp-c-include
 ./usr/include/evbppc/ansi.h		comp-c-include
 ./usr/include/evbppc/aout_machdep.h	comp-c-include
 ./usr/include/evbppc/asm.h		comp-c-include
+./usr/include/evbppc/atomic.h		comp-c-include
 ./usr/include/evbppc/bswap.h		comp-c-include
-./usr/include/evbppc/bus.h		comp-c-include
 ./usr/include/evbppc/cdefs.h		comp-c-include
 ./usr/include/evbppc/cpu.h		comp-c-include
-./usr/include/evbppc/db_machdep.h	comp-c-include
 ./usr/include/evbppc/disklabel.h	comp-c-include
 ./usr/include/evbppc/elf_machdep.h	comp-c-include
 ./usr/include/evbppc/endian.h		comp-c-include
@@ -24,7 +23,6 @@
 ./usr/include/evbppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/evbppc/int_types.h	comp-c-include
 ./usr/include/evbppc/intr.h		comp-c-include
-./usr/include/evbppc/ipkdb.h		comp-c-include
 ./usr/include/evbppc/kcore.h		comp-c-include
 ./usr/include/evbppc/limits.h		comp-c-include
 ./usr/include/evbppc/lock.h		comp-c-include
@@ -32,10 +30,8 @@
 ./usr/include/evbppc/mcontext.h		comp-c-include
 ./usr/include/evbppc/param.h		comp-c-include
 ./usr/include/evbppc/pcb.h		comp-c-include
-./usr/include/evbppc/pio.h		comp-c-include
 ./usr/include/evbppc/pmap.h		comp-c-include
 ./usr/include/evbppc/pmc.h		comp-c-include
-./usr/include/evbppc/powerpc.h		comp-c-include
 ./usr/include/evbppc/proc.h		comp-c-include
 ./usr/include/evbppc/profile.h		comp-c-include
 ./usr/include/evbppc/psl.h		comp-c-include
@@ -46,7 +42,6 @@
 ./usr/include/evbppc/setjmp.h		comp-c-include
 ./usr/include/evbppc/signal.h		comp-c-include
 ./usr/include/evbppc/stdarg.h		comp-c-include
-./usr/include/evbppc/tlb.h		comp-c-include
 ./usr/include/evbppc/trap.h		comp-c-include
 ./usr/include/evbppc/types.h		comp-c-include
 ./usr/include/evbppc/varargs.h		comp-c-include

@@ -1,2 +1,7 @@
-# $NetBSD: obsolete.evbppc,v 1.1 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: obsolete.evbppc,v 1.2 2003/10/24 06:49:37 matt Exp $
 ./usr/include/evbppc/_G_config.h
+./usr/include/evbppc/bus.h
+./usr/include/evbppc/db_machdep.h
+./usr/include/evbppc/ipkdb.h
+./usr/include/evbppc/pio.h
+./usr/include/evbppc/powerpc.h

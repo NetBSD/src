@@ -1,13 +1,12 @@
-# $NetBSD: md.ofppc,v 1.3 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: md.ofppc,v 1.4 2003/10/24 06:49:37 matt Exp $
 ./usr/include/ofppc	comp-c-include
 ./usr/include/ofppc/ansi.h	comp-c-include
 ./usr/include/ofppc/aout_machdep.h	comp-c-include
 ./usr/include/ofppc/asm.h	comp-c-include
-./usr/include/ofppc/bat.h	comp-c-include
+./usr/include/ofppc/atomic.h	comp-c-include
 ./usr/include/ofppc/bswap.h	comp-c-include
 ./usr/include/ofppc/cdefs.h	comp-c-include
 ./usr/include/ofppc/cpu.h	comp-c-include
-./usr/include/ofppc/db_machdep.h	comp-c-include
 ./usr/include/ofppc/disklabel.h	comp-c-include
 ./usr/include/ofppc/elf_machdep.h	comp-c-include
 ./usr/include/ofppc/endian.h	comp-c-include
@@ -23,7 +22,6 @@
 ./usr/include/ofppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/ofppc/int_types.h	comp-c-include
 ./usr/include/ofppc/intr.h	comp-c-include
-./usr/include/ofppc/ipkdb.h	comp-c-include
 ./usr/include/ofppc/kcore.h	comp-c-include
 ./usr/include/ofppc/limits.h	comp-c-include
 ./usr/include/ofppc/lock.h	comp-c-include

@@ -1,4 +1,6 @@
-# $NetBSD: obsolete.powerpc,v 1.4 2003/02/03 17:09:53 matt Exp $
+# $NetBSD: obsolete.powerpc,v 1.5 2003/10/24 06:49:37 matt Exp $
+./usr/include/powerpc/bat.h
+./usr/include/powerpc/bus.h
 ./usr/include/powerpc/hid.h
 ./usr/include/powerpc/hid_601.h
 ./usr/include/powerpc/machine_type.h
