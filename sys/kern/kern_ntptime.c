@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.12 2000/06/27 17:41:23 mrg Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.13 2000/08/07 18:10:21 bjh21 Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -372,15 +372,8 @@ sysctl_ntptime(where, sizep)
 
 #else /* !NTP */
 
-/*
- * For kernels configured without the NTP option, emulate the behavior
- * of a kernel with no NTP support (i.e., sys_nosys()). On systems
- * where kernel  NTP support appears present when xntpd is compiled,
- * (e.g., sys/timex.h is present),  xntpd relies on getting a SIGSYS
- * signal in response to an ntp_adjtime() syscal, to inform xntpd that
- * NTP support is not really present, and xntpd should fall back to
- * using a user-level phase-locked loop to discipline the clock.
- */
+/* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
+
 int
 sys_ntp_gettime(p, v, retval)
 	struct proc *p;
@@ -390,20 +383,4 @@ sys_ntp_gettime(p, v, retval)
 	return(ENOSYS);
 }
 
-int
-sys_ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(sys_nosys(p, v, retval));
-}
-
-int
-sysctl_ntptime(where, sizep)
-	void *where;
-	size_t *sizep;
-{
-	return (ENOSYS);
-}
-#endif /* NTP */
+#endif /* !NTP */
