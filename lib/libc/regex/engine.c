@@ -480,8 +480,8 @@ sopno lev;			/* PLUS nesting level */
 					(sp < m->endp && *(sp-1) == '\n' &&
 						(m->g->cflags&REG_NEWLINE)) ||
 					(sp > m->beginp &&
-							!isalnum(*(sp-1))) ) &&
-					(sp < m->endp && isalnum(*sp)) )
+							!ISWORD(*(sp-1))) ) &&
+					(sp < m->endp && ISWORD(*sp)) )
 				{ /* yes */ }
 			else
 				return(NULL);
@@ -490,8 +490,8 @@ sopno lev;			/* PLUS nesting level */
 			if (( (sp == m->endp && !(m->eflags&REG_NOTEOL)) ||
 					(sp < m->endp && *sp == '\n' &&
 						(m->g->cflags&REG_NEWLINE)) ||
-					(sp < m->endp && !isalnum(*sp)) ) &&
-					(sp > m->beginp && isalnum(*(sp-1))) )
+					(sp < m->endp && !ISWORD(*sp)) ) &&
+					(sp > m->beginp && ISWORD(*(sp-1))) )
 				{ /* yes */ }
 			else
 				return(NULL);
@@ -671,12 +671,12 @@ sopno stopst;
 		}
 
 		/* how about a word boundary? */
-		if ( (flagch == BOL || (lastc != OUT && !isalnum(lastc))) &&
-					(c != OUT && isalnum(c)) ) {
+		if ( (flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
+					(c != OUT && ISWORD(c)) ) {
 			flagch = BOW;
 		}
-		if ( (lastc != OUT && isalnum(lastc)) &&
-				(flagch == EOL || (c != OUT && !isalnum(c))) ) {
+		if ( (lastc != OUT && ISWORD(lastc)) &&
+				(flagch == EOL || (c != OUT && !ISWORD(c))) ) {
 			flagch = EOW;
 		}
 		if (flagch == BOW || flagch == EOW) {
@@ -760,12 +760,12 @@ sopno stopst;
 		}
 
 		/* how about a word boundary? */
-		if ( (flagch == BOL || (lastc != OUT && !isalnum(lastc))) &&
-					(c != OUT && isalnum(c)) ) {
+		if ( (flagch == BOL || (lastc != OUT && !ISWORD(lastc))) &&
+					(c != OUT && ISWORD(c)) ) {
 			flagch = BOW;
 		}
-		if ( (lastc != OUT && isalnum(lastc)) &&
-				(flagch == EOL || (c != OUT && !isalnum(c))) ) {
+		if ( (lastc != OUT && ISWORD(lastc)) &&
+				(flagch == EOL || (c != OUT && !ISWORD(c))) ) {
 			flagch = EOW;
 		}
 		if (flagch == BOW || flagch == EOW) {
@@ -795,7 +795,7 @@ sopno stopst;
 
 /*
  - step - map set of states reachable before char to set reachable after
- == static states step(register struct re_guts *g, int start, int stop, \
+ == static states step(register struct re_guts *g, sopno start, sopno stop, \
  ==	register states bef, int ch, register states aft);
  == #define	BOL	(OUT+1)
  == #define	EOL	(BOL+1)
@@ -810,8 +810,8 @@ sopno stopst;
 static states
 step(g, start, stop, bef, ch, aft)
 register struct re_guts *g;
-int start;			/* start state within strip */
-int stop;			/* state after stop state within strip */
+sopno start;			/* start state within strip */
+sopno stop;			/* state after stop state within strip */
 register states bef;		/* states reachable before */
 int ch;				/* character or NONCHAR code */
 register states aft;		/* states already known reachable after */
