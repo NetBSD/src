@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16.2.3 1998/11/10 18:49:11 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.16.2.4 1998/11/15 19:15:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16.2.3 1998/11/10 18:49:11 cgd Exp $");
+__RCSID("$NetBSD: util.c,v 1.16.2.4 1998/11/15 19:15:08 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -930,8 +930,10 @@ void
 controlediting()
 {
 	if (editing && el == NULL && hist == NULL) {
+#ifdef H_SETSIZE
 		HistEvent ev;
-		int editmode;
+#endif
+		int editmode = 0;
 
 #ifdef EL_EDITMODE /* hack */
 		el = el_init(__progname, stdin, ttyout, stderr);
