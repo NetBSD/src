@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.1 1996/09/07 19:05:33 mycroft Exp $
+.\"	$NetBSD: poll.2,v 1.2 1996/09/07 21:50:07 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
 .\"
@@ -115,8 +115,10 @@ bitmask.
 .Pp
 If
 .Fa timeout
-is non-zero, it specifies a maximum interval to wait for any file
-descriptor to become ready.  If
+is neither zero nor INFTIM (-1), it specifies a maximum interval to
+wait for any file descriptor to become ready.  If
+.Fa timeout
+is INFTIM (-1), the poll blocks indefinitely.  If
 .Fa timeout
 is zero, then
 .Fn poll
