@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.2 2004/03/15 23:38:16 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.3 2004/04/04 17:49:38 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.2 2004/03/15 23:38:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3 2004/04/04 17:49:38 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.2 2004/03/15 23:38:16 uwe Exp $");
 
 /*
  * LCD contrast: controlled by pins 6,5,4,3 HD64461 GPIO port B.
- * 6th is the most significant bit, 3rd is the least significant.
+ * 6th is the least significant bit, 3rd is the most significant.
  * The bits are inverted: .1111... = 0, .0111... = 1, etc.
  *
  * We control the contrast value by setting bits in the data register
