@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 1997/11/02 05:16:25 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 1997/11/03 16:08:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,6 +68,18 @@
  *       pmegs that aren't needed by a pmap remain in the MMU.
  *       quick context switches between pmaps
  *       kernel is in all contexts
+ */
+
+/*
+ * Project:  Use a "null" context for processes that have not
+ * touched any user-space address recently.  This is efficient
+ * for things that stay in the kernel for a while, waking up
+ * to handle some I/O then going back to sleep (i.e. nfsd).
+ * If and when such a process returns to user-mode, it will
+ * fault and be given a real context at that time.
+ *
+ * This also lets context switch be fast, because all we need
+ * to do there for the MMU is slam the context register.
  */
 
 #include <sys/param.h>
@@ -292,9 +304,6 @@ pv_entry_t pv_head_table = NULL;
 #define PV_REF    0x02
 #define PV_MOD    0x01
 
-#define MAKE_PV_REAL(pv_flags) ((pv_flags & PV_PERM) << PV_SHIFT)
-#define PG_TO_PV_FLAGS(pte) (((PG_PERM) & pte) >> PV_SHIFT)
-
 
 /*
  * context structures, and queues
@@ -307,8 +316,10 @@ struct context_state {
 };
 typedef struct context_state *context_t;
 
-#define	CTXINVAL -1
-#define	has_context(pmap)	(pmap->pm_ctxnum >= 0)
+#define INVALID_CONTEXT -1	/* impossible value */
+#define EMPTY_CONTEXT 0
+#define FIRST_CONTEXT 1
+#define	has_context(pmap)	((pmap)->pm_ctxnum != EMPTY_CONTEXT)
 
 TAILQ_HEAD(context_tailq, context_state)
 	context_free_queue, context_active_queue;
@@ -413,6 +424,26 @@ static void pmeg_verify_empty __P((vm_offset_t va));
  * Various in-line helper functions.
  */
 
+static inline pmap_t
+current_pmap __P((void))
+{
+	struct proc *p;
+	struct vmspace *vm;
+	vm_map_t	map;
+	pmap_t	pmap;
+
+	p = curproc;	/* XXX */
+	if (p == NULL)
+		pmap = kernel_pmap;
+	else {
+		vm = p->p_vmspace;
+		map = &vm->vm_map;
+		pmap = vm_map_pmap(map);
+	}
+
+	return (pmap);
+}
+
 #ifdef	DIAGNOSTIC
 static struct pv_entry *
 pa_to_pvp(vm_offset_t pa)
@@ -494,7 +525,10 @@ context_init()
 	TAILQ_INIT(&context_free_queue);
 	TAILQ_INIT(&context_active_queue);
 
-	for (i=0; i < NCONTEXT; i++) {
+	/* Leave EMPTY_CONTEXT out of the free list. */
+	context_array[0].context_upmap = kernel_pmap;
+
+	for (i = 1; i < NCONTEXT; i++) {
 		context_array[i].context_num = i;
 		context_array[i].context_upmap = NULL;
 		TAILQ_INSERT_TAIL(&context_free_queue, &context_array[i],
@@ -571,7 +605,7 @@ context_free(pmap)		/* :) */
 	CHECK_SPL();
 
 	ctxnum = pmap->pm_ctxnum;
-	if (ctxnum < 0 || ctxnum >= NCONTEXT)
+	if (ctxnum < FIRST_CONTEXT || ctxnum >= NCONTEXT)
 		panic("pmap: context_free ctxnum");
 	contextp = &context_array[ctxnum];
 
@@ -612,6 +646,7 @@ context_free(pmap)		/* :) */
 		/* Did cache flush above (whole context). */
 		set_segmap(va, SEGINV);
 		/* In this case, do not clear pm_segmap. */
+		/* XXX: Maybe inline this call? */
 		pmeg_release(pmeg_p(sme));
 	}
 
@@ -620,7 +655,7 @@ context_free(pmap)		/* :) */
 
 	/* Dequeue, update, requeue. */
 	TAILQ_REMOVE(&context_active_queue, contextp, context_link);
-	pmap->pm_ctxnum = CTXINVAL;
+	pmap->pm_ctxnum = EMPTY_CONTEXT;
 	contextp->context_upmap = NULL;
 	TAILQ_INSERT_TAIL(&context_free_queue, contextp, context_link);
 }
@@ -1495,7 +1530,7 @@ pmap_common_init(pmap)
 	bzero(pmap, sizeof(struct pmap));
 	pmap->pm_refcount=1;
 	pmap->pm_version = pmap_version++;
-	pmap->pm_ctxnum = CTXINVAL;
+	pmap->pm_ctxnum = EMPTY_CONTEXT;
 	simple_lock_init(&pmap->pm_lock);
 }
 
@@ -1726,6 +1761,9 @@ pmap_bootstrap(nextva)
 	 * Reserve a segment for the kernel to use to access a pmeg
 	 * that is not currently mapped into any context/segmap.
 	 * The kernel temporarily maps such a pmeg into this segment.
+	 *
+	 * XXX: Now that context zero is reserved as kernel-only,
+	 * we could borrow context zero for these temporary uses.
 	 */
 	temp_seg_va = virtual_avail;
 	virtual_avail += NBSG;
@@ -2182,6 +2220,7 @@ pmap_remove_mmu(pmap, sva, eva)
 /*
  * Remove some mappings, all in one PMEG,
  * where it is not currently in any context.
+ * XXX: Re-work this so it borrows context zero.
  */
 void
 pmap_remove_noctx(pmap, sva, eva)
@@ -2264,7 +2303,7 @@ pmap_remove1(pmap, sva, eva)
 	/* It is a user pmap. */
 
 	/* There is a PMEG, but maybe not active. */
-	old_ctx = CTXINVAL;
+	old_ctx = INVALID_CONTEXT;
 	in_ctx = FALSE;
 	if (has_context(pmap)) {
 		/* Temporary context change. */
@@ -2280,7 +2319,7 @@ pmap_remove1(pmap, sva, eva)
 	else
 		pmap_remove_noctx(pmap, sva, eva);
 
-	if (old_ctx != CTXINVAL) {
+	if (old_ctx != INVALID_CONTEXT) {
 		/* Restore previous context. */
 		set_context(old_ctx);
 	}
@@ -2418,10 +2457,9 @@ pmap_enter_kernel(pgva, pa, prot, wired, new_pte)
 #endif
 
 	/*
-	 * Found existing PMEG.  Does mapping already exist?
-	 *	(a) if so, is it same pa then really a protection change
-	 *	(b) if not same, pa then we have to unlink from old pa
-	 *	(c)
+	 * We have a PMEG.  Is the VA already mapped to somewhere?
+	 *	(a) if so, is it same pa? (really a protection change)
+	 *	(b) if not same pa, then we have to unlink from old pa
 	 */
 	old_pte = get_pte(pgva);
 	if ((old_pte & PG_VALID) == 0)
@@ -2471,7 +2509,7 @@ pmap_enter_kernel(pgva, pa, prot, wired, new_pte)
 		do_pv = FALSE;
 	}
 	if (do_pv) {
-		int nc = PG_TO_PV_FLAGS(new_pte & PG_NC);
+		int nc = (new_pte & PG_NC) ? PV_NC : 0;
 		nc = pv_link(kernel_pmap, pa, pgva, nc);
 		if (nc & PV_NC)
 			new_pte |= PG_NC;
@@ -2497,7 +2535,7 @@ pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
 	boolean_t wired;
 	int new_pte;
 {
-	int do_pv, old_pte, sme, old_ctx;
+	int do_pv, old_pte, sme;
 	vm_offset_t segva;
 	pmeg_t pmegp;
 
@@ -2525,34 +2563,43 @@ pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
 	}
 #endif
 
+	/* Validate this assumption. */
+	if (pmap != current_pmap()) {
+#ifdef	PMAP_DEBUG
+		/* XXX: does this ever happen? */
+		db_printf("pmap_enter_user: not curproc\n");
+		Debugger();
+#endif
+		/* XXX: Just throw it out (fault it in later). */
+		/* XXX: But must remember it if wired... */
+		return;
+	}
+
 	segva = m68k_trunc_seg(pgva);
 	do_pv = TRUE;
 
 	/*
-	 * Make sure the current context is correct.
-	 * Even though we call pmap_activate when we switch
-	 * to a new process, the VM system occasionally will
-	 * activate enough other pmaps that we can loose our
-	 * own context and have to reallocate one here.
+	 * If this pmap was sharing the "empty" context,
+	 * allocate a real context for its exclusive use.
 	 */
-	old_ctx = get_context();
-	if (old_ctx != pmap->pm_ctxnum) {
+	if (!has_context(pmap)) {
+		context_allocate(pmap);
+#ifdef PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("pmap_enter(%p) got context %d\n",
+				   pmap, pmap->pm_ctxnum);
+#endif
+		set_context(pmap->pm_ctxnum);
+	} else {
 #ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH) {
+		/* Make sure context is correct. */
+		if (pmap->pm_ctxnum != get_context()) {
 			db_printf("pmap_enter_user: wrong context\n");
 			Debugger();
+			/* XXX: OK to proceed? */
+			set_context(pmap->pm_ctxnum);
 		}
 #endif
-		if (!has_context(pmap)) {
-#ifdef	PMAP_DEBUG
-			if (pmap_debug & PMD_SWITCH) {
-				db_printf("pmap_enter_user: pmap without context\n");
-				Debugger();
-			}
-#endif
-			context_allocate(pmap);
-		}
-		set_context(pmap->pm_ctxnum);
 	}
 
 	/*
@@ -2646,7 +2693,7 @@ pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
 		do_pv = FALSE;
 	}
 	if (do_pv) {
-		int nc = PG_TO_PV_FLAGS(new_pte & PG_NC);
+		int nc = (new_pte & PG_NC) ? PV_NC : 0;
 		nc = pv_link(pmap, pa, pgva, nc);
 		if (nc & PV_NC)
 			new_pte |= PG_NC;
@@ -2660,8 +2707,6 @@ pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
 	/* cache flush done above */
 	set_pte(pgva, new_pte);
 	pmegp->pmeg_vpages++;
-
-	set_context(old_ctx);	/* XXX */
 }
 
 /*
@@ -2816,11 +2861,30 @@ pmap_fault_reload(pmap, pgva, ftype)
 
 	s = splpmap();
 
-#ifdef	DIAGNOSTIC
-	/* Make sure context is correct. */
-	if (pmap->pm_ctxnum != get_context())
-		panic("pmap_fault_reload: wrong context");
+	/*
+	 * Given that we faulted on a user-space address, we will
+	 * probably need a context.  Get a context now so we can
+	 * try to resolve the fault with a segmap reload.
+	 */
+	if (!has_context(pmap)) {
+		context_allocate(pmap);
+#ifdef PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("pmap_fault(%p) got context %d\n",
+				   pmap, pmap->pm_ctxnum);
 #endif
+		set_context(pmap->pm_ctxnum);
+	} else {
+#ifdef	PMAP_DEBUG
+		/* Make sure context is correct. */
+		if (pmap->pm_ctxnum != get_context()) {
+			db_printf("pmap_fault_reload: wrong context\n");
+			Debugger();
+			/* XXX: OK to proceed? */
+			set_context(pmap->pm_ctxnum);
+		}
+#endif
+	}
 
 	sme = get_segmap(segva);
 	if (sme == SEGINV) {
@@ -2942,42 +3006,20 @@ pmap_is_referenced(pa)
 /*
  * This is called by locore.s:cpu_switch() when it is
  * switching to a new process.  Load new translations.
+ *
+ * Note that we do NOT allocate a context here, but
+ * share the "kernel only" context until we really
+ * need our own context for user-space mappings in
+ * pmap_enter_user().
  */
 void
 pmap_activate(pmap)
 	pmap_t pmap;
 {
-	int old_ctx;
 
 	CHECK_SPL();
-	old_ctx = get_context();
-
-	/*
-	 * XXX - Should delay context allocation until later,
-	 * when pmap_enter() is called for this pmap.  That
-	 * could be arranged using a "kernel only" context
-	 * (one with no user-space mappings) for all pmaps
-	 * that do not yet have a "real" context.
-	 */
-	if (!has_context(pmap)) {
-		context_allocate(pmap);
-#ifdef PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH)
-			printf("pmap_activate(%p) takes context %d\n",
-				   pmap, pmap->pm_ctxnum);
-#endif
-	}
-
-	if (pmap->pm_ctxnum != old_ctx) {
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH) {
-			printf("pmap_activate(%p) old_ctx=%d new_ctx=%d\n",
-				   pmap, old_ctx, pmap->pm_ctxnum);
-		}
-#endif
-		set_context(pmap->pm_ctxnum);
-		ICIA();
-	}
+	set_context(pmap->pm_ctxnum);
+	ICIA();
 }
 
 
@@ -3243,6 +3285,7 @@ pmap_protect_mmu(pmap, sva, eva)
 /*
  * Remove write permissions, all in one PMEG,
  * where it is not currently in any context.
+ * XXX: Re-work this so it borrows context zero.
  */
 void
 pmap_protect_noctx(pmap, sva, eva)
@@ -3312,7 +3355,7 @@ pmap_protect1(pmap, sva, eva)
 	/* It is a user pmap. */
 
 	/* There is a PMEG, but maybe not active. */
-	old_ctx = CTXINVAL;
+	old_ctx = INVALID_CONTEXT;
 	in_ctx = FALSE;
 	if (has_context(pmap)) {
 		/* Temporary context change. */
@@ -3328,7 +3371,7 @@ pmap_protect1(pmap, sva, eva)
 	else
 		pmap_protect_noctx(pmap, sva, eva);
 
-	if (old_ctx != CTXINVAL) {
+	if (old_ctx != INVALID_CONTEXT) {
 		/* Restore previous context. */
 		set_context(old_ctx);
 	}
@@ -3633,6 +3676,7 @@ pmap_get_pagemap(pt, off)
 
 /*
  * Helper functions for changing unloaded PMEGs
+ * XXX: These should go away.  (Borrow context zero instead.)
  */
 
 static int temp_seg_inuse;
