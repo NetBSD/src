@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.157 2002/06/11 11:37:01 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.158 2002/07/17 02:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -248,6 +248,10 @@ _mapme:
 #endif
 #endif
 
+#if !defined(SUN4D)
+sun4d_notsup:
+	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4d) cr"
+#endif
 #if !defined(SUN4M)
 sun4m_notsup:
 	.asciz	"cr .( NetBSD/sparc: this kernel does not support the sun4m) cr"
@@ -3495,9 +3499,10 @@ dostart:
 	be	is_sun4
 	 nop
 
-#if defined(SUN4C) || defined(SUN4M)
+#if defined(SUN4C) || defined(SUN4M) || defined(SUN4D)
 	/*
 	 * Be prepared to get OF client entry in either %o0 or %o3.
+	 * XXX Will this ever trip on sun4d?  Let's hope not!
 	 */
 	cmp	%o0, 0
 	be	is_openfirm
@@ -3513,7 +3518,7 @@ dostart:
 	 nop				! }
 
 	/*
-	 * are we on a sun4c or a sun4m?
+	 * are we on a sun4c or a sun4m or a sun4d?
 	 */
 	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
 	ld	[%o4 + NO_NEXTNODE], %o4
@@ -3535,9 +3540,15 @@ dostart:
 	cmp	%o0, 'm'
 	be	is_sun4m
 	 nop
-#endif /* SUN4C || SUN4M */
+	cmp	%o0, 'd'
+	be	is_sun4d
+	 nop
+#endif /* SUN4C || SUN4M || SUN4D */
 
-	! ``on a sun4d?!  hell no!''
+	/*
+	 * Don't know what type of machine this is; just halt back
+	 * out to the PROM.
+	 */
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
@@ -3558,6 +3569,22 @@ is_sun4m:
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+	/*NOTREACHED*/
+#endif
+is_sun4d:
+#if defined(SUN4D)
+	set	trapbase_sun4d, %g6
+	mov	SUN4CM_PGSHIFT, %g5
+	b	start_havetype
+	 mov	CPU_SUN4D, %g4
+#else
+	set	sun4d_notsup-KERNBASE, %o0
+	ld	[%g7 + PV_EVAL], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4d architecture is not supported
 	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
