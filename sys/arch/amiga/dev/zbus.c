@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.37 1998/01/12 10:40:15 thorpej Exp $	*/
+/*	$NetBSD: zbus.c,v 1.38 1998/11/11 22:28:32 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -106,6 +106,8 @@ static struct aconfdata aconftab[] = {
 	{ "ed",		1023,	254 },
 	/* Village Tronic Ariadne */
 	{ "le",		2167,	201},
+	/* Village Tronic Ariadne II */
+	{ "ne",		2167,	202},
 	/* bsc/Alf Data */
 	{ "Tandem", 2092,    6 },	/* Tandem AT disk controler */
 	{ "mfc",	2092,	16 },
