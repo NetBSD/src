@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/28/93
+#	from: @(#)Makefile	8.1 (Berkeley) 6/28/93
+#	$Id: Makefile,v 1.6 1994/06/13 20:50:07 mycroft Exp $
 
 .include "../config/Makefile.config"
 

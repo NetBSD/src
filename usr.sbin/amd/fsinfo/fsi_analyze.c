@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_analyze.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: fsi_analyze.c,v 1.2 1994/06/13 19:49:29 mycroft Exp $
- *
+ *	from: @(#)fsi_analyze.c	8.1 (Berkeley) 6/6/93
+ *	$Id: fsi_analyze.c,v 1.3 1994/06/13 20:50:08 mycroft Exp $
  */
 
 /*

@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_dict.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: fsi_dict.c,v 1.2 1994/06/13 19:49:31 mycroft Exp $
- *
+ *	from: @(#)fsi_dict.c	8.1 (Berkeley) 6/6/93
+ *	$Id: fsi_dict.c,v 1.3 1994/06/13 20:50:11 mycroft Exp $
  */
 
 /*

@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)am.h	5.6 (Berkeley) 6/6/93
- *
- * $Id: am.h,v 1.2 1994/06/13 19:50:03 mycroft Exp $
+ *	from: @(#)am.h	5.6 (Berkeley) 6/6/93
+ *	$Id: am.h,v 1.3 1994/06/13 20:50:34 mycroft Exp $
  *
  */
 
