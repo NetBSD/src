@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.40 2001/09/07 17:10:13 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.41 2001/09/10 07:29:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -439,6 +439,10 @@ egavga_unreffont(vc, f)
 #endif
 	if (f->usecount == 0 && f != &vga_builtinfont) {
 		TAILQ_REMOVE(&vc->vc_fontlist, f, next);
+		if (f->slot != -1) {
+			KASSERT(vc->vc_fonts[f->slot] == f);
+			vc->vc_fonts[f->slot] = 0;
+		}
 		wsfont_unlock(f->cookie);
 #ifdef VGA_CONSOLE_SCREENTYPE
 		if (f != &vga_consolefont)
