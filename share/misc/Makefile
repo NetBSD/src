@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.6 1994/03/08 07:15:21 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/03/26 03:24:50 cgd Exp $
 
-FILES=	airport ascii birthtoken eqnchar inter.phone man.template \
+FILES=	airport ascii birthtoken eqnchar getopt inter.phone man.template \
 	mdoc.template na.phone operator style zipcodes
 NOOBJ=	noobj
 
