@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 2000/09/20 19:53:36 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.38 2000/09/26 23:12:45 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,6 +64,7 @@ static int mbr_part_above_chs __P((struct mbr_partition *));
 static int mbr_partstart_above_chs __P((struct mbr_partition *));
 static void configure_bootsel __P((void));
 static void md_upgrade_mbrtype __P((void));
+static void md_enable_swap __P((partinfo *pp));
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -175,6 +176,8 @@ md_pre_disklabel()
 int
 md_post_disklabel(void)
 {
+	md_enable_swap(bsdlabel);
+
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		msg_display(MSG_dobad144);
@@ -420,6 +423,38 @@ custom:		ask_sizemult(dlcylsize);
 
 	/* Everything looks OK. */
 	return (1);
+}
+
+static void
+md_enable_swap(pp)
+	partinfo *pp;
+{
+	partinfo parts[16];
+	int i, maxpart;
+
+	if (pp == NULL) {
+		emptylabel(parts);
+		if (incorelabel(diskdev, parts) < 0)
+			return;
+		pp = parts;
+	}
+
+	maxpart = getmaxpartitions();
+
+	for (i = 0; i < maxpart; i++) {
+		if (pp[i].pi_fstype == FS_SWAP) {
+			run_prog(0, 0, NULL,
+			    "/sbin/swapctl -a /dev/%s%c", diskdev, 'a' + i);
+			break;
+		}
+	}
+}
+
+int
+md_pre_update(void)
+{
+	md_enable_swap(NULL);
+	return 1;
 }
 
 
