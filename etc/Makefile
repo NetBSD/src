@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.288 2004/05/17 07:00:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.289 2004/06/20 21:30:26 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -93,7 +93,6 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	rc.lkm rc.local rc.subr rc.shutdown remote rpc \
 	security security.conf services shells sysctl.conf syslog.conf \
 	weekly weekly.conf wscons.conf \
-	etc.${MACHINE}/ttys
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)
@@ -149,12 +148,15 @@ distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
-CLEANFILES+=	MAKEDEV
+CLEANFILES+=	MAKEDEV ttys
 MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
+
+ttys: mkttys etc.${MACHINE}/ttys
+	${HOST_SH} ${.ALLSRC} > ${.TARGET}
 
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
@@ -210,7 +212,7 @@ install-etc-release: .PHONY etc-release
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: .PHONY check_DESTDIR MAKEDEV
+install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${BIN1} ${DESTDIR}/etc
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 \
@@ -234,6 +236,8 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ttys ${DESTDIR}/etc
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
