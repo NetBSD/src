@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.1 2000/08/20 19:58:19 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2 2000/08/20 20:01:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,11 @@
 
 #include <machine/conf.h>
 
+static void	cgthreeunblank(struct device *);
+static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
+static void	cgthree_set_video(struct cgthree_softc *, int);
+static int	cgthree_get_video(struct cgthree_softc *);
+
 /* cdevsw prototypes */
 cdev_decl(cgthree);
 
@@ -77,11 +82,6 @@ static struct fbdriver cgthreefbdriver = {
 	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
 	cgthreemmap
 };
-
-static void	cgthreeunblank(struct device *);
-static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
-static void	cgthree_set_video(struct cgthree_softc *, int);
-static int	cgthree_get_video(struct cgthree_softc *);
 
 /* Video control parameters */
 struct cg3_videoctrl {
