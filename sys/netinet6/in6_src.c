@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_src.c,v 1.1 2000/06/03 14:36:36 itojun Exp $	*/
-/*	$KAME: in6_src.c,v 1.15 2000/05/30 10:16:24 jinmei Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.1.2.1 2000/08/27 01:11:27 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.27 2000/06/21 08:07:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -342,8 +342,10 @@ in6_pcbsetport(laddr, in6p)
 		wild = IN6PLOOKUP_WILDCARD;
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
+#ifndef IPNOPRIVPORTS
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
+#endif
 		min = IPV6PORT_RESERVEDMIN;
 		max = IPV6PORT_RESERVEDMAX;
 	} else {
