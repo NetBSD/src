@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.17 2002/06/18 23:46:52 wrstuden Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.18 2002/07/02 19:52:16 wrstuden Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -298,14 +298,10 @@ EXTRA_CLEAN+= cscope.out
 #
 cscope.out: Makefile
 	@echo Building cscope.out source database
-	@${MAKE} LIBKERNSRC="`${KERNMAKE} showsources`" \
-		LIBCOMPATSRC="`${COMPATMAKE} showsources`" cscope.out1
-
-.PHONY: cscope.out1
-cscope.out1:
-	@echo ${SRCS} ${LIBKERNSRC:S|^|${KERNDST}/|} \
-		${LIBCOMPATSRC:S|^|${COMPATDST}/|} \
-		| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
+	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
+	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
+	sed "s|^../../||" | sort -u` \
+	| ${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
 #	cscope doesn't write cscope.out if it's uptodate, so ensure
 #	make doesn't keep calling cscope when not needed.
 	@touch cscope.out
@@ -324,17 +320,11 @@ mkid: ID
 ID: Makefile depend
 # Same dance as cscope.out/cscope.out1
 	@echo Building mkid database
-	@${MAKE} LIBKERNSRC="`${KERNMAKE} showsources`" \
-		LIBCOMPATSRC="`${COMPATMAKE} showsources`" \
-		LIBKERNDEPEND="`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern//.depend | tr ' ' '\n' | sort -u`" \
-		LIBCOMPDEPEND="`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/compat/.depend | tr ' ' '\n' | sort -u`" ID1
+	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
+	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
+	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
+	| sort -u`
 
-.PHONY: ID1
-ID1:
-	@${MKID} ${SRCS} ${LIBKERNSRC:S|^|${KERNDST}/|} \
-		${LIBCOMPATSRC:S|^|${COMPATDST}/|} \
-		${LIBKERNDEPEND:S|^../../||} ${LIBCOMPDEPEND:S|^../../||} \
-	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' | sort -u`
 .endif
 
 ##
