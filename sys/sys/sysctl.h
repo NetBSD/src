@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.30 1998/07/04 22:18:52 jonathan Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.31 1998/08/03 14:38:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,7 +146,9 @@ struct ctlname {
 #define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
 #define	KERN_SHORTCORENAME	36	/* int: programs dump core as "core" */
-#define	KERN_MAXID		37	/* number of valid kern ids */
+#define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
+#define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
+#define	KERN_MAXID		39	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -186,6 +188,8 @@ struct ctlname {
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
 	{ "shortcorename", CTLTYPE_INT }, \
+	{ "synchronized_io", CTLTYPE_INT }, \
+	{ "iov_max", CTLTYPE_INT }, \
 }
 
 /*
