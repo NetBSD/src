@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.28 2001/01/23 01:56:16 thorpej Exp $	*/
 
 /*
  *
@@ -260,6 +260,8 @@ amap_free(amap)
 		panic("amap_free");
 #endif
 
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
 	free(amap->am_anon, M_UVMAMAP);
@@ -465,6 +467,8 @@ amap_share_protect(entry, prot)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
 
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_pageoff + slots;
 
@@ -507,6 +511,8 @@ amap_wipeout(amap)
 	struct vm_anon *anon;
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
+
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
@@ -794,9 +800,10 @@ ReStart:
 			 * ok, time to do a copy-on-write to a new anon
 			 */
 			nanon = uvm_analloc();
-			if (nanon)
+			if (nanon) {
+				simple_lock(&nanon->an_lock);
 				npg = uvm_pagealloc(NULL, 0, nanon, 0);
-			else
+			} else
 				npg = NULL;	/* XXX: quiet gcc warning */
 
 			if (nanon == NULL || npg == NULL) {
@@ -806,7 +813,8 @@ ReStart:
 				 * we can't ...
 				 */
 				if (nanon) {
-					simple_lock(&nanon->an_lock);
+					nanon->an_ref--;
+					simple_unlock(&nanon->an_lock);
 					uvm_anfree(nanon);
 				}
 				simple_unlock(&anon->an_lock);
@@ -833,6 +841,7 @@ ReStart:
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);
 			uvm_unlock_pageq();
+			simple_unlock(&nanon->an_lock);
 		}
 
 		simple_unlock(&anon->an_lock);
