@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.35 1995/04/10 00:46:51 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.36 1995/06/20 10:42:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -777,7 +777,7 @@ count_lock_queue()
 	return (n);
 }
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 /*
  * Print out statistics on the current allocation of the buffer pool.
  * Can be enabled to print out on every ``sync'' by setting "syncprt"
@@ -809,4 +809,4 @@ vfs_bufstats()
 		printf("\n");
 	}
 }
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG */
