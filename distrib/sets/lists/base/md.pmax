@@ -1,7 +1,6 @@
-# $NetBSD: md.pmax,v 1.37 2001/01/26 01:37:19 jwise Exp $
+# $NetBSD: md.pmax,v 1.38 2002/05/08 04:05:41 lukem Exp $
 ./boot.pmax			base-sysutil-bin
 ./usr/mdec/boot.pmax		base-sysutil-bin
 ./usr/mdec/bootxx_cd9660	base-sysutil-bin
 ./usr/mdec/bootxx_ffs		base-sysutil-bin
 ./usr/mdec/bootxx_lfs		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
