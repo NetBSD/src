@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.71 2003/01/01 00:10:27 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.72 2003/01/20 02:16:55 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.71 2003/01/01 00:10:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.72 2003/01/20 02:16:55 simonb Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -281,7 +281,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 void
 wsscreen_detach(struct wsscreen *scr)
 {
-	int ccol, crow; /* XXX */
+	u_int ccol, crow; /* XXX */
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		tty_detach(scr->scr_tty);
@@ -1384,7 +1384,7 @@ wsdisplay_emulinput(void *v, const u_char *data, u_int count)
 	tp = scr->scr_tty;
 	while (count-- > 0)
 		(*tp->t_linesw->l_rint)(*data++, tp);
-};
+}
 
 /*
  * Calls from the keyboard interface.
@@ -1823,7 +1823,7 @@ void
 wsdisplay_cnputc(dev_t dev, int i)
 {
 	struct wsscreen_internal *dc;
-	char c = i;
+	u_char c = i;
 
 	if (!wsdisplay_console_initted)
 		return;
