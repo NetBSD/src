@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.169 2002/05/31 13:29:19 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.170 2002/06/01 21:03:14 itojun Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -397,6 +397,7 @@ product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Syste
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" } CNet CN40BC NE2000 Compatible
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega Ether PCC-T
 product COREGA ETHER_PCC_TD	{ "corega&spK.K.", "corega&spEther&spPCC-TD", NULL, NULL } Corega Ether PCC-TD
+product COREGA ETHER_II_PCC_TD	{ "corega&spK.K.", "corega&spEtherII&spPCC-TD", NULL, NULL } Corega EtherII PCC-TD
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL } Corega EtherII PCC-T
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL } Corega FastEther PCC-TX
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL } Corega FEther PCC-TXD
