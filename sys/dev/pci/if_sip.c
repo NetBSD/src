@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11.4.5 2001/03/13 20:26:01 he Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.11.4.6 2001/10/27 17:55:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -86,14 +86,18 @@
 
 #include <dev/pci/if_sipreg.h>
 
+#if !defined(IF_POLL)
+#define IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
+#endif
+
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
  * enough descriptors for 64 pending transmissions, and 16 segments
  * per packet.  This MUST work out to a power of 2.
  */
-#define	SIP_NTXSEGS		16
+#define	SIP_NTXSEGS		8
 
-#define	SIP_TXQUEUELEN		64
+#define	SIP_TXQUEUELEN		256
 #define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
@@ -102,7 +106,7 @@
  * Receive descriptor list size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
  */
-#define	SIP_NRXDESC		64
+#define	SIP_NRXDESC		128
 #define	SIP_NRXDESC_MASK	(SIP_NRXDESC - 1)
 #define	SIP_NEXTRX(x)		(((x) + 1) & SIP_NRXDESC_MASK)
 
@@ -675,12 +679,15 @@ sip_start(ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
-	       sc->sc_txfree != 0) {
+	for (;;) {
+		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
+			break;
+		}
+
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IF_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -698,7 +705,6 @@ sip_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -707,29 +713,27 @@ sip_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m0, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
 
 		/*
 		 * Ensure we have enough descriptors free to describe
-		 * the packet.
+		 * the packet.  Note, we always reserve one descriptor
+		 * at the end of the ring as a termination point, to
+		 * prevent wrap-around.
 		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
+		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed anything yet,
@@ -742,10 +746,16 @@ sip_start(ifp)
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			IF_PREPEND(&ifp->if_snd, m0);
+			if (m != NULL)
+				m_freem(m);
 			break;
 		}
 
+		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
+		}
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
@@ -828,13 +838,31 @@ sip_start(ifp)
 		SIP_CDTXSYNC(sc, firsttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		/* Start the transmit process. */
+		/*
+		 * Start the transmit process.  Note, the manual says
+		 * that if there are no pending transmissions in the
+		 * chip's internal queue (indicated by TXE being clear),
+		 * then the driver software must set the TXDP to the
+		 * first descriptor to be transmitted.  However, if we
+		 * do this, it causes serious performance degredation on
+		 * the DP83820 under load, not setting TXDP doesn't seem
+		 * to adversely affect the SiS 900 or DP83815.
+		 *
+		 * Well, I guess it wouldn't be the first time a manual
+		 * has lied -- and they could be speaking of the NULL-
+		 * terminated descriptor list case, rather than OWN-
+		 * terminated rings.
+		 */
+#if 0
 		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CR) &
 		     CR_TXE) == 0) {
 			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXDP,
 			    SIP_CDTXADDR(sc, firsttx));
 			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_TXE);
 		}
+#else
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_TXE);
+#endif
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1136,15 +1164,16 @@ sip_txintr(sc)
 		 */
 		if (cmdsts &
 		    (CMDSTS_Tx_TXA|CMDSTS_Tx_TFU|CMDSTS_Tx_ED|CMDSTS_Tx_EC)) {
+			ifp->if_opackets++;
+			if (cmdsts & CMDSTS_Tx_EC)
+				ifp->if_collisions += 16;
 			if (ifp->if_flags & IFF_DEBUG) {
-				if (CMDSTS_Tx_ED)
+				if (cmdsts & CMDSTS_Tx_ED)
 					printf("%s: excessive deferral\n",
 					    sc->sc_dev.dv_xname);
-				if (CMDSTS_Tx_EC) {
+				if (cmdsts & CMDSTS_Tx_EC)
 					printf("%s: excessive collisions\n",
 					    sc->sc_dev.dv_xname);
-					ifp->if_collisions += 16;
-				}
 			}
 		} else {
 			/* Packet was transmitted successfully. */
