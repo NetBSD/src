@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.11 1996/06/14 22:22:14 cgd Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.12 1996/09/08 14:28:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -392,8 +392,8 @@ tp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct tp_pcb *tpcb = sototpcb(so);
-	int             s = splsoftnet();
+	register struct tp_pcb *tpcb;
+	int             s;
 	int             error = 0;
 	int             flags, *outflags = &flags;
 	u_long          eotsdu = 0;
@@ -413,35 +413,34 @@ tp_usrreq(so, req, m, nam, control, p)
 	}
 #endif
 
-	if ((u_long) tpcb == 0 && req != PRU_ATTACH) {
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
+
+	s = splsoftnet();
+	tpcb = sototpcb(so);
+	if (tpcb == 0 && req != PRU_ATTACH) {
 #ifdef TPPT
 		if (tp_traceflags[D_REQUEST]) {
 			tptraceTPCB(TPPTusrreq, "req failed NO TPCB[", 0, 0, 0, 0);
 		}
 #endif
-		splx(s);
-		return ENOTCONN;
+		error = EINVAL;
+		goto release;
 	}
+
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (tpcb) {
+		if (tpcb != 0) {
 			error = EISCONN;
-		} else if ((error = tp_attach(so, (long) nam)) == 0)
-			tpcb = sototpcb(so);
+			break;
+		}
+		error = tp_attach(so, (long)nam);
+		if (error)
+			break;
+		tpcb = sototpcb(so);
 		break;
 
-	case PRU_ABORT:	/* called from close() */
-		/*
-		 * called for each incoming connect queued on the parent
-		 * (accepting) socket
-		 */
-		if (tpcb->tp_state == TP_OPEN || tpcb->tp_state == TP_CONFIRMING) {
-			E.TPDU_ATTR(REQ).e_reason = E_TP_NO_SESSION ^ TP_ERROR_MASK;
-			error = DoEvent(T_DISC_req);	/* pretend it was a
-							 * close() */
-			break;
-		}		/* else DROP THROUGH */
 	case PRU_DETACH:	/* called from close() */
 		/* called only after disconnect was called */
 		error = DoEvent(T_DETACH);
@@ -457,16 +456,6 @@ tp_usrreq(so, req, m, nam, control, p)
 			free((caddr_t) tpcb, M_PCB);
 			tpcb = 0;
 		}
-		break;
-
-	case PRU_SHUTDOWN:
-		/*
-		 * recv end may have been released; local credit might be
-		 * zero
-		 */
-	case PRU_DISCONNECT:
-		E.TPDU_ATTR(REQ).e_reason = E_TP_NORMAL_DISC ^ TP_ERROR_MASK;
-		error = DoEvent(T_DISC_req);
 		break;
 
 	case PRU_BIND:
@@ -488,10 +477,6 @@ tp_usrreq(so, req, m, nam, control, p)
 			*tt = tpcb;
 			error = DoEvent(T_LISTEN_req);
 		}
-		break;
-
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;	/* for unix domain sockets */
 		break;
 
 	case PRU_CONNECT:
@@ -565,6 +550,15 @@ tp_usrreq(so, req, m, nam, control, p)
 #endif
 		break;
 
+	case PRU_CONNECT2:
+		error = EOPNOTSUPP;	/* for unix domain sockets */
+		break;
+
+	case PRU_DISCONNECT:
+		E.TPDU_ATTR(REQ).e_reason = E_TP_NORMAL_DISC ^ TP_ERROR_MASK;
+		error = DoEvent(T_DISC_req);
+		break;
+
 	case PRU_ACCEPT:
 		(tpcb->tp_nlproto->nlp_getnetaddr) (tpcb->tp_npcb, nam, TP_FOREIGN);
 #ifdef ARGO_DEBUG
@@ -583,6 +577,15 @@ tp_usrreq(so, req, m, nam, control, p)
 			       &time, lsufx, fsufx, tpcb->tp_fref);
 		}
 #endif
+		break;
+
+	case PRU_SHUTDOWN:
+		/*
+		 * recv end may have been released; local credit might be
+		 * zero
+		 */
+		E.TPDU_ATTR(REQ).e_reason = E_TP_NORMAL_DISC ^ TP_ERROR_MASK;
+		error = DoEvent(T_DISC_req);
 		break;
 
 	case PRU_RCVD:
@@ -712,24 +715,31 @@ tp_usrreq(so, req, m, nam, control, p)
 		}
 		break;
 
+	case PRU_ABORT:	/* called from close() */
+		/*
+		 * called for each incoming connect queued on the parent
+		 * (accepting) socket
+		 */
+		if (tpcb->tp_state == TP_OPEN || tpcb->tp_state == TP_CONFIRMING) {
+			E.TPDU_ATTR(REQ).e_reason = E_TP_NO_SESSION ^ TP_ERROR_MASK;
+			error = DoEvent(T_DISC_req);	/* pretend it was a
+							 * close() */
+		}
+		break;
+
+	case PRU_SENSE:
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
+		splx(s);
+		return (0);
+
 	case PRU_SOCKADDR:
 		(tpcb->tp_nlproto->nlp_getnetaddr) (tpcb->tp_npcb, nam, TP_LOCAL);
 		break;
 
 	case PRU_PEERADDR:
 		(tpcb->tp_nlproto->nlp_getnetaddr) (tpcb->tp_npcb, nam, TP_FOREIGN);
-		break;
-
-	case PRU_CONTROL:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_PROTOSEND:
-	case PRU_PROTORCV:
-	case PRU_SENSE:
-	case PRU_SLOWTIMO:
-	case PRU_FASTTIMO:
-		error = EOPNOTSUPP;
 		break;
 
 	default:
@@ -752,10 +762,7 @@ tp_usrreq(so, req, m, nam, control, p)
 			    tpcb ? tpcb->tp_state : 0);
 	}
 #endif
-	if (control) {
-		m_freem(control);
-		printf("control data unexpectedly retained in tp_usrreq()");
-	}
+release:
 	splx(s);
 	return error;
 }

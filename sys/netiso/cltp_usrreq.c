@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.10 1996/05/22 13:55:47 mycroft Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.11 1996/09/08 14:28:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -298,28 +298,38 @@ cltp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct isopcb *isop = sotoisopcb(so);
-	int             s = 0, error = 0;
+	register struct isopcb *isop;
+	int s;
+	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (iso_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
-	if ((isop == NULL && req != PRU_ATTACH) ||
-	    (control && control->m_len)) {
+
+	s = splsoftnet();
+	isop = sotoisopcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("cltp_usrreq: unexpected control mbuf");
+#endif
+	if (isop == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
+
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (isop != NULL) {
-			error = EINVAL;
+		if (isop != 0) {
+			error = EISCONN;
 			break;
 		}
+		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+			error = soreserve(so, cltp_sendspace, cltp_recvspace);
+			if (error)
+				break;
+		}
 		error = iso_pcballoc(so, &cltb);
-		if (error)
-			break;
-		error = soreserve(so, cltp_sendspace, cltp_recvspace);
 		if (error)
 			break;
 		break;
@@ -337,107 +347,88 @@ cltp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_CONNECT:
-		if (isop->isop_faddr) {
-			error = EISCONN;
-			break;
-		}
 		error = iso_pcbconnect(isop, nam);
-		if (error == 0)
-			soisconnected(so);
+		if (error)
+			break;
+		soisconnected(so);
 		break;
 
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_ACCEPT:
-		error = EOPNOTSUPP;
-		break;
-
 	case PRU_DISCONNECT:
-		if (isop->isop_faddr == 0) {
-			error = ENOTCONN;
-			break;
-		}
+		soisdisconnected(so);
 		iso_pcbdisconnect(isop);
-		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
 		break;
 
+	case PRU_RCVD:
+		error = EOPNOTSUPP;
+		break;
+
 	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		if (nam) {
-			if (isop->isop_faddr) {
+			if ((so->so_state & SS_ISCONNECTED) != 0) {
 				error = EISCONN;
-				break;
+				goto die;
 			}
-			/*
-			 * Must block input while temporarily connected.
-			 */
-			s = splsoftnet();
 			error = iso_pcbconnect(isop, nam);
 			if (error) {
-				splx(s);
+			die:
+				m_freem(m);
 				break;
 			}
 		} else {
-			if (isop->isop_faddr == 0) {
+			if ((so->so_state & SS_ISCONNECTED) == 0) {
 				error = ENOTCONN;
-				break;
+				goto die;
 			}
 		}
 		error = cltp_output(m, isop);
-		m = 0;
-		if (nam) {
+		if (nam)
 			iso_pcbdisconnect(isop);
-			splx(s);
-		}
-		break;
-
-	case PRU_ABORT:
-		soisdisconnected(so);
-		iso_pcbdetach(isop);
-		break;
-
-	case PRU_SOCKADDR:
-		if (isop->isop_laddr)
-			bcopy((caddr_t) isop->isop_laddr, mtod(m, caddr_t),
-			      nam->m_len = isop->isop_laddr->siso_len);
-		break;
-
-	case PRU_PEERADDR:
-		if (isop->isop_faddr)
-			bcopy((caddr_t) isop->isop_faddr, mtod(m, caddr_t),
-			      nam->m_len = isop->isop_faddr->siso_len);
 		break;
 
 	case PRU_SENSE:
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
+		splx(s);
 		return (0);
 
-	case PRU_SENDOOB:
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
+	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_RCVD:
-	case PRU_RCVOOB:
-		return (EOPNOTSUPP);	/* do not free mbuf's */
+	case PRU_SENDOOB:
+		m_freem(control);
+		m_freem(m);
+		error = EOPNOTSUPP;
+		break;
+
+	case PRU_SOCKADDR:
+		iso_getnetaddr(isop, nam, TP_LOCAL);
+		break;
+
+	case PRU_PEERADDR:
+		iso_getnetaddr(isop, nam, TP_FOREIGN);
+		break;
 
 	default:
 		panic("cltp_usrreq");
 	}
+
 release:
-	if (control != NULL)
-		m_freem(control);
-	if (m != NULL)
-		m_freem(m);
+	splx(s);
 	return (error);
 }

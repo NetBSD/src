@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.6 1996/05/22 13:55:53 mycroft Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.7 1996/09/08 14:28:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 
+#include <net/raw_cb.h>
 #include <net/route.h>
 #include <net/if.h>
 
@@ -58,7 +59,8 @@
 
 #include <machine/stdarg.h>
 
-struct isopcb   idrp_isop;
+LIST_HEAD(, rawcb) idrp_pcb;
+struct isopcb idrp_isop;
 static struct sockaddr_iso idrp_addrs[2] =
 {{sizeof(idrp_addrs), AF_ISO,}, {sizeof(idrp_addrs[1]), AF_ISO,}};
 
@@ -69,6 +71,8 @@ void
 idrp_init()
 {
 	extern struct clnl_protosw clnl_protox[256];
+
+	LIST_INIT(&idrp_pcb);
 
 	idrp_isop.isop_next = idrp_isop.isop_prev = &idrp_isop;
 	idrp_isop.isop_faddr = &idrp_isop.isop_sfaddr;
@@ -128,14 +132,13 @@ idrp_output(m, va_alist)
 	va_dcl
 #endif
 {
-	struct mbuf *addr;
 	register struct sockaddr_iso *siso;
 	int             s = splsoftnet(), i;
 	va_list ap;
+
 	va_start(ap, m);
-	addr = va_arg(ap, struct mbuf *);
+	siso = va_arg(ap, struct sockaddr_iso *);
 	va_end(ap);
-	siso = mtod(addr, struct sockaddr_iso *);
 
 	bcopy((caddr_t) & (siso->siso_addr),
 	  (caddr_t) & idrp_isop.isop_sfaddr.siso_addr, 1 + siso->siso_nlen);
@@ -158,7 +161,21 @@ idrp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	int             error = 0;
+	struct rawcb *rp;
+	int error = 0;
+
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
+
+	rp = sotorawcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("idrp_usrreq: unexpected control mbuf");
+#endif
+	if (rp == 0 && req != PRU_ATTACH) {
+		error = EINVAL;
+		goto release;
+	}
 
 	/*
 	 * Note: need to block idrp_input while changing the udp pcb queue
@@ -167,27 +184,55 @@ idrp_usrreq(so, req, m, nam, control, p)
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (idrp_isop.isop_socket != NULL) {
-			error = ENXIO;
+		if (rp != 0) {
+			error = EISCONN;
 			break;
 		}
-		idrp_isop.isop_socket = so;
-		error = soreserve(so, idrp_sendspace, idrp_recvspace);
+		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+			error = soreserve(so, idrp_sendspace, idrp_recvspace);
+			if (error)
+				break;
+		}
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		if (rp == 0) {
+			error = ENOBUFS;
+			break;
+		}
+		bzero(rp, sizeof(*rp));
+		rp->rcb_socket = so;
+		LIST_INSERT_HEAD(&idrp_pcb, rp, rcb_list);
+		so->so_pcb = rp;
+		break;
+
+	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
+		if (nam == NULL) {
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
+		/* error checking here */
+		error = idrp_output(m, mtod(nam, struct sockaddr_iso *));
+		break;
+
+	case PRU_SENDOOB:
+		m_freem(control);
+		m_freem(m);
+		error = EOPNOTSUPP;
+		break;
+
+	case PRU_DETACH:
+		raw_detach(rp);
 		break;
 
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
 		break;
-
-	case PRU_SEND:
-		return (idrp_output(m, nam));
-
-	case PRU_ABORT:
-		soisdisconnected(so);
-	case PRU_DETACH:
-		idrp_isop.isop_socket = 0;
-		break;
-
 
 	case PRU_SENSE:
 		/*
@@ -196,14 +241,10 @@ idrp_usrreq(so, req, m, nam, control, p)
 		return (0);
 
 	default:
-		return (EOPNOTSUPP);	/* do not free mbuf's */
+		error = EOPNOTSUPP;
+		break;
 	}
 
-	if (control) {
-		printf("idrp control data unexpectedly retained\n");
-		m_freem(control);
-	}
-	if (m)
-		m_freem(m);
+release:
 	return (error);
 }
