@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 1999/06/20 06:08:23 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 1999/06/20 06:42:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* pmax machine dependend messages, english */
+/* pmax machine dependent messages, english */
 
 
 message fullpart

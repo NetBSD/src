@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.2 1999/06/20 06:08:21 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.3 1999/06/20 06:42:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* macppc machine dependend messages, french */
+/* macppc machine dependent messages, french */
 
 
 message fullpart

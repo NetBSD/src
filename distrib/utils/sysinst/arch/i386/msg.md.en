@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.14 1999/06/20 06:08:19 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.15 1999/06/20 06:42:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@ in your disk's MBR partition table. Whole-disk installation is
 `dangerously dedicated': it takes over the entire MBR. This WILL
 overwrite all existing data and OSes on the disk. It also prohibits later
 installation of multiple OSes on that disk (unless you overwrite NetBSD and
-re-install using only part of the disk).
+reinstall using only part of the disk).
 
 Which would you like to do?
 }
@@ -56,12 +56,12 @@ message wdtype
 {What kind of disk is %s?}
 
 message sectforward
-{Does your disk to AUTOMATIC sector forwarding?}
+{Does your disk do AUTOMATIC sector forwarding?}
 
 message dlgeom
 {It appears that your disk, %s, has already been labeled with a BSD 
 disklabel and the disklabel reports geometry that is different from
-the the real geometry.  The two geometries are:
+the real geometry.  The two geometries are:
 
 disklabel: %d cylinders, %d heads, %d sectors
 real geom: %d cylinders, %d heads, %d sectors
@@ -85,7 +85,7 @@ the number of cylinders may have been truncated to 1024. This is ok as
 long as the other numbers are correct; only 1024 cylinders can be
 specified in the MBR, the rest will be found in a different way by NetBSD.
 
-If you re-enter the values, make sure that the values are correct and
+If you reenter the values, make sure that the values are correct and
 match those used by other systems on this disk. Values that do not match
 may result in data corruption.
 
@@ -126,10 +126,10 @@ active partition.   The partition table currently looks like:
 }
 
 message reeditpart
-{There are overlaping MBR partitions or do not have exactly one NetBSD 
-partition. You should re-edit the MBR partition table.
+{There are overlapping MBR partitions or there is not exactly one NetBSD
+partition. You should reedit the MBR partition table.
 
-Do you want to re-edit it?
+Do you want to reedit it?
 }
 
 message nobsdpart
@@ -242,7 +242,7 @@ message defbootseloptpart
 {boot off partition %d.\n}
 
 message defbootseloptdisk
-{boot off harddisk %d.\n}
+{boot off hard disk %d.\n}
 
 message bootselitemname
 {Enter name for menu item}
