@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.13 2002/10/12 11:39:54 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.14 2002/10/21 15:37:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -474,12 +474,14 @@ Lbadsw3_panic:
  * another process to run.
  */
 ENTRY(switch_exit)
+	LEA(_C_LABEL(proc0), r1)
 	getcon	kcr0, r0
-	LEA(Lnullpcb,r1)
-	movi	USPACE-8, r3
+	LDPTR	r1, P_ADDR, r1
 	STPTR	r0, CI_CURPCB, r1	/* Set something useful in CURPCB */
-	add	r1, r3, r15		/* Switch to a temporary stack */
-					/* XXX: Should be per cpu... */
+	STPTR	r0, CI_CURPROC, r63	/* No process is current */
+	ld.q	r1, PCB_CTX_SP, r15	/* Switch to proc0's stack */
+	ld.q	r1, PCB_CTX_FP, r14
+
 	LEAF(_C_LABEL(exit2), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
@@ -495,9 +497,6 @@ ENTRY(switch_exit)
 
 	pta/l	Lsw1, tr0
 	blink	tr0, r63
-
-	.comm	Lnullpcb,USPACE,0
-
 
 
 /******************************************************************************
