@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2000/06/15 13:35:34 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46 2000/09/06 19:09:46 thorpej Exp $	*/
 
 /*
  *
@@ -193,21 +193,12 @@
  *
  *  vtopte: return a pointer to the PTE mapping a VA
  *  kvtopte: same as above (takes a KVA, but doesn't matter with this pmap)
- *  ptetov: given a pointer to a PTE, return the VA that it maps
- *  vtophys: translate a VA to the PA mapped to it
  *
  * plus alternative versions of the above
  */
 
 #define vtopte(VA)	(PTE_BASE + i386_btop(VA))
 #define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(i386_ptob(PT - PTE_BASE))
-#define	vtophys(VA)	((*vtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
-#define	avtopte(VA)	(APTE_BASE + i386_btop(VA))
-#define	ptetoav(PT)	(i386_ptob(PT - APTE_BASE))
-#define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
 
 /*
  * pdei/ptei: generate index into PDP/PTP from a VA
@@ -502,6 +493,7 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
+paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if defined(USER_LDT)
