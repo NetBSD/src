@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/02/08 21:57:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/02/08 22:13:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -45,7 +45,7 @@ STRINGS_LIST=	util/string.list
 ${STRINGS_FILES}: strings_files.stamp
 strings_files.stamp: ${MAKESTRS} ${STRINGS_LIST} ${STRINGS_TMPLS}
 	${_MKMSG_CREATE} ${STRINGS_FILES}
-	rm -f ${.TARGET} util
+	rm -f ${.TARGET} util ${STRINGS_FILES}
 	ln -s ${X11SRCDIR.xc}/lib/${LIB}/util util
 	${MAKESTRS} < ${STRINGS_LIST} > StringDefs.c
 	touch ${.TARGET}
