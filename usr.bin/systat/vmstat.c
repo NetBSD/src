@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.40 2002/08/01 23:36:55 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.41 2002/08/08 17:06:32 abs Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.40 2002/08/01 23:36:55 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.41 2002/08/08 17:06:32 abs Exp $");
 #endif /* not lint */
 
 /*
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.40 2002/08/01 23:36:55 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -286,7 +287,7 @@ labelvmstat(void)
 	mvprintw(DISKROW, DISKCOL, "Discs");
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
-	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
+	mvprintw(DISKROW + 3, DISKCOL, "bytes");
 	mvprintw(DISKROW + 4, DISKCOL, "%%busy");
 	j = 0;
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
@@ -518,6 +519,26 @@ cputime(int indx)
 }
 
 static void
+puthumanint(int n, int l, int c, int w)
+{
+	char b[128];
+
+	move(l, c);
+	if (n == 0) {
+		hline(' ', w);
+		return;
+	}
+	if (humanize_number(b, w, (int64_t)n * 1024, "", HN_AUTOSCALE,
+	    HN_NOSPACE) == -1 ) {
+		hline('*', w);
+		return;
+	}
+	hline(' ', w - strlen(b));
+	move(l, c + w - strlen(b));
+	addstr(b);
+}
+
+static void
 putint(int n, int l, int c, int w)
 {
 	char b[128];
@@ -613,6 +634,9 @@ dinfo(int dn, int c)
 
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
-	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
-	putfloat(atime*100.0/etime, DISKROW + 4, c, 5, 1, 1);
+	puthumanint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
+	if (atime*100.0/etime >= 100)
+		putint(100, DISKROW + 4, c, 5);
+	else
+		putfloat(atime*100.0/etime, DISKROW + 4, c, 5, 1, 1);
 }
