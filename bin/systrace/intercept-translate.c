@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept-translate.c,v 1.2 2002/06/18 21:19:59 thorpej Exp $	*/
+/*	$NetBSD: intercept-translate.c,v 1.3 2002/06/18 21:21:17 thorpej Exp $	*/
 /*	$OpenBSD: intercept-translate.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.2 2002/06/18 21:19:59 thorpej Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.3 2002/06/18 21:21:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +206,7 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 	struct sockaddr_storage sa;
 	socklen_t len;
 
-	len = (socklen_t) (size_t) trans->trans_addr2;
+	len = (size_t) trans->trans_addr2;
 	if (len == 0 || len > sizeof(struct sockaddr_storage))
 		return (-1);
 
