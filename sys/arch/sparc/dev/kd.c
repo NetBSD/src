@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.13 2000/07/04 13:57:40 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.14 2000/08/22 21:28:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
 #include <machine/conf.h>
 
 #ifdef RASTERCONSOLE
-#include <machine/fbio.h>
-#include <machine/fbvar.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 #endif
 
 #include <dev/cons.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.23 2000/06/29 07:40:06 mrg Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.24 2000/08/22 21:28:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -103,16 +103,15 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-
-#include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
-#include <sparc/dev/btreg.h>
-#include <sparc/dev/btvar.h>
-#include <sparc/dev/pfourreg.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+#include <dev/sun/btreg.h>
+#include <dev/sun/btvar.h>
+#include <dev/sun/pfourreg.h>
 
 /* per-display variables */
 struct cgfour_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.3 2000/06/29 07:40:06 mrg Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.4 2000/08/22 21:28:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,30 +98,30 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
 #include <machine/conf.h>
 #include <sparc/sparc/asm.h>
 
-#include <sparc/dev/btreg.h>
-#include <sparc/dev/bwtworeg.h>
-#include <sparc/dev/bwtwovar.h>
-#include <sparc/dev/pfourreg.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+#include <dev/sun/btreg.h>
+#include <dev/sun/bwtworeg.h>
+#include <dev/sun/bwtwovar.h>
+#include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
-static void	bwtwoattach_obio __P((struct device *, struct device *, void *));
-static int	bwtwomatch_obio __P((struct device *, struct cfdata *, void *));
+static void	bwtwoattach_obio (struct device *, struct device *, void *);
+static int	bwtwomatch_obio (struct device *, struct cfdata *, void *);
 
 
 struct cfattach bwtwo_obio_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch_obio, bwtwoattach_obio
 };
 
-static int	bwtwo_get_video_sun4  __P((struct bwtwo_softc *));
-static void	bwtwo_set_video_sun4 __P((struct bwtwo_softc *, int));
+static int	bwtwo_get_video_sun4(struct bwtwo_softc *);
+static void	bwtwo_set_video_sun4(struct bwtwo_softc *, int);
 
 extern int fbnode;
 
