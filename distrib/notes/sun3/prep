@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 1999/01/13 07:30:09 ross Exp $	
+.\"	$NetBSD: prep,v 1.5 1999/05/19 05:49:06 gwr Exp $	
 .
 Sun3 machines usually need little or no preparation before installing
 NetBSD, other than the usual, well advised precaution of
@@ -21,6 +21,12 @@ It might be a good time to run the diagnostics on your Sun3.  First,
 attach a terminal to the "ttya" serial port, then set the "Diag/Norm"
 switch to the Diagnostic position, and power-on the machine.  The
 Diag. switch setting forces console interaction to occur on ttya.
+Note that the 3/80 has a "software" diag switch you can set at
+the PROM monitor prompt.  To turn on diag boot mode, do:
+.Ic q 70b 12
+To return to normal boot mode, do:
+.Ic q 70b 6 .
+
 .Pp
 The console location (ttya, ttyb, or keyboard/display) is controlled
 by address 0x1F in the EEPROM, which you can examine and change in
@@ -31,5 +37,3 @@ just a '.' if you don't want to change it).  Console values are:
 .Dl 11: No tty b (1200-N-8-1)
 .Dl 20: No Color option board on P4
 .Pp
-NetBSD will use the EEPROM setting to determine which device to
-use as the console, so you should make sure it is correct.

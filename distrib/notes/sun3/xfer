@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.5 1999/01/13 07:30:09 ross Exp $	
+.\" $NetBSD: xfer,v 1.6 1999/05/19 05:49:06 gwr Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact -offset indent
@@ -114,9 +114,7 @@ netbsd-rd kernel in the root area for your client (no other files
 are needed in the client root) and /etc/bootparams on the server
 should have an entry for your client and its root directory.
 The client will need access to the miniroot image, which can be
-provided using NFS or remote shell. If using NFS, miniroot.gz
-must be expanded on the server, because there is no gzip program
-in the RAMDISK image. The unzipped miniroot takes 8MB of space.
+provided using NFS or remote shell.
 .Pp
 If you will be installing NetBSD on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long

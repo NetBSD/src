@@ -1,6 +1,7 @@
-.\"	$NetBSD: whatis,v 1.5 1999/01/13 07:30:09 ross Exp $	
+.\"	$NetBSD: whatis,v 1.6 1999/05/19 05:49:06 gwr Exp $	
 .
 For the sun3,
 .Nx \*V
-brings support for the Sun3/E, and
-significantly improved VM and context switch performance.
+brings combined Sun3 and Sun3X support with the same
+installation media.
+

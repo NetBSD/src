@@ -1,15 +1,15 @@
-.\"	$NetBSD: hardware,v 1.5 1999/01/13 07:30:09 ross Exp $	
+.\"	$NetBSD: hardware,v 1.6 1999/05/19 05:49:06 gwr Exp $	
 .
 NetBSD/sun3 \*V runs on most Sun3 machines, including:
 .Bl -column -offset indent 3/260 3/280 3/160
 .       It 3/50 Ta 3/60 Ta 3/110
 .       It 3/75 Ta 3/150 Ta 3/160
 .       It 3/260 Ta 3/280 Ta 3/E
+.       It 3/80 Ta 3/470
 .El
 .Pp
-NetBSD/sun3 \*V does not run on the Sun3/80 (sun3x class)
-but that is presently handled as a separate distribution.
-Use NetBSD/sun3x for Sun3/80 and Sun3/470 support.
+Note that NetBSD/sun3 now includes support for "Sun3X" machines,
+which used to be supported with a separate distribution.
 .Pp
 The minimal configuration requires 4M of RAM and about 80MB of disk
 space.  To install the entire system requires much more disk space
@@ -34,7 +34,7 @@ and bulky to accommodate all people).
 .Pp
 Note that the sun3 installation procedure uses a `miniroot' image
 which is placed into the swap area of the disk.  The swap partition
-must be at least as large as the miniroot image (8MB).
+must be at least as large as the miniroot image (10MB).
 .Pp
 The following Sun3 hardware is supported:
 .Bl -tag -width Em -offset indent
@@ -49,6 +49,8 @@ On-board or VME Intel Ethernet
 .	br
 Sun3/E SCSI/Ethernet board
 .	It Em SCSI:  (Most SCSI disks, tapes, CD-ROMs, etc.)
+On-board "esp" (Sun3/80 SCSI)
+.	br
 On-board "si" (SCSI-3)
 .	br
 VME "si" (SCSI-3) board
@@ -62,6 +64,8 @@ Xylogics 753/7053
 Sun keyboard and mouse
 .	It Em Miscellaneous:
 Battery-backed real-time clock.
+.	br
+On-board floppy controller (Sun3/80 floppy)
 .El
 .Pp
 If it's not on this list, there is no support for it in this release.
