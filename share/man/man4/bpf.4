@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.27 2003/06/27 18:14:46 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.28 2004/10/04 19:12:52 rumble Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -358,7 +358,7 @@ field exists to account for
 padding between the header and the link level protocol.
 The purpose here is to guarantee proper alignment of the packet
 data structures, which is required on alignment sensitive
-architectures and and improves performance on many other architectures.
+architectures and improves performance on many other architectures.
 The packet filter ensures that the
 .Va bpf_hdr
 and the
