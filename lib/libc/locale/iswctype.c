@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.11 2003/03/04 15:05:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.10 2003/03/02 22:18:15 tshiozak Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.11 2003/03/04 15:05:57 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -262,9 +262,13 @@ wctype(const char *property)
 int
 iswctype(wint_t c, wctype_t charclass)
 {
-	if (charclass==NULL) {
-		errno = EINVAL;
-		return (c);
+
+	/*
+	 * SUSv3: If charclass is 0, iswctype() shall return 0.
+	 */
+	if (charclass == (wctype_t)0) {
+		return 0;
 	}
+
 	return (__isctype_w(c, ((_WCTypeEntry *)charclass)->te_mask));
 }
