@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.70 2003/10/02 01:27:20 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.71 2003/10/03 10:29:05 oki Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.70 2003/10/02 01:27:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.71 2003/10/03 10:29:05 oki Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2302,7 +2302,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				/* not agreed, nak */
 				if (debug)
 					addlog(" [mine %s != his %s]",
-					       sppp_proto_name(sp->hisauth.proto),
+					       sppp_proto_name(sp->myauth.proto),
 					       sppp_proto_name(authproto));
 				p[2] = sp->myauth.proto >> 8;
 				p[3] = sp->myauth.proto;
