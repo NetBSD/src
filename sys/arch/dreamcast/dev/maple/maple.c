@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.16 2002/09/27 03:17:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -531,7 +531,7 @@ maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
 	    match->cf_loc[MAPLECF_SUBUNIT] != ma->ma_subunit)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 u_int32_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.62 2002/09/27 02:24:31 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.63 2002/09/27 03:18:18 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.62 2002/09/27 02:24:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.63 2002/09/27 03:18:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -262,7 +262,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 		goto forgetit;
 
 	scb_vecref(0, 0); /* Clear vector ref */
-	i = (*cf->cf_attach->ca_match) (parent, cf, &ua);
+	i = config_match(parent, cf, &ua);
 
 	if (sc->uh_errchk)
 		if ((*sc->uh_errchk)(sc))

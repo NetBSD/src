@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2002/09/27 02:24:14 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2002/09/27 03:17:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -113,7 +113,7 @@ mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 
 	/* attach device */
-	if ((*cf->cf_attach->ca_match)(parent, cf, ma))
+	if (config_match(parent, cf, ma))
 		config_attach(parent, cf, ma, mainbus_print);
 
 	return (0);

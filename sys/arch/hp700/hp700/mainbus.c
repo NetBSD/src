@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2002/08/25 20:20:01 fredette Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2002/09/27 03:17:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1352,7 +1352,7 @@ mbsubmatch(parent, cf, aux)
 	saved_irq = ca->ca_irq;
 	if (cf->hp700cf_irq != HP700CF_IRQ_UNDEF)
 		ca->ca_irq = cf->hp700cf_irq;
-	if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
+	if (!(ret = config_match(parent, cf, aux)))
 		ca->ca_irq = saved_irq;
 	return ret;
 }

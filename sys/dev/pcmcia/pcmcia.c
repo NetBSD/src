@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.30 2002/09/27 02:24:31 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.31 2002/09/27 03:18:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.30 2002/09/27 02:24:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.31 2002/09/27 03:18:17 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -277,7 +277,7 @@ pcmcia_submatch(parent, cf, aux)
 	    cf->cf_loc[PCMCIACF_FUNCTION] != paa->pf->number)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

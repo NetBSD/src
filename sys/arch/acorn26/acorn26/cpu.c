@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2002/09/27 03:17:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2002/09/27 03:17:40 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -131,7 +131,7 @@ static int
 cpu_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	
-	if ((cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 
 	return 0;

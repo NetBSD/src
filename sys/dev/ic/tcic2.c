@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.10 2002/06/01 23:50:59 lukem Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.11 2002/09/27 03:18:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.10 2002/06/01 23:50:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.11 2002/09/27 03:18:13 thorpej Exp $");
 
 #undef	TCICDEBUG
 
@@ -567,7 +567,7 @@ tcic_submatch(parent, cf, aux)
 		panic("unknown tcic socket");
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

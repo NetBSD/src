@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2002/04/13 17:49:41 briggs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2002/09/27 03:17:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ mainbus_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, aux) > 0)
+	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, NULL);
 	return 0;
 }

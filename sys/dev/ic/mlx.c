@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.21 2002/09/22 18:59:00 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.22 2002/09/27 03:18:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.21 2002/09/22 18:59:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.22 2002/09/27 03:18:13 thorpej Exp $");
 
 #include "ld.h"
 
@@ -681,7 +681,7 @@ mlx_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->mlxacf_unit != mlxa->mlxa_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

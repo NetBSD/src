@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.13 2002/05/03 07:31:24 takemura Exp $ */
+/*	$NetBSD: it8368.c,v 1.14 2002/09/27 03:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ int
 it8368_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

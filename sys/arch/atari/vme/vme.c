@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.4 2002/09/27 02:24:10 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.5 2002/09/27 03:17:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ vmesearch(parent, cf, aux)
 	va.va_msize  = cf->cf_msize;
 	va.va_irq    = cf->cf_irq;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &va) > 0)
+	if (config_match(parent, cf, &va) > 0)
 		config_attach(parent, cf, &va, vmeprint);
 	return (0);
 }

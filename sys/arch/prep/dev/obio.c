@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2002/09/27 03:18:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 			oa.oa_msize = cf->cf_msize;
 			oa.oa_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 
-			if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
+			if (config_match(parent, cf, &oa) > 0)
 				config_attach(parent, cf, &oa, obio_print);
 		}
 	}
