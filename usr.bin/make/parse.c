@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.48 2000/05/11 08:22:40 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.48 2000/05/11 08:22:40 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.47 1999/09/16 00:54:15 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.48 2000/05/11 08:22:40 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -178,6 +178,9 @@ typedef enum {
     Parallel,	    /* .PARALLEL */
     ExPath,	    /* .PATH */
     Phony,	    /* .PHONY */
+#ifdef POSIX
+    Posix,	    /* .POSIX */
+#endif
     Precious,	    /* .PRECIOUS */
     ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
@@ -233,6 +236,9 @@ static struct {
 { ".PARALLEL",	  Parallel,	0 },
 { ".PATH",	  ExPath,	0 },
 { ".PHONY",	  Phony,	OP_PHONY },
+#ifdef POSIX
+{ ".POSIX",	  Posix,	0 },
+#endif
 { ".PRECIOUS",	  Precious, 	OP_PRECIOUS },
 { ".RECURSIVE",	  Attribute,	OP_MAKE },
 { ".SHELL", 	  ExShell,    	0 },
@@ -1116,6 +1122,11 @@ ParseDoDependency (line)
 	    case ExPath:
 		Lst_ForEach(paths, ParseClearPath, (ClientData)NULL);
 		break;
+#ifdef POSIX
+            case Posix:
+                Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
+                break;
+#endif
 	    default:
 		break;
 	}
