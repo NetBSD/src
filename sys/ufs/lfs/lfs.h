@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.20 2000/01/19 00:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.21 2000/05/05 20:59:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ struct lfs {
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
+	struct vnode *lfs_unlockvp;     /* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	struct lock lfs_freelock;
 };
@@ -333,8 +334,9 @@ struct lfs {
 #define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
 #define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
-/* Unassigned disk address. */
+/* Unassigned disk addresses. */
 #define	UNASSIGNED	-1
+#define UNWRITTEN       -2
 
 /* Unused logical block number */
 #define LFS_UNUSED_LBN	-1

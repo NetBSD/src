@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.64 2000/03/30 12:41:15 augustss Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.65 2000/05/05 20:59:20 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1639,10 +1639,10 @@ ufs_strategy(v)
 			biodone(bp);
 			return (error);
 		}
-		if ((long)bp->b_blkno == -1)
+		if ((long)bp->b_blkno == -1) /* no valid data */
 			clrbuf(bp);
 	}
-	if ((long)bp->b_blkno == -1) {
+	if ((long)bp->b_blkno < 0) { /* block is not on disk */
 		biodone(bp);
 		return (0);
 	}

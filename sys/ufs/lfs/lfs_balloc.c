@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.15 2000/04/23 21:10:26 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.16 2000/05/05 20:59:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,6 +99,19 @@
 
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
 
+/*
+ * Allocate a block, and to inode and filesystem block accounting for it
+ * and for any indirect blocks the may need to be created in order for
+ * this block to be created.
+ *
+ * Blocks which have never been accounted for (i.e., which "do not exist")
+ * have disk address 0, which is translated by ufs_bmap to the special value
+ * UNASSIGNED == -1, as in the historical UFS.
+ * 
+ * Blocks which have been accounted for but which have not yet been written
+ * to disk are given the new special disk address UNWRITTEN == -2, so that
+ * they can be differentiated from completely new blocks.
+ */
 int
 lfs_balloc(v)
 	void *v;
@@ -118,7 +131,7 @@ lfs_balloc(v)
 	struct buf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
-	struct indir indirs[NIADDR+2];
+	struct indir indirs[NIADDR+2], *idp;
 	ufs_daddr_t	daddr, lastblock;
 	int bb;		/* number of disk blocks in a block disk blocks */
 	int error, frags, i, nsize, osize, num;
@@ -171,28 +184,45 @@ lfs_balloc(v)
 	}
 	
 	bb = VFSTOUFS(vp->v_mount)->um_seqinc;
-	if (daddr == UNASSIGNED)
+	if (daddr == UNASSIGNED) {
+		if (num > 0 && ip->i_ffs_ib[indirs[0].in_off] == 0) {
+			ip->i_ffs_ib[indirs[0].in_off] = UNWRITTEN;
+		}
 		/* May need to allocate indirect blocks */
-		for (i = 1; i < num; ++i)
+		for (i = 1; i < num; ++i) {
+			ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize, 0,0);
 			if (!indirs[i].in_exists) {
-				ibp = getblk(vp, indirs[i].in_lbn, fs->lfs_bsize,
-					     0, 0);
-				if ((ibp->b_flags & (B_DONE | B_DELWRI))) 
+#ifdef DIAGNOSTIC
+				if ((ibp->b_flags & (B_DONE | B_DELWRI)))
 					panic ("Indirect block should not exist");
+#endif
 
 				if (!ISSPACE(fs, bb, curproc->p_ucred)){
 					ibp->b_flags |= B_INVAL;
 					brelse(ibp);
+					/* XXX might leave some UNWRITTENs hanging, do this better */
 					return(ENOSPC);
 				} else {
 					ip->i_ffs_blocks += bb;
 					ip->i_lfs->lfs_bfree -= bb;
 					clrbuf(ibp);
-					if ((error = VOP_BWRITE(ibp)))
-						return(error);
+					((ufs_daddr_t *)ibp->b_data)[indirs[i].in_off] = UNWRITTEN;
+					ibp->b_blkno = UNWRITTEN;
+				}
+			} else {
+				/*
+				 * This block exists, but the next one may not.
+				 * If that is the case mark it UNWRITTEN to
+				 * keep the accounting straight.
+				 */
+				if ( ((ufs_daddr_t *)ibp->b_data)[indirs[i].in_off] == 0) {
+					((ufs_daddr_t *)ibp->b_data)[indirs[i].in_off] = UNWRITTEN;
 				}
 			}
-	
+			if ((error = VOP_BWRITE(ibp)))
+				return(error);
+		}
+	}	
 	/*
 	 * If the block we are writing is a direct block, it's the last
 	 * block in the file, and offset + iosize is less than a full
@@ -239,11 +269,10 @@ lfs_balloc(v)
 	 * for free space and update the inode number of blocks.
 	 *
 	 * We can tell a truly new block because (1) ufs_bmaparray
-	 * will say it is UNASSIGNED; and (2) it will not be marked
-	 * with B_DELWRI.  (It might be marked B_DONE, if it was
-	 * read into the cache before it existed on disk.)
+	 * will say it is UNASSIGNED.  Once we allocate it we will assign
+	 * it the disk address UNWRITTEN.
 	 */
-	if ((!(bp->b_flags & B_DELWRI)) && daddr == UNASSIGNED) {
+	if (daddr == UNASSIGNED) {
 		if (!ISSPACE(fs, bb, curproc->p_ucred)) {
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
@@ -253,6 +282,27 @@ lfs_balloc(v)
 			ip->i_lfs->lfs_bfree -= bb;
 			if (iosize != fs->lfs_bsize)
 				clrbuf(bp);
+
+			/* Note the new address */
+			bp->b_blkno = UNWRITTEN;
+			
+			switch (num) {
+			    case 0:
+				ip->i_ffs_db[lbn] = UNWRITTEN;
+				break;
+			    case 1:
+				ip->i_ffs_ib[indirs[0].in_off] = UNWRITTEN;
+				break;
+			    default:
+				idp = &indirs[num - 1];
+				if (bread(vp, idp->in_lbn, fs->lfs_bsize,
+					  NOCRED, &ibp))
+					panic("lfs_balloc: bread bno %d",
+					      idp->in_lbn);
+				((ufs_daddr_t *)ibp->b_data)[idp->in_off] =
+					UNWRITTEN;
+				VOP_BWRITE(ibp);
+			}
 		}
 	} else if (!(bp->b_flags & (B_DONE|B_DELWRI))) {
 		/*
