@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.4 2002/04/04 01:03:23 reinoud Exp $ */
+/* $NetBSD: wsqms.c,v 1.5 2002/06/19 23:02:58 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -44,9 +44,11 @@
 
 #include <sys/param.h>
 
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h> 
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h> 
@@ -74,6 +76,7 @@
 static int wsqms_enable		__P((void *cookie));
 static int wsqms_ioctl		__P((void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p));
 static void wsqms_disable	__P((void *cookie));
+static void wsqms_intr		__P((void *arg));
 
 
 static struct wsmouse_accessops wsqms_accessops = {
@@ -95,6 +98,8 @@ wsqms_attach(sc, self)
 	printf("\n");
 
 	sc->sc_wsmousedev = config_found(self, &wsmouseargs, wsmousedevprint);
+
+	callout_init(&sc->sc_callout);
 }
 
 
@@ -106,9 +111,7 @@ wsqms_enable(cookie)
 
 	sc->sc_flags |= WSQMS_ENABLED;
 
-	/* enable interrupts */
-	sc->sc_intenable(sc, 1);
-
+	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 	return 0;
 }
 
@@ -121,8 +124,7 @@ wsqms_disable(cookie)
 
 	sc->sc_flags &= ~WSQMS_ENABLED;
 
-	/* disable interrupts */
-	sc->sc_intenable(sc, 0);
+	callout_stop(&sc->sc_callout);
 }
 
 
@@ -144,47 +146,36 @@ wsqms_ioctl(cookie, cmd, data, flag, p)
 }
 
 
-/* We can really put in the mouse XY as absolutes ? */
-int
+static void
 wsqms_intr(arg)
 	void *arg;
 {
 	struct wsqms_softc *sc = arg;
 	int x, y, b;
+	int dx, dy;
 
 	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX) & 0xffff;
 	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY) & 0xffff;
 	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
-	b >>= 4;
-	if (x & 0x8000) x |= 0xffff0000;
-	if (y & 0x8000) y |= 0xffff0000;
 
 	/* patch up the buttons */
+	b >>= 4;
 	b = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
 	if ((x != sc->lastx) || (y != sc->lasty) || (b != sc->lastb)) {
-		/* do we have to bound x and y ? => yes */
-		if (x < -MAX_XYREG) x = -MAX_XYREG;
-		if (x >  MAX_XYREG) x =  MAX_XYREG;
-		if (y < -MAX_XYREG) y = -MAX_XYREG;
-		if (y >  MAX_XYREG) y =  MAX_XYREG;
-
-		/* write the bounded values back */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, x);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, y);
-
-		wsmouse_input(sc->sc_wsmousedev, b, x - sc->lastx, y - sc->lasty, 0,
-				WSMOUSE_INPUT_DELTA);
-		wsmouse_input(sc->sc_wsmousedev, b, x, y, 0,
-				WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+		dx = (x - sc->lastx) & 0xffff;
+		if (dx >= 0x8000) dx -= 0x10000;
+		dy = (y - sc->lasty) & 0xffff;
+		if (dy >= 0x8000) dy -= 0x10000;
+		wsmouse_input(sc->sc_wsmousedev, b, dx, dy, 0,
+		    WSMOUSE_INPUT_DELTA);
 
 		/* save old values */
 		sc->lastx = x;
 		sc->lasty = y;
 		sc->lastb = b;
 	};
-
-	return (0);	/* pass on */
+	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 }
 
 
