@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.135 2002/03/25 04:26:43 itohy Exp $	*/
+/*	$NetBSD: tty.c,v 1.136 2002/04/12 17:02:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.135 2002/03/25 04:26:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.136 2002/04/12 17:02:33 christos Exp $");
 
 #include "opt_uconsole.h"
 
@@ -267,7 +267,10 @@ ttyclose(struct tty *tp)
 
 	tp->t_gen++;
 	tp->t_pgrp = NULL;
-	tp->t_session = NULL;
+	if (tp->t_session != NULL) {
+		SESSRELE(tp->t_session);
+		tp->t_session = NULL;
+	}
 	tp->t_state = 0;
 	return (0);
 }
@@ -988,6 +991,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		     (tp->t_session != p->p_session)))
 			return (EPERM);
+		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
