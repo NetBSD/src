@@ -1,3 +1,4 @@
+.\"	$NetBSD: ld.1,v 1.12.2.1 1998/10/29 20:06:10 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
 .\" All rights reserved.
@@ -26,8 +27,6 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"
-.\"	$Id: ld.1,v 1.12 1997/07/16 04:34:36 mikel Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
@@ -185,7 +184,7 @@ output file.
 Produce relocatable object file, suitable for another pass through
 .Nm ld .
 .It Fl R
-Record the given path within the executable for run-time libary search.
+Record the given path within the executable for run-time library search.
 This only applies to dynamically linked executables.
 .It Fl S
 Strip all debugger symbols from the output.
@@ -218,6 +217,52 @@ Trace the manipulations inflicted on
 Make a
 .Dv ZMAGIC
 output file. This is the default.
+.Sh
+Use of the following directives is required on ELF systems and is
+recommended on all others
+in order to prepare for the planned transition from COFF to ELF.
+.Bl -tag -width indent
+.It Fl rpath Ar dir
+Record the given 
+.Ar dir
+within the executable for run-time library
+search, as for 
+.Fl R "."
+Ignored on COFF systems.
+.It Fl shared
+Instructs the linker to build a shared object from the object files rather
+than a normal executable image.
+.It Fl soname Ar library-name
+The linker input file name is usually the plain ``.so'' file with
+no version number.
+On ELF systems, this option sets the DT_SONAME field
+of a shared library to
+.Ar libraryname,
+which should be specified with the major number and without the minor
+number. A program image linked with this library will
+use at run time the file name specified here rather than the linker input
+file name.
+.It Fl Fl whole-archive
+A positional qualifier to force loading from archives.
+For each archive mentioned on the commandline after this option,
+include every object file from the archive in the link, rather than
+searching the archive for the required object files. This is normally used
+when building shared libraries.
+
+On COFF systems, the positional syntax is not currently implemented; 
+.Fl Fl whole-archive
+is treated exactly as
+.Fl B Ns Ar forcearchive .
+.It Fl Fl no-whole-archive
+This option turns off the effect of a preceding
+.Fl Fl whole-archive 
+for any subsequent archive files on the command line.
+It is currently ignored on COFF systems.
+.It Fl Fl export-dynamic
+Specifies that all symbols should be added to the
+dynamic symbol table. This option is needed only by programs that make run-time
+decisions to load modules they were never linked with. Ignored on COFF systems.
+.El
 .Sh ENVIRONMENT
 .Nm
 utilizes the following environment variables:
