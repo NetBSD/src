@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.142 2001/10/20 15:29:05 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.143 2001/10/21 23:17:38 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.142 2001/10/20 15:28:45 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.143 2001/10/21 23:16:48 mjl Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -842,6 +842,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega Ether PCC-T"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD,
+	    PCMCIA_CIS_COREGA_ETHER_PCC_TD,
+	    0,
+	    "Corega K.K.",
+	    "Corega Ether PCC-TD"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
