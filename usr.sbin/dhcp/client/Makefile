@@ -33,7 +33,7 @@
 SUBDIR=	scripts
 SRCS   = dhclient.c clparse.c
 PROG   = dhclient
-MAN    = dhclient.8 dhclient.conf.5
+MAN    = dhclient.8 dhclient.conf.5 dhclient.leases.5 dhclient-script.8
 
 # XXX
 BINDIR?=	/sbin
