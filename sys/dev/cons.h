@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.7 1994/10/26 17:56:56 mycroft Exp $	*/
+/*	$NetBSD: cons.h,v 1.8 1995/03/24 15:29:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,4 +64,14 @@ struct consdev {
 #ifdef KERNEL
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
+
+void	cninit __P((void));
+int	cnopen __P((dev_t, int, int, struct proc *));
+int	cnclose __P((dev_t, int, int, struct proc *));
+int	cnread __P((dev_t, struct uio *, int));
+int	cnwrite __P((dev_t, struct uio *, int));
+int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	cnselect __P((dev_t, int, struct proc *));
+int	cngetc __P((void));
+int	cnputc __P((int));
 #endif

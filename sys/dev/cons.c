@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.23 1994/12/14 19:09:13 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.24 1995/03/24 15:29:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,6 +142,7 @@ int
 cnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	/*
@@ -164,6 +165,7 @@ int
 cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	/*
@@ -253,12 +255,13 @@ cnputc(c)
 {
 
 	if (cn_tab == NULL)
-		return;
+		return 0;			/* XXX should be void */
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 		if (c == '\n')
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 	}
+	return 0;				/* XXX should be void */
 }
 
 void
