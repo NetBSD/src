@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.34 2001/05/29 20:22:05 kleink Exp $
+#	$NetBSD: Makefile,v 1.35 2001/10/10 16:56:27 christos Exp $
 
 .include <bsd.own.mk>
 
 WFORMAT=	1
 MFILESDIR=	/usr/share/misc
-MFILES=		magic magic.mgc magic.mime
+MFILES=		magic magic.mgc magic.mime magic.mime.mgc
 MAGIC=		${MFILESDIR}/magic
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
@@ -18,9 +18,9 @@ CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
-CLEANFILES+=	mkmagic magic magic.mgc
+CLEANFILES+=	mkmagic magic magic.mgc magic.mime.mgc
 .if ${MKSHARE} != "no"
-realall:	file magic magic.mgc
+realall:	file magic magic.mgc magic.mime.mgc
 .endif
 
 MAGDIRF:sh=	echo ${.CURDIR}/magdir/[0-9a-z]*
@@ -32,8 +32,18 @@ MAGFILES=	${.CURDIR}/Header \
 .if ${MKSHARE} != "no"
 magic:		${MAGFILES}
 	cat ${MAGFILES} > ${.TARGET}
+
 magic.mgc:	mkmagic magic
 	${.OBJDIR}/mkmagic magic
+
+magic.mime.mgc:	mkmagic magic.mime
+.if ${.CURDIR} != ${.OBJDIR}
+	@cp -p ${.CURDIR}/magic.mime ${.OBJDIR}
+.endif
+	${.OBJDIR}/mkmagic magic.mime
+.if ${.CURDIR} != ${.OBJDIR}
+	@rm -f ${.OBJDIR}/magic.mime
+.endif
 .else
 magic:
 .endif
