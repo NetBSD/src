@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.20 2003/07/05 19:50:17 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.21 2003/07/27 03:51:28 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.20 2003/07/05 19:50:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.21 2003/07/27 03:51:28 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -116,6 +116,11 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.20 2003/07/05 19:50:17 tsutsui Exp $")
 #endif
 
 #define	SPC_ABORT_TIMEOUT	2000	/* time to wait for abort */
+
+#ifdef x68k	/* XXX it seems x68k SPC SCSI hardware has some quirks */
+#define NEED_DREQ_ON_HARDWARE_XFER
+#define NO_MANUAL_XFER
+#endif
 
 /* End of customizable parameters */
 
@@ -878,6 +883,7 @@ spc_msgin(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int n;
+	u_int8_t msg;
 
 	SPC_TRACE(("spc_msgin  "));
 
@@ -901,6 +907,16 @@ nextbyte:
 	 * itself.
 	 */
 	for (;;) {
+#ifdef NO_MANUAL_XFER /* XXX */
+		if (bus_space_read_1(iot, ioh, INTS) != 0) {
+			/*
+			 * Target left MESSAGE IN, probably because it
+			 * a) noticed our ATN signal, or
+			 * b) ran out of messages.
+			 */
+			goto out;
+		}
+#endif
 		/* If parity error, just dump everything on the floor. */
 		if ((bus_space_read_1(iot, ioh, SERR) &
 		     (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
@@ -908,15 +924,39 @@ nextbyte:
 			spc_sched_msgout(sc, SEND_PARITY_ERROR);
 		}
 
+#ifdef NO_MANUAL_XFER /* XXX */
+		/* send TRANSFER command. */
+		bus_space_write_1(iot, ioh, TCH, 0);
+		bus_space_write_1(iot, ioh, TCM, 0);
+		bus_space_write_1(iot, ioh, TCL, 1);
+		bus_space_write_1(iot, ioh, PCTL,
+		    sc->sc_phase | PCTL_BFINT_ENAB);
+#ifdef NEED_DREQ_ON_HARDWARE_XFER
+		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);
+#else
+		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);
+#endif
+		for (;;) {
+			if ((bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_DREG_EMPTY) == 0)
+				break;
+			if (bus_space_read_1(iot, ioh, INTS) != 0)
+				goto out;
+		}
+		msg = bus_space_read_1(iot, ioh, DREG);
+#else
 		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
 			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
 
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0) {
 			/* XXX needs timeout */
 			if ((bus_space_read_1(iot, ioh, PSNS) & PH_MASK)
-			     != PH_MSGIN ||
-			    (bus_space_read_1(iot, ioh, SSTS) & SSTS_INITIATOR)
-			     == 0)
+			     != PH_MSGIN)
+				/*
+				 * Target left MESSAGE IN, probably because it
+				 * a) noticed our ATN signal, or
+				 * b) ran out of messages.
+				 */
 				goto out;
 		}
 
@@ -924,16 +964,16 @@ nextbyte:
 		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
 			continue;	/* XXX needs timeout */
+		msg = bus_space_read_1(iot, ioh, TEMP);
+#endif
 
 		/* Gather incoming message bytes if needed. */
 		if ((sc->sc_flags & SPC_DROP_MSGIN) == 0) {
 			if (n >= SPC_MAX_MSG_LEN) {
-				(void) bus_space_read_1(iot, ioh, TEMP);
 				sc->sc_flags |= SPC_DROP_MSGIN;
 				spc_sched_msgout(sc, SEND_REJECT);
 			} else {
-				*sc->sc_imp++ =
-				    bus_space_read_1(iot, ioh, TEMP);
+				*sc->sc_imp++ = msg;
 				n++;
 				/*
 				 * This testing is suboptimal, but most
@@ -949,17 +989,17 @@ nextbyte:
 				    n == sc->sc_imess[1] + 2)
 					break;
 			}
-		} else
-			(void) bus_space_read_1(iot, ioh, TEMP);
-
+		}
 		/*
 		 * If we reach this spot we're either:
 		 * a) in the middle of a multi-byte message, or
 		 * b) dropping bytes.
 		 */
 
+#ifndef NO_MANUAL_XFER /* XXX */
 		/* Ack the last byte read. */
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 	}
 
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
@@ -1130,19 +1170,20 @@ nextbyte:
 #endif
 	}
 
+#ifndef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 
 	/* Go get the next message, if any. */
 	goto nextmsg;
 
 out:
+#ifndef NO_MANUAL_XFER /* XXX */
+	/* Ack the last message byte. */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
-
-	while ((bus_space_read_1(iot, ioh, SSTS) & SSTS_ACTIVE) 
-	    == SSTS_INITIATOR)
-		continue;	/* XXX needs timeout */
 }
 
 /*
@@ -1277,7 +1318,7 @@ nextbyte:
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-#ifdef x68k
+#ifdef NEED_DREQ_ON_HARDWARE_XFER
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
 	bus_space_write_1(iot, ioh, SCMD,
@@ -1383,7 +1424,7 @@ spc_dataout_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-#ifdef x68k
+#ifdef NEED_DREQ_ON_HARDWARE_XFER
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
 	bus_space_write_1(iot, ioh, SCMD,
@@ -1492,7 +1533,7 @@ spc_datain_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-#ifdef x68k
+#ifdef NEED_DREQ_ON_HARDWARE_XFER
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
 	bus_space_write_1(iot, ioh, SCMD,
@@ -1920,6 +1961,9 @@ dophase:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
 
+#ifdef NO_MANUAL_XFER
+		spc_datain_pio(sc, &acb->target_stat, 1);
+#else
 		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
 			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
@@ -1930,6 +1974,7 @@ dophase:
 			continue;	/* XXX needs timeout */
 		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 
 		SPC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
