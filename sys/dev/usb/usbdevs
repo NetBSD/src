@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.218 2002/01/21 11:20:25 augustss Exp $
+$NetBSD: usbdevs,v 1.219 2002/01/22 03:12:18 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -163,6 +163,7 @@ vendor AVM		0x057c	AVM GmbH
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
+vendor RATOC		0x0584	RATOC Systems,Inc.
 vendor ZYXEL		0x0586	ZyXEL Communication
 vendor ALCOR		0x058f	Alcor Micro
 vendor IOMEGA		0x059b	Iomega
@@ -961,6 +962,9 @@ product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
+
+/* RATOC Systems products */
+product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
 
 /* Saitek products */
 product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
