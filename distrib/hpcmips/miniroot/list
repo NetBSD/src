@@ -1,7 +1,7 @@
-#	$NetBSD: list,v 1.6 2002/03/06 12:04:51 lukem Exp $
+#	$NetBSD: list,v 1.7 2002/04/27 23:38:22 shin Exp $
 
 # extras in bin
-PROG	bin/csh
+#PROG	bin/csh
 PROG	bin/date
 PROG	bin/rcp
 PROG	bin/rcmd
@@ -15,38 +15,23 @@ PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 
 # extras in /usr.bin
-PROG	usr/bin/netstat
+#PROG	usr/bin/netstat
 PROG	usr/bin/rsh
-PROG	usr/bin/tset usr/bin/reset
-PROG	usr/bin/vi
+#PROG	usr/bin/tset usr/bin/reset
+#PROG	usr/bin/vi
 
 # crunchgen source directory specials: progs built in nonstandard places
-SPECIAL	vi	srcdir usr.bin/vi/build
+#SPECIAL	vi	srcdir usr.bin/vi/build
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
-# we need the contents of /usr/mdec
-COPYDIR	${DESTDIR}/usr/mdec	/usr/mdec
-
-# the zoneinfo (dont use)
-#COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
-# and the termcap file
+# termcap file
 COPY	${ARCHDIR}/termcap.vt100	usr/share/misc/termcap
 
-# copy the kernel(s)
-#COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
-
-
 # various files that we need in /etc for the install
-#COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 LINK	etc/spwd.db			etc/pwd.db
-#SYMLINK	/tmp/disktab.shadow		etc/disktab
-#SYMLINK	/tmp/fstab.shadow		etc/fstab
-#SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
-#SYMLINK	/tmp/hosts			etc/hosts
 
 # sysinst needs disktab template
 COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
