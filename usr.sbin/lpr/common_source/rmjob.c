@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.7 1995/11/28 19:43:31 jtc Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.8 1996/12/09 09:57:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -174,12 +174,12 @@ lockchk(s)
 	}
 	seteuid(uid);
 	if (!getline(fp)) {
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
 	cur_daemon = atoi(line);
 	if (kill(cur_daemon, 0) < 0 && errno != EPERM) {
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
 	for (i = 1; (n = fread(current, sizeof(char), sizeof(current), fp)) <= 0; i++) {
@@ -190,7 +190,7 @@ lockchk(s)
 		sleep(i);
 	}
 	current[n-1] = '\0';
-	(void) fclose(fp);
+	(void)fclose(fp);
 	return(1);
 }
 
@@ -215,7 +215,7 @@ process(file)
 			do_unlink(line+1);
 		}
 	}
-	(void) fclose(cfp);
+	(void)fclose(cfp);
 	do_unlink(file);
 }
 
@@ -264,7 +264,7 @@ chk(file)
 		if (line[0] == 'P')
 			break;
 	}
-	(void) fclose(cfp);
+	(void)fclose(cfp);
 	if (line[0] != 'P')
 		return(0);
 
@@ -314,9 +314,8 @@ isowner(owner, file)
 void
 rmremote()
 {
-	register char *cp;
-	register int i, rem;
-	char buf[BUFSIZ];
+	register char *cp, *s;
+	register int i, rem, len;
 
 	if (!sendtorem)
 		return;	/* not sending to a remote machine */
@@ -327,30 +326,47 @@ rmremote()
 	 */
 	fflush(stdout);
 
-	(void)snprintf(buf, sizeof(buf), "\5%s %s", RP, all ? "-all" : person);
-	cp = buf;
+	/* \5 RP space all */
+	len = 1 + strlen(RP) + 1 + strlen(all ? "-all" : person);
 	for (i = 0; i < users; i++) {
-		cp += strlen(cp);
-		*cp++ = ' ';
-		strcpy(cp, user[i]);
+		len += strlen(user[i]) + 1;
 	}
 	for (i = 0; i < requests; i++) {
-		cp += strlen(cp);
-		(void) sprintf(cp, " %d", requ[i]);
+		len += snprintf(line, sizeof(line), " %d", requ[i]);
 	}
-	strcat(cp, "\n");
+	len += 1;
+	if (len > sizeof(line))
+		s = malloc(len);
+	else	
+		s = line;
+	cp = s;
+
+	cp += snprintf(s, len, "\5%s %s", RP, all ? "-all" : person);
+	for (i = 0; i < users; i++) {
+		*cp++ = ' ';
+		strncpy(cp, user[i], len - (cp - s) - 2);
+		cp += strlen(cp);
+	}
+	for (i = 0; i < requests; i++) {
+		(void)snprintf(cp, len - (cp - s) - 2, " %d", requ[i]);
+		cp += strlen(cp);
+	}
+	cp[0] = '\n';
+	cp[1] = '\0';
+
 	rem = getport(RM);
 	if (rem < 0) {
 		if (from != host)
 			printf("%s: ", host);
 		printf("connection to %s is down\n", RM);
 	} else {
-		i = strlen(buf);
-		if (write(rem, buf, i) != i)
+		if (write(rem, s, len) != i)
 			fatal("Lost connection");
-		while ((i = read(rem, buf, sizeof(buf))) > 0)
-			(void) fwrite(buf, 1, i, stdout);
-		(void) close(rem);
+		if (len > sizeof(line))
+			(void)free(s);
+		while ((i = read(rem, line, sizeof(line))) > 0)
+			(void)fwrite(line, 1, i, stdout);
+		(void)close(rem);
 	}
 }
 

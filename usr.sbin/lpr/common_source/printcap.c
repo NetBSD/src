@@ -1,4 +1,4 @@
-/*	$NetBSD: printcap.c,v 1.7 1995/11/28 19:43:29 jtc Exp $	*/
+/*	$NetBSD: printcap.c,v 1.8 1996/12/09 09:57:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -176,10 +176,16 @@ tgetent(bp, name)
 	 * has to already have the newlines crunched out.
 	 */
 	if (cp && *cp) {
-		if (*cp!='/') {
+		if (*cp != '/') {
 			cp2 = getenv("TERM");
-			if (cp2==(char *) 0 || strcmp(name,cp2)==0) {
-				strcpy(bp,cp);
+			if (cp2 == (char *) 0 || strcmp(name, cp2) == 0) {
+				/*
+				 * XXX: strcpy, should perhaps use BUFSIZ
+				 * here, as that's the general length of a
+				 * termcap buffer.  Note that this code
+				 * isn't used now anyway.
+				 */
+				strcpy(bp, cp);
 				return(tnchktc());
 			} else {
 				seteuid(euid);
@@ -268,25 +274,25 @@ tnchktc()
 	/* p now points to beginning of last field */
 	if (p[0] != 't' || p[1] != 'c')
 		return(1);
-	strcpy(tcname,p+3);
+	strncpy(tcname, p+3, sizeof(tcname) - 4);
 	q = tcname;
 	while (q && *q != ':')
 		q++;
-	*q = 0;
+	*q = '\0';
 	if (++hopcount > MAXHOP) {
 		write(2, "Infinite tc= loop\n", 18);
 		return (0);
 	}
 	if (tgetent(tcbuf, tcname) != 1)
 		return(0);
-	for (q=tcbuf; *q != ':'; q++)
+	for (q = tcbuf; *q != ':'; q++)
 		;
 	l = p - holdtbuf + strlen(q);
 	if (l > BUFSIZ) {
 		write(2, "Termcap entry too long\n", 23);
 		q[BUFSIZ - (p-tbuf)] = 0;
 	}
-	strcpy(p, q+1);
+	strcpy(p, q+1);	/* XXX: strcpy is safe from above test */
 	tbuf = holdtbuf;
 	return(1);
 }
