@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.56 2001/07/07 15:57:51 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.57 2001/07/07 16:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ fxp_attach(struct fxp_softc *sc)
 	sc->sc_cdseg = seg;
 	sc->sc_cdnseg = rseg;
 
-	bzero(sc->sc_control_data, sizeof(struct fxp_control_data));
+	memset(sc->sc_control_data, 0, sizeof(struct fxp_control_data));
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct fxp_control_data), 1,
