@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.10.4.1 2004/04/07 23:06:39 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdisc.c,v 1.10 2000/03/02 21:00:41 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.10.4.1 2004/04/07 23:06:39 jmc Exp $");
 #endif
 
 #include "defs.h"
@@ -97,8 +97,9 @@ struct dr {				/* accumulated advertisements */
 #define UNSIGN_PREF(p) SIGN_PREF(p)
 /* adjust unsigned preference by interface metric,
  * without driving it to infinity */
-#define PREF(p, ifp) ((int)(p) <= (ifp)->int_metric ? ((p) != 0 ? 1 : 0) \
-		      : (p) - ((ifp)->int_metric))
+#define PREF(p, ifp) ((n_long)(p) <= (n_long)(ifp)->int_metric	\
+		? ((p) != 0 ? 1 : 0) 				\
+		: (p) - ((ifp)->int_metric))
 
 static void rdisc_sort(void);
 
