@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32 2002/04/05 21:14:34 scw Exp $
+.\"	$NetBSD: sysinst,v 1.33 2002/05/23 06:05:41 pooka Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[x68k]
+.\} \" ! \n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
 .It
 .To 2 General
 .Em General
@@ -282,7 +282,8 @@ an example.
 What you need.
 .(bullet
 The distribution sets (in this example, they are on CD).
-.if !r_pmax \{\
+.\" .if !r_pmax \{\
+.if !\n[pmax]:\n[sgimips] \{\
 .It
 .ie r_alpha Two floppy disks.
 .el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
@@ -305,6 +306,7 @@ a harddisk and a minimum of
 .if r_news68k 4 MB
 .if r_pmax 8 MB
 .if r_sparc 4 MB
+.if r_sgimips 16 MB
 of memory installed.
 .It
 The harddisk should have at least
@@ -315,6 +317,7 @@ The harddisk should have at least
 .if r_news68k 100
 .if r_pmax 200
 .if r_sparc 200
+.if r_sgimips 200
 +
 .Em n
 megabytes of
@@ -368,12 +371,12 @@ system, you would type something like:
 .It
 The Quick Installation
 .(bullet
-.ie \n[macppc]:\n[pmax]:\n[sparc] \{\
+.ie \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 Boot the system as described above.  You
 should be at the
 .Ic sysinst
 main menu.
-.\} \" \n[macppc]:\n[pmax]:\n[sparc]
+.\} \" \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]
 .el \{\
 Insert the
 .ie r_i386 first
@@ -429,12 +432,18 @@ setup of your disk, and the selection of distributed components
 to install. When in doubt, refer to the rest of this document for details.
 .It
 After your disk has been prepared, choose
+.if r_sgimips \{\
+.Me Unmounted filesystem
+as the medium.  The CD-ROM device is usually cd0 and the partition 'a'
+.Pq i.e. cd0a .
+.el
 .Me CD-ROM
 as the medium. The default values for the path and device should be ok.
+.\}
 .It
 After all the files have been unpacked, go back to
 the main menu and select
-.ie \n[macppc]:\n[pmax]:\n[sparc] \{\
+.ie \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 .Me reboot.
 .\}
 .el \{\
@@ -449,6 +458,11 @@ the correct command to boot from your hard drive.
 .if r_sparc \{\
 Once the system reaches the PROM prompt, you will need to type the correct
 command to boot from your hard drive.
+.\}
+.if r_sgimips \{\
+Once the system reaches the PROM prompt, you will need to modify your
+PROM environment settings for SystemPartition, OSLoadPartition, OSLoader
+and OSLoadFilename and then boot the hard drive.
 .\}
 .Nx
 will now boot. If you haven't already done so in 
@@ -479,15 +493,15 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
-.ie \n[macppc]:\n[pmax]:\n[sparc] \{\
+.\} \" !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
+.ie \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc] \{\
 .Pp
 Boot the system as described in the previous section.
 .Pp
@@ -603,12 +617,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" ! \n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
+.\} \" ! \n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -1195,6 +1209,13 @@ instead of a hostname for the NFS server.
 .To 2 "Installation from CD-ROM"
 .Em Installation from CD-ROM
 .Pp
+.if r_sgimips \{\
+The bootable CD-ROM distribution for
+.Nx*M
+is not ISO-9660 formatted.
+This function cannot be used for installation.  Use the 
+"Installation from an unmounted file system" selection.
+.el \{\
 When installing from a CD-ROM, you will be asked to specify
 the device name for your CD-ROM player
 .Pq usually Li cd0 ,
@@ -1204,6 +1225,7 @@ and the directory name on the CD-ROM where the distribution files are.
 will then check if the files are indeed available
 in the specified location, and proceed to the actual
 extraction of the sets.
+.\}
 .if r_i386 \{\
 .It
 .To 2 "Installation from a floppy set"
@@ -1232,6 +1254,12 @@ and the directory on the specified file system where the sets are located.
 .Ic sysinst
 will then check if it
 can indeed access the sets at that location.
+.if r_sgimips \{\
+.Pp
+If this is a CD-ROM installation, the device used will be the name for your
+CD-ROM player with partition letter 'a'
+.Pq usually cd0a .
+.\}
 .if r_macppc \{\
 Remember, 
 .Nx*M
