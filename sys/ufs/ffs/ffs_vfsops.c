@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.38 1998/06/13 16:26:22 kleink Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.39 1998/06/22 22:01:09 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -37,6 +37,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_quota.h"
+#include "opt_fifo.h"
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.7 1998/03/01 02:23:24 fvdl Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.8 1998/06/22 22:01:09 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,8 @@
  *
  *	@(#)lfs_extern.h	8.6 (Berkeley) 5/8/95
  */
+
+#include "opt_fifo.h"
 
 struct fid;
 struct mount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.22 1998/03/01 02:22:50 fvdl Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.23 1998/06/22 22:00:59 sommerfe Exp $	 */
 
 /*
  * Copyright (c) 1994, 1997 Christos Zoulas.  All rights reserved.
@@ -308,11 +308,7 @@ fd_truncate(p, fd, flp, retval)
 		return EBADF;
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE
-#ifdef FIFO
-	    || vp->v_type == VFIFO
-#endif
-	)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
 
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)

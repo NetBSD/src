@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.2 1998/03/01 02:22:08 fvdl Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.3 1998/06/22 22:01:03 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,10 @@
  *
  *	@(#)iso.h	8.4 (Berkeley) 12/5/94
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_fifo.h"
+#endif
 
 /*
  * Definitions used in the kernel for cd9660 file system support.

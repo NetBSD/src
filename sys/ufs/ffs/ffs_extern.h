@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.8 1998/03/18 15:57:27 bouyer Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.9 1998/06/22 22:01:08 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,10 @@
  *
  *	@(#)ffs_extern.h	8.6 (Berkeley) 3/30/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_fifo.h"
+#endif
 
 /*
  * Sysctl values for the fast filesystem.

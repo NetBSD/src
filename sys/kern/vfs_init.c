@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.11 1998/03/30 02:32:38 mrg Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.12 1998/06/22 22:01:04 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  *	@(#)vfs_init.c	8.5 (Berkeley) 5/11/95
  */
 
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>

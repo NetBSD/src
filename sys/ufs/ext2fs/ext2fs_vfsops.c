@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.12 1998/06/05 19:53:02 kleink Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.13 1998/06/22 22:01:08 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,8 @@
  *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

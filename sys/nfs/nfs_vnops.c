@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.92 1998/06/05 19:53:02 kleink Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.93 1998/06/22 22:01:07 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_fifo.h"
 
 /*
  * vnode op calls for Sun NFS version 2 and 3
