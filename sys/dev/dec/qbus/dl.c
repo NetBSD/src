@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.4 1998/01/24 14:16:37 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.5 1998/04/13 12:14:42 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -199,7 +199,6 @@ dl_attach (parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct uba_softc *uh = (void *)parent;
 	struct dl_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
 	register dlregs *dladdr;
@@ -297,7 +296,6 @@ dlopen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit;
 	struct dl_softc *sc;
-	int s, error = 0;
 
 	unit = DL_I2C(minor(dev));
 
@@ -313,7 +311,6 @@ dlopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 
 	if (!(tp->t_state & TS_ISOPEN)) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -466,7 +463,7 @@ dlstart(tp)
 {
 	register struct dl_softc *sc;
 	register dlregs *dladdr;
-	register int unit, cc;
+	register int unit;
 	int s;
 
 	unit = DL_I2C(minor(tp->t_dev));

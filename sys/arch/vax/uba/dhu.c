@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.11 1998/01/24 14:16:39 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.12 1998/04/13 12:14:42 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -392,7 +392,6 @@ dhuopen(dev, flag, mode, p)
 	tp->t_hwiflow = dhuiflow;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
@@ -411,9 +410,10 @@ dhuopen(dev, flag, mode, p)
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
-		tp->t_state |= TS_WOPEN;
+		tp->t_wopen++;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 				TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
 		if (error)
 			break;
 	}
@@ -449,7 +449,7 @@ dhuclose(dev, flag, mode, p)
 
 	/* Do a hangup if so required. */
 
-	if ((tp->t_cflag & HUPCL) || (tp->t_state & TS_WOPEN) ||
+	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
 		(void) dhumctl(sc, line, 0, DMSET);
 
