@@ -1,4 +1,22 @@
-/*	$NetBSD: i82365.c,v 1.83 2004/08/12 13:37:40 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.84 2004/08/12 13:39:38 mycroft Exp $	*/
+
+/*
+ * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Charles M. Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ */
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.83 2004/08/12 13:37:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.84 2004/08/12 13:39:38 mycroft Exp $");
 
 #define	PCICDEBUG
 
