@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.2 1997/03/15 18:12:41 is Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.3 1998/04/03 19:34:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,9 @@
 
 #ifdef	_KERNEL
 
+#include <ddb/db_run.h>
+#include <ddb/db_access.h>
+
 /*
  * Functions and variables exported from kgdb_stub.c
  */
@@ -92,8 +95,6 @@ int kgdb_trap __P((int, db_regs_t *));
 /*
  * Machine dependent functions needed by kgdb_stub.c
  */
-void db_read_bytes __P((vm_offset_t, size_t, char *));
-void db_write_bytes __P((vm_offset_t, size_t, char *));
 int kgdb_signal __P((int));
 int kgdb_acc __P((vm_offset_t, size_t));
 void kgdb_getregs __P((db_regs_t *, kgdb_reg_t *));
