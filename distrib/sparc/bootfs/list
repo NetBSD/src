@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1.1.1 1998/06/06 05:29:50 mrg Exp $
+#	$NetBSD: list,v 1.2 1999/06/23 13:20:18 mrg Exp $
 
 # copy the kernel
-COPY	${OBJDIR}/netbsd.ram.gz	netbsd.gz
+COPY	${OBJDIR}/netbsd.ram.gz		netbsd
