@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.228 2001/12/04 04:25:21 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.229 2001/12/07 02:28:53 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -123,6 +123,7 @@ OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
 OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 PIC=		${TOOLDIR}/bin/nbpic
+PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 REFER=		${TOOLDIR}/bin/nbrefer
 RPCGEN=		${TOOLDIR}/bin/nbrpcgen

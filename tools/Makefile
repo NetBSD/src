@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/11/29 23:51:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2001/12/07 02:28:53 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,8 @@ SUBDIR=	mkdep .WAIT \
 	yacc .WAIT \
 		groff \
 	lex .WAIT \
-		asn1_compile compile_et config lint1 msgc menuc mklocale
+		asn1_compile compile_et config lint1 msgc menuc mklocale \
+		pwd_mkdb
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
