@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1998/12/17 20:14:44 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1998/12/20 17:43:37 veego Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <err.h>
 #include <fcntl.h>
 #include <a.out.h>
 #include <stab.h>
