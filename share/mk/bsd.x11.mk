@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.22 2004/01/18 05:43:16 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.23 2004/01/18 06:38:16 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -38,9 +38,12 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 			-DDDXOSVERRORF -DDDXTIME
 
-.if ${MACHINE} != "sparc" && ${MACHINE} != "amiga" && \
-    ${MACHINE} != "alpha" && ${MACHINE} != "pmax" && \
-    ${MACHINE} != "acorn32"
+.if !(${MACHINE} == "acorn32"	|| \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amiga"	|| \
+    ${MACHINE} == "pmax"	|| \
+    ${MACHINE} == "sparc"	|| \
+    ${MACHINE} == "vax")
 #	EXT_DEFINES
 X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 
@@ -48,13 +51,17 @@ X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 X11FLAGS.SERVER+=	-DXINPUT -DXFree86XDGA -DXF86VIDMODE
 .endif
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "amd64" || ${MACHINE} == "alpha"
+.if ${MACHINE_ARCH} == "alpha"	||
+    ${MACHINE_ARCH} == "sparc64" ||
+    ${MACHINE_ARCH} == "x86_64"	||
 #	ServerDefines
 X11FLAGS.SERVER+=	-D_XSERVER64
 .endif
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "macppc" || \
-    ${MACHINE} == "amd64" || ${MACHINE} == "cats"
+.if ${MACHINE} == "amd64"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "i386"	|| \
+    ${MACHINE} == "macppc"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module
 .endif
