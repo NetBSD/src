@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.1.2.2 2001/04/23 09:42:21 bouyer Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.1.2.3 2001/04/23 13:41:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -149,9 +149,8 @@ struct sunscpal_req {
 	int		sr_datalen;
 	int		sr_flags;		/* Internal error code */
 #define	SR_IMMED			1	/* Immediate command */
-#define	SR_SENSE			2	/* We are getting sense */
-#define	SR_OVERDUE			4	/* Timeout while not current */
-#define	SR_ERROR			8	/* Error occurred */
+#define	SR_OVERDUE			2	/* Timeout while not current */
+#define	SR_ERROR			4	/* Error occurred */
 	int		sr_status;		/* Status code from last cmd */
 };
 #define	SUNSCPAL_OPENINGS	16		/* How many commands we can enqueue. */
@@ -159,8 +158,8 @@ struct sunscpal_req {
 
 struct sunscpal_softc {
 	struct device		sc_dev;
-	struct scsipi_link	sc_link;
 	struct scsipi_adapter	sc_adapter;
+	struct scsipi_channel	sc_channel;
 
 #ifdef SUNSCPAL_USE_BUS_SPACE
 	/* Pointers to bus_space */
@@ -269,7 +268,8 @@ struct sunscpal_softc {
 void	sunscpal_attach __P((struct sunscpal_softc *, int));
 int	sunscpal_detach __P((struct sunscpal_softc *, int));
 int 	sunscpal_intr __P((void *));
-int 	sunscpal_scsi_cmd __P((struct scsipi_xfer *));
+void 	sunscpal_scsipi_request __P((struct scsipi_channel *,
+		scsipi_adapter_req_t, void *));
 int 	sunscpal_pio_in __P((struct sunscpal_softc *, int, int, u_char *));
 int 	sunscpal_pio_out __P((struct sunscpal_softc *, int, int, u_char *));
 void	sunscpal_init __P((struct sunscpal_softc *));
