@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.4.2 1999/07/11 05:43:59 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.4.3 1999/07/31 18:49:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -159,7 +159,7 @@ ffs_truncate(v)
 	register struct vnode *ovp = ap->a_vp;
 	register ufs_daddr_t lastblock;
 	register struct inode *oip;
-	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	register struct fs *fs;
@@ -220,34 +220,13 @@ ffs_truncate(v)
 	 * of subsequent file growth.
 	 */
 	offset = blkoff(fs, length);
-	if (offset == 0) {
-		oip->i_ffs_size = length;
-	} else {
-		lbn = lblkno(fs, length);
-#if 1
+	if (offset != 0) {
+		size = blksize(fs, oip, lblkno(fs, length));
+
 		/* XXX we should handle more than just VREG */
-#else
-		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
-			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, NULL,
-				   aflags);
-		if (error)
-			return (error);
-#endif
-		oip->i_ffs_size = length;
-		size = blksize(fs, oip, lbn);
-#if 1
-		uvm_vnp_zerorange(ovp, oip->i_ffs_size, size - offset);
-#else
-		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
-		allocbuf(bp, size);
-		if (aflags & B_SYNC)
-			bwrite(bp);
-		else
-			bawrite(bp);
-#endif
+		uvm_vnp_zerorange(ovp, length, size - offset);
 	}
+	oip->i_ffs_size = length;
 	uvm_vnp_setsize(ovp, length);
 	/*
 	 * Calculate index into inode's block list of
