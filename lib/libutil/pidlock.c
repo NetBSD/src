@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.5 1998/12/09 14:35:03 christos Exp $ */
+/*	$NetBSD: pidlock.c,v 1.6 1999/01/11 23:20:35 kleink Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,14 +24,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.5 1998/12/09 14:35:03 christos Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.6 1999/01/11 23:20:35 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
