@@ -1,4 +1,4 @@
-.\"	$NetBSD: toupper.3,v 1.13 2003/08/07 16:42:58 agc Exp $
+.\"	$NetBSD: toupper.3,v 1.14 2004/12/24 02:47:16 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)toupper.3	5.2 (Berkeley) 6/29/91
 .\"
-.Dd June 29, 1991
+.Dd December 24, 2004
 .Dt TOUPPER 3
 .Os
 .Sh NAME
@@ -85,3 +85,11 @@ The
 .Fn toupper
 function conforms to
 .St -ansiC .
+.Sh CAVEATS
+The argument to
+.Fn toupper
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.
