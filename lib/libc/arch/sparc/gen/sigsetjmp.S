@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.1 1995/01/11 20:22:28 pk Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.2 1995/03/11 20:28:59 pk Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -33,54 +33,38 @@
 #include "SYS.h"
 
 #ifdef PIC
-	/*
-	 * We cannot do PIC branches to external labels, hence all this crap.
-	 */
-	.data
-L_setjmp:	.word	_setjmp
-L__setjmp:	.word	__setjmp
-L_longjmp:	.word	_longjmp
-L__longjmp:	.word	__longjmp
-
-	.text
 
 ENTRY(sigsetjmp)
-	PIC_PROLOGUE(%g1,%g2)
+	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
 	cmp %o1,0
 	st %o1,[%o0+40]		! jmpbuf[JBLEN]
-	bne 1f
-	nop
-	ld [%g1+L__setjmp], %g1
-	ba,a 2f
+	bne,a 1f
+	ld [%g1+_setjmp], %g1	! if (%o1 != 0) goto _setjmp;
+	ld [%g1+__setjmp], %g1	! else goto __setjmp;
 1:
-	ld [%g1+L_setjmp], %g1
-	ba,a 2f
-	unimp 0
+	jmp %g1
+	nop
 
 ENTRY(siglongjmp)
-	PIC_PROLOGUE(%g1,%g2)
-	ld [%o0+40],%g2
+	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
+	ld [%o0+40],%g2		! jmpbuf[JBLEN]
 	cmp %g2,0
-	bne 1f
-	nop
-	ld [%g1+L__longjmp], %g1
-	ba,a 2f
+	bne,a 1f
+	ld [%g1+_longjmp], %g1	! if (%g2 != 0) goto _longjmp;
+	ld [%g1+__longjmp], %g1	! else goto __longjmp;
 1:
-	ld [%g1+L_longjmp], %g1
-2:
-	ld [%g1],%g1
 	jmp %g1
 	nop
 	unimp 0
-#else
+
+#else /* PIC */
 
 ENTRY(sigsetjmp)
 	cmp %o1,0
-	st %o1,[%o0+40]		! jmpbuf[JBLEN]
 	be __setjmp
+	st %o1,[%o0+40]		! jmpbuf[JBLEN]
 	nop
-	ba _setjmp
-	nop
+	ba,a _setjmp
 	unimp 0
 
 ENTRY(siglongjmp)
@@ -88,7 +72,7 @@ ENTRY(siglongjmp)
 	cmp %g1,0
 	be __longjmp
 	nop
-	ba _longjmp
-	nop
+	ba,a _longjmp
 	unimp 0
-#endif
+
+#endif /* PIC */
