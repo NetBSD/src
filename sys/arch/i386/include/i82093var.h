@@ -1,3 +1,5 @@
+/* $NetBSD: i82093var.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
