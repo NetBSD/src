@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.96 1998/08/30 21:54:25 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.97 1998/09/07 23:04:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -218,7 +218,7 @@ bootstrap()
 	/* Attach user structure to proc0 */
 	proc0.p_addr = proc0paddr;
 
-	bzero(&cpuinfo, sizeof(struct cpu_softc));
+	bzero(&cpuinfo, sizeof(struct cpu_info));
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1998/09/06 21:14:56 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.72 1998/09/07 23:04:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -396,7 +396,7 @@ badtrap:
 		/*
 		 * If we have not found an FPU, we have to emulate it.
 		 */
-		if (!foundfpu) {
+		if (!cpuinfo.fpupresent) {
 #ifdef notyet
 			fpu_emulate(p, tf, fs);
 			break;
