@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.4 1995/10/07 06:26:25 mycroft Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.4.18.1 1998/01/29 11:29:37 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -155,7 +155,7 @@ compat_10_sys_shmsys(p, v, retval)
 		return (sys_shmctl(p, &shmctl_args, retval));
 
 	case 2:						/* shmdt() */
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
+		SCARG(&shmdt_args, shmaddr) = (void *)SCARG(uap, a2);
 		return (sys_shmdt(p, &shmdt_args, retval));
 
 	case 3:						/* shmget() */
