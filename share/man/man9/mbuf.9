@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.30 2004/09/06 16:25:29 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.31 2004/12/12 21:04:16 spz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 6, 2004
+.Dd December 12, 2004
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -56,6 +56,7 @@
 .Nm m_pullup ,
 .Nm m_split ,
 .Nm m_adj ,
+.Nm m_apply ,
 .Nm m_free ,
 .Nm m_freem ,
 .Nm mtod ,
@@ -112,6 +113,8 @@
 .Fn m_split "struct mbuf *m0" "int len0" "int wait"
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
+.Ft int
+.Fn m_apply "struct mbuf *m" "int off" "int len" "int *f(void *, caddr_t, unsigned int)" "void *arg"
 .Ft struct mbuf *
 .Fn m_free "struct mbuf *m"
 .Ft void
@@ -508,6 +511,34 @@ from the back (and if it is zero, the mbuf will stay bearded).
 This function does not move data in any way, but is used to manipulate the
 data area pointer and data length variable of the mbuf in a non-clobbering
 way.
+.It Fn m_apply "struct mbuf *m" "int off" "int len" "int (*f)(void *, caddr_t, unsigned int)" "void *arg"
+Apply function 
+.Fa f 
+to the data in an mbuf chain starting 
+.Fa off 
+bytes from the beginning, continuing for 
+.Fa len 
+bytes. Neither
+.Fa off 
+nor
+.Fa len 
+may be negative. 
+.Fa arg 
+will be supplied as first argument for
+.Fa f ,
+the second argument will be the pointer to the data buffer of a
+packet (starting after 
+.Fa off
+bytes in the stream), and the third argument is the amount 
+of data in bytes in this call. If
+.Fa f 
+returns something not equal to 
+.Dv zero 
+.Fn m_apply 
+will bail out, returning the return code of
+.Fa f .
+Upon successful completion it will return 
+.Dv zero .
 .It Fn m_free "struct mbuf *m"
 Frees mbuf
 .Fa m .
