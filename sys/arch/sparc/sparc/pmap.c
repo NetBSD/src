@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2001/03/04 21:12:24 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.183 2001/03/04 21:28:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2135,7 +2135,7 @@ pv_unlink4_4c(pv, pm, va)
 		prev->pv_next = npv->pv_next;
 		pool_put(&pv_pool, npv);
 	}
-	if (pv->pv_flags & (PV_NC|PV_ANC) == PV_ANC) {
+	if ((pv->pv_flags & (PV_NC|PV_ANC)) == PV_ANC) {
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
@@ -2552,7 +2552,7 @@ pv_uncache(pv0)
 		pv_changepte4m(pv, 0, SRMMU_PG_C);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4OR4C)
 		pv_changepte4_4c(pv, PG_NC, 0);
 #endif
 }
