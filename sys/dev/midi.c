@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.13 1999/10/19 16:04:52 soren Exp $	*/
+/*	$NetBSD: midi.c,v 1.14 2000/01/18 18:49:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -235,7 +235,10 @@ midi_in(addr, data)
 		return;
 	if (data == MIDI_ACK)
 		return;
-	DPRINTFN(3, ("midi_in: %p 0x%02x\n", sc, data));
+
+	DPRINTFN(3, ("midi_in: sc=%p data=0x%02x state=%d pos=%d\n", 
+		     sc, data, sc->in_state, sc->in_pos));
+
 	if (!(sc->flags & FREAD))
 		return;		/* discard data if not reading */
 
@@ -268,8 +271,7 @@ midi_in(addr, data)
 					sc->in_state = MIDI_IN_DATA;
 					sc->in_msg[0] = sc->in_status = data;
 					sc->in_pos = 1;
-					sc->in_left = 
-						MIDI_LENGTH(sc->in_status);
+					sc->in_left = MIDI_LENGTH(data);
 				}
 				break;
 			}
