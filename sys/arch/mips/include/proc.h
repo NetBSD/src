@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13.4.3 2001/11/19 11:14:01 wdk Exp $	*/
+/*	$NetBSD: proc.h,v 1.13.4.4 2001/11/28 10:14:08 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,8 @@
 
 #ifndef _MIPS_PROC_H_
 #define _MIPS_PROC_H_
+
+#include <sys/param.h>
 
 struct lwp;
 
