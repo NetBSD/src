@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.15 2003/10/25 09:03:59 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.16 2003/11/06 18:22:01 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.15 2003/10/25 09:03:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.16 2003/11/06 18:22:01 ragge Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -241,7 +241,7 @@ static void
 ptree_gen(char *off, struct symtab *tab)
 {
 	Elf_Sym *sym;
-	int i;
+	int i, nsym;
 
 	if (off != NULL)
 		symb = (struct ptree *)ALIGN(off);
@@ -251,7 +251,12 @@ ptree_gen(char *off, struct symtab *tab)
 	symb--; /* sym index won't be 0 */
 
 	sym = tab->sd_symstart;
-	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
+	if ((nsym = tab->sd_symsize/sizeof(Elf_Sym)) > INT16_MAX) {
+		printf("Too many symbols for tree, skipping %d symbols\n",
+		    nsym-INT16_MAX);
+		nsym = INT16_MAX;
+	}
+	for (i = 1; i < nsym; i++) {
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
 		ptree_add(tab->sd_strstart+sym[i].st_name, i);
