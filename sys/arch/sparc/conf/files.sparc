@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.68 1998/09/26 19:06:47 pk Exp $
+#	$NetBSD: files.sparc,v 1.69 1998/11/22 23:22:26 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -80,6 +80,13 @@ include "../../../dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
+
+# network devices MII bus
+include "../../../dev/mii/files.mii"
+
+# PCMCIA bus
+include "../../../dev/pcmcia/files.pcmcia"
+include "../../../dev/ata/files.ata"
 
 #
 # Console (zs) related stuff
