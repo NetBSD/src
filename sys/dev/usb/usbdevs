@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.323 2003/05/24 23:29:11 augustss Exp $
+$NetBSD: usbdevs,v 1.324 2003/05/25 14:31:41 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -396,6 +396,7 @@ product ABOCOM XX6		0x400b	XX6
 product ABOCOM XX7		0x400c	XX7
 product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
+product ABOCOM UFE2000		0x420a	UFE2000 USB2.0 Fast Ethernet Adapter
 product ABOCOM XX10		0xabc1	XX10
 
 /* Accton products */
