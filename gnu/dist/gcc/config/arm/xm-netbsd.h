@@ -2,6 +2,9 @@
 
 #include <arm/xm-arm.h>
 
-#ifndef SYS_SIGLIST_DECLARED
-#define SYS_SIGLIST_DECLARED
+/* xm-netbsd.h defines this */
+#ifdef HAVE_VPRINTF
+#undef HAVE_VPRINTF
 #endif
+
+#include <xm-netbsd.h>
