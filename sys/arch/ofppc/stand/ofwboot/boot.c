@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2001/05/03 13:11:25 soren Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2001/07/22 14:43:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ chain(entry, args, esym)
 	 * strings.
 	 */
 	l = strlen(args) + 1;
-	bcopy(&esym, args + l, sizeof(esym));
+	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
@@ -275,7 +275,7 @@ aout_exec(fd, hdr, entryp, esymp)
 
 	/* Zero BSS. */
 	printf("+%lu", hdr->a_bss);
-	bzero((char *)addr + hdr->a_text + hdr->a_data, hdr->a_bss);
+	memset((char *)addr + hdr->a_text + hdr->a_data, 0, hdr->a_bss);
 
 	/* Symbols. */
 	*esymp = addr;
@@ -353,7 +353,7 @@ elf_exec(fd, elf, entryp, esymp)
 		if (phdr.p_filesz < phdr.p_memsz) {
 			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero((void *)phdr.p_vaddr + phdr.p_filesz,
+			memset((void *)phdr.p_vaddr + phdr.p_filesz, 0,
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
@@ -395,8 +395,8 @@ elf_exec(fd, elf, entryp, esymp)
 	elf->e_shoff = sizeof(Elf_Ehdr);
 	elf->e_phentsize = 0;
 	elf->e_phnum = 0;
-	bcopy(elf, addr, sizeof(Elf_Ehdr));
-	bcopy(shp, addr + sizeof(Elf_Ehdr), elf->e_shnum * sizeof(Elf32_Shdr));
+	memcpy(addr, elf, sizeof(Elf_Ehdr));
+	memcpy(addr + sizeof(Elf_Ehdr), shp, elf->e_shnum * sizeof(Elf32_Shdr));
 	free(shp, elf->e_shnum * sizeof(Elf32_Shdr));
 	*ssymp = addr;
 
