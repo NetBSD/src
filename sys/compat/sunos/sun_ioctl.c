@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.6 1993/12/12 20:43:20 deraadt Exp $
+ * $Id: sun_ioctl.c,v 1.7 1994/01/15 01:18:14 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -542,13 +542,13 @@ sun_ioctl(p, uap, retval)
  * Pseudo-tty ioctl translations.
  */
 	case _IOW('t', 32, int):	/* TIOCTCNTL */
-		return EOPNOTSUPP;
+		return ENODEV;
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
 		int error, sig;
 
 		if (error = copyin (uap->data, (caddr_t)&sig, sizeof (sig)))
 			return error;
-		return (*ctl)(fp, TIOCSIG, (caddr_t)sig, p);
+		return (*ctl)(fp, TIOCSIG, (caddr_t)&sig, p);
 	}
 
 /*
