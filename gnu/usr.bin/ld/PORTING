@@ -1,4 +1,4 @@
-$NetBSD: PORTING,v 1.3 1998/01/05 22:00:34 cgd Exp $
+$NetBSD: PORTING,v 1.4 1998/10/19 03:09:31 matt Exp $
 
 This document describes some of the machine dependent parts in ld(1) and rtld(?)
 Most of the machine dependencies are a result of different ways in which
@@ -36,6 +36,17 @@ RELOC_STATICS_THROUGH_GOT_P(r)
 	decides whether variables with file scope are addressed relative to
 	the start Global Offset Table (1) or an entry in GOT must be
 	allocated (0). The compiler has a say in this.
+
+RELOC_SYMBOLICS_THROUGH_JMPSLOT_P(r)
+
+	Macro indicates whether or not a jmpslot entry is needed when
+	link symbolicly.  Some archictecures produce purely PIC in which
+	a jmpslot is just redundant.
+
+JMPTAB_NONEXTERN_ARE_INTERMODULE_P(r)
+
+	Macro indicate whether or not a nonextern jmpslot is used to
+	directly call other functions without a jmpslot (1) or not(0).
 
 
 Some other random macros:

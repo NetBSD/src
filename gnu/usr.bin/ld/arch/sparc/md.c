@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.17 1998/10/19 03:09:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,10 +234,11 @@ md_make_jmpslot(sp, offset, index)
  * OFFSET unused on Sparc.
  */
 void
-md_fix_jmpslot(sp, offset, addr)
+md_fix_jmpslot(sp, offset, addr, first)
 	jmpslot_t	*sp;
 	long		offset;
 	u_long		addr;
+	int		first;
 {
 	/*
 	 * Here comes a RELOC_{LO10,HI22} relocation pair
@@ -272,10 +273,9 @@ md_make_jmpreloc(rp, r, type)
  * Set relocation type for a GOT RRS relocation.
  */
 void
-md_make_gotreloc(rp, r, type, gotp)
+md_make_gotreloc(rp, r, type)
 	struct relocation_info	*rp, *r;
 	int			type;
-	got_t			*gotp;
 {
 	/*
 	 * GOT value resolved (symbolic or entry point): R_32

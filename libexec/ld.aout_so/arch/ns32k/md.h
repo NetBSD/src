@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 1998/10/03 20:04:01 matthias Exp $  */
+/*	$NetBSD: md.h,v 1.6 1998/10/19 03:09:32 matt Exp $  */
 
 /*
  *	- ns32k dependent definitions
@@ -27,9 +27,11 @@
 #define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
 #define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
-#define JMPSLOT_NEEDS_RELOC		(0)
-#define RELOC_INIT_SEGMENT_RELOC(r)	((r)->r_disp = 2)
+#define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
+#define JMPSLOT_NEEDS_RELOC			(0)
+#define RELOC_INIT_SEGMENT_RELOC(r)		((r)->r_disp = 2)
+#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
+#define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 #define md_got_reloc(r)			(0)
 
