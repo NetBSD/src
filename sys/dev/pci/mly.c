@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.18 2003/03/31 03:23:38 perry Exp $	*/
+/*	$NetBSD: mly.c,v 1.19 2003/04/01 02:04:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.18 2003/03/31 03:23:38 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.19 2003/04/01 02:04:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2208,7 +2208,7 @@ mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap,
 
 	state = 0;
 	
-	if ((rv = bus_dmamem_alloc(mly->mly_dmat, size, NBPG, 0, 
+	if ((rv = bus_dmamem_alloc(mly->mly_dmat, size, PAGE_SIZE, 0, 
 	    seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: dmamem_alloc = %d\n", mly->mly_dv.dv_xname, rv);
 		goto bad;

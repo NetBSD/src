@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.4 2002/10/02 16:34:26 thorpej Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.5 2003/04/01 02:01:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ ie_pcctwo_attach(parent, self, args)
 	    0, &ps->ps_bush);
 
 	/* Get contiguous DMA-able memory for the IE chip */
-	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
+	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, PAGE_SIZE, 0,
 		&seg, 1, &rseg,
 		BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0) {
 		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
