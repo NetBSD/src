@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.nv,v 1.1.2.1 2004/11/15 09:12:40 rtr Exp $
+#	$NetBSD: Makefile.nv,v 1.1.2.2 2004/12/07 11:00:33 rtr Exp $
 
 MAN+=	nv.4
 
@@ -6,7 +6,7 @@ MAN+=	nv.4
 SRCS.nv=	nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
 		nv_shadow.c nv_hw.c nv_video.c
 
-.if ${X11LOADABLE} == "no"
+.if ${MKX11LOADABLE} == "no"
 SRCS.nv+=	riva_driver.c riva_dac.c riva_setup.c riva_cursor.c riva_xaa.c \
 		riva_dga.c riva_shadow.c riva_hw.c
 .endif

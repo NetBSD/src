@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.11.4.1 2004/11/15 09:12:39 rtr Exp $
+#	$NetBSD: Makefile.cfb,v 1.11.4.2 2004/12/07 11:00:32 rtr Exp $
 
 .if ${PIXELSIZE} == 8
 LIB=		cfb
@@ -19,7 +19,7 @@ SRCS+=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
 		cfbscrinit.c cfbseg.c cfbsetsp.c cfbsolidC.c \
 		cfbsolidG.c cfbsolidX.c cfbtegblt.c cfbtile32C.c \
 		cfbtile32G.c cfbtileoddC.c cfbtileoddG.c cfbwindow.c \
-		cfbzerarcC.c cfbzerarcG.c cfbzerarcX.c
+		cfbzerarcC.c cfbzerarcG.c cfbzerarcX.c cfbcmap.c
 
 X11XSERVERDIR=	${X11SRCDIR.xc}/programs/Xserver
 

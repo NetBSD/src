@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2004/11/21 10:01:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2004/12/07 11:00:33 rtr Exp $
 
-X11LOADABLE=no
+MKX11LOADABLE=no
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
