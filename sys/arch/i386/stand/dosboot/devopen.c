@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1997/09/17 18:40:33 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.4 1999/04/14 11:53:44 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -79,6 +79,8 @@ static struct {
 	}
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
+
+static int dev2bios __P((char *, unsigned int, int *));
 
 static int
 dev2bios(devname, unit, biosdev)
