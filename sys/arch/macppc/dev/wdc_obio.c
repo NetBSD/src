@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.2 1999/01/22 10:44:38 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.3 1999/05/01 10:23:42 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,11 +88,18 @@ wdc_obio_probe(parent, match, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	char compat[32];
 
+	/* XXX should not use name */
 	if (strcmp(ca->ca_name, "ATA") == 0 ||
 	    strcmp(ca->ca_name, "ata") == 0 ||
 	    strcmp(ca->ca_name, "ata0") == 0 ||
 	    strcmp(ca->ca_name, "ide") == 0)
+		return 1;
+
+	bzero(compat, sizeof(compat));
+	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	if (strcmp(compat, "heathrow-ata") == 0)
 		return 1;
 
 	return 0;
