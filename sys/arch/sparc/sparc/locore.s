@@ -2907,6 +2907,13 @@ _esigcode:
 #define	ALTENTRY(x)	.globl _##x; _##x:
 
 /*
+ * getfp() - get stack frame pointer
+ */
+ENTRY(getfp)
+	retl
+	 mov %fp, %o0
+
+/*
  * copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *
  * Copy a null terminated string from the user address space into
