@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.5.4.4 1993/11/27 19:43:01 mycroft Exp $
+ *	$Id: bpf.c,v 1.5.4.5 1993/12/03 03:35:05 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -200,6 +200,16 @@ bpf_movein(uio, linktype, mp, sockp)
 		error = UIOMOVE((caddr_t)sockp->sa_data, hlen, UIO_WRITE, uio);
 		if (error)
 			goto bad;
+
+		if (linktype == DLT_EN10MB) {
+			/*
+			 * ether_output() routine does a htons() on the type
+			 * field, so here we make sure it's in host order.
+			 */
+			struct ether_header *eh;
+			eh = (struct ether_header *)sockp->sa_data;
+			eh->ether_type = ntohs(eh->ether_type);
+		}
 	}
 	error = UIOMOVE(mtod(m, caddr_t), len - hlen, UIO_WRITE, uio);
 	if (!error)
