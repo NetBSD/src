@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.31 1999/06/16 00:29:05 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.32 1999/06/16 17:43:49 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -107,13 +107,11 @@ struct vm_map_entry {
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
 	vsize_t			offset;		/* offset into object */
-	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
-		/* Only in task maps: */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
-	int			wired_count;	/* can be paged if = 0 */
+	int			wired_count;	/* can be paged if == 0 */
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
 #define uvm_map_entry_stop_copy flags
