@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.32 2000/11/13 16:48:41 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.33 2000/11/15 14:29:40 tsubai Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	16
 
@@ -86,7 +86,11 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 options 	NFS_BOOT_BOOTPARAM
 
-config		netbsd	root on ? type ?
+# wscons options
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
+
+config	netbsd	root on ? type ?
 
 mainbus0 at root
 
@@ -127,15 +131,17 @@ scsibus0 at sc0
 #spifi*	at ap?				# SPIFI SCSI
 #scsibus* at spifi?
 
+xafb*	at ap?
+kb0	at ap?
+ms0	at ap?
+
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	FONT_GALLANT12x22
-
 wsdisplay0 at fb? console ?
+wsdisplay0 at xafb? console ?
 wskbd0	at kb? console ?
 wsmouse0 at ms?
 
