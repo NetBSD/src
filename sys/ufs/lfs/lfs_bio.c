@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.39 2001/11/08 02:39:10 lukem Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.40 2001/11/23 21:44:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.39 2001/11/08 02:39:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.40 2001/11/23 21:44:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int nb)
  * Also, we don't let blocks that have come to us from the cleaner
  * run out of space.
  */
-#define CANT_WAIT(BP,F) (IS_IFILE((BP)) || (BP)->b_lblkno<0 || ((F) & BW_CLEAN))
+#define CANT_WAIT(BP,F) (IS_IFILE((BP)) || (BP)->b_lblkno < 0 || ((F) & BW_CLEAN))
 
 int
 lfs_bwrite(void *v)
@@ -253,10 +253,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * Don't write *any* blocks if we're mounted read-only.
 	 * In particular the cleaner can't write blocks either.
 	 */
-        if(VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
+        if (VTOI(bp->b_vp)->i_lfs->lfs_ronly) {
 		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
 		LFS_UNLOCK_BUF(bp);
-		if(bp->b_flags & B_CALL)
+		if (bp->b_flags & B_CALL)
 			bp->b_flags &= ~B_BUSY;
 		else
 			brelse(bp);
@@ -306,7 +306,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 
 	}
 	
-	if(bp->b_flags & B_CALL)
+	if (bp->b_flags & B_CALL)
 		bp->b_flags &= ~B_BUSY;
 	else
 		brelse(bp);
@@ -317,7 +317,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 void
 lfs_flush_fs(struct lfs *fs, int flags)
 {
-	if(fs->lfs_ronly == 0 && fs->lfs_dirops == 0)
+	if (fs->lfs_ronly == 0 && fs->lfs_dirops == 0)
 	{
 		/* disallow dirops during flush */
 		fs->lfs_writer++;
@@ -331,12 +331,12 @@ lfs_flush_fs(struct lfs *fs, int flags)
 		 * count to reflect these new writes
 		 * after the segwrite completes.
 		 */
-		if(lfs_dostats)
+		if (lfs_dostats)
 			++lfs_stats.flush_invoked;
 		lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
 
 		/* XXX KS - allow dirops again */
-		if(--fs->lfs_writer==0)
+		if (--fs->lfs_writer == 0)
 			wakeup(&fs->lfs_dirops);
 	}
 }
@@ -355,9 +355,9 @@ lfs_flush(struct lfs *fs, int flags)
 	int s;
 	struct mount *mp, *nmp;
 	
-	if(lfs_dostats) 
+	if (lfs_dostats) 
 		++lfs_stats.write_exceeded;
-	if (lfs_writing && flags==0) {/* XXX flags */
+	if (lfs_writing && flags == 0) {/* XXX flags */
 #ifdef DEBUG_LFS
 		printf("lfs_flush: not flushing because another flush is active\n");
 #endif
@@ -371,7 +371,7 @@ lfs_flush(struct lfs *fs, int flags)
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
-		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN)==0)
+		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) == 0)
 			lfs_flush_fs(((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs, flags);
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_next;
@@ -430,14 +430,14 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 	{
 		++fs->lfs_writer;
 		lfs_flush(fs, flags);
-		if(--fs->lfs_writer==0)
+		if (--fs->lfs_writer == 0)
 			wakeup(&fs->lfs_dirops);
 	}
 
 	while (locked_queue_count > LFS_WAIT_BUFS
 	       || locked_queue_bytes > LFS_WAIT_BYTES)
 	{
-		if(lfs_dostats)
+		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
 #ifdef DEBUG_LFS
 		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
@@ -458,7 +458,7 @@ lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 		{
 			++fs->lfs_writer;
 			lfs_flush(fs, flags | SEGM_CKP);
-			if(--fs->lfs_writer==0)
+			if (--fs->lfs_writer == 0)
 				wakeup(&fs->lfs_dirops);
 		}
 	}
@@ -488,13 +488,13 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
 	bzero(bp, sizeof(struct buf));
 	if (nbytes)
 		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
-	if(nbytes) {
+	if (nbytes) {
 		bzero(bp->b_data, nbytes);
 	}
 #ifdef DIAGNOSTIC	
-	if(vp==NULL)
+	if (vp == NULL)
 		panic("vp is NULL in lfs_newbuf");
-	if(bp==NULL)
+	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
 	s = splbio();
@@ -526,7 +526,7 @@ lfs_freebuf(struct buf *bp)
 	int s;
 	
 	s = splbio();
-	if(bp->b_vp)
+	if (bp->b_vp)
 		brelvp(bp);
 	splx(s);
 	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
