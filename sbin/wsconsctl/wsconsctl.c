@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.6 2003/05/04 11:54:59 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.7 2004/06/25 14:33:48 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ usage(msg)
 	fprintf(stderr, "usage: %s [-kmd] [-f file] [-n] name ...\n",
 		progname);
 	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name=value ...\n",
+		progname);
+	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -w name+=value ...\n",
 		progname);
 	fprintf(stderr, " -or-  %s [-kmd] [-f file] [-n] -a\n", progname);
 
