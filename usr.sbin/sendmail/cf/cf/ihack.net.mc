@@ -36,9 +36,10 @@ divert(-1)
 # Mailer configuration for *.ihack.net.
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: ihack.net.mc,v 1.1 1999/03/05 01:10:33 mycroft Exp $')
+VERSIONID(`$NetBSD: ihack.net.mc,v 1.2 1999/03/05 01:32:11 mycroft Exp $')
 OSTYPE(bsd4.4)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
 
 DOMAIN(ihack.net)dnl
+
+MAILER(local)dnl
+MAILER(smtp)dnl
