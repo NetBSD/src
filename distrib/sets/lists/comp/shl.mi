@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.15 2000/06/21 06:28:09 thorpej Exp $
+# $NetBSD: shl.mi,v 1.16 2000/11/18 06:17:36 wiz Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbfd.so.3.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
@@ -14,6 +14,7 @@
 ./usr/lib/libgnumalloc_pic.a	comp-c-piclib
 ./usr/lib/libgssapi_pic.a	comp-c-piclib
 ./usr/lib/libhdb_pic.a		comp-c-piclib
+./usr/lib/libintl_pic.a		comp-c-piclib
 ./usr/lib/libipsec_pic.a	comp-c-piclib
 ./usr/lib/libkadm5clnt_pic.a	comp-c-piclib
 ./usr/lib/libkadm5srv_pic.a	comp-c-piclib
