@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.26 2002/10/21 23:38:12 fair Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.27 2002/10/23 01:34:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -2494,10 +2494,10 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
-#define	ADD(s, m, d)							\
+#define	ADD(ss, mm, dd)							\
 do {									\
-	printf("%s%s", sep, s);						\
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(m), (d), NULL);	\
+	printf("%s%s", sep, ss);					\
+	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(mm), (dd), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
