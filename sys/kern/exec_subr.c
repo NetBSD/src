@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.23 2000/08/02 20:42:03 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.24 2000/09/13 15:00:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -169,7 +169,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 */
 
 	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
-		uobj, cmd->ev_offset, 
+		uobj, cmd->ev_offset, 0,
 		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
@@ -209,7 +209,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_len += diff;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
@@ -267,7 +267,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_len += diff;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));

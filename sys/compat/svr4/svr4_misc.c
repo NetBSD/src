@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.86 2000/08/03 20:41:20 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.87 2000/09/13 15:00:24 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -775,6 +775,7 @@ svr4_sys_break(p, v, retval)
 
 	if (diff > 0) {
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+			0,
            		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, 
 			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
