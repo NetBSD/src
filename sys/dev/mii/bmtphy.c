@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.13 2003/05/02 19:42:35 scw Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.14 2003/06/06 23:22:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.13 2003/05/02 19:42:35 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.14 2003/06/06 23:22:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,6 @@ bmtphy_status(struct mii_softc *sc)
 	mii->mii_media_active = IFM_ETHER;
 
 	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-	aux_csr = PHY_READ(sc, MII_BMTPHY_AUX_CSR);
 
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
@@ -262,6 +261,7 @@ bmtphy_status(struct mii_softc *sc)
 			return;
 		}
 
+		aux_csr = PHY_READ(sc, MII_BMTPHY_AUX_CSR);
 		if (aux_csr & AUX_CSR_SPEED)
 			mii->mii_media_active |= IFM_100_TX;
 		else
