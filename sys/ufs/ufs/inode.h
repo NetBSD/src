@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.32 2003/01/24 21:55:29 fvdl Exp $	*/
+/*	$NetBSD: inode.h,v 1.33 2003/02/17 23:48:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -58,11 +58,7 @@ struct ext2fs_inode_ext {
 	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
 };
 
-struct lfs_inode_ext {
-	off_t	  lfs_osize;		/* size of file on disk */
-	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
-	size_t    lfs_fragsize[NDADDR]; /* size of on-disk direct blocks */
-};
+struct lfs_inode_ext;
 
 /*
  * The inode is used to describe each active (or recently active) file in the
@@ -111,13 +107,10 @@ struct inode {
 	union {
 		/* Other extensions could go here... */
 		struct	ext2fs_inode_ext e2fs;
-		struct  lfs_inode_ext lfs;
+		struct  lfs_inode_ext *lfs;
 	} inode_ext;
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
-#define i_lfs_effnblks		inode_ext.lfs.lfs_effnblocks
-#define i_lfs_fragsize		inode_ext.lfs.lfs_fragsize
-#define i_lfs_osize		inode_ext.lfs.lfs_osize
 	/*
 	 * The on-disk dinode itself.
 	 */
@@ -179,6 +172,7 @@ struct inode {
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
 #define IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+#define IN_PAGING       0x1000          /* LFS: file is on paging queue */
 
 #if defined(_KERNEL)
 /*

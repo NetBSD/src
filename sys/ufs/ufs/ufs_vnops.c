@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.89 2002/12/31 15:00:18 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.90 2003/02/17 23:48:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.89 2002/12/31 15:00:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.90 2003/02/17 23:48:23 perseant Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.89 2002/12/31 15:00:18 yamt Exp $");
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/lfs/lfs_extern.h>
+
+#include <uvm/uvm.h>
 
 static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
@@ -2070,4 +2072,50 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		softdep_change_linkcnt(ip);
 	vput(tvp);
 	return (error);
+}
+
+/*
+ * Allocate len bytes at offset off.
+ */
+int
+ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
+{
+        struct inode *ip = VTOI(vp);
+        int error, delta, bshift, bsize;
+        UVMHIST_FUNC("ufs_gop_alloc"); UVMHIST_CALLED(ubchist);
+
+        error = 0;
+        bshift = vp->v_mount->mnt_fs_bshift;                  
+        bsize = 1 << bshift;
+
+        delta = off & (bsize - 1);
+        off -= delta;
+        len += delta;
+
+        while (len > 0) {
+                bsize = MIN(bsize, len);
+
+                error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL);
+                if (error) {
+                        goto out;
+                }
+
+                /*
+                 * increase file size now, VOP_BALLOC() requires that
+                 * EOF be up-to-date before each call.
+                 */
+
+                if (ip->i_ffs_size < off + bsize) {
+                        UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
+                            vp, ip->i_ffs_size, off + bsize, 0);
+                        ip->i_ffs_size = off + bsize;
+                }
+
+                off += bsize;
+                len -= bsize;
+        }
+
+out:
+        return error;
 }
