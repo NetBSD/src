@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.15 2000/11/05 21:30:22 pk Exp $
+.\"	$NetBSD: prep,v 1.16 2001/07/24 18:14:34 nra Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -280,7 +280,7 @@ If you're installing
 for the first time it's a good idea
 to look at the partition sizes of disk you intend installing NetBSD on.
 .Pp
-Asumming a classic partition scheme with
+Assuming a classic partition scheme with
 .Pa /
 (root) and
 .Pa /usr
