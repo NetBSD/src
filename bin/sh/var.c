@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.13 1995/05/11 21:30:39 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.14 1996/06/25 16:49:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.13 1995/05/11 21:30:39 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.14 1996/06/25 16:49:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ struct varinit {
 	struct var *var;
 	int flags;
 	char *text;
+	void (*func) __P((const char *));
 };
 
 
@@ -95,31 +96,42 @@ struct var vvers;
 #if ATTY
 struct var vterm;
 #endif
+struct var voptind;
 
 const struct varinit varinit[] = {
 #if ATTY
-	{&vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY="},
+	{ &vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY=",
+	  NULL },
 #endif
 #ifndef NO_HISTORY
-	{&vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE="},
+	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
+	  sethistsize },
 #endif
-	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
-	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
-	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
-	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin"},
+	{ &vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n",
+	  NULL },
+	{ &vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL=",
+	  NULL },
+	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
+	  NULL },
+	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin",
+	  changepath },
 	/* 
 	 * vps1 depends on uid
 	 */
-	{&vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> "},
+	{ &vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> ",
+	  NULL },
 #if ATTY
-	{&vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM="},
+	{ &vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM=",
+	  NULL },
 #endif
-	{NULL,	0,				NULL}
+	{ &voptind,	VSTRFIXED|VTEXTFIXED,		"OPTIND=1",
+	  getoptsreset },
+	{ NULL,	0,				NULL,
+	  NULL }
 };
 
 struct var *vartab[VTABSIZE];
 
-STATIC int unsetvar __P((char *));
 STATIC struct var **hashvar __P((char *));
 STATIC int varequal __P((char *, char *));
 
@@ -161,6 +173,7 @@ initvar() {
 			*vpp = vp;
 			vp->text = ip->text;
 			vp->flags = ip->flags;
+			vp->func = ip->func;
 		}
 	}
 	/*
@@ -173,6 +186,29 @@ initvar() {
 		vps1.text = geteuid() ? "PS1=$ " : "PS1=# ";
 		vps1.flags = VSTRFIXED|VTEXTFIXED;
 	}
+}
+
+/*
+ * Safe version of setvar, returns 1 on success 0 on failure.
+ */
+
+int
+setvarsafe(name, val, flags)
+	char *name, *val;
+	int flags;
+{
+	struct jmploc jmploc;
+	struct jmploc *volatile savehandler = handler;
+	int err = 0;
+
+	if (setjmp(jmploc.loc))
+		err = 1;
+	else {
+		handler = &jmploc;
+		setvar(name, val, flags);
+	}
+	handler = savehandler;
+	return err;
 }
 
 /*
@@ -243,23 +279,27 @@ setvareq(s, flags)
 	for (vp = *vpp ; vp ; vp = vp->next) {
 		if (varequal(s, vp->text)) {
 			if (vp->flags & VREADONLY) {
-				int len = strchr(s, '=') - s;
+				size_t len = strchr(s, '=') - s;
 				error("%.*s: is read only", len, s);
 			}
 			INTOFF;
-			if (vp == &vpath)
-				changepath(s + 5);	/* 5 = strlen("PATH=") */
+
+			if (vp->func && (flags & VNOFUNC) == 0)
+				(*vp->func)(strchr(s, '=') + 1);
+
 			if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 				ckfree(vp->text);
-			vp->flags &=~ (VTEXTFIXED|VSTACK|VUNSET);
+
+			vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 			vp->flags |= flags;
 			vp->text = s;
+
+			/*
+			 * We could roll this to a function, to handle it as
+			 * a regular variable function callback, but why bother?
+			 */
 			if (vp == &vmpath || (vp == &vmail && ! mpathset()))
 				chkmail(1);
-#ifndef NO_HISTORY
-			if (vp == &vhistsize)
-				sethistsize();
-#endif
 			INTON;
 			return;
 		}
@@ -269,6 +309,7 @@ setvareq(s, flags)
 	vp->flags = flags;
 	vp->text = s;
 	vp->next = *vpp;
+	vp->func = NULL;
 	*vpp = vp;
 }
 
@@ -638,7 +679,7 @@ unsetcmd(argc, argv)
  * Unset the specified variable.
  */
 
-STATIC int
+int
 unsetvar(s)
 	char *s;
 	{
@@ -653,7 +694,7 @@ unsetvar(s)
 			INTOFF;
 			if (*(strchr(vp->text, '=') + 1) != '\0')
 				setvar(s, nullstr, 0);
-			vp->flags &=~ VEXPORT;
+			vp->flags &= ~VEXPORT;
 			vp->flags |= VUNSET;
 			if ((vp->flags & VSTRFIXED) == 0) {
 				if ((vp->flags & VTEXTFIXED) == 0)
