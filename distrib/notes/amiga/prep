@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.23 2000/10/29 14:08:05 lukem Exp $
+.\"	$NetBSD: prep,v 1.24 2000/11/07 22:10:17 is Exp $
 .
 You will need an
 .Tn AmigaDOS
@@ -56,7 +56,7 @@ This should be done as the HDToolBox manual describes.  One thing
 to note is that if you are not using a Commodore controller you
 will need to specify the device your SCSI controller uses, e.g.
 if you have a Warp Engine you would:
-.(tag "From cli" -offset indent
+.(tag From\ cli -offset indent
 .It From cli
 .Dl Ic "hdtoolbox warpdrive.device"
 .It From wb
