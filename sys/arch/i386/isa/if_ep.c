@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.47 1994/07/28 09:50:33 mycroft Exp $
+ *	$Id: if_ep.c,v 1.48 1994/07/28 19:57:31 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -157,13 +157,13 @@ epprobe(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	static int firsttime;
+	static int probed;
 	int slot, iobase, i;
 	u_short vendor, model;
 	u_short k, k2;
 
-	if (firsttime==0) {
-		firsttime = 1;
+	if (!probed) {
+		probed = 1;
 
 		/* find all EISA cards */
 		for (slot = 1; slot < 16; slot++) {
@@ -244,42 +244,16 @@ epprobe(parent, self, aux)
 		/* XXX should we sort by ethernet address? */
 	}
 
-	/*
-	 * a very specific search order:
-	 * 	exact iobase & irq
-	 * 	exact iobase, wildcard irq
-	 * 	wildcard iobase, exact irq
-	 *	wildcard iobase & irq
-	 * else fail..
-	 */
-	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq != (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_iobase == epcards[i].iobase &&
-			    ia->ia_irq == epcards[i].irq)
-				goto good;
-		}
-	}
-	if (ia->ia_iobase != (u_short)-1 && ia->ia_irq == (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_iobase == epcards[i].iobase)
-				goto good;
-		}
-	}
-	if (ia->ia_iobase == (u_short)-1 && ia->ia_irq != (u_short)-1) {
-		for (i = 0; i<nepcards; i++) {
-			if (epcards[i].available == 0)
-				continue;
-			if (ia->ia_irq == epcards[i].irq)
-				goto good;
-		}
-	}
-	for (i = 0; i<nepcards; i++)
-		if (epcards[i].available != 0) {
-			goto good;
+	for (i = 0; i < nepcards; i++) {
+		if (epcards[i].available == 0)
+			continue;
+		if (ia->ia_iobase != IOBASEUNK &&
+		    ia->ia_iobase != epcards[i].iobase)
+			continue;
+		if (ia->ia_irq != IRQUNK &&
+		    ia->ia_irq != epcards[i].irq)
+			continue;
+		goto good;
 	}
 	return 0;
 
