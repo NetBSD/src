@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.3 1998/01/12 09:23:28 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.4 1998/03/29 22:08:03 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -458,11 +458,13 @@ lemac_multicast_op(
     const u_char *mca,
     int enable)
 {
-    u_int idx, bit, data, crc = 0xFFFFFFFFUL;
+    u_int idx, bit, crc = 0xFFFFFFFFUL;
 
-    for (idx = 0; idx < 6; idx++)
-        for (data = *mca++, bit = 0; bit < 8; bit++, data >>= 1)
-            crc = (crc >> 1) ^ (((crc ^ data) & 1) ? LEMAC_CRC32_POLY : 0);
+    for (idx = 0; idx < 6; idx++) {
+	crc ^= (*mca++) << 0;
+        for (bit = 0; bit < 8; bit++)
+            crc = (crc >> 1) ^ ((crc & 1) ? LEMAC_CRC32_POLY : 0);
+    }
     /*
      * The following two lines convert the N bit index into a longword index
      * and a longword mask.  
