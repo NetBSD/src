@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.23 2002/12/27 11:43:38 tsutsui Exp $
+#	$NetBSD: files.dreamcast,v 1.24 2003/06/14 16:15:16 tsutsui Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -17,6 +17,10 @@ file	arch/dreamcast/dreamcast/machdep.c
 file	arch/dreamcast/dreamcast/autoconf.c
 file	arch/dreamcast/dreamcast/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c				disk
+
+file	arch/dreamcast/dreamcast/kloader.c		kloader
+defflag	opt_kloader.h	KLOADER
+defflag	debug_kloader.h	KLOADER_DEBUG
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 

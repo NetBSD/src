@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2003/04/26 11:05:09 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2003/06/14 16:15:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
 #include "scif.h"
+#include "opt_kloader.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +101,9 @@
 
 #include <sh3/cpu.h>
 #include <sh3/exception.h>
+#include <sh3/bscreg.h>
 #include <machine/intr.h>
+#include <machine/kloader.h>
 
 #include <dev/cons.h>
 
@@ -213,6 +216,15 @@ cpu_reboot(int howto, char *bootstr)
 		goto haltsys;
 	}
 
+#ifdef KLOADER
+	if ((howto & RB_HALT) == 0) {
+		if ((howto & RB_STRING) && bootstr != NULL) {
+			printf("loading a new kernel: %s\n", bootstr);
+			kloader_reboot_setup(bootstr);
+		}
+	}
+#endif
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
@@ -221,7 +233,9 @@ cpu_reboot(int howto, char *bootstr)
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
 		 */
-		/* resettodr(); */
+#if 0
+		resettodr();
+#endif
 	}
 
 	/* Disable interrupts. */
@@ -231,7 +245,7 @@ cpu_reboot(int howto, char *bootstr)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-haltsys:
+ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
@@ -240,6 +254,14 @@ haltsys:
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
+
+#ifdef KLOADER
+	else if ((howto & RB_STRING) && bootstr != NULL) {
+		kloader_reboot();
+		printf("\nFailed to load a new kernel.\n");
+		cngetc();
+	}
+#endif
 
 	printf("rebooting...\n");
 	cpu_reset();
