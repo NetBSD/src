@@ -1,3 +1,5 @@
+/*      $NetBSD: extern.h,v 1.2 1995/09/05 02:50:57 tls Exp $      */
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
