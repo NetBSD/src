@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.7 2001/11/14 06:16:09 tv Exp $	*/
+/*	$NetBSD: look.c,v 1.8 2002/01/31 19:36:47 tv Exp $	*/
 /*	$OpenBSD: look.c,v 1.8 2001/09/17 08:11:13 espie Exp $	*/
 
 /*
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: look.c,v 1.7 2001/11/14 06:16:09 tv Exp $");
+__RCSID("$NetBSD: look.c,v 1.8 2002/01/31 19:36:47 tv Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.8 2000/10/11 14:46:17 is Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.9 2002/01/31 19:36:49 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.8 2000/10/11 14:46:17 is Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.9 2002/01/31 19:36:49 tv Exp $");
 #endif
 #endif
 
