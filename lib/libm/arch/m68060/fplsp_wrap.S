@@ -1,4 +1,4 @@
-/* $NetBSD: fplsp_wrap.S,v 1.3 1999/08/22 08:25:43 is Exp $ */
+/* $NetBSD: fplsp_wrap.S,v 1.4 1999/11/10 16:34:56 thorpej Exp $ */
 
 /*
  * FPLSP wrapper.
@@ -13,10 +13,10 @@ ENTRY(__ieee754_acosf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0000
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0000
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -24,12 +24,12 @@ ENTRY(__ieee754_acos)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0008
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0008
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -37,10 +37,10 @@ ENTRY(__ieee754_asinf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0018
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0018
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -48,12 +48,12 @@ ENTRY(__ieee754_asin)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0020
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0020
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -61,10 +61,10 @@ ENTRY(atanf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0030
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0030
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -72,12 +72,12 @@ ENTRY(atan)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0038
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0038
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -85,10 +85,10 @@ ENTRY(__ieee754_atanhf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0048
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0048
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -96,12 +96,12 @@ ENTRY(__ieee754_atanh)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0050
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0050
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -109,10 +109,10 @@ ENTRY(cosf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0060
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0060
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -120,12 +120,12 @@ ENTRY(cos)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0068
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0068
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -133,10 +133,10 @@ ENTRY(__ieee754_coshf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0078
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0078
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -144,12 +144,12 @@ ENTRY(__ieee754_cosh)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0080
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0080
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -157,10 +157,10 @@ ENTRY(__ieee754_expf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0090
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0090
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -168,12 +168,12 @@ ENTRY(__ieee754_exp)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0098
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0098
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -181,10 +181,10 @@ ENTRY(expm1f)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP00a8
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP00a8
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -192,12 +192,12 @@ ENTRY(expm1)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP00b0
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP00b0
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -205,10 +205,10 @@ ENTRY(__ieee754_log10f)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP00f0
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP00f0
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -216,12 +216,12 @@ ENTRY(__ieee754_log10)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP00f8
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP00f8
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -229,10 +229,10 @@ ENTRY(logbf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0108
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0108
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -240,12 +240,12 @@ ENTRY(logb)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0110
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0110
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -253,10 +253,10 @@ ENTRY(__ieee754_logf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0120
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0120
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -264,12 +264,12 @@ ENTRY(__ieee754_log)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0128
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0128
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -277,10 +277,10 @@ ENTRY(log1pf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0138
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0138
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -288,12 +288,12 @@ ENTRY(log1p)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0140
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0140
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -301,10 +301,10 @@ ENTRY(sinf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0198
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP0198
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -312,12 +312,12 @@ ENTRY(sin)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01a0
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP01a0
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -325,10 +325,10 @@ ENTRY(__ieee754_sinhf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01c8
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP01c8
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -336,12 +336,12 @@ ENTRY(__ieee754_sinh)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01d0
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP01d0
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -349,10 +349,10 @@ ENTRY(tanf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01e0
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP01e0
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -360,12 +360,12 @@ ENTRY(tan)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01e8
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP01e8
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -373,10 +373,10 @@ ENTRY(tanhf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP01f8
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP01f8
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -384,12 +384,12 @@ ENTRY(tanh)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP0200
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP0200
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
@@ -397,10 +397,10 @@ ENTRY(__ieee754_sqrtf)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP02e8
 #else
-	movel sp@(4),sp@-
+	movel %sp@(4),%sp@-
 	jbsr L060FPLSP02e8
-	fmoves fp0,sp@
-	movel sp@+,d0
+	fmoves %fp0,%sp@
+	movel %sp@+,%d0
 	rts
 #endif
 
@@ -408,12 +408,12 @@ ENTRY(__ieee754_sqrt)
 #ifdef __SVR4_ABI__
 	jbra L060FPLSP02f0
 #else
-	movel sp@(8),sp@-
-	movel sp@(8),sp@-
+	movel %sp@(8),%sp@-
+	movel %sp@(8),%sp@-
 	jbsr L060FPLSP02f0
-	fmoved fp0,sp@
-	movel sp@+,d0
-	movel sp@+,d1
+	fmoved %fp0,%sp@
+	movel %sp@+,%d0
+	movel %sp@+,%d1
 	rts
 #endif
 
