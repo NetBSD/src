@@ -7,7 +7,8 @@
  * Leland Stanford Junior University.
  *
  *
- * $Id: defs.h,v 1.1 1994/01/11 20:15:50 brezak Exp $
+ * From: Id: defs.h,v 1.4 1993/06/24 05:11:16 deering Exp
+ *      $Id: defs.h,v 1.2 1994/05/08 15:08:52 brezak Exp $
  */
 
 
@@ -43,7 +44,7 @@
 
 #define PROTOCOL_VERSION 2  /* increment when packet format/content changes */
 
-#define MROUTED_VERSION  0  /* increment on local changes or bug fixes, */
+#define MROUTED_VERSION  2  /* increment on local changes or bug fixes, */
 			    /* reset to 0 whever PROTOCOL_VERSION increments */
 
 #define MROUTED_LEVEL ( (MROUTED_VERSION << 8) | PROTOCOL_VERSION )
@@ -64,6 +65,7 @@ extern int		debug;
 
 extern int		routes_changed;
 extern int		delay_change_reports;
+extern unsigned		nroutes;
 
 extern struct uvif	uvifs[MAXVIFS];
 extern vifi_t		numvifs;
@@ -95,6 +97,7 @@ extern void		accept_probe();
 extern void		accept_report();
 extern void		report();
 extern void		report_to_all_neighbors();
+extern int		report_next_chunk();
 extern void		add_vif_to_routes();
 extern void		delete_vif_from_routes();
 extern void		delete_neighbor_from_routes();
