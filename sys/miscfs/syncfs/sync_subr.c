@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.3 1999/11/23 23:52:41 fvdl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.3.6.1 2000/07/27 02:46:51 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -128,6 +128,24 @@ vn_syncer_add_to_worklist(vp, delay)
 
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	vp->v_flag |= VONWORKLST;
+	splx(s);
+}
+
+/*
+ * Remove an item fromthe syncer work queue.
+ */
+void
+vn_syncer_remove_from_worklist(vp)
+	struct vnode *vp;
+{
+	int s;
+
+	s = splbio();
+
+	if (vp->v_flag & VONWORKLST) {
+		LIST_REMOVE(vp, v_synclist);
+	}
+
 	splx(s);
 }
 
