@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1996/09/23 16:28:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.4 1996/09/23 16:28:00 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -42,7 +42,6 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $"
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <fstab.h>
 #include <errno.h>
 #if __STDC__
 #include <stdarg.h>
@@ -50,6 +49,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $"
 #include <varargs.h>
 #endif
 
+#include "util.h"
 #include "ext.h"
 
 int alwaysno;		/* assume "no" for all questions */
@@ -57,10 +57,9 @@ int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-char *fname;		/* filesystem currently checked */
+static void usage __P((void));
+int main __P((int, char **));
 
-static char *rawname __P((const char *));
-	
 static void
 usage()
 {
@@ -100,122 +99,16 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-#define	BADTYPE(type)							\
-	(strcmp(type, FSTAB_RO) &&					\
-	    strcmp(type, FSTAB_RW) && strcmp(type, FSTAB_RQ))
-
-	if (argc == 0) {
-		struct fstab *fs;
-
-		if (!preen)
-			usage();
-
-		while ((fs = getfsent()) != NULL) {
-
-			if (fs->fs_passno == 0)
-				continue;
-
-			if (BADTYPE(fs->fs_type))
-				continue;
-
-			if (strcmp(fs->fs_vfstype, "msdos"))
-				continue;
-
-			erg = checkfilesys(fname = rawname(fs->fs_spec));
-
-			if (erg > ret)
-				ret = erg;
-		}
-
-	}
-	else {
-		while (argc-- > 0) {
-			erg = checkfilesys(fname = *argv++);
-			if (erg > ret)
-				ret = erg;
-		}
+	while (argc-- > 0) {
+		setcdevname(*argv, preen);
+		erg = checkfilesys(*argv++);
+		if (erg > ret)
+			ret = erg;
 	}
 
 	return ret;
 }
 
-/*VARARGS*/
-void
-#if __STDC__
-errexit(const char *fmt, ...)
-#else
-errexit(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-	exit(8);
-}
-
-/*VARARGS*/
-void
-#if __STDC__
-pfatal(const char *fmt, ...)
-#else
-pfatal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-	if (preen)
-		printf("%s: ", fname);
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
-	if (preen)
-		exit(8);
-}
-
-/*VARARGS*/
-void
-#if __STDC__
-pwarn(const char *fmt, ...)
-#else
-pwarn(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-	if (preen)
-		printf("%s: ", fname);
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-perror(s)
-	const char *s;
-{
-	pfatal("%s (%s)", s, strerror(errno));
-}
 
 /*VARARGS*/
 int
@@ -260,21 +153,4 @@ ask(def, fmt, va_alist)
 				return 0;
 	} while (c != 'y' && c != 'Y' && c != 'n' && c != 'N');
 	return c == 'y' || c == 'Y';
-}
-
-static char *
-rawname(name)
-	const char *name;
-{
-	static char rawbuf[32];
-	char *dp;
-
-	if ((dp = strrchr(name, '/')) == 0)
-		return (0);
-	*dp = 0;
-	(void)strcpy(rawbuf, name);
-	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, &dp[1]);
-	return (rawbuf);
 }
