@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.50 1998/07/27 01:44:20 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.51 1998/07/28 21:19:13 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -103,9 +103,6 @@ device	   isa {[port = -1], [size = 0],
 device	ofisapc {}
 attach	ofisapc at ofbus
 file	arch/arm32/ofw/ofisapc.c			pc & ofw
-device	ofisacs {}
-attach	ofisacs at ofisa
-file	arch/arm32/ofw/ofisacs.c			cs & ofw
 device	ofisaess {}
 attach	ofisaess at ofisa
 file	arch/arm32/ofw/ofisaess.c		        ess & ofw
