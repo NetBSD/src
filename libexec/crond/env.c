@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/env.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/env.c,v 1.2 1993/03/28 17:24:46 glass Exp $";
 #endif
 
 /* Copyright 1988,1990 by Paul Vixie
@@ -92,7 +92,6 @@ load_env(envstr, f)
 	 *		FALSE = not an env setting (file was repositioned)
 	 *		TRUE = was an env setting
 	 */
-	char	*strcpy(), *sprintf();
 	long	filepos;
 	int	fileline;
 	char	name[MAX_TEMPSTR], val[MAX_ENVSTR];
