@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.27 2003/05/02 02:13:16 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.28 2003/06/26 00:43:32 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.27 2003/05/02 02:13:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28 2003/06/26 00:43:32 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -117,8 +117,8 @@ void
 gre_input(struct mbuf *m, ...)
 #else
 gre_input(m, va_alist)
-        struct mbuf *m;
-        va_dcl
+	struct mbuf *m;
+	va_dcl
 #endif
 {
 	int off, ret, proto;
@@ -261,8 +261,8 @@ void
 gre_mobile_input(struct mbuf *m, ...)
 #else
 gre_mobile_input(m, va_alist)
-        struct mbuf *m;
-        va_dcl
+	struct mbuf *m;
+	va_dcl
 #endif
 {
 	struct ip *ip;

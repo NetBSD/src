@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.49 2002/09/29 17:55:14 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.50 2003/06/26 00:43:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -426,7 +426,7 @@ typedef	struct	iplog	{
 
 typedef	struct	ipflog	{
 #if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
-        (defined(OpenBSD) && (OpenBSD >= 199603))
+	(defined(OpenBSD) && (OpenBSD >= 199603))
 	char	fl_ifname[LIFNAMSIZ];
 #else
 	u_int	fl_unit;

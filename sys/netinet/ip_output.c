@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.104 2003/05/26 15:12:11 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.105 2003/06/26 00:43:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.104 2003/05/26 15:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.105 2003/06/26 00:43:32 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -1285,7 +1285,7 @@ ip_pcbopts(pcbopt, m)
 			 * to close up the deleted entry.
 			 */
 			memmove(&cp[IPOPT_OFFSET+1],
-                            (caddr_t)(&cp[IPOPT_OFFSET+1] + sizeof(struct in_addr)),
+			    (caddr_t)(&cp[IPOPT_OFFSET+1] + sizeof(struct in_addr)),
 			    (unsigned)cnt + sizeof(struct in_addr));
 			break;
 		}
