@@ -1,4 +1,4 @@
-/*	$NetBSD: ttinit.c,v 1.4 1997/11/21 08:36:32 lukem Exp $	*/
+/*	$NetBSD: ttinit.c,v 1.5 1998/10/15 01:49:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttinit.c,v 1.4 1997/11/21 08:36:32 lukem Exp $");
+__RCSID("$NetBSD: ttinit.c,v 1.5 1998/10/15 01:49:04 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,13 @@ __RCSID("$NetBSD: ttinit.c,v 1.4 1997/11/21 08:36:32 lukem Exp $");
 #include <string.h>
 #include "ww.h"
 #include "tt.h"
+
+struct tt tt;
+char tt_strings[1024];		/* string buffer */
+char *tt_strp;			/* pointer for it */
+char *tt_ob;
+char *tt_obp;
+char *tt_obe;
 
 struct tt_tab tt_tab[] = {
 	{ "h19",	3, tt_h19 },
