@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.13 2001/01/23 23:58:31 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.14 2001/02/11 14:46:11 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.13 2001/01/23 23:58:31 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.14 2001/02/11 14:46:11 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -316,7 +316,8 @@ hardsplx(int s)
 	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
 #endif
 	current_spl = s;
-	return was; /* Restore interrupt state */
+	int_on();
+	return was;
 }
 
 #ifdef DDB
