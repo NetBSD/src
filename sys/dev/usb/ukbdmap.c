@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.1 1999/01/10 00:23:32 augustss Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.2 1999/01/10 16:56:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,9 +89,9 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(45), 			KS_minus,	KS_underscore,
     KC(46), 			KS_equal,	KS_plus,
     KC(47), 			KS_bracketleft,	KS_braceleft,
-    KC(48), 			KS_bracketright, KS_braceright,
+    KC(48), 			KS_bracketright,KS_braceright,
     KC(49), 			KS_backslash,	KS_bar,
-/*  KC(50), non-US # and ~ */
+    KC(50),			KS_numbersign,	KS_asciitilde,
     KC(51), 			KS_semicolon,	KS_colon,
     KC(52), 			KS_apostrophe,	KS_quotedbl,
     KC(53), 			KS_grave,	KS_asciitilde,
@@ -111,9 +111,9 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(67),  KS_Cmd_Screen9,	KS_f10,
     KC(68), 			KS_f11,
     KC(69), 			KS_f12,
-/*  KC(70), print screen */
+    KC(70),			KS_Print_Screen,
     KC(71), 			KS_Hold_Screen,
-/*  KC(72), pause */
+    KC(72),			KS_Pause,
     KC(73),			KS_Insert, 
     KC(74),			KS_Home,
     KC(75),			KS_Prior,
@@ -141,17 +141,23 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(97), 			KS_KP_Prior,	KS_KP_9,
     KC(98), 			KS_KP_Insert,	KS_KP_0,
     KC(99), 			KS_KP_Delete,	KS_KP_Decimal,
-/*  KC(100), non-US \ */
-/*  KC(101), application */
+    KC(100),			KS_backslash,	KS_bar,
+    KC(101),			KS_Menu,
 /* ... many unmapped keys ... */
     KC(224),  KS_Cmd1,		KS_Control_L,
     KC(225), 			KS_Shift_L,
     KC(226),  KS_Cmd2,		KS_Alt_L,
-/*  KC(227), left win */
+    KC(227),			KS_Meta_L,
     KC(228),			KS_Control_R,
     KC(229), 			KS_Shift_R,
     KC(230),			KS_Alt_R,	KS_Multi_key,
-/*  KC(231), right win */
+    KC(231),			KS_Meta_L,
+};
+
+static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
+/*  pos      command		normal		shifted */
+    KC(57), 			KS_Caps_Lock,
+    KC(224), KS_Cmd1,		KS_Control_L,
 };
 
 #define KBD_MAP(name, base, map) \
@@ -159,6 +165,7 @@ static const keysym_t ukbd_keydesc_us[] = {
 
 const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	ukbd_keydesc_us),
+	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
 	{0, 0, 0, 0}
 };
 
