@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.17 1996/02/11 02:06:13 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -313,7 +313,6 @@ ufs_setattr(v)
 	register struct inode *ip = VTOI(vp);
 	register struct ucred *cred = ap->a_cred;
 	register struct proc *p = ap->a_p;
-	struct timeval atimeval, mtimeval;
 	int error;
 
 	/*
@@ -372,11 +371,7 @@ ufs_setattr(v)
 			ip->i_flag |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		atimeval.tv_sec = vap->va_atime.tv_sec;
-		atimeval.tv_usec = vap->va_atime.tv_nsec / 1000;
-		mtimeval.tv_sec = vap->va_mtime.tv_sec;
-		mtimeval.tv_usec = vap->va_mtime.tv_nsec / 1000;
-		error = VOP_UPDATE(vp, &atimeval, &mtimeval, 1);
+		error = VOP_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 1);
 		if (error)
 			return (error);
 	}
@@ -660,7 +655,7 @@ ufs_link(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct componentname *cnp = ap->a_cnp;
 	register struct inode *ip;
-	struct timeval tv;
+	struct timespec ts;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -694,8 +689,8 @@ ufs_link(v)
 	}
 	ip->i_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	tv = time;
-	error = VOP_UPDATE(vp, &tv, &tv, 1);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	error = VOP_UPDATE(vp, &ts, &ts, 1);
 	if (!error)
 		error = ufs_direnter(ip, dvp, cnp);
 	if (error) {
@@ -814,7 +809,7 @@ ufs_rename(v)
 	register struct componentname *fcnp = ap->a_fcnp;
 	register struct inode *ip, *xp, *dp;
 	struct dirtemplate dirbuf;
-	struct timeval tv;
+	struct timespec ts;
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
 	int error = 0;
 	u_char namlen;
@@ -917,8 +912,8 @@ abortit:
 	 */
 	ip->i_nlink++;
 	ip->i_flag |= IN_CHANGE;
-	tv = time;
-	if ((error = VOP_UPDATE(fvp, &tv, &tv, 1)) != 0) {
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	if ((error = VOP_UPDATE(fvp, &ts, &ts, 1)) != 0) {
 		VOP_UNLOCK(fvp);
 		goto bad;
 	}
@@ -975,14 +970,14 @@ abortit:
 			}
 			dp->i_nlink++;
 			dp->i_flag |= IN_CHANGE;
-			if ((error = VOP_UPDATE(tdvp, &tv, &tv, 1)) != 0)
+			if ((error = VOP_UPDATE(tdvp, &ts, &ts, 1)) != 0)
 				goto bad;
 		}
 		if ((error = ufs_direnter(ip, tdvp, tcnp)) != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_nlink--;
 				dp->i_flag |= IN_CHANGE;
-				(void)VOP_UPDATE(tdvp, &tv, &tv, 1);
+				(void)VOP_UPDATE(tdvp, &ts, &ts, 1);
 			}
 			goto bad;
 		}
@@ -1197,7 +1192,7 @@ ufs_mkdir(v)
 	register struct inode *ip, *dp;
 	struct vnode *tvp;
 	struct dirtemplate dirtemplate, *dtp;
-	struct timeval tv;
+	struct timespec ts;
 	int error, dmode;
 
 #ifdef DIAGNOSTIC
@@ -1237,8 +1232,8 @@ ufs_mkdir(v)
 	ip->i_nlink = 2;
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_flags |= UF_OPAQUE;
-	tv = time;
-	error = VOP_UPDATE(tvp, &tv, &tv, 1);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	error = VOP_UPDATE(tvp, &ts, &ts, 1);
 
 	/*
 	 * Bump link count in parent directory
@@ -1248,7 +1243,7 @@ ufs_mkdir(v)
 	 */
 	dp->i_nlink++;
 	dp->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(dvp, &tv, &tv, 1)) != 0)
+	if ((error = VOP_UPDATE(dvp, &ts, &ts, 1)) != 0)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
@@ -2000,7 +1995,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	struct componentname *cnp;
 {
 	register struct inode *ip, *pdir;
-	struct timeval tv;
+	struct timespec ts;
 	struct vnode *tvp;
 	int error;
 
@@ -2045,8 +2040,8 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	tv = time;
-	if ((error = VOP_UPDATE(tvp, &tv, &tv, 1)) != 0)
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	if ((error = VOP_UPDATE(tvp, &ts, &ts, 1)) != 0)
 		goto bad;
 	if ((error = ufs_direnter(ip, dvp, cnp)) != 0)
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.61 1996/04/03 23:25:42 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.62 1996/05/11 18:26:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3037,8 +3037,8 @@ nfs_update(v)
 #if 0
 	struct vop_update_args /* {
 		struct vnode *a_vp;
-		struct timeval *a_ta;
-		struct timeval *a_tm;
+		struct timespec *a_ta;
+		struct timespec *a_tm;
 		int a_waitfor;
 	} */ *ap = v;
 #endif
