@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.8 1994/10/27 04:14:37 cgd Exp $	*/
+/*	$NetBSD: disk.c,v 1.9 1995/01/18 02:54:24 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -114,8 +114,6 @@ devopen()
 			dkbbnum = dl->d_secperunit - dl->d_nsectors;
 			if (dl->d_secsize > DEV_BSIZE)
 				dkbbnum *= dl->d_secsize / DEV_BSIZE;
-			else
-				dkbbnum /= DEV_BSIZE / dl->d_secsize;
 			i = 0;
 			do_bad144 = 0;
 			do {
@@ -170,7 +168,7 @@ Bread(dosdev, sector)
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
 
-		cyl = sector/spc;
+		cyl = sector / spc;
 		head = (sector % spc) / spt;
 		sec = sector % spt;
 		nsec = spt - sec;
@@ -181,7 +179,7 @@ Bread(dosdev, sector)
 			nsec = 1;
 			twiddle();
 			while (biosread(dosdev, cyl, head, sec, nsec, ra_buf) != 0) {
-				printf("Error: C:%d H:%d S:%d\n", cyl, head,					    sec);
+				printf("Error: C:%d H:%d S:%d\n", cyl, head, sec);
 				twiddle();
 			}
 		}
@@ -198,9 +196,7 @@ badsect(dosdev, sector)
 	int i;
 #ifdef DO_BAD144
 	if (do_bad144) {
-		u_short cyl;
-		u_short head;
-		u_short sec;
+		u_short cyl, head, sec;
 		int newsec;
 		struct disklabel *dl = &disklabel;
 
@@ -216,25 +212,20 @@ badsect(dosdev, sector)
 		cyl = sector / dl->d_secpercyl;
 		head = (sector % dl->d_secpercyl) / dl->d_nsectors;
 		sec = sector % dl->d_nsectors;
-		sec = (head<<8) + sec;
+		sec += head << 8;
 
 		/* now, look in the table for a possible bad sector */
 		for (i = 0; i < 126; i++) {
-			if (dkb.bt_bad[i].bt_cyl == cyl) {
-				/* found same cylinder */
-				if (dkb.bt_bad[i].bt_trksec == sec) {
-					/* found same sector */
-					break;
-				}
+			if (dkb.bt_bad[i].bt_cyl == cyl &&
+			    dkb.bt_bad[i].bt_trksec == sec) {
+				/* found same sector */
+				goto remap;
 			} else if (dkb.bt_bad[i].bt_cyl > cyl) {
-				i = 126;
-				break;
+				goto no_remap;
 			}
 		}
-		if (i == 126) {
-			/* didn't find bad sector */
-			goto no_remap;
-		}
+		goto no_remap;
+	remap:
 		/* otherwise find replacement sector */
 		newsec = dl->d_secperunit - dl->d_nsectors - i -1;
 		return newsec;
