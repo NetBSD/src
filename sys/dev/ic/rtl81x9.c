@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.33 2001/07/07 15:57:52 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.34 2001/07/07 16:13:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -468,7 +468,7 @@ STATIC int rtk_phy_readreg(self, phy, reg)
 		return (rval);
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	memset((char *)&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
@@ -516,7 +516,7 @@ STATIC void rtk_phy_writereg(self, phy, reg, data)
 		return;
 	}
 
-	bzero((char *)&frame, sizeof(frame));
+	memset((char *)&frame, 0, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.76 2001/07/07 15:53:15 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.77 2001/07/07 16:13:46 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -812,7 +812,7 @@ ahc_alloc(struct ahc_softc *ahc, bus_space_handle_t sh, bus_space_tag_t st,
 		printf("%s: cannot malloc softc!\n", ahc_name(ahc));
 		return -1;
 	}
-	bzero(scb_data, sizeof (struct scb_data));
+	memset(scb_data, 0, sizeof (struct scb_data));
 	LIST_INIT(&ahc->pending_ccbs);
 	ahc->tag = st;
 	ahc->bsh = sh;
@@ -863,7 +863,7 @@ ahcinitscbdata(struct ahc_softc *ahc)
 				 M_DEVBUF, M_NOWAIT);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
-	bzero(scb_data->scbarray, sizeof(struct scb) * AHC_SCB_MAX);
+	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
@@ -926,7 +926,7 @@ ahcinitscbdata(struct ahc_softc *ahc)
 	scb_data->init_level++;
 
 	/* Perform initial CCB allocation */
-	bzero(scb_data->hscbs, AHC_SCB_MAX * sizeof(struct hardware_scb));
+	memset(scb_data->hscbs, 0, AHC_SCB_MAX * sizeof(struct hardware_scb));
 	ahcallocscbs(ahc);
 
 	if (scb_data->numscbs == 0) {
@@ -1566,13 +1566,13 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 		memcpy(tstate, master_tstate, sizeof(*tstate));
 		tstate->ultraenb = 0;
 		for (i = 0; i < 16; i++) {
-			bzero(&tstate->transinfo[i].current,
+			memset(&tstate->transinfo[i].current, 0,
 			      sizeof(tstate->transinfo[i].current));
-			bzero(&tstate->transinfo[i].goal,
+			memset(&tstate->transinfo[i].goal, 0,
 			      sizeof(tstate->transinfo[i].goal));
 		}
 	} else
-		bzero(tstate, sizeof(*tstate));
+		memset(tstate, 0, sizeof(*tstate));
 	s = splbio();
 	ahc->enabled_targets[scsi_id] = tstate;
 	splx(s);
@@ -3373,7 +3373,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		/*
 		 * We performed autosense retrieval.
 		 *
-		 * bzero the sense data before having
+		 * zero the sense data before having
 		 * the drive fill it.  The SCSI spec mandates
 		 * that any untransfered data should be
 		 * assumed to be zero.  Complete the 'bounce'
@@ -3381,7 +3381,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 * via bus-space by copying it into the clients
 		 * csio.
 		 */
-		bzero(&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
+		memset(&xs->sense.scsi_sense, 0, sizeof(xs->sense.scsi_sense));
 		memcpy(&xs->sense.scsi_sense,
 		    &ahc->scb_data->sense[scb->hscb->tag],
 		    le32toh(scb->sg_list->len));
@@ -3641,7 +3641,7 @@ ahc_init(struct ahc_softc *ahc)
 		tinfo = ahc_fetch_transinfo(ahc, channel, our_id,
 					    target_id, &tstate);
 		/* Default to async narrow across the board */
-		bzero(tinfo, sizeof(*tinfo));
+		memset(tinfo, 0, sizeof(*tinfo));
 		if (ahc->flags & AHC_USEDEFAULTS) {
 			if ((ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
