@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.1 1995/02/19 19:17:03 mycroft Exp $
+ *	$Id: clock.c,v 1.2 1995/02/19 23:53:19 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -55,10 +55,12 @@ struct hil_dev *bbcaddr = BBCADDR;
 
 getsecs()
 {
+	static int bbcinited = 0;
 	u_long timbuf = 0;
 
-	if (!bbc_to_gmt(&timbuf))
-		panic("WARNING: bad date in battery clock\n");
+	if (!bbc_to_gmt(&timbuf) && !bbcinited)
+		printf("WARNING: bad date in battery clock\n");
+	bbcinited = 1;
 
 	/* Battery clock does not store usec's, so forget about it. */
 	return(timbuf);
