@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.43 1997/05/24 20:16:14 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.44 1997/06/26 00:31:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -534,8 +534,15 @@ espdmaintr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
+#if 0
+		/*
+		 * This situation can happen in perfectly normal operation
+		 * if the ESP is reselected while using DMA to select
+		 * another target.  As such, don't print the warning.
+		 */
 		printf("%s: xfer (%d) > req (%d)\n",
 		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+#endif
 		trans = sc->sc_dmasize;
 	}
 
