@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.31 2004/03/24 15:34:56 atatat Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.32 2004/05/25 04:31:17 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.31 2004/03/24 15:34:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.32 2004/05/25 04:31:17 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -316,66 +316,93 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTL_VM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "vmmeter", NULL,
+		       CTLTYPE_STRUCT, "vmmeter",
+		       SYSCTL_DESCR("Simple system-wide virtual memory "
+				    "statistics"),
 		       sysctl_vm_meter, 0, NULL, sizeof(struct vmtotal),
 		       CTL_VM, VM_METER, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "loadavg", NULL,
+		       CTLTYPE_STRUCT, "loadavg",
+		       SYSCTL_DESCR("System load average history"),
 		       NULL, 0, &averunnable, sizeof(averunnable),
 		       CTL_VM, VM_LOADAVG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "uvmexp", NULL,
+		       CTLTYPE_STRUCT, "uvmexp",
+		       SYSCTL_DESCR("Detailed system-wide virtual memory "
+				    "statistics"),
 		       sysctl_vm_uvmexp, 0, &uvmexp, sizeof(uvmexp),
 		       CTL_VM, VM_UVMEXP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "nkmempages", NULL,
+		       CTLTYPE_INT, "nkmempages",
+		       SYSCTL_DESCR("Default number of pages in kmem_map"),
 		       NULL, 0, &nkmempages, 0,
 		       CTL_VM, VM_NKMEMPAGES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "uvmexp2", NULL,
+		       CTLTYPE_STRUCT, "uvmexp2",
+		       SYSCTL_DESCR("Detailed system-wide virtual memory "
+				    "statistics (MI)"),
 		       sysctl_vm_uvmexp2, 0, NULL, 0,
 		       CTL_VM, VM_UVMEXP2, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonmin", NULL,
+		       CTLTYPE_INT, "anonmin",
+		       SYSCTL_DESCR("Percentage of physical memory reserved "
+				    "for anonymous application data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonminpct, 0,
 		       CTL_VM, VM_ANONMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "execmin", NULL,
+		       CTLTYPE_INT, "execmin",
+		       SYSCTL_DESCR("Percentage of physical memory reserved "
+				    "for cached executable data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.execminpct, 0,
 		       CTL_VM, VM_EXECMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "filemin", NULL,
+		       CTLTYPE_INT, "filemin",
+		       SYSCTL_DESCR("Percentage of physical memory reserved "
+				    "for cached file data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.fileminpct, 0,
 		       CTL_VM, VM_FILEMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, CTLTYPE_INT, "maxslp", NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_INT, "maxslp",
+		       SYSCTL_DESCR("Maximum process sleep time before being "
+				    "swapped"),
 		       NULL, 0, &maxslp, 0,
 		       CTL_VM, VM_MAXSLP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "uspace", NULL,
+		       CTLTYPE_INT, "uspace",
+		       SYSCTL_DESCR("Number of bytes allocated for a kernel "
+				    "stack"),
 		       NULL, USPACE, NULL, 0,
 		       CTL_VM, VM_USPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonmax", NULL,
+		       CTLTYPE_INT, "anonmax",
+		       SYSCTL_DESCR("Percentage of physical memory which will "
+				    "be reclaimed from other usage for "
+				    "anonymous application data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.anonmaxpct, 0,
 		       CTL_VM, VM_ANONMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "execmax", NULL,
+		       CTLTYPE_INT, "execmax",
+                       SYSCTL_DESCR("Percentage of physical memory which will "
+				    "be reclaimed from other usage for cached "
+				    "executable data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.execmaxpct, 0,
 		       CTL_VM, VM_EXECMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "filemax", NULL,
+		       CTLTYPE_INT, "filemax",
+		       SYSCTL_DESCR("Percentage of physical memory which will "
+				    "be reclaimed from other usage for cached "
+				    "file data"),
 		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
 		       CTL_VM, VM_FILEMAX, CTL_EOL);
 }
