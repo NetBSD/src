@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.168 2001/10/05 16:09:38 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.169 2001/10/08 02:48:49 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -36,7 +36,7 @@
 ./usr
 ./usr/bin
 ./usr/games
-./usr/games/hide		uname=root gname=games mode=0750
+./usr/games/hide		gname=games mode=0750
 ./usr/include
 ./usr/include/arpa
 ./usr/include/cdk
