@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.71 2000/10/21 07:27:41 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.72 2000/12/03 12:29:28 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	8
 
@@ -26,6 +26,11 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
+
+## UVM options.
+#options 	UVM_PAGE_TRKOWN
+#options 	UVMHIST
+#options 	UVMHIST_PRINT	# Loud!
 
 #options 	SCSIVERBOSE		# human readable SCSI error messages
 #options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
