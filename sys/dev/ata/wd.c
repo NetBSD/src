@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.209 2000/07/06 00:48:53 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.210 2000/12/14 23:56:18 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -299,7 +299,7 @@ wdattach(parent, self, aux)
 		wd->sc_multi = 1;
 	}
 
-	printf("%s: drive supports %d-sector pio transfers,",
+	printf("%s: drive supports %d-sector PIO transfers,",
 	    wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* Prior to ATA-4, LBA was optional. */
@@ -313,7 +313,7 @@ wdattach(parent, self, aux)
 #endif
 
 	if ((wd->sc_flags & WDF_LBA) != 0) {
-		printf(" lba addressing\n");
+		printf(" LBA addressing\n");
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
