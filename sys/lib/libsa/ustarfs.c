@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.22 2003/08/18 15:45:30 dsl Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.23 2003/08/31 22:40:49 fvdl Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -259,7 +259,7 @@ checksig(ustf)
 {
 	int	i, rcs;
 
-	for(i = rcs = 0; i < sizeof ustf->uas_1cyl; ++i)
+	for(i = rcs = 0; i < (int)(sizeof ustf->uas_1cyl); ++i)
 		rcs += ustf->uas_1cyl[i];
 	return rcs;
 }
@@ -350,7 +350,8 @@ read512block(f, vda, block)
 tryagain:
 	if(ustf->uas_init_window
 	&& ustf->uas_windowbase <= vda && vda <
-	   ustf->uas_windowbase + sizeof ustf->uas_1cyl - ustf->uas_offset) {
+	   ustf->uas_windowbase +
+	     (int)(sizeof ustf->uas_1cyl) - ustf->uas_offset) {
 		memcpy(block, ustf->uas_1cyl
 				+ (vda - ustf->uas_windowbase)
 				+ ustf->uas_offset, 512);
@@ -505,7 +506,7 @@ ustarfs_read(f, start, size, resid)
 		readoffs,
 		bufferoffset;
 	size_t	seg;
-	int	infile,
+	size_t	infile,
 		inbuffer;
 
 	e = 0;

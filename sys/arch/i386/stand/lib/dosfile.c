@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.8 2003/08/18 15:47:41 dsl Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.9 2003/08/31 22:40:14 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -123,7 +123,7 @@ dos_read(f, addr, size, resid)
 
 		while (lsize > 0) {
 			u_int           tsize;
-			int             tgot;
+			size_t          tgot;
 
 			tsize = lsize;
 
