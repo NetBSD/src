@@ -27,8 +27,8 @@ NOOBJ=	noobj
 # Define SHARED to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
-# SHARED=	copies
-SHARED=	symlinks
+SHARED= 	copies
+#SHARED= 	symlinks
 
 install: ${SHARED}
 	@echo installing ${FILES}
