@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.8 1999/04/23 12:17:27 leo Exp $	
+.\"	$NetBSD: whatis,v 1.9 2000/10/02 11:42:20 lukem Exp $	
 The Atari release stepped in in March 1995. The first official release was
 .Nx 1.1 .
 About a year later, 
@@ -13,7 +13,7 @@ ethernet and Falcon IDE support.
 And now, yet another release is emerging!
 .Pp
 New on the
-.Nx 1.4
+.Nx \*V
 release (atari specific):
 .Bl -bullet
 .It
