@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/06 03:31:06 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -46,6 +46,16 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/mga \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/vbe \
 		-I${X11SRCDIR.xc} \
                 -I${XSERVERINCDIR}
+
+.if ${X11DRI} != "no"
+SRCS+=		mga_dri.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/dri \
+		-I${X11SRCDIR.xc}/lib/GL/dri \
+		-I${X11SRCDIR.xc}/include
+
+CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
 
 CPPFLAGS.mga_storm8.c=	-DPSZ=8
 CPPFLAGS.mga_storm16.c=	-DPSZ=16

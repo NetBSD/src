@@ -1,46 +1,83 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/06 03:31:06 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
 
 LIB=	freetype
+
+FT2DIR=	${X11SRCDIR.xc}/extras/freetype2
+FT2SRC=	${FT2DIR}/src
+
 .PATH:	${X11SRCDIR.xc}/lib/font/FreeType
+SRCS=	xttcap.c ftfuncs.c ftenc.c fttools.c
+
 .PATH:	${X11SRCDIR.xc}/lib/font/FreeType/module
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/autohint
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/cff
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/base
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/psaux
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/pshinter
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/psnames
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/raster
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/sfnt
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/truetype
-.PATH:	${X11SRCDIR.xc}/extras/freetype2/src/type1
+SRCS+=	ftmodule.c
 
-SRCS=	ftfuncs.c ftenc.c fttools.c ftbase.c ftinit.c ftglyph.c ftsystem.c \
-	fttype1.c ftxf86.c raster.c sfnt.c truetype.c cff.c type1.c \
-	psaux.c psnames.c pshinter.c  autohint.c ftmodule.c
+.PATH:	${FT2SRC}/base
+SRCS+=	ftbase.c ftinit.c ftglyph.c ftbbox.c ftsystem.c fttype1.c ftxf86.c ftbdf.c 
+	
+.PATH:	${FT2SRC}/gzip
+SRCS+=	ftgzip.c
 
-CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/font/FreeType \
+.PATH:	${FT2SRC}/raster
+SRCS+=	raster.c
+
+.PATH:	${FT2SRC}/sfnt
+SRCS+=	sfnt.c
+
+.PATH:	${FT2SRC}/truetype
+SRCS+=	truetype.c
+
+.PATH:	${FT2SRC}/cff
+SRCS+=	cff.c
+
+.PATH:	${FT2SRC}/type1
+SRCS+=	type1.c
+
+.PATH:	${FT2SRC}/psaux
+SRCS+=	psaux.c
+
+.PATH:	${FT2SRC}/psnames
+SRCS+=	psnames.c
+
+.PATH:	${FT2SRC}/pshinter
+SRCS+=	pshinter.c
+
+.PATH:	${FT2SRC}/autohint
+SRCS+=	autohint.c
+
+.PATH:	${FT2SRC}/bdf
+SRCS+=	bdf.c
+
+.PATH:	${FT2SRC}/pcf
+SRCS+=	pcf.c
+
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/font/FreeType/module \
+		-I${X11SRCDIR.xc}/lib/font/FreeType \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/lib/font/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
-		-I${X11SRCDIR.xc}/extras/freetype2/include \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/base \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/raster \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/sfnt \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/truetype \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/cff \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/type1 \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/psaux \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/psnames \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/pshinter \
-		-I${X11SRCDIR.xc}/extras/freetype2/src/autohint \
+		-I${FT2DIR}/include \
+		-I${FT2SRC}/base \
+		-I${FT2SRC}/gzip \
+		-I${FT2SRC}/raster \
+		-I${FT2SRC}/sfnt \
+		-I${FT2SRC}/truetype \
+		-I${FT2SRC}/cff \
+		-I${FT2SRC}/type1 \
+		-I${FT2SRC}/psaux \
+		-I${FT2SRC}/psnames \
+		-I${FT2SRC}/pshinter \
+		-I${FT2SRC}/autohint \
+		-I${FT2SRC}/bdf \
+		-I${FT2SRC}/pcf \
 		-I${XSERVERINCDIR}
 
-CPPFLAGS+=	-DFONTMODULE
+CPPFLAGS+=	-DFONTMODULE -DXFREE86_FT2
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
