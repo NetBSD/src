@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.40 2004/10/08 16:42:55 dbj Exp $	*/
+/*	$NetBSD: pass5.c,v 1.41 2004/10/09 20:08:44 ragge Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.40 2004/10/08 16:42:55 dbj Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.41 2004/10/09 20:08:44 ragge Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,10 +469,14 @@ pass5(void)
 		if (debug) {
 			printf("total: nffree: %lld/%lld nbfree %lld/%lld"
 				" nifree %lld/%lld ndir %lld/%lld\n",
-				fs->fs_cstotal.cs_nffree,cstotal.cs_nffree,
-				fs->fs_cstotal.cs_nbfree,cstotal.cs_nbfree,
-				fs->fs_cstotal.cs_nifree,cstotal.cs_nifree,
-				fs->fs_cstotal.cs_ndir,cstotal.cs_ndir);
+				(long long int)fs->fs_cstotal.cs_nffree,
+				(long long int)cstotal.cs_nffree,
+				(long long int)fs->fs_cstotal.cs_nbfree,
+				(long long int)cstotal.cs_nbfree,
+				(long long int)fs->fs_cstotal.cs_nifree,
+				(long long int)cstotal.cs_nifree,
+				(long long int)fs->fs_cstotal.cs_ndir,
+				(long long int)cstotal.cs_ndir);
 		}
 		if (dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memmove(&fs->fs_cstotal, &cstotal, sizeof cstotal);
