@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.5 2003/08/07 16:31:34 agc Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.6 2004/03/27 04:43:43 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.5 2003/08/07 16:31:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.6 2004/03/27 04:43:43 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,9 @@ static u_int cd9660_chars2ui __P((u_char *, int));
 void
 cd9660_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_ISOFSMNT);
+#endif
 	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
 	    &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
@@ -162,6 +165,9 @@ cd9660_done()
 	hashdone(idvhashtbl, M_ISOFSMNT);
 #endif
 	pool_destroy(&cd9660_node_pool);
+#ifdef _LKM
+	malloc_type_detach(M_ISOFSMNT);
+#endif
 }
 
 #ifdef ISODEVMAP
