@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.32 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.33 2001/06/18 11:06:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ le_pci_mediachange(sc)
 				sc->sc_initmodemedia = 1; /* UTP */
 			else
 				sc->sc_initmodemedia = 0; /* AUI */
-			lance_init(sc);
+			lance_init(&sc->sc_ethercom.ec_if);
 
 			if (IFM_SUBTYPE(lesc->sc_currentmedia) == IFM_AUTO) {
 				/* take away autoselect - BCR2 bit 1 */
