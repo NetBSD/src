@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 1999/03/31 11:53:08 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 2000/02/24 15:37:34 kleink Exp $	*/
 
 #include "SYS.h"
 
@@ -18,10 +18,10 @@ ENTRY(brk)
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
 	mflr	9
 	mtlr	10
-	lwz	5,_C_LABEL(end)@got(9)
+	lwz	5,_C_LABEL(_end)@got(9)
 #else
-	lis	5,_C_LABEL(end)@ha	# r5 = &_end
-	addi	5,5,_C_LABEL(end)@l
+	lis	5,_C_LABEL(_end)@ha	# r5 = &_end
+	addi	5,5,_C_LABEL(_end)@l
 #endif
 	cmplw	5,3			# if (&_end <= r3)
 	bgt	0f
