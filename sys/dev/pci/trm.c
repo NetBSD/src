@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.8 2002/03/13 22:23:50 wiz Exp $	*/
+/*	$NetBSD: trm.c,v 1.9 2002/04/05 03:13:48 mjacob Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.8 2002/03/13 22:23:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.9 2002/04/05 03:13:48 mjacob Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -574,8 +574,7 @@ trm_init(sc)
 		if (bus_dmamap_create(sc->sc_dmat,
 		    MAXPHYS, TRM_MAX_SG_ENTRIES, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &srb->dmap)) {
-			printf(": unable to create DMA transfer map...\n",
-			    sc->sc_dev.dv_xname);
+			printf(": unable to create DMA transfer map...\n");
 			free(sc->sc_srb, M_DEVBUF);
 			return (1);
 		}
