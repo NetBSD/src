@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.26 2000/04/25 13:46:10 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.27 2000/04/26 10:55:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.26 2000/04/25 13:46:10 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.27 2000/04/26 10:55:53 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -445,18 +445,12 @@ res_send(buf, buflen, ans, anssiz)
 			} while (!done);
 		}
 
-#ifdef INET6
 		Dprint((_res.options & RES_DEBUG) &&
 		       getnameinfo(nsap, (size_t)nsap->sa_len, abuf,
 			   sizeof(abuf), NULL, 0,
 			   NI_NUMERICHOST|NI_WITHSCOPEID) == 0,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
-#else /* INET6 */
-		Dprint(_res.options & RES_DEBUG,
-		       (stdout, ";; Querying server (# %d) address = %s\n",
-			ns + 1, inet_ntoa(((struct sockaddr_in *)nsap)->sin_addr)));
-#endif /* INET6 */
 
 		if (v_circuit) {
 			int truncated;
