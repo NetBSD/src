@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.29 1997/03/13 18:39:50 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.30 1997/03/13 20:15:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.29 1997/03/13 18:39:50 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.30 1997/03/13 20:15:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,7 @@ static char rcsid[] = "$NetBSD: inetd.c,v 1.29 1997/03/13 18:39:50 mycroft Exp $
 #endif
 
 #include <errno.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -303,11 +304,12 @@ char	       *nextline __P((FILE *));
 void		print_service __P((char *, struct servtab *));
 void		reapchild __P((int));
 void		retry __P((int));
+void		run_service __P((int, struct servtab *));
 int		setconfig __P((void));
 void		setup __P((struct servtab *));
 char	       *sskip __P((char **));
 char	       *skip __P((char **));
-struct servtab *tcpmux __P((int));
+void		tcpmux __P((int, struct servtab *));
 void		usage __P((void));
 
 struct biltin {
@@ -337,7 +339,7 @@ struct biltin {
 	{ "chargen",	SOCK_STREAM,	1, 0,	chargen_stream },
 	{ "chargen",	SOCK_DGRAM,	0, 0,	chargen_dg },
 
-	{ "tcpmux",	SOCK_STREAM,	1, 0,	(void (*)())tcpmux },
+	{ "tcpmux",	SOCK_STREAM,	1, 0,	tcpmux },
 
 	{ NULL }
 };
@@ -365,17 +367,10 @@ main(argc, argv, envp)
 	char *argv[], *envp[];
 {
 	struct servtab *sep, *nsep;
-	struct passwd *pwd;
-	struct group *grp;
 	struct sigvec sv;
 	int tmpint, ch, dofork;
 	pid_t pid;
 	char buf[50];
-#ifdef LIBWRAP
-	struct request_info req;
-	int denied;
-	char *service;
-#endif
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -488,17 +483,6 @@ main(argc, argv, envp)
 					    sep->se_service);
 				continue;
 			}
-			/*
-			 * Call tcpmux to find the real service to exec.
-			 */
-			if (sep->se_bi &&
-			    sep->se_bi->bi_fn == (void (*)()) tcpmux) {
-				sep = tcpmux(ctrl);
-				if (sep == NULL) {
-					close(ctrl);
-					continue;
-				}
-			}
 		} else
 			ctrl = sep->se_fd;
 		(void) sigblock(SIGBLOCK);
@@ -552,118 +536,126 @@ main(argc, argv, envp)
 		}
 		sigsetmask(0L);
 		if (pid == 0) {
-#ifdef LIBWRAP
-#ifndef LIBWRAP_INTERNAL
-		    if (sep->se_bi == 0)
-#endif
-		    {
-			request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
-			    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl,
-			    NULL);
-			fromhost(&req);
-			denied = !hosts_access(&req);
-			if (denied || lflag) {
-				sp = getservbyport(sep->se_ctrladdr_in.sin_port,
-				    sep->se_proto);
-				if (sp == NULL) {
-					(void)snprintf(buf, sizeof buf, "%d",
-					    ntohs(sep->se_ctrladdr_in.sin_port));
-					service = buf;
-				} else
-					service = sp->s_name;
-			}
-			if (denied) {
-				syslog(deny_severity, "refused "
-				    "connection from %.500s, service %s (%s)",
-				    eval_client(&req), service, sep->se_proto);
-				goto reject;
-			}
-			if (lflag) {
-				syslog(allow_severity,
-				    "connection from %.500s, service %s (%s)",
-				    eval_client(&req), service, sep->se_proto);
-			}
-		    }
-#endif /* LIBWRAP */
-			if (sep->se_bi) {
-				(*sep->se_bi->bi_fn)(ctrl, sep);
-				if (dofork)
-					exit(0);
-			} else {
-				if ((pwd = getpwnam(sep->se_user)) == NULL) {
-					syslog(LOG_ERR,
-					    "%s/%s: %s: No such user",
-					    sep->se_service, sep->se_proto,
-					    sep->se_user);
-					goto reject;
-				}
-				if (sep->se_group &&
-				    (grp = getgrnam(sep->se_group)) == NULL) {
-					syslog(LOG_ERR,
-					    "%s/%s: %s: No such group",
-					    sep->se_service, sep->se_proto,
-					    sep->se_group);
-					goto reject;
-				}
-				if (pwd->pw_uid) {
-					if (sep->se_group)
-						pwd->pw_gid = grp->gr_gid;
-					if (setgid(pwd->pw_gid) < 0) {
-						syslog(LOG_ERR,
-						 "%s/%s: can't set gid %d: %m",
-						    sep->se_service,
-						    sep->se_proto, pwd->pw_gid);
-						goto reject;
-					}
-					(void) initgroups(pwd->pw_name,
-					    pwd->pw_gid);
-					if (setuid(pwd->pw_uid) < 0) {
-						syslog(LOG_ERR,
-						 "%s/%s: can't set uid %d: %m",
-						    sep->se_service,
-						    sep->se_proto, pwd->pw_uid);
-						goto reject;
-					}
-				} else if (sep->se_group) {
-					(void) setgid((gid_t)grp->gr_gid);
-				}
-				if (debug)
-					fprintf(stderr, "%d execl %s\n",
-					    getpid(), sep->se_server);
-#ifdef MULOG
-				if (sep->se_log)
-					dolog(sep, ctrl);
-#endif
-				if (ctrl != 0) {
-					dup2(ctrl, 0);
-					close(ctrl);
-					ctrl = 0;
-				}
-				dup2(0, 1);
-				dup2(0, 2);
-#ifdef RLIMIT_NOFILE
-				if (rlim_ofile.rlim_cur != rlim_ofile_cur) {
-					if (setrlimit(RLIMIT_NOFILE,
-							&rlim_ofile) < 0)
-						syslog(LOG_ERR,
-						    "setrlimit: %m");
-				}
-#endif
-				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
-					(void)close(tmpint);
-				execv(sep->se_server, sep->se_argv);
-				syslog(LOG_ERR,
-				    "cannot execute %s: %m", sep->se_server);
-			reject:
-				if (sep->se_socktype != SOCK_STREAM)
-					recv(ctrl, buf, sizeof (buf), 0);
-				_exit(1);
-			}
+			run_service(ctrl, sep);
+			if (dofork)
+				exit(0);
 		}
-		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+		if (sep->se_socktype == SOCK_STREAM)
 			close(ctrl);
 	    }
 	    }
+	}
+}
+
+void
+run_service(ctrl, sep)
+	int ctrl;
+	struct servtab *sep;
+{
+	struct passwd *pwd;
+	struct group *grp;
+#ifdef LIBWRAP
+	struct request_info req;
+	int denied;
+	char buf[7], *service;
+#endif
+
+#ifdef LIBWRAP
+#ifndef LIBWRAP_INTERNAL
+	if (sep->se_bi == 0)
+#endif
+	{
+		request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
+		    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl, NULL);
+		fromhost(&req);
+		denied = !hosts_access(&req);
+		if (denied || lflag) {
+			sp = getservbyport(sep->se_ctrladdr_in.sin_port,
+			    sep->se_proto);
+			if (sp == NULL) {
+				(void)snprintf(buf, sizeof buf, "%d",
+				    ntohs(sep->se_ctrladdr_in.sin_port));
+				service = buf;
+			} else
+				service = sp->s_name;
+		}
+		if (denied) {
+			syslog(deny_severity,
+			    "refused connection from %.500s, service %s (%s)",
+			    eval_client(&req), service, sep->se_proto);
+			goto reject;
+		}
+		if (lflag) {
+			syslog(allow_severity,
+			    "connection from %.500s, service %s (%s)",
+			    eval_client(&req), service, sep->se_proto);
+		}
+	}
+#endif /* LIBWRAP */
+
+	if (sep->se_bi) {
+		(*sep->se_bi->bi_fn)(ctrl, sep);
+	} else {
+		if ((pwd = getpwnam(sep->se_user)) == NULL) {
+			syslog(LOG_ERR, "%s/%s: %s: No such user",
+			    sep->se_service, sep->se_proto, sep->se_user);
+			goto reject;
+		}
+		if (sep->se_group &&
+		    (grp = getgrnam(sep->se_group)) == NULL) {
+			syslog(LOG_ERR, "%s/%s: %s: No such group",
+			    sep->se_service, sep->se_proto, sep->se_group);
+			goto reject;
+		}
+		if (pwd->pw_uid) {
+			if (sep->se_group)
+				pwd->pw_gid = grp->gr_gid;
+			if (setgid(pwd->pw_gid) < 0) {
+				syslog(LOG_ERR,
+				 "%s/%s: can't set gid %d: %m", sep->se_service,
+				    sep->se_proto, pwd->pw_gid);
+				goto reject;
+			}
+			(void) initgroups(pwd->pw_name,
+			    pwd->pw_gid);
+			if (setuid(pwd->pw_uid) < 0) {
+				syslog(LOG_ERR,
+				 "%s/%s: can't set uid %d: %m", sep->se_service,
+				    sep->se_proto, pwd->pw_uid);
+				goto reject;
+			}
+		} else if (sep->se_group) {
+			(void) setgid((gid_t)grp->gr_gid);
+		}
+		if (debug)
+			fprintf(stderr, "%d execl %s\n",
+			    getpid(), sep->se_server);
+#ifdef MULOG
+		if (sep->se_log)
+			dolog(sep, ctrl);
+#endif
+		/* Set our control descriptor to not close-on-exec... */
+		if (fcntl(ctrl, F_SETFD, 0) < 0)
+			syslog(LOG_ERR, "fcntl (F_SETFD, 0): %m");
+		/* ...and dup it to stdin, stdout, and stderr. */
+		if (ctrl != 0) {
+			dup2(ctrl, 0);
+			close(ctrl);
+			ctrl = 0;
+		}
+		dup2(0, 1);
+		dup2(0, 2);
+#ifdef RLIMIT_NOFILE
+		if (rlim_ofile.rlim_cur != rlim_ofile_cur &&
+		    setrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0)
+			syslog(LOG_ERR, "setrlimit: %m");
+#endif
+		execv(sep->se_server, sep->se_argv);
+		syslog(LOG_ERR, "cannot execute %s: %m", sep->se_server);
+	reject:
+		if (sep->se_socktype != SOCK_STREAM)
+			recv(ctrl, buf, sizeof (buf), 0);
+		_exit(1);
 	}
 }
 
@@ -949,6 +941,9 @@ setup(sep)
 		    sep->se_service, sep->se_proto);
 		return;
 	}
+	/* Set all listening sockets to close-on-exec. */
+	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0)
+		syslog(LOG_ERR, "fcntl (F_SETFD, FD_CLOEXEC): %m");
 #define	turnon(fd, opt) \
 setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (strcmp(sep->se_proto, "tcp") == 0 && (options & SO_DEBUG) &&
@@ -1808,18 +1803,18 @@ getline(fd, buf, len)
 
 #define strwrite(fd, buf)	(void) write(fd, buf, sizeof(buf)-1)
 
-struct servtab *
-tcpmux(s)
-	int s;
-{
+void
+tcpmux(ctrl, sep)
+	int ctrl;
 	struct servtab *sep;
+{
 	char service[MAX_SERV_LEN+1];
 	int len;
 
 	/* Get requested service name */
-	if ((len = getline(s, service, MAX_SERV_LEN)) < 0) {
-		strwrite(s, "-Error reading service name\r\n");
-		return (NULL);
+	if ((len = getline(ctrl, service, MAX_SERV_LEN)) < 0) {
+		strwrite(ctrl, "-Error reading service name\r\n");
+		goto reject;
 	}
 	service[len] = '\0';
 
@@ -1834,10 +1829,11 @@ tcpmux(s)
 		for (sep = servtab; sep; sep = sep->se_next) {
 			if (!ISMUX(sep))
 				continue;
-			(void)write(s,sep->se_service,strlen(sep->se_service));
-			strwrite(s, "\r\n");
+			(void)write(ctrl, sep->se_service,
+			    strlen(sep->se_service));
+			strwrite(ctrl, "\r\n");
 		}
-		return (NULL);
+		goto reject;
 	}
 
 	/* Try matching a service in inetd.conf with the request */
@@ -1845,14 +1841,15 @@ tcpmux(s)
 		if (!ISMUX(sep))
 			continue;
 		if (!strcasecmp(service, sep->se_service)) {
-			if (ISMUXPLUS(sep)) {
-				strwrite(s, "+Go\r\n");
-			}
-			return (sep);
+			if (ISMUXPLUS(sep))
+				strwrite(ctrl, "+Go\r\n");
+			run_service(ctrl, sep);
+			return;
 		}
 	}
-	strwrite(s, "-Service not available\r\n");
-	return (NULL);
+	strwrite(ctrl, "-Service not available\r\n");
+reject:
+	_exit(1);
 }
 
 
