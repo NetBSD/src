@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.74.2.1 2000/04/30 12:07:06 he Exp $	*/
+/*	$NetBSD: proc.h,v 1.74.2.2 2000/04/30 20:12:04 he Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -148,7 +148,6 @@ struct	proc {
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
-	int	p_schedflags;	 /* PSCHED_* flags */
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeval p_rtime;	/* Real time. */
@@ -231,9 +230,11 @@ struct	proc {
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
 
 /*
- * These flags are kept in p_schedflags.  p_schedflags may be modified
+ * These flags are kept in schedflags.  schedflags may be modified
  * only at splstatclock().
  */
+extern int schedflags;
+
 #define	PSCHED_SEENRR		0x0001	/* process has been in roundrobin() */
 #define	PSCHED_SHOULDYIELD	0x0002	/* process should yield */
 
