@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.18 1994/05/18 16:05:07 chopps Exp $
+ *	$Id: trap.c,v 1.19 1994/05/21 10:05:44 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -49,11 +49,14 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 #include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include <vm/vm.h>
+#include <sys/user.h>
+#include <vm/pmap.h>
 
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -61,10 +64,6 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
-
-#include <vm/vm.h>
-#include <vm/pmap.h>
-#include <sys/vmmeter.h>
 
 struct	sysent	sysent[];
 int	nsysent;

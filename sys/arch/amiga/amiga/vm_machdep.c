@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.11 1994/05/19 08:51:44 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.12 1994/05/21 10:05:48 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -47,11 +47,11 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#include <sys/user.h>
 #include <vm/vm_kern.h>
 #include <machine/pte.h>
 

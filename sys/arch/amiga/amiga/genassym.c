@@ -31,14 +31,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.11 1994/05/11 19:02:55 chopps Exp $
+ *	$Id: genassym.c,v 1.12 1994/05/21 10:05:34 chopps Exp $
  */
 
 #define KERNEL
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/vmmeter.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
