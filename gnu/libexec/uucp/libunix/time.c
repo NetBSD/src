@@ -9,8 +9,10 @@
 
 #include "system.h"
 
+#ifndef POSIX_HEADERS
 #ifndef time
 extern time_t time ();
+#endif
 #endif
 
 /* Get the time in seconds since the epoch, with optional

@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char time_rcsid[] = "$Id: time.c,v 1.3 1995/08/24 05:23:07 jtc Exp $";
+const char time_rcsid[] = "$Id: time.c,v 1.4 1998/02/04 14:33:24 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -41,11 +41,13 @@ const char time_rcsid[] = "$Id: time.c,v 1.3 1995/08/24 05:23:07 jtc Exp $";
 #include "uuconf.h"
 
 /* External functions.  */
+#ifndef POSIX_HEADERS
 #ifndef time
 extern time_t time ();
 #endif
 #ifndef localtime
 extern struct tm *localtime ();
+#endif
 #endif
 
 /* See if the current time matches a time span.  If it does, return

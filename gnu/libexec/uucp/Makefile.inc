@@ -7,6 +7,8 @@ LIBUUCONF!=cd $(.CURDIR)/../libuuconf; \
 LIBUUCP!=cd $(.CURDIR)/../libuucp; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libuucp.a\n" | ${MAKE} -s -f-
 
+CPPFLAGS+=-DPOSIX_HEADERS
+WARNS=		1
 VERSION=	1.06.1
 owner=		uucp
 bindir=		/usr/bin

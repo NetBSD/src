@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char conn_rcsid[] = "$Id: conn.c,v 1.3 1995/08/24 05:18:49 jtc Exp $";
+const char conn_rcsid[] = "$Id: conn.c,v 1.4 1998/02/04 14:32:53 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -205,7 +205,7 @@ fconn_close (qconn, puuconf, qdialer, fsuccess)
   /* Ignore any SIGHUP we may have gotten, and make sure any signal
      reporting has been done before we reset fLog_sighup.  */
   afSignal[INDEXSIG_SIGHUP] = FALSE;
-  ulog (LOG_ERROR, (const char *) NULL);
+  ulog (LOG_ERROR, ulognone);
   fLog_sighup = TRUE;
 
   ulog_device ((const char *) NULL);

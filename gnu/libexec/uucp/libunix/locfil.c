@@ -31,9 +31,11 @@
 
 #include <pwd.h>
 
+#ifndef POSIX_HEADERS
 #if GETPWNAM_DECLARATION_OK
 #ifndef getpwnam
 extern struct passwd *getpwnam ();
+#endif
 #endif
 #endif
 

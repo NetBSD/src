@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char copy_rcsid[] = "$Id: copy.c,v 1.3 1995/08/24 05:18:52 jtc Exp $";
+const char copy_rcsid[] = "$Id: copy.c,v 1.4 1998/02/04 14:32:54 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -91,7 +91,7 @@ fcopy_open_file (efrom, zto, fpublic, fmkdirs, fsignals)
       if (fsignals && FGOT_SIGNAL ())
 	{
 	  /* Log the signal.  */
-	  ulog (LOG_ERROR, (const char *) NULL);
+	  ulog (LOG_ERROR, ulognone);
 	  (void) fclose (eto);
 	  (void) remove (zto);
 	  return FALSE;

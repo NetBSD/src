@@ -99,7 +99,7 @@ ixswait (ipid, zreport)
 	    ulog (LOG_ERROR, "waitpid: %s", strerror (errno));
 	  return -1;
 	}
-      ulog (LOG_ERROR, (const char *) NULL);
+      ulog (LOG_ERROR, ulognone);
     }
 #else /* ! HAVE_WAITPID */
 #if HAVE_WAIT4
