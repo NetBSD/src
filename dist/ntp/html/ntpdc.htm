@@ -34,7 +34,7 @@ again defaulting to localhost when no other host is specified. <TT>ntpdc</TT>
 will prompt for commands if the standard input is a terminal device.
 
 <P><TT>ntpdc</TT> uses NTP mode 7 packets to communicate with the NTP server,
-and hence can be used to query any compatable server on the network which
+and hence can be used to query any compatible server on the network which
 permits it. Note that since NTP is a UDP protocol this communication will
 be somewhat unreliable, especially over large distances in terms of network
 topology. <TT>ntpdc</TT> makes no attempt to retransmit requests, and will
@@ -119,7 +119,7 @@ being sent to a server. These are described following.
 <DD>
 A <TT>?</TT> by itself will print a list of all the command keywords known
 to this incarnation of <TT>ntpq</TT>. A <TT>?</TT> followed by a command
-keyword will print funcation and usage information about the command. This
+keyword will print function and usage information about the command. This
 command is probably a better source of information about <TT>ntpq</TT>
 than this manual page.</DD>
 
@@ -195,7 +195,7 @@ no modification of the server configuration state.
 Obtains and prints a brief list of the peers for which the server is maintaining
 state. These should include all configured peer associations as well as
 those peers whose stratum is such that they are considered by the server
-to be possible future synchonization candidates.</DD>
+to be possible future synchronization candidates.</DD>
 
 <DT>
 <TT>peers</TT></DT>
@@ -213,7 +213,7 @@ operating in. A <TT>+</TT> denotes symmetric active, a <TT>-</TT> indicates
 symmetric passive, a <TT>=</TT> means the remote server is being polled
 in client mode, a <TT>^</TT> indicates that the server is broadcasting
 to this address, a <TT>~</TT> denotes that the remote peer is sending broadcasts
-and a <TT>*</TT> marks the peer the server is currently synchonizing to.</DD>
+and a <TT>*</TT> marks the peer the server is currently synchronizing to.</DD>
 
 
 <P>The contents of the host field may be one of four forms. It may be a
