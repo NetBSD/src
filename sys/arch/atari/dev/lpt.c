@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.7 1996/11/17 13:47:21 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.8 1996/12/20 12:49:42 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -122,7 +122,7 @@ int lpthwintr __P((int));
  * Autoconfig stuff
  */
 static void lptattach __P((struct device *, struct device *, void *));
-static int  lptmatch __P((struct device *, void *, void *));
+static int  lptmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach lpt_ca = {
 	sizeof(struct lpt_softc), lptmatch, lptattach
@@ -134,12 +134,11 @@ struct cfdriver lpt_cd = {
 
 /*ARGSUSED*/
 static	int
-lptmatch(pdp, match, auxp)
-struct	device *pdp;
-void	*match, *auxp;
+lptmatch(pdp, cfp, auxp)
+struct	device	*pdp;
+struct	cfdata	*pdp;
+void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if (!strcmp((char *)auxp, "lpt") && cfp->cf_unit == 0)
 		return (1);
 	return (0);

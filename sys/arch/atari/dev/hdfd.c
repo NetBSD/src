@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.4 1996/12/18 12:35:34 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.5 1996/12/20 12:49:37 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -155,7 +155,7 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int	fdcprobe __P((struct device *, void *, void *));
+int	fdcprobe __P((struct device *, struct cfdata *, void *));
 int	fdprint __P((void *, const char *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
@@ -232,7 +232,7 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdprobe __P((struct device *, void *, void *));
+int	fdprobe __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
 struct cfattach hdfd_ca = {
@@ -266,12 +266,12 @@ int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 int
-fdcprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdcprobe(parent, cfp, aux)
+	struct device	*parent;
+	struct cfdata	*cfp;
+	void		*aux;
 {
 	int		rv   = 0;
-	struct cfdata	*cfp = match;
 
 	if(strcmp("fdc", aux) || cfp->cf_unit != 0)
 		return(0);
@@ -396,24 +396,24 @@ fdcattach(parent, self, aux)
 }
 
 int
-fdprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdprobe(parent, cfp, aux)
+	struct device	*parent;
+	struct cfdata	*cfp;
+	void		*aux;
 {
 	struct fdc_softc	*fdc = (void *)parent;
-	struct cfdata		*cf = match;
 	struct fdc_attach_args	*fa = aux;
 	int			drive = fa->fa_drive;
 	int			n;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cfp->cf_loc[0] != -1 && cfp->cf_loc[0] != drive)
 		return 0;
 	/*
 	 * XXX
 	 * This is to work around some odd interactions between this driver
 	 * and SMC Ethernet cards.
 	 */
-	if (cf->cf_loc[0] == -1 && drive >= 2)
+	if (cfp->cf_loc[0] == -1 && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */

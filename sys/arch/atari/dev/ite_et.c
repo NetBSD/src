@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.4 1996/10/13 04:11:02 christos Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.5 1996/12/20 12:49:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -99,7 +99,7 @@ extern int ite_default_height;
  * grfet config stuff
  */
 void grfetattach __P((struct device *, struct device *, void *));
-int  grfetmatch __P((struct device *, void *, void *));
+int  grfetmatch __P((struct device *, struct cfdata *, void *));
 int  grfetprint __P((void *, const char *));
 
 struct cfattach grfet_ca = {
@@ -116,13 +116,13 @@ struct cfdriver grfet_cd = {
 static struct cfdata *cfdata_grf   = NULL;
 
 int
-grfetmatch(pdp, match, auxp)
+grfetmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void	*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
 	static int	must_probe = 1;
 	grf_auxp_t	*grf_auxp = auxp;
-	struct cfdata	*cfp = match;
 
 	if (must_probe) {
 		if(!(machineid & ATARI_HADES))
