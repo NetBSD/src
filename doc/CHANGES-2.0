@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.148 2004/04/29 04:09:38 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.149 2004/04/29 04:10:53 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1509,3 +1509,9 @@ sbin/tunefs/tunefs.8				1.34
 	According to newfs(8) and reality, the default minfree value is 
 	actually 5% not 10%.
 	[grant, ticket #208]
+
+sys/arch/arm/include/arm32/frame.h		1.11
+
+	Always disable interrupts at the start of 
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS. PR#23581
+	[scw, ticket #209]
