@@ -1,6 +1,6 @@
 .\"
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,25 +30,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tmac.andoc	8.1 (Berkeley) 6/30/93
+.\"	@(#)tmac.e	8.2 (Berkeley) 3/27/94
 .\"
-.\" If -mdoc macros, source tmac.mdoc
-.\" If -man macros, check to see if groff or troff/nroff is being used
-.\"
-.de Dd
-.rn Dd xX
-.so /usr/share/tmac/tmac.doc
-.Dd \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
-.rm xX
-..
-.de TH
-.rn TH xX
+.\" If groff, use groff -me, else use local -me (w/ditroff, troff, nroff)
 .ie \n(.g \{\
-.	so /usr/share/tmac/tmac.groff_an
+.	so /usr/share/tmac/tmac.groff_me
 .\}
 .el \{\
-.	so /usr/old/lib/tmac/tmac.an
+.	so /usr/share/tmac/tmac.orig_me
 .\}
-.TH "\\$1" "\\$2" "\\$3" "\\$4" "\\$5" "\\$6" "\\$7" "\\$8"
-.rm xX
-..
