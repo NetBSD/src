@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1997/11/08 02:17:17 mark Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1997/12/04 11:28:07 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -254,12 +255,13 @@ void	md_copy_filesystem (void)
 	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
 }
 
-void md_make_bsd_partitions (void)
+int md_make_bsd_partitions (void)
 {
 	FILE *f;
 	int i, part;
 	int remain;
 	char isize[20];
+	int maxpart = getmaxpartitions();
 
 	/*
 	 * Initialize global variables that track  space used on this disk.
@@ -284,7 +286,9 @@ void md_make_bsd_partitions (void)
 		multname = msg_string(MSG_megname);
 	}
 
+
 	/* Build standard partitions */
+	emptylabel(bsdlabel);
 
 	/* Partitions C is predefined (whole  disk). */
 	bsdlabel[C][D_FSTYPE] = T_UNUSED;
@@ -344,9 +348,6 @@ void md_make_bsd_partitions (void)
 		bsdlabel[PART_USR][D_FSIZE] = 1024;
 		strcpy (fsmount[PART_USR], "/usr");
 
-
-		/* Verify Partitions. */
-		process_menu (MENU_fspartok);
 		break;
 
 	case 3: /* custom: ask user for all sizes */
@@ -426,15 +427,22 @@ void md_make_bsd_partitions (void)
 			remain = fsdsize - partstart;
 			part++;
 		}
-		
 
-		/* Verify Partitions. */
-		process_menu(MENU_fspartok);
 		break;
 	}
 
+
+	/*
+	 * OK, we have a partition table. Give the user the chance to
+	 * edit it and verify it's OK, or abort altogether.
+	 */
+	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
+		msg_display(MSG_abort);
+		return 0;
+	}
+
 	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, 80);
+	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
 	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
@@ -469,6 +477,8 @@ void md_make_bsd_partitions (void)
 	}
 	fclose (f);
 
+	/* Everything looks OK. */
+	return (1);
 }
 
 
