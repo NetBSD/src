@@ -1,34 +1,41 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/31 21:21:40 cjs Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/05 23:10:36 mark Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
-OBJS=		crt0.o gcrt0.o scrt0.o mcrt0.o
-CLEANFILES+=	core a.out
+OBJS=		crt0.o gcrt0.o scrt0.o
+SRCS=		crt0.c
 
 all: ${OBJS}
 
-crt0.o: crt0.c
-	${COMPILE.c} -DCRT0 -DDYNAMIC ${.ALLSRC}
-#	${LD} -x -r ${.TARGET}
-#	mv a.out ${.TARGET}
+crt0.o: ${SRCS}
+	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
+	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
-gcrt0.o: crt0.c
-	${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}
-#	${LD} -x -r ${.TARGET}
-#	mv a.out ${.TARGET}
+gcrt0.o: ${SRCS}
+	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
+	@${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
-mcrt0.o: crt0.c
-	${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}
-#	${LD} -x -r ${.TARGET}
-#	mv a.out ${.TARGET}
+scrt0.o: ${SRCS}
+	@echo "${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
+	@${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
-scrt0.o: crt0.c
-	${COMPILE.c} -DSCRT0 ${.ALLSRC} -o ${.TARGET}
-#	${LD} -x -r ${.TARGET}
-#	mv a.out ${.TARGET}
+.if make(depend)
+CPPFLAGS+= -DDYNAMIC
+.endif
 
-install:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
-	    ${DESTDIR}/usr/lib
+afterdepend: .depend
+	@(TMP=/tmp/_depend$$$$; \
+		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
+		< .depend > $$TMP; \
+	mv $$TMP .depend)
+
+FILES=${OBJS}
+FILESDIR=/usr/lib
 
 .include <bsd.prog.mk>
