@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.570 2003/08/26 21:02:22 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.571 2003/08/27 14:27:12 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.570 2003/08/26 21:01:35 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.572 2003/08/27 14:21:51 kleink Exp 
  */
 
 /*
@@ -831,8 +831,11 @@
 #define	PCI_PRODUCT_AMD_PCIX8131_PPB	0x7450		/* PCI-X Tunnel */
 #define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* IO Apic */
 #define	PCI_PRODUCT_AMD_PBC8111	0x7460		/* AMD8111 I/O Hub */
+#define	PCI_PRODUCT_AMD_PBC8111_USB	0x7464		/* AMD8111 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_SMB	0x746a		/* AMD8111 SMBus Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_ACPI	0x746b		/* AMD8111 ACPI Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 
 /* American Megatrends products */
