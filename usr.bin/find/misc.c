@@ -1,7 +1,7 @@
-/*	$NetBSD: misc.c,v 1.6 1997/10/19 11:52:50 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1998/02/02 14:02:25 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1997/10/19 11:52:50 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1998/02/02 14:02:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ brace_subst(orig, store, path, len)
 	char ch, *p;
 
 	plen = strlen(path);
-	for (p = *store; (ch = *orig) != 0; ++orig)
+	for (p = *store; (ch = *orig) != '\0'; ++orig)
 		if (ch == '{' && orig[1] == '}') {
 			while ((p - *store) + plen > len)
 				if (!(*store = realloc(*store, len *= 2)))
@@ -129,7 +129,7 @@ emalloc(len)
 {
 	void *p;
 
-	if ((p = malloc(len)) != NULL)
-		return (p);
-	err(1, "malloc");
+	if ((p = malloc(len)) == NULL)
+		err(1, "malloc");
+	return (p);
 }

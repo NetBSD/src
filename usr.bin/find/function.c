@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.21 1997/10/19 11:52:32 lukem Exp $	*/
+/*	$NetBSD: function.c,v 1.22 1998/02/02 14:02:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.21 1997/10/19 11:52:32 lukem Exp $");
+__RCSID("$NetBSD: function.c,v 1.22 1998/02/02 14:02:21 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,10 +433,25 @@ c_fstype(arg)
 	char *arg;
 {
 	PLAN *new;
+#if 0
+	struct vfsconf vfc;
+#endif
     
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_FSTYPE, f_fstype);
+#if 0
+
+	/*
+	 * Check first for a filesystem name.
+	 */
+	if (getvfsbyname(arg, &vfc) == 0) {
+		new->flags = F_MTTYPE;
+		new->mt_data = vfc.vfc_typenum;
+		return (new);
+	}
+#endif
+
 	switch (*arg) {
 	case 'l':
 		if (!strcmp(arg, "local")) {
@@ -454,9 +469,14 @@ c_fstype(arg)
 		break;
 	}
 
+#if 0
+	errx(1, "%s: unknown file type", arg);
+	/* NOTREACHED */
+#else
 	new->flags = F_MTTYPE;
 	new->c_data = arg;
 	return (new);
+#endif
 }
  
 /*
@@ -670,6 +690,7 @@ f_nogroup(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (group_from_gid(entry->fts_statp->st_gid, 1) ? 0 : 1);
 }
  
@@ -692,6 +713,7 @@ f_nouser(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (user_from_uid(entry->fts_statp->st_uid, 1) ? 0 : 1);
 }
  
@@ -786,7 +808,7 @@ f_print(plan, entry)
 	FTSENT *entry;
 {
 	(void)printf("%s\n", entry->fts_path);
-	return(1);
+	return (1);
 }
 
 int
@@ -796,7 +818,7 @@ f_print0(plan, entry)
 {
 	(void)fputs(entry->fts_path, stdout);
 	(void)fputc('\0', stdout);
-	return(1);
+	return (1);
 }
  
 PLAN *
@@ -804,7 +826,7 @@ c_print()
 {
 	isoutput = 1;
 
-	return(palloc(N_PRINT, f_print));
+	return (palloc(N_PRINT, f_print));
 }
 
 PLAN *
@@ -812,7 +834,7 @@ c_print0()
 {
 	isoutput = 1;
 
-	return(palloc(N_PRINT0, f_print0));
+	return (palloc(N_PRINT0, f_print0));
 }
  
 /*
@@ -880,9 +902,9 @@ c_size(arg)
 /*
  * -type c functions --
  *
- *	True if the type of the file is c, where c is b, c, d, p, or f for
- *	block special file, character special file, directory, FIFO, or
- *	regular file, respectively.
+ *	True if the type of the file is c, where c is b, c, d, p, f or w
+ *	for block special file, character special file, directory, FIFO,
+ *	regular file or whiteout respectively.
  */
 int
 f_type(plan, entry)
@@ -931,6 +953,12 @@ c_type(typestring)
 	case 's':
 		mask = S_IFSOCK;
 		break;
+#ifdef FTS_WHITEOUT
+	case 'w':
+		mask = S_IFWHT;
+		ftsoptions |= FTS_WHITEOUT;
+		break;
+#endif /* FTS_WHITEOUT */
 	default:
 		errx(1, "-type: %s: unknown type", typestring);
 	}
@@ -1092,13 +1120,11 @@ palloc(t, f)
 {
 	PLAN *new;
 
-	if ((new = malloc(sizeof(PLAN))) != NULL) {
-		new->type = t;
-		new->eval = f;
-		new->flags = 0;
-		new->next = NULL;
-		return (new);
-	}
-	err(1, "malloc");
-	/* NOTREACHED */
+	if ((new = malloc(sizeof(PLAN))) == NULL)
+		err(1, NULL);
+	new->type = t;
+	new->eval = f;
+	new->flags = 0;
+	new->next = NULL;
+	return (new);
 }

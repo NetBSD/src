@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.6 1997/10/19 11:52:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1998/02/02 14:02:12 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *      $NetBSD: extern.h,v 1.6 1997/10/19 11:52:12 lukem Exp $
+ *	from: @(#)extern.h	8.3 (Berkeley) 4/16/94
  */
 
 #include <sys/cdefs.h>
@@ -41,11 +40,10 @@
 void	 brace_subst __P((char *, char **, char *, int));
 void	*emalloc __P((unsigned int));
 PLAN	*find_create __P((char ***));
-void	 find_execute __P((PLAN *, char **));
+int	 find_execute __P((PLAN *, char **));
 PLAN	*find_formplan __P((char **));
 int	 f_expr __P((PLAN *, FTSENT *));
 PLAN	*not_squish __P((PLAN *));
-OPTION	*option __P((char *));
 PLAN	*or_squish __P((PLAN *));
 PLAN	*paren_squish __P((PLAN *));
 struct stat;
