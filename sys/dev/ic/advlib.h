@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.2 1998/08/29 13:45:57 dante Exp $        */
+/*      $NetBSD: advlib.h,v 1.3 1998/09/26 16:02:57 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -52,8 +52,8 @@
  * modification.
  */
 
-#ifndef	_ADVANSYS_LIBRARY_H_
-#define	_ADVANSYS_LIBRARY_H_
+#ifndef	_ADVANSYS_NARROW_LIBRARY_H_
+#define	_ADVANSYS_NARROW_LIBRARY_H_
 
 #include <dev/ic/adv.h>
 
@@ -1314,4 +1314,4 @@ int AscResetDevice __P((ASC_SOFTC *, u_char));
 
 
 /******************************************************************************/
-#endif	/* _ADVANSYS_LIBRARY_H_ */
+#endif	/* _ADVANSYS_NARROW_LIBRARY_H_ */

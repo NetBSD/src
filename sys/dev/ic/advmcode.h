@@ -1,4 +1,4 @@
-/*      $NetBSD: advmcode.h,v 1.2 1998/08/29 13:45:57 dante Exp $        */
+/*      $NetBSD: advmcode.h,v 1.3 1998/09/26 16:02:57 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *    This product includes software developed by the NetBSD
- *    Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
