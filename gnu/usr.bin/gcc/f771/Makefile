@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/18 16:18:35 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/07/18 13:59:17 tv Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c}
@@ -27,7 +27,7 @@ str-${f}.h str-${f}.j: str-${f}.fin fini.c proj.c
 	@cd ${.CURDIR} && ${MAKE} fini
 	./fini ${>:M*.fin} str-${f}.j str-${f}.h
 
-${OBJS}: str-${f}.h
+${OBJS} .depend: str-${f}.h
 .endfor
 
 .PATH: ${DIST}/gcc/f

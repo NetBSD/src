@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/18 16:18:34 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/07/18 13:59:17 tv Exp $
 
 LIB=		backend
 MKLINT=		no
@@ -52,6 +52,6 @@ insn-${f}: genrtl.h gen${f:R}.c
 
 insn-attrtab.c: ${G_HOST_RTLANAL:.o=.c}
 insn-extract.c: insn-config.h
-${OBJS}: insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+${OBJS} .depend: insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${G_out_file:H}
