@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.19 2001/01/15 18:04:53 veego Exp $
+#	$NetBSD: changelist,v 1.20 2001/04/24 22:41:13 atatat Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -20,7 +20,6 @@
 /etc/defaultdomain
 /etc/dhclient-enter-hooks
 /etc/dhclient-exit-hooks
-/etc/dhclient-script
 /etc/dhclient.conf
 /etc/dhcpd.conf
 /etc/disktab
