@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*      $NetBSD: en.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -143,6 +143,7 @@ en_init(struct iodesc *desc, void *machdep_hint)
 	er->reset = 0;
 }
 
+#if 0
 /* ### remove this when things work! */
 #define XCHR(x) "0123456789abcdef"[(x) & 0xf]
 void
@@ -163,6 +164,7 @@ dump_pkt(unsigned char *pkt, size_t len)
 	}
 	printf("\n");
 }
+#endif
 
 int
 en_put(struct iodesc *desc, void *pkt, size_t len)
