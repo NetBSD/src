@@ -43,9 +43,13 @@
 .Nm vnconfig
 .Nd configure vnode disks
 .Sh SYNOPSIS
-.Nm vnconfig
-.Op Fl cuv
-.Ar special_file Ar regular_file
+.Nm vnconfig Fl c
+.Op Fl v
+.Ar special_file
+.Ar regular_file
+.Nm vnconfig Fl u
+.Op Fl v
+.Ar special_file
 .Sh DESCRIPTION
 The
 .Nm vnconfig
@@ -87,7 +91,7 @@ is assumed.
 Configures the vnode disk
 .Pa vnd0c .
 .Pp
-.Dl vnconfig -u /dev/vnd0c /tmp/diskimage
+.Dl vnconfig -u /dev/vnd0c
 .Pp
 Unconfigures the
 .Pa vnd0c
