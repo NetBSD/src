@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.8 1994/12/28 02:43:00 mycroft Exp $	*/
+/*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -79,7 +79,7 @@ typedef struct _dirdesc {
 
 #endif /* _POSIX_SOURCE */
 
-#ifndef KERNEL
+#ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
@@ -99,6 +99,6 @@ int getdirentries __P((int, char *, int, long *));
 #endif /* not POSIX */
 __END_DECLS
 
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_DIRENT_H_ */
