@@ -1,4 +1,4 @@
-.\" $NetBSD: modunload.8,v 1.14 2003/09/06 19:55:24 jdolecek Exp $
+.\" $NetBSD: modunload.8,v 1.15 2003/09/06 20:12:41 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Op Fl i Ar id
 .Op Fl n Ar name
 .Nm
-.Op Ar id Ns \&| Ns Ar name 
+.Op Ar id Ns \&| Ns Ar name
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,8 +66,8 @@ Unload the module with the name
 .El
 .Pp
 If the option is not specified, the provided argument
-is used as module ID if it's numeric. If the argument is not
-numeric, it's used as module name. 
+is used as module ID if it's numeric.
+If the argument is not numeric, it's used as module name.
 .Sh DIAGNOSTICS
 The
 .Nm
