@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.180 2003/07/31 13:47:32 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.181 2003/08/01 13:08:35 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -140,21 +140,15 @@ _CCLINK=	${CC}
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 
+${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+.if !commands(${PROG})
 .if defined(DESTDIR)
-
-${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
-.if !commands(${PROG})
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
-.endif
-
 .else
-
-${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
-.if !commands(${PROG})
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
-.endif
-
 .endif	# defined(DESTDIR)
+.endif	# !commands(${PROG})
+
 .endif	# defined(OBJS) && !empty(OBJS)
 
 .if !defined(MAN)
