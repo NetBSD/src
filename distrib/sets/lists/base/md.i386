@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.89 2002/03/24 18:25:58 wiz Exp $
+# $NetBSD: md.i386,v 1.90 2002/03/25 08:04:06 kent Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
@@ -8,6 +8,7 @@
 ./usr/libexec/ld.so			base-sys-shlib
 ./usr/lkm/compat_freebsd.o		base-sys-lkm
 ./usr/lkm/compat_linux.o		base-sys-lkm
+./usr/lkm/compat_pecoff.o		base-sys-lkm
 ./usr/lkm/compat_svr4.o			base-sys-lkm
 ./usr/lkm/exec_freebsd_elf.o		base-sys-lkm
 ./usr/lkm/exec_freebsd_aout.o		base-sys-lkm
