@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.19 1999/01/30 16:57:25 eeh Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.19 1999/01/30 16:57:25 eeh Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,6 +84,29 @@ static int nptesg;	/* [sun4/sun4c] only */
 
 int _kvm_kvatop44c __P((kvm_t *, u_long, u_long *));
 int _kvm_kvatop4m __P((kvm_t *, u_long, u_long *));
+int _kvm_kvatop4u __P((kvm_t *, u_long, u_long *));
+
+/*
+ * XXX
+ * taken from /sys/arch/sparc64/include/kcore.h.  
+ * this is the same as the sparc one, except for the kphys addition,
+ * so luckily we can use this here...
+ */
+typedef struct sparc64_cpu_kcore_hdr {
+	int	cputype;		/* CPU type associated with this dump */
+	u_long	kernbase;		/* copy of KERNBASE goes here */
+	int	nmemseg;		/* # of physical memory segments */
+	u_long	memsegoffset;		/* start of memseg array (relative */
+					/*  to the start of this header) */
+	int	nsegmap;		/* # of segmaps following */
+	u_long	segmapoffset;		/* start of segmap array (relative */
+					/*  to the start of this header) */
+	int	npmeg;			/* # of PMEGs; [sun4/sun4c] only */
+	u_long	pmegoffset;		/* start of pmeg array (relative */
+					/*  to the start of this header) */
+/* SPARC64 stuff */
+	paddr_t	kphys;			/* Physical address of 4MB locked TLB */
+} sparc64_cpu_kcore_hdr_t;
 
 void
 _kvm_freevtop(kd)
@@ -104,7 +127,7 @@ int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 
 	switch (cputyp = cpup->cputype) {
 	case CPU_SUN4:
@@ -165,7 +188,7 @@ _kvm_kvatop44c(kd, va, pa)
 	u_long *pa;
 {
 	int vr, vs, pte;
-	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	struct segmap *sp, *segmaps;
 	int *ptes;
 	int nkreg, nureg;
@@ -214,7 +237,7 @@ _kvm_kvatop4m(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int vr, vs;
 	int pte;
 	off_t foff;
@@ -266,7 +289,7 @@ err:
 }
 
 /*
- * pmap's 32-bit page table format
+ * sparc64 pmap's 32-bit page table format
  */
 int
 _kvm_kvatop4u(kd, va, pa)
@@ -274,14 +297,12 @@ _kvm_kvatop4u(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	int vr, vs;
-	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int64_t **segmaps;
 	int64_t *ptes;
 	int64_t pte;
-	int nkreg, nureg;
-	u_long kernbase = cpup->kernbase;
 	int64_t kphys = cpup->kphys;
+	u_long kernbase = cpup->kernbase;
 
 	if (va < kernbase)
 		goto err;
@@ -293,8 +314,23 @@ _kvm_kvatop4u(kd, va, pa)
 	 *	4MB locked TLB (text+data+BSS)
 	 *	Random other stuff.	
 	 */
-	if (va >= kernbase && va < kernbase + 4*MEG)
+	if (va >= kernbase && va < kernbase + 4*1024*1024)
 		return (va - kernbase) + kphys;
+
+/* XXX: from sparc64/include/pmap.h */
+#define	SPARC64_PTSZ		(kd->nbpg/8)
+#define	SPARC64_STSZ		(SPARC64_PTSZ)
+#define	SPARC64_PTMASK		(SPARC64_PTSZ-1)
+#define	SPARC64_PTSHIFT		(13)
+#define	SPARC64_PDSHIFT		(10+SPARC64_PTSHIFT)
+#define	SPARC64_STSHIFT		(10+SPARC64_PDSHIFT)
+#define	SPARC64_STMASK		(SPARC64_STSZ-1)
+#define	sparc64_va_to_seg(v)	(int)((((int64_t)(v))>>SPARC64_STSHIFT)&SPARC64_STMASK)
+#define	sparc64_va_to_pte(v)	(int)((((int64_t)(v))>>SPARC64_PTSHIFT)&SPARC64_PTMASK)
+
+/* XXX: from sparc64/include/pte.h */
+#define	SPARC64_TLB_V			0x8000000000000000LL
+#define	SPARC64_TLB_PA_MASK		0x000001ffffffe000LL
 
 	/*
 	 * Layout of CPU segment:
@@ -303,12 +339,14 @@ _kvm_kvatop4u(kd, va, pa)
 	 *	phys_ram_seg_t[cpup->nmemseg];
 	 *	segmap[cpup->nsegmap];
 	 */
-	segmaps = ((long)kd->cpu_data + cpup->segmapoffset);
-	ptes = (int64_t *)_kvm_pa2off(kd, segmaps[va_to_seg(va)]);
-	pte = ptes[va_to_pte(va)];
-	if ((pte & TLB_V) != 0) {
-		return ((pte & TLB_PA_MASK) | (va & PGOFSET);
-	}
+	segmaps = (int64_t **)((long)kd->cpu_data + cpup->segmapoffset);
+	/* XXX XXX XXX _kvm_pa2off takes u_long and returns off_t..
+	   should take off_t also!! */
+
+	ptes = (int64_t *)(int)_kvm_pa2off(kd, (u_long)segmaps[sparc64_va_to_seg(va)]);
+	pte = ptes[sparc64_va_to_pte(va)];
+	if ((pte & SPARC64_TLB_V) != 0)
+		return ((pte & SPARC64_TLB_PA_MASK) | (va & (kd->nbpg - 1)));
 err:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
@@ -323,7 +361,7 @@ _kvm_pa2off(kd, pa)
 	kvm_t   *kd;
 	u_long  pa;
 {
-	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;
 	off_t off;
 	int nmem;
