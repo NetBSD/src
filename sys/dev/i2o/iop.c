@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.23 2002/03/08 11:37:04 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.24 2002/04/05 18:27:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.23 2002/03/08 11:37:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.24 2002/04/05 18:27:48 bouyer Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -2208,7 +2208,7 @@ iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
 		splx(s);
 		return;
 	}
-	rv = tsleep(im, PRIBIO, "iopmsg", timo * hz / 1000);
+	rv = tsleep(im, PRIBIO, "iopmsg", mstohz(timo));
 	splx(s);
 
 #ifdef I2ODEBUG

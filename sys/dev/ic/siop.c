@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.50 2002/03/01 21:37:03 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.51 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.50 2002/03/01 21:37:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.51 2002/04/05 18:27:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1454,8 +1454,7 @@ siop_start(sc, siop_cmd)
 	/* handle timeout */
 	if ((siop_cmd->xs->xs_control & XS_CTL_POLL) == 0) {
 		/* start exire timer */
-		timeout =
-		    (u_int64_t)siop_cmd->xs->timeout * (u_int64_t)hz / 1000;
+		timeout = mstohz(siop_cmd->xs->timeout);
 		if (timeout == 0)
 			timeout = 1;
 		callout_reset( &siop_cmd->xs->xs_callout,

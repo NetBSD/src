@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.49 2002/03/31 14:36:59 martin Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.50 2002/04/05 18:27:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.49 2002/03/31 14:36:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.50 2002/04/05 18:27:56 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -410,7 +410,7 @@ wdc_atapi_start(chp, xfer)
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->ch_callout, sc_xfer->timeout * hz / 1000,
+		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
 		    wdctimeout, chp);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
@@ -935,7 +935,7 @@ wdc_atapi_phase_complete(xfer)
 			if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10)) {
 				/* 10ms not enouth, try again in 1 tick */
 				if (xfer->c_dscpoll++ > 
-				    sc_xfer->timeout * hz / 1000) {
+				    mstohz(sc_xfer->timeout)) {
 					printf("%s:%d:%d: wait_for_dsc "
 					    "failed\n",
 					    chp->wdc->sc_dev.dv_xname,
