@@ -1,7 +1,6 @@
-# $NetBSD: md.sandpoint,v 1.6 2003/01/18 17:50:29 thorpej Exp $
+# $NetBSD: md.sandpoint,v 1.7 2003/09/24 05:00:16 matt Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sandpoint	comp-c-include
-./usr/include/sandpoint/_G_config.h	comp-c-include
 ./usr/include/sandpoint/ansi.h	comp-c-include
 ./usr/include/sandpoint/aout_machdep.h	comp-c-include
 ./usr/include/sandpoint/asm.h	comp-c-include

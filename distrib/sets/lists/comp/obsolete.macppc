@@ -1,2 +1,3 @@
-# $NetBSD: obsolete.macppc,v 1.2 2002/11/17 02:48:05 lukem Exp $
+# $NetBSD: obsolete.macppc,v 1.3 2003/09/24 05:00:16 matt Exp $
+./usr/include/macppc/_G_config.h
 ./usr/include/macppc/machine_type.h

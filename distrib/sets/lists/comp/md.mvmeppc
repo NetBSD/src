@@ -1,6 +1,5 @@
-# $NetBSD: md.mvmeppc,v 1.4 2003/01/18 17:50:26 thorpej Exp $
+# $NetBSD: md.mvmeppc,v 1.5 2003/09/24 05:00:16 matt Exp $
 ./usr/include/mvmeppc	comp-c-include
-./usr/include/mvmeppc/_G_config.h	comp-c-include
 ./usr/include/mvmeppc/ansi.h	comp-c-include
 ./usr/include/mvmeppc/aout_machdep.h	comp-c-include
 ./usr/include/mvmeppc/asm.h	comp-c-include
