@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm1,v 1.4 2000/08/21 23:34:45 lukem Exp $
+# $NetBSD: lkm1,v 1.5 2000/09/19 13:04:38 lukem Exp $
 #
 
 # PROVIDE: beforenetlkm
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="lkm1"
+rcvar="lkm"
 start_cmd="lkm1_start"
 stop_cmd="lkm1_stop"
 
@@ -17,7 +18,7 @@ lkm1_start()
 #		load kernel modules specified in /etc/lkm.conf if the /usr
 #		filesystem is already present with "/" or can be mounted now
 #
-	if checkyesno lkm && [ -f /etc/rc.lkm ]; then
+	if [ -f /etc/rc.lkm ]; then
 		mount /usr >/dev/null 2>&1
 		if [ -x /usr/bin/ld ]; then
 			lkmstage=BEFORENET
@@ -28,7 +29,7 @@ lkm1_start()
 
 lkm1_stop()
 {
-	if checkyesno lkm && [ -f /etc/rc.lkm -a -x /usr/bin/ld ]; then
+	if [ -f /etc/rc.lkm -a -x /usr/bin/ld ]; then
 		lkmstage=BEFORENET
 		set stop ; . /etc/rc.lkm
 	fi

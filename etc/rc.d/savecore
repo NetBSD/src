@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: savecore,v 1.2 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: savecore,v 1.3 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: savecore
@@ -9,7 +9,7 @@
 . /etc/rc.subr
 
 name="savecore"
-start_precmd="checkyesno savecore"
+rcvar=$name
 start_cmd="savecore_start"
 stop_cmd=":"
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.5 2000/08/21 14:48:39 abs Exp $
+# $NetBSD: ntpdate,v 1.6 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: ntpdate
@@ -9,7 +9,7 @@
 . /etc/rc.subr
 
 name="ntpdate"
-start_precmd="checkyesno ntpdate"
+rcvar=$name
 start_cmd="ntpdate_start"
 stop_cmd=":"
 

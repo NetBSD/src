@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rbootd,v 1.4 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: rbootd,v 1.5 2000/09/19 13:04:39 lukem Exp $
 #
 
 # PROVIDE: rbootd
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="rbootd"
+rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/${name}.conf"
