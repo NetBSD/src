@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.19 1999/02/24 15:37:34 rh Exp $
+$NetBSD: isapnpdevs,v 1.20 1999/03/16 22:58:17 dean Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ devlogic	com	OZO8039		Zoom 56k flex
 devlogic	com	BRI1400		Boca 33.6 PnP
 devlogic	com	BRIB400		Boca 56k PnP
 devlogic	com	ROK0010		Rockwell ?
+devlogic	com	USR0004		USR Sportster 14.4k
+devlogic	com	USR0006		USR Sportster 33.6k
 devlogic	com	USR2070		USR Sportster 56k
 devlogic	com	USR3031		USR 56k Faxmodem
 devlogic	com	ZTIF761		Zoom ComStar 33.6
