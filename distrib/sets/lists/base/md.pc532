@@ -1,6 +1,5 @@
 ./sbin/bim
 ./sbin/ldconfig
-./usr/lib/libstdc++.so.1.0
 ./usr/libexec/ld.so
 ./usr/lkm/cd9660.o
 ./usr/lkm/fdesc.o
