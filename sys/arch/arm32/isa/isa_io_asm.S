@@ -1,4 +1,40 @@
-/*	$NetBSD: isa_io_asm.S,v 1.2 1998/06/28 07:27:53 thorpej Exp $	*/
+/*	$NetBSD: isa_io_asm.S,v 1.3 1998/09/05 01:31:53 mark Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Mark Brinicombe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1997
@@ -39,13 +75,17 @@
 
 #include <machine/asm.h>
 
-fp	.req	r11
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
+#ifdef GPROF
+#define	PAUSE	nop ; nop ; nop ; nop ; nop
+#else
+#define	PAUSE
+#endif
 
-	.text
+/*
+ * Note these functions use ARM Architecture V4 instructions as
+ * all current systems with ISA will be using processors that support
+ * V4 or later architectures (SHARK & CATS)
+ */
 
 /*
  * read single
@@ -53,171 +93,116 @@ pc	.req	r15
 
 ENTRY(isa_bs_r_1)
 	ldrb	r0, [r1, r2]
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	PAUSE
 	mov	pc, lr
 
 ENTRY(isa_bs_r_2)
-	add	r0, r1, r2
-/*	ldrh	r0, [r0] */	.word	0xe1d000b0
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	ldrh	r0, [r1, r2]	/*.word	0xe19100b2*/
+	PAUSE
 	mov	pc, lr
 
 ENTRY(isa_bs_r_4)
 	ldr	r0, [r1, r2]
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	PAUSE
 	mov	pc, lr
+
 /*
  * read multiple.
- *
- * cloned from assembly generated for:
- * 
- *	void
- *	isa_bs_rm_4(v, h, o, p, s)
- *		void *v;
- *		bus_space_handle_t h;
- *		bus_size_t o, s;
- *		u_int32_t *p;
- *	{
- *		u_int32_t *port, *lim;
- *
- *		port = (u_in32_t *)(h + o);
- *		lim = p + s;
- *
- *		while (p < lim)
- *			*p++ = *port;;
- *	}
  */
 
 ENTRY(isa_bs_rm_1)
-	mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_rm_1_loop:
-        ldrb     r3, [r1, #0]
-        strb     r3, [r0], #1
-        cmp     r0, ip
-        bcc     Lisa_rm_1_loop
-        ldmea   fp, {fp, sp, pc}
+	ldrb	r3, [r0]
+	strb	r3, [r1], #1
+	subs	r2, r2, #1
+	bne	Lisa_rm_1_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_rm_2)
-	mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3, asl #1
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
-Lisa_rm_2_loop:	
-	/* ldrh	r3, [r1] */	.word 0xe1d130b0
-	/* strh	r3, [r0], #2 */	.word 0xe0c030b2
-        cmp     r0, ip
-        bcc     Lisa_rm_2_loop
-        ldmea   fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lisa_rm_2_loop:
+	ldrh	r3, [r0]	/*.word 0xe1d030b0*/
+	strh	r3, [r1], #2	/*.word 0xe0c130b2*/
+	subs	r2, r2, #1
+	bne	Lisa_rm_2_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_rm_4)
-	mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3, asl #2
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_rm_4_loop:
-        ldr     r3, [r1, #0]
-        str     r3, [r0], #4
-        cmp     r0, ip
-        bcc     Lisa_rm_4_loop
-        ldmea   fp, {fp, sp, pc}
+	ldr	r3, [r0]
+	str	r3, [r1], #4
+	subs	r2, r2, #1
+	bne	Lisa_rm_4_loop
+
+	mov	pc, lr
 
 /*
  * read region.
- *
- * cloned from assembly generated for:
- *
- *	void
- *	isa_bs_wr_4(v, h, o, p, s)
- *		void *v;
- *		bus_space_handle_t h;
- *		bus_size_t o, s;
- *		u_int32_t *p;
- *	{
- *		u_int32_t *cur, *lim;
- *	
- *		cur = (u_in32_t *)(h + o);
- *		lim = cur + s;
- *	
- *		while (cur < lim)
- *			*cur++ = *p++;
- *	}
- *
  */
 
 ENTRY(isa_bs_rr_1)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_rr_1_loop:
-	ldrb	r3, [r1], #1
-	strb	r3, [r0], #1
-	cmp	r1, r2
-	bcc	Lisa_rr_1_loop
-	ldmea	fp, {fp, sp, pc}
+	ldrb	r3, [r0], #1
+	strb	r3, [r1], #1
+	subs	r2, r2, #1
+	bne	Lisa_rr_1_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_rr_2)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3, asl #1
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_rr_2_loop:
-	/* ldrh	r3, [r1], #2 */	.word 0xe0d130b2
-	/* strh	r3, [r0], #2 */	.word 0xe0c030b2
-	cmp	r1, r2
-	bcc	Lisa_rr_2_loop
-	ldmea	fp, {fp, sp, pc}
+	ldrh	r3, [r0], #2
+	strh	r3, [r1], #2	/*.word 0xe0c130b2*/
+	subs	r2, r2, #1
+	bne	Lisa_rr_2_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_rr_4)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3, asl #2
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_rr_4_loop:
-	ldr	r3, [r1], #4
-	str	r3, [r0], #4
-	cmp	r1, r2
-	bcc	Lisa_rr_4_loop
-	ldmea	fp, {fp, sp, pc}
+	ldr	r3, [r0], #4
+	str	r3, [r1], #4
+	subs	r2, r2, #1
+	bne	Lisa_rr_4_loop
+
+	mov	pc, lr
 
 /*
  * write single
@@ -225,167 +210,132 @@ Lisa_rr_4_loop:
 
 ENTRY(isa_bs_w_1)
 	strb	r3, [r1, r2]
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	PAUSE
 	mov	pc, lr
 
 ENTRY(isa_bs_w_2)
-	add	r0, r1, r2
-/*	strh	r3, [r0] */	.word	0xe1c030b0
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	strh	r3, [r1, r2]	/*.word 0xe18130b2*/
+	PAUSE
 	mov	pc, lr
 
 ENTRY(isa_bs_w_4)
 	str	r3, [r1, r2]
-#ifdef GPROF
-	nop ; nop ; nop ; nop ; nop
-#endif
+	PAUSE
 	mov	pc, lr
 
-/* write multiple
- *
- * cloned from assembly generated for:
- *
- *	void
- *	isa_bs_wm_4(v, h, o, p, s)
- *		void *v;
- *		bus_space_handle_t h;
- *		bus_size_t o, s;
- *		u_int32_t *p;
- *	{
- *		u_int32_t *port, *lim;
- *
- *		port = (u_in32_t *)(h + o);
- *		lim = p + s;
- *
- *		while (p < lim)
- *			*port = *p++;
- *	}
+/*
+ * write multiple
  */
+ 
 ENTRY(isa_bs_wm_1)
-        mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_wm_1_loop:
-        ldrb     r3, [r0], #1
-        strb     r3, [r1]
-        cmp     r0, ip
-        bcc     Lisa_wm_1_loop
-        ldmea   fp, {fp, sp, pc}
+	ldrb	r3, [r1], #1
+	strb	r3, [r0]
+	subs	r2, r2, #1
+	bne	Lisa_wm_1_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_wm_2)
-        mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3, asl #1
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_wm_2_loop:	
-	/* ldrh	r3, [r0], #2 */	.word 0xe0d030b2
-	/* strh	r3, [r1] */	.word 0xe1c130b0
-        cmp     r0, ip
-        bcc     Lisa_wm_2_loop
-        ldmea   fp, {fp, sp, pc}
+	ldrh	r3, [r1], #2	/*.word 0xe0d130b2*/
+	strh	r3, [r0]	/*.word 0xe1c030b0*/
+	subs	r2, r2, #1
+	bne	Lisa_wm_2_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_wm_4)
-        mov     ip, sp
-        stmfd   sp!, {fp, ip, lr, pc}
-        mov     r0, r3
-        add     r1, r1, r2
-        sub     fp, ip, #4
-        ldr     r3, [fp, #4]
-        add     ip, r0, r3, asl #2
-        cmp     r0, ip
-        ldmcsea fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_wm_4_loop:
-        ldr     r3, [r0], #4
-        str     r3, [r1]
-        cmp     r0, ip
-        bcc     Lisa_wm_4_loop
-        ldmea   fp, {fp, sp, pc}
+	ldr	r3, [r1], #4
+	str	r3, [r0]
+	subs	r2, r2, #1
+	bne	Lisa_wm_4_loop
+
+	mov	pc, lr
+
 
 /*
  * write region.
- *
- * cloned from assembly generated for:
- *
- *	void
- *	isa_bs_wr_4(v, h, o, p, s)
- *		void *v;
- *		bus_space_handle_t h;
- *		bus_size_t o, s;
- *		u_int32_t *p;
- *	{
- *		u_int32_t *cur, *lim;
- *	
- *		cur = (u_in32_t *)(h + o);
- *		lim = cur + s;
- *	
- *		while (cur < lim)
- *			*cur++ = *p++;
- *	}
- *
  */
 
 ENTRY(isa_bs_wr_1)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_wr_1_loop:
-	ldrb	r3, [r0], #1
-	strb	r3, [r1], #1
-	cmp	r1, r2
-	bcc	Lisa_wr_1_loop
-	ldmea	fp, {fp, sp, pc}
+	ldrb	r3, [r1], #1
+	strb	r3, [r0], #1
+	subs	r2, r2, #1
+	bne	Lisa_wr_1_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_wr_2)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3, asl #1
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
-Lisa_wr_2_loop:
-	/* ldrh	r3, [r0], #2 */	.word 0xe0d030b2
-	/* strh	r3, [r1], #2 */	.word 0xe0c130b2
-	cmp	r1, r2
-	bcc	Lisa_wr_2_loop
-	ldmea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lisa_wr_2_loop:	
+	ldrh	r3, [r1], #2	/*.word 0xe0d130b2*/
+	strh	r3, [r0], #2
+	subs	r2, r2, #1
+	bne	Lisa_wr_2_loop
+
+	mov	pc, lr
 
 ENTRY(isa_bs_wr_4)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	mov	r0, r3
-	add	r1, r1, r2
-	sub	fp, ip, #4
-	ldr	r3, [fp, #4]
-	add	r2, r1, r3, asl #2
-	cmp	r1, r2
-	ldmcsea	fp, {fp, sp, pc}
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
 Lisa_wr_4_loop:
-	ldr	r3, [r0], #4
-	str	r3, [r1], #4
-	cmp	r1, r2
-	bcc	Lisa_wr_4_loop
-	ldmea	fp, {fp, sp, pc}
+	ldr	r3, [r1], #4
+	str	r3, [r0], #4
+	subs	r2, r2, #1
+	bne	Lisa_wr_4_loop
+
+	mov	pc, lr
+
+/*
+ * Set region
+ */
+
+ENTRY(isa_bs_sr_2)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lisa_bs_sr_2_loop:
+	strh	r1, [r0], #2		/*.word e0c010b2*/
+	subs	r2, r2, #1
+	bne	Lisa_bs_sr_2_loop
+
+	mov	pc, lr
