@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.51 2001/02/24 00:01:23 cgd Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.52 2001/05/27 21:00:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -217,6 +217,8 @@ void	tlp_pci_accton_21040_quirks __P((struct tulip_pci_softc *,
 
 void	tlp_pci_cobalt_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
+void	tlp_pci_algor_21142_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
 
 const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
 	{ tlp_pci_znyx_21040_quirks,	{ 0x00, 0xc0, 0x95 } },
@@ -246,6 +248,7 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_cobalt_21142_quirks,	{ 0x00, 0x10, 0xe0 } },
+	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -636,6 +639,30 @@ tlp_pci_attach(parent, self, aux)
 	    }
 
 	default:
+#ifdef algor
+		/*
+		 * XXX This should be done with device properties, but
+		 * XXX we don't have those yet.
+		 */
+		if (algor_get_ethaddr(pa, NULL)) {
+			extern int tlp_srom_debug;
+			sc->sc_srom_addrbits = 6;
+			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
+			    M_NOWAIT);
+			memset(sc->sc_srom, 0, TULIP_ROM_SIZE(6));
+			algor_get_ethaddr(pa, sc->sc_srom);
+			if (tlp_srom_debug) {
+				printf("SROM CONTENTS:");
+				for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
+					if ((i % 8) == 0)
+						printf("\n\t");
+					printf("0x%02x ", sc->sc_srom[i]);
+				}
+				printf("\n");
+			}
+			break;
+		}
+#endif /* algor */
 		if (tlp_read_srom(sc) == 0)
 			goto cant_cope;
 		break;
@@ -1210,4 +1237,20 @@ tlp_pci_cobalt_21142_reset(sc)
 	delay(10);
 	TULIP_WRITE(sc, CSR_SIAGEN, SIAGEN_CWE);
 	delay(10);
+}
+
+void
+tlp_pci_algor_21142_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Algorithmics boards just have MII-on-SIO.
+	 *
+	 * XXX They also have AUI on the serial interface.
+	 * XXX Deal with this.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 }
