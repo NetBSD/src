@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.1 2001/03/10 01:51:49 cgd Exp $ */
+/* $NetBSD: shquote.c,v 1.2 2001/03/10 20:54:53 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -45,6 +45,7 @@
 
 #include <stdlib.h>
 #ifdef SHQUOTE_USE_MULTIBYTE
+#include <limits.h>
 #include <stdio.h>
 #include <wchar.h>
 #endif
@@ -80,7 +81,7 @@
 #define	XLATE_INCH()						\
     do {							\
 	n = mbrtowc(&c, arg, MB_CUR_MAX, &mbsi);		\
-    } while (0)
+    } while (/*LINTED const cond*/0)
 
 #else
 
@@ -88,7 +89,7 @@
 #define	XLATE_INCH()						\
     do {							\
 	n = ((c = *arg) != '\0') ? 1 : 0;			\
-    } while (0)
+    } while (/*LINTED const cond*/0)
 
 #endif
 
@@ -110,13 +111,13 @@
 			bufsize -= outchlen;			\
 		}						\
 	}							\
-    } while (0)
+    } while (/*LINTED const cond*/0)
 
 size_t
 shquote(const char *arg, char *buf, size_t bufsize)
 {
 #ifdef SHQUOTE_USE_MULTIBYTE
-	char outch[MB_CUR_MAX];
+	char outch[MB_LEN_MAX];
 	mbstate_t mbsi, mbso;
 	wchar_t c, lastc;
 	size_t outchlen;
@@ -125,13 +126,11 @@ shquote(const char *arg, char *buf, size_t bufsize)
 	char c, lastc;
 	size_t outchlen;
 #endif
-	char *end;
 	size_t rv;
 	int n;
 
 	rv = 0;
 	lastc = 0;
-	end = (bufsize != 0) ? &buf[bufsize - 1] : NULL;
 #ifdef SHQUOTE_USE_MULTIBYTE
 	memset(&mbsi, 0, sizeof mbsi);
 	memset(&mbso, 0, sizeof mbso);
@@ -177,5 +176,5 @@ shquote(const char *arg, char *buf, size_t bufsize)
 
 bad:
 	/* A multibyte character encoding or decoding error occurred. */
-	return -1;
+	return (size_t)-1;
 }
