@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.16 2002/07/17 18:01:37 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.17 2002/07/26 01:19:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.16 2002/07/17 18:01:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.17 2002/07/26 01:19:55 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -194,7 +194,8 @@ exit1(struct lwp *l, int rv)
 	p->p_sigctx.ps_sigcheck = 0;
 	timers_free(p, TIMERS_ALL);
 
-	exit_lwps(l);
+	if (p->p_nlwps > 1)
+		exit_lwps(l);
 
 	/*
 	 * Close open files and release open-file table.
