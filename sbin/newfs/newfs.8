@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.45 2002/10/01 13:40:45 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.46 2002/10/12 22:42:52 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -151,11 +151,11 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar block-size
-.It \&\*[Lt] 20 MB
+.It \*[Lt] 20 MB
 4 KB
-.It \&\*[Lt] 1024 MB
+.It \*[Lt] 1024 MB
 8 KB
-.It \&\*[Gt]\&= 1024 MB
+.It \*[Gt]= 1024 MB
 16 KB
 .El
 .It Fl c Ar cpg
@@ -195,11 +195,11 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar frag-size
-.It \&\*[Lt] 20 MB
+.It \*[Lt] 20 MB
 0.5 KB
-.It \&\*[Lt] 1024 MB
+.It \*[Lt] 1024 MB
 1 KB
-.It \&\*[Gt]\&= 1024 MB
+.It \*[Gt]= 1024 MB
 2 KB
 .El
 .It Fl g Ar avgfilesize
@@ -217,11 +217,11 @@ bytes of data space:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar bytes-per-inode
-.It \&\*[Lt] 20 MB
+.It \*[Lt] 20 MB
 2 KB
-.It \&\*[Lt] 1024 MB
+.It \*[Lt] 1024 MB
 4 KB
-.It \&\*[Gt]\&= 1024 MB
+.It \*[Gt]= 1024 MB
 8 KB
 .El
 .It Fl m Ar free-space
@@ -259,7 +259,7 @@ sector size (as specified by
 .Fl S Ar secsize )
 after suffix interpretation.
 .It Fl v Ar volname
-This specifies that a Apple UFS filesystem should be created
+This specifies that an Apple UFS filesystem should be created
 with the given volume name.
 .El
 .Pp
@@ -279,7 +279,7 @@ to find the alternative superblocks if the standard superblock is lost.
 The size of a sector in bytes (almost never anything but 512).
 Defaults to 512.
 .It Fl k Ar skew
-Sector \&0 skew, per track.
+Sector 0 skew, per track.
 Used to describe perturbations in the media format to compensate for
 a slow controller.
 Track skew is the offset of sector 0 on track N relative to sector 0
