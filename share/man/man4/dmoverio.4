@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmoverio.4,v 1.2 2002/08/02 22:20:59 wiz Exp $
+.\"	$NetBSD: dmoverio.4,v 1.3 2002/08/04 05:02:22 thorpej Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -200,6 +200,7 @@ hw_bzero(void *buf, size_t len)
 
 	req.req_outbuf.dmbuf_iov = &iov;
 	req.req_outbuf.dmbuf_iovcnt = 1;
+	req.req_id = reqid++;
 
 	if (write(fd, &req, sizeof(req)) != sizeof(req)) {
 		close(fd);
