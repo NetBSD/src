@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.12 1998/10/27 22:45:13 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.13 1999/03/15 20:19:57 thomas Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/bswap.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
