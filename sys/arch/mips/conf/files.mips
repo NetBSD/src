@@ -1,0 +1,2 @@
+file	arch/mips/mips/cpu_exec.c
+file	arch/mips/mips/elf.c
