@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.74 1998/04/30 06:28:59 thorpej Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.75 1998/05/09 15:04:40 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -86,7 +86,8 @@ int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 int
 kernacc(addr, len, rw)
 	caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	boolean_t rv;
 	vm_offset_t saddr, eaddr;
@@ -113,7 +114,8 @@ kernacc(addr, len, rw)
 int
 useracc(addr, len, rw)
 	caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
@@ -150,7 +152,8 @@ useracc(addr, len, rw)
 void
 chgkprot(addr, len, rw)
 	register caddr_t addr;
-	int len, rw;
+	size_t len;
+	int rw;
 {
 	vm_prot_t prot;
 	vm_offset_t pa, sva, eva;
@@ -176,7 +179,7 @@ void
 vslock(p, addr, len)
 	struct proc *p;
 	caddr_t	addr;
-	u_int	len;
+	size_t	len;
 {
 	vm_map_pageable(&p->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), FALSE);
@@ -186,7 +189,7 @@ void
 vsunlock(p, addr, len)
 	struct proc *p;
 	caddr_t	addr;
-	u_int	len;
+	size_t	len;
 {
 	vm_map_pageable(&p->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), TRUE);

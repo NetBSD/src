@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.36 1998/04/30 06:28:58 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.37 1998/05/09 15:04:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@ struct vnode;
 struct core;
 
 #if defined(KGDB) && !defined(UVM)
-void		 chgkprot __P((caddr_t, int, int));
+void		 chgkprot __P((caddr_t, size_t, int));
 #endif
 
 #ifdef _KERNEL
@@ -73,7 +73,7 @@ int		 grow __P((struct proc *, vm_offset_t));
 #endif
 void		 iprintf __P((void (*)(const char *, ...), const char *, ...));
 #if !defined(UVM)
-int		 kernacc __P((caddr_t, int, int));
+int		 kernacc __P((caddr_t, size_t, int));
 #endif
 int		 kinfo_loadavg __P((int, char *, int *, int, int *));
 int		 kinfo_meter __P((int, caddr_t, int *, int, int *));
@@ -118,7 +118,7 @@ void		 thread_sleep_msg __P((void *, simple_lock_t,
  */
 #define		 thread_wakeup wakeup
 #if !defined(UVM)
-int		 useracc __P((caddr_t, int, int));
+int		 useracc __P((caddr_t, size_t, int));
 int		 vm_allocate __P((vm_map_t, vm_offset_t *, vm_size_t,
 				  boolean_t));
 int		 vm_allocate_with_pager __P((vm_map_t, vm_offset_t *,
@@ -167,8 +167,8 @@ void		 vnode_pager_sync __P((struct mount *));
 void		 vnode_pager_umount __P((struct mount *));
 boolean_t	 vnode_pager_uncache __P((struct vnode *));
 #if !defined(UVM)
-void		 vslock __P((struct proc *, caddr_t, u_int));
-void		 vsunlock __P((struct proc *, caddr_t, u_int));
+void		 vslock __P((struct proc *, caddr_t, size_t));
+void		 vsunlock __P((struct proc *, caddr_t, size_t));
 #endif
 
 /* Machine dependent portion */

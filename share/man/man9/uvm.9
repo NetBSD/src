@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.3 1998/05/09 00:48:20 mrg Exp $
+.\"	$NetBSD: uvm.9,v 1.4 1998/05/09 15:04:39 kleink Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -713,16 +713,16 @@ swaps in the named process.
 .Fn uao_reference "struct uvm_object *uobj"
 
 .Ft boolean_t
-.Fn uvm_chgkprot "caddr_t addr" "int len" "int rw"
+.Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw"
 .Ft void
-.Fn uvm_kernacc "caddr_t addr" "int len" "int rw"
+.Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw"
 .Ft boolean_t
-.Fn uvm_useracc "caddr_t addr" "int len" "int rw"
+.Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
 
 .Ft void
-.Fn uvm_vslock "struct proc *p" "caddr_t addr" "u_int len"
+.Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len"
 .Ft void
-.Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "u_int len"
+.Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
 
 .Ft void
 .Fn uvm_meter
@@ -1007,4 +1007,5 @@ UVM to support System V shared memory and process swapping.
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
 .Xr sysctl 3 ,
-.Xr ddb 4
+.Xr ddb 4 ,
+.Xr options 4
