@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.3 2003/12/10 00:22:29 lonewolf Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.4 2004/02/19 01:03:45 bjh21 Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.3 2003/12/10 00:22:29 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.4 2004/02/19 01:03:45 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,16 +125,6 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
-}
-
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(pckbc_tag_t kbctag, pckbc_slot_t kbcslot)
-{
-	return (ENXIO);
 }
 
 static void
