@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.6 1997/01/01 21:12:56 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.7 1997/04/25 19:18:04 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -1355,6 +1355,9 @@ fdioctl(dev, cmd, addr, flag, p)
 		case FDC_250KBPS:
 			form_parms->xfer_rate = 250 * 1024;
 			break;
+		case FDC_125KBPS:
+			form_parms->xfer_rate = 125 * 1024;
+			break;
 		default:
 			return EINVAL;
 		}
@@ -1382,6 +1385,9 @@ fdioctl(dev, cmd, addr, flag, p)
 			break;
 		case 250 * 1024:
 			fd->sc_type->rate = FDC_250KBPS;
+			break;
+		case 125 * 1024:
+			fd->sc_type->rate = FDC_125KBPS;
 			break;
 		default:
 			return EINVAL;
