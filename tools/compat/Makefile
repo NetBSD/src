@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2002/01/29 10:20:31 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/01/31 22:43:45 tv Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
-		getmode.c getopt_long.c pread.c pwcache.c pwrite.c \
-		pw_scan.c setenv.c setgroupent.c setpassent.c \
-		setprogname.c snprintf.c \
+		getmode.c getopt_long.c libyywrap.c pread.c \
+		pwcache.c pwrite.c pw_scan.c setenv.c \
+		setgroupent.c setpassent.c setprogname.c snprintf.c \
 		strlcat.c strlcpy.c strmode.c strsep.c unvis.c vis.c \
 		_err.c _errx.c _verr.c _verrx.c _vwarn.c _vwarnx.c \
 		_warn.c _warnx.c __fts13.c
@@ -13,16 +13,17 @@ SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
 # -D_FILE_OFFSET_BITS=64 produces a much more amenable `struct stat', and
 # other file ops, on many systems, without changing function names.
 
-CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H -Dlint \
+CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H \
 		-D_FILE_OFFSET_BITS=64
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/stdlib \
 		${.CURDIR}/../../lib/libc/string \
 		${.CURDIR}/../../lib/libutil \
+		${.CURDIR}/../../usr.bin/lex
 
 DPSRCS+=	defs.mk
-CLEANFILES=	config.log config.status confdefs.h includedir.stamp
+CLEANFILES=	config.log config.status confdefs.h *.stamp
 
 # Get components of Berkeley DB.
 _CURDIR:=	${.CURDIR}
@@ -32,7 +33,7 @@ _CURDIR:=	${.CURDIR}
 
 SRCS:=		${SRCS:Nndbm.c}
 
-defs.mk: includedir.stamp configure config.h.in defs.mk.in
+defs.mk: include.stamp configure config.h.in defs.mk.in
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
 		sh ${.CURDIR}/configure --cache-file=config.cache
 	@touch $@
@@ -41,8 +42,8 @@ defs.mk: includedir.stamp configure config.h.in defs.mk.in
 regen:
 	cd ${.CURDIR} && ${TOOLDIR}/bin/nbautoconf
 
-includedir.stamp:
-	mkdir -p include/sys
+include.stamp:
+	mkdir -p include/sys include/machine
 	@touch $@
 
 cleandir: compat.clean

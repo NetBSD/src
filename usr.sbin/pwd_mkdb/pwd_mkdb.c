@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.23 2002/01/29 10:20:38 tv Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.24 2002/01/31 22:44:06 tv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -36,25 +36,23 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
-#define HAVE_ERR_H 1
-#define HAVE_UTIL_H 1
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, Inc.  All rights reserved.\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.23 2002/01/29 10:20:38 tv Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.24 2002/01/31 22:44:06 tv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -63,17 +61,12 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.23 2002/01/29 10:20:38 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #if HAVE_CONFIG_H
 #include "compat_pwd.h"
 #else
 #include <pwd.h>
-#endif
-#if HAVE_ERR_H
-#include <err.h>
-#endif
-#if HAVE_UTIL_H
-#include <util.h>
 #endif
 
 #define	MAX_CACHESIZE	8*1024*1024

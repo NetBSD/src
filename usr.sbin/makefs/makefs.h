@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.6 2002/01/26 13:22:16 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.7 2002/01/31 22:44:03 tv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,8 +38,17 @@
 #ifndef	_MAKEFS_H
 #define	_MAKEFS_H
 
-#include <sys/stat.h>
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#define HAVE_STRUCT_STAT_ST_GEN 1
+#define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
+#define HAVE_STRUCT_STATFS_F_IOSIZE 1
+#endif
 
+#include <sys/stat.h>
+#include <err.h>
 
 /*
  * fsnode -

@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.3 2002/01/21 19:22:53 tv Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.4 2002/01/31 22:43:36 tv Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -30,27 +30,26 @@
  * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_ERR_H 1
-#endif
-
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.3 2002/01/21 19:22:53 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: mdsetimage.c,v 1.4 2002/01/31 22:43:36 tv Exp $");
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -58,10 +57,6 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.3 2002/01/21 19:22:53 tv Exp $");
 #include <unistd.h>
 
 #include <bfd.h>
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
 
 struct symbols {
 	char *name;
