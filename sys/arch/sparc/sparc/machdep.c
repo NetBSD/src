@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1998/09/13 12:13:50 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.126 1998/09/13 20:17:54 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 
 #include <sys/param.h>
@@ -581,25 +582,25 @@ sendsig(catcher, sig, mask, code)
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
-	int addr, onstack, oldsp, newsp;
+	int addr, oonstack, onstack, oldsp, newsp;
 	struct sigframe sf;
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if (onstack)
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	if (onstack) {
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		                                  psp->ps_sigstk.ss_size);
-	else
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
 
@@ -608,7 +609,6 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
 #endif
-
 	/*
 	 * Now set up the signal frame.  We build it in kernel space
 	 * and then copy it out.  We probably ought to just build it
@@ -621,29 +621,26 @@ sendsig(catcher, sig, mask, code)
 #endif
 	sf.sf_addr = 0;			/* XXX */
 
-	/* Save register context. */
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_mask = *mask;
+#ifdef COMPAT_13
+	/* 
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will 
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &sf.sf_sc.__sc_mask13);
+#endif
 	sf.sf_sc.sc_sp = oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_psr = tf->tf_psr;
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
 
 	/*
 	 * Put the stack in a consistent state before we whack away
@@ -669,34 +666,20 @@ sendsig(catcher, sig, mask, code)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 #endif
-
 	/*
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-#ifdef COMPAT_SUNOS
-	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (int)catcher;	/* user does his own trampolining */
-	} else
-#endif
-	{
-		addr = (int)psp->ps_sigcode;
-		tf->tf_global[1] = (int)catcher;
-	}
+	addr = (int)psp->ps_sigcode;
+	tf->tf_global[1] = (int)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig: about to return to catcher\n");
@@ -714,16 +697,17 @@ sendsig(catcher, sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
+	struct sigcontext sc, *scp;
 	struct trapframe *tf;
+	int error;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -734,9 +718,76 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
-	scp = SCARG(uap, sigcntxp);
-	if ((int)scp & 3 || uvm_useracc((caddr_t)scp,sizeof *scp, B_WRITE) == 0)
+	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
+		return (error);
+	scp = &sc;
+
+	tf = p->p_md.md_tf;
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
 		return (EINVAL);
+
+	/* take only psr ICC field */
+	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (scp->sc_psr & PSR_ICC);
+	tf->tf_pc = scp->sc_pc;
+	tf->tf_npc = scp->sc_npc;
+	tf->tf_global[1] = scp->sc_g1;
+	tf->tf_out[0] = scp->sc_o0;
+	tf->tf_out[6] = scp->sc_sp;
+
+	if (scp->sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask */
+	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
+
+	return (EJUSTRETURN);
+}
+
+#ifdef COMPAT_13
+/*
+ * System call to cleanup state after a signal
+ * has been taken.  Reset signal mask and
+ * stack state from context left by sendsig (above),
+ * and return to the given trap frame (if there is one).
+ * Check carefully to make sure that the user has not
+ * modified the state to gain improper privileges or to cause
+ * a machine fault.
+ */
+/* ARGSUSED */
+int
+compat_13_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_sys_sigreturn_args /* {
+		syscallarg(struct sigcontext13 *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext13 sc, *scp;
+	sigset_t mask;
+	struct trapframe *tf;
+	int error;
+
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+	if (rwindow_save(p))
+		sigexit(p, SIGILL);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn: %s[%d], sigcntxp %p\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+#endif
+	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
+		return (error);
+	scp = &sc;
+
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -753,17 +804,18 @@ sys_sigreturn(p, v, retval)
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
 
-	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
+	/* Restore signal mask */
+	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }
+#endif
 
 int	waittime = -1;
 
