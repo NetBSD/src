@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19 1997/02/04 00:02:34 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -287,7 +287,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		while (narg) {
 			if (argnp)
 				db_printf("%s=", *argnp++);
-			db_printf("%x", db_get_value((int)argp, 4, FALSE));
+			db_printf("%lx", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
 				db_printf(",");
