@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1997/03/27 21:01:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1997/04/01 16:37:43 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -171,6 +171,7 @@ vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
+extern	int ieee_handler_disable;
 extern	struct user *proc0paddr;
 
 static vm_offset_t alloc_pages __P((int));
@@ -398,6 +399,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
+	case CPU_IEEE_DISABLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ieee_handler_disable));
 
 	default:
 		return (EOPNOTSUPP);
