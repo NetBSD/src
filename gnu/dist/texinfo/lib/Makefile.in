@@ -184,9 +184,10 @@ DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = $(DEPDIR)/alloca.Po $(DEPDIR)/memcpy.Po \
-@AMDEP_TRUE@	$(DEPDIR)/memmove.Po $(DEPDIR)/strcasecmp.Po \
-@AMDEP_TRUE@	$(DEPDIR)/strdup.Po $(DEPDIR)/strerror.Po \
-@AMDEP_TRUE@	$(DEPDIR)/strncasecmp.Po ./$(DEPDIR)/getopt.Po \
+@AMDEP_TRUE@	$(DEPDIR)/memmove.Po $(DEPDIR)/mkstemp.Po \
+@AMDEP_TRUE@	$(DEPDIR)/strcasecmp.Po $(DEPDIR)/strdup.Po \
+@AMDEP_TRUE@	$(DEPDIR)/strerror.Po $(DEPDIR)/strncasecmp.Po \
+@AMDEP_TRUE@	$(DEPDIR)/tempname.Po ./$(DEPDIR)/getopt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/getopt1.Po ./$(DEPDIR)/substring.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/xexit.Po ./$(DEPDIR)/xmalloc.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/xstrdup.Po
@@ -196,7 +197,8 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 DIST_SOURCES = $(libtxi_a_SOURCES)
 DIST_COMMON = README Makefile.am Makefile.in alloca.c memcpy.c \
-	memmove.c strcasecmp.c strdup.c strerror.c strncasecmp.c
+	memmove.c mkstemp.c strcasecmp.c strdup.c strerror.c \
+	strncasecmp.c tempname.c
 SOURCES = $(libtxi_a_SOURCES)
 
 all: all-am
@@ -227,10 +229,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/alloca.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/memcpy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/memmove.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/mkstemp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/strcasecmp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/strdup.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/strerror.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/strncasecmp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/tempname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/substring.Po@am__quote@
