@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/14 02:38:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/21 08:20:09 itojun Exp $
 #
 # Makefile for macppc
 #
@@ -10,5 +10,7 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c
 
 md.o:	menu_defs.h msg_defs.h
+
+CPPFLAGS+=-DINET6
 
 .include "../../Makefile.inc"
