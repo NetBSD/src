@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.12 2000/01/13 09:01:17 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.13 2000/01/13 09:05:41 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -2380,13 +2380,6 @@ pccbb_pcmcia_do_mem_map(ph, win)
   if (((struct pccbb_softc *)ph->ph_parent)->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
     Pcic_write(ph, 0x40 + win, mem_window);
   }
-
-
-#if 0
-  /* XXX do I want 16 bit all the time? */
-  PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT;
-#endif
-
 
   stop_low = (phys_end >> PCIC_MEMREG_LSB_SHIFT) & 0xff;
   stop_high = ((phys_end >> PCIC_MEMREG_MSB_SHIFT) & 0x0f)
