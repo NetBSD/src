@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.40 2002/09/19 20:22:32 mycroft Exp $	*/
+/*	$NetBSD: lpd.c,v 1.41 2002/09/19 20:35:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.40 2002/09/19 20:22:32 mycroft Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.41 2002/09/19 20:35:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,8 +147,8 @@ int child_count;
 int
 main(int argc, char **argv)
 {
-	struct sockaddr_un fromunix;
-	struct sockaddr_storage frominet;
+	struct sockaddr_storage from;
+	socklen_t fromlen;
 	sigset_t nmask, omask;
 	int lfd, errs, i, f, nfds;
 	struct pollfd *socks;
@@ -299,10 +299,9 @@ main(int argc, char **argv)
 	/*
 	 * Main loop: accept, do a request, continue.
 	 */
-	memset(&frominet, 0, sizeof(frominet));
-	memset(&fromunix, 0, sizeof(fromunix));
+	memset(&from, 0, sizeof(from));
 	for (;;) {
-		int domain, rv, s, fromlen;
+		int rv, s;
 		/* "short" so it overflows in about 2 hours */
 		struct timespec sleeptime = {10, 0};
 
@@ -326,15 +325,9 @@ main(int argc, char **argv)
 		}
                 for (i = 0; i < nfds; i++) 
 			if (socks[i].revents & POLLIN) {
-				if (i == 0) {
-					domain = AF_LOCAL;
-					fromlen = sizeof(fromunix);
-					s = accept(socks[i].fd, (struct sockaddr *)&fromunix, &fromlen);
-				} else {
-					domain = AF_INET;
-					fromlen = sizeof(frominet);
-					s = accept(socks[i].fd, (struct sockaddr *)&frominet, &fromlen);
-				}
+				fromlen = sizeof(from);
+				s = accept(socks[i].fd,
+				    (struct sockaddr *)&from, &fromlen);
 				break;
 			}
 		if (s < 0) {
@@ -354,10 +347,10 @@ main(int argc, char **argv)
 				(void)close(socks[i].fd);
 			dup2(s, 1);
 			(void)close(s);
-			if (domain == AF_INET) {
+			if (from.ss_family != AF_LOCAL) {
 				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost((struct sockaddr *)&frominet, check_options);
+				chkhost((struct sockaddr *)&from, check_options);
 			} else
 				from_remote = 0;
 			doit();
