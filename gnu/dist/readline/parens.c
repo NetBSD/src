@@ -1,4 +1,4 @@
-/* parens.c -- Implementation of matching parentheses feature. */
+/* parens.c -- Implemenation of matching parenthesis feature. */
 
 /* Copyright (C) 1987, 1989, 1992 Free Software Foundation, Inc.
 
@@ -19,85 +19,51 @@
    is generally kept in a file called COPYING or LICENSE.  If you do not
    have a copy of the license, write to the Free Software Foundation,
    675 Mass Ave, Cambridge, MA 02139, USA. */
-#define READLINE_LIBRARY
-
-#include "rlconf.h"
-
-#if !defined (PAREN_MATCHING)
-extern int rl_insert ();
-
-int
-rl_insert_close (count, invoking_key)
-     int count, invoking_key;
-{
-  return (rl_insert (count, invoking_key));
-}
-
-#else /* PAREN_MATCHING */
-
-#if defined (HAVE_CONFIG_H)
-#  include <config.h>
-#endif
 
 #include <stdio.h>
 #include <sys/types.h>
 
-#if defined (FD_SET) && !defined (HAVE_SELECT)
-#  define HAVE_SELECT
+#if defined(__GO32__) || defined(_WIN32)
+#undef FD_SET
 #endif
 
-#if defined (HAVE_SELECT)
-#  include <sys/time.h>
-#endif /* HAVE_SELECT */
-#if defined (HAVE_SYS_SELECT_H)
-#  include <sys/select.h>
+#if defined (FD_SET)
+#include <sys/time.h>
 #endif
-
-#if defined (HAVE_STRING_H)
-#  include <string.h>
-#else /* !HAVE_STRING_H */
-#  include <strings.h>
-#endif /* !HAVE_STRING_H */
-
-#if !defined (strchr) && !defined (__STDC__)
-extern char *strchr (), *strrchr ();
-#endif /* !strchr && !__STDC__ */
-
 #include "readline.h"
-
-extern int rl_explicit_arg;
 
 /* Non-zero means try to blink the matching open parenthesis when the
    close parenthesis is inserted. */
-#if defined (HAVE_SELECT)
+#if defined (FD_SET)
 int rl_blink_matching_paren = 1;
-#else /* !HAVE_SELECT */
+#else /* !FD_SET */
 int rl_blink_matching_paren = 0;
-#endif /* !HAVE_SELECT */
+#endif /* !FD_SET */
 
 static int find_matching_open ();
 
-int
 rl_insert_close (count, invoking_key)
      int count, invoking_key;
 {
+  extern int rl_explicit_arg;
+
   if (rl_explicit_arg || !rl_blink_matching_paren)
     rl_insert (count, invoking_key);
   else
     {
-#if defined (HAVE_SELECT)
+#if defined (FD_SET) && !defined(__GO32__)
       int orig_point, match_point, ready;
       struct timeval timer;
       fd_set readfds;
 
       rl_insert (1, invoking_key);
-      (*rl_redisplay_function) ();
+      rl_redisplay ();
       match_point =
 	find_matching_open (rl_line_buffer, rl_point - 2, invoking_key);
 
       /* Emacs might message or ring the bell here, but I don't. */
       if (match_point < 0)
-	return -1;
+	return;
 
       FD_ZERO (&readfds);
       FD_SET (fileno (rl_instream), &readfds);
@@ -106,14 +72,13 @@ rl_insert_close (count, invoking_key)
 
       orig_point = rl_point;
       rl_point = match_point;
-      (*rl_redisplay_function) ();
+      rl_redisplay ();
       ready = select (1, &readfds, (fd_set *)NULL, (fd_set *)NULL, &timer);
       rl_point = orig_point;
-#else /* !HAVE_SELECT */
+#else /* !FD_SET */
       rl_insert (count, invoking_key);
-#endif /* !HAVE_SELECT */
+#endif /* !FD_SET */
     }
-  return 0;
 }
 
 static int
@@ -140,8 +105,8 @@ find_matching_open (string, from, closer)
     {
       if (delimiter && (string[i] == delimiter))
 	delimiter = 0;
-      else if (rl_basic_quote_characters && strchr (rl_basic_quote_characters, string[i]))
-	delimiter = string[i];
+      else if ((string[i] == '\'') || (string[i] == '"'))
+	delimiter = rl_line_buffer[i];
       else if (!delimiter && (string[i] == closer))
 	level++;
       else if (!delimiter && (string[i] == opener))
@@ -153,4 +118,5 @@ find_matching_open (string, from, closer)
   return (i);
 }
 
-#endif /* PAREN_MATCHING */
+
+      

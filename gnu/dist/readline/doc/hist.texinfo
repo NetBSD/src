@@ -1,26 +1,17 @@
 \input texinfo    @c -*-texinfo-*-
-@c %**start of header (This is for running Texinfo on a region.)
+@comment %**start of header (This is for running Texinfo on a region.)
 @setfilename history.info
-@settitle GNU History Library
-@c %**end of header (This is for running Texinfo on a region.)
-
+@settitle GNU Readline Library
+@comment %**end of header (This is for running Texinfo on a region.)
+@synindex vr fn
 @setchapternewpage odd
-
-@ignore
-last change: Thu Mar 21 16:07:29 EST 1996
-@end ignore
-
-@set EDITION 2.1
-@set VERSION 2.1
-@set UPDATED 21 March 1996
-@set UPDATE-MONTH March 1996
 
 @ifinfo
 This document describes the GNU History library, a programming tool that
 provides a consistent user interface for recalling lines of previously
 typed input.
 
-Copyright (C) 1988, 1991, 1993, 1995, 1996 Free Software Foundation, Inc.
+Copyright (C) 1988, 1991 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -45,13 +36,18 @@ by the Foundation.
 @end ifinfo
 
 @titlepage
-@title GNU History Library
-@subtitle Edition @value{EDITION}, for @code{History Library} Version @value{VERSION}.
-@subtitle @value{UPDATE-MONTH}
-@author Brian Fox, Free Software Foundation
-@author Chet Ramey, Case Western Reserve University
+@sp 10
+@center @titlefont{GNU History Library}
+@center Brian Fox
+@center Free Software Foundation
+@center Version 1.1
+@center April 1991
+
+@c Include the Distribution inside the titlepage environment so
+@c that headings are turned off. 
 
 @page
+
 This document describes the GNU History library, a programming tool that
 provides a consistent user interface for recalling lines of previously
 typed input.
@@ -95,8 +91,6 @@ typed input.
 @end menu
 @end ifinfo
 
-@syncodeindex fn vr
-
 @include hsuser.texinfo
 @include hstech.texinfo
 
@@ -107,6 +101,6 @@ typed input.
 @node Function and Variable Index
 @appendix Function and Variable Index
 @printindex vr
-
 @contents
+
 @bye

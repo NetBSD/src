@@ -33,7 +33,7 @@
 KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
 
   /* Control keys. */
-  { ISFUNC, rl_set_mark },		/* Control-@ */
+  { ISFUNC, (Function *)0x0 },		/* Control-@ */
   { ISFUNC, rl_beg_of_line },		/* Control-a */
   { ISFUNC, rl_backward },		/* Control-b */
   { ISFUNC, (Function *)0x0 },		/* Control-c */
@@ -62,7 +62,7 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, (Function *)0x0 },		/* Control-z */
   { ISKMAP, (Function *)emacs_meta_keymap }, /* Control-[ */
   { ISFUNC, (Function *)0x0 },		/* Control-\ */
-  { ISFUNC, rl_char_search },		/* Control-] */
+  { ISFUNC, (Function *)0x0 },		/* Control-] */
   { ISFUNC, (Function *)0x0 },		/* Control-^ */
   { ISFUNC, rl_undo_command },		/* Control-_ */
 
@@ -322,7 +322,7 @@ KEYMAP_ENTRY_ARRAY emacs_standard_keymap = {
   { ISFUNC, rl_insert },	/* Latin small letter y with acute */
   { ISFUNC, rl_insert },	/* Latin small letter thorn (Icelandic) */
   { ISFUNC, rl_insert }		/* Latin small letter y with diaeresis */
-#endif /* KEYMAP_SIZE > 128 */
+#endif /* MEYMAP_SIZE > 128 */
 };
 
 KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
@@ -336,7 +336,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-e */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-f */
   { ISFUNC, rl_abort },		/* Meta-Control-g */
-  { ISFUNC, rl_backward_kill_word },	/* Meta-Control-h */
+  { ISFUNC, (Function *)0x0 },	/* Meta-Control-h */
   { ISFUNC, rl_tab_insert },	/* Meta-Control-i */
   { ISFUNC, rl_vi_editing_mode }, /* Meta-Control-j */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-k */
@@ -356,28 +356,28 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_yank_nth_arg },	/* Meta-Control-y */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-z */
 
-  { ISFUNC, rl_complete },	/* Meta-Control-[ */
+  { ISFUNC, (Function *)0x0 },	/* Meta-Control-[ */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-\ */
-  { ISFUNC, rl_backward_char_search },	/* Meta-Control-] */
+  { ISFUNC, (Function *)0x0 },	/* Meta-Control-] */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-^ */
   { ISFUNC, (Function *)0x0 },	/* Meta-Control-_ */
 
   /* The start of printing characters. */
-  { ISFUNC, rl_set_mark },	/* Meta-SPACE */
+  { ISFUNC, (Function *)0x0 },	/* Meta-SPACE */
   { ISFUNC, (Function *)0x0 },	/* Meta-! */
   { ISFUNC, (Function *)0x0 },	/* Meta-" */
-  { ISFUNC, rl_insert_comment },/* Meta-# */
+  { ISFUNC, (Function *)0x0 },	/* Meta-# */
   { ISFUNC, (Function *)0x0 },	/* Meta-$ */
   { ISFUNC, (Function *)0x0 },	/* Meta-% */
   { ISFUNC, rl_tilde_expand },	/* Meta-& */
   { ISFUNC, (Function *)0x0 },	/* Meta-' */
   { ISFUNC, (Function *)0x0 },	/* Meta-( */
   { ISFUNC, (Function *)0x0 },	/* Meta-) */
-  { ISFUNC, rl_insert_completions },	/* Meta-* */
+  { ISFUNC, (Function *)0x0 },	/* Meta-* */
   { ISFUNC, (Function *)0x0 },	/* Meta-+ */
   { ISFUNC, (Function *)0x0 },	/* Meta-, */
   { ISFUNC, rl_digit_argument }, /* Meta-- */
-  { ISFUNC, rl_yank_last_arg},	/* Meta-. */
+  { ISFUNC, (Function *)0x0 },	/* Meta-. */
   { ISFUNC, (Function *)0x0 },	/* Meta-/ */
 
   /* Regular digits. */
@@ -396,7 +396,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, (Function *)0x0 },		/* Meta-: */
   { ISFUNC, (Function *)0x0 },		/* Meta-; */
   { ISFUNC, rl_beginning_of_history },	/* Meta-< */
-  { ISFUNC, rl_possible_completions },	/* Meta-= */
+  { ISFUNC, (Function *)0x0 },		/* Meta-= */
   { ISFUNC, rl_end_of_history },	/* Meta-> */
   { ISFUNC, rl_possible_completions },	/* Meta-? */
   { ISFUNC, (Function *)0x0 },		/* Meta-@ */
@@ -430,12 +430,12 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_do_lowercase_version },	/* Meta-Z */
 
   /* Some more punctuation. */
-  { ISFUNC, (Function *)0x0 },		/* Meta-[ */	/* was rl_arrow_keys */
+  { ISFUNC, rl_arrow_keys },			/* Meta-[ */
   { ISFUNC, rl_delete_horizontal_space },	/* Meta-\ */
-  { ISFUNC, (Function *)0x0 },		/* Meta-] */
-  { ISFUNC, (Function *)0x0 },		/* Meta-^ */
-  { ISFUNC, rl_yank_last_arg },		/* Meta-_ */
-  { ISFUNC, (Function *)0x0 },		/* Meta-` */
+  { ISFUNC, (Function *)0x0 },			/* Meta-] */
+  { ISFUNC, (Function *)0x0 },			/* Meta-^ */
+  { ISFUNC, (Function *)0x0 },			/* Meta-_ */
+  { ISFUNC, (Function *)0x0 },			/* Meta-` */
 
   /* Lowercase alphabet. */
   { ISFUNC, (Function *)0x0 },	/* Meta-a */
@@ -452,7 +452,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, rl_downcase_word },	/* Meta-l */
   { ISFUNC, (Function *)0x0 },	/* Meta-m */
   { ISFUNC, rl_noninc_forward_search },	/* Meta-n */
-  { ISFUNC, (Function *)0x0 },	/* Meta-o */	/* was rl_arrow_keys */
+  { ISFUNC, rl_arrow_keys },	/* Meta-o */
   { ISFUNC, rl_noninc_reverse_search },	/* Meta-p */
   { ISFUNC, (Function *)0x0 },	/* Meta-q */
   { ISFUNC, rl_revert_line },	/* Meta-r */
@@ -469,7 +469,7 @@ KEYMAP_ENTRY_ARRAY emacs_meta_keymap = {
   { ISFUNC, (Function *)0x0 },	/* Meta-{ */
   { ISFUNC, (Function *)0x0 },	/* Meta-| */
   { ISFUNC, (Function *)0x0 },	/* Meta-} */
-  { ISFUNC, rl_tilde_expand },	/* Meta-~ */
+  { ISFUNC, (Function *)0x0 },	/* Meta-~ */
   { ISFUNC, rl_backward_kill_word }, /* Meta-rubout */
 
 #if KEYMAP_SIZE > 128
@@ -632,7 +632,7 @@ KEYMAP_ENTRY_ARRAY emacs_ctlx_keymap = {
   { ISFUNC, rl_undo_command },		/* Control-u */
   { ISFUNC, (Function *)0x0 },		/* Control-v */
   { ISFUNC, (Function *)0x0 },		/* Control-w */
-  { ISFUNC, rl_exchange_point_and_mark },/* Control-x */
+  { ISFUNC, (Function *)0x0 },		/* Control-x */
   { ISFUNC, (Function *)0x0 },		/* Control-y */
   { ISFUNC, (Function *)0x0 },		/* Control-z */
   { ISFUNC, (Function *)0x0 },		/* Control-[ */

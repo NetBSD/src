@@ -1,39 +1,13 @@
 /* chardefs.h -- Character definitions for readline. */
-
-/* Copyright (C) 1994 Free Software Foundation, Inc.
-
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
-
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 1, or
-   (at your option) any later version.
-
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   675 Mass Ave, Cambridge, MA 02139, USA. */
-
-#ifndef _CHARDEFS_H_
-#define _CHARDEFS_H_
+#ifndef _CHARDEFS_
+#define _CHARDEFS_
 
 #include <ctype.h>
 
-#if defined (HAVE_CONFIG_H)
-#  if defined (HAVE_STRING_H)
-#    include <string.h>
-#  else
-#    include <strings.h>
-#  endif /* HAVE_STRING_H */
-#else
-#  include <string.h>
-#endif /* !HAVE_CONFIG_H */
+#ifndef savestring
+#define savestring(X) _rl_savestring(X)
+extern char * _rl_savestring ();
+#endif
 
 #ifndef whitespace
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))
@@ -45,47 +19,30 @@
 
 /* Some character stuff. */
 #define control_character_threshold 0x020   /* Smaller than this is control. */
-#define control_character_mask 0x1f	    /* 0x20 - 1 */
 #define meta_character_threshold 0x07f	    /* Larger than this is Meta. */
 #define control_character_bit 0x40	    /* 0x000000, must be off. */
 #define meta_character_bit 0x080	    /* x0000000, must be on. */
 #define largest_char 255		    /* Largest character value. */
 
-#define CTRL_CHAR(c) ((c) < control_character_threshold && (c) >= 0)
 #define META_CHAR(c) ((c) > meta_character_threshold && (c) <= largest_char)
-
-#define CTRL(c) ((c) & control_character_mask)
+#define CTRL(c) ((c) & (~control_character_bit))
 #define META(c) ((c) | meta_character_bit)
 
 #define UNMETA(c) ((c) & (~meta_character_bit))
-#define UNCTRL(c) _rl_to_upper(((c)|control_character_bit))
+#define UNCTRL(c) to_upper(((c)|control_character_bit))
 
-/* Old versions
-#define _rl_lowercase_p(c) (((c) > ('a' - 1) && (c) < ('z' + 1)))
-#define _rl_uppercase_p(c) (((c) > ('A' - 1) && (c) < ('Z' + 1)))
-#define _rl_digit_p(c)  ((c) >= '0' && (c) <= '9')
-*/
+#define lowercase_p(c) (((c) > ('a' - 1) && (c) < ('z' + 1)))
+#define uppercase_p(c) (((c) > ('A' - 1) && (c) < ('Z' + 1)))
 
-#define _rl_lowercase_p(c) (islower(c))
-#define _rl_uppercase_p(c) (isupper(c))
-#define _rl_digit_p(x)  (isdigit (x))
+#define pure_alphabetic(c) (lowercase_p(c) || uppercase_p(c))
 
-#define _rl_pure_alphabetic(c) (_rl_lowercase_p(c) || _rl_uppercase_p(c))
-#define ALPHABETIC(c)	(_rl_lowercase_p(c) || _rl_uppercase_p(c) || _rl_digit_p(c))
-
-/* Old versions
-#  define _rl_to_upper(c) (_rl_lowercase_p(c) ? ((c) - 32) : (c))
-#  define _rl_to_lower(c) (_rl_uppercase_p(c) ? ((c) + 32) : (c))
-*/
-
-#ifndef _rl_to_upper
-#  define _rl_to_upper(c) (islower(c) ? toupper(c) : (c))
-#  define _rl_to_lower(c) (isupper(c) ? tolower(c) : (c))
+#ifndef to_upper
+#define to_upper(c) (lowercase_p(c) ? ((c) - 32) : (c))
+#define to_lower(c) (uppercase_p(c) ? ((c) + 32) : (c))
 #endif
 
-#ifndef _rl_digit_value
-#define _rl_digit_value(x) ((x) - '0')
-#endif
+#define CTRL_P(c) ((c) < control_character_threshold)
+#define META_P(c) ((c) > meta_character_threshold)
 
 #ifndef NEWLINE
 #define NEWLINE '\n'
@@ -96,7 +53,7 @@
 #endif
 
 #ifndef RUBOUT
-#define RUBOUT 0x7f
+#define RUBOUT 0x07f
 #endif
 
 #ifndef TAB
@@ -116,7 +73,7 @@
 #ifdef SPACE
 #undef SPACE
 #endif
-#define SPACE ' '	/* XXX - was 0x20 */
+#define SPACE 0x020
 
 #ifdef ESC
 #undef ESC
@@ -124,4 +81,4 @@
 
 #define ESC CTRL('[')
 
-#endif  /* _CHARDEFS_H_ */
+#endif  /* _CHARDEFS_ */

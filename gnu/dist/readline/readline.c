@@ -1,7 +1,7 @@
 /* readline.c -- a general facility for reading lines of input
    with emacs style editing and completion. */
 
-/* Copyright (C) 1987, 1989, 1992 Free Software Foundation, Inc.
+/* Copyright 1987, 1989, 1991, 1992 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library, a library for
    reading lines of text with interactive input and history editing.
@@ -20,168 +20,101 @@
    is generally kept in a file called COPYING or LICENSE.  If you do not
    have a copy of the license, write to the Free Software Foundation,
    675 Mass Ave, Cambridge, MA 02139, USA. */
-#define READLINE_LIBRARY
 
-#if defined (HAVE_CONFIG_H)
-#  include <config.h>
-#endif
-
-#include <sys/types.h>
-#include "posixstat.h"
+#include "sysdep.h"
+#include <stdio.h>
 #include <fcntl.h>
-#if defined (HAVE_SYS_FILE_H)
-#  include <sys/file.h>
-#endif /* HAVE_SYS_FILE_H */
+#include <signal.h>
+
+/* This is needed to include support for TIOCGWINSZ and window resizing. */
+#if defined (OSF1) || defined (BSD386) || defined (_386BSD) || defined (AIX)
+#  include <sys/ioctl.h>
+#endif /* OSF1 */
 
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-
-#if defined (HAVE_STDLIB_H)
-#  include <stdlib.h>
-#else
-#  include "ansi_stdlib.h"
-#endif /* HAVE_STDLIB_H */
-
-#if defined (HAVE_LOCALE_H)
-#  include <locale.h>
 #endif
+
+#include <errno.h>
+/* Not all systems declare ERRNO in errno.h... and some systems #define it! */
+#if !defined (errno)
+extern int errno;
+#endif /* !errno */
 
-#include <signal.h>
-#include <stdio.h>
-#include "posixjmp.h"
+extern char * getenv ();
+
+#include <setjmp.h>
+#include <sys/stat.h>
 
 /* System-specific feature definitions and include files. */
 #include "rldefs.h"
 
-#if defined (__EMX__)
-#  define INCL_DOSPROCESS
-#  include <os2.h>
-#endif /* __EMX__ */
-
 /* Some standard library routines. */
 #include "readline.h"
 #include "history.h"
-
-#ifndef RL_LIBRARY_VERSION
-#  define RL_LIBRARY_VERSION "2.1-bash"
-#endif
-
-/* Evaluates its arguments multiple times. */
-#define SWAP(s, e)  do { int t; t = s; s = e; e = t; } while (0)
 
 /* NOTE: Functions and variables prefixed with `_rl_' are
    pseudo-global: they are global so they can be shared
    between files in the readline library, but are not intended
    to be visible to readline callers. */
 
-/* Variables and functions imported from terminal.c */
-extern int _rl_init_terminal_io ();
-extern void _rl_enable_meta_key ();
-extern int _rl_output_character_function ();
-extern void _rl_get_screen_size ();
-
-extern int _rl_enable_meta;
-extern int _rl_term_autowrap;
-extern int screenwidth, screenheight, screenchars;
-
-/* Variables and functions imported from rltty.c. */
+/* Functions imported from other files in the library. */
 extern void rl_prep_terminal (), rl_deprep_terminal ();
-extern void rltty_set_default_bindings ();
-
-/* Functions imported from util.c. */
-extern void _rl_abort_internal ();
-extern void rl_extend_line_buffer ();
-extern int alphabetic ();
-
-/* Functions imported from bind.c. */
-extern void _rl_bind_if_unbound ();
-extern int rl_set_keymap_from_edit_mode ();
-
-/* Functions imported from input.c. */
-extern int _rl_any_typein ();
-extern void _rl_insert_typein ();
-extern int rl_read_key ();
-
-/* Functions imported from nls.c */
-extern int _rl_init_eightbit ();
-
-/* Functions imported from shell.c */
-extern char *get_env_value ();
+extern void rl_vi_set_last ();
+extern Function *rl_function_of_keyseq ();
+extern char *tilde_expand ();
 
 /* External redisplay functions and variables from display.c */
+extern void rl_redisplay ();
 extern void _rl_move_vert ();
-extern void _rl_update_final ();
-extern void _rl_clear_to_eol ();
-extern void _rl_clear_screen ();
-
-extern void _rl_save_prompt ();
-extern void _rl_restore_prompt ();
 
 extern void _rl_erase_at_end_of_line ();
 extern void _rl_move_cursor_relative ();
 
 extern int _rl_vis_botlin;
 extern int _rl_last_c_pos;
-extern int _rl_horizontal_scroll_mode;
 extern int rl_display_fixed;
-extern int _rl_suppress_redisplay;
-extern char *rl_display_prompt;
 
 /* Variables imported from complete.c. */
 extern char *rl_completer_word_break_characters;
 extern char *rl_basic_word_break_characters;
+extern Function *rl_symbolic_link_hook;
 extern int rl_completion_query_items;
 extern int rl_complete_with_tilde_expansion;
 
-/* Variables and functions from macro.c. */
-extern void _rl_add_macro_char ();
-extern void _rl_with_macro_input ();
-extern int _rl_next_macro_key ();
-extern int _rl_defining_kbd_macro;
-
-#if defined (VI_MODE)
-/* Functions imported from vi_mode.c. */
-extern void _rl_vi_set_last ();
-extern void _rl_vi_reset_last ();
-extern void _rl_vi_done_inserting ();
-extern int _rl_vi_textmod_command ();
-extern void _rl_vi_initialize_line ();
-#endif /* VI_MODE */
-
-extern UNDO_LIST *rl_undo_list;
-extern int _rl_doing_an_undo;
-
 /* Forward declarations used in this file. */
-void _rl_free_history_entry ();
+void rl_dispatch ();
+void free_history_entry ();
+int _rl_output_character_function ();
 
-int _rl_dispatch ();
-int _rl_init_argument ();
+#if !defined (MINIMAL)
+void _rl_set_screen_size ();
+#endif /* !MINIMAL */
 
-static char *readline_internal ();
-static void readline_initialize_everything ();
-static void start_using_history ();
-static void bind_arrow_keys ();
+void free_undo_list (), rl_add_undo ();
 
-#if !defined (__GO32__)
+#if !defined (MINIMAL)
 static void readline_default_bindings ();
-#endif /* !__GO32__ */
+#endif /* !MINIMAL */
 
 #if defined (__GO32__)
-#  include <go32.h>
-#  include <pc.h>
-#  undef HANDLE_SIGNALS
+#  include <sys/pc.h>
 #endif /* __GO32__ */
 
+#if defined (STATIC_MALLOC)
+static char *xmalloc (), *xrealloc ();
+#else
 extern char *xmalloc (), *xrealloc ();
+#endif /* STATIC_MALLOC */
 
+
 /* **************************************************************** */
 /*								    */
 /*			Line editing input utility		    */
 /*								    */
 /* **************************************************************** */
 
-char *rl_library_version = RL_LIBRARY_VERSION;
+static char *LibraryVersion = "2.0 (Cygnus)";
 
 /* A pointer to the keymap that is currently in use.
    By default, it is the standard emacs keymap. */
@@ -190,13 +123,8 @@ Keymap _rl_keymap = emacs_standard_keymap;
 /* The current style of editing. */
 int rl_editing_mode = emacs_mode;
 
-/* Non-zero if we called this function from _rl_dispatch().  It's present
-   so functions can find out whether they were called from a key binding
-   or directly from an application. */
-int rl_dispatching;
-
 /* Non-zero if the previous command was a kill command. */
-int _rl_last_command_was_kill = 0;
+static int last_command_was_kill = 0;
 
 /* The current value of the numeric argument specified by the user. */
 int rl_numeric_arg = 1;
@@ -208,10 +136,10 @@ int rl_explicit_arg = 0;
 int rl_arg_sign = 1;
 
 /* Non-zero means we have been called at least once before. */
-static int rl_initialized;
+static int rl_initialized = 0;
 
 /* If non-zero, this program is running in an EMACS buffer. */
-static int running_in_emacs;
+static char *running_in_emacs = (char *)NULL;
 
 /* The current offset in the current input line. */
 int rl_point;
@@ -229,10 +157,10 @@ int rl_done;
 Function *rl_last_func = (Function *)NULL;
 
 /* Top level environment for readline_internal (). */
-procenv_t readline_top_level;
+static jmp_buf readline_top_level;
 
 /* The streams we interact with. */
-FILE *_rl_in_stream, *_rl_out_stream;
+static FILE *in_stream, *out_stream;
 
 /* The names of the streams that we do input and output to. */
 FILE *rl_instream = (FILE *)NULL;
@@ -243,7 +171,6 @@ int readline_echoing_p = 1;
 
 /* Current prompt. */
 char *rl_prompt;
-int rl_visible_prompt_length = 0;
 
 /* The number of characters read in order to type this complete command. */
 int rl_key_sequence_length = 0;
@@ -271,23 +198,17 @@ int _rl_horizontal_scroll_mode = 0;
 /* Non-zero means to display an asterisk at the starts of history lines
    which have been modified. */
 int _rl_mark_modified_lines = 0;  
-
-/* The style of `bell' notification preferred.  This can be set to NO_BELL,
-   AUDIBLE_BELL, or VISIBLE_BELL. */
-int _rl_bell_preference = AUDIBLE_BELL;
+   
+/* Non-zero means to use a visible bell if one is available rather than
+   simply ringing the terminal bell. */
+int _rl_prefer_visible_bell = 0;
      
-/* String inserted into the line by rl_insert_comment (). */
-char *_rl_comment_begin;
-
-/* Keymap holding the function currently being executed. */
-Keymap rl_executing_keymap;
-
 /* Line buffer and maintenence. */
 char *rl_line_buffer = (char *)NULL;
 int rl_line_buffer_len = 0;
+#define DEFAULT_BUFFER_SIZE 256
 
-/* Forward declarations used by the display and termcap code. */
-
+
 /* **************************************************************** */
 /*								    */
 /*			`Forward' declarations  		    */
@@ -298,15 +219,18 @@ int rl_line_buffer_len = 0;
    parser directives. */
 unsigned char _rl_parsing_conditionalized_out = 0;
 
+/* Non-zero means to save keys that we dispatch on in a kbd macro. */
+static int defining_kbd_macro = 0;
+
 /* Non-zero means to convert characters with the meta bit set to
    escape-prefixed characters so we can indirect through
    emacs_meta_keymap or vi_escape_keymap. */
 int _rl_convert_meta_chars_to_ascii = 1;
 
-/* Non-zero means to output characters with the meta bit set directly
-   rather than as a meta-prefixed escape sequence. */
-int _rl_output_meta_chars = 0;
-
+/* Non-zero tells rl_delete_text and rl_insert_text to not add to
+   the undo list. */
+static int doing_an_undo = 0;
+
 /* **************************************************************** */
 /*								    */
 /*			Top Level Functions			    */
@@ -316,12 +240,13 @@ int _rl_output_meta_chars = 0;
 /* Non-zero means treat 0200 bit in terminal input as Meta bit. */
 int _rl_meta_flag = 0;	/* Forward declaration */
 
-/* Read a line of input.  Prompt with PROMPT.  An empty PROMPT means
+/* Read a line of input.  Prompt with PROMPT.  A NULL PROMPT means
    none.  A return value of NULL means that EOF was encountered. */
 char *
 readline (prompt)
      char *prompt;
 {
+  char *readline_internal ();
   char *value;
 
   rl_prompt = prompt;
@@ -333,17 +258,15 @@ readline (prompt)
       return ((char *)NULL);
     }
 
-  rl_visible_prompt_length = rl_expand_prompt (rl_prompt);
-
   rl_initialize ();
-  (*rl_prep_term_function) (_rl_meta_flag);
+  rl_prep_terminal (_rl_meta_flag);
 
 #if defined (HANDLE_SIGNALS)
   rl_set_signals ();
 #endif
 
   value = readline_internal ();
-  (*rl_deprep_term_function) ();
+  rl_deprep_terminal ();
 
 #if defined (HANDLE_SIGNALS)
   rl_clear_signals ();
@@ -352,98 +275,55 @@ readline (prompt)
   return (value);
 }
 
-#if defined (READLINE_CALLBACKS)
-#  define STATIC_CALLBACK
-#else
-#  define STATIC_CALLBACK static
-#endif
-
-STATIC_CALLBACK void
-readline_internal_setup ()
+/* Read a line of input from the global rl_instream, doing output on
+   the global rl_outstream.
+   If rl_prompt is non-null, then that is our prompt. */
+char *
+readline_internal ()
 {
-  _rl_in_stream = rl_instream;
-  _rl_out_stream = rl_outstream;
+  int lastc, c, eof_found;
+
+  in_stream  = rl_instream;
+  out_stream = rl_outstream;
+
+  lastc = -1;
+  eof_found = 0;
 
   if (rl_startup_hook)
     (*rl_startup_hook) ();
 
-  if (readline_echoing_p == 0)
+  if (!readline_echoing_p)
     {
       if (rl_prompt)
 	{
-	  fprintf (_rl_out_stream, "%s", rl_prompt);
-	  fflush (_rl_out_stream);
+	  fprintf (out_stream, "%s", rl_prompt);
+	  fflush (out_stream);
 	}
     }
   else
     {
       rl_on_new_line ();
-      (*rl_redisplay_function) ();
+      rl_redisplay ();
 #if defined (VI_MODE)
       if (rl_editing_mode == vi_mode)
-	rl_vi_insertion_mode (1, 0);
+	rl_vi_insertion_mode ();
 #endif /* VI_MODE */
     }
-}
 
-STATIC_CALLBACK char *
-readline_internal_teardown (eof)
-     int eof;
-{
-  char *temp;
-  HIST_ENTRY *entry;
-
-  /* Restore the original of this history line, iff the line that we
-     are editing was originally in the history, AND the line has changed. */
-  entry = current_history ();
-
-  if (entry && rl_undo_list)
+  while (!rl_done)
     {
-      temp = savestring (the_line);
-      rl_revert_line (1, 0);
-      entry = replace_history_entry (where_history (), the_line, (HIST_ENTRY *)NULL);
-      _rl_free_history_entry (entry);
-
-      strcpy (the_line, temp);
-      free (temp);
-    }
-
-  /* At any rate, it is highly likely that this line has an undo list.  Get
-     rid of it now. */
-  if (rl_undo_list)
-    free_undo_list ();
-
-  return (eof ? (char *)NULL : savestring (the_line));
-}
-
-STATIC_CALLBACK int
-#if defined (READLINE_CALLBACKS)
-readline_internal_char ()
-#else
-readline_internal_charloop ()
-#endif
-{
-  static int lastc, eof_found;
-  int c, code, lk;
-
-  lastc = -1;
-  eof_found = 0;
-
-#if !defined (READLINE_CALLBACKS)
-  while (rl_done == 0)
-    {
-#endif
-      lk = _rl_last_command_was_kill;
+      int lk = last_command_was_kill;
+      int code;
 
       code = setjmp (readline_top_level);
 
       if (code)
-	(*rl_redisplay_function) ();
+	rl_redisplay ();
 
-      if (rl_pending_input == 0)
+      if (!rl_pending_input)
 	{
 	  /* Then initialize the argument and number of keys read. */
-	  _rl_init_argument ();
+	  rl_init_argument ();
 	  rl_key_sequence_length = 0;
 	}
 
@@ -457,22 +337,21 @@ readline_internal_charloop ()
 	 previous character is interpreted as EOF. */
       if (((c == _rl_eof_char && lastc != c) || c == EOF) && !rl_end)
 	{
-#if defined (READLINE_CALLBACKS)
-	  return (rl_done = 1);
-#else
 	  eof_found = 1;
 	  break;
-#endif
 	}
 
       lastc = c;
-      _rl_dispatch (c, _rl_keymap);
+      rl_dispatch (c, _rl_keymap);
 
-      /* If there was no change in _rl_last_command_was_kill, then no kill
+      /* If there was no change in last_command_was_kill, then no kill
 	 has taken place.  Note that if input is pending we are reading
 	 a prefix command, so nothing has changed yet. */
-      if (rl_pending_input == 0 && lk == _rl_last_command_was_kill)
-	_rl_last_command_was_kill = 0;
+      if (!rl_pending_input)
+	{
+	  if (lk == last_command_was_kill)
+	    last_command_was_kill = 0;
+	}
 
 #if defined (VI_MODE)
       /* In vi mode, when you exit insert mode, the cursor moves back
@@ -481,161 +360,551 @@ readline_internal_charloop ()
 	rl_vi_check ();
 #endif /* VI_MODE */
 
-      if (rl_done == 0)
-	(*rl_redisplay_function) ();
-
-#if defined (READLINE_CALLBACKS)
-      return 0;
-#else
+      if (!rl_done)
+	rl_redisplay ();
     }
 
-  return (eof_found);
+  /* Restore the original of this history line, iff the line that we
+     are editing was originally in the history, AND the line has changed. */
+  {
+    HIST_ENTRY *entry = current_history ();
+
+    if (entry && rl_undo_list)
+      {
+	char *temp = savestring (the_line);
+	rl_revert_line ();
+	entry = replace_history_entry (where_history (), the_line,
+				       (HIST_ENTRY *)NULL);
+	free_history_entry (entry);
+
+	strcpy (the_line, temp);
+	free (temp);
+      }
+  }
+
+  /* At any rate, it is highly likely that this line has an undo list.  Get
+     rid of it now. */
+  if (rl_undo_list)
+    free_undo_list ();
+
+  if (eof_found)
+    return (char *)NULL;
+  else
+    return (savestring (the_line));
+}
+
+/* **************************************************************** */
+/*								    */
+/*			Character Input Buffering       	    */
+/*								    */
+/* **************************************************************** */
+
+static int pop_index = 0, push_index = 0, ibuffer_len = 511;
+static unsigned char ibuffer[512];
+
+/* Non-null means it is a pointer to a function to run while waiting for
+   character input. */
+Function *rl_event_hook = (Function *)NULL;
+
+#define any_typein (push_index != pop_index)
+
+/* Add KEY to the buffer of characters to be read. */
+rl_stuff_char (key)
+     int key;
+{
+  if (key == EOF)
+    {
+      key = NEWLINE;
+      rl_pending_input = EOF;
+    }
+  ibuffer[push_index++] = key;
+  if (push_index >= ibuffer_len)
+    push_index = 0;
+}
+
+/* Return the amount of space available in the
+   buffer for stuffing characters. */
+int
+ibuffer_space ()
+{
+  if (pop_index > push_index)
+    return (pop_index - push_index);
+  else
+    return (ibuffer_len - (push_index - pop_index));
+}
+
+/* Get a key from the buffer of characters to be read.
+   Return the key in KEY.
+   Result is KEY if there was a key, or 0 if there wasn't. */
+int
+rl_get_char (key)
+     int *key;
+{
+  if (push_index == pop_index)
+    return (0);
+
+  *key = ibuffer[pop_index++];
+
+  if (pop_index >= ibuffer_len)
+    pop_index = 0;
+
+  return (1);
+}
+
+/* Stuff KEY into the *front* of the input buffer.
+   Returns non-zero if successful, zero if there is
+   no space left in the buffer. */
+int
+rl_unget_char (key)
+     int key;
+{
+  if (ibuffer_space ())
+    {
+      pop_index--;
+      if (pop_index < 0)
+	pop_index = ibuffer_len - 1;
+      ibuffer[pop_index] = key;
+      return (1);
+    }
+  return (0);
+}
+
+/* If a character is available to be read, then read it
+   and stuff it into IBUFFER.  Otherwise, just return. */
+void
+rl_gather_tyi ()
+{
+#if defined (MINIMAL) && !defined (_WIN32)
+  char input;
+
+  if (isatty (0))
+    {
+      int i = rl_getc ();
+
+      if (i != EOF)
+	rl_stuff_char (i);
+    }
+  else if (kbhit () && ibuffer_space ())
+    rl_stuff_char (getkey () & 0x7f);
+#else /* !MINIMAL */
+
+  int tty = fileno (in_stream);
+  register int tem, result = -1;
+  int chars_avail;
+  char input;
+
+#if defined (FIONREAD)
+  result = ioctl (tty, FIONREAD, &chars_avail);
 #endif
+
+#if defined (O_NDELAY)
+  if (result == -1)
+    {
+      int flags;
+
+      flags = fcntl (tty, F_GETFL, 0);
+
+      fcntl (tty, F_SETFL, (flags | O_NDELAY));
+      chars_avail = read (tty, &input, 1);
+
+      fcntl (tty, F_SETFL, flags);
+      if (chars_avail == -1 && errno == EAGAIN)
+	return;
+    }
+#endif /* O_NDELAY */
+
+  /* If there's nothing available, don't waste time trying to read
+     something. */
+  if (chars_avail == 0)
+    return;
+
+  tem = ibuffer_space ();
+
+  if (chars_avail > tem)
+    chars_avail = tem;
+
+  /* One cannot read all of the available input.  I can only read a single
+     character at a time, or else programs which require input can be
+     thwarted.  If the buffer is larger than one character, I lose.
+     Damn! */
+  if (tem < ibuffer_len)
+    chars_avail = 0;
+
+  if (result != -1)
+    {
+      while (chars_avail--)
+	rl_stuff_char (rl_getc (in_stream));
+    }
+  else
+    {
+      if (chars_avail)
+	rl_stuff_char (input);
+    }
+#endif /* !MINIMAL */
 }
 
-#if defined (READLINE_CALLBACKS)
-static int
-readline_internal_charloop ()
+static int next_macro_key ();
+/* Read a key, including pending input. */
+int
+rl_read_key ()
 {
-  int eof;
+  int c;
 
-  while (rl_done == 0)
-    eof = readline_internal_char ();
-  return (eof);
+  rl_key_sequence_length++;
+
+  if (rl_pending_input)
+    {
+      c = rl_pending_input;
+      rl_pending_input = 0;
+    }
+  else
+    {
+      /* If input is coming from a macro, then use that. */
+      if (c = next_macro_key ())
+	return (c);
+
+      /* If the user has an event function, then call it periodically. */
+      if (rl_event_hook)
+	{
+	  while (rl_event_hook && !rl_get_char (&c))
+	    {
+	      (*rl_event_hook) ();
+	      rl_gather_tyi ();
+	    }
+	}
+      else
+	{
+	  if (!rl_get_char (&c))
+	    c = rl_getc (in_stream);
+	}
+    }
+
+  return (c);
 }
-#endif /* READLINE_CALLBACKS */
 
-/* Read a line of input from the global rl_instream, doing output on
-   the global rl_outstream.
-   If rl_prompt is non-null, then that is our prompt. */
-static char *
-readline_internal ()
-{
-  int eof;
-
-  readline_internal_setup ();
-  eof = readline_internal_charloop ();
-  return (readline_internal_teardown (eof));
-}
-
-void
-_rl_init_line_state ()
-{
-  rl_point = rl_end = 0;
-  the_line = rl_line_buffer;
-  the_line[0] = 0;
-}
-
-void
-_rl_set_the_line ()
-{
-  the_line = rl_line_buffer;
-}
+/* Found later in this file. */
+static void add_macro_char (), with_macro_input ();
 
 /* Do the command associated with KEY in MAP.
    If the associated command is really a keymap, then read
    another key, and dispatch into that map. */
-int
-_rl_dispatch (key, map)
+void
+rl_dispatch (key, map)
      register int key;
      Keymap map;
 {
-  int r, newkey;
-  char *macro;
-  Function *func;
+#if defined (VI_MODE)
+  extern int _rl_vi_last_command, _rl_vi_last_repeat, _rl_vi_last_arg_sign;
+#endif
+
+  if (defining_kbd_macro)
+    add_macro_char (key);
 
   if (META_CHAR (key) && _rl_convert_meta_chars_to_ascii)
     {
       if (map[ESC].type == ISKMAP)
 	{
-	  if (_rl_defining_kbd_macro)
-	    _rl_add_macro_char (ESC);
-	  map = FUNCTION_TO_KEYMAP (map, ESC);
+#if defined (CRAY)
+	  map = (Keymap)((int)map[ESC].function);
+#else
+	  map = (Keymap)map[ESC].function;
+#endif
 	  key = UNMETA (key);
 	  rl_key_sequence_length += 2;
-	  return (_rl_dispatch (key, map));
+	  rl_dispatch (key, map);
 	}
       else
 	ding ();
-      return 0;
+      return;
     }
 
-  if (_rl_defining_kbd_macro)
-    _rl_add_macro_char (key);
-
-  r = 0;
   switch (map[key].type)
     {
     case ISFUNC:
-      func = map[key].function;
-      if (func != (Function *)NULL)
-	{
-	  /* Special case rl_do_lowercase_version (). */
-	  if (func == rl_do_lowercase_version)
-	    return (_rl_dispatch (_rl_to_lower (key), map));
+      {
+	Function *func = map[key].function;
 
-	  rl_executing_keymap = map;
+	if (func != (Function *)NULL)
+	  {
+	    /* Special case rl_do_lowercase_version (). */
+	    if (func == rl_do_lowercase_version)
+	      {
+		rl_dispatch (to_lower (key), map);
+		return;
+	      }
 
-#if 0
-	  _rl_suppress_redisplay = (map[key].function == rl_insert) && _rl_input_available ();
-#endif
+	    (*map[key].function)(rl_numeric_arg * rl_arg_sign, key);
 
-	  rl_dispatching = 1;
-	  r = (*map[key].function)(rl_numeric_arg * rl_arg_sign, key);
-	  rl_dispatching = 0;
-
-	  /* If we have input pending, then the last command was a prefix
-	     command.  Don't change the state of rl_last_func.  Otherwise,
-	     remember the last command executed in this variable. */
-	  if (!rl_pending_input && map[key].function != rl_digit_argument)
-	    rl_last_func = map[key].function;
-	}
-      else
-	{
-	  _rl_abort_internal ();
-	  return -1;
-	}
+	    /* If we have input pending, then the last command was a prefix
+	       command.  Don't change the state of rl_last_func.  Otherwise,
+	       remember the last command executed in this variable. */
+	    if (!rl_pending_input)
+	      rl_last_func = map[key].function;
+	  }
+	else
+	  {
+	    rl_abort ();
+	    return;
+	  }
+      }
       break;
 
     case ISKMAP:
       if (map[key].function != (Function *)NULL)
 	{
+	  int newkey;
+
 	  rl_key_sequence_length++;
 	  newkey = rl_read_key ();
-	  r = _rl_dispatch (newkey, FUNCTION_TO_KEYMAP (map, key));
+#if defined (CRAY)
+	  /* If you cast map[key].function to type (Keymap) on a Cray,
+	     the compiler takes the value of may[key].function and
+	     divides it by 4 to convert between pointer types (pointers
+	     to functions and pointers to structs are different sizes).
+	     This is not what is wanted. */
+	  rl_dispatch (newkey, (Keymap)((int)map[key].function));
+#else
+	  rl_dispatch (newkey, (Keymap)map[key].function);
+#endif /* !CRAY */
 	}
       else
 	{
-	  _rl_abort_internal ();
-	  return -1;
+	  rl_abort ();
+	  return;
 	}
       break;
 
     case ISMACR:
       if (map[key].function != (Function *)NULL)
 	{
+	  char *macro;
+
 	  macro = savestring ((char *)map[key].function);
-	  _rl_with_macro_input (macro);
-	  return 0;
+	  with_macro_input (macro);
+	  return;
 	}
       break;
     }
 #if defined (VI_MODE)
   if (rl_editing_mode == vi_mode && _rl_keymap == vi_movement_keymap &&
-      _rl_vi_textmod_command (key))
-    _rl_vi_set_last (key, rl_numeric_arg, rl_arg_sign);
+      rl_vi_textmod_command (key))
+    {
+      _rl_vi_last_command = key;
+      _rl_vi_last_repeat = rl_numeric_arg;
+      _rl_vi_last_arg_sign = rl_arg_sign;
+    }
 #endif
-  return (r);
 }
 
+
+/* **************************************************************** */
+/*								    */
+/*			Hacking Keyboard Macros 		    */
+/*								    */
+/* **************************************************************** */
+
+/* The currently executing macro string.  If this is non-zero,
+   then it is a malloc ()'ed string where input is coming from. */
+static char *executing_macro = (char *)NULL;
+
+/* The offset in the above string to the next character to be read. */
+static int executing_macro_index = 0;
+
+/* The current macro string being built.  Characters get stuffed
+   in here by add_macro_char (). */
+static char *current_macro = (char *)NULL;
+
+/* The size of the buffer allocated to current_macro. */
+static int current_macro_size = 0;
+
+/* The index at which characters are being added to current_macro. */
+static int current_macro_index = 0;
+
+/* A structure used to save nested macro strings.
+   It is a linked list of string/index for each saved macro. */
+struct saved_macro {
+  struct saved_macro *next;
+  char *string;
+  int index;
+};
+
+/* The list of saved macros. */
+struct saved_macro *macro_list = (struct saved_macro *)NULL;
+
+/* Forward declarations of static functions.  Thank you C. */
+static void push_executing_macro (), pop_executing_macro ();
+
+/* This one has to be declared earlier in the file. */
+/* static void add_macro_char (); */
+
+/* Set up to read subsequent input from STRING.
+   STRING is free ()'ed when we are done with it. */
+static void
+with_macro_input (string)
+     char *string;
+{
+  push_executing_macro ();
+  executing_macro = string;
+  executing_macro_index = 0;
+}
+
+/* Return the next character available from a macro, or 0 if
+   there are no macro characters. */
+static int
+next_macro_key ()
+{
+  if (!executing_macro)
+    return (0);
+
+  if (!executing_macro[executing_macro_index])
+    {
+      pop_executing_macro ();
+      return (next_macro_key ());
+    }
+
+  return (executing_macro[executing_macro_index++]);
+}
+
+/* Save the currently executing macro on a stack of saved macros. */
+static void
+push_executing_macro ()
+{
+  struct saved_macro *saver;
+
+  saver = (struct saved_macro *)xmalloc (sizeof (struct saved_macro));
+  saver->next = macro_list;
+  saver->index = executing_macro_index;
+  saver->string = executing_macro;
+
+  macro_list = saver;
+}
+
+/* Discard the current macro, replacing it with the one
+   on the top of the stack of saved macros. */
+static void
+pop_executing_macro ()
+{
+  if (executing_macro)
+    free (executing_macro);
+
+  executing_macro = (char *)NULL;
+  executing_macro_index = 0;
+
+  if (macro_list)
+    {
+      struct saved_macro *disposer = macro_list;
+      executing_macro = macro_list->string;
+      executing_macro_index = macro_list->index;
+      macro_list = macro_list->next;
+      free (disposer);
+    }
+}
+
+/* Add a character to the macro being built. */
+static void
+add_macro_char (c)
+     int c;
+{
+  if (current_macro_index + 1 >= current_macro_size)
+    {
+      if (!current_macro)
+	current_macro = (char *)xmalloc (current_macro_size = 25);
+      else
+	current_macro =
+	  (char *)xrealloc (current_macro, current_macro_size += 25);
+    }
+
+  current_macro[current_macro_index++] = c;
+  current_macro[current_macro_index] = '\0';
+}
+
+/* Begin defining a keyboard macro.
+   Keystrokes are recorded as they are executed.
+   End the definition with rl_end_kbd_macro ().
+   If a numeric argument was explicitly typed, then append this
+   definition to the end of the existing macro, and start by
+   re-executing the existing macro. */
+rl_start_kbd_macro (ignore1, ignore2)
+     int ignore1, ignore2;
+{
+  if (defining_kbd_macro)
+    rl_abort ();
+
+  if (rl_explicit_arg)
+    {
+      if (current_macro)
+	with_macro_input (savestring (current_macro));
+    }
+  else
+    current_macro_index = 0;
+
+  defining_kbd_macro = 1;
+}
+
+/* Stop defining a keyboard macro.
+   A numeric argument says to execute the macro right now,
+   that many times, counting the definition as the first time. */
+rl_end_kbd_macro (count, ignore)
+     int count, ignore;
+{
+  if (!defining_kbd_macro)
+    rl_abort ();
+
+  current_macro_index -= (rl_key_sequence_length - 1);
+  current_macro[current_macro_index] = '\0';
+
+  defining_kbd_macro = 0;
+
+  rl_call_last_kbd_macro (--count, 0);
+}
+
+/* Execute the most recently defined keyboard macro.
+   COUNT says how many times to execute it. */
+rl_call_last_kbd_macro (count, ignore)
+     int count, ignore;
+{
+  if (!current_macro)
+    rl_abort ();
+
+  if (defining_kbd_macro)
+    {
+      ding ();		/* no recursive macros */
+      current_macro[--current_macro_index] = '\0';	/* erase this char */
+      return 0;
+    }
+
+  while (count--)
+    with_macro_input (savestring (current_macro));
+}
+
+void
+_rl_kill_kbd_macro ()
+{
+  if (current_macro)
+    {
+      free (current_macro);
+      current_macro = (char *) NULL;
+    }
+  current_macro_size = current_macro_index = 0;
+
+  if (executing_macro)
+    {
+      free (executing_macro);
+      executing_macro = (char *) NULL;
+    }
+  executing_macro_index = 0;
+
+  defining_kbd_macro = 0;
+}
+
+
 /* **************************************************************** */
 /*								    */
 /*			Initializations 			    */
 /*								    */
 /* **************************************************************** */
 
-/* Initialize readline (and terminal if not already). */
-int
+/* Initliaze readline (and terminal if not already). */
 rl_initialize ()
 {
   /* If we have never been called before, initialize the
@@ -647,7 +916,9 @@ rl_initialize ()
     }
 
   /* Initalize the current line information. */
-  _rl_init_line_state ();
+  rl_point = rl_end = 0;
+  the_line = rl_line_buffer;
+  the_line[0] = 0;
 
   /* We aren't done yet.  We haven't even gotten started yet! */
   rl_done = 0;
@@ -663,50 +934,13 @@ rl_initialize ()
 
   /* Parsing of key-bindings begins in an enabled state. */
   _rl_parsing_conditionalized_out = 0;
-
-#if defined (VI_MODE)
-  if (rl_editing_mode == vi_mode)
-    _rl_vi_initialize_line ();
-#endif
-
-  return 0;
 }
-
-#if defined (__EMX__)
-static void
-_emx_build_environ ()
-{
-  TIB *tibp;
-  PIB *pibp;
-  char *t, **tp;
-  int c;
-
-  DosGetInfoBlocks (&tibp, &pibp);
-  t = pibp->pib_pchenv;
-  for (c = 1; *t; c++)
-    t += strlen (t) + 1;
-  tp = environ = (char **)xmalloc ((c + 1) * sizeof (char *));
-  t = pibp->pib_pchenv;
-  while (*t)
-    {
-      *tp++ = t;
-      t += strlen (t) + 1;
-    }
-  *tp = 0;
-}
-#endif /* __EMX__ */
 
 /* Initialize the entire state of the world. */
-static void
 readline_initialize_everything ()
 {
-#if defined (__EMX__)
-  if (environ == 0)
-    _emx_build_environ ();
-#endif
-
   /* Find out if we are running in Emacs. */
-  running_in_emacs = get_env_value ("EMACS") != (char *)0;
+  running_in_emacs = getenv ("EMACS");
 
   /* Set up input and output if they are not already set up. */
   if (!rl_instream)
@@ -715,110 +949,48 @@ readline_initialize_everything ()
   if (!rl_outstream)
     rl_outstream = stdout;
 
-  /* Bind _rl_in_stream and _rl_out_stream immediately.  These values
-     may change, but they may also be used before readline_internal ()
-     is called. */
-  _rl_in_stream = rl_instream;
-  _rl_out_stream = rl_outstream;
+  /* Bind in_stream and out_stream immediately.  These values may change,
+     but they may also be used before readline_internal () is called. */
+  in_stream = rl_instream;
+  out_stream = rl_outstream;
 
   /* Allocate data structures. */
-  if (rl_line_buffer == 0)
-    rl_line_buffer = xmalloc (rl_line_buffer_len = DEFAULT_BUFFER_SIZE);
+  if (!rl_line_buffer)
+    rl_line_buffer =
+      (char *)xmalloc (rl_line_buffer_len = DEFAULT_BUFFER_SIZE);
 
   /* Initialize the terminal interface. */
-  _rl_init_terminal_io ((char *)NULL);
+  init_terminal_io ((char *)NULL);
 
-#if !defined (__GO32__)
+#if !defined (MINIMAL)
   /* Bind tty characters to readline functions. */
   readline_default_bindings ();
-#endif /* !__GO32__ */
+#endif /* !MINIMAL */
 
   /* Initialize the function names. */
   rl_initialize_funmap ();
 
-  /* Decide whether we should automatically go into eight-bit mode. */
-  _rl_init_eightbit ();
-      
   /* Read in the init file. */
   rl_read_init_file ((char *)NULL);
 
-  /* XXX */
-  if (_rl_horizontal_scroll_mode && _rl_term_autowrap)
-    {
-      screenwidth--;
-      screenchars -= screenheight;
-    }
-
-  /* Override the effect of any `set keymap' assignments in the
-     inputrc file. */
-  rl_set_keymap_from_edit_mode ();
-
-  /* Try to bind a common arrow key prefix, if not already bound. */
-  bind_arrow_keys ();
-
-  /* Enable the meta key, if this terminal has one. */
-  if (_rl_enable_meta)
-    _rl_enable_meta_key ();
-
   /* If the completion parser's default word break characters haven't
      been set yet, then do so now. */
-  if (rl_completer_word_break_characters == (char *)NULL)
-    rl_completer_word_break_characters = rl_basic_word_break_characters;
+  {
+    if (rl_completer_word_break_characters == (char *)NULL)
+      rl_completer_word_break_characters = rl_basic_word_break_characters;
+  }
 }
 
 /* If this system allows us to look at the values of the regular
    input editing characters, then bind them to their readline
    equivalents, iff the characters are not bound to keymaps. */
+#if !defined (MINIMAL)
 static void
 readline_default_bindings ()
 {
   rltty_set_default_bindings (_rl_keymap);
 }
-
-static void
-bind_arrow_keys_internal ()
-{
-  Function *f;
-
-  f = rl_function_of_keyseq ("\033[A", _rl_keymap, (int *)NULL);
-  if (!f || f == rl_do_lowercase_version)
-    {
-      _rl_bind_if_unbound ("\033[A", rl_get_previous_history);
-      _rl_bind_if_unbound ("\033[B", rl_get_next_history);
-      _rl_bind_if_unbound ("\033[C", rl_forward);
-      _rl_bind_if_unbound ("\033[D", rl_backward);
-    }
-
-  f = rl_function_of_keyseq ("\033OA", _rl_keymap, (int *)NULL);
-  if (!f || f == rl_do_lowercase_version)
-    {
-      _rl_bind_if_unbound ("\033OA", rl_get_previous_history);
-      _rl_bind_if_unbound ("\033OB", rl_get_next_history);
-      _rl_bind_if_unbound ("\033OC", rl_forward);
-      _rl_bind_if_unbound ("\033OD", rl_backward);
-    }
-}
-
-/* Try and bind the common arrow key prefix after giving termcap and
-   the inputrc file a chance to bind them and create `real' keymaps
-   for the arrow key prefix. */
-static void
-bind_arrow_keys ()
-{
-  Keymap xkeymap;
-
-  xkeymap = _rl_keymap;
-
-  _rl_keymap = emacs_standard_keymap;
-  bind_arrow_keys_internal ();
-
-#if defined (VI_MODE)
-  _rl_keymap = vi_movement_keymap;
-  bind_arrow_keys_internal ();
-#endif
-
-  _rl_keymap = xkeymap;
-}
+#endif /* !MINIMAL */
 
 
 /* **************************************************************** */
@@ -828,103 +1000,528 @@ bind_arrow_keys ()
 /* **************************************************************** */
 
 /* Handle C-u style numeric args, as well as M--, and M-digits. */
-static int
-rl_digit_loop ()
-{
-  int key, c, sawminus, sawdigits;
-
-  _rl_save_prompt ();
-
-  sawminus = sawdigits = 0;
-  while (1)
-    {
-      rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
-      key = c = rl_read_key ();
-
-      /* If we see a key bound to `universal-argument' after seeing digits,
-	 it ends the argument but is otherwise ignored. */
-      if (_rl_keymap[c].type == ISFUNC &&
-	  _rl_keymap[c].function == rl_universal_argument)
-	{
-	  if (sawdigits == 0)
-	    {
-	      rl_numeric_arg *= 4;
-	      continue;
-	    }
-	  else
-	    {
-	      key = rl_read_key ();
-	      _rl_restore_prompt ();
-	      rl_clear_message ();
-	      return (_rl_dispatch (key, _rl_keymap));
-	    }
-	}
-
-      c = UNMETA (c);
-
-      if (_rl_digit_p (c))
-	{
-	  rl_numeric_arg = rl_explicit_arg ? (rl_numeric_arg * 10) + c - '0' : c - '0';
-	  sawdigits = rl_explicit_arg = 1;
-	}
-      else if (c == '-' && rl_explicit_arg == 0)
-	{
-	  rl_numeric_arg = sawminus = 1;
-	  rl_arg_sign = -1;
-	}
-      else
-	{
-	  /* Make M-- command equivalent to M--1 command. */
-	  if (sawminus && rl_numeric_arg == 1 && rl_explicit_arg == 0)
-	    rl_explicit_arg = 1;
-	  _rl_restore_prompt ();
-	  rl_clear_message ();
-	  return (_rl_dispatch (key, _rl_keymap));
-	}
-    }
-
-  return 0;
-}
 
 /* Add the current digit to the argument in progress. */
-int
 rl_digit_argument (ignore, key)
      int ignore, key;
 {
   rl_pending_input = key;
-  return (rl_digit_loop ());
+  rl_digit_loop ();
 }
 
 /* What to do when you abort reading an argument. */
-int
 rl_discard_argument ()
 {
   ding ();
   rl_clear_message ();
-  _rl_init_argument ();
-  return 0;
+  rl_init_argument ();
 }
 
 /* Create a default argument. */
-int
-_rl_init_argument ()
+rl_init_argument ()
 {
   rl_numeric_arg = rl_arg_sign = 1;
   rl_explicit_arg = 0;
-  return 0;
 }
 
 /* C-u, universal argument.  Multiply the current argument by 4.
    Read a key.  If the key has nothing to do with arguments, then
    dispatch on it.  If the key is the abort character then abort. */
-int
-rl_universal_argument (count, key)
-     int count, key;
+rl_universal_argument ()
 {
   rl_numeric_arg *= 4;
-  return (rl_digit_loop ());
+  rl_digit_loop ();
 }
 
+rl_digit_loop ()
+{
+  int key, c;
+  while (1)
+    {
+      rl_message ("(arg: %d) ", rl_arg_sign * rl_numeric_arg);
+      key = c = rl_read_key ();
+
+      if (_rl_keymap[c].type == ISFUNC &&
+	  _rl_keymap[c].function == rl_universal_argument)
+	{
+	  rl_numeric_arg *= 4;
+	  continue;
+	}
+      c = UNMETA (c);
+      if (numeric (c))
+	{
+	  if (rl_explicit_arg)
+	    rl_numeric_arg = (rl_numeric_arg * 10) + (c - '0');
+	  else
+	    rl_numeric_arg = (c - '0');
+	  rl_explicit_arg = 1;
+	}
+      else
+	{
+	  if (c == '-' && !rl_explicit_arg)
+	    {
+	      rl_numeric_arg = 1;
+	      rl_arg_sign = -1;
+	    }
+	  else
+	    {
+	      rl_clear_message ();
+	      rl_dispatch (key, _rl_keymap);
+	      return;
+	    }
+	}
+    }
+}
+
+/* **************************************************************** */
+/*								    */
+/*			Terminal and Termcap			    */
+/*								    */
+/* **************************************************************** */
+
+static char *term_buffer = (char *)NULL;
+static char *term_string_buffer = (char *)NULL;
+
+/* Non-zero means this terminal can't really do anything. */
+int dumb_term = 0;
+/* On Solaris2, sys/types.h #includes sys/reg.h, which #defines PC.
+   Unfortunately, PC is a global variable used by the termcap library. */
+#undef PC
+
+#if !defined (__linux__)
+char PC;
+char *BC, *UP;
+#endif /* __linux__ */
+
+/* Some strings to control terminal actions.  These are output by tputs (). */
+char *term_goto, *term_clreol, *term_cr, *term_clrpag, *term_backspace;
+
+int screenwidth, screenheight;
+
+/* Non-zero if we determine that the terminal can do character insertion. */
+int terminal_can_insert = 0;
+
+/* How to insert characters. */
+char *term_im, *term_ei, *term_ic, *term_ip, *term_IC;
+
+/* How to delete characters. */
+char *term_dc, *term_DC;
+
+#if defined (HACK_TERMCAP_MOTION)
+char *term_forward_char;
+#endif  /* HACK_TERMCAP_MOTION */
+
+/* How to go up a line. */
+char *term_up;
+
+/* True if we have funny auto-line-wrap ("am" and "xn"). */
+int term_xn;
+
+/* A visible bell, if the terminal can be made to flash the screen. */
+char *visible_bell;
+
+/* Non-zero means that this terminal has a meta key. */
+int term_has_meta;
+
+/* The string to write to turn on the meta key, if this term has one. */
+char *term_mm;
+
+/* The string to write to turn off the meta key, if this term has one. */
+char *term_mo;
+
+/* The key sequences output by the arrow keys, if this terminal has any. */
+char *term_ku, *term_kd, *term_kr, *term_kl;
+
+/* Re-initialize the terminal considering that the TERM/TERMCAP variable
+   has changed. */
+rl_reset_terminal (terminal_name)
+     char *terminal_name;
+{
+  init_terminal_io (terminal_name);
+}
+
+/* Set readline's idea of the screen size.  TTY is a file descriptor open
+   to the terminal.  If IGNORE_ENV is true, we do not pay attention to the
+   values of $LINES and $COLUMNS.  The tests for TERM_STRING_BUFFER being
+   non-null serve to check whether or not we have initialized termcap. */
+#if !defined (MINIMAL)
+void
+_rl_set_screen_size (tty, ignore_env)
+     int tty, ignore_env;
+{
+#if defined (TIOCGWINSZ) && !defined (TIOCGWINSZ_BROKEN)
+  struct winsize window_size;
+#endif /* TIOCGWINSZ */
+
+#if defined (TIOCGWINSZ) && !defined (TIOCGWINSZ_BROKEN)
+  if (ioctl (tty, TIOCGWINSZ, &window_size) == 0)
+    {
+      screenwidth = (int) window_size.ws_col;
+      screenheight = (int) window_size.ws_row;
+    }
+#endif /* TIOCGWINSZ */
+
+  /* Environment variable COLUMNS overrides setting of "co" if IGNORE_ENV
+     is unset. */
+  if (screenwidth <= 0)
+    {
+      char *sw;
+
+      if (!ignore_env && (sw = getenv ("COLUMNS")))
+	screenwidth = atoi (sw);
+
+      if (screenwidth <= 0 && term_string_buffer)
+	screenwidth = tgetnum ("co");
+    }
+
+  /* Environment variable LINES overrides setting of "li" if IGNORE_ENV
+     is unset. */
+  if (screenheight <= 0)
+    {
+      char *sh;
+
+      if (!ignore_env && (sh = getenv ("LINES")))
+	screenheight = atoi (sh);
+
+      if (screenheight <= 0 && term_string_buffer)
+	screenheight = tgetnum ("li");
+    }
+
+  /* If all else fails, default to 80x24 terminal. */
+  if (screenwidth <= 0)
+    screenwidth = 80;
+
+  if (screenheight <= 0)
+    screenheight = 24;
+
+#if defined (SHELL)
+  /* If we're being compiled as part of bash, set the environment
+     variables $LINES and $COLUMNS to new values. */
+  set_lines_and_columns (screenheight, screenwidth);
+#endif
+
+  /* If we don't have xn (most modern terminals do),
+     don't use the last column. */
+  if (!term_xn)
+    screenwidth--;
+}
+#endif /* !MINIMAL */
+
+init_terminal_io (terminal_name)
+     char *terminal_name;
+{
+#if defined (MINIMAL)
+  screenwidth = ScreenCols ();
+  screenheight = ScreenRows ();
+  term_cr = "\r";
+  term_im = term_ei = term_ic = term_IC = (char *)NULL;
+  term_up = term_dc = term_DC = visible_bell = (char *)NULL;
+
+  /* Does the MINIMAL have a meta key?  I don't know. */
+  term_has_meta = 0;
+  term_mm = term_mo = (char *)NULL;
+
+  /* It probably has arrow keys, but I don't know what they are. */
+  term_ku = term_kd = term_kr = term_kl = (char *)NULL;
+
+#if defined (HACK_TERMCAP_MOTION)
+  term_forward_char = (char *)NULL;
+#endif /* HACK_TERMCAP_MOTION */
+  terminal_can_insert = term_xn = 0;
+  return;
+#else /* !MINIMAL */
+
+  char *term, *buffer;
+  int tty;
+
+  term = terminal_name ? terminal_name : getenv ("TERM");
+
+  if (!term_string_buffer)
+    term_string_buffer = (char *)xmalloc (2048);
+
+  if (!term_buffer)
+    term_buffer = (char *)xmalloc (2048);
+
+  buffer = term_string_buffer;
+
+  term_clrpag = term_cr = term_clreol = (char *)NULL;
+
+  if (!term)
+    term = "dumb";
+
+  if (tgetent (term_buffer, term) <= 0)
+    {
+      dumb_term = 1;
+      screenwidth = 79;
+      screenheight = 24;
+      term_cr = "\r";
+      term_im = term_ei = term_ic = term_IC = (char *)NULL;
+      term_up = term_dc = term_DC = visible_bell = (char *)NULL;
+      term_ku = term_kd = term_kl = term_kr = (char *)NULL;
+#if defined (HACK_TERMCAP_MOTION)
+      term_forward_char = (char *)NULL;
+#endif
+      terminal_can_insert = term_xn = 0;
+      return;
+    }
+
+  BC = tgetstr ("pc", &buffer);
+  PC = buffer ? *buffer : 0;
+
+  term_backspace = tgetstr ("le", &buffer);
+
+  term_cr = tgetstr ("cr", &buffer);
+  term_clreol = tgetstr ("ce", &buffer);
+  term_clrpag = tgetstr ("cl", &buffer);
+
+  if (!term_cr)
+    term_cr =  "\r";
+
+#if defined (HACK_TERMCAP_MOTION)
+  term_forward_char = tgetstr ("nd", &buffer);
+#endif  /* HACK_TERMCAP_MOTION */
+
+  if (rl_instream)
+    tty = fileno (rl_instream);
+  else
+    tty = 0;
+
+  screenwidth = screenheight = 0;
+
+  term_xn = tgetflag ("am") && tgetflag ("xn");
+
+  _rl_set_screen_size (tty, 0);
+
+  term_im = tgetstr ("im", &buffer);
+  term_ei = tgetstr ("ei", &buffer);
+  term_IC = tgetstr ("IC", &buffer);
+  term_ic = tgetstr ("ic", &buffer);
+
+  /* "An application program can assume that the terminal can do
+      character insertion if *any one of* the capabilities `IC',
+      `im', `ic' or `ip' is provided."  But we can't do anything if
+      only `ip' is provided, so... */
+  terminal_can_insert = (term_IC || term_im || term_ic);
+
+  term_up = tgetstr ("up", &buffer);
+  term_dc = tgetstr ("dc", &buffer);
+  term_DC = tgetstr ("DC", &buffer);
+
+  visible_bell = tgetstr ("vb", &buffer);
+
+  /* Check to see if this terminal has a meta key. */
+  term_has_meta = (tgetflag ("km") || tgetflag ("MT"));
+  if (term_has_meta)
+    {
+      term_mm = tgetstr ("mm", &buffer);
+      term_mo = tgetstr ("mo", &buffer);
+    }
+  else
+    {
+      term_mm = (char *)NULL;
+      term_mo = (char *)NULL;
+    }
+
+  /* Attempt to find and bind the arrow keys.  Do not override already
+     bound keys in an overzealous attempt, however. */
+  term_ku = tgetstr ("ku", &buffer);
+  term_kd = tgetstr ("kd", &buffer);
+  term_kr = tgetstr ("kr", &buffer);
+  term_kl = tgetstr ("kl", &buffer);
+
+  if (term_ku)
+    {
+      Function *func;
+
+      func = rl_function_of_keyseq (term_ku, _rl_keymap, (int *)NULL);
+
+      if (!func || func == rl_do_lowercase_version)
+	rl_set_key (term_ku, rl_get_previous_history, _rl_keymap);
+    }
+
+  if (term_kd)
+    {
+      Function *func;
+
+      func = rl_function_of_keyseq (term_kd, _rl_keymap, (int *)NULL);
+
+      if (!func || func == rl_do_lowercase_version)
+	rl_set_key (term_kd, rl_get_next_history, _rl_keymap);
+    }
+
+  if (term_kr)
+    {
+      Function *func;
+
+      func = rl_function_of_keyseq (term_kr, _rl_keymap, (int *)NULL);
+
+      if (!func || func == rl_do_lowercase_version)
+	rl_set_key (term_kr, rl_forward, _rl_keymap);
+    }
+
+  if (term_kl)
+    {
+      Function *func;
+
+      func = rl_function_of_keyseq (term_kl, _rl_keymap, (int *)NULL);
+
+      if (!func || func == rl_do_lowercase_version)
+	rl_set_key (term_kl, rl_backward, _rl_keymap);
+    }
+#endif /* !MINIMAL */
+  return 0;
+}
+
+/* A function for the use of tputs () */
+int
+_rl_output_character_function (c)
+     int c;
+{
+  return putc (c, out_stream);
+}
+
+/* Write COUNT characters from STRING to the output stream. */
+void
+_rl_output_some_chars (string, count)
+     char *string;
+     int count;
+{
+  fwrite (string, 1, count, out_stream);
+}
+
+/* Move the cursor back. */
+backspace (count)
+     int count;
+{
+  register int i;
+
+#if !defined (MINIMAL)
+  if (term_backspace)
+    for (i = 0; i < count; i++)
+      tputs (term_backspace, 1, _rl_output_character_function);
+  else
+#endif /* !MINIMAL */
+    for (i = 0; i < count; i++)
+      putc ('\b', out_stream);
+}
+
+/* Move to the start of the next line. */
+crlf ()
+{
+#if defined (NEW_TTY_DRIVER)
+  tputs (term_cr, 1, _rl_output_character_function);
+#endif /* NEW_TTY_DRIVER */
+  putc ('\n', out_stream);
+}
+
+
+/* **************************************************************** */
+/*								    */
+/*			Utility Functions			    */
+/*								    */
+/* **************************************************************** */
+
+/* Return 0 if C is not a member of the class of characters that belong
+   in words, or 1 if it is. */
+
+int allow_pathname_alphabetic_chars = 0;
+char *pathname_alphabetic_chars = "/-_=~.#$";
+
+int
+alphabetic (c)
+     int c;
+{
+  if (pure_alphabetic (c) || (numeric (c)))
+    return (1);
+
+  if (allow_pathname_alphabetic_chars)
+    return (strchr (pathname_alphabetic_chars, c) != NULL);
+  else
+    return (0);
+}
+
+/* Return non-zero if C is a numeric character. */
+int
+numeric (c)
+     int c;
+{
+  return (c >= '0' && c <= '9');
+}
+
+/* Ring the terminal bell. */
+int
+ding ()
+{
+  if (readline_echoing_p)
+    {
+#if !defined (MINIMAL)
+      if (_rl_prefer_visible_bell && visible_bell)
+	tputs (visible_bell, 1, _rl_output_character_function);
+      else
+#endif /* !MINIMAL */
+	{
+	  fprintf (stderr, "\007");
+	  fflush (stderr);
+	}
+    }
+  return (-1);
+}
+
+/* How to abort things. */
+rl_abort ()
+{
+  ding ();
+  rl_clear_message ();
+  rl_init_argument ();
+  rl_pending_input = 0;
+
+  defining_kbd_macro = 0;
+  while (executing_macro)
+    pop_executing_macro ();
+
+  rl_last_func = (Function *)NULL;
+  longjmp (readline_top_level, 1);
+}
+
+/* Return a copy of the string between FROM and TO.
+   FROM is inclusive, TO is not. */
+char *
+rl_copy_text (from, to)
+     int from, to;
+{
+  register int length;
+  char *copy;
+
+  /* Fix it if the caller is confused. */
+  if (from > to)
+    {
+      int t = from;
+      from = to;
+      to = t;
+    }
+
+  length = to - from;
+  copy = (char *)xmalloc (1 + length);
+  strncpy (copy, the_line + from, length);
+  copy[length] = '\0';
+  return (copy);
+}
+
+/* Increase the size of RL_LINE_BUFFER until it has enough space to hold
+   LEN characters. */
+void
+rl_extend_line_buffer (len)
+     int len;
+{
+  while (len >= rl_line_buffer_len)
+    rl_line_buffer =
+      (char *)xrealloc
+	(rl_line_buffer, rl_line_buffer_len += DEFAULT_BUFFER_SIZE);
+
+  the_line = rl_line_buffer;
+}
+
+
 /* **************************************************************** */
 /*								    */
 /*			Insert and Delete			    */
@@ -934,7 +1531,6 @@ rl_universal_argument (count, key)
 /* Insert a string of text into the line at point.  This is the only
    way that you should do insertion.  rl_insert () calls this
    function. */
-int
 rl_insert_text (string)
      char *string;
 {
@@ -948,10 +1544,10 @@ rl_insert_text (string)
   strncpy (the_line + rl_point, string, l);
 
   /* Remember how to undo this if we aren't undoing something. */
-  if (!_rl_doing_an_undo)
+  if (!doing_an_undo)
     {
       /* If possible and desirable, concatenate the undos. */
-      if ((l == 1) &&
+      if ((strlen (string) == 1) &&
 	  rl_undo_list &&
 	  (rl_undo_list->what == UNDO_INSERT) &&
 	  (rl_undo_list->end == rl_point) &&
@@ -963,70 +1559,36 @@ rl_insert_text (string)
   rl_point += l;
   rl_end += l;
   the_line[rl_end] = '\0';
-  return l;
 }
 
 /* Delete the string between FROM and TO.  FROM is
    inclusive, TO is not. */
-int
 rl_delete_text (from, to)
      int from, to;
 {
   register char *text;
-  register int diff, i;
 
   /* Fix it if the caller is confused. */
   if (from > to)
-    SWAP (from, to);
-
-  /* fix boundaries */
-  if (to > rl_end)
     {
-      to = rl_end;
-      if (from > to)
-        from = to;
+      int t = from;
+      from = to;
+      to = t;
     }
-
   text = rl_copy_text (from, to);
-
-  /* Some versions of strncpy() can't handle overlapping arguments. */
-  diff = to - from;
-  for (i = from; i < rl_end - diff; i++)
-    the_line[i] = the_line[i + diff];
+  strncpy (the_line + from, the_line + to, rl_end - to);
 
   /* Remember how to undo this delete. */
-  if (_rl_doing_an_undo == 0)
+  if (!doing_an_undo)
     rl_add_undo (UNDO_DELETE, from, to, text);
   else
     free (text);
 
-  rl_end -= diff;
+  rl_end -= (to - from);
   the_line[rl_end] = '\0';
-  return (diff);
 }
 
-/* Fix up point so that it is within the line boundaries after killing
-   text.  If FIX_MARK_TOO is non-zero, the mark is forced within line
-   boundaries also. */
-
-#define _RL_FIX_POINT(x) \
-	do { \
-	if (x > rl_end) \
-	  x = rl_end; \
-	else if (x < 0) \
-	  x = 0; \
-	} while (0)
-
-void
-_rl_fix_point (fix_mark_too)
-     int fix_mark_too;
-{
-  _RL_FIX_POINT (rl_point);
-  if (fix_mark_too)
-    _RL_FIX_POINT (rl_mark);
-}
-#undef _RL_FIX_POINT
-
+
 /* **************************************************************** */
 /*								    */
 /*			Readline character functions		    */
@@ -1049,6 +1611,7 @@ _rl_fix_point (fix_mark_too)
    The second is the key which invoked this command.
 */
 
+
 /* **************************************************************** */
 /*								    */
 /*			Movement Commands			    */
@@ -1061,80 +1624,74 @@ _rl_fix_point (fix_mark_too)
    might as well let rl_redisplay do that job. */
 
 /* Move forward COUNT characters. */
-int
-rl_forward (count, key)
-     int count, key;
+rl_forward (count)
+     int count;
 {
   if (count < 0)
-    rl_backward (-count, key);
-  else if (count > 0)
-    {
-      int end = rl_point + count;
+    rl_backward (-count);
+  else
+    while (count)
+      {
 #if defined (VI_MODE)
-      int lend = rl_end - (rl_editing_mode == vi_mode);
+	if (rl_point >= (rl_end - (rl_editing_mode == vi_mode)))
 #else
-      int lend = rl_end;
-#endif
-
-      if (end > lend)
-	{
-	  rl_point = lend;
-	  ding ();
-	}
-      else
-	rl_point = end;
-    }
+	if (rl_point == rl_end)
+#endif /* VI_MODE */
+	  {
+	    ding ();
+	    return 0;
+	  }
+	else
+	  rl_point++;
+	--count;
+      }
   return 0;
 }
 
 /* Move backward COUNT characters. */
-int
-rl_backward (count, key)
-     int count, key;
+rl_backward (count)
+     int count;
 {
   if (count < 0)
-    rl_forward (-count, key);
-  else if (count > 0)
-    {
-      if (rl_point < count)
-	{
-	  rl_point = 0;
-	  ding ();
-	}
-      else
-        rl_point -= count;
-    }
+    rl_forward (-count);
+  else
+    while (count)
+      {
+	if (!rl_point)
+	  {
+	    ding ();
+	    return 0;
+	  }
+	else
+	  --rl_point;
+	--count;
+      }
   return 0;
 }
 
 /* Move to the beginning of the line. */
-int
-rl_beg_of_line (count, key)
-     int count, key;
+rl_beg_of_line ()
 {
   rl_point = 0;
   return 0;
 }
 
 /* Move to the end of the line. */
-int
-rl_end_of_line (count, key)
-     int count, key;
+rl_end_of_line ()
 {
   rl_point = rl_end;
   return 0;
 }
 
 /* Move forward a word.  We do what Emacs does. */
-int
-rl_forward_word (count, key)
-     int count, key;
+rl_forward_word (count)
+     int count;
 {
   int c;
 
   if (count < 0)
     {
-      rl_backward_word (-count, key);
+      rl_backward_word (-count);
       return 0;
     }
 
@@ -1146,22 +1703,19 @@ rl_forward_word (count, key)
       /* If we are not in a word, move forward until we are in one.
 	 Then, move forward until we hit a non-alphabetic character. */
       c = the_line[rl_point];
-      if (alphabetic (c) == 0)
+      if (!alphabetic (c))
 	{
 	  while (++rl_point < rl_end)
 	    {
 	      c = the_line[rl_point];
-	      if (alphabetic (c))
-		break;
+	      if (alphabetic (c)) break;
 	    }
 	}
-      if (rl_point == rl_end)
-	return 0;
+      if (rl_point == rl_end) return;
       while (++rl_point < rl_end)
 	{
 	  c = the_line[rl_point];
-	  if (alphabetic (c) == 0)
-	    break;
+	  if (!alphabetic (c)) break;
 	}
       --count;
     }
@@ -1169,15 +1723,14 @@ rl_forward_word (count, key)
 }
 
 /* Move backward a word.  We do what Emacs does. */
-int
-rl_backward_word (count, key)
-     int count, key;
+rl_backward_word (count)
+     int count;
 {
   int c;
 
   if (count < 0)
     {
-      rl_forward_word (-count, key);
+      rl_forward_word (-count);
       return 0;
     }
 
@@ -1190,23 +1743,21 @@ rl_backward_word (count, key)
 	 just before point. */
 
       c = the_line[rl_point - 1];
-      if (alphabetic (c) == 0)
+      if (!alphabetic (c))
 	{
 	  while (--rl_point)
 	    {
 	      c = the_line[rl_point - 1];
-	      if (alphabetic (c))
-		break;
+	      if (alphabetic (c)) break;
 	    }
 	}
 
       while (rl_point)
 	{
 	  c = the_line[rl_point - 1];
-	  if (alphabetic (c) == 0)
+	  if (!alphabetic (c))
 	    break;
-	  else
-	    --rl_point;
+	  else --rl_point;
 	}
       --count;
     }
@@ -1214,26 +1765,16 @@ rl_backward_word (count, key)
 }
 
 /* Clear the current line.  Numeric argument to C-l does this. */
-int
 rl_refresh_line ()
 {
-  int curr_line, nleft;
-
-  /* Find out whether or not there might be invisible characters in the
-     editing buffer. */
-  if (rl_display_prompt == rl_prompt)
-    nleft = _rl_last_c_pos - screenwidth - rl_visible_prompt_length;
-  else
-    nleft = _rl_last_c_pos - screenwidth;
-
-  if (nleft > 0)
-    curr_line = 1 + nleft / screenwidth;
-  else
-    curr_line = 0;
+  int curr_line = _rl_last_c_pos / screenwidth;
 
   _rl_move_vert (curr_line);
   _rl_move_cursor_relative (0, the_line);   /* XXX is this right */
 
+#if defined (_WIN32)
+  abort();
+#else
 #if defined (__GO32__)
   {
     int row, col, width, row_start;
@@ -1243,10 +1784,11 @@ rl_refresh_line ()
     row_start = ScreenPrimary + (row * width);
     memset (row_start + col, 0, (width - col) * 2);
   }
-#else /* !__GO32__ */
-  _rl_clear_to_eol (0);		/* arg of 0 means to not use spaces */
-#endif /* !__GO32__ */
-
+#else /* !MINIMAL */
+  if (term_clreol)
+    tputs (term_clreol, 1, _rl_output_character_function);
+#endif /* !MINIMAL */
+#endif
   rl_forced_update_display ();
   rl_display_fixed = 1;
 
@@ -1256,9 +1798,7 @@ rl_refresh_line ()
 /* C-l typed to a line without quoting clears the screen, and then reprints
    the prompt and the current input line.  Given a numeric arg, redraw only
    the current line. */
-int
-rl_clear_screen (count, key)
-     int count, key;
+rl_clear_screen ()
 {
   if (rl_explicit_arg)
     {
@@ -1266,14 +1806,19 @@ rl_clear_screen (count, key)
       return 0;
     }
 
-  _rl_clear_screen ();		/* calls termcap function to clear screen */
+#if !defined (MINIMAL)
+  if (term_clrpag)
+    tputs (term_clrpag, 1, _rl_output_character_function);
+  else
+#endif /* !MINIMAL */
+    crlf ();
+
   rl_forced_update_display ();
   rl_display_fixed = 1;
 
   return 0;
 }
 
-int
 rl_arrow_keys (count, c)
      int count, c;
 {
@@ -1281,22 +1826,22 @@ rl_arrow_keys (count, c)
 
   ch = rl_read_key ();
 
-  switch (_rl_to_upper (ch))
+  switch (to_upper (ch))
     {
     case 'A':
-      rl_get_previous_history (count, ch);
+      rl_get_previous_history (count);
       break;
 
     case 'B':
-      rl_get_next_history (count, ch);
+      rl_get_next_history (count);
       break;
 
     case 'C':
-      rl_forward (count, ch);
+      rl_forward (count);
       break;
 
     case 'D':
-      rl_backward (count, ch);
+      rl_backward (count);
       break;
 
     default:
@@ -1313,7 +1858,6 @@ rl_arrow_keys (count, c)
 /* **************************************************************** */
 
 /* Insert the character C at the current location, moving point forward. */
-int
 rl_insert (count, c)
      int count, c;
 {
@@ -1325,36 +1869,34 @@ rl_insert (count, c)
 
   /* If we can optimize, then do it.  But don't let people crash
      readline because of extra large arguments. */
-  if (count > 1 && count <= 1024)
+  if (count > 1 && count < 1024)
     {
-      string = xmalloc (1 + count);
+      string = (char *)alloca (1 + count);
 
       for (i = 0; i < count; i++)
 	string[i] = c;
 
       string[i] = '\0';
       rl_insert_text (string);
-      free (string);
-
       return 0;
     }
 
   if (count > 1024)
     {
       int decreaser;
-      char str[1024+1];
+
+      string = (char *)alloca (1024 + 1);
 
       for (i = 0; i < 1024; i++)
-	str[i] = c;
+	string[i] = c;
 
       while (count)
 	{
 	  decreaser = (count > 1024 ? 1024 : count);
-	  str[decreaser] = '\0';
-	  rl_insert_text (str);
+	  string[decreaser] = '\0';
+	  rl_insert_text (string);
 	  count -= decreaser;
 	}
-
       return 0;
     }
 
@@ -1362,35 +1904,51 @@ rl_insert (count, c)
      If there is pending input, then make a string of all of the
      pending characters that are bound to rl_insert, and insert
      them all. */
-  if (_rl_any_typein ())
-    _rl_insert_typein (c);
+  if (any_typein)
+    {
+      int key = 0, t;
+
+      i = 0;
+      string = (char *)alloca (ibuffer_len + 1);
+      string[i++] = c;
+
+      while ((t = rl_get_char (&key)) &&
+	     (_rl_keymap[key].type == ISFUNC &&
+	      _rl_keymap[key].function == rl_insert))
+	string[i++] = key;
+
+      if (t)
+	rl_unget_char (key);
+
+      string[i] = '\0';
+      rl_insert_text (string);
+    }
   else
     {
       /* Inserting a single character. */
-      char str[2];
+      string = (char *)alloca (2);
 
-      str[1] = '\0';
-      str[0] = c;
-      rl_insert_text (str);
+      string[1] = '\0';
+      string[0] = c;
+      rl_insert_text (string);
     }
   return 0;
 }
 
 /* Insert the next typed character verbatim. */
-int
-rl_quoted_insert (count, key)
-     int count, key;
+rl_quoted_insert (count)
+     int count;
 {
   int c;
 
   c = rl_read_key ();
-  return (rl_insert (count, c));  
+  return (rl_insert (count, c));
+  
 }
 
 /* Insert a tab character. */
-int
-rl_tab_insert (count, key)
-     int count, key;
+rl_tab_insert (count)
+     int count;
 {
   return (rl_insert (count, '\t'));
 }
@@ -1398,30 +1956,51 @@ rl_tab_insert (count, key)
 /* What to do when a NEWLINE is pressed.  We accept the whole line.
    KEY is the key that invoked this command.  I guess it could have
    meaning in the future. */
-int
 rl_newline (count, key)
      int count, key;
 {
   rl_done = 1;
 
 #if defined (VI_MODE)
-  if (rl_editing_mode == vi_mode)
-    {
-      _rl_vi_done_inserting ();
-      _rl_vi_reset_last ();
-    }
+  {
+    extern int _rl_vi_doing_insert;
+    if (_rl_vi_doing_insert)
+      {
+	rl_end_undo_group ();
+	_rl_vi_doing_insert = 0;
+      }
+  }
+  rl_vi_set_last ();
+
 #endif /* VI_MODE */
 
   if (readline_echoing_p)
-    _rl_update_final ();
+    {
+      _rl_move_vert (_rl_vis_botlin);
+      _rl_vis_botlin = 0;
+      crlf ();
+      fflush (out_stream);
+      rl_display_fixed++;
+    }
+  return 0;
+}
+
+rl_clean_up_for_exit ()
+{
+  if (readline_echoing_p)
+    {
+      _rl_move_vert (_rl_vis_botlin);
+      _rl_vis_botlin = 0;
+      fflush (out_stream);
+      rl_restart_output ();
+    }
   return 0;
 }
 
 /* What to do for some uppercase characters, like meta characters,
    and some characters appearing in emacs_ctlx_keymap.  This function
-   is just a stub, you bind keys to it and the code in _rl_dispatch ()
+   is just a stub, you bind keys to it and the code in rl_dispatch ()
    is special cased. */
-int
 rl_do_lowercase_version (ignore1, ignore2)
      int ignore1, ignore2;
 {
@@ -1429,13 +2008,12 @@ rl_do_lowercase_version (ignore1, ignore2)
 }
 
 /* Rubout the character behind point. */
-int
-rl_rubout (count, key)
-     int count, key;
+rl_rubout (count)
+     int count;
 {
   if (count < 0)
     {
-      rl_delete (-count, key);
+      rl_delete (-count);
       return 0;
     }
 
@@ -1448,7 +2026,7 @@ rl_rubout (count, key)
   if (count > 1 || rl_explicit_arg)
     {
       int orig_point = rl_point;
-      rl_backward (count, key);
+      rl_backward (count);
       rl_kill_text (orig_point, rl_point);
     }
   else
@@ -1468,12 +2046,13 @@ rl_rubout (count, key)
 
 /* Delete the character under the cursor.  Given a numeric argument,
    kill that many characters instead. */
-int
-rl_delete (count, key)
-     int count, key;
+rl_delete (count, invoking_key)
+     int count, invoking_key;
 {
   if (count < 0)
-    return (rl_rubout (-count, key));
+    {
+      return (rl_rubout (-count));
+    }
 
   if (rl_point == rl_end)
     {
@@ -1484,7 +2063,7 @@ rl_delete (count, key)
   if (count > 1 || rl_explicit_arg)
     {
       int orig_point = rl_point;
-      rl_forward (count, key);
+      rl_forward (count);
       rl_kill_text (orig_point, rl_point);
       rl_point = orig_point;
       return 0;
@@ -1495,7 +2074,6 @@ rl_delete (count, key)
 }
 
 /* Delete all spaces and tabs around point. */
-int
 rl_delete_horizontal_space (count, ignore)
      int count, ignore;
 {
@@ -1517,23 +2095,64 @@ rl_delete_horizontal_space (count, ignore)
   return 0;
 }
 
-#ifndef RL_COMMENT_BEGIN_DEFAULT
-#define RL_COMMENT_BEGIN_DEFAULT "#"
-#endif
+
+/* **************************************************************** */
+/*								    */
+/*			Kill commands				    */
+/*								    */
+/* **************************************************************** */
 
-/* Turn the current line into a comment in shell history.
-   A K*rn shell style function. */
-int
-rl_insert_comment (count, key)
-     int count, key;
+/* The next two functions mimic unix line editing behaviour, except they
+   save the deleted text on the kill ring.  This is safer than not saving
+   it, and since we have a ring, nobody should get screwed. */
+
+/* This does what C-w does in Unix.  We can't prevent people from
+   using behaviour that they expect. */
+rl_unix_word_rubout ()
 {
-  rl_beg_of_line (1, key);
-  rl_insert_text (_rl_comment_begin ? _rl_comment_begin
-				    : RL_COMMENT_BEGIN_DEFAULT);
-  (*rl_redisplay_function) ();
-  rl_newline (1, '\n');
-  return (0);
+  if (!rl_point)
+    ding ();
+  else
+    {
+      int orig_point = rl_point;
+
+      while (rl_point && whitespace (the_line[rl_point - 1]))
+	rl_point--;
+
+      while (rl_point && !whitespace (the_line[rl_point - 1]))
+	rl_point--;
+
+      rl_kill_text (rl_point, orig_point);
+    }
+  return 0;
 }
+
+/* Here is C-u doing what Unix does.  You don't *have* to use these
+   key-bindings.  We have a choice of killing the entire line, or
+   killing from where we are to the start of the line.  We choose the
+   latter, because if you are a Unix weenie, then you haven't backspaced
+   into the line at all, and if you aren't, then you know what you are
+   doing. */
+rl_unix_line_discard ()
+{
+  if (!rl_point)
+    ding ();
+  else
+    {
+      rl_kill_text (rl_point, 0);
+      rl_point = 0;
+    }
+  return 0;
+}
+
+
+/* **************************************************************** */
+/*								    */
+/*			Commands For Typos			    */
+/*								    */
+/* **************************************************************** */
+
+/* Random and interesting things in here.  */
 
 /* **************************************************************** */
 /*								    */
@@ -1549,25 +2168,22 @@ rl_insert_comment (count, key)
 static int rl_change_case ();
 
 /* Uppercase the word at point. */
-int
-rl_upcase_word (count, key)
-     int count, key;
+rl_upcase_word (count)
+     int count;
 {
   return (rl_change_case (count, UpCase));
 }
 
 /* Lowercase the word at point. */
-int
-rl_downcase_word (count, key)
-     int count, key;
+rl_downcase_word (count)
+     int count;
 {
   return (rl_change_case (count, DownCase));
 }
 
 /* Upcase the first letter, downcase the rest. */
-int
-rl_capitalize_word (count, key)
-     int count, key;
+rl_capitalize_word (count)
+     int count;
 {
  return (rl_change_case (count, CapCase));
 }
@@ -1581,39 +2197,50 @@ static int
 rl_change_case (count, op)
      int count, op;
 {
-  register int start, end;
-  int inword, c;
+  register int start = rl_point, end;
+  int state = 0;
 
-  start = rl_point;
-  rl_forward_word (count, 0);
+  rl_forward_word (count);
   end = rl_point;
 
   if (count < 0)
-    SWAP (start, end);
+    {
+      int temp = start;
+      start = end;
+      end = temp;
+    }
 
   /* We are going to modify some text, so let's prepare to undo it. */
   rl_modifying (start, end);
 
-  for (inword = 0; start < end; start++)
+  for (; start < end; start++)
     {
-      c = the_line[start];
       switch (op)
 	{
 	case UpCase:
-	  the_line[start] = _rl_to_upper (c);
+	  the_line[start] = to_upper (the_line[start]);
 	  break;
 
 	case DownCase:
-	  the_line[start] = _rl_to_lower (c);
+	  the_line[start] = to_lower (the_line[start]);
 	  break;
 
 	case CapCase:
-	  the_line[start] = (inword == 0) ? _rl_to_upper (c) : _rl_to_lower (c);
-	  inword = alphabetic (the_line[start]);
+	  if (state == 0)
+	    {
+	      the_line[start] = to_upper (the_line[start]);
+	      state = 1;
+	    }
+	  else
+	    {
+	      the_line[start] = to_lower (the_line[start]);
+	    }
+	  if (!pure_alphabetic (the_line[start]))
+	    state = 0;
 	  break;
 
 	default:
-	  ding ();
+	  abort ();
 	  return -1;
 	}
     }
@@ -1628,9 +2255,8 @@ rl_change_case (count, op)
 /* **************************************************************** */
 
 /* Transpose the words at point. */
-int
-rl_transpose_words (count, key)
-     int count, key;
+rl_transpose_words (count)
+     int count;
 {
   char *word1, *word2;
   int w1_beg, w1_end, w2_beg, w2_end;
@@ -1640,13 +2266,13 @@ rl_transpose_words (count, key)
     return 0;
 
   /* Find the two words. */
-  rl_forward_word (count, key);
+  rl_forward_word (count);
   w2_end = rl_point;
-  rl_backward_word (1, key);
+  rl_backward_word (1);
   w2_beg = rl_point;
-  rl_backward_word (count, key);
+  rl_backward_word (count);
   w1_beg = rl_point;
-  rl_forward_word (1, key);
+  rl_forward_word (1);
   w1_end = rl_point;
 
   /* Do some check to make sure that there really are two words. */
@@ -1689,9 +2315,8 @@ rl_transpose_words (count, key)
 
 /* Transpose the characters at point.  If point is at the end of the line,
    then transpose the characters before point. */
-int
-rl_transpose_chars (count, key)
-     int count, key;
+rl_transpose_chars (count)
+     int count;
 {
   char dummy[2];
 
@@ -1719,83 +2344,188 @@ rl_transpose_chars (count, key)
   rl_delete_text (rl_point, rl_point + 1);
 
   rl_point += count;
-  _rl_fix_point (0);
+  if (rl_point > rl_end)
+    rl_point = rl_end;
+  else if (rl_point < 0)
+    rl_point = 0;
   rl_insert_text (dummy);
 
   rl_end_undo_group ();
   return 0;
 }
-
+
 /* **************************************************************** */
 /*								    */
-/*			Character Searching			    */
+/*			Undo, and Undoing			    */
 /*								    */
 /* **************************************************************** */
 
-int
-_rl_char_search_internal (count, dir, schar)
-     int count, dir, schar;
+/* The current undo list for THE_LINE. */
+UNDO_LIST *rl_undo_list = (UNDO_LIST *)NULL;
+
+/* Remember how to undo something.  Concatenate some undos if that
+   seems right. */
+void
+rl_add_undo (what, start, end, text)
+     enum undo_code what;
+     int start, end;
+     char *text;
 {
-  int pos, inc;
+  UNDO_LIST *temp = (UNDO_LIST *)xmalloc (sizeof (UNDO_LIST));
+  temp->what = what;
+  temp->start = start;
+  temp->end = end;
+  temp->text = text;
+  temp->next = rl_undo_list;
+  rl_undo_list = temp;
+}
 
-  pos = rl_point;
-  inc = (dir < 0) ? -1 : 1;
+/* Free the existing undo list. */
+void
+free_undo_list ()
+{
+  while (rl_undo_list)
+    {
+      UNDO_LIST *release = rl_undo_list;
+      rl_undo_list = rl_undo_list->next;
+
+      if (release->what == UNDO_DELETE)
+	free (release->text);
+
+      free (release);
+    }
+  rl_undo_list = (UNDO_LIST *)NULL;
+}
+
+/* Undo the next thing in the list.  Return 0 if there
+   is nothing to undo, or non-zero if there was. */
+int
+rl_do_undo ()
+{
+  UNDO_LIST *release;
+  int waiting_for_begin = 0;
+
+undo_thing:
+  if (!rl_undo_list)
+    return (0);
+
+  doing_an_undo = 1;
+
+  switch (rl_undo_list->what) {
+
+    /* Undoing deletes means inserting some text. */
+  case UNDO_DELETE:
+    rl_point = rl_undo_list->start;
+    rl_insert_text (rl_undo_list->text);
+    free (rl_undo_list->text);
+    break;
+
+    /* Undoing inserts means deleting some text. */
+  case UNDO_INSERT:
+    rl_delete_text (rl_undo_list->start, rl_undo_list->end);
+    rl_point = rl_undo_list->start;
+    break;
+
+    /* Undoing an END means undoing everything 'til we get to
+       a BEGIN. */
+  case UNDO_END:
+    waiting_for_begin++;
+    break;
+
+    /* Undoing a BEGIN means that we are done with this group. */
+  case UNDO_BEGIN:
+    if (waiting_for_begin)
+      waiting_for_begin--;
+    else
+#if 0
+      abort ();
+#else
+      ding ();
+#endif
+    break;
+  }
+
+  doing_an_undo = 0;
+
+  release = rl_undo_list;
+  rl_undo_list = rl_undo_list->next;
+  free (release);
+
+  if (waiting_for_begin)
+    goto undo_thing;
+
+  return (1);
+}
+
+/* Begin a group.  Subsequent undos are undone as an atomic operation. */
+rl_begin_undo_group ()
+{
+  rl_add_undo (UNDO_BEGIN, 0, 0, 0);
+  return 0;
+}
+
+/* End an undo group started with rl_begin_undo_group (). */
+rl_end_undo_group ()
+{
+  rl_add_undo (UNDO_END, 0, 0, 0);
+  return 0;
+}
+
+/* Save an undo entry for the text from START to END. */
+rl_modifying (start, end)
+     int start, end;
+{
+  if (start > end)
+    {
+      int t = start;
+      start = end;
+      end = t;
+    }
+
+  if (start != end)
+    {
+      char *temp = rl_copy_text (start, end);
+      rl_begin_undo_group ();
+      rl_add_undo (UNDO_DELETE, start, end, temp);
+      rl_add_undo (UNDO_INSERT, start, end, (char *)NULL);
+      rl_end_undo_group ();
+    }
+  return 0;
+}
+
+/* Revert the current line to its previous state. */
+rl_revert_line ()
+{
+  if (!rl_undo_list)
+    ding ();
+  else
+    {
+      while (rl_undo_list)
+	rl_do_undo ();
+    }
+  return 0;
+}
+
+/* Do some undoing of things that were done. */
+rl_undo_command (count)
+     int count;
+{
+  if (count < 0)
+    return 0;	/* Nothing to do. */
+
   while (count)
     {
-      if ((dir < 0 && pos <= 0) || (dir > 0 && pos >= rl_end))
+      if (rl_do_undo ())
+	count--;
+      else
 	{
 	  ding ();
-	  return -1;
+	  break;
 	}
-
-      pos += inc;
-      do
-	{
-	  if (rl_line_buffer[pos] == schar)
-	    {
-	      count--;
-	      if (dir < 0)
-	        rl_point = (dir == BTO) ? pos + 1 : pos;
-	      else
-		rl_point = (dir == FTO) ? pos - 1 : pos;
-	      break;
-	    }
-	}
-      while ((dir < 0) ? pos-- : ++pos < rl_end);
     }
-  return (0);
+  return 0;
 }
-
-/* Search COUNT times for a character read from the current input stream.
-   FDIR is the direction to search if COUNT is non-negative; otherwise
-   the search goes in BDIR. */
-static int
-_rl_char_search (count, fdir, bdir)
-     int count, fdir, bdir;
-{
-  int c;
-
-  c = rl_read_key ();
-  if (count < 0)
-    return (_rl_char_search_internal (-count, bdir, c));
-  else
-    return (_rl_char_search_internal (count, fdir, c));
-}
-
-int
-rl_char_search (count, key)
-     int count, key;
-{
-  return (_rl_char_search (count, FFIND, BFIND));
-}
-
-int
-rl_backward_char_search (count, key)
-     int count, key;
-{
-  return (_rl_char_search (count, BFIND, FFIND));
-}
-
+
 /* **************************************************************** */
 /*								    */
 /*			History Utilities			    */
@@ -1803,30 +2533,30 @@ rl_backward_char_search (count, key)
 /* **************************************************************** */
 
 /* We already have a history library, and that is what we use to control
-   the history features of readline.  This is our local interface to
-   the history mechanism. */
+   the history features of readline.  However, this is our local interface
+   to the history mechanism. */
 
 /* While we are editing the history, this is the saved
    version of the original line. */
 HIST_ENTRY *saved_line_for_history = (HIST_ENTRY *)NULL;
 
 /* Set the history pointer back to the last entry in the history. */
-static void
 start_using_history ()
 {
   using_history ();
   if (saved_line_for_history)
-    _rl_free_history_entry (saved_line_for_history);
+    free_history_entry (saved_line_for_history);
 
   saved_line_for_history = (HIST_ENTRY *)NULL;
+  return 0;
 }
 
 /* Free the contents (and containing structure) of a HIST_ENTRY. */
 void
-_rl_free_history_entry (entry)
+free_history_entry (entry)
      HIST_ENTRY *entry;
 {
-  if (entry == 0)
+  if (!entry)
     return;
   if (entry->line)
     free (entry->line);
@@ -1834,12 +2564,10 @@ _rl_free_history_entry (entry)
 }
 
 /* Perhaps put back the current line if it has changed. */
-int
 maybe_replace_line ()
 {
-  HIST_ENTRY *temp;
+  HIST_ENTRY *temp = current_history ();
 
-  temp = current_history ();
   /* If the current line has changed, save the changes. */
   if (temp && ((UNDO_LIST *)(temp->data) != rl_undo_list))
     {
@@ -1851,13 +2579,12 @@ maybe_replace_line ()
 }
 
 /* Put back the saved_line_for_history if there is one. */
-int
 maybe_unsave_line ()
 {
-  int line_len;
-
   if (saved_line_for_history)
     {
+      int line_len;
+
       line_len = strlen (saved_line_for_history->line);
 
       if (line_len >= rl_line_buffer_len)
@@ -1865,7 +2592,7 @@ maybe_unsave_line ()
 
       strcpy (the_line, saved_line_for_history->line);
       rl_undo_list = (UNDO_LIST *)saved_line_for_history->data;
-      _rl_free_history_entry (saved_line_for_history);
+      free_history_entry (saved_line_for_history);
       saved_line_for_history = (HIST_ENTRY *)NULL;
       rl_end = rl_point = strlen (the_line);
     }
@@ -1875,10 +2602,9 @@ maybe_unsave_line ()
 }
 
 /* Save the current line in saved_line_for_history. */
-int
 maybe_save_line ()
 {
-  if (saved_line_for_history == 0)
+  if (!saved_line_for_history)
     {
       saved_line_for_history = (HIST_ENTRY *)xmalloc (sizeof (HIST_ENTRY));
       saved_line_for_history->line = savestring (the_line);
@@ -1886,7 +2612,7 @@ maybe_save_line ()
     }
   return 0;
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			History Commands			    */
@@ -1894,17 +2620,13 @@ maybe_save_line ()
 /* **************************************************************** */
 
 /* Meta-< goes to the start of the history. */
-int
-rl_beginning_of_history (count, key)
-     int count, key;
+rl_beginning_of_history ()
 {
-  return (rl_get_previous_history (1 + where_history (), key));
+  return (rl_get_previous_history (1 + where_history ()));
 }
 
 /* Meta-> goes to the end of the history.  (The current line). */
-int
-rl_end_of_history (count, key)
-     int count, key;
+rl_end_of_history ()
 {
   maybe_replace_line ();
   using_history ();
@@ -1913,22 +2635,19 @@ rl_end_of_history (count, key)
 }
 
 /* Move down to the next history line. */
-int
-rl_get_next_history (count, key)
-     int count, key;
+rl_get_next_history (count)
+     int count;
 {
-  HIST_ENTRY *temp;
-  int line_len;
+  HIST_ENTRY *temp = (HIST_ENTRY *)NULL;
 
   if (count < 0)
-    return (rl_get_previous_history (-count, key));
+    return (rl_get_previous_history (-count));
 
-  if (count == 0)
+  if (!count)
     return 0;
 
   maybe_replace_line ();
 
-  temp = (HIST_ENTRY *)NULL;
   while (count)
     {
       temp = next_history ();
@@ -1937,10 +2656,12 @@ rl_get_next_history (count, key)
       --count;
     }
 
-  if (temp == 0)
+  if (!temp)
     maybe_unsave_line ();
   else
     {
+      int line_len;
+
       line_len = strlen (temp->line);
 
       if (line_len >= rl_line_buffer_len)
@@ -1959,17 +2680,16 @@ rl_get_next_history (count, key)
 
 /* Get the previous item out of our interactive history, making it the current
    line.  If there is no previous history, just ding. */
-int
-rl_get_previous_history (count, key)
-     int count, key;
+rl_get_previous_history (count)
+     int count;
 {
-  HIST_ENTRY *old_temp, *temp;
-  int line_len;
+  HIST_ENTRY *old_temp = (HIST_ENTRY *)NULL;
+  HIST_ENTRY *temp = (HIST_ENTRY *)NULL;
 
   if (count < 0)
-    return (rl_get_next_history (-count, key));
+    return (rl_get_next_history (-count));
 
-  if (count == 0)
+  if (!count)
     return 0;
 
   /* If we don't have a line saved, then save this one. */
@@ -1978,14 +2698,13 @@ rl_get_previous_history (count, key)
   /* If the current line has changed, save the changes. */
   maybe_replace_line ();
 
-  temp = old_temp = (HIST_ENTRY *)NULL;
   while (count)
     {
       temp = previous_history ();
-      if (temp == 0)
+      if (!temp)
 	break;
-
-      old_temp = temp;
+      else
+	old_temp = temp;
       --count;
     }
 
@@ -1994,10 +2713,12 @@ rl_get_previous_history (count, key)
   if (!temp && old_temp)
     temp = old_temp;
 
-  if (temp == 0)
+  if (!temp)
     ding ();
   else
     {
+      int line_len;
+
       line_len = strlen (temp->line);
 
       if (line_len >= rl_line_buffer_len)
@@ -2015,6 +2736,14 @@ rl_get_previous_history (count, key)
   return 0;
 }
 
+/* Make C be the next command to be executed. */
+rl_execute_next (c)
+     int c;
+{
+  rl_pending_input = c;
+  return 0;
+}
+
 /* **************************************************************** */
 /*								    */
 /*		   The Mark and the Region.			    */
@@ -2022,8 +2751,7 @@ rl_get_previous_history (count, key)
 /* **************************************************************** */
 
 /* Set the mark at POSITION. */
-int
-_rl_set_mark_at_pos (position)
+rl_set_mark (position)
      int position;
 {
   if (position > rl_end)
@@ -2033,18 +2761,8 @@ _rl_set_mark_at_pos (position)
   return 0;
 }
 
-/* A bindable command to set the mark. */
-int
-rl_set_mark (count, key)
-     int count, key;
-{
-  return (_rl_set_mark_at_pos (rl_explicit_arg ? count : rl_point));
-}
-
 /* Exchange the position of mark and point. */
-int
-rl_exchange_point_and_mark (count, key)
-     int count, key;
+rl_exchange_mark_and_point ()
 {
   if (rl_mark > rl_end)
     rl_mark = -1;
@@ -2055,33 +2773,520 @@ rl_exchange_point_and_mark (count, key)
       return -1;
     }
   else
-    SWAP (rl_point, rl_mark);
+    {
+      int temp = rl_point;
 
+      rl_point = rl_mark;
+      rl_mark = temp;
+    }
   return 0;
 }
 
+
 /* **************************************************************** */
 /*								    */
-/*			    Editing Modes			    */
+/*			Killing Mechanism			    */
 /*								    */
 /* **************************************************************** */
+
+/* What we assume for a max number of kills. */
+#define DEFAULT_MAX_KILLS 10
+
+/* The real variable to look at to find out when to flush kills. */
+int rl_max_kills = DEFAULT_MAX_KILLS;
+
+/* Where to store killed text. */
+char **rl_kill_ring = (char **)NULL;
+
+/* Where we are in the kill ring. */
+int rl_kill_index = 0;
+
+/* How many slots we have in the kill ring. */
+int rl_kill_ring_length = 0;
+
+/* How to say that you only want to save a certain amount
+   of kill material. */
+rl_set_retained_kills (num)
+     int num;
+{
+  return 0;
+}
+
+/* The way to kill something.  This appends or prepends to the last
+   kill, if the last command was a kill command.  if FROM is less
+   than TO, then the text is appended, otherwise prepended.  If the
+   last command was not a kill command, then a new slot is made for
+   this kill. */
+rl_kill_text (from, to)
+     int from, to;
+{
+  int slot;
+  char *text = rl_copy_text (from, to);
+
+  /* Is there anything to kill? */
+  if (from == to)
+    {
+      free (text);
+      last_command_was_kill++;
+      return 0;
+    }
+
+  /* Delete the copied text from the line. */
+  rl_delete_text (from, to);
+
+  /* First, find the slot to work with. */
+  if (!last_command_was_kill)
+    {
+      /* Get a new slot.  */
+      if (!rl_kill_ring)
+	{
+	  /* If we don't have any defined, then make one. */
+	  rl_kill_ring = (char **)
+	    xmalloc (((rl_kill_ring_length = 1) + 1) * sizeof (char *));
+	  slot = 1;
+	}
+      else
+	{
+	  /* We have to add a new slot on the end, unless we have
+	     exceeded the max limit for remembering kills. */
+	  slot = rl_kill_ring_length;
+	  if (slot == rl_max_kills)
+	    {
+	      register int i;
+	      free (rl_kill_ring[0]);
+	      for (i = 0; i < slot; i++)
+		rl_kill_ring[i] = rl_kill_ring[i + 1];
+	    }
+	  else
+	    {
+	      rl_kill_ring =
+		(char **)
+		  xrealloc (rl_kill_ring,
+			    ((slot = (rl_kill_ring_length += 1)) + 1)
+			    * sizeof (char *));
+	    }
+	}
+      slot--;
+    }
+  else
+    {
+      slot = rl_kill_ring_length - 1;
+    }
+
+  /* If the last command was a kill, prepend or append. */
+  if (last_command_was_kill && rl_editing_mode != vi_mode)
+    {
+      char *old = rl_kill_ring[slot];
+      char *new = (char *)xmalloc (1 + strlen (old) + strlen (text));
+
+      if (from < to)
+	{
+	  strcpy (new, old);
+	  strcat (new, text);
+	}
+      else
+	{
+	  strcpy (new, text);
+	  strcat (new, old);
+	}
+      free (old);
+      free (text);
+      rl_kill_ring[slot] = new;
+    }
+  else
+    {
+      rl_kill_ring[slot] = text;
+    }
+  rl_kill_index = slot;
+  last_command_was_kill++;
+  return 0;
+}
+
+/* Now REMEMBER!  In order to do prepending or appending correctly, kill
+   commands always make rl_point's original position be the FROM argument,
+   and rl_point's extent be the TO argument. */
+
+/* **************************************************************** */
+/*								    */
+/*			Killing Commands			    */
+/*								    */
+/* **************************************************************** */
+
+/* Delete the word at point, saving the text in the kill ring. */
+rl_kill_word (count)
+     int count;
+{
+  int orig_point = rl_point;
+
+  if (count < 0)
+    return (rl_backward_kill_word (-count));
+  else
+    {
+      rl_forward_word (count);
+
+      if (rl_point != orig_point)
+	rl_kill_text (orig_point, rl_point);
+
+      rl_point = orig_point;
+    }
+  return 0;
+}
+
+/* Rubout the word before point, placing it on the kill ring. */
+rl_backward_kill_word (count)
+     int count;
+{
+  int orig_point = rl_point;
+
+  if (count < 0)
+    return (rl_kill_word (-count));
+  else
+    {
+      rl_backward_word (count);
+
+      if (rl_point != orig_point)
+	rl_kill_text (orig_point, rl_point);
+    }
+}
+
+/* Kill from here to the end of the line.  If DIRECTION is negative, kill
+   back to the line start instead. */
+rl_kill_line (direction)
+     int direction;
+{
+  int orig_point = rl_point;
+
+  if (direction < 0)
+    return (rl_backward_kill_line (1));
+  else
+    {
+      rl_end_of_line ();
+      if (orig_point != rl_point)
+	rl_kill_text (orig_point, rl_point);
+      rl_point = orig_point;
+    }
+  return 0;
+}
+
+/* Kill backwards to the start of the line.  If DIRECTION is negative, kill
+   forwards to the line end instead. */
+rl_backward_kill_line (direction)
+     int direction;
+{
+  int orig_point = rl_point;
+
+  if (direction < 0)
+    return (rl_kill_line (1));
+  else
+    {
+      if (!rl_point)
+	ding ();
+      else
+	{
+	  rl_beg_of_line ();
+	  rl_kill_text (orig_point, rl_point);
+	}
+    }
+  return 0;
+}
+
+/* Yank back the last killed text.  This ignores arguments. */
+rl_yank ()
+{
+  if (!rl_kill_ring)
+    {
+      rl_abort ();
+      return -1;
+    }
+
+  rl_set_mark (rl_point);
+  rl_insert_text (rl_kill_ring[rl_kill_index]);
+  return 0;
+}
+
+/* If the last command was yank, or yank_pop, and the text just
+   before point is identical to the current kill item, then
+   delete that text from the line, rotate the index down, and
+   yank back some other text. */
+rl_yank_pop ()
+{
+  int l;
+
+  if (((rl_last_func != rl_yank_pop) && (rl_last_func != rl_yank)) ||
+      !rl_kill_ring)
+    {
+      rl_abort ();
+      return -1;
+    }
+
+  l = strlen (rl_kill_ring[rl_kill_index]);
+  if (((rl_point - l) >= 0) &&
+      (strncmp (the_line + (rl_point - l),
+		rl_kill_ring[rl_kill_index], l) == 0))
+    {
+      rl_delete_text ((rl_point - l), rl_point);
+      rl_point -= l;
+      rl_kill_index--;
+      if (rl_kill_index < 0)
+	rl_kill_index = rl_kill_ring_length - 1;
+      rl_yank ();
+      return 0;
+    }
+  else
+    {
+      rl_abort ();
+      return -1;
+    }
+}
+
+/* Yank the COUNTth argument from the previous history line. */
+rl_yank_nth_arg (count, ignore)
+     int count;
+{
+  register HIST_ENTRY *entry = previous_history ();
+  char *arg;
+
+  if (entry)
+    next_history ();
+  else
+    {
+      ding ();
+      return -1;
+    }
+
+  arg = history_arg_extract (count, count, entry->line);
+  if (!arg || !*arg)
+    {
+      ding ();
+      return -1;
+    }
+
+  rl_begin_undo_group ();
+
+#if defined (VI_MODE)
+  /* Vi mode always inserts a space before yanking the argument, and it
+     inserts it right *after* rl_point. */
+  if (rl_editing_mode == vi_mode)
+    rl_point++;
+#endif /* VI_MODE */
+
+#if 0
+  if (rl_point && the_line[rl_point - 1] != ' ')
+    rl_insert_text (" ");
+#endif
+
+  rl_insert_text (arg);
+  free (arg);
+
+  rl_end_undo_group ();
+  return 0;
+}
+
 /* How to toggle back and forth between editing modes. */
-int
-rl_vi_editing_mode (count, key)
-     int count, key;
+rl_vi_editing_mode ()
 {
 #if defined (VI_MODE)
   rl_editing_mode = vi_mode;
-  rl_vi_insertion_mode (1, key);
-#endif /* VI_MODE */
+  rl_vi_insertion_mode ();
   return 0;
+#endif /* VI_MODE */
 }
 
-int
-rl_emacs_editing_mode (count, key)
-     int count, key;
+rl_emacs_editing_mode ()
 {
   rl_editing_mode = emacs_mode;
   _rl_keymap = emacs_standard_keymap;
   return 0;
 }
+
+
+/* **************************************************************** */
+/*								    */
+/*			USG (System V) Support			    */
+/*								    */
+/* **************************************************************** */
+
+int
+rl_getc (stream)
+     FILE *stream;
+{
+  int result;
+  unsigned char c;
+
+#if defined (MINIMAL) && !defined (_WIN32)
+  if (isatty (0))
+    return (getkey () & 0x7f);
+#endif /* MINIMAL */
+
+  while (1)
+    {
+      result = read (fileno (stream), &c, sizeof (unsigned char));
+
+      if (result == sizeof (unsigned char))
+	return (c);
+
+      /* If zero characters are returned, then the file that we are
+	 reading from is empty!  Return EOF in that case. */
+      if (result == 0)
+	return (EOF);
+
+#if defined (EWOULDBLOCK)
+      if (errno == EWOULDBLOCK)
+	{
+	  int flags;
+
+	  if ((flags = fcntl (fileno (stream), F_GETFL, 0)) < 0)
+	    return (EOF);
+	  if (flags & O_NDELAY)
+	    {
+	      flags &= ~O_NDELAY;
+	      fcntl (fileno (stream), F_SETFL, flags);
+	      continue;
+	    }
+	  continue;
+	}
+#endif /* EWOULDBLOCK */
+
+#if defined (_POSIX_VERSION) && defined (EAGAIN) && defined (O_NONBLOCK)
+      if (errno == EAGAIN)
+	{
+	  int flags;
+
+	  if ((flags = fcntl (fileno (stream), F_GETFL, 0)) < 0)
+	    return (EOF);
+	  if (flags & O_NONBLOCK)
+	    {
+	      flags &= ~O_NONBLOCK;
+	      fcntl (fileno (stream), F_SETFL, flags);
+	      continue;
+	    }
+	}
+#endif /* _POSIX_VERSION && EAGAIN && O_NONBLOCK */
+
+#if !defined (MINIMAL)
+      /* If the error that we received was SIGINT, then try again,
+	 this is simply an interrupted system call to read ().
+	 Otherwise, some error ocurred, also signifying EOF. */
+      if (errno != EINTR)
+	return (EOF);
+#endif /* !MINIMAL */
+    }
+}
+
+char *
+_rl_savestring (str)
+     char *str;
+{
+  char *copy = (char*) xmalloc (strlen (str) + 1);
+  strcpy (copy, str);
+  return copy;
+}
+
+#if defined (STATIC_MALLOC)
+
+/* **************************************************************** */
+/*								    */
+/*			xmalloc and xrealloc ()		     	    */
+/*								    */
+/* **************************************************************** */
+
+static void memory_error_and_abort ();
+
+static char *
+xmalloc (bytes)
+     int bytes;
+{
+  char *temp = (char *)malloc (bytes);
+
+  if (!temp)
+    memory_error_and_abort ();
+  return (temp);
+}
+
+static char *
+xrealloc (pointer, bytes)
+     char *pointer;
+     int bytes;
+{
+  char *temp;
+
+  if (!pointer)
+    temp = (char *)malloc (bytes);
+  else
+    temp = (char *)realloc (pointer, bytes);
+
+  if (!temp)
+    memory_error_and_abort ();
+
+  return (temp);
+}
+
+static void
+memory_error_and_abort ()
+{
+  fprintf (stderr, "readline: Out of virtual memory!\n");
+  abort ();
+}
+#endif /* STATIC_MALLOC */
+
+
+/* **************************************************************** */
+/*								    */
+/*			Testing Readline			    */
+/*								    */
+/* **************************************************************** */
+
+#if defined (TEST)
+
+main ()
+{
+  HIST_ENTRY **history_list ();
+  char *temp = (char *)NULL;
+  char *prompt = "readline% ";
+  int done = 0;
+
+  while (!done)
+    {
+      temp = readline (prompt);
+
+      /* Test for EOF. */
+      if (!temp)
+	exit (1);
+
+      /* If there is anything on the line, print it and remember it. */
+      if (*temp)
+	{
+	  fprintf (stderr, "%s\r\n", temp);
+	  add_history (temp);
+	}
+
+      /* Check for `command' that we handle. */
+      if (strcmp (temp, "quit") == 0)
+	done = 1;
+
+      if (strcmp (temp, "list") == 0)
+	{
+	  HIST_ENTRY **list = history_list ();
+	  register int i;
+	  if (list)
+	    {
+	      for (i = 0; list[i]; i++)
+		{
+		  fprintf (stderr, "%d: %s\r\n", i, list[i]->line);
+		  free (list[i]->line);
+		}
+	      free (list);
+	    }
+	}
+      free (temp);
+    }
+}
+
+#endif /* TEST */
+
+
+/*
+ * Local variables:
+ * compile-command: "gcc -g -traditional -I. -I.. -DTEST -o readline readline.c keymaps.o funmap.o history.o -ltermcap"
+ * end:
+ */

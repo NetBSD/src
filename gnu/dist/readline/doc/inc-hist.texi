@@ -1,4 +1,8 @@
 @ignore
+This file is completely identical to hsuser.texinfo, except that it has the
+reference to the programming manual removed.  There are definately better ways
+to do this!
+
 This file documents the user interface to the GNU History library.
 
 Copyright (C) 1988, 1991 Free Software Foundation, Inc.
@@ -24,12 +28,10 @@ into another language, under the above conditions for modified versions.
 @end ignore
 
 @node Using History Interactively
-@chapter Using History Interactively
+@appendix Using History Interactively
 
 This chapter describes how to use the GNU History Library interactively,
-from a user's standpoint.  It should be considered a user's guide.  For
-information on using the GNU History Library in your own programs,
-@pxref{Programming with GNU History}.
+from a user's standpoint.
 
 @menu
 * History Interaction::		What it feels like using History as a user.
@@ -39,18 +41,18 @@ information on using the GNU History Library in your own programs,
 @section History Interaction
 @cindex expansion
 
-The History library provides a history expansion feature that is similar
-to the history expansion in Csh.  The following text describes the sytax
-that you use to manipulate the history information.
+The History library provides a history expansion feature similar
+to the history expansion in @code{csh}.  The following text describes the 
+syntax you use to manipulate history information.
 
-History expansion takes place in two parts.  The first is to determine
-which line from the previous history should be used during substitution.
-The second is to select portions of that line for inclusion into the
-current one.  The line selected from the previous history is called the
-@dfn{event}, and the portions of that line that are acted upon are
-called @dfn{words}.  The line is broken into words in the same fashion
-that the Bash shell does, so that several English (or Unix) words
-surrounded by quotes are considered as one word.
+History expansion takes two parts.  In the first part, determine
+which line from the previous history will be used for substitution.
+This line is called the @dfn{event}.
+In the second part, select portions of that line for inclusion into the
+current line.  These portions are called @dfn{words}.  
+@value{GDBN} breaks the line into words in the same 
+way that the Bash shell does, so that several English (or Unix) words
+surrounded by quotes are considered one word.
 
 @menu
 * Event Designators::	How to specify which history line to use.
@@ -62,7 +64,7 @@ surrounded by quotes are considered as one word.
 @subsection Event Designators
 @cindex event designators
 
-An event designator is a reference to a command line entry in the
+An @dfn{event designator} is a reference to a command line entry in the
 history list.
 
 @table @asis
@@ -91,8 +93,8 @@ Refer to the most recent command containing @var{string}.
 @node Word Designators
 @subsection Word Designators
 
-A @key{:} separates the event specification from the word designator.  It
-can be omitted if the word designator begins with a @key{^}, @key{$},
+A @key{:} separates the event designator from the @dfn{word designator}.  
+It can be omitted if the word designator begins with a @key{^}, @key{$},
 @key{*} or @key{%}.  Words are numbered from the beginning of the line,
 with the first word being denoted by a 0 (zero).
 
@@ -127,14 +129,18 @@ The empty string is returned in that case.
 @subsection Modifiers
 
 After the optional word designator, you can add a sequence of one or more
-of the following modifiers, each preceded by a @key{:}.
+of the following @dfn{modifiers}, each preceded by a @key{:}.
 
 @table @code
 
 @item #
 The entire command line typed so far.  This means the current command,
-not the previous command, so it really isn't a word designator, and doesn't
-belong in this section.
+not the previous command.
+@c
+@c  FIXME:  If it doesn't belong here, let's put it where it does. 
+@c
+@c  so it technically isn't a word designator and doesn't belong in 
+@c  this section.
 
 @item h
 Remove a trailing pathname component, leaving only the head.

@@ -23,14 +23,12 @@
 #ifndef _KEYMAPS_H_
 #define _KEYMAPS_H_
 
-#if defined (READLINE_LIBRARY)
-#  include "chardefs.h"
-#else
-#  include <readline/chardefs.h>
-#endif
+/* CYGNUS LOCAL--bash 1.13 uses <readline/chardefs.h> which would require
+   GDB to add YET ANOTHER -I directive.  No thanks.  */
+#include "chardefs.h"
 
-#if !defined (_FUNCTION_DEF)
-#  define _FUNCTION_DEF
+#if !defined (__FUNCTION_DEF)
+#  define __FUNCTION_DEF
 typedef int Function ();
 typedef void VFunction ();
 typedef char *CPFunction ();
@@ -70,26 +68,24 @@ extern KEYMAP_ENTRY_ARRAY vi_insertion_keymap, vi_movement_keymap;
 
 /* Return a new, empty keymap.
    Free it with free() when you are done. */
-extern Keymap rl_make_bare_keymap ();
+Keymap rl_make_bare_keymap ();
 
 /* Return a new keymap which is a copy of MAP. */
-extern Keymap rl_copy_keymap ();
+Keymap rl_copy_keymap ();
 
 /* Return a new keymap with the printing characters bound to rl_insert,
    the lowercase Meta characters bound to run their equivalents, and
    the Meta digits bound to produce numeric arguments. */
-extern Keymap rl_make_keymap ();
-
-extern void rl_discard_keymap ();
+Keymap rl_make_keymap ();
 
 /* Return the keymap corresponding to a given name.  Names look like
    `emacs' or `emacs-meta' or `vi-insert'. */
-extern Keymap rl_get_keymap_by_name ();
+Keymap rl_get_keymap_by_name ();
 
 /* Return the current keymap. */
-extern Keymap rl_get_keymap ();
+Keymap rl_get_keymap ();
 
 /* Set the current keymap to MAP. */
-extern void rl_set_keymap ();
+void rl_set_keymap ();
 
 #endif /* _KEYMAPS_H_ */

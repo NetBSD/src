@@ -1,82 +1,58 @@
-dnl
-dnl Configure script for readline library
-dnl
-dnl report bugs to chet@po.cwru.edu
-dnl
-dnl Process this file with autoconf to produce a configure script.
-AC_REVISION([for Readline 2.1, version 2.04, from autoconf version] AC_ACVERSION)
-LIBVERSION=2.1
+# This file is a shell script fragment that supplies the information
+# necessary to tailor a template configure script into the configure
+# script appropriate for this directory.  For more information, check
+# any existing configure script.
 
-AC_INIT(readline.h)
-AC_CONFIG_HEADER(config.h)
+configdirs=doc
+srctrigger=readline.c
+srcname="the readline library"
 
-dnl make sure we are using a recent autoconf version
-AC_PREREQ(2.10)
+# per-host:
 
-AC_CONFIG_AUX_DIR(./support)
+files=sysdep-norm.h
+links=sysdep.h
 
-AC_CANONICAL_HOST
-
-# We want these before the checks, so the checks can modify their values.
-test -z "$CFLAGS" && CFLAGS=-g auto_cflags=1
-
-AC_PROG_CC
-
-# If we're using gcc and the user hasn't specified CFLAGS, add -O to CFLAGS.
-test -n "$GCC" && test -n "$auto_cflags" && CFLAGS="$CFLAGS -O"
-
-AC_PROG_GCC_TRADITIONAL
-AC_PROG_INSTALL
-AC_PROG_RANLIB
-
-AC_RETSIGTYPE
-
-AC_HEADER_STAT
-AC_HEADER_DIRENT
-
-AC_CHECK_FUNCS(strcasecmp select setenv putenv tcgetattr setlocale lstat)
-
-AC_FUNC_STRCOLL
-
-AC_CHECK_HEADERS(unistd.h stdlib.h varargs.h stdarg.h string.h \
-		sys/ptem.h sys/pte.h sys/stream.h sys/select.h \
-		termcap.h termios.h termio.h sys/file.h locale.h)
-
-BASH_SIGNAL_CHECK
-BASH_REINSTALL_SIGHANDLERS
-
-BASH_FUNC_POSIX_SETJMP
-BASH_FUNC_LSTAT
-BASH_CHECK_GETPW_FUNCS
-BASH_FUNC_STRCOLL
-
-BASH_TYPE_SIGHANDLER
-BASH_HAVE_TIOCGWINSZ
-BASH_HAVE_TIOCSTAT
-BASH_HAVE_FIONREAD
-BASH_MISC_SPEED_T
-BASH_STRUCT_DIRENT_D_INO
-BASH_STRUCT_DIRENT_D_FILENO
-
-case "$host_cpu" in
-*cray*)	LOCAL_CFLAGS=-DCRAY ;;
+case "${host}" in
+  *-*-cygwin32*)	host_makefile_frag=config/mh-posix ;;
+  *-*-irix*)		host_makefile_frag=config/mh-sysv; files=sysdep-irix.h;;
+  i[3456]86-ncr-sysv4*)	host_makefile_frag=config/mh-ncr3000 ;;
+# Using sysdep-norm.h is harmful because termio.h defines VWERASE even though
+# c_cc is too small for it (VWERASE is for termios).
+# The problem with _POSIX_SOURCE is said not to be a problem after all.
+#  m88k-*-sysv4*)	host_makefile_frag=config/mh-sysv ;
+			# defining POSIX_SOURCE causes stack_t to be undefined
+			# even though it's used in <setjmp.h>
+#			files=sysdep-norm.h ;;
+  m88*-harris-cxux7*)	host_makefile_frag=config/mh-sysv4 ; files=sysdep-cxux7.h ;;
+  *-*-sysv4*)		host_makefile_frag=config/mh-sysv4 ; files=sysdep-sysv4.h ;;
+  *-*-solaris2*)	host_makefile_frag=config/mh-sysv4 ;;
+  i[3456]86-*-sco3.2v[45]*)	host_makefile_frag=config/mh-sco4; files=sysdep-sco.h ;;
+  i[3456]86-*-sco*)	host_makefile_frag=config/mh-sco; files=sysdep-sco.h ;;
+# Don't use this; ISC 4.0 only supports POSIX features if you link with
+# -lcposix.  No thanks.
+#  i[3456]86-*-isc*)	host_makefile_frag=config/mh-isc ;;
+  i[3456]86-*-isc*)	host_makefile_frag=config/mh-sysv ;;
+  *-*-go32)		host_makefile_frag=config/mh-go32 ;;
+  m68k-apollo-sysv*)	host_makefile_frag=config/mh-apollo68v ;;    
+  *-*-sysv*)		host_makefile_frag=config/mh-sysv ;;
+  *-*-m88kbcs*)		host_makefile_frag=config/mh-sysv ;;
+  *-*-linux*)		host_makefile_frag=config/mh-posix ;;
+  powerpc-ibm-aix*)	host_makefile_frag=config/mh-sysv; files=sysdep-aix.h ;;
+  rs6000-ibm-aix*)	host_makefile_frag=config/mh-sysv; files=sysdep-aix.h ;;
+  rs6000-bull-bosx*)	host_makefile_frag=config/mh-sysv; files=sysdep-aix.h ;;
+  *-ibm-aix*)		host_makefile_frag=config/mh-sysv ;;
+  m68k-sony-news*)					files=sysdep-obsd.h ;;
+  *-*-bsd*)						files=sysdep-obsd.h ;;
+  *-*-mach*)						files=sysdep-obsd.h ;;
+  *-*-gnu*)		host_makefile_frag=config/mh-gnu ;;
+  *-*-sunos3*)						files=sysdep-obsd.h ;;
+# Using termios on SunOS is necessary to save and restore cs7 versus cs8.
+  *-*-sunos4.1*)	host_makefile_frag=config/mh-posix ;;
+  *-*-ultrix2*)						files=sysdep-obsd.h ;;
+  *-*-riscos*)		host_makefile_frag=config/mh-sysv ;;
+  *-*-netbsd*)		host_makefile_frag=config/mh-bsd44 ;;
 esac
 
-case "$host_os" in
-isc*)	LOCAL_CFLAGS=-Disc386 ;;
-esac
+# per-target:
 
-AC_SUBST(CFLAGS)
-AC_SUBST(LOCAL_CFLAGS)
-AC_SUBST(LOCAL_DEFS)
 
-AC_SUBST(host_cpu)
-AC_SUBST(host_os)
-
-AC_SUBST(LIBVERSION)
-
-AC_OUTPUT([Makefile doc/Makefile examples/Makefile],
-[
-# Makefile uses this timestamp file to record whether config.h is up to date.
-echo > stamp-h
-])

@@ -15,11 +15,11 @@ static char *line_read = (char *)NULL;
 
 /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 char *
-rl_gets ()
+do_gets ()
 {
   /* If the buffer has already been allocated, return the memory
      to the free pool. */
-  if (line_read)
+  if (line_read != (char *)NULL)
     {
       free (line_read);
       line_read = (char *)NULL;
@@ -34,6 +34,7 @@ rl_gets ()
 
   return (line_read);
 }
+
 
 /* **************************************************************** */
 /*                                                                  */
@@ -91,4 +92,5 @@ invert_case_line (count, key)
   /* Move point to on top of the last character changed. */
   rl_point = end - direction;
 }
+
 
