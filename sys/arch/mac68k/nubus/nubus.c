@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.49 2000/06/29 08:15:13 mrg Exp $	*/
+/*	$NetBSD: nubus.c,v 1.50 2000/07/31 22:39:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -714,6 +714,7 @@ nubus_get_c_string(bst, bsh, fmt, dirent, data_return, max_bytes)
 			return 1;
 		loc = nubus_adjust_ptr(lanes, loc, 1);
 	}
+	*(data_return-1) = '\0';
 	return 0;
 }
 
