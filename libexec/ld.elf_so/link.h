@@ -1,4 +1,4 @@
-/*	$NetBSD: link.h,v 1.1.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
+/*	$NetBSD: link.h,v 1.1.2.2 1998/10/30 18:26:25 cgd Exp $	*/
 
 /*
  * This only exists for GDB.
@@ -7,6 +7,8 @@
 #define	_LINK_H
 
 #include <sys/types.h>
+
+#include <machine/elf_machdep.h>
 
 struct link_map {
 	caddr_t		l_addr;			/* Base Address of library */
