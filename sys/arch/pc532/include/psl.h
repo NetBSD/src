@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.19 1997/11/13 20:57:31 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.20 1999/08/04 15:54:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,8 +76,11 @@
 #define	IPL_TTY		4	/* terminal */
 #define	IPL_CLOCK	5	/* clock */
 #define IPL_IMP		6	/* memory allocation */
-#define	NIPL		7	/* number of interrupt priority levels */
-#define IPL_NAMES	{"zero", "", "bio", "net", "tty", "clock", "imp"}
+#define	IPL_SOFTCLOCK	7	/* softlock */
+#define	IPL_SOFTNET	8	/* softnet */
+#define	NIPL		9	/* number of interrupt priority levels */
+#define IPL_NAMES	{"zero", "", "bio", "net", "tty", "clock", "imp", \
+			 "softclock", "softnet" }
 
 /* IPL_RTTY (for the scn driver) is the same as IPL_HIGH. */
 #define	IPL_RTTY	IPL_HIGH
@@ -190,13 +193,13 @@ splx(ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	splx(SIR_CLOCKMASK | imask[IPL_ZERO])
-#define	splsoftnet()	splraise(SIR_NETMASK)
+#define	splsoftclock()	splx(imask[IPL_SOFTCLOCK])
+#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
 
 /*
  * Miscellaneous
  */
-#define	splhigh()	splraise(-1)
+#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		splx(imask[IPL_ZERO])
 #define splnone()	spl0()
 
