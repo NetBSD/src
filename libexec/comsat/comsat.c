@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.7 1995/03/21 21:47:04 mycroft Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.8 1995/05/02 02:05:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,12 +55,12 @@ static char rcsid[] = "$Id: comsat.c,v 1.7 1995/03/21 21:47:04 mycroft Exp $";
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
-#include <sgtty.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <termios.h>
 #include <unistd.h>
 #include <utmp.h>
 
@@ -195,7 +195,7 @@ notify(utp, offset)
 {
 	FILE *tp;
 	struct stat stb;
-	struct sgttyb gttybuf;
+	struct termios ttybuf;
 	char tty[20], name[sizeof(utmp[0].ut_name) + 1];
 
 	(void)snprintf(tty, sizeof(tty), "%s%.*s",
@@ -218,8 +218,8 @@ notify(utp, offset)
 		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
 		_exit(-1);
 	}
-	(void)ioctl(fileno(tp), TIOCGETP, &gttybuf);
-	cr = (gttybuf.sg_flags&CRMOD) && !(gttybuf.sg_flags&RAW) ?
+	(void)tcgetattr(fileno(tp), &ttybuf);
+	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
 	(void)strncpy(name, utp->ut_name, sizeof(utp->ut_name));
 	name[sizeof(name) - 1] = '\0';
