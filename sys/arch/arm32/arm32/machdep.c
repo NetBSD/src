@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2000/05/26 21:19:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2000/06/07 04:59:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -57,6 +57,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/msgbuf.h>
+#include <sys/device.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
@@ -142,6 +143,10 @@ extern void dumpsys	__P((void));
 extern void pmap_debug	__P((int level));
 #endif	/* PMAP_DEBUG */
 
+#if defined(SHARK)
+int shark_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+	void *newp, size_t newlen, struct proc *p);
+#endif
 /*
  * Debug function just to park the CPU
  */
@@ -772,6 +777,31 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_DEBUG:
 		return(sysctl_int(oldp, oldlenp, newp, newlen, &kernel_debug));
+
+	case CPU_BOOTED_DEVICE:
+		if (booted_device != NULL)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    booted_device->dv_xname));
+		return (EOPNOTSUPP);
+
+	case CPU_CONSDEV: {
+		dev_t consdev;
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+			sizeof consdev));
+	}
+#if defined(SHARK)
+	case CPU_BOOTED_KERNEL: {
+		extern char *boot_kernel;
+		if (boot_kernel != NULL && boot_kernel[0] != '\0')
+			return sysctl_rdstring(oldp, oldlenp, newp,
+			    boot_kernel);
+		return (EOPNOTSUPP);
+	}
+#endif
 
 	default:
 		return (EOPNOTSUPP);
