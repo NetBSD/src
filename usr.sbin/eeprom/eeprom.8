@@ -1,4 +1,4 @@
-.\"	$NetBSD: eeprom.8,v 1.5 2000/11/28 22:31:37 mrg Exp $
+.\"	$NetBSD: eeprom.8,v 1.6 2002/01/19 03:11:35 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -232,7 +232,7 @@ rather than the default Sun logo.
 A string to use at power up, rather than the default Sun banner.
 .It oem-banner?
 If true, emables the use of the banner stored in
-.Pa oem-banner 
+.Pa oem-banner
 rather than the default Sun banner.
 .It ttya-mode
 A string of five comma separated fields in the format
@@ -326,7 +326,14 @@ describing when the CPU was last updated.
 .It diag-switch?
 If true, the system will boot and run in diagnostic mode.
 .El
-.Sh WARNINGS
+.Sh FILES
+.Bl -tag -width "/dev/openprom  "
+.It /dev/eeprom
+The EEPROM device on systems with an EEPROM.
+.It /dev/openprom
+The OpenProm device on systems with an OpenProm.
+.El
+.Sh BUGS
 The fields and their values are not necessarily well defined on
 systems with an OpenProm.  Your mileage may vary.
 .Pp
@@ -338,10 +345,3 @@ Aviod gratuitously changing the contents of the EEPROM.  It has a limited
 number of write cycles.
 .Pp
 The date parser isn't very intelligent.
-.Sh FILES
-.Bl -tag -width "/dev/openprom  "
-.It /dev/eeprom
-The EEPROM device on systems with an EEPROM.
-.It /dev/openprom
-The OpenProm device on systems with an OpenProm.
-.El
