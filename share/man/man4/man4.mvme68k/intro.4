@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.2 1999/12/15 23:44:53 abs Exp $
+.\"	$NetBSD: intro.4,v 1.2.6.1 2000/10/17 20:01:12 scw Exp $
 .\"
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -116,6 +116,8 @@ Lance-based Ethernet interface
 Onboard parallel printer interface
 .It Em mem
 physical memory
+.It Em mcchip
+MVME162 and MVME172 MCChip (similar to PCCchip2)
 .It Em ncrsc
 .Tn NCR
 53c710 SCSI I/O Processor
@@ -123,11 +125,15 @@ physical memory
 MVME147 PCC Chip
 .It Em pcctwo
 MVME167 and MVME177 PCCchip2
+.It Em vmepcc
+MVME147 VMEbus interface chip
+.It Em vmetwo
+MVME1[67]x Enhanced VMEbus interface chip
 .It Em wdsc
 WD33c93 SCSI Bus Interface Controller
 .It Em zsc
 .Tn Zilog
-Z8530 Dual-port Serial Snterface
+Z8530 Dual-port Serial Interface on MVME147 and MVME162
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
