@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.7 2003/09/07 14:47:48 cl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.8 2004/08/21 11:31:44 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -139,7 +139,7 @@ ENTRY_NP(pthread__switch_return_point)
 	add	sp, sp, #12		/* skip over r0-r2 */
 	ldmfd	sp!, {r4-r5, lr}	/* restore r4-r5, lr */
 	add	sp, sp, #(RND_CTXSIZE)	/* pop ucontext_t */
-	mov	pc, lr
+	RET
 
 /*
  * Helper routine; r0 = from, r1 = to, r2 = decr-spinlocks (boolean)
@@ -395,4 +395,4 @@ locked_return_point:
 	add	sp, sp, #12		/* skip over r0-r2 */
 	ldmfd	sp!, {r4-r5, lr}	/* restore r4-r5, lr */
 	add	sp, sp, #(RND_CTXSIZE)	/* pop ucontext_t */
-	mov	pc, lr
+	RET
