@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2002/05/07 03:34:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.62 2002/05/07 14:59:34 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,6 +25,11 @@ PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
 IMAGE_RELEASEDIR=	installation/miniroot
 
 .include "${ARCHDIR}/Makefile.inc"
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .if defined(MAKEDEVTARGETS)

@@ -1,7 +1,4 @@
-#	$NetBSD: list,v 1.13 2002/04/10 01:57:28 lukem Exp $
-
-# Usage of libhack.o reduces the instbin-size with approx. 64KB!
-LIBS	libhack.o
+#	$NetBSD: list,v 1.14 2002/05/07 14:59:35 lukem Exp $
 
 # Atari extra's
 PROG	sbin/ahdilabel

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/03/28 04:33:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/05/07 14:59:35 lukem Exp $
 
 IMAGESIZE=	1080k
 IMAGEENDIAN=	be
@@ -6,8 +6,6 @@ MAKEDEVTARGETS=	floppy
 IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
 		${ARCHDIR}/install.md ${ARCHDIR}/termcap.vt
 
-# Use stubs to eliminate some large stuff from libc
-HACKSRC=	${DISTRIBDIR}/utils/libhack
+# add cut-down gethostby*() from libhack
+#
 HACKOBJS=	gethost.o
-.include	"${HACKSRC}/Makefile.inc"
-${CRUNCHBIN}:	libhack.o

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2002/04/26 15:50:37 lukem Exp $
+#	$NetBSD: list,v 1.20 2002/05/07 14:59:35 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -57,6 +57,7 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 
+LIBS	libhack.o
 LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lbz2 -lcrypt -lintl -ll -lm -lkvm
 
 # various files that we need in /etc for the install
