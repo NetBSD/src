@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.3 1996/10/01 00:32:52 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.4 1996/10/01 13:35:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -89,19 +89,18 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	rv = -1;
 
 	/*
-	 * Map the whole file.  If we can't open/stat it, something bad
-	 * is going on so we punt.
+	 * If we can't fstat() the file, something bad is going on.
 	 */
 	if (fstat(fd, &st) < 0)
 		BAD;
-	if (st.st_size > SIZE_T_MAX) {
-		errno = EFBIG;
-		BAD;
-	}
 
 	/*
 	 * Map the file in its entirety.
 	 */
+	if (st.st_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		BAD;
+	}
 	mappedsize = st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
 	if (mappedfile == (char *)-1)
@@ -160,11 +159,11 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	strtab = &mappedfile[symstrshdrp->sh_offset];
 
 	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
+	 * Clean out any left-over information for all valid entries.
+	 * Type and value are defined to be 0 if not found; historical
 	 * versions cleared other and desc as well.
 	 *
-	 * XXX clearing anything other than n_type and n_value violates
+	 * XXX Clearing anything other than n_type and n_value violates
 	 * the semantics given in the man page.
 	 */
 	nent = 0;
@@ -189,7 +188,9 @@ ELFNAMEEND(__fdnlist)(fd, list)
 			symtabname = &strtab[symp[i].st_name];
 
 			if (!strcmp(symtabname, nlistname)) {
-				/* Fill in the nlist data. */
+				/*
+				 * Translate (roughly) from ELF to nlist
+				 */
 				p->n_value = symp[i].st_value;
 				switch(ELF_SYM_TYPE(symp[i].st_info)) {
 				case Elf_estt_notype:
