@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.114 2001/02/19 18:15:29 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.115 2001/12/20 05:45:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.114 2001/02/19 18:15:29 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.115 2001/12/20 05:45:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -722,7 +722,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		rc = -1;
 		switch (curtype) {
 		case TYPE_A:
-			rc = fseek(fin, (long) restart_point, SEEK_SET);
+			rc = fseeko(fin, restart_point, SEEK_SET);
 			break;
 		case TYPE_I:
 		case TYPE_L:
@@ -1167,18 +1167,17 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 	case TYPE_A:
 		if (is_retr && restart_point) {
 			int ch;
-			long i, n;
+			off_t i;
 
-			if (fseek(fout, 0L, SEEK_SET) < 0)
+			if (fseeko(fout, (off_t)0, SEEK_SET) < 0)
 				goto done;
-			n = (long)restart_point;
-			for (i = 0; i++ < n;) {
+			for (i = 0; i++ < restart_point;) {
 				if ((ch = getc(fout)) == EOF)
 					goto done;
 				if (ch == '\n')
 					i++;
 			}
-			if (fseek(fout, 0L, SEEK_CUR) < 0) {
+			if (fseeko(fout, (off_t)0, SEEK_CUR) < 0) {
  done:
 				warn("local: %s", local);
 				goto cleanuprecv;
