@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2000/11/01 20:56:06 mbw Exp $
+.\"	$NetBSD: hardware,v 1.17 2000/11/03 02:18:50 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -321,7 +321,7 @@ Misc cards
 .(bullet -compact
 .Em mtty /
 .Em mbpp ;
-Magma Serial/Parallel Sbus card
+Magma Serial/Parallel ports.  Sbus card
 .It
 .Em xbox ;
 Sun Sbus expander device
@@ -342,10 +342,10 @@ Sun SCSI.  VME card
 Bi-directional parallel port.  On-board and Sbus card
 .It
 .Em cgtwelve ;
-I.e. GS, 24 bpp.  Sbus framebuffer
+I.e. GS, 24 bpp framebuffer.  Sbus card
 .It
 .Em leo ;
-I.e. ZX and TZX, 24 bpp.  Sbus framebuffer
+I.e. ZX and TZX, 24 bpp accelerated framebuffer.  Sbus card
 .It
 .Em nell ;
 Sbus-to-PCMCIA bridge

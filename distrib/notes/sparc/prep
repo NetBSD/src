@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13 2000/11/01 20:56:06 mbw Exp $
+.\"	$NetBSD: prep,v 1.14 2000/11/03 02:18:50 mbw Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -275,7 +275,7 @@ there are no restrictions on the size of the swap partition that would render
 part of your memory unusable). A full binary installation takes about 60 MB
 in
 .Pa /usr .
-Pp
+.Pp
 Most sparc systems have trouble booting if the root partition extends
 beyond the first 2 GB of your disk.
 .
