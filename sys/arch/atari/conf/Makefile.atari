@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.29 1997/02/16 13:00:49 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.30 1997/03/14 23:27:29 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -128,7 +128,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean:
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 

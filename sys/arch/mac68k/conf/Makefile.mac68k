@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.51 1997/02/04 05:08:36 perry Exp $
+#	$NetBSD: Makefile.mac68k,v 1.52 1997/03/14 23:27:30 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -128,7 +128,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean:
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.31 1997/02/12 18:07:53 ragge Exp $
+#	$NetBSD: Makefile.vax,v 1.32 1997/03/14 23:27:35 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -116,7 +116,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean:
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks
 
