@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.53 2000/01/24 22:38:21 thorpej Exp $
+$NetBSD: acronyms,v 1.54 2000/02/09 02:11:03 enami Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -9,6 +9,7 @@ AKA	also known as
 ASAP	as soon as possible
 BBL	[I'll] be back later
 BBS	be back soon
+BBT	be back tomorrow
 BFD	big fucking deal
 BIAB	back in a bit
 BIAF	back in a few
