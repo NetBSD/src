@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.83.2.2 2004/08/03 10:52:55 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.83.2.3 2004/08/12 15:33:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.2 2004/08/03 10:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.83.2.3 2004/08/12 15:33:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -683,10 +683,8 @@ int
 process_validfpregs(l)
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
-
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
