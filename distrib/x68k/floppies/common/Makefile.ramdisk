@@ -1,70 +1,30 @@
-#	$NetBSD: Makefile.ramdisk,v 1.1 2002/05/07 13:55:42 isaki Exp $
-
-.include "${TOP}/Makefile.inc"
+#	$NetBSD: Makefile.ramdisk,v 1.2 2002/05/07 14:08:32 isaki Exp $
 
 WARNS=1
 
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-IMAGE?=		xxx.fs
-MDEC=		${DESTDIR}/usr/mdec
-
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
-
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
+CRUNCHBIN?=	ramdiskbin
+IMAGEENDIAN=	be
+IMAGEDEPENDS+= 	${CRUNCHBIN} ${AUXDEPENDS}
+POPULATEENV+=	COMMONDIR=${COMMONDIR:Q}
 
 realall: ${IMAGE}
 
-RAMDISKSIZE!=	expr ${RAMDISKSPT} \* ${RAMDISKCYLS} \* ${RAMDISKHEADS}
-RAMDISKGEOM=	512/${RAMDISKSPT}/${RAMDISKHEADS}/${RAMDISKCYLS}
-
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND} ${IMAGE} ${RAMDISKGEOM}
-	-disklabel ${VND} >tmplabel
-	disklabel -r -R ${VND} tmplabel
-	newfs -B be -m 0 -o space -i ${RAMDISKBPI} -c ${RAMDISKCPG} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} COMMONDIR=${TOP}/ramdisk-common \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+# Use size-reduced libhack.
+${CRUNCHBIN}:	libhack.o
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=	${_SRC_TOP_}/distrib/utils/libhack
+HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
-${CBIN}:	libhack.o
+#${CBIN}:	libhack.o
 
 # Used in building bootfloppy
 echoimage:
 	@echo ${.OBJDIR}/${IMAGE}
 
-depend:
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
 
 release:
 
-clean cleandir distclean:
-	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c tmplabel
+.include <bsd.prog.mk>
