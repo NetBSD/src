@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.1 1996/12/16 20:38:07 cgd Exp $	*/
+/*	$NetBSD: xprintf.c,v 1.2 1999/02/07 17:23:40 christos Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -32,6 +32,40 @@
 #include <unistd.h>
 #include <errno.h>
 
+static __inline long long xva_arg __P((va_list *, int));
+
+#define SZ_SHORT	0x01
+#define	SZ_INT		0x02
+#define	SZ_LONG		0x04
+#define	SZ_QUAD		0x08
+#define	SZ_UNSIGNED	0x10
+#define	SZ_MASK		0x0f
+
+static __inline long long
+xva_arg(ap, size)
+	va_list *ap;
+	int size;
+{
+	switch (size) {
+	case SZ_SHORT:
+		return va_arg(*ap, short);
+	default:
+	case SZ_INT:
+		return va_arg(*ap, int);
+	case SZ_LONG:
+		return va_arg(*ap, long);
+	case SZ_QUAD:
+		return va_arg(*ap, long long);
+	case SZ_SHORT|SZ_UNSIGNED:
+		return va_arg(*ap, unsigned short);
+	case SZ_INT|SZ_UNSIGNED:
+		return va_arg(*ap, unsigned int);
+	case SZ_LONG|SZ_UNSIGNED:
+		return va_arg(*ap, unsigned long);
+	case SZ_QUAD|SZ_UNSIGNED:
+		return va_arg(*ap, unsigned long long);
+	}
+}
 /*
  * Non-mallocing printf, for use by malloc and rtld itself.
  * This avoids putting in most of stdio.
@@ -47,6 +81,7 @@ xvsnprintf(
 {
     char *bp = buf;
     char * const ep = buf + buflen - 4;
+    int size;
 
     while (*fmt != NULL && bp < ep) {
 	switch (*fmt) {
@@ -56,16 +91,33 @@ xvsnprintf(
 	    continue;
 	}
 	case '%': {
-	    switch (fmt[1]) {
-	    case 'd': case 'u': {
-		int ival;
-		unsigned uval;
+	    size = SZ_INT;
+rflag:	    switch (fmt[1]) {
+	    case 'h':
+		size = (size & SZ_MASK) | SZ_SHORT;
+		fmt++;
+		goto rflag;
+	    case 'l':
+		size = (size & SZ_MASK) | SZ_LONG;
+		fmt++;
+		if (fmt[1] == 'l') {
+	    case 'q':
+		    size = (size & SZ_MASK) | SZ_QUAD;
+		    fmt++;
+		}
+		goto rflag;
+	    case 'u':
+		size |= SZ_UNSIGNED;
+		/* FALLTHROUGH*/
+	    case 'd': {
+		long long sval;
+		unsigned long long uval;
 		char digits[sizeof(int) * 3], *dp = digits;
 
 		if (fmt[1] == 'd') {
-		    ival = va_arg(ap, int);
-		    if (ival < 0) {
-			if ((ival << 1) == 0) {
+		    sval = xva_arg(&ap, size);
+		    if (sval < 0) {
+			if ((sval << 1) == 0) {
 			    /*
 			     * We can't flip the sign of this since
 			     * it's can't represented as a postive
@@ -73,16 +125,16 @@ xvsnprintf(
 			     * first digit.  After that, it can be
 			     * flipped since it is now not 2^(n-1).
 			     */
-			    *dp++ = '0' - (ival % 10);
-			    ival /= 10;
+			    *dp++ = '0' - (sval % 10);
+			    sval /= 10;
 			}
 			*bp++ = '-';
-			uval = -ival;
+			uval = -sval;
 		    } else {
-			uval = ival;
+			uval = sval;
 		    }
 		} else {
-		    uval = va_arg(ap, unsigned);
+		    uval = xva_arg(&ap, size);
 		}
 		do {
 		    *dp++ = '0' + (uval % 10);
