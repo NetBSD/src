@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.21 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.22 2005/03/21 14:15:27 xtraeme Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32		# estimated number of users
 
@@ -308,6 +308,7 @@ lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
+pcppi*          at acpi?                # AT-style speaker sound
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
