@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.19 1999/05/24 07:03:18 ross Exp $
+.\" $NetBSD: main,v 1.20 1999/07/02 18:53:26 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,6 +217,15 @@ chrooting of servers easier.
 .It
 Most third party packages have been updated to the latest stable
 release.
+.It
+Import IPv6/IPsec stack, from KAME project.
+This includes addition of kernel code for IPv6/IPsec,
+IPv4/v6 dual-stack user applications and supporting libraries.
+Due to this, shlib major version for
+.Xr pcap 3
+is incremented and you may need a recompilation of your userland tools.
+We will be upgrading IPv6 part to unified-ipv6 codebase
+whenever it becomes ready.
 .El
 .Pp
 As has been noted, there have also been innumerable bug fixes.	
