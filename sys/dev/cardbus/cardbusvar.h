@@ -1,7 +1,7 @@
-/*	$NetBSD: cardbusvar.h,v 1.13 1999/12/17 14:06:43 augustss Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.14 2000/01/26 09:04:59 haya Exp $	*/
 
 /*
- * Copyright (c) 1998 and 1999
+ * Copyright (c) 1998, 1999 and 2000
  *       HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -403,6 +403,7 @@ struct cardbus_attach_args {
 #define CARDBUS_UNK_FUNCTION CARDBUSCF_FUNCTION_DEFAULT
 
 int cardbus_attach_card __P((struct cardbus_softc *));
+void cardbus_detach_card __P((struct cardbus_softc *));
 void *cardbus_intr_establish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, cardbus_intr_handle_t irq, int level, int (*func) (void *), void *arg));
 void cardbus_intr_disestablish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, void *handler));
 
