@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.31 2004/01/20 19:58:00 jdolecek Exp $
+#	$NetBSD: files.netwinder,v 1.32 2004/03/13 17:31:34 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -99,6 +99,6 @@ file	arch/netwinder/pci/pcib.c		pcib
 
 file	arch/netwinder/pci/pciide_machdep.c	pciide_common
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 include "arch/arm/conf/majors.arm32"

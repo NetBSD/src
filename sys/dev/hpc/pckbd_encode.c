@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd_encode.c,v 1.2 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: pckbd_encode.c,v 1.3 2004/03/13 17:31:34 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd_encode.c,v 1.2 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd_encode.c,v 1.3 2004/03/13 17:31:34 bjh21 Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #include <sys/param.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/pckbc/pckbdreg.h>
+#include <dev/pckbport/pckbdreg.h>
 #include <dev/hpc/pckbd_encode.h>
 
 /*

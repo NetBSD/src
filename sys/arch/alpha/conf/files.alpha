@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.165 2004/01/20 19:58:00 jdolecek Exp $
+# $NetBSD: files.alpha,v 1.166 2004/03/13 17:31:33 bjh21 Exp $
 #
 # alpha-specific configuration info
 
@@ -223,7 +223,7 @@ file	arch/alpha/isa/isa_machdep.c	isa
 define	isadma_bounce
 file	arch/alpha/isa/isadma_bounce.c	isadma_bounce
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # ISA speaker generates keyboard beep
 device isabeep

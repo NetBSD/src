@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.8 2004/01/20 19:58:00 jdolecek Exp $
+#	$NetBSD: files.amd64,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -140,7 +140,7 @@ define	pckbcport { [irq = -1], [port = -1] }
 include	"dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
-include	"dev/pckbc/files.pckbc"
+include	"dev/pckbport/files.pckbport"
 
 device	sysbeep
 attach	sysbeep at pcppi

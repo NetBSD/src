@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $ */
+/* $NetBSD: pckbd.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.1 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,11 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $");
 
 #include <machine/bus.h>
 
-#include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 
-#include <dev/pckbc/pckbdreg.h>
-#include <dev/pckbc/pckbdvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
+#include <dev/pckbport/pckbdreg.h>
+#include <dev/pckbport/pckbdvar.h>
+#include <dev/pckbport/wskbdmap_mfii.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -103,8 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $");
 
 struct pckbd_internal {
 	int t_isconsole;
-	pckbc_tag_t t_kbctag;
-	pckbc_slot_t t_kbcslot;
+	pckbport_tag_t t_kbctag;
+	pckbport_slot_t t_kbcslot;
 
 	int t_lastchar;
 	int t_extended0;
@@ -127,7 +127,7 @@ struct pckbd_softc {
 #endif
 };
 
-static int pckbd_is_console __P((pckbc_tag_t, pckbc_slot_t));
+static int pckbd_is_console __P((pckbport_tag_t, pckbport_slot_t));
 
 int pckbdprobe __P((struct device *, struct cfdata *, void *));
 void pckbdattach __P((struct device *, struct device *, void *));
@@ -173,8 +173,8 @@ void	*pckbd_bell_fn_arg;
 
 void	pckbd_bell __P((u_int, u_int, u_int, int));
 
-int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
-int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
+int	pckbd_set_xtscancode __P((pckbport_tag_t, pckbport_slot_t));
+int	pckbd_init __P((struct pckbd_internal *, pckbport_tag_t, pckbport_slot_t,
 			int));
 void	pckbd_input __P((void *, int));
 
@@ -187,8 +187,8 @@ struct pckbd_internal pckbd_consdata;
 
 int
 pckbd_set_xtscancode(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 	u_char cmd[2];
 	int res;
@@ -206,11 +206,11 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 	 * XXX It would perhaps be a better choice to just use AT scan codes
 	 * and not bother with this.
 	 */
-	if (pckbc_xt_translation(kbctag, kbcslot, 1)) {
+	if (pckbport_xt_translation(kbctag, kbcslot, 1)) {
 		/* The 8042 is translating for us; use AT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 2;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			u_char cmd[1];
 #ifdef DEBUG
@@ -223,15 +223,15 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 			 * default anyway.
 			 */
 			cmd[0] = KBC_RESET;
-			(void)pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
-			pckbc_flush(kbctag, kbcslot);
+			(void)pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
+			pckbport_flush(kbctag, kbcslot);
 			res = 0;
 		}
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 1;
-		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 #ifdef DEBUG
 		if (res)
 			printf("pckbd: error setting scanset 1\n");
@@ -242,8 +242,8 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 
 static int
 pckbd_is_console(tag, slot)
-	pckbc_tag_t tag;
-	pckbc_slot_t slot;
+	pckbport_tag_t tag;
+	pckbport_slot_t slot;
 {
 	return (pckbd_consdata.t_isconsole &&
 		(tag == pckbd_consdata.t_kbctag) &&
@@ -259,7 +259,7 @@ pckbdprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[1];
 	int res;
 
@@ -269,16 +269,16 @@ pckbdprobe(parent, cf, aux)
 	 * For further experiments, allow it if explicitly
 	 * wired in the config file.
 	 */
-	if ((pa->pa_slot != PCKBC_KBD_SLOT) &&
-	    (cf->cf_loc[PCKBCCF_SLOT] == PCKBCCF_SLOT_DEFAULT))
+	if ((pa->pa_slot != PCKBPORT_KBD_SLOT) &&
+	    (cf->cf_loc[PCKBPORTCF_SLOT] == PCKBPORTCF_SLOT_DEFAULT))
 		return (0);
 
 	/* Flush any garbage. */
-	pckbc_flush(pa->pa_tag, pa->pa_slot);
+	pckbport_flush(pa->pa_tag, pa->pa_slot);
 
 	/* Reset the keyboard. */
 	cmd[0] = KBC_RESET;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
 	if (res) {
 #ifdef DEBUG
 		printf("pckbdprobe: reset error %d\n", res);
@@ -300,7 +300,7 @@ pckbdprobe(parent, cf, aux)
 	 * This is kind of stupid, but we account for them anyway by just
 	 * flushing the buffer.
 	 */
-	pckbc_flush(pa->pa_tag, pa->pa_slot);
+	pckbport_flush(pa->pa_tag, pa->pa_slot);
 
 	if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot))
 		return (0);
@@ -314,7 +314,7 @@ pckbdattach(parent, self, aux)
 	void *aux;
 {
 	struct pckbd_softc *sc = (void *)self;
-	struct pckbc_attach_args *pa = aux;
+	struct pckbport_attach_args *pa = aux;
 	int isconsole;
 	struct wskbddev_attach_args a;
 	u_char cmd[1];
@@ -331,7 +331,7 @@ pckbdattach(parent, self, aux)
 		 * so make sure it is enabled now.
 		 */
 		cmd[0] = KBC_ENABLE;
-		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		(void) pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 				      cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 1;
 	} else {
@@ -341,14 +341,14 @@ pckbdattach(parent, self, aux)
 
 		/* no interrupts until enabled */
 		cmd[0] = KBC_DISABLE;
-		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		(void) pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 				      cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 0;
 	}
 
 	sc->id->t_sc = sc;
 
-	pckbc_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
+	pckbport_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
 			       pckbd_input, sc, sc->sc_dev.dv_xname);
 
 	a.console = isconsole;
@@ -382,10 +382,10 @@ pckbd_enable(v, on)
 			return (EBUSY);
 		}
 
-		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
+		pckbport_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
 
 		cmd[0] = KBC_ENABLE;
-		res = pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		res = pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 1, 0, NULL, 0);
 		if (res) {
 			printf("pckbd_enable: command error\n");
@@ -403,14 +403,14 @@ pckbd_enable(v, on)
 			return (EBUSY);
 
 		cmd[0] = KBC_DISABLE;
-		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 1, 0, 1, 0);
 		if (res) {
 			printf("pckbd_disable: command error\n");
 			return (res);
 		}
 
-		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 0);
+		pckbport_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 0);
 
 		sc->sc_enabled = 0;
 	}
@@ -472,8 +472,8 @@ pckbd_decode(id, datain, type, dataout)
 int
 pckbd_init(t, kbctag, kbcslot, console)
 	struct pckbd_internal *t;
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 	int console;
 {
 	memset(t, 0, sizeof(struct pckbd_internal));
@@ -530,7 +530,7 @@ pckbd_set_leds(v, leds)
 	cmd[1] = pckbd_led_encode(leds);
 	sc->sc_ledstate = cmd[1];
 
-	(void) pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+	(void) pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 				 cmd, 2, 0, 0, 0);
 }
 
@@ -578,7 +578,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
 		sc->sc_ledstate = cmd[1];
-		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
 					cmd, 2, 0, 1, 0);
 		return (res);
 		}
@@ -628,7 +628,7 @@ pckbd_hookup_bell(fn, arg)
 
 int
 pckbd_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
+	pckbport_tag_t kbctag;
 	int kbcslot;
 {
 	u_char cmd[1];
@@ -642,7 +642,8 @@ pckbd_cnattach(kbctag, kbcslot)
 
 	/* Just to be sure. */
 	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+	res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+
 #if 0
 	if (res)
 		return (res);
@@ -664,7 +665,7 @@ pckbd_cngetc(v, type, data)
 	int val;
 
 	for (;;) {
-		val = pckbc_poll_data(t->t_kbctag, t->t_kbcslot);
+		val = pckbport_poll_data(t->t_kbctag, t->t_kbcslot);
 		if ((val != -1) && pckbd_decode(t, val, type, data))
 			return;
 	}
@@ -677,7 +678,7 @@ pckbd_cnpollc(v, on)
 {
 	struct pckbd_internal *t = v;
 
-	pckbc_set_poll(t->t_kbctag, t->t_kbcslot, on);
+	pckbport_set_poll(t->t_kbctag, t->t_kbcslot, on);
 }
 
 void
