@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2003/12/14 05:49:14 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2003/12/14 06:11:35 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2003/12/14 05:49:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2003/12/14 06:11:35 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -709,6 +709,7 @@ cpu_reboot(howto, bootstr)
 
 	/* Clear and disable watchdog timer. */
 	switch (mach_type) {
+	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
 		*(volatile u_int32_t *)0xbfa00014 = 0;
 		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
@@ -915,6 +916,7 @@ void ddb_trap_hook(int where)
 	switch (where) {
 	case 1:		/* Entry to DDB, turn watchdog off */
 		switch (mach_type) {
+		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
@@ -934,6 +936,7 @@ void ddb_trap_hook(int where)
 
 	case 0:		/* Exit from DDB, turn watchdog back on */
 		switch (mach_type) {
+		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
 			*(volatile u_int32_t *)0xbfa00014 = 0;
