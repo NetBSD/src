@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.54 2000/09/09 16:25:33 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.55 2000/09/09 16:30:14 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1236,8 +1236,8 @@ distrib/notes/common/sysinst			patch
 
   Correct markup error.
 
-distrib/sets/list/base/mi			1.156 via patch
-distrib/sets/list/base/obsolete.mi		1.7 via patch
+distrib/sets/lists/base/mi			1.156 via patch
+distrib/sets/lists/base/obsolete.mi		1.7 via patch
 distrib/sets/lists/man/mi			1.226 via patch
 distrib/sets/lists/man/obsolete.mi		1.9 via patch
 
@@ -1289,3 +1289,8 @@ lib/libc/arch/i386/sys/ptrace.S			1.12
 
   Update old syscall stubs to match the new cerror interface.
   Fixes PR#10789 and PR#9664.
+
+Makefile					patch
+
+  Back out ``TARGETS+= release'' part of last change; the rest of
+  the tree is not ready for this change.
