@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.4 1998/04/10 06:54:30 mark Exp $	*/
+/*	$NetBSD: iomd.c,v 1.5 1998/04/17 18:44:09 mark Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -268,6 +268,7 @@ iomdattach(parent, self, aux)
 	config_found(self, &ia, iomdprint);
 
 	switch (sc->sc_id) {
+#ifdef CPU_ARM7500
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		/* Attach pms device */
@@ -279,7 +280,7 @@ iomdattach(parent, self, aux)
 		ia.ia_pms.pa_irq = IRQ_MSDRX;
 		config_found(self, &ia, iomdprint);
 		break;
-
+#endif	/* CPU_ARM7500 */
 	case RPC600_IOMD_ID:
 		/* Attach qms device */
 
