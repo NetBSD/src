@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120 2002/04/27 12:36:47 shin Exp $
+# $NetBSD: GENERIC,v 1.121 2002/05/03 11:37:48 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120 $"
+#ident 		"GENERIC-$Revision: 1.121 $"
 
 maxusers	16
 
@@ -364,6 +364,14 @@ vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_INTERTOP_IT31
 pci*	at vrc4172pci?
 hpcioman8 at vrc4172gpio0 platform FUJITSU_INTERTOP_IT310
 hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
+
+#
+# MC-R700
+#
+options	VRC4172PCI_MCR700_SUPPORT
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700
+hpcioman9 at vrgiu? platform NEC_MCR_700
+hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
