@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.19 1996/02/03 23:17:56 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.20 1996/02/19 02:51:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -299,7 +299,8 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	 * We do not queue RESET commands
 	 */
 	if (flags & SCSI_RESET) {
-		scsi_reset(xs->sc_link->adapter_softc);
+		scsi_reset_verbose(xs->sc_link->adapter_softc,
+				   "Got reset-command");
 		return (COMPLETE);
 	}
 
@@ -583,7 +584,7 @@ connected:
 		/*
 		 * Let the target guide us through the bus-phases
 		 */
-		while (information_transfer() == -1)
+		while (information_transfer(sc) == -1)
 			;
 	    }
 	}
@@ -600,8 +601,15 @@ main_exit:
 	 */
 	PID("scsi_main4");
 	scsi_ienable();
-	SET_5380_REG(NCR5380_IDSTAT, SC_HOST_ID);
-	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
+
+	/*
+	 * If we're not currently connected, enable reselection
+	 * interrupts.
+	 */
+	if (!connected)
+		SET_5380_REG(NCR5380_IDSTAT, SC_HOST_ID);
+
+	if (scsi_ipending()) {
 		if ((itype = check_intr(sc)) != INTR_SPURIOUS) {
 			scsi_idisable();
 			splx(sps);
@@ -612,8 +620,9 @@ main_exit:
 			else dma_ready();
 #else
 			else {
-				if (!pdma_ready())
-					panic("Got DMA interrupt without DMA");
+				if (pdma_ready())
+					goto connected;
+				panic("Got DMA interrupt without DMA");
 			}
 #endif
 			scsi_clr_ipend();
@@ -668,7 +677,7 @@ struct ncr_softc *sc;
 	int	itype;
 	int	dma_done;
 
-	while (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
+	while (scsi_ipending()) {
 		scsi_idisable();
 		if ((itype = check_intr(sc)) != INTR_SPURIOUS) {
 			if (itype == INTR_RESEL)
@@ -680,9 +689,9 @@ struct ncr_softc *sc;
 				return;
 			    }
 #else
-			    if (!pdma_ready())
-				panic("Got DMA interrupt without DMA\n");
-			    return;
+			    if (pdma_ready())
+				return;
+			    panic("Got DMA interrupt without DMA\n");
 #endif
 			}
 			scsi_clr_ipend();
@@ -928,7 +937,7 @@ SC_REQ	*reqp;
 
 			transfer_pio(&phase, &msg, &len, 0);
 		}
-		else scsi_reset(sc);
+		else scsi_reset_verbose(sc, "Connected to unidentified target");
 
 		SET_5380_REG(NCR5380_ICOM, 0);
 		reqp->xs->error = code ? code : XS_DRIVER_STUFFUP;
@@ -956,11 +965,12 @@ identify_failed:
 
 /*
  * Return codes:
- *	-1: quit main, trigger on interrupt
- *	 0: keep on running main.
+ *	 0: Job has finished or disconnected, find something else
+ *	-1: keep on calling information_transfer() from scsi_main()
  */
 static int
-information_transfer()
+information_transfer(sc)
+struct ncr_softc *sc;
 {
 	SC_REQ	*reqp = connected;
 	u_char	tmp, phase;
@@ -973,28 +983,35 @@ information_transfer()
 	scsi_clr_ipend();
 
 	/*
-	 * We only have a valid SCSI-phase when REQ is asserted. Something
-	 * is deadly wrong when BSY has dropped.
+	 * The SCSI-spec requires BSY to be true while connected to a target,
+	 * loosing it means we lost the target...
+	 * Also REQ needs to be asserted here to indicate that the bus-phase
+	 * is valid. When the target does not supply REQ within a 'reasonable'
+	 * amount of time, it's probably lost in it's own maze of twisting
+	 * passages, we have to reset the bus to free it.
 	 */
+	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)
+		wait_req_true();
 	tmp = GET_5380_REG(NCR5380_IDSTAT);
 
-	if (!(tmp & SC_S_BSY)) {
+
+	if ((tmp & (SC_S_BSY|SC_S_REQ)) != (SC_S_BSY|SC_S_REQ)) {
 		busy           &= ~(1 << reqp->targ_id);
 		connected       = NULL;
-		reqp->xs->error = XS_BUSY;
+		reqp->xs->error = XS_TIMEOUT;
 		finish_req(reqp);
+		if (!(tmp & SC_S_REQ))
+			scsi_reset_verbose(sc,
+					   "Timeout waiting for phase-change");
 		PID("info_transf2");
 		return (0);
 	}
 
-	if (tmp & SC_S_REQ) {
-		phase = (tmp >> 2) & 7;
-		if (phase != reqp->phase) {
-			reqp->phase = phase;
-			DBG_INFPRINT(show_phase, reqp, phase);
-		}
+	phase = (tmp >> 2) & 7;
+	if (phase != reqp->phase) {
+		reqp->phase = phase;
+		DBG_INFPRINT(show_phase, reqp, phase);
 	}
-	else return (-1);
 
 	switch (phase) {
 	    case PH_DATAOUT:
@@ -1237,7 +1254,7 @@ struct ncr_softc *sc;
 	}
 	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) {
 		/* Damn SEL isn't dropping */
-		scsi_reset(sc);
+		scsi_reset_verbose(sc, "Target won't drop SEL during Reselect");
 		return;
 	}
 
@@ -1291,7 +1308,7 @@ struct ncr_softc *sc;
 
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 		if (transfer_pio(&phase, &msg, &len, 0) || len)
-			scsi_reset(sc);
+			scsi_reset_verbose(sc, "Failure to abort reselection");
 	}
 	else {
 		connected = tmp;
@@ -1658,19 +1675,17 @@ u_long		 len;
 }
 
 static void
-scsi_reset(sc)
-struct ncr_softc *sc;
+scsi_reset()
 {
 	SC_REQ	*tmp, *next;
 	int	sps;
 
-	ncr_aprint(sc, "Resetting SCSI-bus\n");
-
 	PID("scsi_reset1");
 	sps = splbio();
 	SET_5380_REG(NCR5380_ICOM, SC_A_RST);
-	delay(1);
+	delay(100);
 	SET_5380_REG(NCR5380_ICOM, 0);
+	scsi_clr_ipend();
 
 	/*
 	 * None of the jobs in the discon_q will ever be reconnected,
@@ -1703,6 +1718,25 @@ struct ncr_softc *sc;
 	}
 	splx(sps);
 	PID("scsi_reset2");
+
+	/*
+	 * Give the attached devices some time to handle the reset. This
+	 * value is arbitrary but should be relatively long.
+	 */
+	delay(100000);
+}
+
+static void
+scsi_reset_verbose(sc, why)
+struct ncr_softc *sc;
+const char	 *why;
+{
+	SC_REQ	*tmp, *next;
+	int	sps;
+
+	ncr_aprint(sc, "Resetting SCSI-bus (%s)\n", why);
+
+	scsi_reset();
 }
 
 /*
