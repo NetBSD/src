@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.12 1994/02/04 22:19:28 mycroft Exp $
+ *	$Id: locore.s,v 1.13 1994/02/04 22:55:23 mycroft Exp $
  */
 
 #include "assym.s"
@@ -552,8 +552,9 @@ Lstackok:
 	movl	d0,sp@-			| save status so jsr will not clobber
 	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
+	movl	sp,sp@-
 	jbsr	_profclock		| profclock(pc, ps)
-	addql	#8,sp			| pop params
+	lea	sp@(12),sp		| pop params
 #else
 	btst	#5,a1@(2)		| saved PS in user mode?
 	jne	Lttimer1		| no, go check timer1
