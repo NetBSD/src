@@ -14,7 +14,8 @@ cccp, cpp \- The GNU C-Compatible Compiler Preprocessor.
 .RB [ (\c
 .I value\c
 .BR ) ]\|]
-.RB "[\|" \-C "\|]" 
+.RB "[\|" \-C "\|]"
+.RB "[\|" \-CC "\|]"
 .RB "[\|" \-D \c
 .I name\c
 .RB [ =\c
@@ -202,6 +203,13 @@ and will be sent to a program which might be confused by the
 Do not discard comments: pass them through to the output file.
 Comments appearing in arguments of a macro call will be copied to the
 output before the expansion of the macro call.
+.TP
+.B \-CC
+In addition to not discarding comments, make sure that a comment that
+is part of the body of the macro definition, gets expanded in the location
+of the macro expansion. This is useful for 
+.B lint(1)
+comments.
 .TP
 .B \-traditional
 Try to imitate the behavior of old-fashioned C, as opposed to ANSI C.
