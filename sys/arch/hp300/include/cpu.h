@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1996/09/11 00:17:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1996/10/07 06:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,8 +208,18 @@ extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	char *intiobase, *intiolimit;
 extern	void (*vectab[]) __P((void));
 
+struct	frame;
+
+/* locore.s functions */
 void	doboot __P((void))
 	__attribute__((__noreturn__));
+void	ecacheon __P((void));
+void	ecacheoff __P((void));
+
+/* machdep.c functions */
+int	badaddr __P((caddr_t));
+int	badbaddr __P((caddr_t));
+void	regdump __P((struct frame *, int));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
