@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.28 1999/11/03 23:07:10 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.29 1999/11/04 00:24:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -4098,7 +4098,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * particularly care; the MII code just likes to
 			 * search the whole thing anyhow.
 			 */
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, tm->tm_phyno);
 
 			/*
 			 * Now, search for the PHY we hopefully just
@@ -4362,7 +4363,8 @@ tlp_sio_mii_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -4409,7 +4411,8 @@ tlp_pnic_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* XXX What about AUI/BNC support? */
 		printf("%s: ", sc->sc_dev.dv_xname);
@@ -4817,7 +4820,8 @@ tlp_pmac_tmsw_init(sc)
 	    tlp_mediastatus);
 	if (sc->sc_chip == TULIP_CHIP_MX98713 ||
 	    sc->sc_chip == TULIP_CHIP_MX98713A) {
-		mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+		mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+		    MII_PHY_ANY, MII_OFFSET_ANY);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL) {
 			sc->sc_flags |= TULIPF_HAS_MII;
 			sc->sc_tick = tlp_mii_tick;
@@ -4884,7 +4888,8 @@ tlp_al981_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
