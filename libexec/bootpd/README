@@ -1,4 +1,19 @@
-This is a port of bootpd (CMU version 2.2a) to NetBSD-current.
+
+This is an enhanced version of the CMU BOOTP server which was derived
+from the original BOOTP server created by Bill Croft at Stanford.
+This version merges all the enhancements and bug-fixes from the
+NetBSD, Columbia, and other versions.
+
+If you have problems or questions about this version, send email to:
+	gwr@mc.com (Gordon W. Ross)
+
+For general questions about BOOTP, send email to the list:
+	bootp@andrew.cmu.edu
+You can subscribe to this mailing list by sending mail to:
+	bootp-request@andrew.cmu.edu
+(The body of the message should contain: "Add <your-address>")
+
+[ From the NetBSD README file: ]
 
 BOOTPD is a useful adjunct to the nfs diskless boot EPROM code.
 
@@ -7,39 +22,7 @@ are to use RARP protocol, or BOOTP protocol. BOOTP is more flexible;
 it allows additional items of information to be returned to the
 booting client; it also supports booting across gateways.
 
-There are two parts to this package:
-
-- The bootpd sources to be compiled and installed.
-
-- A patch to etc/services and etc/inetd.conf to define the bootpd
-network service names and to define the bootpd task to inetd. These
-items are in the PATCH file.
-
-If you have problems or questions about this port, send me email at
-mckim@lerc.nasa.gov
-
-- Jim McKim
-
-enclosed below is the original README:
-
-
-This directory contains the source for the CMU BOOTP server.  The files
-include:
-
-README		This file
-bootpd.8	The manual page
-bootp.h		The protocol header file
-bootpd.h	The server header file
-bootpd.c	The main server module
-readfile.c	The configuration file-reading routines
-hash.h		The hash table header file
-hash.c		The hash table module
-Version.c	The version module
-newvers.sh	A shell script to generate new version numbers
-Makefile	The makefile
-bootptab	An example database file for the server
-gmods		Text describing optional gateway modifications
-
+[ From the CMU README file: ]
 
 Notes:
 1) BOOTP was originally designed and implemented by Bill Croft at Stanford.
@@ -53,13 +36,16 @@ Notes:
    should compile without the -DSYSLOG switch.
 
 3) You must update your /etc/services file to contain the following two lines:
-    bootps		67/udp				# bootp server
-    bootpc		68/udp				# bootp client
+	bootps		67/udp		bootp		# BOOTP Server
+	bootpc		68/udp				# BOOTP Client
 
-4) The code and the bootptab should be reasonably well commented.  If you 
-   have any questions, just let us know.
+4) Edit the bootptab.  It has some explanitory comments, and there
+   is a manual entry describing its format (bootptab.5)
+   If you have any questions, just let us know.
 
 Construction:
+    [ See the file Installation which is more up-to-date. -gwr ]
+
     Make sure all of the files exist first.  If anything is missing,
     please contact either Walt Wimer or Drew Perkins by E-mail or phone.
     Addresses and phone numbers are listed below.
@@ -74,7 +60,9 @@ Construction:
     Type 'make install'.  This should put all of the files in the right place.
 
     Edit your /etc/rc.local or /etc/inetd.conf file to start up bootpd upon
-    reboot.
+    reboot.  The following is a sample /etc/inetd.conf entry:
+	# BOOTP server
+	bootps dgram udp wait root /usr/etc/bootpd bootpd -i
 
 Care and feeding:
     If you change the interface cards on your host or add new hosts you will
@@ -100,3 +88,46 @@ ww0n@andrew.cmu.edu		ddp@andrew.cmu.edu
 4910 Forbes Ave
 Pittsburgh, PA  15213
 
+[ Contents description by file: ]
+
+Announce*	Text of release announcements
+Installation	Instructions for building and installing
+Makefile*	for "make"
+README		This file
+bootp.h		The protocol header file
+bootpd.8	Manual page for bootpd, boopgw
+bootpd.c	BOOTP server main module
+bootpd.h	 header for above (and others)
+bootpef.8	Manual page for bootpef
+bootpef.c	BOOTP extension file compiler
+bootpgw.c	BOOTP gateway main module
+bootptab.5	A manual describing the bootptab format
+bootptab.cmu	A sample database file for the server
+bootptab.mcs	Another sample from <gwr@mc.com>
+bootptest.8	Manual page for bootptest
+bootptest.c	BOOTP test program (fake client)
+bootptest.h	 header for above
+dovend.c	Vendor Option builder (for bootpd, bootpef)
+dovend.h	 header for above
+dumptab.c	Implements debugging dump for bootpd
+getether.c	For bootptest (not used yet)
+getif.c		Get network interface info.
+getif.h		 header for above
+hash.c		The hash table module
+hash.h		 header for above
+hwaddr.c	Hardware address support
+hwaddr.h	 header for above
+lookup.c	Internet Protocol address lookup
+lookup.h	 header for above
+patchlevel.h	Holds version numbers
+print-bootp.c	Prints BOOTP packets (taken from BSD tcpdump)
+readfile.c	The configuration file-reading routines
+readfile.h	 header for above
+report.c	Does syslog-style messages
+report.h	 header for above
+strerror.c	Library errno-to-string (for systems lacking it)
+syslog.conf	Sample config file for syslogd(8)
+syslog.h	For systems that lack syslog(3)
+try*.c		Test programs (for debugging)
+tzone.c		Get timezone offset
+tzone.h		 header for above

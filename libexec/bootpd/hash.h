@@ -1,5 +1,6 @@
-#ifndef _BLURB_
-#define _BLURB_
+#ifndef	HASH_H
+#define HASH_H
+/* hash.h */
 /************************************************************************
           Copyright 1988, 1991 by Carnegie Mellon University
 
@@ -21,8 +22,6 @@ PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
-#endif /* _BLURB_ */
-
 
 /*
  * Generalized hash table ADT
@@ -91,10 +90,6 @@ SOFTWARE.
  */
 
 
-#ifndef __HASHXYZ973__
-
-#define __HASHXYZ973__
-
 /*
  * Define "hash_datum" as a universal data type
  */
@@ -124,14 +119,40 @@ struct hash_tblstruct {
     hash_member	*table[1];		/* Dynamically extended */
 };
 
-extern hash_tbl	  *hash_Init();
-extern void	   hash_Reset();
-extern unsigned	   hash_HashFunction();
-extern int	   hash_Exists();
-extern int	   hash_Insert();
-extern int	   hash_Delete();
-extern hash_datum *hash_Lookup();
-extern hash_datum *hash_FirstEntry();
-extern hash_datum *hash_NextEntry();
-
+/* ANSI function prototypes or empty arg list? */
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
 #endif
+
+typedef int (*hash_cmpfp) P((hash_datum *, hash_datum *));
+typedef void (*hash_freefp) P((hash_datum *));
+
+extern hash_tbl	  *hash_Init P((u_int tablesize));
+
+extern void	   hash_Reset P((hash_tbl *tbl, hash_freefp));
+
+extern unsigned	   hash_HashFunction P((u_char *str, u_int len));
+
+extern int	   hash_Exists P((hash_tbl *, u_int code,
+				  hash_cmpfp, hash_datum *key));
+
+extern int	   hash_Insert P((hash_tbl *, u_int code,
+				  hash_cmpfp, hash_datum *key,
+				  hash_datum *element));
+
+extern int	   hash_Delete P((hash_tbl *, u_int code,
+				  hash_cmpfp, hash_datum *key,
+				  hash_freefp));
+
+extern hash_datum *hash_Lookup P((hash_tbl *, u_int code,
+				  hash_cmpfp, hash_datum *key));
+
+extern hash_datum *hash_FirstEntry P((hash_tbl *));
+
+extern hash_datum *hash_NextEntry P((hash_tbl *));
+
+#undef P
+
+#endif	/* HASH_H */
