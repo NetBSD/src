@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.34 1997/11/11 21:10:50 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.35 1997/12/10 01:58:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -76,6 +76,8 @@ int	tcp_do_rfc1323 = 1;
 #define	TCBHASHSIZE	128
 #endif
 int	tcbhashsize = TCBHASHSIZE;
+
+int	tcp_freeq __P((struct tcpcb *));
 
 /*
  * Tcp initialization
@@ -281,7 +283,6 @@ struct tcpcb *
 tcp_close(tp)
 	register struct tcpcb *tp;
 {
-	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
 #ifdef RTV_RTT
@@ -355,11 +356,8 @@ tcp_close(tp)
 	}
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
-	while ((qe = tp->segq.lh_first) != NULL) {
-		LIST_REMOVE(qe, ipqe_q);
-		m_freem(qe->ipqe_m);
-		FREE(qe, M_IPQ);
-	}
+	(void) tcp_freeq(tp);
+
 	if (tp->t_template)
 		FREE(tp->t_template, M_MBUF);
 	free(tp, M_PCB);
@@ -370,10 +368,43 @@ tcp_close(tp)
 	return ((struct tcpcb *)0);
 }
 
+int
+tcp_freeq(tp)
+	struct tcpcb *tp;
+{
+	register struct ipqent *qe;
+	int rv = 0;
+
+	while ((qe = tp->segq.lh_first) != NULL) {
+		LIST_REMOVE(qe, ipqe_q);
+		m_freem(qe->ipqe_m);
+		FREE(qe, M_IPQ);
+		rv = 1;
+	}
+	return (rv);
+}
+
+/*
+ * Protocol drain routine.  Called when memory is in short supply.
+ */
 void
 tcp_drain()
 {
+	register struct inpcb *inp;
+	register struct tcpcb *tp;
 
+	/*
+	 * Free the sequence queue of all TCP connections.
+	 */
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp)						/* XXX */
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
+	    inp = inp->inp_queue.cqe_next) {
+		if ((tp = intotcpcb(inp)) != NULL) {
+			if (tcp_freeq(tp))
+				tcpstat.tcps_connsdrained++;
+		}
+	}
 }
 
 /*
