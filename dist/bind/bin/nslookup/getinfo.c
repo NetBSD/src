@@ -1,4 +1,4 @@
-/*	$NetBSD: getinfo.c,v 1.1.1.1 1999/11/20 18:54:02 veego Exp $	*/
+/*	$NetBSD: getinfo.c,v 1.2 1999/11/20 20:03:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -321,7 +321,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->name = Calloc(1, s);
 		    memcpy(hostPtr->name, bp, s);
 		}
-		bp += (((u_int32_t)bp) % sizeof(align));
+		bp += (((size_t)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (res.options & RES_DEBUG) {
