@@ -1,4 +1,4 @@
-.\"     $NetBSD: et.4,v 1.11 2001/09/11 00:08:33 wiz Exp $
+.\"     $NetBSD: et.4,v 1.12 2002/01/15 01:29:43 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Cd "et0 at vme0"
 .Sh DESCRIPTION
 The
-.Nm ""
+.Nm
 device driver supports VME graphics cards based on the Tseng ET4000 chipset.
 It supports the minimal ioctl's needed to run X11.  The 8Kb control registers
 are mapped from offset 0x0 to offset 0x1fff and the 1MB frame buffer is mapped
@@ -104,4 +104,3 @@ clock are:
 .An Julian Coleman
 .Sh BUGS
 The driver does not support a text mode, so cannot be used as a console.
-
