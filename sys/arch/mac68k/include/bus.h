@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1998/08/16 05:36:17 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -209,7 +209,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -223,7 +223,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
@@ -251,7 +251,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -265,7 +265,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -279,7 +279,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
@@ -328,7 +328,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -342,7 +342,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -356,7 +356,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
@@ -384,7 +384,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -398,7 +398,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
@@ -412,7 +412,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
 		    "a0","a1","d0");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
@@ -440,7 +440,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
 	(void) t;							\
@@ -454,7 +454,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
 	(void) t;							\
@@ -468,7 +468,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8						\
@@ -496,7 +496,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
 	(void) t;							\
@@ -510,7 +510,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
 	(void) t;							\
@@ -524,7 +524,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
 		    "a0","d0","d1");					\
-} while (0);
+} while (0)
 
 #if 0	/* Cause a link error for bus_space_set_region_8 */
 #define	bus_space_set_region_8						\
