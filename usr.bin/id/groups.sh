@@ -31,7 +31,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)groups.sh	8.1 (Berkeley) 6/6/93
+#	from: @(#)groups.sh	8.1 (Berkeley) 6/6/93
+#	$Id: groups.sh,v 1.2 1994/05/05 23:24:40 cgd Exp $
 #
 
 id -Gn $*
