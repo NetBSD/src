@@ -21,56 +21,50 @@ file	arch/i386/isa/clock.c		clock timer device-driver
 
 device	npx at isa
 file	arch/i386/isa/npx.c		npx device-driver needs-flag
-#device	dcfclk at isa
-#file	arch/i386/isa/dcfclk.c		dcfclk device-driver
+device	dcfclk at isa
+file	arch/i386/isa/dcfclk.c		dcfclk device-driver needs-flag
 
 
 device	com at isa: tty
 file	arch/i386/isa/com.c		com device-driver needs-count
 device	pc at isa: tty
-file	arch/i386/isa/pccons.c		pc device-driver
+file	arch/i386/isa/pccons.c		pc device-driver needs-count
 device	spkr at isa: tty
-file	arch/i386/isa/spkr.c		speaker device-driver
+file	arch/i386/isa/spkr.c		speaker device-driver needs-flag
 
 
-#device	ec at isa: ether, ifnet
-#file	arch/i386/isa/if_ec.c		ec device-driver
 device	ed at isa: ether, ifnet
 file	arch/i386/isa/if_ed.c		ed device-driver
 #device	hp at isa: ether, ifnet
 #file	arch/i386/isa/if_hp.c		hp device-driver
 device	is at isa: ether, ifnet
 file	arch/i386/isa/if_is.c		is device-driver
-#device	ne at isa: ether, ifnet
-#file	arch/i386/isa/if_ne.c		ne device-driver
-#device	we at isa: ether, ifnet
-#file	arch/i386/isa/if_we.c		we device-driver
 
 
-device	lms at isa: tty
-file	arch/i386/isa/lms.c		lms device-driver
-device	mms at isa: tty
-file	arch/i386/isa/mms.c		mms device-driver
-device	pms at isa: tty
-file	arch/i386/isa/pms.c		pms device-driver
+device	lms at isa
+file	arch/i386/isa/lms.c		lms device-driver needs-flag
+device	mms at isa
+file	arch/i386/isa/mms.c		mms device-driver needs-flag
+device	pms at isa
+file	arch/i386/isa/pms.c		pms device-driver needs-flag
 
 
-device	lpt at isa: tty
-file	arch/i386/isa/lpt.c		lpt device-driver
+device	lpt at isa
+file	arch/i386/isa/lpt.c		lpt device-driver needs-flag
 
 
 device	fdc at isa {drive = -1}
 device	fd at fdc: disk
-file	arch/i386/isa/fd.c		fdc device-driver
+file	arch/i386/isa/fd.c		fdc device-driver needs-flag
 major	{fd = 2}
 
 device	wdc at isa {drive = -1}
 device	wd at wdc: disk
-file	arch/i386/isa/wd.c		wdc device-driver
+file	arch/i386/isa/wd.c		wdc device-driver needs-flag
 major	{wd = 0}
 
 device	wt at isa: tape
-file	arch/i386/isa/wt.c		wt device-driver
+file	arch/i386/isa/wt.c		wt device-driver needs-flag
 major	{wt = 3}
 
 
@@ -90,15 +84,15 @@ file	arch/i386/isa/wd7000.c		wds device-driver
 device	tg at scsi {drive = -1}
 
 device	cd at tg: disk
-file	scsi/cd.c			cd device-driver
+file	scsi/cd.c			cd device-driver needs-flag
 major	{cd = 6}
 device	ch at tg: disk
-file	scsi/ch.c			ch device-driver
+file	scsi/ch.c			ch device-driver needs-flag
 device	sd at tg: disk
-file	scsi/sd.c			sd device-driver
+file	scsi/sd.c			sd device-driver needs-flag
 major	{sd = 4}
 device	st at tg: tape
-file	scsi/st.c			st device-driver
+file	scsi/st.c			st device-driver needs-flag
 major	{st = 5}
 
 
