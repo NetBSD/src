@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2000/09/13 15:00:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2000/09/15 08:50:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,7 +134,7 @@ int	safepri = PSL_LOWIPL;
 #define	ETHER_DATA_BUFF_PAGES	4
 #endif
 u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
-u_long	myea;
+u_char	mvme_ea[6];
 
 extern	u_int lowram;
 extern	short exframesize[];
@@ -1193,21 +1193,4 @@ cpu_exec_aout_makecmds(p, epp)
     struct exec_package *epp;
 {
     return ENOEXEC;
-}
-
-void
-myetheraddr(ether)
-	u_char *ether;
-{
-	int e = myea;
-
-	ether[0] = 0x08;
-	ether[1] = 0x00;
-	ether[2] = 0x3e;
-	e = e >> 8;
-	ether[5] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[4] = (u_char)(e & 0xff);
-	e = e >> 8;
-	ether[3] = (u_char)(e & 0x0f) | 0x20;
 }

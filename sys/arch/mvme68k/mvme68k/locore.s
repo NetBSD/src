@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 2000/09/06 19:51:44 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.65 2000/09/15 08:50:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,8 +193,17 @@ ASENTRY_NOPROFILE(start)
 	/* XXXCDC SHUTUP 147 CALL */
 
 	/* Save our ethernet address */
-	RELOC(myea, a0)
-	movl	0xfffe0778,a0@		| XXXCDC -- HARDWIRED HEX
+	RELOC(mvme_ea, a0)
+	lea	0xfffe0778,a1		| XXXCDC -- HARDWIRED HEX
+	movb	#0x08,a0@+
+	clrb	a0@+
+	movb	#0x3e,a0@+
+	movql	#0x0f,d0
+	andb	a1@+,d0
+	orb	#0x20,d0
+	movb	d0,a0@+
+	movb	a1@+,a0@+
+	movb	a1@,a0@
 
 	/*
 	 * Fix up the physical addresses of the MVME147's onboard
@@ -369,10 +378,14 @@ Lmemcquery:
 
 Lis16x_common:
 	/* Save our ethernet address */
-	movel	0xfffc1f2e,d0
-	lsll	#8,d0
-	RELOC(myea, a0)
-	movl	d0,a0@
+	RELOC(mvme_ea, a0)
+	lea	0xfffc1f2c,a1
+	movb	a1@+,a0@+
+	movb	a1@+,a0@+
+	movb	a1@+,a0@+
+	movb	a1@+,a0@+
+	movb	a1@+,a0@+
+	movb	a1@,a0@
 
 	/*
 	 * Fix up the physical addresses of the MVME167's onboard
