@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.23 2004/03/24 07:55:01 junyoung Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.23 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -71,11 +71,11 @@ int uvmhist_print_enabled = 1;
  */
 
 #ifdef UVMHIST
-void uvmhist_dump __P((struct uvm_history *));
-void uvm_hist __P((u_int32_t));
-static void uvmhist_dump_histories __P((struct uvm_history *[]));
+void uvmhist_dump(struct uvm_history *);
+void uvm_hist(u_int32_t);
+static void uvmhist_dump_histories(struct uvm_history *[]);
 #endif
-void uvmcnt_dump __P((void));
+void uvmcnt_dump(void);
 
 
 #ifdef UVMHIST

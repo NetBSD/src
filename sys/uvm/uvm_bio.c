@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.30 2004/03/05 20:44:01 dbj Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.31 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.30 2004/03/05 20:44:01 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.31 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.30 2004/03/05 20:44:01 dbj Exp $");
  * local functions
  */
 
-int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t, struct vm_page **, int,
-    int, vm_fault_t, vm_prot_t, int));
-struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
+int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **, int,
+    int, vm_fault_t, vm_prot_t, int);
+struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 
 /*
  * local data structues

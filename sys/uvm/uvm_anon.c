@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.27 2004/01/06 15:56:49 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.28 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.27 2004/01/06 15:56:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.28 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -65,7 +65,7 @@ struct uvm_anonblock {
 static LIST_HEAD(anonlist, uvm_anonblock) anonblock_list;
 
 
-static boolean_t anon_pagein __P((struct vm_anon *));
+static boolean_t anon_pagein(struct vm_anon *);
 
 
 /*

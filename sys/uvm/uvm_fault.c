@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.86 2004/03/02 11:43:44 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.87 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.86 2004/03/02 11:43:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.87 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -179,8 +179,8 @@ static struct uvm_advice uvmadvice[] = {
  * private prototypes
  */
 
-static void uvmfault_amapcopy __P((struct uvm_faultinfo *));
-static __inline void uvmfault_anonflush __P((struct vm_anon **, int));
+static void uvmfault_amapcopy(struct uvm_faultinfo *);
+static __inline void uvmfault_anonflush(struct vm_anon **, int);
 
 /*
  * inline functions

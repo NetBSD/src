@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.58 2004/01/30 11:32:16 tls Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.59 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.58 2004/01/30 11:32:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -99,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.58 2004/01/30 11:32:16 tls Exp $")
  * local prototypes
  */
 
-void		uvmpd_scan __P((void));
-void		uvmpd_scan_inactive __P((struct pglist *));
-void		uvmpd_tune __P((void));
+void		uvmpd_scan(void);
+void		uvmpd_scan_inactive(struct pglist *);
+void		uvmpd_tune(void);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.61 2003/09/18 13:48:05 drochner Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.62 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.61 2003/09/18 13:48:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.62 2004/03/24 07:55:01 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -176,14 +176,14 @@ MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
  */
 
 static struct uao_swhash_elt *uao_find_swhash_elt
-    __P((struct uvm_aobj *, int, boolean_t));
+    (struct uvm_aobj *, int, boolean_t);
 
-static void	uao_free __P((struct uvm_aobj *));
-static int	uao_get __P((struct uvm_object *, voff_t, struct vm_page **,
-		    int *, int, vm_prot_t, int, int));
-static boolean_t uao_put __P((struct uvm_object *, voff_t, voff_t, int));
-static boolean_t uao_pagein __P((struct uvm_aobj *, int, int));
-static boolean_t uao_pagein_page __P((struct uvm_aobj *, int));
+static void	uao_free(struct uvm_aobj *);
+static int	uao_get(struct uvm_object *, voff_t, struct vm_page **,
+		    int *, int, vm_prot_t, int, int);
+static boolean_t uao_put(struct uvm_object *, voff_t, voff_t, int);
+static boolean_t uao_pagein(struct uvm_aobj *, int, int);
+static boolean_t uao_pagein_page(struct uvm_aobj *, int);
 
 /*
  * aobj_pager
