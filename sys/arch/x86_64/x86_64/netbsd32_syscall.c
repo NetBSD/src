@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.3 2002/06/04 11:12:18 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.4 2002/06/05 22:50:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ netbsd32_syscall_fancy(frame)
 	if (KTRPOINT(p, KTR_SYSCALL)) {
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
-		ktrsyscall(p, code, argsize, args64);
+		ktrsyscall(p, code, argsize << 1, args64);
 	}
 #endif /* KTRACE */
 
