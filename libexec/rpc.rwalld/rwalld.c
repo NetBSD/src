@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.5 1995/01/13 18:51:39 mycroft Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.6 1995/01/13 19:18:08 mycroft Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -36,6 +36,7 @@ static char rcsid[] = "$Id: rwalld.c,v 1.5 1995/01/13 18:51:39 mycroft Exp $";
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -168,7 +169,7 @@ wallprog_1(rqstp, transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
-		log(LOG_ERR, "unable to free arguments");
+		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
 leave:
