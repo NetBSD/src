@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.23 2004/04/17 15:17:33 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.24 2004/04/25 22:18:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -126,10 +126,10 @@ int	donice __P((struct proc *, struct proc *, int));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getpriority __P((int, int));
+int	getpriority __P((int, id_t));
 int	getrlimit __P((int, struct rlimit *));
 int	getrusage __P((int, struct rusage *));
-int	setpriority __P((int, int, int));
+int	setpriority __P((int, id_t, int));
 int	setrlimit __P((int, const struct rlimit *));
 __END_DECLS
 
