@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1997/01/31 02:02:56 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1997/02/05 17:53:52 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -249,7 +249,7 @@ makebootdev(cp)
 		else
 			part = 0;
 		cp += 2;
-		for (majdev = 0; majdev < sizeof(pmax_nam2blk)/sizeof(pmax_nam2blk[0]);
+		for (majdev = 0; pmax_nam2blk[majdev].d_name != NULL;
 		    majdev++) {
 			if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
 			    cp[1] == pmax_nam2blk[majdev].d_name[1]) {
@@ -261,7 +261,7 @@ makebootdev(cp)
 		}
 		goto defdev;
 	}
-	for (majdev = 0; majdev < sizeof(pmax_nam2blk)/sizeof(pmax_nam2blk[0]); majdev++)
+	for (majdev = 0; pmax_nam2blk[majdev].d_name != NULL; majdev++)
 		if (cp[0] == pmax_nam2blk[majdev].d_name[0] &&
 		    cp[1] == pmax_nam2blk[majdev].d_name[1] &&
 		    cp[2] == '(')
