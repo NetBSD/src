@@ -20,7 +20,10 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
  * HISTORY
  * $Log: ns32k-tdep.c,v $
- * Revision 1.1  1994/04/28 17:11:31  phil
+ * Revision 1.2  1994/05/24 23:58:24  phil
+ * Follow changes to sys/arch/pc532/include/reg.h.
+ *
+ * Revision 1.1  1994/04/28  17:11:31  phil
  * Adding ns32k support.
  *
  * Revision 2.1.1.1  93/04/16  16:35:44  pds
@@ -78,9 +81,9 @@ isa_NAN(p, len)
 /* this table must line up with REGISTER_NAMES in tm-ns32k.h */
 static int regmap[] = 
 {
-  R0, R1, R2, R3, R4, R5, R6, R7,
+  REG_R0, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7,
   0, 0, 0, 0, 0, 0, 0, 0,
-  SP, FP, PC, PSR,
+  REG_SP, REG_FP, REG_PC, REG_PSR,
   0, 0, 0, 0, 0
 };
 
