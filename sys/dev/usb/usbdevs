@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.21 1999/01/26 22:21:55 augustss Exp $
+$NetBSD: usbdevs,v 1.22 1999/03/29 17:23:45 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix
 vendor ACER		0x04a5	Acer Peripherals
 vendor CYPRESS		0x04b4	Cypress Semiconductor
+vendor EPSON		0x04b8	Epson
 vendor 3COM		0x04c1	3Com
 vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
@@ -122,6 +123,9 @@ product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
 /* Cypress Semiconduuctor products */
 product CYPRESS MOUSE		0x0001	mouse
+
+/* Epson products */
+product EPSON PRINTER3		0x0003	printer adapter
 
 /* 3Com products */
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice USB Modem
