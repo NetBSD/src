@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.2.2.5 2002/12/11 06:00:50 thorpej Exp $
+#	$NetBSD: majors.i386,v 1.2.2.6 2002/12/19 00:33:47 thorpej Exp $
 #
 # Device majors for i386
 #
@@ -95,3 +95,4 @@ device-major	cgd		char 93  block 21	cgd
 device-major	verifiedexec	char 94			verifiedexec
 device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
+device-major	twe		char 97			twe

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.29 2002/12/17 02:08:46 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.30 2002/12/19 00:35:07 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.29 2002/12/17 02:08:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.30 2002/12/19 00:35:07 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -389,26 +389,33 @@ static const struct pridtab cputab[] = {
 	  MIPS64_FLAGS,				"20Kc"			},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1 core)"	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1000 (Rev 1 core)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1000, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2 core)" 	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1000 (Rev 2 core)" 	},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 1 core)"	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 1 core)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 2 core)" 	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 2 core)" 	},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 1 core)"	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1100 (Rev 1 core)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 2 core)" 	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1100 (Rev 2 core)" 	},
 
 	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, -1, 0,
-	  MIPS64_FLAGS | CPU_MIPS_HAVE_SPECIAL_CCA | \
-	  (5 << CPU_MIPS_CACHED_CCA_SHIFT),	"SB1"			},
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT |
+	  CPU_MIPS_HAVE_SPECIAL_CCA | (5 << CPU_MIPS_CACHED_CCA_SHIFT),
+						"SB1"			},
 
-	{ 0, 0, 0,				0, 0, 64,
+	{ 0, 0, 0,				0, 0, 0,
 	  0,					NULL			}
 };
 

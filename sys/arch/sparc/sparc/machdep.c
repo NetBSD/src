@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.19 2002/12/11 06:12:15 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.20 2002/12/19 00:38:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1180,7 +1180,7 @@ dumpsys()
 					VM_PROT_READ);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
 				break;
@@ -1751,7 +1751,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	cpuinfo.cache_flush(buf, buflen);
+	cache_flush(buf, buflen);
 
 	if ((map->_dm_flags & BUS_DMA_24BIT) == 0) {
 		/*

@@ -1,11 +1,11 @@
-/*	$NetBSD: darwin_machdep.c,v 1.1.2.3 2002/12/19 00:33:47 thorpej Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.1.6.2 2002/12/19 00:33:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Christos Zoulas
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,71 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.1.2.3 2002/12/19 00:33:47 thorpej Exp $");
+#ifndef	_DARWIN_MACHDEP_H_
+#define	_DARWIN_MACHDEP_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/signal.h>
-#include <sys/mount.h>
+void darwin_fork_child_return(void *);
 
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_vm.h>
+struct darwin_i386_sigcontext {
+	int		sc_onstack;
+	int		sc_mask;
+	unsigned int	sc_eax;
+	unsigned int	sc_ebx;
+	unsigned int	sc_ecx;
+	unsigned int	sc_edx;
+	unsigned int	sc_edi;
+	unsigned int	sc_esi;
+	unsigned int	sc_ebp;
+	unsigned int	sc_esp;
+	unsigned int	sc_ss;
+	unsigned int	sc_eflags;
+	unsigned int	sc_eip;
+	unsigned int	sc_cs;
+	unsigned int	sc_ds;
+	unsigned int	sc_es;
+	unsigned int	sc_fs;
+	unsigned int	sc_gs;
+};
 
-#include <compat/darwin/darwin_signal.h>
-#include <compat/darwin/darwin_syscallargs.h>
 
-#include <machine/darwin_machdep.h>
+struct darwin_sigframe {
+	int	retaddr;
+	sig_t	catcher;
+	int	sigstyle;
+	int	sig;
+	int	code;
+	struct darwin_i386_sigcontext * scp;
+};
 
-void
-darwin_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask; 
-	u_long code;
-{
-	printf("darwin_sendsig: sig = %d\n", sig);
-	return;
-}
-
-int
-darwin_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-
-	struct darwin_sys_sigreturn_args /* {
-		syscallarg(struct darwin_ucontext *) uctx;
-	} */ *uap = v;
-
-	printf("darwin_sys_sigreturn: uctx = %p\n", SCARG(uap, uctx));
-
-	return 0;
-}
-
-/*
- * Set the return value for darwin binaries after a fork(). The userland
- * libSystem stub expects the child pid to be in retval[0] for the parent
- * and the child as well. It will perform the required operation to transform 
- * it in the POSIXly correct value: zero for the child.
- * We also need to skip the next instruction because the system call
- * was successful (We also do this in the syscall handler, Darwin 
- * works that way).
- */
-void
-darwin_fork_child_return(arg)
-	void *arg;
-{
-#ifdef notyet
-	struct proc * const p = arg;
-	struct trapframe * const tf = trapframe(p);
-
-	child_return(arg);
-
-	tf->fixreg[FIRSTARG] = p->p_pid;
-	tf->srr0 +=4;
-#else
-	printf("darwin_fork_child_return: proc = %p\n", arg);
-#endif
-}
+#endif /* !_DARWIN_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.1.8.5 2002/12/11 06:11:07 thorpej Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.1.8.6 2002/12/19 00:35:07 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ mipsNN_icache_sync_all_16(void)
 	 * worry about the N different "ways".
 	 */
 
-	mips_dcache_wbinv_all();
+	mips_intern_dcache_wbinv_all();
 
 	while (va < eva) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -143,7 +143,7 @@ mipsNN_icache_sync_all_32(void)
 	 * worry about the N different "ways".
 	 */
 
-	mips_dcache_wbinv_all();
+	mips_intern_dcache_wbinv_all();
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
@@ -161,7 +161,7 @@ mipsNN_icache_sync_range_16(vaddr_t va, vsize_t size)
 	eva = round_line16(va + size);
 	va = trunc_line16(va);
 
-	mips_dcache_wb_range(va, (eva - va));
+	mips_intern_dcache_wb_range(va, (eva - va));
 
 	while ((eva - va) >= (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -184,7 +184,7 @@ mipsNN_icache_sync_range_32(vaddr_t va, vsize_t size)
 	eva = round_line32(va + size);
 	va = trunc_line32(va);
 
-	mips_dcache_wb_range(va, (eva - va));
+	mips_intern_dcache_wb_range(va, (eva - va));
 
 	while ((eva - va) >= (32 * 32)) {
 		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
@@ -223,7 +223,7 @@ mipsNN_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 	stride = picache_stride;
 	loopcount = picache_loopcount;
 
-	mips_dcache_wbinv_range_index(va, (eva - va));
+	mips_intern_dcache_wbinv_range_index(va, (eva - va));
 
 	while ((eva - va) >= (8 * 16)) {
 		tmpva = va;
@@ -266,7 +266,7 @@ mipsNN_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	stride = picache_stride;
 	loopcount = picache_loopcount;
 
-	mips_dcache_wbinv_range_index(va, (eva - va));
+	mips_intern_dcache_wbinv_range_index(va, (eva - va));
 
 	while ((eva - va) >= (8 * 32)) {
 		tmpva = va;

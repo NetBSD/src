@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.15 2002/12/11 06:01:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.16 2002/12/19 00:33:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -357,6 +357,7 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf __P((void));
+int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));
 void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
 void	i386_proc0_tss_ldt_init __P((void));

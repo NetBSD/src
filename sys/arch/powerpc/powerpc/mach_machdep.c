@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.1.2.3 2002/12/11 06:11:45 thorpej Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.1.2.4 2002/12/19 00:35:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1.2.3 2002/12/11 06:11:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1.2.4 2002/12/19 00:35:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1.2.3 2002/12/11 06:11:45 thorpej
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
+#include <compat/mach/mach_thread.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
 #include <machine/vmparam.h>
+#include <machine/macho_machdep.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -99,7 +102,7 @@ mach_trap(frame)
 
 void
 mach_host_basic_info(info)
-    struct mach_host_basic_info *info;
+	struct mach_host_basic_info *info;
 {
 	/* XXX fill this  accurately */
 	info->max_cpus = 1; /* XXX */
@@ -107,4 +110,53 @@ mach_host_basic_info(info)
 	info->memory_size = (uvmexp.active + uvmexp.inactive) * PAGE_SIZE;
 	info->cpu_type = MACHO_CPU_TYPE_POWERPC;
 	info->cpu_subtype = (mfpvr() >> 16);
+}
+
+void
+mach_create_thread_child(arg)
+	void *arg;
+{
+	struct mach_create_thread_child_args *mctc;
+	struct proc *p;
+	struct trapframe *tf;
+	struct exec_macho_powerpc_thread_state *regs;
+
+	mctc = (struct mach_create_thread_child_args *)arg;
+
+	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
+		mctc->mctc_child_done = 1;
+		wakeup(&mctc->mctc_child_done);	
+		killproc(p, "mach_create_thread_child: unknown flavor");
+	}
+	
+	p = *mctc->mctc_proc;
+	tf = trapframe(p);
+	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
+
+	/* Security warning */
+	if ((regs->srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+		uprintf("mach_create_thread_child: PSL_USERSTATIC change\n");		
+	/* 
+	 * Call child return before setting the register context as it
+	 * affects R3, R4 and CR.
+	 */
+	child_return((void *)p);
+
+	/* Set requested register context */
+	tf->srr0 = regs->srr0;
+	tf->srr1 = ((regs->srr1 & ~PSL_USERSTATIC) | 
+	    (tf->srr1 & PSL_USERSTATIC));
+	memcpy(tf->fixreg, &regs->r0, 32 * sizeof(register_t));
+	tf->cr = regs->cr;
+	tf->xer = regs->xer;
+	tf->lr = regs->lr;
+	tf->ctr = regs->ctr;
+	/* XXX regs->mq ? (601 specific) */
+	tf->vrsave = regs->vrsave;
+
+	/* Wakeup the parent */
+	mctc->mctc_child_done = 1;
+	wakeup(&mctc->mctc_child_done);	
+
+	return;
 }

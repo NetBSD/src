@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.11 2002/12/11 06:12:10 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.12 2002/12/19 00:38:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -181,6 +181,7 @@ find_cpus()
 	 */
 	cpu_arch = 7;
 
+	/* On sun4 and sun4c we support only one CPU */
 	if (!CPU_ISSUN4M && !CPU_ISSUN4D)
 		return (1);
 
@@ -192,12 +193,6 @@ find_cpus()
 			continue;
 		if (n++ == 0)
 			cpu_arch = PROM_getpropint(node, "sparc-version", 7);
-	}
-
-	/* Switch to sparc v8 multiply/divide functions on v8 machines */
-	if (cpu_arch == 8) {
-		extern void sparc_v8_muldiv(void);
-		sparc_v8_muldiv();
 	}
 #endif /* SUN4M || SUN4D */
 	return (n);
@@ -265,6 +260,14 @@ bootstrap()
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
+
+#if defined(SUN4M) || defined(SUN4D)
+	/* Switch to sparc v8 multiply/divide functions on v8 machines */
+	if (cpu_arch == 8) {
+		extern void sparc_v8_muldiv(void);
+		sparc_v8_muldiv();
+	}
+#endif /* SUN4M || SUN4D */
 
 #ifndef DDB
 	/*

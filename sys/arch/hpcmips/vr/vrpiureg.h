@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiureg.h,v 1.2.10.1 2002/04/01 07:40:32 nathanw Exp $	*/
+/*	$NetBSD: vrpiureg.h,v 1.2.10.2 2002/12/19 00:31:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -150,6 +150,8 @@
 #define PIUPB_VALID		(1<<15)
 #define PIUPB_PADDATA_MASK	0x3FF
 #define PIUPB_PADDATA_MAX	0x3FF
+#define VRC4173PIUPB_PADDATA_MASK	0xFFF
+#define VRC4173PIUPB_PADDATA_MAX	0xFFF
 
 #define	PIUAB0_REG_W	(PIUB_REG_OFFSSET+0x10)	/* PIU A/D scan Buffer 0 reg */
 #define	PIUAB1_REG_W	(PIUB_REG_OFFSSET+0x12)	/* PIU A/D scan Buffer 1 reg */
@@ -158,3 +160,4 @@
 #define PIUAB(n)	(PIUAB0_REG_W+(n)*2)
 #define PIUAB_VALID		(1<<15)
 #define PIUAB_PADDATA_MASK	0x3FF
+#define VRC4173PIUAB_PADDATA_MASK	0xFFF

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.15 2002/12/11 06:12:19 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.16 2002/12/19 00:38:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -346,6 +346,22 @@ trap(type, psr, pc, tf)
 			return;
 		}
 #endif
+		if (type == T_UNIMPLFLUSH) {
+			/*
+			 * This should happen only on hypersparc.
+			 * It also is a rare event to get this trap
+			 * from kernel space. For now, just flush the
+			 * entire I-cache.
+			 */
+			(*cpuinfo.pure_vcache_flush)();
+#if defined(MULTIPROCESSOR)
+			/* Broadcast to other CPUs */
+			/* e.g. xcall(cpuinfo.pure_vcache_flush, 0, 0, 0, 0);*/
+#endif
+			ADVANCE;
+			return;
+		}
+
 		/*
 		 * Storing %fsr in cpu_attach will cause this trap
 		 * even though the fpu has been enabled, if and only
@@ -1339,8 +1355,10 @@ syscall(code, tf, pc)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(p);
 
-	if ((error = trace_enter(l, code, code, args.i, rval)) != 0)
+	if ((error = trace_enter(l, code, code, args.i, rval)) != 0) {
+		KERNEL_PROC_UNLOCK(p);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
