@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sendmail,v 1.4 2003/08/06 17:09:26 tron Exp $
+# $NetBSD: Makefile.sendmail,v 1.5 2003/10/22 06:04:03 lukem Exp $
 
 CFDIR?=		${.CURDIR}/..
 CHMOD=		chmod
@@ -11,6 +11,7 @@ RM=		rm -f
 .mc.cf:
 .else
 __makemc: .USE
+	${_MKTARGET_CREATE}
 .endif
 	${RM} $@
 	(cd ${CFDIR}/cf && \
