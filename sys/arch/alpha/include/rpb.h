@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.13 1997/09/23 23:17:51 mjacob Exp $ */
+/* $NetBSD: rpb.h,v 1.14 1998/01/12 07:07:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -344,7 +344,7 @@ struct mddt {
 						 * IMPLEMENTATION SPECIFIC
 						 */
 	u_int64_t	mddt_cluster_cnt;	/*  10: memory cluster count */
-	struct {
+	struct mddt_cluster {
 		vm_offset_t	mddt_pfn;	/*   0: starting PFN */
 		u_int64_t	mddt_pg_cnt;	/*   8: 8KB page count */
 		u_int64_t	mddt_pg_test;	/*  10: tested page count */
@@ -352,9 +352,10 @@ struct mddt {
 		vm_offset_t	mddt_p_bitaddr;	/*  20: bitmap phys addr */
 		int64_t		mddt_bit_cksum;	/*  28: bitmap checksum */
 
+#define	MDDT_NONVOLATILE		0x10	/* cluster is non-volatile */
 #define	MDDT_PALCODE			0x01	/* console and PAL only */
 #define	MDDT_SYSTEM			0x00	/* system software only */
-#define	MDDT_mbz	  0xfffffffffffffffe	/* 1:63 -- must be zero */
+#define	MDDT_mbz	  0xfffffffffffffffc	/* 2:63 -- must be zero */
 		int64_t		mddt_usage;	/*  30: bitmap permissions */
 	} mddt_clusters[1];			/* variable length array */
 };
