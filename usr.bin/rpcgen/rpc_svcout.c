@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.15 2002/01/31 19:36:49 tv Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.16 2002/02/05 22:41:47 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.15 2002/01/31 19:36:49 tv Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.16 2002/02/05 22:41:47 christos Exp $");
 #endif
 #endif
 
@@ -536,7 +536,7 @@ write_program(def, storage)
 		print_return("\t\t");
 		f_print(fout, "\t}\n");
 
-		f_print(fout, "\t(void) memset((char *)&%s, 0, sizeof (%s));\n", ARG, ARG);
+		f_print(fout, "\t(void) memset(&%s, 0, sizeof(%s));\n", ARG, ARG);
 		printif("getargs", TRANSP, "(caddr_t)&", ARG);
 		printerr("decode", TRANSP);
 		print_return("\t\t");
@@ -630,15 +630,15 @@ write_inetmost(infile)
 	f_print(fout, "\tint sock;\n");
 	f_print(fout, "\tint proto = 0;\n");
 	f_print(fout, "\tstruct sockaddr_in saddr;\n");
-	f_print(fout, "\tint asize = sizeof (saddr);\n");
+	f_print(fout, "\tsocklen_t asize = (socklen_t)sizeof(saddr);\n");
 	f_print(fout, "\n");
 	f_print(fout,
 	    "\tif (getsockname(0, (struct sockaddr *)&saddr, &asize) == 0) {\n");
-	f_print(fout, "\t\tint ssize = sizeof (int);\n\n");
+	f_print(fout, "\t\tsocklen_t ssize = (socklen_t)sizeof(int);\n\n");
 	f_print(fout, "\t\tif (saddr.sin_family != AF_INET)\n");
 	f_print(fout, "\t\t\texit(1);\n");
 	f_print(fout, "\t\tif (getsockopt(0, SOL_SOCKET, SO_TYPE,\n");
-	f_print(fout, "\t\t\t\t(char *)&_rpcfdtype, &ssize) == -1)\n");
+	f_print(fout, "\t\t\t\t(void *)&_rpcfdtype, &ssize) == -1)\n");
 	f_print(fout, "\t\t\texit(1);\n");
 	f_print(fout, "\t\tsock = 0;\n");
 	f_print(fout, "\t\t_rpcpmstart = 1;\n");
@@ -805,7 +805,7 @@ write_caller_func()
 
 	P("	prev = actual.sin_addr;\n\n");
 
-	P("	hp = gethostbyaddr((char *) &actual.sin_addr, sizeof(actual.sin_addr), AF_INET);\n");
+	P("	hp = gethostbyaddr((char *)&actual.sin_addr, sizeof(actual.sin_addr), AF_INET);\n");
 	P("	if (hp == NULL) {                       /* dummy one up */\n");
 	P("		extern char *inet_ntoa();\n");
 	P("		strcpy(cname, inet_ntoa(actual.sin_addr));\n");
