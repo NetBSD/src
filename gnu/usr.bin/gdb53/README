@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.2 2003/10/26 17:49:24 christos Exp $
+# $NetBSD: README,v 1.3 2003/10/27 00:57:04 wiz Exp $
 
 This note describes how to add support for gdb53 to a platform.
 
@@ -15,7 +15,7 @@ To make gdb work on your platform of choice you need to populate the files in
         cp arch/i386/defs.mk arch/<platform>
 
 3. Add coredump and netbsd thread support to init.c (we should fix the autoconf
-   stuff to do this automatically. At the declaration section on init.c add:
+   stuff to do this automatically). At the declaration section on init.c add:
 
 extern initialize_file_ftype _initialize_nbsd_thread;
 #ifdef USE_TUI
