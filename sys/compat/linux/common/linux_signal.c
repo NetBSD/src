@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.30 2000/08/23 17:02:18 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31 2001/01/18 20:28:27 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,7 +84,7 @@
 					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
 
 /* Note: linux_to_native_sig[] is in <arch>/linux_sigarray.c */
-int native_to_linux_sig[NSIG] = {
+const int native_to_linux_sig[NSIG] = {
 	0,
 	LINUX_SIGHUP,
 	LINUX_SIGINT,

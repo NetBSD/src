@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.24 2000/05/27 21:58:15 fvdl Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.25 2001/01/18 20:28:17 jdolecek Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -116,7 +116,7 @@ typedef enum {
 	AHC_BUS_MASK	= 0x0F00
 } ahc_chip;
 
-extern char *ahc_chip_names[];
+extern const char * const ahc_chip_names[];
 
 typedef enum {
 	AHC_FENONE	= 0x0000,

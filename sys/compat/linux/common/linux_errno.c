@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.c,v 1.9 1998/10/23 03:53:18 erh Exp $	*/
+/*	$NetBSD: linux_errno.c,v 1.10 2001/01/18 20:28:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  * This list is used to translate NetBSD errnos to linux errnos
  * when returning from a system call. (NetBSD system call->linux program)
  */
-int native_to_linux_errno[] = {
+const int native_to_linux_errno[] = {
 	0,
 	-LINUX_EPERM,
 	-LINUX_ENOENT,

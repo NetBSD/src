@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.11 2000/08/12 22:24:26 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.12 2001/01/18 20:28:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct real_voice {
 	u_int8_t op[4]; /* Operator offsets */
 };
 
-struct opl_voice voicetab[] = {
+const struct opl_voice voicetab[] = {
 /*       No    I/O offs	OP1	OP2	OP3   OP4	*/
 /*	---------------------------------------------	*/
 	{ 0,   OPL_L,	{0x00,	0x03,	0x08, 0x0b}},
@@ -275,7 +275,7 @@ opl_load_patch(sc, v)
 	struct opl_softc *sc;
 	int v;
 {
-	struct opl_operators *p = sc->voices[v].patch;
+	const struct opl_operators *p = sc->voices[v].patch;
 
 	opl_set_op_reg(sc, OPL_AM_VIB,          v, 0, p->ops[OO_CHARS+0]);
 	opl_set_op_reg(sc, OPL_AM_VIB,          v, 1, p->ops[OO_CHARS+1]);
@@ -390,7 +390,7 @@ oplsyn_reset(addr)
 	opl_reset(sc);
 }
 
-int8_t opl_volume_table[128] =
+const int8_t opl_volume_table[128] =
     {-64, -48, -40, -35, -32, -29, -27, -26,
      -24, -23, -21, -20, -19, -18, -18, -17,
      -16, -15, -15, -14, -13, -13, -12, -12,
@@ -439,7 +439,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
-	struct opl_operators *p;
+	const struct opl_operators *p;
 	u_int32_t block_fnum;
 	int mult;
 	int c_mult, m_mult;

@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.4 1999/10/05 03:29:22 itohy Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct opl_voice {
 	int voiceno;
 	int iooffs;
 	u_int8_t op[4];
-	struct opl_operators *patch;
+	const struct opl_operators *patch;
 	u_int8_t rB0;
 };
 
@@ -91,8 +91,8 @@ struct opl_operators {
 #define OPL_NINSTR 256
 
 #ifdef _KERNEL
-extern struct opl_operators opl2_instrs[];
-extern struct opl_operators opl3_instrs[];
+extern const struct opl_operators opl2_instrs[];
+extern const struct opl_operators opl3_instrs[];
 
 int	opl_find __P((struct opl_softc *));
 void	opl_attach __P((struct opl_softc *));

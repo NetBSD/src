@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.43 2000/11/12 19:50:47 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.44 2001/01/18 20:28:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.43 2000/11/12 19:50:47 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.44 2001/01/18 20:28:22 jdolecek Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -160,7 +160,7 @@ static	void	frsynclist __P((frentry_t *));
 /*
  * bit values for identifying presence of individual IP options
  */
-struct	optlist	ipopts[20] = {
+const struct	optlist	ipopts[20] = {
 	{ IPOPT_NOP,	0x000001 },
 	{ IPOPT_RR,	0x000002 },
 	{ IPOPT_ZSU,	0x000004 },
@@ -186,7 +186,7 @@ struct	optlist	ipopts[20] = {
 /*
  * bit values for identifying presence of individual IP security options
  */
-struct	optlist	secopt[8] = {
+const struct	optlist	secopt[8] = {
 	{ IPSO_CLASS_RES4,	0x01 },
 	{ IPSO_CLASS_TOPS,	0x02 },
 	{ IPSO_CLASS_SECR,	0x04 },
@@ -210,7 +210,7 @@ fr_info_t *fin;
 	u_short optmsk = 0, secmsk = 0, auth = 0;
 	int i, mv, ol, off, p, plen, v;
 	fr_ip_t *fi = &fin->fin_fi;
-	struct optlist *op;
+	const struct optlist *op;
 	u_char *s, opt;
 	tcphdr_t *tcp;
 
@@ -370,7 +370,7 @@ getports:
 			if (opt == (u_char)op->ol_val) {
 				optmsk |= op->ol_bit;
 				if (opt == IPOPT_SECURITY) {
-					struct optlist *sp;
+					const struct optlist *sp;
 					u_char	sec;
 					int j, m;
 

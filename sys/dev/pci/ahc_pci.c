@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.28 2000/12/28 22:59:11 sommerfeld Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.29 2001/01/18 20:28:15 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -180,11 +180,11 @@ static ahc_device_setup_t ahc_aha398XX_setup;
 struct ahc_pci_identity {
 	u_int64_t		 full_id;
 	u_int64_t		 id_mask;
-	char			*name;
+	const char		*name;
 	ahc_device_setup_t	*setup;
 };
 
-struct ahc_pci_identity ahc_pci_ident_table [] =
+const struct ahc_pci_identity ahc_pci_ident_table [] =
 {
 	/* aic7850 based controllers */
 	{
@@ -549,7 +549,7 @@ static const int ahc_num_pci_devs =
 #define		CACHESIZE	0x0000003f	/* only 5 bits */
 #define		LATTIME		0x0000ff00
 
-static struct ahc_pci_identity *ahc_find_pci_device(pcireg_t, pcireg_t);
+static const struct ahc_pci_identity *ahc_find_pci_device(pcireg_t, pcireg_t);
 static int ahc_ext_scbram_present(struct ahc_softc *ahc);
 static void ahc_ext_scbram_config(struct ahc_softc *ahc, int enable,
 				  int pcheck, int fast);
@@ -565,12 +565,12 @@ struct cfattach ahc_pci_ca = {
         sizeof(struct ahc_softc), ahc_pci_probe, ahc_pci_attach
 };
 
-static struct ahc_pci_identity *
+static const struct ahc_pci_identity *
 ahc_find_pci_device(id, subid)
 	pcireg_t id, subid;
 {
 	u_int64_t  full_id;
-	struct	   ahc_pci_identity *entry;
+	const struct	   ahc_pci_identity *entry;
 	u_int	   i;
 
 	full_id = ahc_compose_id(PCI_PRODUCT(id), PCI_VENDOR(id),
@@ -591,7 +591,7 @@ ahc_pci_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	struct	   ahc_pci_identity *entry;
+	const struct	   ahc_pci_identity *entry;
 	pcireg_t   subid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -605,7 +605,7 @@ ahc_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	struct		   ahc_pci_identity *entry;
+	const struct	   ahc_pci_identity *entry;
 	struct		   ahc_softc *ahc = (void *)self;
 	pcireg_t	   command;
 	ahc_chip	   ahc_t = AHC_NONE;

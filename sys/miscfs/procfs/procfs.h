@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.31 2001/01/17 00:09:07 fvdl Exp $	*/
+/*	$NetBSD: procfs.h,v 1.32 2001/01/18 20:28:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -123,7 +123,7 @@ struct vfs_namemap {
 };
 
 int vfs_getuserstr __P((struct uio *, char *, int *));
-vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
+const vfs_namemap_t *vfs_findname __P((const vfs_namemap_t *, const char *, int));
 
 #define PFIND(pid) ((pid) ? pfind(pid) : &proc0)
 int procfs_freevp __P((struct vnode *));

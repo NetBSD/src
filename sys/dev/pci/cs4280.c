@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.11 2001/01/15 23:25:39 perry Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.12 2001/01/18 20:28:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -171,7 +171,7 @@ int	cs4280_intr __P((void *));
 void	cs4280_reset __P((void *));
 int	cs4280_download_image __P((struct cs4280_softc *));
 
-int cs4280_download(struct cs4280_softc *, u_int32_t *, u_int32_t, u_int32_t);
+int cs4280_download(struct cs4280_softc *, const u_int32_t *, u_int32_t, u_int32_t);
 int cs4280_allocmem __P((struct cs4280_softc *, size_t, size_t,
 			 struct cs4280_dma *));
 int cs4280_freemem __P((struct cs4280_softc *, struct cs4280_dma *));
@@ -821,7 +821,7 @@ cs4280_intr(p)
 int
 cs4280_download(sc, src, offset, len)
 	struct cs4280_softc *sc;
-	u_int32_t *src;
+	const u_int32_t *src;
 	u_int32_t offset, len;
 {
 	u_int32_t ctr;

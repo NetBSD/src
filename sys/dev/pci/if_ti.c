@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.18 2001/01/14 17:41:17 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.19 2001/01/18 20:28:15 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -135,7 +135,7 @@
  * Various supported device vendors/types and their names.
  */
 
-static struct ti_type ti_devs[] = {
+static const struct ti_type ti_devs[] = {
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC,
 		"Alteon AceNIC 1000baseSX Gigabit Ethernet" },
 	{ PCI_VENDOR_ALTEON,	PCI_PRODUCT_ALTEON_ACENIC_COPPER,
@@ -151,7 +151,7 @@ static struct ti_type ti_devs[] = {
 	{ 0, 0, NULL }
 };
 
-static struct ti_type *ti_type_match __P((struct pci_attach_args *));
+static const struct ti_type *ti_type_match __P((struct pci_attach_args *));
 static int ti_probe	__P((struct device *, struct cfdata *, void *));
 static void ti_attach	__P((struct device *, struct device *, void *));
 static void ti_shutdown __P((void *));
@@ -1570,10 +1570,11 @@ static int ti_gibinit(sc)
 /*
  * look for id in the device list, returning the first match
  */
-static struct ti_type * ti_type_match(pa)
+static const struct ti_type *
+ti_type_match(pa)
 	struct pci_attach_args *pa;
 {
-	struct ti_type          *t;
+	const struct ti_type          *t;
 
 	t = ti_devs;
 	while(t->ti_name != NULL) {
@@ -1597,7 +1598,7 @@ static int ti_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	struct ti_type		*t;
+	const struct ti_type		*t;
 
 	t = ti_type_match(pa);
 
@@ -1618,7 +1619,7 @@ static void ti_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg, nolinear;
-	struct ti_type		*t;
+	const struct ti_type		*t;
 
 	t = ti_type_match(pa);
 	if (t == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.14 2000/12/30 16:52:36 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.15 2001/01/18 20:28:24 jdolecek Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -279,7 +279,7 @@ typedef u_char bool_t;
  * Parameters describing size of transmitted image.
  */
 
-static struct format_params format_params[] = {
+static const struct format_params format_params[] = {
 /* # define BT848_IFORM_F_AUTO             (0x0) - don't matter. */
   { 525, 26, 480,  910, 135, 754, 640,  780, 30, 0x68, 0x5d, BT848_IFORM_X_AUTO,
     12,  1600 },
@@ -310,7 +310,7 @@ static struct format_params format_params[] = {
  * Table of supported Pixel Formats 
  */
 
-static struct meteor_pixfmt_internal {
+static const struct meteor_pixfmt_internal {
 	struct meteor_pixfmt public;
 	u_int                color_fmt;
 } pixfmt_table[] = {
@@ -339,7 +339,7 @@ static struct meteor_pixfmt_internal {
  */
 
 /*  FIXME:  Also add YUV_422 and YUV_PACKED as well  */
-static struct {
+static const struct {
 	u_long               meteor_format;
 	struct meteor_pixfmt public;
 } meteor_pixfmt_table[] = {
@@ -2627,7 +2627,7 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
 		    volatile u_char ** target_buffer, int cols ) {
 
  u_long flag, flag2;
- struct meteor_pixfmt *pf = &pixfmt_table[ bktr->pixfmt ].public;
+ const struct meteor_pixfmt *pf = &pixfmt_table[ bktr->pixfmt ].public;
  u_int  skip, start_skip;
 
   /*  For RGB24, we need to align the component in FIFO Byte Lane 0         */
@@ -2717,7 +2717,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	volatile u_long		*dma_prog;	/* DMA prog is an array of 
 						32 bit RISC instructions */
 	volatile u_long		*loop_point;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 	u_int                   Bpp = pf_int->public.Bpp;
 	unsigned int            vbisamples;     /* VBI samples per line */
 	unsigned int            vbilines;       /* VBI lines per field */
@@ -2897,7 +2897,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	volatile u_long		target_buffer, buffer, target,width;
 	volatile u_long		pitch;
 	volatile  u_long	*dma_prog;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 	u_int                   Bpp = pf_int->public.Bpp;
 
 	OUTB(bktr, BKTR_COLOR_FMT, pf_int->color_fmt);
@@ -3061,7 +3061,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	volatile unsigned int	inst3;
 	volatile u_long		target_buffer, buffer;
 	volatile  u_long	*dma_prog;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 	int			b;
 
 	OUTB(bktr, BKTR_COLOR_FMT, pf_int->color_fmt);
@@ -3175,7 +3175,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	volatile unsigned int	inst;
 	volatile u_long		target_buffer, t1, buffer;
 	volatile u_long		*dma_prog;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 
 	OUTB(bktr, BKTR_COLOR_FMT, pf_int->color_fmt);
 
@@ -3289,7 +3289,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	volatile unsigned int	inst1;
 	volatile u_long		target_buffer, t1, buffer;
 	volatile u_long		*dma_prog;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 
 	OUTB(bktr, BKTR_COLOR_FMT, pf_int->color_fmt);
 
@@ -3397,8 +3397,8 @@ build_dma_prog( bktr_ptr_t bktr, char i_flag )
 	int			rows, cols,  interlace;
 	int			tmp_int;
 	unsigned int		temp;	
-	struct format_params	*fp;
-        struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
+	const struct format_params	*fp;
+        const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 	
 
 	fp = &format_params[bktr->format_params];
@@ -3604,7 +3604,7 @@ static void
 start_capture( bktr_ptr_t bktr, unsigned type )
 {
 	u_char			i_flag;
-	struct format_params   *fp;
+	const struct format_params   *fp;
 
 	fp = &format_params[bktr->format_params];
 
@@ -3662,7 +3662,7 @@ start_capture( bktr_ptr_t bktr, unsigned type )
 static void
 set_fps( bktr_ptr_t bktr, u_short fps )
 {
-	struct format_params	*fp;
+	const struct format_params	*fp;
 	int i_flag;
 
 	fp = &format_params[bktr->format_params];
@@ -3714,7 +3714,7 @@ set_fps( bktr_ptr_t bktr, u_short fps )
 
 static u_int pixfmt_swap_flags( int pixfmt )
 {
-	struct meteor_pixfmt *pf = &pixfmt_table[ pixfmt ].public;
+	const struct meteor_pixfmt *pf = &pixfmt_table[ pixfmt ].public;
 	u_int		      swapf = 0;
 
 	switch ( pf->Bpp ) {
@@ -3743,7 +3743,7 @@ static u_int pixfmt_swap_flags( int pixfmt )
 static int oformat_meteor_to_bt( u_long format )
 {
 	int    i;
-        struct meteor_pixfmt *pf1, *pf2;
+        const struct meteor_pixfmt *pf1, *pf2;
 
 	/*  Find format in compatibility table  */
 	for ( i = 0; i < METEOR_PIXFMT_TABLE_SIZE; i++ )

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.18 2001/01/11 20:35:02 explorer Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.19 2001/01/18 20:28:23 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -55,6 +55,6 @@ struct usbd_quirks {
 #define UQ_ASSUME_CM_OVER_DATA 0x1000 /* modem device breaks on cm over data */
 };
 
-extern struct usbd_quirks usbd_no_quirk;
+extern const struct usbd_quirks usbd_no_quirk;
 
-struct usbd_quirks *usbd_find_quirk(usb_device_descriptor_t *);
+const struct usbd_quirks *usbd_find_quirk(usb_device_descriptor_t *);

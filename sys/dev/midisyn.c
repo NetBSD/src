@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.6 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.7 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct midi_hw_if midisyn_hw_if = {
 	midisyn_ioctl,
 };
 
-static int midi_lengths[] = { 3,3,3,3,2,2,3,1 };
+static const int midi_lengths[] = { 3,3,3,3,2,2,3,1 };
 /* Number of bytes in a MIDI command, including status */
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
@@ -330,7 +330,7 @@ midisyn_note_to_freq(note)
 {
 	int o, n, f;
 #define BASE_OCTAVE 5
-	static u_int32_t notes[] = {
+	static const u_int32_t notes[] = {
 		17145893, 18165441, 19245614, 20390018, 21602472, 22887021,
 		24247954, 25689813, 27217409, 28835840, 30550508, 32367136
 	};
@@ -355,13 +355,13 @@ midisyn_finetune(base_freq, bend, range, vibrato_cents)
 	int range;
 	int vibrato_cents;
 {
-	static u_int16_t semitone_tuning[24] = 
+	static const u_int16_t semitone_tuning[24] = 
 	{
 /*   0 */ 10000, 10595, 11225, 11892, 12599, 13348, 14142, 14983, 
 /*   8 */ 15874, 16818, 17818, 18877, 20000, 21189, 22449, 23784, 
 /*  16 */ 25198, 26697, 28284, 29966, 31748, 33636, 35636, 37755
 	};
-	static u_int16_t cent_tuning[100] =
+	static const u_int16_t cent_tuning[100] =
 	{
 /*   0 */ 10000, 10006, 10012, 10017, 10023, 10029, 10035, 10041, 
 /*   8 */ 10046, 10052, 10058, 10064, 10070, 10075, 10081, 10087, 

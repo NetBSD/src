@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.35 2001/01/17 00:09:08 fvdl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.36 2001/01/18 20:28:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -303,10 +303,10 @@ vfs_getuserstr(uio, buf, buflenp)
 	return (0);
 }
 
-vfs_namemap_t *
+const vfs_namemap_t *
 vfs_findname(nm, buf, buflen)
-	vfs_namemap_t *nm;
-	char *buf;
+	const vfs_namemap_t *nm;
+	const char *buf;
 	int buflen;
 {
 

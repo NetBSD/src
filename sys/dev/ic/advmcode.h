@@ -1,4 +1,4 @@
-/*      $NetBSD: advmcode.h,v 1.3 1998/09/26 16:02:57 dante Exp $        */
+/*      $NetBSD: advmcode.h,v 1.4 2001/01/18 20:28:17 jdolecek Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -41,8 +41,8 @@
 #ifndef ADV_MCODE_H
 #define ADV_MCODE_H
 
-extern u_int8_t asc_mcode[];
-extern u_int16_t asc_mcode_size;
-extern u_int32_t asc_mcode_chksum;
+extern const u_int8_t asc_mcode[];
+extern const u_int16_t asc_mcode_size;
+extern const u_int32_t asc_mcode_chksum;
 
 #endif	/* ADV_MCODE_H */

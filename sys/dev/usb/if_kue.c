@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.34 2000/12/14 07:51:36 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.35 2001/01/18 20:28:23 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -172,7 +172,7 @@ int	kuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static struct kue_type kue_devs[] = {
+Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_AOX, USB_PRODUCT_AOX_USB101 },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT },
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC10T },
@@ -210,7 +210,7 @@ Static void kue_setmulti(struct kue_softc *);
 Static void kue_reset(struct kue_softc *);
 
 Static usbd_status kue_ctl(struct kue_softc *, int, u_int8_t,
-			   u_int16_t, void *, u_int32_t);
+			   u_int16_t, const void *, u_int32_t);
 Static usbd_status kue_setword(struct kue_softc *, u_int8_t, u_int16_t);
 Static int kue_is_warm(struct kue_softc *);
 Static int kue_load_fw(struct kue_softc *);
@@ -226,7 +226,7 @@ Static void kue_shutdown(device_t);
 
 Static struct usb_qdat kue_qdat;
 
-Static device_method_t kue_methods[] = {
+Static const device_method_t kue_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		kue_match),
 	DEVMETHOD(device_attach,	kue_attach),
@@ -275,7 +275,7 @@ kue_setword(struct kue_softc *sc, u_int8_t breq, u_int16_t word)
 
 Static usbd_status
 kue_ctl(struct kue_softc *sc, int rw, u_int8_t breq, u_int16_t val,
-	void *data, u_int32_t len)
+	const void *data, u_int32_t len)
 {
 	usb_device_request_t	req;
 	usbd_status		err;
@@ -295,7 +295,7 @@ kue_ctl(struct kue_softc *sc, int rw, u_int8_t breq, u_int16_t val,
 	USETW(req.wLength, len);
 
 	s = splusb();
-	err = KUE_DO_REQUEST(sc->kue_udev, &req, data);
+	err = KUE_DO_REQUEST(sc->kue_udev, &req, (void *)data);
 	splx(s);
 
 	return (err);
@@ -499,7 +499,7 @@ kue_reset(struct kue_softc *sc)
 USB_MATCH(kue)
 {
 	USB_MATCH_START(kue, uaa);
-	struct kue_type			*t;
+	const struct kue_type			*t;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.62 2000/12/02 14:53:01 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.63 2001/01/18 20:28:16 jdolecek Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -150,7 +150,7 @@
 	    | (SIM_IS_SCSIBUS_B((ahc), (xs)->sc_link) ? SELBUSB : 0) \
 	    | ((xs)->sc_link->scsipi_scsi.lun & 0x07))
 
-char *ahc_chip_names[] =
+const char * const ahc_chip_names[] =
 {
 	"NONE",
 	"aic7770",
@@ -268,20 +268,20 @@ static u_int	ahc_rem_scb_from_disc_list(struct ahc_softc *, u_int, u_int);
 static void	ahc_add_curscb_to_free_list(struct ahc_softc *);
 static void	ahc_clear_intstat(struct ahc_softc *);
 static void	ahc_reset_current_bus(struct ahc_softc *);
-static struct ahc_syncrate *
+static const struct ahc_syncrate *
 		ahc_devlimited_syncrate(struct ahc_softc *, u_int *);
-static struct ahc_syncrate *
+static const struct ahc_syncrate *
 		ahc_find_syncrate(struct ahc_softc *, u_int *, u_int);
 static u_int	ahc_find_period(struct ahc_softc *, u_int, u_int);
-static void	ahc_validate_offset(struct ahc_softc *, struct ahc_syncrate *,
-				    u_int *, int);
+static void	ahc_validate_offset(struct ahc_softc *,
+				const struct ahc_syncrate *, u_int *, int);
 static void	ahc_update_target_msg_request(struct ahc_softc *,
 					      struct ahc_devinfo *,
 					      struct ahc_initiator_tinfo *,
 					      int, int);
 static void	ahc_set_syncrate(struct ahc_softc *, struct ahc_devinfo *,
-				 struct ahc_syncrate *, u_int, u_int, u_int,
-				 int, int);
+				 const struct ahc_syncrate *, u_int, u_int,
+				 u_int, int, int);
 static void	ahc_set_width(struct ahc_softc *, struct ahc_devinfo *,
 			      u_int, u_int, int, int);
 static void	ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *,
@@ -777,9 +777,9 @@ ahc_print_scb(struct scb *scb)
 }
 #endif
 
-static struct {
+static const struct {
         u_int8_t errno;
-	char *errmesg;
+	const char *errmesg;
 } hard_error[] = {
 	{ ILLHADDR,	"Illegal Host Access" },
 	{ ILLSADDR,	"Illegal Sequencer Address referrenced" },
@@ -792,10 +792,10 @@ static struct {
 };
 static const int num_errors = sizeof(hard_error)/sizeof(hard_error[0]);
 
-static struct {
+static const struct {
         u_int8_t phase;
         u_int8_t mesg_out; /* Message response to parity errors */
-	char *phasemsg;
+	const char *phasemsg;
 } phase_table[] = {
 	{ P_DATAOUT,	MSG_NOOP,		"in Data-out phase"	},
 	{ P_DATAIN,	MSG_INITIATOR_DET_ERR,	"in Data-in phase"	},
@@ -817,7 +817,7 @@ static const int num_phases = (sizeof(phase_table)/sizeof(phase_table[0])) - 1;
 #define AHC_SYNCRATE_ULTRA2	1
 #define AHC_SYNCRATE_ULTRA	3
 #define AHC_SYNCRATE_FAST	6
-static struct ahc_syncrate ahc_syncrates[] = {
+static const struct ahc_syncrate ahc_syncrates[] = {
       /* ultra2    fast/ultra  period     rate */
 	{ 0x42,      0x000,      9,      "80.0" },
 	{ 0x03,      0x000,     10,      "40.0" },
@@ -1081,7 +1081,7 @@ ahc_reset(struct ahc_softc *ahc)
  * this function finds the nearest syncrate to the input period limited
  * by the capabilities of the bus connectivity of the target.
  */
-static struct ahc_syncrate *
+static const struct ahc_syncrate *
 ahc_devlimited_syncrate(struct ahc_softc *ahc, u_int *period) {
 	u_int	maxsync;
 
@@ -1105,10 +1105,10 @@ ahc_devlimited_syncrate(struct ahc_softc *ahc, u_int *period) {
  * Return the period and offset that should be sent to the target
  * if this was the beginning of an SDTR.
  */
-static struct ahc_syncrate *
+static const struct ahc_syncrate *
 ahc_find_syncrate(struct ahc_softc *ahc, u_int *period, u_int maxsync)
 {
-	struct ahc_syncrate *syncrate;
+	const struct ahc_syncrate *syncrate;
 
 	syncrate = &ahc_syncrates[maxsync];
 	while ((syncrate->rate != NULL)
@@ -1148,7 +1148,7 @@ ahc_find_syncrate(struct ahc_softc *ahc, u_int *period, u_int maxsync)
 static u_int
 ahc_find_period(struct ahc_softc *ahc, u_int scsirate, u_int maxsync)
 {
-	struct ahc_syncrate *syncrate;
+	const struct ahc_syncrate *syncrate;
 
 	if ((ahc->features & AHC_ULTRA2) != 0)
 		scsirate &= SXFR_ULTRA2;
@@ -1172,7 +1172,7 @@ ahc_find_period(struct ahc_softc *ahc, u_int scsirate, u_int maxsync)
 }
 
 static void
-ahc_validate_offset(struct ahc_softc *ahc, struct ahc_syncrate *syncrate,
+ahc_validate_offset(struct ahc_softc *ahc, const struct ahc_syncrate *syncrate,
 		    u_int *offset, int wide)
 {
 	u_int maxoffset;
@@ -1240,7 +1240,7 @@ ahc_update_target_msg_request(struct ahc_softc *ahc,
 
 static void
 ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
-		 struct ahc_syncrate *syncrate,
+		 const struct ahc_syncrate *syncrate,
 		 u_int period, u_int offset, u_int type, int paused, int done)
 {
 	struct	ahc_initiator_tinfo *tinfo;
@@ -2403,7 +2403,7 @@ ahc_build_transfer_msg(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 	if (dowide) {
 		ahc_construct_wdtr(ahc, tinfo->goal.width);
 	} else if (dosync) {
-		struct	ahc_syncrate *rate;
+		const struct	ahc_syncrate *rate;
 		u_int	period;
 		u_int	offset;
 
@@ -2962,7 +2962,7 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_link *sc_link,
 		switch (ahc->msgin_buf[2]) {
 		case MSG_EXT_SDTR:
 		{
-			struct	 ahc_syncrate *syncrate;
+			const struct	 ahc_syncrate *syncrate;
 			u_int	 period;
 			u_int	 offset;
 			u_int	 saved_offset;
@@ -3098,7 +3098,7 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_link *sc_link,
 			if (sending_reply == FALSE && reject == FALSE) {
 
 				if (tinfo->goal.period) {
-					struct	ahc_syncrate *rate;
+					const struct	ahc_syncrate *rate;
 					u_int	period;
 					u_int	offset;
 
