@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: netgroup.h,v 1.1 1994/12/03 00:00:58 christos Exp $
+ * $Id: netgroup.h,v 1.2 1996/04/27 18:57:51 christos Exp $
  */
 #ifndef _NETGROUP_H_
 #define	_NETGROUP_H_
@@ -63,6 +63,18 @@ int	getnetgrent	__P((const char **, const char **, const char **));
 void	endnetgrent	__P((void));
 int	innetgr		__P((const char *, const char *, const char *,
 			     const char *));
+#ifdef _NETGROUP_PRIVATE
+struct stringlist;
+
+struct stringlist *_ng_sl_init __P((void));
+void	_ng_sl_add __P((struct stringlist *, char *));
+void	_ng_sl_free __P((struct stringlist *, int));
+char    *_ng_sl_find __P((struct stringlist *, char *));
+char    *_ng_makekey __P((const char *, const char *, size_t));
+int	_ng_parse __P((char **, char **, struct netgroup **));
+void	_ng_print __P((char *, size_t, const struct netgroup *));
+#endif /* _NETGROUP_PRIVATE */
+
 __END_DECLS
 
 #endif /* !_NETGROUP_H_ */
