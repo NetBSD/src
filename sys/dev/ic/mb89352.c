@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.12 2002/04/05 18:27:52 bouyer Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.13 2002/05/30 21:10:36 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.12 2002/04/05 18:27:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.13 2002/05/30 21:10:36 thorpej Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1380,6 +1380,7 @@ nextbyte:
 
 out:
 	/* Disable REQ/ACK protocol. */
+	return;
 }
 
 /*
