@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.6 1995/09/16 12:36:01 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.7 1995/09/17 21:28:39 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -94,7 +94,7 @@
 	loglob(HwCfgFlags , 0xb22)	/* 2 bytes, h/w config flags */
 	loglob(HwCfgFlags2, 0xdd0)	/* 4 bytes, more h/w config flags */
 	loglob(HwCfgFlags3, 0xdd4)	/* 4 bytes, more h/w config flags */
-	loglob(HwCfgFlags4, 0xdd8)	/* 4 bytes, pointer to patch table */
+	loglob(ADBReInit_JTBL, 0xdd8)	/* 4 bytes, pointer to patch table */
 	loglob(jClkNoMem, 0x54c)	/* Pointer to ClkNoMem function */
 	loglob(PramTransfer, 0x1e4)	/* Transfer buffer used with PRam */
 	loglob(SysParam, 0x1f8) 	/* Place where PRam data gets stored */
