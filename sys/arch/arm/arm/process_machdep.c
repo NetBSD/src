@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2001/02/28 18:15:42 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 2001/10/27 16:48:50 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6 2001/02/28 18:15:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.7 2001/10/27 16:48:50 rearnsha Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -107,6 +107,12 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r_pc = tf->tf_pc;
 	regs->r_cpsr = tf->tf_spsr;
 
+#ifdef DIAGNOSTIC
+	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
+	    && tf->tf_spsr & I32_bit)
+		panic("process_read_regs: Interrupts blocked in user process");
+#endif
+
 	return(0);
 }
 
@@ -136,6 +142,11 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_pc = regs->r_pc;
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
+#ifdef DIAGNOSTIC
+	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
+	    && tf->tf_spsr & I32_bit)
+		panic("process_write_regs: Interrupts blocked in user process");
+#endif
 #else /* PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EPERM;
