@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.82 2003/09/24 10:22:53 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.83 2003/11/27 07:58:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.82 2003/09/24 10:22:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.83 2003/11/27 07:58:02 pk Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -274,8 +274,8 @@ genfs_revoke(void *v)
 		 */
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vop_revokeall", 0);
+			ltsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
+				&vp->v_interlock);
 			return (0);
 		}
 		/*
