@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.23 1998/05/24 23:41:43 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.24 1998/05/25 01:14:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.23 1998/05/24 23:41:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.24 1998/05/25 01:14:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,6 +135,7 @@ struct tcds_device {
 };
 
 struct tcds_device *tcds_lookup __P((const char *));
+void	tcds_params __P((struct tcds_softc *, int, int *, int *));
 
 struct tcds_device *
 tcds_lookup(modname)
@@ -171,7 +172,7 @@ tcdsattach(parent, self, aux)
 	struct tcds_slotconfig *slotc;
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
-	int i;
+	int i, id, fast;
 	extern int cputype;
 
 	td = tcds_lookup(ta->ta_modname);
@@ -186,6 +187,11 @@ tcdsattach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_flags = td->td_flags;
+
+#ifndef __alpha__
+	if (sc->sc_flags & TCDSF_BASEBOARD)
+		panic("tcdsattach: baseboard TCDS on non-Alpha?!");
+#endif
 
 	/*
 	 * Map the device.
@@ -268,11 +274,13 @@ tcdsattach(parent, self, aux)
 
 	/* find the hardware attached to the TCDS ASIC */
 	for (i = 0; i < 2; i++) {
+		tcds_params(sc, i, &id, &fast);
+
 		tcdsdev.tcdsda_bst = sc->sc_bst;
 		tcdsdev.tcdsda_bsh = sbsh[i];
 		tcdsdev.tcdsda_chip = i;
 		tcdsdev.tcdsda_sc = &sc->sc_slots[i];
-		tcdsdev.tcdsda_id = 7;				/* XXX */
+		tcdsdev.tcdsda_id = id;				/* XXX */
 		tcdsdev.tcdsda_freq = 25000000;			/* XXX */
 		if (sc->sc_flags & TCDSF_FASTSCSI)
 			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C96;
@@ -531,4 +539,37 @@ tcds_intr(arg)
 	DELAY(1);
 
 	return (1);
+}
+
+void
+tcds_params(sc, chip, idp, fastp)
+	struct tcds_softc *sc;
+	int chip, *idp, *fastp;
+{
+	u_int32_t ids;
+
+#ifdef __alpha__
+	if (sc->sc_flags && TCDSF_BASEBOARD) {
+		/* XXX Implement me. */
+		*idp = 7;
+		*fastp = 0;
+	} else
+#endif /* __alpha__ */
+	{
+		/*
+		 * SCSI IDs are stored in the EEPROM, along with whether or
+		 * not the device is "fast".  Chip 0 is the high nibble,
+		 * chip 1 the low nibble.
+		 */
+		ids = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_EEPROM_IDS);
+		if (chip == 0)
+			ids >>= 4;
+
+		*idp = ids & 0x7;
+		*fastp = ids & 0x8;
+	}
+
+	if ((sc->sc_flags & TCDSF_FASTSCSI) != 0 && *fastp == 0)
+		printf("%s: WARNING: chip %d not in fast mode\n",
+		    sc->sc_dv.dv_xname, chip);
 }
