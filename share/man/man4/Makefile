@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.234 2001/12/02 16:42:37 augustss Exp $
+#	$NetBSD: Makefile,v 1.235 2001/12/02 19:46:04 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
@@ -38,8 +38,8 @@ MAN+=	uaudio.4 ucom.4 uftdi.4 ugen.4 uhid.4 ukbd.4 ulpt.4 \
 	ehci.4 ohci.4 uhci.4
 
 # Ir devices
-MAN+=	irframe.4
-#	cir.4 oboe.4
+MAN+=	irframe.4 cir.4 oboe.4
+#	smccir.4
 
 # machine-independent busses
 MAN+=	eisa.4 isa.4 isapnp.4 ofisa.4 pci.4 pcmcia.4
