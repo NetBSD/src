@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.6 2003/07/08 10:06:32 itojun Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.7 2004/08/30 10:30:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -162,6 +162,8 @@ struct agp_gatt {
 	bus_dma_segment_t ag_dmaseg;
 	size_t		  ag_size;
 };
+
+int agpbusprint(void *, const char *);
 
 /*
  * Functions private to the AGP code.

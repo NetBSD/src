@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.18 2002/03/24 18:03:58 jdolecek Exp $
+# $NetBSD: files.mca,v 1.19 2004/08/30 10:30:38 drochner Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -9,6 +9,8 @@ defflag	MCAVERBOSE
 attach	mca at mcabus
 file	dev/mca/mca.c			mca			needs-flag
 file	dev/mca/mca_subr.c		mca
+
+file	dev/mca/mcabusprint.c		mcabus
 
 # 3Com 3C529
 attach	ep at mca with ep_mca: elink

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.218 2004/08/30 10:10:34 drochner Exp $
+#	$NetBSD: files.pci,v 1.219 2004/08/30 10:30:38 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -25,6 +25,8 @@ file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
 file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci & pci_netbsd_configure
+
+file	dev/pci/pcibusprint.c		pcibus
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:

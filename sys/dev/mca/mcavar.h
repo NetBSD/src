@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.4 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.5 2004/08/30 10:30:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@ struct mca_attach_args {
 
 #define mcacf_slot		cf_loc[0]
 #define MCA_UNKNOWN_SLOT	-1		/* wildcarded 'slot' */
+
+int	mcabusprint(void *, const char *);
 
 void	mca_devinfo __P((int, char *, size_t));
 int	mca_match_disabled __P((int));
