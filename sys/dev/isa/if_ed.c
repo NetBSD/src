@@ -14,7 +14,7 @@
  * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
  * similar clones.
  *
- *	$Id: if_ed.c,v 1.54 1994/10/23 21:22:13 mycroft Exp $
+ *	$Id: if_ed.c,v 1.55 1994/10/23 21:38:00 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1541,17 +1541,17 @@ ed_rint(sc)
 		--nlen;
 		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
 			--nlen;
-		if ((len >> ED_PAGE_SHIFT) != nlen) {
+		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
+		if (len != packet_hdr.count) {
 			printf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %02x start %02x curr %02x next %02x stop %02x\n",
-			    sc->sc_dev.dv_xname, len, nlen, sc->rec_page_start,
-			    sc->next_packet, packet_hdr.next_packet,
-			    sc->rec_page_stop);
-#endif
-			len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
+			printf("%s: len %04x nlen %04x start %02x curr %02x next %02x stop %02x\n",
+			    sc->sc_dev.dv_xname, packet_hdr.count, len,
+			    sc->rec_page_start, sc->next_packet,
+			    packet_hdr.next_packet, sc->rec_page_stop);
 		}
+#endif
 
 		/*
 		 * Be fairly liberal about what we allow as a "reasonable"
