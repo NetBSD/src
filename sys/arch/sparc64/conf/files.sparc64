@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.6 1998/07/27 19:20:32 pk Exp $
+#	$NetBSD: files.sparc64,v 1.7 1998/07/28 04:46:48 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -148,7 +148,7 @@ file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 file	arch/sparc64/dev/bt_subr.c	bt_dac
 
 # device definition in sys/conf/files
-attach le at sbus, ledma, lebuffer, obio: le24
+attach le at ledma, obio: le24
 file	arch/sparc64/dev/if_le.c	le
 
 device ie: ifnet, ether, arp
@@ -161,8 +161,8 @@ file	arch/sparc64/dev/si.c		 sw
 
 # Efficient Networks, Inc. ATM interface
 # device declaration in sys/conf/files
-attach  en at sbus with en_sbus
-file    arch/sparc64/dev/if_en_sbus.c     en_sbus
+#attach  en at sbus with en_sbus
+#file    arch/sparc64/dev/if_en_sbus.c     en_sbus
 
 # Qlogic ISP 10x0 (Sbus) family
 # device declaration in sys/conf/files
