@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.22 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: kd.c,v 1.23 2002/10/23 09:12:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
 	kdopen, kdclose, kdread, kdwrite, kdioctl,
-	nostop, kdtty, kdpoll, nommap, D_TTY
+	nostop, kdtty, kdpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

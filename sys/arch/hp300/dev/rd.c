@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.53 2002/10/02 05:15:54 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.54 2002/10/23 09:11:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.53 2002/10/02 05:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.54 2002/10/23 09:11:08 jdolecek Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -300,7 +300,7 @@ const struct bdevsw rd_bdevsw = {
 
 const struct cdevsw rd_cdevsw = {
 	rdopen, rdclose, rdread, rdwrite, rdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 int

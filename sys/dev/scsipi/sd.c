@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.189 2002/10/18 14:31:15 junyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.190 2002/10/23 09:13:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.189 2002/10/18 14:31:15 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.190 2002/10/23 09:13:48 jdolecek Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -125,7 +125,7 @@ const struct bdevsw sd_bdevsw = {
 
 const struct cdevsw sd_cdevsw = {
 	sdopen, sdclose, sdread, sdwrite, sdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver sddkdriver = { sdstrategy };

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.10 2002/10/23 09:12:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -55,6 +55,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <x68k/x68k/iodevice.h>
 #include <machine/opmbellio.h>
@@ -112,7 +113,7 @@ dev_type_ioctl(bellioctl);
 
 const struct cdevsw bell_cdevsw = {
 	bellopen, bellclose, noread, nowrite, bellioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

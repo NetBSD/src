@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.23 2002/10/02 16:34:33 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.24 2002/10/23 09:13:29 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.23 2002/10/02 16:34:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.24 2002/10/23 09:13:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -87,7 +87,7 @@ const struct bdevsw ofdisk_bdevsw = {
 
 const struct cdevsw ofdisk_cdevsw = {
 	ofdisk_open, ofdisk_close, ofdisk_read, ofdisk_write, ofdisk_ioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };

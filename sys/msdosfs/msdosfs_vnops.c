@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.122 2002/09/27 15:37:49 provos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.123 2002/10/23 09:14:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.122 2002/09/27 15:37:49 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.123 2002/10/23 09:14:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ msdosfs_create(v)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
@@ -438,9 +439,10 @@ msdosfs_setattr(v)
 		de_changed = 1;
 	}
 
-	if (de_changed)
+	if (de_changed) {
+		VN_KNOTE(vp, NOTE_ATTRIB);
 		return (deupdat(dep, 1));
-	else
+	} else
 		return (0);
 }
 
@@ -563,6 +565,7 @@ msdosfs_write(v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
 	boolean_t async;
+	int extended=0;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",
@@ -631,6 +634,7 @@ msdosfs_write(v)
 	if (dep->de_FileSize < uio->uio_offset + resid) {
 		dep->de_FileSize = uio->uio_offset + resid;
 		uvm_vnp_setsize(vp, dep->de_FileSize);
+		extended = 1;
 	}
 
 	do {
@@ -667,6 +671,8 @@ msdosfs_write(v)
 	 * to the size it was before the write was attempted.
 	 */
 errexit:
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -746,6 +752,8 @@ msdosfs_remove(v)
 	printf("msdosfs_remove(), dep %p, v_usecount %d\n",
 		dep, ap->a_vp->v_usecount);
 #endif
+	VN_KNOTE(ap->a_vp, NOTE_DELETE);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	if (ddep == dep)
 		vrele(ap->a_vp);
 	else
@@ -923,6 +931,7 @@ abortit:
 		ip->de_flag |= DE_RENAME;
 		doingdirectory++;
 	}
+	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
 
 	/*
 	 * When the target exists, both the directory
@@ -991,6 +1000,8 @@ abortit:
 		}
 		if ((error = removede(dp, xp)) != 0)
 			goto bad;
+		VN_KNOTE(tdvp, NOTE_WRITE);
+		VN_KNOTE(tvp, NOTE_DELETE);
 		cache_purge(tvp);
 		vput(tvp);
 		xp = NULL;
@@ -1133,6 +1144,7 @@ abortit:
 		}
 	}
 
+	VN_KNOTE(fvp, NOTE_RENAME);
 	VOP_UNLOCK(fvp, 0);
 bad:
 	if (xp)
@@ -1279,6 +1291,7 @@ msdosfs_mkdir(v)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
@@ -1343,6 +1356,7 @@ msdosfs_rmdir(v)
 	 * directory.  Since dos filesystems don't do this we just purge
 	 * the name cache and let go of the parent directory denode.
 	 */
+	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	vput(dvp);
 	dvp = NULL;
@@ -1352,6 +1366,7 @@ msdosfs_rmdir(v)
 	error = detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred, cnp->cn_proc);
 	cache_purge(vp);
 out:
+	VN_KNOTE(vp, NOTE_DELETE);
 	if (dvp)
 		vput(dvp);
 	vput(vp);
@@ -1844,6 +1859,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, msdosfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */

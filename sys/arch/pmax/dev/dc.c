@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.70 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: dc.c,v 1.71 2002/10/23 09:11:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.70 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.71 2002/10/23 09:11:46 jdolecek Exp $");
 
 /*
  * devDC7085.c --
@@ -108,7 +108,7 @@ dev_type_poll(dcpoll);
 
 const struct cdevsw dc_cdevsw = {
 	dcopen, dcclose, dcread, dcwrite, dcioctl,
-	dcstop, dctty, dcpoll, nommap, D_TTY
+	dcstop, dctty, dcpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.8 2002/09/25 22:21:36 thorpej Exp $	*/
+/*	$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.8 2002/09/25 22:21:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9 2002/10/23 09:13:09 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,7 +116,7 @@ dev_type_poll(dzpoll);
 
 const struct cdevsw dz_cdevsw = {
 	dzopen, dzclose, dzread, dzwrite, dzioctl,
-	dzstop, dztty, dzpoll, nommap, D_TTY
+	dzstop, dztty, dzpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.23 2002/10/02 16:51:08 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.24 2002/10/23 09:13:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.23 2002/10/02 16:51:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.24 2002/10/23 09:13:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ dev_type_poll(czttypoll);
 
 const struct cdevsw cz_cdevsw = {
 	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
-	czttystop, czttytty, czttypoll, nommap, D_TTY
+	czttystop, czttytty, czttypoll, nommap, ttykqfilter, D_TTY
 };
 
 /* Macros to clear/set/test flags. */

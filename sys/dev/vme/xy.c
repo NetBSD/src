@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.45 2002/10/02 16:53:15 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.46 2002/10/23 09:14:05 jdolecek Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.45 2002/10/02 16:53:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46 2002/10/23 09:14:05 jdolecek Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -216,7 +216,7 @@ const struct bdevsw xy_bdevsw = {
 
 const struct cdevsw xy_cdevsw = {
 	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */

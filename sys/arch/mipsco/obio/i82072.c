@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.6 2002/10/02 05:38:10 thorpej Exp $	*/
+/*	$NetBSD: i82072.c,v 1.7 2002/10/23 09:11:39 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -57,7 +58,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, nullclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #define	I82072_STATUS	0x000003

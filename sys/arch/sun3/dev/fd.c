@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 2002/10/02 16:02:25 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 2002/10/23 09:12:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -245,7 +245,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel __P((dev_t));

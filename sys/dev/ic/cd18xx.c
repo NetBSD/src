@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.5 2002/10/23 09:13:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.5 2002/10/23 09:13:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -155,7 +155,7 @@ dev_type_poll(cdttypoll);
 
 const struct cdevsw cdtty_cdevsw = {
 	cdttyopen, cdttyclose, cdttyread, cdttywrite, cdttyioctl,
-	cdttystop, cdttytty, cdttypoll, nommap, D_TTY
+	cdttystop, cdttytty, cdttypoll, nommap, ttykqfilter, D_TTY
 };
 
 static void	cdtty_shutdown(struct cd18xx_softc *, struct cdtty_port*);

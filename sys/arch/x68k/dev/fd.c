@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.49 2002/10/20 02:33:08 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.50 2002/10/23 09:12:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdstart __P((struct fd_softc *fd));

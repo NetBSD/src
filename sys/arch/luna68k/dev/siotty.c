@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.11 2002/10/02 05:31:46 thorpej Exp $ */
+/* $NetBSD: siotty.c,v 1.12 2002/10/23 09:11:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.11 2002/10/02 05:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.12 2002/10/23 09:11:25 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,7 +110,7 @@ dev_type_poll(siopoll);
 
 const struct cdevsw siotty_cdevsw = {
 	sioopen, sioclose, sioread, siowrite, sioioctl,
-	siostop, siotty, siopoll, nommap, D_TTY
+	siostop, siotty, siopoll, nommap, ttykqfilter, D_TTY
 };
 
 static int 

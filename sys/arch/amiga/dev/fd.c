@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.54 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.55 2002/10/23 09:10:31 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.54 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2002/10/23 09:10:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver fddkdriver = { fdstrategy };

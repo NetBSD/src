@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.31 2002/10/02 04:55:52 thorpej Exp $ */
+/*	$NetBSD: mfc.c,v 1.32 2002/10/23 09:10:34 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.31 2002/10/02 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.32 2002/10/23 09:10:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ dev_type_poll(mfcspoll);
 
 const struct cdevsw mfcs_cdevsw = {
 	mfcsopen, mfcsclose, mfcsread, mfcswrite, mfcsioctl,
-	mfcsstop, mfcstty, mfcspoll, nommap, D_TTY
+	mfcsstop, mfcstty, mfcspoll, nommap, ttykqfilter, D_TTY
 };
 
 int	mfcs_active;

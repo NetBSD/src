@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.20 2002/10/02 05:15:53 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.21 2002/10/23 09:11:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.20 2002/10/02 05:15:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.21 2002/10/23 09:11:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ const struct bdevsw mt_bdevsw = {
 
 const struct cdevsw mt_cdevsw = {
 	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.21 2002/10/02 16:02:24 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.22 2002/10/23 09:12:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@ dev_type_mmap(cg2mmap);
 
 const struct cdevsw cgtwo_cdevsw = {
 	cg2open, nullclose, noread, nowrite, cg2ioctl,
-	nostop, notty, nopoll, cg2mmap,
+	nostop, notty, nopoll, cg2mmap, nokqfilter,
 };
 
 static int  cg2gattr __P((struct fbdevice *,  void *));
@@ -118,7 +118,7 @@ static int	cg2getcmap __P((struct fbdevice *, void *));
 static int	cg2putcmap __P((struct fbdevice *, void *));
 
 static struct fbdriver cg2fbdriver = {
-	cg2open, nullclose, cg2mmap, cg2gattr,
+	cg2open, nullclose, cg2mmap, nokqfilter, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.4 2002/10/07 21:32:10 jdolecek Exp $	*/
+/*	$NetBSD: apm.c,v 1.5 2002/10/23 09:11:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.4 2002/10/07 21:32:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5 2002/10/23 09:11:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ CFATTACH_DECL(apm, sizeof(struct apm_softc),
 
 const struct cdevsw apm_cdevsw = {
 	apmopen, apmclose, noread, nowrite, apmioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 
