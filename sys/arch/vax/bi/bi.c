@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.6 1998/01/24 14:17:09 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.7 1998/04/13 12:18:20 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
@@ -85,15 +86,16 @@ bi_print(aux, name)
 	struct bi_attach_args *ba = aux;
 	struct bi_list *bl;
 
+	for (bl = &bi_list[0]; bl->bl_nr; bl++)
+		if (bl->bl_nr == ba->ba_node->biic.bi_dtype)
+			break;
+
 	if (name) {
-		for (bl = &bi_list[0]; bl->bl_nr; bl++)
-			if (bl->bl_nr == ba->ba_node->biic.bi_dtype) {
-				printf(bl->bl_name);
-				break;
-			}
 		if (bl->bl_nr == 0)
 			printf("unknown device 0x%x",
 			    ba->ba_node->biic.bi_dtype);
+		else
+			printf(bl->bl_name);
 		printf(" at %s", name);
 	}
 	printf(" node %d", ba->ba_nodenr);
@@ -136,10 +138,4 @@ bi_attach(parent, self, aux)
 		ba.ba_nodenr = nodenr;
 		config_found(self, &ba, bi_print);
 	}
-}
-
-void
-bi_buserr()
-{
-	panic("bi_buserr");
 }
