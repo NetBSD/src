@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
+/*	$NetBSD: printf.c,v 1.11 1997/06/26 06:20:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -146,6 +146,9 @@ kdoprnt(put, fmt, ap)
 		}
 		lflag = 0;
 reswitch:	switch (ch = *fmt++) {
+		case '\0':
+			/* XXX print the last format character? */
+			return;
 		case 'l':
 			lflag = 1;
 			goto reswitch;
