@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.4 2003/06/23 11:01:57 martin Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.5 2003/06/23 15:10:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,11 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.4 2003/06/23 11:01:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.5 2003/06/23 15:10:03 martin Exp $");
 
 /*#define DEBUG_PECOFF*/
 
+#ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
