@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.17 1997/03/14 01:42:24 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.18 1997/04/11 22:45:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.17 1997/03/14 01:42:24 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.18 1997/04/11 22:45:38 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ struct var vatty;
 #endif
 #ifndef SMALL
 struct var vhistsize;
+struct var vterm;
 #endif
 struct var vifs;
 struct var vmail;
@@ -94,9 +95,6 @@ struct var vpath;
 struct var vps1;
 struct var vps2;
 struct var vvers;
-#if ATTY
-struct var vterm;
-#endif
 struct var voptind;
 
 const struct varinit varinit[] = {
@@ -121,9 +119,9 @@ const struct varinit varinit[] = {
 	 */
 	{ &vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> ",
 	  NULL },
-#if ATTY
+#ifndef SMALL
 	{ &vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM=",
-	  NULL },
+	  setterm },
 #endif
 	{ &voptind,	VSTRFIXED|VTEXTFIXED,		"OPTIND=1",
 	  getoptsreset },

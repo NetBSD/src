@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.13 1997/03/14 01:42:26 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.14 1997/04/11 22:45:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,10 +81,9 @@ extern struct var vmpath;
 extern struct var vpath;
 extern struct var vps1;
 extern struct var vps2;
-#if ATTY
-extern struct var vterm;
-#endif
 #ifndef SMALL
+extern struct var vterm;
+extern struct var vtermcap;
 extern struct var vhistsize;
 #endif
 
@@ -100,12 +99,10 @@ extern struct var vhistsize;
 #define pathval()	(vpath.text + 5)
 #define ps1val()	(vps1.text + 4)
 #define ps2val()	(vps2.text + 4)
-#if ATTY
-#define termval()	(vterm.text + 5)
-#endif
 #define optindval()	(voptind.text + 7)
 #ifndef SMALL
 #define histsizeval()	(vhistsize.text + 9)
+#define termval()	(vterm.text + 5)
 #endif
 
 #if ATTY
