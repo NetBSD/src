@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.8 2002/02/13 08:18:17 ross Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.9 2002/04/26 00:06:53 lukem Exp $
 .\"
 .\" Copyright 2000, 2001 Hubert Feyrer <hubertf@netbsd.org>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 2, 2000
+.Dd April 26, 2002
 .Dt WSCONS.CONF 5
 .Os
 .Sh NAME
@@ -47,66 +47,98 @@ Empty lines and lines starting with a hash
 are ignored.
 .Pp
 The following keywords and arguments are recognized:
-.Bl -tag -width keyboard -compact
-.It Sy screen      idx scr emul
-Add and configure virtual console number
-.Sy idx
-using a screen type of
-.Sy scr
-(e.g. 80x25) and a
-.Sy emul
-terminal emulation (e.g. vt100). See
-.Xr wsconscfg 8
-for further parameter description.
-.Pp
-.It Sy font        name width height enc file
+.Bl -tag -width keyboard
+.It Sy font Xo
+.Ar name Ar width Ar height
+.Ar enc Ar file
+.Xc
 Used to load a font via
 .Xr wsfontload 8 .
-.Sy name
+.Ar name
 gives a font name that can be used later,
-.Sy width
+.Ar width
 can be used to specify the width of a font character in pixel,
-.Sy height
+.Ar height
 is the same, just for the font characters' height.
-.Sy enc
+.Ar enc
 is used to declare the font's encoding, see the description on
 .Xr wsfontload 8 's
 .Fl e
 option for more detail.
-.Sy file
+.Ar file
 gives the absolute path to the font file.
 See
 .Xr wsfontload 8
 for more information.
-.Pp
-.It Sy keyboard    \*[Lt]wsconscfg -k args\*[Gt]
-The given argument(s) are handed off to
-.Dq Li "wsconscfg -k"
-for attaching and configuration of keyboards. See
+.
+.It Sy screen Ar idx Ar scr Ar emul
+Add and configure virtual console number
+.Ar idx
+using a screen type of
+.Ar scr
+(e.g. 80x25) and a
+.Ar emul
+terminal emulation (e.g. vt100). See
+.Xr wsconscfg 8
+for further parameter description.
+.
+.It Sy keyboard Ar kbd
+Attach and configure keyboard
+.Ar kbd
+using
+.Dq Li "wsconscfg -k" .
+If
+.Ar kbd
+is
+.Sq Li -
+or
+.Sq Li auto ,
+the first free keyboard will be used.
+See
 .Xr wsconscfg 8
 for more information.
-.Pp
-.It Sy encoding    \*[Lt]wsconsctl -w encoding=arg\*[Gt]
-Set the keyboard map to the given language code. The map
-must be supported by the keyboard driver in use and must be
-compiled into the kernel. See the keyboard driver's manpage (eg.
+.
+.It Sy encoding Ar enc
+Set the keyboard map to the given language code
+.Ar enc ,
+using
+.Dq Li "wsconsctl -w encoding=enc" .
+The map must be supported by the keyboard driver in use and must be
+compiled into the kernel.
+See the keyboard driver's manpage (eg.
 .Xr pckbd 4 ,
 .Xr ukbd 4 )
 for details.
-.Pp
-.It Sy mapfile
-Passes the contents of a file containing a keyboard map line by line to
-.Dq wsconsctl -w map+=
+.
+.It Sy mapfile Ar file
+Parses the contents of
+.Ar file ,
+which contains a keyboard map per line, and calls
+.Dq Li "wsconsctl -w map+="
+for each line.
 See
 .Xr wsconsctl 8
 for details.
-.Pp
-.It Sy mux         \*[Lt]wsconscfg -m args\*[Gt]
-Used to attach and configure keyboard/mouse multiplexors. See
+.
+.It Sy mux Ar idx
+Used to attach and configure keyboard/mouse multiplexors, using
+.Dq Li "wsconscfg -m idx" .
+See
 .Xr wsconscfg 8
 for more information.
-.Pp
+.
+.It Sy setvar Ar var Ns = Ns Ar val
+Set wscons variable
+.Ar var
+to
+.Ar val ,
+using
+.Dq Li "wsconsctl -w var=val" .
+See
+.Xr wsconsctl 8
+for more information.
 .El
+.Pp
 Command arguments can be specified as
 .Dq -
 which makes default values come into effect as described in the
