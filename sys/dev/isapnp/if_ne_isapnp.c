@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.1.2.1 1997/10/29 00:40:38 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.1.2.2 1997/12/17 23:36:34 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -152,9 +152,9 @@ ne_isapnp_attach(
 	struct ne2000_softc * const nsc = &isc->sc_ne2000;
 	struct dp8390_softc * const dsc = &nsc->sc_dp8390;
 	struct isapnp_attach_args * const ipa = aux;
-	const bus_space_tag_t nict = ipa->ipa_iot;
-	const bus_space_handle_t nich = ipa->ipa_io[0].h;
-	bus_space_tag_t asict = nict;
+	bus_space_tag_t nict;
+	bus_space_handle_t nich;
+	bus_space_tag_t asict;
 	bus_space_handle_t asich;
 	const char *typestr;
 
@@ -165,6 +165,11 @@ ne_isapnp_attach(
 		    dsc->sc_dev.dv_xname);
 		return;
 	}
+
+	nict = ipa->ipa_iot;
+	nich = ipa->ipa_io[0].h;
+
+	asict = nict;
 
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
