@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.16 1999/01/26 11:07:25 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.17 1999/03/26 12:39:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,10 +206,22 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 2;
 		res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
+		if (res) {
+			u_char cmd[1];
 #ifdef DEBUG
-		if (res)
 			printf("pckbd: error setting scanset 2\n");
 #endif
+			/*
+			 * XXX at least one keyboard is reported to lock up
+			 * if a "set table" is attempted, thus the "reset".
+			 * XXX ignore errors, scanset 2 should be
+			 * default anyway.
+			 */
+			cmd[0] = KBC_RESET;
+			(void)pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 1, 0, 1);
+			pckbc_flush(kbctag, kbcslot);
+			res = 0;
+		}
 	} else {
 		/* Stupid 8042; set keyboard to XT codes. */
 		cmd[0] = KBC_SETTABLE;
