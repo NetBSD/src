@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readcf.c	8.22 (Berkeley) 3/11/94";
+static char sccsid[] = "@(#)readcf.c	8.23 (Berkeley) 3/18/94";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -1075,7 +1075,7 @@ setoption(opt, val, safe, sticky, e)
 
 	if (!safe && RealUid == 0)
 		safe = TRUE;
-	if (!safe && strchr("bCdeEijLmoprsvw7", opt) == NULL)
+	if (!safe && strchr("bCdeijLmoprsvw7", opt) == NULL)
 	{
 		if (opt != 'M' || (val[0] != 'r' && val[0] != 's'))
 		{
