@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.7 1999/12/07 14:54:46 mrg Exp $	*/
+/*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.7 1999/12/07 14:54:46 mrg Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ int	crnl;		/* \n -> \r\n */
 int	need_cr;
 
 int main __P((int, char *[]));
+void usage __P((void));
 
 int
 main(argc, argv) 
@@ -87,45 +88,39 @@ main(argc, argv)
 	int done, linedone, maxrep, ch, prch;
 	char *limit;
 
-	while (--argc) {
-		if (*(cp = *++argv) == '-') {
-			switch (cp[1]) {
-			case 'n':
-				argc--;
-				name = *++argv;
-				break;
+        while ((ch = getopt(argc, argv, "cfh:i:l:n:w:")) != -1)
+		switch (ch) {
+		case 'n':
+			name = optarg;
+			break;
+		case 'h':
+			host = optarg;
+			break;
+		case 'w':
+			if ((i = atoi(optarg)) > 0 && i <= MAXWIDTH)
+				width = i;
+			break;
+		case 'l':
+			length = atoi(optarg);
+			break;
+		case 'i':
+			indent = atoi(optarg);
+			break;
+		case 'c':	/* Print control chars */
+			literal++;
+			break;
+		case 'f':	/* Fix missing carriage returns */
+			crnl++;
+			break;
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	if (argc)
+		acctfile = *argv;
 
-			case 'h':
-				argc--;
-				host = *++argv;
-				break;
-
-			case 'w':
-				if ((i = atoi(&cp[2])) > 0 && i <= MAXWIDTH)
-					width = i;
-				break;
-
-			case 'l':
-				length = atoi(&cp[2]);
-				break;
-
-			case 'i':
-				indent = atoi(&cp[2]);
-				break;
-
-			case 'c':	/* Print control chars */
-				literal++;
-				break;
-
-			case 'f':	/* Fix missing carriage returns */
-				crnl++;
-				break;
-			}
-		} else
-			acctfile = cp;
-	}
-
-	for (cp = buf[0], limit = buf[MAXREP]; cp < limit; *cp++ = ' ');
+	memset(buf, ' ',  sizeof(buf));
 	done = 0;
 	
 	while (!done) {
@@ -233,3 +228,13 @@ main(argc, argv)
 	}
 	exit(0);
 }
+
+void
+usage()
+{
+        fprintf(stderr,
+	  "usage: lpf [-c] [-f] [-h host] [-i indent] [-l length] [-n name] [-w width] [acctfile]\n");
+	exit(1);
+
+}
+
