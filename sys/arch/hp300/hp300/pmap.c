@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/01/08 05:15:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 1999/01/09 18:40:12 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1820,6 +1820,17 @@ pmap_zero_page(phys)
 	}
 #endif
 
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the page; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		npte |= PG_CCB;
+	}
+#endif
+
 	s = splimp();
 
 	*caddr1_pte = npte;
@@ -1864,6 +1875,18 @@ pmap_copy_page(src, dst)
 		 */
 		npte1 |= PG_CI;
 		npte2 |= PG_CI;
+	}
+#endif
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the pages; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		npte1 |= PG_CCB;
+		npte2 |= PG_CCB;
 	}
 #endif
 
