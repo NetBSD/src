@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2000/09/24 12:32:34 jdolecek Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 2001/09/16 15:45:43 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,5 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* others.. */
 extern char cpu_name[];
+extern struct device *booted_device;
+extern int booted_partition;
+
+int	badaddr(void *, u_int);
+void	makebootdev(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2001/09/15 14:08:15 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2001/09/16 15:45:42 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,21 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2001/09/15 14:08:15 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2001/09/16 15:45:42 uch Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>	/* setroot() */
+
+#include <machine/disklabel.h>
+
+#include <machine/sysconf.h>
+#include <machine/config_hook.h>
+
+#include <hpcmips/hpcmips/machdep.h>
+
+static char __booted_device_name[16];
+static void get_device(char *);
 
 /*
  * Setup the system to run on the current machine.
@@ -52,26 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2001/09/15 14:08:15 uch Exp $");
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-
-#include <machine/bus.h>
-#include <machine/disklabel.h>
-
-#include <machine/sysconf.h>
-#include <machine/autoconf.h>
-#include <machine/config_hook.h>
-
-int cpuspeed = 7;	/* approx # instr per usec. */
-
-struct device *booted_device;
-int booted_partition;
-
-static char booted_device_name[16];
-static void get_device(char *);
-
 void
 cpu_configure()
 {
@@ -86,9 +80,6 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-	/* Reset any bus errors due to probing nonexistent devices. */
-	(*platform.bus_reset)();
-
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 }
@@ -97,7 +88,7 @@ void
 cpu_rootconf()
 {
 
-	get_device(booted_device_name);
+	get_device(__booted_device_name);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -109,7 +100,7 @@ void
 makebootdev(char *cp)
 {
 
-	strncpy(booted_device_name, cp, 16);
+	strncpy(__booted_device_name, cp, 16);
 }
 
 static void

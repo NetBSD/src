@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 2000/05/22 07:40:41 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 2001/09/16 15:45:43 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,23 +81,23 @@ END(__main)
 _C_LABEL(intrnames):
 	.asciiz	"softclock"
 	.asciiz	"softnet"
-	.asciiz	"serial0"
-	.asciiz	"serial1"
-	.asciiz	"serial2"
-	.asciiz	"ether"
-	.asciiz	"scsi"
-	.asciiz	"memory"
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
 	.asciiz	"clock"
-	.asciiz	"fpu"
-	.asciiz	"tcslot0"
-	.asciiz	"tcslot1"
-	.asciiz	"tcslot2"
-	.asciiz "dtop"
-	.asciiz "isdn"
-	.asciiz	"floppy"
-	.asciiz	"stray"
-	.asciiz	"nmi"
-	.asciiz	"lostclock"
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz ""
+	.asciiz ""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
+	.asciiz	""
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.28 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.29 2001/09/16 15:45:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "opt_vr41xx.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -51,12 +53,8 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-#include <mips/mips_param.h>		/* hokey spl()s */
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
-
 #include <dev/hpc/hpckbdvar.h>
 
-#include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vrcpudef.h>
@@ -110,18 +108,13 @@
 #endif
 
 void	vr_init(void);
-void	vr_os_init(void);
-void	vr_bus_reset(void);
 int	vr_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void	vr_cons_init(void);
-void	vr_device_register(struct device *, void *);
-void    vr_fb_init(caddr_t*);
+void    vr_fb_init(caddr_t *);
 void    vr_mem_init(paddr_t);
 void	vr_find_dram(paddr_t, paddr_t);
 void	vr_reboot(int, char *);
-
-extern unsigned nullclkread(void);
-extern unsigned (*clkread)(void);
+void	vr_idle(void);
 
 /*
  * CPU interrupt dispatch table (HwInt[0:3])
@@ -143,20 +136,14 @@ void
 vr_init()
 {
 	/*
-	 * Platform Information.
-	 */
-
-	/*
 	 * Platform Specific Function Hooks
 	 */
-	platform.os_init = vr_os_init;
-	platform.iointr = vr_intr;
-	platform.bus_reset = vr_bus_reset;
-	platform.cons_init = vr_cons_init;
-	platform.device_register = vr_device_register;
-	platform.fb_init = vr_fb_init;
-	platform.mem_init = vr_mem_init;
-	platform.reboot = vr_reboot;
+	platform.cpu_idle	= vr_idle;
+	platform.iointr		= vr_intr;
+	platform.cons_init	= vr_cons_init;
+	platform.fb_init	= vr_fb_init;
+	platform.mem_init	= vr_mem_init;
+	platform.reboot		= vr_reboot;
 
 #if NVRBCU > 0
 	sprintf(cpu_name, "NEC %s rev%d.%d %d.%03dMHz", 
@@ -263,39 +250,6 @@ vr_fb_init(caddr_t *kernend)
 }
 
 void
-vr_os_init()
-{
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
-
-#ifdef NOT_YET
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(Vr_SYS_CLOCK);
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
-#else
-	printf("%s(%d): cpuspeed estimation is notimplemented\n",
-	       __FILE__, __LINE__);
-#endif
-#ifdef HPCMIPS_L1CACHE_DISABLE
-	cpuspeed = 1;	/* XXX, CPU is very very slow because L1 cache is */
-	/* disabled. */
-#endif /*  HPCMIPS_L1CAHCE_DISABLE */
-}
-
-
-/*
- * Initalize the memory system and I/O buses.
- */
-void
-vr_bus_reset()
-{
-
-	printf("%s(%d): vr_bus_reset() not implemented.\n",
-	       __FILE__, __LINE__);
-}
-
-void
 vr_cons_init()
 {
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
@@ -349,14 +303,6 @@ vr_cons_init()
 		return;
 	}
 #endif
-}
-
-void
-vr_device_register(struct device *dev, void *aux)
-{
-	printf("%s(%d): vr_device_register() not implemented.\n",
-	       __FILE__, __LINE__);
-	panic("abort");
 }
 
 void
