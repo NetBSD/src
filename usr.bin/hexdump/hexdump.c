@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.8 2002/11/12 22:41:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.8 2002/11/12 22:41:01 kleink Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <errno.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -70,6 +71,8 @@ main(argc, argv)
 {
 	FS *tfs;
 	char *p;
+
+	setlocale(LC_ALL, "");
 
 	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
 		newsyntax(argc, &argv);
