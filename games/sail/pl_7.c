@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.23 2001/01/16 02:44:43 cgd Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.24 2001/02/05 01:10:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.23 2001/01/16 02:44:43 cgd Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.24 2001/02/05 01:10:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,29 +53,8 @@ __RCSID("$NetBSD: pl_7.c,v 1.23 2001/01/16 02:44:43 cgd Exp $");
 #include "player.h"
 #include "display.h"
 
-void	initscreen(void);
-void	cleanupscreen(void);
-void	newturn(int);
-void	Signal(const char *, struct ship *, ...)
-		__attribute__((__format__(__printf__,1,3)));
-void	Msg(const char *, ...)
-		__attribute__((__format__(__printf__,1,2)));
 static void	Scroll(void);
-void	prompt(const char *, struct ship *);
 static void	endprompt(int);
-int	sgetch(const char *, struct ship *, int);
-void	sgetstr(const char *, char *, int);
-void	draw_screen(void);
-void	draw_view(void);
-void	draw_turn(void);
-void	draw_stat(void);
-void	draw_slot(void);
-void	draw_board(void);
-void	centerview(void);
-void	upview(void);
-void	downview(void);
-void	leftview(void);
-void	rightview(void);
 static void	adjustview(void);
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.10 2001/01/04 03:51:24 jwise Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.11 2001/02/05 01:10:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: dr_main.c,v 1.10 2001/01/04 03:51:24 jwise Exp $");
+__RCSID("$NetBSD: dr_main.c,v 1.11 2001/02/05 01:10:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: dr_main.c,v 1.10 2001/01/04 03:51:24 jwise Exp $");
 #include <unistd.h>
 #include "extern.h"
 #include "driver.h"
-
-int	dr_main(void);
 
 int
 dr_main(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.9 2001/01/04 03:51:24 jwise Exp $	*/
+/*	$NetBSD: parties.c,v 1.10 2001/02/05 01:10:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,16 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parties.c,v 1.9 2001/01/04 03:51:24 jwise Exp $");
+__RCSID("$NetBSD: parties.c,v 1.10 2001/02/05 01:10:10 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include "extern.h"
-
-int	meleeing(struct ship *, struct ship *);
-int	boarding(struct ship *, int);
-void	unboard(struct ship *, struct ship *, int);
 
 int
 meleeing(struct ship *from, struct ship *to)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.13 2001/01/04 06:16:51 jwise Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.14 2001/02/05 01:10:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.13 2001/01/04 06:16:51 jwise Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.14 2001/02/05 01:10:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,15 +47,10 @@ __RCSID("$NetBSD: dr_3.c,v 1.13 2001/01/04 06:16:51 jwise Exp $");
 #include "extern.h"
 #include "driver.h"
 
-void	moveall(void);
 static int	stillmoving(int);
 static int	is_isolated(struct ship *);
 static int	push(struct ship *, struct ship *);
 static void	step(struct ship *, int,  char *);
-void	sendbp(struct ship *, struct ship *, int, int);
-int	is_toughmelee(struct ship *, struct ship *, int, int);
-void	reload(void);
-void	checksails(void);
 
 /* move all comp ships */
 void
