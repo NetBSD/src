@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.11 2000/05/08 07:56:01 mycroft Exp $	*/
+/*	$NetBSD: teach.c,v 1.12 2001/02/05 00:23:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,14 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: teach.c,v 1.11 2000/05/08 07:56:01 mycroft Exp $");
+__RCSID("$NetBSD: teach.c,v 1.12 2001/02/05 00:23:59 christos Exp $");
 #endif
 #endif				/* not lint */
 
 #include "back.h"
 #include "tutor.h"
-
-extern short ospeed;		/* tty output speed for termlib */
 
 const char   *const helpm[] = {
 	"\nEnter a space or newline to roll, or",
