@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.11 1993/12/20 09:05:58 mycroft Exp $
+ *	$Id: if_hp.c,v 1.12 1994/01/12 02:58:26 mycroft Exp $
  */
 
 /*
@@ -516,7 +516,7 @@ hpstart (ifp)
   register struct hp_softc *ns = &hp_softc[ifp->if_unit];
   struct mbuf *m0, *m;
   int buffer;
-  int len = 0, i, total, t;
+  int len, i, total;
   register hpc = ns->ns_port;
 
   /*
@@ -543,16 +543,11 @@ hpstart (ifp)
 
   ns->ns_flags |= DSF_LOCK;	/* prevent entering hpstart */
   buffer = ns->ns_txstart * DS_PGSIZE;
-  len = i = 0;
-  t = 0;
-  for (m0 = m; m != 0; m = m->m_next)
-    t += m->m_len;
-
-  m = m0;
-  total = t;
+  i = 0;
+  total = len = m->m_pkthdr.len;
 
 #ifdef HP_DEBUG
-  printf ("hpstart: len=%d\n", total);
+  printf ("hpstart: len=%d\n", len);
 #endif
 
 #if NBPFILTER > 0
@@ -585,7 +580,6 @@ hpstart (ifp)
   /*
 	 * Init transmit length registers, and set transmit start flag.
 	 */
-
   len = total;
   if (len < ETHER_MIN_LEN)
     len = ETHER_MIN_LEN;
