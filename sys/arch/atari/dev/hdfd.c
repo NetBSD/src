@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.13 1998/11/20 12:58:13 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.13.4.1 1999/12/04 19:53:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -264,6 +264,10 @@ int	fdcintr __P((void *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+
+static void	fdgetdisklabel __P((struct fd_softc *, dev_t));
+static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
+		    int));
 
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
@@ -1297,7 +1301,6 @@ fdioctl(dev, cmd, addr, flag, p)
 {
 	struct fd_softc		*fd;
 	struct disklabel	buffer;
-	struct cpu_disklabel	cpulab;
 	int			error;
 	struct fdformat_parms	*form_parms;
 	struct fdformat_cmd	*form_cmd;
@@ -1310,32 +1313,16 @@ fdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
-		bzero(&cpulab, sizeof(cpulab));
-
-		buffer.d_secpercyl  = fd->sc_type->seccyl;
-		buffer.d_type       = DTYPE_FLOPPY;
-		buffer.d_secsize    = FDC_BSIZE;
-		buffer.d_secperunit = fd->sc_type->size;
-
-		if (readdisklabel(dev, fdstrategy, &buffer, &cpulab) != NULL)
-			return EINVAL;
-
-		if ((FDC_BSIZE * fd->sc_type->size)
-			< (buffer.d_secsize * buffer.d_secperunit)) {
-			/*
-			 * XXX: Ignore these fields. If you drop a vnddisk
-			 *	on more than one floppy, you'll get disturbing
-			 *	sounds!
-			 */
-			buffer.d_secpercyl  = fd->sc_type->seccyl;
-			buffer.d_type       = DTYPE_FLOPPY;
-			buffer.d_secsize    = FDC_BSIZE;
-			buffer.d_secperunit = fd->sc_type->size;
-		}
-
-		*(struct disklabel *)addr = buffer;
+		fdgetdisklabel(fd, dev);
+		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return 0;
+
+	case DIOCGPART:
+		fdgetdisklabel(fd, dev);
+		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
+			      &fd->sc_dk.dk_label->d_partitions[RAW_PART];
+		return(0);
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
@@ -1541,4 +1528,82 @@ fdformat(dev, finfo, p)
 	PRELE(p);
 	free(bp, M_TEMP);
 	return rv;
+}
+
+
+/*
+ * Obtain a disklabel. Either a real one from the disk or, if there
+ * is none, a fake one.
+ */
+static void
+fdgetdisklabel(fd, dev)
+struct fd_softc *fd;
+dev_t		dev;
+{
+	struct disklabel	*lp;
+	struct cpu_disklabel	cpulab;
+
+	lp   = fd->sc_dk.dk_label;
+
+	bzero(lp, sizeof(*lp));
+	bzero(&cpulab, sizeof(cpulab));
+
+	lp->d_secpercyl  = fd->sc_type->seccyl;
+	lp->d_type       = DTYPE_FLOPPY;
+	lp->d_secsize    = FDC_BSIZE;
+	lp->d_secperunit = fd->sc_type->size;
+
+	/*
+	 * If there is no label on the disk: fake one
+	 */
+	if (readdisklabel(dev, fdstrategy, lp, &cpulab) != NULL)
+		fdgetdefaultlabel(fd, lp, RAW_PART);
+
+	if ((FDC_BSIZE * fd->sc_type->size)
+		< (lp->d_secsize * lp->d_secperunit)) {
+		/*
+		 * XXX: Ignore these fields. If you drop a vnddisk
+		 *	on more than one floppy, you'll get disturbing
+		 *	sounds!
+		 */
+		lp->d_secpercyl  = fd->sc_type->seccyl;
+		lp->d_type       = DTYPE_FLOPPY;
+		lp->d_secsize    = FDC_BSIZE;
+		lp->d_secperunit = fd->sc_type->size;
+	}
+}
+
+/*
+ * Build defaultdisk label. For now we only create a label from what we
+ * know from 'sc'.
+ */
+static void
+fdgetdefaultlabel(fd, lp, part)
+	struct fd_softc  *fd;
+	struct disklabel *lp;
+	int part;
+{
+	bzero(lp, sizeof(struct disklabel));
+
+	lp->d_secsize     = 128 * (1 << fd->sc_type->secsize);
+	lp->d_ntracks     = fd->sc_type->heads;
+	lp->d_nsectors    = fd->sc_type->sectrac;
+	lp->d_secpercyl   = lp->d_ntracks * lp->d_nsectors;
+	lp->d_ncylinders  = fd->sc_type->size / lp->d_secpercyl;
+	lp->d_secperunit  = fd->sc_type->size;
+
+	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
+	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
+	lp->d_bbsize      = 0;
+	lp->d_sbsize      = 0;
+	lp->d_npartitions = part + 1;
+	lp->d_trkseek     = 6000; 	/* Who cares...			*/
+	lp->d_magic       = DISKMAGIC;
+	lp->d_magic2      = DISKMAGIC;
+	lp->d_checksum    = dkcksum(lp);
+	lp->d_partitions[part].p_size   = lp->d_secperunit;
+	lp->d_partitions[part].p_fstype = FS_UNUSED;
+	lp->d_partitions[part].p_fsize  = 1024;
+	lp->d_partitions[part].p_frag   = 8;
 }
