@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.27 2002/09/27 20:38:31 thorpej Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.28 2002/09/28 18:43:08 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.27 2002/09/27 20:38:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.28 2002/09/28 18:43:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.27 2002/09/27 20:38:31 thorpej Exp $");
 #include <dev/ic/mb86960var.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
+#include <dev/isa/if_fmvreg.h>
 
 int	fmv_match __P((struct device *, struct cfdata *, void *));
 void	fmv_attach __P((struct device *, struct device *, void *));
