@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.26 2003/11/24 18:00:49 wiz Exp $
+.\"	$NetBSD: ktrace.1,v 1.27 2004/06/24 15:50:50 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd enable kernel process tracing
 .Sh SYNOPSIS
 .Nm
-.Op Fl aCcdis
+.Op Fl aCcdins
 .Op Fl f Ar trfile
 .Op Fl g Ar pgrp
 .Op Fl p Ar pid
@@ -48,7 +48,7 @@
 .Op Fl t Ar trstr
 .Ar command
 .Nm ktruss
-.Op Fl aCcdilRT
+.Op Fl aCcdilnRT
 .Op Fl e Ar emulation
 .Op Fl f Ar infile
 .Op Fl g Ar pgrp
@@ -57,7 +57,7 @@
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
 .Nm ktruss
-.Op Fl adiRT
+.Op Fl adinRT
 .Op Fl e Ar emulation
 .Op Fl m Ar maxdata
 .Op Fl o Ar outfile
@@ -138,10 +138,22 @@ This is used for pointer type arguments, e.g., strings.
 The data will be escaped in C-style unless
 .Fl x
 is specified when it will be output in hex and ascii.
+.It Fl n
+Stop tracing if attempts to write to the trace file would block.
+This option always affects
+.Nm ktruss
+and only affects 
+.Nm ktrace
+when writing to
+.Dv stdout .
+If this flag is not set, then the traced program will block until it can
+write more data to the trace file descriptor.
 .It Fl o Ar outfile
 Log trace records to
 .Ar outfile .
-Without this option ktruss will print its output in a human
+Without this option
+.Nm ktruss
+will print its output in a human
 readable format to standard out.
 .It Fl p Ar pid
 Enable (disable) tracing on the indicated process id (only one
