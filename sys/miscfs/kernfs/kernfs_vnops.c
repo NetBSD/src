@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vnops.c,v 4.1 1994/01/02 14:41:30 jsp Exp
  *
- *	$Id: kernfs_vnops.c,v 1.17 1994/01/05 11:05:12 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.18 1994/02/09 06:32:17 cgd Exp $
  */
 
 /*
@@ -454,6 +454,9 @@ kernfs_read(vp, uio, ioflag, cred)
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kern_read %s\n", kt->kt_name);
 #endif
+
+	if (vp->v_flag & VROOT)
+		return (0);
 
 	error = kernfs_xread(kt, strbuf, sizeof(strbuf), &len);
 	if (error)
