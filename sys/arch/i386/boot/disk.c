@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: disk.c,v 1.5 1994/02/03 23:21:25 mycroft Exp $
+ *	$Id: disk.c,v 1.6 1994/02/20 14:05:19 mycroft Exp $
  */
 
 #include "boot.h"
@@ -158,13 +158,14 @@ devread()
  */
 #define RA_SECTORS	18
 static char ra_buf[RA_SECTORS * BPS];
+static int ra_dev;
 static int ra_end;
 static int ra_first;
 
 Bread(dosdev, sector)
 	int dosdev, sector;
 {
-	if (sector < ra_first || sector >= ra_end) {
+	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
 
 		cyl = sector/spc;
@@ -182,6 +183,7 @@ Bread(dosdev, sector)
 				twiddle();
 			}
 		}
+		ra_dev = dosdev;
 		ra_first = sector;
 		ra_end = sector + nsec;
 	}
