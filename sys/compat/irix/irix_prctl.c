@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.17 2002/09/21 21:14:57 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.18 2002/10/14 21:14:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.17 2002/09/21 21:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.18 2002/10/14 21:14:25 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -80,6 +80,11 @@ struct irix_sproc_child_args {
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
     pid_t, struct proc *, register_t *));
+static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t, 
+    vsize_t, int));
+#ifdef DEBUG_IRIX
+static void irix_isrr_debug __P((struct proc *));
+#endif
 
 int
 irix_sys_prctl(p, v, retval)
@@ -379,8 +384,9 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	isc->isc_share_group = isg;
 	isc->isc_child_done = 0;
 
-	if (inh & IRIX_PR_SADDR)
+	if (inh & IRIX_PR_SADDR) {
 		ied->ied_shareaddr = 1;
+	}
 
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)isc, retval, &p2)) != 0)
@@ -423,37 +429,49 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SADDR) {
 		int error;
-		vaddr_t vm_min;
-		vsize_t vm_len;
+		vaddr_t min, max;
+		vsize_t len;
+		struct irix_shared_regions_rec *isrr;
 
-		vm_min = vm_map_min(&parent->p_vmspace->vm_map);
-		vm_len = vm_map_max(&parent->p_vmspace->vm_map) - vm_min;
+		/* 
+		 * First, unmap the whole address space
+		 */
+		min = vm_map_min(&p2->p_vmspace->vm_map);
+		max = vm_map_max(&p2->p_vmspace->vm_map);
+		uvm_unmap(&p2->p_vmspace->vm_map, min, max);
 
-		/* Drop the current VM space */
-		uvm_unmap(&p2->p_vmspace->vm_map, vm_min, vm_min + vm_len);
+		/*
+		 * Now, copy the mapping from the parent for shared regions
+		 */
+		parent_ied = (struct irix_emuldata *)parent->p_emuldata;
+		LIST_FOREACH(isrr, &parent_ied->ied_shared_regions, isrr_list) {
+			min = isrr->isrr_start;
+			len = isrr->isrr_len;
+			max = min + len;
+			/* If this is a private region, skip */
+			if (isrr->isrr_shared == IRIX_ISRR_PRIVATE)
+				continue;
 
-		/* Clone the mapping from the parent */
-		error = uvm_map_extract(&parent->p_vmspace->vm_map, 
-		    vm_min, vm_len, &p2->p_vmspace->vm_map, &vm_min, 0);
-		if (error != 0) {
+			/* Copy the new mapping from the parent */
+			error = uvm_map_extract(&parent->p_vmspace->vm_map, 
+			    min, len, &p2->p_vmspace->vm_map, &min, 0);
+			if (error != 0) {
 #ifdef DEBUG_IRIX
-			printf("irix_sproc_child(): error %d\n", error);
+				printf("irix_sproc_child(): error %d\n", error);
 #endif
-			isc->isc_child_done = 1;
-			wakeup(&isc->isc_child_done);
-			killproc(p2, "failed to initialize share group VM");
+				isc->isc_child_done = 1;
+				wakeup(&isc->isc_child_done);
+				killproc(p2, 
+				    "failed to initialize share group VM");
+			}
 		}
 
-		/* Unmap the process private arena (shared) */
-		uvm_unmap(&p2->p_vmspace->vm_map, (vaddr_t)IRIX_PRDA,
-		    (vaddr_t)((u_long)IRIX_PRDA + sizeof(struct irix_prda)));
-
-		/* Remap the process private arena (unshared) */
+		/* Map and initialize the process private arena (unshared) */
 		error = irix_prda_init(p2);
 		if (error != 0) {
 			isc->isc_child_done = 1;
 			wakeup(&isc->isc_child_done);
-			killproc(p2, "failed to initialize share group VM");
+			killproc(p2, "failed to initialize the PRDA");
 		}
 	}
 
@@ -513,7 +531,7 @@ irix_sproc_child(isc)
 	ied->ied_share_group->isg_refcount++;
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
 
-	if (inh & IRIX_PR_SADDR) 
+	if (inh & IRIX_PR_SADDR)
 		ied->ied_shareaddr = 1;
 
 	/*
@@ -665,8 +683,13 @@ irix_prda_init(p)
 	ips.t_prid = p->p_pid;
 
 	error = copyout(&ips, (void *)&ip->sys_prda.prda_sys, sizeof(ips));
+	if (error)
+		return error;
 
-	return error;
+	/* Remeber the PRDA is private */
+	irix_isrr_insert((vaddr_t)IRIX_PRDA, sizeof(ips), IRIX_ISRR_PRIVATE, p);
+	
+	return 0;
 }
 
 int
@@ -705,12 +728,10 @@ irix_vm_sync(p)
 	struct proc *pp;
 	struct irix_emuldata *iedp;
 	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
-	vaddr_t low_min = vm_map_min(&p->p_vmspace->vm_map);
-	vaddr_t low_max = (vaddr_t)IRIX_PRDA;
-	vsize_t low_len = low_max - low_min;
-	vaddr_t top_min = (vaddr_t)IRIX_PRDA + sizeof(struct irix_prda);
-	vaddr_t top_max = vm_map_max(&p->p_vmspace->vm_map);
-	vsize_t top_len = top_max - top_min;
+	struct irix_shared_regions_rec *isrr;
+	vaddr_t min;
+	vaddr_t max;
+	vsize_t len;
 	int error;
 
 	LIST_FOREACH(iedp, &ied->ied_share_group->isg_head, ied_sglist) {
@@ -719,17 +740,185 @@ irix_vm_sync(p)
 
 		pp = iedp->ied_p;
 
-		/* Drop the current VM space except the PRDA */
-		uvm_unmap(&pp->p_vmspace->vm_map, low_min, low_max);
-		uvm_unmap(&pp->p_vmspace->vm_map, top_min, top_max);
+		error = 0;
+		/* for each region in the target process ... */
+		LIST_FOREACH(isrr, &iedp->ied_shared_regions, isrr_list) {
+			/* skip regions private to the target process */
+			if (isrr->isrr_shared == IRIX_ISRR_PRIVATE)
+				continue;
 
-		/* Clone the mapping from the fault initiator, except PRDA */
-		if ((error = uvm_map_extract(&p->p_vmspace->vm_map,
-		    low_min, low_len, &pp->p_vmspace->vm_map, &low_min, 0)) ||
-		    (error = uvm_map_extract(&p->p_vmspace->vm_map,
-		    top_min, top_len, &pp->p_vmspace->vm_map, &top_min, 0)))
+			/* 
+			 * XXX We should also skip regions private to the
+			 * original process...
+			 */
+
+			/* The region is shared */
+			min = isrr->isrr_start;
+			len = isrr->isrr_len;
+			max = min + len;
+
+			/* Drop the region */
+			uvm_unmap(&pp->p_vmspace->vm_map, min, max);
+
+			/* Clone it from the parent */
+			error = uvm_map_extract(&p->p_vmspace->vm_map,
+			    min, len, &pp->p_vmspace->vm_map, &min, 0);
+			
+			if (error) 
+				break;
+		}
+
+		if (error)
 			killproc(pp, "failed to keep share group VM in sync");
 	}
 
 	return;
 }
+
+static struct irix_shared_regions_rec *
+irix_isrr_create(start, len, shared)
+	vaddr_t start;
+	vsize_t len;
+	int shared;
+{
+	struct irix_shared_regions_rec *new_isrr;
+
+	new_isrr = malloc(sizeof(struct irix_shared_regions_rec), 
+	    M_EMULDATA, M_WAITOK);
+	new_isrr->isrr_start = start;
+	new_isrr->isrr_len = len;
+	new_isrr->isrr_shared = shared;
+
+	return new_isrr;
+}
+
+/* 
+ * Insert a record for a new region in the list. The new region may be
+ * overlaping or be included in an existing region.
+ */
+void
+irix_isrr_insert(start, len, shared, p)
+	vaddr_t start;
+	vsize_t len;
+	int shared;
+	struct proc *p;
+{
+	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
+	struct irix_shared_regions_rec *isrr;
+	struct irix_shared_regions_rec *new_isrr;
+	vaddr_t end, cur_start, cur_end;
+	int cur_shared;
+
+	start = trunc_page(start);
+	len = round_page(len);
+	end = start + len;
+
+	new_isrr = irix_isrr_create(start, len, shared);
+
+	/* Do we need to insert the new region at the begining of the list? */
+	if (LIST_EMPTY(&ied->ied_shared_regions) || 
+	    LIST_FIRST(&ied->ied_shared_regions)->isrr_start > start) {
+		LIST_INSERT_HEAD(&ied->ied_shared_regions, new_isrr, isrr_list);
+	} else {
+		/* Find the place where to insert it */
+		LIST_FOREACH(isrr, &ied->ied_shared_regions, isrr_list) {
+			cur_start = isrr->isrr_start;
+			cur_end = isrr->isrr_start + isrr->isrr_len;
+			cur_shared = isrr->isrr_shared;
+		
+			/* 
+			 * if there is no intersection between inserted 
+			 * and current region: skip to next region 
+			 */
+			if (cur_end <= start)
+				continue;
+
+			/* 
+			 * if new region is included into the current 
+			 * region. Right-crop the current region,
+			 * insert a new one, and insert a new region
+			 * for the end of the split region
+			 */
+			if (cur_end > end && cur_start < start) {
+				isrr->isrr_len = start - isrr->isrr_start;
+				LIST_INSERT_AFTER(isrr, new_isrr, isrr_list);
+				isrr = new_isrr;
+
+				new_isrr = irix_isrr_create(end, 
+				    cur_end - end, cur_shared);
+				LIST_INSERT_AFTER(isrr, new_isrr, isrr_list);
+
+				/* Nothing more to do, exit now */
+#ifdef DEBUG_IRIX
+				irix_isrr_debug(p);
+#endif
+				return;
+			}
+
+			/*
+			 * if inserted block overlap some part 
+			 * of current region: right-crop current region
+			 * and insert the new region
+			 */
+			if (start < cur_end) {
+				isrr->isrr_len = start - cur_start;
+				LIST_INSERT_AFTER(isrr, new_isrr, isrr_list);
+
+				/* exit the FOREACH loop */
+				break;
+			}
+		}
+	}
+
+	/* 
+	 * At this point, we inserted the new region (new_isrr) but 
+	 * it may be overlaping with next regions, so we need to clean
+	 * this up and remove or crop next regions
+	 */
+	LIST_FOREACH(isrr, &ied->ied_shared_regions, isrr_list) {
+		cur_start = isrr->isrr_start;
+		cur_end = isrr->isrr_start + isrr->isrr_len;
+
+		/* skip until we get beyond new_isrr */
+		if (cur_start <= start)
+			continue;
+
+		if (end >= cur_end) { /* overlap */
+			LIST_REMOVE(isrr, isrr_list);
+			free(isrr, M_EMULDATA);
+			/* isrr is now invalid */
+			isrr = new_isrr;
+			continue;
+		}
+
+		/* 
+		 * Here end < cur_end, therefore we need to 
+		 * right-crop the current region 
+		 */
+		 isrr->isrr_start = end;
+		 isrr->isrr_len = cur_end - end;
+		 break;
+	}
+#ifdef DEBUG_IRIX
+	irix_isrr_debug(p);
+#endif
+	return;
+}
+
+#ifdef DEBUG_IRIX
+static void
+irix_isrr_debug(p)
+	struct proc *p;
+{
+	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
+	struct irix_shared_regions_rec *isrr;
+
+	printf("isrr for pid %d\n", p->p_pid);
+	LIST_FOREACH(isrr, &ied->ied_shared_regions, isrr_list) {
+		printf("  addr = %p, len = %p, shared = %d\n",
+		    (void *)isrr->isrr_start, 
+		    (void *)isrr->isrr_len, 
+		    isrr->isrr_shared);
+	}
+}
+#endif /* DEBUG_IRIX */
