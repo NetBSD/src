@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.17 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umidi.c,v 1.18 2003/12/05 06:01:59 gson Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.17 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.18 2003/12/05 06:01:59 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -890,7 +890,8 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 	jack->opened = 1;
 	if (ep->num_open++==0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
 		err = start_input_transfer(ep);
-		if (err!=USBD_NORMAL_COMPLETION) {
+		if (err != USBD_NORMAL_COMPLETION &&
+		    err != USBD_IN_PROGRESS) {
 			ep->num_open--;
 		}
 	}
