@@ -1,5 +1,5 @@
 /*
- * $NetBSD: aout2bb.c,v 1.1.1.1 1996/11/29 23:36:30 is Exp $
+ * $NetBSD: aout2bb.c,v 1.2 1996/12/31 22:39:58 veego Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -45,7 +45,6 @@
 #include <machine/endian.h>	/* of the machine we're running on */
 
 #include <sys/exec_aout.h>	/* TARGET */
-#include <machine/exec.h>	/* XXX CROSS should be of TARGET */
 
 #include "aout2bb.h"
 #include "chksum.h"
