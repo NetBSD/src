@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26.2.6 2000/10/17 19:50:21 tv Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.7 2000/10/18 04:10:57 tv Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -65,8 +65,6 @@ struct in_addr inaddr_any;
 struct sockaddr_in sockaddr_broadcast;
 struct in_addr giaddr;
 
-struct binding_scope global_scope;
-
 /* ASSERT_STATE() does nothing now; it used to be
    assert (state_is == state_shouldbe). */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
@@ -74,7 +72,6 @@ struct binding_scope global_scope;
 static const char copyright[] = "Copyright 1995-2000 Internet Software Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Software Consortium DHCP Client";
-static const char contrib [] = "\nPlease contribute if you find this software useful.";
 static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 u_int16_t local_port;
@@ -229,8 +226,8 @@ int main (argc, argv, envp)
 		log_info ("%s %s", message, DHCP_VERSION);
 		log_info (copyright);
 		log_info (arr);
-		log_info (contrib);
 		log_info (url);
+		log_info ("%s", "");
 	} else
 		log_perror = 0;
 
@@ -415,9 +412,14 @@ int main (argc, argv, envp)
 
 static void usage ()
 {
+	log_info ("%s %s", message, DHCP_VERSION);
+	log_info (copyright);
+	log_info (arr);
+	log_info (url);
+
 	log_error ("Usage: dhclient [-d] [-D] [-q] [-p <port>] %s",
 		   "[-s server]");
-	log_error ("                [-lf lease-file] [-pf pid-file]%s",
+	log_fatal ("                [-lf lease-file] [-pf pid-file]%s",
 		   "[-cf config-file] [interface]");
 }
 
@@ -661,7 +663,7 @@ void dhcpack (packet)
 
 	log_info ("DHCPACK from %s", piaddr (packet -> client_addr));
 
-	lease = packet_to_lease (packet);
+	lease = packet_to_lease (packet, client);
 	if (!lease) {
 		log_info ("packet_to_lease failed.");
 		return;
@@ -1010,7 +1012,7 @@ void dhcpoffer (packet)
 		}
 	}
 
-	lease = packet_to_lease (packet);
+	lease = packet_to_lease (packet, client);
 	if (!lease) {
 		log_info ("packet_to_lease failed.");
 		return;
@@ -1063,8 +1065,9 @@ void dhcpoffer (packet)
 /* Allocate a client_lease structure and initialize it from the parameters
    in the specified packet. */
 
-struct client_lease *packet_to_lease (packet)
+struct client_lease *packet_to_lease (packet, client)
 	struct packet *packet;
+	struct client_state *client;
 {
 	struct client_lease *lease;
 	int i;
@@ -1074,7 +1077,7 @@ struct client_lease *packet_to_lease (packet)
 	lease = (struct client_lease *)new_client_lease (MDL);
 
 	if (!lease) {
-		log_error ("dhcpoffer: no memory to record lease.\n");
+		log_error ("packet_to_lease: no memory to record lease.\n");
 		return (struct client_lease *)0;
 	}
 
@@ -1140,6 +1143,14 @@ struct client_lease *packet_to_lease (packet)
 			lease -> filename [len] = 0;
 		}
 	}
+
+	execute_statements_in_scope ((struct binding_value **)0,
+				     (struct packet *)packet,
+				     (struct lease *)0, lease -> options,
+				     lease -> options, &global_scope,
+				     client -> config -> on_receipt,
+				     (struct group *)0);
+
 	return lease;
 }	
 
@@ -1699,7 +1710,8 @@ void make_client_options (client, lease, type, sid, rip, prl, op)
 	/* Run statements that need to be run on transmission. */
 	if (client -> config -> on_transmission)
 		execute_statements_in_scope
-			((struct packet *)0, (struct lease *)0,
+			((struct binding_value **)0,
+			 (struct packet *)0, (struct lease *)0,
 			 (lease ? lease -> options : (struct option_state *)0),
 			 *op, &global_scope,
 			 client -> config -> on_transmission,
@@ -1728,7 +1740,8 @@ void make_discover (client, lease)
 		cons_options ((struct packet *)0, &client -> packet,
 			      (struct lease *)0, 0,
 			      (struct option_state *)0, options,
-			      &global_scope, 0, 0, 0, (struct data_string *)0);
+			      &global_scope, 0, 0, 0, (struct data_string *)0,
+			      client -> config -> vendor_space_name);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1796,7 +1809,8 @@ void make_request (client, lease)
 		cons_options ((struct packet *)0, &client -> packet,
 			      (struct lease *)0, 0,
 			      (struct option_state *)0, options,
-			      &global_scope, 0, 0, 0, (struct data_string *)0);
+			      &global_scope, 0, 0, 0, (struct data_string *)0,
+			      client -> config -> vendor_space_name);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1861,7 +1875,8 @@ void make_decline (client, lease)
 		cons_options ((struct packet *)0, &client -> packet,
 			      (struct lease *)0, 0,
 			      (struct option_state *)0, options,
-			      &global_scope, 0, 0, 0, (struct data_string *)0);
+			      &global_scope, 0, 0, 0, (struct data_string *)0,
+			      client -> config -> vendor_space_name);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 	option_state_dereference (&options, MDL);
@@ -1918,7 +1933,8 @@ void make_release (client, lease)
 		cons_options ((struct packet *)0, &client -> packet,
 			      (struct lease *)0, 0,
 			      (struct option_state *)0, options,
-			      &global_scope, 0, 0, 0, (struct data_string *)0);
+			      &global_scope, 0, 0, 0, (struct data_string *)0,
+			      client -> config -> vendor_space_name);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 	option_state_dereference (&options, MDL);
@@ -2003,6 +2019,35 @@ void rewrite_client_leases ()
 	fflush (leaseFile);
 }
 
+void write_lease_option (struct option_cache *oc,
+			 struct packet *packet, struct lease *lease,
+			 struct option_state *in_options,
+			 struct option_state *cfg_options,
+			 struct binding_scope **scope,
+			 struct universe *u, void *stuff)
+{
+	const char *name, *dot;
+	struct data_string ds;
+	memset (&ds, 0, sizeof ds);
+
+	if (u != &dhcp_universe) {
+		name = u -> name;
+		dot = ".";
+	} else {
+		name = "";
+		dot = "";
+	}
+	if (evaluate_option_cache (&ds, packet, lease,
+				   in_options, cfg_options, scope, oc, MDL)) {
+		fprintf (leaseFile,
+			 "  option %s%s%s %s;\n",
+			 name, dot, oc -> option -> name,
+			 pretty_print_option (oc -> option -> code,
+					      ds.data, ds.len, 1, 1));
+		data_string_forget (&ds, MDL);
+	}
+}
+
 int write_client_lease (client, lease, rewrite, makesure)
 	struct client_state *client;
 	struct client_lease *lease;
@@ -2061,30 +2106,11 @@ int write_client_lease (client, lease, rewrite, makesure)
 
 	memset (&ds, 0, sizeof ds);
 
-	hash = lease -> options -> universes [dhcp_universe.index];
-	for (i = 0; i < OPTION_HASH_SIZE; i++) {
-		pair p;
-		/* XXX save _all_ options! XXX */
-		for (p = hash [i]; p; p = p -> cdr) {
-			oc = (struct option_cache *)p -> car;
-			if (evaluate_option_cache (&ds, (struct packet *)0,
-						   (struct lease *)0,
-						   (struct option_state *)0,
-						   lease -> options,
-						   &global_scope, oc, MDL)) {
-				fprintf (leaseFile,
-					 "  option %s %s;\n",
-					 oc -> option -> name,
-					 pretty_print_option
-					 (oc -> option -> code,
-					  ds.data, ds.len, 1, 1));
-				data_string_forget (&ds, MDL);
-				if (errno != 0) {
-					errors++;
-					errno = 0;
-				}
-			}
-		}
+	for (i = 0; i < lease -> options -> universe_count; i++) {
+		option_space_foreach ((struct packet *)0, (struct lease *)0,
+				      (struct option_state *)0,
+				      lease -> options, &global_scope,
+				      universes [i], 0, write_lease_option);
 	}
 
 	/* Note: the following is not a Y2K bug - it's a Y1.9K bug.   Until
@@ -2159,6 +2185,40 @@ void script_init (client, reason, medium)
 	}
 }
 
+struct envadd_state {
+	struct client_state *client;
+	const char *prefix;
+};
+
+void client_option_envadd (struct option_cache *oc,
+			   struct packet *packet, struct lease *lease,
+			   struct option_state *in_options,
+			   struct option_state *cfg_options,
+			   struct binding_scope **scope,
+			   struct universe *u, void *stuff)
+{
+	struct envadd_state *es = stuff;
+	struct data_string data;
+	memset (&data, 0, sizeof data);
+
+	if (evaluate_option_cache (&data, packet, lease,
+				   in_options, cfg_options, scope, oc, MDL)) {
+		if (data.len) {
+			char name [256];
+			if (dhcp_option_ev_name (name, sizeof name,
+						 oc -> option)) {
+				client_envadd (es -> client, es -> prefix,
+					       name, "%s",
+					       (pretty_print_option
+						(oc -> option -> code,
+						 data.data, data.len,
+						 0, 0)));
+				data_string_forget (&data, MDL);
+			}
+		}
+	}
+}
+
 void script_write_params (client, prefix, lease)
 	struct client_state *client;
 	const char *prefix;
@@ -2169,6 +2229,10 @@ void script_write_params (client, prefix, lease)
 	struct option_cache *oc;
 	pair *hash;
 	char *s, *t;
+	struct envadd_state es;
+
+	es.client = client;
+	es.prefix = prefix;
 
 	client_envadd (client,
 		       prefix, "ip_address", "%s", piaddr (lease -> address));
@@ -2229,39 +2293,12 @@ void script_write_params (client, prefix, lease)
 		client_envadd (client, prefix, "server_name",
 			       "%s", lease -> server_name);
 
-	execute_statements_in_scope ((struct packet *)0,
-				     (struct lease *)0, lease -> options,
-				     lease -> options, &global_scope,
-				     client -> config -> on_receipt,
-				     (struct group *)0);
-
-	hash = lease -> options -> universes [dhcp_universe.index];
-	for (i = 0; i < OPTION_HASH_SIZE; i++) {
-	    pair hp;
-
-	    for (hp = hash [i]; hp; hp = hp -> cdr) {
-		oc = (struct option_cache *)hp -> car;
-
-		if (evaluate_option_cache (&data,
-					   (struct packet *)0,
-					   (struct lease *)0,
-					   (struct option_state *)0,
-					   lease -> options,
-					   &global_scope, oc, MDL)) {
-		    if (data.len) {
-			char name [256];
-			if (dhcp_option_ev_name (name, sizeof name,
-						 oc -> option)) {
-			    client_envadd (client, prefix, name, "%s",
-					   (pretty_print_option
-					    (oc -> option -> code,
-					     data.data, data.len,
-					     0, 0)));
-			    data_string_forget (&data, MDL);
-			}
-		    }
-		}
-	    }
+	for (i = 0; i < lease -> options -> universe_count; i++) {
+		option_space_foreach ((struct packet *)0, (struct lease *)0,
+				      (struct option_state *)0,
+				      lease -> options, &global_scope,
+				      universes [i],
+				      &es, client_option_envadd);
 	}
 	client_envadd (client, prefix, "expiry", "%d", (int)(lease -> expiry));
 }
@@ -2373,18 +2410,38 @@ int dhcp_option_ev_name (buf, buflen, option)
 	size_t buflen;
 	struct option *option;
 {
-	int i;
+	int i, j;
+	const char *s;
 
-	for (i = 0; option -> name [i]; i++) {
-		if (i + 1 == buflen)
-			return 0;
-		if (option -> name [i] == '-')
-			buf [i] = '_';
-		else
-			buf [i] = option -> name [i];
+	j = 0;
+	if (option -> universe != &dhcp_universe) {
+		s = option -> universe -> name;
+		i = 0;
+	} else { 
+		s = option -> name;
+		i = 1;
 	}
 
-	buf [i] = 0;
+	do {
+		while (*s) {
+			if (j + 1 == buflen)
+				return 0;
+			if (*s == '-')
+				buf [j++] = '_';
+			else
+				buf [j++] = *s;
+			++s;
+		}
+		if (!i) {
+			s = option -> name;
+			if (j + 1 == buflen)
+				return 0;
+			buf [j++] = '_';
+		}
+		++i;
+	} while (i != 2);
+
+	buf [j] = 0;
 	return 1;
 }
 
@@ -2590,7 +2647,6 @@ int parse_agent_information_option (packet, len, data)
 	int len;
 	u_int8_t *data;
 {
-	log_info ("relay agent information option received.");
 	return 1;
 }
 

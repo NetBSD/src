@@ -117,7 +117,7 @@ const char *res_protocolname(int);
 const char *res_servicename(u_int16_t, const char *);
 u_int32_t ns_datetosecs (const char *cp, int *errp);
 int b64_pton (char const *, unsigned char *, size_t);
-u_int res_randomid (void);
+unsigned int res_randomid (void);
 ns_rcode res_findzonecut (res_state, const char *, ns_class, int, char *,
 			  size_t, struct in_addr *, int, int *, void *);
 int res_nsend (res_state,
@@ -197,6 +197,7 @@ ns_rcode find_cached_zone (const char *, ns_class, char *,
 int find_tsig_key (ns_tsig_key **, const char *, void *);
 int forget_zone (void *);
 int repudiate_zone (void *);
+void cache_found_zone (ns_class, char *, struct in_addr *, int);
 
 #define DprintQ(a,b,c,d)
 #define Dprint(a,b)

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.6 2000/04/22 07:11:37 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.6.4.1 2000/10/18 04:11:13 tv Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -102,6 +102,35 @@ void print_lease (lease)
 }	
 
 #if defined (DEBUG)
+void dump_packet_option (struct option_cache *oc,
+			 struct packet *packet,
+			 struct lease *lease,
+			 struct option_state *in_options,
+			 struct option_state *cfg_options,
+			 struct binding_scope **scope,
+			 struct universe *u, void *foo)
+{
+	const char *name, *dot;
+	struct data_string ds;
+	memset (&ds, 0, sizeof ds);
+
+	if (u != &dhcp_universe) {
+		name = u -> name;
+		dot = ".";
+	} else {
+		name = "";
+		dot = "";
+	}
+	if (evaluate_option_cache (&ds, packet, lease,
+				   in_options, cfg_options, scope, oc, MDL)) {
+		log_debug ("  option %s%s%s %s;\n",
+			   name, dot, oc -> option -> name,
+			   pretty_print_option (oc -> option -> code,
+						ds.data, ds.len, 1, 1));
+		data_string_forget (&ds, MDL);
+	}
+}
+
 void dump_packet (tp)
 	struct packet *tp;
 {
@@ -110,13 +139,13 @@ void dump_packet (tp)
 	log_debug ("packet length %d", tp -> packet_length);
 	log_debug ("op = %d  htype = %d  hlen = %d  hops = %d",
 	       tdp -> op, tdp -> htype, tdp -> hlen, tdp -> hops);
-	log_debug ("xid = %x  secs = %d  flags = %x",
-	       tdp -> xid, tdp -> secs, tdp -> flags);
+	log_debug ("xid = %x  secs = %ld  flags = %x",
+	       tdp -> xid, (unsigned long)tdp -> secs, tdp -> flags);
 	log_debug ("ciaddr = %s", inet_ntoa (tdp -> ciaddr));
 	log_debug ("yiaddr = %s", inet_ntoa (tdp -> yiaddr));
 	log_debug ("siaddr = %s", inet_ntoa (tdp -> siaddr));
 	log_debug ("giaddr = %s", inet_ntoa (tdp -> giaddr));
-	log_debug ("chaddr = %02.2x:%02.2x:%02.2x:%02.2x:%02.2x:%02.2x",
+	log_debug ("chaddr = %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
 	       ((unsigned char *)(tdp -> chaddr)) [0],
 	       ((unsigned char *)(tdp -> chaddr)) [1],
 	       ((unsigned char *)(tdp -> chaddr)) [2],
@@ -128,16 +157,18 @@ void dump_packet (tp)
 	if (tp -> options_valid) {
 		int i;
 
-		for (i = 0; i < 256; i++) {
-			if (tp -> options [i].data)
-				log_debug ("  %s = %s",
-					dhcp_options [i].name,
-					pretty_print_option
-					(i, tp -> options [i].data,
-					 tp -> options [i].len, 1, 1));
+		for (i = 0; i < tp -> options -> universe_count; i++) {
+			if (tp -> options -> universes [i]) {
+				option_space_foreach (tp, (struct lease *)0,
+						      (struct option_state *)0,
+						      tp -> options,
+						      &global_scope,
+						      universes [i], 0,
+						      dump_packet_option);
+			}
 		}
 	}
-	log_debug ("");
+	log_debug ("%s", "");
 }
 #endif
 
@@ -154,7 +185,7 @@ void dump_raw (buf, len)
 	for (i = 0; i < len; i++) {
 		if ((i & 15) == 0) {
 			if (lbix)
-				log_info (lbuf);
+				log_info ("%s", lbuf);
 			sprintf (lbuf, "%03x:", i);
 			lbix = 4;
 		} else if ((i & 7) == 0)
@@ -162,7 +193,7 @@ void dump_raw (buf, len)
 		sprintf (&lbuf [lbix], " %02x", buf [i]);
 		lbix += 3;
 	}
-	log_info (lbuf);
+	log_info ("%s", lbuf);
 }
 
 void hash_dump (table)
@@ -182,7 +213,7 @@ void hash_dump (table)
 			if (bp -> len)
 				dump_raw (bp -> name, bp -> len);
 			else
-				log_info ((const char *)bp -> name);
+				log_info ("%s", (const char *)bp -> name);
 		}
 	}
 }
@@ -455,6 +486,18 @@ static unsigned print_subexpression (expr, buf, len)
 
 	      case expr_remainder:
 		s = "%";
+		goto binop;
+
+	      case expr_binary_and:
+		s = "&";
+		goto binop;
+
+	      case expr_binary_or:
+		s = "|";
+		goto binop;
+
+	      case expr_binary_xor:
+		s = "^";
 		goto binop;
 		
 	      case expr_not:
@@ -1181,8 +1224,8 @@ void print_dns_status (int status, ns_updque *uq)
 		*s++ = '.';
 	*s++ = 0;
 	if (errorp)
-		log_error (obuf);
+		log_error ("%s", obuf);
 	else
-		log_info (obuf);
+		log_info ("%s", obuf);
 }
 #endif /* NSUPDATE */
