@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.4 1999/01/13 07:30:10 ross Exp $	
+.\" $NetBSD: xfer,v 1.4.2.1 1999/04/04 04:29:59 minoura Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact -offset indent
@@ -12,28 +12,39 @@ Remote NFS partition
 FTP
 .El
 .Pp
-No matter which installation medium you choose, you'll need to have
-a floppy disk. On the first, you'll put the install or upgrade floppy
-image, depending on whether you're installing NetBSD for the first time,
-or upgrading a previous installation.
+You'll need to have a install floppy disk. On the first, you'll put
+the install floppy image.
 .Pp
 If you are using a UN*X-like system to write the floppy images to
-disks, you should use the "dd" command to copy the file system images
-(.fs files) directly to the raw floppy disks. It is suggested that
-you read the dd(1) manual page or ask your system administrator to
-determine the correct set of arguments to use; it will be slightly
-different from system to system, and a comprehensive list of the
-possibilities is beyond the scope of this document.
+disks, you should use the 
+.Pa dd
+command to copy the file system images (.fs files) directly to the raw
+floppy disks. It is suggested that you read the dd(1) manual page or
+ask your system administrator to determine the correct set of
+arguments to use; it will be slightly different from system to system,
+and a comprehensive list of the possibilities is beyond the scope of
+this document.
 .Pp
-If you are using Human68k to write the floppy images to disks, you should
-use the "rawrite" utility, provided in the "x68k/utils" directory
-of the NetBSD distribution. It will write the file system images (.fs
-files) to disks.
+If you are using Human68k to write the floppy images to disks, you
+should use the
+.Pa rawrite
+utility, provided in the
+.Pa installation/misc
+directory of the NetBSD distribution. It will write the file system
+images (.fs files) to disks.
 .Pp
-Note that, when installing, the install floppy MUST not be write-protected.
-The install program needs to write some temporary files, and if the
-disk is write-protected, it can't. If you're upgrading your system,
-the upgrade floppy may be write-protected.
+If you can retrieve
+.Pa loadbsd.x
+utility and
+.Pa netbsd.INSTALL
+file which can be found in
+.Pa installation/misc
+directory into your Human68k disk, you can run installation kernel
+without preparing the special boot floppy.  Simply type:
+.D1 Ic loadbsd netbsd.INSTALL
+from the Human68k command line, then
+.Nx
+will start the installation sequence.
 .Pp
 Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you
@@ -48,11 +59,12 @@ the media
 be of the IBM
 .Em Super-floppy
 format. The Human68k format is not recognized
-by this release of the NetBSD/x68k. If you have a MS-DOS (or
+by this release of the NetBSD/\*m. If you have a MS-DOS (or
 MS-Windows) machine with an MO drive connected, use it. If
 you don't, and if you have a program to handle IBM format MO
 for Human68k, copy all the files in the subdirectory
-"x68k/binaries" and CHANGE THEIR NAMES IN UPPER CASE.
+.Pa x68k/binaries
+and CHANGE THEIR NAMES IN UPPER CASE.
 .
 .It Em Install\ From\ Tape
 .Pp
@@ -63,7 +75,7 @@ To install NetBSD from a tape, you need to make a tape that
 contains the distribution set files, in "tar" format. If
 you're making the tape on a UN*X-like system, the easiest way
 to do so is probably something like:
-.D1 Ic tar cf Ar tape_device dist_directories
+.D1 Ic tar\ cf Ar tape_device Ar dist_directories
 where
 .Ar tape_device
 is the name of the tape device that
