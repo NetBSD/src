@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.15 1994/06/29 06:42:05 cgd Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.15.2.1 1994/07/12 21:04:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -415,6 +415,11 @@ nfs_write(ap)
 	 */
 	biosize = nmp->nm_rsize;
 	do {
+
+		/*
+		 * XXX make sure we aren't cached in the VM page cache
+		 */
+		(void)vnode_pager_uncache(vp);
 
 		/*
 		 * Check for a valid write lease.
