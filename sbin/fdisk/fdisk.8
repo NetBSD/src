@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.8 1995/03/18 14:55:34 cgd Exp $
+.\"	$NetBSD: fdisk.8,v 1.9 1997/08/11 23:31:41 phil Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -8,13 +8,16 @@
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aiu
+.Op Fl aiufS
+.Op Fl 0 | 1 | 2 | 3
+.Op Fl s Ar id offset size
 .Op Ar device
 .Sh PROLOGUE
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
 Sector 0 of the disk must contain boot code, a partition table, and a
 magic number.
+Newer BIOS want the entire first track reserved.
 BIOS partitions can be used to break the disk up into several pieces.
 The BIOS brings in sector 0, verifies the magic number, and begins
 executing the code at the first byte.
@@ -35,28 +38,25 @@ When called with no arguments, it prints the sector 0 partition table.
 An example follows:
 .Bd -literal
 	******* Working on device /dev/rwd0d *******
+	Warning: BIOS sector numbering starts with sector 1
 	parameters extracted from in-core disklabel are:
 	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
 
 	parameters to be used for BIOS calculations are:
 	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
 		
-	Warning: BIOS sector numbering starts with sector 1
 	Information from DOS bootblock is:
 	The data for partition 0 is:
-	sysid 165 (NetBSD)
+	0: sysid 165 (NetBSD)
     	    start 495, size 380160 (185 MB), flag 0
 		beg: cylinder    1, head   0, sector  1
 		end: cylinder  768, head  14, sector 33
-	The data for partition 1 is:
-	sysid 164 (unknown)
+	1: sysid 164 (unknown)
     	    start 378180, size 2475 (1 MB), flag 0
 		beg: cylinder  764, head   0, sector  1
 		end: cylinder  768, head  14, sector 33
-	The data for partition 2 is:
-	<UNUSED>
-	The data for partition 3 is:
-	sysid 99 (ISC UNIX, other System V/386, GNU HURD or Mach)
+	2: <UNUSED>
+	3: sysid 99 (ISC UNIX, other System V/386, GNU HURD or Mach)
     	    start 380656, size 224234 (109 MB), flag 80
 		beg: cylinder  769, head   0, sector  2
 		end: cylinder  197, head  14, sector 33
@@ -83,7 +83,8 @@ and saved in the bootblock.
 .El
 .Pp
 The flags
-.Fl i
+.Fl a ,
+.Fl i 
 or
 .Fl u
 are used to indicate that the partition data is to be updated.
@@ -94,7 +95,9 @@ This mode is designed not to change any data unless you explicitly tell it to;
 .Nm
 selects defaults for its questions to guarantee that behavior.
 .Pp
-It displays each partition and asks if you want to edit it.
+If the 
+.Fl u
+flag is used, it displays each partition and asks if you want to edit it.
 If you reply affirmatively,
 it will step through each field showing the old value
 and asking for a new one.
@@ -114,14 +117,15 @@ they will be calculated for you;
 you can specify them if you choose.
 .Pp
 After all the partitions are processed,
-you are given the option to change the
+if the 
+.Fl a
+flag was given, you are given the option to change the
 .Em active
 partition.
 To change only the
 .Em active
-partition, you can use the
-.Fl a
-flag instead.
+partition, you can use only the
+.Fl a .
 .Pp
 Finally,
 when the all the data for the first sector has been accumulated,
@@ -131,22 +135,57 @@ Only if you reply affirmatively to this question will
 .Nm
 write anything to the disk.
 .Pp
-The difference between the
-.Fl u
-flag and
+The
 .Fl i
-flag is that
-the
+initializes the partition table.  This initialization is done
+before any work is done for the
+.Fl a
+or
 .Fl u
-flag just edits the fields as they appear on the disk, while the
-.Fl i
-flag is used to `initialize' sector 0.
+flags.
 The
 .Fl i
 flag instructs
 .Nm
 to start by making the first 3 partitions empty, setting the last partition
 to use the whole disk for NetBSD, and marking the last partition active.
+.Pp
+The flags
+.Fl 0 ,
+.Fl 1 ,
+.Fl 2 and
+.Fl 3
+allow the user to selectively update or set to active a specific
+partition.
+.Pp
+The
+.Fl s
+flag allows the user to specify the partition type, offset and
+size from the command line.  This flag requires the use of the
+partition selection flag.
+.Pp
+The
+.Fl f
+flag makes
+.Nm
+work in a non-interactive mode.  You can not change the disk parameters
+in this mode.  This is provided only so scripts or other programs may
+use fdisk as part of an automatic installation process.  Using the
+.Fl f
+flag with the
+.Fl u
+makes it impossible to specify 
+.Em cylinder, head
+and 
+.Em sector
+fields.
+.Pp
+The
+.Fl S
+flag used with no other flags prints a series of 
+.Nm /bin/sh
+commands for setting variables to the partition information.  This
+is used for the install script.
 .Sh NOTES
 The automatic calculation of starting cylinder etc. uses
 a set of figures that represent what the BIOS thinks is the
