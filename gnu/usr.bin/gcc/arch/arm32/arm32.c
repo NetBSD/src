@@ -1402,155 +1402,543 @@ soft_df_operand (op, mode)
  /* Return 1 if OP is a load multiple operation.  It is known to be
     parallel and the first section will be tested. */
  
- int
- load_multiple_operation (op, mode)
-      rtx op;
-      enum machine_mode mode;
- {
-   HOST_WIDE_INT count = XVECLEN (op, 0);
-   int dest_regno;
-   rtx src_addr;
-   HOST_WIDE_INT i = 1, base = 0;
-   rtx elt;
- 
-   if (count <= 1
-       || GET_CODE (XVECEXP (op, 0, 0)) != SET)
-     return 0;
- 
-   /* Check to see if this might be a write-back */
-   if (GET_CODE (SET_SRC (elt = XVECEXP (op, 0, 0))) == PLUS)
-     {
-       i++;
-       base = 1;
- 
-       /* Now check it more carefully */
-       if (GET_CODE (SET_DEST (elt)) != REG
-           || GET_CODE (XEXP (SET_SRC (elt), 0)) != REG
-           || REGNO (XEXP (SET_SRC (elt), 0)) != REGNO (SET_DEST (elt))
-           || GET_CODE (XEXP (SET_SRC (elt), 1)) != CONST_INT
-           || INTVAL (XEXP (SET_SRC (elt), 1)) != (count - 2) * 4
-           || GET_CODE (XVECEXP (op, 0, count - 1)) != CLOBBER
-           || GET_CODE (XEXP (XVECEXP (op, 0, count - 1), 0)) != REG
-           || REGNO (XEXP (XVECEXP (op, 0, count - 1), 0))
-               != REGNO (SET_DEST (elt)))
-         return 0;
- 
-       count--;
-     }
- 
-   /* Perform a quick check so we don't blow up below.  */
-   if (count <= i
-       || GET_CODE (XVECEXP (op, 0, i - 1)) != SET
-       || GET_CODE (SET_DEST (XVECEXP (op, 0, i - 1))) != REG
-       || GET_CODE (SET_SRC (XVECEXP (op, 0, i - 1))) != MEM)
-     return 0;
- 
-   dest_regno = REGNO (SET_DEST (XVECEXP (op, 0, i - 1)));
-   src_addr = XEXP (SET_SRC (XVECEXP (op, 0, i - 1)), 0);
- 
-   for (; i < count; i++)
-     {
-       rtx elt = XVECEXP (op, 0, i);
- 
-       if (GET_CODE (elt) != SET
-           || GET_CODE (SET_DEST (elt)) != REG
-           || GET_MODE (SET_DEST (elt)) != SImode
-           || REGNO (SET_DEST (elt)) != dest_regno + i - base
-           || GET_CODE (SET_SRC (elt)) != MEM
-           || GET_MODE (SET_SRC (elt)) != SImode
-           || GET_CODE (XEXP (SET_SRC (elt), 0)) != PLUS
-           || ! rtx_equal_p (XEXP (XEXP (SET_SRC (elt), 0), 0), src_addr)
-           || GET_CODE (XEXP (XEXP (SET_SRC (elt), 0), 1)) != CONST_INT
-           || INTVAL (XEXP (XEXP (SET_SRC (elt), 0), 1)) != (i - base) * 4)
-         return 0;
-     }
- 
-   return 1;
- }
- 
- /* Return 1 if OP is a store multiple operation.  It is known to be
-    parallel and the first section will be tested. */
- 
- int
- store_multiple_operation (op, mode)
-      rtx op;
-      enum machine_mode mode;
- {
-   HOST_WIDE_INT count = XVECLEN (op, 0);
-   int src_regno;
-   rtx dest_addr;
-   HOST_WIDE_INT i = 1, base = 0;
-   rtx elt;
- 
-   if (count <= 1
-       || GET_CODE (XVECEXP (op, 0, 0)) != SET)
-     return 0;
- 
-   /* Check to see if this might be a write-back */
-   if (GET_CODE (SET_SRC (elt = XVECEXP (op, 0, 0))) == PLUS)
-     {
-       i++;
-       base = 1;
- 
-       /* Now check it more carefully */
-       if (GET_CODE (SET_DEST (elt)) != REG
-           || GET_CODE (XEXP (SET_SRC (elt), 0)) != REG
-           || REGNO (XEXP (SET_SRC (elt), 0)) != REGNO (SET_DEST (elt))
-           || GET_CODE (XEXP (SET_SRC (elt), 1)) != CONST_INT
-           || INTVAL (XEXP (SET_SRC (elt), 1)) != (count - 2) * 4
-           || GET_CODE (XVECEXP (op, 0, count - 1)) != CLOBBER
-           || GET_CODE (XEXP (XVECEXP (op, 0, count - 1), 0)) != REG
-           || REGNO (XEXP (XVECEXP (op, 0, count - 1), 0))
-               != REGNO (SET_DEST (elt)))
-         return 0;
- 
-       count--;
-     }
- 
-   /* Perform a quick check so we don't blow up below.  */
-   if (count <= i
-       || GET_CODE (XVECEXP (op, 0, i - 1)) != SET
-       || GET_CODE (SET_DEST (XVECEXP (op, 0, i - 1))) != MEM
-       || GET_CODE (SET_SRC (XVECEXP (op, 0, i - 1))) != REG)
-     return 0;
- 
-   src_regno = REGNO (SET_SRC (XVECEXP (op, 0, i - 1)));
-   dest_addr = XEXP (SET_DEST (XVECEXP (op, 0, i - 1)), 0);
- 
-   for (; i < count; i++)
-     {
-       elt = XVECEXP (op, 0, i);
- 
-       if (GET_CODE (elt) != SET
-           || GET_CODE (SET_SRC (elt)) != REG
-           || GET_MODE (SET_SRC (elt)) != SImode
-           || REGNO (SET_SRC (elt)) != src_regno + i - base
-           || GET_CODE (SET_DEST (elt)) != MEM
-           || GET_MODE (SET_DEST (elt)) != SImode
-           || GET_CODE (XEXP (SET_DEST (elt), 0)) != PLUS
-           || ! rtx_equal_p (XEXP (XEXP (SET_DEST (elt), 0), 0), dest_addr)
-           || GET_CODE (XEXP (XEXP (SET_DEST (elt), 0), 1)) != CONST_INT
-           || INTVAL (XEXP (XEXP (SET_DEST (elt), 0), 1)) != (i - base) * 4)
-         return 0;
-     }
- 
-   return 1;
- }
- 
- int
- multi_register_push (op, mode)
-      rtx op;
-      enum machine_mode mode;
- {
-   if (GET_CODE (op) != PARALLEL
-       || (GET_CODE (XVECEXP (op, 0, 0)) != SET)
-       || (GET_CODE (SET_SRC (XVECEXP (op, 0, 0))) != UNSPEC)
-       || (XINT (SET_SRC (XVECEXP (op, 0, 0)), 1) != 2))
-     return 0;
- 
-   return 1;
- }
- 
+/* Return 1 if OP is a load multiple operation.  It is known to be
+   parallel and the first section will be tested. */
+
+int
+load_multiple_operation (op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  HOST_WIDE_INT count = XVECLEN (op, 0);
+  int dest_regno;
+  rtx src_addr;
+  HOST_WIDE_INT i = 1, base = 0;
+  rtx elt;
+
+  if (count <= 1
+      || GET_CODE (XVECEXP (op, 0, 0)) != SET)
+    return 0;
+
+  /* Check to see if this might be a write-back */
+  if (GET_CODE (SET_SRC (elt = XVECEXP (op, 0, 0))) == PLUS)
+    {
+      i++;
+      base = 1;
+
+      /* Now check it more carefully */
+      if (GET_CODE (SET_DEST (elt)) != REG
+          || GET_CODE (XEXP (SET_SRC (elt), 0)) != REG
+          || REGNO (XEXP (SET_SRC (elt), 0)) != REGNO (SET_DEST (elt))
+          || GET_CODE (XEXP (SET_SRC (elt), 1)) != CONST_INT
+          || INTVAL (XEXP (SET_SRC (elt), 1)) != (count - 2) * 4
+          || GET_CODE (XVECEXP (op, 0, count - 1)) != CLOBBER
+          || GET_CODE (XEXP (XVECEXP (op, 0, count - 1), 0)) != REG
+          || REGNO (XEXP (XVECEXP (op, 0, count - 1), 0))
+              != REGNO (SET_DEST (elt)))
+        return 0;
+
+      count--;
+    }
+
+  /* Perform a quick check so we don't blow up below.  */
+  if (count <= i
+      || GET_CODE (XVECEXP (op, 0, i - 1)) != SET
+      || GET_CODE (SET_DEST (XVECEXP (op, 0, i - 1))) != REG
+      || GET_CODE (SET_SRC (XVECEXP (op, 0, i - 1))) != MEM)
+    return 0;
+
+  dest_regno = REGNO (SET_DEST (XVECEXP (op, 0, i - 1)));
+  src_addr = XEXP (SET_SRC (XVECEXP (op, 0, i - 1)), 0);
+
+  for (; i < count; i++)
+    {
+      elt = XVECEXP (op, 0, i);
+
+      if (GET_CODE (elt) != SET
+          || GET_CODE (SET_DEST (elt)) != REG
+          || GET_MODE (SET_DEST (elt)) != SImode
+          || REGNO (SET_DEST (elt)) != dest_regno + i - base
+          || GET_CODE (SET_SRC (elt)) != MEM
+          || GET_MODE (SET_SRC (elt)) != SImode
+          || GET_CODE (XEXP (SET_SRC (elt), 0)) != PLUS
+          || ! rtx_equal_p (XEXP (XEXP (SET_SRC (elt), 0), 0), src_addr)
+          || GET_CODE (XEXP (XEXP (SET_SRC (elt), 0), 1)) != CONST_INT
+          || INTVAL (XEXP (XEXP (SET_SRC (elt), 0), 1)) != (i - base) * 4)
+        return 0;
+    }
+
+  return 1;
+}
+
+/* Return 1 if OP is a store multiple operation.  It is known to be
+   parallel and the first section will be tested. */
+
+int
+store_multiple_operation (op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  HOST_WIDE_INT count = XVECLEN (op, 0);
+  int src_regno;
+  rtx dest_addr;
+  HOST_WIDE_INT i = 1, base = 0;
+  rtx elt;
+
+  if (count <= 1
+      || GET_CODE (XVECEXP (op, 0, 0)) != SET)
+    return 0;
+
+  /* Check to see if this might be a write-back */
+  if (GET_CODE (SET_SRC (elt = XVECEXP (op, 0, 0))) == PLUS)
+    {
+      i++;
+      base = 1;
+
+      /* Now check it more carefully */
+      if (GET_CODE (SET_DEST (elt)) != REG
+          || GET_CODE (XEXP (SET_SRC (elt), 0)) != REG
+          || REGNO (XEXP (SET_SRC (elt), 0)) != REGNO (SET_DEST (elt))
+          || GET_CODE (XEXP (SET_SRC (elt), 1)) != CONST_INT
+          || INTVAL (XEXP (SET_SRC (elt), 1)) != (count - 2) * 4
+          || GET_CODE (XVECEXP (op, 0, count - 1)) != CLOBBER
+          || GET_CODE (XEXP (XVECEXP (op, 0, count - 1), 0)) != REG
+          || REGNO (XEXP (XVECEXP (op, 0, count - 1), 0))
+              != REGNO (SET_DEST (elt)))
+        return 0;
+
+      count--;
+    }
+
+  /* Perform a quick check so we don't blow up below.  */
+  if (count <= i
+      || GET_CODE (XVECEXP (op, 0, i - 1)) != SET
+      || GET_CODE (SET_DEST (XVECEXP (op, 0, i - 1))) != MEM
+      || GET_CODE (SET_SRC (XVECEXP (op, 0, i - 1))) != REG)
+    return 0;
+
+  src_regno = REGNO (SET_SRC (XVECEXP (op, 0, i - 1)));
+  dest_addr = XEXP (SET_DEST (XVECEXP (op, 0, i - 1)), 0);
+
+  for (; i < count; i++)
+    {
+      elt = XVECEXP (op, 0, i);
+
+      if (GET_CODE (elt) != SET
+          || GET_CODE (SET_SRC (elt)) != REG
+          || GET_MODE (SET_SRC (elt)) != SImode
+          || REGNO (SET_SRC (elt)) != src_regno + i - base
+          || GET_CODE (SET_DEST (elt)) != MEM
+          || GET_MODE (SET_DEST (elt)) != SImode
+          || GET_CODE (XEXP (SET_DEST (elt), 0)) != PLUS
+          || ! rtx_equal_p (XEXP (XEXP (SET_DEST (elt), 0), 0), dest_addr)
+          || GET_CODE (XEXP (XEXP (SET_DEST (elt), 0), 1)) != CONST_INT
+          || INTVAL (XEXP (XEXP (SET_DEST (elt), 0), 1)) != (i - base) * 4)
+        return 0;
+    }
+
+  return 1;
+}
+
+int
+load_multiple_sequence (operands, nops, regs, base, load_offset)
+     rtx *operands;
+     int nops;
+     int *regs;
+     int *base;
+     HOST_WIDE_INT *load_offset;
+{
+  int unsorted_regs[4];
+  HOST_WIDE_INT unsorted_offsets[4];
+  int order[4];
+  int base_reg = -1;
+  int i;
+
+  /* Can only handle 2, 3, or 4 insns at present, though could be easily
+     extended if required.  */
+  if (nops < 2 || nops > 4)
+    abort ();
+
+  /* Loop over the operands and check that the memory references are
+     suitable (ie immediate offsets from the same base register).  At
+     the same time, extract the target register, and the memory
+     offsets.  */
+  for (i = 0; i < nops; i++)
+    {
+      rtx reg;
+      rtx offset;
+
+      /* Convert a subreg of a mem into the mem itself.  */
+      if (GET_CODE (operands[nops + i]) == SUBREG)
+	operands[nops + i] = alter_subreg(operands[nops + i]);
+
+      if (GET_CODE (operands[nops + i]) != MEM)
+	abort ();
+
+      /* Don't reorder volatile memory references; it doesn't seem worth
+	 looking for the case where the order is ok anyway.  */
+      if (MEM_VOLATILE_P (operands[nops + i]))
+	return 0;
+
+      offset = const0_rtx;
+
+      if ((GET_CODE (reg = XEXP (operands[nops + i], 0)) == REG
+	   || (GET_CODE (reg) == SUBREG
+	       && GET_CODE (reg = SUBREG_REG (reg)) == REG))
+	  || (GET_CODE (XEXP (operands[nops + i], 0)) == PLUS
+	      && ((GET_CODE (reg = XEXP (XEXP (operands[nops + i], 0), 0))
+		   == REG)
+		  || (GET_CODE (reg) == SUBREG
+		      && GET_CODE (reg = SUBREG_REG (reg)) == REG))
+	      && (GET_CODE (offset = XEXP (XEXP (operands[nops + i], 0), 1))
+		  == CONST_INT)))
+	{
+	  if (i == 0)
+	    {
+	      base_reg = REGNO(reg);
+	      unsorted_regs[0] = (GET_CODE (operands[i]) == REG
+				  ? REGNO (operands[i])
+				  : REGNO (SUBREG_REG (operands[i])));
+	      order[0] = 0;
+	    }
+	  else 
+	    {
+	      if (base_reg != REGNO (reg))
+		/* Not addressed from the same base register.  */
+		return 0;
+
+	      unsorted_regs[i] = (GET_CODE (operands[i]) == REG
+				  ? REGNO (operands[i])
+				  : REGNO (SUBREG_REG (operands[i])));
+	      if (unsorted_regs[i] < unsorted_regs[order[0]])
+		order[0] = i;
+	    }
+
+	  /* If it isn't an integer register, or if it overwrites the
+	     base register but isn't the last insn in the list, then
+	     we can't do this.  */
+	  if (unsorted_regs[i] < 0 || unsorted_regs[i] > 14
+	      || (i != nops - 1 && unsorted_regs[i] == base_reg))
+	    return 0;
+
+	  unsorted_offsets[i] = INTVAL (offset);
+	}
+      else
+	/* Not a suitable memory address.  */
+	return 0;
+    }
+
+  /* All the useful information has now been extracted from the
+     operands into unsorted_regs and unsorted_offsets; additionally,
+     order[0] has been set to the lowest numbered register in the
+     list.  Sort the registers into order, and check that the memory
+     offsets are ascending and adjacent.  */
+
+  for (i = 1; i < nops; i++)
+    {
+      int j;
+
+      order[i] = order[i - 1];
+      for (j = 0; j < nops; j++)
+	if (unsorted_regs[j] > unsorted_regs[order[i - 1]]
+	    && (order[i] == order[i - 1]
+		|| unsorted_regs[j] < unsorted_regs[order[i]]))
+	  order[i] = j;
+
+      /* Have we found a suitable register? if not, one must be used more
+	 than once.  */
+      if (order[i] == order[i - 1])
+	return 0;
+
+      /* Is the memory address adjacent and ascending? */
+      if (unsorted_offsets[order[i]] != unsorted_offsets[order[i - 1]] + 4)
+	return 0;
+    }
+
+  if (base)
+    {
+      *base = base_reg;
+
+      for (i = 0; i < nops; i++)
+	regs[i] = unsorted_regs[order[i]];
+
+      *load_offset = unsorted_offsets[order[0]];
+    }
+
+  if (unsorted_offsets[order[0]] == 0)
+    return 1; /* ldmia */
+
+  if (unsorted_offsets[order[0]] == 4)
+    return 2; /* ldmib */
+
+  if (unsorted_offsets[order[nops - 1]] == 0)
+    return 3; /* ldmda */
+
+  if (unsorted_offsets[order[nops - 1]] == -4)
+    return 4; /* ldmdb */
+
+  /* Can't do it without setting up the offset, only do this if it takes
+     no more than one insn.  */
+  return (const_ok_for_arm (unsorted_offsets[order[0]]) 
+	  || const_ok_for_arm (-unsorted_offsets[order[0]])) ? 5 : 0;
+}
+
+char *
+emit_ldm_seq (operands, nops)
+     rtx *operands;
+     int nops;
+{
+  int regs[4];
+  int base_reg;
+  HOST_WIDE_INT offset;
+  char buf[100];
+  int i;
+
+  switch (load_multiple_sequence (operands, nops, regs, &base_reg, &offset))
+    {
+    case 1:
+      strcpy (buf, "ldm%?ia\t");
+      break;
+
+    case 2:
+      strcpy (buf, "ldm%?ib\t");
+      break;
+
+    case 3:
+      strcpy (buf, "ldm%?da\t");
+      break;
+
+    case 4:
+      strcpy (buf, "ldm%?db\t");
+      break;
+
+    case 5:
+      if (offset >= 0)
+	sprintf (buf, "add%%?\t%s%s, %s%s, #%ld", REGISTER_PREFIX,
+		 reg_names[regs[0]], REGISTER_PREFIX, reg_names[base_reg],
+		 (long) offset);
+      else
+	sprintf (buf, "sub%%?\t%s%s, %s%s, #%ld", REGISTER_PREFIX,
+		 reg_names[regs[0]], REGISTER_PREFIX, reg_names[base_reg],
+		 (long) -offset);
+      output_asm_insn (buf, operands);
+      base_reg = regs[0];
+      strcpy (buf, "ldm%?ia\t");
+      break;
+
+    default:
+      abort ();
+    }
+
+  sprintf (buf + strlen (buf), "%s%s, {%s%s", REGISTER_PREFIX, 
+	   reg_names[base_reg], REGISTER_PREFIX, reg_names[regs[0]]);
+
+  for (i = 1; i < nops; i++)
+    sprintf (buf + strlen (buf), ", %s%s", REGISTER_PREFIX,
+	     reg_names[regs[i]]);
+
+  strcat (buf, "}\t%@ phole ldm");
+
+  output_asm_insn (buf, operands);
+  return "";
+}
+
+int
+store_multiple_sequence (operands, nops, regs, base, load_offset)
+     rtx *operands;
+     int nops;
+     int *regs;
+     int *base;
+     HOST_WIDE_INT *load_offset;
+{
+  int unsorted_regs[4];
+  HOST_WIDE_INT unsorted_offsets[4];
+  int order[4];
+  int base_reg = -1;
+  int i;
+
+  /* Can only handle 2, 3, or 4 insns at present, though could be easily
+     extended if required.  */
+  if (nops < 2 || nops > 4)
+    abort ();
+
+  /* Loop over the operands and check that the memory references are
+     suitable (ie immediate offsets from the same base register).  At
+     the same time, extract the target register, and the memory
+     offsets.  */
+  for (i = 0; i < nops; i++)
+    {
+      rtx reg;
+      rtx offset;
+
+      /* Convert a subreg of a mem into the mem itself.  */
+      if (GET_CODE (operands[nops + i]) == SUBREG)
+	operands[nops + i] = alter_subreg(operands[nops + i]);
+
+      if (GET_CODE (operands[nops + i]) != MEM)
+	abort ();
+
+      /* Don't reorder volatile memory references; it doesn't seem worth
+	 looking for the case where the order is ok anyway.  */
+      if (MEM_VOLATILE_P (operands[nops + i]))
+	return 0;
+
+      offset = const0_rtx;
+
+      if ((GET_CODE (reg = XEXP (operands[nops + i], 0)) == REG
+	   || (GET_CODE (reg) == SUBREG
+	       && GET_CODE (reg = SUBREG_REG (reg)) == REG))
+	  || (GET_CODE (XEXP (operands[nops + i], 0)) == PLUS
+	      && ((GET_CODE (reg = XEXP (XEXP (operands[nops + i], 0), 0))
+		   == REG)
+		  || (GET_CODE (reg) == SUBREG
+		      && GET_CODE (reg = SUBREG_REG (reg)) == REG))
+	      && (GET_CODE (offset = XEXP (XEXP (operands[nops + i], 0), 1))
+		  == CONST_INT)))
+	{
+	  if (i == 0)
+	    {
+	      base_reg = REGNO(reg);
+	      unsorted_regs[0] = (GET_CODE (operands[i]) == REG
+				  ? REGNO (operands[i])
+				  : REGNO (SUBREG_REG (operands[i])));
+	      order[0] = 0;
+	    }
+	  else 
+	    {
+	      if (base_reg != REGNO (reg))
+		/* Not addressed from the same base register.  */
+		return 0;
+
+	      unsorted_regs[i] = (GET_CODE (operands[i]) == REG
+				  ? REGNO (operands[i])
+				  : REGNO (SUBREG_REG (operands[i])));
+	      if (unsorted_regs[i] < unsorted_regs[order[0]])
+		order[0] = i;
+	    }
+
+	  /* If it isn't an integer register, then we can't do this.  */
+	  if (unsorted_regs[i] < 0 || unsorted_regs[i] > 14)
+	    return 0;
+
+	  unsorted_offsets[i] = INTVAL (offset);
+	}
+      else
+	/* Not a suitable memory address.  */
+	return 0;
+    }
+
+  /* All the useful information has now been extracted from the
+     operands into unsorted_regs and unsorted_offsets; additionally,
+     order[0] has been set to the lowest numbered register in the
+     list.  Sort the registers into order, and check that the memory
+     offsets are ascending and adjacent.  */
+
+  for (i = 1; i < nops; i++)
+    {
+      int j;
+
+      order[i] = order[i - 1];
+      for (j = 0; j < nops; j++)
+	if (unsorted_regs[j] > unsorted_regs[order[i - 1]]
+	    && (order[i] == order[i - 1]
+		|| unsorted_regs[j] < unsorted_regs[order[i]]))
+	  order[i] = j;
+
+      /* Have we found a suitable register? if not, one must be used more
+	 than once.  */
+      if (order[i] == order[i - 1])
+	return 0;
+
+      /* Is the memory address adjacent and ascending? */
+      if (unsorted_offsets[order[i]] != unsorted_offsets[order[i - 1]] + 4)
+	return 0;
+    }
+
+  if (base)
+    {
+      *base = base_reg;
+
+      for (i = 0; i < nops; i++)
+	regs[i] = unsorted_regs[order[i]];
+
+      *load_offset = unsorted_offsets[order[0]];
+    }
+
+  if (unsorted_offsets[order[0]] == 0)
+    return 1; /* stmia */
+
+  if (unsorted_offsets[order[0]] == 4)
+    return 2; /* stmib */
+
+  if (unsorted_offsets[order[nops - 1]] == 0)
+    return 3; /* stmda */
+
+  if (unsorted_offsets[order[nops - 1]] == -4)
+    return 4; /* stmdb */
+
+  return 0;
+}
+
+char *
+emit_stm_seq (operands, nops)
+     rtx *operands;
+     int nops;
+{
+  int regs[4];
+  int base_reg;
+  HOST_WIDE_INT offset;
+  char buf[100];
+  int i;
+
+  switch (store_multiple_sequence (operands, nops, regs, &base_reg, &offset))
+    {
+    case 1:
+      strcpy (buf, "stm%?ia\t");
+      break;
+
+    case 2:
+      strcpy (buf, "stm%?ib\t");
+      break;
+
+    case 3:
+      strcpy (buf, "stm%?da\t");
+      break;
+
+    case 4:
+      strcpy (buf, "stm%?db\t");
+      break;
+
+    default:
+      abort ();
+    }
+
+  sprintf (buf + strlen (buf), "%s%s, {%s%s", REGISTER_PREFIX, 
+	   reg_names[base_reg], REGISTER_PREFIX, reg_names[regs[0]]);
+
+  for (i = 1; i < nops; i++)
+    sprintf (buf + strlen (buf), ", %s%s", REGISTER_PREFIX,
+	     reg_names[regs[i]]);
+
+  strcat (buf, "}\t%@ phole stm");
+
+  output_asm_insn (buf, operands);
+  return "";
+}
+
+int
+multi_register_push (op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  if (GET_CODE (op) != PARALLEL
+      || (GET_CODE (XVECEXP (op, 0, 0)) != SET)
+      || (GET_CODE (SET_SRC (XVECEXP (op, 0, 0))) != UNSPEC)
+      || (XINT (SET_SRC (XVECEXP (op, 0, 0)), 1) != 2))
+    return 0;
+
+  return 1;
+}
  
  /* Routines for use with attributes */
  
@@ -1561,82 +1949,95 @@ soft_df_operand (op, mode)
    return get_pool_offset (symbol) - get_pool_size () - get_prologue_size ();
  }
  
- /* Routines for use in generating RTL */
- 
- rtx
- arm_gen_load_multiple (base_regno, count, from, up, write_back)
-      int base_regno;
-      int count;
-      rtx from;
-      int up;
-      int write_back;
- {
-   int i = 0, j;
-   rtx result;
-   int sign = up ? 1 : -1;
- 
-   result = gen_rtx (PARALLEL, VOIDmode,
-                     rtvec_alloc (count + (write_back ? 2 : 0)));
-   if (write_back)
-     {
-       XVECEXP (result, 0, 0)
- 	= gen_rtx (SET, GET_MODE (from), from,
- 		   plus_constant (from, count * 4 * sign));
-       i = 1;
-       count++;
-     }
- 
-   for (j = 0; i < count; i++, j++)
-     {
-       XVECEXP (result, 0, i)
- 	= gen_rtx (SET, VOIDmode, gen_rtx (REG, SImode, base_regno + j),
- 		   gen_rtx (MEM, SImode,
- 			    plus_constant (from, j * 4 * sign)));
-     }
- 
-   if (write_back)
-     XVECEXP (result, 0, i) = gen_rtx (CLOBBER, SImode, from);
- 
-   return result;
- }
- 
- rtx
- arm_gen_store_multiple (base_regno, count, to, up, write_back)
-      int base_regno;
-      int count;
-      rtx to;
-      int up;
-      int write_back;
- {
-   int i = 0, j;
-   rtx result;
-   int sign = up ? 1 : -1;
- 
-   result = gen_rtx (PARALLEL, VOIDmode,
-                     rtvec_alloc (count + (write_back ? 2 : 0)));
-   if (write_back)
-     {
-       XVECEXP (result, 0, 0)
- 	= gen_rtx (SET, GET_MODE (to), to,
- 		   plus_constant (to, count * 4 * sign));
-       i = 1;
-       count++;
-     }
- 
-   for (j = 0; i < count; i++, j++)
-     {
-       XVECEXP (result, 0, i)
- 	= gen_rtx (SET, VOIDmode,
- 		   gen_rtx (MEM, SImode, plus_constant (to, j * 4 * sign)),
- 		   gen_rtx (REG, SImode, base_regno + j));
-     }
- 
-   if (write_back)
-     XVECEXP (result, 0, i) = gen_rtx (CLOBBER, SImode, to);
- 
-   return result;
- }
- 
+/* Routines for use in generating RTL */
+
+rtx
+arm_gen_load_multiple (base_regno, count, from, up, write_back, unchanging_p,
+		       in_struct_p)
+     int base_regno;
+     int count;
+     rtx from;
+     int up;
+     int write_back;
+     int unchanging_p;
+     int in_struct_p;
+{
+  int i = 0, j;
+  rtx result;
+  int sign = up ? 1 : -1;
+  rtx mem;
+
+  result = gen_rtx (PARALLEL, VOIDmode,
+                    rtvec_alloc (count + (write_back ? 2 : 0)));
+  if (write_back)
+    {
+      XVECEXP (result, 0, 0)
+	= gen_rtx (SET, GET_MODE (from), from,
+		   plus_constant (from, count * 4 * sign));
+      i = 1;
+      count++;
+    }
+
+  for (j = 0; i < count; i++, j++)
+    {
+      mem = gen_rtx (MEM, SImode, plus_constant (from, j * 4 * sign));
+      RTX_UNCHANGING_P (mem) = unchanging_p;
+      MEM_IN_STRUCT_P (mem) = in_struct_p;
+
+      XVECEXP (result, 0, i) = gen_rtx (SET, VOIDmode,
+					gen_rtx (REG, SImode, base_regno + j),
+					mem);
+    }
+
+  if (write_back)
+    XVECEXP (result, 0, i) = gen_rtx (CLOBBER, SImode, from);
+
+  return result;
+}
+
+rtx
+arm_gen_store_multiple (base_regno, count, to, up, write_back, unchanging_p,
+			in_struct_p)
+     int base_regno;
+     int count;
+     rtx to;
+     int up;
+     int write_back;
+     int unchanging_p;
+     int in_struct_p;
+{
+  int i = 0, j;
+  rtx result;
+  int sign = up ? 1 : -1;
+  rtx mem;
+
+  result = gen_rtx (PARALLEL, VOIDmode,
+                    rtvec_alloc (count + (write_back ? 2 : 0)));
+  if (write_back)
+    {
+      XVECEXP (result, 0, 0)
+	= gen_rtx (SET, GET_MODE (to), to,
+		   plus_constant (to, count * 4 * sign));
+      i = 1;
+      count++;
+    }
+
+  for (j = 0; i < count; i++, j++)
+    {
+      mem = gen_rtx (MEM, SImode, plus_constant (to, j * 4 * sign));
+      RTX_UNCHANGING_P (mem) = unchanging_p;
+      MEM_IN_STRUCT_P (mem) = in_struct_p;
+
+      XVECEXP (result, 0, i) = gen_rtx (SET, VOIDmode, mem,
+					gen_rtx (REG, SImode, base_regno + j));
+    }
+
+  if (write_back)
+    XVECEXP (result, 0, i) = gen_rtx (CLOBBER, SImode, to);
+
+  return result;
+}
+
  int
  arm_gen_movstrqi (operands)
       rtx *operands;
