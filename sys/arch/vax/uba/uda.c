@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.5 1995/02/23 17:53:24 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.6 1995/03/30 20:55:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -216,7 +216,7 @@ struct	uba_ctlr *udaminfo[NUDA];
 struct	uba_device *udadinfo[NRA];
 struct	disklabel udalabel[NRA];
 
-u_short	udastd[] = { 0172150, 0172550, 0177550, 0 };
+u_short	udastd[] = { 0 };
 struct	uba_driver udadriver =
  { udaprobe, udaslave, udaattach, udadgo, udastd, "ra", udadinfo, "uda",
    udaminfo };
@@ -313,7 +313,11 @@ udaprobe(reg, ctlr, um)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = uda[ctlr].uda_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = uda[ctlr].uda_rsp;
+#ifdef ragge
+	mi->mi_wtab.b_actf = NULL;
+#else
 	mi->mi_wtab.b_actf = &mi->mi_wtab;
+#endif
 /* Was:	mi->mi_wtab.av_forw = mi->mi_wtab.av_back = &mi->mi_wtab; */
 
 	/*
@@ -357,11 +361,9 @@ again:
 			goto bad;
 	/* should have interrupted by now */
 #ifdef notyet
-#ifdef notyet
 	sc->sc_ipl = br = qbgetpri();
 #else
-	sc->sc_ipl = br = 0x15;
-#endif
+	sc->sc_ipl = 0x15;
 #endif
 	return (sizeof (struct udadevice));
 bad:
@@ -394,7 +396,7 @@ udaslave(ui, reg)
 	volatile struct uda_softc *sc;
 	int next = 0, timeout, tries;
 	volatile int i;
-/* printf("udaslave\n"); */
+
 #ifdef lint
 	i = 0; i = i;
 #endif
@@ -440,10 +442,8 @@ findunit:
 		mp->mscp_modifier = 0;
 	}
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-/* printf("dags f|r polling:\n"); */
 	i = ((struct udadevice *) reg)->udaip;	/* initiate polling */
 	mp = &udaslavereply;
-/* printf("&mp->mscp_opcode %x, reg %x\n",&mp->mscp_opcode,reg); */
 	timeout = todr() + 1000;
 	while (todr() < timeout)
 		if (mp->mscp_opcode)
@@ -557,7 +557,7 @@ udaattach(ui)
 	register struct uba_device *ui;
 {
 	register int unit = ui->ui_unit;
-/* printf("udaattach\n"); */
+
 	if (udawstart == 0) {
 		timeout(udawatch, (caddr_t) 0, hz);
 		udawstart++;
@@ -879,7 +879,8 @@ uda_rainit(ui, flags)
 	/*
 	 * Read pack label.
 	 */
-	if ((msg = readdisklabel(udaminor(unit, 0), udastrategy, lp)) != NULL) {
+	if ((msg = readdisklabel(udaminor(unit, 0), udastrategy, lp,NULL))
+			!= NULL) {
 		if (cold)
 			printf(": %s", msg);
 		else
@@ -1319,20 +1320,19 @@ udasaerror(um, doreset)
  * continue initialisation, or acknowledge command and response
  * interrupts, and process responses.
  */
-udaintr(/*ctlr*/)
-/*	int ctlr; */
+udaintr(vektor,level,uba,ctlr)
 {
-	struct uba_ctlr *um = udaminfo[/*ctlr*/0];
-	volatile struct uda_softc *sc = &uda_softc[/*ctlr*/0];
+	struct uba_ctlr *um = udaminfo[ctlr];
+	volatile struct uda_softc *sc = &uda_softc[ctlr];
 	volatile struct udadevice *udaddr = (struct udadevice *)um->um_addr;
 	struct uda *ud;
 	struct mscp *mp;
 	volatile int i;
 	extern int cpu_type;
-	int ctlr=0; /* XXX Fult f|r att testa interrupter :-/ */
-/*printf("udaintr\n"); */
-#ifdef notyet
-	splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
+
+#ifdef QBA
+	if(cpunumber == VAX_78032)
+		splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */
 
@@ -2026,8 +2026,8 @@ udadumpcmd(op, ud, ui)
 	register struct uda1 *ud;
 	struct uba_device *ui;
 {
-	register struct udadevice *udaddr;
-	register int n;
+	volatile struct udadevice *udaddr;
+	volatile int n;
 #define mp (&ud->uda1_rsp)
 
 	udaddr = (struct udadevice *)ui->ui_physaddr;

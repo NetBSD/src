@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.6 1995/02/23 17:53:21 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.7 1995/03/30 20:55:34 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -66,8 +66,11 @@
 #include "ubavar.h"
 
 int	(*vekmatris[NUBA][128])();
+int	interinfo[NUBA][128];
 int dkn;
 extern int cold;
+struct uba_hd uba_hd[NUBA];
+
 /* F|r att f} genom kompilatorn :( Nollpekare f|r interrupt... */
 int cvec=0;
 volatile int rbr,rcvec;
@@ -128,7 +131,7 @@ ioaccess(physa, pte, size)
  */
 ubainterrupt(level, uba,vektor){
 /*printf("ubainterrupt: level %x, uba %x, vektor %x\n",level, uba,vektor); */
-	(*vekmatris[uba][vektor])(vektor,level,uba);
+	(*vekmatris[uba][vektor])(vektor,level,uba,interinfo[uba][vektor]);
 }
 
 /* 
@@ -196,7 +199,6 @@ unifind(uhp0, pumem)
 	else
 #endif
 		uhp->Nuh_vec = vekmatris[numuba];
-printf("numuba %d\n",numuba);
 	for (i = 0; i < 128; i++)
 		uhp->Nuh_vec[i] = ubastray;
 
@@ -270,8 +272,10 @@ printf("numuba %d\n",numuba);
 		if (ualloc[ubdevreg(addr)])
 			continue;
 		reg = ubaddr(uhp, addr);
+
 		if (badaddr((caddr_t)reg, 2))
 			continue;
+
 #ifdef DW780
 		if (uhp->uh_type == DW780 && vubp->uba_sr) {
 			vubp->uba_sr = vubp->uba_sr;
@@ -299,6 +303,7 @@ printf("numuba %d\n",numuba);
 			printf("didn't interrupt\n");
 			continue;
 		}
+		interinfo[numuba][rcvec]=um->um_ctlr;
 		printf("vec %o, ipl %x\n", rcvec, rbr);
 		csralloc(ualloc, addr, i);
 		um->um_alive = 1;
@@ -384,6 +389,7 @@ printf("numuba %d\n",numuba);
 			printf("didn't interrupt\n");
 			continue;
 		}
+		interinfo[numuba][rcvec]=ui->ui_unit;
 		printf("vec %o, ipl %x\n", rcvec, rbr);
 		csralloc(ualloc, addr, i);
 		ui->ui_hd = uhp;
@@ -1243,8 +1249,7 @@ uba_attach(parent, self, aux)
 		/*
 		 * Clear restart and boot in progress flags in the CPMBX.
 		 */
-		ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG) |
-			KA630CLK_REBOOT;
+		ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG);
 
 		/*
 		 * Enable memory parity error detection and clear error bits.

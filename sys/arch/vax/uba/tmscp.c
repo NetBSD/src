@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.1 1995/02/23 17:53:16 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.2 1995/03/30 20:55:23 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -329,10 +329,10 @@ tmscpprobe(reg, ctlr, um)
 	int ctlr;		/* index of controller in the tmscp_softc array */
 	struct uba_ctlr *um;
 {
-	register int br, cvec;	/* MUST be 1st (r11 & r10): IPL and intr vec */
+	/* register int br, cvec; MUST be 1st (r11 & r10): IPL and intr vec */
 	register struct tmscp_softc *sc = &tmscp_softc[ctlr];
 				/* ptr to software controller structure */
-	struct tmscpdevice *tmscpaddr; /* ptr to tmscpdevice struct (IP & SA) */
+	volatile struct tmscpdevice *tmscpaddr;
 	int count;		/* for probe delay time out */
 
 #	ifdef lint
@@ -392,9 +392,9 @@ tmscpslave (ui, reg)
 	register struct uba_ctlr *um = tmscpminfo[ui->ui_ctlr];
 	register struct tmscp_softc *sc = &tmscp_softc[ui->ui_ctlr];
 	register struct tms_info *tms = &tms_info[ui->ui_unit];
-	struct   tmscpdevice *tmscpaddr;	/* ptr to IP & SA */
-	struct   mscp *mp;
-	int	 i;			/* Something to write into to start */
+	volatile struct tmscpdevice *tmscpaddr;	/* ptr to IP & SA */
+	volatile struct mscp *mp;
+	volatile int i;			/* Something to write into to start */
 					/* the tmscp polling */
 
 #	ifdef lint
@@ -491,24 +491,25 @@ tmscpattach (ui)
 /*
  * TMSCP interrupt routine.
  */
-tmscpintr (d)
-	int d;		/* index to the controller */
+tmscpintr(uba,vector,level,d)
 {
-	register struct uba_ctlr *um = tmscpminfo[/*d*/0];
-	register struct tmscpdevice *tmscpaddr = (struct tmscpdevice *)um->um_addr;
+	register struct uba_ctlr *um = tmscpminfo[d];
+	register volatile struct tmscpdevice *tmscpaddr =
+		(struct tmscpdevice *)um->um_addr;
 	struct buf *bp;
-	register int i;
-	register struct tmscp_softc *sc = &tmscp_softc[/*d*/0];
-	register struct tmscp *tm = &tmscp[/*d*/0];
+	register volatile int i;
+	register struct tmscp_softc *sc = &tmscp_softc[d];
+	register volatile struct tmscp *tm = &tmscp[d];
 	struct tmscp *ttm;
-	struct mscp *mp;
+	volatile struct mscp *mp;
 
 #	ifdef DEBUG
 	printd10("tmscpintr: state %d, tmscpsa %o\n", sc->sc_state, tmscpaddr->tmscpsa);
 #	endif	
 
 #ifdef QBA
-	splx(sc->sc_ipl);
+	if (cpunumber == VAX_78032)
+		splx(sc->sc_ipl);
 #endif
 	/*
 	 * How the interrupt is handled depends on the state of the controller.
@@ -633,10 +634,10 @@ tmscpintr (d)
 		    tm->tmscp_cmd[i].mscp_header.tmscp_vcid = 1;
 		    }
 	    bp = &tmscpwtab[d];
-	    bp->b_actf = bp;
+	    bp->b_actf = NULL;
 	    sc->sc_lastcmd = 1;
 	    sc->sc_lastrsp = 0;
-	    mp = &tmscp[um->um_ctlr].tmscp_cmd[0];
+	    mp = &tmscp[d].tmscp_cmd[0];
 	    mp->mscp_unit = mp->mscp_modifier = 0;
 	    mp->mscp_flags = 0;
 	    mp->mscp_version = 0;
@@ -733,10 +734,11 @@ tmscpopen(dev, flag)
 	register struct uba_device *ui;
 	register struct tmscp_softc *sc;
 	register struct tms_info *tms;
-	register struct mscp *mp;
+	register volatile struct mscp *mp;
 	register struct uba_ctlr *um;
-	struct tmscpdevice *tmscpaddr;
-	int s,i;
+	volatile struct tmscpdevice *tmscpaddr;
+	volatile int i;
+	int s;
 	
 	unit = TMSUNIT(dev);
 #	ifdef DEBUG
@@ -952,8 +954,8 @@ struct mscp *
 tmscpgetcp(um)
 	struct uba_ctlr *um;
 {
-	register struct mscp *mp;
-	register struct tmscpca *cp;
+	register volatile struct mscp *mp;
+	register volatile struct tmscpca *cp;
 	register struct tmscp_softc *sc;
 	register int i;
 	int	s;
@@ -980,7 +982,7 @@ tmscpgetcp(um)
 		mp->mscp_bytecnt = mp->mscp_buffer = 0;
 		sc->sc_lastcmd = (i + 1) % NCMD;
 		(void) splx(s);
-		return(mp);
+		return((struct mscp *)mp);
 		}
 	(void) splx(s);
 	return(NULL);
@@ -996,8 +998,8 @@ tmscpinit (d)
 	int d;			/* index to the controller */
 {
 	register struct tmscp_softc *sc;
-	register struct tmscp *t;  /* communications area; cmd & resp packets */
-	struct tmscpdevice *tmscpaddr;
+	register struct tmscp *t;
+	volatile struct tmscpdevice *tmscpaddr;
 	struct uba_ctlr *um;
 
 	sc = &tmscp_softc[d];
@@ -1050,13 +1052,14 @@ tmscpstart(um)
 	register struct uba_ctlr *um;
 {
 	register struct buf *bp, *dp;
-	register struct mscp *mp;
+	register volatile struct mscp *mp;
 	register struct tmscp_softc *sc;
 	register struct tms_info *tms;
 	register struct uba_device *ui;
-	struct   tmscpdevice *tmscpaddr;
-	struct   tmscp *tm = &tmscp[um->um_ctlr];
-	int i,tempi;
+	volatile struct tmscpdevice *tmscpaddr;
+	volatile struct tmscp *tm = &tmscp[um->um_ctlr];
+	volatile int i;
+	int tempi;
 	char ioctl;		/* flag: set true if its an IOCTL command */
 
 	sc = &tmscp_softc[um->um_ctlr];
@@ -1352,11 +1355,11 @@ tmscpstart(um)
  */
 tmscprsp(um, tm, sc, i)
 	register struct uba_ctlr *um;
-	register struct tmscp *tm;
+	register volatile struct tmscp *tm;
 	register struct tmscp_softc *sc;
 	int i;
 {
-	register struct mscp *mp;
+	register volatile struct mscp *mp;
 	register struct tms_info *tms;
 	struct uba_device *ui;
 	struct buf *dp, *bp;
@@ -1545,7 +1548,7 @@ tmscprsp(um, tm, sc, i)
 		dp->b_actf = bp->b_actf;
 #		if defined(VAX750)
 		if (cpunumber == VAX_750) { 
-		    if ((tmscpwtab[um->um_ctlr].b_actf == &tmscpwtab[um->um_ctlr]) &&
+		    if ((tmscpwtab[um->um_ctlr].b_actf == NULL) &&
 					(um->um_ubinfo != 0)) {
 			ubarelse(um->um_ubanum, &um->um_ubinfo);
 		    }
@@ -1753,7 +1756,7 @@ tmscpstrategy (bp)
 		{
 #		if defined(VAX750)
 		if (cpunumber == VAX_750
-				 && tmscpwtab[um->um_ctlr].b_actf == &tmscpwtab[um->um_ctlr])
+				 && tmscpwtab[um->um_ctlr].b_actf == NULL)
 			{
 			if (um->um_ubinfo != 0)
 				log(TMS_PRI, "tmscpstrategy: ubinfo 0x%x\n",
@@ -1784,13 +1787,13 @@ tmscpdump(dev)
 	dev_t dev;
 {
 #ifdef notyet
-	struct tmscpdevice *tmscpaddr;
-	struct tmscp *tmscp_ubaddr;
+	volatile struct tmscpdevice *tmscpaddr;
+	volatile struct tmscp *tmscp_ubaddr;
 	char *start;
 	int num, blk, unit;
 	register struct uba_regs *uba;
 	register struct uba_device *ui;
-	register struct tmscp *tmscpp;
+	register volatile struct tmscp *tmscpp;
 	register struct pte *io;
 	register int i;
 
@@ -1873,10 +1876,10 @@ tmscpdump(dev)
 
 tmscpcmd(op, tmscpp, tmscpaddr)
 	int op;
-	register struct tmscp *tmscpp;
-	struct tmscpdevice *tmscpaddr;
+	register volatile struct tmscp *tmscpp;
+	volatile struct tmscpdevice *tmscpaddr;
 {
-	int i;
+	volatile int i;
 
 
 	tmscpp->tmscp_Cmd.mscp_opcode = op;
