@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.57 2000/03/30 12:45:29 augustss Exp $	*/
+/*	$NetBSD: am7990.c,v 1.58 2000/04/16 17:03:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ am7990_rint(sc)
 			ifp->if_ierrors++;
 		} else {
 #ifdef LEDEBUG
-			if (sc->sc_debug)
+			if (sc->sc_debug > 1)
 				am7990_recv_print(sc, sc->sc_last_rd);
 #endif
 			lance_read(sc, LE_RBUFADDR(sc, bix),
@@ -552,7 +552,7 @@ am7990_start(ifp)
 		(*sc->sc_copytodesc)(sc, &tmd, rp, sizeof(tmd));
 
 #ifdef LEDEBUG
-		if (sc->sc_debug)
+		if (sc->sc_debug > 1)
 			am7990_xmit_print(sc, sc->sc_last_td);
 #endif
 
