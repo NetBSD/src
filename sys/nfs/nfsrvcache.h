@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.10 1996/02/18 11:54:08 fvdl Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.11 1997/05/12 23:36:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@ struct nfsrvcache {
 		int ru_repstat;			/* Reply status */
 	} rc_un;
 	union nethostaddr rc_haddr;		/* Host address */
-	u_int16_t rc_proc;			/* rpc proc number */
+	u_int32_t rc_proc;			/* rpc proc number */
 	u_char    rc_state;		/* Current state of request */
 	u_char    rc_flag;		/* Flag bits */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.4 1996/02/18 11:54:07 fvdl Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.5 1997/05/12 23:36:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,15 +59,15 @@
 struct nfsrtt {
 	int pos;			/* Position in array for next entry */
 	struct rttl {
-		int	proc;		/* NFS procedure number */
-		int	rtt;		/* Measured round trip time */
-		int	rto;		/* Round Trip Timeout */
-		int	sent;		/* # rpcs in progress */
-		int	cwnd;		/* Send window */
-		int	srtt;		/* Ave Round Trip Time */
-		int	sdrtt;		/* Ave mean deviation of RTT */
-		fsid_t	fsid;		/* Fsid for mount point */
-		struct timeval tstamp;	/* Timestamp of log entry */
+		u_int32_t	proc;		/* NFS procedure number */
+		int		rtt;		/* Measured round trip time */
+		int		rto;		/* Round Trip Timeout */
+		int		sent;		/* # rpcs in progress */
+		int		cwnd;		/* Send window */
+		int		srtt;		/* Ave Round Trip Time */
+		int		sdrtt;		/* Ave mean deviation of RTT */
+		fsid_t		fsid;		/* Fsid for mount point */
+		struct timeval	tstamp;	/* Timestamp of log entry */
 	} rttl[NFSRTTLOGSIZ];
 };
 
@@ -95,8 +95,8 @@ struct nfsdrt {
 	int pos;			/* Position of next log entry */
 	struct drt {
 		int       flag;		/* Bits as defined above */
-		int       proc;		/* NFS procedure number */
-		u_int32_t ipadr;		/* IP address of client */
+		u_int32_t proc;		/* NFS procedure number */
+		u_int32_t ipadr;	/* IP address of client */
 		int       resptime;	/* Response time (usec) */
 		struct timeval tstamp;	/* Timestamp of log entry */
 	} drt[NFSRTTLOGSIZ];
