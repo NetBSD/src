@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.5 1999/07/31 00:28:20 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.6 2000/11/29 21:51:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,9 @@ extern	int mmuid;		/* MMU id */
 /*
  * Pull in user-defined SPU configuration options.
  */
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_spuconf.h"
+#endif
 
 /*
  * CPU configuration.

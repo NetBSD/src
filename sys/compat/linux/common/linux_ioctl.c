@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.22 1998/12/15 10:32:16 augustss Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.23 2000/11/29 22:05:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "sequencer.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
