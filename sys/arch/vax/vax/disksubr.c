@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1998/01/18 22:09:13 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1998/03/02 17:00:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,6 +50,7 @@
 #include <machine/macros.h>
 #include <machine/pte.h>
 #include <machine/pcb.h>
+#include <machine/cpu.h>
 
 #include <arch/vax/mscp/mscp.h> /* For disk encoding scheme */
 
@@ -237,10 +238,10 @@ void
 disk_printtype(unit, type)
 	int unit, type;
 {
-	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
-	    MSCP_MID_CHAR(1, type));
+	printf(" drive %d: %c%c", unit, (int)MSCP_MID_CHAR(2, type),
+	    (int)MSCP_MID_CHAR(1, type));
 	if (MSCP_MID_ECH(0, type))
-		printf("%c", MSCP_MID_CHAR(0, type));
+		printf("%c", (int)MSCP_MID_CHAR(0, type));
 	printf("%d\n", MSCP_MID_NUM(type));
 }
 
@@ -255,6 +256,7 @@ disk_reallymapin(bp, map, reg, flag)
 	struct pte *map;
 	int reg, flag;
 {
+	struct proc *p;
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	struct pcb *pcb;
@@ -264,6 +266,7 @@ disk_reallymapin(bp, map, reg, flag)
 	o = (int)bp->b_un.b_addr & PGOFSET;
 	npf = btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
+	p = bp->b_proc;
 
 	/*
 	 * Get a pointer to the pte pointing out the first virtual address.
@@ -271,8 +274,10 @@ disk_reallymapin(bp, map, reg, flag)
 	 */
 	if ((bp->b_flags & B_PHYS) == 0) {
 		pte = kvtopte(addr);
+		if (p == 0)
+			p = &proc0;
 	} else {
-		pcb = &bp->b_proc->p_addr->u_pcb;
+		pcb = &p->p_addr->u_pcb;
 		pte = uvtopte(addr, pcb);
 	}
 
@@ -284,9 +289,15 @@ disk_reallymapin(bp, map, reg, flag)
 	for (i = 0; i < (npf - 1); i++) {
 		if ((pte + i)->pg_pfn == 0) {
 			int rv;
-			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
+#if defined(UVM)
+			rv = uvm_fault(&p->p_vmspace->vm_map,
+			    (unsigned)addr + i * NBPG, 0,
+			    VM_PROT_READ|VM_PROT_WRITE);
+#else
+			rv = vm_fault(&p->p_vmspace->vm_map,
 			    (unsigned)addr + i * NBPG,
 			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+#endif
 			if (rv)
 				panic("DMA to nonexistent page, %d", rv);
 		}

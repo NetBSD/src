@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.14 1998/01/18 22:06:02 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.15 1998/03/02 17:00:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,7 +34,7 @@
 
 #if !defined(_VAX_MACROS_H_) && !defined(STANDALONE) && \
 	(!defined(_LOCORE) && defined(_VAX_INLINE_))
-#define	_VAX_MACROS_H_
+#define _VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
 
@@ -44,7 +44,7 @@ static __inline__ int ffs(int reg){
 	__asm__ __volatile ("ffs	$0,$32,%1,%0
 			bneq	1f
 			mnegl	$1,%0
-		1:	incl    %0"
+		1:	incl	%0"
 			: "&=r" (val)
 			: "r" (reg) );
 	return	val;
@@ -58,10 +58,10 @@ static __inline__ void _remque(void*p){
 }
 
 static __inline__ void _insque(void*p, void*q) {
-        __asm__ __volatile ("insque (%0), (%1)"
-                        :
-                        : "r" (p),"r" (q)
-                        : "memory" );
+	__asm__ __volatile ("insque (%0), (%1)"
+			:
+			: "r" (p),"r" (q)
+			: "memory" );
 }
 
 static __inline__ void bcopy(const void*from, void*toe, u_int len) {
@@ -71,11 +71,17 @@ static __inline__ void bcopy(const void*from, void*toe, u_int len) {
 			:"r0","r1","r2","r3","r4","r5");
 }
 
+void	blkclr __P((void *, u_int));
+
 static __inline__ void bzero(void*block, u_int len){
-	__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
+	if (len > 65535)
+		blkclr(block, len);
+	else {
+		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
 			:
 			: "r" (block), "r" (len)
 			:"r0","r1","r2","r3","r4","r5");
+	}
 }
 
 static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
@@ -121,13 +127,13 @@ static __inline__ int skpc(int mask, size_t size, u_char *cp){
 	return	ret;
 }
 
-#define	setrunqueue(p)	\
+#define setrunqueue(p)	\
 	__asm__ __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
 
-#define	remrunqueue(p)	\
+#define remrunqueue(p)	\
 	__asm__ __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
 
-#define	cpu_switch(p) \
+#define cpu_switch(p) \
 	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
 	    ::"g"(p):"r0","r1","r2","r3");
 #endif	/* _VAX_MACROS_H_ */

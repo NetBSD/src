@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.11 1998/01/24 14:17:07 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.12 1998/03/02 17:03:12 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,8 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -66,7 +67,7 @@
 
 #include "locators.h"
 
-#define     b_forw  b_hash.le_next
+#define	    b_forw  b_hash.le_next
 /*
  * Software status, per controller.
  */
@@ -119,19 +120,19 @@ kdbprint(aux, name)
 int
 kdbmatch(parent, cf, aux)
 	struct	device *parent;
-	struct  cfdata *cf;
+	struct	cfdata *cf;
 	void	*aux;
 {
 	struct bi_attach_args *ba = aux;
 
-        if (ba->ba_node->biic.bi_dtype != BIDT_KDB50)
-                return 0;
+	if (ba->ba_node->biic.bi_dtype != BIDT_KDB50)
+		return 0;
 
-        if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
+	if (cf->cf_loc[BICF_NODE] != BICF_NODE_DEFAULT &&
 	    cf->cf_loc[BICF_NODE] != ba->ba_nodenr)
-                return 0;
+		return 0;
 
-        return 1;
+	return 1;
 }
 
 void
@@ -142,7 +143,7 @@ kdbattach(parent, self, aux)
 	struct	kdb_softc *sc = (void *)self;
 	struct	bi_attach_args *ba = aux;
 	struct	mscp_attach_args ma;
-	extern  struct ivec_dsp idsptch;
+	extern	struct ivec_dsp idsptch;
 	volatile int i = 10000;
 
 	printf("\n");
@@ -182,42 +183,48 @@ kdbgo(usc, bp)
 	struct kdb_softc *sc = (void *)usc;
 	struct mscp_softc *mi = sc->sc_softc;
 	struct mscp *mp = (void *)bp->b_actb;
-        struct  pcb *pcb;
-        pt_entry_t *pte;
-        int     pfnum, npf, o, i;
+	struct	pcb *pcb;
+	pt_entry_t *pte;
+	int	npf, o, i;
 	unsigned info = 0;
-        caddr_t addr;
+	caddr_t addr;
 
 	o = (int)bp->b_un.b_addr & PGOFSET;
 	npf = btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
 
-        /*
-         * Get a pointer to the pte pointing out the first virtual address.
-         * Use different ways in kernel and user space.
-         */
-        if ((bp->b_flags & B_PHYS) == 0) {
-                pte = kvtopte(addr);
-        } else {
-                pcb = &bp->b_proc->p_addr->u_pcb;
-                pte = uvtopte(addr, pcb);
-        }
+	/*
+	 * Get a pointer to the pte pointing out the first virtual address.
+	 * Use different ways in kernel and user space.
+	 */
+	if ((bp->b_flags & B_PHYS) == 0) {
+		pte = kvtopte(addr);
+	} else {
+		pcb = &bp->b_proc->p_addr->u_pcb;
+		pte = uvtopte(addr, pcb);
+	}
 
-        /*
-         * When we are doing DMA to user space, be sure that all pages
-         * we want to transfer to is mapped. WHY DO WE NEED THIS???
-         * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
-         */
-        for (i = 0; i < (npf - 1); i++) {
-                if ((pte + i)->pg_pfn == 0) {
-                        int rv;
-                        rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
-                            (unsigned)addr + i * NBPG,
-                            VM_PROT_READ|VM_PROT_WRITE, FALSE);
-                        if (rv)
-                                panic("KDB DMA to nonexistent page, %d", rv);
-                }
-        }
+	/*
+	 * When we are doing DMA to user space, be sure that all pages
+	 * we want to transfer to is mapped. WHY DO WE NEED THIS???
+	 * SHOULDN'T THEY ALWAYS BE MAPPED WHEN DOING THIS???
+	 */
+	for (i = 0; i < (npf - 1); i++) {
+		if ((pte + i)->pg_pfn == 0) {
+			int rv;
+#if defined(UVM)
+			rv = uvm_fault(&bp->b_proc->p_vmspace->vm_map,
+			    (unsigned)addr + i * NBPG, 0,
+			    VM_PROT_READ|VM_PROT_WRITE);
+#else
+			rv = vm_fault(&bp->b_proc->p_vmspace->vm_map,
+			    (unsigned)addr + i * NBPG,
+			    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+#endif
+			if (rv)
+				panic("KDB DMA to nonexistent page, %d", rv);
+		}
+	}
 	/*
 	 * pte's for userspace isn't necessary positioned
 	 * in consecutive physical pages. We check if they 
@@ -266,8 +273,6 @@ kdbintr(ctlr)
 	int	ctlr;
 {
 	struct kdb_softc *sc = kdb_cd.cd_devs[ctlr];
-	struct	uba_softc *uh;
-	struct mscp_pack *ud;
 
 	if (sc->sc_kr->kdb_sa & MP_ERR) {	/* ctlr fatal error */
 		kdbsaerror(&sc->sc_dev, 1);

@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.37 1998/01/03 00:37:31 thorpej Exp $       */
+/*	$NetBSD: vm_machdep.c,v 1.38 1998/03/02 17:00:01 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -94,24 +94,22 @@ void
 cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
+	struct pte *pt;
 	struct pcb *nyproc;
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
-	extern vm_map_t pte_map;
 
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
 	opmap = p1->p_vmspace->vm_map.pmap;
 	pmap = p2->p_vmspace->vm_map.pmap;
 
-#ifdef notyet
 	/* Mark page invalid */
-	p2pte = kvtopte((u_int *)p2->p_addr + 2 * NBPG);
-	*p2pte = 0; 
-#endif
+	pt = kvtopte((u_int)p2->p_addr + NBPG);
+	pt->pg_v = 0; 
 
 	/*
-	 * Activate address space for the new process.  The PTEs have
+	 * Activate address space for the new process.	The PTEs have
 	 * already been allocated by way of pmap_create().
 	 */
 	pmap_activate(p2);
@@ -161,7 +159,7 @@ cpu_set_kpc(p, pc)
 	kc->cf.ca_pc = (unsigned)&sret;
 	kc->cf.ca_argno = 1;
 	kc->cf.ca_arg1 = (unsigned)p;
-	kc->tf.r11 = boothowto;	/* If we have old init */
+	kc->tf.r11 = boothowto; /* If we have old init */
 	kc->tf.psl = 0x3c00000;
 
 	nyproc->framep = (void *)&kc->tf;
@@ -218,7 +216,7 @@ extern struct emul emul_ultrix;
  * 4.3BSD Reno programs have an 1K header first in the executable
  * file, containing a.out header. Otherwise programs are identical.
  *
- *      from: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
+ *	from: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
  */
 
 int
@@ -301,14 +299,14 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-        error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
-            (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-            IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
 
-        if (!error)
-                chdr->c_nseg++;
+	if (!error)
+		chdr->c_nseg++;
 
-        return error;
+	return error;
 }
 
 /*
@@ -322,6 +320,7 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
+	struct pte *pt;
 	u_int uarea, i, *j, rv;
 
 	uarea = (u_int)p->p_addr;
@@ -329,16 +328,20 @@ cpu_swapin(p)
 	for (i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
 		j = (u_int *)kvtopte(i);
 		if ((*j & PG_V) == 0) {
+#if defined(UVM)
+			rv = uvm_fault(kernel_map, i, 0,
+			    VM_PROT_WRITE|VM_PROT_READ);
+#else
 			rv = vm_fault(kernel_map, i,
 			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
+#endif
 			if (rv != KERN_SUCCESS)
 				panic("cpu_swapin: rv %d",rv);
 		}
 	}
-#ifdef notyet
-	j = (u_int *)kvtopte(uarea + 2 * NBPG);
-	*j = 0; /* Set kernel stack red zone */
-#endif
+
+	pt = kvtopte(uarea + NBPG);
+	pt->pg_v = 0; /* Set kernel stack red zone */
 }
 
 #if VAX410 || VAX43
@@ -349,32 +352,36 @@ cpu_swapin(p)
  */
 void
 vmapbuf(bp, len)
-        struct buf *bp;
-        vm_size_t len;
+	struct buf *bp;
+	vm_size_t len;
 {
-        vm_offset_t faddr, taddr, off, pa;
-        pmap_t fmap, tmap;
+	vm_offset_t faddr, taddr, off, pa;
+	pmap_t fmap, tmap;
 
 	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
 		return;
-        faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-        off = (vm_offset_t)bp->b_data - faddr;
-        len = round_page(off + len);
-        taddr = kmem_alloc_wait(phys_map, len);
-        bp->b_data = (caddr_t)(taddr + off);
-        fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-        tmap = vm_map_pmap(phys_map);
-        len = len >> PGSHIFT;
-        while (len--) {
-                pa = pmap_extract(fmap, faddr);
-                if (pa == 0)
-                       	panic("vmapbuf: null page frame for %x", (u_int)faddr);
+	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vm_offset_t)bp->b_data - faddr;
+	len = round_page(off + len);
+#if defined(UVM)
+	taddr = uvm_km_valloc_wait(phys_map, len);
+#else
+	taddr = kmem_alloc_wait(phys_map, len);
+#endif
+	bp->b_data = (caddr_t)(taddr + off);
+	fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	tmap = vm_map_pmap(phys_map);
+	len = len >> PGSHIFT;
+	while (len--) {
+		pa = pmap_extract(fmap, faddr);
+		if (pa == 0)
+			panic("vmapbuf: null page frame for %x", (u_int)faddr);
 
-                pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
-                           VM_PROT_READ|VM_PROT_WRITE, TRUE);
-                faddr += NBPG;
-                taddr += NBPG;
-        }
+		pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		faddr += NBPG;
+		taddr += NBPG;
+	}
 }
 
 /*
@@ -383,18 +390,22 @@ vmapbuf(bp, len)
  */
 void
 vunmapbuf(bp, len)
-        struct buf *bp;
-        vm_size_t len;
+	struct buf *bp;
+	vm_size_t len;
 {
-        vm_offset_t addr, off;
+	vm_offset_t addr, off;
 
 	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
 		return;
-        addr = trunc_page(bp->b_data);
-        off = (vm_offset_t)bp->b_data - addr;
-        len = round_page(off + len);
-        kmem_free_wakeup(phys_map, addr, len);
-        bp->b_data = bp->b_saveaddr;
-        bp->b_saveaddr = 0;
+	addr = trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - addr;
+	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
+	kmem_free_wakeup(phys_map, addr, len);
+#endif
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = 0;
 }
 #endif

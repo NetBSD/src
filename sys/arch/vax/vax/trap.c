@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.33 1998/01/03 00:35:28 thorpej Exp $     */
+/*	$NetBSD: trap.c,v 1.34 1998/03/02 17:00:01 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -92,14 +92,14 @@ char *traptypes[]={
 int no_traps = 18;
 
 #define USERMODE(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
-#define FAULTCHK                                                \
-        if (p->p_addr->u_pcb.iftrap) {                          \
-                frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;  \
+#define FAULTCHK						\
+	if (p->p_addr->u_pcb.iftrap) {				\
+		frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;	\
 		frame->psl &= ~PSL_FPD;				\
 		frame->r0 = EFAULT;/* for copyin/out */		\
-		frame->r1 = -1;	/* for fetch/store */		\
-                return;                                         \
-        }
+		frame->r1 = -1; /* for fetch/store */		\
+		return;						\
+	}
 
 void
 arithflt(frame)
@@ -112,8 +112,13 @@ arithflt(frame)
 	u_quad_t oticks = 0;
 	vm_map_t map;
 	vm_prot_t ftype;
-	extern vm_map_t	pte_map;
+	extern vm_map_t pte_map;
 	
+#if defined(UVM)
+	uvmexp.traps++;
+#else
+	cnt.v_trap++;
+#endif
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
 		oticks = p->p_sticks;
@@ -166,7 +171,7 @@ fram:
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
-                        frame->trap, frame->code, frame->pc, frame->psl);
+			frame->trap, frame->code, frame->pc, frame->psl);
 #endif
 #ifdef DIAGNOSTIC
 		if (p == 0)
@@ -189,11 +194,15 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 				addr = trunc_page((unsigned)&pm->pm_p1br[
 				    (frame->code & 0x3fffffff) >> PGSHIFT]);
 			}
+#if defined(UVM)
+			rv = uvm_fault(pte_map, addr, 0,
+			    VM_PROT_WRITE|VM_PROT_READ);
+#else
 			rv = vm_fault(pte_map, addr,
 			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
+#endif
 			if (rv != KERN_SUCCESS) {
-				sig = SIGSEGV;
-				break;
+				goto ufault;
 			} else
 				trapsig = 0;
 		}
@@ -208,13 +217,20 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		else
 			ftype = VM_PROT_READ;
 
+#if defined(UVM)
+		rv = uvm_fault(map, addr, 0, ftype);
+#else
 		rv = vm_fault(map, addr, ftype, FALSE);
+#endif
 		if (rv != KERN_SUCCESS) {
 			if (umode == 0) {
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
+ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
+				printf("Pid %d killed: out of memory.\n",
+				 p->p_pid);
 			sig = SIGSEGV;
 		} else
 			trapsig = 0;
@@ -270,14 +286,14 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
-                /*
-                 * Since we are curproc, clock will normally just change
-                 * our priority without moving us from one queue to another
-                 * (since the running process is not on a queue.)
-                 * If that happened after we setrunqueue ourselves but before
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrunqueue ourselves but before
 		 * we swtch()'ed, we might not be on the queue indicated by
-                 * our priority.
-                 */
+		 * our priority.
+		 */
 		splstatclock();
 		setrunqueue(p);
 		mi_switch();
@@ -288,14 +304,14 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		extern int psratio;
 		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
 	}
-        curpriority = p->p_priority;
+	curpriority = p->p_priority;
 }
 
 void
 setregs(p, pack, stack)
-        struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
-        u_long stack;
+	u_long stack;
 {
 	struct trapframe *exptr;
 
@@ -317,10 +333,15 @@ syscall(frame)
 
 #ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
-               syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
+	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 #endif
-
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
+	cnt.v_syscall++;
+#endif
+ 
 	exptr = p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
@@ -362,8 +383,8 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 #ifdef TRAPDEBUG
 if(startsysc)
 	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
-               syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
-                curproc->p_pid,err,rval[0],rval[1],exptr);
+	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
+		curproc->p_pid,err,rval[0],rval[1],exptr);
 #endif
 
 bad:
@@ -391,14 +412,14 @@ bad:
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
-                /*
-                 * Since we are curproc, clock will normally just change
-                 * our priority without moving us from one queue to another
-                 * (since the running process is not on a queue.)
-                 * If that happened after we setrunqueue ourselves but before
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrunqueue ourselves but before
 		 * we swtch()'ed, we might not be on the queue indicated by
-                 * our priority.
-                 */
+		 * our priority.
+		 */
 		splstatclock();
 		setrunqueue(p);
 		mi_switch();

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1997/11/02 14:25:21 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.11 1998/03/02 17:00:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c       8.3 (Berkeley) 1/12/94
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -123,7 +123,11 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+			if (!uvm_kernacc((caddr_t)v, c,
+#else
 			if (!kernacc((caddr_t)v, c,
+#endif
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);

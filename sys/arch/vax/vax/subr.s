@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.22 1998/01/18 22:06:01 ragge Exp $     */
+/*	$NetBSD: subr.s,v 1.23 1998/03/02 17:00:01 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,8 +33,9 @@
 #include <machine/asm.h>
 
 #include "assym.h"
+#include "opt_uvm.h"
 
-#define	JSBENTRY(x)	.globl x ; .align 2 ; x :
+#define JSBENTRY(x)	.globl x ; .align 2 ; x :
 
 		.text
 
@@ -61,8 +62,8 @@ _eidsptch:
 ENTRY(badaddr,0)			# Called with addr,b/w/l
 		mfpr	$0x12,r0
 		mtpr	$0x1f,$0x12
-		movl	4(ap),r2 	# First argument, the address
-		movl	8(ap),r1 	# Sec arg, b,w,l
+		movl	4(ap),r2	# First argument, the address
+		movl	8(ap),r1	# Sec arg, b,w,l
 		pushl	r0		# Save old IPL
 		clrl	r3
 		movl	$4f,_memtest	# Set the return adress
@@ -111,7 +112,7 @@ ENTRY(bzero,0)
 _setjmp:.word	0
 	movl	4(ap), r0
 	movl	8(fp), (r0)
-	movl	12(fp),	4(r0)
+	movl	12(fp), 4(r0)
 	movl	16(fp), 8(r0)
 	addl3	fp,$28,12(r0)
 	clrl	r0
@@ -138,7 +139,7 @@ JSBENTRY(Setrq)
 	calls	$1,_panic
 setrq:	.asciz	"setrunqueue"
 #endif
-1:	extzv	$2,$6,P_PRIORITY(r0),r1	# get priority
+1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
 	movaq	_qs[r1],r2		# get address of queue
 	insque	(r0),*4(r2)		# put proc last in queue
 	bbss	r1,_whichqs,1f		# set queue bit.
@@ -220,13 +221,21 @@ noque:	.asciz	"swtch"
 ENTRY(cpu_exit,0)
 	movl	4(ap),r6	# Process pointer in r0
 	pushl	P_VMSPACE(r6)	# free current vm space
+#if defined(UVM)
+	calls	$1,_uvmspace_free
+#else
 	calls	$1,_vmspace_free
+#endif
 	mtpr	$0x18,$PR_IPL	# Block almost everything
 	addl3	$512,_scratch,sp # Change stack, we will free it now
 	pushl	$USPACE		# stack size
 	pushl	P_ADDR(r6)	# pointer to stack space
 	pushl	_kernel_map	# the correct vm map
+#if defined(UVM)
+	calls	$3,_uvm_km_free
+#else
 	calls	$3,_kmem_free
+#endif
 	clrl	r0		# No process to switch from
 	bicl3	$0xc0000000,_scratch,r1
 	mtpr	r1,$PR_PCBB
@@ -245,6 +254,16 @@ _copyin:.word 0
 	movl	8(ap),r2
 	movc3	12(ap),(r1), (r2)
 1:	clrl	*pcbtrap
+	ret
+
+ENTRY(kcopy,0)
+	moval	1f,*pcbtrap
+	movl	4(ap),r1
+	movl	8(ap),r2
+	movc3	12(ap),(r1), (r2)
+	clrl	r1
+1:	clrl	*pcbtrap
+	movl	r1,r0
 	ret
 
 _copystr:	.globl	_copystr
@@ -333,7 +352,7 @@ ENTRY(suswintr,0)
 
 ENTRY(fuswintr,0)
 	moval	1f,*pcbtrap
-	movl    4(ap),r0
+	movl	4(ap),r0
 	movzwl	(r0),r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
@@ -352,16 +371,16 @@ pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).
  */
 ENTRY(blkcpy,R6)
-	movl    4(ap),r1
-	movl    8(ap),r3
+	movl	4(ap),r1
+	movl	8(ap),r3
 	movl	12(ap),r6
 	jbr 2f
-1:	subl2   r0,r6
-	movc3   r0,(r1),(r3)
-2:	movzwl  $65535,r0
-	cmpl    r6,r0
-	jgtr    1b
-	movc3   r6,(r1),(r3)
+1:	subl2	r0,r6
+	movc3	r0,(r1),(r3)
+2:	movzwl	$65535,r0
+	cmpl	r6,r0
+	jgtr	1b
+	movc3	r6,(r1),(r3)
 	ret
 
 ENTRY(blkclr,R6)
