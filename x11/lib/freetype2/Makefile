@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/03/21 13:55:25 tron Exp $
+#	$NetBSD: Makefile,v 1.11 2005/03/21 14:11:00 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,6 @@ INCSDIR=${X11INCDIR}
 
 CPPFLAGS+=	${X11FLAGS.THREADS} -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
-
-COPTS+=		-fno-strict-aliasing
 
 .if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
 CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
