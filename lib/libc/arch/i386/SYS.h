@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1 1993/10/07 00:18:55 cgd Exp $
+ *	$Id: SYS.h,v 1.2 1993/12/06 23:26:04 pk Exp $
  */
 
 #include <machine/asm.h>
@@ -60,10 +60,10 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
-#define	SYSCALL(x)	2: jmp cerror; ENTRY(x); lea SYS_/**/x,%eax; LCALL(7,0); jb 2b
+#define	SYSCALL(x)	2: jmp PIC_PLT(cerror); ENTRY(x); lea SYS_/**/x,%eax; LCALL(7,0); jb 2b
 #define	RSYSCALL(x)	SYSCALL(x); ret
 #define	PSEUDO(x,y)	ENTRY(x); lea SYS_/**/y, %eax; ; LCALL(7,0); ret
-#define	CALL(x,y)	call _/**/y; addl $4*x,%esp
+#define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
 /* gas fucks up offset -- although we don't currently need it, do for BCS */
 #define	LCALL(x,y)	.byte 0x9a ; .long y; .word x
 
