@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.2 2000/04/26 05:12:06 thorpej Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.3 2000/05/09 04:21:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -34,6 +34,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -399,11 +400,22 @@ crunch_file(filename)
 	int require_flag, provide_flag, before_flag, directive_flag;
 	filenode *node;
 	char delims[3] = { '\\', '\\', '\0' };
+	struct stat st;
 
 	directive_flag = 0;
 
 	if ((fp = fopen(filename, "r")) == NULL) {
 		warn("could not open %s", filename);
+		return;
+	}
+
+	if (fstat(fileno(fp), &st) == -1) {
+		warn("could not stat %s", filename);
+		return;
+	}
+
+	if (!S_ISREG(st.st_mode)) {
+		warnx("%s is not a file", filename);
 		return;
 	}
 
