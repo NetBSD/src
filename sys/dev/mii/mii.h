@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
+/*	$NetBSD: mii.h,v 1.9 2001/05/31 03:07:14 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -165,7 +165,7 @@
 #define	GTSR_LP_1000TFDX 0x0800	/* link partner 1000baseT FDX capable */
 #define	GTSR_LP_1000THDX 0x0400	/* link partner 1000baseT HDX capable */
 #define	GTSR_LP_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
-#define	GRSR_IDLE_ERR	0x00ff	/* IDLE error count */
+#define	GTSR_IDLE_ERR	0x00ff	/* IDLE error count */
 
 #define	MII_EXTSR	0x0f	/* Extended status register */
 #define	EXTSR_1000XFDX	0x8000	/* 1000X full-duplex capable */
