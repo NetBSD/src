@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.18 2000/02/11 00:30:07 abs Exp $
+.\"	$NetBSD: su.1,v 1.19 2000/05/10 19:04:36 jdolecek Exp $
 .\"
 .Dd January 14, 2000
 .Dt SU 1
@@ -179,6 +179,22 @@ By default (unless the prompt is reset by a startup file) the super-user
 prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
+.Sh EXAMPLES
+To  become user username and use the same environment as in original shell, execute:
+.Bd -literal -offset indent
+su username
+.Ed
+
+To become user username and use environment as if full login would be performed,
+execute:
+.Bd -literal -offset indent
+su -l username
+.Ed
+
+To execute arbitrary command with privileges of user username, execute:
+.Bd -literal -offset indent
+su username -c "command args"
+.Ed
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr login 1 ,
