@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.17 2003/06/29 22:30:58 fvdl Exp $	*/
+/*	$NetBSD: urio.c,v 1.18 2003/11/24 00:00:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.17 2003/06/29 22:30:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.18 2003/11/24 00:00:07 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ static const struct usb_devno urio_devs[] = {
 	{ USB_VENDOR_DIAMOND, USB_PRODUCT_DIAMOND_RIO500USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO600USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_PSAPLAY120},
 };
 #define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
