@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.3 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.4 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Toru Nishimura
@@ -135,8 +135,9 @@ static void
 stpc_setup_channel(struct wdc_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int channel = chp->channel;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	int channel = chp->ch_channel;
 	struct ata_drive_datas *drvp;
 	u_int32_t idedma_ctl, idetim;
 	int drive, bits[2];
@@ -154,7 +155,7 @@ stpc_setup_channel(struct wdc_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if ((chp->wdc->cap & WDC_CAPABILITY_DMA) &&
+		if ((wdc->cap & WDC_CAPABILITY_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
 			drvp->drive_flags &= ~DRIVE_UDMA;

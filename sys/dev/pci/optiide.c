@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.4 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: optiide.c,v 1.5 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ opti_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int drive, spd;
 	int mode[2];
 	u_int8_t rv, mr;
@@ -256,8 +256,8 @@ opti_setup_channel(struct wdc_channel *chp)
 
 		/* Set the Enhanced Mode register appropriately */
 	    	rv = pciide_pci_read(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE);
-		rv &= ~OPTI_ENH_MODE_MASK(chp->channel, drive);
-		rv |= OPTI_ENH_MODE(chp->channel, drive, opti_tim_em[m]);
+		rv &= ~OPTI_ENH_MODE_MASK(chp->ch_channel, drive);
+		rv |= OPTI_ENH_MODE(chp->ch_channel, drive, opti_tim_em[m]);
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE, rv);
 	}
 

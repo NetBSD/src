@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.4 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.5 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -300,7 +300,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 	u_int32_t idedma_ctl;
 	int regtim;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
 	sis_tim = 0;
 	idedma_ctl = 0;
@@ -310,7 +310,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		regtim = SIS_TIM133(
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_REG_57),
-		    chp->channel, drive);
+		    chp->ch_channel, drive);
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
@@ -320,7 +320,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
-			    SIS96x_REG_CBL(chp->channel)) & SIS96x_REG_CBL_33) {
+			    SIS96x_REG_CBL(chp->ch_channel)) & SIS96x_REG_CBL_33) {
 				if (drvp->UDMA_mode > 2)
 					drvp->UDMA_mode = 2;
 			}
@@ -345,7 +345,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 		}
 		WDCDEBUG_PRINT(("sis96x_setup_channel: new timings reg for "
 		    "channel %d drive %d: 0x%x (reg 0x%x)\n",
-		    chp->channel, drive, sis_tim, regtim), DEBUG_PROBE);
+		    chp->ch_channel, drive, sis_tim, regtim), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, regtim, sis_tim);
 	}
 	if (idedma_ctl != 0) {
@@ -363,11 +363,11 @@ sis_setup_channel(struct wdc_channel *chp)
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
 	WDCDEBUG_PRINT(("sis_setup_channel: old timings reg for "
-	    "channel %d 0x%x\n", chp->channel, 
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->channel))),
+	    "channel %d 0x%x\n", chp->ch_channel, 
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel))),
 	    DEBUG_PROBE);
 	sis_tim = 0;
 	idedma_ctl = 0;
@@ -388,7 +388,7 @@ sis_setup_channel(struct wdc_channel *chp)
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
-			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->channel)) {
+			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->ch_channel)) {
 				if (drvp->UDMA_mode > 2)
 					drvp->UDMA_mode = 2;
 			}
@@ -448,8 +448,9 @@ pio:		switch (sc->sis_type) {
 		}
 	}
 	WDCDEBUG_PRINT(("sis_setup_channel: new timings reg for "
-	    "channel %d 0x%x\n", chp->channel, sis_tim), DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->channel), sis_tim);
+	    "channel %d 0x%x\n", chp->ch_channel, sis_tim), DEBUG_PROBE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel),
+		       sis_tim);
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,

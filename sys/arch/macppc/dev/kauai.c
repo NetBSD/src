@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: kauai.c,v 1.11 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.11 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,8 @@ kauai_attach(parent, self, aux)
 	sc->sc_calc_timing = calc_timing_kauai;
 	sc->sc_dmareg = (void *)dmabase;
 
-	chp->channel = 0;
-	chp->wdc = &sc->sc_wdcdev;
+	chp->ch_channel = 0;
+	chp->ch_wdc = &sc->sc_wdcdev;
 	chp->ch_queue = &sc->wdc_queue;
 
 	wdcattach(chp);
