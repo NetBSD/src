@@ -2,7 +2,7 @@
 
 # rcsfreeze - assign a symbolic revision number to a configuration of RCS files
 
-#	$NetBSD: rcsfreeze.sh,v 1.3 1996/10/15 07:00:43 veego Exp $
+#	$NetBSD: rcsfreeze.sh,v 1.4 1998/09/12 21:02:50 frueauf Exp $
 #
 #	Id: rcsfreeze.sh,v 4.6 1993/11/03 17:42:27 eggert Exp
 
@@ -27,7 +27,7 @@
 #       {RCS/}.rcsfreeze.ver	version number
 #       {RCS/}.rscfreeze.log	log messages, most recent first
 
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/ucb:$PATH
+PATH=/bin:/usr/bin:$PATH
 export PATH
 
 DATE=`date` || exit
