@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 2002/08/05 20:58:35 fredette Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,8 +64,13 @@ extern vaddr_t vmmap;	/* XXX - See mem.c */
 /* Kernel virtual address space available: */
 extern vaddr_t virtual_start, virtual_end;
 
-/* Physical pages available. */
+/* Total physical pages, and low reserved physical pages. */
 extern int totalphysmem;
+extern int resvmem;
+
+/* BTLB minimum and maximum sizes, in pages. */
+extern u_int hppa_btlb_size_min;
+extern u_int hppa_btlb_size_max;
 
 /* FPU variables and functions. */
 extern int fpu_present;
