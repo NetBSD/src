@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.1 2000/03/03 13:08:42 soda Exp $	*/
+/*	$NetBSD: rd94.h,v 1.2 2000/06/09 05:33:06 soda Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -107,6 +107,6 @@
 
 #define	RD94_P_PCI_MEM		0x100000000LL	/* PCI Memory control */
 #define	RD94_V_PCI_MEM		0xe3000000
-#define	RD94_S_PCI_MEM		0x01000000
+#define	RD94_S_PCI_MEM		0x40000000
 
 #endif	/* _RD94_H_ */
