@@ -1,8 +1,6 @@
-#	$NetBSD: VME147,v 1.14 1997/03/18 21:41:49 thorpej Exp $
+#	$NetBSD: VME147,v 1.15 1997/03/21 22:40:33 thorpej Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
-
-machine		mvme68k m68k
 
 # Boards this kernel supports; need at lest the correct one
 options		MVME147
