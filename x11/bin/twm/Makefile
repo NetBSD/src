@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -34,8 +34,8 @@ deftwmrc.c: system.twmrc deftwmrc.sed
 	echo '    (char *) 0 };' >>$@
 
 
-LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXpm -lXmu -lXt -lSM -lICE -lXext -lX11
+DPADD+=	${LIBXPM} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
 

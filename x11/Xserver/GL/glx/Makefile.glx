@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.5 2004/03/06 03:31:05 rtr Exp $
+#	$NetBSD: Makefile.glx,v 1.6 2005/03/19 21:41:58 christos Exp $
 
 LIB=		glx
 
@@ -18,7 +18,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/include/fonts \
-		-I${X11SRCDIR.xc}/extras/Mesa/src \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common \
+		-I${X11SRCDIR.xc}/extras/Mesa/include \
 		-I${X11SRCDIR.xc}/lib/GL/include
 
 CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
