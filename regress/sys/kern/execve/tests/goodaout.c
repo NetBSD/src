@@ -1,4 +1,4 @@
-/* $NetBSD: goodaout.c,v 1.5 2000/06/14 17:25:22 cgd Exp $ */
+/* $NetBSD: goodaout.c,v 1.6 2000/07/03 04:02:35 matt Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -35,7 +35,7 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 int
 main(argc, argv)
