@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.8 1995/04/11 02:57:52 cgd Exp $	*/
+/*	$NetBSD: syslog.c,v 1.9 1995/08/30 21:20:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-static char rcsid[] = "$NetBSD: syslog.c,v 1.8 1995/04/11 02:57:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: syslog.c,v 1.9 1995/08/30 21:20:36 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,6 +105,7 @@ vsyslog(pri, fmt, ap)
 	time_t now;
 	int fd, saved_errno;
 	char *stdp, tbuf[2048], fmt_cpy[1024];
+	int tbuf_len, fmt_len, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
@@ -125,33 +126,85 @@ vsyslog(pri, fmt, ap)
 		pri |= LogFacility;
 
 	/* Build the message. */
+	
+        /*
+ 	 * Although it's tempting, we can't ignore the possibility of
+	 * overflowing the buffer when assembling the "fixed" portion
+	 * of the message.  Strftime's "%h" directive expands to the
+	 * locale's abbreviated month name, but if the user has the
+	 * ability to construct to his own locale files, it may be
+	 * arbitrarily long.
+	 */
 	(void)time(&now);
-	p = tbuf + sprintf(tbuf, "<%d>", pri);
-	p += strftime(p, sizeof (tbuf) - (p - tbuf), "%h %e %T ",
-	    localtime(&now));
+
+#define DEC()				        \
+	if (tbuf_len > prlen)			\
+		tbuf_len -= prlen;		\
+	else					\
+		tbuf_len = 0;			\
+	p = tbuf + sizeof(tbuf) - tbuf_len;
+
+	p = tbuf;  
+        tbuf_len = sizeof(tbuf);
+	
+	prlen = sprintf(p, "<%d>", pri);
+	DEC();
+
+	prlen = strftime(p, tbuf_len, "%h %e %T ", localtime(&now));
+	DEC();
+
 	if (LogStat & LOG_PERROR)
 		stdp = p;
 	if (LogTag == NULL)
 		LogTag = __progname;
-	if (LogTag != NULL)
-		p += sprintf(p, "%s", LogTag);
-	if (LogStat & LOG_PID)
-		p += sprintf(p, "[%d]", getpid());
 	if (LogTag != NULL) {
-		*p++ = ':';
-		*p++ = ' ';
+		prlen = snprintf(p, tbuf_len, "%s", LogTag);
+		DEC();
+	}
+	if (LogStat & LOG_PID) {
+		prlen = snprintf(p, tbuf_len, "[%d]", getpid());
+		DEC();
+	}
+	if (LogTag != NULL) {
+		if (tbuf_len > 1) {
+			*p++ = ':';
+			tbuf_len--;
+		}
+		if (tbuf_len > 1) {
+			*p++ = ' ';
+			tbuf_len--;
+		}
 	}
 
-	/* Substitute error message for %m. */
-	for (t = fmt_cpy; ch = *fmt; ++fmt)
+	/* 
+	 * We wouldn't need this mess if printf handled %m, or if 
+	 * strerror() had been invented before syslog().
+	 */
+	for (t = fmt_cpy, fmt_len = sizeof(fmt_cpy); ch = *fmt; ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			++fmt;
-			t += sprintf(t, "%s", strerror(saved_errno));
-		} else
-			*t++ = ch;
+			prlen = snprintf(t, fmt_len, 
+					 "%s", strerror(saved_errno));
+			if (fmt_len > prlen) {
+				t += prlen;
+				fmt_len -= prlen;
+			} else {
+				t = fmt_cpy + sizeof(fmt_cpy) - 1;
+				break;
+			}
+		} else {
+			if (fmt_len > 1) {
+				*t++ = ch;
+				fmt_len--;
+			} else {
+				break;
+			}
+		}
+	}
 	*t = '\0';
 
-	p += vsprintf(p, fmt_cpy, ap);
+	prlen = vsnprintf(p, tbuf_len, fmt_cpy, ap);
+	DEC();
 	cnt = p - tbuf;
 
 	/* Output to stderr if requested. */
@@ -180,10 +233,16 @@ vsyslog(pri, fmt, ap)
 	 */
 	if (LogStat & LOG_CONS &&
 	    (fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
-		(void)strcat(tbuf, "\r\n");
-		cnt += 2;
+		struct iovec iov[2];
+		register struct iovec *v = iov;
+		
 		p = strchr(tbuf, '>') + 1;
-		(void)write(fd, p, cnt - (p - tbuf));
+		v->iov_base = p;
+		v->iov_len = cnt - (p - tbuf);
+		++v;
+		v->iov_base = "\r\n";
+		v->iov_len = 2;
+		(void)writev(fd, iov, 2);
 		(void)close(fd);
 	}
 }
