@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.68 2002/03/18 12:28:07 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -282,6 +282,7 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 				 * limits or migration home */
 
 
+sigset_t	caught_signals;	/* Set of signals we handle */
 #if defined(USE_PGRP) && defined(SYSV)
 # define KILL(pid, sig)		kill(-(pid), (sig))
 #else
@@ -333,6 +334,32 @@ static Shell *JobMatchShell __P((char *));
 static void JobInterrupt __P((int, int));
 static void JobRestartJobs __P((void));
 static void JobTokenAdd __P((void));
+static void JobSigLock(sigset_t *);
+static void JobSigUnlock(sigset_t *);
+static void JobSigReset(void);
+
+
+
+/*
+ * JobSigLock/JobSigUnlock
+ *
+ * Signal lock routines to get exclusive access. Currently used to
+ * protect `jobs' and `stoppedJobs' list manipulations.
+ */
+static void JobSigLock(omaskp)
+	sigset_t *omaskp;
+{
+	if (sigprocmask(SIG_BLOCK, &caught_signals, omaskp) != 0) {
+		Punt("JobSigLock: sigprocmask: %s", strerror(errno));
+	sigemptyset(omaskp);
+	}
+}
+
+static void JobSigUnlock(omaskp)
+	sigset_t *omaskp;
+{
+	(void) sigprocmask(SIG_SETMASK, omaskp, NULL);
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -1283,6 +1310,7 @@ JobExec(job, argv)
     char    	  **argv;
 {
     int	    	  cpid;	    	/* ID of new child */
+    sigset_t	  mask;
 
     job->flags &= ~JOB_TRACED;
 
@@ -1317,9 +1345,21 @@ JobExec(job, argv)
     }
 #endif /* RMT_NO_EXEC */
 
+    /* No interruptions until this job is on the `jobs' list */
+    JobSigLock(&mask);
+
     if ((cpid = vfork()) == -1) {
 	Punt("Cannot vfork: %s", strerror(errno));
     } else if (cpid == 0) {
+
+	/*
+	 * Reset all signal handlers; this is necessary because we also
+	 * need to unblock signals before we exec(2).
+	 */
+	JobSigReset();
+
+	/* Now unblock signals */
+	JobSigUnlock(&mask);
 
 	/*
 	 * Must duplicate the input stream down to the child's input and
@@ -1397,12 +1437,6 @@ JobExec(job, argv)
 	}
 	_exit(1);
     } else {
-#ifdef REMOTE
-	sigset_t nmask, omask;
-	sigemptyset(&nmask);
-	sigaddset(&nmask, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &nmask, &omask);
-#endif
 	job->pid = cpid;
 
 	Trace_Log(JOBSTART, job);
@@ -1442,9 +1476,6 @@ JobExec(job, argv)
 		job->cmdFILE = NULL;
 	    }
 	}
-#ifdef REMOTE
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-#endif
     }
 
 #ifdef RMT_NO_EXEC
@@ -1453,8 +1484,13 @@ jobExecFinish:
     /*
      * Now the job is actually running, add it to the table.
      */
+    if (DEBUG(JOB)) {
+	printf("JobExec(%s): pid %d added to jobs table\n",
+		job->node->name, job->pid);
+    }
     nJobs += 1;
     (void) Lst_AtEnd(jobs, (ClientData)job);
+    JobSigUnlock(&mask);
 }
 
 /*-
@@ -1826,6 +1862,7 @@ JobStart(gn, flags, previous)
 	 * the make process in a 6-character field with leading zeroes.
 	 */
 	char     tfile[sizeof(TMPPAT)];
+	sigset_t mask;
 	/*
 	 * We're serious here, but if the commands were bogus, we're
 	 * also dead...
@@ -1834,10 +1871,12 @@ JobStart(gn, flags, previous)
 	    DieHorribly();
 	}
 
+	JobSigLock(&mask);
 	(void)strcpy(tfile, TMPPAT);
 	if ((tfd = mkstemp(tfile)) == -1)
 	    Punt("Could not create temporary file %s", strerror(errno));
 	(void) eunlink(tfile);
+	JobSigUnlock(&mask);
 
 	job->cmdFILE = fdopen(tfd, "w+");
 	if (job->cmdFILE == NULL) {
@@ -2351,9 +2390,7 @@ Job_CatchChildren(block)
 	    (void) fflush(stdout);
 	}
 
-
 	jnode = Lst_Find(jobs, (ClientData)&pid, JobCmpPid);
-
 	if (jnode == NILLNODE) {
 	    if (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGCONT)) {
 		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
@@ -2375,7 +2412,7 @@ Job_CatchChildren(block)
 	    if (!(job->flags & JOB_REMOTE)) {
 		if (DEBUG(JOB)) {
 		    (void) fprintf(stdout,
-				   "Job queue has one fewer local process.\n");
+			   "Job queue has one fewer local process.\n");
 		    (void) fflush(stdout);
 		}
 		nLocal -= 1;
@@ -2442,8 +2479,8 @@ Job_CatchOutput()
 #else
     if (usePipes) {
 #ifdef USE_SELECT
-	struct timeval	  timeout;
-	fd_set         	  readfds;
+	struct timeval	timeout;
+	fd_set         	readfds;
 
 	readfds = outputs;
 	timeout.tv_sec = SEL_SEC;
@@ -2458,6 +2495,8 @@ Job_CatchOutput()
 	    return;
 #endif
 	else {
+	    sigset_t	mask;
+	    JobSigLock(&mask);
 	    if (Lst_Open(jobs) == FAILURE) {
 		Punt("Cannot open job table");
 	    }
@@ -2475,6 +2514,7 @@ Job_CatchOutput()
 		
 	    }
 	    Lst_Close(jobs);
+	    JobSigUnlock(&mask);
 	}
     }
 #endif /* RMT_WILL_WATCH */
@@ -2568,27 +2608,28 @@ Job_Init(maxproc, maxlocal)
 	commandShell->echo = "";
     }
 
+    sigemptyset(&caught_signals);
+    /*
+     * Install a NOOP  SIGCHLD handler so we are woken up if we're blocked.
+     */
+    (void)signal(SIGCHLD, JobIgnoreSig);
+    sigaddset(&caught_signals, SIGCHLD);
+
+#define ADDSIG(s,h)				\
+    if (signal(s, SIG_IGN) != SIG_IGN) {	\
+	sigaddset(&caught_signals, s);		\
+	(void) signal(s, h);			\
+    }
+
     /*
      * Catch the four signals that POSIX specifies if they aren't ignored.
      * JobPassSig will take care of calling JobInterrupt if appropriate.
      */
-    if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGINT, JobPassSig);
-    }
-    if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGHUP, JobPassSig);
-    }
-    if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGQUIT, JobPassSig);
-    }
-    if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGTERM, JobPassSig);
-    }
-    /*
-     * Install a NOOP  SIGCHLD handler so we are woken up if we're blocked.
-     */
-    signal(SIGCHLD, JobIgnoreSig);
-    
+    ADDSIG(SIGINT, JobPassSig)
+    ADDSIG(SIGHUP, JobPassSig)
+    ADDSIG(SIGTERM, JobPassSig)
+    ADDSIG(SIGQUIT, JobPassSig)
+
     /*
      * There are additional signals that need to be caught and passed if
      * either the export system wants to be told directly of signals or if
@@ -2596,22 +2637,13 @@ Job_Init(maxproc, maxlocal)
      * signals from the terminal driver as we own the terminal)
      */
 #if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
-    if (signal(SIGTSTP, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGTSTP, JobPassSig);
-    }
-    if (signal(SIGTTOU, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGTTOU, JobPassSig);
-    }
-    if (signal(SIGTTIN, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGTTIN, JobPassSig);
-    }
-    if (signal(SIGWINCH, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGWINCH, JobPassSig);
-    }
-    if (signal(SIGCONT, SIG_IGN) != SIG_IGN) {
-	(void) signal(SIGCONT, JobContinueSig);
-    }
+    ADDSIG(SIGTSTP, JobPassSig)
+    ADDSIG(SIGTTOU, JobPassSig)
+    ADDSIG(SIGTTIN, JobPassSig)
+    ADDSIG(SIGWINCH, JobPassSig)
+    ADDSIG(SIGCONT, JobContinueSig)
 #endif
+#undef ADDSIG
 
     begin = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 
@@ -2625,6 +2657,28 @@ Job_Init(maxproc, maxlocal)
 	}
     }
     postCommands = Targ_FindNode(".END", TARG_CREATE);
+}
+
+static void JobSigReset()
+{
+#define DELSIG(s)					\
+    if (sigismember(&caught_signals, s)) {		\
+	(void) signal(SIGINT, SIG_DFL);			\
+    }
+
+    DELSIG(SIGINT)
+    DELSIG(SIGHUP)
+    DELSIG(SIGQUIT)
+    DELSIG(SIGTERM)
+#if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
+    DELSIG(SIGTSTP)
+    DELSIG(SIGTTOU)
+    DELSIG(SIGTTIN)
+    DELSIG(SIGWINCH)
+    DELSIG(SIGCONT)
+#endif
+#undef DELSIG
+    (void)signal(SIGCHLD, SIG_DFL);
 }
 
 /*-
@@ -2883,17 +2937,20 @@ Job_ParseShell(line)
  */
 static void
 JobInterrupt(runINTERRUPT, signo)
-    int	    runINTERRUPT;   	/* Non-zero if commands for the .INTERRUPT
-				 * target should be executed */
-    int	    signo;		/* signal received */
+    int	runINTERRUPT;	/* Non-zero if commands for the .INTERRUPT
+			 * target should be executed */
+    int	signo;		/* signal received */
 {
-    LstNode 	  ln;		/* element in job table */
-    Job           *job;	    	/* job descriptor in that element */
-    GNode         *interrupt;	/* the node describing the .INTERRUPT target */
+    LstNode	ln;		/* element in job table */
+    Job		*job;		/* job descriptor in that element */
+    GNode	*interrupt;	/* the node describing the .INTERRUPT target */
+    sigset_t	mask;
 
     aborting = ABORT_INTERRUPT;
 
-   (void) Lst_Open(jobs);
+    JobSigLock(&mask);
+
+    (void) Lst_Open(jobs);
     while ((ln = Lst_Next(jobs)) != NILLNODE) {
 	GNode *gn;
 
@@ -2929,8 +2986,8 @@ JobInterrupt(runINTERRUPT, signo)
 	if (job->pid) {
 	    if (DEBUG(JOB)) {
 		(void) fprintf(stdout,
-			       "JobInterrupt passing signal to child %d.\n",
-			       job->pid);
+			   "JobInterrupt passing signal %d to child %d.\n",
+			   signo, job->pid);
 		(void) fflush(stdout);
 	    }
 	    KILL(job->pid, signo);
@@ -3000,6 +3057,8 @@ JobInterrupt(runINTERRUPT, signo)
     }
     Lst_Close(stoppedJobs);
 #endif /* REMOTE */
+
+    JobSigUnlock(&mask);
 
     if (runINTERRUPT && !touchFlag) {
 	interrupt = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
@@ -3122,11 +3181,13 @@ Job_AbortAll()
     LstNode	ln;	/* element in job table */
     Job		*job;	/* the job descriptor in that element */
     int		foo;
+    sigset_t	mask;
 
     aborting = ABORT_ERROR;
 
     if (nJobs) {
 
+	JobSigLock(&mask);
 	(void) Lst_Open(jobs);
 	while ((ln = Lst_Next(jobs)) != NILLNODE) {
 	    job = (Job *) Lst_Datum(ln);
@@ -3149,6 +3210,7 @@ Job_AbortAll()
 #endif /* RMT_WANTS_SIGNALS */
 	}
 	Lst_Close(jobs);
+	JobSigUnlock(&mask);
     }
 
     /*
@@ -3229,6 +3291,9 @@ JobFlagForMigration(hostID)
 static void
 JobRestartJobs()
 {
+    sigset_t	mask;
+
+    JobSigLock(&mask);
     while (!Lst_IsEmpty(stoppedJobs)) {
 	if (DEBUG(JOB)) {
 	    (void) fprintf(stdout, "Restarting a stopped job.\n");
@@ -3237,6 +3302,7 @@ JobRestartJobs()
 	if (JobRestart((Job *)Lst_DeQueue(stoppedJobs)) != 0)
 		break;
     }
+    JobSigUnlock(&mask);
 }
 
 #ifndef RMT_WILL_WATCH
