@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.113 2000/11/28 09:31:29 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.114 2000/11/28 09:46:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.113 2000/11/28 09:31:29 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.114 2000/11/28 09:46:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ int	swaitint = SWAITINT;
 static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
-static void	 dolog(struct sockaddr *);
+static void	 dolog(struct sockinet *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
 static char	*gunique(const char *);
@@ -471,7 +471,7 @@ main(int argc, char *argv[])
 	if (fcntl(fileno(stdin), F_SETOWN, getpid()) == -1)
 		syslog(LOG_ERR, "fcntl F_SETOWN: %m");
 #endif
-	dolog((struct sockaddr *)&his_addr);
+	dolog(&his_addr);
 	/*
 	 * Set up default state
 	 */
@@ -2103,11 +2103,11 @@ reply(int n, const char *fmt, ...)
 }
 
 static void
-dolog(struct sockaddr *who)
+dolog(struct sockinet *who)
 {
 
-	if (getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
-	    NULL, 0, 0))
+	if (getnameinfo((struct sockaddr *)&who->si_su,
+	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 0))
 		strlcpy(remotehost, "?", sizeof(remotehost));
 
 #ifdef HASSETPROCTITLE
