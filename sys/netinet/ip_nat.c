@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.16 1997/11/25 03:14:11 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.17 1998/03/29 22:56:00 scottr Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.6 1997/11/24 11:35:13 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.7 1997/12/02 13:54:27 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -523,7 +523,7 @@ fr_info_t *fin;
 u_short flags;
 int direction;
 {
-	register u_long sum1, sum2, sumd;
+	register u_long sum1, sum2, sumd, l;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
 	struct in_addr in;
 	tcphdr_t *tcp = NULL;
@@ -553,13 +553,22 @@ int direction;
 		 * If it's an outbound packet which doesn't match any existing
 		 * record, then create a new port
 		 */
+		l = 0;
 		do {
+			l++;
 			port = 0;
 			in.s_addr = np->in_nip;
 			if (!in.s_addr && (np->in_outmsk == 0xffffffff)) {
-				if (nat_ifpaddr(nat, fin->fin_ifp, &in) == -1)
+				if ((l > 1) ||
+				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1) {
+					KFREE(nat);
 					return NULL;
+				}
 			} else if (!in.s_addr && !np->in_outmsk) {
+				if (l > 1) {
+					KFREE(nat);
+					return NULL;
+				}
 				in.s_addr = ntohl(ip->ip_src.s_addr);
 				if (nflags & IPN_TCPUDP)
 					port = sport;
