@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.6 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.7 2002/08/13 05:25:39 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -60,7 +60,7 @@
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/mal405gp.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
-#include <powerpc/ibm4xx/emacreg.h>
+#include <powerpc/ibm4xx/dev/emacreg.h>
 #include <powerpc/ibm4xx/dev/if_emacreg.h>
 
 #include <dev/mii/miivar.h>
