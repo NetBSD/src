@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.18.2.3 1993/11/25 10:01:29 mycroft Exp $
+ *      $Id: cd.c,v 1.18.2.4 1993/11/25 10:19:12 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -126,7 +126,7 @@ cdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	cd_get_parms(cd, SCSI_NOSLEEP | SCSI_NOMASK);
+	cd_get_parms(cd, SCSI_NOSLEEP | SCSI_NOMASK | SCSI_SILENT);
 	if (dp->disksize)
 		printf(": cd present, %d x %d byte records\n",
 		       cd->params.disksize, cd->params.blksize);
@@ -801,7 +801,9 @@ cd_size(cd, flags)
 	if (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
 			  sizeof(scsi_cmd), (u_char *) &rdcap, sizeof(rdcap),
 			  CDRETRIES, 20000, NULL, SCSI_DATA_IN | flags) != 0) {
-		printf("%s: could not get size\n", cd->sc_dk.dk_dev.dv_xname);
+		if (!(flags & SCSI_SILENT))
+			printf("%s: could not get size\n",
+			       cd->sc_dk.dk_dev.dv_xname);
 		return 0;
 	} else {
 		size = rdcap.addr_0 + 1;
