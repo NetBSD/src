@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.10 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.11 2004/05/12 16:38:01 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -54,6 +54,20 @@ CLEANFILES+=	${RPC_SVCFILES}
 
 .endif								# }
 
+.if defined(RPC_CLNTFILES)					# {
+
+.for I in ${RPC_CLNTFILES}
+
+${I}: ${RPC_XDIR}${I:_clnt.c=.x}
+	${_MKTARGET_CREATE}
+	${TOOL_RPCGEN} -C -l ${_RPCS} ${RPC_CLNTFLAGS} \
+		${RPC_XDIR}${I:_clnt.c=.x} -o ${.TARGET}
+.endfor
+
+DPSRCS+=	${RPC_CLNTFILES}
+CLEANFILES+=	${RPC_CLNTFILES}
+
+.endif								# }
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
