@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1998/07/05 22:48:06 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1998/07/13 19:37:29 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -135,7 +135,7 @@ caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
 
 extern u_int openfirmware_entry;
-static u_int ofw_va, ofw_pa, ofw_len;
+static u_int ofw_pa;
 
 int cold = 1;
 
@@ -163,35 +163,15 @@ initppc(startkernel, endkernel, args)
 	extern void ext_intr __P((void));
 	int exc, scratch;
 
-	int node, i;
-	u_int trans[80];
-	char type[8];
+	int chosen, mmu, mode, exists;
 
 	/*
 	 * Read translations for Openfirmware call.
 	 */
-	node = OF_peer(0);
-	node = OF_child(node);
-	while (node) {
-		bzero(type, 8);
-		OF_getprop(node, "device_type", type, sizeof(type));
-		if (strcmp(type, "cpu") == 0)
-			break;
-		node = OF_peer(node);
-	}
-
-	bzero(trans, sizeof(trans));
-	OF_getprop(node, "translations", trans, sizeof(trans));
-
-	for (i = 0; i < 80; i += 4) {
-		if (trans[i] <= openfirmware_entry &&
-		    trans[i] + trans[i+1] > openfirmware_entry) {
-			    ofw_va  = trans[i];
-			    ofw_len = trans[i + 1];
-			    ofw_pa  = trans[i + 2];
-			    break;
-		    }
-	}
+	chosen = OF_finddevice("/chosen");
+	OF_getprop(chosen, "mmu", &mmu, 4);
+	OF_call_method("translate", mmu, 1, 3,
+		       0xff800000, &ofw_pa, &mode, &exists);
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -1100,17 +1080,6 @@ cninit()
 		return;
 	}
 #endif
-
-	if (1) {
-		extern struct consdev consdev_ofcons;
-
-		cp = &consdev_ofcons;
-		(*cp->cn_probe)(cp);
-		(*cp->cn_init)(cp);
-		cn_tab = cp;
-
-		return;
-	}
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {

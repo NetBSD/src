@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1998/05/15 10:15:57 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1998/07/13 19:37:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,11 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <dev/ofw/openfirm.h>
 #include <machine/cpu.h>
@@ -127,7 +132,9 @@ decr_intr(frame)
 	 */
 	lasttb = tb + tick - ticks_per_intr;
 
-	/*clock_return(frame, nticks);*/
+#if defined(UVM)
+	uvmexp.intrs++;
+#endif
 	/*intrcnt[CNT_CLOCK]++;*/
 	{
 	int pri;
