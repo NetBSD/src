@@ -1,6 +1,7 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.23 1996/05/23 17:07:03 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.24 1997/04/10 01:51:21 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -625,30 +626,45 @@ unp_externalize(rights)
 	struct mbuf *rights;
 {
 	struct proc *p = curproc;		/* XXX */
-	register int i;
 	register struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	register struct file **rp = (struct file **)(cm + 1);
+	register int i, *fdp = (int *)(cm + 1);
+	register struct file **rp = (struct file **)ALIGN(cm + 1);
 	register struct file *fp;
-	int newfds = (cm->cmsg_len - sizeof(*cm)) / sizeof (int);
+	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof (struct file *);
 	int f;
 
-	if (!fdavail(p, newfds)) {
-		for (i = 0; i < newfds; i++) {
+	/* Make sure that the recipient has space */
+	if (!fdavail(p, nfds)) {
+		for (i = 0; i < nfds; i++) {
 			fp = *rp;
 			unp_discard(fp);
 			*rp++ = 0;
 		}
 		return (EMSGSIZE);
 	}
-	for (i = 0; i < newfds; i++) {
+
+	/*
+	 * Add file to the recipient's open file table, converting them
+	 * to integer file descriptors as we go.  Done in forward order
+	 * because an integer will always come in the same place or before
+	 * its corresponding struct file pointer.
+	 */
+	for (i = 0; i < nfds; i++) {
 		if (fdalloc(p, 0, &f))
 			panic("unp_externalize");
 		fp = *rp;
 		p->p_fd->fd_ofiles[f] = fp;
 		fp->f_msgcount--;
 		unp_rights--;
-		*(int *)rp++ = f;
+		*fdp++ = f;
 	}
+
+	/*
+	 * Adjust length, in case of transition from large struct file
+	 * pointers to ints.
+	 */
+	cm->cmsg_len = sizeof(*cm) + (nfds * sizeof(int));
+	rights->m_len = cm->cmsg_len;
 	return (0);
 }
 
@@ -657,28 +673,64 @@ unp_internalize(control, p)
 	struct mbuf *control;
 	struct proc *p;
 {
-	struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdescp = p->p_fd;
 	register struct cmsghdr *cm = mtod(control, struct cmsghdr *);
 	register struct file **rp;
 	register struct file *fp;
-	register int i, fd;
-	int oldfds;
+	register int i, fd, *fdp;
+	int nfds;
+	u_int neededspace;
 
+	/* Sanity check the control message header */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
-	oldfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
-	rp = (struct file **)(cm + 1);
-	for (i = 0; i < oldfds; i++) {
-		fd = *(int *)rp++;
-		if ((unsigned)fd >= fdp->fd_nfiles ||
-		    fdp->fd_ofiles[fd] == NULL)
+
+	/* Verify that the file descriptors are valid */
+	nfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
+	fdp = (int *)(cm + 1);
+	for (i = 0; i < nfds; i++) {
+		fd = *fdp++;
+		if ((unsigned)fd >= fdescp->fd_nfiles ||
+		    fdescp->fd_ofiles[fd] == NULL)
 			return (EBADF);
 	}
-	rp = (struct file **)(cm + 1);
-	for (i = 0; i < oldfds; i++) {
-		fp = fdp->fd_ofiles[*(int *)rp];
-		*rp++ = fp;
+
+	/* Make sure we have room for the struct file pointers */
+morespace:
+	neededspace = (ALIGN(sizeof (*cm)) + nfds * sizeof (struct file *)) -
+		control->m_len;
+	if (neededspace > M_TRAILINGSPACE(control)) {
+
+		/* if we already have a cluster, the message is just too big */
+		if (control->m_flags & M_EXT)
+			return (E2BIG);
+
+		/* allocate a cluster and try again */
+		MCLGET(control, M_WAIT);
+		if ((control->m_flags & M_EXT) == 0)
+			return (ENOBUFS);	/* allocation failed */
+
+		/* copy the data to the cluster */
+		bcopy(cm, mtod(control, char *), cm->cmsg_len);
+		cm = mtod(control, struct cmsghdr *);
+		goto morespace;
+	}
+
+	/* adjust message & mbuf to note amount of space actually used. */
+	cm->cmsg_len += neededspace;
+	control->m_len = cm->cmsg_len;
+
+	/*
+	 * Transform the file descriptors into struct file pointers, in
+	 * reverse order so that if pointers are bigger than ints, the
+	 * int won't get until we're done.
+	 */
+	fdp = ((int *)(cm + 1)) + nfds - 1;
+	rp = ((struct file **)ALIGN(cm + 1)) + nfds - 1;
+	for (i = 0; i < nfds; i++) {
+		fp = fdescp->fd_ofiles[*fdp];
+		*rp-- = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
 		unp_rights++;
