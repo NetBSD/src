@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.14 1999/09/20 19:34:08 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.15 1999/09/20 19:52:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1378,37 +1378,6 @@ tlp_init(sc)
 	 */
 	sc->sc_opmode |= OPMODE_SR | OPMODE_ST |
 	    sc->sc_txth[sc->sc_txthresh].txth_opmode;
-
-	if (sc->sc_flags & TULIPF_HAS_MII) {
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_82C168:
-		case TULIP_CHIP_82C169:
-			/* Enable the MII port. */
-			sc->sc_opmode |= OPMODE_PS;
-
-			TULIP_WRITE(sc, CSR_PNIC_ENDEC, PNIC_ENDEC_JDIS);
-			break;
-
-		case TULIP_CHIP_WB89C840F:
-			/* Nothing. */
-			break;
-
-		default:
-			/* Enable the MII port. */
-			sc->sc_opmode |= OPMODE_PS;
-			break;
-		}
-	} else {
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_82C168:
-		case TULIP_CHIP_82C169:
-			sc->sc_opmode |= OPMODE_PNIC_TBEN;
-			break;
-
-		default:
-			/* Nothing. */
-		}
-	}
 
 	/*
 	 * Magical mystery initialization on the Macronix chips.
@@ -2797,6 +2766,12 @@ tlp_pnic_preinit(sc)
 	}
 
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	/*
+	 * If not using MII, enable the Tx backoff counter.
+	 */
+	if ((sc->sc_flags & TULIPF_HAS_MII) == 0)
+		sc->sc_opmode |= OPMODE_PNIC_TBEN;
 }
 
 /*****************************************************************************
@@ -3377,8 +3352,14 @@ tlp_pnic_tmsw_set(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 
-	if (sc->sc_flags & TULIPF_HAS_MII)
+	if (sc->sc_flags & TULIPF_HAS_MII) {
+		/*
+		 * Make sure the built-in Tx jabber timer is disabled.
+		 */
+		TULIP_WRITE(sc, CSR_PNIC_ENDEC, PNIC_ENDEC_JDIS);
+
 		return (tlp_mii_setmedia(sc));
+	}
 
 	if (ifp->if_flags & IFF_UP) {
 		mii->mii_media_status = 0;
