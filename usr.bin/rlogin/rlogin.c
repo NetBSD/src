@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.33 2004/12/21 02:39:00 ginsbach Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.34 2005/01/08 03:23:15 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.33 2004/12/21 02:39:00 ginsbach Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.34 2005/01/08 03:23:15 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,8 @@ main(int argc, char *argv[])
 	struct servent *sp;
 	struct termios tty;
 	sigset_t smask;
-	int argoff, ch, dflag, one, uid;
+	uid_t uid;
+	int argoff, ch, dflag, one;
 	int i, len, len2;
 	char *host, *p, *user, *name, term[1024] = "network";
 	speed_t ospeed;
