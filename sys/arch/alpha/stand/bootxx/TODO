@@ -1,0 +1,6 @@
+libsa/devopen.c should replace the PMAX source code, and
+they should then share it.
+
+Standalone programs should load against libkern, and sys/stand
+should lose things like strchr() in favor of the libkern versions.
+

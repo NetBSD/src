@@ -1,0 +1,9 @@
+#	$NetBSD: std.alpha,v 1.1 1995/02/13 23:07:27 cgd Exp $
+#
+# standard Alpha information.
+
+machine alpha
+
+mainbus0 at root
+
+cpu* at mainbus0
