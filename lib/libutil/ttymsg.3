@@ -1,4 +1,4 @@
-.\" $NetBSD: ttymsg.3,v 1.1 1997/06/29 18:44:10 christos Exp $
+.\" $NetBSD: ttymsg.3,v 1.2 1997/07/01 06:24:01 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,28 +36,33 @@
 .\"
 .Dd June 29, 1997
 .Dt TTYMSG 3
-.Os
+.Os NetBSD 1.3
 .Sh NAME
 .Nm ttymsg
 .Nd ttymsg utility function
 .Sh SYNOPSIS
 .Fd #include <util.h>
 .Ft char *
-.Fn ttyaction "struct iovec *iov" "int iovlen" "const char *tty" "int tmout"
+.Fn ttymsg "struct iovec *iov" "int iovlen" "const char *tty" "int tmout"
 .Sh DESCRIPTION
 The
-.Fn ttyaction
+.Fn ttymsg
 function is used by
 programs such as
 .Xr talkd 8 ,
 .Xr syslogd 8 ,
 .Xr wall 1 ,
-etc.  to display the contents of a uio structure on a terminal.
-.Fn ttyaction
-forks and finishes in child if write would block after
-waiting up to tmout seconds.
+etc., to display the contents of a uio structure on a terminal.
+.Fn ttymsg
+forks and finishes in the child if the write would block after
+waiting up to
+.Fa tmout
+seconds.
 .Sh RETURN VALUES
-.Fn ttyaction
-returns a pointer to the error string on unexpected
-error; string is not newline-terminated.  Various "normal" errors are
+.Fn ttymsg
+returns a pointer to an error string on unexpected
+error; the string is not newline-terminated.  Various "normal" errors are
 ignored (exclusive-use, lack of permission, etc.).
+.Sh SEE ALSO
+.Xr writev 2
+
