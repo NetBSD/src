@@ -1,4 +1,4 @@
-.\"	$NetBSD: setbuf.3,v 1.6 1999/03/22 19:44:57 garbled Exp $
+.\"	$NetBSD: setbuf.3,v 1.7 2000/12/29 15:22:52 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,13 +51,13 @@
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft void
-.Fn setbuf "FILE *stream" "char *buf"
+.Fn setbuf "FILE * restrict stream" "char * restrict buf"
 .Ft void
 .Fn setbuffer "FILE *stream" "char *buf" "size_t size"
 .Ft int
 .Fn setlinebuf "FILE *stream"
 .Ft int
-.Fn setvbuf "FILE *stream" "char *buf" "int mode" "size_t size"
+.Fn setvbuf "FILE * restrict stream" "char * restrict buf" "int mode" "size_t size"
 .Sh DESCRIPTION
 The three types of buffering available are unbuffered, block buffered,
 and line buffered.
