@@ -41,21 +41,16 @@
 .Os BSD 4
 .Sh NAME
 .Nm vnconfig
-.Nd configure and enable vnode disks
+.Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm vnconfig
-.Op Fl cdeuv
+.Op Fl cuv
 .Ar special_file Ar regular_file
-.Oo Ar feature Oc
-.Nm vnconfig
-.Fl a 
-.Op Fl cdeuv
-.Op Fl f Ar config_file
 .Sh DESCRIPTION
 The
 .Nm vnconfig
-command configures and enables vnode pseudo disk devices.
-The first form of the command will associate the special file 
+command configures vnode pseudo disk devices.
+It will associate the special file 
 .Ar special_file
 with the regular file
 .Ar regular_file
@@ -71,18 +66,8 @@ If successful, references to
 .Ar special_file
 will access the contents of
 .Ar regular_file .
-.It Fl e
-Configures the device and enables any
-.Ar feature
-that was specified.
-If no feature was specified,
-.Fl e
-is the same as
-.Fl c .
-.It Fl d
-Disables (if possible) the specified feature.
 .It Fl u
-Disables and ``unconfigures'' the device.
+Unconfigures the device.
 .It Fl v
 Print messages to stdout describing actions taken.
 .El
@@ -90,52 +75,10 @@ Print messages to stdout describing actions taken.
 If no action option is given,
 .Fl c
 is assumed.
-.Pp
-The
-.Ar feature
-argument specifies a feature that can be enabled via the
-.Fl e
-option:
-.Bl -tag -width indent
-.It Dv swap
-Swapping is enabled on the special file.
-See
-.Xr swapon 2 .
-.It Dv Pf mountro= Pa mount_point
-The special file is mounted read-only on
-.Ar mount_point .
-See
-.Xr mount 2 .
-.It Dv Pf mountrw= Pa mount_point
-The special file is mounted read-write on
-.Ar mount_point .
-See
-.Xr mount 2 .
-.It Dv Pf mount= Pa mount_point
-Same as ``mountrw=''.
-.El
-.Pp
-The second (-a) form of the command reads a command file and performs the
-specified actions for each device/file pair.
-With
-.Fl f
-it reads the indicated configuration file
-.Ar config_file .
-Otherwise it uses a default configuration file.
-A configuration file contains one line per device/file pair in the form:
-.Bd -literal
-	special_file	regular_file	[ feature ]
-.Ed
-.Pp
-where fields are seperated by white space.
-The previously described action options serve to configure, enable,
-disable or unconfigure all devices in the configuration file.
 .Sh FILES
-.Bl -tag -width /etc/vntab -compact
-.It Pa /etc/vntab
-default configuration file for
-.Fl a
-option.
+.Bl -tag -width /etc/rvnd?? -compact
+.It Pa /dev/rvnd??
+.It Pa /dev/vnd??
 .El
 .Sh EXAMPLES
 .Pp
@@ -144,22 +87,12 @@ option.
 Configures the vnode disk
 .Pa vnd0c .
 .Pp
-.Dl vnconfig -e /dev/vnd0c /var/swapfile swap
+.Dl vnconfig -u /dev/vnd0c /tmp/diskimage
 .Pp
-Configures
+Unconfigures the
 .Pa vnd0c
-and enables swapping on it.
-.Pp
-.Dl vnconfig -d /dev/vnd0c myfilesystem mount=/mnt
-.Pp
-Unmounts (disables)
-.Pa vnd0c .
-.Pp
-.Dl vnconfig -ae
-.Pp
-Configures and enables all devices specified in
-.Pa /etc/vntab .
+device.
 .Sh SEE ALSO
-.Xr swapon 2 ,
-.Xr mount 2 ,
-.Xr unmount 2 .
+.Xr swapon 8 ,
+.Xr mount 8 ,
+.Xr umount 8 .
