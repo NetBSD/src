@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.301 2003/02/07 18:08:06 augustss Exp $
+$NetBSD: usbdevs,v 1.302 2003/02/08 04:07:36 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -245,6 +245,7 @@ vendor JENOPTIK		0x0784  Jenoptik
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
 vendor ABL		0x0794	ABL Electronics
+vendor SUNCOMM		0x079c	Sun Communications, Inc.
 vendor ALFADATA		0x079d	Alfadata Computer
 vendor NATIONALTECH	0x07a2	National Technical Systems
 vendor ONNTO		0x07a3	Onnto
@@ -1274,6 +1275,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
 /* STSN products */
 product STSN STSN0001		0x0001	Internet Access Device
+
+/* Sun Communications products */
+product	SUNCOMM MB_ADAPTOR	0x0003	Mobile Adaptor
 
 /* SUN Corporation products */
 product SUNTAC PS64P1		0x0005	SUNTAC U-Cable type P1
