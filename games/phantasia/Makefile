@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/09/30 09:23:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/10/18 07:40:27 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -36,11 +36,8 @@ ${FILES}: setup
 setup: host_phantglobs.lo setup.lo monsters.asc ${LIBM} 
 	${HOST_LINK.c} host_phantglobs.lo setup.lo -o ${.TARGET} -lm
 
-host_phantglobs.lo: ${.CURDIR}/phantglobs.c
-	${HOST_COMPILE.c} -o host_phantglobs.lo ${.CURDIR}/phantglobs.c
-
-setup.lo: ${.CURDIR}/setup.c
-	${HOST_COMPILE.c} -o setup.lo ${.CURDIR}/setup.c
+BUILDSYMLINKS+=	phantglobs.c host_phantglobs.c
+HOST_CPPFLAGS+=	-I${.CURDIR}
 
 # Make Phantasia map.  Change the map commands reflect your installation.
 # PLOTDEVICE is used for plotting the map.  Change as appropriate.
