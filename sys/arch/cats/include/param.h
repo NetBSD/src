@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2002/06/07 20:56:43 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,6 +45,12 @@
 #define	_MACHINE_ARCH	arm32
 #define	MACHINE_ARCH	"arm32"
 #endif /* __ELF__ */
+
+/*
+ * cats boot dmesg is bigger than 4k
+ */
+
+#define MSGBUFSIZE	(2*NBPG)
 
 #include <arm/arm32/param.h>
 
