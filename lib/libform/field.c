@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.14 2001/07/08 12:15:06 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.15 2002/05/20 15:00:11 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -52,6 +52,7 @@ FIELD _formi_default_field = {
 	0, /* starting char in string (horiz scroll) */
 	0, /* starting line in field (vert scroll) */
 	0, /* number of rows actually used in field */
+	0, /* actual pos of cursor in row, not same as x pos due to tabs */
 	0, /* x pos of cursor in field */
 	0, /* y pos of cursor in field */
 	0, /* start of a new page on the form if 1 */
@@ -314,16 +315,30 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	field->buffers[buffer].allocated = len + 1;
 
 	if (buffer == 0) {
+		field->start_char = 0;
+		field->start_line = 0;
+		field->row_xpos = 0;
+		field->cursor_xpos = 0;
+		field->cursor_ypos = 0;
 		field->row_count = 1; /* must be at least one row */
 		field->lines[0].start = 0;
 		field->lines[0].end = (len > 0)? (len - 1) : 0;
-		field->lines[0].length = len;
+		field->lines[0].length =
+			_formi_tab_expanded_length(field->buffers[0].string,
+						   0, field->lines[0].end);
 	
 		  /* we have to hope the wrap works - if it does not then the
 		     buffer is pretty much borked */
 		status = _formi_wrap_field(field, 0);
 		if (status != E_OK)
 			return status;
+
+		  /*
+		   * calculate the tabs for a single row field, the
+		   * multiline case is handled when the wrap is done.
+		   */
+		if (field->row_count == 1)
+			_formi_calculate_tabs(field, 0);
 
 		  /* redraw the field to reflect the new contents. If the field
 		   * is attached....
@@ -660,6 +675,7 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 	new->lines[0].length = 0;
 	new->lines[0].start = 0;
 	new->lines[0].end = 0;
+	new->lines[0].tabs = NULL;
 	
 	return new;
 }
@@ -730,6 +746,8 @@ int
 free_field(FIELD *field)
 {
 	FIELD *flink;
+	int i;
+	_formi_tab_t *ts, *nts;
 	
 	if (field == NULL)
 		return E_BAD_ARGUMENT;
@@ -740,6 +758,17 @@ free_field(FIELD *field)
 	if (field->link == field) { /* check if field linked */
 		  /* no it is not - release the buffers */
 		free(field->buffers);
+		  /* free the tab structures */
+		for (i = 0; i < field->row_count - 1; i++) {
+			if (field->lines[i].tabs != NULL) {
+				ts = field->lines[i].tabs;
+				while (ts != NULL) {
+					nts = ts->fwd;
+					free(ts);
+					ts = nts;
+				}
+			}
+		}
 	} else {
 		  /* is linked, traverse the links to find the field referring
 		   * to the one to be freed.
