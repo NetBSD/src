@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.36 2001/10/26 16:01:46 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.37 2001/10/31 20:41:17 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.36 2001/10/26 16:01:46 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.37 2001/10/31 20:41:17 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,9 +395,11 @@ set(char *t, NODE *ip)
 				mtree_err("invalid gid `%s'", val);
 			break;
 		case F_GNAME:
-			if (gid_from_group(val, &gid) == -1)
-			    mtree_err("unknown group `%s'", val);
-			ip->st_gid = gid;
+			if (!Wflag) {
+				if (gid_from_group(val, &gid) == -1)
+					mtree_err("unknown group `%s'", val);
+				ip->st_gid = gid;
+			}
 			break;
 		case F_IGN:
 			/* just set flag bit */
@@ -458,9 +460,11 @@ set(char *t, NODE *ip)
 				mtree_err("invalid uid `%s'", val);
 			break;
 		case F_UNAME:
-			if (uid_from_user(val, &uid) == -1)
-			    mtree_err("unknown user `%s'", val);
-			ip->st_uid = uid;
+			if (!Wflag) {
+				if (uid_from_user(val, &uid) == -1)
+					mtree_err("unknown user `%s'", val);
+				ip->st_uid = uid;
+			}
 			break;
 		default:
 			mtree_err(
