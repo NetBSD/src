@@ -1,6 +1,6 @@
-/*	$NetBSD: vm86.h,v 1.6 1996/04/18 10:04:32 mycroft Exp $	*/
+/*	$NetBSD: vm86.h,v 1.7 1996/04/30 10:35:28 mycroft Exp $	*/
 
-#define	VM86_USE_VIF
+#undef	VM86_USE_VIF
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,8 +71,6 @@ struct vm86_struct {
 	unsigned char int_byuser[32];	/* 256 bits each: pass control to user */
 	unsigned char int21_byuser[32];	/* otherwise, handle directly */
 };
-
-#define BIOSSEG		0x0f000
 
 #define VCPU_086		0
 #define VCPU_186		1
