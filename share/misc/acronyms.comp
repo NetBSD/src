@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.34 2004/01/14 13:46:26 keihan Exp $
+$NetBSD: acronyms.comp,v 1.35 2004/01/15 03:31:04 grant Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -11,6 +11,7 @@ APIC	advanced programmable interrupt controller
 AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
+ATM	asynchronous transfer mode
 ATX	advanced technology extended
 BEDO	burst extended data output
 BGP	border gateway protocol
@@ -122,6 +123,7 @@ NIC	network interface card
 NIS	network information service
 NUMA	non uniform memory access
 OEM	original equipment manufacturer
+OSF	open software foundation
 OTP	one time password
 PAM	pluggable authentication modules
 PAX	portable archive exchange
@@ -138,6 +140,7 @@ POP	post office protocol
 POSIX	portable operating system interface [for] unix
 POST	power on self test
 PPP	point-to-point protocol
+PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
 PROM	programmable read only memory
 PTE	page table entry
