@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1996/10/07 02:17:33 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 1996/10/07 11:20:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
-#if #defined(MIPS1) && !defined(MIPS3)
+#if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIP3" (r4000 family) was configured.
 #endif
 
@@ -770,6 +770,13 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[V0] = i;
 			locr0[A3] = 1;
 		}
+		/*
+		 * If we modified code or data, flush caches.
+		 * XXX code unyderling ptrace() and/or proc fs should do this?
+		 */
+		if (code == SYS_ptrace)
+			MachFlushCache();
+
 	done:
 #ifdef SYSCALL_DEBUG
 		scdebug_ret(p, code, i, rval);
@@ -1049,7 +1056,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 		intrcnt[SOFTCLOCK_INTR]++;
 		cnt.v_soft++;
 		softclock();
- 	}
+	}
 }
 
 
@@ -1138,6 +1145,7 @@ GetBranchDest(InstPtr)
 {
 	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
 }
+
 
 /*
  * Return the resulting PC as if the branch was executed.
@@ -1479,7 +1487,7 @@ specialframe:
 		Between((unsigned)a, pc, (unsigned)b)
 
 
-	/* Backtraces should contine through interrupts from kernel mode */
+	/* Backtraces should continue through interrupts from kernel mode */
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
@@ -1498,7 +1506,7 @@ specialframe:
 #endif	/* MIPS1 */
 
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
-	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr) {
+	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips_r4000_KernIntr, a0, a1, a2);
@@ -1525,6 +1533,7 @@ specialframe:
 	/* XXX fixup tests after cutting and pasting in locore.S */
 	/* R4000  exception handlers */
 
+#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 	if (pcBetween(mips_r2000_KernGenException, mips_r2000_UserGenException))
 		subr = (unsigned) mips_r2000_KernGenException;
 	else if (pcBetween(mips_r2000_UserGenException,mips_r2000_KernIntr))
@@ -1536,10 +1545,13 @@ specialframe:
 
 	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
 		subr = (unsigned) mips_r2000_UserIntr;
+	else
+#endif /* MIPS1 */
 
-	/* R4000  exception handlers */
+
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
-	else if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
+	/* R4000  exception handlers */
+	if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
 		subr = (unsigned) mips_r4000_KernGenException;
 	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
 		subr = (unsigned) mips_r4000_UserGenException;
@@ -1549,10 +1561,11 @@ specialframe:
 
 	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
 		subr = (unsigned) mips_r4000_UserIntr;
+	else
 #endif /* MIPS3 */
 
 
-	else if (pcBetween(splx, MachEmptyWriteBuffer))
+	if (pcBetween(splx, wbflush))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
 		subr = (unsigned) cpu_switch;
