@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.3 1997/07/22 07:51:36 jonathan Exp $ */
+/* $NetBSD: mcclock.c,v 1.4 1998/01/12 20:12:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.3 1997/07/22 07:51:36 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.4 1998/01/12 20:12:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,10 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.3 1997/07/22 07:51:36 jonathan Exp $")
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL,
-};
 
 void	mcclock_init __P((struct device *));
 void	mcclock_get __P((struct device *, time_t, struct clocktime *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.22 1997/07/21 05:39:30 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.23 1998/01/12 20:12:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,7 +134,6 @@ struct fbuaccess xcfbu;
 struct pmax_fbtty xcfbfb;
 
 struct fbinfo	xcfbfi;	/*XXX*/
-extern struct cfdriver cfb_cd;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
@@ -171,10 +170,6 @@ void xcfbattach __P((struct device *, struct device *, void *));
 
 struct cfattach xcfb_ca = {
 	sizeof(struct device), xcfbmatch, xcfbattach
-};
-
-struct cfdriver xcfb_cd = {
-	NULL, "xcfb", DV_DULL
 };
 
 int

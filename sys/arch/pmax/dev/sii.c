@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.28 1997/08/27 11:24:12 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.29 1998/01/12 20:12:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,15 +81,11 @@ int	old_siimatch  __P((struct device * parent, struct cfdata *cfdata,
 	    void *aux));
 void	old_siiattach __P((struct device *parent, struct device *self, void *aux));
 
-extern struct cfattach sii_ca;
 struct cfattach sii_ca = {
 	sizeof(struct siisoftc), old_siimatch, old_siiattach
 };
 
 extern struct cfdriver sii_cd;
-struct  cfdriver sii_cd = {
-	NULL, "sii", DV_DULL
-};
 
 int	siiprint(void*, char*);
 int siiintr __P((void *sc));

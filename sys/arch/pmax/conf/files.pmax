@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.47 1997/08/27 11:25:57 bouyer Exp $
+#	$NetBSD: files.pmax,v 1.48 1998/01/12 20:12:28 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -9,10 +9,10 @@ maxusers 2 8 64
 #
 # Bus-independent devices
 #
-device mainbus { }			# no locators
+device mainbus class dull { }		# no locators
 attach mainbus at root
 
-device cpu				# not optional
+device cpu class cpu			# not optional
 attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
 
@@ -53,7 +53,7 @@ file	arch/pmax/tc/asic.c		ioasic
 
 
 # Real-time clock (not optional)
-device	clock
+device	clock class dull
 attach	clock at ioasic, mainbus with mcclock_ioasic
 file	arch/pmax/pmax/clock.c
 file	arch/pmax/pmax/mcclock.c	clock
@@ -74,12 +74,12 @@ major { rz = 21 }
 # Old 4.4bsd pmax-specific scsi driver (deprecated).
 #
 define	oldscsi {}
-device oldscsibus	{target = -1, drive = -1}
+device oldscsibus class dull {target = -1, drive = -1}
 attach oldscsibus at oldscsi
 
 # asc:  system-slot or turbochannel-option SCSI interface
 #device asc: oldscsi,scsi
-device asc: oldscsi
+device asc class dull: oldscsi
 attach asc at ioasic with asc_ioasic
 file	dev/tc/asc_ioasic.c		asc_ioasic
 attach asc at tc with asc_tc
@@ -89,17 +89,17 @@ file	dev/tc/asc.c			asc needs-flag
 
 # sii:  kn01 SCSI interface 
 #device sii: scsi,oldscsi
-device sii: oldscsi
+device sii class dull: oldscsi
 file	arch/pmax/dev/sii.c		sii needs-flag
 attach sii at mainbus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
 
 
-device	tz: tape
+device	tz class tape: tape
 attach	tz at oldscsibus
 file	arch/pmax/dev/tz.c		tz needs-count
 
-device	rz: disk
+device	rz class disk: disk
 attach	rz at oldscsibus
 file	arch/pmax/dev/rz.c		rz needs-count
 
@@ -109,7 +109,7 @@ file	arch/pmax/dev/rz.c		rz needs-count
 
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
-device dc
+device dc class tty
 file	arch/pmax/dev/dc.c		dc
 attach dc at ioasic with dc_ioasic
 file	arch/pmax/dev/dc_ioasic.c	dc_ioasic	needs-flag
@@ -118,7 +118,7 @@ file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
-device dtop
+device dtop class dull
 attach dtop at ioasic
 file	arch/pmax/dev/dtop.c		dtop needs-flag
 
@@ -131,7 +131,7 @@ file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
 
 # 3100 (pmax) onboard framebuffer
-device pm
+device pm class dull
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
 attach pm at mainbus with pm_ds
@@ -141,31 +141,31 @@ file	arch/pmax/dev/pm_ds.c		pm_ds
 # Turbochannel options.
 ########################################################################
 
-device cfb
+device cfb class dull
 attach cfb at tc
 file	arch/pmax/dev/cfb.c		cfb needs-flag
 
-device sfb
+device sfb class dull
 attach sfb at tc
 file	arch/pmax/dev/sfb.c		sfb needs-flag
 
-device mfb
+device mfb class dull
 attach mfb at tc
 file	arch/pmax/dev/mfb.c		mfb needs-flag
 
 #  Zilog 8350/Intel 82350(?) SCC UART.
-device scc
+device scc class tty
 attach scc at ioasic
 file	arch/pmax/tc/scc.c		scc needs-flag
 
 # MAXINE onboard framebuffer
-device	xcfb
+device	xcfb class dull
 attach	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
 
 # DECWRL 45Mbit T3 interface
-device	tt
+device	tt class tty
 attach	tt at tc
 file	arch/pmax/dev/if_tt.c		tt needs-count
 
