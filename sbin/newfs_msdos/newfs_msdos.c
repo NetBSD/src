@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.10 2003/04/21 07:58:55 dbj Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.11 2003/07/13 07:38:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.10 2003/04/21 07:58:55 dbj Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.11 2003/07/13 07:38:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -634,7 +634,7 @@ main(int argc, char *argv[])
 			  (u_int)tm->tm_min));
 		mk4(bsx->volid, x);
 		mklabel(bsx->label, opt_L ? opt_L : "NO NAME");
-		sprintf(buf, "FAT%u", fat);
+		snprintf(buf, sizeof(buf), "FAT%u", fat);
 		setstr(bsx->type, buf, sizeof(bsx->type));
 		if (!opt_B) {
 		    x1 += sizeof(struct bsx);
