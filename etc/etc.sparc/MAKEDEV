@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 1998/10/15 21:22:54 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.41 1998/11/13 04:49:03 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -49,6 +49,7 @@
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#	raid*	RAIDframe disk driver
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -87,7 +88,7 @@ all)
 	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
 	sh -$- $0 cd0 st0 st1 fd0
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
-	sh -$- $0 ccd0 ccd1 ccd2 ccd3
+	sh -$- $0 ccd0 ccd1 ccd2 ccd3 raid0 raid1 raid2 raid3
 	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh -$- $0 cgeight0 tcx0
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -240,7 +241,7 @@ md*)
 	chmod 640 md$unit rmd$unit $name$unit $name$unit[abc] r$name$unit r$name$unit[abc]
 	;;
 
-ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
+ccd*|fd*|sd*|xd*|xy*|cd*|vnd*|raid*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=9;	chr=23;;
 	fd*)	name=fd;	unit=${i#fd};	blk=16;	chr=54;;
@@ -248,6 +249,7 @@ ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
 	xd*)	name=xd;	unit=${i#xd};	blk=10;	chr=42;;
 	xy*)	name=xy;	unit=${i#xy};	blk=3;	chr=9;;
 	cd*)	name=cd;	unit=${i#cd};	blk=18;	chr=58;;
+	raid*)	name=raid;	unit=${i#raid};	blk=25;	chr=121;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=8;	chr=110;;
 	esac
 	case $unit in

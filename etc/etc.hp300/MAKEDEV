@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1998/10/15 21:22:52 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1998/11/13 04:49:02 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -44,6 +44,7 @@
 #	st*	Exabyte tape
 # Disks:
 #	ccd*	"concatenated" pseudo-disks
+#	raid*	RAIDframe disk driver
 #	rd*	HP300 HP-IB disks
 #	sd*	HP300 SCSI disks
 #	vnd*	"file" pseudo-disks
@@ -76,7 +77,7 @@ case $i in
 
 all)
 	sh $0 std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
-	sh $0 sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
+	sh $0 sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3 raid0 raid1 raid2 raid3
 	sh $0 hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3 apci0
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3 lkm ipl random
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
@@ -173,11 +174,12 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-ccd*|fd*|rd*|sd*|vnd*)
+ccd*|fd*|raid*|rd*|sd*|vnd*)
 	case $i in
 	rd*) name=rd; unit=${i#rd}; blk=2; chr=9;;
 	sd*) name=sd; unit=${i#sd}; blk=4; chr=8;;
 	ccd*) name=ccd; unit=${i#ccd}; blk=5; chr=17;;
+	raid*) name=raid; unit=${i#raid}; blk=15; chr=35;;
 	vnd*) name=vnd; unit=${i#vnd}; blk=6; chr=19;;
 	esac
 	case $unit in
