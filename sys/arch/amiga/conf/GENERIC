@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.106 1998/06/26 01:53:48 lukem Exp $
+#	$NetBSD: GENERIC,v 1.107 1998/09/01 02:40:36 mhitch Exp $
 
 #
 # GENERIC AMIGA
@@ -105,6 +105,8 @@ options 	SCSIVERBOSE	# Verbose SCSI errors
 
 options 	NTP		# NTP phase/frequency locked loop
 
+#options 	UVM		# Use UVM instead of Mach VM.
+
 #
 # Misc. debugging options
 #
@@ -198,12 +200,10 @@ ite5		at grf5			# terminal emulators for grf's
 ite6		at grf6			# terminal emulators for grf's
 ite7		at grf7			# terminal emulators for grf's
 
-# XXX mfs and msc don't compile currently
-
-#msc0		at zbus0		# A2232 MSC multiport serial.
-#mfc0		at zbus0		# MultiFaceCard I/O board
-#mfcs0		at mfc0 unit 0		# MFC serial
-#mfcs1		at mfc0 unit 1		# MFC serial
+msc0		at zbus0		# A2232 MSC multiport serial.
+mfc0		at zbus0		# MultiFaceCard I/O board
+mfcs0		at mfc0 unit 0		# MFC serial
+mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
