@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.2.2 1999/02/25 04:10:14 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.2.3 1999/04/09 04:37:11 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -394,7 +394,7 @@ UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 
 		/* uvmexp.fltnomap++; XXX? */
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pages[i]),
-			   VM_PROT_ALL, 0);
+			   VM_PROT_ALL, FALSE);
 
 		pages[i]->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pages[i], NULL);
@@ -439,10 +439,10 @@ ubc_find_mapping(uobj, offset)
  */
 void *
 ubc_alloc(uobj, offset, len, flags)
-struct uvm_object *uobj;
-vaddr_t offset;
-vsize_t len;
-int flags;
+	struct uvm_object *uobj;
+	vaddr_t offset;
+	vsize_t len;
+	int flags;
 {
 	int s;
 	vaddr_t umap_offset, slot_offset;
