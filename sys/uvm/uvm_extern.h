@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.68 2001/12/08 00:35:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.69 2001/12/09 03:07:19 chs Exp $	*/
 
 /*
  *
@@ -256,9 +256,9 @@ struct uvmexp {
 	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel;	/* number of pages reserved for kernel */
-	int anonpages;		/* number of pages used by anon pagers */
-	int vnodepages;		/* number of pages used by vnode page cache */
-	int vtextpages;		/* number of pages used by vtext vnodes */
+	int anonpages;		/* number of pages used by anon mappings */
+	int filepages;		/* number of pages used by cached file data */
+	int execpages;		/* number of pages used by cached exec date */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
@@ -266,11 +266,17 @@ struct uvmexp {
 	int inactarg;   /* target number of inactive pages */
 	int wiredmax;   /* max number of wired pages */
 	int anonmin;	/* min threshold for anon pages */
-	int vtextmin;	/* min threshold for vtext pages */
-	int vnodemin;	/* min threshold for vnode pages */
+	int execmin;	/* min threshold for executable pages */
+	int filemin;	/* min threshold for file pages */
 	int anonminpct;	/* min percent anon pages */
-	int vtextminpct;/* min percent vtext pages */
-	int vnodeminpct;/* min percent vnode pages */
+	int execminpct;	/* min percent executable pages */
+	int fileminpct;	/* min percent file pages */
+	int anonmax;	/* max threshold for anon pages */
+	int execmax;	/* max threshold for executable pages */
+	int filemax;	/* max threshold for file pages */
+	int anonmaxpct;	/* max percent anon pages */
+	int execmaxpct;	/* max percent executable pages */
+	int filemaxpct;	/* max percent file pages */
 
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
@@ -340,9 +346,9 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	int pdreanon;	/* anon pages reactivated due to min threshold */
-	int pdrevnode;	/* vnode pages reactivated due to min threshold */
-	int pdrevtext;	/* vtext pages reactivated due to min threshold */
+	int pdreanon;	/* anon pages reactivated due to thresholds */
+	int pdrefile;	/* file pages reactivated due to thresholds */
+	int pdreexec;	/* executable pages reactivated due to thresholds */
 };
 
 /*
@@ -423,8 +429,8 @@ struct uvmexp_sysctl {
 	int64_t	pdpending;
 	int64_t	pddeact;
 	int64_t	anonpages;
-	int64_t	vnodepages;
-	int64_t	vtextpages;
+	int64_t	filepages;
+	int64_t	execpages;
 	int64_t colorhit;
 	int64_t colormiss;
 	int64_t ncolors;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.21 2001/11/10 07:37:01 lukem Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.21 2001/11/10 07:37:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22 2001/12/09 03:07:20 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -219,11 +219,14 @@ uvmexp_print(void (*pr)(const char *, ...))
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
 	    uvmexp.free);
-	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
-	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
-	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
-	(*pr)("  pages  %d anon, %d vnode, %d vtext\n",
-	    uvmexp.anonpages, uvmexp.vnodepages, uvmexp.vtextpages);
+	(*pr)("  min  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
+	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.fileminpct,
+	    uvmexp.filemin, uvmexp.execminpct, uvmexp.execmin);
+	(*pr)("  max  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
+	    uvmexp.anonmaxpct, uvmexp.anonmax, uvmexp.filemaxpct,
+	    uvmexp.filemax, uvmexp.execmaxpct, uvmexp.execmax);
+	(*pr)("  pages  %d anon, %d file, %d exec\n",
+	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
 	    uvmexp.wiredmax);

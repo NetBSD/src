@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.71 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.72 2001/12/09 03:07:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.71 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.72 2001/12/09 03:07:19 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -198,9 +198,9 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 
 	if (UVM_OBJ_IS_VTEXT(uobj)) {
-		uvmexp.vtextpages--;
+		uvmexp.execpages--;
 	} else if (UVM_OBJ_IS_VNODE(uobj)) {
-		uvmexp.vnodepages--;
+		uvmexp.filepages--;
 	}
 
 	/* object should be locked */
@@ -369,17 +369,22 @@ uvm_page_init(kvm_startp, kvm_endp)
 
 	/*
 	 * init various thresholds.
-	 * XXXCDC - values may need adjusting
 	 */
 
 	uvmexp.reserve_pagedaemon = 1;
 	uvmexp.reserve_kernel = 5;
 	uvmexp.anonminpct = 10;
-	uvmexp.vnodeminpct = 10;
-	uvmexp.vtextminpct = 5;
+	uvmexp.fileminpct = 10;
+	uvmexp.execminpct = 5;
+	uvmexp.anonmaxpct = 80;
+	uvmexp.filemaxpct = 50;
+	uvmexp.execmaxpct = 30;
 	uvmexp.anonmin = uvmexp.anonminpct * 256 / 100;
-	uvmexp.vnodemin = uvmexp.vnodeminpct * 256 / 100;
-	uvmexp.vtextmin = uvmexp.vtextminpct * 256 / 100;
+	uvmexp.filemin = uvmexp.fileminpct * 256 / 100;
+	uvmexp.execmin = uvmexp.execminpct * 256 / 100;
+	uvmexp.anonmax = uvmexp.anonmaxpct * 256 / 100;
+	uvmexp.filemax = uvmexp.filemaxpct * 256 / 100;
+	uvmexp.execmax = uvmexp.execmaxpct * 256 / 100;
 
 	/*
 	 * determine if we should zero pages in the idle loop.
