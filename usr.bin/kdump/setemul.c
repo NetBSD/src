@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.4 2000/07/20 20:47:02 jdolecek Exp $	*/
+/*	$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.4 2000/07/20 20:47:02 jdolecek Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ __RCSID("$NetBSD: setemul.c,v 1.4 2000/07/20 20:47:02 jdolecek Exp $");
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
-static struct emulation emulations[] = {
+static const struct emulation emulations[] = {
 	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{   "netbsd32", netbsd32_syscallnames,	     SYS_MAXSYSCALL,
@@ -151,19 +151,19 @@ static struct emulation emulations[] = {
 
 struct emulation_ctx {
 	pid_t	pid;
-	struct emulation *emulation;
+	const struct emulation *emulation;
 	struct emulation_ctx *next;
 };
 
-struct emulation *current;
+const struct emulation *current;
 
-static struct emulation *default_emul=NULL;
+static const struct emulation *default_emul=NULL;
 
 struct emulation_ctx *current_ctx;
 struct emulation_ctx *emul_ctx = NULL;
 
 static struct emulation_ctx *ectx_find __P((pid_t));
-static void	ectx_update __P((pid_t, struct emulation *));
+static void	ectx_update __P((pid_t, const struct emulation *));
 
 void
 setemul(name, pid, update_ectx)
@@ -172,7 +172,7 @@ setemul(name, pid, update_ectx)
 	int update_ectx;
 {
 	int i;
-	struct emulation *match = NULL;
+	const struct emulation *match = NULL;
 
 	for (i = 0; emulations[i].name != NULL; i++) {
 		if (strcmp(emulations[i].name, name) == 0) {
@@ -225,7 +225,7 @@ ectx_find(pid)
 static void
 ectx_update(pid, emul)
 	pid_t pid;
-	struct emulation *emul;
+	const struct emulation *emul;
 {
 	struct emulation_ctx *ctx;
 
