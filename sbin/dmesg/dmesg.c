@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.17 2000/06/16 00:20:23 simonb Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.18 2000/06/16 03:42:12 simonb Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.17 2000/06/16 00:20:23 simonb Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.18 2000/06/16 03:42:12 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,16 +69,14 @@ struct nlist nl[] = {
 	{ NULL },
 };
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct kern_msgbuf cur;
 	int ch, newl, skip, i;
@@ -193,7 +191,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
