@@ -39,8 +39,11 @@
  *	- added sl_uncompress_tcp_part.
  *
  *	From: 	slcompress.h	7.4	90/06/28
- *	$Id: slcompress.h,v 1.4 1993/08/14 06:38:41 deraadt Exp $
+ *	$Id: slcompress.h,v 1.5 1994/01/15 20:13:16 deraadt Exp $
  */
+
+#ifndef _SLCOMPRESS_H_
+#define _SLCOMPRESS_H_
 
 #define MAX_STATES 16		/* must be > 2 and < 256 */
 #define MAX_HDR MLEN		/* XXX 4bsd-ism: should really be 128 */
@@ -162,3 +165,5 @@ extern int sl_uncompress_tcp __P((u_char **bufp, int len, u_int type,
 extern int sl_uncompress_tcp_part __P((u_char **bufp, int buflen,
 				       int total_len, u_int type,
 				       struct slcompress *));
+
+#endif /* _SLCOMPRESS_H_ */
