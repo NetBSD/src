@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.107 2001/11/30 16:21:16 kleink Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.107.4.1 2002/03/10 19:08:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.107 2001/11/30 16:21:16 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.107.4.1 2002/03/10 19:08:23 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -121,8 +121,6 @@ struct lock kernel_lock;
 void schedcpu(void *);
 void updatepri(struct proc *);
 void endtsleep(void *);
-
-__inline void awaken(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.136 2002/01/11 21:16:27 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.136.4.1 2002/03/10 19:08:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -152,6 +152,7 @@ struct proc {
 	struct plimit	*p_limit;	/* Process limits */
 	struct vmspace	*p_vmspace;	/* Address space */
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
+	struct turnstile *p_ts;		/* turnstile for locking */
 
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit

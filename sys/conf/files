@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.500 2002/03/09 21:21:57 kent Exp $
+#	$NetBSD: files,v 1.500.2.1 2002/03/10 19:08:20 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1092,6 +1092,7 @@ file	kern/kern_subr.c
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_time.c
+file	kern/kern_turnstile.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
