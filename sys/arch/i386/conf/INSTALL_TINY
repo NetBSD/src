@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.63 2002/12/20 23:14:14 thorpej Exp $
+#	$NetBSD: INSTALL_TINY,v 1.64 2003/01/08 13:20:27 fvdl Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -34,8 +34,8 @@ options 	I486_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
+# insert delay no-ops in interrupts; recommended on very old machines
+options 	PIC_DELAY
 
 # Misc. i386-specific options
 #options 	XSERVER		# X server support in console drivers

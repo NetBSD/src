@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.92 2002/10/16 02:44:27 lukem Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.93 2003/01/08 13:20:26 fvdl Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -36,8 +36,8 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
+# insert delay interrupts in I/O; recommended on very old machines
+options 	PIC_DELAY
 
 # Misc. i386-specific options
 #options 	XSERVER		# X server support in console drivers
