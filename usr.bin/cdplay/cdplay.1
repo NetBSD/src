@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.8 2000/09/18 16:47:11 abs Exp $
+.\"	$NetBSD: cdplay.1,v 1.9 2001/04/09 12:30:53 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,9 +26,9 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd Sep 18, 2000
+.Dd September 18, 2000
 .Dt CDPLAY 1
-.Os NetBSD 1.5
+.Os
 .Sh NAME
 .Nm cdplay
 .Nd compact disc player
@@ -51,7 +51,7 @@ Specify the control device.  Both absolute paths and paths relative to
 .Pa /dev
 are accepted.  The suffix `c' (or 'd' on some architectures, see
 .Xr disklabel 8
-for details) is added to the 
+for details) is added to the
 device name if needed.  If the device not specified, the environment variables
 .Ev MUSIC_CD ,
 .Ev CD_DRIVE ,
@@ -68,24 +68,24 @@ need be specified.  The word
 can be omitted in all cases.
 .Bl -tag -width Cm
 .It Cm play Op Ar first_track Op Ar last_track
-Play from track 
+Play from track
 .Ar first_track
 to track
 .Ar last_track .
 The first track has number 1.
 .It Cm play Op Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
 Play from the absolute address
-(MSF) defined by 
+(MSF) defined by
 .Ar start_m
-in minutes, 
+in minutes,
 .Ar start_s ,
-in seconds and 
+in seconds and
 .Ar start_f
 (frame number) to the absolute address defined by
 .Ar end_m
-in minutes, 
+in minutes,
 .Ar end_s ,
-in seconds and 
+in seconds and
 .Ar end_f
 (frame number).  Minutes are in the range 0-99. Seconds are in the range 0-59.
 Frame numbers are in the range 0-74.
@@ -98,7 +98,7 @@ logical blocks.
 .It Cm pause
 Stop playing.  Do not stop the disc.
 .It Cm resume
-Resume playing.  Used after the 
+Resume playing.  Used after the
 .Em pause
 command.
 .It Cm stop
@@ -108,15 +108,15 @@ Eject the disc.
 .It Cm close
 Inject the disc.
 .It Cm volume Ar left_channel Ar right_channel
-Set the volume of left channel to 
+Set the volume of left channel to
 .Ar left_channel
-and the volume of right channel to 
-.Ar right_channel . 
-Allowed values are in the range 0-255. 
+and the volume of right channel to
+.Ar right_channel .
+Allowed values are in the range 0-255.
 .It Cm volume Ar value
-Set the volume of both left channel right channel to 
-.Ar value . 
-Allowed values are in the range 0-255. 
+Set the volume of both left channel right channel to
+.Ar value .
+Allowed values are in the range 0-255.
 .It Cm volume mute
 Turn the sound off.
 .It Cm volume mono
@@ -129,7 +129,7 @@ Play the left subtrack on both left and right channels.
 Play the right subtrack on both left and right channels.
 .It Cm info
 Print the table of contents.
-.It Cm status 
+.It Cm status
 .Op audio | media | volume
 
 Print the information about the disc:
