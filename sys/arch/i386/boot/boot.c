@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.15 1994/01/28 08:21:40 cgd Exp $
+ *	$Id: boot.c,v 1.16 1994/02/03 23:21:24 mycroft Exp $
  */
 
 /*
@@ -121,19 +121,15 @@ loadprog(howto)
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */
-	printf("Booting %s(%d,%c)%s @ 0x%x\n"
-			, devs[maj]
-			, unit
-			, 'a'+part
-			, name
-			, addr);
+	printf("Booting %s(%d,%c)%s @ 0x%x\n",
+	    devs[maj], unit, 'a'+part, name, addr);
 
 	/*
-	 * The +40960 is for memory allocated by locore.s that must
-	 * fit in the bss!  XXXX
+	 * The +40960 is for memory used by locore.s for the kernel page
+	 * table and proc0 stack.  XXX
 	 */
-	if ((head.a_text + head.a_data + head.a_bss + 40960) >
-	    (memsize(1) * 1024)) {
+	if ((addr + N_BSSADDR(head) + head.a_bss + 40960) >
+	    ((memsize(1) + 1024) * 1024)) {
 		printf("kernel too large\n");
 		return;
 	}
@@ -229,29 +225,28 @@ loadprog(howto)
 	case 4:
 		break;
 	}
+
+	startaddr &= 0xffffff;
 	argv[1] = howto;
 	argv[2] = (MAKEBOOTDEV(maj, 0, 0, unit, part));
-	argv[5] = (head.a_entry &= 0xfffffff);
+	argv[5] = startaddr;
 	argv[6] = (int) &x_entry;
 	argv[0] = 8;
+
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	startaddr &= 0xffffff;
 	printf("entry=0x%x\n", (int)startaddr);
 	startprog((int)startaddr, argv);
 }
 
 char namebuf[100];
 getbootdev(howto)
-     int *howto;
+	int *howto;
 {
 	char c, *ptr = namebuf;
-	printf("Boot: [[[%s(%d,%c)]%s][-s][-a][-d]] :- "
-			, devs[maj]
-			, unit
-			, 'a'+part
-			, name);
+	printf("Boot: [[[%s(%d,%c)]%s][-s][-a][-d]] :- ",
+	    devs[maj], unit, 'a'+part, name);
 	if (gets(namebuf)) {
 		while (c = *ptr) {
 			while (c == ' ')

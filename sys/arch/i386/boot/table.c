@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *     
- *	$Id: table.c,v 1.3 1993/08/02 17:52:17 mycroft Exp $
+ *	$Id: table.c,v 1.4 1994/02/03 23:21:26 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,7 @@ struct seg_desc {
 	unsigned char	p_dpl_type;
 	unsigned char	g_b_a_limit;
 	unsigned char	base_31_24;
-	};
+};
 
 #define RUN	0		/* not really 0, but filled in at boot time */
 
@@ -82,22 +82,9 @@ struct seg_desc	Gdt[] = {
 			/* 0x9E? */
 	{0xFFFF, 0x0, 0x0, 0x93, 0xCF, 0x0},	/* 0x10 : kernel data */
 			/* 0x92? */
-	{0xFFFF, RUN, RUN, 0x9E, 0x40, 0x0},	/* 0x18 : boot code */
-	{0xFFFF, RUN, RUN, 0x92, 0x40, 0x0},	/* 0x20 : boot data */
+	{0xFFFF, RUN, RUN, 0x9E, 0xCF, 0x0},	/* 0x18 : boot code */
+	{0xFFFF, RUN, RUN, 0x92, 0xCF, 0x0},	/* 0x20 : boot data */
 	{0xFFFF, RUN, RUN, 0x9E, 0x0, 0x0},	/* 0x28 : boot code, 16 bits */
-	/* More for bdb. */
-	{},					/* BIOS_CS_INDEX = 6 : null */
-	{},					/* BIOS_TMP_INDEX = 7 : null */
-	{},					/* TSS_INDEX = 8 : null */
-	{0xFFFF, 0x0, 0x0, 0xB2, 0x40, 0x0},	/* DS_286_INDEX = 9 */
-	{0xFFFF, 0x0, 0x0, 0xB2, 0x40, 0x0},	/* ES_286_INDEX = 10 */
-	{},					/* Unused = 11 : null */
-	{0x7FFF, 0x8000, 0xB, 0xB2, 0x40, 0x0},	/* COLOR_INDEX = 12 */
-	{0x7FFF, 0x0, 0xB, 0xB2, 0x40, 0x0},	/* MONO_INDEX = 13 */
-	{0xFFFF, RUN, RUN, 0x9A, 0x40, 0x0},	/* DB_CS_INDEX = 14 */
-	{0xFFFF, RUN, RUN, 0x9A, 0x0, 0x0},	/* DB_CS16_INDEX = 15 */
-	{0xFFFF, RUN, RUN, 0x92, 0x40, 0x0},	/* DB_DS_INDEX = 16 */
-	{8*18-1, RUN, RUN, 0x92, 0x40, 0x0},	/* GDT_INDEX = 17 */
 };
 
 struct idt_desc {
@@ -119,7 +106,7 @@ struct pseudo_desc {
 	unsigned short	limit;
 	unsigned short	base_low;
 	unsigned short	base_high;
-	};
+};
 
 struct pseudo_desc Gdtr = { sizeof Gdt - 1, RUN, RUN };
 struct pseudo_desc Idtr_prot = { sizeof Idt - 1, RUN, RUN };
