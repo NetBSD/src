@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.20 1998/01/21 00:25:19 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.21 1998/05/16 15:12:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.20 1998/01/21 00:25:19 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.21 1998/05/16 15:12:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: print.c,v 1.20 1998/01/21 00:25:19 mycroft Exp $");
 #include "ls.h"
 #include "extern.h"
 
-static int	printaname __P((FTSENT *, u_long, u_long));
+static int	printaname __P((FTSENT *, int, int));
 static void	printlink __P((FTSENT *));
 static void	printtime __P((time_t));
 static int	printtype __P((u_int));
@@ -99,7 +99,8 @@ printlong(dp)
 	time(&now);
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
-		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
+		(void)printf("total %qu\n",
+		    (long long)(howmany(dp->btotal, blocksize)));
 
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
@@ -108,8 +109,7 @@ printlong(dp)
 		if (f_inode)
 			(void)printf("%*u ", dp->s_inode, sp->st_ino);
 		if (f_size)
-			(void)printf("%*qd ",
-			    dp->s_block,
+			(void)printf("%*qu ", dp->s_block,
 			    (long long)howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
@@ -123,7 +123,7 @@ printlong(dp)
 			    dp->s_major, major(sp->st_rdev), dp->s_minor,
 			    minor(sp->st_rdev));
 		else
-			(void)printf("%*qd ", dp->s_size,
+			(void)printf("%*qu ", dp->s_size,
 			    (long long)sp->st_size);
 		if (f_accesstime)
 			printtime(sp->st_atime);
@@ -189,7 +189,8 @@ printcol(dp)
 		++numrows;
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
-		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
+		(void)printf("total %qu\n",
+		    (long long)(howmany(dp->btotal, blocksize)));
 	for (row = 0; row < numrows; ++row) {
 		for (base = row, chcnt = col = 0; col < numcols; ++col) {
 			chcnt = printaname(array[base], dp->s_inode,
@@ -231,7 +232,8 @@ printacol(dp)
 	colwidth = termwidth / numcols;		/* spread out if possible */
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
-		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
+		(void)printf("total %qu\n", 
+		    (long long)(howmany(dp->btotal, blocksize)));
 	chcnt = col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
@@ -255,7 +257,7 @@ printacol(dp)
 static int
 printaname(p, inodefield, sizefield)
 	FTSENT *p;
-	u_long sizefield, inodefield;
+	int sizefield, inodefield;
 {
 	struct stat *sp;
 	int chcnt;
@@ -263,10 +265,9 @@ printaname(p, inodefield, sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*u ", (int)inodefield, sp->st_ino);
+		chcnt += printf("%*u ", inodefield, sp->st_ino);
 	if (f_size)
-		chcnt += printf("%*qd ",
-		    (int)sizefield,
+		chcnt += printf("%*qu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
 	if (f_type)
