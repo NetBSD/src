@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
+/*	$NetBSD: ip_gre.h,v 1.4 2000/07/06 04:34:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,5 @@
 
 #ifdef _KERNEL
 void gre_input __P((struct mbuf *, ...));
-int gre_input2 __P((struct mbuf *,int hlen,u_char proto));
 void gre_mobile_input __P((struct mbuf *, ...));
-
-#ifndef MROUTING
-void gre_ipip_input __P((struct mbuf *, ...));
-#endif
 #endif /* _KERNEL */
