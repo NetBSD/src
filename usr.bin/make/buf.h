@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)buf.h	5.4 (Berkeley) 12/28/90
- *	$Id: buf.h,v 1.3 1994/03/05 00:34:36 cgd Exp $
+ *	$Id: buf.h,v 1.4 1994/06/06 22:45:20 jtc Exp $
  */
 
 /*-
@@ -49,7 +49,7 @@
 
 #include    "sprite.h"
 
-typedef unsigned char Byte;
+typedef char Byte;
 
 typedef struct Buffer {
     int	    size; 	/* Current size of the buffer */
