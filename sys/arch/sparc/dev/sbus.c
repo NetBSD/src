@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.16 1997/04/08 20:08:21 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 
@@ -192,15 +193,19 @@ sbus_translate(dev, ca)
 			ca->ca_slot = SBUS_ABS_TO_SLOT(base);
 			ca->ca_offset = SBUS_ABS_TO_OFFSET(base);
 		} else {
+			if (!CPU_ISSUN4C)
+				panic("relative sbus addressing not supported");
 			ca->ca_slot = slot = ca->ca_ra.ra_iospace;
 			ca->ca_offset = base;
-			ca->ca_ra.ra_paddr =
-				(void *)SBUS_ADDR(slot, base);
+			ca->ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
+			ca->ca_ra.ra_iospace = PMAP_OBIO;
+
 			/* Fix any remaining register banks */
 			for (i = 1; i < ca->ca_ra.ra_nreg; i++) {
 				base = (int)ca->ca_ra.ra_reg[i].rr_paddr;
 				ca->ca_ra.ra_reg[i].rr_paddr =
 					(void *)SBUS_ADDR(slot, base);
+				ca->ca_ra.ra_reg[i].rr_iospace = PMAP_OBIO;
 			}
 		}
 
