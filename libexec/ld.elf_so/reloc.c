@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.26.4.2 2000/10/16 22:06:49 tv Exp $	 */
+/*	$NetBSD: reloc.c,v 1.26.4.3 2001/05/01 12:06:16 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,7 +53,7 @@
 #include "rtld.h"
 
 #ifndef RTLD_INHIBIT_COPY_RELOCS
-static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_RelA *,
+static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *,
     bool));
 
 /*
@@ -68,7 +68,7 @@ static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_RelA *,
 static int
 _rtld_do_copy_relocation(dstobj, rela, dodebug)
 	const Obj_Entry *dstobj;
-	const Elf_RelA *rela;
+	const Elf_Rela *rela;
 	bool dodebug;
 {
 	void           *dstaddr = (void *)(dstobj->relocbase + rela->r_offset);
@@ -121,7 +121,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 		const Elf_Rel  *rel;
 		for (rel = dstobj->rel; rel < dstobj->rellim; ++rel) {
 			if (ELF_R_TYPE(rel->r_info) == R_TYPE(COPY)) {
-				Elf_RelA        ourrela;
+				Elf_Rela        ourrela;
 				ourrela.r_info = rel->r_info;
 				ourrela.r_offset = rel->r_offset;
 				ourrela.r_addend = 0;
@@ -132,7 +132,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 		}
 	}
 	if (dstobj->rela != NULL) {
-		const Elf_RelA *rela;
+		const Elf_Rela *rela;
 		for (rela = dstobj->rela; rela < dstobj->relalim; ++rela) {
 			if (ELF_R_TYPE(rela->r_info) == R_TYPE(COPY)) {
 				if (_rtld_do_copy_relocation(dstobj, rela,
@@ -151,7 +151,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Obj_Entry *obj;
-	const Elf_RelA *rela;
+	const Elf_Rela *rela;
 	bool dodebug;
 {
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
@@ -453,7 +453,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 int
 _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	Obj_Entry *obj;
-	const Elf_RelA *rela;
+	const Elf_Rela *rela;
 	caddr_t *addrp;
 	bool bind_now;
 	bool dodebug;
@@ -512,8 +512,8 @@ _rtld_bind(obj, reloff)
 	Obj_Entry *obj;
 	Elf_Word reloff;
 {
-	const Elf_RelA *rela;
-	Elf_RelA        ourrela;
+	const Elf_Rela *rela;
+	Elf_Rela        ourrela;
 	caddr_t		addr;
 
 	if (obj->pltrel != NULL) {
@@ -524,7 +524,7 @@ _rtld_bind(obj, reloff)
 		ourrela.r_offset = rel->r_offset;
 		rela = &ourrela;
 	} else {
-		rela = (const Elf_RelA *)((caddr_t) obj->pltrela + reloff);
+		rela = (const Elf_Rela *)((caddr_t) obj->pltrela + reloff);
 	}
 
 	if (_rtld_relocate_plt_object(obj, rela, &addr, true, true) < 0)
@@ -580,7 +580,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			/* Process the non-PLT relocations. */
 			const Elf_Rel  *rel;
 			for (rel = obj->rel; rel < obj->rellim; ++rel) {
-				Elf_RelA        ourrela;
+				Elf_Rela        ourrela;
 				ourrela.r_info = rel->r_info;
 				ourrela.r_offset = rel->r_offset;
 #if defined(__mips__)
@@ -600,7 +600,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 		}
 		if (obj->rela != NULL) {
 			/* Process the non-PLT relocations. */
-			const Elf_RelA *rela;
+			const Elf_Rela *rela;
 			for (rela = obj->rela; rela < obj->relalim; ++rela) {
 				if (_rtld_relocate_nonplt_object(obj, rela,
 				    dodebug) < 0)
@@ -619,7 +619,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 		if (obj->pltrel != NULL) {
 			const Elf_Rel  *rel;
 			for (rel = obj->pltrel; rel < obj->pltrellim; ++rel) {
-				Elf_RelA        ourrela;
+				Elf_Rela        ourrela;
 				ourrela.r_info = rel->r_info;
 				ourrela.r_offset = rel->r_offset;
 				ourrela.r_addend =
@@ -631,7 +631,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			}
 		}
 		if (obj->pltrela != NULL) {
-			const Elf_RelA *rela;
+			const Elf_Rela *rela;
 			for (rela = obj->pltrela; rela < obj->pltrelalim;
 			    ++rela) {
 				if (_rtld_relocate_plt_object(obj, rela,
