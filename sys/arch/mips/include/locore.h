@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.55 2001/08/15 02:45:08 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.56 2001/08/18 04:13:28 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -90,10 +90,10 @@ u_int32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(u_int32_t);
 
 u_int32_t mips3_cp0_config_read(void);
-void	mips3_cp0_count_write(u_int32_t);
+void	mips3_cp0_config_write(u_int32_t);
 
 u_int32_t mips3_cp0_count_read(void);
-void	mips3_cp0_config_write(u_int32_t);
+void	mips3_cp0_count_write(u_int32_t);
 
 u_int32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(u_int32_t);
