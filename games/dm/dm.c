@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $	*/
+/*	$NetBSD: dm.c,v 1.12 1999/07/14 22:52:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $");
+__RCSID("$NetBSD: dm.c,v 1.12 1999/07/14 22:52:07 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,9 @@ static int	priority = 0;		/* priority game runs at */
 static char	*game,			/* requested game */
 		*gametty;		/* from tty? */
 
-void	c_day __P((char *, char *, char *));
-void	c_game __P((char *, char  *, char *, char *));
-void	c_tty __P((char *));
+void	c_day __P((const char *, const char *, const char *));
+void	c_game __P((const char *, const char  *, const char *, const char *));
+void	c_tty __P((const char *));
 const char *hour __P((int));
 double	load __P((void));
 int	main __P((int, char *[]));
@@ -168,9 +168,9 @@ read_config()
  */
 void
 c_day(s_day, s_start, s_stop)
-	char *s_day, *s_start, *s_stop;
+	const char *s_day, *s_start, *s_stop;
 {
-	static char *days[] = {
+	static const char *const days[] = {
 		"sunday", "monday", "tuesday", "wednesday",
 		"thursday", "friday", "saturday",
 	};
@@ -196,7 +196,7 @@ c_day(s_day, s_start, s_stop)
  */
 void
 c_tty(tty)
-	char *tty;
+	const char *tty;
 {
 	static int first = 1;
 	static char *p_tty;
@@ -216,7 +216,7 @@ c_tty(tty)
  */
 void
 c_game(s_game, s_load, s_users, s_priority)
-	char *s_game, *s_load, *s_users, *s_priority;
+	const char *s_game, *s_load, *s_users, *s_priority;
 {
 	static int found;
 
@@ -291,7 +291,7 @@ const char *
 hour(h)
 	int h;
 {
-	static char *hours[] = {
+	static const char *const hours[] = {
 	    "midnight", "1am", "2am", "3am", "4am", "5am",
 	    "6am", "7am", "8am", "9am", "10am", "11am",
 	    "noon", "1pm", "2pm", "3pm", "4pm", "5pm",
