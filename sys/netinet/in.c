@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.63 2000/10/06 05:07:41 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.64 2000/10/08 02:05:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,6 +143,18 @@ static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 
 int subnetsarelocal = SUBNETSARELOCAL;
 int hostzeroisbroadcast = HOSTZEROBROADCAST;
+
+/*
+ * This structure is used to keep track of in6_multi chains which belong to
+ * deleted interface addresses.
+ */
+static LIST_HEAD(, multi_kludge) in_mk; /* XXX BSS initialization */
+
+struct multi_kludge {
+	LIST_ENTRY(multi_kludge) mk_entry;
+	struct ifnet *mk_ifp;
+	LIST_HEAD(, in_multi) mk_head;
+};
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -557,6 +569,19 @@ in_purgeaddr(ifa, ifp)
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+	if (LIST_FIRST(&ia->ia_multiaddrs) != NULL) {
+		/*
+		 * XXX thorpej@netbsd.org -- if the interface is going
+		 * XXX away, don't save the multicast entries, delete them!
+		 */
+		if (ia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
+			struct in_multi *inm;
+
+			while ((inm = LIST_FIRST(&ia->ia_multiaddrs)) != NULL)
+				in_delmulti(inm);
+		} else
+			in_savemkludge(ia);
+	}
 	IFAFREE(&ia->ia_ifa);
 	in_setmaxmtu();
 }
@@ -573,6 +598,7 @@ in_purgeif(ifp)
 			continue;
 		in_purgeaddr(ifa, ifp);
 	}
+	in_purgemkludge(ifp);
 }
 
 /*
@@ -864,6 +890,11 @@ in_ifinit(ifp, ia, sin, scrub)
 	if (error == EEXIST)
 		error = 0;
 	/*
+	 * recover multicast kludge entry, if there is.
+	 */
+	if (ifp->if_flags & IFF_MULTICAST)
+		in_restoremkludge(ia, ifp);
+	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
@@ -917,6 +948,101 @@ in_broadcast(in, ifp)
 			return 1;
 	return (0);
 #undef ia
+}
+
+/*
+ * Multicast address kludge:
+ * If there were any multicast addresses attached to this interface address,
+ * either move them to another address on this interface, or save them until
+ * such time as this interface is reconfigured for IPv6.
+ */
+void
+in_savemkludge(oia)
+	struct in_ifaddr *oia;
+{
+	struct in_ifaddr *ia;
+	struct in_multi *inm, *next;
+
+	IFP_TO_IA(oia->ia_ifp, ia);
+	if (ia) {	/* there is another address */
+		for (inm = oia->ia_multiaddrs.lh_first; inm; inm = next){
+			next = inm->inm_list.le_next;
+			IFAFREE(&inm->inm_ia->ia_ifa);
+			IFAREF(&ia->ia_ifa);
+			inm->inm_ia = ia;
+			LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
+		}
+	} else {	/* last address on this if deleted, save */
+		struct multi_kludge *mk;
+
+		mk = malloc(sizeof(*mk), M_IPMADDR, M_WAITOK);
+
+		LIST_INIT(&mk->mk_head);
+		mk->mk_ifp = oia->ia_ifp;
+
+		for (inm = oia->ia_multiaddrs.lh_first; inm; inm = next){
+			next = inm->inm_list.le_next;
+			IFAFREE(&inm->inm_ia->ia_ifa); /* release reference */
+			inm->inm_ia = NULL;
+			LIST_INSERT_HEAD(&mk->mk_head, inm, inm_list);
+		}
+
+		if (mk->mk_head.lh_first != NULL) {
+			LIST_INSERT_HEAD(&in_mk, mk, mk_entry);
+		} else {
+			FREE(mk, M_IPMADDR);
+		}
+	}
+}
+
+/*
+ * Continuation of multicast address hack:
+ * If there was a multicast group list previously saved for this interface,
+ * then we re-attach it to the first address configured on the i/f.
+ */
+void
+in_restoremkludge(ia, ifp)
+	struct in_ifaddr *ia;
+	struct ifnet *ifp;
+{
+	struct multi_kludge *mk;
+
+	for (mk = in_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+		if (mk->mk_ifp == ifp) {
+			struct in_multi *inm, *next;
+
+			for (inm = mk->mk_head.lh_first; inm; inm = next){
+				next = inm->inm_list.le_next;
+				inm->inm_ia = ia;
+				IFAREF(&ia->ia_ifa);
+				LIST_INSERT_HEAD(&ia->ia_multiaddrs,
+						 inm, inm_list);
+			}
+			LIST_REMOVE(mk, mk_entry);
+			free(mk, M_IPMADDR);
+			break;
+		}
+	}
+}
+
+void
+in_purgemkludge(ifp)
+	struct ifnet *ifp;
+{
+	struct multi_kludge *mk;
+	struct in_multi *inm;
+
+	for (mk = in_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+		if (mk->mk_ifp != ifp)
+			continue;
+
+		/* leave from all multicast groups joined */
+		while ((inm = LIST_FIRST(&mk->mk_head)) != NULL)
+			in_delmulti(inm);
+		LIST_REMOVE(mk, mk_entry);
+		free(mk, M_IPMADDR);
+		break;
+	}
 }
 
 /*
