@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.40 2003/10/25 18:29:40 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.41 2003/10/25 21:30:03 christos Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.40 2003/10/25 18:29:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.41 2003/10/25 21:30:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1365,11 +1365,11 @@ ray_recv(sc, ccs)
 	struct ieee80211_frame *frame;
 	struct ether_header *eh;
 	struct mbuf *m;
-	size_t pktlen, fudge, len, lenread;
+	size_t pktlen, fudge, len, lenread = 0;
 	bus_size_t bufp, ebufp, tmp;
 	struct ifnet *ifp;
 	u_int8_t *src, *d;
-	u_int frag, nofrag, ni, i, issnap, first;
+	u_int frag = 0, ni, i, issnap, first;
 	u_int8_t fc0;
 #ifdef RAY_DO_SIGLEV
 	u_int8_t siglev;
@@ -1404,8 +1404,8 @@ ray_recv(sc, ccs)
 	siglev = SRAM_READ_FIELD_1(sc, ccs, ray_cmd_rx, c_siglev);
 #endif
 
-	RAY_DPRINTF(("%s: recv pktlen %ld nofrag %d\n", sc->sc_xname,
-	    (u_long)pktlen, nofrag));
+	RAY_DPRINTF(("%s: recv pktlen %ld frag %d\n", sc->sc_xname,
+	    (u_long)pktlen, frag));
 	RAY_DPRINTF_XMIT(("%s: received packet: len %ld\n", sc->sc_xname,
 	    (u_long)pktlen));
 	if (pktlen > MCLBYTES || pktlen < sizeof(*frame)) {
@@ -1438,8 +1438,6 @@ ray_recv(sc, ccs)
 	d = mtod(m, u_int8_t *);
 
 	RAY_DPRINTF(("%s: recv ccs index %d\n", sc->sc_xname, first));
-	frag = 0;
-	lenread = 0;
 	i = ni = first;
 	while ((i = ni) && i != RAY_CCS_LINK_NULL) {
 		ccs = RAY_GET_CCS(i);
