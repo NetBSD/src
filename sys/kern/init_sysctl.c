@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.16 2003/12/28 22:12:00 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.17 2003/12/28 22:19:59 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.16 2003/12/28 22:12:00 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.17 2003/12/28 22:19:59 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -120,7 +120,7 @@ static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
-static int sysctl_kern_hostname(SYSCTLFN_PROTO);
+static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_kern_file(SYSCTLFN_PROTO);
 static int sysctl_kern_autonice(SYSCTLFN_PROTO);
@@ -270,7 +270,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_STRING, "hostname", NULL,
-		       sysctl_kern_hostname, 0, &hostname, MAXHOSTNAMELEN,
+		       sysctl_setlen, 0, &hostname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "hostid", NULL,
@@ -321,7 +321,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_STRING, "domainname", NULL,
-		       NULL, 0, &domainname, MAXHOSTNAMELEN,
+		       sysctl_setlen, 0, &domainname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_DOMAINNAME, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
 		       CTLTYPE_INT, "maxpartitions", NULL,
@@ -867,21 +867,28 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper function for kern.hostname.
- * we have to adjust hostnamelen after changes.
+ * sysctl helper function for kern.hostname and kern.domainnname.
+ * resets the relevant recorded length when the underlying name is
+ * changed.
  */
 static int
-sysctl_kern_hostname(SYSCTLFN_ARGS)
+sysctl_setlen(SYSCTLFN_ARGS)
 {
 	int error;
-	struct sysctlnode node;
 
-	node = *rnode;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (error || newp == NULL)
 		return (error);
 
-	hostnamelen = strlen(hostname);
+	switch (rnode->sysctl_num) {
+	case KERN_HOSTNAME:
+		hostnamelen = strlen((const char*)rnode->sysctl_data);
+		break;
+	case KERN_DOMAINNAME:
+		domainnamelen = strlen((const char*)rnode->sysctl_data);
+		break;
+	}
+
 	return (0);
 }
 
