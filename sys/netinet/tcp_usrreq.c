@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.40 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.41 1999/07/02 12:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -746,6 +746,8 @@ tcp_attach(so)
 	else if (in6p)
 		tp = tcp_newtcpcb(family, (void *)in6p);
 #endif
+	else
+		tp = NULL;
 
 	if (tp == 0) {
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */

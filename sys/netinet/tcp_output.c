@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.48 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.49 1999/07/02 12:45:32 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -584,6 +584,9 @@ send:
 		iphdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		iphdrlen = 0;
+		break;
 	}
 	hdrlen = iphdrlen;
 	if (flags & TH_SYN) {
@@ -768,6 +771,11 @@ send:
 		th = (struct tcphdr *)(ip6 + 1);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		ip = NULL;
+		ip6 = NULL;
+		th = NULL;
+		break;
 	}
 	if (tp->t_template == 0)
 		panic("tcp_output");
@@ -1062,6 +1070,9 @@ send:
 		break;
 	    }
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 	if (error) {
 out:

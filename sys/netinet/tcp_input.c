@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.83 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.84 1999/07/02 12:45:32 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3215,6 +3215,8 @@ syn_cache_respond(sc, m)
 		th->th_sport = sc->sc_dst.sin6.sin6_port;
 		break;
 #endif
+	default:
+		th = NULL;
 	}
 
 	th->th_seq = htonl(sc->sc_iss);
@@ -3327,6 +3329,9 @@ syn_cache_respond(sc, m)
 			0, NULL);
 		break;
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 	return (error);
 }
