@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.8 2001/06/24 14:22:43 bjh21 Exp $
+.\"	$NetBSD: ifmedia.4,v 1.9 2001/06/28 19:50:32 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,16 +127,28 @@ connector.  [100baseT4, 100T4]
 100VG-AnyLAN.  [100baseVG, 100VG]
 .It IFM_100_T2
 100BASE-T2.  [100baseT2, 100T2]
-.It IFM_1000_FX
-1000BASE-FX, 1Gb/s over fiber optic cables.  [1000baseFX, 1000FX]
+.It IFM_1000_SX
+1000BASE-SX, 1Gb/s over multi-mode fiber optic cables.  [1000baseSX, 1000SX]
 .It IFM_10_STP
 10BASE-STP, 10Mb/s over shielded twisted pair, DB9 connector.  [10baseSTP,
 STP, 10STP]
 .It IFM_10_FL
 10BASE-FL, 10Mb/s over fiber optic cables.  [10baseFL, FL, 10FL]
+.It IFM_1000_LX
+1000BASE-LX, 1Gb/s over single-mode fiber optic cables.  [1000baseLX, 1000LX]
+.It IFM_1000_CX
+1000BASE-CX, 1Gb/s over shielded twisted pair.  [1000baseCX, 1000CX]
+.It IFM_1000_TX
+1000BASE-TX, 1Gb/s over 4 pair cat 5.  [1000baseTX, 1000TX]
+.It IFM_HPNA_1
+HomePNA 1.0, 1Mb/s.  [HomePNA1, HPNA1]
 .El
 .Pp
-There are no link type-specific options defined for Ethernet.
+The following media option is defined for Ethernet:
+.Bl -tag -offset indent -width IFM_ETH_MASTER
+.It IFM_ETH_MASTER
+Configure a 1000BASE-TX PHY in as a MASTER PHY.
+.El
 .Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
 The following media types are defined for Token Ring:
 .Bl -tag -offset indent -width IFM_TOK_UTP16
