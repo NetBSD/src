@@ -103,6 +103,9 @@ confFORCE_RMAIL	    [undefined]		If defined, install the rmail program
 confHFDIR	    /etc/mail		Location of the sendmail helpfile.
 confHFFILE	    helpfile		Name of the installed helpfile.
 confINCDIRS	    [empty]		-I flags passed to C compiler.
+confINCGRP	    bin			The group for include files.
+confINCMODE	    444			The mode of installed include files.
+confINCOWN	    root		The owner for include files.
 confINCLUDEDIR	    /usr/include	Where to install include files.
 confINSTALL	    install		The BSD-compatible install program.
 					Use ${BUILDBIN}/install.sh if none
@@ -114,6 +117,9 @@ confLDOPTS	    [empty]		Linker options passed to ld.
 					linking shared object libraries.
 confLIBDIR	    /usr/lib		Where to install library files.
 confLIBDIRS	    [empty]		-L flags passed to ld.
+confLIBGRP	    bin			The group for libraries.
+confLIBMODE	    444			The mode of installed libraries.
+confLIBOWN	    root		The owner for libraries.
 confLIBS	    [varies]		-l flags passed to ld.
 confLIBSEARCH	    db bind resolv 44bsd
 					Search for these libraries for
@@ -352,4 +358,4 @@ files that make up the library.
 bldINSTALLABLE - This should be set if the library should be installed in
 confLIBDIR.
 
-Revision: 8.65.4.5, Last updated Date: 2000/12/20 21:21:38
+Revision: 8.65.4.7, Last updated Date: 2001/02/11 19:45:51
