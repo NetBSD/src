@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.10 2004/01/01 02:44:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.10 2004/01/01 02:44:09 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $");
  *
  * TODO:
  *	- handle .taz/.tgz files?
+ *	- use mmap where possible
  */
 
 #include <sys/param.h>
@@ -62,21 +63,34 @@ __RCSID("$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $");
 #include <stdarg.h>
 #include <getopt.h>
 
-#ifndef GZ_SUFFIX
-# define GZ_SUFFIX ".gz"
-#endif
+/* what type of file are we dealing with */
+enum filetype {
+	FT_GZIP,
+	FT_BZIP2,
+	FT_LAST,
+	FT_UNKNOWN
+};
 
-#define BUFLEN 4096
+#define BZ_NO_STDIO
+#include <bzlib.h>
+
+#define BZ2_SUFFIX	".bz2"
+#define BZIP2_MAGIC	"\102\132\150"
+
+#define GZ_SUFFIX	".gz"
+
+#define BUFLEN		(32 * 1024)
 
 #define GZIP_MAGIC0	0x1F
-#define GZIP_MAGIC1	0x2B
+#define GZIP_MAGIC1	0x8B
+#define GZIP_OMAGIC1	0x9E
 
 #define ORIG_NAME 	0x08
 
 /* Define this if you have the NetBSD gzopenfull(3) extension to zlib(3) */
 #define HAVE_ZLIB_GZOPENFULL 0
 
-static	const char	gzip_version[] = "NetBSD gzip 2.0";
+static	const char	gzip_version[] = "NetBSD gzip 2.1";
 
 static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
@@ -89,9 +103,10 @@ static	int	qflag;			/* quiet mode */
 static	int	rflag;			/* recursive mode */
 static	int	tflag;			/* test */
 static	int	vflag;			/* verbose mode */
-static	const char *Sflag = GZ_SUFFIX;	/* suffix (.gz) */
+static	char	*Sflag;
+static	char	*suffix;
 
-static	int	suffix_len;		/* length of suffix; includes nul */
+#define suffix_len	(strlen(suffix) + 1)	/* len + nul */
 static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
 
@@ -99,8 +114,6 @@ static	void	maybe_err(int rv, const char *fmt, ...);
 static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
-static	void	usage(void);
-static	void	display_version(void);
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
 static	void	copymodes(const char *, struct stat *);
@@ -115,6 +128,9 @@ static	void	print_ratio(off_t, off_t, FILE *);
 static	void	print_verbage(char *, char *, ssize_t, ssize_t);
 static	void	print_test(char *, int);
 static	void	print_list(int fd, off_t, const char *, time_t);
+static	void	usage(void);
+static	void	display_version(void);
+static	off_t	unbzip2(int, int);
 
 int main(int, char *p[]);
 
@@ -138,9 +154,8 @@ static const struct option longopts[] = {
 	{ "best",		no_argument,		0,	'9' },
 #if 0
 	/*
-	 * This is what else GNU gzip implements.  Maybe --list is
-	 * useful, but --ascii isn't useful on NetBSD, and I don't
-	 * care to have a --license.
+	 * This is what else GNU gzip implements.  --ascii isn't useful
+	 * on NetBSD, and I don't care to have a --license.
 	 */
 	{ "ascii",		no_argument,		0,	'a' },
 	{ "license",		no_argument,		0,	'L' },
@@ -155,6 +170,8 @@ main(int argc, char **argv)
 
 	gzipflags[0] = 'w';
 	gzipflags[1] = '\0';
+
+	suffix = GZ_SUFFIX;;
 
 	/*
 	 * XXX
@@ -226,8 +243,6 @@ main(int argc, char **argv)
 	argc -= optind;
 	if (dflag)
 		gzipflags[0] = 'r';
-
-	suffix_len = strlen(Sflag) + 1;
 
 	if (argc == 0) {
 		if (dflag)	/* stdin mode */
@@ -338,7 +353,7 @@ gz_uncompress(gzFile in, FILE *out)
 				print_test(infile, 0);
 				return (0);
 			} else
-				maybe_err(1, gzerror(in, &i));
+				maybe_errx(1, gzerror(in, &i));
 		} else if (len == 0) {
 			if (tflag)
 				print_test(infile, 1);
@@ -355,7 +370,7 @@ gz_uncompress(gzFile in, FILE *out)
 			maybe_err(1, "failed fwrite");
 	}
 	if (gzclose(in) != Z_OK)
-		maybe_err(1, "failed gzclose");
+		maybe_errx(1, "failed gzclose");
 
 	return (size);
 }
@@ -419,7 +434,7 @@ file_compress(char *file)
 	if (cflag == 0) {
 		(void)strncpy(outfile, file, MAXPATHLEN - suffix_len);
 		outfile[MAXPATHLEN - suffix_len] = '\0';
-		(void)strlcat(outfile, Sflag, sizeof(outfile));
+		(void)strlcat(outfile, suffix, sizeof(outfile));
 
 		if (fflag == 0) {
 			if (stat(outfile, &osb) == 0) {
@@ -505,29 +520,44 @@ file_uncompress(char *file)
 	ssize_t len = strlen(file);
 	int fd;
 	unsigned char header1[10], name[PATH_MAX + 1];
-
-	if (cflag == 0 || lflag) {
-		s = &file[len - suffix_len + 1];
-		if (strncmp(s, Sflag, suffix_len) == 0) {
-			(void)strncpy(outfile, file, len - suffix_len + 1);
-			outfile[len - suffix_len + 1] = '\0';
-		} else
-			maybe_err(1, "unknown suffix %s", s);
-	}
+	enum filetype method;
 
 	/* gather the old name info */
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0)
 		maybe_err(1, "can't open %s", file);
-	if (read(fd, header1, 10) != 10)
+	if (read(fd, header1, 10) != 10) {
+		/* we don't want to fail here. */
+		if (fflag)
+			goto close_it;
 		maybe_err(1, "can't read %s", file);
+	}
 
-	if (fflag == 0 &&
-	    (header1[0] != GZIP_MAGIC0 || header1[1] != GZIP_MAGIC1))
+	if (header1[0] == GZIP_MAGIC0 &&
+	    (header1[1] == GZIP_MAGIC1 || header1[1] == GZIP_OMAGIC1))
+		method = FT_GZIP;
+	else if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
+	    header1[3] >= '0' && header1[3] <= '9') {
+		if (Sflag == NULL)
+			suffix = BZ2_SUFFIX;
+		method = FT_BZIP2;
+	} else
+		method = FT_UNKNOWN;
+
+	if (fflag == 0 && method == FT_UNKNOWN)
 		maybe_errx(1, "%s: not in gzip format", file);
 
-	if (Nflag || lflag) {
+	if (cflag == 0 || lflag) {
+		s = &file[len - suffix_len + 1];
+		if (strncmp(s, suffix, suffix_len) == 0) {
+			(void)strncpy(outfile, file, len - suffix_len + 1);
+			outfile[len - suffix_len + 1] = '\0';
+		} else if (lflag == 0)
+			maybe_errx(1, "unknown suffix %s", s);
+	}
+
+	if (method == FT_GZIP && (Nflag || lflag)) {
 		if (header1[3] & ORIG_NAME) {
 			size_t rbytes;
 			int i;
@@ -551,6 +581,7 @@ file_uncompress(char *file)
 			}
 		}
 	}
+close_it:
 	close(fd);
 
 	if ((cflag == 0 || lflag) && fflag == 0) {
@@ -568,34 +599,58 @@ file_uncompress(char *file)
 			goto lose;
 	}
 
-	if (lflag) {
-		int fd;
+	if (method == FT_BZIP2) {
+		int in, out;
 
-		if ((fd = open(file, O_RDONLY)) == -1)
-			maybe_err(1, "open");
-		print_list(fd, isb.st_size, outfile, isb.st_mtime);
-		return 0;	/* XXX */
+		if ((in = open(file, O_RDONLY)) == -1)
+			maybe_err(1, "open for read: %s", file);
+		if (cflag == 1)
+			out = STDOUT_FILENO;
+		else 
+			out = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+		if (out == -1)
+			maybe_err(1, "open for write: %s", outfile);
+
+		if ((size = unbzip2(in, out)) == 0) {
+			unlink(outfile);
+			goto lose;
+		}
+	} else {
+		if (lflag) {
+			int fd;
+
+			if ((fd = open(file, O_RDONLY)) == -1)
+				maybe_err(1, "open");
+			print_list(fd, isb.st_size, outfile, isb.st_mtime);
+			return 0;	/* XXX */
+		}
+
+		in = gzopen(file, gzipflags);
+		if (in == NULL)
+			maybe_err(1, "can't gzopen %s", file);
+
+		if (cflag == 0) {
+			int fd;
+
+			/* Use open(2) directly to get a safe file.  */
+			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+			if (fd < 0)
+				maybe_err(1, "can't open %s", outfile);
+			out = fdopen(fd, "w");
+			if (out == NULL)
+				maybe_err(1, "can't fdopen %s", outfile);
+		} else
+			out = stdout;
+
+		if ((size = gz_uncompress(in, out)) == 0) {
+			unlink(outfile);
+			goto lose;
+		}
+
+		/* close the file */
+		if (fclose(out))
+			maybe_err(1, "failed fclose");
 	}
-
-	in = gzopen(file, gzipflags);
-	if (in == NULL)
-		maybe_err(1, "can't gzopen %s", file);
-
-	if (cflag == 0) {
-		int fd;
-
-		/* Use open(2) directly to get a safe file.  */
-		fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
-		if (fd < 0)
-			maybe_err(1, "can't open %s", outfile);
-		out = fdopen(fd, "w");
-		if (out == NULL)
-			maybe_err(1, "can't fdopen %s", outfile);
-	} else
-		out = stdout;
-
-	if ((size = gz_uncompress(in, out)) == 0)
-		goto lose;
 
 	/* if testing, or we uncompressed to stdout, this is all we need */
 	if (tflag || cflag)
@@ -605,10 +660,6 @@ file_uncompress(char *file)
 	 * if we create a file...
 	 */
 	if (cflag == 0) {
-		/* close the file */
-		if (fclose(out))
-			maybe_err(1, "failed fclose");
-
 		/*
 		 * if we can't stat the file, or we are uncompressing to
 		 * stdin, don't remove the file.
@@ -702,7 +753,7 @@ retry:
 			if (s == 0)
 				maybe_err(1, "malloc");
 			memmove(s, path, len);
-			memmove(&s[len], Sflag, suffix_len);
+			memmove(&s[len], suffix, suffix_len);
 			path = s;
 			goto retry;
 		}
@@ -792,10 +843,8 @@ print_ratio(off_t in, off_t out, FILE *where)
 
 	if (out == 0)
 		percent = 0;
-	else if (out < 1000 * 1000)
-		percent = 999 - (in * 1000) / out;
 	else
-		percent = 999 - in / (out / 1000);
+		percent = 1000 - ((1000 * out) / in);
 	fprintf(where, "%3lu.%1lu%%", (unsigned long)percent / 10UL,
 	    (unsigned long)percent % 10);
 }
@@ -922,3 +971,5 @@ display_version(void)
 	fflush(stderr);
 	exit(0);
 }
+
+#include "unbzip2.c"
