@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.26 1996/07/01 11:16:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1656,8 +1656,7 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 			error = EBUSY;
 			goto out;
 		}
-		if (vp->v_flag & VTEXT)
-			(void) vnode_pager_uncache(vp);
+		(void) vnode_pager_uncache(vp);
 out:
 		if (!error) {
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
