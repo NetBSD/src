@@ -1,9 +1,8 @@
-/*	$NetBSD: rijndael.h,v 1.1 2003/07/25 21:12:47 jonathan Exp $ */
-/*	$OpenBSD: rijndael.h,v 1.7 2001/12/19 17:42:24 markus Exp $ */
+/*	$NetBSD: rijndael.c,v 1.1 2003/08/26 14:24:05 thorpej Exp $	*/
 
-/**
- * rijndael-alg-fst.h
- *
+/**             
+ * rijndael-alg-fst.c 
+ *      
  * @version 3.0 (December 2000)
  *
  * Optimised ANSI C code for the Rijndael cipher (now AES)
@@ -11,9 +10,9 @@
  * @author Vincent Rijmen <vincent.rijmen@esat.kuleuven.ac.be>
  * @author Antoon Bosselaers <antoon.bosselaers@esat.kuleuven.ac.be>
  * @author Paulo Barreto <paulo.barreto@terra.com.br>
- *
- * This code is hereby placed in the public domain.
- *
+ *              
+ * This code is hereby placed in the public domain. 
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ''AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -26,27 +25,39 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __RIJNDAEL_H
-#define __RIJNDAEL_H
 
-#define MAXKC	(256/32)
-#define MAXKB	(256/8)
-#define MAXNR	14
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.1 2003/08/26 14:24:05 thorpej Exp $");
 
-typedef unsigned char	u8;
-typedef unsigned short	u16;
-typedef unsigned int	u32;
+#include <sys/types.h>
+#include <sys/systm.h>
 
-/*  The structure for key information */
-typedef struct {
-	int	decrypt;
-	int	Nr;			/* key-length-dependent number of rounds */
-	u32	ek[4*(MAXNR + 1)];	/* encrypt key schedule */
-	u32	dk[4*(MAXNR + 1)];	/* decrypt key schedule */
-} rijndael_ctx;
+#include <crypto/rijndael/rijndael.h>
 
-void	 rijndael_set_key(rijndael_ctx *, u_char *, int, int);
-void	 rijndael_decrypt(rijndael_ctx *, u_char *, u_char *);
-void	 rijndael_encrypt(rijndael_ctx *, u_char *, u_char *);
+void
+rijndael_set_key(rijndael_ctx *ctx, u_char *key, int bits, int encrypt)
+{
 
-#endif /* __RIJNDAEL_H */
+	ctx->Nr = rijndaelKeySetupEnc(ctx->ek, key, bits);
+	if (encrypt) {
+		ctx->decrypt = 0;
+		memset(ctx->dk, 0, sizeof(ctx->dk));
+	} else {
+		ctx->decrypt = 1;
+		rijndaelKeySetupDec(ctx->dk, key, bits);
+	}
+}
+
+void
+rijndael_decrypt(rijndael_ctx *ctx, u_char *src, u_char *dst)
+{
+
+	rijndaelDecrypt(ctx->dk, ctx->Nr, src, dst);
+}
+
+void
+rijndael_encrypt(rijndael_ctx *ctx, u_char *src, u_char *dst)
+{
+
+	rijndaelEncrypt(ctx->ek, ctx->Nr, src, dst);
+}
