@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.39 2004/06/23 23:05:48 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.40 2004/09/22 22:15:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -226,18 +226,18 @@ __END_DECLS
 
 #else
 
-int ktrcsw(struct proc *, int, int);
-int ktremul(struct proc *);
-int ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
-int ktrnamei(struct proc *, char *);
-int ktrpsig(struct proc *, int, sig_t, const sigset_t *, const ksiginfo_t *);
-int ktrsyscall(struct proc *, register_t, register_t, 
+void ktrcsw(struct proc *, int, int);
+void ktremul(struct proc *);
+void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
+void ktrnamei(struct proc *, char *);
+void ktrpsig(struct proc *, int, sig_t, const sigset_t *, const ksiginfo_t *);
+void ktrsyscall(struct proc *, register_t, register_t, 
     const struct sysent *, register_t []);
-int ktrsysret(struct proc *, register_t, int, register_t *);
-int ktruser(struct proc *, const char *, void *, size_t, int);
-int ktrmmsg(struct proc *, const void *, size_t);
-int ktrkmem(struct proc *, int, const void *, size_t);
-int ktrmool(struct proc *, const void *, size_t, const void *);
+void ktrsysret(struct proc *, register_t, int, register_t *);
+void ktruser(struct proc *, const char *, void *, size_t, int);
+void ktrmmsg(struct proc *, const void *, size_t);
+void ktrkmem(struct proc *, int, const void *, size_t);
+void ktrmool(struct proc *, const void *, size_t, const void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
