@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.2 2002/11/10 22:05:35 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.3 2002/11/11 09:28:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.2 2002/11/10 22:05:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.3 2002/11/11 09:28:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,14 +62,17 @@ mach_task_get_special_port(p, msgh)
 		return error;
 
 	bzero(&rep, sizeof(rep));
-	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+
+	rep.rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
 	rep.rep_special_port.name = 0x90f; /* XXX why? */
 	rep.rep_special_port.disposition = 0x11; /* XXX why? */
-	rep.rep_trailer.msgh_trailer_size = 8; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
@@ -89,8 +92,11 @@ mach_ports_lookup(p, msgh)
 		return error;
 
 	bzero(&rep, sizeof(rep));
-	rep.rep_msgh.msgh_bits = 0x8001200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
@@ -99,6 +105,7 @@ mach_ports_lookup(p, msgh)
 	rep.rep_init_port_set.copy = 2; /* XXX why ? */
 	rep.rep_init_port_set.disposition = 0x11; /* XXX why? */
 	rep.rep_init_port_set.type = 2; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.2 2002/11/10 22:05:35 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.3 2002/11/11 09:28:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.2 2002/11/10 22:05:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.3 2002/11/11 09:28:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,10 +107,13 @@ mach_port_deallocate(p, msgh)
 		return error;
 
 	bzero(&rep, sizeof(rep));
-	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
@@ -130,11 +133,13 @@ mach_port_allocate(p, msgh)
 		return error;
 
 	bzero(&rep, sizeof(rep));
-	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 1811; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.4 2002/11/10 21:53:40 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.5 2002/11/11 09:28:00 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ typedef unsigned int mach_msg_type_number_t;
 #define MACH_MSGH_BITS_COMPLEX		0x80000000
 #define MACH_MSGH_LOCAL_BITS(bits)	(((bits) >> 8) & 0xff)
 #define MACH_MSGH_REMOTE_BITS(bits)	((bits) & 0xff)
+#define MACH_MSGH_REPLY_LOCAL_BITS(bits)	(((bits) << 8) & 0xff00)
 
 #define MACH_MSG_TYPE_MOVE_RECEIVE	16
 #define MACH_MSG_TYPE_MOVE_SEND		17
