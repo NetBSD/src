@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.49.2.1 1999/06/21 15:22:45 perry Exp $
+# $NetBSD: Makefile.alpha,v 1.49.2.2 1999/09/22 05:57:17 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -101,8 +101,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif
