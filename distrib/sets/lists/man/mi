@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.386 2001/07/25 23:47:23 assar Exp $
+# $NetBSD: mi,v 1.387 2001/07/28 14:43:13 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1123,6 +1123,8 @@
 ./usr/share/man/cat8/arm26/BBBB.0		man-sys-catman
 ./usr/share/man/cat8/arm26/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arm26/bbbb.0		man-sys-catman
+./usr/share/man/cat8/arm26/boot.0		man-sys-catman
+./usr/share/man/cat8/arm26/boot26.0		man-sys-catman
 ./usr/share/man/cat8/arm26/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/makedev.0		man-sysutil-catman
@@ -2678,6 +2680,8 @@
 ./usr/share/man/man8/arm26/BBBB.8		man-sys-man
 ./usr/share/man/man8/arm26/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arm26/bbbb.8		man-sys-man
+./usr/share/man/man8/arm26/boot.8		man-sys-man
+./usr/share/man/man8/arm26/boot26.8		man-sys-man
 ./usr/share/man/man8/arm26/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arm32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arm32/makedev.8		man-sysutil-man
