@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.106 2005/01/04 23:59:11 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.107 2005/01/15 21:27:46 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -951,7 +951,9 @@ traffic.
 .Tn FTP
 servers are required to support the
 .Dv PASV
-command by RFC 1123, some do not.)
+command by
+.Cm RFC 1123 ,
+some do not.)
 .It Ic pdir Op Ar remote-path
 Perform
 .Ic dir
@@ -1614,7 +1616,10 @@ This is unlikely to be useful.
 .It
 Any
 .Sq Li \&% Ns Ar XX
-codes within the path components are decoded, with
+codes
+(per
+.Cm RFC 1738 )
+within the path components are decoded, with
 .Ar XX
 representing a character code in hexadecimal.
 This decoding takes place after the
@@ -2222,9 +2227,9 @@ URL requests
 .Tn FTP
 protocol).
 .Pp
-.Em NOTE :
-this is not used for interactive sessions, only for command-line
-fetches.
+See
+.Ev http_proxy
+for further notes about proxy use.
 .It Ev http_proxy
 URL of
 .Tn HTTP
@@ -2234,6 +2239,18 @@ URL requests.
 If proxy authentication is required and there is a username and
 password in this URL, they will automatically be used in the first
 attempt to authenticate to the proxy.
+.Pp
+If
+.Dq unsafe
+URL characters are required in the username or password
+(for example
+.Sq @
+or
+.Sq / ) ,
+encode them with
+.Cm RFC 1738
+.Sq Li \&% Ns Ar XX
+encoding.
 .Pp
 Note that the use of a username and password in
 .Ev ftp_proxy
