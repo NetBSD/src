@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.37.4.2 2002/02/14 19:53:13 he Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.37.4.3 2002/09/30 03:45:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -649,6 +649,7 @@ sys_swapctl(p, v, retval)
 			goto out;
 		}
 		dumpdev = vp->v_rdev;
+		cpu_dumpconf();
 		
 		break;
 
