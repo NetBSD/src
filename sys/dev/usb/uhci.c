@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.9 1998/08/01 18:16:19 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.10 1998/08/02 22:30:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,30 +199,35 @@ struct usbd_methods uhci_root_ctrl_methods = {
 	uhci_root_ctrl_transfer,
 	uhci_root_ctrl_abort,
 	uhci_root_ctrl_close,
+	0,
 };
 
 struct usbd_methods uhci_root_intr_methods = {	
 	uhci_root_intr_transfer,
 	uhci_root_intr_abort,
 	uhci_root_intr_close,
+	0,
 };
 
 struct usbd_methods uhci_device_ctrl_methods = {
 	uhci_device_ctrl_transfer,
 	uhci_device_ctrl_abort,
 	uhci_device_ctrl_close,
+	0,
 };
 
 struct usbd_methods uhci_device_intr_methods = {
 	uhci_device_intr_transfer,
 	uhci_device_intr_abort,
 	uhci_device_intr_close,
+	0,
 };
 
 struct usbd_methods uhci_device_bulk_methods = {
 	uhci_device_bulk_transfer,
 	uhci_device_bulk_abort,
 	uhci_device_bulk_close,
+	0,
 };
 
 void
