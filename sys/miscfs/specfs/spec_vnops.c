@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.48 2000/03/30 12:22:14 augustss Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.49 2000/07/22 15:26:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -730,6 +730,5 @@ spec_advlock(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id, ap->a_op,
-	                   ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &vp->v_speclockf, (off_t)0);
 }
