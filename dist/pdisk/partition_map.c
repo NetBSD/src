@@ -345,6 +345,8 @@ write_partition_map(partition_map_header *map)
 	    error(errno, "Unable to write block %d", i);
 	}
     }
+
+#ifdef __linux__
 	// zap the block after the map (if possible) to get around a bug.
     if (map->maximum_in_map > 0 &&  i < map->maximum_in_map) {
 	i += 1;
@@ -357,6 +359,8 @@ write_partition_map(partition_map_header *map)
 	    free(block);
 	}
     }
+#endif
+
     if (interactive)
 	printf("The partition table has been altered!\n\n");
 
