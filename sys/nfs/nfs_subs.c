@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.86 2000/09/27 18:36:03 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.87 2000/10/24 12:02:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1581,7 +1581,7 @@ nfs_loadattrcache(vpp, fp, vaper)
 	 * information.
 	 */
 	np = VTONFS(vp);
-	if (vp->v_type != vtyp) {
+	if (vp->v_type == VNON) {
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
