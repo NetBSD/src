@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.21 1996/06/06 16:17:41 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.22 1996/10/06 00:14:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1115,75 +1115,108 @@ rdprinterr(str, err, tab)
 }
 #endif
 
+static int rddoingadump;	/* simple mutex */
+
 /*
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-rddump(dev)
+rddump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	int part = rdpart(dev);
-	int unit = rdunit(dev);
-	register struct rd_softc *rs = &rd_softc[unit];
-	register struct hp_device *hp = rs->sc_hd;
-	register struct partition *pinfo;
-	register daddr_t baddr;
-	register int maddr, pages, i;
+	int sectorsize;		/* size of a disk sector */
+	int nsects;		/* number of sectors in partition */
+	int sectoff;		/* sector offset of partition */
+	int totwrt;		/* total number of sectors left to write */
+	int nwrt;		/* current number of sectors to write */
+	int unit, part;
+	struct rd_softc *rs;
+	struct hp_device *hp;
+	struct disklabel *lp;
 	char stat;
-	extern int lowram, dumpsize;
-#ifdef DEBUG
-	extern int pmapdebug;
-	pmapdebug = 0;
-#endif
 
-	/* is drive ok? */
-	if (unit >= NRD || (rs->sc_flags & RDF_ALIVE) == 0)
+	/* Check for recursive dump; if so, punt. */
+	if (rddoingadump)
+		return (EFAULT);
+	rddoingadump = 1;
+
+	/* Decompose unit and partition. */
+	unit = rdunit(dev);
+	part = rdpart(dev);
+
+	/* Make sure dump device is ok. */
+	if (unit >= NRD)
 		return (ENXIO);
-	pinfo = &rs->sc_dkdev.dk_label->d_partitions[part];
-	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= pinfo->p_size ||
-	    pinfo->p_fstype != FS_SWAP)
+	rs = &rd_softc[unit];
+	if ((rs->sc_flags & RDF_ALIVE) == 0)
+		return (ENXIO);
+	hp = rs->sc_hd;
+
+	/*
+	 * Convert to disk sectors.  Request must be a multiple of size.
+	 */
+	lp = rs->sc_dkdev.dk_label;
+	sectorsize = lp->d_secsize;
+	if ((size % sectorsize) != 0)
+		return (EFAULT);
+	totwrt = size / sectorsize;
+	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
+
+	nsects = lp->d_partitions[part].p_size;
+	sectoff = lp->d_partitions[part].p_offset;
+
+	/* Check transfer bounds against partition size. */
+	if ((blkno < 0) || (blkno + totwrt) > nsects)
 		return (EINVAL);
-	pages = dumpsize;
-	if (dumplo + ctod(pages) > pinfo->p_size)
-		pages = dtoc(pinfo->p_size - dumplo);
-	maddr = lowram;
-	baddr = dumplo + pinfo->p_offset;
-	/* HPIB idle? */
-	if (!hpibreq(&rs->sc_dq)) {
-		hpibreset(hp->hp_ctlr);
-		rdreset(rs, rs->sc_hd);
-		printf("[ drive %d reset ] ", unit);
-	}
-	for (i = 0; i < pages; i++) {
-#define NPGMB	(1024*1024/NBPG)
-		/* print out how many Mbs we have dumped */
-		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
-#undef NPBMG
+
+	/* Offset block number to start of partition. */
+	blkno += sectoff;
+
+	while (totwrt > 0) {
+		nwrt = totwrt;		/* XXX */
+#ifndef RD_DUMP_NOT_TRUSTED
+		/*
+		 * Fill out and send HPIB command.
+		 */
 		rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 		rs->sc_ioc.c_volume = C_SVOL(0);
 		rs->sc_ioc.c_saddr = C_SADDR;
 		rs->sc_ioc.c_hiaddr = 0;
-		rs->sc_ioc.c_addr = RDBTOS(baddr);
+		rs->sc_ioc.c_addr = RDBTOS(blkno);
 		rs->sc_ioc.c_nop2 = C_NOP;
 		rs->sc_ioc.c_slen = C_SLEN;
-		rs->sc_ioc.c_len = NBPG;
+		rs->sc_ioc.c_len = nwrt * sectorsize;
 		rs->sc_ioc.c_cmd = C_WRITE;
 		hpibsend(hp->hp_ctlr, hp->hp_slave, C_CMD,
 			 &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 		if (hpibswait(hp->hp_ctlr, hp->hp_slave))
 			return (EIO);
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
-		hpibsend(hp->hp_ctlr, hp->hp_slave, C_EXEC, vmmap, NBPG);
+
+		/*
+		 * Send the data.
+		 */
+		hpibsend(hp->hp_ctlr, hp->hp_slave, C_EXEC, va,
+		    nwrt * sectorsize);
 		(void) hpibswait(hp->hp_ctlr, hp->hp_slave);
 		hpibrecv(hp->hp_ctlr, hp->hp_slave, C_QSTAT, &stat, 1);
 		if (stat)
 			return (EIO);
-		maddr += NBPG;
-		baddr += ctod(1);
+#else /* RD_DUMP_NOT_TRUSTED */
+		/* Let's just talk about this first... */
+		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		    va, blkno);
+		delay(500 * 1000);	/* half a second */
+#endif /* RD_DUMP_NOT_TRUSTED */
+
+		/* update block count */
+		totwrt -= nwrt;
+		blkno += nwrt;
+		va += sectorsize * nwrt;
 	}
+	rddoingadump = 0;
 	return (0);
 }
 #endif

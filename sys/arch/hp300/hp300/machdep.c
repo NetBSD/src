@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1996/10/05 09:22:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 1996/10/06 00:14:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1229,15 +1229,23 @@ dumpconf()
 }
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Dump physical memory onto the dump device.  Called by doadump()
+ * in locore.s or by boot() here in machdep.c
  */
 void
 dumpsys()
 {
+	daddr_t blkno;		/* current block to write */
+				/* dump routine */
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int pg;			/* page being dumped */
+	vm_offset_t maddr;	/* PA being dumped */
+	int error;		/* error code from (*dump)() */
 
+	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
@@ -1245,35 +1253,57 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	if (dumplo < 0)
+		return;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	blkno = dumplo;
+
+	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
 
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	maddr = lowram;
+	for (pg = 0; pg < dumpsize; pg++) {
+#define NPGMB	(1024*1024/NBPG)
+		/* print out how many MBs we have dumped */
+		if (pg && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		    VM_PROT_READ, TRUE);
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
+		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		switch (error) {
+		case 0:
+			maddr += NBPG;
+			blkno += btodb(NBPG);
+			break;
 
-	case EFAULT:
-		printf("device not ready\n");
-		break;
+		case ENXIO:
+			printf("device bad\n");
+			return;
 
-	case EINVAL:
-		printf("area improper\n");
-		break;
+		case EFAULT:
+			printf("device not ready\n");
+			return;
 
-	case EIO:
-		printf("i/o error\n");
-		break;
+		case EINVAL:
+			printf("area improper\n");
+			return;
 
-	case EINTR:
-		printf("aborted from console\n");
-		break;
+		case EIO:
+			printf("i/o error\n");
+			return;
 
-	default:
-		printf("succeeded\n");
-		break;
+		case EINTR:
+			printf("aborted from console\n");
+			return;
+
+		default:
+			printf("error %d\n", error);
+			return;
+		}
 	}
+	printf("succeeded\n");
 }
 
 void
