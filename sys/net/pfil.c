@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.7.8.1 1999/06/24 16:10:08 perry Exp $	*/
+/*	$NetBSD: pfil.c,v 1.7.8.2 1999/10/10 20:30:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -48,7 +48,7 @@ static int done_pfil_init;
 static void pfil_init __P((void));
 static void pfil_list_add(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)), int);
-static void pfil_list_remove(pfil_list_t,
+static void pfil_list_remove(pfil_list_t *,
     int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)));
 
 static void
@@ -79,9 +79,11 @@ pfil_add_hook(func, flags)
 		pfil_init();
 
 	if (flags & PFIL_IN)
-		pfil_list_add(&pfil_in_list, func, PFIL_IN);
+		pfil_list_add(&pfil_in_list, func, PFIL_IN |
+		    (flags & PFIL_WAITOK));
 	if (flags & PFIL_OUT)
-		pfil_list_add(&pfil_out_list, func, PFIL_OUT);
+		pfil_list_add(&pfil_out_list, func, PFIL_OUT |
+		    (flags & PFIL_WAITOK));
 }
 
 static void
@@ -124,9 +126,9 @@ pfil_remove_hook(func, flags)
 		pfil_init();
 
 	if (flags & PFIL_IN)
-		pfil_list_remove(pfil_in_list, func);
+		pfil_list_remove(&pfil_in_list, func);
 	if (flags & PFIL_OUT)
-		pfil_list_remove(pfil_out_list, func);
+		pfil_list_remove(&pfil_out_list, func);
 }
 
 /*
@@ -135,15 +137,15 @@ pfil_remove_hook(func, flags)
  */
 static void
 pfil_list_remove(list, func)
-	pfil_list_t list;
+	pfil_list_t *list;
 	int	(*func) __P((void *, int, struct ifnet *, int,
 			     struct mbuf **));
 {
 	struct packet_filter_hook *pfh;
 
-	for (pfh = list.tqh_first; pfh; pfh = pfh->pfil_link.tqe_next)
+	for (pfh = list->tqh_first; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func == func) {
-			TAILQ_REMOVE(&list, pfh, pfil_link);
+			TAILQ_REMOVE(list, pfh, pfil_link);
 			free(pfh, M_IFADDR);
 			return;
 		}
