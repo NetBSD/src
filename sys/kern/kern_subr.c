@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.49 1999/05/20 05:58:19 lukem Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.50 1999/06/02 05:53:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -993,7 +993,7 @@ humanize_number(buf, len, bytes, suffix)
 	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
 		bytes /= 1024;
 
-	r = snprintf(buf, len, "%qd%s%c%s", (long long)bytes,
+	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
 	    i == 0 ? "" : " ", prefixes[i], suffix);
 
 	return (r);
