@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.19 2001/11/12 23:49:45 lukem Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.19.10.1 2003/06/24 08:18:53 grant Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.19 2001/11/12 23:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.19.10.1 2003/06/24 08:18:53 grant Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -725,5 +725,7 @@ token_ifdetach(ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+#if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
+#endif
 }
