@@ -7,8 +7,6 @@ Interfaces/features to implement:
 - priority scheduling
 - non-i386 platform support
 - libc integration: 
-   - stdio locks
-   - errno
    - foo_r interfaces
    - cancellation points
 - system integration
