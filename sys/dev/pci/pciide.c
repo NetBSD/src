@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.193 2003/06/28 23:04:11 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.194 2003/06/28 23:13:26 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.193 2003/06/28 23:04:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194 2003/06/28 23:13:26 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -4394,7 +4394,9 @@ pdc202xx_chip_map(sc, pa)
 		}
 
 		mode = PDC2xx_SCR_DMA;
-		if (PDC_IS_262(sc)) {
+		if (PDC_IS_265(sc)) {
+			mode = PDC2xx_SCR_SET_GEN(mode, PDC265_SCR_GEN_LAT);
+		} else if (PDC_IS_262(sc)) {
 			mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
 		} else {
 			/* the BIOS set it up this way */
