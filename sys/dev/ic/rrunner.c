@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.26.2.1 2001/08/03 04:13:03 lukem Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26.2.2 2001/09/08 19:26:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,15 +119,8 @@ void eshwatchdog __P((struct ifnet *));
 
 /* Routines to support FP operation */
 
-int esh_fpopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-int esh_fpclose __P((dev_t dev, int fflag, int devtype, struct proc *));
-int esh_fpread __P((dev_t dev, struct uio *uio, int ioflag));
-int esh_fpwrite __P((dev_t dev, struct uio *uio, int ioflag));
-static void esh_fpstrategy __P((struct buf *bp));
-int esh_fpioctl __P((dev_t dev, u_long cmd, caddr_t data,
-		     int fflag, struct proc *p));
-void esh_fpstop __P((struct tty *tp, int rw));
-int esh_fppoll __P((dev_t dev, int events, struct proc *p));
+bdev_decl(esh_fp);
+cdev_decl(esh_fp);
 
 #ifdef MORE_DONE
 paddr_t esh_fpmmap __P((dev_t, off_t, int));
@@ -1312,7 +1305,7 @@ fpwrite_done:
 	return error;
 }
 
-static void 
+void 
 esh_fpstrategy(bp)
 	struct buf *bp;
 {
@@ -1442,6 +1435,12 @@ esh_fppoll(dev, events, p)
 	return 0;
 }
 
+int
+esh_fpkqfilter(dev_t dev, struct knote *kn)
+{
+
+	return (1);
+}
 
 /*
  * Handle interrupts.  This is basicly event handling code;  version two
