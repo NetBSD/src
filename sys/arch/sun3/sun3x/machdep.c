@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2001/01/26 16:12:12 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2001/02/22 07:11:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,11 +143,10 @@ consinit()
 
 #ifdef DDB
 	{
-		extern int end[];
-		extern char *esym;
+		extern int nsym;
+		extern char *ssym, *esym;
 
-		/* symsize, symstart, symend */
-		ddb_init(end[0], end + 1, (int*)esym);
+		ddb_init(nsym, ssym, esym);
 	}
 #endif DDB
 
@@ -517,7 +516,7 @@ cpu_reboot(howto, user_boot_string)
 
 	if (howto & RB_HALT) {
 	haltsys:
-		printf("Kernel halted.\n");
+		printf("halted.\n");
 		sunmon_halt();
 	}
 
@@ -547,7 +546,7 @@ cpu_reboot(howto, user_boot_string)
 			*p = '\0';
 		}
 	}
-	printf("Kernel rebooting...\n");
+	printf("rebooting...\n");
 	sunmon_reboot(bootstr);
 	for (;;) ;
 	/*NOTREACHED*/
