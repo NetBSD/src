@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2000/04/16 09:09:42 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2000/04/16 10:08:32 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2000/04/16 09:09:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2000/04/16 10:08:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ pagemove(from, to, size)
 		fpte->pt_entry = invalid;
 #if defined(MIPS1) && !defined(MIPS3)
 	{
-		extern void mips1_TBRPL(vaddr_t, vaddr_t, p_addr_t);
+		extern void mips1_TBRPL(vaddr_t, vaddr_t, paddr_t);
 		mips1_TBRPL((vaddr_t)from, (vaddr_t)to, tpte->pt_entry);
 	}
 #else
