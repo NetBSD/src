@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.3 1997/11/30 15:16:55 drochner Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.4 1998/06/05 03:02:31 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -109,7 +109,8 @@ aic_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pf;
 
-	for (cfe = pf->cfe_head.sqh_first; cfe; cfe = cfe->cfe_list.sqe_next) {
+	for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
+	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 		if (cfe->num_memspace != 0 ||
 		    cfe->num_iospace != 1)
 			continue;
