@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.5 2002/05/28 15:04:01 christos Exp $
+# $NetBSD: dhclient-script,v 1.6 2004/10/04 12:54:06 grant Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -93,20 +93,20 @@ if [ -f $ENTERHOOKS ]; then
 	fi
 fi
 
-if [ ! -z "$new_host_name" ]; then
-	echo New Host Name: $new_host_name
-fi
-
-if [ ! -z "$new_nis_domain" ]; then
-	echo New NIS Domain: $new_nis_domain
-fi
-
-if [ ! -z "$new_network_number" ]; then
-	echo New Network Number: $new_network_number
-fi
+#if [ ! -z "$new_host_name" ]; then
+#	echo New Host Name: $new_host_name
+#fi
+#
+#if [ ! -z "$new_nis_domain" ]; then
+#	echo New NIS Domain: $new_nis_domain
+#fi
+#
+#if [ ! -z "$new_network_number" ]; then
+#	echo New Network Number: $new_network_number
+#fi
 
 if [ ! -z "$new_broadcast_address" ]; then
-	echo New Broadcast Address: $new_broadcast_address
+#	echo New Broadcast Address: $new_broadcast_address
 	new_broadcast_arg="broadcast $new_broadcast_address"
 fi
 
