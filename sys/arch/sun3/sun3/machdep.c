@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1995/02/11 21:08:46 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1995/03/10 02:24:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,6 +65,7 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -76,7 +77,7 @@
 #include <sys/shm.h>
 #endif
 #ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
+#include <compat/hpux/hpux.h>
 #endif
 
 #include <machine/cpu.h>
@@ -899,10 +900,6 @@ sun_sendsig(catcher, sig, mask, code)
 
 #endif	/* COMPAT_SUNOS */
 
-struct sigreturn_args {
-    struct sigcontext *sigcntxp;
-};
-
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -926,7 +923,7 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap,sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
@@ -981,6 +978,30 @@ sigreturn(p, uap, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
+#ifdef	COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS) {
+	    struct sunos_sigcontext {
+		int ssc_onstack;
+		int ssc_mask;
+		int ssc_sp;
+		int ssc_pc;
+		int ssc_ps;
+	    } *sscp, stsigc;
+
+	    sscp = (struct sunos_sigcontext *) scp;
+	    if (useracc((caddr_t)sscp, sizeof (*sscp), B_WRITE) == 0 ||
+		copyin((caddr_t)sscp, (caddr_t)&stsigc, sizeof stsigc))
+		    return (EINVAL);
+	    sscp = &stsigc;
+	    tsigc.sc_onstack = sscp->ssc_onstack;
+	    tsigc.sc_mask = sscp->ssc_mask;
+	    tsigc.sc_sp = sscp->ssc_sp;
+	    tsigc.sc_ps = sscp->ssc_ps;
+	    tsigc.sc_pc = sscp->ssc_pc;
+	}
+	else
+#endif
+
 	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
@@ -997,17 +1018,15 @@ sigreturn(p, uap, retval)
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
-#ifndef COMPAT_SUNOS
-	frame->f_regs[A6] = scp->sc_fp;
-#else 
+#ifdef COMPAT_SUNOS
 	if (p->p_emul != EMUL_SUNOS)
-	    frame->f_regs[A6] = scp->sc_fp;
 #endif
+	    frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
 
 #ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)	
+	if (p->p_emul == EMUL_SUNOS)
 		return EJUSTRETURN;
 #endif
 
