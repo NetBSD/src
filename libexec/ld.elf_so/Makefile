@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1999/03/03 21:18:00 christos Exp $
+#	$NetBSD: Makefile,v 1.25 1999/03/05 11:57:54 drochner Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -6,7 +6,8 @@
 PROG=	ld.elf_so
 .endif
 
-M=	${.CURDIR}/arch/${MACHINE_ARCH:S/mipse[bl]/mips/}
+ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
+M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if (${MACHINE} == "alpha") || \
     (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
