@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: lpt.c,v 1.6 2004/01/25 11:43:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.6 2004/01/25 11:43:09 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -181,7 +181,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
         ppbdev->ctx.mode = ppbus_get_mode(parent);
 	bitmask_snprintf(ppbdev->ctx.mode, "\20\1COMPATIBLE\2NIBBLE"
 		"\3PS2\4EPP\5ECP\6FAST_CENTR", buf, sizeof(buf));
-	printf(": mode = %s\n", buf);
+	printf(": port mode = %s\n", buf);
 
 	/* Set ok flag */
 	sc->sc_dev_ok = LPT_OK;
