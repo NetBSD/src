@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.34 1999/11/26 01:41:03 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.35 1999/12/20 02:12:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -211,6 +211,10 @@ USB_ATTACH(usb)
 	}
 	printf("\n");
 
+	/* Make sure not to use tsleep() if we are cold booting. */
+	if (cold)
+		sc->sc_bus->use_polling++;
+
 	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
 		  &sc->sc_port);
 	if (!err) {
@@ -228,17 +232,16 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
-		if (cold) {
-			sc->sc_bus->use_polling++;
+		if (cold)
 			dev->hub->explore(sc->sc_bus->root_hub);
-			sc->sc_bus->use_polling--;
-		}
 #endif
 	} else {
 		printf("%s: root hub problem, error=%d\n", 
 		       USBDEVNAME(sc->sc_dev), err); 
 		sc->sc_dying = 1;
 	}
+	if (cold)
+		sc->sc_bus->use_polling--;
 
 	kthread_create(usb_create_event_thread, sc);
 
