@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.15 1997/10/14 11:19:15 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.16 1997/10/17 00:09:52 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -59,6 +59,7 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 
 #include <machine/frame.h>
