@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.8 1999/04/24 08:01:07 simonb Exp $	*/
+/*	$NetBSD: scsi.h,v 1.9 1999/08/31 01:12:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,6 +97,14 @@
 #define	SCSI_RECV_DIAG_RESULTS	0x1c
 #define SCSI_SEND_DIAGNOSTIC	0x1d
 #define SCSI_PREVENT_ALLOW	0x1e
+
+/*
+ * Arguments to SCSI_LOAD_UNLOAD command.  These are passed in byte
+ * 5 (the blockCount) of a Group0 command block.
+ */
+#define SCSI_LD_UNLOAD		0x00
+#define SCSI_LD_LOAD		0x01
+#define SCSI_LD_RETENSION	0x02
 
 /*
  * Group1 commands are all 10 bytes and have a format according to
