@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.4.9 2003/01/03 17:25:11 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.4.10 2003/01/03 20:01:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -332,10 +332,7 @@ cpu_exit(l, proc)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	if (proc == 0)
-		switchlwpexit(l);
-	else
-		switchexit(l);
+	switchexit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
 }
 

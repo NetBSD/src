@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.19 2003/01/03 19:29:57 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.20 2003/01/03 20:01:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4594,14 +4594,10 @@ ENTRY(write_user_windows)
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
-ENTRY(switchlwpexit)
-!!Hmm, switchexit() might as well have passed us the `exit2' function to call.
-	set	_C_LABEL(lwp_exit2), %g1
-	b,a	switchexit0
 ENTRY(switchexit)
 	set	_C_LABEL(exit2), %g1
-switchexit0:
 	mov	%o0, %g2		! save proc for exit2() call
+	mov	%o1, %g1		! exit2() or lwp_exit2()
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
@@ -5162,14 +5158,9 @@ ENTRY(proc_trampoline)
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
  */
-ENTRY(switchlwpexit)
-!!Hmm, switchexit() might as well have passed us the `exit2' function to call.
-	set	_C_LABEL(lwp_exit2), %g1
-	b,a	switchexit0
 ENTRY(switchexit)
-	set	_C_LABEL(exit2), %g1
-switchexit0:
 	mov	%o0, %g2		! save proc for exit2() call
+	mov	%o1, %g1		! exit2() or lwp_exit2()
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
