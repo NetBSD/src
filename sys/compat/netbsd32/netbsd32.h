@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.28 2004/05/20 06:34:25 atatat Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.29 2004/06/17 18:29:40 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
@@ -473,6 +474,35 @@ struct netbsd32_stat {
 __attribute__((packed))
 #endif
 ;
+
+/* from <sys/statvfs.h> */
+typedef netbsd32_pointer_t netbsd32_statvfsp_t;
+struct netbsd32_statvfs {
+	netbsd32_u_long	f_flag;		/* copy of mount exported flags */
+	netbsd32_u_long	f_bsize;	/* system block size */
+	netbsd32_u_long	f_frsize;	/* system fragment size */
+	netbsd32_u_long	f_iosize;	/* optimal file system block size */
+	fsblkcnt_t	f_blocks;	/* number of blocks in file system */
+	fsblkcnt_t	f_bfree;	/* free blocks avail in file system */
+	fsblkcnt_t	f_bavail;	/* free blocks avail to non-root */
+	fsblkcnt_t	f_bresvd;	/* blocks reserved for root */
+	fsfilcnt_t	f_files;	/* total file nodes in file system */
+	fsfilcnt_t	f_ffree;	/* free file nodes in file system */
+	fsfilcnt_t	f_favail;	/* free file nodes avail to non-root */
+	fsfilcnt_t	f_fresvd;	/* file nodes reserved for root */
+	uint64_t  	f_syncreads;	/* count of sync reads since mount */
+	uint64_t  	f_syncwrites;	/* count of sync writes since mount */
+	uint64_t  	f_asyncreads;	/* count of async reads since mount */
+	uint64_t  	f_asyncwrites;	/* count of async writes since mount */
+	fsid_t		f_fsidx;	/* NetBSD compatible fsid */
+	netbsd32_u_long	f_fsid;		/* Posix compatible fsid */
+	netbsd32_u_long	f_namemax;	/* maximum filename length */
+	uid_t		f_owner;	/* user that mounted the file system */
+	uint32_t	f_spare[4];	/* spare space */
+	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+} __attribute__((packed));
 
 /* from <sys/timex.h> */
 typedef netbsd32_pointer_t netbsd32_ntptimevalp_t;
