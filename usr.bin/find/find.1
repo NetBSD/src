@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: find.1,v 1.6 1993/12/30 21:15:20 jtc Exp $
+.\"	$Id: find.1,v 1.7 1994/04/14 03:34:13 cgd Exp $
 .\"
 .Dd June 6, 1993
 .Dt FIND 1
@@ -151,13 +151,12 @@ was executed.
 .It Ic -fstype Ar type 
 True if the file is contained in a file system of type
 .Ar type .
-Currently supported types are ``local'', ``mfs'', ``nfs'', ``msdos'', ``isofs'',
-``fdesc'', ``kernfs'', ``rdonly'' and ``ufs''.
-The types ``local'' and ``rdonly'' are not specific file system types.
-The former matches any file system physically mounted on the system where
+Two special file system types are recognized: ``local'' and ``rdonly''.
+These do not describe actual file system types;
+the former matches any file system physically mounted on the system where
 the
 .Nm find
-is being executed and the latter matches any file system which is
+is being executed, and the latter matches any file system which is
 mounted read-only.
 .It Ic -group Ar gname 
 True if the file belongs to the group
