@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp 
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
+
+#include <evbarm/ixdp425/ixdp425reg.h>
 
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];
@@ -460,6 +462,37 @@ ixp425_intr_dispatch(struct clockframe *frame)
 	 * Disable all the interrupts that are pending.  We will
 	 * reenable them once they are processed and not masked.
 	 */
+
+	/* Clear GPIO interrupts pending for PCI(A..D) */
+	if (hwpend & (1U << PCI_INT_A)) {
+#ifdef DEBUG
+		printf("ixp425_intr_dispatch: PCI_INT_A\n");
+#endif
+		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			(1U << GPIO_PCI_INTA);
+	}
+	if (hwpend & (1U << PCI_INT_B)) { 
+#ifdef DEBUG
+		printf("ixp425_intr_dispatch: PCI_INT_B\n");
+#endif
+		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			(1U << GPIO_PCI_INTB);
+	}
+	if (hwpend & (1U << PCI_INT_C)) { 
+#ifdef DEBUG
+		printf("ixp425_intr_dispatch: PCI_INT_C\n");
+#endif
+		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			(1U << GPIO_PCI_INTC);
+	}
+	if (hwpend & (1U << PCI_INT_D)) { 
+#ifdef DEBUG
+		printf("ixp425_intr_dispatch: PCI_INT_D\n");
+#endif
+		IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			(1U << GPIO_PCI_INTD);
+	}
+
 	intr_enabled &= ~hwpend;
 	ixp425_set_intrmask();
 

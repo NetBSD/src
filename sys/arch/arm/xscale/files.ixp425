@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp425,v 1.2 2003/06/01 01:49:56 ichiro Exp $
+#       $NetBSD: files.ixp425,v 1.3 2003/09/25 14:11:18 ichiro Exp $
 #
 # Configuration info for Intel IXP12x0 CPU support
 #
@@ -16,10 +16,12 @@ file	arch/arm/xscale/ixp425_sip_io.c	ixpsip
 # IXP425 Processor CPU support
 # IXP425 PCI bus
 device	ixpio: pcibus, bus_space_generic
-file    arch/arm/xscale/ixp425.c		ixpio
-file    arch/arm/xscale/ixp425_io.c		ixpio
-#file    arch/arm/xscale/ixp425_pci.c		ixpio
-#file    arch/arm/xscale/ixp425_pci_dma.c	ixpio
+file	arch/arm/xscale/ixp425.c		ixpio
+file	arch/arm/xscale/ixp425_space.c		ixpio
+file	arch/arm/xscale/ixp425_pci.c		ixpio
+file	arch/arm/xscale/ixp425_pci_space.c	ixpio
+file	arch/arm/xscale/ixp425_pci_dma.c	ixpio
+file	arch/arm/xscale/ixp425_pci_asm.S	ixpio
 
 # clock device
 device	ixpclk

@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.10 2003/09/25 14:11:18 ichiro Exp $
+#	$NetBSD: IXDP425,v 1.1 2003/09/25 14:11:18 ichiro Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -27,7 +27,7 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 #options 	HZ=512
 
 # Board Type
-makeoptions	BOARDTYPE="zao425"
+makeoptions	BOARDTYPE="ixdp425"
 
 # File systems
 
@@ -220,24 +220,6 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
-
-# CardBus bridge support
-#cbb*            at pci? dev ? function ?
-#cardslot*       at cbb?
-
-# CardBus bus support
-#cardbus*        at cardslot?
-#pcmcia*         at cardslot?
-
-# PCI USB controllers
-#ohci*   at pci? dev ? function ?        # Open Host Controller
-
-# USB bus support
-#usb*    at ohci?
-
-# USB Hubs
-#uhub*   at usb?
-#uhub*   at uhub? port ? configuration ? interface ?
 
 # Pseudo-Devices
 
