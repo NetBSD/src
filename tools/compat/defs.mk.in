@@ -1,10 +1,10 @@
-#	$NetBSD: defs.mk.in,v 1.3 2002/01/29 10:20:32 tv Exp $
+#	$NetBSD: defs.mk.in,v 1.4 2002/01/31 22:43:48 tv Exp $
 
 COMPATOBJ:=	${.PARSEDIR}
 HOSTEXEEXT=	@EXEEXT@
 
 HOST_CPPFLAGS+=	-I${COMPATOBJ} -I${COMPATOBJ}/include \
-		-I${.CURDIR}/../compat -DHAVE_CONFIG_H -Dlint \
+		-I${.CURDIR}/../compat -DHAVE_CONFIG_H \
 		-D_FILE_OFFSET_BITS=64
 
 DPADD+=		${COMPATOBJ}/libnbcompat.a

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1 2002/01/29 10:20:36 tv Exp $	*/
+/*	$NetBSD: defs.h,v 1.2 2002/01/31 22:44:01 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,9 +50,6 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
-#define HAVE_ERR_H 1
-#define HAVE_VIS_H 1
 #endif
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.h,v 1.5 2002/01/29 10:20:36 tv Exp $	*/
+/*	$NetBSD: rpc_scan.h,v 1.6 2002/01/31 22:43:58 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -33,8 +33,6 @@
 
 #if HAVE_CONFIG_H
 #include "config.h"
-#else
-#define HAVE_ERR_H 1
 #endif
 
 /*

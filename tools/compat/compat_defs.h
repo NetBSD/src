@@ -1,7 +1,22 @@
-/*	$NetBSD: compat_defs.h,v 1.3 2002/01/29 10:20:31 tv Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.4 2002/01/31 22:43:45 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
+
+/* Work around some complete brain damage. */
+
+/*
+ * Linux: <features.h> turns on _POSIX_SOURCE by default, even though the
+ * program (not the OS) should do that.  Preload <features.h> to keep any
+ * of this crap from being pulled in, and undefine _POSIX_SOURCE.
+ */
+
+#if defined(__linux__) && HAVE_FEATURES_H
+#include <features.h>
+#endif
+
+#undef _POSIX_SOURCE
+#undef _POSIX_C_SOURCE
 
 /* System headers needed for (re)definitions below. */
 
@@ -9,6 +24,7 @@
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -48,24 +64,7 @@ struct passwd;
 #define __END_DECLS
 #endif
 
-/* Some things usually in BSD <sys/param.h>. */
-
-#undef BIG_ENDIAN
-#undef LITTLE_ENDIAN
-#define BIG_ENDIAN 4321
-#define LITTLE_ENDIAN 1234
-
-#undef BYTE_ORDER
-#if WORDS_BIGENDIAN
-#define BYTE_ORDER BIG_ENDIAN
-#else
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
-
-#undef MIN
-#undef MAX
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
+/* Some things usually in BSD <sys/cdefs.h>. */
 
 #if !defined(__attribute__) && !defined(__GNUC__)
 #define __attribute__(x)
@@ -97,15 +96,6 @@ struct passwd;
 # endif
 #endif
 
-/* Some bits pulled from NetBSD libc. */
-
-#if !HAVE_FTS_H
-#include "compat_fts.h"
-#endif
-#if !HAVE_VIS_H
-#include "compat_vis.h"
-#endif
-
 /* Type substitutes. */
 
 #if !HAVE_ID_T
@@ -124,6 +114,12 @@ int asnprintf(char **, size_t, const char *, ...);
 
 #if !HAVE_BASENAME
 char *basename(char *);
+#endif
+
+#if !HAVE_DECL_OPTIND
+int getopt(int, char *const *, const char *);
+extern char *optarg;
+extern int optind, opterr, optopt;
 #endif
 
 #if !HAVE_DIRNAME
@@ -168,6 +164,18 @@ char *fparseln(FILE *, size_t *, size_t *, const char [3], int);
 
 #if !HAVE_ISBLANK && !defined(isblank)
 #define isblank(x) ((x) == ' ' || (x) == '\t')
+#endif
+
+#if !HAVE_MACHINE_BSWAP_H
+#define bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
+
+#define bswap32(x)	((((x) << 24) & 0xff000000) | \
+			 (((x) <<  8) & 0x00ff0000) | \
+			 (((x) >>  8) & 0x0000ff00) | \
+			 (((x) >> 24) & 0x000000ff))
+
+#define bswap64(x)	(((u_int64_t)bswap32((x)) << 32) | \
+			 ((u_int64_t)bswap32((x) >> 32)))
 #endif
 
 #if !HAVE_PREAD
@@ -251,14 +259,58 @@ void *setmode(const char *);
 
 #undef _DIAGASSERT
 #define _DIAGASSERT(x)
+
+/* Heimdal expects this one. */
+
 #undef RCSID
 #define RCSID(x)
 
 /* Some definitions not available on all systems. */
 
-#ifndef _BSD_VA_LIST_
-#define _BSD_VA_LIST_ va_list
+/* <errno.h> */
+
+#ifndef EFTYPE
+#define EFTYPE EIO
 #endif
+
+/* <fcntl.h> */
+
+#ifndef O_EXLOCK
+#define O_EXLOCK 0
+#endif
+#ifndef O_SHLOCK
+#define O_SHLOCK 0
+#endif
+
+/* <limits.h> */
+
+#ifndef UID_MAX
+#define UID_MAX 32767
+#endif
+#ifndef GID_MAX
+#define GID_MAX UID_MAX
+#endif
+
+#ifndef UQUAD_MAX
+#define UQUAD_MAX ((u_quad_t)-1)
+#endif
+#ifndef QUAD_MAX
+#define QUAD_MAX ((quad_t)(UQUAD_MAX >> 1))
+#endif
+#ifndef QUAD_MIN
+#define QUAD_MIN ((quad_t)(~QUAD_MAX))
+#endif
+#ifndef ULLONG_MAX
+#define ULLONG_MAX ((unsigned long long)-1)
+#endif
+#ifndef LLONG_MAX
+#define LLONG_MAX ((long long)(ULLONG_MAX >> 1))
+#endif
+#ifndef LLONG_MIN
+#define LLONG_MIN ((long long)(~LLONG_MAX))
+#endif
+
+/* <paths.h> */
 
 #ifndef _PATH_BSHELL
 #if defined(__sun)
@@ -281,46 +333,109 @@ void *setmode(const char *);
 #define _PATH_TMP "/tmp/"
 #endif
 
-#ifndef ALLPERMS
-#define ALLPERMS (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+/* <stdarg.h> */
+
+#ifndef _BSD_VA_LIST_
+#define _BSD_VA_LIST_ va_list
 #endif
 
-#ifndef EFTYPE
-#define EFTYPE EIO
-#endif
-
-#ifndef UID_MAX
-#define UID_MAX 32767
-#endif
-#ifndef GID_MAX
-#define GID_MAX UID_MAX
-#endif
+/* <sys/mman.h> */
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
 #endif
 
+/* <sys/param.h> */
+
+#undef BIG_ENDIAN
+#undef LITTLE_ENDIAN
+#define BIG_ENDIAN 4321
+#define LITTLE_ENDIAN 1234
+
+#undef BYTE_ORDER
+#if WORDS_BIGENDIAN
+#define BYTE_ORDER BIG_ENDIAN
+#else
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
+
+#undef MIN
+#undef MAX
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 #ifndef MAXBSIZE
 #define MAXBSIZE (64 * 1024)
 #endif
-
-#ifndef O_EXLOCK
-#define O_EXLOCK 0
+#ifndef MAXFRAG
+#define MAXFRAG 8
 #endif
-#ifndef O_SHLOCK
-#define O_SHLOCK 0
-#endif
-
-#ifndef QUAD_MAX
-#define QUAD_MAX ((quad_t)(((u_quad_t)-1) >> 1))
+#ifndef MAXPHYS
+#define MAXPHYS (64 * 1024)
 #endif
 
+/* XXX needed by makefs; this should be done in a better way */
+#undef btodb
+#define btodb(x) ((x) << 9)
+
+#ifndef powerof2
+#define powerof2(x) ((((x)-1)&(x))==0)
+#endif
+
+/* <sys/stat.h> */
+
+#ifndef ALLPERMS
+#define ALLPERMS (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+#endif
+#ifndef DEFFILEMODE
+#define DEFFILEMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+#endif
 #ifndef S_ISTXT
 #ifdef S_ISVTX
 #define S_ISTXT S_ISVTX
 #else
 #define S_ISTXT 0
 #endif
+#endif
+
+/* <sys/time.h> */
+
+#ifndef timercmp
+#define	timercmp(tvp, uvp, cmp)						\
+	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
+	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
+	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
+#endif
+#ifndef timeradd
+#define	timeradd(tvp, uvp, vvp)						\
+	do {								\
+		(vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec >= 1000000) {			\
+			(vvp)->tv_sec++;				\
+			(vvp)->tv_usec -= 1000000;			\
+		}							\
+	} while (/* CONSTCOND */ 0)
+#endif
+#ifndef timersub
+#define	timersub(tvp, uvp, vvp)						\
+	do {								\
+		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec < 0) {				\
+			(vvp)->tv_sec--;				\
+			(vvp)->tv_usec += 1000000;			\
+		}							\
+	} while (/* CONSTCOND */ 0)
+#endif
+
+/* <sys/types.h> */
+
+#if !HAVE_U_QUAD_T
+/* #define, not typedef, as quad_t exists as a struct on some systems */
+#define quad_t long long
+#define u_quad_t unsigned long long
+#define strtouq strtoull
 #endif
 
 #endif	/* !__NETBSD_COMPAT_DEFS_H__ */

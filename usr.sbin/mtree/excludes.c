@@ -38,12 +38,10 @@ static const char rcsid[] =
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <util.h>
 
 #include "extern.h"
 
-#if HAVE_UTIL_H
-#include <util.h>
-#endif
 
 /*
  * We're assuming that there won't be a whole lot of excludes,

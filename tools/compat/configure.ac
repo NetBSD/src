@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.6 2002/01/29 10:20:32 tv Exp $
+#	$NetBSD: configure.ac,v 1.7 2002/01/31 22:43:48 tv Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -22,7 +22,7 @@ AC_CHECK_LIB(z, gzdopen,,
 # These are not necessarily required by the code, but they are not
 # currently conditionalized.
 AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
-	sys/stat.h sys/types.h sys/utsname.h sys/wait.h \
+	sys/stat.h sys/time.h sys/types.h sys/utsname.h sys/wait.h \
 	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
 	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
 	unistd.h,,
@@ -30,14 +30,15 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(sys/sysmacros.h \
-	err.h fts.h inttypes.h libgen.h malloc.h stddef.h stdint.h util.h vis.h)
-AC_CHECK_HEADERS(sys/cdefs.h sys/featuretest.h paths.h,,
-	[touch include/$ac_header])
+AC_CHECK_HEADERS(sys/sysmacros.h features.h inttypes.h malloc.h stddef.h stdint.h)
+AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/featuretest.h \
+	err.h libgen.h paths.h util.h,, [touch include/$ac_header])
+AC_CHECK_HEADERS(fts.h getopt.h vis.h,,
+	[echo '#include "'$srcdir/../../include/$ac_header'"' >include/$ac_header])
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES([id_t, long long])
+AC_CHECK_TYPES([id_t, long long, u_quad_t])
 
 define([NB_CHECK_INTTYPE], [
 	AC_CHECK_TYPE(u_int][$1][_t,, [
@@ -53,16 +54,24 @@ NB_CHECK_INTTYPE(32)
 NB_CHECK_INTTYPE(64)
 
 # Struct members.
-AC_CHECK_MEMBERS(struct stat.st_flags,,, [#include <sys/stat.h>])
 AC_CHECK_MEMBERS(DIR.dd_fd,,, [#include <dirent.h>])
+AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
+	struct stat.st_mtimensec],,, [#include <sys/stat.h>])
+AC_CHECK_MEMBERS(struct statfs.f_iosize,,, [#include <sys/mount.h>])
 
 # Global variable decls.
+AC_CHECK_DECLS([optind, optreset],,, [
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+])
 AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_SEARCH_LIBS(fparseln, util)
 AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
-	fgetln flock fparseln futimes isblank lchmod lchown lutimes pread pwcache_userdb \
+	fgetln flock fparseln futimes getopt getopt_long \
+	isblank lchmod lchown lutimes pread pwcache_userdb \
 	pwrite setenv setgroupent setpassent setprogname \
 	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf)
 

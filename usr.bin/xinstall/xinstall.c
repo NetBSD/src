@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.66 2002/01/28 19:44:03 tv Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.67 2002/01/31 22:43:59 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -36,24 +36,21 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #else
-#define HAVE_ERR_H 1
 #define HAVE_FUTIMES 1
-#define HAVE_LIBGEN_H 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
-#define HAVE_VIS_H 1
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.66 2002/01/28 19:44:03 tv Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.67 2002/01/31 22:43:59 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,25 +60,18 @@ __RCSID("$NetBSD: xinstall.c,v 1.66 2002/01/28 19:44:03 tv Exp $");
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <libgen.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
-#if HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
-#if HAVE_VIS_H
 #include <vis.h>
-#endif
 
 #include "pathnames.h"
 #include "stat_flags.h"

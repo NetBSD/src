@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.26 2001/09/09 10:46:36 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.27 2002/01/31 22:43:53 tv Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -45,11 +45,11 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef	lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.44 2001/08/01 14:03:19 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.26 2001/09/09 10:46:36 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.27 2002/01/31 22:43:53 tv Exp $");
 #endif
 #endif	/* lint */
 

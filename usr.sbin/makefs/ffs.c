@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.11 2002/01/26 13:27:53 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.12 2002/01/31 22:44:02 tv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,15 +70,14 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.11 2002/01/26 13:27:53 lukem Exp $");
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: ffs.c,v 1.12 2002/01/31 22:44:02 tv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
 #include <assert.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -421,7 +420,9 @@ ffs_dump_fsinfo(fsinfo_t *f)
 static int
 ffs_create_image(const char *image, fsinfo_t *fsopts)
 {
+#if HAVE_STRUCT_STATFS_F_IOSIZE
 	struct statfs	sfs;
+#endif
 	struct fs	*fs;
 	char	*buf;
 	int	i, bufsize;
@@ -438,12 +439,16 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	}
 
 		/* zero image */
+#if HAVE_STRUCT_STATFS_F_IOSIZE
 	if (fstatfs(fsopts->fd, &sfs) == -1) {
+#endif
 		bufsize = 8192;
+#if HAVE_STRUCT_STATFS_F_IOSIZE
 		warn("can't fstatfs `%s', using default %d byte chunk",
 		    image, bufsize);
 	} else
 		bufsize = sfs.f_iosize;
+#endif
 	bufrem = fsopts->size;
 	if (debug & DEBUG_FS_CREATE_IMAGE)
 		printf(
@@ -633,13 +638,19 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		din.di_nlink = cur->inode->nlink;
 		din.di_size = cur->inode->st.st_size;
 		din.di_atime = cur->inode->st.st_atime;
-		din.di_atimensec = cur->inode->st.st_atimensec;
 		din.di_mtime = cur->inode->st.st_mtime;
-		din.di_mtimensec = cur->inode->st.st_mtimensec;
 		din.di_ctime = cur->inode->st.st_ctime;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
+		din.di_atimensec = cur->inode->st.st_atimensec;
+		din.di_mtimensec = cur->inode->st.st_mtimensec;
 		din.di_ctimensec = cur->inode->st.st_ctimensec;
+#endif
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		din.di_flags = cur->inode->st.st_flags;
+#endif
+#if HAVE_STRUCT_STAT_ST_GEN
 		din.di_gen = cur->inode->st.st_gen;
+#endif
 		din.di_uid = cur->inode->st.st_uid;
 		din.di_gid = cur->inode->st.st_gid;
 			/* not set: di_db, di_ib, di_blocks, di_spare */

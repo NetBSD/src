@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.31 2002/01/29 10:20:31 tv Exp $
+#	$NetBSD: Makefile,v 1.32 2002/01/31 22:43:43 tv Exp $
 
-# XXX Note: NO_DBSYM and NO_MAKEFS are stopgap temporary variables for use
-# with the development of non-NetBSD hosting support.  These will go away.
+# XXX Note: NO_DBSYM is a stopgap temporary variable for use
+# with the development of non-NetBSD hosting support.  This will go away.
 
 .include <bsd.own.mk>
 
@@ -10,25 +10,22 @@
 TOOLCHAIN_BITS= toolchain .WAIT ${NO_DBSYM:D:Udbsym} mdsetimage
 .endif
 
-.if ${MKLINT} != "no"
-LINT_BITS=	lint lint1 lint2
-.endif
-
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
-		crunchgen gencat lorder makewhatis mkdep mtree \
-		rpcgen texinfo tsort \
-	${TOOLCHAIN_BITS} \
+		cap_mkdb crunchgen ctags gencat lint lint2 lorder \
+		m4 makewhatis mkdep mtree rpcgen tsort uudecode \
+	texinfo .WAIT \
 	yacc .WAIT \
 		groff \
 	lex .WAIT \
-		${LINT_BITS} asn1_compile compile_et config \
-		${NO_MAKEFS:D:Umakefs} menuc mklocale msgc pax pwd_mkdb zic
+	${TOOLCHAIN_BITS} \
+		asn1_compile compile_et config lint1 \
+		makefs menuc mklocale msgc pax pwd_mkdb zic
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
-SUBDIR+=	m4 .WAIT autoconf
+SUBDIR+=	autoconf
 .endif
 
 .if ${MACHINE} == sparc || ${MACHINE} == sparc64

@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.12 2001/10/28 13:06:43 lukem Exp $	*/
+/*	$NetBSD: pax.h,v 1.13 2002/01/31 22:43:36 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,6 +38,15 @@
  *
  *	@(#)pax.h	8.2 (Berkeley) 4/18/94
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_LCHMOD 1
+#define HAVE_LCHOWN 1
+#define HAVE_LUTIMES 1
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
 
 /*
  * BSD PAX global data structures and constants.

@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/10 05:03:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/01/31 22:43:51 tv Exp $
 
 HOSTPROGNAME=	nbmakefs
 HOST_SRCDIR=	usr.sbin/makefs
 
-.include "${.CURDIR}/../Makefile.host"
-
+DPSRCS+=	ufs.stamp
 HOST_CPPFLAGS+=	-I.
 CLEANFILES+=	ufs
 
-${SRCS}:	ufs
+.include "${.CURDIR}/../Makefile.host"
 
-ufs:
-	ln -fs ${.CURDIR}/../../sys/ufs
-
+ufs.stamp:
+	-rm -f ufs
+	ln -fs ${.CURDIR}/../../sys/ufs ufs
+	@touch $@

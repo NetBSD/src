@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/11/12 20:26:55 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2002/01/31 22:43:56 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,6 @@ SRCS=		msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
 .PATH:		${.CURDIR}/../menuc
 CPPFLAGS+=	-I. -I${.CURDIR}
 YHEADER=
-
-LDADD+=		-ll
-DPADD+=		${LIBL}
 
 MLINKS+=	msgc.1 msg_window.1 \
 		msgc.1 msg_window.1 \
@@ -30,5 +27,8 @@ FILESDIR=	/usr/share/misc
 .endif
 
 .ifndef HOSTPROG
+LDADD+=		-ll
+DPADD+=		${LIBL}
+
 .include <bsd.prog.mk>
 .endif

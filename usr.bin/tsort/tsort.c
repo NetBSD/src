@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.16 2002/01/21 19:24:08 tv Exp $	*/
+/*	$NetBSD: tsort.c,v 1.17 2002/01/31 22:43:58 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,38 +36,33 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_ERR_H 1
-#endif
-
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.16 2002/01/21 19:24:08 tv Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.17 2002/01/31 22:43:58 tv Exp $");
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <ctype.h>
 #include <db.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by

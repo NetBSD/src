@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2002/01/29 10:20:28 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2002/01/31 22:43:35 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -39,23 +39,12 @@
  *	@(#)extern.h	8.2 (Berkeley) 4/18/94
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_ERR_H 1
-#define HAVE_FTS_H 1
-#define HAVE_STRUCT_STAT_ST_FLAGS 1
-#endif
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
-
 /*
  * External references from each source file
  */
 
 #include <sys/cdefs.h>
+#include <err.h>
 
 /*
  * ar_io.c

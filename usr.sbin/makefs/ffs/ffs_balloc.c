@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.8 2002/01/08 06:00:14 lukem Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.9 2002/01/31 22:44:04 tv Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -37,15 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef __lint
-__RCSID("$NetBSD: ffs_balloc.c,v 1.8 2002/01/08 06:00:14 lukem Exp $");
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: ffs_balloc.c,v 1.9 2002/01/31 22:44:04 tv Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
 #include <assert.h>
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

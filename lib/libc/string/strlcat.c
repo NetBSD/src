@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.10 2002/01/21 21:33:42 tv Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.11 2002/01/31 22:43:40 tv Exp $	*/
 /*	$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $	*/
 
 /*
@@ -28,18 +28,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.10 2002/01/21 21:33:42 tv Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.11 2002/01/31 22:43:40 tv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
-#endif
 
 #if !HAVE_STRLCAT
 /*

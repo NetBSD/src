@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.12 2002/01/28 22:39:07 tv Exp $	*/
+/*	$NetBSD: strsep.c,v 1.13 2002/01/31 22:43:41 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,15 +33,12 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.12 2002/01/28 22:39:07 tv Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.13 2002/01/31 22:43:41 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +49,6 @@ __RCSID("$NetBSD: strsep.c,v 1.12 2002/01/28 22:39:07 tv Exp $");
 
 #ifdef __weak_alias
 __weak_alias(strsep,_strsep)
-#endif
 #endif
 
 #if !HAVE_STRSEP

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.44 2002/01/29 10:20:38 tv Exp $	*/
+/*	$NetBSD: spec.c,v 1.45 2002/01/31 22:44:05 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -70,11 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.44 2002/01/29 10:20:38 tv Exp $");
+__RCSID("$NetBSD: spec.c,v 1.45 2002/01/31 22:44:05 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,13 +89,10 @@ __RCSID("$NetBSD: spec.c,v 1.44 2002/01/29 10:20:38 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 #include "pack_dev.h"
-
-#if HAVE_UTIL_H
-#include <util.h>
-#endif
 
 size_t	mtree_lineno;			/* Current spec line number */
 int	Wflag;				/* Don't "whack" permissions */

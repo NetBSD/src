@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2002/01/31 22:44:01 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,13 +68,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include <unistd.h>
 #include "defs.h"
 #include "sem.h"
-
-#if HAVE_ERR_H
-#include <err.h>
-#endif
-#if HAVE_VIS_H
 #include <vis.h>
-#endif
 
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */

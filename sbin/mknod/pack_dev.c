@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.2 2002/01/29 00:07:28 tv Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.3 2002/01/31 22:43:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,28 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_ERR_H 1
-#endif
-
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: pack_dev.c,v 1.2 2002/01/29 00:07:28 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: pack_dev.c,v 1.3 2002/01/31 22:43:42 tv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#if HAVE_ERR_H
-#include <err.h>
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include "pack_dev.h"
