@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.5 2001/04/22 15:03:49 bjh21 Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2001/04/28 17:46:11 bjh21 Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -53,9 +53,12 @@
 #	st*	SCSI tape
 #
 # Disks:
+#	wd*	IDE disk drives
+#	cd*	SCSI or ATAPI CD-ROM
 #	ccd*	concatenated disk driver
 #	md*	memory pseudo-disk devices
 #	vnd*	file pseudo-disks
+#	raid*	RAIDframe disk devices
 #
 # Terminals:
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
@@ -73,6 +76,10 @@
 # Special purpose devices:
 #	fd	file descriptors (/dev/fd/*)
 #	bpf*	Berkeley packet filter devices
+#	ipl	IP filter
+#	random	Random number generator, see rnd(4)
+#	tun*	network tunnel driver
+#	cfs*	Coda file system device
 
 dialin=0
 dialout=524288
@@ -176,9 +183,10 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|vnd*|wd*)
+ccd*|raid*|vnd*|wd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=3; chr=9;;
+	raid*)	name=raid;	unit=${i#raid};	blk=7; chr=26;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=2; chr=8;;
 	wd*)	name=wd;	unit=${i#wd};	blk=4; chr=15;;
 	esac
@@ -286,6 +294,36 @@ bpf*|tun*|lpt*|arcpp*)
 	mknod $name$unit	c $chr $unit
 	chown root.wheel $name$unit
 	;;
+
+ipl)
+	rm -f ipl ipnat ipstate ipauth
+	mknod ipl c 23 0
+	mknod ipnat c 23 1
+	mknod ipstate c 23 2
+	mknod ipauth c 23 3
+	chown root.wheel ipl ipnat ipstate ipauth
+	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 24 0
+	mknod urandom c 24 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
+	;;
+
+cfs*)
+	unit=${i#cfs}
+	cfs=cfs$unit
+	major=25
+	rm -f $cfs
+	mknod $cfs c $major $unit
+	chown root.wheel $cfs
+	chmod 600 $cfs
+	;;
+
 
 local)
 	umask 0
