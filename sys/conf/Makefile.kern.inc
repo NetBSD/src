@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.13.4.2 2002/05/29 16:32:57 tv Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.13.4.3 2002/06/18 14:54:45 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -27,6 +27,8 @@ MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
+CSCOPE?=	cscope
+MKID?=		mkid
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 ##
@@ -200,7 +202,8 @@ uipc_proto.o vfs_conf.o: Makefile
 assym.h machdep.o: Makefile
 
 ##
-## (7) misc targets: install, clean(dir), depend(all), lint, links, tags
+## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
+##                   cscope, mkid
 ##
 ## Any ports that have other stuff to be cleaned up should fill in
 ## EXTRA_CLEAN.  Some ports may want different settings for
@@ -279,6 +282,32 @@ install-kernel-${MACHINE_NAME}:
 .if !target(tags)
 tags:
 	@echo "see $S/kern/Makefile for tags"
+.endif
+
+EXTRA_CLEAN+= cscope.out
+.if !target(cscope.out)
+cscope.out: Makefile
+	@echo Building cscope.out source database
+	@echo ${SRCS} | ${CSCOPE} -k -i - -b \
+		`echo ${INCLUDES} | sed s/-nostdinc//`
+#	cscope doesn't write cscope.out if it's uptodate, so ensure
+#	make doesn't keep calling cscope when not needed.
+	@touch cscope.out
+.endif
+
+.if !target(cscope)
+cscope: cscope.out
+	@${CSCOPE} -d
+.endif
+
+EXTRA_CLEAN+= ID
+.if !target(mkid)
+.PHONY: mkid
+mkid: ID
+
+ID: Makefile
+	@echo Building mkid database
+	@${MKID} ${SRCS}
 .endif
 
 ##
