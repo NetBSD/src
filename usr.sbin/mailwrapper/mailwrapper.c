@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.1 1998/12/25 22:06:59 perry Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -31,15 +31,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #define _PATH_MAILERCONF	"/etc/mailer.conf"
 
 int main __P((int, char *[], char *[]));
+
+extern const char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv, envp)
@@ -48,39 +51,57 @@ main(argc, argv, envp)
 	char *envp[];
 {
 	FILE *config;
-	char buf[BUFSIZ], from[BUFSIZ], to[BUFSIZ], orig[BUFSIZ];
-	char *tmp;
-	
+	char *line, *cp, *from, *to;
+	size_t len, lineno = 0;
+
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL)
-		err(1, "mailswitch: can't open %s", _PATH_MAILERCONF);
+		err(1, "mailwrapper: can't open %s", _PATH_MAILERCONF);
 
-	if (strlen(argv[0]) > (BUFSIZ - 1))
-		errx(1, "mailswitch: invoking command pathname is too long.");
-	
-	tmp = strrchr(argv[0], '/');
-	if (tmp == NULL)
-		strcpy(orig, argv[0]);
-	else
-		strcpy(orig, ++tmp);
+	for (;;) {
+		if ((line = fparseln(config, &len, &lineno, NULL, 0)) == NULL) {
+			if (feof(config))
+				errx(1, "mailwrapper: no mapping in %s",
+				    _PATH_MAILERCONF);
+			err(1, "mailwrapper");
+		}
 
-	while (1) {
-		if (fgets(buf, BUFSIZ, config) == NULL)
-			errx(1, "mailswitch: %s contains no mapping for %s",
-			    _PATH_MAILERCONF, orig);
-		
-		if (buf[0] == '#')
+#define	WHITESPACE	" \t"
+#define	PARSE_ERROR \
+		errx(1, "mailwrapper: parse error in %s at line %lu", \
+		    _PATH_MAILERCONF, (u_long)lineno)
+
+		cp = line;
+
+		cp += strspn(cp, WHITESPACE);
+		if (cp[0] == '\0') {
+			/* empty line */
+			free(line);
 			continue;
+		}
 
-		if (sscanf(buf, "%s %s", from, to) != 2)
-			continue;
+		if ((from = strsep(&cp, WHITESPACE)) == NULL)
+			PARSE_ERROR;
 
-		if (strcmp(from, orig) == 0)
+		cp += strspn(cp, WHITESPACE);
+
+		if ((to = strsep(&cp, WHITESPACE)) == NULL)
+			PARSE_ERROR;
+
+		if (cp != NULL) {
+			cp += strspn(cp, WHITESPACE);
+			if (cp[0] != '\0')
+				PARSE_ERROR;
+		}
+
+		if (strcmp(from, __progname) == 0)
 			break;
+
+		free(line);
 	}
 
 	fclose(config);
 
 	execve(to, argv, envp);
-	
-	err(1, "mailswitch: execing %s:", to);
+
+	err(1, "mailwrapper: execing %s", to);
 }
