@@ -747,7 +747,7 @@ case "${target}" in
     fi
     ;;
   m68k-*-netbsdelf*) ;;
-  m68k-*-netbsd*) # (a.out)
+  m68k-*-netbsd* | m68k4k-*-netbsd*) # (a.out)
     noconfigdirs="$noconfigdirs gas ld"
     ;;
   mn10200-*-*)
@@ -892,7 +892,7 @@ case "${target}" in
   vax-*-netbsdelf*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
-  vax-*-netbsd*) # (a.out)
+  vax-*-netbsd* | vax1k-*-netbsd*) # (a.out)
     noconfigdirs="$noconfigdirs ld target-newlib target-libgloss"
     ;;
   vax-*-*)
