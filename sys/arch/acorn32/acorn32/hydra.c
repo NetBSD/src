@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.8 2002/10/06 10:21:50 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.9 2002/10/06 11:34:12 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.8 2002/10/06 10:21:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.9 2002/10/06 11:34:12 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -56,6 +56,11 @@ struct hydra_attach_args {
 	int ha_slave;
 };
 
+struct cpu_hydra_softc {
+	struct device		sc_dev;
+	struct cpu_info		sc_cpuinfo;
+};
+
 static int hydra_match(struct device *, struct cfdata *, void *);
 static void hydra_attach(struct device *, struct device *, void *);
 static int hydra_probe_slave(struct hydra_softc *, int);
@@ -71,13 +76,15 @@ static void cpu_hydra_hatch(void);
 
 CFATTACH_DECL(hydra, sizeof(struct hydra_softc),
     hydra_match, hydra_attach, NULL, NULL);
-CFATTACH_DECL(cpu_hydra, sizeof(struct device),
+CFATTACH_DECL(cpu_hydra, sizeof(struct cpu_hydra_softc),
     cpu_hydra_match, cpu_hydra_attach, NULL, NULL);
 
 extern char const hydra_probecode[], hydra_eprobecode[];
 extern char const hydra_hatchcode[], hydra_ehatchcode[];
+extern struct cpu_info cpu_info_store;
 
 static struct hydra_softc *the_hydra;
+static struct cpu_info *cpu_info_array[8] = {&cpu_info_store};
 
 static int
 hydra_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -137,9 +144,6 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	if (the_hydra == NULL)
-		the_hydra = sc;
-
 	sc->sc_iot = mba->mb_iot;
 	if (bus_space_map(sc->sc_iot, HYDRA_PHYS_BASE, HYDRA_PHYS_SIZE, 0,
 		&sc->sc_ioh) != 0) {
@@ -148,6 +152,9 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	}
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
+
+	if (the_hydra == NULL)
+		the_hydra = sc;
 
 	/*
 	 * The Hydra has special hardware to allow a slave processor
@@ -294,6 +301,7 @@ static void
 cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hydra_softc *sc = (void *)parent;
+	struct cpu_hydra_softc *cpu = (void *)self;
 	struct hydra_attach_args *ha = aux;
 	int slave = ha->ha_slave;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -311,6 +319,10 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("cpu_hydra_attach: uvm_fault_wire failed: %d", error);
+
+	/* Set up a struct cpu_info for this CPU */
+	cpu_info_array[slave | HYDRA_ID_ISSLAVE] = &cpu->sc_cpuinfo;
+	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
 
 	/* Copy hatch code to boot page, and set up arguments */
 	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
@@ -358,18 +370,22 @@ cpu_hydra_hatch(void)
 	cpuid_t cpunum = cpu_number();
 
 	printf(": Number %ld is alive!", cpunum);
-	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << (cpunum & 3));
-	/* We only get here if someone resumes us. */
-	for (;;)
-		continue;
+	for (;;) { 
+		bus_space_write_1(iot, ioh,
+		    HYDRA_HALT_SET, 1 << (cpunum & 3));
+		printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
+	}
 }
 
 #ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors(void)
 {
-
-	/* Do nothing for now. */
+	struct hydra_softc *sc = the_hydra;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	
+	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 0xf);
 }
 
 cpuid_t
@@ -390,12 +406,10 @@ cpu_number(void)
 	return 0;
 }
 
-extern struct cpu_info cpu_info_store;
-
 struct cpu_info *
 curcpu(void)
 {
 
-	return &cpu_info_store;
+	return cpu_info_array[cpu_number()];
 }
 #endif
