@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.18 1996/05/17 23:44:02 cgd Exp $
+#	$NetBSD: files.alpha,v 1.19 1996/05/19 21:24:24 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -227,14 +227,14 @@ file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	dev/cons.c
-file	netinet/in_cksum.c
 
 
 #
 # Optional/miscellaneous files
 #
 
-file	netns/ns_cksum.c		ns
+file	arch/alpha/alpha/in_cksum.c		inet
+file	netns/ns_cksum.c			ns
 
 # XXX
 file	arch/alpha/alpha/promcons.c
