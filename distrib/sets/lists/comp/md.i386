@@ -1,10 +1,11 @@
-# $NetBSD: md.i386,v 1.64 2002/09/22 15:08:19 lukem Exp $
+# $NetBSD: md.i386,v 1.65 2002/10/02 03:19:33 grant Exp $
 ./lib/libm387.so			base-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
 ./usr/include/i386/apmvar.h		comp-c-include
+./usr/include/i386/atomic.h		comp-c-include
 ./usr/include/i386/asm.h		comp-c-include
 ./usr/include/i386/bioscall.h		comp-c-include
 ./usr/include/i386/bootinfo.h		comp-c-include
