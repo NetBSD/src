@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.12 1997/03/29 20:46:17 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $";
+static char rcsid[] = "$NetBSD: fdisk.c,v 1.12 1997/03/29 20:46:17 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -286,6 +286,48 @@ print_s0(which)
 
 static struct dos_partition mtpart = { 0 };
 
+static inline unsigned short
+getshort(p)
+	void *p;
+{
+	unsigned char *cp = p;
+
+	return cp[0] | (cp[1] << 8);
+}
+
+static inline void
+putshort(p, l)
+	void *p;
+	unsigned short l;
+{
+	unsigned char *cp = p;
+
+	*cp++ = l;
+	*cp++ = l >> 8;
+}
+
+static inline unsigned long
+getlong(p)
+	void *p;
+{
+	unsigned char *cp = p;
+
+	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
+}
+
+static inline void
+putlong(p, l)
+	void *p;
+	unsigned long l;
+{
+	unsigned char *cp = p;
+
+	*cp++ = l;
+	*cp++ = l >> 8;
+	*cp++ = l >> 16;
+	*cp++ = l >> 24;
+}
+
 void
 print_part(part)
 	int part;
@@ -299,8 +341,8 @@ print_part(part)
 	}
 	printf("sysid %d (%s)\n", partp->dp_typ, get_type(partp->dp_typ));
 	printf("    start %d, size %d (%d MB), flag %x\n",
-	    partp->dp_start, partp->dp_size,
-	    partp->dp_size * 512 / (1024 * 1024), partp->dp_flag);
+	    getlong(&partp->dp_start), getlong(&partp->dp_size),
+	    getlong(&partp->dp_size) * 512 / (1024 * 1024), partp->dp_flag);
 	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
 	    DPCYL(partp->dp_scyl, partp->dp_ssect),
 	    partp->dp_shd, DPSECT(partp->dp_ssect));
@@ -316,17 +358,17 @@ init_sector0(start)
 	struct dos_partition *partp;
 
 	memcpy(mboot.bootinst, bootcode, sizeof(bootcode));
-	mboot.signature = BOOT_MAGIC;
+	putshort(&mboot.signature, BOOT_MAGIC);
 
 	partp = &mboot.parts[3];
 	partp->dp_typ = DOSPTYP_386BSD;
 	partp->dp_flag = ACTIVE;
-	partp->dp_start = start;
-	partp->dp_size = disksectors - start;
+	putlong(&partp->dp_start, start);
+	putlong(&partp->dp_size, disksectors - start);
 
-	dos(partp->dp_start,
+	dos(getlong(&partp->dp_start),
 	    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-	dos(partp->dp_start + partp->dp_size - 1,
+	dos(getlong(&partp->dp_start) + getlong(&partp->dp_size) - 1,
 	    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
 }
 
@@ -428,12 +470,13 @@ get_mapping(i, cylinder, head, sector, absolute)
 		*cylinder = DPCYL(part->dp_scyl, part->dp_ssect);
 		*head = part->dp_shd;
 		*sector = DPSECT(part->dp_ssect) - 1;
-		*absolute = part->dp_start;
+		*absolute = getlong(&part->dp_start);
 	} else {
 		*cylinder = DPCYL(part->dp_ecyl, part->dp_esect);
 		*head = part->dp_ehd;
 		*sector = DPSECT(part->dp_esect) - 1;
-		*absolute = part->dp_start + part->dp_size - 1;
+		*absolute = getlong(&part->dp_start)
+		    + getlong(&part->dp_size) - 1;
 	}
 	return 0;
 }
@@ -466,14 +509,14 @@ change_part(part)
 			int sysid, start, size;
 
 			sysid = partp->dp_typ,
-			start = partp->dp_start,
-			size = partp->dp_size;
+			start = getlong(&partp->dp_start),
+			size = getlong(&partp->dp_size);
 			decimal("sysid", &sysid);
 			decimal("start", &start);
 			decimal("size", &size);
 			partp->dp_typ = sysid;
-			partp->dp_start = start;
-			partp->dp_size = size;
+			putlong(&partp->dp_start, start);
+			putlong(&partp->dp_size, size);
 		}
 
 		if (yesno("Explicitly specify beg/end address?")) {
@@ -499,9 +542,10 @@ change_part(part)
 			partp->dp_ehd = thead;
 			partp->dp_esect = DOSSECT(tsector, tcylinder);
 		} else {
-			dos(partp->dp_start,
+			dos(getlong(&partp->dp_start),
 			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-			dos(partp->dp_start + partp->dp_size - 1,
+			dos(getlong(&partp->dp_start)
+			    + getlong(&partp->dp_size) - 1,
 			    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
 		}
 
@@ -664,8 +708,8 @@ read_s0()
 		warn("can't read fdisk partition table");
 		return (-1);
 	}
-	if (mboot.signature != BOOT_MAGIC) {
-		warn("invalid fdisk partition table found");
+	if (getshort(&mboot.signature) != BOOT_MAGIC) {
+		warnx("invalid fdisk partition table found");
 		/* So should we initialize things? */
 		return (-1);
 	}
