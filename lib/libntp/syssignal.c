@@ -1,4 +1,4 @@
-/*	$NetBSD: syssignal.c,v 1.2 1998/01/09 03:16:32 perry Exp $	*/
+/*	$NetBSD: syssignal.c,v 1.2.2.1 2000/01/23 12:01:19 he Exp $	*/
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -9,8 +9,6 @@
 
 #ifdef HAVE_SIGACTION
 #include <errno.h>
-
-extern int errno;
 
 void
 signal_no_reset(sig, func)
