@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)clock.c	5.4 (Berkeley) 8/27/90";*/
-static char rcsid[] = "$Id: clock.c,v 1.2 1993/07/30 08:21:47 mycroft Exp $";
+static char rcsid[] = "$Id: clock.c,v 1.3 1993/08/17 20:37:59 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,10 +41,11 @@ static char rcsid[] = "$Id: clock.c,v 1.2 1993/07/30 08:21:47 mycroft Exp $";
 #include <sys/resource.h>
 
 /*
- * Convert usec to clock ticks; could do (usec * CLK_TCK) / 1000000,
+ * Convert usec to clock ticks; could do (usec * CLOCKS_PER_SEC) / 1000000,
  * but this would overflow if we switch to nanosec.
  */
-#define	CONVTCK(r)	(r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+#define	CONVTCK(r)	(r.tv_sec * CLOCKS_PER_SEC + \
+			 r.tv_usec / (1000000 / CLOCKS_PER_SEC))
 
 clock_t
 clock()
