@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.514 2002/10/04 03:17:00 itojun Exp $
+# $NetBSD: GENERIC,v 1.515 2002/10/04 16:24:47 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.514 $"
+#ident 		"GENERIC-$Revision: 1.515 $"
 
 maxusers	32		# estimated number of users
 
@@ -638,6 +638,7 @@ tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 # ISA Plug-and-Play network interfaces
 an*	at isapnp?			# Aironet 802.11
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+le*	at isapnp?			# AMD PCnet-ISA Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
