@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.5 2001/09/18 19:36:41 jdolecek Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.6 2001/09/20 20:28:41 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <compat/svr4_32/svr4_32_syscall.h>
 #include <compat/svr4/svr4_errno.h>
 #include <compat/svr4_32/svr4_32_signal.h>
+#include <compat/svr4_32/svr4_32_exec.h>
 
 extern char svr4_32_sigcode[], svr4_32_esigcode[];
 extern struct sysent svr4_32_sysent[];
