@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.15 2000/02/10 21:50:05 he Exp $
+.\" $NetBSD: main,v 1.6.2.16 2000/02/11 00:35:57 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -514,13 +514,13 @@ the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution
 sets.
 .br
-.Em 19M gzipped, 84.2M uncompressed
+.Em 19M gzipped, 84.3M uncompressed
 .It syssrc.tgz:
 This set contains the sources to the
 .Nx \*V
 kernel, config(8), and dbsym(8).
 .br
-.Em 13.5M gzipped, 66.7M uncompressed
+.Em 13.9M gzipped, 66.4M uncompressed
 .It sharesrc.tgz:
 This set contains the "share" sources, which include
 the sources for the man pages not associated with
