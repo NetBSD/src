@@ -1,4 +1,4 @@
-.\"	$NetBSD: shar.1,v 1.4 1995/08/18 14:55:40 pk Exp $
+.\"	$NetBSD: shar.1,v 1.5 1997/10/19 23:05:28 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,10 @@
 .Nm shar
 .Nd create a shell archive of files
 .Sh SYNOPSIS
-.Nm shar Ar
+.Nm
+.Ar
 .Sh DESCRIPTION
-.Nm Shar
+.Nm
 writes an
 .Xr sh 1
 shell script to the standard output which will recreate the file
@@ -52,7 +53,7 @@ files they contain (the
 .Xr find 1
 utility does this correctly).
 .Pp
-.Nm Shar
+.Nm
 is normally used for distributing files by
 .Xr ftp  1
 or
@@ -63,18 +64,18 @@ or
 .Xr uuencode 1 ,
 .Xr tar 1
 .Sh BUGS
-.Nm Shar
+.Nm
 makes no provisions for special types of files or files containing
 magic characters.
 .Pp
 It is easy to insert trojan horses into
-.Nm shar
+.Nm
 files.
 It is strongly recommended that all shell archive files be examined
 before running them through
 .Xr sh  1  .
 Archives produced using this implementation of
-.Nm shar
+.Nm
 may be easily examined with the command:
 .Bd -literal -offset indent
 egrep -v '^[X#]' shar.file
