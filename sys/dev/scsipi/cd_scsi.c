@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.10 1998/02/05 07:59:43 mrg Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.11 1998/07/13 12:04:30 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -102,12 +102,14 @@ int	cd_scsibus_getvol __P((struct cd_softc *, struct ioc_vol *, int));
 int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
 	    int));
 int	cd_scsibus_set_pa_immed __P((struct cd_softc *, int));
+int	cd_scsibus_load_unload __P((struct cd_softc *, int, int));
 
 const struct cd_ops cd_scsibus_ops = {
 	cd_scsibus_setchan,
 	cd_scsibus_getvol,
 	cd_scsibus_setvol,
 	cd_scsibus_set_pa_immed,
+	cd_scsibus_load_unload,
 };
 
 int
@@ -278,4 +280,16 @@ cd_scsibus_setvol(cd, arg, flags)
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
 	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+}
+
+int
+cd_scsibus_load_unload(cd, options, slot)
+	struct cd_softc *cd;
+	int options, slot;
+{
+	/*
+	 * Not supported on SCSI CDs that we know of (but we'll leave
+	 * the hook here Just In Case).
+	 */
+	return (ENODEV);
 }

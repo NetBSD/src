@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.7 1998/02/13 08:28:19 enami Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.8 1998/07/13 12:04:29 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -28,6 +28,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#define		ATAPI_LOAD_UNLOAD	0xa6
+struct atapi_load_unload {
+	u_int8_t opcode;
+	u_int8_t unused1[3];
+	u_int8_t options;
+	u_int8_t unused2[3];
+	u_int8_t slot;
+	u_int8_t unused3[3];
+};
 
 struct atapi_cdrom_page {
 	u_int8_t page;

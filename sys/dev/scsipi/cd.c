@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.112 1998/03/16 04:17:53 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.113 1998/07/13 12:04:29 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -884,6 +884,12 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (0);
 	case CDIOCRESET:
 		return (cd_reset(cd));
+	case CDIOCLOADUNLOAD: {
+		struct ioc_load_unload *args = (struct ioc_load_unload *)addr;
+
+		return ((*cd->sc_ops->cdo_load_unload)(cd, args->options,
+			args->slot));
+	}
 
 	default:
 		if (CDPART(dev) != RAW_PART)

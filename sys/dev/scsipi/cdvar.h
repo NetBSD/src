@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.7 1998/02/13 08:28:25 enami Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.8 1998/07/13 12:04:30 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -63,6 +63,7 @@ struct cd_ops {
 	int	(*cdo_setvol) __P((struct cd_softc *, const struct ioc_vol *,
 		    int));
 	int	(*cdo_set_pa_immed) __P((struct cd_softc *, int));
+	int	(*cdo_load_unload) __P((struct cd_softc *, int, int));
 };
 
 void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
