@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:57 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/20 17:05:53 bjh21 Exp $
 #
 #	etc.netwinder/Makefile.inc -- netwinder-specific etc Makefile targets
 #
@@ -17,5 +17,5 @@ snap_md_post:
 #	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 #	cd ${.CURDIR}/../distrib/arm32 && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-#	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernels '*.gz'
+#	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernel '*.gz'
 #	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'

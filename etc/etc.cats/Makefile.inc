@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/01/23 15:41:42 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/03/20 17:05:52 bjh21 Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
@@ -18,5 +18,5 @@ snap_md_post:
 #	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 #	cd ${.CURDIR}/../distrib/cats && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-#	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernels '*.gz'
+#	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/kernel '*.gz'
 #	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/misc '*.gz'
