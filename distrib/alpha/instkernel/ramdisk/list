@@ -1,7 +1,7 @@
-#	$NetBSD: list,v 1.13 2002/03/07 23:51:48 lukem Exp $
+#	$NetBSD: list,v 1.14 2002/03/14 22:26:08 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
-SRCDIRS	sys/arch/@MACHINE@/stand
+SRCDIRS	sys/arch/${MACHINE}/stand
 
 
 PROG	bin/cat		usr/bin/strings
