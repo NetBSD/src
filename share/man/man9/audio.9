@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.31 2005/02/20 19:46:15 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.32 2005/02/20 19:48:47 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,7 +210,7 @@ For example, if
 .Va play
 requests [8000Hz, mu-law, 8/8bit, 1ch] and the hardware supports
 not 8bit mu-law but 16bit slinear_le, the driver should call
-.Dv pfil->append()
+.Dv pfil-\*[Gt]append()
 with
 .Va pfil ,
 .Va mulaw_to_slinear16 ,
@@ -248,28 +248,28 @@ For playing,
 constructs conversions as follows:
 .Bd -literal
 	(play) == write(2) input
-	  |	pfil->filters[pfil->req_size-1].factory
-	(pfil->filters[pfil->req_size-1].param)
-	  |	pfil->filters[pfil->req_size-2].factory
+	  |	pfil-\*[Gt]filters[pfil-\*[Gt]req_size-1].factory
+	(pfil-\*[Gt]filters[pfil-\*[Gt]req_size-1].param)
+	  |	pfil-\*[Gt]filters[pfil-\*[Gt]req_size-2].factory
 	  :
-	  |	pfil->filters[1].factory
-	(pfil->filters[1].param)
-	  |	pfil->filters[0].factory
-	(pfil->filters[0].param)  == hardware input
+	  |	pfil-\*[Gt]filters[1].factory
+	(pfil-\*[Gt]filters[1].param)
+	  |	pfil-\*[Gt]filters[0].factory
+	(pfil-\*[Gt]filters[0].param)  == hardware input
 .Ed
 .Pp
 For recording,
 .Va rfil
 constructs conversions as follows:
 .Bd -literal
-	(rfil->filters[0].param) == hardware output
-	  |	rfil->filters[0].factory
-	(rfil->filters[1].param)
-	  |	rfil->filters[1].factory
+	(rfil-\*[Gt]filters[0].param) == hardware output
+	  |	rfil-\*[Gt]filters[0].factory
+	(rfil-\*[Gt]filters[1].param)
+	  |	rfil-\*[Gt]filters[1].factory
 	  :
-	  |	rfil->filters[rfil->req_size-2].factory
-	(rfil->filters[rfil->req_size-1].param)
-	  |	rfil->filters[rfil->req_size-1].factory
+	  |	rfil-\*[Gt]filters[rfil-\*[Gt]req_size-2].factory
+	(rfil-\*[Gt]filters[rfil-\*[Gt]req_size-1].param)
+	  |	rfil-\*[Gt]filters[rfil-\*[Gt]req_size-1].factory
 	(rec)  == read(2) output
 .Ed
 .Pp
