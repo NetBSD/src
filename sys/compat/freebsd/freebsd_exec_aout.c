@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.1 2000/12/01 19:13:47 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.2 2000/12/01 19:35:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -34,6 +34,10 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+
+#ifndef EXEC_AOUT
+#define EXEC_AOUT	/* to get a.out specific stuff */
+#endif
 
 #include <compat/freebsd/freebsd_exec.h>
 
