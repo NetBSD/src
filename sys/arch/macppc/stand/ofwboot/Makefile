@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/02/01 18:45:29 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.27 2002/02/13 17:52:08 wrstuden Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -77,7 +77,7 @@ LIBSA=		${SALIB}
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
 
-all: ${PROG} ${PROG}.xcf ${PROG}.elf
+all realall: ${PROG} ${PROG}.xcf ${PROG}.elf
 
 ${PROG}: ${OBJS} boot1.o ${LIBSA} ${LIBZ} ${LIBKERN} 
 	${LD} -s -N -Ttext ${RELOC_FLATFILE} -Bstatic -o ${PROG}.el1 \
