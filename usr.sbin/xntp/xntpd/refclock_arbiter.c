@@ -237,7 +237,7 @@ arb_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct arbunit *)pp->unitptr;
-	temp = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+	temp = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 	if (up->tcswitch)
 		return;
 
@@ -261,34 +261,34 @@ arb_receive(rbufp)
 	up->laststamp = trtmp;
 	if (temp < 3)
 		return;
-	if (!strncmp(pp->lastcode, "TQ", 2)) {
-		up->qualchar = pp->lastcode[2];
+	if (!strncmp(pp->a_lastcode, "TQ", 2)) {
+		up->qualchar = pp->a_lastcode[2];
 		write(pp->io.fd, "SR", 2);
 		return;
-	} else if (!strncmp(pp->lastcode, "SR", 2)) {
-		strcpy(up->status, pp->lastcode + 2);
+	} else if (!strncmp(pp->a_lastcode, "SR", 2)) {
+		strcpy(up->status, pp->a_lastcode + 2);
     		if (pp->sloppyclockflag & CLK_FLAG4)
 			write(pp->io.fd, "LA", 2);
 		else
 			write(pp->io.fd, "B5", 2);
 		return;
-	} else if (!strncmp(pp->lastcode, "LA", 2)) {
-		strcpy(up->latlon, pp->lastcode + 2);
+	} else if (!strncmp(pp->a_lastcode, "LA", 2)) {
+		strcpy(up->latlon, pp->a_lastcode + 2);
 		write(pp->io.fd, "LO", 2);
 		return;
-	} else if (!strncmp(pp->lastcode, "LO", 2)) {
+	} else if (!strncmp(pp->a_lastcode, "LO", 2)) {
 		strcat(up->latlon, " ");
-		strcat(up->latlon, pp->lastcode + 2);
+		strcat(up->latlon, pp->a_lastcode + 2);
 		write(pp->io.fd, "LH", 2);
 		return;
-	} else if (!strncmp(pp->lastcode, "LH", 2)) {
+	} else if (!strncmp(pp->a_lastcode, "LH", 2)) {
 		strcat(up->latlon, " ");
-		strcat(up->latlon, pp->lastcode + 2);
+		strcat(up->latlon, pp->a_lastcode + 2);
 		write(pp->io.fd, "DB", 2);
 		return;
-	} else if (!strncmp(pp->lastcode, "DB", 2)) {
+	} else if (!strncmp(pp->a_lastcode, "DB", 2)) {
 		strcat(up->latlon, " ");
-		strcat(up->latlon, pp->lastcode + 2);
+		strcat(up->latlon, pp->a_lastcode + 2);
 		record_clock_stats(&peer->srcadr, up->latlon);
 		write(pp->io.fd, "B5", 2);
 		return;
@@ -301,7 +301,7 @@ arb_receive(rbufp)
 #ifdef DEBUG
 	if (debug)
         	printf("arbiter: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -317,11 +317,11 @@ arb_receive(rbufp)
 		/*
  		 * Timecode format B5: "i yy ddd hh:mm:ss.000   "
  		 */
-		pp->lastcode[LENARB - 2] = up->qualchar;
-		strcat(pp->lastcode, up->status);
-		record_clock_stats(&peer->srcadr, pp->lastcode);
+		pp->a_lastcode[LENARB - 2] = up->qualchar;
+		strcat(pp->a_lastcode, up->status);
+		record_clock_stats(&peer->srcadr, pp->a_lastcode);
 		syncchar = leapchar = ' ';
-		if (sscanf(pp->lastcode, "%c%2d %3d %2d:%2d:%2d",
+		if (sscanf(pp->a_lastcode, "%c%2d %3d %2d:%2d:%2d",
 		    &syncchar, &pp->year, &pp->day, &pp->hour,
 		    &pp->minute, &pp->second) != 6) {
 			refclock_report(peer, CEVNT_BADREPLY);

@@ -215,29 +215,29 @@ irig_poll(unit, peer)
 	buf.stamp.tv_sec += JAN_1970;
 	TVTOTS(&buf.stamp, &pp->lastrec);
 	cp = buf.time;
-	dp = pp->lastcode;
+	dp = pp->a_lastcode;
 	for (i = 0; i < sizeof(buf.time); i++)
 		*dp++ = *cp++;
 	*--dp = '\0';
-	pp->lencode = dp - pp->lastcode;
+	pp->lencode = dp - pp->a_lastcode;
 
 #ifdef DEBUG
 	if (debug)
 		printf("irig: time %s timecode %d %s\n",
 		    ulfptoa(&pp->lastrec, 6), pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 
 	/*
          * Get IRIG time and convert to timestamp format
          */
-	if (sscanf(pp->lastcode, "%3d %2d:%2d:%2d",
+	if (sscanf(pp->a_lastcode, "%3d %2d:%2d:%2d",
 	    &pp->day, &pp->hour, &pp->minute, &pp->second) != 4) {
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
 	}
-	if (pp->lastcode[12] != ' ') {
+	if (pp->a_lastcode[12] != ' ') {
 		pp->leap = LEAP_NOTINSYNC;
 	} else {
 		pp->leap = 0;

@@ -550,17 +550,17 @@ acts_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct actsunit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX,
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX,
 	    &pp->lastrec);
 	if (pp->lencode == 0) {
-		if (strcmp(pp->lastcode, "OK") == 0)
+		if (strcmp(pp->a_lastcode, "OK") == 0)
 			pp->lencode = 2;
 		return;
 	}
 #ifdef DEBUG
 	if (debug)
         	printf("acts: state %d timecode %d %*s\n", up->state,
-		       pp->lencode, pp->lencode, pp->lastcode);
+		       pp->lencode, pp->lencode, pp->a_lastcode);
 #endif
 
 	switch (up->state) {
@@ -586,14 +586,27 @@ acts_receive(rbufp)
 		 * 2.
 		 */
 		if( strcmp(sys_phone[0],"DIRECT") != 0 ) {
-			(void)strncpy(str, strtok(pp->lastcode, " "), SMAX);
+			if (pp) {
+			  if (pp->a_lastcode[0]) {
+			    (void)strncpy(str, strtok(pp->a_lastcode, " "), SMAX);
+			  } else {
+			    msyslog(LOG_ERR, "clock %s ACTS: pp->a_lastcode was NIL",
+				    ntoa(&peer->srcadr));
+			    *str = '\0';
+			  }
+			} else {
+			  /* pp was NIL */
+			  msyslog(LOG_ERR, "clock %s ACTS: pp was NIL",
+				  ntoa(&peer->srcadr));
+			  *str = '\0';
+			}
 			if (strcmp(str, "BUSY") == 0 || strcmp(str, "ERROR") ==
 			     0 || strcmp(str, "NO") == 0) {
 				TIMER_DEQUEUE(&up->timer);
 				NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 				  msyslog(LOG_NOTICE,
 				    "clock %s ACTS modem status %s",
-				    ntoa(&peer->srcadr), pp->lastcode);
+				    ntoa(&peer->srcadr), pp->a_lastcode);
 				acts_disc(peer);
 			} else if (strcmp(str, "CONNECT") == 0) {
 				TIMER_DEQUEUE(&up->timer);
@@ -655,7 +668,7 @@ acts_receive(rbufp)
 	 *  MJD  YR MO DA H  M  S  ST S UT1 msADV         OTM
 	 * 47222 88-03-02 21:39:15 83 0 +.3 045.0 UTC(NBS) *
 	 */
-	if (sscanf(pp->lastcode,
+	if (sscanf(pp->a_lastcode,
 	    "%5ld %2d-%2d-%2d %2d:%2d:%2d %2d %1d %3lf %5lf %s %c",
 	    &mjd, &pp->year, &month, &day, &pp->hour, &pp->minute,
 	    &pp->second, &dst, &leap, &dut1, &msADV, utc, &flag) != 13) {
@@ -669,7 +682,7 @@ acts_receive(rbufp)
 	 * 0123456789012345678901234567890123456789012345678901234567890123456789012345678   9
 	 * 1995-01-23 20:58:51 MEZ  10402303260219950123195849740+40000500              *
 	 */
-	if (sscanf(pp->lastcode,
+	if (sscanf(pp->a_lastcode,
 	    "%*4d-%*2d-%*2d %*2d:%*2d:%2d %*5c%*12c%4d%2d%2d%2d%2d%5ld%2lf%c%2d%3lf%*15c%c",
 	    &pp->second, &pp->year, &month, &day, &pp->hour, &pp->minute, &mjd, &dut1, &leapdir, &leapmonth, &msADV, &flag) != 12) {
 		refclock_report(peer, CEVNT_BADREPLY);
@@ -771,7 +784,7 @@ acts_receive(rbufp)
 	 * these clumsy things anyway.
 	 */
 	disp = LFPTOFP(&pp->fudgetime2);
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer, &pp->offset, 0, pp->dispersion +
 	    (u_fp)disp, &pp->lastrec, &pp->lastrec, pp->leap);
 	pp->sloppyclockflag &= ~CLK_FLAG1;
@@ -931,7 +944,7 @@ acts_timeout(peer)
 	 * it strange if the OK status has not been received from the
 	 * modem, but plow ahead anyway.
 	 */
-	if (strcmp(pp->lastcode, "OK") != 0)
+	if (strcmp(pp->a_lastcode, "OK") != 0)
 		NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 		  msyslog(LOG_NOTICE, "clock %s ACTS no modem status",
 		    ntoa(&peer->srcadr));

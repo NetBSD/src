@@ -241,7 +241,7 @@ leitch_control(unit, in, out)
 		out->haveflags = CLK_HAVEVAL1 | CLK_HAVEVAL2;
 		out->fudgeval1 = (int32)stratumtouse[unit];
 		out->fudgeval2 = refid[unit];
-		out->lastcode = "";
+		out->p_lastcode = "";
 		out->clockdesc = LEITCH_DESCRIPTION;
 	}
 }
@@ -478,7 +478,7 @@ leitch_receive(rbufp)
 		if (!leitch_get_time(rbufp,leitch,1)) {
 		}
 		if (!clocktime(leitch->yearday,leitch->hour,leitch->minute,
-			leitch->second, 0, rbufp->recv_time.l_ui,
+			leitch->second, GMT, rbufp->recv_time.l_ui,
 			&leitch->yearstart, &leitch->reftime1.l_ui)) {
 			leitch->state = STATE_IDLE;
 			break;
@@ -495,7 +495,7 @@ leitch_receive(rbufp)
 		if (!leitch_get_time(rbufp,leitch,2)) {
 		}
 		if (!clocktime(leitch->yearday,leitch->hour,leitch->minute,
-			leitch->second, 0, rbufp->recv_time.l_ui,
+			leitch->second, GMT, rbufp->recv_time.l_ui,
 			&leitch->yearstart, &leitch->reftime2.l_ui)) {
 			leitch->state = STATE_IDLE;
 			break;
@@ -512,7 +512,7 @@ leitch_receive(rbufp)
 		if (!leitch_get_time(rbufp,leitch,3)) {
 		}
 		if (!clocktime(leitch->yearday,leitch->hour,leitch->minute,
-			leitch->second, 0, rbufp->recv_time.l_ui,
+			leitch->second, GMT, rbufp->recv_time.l_ui,
 			&leitch->yearstart, &leitch->reftime3.l_ui)) {
 			leitch->state = STATE_IDLE;
 			break;

@@ -28,7 +28,7 @@
 #endif
 
 #if	_BSDI_VERSION >= 199510
-# include "ifaddrs.h"		/* XXX Why not <ifaddrs.h>? */
+# include <ifaddrs.h>
 #endif
 #include "ntpd.h"
 #include "ntp_select.h"
@@ -113,9 +113,9 @@ static int sigio_block_count = 0;
 volatile u_long full_recvbufs;		/* number of recvbufs on fulllist */
 volatile u_long free_recvbufs;		/* number of recvbufs on freelist */
 
-volatile static	struct recvbuf *freelist;	/* free buffers */
-volatile static	struct recvbuf *fulllist;	/* lifo buffers with data */
-volatile static	struct recvbuf *beginlist;	/* fifo buffers with data */
+static	struct recvbuf *volatile freelist;	/* free buffers */
+static	struct recvbuf *volatile fulllist;	/* lifo buffers with data */
+static	struct recvbuf *volatile beginlist;	/* fifo buffers with data */
 
 u_long total_recvbufs;		/* total recvbufs currently in use */
 u_long lowater_additions;	/* number of times we have added memory */
@@ -207,7 +207,7 @@ init_io()
   freelist = 0;
   for (i = 0; i < RECV_INIT; i++)
     {
-      initial_bufs[i].next = freelist;
+      initial_bufs[i].next = (struct recvbuf *) freelist;
       freelist = &initial_bufs[i];
     }
 
@@ -260,9 +260,13 @@ create_sockets(port)
      u_int port;
 {
 #if	_BSDI_VERSION >= 199510
-  int num_if, i, j;
-  struct ifaddrs *ifaddrs, *ifap, *lp;
+  int i, j;
+  struct ifaddrs *ifaddrs, *ifap;
   struct sockaddr_in resmask;
+#if     _BSDI_VERSION < 199701 
+  struct ifaddrs *lp;
+  int num_if;
+#endif
 #else	/* _BSDI_VERSION >= 199510 */
 # ifdef STREAMS_TLI
   struct strioctl	ioc;
@@ -287,13 +291,21 @@ create_sockets(port)
   inter_list[0].sin.sin_addr.s_addr = htonl(INADDR_ANY);
   (void) strncpy(inter_list[0].name, "wildcard",
 		 sizeof(inter_list[0].name));
-  inter_list[0].mask.sin_addr.s_addr = htonl(~ (u_long)0);
+  inter_list[0].mask.sin_addr.s_addr = htonl(~(u_int32)0);
   inter_list[0].received = 0;
   inter_list[0].sent = 0;
   inter_list[0].notsent = 0;
   inter_list[0].flags = INT_BROADCAST;
-
 #if	_BSDI_VERSION >= 199510
+#if     _BSDI_VERSION >= 199701 
+   if (getifaddrs(&ifaddrs) < 0)
+     {
+       msyslog(LOG_ERR, "getifaddrs: %m");
+       exit(1);
+     }
+   i = 1;
+   for (ifap = ifaddrs; ifap != NULL; ifap = ifap->ifa_next)
+#else
   if (getifaddrs(&ifaddrs, &num_if) < 0)
     {
       msyslog(LOG_ERR, "create_sockets: getifaddrs() failed: %m");
@@ -303,6 +315,7 @@ create_sockets(port)
   i = 1;
 
   for (ifap = ifaddrs, lp = ifap + num_if; ifap < lp; ifap++)
+#endif
     {
       struct sockaddr_in *sin;
 
@@ -637,7 +650,7 @@ create_sockets(port)
   /*
    * Blacklist all bound interface addresses
    */
-  resmask.sin_addr.s_addr = ~ (u_long)0;
+  resmask.sin_addr.s_addr = ~ (u_int32)0;
   for (i = 1; i < ninterfaces; i++)
     restrict(RESTRICT_FLAGS, &inter_list[i].sin, &resmask,
 	     RESM_NTPONLY|RESM_INTERFACE, RES_IGNORE);
@@ -700,12 +713,12 @@ io_setbclient()
  */
 void
 io_multicast_add(addr)
-     u_long addr;
+     u_int32 addr;
 {
 #ifdef MCAST
   struct ip_mreq mreq;
   int i = ninterfaces;	/* Use the next interface */
-  u_long haddr = ntohl(addr);
+  u_int32 haddr = ntohl(addr);
   struct in_addr iaddr;
   int s;
   struct sockaddr_in *sinp;
@@ -755,7 +768,7 @@ io_multicast_add(addr)
       inter_list[i].bfd = -1;
       (void) strncpy(inter_list[i].name, "multicast",
 		     sizeof(inter_list[i].name));
-      inter_list[i].mask.sin_addr.s_addr = htonl(~0);
+      inter_list[i].mask.sin_addr.s_addr = htonl(~(u_int32)0);
     }
 
   /*
@@ -804,7 +817,7 @@ io_unsetbclient()
  */
 void
 io_multicast_del(addr)
-     u_long addr;
+     u_int32 addr;
 {
 #ifdef MCAST
   int i;
@@ -928,6 +941,15 @@ open_socket(addr, flags, turn_off_reuse)
   /*
    * set non-blocking,
    */
+
+#ifdef USE_FIONBIO
+/* in vxWorks we use FIONBIO, but the others are defined for old systems, so
+ * all hell breaks loose if we leave them defined 
+ */
+#undef O_NONBLOCK
+#undef FNDELAY
+#undef O_NDELAY
+#endif
 
 #if defined(O_NONBLOCK) /* POSIX */
   if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
@@ -1073,7 +1095,7 @@ findbcastinter(addr)
 {
 #ifdef SIOCGIFCONF
   register int i;
-  register u_long netnum;
+  register u_int32 netnum;
 
   netnum = NSRCADR(addr);
   for (i = 1; i < ninterfaces; i++)
@@ -1124,7 +1146,7 @@ getrecvbufs()
   if (debug > 4)
     printf("getrecvbufs returning %ld buffers\n", full_recvbufs);
 #endif
-  rb = beginlist;
+  rb = (struct recvbuf *) beginlist;
   fulllist = 0;
   full_recvbufs = 0;
 
@@ -1145,7 +1167,7 @@ getrecvbufs()
 	    emalloc(RECV_INC*sizeof(struct recvbuf));
 	  for (i = 0; i < RECV_INC; i++)
 	    {
-	      buf->next = freelist;
+	      buf->next = (struct recvbuf *) freelist;
 	      freelist = buf;
 	      buf++;
 	    }
@@ -1172,7 +1194,7 @@ freerecvbuf(rb)
      struct recvbuf *rb;
 {
   BLOCKIO();
-  rb->next = freelist;
+  rb->next = (struct recvbuf *) freelist;
   freelist = rb;
   free_recvbufs++;
   UNBLOCKIO();
@@ -1396,7 +1418,7 @@ input_handler(cts)
 #endif
 			}
 
-		      rb = freelist;
+		      rb = (struct recvbuf *) freelist;
 		      freelist = rb->next;
 		      free_recvbufs--;
 
@@ -1415,7 +1437,7 @@ input_handler(cts)
 		      if (rb->recv_length == -1)
 			{
 			  msyslog(LOG_ERR, "clock read fd %d: %m", fd);
-			  rb->next = freelist;
+			  rb->next = (struct recvbuf *) freelist;
 			  freelist = rb;
 			  free_recvbufs++;
 #if 1
@@ -1533,7 +1555,7 @@ input_handler(cts)
 			    }
 			}
 
-		      rb = freelist;
+		      rb = (struct recvbuf *) freelist;
 
 		      fromlen = sizeof(struct sockaddr_in);
 		      rb->recv_length = recvfrom(fd,
@@ -1696,7 +1718,7 @@ findinterface(addr)
      struct sockaddr_in *addr;
 {
   register int i;
-  register u_long saddr;
+  register u_int32 saddr;
 
   /*
    * Just match the address portion.

@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <netdb.h>
-
 #ifdef SYS_WINNT
 # include <io.h>
 #else
@@ -22,6 +21,12 @@
 #include "ntp_select.h"
 #include "ntp_stdlib.h"
 
+#ifdef SYS_VXWORKS
+/* vxWorks needs mode flag -casey*/
+#define open(name, flags)   open(name, flags, 0777)
+#define SERVER_PORT_NUM     123
+#endif
+
 #if defined(VMS)
 extern char *getpass(const char *);
 #endif
@@ -31,13 +36,13 @@ extern char *getpass(const char *);
  * interactive if connected to a terminal.
  */
 int interactive = 0;		/* set to 1 when we should prompt */
-char *prompt = "ntpq> ";	/* prompt to ask him about */
+const char *prompt = "ntpq> ";	/* prompt to ask him about */
 
 
 /*
  * Keyid used for authenticated requests.  Obtained on the fly.
  */
-u_long info_auth_keyid = (u_long) -1;
+u_int32 info_auth_keyid = (u_int32) -1;
 
 /*
  * Type of key md5 or des
@@ -194,7 +199,7 @@ struct ctl_var clock_var[] = {
 /*
  * flasher bits
  */
-static char *tstflagnames[] = {
+static const char *tstflagnames[] = {
       "DUPLICATE PKT",
       "BOGUS PKT",
       "PROTO UNSYNC",
@@ -246,7 +251,7 @@ static	void	authenticate	P((struct parse *, FILE *));
 static	void	ntpversion	P((struct parse *, FILE *));
 static	void	warning		P((char *, char *, char *));
 static	void	error		P((char *, char *, char *));
-static	u_long	getkeyid	P((char *));
+static	u_int32	getkeyid	P((char *));
 static	void	atoascii	P((int, char *, char *));
 static	void	makeascii	P((int, char *, FILE *));
 static	void	rawprint	P((int, int, char *, int, FILE *));
@@ -428,13 +433,35 @@ extern struct xcmd opcmds[];
 char *progname;
 int debug;
 
+#ifdef NO_MAIN_ALLOWED
+CALL(ntpq,"ntpq",ntpqmain);
+
+void clear_globals()
+    {
+    extern int ntp_optind;
+    extern char *ntp_optarg;
+    showhostnames = 0;				/* don'tshow host names by default */
+    ntp_optind = 0;
+    ntp_optarg = 0;
+    server_entry = NULL;            /* server entry for ntp */
+    havehost = 0;				/* set to 1 when host open */
+    numassoc = 0;		/* number of cached associations */
+    numcmds = 0;
+    numhosts = 0;
+    }
+#endif
 /*
  * main - parse arguments and handle options
  */
 #if !defined(VMS)
 void
 #endif /* VMS */
-main(argc, argv)
+#ifndef NO_MAIN_ALLOWED
+main
+#else
+ntpqmain
+#endif
+(argc, argv)
 int argc;
 char *argv[];
 {
@@ -443,6 +470,10 @@ char *argv[];
 	extern int ntp_optind;
 	extern char *ntp_optarg;
 
+#ifdef NO_MAIN_ALLOWED
+    clear_globals();
+    taskPrioritySet(taskIdSelf(), 100 );
+#endif
 	delay_time.l_ui = 0;
 	delay_time.l_uf = DEFDELAY;
 
@@ -515,7 +546,9 @@ char *argv[];
 #ifdef SYS_WINNT
 	WSACleanup();
 #endif /* SYS_WINNT */
+#ifndef SYS_VXWORKS
 	exit(0);
+#endif
 }
 
 
@@ -561,7 +594,11 @@ openhost(hname)
 	(void) strcpy(currenthost, temphost);
 
 	hostaddr.sin_family = AF_INET;
+#ifndef SYS_VXWORKS
 	hostaddr.sin_port = server_entry->s_port;
+#else
+    hostaddr.sin_port = htons(SERVER_PORT_NUM);
+#endif
 	hostaddr.sin_addr.s_addr = netnum;
 
 #ifdef SYS_WINNT
@@ -835,7 +872,7 @@ again:
 
 	if (debug >= 3) {
 		int shouldbesize;
-		u_long key;
+		u_int32 key;
 		u_long *lpkt;
 		int maclen;
 
@@ -863,7 +900,7 @@ again:
 			    (u_long)ntohl(lpkt[(n - maclen)/sizeof(u_long) + 1]),
 			    (u_long)ntohl(lpkt[(n - maclen)/sizeof(u_long) + 2]));
 			key = ntohl(lpkt[(n - maclen) / sizeof(u_long)]);
-			printf("Authenticated with keyid %lu\n", key);
+			printf("Authenticated with keyid %lu\n", (u_long)key);
 			if (key != 0 && key != info_auth_keyid) {
 				printf("We don't know that key\n");
 			} else {
@@ -1072,13 +1109,15 @@ sendrequest(opcode, associd, auth, qsize, qdata)
 		}
 		if (auth_havekey(info_auth_keyid)) {
 			int maclen;
+			u_int32 keyid;
 
 			/*
 			 * Stick the keyid in the packet where
 			 * cp currently points.  Cp should be aligned
 			 * properly.  Then do the encryptions.
 			 */
-			*(u_long *)(&qpkt.data[qsize]) = htonl(info_auth_keyid);
+			keyid = htonl(info_auth_keyid);
+			memcpy(&qpkt.data[qsize], &keyid, sizeof keyid);
 			maclen = authencrypt(info_auth_keyid, (u_int32 *)&qpkt,
 					     pktsize);
 			return sendpkt((char *)&qpkt, pktsize + maclen);
@@ -1435,7 +1474,7 @@ getarg(str, code, argp)
 {
 	int isneg;
 	char *cp, *np;
-	static char *digits = "0123456789";
+	static const char *digits = "0123456789";
 
 	switch (code & ~OPT) {
 	case STR:
@@ -1522,7 +1561,7 @@ getnetnum(host, num, fullhost)
 		}
 		return 1;
 	} else if ((hp = gethostbyname(host)) != 0) {
-		memmove((char *)num, hp->h_addr, sizeof(u_long));
+		memmove((char *)num, hp->h_addr, sizeof(u_int32));
 		if (fullhost != 0)
 			(void) strcpy(fullhost, hp->h_name);
 		return 1;
@@ -1561,7 +1600,7 @@ rtdatetolfp(str, lfp)
 	register int i;
 	struct calendar cal;
 	char buf[4];
-	static char *months[12] = {
+	static const char *months[12] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
@@ -1805,7 +1844,7 @@ help(pcmd, fp)
 	int length[100];
 	int maxlength;
 	int numperline;
-	static char *spaces = "                    ";	/* 20 spaces */
+	static const char *spaces = "                    ";	/* 20 spaces */
 
 	if (pcmd->nargs == 0) {
 		n = 0;
@@ -2005,7 +2044,7 @@ keyid(pcmd, fp)
 		if (info_auth_keyid == -1)
 			(void) fprintf(fp, "no keyid defined\n");
 		else
-			(void) fprintf(fp, "keyid is %lu\n", info_auth_keyid);
+			(void) fprintf(fp, "keyid is %lu\n", (u_long)info_auth_keyid);
 	} else {
 		info_auth_keyid = pcmd->argval[0].uval;
 	}
@@ -2260,7 +2299,7 @@ error(fmt, st1, st2)
 /*
  * getkeyid - prompt the user for a keyid to use
  */
-static u_long
+static u_int32
 getkeyid(prompt)
      char *prompt;
 {
@@ -2288,7 +2327,7 @@ getkeyid(prompt)
 	if (strcmp(pbuf, "0") == 0)
 	    return 0;
 
-	return (u_long) atoi(pbuf);
+	return (u_int32) atoi(pbuf);
 }
 
 

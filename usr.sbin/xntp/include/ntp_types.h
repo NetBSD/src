@@ -22,20 +22,6 @@
 #endif
 
 /*
- * Set up for prototyping
- */
-#ifndef P
-#if defined(__STDC__) || defined(USE_PROTOTYPES)
-#define	P(x)	x
-#else /* __STDC__ USE_PROTOTYPES */
-#define P(x)	()
-#if	!defined(const)
-#define	const
-#endif /* const */
-#endif /* __STDC__ USE_PROTOTYPES */
-#endif /* P */
-
-/*
  * VMS DECC (v4.1), {u_char,u_short,u_long} are only in SOCKET.H,
  *			and u_int isn't defined anywhere
  */

@@ -256,7 +256,7 @@ trak_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct trakunit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX,
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX,
 	    &pp->lastrec);
 
 	/*
@@ -265,7 +265,7 @@ trak_receive(rbufp)
 	 * buffer timestamp and edit out the timestamp for prettyprint
 	 * billboards.
 	 */
-	dpt = pp->lastcode;
+	dpt = pp->a_lastcode;
 	dpend = dpt + pp->lencode;
 	if (*dpt == '*' && buftvtots(dpt + 1, &trtmp)) {
 		if (trtmp.l_i == pp->lastrec.l_i || trtmp.l_i ==
@@ -281,11 +281,11 @@ trak_receive(rbufp)
 #ifndef PPS
 	get_systime(&up->tstamp);
 #endif
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 #ifdef DEBUG
 	if (debug)
         	printf("trak: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -301,7 +301,7 @@ trak_receive(rbufp)
 	/*
 	 * Timecode format: "*RQTS U,ddd:hh:mm:ss.0,q"
  	 */
-	if (sscanf(pp->lastcode, "*RQTS U,%3d:%2d:%2d:%2d.0,%c",
+	if (sscanf(pp->a_lastcode, "*RQTS U,%3d:%2d:%2d:%2d.0,%c",
 	    &pp->day, &pp->hour, &pp->minute, &pp->second, &qchar) != 5) {
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;

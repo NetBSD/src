@@ -293,7 +293,7 @@ heath_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct heathunit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 
 	/*
 	 * We get a buffer and timestamp for each <cr>; however, we use
@@ -305,11 +305,11 @@ heath_receive(rbufp)
 	 */
 	pp->lastrec = up->tstamp;
 	up->pollcnt = 2;
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 #ifdef DEBUG
 	if (debug)
         	printf("heath: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -325,7 +325,7 @@ heath_receive(rbufp)
 	/*
 	 * Timecode format: "hh:mm:ss.f AM  mm/dd/yy"
 	 */
-	if (sscanf(pp->lastcode, "%2d:%2d:%2d.%c%5c%2d/%2d/%2d",
+	if (sscanf(pp->a_lastcode, "%2d:%2d:%2d.%c%5c%2d/%2d/%2d",
 	    &pp->hour, &pp->minute, &pp->second, &dsec, a, &month, &day,
 	    &pp->year) != 8) {
 		refclock_report(peer, CEVNT_BADREPLY);

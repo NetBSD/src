@@ -122,7 +122,7 @@ static	int sockfd = -1;
 
 /* stuff to be filled in by caller */
 
-u_long req_keyid;	/* request keyid */
+u_int32 req_keyid;	/* request keyid */
 char *req_file;		/* name of the file with configuration info */
 
 /* end stuff to be filled in */
@@ -136,7 +136,7 @@ extern int errno;
 static	RETSIGTYPE bong		P((int));
 static	void	checkparent	P((void));
 static	void	removeentry	P((struct conf_entry *));
-static	void	addentry	P((char *, int, int, int, int, int, int, u_long));
+static	void	addentry	P((char *, int, int, int, int, int, int, u_int32));
 static	int	findhostaddr	P((struct conf_entry *));
 static	void	openntp		P((void));
 static	int	request		P((struct conf_peer *));
@@ -278,7 +278,7 @@ int sig;
 static void
 checkparent()
 {
-#ifndef SYS_WINNT
+#if !defined (SYS_WINNT) && !defined (SYS_VXWORKS)
 
 	/*
 	 * If our parent (the server) has died we will have been
@@ -288,7 +288,7 @@ checkparent()
 		msyslog(LOG_INFO, "parent died before we finished, exiting");
 		exit(0);
 	}
-#endif /* SYS_WINNT */
+#endif /* SYS_WINNT && SYS_VXWORKS*/
 }
 
 
@@ -330,7 +330,7 @@ addentry(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 	int maxpoll;
 	int flags;
 	int ttl;
-	u_long keyid;
+	u_int32 keyid;
 {
 	register char *cp;
 	register struct conf_entry *ce;

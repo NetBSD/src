@@ -54,6 +54,12 @@
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
 /* #undef WORDS_BIGENDIAN */
 
+/* Package */
+#define PACKAGE "xntp3"
+
+/* Version */
+#define VERSION "5.92"
+
 /* debugging code */
 #define DEBUG 1
 
@@ -69,50 +75,53 @@
 /* ACTS modem service */
 #define ACTS 1
 
-/* Austron 2200A/2201A GPS receiver */
-#define AS2201 1
-
 /* Arbiter 1088A/B GPS receiver */
 #define ARBITER 1
+
+/* DHD19970505: ARCRON support. */
+#define ARCRON_MSF 1
+
+/* Austron 2200A/2201A GPS receiver */
+#define AS2201 1
 
 /* PPS interface */
 #define ATOM 1
 
 /* Datum/Bancomm bc635/VME interface */
-/* #undef BANC */
+#define BANC 1
 
 /* ELV/DCF7000 clock */
-/* #undef CLOCK_DCF7000 */
+#define CLOCK_DCF7000 1
 
 /* HOPF 6021 clock */
-/* #undef CLOCK_HOPF6021 */
+#define CLOCK_HOPF6021 1
 
 /* Meinberg clocks */
-/* #undef CLOCK_MEINBERG */
+#define CLOCK_MEINBERG 1
 
 /* DCF77 raw time code */
-/* #undef CLOCK_RAWDCF */
+#define CLOCK_RAWDCF 1
 
 /* RCC 8000 clock */
-/* #undef CLOCK_RCC8000 */
+#define CLOCK_RCC8000 1
 
 /* Schmid DCF77 clock */
-/* #undef CLOCK_SCHMID */
+#define CLOCK_SCHMID 1
 
 /* Trimble GPS receiver/TAIP protocol */
-/* #undef CLOCK_TRIMTAIP */
+#define CLOCK_TRIMTAIP 1
 
 /* Trimble GPS receiver/TSIP protocol */
-/* #undef CLOCK_TRIMTSIP */
+#define CLOCK_TRIMTSIP 1
 
 /* Diems Computime Radio Clock */
-/* #undef CLOCK_COMPUTIME */
+#define CLOCK_COMPUTIME 1
 
 /* Datum Programmable Time System */
 #define DATUM 1
 
 /* TrueTime GPS receiver/VME interface */
-/* #undef GPSVME */
+#define GPSVME
 
 /* Heath GC-1000 WWV/WWVH receiver */
 #define HEATH 1
@@ -121,7 +130,7 @@
 #define HPGPS 1
 
 /* Sun IRIG audio decoder */
-/* #undef IRIG */
+#define IRIG 1
 
 /* Leitch CSD 5300 Master Clock System Driver */
 #define LEITCH 1
@@ -133,13 +142,13 @@
 #define MSFEES 1
 
 /* Magnavox MX4200 GPS receiver */
-/* #undef MX4200 */
+#define MX4200
 
 /* NMEA GPS receiver */
 #define NMEA 1
 
 /* PARSE driver interface */
-/* #undef PARSE */
+#define PARSE
 
 /* PARSE kernel PLL PPS support */
 /* #undef PPS_SYNC */
@@ -152,6 +161,9 @@
 
 /* PTB modem service */
 #define PTBACTS 1
+
+/* clock thru shared memory */
+/* #undef SHM_CLOCK */
 
 /* KSI/Odetics TPRO/S GPS receiver/IRIG interface */
 /* #undef TPRO */
@@ -186,14 +198,22 @@
 /* Do we want the HPUX FindConfig()? */
 /* #undef NEED_HPUX_FINDCONFIG */
 
+#include <sys/param.h>
+
 /* canonical system (cpu-vendor-os) string */
-#define STR_SYSTEM "i386-unknown-netbsd1.2D"
+#define STR_SYSTEM MACHINE_ARCH ## "-unknown-netbsd"
 
 /* define if [gs]ettimeofday() only takes 1 argument */
 /* #undef SYSV_TIMEOFDAY */
 
 /* define if struct sockaddr has sa_len */
 #define HAVE_SA_LEN_IN_STRUCT_SOCKADDR 1
+
+/* define if struct clockinfo has hz */
+#define HAVE_HZ_IN_STRUCT_CLOCKINFO 1
+
+/* define if struct clockinfo has tickadj */
+#define  HAVE_TICKADJ_IN_STRUCT_CLOCKINFO 1
 
 /* define if function prototypes are OK */
 #define HAVE_PROTOTYPES 1
@@ -211,7 +231,7 @@
 /* #undef ADJTIME_IS_ACCURATE */
 
 /* should we NOT read /dev/kmem? */
-/* #undef NOKMEM */
+#define NOKMEM 1
 
 /* use UDP Wildcard Delivery? */
 /* #undef UDP_WILDCARD_DELIVERY */
@@ -333,6 +353,9 @@
 /* adjtime()? */
 /* #undef DECL_ADJTIME_0 */
 
+/* bcopy()? */
+/* #undef DECL_BCOPY_0 */
+
 /* bzero()? */
 /* #undef DECL_BZERO_0 */
 
@@ -345,8 +368,14 @@
 /* memmove()? */
 /* #undef DECL_MEMMOVE_0 */
 
+/* mkstemp()? */
+/* #undef DECL_MKSTEMP_0 */
+
 /* mktemp()? */
 /* #undef DECL_MKTEMP_0 */
+
+/* plock()? */
+/* #undef DECL_PLOCK_0 */
 
 /* rename()? */
 /* #undef DECL_RENAME_0 */
@@ -360,6 +389,9 @@
 /* setpriority()? */
 /* #undef DECL_SETPRIORITY_0 */
 /* #undef DECL_SETPRIORITY_1 */
+
+/* sigvec()? */
+/* #undef DECL_SIGVEC_0 */
 
 /* stdio stuff? */
 /* #undef DECL_STDIO_0 */
@@ -381,6 +413,9 @@
 
 /* The number of bytes in a int.  */
 #define SIZEOF_INT 4
+
+/* The number of bytes in a long.  */
+/* #undef SIZEOF_LONG 4 */
 
 /* The number of bytes in a signed char.  */
 #define SIZEOF_SIGNED_CHAR 1
@@ -427,6 +462,12 @@
 /* Define if you have the memset function.  */
 #define HAVE_MEMSET 1
 
+/* Define if you have the mkstemp function.  */
+#define HAVE_MKSTEMP 1
+
+/* Define if you have the mlockall function.  */
+/* #undef HAVE_MLOCKALL */
+
 /* Define if you have the nice function.  */
 #define HAVE_NICE 1
 
@@ -450,6 +491,9 @@
 
 /* Define if you have the rtprio function.  */
 /* #undef HAVE_RTPRIO */
+
+/* Define if you have the sched_setscheduler function.  */
+/* #undef HAVE_SCHED_SETSCHEDULER */
 
 /* Define if you have the setlinebuf function.  */
 #define HAVE_SETLINEBUF 1
@@ -490,6 +534,18 @@
 /* Define if you have the sysconf function.  */
 #define HAVE_SYSCONF 1
 
+/* Define if you have the sysctl function.  */
+#define HAVE_SYSCTL 1
+
+/* Define if you have the timer_create function.  */
+#define HAVE_TIMER_CREATE 1
+
+/* Define if you have the timer_settime function.  */
+/* #undef HAVE_TIMER_SETTIME */
+
+/* Define if you have the umask function.  */
+#define HAVE_UMASK 1
+
 /* Define if you have the uname function.  */
 #define HAVE_UNAME 1
 
@@ -529,6 +585,9 @@
 /* Define if you have the <netinet/ip.h> header file.  */
 #define HAVE_NETINET_IP_H 1
 
+/* Define if you have the <sched.h> header file.  */
+/* #undef HAVE_SCHED_H */
+
 /* Define if you have the <sgtty.h> header file.  */
 #define HAVE_SGTTY_H 1
 
@@ -557,7 +616,7 @@
 #define HAVE_SYS_IOCTL_H 1
 
 /* Define if you have the <sys/lock.h> header file.  */
-/* #undef HAVE_SYS_LOCK_H */
+#define HAVE_SYS_LOCK_H 1
 
 /* Define if you have the <sys/mman.h> header file.  */
 #define HAVE_SYS_MMAN_H 1
@@ -595,6 +654,9 @@
 /* Define if you have the <sys/stropts.h> header file.  */
 /* #undef HAVE_SYS_STROPTS_H */
 
+/* Define if you have the <sys/sysctl.h> header file.  */
+#define HAVE_SYS_SYSCTL_H 1
+
 /* Define if you have the <sys/time.h> header file.  */
 #define HAVE_SYS_TIME_H 1
 
@@ -628,8 +690,8 @@
 /* Define if you have the elf library (-lelf).  */
 /* #undef HAVE_LIBELF */
 
-/* Define if you have the gsn library (-lgsn).  */
-/* #undef HAVE_LIBGSN */
+/* Define if you have the gen library (-lgen).  */
+/* #undef HAVE_LIBGEN */
 
 /* Define if you have the kvm library (-lkvm).  */
 #define HAVE_LIBKVM 1

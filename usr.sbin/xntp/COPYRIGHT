@@ -51,6 +51,10 @@ Trimble PARSE support
 
 <br><li>Steve Clift (clift@ml.csiro.au): OMEGA clock driver
 
+<br><li><a href="http://www.ee.uct.ac.za/~casey"> Casey Crellin </a> 
+        <a href="mailto:casey@ccii.co.za"> (casey@ccii.co.za) </a> 
+    vxWorks (Tornado) port and help with target configuration 
+
 <br><li>Torsten Duwe (duwe@immd4.informatik.uni-erlangen.de) Linux Port
 
 <br><li>John A. Dundas III (dundas@salt.jpl.nasa.gov) Apple A/UX port

@@ -427,6 +427,8 @@ struct peer {
 #define REFCLK_PTB_ACTS		23	/* PTB Auto Computer Time Service */
 #define REFCLK_USNO		24	/* Naval Observatory dialup */
 #define REFCLK_GPS_HP		26	/* HP 58503A Time & Frequency Receiver */
+#define REFCLK_ARCRON_MSF       27      /* ARCRON MSF radio clock. */
+#define REFCLK_SHM		28	/* clock attached thru shared memory */
 #define REFCLK_MAX		30	/* maximum index (room to expand) */
 
 /*

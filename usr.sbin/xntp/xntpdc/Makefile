@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/04/18 13:29:14 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1998/03/06 16:33:10 christos Exp $
 
 PROG= xntpdc
-SRCS=	ntpdc.c ntpdc.h ntpdc_ops.c 
+SRCS=	ntpdc_ops.c ntpdc.h ntpdc.c 
 MAN+= xntpdc.8
 
 .include <bsd.prog.mk>

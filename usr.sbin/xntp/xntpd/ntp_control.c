@@ -43,18 +43,18 @@ struct ctl_proc {
 static	void	ctl_error	P((int));
 static	u_short	ctlclkstatus	P((struct refclockstat *));
 static	void	ctl_flushpkt	P((int));
-static	void	ctl_putdata	P((char *, int, int));
-static	void	ctl_putstr	P((char *, char *, int));
-static	void	ctl_putlfp	P((char *, l_fp *));
-static	void	ctl_putfp	P((char *, s_fp));
-static	void	ctl_putufp	P((char *, u_fp));
-static	void	ctl_putuint	P((char *, u_long));
-static	void	ctl_puthex	P((char *, u_long));
-static	void	ctl_putint	P((char *, long));
-static	void	ctl_putts	P((char *, l_fp *));
-static	void	ctl_putadr	P((char *, u_int32));
-static	void	ctl_putid	P((char *, char *));
-static	void	ctl_putarray	P((char *, s_fp *, int));
+static	void	ctl_putdata	P((const char *, int, int));
+static	void	ctl_putstr	P((const char *, const char *, int));
+static	void	ctl_putlfp	P((const char *, l_fp *));
+static	void	ctl_putfp	P((const char *, s_fp));
+static	void	ctl_putufp	P((const char *, u_fp));
+static	void	ctl_putuint	P((const char *, u_long));
+static	void	ctl_puthex	P((const char *, u_long));
+static	void	ctl_putint	P((const char *, long));
+static	void	ctl_putts	P((const char *, l_fp *));
+static	void	ctl_putadr	P((const char *, u_int32));
+static	void	ctl_putid	P((const char *, char *));
+static	void	ctl_putarray	P((const char *, s_fp *, int));
 static	void	ctl_putsys	P((int));
 static	void	ctl_putpeer	P((int, struct peer *));
 #ifdef REFCLOCK
@@ -331,13 +331,15 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_USNO (24) */
 	CTL_SST_TS_UHF,		/* REFCLK_TRUETIME (25) */
 	CTL_SST_TS_UHF,		/* REFCLK_GPS_HP (26) */
+	CTL_SST_TS_TELEPHONE,	/* REFCLK_ARCRON_MSF (27) */
+	CTL_SST_TS_TELEPHONE,	/* REFCLK_SHM (28) */
 };
 
 
 /*
  * Keyid used for authenticating write requests.
  */
-u_long ctl_auth_keyid;
+u_int32 ctl_auth_keyid;
 
 /*
  * We keep track of the last error reported by the system internally
@@ -432,7 +434,7 @@ static struct interface *lcl_inter;
 
 static u_char	res_authenticate;
 static u_char	res_authokay;
-static u_long	res_keyid;
+static u_int32	res_keyid;
 
 #define	MAXDATALINELEN	(72)
 
@@ -493,7 +495,7 @@ ctl_error(errcode)
 	if (res_authenticate) {
 		int maclen;
 
-		*(u_long *)((u_char *)&rpkt + CTL_HEADER_LEN)
+		*(u_int32 *)((u_char *)&rpkt + CTL_HEADER_LEN)
 		    = htonl(res_keyid);
 		maclen = 
 		    authencrypt(res_keyid, (u_int32 *)&rpkt, CTL_HEADER_LEN);
@@ -614,18 +616,18 @@ process_control(rbufp, restrict)
 	    && maclen <= MAX_MAC_LEN) {
 
 		res_authenticate = 1;
-		res_keyid = ntohl(*(u_long *)((u_char *)pkt + properlen));
+		res_keyid = ntohl(*(u_int32 *)((u_char *)pkt + properlen));
 
 #ifdef DEBUG
 		if (debug >= 3)
 			printf(
       "recv_len %d, properlen %d, wants auth with keyid %ld, MAC length=%d\n",
-			    rbufp->recv_length, properlen, res_keyid, maclen);
+			    rbufp->recv_length, properlen, (u_long)res_keyid, maclen);
 #endif
 		if (!authhavekey(res_keyid)) {
 #ifdef DEBUG
 			if (debug >= 2)
-				printf("keyid %lu unknown\n", res_keyid);
+				printf("keyid %lu unknown\n", (u_long)res_keyid);
 #endif
 		} else if (authdecrypt(res_keyid, (u_int32 *)pkt,
 				       rbufp->recv_length - maclen)) {
@@ -815,6 +817,7 @@ ctl_flushpkt(more)
 		if (res_authenticate) {
 			int maclen;
 			int totlen = sendlen;
+			u_int32 keyid = htonl(res_keyid);
 
 			/*
 			 *  If we are going to authenticate, then there is
@@ -825,7 +828,7 @@ ctl_flushpkt(more)
 			    *datapt++ = '\0';
 			    totlen++;
 			}
-			*(u_long *)datapt = htonl(res_keyid);
+			memcpy(datapt, &keyid, sizeof keyid);
 			maclen = 
 			    authencrypt(res_keyid, (u_int32 *)&rpkt, totlen);
 
@@ -855,9 +858,9 @@ ctl_flushpkt(more)
  */
 static void
 ctl_putdata(dp, dlen, bin)
-	char *dp;
-	int dlen;
-	int bin;	/* set to 1 when data is binary */
+     const char *dp;
+     int dlen;
+     int bin;			/* set to 1 when data is binary */
 {
 	int overhead;
 
@@ -900,11 +903,12 @@ ctl_putdata(dp, dlen, bin)
  */
 static void
 ctl_putstr(tag, data, len)
-	char *tag;
-	char *data;
+	const char *tag;
+	const char *data;
 	int len;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[400];
 
 	cp = buffer;
@@ -932,7 +936,7 @@ ctl_putstr(tag, data, len)
  */
 static void
 ctl_putlfp(tag, ts)
-	char *tag;
+	const char *tag;
 	l_fp *ts;
 {
 	register char *cp, *cq;
@@ -957,10 +961,11 @@ ctl_putlfp(tag, ts)
  */
 static void
 ctl_putfp(tag, fp)
-	char *tag;
+	const char *tag;
 	s_fp fp;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -982,10 +987,11 @@ ctl_putfp(tag, fp)
  */
 static void
 ctl_putufp(tag, ufp)
-	char *tag;
+	const char *tag;
 	u_fp ufp;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1007,10 +1013,11 @@ ctl_putufp(tag, ufp)
  */
 static void
 ctl_putuint(tag, uval)
-	char *tag;
+	const char *tag;
 	u_long uval;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1032,10 +1039,11 @@ ctl_putuint(tag, uval)
  */
 static void
 ctl_puthex(tag, uval)
-	char *tag;
+	const char *tag;
 	u_long uval;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1057,10 +1065,11 @@ ctl_puthex(tag, uval)
  */
 static void
 ctl_putint(tag, ival)
-	char *tag;
+	const char *tag;
 	long ival;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1082,10 +1091,11 @@ ctl_putint(tag, ival)
  */
 static void
 ctl_putts(tag, ts)
-	char *tag;
+	const char *tag;
 	l_fp *ts;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const  char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1108,10 +1118,11 @@ ctl_putts(tag, ts)
  */
 static void
 ctl_putadr(tag, addr)
-	char *tag;
+	const char *tag;
 	u_int32 addr;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1133,10 +1144,11 @@ ctl_putadr(tag, addr)
  */
 static void
 ctl_putid(tag, id)
-	char *tag;
+	const char *tag;
 	char *id;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 
 	cp = buffer;
@@ -1158,11 +1170,12 @@ ctl_putid(tag, id)
  */
 static void
 ctl_putarray(tag, arr, start)
-	char *tag;
+	const char *tag;
 	s_fp *arr;
 	int start;
 {
-	register char *cp, *cq;
+	register char *cp;
+	register const char *cq;
 	char buffer[200];
 	int i, ind;
 	int len;
@@ -1558,7 +1571,7 @@ ctl_putclock(varid, clock, mustput)
 		}
 		break;
 	case CC_TIMECODE:
-		ctl_putstr(clock_var[CC_TIMECODE].text, clock->lastcode,
+		ctl_putstr(clock_var[CC_TIMECODE].text, clock->p_lastcode,
 		    (int)clock->lencode);
 		break;
 	case CC_POLL:

@@ -48,11 +48,11 @@ struct parse {
  * syntax.
  */
 struct xcmd {
-	char *keyword;		/* command key word */
-	void (*handler)	P((struct parse *, FILE *));	/* command handler */
-	u_char arg[MAXARGS];	/* descriptors for arguments */
-	char *desc[MAXARGS];	/* descriptions for arguments */
-	char *comment;
+  const char *keyword;		/* command key word */
+  void (*handler)	P((struct parse *, FILE *));	/* command handler */
+  u_char arg[MAXARGS];		/* descriptors for arguments */
+  const char *desc[MAXARGS];	/* descriptions for arguments */
+  const char *comment;
 };
 
 extern	int	doquery	P((int, int, int, int, int, char *, int *, int *, char **, int));

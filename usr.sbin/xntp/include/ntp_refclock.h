@@ -43,9 +43,9 @@
  * lib/clocktypes.c and xntpd/refclock_conf.c.
  */
 struct clktype {
-	int code;		/* driver "major" number */
-	char *clocktype;	/* long description */
-	char *abbrev;		/* short description */
+  int code;			/* driver "major" number */
+  const char *clocktype;	/* long description */
+  const char *abbrev;		/* short description */
 };
 
 /*
@@ -81,7 +81,7 @@ struct refclockstat {
 	u_char	flags;		/* clock flags */
 	u_char	haveflags;	/* bit array of valid flags */
 	u_short	lencode;	/* length of last timecode (may be longer than a char!) */
-	char	*lastcode;	/* last timecode received */
+	char	*p_lastcode;	/* last timecode received */
 	u_int32	polls;		/* transmit polls */
 	u_int32	noresponse;	/* no response to poll */
 	u_int32	badformat;	/* bad format timecode received */
@@ -156,7 +156,7 @@ struct refclockproc {
 	u_char	lastevent;	/* last exception event */
 	u_char	type;		/* clock type */
 	char	*clockdesc;	/* clock description */
-	char	lastcode[BMAX];	/* last timecode received */
+	char	a_lastcode[BMAX]; /* last timecode received */
 	u_short	lencode;	/* length of last timecode (allow for more than 256 chars !) */
 
 	int	year;		/* year of eternity */
@@ -180,7 +180,7 @@ struct refclockproc {
 	 */
 	l_fp	fudgetime1;	/* fudge time1 */
 	l_fp	fudgetime2;	/* fudge time2 */
-	u_long	refid;		/* reference identifier */
+	u_int32	refid;		/* reference identifier */
 	u_long	sloppyclockflag; /* fudge flags */
 
 	/*

@@ -46,8 +46,11 @@
  */
 int debug = 0;
 
+#ifndef SYS_VXWORKS
 int nonames = 0;			/* if set, don't print hostnames */
-
+#else
+int nonames = 1;			/* if set, don't print hostnames */
+#endif
 /*
  * Program name.
  */
@@ -95,8 +98,8 @@ static	struct server *addservbyname	P((char *));
 static	void	setup_io	P((void));
 static	void	freerecvbuf	P((struct recvbuf *));
 static	void	sendpkt	P((struct sockaddr_in *, struct pkt *, int));
-static	int	getipaddr	P((char *, long *));
-static	int	decodeipaddr	P((char *, long *));
+static	int	getipaddr	P((char *, u_int32 *));
+static	int	decodeipaddr	P((char *, u_int32 *));
 static	void	printserver	P((struct server *, FILE *));
 static	void	printrefid	P((FILE *, struct server *));
 
@@ -104,8 +107,16 @@ static	void	printrefid	P((FILE *, struct server *));
  * Main program.  Initialize us and loop waiting for I/O and/or
  * timer expiries.
  */
+#ifdef NO_MAIN_ALLOWED
+CALL(ntptrace,"ntptrace",ntptracemain);
+#endif
 void
-main(argc, argv)
+#ifndef NO_MAIN_ALLOWED
+main
+#else
+ntptracemain
+#endif /* NO_MAIN_ALLOWED */
+(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -536,7 +547,7 @@ static struct server *
 addservbyname(serv)
 	char *serv;
 {
-	long ipaddr;
+	u_int32 ipaddr;
 	struct in_addr ia;
 
 	if (!getipaddr(serv, &ipaddr)) {
@@ -634,7 +645,7 @@ sendpkt(dest, pkt, len)
 static int
 getipaddr(host, num)
 	char *host;
-	long *num;
+	u_int32 *num;
 {
 	struct hostent *hp;
 
@@ -653,7 +664,7 @@ getipaddr(host, num)
 static int
 decodeipaddr(num, ipaddr)
 	char *num;
-	long *ipaddr;
+	u_int32 *ipaddr;
 {
 	register char *cp;
 	register char *bp;

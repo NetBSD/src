@@ -46,9 +46,9 @@ extern	void	report_event	P((int, struct peer *));
  * variable indices and text format.
  */
 struct ctl_var {
-	u_short code;
-	u_short flags;
-	char *text;
+  u_short code;
+  u_short flags;
+  const char *text;
 };
 /*
  * Flag values
@@ -82,8 +82,8 @@ extern  void    input_handler   P((l_fp *));
 extern	void	io_clr_stats	P((void));
 extern	void	io_setbclient	P((void));
 extern	void	io_unsetbclient	P((void));
-extern	void	io_multicast_add P((u_long));
-extern	void	io_multicast_del P((u_long));
+extern	void	io_multicast_add P((u_int32));
+extern	void	io_multicast_del P((u_int32));
 extern	void	kill_asyncio	 P((void));
 
 extern	void	sendpkt		P((struct sockaddr_in *, struct interface *, int, struct pkt *, int));
@@ -128,10 +128,10 @@ extern	void	init_peer	P((void));
 extern	struct peer *findexistingpeer P((struct sockaddr_in *, struct peer *));
 extern	struct peer *findpeer	P((struct sockaddr_in *, struct interface *, int));
 extern	struct peer *findpeerbyassoc P((int));
-extern	struct peer *newpeer	P((struct sockaddr_in *, struct interface *, int, int, int, int, int, u_long));
+extern	struct peer *newpeer	P((struct sockaddr_in *, struct interface *, int, int, int, int, int, u_int32));
 extern	void	peer_all_reset	P((void));
 extern	void	peer_clr_stats	P((void));
-extern	struct peer *peer_config P((struct sockaddr_in *, struct interface *, int, int, int, int, int, int, u_long));
+extern	struct peer *peer_config P((struct sockaddr_in *, struct interface *, int, int, int, int, int, int, u_int32));
 extern	void	peer_reset	P((struct peer *));
 extern	int	peer_unconfig	P((struct sockaddr_in *, struct interface *));
 extern	void	unpeer		P((struct peer *));
@@ -191,7 +191,7 @@ extern	void	init_util	P((void));
 extern	void	hourly_stats	P((void));
 extern	void	stats_config	P((int, char *));
 extern	void	record_peer_stats P((struct sockaddr_in *, int, l_fp *, s_fp, u_fp));
-extern	void	record_loop_stats P((l_fp *, s_fp, int));
+extern	void	record_loop_stats P((l_fp *, s_fp, unsigned));
 extern	void	record_clock_stats P((struct sockaddr_in *, char *));
 extern	void	record_raw_stats P((struct sockaddr_in *, struct sockaddr_in *, l_fp *, l_fp *, l_fp *, l_fp *));
 extern	void	getauthkeys	P((char *));

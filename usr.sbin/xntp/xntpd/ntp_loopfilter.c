@@ -231,14 +231,15 @@ local_clock(fp_offset, peer, fastset)
 	 * ms), reset the poll interval and wait for further
 	 * instructions. Note that the cutout switch is set when the
 	 * time is stepped, possibly because the frequency error is off
-	 * planet. In that case all sanity checks are disables and the
+	 * planet. In that case all sanity checks are disabled and the
 	 * discipine loop is on its own. Presumably, the loop will
 	 * eventually capture the wayward oscillator (if less than 500
 	 * ppm off planet) and converge, which will then reset the
 	 * cutout switch.
 	 */
-	} else if ((ftmp.l_ui > CLOCK_MAX_I || (ftmp.l_ui == CLOCK_MAX_I
-	    && ftmp.l_uf >= CLOCK_MAX_F)) && !cutout) {
+	} else if (ftmp.l_ui > CLOCK_MAX_I || ftmp.l_f < 0
+		   || (ftmp.l_ui == CLOCK_MAX_I && ftmp.l_uf >= CLOCK_MAX_F
+		       && !cutout)) {
 		tc_counter = 0;
 		sys_poll = peer->minpoll;
 
@@ -317,13 +318,12 @@ local_clock(fp_offset, peer, fastset)
 		/*
 		 * Set the leap bits in the status word.
 		 */
-		if (sys_leap & LEAP_ADDSECOND && sys_leap &
-		    LEAP_DELSECOND)
-		ntv.status |= STA_UNSYNC;
+		if (sys_leap & LEAP_ADDSECOND && sys_leap & LEAP_DELSECOND)
+			ntv.status |= STA_UNSYNC;
 		else if (sys_leap & LEAP_ADDSECOND)
-		ntv.status |= STA_INS;
+			ntv.status |= STA_INS;
 		else if (sys_leap & LEAP_DELSECOND)
-		ntv.status |= STA_DEL;
+			ntv.status |= STA_DEL;
 
 		/*
 		 * This astonishingly intricate wonder juggles the
@@ -410,8 +410,8 @@ local_clock(fp_offset, peer, fastset)
 	 * by the time constant, which is adjusted in response to the
 	 * phase error and dispersion.
 	 */ 
-	} else if (interval < CLOCK_MAXSEC || peer->maxpoll <=
-	    NTP_MAXDPOLL) {
+	} else if (interval < CLOCK_MAXSEC
+		   || peer->maxpoll <= NTP_MAXDPOLL) {
 		long ltmp = interval;
 
 		tmp = NTP_MAXDPOLL;
@@ -419,8 +419,7 @@ local_clock(fp_offset, peer, fastset)
 			tmp--;
 			ltmp <<= 1;
 		}
-		tmp = RSH_FRAC_TO_FREQ - tmp + time_constant +
-		    time_constant;
+		tmp = RSH_FRAC_TO_FREQ - tmp + time_constant + time_constant;
 		if (offset < 0)
 			drift_comp -= -offset >> tmp;
 		else
@@ -459,7 +458,7 @@ local_clock(fp_offset, peer, fastset)
 		stmp = -stmp;
 	if (stmp < CLOCK_MAX_FP)
 		cutout = 0;
-	if (interval > (u_long)(1 << (peer->minpoll - 1))) {
+	if (interval > (1 << (peer->minpoll - 1))) {
 
 		/*
 		 * Determine when to adjust the poll interval. We do
@@ -515,12 +514,12 @@ local_clock(fp_offset, peer, fastset)
 	if (debug > 1)
 		printf(
 		    "local_clock: phase %s freq %s disp %s poll %d count %d\n",
-		    mfptoa((clock_adjust < 0 ? -1 : 0), clock_adjust,
-		    6), fptoa(drift_comp, 3), fptoa(sys_maxd[0], 5),
+		    mfptoa((clock_adjust < 0 ? -1 : 0), clock_adjust, 6),
+		    fptoa(drift_comp, 3), fptoa(sys_maxd[0], 5),
 		    sys_poll, tc_counter);
 #endif /* DEBUG */
 
-	(void) record_loop_stats(fp_offset, drift_comp, sys_poll);
+	(void) record_loop_stats(fp_offset, drift_comp, (unsigned)sys_poll);
 	
 	/*
 	 * Whew. I've had enough.
@@ -567,7 +566,7 @@ adj_host_clock()
 		return;
 	adjustment = clock_adjust;
 	if (adjustment < 0)
-		adjustment = -(-adjustment >> CLOCK_PHASE + time_constant);
+		adjustment = -(-adjustment >> (CLOCK_PHASE + time_constant));
 	else
 		adjustment >>= CLOCK_PHASE + time_constant;
 	clock_adjust -= adjustment;
@@ -610,10 +609,10 @@ adj_frequency(freq)
 	 * This routine adjusts the frequency offset. It is used by the
 	 * local clock driver to adjust frequency when no external
 	 * discipline source is available and by the acts driver when
-	 * the interval between updates is greater than 1 <<
-	 * NTP_MAXPOLL. Note that the maximum offset is limited by
-	 * max_comp when the daemon pll is used, but the maximum may be
-	 * different when the kernel pll is used.
+	 * the interval between updates is greater than 1 << NTP_MAXPOLL.
+	 * Note that the maximum offset is limited by max_comp when
+	 * the daemon pll is used, but the maximum may be different
+	 * when the kernel pll is used.
 	 */
 	drift_comp += freq;
 	if (drift_comp > max_comp)

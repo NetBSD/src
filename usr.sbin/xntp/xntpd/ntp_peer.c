@@ -375,7 +375,7 @@ peer_config(srcadr, dstadr, hmode, version, minpoll, maxpoll, flags, ttl, key)
 	int maxpoll;
 	int flags;
 	int ttl;
-	u_long key;
+	u_int32 key;
 {
 	register struct peer *peer;
 
@@ -383,7 +383,7 @@ peer_config(srcadr, dstadr, hmode, version, minpoll, maxpoll, flags, ttl, key)
 	if (debug)
 		printf("peer_config: addr %s mode %d version %d minpoll %d maxpoll %d flags %d ttl %d key %lu\n",
 		    ntoa(srcadr), hmode, version, minpoll, maxpoll, flags,
-		    ttl, key);
+		    ttl, (u_long)key);
 #endif
 	/*
 	 * See if we have this guy in the tables already.  If
@@ -446,7 +446,7 @@ newpeer(srcadr, dstadr, hmode, version, minpoll, maxpoll, ttl, key)
 	int minpoll;
 	int maxpoll;
 	int ttl;
-	u_long key;
+	u_int32 key;
 {
 	register struct peer *peer;
 	register int i;

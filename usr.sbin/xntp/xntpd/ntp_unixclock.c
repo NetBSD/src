@@ -12,22 +12,25 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
-# ifdef NLIST_STRUCT
-#  include <nlist.h>
-#  ifdef NLIST_NAME_UNION
-#   define N_NAME n_un.n_name
-#  else /* not NLIST_NAME_UNION */
-#   define N_NAME n_name
-#  endif /* not NLIST_NAME_UNION */
-# endif /* NLIST_STRUCT */
-# include <sys/stat.h>
-# include <sys/time.h>
+#ifdef NLIST_STRUCT
+# include <nlist.h>
+# ifdef NLIST_NAME_UNION
+#  define N_NAME n_un.n_name
+# else /* not NLIST_NAME_UNION */
+#  define N_NAME n_name
+# endif /* not NLIST_NAME_UNION */
+#endif /* NLIST_STRUCT */
+#include <sys/stat.h>
+#include <sys/time.h>
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
 #ifdef HAVE_UTMP_H
 # include <utmp.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
 #endif
 
 #if defined(HAVE_GETBOOTFILE)
@@ -166,7 +169,11 @@ init_systime()
 	/*
 	 * Estimate hz from tick
 	 */
+#ifndef SYS_VXWORKS
 	hz = 1000000L / tick;
+#else
+    hz =sysClkRateGet();
+#endif
 
 #ifdef SYS_WINNT
 	if ((1000000L % tick) >	tick/2)
@@ -267,6 +274,7 @@ init_systime()
  * clock_parms - return the local clock tickadj and tick parameters
  *
  */
+
 static void
 clock_parms(ptickadj, ptick)
      u_long *ptickadj;
@@ -275,44 +283,51 @@ clock_parms(ptickadj, ptick)
   u_long tick;
   int got_tick = 0;
   int got_tickadj = 0;
-#ifdef SYS_WINNT
+  int hz = 0;
+  int got_hz = 0;
+# ifdef SYS_WINNT
   DWORD add, every;
   BOOL noslew;
-#else
-  int hz;
-#ifndef NOKMEM
+# else /* not SYS_WINNT */
+#  if defined(HAVE_SYSCTL) && defined(CTL_KERN) && defined(KERN_CLOCKRATE)
+  int mib[2];
+  size_t ci_len;
+  struct clockinfo c;
+  int rc;
+#  endif /* HAVE_SYSCTL && CTL_KERN && KERN_CLOCKRATE */
+#  ifndef NOKMEM
   static struct nlist nl[] =
   {
     NL_B
-# ifdef K_TICKADJ_NAME
+#   ifdef K_TICKADJ_NAME
 #  define N_TICKADJ 0
     K_TICKADJ_NAME
-# else
+#   else
     K_FILLER_NAME
-# endif /* K_TICKADJ_NAME */
+#   endif /* K_TICKADJ_NAME */
     NL_E,
     NL_B
-# ifdef K_TICK_NAME
+#   ifdef K_TICK_NAME
 #  define N_TICK 1
     K_TICK_NAME
-# else
+#   else
     K_FILLER_NAME
-# endif /* K_TICK_NAME */
+#   endif /* K_TICK_NAME */
     NL_E,
     NL_B "" NL_E,
   };
-# ifdef HAVE_K_OPEN
-# else /* not HAVE_K_OPEN */
-#  ifdef HAVE_KVM_OPEN
+#   ifdef HAVE_K_OPEN
+#   else /* not HAVE_K_OPEN */
+#    ifdef HAVE_KVM_OPEN
   register kvm_t *kd;
-#  else /* not HAVE_KVM_OPEN */
+#    else /* not HAVE_KVM_OPEN */
   register int i;
   int kmem;
   struct stat stbuf;
   off_t where;
-#   ifdef HAVE_BOOTFILE
+#     ifdef HAVE_BOOTFILE
   const char *kernelname;
-#   else /* not HAVE_BOOTFILE */
+#     else /* not HAVE_BOOTFILE */
   static char *kernelnames[] =
   {
     "/kernel/unix",
@@ -325,18 +340,18 @@ clock_parms(ptickadj, ptick)
     "/netbsd",
     "/stand/vmunix",
     "/bsd",
-#    ifdef KERNELFILE
+#      ifdef KERNELFILE
     KERNELFILE,
-#    endif
+#      endif
     NULL
   };
-#   endif /* not HAVE_BOOTFILE */
-#  endif /* not HAVE_KVM_OPEN */
-# endif /* not HAVE_K_OPEN */
-#endif /* not NOKMEM */
-#endif /* not SYS_WINNT */
+#     endif /* not HAVE_BOOTFILE */
+#    endif /* not HAVE_KVM_OPEN */
+#   endif /* not HAVE_K_OPEN */
+#  endif /* not NOKMEM */
+# endif /* not SYS_WINNT */
 
-#ifdef SYS_WINNT
+# ifdef SYS_WINNT
   if (!GetSystemTimeAdjustment(&add, &every, &noslew))
     {
       *ptick = 0;
@@ -344,18 +359,45 @@ clock_parms(ptickadj, ptick)
       return;
     }
   units_per_tick = add;
-#else /* not SYS_WINNT */
-  hz = HZ;
-#if defined(HAVE_SYSCONF) && defined(_SC_CLK_TCK)
-  hz = (int) sysconf (_SC_CLK_TCK);
-#endif /* SYS_WINNT */
-#ifdef OVERRIDE_HZ
-  hz = DEFAULT_HZ;
-#endif
+# else /* not SYS_WINNT */
+
+#  if defined(HAVE_SYSCTL) && defined(CTL_KERN) && defined(KERN_CLOCKRATE)
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_CLOCKRATE;
+    ci_len = sizeof(c);
+    rc = sysctl(mib, 2, &c, &ci_len, NULL, 0);
+    if (rc == -1)
+    {
+      NLOG(NLOG_SYSINFO) /* conditional if clause for conditional syslog */
+      syslog(LOG_NOTICE, "sysctl returned %d: %m", rc);
+    }
+    *ptick = c.tick;
+    ++got_tick;
+#   ifdef HAVE_TICKADJ_IN_STRUCT_CLOCKINFO
+    *ptickadj = c.tickadj;
+    ++got_tickadj;
+#   endif /* HAVE_TICKADJ_IN_STRUCT_CLOCKINFO */
+#   ifdef HAVE_HZ_IN_STRUCT_CLOCKINFO
+    hz = c.hz;
+    ++got_hz;
+#   endif /* HAVE_HZ_IN_STRUCT_CLOCKINFO */
+#  endif /* HAVE_SYSCTL && CTL_KERN && KERN_CLOCKRATE */
+
+  if (!got_hz)
+  {
+    hz = HZ;
+#  if defined(HAVE_SYSCONF) && defined(_SC_CLK_TCK)
+    hz = (int) sysconf (_SC_CLK_TCK);
+#  endif /* HAVE_SYSCONF && _SC_CLK_TCK */
+#  ifdef OVERRIDE_HZ
+    hz = DEFAULT_HZ;
+#  endif
+    ++got_hz;
+  }
 
   {
-#ifndef NOKMEM
-# ifdef HAVE_K_OPEN /* { */
+#  ifndef NOKMEM
+#   ifdef HAVE_K_OPEN /* { */
     if (K_open((char *)0, O_RDONLY, "/vmunix")!=0)
       {
 	msyslog(LOG_ERR, "K_open failed");
@@ -367,8 +409,8 @@ clock_parms(ptickadj, ptick)
 	msyslog(LOG_ERR, "knlist failed");
 	exit(3);
       }
-# else  /* } not HAVE_K_OPEN { */
-#  ifdef HAVE_KVM_OPEN /* { */
+#   else  /* } not HAVE_K_OPEN { */
+#    ifdef HAVE_KVM_OPEN /* { */
     if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, NULL)) == NULL)
       {
 	msyslog(LOG_ERR, "kvm_open failed");
@@ -379,8 +421,8 @@ clock_parms(ptickadj, ptick)
 	msyslog(LOG_ERR, "kvm_nlist failed");
 	exit(3);
       }
-#  else /* } not HAVE_KVM_OPEN { */
-#   ifdef HAVE_GETBOOTFILE
+#    else /* } not HAVE_KVM_OPEN { */
+#     ifdef HAVE_GETBOOTFILE
     kernelname = getbootfile();
     if (!kernelname)
       {
@@ -397,7 +439,7 @@ clock_parms(ptickadj, ptick)
 	msyslog(LOG_ERR, "nlist(%s) failed: %m", kernelname);
 	exit(3);
       }  
-#   else /* not HAVE_GETBOOTFILE */
+#     else /* not HAVE_GETBOOTFILE */
     for (i = 0; kernelnames[i] != NULL; i++)
       {
 	if (stat(kernelnames[i], &stbuf) == -1)
@@ -409,7 +451,7 @@ clock_parms(ptickadj, ptick)
       {
 	msyslog(LOG_ERR, "Clock init couldn't find kernel object file");
       }
-#   endif /* not HAVE_GETBOOTFILE */
+#     endif /* not HAVE_GETBOOTFILE */
     kmem = open("/dev/kmem", O_RDONLY);
     if (kmem < 0)
       {
@@ -419,20 +461,21 @@ clock_parms(ptickadj, ptick)
 	  perror("/dev/kmem");
 #endif
       }
-#  endif /* } not HAVE_KVM_OPEN */
-# endif /* } not HAVE_K_OPEN */
-#endif /* not NOKMEM */
+#    endif /* } not HAVE_KVM_OPEN */
+#   endif /* } not HAVE_K_OPEN */
+#  endif /* not NOKMEM */
   }
-#endif /* not SYS_WINNT */
+# endif /* not SYS_WINNT */
 
   /* Skippy says we need to know TICK before handling TICKADJ */
+  if (got_tick != 1)
   {
-#if defined(HAVE_SYS_TIMEX_H) && defined(HAVE___ADJTIMEX)
+# if defined(HAVE_SYS_TIMEX_H) && defined(HAVE___ADJTIMEX)
     struct timex txc;
-#endif /* HAVE_SYS_TIMEX_H && HAVE___ADJTIMEX */
+# endif /* HAVE_SYS_TIMEX_H && HAVE___ADJTIMEX */
 
-#if !defined(NOKMEM) && defined(N_TICK)
-# ifdef HAVE_K_OPEN
+# if !defined(NOKMEM) && defined(N_TICK)
+#  ifdef HAVE_K_OPEN
     if (K_read(ptick, sizeof(*ptick), nl[N_TICK].n_value) != sizeof(*ptick))
       {
 	msyslog(LOG_ERR, "K_read tick failed");
@@ -441,8 +484,8 @@ clock_parms(ptickadj, ptick)
       {
 	if (*ptick) ++got_tick;
       }
-# else /* not HAVE_K_OPEN */
-#  ifdef HAVE_KVM_OPEN
+#  else /* not HAVE_K_OPEN */
+#   ifdef HAVE_KVM_OPEN
     if (kvm_read(kd, nl[N_TICK].n_value, (char *)ptick, sizeof(*ptick)) !=
 	sizeof(*ptick))
       {
@@ -452,7 +495,7 @@ clock_parms(ptickadj, ptick)
       {
 	if (*ptick) ++got_tick;
       }
-#  else /* not HAVE_KVM_OPEN */
+#   else /* not HAVE_KVM_OPEN */
     if ((where = nl[N_TICK].n_value) == 0)
       {
 	msyslog(LOG_ERR, "Unknown kernel var <%s>",
@@ -474,7 +517,7 @@ clock_parms(ptickadj, ptick)
 	      }
 	    else
 	      {
-#   ifdef NLIST_EXTRA_INDIRECTION
+#    ifdef NLIST_EXTRA_INDIRECTION
 		/*
 		 * Aix requires one more round of indirection
 		 * if storage class a pointer.
@@ -500,21 +543,21 @@ clock_parms(ptickadj, ptick)
 			  }
 		      }
 		  }
-#   else /* not NLIST_EXTRA_INDIRECTION */
+#    else /* not NLIST_EXTRA_INDIRECTION */
 		if (*ptick) ++got_tick;
-#   endif /* not NLIST_EXTRA_INDIRECTION */
+#    endif /* not NLIST_EXTRA_INDIRECTION */
 	      }
 	  }
       }
-#  endif /* not HAVE_KVM_OPEN */
-# endif /* not HAVE_K_OPEN */
-# ifdef TICK_NANO
+#   endif /* not HAVE_KVM_OPEN */
+#  endif /* not HAVE_K_OPEN */
+#  ifdef TICK_NANO
     if (got_tick)
       {
 	*ptick /= 1000;
       }
-# endif /* TICK_NANO */
-#endif /* not NOKMEM && N_TICK */
+#  endif /* TICK_NANO */
+# endif /* not NOKMEM && N_TICK */
 
     if (!got_tick && default_tick)
       {
@@ -522,21 +565,21 @@ clock_parms(ptickadj, ptick)
 	if (*ptick) ++got_tick;
       }
 
-#ifdef PRESET_TICK
+# ifdef PRESET_TICK
     if (!got_tick)
       {
-# if defined(HAVE_SYS_TIMEX_H) && defined(HAVE___ADJTIMEX)
-#  ifdef MOD_OFFSET
+#  if defined(HAVE_SYS_TIMEX_H) && defined(HAVE___ADJTIMEX)
+#   ifdef MOD_OFFSET
 	txc.modes = 0;
-#  else
+#   else
 	txc.mode = 0;
-#  endif
+#   endif
 	__adjtimex(&txc);
-# endif /* HAVE_SYS_TIMEX_H && HAVE___ADJTIMEX */
+#  endif /* HAVE_SYS_TIMEX_H && HAVE___ADJTIMEX */
 	*ptick = (u_long) PRESET_TICK;
 	if (*ptick) ++got_tick;
       }
-#endif  /* PRESET_TICK */
+# endif  /* PRESET_TICK */
 
     if (got_tick != 1)
       {
@@ -548,8 +591,9 @@ clock_parms(ptickadj, ptick)
   }
 
   /* Skippy says we need to know TICK before handling TICKADJ */
+  if (got_tickadj != 1)
   {
-#if !defined(NOKMEM) && defined(N_TICKADJ)
+# if !defined(NOKMEM) && defined(N_TICKADJ)
     if (nl[N_TICKADJ].n_value == 0)
       {
 	msyslog(LOG_ERR, "Unknown kernel variable <%s>",
@@ -557,7 +601,7 @@ clock_parms(ptickadj, ptick)
       }
     else
       {
-# ifdef HAVE_K_OPEN
+#  ifdef HAVE_K_OPEN
 	if (K_read(ptickadj, sizeof(*ptickadj), nl[N_TICKADJ].n_value) !=
 	    sizeof(*ptickadj))
 	  {
@@ -567,8 +611,8 @@ clock_parms(ptickadj, ptick)
 	  {
 	    if (*ptickadj) ++got_tickadj;
 	  }
-# else /* not HAVE_K_OPEN */
-#  ifdef HAVE_KVM_OPEN
+#  else /* not HAVE_K_OPEN */
+#   ifdef HAVE_KVM_OPEN
 	if (kvm_read(kd, nl[N_TICKADJ].n_value, (char *)ptickadj, sizeof(*ptickadj)) !=
 	    sizeof(*ptickadj))
 	  {
@@ -578,7 +622,7 @@ clock_parms(ptickadj, ptick)
 	  {
 	    if (*ptickadj) ++got_tickadj;
 	  }
-#  else /* not HAVE_KVM_OPEN */
+#   else /* not HAVE_KVM_OPEN */
 	if ((where = nl[N_TICKADJ].n_value) == 0)
 	  {
 	    msyslog(LOG_ERR, "Unknown kernel var <%s>",
@@ -601,7 +645,7 @@ clock_parms(ptickadj, ptick)
 		  }
 		else
 		  {
-#   ifdef NLIST_EXTRA_INDIRECTION
+#    ifdef NLIST_EXTRA_INDIRECTION
 		    /*
 		     * Aix requires one more round of indirection
 		     * if storage class a pointer.
@@ -627,17 +671,17 @@ clock_parms(ptickadj, ptick)
 			      }
 			  }
 		      }
-#   else /* not NLIST_EXTRA_INDIRECTION */
+#    else /* not NLIST_EXTRA_INDIRECTION */
 		    if (*ptickadj) ++got_tickadj;
-#   endif /* not NLIST_EXTRA_INDIRECTION */
+#    endif /* not NLIST_EXTRA_INDIRECTION */
 		  }
 	      }
 	  }
-#  endif /* not HAVE_KVM_OPEN */
-# endif /* not HAVE_K_OPEN */
+#   endif /* not HAVE_KVM_OPEN */
+#  endif /* not HAVE_K_OPEN */
       }
 
-# ifdef TICKADJ_NANO
+#  ifdef TICKADJ_NANO
     if (got_tickadj)
       {
 	*ptickadj /= 1000;
@@ -646,21 +690,21 @@ clock_parms(ptickadj, ptick)
 	    *ptickadj = 1;
 	  }
       }
-# endif /* TICKADJ_NANO */
-# ifdef SCO5_TICKADJ
+#  endif /* TICKADJ_NANO */
+#  ifdef SCO5_TICKADJ
     if (got_tickadj)
       {
 	*ptickadj /= (1000 * hz);
       }
-# else /* not SCO5_TICKADJ */
-#  ifdef SCO3_TICKADJ
+#  else /* not SCO5_TICKADJ */
+#   ifdef SCO3_TICKADJ
     if (got_tickadj)
       {
 	*ptickadj *= (10000 / hz);
       }
-#  endif /* SCO3_TICKADJ */
-# endif/* not SCO5_TICKADJ */
-#endif /* not NOKMEM && N_TICKADJ */
+#   endif /* SCO3_TICKADJ */
+#  endif/* not SCO5_TICKADJ */
+# endif /* not NOKMEM && N_TICKADJ */
 
     if (!got_tickadj && default_tickadj)
       {
@@ -683,25 +727,25 @@ clock_parms(ptickadj, ptick)
       }
   }
 
-#ifndef NOKMEM
-# ifdef HAVE_K_OPEN
+# ifndef NOKMEM
+#  ifdef HAVE_K_OPEN
   (void) K_close();
-# else /* not HAVE_K_OPEN */
-#  ifdef HAVE_KVM_OPEN
+#  else /* not HAVE_K_OPEN */
+#   ifdef HAVE_KVM_OPEN
   if (kvm_close(kd) < 0)
     {
       msyslog(LOG_ERR, "kvm_close failed");
       exit(3);
     }
-#  else /* not HAVE_KVM_OPEN */
+#   else /* not HAVE_KVM_OPEN */
   close(kmem);
-#  endif /* not HAVE_KVM_OPEN */
-# endif /* not HAVE_K_OPEN */
-#endif /* not NOKMEM */
+#   endif /* not HAVE_KVM_OPEN */
+#  endif /* not HAVE_K_OPEN */
+# endif /* not NOKMEM */
 
-#ifdef	DEBUG
+# ifdef	DEBUG
   if (debug)
     printf("tick = %ld, tickadj = %ld, hz = %d\n", *ptick, *ptickadj, hz);
-#endif
+# endif
 }
 #endif /* not VMS */

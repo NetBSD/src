@@ -257,7 +257,7 @@ filegen_open(gen, newid)
 
 			/* Windows NT does not support file links -Greg Schueman 1/18/97 */
 			
-#if !defined(VMS) && !defined(SYS_WINNT)
+#if !defined(VMS) && !defined(SYS_WINNT) && !defined (SYS_VXWORKS)
 			if (link(filename, basename) != 0) {
 				if (errno != EEXIST)
 #else

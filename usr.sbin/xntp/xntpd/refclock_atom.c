@@ -172,6 +172,10 @@ atom_start(unit, peer)
 	register struct atomunit *up;
 	struct refclockproc *pp;
 
+#ifdef	DEBUG
+	if (debug > 0)
+		printf("atom_start: unit %d\n", unit);
+#endif
 	/*
 	 * Allocate and initialize unit structure
 	 */
@@ -218,6 +222,10 @@ atom_shutdown(unit, peer)
 	register struct atomunit *up;
 	struct refclockproc *pp;
 
+#ifdef	DEBUG
+	if (debug > 0)
+		printf("atom_shutdown: unit %d\n", unit);
+#endif
 	pp = peer->procptr;
 	up = (struct atomunit *)pp->unitptr;
 
@@ -244,6 +252,10 @@ pps_sample(tsr)
 	int i;
 	l_fp lftemp;		/* l_fp temps */
 
+#ifdef	DEBUG
+	if (debug > 2)
+		printf("pps_sample: pollcnt %d\n", up->pollcnt);
+#endif
 	/*
 	 * This routine is called once per second by an auxilliary
 	 * routine in another driver. It saves the sign-extended
@@ -296,6 +308,11 @@ atom_pps(peer)
 	pp = peer->procptr;
 	up = (struct atomunit *)pp->unitptr;
 
+#ifdef	DEBUG
+	if (debug > 3)
+		printf("atom_pps: pollcnt %d, fdpps = %d, serial = %ld\n",
+		       up->pollcnt, fdpps, up->ev.serial);
+#endif
 	/*
 	 * Arm the timer for the next interrupt
 	 */
@@ -352,8 +369,13 @@ atom_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct atomunit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX,
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX,
 	    &pp->lastrec);
+#ifdef	DEBUG
+	if (debug > 2)
+		printf("atom_receive: pollcnt %d, lastrec %ld\n",
+		       up->pollcnt, pp->lastrec);
+#endif
 
 	/*
 	 * Save the timestamp for billboards. Sign-extend the fraction
@@ -403,6 +425,10 @@ atom_poll(unit, peer)
 	l_fp off[MAXSTAGE];
 	u_fp disp;
 
+#ifdef	DEBUG
+	if (debug > 2)
+		printf("atom_poll: unit %d\n", unit);
+#endif
 	/*
 	 * At each poll we check for timeout. At the first timeout we
 	 * test to see if the LDISC_PPS discipline is present and, if
@@ -436,6 +462,7 @@ atom_poll(unit, peer)
 				refclock_report(peer, CEVNT_FAULT);
 				return;
 			}
+			fdpps = fd;	/* Linux hack!!! */
 			pp->io.clock_recv = atom_receive;
 			pp->io.srcclock = (caddr_t)peer;
 			pp->io.datalen = 0;
