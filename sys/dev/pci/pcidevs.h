@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.636 2004/07/27 00:13:11 rumble Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.637 2004/07/27 01:01:17 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.635 2004/07/27 00:12:10 rumble Exp 
+ *	NetBSD: pcidevs,v 1.636 2004/07/27 01:01:00 christos Exp 
  */
 
 /*
@@ -1209,6 +1209,7 @@
 #define	PCI_PRODUCT_COMPAQ_CSA5i	0x4080		/* Smart Array 5i */
 #define	PCI_PRODUCT_COMPAQ_CSA532	0x4082		/* Smart Array 532 */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
+#define	PCI_PRODUCT_COMPAQ_ASMC	0xa0f0		/* Advanced Systems Management Controller */
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
 #define	PCI_PRODUCT_COMPAQ_USB_MEDIAGX	0xa0f8		/* USB Controller */
 #define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
