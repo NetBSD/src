@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.10 1998/12/09 03:41:42 mrg Exp $	*/
+/*	$NetBSD: utils.c,v 1.11 2000/03/27 17:07:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.10 1998/12/09 03:41:42 mrg Exp $");
+__RCSID("$NetBSD: utils.c,v 1.11 2000/03/27 17:07:23 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ DispPkt(rconn, direct)
 	/* display packet timestamp */
 	tmp = localtime((time_t *)&rconn->tstamp.tv_sec);
 	fprintf(DbgFp, "%02d:%02d:%02d.%06ld   ", tmp->tm_hour, tmp->tm_min,
-	        tmp->tm_sec, rconn->tstamp.tv_usec);
+	        tmp->tm_sec, (long int)rconn->tstamp.tv_usec);
 
 	/* display src or dst addr and information about network interface */
 	fprintf(DbgFp, "Addr: %s   Intf: %s\n", EnetStr(rconn), IntfName);

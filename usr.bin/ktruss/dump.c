@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.7 2000/01/26 14:23:41 sommerfeld Exp $	*/
+/*	$NetBSD: dump.c,v 1.8 2000/03/27 17:03:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.7 2000/01/26 14:23:41 sommerfeld Exp $");
+__RCSID("$NetBSD: dump.c,v 1.8 2000/03/27 17:03:26 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -302,8 +302,9 @@ dumpheader(kth, buff, buffsz, lenp)
 			prevtime = kth->ktr_time;
 		} else
 			temp = kth->ktr_time;
-		(void)snprintf(bp, buffsz - *lenp, "%ld.%06ld ", temp.tv_sec,
-			temp.tv_usec);
+		(void)snprintf(bp, buffsz - *lenp, "%ld.%06ld ",
+		    (long int)temp.tv_sec,
+		    (long int)temp.tv_usec);
 		*lenp += strlen(bp);
 	}
 }
