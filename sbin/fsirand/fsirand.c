@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.3 1997/03/14 00:00:26 cgd Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.4 1997/06/24 17:47:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsirand.c,v 1.3 1997/03/14 00:00:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: fsirand.c,v 1.4 1997/06/24 17:47:03 kleink Exp $";
 #endif /* lint */
 
 #include <stdio.h>
@@ -65,7 +65,8 @@ usage()
 {
 	extern char *__progname;
 
-	(void) fprintf(stderr, "%s: [-p] <special>\n", __progname);
+	(void) fprintf(stderr, "%s: [-x <constant>] [-p] <special>\n",
+	    __progname);
 	exit(1);
 }
 
@@ -187,7 +188,7 @@ main(argc, argv)
 			break;
 		case 'x':
 			xorval = strtol(optarg, &ep, 0);
-			if ((xorval = LONG_MIN || xorval == LONG_MAX) &&
+			if ((xorval == LONG_MIN || xorval == LONG_MAX) &&
 			    errno == ERANGE)
 				err(1, "Out of range constant");
 			if (*ep)
