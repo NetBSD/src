@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.18 2003/06/23 13:05:49 agc Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.19 2003/07/14 09:38:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.18 2003/06/23 13:05:49 agc Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.19 2003/07/14 09:38:14 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -71,10 +71,11 @@ mixer_devinfo_t *infos;
 static char *
 catstr(char *p, char *q)
 {
-	char *r = malloc(strlen(p) + strlen(q) + 2);
-	strcpy(r, p);
-	strcat(r, ".");
-	strcat(r, q);
+	char *r;
+
+	asprintf(&r, "%s.%s", p, q);
+	if (!r)
+		err(1, "malloc");
 	return r;
 }
 
