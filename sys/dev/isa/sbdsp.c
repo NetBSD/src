@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.82 1998/08/10 00:20:39 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.83 1998/08/10 01:25:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -537,6 +537,23 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	if (model > SB_16) 
 		model = SB_16;	/* later models work like SB16 */
 
+	/*
+	 * Prior to the SB16, we have only one clock, so make the sample
+	 * rates match.
+	 */
+	if (!ISSB16CLASS(sc) &&
+	    play->sample_rate != rec->sample_rate &&
+	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+		if (setmode == AUMODE_PLAY) {
+			rec->sample_rate = play->sample_rate;
+			setmode |= AUMODE_RECORD;
+		} else if (setmode == AUMODE_RECORD) {
+			play->sample_rate = rec->sample_rate;
+			setmode |= AUMODE_PLAY;
+		} else
+			return (EINVAL);
+	}
+
 	/* Set first record info, then play info */
 	for (mode = AUMODE_RECORD; mode != -1; 
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -673,6 +690,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			 p->encoding, tc, m->cmd, bmode, m->cmdchan, swcode, factor));
 
 	}
+
 	/*
 	 * XXX
 	 * Should wait for chip to be idle.
@@ -2214,7 +2232,7 @@ sbdsp_get_props(addr)
 	void *addr;
 {
 	struct sbdsp_softc *sc = addr;
-	return AUDIO_PROP_MMAP | 
+	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	       (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
 
