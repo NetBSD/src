@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.11 1997/10/19 01:46:36 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.11.2.1 1998/02/07 05:40:35 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -189,6 +189,7 @@ int nfsrv_access __P((struct vnode *, int, struct ucred *, int, struct proc *,
 int nfs_connect __P((struct nfsmount *, struct nfsreq *));
 int nfs_reconnect __P((struct nfsreq *));
 void nfs_disconnect __P((struct nfsmount *));
+void nfs_safedisconnect __P((struct nfsmount *));
 int nfs_send __P((struct socket *, struct mbuf *, struct mbuf *,
 		  struct nfsreq *));
 int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **));
@@ -204,7 +205,6 @@ int nfs_sndlock __P((int *, struct nfsreq *));
 void nfs_sndunlock __P((int *));
 int nfs_rcvlock __P((struct nfsreq *));
 void nfs_rcvunlock __P((int *));
-void nfs_realign __P((struct mbuf *, int));
 int nfs_getreq __P((struct nfsrv_descript *, struct nfsd *, int));
 int nfs_msg __P((struct proc *, char *, char *));
 void nfsrv_rcv __P((struct socket *, caddr_t, int));
