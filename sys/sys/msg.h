@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.11 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: msg.h,v 1.12 2000/03/28 05:14:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct msginfo {
 				   (see notes above) */
 		msgseg;		/* number of message segments */
 };
-struct msginfo	msginfo;
+extern struct msginfo msginfo;
 
 #ifndef MSGSSZ
 #define MSGSSZ	8		/* Each segment must be 2^N long */
