@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.15 2000/05/13 15:22:18 mycroft Exp $
+.\"     $NetBSD: raid.4,v 1.15.4.1 2000/11/03 01:21:21 tv Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,9 +135,12 @@ auto-configuration of RAID sets.  A RAID set can be flagged as
 auto-configurable, in which case it will be configured automatically
 during the kernel boot process.  RAID filesystems which are
 automatically configured are also eligible to be the root filesystem.
-While there is no support for booting directly from a RAID set, it is
-possible to boot from a small partition which contains a kernel, and
-have the root filesystem on a RAID set.  See
+There is currently only limited support (alpha and pmax architectures)
+for booting a kernel directly from a RAID 1 set, and no support for
+booting from any other RAID sets.  To use a RAID set as the root
+filesystem, a kernel is usually obtained from a small non-RAID
+partition, after which any auto-configuring RAID set can be used for the
+root filesystem.  See
 .Xr raidctl 8
 for more information on auto-configuration of RAID sets.
 .Pp
