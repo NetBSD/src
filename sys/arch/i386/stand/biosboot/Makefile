@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2000/05/13 19:58:02 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.30 2000/05/21 16:29:14 jhawk Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -57,7 +57,7 @@ CPPFLAGS+= -DPASS_BIOSGEOM
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
-SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
+SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 
 .if (${BASE} == "biosboot")
