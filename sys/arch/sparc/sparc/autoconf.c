@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 1996/05/18 12:35:18 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.57 1996/05/19 04:12:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1710,6 +1710,8 @@ romgetcursoraddr(rowp, colp)
 void
 romhalt()
 {
+	if (CPU_ISSUN4COR4M)
+		*promvec->pv_synchook = NULL;
 
 	promvec->pv_halt();
 	panic("PROM exit failed");
@@ -1719,6 +1721,8 @@ void
 romboot(str)
 	char *str;
 {
+	if (CPU_ISSUN4COR4M)
+		*promvec->pv_synchook = NULL;
 
 	promvec->pv_reboot(str);
 	panic("PROM boot failed");
