@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.7.4.1 1999/06/21 23:16:22 perry Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.7.4.2 1999/09/05 15:18:52 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.7.4.1 1999/06/21 23:16:22 perry Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.7.4.2 1999/09/05 15:18:52 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ main(argc, argv)
 	args.gmapdata = gmapdata;
 
 	if (mount(MOUNT_UMAP, argv[1], mntflags, &args))
-		err(1, "%s", "");
+		err(1, "%s on %s", source, argv[1]);
 	exit(0);
 }
 
