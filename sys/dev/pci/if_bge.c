@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.45 2003/08/22 03:03:20 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.46 2003/08/22 03:32:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.45 2003/08/22 03:03:20 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.46 2003/08/22 03:32:35 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.45 2003/08/22 03:03:20 jonathan Exp $")
 
 #include <uvm/uvm_extern.h>
 
+#define ETHER_MIN_NOPAD (ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
+
 int bge_probe(struct device *, struct cfdata *, void *);
 void bge_attach(struct device *, struct device *, void *);
 void bge_release_resources(struct bge_softc *);
@@ -132,6 +134,7 @@ void bge_rxeof(struct bge_softc *);
 void bge_tick(void *);
 void bge_stats_update(struct bge_softc *);
 int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
+static __inline int bge_cksum_pad(struct mbuf *pkt);
 static __inline int bge_compact_dma_runt(struct mbuf *pkt);
 
 int bge_intr(void *);
@@ -2472,18 +2475,23 @@ bge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0) {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-#if 0	/* XXX appears to be broken */
-			if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
-				m->m_pkthdr.csum_data =
-				    cur_rx->bge_tcp_udp_csum;
-				m->m_pkthdr.csum_flags |=
-				    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_DATA);
-			}
-#endif
+		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+
+		if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+		/*
+		 * Rx transport checksum-offload may also
+		 * have bugs with packets which, when transmitted,
+		 * were `runts' requiring padding.
+		 */
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM &&
+		    (/* (sc->_bge_quirks & BGE_QUIRK_SHORT_CKSUM_BUG) == 0 ||*/
+		     m->m_pkthdr.len >= ETHER_MIN_NOPAD)) {
+			m->m_pkthdr.csum_data =
+			    cur_rx->bge_tcp_udp_csum;
+			m->m_pkthdr.csum_flags |=
+			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
+			     M_CSUM_DATA|M_CSUM_NO_PSEUDOHDR);
 		}
 
 		/*
@@ -2751,6 +2759,59 @@ bge_stats_update(sc)
 #endif
 }
 
+/*
+ * Pad outbound frame to ETHER_MIN_NOPAD for an unusual reason.
+ * The bge hardware will pad out Tx runts to ETHER_MIN_NOPAD,
+ * but when such padded frames employ the  bge IP/TCP checksum offload,
+ * the hardware checksum assist gives incorrect results (possibly
+ * from incorporating its own padding into the UDP/TCP checksum; who knows).
+ * If we pad such runts with zeros, the onboard checksum comes out correct.
+ */
+static __inline int
+bge_cksum_pad(struct mbuf *pkt)
+{
+	struct mbuf *last = NULL;
+	int padlen;
+
+	padlen = ETHER_MIN_NOPAD - pkt->m_pkthdr.len;
+
+	/* if there's only the packet-header and we can pad there, use it. */
+	if (pkt->m_pkthdr.len == pkt->m_len &&
+	    !M_READONLY(pkt) && M_TRAILINGSPACE(pkt) >= padlen) {
+		last = pkt;
+	} else {
+		/*
+		 * Walk packet chain to find last mbuf. We will either
+		 * pad there, or append a new mbuf and pad it 
+		 * (thus perhaps avoiding the bcm5700 dma-min bug).
+		 */
+		for (last = pkt; last->m_next != NULL; last = last->m_next) {
+	      	       (void) 0; /* do nothing*/
+		}
+
+		/* `last' now points to last in chain. */
+		if (!M_READONLY(last) && M_TRAILINGSPACE(last) >= padlen) {
+			(void) 0; /* we can pad here, in-place. */
+		} else {
+			/* Allocate new empty mbuf, pad it. Compact later. */
+			struct mbuf *n;
+			MGET(n, M_DONTWAIT, MT_DATA);
+			n->m_len = 0;
+			last->m_next = n;
+			last = n;
+		}
+	}
+
+#ifdef DEBUG
+	  KASSERT(M_WRITABLE(last), ("to-pad mbuf not writeable\n"));
+	  KASSERT(M_TRAILINGSPACE(last) >= padlen, ("insufficient space to pad\n"));
+#endif
+	/* Now zero the pad area, to avoid the bge cksum-assist bug */
+	memset(mtod(last, caddr_t) + last->m_len, 0, padlen);
+	last->m_len += padlen;
+	pkt->m_pkthdr.len += padlen;
+	return 0;
+}
 
 /*
  * Compact outbound packets to avoid bug with DMA segments less than 8 bytes.
@@ -2896,6 +2957,24 @@ bge_encap(sc, m_head, txidx)
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 	}
 
+	/* 
+	 * If we were asked to do an outboard checksum, and the NIC
+	 * has the bug where it sometimes adds in the Ethernet padding,
+	 * explicitly pad with zeros so the cksum will be correct either way.
+	 * (For now, do this for all chip versions, until newer
+	 * are confirmed to not require the workaround.)
+	 */
+	if ((csum_flags & BGE_TXBDFLAG_TCP_UDP_CSUM) == 0 ||
+#ifdef notyet
+	    (sc->bge_quirks & BGE_QUIRK_SHORT_CKSUM_BUG) == 0 ||
+#endif	    
+	    m_head->m_pkthdr.len >= ETHER_MIN_NOPAD)
+		goto check_dma_bug;
+
+	if (bge_cksum_pad(m_head) != 0)
+	    return ENOBUFS;
+
+check_dma_bug:
 	if (!(sc->bge_quirks & BGE_QUIRK_5700_SMALLDMA))
 		goto doit;
 	/*
