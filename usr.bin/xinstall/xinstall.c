@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.60 2001/11/22 23:27:38 dillo Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.61 2001/11/23 16:14:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,20 +43,21 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.60 2001/11/22 23:27:38 dillo Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.61 2001/11/23 16:14:51 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <libgen.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -98,14 +99,18 @@ char	*suffix = BACKUP_SUFFIX;
 
 void	backup(const char *);
 void	copy(int, char *, int, char *, off_t);
+int	do_link(char *, char *);
+void	do_symlink(char *, char *);
 void	install(char *, char *, u_int);
 void	install_dir(char *, u_int);
 int	main(int, char *[]);
 void	makelink(char *, char *);
+void	metadata_log(const char *, const char *, struct timeval *, const char *);
 int	parseid(char *, id_t *);
 void	strip(char *);
-void	metadata_log(const char *, const char *, struct timeval *, const char *);
 void	usage(void);
+char   *xbasename(char *);
+char   *xdirname(char *);
 
 int
 main(int argc, char *argv[])
@@ -138,6 +143,7 @@ main(int argc, char *argv[])
 					numberedbackup = 1;
 			}
 			/* fall through; -B implies -b */
+			/*FALLTHROUGH*/
 		case 'b':
 			dobackup = 1;
 			break;
@@ -178,7 +184,7 @@ main(int argc, char *argv[])
 					break;
 				default:
 					errx(1, "%c: invalid link type", *p);
-					break;
+					/* NOTREACHED */
 				}
 			break;
 		case 'm':
@@ -204,6 +210,7 @@ main(int argc, char *argv[])
 			if (stripArgs == NULL)
 				errx(1, "%s", strerror(ENOMEM));
 			/* fall through; -S implies -s */
+			/*FALLTHROUGH*/
 		case 's':
 			dostrip = 1;
 			break;
@@ -281,13 +288,17 @@ main(int argc, char *argv[])
 		usage();
 
 	if (!no_target) {
-		if (stat(*argv, &from_sb))
-			err(1, "%s", *argv);
-		if (!S_ISREG(to_sb.st_mode))
-			errx(1, "%s: not a regular file", to_name);
-		if (!dolink && to_sb.st_dev == from_sb.st_dev &&
-		    to_sb.st_ino == from_sb.st_ino)
-			errx(1, "%s and %s are the same file", *argv, to_name);
+		/* makelink() handles checks for links */
+		if (!dolink) {
+			if (stat(*argv, &from_sb))
+				err(1, "%s", *argv);
+			if (!S_ISREG(to_sb.st_mode))
+				errx(1, "%s: not a regular file", to_name);
+			if (to_sb.st_dev == from_sb.st_dev &&
+			    to_sb.st_ino == from_sb.st_ino)
+				errx(1, "%s and %s are the same file", *argv,
+				    to_name);
+		}
 		/*
 		 * Unlink now... avoid ETXTBSY errors later.  Try and turn
 		 * off the append/immutable bits -- if we fail, go ahead,
@@ -323,6 +334,63 @@ parseid(char *name, id_t *id)
 }
 
 /*
+ * do_link --
+ *	make a hard link, obeying dorename if set
+ *	return -1 on failure
+ */
+int
+do_link(char *from_name, char *to_name)
+{
+	char tmpl[MAXPATHLEN];
+	int ret;
+
+	if (dorename) {
+		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
+		    xdirname(to_name));
+		if (mktemp(tmpl) == NULL)
+			err(1, "%s", tmpl);
+		ret = link(from_name, tmpl);
+		if (ret == 0) {
+			ret = rename(tmpl, to_name);
+			if (ret < 0)
+				/* remove temporary link before exiting */
+				(void)unlink(tmpl);
+		}
+		return (ret);
+	} else
+		return (link(from_name, to_name));
+}
+
+/*
+ * do_symlink --
+ *	make a symbolic link, obeying dorename if set
+ *	exit on failure
+ */
+void
+do_symlink(char *from_name, char *to_name)
+{
+	char tmpl[MAXPATHLEN];
+
+	if (dorename) {
+		(void)snprintf(tmpl, sizeof(tmpl), "%s/inst.XXXXXX",
+		    xdirname(to_name));
+		if (mktemp(tmpl) == NULL)
+			err(1, "%s", tmpl);
+
+		if (symlink(from_name, tmpl) == -1)
+			err(1, "symlink %s -> %s", from_name, tmpl);
+		if (rename(tmpl, to_name) == -1) {
+			/* remove temporary link before exiting */
+			(void)unlink(tmpl);
+			err(1, "%s: rename", to_name);
+		}
+	} else {
+		if (symlink(from_name, to_name) == -1)
+			err(1, "symlink %s -> %s", from_name, to_name);
+	}
+}
+
+/*
  * makelink --
  *	make a link from source to destination
  */
@@ -333,7 +401,7 @@ makelink(char *from_name, char *to_name)
 
 	/* Try hard links first */
 	if (dolink & (LN_HARD|LN_MIXED)) {
-		if (link(from_name, to_name) == -1) {
+		if (do_link(from_name, to_name) == -1) {
 			if ((dolink & LN_HARD) || errno != EXDEV)
 				err(1, "link %s -> %s", from_name, to_name);
 		}
@@ -347,21 +415,34 @@ makelink(char *from_name, char *to_name)
 	if (dolink & LN_ABSOLUTE) {
 		/* Convert source path to absolute */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s", src);
-		if (symlink(src, to_name) == -1)
-			err(1, "symlink %s -> %s", src, to_name);
+			err(1, "%s", from_name);
+		do_symlink(src, to_name);
 		metadata_log(to_name, "link", NULL, src);
 		return;
 	}
 
 	if (dolink & LN_RELATIVE) {
-		char *s, *d;
+		char *cp, *d, *s;
 
 		/* Resolve pathnames */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s", src);
-		if (realpath(to_name, dst) == NULL)
-			err(1, "%s", dst);
+			err(1, "%s", from_name);
+
+		/*
+		 * The last component of to_name may be a symlink,
+		 * so use realpath to resolve only the directory.
+		 */
+		cp = dirname(to_name);
+		if (realpath(cp, dst) == NULL)
+			err(1, "%s", cp);
+		/* .. and add the last component */
+		if (strcmp(dst, "/") != 0) {
+			if (strlcat(dst, "/", sizeof(dst)) > sizeof(dst))
+				errx(1, "resolved pathname too long");
+		}
+		cp = xbasename(to_name);
+		if (strlcat(dst, cp, sizeof(dst)) > sizeof(dst))
+			errx(1, "resolved pathname too long");
 
 		/* trim common path components */
 		for (s = src, d = dst; *s == *d; s++, d++)
@@ -372,12 +453,11 @@ makelink(char *from_name, char *to_name)
 		/* count the number of directories we need to backtrack */
 		for (++d, lnk[0] = '\0'; *d; d++)
 			if (*d == '/')
-				(void) strcat(lnk, "../");
+				(void)strcat(lnk, "../");
 
-		(void) strcat(lnk, ++s);
+		(void)strcat(lnk, ++s);
 
-		if (symlink(lnk, dst) == -1)
-			err(1, "symlink %s -> %s", lnk, dst);
+		do_symlink(lnk, dst);
 		metadata_log(dst, "link", NULL, lnk);
 		return;
 	}
@@ -386,8 +466,7 @@ makelink(char *from_name, char *to_name)
 	 * If absolute or relative was not specified, 
 	 * try the names the user provided
 	 */
-	if (symlink(from_name, to_name) == -1)
-		err(1, "symlink %s -> %s", from_name, to_name);
+	do_symlink(from_name, to_name);
 	metadata_log(to_name, "link", NULL, from_name);
 }
 
@@ -432,23 +511,10 @@ install(char *from_name, char *to_name, u_int flags)
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
 	if (dorename) {
-		char *ptr, c, *dir;
-
-		if ((ptr = strrchr(to_name, '/')) != NULL) {
-			c = *++ptr;
-			*ptr = '\0';
-			dir = to_name;
-		} else {
-			c = '\0';	/* pacify gcc */
-			dir = tmpl;
-			*dir = '\0';
-		}
-		(void)snprintf(tmpl, sizeof(tmpl), "%sinst.XXXXXX", dir);
-		if (ptr)
-			*ptr = c;
+		(void)snprintf(tmpl, sizeof(tmpl), "%sinst.XXXXXX",
+		    xdirname(to_name));
 		oto_name = to_name;
 		to_name = tmpl;
-
 	} else {
 		oto_name = NULL;	/* pacify gcc */
 		if (dobackup)
@@ -458,7 +524,7 @@ install(char *from_name, char *to_name, u_int flags)
 	}
 
 	if (dolink) {
-		makelink(from_name, to_name);
+		makelink(from_name, dorename ? oto_name : to_name);
 		return;
 	}
 
@@ -629,6 +695,7 @@ strip(char *to_name)
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "vfork: %s", strerror(serrno));
+		/*NOTREACHED*/
 	case 0:
 		stripprog = getenv("STRIP");
 		if (stripprog == NULL)
@@ -655,6 +722,7 @@ strip(char *to_name)
 
 		warn("%s", stripprog);
 		_exit(1);
+		/*NOTREACHED*/
 	default:
 		if (wait(&status) == -1 || status)
 			(void)unlink(to_name);
@@ -662,14 +730,15 @@ strip(char *to_name)
 }
 
 /*
- * backup file "to_name" to to_name.suffix
- * if suffix contains a "%", it's taken as a printf(3) pattern
- * used for a numbered backup.
+ * backup --
+ *	backup file "to_name" to to_name.suffix
+ *	if suffix contains a "%", it's taken as a printf(3) pattern
+ *	used for a numbered backup.
  */
 void
 backup(const char *to_name)
 {
-	char	backup[FILENAME_MAX];
+	char	bname[FILENAME_MAX];
 	
 	if (numberedbackup) {
 		/* Do numbered backup */
@@ -680,16 +749,16 @@ backup(const char *to_name)
 		do {
 			(void)snprintf(suffix_expanded, FILENAME_MAX, suffix,
 			    cnt);
-			(void)snprintf(backup, FILENAME_MAX, "%s%s",
-				       to_name, suffix_expanded);
+			(void)snprintf(bname, FILENAME_MAX, "%s%s", to_name,
+			    suffix_expanded);
 			cnt++;
-		} while (access(backup, F_OK)==0); 
+		} while (access(bname, F_OK) == 0); 
 	} else {
 		/* Do simple backup */
-		(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
+		(void)snprintf(bname, FILENAME_MAX, "%s%s", to_name, suffix);
 	}
 	
-	(void)rename(to_name, backup);
+	(void)rename(to_name, bname);
 }
 
 /*
@@ -710,7 +779,6 @@ install_dir(char *path, u_int flags)
                         if (stat(path, &sb)) {
                                 if (errno != ENOENT || mkdir(path, 0777) < 0) {
 					err(1, "%s", path);
-					/* NOTREACHED */
                                 }
                         }
                         if (!(*p = ch))
@@ -772,7 +840,33 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	free(buf);
 }
 
+/*
+ * xbasename --
+ *	libc basename(3) that returns a pointer to a static buffer
+ *	instead of overwriting that passed-in string.
+ */
+char *
+xbasename(char *path)
+{
+	static char tmp[MAXPATHLEN];
 
+	(void)strlcpy(tmp, path, sizeof(tmp));
+	return (basename(tmp));
+}
+
+/*
+ * xdirname --
+ *	libc dirname(3) that returns a pointer to a static buffer
+ *	instead of overwriting that passed-in string.
+ */
+char *
+xdirname(char *path)
+{
+	static char tmp[MAXPATHLEN];
+
+	(void)strlcpy(tmp, path, sizeof(tmp));
+	return (dirname(tmp));
+}
 
 /*
  * usage --
