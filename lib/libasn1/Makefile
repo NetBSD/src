@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.19 2001/12/12 00:51:00 tv Exp $
+# $NetBSD: Makefile,v 1.20 2002/08/19 09:41:27 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/asn1
 
 WARNS?=		1
@@ -100,8 +100,8 @@ SRCS=	der_get.c \
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/asn1		\
-	 -I${.CURDIR}/../../include/heimdal	\
-	 -I${.CURDIR}/../libroken		\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
+	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -DHAVE_CONFIG_H

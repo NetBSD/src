@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.21 2002/04/24 08:18:51 lukem Exp $
+# $NetBSD: Makefile,v 1.22 2002/08/19 09:41:32 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/krb5 ${DIST}/heimdal/doc
 
 WARNS?=		1
@@ -234,7 +234,7 @@ MLINKS=									 \
 	krb5_warn.3			krb5_set_warn_dest.3
 
 krb5-types.h:
-	cp ${.CURDIR}/../../include/heimdal/$@ $@
+	cp ${NETBSDSRCDIR}/include/heimdal/$@ $@
 
 INCSDIR=	/usr/include/krb5
 
@@ -246,8 +246,8 @@ CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/com_err		\
-	 -I${.CURDIR}/../../include/heimdal	\
-	 -I${.CURDIR}/../libroken		\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
+	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 

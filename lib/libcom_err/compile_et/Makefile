@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.12 2002/02/02 06:17:56 tv Exp $
+# $NetBSD: Makefile,v 1.13 2002/08/19 09:41:29 lukem Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 
 .PATH: ${DIST}/heimdal/lib/com_err ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
@@ -20,7 +20,7 @@ BINDIR=		/usr/bin
 LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
 
 HOST_CPPFLAGS+= -I.				\
-	 -I${.CURDIR}/../../../include/heimdal	\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
 	 -I${LIBROKEN}				\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -I${DIST}/heimdal/lib/roken		\
@@ -28,7 +28,7 @@ HOST_CPPFLAGS+= -I.				\
 
 DPSRCS=		print_version.h
 
-make-print-version.lo: ${.CURDIR}/../../../include/heimdal/version.h
+make-print-version.lo: ${NETBSDSRCDIR}/include/heimdal/version.h
 
 make-print-version: make-print-version.lo
 	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 00:51:02 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2002/08/19 09:41:30 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -28,9 +28,9 @@ WARNS=		0
 LIB=		crypto_rc5
 CPPFLAGS+=	-Dlib${LIB} -I. -I${OPENSSLSRC}/crypto
 
-CRYPTODIST=	${.CURDIR}/../../crypto/dist
+CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
-.include "../../crypto/Makefile.openssl"
+.include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 
 .PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/rc5 ${OPENSSLSRC}/crypto/evp
 
