@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.5 2001/07/19 23:55:50 eeh Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -189,13 +189,13 @@ com_ebus_attach(parent, self, aux)
 /* Attach 'em if we got 'em. */
 #if (NKBD > 0)
 	kma.kmta_name = "keyboard";
-	if (getproplen(ea->ea_node, kma.kmta_name) == 0) {
+	if (OF_getproplen(ea->ea_node, kma.kmta_name) == 0) {
 		config_found(self, (void *)&kma, NULL);
 	}
 #endif
 #if (NMS > 0)
 	kma.kmta_name = "mouse";
-	if (getproplen(ea->ea_node, kma.kmta_name) == 0) {
+	if (OF_getproplen(ea->ea_node, kma.kmta_name) == 0) {
 		config_found(self, (void *)&kma, NULL);
 	}
 #endif
