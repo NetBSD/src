@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.9 2003/05/06 11:34:01 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.10 2003/05/07 06:39:08 wiz Exp $	*/
 
 /*
  * Command line editing - common code
@@ -1107,7 +1107,7 @@ x_escape(s, len, putbuf_func)
 	int rval=0;
 
 	for (add = 0, wlen = len; wlen - add > 0; add++) {
-		if (strchr("\\$(){}*&;|<>\"'`", s[add]) || strchr(ifs, s[add])) {
+		if (strchr("\\$(){}*&;|<>\"'`#", s[add]) || strchr(ifs, s[add])) {
 			if (putbuf_func(s, add) != 0) {
 				rval = -1;
 				break;
