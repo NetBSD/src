@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.7 1996/04/12 06:08:01 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.8 1996/07/09 00:54:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -106,7 +106,7 @@ apecs_init(acp)
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
 	REGVAL(EPIC_PCI_BASE_1) = 0;
-	wbflush();
+	alpha_mb();
 
 	/* XXX SGMAP? */
 }

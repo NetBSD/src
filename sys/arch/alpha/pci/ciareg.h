@@ -1,4 +1,4 @@
-/*	$NetBSD: ciareg.h,v 1.4 1996/06/13 18:32:14 cgd Exp $	*/
+/*	$NetBSD: ciareg.h,v 1.5 1996/07/09 00:54:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * Taken from XXX
  */
 
-#define	REGVAL(r)	(*(int32_t *)phystok0seg(r))
+#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_pci.c,v 1.2 1996/04/12 23:37:10 cgd Exp $	*/
+/*	$NetBSD: cia_pci.c,v 1.3 1996/07/09 00:54:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -118,12 +118,12 @@ cia_conf_read(cpv, tag, offset)
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
-		wbflush();
+		alpha_mb();
 		REGVAL(CIA_CSRS + 0x480) = old_haxr2 | 0x1;	/* XXX */
-		wbflush();
+		alpha_mb();
 	}
 
-	datap = (pcireg_t *)phystok0seg(CIA_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -133,9 +133,9 @@ cia_conf_read(cpv, tag, offset)
 		data = *datap;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(CIA_CSRS + 0x480) = old_haxr2;		/* XXX */
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 
@@ -164,12 +164,12 @@ cia_conf_write(cpv, tag, offset, data)
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
-		wbflush();
+		alpha_mb();
 		REGVAL(CIA_CSRS + 0x480) = old_haxr2 | 0x1;	/* XXX */
-		wbflush();
+		alpha_mb();
 	}
 
-	datap = (pcireg_t *)phystok0seg(CIA_PCI_CONF |
+	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
 	    tag << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
@@ -177,9 +177,9 @@ cia_conf_write(cpv, tag, offset, data)
 	*datap = data;
 
 	if (secondary) {
-		wbflush();
+		alpha_mb();
 		REGVAL(CIA_CSRS + 0x480) = old_haxr2;		/* XXX */
-		wbflush();
+		alpha_mb();
 		splx(s);
 	}
 

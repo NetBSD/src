@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1996/06/15 03:55:17 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1996/07/09 00:54:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -200,15 +200,16 @@ alpha_init(pfn, ptb)
 	 * Make sure the instruction and data streams are consistent.
 	 */
 	(void)splhigh();
-	pal_wrfen(0);
+	alpha_pal_wrfen(0);
 	TBIA();
-	IMB();
+	alpha_pal_imb();
 
 	/*
 	 * get address of the restart block, while we the bootstrap
 	 * mapping is still around.
 	 */
-	hwrpb = (struct rpb *) phystok0seg(*(struct rpb **)HWRPB_ADDR);
+	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(
+	    (vm_offset_t)(*(struct rpb **)HWRPB_ADDR));
 
 	/*
 	 * Remember how many cycles there are per microsecond, 
@@ -225,12 +226,12 @@ alpha_init(pfn, ptb)
 	/*
 	 * Point interrupt/exception vectors to our own.
 	 */
-	pal_wrent(XentInt, 0);
-	pal_wrent(XentArith, 1);
-	pal_wrent(XentMM, 2);
-	pal_wrent(XentIF, 3);
-	pal_wrent(XentUna, 4);
-	pal_wrent(XentSys, 5);
+	alpha_pal_wrent(XentInt, 0);
+	alpha_pal_wrent(XentArith, 1);
+	alpha_pal_wrent(XentMM, 2);
+	alpha_pal_wrent(XentIF, 3);
+	alpha_pal_wrent(XentUna, 4);
+	alpha_pal_wrent(XentSys, 5);
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -454,7 +455,8 @@ alpha_init(pfn, ptb)
 	if (cputype == ST_DEC_3000_500 ||
 	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
 		lastusablepage -= btoc(128 * 1024);
-		le_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
+		le_iomem =
+		    (caddr_t)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
 	}
 #endif /* NLE_IOASIC */
 
@@ -462,7 +464,8 @@ alpha_init(pfn, ptb)
 	 * Initialize error message buffer (at end of core).
 	 */
 	lastusablepage -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)phystok0seg(ctob(lastusablepage + 1));
+	msgbufp =
+	    (struct msgbuf *)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
 	msgbufmapped = 1;
 
 	/*
@@ -529,14 +532,14 @@ alpha_init(pfn, ptb)
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
-	pmap_bootstrap((vm_offset_t)v, phystok0seg(ptb << PGSHIFT));
+	pmap_bootstrap((vm_offset_t)v, ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT));
 
 	/*
 	 * Initialize the rest of proc 0's PCB, and cache its physical
 	 * address.
 	 */
 	proc0.p_md.md_pcbpaddr =
-	    (struct pcb *)k0segtophys(&proc0paddr->u_pcb);
+	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vm_offset_t)&proc0paddr->u_pcb);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
@@ -1067,9 +1070,9 @@ sendsig(catcher, sig, mask, code)
 
 	/* save the floating-point state, if necessary, then copy it. */
 	if (p == fpcurproc) {
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		savefpstate(&p->p_addr->u_pcb.pcb_fp);
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 		fpcurproc = NULL;
 	}
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
@@ -1168,7 +1171,8 @@ sys_sigreturn(p, v, retval)
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	p->p_md.md_tf->tf_pc = ksc.sc_pc;
-	p->p_md.md_tf->tf_ps = (ksc.sc_ps | PSL_USERSET) & ~PSL_USERCLR;
+	p->p_md.md_tf->tf_ps =
+	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
 	regtoframe((struct reg *)ksc.sc_regs, p->p_md.md_tf);
 
@@ -1254,7 +1258,7 @@ setregs(p, pack, stack, retval)
 #define FP_RN 2 /* XXX */
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
 	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
-	tfp->tf_ps = PSL_USERSET;
+	tfp->tf_ps = ALPHA_PSL_USERSET;
 	tfp->tf_pc = pack->ep_entry & ~3;
 
 	p->p_md.md_flags & ~MDP_FPUSED;
@@ -1330,7 +1334,7 @@ spl0()
 		do_sir();
 	}
 
-	return (pal_swpipl(PSL_IPL_0));
+	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
 }
 
 /*
@@ -1423,9 +1427,9 @@ microtime(tvp)
 /*
  * Wait "n" microseconds.
  */
-int
+void
 delay(n)
-	int n;
+	unsigned long n;
 {
 	long N = cycles_per_usec * (n);
 
@@ -1489,11 +1493,11 @@ vtophys(vaddr)
 {
 	vm_offset_t paddr;
 
-	if (vaddr < K0SEG_BEGIN) {
+	if (vaddr < ALPHA_K0SEG_BASE) {
 		printf("vtophys: invalid vaddr 0x%lx", vaddr);
 		paddr = vaddr;
-	} else if (vaddr < K0SEG_END)
-		paddr = k0segtophys(vaddr);
+	} else if (vaddr <= ALPHA_K0SEG_END)
+		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
 	else
 		paddr = vatopa(vaddr);
 

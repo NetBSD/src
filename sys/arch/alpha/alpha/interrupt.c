@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 1996/04/23 13:54:32 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6 1996/07/09 00:53:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
 
 #ifdef EVCNT_COUNTERS
 #include <sys/device.h>
@@ -135,7 +136,7 @@ machine_check(framep, logoutp, vec)
 	mc_received = 1;
 
 	logoutp->q1 &= ~LOGOUT_RETRY;		/* XXX: Necessary? */
-	pal_mtpr_mces(0x19);			/* XXX: VMS PAL! */
+	alpha_pal_wrmces(0x19);			/* XXX */
 }
 
 int
@@ -151,7 +152,7 @@ badaddr(addr, size)
 	mc_expected = 1;
 
 	/* Read from the test address, and make sure the read happens. */
-	wbflush();
+	alpha_mb();
 	switch (size) {
 	case sizeof (u_int8_t):
 		rcpt = *(u_int8_t *)addr;
@@ -172,8 +173,8 @@ badaddr(addr, size)
 	default:
 		panic("badaddr: invalid size (%ld)\n", size);
 	}
-	wbflush();
-	pal_draina();
+	alpha_mb();
+	alpha_pal_draina();
 
 	/* disallow further machine checks */
 	mc_expected = 0;
