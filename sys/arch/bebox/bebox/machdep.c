@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1999/04/16 21:47:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1999/04/17 21:16:46 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -316,7 +316,7 @@ initppc(startkernel, endkernel, args, btinfo)
 #endif /* DDB || NIPKDB > 0 */
 		}
 
-	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 	/*
 	 * external interrupt handler install
@@ -428,8 +428,8 @@ install_extint(handler)
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
-	syncicache((void *)&extint_call, sizeof extint_call);
-	syncicache((void *)EXC_EXI, (int)&extsize);
+	__syncicache((void *)&extint_call, sizeof extint_call);
+	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
@@ -890,7 +890,6 @@ sys___sigreturn14(p, v, retval)
 
 /*
  * Machine dependent system variables.
- * None for now.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -905,7 +904,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);
+
 	switch (name[0]) {
+	case CPU_CACHELINE:
+		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
 	default:
 		return (EOPNOTSUPP);
 	}
