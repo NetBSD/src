@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.56 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.56 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.57 2005/03/08 17:29:29 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -527,6 +527,9 @@ unionlookup:
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
+
+		if (cnp->cn_flags & PDIRUNLOCK)
+			dpunlocked = 1;
 
 		if (error != EJUSTRETURN)
 			goto bad;
