@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.17 1999/03/03 00:24:21 hubertf Exp $	*/
+/*	$NetBSD: plist.c,v 1.18 1999/03/15 08:57:12 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.17 1999/03/03 00:24:21 hubertf Exp $");
+__RCSID("$NetBSD: plist.c,v 1.18 1999/03/15 08:57:12 christos Exp $");
 #endif
 #endif
 
@@ -219,8 +219,8 @@ plist_cmd(char *s, char **arg)
 	(void) strcpy(cmd, s);
 	str_lowercase(cmd);
 	for (cp = cmd, sp = s ; *cp ; cp++, sp++) {
-		if (isspace(*cp)) {
-			for (*cp = '\0'; isspace(*sp) ; sp++) {
+		if (isspace((unsigned char)*cp)) {
+			for (*cp = '\0'; isspace((unsigned char)*sp); sp++) {
 			}
 			break;
 		}
@@ -243,7 +243,8 @@ read_plist(package_t *pkg, FILE *fp)
 	int	len;
 
 	while (fgets(pline, FILENAME_MAX, fp) != (char *) NULL) {
-		for (len = strlen(pline); len && isspace(pline[len - 1]) ; ) {
+		for (len = strlen(pline); len &&
+		    isspace((unsigned char)pline[len - 1]); ) {
 			pline[--len] = '\0';
 		}
 		if (len == 0) {
