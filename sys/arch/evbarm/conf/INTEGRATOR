@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.26 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: INTEGRATOR,v 1.27 2004/08/07 10:47:19 rearnsha Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -21,7 +21,7 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	CPU_ARM9	# Support the ARM9TDMI core
 options 	CPU_ARM10	# Support the ARM10 core
 # XXX Should be armv5 for ARM10 processor.
-makeoptions	COPTS="-O2 -march=armv4"
+makeoptions	CPUFLAGS="-march=armv4"
 
 # Architecture options
 

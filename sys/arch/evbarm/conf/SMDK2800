@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.14 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: SMDK2800,v 1.15 2004/08/07 10:47:19 rearnsha Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -27,7 +27,7 @@ options 	NTP		# NTP phase/frequency locked loop
 # CPU options
 
 options 	CPU_ARM9	# Support the ARM9TDMI core
-makeoptions	COPTS="-O2 -march=armv4"
+makeoptions	CPUFLAGS="-march=armv4"
 
 options 	S3C2XX0_XTAL_CLK=6000000	# 6MHz external Xtal
 

@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.9 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: SMDK2410,v 1.10 2004/08/07 10:47:19 rearnsha Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -27,7 +27,7 @@ options 	NTP		# NTP phase/frequency locked loop
 # CPU options
 
 options 	CPU_ARM9	# Support the ARM9TDMI core
-makeoptions	COPTS="-O2 -march=armv4"
+makeoptions	CPUFLAGS="-march=armv4"
 #options 	ARM9_CACHE_WRITE_THROUGH
 
 # Architecture options
