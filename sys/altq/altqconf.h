@@ -1,4 +1,4 @@
-/*	$NetBSD: altqconf.h,v 1.2 2001/05/30 11:57:16 mrg Exp $	*/
+/*	$NetBSD: altqconf.h,v 1.2.14.1 2002/05/16 12:29:27 gehenna Exp $	*/
 
 #if defined(_KERNEL_OPT)
 #include "opt_altq_enabled.h"
@@ -11,7 +11,4 @@
 #define	NALTQ	0
 #endif
 
-cdev_decl(altq);
-
-#define	cdev_altq_init(x,y)	cdev__oci_init(x,y)
 #endif /* _KERNEL_OPT */
