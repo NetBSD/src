@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.14 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.15 2004/04/27 03:49:03 atatat Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.14 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.15 2004/04/27 03:49:03 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.14 2004/03/24 15:34:52 atatat 
 struct sysctlnode netbsd32_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_num = 0,
-	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(netbsd32_root)",
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 };
 
 /*
