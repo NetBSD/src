@@ -1,7 +1,7 @@
-/* $NetBSD: listener.c,v 1.9 2003/06/01 14:07:00 atatat Exp $ */
+/* $NetBSD: listener.c,v 1.10 2003/07/05 15:09:00 martin Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: listener.c,v 1.9 2003/06/01 14:07:00 atatat Exp $");
+__RCSID("$NetBSD: listener.c,v 1.10 2003/07/05 15:09:00 martin Exp $");
 #endif
 
 /*
@@ -519,7 +519,7 @@ void *
 mi_thread_handle_wrapper(arg)
 	void *arg;
 {
-	return (void *) mi_handle_session(arg);
+	return (void *) (intptr_t) mi_handle_session(arg);
 }
 
 /*
