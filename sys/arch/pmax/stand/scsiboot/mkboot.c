@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.7 1999/01/29 05:37:49 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.8 1999/01/30 10:14:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.7 1999/01/29 05:37:49 simonb Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.8 1999/01/30 10:14:45 simonb Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ main(argc, argv)
 	    sizeof(decBootInfo) || close(ofd1) != 0)
 		goto xxboot_err;
 
-	printf("load %x, start %x, len %d, nsectors %d\n", loadAddr, execAddr,
-		length, nsectors);
+	printf("load %x, start %x, len %d, nsectors %d avail %d\n",
+	    loadAddr, execAddr, length, nsectors, (15 * 512) - length);
 
 	/*
 	 * Write the boot code to the bootxx file.
@@ -150,6 +150,8 @@ main(argc, argv)
 	}
 	if (length > 0)
 		printf("Warning: didn't reach end of boot program!\n");
+	if (nsectors > 15)
+		printf("\n!!!!!! WARNING: BOOT PROGRAM TOO BIG !!!!!!!\n\n");
 	exit(0);
 }
 
