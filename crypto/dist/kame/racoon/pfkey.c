@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.94 2000/12/18 01:36:50 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.96 2001/01/10 16:24:57 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1286,7 +1286,7 @@ pk_recvexpire(mhp)
 	proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
 	if (proto_id == ~0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"ERROR: invalid proto_id %d\n", msg->sadb_msg_satype);
+			"invalid proto_id %d\n", msg->sadb_msg_satype);
 		return -1;
 	}
 
@@ -1485,6 +1485,7 @@ pk_recvacquire(mhp)
 		return -1;
 	}
 	iph2[n]->spid = xpl->sadb_x_policy_id;
+	iph2[n]->satype = msg->sadb_msg_satype;
 	iph2[n]->seq = msg->sadb_msg_seq;
 	iph2[n]->status = PHASE2ST_STATUS2;
 
@@ -1938,7 +1939,7 @@ pk_sendeacquire(iph2)
 	newmsg->sadb_msg_version = PF_KEY_V2;
 	newmsg->sadb_msg_type = SADB_ACQUIRE;
 	newmsg->sadb_msg_errno = ENOENT;	/* XXX */
-	newmsg->sadb_msg_satype = ipsecdoi2pfkey_proto(iph2->proposal->head->proto_id);
+	newmsg->sadb_msg_satype = iph2->satype;
 	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
 	newmsg->sadb_msg_reserved = 0;
 	newmsg->sadb_msg_seq = iph2->seq;
