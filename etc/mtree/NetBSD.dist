@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.45 1997/06/26 21:20:19 kleink Exp $
+#	$NetBSD: NetBSD.dist,v 1.46 1997/07/16 23:33:59 phil Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1489,6 +1489,52 @@ nls
 # ./usr/share/nls
 ..
 
+# ./usr/share/sendmail
+sendmail
+
+# ./usr/share/sendmail/domain
+domain
+# ./usr/share/sendmail/domain
+..
+
+# ./usr/share/sendmail/feature
+feature
+# ./usr/share/sendmail/feature
+..
+
+# ./usr/share/sendmail/hack
+hack
+# ./usr/share/sendmail/hack
+..
+
+# ./usr/share/sendmail/m4
+m4
+# ./usr/share/sendmail/m4
+..
+
+# ./usr/share/sendmail/mailer
+mailer
+# ./usr/share/sendmail/mailer
+..
+
+# ./usr/share/sendmail/ostype
+ostype
+# ./usr/share/sendmail/ostype
+..
+
+# ./usr/share/sendmail/sh
+sh
+# ./usr/share/sendmail/sh
+..
+
+# ./usr/share/sendmail/siteconfig
+siteconfig
+# ./usr/share/sendmail/siteconfig
+..
+
+# ./usr/share/sendmail
+..
+
 # ./usr/share/skel
 skel
 # ./usr/share/skel
@@ -1496,7 +1542,7 @@ skel
 
 # ./usr/share/tabset
 tabset
-# ./usr/share/tabset
+# ./Usr/share/tabset
 ..
 
 # ./usr/share/tmac
