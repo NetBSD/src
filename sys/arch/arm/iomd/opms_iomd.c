@@ -1,4 +1,4 @@
-/*	$NetBSD: opms_iomd.c,v 1.6 2003/07/15 00:24:45 lukem Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.7 2004/02/08 13:43:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_iomd.c,v 1.6 2003/07/15 00:24:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_iomd.c,v 1.7 2004/02/08 13:43:52 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ opms_iomd_probe(parent, cf, aux)
 	struct opms_attach_args *pa = aux;
 
 	if (strcmp(pa->pa_name, "opms") == 0)
-		return(1);
+		return(5);
 
 	return(0);
 }

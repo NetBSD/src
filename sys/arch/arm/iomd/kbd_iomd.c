@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.7 2003/07/15 00:24:45 lukem Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.8 2004/02/08 13:43:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.7 2003/07/15 00:24:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.8 2004/02/08 13:43:52 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ kbd_iomd_probe(parent, cf, aux)
 	struct kbd_attach_args *ka = aux;
 
 	if (strcmp(ka->ka_name, "kbd") == 0)
-		return(1);
+		return(5);
 
 	return(0);
 }
