@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.7 1997/02/15 10:02:29 mikel Exp $
+#	$NetBSD: weekly,v 1.8 1997/03/10 09:45:59 mycroft Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -24,7 +24,7 @@ fi
 # before looking there for checked-out files
 
 #if [ -d /usr/src -a \
-#  X"`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" != X ];
+#  -n "`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" ];
 #then
 #	echo "looking for checked out files:"
 #	TDIR=/tmp/_checkout$$
@@ -45,7 +45,7 @@ fi
 #	rm -rf $TDIR
 #fi
 
-if [ X"$clean_uucp" != XNO -a -f /usr/lib/uucp/clean.weekly ]; then
+if [ "$clean_uucp" = YES ] && [ -f /usr/lib/uucp/clean.weekly ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	echo /usr/lib/uucp/clean.weekly | su daemon
@@ -53,7 +53,7 @@ fi
 echo ""
 
 echo ""
-if [ X"$rebuild_locatedb" != XNO -a -f /var/db/locate.database ]; then
+if [ "$rebuild_locatedb" = YES ] && [ -f /var/db/locate.database ]; then
 	echo "Rebuilding locate database:"
 	chmod 644 /var/db/locate.database
 	chown nobody.nobody /var/db/locate.database
