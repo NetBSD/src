@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.55 1999/10/28 09:22:57 jun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.56 1999/10/28 20:00:29 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.54 1999/10/28 09:21:46 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.55 1999/10/28 19:59:31 sommerfeld Exp 
  */
 
 /*-
@@ -64,6 +64,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
+#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
@@ -277,6 +278,10 @@
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
 #define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
+
+#define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BAY_STACK_650	0x804
+#define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
