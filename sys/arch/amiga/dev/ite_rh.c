@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.6 1996/04/21 21:12:00 veego Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.7 1996/04/23 22:53:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -48,8 +48,10 @@
 #include <amiga/dev/grf_rhreg.h>
 #include <amiga/dev/itevar.h>
 
+#ifdef	RETINA_SPEED_HACK
 static void screen_up __P((struct ite_softc *, int, int, int));
 static void screen_down __P((struct ite_softc *, int, int, int));
+#endif
 
 /*
  * grfrh_cnprobe is called when the console is being initialized
@@ -71,6 +73,7 @@ grfrh_cnprobe()
 	return(rv);
 }
 
+
 void
 grfrh_iteinit(gp)
 	struct grf_softc *gp;
@@ -82,6 +85,7 @@ grfrh_iteinit(gp)
 	gp->g_itescroll = rh_scroll;
 	gp->g_itecursor = rh_cursor;
 }
+
 
 void
 rh_init(ip)
@@ -137,7 +141,7 @@ rh_cursor(ip, flag)
 }
 
 
-
+#ifdef	RETINA_SPEED_HACK
 static void
 screen_up(ip, top, bottom, lines)
 	struct ite_softc *ip;
@@ -159,6 +163,7 @@ screen_up(ip, top, bottom, lines)
 	RZ3AlphaErase(ip->grf, 0, bottom - lines + 1, ip->cols, lines);
 }
 
+
 static void
 screen_down (ip, top, bottom, lines)
 	struct ite_softc *ip;
@@ -179,6 +184,8 @@ screen_down (ip, top, bottom, lines)
 	RZ3AlphaCopy(ip->grf, 0, top, 0, top+lines, ip->cols, bottom-top-lines+1);
 	RZ3AlphaErase(ip->grf, 0, top, ip->cols, lines);
 }
+#endif	/* RETINA_SPEED_HACK */
+
 
 void
 rh_deinit(ip)
@@ -208,6 +215,7 @@ rh_putc(ip, c, dy, dx, mode)
 	*fb++ = c; *fb = attr;
 }
 
+
 void
 rh_clear(ip, sy, sx, h, w)
 	struct ite_softc *ip;
@@ -218,6 +226,7 @@ rh_clear(ip, sy, sx, h, w)
 {
 	RZ3AlphaErase (ip->grf, sx, sy, w, h);
 }
+
 
 /*
  * RETINA_SPEED_HACK code seems to work on some boards and on others
@@ -263,7 +272,7 @@ rh_scroll(ip, sy, sx, count, dir)
 		RZ3AlphaErase(ip->grf, ip->cols - count, sy, count, 1);
 	}
 #ifndef	RETINA_SPEED_HACK
-	retina_cursor(ip, !ERASE_CURSOR);
+	rh_cursor(ip, !ERASE_CURSOR);
 #endif
 }
 #endif /* NGRFRH */
