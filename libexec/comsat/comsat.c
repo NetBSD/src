@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.8 1995/05/02 02:05:47 mycroft Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.9 1997/08/25 19:31:47 kleink Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ onalrm(signo)
 				exit(1);
 			}
 		}
-		(void)lseek(uf, (off_t)0, L_SET);
+		(void)lseek(uf, (off_t)0, SEEK_SET);
 		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
 	}
 }
@@ -249,7 +249,7 @@ jkfprintf(tp, name, offset)
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
 
-	(void)fseek(fi, offset, L_SET);
+	(void)fseek(fi, offset, SEEK_SET);
 	/*
 	 * Print the first 7 lines or 560 characters of the new mail
 	 * (whichever comes first).  Skip header crap other than

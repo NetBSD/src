@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.6 1997/06/29 18:44:07 christos Exp $	*/
+/*	$NetBSD: logout.c,v 1.7 1997/08/25 19:31:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.6 1997/06/29 18:44:07 christos Exp $");
+__RCSID("$NetBSD: logout.c,v 1.7 1997/08/25 19:31:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,7 +70,7 @@ logout(line)
 		bzero(ut.ut_name, UT_NAMESIZE);
 		bzero(ut.ut_host, UT_HOSTSIZE);
 		(void)time(&ut.ut_time);
-		(void)lseek(fd, -(off_t)sizeof(UTMP), L_INCR);
+		(void)lseek(fd, -(off_t)sizeof(UTMP), SEEK_CUR);
 		(void)write(fd, &ut, sizeof(UTMP));
 		rval = 1;
 	}

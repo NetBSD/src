@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.25 1997/08/19 17:26:15 mycroft Exp $	*/
+/*	$NetBSD: login.c,v 1.26 1997/08/25 19:31:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.25 1997/08/19 17:26:15 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.26 1997/08/25 19:31:55 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -712,7 +712,7 @@ dolastlog(quiet)
 	int fd;
 
 	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-		(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
+		(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
 		if (!quiet) {
 			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
 			    ll.ll_time != 0) {
@@ -727,7 +727,8 @@ dolastlog(quiet)
 					    (int)sizeof(ll.ll_line),
 					    ll.ll_line);
 			}
-			(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
+			(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)),
+			    SEEK_SET);
 		}
 		memset((void *)&ll, 0, sizeof(ll));
 		(void)time(&ll.ll_time);
