@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.15 2000/03/30 14:45:07 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.16 2000/06/02 20:20:30 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,13 +15,26 @@
  * this driver contributed by Jonathan Stone
  */
 
+#include "sii.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <machine/locore.h>
 
+#if NXSII > 0
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
+
+#include <machine/bus.h>
 #include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
+#else
+#include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
+#endif
 #include <pmax/dev/siireg.h>
 #include <pmax/dev/siivar.h>
 
@@ -49,11 +62,22 @@ static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
 static void	sii_ds_attach __P((struct device *parent, struct device *self,
 		    void *aux));
 
-
+#if NXSII > 0
+struct cfattach xsii_ds_ca = {
+	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
+};
+struct scsipi_device sii_ds_dev = {
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+};
+#else
 extern struct cfattach sii_ds_ca;
 struct cfattach sii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
+#endif
 
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
@@ -107,11 +131,17 @@ sii_ds_attach(parent, self, aux)
 		sc->sii_copyfrombuf = kn230_copyfrombuf;
 	}
 
+	/* Do the common parts of attachment. */
+#if NXSII > 0
+	sc->sc_adapter.scsipi_cmd = sii_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+	siiattach(sc, &sii_ds_dev);
+#else
 	siiattach(sc);
+#endif
 
 	/* tie pseudo-slot to device */
 	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO, siiintr, sc);
-	printf("\n");
 }
 
 
