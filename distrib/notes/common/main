@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.161 2002/03/07 14:46:10 simonb Exp $
+.\"	$NetBSD: main,v 1.162 2002/03/11 07:02:12 itojun Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1217,6 +1217,20 @@ and friends, you will need to move the files to the new locations.
 See
 .Pa /usr/share/sendmail/README
 for more information.
+.\"
+.It
+.Xr sshd 8
+configuration file pathname changed
+.
+.Pp
+Configuration files for
+.Xr ssh 1
+and
+.Xr sshd 8
+are moved from
+.Pa /etc
+to
+.Pa /etc/ssh .
 .bullet)
 .
 .Pp
