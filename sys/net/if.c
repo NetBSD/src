@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.34 1996/05/07 02:40:25 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -416,13 +416,9 @@ ifunit(name)
 	register char *name;
 {
 	register struct ifnet *ifp;
-	size_t namelen;
-
-	namelen = strlen(name);
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		if (strlen(ifp->if_xname) == namelen &&
-		    strcmp(ifp->if_xname, name) == 0)
+		if (strcmp(ifp->if_xname, name) == 0)
 			return (ifp);
 
 	return (NULL);
