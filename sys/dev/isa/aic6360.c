@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.15 1994/11/29 17:56:49 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.16 1994/11/29 20:08:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -557,10 +557,10 @@ struct aic_tinfo {
 } tinfo_t;
 
 struct aic_softc { /* One of these per adapter */
-	/* Auto config stuff */
-	struct device 	sc_dev;	/* This one has to go first! */
+	struct device 	sc_dev;
 	struct isadev	sc_id;
 	struct intrhand sc_ih;
+
 	struct scsi_link sc_link;	/* prototype for subdevs */
 	int		id_irq;		/* IRQ on the EISA bus */
 	int		id_drq;		/* DRQ on the EISA bus */
@@ -577,20 +577,20 @@ struct aic_softc { /* One of these per adapter */
 	u_char	*cp;		/* Current command pointer */
 	int	 cleft;		/* Command bytes left to transfer */
 	/* Adapter state */
-	short	 phase;		/* Copy of what bus phase we are in */
-	short	 prevphase;	/* Copy of what bus phase we were in */
-	short	 state;		/* State applicable to the adapter */
+	u_short	 prevphase;	/* Copy of what bus phase we were in */
+	u_char	 state;		/* State applicable to the adapter */
 #define AIC_IDLE	1
 #define AIC_SELECTING	2	/* SCSI command is arbiting  */
 #define AIC_RESELECTED	3	/* Has been reselected */
 #define AIC_CONNECTED	4	/* Actively using the SCSI bus */
-#define AIC_CLEANING	5
-	short	 flags;
+#define	AIC_DISCONNECT	5	/* MSG_DISCONNECT received */
+#define	AIC_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
+#define AIC_CLEANING	7
+	u_char	 flags;
 #define AIC_DROP_MSGI	0x01	/* Discard all msgs (parity err detected) */
-#define AIC_DOINGDMA	0x02	/* The FIFO data path is active! */
-#define AIC_BUSFREE_OK	0x04	/* Bus free phase is OK. */
+#define	AIC_ABORTING	0x02	/* Bailing out */
+#define AIC_DOINGDMA	0x04	/* The FIFO data path is active! */
 	/* Debugging stuff */
-#define AIC_HSIZE 8
 	u_char	progress;	/* Set if interrupt has achieved progress */
 	/* Message stuff */
 	u_char	msgpriq;	/* Messages we want to send */
@@ -910,7 +910,7 @@ aic_init(aic)
 		}
 	}
 	
-	aic->phase = aic->prevphase = PH_INVALID;
+	aic->prevphase = PH_INVALID;
 	for (r = 0; r < 8; r++) {
 		struct aic_tinfo *ti = &aic->tinfo[r];
 
@@ -1383,16 +1383,19 @@ nextbyte:
 	 * itself.
 	 */
 	for (;;) {
-		do {
-			aic->phase = aicphase(aic);
-		} while (aic->phase == PH_INVALID);
-		if (aic->phase != PH_MSGI) {
-			/*
-			 * Target left MESSAGE IN, probably because it
-			 * a) noticed our ATN signal, or
-			 * b) ran out of messages.
-			 */
-			goto out;
+		for (;;) {
+			u_short phase = aicphase(aic);
+			if (phase == PH_MSGI)
+				break;
+			if (phase != PH_INVALID) {
+				/*
+				 * Target left MESSAGE IN, probably because it
+				 * a) noticed our ATN signal, or
+				 * b) ran out of messages.
+				 */
+				goto out;
+			}
+			/* Wait for REQINIT.  XXX Need timeout. */
 		}
 
 		/* XXX parity */
@@ -1456,12 +1459,7 @@ nextbyte:
 				acb->dleft = 0;
 			}
 			acb->xs->resid = acb->dleft = aic->dleft;
-			aic->flags |= AIC_BUSFREE_OK;
-#if 1 /* XXX defer till BUS FREE? */
-			untimeout(aic_timeout, acb);
-			delay(250);
-			aic_done(acb);
-#endif
+			aic->state = AIC_CMDCOMPLETE;
 			break;
 
 		case MSG_PARITY_ERROR:
@@ -1488,6 +1486,7 @@ nextbyte:
 				/* ... */
 				break;
 			case SEND_INIT_DET_ERR:
+				aic->flags |= AIC_ABORTING;
 				aic_sched_msgout(SEND_ABORT);
 				break;
 			}
@@ -1498,10 +1497,7 @@ nextbyte:
 
 		case MSG_DISCONNECT:
 			ti->dconns++;
-			aic->state = AIC_IDLE;
-			aic->nexus = NULL;
-			TAILQ_INSERT_HEAD(&aic->nexus_list, acb, chain);
-			aic->flags |= AIC_BUSFREE_OK;
+			aic->state = AIC_DISCONNECT;
 			break;
 
 		case MSG_SAVEDATAPOINTER:
@@ -1630,6 +1626,7 @@ nextbyte:
 		printf("aic at line %d: unexpected MESSAGE IN; sending DEVICE RESET\n", __LINE__);
 		AIC_BREAK();
 	reset:
+		aic->flags |= AIC_ABORTING;
 		aic_sched_msgout(SEND_DEV_RESET);
 		break;
 	}
@@ -1760,7 +1757,6 @@ nextmsg:
 	case SEND_DEV_RESET:
 		aic->omess[0] = MSG_BUS_DEV_RESET;
 		n = 1;
-		aic->flags |= AIC_BUSFREE_OK;
 		break;
 
 	case SEND_REJECT:
@@ -1781,7 +1777,6 @@ nextmsg:
 	case SEND_ABORT:
 		aic->omess[0] = MSG_ABORT;
 		n = 1;
-		aic->flags |= AIC_BUSFREE_OK;
 		break;
 
 	case 0:
@@ -1800,26 +1795,34 @@ nextmsg:
 
 nextbyte:
 	/* Send message bytes. */
-	for (; n > 0; n--) {
-		do {
-			aic->phase = aicphase(aic);
-		} while (aic->phase == PH_INVALID);
-		if (aic->phase != PH_MSGO) {
-			/*
-			 * Target left MESSAGE OUT, possibly to reject our
-			 * message.
-			 */
-			goto out;
+	for (;;) {
+		for (;;) {
+			u_short phase = aicphase(aic);
+			if (phase == PH_MSGO)
+				break;
+			if (phase != PH_INVALID) {
+				/*
+				 * Target left MESSAGE OUT, possibly to reject
+				 * our message.
+				 */
+				goto out;
+			}
+			/* Wait for REQINIT.  XXX Need timeout. */
 		}
 
+		--n;
+
 		/* Clear ATN before last byte if this is the last message. */
-		if (n == 1 && aic->msgpriq == 0)
+		if (n == 0 && aic->msgpriq == 0)
 			outb(CLRSINT1, CLRATNO);
 		/* Send message byte. */
 		outb(SCSIDAT, *--aic->omp);
-		/* Wait for ACK to be negated. */
+		/* Wait for ACK to be negated.  XXX Need timeout. */
 		while ((inb(SCSISIGI) & ACKI) != 0)
 			;
+
+		if (n == 0)
+			break;
 	}
 
 	aic->progress = 1;
@@ -2091,6 +2094,7 @@ aicintr(aic)
 {
 	register int iobase = aic->iobase;
 	u_char sstat0, sstat1;
+	u_short phase;
 	register struct acb *acb;
 	register struct scsi_link *sc;
 	struct aic_tinfo *ti;
@@ -2164,7 +2168,6 @@ aicintr(aic)
 			outb(SIMODE1, ENSCSIRST|ENSCSIPERR|ENBUSFREE|ENREQINIT);
 
 			aic->state = AIC_RESELECTED;
-			goto reselected;
 		} else if ((sstat0 & SELDO) != 0) {
 			AIC_MISC(("selected  "));
 
@@ -2202,8 +2205,6 @@ aicintr(aic)
 			outb(SIMODE0, 0);
 			outb(SIMODE1, ENSCSIRST|ENSCSIPERR|ENBUSFREE|ENREQINIT);
 
-			aic->flags = 0;
-			aic->prevphase = PH_INVALID;
 			ti->lubusy |= (1<<sc->lun);
 
 			/* Do an implicit RESTORE POINTERS. */
@@ -2213,7 +2214,6 @@ aicintr(aic)
 			aic->cleft = acb->clen;
 
 			aic->state = AIC_CONNECTED;
-			goto connected;
 		} else if ((sstat1 & SELTO) != 0) {
 			AIC_MISC(("selection timeout  "));
 
@@ -2231,110 +2231,120 @@ aicintr(aic)
 			untimeout(aic_timeout, acb);
 			delay(250);
 			aic_done(acb);
+			goto out;
 		} else {
 			if (aic->state != AIC_IDLE) {
 				printf("aic at line %d: BUS FREE while not idle; state=%d\n", __LINE__, aic->state);
 				AIC_BREAK();
+				goto out;
 			}
 
 			aic_sched(aic);
+			goto out;
 		}
+
+		aic->flags = 0;
+		aic->prevphase = PH_INVALID;
 		break;
+	}
 
-	case AIC_RESELECTED:
-	reselected:
-		/* Now, we're expecting an IDENTIFY message. */
-		aic->phase = aicphase(aic);
-		AIC_MISC(("phase=0x%02x  ", aic->phase));
-		if ((aic->phase & PH_PSBIT) == 0)
-			outb(SCSISIGO, aic->phase);
-		outb(CLRSINT1, CLRPHASECHG|CLRBUSFREE);
+	phase = aicphase(aic);
+	AIC_MISC(("phase=0x%02x  ", phase));
+	if ((phase & PH_PSBIT) == 0)
+		outb(SCSISIGO, phase);
+	outb(CLRSINT1, CLRPHASECHG|CLRBUSFREE);
 
-		switch (aic->phase) {
-		case PH_INVALID:
-			break;
-
-		case PH_BUSFREE:
+	switch (phase) {
+	case PH_BUSFREE:
+		switch (aic->state) {
+		case AIC_RESELECTED:
 			aic->state = AIC_IDLE;
 			aic_sched(aic);
-			break;
+			goto out;
 
+		case AIC_CONNECTED:
+			if ((aic->flags & AIC_ABORTING) == 0) {
+				printf("aic at line %d: unexpected BUS FREE; aborting\n", __LINE__);
+				AIC_BREAK();
+			}
+			acb = aic->nexus;
+			acb->xs->error = XS_DRIVER_STUFFUP;
+			goto finish;
+
+		case AIC_DISCONNECT:
+			acb = aic->nexus;
+			aic->state = AIC_IDLE;
+			aic->nexus = NULL;
+			TAILQ_INSERT_HEAD(&aic->nexus_list, acb, chain);
+			aic_sched(aic);
+			goto out;
+
+		case AIC_CMDCOMPLETE:
+			acb = aic->nexus;
+		finish:
+			untimeout(aic_timeout, acb);
+			aic_done(acb);
+			goto out;
+		}
+
+	case PH_INVALID:
+		/* Wait for REQINIT. */
+		goto out;
+
+	case PH_MSGO:
+		/* If aborting, always handle MESSAGE OUT. */
+		if ((aic->flags & AIC_ABORTING) == 0)
+			break;
+		aic_msgout(aic);
+		goto nextphase;
+	}
+
+	switch (aic->state) {
+	case AIC_RESELECTED:
+		switch (phase) {
 		case PH_MSGI:
 			aic_msgin(aic);
-			aic->prevphase = PH_MSGI;
-			if (aic->state == AIC_CONNECTED)
-				goto connected;
-			break;
-
-		default:
-			printf("aic at line %d: reselect without MESSAGE IN; resetting\n", __LINE__);
-			AIC_BREAK();
-			goto reset;
+			goto nextphase;
 		}
 		break;
 
 	case AIC_CONNECTED:
-	connected:
-		acb = aic->nexus;
-	
-		/* What sort of transfer does the bus signal? */
-		aic->phase = aicphase(aic);
-		AIC_MISC(("phase=0x%02x  ", aic->phase));
-		if ((aic->phase & PH_PSBIT) == 0)
-			outb(SCSISIGO, aic->phase);
-		outb(CLRSINT1, CLRPHASECHG|CLRBUSFREE);
-
-		switch (aic->phase) {
-		case PH_INVALID:
-			break;
-
-		case PH_BUSFREE:
-			if ((aic->flags & AIC_BUSFREE_OK) == 0) {
-				printf("aic at line %d: unexpected BUS FREE while connected; aborting\n", __LINE__);
-				AIC_BREAK();
-
-				acb->xs->error = XS_DRIVER_STUFFUP;
-				untimeout(aic_timeout, acb);
-				aic_done(acb);
-				goto out;
-			}
-			aic->flags &= ~AIC_BUSFREE_OK;
-			break;
-
+		switch (phase) {
 		case PH_MSGO:
 			aic_msgout(aic);
-			aic->prevphase = PH_MSGO;
-			break;
+			goto nextphase;
 
 		case PH_MSGI:
 			aic_msgin(aic);
-			aic->prevphase = PH_MSGI;
-			break;
+			goto nextphase;
 
 		case PH_CMD:		/* CMD phase & REQ asserted */
-			AIC_MISC(("cmd=0x%02x+%d  ", acb->cmd.opcode, acb->clen-1));
+#if AIC_DEBUG
+			if ((aic_debug & AIC_SHOWMISC) != 0) {
+				acb = aic->nexus;
+				printf("cmd=0x%02x+%d  ", acb->cmd.opcode, acb->clen-1);
+			}
+#endif
 			n = aic_dataout_pio(aic, aic->cp, aic->cleft);
 			aic->cp += n;
 			aic->cleft -= n;
-			aic->prevphase = PH_CMD;
-			break;
+			goto nextphase;
 
 		case PH_DOUT:
 			AIC_MISC(("dleft=%d  ", aic->dleft));
 			n = aic_dataout_pio(aic, aic->dp, aic->dleft);
 			aic->dp += n;
 			aic->dleft -= n;
-			aic->prevphase = PH_DOUT;
-			break;
+			goto nextphase;
 
 		case PH_DIN:
 			n = aic_datain_pio(aic, aic->dp, aic->dleft);
 			aic->dp += n;
 			aic->dleft -= n;
-			aic->prevphase = PH_DIN;
-			break;
+			goto nextphase;
 
 		case PH_STAT:
+			acb = aic->nexus;
 			outb(SXFRCTL0, CHEN|SPIOEN);
 			outb(DMACNTRL0, RSTFIFO);
 			outb(SIMODE1, ENSCSIRST|ENPHASEMIS|ENBUSFREE|ENSCSIPERR);
@@ -2342,23 +2352,22 @@ aicintr(aic)
 			outb(SXFRCTL0, CHEN);
 			AIC_MISC(("stat=0x%02x  ", acb->stat));
 			outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
-			aic->prevphase = PH_STAT;
-			break;
-
-		default:
-			printf("aic at line %d: bogus phase while connected; resetting\n", __LINE__);
-			AIC_BREAK();
-			goto reset;
+			goto nextphase;
 		}
 		break;
 	}
 
-out:
-	outb(DMACNTRL0, INTEN);
-	return 1;
-
+	printf("aic at line %d: unexpected bus phase; resetting\n", __LINE__);
+	AIC_BREAK();
 reset:
 	aic_init(aic);
+	return 1;
+
+nextphase:
+	aic->prevphase = phase;
+
+out:
+	outb(DMACNTRL0, INTEN);
 	return 1;
 }
 
@@ -2458,8 +2467,7 @@ aic_dump_driver(aic)
 	struct aic_tinfo *ti;
 	int i;
 	
-	printf("nexus=%x phase=%x prevphase=%x\n", aic->nexus, aic->phase,
-	    aic->prevphase);
+	printf("nexus=%x prevphase=%x\n", aic->nexus, aic->prevphase);
 	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x msgout=%x\n",
 	    aic->state, aic->imess[0], aic->msgpriq, aic->msgoutq, aic->msgout);
 	for (i = 0; i < 7; i++) {
