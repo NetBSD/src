@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2001/05/28 01:09:55 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2001/06/03 09:51:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2001/05/28 01:09:55 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2001/06/03 09:51:10 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 		}
 		if ((dt = fstabsearch(argv[i])) != NULL) {
 			disk = dt->fs_spec;
-			mountpoint = dt->fs_file;
+			mountpoint = xstrdup(dt->fs_file);
 			goto multicheck;
 		}
 		if (statfs(argv[i], &fsbuf) == -1)
