@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.25 2003/08/07 11:15:49 agc Exp $	*/
+/*	$NetBSD: compile.c,v 1.26 2004/06/12 04:29:22 minskim Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.25 2003/08/07 11:15:49 agc Exp $");
+__RCSID("$NetBSD: compile.c,v 1.26 2004/06/12 04:29:22 minskim Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,6 +481,7 @@ compile_subst(char *p, struct s_subst *s)
 	static char lbuf[_POSIX2_LINE_MAX + 1];
 	int asize, ref, size;
 	char c, *text, *op, *sp;
+	int sawesc = 0;
 
 	c = *p++;			/* Terminator character */
 	if (c == '\0')
@@ -494,9 +495,29 @@ compile_subst(char *p, struct s_subst *s)
 	do {
 		op = sp = text + size;
 		for (; *p; p++) {
-			if (*p == '\\') {
-				p++;
-				if (strchr("123456789", *p) != NULL) {
+			if (*p == '\\' || sawesc) {
+				/*
+				 * If this is a continuation from the last
+				 * buffer, we won't have a character to
+				 * skip over.
+				 */
+				if (sawesc)
+					sawesc = 0;
+				else
+					p++;
+
+				if (*p == '\0') {
+					/*
+					 * This escaped character is continued
+					 * in the next part of the line.  Note
+					 * this fact, then cause the loop to
+					 * exit w/ normal EOL case and reenter
+					 * above with the new buffer.
+					 */
+					sawesc = 1;
+					p--;
+					continue;
+				} else if (strchr("123456789", *p) != NULL) {
 					*sp++ = '\\';
 					ref = *p - '0';
 					if (s->re != NULL &&
