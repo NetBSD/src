@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2 1996/09/17 21:26:45 cgd Exp $	*/
+/*	$NetBSD: start.S,v 1.3 1996/09/23 04:33:00 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -44,15 +44,20 @@
 #define ENTRY_FRAME	32
 
 NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
-	br	pv,1f
-1:	SETGP(pv)
+	br	pv,Lstartgp
+Lstartgp:
+	SETGP(pv)
 
 #ifndef PRIMARY_BOOTBLOCK
 	lda	sp,start		/* start stack below text */
 	lda	sp,-ENTRY_FRAME(sp)
 #endif
 
+#ifdef ECOFF_COMPAT
 	lda	a0,_EDATA
+#else
+	lda	a0,_edata
+#endif
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)

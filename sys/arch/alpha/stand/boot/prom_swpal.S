@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_swpal.S,v 1.2 1995/02/16 02:32:58 cgd Exp $	*/
+/*	$NetBSD: prom_swpal.S,v 1.3 1996/09/23 04:33:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,7 +60,7 @@
 #define	PALSW_FRAME_SIZE	(14*8)
 #define	PALSW_REGS		IM_RA|IM_S0|IM_S1|IM_S2|IM_S3|IM_S4|IM_S5
 
-	.comm	ptbr_save	 8
+	.comm	ptbr_save,8
 
 	.text
 	.align	4
