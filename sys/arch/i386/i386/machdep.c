@@ -1021,18 +1021,9 @@ init386(first_avail)
 	 * These guys should be page-aligned.
 	 */
 	hole_start = biosbasemem * 1024;
-#if	LOAD_ADDRESS == 0xfe000000
-	hole_end = IOM_END;
-	avail_next = first_avail;
-#else
-#if	LOAD_ADDRESS == 0xfe100000
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page((vm_offset_t)first_avail);
 	avail_next = avail_start;
-#else
-#error "unsupported load address"
-#endif
-#endif
 	avail_remaining = i386_btop((avail_end - avail_start) -
 				    (hole_end - hole_start));
 	
