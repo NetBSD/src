@@ -34,3 +34,8 @@ Should do topology maps, speed maps, the various bus managers, etc.
 done - change all FW_DEBUG wrapped printf's to DPRINTF macro's
 
 done - ack errors from a TX complete should get passed up to any registered callbacks
+
+Track down issues where multiple hosts plugged into a firewire hub don't 
+init/see all devices on resets sometimes.
+
+Make fwohci detach correctly (for cardbus/etc type interfaces)
