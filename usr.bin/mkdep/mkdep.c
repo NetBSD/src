@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $ */
+/* $NetBSD: mkdep.c,v 1.10.2.1 2003/01/27 06:31:14 jmc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.10.2.1 2003/01/27 06:31:14 jmc Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $");
 #include <err.h>
 #include <locale.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +66,10 @@ __RCSID("$NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $");
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
 
+int tmpfd;
+char tmpfilename[MAXPATHLEN];
+
+static void	finish __P((int));
 static void	usage __P((void));
 static char    *findcc __P((const char *));
 int		main __P((int, char **));
@@ -115,15 +120,27 @@ findcc(progname)
 	return NULL;
 }
 
+void
+finish(signo)
+	int signo;
+{
+
+	if (tmpfd != -1) {
+		(void)close(tmpfd);
+		(void)unlink(tmpfilename);
+	}
+	exit(EXIT_FAILURE);
+}
+
 int
 main(argc, argv)
 	int     argc;
 	char  **argv;
 {
 	/* LINTED local definition of index */
-	int 	aflag, pflag, index, tmpfd, status;
+	int 	aflag, pflag, index, status;
 	pid_t	cpid, pid;
-	char   *filename, *CC, *pathname, tmpfilename[MAXPATHLEN], **args;
+	char   *filename, *CC, *pathname, **args;
 	const char *tmpdir;
 	/* LINTED local definition of tmpfile */
 	FILE   *tmpfile, *dependfile;
@@ -176,6 +193,12 @@ main(argc, argv)
 		tmpdir = _PATH_TMP;
 	(void)snprintf(tmpfilename, sizeof (tmpfilename), "%s/%s", tmpdir,
 	    "mkdepXXXXXX");
+	/* set signal handler */
+	tmpfd = -1;
+	(void)signal(SIGINT, finish);
+	(void)signal(SIGHUP, finish);
+	(void)signal(SIGQUIT, finish);
+	(void)signal(SIGTERM, finish);
 	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
 		exit(EXIT_FAILURE);
