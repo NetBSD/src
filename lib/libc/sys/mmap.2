@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.6 1997/05/29 01:48:22 cgd Exp $
+.\"	$NetBSD: mmap.2,v 1.7 1997/07/12 18:44:48 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -168,10 +168,8 @@ parameter and
 .Fa fd
 was not open for reading.
 The flags
-.Dv PROT_WRITE ,
+.Dv PROT_WRITE and
 .Dv MAP_SHARED
-and
-.Dv MAP_WRITE
 were specified as part
 of the
 .Fa flags
