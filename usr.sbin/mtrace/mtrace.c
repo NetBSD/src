@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.6 1995/12/16 20:11:45 thorpej Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $";
+    "@(#) $NetBSD: mtrace.c,v 1.6 1995/12/16 20:11:45 thorpej Exp $";
 #endif
 
 #include <netdb.h>
