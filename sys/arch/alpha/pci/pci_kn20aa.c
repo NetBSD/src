@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.8 1996/08/07 04:22:40 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.9 1996/08/07 04:33:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -131,16 +131,16 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
-	int kn20aa_slot, kn20aa_irq;
+	int kn20aa_irq;
 	void *ih;
 
         if (buspin == 0) {
                 /* No IRQ used. */
-                return 0;
+                return 1;
         }
         if (buspin > 4) {
                 printf("pci_map_int: bad interrupt pin %d\n", buspin);
-                return NULL;
+                return 1;
         }
 
 	/*
@@ -154,19 +154,19 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	switch (device) {
 	case 11:
 	case 12:
-		kn20aa_slot = (device - 11) + 0;
+		kn20aa_irq = ((device - 11) + 0) * 4;
 		break;
 
 	case 7:
-		kn20aa_slot = 2;
+		kn20aa_irq = 8;
 		break;
 
 	case 8:
-		kn20aa_slot = 4;
+		kn20aa_irq = 16;
 		break;
 
 	case 9:
-		kn20aa_slot = 3;
+		kn20aa_irq = 12;
 		break;
 
 	default:
@@ -174,12 +174,13 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		    device);
 	}
 
-	kn20aa_irq = (kn20aa_slot * 4) + buspin - 1;
+	kn20aa_irq += buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
 		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)\n",
 		    kn20aa_irq);
 
 	*ihp = kn20aa_irq;
+	return (0);
 }
 
 const char *
