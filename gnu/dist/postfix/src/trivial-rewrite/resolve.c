@@ -139,6 +139,7 @@ void    resolve_addr(char *addr, VSTRING *channel, VSTRING *nexthop,
 	    if (saved_domain)
 		tok822_free_tree(saved_domain);
 	    saved_domain = domain;
+	    domain = 0;
 	}
 
 	/*
