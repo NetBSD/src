@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite_clnt.c,v 1.1.1.6 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: rewrite_clnt.c,v 1.1.1.7 2004/07/28 22:49:19 heas Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@
   */
 CLNT_STREAM *rewrite_clnt_stream = 0;
 
+static VSTRING *last_rule;
 static VSTRING *last_addr;
 static VSTRING *last_result;
 
@@ -87,6 +88,7 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
      * One-entry cache.
      */
     if (last_addr == 0) {
+	last_rule = vstring_alloc(10);
 	last_addr = vstring_alloc(100);
 	last_result = vstring_alloc(100);
     }
@@ -104,10 +106,9 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
 
     /*
      * Peek at the cache.
-     * 
-     * XXX Must be made "rule" specific.
      */
-    if (strcmp(addr, STR(last_addr)) == 0) {
+    if (strcmp(addr, STR(last_addr)) == 0
+	&& strcmp(rule, STR(last_rule)) == 0) {
 	vstring_strcpy(result, STR(last_result));
 	if (msg_verbose)
 	    msg_info("rewrite_clnt: cached: %s: %s -> %s",
@@ -154,6 +155,7 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
     /*
      * Update the cache.
      */
+    vstring_strcpy(last_rule, rule);
     vstring_strcpy(last_addr, addr);
     vstring_strcpy(last_result, STR(result));
 
