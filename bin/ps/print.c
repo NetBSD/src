@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.39 1998/07/28 18:41:59 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.40 1999/04/16 13:34:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.39 1998/07/28 18:41:59 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.40 1999/04/16 13:34:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -723,6 +723,27 @@ printval(bp, v)
 		break;
 	case KPTR:
 		(void)printf(ofmt, v->width, GET(u_long));
+		break;
+	case SIGLIST:
+		{
+			sigset_t *s = (sigset_t *)(void *)bp;
+			size_t i;
+#define SIGSETSIZE	(sizeof(s->__bits) / sizeof(s->__bits[0]))
+			char buf[SIGSETSIZE * 8 + 1];
+
+			for (i = 0; i < SIGSETSIZE; i++)
+				(void)snprintf(&buf[i * 8], 9, "%.8x",
+				    s->__bits[(SIGSETSIZE - 1) - i]);
+
+			/* Skip leading zeroes */
+			for (i = 0; buf[i]; i++)
+				if (buf[i] != '0')
+					break;
+
+			if (buf[i] == '\0')
+				i--;
+			(void)printf(ofmt, v->width, &buf[i]);
+		}
 		break;
 	default:
 		errx(1, "unknown type %d", v->type);
