@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.3 2001/11/25 11:22:09 lukem Exp $
+.\"	$NetBSD: makefs.8,v 1.4 2001/11/25 23:30:46 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ Set the minimum size of the file system image to
 Set the maximum size of the file system image to
 .Ar maximum-size .
 An error will be raised if the target file system needs to be larger
-than this to accomodate the provided directory tree.
+than this to accommodate the provided directory tree.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
@@ -211,7 +211,6 @@ Word; multiply by the number of bytes in an integer
 .\"
 .\"
 .Ss FFS-specific options
-.Pp
 .Sy ffs
 images have ffs-specific optional parameters that may be provided.
 Each of the options consists of a keyword, an equals sign
@@ -255,10 +254,10 @@ Number of rotational positions
 .Sh SEE ALSO
 .Xr mtree 8 ,
 .Xr newfs 8
-.Sh AUTHOR
-Luke Mewburn <lukem@netbsd.org>
 .Sh HISTORY
 The
 .Nm
 utility appeared in
 .Nx 1.6 .
+.Sh AUTHORS
+.An Luke Mewburn Aq lukem@netbsd.org
