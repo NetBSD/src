@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.43 2001/04/04 21:00:09 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.44 2001/04/05 09:48:43 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2475,3 +2475,12 @@ usr.sbin/dhcp/server/omapi.c			1.7
 usr.sbin/dhcp/server/stables.c			1.1.1.6
 
   Update DHCP software to ISC version 3, Beta 2, Patchlevel 23.
+
+dist/ntp/ntpd/ntp_control.c			1.2
+
+  Fix a DoS attack (and possibly, but not confirmed, a root exploit) in
+  ntpd.
+  Fix from Poul-Henning Kamp and Dima Ruban from the FreeBSD tree,
+  with changes from Jason Thorpe to not overrun the end of the static
+  buffer and with syslog()ing the bad packets disabled so as not to
+  DoS syslog.
