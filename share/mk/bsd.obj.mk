@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.30 2001/11/11 22:39:23 tv Exp $
+#	$NetBSD: bsd.obj.mk,v 1.31 2001/11/11 23:07:26 tv Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -51,24 +51,24 @@ PAWD?=		/bin/pwd
 obj:
 	@cd ${__curdir}; \
 	here=`${PAWD}`/; subdir=$${here#${BSDSRCDIR}/}; \
-	if [ "$$here" != "$$subdir/" ]; then \
+	if [ "$$here" != "$$subdir" ]; then \
 		if [ ! -d ${__usrobjdir} ]; then \
 			echo "BSDOBJDIR ${__usrobjdir} does not exist, bailing..."; \
 			exit 1; \
 		fi; \
 		subdir=$${subdir%/}; \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf}; \
-		if [ -h $$here${__objdir} ]; then \
-			curtarg=`ls -ld $$here${__objdir} | awk '{print $$NF}'` ; \
+		if [ -h $${here}${__objdir} ]; then \
+			curtarg=`ls -ld $${here}${__objdir} | awk '{print $$NF}'` ; \
 			if [ "$$curtarg" = "$$dest" ]; then \
 				: ; \
 			else \
-				echo "$$here""${__objdir} -> $$dest"; \
+				echo "$${here}${__objdir} -> $$dest"; \
 				rm -rf ${__objdir}; \
 				ln -s $$dest ${__objdir}; \
 			fi; \
 		else \
-			echo "$$here""${__objdir} -> $$dest"; \
+			echo "$${here}${__objdir} -> $$dest"; \
 			rm -rf ${__objdir}; \
 			ln -s $$dest ${__objdir}; \
 		fi; \
@@ -79,7 +79,7 @@ obj:
 		fi; \
 	else \
 		true ; \
-		dest=$$here${__objdir} ; \
+		dest=$${here}${__objdir} ; \
 		if [ ! -d ${__objdir} ] || [ -h ${__objdir} ]; then \
 			echo "making $$dest" ; \
 			rm -f ${__objdir}; \
