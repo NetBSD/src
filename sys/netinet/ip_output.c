@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.38 1997/02/18 20:49:36 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.39 1997/04/15 00:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -305,11 +305,11 @@ ip_output(m0, va_alist)
 	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.le_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
-			ip = mtod(m = m1, struct ip *);
 			if (rv) {
 				error = EHOSTUNREACH;
 				goto done;
 			}
+			ip = mtod(m = m1, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
 sendit:
