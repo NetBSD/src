@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.1 1996/03/07 23:22:48 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.2 1996/03/08 12:32:54 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -300,6 +300,7 @@ ka86_conf(parent, self, aux)
 		mtpr(0x8000, PR_ACCS);
 	} else
 		printf("no FPA\n");
+	crlattach();
 }
 
 int   
