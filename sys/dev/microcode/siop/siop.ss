@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.15 2002/04/23 20:41:16 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.15.4.1 2005/03/17 17:49:33 tron Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -260,10 +260,8 @@ handle_msgin:
 	JUMP REL(handle_extin), IF 0x01	      ; extended message
 	INT int_msgin, IF not 0x04;
 	CALL REL(disconnect)                  ; disconnect message;
-; if we didn't get sdp, or if offset is 0, no need to interrupt
+; if we didn't get sdp, no need to interrupt
 	MOVE SCRATCHA0 & flag_sdp TO SFBR;
-	JUMP REL(script_sched), if 0x00; 
-	MOVE SCRATCHA1 TO SFBR;
 	JUMP REL(script_sched), if 0x00; 
 ; Ok, we need to save data pointers
 	INT int_disc;
