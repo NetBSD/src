@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1997/01/23 22:29:08 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1997/02/16 21:25:21 cgd Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -8,6 +8,9 @@
 #	SA_AS	may be set to 'obj' to build a object from the library's
 #		object files.  (Otherwise, a library will be built.)
 #		Defaults to 'library'.
+#	SAMISCCPPFLAGS
+#		Miscellaneous cpp flags to be passed to the library's Makefile
+#		when building.
 #	SAMISCMAKEFLAGS
 #		Miscellaneous flags to be passed to the library's Makefile when
 #		building.  See library's Makefile for more details about
@@ -33,6 +36,7 @@ SAMAKE= \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    SACPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    SAMISCCPPFLAGS=${SAMISCCPPFLAGS:Q} \
 	    ${SAMISCMAKEFLAGS}
 
 ${SALIB}:		.NOTMAIN __always_make_salib
