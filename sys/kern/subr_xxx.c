@@ -31,15 +31,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: subr_xxx.c,v 1.5.4.2 1993/09/24 08:51:32 mycroft Exp $
+ *	$Id: subr_xxx.c,v 1.5.4.3 1993/11/14 21:07:12 mycroft Exp $
  */
 
 /*
  * Miscellaneous trivial functions, including many
  * that are often inline-expanded or done in assembler.
  */
-#include "param.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/systm.h>
 
 /*
  * Unsupported device function (e.g. writing to read-only device).
