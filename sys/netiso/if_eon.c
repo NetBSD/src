@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.23 1998/03/01 02:24:45 fvdl Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.24 1998/07/05 01:06:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,8 @@ SOFTWARE.
  * Put together a current rfc986 address format and get the right offset
  * for the nsel
  */
+
+#include "opt_eon.h"
 
 #ifdef EON
 #define NEON 1
