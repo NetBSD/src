@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.80 2002/06/09 05:09:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.80 2002/06/09 05:09:26 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -400,8 +400,38 @@ arp_rtrequest(req, rt, info)
 		callout_init(&arptimer_ch);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
-	if (rt->rt_flags & RTF_GATEWAY)
+
+	if ((rt->rt_flags & RTF_GATEWAY) != 0) {
+		if (req != RTM_ADD)
+			return;
+
+		/*
+		 * linklayers with particular link MTU limitation.
+		 */
+		switch(rt->rt_ifp->if_type) {
+#if NFDDI > 0
+		case IFT_FDDI:
+			if (rt->rt_ifp->if_mtu > FDDIIPMTU)
+				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
+			break;
+#endif
+#if NARC > 0
+		case IFT_ARCNET:
+		    {
+			int arcipifmtu;
+
+			if (rt->rt_ifp->if_flags & IFF_LINK0)
+				arcipifmtu = arc_ipmtu;
+			else
+				arcipifmtu = ARCMTU;
+			if (rt->rt_ifp->if_mtu > arcipifmtu)
+				rt->rt_rmx.rmx_mtu = arcipifmtu;
+			break;
+		    }
+#endif
+		}
 		return;
+	}
 
 	ARP_LOCK(1);		/* we may already be locked here. */
 
@@ -431,30 +461,37 @@ arp_rtrequest(req, rt, info)
 			 * from it do not need their expiration time set.
 			 */
 			rt->rt_expire = time.tv_sec;
+			/*
+			 * linklayers with particular link MTU limitation.
+			 */
+			switch (rt->rt_ifp->if_type) {
 #if NFDDI > 0
-			if (rt->rt_ifp->if_type == IFT_FDDI
-			    && (rt->rt_rmx.rmx_mtu > FDDIIPMTU
-				|| (rt->rt_rmx.rmx_mtu == 0
-				    && rt->rt_ifp->if_mtu > FDDIIPMTU))) {
-				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-			}
+			case IFT_FDDI:
+				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
+				    (rt->rt_rmx.rmx_mtu > FDDIIPMTU ||
+				     (rt->rt_rmx.rmx_mtu == 0 &&
+				      rt->rt_ifp->if_mtu > FDDIIPMTU)))
+					rt->rt_rmx.rmx_mtu = FDDIIPMTU;
+				break;
 #endif
 #if NARC > 0
-			if (rt->rt_ifp->if_type == IFT_ARCNET) {
+			case IFT_ARCNET:
+			    {
 				int arcipifmtu;
-
 				if (rt->rt_ifp->if_flags & IFF_LINK0)
 					arcipifmtu = arc_ipmtu;
 				else
 					arcipifmtu = ARCMTU;
 
-			    	if (rt->rt_rmx.rmx_mtu > arcipifmtu ||
-				    (rt->rt_rmx.rmx_mtu == 0 &&
-				     rt->rt_ifp->if_mtu > arcipifmtu))
-
+				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
+				    (rt->rt_rmx.rmx_mtu > arcipifmtu ||
+				     (rt->rt_rmx.rmx_mtu == 0 &&
+				      rt->rt_ifp->if_mtu > arcipifmtu)))
 					rt->rt_rmx.rmx_mtu = arcipifmtu;
-			}
+				break;
+			    }
 #endif
+			}
 			break;
 		}
 		/* Announce a new entry if requested. */
