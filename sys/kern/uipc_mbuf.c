@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.15 1996/02/09 19:00:45 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.16 1996/06/13 17:02:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -78,19 +78,25 @@ m_clalloc(ncl, nowait)
 	register int ncl;
 	int nowait;
 {
-	static int logged;
+	volatile static struct timeval lastlogged;
+	struct timeval curtime, logdiff;
 	register caddr_t p;
 	register int i;
-	int npg;
+	int npg, s;
 
 	npg = ncl * CLSIZE;
 	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !nowait);
 	if (p == NULL) {
-		if (logged == 0) {
-			logged++;
+		s = splclock();
+		curtime = time;
+		splx(s);
+		timersub(&curtime, &lastlogged, &logdiff);
+		if (logdiff.tv_sec >= 60) {
+			lastlogged = curtime;
 			log(LOG_ERR, "mb_map full\n");
 		}
-		return (0);
+		m_reclaim();
+		return (mclfree != NULL);
 	}
 	ncl = ncl * CLBYTES / MCLBYTES;
 	for (i = 0; i < ncl; i++) {
