@@ -1,4 +1,4 @@
-.\"	$NetBSD: vslock.9,v 1.2 1997/10/08 22:00:42 jtc Exp $
+.\"	$NetBSD: vslock.9,v 1.2.2.1 1997/11/11 14:05:23 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,9 @@
 .Dt VSLOCK 9
 .Os NetBSD
 .Sh NAME
-.Nm vslock
-.Nd lock user space addresses in memory
+.Nm vslock ,
+.Nm vsunlock
+.Nd lock/unlock user space addresses in memory
 .Sh SYNOPSIS
 .Ft void
 .Fn vslock "caddr_t addr" "u_int len"

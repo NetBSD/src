@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.3 1997/08/14 00:57:40 cgd Exp $
+.\" $NetBSD: bus_space.9,v 1.3.2.1 1997/11/11 14:04:48 mrg Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,44 @@
 .Dt BUS_SPACE 9
 .Os NetBSD 1.3
 .Sh NAME
-.Nm bus_space
+.Nm bus_space ,
+.Nm bus_space_barrier ,
+.Nm bus_space_copy_region_1 ,
+.Nm bus_space_copy_region_2 ,
+.Nm bus_space_copy_region_4 ,
+.Nm bus_space_copy_region_8 ,
+.Nm bus_space_free ,
+.Nm bus_space_map ,
+.Nm bus_space_read_1 ,
+.Nm bus_space_read_2 ,
+.Nm bus_space_read_4 ,
+.Nm bus_space_read_8 ,
+.Nm bus_space_read_multi_1 ,
+.Nm bus_space_read_multi_2 ,
+.Nm bus_space_read_multi_4 ,
+.Nm bus_space_read_multi_8 ,
+.Nm bus_space_read_region_1 ,
+.Nm bus_space_read_region_2 ,
+.Nm bus_space_read_region_4 ,
+.Nm bus_space_read_region_8 ,
+.Nm bus_space_set_region_1 ,
+.Nm bus_space_set_region_2 ,
+.Nm bus_space_set_region_4 ,
+.Nm bus_space_set_region_8 ,
+.Nm bus_space_subregion ,
+.Nm bus_space_unmap ,
+.Nm bus_space_write_1 ,
+.Nm bus_space_write_2 ,
+.Nm bus_space_write_4 ,
+.Nm bus_space_write_8 ,
+.Nm bus_space_write_multi_1 ,
+.Nm bus_space_write_multi_2 ,
+.Nm bus_space_write_multi_4 ,
+.Nm bus_space_write_multi_8 ,
+.Nm bus_space_write_region_1 ,
+.Nm bus_space_write_region_2 ,
+.Nm bus_space_write_region_4 ,
+.Nm bus_space_write_region_8
 .Nd bus space manipulation functions
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
