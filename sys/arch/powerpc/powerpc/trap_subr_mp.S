@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.4 2001/06/23 02:36:15 matt Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.5 2002/07/28 07:06:27 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,57 @@
  *	#include <powerpc/powerpc/trap_subr.S>
  */
 
+#ifdef ALTIVEC
+#define DSSALL			/* assumes PSL is in cr registers */	\
+	bc+	4,6,86f;	/* branch is PSL_VEC is false */	\
+	dssall;			/* stop datastreams */			\
+86:
+#define	SAVE_VRSAVE(tf,b)						\
+	mfspr	b,SPR_VRSAVE;						\
+	stw	b,FRAME_VRSAVE+8(tf);
+
+#define RESTORE_VRSAVE(tf,b)						\
+	lwz	b,FRAME_VRSAVE+8(tf);					\
+	mtspr	SPR_VRSAVE,b;
+#else
+#define DSSALL
+#define SAVE_VRSAVE(tf,b)
+#define RESTORE_VRSAVE(tf,b)
+#endif
+#define	RESTORE_SRS(pmap,sr)	mtsr	0,sr; \
+	lwz	sr,4(pmap);	mtsr	1,sr; \
+	lwz	sr,8(pmap);	mtsr	2,sr; \
+	lwz	sr,12(pmap);	mtsr	3,sr; \
+	lwz	sr,16(pmap);	mtsr	4,sr; \
+	lwz	sr,20(pmap);	mtsr	5,sr; \
+	lwz	sr,24(pmap);	mtsr	6,sr; \
+	lwz	sr,28(pmap);	mtsr	7,sr; \
+	lwz	sr,32(pmap);	mtsr	8,sr; \
+	lwz	sr,36(pmap);	mtsr	9,sr; \
+	lwz	sr,40(pmap);	mtsr	10,sr; \
+	lwz	sr,44(pmap);	mtsr	11,sr; \
+	lwz	sr,48(pmap);	mtsr	12,sr; \
+	lwz	sr,52(pmap);	mtsr	13,sr; \
+	lwz	sr,56(pmap);	mtsr	14,sr; \
+	lwz	sr,60(pmap);	mtsr	15,sr;
+
+/*
+ * User SRs are loaded through a pointer to the current pmap.
+ */
+#define RESTORE_USER_SRS(pmap,sr) \
+	GET_CPUINFO(pmap); \
+	lwz	pmap,CI_CURPM(pmap); \
+	lwzu	sr,PM_SR(pmap); \
+	RESTORE_SRS(pmap,sr)
+
+/*
+ * Kernel SRs are loaded directly from kernel_pmap_
+ */
+#define RESTORE_KERN_SRS(pmap,sr) \
+	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
+	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
+	RESTORE_SRS(pmap,sr)
+
 /*
  * This code gets copied to all the trap vectors
  * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
@@ -55,11 +106,6 @@ _C_LABEL(trapcode):
 /* Test whether we already had PR set */
 	mfsrr1	31
 	mtcr	31
-	bc	4,17,1f			/* branch if PSL_PR is clear */
-	GET_CPUINFO(1)
-	lwz	1,CI_CURPCB(1)
-	addi	1,1,USPACE		/* stack is top of user struct */
-1:
 	bla	s_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
@@ -80,11 +126,6 @@ _C_LABEL(alitrap):
 /* Test whether we already had PR set */
 	mfsrr1	31
 	mtcr	31
-	bc	4,17,1f			/* branch if PSL_PR is clear */
-	GET_CPUINFO(1)
-	lwz	1,CI_CURPCB(1)
-	addi	1,1,USPACE		/* stack is top of user struct */
-1:
 	bla	s_trap
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
@@ -228,6 +269,24 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
  */
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
+#ifdef PMAPDEBUG
+	mfspr	2,SPR_IMISS		/* exception address */
+	li	1,24			/* get rid of the lower */
+	srw	2,2,1			/*   24 bits */
+	li	1,1			/* Load 1 */
+	cmpl	2,1,1			/* is it > 16MB */
+	blt	99f			/* nope, skip saving these SPRs */
+	li	1,0xc0			/* arbitrary */
+	mfspr	2,SPR_HASH1
+	stw	2,0(1)
+	mfspr	2,SPR_HASH2
+	stw	2,4(1)
+	mfspr	2,SPR_IMISS
+	stw	2,8(1)
+	mfspr	2,SPR_ICMP
+	stw	2,12(1)
+99:
+#endif /* PMAPDEBUG */
 	mfspr	2,SPR_HASH1		/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
@@ -408,7 +467,7 @@ _C_LABEL(tlbdsmiss):
 	ba	EXC_DSI
 _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 #define	ddbsave	0xde0		/* primary save area for DDB */
 /*
  * In case of DDB we want a separate trap catcher for it
@@ -427,7 +486,7 @@ _C_LABEL(ddblow):
 	addi	1,1,ddbstk+INTSTK@l
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
-#endif	/* DDB */
+#endif	/* DDB || KGDB */
 
 #ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
@@ -450,6 +509,35 @@ _C_LABEL(ipkdblow):
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
+
+#ifdef	CPU601_KERN_ENTRY_HOOK
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	98f;			/* skip if not 601 */		\
+	CPU601_KERN_ENTRY_HOOK(_s1_,_s2_);				\
+98:
+#else
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)	/* nothing */
+#endif
+
+#ifdef CPU601_KERN_LEAVE_HOOK
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	99f;			/* skip if not 601 */		\
+	CPU601_KERN_LEAVE_HOOK(_pmap_,_s1_);				\
+	xor	_s1_,_s1_,_s1_;						\
+	mtibatl	0,_s1_;			/* obliterate BATs */		\
+	mtibatl	1,_s1_;							\
+	mtibatl	2,_s1_;							\
+	mtibatl	3,_s1_;							\
+99:
+#else
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)	/* nothing */
+#endif
 
 /*
  * FRAME_SETUP assumes:
@@ -481,7 +569,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	2,FRAME_2+8(1);						\
 	GET_CPUINFO(2);							\
 	lmw	28,savearea(2);						\
-	stmw	3,FRAME_3+8(1);						\
+	stmw	3,FRAME_3+8(1);	 /* after this, r3-r31 can be used */	\
 	lmw	28,savearea+16(2);					\
 	mfxer	3;							\
 	mfctr	4;							\
@@ -490,6 +578,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	3,FRAME_XER+8(1);					\
 	stw	4,FRAME_CTR+8(1);					\
 	stw	5,FRAME_EXC+8(1);					\
+	SAVE_VRSAVE(2,6);						\
 	stw	28,FRAME_DAR+8(1);					\
 	stw	29,FRAME_DSISR+8(1);					\
 	stw	30,FRAME_SRR0+8(1);					\
@@ -502,6 +591,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	4,FRAME_CTR+8(1);					\
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
+	RESTORE_VRSAVE(1,8);						\
 	GET_CPUINFO(7);							\
 	stw	2,savearea(7);						\
 	stw	3,savearea+4(7);					\
@@ -511,8 +601,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtlr	6;							\
 	mtsprg	1,7;			/* save cr */			\
 	lmw	2,FRAME_2+8(1);						\
-	lwz	0,FRAME_0+8(1);						\
-	lwz	1,FRAME_1+8(1);						\
+	lwz	0,FRAME_0+8(1);		/* restore r0 */		\
+	lwz	1,FRAME_1+8(1);		/* restore old sp in r1 */	\
 	mtsprg	2,2;			/* save r2 & r3 */		\
 	mtsprg	3,3;							\
 /* Disable translation, machine check and recoverability: */		\
@@ -525,13 +615,9 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	3,savearea+4(2);					\
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
-/* Restore user & kernel access SR: */					\
-	GET_CPUINFO(2);							\
-	lwz	2,CI_CURPM(2);		/* get real address of pmap */	\
-	lwz	3,PM_USRSR(2);						\
-	mtsr	USER_SR,3;						\
-	lwz	3,PM_KERNELSR(2);					\
-	mtsr	KERNEL_SR,3;						\
+/* Restore user SRs */							\
+	CPU601_KERN_LEAVE(2,3);						\
+	RESTORE_USER_SRS(2,3);						\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
 	GET_CPUINFO(2);							\
@@ -554,13 +640,17 @@ disitrap:
 	mfdar	30
 	mfdsisr	31
 	stmw	30,CI_TEMPSAVE+16(1)
+	.globl	_C_LABEL(trapstart)
+_C_LABEL(trapstart):
 realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
 	mtcr	1
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
-	bc	4,17,s_trap		/* branch if PSL_PR is false */
+s_trap:
+	bc	4,17,k_trap		/* branch if PSL_PR is false */
+	DSSALL				/* stop AltiVec data streams */
 	GET_CPUINFO(1)
 	lwz	1,CI_CURPCB(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -568,11 +658,11 @@ realtrap:
 /*
  * Now the common trap catching code.
  */
-s_trap:
-/* First have to enable KERNEL mapping */
-	lis	31,KERNEL_SEGMENT@h
-	ori	31,31,KERNEL_SEGMENT@l
-	mtsr	KERNEL_SR,31
+
+	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
+	CPU601_KERN_ENTRY(30,31)
+
+k_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
 /* Now we can recover interrupts again: */
 	mfmsr	7
@@ -615,18 +705,18 @@ s_dsitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	GET_CPUINFO(1)
 	lwz	1,CI_SPILLSTK(1)	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mflr	30			/* save trap type */
 	mfctr	31			/* & CTR */
 	mfdar	3
@@ -637,17 +727,17 @@ s_pte_spill:
 	mtlr	30			/* and trap type */
 	mfsprg	31,2			/* get saved XER */
 	mtxer	31			/* restore XER */
-	lwz	12,8(1)			/* restore non-volatile registers */
-	lwz	11,12(1)
-	lwz	10,16(1)
-	lwz	9,20(1)
-	lwz	8,24(1)
-	lwz	7,28(1)
-	lwz	6,32(1)
-	lwz	5,36(1)
-	lwz	4,40(1)
-	lwz	3,44(1)
-	lwz	0,48(1)
+	lwz	12,SPFRAME_R12(1)	/* restore non-volatile registers */
+	lwz	11,SPFRAME_R11(1)
+	lwz	10,SPFRAME_R10(1)
+	lwz	9,SPFRAME_R9(1)
+	lwz	8,SPFRAME_R8(1)
+	lwz	7,SPFRAME_R7(1)
+	lwz	6,SPFRAME_R6(1)
+	lwz	5,SPFRAME_R5(1)
+	lwz	4,SPFRAME_R4(1)
+	lwz	3,SPFRAME_R3(1)
+	lwz	0,SPFRAME_R0(1)
 	beq	disitrap
 	mtcr	29			/* restore CR */
 	mtlr	28			/* restore LR */
@@ -667,18 +757,18 @@ s_isitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	GET_CPUINFO(1)
 	lwz	1,CI_SPILLSTK(1)	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mfxer	30			/* save XER */
 	mtsprg	2,30
 	mflr	30			/* save trap type */
@@ -691,38 +781,40 @@ s_isitrap:
  */
 #define	INTRENTER							\
 /* Save non-volatile registers: */					\
-	stwu	1,-88(1);		/* temporarily */		\
-	stw	0,84(1);						\
+	stwu	1,-IFRAMELEN(1);	/* temporarily */		\
+	stw	0,IFRAME_R0(1);						\
 	mfsprg	0,1;			/* get original SP */		\
-	stw	0,0(1);			/* and store it */		\
-	stw	3,80(1);						\
-	stw	4,76(1);						\
-	stw	5,72(1);						\
-	stw	6,68(1);						\
-	stw	7,64(1);						\
-	stw	8,60(1);						\
-	stw	9,56(1);						\
-	stw	10,52(1);						\
-	stw	11,48(1);						\
-	stw	12,44(1);						\
-	stw	28,40(1);		/* saved LR */			\
-	stw	29,36(1);		/* saved CR */			\
-	stw	30,32(1);		/* saved XER */			\
+	stw	0,IFRAME_R1(1);		/* and store it */		\
+	stw	3,IFRAME_R3(1);						\
+	stw	4,IFRAME_R4(1);						\
+	stw	5,IFRAME_R5(1);						\
+	stw	6,IFRAME_R6(1);						\
+	stw	7,IFRAME_R7(1);						\
+	stw	8,IFRAME_R8(1);						\
+	stw	9,IFRAME_R9(1);						\
+	stw	10,IFRAME_R10(1);					\
+	stw	11,IFRAME_R11(1);					\
+	stw	12,IFRAME_R12(1);					\
+	stw	28,IFRAME_LR(1);	/* saved LR */			\
+	stw	29,IFRAME_CR(1);	/* saved CR */			\
+	stw	30,IFRAME_XER(1);	/* saved XER */			\
 	GET_CPUINFO(4);							\
 	lmw	28,CI_TEMPSAVE(4);	/* restore r28-r31 */		\
 	mfctr	6;							\
 	lwz	5,CI_INTRDEPTH(4);					\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
-	stw	6,28(1);						\
-	stw	5,20(1);						\
-	stw	4,12(1);						\
-	stw	3,8(1);							\
+	stw	6,IFRAME_CTR(1);					\
+	stw	5,IFRAME_INTR_DEPTH(1);					\
+	stw	4,IFRAME_SRR0(1);					\
+	stw	3,IFRAME_SRR1(1);					\
+	mtcr	3;							\
+	bc	4,17,99f;	/* branch if PSL_PR is false */		\
+	DSSALL;			/* stop AltiVec datastreams */		\
 /* interrupts are recoverable here, and enable translation */		\
-	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
-	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
-	mtsr	KERNEL_SR,3;						\
-	mfmsr	5;							\
+	RESTORE_KERN_SRS(3,4);						\
+	CPU601_KERN_ENTRY(3,4);						\
+99:	mfmsr	5;							\
 	ori	5,5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	5;							\
 	isync
@@ -740,16 +832,16 @@ intr_exit:
 	mtmsr	3
 	isync
 /* restore possibly overwritten registers: */
-	lwz	12,44(1)
-	lwz	11,48(1)
-	lwz	10,52(1)
-	lwz	9,56(1)
-	lwz	8,60(1)
-	lwz	7,64(1)
-	lwz	6,8(1)
-	lwz	5,12(1)
-	lwz	4,28(1)
-	lwz	3,32(1)
+	lwz	12,IFRAME_R12(1)
+	lwz	11,IFRAME_R11(1)
+	lwz	10,IFRAME_R10(1)
+	lwz	9,IFRAME_R9(1)
+	lwz	8,IFRAME_R8(1)
+	lwz	7,IFRAME_R7(1)
+	lwz	6,IFRAME_SRR1(1)
+	lwz	5,IFRAME_SRR0(1)
+	lwz	4,IFRAME_CTR(1)
+	lwz	3,IFRAME_XER(1)
 	mtsrr1	6
 	mtsrr0	5
 	mtctr	4
@@ -757,27 +849,26 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
+	CPU601_KERN_LEAVE(3,4)
 	GET_CPUINFO(4)
-	lwz	3,CI_CURPM(4)
-	lwz	3,PM_KERNELSR(3)
-	mtsr	KERNEL_SR,3		/* Restore kernel SR */
+	RESTORE_USER_SRS(3,4)
 	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
-	lwz	3,0(1)			/* get saved SP */
+	lwz	3,IFRAME_R1(1)		/* get saved SP */
 	mtsprg	1,3
 	li	6,EXC_AST
 	GET_CPUINFO(3)
 	stmw	28,CI_TEMPSAVE(3)	/* establish tempsave again */
 	mtlr	6
-	lwz	28,40(1)		/* saved LR */
-	lwz	29,36(1)		/* saved CR */
-	lwz	6,68(1)
-	lwz	5,72(1)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
+	lwz	28,IFRAME_LR(1)		/* saved LR */
+	lwz	29,IFRAME_CR(1)		/* saved CR */
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
 	GET_CPUINFO(30)
 	lwz	31,CI_INTRDEPTH(30)
 	addi	31,31,-1		/* adjust reentrancy count */
@@ -785,20 +876,20 @@ intr_exit:
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
-	lwz	5,36(1)
-	lwz	6,40(1)
+	lwz	5,IFRAME_CR(1)
+	lwz	6,IFRAME_LR(1)
 	mtcr	5
 	mtlr	6
-	lwz	6,68(1)
-	lwz	5,72(1)
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
 	GET_CPUINFO(3)
 	lwz	4,CI_INTRDEPTH(3)
 	addi	4,4,-1			/* adjust reentrancy count */
 	stw	4,CI_INTRDEPTH(3)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
-	lwz	1,0(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
+	lwz	1,IFRAME_R1(1)
 	rfi
 
 /*
@@ -806,7 +897,7 @@ intr_exit:
  */
 decrintr:
 	INTRENTER
-	addi	3,1,8			/* intr frame */
+	addi	3,1,8			/* intr frame -> clock frame */
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
@@ -829,7 +920,9 @@ _C_LABEL(ddb_trap):
 	mtlr	29
 	mfcr	29
 	mtsrr0	28
+#endif /* DDB */
 
+#if defined(DDB) || defined(KGDB)
 /*
  * Now the ddb trap catching code.
  */
@@ -857,7 +950,7 @@ ddbtrap:
 ddbleave:
 	FRAME_LEAVE(CI_DDBSAVE)
 	rfi
-#endif /* DDB */
+#endif /* DDB || KGDB */
 
 #ifdef IPKDB
 /*
@@ -974,3 +1067,5 @@ _C_LABEL(ipkdbsbyte):
 	icbi	0,9			/* and instruction caches */
 	blr
 #endif	/* IPKDB */
+	.globl	_C_LABEL(trapend)
+_C_LABEL(trapend):

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.25 2002/07/25 23:46:47 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.26 2002/07/28 07:06:27 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,11 +40,11 @@
 #include "opt_altivec.h"
 
 #ifdef ALTIVEC
-#define	SAVE_VRSAVE(tf,b) \
+#define	SAVE_VRSAVE(tf,b) 						\
 	mfspr	b,SPR_VRSAVE;						\
 	stw	b,FRAME_VRSAVE+8(tf);
 
-#define RESTORE_VRSAVE(tf,b) \
+#define RESTORE_VRSAVE(tf,b)						\
 	lwz	b,FRAME_VRSAVE+8(tf);					\
 	mtspr	SPR_VRSAVE,b;
 #else
@@ -687,7 +687,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Decide whether we return to user mode: */				\
 	lwz	3,savearea+4(0);					\
 	mtcr	3;							\
-	bc	4,17,1f;	/* branch if PSL_PR is false */		\
+	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(2,3);						\
 	RESTORE_USER_SRS(2,3);						\
@@ -711,8 +711,8 @@ disitrap:
 	mfdar	30
 	mfdsisr	31
 	stmw	30,tempsave+16(0)
-	.globl	trapstart
-trapstart:
+	.globl	_C_LABEL(trapstart)
+_C_LABEL(trapstart):
 realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
@@ -743,8 +743,8 @@ k_trap:
 trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
-	.globl	_C_LABEL(trapexit)
-_C_LABEL(trapexit):
+	.globl	trapexit
+trapexit:
 /* Disable interrupts: */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l
@@ -949,9 +949,9 @@ intr_exit:
 	mtlr	6
 	lwz	6,IFRAME_R6(1)
 	lwz	5,IFRAME_R5(1)
-	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
+	lis	3,_C_LABEL(intr_depth)@ha
 	lwz	4,_C_LABEL(intr_depth)@l(3)
-	addi	4,4,-1
+	addi	4,4,-1			/* adjust reentrancy count */
 	stw	4,_C_LABEL(intr_depth)@l(3)
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
@@ -1126,5 +1126,5 @@ _C_LABEL(ipkdbsbyte):
 	icbi	0,9			/* and instruction caches */	
 	blr
 #endif	/* IPKDB */
-	.globl	trapend
-trapend:
+	.globl	_C_LABEL(trapend)
+_C_LABEL(trapend):
