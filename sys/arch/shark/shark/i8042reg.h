@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.2 2003/10/22 09:03:40 agc Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.3 2003/10/22 10:04:43 agc Exp $     */
 
 /*
  * Copyright 1997
@@ -241,7 +241,7 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 #define I8042_READCCB(iot, ioh, status, value)  \
 { \
     if ( ((status) = i8042_cmd((iot), (ioh), I8042_CMD, \
-                                I8042_NO_RESPONSE, NULL, K_RDCMDBYTE)) != 0 ) \
+                                I8042_NO_RESPONSE, 0, K_RDCMDBYTE)) != 0 ) \
     { \
         if (((status) = i8042_wait_input((iot),(ioh),I8042_ANY_DATA)) != 0) \
         { \
