@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/04/29 03:23:45 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,9 @@ FILES=		luximb.ttf luximbi.ttf luximr.ttf luximri.ttf \
 
 .PATH: ${X11SRCDIR.xc}/extras/fonts/Bitstream-Vera
 
-FILES+=		Vera.ttf VeraBI.ttf VeraBd.ttf VeraMoBI.ttf VeraMoBd.ttf \
-		VeraMoIt.ttf VeraMono.ttf VeraSe.ttf VeraSeBd.ttf
+FILES+=		Vera.ttf VeraBI.ttf VeraBd.ttf VeraIt.ttf \
+		VeraMoBI.ttf VeraMoBd.ttf VeraMoIt.ttf VeraMono.ttf \
+		VeraSe.ttf VeraSeBd.ttf
 
 .include "../Makefile.scaled"
 
