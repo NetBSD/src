@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vnops.c,v 4.1 1994/01/02 14:41:30 jsp Exp
  *
- *	$Id: kernfs_vnops.c,v 1.19 1994/02/11 01:01:51 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.20 1994/02/14 19:46:18 ws Exp $
  */
 
 /*
@@ -87,6 +87,7 @@ struct kern_target {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 	/* name		data		tag		ro/rw */
 	{ ".",		0,		KTT_NULL,	KTM_RO,	VDIR },
+	{ "..",		0,		KTT_NULL,	KTM_RO,	VDIR },
 	{ "copyright",	copyright,	KTT_STRING,	KTM_RO,	VREG },
 	{ "hostname",	0,		KTT_HOSTNAME,	KTM_RW,	VREG },
 	{ "hz",		&hz,		KTT_INT,	KTM_RO,	VREG },
