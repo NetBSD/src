@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.5 1997/10/13 19:45:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $";
+__RCSID("$NetBSD: pl_5.c,v 1.5 1997/10/13 19:45:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +46,7 @@ static char rcsid[] = "$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $";
 
 #define turnfirst(x) (*x == 'r' || *x == 'l')
 
+void
 acceptmove()
 {
 	int ta;
@@ -54,10 +56,10 @@ acceptmove()
 	int vma, dir;
 	char prompt[60];
 	char buf[60], last = '\0';
-	register char *p;
+	char *p;
 
 	if (!mc->crew3 || snagged(ms) || !windspeed) {
-		Signal("Unable to move", (struct ship *)0);
+		Msg("Unable to move");
 		return;
 	}
 
@@ -77,22 +79,21 @@ acceptmove()
 			else if (dir == 9)
 				dir = 1;
 			if (last == 't') {
-				Signal("Ship can't turn that fast.",
-					(struct ship *)0);
+				Msg("Ship can't turn that fast.");
 				*p-- = '\0';
 			}
 			last = 't';
 			ma--;
 			ta--;
 			vma = min(ma, maxmove(ms, dir, 0));
-			if (ta < 0 && moved || vma < 0 && moved)
+			if ((ta < 0 && moved) || (vma < 0 && moved))
 				*p-- = '\0';
 			break;
 		case 'b':
 			ma--;
 			vma--;
 			last = 'b';
-			if (ta < 0 && moved || vma < 0 && moved)
+			if ((ta < 0 && moved) || (vma < 0 && moved))
 				*p-- = '\0';
 			break;
 		case '0':
@@ -105,31 +106,29 @@ acceptmove()
 		case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7':
 			if (last == '0') {
-				Signal("Can't move that fast.",
-					(struct ship *)0);
+				Msg("Can't move that fast.");
 				*p-- = '\0';
 			}
 			last = '0';
 			moved = 1;
 			ma -= *p - '0';
 			vma -= *p - '0';
-			if (ta < 0 && moved || vma < 0 && moved)
+			if ((ta < 0 && moved) || (vma < 0 && moved))
 				*p-- = '\0';
 			break;
 		default:
 			if (!isspace(*p)) {
-				Signal("Input error.", (struct ship *)0);
+				Msg("Input error.");
 				*p-- = '\0';
 			}
 		}
-	if (ta < 0 && moved || vma < 0 && moved
-	    || af && turnfirst(buf) && moved) {
-		Signal("Movement error.", (struct ship *)0);
+	if ((ta < 0 && moved) || (vma < 0 && moved)
+	    || (af && turnfirst(buf) && moved)) {
+		Msg("Movement error.");
 		if (ta < 0 && moved) {
 			if (mf->FS == 1) {
 				Write(W_FS, ms, 0, 0, 0, 0, 0);
-				Signal("No hands to set full sails.",
-					(struct ship *)0);
+				Msg("No hands to set full sails.");
 			}
 		} else if (ma >= 0)
 			buf[1] = '\0';
@@ -137,8 +136,7 @@ acceptmove()
 	if (af && !moved) {
 		if (mf->FS == 1) {
 			Write(W_FS, ms, 0, 0, 0, 0, 0);
-			Signal("No hands to set full sails.",
-				(struct ship *)0);
+			Msg("No hands to set full sails.");
 		}
 	}
 	if (*buf)
@@ -146,13 +144,14 @@ acceptmove()
 	else
 		(void) strcpy(movebuf, "d");
 	Write(W_MOVE, ms, 1, (long)movebuf, 0, 0, 0);
-	Signal("Helm: %s.", (struct ship *)0, movebuf);
+	Msg("Helm: %s.", movebuf);
 }
 
+void
 acceptboard()
 {
-	register struct ship *sp;
-	register int n;
+	struct ship *sp;
+	int n;
 	int crew[3];
 	int men = 0;
 	char c;
@@ -201,13 +200,14 @@ acceptboard()
 	unblockalarm();
 }
 
+void
 parties(crew, to, isdefense, buf)
-register struct ship *to;
+struct ship *to;
 int crew[3];
 char isdefense;
 char buf;
 {
-	register int k, j, men; 
+	int k, j, men; 
 	struct BP *ptr;
 	int temp[3];
 
@@ -227,8 +227,7 @@ char buf;
 					buf--;
 			}
 			if (buf > '0')
-				Signal("Sending all crew sections.",
-					(struct ship *)0);
+				Msg("Sending all crew sections.");
 			Write(isdefense ? W_DBP : W_OBP, ms, 0,
 				j, turn, to->file->index, men);
 			if (isdefense) {
@@ -255,6 +254,6 @@ char buf;
 			(void) wrefresh(slot_w);
 			unblockalarm();
 		} else
-			Signal("Sending no crew sections.", (struct ship *)0);
+			Msg("Sending no crew sections.");
 	}
 }

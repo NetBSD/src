@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.4 1997/01/07 12:42:15 tls Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.5 1997/10/13 19:43:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: dr_5.c,v 1.4 1997/01/07 12:42:15 tls Exp $";
+__RCSID("$NetBSD: dr_5.c,v 1.5 1997/10/13 19:43:47 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+void
 subtract(from, totalfrom, crewfrom, fromcap, pcfrom)
 struct ship *from, *fromcap;
 int pcfrom;
-register int  totalfrom, crewfrom[3];
+int  totalfrom, crewfrom[3];
 {
-	register int n;
+	int n;
 
 	if (fromcap == from && totalfrom) {		/* if not captured */
 		for (n = 0; n < 3; n++) {
@@ -68,15 +70,16 @@ register int  totalfrom, crewfrom[3];
 	}
 }
 
+int
 mensent(from, to, crew, captured, pc, isdefense)
 struct ship *from, *to, **captured;
 int crew[3], *pc;
 char isdefense;
 {					/* returns # of crew squares sent */
 	int men = 0;
-	register int n;
+	int n;
 	int c1, c2, c3;
-	register struct BP *bp;
+	struct BP *bp;
 
 	*pc = from->file->pcrew;
 	*captured = from->file->captured;
