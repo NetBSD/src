@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.38 1997/09/22 21:39:40 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.39 1997/10/14 00:52:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -100,6 +100,7 @@ in_pcballoc(so, v)
 	bzero((caddr_t)inp, sizeof(*inp));
 	inp->inp_table = table;
 	inp->inp_socket = so;
+	inp->inp_errormtu = -1;
 	so->so_pcb = inp;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
