@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.3 2001/03/05 23:29:32 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.4 2001/03/08 21:30:35 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,11 +45,13 @@
 
 #define FAST_FPE
 
+#include "opt_cputypes.h"
 #include "opt_ddb.h"
+#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.3 2001/03/05 23:29:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.4 2001/03/08 21:30:35 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -64,11 +66,14 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.3 2001/03/05 23:29:32 bjh21 Exp $");
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/katelib.h>
 #include <machine/undefined.h>
 #include <machine/trap.h>
 
 #include <arch/arm/arm/disassem.h>
+
+#ifdef arm26
+#include <machine/machdep.h>
+#endif
 
 #ifdef FAST_FPE
 extern int want_resched;
@@ -127,13 +132,19 @@ undefinedinstruction(trapframe_t *frame)
 	int coprocessor;
 
 	/* Enable interrupts if they were enabled before the exception. */
+#ifdef arm26
+	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
+		int_on();
+#else
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
+#endif
 
-	/* Update vmmeter statistics */
-	uvmexp.traps++;
-
+#ifdef arm26
+	fault_pc = frame->tf_r15 & R15_PC;
+#else
 	fault_pc = frame->tf_pc - INSN_SIZE;
+#endif
 
 	/*
 	 * Should use fuword() here .. but in the interests of squeezing every
@@ -143,7 +154,21 @@ undefinedinstruction(trapframe_t *frame)
 	 * it ?
 	 */
 
-	fault_instruction = ReadWord(fault_pc);
+	fault_instruction = *(u_int32_t *)fault_pc;
+
+#ifdef CPU_ARM2
+	/*
+	 * Check if the aborted instruction was a SWI (ARM2 bug --
+	 * ARM3 data sheet p87) and call SWI handler if so.
+	 */
+	if ((fault_instruction & 0x0f000000) == 0x0f000000) {
+		swi_handler(frame);
+		return;
+	}
+#endif
+
+	/* Update vmmeter statistics */
+	uvmexp.traps++;
 
 	/* Check for coprocessor instruction */
 
@@ -158,13 +183,17 @@ undefinedinstruction(trapframe_t *frame)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
 	else
 		coprocessor = 0;
-		
+
 	/* Get the current proc structure or proc0 if there is none. */
 
 	if ((p = curproc) == 0)
 		p = &proc0;
 
+#ifdef PROG26
+	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
+#else
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
+#endif
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.
