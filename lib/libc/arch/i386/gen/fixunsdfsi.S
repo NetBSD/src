@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.5 1993/12/06 23:27:04 pk Exp $
+ *	$Id: fixunsdfsi.S,v 1.6 1994/01/27 06:34:04 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.5 1993/12/06 23:27:04 pk Exp $"
+	.asciz "$Id: fixunsdfsi.S,v 1.6 1994/01/27 06:34:04 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -54,7 +54,7 @@ ENTRY(__fixunsdfsi)
 	PIC_EPILOGUE
 	fcoml	(%eax)
 #else
-	fcoml	PIC_GOTOFF(fbiggestsigned)	/* bigger than biggest signed? */
+	fcoml	fbiggestsigned	/* bigger than biggest signed? */
 #endif
 	fstsw	%ax
 	sahf
