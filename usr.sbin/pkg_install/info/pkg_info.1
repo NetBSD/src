@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.4.2.2 1998/08/29 03:36:28 mellon Exp $
+.\" $NetBSD: pkg_info.1,v 1.4.2.3 1998/11/06 20:41:12 cgd Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cDdfIikLmpqRrvh
+.Op Fl BbcDdfIikLmpqRrvh
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name [pkg-name ...]
@@ -48,6 +48,14 @@ The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl a
 Show information for all currently installed packages.
+.It Fl B
+Show some of the important definitions used when building
+the binary package (the "Build information") for each package.
+.It Fl b
+Show the NetBSD RCS Id strings from the files used in the construction
+of the binary package (the "Build version") for each package. These files are the
+package Makefile, any patch files, any checksum files, and the packing
+list file.
 .It Fl c
 Show the one-line comment field for each package.
 .It Fl D
@@ -55,18 +63,26 @@ Show the install-message file (if any) for each package.
 .It Fl d
 Show the long-description field for each package.
 .It Fl e Ar pkg-name
+This option
+allows you to test for the presence of another (perhaps
+prerequisite) package from a script.
 If the package identified by
 .Ar pkg-name
 is currently installed, return 0, otherwise return 1.
-If the given pkg-name contains a
+In addition, the names of any package(s) found installed are printed to
+stdout unless turned off using the
+.Fl q
+option.
+
+If the given
+.Ar pkg-name
+contains a
 shell metacharacter, it will be matched against all installed
 packages using
-.Xr fnmatch 3 ,
-and any packages found installed are printed to stdout, one name per
-line.
+.Xr fnmatch 3 .
 .Xr csh 1
-style {,} alternates have also been implemented.
-Dewey decimal numbers can also be matched in a relational manner,
+style {,} alternates have also been implemented in addition to this.
+Package version numbers can also be matched in a relational manner
 using the
 .Pa >=, <=, >
 and
@@ -77,12 +93,6 @@ For example,
 will match versions 1.3 and later of the
 .Pa name
 package.
-This printing can be turned off using the
-.Fl q
-option.
-This option
-allows you to test for the presence of another (perhaps
-prerequisite) package from a script.
 .It Fl f
 Show the packing list instructions for each package.
 .It Fl I
