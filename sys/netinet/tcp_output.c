@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.70 2001/07/31 02:25:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.71 2001/09/10 04:24:24 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1090,13 +1090,17 @@ out:
 			if (tp->t_in6pcb)
 				tcp6_quench(tp->t_in6pcb, 0);
 #endif
-			return (0);
-		}
-		if ((error == EHOSTUNREACH || error == ENETDOWN)
-		    && TCPS_HAVERCVDSYN(tp->t_state)) {
+			error = 0;
+		} else if ((error == EHOSTUNREACH || error == ENETDOWN) &&
+		    TCPS_HAVERCVDSYN(tp->t_state)) {
 			tp->t_softerror = error;
-			return (0);
+			error = 0;
 		}
+
+		/* Restart the delayed ACK timer, if necessary. */
+		if (tp->t_flags & TF_DELACK)
+			TCP_RESTART_DELACK(tp);
+
 		return (error);
 	}
 	tcpstat.tcps_sndtotal++;
