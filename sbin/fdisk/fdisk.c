@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.37 1999/06/04 18:59:15 thorpej Exp $ */
+/*	$NetBSD: fdisk.c,v 1.38 1999/09/06 23:58:59 soren Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.37 1999/06/04 18:59:15 thorpej Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.38 1999/09/06 23:58:59 soren Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,11 +81,13 @@ struct mboot mboot;
 
 #ifdef	__i386__
 
+#define PARTNAMESIZE	8	/* From mbr_bootsel.S */
+
 struct mbr_bootsel {
 	u_int8_t defkey;
 	u_int8_t flags;
 	u_int16_t timeo;
-	char nametab[4][9];
+	char nametab[4][PARTNAMESIZE + 1];
 	u_int16_t magic;
 } __attribute__((packed));
 
@@ -444,8 +446,10 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: fdisk [-aiufSc] [-0|-1|-2|-3] "
-		      "[device]\n");
+	(void)fprintf(stderr, "usage: fdisk [-aiufBS] [-0|-1|-2|-3] "
+			      "[-b cylinders/heads/sectors]\n"
+			      "             [-s id/start/size] [-c bootcode] "
+			      "[device]\n");
 	exit(1);
 }
 
@@ -711,10 +715,10 @@ configure_bootsel()
 	struct mbr_bootsel *mbs =
 	    (struct mbr_bootsel *)&mboot.bootinst[MBR_BOOTSELOFF];
 	int i, nused, firstpart = -1, item;
-	char desc[10], *p;
+	char desc[PARTNAMESIZE + 2], *p;
 	int timo, entry_changed = 0;
 
-	for (i = nused = 0; i < NMBRPART; i++) {
+	for (i = nused = 0; i < NMBRPART; ++i) {
 		if (mboot.parts[i].mbrp_typ != 0) {
 			if (firstpart == -1)
 				firstpart = i;
@@ -770,7 +774,7 @@ configure_bootsel()
 		if (mbs->nametab[i][0] != 0)
 			printf("%d: %s\n", i, &mbs->nametab[i][0]);
 		else
-			printf("%d: Unused\n", i);
+			printf("%d: <UNUSED>\n", i);
 	}
 	printf("\n");
 
@@ -783,23 +787,26 @@ editentries:
 			break;
 		if (item < 0 || item >= NMBRPART) {
 			printf("Invalid entry number\n");
+			item = -1;
 			continue;
 		}
 		if (mboot.parts[item].mbrp_typ == 0) {
-			printf("The matching partition entry is unused\n");
+			printf("The partition entry is unused\n");
+			item = -1;
 			continue;
 		}
 
 		printf("Enter descriptions (max. 8 characters): ");
 		rewind(stdin);
-		fgets(desc, 10, stdin);
+		fgets(desc, PARTNAMESIZE + 1, stdin);
+		fpurge(stdin);
 		p = strchr(desc, '\n');
 		if (p != NULL)
 			*p = 0;
-		else
-			desc[9] = 0;
 		strcpy(&mbs->nametab[item][0], desc);
 		entry_changed = bootsel_modified = 1;
+
+		item++;
 	}
 
 	if (entry_changed)
@@ -813,7 +820,7 @@ editentries:
 				printf("%d: %s\n", i, &mbs->nametab[i][0]);
 		} else {
 			if (entry_changed)
-				printf("%d: Unused\n", i);
+				printf("%d: <UNUSED>\n", i);
 		}
 	}
 	if (entry_changed)
