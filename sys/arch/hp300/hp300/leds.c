@@ -1,7 +1,7 @@
-/*	$NetBSD: led.h,v 1.4 1996/10/05 09:18:22 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.1 1997/05/05 20:54:35 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1992 University of Utah.
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -37,21 +37,61 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: led.h 1.2 92/08/27$
+ * from: Utah $Hdr: machdep.c 1.74 92/12/20$
  *
- *	@(#)led.h	8.1 (Berkeley) 6/10/93
+ *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
-#define	LED_ADDR	0x1FFFF		/* a ROM address--strange but true */
+#include <sys/param.h>
 
-#define	LED_LANXMT	0x80		/* for LAN transmit activity */
-#define	LED_LANRCV	0x40		/* for LAN receive activity */
-#define	LED_DISK	0x20		/* for disk activity */
-#define	LED_PULSE	0x10		/* heartbeat */
+#include <vm/vm.h>
 
-#ifdef _KERNEL
-extern	char *ledaddr;
-extern	int inledcontrol;
+#include <arch/hp300/hp300/leds.h>
 
-void	ledcontrol __P((int, int, int));
-#endif
+extern caddr_t	ledbase;	/* kva of LED page */
+u_int8_t	*ledaddr;	/* actual address of LEDs */
+static int	inledcontrol;	/* mutex */
+
+/*
+ * Map the LED page and setup the KVA to access it.
+ */
+void
+ledinit()
+{
+
+	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	ledaddr = (u_int8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
+}
+
+/*
+ * Do lights:
+ *	`ons' is a mask of LEDs to turn on,
+ *	`offs' is a mask of LEDs to turn off,
+ *	`togs' is a mask of LEDs to toggle.
+ * Note we don't use splclock/splx for mutual exclusion.
+ * They are expensive and we really don't need to be that precise.
+ * Besides we would like to be able to profile this routine.
+ */
+void
+ledcontrol(ons, offs, togs)
+	int ons, offs, togs;
+{
+	static u_int8_t currentleds;
+	u_int8_t leds;
+
+	if (inledcontrol)
+		return;
+
+	inledcontrol = 1;
+	leds = currentleds;
+	if (ons)
+		leds |= ons;
+	if (offs)
+		leds &= ~offs;
+	if (togs)
+		leds ^= togs;
+	currentleds = leds;
+	*ledaddr = ~leds;
+	inledcontrol = 0;
+}
