@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.13 1999/07/08 18:11:01 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.14 1999/11/13 00:32:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ dvma_mapin(kmem_va, len, canwait)
 
 		iommu_enter((tva & IOMMU_VA_MASK), pa);
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
-			VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+			VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 
 	return (dvma_addr);

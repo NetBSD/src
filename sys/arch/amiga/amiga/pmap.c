@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 1999/09/24 06:24:34 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 1999/11/13 00:30:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -786,7 +786,7 @@ pmap_map(virt, start, end, prot)
 		printf("pmap_map(%lx, %lx, %lx, %x)\n", virt, start, end, prot);
 #endif
 	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), virt, start, prot, 0);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -1130,20 +1130,20 @@ pmap_protect(pmap, sva, eva, prot)
  */
 extern int kernel_copyback;
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	u_int *pte;
 	int npte;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1151,7 +1151,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		    pmap, va, pa, prot, wired);
 #endif
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 
 #ifdef DEBUG
 	if (pmap == pmap_kernel())
@@ -1393,6 +1393,7 @@ validate:
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
 	}
 #endif
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1401,7 +1402,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -1414,7 +1415,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 
@@ -2530,8 +2531,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
+		    VM_PROT_DEFAULT|PMAP_WIRED);
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

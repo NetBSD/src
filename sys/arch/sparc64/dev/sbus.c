@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.20 1999/07/08 18:09:00 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.21 1999/11/13 00:32:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1142,8 +1142,8 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

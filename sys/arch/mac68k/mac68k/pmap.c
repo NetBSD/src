@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1999/09/12 01:17:08 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 1999/11/13 00:30:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -705,7 +705,7 @@ pmap_map(va, spa, epa, prot)
 	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -1092,27 +1092,27 @@ pmap_protect(pmap, sva, eva, prot)
  *	or lose information.  Thatis, this routine must actually
  *	insert this page into the given map NOW.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *pte;
 	int npte;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 	    pmap, va, pa, prot, wired));
 
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1238,12 +1238,12 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 * on the hint provided in access_type.
 		 */
 #ifdef DIAGNOSTIC
-		if (access_type & ~prot)
+		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
-		if (access_type & VM_PROT_WRITE)
+		if (flags & VM_PROT_WRITE)
 			*pa_to_attribute(pa) |= (PG_U|PG_M);
-		else if (access_type & VM_PROT_ALL)
+		else if (flags & VM_PROT_ALL)
 			*pa_to_attribute(pa) |= PG_U;
 		splx(s);
 	}
@@ -1299,6 +1299,8 @@ validate:
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pte));
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1307,7 +1309,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -2307,8 +2309,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
+		    VM_PROT_DEFAULT|PMAP_WIRED);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

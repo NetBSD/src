@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.6 1999/03/26 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.7 1999/11/13 00:30:29 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -184,7 +184,7 @@ ofromrw(dev, uio, flags)
 		v = sc->base + uio->uio_offset;
 		pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
 		    trunc_page(v), uio->uio_rw == UIO_READ ?
-		    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
 		o = uio->uio_offset & PGOFSET;
 		c = min(uio->uio_resid, (int)(NBPG - o));
 		error = uiomove((caddr_t)memhook + o, c, uio);

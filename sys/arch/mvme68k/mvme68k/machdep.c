@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1999/09/17 20:04:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1999/11/13 00:30:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -237,8 +237,8 @@ mvme68k_init()
 	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
 
@@ -994,7 +994,7 @@ dumpsys()
 				n = NBPG;
 
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-			    VM_PROT_READ, TRUE, VM_PROT_READ);
+			    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 			error = (*dump)(dumpdev, blkno, vmmap, n);
 			if (error)

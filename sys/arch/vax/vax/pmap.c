@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 1999/10/27 16:37:54 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.73 1999/11/13 00:32:20 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -631,28 +631,27 @@ if(startpmapdebug)
 /*
  * pmap_enter() is the main routine that puts in mappings for pages, or
  * upgrades mappings to more "rights". Note that:
- * - "wired" isn't used. We don't loose mappings unless asked for.
- * - "access_type" is set if the entering was caused by a fault.
  */
-void
-pmap_enter(pmap, v, p, prot, wired, access_type)
+int
+pmap_enter(pmap, v, p, prot, flags)
 	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
-	vm_prot_t prot, access_type;
-	boolean_t wired;
+	vm_prot_t prot;
+	int flags;
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
 	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
-		    pmap, v, p, prot, wired, access_type);
+		    pmap, v, p, prot, wired, flags & VM_PROT_ALL);
 #endif
 	/* Can this happen with UVM??? */
 	if (pmap == 0)
-		return;
+		return (KERN_SUCCESS);
 
 	RECURSESTART;
 	/* Find addess of correct pte */
@@ -723,7 +722,7 @@ if (startpmapdebug)
 	/* No mapping change. Can this happen??? */
 	if (newpte == oldpte) {
 		RECURSEEND;
-		return;
+		return (KERN_SUCCESS);
 	}
 
 	pv = pv_table + (p >> PGSHIFT);
@@ -760,11 +759,11 @@ if (startpmapdebug)
 	}
 	pmap->pm_stats.resident_count++;
 
-	if (access_type & VM_PROT_READ) {
+	if (flags & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
-	if (access_type & VM_PROT_WRITE)
+	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
 
 	patch[i] = newpte;
@@ -783,6 +782,8 @@ if (startpmapdebug)
 #endif
 	if (pventries < 10)
 		more_pventries();
+
+	return (KERN_SUCCESS);
 }
 
 void *

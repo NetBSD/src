@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1999/10/26 00:20:39 itohy Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 1999/11/13 00:30:41 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -761,8 +761,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
-			    VM_PROT_WRITE);
+			    trunc_page(f->f_fa), VM_PROT_WRITE,
+			    VM_PROT_WRITE|PMAP_WIRED);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);

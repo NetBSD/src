@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1999/11/08 05:06:42 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.54 1999/11/13 00:32:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -907,7 +907,7 @@ dumpsys()
 				printf("%d ", i / (1024*1024));
 
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, 1, VM_PROT_READ);
+					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
@@ -1381,8 +1381,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			   VM_PROT_READ | VM_PROT_WRITE);
+			   VM_PROT_READ | VM_PROT_WRITE,
+			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
@@ -1531,7 +1531,7 @@ static	vaddr_t iobase = IODEV_BASE;
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
