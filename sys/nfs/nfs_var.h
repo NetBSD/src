@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.12 1998/01/30 22:44:14 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.13 1998/03/29 05:13:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -60,6 +60,7 @@ struct nfsd_srvargs;
 struct nfsrv_descript;
 struct nfs_fattr;
 struct nfsdircache;
+union nethostaddr;
 
 /* nfs_bio.c */
 int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
