@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9 2000/05/05 19:05:30 itojun Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.1 2000/08/04 15:06:59 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,11 +141,11 @@ you can just press RETURN when it prompts for
 Adding accounts
 .Pp
 Use the
-.Xr vipw 8
+.Xr useradd 8
 command to add accounts to your system,
 .Em do not No edit Pa /etc/passwd
 directly. See
-.Xr adduser 8
+.Xr useradd 8
 for more information on the process of how to add a new user to the system.
 .It
 The X Window System
