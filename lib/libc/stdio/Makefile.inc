@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.17 1998/08/28 21:33:10 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.18 1998/08/30 23:29:18 perry Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -35,9 +35,9 @@ MLINKS+=fseek.3 fgetpos.3 fseek.3 fsetpos.3 fseek.3 ftell.3 fseek.3 rewind.3
 MLINKS+=funopen.3 fropen.3 funopen.3 fwopen.3
 MLINKS+=getc.3 fgetc.3 getc.3 getchar.3 getc.3 getw.3
 MLINKS+=mktemp.3 mkdtemp.3 mktemp.3 mkstemp.3
-MLINKS+=printf.3 fprintf.3 printf.3 snprintf.3 printf.3 sprintf.3 \
-	printf.3 vfprintf.3 printf.3 vprintf.3 printf.3 vsnprintf.3 \
-	printf.3 vsprintf.3 
+MLINKS+=printf.3 asprintf.3 printf.3 fprintf.3 printf.3 snprintf.3 \
+	printf.3 sprintf.3 printf.3 vasprintf.3 printf.3 vfprintf.3 \
+	printf.3 vprintf.3 printf.3 vsnprintf.3 printf.3 vsprintf.3 
 MLINKS+=putc.3 fputc.3 putc.3 putchar.3 putc.3 putw.3
 MLINKS+=scanf.3 fscanf.3 scanf.3 sscanf.3 scanf.3 vfscanf.3 scanf.3 vscanf.3 \
 	scanf.3 vsscanf.3
