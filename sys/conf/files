@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.662.2.5 2004/05/09 09:00:58 jdc Exp $
+#	$NetBSD: files,v 1.662.2.6 2004/05/22 15:58:37 he Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1107,7 +1107,7 @@ file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
-file	dev/dksubr.c			cgd
+file	dev/dksubr.c			cgd | xbd
 file	dev/fss.c			fss			needs-count
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
