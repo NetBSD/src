@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.13 1994/06/04 11:59:13 chopps Exp $
+ *	$Id: grf_rt.c,v 1.14 1994/06/05 07:45:12 chopps Exp $
  */
 
 #include "grf.h"
@@ -783,7 +783,9 @@ grfrtmatch(pdp, cfp, auxp)
 	if (zap->manid != 18260 || zap->prodid != 6)
 		return(0);
 
+#ifdef RETINACONSOLE
 	if (amiga_realconfig == 0 || rtconunit != cfp->cf_unit) {
+#endif
 		if ((unsigned)retina_default_mon >= retina_mon_max ||
 		    monitor_defs[retina_default_mon].DEP == 8)
 			retina_default_mon = 0;
@@ -791,11 +793,13 @@ grfrtmatch(pdp, cfp, auxp)
 		current_mon = monitor_defs + retina_default_mon;
 		if (retina_alive(current_mon) == 0)
 			return(0);
+#ifdef RETINACONSOLE
 		if (amiga_realconfig == 0) {
 			rtconunit = cfp->cf_unit;
 			cfdata = cfp;
 		}
 	}
+#endif
 	return(1);
 }
 
@@ -830,6 +834,7 @@ grfrtattach(pdp, dp, auxp)
 		gp->g_regkva = (volatile caddr_t)zap->va;
 		gp->g_fbkva = (volatile caddr_t)zap->va + 64 * 1024;
 		gp->g_unit = GRF_RETINAII_UNIT;
+		gp->g_flags = GF_ALIVE;
 		gp->g_mode = rt_mode;
 		gp->g_conpri = grfrt_cnprobe();
 		grfrt_iteinit(gp);
