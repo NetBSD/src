@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.108 1999/08/10 23:35:44 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.109 1999/08/14 06:19:49 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 1999/08/10 23:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 1999/08/14 06:19:49 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1428,9 +1428,10 @@ pmap_page_protect(pa, prot)
 	simple_lock(&pvh->pvh_slock);
 	s = splimp();			/* XXX needed w/ PMAP_NEW? */
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
-		nextpv = LIST_NEXT(pv, pv_list);
+		struct pmap *pmap = pv->pv_pmap;
 
-		PMAP_LOCK(pv->pv_pmap, ps);
+		nextpv = LIST_NEXT(pv, pv_list);
+		PMAP_LOCK(pmap, ps);
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
 		    pmap_pte_pa(pv->pv_pte) != pa)
@@ -1449,7 +1450,7 @@ pmap_page_protect(pa, prot)
 			}
 		}
 #endif
-		PMAP_UNLOCK(pv->pv_pmap, ps);
+		PMAP_UNLOCK(pmap, ps);
 	}
 	splx(s);
 
