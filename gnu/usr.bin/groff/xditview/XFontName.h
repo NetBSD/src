@@ -1,5 +1,3 @@
-/*	$Id: XFontName.h,v 1.2 1993/08/02 17:45:57 mycroft Exp $ */
-
 typedef struct _xFontName {
 	char		Registry[256];
 	char		Foundry[256];

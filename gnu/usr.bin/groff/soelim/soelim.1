@@ -1,9 +1,26 @@
-.\"	$Id: soelim.1,v 1.2 1993/08/02 17:45:10 mycroft Exp $	-*- nroff -*-
-.TH SOELIM 1 "15 September 1992" "Groff Version 1.08"
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
+.TH @G@SOELIM @MAN1EXT@ "@MDATE@" "Groff Version @VERSION@"
 .SH NAME
-soelim \- interpret .so requests in groff input
+@g@soelim \- interpret .so requests in groff input
 .SH SYNOPSIS
-.B soelim
+.B @g@soelim
 [
 .B \-Cv
 ]
@@ -11,7 +28,7 @@ soelim \- interpret .so requests in groff input
 .IR files \|.\|.\|.\|
 ]
 .SH DESCRIPTION
-.B soelim
+.B @g@soelim
 reads
 .I files
 and replaces lines of the form
@@ -24,7 +41,7 @@ It is useful if files included with
 .B so
 need to be preprocessed.
 Normally,
-.B soelim
+.B @g@soelim
 should be invoked with the
 .B \-s
 option of
@@ -39,4 +56,4 @@ even when followed by a character other than space or newline.
 .B \-v
 Print the version number.
 .SH "SEE ALSO"
-.BR groff (1)
+.BR groff (@MAN1EXT@)

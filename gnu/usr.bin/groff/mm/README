@@ -1,9 +1,10 @@
+
 This is mgm, a macro package for groff.
 
 It is supposed to be compatible with the DWB mm macros,
 and has several extensions.
 
-Send bug reports to jh@efd.lth.se with a description of the problem
+Send bug reports to jh@axis.se with a description of the problem
 and a sample of text which reproduces the error.
 
 Don't forget to mention the version of mgm (look in the beginning
@@ -23,4 +24,4 @@ This README should be bigger :-)
 
 Jörgen.
 
-Thanks to everyone who have send me bug-reports and fixes.
+Thanks to everyone who have sent me bug-reports and fixes.

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "refer.h"
 #include "refid.h"
@@ -179,7 +179,8 @@ int main(int argc, char **argv)
 	    num = opt;
 	    opt = 0;
 	  }
-	  const char *ptr; for (ptr = num; *ptr; ptr++)
+	  const char *ptr;
+	  for (ptr = num; *ptr; ptr++)
 	    if (!csdigit(*ptr)) {
 	      error("bad character `%1' in argument to -f option", *ptr);
 	      break;
@@ -227,7 +228,8 @@ int main(int argc, char **argv)
 	break;
       case 'a':
 	{
-	  const char *ptr; for (ptr = ++opt; *ptr; ptr++)
+	  const char *ptr;
+	  for (ptr = ++opt; *ptr; ptr++)
 	    if (!csdigit(*ptr)) {
 	      error("argument to `a' option not a number");
 	      break;
@@ -258,7 +260,7 @@ int main(int argc, char **argv)
 	    if (n < 0)
 	      n = 0;
 	    opt = ptr;
-	    sprintf(strchr(buf, '\0'), "+%d", n);
+	    sprintf(strchr(buf, '\0'), "+%ld", n);
 	  }
 	  strcat(buf, "D.y");
 	  if (*opt == ',')
@@ -273,7 +275,7 @@ int main(int argc, char **argv)
 	    }
 	    if (n < 0)
 	      n = 0;
-	    sprintf(strchr(buf, '\0'), "-%d", n);
+	    sprintf(strchr(buf, '\0'), "-%ld", n);
 	    opt = ptr;
 	    if (*opt != '\0')
 	      error("argument to `l' option not of form `m,n'");
@@ -374,7 +376,7 @@ int main(int argc, char **argv)
     output_references();
   if (fflush(stdout) < 0)
     fatal("output error");
-  exit(0);
+  return 0;
 }
 
 static void usage()
@@ -422,8 +424,8 @@ static void do_file(const char *filename)
       error("can't open `%1': %2", filename, strerror(errno));
       return;
     }
-    current_filename = filename;
   }
+  current_filename = filename;
   fprintf(outfp, ".lf 1 %s\n", filename);
   string line;
   current_lineno = 0;
@@ -697,7 +699,8 @@ static unsigned store_reference(const string &str)
   reference *ref = make_reference(str, &flags);
   ref->compute_hash_code();
   unsigned h = ref->hash();
-  reference **ptr; for (ptr = reference_hash_table + (h % hash_table_size);
+  reference **ptr;
+  for (ptr = reference_hash_table + (h % hash_table_size);
        *ptr != 0;
        ((ptr == reference_hash_table)
 	? (ptr = reference_hash_table + hash_table_size - 1)
@@ -727,7 +730,8 @@ static unsigned store_reference(const string &str)
 	reference_hash_table[i] = 0;
       for (i = 0; i < old_size; i++)
 	if (old_table[i]) {
-	  reference **p; for (p = (reference_hash_table
+	  reference **p;
+	  for (p = (reference_hash_table
 				+ (old_table[i]->hash() % hash_table_size));
 	       *p;
 	       ((p == reference_hash_table)
@@ -785,7 +789,8 @@ static void output_citation_group(reference **v, int n, label_type type,
     for (int i = 1; i < n; i++) {
       int num = v[i]->get_number();
       reference *temp = v[i];
-      int j; for (j = i - 1; j >= 0 && v[j]->get_number() > num; j--)
+      int j;
+      for (j = i - 1; j >= 0 && v[j]->get_number() > num; j--)
 	v[j + 1] = v[j];
       v[j + 1] = temp;
     }
@@ -1213,7 +1218,8 @@ int next_size(int n)
     16000057, 32000011, 64000031, 128000003, 0 
   };
 
-  const int *p; for (p = table_sizes; *p <= n && *p != 0; p++)
+  const int *p;
+  for (p = table_sizes; *p <= n && *p != 0; p++)
     ;
   assert(*p != 0);
   return *p;

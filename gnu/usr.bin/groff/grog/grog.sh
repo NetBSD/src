@@ -1,7 +1,7 @@
 #!/bin/sh
+#	$NetBSD: grog.sh,v 1.5 1996/08/13 07:04:44 explorer Exp $
 # grog -- guess options for groff command
 # Like doctype in Kernighan & Pike, Unix Programming Environment, pp 306-8.
-# $Id: grog.sh,v 1.4 1995/09/27 09:43:21 pk Exp $
 
 soelim=soelim
 

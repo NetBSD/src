@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "driver.h"
 #include "stringclass.h"
@@ -121,7 +121,8 @@ resource *resource_manager::lookup_resource(resource_type type,
 					    string &version,
 					    unsigned revision)
 {
-  resource *r; for (r = resource_list; r; r = r->next)
+  resource *r;
+  for (r = resource_list; r; r = r->next)
     if (r->type == type
 	&& r->name == name
 	&& r->version == version
@@ -137,7 +138,8 @@ resource *resource_manager::lookup_resource(resource_type type,
 
 resource *resource_manager::lookup_font(const char *name)
 {
-  resource *r; for (r = resource_list; r; r = r->next)
+  resource *r;
+  for (r = resource_list; r; r = r->next)
     if (r->type == RESOURCE_FONT
 	&& strlen(name) == r->name.length()
 	&& memcmp(name, r->name.contents(), r->name.length()) == 0)
@@ -159,14 +161,16 @@ typedef resource *Presource;	// Work around g++ bug.
 void resource_manager::document_setup(ps_output &out)
 {
   int nranks = 0;
-  resource *r; for (r = resource_list; r; r = r->next)
+  resource *r;
+  for (r = resource_list; r; r = r->next)
     if (r->rank >= nranks)
       nranks = r->rank + 1;
   if (nranks > 0) {
     // Sort resource_list in reverse order of rank.
     Presource *head = new Presource[nranks + 1];
     Presource **tail = new Presource *[nranks + 1];
-    int i; for (i = 0; i < nranks + 1; i++) {
+    int i;
+    for (i = 0; i < nranks + 1; i++) {
       head[i] = 0;
       tail[i] = &head[i];
     }
@@ -510,7 +514,8 @@ resource *resource_manager::read_resource_arg(const char **ptr)
     error("missing resource type");
     return 0;
   }
-  int ri; for (ri = 0; ri < NRESOURCES; ri++)
+  int ri;
+  for (ri = 0; ri < NRESOURCES; ri++)
     if (strlen(resource_table[ri]) == *ptr - name
 	&& memcmp(resource_table[ri], name, *ptr - name) == 0)
       break;
@@ -833,7 +838,8 @@ static unsigned parse_extensions(const char *ptr)
     do {
       ++ptr;
     } while (*ptr != '\0' && !white_space(*ptr));
-    int i; for (i = 0; i < NEXTENSIONS; i++)
+    int i;
+    for (i = 0; i < NEXTENSIONS; i++)
       if (strlen(extension_table[i]) == ptr - name
 	  && memcmp(extension_table[i], name, ptr - name) == 0) {
 	flags |= (1 << i);
@@ -879,22 +885,22 @@ void resource_manager::process_file(int rank, FILE *fp, const char *filename,
   };
 
   static comment_info comment_table[] = {
-    "BeginResource:", &resource_manager::do_begin_resource,
-    "IncludeResource:", &resource_manager::do_include_resource,
-    "BeginDocument:", &resource_manager::do_begin_document,
-    "IncludeDocument:", &resource_manager::do_include_document,
-    "BeginProcSet:", &resource_manager::do_begin_procset,
-    "IncludeProcSet:", &resource_manager::do_include_procset,
-    "BeginFont:", &resource_manager::do_begin_font,
-    "IncludeFont:", &resource_manager::do_include_font,
-    "BeginFile:", &resource_manager::do_begin_file,
-    "IncludeFile:", &resource_manager::do_include_file,
-    "EndProcSet", &resource_manager::change_to_end_resource,
-    "EndFont", &resource_manager::change_to_end_resource,
-    "EndFile", &resource_manager::change_to_end_resource,
-    "BeginPreview:", &resource_manager::do_begin_preview,
-    "BeginData:", &resource_manager::do_begin_data,
-    "BeginBinary:", &resource_manager::do_begin_binary,
+    { "BeginResource:", &resource_manager::do_begin_resource },
+    { "IncludeResource:", &resource_manager::do_include_resource },
+    { "BeginDocument:", &resource_manager::do_begin_document },
+    { "IncludeDocument:", &resource_manager::do_include_document },
+    { "BeginProcSet:", &resource_manager::do_begin_procset },
+    { "IncludeProcSet:", &resource_manager::do_include_procset },
+    { "BeginFont:", &resource_manager::do_begin_font },
+    { "IncludeFont:", &resource_manager::do_include_font },
+    { "BeginFile:", &resource_manager::do_begin_file },
+    { "IncludeFile:", &resource_manager::do_include_file },
+    { "EndProcSet", &resource_manager::change_to_end_resource },
+    { "EndFont", &resource_manager::change_to_end_resource },
+    { "EndFile", &resource_manager::change_to_end_resource },
+    { "BeginPreview:", &resource_manager::do_begin_preview },
+    { "BeginData:", &resource_manager::do_begin_data },
+    { "BeginBinary:", &resource_manager::do_begin_binary },
   };
   
   const int NCOMMENTS = sizeof(comment_table)/sizeof(comment_table[0]);
@@ -932,7 +938,8 @@ void resource_manager::process_file(int rank, FILE *fp, const char *filename,
       if (buf[0] == '%') {
 	if (buf[1] == '%') {
 	  const char *ptr;
-	  int i; for (i = 0; i < NCOMMENTS; i++)
+	  int i;
+	  for (i = 0; i < NCOMMENTS; i++)
 	    if (ptr = matches_comment(buf, comment_table[i].name)) {
 	      copy_this_line
 		= (this->*(comment_table[i].proc))(ptr, rank, fp, outfp);
@@ -955,8 +962,8 @@ void resource_manager::process_file(int rank, FILE *fp, const char *filename,
 	      had_language_level_comment = 1;
 	    }
 	    else {
-	      for (i = 0; i < NHEADER_COMMENTS; i++)
-		if (matches_comment(buf, header_comment_table[i])) {
+	      for (int ii = 0; ii < NHEADER_COMMENTS; ii++)
+		if (matches_comment(buf, header_comment_table[ii])) {
 		  interesting = 1;
 		  break;
 		}
@@ -1028,7 +1035,8 @@ static void print_ps_string(const string &s, FILE *outfp)
     return;
   }
   int level = 0;
-  int i; for (i = 0; i < len; i++)
+  int i;
+  for (i = 0; i < len; i++)
     if (str[i] == '(')
       level++;
     else if (str[i] == ')' && --level < 0)

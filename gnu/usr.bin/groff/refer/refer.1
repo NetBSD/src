@@ -1,4 +1,21 @@
-.\"	$Id: refer.1,v 1.2 1993/08/02 17:45:03 mycroft Exp $	-*- nroff -*-
+.ig \"-*- nroff -*-
+Copyright (C) 1989-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
 .de TQ
 .br
 .ns
@@ -13,7 +30,7 @@
 .\" The BSD man macros can't handle " in arguments to font change macros,
 .\" so use \(ts instead of ".
 .tr \(ts"
-.TH REFER 1 "19 February 1993" "Groff Version 1.08"
+.TH REFER 1 "August 10, 1996" "Groff Version 1.10"
 .SH NAME
 refer \- preprocess bibliographic references for groff
 .SH SYNOPSIS
@@ -155,7 +172,7 @@ no-label-in-text; no-label-in-reference
 .B compatible
 .TP
 .B \-P
-.B move-puntuation
+.B move-punctuation
 .TP
 .B \-S
 .B
@@ -259,10 +276,10 @@ If the name contains a title such as
 .B Jr.
 at the end,
 it should be separated from the last name by a comma.
-There can be multiple occurences of the
+There can be multiple occurrences of the
 .B A
 field.
-The order is siginificant.
+The order is significant.
 It is a good idea always to supply an
 .B A
 field or a 
@@ -357,10 +374,10 @@ For all fields except
 .B A
 and
 .BR E ,
-if there is more than one occurence of a particular field in a record,
+if there is more than one occurrence of a particular field in a record,
 only the last such field will be used.
 .LP
-If accent strings are used, they should follow the charater to be accented.
+If accent strings are used, they should follow the character to be accented.
 This means that the
 .B AM
 macro must be used with the
@@ -727,7 +744,7 @@ and
 even when followed by a character other than space or newline.
 .TP
 .BI database\  filename \fR\|.\|.\|.
-Search the bibligraphic databases
+Search the bibliographic databases
 .IR filename \|.\|.\|.
 For each
 .I filename

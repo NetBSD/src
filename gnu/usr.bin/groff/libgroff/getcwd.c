@@ -1,9 +1,5 @@
 /* Partial emulation of getcwd in terms of getwd. */
 
-#ifndef lint
-static char rcsid[] = "$Id: getcwd.c,v 1.2 1993/08/02 17:44:02 mycroft Exp $";
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <string.h>
 #include <errno.h>

@@ -8,12 +8,14 @@
 .char _ \R'dvi-char_ \\n(.f=\f(CW\\n(.f\fP'\\*[dvi-char_\\n[dvi-char_]]
 .char \[ul] \R'dvi-char_ \w'M'=\w'i''\\*[dvi-char_\\n[dvi-char_]]
 .\" Normally use a rule.
-.ds dvi-char_0 \v'.23m'\D'R .5m .04m'\v'-.04m'\v'-.23m'
+.\" This is designed so that \(ul, \(rn and \(br form corners.
+.ds dvi-char_0 \Z'\v'.23m'\D'R .54m .04m''\h'.5m'
 .\" In font CW use a real _ character.
 .ds dvi-char_1 _
-.if !c\[rn] .char \[rn] \D'R .5m -.04m'\v'.04m'
+.if !c\[radicalex] .char \[radicalex] \D'R .5m -.04m'\v'.04m'
 .if !c\[br] .char \[br] \Z'\v'.25m'\D'R .04m -1m''
-.if !c\[ru] .char \[ru] \v'-.02m'\D'R .5m .04m'\v'-.04m'\v'.02m'
+.if !c\[ru] .char \[ru] \Z'\v'-.02m'\D'R .54m .04m''\h'.5m'
+.if !c\[rn] .char \[rn] \Z'\v'-.77m'\D'R .54m .04m''\h'.5m'
 .if !c\[co] .char \[co] \z\(ci\h'\w'\(ci'u-\w'c'u/2u'c\h'\w'\(ci'u-\w'c'u/2u'
 .if !c\[rg] .char \[rg] \z\(ci\h'\w'\(ci'u-\w'r'u/2u'r\h'\w'\(ci'u-\w'r'u/2u'
 .if !c\[fm] .char \[fm] \v'-.35m'\s[\\n(.s*7u/10u]\[prime]\s0\v'.35m'
@@ -33,6 +35,7 @@
 .if !c\[TP] .char \[TP] I\h'-.25m'\v'-.33m'\s[\En[.s]*6u/10u]\v'.33m'D\
 \v'-.33m'\s0\v'.33m'
 .if !c\[Tp] .char \[Tp] \zlp
+.if !c\[nb] .char \[nb] \[slashnot]\(sb
 .cflags 8 \(an
 .if !c\[an] .char \[an] \h'-.167m'\(mi\h'-.167m'
 .\" Define some fractions.
@@ -124,9 +127,9 @@
 .dvi-achar \(:u \(ad u u
 .dvi-achar \('y \' y y
 .dvi-achar \(:y \(ad y y
-.char \(,C \o'\(acc'
+.if !c\(,C .char \(,C \o'\(acC'
 .hcode \(,Cc
-.char \(,c \o'\(acc'
+.if !c\(,c .char \(,c \o'\(acc'
 .hcode \(,cc
 .cp \n(_C
 .do mso tmac.latin1
