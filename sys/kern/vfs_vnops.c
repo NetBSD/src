@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.76 2004/01/10 17:16:38 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.76 2004/01/10 17:16:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $");
 
 #include "fs_union.h"
 
@@ -48,12 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.76 2004/01/10 17:16:38 hannken Exp $
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/poll.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -824,4 +827,61 @@ vn_restorerecurse(vp, flags)
 
 	lkp->lk_flags &= ~LK_CANRECURSE;
 	lkp->lk_flags |= flags;
+}
+
+int
+vn_cow_establish(struct vnode *vp,
+    void (*func)(void *, struct buf *), void *cookie)
+{
+	int s;
+	struct spec_cow_entry *e;
+
+	MALLOC(e, struct spec_cow_entry *, sizeof(struct spec_cow_entry),
+	    M_DEVBUF, M_WAITOK);
+	e->ce_func = func;
+	e->ce_cookie = cookie;
+
+	SPEC_COW_LOCK(vp->v_specinfo, s);
+	vp->v_spec_cow_req++;
+	while (vp->v_spec_cow_count > 0)
+		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_slock);
+
+	SLIST_INSERT_HEAD(&vp->v_spec_cow_head, e, ce_list);
+
+	vp->v_spec_cow_req--;
+	if (vp->v_spec_cow_req == 0)
+		wakeup(&vp->v_spec_cow_req);
+	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+	return 0;
+}
+
+int
+vn_cow_disestablish(struct vnode *vp,
+    void (*func)(void *, struct buf *), void *cookie)
+{
+	int s;
+	struct spec_cow_entry *e;
+
+	SPEC_COW_LOCK(vp->v_specinfo, s);
+	vp->v_spec_cow_req++;
+	while (vp->v_spec_cow_count > 0)
+		ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+		    &vp->v_spec_cow_slock);
+
+	SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
+		if (e->ce_func == func && e->ce_cookie == cookie) {
+			SLIST_REMOVE(&vp->v_spec_cow_head, e,
+			    spec_cow_entry, ce_list);
+			FREE(e, M_DEVBUF);
+			break;
+		}
+
+	vp->v_spec_cow_req--;
+	if (vp->v_spec_cow_req == 0)
+		wakeup(&vp->v_spec_cow_req);
+	SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+	return e ? 0 : EINVAL;
 }

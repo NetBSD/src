@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.215 2004/01/14 11:28:05 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.216 2004/02/14 00:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.215 2004/01/14 11:28:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.216 2004/02/14 00:00:56 hannken Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1167,6 +1167,11 @@ loop:
 		nvp->v_specmountpoint = NULL;
 		simple_unlock(&spechash_slock);
 		nvp->v_speclockf = NULL;
+		simple_lock_init(&nvp->v_spec_cow_slock);
+		SLIST_INIT(&nvp->v_spec_cow_head);
+		nvp->v_spec_cow_req = 0;
+		nvp->v_spec_cow_count = 0;
+
 		*vpp = nvp;
 		if (vp != NULLVP) {
 			nvp->v_flag |= VALIASED;
