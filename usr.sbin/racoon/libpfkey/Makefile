@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/18 03:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/11/24 21:54:38 fvdl Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -7,7 +7,7 @@ NOLINT=		# defined
 .include <bsd.own.mk>
 
 LIB=	pfkey
-CFLAGS+=-g -Wall -Werror
+#CFLAGS+=-g -Wall -Werror
 CPPFLAGS+=-DIPSEC_DEBUG -DIPSEC -DINET6 -I. -DYY_NO_UNPUT -I${LIBPFKEYSRCDIR}
 
 SRCS=	pfkey.c pfkey_dump.c ipsec_strerror.c
