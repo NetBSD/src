@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.21 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.22 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.21 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.22 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,6 @@ esp_pcmcia_attach(parent, self, aux)
 	struct pcmcia_function *pf = pa->pf;
 	int error;
 
-	aprint_normal("\n");
 	esc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, esp_pcmcia_validate_config);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.29 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.30 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.29 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.30 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,6 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_function *pf = pa->pf;
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, aic_pcmcia_validate_config);
