@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.7 1994/12/12 18:59:20 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.8 1994/12/17 20:14:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -90,8 +90,12 @@ kdopen(dev, flag, mode, p)
 	if (tp == NULL)
 		return ENXIO;
 
-	if ((error = kbd_init()) != 0)
+	if ((error = kbd_iopen()) != 0) {
+#ifdef	DIAGNOSTIC
+		printf("kd: kbd_iopen, error=%d\n", error);
+#endif
 		return (error);
+	}
 
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
@@ -232,11 +236,9 @@ kdparam(tp, t)
 
 /*
  * kd console support
- *
- * XXX - Using prom routines for now...
  */
 
-extern int zscnprobe_kbd();
+extern int zscnprobe_kbd(), zscngetc(), kbd_translate();
 
 kdcnprobe(cp)
 	struct consdev *cp;
@@ -256,22 +258,26 @@ kdcnprobe(cp)
 kdcninit(cp)
 	struct consdev *cp;
 {
+
+	/* This prepares zscngetc() */
+	zs_set_conschan(1, 0);
+
+	/* This prepares kbd_translate() */
+	kbd_init_tables();
+
 	mon_printf("console on kd0 (keyboard/display)\n");
 }
 
 kdcngetc(dev)
 	dev_t dev;
 {
-	int c, s;
+	int c;
 
-	/* XXX - Does mon_may_getchar() require the NMI clock? */
-	s = splhigh();
-	do c = mon_may_getchar();
-	while (c < 0);
-	splx(s);
+	do {
+		c = zscngetc(0);
+		c = kbd_translate(c);
+	} while (c == -1);
 
-	if (c == '\r')
-		c = '\n';
 	return (c);
 }
 

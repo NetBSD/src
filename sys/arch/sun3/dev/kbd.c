@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.7 1994/12/12 18:59:19 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.8 1994/12/17 20:14:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,6 +208,7 @@ struct kbd_softc {
 	void	(*k_open) __P((struct tty *));	/* enable dataflow */
 	void	(*k_close) __P((struct tty *));	/* disable dataflow */
 	int	k_evmode;		/* set if we should produce events */
+	int	k_isopen;		/* set if open has been done */
 	struct	kbd_state k_state;	/* ASCII decode state */
 	struct	evvar k_events;		/* event queue state */
 } kbd_softc;
@@ -215,9 +216,9 @@ struct kbd_softc {
 /* Prototypes */
 void	kbd_ascii(struct tty *);
 void	kbd_serial(struct tty *, void (*)(), void (*)());
-int 	kbd_init(void);
-void	kbd_reset(struct kbd_state *);
-static	int kbd_translate(int, struct kbd_state *);
+int 	kbd_iopen(void);
+void	kbd_reset(struct kbd_softc *);
+int kbd_translate(int);
 void	kbd_rint(int);
 int	kbdopen(dev_t, int, int, struct proc *);
 int	kbdclose(dev_t, int, int, struct proc *);
@@ -226,6 +227,22 @@ int	kbdwrite(dev_t, struct uio *, int);
 int	kbdioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	kbdselect(dev_t, int, struct proc *);
 int	kbd_docmd(int, int);
+
+/*
+ * Initialization done by either kdcninit or kbd_iopen
+ */
+void
+kbd_init_tables()
+{
+	struct kbd_state *ks;
+
+	ks = &kbd_softc.k_state;
+	if (ks->kbd_cur == NULL) {
+		ks->kbd_cur = kbd_unshifted;
+		ks->kbd_unshifted = kbd_unshifted;
+		ks->kbd_shifted = kbd_shifted;
+	}
+}
 
 /*
  * Attach the console keyboard ASCII (up-link) interface.
@@ -253,7 +270,10 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
 	k->k_open = iopen;
 	k->k_close = iclose;
 
-	/* Now attach the Keyboard/Display (kd) pseudo-driver. */
+	/* Do this before any calls to kbd_rint(). */
+	kbd_init_tables();
+
+	/* Now attach the (kd) pseudo-driver. */
 	kd_attach(1);	/* This calls kbd_ascii() */
 }
 
@@ -262,15 +282,15 @@ kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
  * This is called from kbdopen or kdopen (in kd.c)
  */
 int
-kbd_init()
+kbd_iopen()
 {
-	register struct kbd_softc *k;
+	struct kbd_softc *k;
 	int error, s;
 
 	k = &kbd_softc;
 
 	/* Tolerate extra calls. */
-	if (k->k_state.kbd_cur)
+	if (k->k_isopen)
 		return (0);
 
 	/* Make sure "down" link (to zs1a) is established. */
@@ -285,31 +305,34 @@ kbd_init()
 	(void) ttyoutput(KBD_CMD_RESET, k->k_kbd);
 	(*k->k_kbd->t_oproc)(k->k_kbd);
 	/* The wakeup for this sleep is in kbd_reset(). */
-	error = tsleep((caddr_t)&kbd_softc.k_state, PZERO | PCATCH,
+	error = tsleep((caddr_t)k, PZERO | PCATCH,
 				   devopn, hz);
-	if (error == EWOULDBLOCK)	/* no response */
-		error = ENXIO;
+	if (error == EWOULDBLOCK) { 	/* no response */
+		printf("keyboard not responding\n");
+		error = EIO;
+	}
 
 	if (error == 0)
-	    k->k_state.kbd_cur = kbd_unshifted;
+		k->k_isopen = 1;
 
 	splx(s);
 	return error;
 }
 
 void
-kbd_reset(register struct kbd_state *ks)
+kbd_reset(k)
+	struct kbd_softc *k;
 {
+	struct kbd_state *ks;
+
+	ks = &k->k_state;
+
 	/*
 	 * On first identification, wake up anyone waiting for type
 	 * and set up the table pointers.
 	 */
-	if (ks->kbd_unshifted == NULL) {
-		wakeup((caddr_t)ks);
-		ks->kbd_unshifted = kbd_unshifted;
-		ks->kbd_shifted = kbd_shifted;
-		ks->kbd_cur = ks->kbd_unshifted;
-	}
+	if (k->k_isopen == 0)
+		wakeup((caddr_t)k);
 
 	/* Restore keyclick, if necessary */
 	switch (ks->kbd_id) {
@@ -335,11 +358,13 @@ kbd_reset(register struct kbd_state *ks)
 /*
  * Turn keyboard up/down codes into ASCII.
  */
-static int
-kbd_translate(register int c, register struct kbd_state *ks)
+int
+kbd_translate(register int c)
 {
+	register struct kbd_state *ks;
 	register int down;
 
+	ks = &kbd_softc.k_state;
 	if (ks->kbd_cur == NULL) {
 		/*
 		 * Do not know how to translate yet.
@@ -420,7 +445,7 @@ kbd_rint(register int c)
 	if (k->k_state.kbd_takeid) {
 		k->k_state.kbd_takeid = 0;
 		k->k_state.kbd_id = c;
-		kbd_reset(&k->k_state);
+		kbd_reset(k);
 		return;
 	}
 
@@ -437,7 +462,7 @@ kbd_rint(register int c)
 	 * open and we do not know its type.
 	 */
 	if (!k->k_evmode) {
-		c = kbd_translate(c, &k->k_state);
+		c = kbd_translate(c);
 		if (c >= 0 && k->k_cons != NULL)
 			ttyinput(c, k->k_cons);
 		return;
@@ -481,7 +506,7 @@ kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 	kbd_softc.k_events.ev_io = p;
 
-	if ((error = kbd_init()) != 0) {
+	if ((error = kbd_iopen()) != 0) {
 		kbd_softc.k_events.ev_io = NULL;
 		return (error);
 	}
