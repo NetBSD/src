@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.22 2002/06/18 15:49:48 drochner Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.23 2002/06/20 08:24:22 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.22 2002/06/18 15:49:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.23 2002/06/20 08:24:22 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ uvm_pglistalloc_c_ps(psi, size, low, high, alignment, boundary, rlist)
 			panic("pgalloc contig: botch4");		
 #endif
 		tryidx = try - vm_physmem[psi].start;
-		end = tryidx + (size / PAGE_SIZE);
+		end = tryidx + (size >> PAGE_SHIFT);
 		pgs = vm_physmem[psi].pgs;
 
 		/*
@@ -330,7 +330,7 @@ uvm_pglistalloc_simple(size, low, high, rlist, waitok)
 	/* Default to "lose". */
 	error = ENOMEM;
 
-	todo = size / PAGE_SIZE;
+	todo = size >> PAGE_SHIFT;
 
 again:
 	/*
@@ -413,10 +413,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 
 	TAILQ_INIT(rlist);
 
-	if ((nsegs < size / PAGE_SIZE) || (alignment != PAGE_SIZE)
-	    || (boundary != 0))
+	if ((nsegs < size >> PAGE_SHIFT) || (alignment != PAGE_SIZE) ||
+	    (boundary != 0))
 		res = uvm_pglistalloc_contig(size, low, high, alignment,
-					     boundary, rlist);
+		    boundary, rlist);
 	else
 		res = uvm_pglistalloc_simple(size, low, high, rlist, waitok);
 
