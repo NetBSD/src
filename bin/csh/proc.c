@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.17 1999/03/19 12:58:00 christos Exp $	*/
+/*	$NetBSD: proc.c,v 1.17.2.1 1999/06/21 14:36:39 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.17 1999/03/19 12:58:00 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.17.2.1 1999/06/21 14:36:39 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -973,6 +973,7 @@ dokill(v, t)
     struct command *t;
 {
     int signum = SIGTERM;
+    Char *signame;
     char *name;
 
     v++;
@@ -1005,15 +1006,15 @@ dokill(v, t)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
-	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0'))
-		v++;
+	    if (v[0][1] == 's' && v[0][2] == '\0')
+		signame = *(++v);
 	    else
-		(*v)++;
+		signame = &v[0][1];
 
-	    if (v[0] == NULL || v[1] == NULL)
+	    if (signame == NULL || v[1] == NULL)
 		stderror(ERR_NAME | ERR_TOOFEW);
 
-	    name = short2str(&v[0][0]);
+	    name = short2str(signame);
 	    for (signum = 1; signum < NSIG; signum++)
 		if (!strcasecmp(sys_signame[signum], name) ||
 		    (!strncasecmp("SIG", name, 3) &&	/* skip "SIG" prefix */
@@ -1021,10 +1022,10 @@ dokill(v, t)
 		    break;
 
 	    if (signum == NSIG) {
-		if (v[0][0] == '0')
+		if (signame[0] == '0')
 		    signum = 0;
 		else {
-		    setname(vis_str(&v[0][0]));
+		    setname(vis_str(signame));
 		    stderror(ERR_NAME | ERR_UNKSIG);
 		}
 	    }
