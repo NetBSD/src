@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.1 2000/06/02 23:11:11 fvdl Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.2 2000/06/11 16:26:53 assar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,6 +46,7 @@ static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #include <netconfig.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 
 #ifdef __weak_alias
 __weak_alias(getnetpath,_getnetpath)
@@ -102,6 +103,7 @@ setnetpath()
 	return (NULL);
     }
     if ((np_sessionp->nc_handlep = setnetconfig()) == NULL) {
+	syslog (LOG_ERR, "rpc: failed to open " NETCONFIG);
 	return (NULL);
     }
     np_sessionp->valid = NP_VALID;
@@ -158,6 +160,8 @@ getnetpath(handlep)
 	do {                /* select next visible network */
 	    if (np_sessionp->nc_handlep == NULL) {
 		np_sessionp->nc_handlep = setnetconfig();
+		if (np_sessionp->nc_handlep == NULL)
+		    syslog (LOG_ERR, "rpc: failed to open " NETCONFIG);
 	    }
 	    if ((ncp = getnetconfig(np_sessionp->nc_handlep)) == NULL) {
 		return(NULL);
