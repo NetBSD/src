@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/12/26 17:57:02 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/27 01:16:55 christos Exp $
 
 WARNS=2
 DPADD+=${LIBSTDCPP} ${LIBCURSES} ${LIBTERMCAP} ${LIBM}
@@ -6,7 +6,7 @@ LDADD+=-lstdc++ -lcurses -ltermcap -lm
 
 PROG=dab
 MAN=dab.6
-SRCS=algor.C board.C main.C human.C box.C player.C gamescreen.C \
-    ttyscrn.C random.C
+SRCS=algor.cc board.cc main.cc human.cc box.cc player.cc gamescreen.cc \
+    ttyscrn.cc random.cc
 
 .include <bsd.prog.mk>
