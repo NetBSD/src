@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.13 2002/10/23 09:15:00 jdolecek Exp $	*/
+/*	$NetBSD: select.h,v 1.14 2002/11/26 19:08:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,9 +46,9 @@
  * notified when I/O becomes possible.
  */
 struct selinfo {
-	pid_t		si_pid;		/* process to be notified */
-	struct klist	si_klist;	/* knotes attached to this selinfo */
-	short		si_flags;	/* see below */
+	pid_t		sel_pid;	/* process to be notified */
+	struct klist	sel_klist;	/* knotes attached to this selinfo */
+	short		sel_flags;	/* see below */
 };
 #define	SI_COLL		0x0001		/* collision occurred */
 
@@ -62,9 +62,9 @@ static __inline void
 selnotify(struct selinfo *sip, long knhint)
 {
 
-	if (sip->si_pid != 0)
+	if (sip->sel_pid != 0)
 		selwakeup(sip);
-	KNOTE(&sip->si_klist, knhint);
+	KNOTE(&sip->sel_klist, knhint);
 }
 #endif
 
