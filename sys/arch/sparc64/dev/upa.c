@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.5 1999/06/07 05:28:04 eeh Exp $ */
+/*	$NetBSD: upa.c,v 1.6 2000/01/14 14:33:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ upa_attach_mainbus(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	upa_attach(sc, "upa", node, ma->ma_bp, NULL);
+	upa_attach(sc, "upa", node, NULL);
 }
 
 void
@@ -260,7 +260,7 @@ upa_attach_iommu(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	upa_attach(sc, "upa", node, ia->iom_bp, NULL);
+	upa_attach(sc, "upa", node, NULL);
 }
 
 void
@@ -286,15 +286,14 @@ upa_attach_xbox(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	upa_attach(sc, "upa", node, xa->xa_bp, NULL);
+	upa_attach(sc, "upa", node, NULL);
 }
 
 void
-upa_attach(sc, busname, busnode, bp, specials)
+upa_attach(sc, busname, busnode, specials)
 	struct upa_softc *sc;
 	char *busname;
 	int busnode;
-	struct bootpath *bp;
 	const char * const *specials;
 {
 	int node0, node, error;
@@ -309,12 +308,6 @@ upa_attach(sc, busname, busnode, bp, specials)
 	 * Get the Upa burst transfer size if burst transfers are supported
 	 */
 	sc->sc_burst = getpropint(busnode, "burst-sizes", 0);
-
-	/* Propagate bootpath */
-	if (bp != NULL && strcmp(bp->name, busname) == 0)
-		bp++;
-	else
-		bp = NULL;
 
 	/*
 	 * Collect address translations from the OBP.
@@ -391,7 +384,7 @@ upa_attach(sc, busname, busnode, bp, specials)
 		}
 
 		if (upa_setup_attach_args(sc, sbt, sc->sc_dmatag,
-					   node, bp, &ua) != 0) {
+					   node, &ua) != 0) {
 			panic("upa_attach: %s: incomplete", sp);
 		}
 		(void) config_found(&sc->sc_dev, (void *)&ua, upa_print);
@@ -462,12 +455,11 @@ upa_attach(sc, busname, busnode, bp, specials)
 }
 
 int
-upa_setup_attach_args(sc, bustag, dmatag, node, bp, ua)
+upa_setup_attach_args(sc, bustag, dmatag, node, ua)
 	struct upa_softc	*sc;
 	bus_space_tag_t		bustag;
 	bus_dma_tag_t		dmatag;
 	int			node;
-	struct bootpath		*bp;
 	struct upa_attach_args	*ua;
 {
 	struct	rom_reg romreg;
@@ -479,7 +471,6 @@ upa_setup_attach_args(sc, bustag, dmatag, node, bp, ua)
 	ua->ua_bustag = bustag;
 	ua->ua_dmatag = dmatag;
 	ua->ua_node = node;
-	ua->ua_bp = bp;
 
 	if ((error = getprop_reg1(node, &romreg)) != 0)
 		return (error);
