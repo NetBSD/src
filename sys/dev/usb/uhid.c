@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.12 1998/12/26 12:53:02 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.13 1999/01/07 02:22:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #if defined(__NetBSD__)
-#include <sys/device.h>
 #include <sys/ioctl.h>
 #elif defined(__FreeBSD__)
 #include <sys/ioccom.h>
