@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.133 1999/12/12 11:53:41 soren Exp $
+#	$NetBSD: INSTALL,v 1.134 2000/01/04 08:05:49 itojun Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -123,6 +123,7 @@ file-system 	KERNFS		# /kern
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -451,6 +452,9 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
+# need more pcic mem window for awi and cnw
+#awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
+#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
