@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.10 1993/11/12 05:55:14 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.11 1993/11/26 19:56:56 ws Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -285,9 +285,10 @@ struct isoreaddir {
 };
 
 static int
-iso_uiodir(idp,dp)
+iso_uiodir(idp,dp,off)
 	struct isoreaddir *idp;
 	struct dirent *dp;
+	off_t off;
 {
 	int error;
 	
@@ -305,13 +306,13 @@ iso_uiodir(idp,dp)
 			return -1;
 		}
 		
-		*idp->cookiep++ = idp->curroff;
+		*idp->cookiep++ = off;
 		--idp->ncookies;
 	}
 	
 	if (error = uiomove(dp,dp->d_reclen,idp->uio))
 		return error;
-	idp->uio_off = idp->curroff;
+	idp->uio_off = off;
 	return 0;
 }
 
@@ -344,13 +345,11 @@ iso_shipdir(idp)
 			if (idp->assocent.d_namlen) {
 				if (error = iso_uiodir(idp,&idp->assocent,idp->assocoff))
 					return error;
-				idp->uio_off = idp->assocoff;
 				idp->assocent.d_namlen = 0;
 			}
 			if (idp->saveent.d_namlen) {
 				if (error = iso_uiodir(idp,&idp->saveent,idp->saveoff))
 					return error;
-				idp->uio_off = idp->saveoff;
 				idp->saveent.d_namlen = 0;
 			}
 		}
@@ -472,18 +471,18 @@ isofs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 					   &idp->current.d_namlen,
 					   &idp->current.d_fileno,imp);
 			if (idp->current.d_namlen)
-				error = iso_uiodir(idp,&idp->current);
+				error = iso_uiodir(idp,&idp->current,idp->curroff);
 			break;
 		default:	/* ISO_FTYPE_DEFAULT || ISO_FTYPE_9660 */
 			strcpy(idp->current.d_name,"..");
 			switch (ep->name[0]) {
 			case 0:
 				idp->current.d_namlen = 1;
-				error = iso_uiodir(idp,&idp->current);
+				error = iso_uiodir(idp,&idp->current,idp->curroff);
 				break;
 			case 1:
 				idp->current.d_namlen = 2;
-				error = iso_uiodir(idp,&idp->current);
+				error = iso_uiodir(idp,&idp->current,idp->curroff);
 				break;
 			default:
 				isofntrans(ep->name,idp->current.d_namlen,
@@ -493,7 +492,7 @@ isofs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
 					error = iso_shipdir(idp);
 				else
-					error = iso_uiodir(idp,&idp->current);
+					error = iso_uiodir(idp,&idp->current,idp->curroff);
 				break;
 			}
 		}
