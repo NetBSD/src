@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.41 2002/06/01 23:50:58 lukem Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.42 2002/10/22 00:01:56 fair Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.41 2002/06/01 23:50:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.42 2002/10/22 00:01:56 fair Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -734,7 +734,7 @@ rtk_attach(sc)
 	sc->mii.mii_readreg = rtk_phy_readreg;
 	sc->mii.mii_writereg = rtk_phy_writereg;
 	sc->mii.mii_statchg = rtk_phy_statchg;
-	ifmedia_init(&sc->mii.mii_media, 0, rtk_ifmedia_upd, rtk_ifmedia_sts);
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd, rtk_ifmedia_sts);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, 
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.30 2002/08/29 14:33:03 martin Exp $	*/
+/*	$NetBSD: hme.c,v 1.31 2002/10/22 00:01:56 fair Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.30 2002/08/29 14:33:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.31 2002/10/22 00:01:56 fair Exp $");
 
 #define HMEDEBUG
 
@@ -262,7 +262,7 @@ hme_config(sc)
 	mii->mii_writereg = hme_mii_writereg;
 	mii->mii_statchg = hme_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK, hme_mediachange, hme_mediastatus);
 
 	hme_mifinit(sc);
 
