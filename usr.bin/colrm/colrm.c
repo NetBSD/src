@@ -1,4 +1,4 @@
-/*	$NetBSD: colrm.c,v 1.6 2003/08/07 11:13:25 agc Exp $	*/
+/*	$NetBSD: colrm.c,v 1.7 2005/02/17 17:17:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: colrm.c,v 1.6 2003/08/07 11:13:25 agc Exp $");
+__RCSID("$NetBSD: colrm.c,v 1.7 2005/02/17 17:17:25 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,14 +54,11 @@ __RCSID("$NetBSD: colrm.c,v 1.6 2003/08/07 11:13:25 agc Exp $");
 
 #define	TAB	8
 
-void	check __P((FILE *));
-int	main __P((int, char **));
-void	usage __P((void));
+void	check(FILE *);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_long column, start, stop;
 	int ch;
@@ -124,8 +121,7 @@ main(argc, argv)
 }
 
 void
-check(stream)
-	FILE *stream;
+check(FILE *stream)
 {
 	if (feof(stream))
 		exit(0);
