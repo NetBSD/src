@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.1.8.2 2002/06/23 17:41:31 jdolecek Exp $        */
+/*      $NetBSD: opms.c,v 1.1.8.3 2002/06/23 18:16:19 jdolecek Exp $        */
 
 /*
  * Copyright 1997
@@ -977,3 +977,51 @@ opmspoll(dev, events, p)
     return (revents);
 } /* End opmspoll */
 
+static void
+filt_opmsrdetach(struct knote *kn)
+{
+	struct opms_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_opmsread(struct knote *kn, long hint)
+{
+	struct opms_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops opmsread_filtops =
+	{ 1, NULL, filt_opmsrdetach, filt_opmsread };
+
+int
+opmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &opmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
