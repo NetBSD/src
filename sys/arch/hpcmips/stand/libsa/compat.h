@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.1.1.1 1999/09/16 12:23:28 takemura Exp $	*/
+/*	$NetBSD: compat.h,v 1.2 2000/01/16 03:07:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
