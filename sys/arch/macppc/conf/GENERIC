@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1998/07/02 18:58:32 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.7 1998/07/03 11:50:32 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -115,7 +115,8 @@ ep*	at pci? dev ? function ?
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 
 obio0	at pci? dev ? function ?
-adb0	at obio0
+nvram0	at obio0			# nvram
+adb0	at obio0			# Apple Desktop Bus
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
 scsibus* at esp0
