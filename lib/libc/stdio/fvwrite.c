@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.8 1998/02/03 18:41:15 perry Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.9 1998/08/28 21:33:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.8 1998/02/03 18:41:15 perry Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.9 1998/08/28 21:33:11 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "local.h"
 #include "fvwrite.h"
@@ -117,6 +118,23 @@ __sfvwrite(fp, uio)
 		 */
 		do {
 			GETIOV(;);
+			if ((fp->_flags & (__SALC | __SSTR)) ==
+			    (__SALC | __SSTR) && fp->_w < len) {
+				size_t blen = fp->_p - fp->_bf._base;
+				unsigned char *_base;
+
+				/*
+				 * Alloc an extra 128 bytes (+ 1 for NULL)
+				 * so we don't call realloc(3) so often.
+				 */
+				fp->_w = len + 128;
+				fp->_bf._size = blen + len + 128;
+				_base = realloc(fp->_bf._base, fp->_bf._size + 1);
+				if (_base == NULL)
+					goto err;
+				fp->_bf._base = _base;
+				fp->_p = fp->_bf._base + blen;
+			}
 			w = fp->_w;
 			if (fp->_flags & __SSTR) {
 				if (len < w)
