@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.19 2003/02/09 18:27:10 grant Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.20 2003/02/21 01:25:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.19 2003/02/09 18:27:10 grant Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.20 2003/02/21 01:25:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,7 +615,16 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 	int cnt;
 	int res = 0;
 	off_t size = arcn->sb.st_size;
-	struct stat sb;
+	struct stat origsb, sb;
+
+	/*
+	 * by default, remember the previously obtained stat information
+	 * (in arcn->sb) for comparing the mtime after reading.
+	 * if Mflag is set, use the actual mtime instead.
+	 */
+	origsb = arcn->sb;
+	if (Mflag && (fstat(ifd, &origsb) < 0))
+		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 
 	/*
 	 * while there are more bytes to write
@@ -643,7 +652,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 		tty_warn(1, "File changed size during read %s", arcn->org_name);
 	else if (fstat(ifd, &sb) < 0)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
-	else if (arcn->sb.st_mtime != sb.st_mtime)
+	else if (origsb.st_mtime != sb.st_mtime)
 		tty_warn(1, "File %s was modified during copy to archive",
 			arcn->org_name);
 	*left = size;
@@ -773,7 +782,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
-	struct stat sb;
+	struct stat sb, origsb;
 
 	/*
 	 * check for holes in the source file. If none, we will use regular
@@ -781,6 +790,15 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	 */
 	 if (((off_t)(arcn->sb.st_blocks * BLKMULT)) >= arcn->sb.st_size)
 		++no_hole;
+
+	/*
+	 * by default, remember the previously obtained stat information
+	 * (in arcn->sb) for comparing the mtime after reading.
+	 * if Mflag is set, use the actual mtime instead.
+	 */
+	origsb = arcn->sb;
+	if (Mflag && (fstat(fd1, &origsb) < 0))
+		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 
 	/*
 	 * pass the blocksize of the file being written to the write routine,
@@ -820,7 +838,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 			arcn->org_name, arcn->name);
 	else if (fstat(fd1, &sb) < 0)
 		syswarn(1, errno, "Failed stat of %s", arcn->org_name);
-	else if (arcn->sb.st_mtime != sb.st_mtime)
+	else if (origsb.st_mtime != sb.st_mtime)
 		tty_warn(1, "File %s was modified during copy to %s",
 			arcn->org_name, arcn->name);
 
