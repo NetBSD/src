@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.5 1996/10/14 23:21:22 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.6 1996/10/30 00:01:05 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -83,6 +83,8 @@ typedef struct {
 	u_int mod_base;
 	u_int easi_base;
 
+	int dma_channel;
+	
 /* Flags */
 
 	int podulenum; 
