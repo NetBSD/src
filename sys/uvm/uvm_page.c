@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.98 2004/05/05 11:58:27 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.99 2004/09/01 11:53:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.98 2004/05/05 11:58:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.99 2004/09/01 11:53:38 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1360,7 +1360,9 @@ uvm_pagefree(pg)
 				pg->loan_count--;
 			} else {
 				pg->pqflags &= ~PQ_ANON;
+				uvmexp.anonpages--;
 			}
+			pg->uanon->u.an_page = NULL;
 			pg->uanon = NULL;
 		}
 		if (pg->flags & PG_WANTED) {
