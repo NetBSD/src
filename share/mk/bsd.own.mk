@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.262 2002/01/28 21:46:49 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.263 2002/01/29 10:21:35 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -138,7 +138,7 @@ PAX=		${TOOLDIR}/bin/nbpax
 PIC=		${TOOLDIR}/bin/nbpic
 PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
 REFER=		${TOOLDIR}/bin/nbrefer
-RPCGEN=		${TOOLDIR}/bin/nbrpcgen
+RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/nbrpcgen
 SOELIM=		${TOOLDIR}/bin/nbsoelim
 SPARCINSTALLBOOT=${TOOLDIR}/bin/nbsparc-installboot
 SUNLABEL=	${TOOLDIR}/bin/nbsunlabel
