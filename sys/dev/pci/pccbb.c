@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.100 2004/08/06 21:39:47 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.101 2004/08/11 00:18:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.100 2004/08/06 21:39:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.101 2004/08/11 00:18:20 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -184,6 +184,7 @@ STATIC void pccbb_pcmcia_intr_disestablish __P((pcmcia_chipset_handle_t,
     void *));
 STATIC void pccbb_pcmcia_socket_enable __P((pcmcia_chipset_handle_t));
 STATIC void pccbb_pcmcia_socket_disable __P((pcmcia_chipset_handle_t));
+STATIC void pccbb_pcmcia_socket_settype __P((pcmcia_chipset_handle_t, int));
 STATIC int pccbb_pcmcia_card_detect __P((pcmcia_chipset_handle_t pch));
 
 static void pccbb_pcmcia_do_io_map __P((struct pcic_handle *, int));
@@ -242,6 +243,7 @@ static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_intr_disestablish,
 	pccbb_pcmcia_socket_enable,
 	pccbb_pcmcia_socket_disable,
+	pccbb_pcmcia_socket_settype,
 	pccbb_pcmcia_card_detect
 };
 
@@ -2403,7 +2405,7 @@ pccbb_pcmcia_socket_enable(pch)
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
-	int cardtype, win;
+	int win;
 	u_int8_t power, intr;
 	pcireg_t spsr;
 	int voltage;
@@ -2499,18 +2501,6 @@ pccbb_pcmcia_socket_enable(pch)
 
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* set the card type */
-
-	cardtype = pcmcia_card_gettype(ph->pcmcia);
-
-	intr |= ((cardtype == PCMCIA_IFTYPE_IO) ?
-	    PCIC_INTR_CARDTYPE_IO : PCIC_INTR_CARDTYPE_MEM);
-	Pcic_write(ph, PCIC_INTR, intr);
-
-	DPRINTF(("%s: pccbb_pcmcia_socket_enable %02x cardtype %s %02x\n",
-	    ph->ph_parent->dv_xname, ph->sock,
-	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
-
 	/* reinstall all the memory and io mappings */
 
 	for (win = 0; win < PCIC_MEM_WINS; ++win) {
@@ -2538,7 +2528,7 @@ pccbb_pcmcia_socket_disable(pch)
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
-	u_int8_t power, intr;
+	u_int8_t power;
 
 	DPRINTF(("pccbb_pcmcia_socket_disable\n"));
 
@@ -2561,10 +2551,29 @@ pccbb_pcmcia_socket_disable(pch)
 #endif
 
 	/* reset signal asserting... */
+}
+
+STATIC void
+pccbb_pcmcia_socket_settype(pch, type)
+	pcmcia_chipset_handle_t pch;
+	int type;
+{
+	struct pcic_handle *ph = (struct pcic_handle *)pch;
+	u_int8_t intr;
+
+	/* set the card type */
 
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_CARDTYPE_MASK);
+	intr &= ~PCIC_INTR_CARDTYPE_MASK;
+	if (type == PCMCIA_IFTYPE_IO)
+		intr |= PCIC_INTR_CARDTYPE_IO;
+	else
+		intr |= PCIC_INTR_CARDTYPE_MEM;
 	Pcic_write(ph, PCIC_INTR, intr);
+
+	DPRINTF(("%s: pccbb_pcmcia_socket_settype %02x type %s %02x\n",
+	    ph->ph_parent->dv_xname, ph->sock,
+	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 
 /*
