@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 1997/06/09 11:50:52 jonathan Exp $
+	$NetBSD: syscalls.master,v 1.20 1997/06/09 11:57:43 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -228,8 +228,14 @@
 150	NOARGS		{ int compat_43_sys_getsockname(int fdes, caddr_t asa, \
 			    int *alen); }
 151	UNIMPL		sysmips /* 4 args */
-152	UNIMPL		cacheflush /* 4 args */
-153	UNIMPL		cachectl /* 3 args */
+#ifdef __mips
+152	STD		{ int ultrix_sys_cacheflush(char *addr, int nbytes, \
+			    int whichcache); }
+153	STD	{ int ultrix_sys_cachectl(char *addr, int nbytes, int cacheop); }
+#else	/* !mips */
+152	UNIMPL
+153	UNIMPL
+#endif	/* !mips */
 154	UNIMPL
 155	UNIMPL		atomic_op
 156	UNIMPL
