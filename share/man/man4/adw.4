@@ -1,4 +1,4 @@
-.\"	$NetBSD: adw.4,v 1.2 2000/02/12 09:56:34 fair Exp $
+.\"	$NetBSD: adw.4,v 1.3 2000/02/12 16:45:30 dante Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Baldassare Dante Profeta
 .\" 	All rights reserved.
@@ -44,27 +44,30 @@ The
 driver provides support for the ADW (AdvanSys) ABP-940UW, ASB-3940UW,
 ASB-3940U2W
 .Tn SCSI
-controller chips.
+host adapters.
 .Pp
 The following kernel configuration options are available:
 .Bl -ohang
 .It Cd options FAILSAFE
-Disables tagged command queuing, wide transfer and forces asynchronous
-transfers for all
+Disables tagged command queuing, wide data transfers and synchronous
+data transfers for all
 .Tn SCSI
-devices.
-By default, wide data transfers and synchronous transfers are used if the
+devices controlled by the
+.Nm
+driver.
+By default, tagged command queuing, wide data transfers and 
+synchronous data transfers are used if the
 .Tn SCSI
-devices supports them.
+devices support them.
 .Pp
-The following options does use a
+The following options use a
 .Em mask
-to specify which SCSI peripheral must have the relative feature disabled.
+to specify which SCSI peripherals the option applies to.
 The
 .Em mask
-is a 16 bitfield value. Each bit corrispond to the peripheral ID.
-The LSB (bit 0) corrispond to the peripheral with ID 0.
-The MSB (bit 15) corrispond to the peripheral with ID 15.
+is a 16 bit bitfield value. Each bit corresponds to a peripheral ID.
+The LSB (bit 0) corresponds to the peripheral with ID 0.
+The MSB (bit 15) corresponds to the peripheral with ID 15.
 The following features cannot be disabled for the host adapter, which by
 default has ID 7.
 .It Cd options SCSI_ADW_WDTR_DISABLE=mask
