@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.6 2001/01/04 06:45:18 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.7 2001/01/09 11:38:32 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -158,10 +158,12 @@ rtgettod()
 	/* let it run again.. */
 	RTC_WRITE(RTC_MODE, RTC_FREE_CLOCK);
 
+#ifdef DIAGNOSTIC
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
 	range_test(year, STARTOFTIME, 2079);
+#endif
   
 	tmp = 0;
 
