@@ -149,18 +149,28 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 
 #ifdef	FETCH_KCORE_REGISTERS
 /* Get registers from a kernel crash dump. 
-   FIXME: NetBSD 1.3 does not produce kernel crashdumps.  */
+ */
 void
 fetch_kcore_registers(pcb)
 struct pcb *pcb;
 {
-  int i, *ip, tmp=0;
-  u_long sp;
+  /* First clear out any garbage. */
+  memset(registers, '\0', REGISTER_BYTES);
 
-#if 0
-  supply_register(SP_REGNUM, (char *)&pcb->pcb_sp);
-  supply_register(PC_REGNUM, (char *)&pcb->pcb_pc);
-#endif
+  supply_register(16, (char *)&pcb->pcb_context[0x0]);	/* s0 */
+  supply_register(17, (char *)&pcb->pcb_context[0x1]);	/* s1 */
+  supply_register(18, (char *)&pcb->pcb_context[0x2]);	/* s2 */
+  supply_register(19, (char *)&pcb->pcb_context[0x3]);	/* s3 */
+  supply_register(20, (char *)&pcb->pcb_context[0x4]);	/* s4 */
+  supply_register(21, (char *)&pcb->pcb_context[0x5]);	/* s5 */
+  supply_register(22, (char *)&pcb->pcb_context[0x6]);	/* s6 */
+  supply_register(23, (char *)&pcb->pcb_context[0x7]);	/* s7 */
+  supply_register(30, (char *)&pcb->pcb_context[0x9]);	/* s8 */
+
+  supply_register(SP_REGNUM, (char *)&pcb->pcb_context[0x8]);	/* sp */
+  supply_register(RA_REGNUM, (char *)&pcb->pcb_context[0xa]);	/* ra */
+  supply_register(PC_REGNUM, (char *)&pcb->pcb_context[0xa]);	/* ra is pc */
+  supply_register(PS_REGNUM, (char *)&pcb->pcb_context[0xb]);	/* sr */
 
   /* The kernel does not use the FPU, so ignore it. */
   registers_fetched ();
