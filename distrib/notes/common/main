@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.9 2002/07/10 01:24:27 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.10 2002/07/11 19:58:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -516,7 +516,7 @@ Many more kernel tunable variables added to
 .Xr sysctl 8 .
 .It
 Linux binary emulation has been greatly improved,
-and not supports Linux kernel version 2.4.18.
+and now supports Linux kernel version 2.4.18.
 .bullet)
 .
 .Ss2 Networking
@@ -600,7 +600,7 @@ creates file system images from a directory tree.
 .It
 Enhanced
 .Fn ffs_dirpref
-by Grigoriy Orlov, which noticibly improves performance on FFS file systems
+by Grigoriy Orlov, which noticeably improves performance on FFS file systems
 when creating directories, and subsequently manipulating them.
 .It
 Fixes for free block tracking and directory block allocation in FFS softdeps.
