@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2001/12/12 01:50:04 tv Exp $
+#	$NetBSD: Makefile,v 1.63.10.1 2002/06/19 00:03:25 lukem Exp $
 
 LIB=	kern
 NOPIC=	# defined
@@ -89,3 +89,6 @@ lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
 	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
+
+showsources: ${SRCS}
+	@echo ${.ALLSRC}
