@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.6 1998/07/23 13:44:21 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.7 1998/07/24 21:09:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,14 +55,13 @@
 #include <sys/queue.h>
 #include <sys/select.h>
 
-#include <dev/usb/usb.h>
+#include <machine/bus.h>
 
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-
+#include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
-
-#include <machine/bus.h>
 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
@@ -78,21 +77,21 @@ struct uhci_pipe {
 		/* Control pipe */
 		struct {
 			uhci_soft_qh_t *sqh;
-			uhci_dma_t reqdma;
-			uhci_dma_t datadma;
+			usb_dma_t reqdma;
+			usb_dma_t datadma;
 			uhci_soft_td_t *setup, *stat, *xferend;
 			u_int length;
 		} ctl;
 		/* Interrupt pipe */
 		struct {
-			uhci_dma_t datadma;
+			usb_dma_t datadma;
 			int npoll;
 			uhci_soft_qh_t **qhs;
 		} intr;
 		/* Bulk pipe */
 		struct {
 			uhci_soft_qh_t *sqh;
-			uhci_dma_t datadma;
+			usb_dma_t datadma;
 			u_int length;
 			int isread;
 		} bulk;
@@ -107,8 +106,6 @@ int uhci_global_init_done = 0;
 LIST_HEAD(, uhci_intr_info) uhci_ii_free;
 
 void		uhci_busreset __P((uhci_softc_t *));
-usbd_status	uhci_allocmem __P((uhci_softc_t *,size_t,size_t,uhci_dma_t *));
-void		uhci_freemem __P((uhci_softc_t *, uhci_dma_t *));
 void		uhci_run __P((uhci_softc_t *, int run));
 uhci_soft_td_t *uhci_alloc_std __P((uhci_softc_t *));
 void		uhci_free_std __P((uhci_softc_t *, uhci_soft_td_t *));
@@ -123,7 +120,7 @@ void		uhci_exit_ctl_q __P((uhci_softc_t *, uhci_soft_qh_t *));
 void		uhci_free_std_chain __P((uhci_softc_t *, 
 					 uhci_soft_td_t *, uhci_soft_td_t *));
 usbd_status	uhci_alloc_std_chain __P((struct uhci_pipe *, uhci_softc_t *,
-					  int, int, uhci_dma_t *, 
+					  int, int, usb_dma_t *, 
 					  uhci_soft_td_t **,
 					  uhci_soft_td_t **));
 void		uhci_timo __P((void *));
@@ -244,7 +241,7 @@ uhci_init(sc)
 	int i, j;
 	uhci_soft_qh_t *csqh, *bsqh, *sqh;
 	uhci_soft_td_t *std;
-	uhci_dma_t dma;
+	usb_dma_t dma;
 
 	DPRINTFN(1,("uhci_init: start\n"));
 
@@ -262,9 +259,9 @@ uhci_init(sc)
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 
 	/* Allocate and initialize real frame array. */
-	r = uhci_allocmem(sc, UHCI_FRAMELIST_COUNT * 
-			  sizeof(uhci_physaddr_t),
-			  UHCI_FRAMELIST_ALIGN, &dma);
+	r = usb_allocmem(sc->sc_dmatag, 
+			 UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
+			 UHCI_FRAMELIST_ALIGN, &dma);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	sc->sc_pframes = KERNADDR(&dma);
@@ -443,7 +440,7 @@ uhci_timo(addr)
 	if (reqh->pipe->intrreqh == reqh) {
 		timeout(uhci_timo, addr, sc->sc_ival);
 	} else {
-		uhci_freemem(sc, &upipe->u.intr.datadma);
+		usb_freemem(sc->sc_dmatag, &upipe->u.intr.datadma);
 	}
 }
 
@@ -696,13 +693,26 @@ uhci_ii_done(ii, timo)
 	u_int32_t tst;
 	int len, status;
 
-	DPRINTFN(10, ("uhci_check_intr: ii=%p ready\n", ii));
+	DPRINTFN(10, ("uhci_ii_done: ii=%p ready %d\n", ii, timo));
+
+#ifdef DIAGNOSTIC
+	{
+		int s = splhigh();
+		if (ii->isdone) {
+			printf("uhci_ii_done: is done!\n");
+			splx(s);
+			return;
+		}
+		ii->isdone = 1;
+		splx(s);
+	}
+#endif
 
 	/* The transfer is done, compute length and status. */
 	for (len = status = 0, std = ii->stdstart; 
 	     std != 0; 
 	     std = std->td->link.std) {
-		tst = std->td->td_status;;
+		tst = std->td->td_status;
 		status |= tst;
 #ifdef USB_DEBUG
 		if ((tst & UHCI_TD_ERROR) && uhcidebug) {
@@ -743,6 +753,7 @@ uhci_ii_done(ii, timo)
 		break;
 	case UE_ISOCHRONOUS:
 		printf("uhci_ii_done: ISO??\n");
+		break;
 	case UE_BULK:
 		uhci_bulk_done(ii);
 		break;
@@ -842,68 +853,13 @@ uhci_run(sc, run)
 
 /*
  * Memory management routines.
- *  uhci_allocmem allocates DMAable memory.
  *  uhci_alloc_std allocates TDs
  *  uhci_alloc_sqh allocates QHs
- *  uhci_alloc_buffer allocates transfer buffers.
- * The latter three routines do their own free list management,
+ * These two routines do their own free list management,
  * partly for speed, partly because allocating DMAable memory
  * has page size granularaity so much memory would be wasted if
  * only one TD/QH (32 bytes) was placed in each alloacted chunk.
  */
-
-usbd_status
-uhci_allocmem(sc, size, align, p)
-	uhci_softc_t *sc;
-	size_t size;
-	size_t align;
-        uhci_dma_t *p;
-{
-	int error;
-
-	DPRINTFN(5, ("uhci_allocmem: size=%d align=%d\n", size, align));
-	p->size = size;
-	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
-	if (error)
-		return (USBD_NOMEM);
-
-	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size, 
-			       &p->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error)
-		goto free;
-
-	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
-	if (error)
-		goto unmap;
-
-	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->kaddr,p->size, NULL, 
-				BUS_DMA_NOWAIT);
-	if (error)
-		goto destroy;
-	return 0;
-
-destroy:
-	bus_dmamap_destroy(sc->sc_dmatag, p->map);
-unmap:
-	bus_dmamem_unmap(sc->sc_dmatag, p->kaddr, p->size);
-free:
-	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-	return (USBD_NOMEM);
-}
-
-void
-uhci_freemem(sc, p)
-	uhci_softc_t *sc;
-        uhci_dma_t *p;
-{
-	bus_dmamap_unload(sc->sc_dmatag, p->map);
-	bus_dmamap_destroy(sc->sc_dmatag, p->map);
-	bus_dmamem_unmap(sc->sc_dmatag, p->kaddr, p->size);
-	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-}
 
 uhci_soft_td_t *
 uhci_alloc_std(sc)
@@ -912,7 +868,7 @@ uhci_alloc_std(sc)
 	uhci_soft_td_t *std;
 	usbd_status r;
 	int i;
-	uhci_dma_t dma;
+	usb_dma_t dma;
 
 	if (!sc->sc_freetds) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
@@ -920,8 +876,8 @@ uhci_alloc_std(sc)
 			     M_USBDEV, M_NOWAIT);
 		if (!std)
 			return 0;
-		r = uhci_allocmem(sc, UHCI_TD_SIZE * UHCI_TD_CHUNK,
-				  UHCI_TD_ALIGN, &dma);
+		r = usb_allocmem(sc->sc_dmatag, UHCI_TD_SIZE * UHCI_TD_CHUNK,
+				 UHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
 			free(std, M_USBDEV);
 			return 0;
@@ -946,6 +902,14 @@ uhci_free_std(sc, std)
 	uhci_softc_t *sc;
 	uhci_soft_td_t *std;
 {
+#ifdef DIAGNOSTIC
+#define TD_IS_FREE 0x12345678
+	if (std->td->td_token == TD_IS_FREE) {
+		printf("uhci_free_std: freeing free TD %p\n", std);
+		return;
+	}
+	std->td->td_token = TD_IS_FREE;
+#endif
 	std->td->link.std = sc->sc_freetds;
 	sc->sc_freetds = std;
 }
@@ -957,7 +921,7 @@ uhci_alloc_sqh(sc)
 	uhci_soft_qh_t *sqh;
 	usbd_status r;
 	int i, offs;
-	uhci_dma_t dma;
+	usb_dma_t dma;
 
 	if (!sc->sc_freeqhs) {
 		DPRINTFN(2, ("uhci_alloc_sqh: allocating chunk\n"));
@@ -965,8 +929,8 @@ uhci_alloc_sqh(sc)
 			     M_USBDEV, M_NOWAIT);
 		if (!sqh)
 			return 0;
-		r = uhci_allocmem(sc, UHCI_QH_SIZE * UHCI_QH_CHUNK,
-				     UHCI_QH_ALIGN, &dma);
+		r = usb_allocmem(sc->sc_dmatag, UHCI_QH_SIZE * UHCI_QH_CHUNK,
+				 UHCI_QH_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
 			free(sqh, M_USBDEV);
 			return 0;
@@ -994,47 +958,6 @@ uhci_free_sqh(sc, sqh)
 	sqh->qh->hlink = sc->sc_freeqhs;
 	sc->sc_freeqhs = sqh;
 }
-
-#if 0
-void *
-uhci_alloc_buffer(sc, size)
-	uhci_softc_t *sc;
-	size_t size;
-{
-	struct uhci_buffer *buf;
-	usbd_status r;
-	int i, offs;
-	uhci_dma_t dma;
-
-	if (!sc->sc_freebuffers) {
-		DPRINTFN(2, ("uhci_alloc_buffer: allocating chunk\n"));
-		r = uhci_allocmem(sc, UHCI_BUFFER_SIZE * BUFFER_CHUNK,
-				  0, &dma);
-		if (r != USBD_NORMAL_COMPLETION)
-			return 0;
-		for(i = 0; i < BUFFER_CHUNK; i++, sqh++) {
-			offs = i * UHCI_BUFFER_SIZE;
-			sqh->physaddr = DMAADDR(&dma) + offs;
-			sqh->qh = (uhci_qh_t *)
-					((char *)KERNADDR(&dma) + offs);
-			sqh->qh->hlink = sc->sc_freeqhs;
-			sc->sc_freeqhs = sqh;
-		}
-	}
-	sqh = sc->sc_freeqhs;
-	sc->sc_freeqhs = sqh->qh->hlink;
-	memset(sqh->qh, 0, UHCI_QH_SIZE);
-	return sqh;
-}
-
-void
-uhci_free_buffer(sc, p, size)
-	uhci_softc_t *sc;
-	void *p;
-	size_t size;
-{
-}
-#endif
 
 /* 
  * Enter a list of transfers onto a control queue.
@@ -1069,7 +992,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, dma, sp, ep)
 	struct uhci_pipe *upipe;
 	uhci_softc_t *sc;
 	int len, rd;
-	uhci_dma_t *dma;
+	usb_dma_t *dma;
 	uhci_soft_td_t **sp, **ep;
 {
 	uhci_soft_td_t *p, *lastp;
@@ -1140,7 +1063,7 @@ uhci_device_bulk_transfer(reqh)
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *xfer, *xferend;
 	uhci_soft_qh_t *sqh;
-	uhci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int len, isread;
 	int s;
@@ -1159,7 +1082,7 @@ uhci_device_bulk_transfer(reqh)
 	upipe->u.bulk.isread = isread;
 	upipe->u.bulk.length = len;
 
-	r = uhci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret1;
 	r = uhci_alloc_std_chain(upipe, sc, len, isread, 
@@ -1182,6 +1105,9 @@ uhci_device_bulk_transfer(reqh)
 	ii->reqh = reqh;
 	ii->stdstart = xfer;
 	ii->stdend = xferend;
+#ifdef DIAGNOSTIC
+	ii->isdone = 0;
+#endif
 
 	sqh->qh->elink = xfer;
 	sqh->qh->qh_elink = xfer->physaddr;
@@ -1206,7 +1132,7 @@ uhci_device_bulk_transfer(reqh)
 
  ret2:
 	if (len != 0)
-		uhci_freemem(sc, dmap);
+		usb_freemem(sc->sc_dmatag, dmap);
  ret1:
 	return (r);
 }
@@ -1263,7 +1189,7 @@ uhci_device_intr_transfer(reqh)
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *xfer, *xferend;
 	uhci_soft_qh_t *sqh;
-	uhci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int len, i;
 	int s;
@@ -1279,7 +1205,7 @@ uhci_device_intr_transfer(reqh)
 	if (len == 0)
 		return (USBD_INVAL); /* XXX should it be? */
 
-	r = uhci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret1;
 	r = uhci_alloc_std_chain(upipe, sc, len, 1, dmap, &xfer, &xferend);
@@ -1300,6 +1226,9 @@ uhci_device_intr_transfer(reqh)
 	ii->reqh = reqh;
 	ii->stdstart = xfer;
 	ii->stdend = xferend;
+#ifdef DIAGNOSTIC
+	ii->isdone = 0;
+#endif
 
 DPRINTFN(10,("uhci_device_intr_transfer: qhs[0]=%p\n", upipe->u.intr.qhs[0]));
 	for (i = 0; i < upipe->u.intr.npoll; i++) {
@@ -1321,7 +1250,7 @@ DPRINTFN(10,("uhci_device_intr_transfer: qhs[0]=%p\n", upipe->u.intr.qhs[0]));
 
  ret2:
 	if (len != 0)
-		uhci_freemem(sc, dmap);
+		usb_freemem(sc->sc_dmatag, dmap);
  ret1:
 	return (r);
 }
@@ -1354,6 +1283,7 @@ uhci_device_intr_abort(reqh)
 {
 	struct uhci_pipe *upipe;
 
+	DPRINTFN(1, ("uhci_device_intr_abort: reqh=%p\n", reqh));
 	/* XXX inactivate */
 	usbd_delay_ms(2);	/* make sure it is finished */
 	if (reqh->pipe->intrreqh == reqh) {
@@ -1414,7 +1344,7 @@ uhci_device_request(reqh)
 	uhci_intr_info_t *ii = upipe->iinfo;
 	uhci_soft_td_t *setup, *xfer, *stat, *next, *xferend;
 	uhci_soft_qh_t *sqh;
-	uhci_dma_t *dmap;
+	usb_dma_t *dmap;
 	int len;
 	u_int32_t ls;
 	usbd_status r;
@@ -1437,7 +1367,7 @@ uhci_device_request(reqh)
 
 	/* Set up data transaction */
 	if (len != 0) {
-		r = uhci_allocmem(sc, len, 0, dmap);
+		r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 		if (r != USBD_NORMAL_COMPLETION)
 			goto ret1;
 		upipe->pipe.endpoint->toggle = 1;
@@ -1487,6 +1417,9 @@ uhci_device_request(reqh)
 	ii->reqh = reqh;
 	ii->stdstart = setup;
 	ii->stdend = stat;
+#ifdef DIAGNOSTIC
+	ii->isdone = 0;
+#endif
 
 	sqh->qh->elink = setup;
 	sqh->qh->qh_elink = setup->physaddr;
@@ -1524,7 +1457,7 @@ uhci_device_request(reqh)
 
  ret2:
 	if (len != 0)
-		uhci_freemem(sc, dmap);
+		usb_freemem(sc->sc_dmatag, dmap);
  ret1:
 	return (r);
 }
@@ -1536,7 +1469,7 @@ uhci_intr_done(ii)
 	uhci_softc_t *sc = ii->sc;
 	usbd_request_handle reqh = ii->reqh;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
-	uhci_dma_t *dma;
+	usb_dma_t *dma;
 	uhci_soft_qh_t *sqh;
 	int i, npoll;
 
@@ -1571,13 +1504,16 @@ uhci_intr_done(ii)
 
 		ii->stdstart = xfer;
 		ii->stdend = xferend;
+#ifdef DIAGNOSTIC
+		ii->isdone = 0;
+#endif
 		for (i = 0; i < npoll; i++) {
 			sqh = upipe->u.intr.qhs[i];
 			sqh->qh->elink = xfer;
 			sqh->qh->qh_elink = xfer->physaddr;
 		}
 	} else {
-		uhci_freemem(sc, dma);
+		usb_freemem(sc->sc_dmatag, dma);
 		ii->stdstart = 0;	/* mark as inactive */
 	}
 }
@@ -1591,11 +1527,13 @@ uhci_ctrl_done(ii)
 	usbd_request_handle reqh = ii->reqh;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
 	u_int len = upipe->u.ctl.length;
-	uhci_dma_t *dma;
+	usb_dma_t *dma;
 	uhci_td_t *htd = ii->stdstart->td;
 
+#ifdef DIAGNOSTIC
 	if (!reqh->isreq)
 		panic("uhci_ctrl_done: not a request\n");
+#endif
 
 	LIST_REMOVE(ii, list);	/* remove from active list */
 
@@ -1606,7 +1544,7 @@ uhci_ctrl_done(ii)
 		if (reqh->request.bmRequestType & UT_READ)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
 		uhci_free_std_chain(sc, htd->link.std, ii->stdend);
-		uhci_freemem(sc, dma);
+		usb_freemem(sc->sc_dmatag, dma);
 	}
 	DPRINTFN(5, ("uhci_ctrl_done: length=%d\n", reqh->actlen));
 }
@@ -1620,7 +1558,7 @@ uhci_bulk_done(ii)
 	usbd_request_handle reqh = ii->reqh;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
 	u_int len = upipe->u.bulk.length;
-	uhci_dma_t *dma;
+	usb_dma_t *dma;
 	uhci_td_t *htd = ii->stdstart->td;
 
 	LIST_REMOVE(ii, list);	/* remove from active list */
@@ -1632,7 +1570,7 @@ uhci_bulk_done(ii)
 		if (upipe->u.bulk.isread && len != 0)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
 		uhci_free_std_chain(sc, htd->link.std, 0);
-		uhci_freemem(sc, dma);
+		usb_freemem(sc->sc_dmatag, dma);
 	}
 	DPRINTFN(4, ("uhci_bulk_done: length=%d\n", reqh->actlen));
 	/* XXX compute new toggle */
@@ -1796,8 +1734,9 @@ uhci_open(pipe)
 				uhci_free_std(sc, upipe->u.ctl.setup);
 				goto bad;
 			}
-			r = uhci_allocmem(sc, sizeof(uhci_dma_t), 0, 
-					  &upipe->u.ctl.reqdma);
+			r = usb_allocmem(sc->sc_dmatag, 
+					 sizeof(usb_device_request_t), 
+					 0, &upipe->u.ctl.reqdma);
 			if (r != USBD_NORMAL_COMPLETION) {
 				uhci_free_sqh(sc, upipe->u.ctl.sqh);
 				uhci_free_std(sc, upipe->u.ctl.setup);
@@ -2269,7 +2208,7 @@ uhci_root_intr_transfer(reqh)
 	usbd_pipe_handle pipe = reqh->pipe;
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
-	uhci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int len;
 
@@ -2281,7 +2220,7 @@ uhci_root_intr_transfer(reqh)
 	if (len == 0)
 		return (USBD_INVAL); /* XXX should it be? */
 
-	r = uhci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 
