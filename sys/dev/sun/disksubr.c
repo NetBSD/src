@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2003/11/15 17:52:31 bouyer Exp $ */
+/*	$NetBSD: disksubr.c,v 1.2 2003/12/10 16:35:20 jdolecek Exp $ */
 
 /* 
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -60,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1 2003/11/15 17:52:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2 2003/12/10 16:35:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
