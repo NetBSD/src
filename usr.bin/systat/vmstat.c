@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.43 2002/11/01 12:47:58 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.44 2003/01/18 21:02:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.43 2002/11/01 12:47:58 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.44 2003/01/18 21:02:35 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.43 2002/11/01 12:47:58 mrg Exp $");
 #include <sys/user.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -68,6 +69,7 @@ static struct Info {
 	struct	nchstats nchstats;
 	long	nchcount;
 	long	*intrcnt;
+	u_int64_t	*evcnt;
 } s, s1, s2, z;
 
 #define	cnt s.Cnt
@@ -124,6 +126,8 @@ static struct nlist namelist[] = {
 	{ "_intrcnt" },
 #define	X_EINTRCNT	4
 	{ "_eintrcnt" },
+#define	X_ALLEVENTS	5
+	{ "_allevents" },
 	{ "" },
 };
 
@@ -159,12 +163,55 @@ static struct nlist namelist[] = {
 #define	MAXDRIVES	DK_NDRIVE	 /* max # to display */
 #endif
 
+typedef struct intr_evcnt intr_evcnt_t;
+struct intr_evcnt {
+	char		*ie_group;
+	char		*ie_name;
+	u_int64_t	*ie_count;	/* kernel address... */
+	int		ie_loc;		/* screen row */
+} *ie_head;
+int nevcnt;
+
+static void
+get_interrupt_events(void)
+{
+	struct evcntlist allevents;
+	struct evcnt evcnt, *evptr;
+	intr_evcnt_t *ie;
+
+	if (!NREAD(X_ALLEVENTS, &allevents, sizeof allevents))
+		return;
+	evptr = allevents.tqh_first;
+	for (; evptr != NULL; evptr = evcnt.ev_list.tqe_next) {
+		if (!KREAD(evptr, &evcnt, sizeof evcnt))
+			return;
+		if (evcnt.ev_type != EVCNT_TYPE_INTR)
+			continue;
+		ie_head = realloc(ie_head, sizeof *ie * (nevcnt + 1));
+		if (ie_head == NULL) {
+			error("realloc failed");
+			die(0);
+		}
+		ie = ie_head + nevcnt;
+		ie->ie_group = malloc(evcnt.ev_grouplen + 1);
+		ie->ie_name = malloc(evcnt.ev_namelen + 1);
+		if (ie->ie_group == NULL || ie->ie_name == NULL)
+			return;
+		if (!KREAD(evcnt.ev_group, ie->ie_group, evcnt.ev_grouplen + 1))
+			return;
+		if (!KREAD(evcnt.ev_name, ie->ie_name, evcnt.ev_namelen + 1))
+			return;
+		ie->ie_count = &evptr->ev_count;
+		ie->ie_loc = 0;
+		nevcnt++;
+	}
+}
+
 int
 initvmstat(void)
 {
 	char *intrnamebuf, *cp;
 	int i;
-	static int once = 0;
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
@@ -177,47 +224,43 @@ initvmstat(void)
 		}
 	}
 	hertz = stathz ? stathz : hz;
-	if (! dkinit(1))
+	if (!dkinit(1))
 		return(0);
-	if (dk_ndrive && !once) {
-#define	allocate(e, t) \
-	s./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-	s1./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-	s2./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-	z./**/e = (t *)calloc(dk_ndrive, sizeof (t));
-		once = 1;
-#undef allocate
+
+	/* Old style interrupt counts - deprecated */
+	nintr = (namelist[X_EINTRCNT].n_value -
+		namelist[X_INTRCNT].n_value) / sizeof (long);
+	intrloc = calloc(nintr, sizeof (long));
+	intrname = calloc(nintr, sizeof (long));
+	intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
+		namelist[X_INTRNAMES].n_value);
+	if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
+		error("Out of memory\n");
+		if (intrnamebuf)
+			free(intrnamebuf);
+		if (intrname)
+			free(intrname);
+		if (intrloc)
+			free(intrloc);
+		nintr = 0;
+		return(0);
 	}
-	if (nintr == 0) {
-		nintr = (namelist[X_EINTRCNT].n_value -
-			namelist[X_INTRCNT].n_value) / sizeof (long);
-		intrloc = calloc(nintr, sizeof (long));
-		intrname = calloc(nintr, sizeof (long));
-		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
-			namelist[X_INTRNAMES].n_value);
-		if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
-			error("Out of memory\n");
-			if (intrnamebuf)
-				free(intrnamebuf);
-			if (intrname)
-				free(intrname);
-			if (intrloc)
-				free(intrloc);
-			nintr = 0;
-			return(0);
-		}
-		NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
-			NVAL(X_INTRNAMES));
-		for (cp = intrnamebuf, i = 0; i < nintr; i++) {
-			intrname[i] = cp;
-			cp += strlen(cp) + 1;
-		}
-		nextintsrow = INTSROW + 2;
-		allocinfo(&s);
-		allocinfo(&s1);
-		allocinfo(&s2);
-		allocinfo(&z);
+	NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
+		NVAL(X_INTRNAMES));
+	for (cp = intrnamebuf, i = 0; i < nintr; i++) {
+		intrname[i] = cp;
+		cp += strlen(cp) + 1;
 	}
+
+	/* event counter interrupt counts */
+	get_interrupt_events();
+
+	nextintsrow = INTSROW + 2;
+	allocinfo(&s);
+	allocinfo(&s1);
+	allocinfo(&s2);
+	allocinfo(&z);
+
 	getinfo(&s2, RUN);
 	copyinfo(&s2, &s1);
 	return(1);
@@ -232,6 +275,36 @@ fetchvmstat(void)
 	strcpy(buf, ctime(&now));
 	buf[19] = '\0';
 	getinfo(&s, state);
+}
+
+static void
+print_ie_title(int i)
+{
+	int width, name_width, group_width;
+
+	width = COLS - (INTSCOL + 9);
+	if (width <= 0)
+		return;
+
+	move(ie_head[i].ie_loc, INTSCOL + 9);
+	group_width = strlen(ie_head[i].ie_group);
+	name_width = strlen(ie_head[i].ie_name);
+	width -= group_width + 1 + name_width;
+	if (width < 0) {
+		/* screen to narrow for full strings */
+		width = -width;
+		group_width -= (width + 1) / 2;
+		name_width -= width / 2;
+		if (group_width <= 3 || name_width < 0) {
+			/* don't display group */
+			name_width += group_width + 1;
+			group_width = 0;
+		}
+	}
+
+	if (group_width)
+		printw("%-.*s ", group_width, ie_head[i].ie_group);
+	printw("%-.*s", name_width, ie_head[i].ie_name);
 }
 
 void
@@ -301,6 +374,11 @@ labelvmstat(void)
 			continue;
 		mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s", intrname[i]);
 	}
+	for (i = 0; i < nevcnt; i++) {
+		if (ie_head[i].ie_loc == 0)
+			continue;
+		print_ie_title(i);
+	}
 }
 
 #define X(fld)	{t=s.fld[i]; s.fld[i]-=s1.fld[i]; if(state==TIME) s1.fld[i]=t;}
@@ -321,11 +399,13 @@ showvmstat(void)
 	int i, l, c;
 	static int failcnt = 0;
 
-	if (state == TIME)
+	if (state == TIME) {
 		dkswap();
-	etime = cur.cp_etime;
-	if ((etime * hertz) < 1.0) {	/* < 5 ticks - ignore this trash */
-		if (failcnt++ >= MAXFAIL) {
+		etime = cur.cp_etime;
+		/* < 5 ticks - ignore this trash */
+		if ((etime * hertz) < 1.0) {
+			if (failcnt++ > MAXFAIL)
+				return;
 			clear();
 			mvprintw(2, 10, "The alternate system clock has died!");
 			mvprintw(3, 10, "Reverting to ``pigs'' display.");
@@ -334,9 +414,11 @@ showvmstat(void)
 			failcnt = 0;
 			sleep(5);
 			command("pigs");
+			return;
 		}
-		return;
-	}
+	} else
+		etime = 1.0;
+
 	failcnt = 0;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
@@ -353,6 +435,20 @@ showvmstat(void)
 		l = (int)((float)s.intrcnt[i]/etime + 0.5);
 		inttotal += l;
 		putint(l, intrloc[i], INTSCOL, 8);
+	}
+	for (i = 0; i < nevcnt; i++) {
+		if (s.evcnt[i] == 0)
+			continue;
+		if (ie_head[i].ie_loc == 0) {
+			if (nextintsrow == LINES)
+				continue;
+			ie_head[i].ie_loc = nextintsrow++;
+			print_ie_title(i);
+		}
+		X(evcnt);
+		l = (int)((float)s.evcnt[i]/etime + 0.5);
+		inttotal += l;
+		putint(l, ie_head[i].ie_loc, INTSCOL, 8);
 	}
 	putint(inttotal, INTSROW + 1, INTSCOL, 8);
 	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
@@ -466,8 +562,7 @@ vmstat_run(char *args)
 }
 
 void
-vmstat_time (args)
-	char * args;
+vmstat_time(char *args)
 {
 	state = TIME;
 }
@@ -519,7 +614,7 @@ cputime(int indx)
 }
 
 static void
-puthumanint(int n, int l, int c, int w)
+puthumanint(u_int64_t n, int l, int c, int w)
 {
 	char b[128];
 
@@ -528,8 +623,7 @@ puthumanint(int n, int l, int c, int w)
 		hline(' ', w);
 		return;
 	}
-	if (humanize_number(b, w, (int64_t)n * 1024, "", HN_AUTOSCALE,
-	    HN_NOSPACE) == -1 ) {
+	if (humanize_number(b, w, n, "", HN_AUTOSCALE, HN_NOSPACE) == -1 ) {
 		hline('*', w);
 		return;
 	}
@@ -579,10 +673,13 @@ getinfo(struct Info *s, enum state st)
 {
 	int mib[2];
 	size_t size;
+	int i;
 
 	dkreadstats();
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
+	for (i = 0; i < nevcnt; i++)
+		KREAD(ie_head[i].ie_count, &s->evcnt[i], sizeof s->evcnt[i]);
 	size = sizeof(s->uvmexp);
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP2;
@@ -603,8 +700,12 @@ static void
 allocinfo(struct Info *s)
 {
 
-	if ((s->intrcnt = malloc(nintr * sizeof(long))) == NULL) {
-		error("malloc failed");
+	if ((s->intrcnt = calloc(nintr, sizeof(long))) == NULL) {
+		error("calloc failed");
+		die(0);
+	}
+	if ((s->evcnt = calloc(nevcnt, sizeof(u_int64_t))) == NULL) {
+		error("calloc failed");
 		die(0);
 	}
 }
@@ -613,16 +714,19 @@ static void
 copyinfo(struct Info *from, struct Info *to)
 {
 	long *intrcnt;
+	u_int64_t *evcnt;
 
 	intrcnt = to->intrcnt;
+	evcnt = to->evcnt;
 	*to = *from;
 	memmove(to->intrcnt = intrcnt, from->intrcnt, nintr * sizeof (int));
+	memmove(to->evcnt = evcnt, from->evcnt, nevcnt * sizeof *evcnt);
 }
 
 static void
 dinfo(int dn, int c)
 {
-	double words, atime;
+	double atime;
 
 	c = DISKCOL + c * 5;
 
@@ -630,13 +734,11 @@ dinfo(int dn, int c)
 	atime = (double)cur.dk_time[dn].tv_sec +
 		((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	/* # of k transferred */
-	words = (cur.dk_rbytes[dn] | cur.dk_wbytes[dn]) / 1024.0;
-
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)(cur.dk_rxfer[dn]+cur.dk_wxfer[dn])/etime+0.5),
 	    DISKROW + 2, c, 5);
-	puthumanint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
+	puthumanint((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / etime + 0.5,
+		    DISKROW + 3, c, 5);
 	if (atime*100.0/etime >= 100)
 		putint(100, DISKROW + 4, c, 5);
 	else
