@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.31 1998/08/19 01:44:19 thorpej Exp $	*/
+/*	$NetBSD: ls.c,v 1.32 1998/10/13 16:55:22 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.31 1998/08/19 01:44:19 thorpej Exp $");
+__RCSID("$NetBSD: ls.c,v 1.32 1998/10/13 16:55:22 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,7 @@ display(p, list)
 	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
 	int maxuser, needstats;
 	const char *user, *group;
-	char buf[21];			/* 64 bits == 20 digits, +1 for NUL */
+	char ubuf[21]="", gbuf[21]="", buf[21];	/* 64 bits == 20 digits, +1 for NUL */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;
 
@@ -486,8 +486,14 @@ display(p, list)
 					user = nuser;
 					group = ngroup;
 				} else {
-					user = user_from_uid(sp->st_uid, 0);
-					group = group_from_gid(sp->st_gid, 0);
+					if ((user = user_from_uid(sp->st_uid, 0)) == NULL) {
+						(void)snprintf(ubuf, sizeof(ubuf), "%d", (int)sp->st_uid);
+						user = ubuf;
+					}
+					if ((group = group_from_gid(sp->st_gid, 0)) == NULL) {
+						(void)snprintf(gbuf, sizeof(gbuf), "%d", (int)sp->st_gid);
+						user = gbuf;
+					}
 				}
 				if ((ulen = strlen(user)) > maxuser)
 					maxuser = ulen;
