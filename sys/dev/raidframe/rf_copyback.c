@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.14 2000/03/07 02:59:50 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.15 2001/01/26 02:16:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -242,6 +242,7 @@ rf_CopybackReconstructedData(raidPtr)
 
 	c_label.row = frow;
 	c_label.column = fcol;
+	c_label.partitionSize = raidPtr->Disks[frow][fcol].partitionSize;
 
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
