@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.11 1998/05/02 16:45:28 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.12 1998/06/02 02:14:21 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,11 +47,10 @@
 #include <mac68k/dev/grfvar.h>
 
 void
-grf_establish(sc, sp, g_mode, g_phys)
+grf_establish(sc, sp, g_mode)
 	struct grfbus_softc *sc;
 	nubus_slot *sp;
 	int (*g_mode) __P((struct grf_softc *, int, void *));
-	caddr_t (*g_phys) __P((struct grf_softc *));
 {
 	struct grfmode *gm = &sc->curr_mode;
 	struct grfbus_attach_args ga;
@@ -69,8 +68,8 @@ grf_establish(sc, sp, g_mode, g_phys)
 	ga.ga_slot = sp;
 	ga.ga_tag = sc->sc_tag;
 	ga.ga_handle = sc->sc_handle;
+	ga.ga_phys = sc->sc_bufpa;
 	ga.ga_mode = g_mode;
-	ga.ga_phys = g_phys;
 	(void)config_found(&sc->sc_dev, &ga, grfbusprint);
 }
 
