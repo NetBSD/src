@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)hostname.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: hostname.1,v 1.4 1993/08/01 07:48:39 mycroft Exp $
+.\"	$Id: hostname.1,v 1.5 1993/09/10 01:24:51 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt HOSTNAME 1
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm hostname
 .Op Fl s
-.Op Ar nameofhost
+.Op Ar name-of-host
 .Sh DESCRIPTION
 .Nm Hostname
 prints the name of the current host.  The super-user can
@@ -58,7 +58,9 @@ Trims off any domain information from the printed
 name.
 .El
 .Sh SEE ALSO
-.Xr gethostname 2
+.Xr domainname 1 ,
+.Xr gethostname 2 ,
+.Xr sethostname 2
 .Sh HISTORY
 The
 .Nm hostname
