@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm-m68k.h,v 1.2 1995/01/26 15:56:30 mycroft Exp $
+	$Id: tm-m68k.h,v 1.3 1995/01/26 16:29:02 mycroft Exp $
 */
 
 /* Generic 68000 stuff, to be included by other tm-*.h files.  */
@@ -192,7 +192,7 @@ extern const struct ext_format ext_format_68881;
 #define REGISTER_NAMES  \
  {"d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7", \
   "a0", "a1", "a2", "a3", "a4", "a5", "fp", "sp", \
-  "pc", "ps",  \
+  "ps", "pc",  \
   "fp0", "fp1", "fp2", "fp3", "fp4", "fp5", "fp6", "fp7", \
   "fpcontrol", "fpstatus", "fpiaddr", "fpcode", "fpflags" }
 
@@ -206,8 +206,8 @@ extern const struct ext_format ext_format_68881;
 #define A1_REGNUM 9
 #define FP_REGNUM 14		/* Contains address of executing stack frame */
 #define SP_REGNUM 15		/* Contains address of top of stack */
-#define PC_REGNUM 16		/* Contains program counter */
-#define PS_REGNUM 17		/* Contains processor status */
+#define PS_REGNUM 16		/* Contains processor status */
+#define PC_REGNUM 17		/* Contains program counter */
 #define FP0_REGNUM 18		/* Floating point register 0 */
 #define FPC_REGNUM 26		/* 68881 control register */
 #define FPS_REGNUM 27		/* 68881 status register */
