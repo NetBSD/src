@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.7 2003/10/15 22:19:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.8 2003/10/15 22:41:22 enami Exp $");
 #endif
 
 /*
@@ -1131,6 +1131,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ath_mode_init(sc);
+			error = 0;
 		}
 #endif
 		break;
