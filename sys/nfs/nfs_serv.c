@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.16 1994/06/29 06:42:13 cgd Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.17 1994/12/13 17:17:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_serv.c	8.3 (Berkeley) 1/12/94
+ *	@(#)nfs_serv.c	8.4 (Berkeley) 6/4/94
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.12 1994/08/18 22:48:05 mycroft Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.13 1994/12/13 17:17:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsnode.h	8.4 (Berkeley) 2/13/94
+ *	@(#)nfsnode.h	8.6 (Berkeley) 8/18/94
  */
 
 /*
@@ -124,6 +124,7 @@ int	nfs_getattr __P((struct vop_getattr_args *));
 int	nfs_setattr __P((struct vop_setattr_args *));
 int	nfs_read __P((struct vop_read_args *));
 int	nfs_write __P((struct vop_write_args *));
+#define	nfs_lease_check ((int (*) __P((struct  vop_lease_args *)))nullop)
 int	nfsspec_read __P((struct vop_read_args *));
 int	nfsspec_write __P((struct vop_write_args *));
 #ifdef FIFO
