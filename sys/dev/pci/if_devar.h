@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_devar.h,v 1.16 1997/03/18 22:16:50 thomas Exp
+ * Id: if_devar.h,v 1.17 1997/03/21 22:42:03 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
@@ -478,7 +478,9 @@ struct _tulip_softc_t {
     struct ethercom tulip_ec;
     u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
 #endif
+#if !defined(tulip_ifmedia)
     struct ifmedia tulip_ifmedia;
+#endif
 #if !defined(__NetBSD__)
     struct arpcom tulip_ac;
 #endif
@@ -879,7 +881,7 @@ extern struct cfdriver de_cd;
 #endif
 
 #if !defined(TULIP_ETHERCOM)
-#define	TULIP_ETHERCOM(sc)		(&(sc)->tulip-ac))
+#define	TULIP_ETHERCOM(sc)		(&(sc)->tulip_ac)
 #endif
 
 #if !defined(TULIP_ARP_IFINIT)
