@@ -1,4 +1,4 @@
-/*	$NetBSD: print-frag6.c,v 1.6 1999/12/11 18:19:20 thorpej Exp $	*/
+/*	$NetBSD: print-frag6.c,v 1.7 2001/01/08 16:42:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-frag6.c,v 1.6 1999/12/11 18:19:20 thorpej Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.7 2001/01/08 16:42:29 itojun Exp $");
 #endif
 #endif
 
@@ -71,14 +71,14 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 	dp = (struct ip6_frag *)bp;
 	ip6 = (struct ip6_hdr *)bp2;
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	TCHECK(dp->ip6f_offlg);
 
 	if (vflag) {
 		printf("frag (0x%08x:%d|%ld)",
-		       ntohl(dp->ip6f_ident),
+		       (u_int32_t)ntohl(dp->ip6f_ident),
 		       ntohs(dp->ip6f_offlg & IP6F_OFF_MASK),
 		       sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) -
 			       (long)(bp - bp2) - sizeof(struct ip6_frag));
@@ -89,7 +89,7 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 			       (long)(bp - bp2) - sizeof(struct ip6_frag));
 	}
 
-#if 0
+#if 1
 	/* it is meaningless to decode non-first fragment */
 	if (ntohs(dp->ip6f_offlg & IP6F_OFF_MASK) != 0)
 		return 65535;
