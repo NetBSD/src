@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.5 1993/06/27 06:02:55 andrew Exp $
+ *	$Id: vm_machdep.c,v 1.6 1993/07/18 08:23:15 andrew Exp $
  */
 
 /*
@@ -99,7 +99,12 @@ cpu_fork(p1, p2)
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 	for (i=0; i < UPAGES; i++)
 		pmap_enter(&p2->p_vmspace->vm_pmap, kstack+i*NBPG,
-			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG), VM_PROT_READ, 1);
+			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
+			VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
+							 * i486 WP support;
+							 * i386 doesn't care
+							 */
+			TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
