@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.7 2002/01/30 20:38:50 tv Exp $	*/
+/*	$NetBSD: symtab.c,v 1.8 2003/07/14 11:45:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.7 2002/01/30 20:38:50 tv Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.8 2003/07/14 11:45:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ char *name;
     if (bp == 0) no_space();
     bp->link = 0;
     bp->next = 0;
-    bp->name = MALLOC(strlen(name) + 1);
+    bp->name = strdup(name);
     if (bp->name == 0) no_space();
     bp->tag = 0;
     bp->value = UNDEFINED;
@@ -96,9 +96,6 @@ char *name;
     bp->prec = 0;
     bp-> class = UNKNOWN;
     bp->assoc = TOKEN;
-
-    if (bp->name == 0) no_space();
-    strcpy(bp->name, name);
 
     return (bp);
 }
