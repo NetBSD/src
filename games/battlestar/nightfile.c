@@ -1,4 +1,4 @@
-/*	$NetBSD: nightfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $	*/
+/*	$NetBSD: nightfile.c,v 1.10 2000/09/10 10:52:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightfile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: nightfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $");
+__RCSID("$NetBSD: nightfile.c,v 1.10 2000/09/10 10:52:56 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ of the hangar is +. There is an exit +.*\n"},
 	{"This is the landing bay.",
 		{1, 0, 10, 0, 0, 0, 0, 0},
 	"Ships are landing here, some heavily damaged. Enemy fighters continually\n\
-strafe this vulnerable port. The main hangar is +, *\n\
+strafe this vulnerable port. The main hangar is +. *\n\
 There is an exit +.*\n"},
 	{"You are in the gallery.",
 		{4, 0, 0, 0, 0, 0, 1, 0},
@@ -72,7 +72,7 @@ A staircase leads down. * There is a way -. **        \n"},
 	"From the launch tubes here fighters blast off into space. Only one is left,\n\
 and it is guarded by two fierce men. A staircase leads up from here.\n\
 There is a cluttered workbench +. From the main hangar come sounds of great\n\
-explosions.  The main hangar is +. The viper launch tubes are to the -.*\n"},
+explosions.  The main hangar is +. The viper launch tubes are -.*\n"},
 	{"You are at the workbench.",
 		{0, 5, 7, 0, 0, 0, 0, 0},
 	"Strange and unwieldy tools are arranged here including a lunch box \n\
@@ -128,8 +128,8 @@ continues -. The armory is +.**\n"},
 		{20, 13, 21, 22, 23, 1, 24, 0},
 	"Luxurious staterooms carpeted with crushed velvet and adorned with beaten\n\
 gold open onto this parlor. A wide staircase with ivory banisters leads\n\
-up or down. This parlor leads into a hallway +. The bridal suite is +.\n\
-Other rooms lie - and +.\n"},
+up or down. This parlor leads into a hallway +. The bridal suite is\n\
++. Other rooms lie - and +.\n"},
 	{"You're in a long dimly lit hallway.",
 		{0, 14, 25, 0, 0, 0, 0, 0},
 	"This part of the walkway is deserted. There is a dead end +. The\n\
@@ -165,7 +165,7 @@ room +, and a doorway +.*\n"},
 	{"You are at the entrance to the dining hall.",
 		{0, 0, 28, 0, 0, 0, 16, 0},
 	"A wide staircase with ebony banisters leads down here.**\n\
-The dining hall is to the -.*\n"},
+The dining hall is -.*\n"},
 	{"This was once the first class lounge.",
 		{0, 0, 29, 0, 16, 1, 0, 0},
 	"There is much rubble and destruction here that was not apparent elsewhere.\n\
@@ -331,7 +331,8 @@ like jagged teeth from black gums.  The land rises sharply +.  The shore\n\
 line stretches on *+.*\n"},
 	{"You are flying over a mountainous region.",
 		{75, 73, 76, 77, 68, 1, 0, 1},
-	"Below is a shadow filled canyon with luminous waterfalls plummeting down beyond sight and looming spires and pinnacles.  **The ocean is +.*\n"},
+"Below is a shadow=filled canyon with looming spires and pinnacles and\n\
+luminous waterfalls plummeting down beyond sight.  **The ocean is +.*\n"},
 	{"You are flying over the ocean.",
 		{74, 78, 78, 78, 68, 1, 0, 1},
 	"You bank over the water and your wingtips dip low to the green waves.  The\n\
@@ -579,8 +580,9 @@ There may be poison oak here.  What was that?  A lantern just flickered by in\n\
 the dark!  The sound of rushing water is coming from *+.**\n"},
 	{"You are on a dirt trail.",
 		{179, 181, 98, 0, 84, 0, 0, 0},
-	"The trail seems to start here and head towards the forest +.**  High, dark\n\
-cliffs border the trail +.  Some crickets are chirping noisily.\n"},
+"The trail seems to start here and head towards the forest +.**  High,\n\
+dark cliffs border the trail +.  Some crickets are chirping\n\
+noisily.\n"},
 	{"You are  walking along the beach.",
 		{183, 101, 184, 0, 87, 0, 0, 0},
 	"The surf is rather tame tonight.  The beach continues + and +.**\n"},
@@ -613,7 +615,7 @@ leads -.  The lawn and fountain are +.**\n"},
 	{"You are on a dirt road.",
 		{193, 192, 245, 103, 88, 0, 0, 0},
 	"There are many bright lights +.  The road cleaves the darkness +.\n\
-A small dirt road goes -, and a drive way peals off +.\n"},
+A small dirt road goes -, and a driveway peels off +.\n"},
 	{"You are in a field of small shrubs.",
 		{184, 186, 103, 187, 88, 0, 0, 0},
 	"**Pine and other coniferous saplings are growing here.  The rich brown\n\

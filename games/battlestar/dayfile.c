@@ -1,4 +1,4 @@
-/*	$NetBSD: dayfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $	*/
+/*	$NetBSD: dayfile.c,v 1.10 2000/09/10 10:52:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dayfile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dayfile.c,v 1.9 2000/09/08 17:25:32 jsm Exp $");
+__RCSID("$NetBSD: dayfile.c,v 1.10 2000/09/10 10:52:56 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ of the hangar is +. There is an exit +.*\n"},
 	{"This is the landing bay.",
 		{1, 0, 10, 0, 0, 0, 0, 0},
 	"Ships are landing here, some heavily damaged. Enemy fighters continually\n\
-strafe this vulnerable port. The main hangar is +, *\n\
+strafe this vulnerable port. The main hangar is +. *\n\
 There is an exit +.*\n"},
 	{"You are in the gallery.",
 		{4, 0, 0, 0, 0, 0, 1, 0},
@@ -72,7 +72,7 @@ A staircase leads down. * There is a way -. **        \n"},
 	"From the launch tubes here fighters blast off into space. Only one is left,\n\
 and it is guarded by two fierce men. A staircase leads up from here.\n\
 There is a cluttered workbench +. From the main hangar come sounds of great\n\
-explosions.  The main hangar is +. The viper launch tubes are to the -.*\n"},
+explosions.  The main hangar is +. The viper launch tubes are -.*\n"},
 	{"You are at the workbench.",
 		{0, 5, 7, 0, 0, 0, 0, 0},
 	"Strange and unwieldy tools are arranged here including a lunch box \n\
@@ -128,8 +128,8 @@ continues -. The armory is +.**\n"},
 		{20, 13, 21, 22, 23, 1, 24, 0},
 	"Luxurious staterooms carpeted with crushed velvet and adorned with beaten\n\
 gold open onto this parlor. A wide staircase with ivory banisters leads\n\
-up or down. This parlor leads into a hallway +. The bridal suite is +.\n\
-Other rooms lie - and +.\n"},
+up or down. This parlor leads into a hallway +. The bridal suite is\n\
++. Other rooms lie - and +.\n"},
 	{"You're in a long dimly lit hallway.",
 		{0, 14, 25, 0, 0, 0, 0, 0},
 	"This part of the walkway is deserted. There is a dead end +. The\n\
@@ -165,7 +165,7 @@ room +, and a doorway +.*\n"},
 	{"You are at the entrance to the dining hall.",
 		{0, 0, 28, 0, 0, 0, 16, 0},
 	"A wide staircase with ebony banisters leads down here.**\n\
-The dining hall is to the -.*\n"},
+The dining hall is -.*\n"},
 	{"This was once the first class lounge.",
 		{0, 0, 29, 0, 16, 1, 0, 0},
 	"There is much rubble and destruction here that was not apparent elsewhere.\n\
@@ -434,7 +434,7 @@ There is an open bungalow +.*  The road continues - and -.\n"},
 	{"You are at the sea plane dock.",
 		{121, 122, 123, 124, 82, 0, 0, 0},
 	"Native girls with skin of gold, clad only in fragrant leis and lavalavas,\n\
-line the dockside to greet you. A couple of ukulele plucking islanders and a\n\
+line the dockside to greet you. A couple of ukulele=plucking islanders and a\n\
 keyboard player are adding appropriate music. A road crosses the clearing \n\
 +*.  There are some tables set up +.*\n"},
 	{"You are flying over the ocean.",
@@ -506,7 +506,7 @@ offshore the water is only knee deep.** There are some rocks +.*\n"},
 	{"You are walking along the beach.",
 		{146, 0, 80, 147, 73, 0, 0, 0},
 	"Many beautiful shells have been washed up here including bright yellow \n\
-cowries, chocolate colored murex, orange conchs, striped tritons and the\n\
+cowries, chocolate colored murex, orange conches, striped tritons and the\n\
 deadly cone shells.****\n"},
 	{"You are in a papaya grove.",
 		{148, 89, 149, 150, 77, 0, 0, 0},
@@ -632,7 +632,7 @@ door leads -.  The lawn and fountain are +.**\n"},
 	{"You are on a dirt road.",
 		{193, 192, 245, 103, 88, 0, 0, 0},
 	"There is a large village +. The road cleaves a coconut plantation +.\n\
-A small dirt road goes -, and a drive way peals off +.\n"},
+A small dirt road goes -, and a driveway peels off +.\n"},
 	{"You are in a field of small shrubs.",
 		{184, 186, 103, 187, 88, 0, 0, 0},
 	"**Pine and other coniferous saplings have been planted here.  The rich brown\n\
@@ -1181,7 +1181,7 @@ The trail winds + and +.**\n"},
 		{267, 0, 0, 269, 0, 0, 269, 0},
 	"Beds of ferns and palm leaves make several cozy nests along the walls. In the\n\
 center of the room is a throne of gold and silver which pulls out into a bed\n\
-of enormous size.***  A passageway leads down to the -.\n"},
+of enormous size.***  A passageway - leads down.\n"},
 	{"You are walking along the edge of a huge abyss.",
 		{0, 0, 268, 0, 268, 1, 270, 0},
 	"Steam is rising in great clouds from the immeasurable depths.  A very narrow\n\
