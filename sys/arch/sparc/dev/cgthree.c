@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.4 1994/04/12 07:46:13 deraadt Exp $
+ * $Id: cgthree.c,v 1.5 1994/04/13 11:01:58 deraadt Exp $
  */
 
 /*
@@ -129,7 +129,8 @@ cgthreeattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
 	sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
 	sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
-	ramsize = round_page(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes);
+	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
+		NBPG);
 	sc->sc_fb.fb_type.fb_depth = 8;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
