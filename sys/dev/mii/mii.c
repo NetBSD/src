@@ -1,4 +1,4 @@
-/*  $NetBSD: mii.c,v 1.1 1997/10/17 17:33:53 bouyer Exp $   */
+/*	$NetBSD: mii.c,v 1.2 1997/11/17 08:52:38 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -79,13 +79,15 @@ struct cfdriver mii_cd = {
 	NULL, "mii", DV_DULL
 };
 
-int mii_print(aux, pnp)
+int
+mii_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
 	mii_phy_t *phy = aux;
+
 	if (pnp)
-		printf("ID %x at %s", phy->phy_id, pnp);
+		printf("PHY ID 0x%x at %s", phy->phy_id, pnp);
 	printf(" dev %d", phy->dev);
 	return (UNCONF);
 }
@@ -123,25 +125,25 @@ miiattach(parent, self, aux)
 	sc->adapter = adapter;
 	sc->adapter->mii_sc = sc; 
 	sc->current_phy = NULL;
-	
-	for (i=0; i < 32; i++) {
+
+	for (i = 0; i < 32; i++) {
 		phy_id_h = mii_readreg(sc, i, PHY_IDH);
 		phy_id_l = mii_readreg(sc, i, PHY_IDL);
 #ifdef MII_DEBUG
-		printf("Id of PHY 0x%x: 0x%x%x\n", i,
-			phy_id_h, phy_id_l);
+		printf("Id of PHY 0x%x: 0x%x%x\n", i, phy_id_h, phy_id_l);
 #endif
 		if (phy_id_h != -1 && phy_id_l != -1) {
 			phy = malloc(sizeof(mii_phy_t), M_DEVBUF, M_WAITOK);
-			phy->phy_id = ((phy_id_h & 0xffff) << 16) | (phy_id_l & 0xffff);
+			phy->phy_id = ((phy_id_h & 0xffff) << 16) |
+			    (phy_id_l & 0xffff);
 			phy->adapter_id = adapter->adapter_id;
 			phy->dev = i;
 			phy->mii_softc = sc;
 #if 0
-			if ((cf = config_search(mii_configmatch, (struct device*)sc, phy))
-				!= NULL) {
+			if ((cf = config_search(mii_configmatch, self,
+			    phy)) != NULL) {
 				sc->phy[i] = phy;
-				config_attach((struct device*)sc, cf, phy, mii_print);
+				config_attach(self, cf, phy, mii_print);
 			} else {
 				sc->phy[i] = NULL;
 				mii_print(phy, sc->sc_dev.dv_xname);
@@ -149,8 +151,8 @@ miiattach(parent, self, aux)
 				free(phy, M_DEVBUF);
 			}
 #else
-			if (config_found_sm(self, phy, mii_print, mii_configmatch)
-				!= NULL) {
+			if (config_found_sm(self, phy, mii_print,
+			    mii_configmatch) != NULL) {
 				sc->phy[i] = phy;
 			} else {
 				sc->phy[i] = NULL;
@@ -179,8 +181,8 @@ mii_configmatch(parent, cf, aux)
 	mii_phy_t *phy = aux;
 
 	if (cf->cf_loc[MIICF_DEV] != MIICF_DEV_DEFAULT &&
-		cf->cf_loc[MIICF_DEV] != phy->dev)
-		return 0;
+	    cf->cf_loc[MIICF_DEV] != phy->dev)
+		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
@@ -190,10 +192,10 @@ mii_sync(adapter)
 {
 	int i;
 
-	adapter->mii_clrbit(adapter->adapter_softc, MII_TXEN);
-	for (i=0; i<32; i++) {
-		adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-		adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_TXEN);
+	for (i = 0; i < 32; i++) {
+		(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+		(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
 	}
 }
 
@@ -205,20 +207,23 @@ mii_sendbit(adapter, data, nbits)
 {
 	int i;
 
-	adapter->mii_setbit(adapter->adapter_softc, MII_TXEN);
+	(*adapter->mii_setbit)(adapter->adapter_softc, MII_TXEN);
 	for (i = 1 << (nbits -1); i; i = i >>  1) {
-		adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-		adapter->mii_readbit(adapter->adapter_softc, MII_CLOCK);
+		(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+		(*adapter->mii_readbit)(adapter->adapter_softc, MII_CLOCK);
 		if (data & i)
-			adapter->mii_setbit(adapter->adapter_softc, MII_DATA);
+			(*adapter->mii_setbit)(adapter->adapter_softc,
+			    MII_DATA);
 		else
-			adapter->mii_clrbit(adapter->adapter_softc, MII_DATA);
-		adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
-		adapter->mii_readbit(adapter->adapter_softc, MII_CLOCK);
+			(*adapter->mii_clrbit)(adapter->adapter_softc,
+			    MII_DATA);
+		(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
+		(*adapter->mii_readbit)(adapter->adapter_softc, MII_CLOCK);
 	}
 }
 
-int mii_readreg(v, phy, reg)
+int
+mii_readreg(v, phy, reg)
 	void *v;
 	u_int16_t phy;
 	u_int16_t reg;
@@ -229,7 +234,8 @@ int mii_readreg(v, phy, reg)
 	int i;
 
 	if (adapter->mii_readreg) /* adapter has a special way to read PHYs */
-		return adapter->mii_readreg(adapter->adapter_softc, phy, reg);
+		return ((*adapter->mii_readreg)(adapter->adapter_softc,
+		    phy, reg));
 
 	/* else read using the control lines */
 	mii_sync(adapter);
@@ -238,32 +244,34 @@ int mii_readreg(v, phy, reg)
 	mii_sendbit(adapter, phy, 5);
 	mii_sendbit(adapter, reg, 5);
 
-	adapter->mii_clrbit(adapter->adapter_softc, MII_TXEN);
-	adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-	adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
-	adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_TXEN);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
 
-	err = adapter->mii_readbit(adapter->adapter_softc, MII_DATA);
-	adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
+	err = (*adapter->mii_readbit)(adapter->adapter_softc, MII_DATA);
+	(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
 
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		val = val << 1;
-		adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-		if (!err)
-			if (adapter->mii_readbit(adapter->adapter_softc, MII_DATA))
+		(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+		if (err == 0)
+			if ((*adapter->mii_readbit)(adapter->adapter_softc,
+			    MII_DATA))
 				val |= 1;
-		adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
+		(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
 	}
-	adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-	adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
 
-	if (!err)
+	if (err == 0)
 		return val;
 	else
 		return -1;
 }
 
-void mii_writereg(v, phy, reg, data)
+void
+mii_writereg(v, phy, reg, data)
 	void *v;
 	u_int16_t phy;
 	u_int16_t reg;
@@ -271,8 +279,9 @@ void mii_writereg(v, phy, reg, data)
 {
 	mii_data_t *adapter = ((struct mii_softc *)v)->adapter;
 
-	if (adapter->mii_writereg) { /* adapter has a special way to write PHYs */
-		adapter->mii_writereg(adapter, phy, reg, data);
+	if (adapter->mii_writereg) {
+		/* Interface has a special way of writing to the PHY. */
+		(*adapter->mii_writereg)(adapter, phy, reg, data);
 		return;
 	}
 
@@ -285,11 +294,12 @@ void mii_writereg(v, phy, reg, data)
 	mii_sendbit(adapter, MII_ACK, 2);
 	mii_sendbit(adapter, data, 16);
 
-	adapter->mii_clrbit(adapter->adapter_softc, MII_CLOCK);
-	adapter->mii_setbit(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_clrbit)(adapter->adapter_softc, MII_CLOCK);
+	(*adapter->mii_setbit)(adapter->adapter_softc, MII_CLOCK);
 }
 
-void mii_media_add(ifmedia, adapter)
+void
+mii_media_add(ifmedia, adapter)
 	struct ifmedia *ifmedia;
 	mii_data_t *adapter;
 {
@@ -318,7 +328,8 @@ void mii_media_add(ifmedia, adapter)
 	ifmedia_add(ifmedia, IFM_ETHER | IFM_NONE, 0, NULL);
 }
 
-int mii_mediachg(adapter)
+int
+mii_mediachg(adapter)
 	mii_data_t *adapter;
 {
 	struct mii_softc *sc = adapter->mii_sc;
@@ -327,16 +338,17 @@ int mii_mediachg(adapter)
 
 	sc->current_phy = NULL;
 
-	for (i=0; i<32; i++) {
+	for (i = 0; i < 32; i++) {
 		if (sc->phy[i] == NULL)
 			continue;
-		switch (sc->phy[i]->phy_media_set(media, sc->phy[i]->phy_softc)) {
-		case -1: /* PHY not available */
+		switch (sc->phy[i]->phy_media_set(media,
+		    sc->phy[i]->phy_softc)) {
+		case -1:	/* PHY not available */
 			break;
-		case 0: /* link sucessfully selected */
+		case 0:		/* link sucessfully selected */
 			sc->current_phy = sc->phy[i];
 			break;
-		case ENETDOWN: /* link selected but not up */
+		case ENETDOWN:	/* link selected but not up */
 			best = i;
 			break;
 		default:
@@ -344,20 +356,21 @@ int mii_mediachg(adapter)
 		}
 	}
 	if (sc->current_phy == NULL) {
-	/*
-	 * We didn't find a valid media. Select the best one (i.e.
-	 * last supported but not up). If media != autoselect, don't report
-	 * any error code.
-	 */
+		/*
+		 * We didn't find a valid media. Select the best one (i.e.
+		 * last supported but not up). If media != autoselect,
+		 * don't report any error code.
+		 */
 		if (best < 0)
-			return EINVAL;
+			return (EINVAL);
 		sc->current_phy = sc->phy[best];
-		error = sc->phy[best]->phy_media_set(media, sc->phy[best]->phy_softc);
+		error = sc->phy[best]->phy_media_set(media,
+		    sc->phy[best]->phy_softc);
 		if (media != IFM_AUTO)
-		 error = 0;
+			error = 0;
 	}
 	/* power down all but current phy */
-	for (i=0; i<32; i++) {
+	for (i = 0; i < 32; i++) {
 		if (sc->phy[i] != sc->current_phy) {
 			if (sc->phy[i] == NULL)
 				mii_writereg(sc, i, PHY_CONTROL, CTRL_ISO);
@@ -365,10 +378,11 @@ int mii_mediachg(adapter)
 				sc->phy[i]->phy_pdown(sc->phy[i]->phy_softc);
 		}
 	}
-	return error;
+	return (error);
 }
 
-void mii_pollstat(adapter)
+void
+mii_pollstat(adapter)
 	mii_data_t *adapter;
 {
 	struct mii_softc *sc = adapter->mii_sc;
@@ -376,7 +390,7 @@ void mii_pollstat(adapter)
 	adapter->mii_media_status = IFM_AVALID;
 	if (sc->current_phy == NULL)
 		return;
-	if (sc->current_phy->phy_status(adapter->mii_media_active,
-		sc->current_phy->phy_softc) == 0)
+	if ((*sc->current_phy->phy_status)(adapter->mii_media_active,
+	    sc->current_phy->phy_softc) == 0)
 		adapter->mii_media_status |= IFM_ACTIVE;
 }
