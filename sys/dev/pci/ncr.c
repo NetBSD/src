@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.93 1999/12/26 10:41:22 tsutsui Exp $	*/
+/*	$NetBSD: ncr.c,v 1.94 2000/02/20 22:19:29 sommerfeld Exp $	*/
 
 /**************************************************************************
 **
@@ -237,6 +237,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #ifndef __alpha__
+#undef DELAY
 #define DELAY(x)	delay(x)
 #endif
 #include <dev/scsipi/scsi_all.h>
@@ -1524,7 +1525,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.93 1999/12/26 10:41:22 tsutsui Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.94 2000/02/20 22:19:29 sommerfeld Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
