@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.11 1998/10/01 10:01:20 frueauf Exp $
+#	$NetBSD: NWSCONS,v 1.12 1998/10/19 18:19:55 tron Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -19,6 +19,9 @@ options 	MATH_EMULATE	# floating point emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+# delay between "rebooting ..." message and hardware reset, in milieconds
+#options 	CPURESET_DELAY=2000
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
@@ -99,7 +102,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-#file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -249,6 +252,9 @@ com*	at isapnp?			# Modems and serial boards
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
+pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+com*	at pcmcom? slave ?		# ...and the slave devices
+
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
@@ -334,26 +340,31 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and Related Devices
+# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
+#pciide* at pci ? dev ? function ?
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp?
+wdc*	at isapnp? 
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
-# ISA IDE controllers
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+# ISA ST506, ESDI, and IDE controllers
+wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at wdc? channel ? drive ?
+#wd*	at pciide? channel ? drive ?
 
 # ATAPI bus support
-atapibus* at wdc?
+atapibus* at wdc? channel ?
+#atapibus* at pciide? channel ?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 sd*	at atapibus? drive ?		# ATAPI disk drives
+uk*	at atapibus? drive ?		# ATAPI unknown
 
 
 # Miscellaneous mass storage devices
@@ -573,4 +584,4 @@ pseudo-device	sequencer	1	# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.
