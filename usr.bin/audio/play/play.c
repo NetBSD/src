@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.36 2002/02/10 13:15:08 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.37 2002/07/20 08:40:16 grant Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -135,7 +135,7 @@ main(argc, argv)
 		case 's':
 			decode_int(optarg, &sample_rate);
 			if (sample_rate < 0 || sample_rate > 48000 * 2)	/* XXX */
-				errx(1, "sample rate must be between 0 and 96000\n");
+				errx(1, "sample rate must be between 0 and 96000");
 			break;
 		case 'V':
 			verbose++;
@@ -143,7 +143,7 @@ main(argc, argv)
 		case 'v':
 			volume = atoi(optarg);
 			if (volume < 0 || volume > 255)
-				errx(1, "volume must be between 0 and 255\n");
+				errx(1, "volume must be between 0 and 255");
 			break;
 		/* case 'h': */
 		default:

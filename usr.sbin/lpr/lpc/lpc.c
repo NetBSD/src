@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.13 2002/07/14 15:27:59 wiz Exp $	*/
+/*	$NetBSD: lpc.c,v 1.14 2002/07/20 08:40:18 grant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.13 2002/07/14 15:27:59 wiz Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.14 2002/07/20 08:40:18 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ ingroup(char *grname)
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
-			warnx("Warning: unknown group `%s'\n",
+			warnx("Warning: unknown group `%s'",
 				grname);
 			return(0);
 		}

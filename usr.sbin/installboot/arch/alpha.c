@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.12 2002/05/31 05:54:36 matt Exp $	*/
+/*	$NetBSD: alpha.c,v 1.13 2002/07/20 08:40:17 grant Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.12 2002/05/31 05:54:36 matt Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.13 2002/07/20 08:40:17 grant Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -174,7 +174,7 @@ alpha_clearboot(ib_params *params)
 	    "Old boot block checksum invalid (was %#llx, calculated %#llx)",
 		    (unsigned long long)bb.bb_cksum,
 		    (unsigned long long)cksum);
-		warnx("Boot block invalid\n");
+		warnx("Boot block invalid");
 		return (0);
 	}
 

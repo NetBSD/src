@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.16 2001/02/19 23:22:46 cgd Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.17 2002/07/20 08:40:20 grant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.16 2001/02/19 23:22:46 cgd Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.17 2002/07/20 08:40:20 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(argc, argv)
 	if (strcmp(getprogname(), "quotaoff") == 0)
 		offmode++;
 	else if (strcmp(getprogname(), "quotaon") != 0)
-		errx(1, "Name must be quotaon or quotaoff\n");
+		errx(1, "Name must be quotaon or quotaoff");
 
 	while ((ch = getopt(argc, argv, "avug")) != -1) {
 		switch(ch) {

@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.5 2002/05/16 09:55:50 wiz Exp $ */
+/* $NetBSD: sunlabel.c,v 1.6 2002/07/20 08:40:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.5 2002/05/16 09:55:50 wiz Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.6 2002/07/20 08:40:20 grant Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -580,7 +580,7 @@ getlabel(void)
 
 	lerr = unpack_label();
 	if (lerr)
-		errx(1, "bogus label on `%s' (%s)\n", diskname, lerr);
+		errx(1, "bogus label on `%s' (%s)", diskname, lerr);
 }
 
 /*
@@ -810,7 +810,7 @@ chpart(int pno, const char *numbers)
 		}
 	}
 	if (label.spc && (size % label.spc)) {
-		warnx("Size is not a multiple of cylinder size (is %u/%u/%u)\n",
+		warnx("Size is not a multiple of cylinder size (is %u/%u/%u)",
 		    size / label.spc,
 		    (size % label.spc) / label.nsect, size % label.nsect);
 	}
@@ -1180,7 +1180,7 @@ setlabel(void)
 		return;
 	}
 	if (u.l.d_secsize != 512) {
-		warnx("Disk claims %d-byte sectors\n", (int)u.l.d_secsize);
+		warnx("Disk claims %d-byte sectors", (int)u.l.d_secsize);
 	}
 	u.l.d_nsectors = label.nsect;
 	u.l.d_ntracks = label.nhead;

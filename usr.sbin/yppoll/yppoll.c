@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.9 2001/02/19 23:22:50 cgd Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.10 2002/07/20 08:40:22 grant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.9 2001/02/19 23:22:50 cgd Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.10 2002/07/20 08:40:22 grant Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +111,7 @@ main(argc, argv)
 	}
 
 	if (r != 0)
-		errx(1, "no such map %s. Reason: %s\n",
+		errx(1, "no such map %s. Reason: %s",
 		    inmap, yperr_string(r));
 
 	printf("Map %s has order number %d. %s", inmap, order,
@@ -155,7 +155,7 @@ get_remote_info(indomain, inmap, server, outorder, outname)
 
 	client = clntudp_create(&rsrv_sin, YPPROG, YPVERS, tv, &rsrv_sock);
 	if (client == NULL)
-		errx(1, "clntudp_create: no contact with host %s.\n", server);
+		errx(1, "clntudp_create: no contact with host %s.", server);
 	
 	yprnk.domain = indomain;
 	yprnk.map = inmap;

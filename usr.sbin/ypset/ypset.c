@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.13 2001/02/19 23:22:53 cgd Exp $	*/
+/*	$NetBSD: ypset.c,v 1.14 2002/07/20 08:40:22 grant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypset.c,v 1.13 2001/02/19 23:22:53 cgd Exp $");
+__RCSID("$NetBSD: ypset.c,v 1.14 2002/07/20 08:40:22 grant Exp $");
 #endif
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ bind_tohost(sin, dom, server)
 	r = clnt_call(client, YPBINDPROC_SETDOM,
 	    xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
 	if (r) {
-		warnx("Cannot ypset for domain %s on host %s: %s.\n",
+		warnx("Cannot ypset for domain %s on host %s: %s.",
 		    dom, server, clnt_sperrno(r));
 		clnt_destroy(client);
 		return YPERR_YPBIND;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.3 2001/12/14 20:10:19 thorpej Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.4 2002/07/20 08:40:17 grant Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	else if (strcmp(donglename, "girbil") == 0)
 		dongle = DONGLE_GIRBIL;
 	else
-		errx(1, "Unknown dongle\n");
+		errx(1, "Unknown dongle");
 	if (ioctl(fd, IRFRAMETTY_SET_DONGLE, &dongle) < 0)
 		err(1, "IRFRAMETTY_SET_DONGLE");
 

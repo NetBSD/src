@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.11 2001/02/19 23:22:45 cgd Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.12 2002/07/20 08:40:18 grant Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.11 2001/02/19 23:22:45 cgd Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.12 2002/07/20 08:40:18 grant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -245,7 +245,7 @@ ng_load(fname)
 					break;
 
 				case 1:
-					warnx("Duplicate entry netgroup `%s'\n",
+					warnx("Duplicate entry netgroup `%s'",
 					      head->n_name);
 					break;
 
@@ -507,7 +507,7 @@ ng_print(e, str)
 			break;
 
 		default:
-			errx(1, "Internal error: Bad netgroup type\n");
+			errx(1, "Internal error: Bad netgroup type");
 			break;
 		}
 		str_append(str, ptr, ' ');
