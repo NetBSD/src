@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2003/08/07 16:27:52 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2003/10/06 05:27:19 matt Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -59,6 +59,11 @@ typedef	unsigned long vm_offset_t;
 typedef unsigned long vm_size_t;
 
 #endif
+
+typedef __volatile long		__cpu_simple_lock_t;
+
+#define __SIMPLELOCK_LOCKED	1
+#define __SIMPLELOCK_UNLOCKED	0
 
 typedef int			register_t;
 
