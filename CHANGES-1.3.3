@@ -411,6 +411,24 @@ sys/arch/i386/i386/machdep.c			1.304 (patch)
   Implement handling of DMA boundaries by bus_dmamap_load(), as
   specified in bus_dma(9).  (bouyer)
 
+sys/msdosfs/msdosfs_vnops.c			1.76
+
+  Fix bug where you could create two files with the same name
+  in the root directory of a FAT file system.  (ws)
+
+sys/arch/alpha/pci/dwlpx_pci.c			1.9
+
+  Fix misplaced 32 Bit PCI byte enables for alpha 8200. Some
+  PCI devices (e.g., Buslogic BT958) will now be correctly
+  configured.  (mjacob)
+
+sys/arch/alpha/pci/sio.c			1.23
+
+  Fix softc declaration for 'pceb' device.  The incorrect
+  definition caused an obscure bug in which the configuration
+  code would stop at the bridge (pceb) and would not even call
+  match for the two Qlogic ISP cards that followed.  (mjacob)
+
 
 NOT YET PULLED UP (expecting patches or further information):
 
