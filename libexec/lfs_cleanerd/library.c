@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.21.2.3 2001/06/30 01:28:31 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.21.2.4 2001/07/02 17:48:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.21.2.3 2001/06/30 01:28:31 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.21.2.4 2001/07/02 17:48:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,6 @@ get_fs_info (struct statfs *lstatfsp, int use_mmap)
 		syslog(LOG_ERR, "Exiting: get_fs_info: get_superblock failed: %m");
                 exit(1);
         }
-	fsp->fi_daddr_shift =
-	     fsp->fi_lfs.lfs_bshift - fsp->fi_lfs.lfs_fsbtodb;
 	get_ifile (fsp, use_mmap);
 	return (fsp);
 }
@@ -190,6 +188,7 @@ get_superblock (FS_INFO *fsp, struct lfs *sbp)
 		sbp->lfs_ibsize = sbp->lfs_bsize;
 		sbp->lfs_start = sbp->lfs_sboffs[0];
 		sbp->lfs_tstamp = sbp->lfs_otstamp;
+		sbp->lfs_fsbtodb = 0;
 	}
 
 	return (0);
@@ -310,7 +309,7 @@ pseg_size(daddr_t pseg_addr, FS_INFO *fsp, SEGSUM *sp)
 
 	lfsp = &fsp->fi_lfs;
 	ssize = lfsp->lfs_sumsize
-		+ howmany(sp->ss_ninos, INOPB(lfsp)) * lfsp->lfs_bsize;
+		+ howmany(sp->ss_ninos, INOPB(lfsp)) * lfsp->lfs_ibsize;
 
 	if (lfsp->lfs_version == 1)
 		fp = (FINFO *)(((char *)sp) + sizeof(SEGSUM_V1));
@@ -353,8 +352,9 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 
 	sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, seg);
 	s = seg_buf + (sup->su_flags & SEGUSE_SUPERBLOCK ? LFS_SBPAD : 0);
-	seg_addr = sntoda(lfsp, seg);
-	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? btodb(LFS_SBPAD) : 0);
+	seg_addr = sntod(lfsp, seg);
+	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? 
+		btofsb(lfsp, LFS_SBPAD) : 0);
 
         if(debug > 1)
             syslog(LOG_DEBUG, "\tsegment buffer at: %p\tseg_addr 0x%x", s, seg_addr);
@@ -404,7 +404,7 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO **blocks, int *bc
 
 		ssize = pseg_size(pseg_addr, fsp, sp);
 		s += ssize;
-		pseg_addr += btodb(ssize); /* XXX was bytetoda(fsp,ssize) */
+		pseg_addr += btofsb(lfsp, ssize); 
 	}
 	if(nsegs < sup->su_nsums) {
 		syslog(LOG_WARNING,"only %d segment summaries in seg %d (expected %d)",
@@ -444,8 +444,8 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	FINFO	*fip;
 	caddr_t	bp;
 	daddr_t	*dp, *iaddrp;
-	int db_per_block, i, j;
-	int db_frag;
+	int fsb_per_block, i, j;
+	int fsb_frag;
 	u_long page_size;
 	struct lfs *lfsp;
 
@@ -453,11 +453,11 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
             syslog(LOG_DEBUG, "FILE INFOS");
 
 	lfsp = &fsp->fi_lfs;
-	db_per_block = fsbtodb(&fsp->fi_lfs, 1);
+	fsb_per_block = fragstofsb(lfsp, lfsp->lfs_frag);
 	page_size = fsp->fi_lfs.lfs_bsize;
-	bp = seg_buf + datobyte(fsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
+	bp = seg_buf + fsbtob(lfsp, psegaddr - segaddr) + lfsp->lfs_sumsize;
 	bip += *countp;
-	psegaddr += bytetoda(fsp, lfsp->lfs_sumsize);
+	psegaddr += btofsb(lfsp, lfsp->lfs_sumsize);
 	iaddrp = (daddr_t *)((caddr_t)sp + lfsp->lfs_sumsize);
 	--iaddrp;
 	if (lfsp->lfs_version == 1)
@@ -475,7 +475,7 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 		for (j = 0; j < fip->fi_nblocks; j++, dp++) {
 			/* Skip over intervening inode blocks */
 			while (psegaddr == *iaddrp) {
-				psegaddr += db_per_block;
+				psegaddr += fsb_per_block;
 				bp += page_size;
 				--iaddrp;
 			}
@@ -493,21 +493,21 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 			    || fip->fi_lastlength == page_size)
 			{
 				bip->bi_size = page_size;
-				psegaddr += db_per_block;
+				psegaddr += fsb_per_block;
 				bp += page_size;
 			} else {
-				db_frag = fragstodb(&(fsp->fi_lfs),
+				fsb_frag = fragstofsb(&(fsp->fi_lfs),
 				    numfrags(&(fsp->fi_lfs),
 				    fip->fi_lastlength));
 
                                 if(debug > 1) {
 					syslog(LOG_DEBUG, "lastlength, frags: %d, %d",
-					       fip->fi_lastlength, db_frag);
+					       fip->fi_lastlength, fsb_frag);
 				}
 
 				bip->bi_size = fip->fi_lastlength;
 				bp += fip->fi_lastlength;
-				psegaddr += db_frag;
+				psegaddr += fsb_frag;
 			}
 			++bip;
 			++(*countp);
@@ -545,8 +545,8 @@ add_inodes (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
-			di = (struct dinode *)(seg_buf +
-			    ((*daddrp - seg_addr) << fsp->fi_daddr_shift));
+			di = (struct dinode *)(seg_buf + fsbtob(lfsp, 
+				*daddrp - seg_addr));
 		} else
 			++di;
 
@@ -637,8 +637,8 @@ mmap_segment (FS_INFO *fsp, int segment, caddr_t *segbuf, int use_mmap)
 	lfsp = &fsp->fi_lfs;
 
 	/* get the disk address of the beginning of the segment */
-	seg_daddr = sntoda(lfsp, segment);
-	seg_byte = datobyte(fsp, seg_daddr);
+	seg_daddr = sntod(lfsp, segment);
+	seg_byte = fsbtob(lfsp, (off_t)seg_daddr);
 	ssize = seg_size(lfsp);
 
 	strcpy(mntfromname, "/dev/r");

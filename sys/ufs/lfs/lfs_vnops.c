@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.4.1 2001/06/29 03:56:43 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.4.2 2001/07/02 17:48:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -337,7 +337,7 @@ lfs_set_dirop(struct vnode *vp)
 	 * We might need one directory block plus supporting indirect blocks,
 	 * plus an inode block and ifile page for the new vnode.
 	 */
-	if ((error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 3))) != 0)
+	if ((error = lfs_reserve(fs, vp, btofsb(fs, (NIADDR + 3) << fs->lfs_bshift))) != 0)
 		return (error);
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
@@ -359,7 +359,7 @@ lfs_set_dirop(struct vnode *vp)
 #endif
 			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
 					   "lfs_maxdirop", 0)) !=0) {
-				lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3));
+				lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 3) << fs->lfs_bshift));
 				return error;
 			}
 		}							
@@ -383,7 +383,7 @@ lfs_set_dirop(struct vnode *vp)
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
-	lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3)); /* XXX */	\
+	lfs_reserve((fs), vp, -btofsb((fs), (NIADDR + 3) << (fs)->lfs_bshift)); /* XXX */	\
 	lfs_vunref(vp);							\
 }
 
@@ -750,6 +750,7 @@ lfs_getattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
+	struct lfs *fs = ip->i_lfs;
 	/*
 	 * Copy from inode table
 	 */
@@ -776,7 +777,7 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob((u_quad_t)ip->i_ffs_blocks);
+	vap->va_bytes = fsbtob(fs, (u_quad_t)ip->i_ffs_blocks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.30.2.2 2001/06/29 03:56:45 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.30.2.3 2001/07/02 17:48:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.30.2.2 2001/06/29 03:56:45 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.30.2.3 2001/07/02 17:48:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,15 +342,15 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	double loadavg[MAXLOADS];
 	time_t	now;
 	u_long max_free_segs;
-	u_long db_per_seg;
+	u_long fsb_per_seg;
 
 	lfsp = &fsp->fi_lfs;
 	/*
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
-	db_per_seg = segtodb(lfsp, 1);
-	max_free_segs = fsp->fi_cip->bfree / db_per_seg + lfsp->lfs_minfreeseg;
+	fsb_per_seg = segtod(lfsp, 1);
+	max_free_segs = fsp->fi_cip->bfree / fsb_per_seg + lfsp->lfs_minfreeseg;
 	
 	/* 
 	 * We will clean if there are not enough free blocks or total clean
@@ -359,16 +359,16 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	now = time((time_t *)NULL);
 
 	if(debug > 1) {
-		syslog(LOG_DEBUG, "db_per_seg = %lu bfree = %u avail = %d,"
-		       " bfree = %u, ", db_per_seg, fsp->fi_cip->bfree,
+		syslog(LOG_DEBUG, "fsb_per_seg = %lu bfree = %u avail = %d,"
+		       " bfree = %u, ", fsb_per_seg, fsp->fi_cip->bfree,
 		       fsp->fi_cip->avail, fsp->fi_cip->bfree);
 		syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
 		       fsp->fi_cip->clean, max_free_segs);
 	}
 
-	if ((fsp->fi_cip->bfree - fsp->fi_cip->avail > db_per_seg &&
-	     fsp->fi_cip->avail < (long)db_per_seg &&
-	     fsp->fi_cip->bfree > (long)db_per_seg) ||
+	if ((fsp->fi_cip->bfree - fsp->fi_cip->avail > fsb_per_seg &&
+	     fsp->fi_cip->avail < (long)fsb_per_seg &&
+	     fsp->fi_cip->bfree > (long)fsb_per_seg) ||
 	    (fsp->fi_cip->clean < max_free_segs &&
 	     (fsp->fi_cip->clean <= lfsp->lfs_minfreeseg ||
 	      fsp->fi_cip->clean < max_free_segs * BUSY_LIM)))
@@ -437,9 +437,9 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 		}
 	}
 	if (debug > 1) {
-		if (fsp->fi_cip->bfree - fsp->fi_cip->avail <= db_per_seg)
+		if (fsp->fi_cip->bfree - fsp->fi_cip->avail <= fsb_per_seg)
 			syslog(LOG_DEBUG, "condition 1 false");
-		if (fsp->fi_cip->avail >= (long)db_per_seg)
+		if (fsp->fi_cip->avail >= (long)fsb_per_seg)
 			syslog(LOG_DEBUG, "condition 2 false");
 		if (fsp->fi_cip->clean >= max_free_segs)
 			syslog(LOG_DEBUG, "condition 3 false");
@@ -665,7 +665,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 
 	lfsp = &fsp->fi_lfs;
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
-	seg_addr = sntoda(lfsp,id);
+	seg_addr = sntod(lfsp,id);
 	error = 0;
 	tba = NULL;
 
@@ -699,7 +699,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 		       "add_segment: lfs_segmapv failed for segment %d", id);
 		goto out;
 	}
-	cleaner_stats.blocks_read += segtodb(lfsp, 1);
+	cleaner_stats.blocks_read += segtod(lfsp, 1);
 
 	if (debug > 1)
 		syslog(LOG_DEBUG, "lfs_segmapv returned %d blocks", num_blocks);
@@ -728,8 +728,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	/* XXX KS - check for misplaced blocks */
 	for(i=0; i<num_blocks; i++) {
 		if(tba[i].bi_daddr
-		   && ((char *)(tba[i].bi_bp) - seg_buf) != dbtob(tba[i].bi_daddr - seg_addr)
-		   && datosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
+		   && ((char *)(tba[i].bi_bp) - seg_buf) != fsbtob(lfsp, tba[i].bi_daddr - seg_addr)
+		   && dtosn(&(fsp->fi_lfs), tba[i].bi_daddr) == id)
 		{
 			if(debug > 1) {
 				syslog(LOG_DEBUG, "seg %d, ino %d lbn %d, 0x%x != 0x%lx (fixed)",
@@ -737,7 +737,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 				       tba[i].bi_inode,
 				       tba[i].bi_lbn,
 				       tba[i].bi_daddr,
-				       (long)seg_addr + btodb((char *)(tba[i].bi_bp) - seg_buf));
+				       (long)seg_addr + btofsb(lfsp, (char *)(tba[i].bi_bp) - seg_buf));
 			}
 			/*
 			 * XXX KS - have to be careful here about Inodes;
@@ -746,7 +746,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 			 * the *right* inode, not the first one in the block.
 			 */
 			if(tba[i].bi_lbn == LFS_UNUSED_LBN) {
-				dip = (struct dinode *)(seg_buf + dbtob(tba[i].bi_daddr - seg_addr));
+				dip = (struct dinode *)(seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr));
 				for(j=INOPB(lfsp)-1;j>=0;j--) {
 					if(dip[j].di_u.inumber == tba[i].bi_inode) {
 						tba[i].bi_bp = (char *)(dip+j);
@@ -771,7 +771,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 					       tba[i].bi_daddr);
 				}
 			} else {
-				tba[i].bi_bp = seg_buf + dbtob(tba[i].bi_daddr - seg_addr);
+				tba[i].bi_bp = seg_buf + fsbtob(lfsp, tba[i].bi_daddr - seg_addr);
 			}
 		}
 	}
@@ -856,7 +856,7 @@ clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 
 	cleaner_stats.segs_cleaned += sbp->nsegs;
 	cleaner_stats.blocks_written += sbp->nb;
-	util = ((double)sbp->nb / segtodb(&fsp->fi_lfs, 1));
+	util = ((double)sbp->nb / segtod(&fsp->fi_lfs, 1));
 	cleaner_stats.util_tot += util;
 	cleaner_stats.util_sos += util * util;
 	if (do_small)
@@ -896,7 +896,7 @@ bi_tossold(const void *client, const void *a, const void *b)
 	t = (struct tossstruct *)client;
 
 	return (((BLOCK_INFO *)a)->bi_daddr == LFS_UNUSED_DADDR ||
-	    datosn(t->lfs, ((BLOCK_INFO *)a)->bi_daddr) != t->seg);
+	    dtosn(t->lfs, ((BLOCK_INFO *)a)->bi_daddr) != t->seg);
 }
 
 void

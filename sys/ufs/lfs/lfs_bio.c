@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.4.2 2001/06/29 03:56:40 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.4.3 2001/07/02 17:48:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -191,19 +191,19 @@ lfs_bwrite(void *v)
  * the segment usage table, plus an ifile page.
  */
 int
-lfs_fits(struct lfs *fs, int db)
+lfs_fits(struct lfs *fs, int fsb)
 {
 	int needed;
 
-	needed = db + btodb(fs->lfs_sumsize) +
+	needed = fsb + btofsb(fs, fs->lfs_sumsize) +
 		fsbtodb(fs, howmany(fs->lfs_uinodes + 1, INOPB(fs)) +
-			    fs->lfs_segtabsz + btodb(fs->lfs_sumsize));
+			    fs->lfs_segtabsz + btofsb(fs, fs->lfs_sumsize));
 
 	if (needed >= fs->lfs_avail) {
 #ifdef DEBUG
-		printf("lfs_fits: no fit: db = %d, uinodes = %d, "
+		printf("lfs_fits: no fit: fsb = %d, uinodes = %d, "
 		       "needed = %d, avail = %d\n",
-		       db, fs->lfs_uinodes, needed, fs->lfs_avail);
+		       fsb, fs->lfs_uinodes, needed, fs->lfs_avail);
 #endif
 		return 0;
 	}
@@ -248,7 +248,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 {
 	struct lfs *fs;
 	struct inode *ip;
-	int db, error, s;
+	int fsb, error, s;
 	
 	/*
 	 * Don't write *any* blocks if we're mounted read-only.
@@ -280,9 +280,9 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 */
 	if (!(bp->b_flags & B_LOCKED)) {
 		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
-		db = fragstodb(fs, numfrags(fs, bp->b_bcount));
+		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 		if (!CANT_WAIT(bp, flags)) {
-			if ((error = lfs_availwait(fs, db)) != 0) {
+			if ((error = lfs_availwait(fs, fsb)) != 0) {
 				brelse(bp);
 				return error;
 			}
@@ -294,7 +294,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		} else {
 			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		}
-		fs->lfs_avail -= db;
+		fs->lfs_avail -= fsb;
 		bp->b_flags |= B_DELWRI;
 
 		LFS_LOCK_BUF(bp);
@@ -481,7 +481,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
 	size_t nbytes;
 	int s;
 	
-	nbytes = roundup(size, fs->lfs_devbsize);
+	nbytes = roundup(size, fsbtob(fs, 1));
 	
 	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
 	bzero(bp, sizeof(struct buf));

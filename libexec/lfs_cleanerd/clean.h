@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.10.2.2 2001/06/29 03:56:45 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.10.2.3 2001/07/02 17:48:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@ typedef struct fs_info {
 	CLEANERINFO	*fi_cip;	/* Cleaner info from ifile */
 	SEGUSE	*fi_segusep;		/* segment usage table (from ifile) */
 	IFILE	*fi_ifilep;		/* ifile table (from ifile) */
-	u_long	fi_daddr_shift;		/* shift to get byte offset of daddr */
 	u_long	fi_ifile_count;		/* # entries in the ifile table */
 	off_t	fi_ifile_length;	/* length of the ifile */
 	time_t  fi_fs_tstamp;           /* last fs activity, per ifile */
@@ -94,11 +93,7 @@ typedef struct fs_info {
  * XXX: size (in bytes) of a segment
  *	should lfs_bsize be fsbtodb(fs,1), blksize(fs), or lfs_dsize? 
  */
-#define seg_size(fs) dbtob(segtodb((fs), 1))
-
-/* daddr -> byte offset */
-#define datobyte(fs, da) (((off_t)(da)) << (fs)->fi_daddr_shift)
-#define bytetoda(fs, byte) ((byte) >> (fs)->fi_daddr_shift)
+#define seg_size(fs) fsbtob((fs), segtod((fs), 1))
 
 #define CLEANSIZE(fsp)	(fsp->fi_lfs.lfs_cleansz << fsp->fi_lfs.lfs_bshift)
 #define SEGTABSIZE(fsp)	(fsp->fi_lfs.lfs_segtabsz << fsp->fi_lfs.lfs_bshift)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.4.1 2001/06/27 03:49:39 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.4.2 2001/07/02 17:48:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  */
 #define LFS_EAGAIN_FAIL          /* markv fail with EAGAIN if ino is locked */
 #define LFS_TRACK_IOS            /* attempt to avoid cleaning segments not yet fully written to disk */
+#define LFS_DEBUG_RFW            /* print roll-forward debugging info */
 
 /* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
 
@@ -232,7 +233,8 @@ struct dlfs {
 #define        LFS_VERSION     2
         u_int32_t dlfs_version;   /* 4: version number */
 
-        u_int32_t dlfs_size;      /* 8: number of blocks in fs */
+        u_int32_t dlfs_size;      /* 8: number of blocks in fs (v1) */
+				  /*    number of frags in fs (v2) */
         u_int32_t dlfs_ssize;     /* 12: number of blocks per segment (v1) */
 	                          /*     number of bytes per segment (v2) */
         u_int32_t dlfs_dsize;     /* 16: number of disk blocks in fs */
@@ -253,17 +255,15 @@ struct dlfs {
         ufs_daddr_t  dlfs_curseg; /* 68: current segment being written */
         ufs_daddr_t  dlfs_offset; /* 72: offset in curseg for next partial */
         ufs_daddr_t  dlfs_lastpseg; /* 76: address of last partial written */
-	union {
-		u_int32_t u_tstamp;  /* 80: [v1] time stamp */
-		u_int32_t u_inops;  /* 80: [v2] inodes per disk block */
-	} dlfs_u;
+	u_int32_t dlfs_inopf;     /* 80: v1: time stamp; v2: inodes per frag */
+#define dlfs_otstamp dlfs_inopf
 
 /* These are configuration parameters. */
         u_int32_t dlfs_minfree;   /* 84: minimum percentage of free blocks */
 
 /* These fields can be computed from the others. */
         u_int64_t dlfs_maxfilesize; /* 88: maximum representable file size */
-        u_int32_t dlfs_dbpseg;    /* 96: disk blocks per segment */
+        u_int32_t dlfs_fsbpseg;     /* 96: fsb per segment */
         u_int32_t dlfs_inopb;     /* 100: inodes per block */
         u_int32_t dlfs_ifpb;      /* 104: IFILE entries per block */
         u_int32_t dlfs_sepb;      /* 108: SEGUSE entries per block */
@@ -280,7 +280,7 @@ struct dlfs {
         u_int64_t dlfs_bmask;     /* 152: calc block offset from file offset */
         u_int64_t dlfs_ffmask;    /* 160: calc frag offset from file offset */
         u_int64_t dlfs_fbmask;    /* 168: calc frag offset from block offset */
-        u_int32_t dlfs_fsbtodb;   /* 176: fsbtodb and dbtofsb shift constant */
+        u_int32_t dlfs_blktodb;   /* 176: blktodb and dbtoblk shift constant */
         u_int32_t dlfs_sushift;   /* 180: fast mult/div for segusage table */
 
         int32_t   dlfs_maxsymlinklen; /* 184: max length of an internal symlink */
@@ -301,12 +301,13 @@ struct dlfs {
 	u_int64_t dlfs_tstamp;    /* 352: time stamp */
 #define LFS_44INODEFMT 0
 #define LFS_MAXINODEFMT 0
-	u_int32_t dlfs_inodefmt;  /* 356: inode format version */
+	u_int32_t dlfs_inodefmt;  /* 360: inode format version */
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;     /* 368: per-fs identifier */
-        int8_t    dlfs_pad[136];  /* 372: round to 512 bytes */
+	u_int32_t dlfs_fsbtodb;   /* 372: fsbtodb abd dbtodsb shift constant */
+	int8_t    dlfs_pad[132];  /* 376: round to 512 bytes */
 /* Checksum -- last valid disk field. */
-        u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
+	u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
 };
 
 /* Maximum number of io's we can have pending at once */
@@ -335,11 +336,11 @@ struct lfs {
 #define lfs_curseg lfs_dlfs.dlfs_curseg
 #define lfs_offset lfs_dlfs.dlfs_offset
 #define lfs_lastpseg lfs_dlfs.dlfs_lastpseg
-#define lfs_otstamp lfs_dlfs.dlfs_u.u_tstamp
-#define lfs_inops lfs_dlfs.dlfs_u.u_inops
+#define lfs_otstamp lfs_dlfs.dlfs_inopf
+#define lfs_inopf lfs_dlfs.dlfs_inopf
 #define lfs_minfree lfs_dlfs.dlfs_minfree
 #define lfs_maxfilesize lfs_dlfs.dlfs_maxfilesize
-#define lfs_dbpseg lfs_dlfs.dlfs_dbpseg
+#define lfs_fsbpseg lfs_dlfs.dlfs_fsbpseg
 #define lfs_inopb lfs_dlfs.dlfs_inopb
 #define lfs_ifpb lfs_dlfs.dlfs_ifpb
 #define lfs_sepb lfs_dlfs.dlfs_sepb
@@ -356,6 +357,7 @@ struct lfs {
 #define lfs_ffshift lfs_dlfs.dlfs_ffshift
 #define lfs_fbmask lfs_dlfs.dlfs_fbmask
 #define lfs_fbshift lfs_dlfs.dlfs_fbshift
+#define lfs_blktodb lfs_dlfs.dlfs_blktodb
 #define lfs_fsbtodb lfs_dlfs.dlfs_fsbtodb
 #define lfs_sushift lfs_dlfs.dlfs_sushift
 #define lfs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
@@ -497,6 +499,7 @@ struct segsum {
 	u_int32_t ss_magic;		/* 8: segment summary magic number */
 	ufs_daddr_t ss_next;		/* 12: next segment */
 	u_int32_t ss_ident;		/* 16: roll-forward fsid */
+#define ss_ocreate ss_ident /* ident is where create was in v1 */
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
 	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
@@ -513,8 +516,8 @@ struct segsum {
 
 /* INOPB is the number of inodes in a secondary storage block. */
 #define	INOPB(fs)	((fs)->lfs_inopb)
-/* INOPS is the number of inodes in a disk sector. */
-#define INOPS(fs)       ((fs)->lfs_inops)
+/* INOPF is the number of inodes in a fragment. */
+#define INOPF(fs)       ((fs)->lfs_inopf)
 
 #define	blksize(fs, ip, lbn) \
 	(((lbn) >= NDADDR || (ip)->i_ffs_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
@@ -525,14 +528,20 @@ struct segsum {
     ((int)((loc) & (fs)->lfs_ffmask))
 #define	fsbtodb(fs, b)		((b) << (fs)->lfs_fsbtodb)
 #define	dbtofsb(fs, b)		((b) >> (fs)->lfs_fsbtodb)
-#define fragstodb(fs, b)	((b) << ((fs)->lfs_fsbtodb - (fs)->lfs_fbshift))
-#define dbtofrags(fs, b)	((b) >> ((fs)->lfs_fsbtodb - (fs)->lfs_fbshift))
+#define fragstodb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
+#define dbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
 #define	lblkno(fs, loc)		((loc) >> (fs)->lfs_bshift)
 #define	lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
 /* Same as above, but named like dbtob(), btodb() */
-#define fsbtob(fs, bb)          ((bb) << (fs)->lfs_bshift)
-#define btofsb(fs, bb)          ((bb) >> (fs)->lfs_bshift)
-
+#define fsbtob(fs, b)		((b) << ((fs)->lfs_bshift - \
+				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
+#define btofsb(fs, b)		((b) >> ((fs)->lfs_bshift - \
+				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
+#define fsbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
+				(fs)->lfs_fsbtodb))
+#define fragstofsb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
+				(fs)->lfs_fsbtodb))
+#define btofrags(fs, b)		((b) >> (fs)->lfs_ffshift)
 #define numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> (fs)->lfs_ffshift)
 #define blkroundup(fs, size)	/* calculates roundup(size, fs->lfs_bsize) */ \
@@ -552,13 +561,13 @@ struct segsum {
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
 
-#define segtodb(fs, seg) (((fs)->lfs_version == 1     ?       \
-			   fsbtodb((fs), (fs)->lfs_ssize) :       \
-			   btodb((fs)->lfs_ssize)) * (seg))
-#define	datosn(fs, daddr)	/* disk address to segment number */	\
-	(((daddr) - (fs)->lfs_start) / segtodb((fs), 1))
-#define sntoda(fs, sn) 		/* segment number to disk address */	\
-	((ufs_daddr_t)(segtodb((fs), (sn)) + (fs)->lfs_start))
+#define segtod(fs, seg) (((fs)->lfs_version == 1     ?       \
+			   (fs)->lfs_ssize << (fs)->lfs_blktodb :       \
+			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
+#define	dtosn(fs, daddr)	/* block address to segment number */	\
+	(((daddr) - (fs)->lfs_start) / segtod((fs), 1))
+#define sntod(fs, sn) 		/* segment number to disk address */	\
+	((ufs_daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) {					\

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.10.2.2 2001/06/30 01:28:30 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.10.2.3 2001/07/02 17:48:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -67,10 +67,14 @@ lfs_difind(struct lfs * fs, ino_t ino, struct dinode * dip)
 {
 	struct dinode *ldip, *fin;
 
+#ifdef LFS_IFILE_FRAG_ADDRESSING
 	if (fs->lfs_version == 1)
 		fin = dip + INOPB(fs);
 	else
-		fin = dip + INOPS(fs);
+		fin = dip + INOPF(fs);
+#else
+	fin = dip + INOPB(fs);
+#endif
 
 	for (ldip = dip; ldip < fin; ++ldip) {
 		if (ldip->di_inumber == ino)
@@ -297,7 +301,7 @@ lfs_ino_daddr(ino_t inumber)
 		}
 
 		din_table[inumber] = daddr;
-		seg_table[datosn(&sblock, daddr)].su_nbytes += DINODE_SIZE;
+		seg_table[dtosn(&sblock, daddr)].su_nbytes += DINODE_SIZE;
 	}
 	return daddr;
 }
@@ -318,7 +322,7 @@ lfs_ginode(ino_t inumber)
 		daddr = idaddr;
 		if (din_table[LFS_IFILE_INUM] == 0) {
 			din_table[LFS_IFILE_INUM] = daddr;
-			seg_table[datosn(&sblock, daddr)].su_nbytes += DINODE_SIZE;
+			seg_table[dtosn(&sblock, daddr)].su_nbytes += DINODE_SIZE;
 		}
 		return gidinode();
 	}
@@ -331,7 +335,10 @@ lfs_ginode(ino_t inumber)
 	if (pbp)
 		pbp->b_flags &= ~B_INUSE;
 
-	pbp = getddblk(daddr, sblock.lfs_bsize);
+	if (sblock.lfs_version == 1) 
+		pbp = getddblk(daddr, sblock.lfs_bsize);
+	else
+		pbp = getddblk(daddr, sblock.lfs_fsize);
 	din = lfs_difind(&sblock, inumber, pbp->b_un.b_dinode);
 
 	if (din == NULL) {
@@ -484,7 +491,7 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 			return (n);
 	} else
 		func = dirscan;
-	if (chkrange(idesc->id_blkno, fragstodb(&sblock, idesc->id_numfrags)))
+	if (chkrange(idesc->id_blkno, fragstofsb(&sblock, idesc->id_numfrags)))
 		return (SKIP);
 	bp = getddblk(idesc->id_blkno, sblock.lfs_bsize);
 	ilevel--;
@@ -553,13 +560,13 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 int
 chkrange(daddr_t blk, int cnt)
 {
-	if (blk < sntoda(&sblock, 0)) {
+	if (blk < sntod(&sblock, 0)) {
 		return (1);
 	}
 	if (blk > maxfsblock) {
 		return (1);
 	}
-	if (blk + cnt < sntoda(&sblock, 0)) {
+	if (blk + cnt < sntod(&sblock, 0)) {
 		return (1);
 	}
 	if (blk + cnt > maxfsblock) {
@@ -820,7 +827,7 @@ allocino(ino_t request, int type)
 	dp->di_atime = t;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
 	dp->di_size = sblock.lfs_fsize;
-	dp->di_blocks = btodb(sblock.lfs_fsize);
+	dp->di_blocks = btofsb(&sblock, sblock.lfs_fsize);
 	n_files++;
 	inodirty();
 	if (newinofmt)

@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.8.2.2 2001/06/30 01:28:30 perseant Exp $	 */
+/* $NetBSD: setup.c,v 1.8.2.3 2001/07/02 17:48:13 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -100,7 +100,7 @@ try_verify(struct lfs * osb, struct lfs * nsb)
 		flag = 0;
 oncemore:
 		/* Read in summary block */
-		bread(fsreadfd, summary, daddr, osb->lfs_sumsize);
+		bread(fsreadfd, summary, fsbtodb(osb, daddr), osb->lfs_sumsize);
 		sp = (SEGSUM *)summary;
 
 		/*
@@ -112,7 +112,7 @@ oncemore:
 		  sp->ss_sumsum != cksum(&sp->ss_datasum, osb->lfs_sumsize -
 					 sizeof(sp->ss_sumsum))) {
 			if (flag == 0) {
-				daddr += LFS_SBPAD / dev_bsize;
+				daddr += btofsb(osb, LFS_SBPAD);
 				goto oncemore;
 			}
 			return 0x0;
@@ -120,11 +120,9 @@ oncemore:
 		bc = check_summary(osb, sp, daddr);
 		if (bc == 0)
 			break;
-		daddr += (osb->lfs_sumsize + bc) / dev_bsize;
-		if (datosn(osb, daddr) != datosn(osb, daddr +
-						 (osb->lfs_sumsize +
-						  (1 << osb->lfs_bshift)) /
-						 dev_bsize))
+		daddr += btofsb(osb, osb->lfs_sumsize + bc);
+		if (dtosn(osb, daddr) != dtosn(osb, daddr +
+			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize)))
 			daddr = ((SEGSUM *)summary)->ss_next;
 	}
 	return daddr;
@@ -240,6 +238,22 @@ setup(const char *dev)
 
 	if (bflag == 0x0 && idaddr == 0x0) {
 		/*
+		 * If we read a proper superblock, but its address was not
+		 * lfs_sboffs[0], we're holding a fake primary superblock,
+		 * and need to read the real one.
+		 */
+		if (sblock.lfs_sboffs[0] != dbtofsb(&sblock,
+						    LFS_LABELPAD / dev_bsize))
+		{
+			if (debug)
+				pwarn("Getting 'real' prinary superblock from 0x%x\n",
+				      fsbtodb(&sblock, sblock.lfs_sboffs[0]));
+			bflag = fsbtodb(&sblock, sblock.lfs_sboffs[0]);
+			readsb(1);
+			bflag = 0;
+		}
+
+		/*
 		 * Even if that superblock read in properly, it may not
 		 * be guaranteed to point to a complete checkpoint.
 		 * Read in the second superblock too, and take whichever
@@ -248,7 +262,7 @@ setup(const char *dev)
 		sb0 = malloc(sizeof(*sb0));
 		sb1 = malloc(sizeof(*sb1));
 		memcpy(sb0, &sblock, sizeof(*sb0));
-		bflag = sblock.lfs_sboffs[1];
+		bflag = fsbtodb(&sblock, sblock.lfs_sboffs[1]);
 		if (readsb(1) == 0) {
 			pwarn("COULDN'T READ ALT SUPERBLOCK AT BLK %d", bflag);
 			if (reply("ASSUME PRIMARY SUPERBLOCK IS GOOD") == 0) {
@@ -258,23 +272,43 @@ setup(const char *dev)
 			}
 		} else {
 			memcpy(sb1, &sblock, sizeof(*sb1));
-			if (debug)
-				pwarn("sb0 %lld, sb1 %lld\n",
-				      (long long)sb0->lfs_tstamp,
-				      (long long)sblock.lfs_tstamp);
+			if (debug) {
+				if (sb0->lfs_version > 1) {
+					pwarn("sb0 sn=%lld, sb1 sn=%lld\n",
+					      (long long)sb0->lfs_serial,
+					      (long long)sblock.lfs_serial);
+				} else {
+					pwarn("sb0 %lld, sb1 %lld\n",
+					      (long long)sb0->lfs_otstamp,
+					      (long long)sblock.lfs_otstamp);
+				}
+			}
 			/*
 			 * Verify the checkpoint of the newer superblock,
 			 * if the timestamp of the two superblocks is
 			 * different.  XXX use lfs_offset instead, discover
 			 * how to quickly discover "newness" based on that.
 			 */
-			if (sb0->lfs_tstamp != sb1->lfs_tstamp) {
-				if (sb0->lfs_tstamp > sb1->lfs_tstamp) {
-					osb = sb1;
-					nsb = sb0;
+			if ((sb0->lfs_version == 1 &&
+                             sb0->lfs_otstamp != sb1->lfs_otstamp) ||
+			    (sb0->lfs_version > 1 &&
+                             sb0->lfs_serial != sb1->lfs_serial)) {
+				if (sb0->lfs_version == 1) {
+					if (sb0->lfs_otstamp > sb1->lfs_otstamp) {
+						osb = sb1;
+						nsb = sb0;
+					} else {
+						osb = sb0;
+						nsb = sb1;
+					}
 				} else {
-					osb = sb0;
-					nsb = sb1;
+					if (sb0->lfs_serial > sb1->lfs_serial) {
+						osb = sb1;
+						nsb = sb0;
+					} else {
+						osb = sb0;
+						nsb = sb1;
+					}
 				}
 				daddr = try_verify(osb, nsb);
 
@@ -303,8 +337,8 @@ setup(const char *dev)
 		printf("lfs_frag  = %lu\n", (unsigned long)sblock.lfs_frag);
 		printf("INOPB(fs) = %lu\n", (unsigned long)INOPB(&sblock));
 		if (sblock.lfs_version > 1)
-			printf("INOPS(fs) = %lu\n",
-			       (unsigned long)INOPS(&sblock));
+			printf("INOPF(fs) = %lu\n",
+			       (unsigned long)INOPF(&sblock));
 		/* printf("fsbtodb(fs,1) = %lu\n",fsbtodb(&sblock,1)); */
 	}
 	/* Compatibility */
@@ -312,10 +346,11 @@ setup(const char *dev)
 		sblock.lfs_sumsize = LFS_V1_SUMMARY_SIZE;
 		sblock.lfs_ibsize = sblock.lfs_bsize;
 		sblock.lfs_start = sblock.lfs_sboffs[0];
+		sblock.lfs_fsbtodb = 0;
 	}
 	initbarea(&iblk);
 	iblk.b_un.b_buf = malloc(sblock.lfs_ibsize);
-	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, idaddr,
+	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, fsbtodb(&sblock, idaddr),
 		  (long)sblock.lfs_ibsize) != 0) {
 		printf("Couldn't read disk block %d\n", idaddr);
 		exit(1);
@@ -331,12 +366,15 @@ setup(const char *dev)
 	    - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
 		  / sblock.lfs_bsize) * sblock.lfs_ifpb;
 	if (debug)
-		printf("maxino=%d\n", maxino);
+		printf("maxino    = %d\n", maxino);
 	din_table = (daddr_t *)malloc(maxino * sizeof(*din_table));
 	memset(din_table, 0, maxino * sizeof(*din_table));
 	seg_table = (SEGUSE *)malloc(sblock.lfs_nseg * sizeof(SEGUSE));
 	memset(seg_table, 0, sblock.lfs_nseg * sizeof(SEGUSE));
-	maxfsblock = sblock.lfs_size * (sblock.lfs_bsize / dev_bsize);
+	if (sblock.lfs_version == 1) 
+ 		maxfsblock = sblock.lfs_size * (sblock.lfs_bsize / dev_bsize);
+ 	else
+		maxfsblock = sblock.lfs_size;
 	maxfilesize = maxtable[sblock.lfs_bshift] << sblock.lfs_bshift;
 	if ((sblock.lfs_minfree < 0 || sblock.lfs_minfree > 99)) {
 		pfatal("IMPOSSIBLE MINFREE=%d IN SUPERBLOCK",
