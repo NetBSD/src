@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2.2.1 2000/06/23 08:16:32 hannken Exp $	*/
+/*	$NetBSD: util.c,v 1.2.2.2 2000/08/05 17:47:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ char *
 addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	  char *netid)
 {
-	struct ifaddrs *ifap, *ifp;
+	struct ifaddrs *ifap, *ifp, *bestif;
 #ifdef INET6
 	struct sockaddr_in6 *servsin6, *sin6mask, *clntsin6, *ifsin6, *realsin6;
 	struct sockaddr_in6 *newsin6;
@@ -130,6 +130,12 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	nconf = getnetconfigent(netid);
 	if (nconf == NULL)
 		return NULL;
+
+	/*
+	 * Local merge, just return a duplicate.
+	 */
+	if (clnt_uaddr != NULL && strncmp(clnt_uaddr, "0.0.0.0.", 8) == 0)
+		return strdup(clnt_uaddr);
 
 	serv_nbp = uaddr2taddr(nconf, serv_uaddr);
 	if (serv_nbp == NULL)
@@ -236,6 +242,28 @@ match:
 			goto freeit;
 		}
 	}
+	/*
+	 * Didn't find anything. Get the first possibly useful interface,
+	 * preferring "normal" interfaces to point-to-point and loopback
+	 * ones.
+	 */
+	bestif = NULL;
+	for (ifap = ifp; ifap != NULL; ifap = ifap->ifa_next) {
+		if (ifap->ifa_addr->sa_family != clnt->sa_family ||
+		    !(ifap->ifa_flags & IFF_UP))
+			continue;
+		if (!(ifap->ifa_flags & IFF_LOOPBACK) &&
+		    !(ifap->ifa_flags & IFF_POINTOPOINT)) {
+			bestif = ifap;
+			break;
+		}
+		if (bestif == NULL)
+			bestif = ifap;
+		else if ((bestif->ifa_flags & IFF_LOOPBACK) &&
+		    !(ifap->ifa_flags & IFF_LOOPBACK))
+			bestif = ifap;
+	}
+	ifap = bestif;
 found:
 	if (ifap != NULL)
 		ret = taddr2uaddr(nconf, &tbuf);
