@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.8 1998/10/08 12:15:25 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.9 1998/10/08 12:22:54 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.8 1998/10/08 12:15:25 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.9 1998/10/08 12:22:54 agc Exp $");
 #endif
 #endif
 
@@ -197,7 +197,8 @@ alternate_match(const char *pattern, const char *pkg)
 	}
 	(void) strncpy(buf, pattern, (size_t)(sep - pattern));
 	alt = &buf[sep - pattern];
-	for (last = (char *) NULL, cnt = 0, cp = sep; *cp && last == (char *) NULL ; cp++) {
+	last = (char *) NULL;
+	for (cnt = 0, cp = sep; *cp && last == (char *) NULL ; cp++) {
 		if (*cp == '{') {
 			cnt++;
 		} else if (*cp == '}' && --cnt == 0 && last == (char *) NULL) {
