@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.9 2002/10/15 17:48:32 kleink Exp $
+# $NetBSD: country,v 1.10 2003/04/10 19:50:08 kleink Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -8,7 +8,7 @@
 # Further information can be found at the ISO 3166 Maintenance Agency
 # (ISO 3166/MA) web site,
 # <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
-# This list is up-to-date as of 2002-05-20.
+# This list is up-to-date as of 2003-04-10.
 #
 Afghanistan	AF	AFG	004
 Albania	AL	ALB	008
@@ -71,7 +71,6 @@ Denmark	DK	DNK	208
 Djibouti	DJ	DJI	262
 Dominica	DM	DMA	212
 Dominican Republic	DO	DOM	214
-East Timor	TL	TLS	626
 Ecuador	EC	ECU	218
 Egypt	EG	EGY	818
 El Salvador	SV	SLV	222
@@ -222,6 +221,7 @@ Taiwan, Province of China	TW	TWN	158
 Tajikistan	TJ	TJK	762
 Tanzania, United Republic of	TZ	TZA	834
 Thailand	TH	THA	764
+Timor-Leste	TL	TLS	626
 Togo	TG	TGO	768
 Tokelau	TK	TKL	772
 Tonga	TO	TON	776
