@@ -1,7 +1,7 @@
 /*
  *	Simplified implementation of SYSV ipcs.
  *
- *	$Id: ipcs.c,v 1.2 1994/04/01 03:32:38 cgd Exp $
+ *	$Id: ipcs.c,v 1.3 1994/05/11 07:41:12 cgd Exp $
  */
 
 #include <nlist.h>
@@ -16,7 +16,9 @@
 #define KERNEL
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#ifndef NOSHM
 #include <sys/shm.h>
+#endif
 #include <sys/msg.h>
 
 static kmem_fd;

@@ -1,6 +1,8 @@
-#	$Id: Makefile,v 1.1 1993/11/14 16:27:58 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/05/11 07:43:58 cgd Exp $
 
 PROG=	ipcrm
 NOMAN=
+
+CFLAGS+= -DNOSHM
 
 .include <bsd.prog.mk>
