@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.54 2001/07/30 14:07:25 pooka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.55 2001/10/29 21:30:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -276,6 +276,8 @@ typedef struct {
 #define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
 #define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+#define	EM_NS32K	97	/* National Semiconductor 32000 series */
+
 /* Unofficial machine types follow */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
