@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.10 1999/08/09 10:55:30 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.11 1999/08/13 10:57:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,7 +290,7 @@ udp6_input(mp, offp, proto)
 								ip6, n);
 					}
 
-					m_adj(m, off + sizeof(struct udphdr));
+					m_adj(n, off + sizeof(struct udphdr));
 					if (sbappendaddr(&last->in6p_socket->so_rcv,
 							(struct sockaddr *)&udp_in6,
 							n, opts) == 0) {
