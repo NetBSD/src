@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1997/06/23 21:18:34 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1998/01/26 23:50:58 bad Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -32,7 +32,6 @@ all: ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/11/29 21:19:01 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/01/26 23:51:03 bad Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -47,7 +47,6 @@ all:	netbsd.ram.gz
 	umount ${MOUNT_POINT}
 	/usr/mdec/installboot -v -f /usr/mdec/biosboot.sym ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
