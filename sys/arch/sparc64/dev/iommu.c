@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.8 2000/04/25 14:59:38 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.9 2000/05/17 02:31:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -558,6 +558,100 @@ iommu_dvmamap_unload(t, is, map)
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
 	cache_flush((caddr_t)(u_long)dvmaddr, (u_int)sgsize);	
+}
+
+
+int
+iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
+	struct iommu_state *is;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+	vm_page_t m;
+	int s;
+	int err;
+	bus_size_t sgsize;
+	paddr_t pa;
+	u_long boundary;
+	u_long dvmaddr;
+	struct pglist *mlist;
+	int pagesz = PAGE_SIZE;
+
+	if (map->dm_nsegs) {
+		/* Already in use?? */
+#ifdef DIAGNOSTIC
+		printf("iommu_dvmamap_load_raw: map still in use\n");
+#endif
+		bus_dmamap_unload(t, map);
+	}
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+#ifdef DIAGNOSTIC
+	/* XXX - unhelpful since we can't reset these in map_unload() */
+	if (segs[0].ds_addr != 0 || segs[0].ds_len != 0)
+		panic("iommu_dmamap_load_raw: segment already loaded: "
+			"addr 0x%lx, size 0x%lx",
+			segs[0].ds_addr, segs[0].ds_len);
+#endif
+	sgsize = round_page(size);
+
+	/*
+	 * A boundary presented to bus_dmamem_alloc() takes precedence
+	 * over boundary in the map.
+	 */
+	if ((boundary = segs[0]._ds_boundary) == 0)
+		boundary = map->_dm_boundary;
+
+	
+	s = splhigh();
+	err = extent_alloc(is->is_dvmamap, sgsize, NBPG, boundary, 
+			   (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT, 
+			   (u_long *)&dvmaddr);
+	splx(s);
+
+	if (err != 0)
+		return (err);
+
+#ifdef DEBUG
+	if (dvmaddr == (bus_addr_t)-1)	
+	{ 
+		printf("iommu_dvmamap_load_raw(): extent_alloc(%d, %x) failed!\n",
+		    sgsize, flags);
+		Debugger();
+	}		
+#endif	
+	if (dvmaddr == (bus_addr_t)-1)
+		return (ENOMEM);
+
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_mapsize = size;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr;
+	map->dm_segs[0].ds_len = size;
+
+	mlist = segs[0]._ds_mlist;
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		if (sgsize == 0)
+			panic("iommu_dmamap_load_raw: size botch");
+		pa = VM_PAGE_TO_PHYS(m);
+
+		DPRINTF(IDB_DVMA,
+		    ("iommu_dvmamap_load_raw: map %p loading va %lx at pa %lx\n",
+		    map, (long)dvmaddr, (long)(pa)));
+		iommu_enter(is, dvmaddr, pa, flags);
+			
+		dvmaddr += pagesz;
+		sgsize -= pagesz;
+	}
+	return (0);
 }
 
 void
