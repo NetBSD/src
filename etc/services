@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.77 2004/08/09 05:24:38 simonb Exp $
+#	$NetBSD: services,v 1.78 2004/10/09 17:04:41 christos Exp $
 #
 # Network services, Internet style
 #
@@ -314,6 +314,8 @@ sstp-2		9801/tcp		# Sakura Script Transfer Protocol-2
 sstp-2		9801/udp		# Sakura Script Transfer Protocol-2
 amanda		10080/udp		# Amanda
 kamanda		10081/udp		# Amanda with Kerberos
+amandaidx	10082/tcp		# Amanda index server
+amidxtape	10083/tcp		# Amanda dump image server
 italk		12345/tcp		# Italk Chat System
 italk		12345/udp		# Italk Chat System
 hunt		26740/udp		# multi-player/multi-host maze-wars
