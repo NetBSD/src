@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.85 2003/01/18 08:02:47 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.86 2003/02/27 16:04:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.85 2003/01/18 08:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.86 2003/02/27 16:04:15 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -845,6 +845,8 @@ linux_machdepioctl(p, v, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	switch (com) {
 #if (NWSDISPLAY > 0)
 	case LINUX_KDGKBMODE:
@@ -888,32 +890,34 @@ linux_machdepioctl(p, v, retval)
 		SCARG(&bia, com) = VT_GETMODE;
 		/* XXX NJWLWP */
 		if ((error = sys_ioctl(curlwp, &bia, retval)))
-			return error;
+			goto out;
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
-			return error;
+			goto out;
 		lvt.relsig = native_to_linux_signo[lvt.relsig];
 		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
 		lvt.frsig = native_to_linux_signo[lvt.frsig];
-		return copyout((caddr_t)&lvt, SCARG(uap, data),
+		error = copyout((caddr_t)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
+		goto out;
 	case LINUX_VT_SETMODE:
 		com = VT_SETMODE;
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
-			return error;
+			goto out;
 		lvt.relsig = linux_to_native_signo[lvt.relsig];
 		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
 		lvt.frsig = linux_to_native_signo[lvt.frsig];
 		sg = stackgap_init(p, 0);
 		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
-			return error;
+			goto out;
 		SCARG(&bia, data) = bvtp;
 		break;
 	case LINUX_VT_DISALLOCATE:
 		/* XXX should use WSDISPLAYIO_DELSCREEN */
-		return 0;
+		error = 0;
+		goto out;
 	case LINUX_VT_RELDISP:
 		com = VT_RELDISP;
 		break;
@@ -928,7 +932,8 @@ linux_machdepioctl(p, v, retval)
 		break;
 	case LINUX_KDGKBTYPE:
 		/* This is what Linux does. */
-		return (subyte(SCARG(uap, data), KB_101));
+		error = subyte(SCARG(uap, data), KB_101);
+		goto out;
 	case LINUX_KDGKBENT:
 		/*
 		 * The Linux KDGKBENT ioctl is different from the
@@ -938,13 +943,16 @@ linux_machdepioctl(p, v, retval)
 		 */
 		if ((error = copyin(SCARG(uap, data), &kbe,
 				    sizeof(struct kbentry))))
-			return (error);
+			goto out;
 		if (kbe.kb_table >= sizeof(linux_keytabs) / sizeof(u_short *)
-		    || kbe.kb_index >= NR_KEYS)
-			return (EINVAL);
+		    || kbe.kb_index >= NR_KEYS) {
+			error = EINVAL;
+			goto out;
+		}
 		kbe.kb_value = linux_keytabs[kbe.kb_table][kbe.kb_index];
-		return (copyout(&kbe, SCARG(uap, data),
-				sizeof(struct kbentry)));
+		error = copyout(&kbe, SCARG(uap, data),
+				sizeof(struct kbentry));
+		goto out;
 #endif
 	case LINUX_HDIO_GETGEO:
 	case LINUX_HDIO_GETGEO_BIG:
@@ -955,14 +963,14 @@ linux_machdepioctl(p, v, retval)
 		 * the real geometry) if not found, by returning an
 		 * error. See common/linux_hdio.c
 		 */
-		FILE_USE(fp);
 		bip = fd2biosinfo(p, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
 		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
-		FILE_UNUSE(fp, p);
-		if (error != 0 && error1 != 0)
-			return error1;
+		if (error != 0 && error1 != 0) {
+			error = error1;
+			goto out;
+		}
 		labp = error != 0 ? &label : partp.disklab;
 		start = error1 != 0 ? partp.part->p_offset : 0;
 		if (bip != NULL && bip->bi_head != 0 && bip->bi_sec != 0
@@ -985,14 +993,16 @@ linux_machdepioctl(p, v, retval)
 			hdg.heads = heads;
 			hdg.cylinders = cylinders;
 			hdg.sectors = sectors;
-			return copyout(&hdg, SCARG(uap, data), sizeof hdg);
+			error = copyout(&hdg, SCARG(uap, data), sizeof hdg);
+			goto out;
 		} else {
 			hdg_big.start = start;
 			hdg_big.heads = heads;
 			hdg_big.cylinders = cylinders;
 			hdg_big.sectors = sectors;
-			return copyout(&hdg_big, SCARG(uap, data),
+			error = copyout(&hdg_big, SCARG(uap, data),
 			    sizeof hdg_big);
+			goto out;
 		}
 
 	default:
@@ -1017,11 +1027,14 @@ linux_machdepioctl(p, v, retval)
 		if (error == ENOTTY)
 			DPRINTF(("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com));
-		return error;
+		goto out;
 	}
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
-	return sys_ioctl(curlwp, &bia, retval);
+	error = sys_ioctl(curlwp, &bia, retval);
+out:
+	FILE_UNUSE(fp ,p);
+	return error;
 }
 
 /*
