@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.S,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: prom.S,v 1.2 2000/09/26 09:32:25 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,20 +41,30 @@
 #include <machine/prom.h>
 
 
-/* XXX:	address has only been tested on Version 5.4 firmware */
-	.global	saiob
-	.equ	saiob, 0x80004cd8
-
-	.set noreorder
 LEAF(prom_restart)
 	li	v0, MIPS_PROM_RESTART
 	j	v0
 	move	a0, zero
 END(prom_restart)
 
-LEAF(prom_open)
+NESTED(prom_open, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, -4
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
 	li	v0, MIPS_PROM_OPEN
-	j	v0
+	jal	v0
+	nop
+	/*
+	 * On return t0 contains our _iob structure
+	 * v0 contains the file descriptor number
+	 */
+	la	t4, saiob
+	sll	t5, v0, 2
+	add	t4, t4, t5
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
+	sw	t0, 0(t4)
+	j	ra
 	nop
 END(prom_open)
 
@@ -99,3 +109,9 @@ LEAF(putchar)
 	nop
 END(putchar)
 #endif
+
+	.sdata
+
+	.global	saiob
+saiob:	.space	8*4
+				
