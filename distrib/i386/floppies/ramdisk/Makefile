@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/06/05 20:17:39 bouyer Exp $
+#	$NetBSD: Makefile,v 1.15 1999/06/05 20:44:57 bouyer Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -44,9 +44,7 @@ all: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
-	echo toto
-	echo ${TOP} ${.CURDIR} ${.OBJDIR} ${MOUNT_POINT}
+	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
