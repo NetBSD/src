@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.3 2000/03/14 01:58:34 shin Exp $
+.\"	$NetBSD: contents,v 1.4 2000/06/13 12:56:59 shin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,10 +60,8 @@ see below.
 .	It Pa installation/
 .\" BTW, .Bl ... .El is not allowed unless there is at least one .It.
 .
-.\"============================================ ALPHA INSTALLATION SUBTREE
-.
-.
-.
+Miscellaneous \*[MACHINE] installation utilities; see
+installation section, below.
 .El
 .
 .
@@ -106,7 +104,7 @@ everything described below.
 .if r_amiga .Em 10.3M gzipped, 28.9M uncompressed
 .if r_arm32 .Em 13.1M gzipped, 33.5M uncompressed
 .if r_atari .Em 10.3M gzipped, 29.0M uncompressed
-.if r_hpcmips .Em 14.3M gzipped, 47.1M uncompressed
+.if r_hpcmips .Em 16.8M gzipped, 55.7M uncompressed
 .if r_i386 .Em 11.2M gzipped, 28.2M uncompressed
 .if r_mac68k .Em 10.2M gzipped, 28.9M uncompressed
 .if r_macppc .Em 11.1M gzipped, 30.5M uncompressed
@@ -132,7 +130,7 @@ system call and library manual pages.
 .if r_amiga .Em 8.3M gzipped, 28.5M uncompressed
 .if r_arm32 .Em 9.2M gzipped, 30.5M uncompressed
 .if r_atari .Em 8.1M gzipped, 27.2M uncompressed
-.if r_hpcmips .Em 10.8M gzipped, 46.1M uncompressed
+.if r_hpcmips .Em 10.8M gzipped, 46.4M uncompressed
 .if r_i386 .Em 8.7M gzipped, 28.2M uncompressed
 .if r_mac68k .Em 8.1M gzipped, 26.6M uncompressed
 .if r_macppc .Em 8.5M gzipped, 32.3M uncompressed
@@ -160,7 +158,7 @@ upgrade your configuration files by hand.)
 .if r_amiga .Em 57K gzipped, 330K uncompressed
 .if r_arm32 .Em 57K gzipped, 330K uncompressed
 .if r_atari .Em 56K gzipped, 330K uncompressed
-.if r_hpcmips .Em 76K gzipped, 381K uncompressed
+.if r_hpcmips .Em 94K gzipped, 517K uncompressed
 .if r_i386 .Em 57K gzipped, 340K uncompressed
 .if r_mac68k .Em 57K gzipped, 319K uncompressed
 .if r_macppc .Em 56K gzipped, 330K uncompressed
@@ -202,7 +200,7 @@ install this distribution set.
 .if r_alpha .Em 1.3M gzipped, 3M uncompressed
 .if r_amiga .Em 894k gzipped, 1.9M uncompressed
 .if r_arm32 .Em 857k gzipped, 1.8M uncompressed
-.if r_hpcmips .Em 904k gzipped, 2.3M uncompressed
+.if r_hpcmips .Em 976k gzipped, 2.5M uncompressed
 .if r_i386 .Em 1.5M gzipped, 3M uncompressed
 .if r_macppc .Em 846k gzipped, 1.9M uncompressed
 .if r_next68k .Em 532k gzipped, 1.1M uncompressed
@@ -249,7 +247,7 @@ that are included in the other sets.
 .if r_amiga .Em 4.2M gzipped, 17M uncompressed
 .if r_arm32 .Em 4M gzipped, 15.9M uncompressed
 .if r_atari .Em 4M gzipped, 15.9M uncompressed
-.if r_hpcmips .Em 4.7M gzipped, 17.7M uncompressed
+.if r_hpcmips .Em 4.9M gzipped, 18.8M uncompressed
 .if r_i386 .Em 4M gzipped, 16.2M uncompressed
 .if r_macppc .Em 3.8M gzipped, 15.2M uncompressed
 .if r_next68k .Em 3.9M gzipped, 15.6M uncompressed
@@ -270,7 +268,7 @@ the typesettable document set, and other files from
 .if r_amiga .Em 2.2M gzipped, 8.4M uncompressed
 .if r_arm32 .Em 2.2M gzipped, 8.4M uncompressed
 .if r_atari .Em 2.2M gzipped, 8.4M uncompressed
-.if r_hpcmips .Em 2.3M gzipped, 7.5M uncompressed
+.if r_hpcmips .Em 2.7M gzipped, 10.1M uncompressed
 .if r_i386 .Em 2.1M gzipped, 8.1M uncompressed
 .if r_macppc .Em 2.2M gzipped, 8.5M uncompressed
 .if r_next68k .Em 2.2M gzipped, 8.5M uncompressed
@@ -333,11 +331,6 @@ to locations outside of the United States and Canada.
 .Nx
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
-.if r_hpcmips \{\
-Unfortunately there is no R6.3 Xserver for NetBSD/hpcmips yet,
-so we can only distribute the X clients this time.
-.\}
-
 The sets are:
 .Bl -tag -width xcontribmmm
 .It Sy xbase
@@ -405,10 +398,10 @@ Fonts needed by X.
 .
 .Pp
 .It Sy xserver
-.No The Xhpcmips Em monochrome
-server with man pages.
+.No The Xhpc
+server which supports 256 and 65536 colors with man pages.
 .br
-.Em 0.0M gzipped, 0.0M uncompressed
+.Em 2.0M gzipped, 9.6M uncompressed
 .
 .El
 .
@@ -463,37 +456,32 @@ distribution tree. The important files in this directory are as
 follows:
 .
 .
+.Bl -tag -width netbsd.gz
+.It Pa netbsd.gz
+NetBSD/hpcmips kernel with system installer (sysinst).
+.br
+.Em 1.98M gzipped, 6.7M uncompressed
+.El
+
 .Bl -tag -width pbsdboot.exe
 .It Pa pbsdboot.exe
 The NetBSD/hpcmips Booter utility. This program is used to boot the
 .Nx
-kernel from within WindowsCE.
+kernel from within WindowsCE (version 2.0 and later).
 .br
-.Em 123 K archived
+.Em 122k
+.El
+
+.Bl -tag -width pbsdboot1.exe
+.It Pa pbsdboot1.exe
+The NetBSD/hpcmips Booter utility. This program is used to boot the
+.Nx
+kernel from within WindowsCE (version 1.0).
+.br
+.Em 134k
 .El
 
 .Pp
 These files are all WindowsCE binary. If you need them,
 the sources for these utilities are in the
 .Pa src/arch/hpcmips/stand/ directory.
-.
-.
-.
-.Pp
-notes on 
-.Pa hpcmips/misc/
-subdirectory of the
-.Nx \*V
-distribution tree. The important files in this directory are as
-follows:
-.Bl -tag -width bin-sbin-dynamic-link.tgz
-.It Pa bin-sbin-dynamic-link.tgz
-
-Dynamically linked binaries in `/bin' and `/sbin'. USE AT YOUR OWN RISK.
-You can save 10MB of disk space with these binaries.
-.El
-
-.Bl -tag -width miniroot.fs.gz
-.It Pa  miniroot.fs.gz
-miniroot which contains sysinst.
-.El
