@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2002/08/19 13:54:35 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2002/10/23 01:06:11 itojun Exp $
 
 NOLINT=		# defined
 
@@ -21,7 +21,11 @@ CPPFLAGS+= -I.					\
 
 VERS!=		cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD=		-lkadm5srv -lhdb -lkrb5 -lcrypto -lasn1 \
-		-lcom_err -L${VERS} -lvers -lroken -lcrypt -lutil
+LDADD+=		-lkadm5srv -lhdb -lkrb5 -lcrypto -lasn1 \
+		-lcom_err -L${VERS} -lvers -lroken -lcrypt \
+		-lutil
+DPADD+=		${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} \
+		${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT} \
+		${LIBUTIL}
 
 .include <bsd.prog.mk>
