@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.23 2002/09/18 21:06:39 mycroft Exp $	*/
+/*	$NetBSD: apmd.c,v 1.24 2002/09/23 03:36:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <machine/apmvar.h>
 #include <err.h>
 #include "pathnames.h"
