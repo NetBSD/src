@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2003/07/15 02:29:39 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2003/08/31 01:26:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2003/07/15 02:29:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2003/08/31 01:26:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,8 +869,8 @@ pmap_bootstrap(vstart, vend)
 	mtctl(addr, CR_VTOP);
 	hpt_base = addr;
 	hpt_mask = size;
-	proc0.p_md.md_regs->tf_hptm = size;
-	proc0.p_md.md_regs->tf_vtop = addr;
+	lwp0.l_md.md_regs->tf_hptm = size;
+	lwp0.l_md.md_regs->tf_vtop = addr;
 	addr += size + 1;
 
 	/* Allocate the struct pv_head array. */
@@ -1196,7 +1196,7 @@ static void
 pmap_pinit(pmap)
 	pmap_t pmap;
 {
-	register u_int pid;
+	u_int pid;
 	int s;
 
 	PMAP_PRINTF(PDB_PMAP, ("(%p), pid=%x\n", pmap, pmap->pmap_pid));
@@ -1239,7 +1239,7 @@ pmap_pinit(pmap)
 pmap_t
 pmap_create()
 {
-	register pmap_t pmap;
+	pmap_t pmap;
 	int s;
 
 	PMAP_PRINTF(PDB_PMAP, ("()"));
@@ -1303,19 +1303,20 @@ pmap_destroy(pmap)
 }
 
 /*
- * pmap_activate(proc)
- *	Activates the vmspace for the given process.  This
+ * pmap_activate(lwp)
+ *	Activates the vmspace for the given LWP.  This
  *	isn't necessarily the current process.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pmap_space;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	/* space is cached for the copy{in,out}'s pleasure */
-	p->p_addr->u_pcb.pcb_space = space;
+	l->l_addr->u_pcb.pcb_space = space;
 
 	/* Load all of the user's space registers. */
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
@@ -1349,7 +1350,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	register struct pv_entry *pv;
+	struct pv_entry *pv;
 	u_int tlbpage, tlbprot;
 	pa_space_t space;
 	boolean_t waswired;
@@ -1434,12 +1435,12 @@ pmap_enter(pmap, va, pa, prot, flags)
  */
 void
 pmap_remove(pmap, sva, eva)
-	register pmap_t pmap;
-	register vaddr_t sva;
-	register vaddr_t eva;
+	pmap_t pmap;
+	vaddr_t sva;
+	vaddr_t eva;
 {
-	register struct pv_entry *pv;
-	register pa_space_t space;
+	struct pv_entry *pv;
+	pa_space_t space;
 	int s;
 
 	PMAP_PRINTF(PDB_REMOVE, ("(%p, %p, %p)\n", 
@@ -1480,9 +1481,9 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
 {
-	register struct pv_entry *pv, *pv_next;
-	register pmap_t pmap;
-	register u_int tlbprot;
+	struct pv_entry *pv, *pv_next;
+	pmap_t pmap;
+	u_int tlbprot;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
@@ -1555,7 +1556,7 @@ pmap_protect(pmap, sva, eva, prot)
 	vaddr_t eva;
 	vm_prot_t prot;
 {
-	register struct pv_entry *pv;
+	struct pv_entry *pv;
 	u_int tlbprot;
 	pa_space_t space;
 	int s;
@@ -1669,7 +1670,7 @@ pmap_extract(pmap, va, pap)
  */
 void
 pmap_zero_page(pa)
-	register paddr_t pa;
+	paddr_t pa;
 {
 	struct pv_entry *pv;
 	int s;
@@ -1801,7 +1802,7 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = pmap_clear_bit(pa, TLB_DIRTY);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
@@ -1816,7 +1817,7 @@ boolean_t
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
-	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = pmap_test_bit(pa, TLB_DIRTY);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
@@ -1834,7 +1835,7 @@ boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = pmap_clear_bit(pa, TLB_REF);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
@@ -1849,7 +1850,7 @@ boolean_t
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
-	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = pmap_test_bit(pa, TLB_REF);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
@@ -1894,7 +1895,7 @@ pmap_kremove(va, size)
 	vaddr_t va;
 	vsize_t size;
 {
-	register struct pv_entry *pv;
+	struct pv_entry *pv;
 	int s;
 #ifdef PMAPDEBUG
 	int opmapdebug = pmapdebug;
@@ -1970,8 +1971,8 @@ pmap_redzone(vaddr_t sva, vaddr_t eva, int create)
 void
 pmap_hptdump()
 {
-	register struct hpt_entry *hpt, *ehpt;
-	register struct pv_entry *pv;
+	struct hpt_entry *hpt, *ehpt;
+	struct pv_entry *pv;
 
 	mfctl(CR_HPTMASK, ehpt);
 	mfctl(CR_VTOP, hpt);
