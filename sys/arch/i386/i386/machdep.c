@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.22 2002/07/12 01:39:30 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.23 2002/07/19 22:18:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.22 2002/07/12 01:39:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.23 2002/07/19 22:18:25 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2080,10 +2080,8 @@ sendsig(catcher, sig, mask, code)
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
 	struct saframe *sf, frame;
 	struct trapframe *tf;
-	extern char sigcode[], upcallcode[];
 
 	tf = l->l_md.md_regs;
 
@@ -2093,8 +2091,8 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	frame.sa_events = nevents;
 	frame.sa_interrupted = ninterrupted;
 	frame.sa_arg = ap;
-	frame.sa_upcall = upcall;
-
+	frame.sa_ra = 0;
+ 
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
@@ -2102,9 +2100,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 		/* NOTREACHED */
 	}
 
-	/* XXX hack-o-matic */
-	tf->tf_eip = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
-		(caddr_t)upcallcode - (caddr_t)sigcode));
+	tf->tf_eip = (int) upcall;
 	tf->tf_esp = (int) sf;
 	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
