@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.10 2002/04/17 02:22:55 mycroft Exp $
+#	$NetBSD: SIMICS,v 1.11 2002/04/18 13:18:29 wiz Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -470,7 +470,6 @@ le*	at nele?
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
