@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.2 2001/05/08 19:30:05 kleink Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.3 2001/05/11 17:37:15 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ svr4_32_getmcontext(p, mc, flags)
 #endif
 			return;
 		}
-		if (copyout(fps->fs_queue, f->fp_q, sz) != 0) {
+		if (copyout(fps->fs_queue, (void *)(u_long)f->fp_q, sz) != 0) {
 #ifdef DIAGNOSTIC
 			printf("getcontext: copy of fp_queue failed %d\n",
 			    error);
@@ -312,8 +312,9 @@ svr4_32_setmcontext(p, mc, flags)
 		bcopy(f->fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
-		if (f->fp_q != NULL) {
-			if ((error = copyin(f->fp_q, fps->fs_queue,
+		if (f->fp_q != 0) {
+			if ((error = copyin((void *)(u_long)f->fp_q,
+			                    fps->fs_queue,
 					    f->fp_nqel * f->fp_nqsize)) != 0) {
 #ifdef DIAGNOSTIC
 				printf("setmcontext: fp_queue copy failed\n");
