@@ -958,7 +958,12 @@ for this_target in $target $canon_targets ; do
       sparc-fujitsu-none)   fmt=aout ;;
       sparc-*-elf | sparc-*-sysv4* | sparc-*-solaris*)
 			    fmt=elf ;;
-      sparc-*-netbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
+      sparc-*-netbsd*)      em=nbsd bfd_gas=yes
+			    case ${cpu} in
+				sparc) fmt=aout ;;
+				sparc64) fmt=elf ;;
+			    esac
+			    ;;
       sparc-*-openbsd*)     fmt=aout em=nbsd bfd_gas=yes ;;
 
       vax-*-bsd* | vax-*-ultrix*)
@@ -1022,7 +1027,7 @@ EOF
 
 
     case ${cpu}-${vendor}-${os} in
-      sparc64-*-elf*) cat >> confdefs.h <<\EOF
+      sparc64-*-elf*|sparc64-*-netbsd*) cat >> confdefs.h <<\EOF
 #define SPARC_ARCH64 1
 EOF
  ;;
