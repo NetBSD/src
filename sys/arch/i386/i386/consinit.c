@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2000/06/09 04:58:34 soda Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4 2000/06/11 02:46:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -61,11 +61,6 @@
 #include "pc.h"
 #if (NPC > 0)
 #include <machine/pccons.h>
-#endif
-
-#include "vt.h"
-#if (NVT > 0)
-#include <i386/isa/pcvt/pcvt_cons.h>
 #endif
 
 #include "com.h"
@@ -147,7 +142,7 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
@@ -162,7 +157,7 @@ consinit()
 		if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
-#if (NPC > 0) || (NVT > 0)
+#if (NPC > 0)
 		pccnattach();
 #endif
 		if (0) goto dokbd; /* XXX stupid gcc */
