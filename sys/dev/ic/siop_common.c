@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.27 2002/05/04 18:43:22 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.28 2002/05/05 15:23:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.27 2002/05/04 18:43:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.28 2002/05/05 15:23:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -889,10 +889,6 @@ siop_update_xfer_mode(sc, target)
 	xm.xm_period = 0;
 	xm.xm_offset = 0;
 
-	/* 1010 workaround: can't do disconnect if not wide, so can't do tag */
-	if ((sc->features & SF_CHIP_GEBUG) &&
-	    (sc->targets[target]->flags & TARF_ISWIDE) == 0)
-		siop_target->flags &= ~TARF_TAG;
 
 	if (siop_target->flags & TARF_ISWIDE)
 		xm.xm_mode |= PERIPH_CAP_WIDE16;
@@ -901,7 +897,12 @@ siop_update_xfer_mode(sc, target)
 		xm.xm_offset = siop_target->offset;
 		xm.xm_mode |= PERIPH_CAP_SYNC;
 	}
-	if (siop_target->flags & TARF_TAG)
-		xm.xm_mode |= PERIPH_CAP_TQING;
+	if (siop_target->flags & TARF_TAG) {
+	/* 1010 workaround: can't do disconnect if not wide, so can't do tag */
+		if ((sc->features & SF_CHIP_GEBUG) == 0 ||
+		    (sc->targets[target]->flags & TARF_ISWIDE))
+			xm.xm_mode |= PERIPH_CAP_TQING;
+	}
+
 	scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_XFER_MODE, &xm);
 }
