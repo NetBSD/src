@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.100.4.2 1996/11/29 20:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -842,6 +842,7 @@ sd_get_parms(sd, flags)
 	/*
 	 * do a "mode sense page 4"
 	 */
+	bzero(&scsi_sense, sizeof(scsi_sense));
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.page = 4;
