@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.51 1999/11/28 06:32:05 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.52 2000/01/31 22:01:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -253,5 +253,5 @@ void   *xmalloc __P((size_t));
 StringList *xsl_init __P((void));
 void	xsl_add __P((StringList *, char *));
 char   *xstrdup __P((const char *));
-sig_t	xsignal __P((int, void (func) __P((int))));
-sig_t	xsignal_restart __P((int, void (func) __P((int)), int));
+sigfunc	xsignal __P((int, sigfunc));
+sigfunc	xsignal_restart __P((int, sigfunc, int));
