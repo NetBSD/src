@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.13 2004/05/06 03:07:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.13 2004/05/06 03:07:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -714,6 +714,13 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 				IEEE80211_ADDR_COPY(ni->ni_bssid,
 				    (bssid != NULL) ? bssid : zero);
 
+			/* XXX see remarks in ieee80211_find_txnode */
+			if (ni != NULL) {
+				/* XXX no rate negotiation; just dup */
+				ni->ni_rates = ic->ic_bss->ni_rates;
+				if (ic->ic_newassoc)
+					(*ic->ic_newassoc)(ic, ni, 1);
+			}
 			IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n",
 			    __func__, ni, ether_sprintf(wh->i_addr2)));
 		}
