@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: lk201.4,v 1.2 1997/10/13 11:23:53 lukem Exp $
+.\"	$NetBSD: lk201.4,v 1.3 1998/03/20 13:31:58 fair Exp $
 .\"
 .Dd August 6, 1996
 .Dt LK201 4 pmax
@@ -35,28 +35,32 @@
 .Sh NAME
 .Nm lk201
 .Nd
-LK-201 keyboard input driver
+DEC LK-201 keyboard input driver
 .Sh DESCRIPTION
-THe
+The
 .Nm
 driver provides support for the
 .Tn Digital
 .Tn LK-201
-keyboard and successors.   This support is automatically configured
-into the kernel, to map input keypress events into ACSII codes.
+keyboard and its successors.
+This support is automatically configured into the kernel,
+to map keypress input events into ASCII codes.
 There is no way to disable this support.
 .Pp
 The kernel also includes support for an in-kernel ring-buffer
-structure for keypress events and pointer (mouse) events.  The
+structure for keypress events and pointer (mouse) events.
+The
 .Nm fb
 driver redirects mouse and keyboard input into this in-kernel
 structure, and updates the position of a framebuffer cursor sprite to
-track the mouse.  This is for compatibility with the 
+track the mouse.
+This is for compatibility with the 
 .Nm qv
-QVSS-style software interface used by X11 on  DECstation and Vaxstation
-framebuffers.   This design offers significantly better performance
-on the Vaxstation-100 and Vaxstation-II, but makes it impossible
-to use alternative pointer or keyboard devices.
+QVSS-style software interface used by X11 on DECstation and VAXstation
+framebuffers.
+This design offers significantly better performance on the
+VAXstation-100 and VAXstation-II, but makes it impossible to use
+alternative pointer or keyboard devices.
 .Sh BUGS
 The
 .Nm
