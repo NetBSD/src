@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.22 2001/08/30 00:53:53 itojun Exp $	*/
+/*	$NetBSD: displayq.c,v 1.23 2002/06/08 23:37:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.22 2001/08/30 00:53:53 itojun Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.23 2002/06/08 23:37:47 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ displayq(format)
 	ret = stat(LO, &statb);
 	seteuid(uid);
 	if (ret >= 0) {
-		if (statb.st_mode & 0100) {
+		if (statb.st_mode & S_IXUSR) {
 			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
@@ -157,7 +157,7 @@ displayq(format)
 			} else
 				putchar('\n');
 		}
-		if (statb.st_mode & 010) {
+		if (statb.st_mode & S_IXGRP) {
 			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s queue is turned off\n", printer);
