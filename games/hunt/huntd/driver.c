@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.6 2000/04/14 05:58:03 simonb Exp $	*/
+/*	$NetBSD: driver.c,v 1.7 2001/01/09 23:49:54 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.6 2000/04/14 05:58:03 simonb Exp $");
+__RCSID("$NetBSD: driver.c,v 1.7 2001/01/09 23:49:54 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -266,10 +266,10 @@ init()
 
 # ifdef LOG
 # ifdef	SYSLOG_43
-	openlog("HUNT", LOG_PID, LOG_DAEMON);
+	openlog("huntd", LOG_PID, LOG_DAEMON);
 # endif
 # ifdef	SYSLOG_42
-	openlog("HUNT", LOG_PID);
+	openlog("huntd", LOG_PID);
 # endif
 # endif
 
@@ -907,7 +907,7 @@ send_stats()
 		if (errno == EINTR)
 			return;
 # ifdef LOG
-		syslog(LOG_ERR, "accept: %m");
+		syslog(LOG_WARNING, "accept: %m");
 # else
 		warn("accept");
 # endif
@@ -916,7 +916,7 @@ send_stats()
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
 # ifdef LOG
-		syslog(LOG_ERR, "fdopen: %m");
+		syslog(LOG_WARNING, "fdopen: %m");
 # else
 		warn("fdopen");
 # endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.4 2000/07/03 03:57:41 matt Exp $	*/
+/*	$NetBSD: get_names.c,v 1.5 2001/01/09 23:49:54 lukem Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.4 2000/07/03 03:57:41 matt Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -59,8 +59,13 @@ get_local_name(my_name)
 	/* look up the address of the local host */
 	hp = gethostbyname(my_machine_name);
 	if (hp == (struct hostent *) 0) {
-		printf("This machine doesn't exist. Boy, am I confused!\n");
-		exit(-1);
+# ifdef LOG
+		syslog(LOG_ERR,
+		    "This machine doesn't exist. Boy, am I confused!");
+# else
+		perror("This machine doesn't exist. Boy, am I confused!");
+# endif
+		exit(1);
 	}
 	memcpy(&my_machine_addr, hp->h_addr, hp->h_length);
 	/* find the daemon portal */
@@ -75,7 +80,7 @@ get_local_name(my_name)
 # else
 		perror("This machine doesn't support talk");
 # endif
-		exit(-1);
+		exit(1);
 	}
 	daemon_port = sp->s_port;
 }
