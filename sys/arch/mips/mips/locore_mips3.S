@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.36.2.2 2000/06/21 19:42:06 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.36.2.3 2000/08/10 00:55:16 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2548,12 +2548,17 @@ LEAF(mips3_write_compare)
 END(mips3_write_compare)
 
 LEAF(mips3_write_xcontext_upper)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+	nop
+	nop
+	nop
 	dsll	a0, 32
 	dmtc0	a0, MIPS_COP_0_TLB_XCONTEXT	# Store segment map for access
 	nop
 	nop
 	j	ra
-	nop
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(mips3_write_xcontext_upper)
 
 /*
