@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1996/02/28 22:44:33 gwr Exp $ */
+/*	$NetBSD: pmap.h,v 1.19 1996/03/14 19:49:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,6 +179,13 @@ int		pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
 #define PMAP_DEACTIVATE(pmap, pcb)
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
+
+void pmap_changeprot __P((struct pmap *, vm_offset_t, vm_prot_t, int));
+void kvm_uncache __P((caddr_t, int));
+int mmu_pagein __P((struct pmap *, int, int));
+void pmap_redzone __P((void));
+struct user;
+void	switchexit __P((vm_map_t, struct user *, int));
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 1996/02/09 23:14:14 christos Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.6 1996/03/14 19:49:09 christos Exp $ */
 
 /* 
  * Mach Operating System
@@ -74,5 +74,9 @@ db_regs_t		ddb_regs;	/* register state */
 #define inst_store(ins)		0
 
 #define DB_MACHINE_COMMANDS
+
+void db_machine_init __P((void));
+int kdb_trap __P((int, struct trapframe *));
+
 
 #endif	/* _SPARC_DB_MACHDEP_H_ */
