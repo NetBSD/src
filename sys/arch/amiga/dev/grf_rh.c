@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.8 1995/08/20 03:07:25 chopps Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.9 1995/08/20 15:09:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -109,7 +109,7 @@ extern unsigned char kernel_font_8x11[];
 #define MDF_CLKDIV2 4
 
 /* set this as an option in your kernel config file! */
-/* #define RZ3_64BIT_SPRITE */
+/* #define RH_64BIT_SPRITE */
 
 /* -------------- START OF CODE -------------- */
 
@@ -160,7 +160,7 @@ RZ3SetupHWC(gp, col1, col2, hsx, hsy, data)
 	unsigned long *c = (unsigned long *)(ba + LM_OFFSET + HWC_MEM_OFF);
 	const unsigned long *s = data;
 	struct MonDef *MonitorDef = (struct MonDef *) gp->g_data;
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 	short x = (HWC_MEM_SIZE / (4*4)) - 1;
 #else
         short x = (HWC_MEM_SIZE / (4*4*2)) - 1;
@@ -176,21 +176,21 @@ RZ3SetupHWC(gp, col1, col2, hsx, hsy, data)
 	WSeq(ba, SEQ_ID_CURSOR_COLOR1, col1);
 	WSeq(ba, SEQ_ID_CURSOR_COLOR0, col2);
         if (MonitorDef->DEP <= 8) {
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 		WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x85);
 #else
                 WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x03);
 #endif
         }
         else if (MonitorDef->DEP <= 16) {
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 		WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0xa5);
 #else
                 WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x23);
 #endif
         }
         else {
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
                 WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0xc5);
 #else
                 WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x43);
@@ -1812,7 +1812,7 @@ rh_getspriteinfo (gp, info)
 		 * hope I got these bool-eqs right below..
 		 */
 
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 		info->size.x = 64;
 		info->size.y = 64;
 		for (row = 0, hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
@@ -1878,7 +1878,7 @@ rh_setspriteinfo (gp, info)
 		u_char *imp, *mp;
 		short row;
 
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 		if (info->size.y > 64)
 			info->size.y = 64;
 		if (info->size.x > 64)
@@ -1916,7 +1916,7 @@ rh_setspriteinfo (gp, info)
 			imp += 4;
 			m1  = *(unsigned long *)mp;
 			mp  += 4;
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 			if (info->size.x > 32) {
 	      			im2 = *(unsigned long *)imp;
 				imp += 4;
@@ -1933,15 +1933,15 @@ rh_setspriteinfo (gp, info)
 			M2I(m2);
 
 			*hwp++ = ~m1;
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 			*hwp++ = ~m2;
 #endif
 			*hwp++ = m1 & im1;
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 			*hwp++ = m2 & im2;
 #endif
 		}
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 		for (; row < 64; row++) {
 			*hwp++ = 0xffffffff;
 			*hwp++ = 0xffffffff;
@@ -1987,7 +1987,7 @@ rh_getspritemax (gp, pos)
 	struct grf_softc *gp;
 	struct grf_position *pos;
 {
-#ifdef RZ3_64BIT_SPRITE
+#ifdef RH_64BIT_SPRITE
 	pos->x = 64;
 	pos->y = 64;
 #else
