@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.2 1996/03/08 16:35:17 mark Exp $ */
+/* $NetBSD: psl.h,v 1.3 1996/04/26 21:10:21 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -68,17 +68,21 @@
 #define splstatclock()	raisespl(SPL_CLOCK)
 #define splsoftnet()	raisespl(SPL_SOFT)
 
+#ifdef _KERNEL
 #ifndef _LOCORE
 int raisespl __P((int));
 int lowerspl __P((int));
 int splx __P((int));
 int splsoftclock __P(());
 
-#ifdef _KERNEL
+void setsoftnet __P(());
+void setsoftast __P(());
+void setsoftclock __P(());
+
 extern int current_spl_level;
 
 extern u_int spl_masks[SPL_LEVELS];
-#endif /* _KERNEL */
 #endif /* _LOCORE */
+#endif /* _KERNEL */
 
 /* End of psl.h */
