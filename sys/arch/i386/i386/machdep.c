@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 1995/05/16 14:30:47 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 1995/05/18 18:59:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -93,6 +93,9 @@
 
 #include "isa.h"
 #include "npx.h"
+#if NNPX > 0
+extern struct proc *npxproc;
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
@@ -831,8 +834,14 @@ setregs(p, pack, stack, retval)
 	register struct trapframe *tf;
 
 	pcb = &p->p_addr->u_pcb;
-	lcr0(pcb->pcb_cr0 |= CR0_EM);
+	lcr0(pcb->pcb_cr0 |= CR0_EM|CR0_TS);
 	pcb->pcb_flags = 0;
+
+#if NNPX > 0
+	/* If we were using the FPU, forget about it. */
+	if (npxproc == p)
+		npxproc = 0;
+#endif
 
 	tf = p->p_md.md_regs;
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
