@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.22 1996/04/08 18:37:34 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.23 1996/07/01 20:17:56 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -68,7 +68,7 @@
 
 extern int cold;
 
-volatile int rbr,rcvec;
+volatile int rbr,rcvec, svec;
 
 int	uba_match __P((struct device *, void *, void *));
 void	uba_attach __P((struct device *, struct device *, void *));
@@ -79,12 +79,10 @@ void	ubaerror __P((int, struct uba_softc *, int *, int *,
 	    struct uba_regs *));
 void	ubainit __P((struct uba_softc *));
 void	ubastray __P((int));
-void	unifind __P((struct uba_softc *, caddr_t));
-void	ubapurge __P((struct uba_ctlr *));
+void	ubapurge __P((struct uba_unit *));
 void	ubainitmaps __P((struct uba_softc *));
 int	qbgetpri __P((void));
 int	ubamem __P((int, int, int, int));
-void    uba_dw780int __P((int));
 
 
 struct	cfdriver uba_cd = {
@@ -110,7 +108,7 @@ ubastray(arg)
 	rbr = mfpr(PR_IPL);
 #ifdef DW780
 	if (sc->uh_type == DW780)
-		vektor = ur->uba_brrvr[rbr - 0x14] >> 2;
+		vektor = svec >> 2;
 	else
 #endif
 		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
@@ -121,124 +119,9 @@ ubastray(arg)
 #endif
 			rcvec = vektor;
 	} else 
-		printf("uba%d: unexpected interrupt, vector %o, br %d\n",
-		    arg, vektor << 2, rbr - 20);
+		printf("uba%d: unexpected interrupt, vector 0x%x, br 0x%x\n",
+		    arg, svec, rbr);
 }
-
-/*
- * Find devices on a UNIBUS.
- * Uses per-driver routine to set <br,cvec> into <r11,r10>,
- * and then fills in the tables, with help from a per-driver
- * slave initialization routine.
- */
-void
-unifind(uhp0, pumem)
-	struct uba_softc *uhp0;
-	caddr_t pumem;
-{
-	register struct uba_device *ui;
-	register struct uba_ctlr *um;
-	register struct uba_softc *uhp = uhp0;
-	volatile struct uba_regs *ubar = uhp->uh_uba;
-	u_short *reg, *ap, addr;
-	struct uba_driver *udp;
-	int i;
-	volatile extern int rbr, rcvec;
-
-#define	ubaddr(uhp, off)    (u_short *)((int)(uhp)->uh_iopage + ubdevreg(off))
-	/*
-	 * Check each unibus mass storage controller.
-	 * For each one which is potentially on this uba,
-	 * see if it is really there, and if it is record it and
-	 * then go looking for slaves.
-	 */
-	for (um = ubminit; (udp = um->um_driver); um++) {
-		if ((um->um_ubanum != uhp->uh_dev.dv_unit &&
-		    um->um_ubanum != '?') || um->um_alive)
-			continue;
-		addr = (u_short)(u_long)um->um_addr;
-		/*
-		 * use the particular address specified first,
-		 * or if it is given as "0", of there is no device
-		 * at that address, try all the standard addresses
-		 * in the driver til we find it
-		 */
-	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
-		reg = ubaddr(uhp, addr);
-		if (badaddr((caddr_t)reg, 2))
-			continue;
-
-#if DW780
-		if (uhp->uh_type == DW780 && ubar->uba_sr) {
-			ubar->uba_sr = ubar->uba_sr;
-			continue;
-		}
-#endif
-		rcvec = 0x200;
-		i = (*udp->ud_probe)((caddr_t)reg, um->um_ctlr, um, uhp);
-#if DW780
-		if (uhp->uh_type == DW780 && ubar->uba_sr) {
-			ubar->uba_sr = ubar->uba_sr;
-			continue;
-		}
-#endif
-		if (i == 0)
-			continue;
-		printf("%s%d at uba%d csr %o ",
-		    udp->ud_mname, um->um_ctlr, uhp->uh_dev.dv_unit, addr);
-		if (rcvec == 0) {
-			printf("zero vector\n");
-			continue;
-		}
-		if (rcvec == 0x200) {
-			printf("didn't interrupt\n");
-			continue;
-		}
-		printf("vec %o, ipl %x\n", rcvec << 2, rbr);
-		um->um_alive = 1;
-		um->um_ubanum = uhp->uh_dev.dv_unit;
-		um->um_hd = uhp;
-		um->um_addr = (caddr_t)reg;
-		udp->ud_minfo[um->um_ctlr] = um;
-		uhp->uh_idsp[rcvec].hoppaddr = um->um_intr;
-		uhp->uh_idsp[rcvec].pushlarg = um->um_ctlr;
-		for (ui = ubdinit; ui->ui_driver; ui++) {
-			int t;
-
-			if (ui->ui_driver != udp || ui->ui_alive ||
-			    (ui->ui_ctlr != um->um_ctlr && ui->ui_ctlr != '?') ||
-			    (ui->ui_ubanum != uhp->uh_dev.dv_unit &&
-			    ui->ui_ubanum != '?'))
-				continue;
-			t = ui->ui_ctlr;
-			ui->ui_ctlr = um->um_ctlr;
-			if ((*udp->ud_slave)(ui, (caddr_t)reg) == 0)
-				ui->ui_ctlr = t;
-			else {
-				ui->ui_alive = 1;
-				ui->ui_ubanum = uhp->uh_dev.dv_unit;
-				ui->ui_hd = uhp;
-				ui->ui_addr = (caddr_t)reg;
-				ui->ui_physaddr = pumem + ubdevreg(addr);
-				if (ui->ui_dk && dkn < DK_NDRIVE)
-					ui->ui_dk = dkn++;
-				else
-					ui->ui_dk = -1;
-				ui->ui_mi = um;
-				/* ui_type comes from driver */
-				udp->ud_dinfo[ui->ui_unit] = ui;
-				printf("%s%d at %s%d slave %d",
-				    udp->ud_dname, ui->ui_unit,
-				    udp->ud_mname, um->um_ctlr, ui->ui_slave);
-				(*udp->ud_attach)(ui);
-				printf("\n");
-			}
-		}
-		break;
-	    }
-	}
-}
-
 
 #ifdef DW780
 char	ubasr_bits[] = UBASR_BITS;
@@ -263,82 +146,74 @@ char	ubasr_bits[] = UBASR_BITS;
  * does not now have a BDP.
  */
 int
-ubaqueue(ui, onq)
-	register struct uba_device *ui;
+ubaqueue(uu, onq)
+	register struct uba_unit *uu;
 	int onq;
 {
-	register struct uba_ctlr *um = ui->ui_mi;
 	register struct uba_softc *uh;
-	register struct uba_driver *ud;
 	register int s, unit;
 
-	uh = uba_cd.cd_devs[um->um_ubanum];
-	ud = um->um_driver;
+	uh = (void *)((struct device *)(uu->uu_softc))->dv_parent;
 	s = spluba();
 	/*
 	 * Honor exclusive BDP use requests.
 	 */
-	if ((ud->ud_xclu && uh->uh_users > 0) || uh->uh_xclu)
+	if ((uu->uu_xclu && uh->uh_users > 0) || uh->uh_xclu)
 		goto rwait;
-	if (ud->ud_keepbdp) {
+	if (uu->uu_keepbdp) {
 		/*
 		 * First get just a BDP (though in fact it comes with
 		 * one map register too).
 		 */
-		if (um->um_bdp == 0) {
-			um->um_bdp = uballoc(um->um_ubanum,
+		if (uu->uu_bdp == 0) {
+			uu->uu_bdp = uballoc(uh->uh_dev.dv_unit,
 				(caddr_t)0, 0, UBA_NEEDBDP|UBA_CANTWAIT);
-			if (um->um_bdp == 0)
+			if (uu->uu_bdp == 0)
 				goto rwait;
 		}
 		/* now share it with this transfer */
-		um->um_ubinfo = ubasetup(um->um_ubanum,
-			um->um_tab.b_actf->b_actf,
-			um->um_bdp|UBA_HAVEBDP|UBA_CANTWAIT);
+		uu->uu_ubinfo = ubasetup(uh->uh_dev.dv_unit,
+			uu->uu_tab.b_forw->b_actf,
+			uu->uu_bdp|UBA_HAVEBDP|UBA_CANTWAIT);
 	} else
-		um->um_ubinfo = ubasetup(um->um_ubanum,
-			um->um_tab.b_actf->b_actf, UBA_NEEDBDP|UBA_CANTWAIT);
-	if (um->um_ubinfo == 0)
+		uu->uu_ubinfo = ubasetup(uh->uh_dev.dv_unit,
+			uu->uu_tab.b_forw->b_actf, UBA_NEEDBDP|UBA_CANTWAIT);
+	if (uu->uu_ubinfo == 0)
 		goto rwait;
 	uh->uh_users++;
-	if (ud->ud_xclu)
+	if (uu->uu_xclu)
 		uh->uh_xclu = 1;
 	splx(s);
-	if (ui->ui_dk >= 0) {
-		unit = ui->ui_dk;
-		dk_busy |= 1<<unit;
-		dk_xfer[unit]++;
-		dk_wds[unit] += um->um_tab.b_actf->b_actf->b_bcount>>6;
-	}
 	if (onq)
-		uh->uh_actf = ui->ui_forw;
-	(*ud->ud_dgo)(um);
+		uh->uh_actf = uu->uu_forw;
+	(*uu->uu_dgo)(uu);
 	return (1);
 rwait:
 	if (!onq) {
-		ui->ui_forw = NULL;
+		uu->uu_forw = NULL;
 		if (uh->uh_actf == NULL)
-			uh->uh_actf = ui;
+			uh->uh_actf = uu;
 		else
-			uh->uh_actl->ui_forw = ui;
-		uh->uh_actl = ui;
+			uh->uh_actl->uu_forw = uu;
+		uh->uh_actl = uu;
 	}
 	splx(s);
 	return (0);
 }
 
 void
-ubadone(um)
-	struct uba_ctlr *um;
+ubadone(uu)
+	struct uba_unit *uu;
 {
-	struct uba_softc *uh = uba_cd.cd_devs[um->um_ubanum];
+	struct uba_softc *uh = (void *)((struct device *)
+	    (uu->uu_softc))->dv_parent;
 
-	if (um->um_driver->ud_xclu)
+	if (uu->uu_xclu)
 		uh->uh_xclu = 0;
 	uh->uh_users--;
-	if (um->um_driver->ud_keepbdp)
-		um->um_ubinfo &= ~BDPMASK;	/* keep BDP for misers */
-	ubarelse(um->um_ubanum, &um->um_ubinfo);
+	if (uu->uu_keepbdp)
+		uu->uu_ubinfo &= ~BDPMASK;	/* keep BDP for misers */
+	ubarelse(uh->uh_dev.dv_unit, &uu->uu_ubinfo);
 }
 
 /*
@@ -420,7 +295,6 @@ ubasetup(uban, bp, flags)
 
 		rp = bp->b_proc;
 		v = btop((u_int)bp->b_un.b_addr&0x3fffffff);
-
 		/*
 		 * It may be better to use pmap_extract() here
 		 * somewhere, but so far we do it "the hard way" :)
@@ -482,7 +356,7 @@ void
 ubarelse(uban, amr)
 	int uban, *amr;
 {
-	register struct uba_softc *uh = uba_cd.cd_devs[uban];
+	struct uba_softc *uh = uba_cd.cd_devs[uban];
 	register int bdp, reg, npf, s;
 	int mr;
  
@@ -554,11 +428,12 @@ ubarelse(uban, amr)
 }
 
 void
-ubapurge(um)
-	register struct uba_ctlr *um;
+ubapurge(uu)
+	struct uba_unit *uu;
 {
-	register struct uba_softc *uh = um->um_hd;
-	register int bdp = UBAI_BDP(um->um_ubinfo);
+	struct uba_softc *uh = (void *)((struct device *)
+	    (uu->uu_softc))->dv_parent;
+	register int bdp = UBAI_BDP(uu->uu_ubinfo);
 
 	switch (uh->uh_type) {
 #ifdef DWBUA
@@ -941,15 +816,15 @@ void
 uba_dw780int(uba)
 	int	uba;
 {
-	int	br, svec, vec, arg;
+	int	br, vec, arg;
 	struct	uba_softc *sc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = sc->uh_uba;
 	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
 	svec = ur->uba_brrvr[br - 0x14];
-	if (svec < 0) {
-		ubaerror(uba, sc, &br, &svec, ur);
+	if (svec <= 0) {
+		ubaerror(uba, sc, &br, (int *)&svec, ur);
 		if (svec == 0)
 			return;
 	}
@@ -1167,7 +1042,6 @@ uba_attach(parent, self, aux)
 	/*
 	 * Now start searching for devices.
 	 */
-	unifind(sc, (caddr_t)ubaiophys);/* Some devices are not yet converted */
 	config_scan(ubascan,self);
 
 #ifdef DW780
@@ -1191,7 +1065,7 @@ ubascan(parent, match)
 	struct	uba_attach_args ua;
 	int	i;
 
-	ua.ua_addr = (caddr_t)ubaddr(sc, cf->cf_loc[0]);
+	ua.ua_addr = (caddr_t)((int)sc->uh_iopage + ubdevreg(cf->cf_loc[0]));
 	ua.ua_reset = NULL;
 
 	if (badaddr(ua.ua_addr, 2))
