@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 1999/04/27 17:37:18 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.29 1999/05/15 12:52:22 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -374,6 +374,7 @@ fbrcons_init(fb)
 	int maxrow, maxcol;
 
 	/* Set up what rasops needs to know about */
+	bzero(&ri, sizeof *ri);
 	ri->ri_stride = fb->fb_linebytes;
 	ri->ri_bits = (caddr_t)fb->fb_pixels;
 	ri->ri_depth = fb->fb_type.fb_depth;
