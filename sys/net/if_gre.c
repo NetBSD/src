@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.23 2001/11/13 00:49:35 lukem Exp $ */
+/*	$NetBSD: if_gre.c,v 1.24 2001/11/24 00:21:27 martin Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.23 2001/11/13 00:49:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.24 2001/11/24 00:21:27 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -192,6 +192,9 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_char ttl, osrc;
 	u_short etype = 0;
 	struct mobile_h mob_h;
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return ENETDOWN;
 
 	gh = NULL;
 	inp = NULL;
