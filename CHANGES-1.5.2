@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.4 2001/07/29 20:51:08 he Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.5 2001/07/30 16:06:48 he Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -132,3 +132,11 @@ distrib/amiga/miniroot/install.md		1.15
 
   Workaround for the changed ``mount'' behaviour, which no longer
   defaults to ``ffs'' in certain circumstances.
+
+sys/kern/kern_sig.c				patch
+
+  Typo correction.
+
+sys/arch/i386/include/frame.h			1.14
+
+  Protect against multiple inclusion.
