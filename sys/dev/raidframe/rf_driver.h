@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.11.2.1 2004/06/28 08:32:36 tron Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.11.2.1.2.1 2005/04/06 12:13:43 tron Exp $	*/
 /*
  * rf_driver.h
  */
@@ -36,6 +36,10 @@
 
 #include "rf_threadstuff.h"
 #include "rf_netbsd.h"
+
+#ifndef RF_RETRY_THRESHOLD
+#define RF_RETRY_THRESHOLD 5
+#endif
 
 RF_DECLARE_EXTERN_MUTEX(rf_printf_mutex)
 int rf_BootRaidframe(void);
