@@ -62,9 +62,9 @@
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
