@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.8 2002/06/24 22:03:48 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.9 2002/07/03 20:31:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.8 2002/06/24 22:03:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.9 2002/07/03 20:31:06 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -292,9 +292,9 @@ undefinedinstruction(trapframe_t *frame)
 			postsig(sig);
 		}
 
-		/* If our process is on the way out, die. */
-		if (p->p_flag & P_WEXIT)
-			lwp_exit(l);
+		/* Invoke per-process kernel-exit handling, if any */
+		if (p->p_userret)
+			(p->p_userret)(l, p->p_userret_arg);
 
 		/* Invoke any pending upcalls. */
 		if (l->l_flag & L_SA_UPCALL)
