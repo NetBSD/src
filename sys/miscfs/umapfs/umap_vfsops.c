@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.13 1997/02/20 05:04:05 mikel Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.14 1997/03/11 03:55:04 mikel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -199,7 +199,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, makefstype(MOUNT_LOFS));
+	getnewfsid(mp, makefstype(MOUNT_UMAP));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
