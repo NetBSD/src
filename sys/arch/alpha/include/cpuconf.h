@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.4 1997/09/02 14:19:35 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.5 1997/09/02 14:25:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,7 +70,6 @@ struct cpusw {
 #ifdef _KERNEL
 extern const struct cpusw cpusw[];
 extern const int ncpusw;
-#endif
 
 cpu_decl(dec_2100_a50);
 cpu_decl(dec_3000_300);
@@ -80,3 +79,4 @@ cpu_decl(dec_eb164);
 cpu_decl(dec_eb64plus);
 cpu_decl(dec_kn20aa);
 cpu_decl(dec_kn8ae);
+#endif /* _KERNEL */
