@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.3 2002/07/28 07:05:19 chs Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.4 2002/08/14 14:25:15 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -83,8 +83,20 @@ void
 pmap_zero_page(paddr_t pa)
 {
 	size_t linewidth;
-	u_int32_t msr;
+	register_t msr;
 
+#if defined(PPC_MPC6XX) && !defined(OLDPMAP)
+	{
+		/*
+		 * If we are zeroing this page, we must clear the EXEC-ness
+		 * of this page since the page contents will have changed.
+		 */
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		KDASSERT(pg != NULL);
+		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
+	}
+#endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vzeropage(pa);
@@ -139,11 +151,24 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	const long *sp;
-	long *dp;
+	const register_t *sp;
+	register_t *dp;
 	size_t i;
-	u_int32_t msr;
+	register_t msr;
 
+#if defined(PPC_MPC6XX) && !defined(OLDPMAP)
+	{
+		/*
+		 * If we are copying to the destination page, we must clear
+		 * the EXEC-ness of this page since the page contents have
+		 * changed.
+		 */
+		struct vm_page *pg = PHYS_TO_VM_PAGE(dst);
+		KDASSERT(pg != NULL);
+		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
+		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
+	}
+#endif
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vcopypage(dst, src);
@@ -171,8 +196,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * Copy the page.  Don't use memcpy as we can't refer to the
 	 * kernel stack at this point.
 	 */
-	sp = (long *) src;
-	dp = (long *) dst;
+	sp = (const register_t *) src;
+	dp = (register_t *) dst;
 	for (i = 0; i < NBPG/sizeof(dp[0]); i += 8, dp += 8, sp += 8) {
 		dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2]; dp[3] = sp[3];
 		dp[4] = sp[4]; dp[5] = sp[5]; dp[6] = sp[6]; dp[7] = sp[7];
@@ -188,7 +213,7 @@ void
 pmap_syncicache(paddr_t pa, psize_t len)
 {
 	const size_t linewidth = curcpu()->ci_ci.icache_line_size;
-	u_int32_t msr;
+	register_t msr;
 	size_t i;
 
 #ifdef PPC_MPC6XX
@@ -241,8 +266,8 @@ pmap_syncicache(paddr_t pa, psize_t len)
 boolean_t
 pmap_pageidlezero(paddr_t pa)
 {
-	u_int32_t msr;
-	u_int32_t *dp = (u_int32_t *) pa;
+	register_t msr;
+	register_t *dp = (register_t *) pa;
 	boolean_t rv = TRUE;
 	int i;
 
