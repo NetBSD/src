@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.332 2004/07/13 09:29:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.333 2004/07/14 09:37:37 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5382,4 +5382,55 @@ sys/arch/i386/conf/INSTALL			1.240
 
 	Add re; Realtek GbE.
 	[he, ticket #641]
+
+distrib/utils/sysinst/bsddisklabel.c		1.29
+
+	PR/26201: Jukka Salmi: sysinst dumps core on NetBSD 2.0_BETA i386
+	The problem is that current_cylsize is used in the menu to select
+	rounding, and it is un-initialized at this point.
+	[christos, ticket #642]
+
+include/string.h				1.27
+
+	Move the strcasestr() prototype to the local extensions section.
+	Also __P() it; this should be consistent within a single header.
+	[kleink, ticket #643]
+
+distrib/sets/lists/man/mi			1.712
+share/man/man4/Makefile				1.325
+share/man/man4/geodeide.4			1.1 (new)
+sys/arch/i386/conf/GENERIC			1.620
+sys/arch/i386/conf/GENERIC_LAPTOP		1.104
+sys/arch/i386/conf/INSTALL			1.243
+sys/arch/i386/conf/INSTALL_LAPTOP		1.61
+sys/dev/pci/files.pci				1.214
+sys/dev/pci/geodeide.c				1.1 (new)
+sys/dev/pci/pciide_geode_reg.h			1.1 (new)
+
+	Add geodeide(4), a driver for the AMD Geode CS5530A IDE controller.
+	Tested by Ian Zagorskih (ianzag at megasignal.com).
+	[bouyer, ticket #644]
+
+sys/arch/alpha/include/param.h			1.34
+
+	Bump NMBCLUSTERS to something a little more modern - 2048 for the
+	normal case and 4096 for the "options GATEWAY" case.
+	[mhitch, ticket #645]
+
+crypto/dist/heimdal/lib/asn1/k5.asn1		1.6
+crypto/dist/heimdal/lib/krb5/changepw.c		1.11-1.12
+crypto/dist/heimdal/lib/krb5/krb5-protos.h	1.10
+crypto/dist/heimdal/lib/krb5/krb5.h		1.6
+lib/libasn1/Makefile				1.24
+
+	Synch KRB5 set-password API with heimdal-current and recent
+	MIT KRB5 releases.
+	[jonathan, ticket #646]
+
+usr.bin/netstat/fast_ipsec.c			1.4-1.5
+usr.bin/netstat/main.c				1.45-1.46
+
+	Don't show fast-ipsec protocol state when, e.g., listing PCBs with
+	"netstat -A".
+	[jonathan, ticket #647]
 
