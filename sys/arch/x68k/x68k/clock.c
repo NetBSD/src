@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1996/10/13 03:35:16 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1997/10/12 06:41:45 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,8 @@
 
 #define CLK_INTERVAL 200
 #define CLOCKS_PER_SEC 100
+
+static int clkread __P((void));
 
 /*
  * Machine-dependent clock routines.
@@ -456,8 +458,8 @@ microtime(tvp)
 
 /* this is a hook set by a clock driver for the configured realtime clock,
    returning plain current unix-time */
-long (*gettod) () = 0;
-long (*settod) () = 0;
+long (*gettod) __P((void)) = 0;
+long (*settod) __P((long)) = 0;
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
