@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 2003/01/28 12:35:31 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 2003/04/09 11:04:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,8 +98,11 @@ static int zsc_print __P((void *, const char *));
 int zscngetc __P((dev_t));
 void zscnputc __P((dev_t, int));
 
-static struct consdev zscons = { NULL, NULL,
-	zscngetc, zscnputc, nullcnpollc, 0, NODEV, 1 };
+static struct consdev zscons = {
+	NULL, NULL,
+	zscngetc, zscnputc, nullcnpollc, NULL, NULL, NULL,
+	NODEV, 1
+};
 
 void
 zs_config(zsc, base)
