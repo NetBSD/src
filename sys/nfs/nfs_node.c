@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.28 1998/09/01 03:11:36 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.28.6.1 2000/01/05 23:39:14 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -159,6 +159,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
 	np->n_fhsize = fhsize;
+	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	memset(np->n_vattr, 0, sizeof (struct vattr));
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
