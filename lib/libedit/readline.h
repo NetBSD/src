@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.1 1997/10/23 22:24:15 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.2 1997/10/23 22:52:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ extern const char  *rl_library_version;
 extern char 	   *rl_readline_name;
 extern FILE        *rl_instream;
 extern FILE        *rl_outstream;
+extern char	   *rl_line_buffer;
 extern int          rl_point, rl_end;
 extern int          history_base, history_length;
 extern int          max_input_history;
@@ -79,12 +80,12 @@ void stifle_history __P((int));
 int unstifle_history __P((void));
 int history_is_stifled __P((void));
 int where_history __P((void));
-const HIST_ENTRY *current_history __P((void));
-const HIST_ENTRY *history_get __P((int));
+HIST_ENTRY *current_history __P((void));
+HIST_ENTRY *history_get __P((int));
 int history_total_bytes __P((void));
 int history_set_pos __P((int));
-const HIST_ENTRY *previous_history __P((void));
-const HIST_ENTRY *next_history __P((void));
+HIST_ENTRY *previous_history __P((void));
+HIST_ENTRY *next_history __P((void));
 int history_search __P((const char *, int));
 int history_search_prefix __P((const char *, int));
 int history_search_pos __P((const char *, int, int));
@@ -93,7 +94,7 @@ int write_history __P((const char *));
 int history_expand __P((char *, char **));
 char **history_tokenize __P((const char *));
 
-char *tilde_expand __P((const char *));
+char *tilde_expand __P((char *));
 char *filename_completion_function __P((const char *, int));
 char *username_completion_function __P((const char *, int));
 int rl_complete __P((int, int));
