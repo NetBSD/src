@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 1996/03/31 22:17:14 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.22 1996/09/05 09:32:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ void	amd7930_trap __P((void));
 /* cons.c */
 int	cnrom __P((void));
 /* zs.c */
-void zsconsole __P((struct tty *, int, int, int (**)(struct tty *, int)));
+void zsconsole __P((struct tty *, int, int, void (**)(struct tty *, int)));
 #ifdef KGDB
 void zs_kgdb_init __P((void));
 #endif
