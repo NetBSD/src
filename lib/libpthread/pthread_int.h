@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.15 2001/08/08 19:36:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.16 2001/09/04 21:19:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,13 @@ struct	pthread_st {
 
 #define NIDLETHREADS	4
 #define IDLESPINS	1000
+
+/* Flag to be used in a ucontext_t's uc_flags indicating that
+ * the saved register state is "user" state only, not full
+ * trap state.
+ */
+#define _UC_USER_BIT		30
+#define _UC_USER		(1LU << _UC_USER_BIT)
 
 void	pthread_init(void)  __attribute__ ((__constructor__));
 
