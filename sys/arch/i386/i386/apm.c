@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.47 2000/04/21 18:37:20 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.48 2000/04/28 04:48:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ struct apm_softc {
 	int	sc_flags;
 	int	event_count;
 	int	event_ptr;
+	int	sc_power_state;
 	struct proc *sc_thread;
 	struct lock sc_lock;
 	struct	apm_event_info event_list[APM_NEVENTS];
@@ -161,9 +162,9 @@ static void	apm_powmgt_engage __P((int, u_int));
 static int	apm_record_event __P((struct apm_softc *, u_int));
 static void	apm_get_capabilities __P((void));
 static void	apm_set_ver __P((struct apm_softc *));
-static void	apm_standby __P((void));
+static void	apm_standby __P((struct apm_softc *));
 static const char *apm_strerror __P((int));
-static void	apm_suspend __P((void));
+static void	apm_suspend __P((struct apm_softc *));
 static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
 
 cdev_decl(apm);
@@ -375,8 +376,19 @@ apm_get_powstate(dev)
 #endif
 
 static void
-apm_suspend()
+apm_suspend(sc)
+	struct apm_softc *sc;
 {
+
+	if (sc->sc_power_state == PWR_SUSPEND) {
+#ifdef APMDEBUG
+		printf("%s: apm_suspend: already suspended?\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return;
+	}
+	sc->sc_power_state = PWR_SUSPEND;
+
 	dopowerhooks(PWR_SUSPEND);
 
 	/* XXX cgd */
@@ -384,8 +396,19 @@ apm_suspend()
 }
 
 static void
-apm_standby()
+apm_standby(sc)
+	struct apm_softc *sc;
 {
+
+	if (sc->sc_power_state == PWR_STANDBY) {
+#ifdef APMDEBUG
+		printf("%s: apm_standby: already standing by?\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return;
+	}
+	sc->sc_power_state = PWR_STANDBY;
+
 	dopowerhooks(PWR_STANDBY);
 
 	/* XXX cgd */
@@ -397,6 +420,15 @@ apm_resume(sc, regs)
 	struct apm_softc *sc;
 	struct bioscallregs *regs;
 {
+
+	if (sc->sc_power_state == PWR_RESUME) {
+#ifdef APMDEBUG
+		printf("%s: apm_resume: already running?\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return;
+	}
+	sc->sc_power_state = PWR_RESUME;
 
 	/*
 	 * Some system requires its clock to be initialized after hybernation.
@@ -538,7 +570,7 @@ apm_event_handle(sc, regs)
 	case APM_CRIT_SUSPEND_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: critical system suspend\n"));
 		apm_record_event(sc, regs->BX);
-		apm_suspend();
+		apm_suspend(sc);
 		break;
 
 	case APM_BATTERY_LOW:
@@ -604,10 +636,10 @@ apm_periodic_check(sc)
 		apm_perror("get event", &regs);
 	if (apm_suspends) {
 		apm_op_inprog = 0;
-		apm_suspend();
+		apm_suspend(sc);
 	} else if (apm_standbys || apm_userstandbys) {
 		apm_op_inprog = 0;
-		apm_standby();
+		apm_standby(sc);
 	}
 	apm_suspends = apm_standbys = apm_battlow = apm_userstandbys = 0;
 	apm_damn_fool_bios = 0;
@@ -1259,6 +1291,9 @@ apmattach(parent, self, aux)
 	apm_cpu_busy();
 
 	lockinit(&apmsc->sc_lock, PWAIT, "apmlk", 0, 0);
+
+	/* Initial state is `resumed'. */
+	apmsc->sc_power_state = PWR_RESUME;
 
 	/* Do an initial check. */
 	apm_periodic_check(apmsc);
