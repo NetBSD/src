@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1998/05/28 12:16:08 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1998/06/11 08:36:54 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -270,6 +270,8 @@ static boolean_t	pmap_testbit __P((vm_offset_t, int));
 static void		pmap_enter_ptpage __P((pmap_t, vm_offset_t));
 static struct pv_entry* pmap_alloc_pv __P((void));
 static void		pmap_free_pv __P((struct pv_entry *));
+static void		pmap_pinit __P((pmap_t));
+static void		pmap_release __P((pmap_t));
 static void		atari_protection_init __P((void));
 static void		pmap_collect1 __P((pmap_t, vm_offset_t, vm_offset_t));  
 
@@ -814,7 +816,7 @@ pmap_create(size)
  * Initialize a preallocated and zeroed pmap structure,
  * such as one in a vmspace structure.
  */
-void
+static void
 pmap_pinit(pmap)
 	register pmap_t	pmap;
 {
@@ -871,7 +873,7 @@ pmap_destroy(pmap)
  * Called when a pmap initialized by pmap_pinit is being released.
  * Should only be called if the map contains no valid mappings.
  */
-void
+static void
 pmap_release(pmap)
 	register pmap_t pmap;
 {
