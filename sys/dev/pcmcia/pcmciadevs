@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp $
+$NetBSD: pcmciadevs,v 1.38 1999/06/23 10:40:16 mjl Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
-vender LASAT			0x3401	Lasat Communications A/S
+vendor LASAT			0x3401	Lasat Communications A/S
 vendor COMPEX			0x8a01	Compex Corporation
 vendor COREGA			0xc00f	Corega K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
