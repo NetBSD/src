@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.15 2000/01/19 16:29:55 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.16 2000/01/23 17:04:03 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -24,7 +24,7 @@ machine-links:
 	    ln -s $S/arch/alpha/include alpha
 CLEANFILES+=machine alpha
 
-all: machine-links ${PROG}
+realall: machine-links ${PROG}
 
 AFLAGS+=	-DASSEMBLER
 # -I${.CURDIR}/../.. done by Makefile.inc

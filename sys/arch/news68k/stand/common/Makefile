@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/09 14:53:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2000/01/23 17:04:06 mycroft Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -10,21 +10,21 @@ CPPFLAGS+= -D_STANDALONE -DBOOT_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S} -I.
 AFLAGS= -D_LOCORE
 
-CLEANFILES+= ${.OBJDIR}/machine ${.OBJDIR}/m68k
+CLEANFILES+= machine m68k
 
-.BEGIN: ${.OBJDIR}/machine ${.OBJDIR}/m68k
+.BEGIN: machine m68k
+.NOPATH: machine m68k
+realdepend realall: machine m68k
 
-${.OBJDIR}/machine::
+machine::
 	-rm -f $@
 	ln -s ${S}/arch/${MACHINE}/include $@
 
-${.OBJDIR}/m68k::
+m68k::
 	-rm -f $@
 	ln -s ${S}/arch/m68k/include $@
 
-depend all: ${.OBJDIR}/machine ${.OBJDIR}/m68k
-
-${OBJS}: ${.OBJDIR}/machine ${.OBJDIR}/m68k
+${OBJS}: machine m68k
 
 ### find out what to use for libkern
 KERN_AS= library
@@ -44,7 +44,7 @@ LIBSA= ${SALIB}
 
 LIBS= ${LIBSA} ${LIBZ} ${LIBKERN}
 
-all: ${LIBS}
+realall: ${LIBS}
 
 cleandir distclean: cleanlibdir
 

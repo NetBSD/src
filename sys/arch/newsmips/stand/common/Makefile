@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/17 07:40:11 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2 2000/01/23 17:04:06 mycroft Exp $
 
 S= ${.CURDIR}/../../../..
 
 OBJS= romcalls.o
-
-CLEANFILES+= machine mips
 
 CFLAGS= -Os -G 0 -mno-abicalls -Wall
 
@@ -27,9 +25,11 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h mips ] || ln -s ${S}/arch/mips/include mips
+.NOPATH: machine mips
+CLEANFILES+= machine mips
 .endif
 
-all: ${OBJS} ${KERNLIB} ${ZLIB} ${SALIB}
+realall: ${OBJS} ${KERNLIB} ${ZLIB} ${SALIB}
 #	ln -s ${KERNLIB}
 #	ln -s ${ZLIB}
 #	ln -s ${SALIB}
