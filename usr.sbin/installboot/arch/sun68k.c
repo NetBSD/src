@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.4 2002/04/24 01:35:25 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.5 2002/04/25 18:11:54 tv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,8 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.4 2002/04/24 01:35:25 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.5 2002/04/25 18:11:54 tv Exp $");
 #endif	/* !__lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -52,7 +56,11 @@ __RCSID("$NetBSD: sun68k.c,v 1.4 2002/04/24 01:35:25 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#if HAVE_CONFIG_H
+#include "../../sys/dev/sun/sun_boot.h"
+#else
 #include <dev/sun/sun_boot.h>
+#endif
 
 #include "installboot.h"
 

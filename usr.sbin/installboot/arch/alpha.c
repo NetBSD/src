@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.6 2002/04/19 07:08:54 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.7 2002/04/25 18:11:53 tv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,8 +98,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.6 2002/04/19 07:08:54 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.7 2002/04/25 18:11:53 tv Exp $");
 #endif	/* !__lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -112,7 +116,11 @@ __RCSID("$NetBSD: alpha.c,v 1.6 2002/04/19 07:08:54 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#if HAVE_CONFIG_H
+#include "../../sys/dev/dec/dec_boot.h"
+#else
 #include <dev/dec/dec_boot.h>
+#endif
 
 #include "installboot.h"
 
