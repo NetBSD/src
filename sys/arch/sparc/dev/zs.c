@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 1996/05/28 14:06:28 mrg Exp $ */
+/*	$NetBSD: zs.c,v 1.39 1996/05/29 01:58:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,6 @@
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
-#include <sparc/dev/zsreg.h>
 #include <dev/ic/z8530reg.h>
 #include <sparc/dev/zsvar.h>
 
@@ -110,7 +109,7 @@
 struct zs_softc {
 	struct	device sc_dev;			/* base device */
 	volatile struct zsdevice *sc_zs;	/* chip registers */
-	struct	evcnt sc_intrcnt;
+	struct	evcnt sc_intrcnt;		/* count interrupts */
 	struct	zs_chanstate sc_cs[2];		/* chan A/B software state */
 };
 
@@ -302,7 +301,7 @@ zsattach(parent, dev, aux)
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
 	tp->t_dev = makedev(ZSMAJOR, unit);
-	if ((ctp = zs_checkcons(cs, unit, cs)) != NULL)
+	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
 		cs->cs_ttyp = tp = ctp;
 	else {
 		tp = ttymalloc();
@@ -1350,6 +1349,7 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return (0);
 }
 
 /*
