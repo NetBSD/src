@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.2 1996/02/28 00:47:45 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.3 1996/05/27 12:39:06 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,29 +40,71 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.1
-export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
+RELDIR=""				# Path searched for sets by install_sets
+export RELDIR				# on the local filesystems
 
-trap "umount /tmp > /dev/null 2>&1" 0
+trap "umount -a > /dev/null 2>&1" 0
 
 MODE="upgrade"
 
 # include machine-dependent functions
 # The following functions must be provided:
+#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_ifdevs()		- return available network interfaces
+#	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
 #	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+
+# include machine dependent subroutines
 . install.md
 
 # include common subroutines
 . install.sub
+
+# include version number
+. VERSION
+
+get_reldir() {
+	while : ; do
+	    echo -n "Enter the pathname where the sets are stored [$RELDIR] "
+	    getresp "$RELDIR"
+	    RELDIR=$resp
+
+	    # Allow break-out with empty response
+	    if [ -z "$RELDIR" ]; then
+		echo -n "Are you sure you don't want to set the pathname? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				break
+				;;
+			*)
+				continue
+				;;
+		esac
+	    fi
+	    if [ -f "/mnt/$RELDIR/base.tar.gz" ]; then
+		break
+	    else
+		echo -n "The directory $RELDIR does not exist, retry? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				;;
+			*)
+				break
+				;;
+		esac
+	    fi
+	done
+}
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -205,7 +247,7 @@ esac
 (
 	rm -f /tmp/fstab.new
 	while read line; do
-		_fstype=`echo $line | awk '{print $3}'`
+		_fstype=`echo $line | cutword 3`
 		if [ "X${_fstype}" = X"ufs" -o \
 		    "X${_fstype}" = X"ffs" -o \
 		    "X${_fstype}" = X"nfs" ]; then
@@ -238,7 +280,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -259,6 +301,17 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
+
+echo -n	"Are the upgrade sets on one of your normally mounted filesystems? [y] "
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		get_reldir
+		;;
+	*)
+		;;
+esac
+
 # Install sets.
 install_sets $UPGRSETS
 
@@ -273,7 +326,7 @@ echo -n	"Would you like to edit the resulting fstab? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -303,9 +356,7 @@ esac
 	kill $pid
 	echo "done."
 
-	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
-	echo "done."
+	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
 )
