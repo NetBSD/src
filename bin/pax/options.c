@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.41 2002/10/13 00:32:09 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.42 2002/10/13 11:31:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.41 2002/10/13 00:32:09 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.42 2002/10/13 11:31:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -613,7 +613,8 @@ pax_options(int argc, char **argv)
 			tty_warn(0, "Destination directory was not supplied");
 			pax_usage();
 		}
-		dirptr = argv[optind++];
+		--argc;
+		dirptr = argv[argc];
 		if (mkpath(dirptr) < 0)
 			cpio_usage();
 		/* FALLTHROUGH */
