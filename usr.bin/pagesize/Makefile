@@ -1,15 +1,12 @@
 #	@(#)Makefile	8.2 (Berkeley) 4/3/94
-#	$NetBSD: Makefile,v 1.5 1995/09/05 01:06:38 tls Exp $
+#	$NetBSD: Makefile,v 1.6 1995/09/05 01:11:10 cgd Exp $
 
 MAN=	pagesize.1
 
-all pagesize: ${MAN1}
+SCRIPT=	pagesize.sh
 
-clean depend lint tags:
-
-install: maninstall
+realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/pagesize.sh ${DESTDIR}/${BINDIR}/pagesize
+	    ${.CURDIR}/${SCRIPT} ${DESTDIR}${BINDIR}/pagesize
 
 .include <bsd.prog.mk>
-.include <bsd.man.mk>
