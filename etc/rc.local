@@ -2,12 +2,12 @@
 # site-specific startup actions, daemons
 #
 #	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
-#	$Id: rc.local,v 1.5 1993/12/22 14:03:32 cgd Exp $
+#	$Id: rc.local,v 1.6 1994/05/05 05:46:24 cgd Exp $
 #
 
 T=/tmp/_motd
 rm -f $T
-strings /netbsd | grep NetBSD > $T
+strings /netbsd | grep '@(#)' | sed 's/@(#)//' > $T
 echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
 cp $T /etc/motd
