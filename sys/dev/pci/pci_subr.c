@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.8 1995/05/23 03:43:06 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.9 1995/06/17 22:40:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -31,7 +31,6 @@
 
 /*
  * PCI autoconfiguration support
- * XXX probably should be moved to pci_subr.c?
  */
 
 #include <sys/types.h>
