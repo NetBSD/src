@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.55 2000/10/02 22:13:38 cgd Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.56 2000/10/05 01:06:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2466,18 +2466,6 @@ LEAF(mips3_write_compare)
 	j	ra
 	nop
 END(mips3_write_compare)
-
-/*
- * Clear BEV bit if it was set.
- */
-LEAF(mips3_clearBEV)
-	mfc0	v0, MIPS_COP_0_STATUS
-	or	v0, MIPS3_SR_DIAG_BEV
-	xor	v0, MIPS3_SR_DIAG_BEV
-	mtc0	v0, MIPS_COP_0_STATUS
-	j	ra
-	nop
-	END(mips3_clearBEV)
 
 LEAF(mips3_FetchIcache)
 	lw	t1, mips_L1ICacheSize
