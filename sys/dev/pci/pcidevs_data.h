@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.9 2004/07/28 10:54:41 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.10 2004/07/28 11:19:38 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.8 2004/07/28 10:52:40 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.9 2004/07/28 11:17:44 tron Exp 
  */
 
 /*
@@ -5342,6 +5342,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82875P AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
+	    0,
+	    "Intel",
+	    "6300ESB IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SATA,
+	    0,
+	    "Intel",
+	    "6300ESB SATA Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
