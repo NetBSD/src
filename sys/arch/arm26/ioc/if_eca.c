@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.1 2001/09/10 23:41:49 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.2 2001/09/15 17:27:24 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.1 2001/09/10 23:41:49 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.2 2001/09/15 17:27:24 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -141,6 +141,9 @@ eca_init(struct ifnet *ifp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int sr1, sr2;
 	int err;
+
+	if ((err = eco_init(ifp)) != 0)
+		return err;
 
 	/* Claim the FIQ early, in case we don't get it. */
 	if (fiq_claim(eca_fiqhandler_rx,
@@ -286,9 +289,12 @@ static void
 eca_txdone(void *arg)
 {
 	struct eca_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	m_freem(sc->sc_txmbuf);
 	sc->sc_txmbuf = NULL;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_start(ifp);
 }
 
 /*
@@ -391,8 +397,10 @@ eca_stop(struct ifnet *ifp, int disable)
 static void
 eca_rx_downgrade(void)
 {
+	struct eca_softc *sc = eca_fiqowner;
 
-	softintr_schedule(eca_fiqowner->sc_rx_soft);
+	sc->sc_sr2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, MC6854_SR2);
+	softintr_schedule(sc->sc_rx_soft);
 }
 
 /*
@@ -410,16 +418,15 @@ eca_gotframe(void *arg)
 	struct mbuf *m, *mtail, *n, *reply;
 
 	reply = NULL;
-	KASSERT(!sc->sc_transmitting);
-	KASSERT(sc == eca_fiqowner);
-	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
+	sr2 = sc->sc_sr2;
 	/* OVRN and FV can be set together. */
 	if (__predict_false(sr2 & MC6854_SR2_OVRN)) {
 		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		/* Discard the rest of the frame. */
-		bus_space_write_1(iot, ioh, MC6854_CR1,
-		    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
+		if (!sc->sc_transmitting)
+			bus_space_write_1(iot, ioh, MC6854_CR1,
+			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	} else if (__predict_true(sr2 & MC6854_SR2_FV)) {
 		/* Frame Valid. */
 		fiq_getregs(&fr);
@@ -463,8 +470,9 @@ eca_gotframe(void *arg)
 		log(LOG_NOTICE, "%s: Oversized frame\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		/* Discard the rest of the frame. */
-		bus_space_write_1(iot, ioh, MC6854_CR1,
-		    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
+		if (!sc->sc_transmitting)
+			bus_space_write_1(iot, ioh, MC6854_CR1,
+			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	}
 
 	bus_space_write_1(iot, ioh, MC6854_CR2,
@@ -472,7 +480,7 @@ eca_gotframe(void *arg)
 
 	if (reply)
 		eca_txframe(ifp, reply);
-	else {
+	else if (!sc->sc_transmitting) {
 		/* Make sure we're not flag-filling. */
 		bus_space_write_1(iot, ioh, MC6854_CR2,
 		    sc->sc_cr2);

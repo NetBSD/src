@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.3 2001/09/13 19:19:21 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.4 2001/09/15 17:27:24 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -62,10 +62,11 @@
  */
 
 #include "bpfilter.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.3 2001/09/13 19:19:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.4 2001/09/15 17:27:24 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -78,10 +79,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.3 2001/09/13 19:19:21 bjh21 Exp $")
 #include <net/if_dl.h>
 #include <net/if_eco.h>
 #include <net/if_types.h>
+#include <net/netisr.h>
 #include <net/route.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#ifdef INET
+#include <net/ethertypes.h>
+#include <net/if_arp.h>
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 #endif
 
 /* Default broadcast address */
@@ -100,7 +109,7 @@ static struct mbuf *eco_ack(struct ifnet *ifp, struct mbuf *m);
 void
 eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
-	struct ecocom *ec = (void *)ifp;
+/*	struct ecocom *ec = (void *)ifp; */
 
 	ifp->if_type = IFT_OTHER;
 	ifp->if_addrlen = ECO_ADDR_LEN;
@@ -119,7 +128,6 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 	/* XXX cast safe? */
 	ifp->if_broadcastaddr = (u_int8_t *)eco_broadcastaddr;
-	ec->ec_state = ECO_IDLE;
 #if NBPFILTER > 0
 	bpfattach(ifp, ifp->if_dlt, ECO_HDR_LEN);
 #endif
@@ -130,16 +138,29 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	goto bad;							\
 } while (/*CONSTCOND*/0)
 
+int
+eco_init(struct ifnet *ifp) {
+	struct ecocom *ec = (struct ecocom *)ifp;
+
+	ec->ec_state = ECO_UNKNOWN;
+	return 0;
+}
+
 static int
 eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	struct eco_header ehdr, *eh;
 	int error, s;
-	struct mbuf *m = m0;
+	struct mbuf *m = m0, *mcopy = NULL;
 	struct rtentry *rt;
 	int hdrcmplt;
 	size_t len;
+#ifdef INET
+	struct mbuf *m1;
+	struct arphdr *ah;
+	struct eco_arp *ecah;
+#endif
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -184,6 +205,59 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	hdrcmplt = 0;
 	switch (dst->sa_family) {
+#ifdef INET
+	case AF_INET:
+		if (m->m_flags & M_BCAST)
+                	memcpy(ehdr.eco_dhost, eco_broadcastaddr,
+			    ECO_ADDR_LEN);
+
+		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost))
+			return (0);	/* if not yet resolved */
+		/* If broadcasting on a simplex interface, loopback a copy */
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		ehdr.eco_port = ECO_PORT_IP;
+		ehdr.eco_control = ECO_CTL_IP;
+		break;
+
+	case AF_ARP:
+		ah = mtod(m, struct arphdr *);
+
+		if (ntohs(ah->ar_pro) != ETHERTYPE_IP)
+			return EAFNOSUPPORT;
+		ehdr.eco_port = ECO_PORT_IP;
+		switch (ntohs(ah->ar_op)) {
+		case ARPOP_REQUEST:
+			ehdr.eco_control = ECO_CTL_ARP_REQUEST;
+			break;
+		case ARPOP_REPLY:
+			ehdr.eco_control = ECO_CTL_ARP_REPLY;
+			break;
+		default:
+			return EOPNOTSUPP;
+		}
+
+		if (m->m_flags & M_BCAST)
+			memcpy(ehdr.eco_dhost, eco_broadcastaddr,
+			    ECO_ADDR_LEN);
+		else
+			memcpy(ehdr.eco_dhost, ar_tha(ah), ECO_ADDR_LEN);
+
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+		if (m1 == NULL)
+			senderr(ENOBUFS);
+		M_COPY_PKTHDR(m1, m);
+		m1->m_len = sizeof(*ecah);
+		m1->m_pkthdr.len = m1->m_len;
+		MH_ALIGN(m1, m1->m_len);
+		ecah = mtod(m1, struct eco_arp *);
+		memset(ecah, 0, m1->m_len);
+		memcpy(ecah->ecar_spa, ar_spa(ah), ah->ar_pln);
+		memcpy(ecah->ecar_tpa, ar_tpa(ah), ah->ar_pln);
+		m_freem(m);
+		m = m1;
+		break;
+#endif
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		/* FALLTHROUGH */
@@ -196,6 +270,9 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		    dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
+
+	if (mcopy)
+		(void) looutput(ifp, mcopy, dst, rt);
 
 	/*
 	 * Add local net header.  If no space in first mbuf,
@@ -247,17 +324,111 @@ bad:
 static int
 eco_interestingp(struct ifnet *ifp, struct mbuf *m)
 {
+	struct eco_header *eh;
 
-	/* Until we get some higher-level protocols, we don't care. */
+	eh = mtod(m, struct eco_header *);
+	switch (eh->eco_port) {
+#ifdef INET
+	case ECO_PORT_IP:
+		return 1;
+#endif
+	}
 	return 0;
 }
 
 static void
 eco_input(struct ifnet *ifp, struct mbuf *m)
 {
+	struct ifqueue *inq;
+	struct eco_header *eh;
+	int s;
+#ifdef INET
+	struct arphdr *ah;
+	struct eco_arp *ecah;
+	struct mbuf *m1;
+#endif
 
-	/* We should really _do_ something with this packet. */
-	m_freem(m);
+#ifdef PFIL_HOOKS
+	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+		return;
+	if (m == NULL)
+		return;
+#endif
+
+	eh = mtod(m, struct eco_header *);
+
+	/* Trim header of front (eh continues to be valid). */
+	m_adj(m, ECO_HDR_LEN);
+
+	switch (eh->eco_port) {
+#ifdef INET
+	case ECO_PORT_IP:
+		switch (eh->eco_control) {
+		case ECO_CTL_IP:
+			schednetisr(NETISR_IP);
+			inq = &ipintrq;
+			break;
+		case ECO_CTL_ARP_REQUEST:
+		case ECO_CTL_ARP_REPLY:
+			/*
+			 * ARP over Econet is strange, because Econet only
+			 * supports 8 bytes of data in a broadcast packet.
+			 * To cope with this, only the source and destination
+			 * IP addresses are actually contained in the packet
+			 * and we have to infer the rest and build a fake ARP
+			 * packet to pass upwards.
+			 */
+			ecah = mtod(m, struct eco_arp *);
+			/* This code derived from arprequest() */
+	       		MGETHDR(m1, M_DONTWAIT, MT_DATA);
+			if (m1 == NULL)
+				goto drop;
+			M_COPY_PKTHDR(m1, m);
+			m1->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
+			    2*ifp->if_data.ifi_addrlen;
+			m1->m_pkthdr.len = m1->m_len;
+			MH_ALIGN(m1, m1->m_len);
+			ah = mtod(m1, struct arphdr *);
+			bzero((caddr_t)ah, m1->m_len);
+			ah->ar_pro = htons(ETHERTYPE_IP);
+			ah->ar_hln = ifp->if_data.ifi_addrlen;
+			ah->ar_pln = sizeof(struct in_addr);
+			if (eh->eco_control == ECO_CTL_ARP_REQUEST)
+				ah->ar_op = htons(ARPOP_REQUEST);
+			else
+				ah->ar_op = htons(ARPOP_REPLY);
+			memcpy(ar_sha(ah), eh->eco_shost, ah->ar_hln);
+			memcpy(ar_tha(ah), eh->eco_dhost, ah->ar_hln);
+			memcpy(ar_spa(ah), ecah->ecar_spa, ah->ar_pln);
+			memcpy(ar_tpa(ah), ecah->ecar_tpa, ah->ar_pln);
+			m_freem(m);
+			m = m1;
+			schednetisr(NETISR_ARP);
+			inq = &arpintrq;
+			break;
+		default:
+			printf("%s: unknown IP stn %s ctl 0x%02x\n",
+			    ifp->if_xname, eco_sprintf(eh->eco_shost),
+			    eh->eco_control);
+			goto drop;
+		}
+		break;
+#endif
+	default:
+		printf("%s: unknown port stn %s port 0x%02x ctl 0x%02x\n",
+		    ifp->if_xname, eco_sprintf(eh->eco_shost),
+		    eh->eco_port, eh->eco_control);
+	drop:
+		m_freem(m);
+		return;
+	}
+	s = splnet();
+	if (IF_QFULL(inq)) {
+		IF_DROP(inq);
+		m_freem(m);
+	} else
+		IF_ENQUEUE(inq, m);
+	splx(s);
 }
 
 static void
@@ -267,30 +438,31 @@ eco_start(struct ifnet *ifp)
 	struct mbuf *m;
 	struct eco_header *eh;
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (!m) break;
-		if (ec->ec_claimwire(ifp) == 0) {
-			eh = mtod(m, struct eco_header *);
-			if (eh->eco_port == ECO_PORT_IMMEDIATE) {
-				ec->ec_txframe(ifp, m);
-				ec->ec_state = ECO_IMMED_SENT;
-			} else if (eh->eco_dhost[0] == 255) {
-				ec->ec_txframe(ifp, m);
-			} else {
-				ec->ec_packet = m;
-				m = m_copym(m, 0, ECO_HDR_LEN, M_DONTWAIT);
-				if (m == NULL) {
-					m_freem(ec->ec_packet);
-					return;
-				}
-				ec->ec_txframe(ifp, m);
-				ec->ec_state = ECO_SCOUT_SENT;
-			}
+	if (ec->ec_state != ECO_IDLE) return;
+	IFQ_DEQUEUE(&ifp->if_snd, m);
+	if (m == NULL) return;
+	if (ec->ec_claimwire(ifp) == 0) {
+		eh = mtod(m, struct eco_header *);
+		if (eh->eco_port == ECO_PORT_IMMEDIATE) {
+			ec->ec_txframe(ifp, m);
+			ec->ec_state = ECO_IMMED_SENT;
+		} else if (eh->eco_dhost[0] == 255) {
+			ec->ec_txframe(ifp, m);
+			ec->ec_state = ECO_DONE;
 		} else {
-			log(LOG_ERR, "%s: line jammed\n", ifp->if_xname);
-			m_freem(m);
+			ec->ec_packet = m;
+			m = m_copym(m, 0, ECO_HDR_LEN, M_DONTWAIT);
+			if (m == NULL) {
+				m_freem(ec->ec_packet);
+				return;
+			}
+			ec->ec_txframe(ifp, m);
+			ec->ec_state = ECO_SCOUT_SENT;
 		}
+		ifp->if_flags |= IFF_OACTIVE;
+	} else {
+		log(LOG_ERR, "%s: line jammed\n", ifp->if_xname);
+		m_freem(m);
 	}
 }
 
@@ -305,6 +477,14 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
+			    (error = (*ifp->if_init)(ifp)) != 0)
+				break;
+			arp_ifinit(ifp, ifa);
+			break;
+#endif
 		default:
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
 				error = (*ifp->if_init)(ifp);
@@ -375,6 +555,12 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 			if (eh->eco_port == ECO_PORT_IMMEDIATE)
 				return eco_immediate(ifp, m);
 			else {
+				if (m->m_pkthdr.len != ECO_HDR_LEN) {
+					printf("%s: %d-byte scout\n",
+					    ifp->if_xname, m->m_pkthdr.len);
+					m_freem(m);
+					break;
+				}
 				if (eco_interestingp(ifp, m)) {
 					reply = eco_ack(ifp, m);
 					if (reply == NULL) {
@@ -512,6 +698,7 @@ eco_inputidle(struct ifnet *ifp)
 	ec->ec_state = ECO_IDLE;
 	m_freem(ec->ec_scout);
 	ec->ec_scout = NULL;
+	ifp->if_start(ifp);
 }
 
 /*
