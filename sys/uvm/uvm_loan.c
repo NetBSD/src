@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.25 2001/03/15 06:10:57 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.26 2001/04/08 16:51:51 jdolecek Exp $	*/
 
 /*
  *
@@ -268,6 +268,10 @@ uvm_loan(map, start, len, result, flags)
 			error = EINVAL;
 			goto fail;
 		}
+		if (rv == 0) {
+			uvmfault_unlockmaps(&ufi, FALSE);
+			continue;
+		}
 
 		/*
 		 * done!   advance pointers and unlock.
@@ -275,7 +279,6 @@ uvm_loan(map, start, len, result, flags)
 		rv <<= PAGE_SHIFT;
 		len -= rv;
 		start += rv;
-		uvmfault_unlockmaps(&ufi, FALSE);
 	}
 	
 	/*
@@ -296,7 +299,7 @@ fail:
 			uvm_unloanpage((struct vm_page **)result,
 			    output - result);
 	}
-	return error;
+	return (error);
 }
 
 /*
