@@ -23,7 +23,7 @@ bin_PROGRAMS = gprof
 sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c \
 	cg_print.c corefile.c gmon_io.c gprof.c hertz.c hist.c source.c \
 	search_list.c symtab.c sym_ids.c utils.c \
-	i386.c alpha.c vax.c tahoe.c sparc.c
+	i386.c alpha.c vax.c tahoe.c sparc.c mips.c
 gprof_SOURCES = $(sources) flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 gprof_DEPENDENCIES = ../bfd/libbfd.la ../libiberty/libiberty.a $(INTLDEPS)
 gprof_LDADD = ../bfd/libbfd.la ../libiberty/libiberty.a $(INTLLIBS)
@@ -188,6 +188,10 @@ tahoe.o: tahoe.c gprof.h $(INCDIR)/ansidecl.h $(BFDDIR)/sysdep.h \
   gconfig.h $(INCDIR)/bin-bugs.h cg_arcs.h symtab.h ../bfd/bfd.h \
   source.h search_list.h corefile.h hist.h
 sparc.o: sparc.c gprof.h $(INCDIR)/ansidecl.h $(BFDDIR)/sysdep.h \
+  ../bfd/config.h $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h \
+  gconfig.h $(INCDIR)/bin-bugs.h cg_arcs.h symtab.h ../bfd/bfd.h \
+  source.h search_list.h corefile.h hist.h
+mips.o: mips.c gprof.h $(INCDIR)/ansidecl.h $(BFDDIR)/sysdep.h \
   ../bfd/config.h $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h \
   gconfig.h $(INCDIR)/bin-bugs.h cg_arcs.h symtab.h ../bfd/bfd.h \
   source.h search_list.h corefile.h hist.h
