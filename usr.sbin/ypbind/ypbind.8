@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.5 1996/10/02 05:55:05 thorpej Exp $
+.\"	$NetBSD: ypbind.8,v 1.6 1997/07/07 02:27:06 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,19 +34,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 25, 1994
+.Dd July 7, 1997
 .Dt YPBIND 8
 .Os
 .Sh NAME
 .Nm ypbind
 .Nd create and maintain a binding to a YP server
 .Sh SYNOPSIS
-.Nm ypbind
-.Op Fl ypset
-.Nm ypbind
-.Op Fl ypsetme
-.Nm ypbind
+.Nm
 .Op Fl broadcast
+.Op Fl insecure
+.Op Fl ypset
+.Op Fl ypsetme
 .Sh DESCRIPTION
 .Nm
 finds the server for a particular YP domain and stores information about it
@@ -97,6 +96,15 @@ marks the domain as bound and resumes its periodic check.
 .Pp
 The options are as follows:
 .Bl -tag -width "-broadcast"
+.It Fl broadcast
+sends a broadcast requesting a YP server to which to bind.
+.It Fl insecure
+do not require that clients make requests from reserved ports.
+This may be necessary for
+.Tn SunOS 3.x
+or
+.Tn ULTRIX
+clients.
 .It Fl ypset
 .Xr ypset 8
 may be used to change the server to which a domain is bound.
@@ -104,15 +112,13 @@ may be used to change the server to which a domain is bound.
 .Xr ypset 8
 may be used only from this machine to change the server
 to which a domain is bound.
-.It Fl broadcast
-sends a broadcast requesting a YP server to which to bind.
 .El
 .Pp
 The
-.Fl ypset ,
-.Fl ypsetme ,
-and
 .Fl broadcast
+.Fl ypset ,
+and
+.Fl ypsetme ,
 options are inherently insecure and should be avoided.
 .Sh FILES
 .Pa /var/yp/binding/domainname.version
@@ -129,6 +135,6 @@ options are inherently insecure and should be avoided.
 .Xr yp 8
 .Sh AUTHOR
 This version of
-.Nm ypbind
+.Nm
 was originally implemented by Theo de Raadt.  The ypservers support was
 implemented by Luke Mewburn.
