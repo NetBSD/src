@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.6 2003/12/16 11:59:04 sekiya Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.7 2003/12/29 06:33:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -92,6 +92,7 @@ struct hpc_values {
         u_int32_t       pbus_fifo;
         u_int32_t       pbus_fifo_size;
         u_int32_t       pbus_bbram;
+        u_int32_t       scsi_max_xfer;
 	u_int32_t       scsi_dma_segs;
         u_int32_t       scsi_dma_segs_size;
         u_int32_t       clk_freq;

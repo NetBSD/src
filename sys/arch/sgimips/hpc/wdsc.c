@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.12 2003/12/16 11:59:04 sekiya Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.13 2003/12/29 06:33:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.12 2003/12/16 11:59:04 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.13 2003/12/29 06:33:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,11 +89,6 @@ void	wdsc_reset	__P((struct wd33c93_softc *));
 int	wdsc_dmaintr	__P((void *));
 int	wdsc_scsiintr	__P((void *));
 
-#define MAX_SCSI_XFER	(512*1024)
-#define MAX_SEG_SZ	8192
-#define	MAX_DMA_SZ	MAX_SCSI_XFER
-#define	DMA_SEGS	(MAX_DMA_SZ/MAX_SEG_SZ)
-
 /*
  * Match for SCSI devices on the onboard WD33C93 chip
  */
@@ -137,7 +132,8 @@ wdsc_attach(pdp, dp, auxp)
 		return;
 	}
 
-	if (bus_dmamap_create(wsc->sc_dmat, MAX_DMA_SZ,
+	if (bus_dmamap_create(wsc->sc_dmat,
+			      wsc->sc_hpcdma.hpc->scsi_max_xfer,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
@@ -167,7 +163,7 @@ wdsc_attach(pdp, dp, auxp)
 		return;
 	}
 
-	hpcdma_init(haa, &wsc->sc_hpcdma, DMA_SEGS);
+	hpcdma_init(haa, &wsc->sc_hpcdma, wsc->sc_hpcdma.hpc->scsi_dma_segs);
 	wd33c93_attach(sc);
 	return;
 }

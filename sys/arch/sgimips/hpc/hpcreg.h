@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.9 2003/12/16 11:59:04 sekiya Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.10 2003/12/29 06:33:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -30,12 +30,24 @@
 #ifndef _ARCH_SGIMIPS_HPC_HPCREG_H_
 #define	_ARCH_SGIMIPS_HPC_HPCREG_H_
 
+/*
+ * HPC3 descriptor layout.
+ */
 struct hpc_dma_desc {
 	u_int32_t	hdd_bufptr;	/* Physical address of buffer */
 	u_int32_t	hdd_ctl;	/* Control flags and byte count */
 	u_int32_t	hdd_descptr;	/* Physical address of next descr. */
 	u_int32_t	hdd_pad;	/* Pad out to quadword alignment */
 };
+
+/*
+ * The hdd_bufptr and hdd_ctl fields are swapped between HPC1 and
+ * HPC3. These fields are referenced by macro for readability.
+ */
+#define hpc1_hdd_ctl	hdd_bufptr	
+#define hpc1_hdd_bufptr	hdd_ctl
+#define hpc3_hdd_ctl	hdd_ctl
+#define hpc3_hdd_bufptr	hdd_bufptr
 
 /*
  * Control flags
@@ -363,12 +375,12 @@ struct hpc_dma_desc {
 #define HPC1_HDD_CTL_EOCHAIN	0x80000000	/* End of descriptor chain */
 #define HPC1_HDD_CTL_EOPACKET	0x80000000	/* Ethernet: end of packet */
 #define HPC1_HDD_CTL_INTR	0x00008000	/* Interrupt when finished */
-#define HPC1_HDD_CTL_XMITDONE	0x80000000	/* Ethernet transmit done */
 #define HPC1_HDD_CTL_OWN	0x40000000	/* CPU owns this frame */
 #define HPC1_HDD_CTL_BYTECNT(x)	((x) & 0x1fff)	/* Byte count: for ethernet */
 #define HPC1_BIGENDIAN		0x000000c0	/* Endianness:5 revision:2 */
 #define	HPC1_REVSHIFT		0x00000006	/* Revision rshft */
 #define	HPC1_REVMASK		0x00000003	/* Revision mask */
+#define HPC1_REV15		0x00000001	/* HPC Revision 1.5 */
 #define HPC1_SCSI0_REGS		0x00000088
 #define HPC1_SCSI0_REGS_SIZE	0x00000018
 #define HPC1_SCSI0_CBP		0x00000004	/* Current buffer ptr */
