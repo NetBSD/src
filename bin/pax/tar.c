@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.51 2004/04/20 19:59:54 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.52 2004/04/25 15:52:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.51 2004/04/20 19:59:54 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.52 2004/04/25 15:52:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ static char *gnu_hack_string;		/* ././@LongLink hackery */
 static int gnu_hack_len;		/* len of gnu_hack_string */
 char *gnu_name_string;			/* ././@LongLink hackery name */
 char *gnu_link_string;			/* ././@LongLink hackery link */
+static int gnu_short_trailer;		/* gnu short trailer */
 
 static int
 check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
@@ -122,7 +123,7 @@ check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
 int
 tar_endwr(void)
 {
-	return(wr_skip((off_t)(NULLCNT*BLKMULT)));
+	return(wr_skip((off_t)(NULLCNT * BLKMULT)));
 }
 
 /*
@@ -135,7 +136,7 @@ tar_endwr(void)
 off_t
 tar_endrd(void)
 {
-	return((off_t)(NULLCNT*BLKMULT));
+	return((off_t)((gnu_short_trailer ? 1 : NULLCNT) * BLKMULT));
 }
 
 /*
@@ -154,6 +155,7 @@ tar_trail(char *buf, int in_resync, int *cnt)
 {
 	int i;
 
+	gnu_short_trailer = 0;
 	/*
 	 * look for all zero, trailer is two consecutive blocks of zero
 	 */
@@ -178,14 +180,14 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 */
 	if (!in_resync) {
 		++*cnt;
-#if 0
 		/*
 		 * old GNU tar (up through 1.13) only writes one block of
 		 * trailers, so we pretend we got another
 		 */
-		if (is_gnutar)
+		if (is_gnutar) {
+			gnu_short_trailer = 1;
 			++*cnt;
-#endif
+		}
 		if (*cnt >= NULLCNT)
 			return(0);
 	}
