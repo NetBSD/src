@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.12 2004/12/13 10:35:04 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.13 2005/02/21 15:00:05 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -66,9 +66,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.24 2004/09/27 15:28:37 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.25 2005/01/07 19:17:27 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.12 2004/12/13 10:35:04 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.13 2005/02/21 15:00:05 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -283,7 +283,7 @@ magic_file(struct magic_set *ms, const char *inname)
 			goto gotit;
 		}
 #endif
-		if (file_buffer(ms, buf, (size_t)nbytes) == -1)
+		if (file_buffer(ms, fd, buf, (size_t)nbytes) == -1)
 			goto done;
 #ifdef BUILTIN_ELF
 		if (nbytes > 5) {
@@ -317,7 +317,7 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 	 * The main work is done here!
 	 * We have the file name and/or the data buffer to be identified. 
 	 */
-	if (file_buffer(ms, buf, nb) == -1) {
+	if (file_buffer(ms, -1, buf, nb) == -1) {
 		return NULL;
 	}
 	return file_getbuffer(ms);
