@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.35 1997/08/23 13:44:06 drochner Exp 
+ *	NetBSD: pcidevs,v 1.36 1997/08/28 00:12:44 thorpej Exp 
  */
 
 /*
@@ -1398,6 +1398,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "FDC 37C922",
+	},
+	{
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
+	    0,
+	    "Standard Microsystems",
+	    "83C170 (\"EPIC/100\") Fast Ethernet",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
