@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.39 1997/11/03 16:15:47 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.40 1997/11/03 16:30:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -447,6 +447,8 @@ zsopen(dev, flags, mode, p)
 			SET(t.c_cflag, CLOCAL);
 		if (ISSET(zst->zst_swflags, TIOCFLAG_CRTSCTS))
 			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(zst->zst_swflags, TIOCFLAG_CDTRCTS))
+			SET(t.c_cflag, CDTRCTS);
 		if (ISSET(zst->zst_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
 		/* Make sure zsparam will see changes. */
