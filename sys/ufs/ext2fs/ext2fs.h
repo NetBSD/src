@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.5 1998/09/29 10:24:57 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.6 1998/09/30 09:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,7 +37,7 @@
  *  Modified for ext2fs by Manuel Bouyer.
  */
 
-#include <machine/bswap.h>
+#include <machine/endian.h>
 
 /*
  * Each disk drive contains some number of file systems.
