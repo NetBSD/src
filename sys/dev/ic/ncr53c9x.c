@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.82 2001/07/07 16:13:49 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.83 2001/07/10 00:36:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2638,15 +2638,10 @@ printf("<<RESELECT CONT'd>>");
 
 	default:
 		/* Don't panic: reset. */
-		printf("%s: invalid state: %d",
+		printf("%s: invalid state: %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_state);
 		ncr53c9x_scsi_reset(sc);
 		goto out;
-#if 0
-		panic("%s: invalid state: %d",
-		    sc->sc_dev.dv_xname, sc->sc_state);
-#endif
-		break;
 	}
 
 	/*
