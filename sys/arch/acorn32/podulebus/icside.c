@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.4 2002/09/14 18:12:16 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.5 2002/09/15 11:00:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -86,6 +86,7 @@ struct icside_softc {
 	bus_space_tag_t		sc_latchiot;	/* EEPROM page latch etc */
 	bus_space_handle_t	sc_latchioh;
 	void			*sc_shutdownhook;
+	struct channel_softc *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
 		struct channel_softc	wdc_channel;	/* generic part */
 		void			*ic_ih;		/* interrupt handler */
@@ -94,7 +95,7 @@ struct icside_softc {
 		u_int			ic_irqmask;	/*  location */
 		bus_space_tag_t		ic_irqiot;	/* Bus space tag */
 		bus_space_handle_t	ic_irqioh;	/* handle for IRQ */
-	} *icside_channels;
+	} sc_chan[ICSIDE_MAX_CHANNELS];
 };
 
 int	icside_probe	__P((struct device *, struct cfdata *, void *));
@@ -256,22 +257,14 @@ icside_attach(parent, self, aux)
 	sc->sc_tag.bs_wm_2 = icside_bs_wm_2;
 
 	/* Initialize wdc struct */
-	sc->sc_wdcdev.channels = malloc(
-	    sizeof(struct channel_softc *) * ide->channels, M_DEVBUF, M_NOWAIT);
-	sc->icside_channels = malloc(
-	    sizeof(struct icside_channel) * ide->channels, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_wdcdev.channels == NULL || sc->icside_channels == NULL) {
-		printf("%s: can't allocate channel infos\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
-	}
+	sc->sc_wdcdev.channels = sc->sc_chp;
 	sc->sc_wdcdev.nchannels = ide->channels;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_pa = pa;
 
 	for (channel = 0; channel < ide->channels; ++channel) {
-		icp = &sc->icside_channels[channel];
+		icp = &sc->sc_chan[channel];
 		sc->sc_wdcdev.channels[channel] = &icp->wdc_channel;
 		cp = &icp->wdc_channel;
 
@@ -280,10 +273,9 @@ icside_attach(parent, self, aux)
 		cp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
 		    M_NOWAIT);
 		if (cp->ch_queue == NULL) {
-			printf("%s %s channel: "
+			printf("%s:%d: "
 			    "can't allocate memory for command queue",
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    (channel == 0) ? "primary" : "secondary");
+			    sc->sc_wdcdev.sc_dev.dv_xname, channel);
 			continue;
 		}
 		cp->cmd_iot = &sc->sc_tag;
