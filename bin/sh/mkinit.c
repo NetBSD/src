@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkinit.c	5.3 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: mkinit.c,v 1.5 1994/03/27 07:45:57 deraadt Exp $";
+static char rcsid[] = "$Id: mkinit.c,v 1.6 1994/04/25 18:47:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ static char rcsid[] = "$Id: mkinit.c,v 1.5 1994/03/27 07:45:57 deraadt Exp $";
  */
 
 
+#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -436,7 +437,7 @@ touch(file)
 		close(fd);
 		return 0;
 	}
-	lseek(fd, 0L, 0);
+	lseek(fd, 0, 0);
 	write(fd, &c, 1);
 	close(fd);
 	return 1;
