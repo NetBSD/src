@@ -1,4 +1,41 @@
-/*	$NetBSD: buf.h,v 1.35 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: buf.h,v 1.36 2000/01/21 23:20:51 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,6 +88,54 @@
  * To avoid including <ufs/ffs/softdep.h> 
  */   
 LIST_HEAD(workhead, worklist);
+
+/*
+ * Device driver buffer queue.
+ */
+struct buf_queue {
+	TAILQ_HEAD(bufq_head, buf) bq_head; /* actual list of buffers */
+	struct buf *bq_barrier;		    /* last B_ORDERED request */
+};
+
+#ifdef _KERNEL
+#define	BUFQ_FIRST(bufq)	TAILQ_FIRST(&(bufq)->bq_head)
+#define	BUFQ_NEXT(bp)		TAILQ_NEXT((bp), b_actq)
+
+#define	BUFQ_INIT(bufq)							\
+do {									\
+	TAILQ_INIT(&(bufq)->bq_head);					\
+	(bufq)->bq_barrier = NULL;					\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_TAIL(bufq, bp)					\
+do {									\
+	TAILQ_INSERT_TAIL(&(bufq)->bq_head, (bp), b_actq);		\
+	if (((bp)->b_flags & B_ORDERED) != 0)				\
+		(bufq)->bq_barrier = (bp);				\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_AFTER(bufq, lbp, bp)				\
+do {									\
+	KASSERT((bufq)->bq_barrier == NULL);				\
+	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
+	TAILQ_INSERT_AFTER(&(bufq)->bq_head, (lbp), (bp), b_actq);	\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_BEFORE(bufq, lbp, bp)				\
+do {									\
+	KASSERT((bufq)->bq_barrier == NULL);				\
+	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
+	TAILQ_INSERT_BEFORE((lbp), (bp), b_actq);			\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_REMOVE(bufq, bp)						\
+do {									\
+	if ((bufq)->bq_barrier == (bp))					\
+		(bufq)->bq_barrier = TAILQ_PREV((bp), bufq_head, b_actq); \
+	TAILQ_REMOVE(&(bufq)->bq_head, (bp), b_actq);			\
+} while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
+
 /*
  * These are currently used only by the soft dependency code, hence
  * are stored once in a global variable. If other subsystems wanted
@@ -75,7 +160,7 @@ struct buf {
 	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	struct	buf *b_actf, **b_actb;	/* Device driver queue when active. */
+	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
@@ -109,11 +194,7 @@ struct buf {
 #define	b_cylinder b_resid		/* Cylinder number for disksort(). */
 
 /* Device driver compatibility definitions. */
-#define	b_active b_bcount		/* Driver queue head: drive active. */
 #define	b_data	 b_un.b_addr		/* b_un.b_addr is not changeable. */
-#define	b_errcnt b_resid		/* Retry count while I/O in progress. */
-#define	iodone	 biodone		/* Old name for biodone. */
-#define	iowait	 biowait		/* Old name for biowait. */
 
 /*
  * These flags are kept in b_flags.
@@ -134,6 +215,7 @@ struct buf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
+#define	B_ORDERED	0x00010000	/* ordered I/O request */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
@@ -161,10 +243,11 @@ struct cluster_save {
 /*
  * Zero out the buffer's data area.
  */
-#define	clrbuf(bp) {							\
+#define	clrbuf(bp)							\
+do {									\
 	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount);			\
 	(bp)->b_resid = 0;						\
-}
+} while (0)
 
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
@@ -180,6 +263,7 @@ extern int nswbuf;		/* Number of swap I/O buffer headers. */
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
+void	bowrite __P((struct buf *));
 void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
