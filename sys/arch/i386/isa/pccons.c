@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.53 1994/03/02 05:44:10 mycroft Exp $
+ *	$Id: pccons.c,v 1.54 1994/03/02 06:46:11 mycroft Exp $
  */
 
 /*
@@ -333,13 +333,14 @@ pcprobe(dev)
 		printf("pcprobe: reset error 2\n");
 		goto lose;
 	}
-	/* XXX We need the old XT scancodes. */
-	if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(0, 1)) {
+	/* Just to be safe. */
+	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error 3\n");
 		goto lose;
 	}
-	/* Just to be safe. */
-	if (!kbd_cmd(KBC_ENABLE, 1)) {
+#endif
+	/* We need the old XT scancodes. */
+	if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(1, 1)) {
 		printf("pcprobe: reset error 4\n");
 		goto lose;
 	}
@@ -349,7 +350,6 @@ lose:
 	 * Technically, we should probably fail the probe.  But we'll be nice
 	 * and allow keyboard-less machines to boot with the console.
 	 */
-#endif
 
 	return 16;
 }
