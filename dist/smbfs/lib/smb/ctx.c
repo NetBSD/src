@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.7 2004/03/20 08:55:00 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.8 2004/03/21 07:16:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -598,7 +598,6 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 	int fd, i;
 	char buf[20];
 
-#ifndef __NetBSD__
 	/*
 	 * First, try to open as cloned device
 	 */
@@ -607,14 +606,13 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 		ctx->ct_fd = fd;
 		return 0;
 	}
-#endif
 
 	/*
 	 * well, no clone capabilities available - we have to scan
 	 * all devices in order to get free one
 	 */
 	 for (i = 0; i < 1024; i++) {
-	         snprintf(buf, sizeof(buf), "/dev/%s%d", NSMB_NAME, i);
+	         snprintf(buf, sizeof(buf), "/dev/"NSMB_NAME"%d", i);
 		 fd = open(buf, O_RDWR);
 		 if (fd >= 0) {
 			ctx->ct_fd = fd;
@@ -659,7 +657,7 @@ smb_ctx_lookup(struct smb_ctx *ctx, int level, int flags)
 	}
 	error = smb_ctx_gethandle(ctx);
 	if (error) {
-		smb_error("can't get handle to requester (no /dev/"NSMB_NAME"* device)", 0);
+		smb_error("can't get handle to requester (no /dev/"NSMB_NAME"* device available)", 0);
 		return EINVAL;
 	}
 	bzero(&rq, sizeof(rq));
