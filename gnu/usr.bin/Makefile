@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1995/12/03 21:13:18 phil Exp $
+#	$NetBSD: Makefile,v 1.27 1995/12/07 07:26:32 phil Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
@@ -9,13 +9,8 @@ SUBDIR+=	gzip rcs sdiff send-pr sort tar
 SUBDIR+=	gas gcc2 gdb ld
 .endif
 
-# vax wants part of it anyway.
-.if (${MACHINE_ARCH} == "vax")
-SUBDIR+=        gas gdb ld
-.endif
-
-# ns32k wants newer gcc
-.if (${MACHINE_ARCH} == "ns32k")
+# ns32k and vax wants newer gcc
+.if (${MACHINE_ARCH} == "ns32k") || (${MACHINE_ARCH} == "vax")
 SUBDIR+=        gas gcc gdb ld
 .endif
 
