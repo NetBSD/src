@@ -1,4 +1,4 @@
-/*	$Id: vector.s,v 1.10.2.2 1993/10/09 08:50:36 mycroft Exp $ */
+/*	$Id: vector.s,v 1.10.2.3 1993/10/12 23:36:36 mycroft Exp $ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
@@ -47,37 +47,20 @@
  *
  * XXX - should we do a cld on every system entry to avoid the requirement
  * for scattered cld's?
- *
- * Coding notes for *.s:
- *
- * If possible, avoid operations that involve an operand size override.
- * Word-sized operations might be smaller, but the operand size override
- * makes them slower on on 486's and no faster on 386's unless perhaps
- * the instruction pipeline is depleted.  E.g.,
- *
- *	Use movl to seg regs instead of the equivalent but more descriptive
- *	movw - gas generates an irelevant (slower) operand size override.
- *
- *	Use movl to ordinary regs in preference to movw and especially
- *	in preference to movz[bw]l.  Use unsigned (long) variables with the
- *	top bits clear instead of unsigned short variables to provide more
- *	opportunities for movl.
- *
- * If possible, use byte-sized operations.  They are smaller and no slower.
- *
- * Use (%reg) instead of 0(%reg) - gas generates larger code for the latter.
- *
- * We may not need to load the segment registers to check ipending.
  */
 
 	.globl	_isa_strayintr
 
 #define	INTR(irq_num, icu, enable_icus) \
+IDTVEC(irq_num) ; \
+	ss ; \
+	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
+	jnz	2f ; \
 	pushl	$0 ;		/* dummy error code */ \
 	pushl	$T_ASTFLT ; \
 	pushl	%ds ; 		/* save our data and extra segments ... */ \
 	pushl	%es ; \
-	pushl	%eax ; \
+	pushal ; \
 	movl	$KDSEL,%eax ;	/* ... and reload with kernel's own ... */ \
 	movl	%ax,%ds ; 	/* ... early in case SHOW_A_LOT is on */ \
 	movl	%ax,%es ; \
@@ -86,66 +69,59 @@
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
 	outb	%al,$icu+1 ; \
 	enable_icus ; 		/* reenable hw interrupts */ \
-				/* check if intr masked */ \
-	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
-	jne	2f ; \
-1: ; \
-	popl	%eax ; 		/* fill out trap frame */ \
-	pushal ; \
+Vresume/**/irq_num: ; \
 	incl	_cnt+V_INTR ; 	/* increment statistical counters */ \
 	COUNT_INTR(_intrcnt_actv, irq_num) ; \
 	movl	_cpl,%eax ; 	/* finish interrupt frame */ \
 	pushl	%eax ; \
-	movl	_intrmask + 4*irq_num,%ebx ; /* add interrupt's spl mask */ \
-	orl	(%ebx),%eax ; \
+	orl	_intrmask + 4*irq_num,%eax ; /* add interrupt's spl mask */ \
 	movl	%eax,_cpl ; \
 	sti ; \
-	xorl	%ecx,%ecx ; 	/* clear stray flag */ \
 	movl	_intrhand + 4*irq_num,%ebx ; /* head of handler chain */ \
 	testl	%ebx,%ebx ; 	/* exit loop if no handlers */ \
-	jz	3f ; \
-	movl	(%ebx),%eax ; 	/* push argument or pointer to frame */ \
+	jz	6f ; \
+	xorl	%ecx,%ecx ; 	/* clear stray flag */ \
+7: ; \
+	movl	4(%ebx),%eax ; 	/* push argument or pointer to frame */ \
 	jnz	4f ; \
 	movl	%esp,%eax ; \
 4: ; \
 	pushl	%eax ; \
-	movl	4(%ebx),%eax ; 	/* call handler */ \
-	call	%eax ; \
+	call	(%ebx) ; 	/* call handler */ \
 	addl	$4,%esp	;	/* pop argument */ \
 	orl	%eax,%ecx ; 	/* set stray flag */ \
-	movl	8(%ebx),%eax ; 	/* next handler in chain */ \
+	incl	8(%ebx) ; 	/* increment counter */ \
+	movl	12(%ebx),%ebx ;	/* next handler in chain */ \
 	testl	%ebx,%ebx ; 	/* exit loop if no more */ \
-	jz	3f ; \
-	movl	(%ebx),%eax ; 	/* push argument or pointer to frame */ \
-	jnz	4b ; \
-	movl	%esp,%eax ; \
-	jmp	4b ; \
-; \
-	ALIGN_TEXT ; \
-3: ; \
-	testl	%ecx,%ecx ; 	/* check for stray interrupt */ \
-	jnz	5f ; \
-	pushl	$irq_num ; \
-	call	_isa_strayintr ; \
+	jnz	7b ; \
+	jecxz	6f ;  		/* check for stray interrupt */ \
 5: ; \
 	cli ; 			/* unmask interrupt in hw */ \
 	movb	_imen + IRQ_BYTE(irq_num),%al ; \
 	andb	$~IRQ_BIT(irq_num),%al ; \
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	sti ; \
 	outb	%al,$icu+1 ; \
+	sti ; \
 	jmp	doreti ; 	/* finish up */ \
-; \
+	ALIGN_TEXT ; \
+6: ; \
+	pushl	$irq_num ; \
+	call	_isa_strayintr ; \
+	addl	$4,%esp ; \
+	jmp	5b ; \
 	ALIGN_TEXT ; \
 2: ; \
-	COUNT_EVENT(_intrcnt_pend, irq_num) ; \
-	movl	$1b,%eax ; 	/* save resume address; set pending flag */ \
-	movl	%eax,Vresume + 4*irq_num ; \
+	pushl	%eax ; \
+	ss ; \
+	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
+	orb	$IRQ_BIT(irq_num),%al ; \
+	ss ; \
+	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
+	outb	%al,$icu+1 ; \
+	enable_icus ; 		/* reenable hw interrupts */ \
+	ss ; \
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
 	popl	%eax ; \
-	popl	%es ; \
-	popl	%ds ; \
-	addl	$8,%esp ; \
 	iret
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
@@ -173,16 +149,19 @@ INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
  * Bruce Evans intr-0.1 code, which I modified some more to make it all
  * work with vmstat.
  */
+	ALIGN_TEXT
+Vresume:			/* where to resume intr handler after unpend */
+	.long	Vresume0, Vresume1, Vresume2, Vresume3, Vresume4, Vresume5
+	.long	Vresume6, Vresume7, Vresume8, Vresume9, Vresume10, Vresume11
+	.long	Vresume12, Vresume13, Vresume14, Vresume15
+
 	.data
-Vresume:	.space	16 * 4	/* where to resume intr handler after unpend */
 	.globl	_intrcnt
 _intrcnt:			/* used by vmstat to calc size of table */
 	.globl	_intrcnt_stray
 _intrcnt_stray:	.space	4	/* total count of stray interrupts */
 	.globl	_intrcnt_actv
 _intrcnt_actv:	.space	16 * 4	/* active interrupts */
-	.globl	_intrcnt_pend
-_intrcnt_pend:	.space	16 * 4	/* pending interrupts */
 	.globl	_eintrcnt
 _eintrcnt:			/* used by vmstat to calc size of table */
 
@@ -206,71 +185,4 @@ _intrnames:
 	.asciz	"irq13"
 	.asciz	"irq14"
 	.asciz	"irq15"
-
-#ifdef INTR_DEBUG
-	.asciz	"irq0 pend"
-	.asciz	"irq1 pend"
-	.asciz	"irq2 pend"
-	.asciz	"irq3 pend"
-	.asciz	"irq4 pend"
-	.asciz	"irq5 pend"
-	.asciz	"irq6 pend"
-	.asciz	"irq7 pend"
-	.asciz	"irq8 pend"
-	.asciz	"irq9 pend"
-	.asciz	"irq10 pend"
-	.asciz	"irq11 pend"
-	.asciz	"irq12 pend"
-	.asciz	"irq13 pend"
-	.asciz	"irq14 pend"
-	.asciz	"irq15 pend"
-
-/*
- * now the spl names
- */
-	.asciz	"unpend_v"
-	.asciz	"doreti"
-	.asciz	"p0!ni"
-	.asciz	"!p0!ni"
-	.asciz	"p0ni"
-	.asciz	"netisr_raw"
-	.asciz	"netisr_ip"
-	.asciz	"netisr_imp"
-	.asciz	"netisr_ns"
-	.asciz	"softclock"
-	.asciz	"trap"
-	.asciz	"doreti_exit2"
-	.asciz	"splbio"
-	.asciz	"splclock"
-	.asciz	"splhigh"
-	.asciz	"splimp"
-	.asciz	"splnet"
-	.asciz	"splsoftclock"
-	.asciz	"spltty"
-	.asciz	"splnone"
-	.asciz	"netisr_raw2"
-	.asciz	"netisr_ip2"
-	.asciz	"splx"
-	.asciz	"splx!0"
-	.asciz	"unpend_V"
-	.asciz	"netisr_iso"
-	.asciz	"netisr_imp2"
-	.asciz	"netisr_ns2"
-	.asciz	"netisr_iso2"
-	.asciz	"spl29"		/* spl29-spl31 are spares */
-	.asciz	"spl30"
-	.asciz	"spl31"
-/*
- * now the mask names
- */
-	.asciz	"cli"
-	.asciz	"cpl"
-	.asciz	"imen"
-	.asciz	"ipending"
-	.asciz	"sti"
-	.asciz	"mask5"		/* mask5-mask7 are spares */
-	.asciz	"mask6"
-	.asciz	"mask7"
-#endif /* INTR_DEBUG */
-	
 _eintrnames:
