@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.32 2004/02/28 09:04:00 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.33 2004/02/28 09:19:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.32 2004/02/28 09:04:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.33 2004/02/28 09:19:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,9 @@ smbfs_rename(v)
 	struct componentname *tcnp = ap->a_tcnp;
 /*	struct componentname *fcnp = ap->a_fcnp;*/
 	struct smb_cred scred;
+#ifdef notyet
 	u_int16_t flags = 6;
+#endif
 	int error=0;
 
 	/* Check for cross-device rename */
@@ -689,13 +691,17 @@ smbfs_rename(v)
 		error = EBUSY;
 		goto out;
 	}
+#ifdef notnow
 	flags = 0x10;			/* verify all writes */
 	if (fvp->v_type == VDIR) {
 		flags |= 2;
 	} else if (fvp->v_type == VREG) {
 		flags |= 1;
-	} else
-		return EINVAL;
+	} else {
+		error = EINVAL;
+		goto out;
+	}
+#endif
 	smb_makescred(&scred, tcnp->cn_proc, tcnp->cn_cred);
 	/*
 	 * It seems that Samba doesn't implement SMB_COM_MOVE call...
