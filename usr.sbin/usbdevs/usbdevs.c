@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.17 2001/02/19 23:22:48 cgd Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.18 2001/11/17 01:52:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,12 @@ usbdev(int f, int a, int rec)
 	printf("addr %d: ", a);
 	done[a] = 1;
 	if (verbose) {
-		if (di.lowspeed)
-			printf("low speed, ");
+		switch (di.speed) {
+		case USB_SPEED_LOW:  printf("low speed, "); break;
+		case USB_SPEED_FULL: printf("full speed, "); break;
+		case USB_SPEED_HIGH: printf("high speed, "); break;
+		default: break;
+		}
 		if (di.power)
 			printf("power %d mA, ", di.power);
 		else
