@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/25 10:11:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1997/12/04 09:03:19 mikel Exp $
 
 LIB=	gcc
 NOPROFILE=
@@ -15,7 +15,7 @@ CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 #	  _ledf2.o _eqsf2.o _nesf2.o _gtsf2.o _gesf2.o _ltsf2.o _lesf2.o
 
 #LIB2OBJS= _muldi3.o _divdi3.o _moddi3.o _udivdi3.o _umoddi3.o _negdi2.o \
-#	  _lshrdi3.o _lshldi3.o _ashldi3.o _ashrdi3 _ffsdi2.o \
+#	  _lshrdi3.o _lshldi3.o _ashldi3.o _ashrdi3.o _ffsdi2.o \
 #	  _udiv_w_sdiv.o _udivmoddi4.o _cmpdi2.o _ucmpdi2.o _floatdidf.o \
 #	  _floatdisf.o _fixunsdfsi.o _fixunssfsi.o _fixunsdfdi.o _fixdfdi.o \
 #	  _fixunssfdi.o _fixsfdi.o _fixxfdi.o _fixunsxfdi.o _floatdixf.o \
