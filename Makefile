@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.2.1 1997/10/27 18:09:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.42.2.2 1998/02/07 00:49:34 mellon Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -29,6 +29,10 @@ regression-tests:
 .endif
 
 beforeinstall:
+.ifmake build
+	@echo -n "Build started at: "
+	@date
+.endif
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
@@ -39,9 +43,21 @@ afterinstall:
 .ifndef NOMAN
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
+.ifmake build
+	@echo -n "Build finished at: "
+	@date
+.endif
 
 build: beforeinstall
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
+.if exists(domestic) && !defined (EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic/usr.bin/compile_et && \
+	    ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} install)
+	(cd ${.CURDIR}/domestic/usr.bin/make_cmds && \
+	    ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} install)
+.endif
 	${MAKE} includes
 .if !defined(UPDATE)
 	${MAKE} cleandir
@@ -49,7 +65,15 @@ build: beforeinstall
 	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/lex &&\
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/yacc && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/xlint && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic/lib/libkrb && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
 .endif
