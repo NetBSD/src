@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.4 2001/11/15 09:48:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.5 2002/03/22 09:54:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.4 2001/11/15 09:48:09 lukem Exp $");
 
 /* driver state */
 struct daic_isa_softc {
-	struct daic sc_daic;		/* MI driver state */
+	struct daic_softc sc_daic;	/* MI driver state */
 	void *sc_ih;			/* interrupt handler */
 };
 
@@ -85,13 +85,16 @@ daic_isa_probe(parent, cf, aux)
 	int card;
 
 	/* We need some controller memory to comunicate! */
-	if (ia->ia_maddr == MADDRUNK || ia->ia_msize == -1)
+	if (ia->ia_iomem[0].ir_addr == 0 || ia->ia_iomem[0].ir_size == -1)
 		goto bad;
 
 	/* Map card RAM. */
-	ia->ia_msize = DAIC_ISA_MEMSIZE;
-	ia->ia_iosize = 0;
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize,
+	ia->ia_iomem[0].ir_size = DAIC_ISA_MEMSIZE;
+	ia->ia_nio = 0;
+	ia->ia_ndrq = 0;
+	ia->ia_nirq = 1;
+	ia->ia_niomem = 1;
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_size,
 	    0, &memh))
 		goto bad;
 
@@ -100,7 +103,7 @@ daic_isa_probe(parent, cf, aux)
 	if (card < 0)
 		goto bad;
 	if (card == DAIC_TYPE_QUAD)
-		ia->ia_msize = DAIC_ISA_QUADSIZE;
+		ia->ia_iomem[0].ir_size = DAIC_ISA_QUADSIZE;
 
 	bus_space_unmap(memt, memh, DAIC_ISA_MEMSIZE);
 	return 1;
@@ -122,7 +125,7 @@ daic_isa_attach(parent, self, aux)
 	bus_space_handle_t memh;
 
 	/* Map card RAM. */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize,
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_size,
 	    0, &memh))
 		return;
 
@@ -132,7 +135,7 @@ daic_isa_attach(parent, self, aux)
 	/* MI initialization of card */
 	daic_attach(self, &sc->sc_daic);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE,
 	    IPL_NET, daic_isa_intr, sc);
 }
 
