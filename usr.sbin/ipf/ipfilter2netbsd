@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -67,7 +67,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 SUBDIR=	ipf ipfstat ipftest ipmon ipnat ipresend ipsend iptest rules
 
@@ -80,11 +80,13 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile.inc
 cat > Makefile.inc<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 WARNS?=	1
 
+.if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
+.endif
 __eof_makefile
 ### end Makefile.inc ###############################
 
@@ -101,7 +103,9 @@ cd $d/src/usr.sbin/ipf/ipf
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
+
+.include <bsd.own.mk>
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -109,7 +113,7 @@ MAN=	ipf.8 ipf.4 ipf.5 ipl.4
 MLINKS=	ipl.4 ipfilter.4 ipf.5 ipf.conf.5
 
 BINDIR=		/sbin
-LDSTATIC=	-static
+LDSTATIC?=	-static
 
 .include <bsd.prog.mk>
 __eof_makefile
@@ -128,7 +132,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -154,7 +158,7 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c ip_auth.c
@@ -179,7 +183,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -204,7 +208,7 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
@@ -229,14 +233,18 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c ipft_pc.c
 MAN=	ipresend.1
-CPPFLAGS+=-I${.CURDIR}/../ipfstat -I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 
-.PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat ${.CURDIR}/../ipsend ${.CURDIR}/../ipftest
+CPPFLAGS+=-I${.CURDIR}/../ipf -I${.CURDIR}/../ipfstat
+CPPFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest
+
+.PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat
+.PATH: ${.CURDIR}/../ipsend ${.CURDIR}/../ipftest
+
 .include <bsd.prog.mk>
 __eof_makefile
 ### end of ipresend ###############################
@@ -256,15 +264,14 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
 CPPFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
+YHEADER=1
 LDADD=	-ll
 DPADD=	${LIBL}
-
-CLEANFILES+= y.tab.h
 
 MAN=	ipsend.1 ipsend.5
 
@@ -285,7 +292,7 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
@@ -311,7 +318,7 @@ cd $d/src/usr.sbin/ipf/rules
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 FILESDIR= /usr/share/examples/ipf
 MAN=	mkfilters.1
@@ -346,12 +353,13 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
 
 .include "../Makefile.inc"
 
 .PATH: $S/netinet
 
+CPPFLAGS+= -DIPFILTER_LOG
 KMOD=	if_ipl
 SRCS=	ip_fil.c fil.c mln_ipl.c ip_nat.c ip_frag.c ip_state.c ip_proxy.c \
 	ip_auth.c ip_log.c
@@ -371,13 +379,25 @@ find $d -name '*.[chly]' -print | while read c; do
 		s/"ip_auth.h"/<netinet\/ip_auth.h>/
 		s/\$\(Id.*\)\$/\1/' \
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
-	sed 1q < $c | grep '\$NetBSD' || (
-cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.10.2.4 1997/11/23 23:20:59 veego Exp $	*/
+	sed 1q < $c | grep -q '\$NetBSD' || (
+cat <<'__eof_header'  > /tmp/ipf3n$$
+/*	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $	*/
 
 __eof_header
-cat $c
-	) > /tmp/ipf3n$$ && mv /tmp/ipf3n$$ $c && echo added RCS tags to $c
+cat $c  >> /tmp/ipf3n$$
+mv /tmp/ipf3n$$ $c && echo added RCS tag to $c
+	)
+done
+
+find $d -name '*.[0-9]' -a \! -name 'example.*' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+cat <<'__eof_header' > /tmp/ipf3n$$
+.\"	$NetBSD: ipfilter2netbsd,v 1.10.2.5 1998/07/23 00:11:41 mellon Exp $
+.\"
+__eof_header
+cat $m >> /tmp/ipf3n$$
+mv /tmp/ipf3n$$ $m && echo added RCS tag to $m
+	)
 done
 
 echo done
