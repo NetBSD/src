@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.145 2003/11/23 19:20:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.146 2003/12/29 08:17:10 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.145 2003/11/23 19:20:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146 2003/12/29 08:17:10 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2551,7 +2551,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		if (value != 0) {
+		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
 		}
