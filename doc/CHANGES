@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.2 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.3 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -652,3 +652,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	ipf(8): updated to version 4.1.1. [martti 20040328]
 	libcurses: add *echochar() functions. [jdc 20040328]
 	wscons(4): Added scrolling support [christos 20040531]
+	sgimips: Add support for on-board MACE MAC-110 Ethernet on O2.
+		[tsutsui 20040711]
