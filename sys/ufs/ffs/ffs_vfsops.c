@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.140.2.2 2004/04/28 05:49:56 jmc Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.140.2.3 2004/05/29 09:03:56 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140.2.2 2004/04/28 05:49:56 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140.2.3 2004/05/29 09:03:56 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1560,7 +1560,8 @@ SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ffs", NULL,
+		       CTLTYPE_NODE, "ffs",
+		       SYSCTL_DESCR("Berkeley Fast File System"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 1, CTL_EOL);
 
@@ -1584,12 +1585,14 @@ SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "doasyncfree", NULL,
+		       CTLTYPE_INT, "doasyncfree",
+		       SYSCTL_DESCR("Release dirty blocks asynchronously"),
 		       NULL, 0, &doasyncfree, 0,
 		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "log_changeopt", NULL,
+		       CTLTYPE_INT, "log_changeopt",
+		       SYSCTL_DESCR("Log changes in optimization strategy"),
 		       NULL, 0, &ffs_log_changeopt, 0,
 		       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
 }
