@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1996/06/23 21:08:54 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1996/06/25 05:47:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,6 +152,7 @@ int	bufpages = 0;
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
+int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 int	pmax_boardtype;		/* Mother board type */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
@@ -408,6 +409,12 @@ mach_init(argc, argv, code, cv)
 		boot(RB_HALT | RB_NOSYNC);
 	}
 
+	/*
+	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
+	 * Adjst later in model-specific code if necessary.
+	 */
+	physmem_boardmax = MACH_MAX_MEM_ADDR;
+
 	/* check what model platform we are running on */
 	pmax_boardtype = ((i >> 16) & 0xff);
 
@@ -528,6 +535,20 @@ mach_init(argc, argv, code, cv)
 		(*Mach_reset_addr) = 0;
 
 		strcpy(cpu_model, "5000/1xx");
+
+		/*
+		 * The kmin memory hardware seems to wrap  memory addresses
+		 * with 4Mbyte SIMMs, which causes the physmem computation
+		 * to lose.  Find out how big the SIMMS are and set
+		 * max_	physmem accordingly.
+		 * XXX Do MAXINEs lose the same way?
+		 */
+		physmem_boardmax = KMIN_PHYS_MEMORY_END + 1;
+		if ((*(int*)(MACH_PHYS_TO_UNCACHED(KMIN_REG_MSR)) &
+		     KMIN_MSR_SIZE_16Mb) == 0)
+			physmem_boardmax = physmem_boardmax >> 2;
+		physmem_boardmax = MACH_PHYS_TO_UNCACHED(physmem_boardmax);
+
 		break;
 #endif /* ds5000_100 */
 
@@ -617,8 +638,8 @@ mach_init(argc, argv, code, cv)
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
 	physmem = btoc((vm_offset_t)v - KERNBASE);
-	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
-	while (cp < (char *)MACH_MAX_MEM_ADDR) {
+	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);	
+	while (cp < (char *)physmem_boardmax) {
 	  	int j;
 		if (badaddr(cp, 4))
 			break;
