@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.12 2002/03/13 02:55:10 simonb Exp $
+#	$NetBSD: files.algor,v 1.13 2002/04/16 20:50:17 thorpej Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -57,11 +57,6 @@ file	arch/algor/algor/cpu.c			cpu
 
 device	mcclock
 file	arch/algor/dev/mcclock.c		mcclock
-
-#
-# Machine-independent MII/PHY drivers.
-#
-include "dev/mii/files.mii"
 
 #
 # Machine-independent I2O drivers.

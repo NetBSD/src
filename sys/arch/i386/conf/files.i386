@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.204 2002/02/02 18:37:43 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.205 2002/04/16 20:50:20 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -362,9 +362,6 @@ include	"compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
-
-# network devices MII bus
-include	"dev/mii/files.mii"
 
 #
 # CARDBUS

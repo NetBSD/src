@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.2 2002/03/18 02:33:19 simonb Exp $
+#	$NetBSD: files.malta,v 1.3 2002/04/16 20:50:19 thorpej Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -27,9 +27,6 @@ file	arch/evbmips/malta/cpu.c		cpu
 
 device	mcclock
 file	arch/evbmips/dev/mcclock.c		mcclock
-
-# Machine-independent MII/PHY drivers.
-include "dev/mii/files.mii"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

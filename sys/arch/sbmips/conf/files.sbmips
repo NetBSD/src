@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.2 2002/03/06 23:50:42 simonb Exp $
+# $NetBSD: files.sbmips,v 1.3 2002/04/16 20:50:23 thorpej Exp $
 
 maxpartitions 8
 
@@ -26,8 +26,6 @@ file arch/mips/cfe/cfe_api.c
 ###
 ### MI device inclusion
 ###
-# Machine-independent MII/PHY drivers.
-include "dev/mii/files.mii"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

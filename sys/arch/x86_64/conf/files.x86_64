@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.7 2002/01/25 22:01:12 fvdl Exp $
+#	$NetBSD: files.x86_64,v 1.8 2002/04/16 20:50:24 thorpej Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -190,9 +190,6 @@ file	arch/x86_64/x86_64/netbsd32_syscall.c	compat_netbsd32
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
-
-# network devices MII bus
-include	"dev/mii/files.mii"
 
 include	"dev/usb/files.usb"
 

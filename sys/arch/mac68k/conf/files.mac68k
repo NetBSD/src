@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.103 2002/04/10 04:38:48 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.104 2002/04/16 20:50:21 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -18,7 +18,6 @@ device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
 include "dev/wscons/files.wscons"
-include "dev/mii/files.mii"
 
 define obio_norm { [addr = -1], ["no drq" = -1], ["no hsk" = -1] }
 define obio_scsi5380 { [addr = -1], [drq = -1], [hsk = -1] }

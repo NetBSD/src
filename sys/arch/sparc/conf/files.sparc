@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.110 2002/03/28 19:50:20 uwe Exp $
+#	$NetBSD: files.sparc,v 1.111 2002/04/16 20:50:23 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -132,9 +132,6 @@ file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 device tpcic: pcmciabus
 attach tpcic at sbus
 file	arch/sparc/dev/ts102.c			tpcic
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"

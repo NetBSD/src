@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.18 2002/03/13 02:55:13 simonb Exp $
+#	$NetBSD: files.newsmips,v 1.19 2002/04/16 20:50:22 thorpej Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -125,9 +125,6 @@ include "dev/rasops/files.rasops"
 device xafb: wsemuldisplaydev, rasops8
 attach xafb at ap
 file arch/newsmips/apbus/xafb.c			xafb needs-flag
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 #
 # Memory Disk for install floppy

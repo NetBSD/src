@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.117 2002/01/21 22:13:25 is Exp $
+#	$NetBSD: files.amiga,v 1.118 2002/04/16 20:50:17 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -455,7 +455,6 @@ device	pccard: pcmciabus, gayle
 attach	pccard at mainbus
 
 include "dev/pcmcia/files.pcmcia"
-include "dev/mii/files.mii"
 
 include "dev/ata/files.ata"
 major	{wd = 17}

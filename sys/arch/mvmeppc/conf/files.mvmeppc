@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.1 2002/02/27 21:02:13 scw Exp $
+#	$NetBSD: files.mvmeppc,v 1.2 2002/04/16 20:50:21 thorpej Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -85,9 +85,6 @@ file	arch/mvmeppc/pci/pchb.c		pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/mvmeppc/pci/pcib.c		pcib
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 #
 # ISA and mixed ISA+PCI drivers
