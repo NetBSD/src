@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.6 1997/03/17 19:03:15 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.7 1997/03/18 23:28:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,6 +78,7 @@ struct pcb;
 struct proc;
 struct reg;
 struct trapframe;
+struct uio;
 
 extern int cache_size;
 extern int cold;
@@ -114,6 +115,8 @@ void	cninit __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
+int 	eeprom_uio __P((struct uio *uio));
+
 int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
 
 int 	getdfc __P((void));
@@ -127,6 +130,9 @@ void	initfpu __P((void));
 
 void	isr_init __P((void));
 void	isr_config __P((void));
+
+void	leds_intr __P((void));
+int 	leds_uio __P((struct uio *uio));
 
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
