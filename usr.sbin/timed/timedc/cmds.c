@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $	*/
+/*	$NetBSD: cmds.c,v 1.13 2003/05/17 20:55:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.13 2003/05/17 20:55:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,8 @@ msite(int argc, char *argv[])
 		}
 		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
 
-		(void)strncpy(msg.tsp_name, myname, sizeof(msg.tsp_name) - 1);
+		memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
+		(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
 		msg.tsp_type = TSP_MSITE;
 		msg.tsp_vers = TSPVERSION;
 		bytenetorder(&msg);
@@ -387,7 +388,8 @@ testing(int argc, char *argv[])
 		msg.tsp_type = TSP_TEST;
 		msg.tsp_vers = TSPVERSION;
 		(void)gethostname(myname, sizeof(myname));
-		(void)strncpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
+		memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
+		(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
 		bytenetorder(&msg);
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
 			   (struct sockaddr*)&sin,
@@ -439,7 +441,8 @@ tracing(int argc, char *argv[])
 		onflag = OFF;
 	}
 
-	(void)strncpy(msg.tsp_name, myname, sizeof(msg.tsp_name) - 1);
+	memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
+	(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
 	msg.tsp_vers = TSPVERSION;
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,
