@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: process_machdep.c,v 1.6 1994/05/05 05:37:22 cgd Exp $
+ *	$Id: process_machdep.c,v 1.7 1994/05/19 06:36:06 mycroft Exp $
  */
 
 /*
@@ -75,7 +75,7 @@ process_read_regs(p, regs)
 	struct frame *frame;
 
 	if ((p->p_flag & P_INMEM) == 0)
-		return EIO;
+		return (EIO);
 
 	frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
@@ -84,7 +84,7 @@ process_read_regs(p, regs)
 	regs->r_sr = frame->f_sr;
 	regs->r_pc = frame->f_pc;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -95,7 +95,7 @@ process_write_regs(p, regs)
 	struct frame *frame;
 
 	if ((p->p_flag & P_INMEM) == 0)
-		return EIO;
+		return (EIO);
 
 	frame = (struct frame *)
 	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
@@ -123,34 +123,36 @@ process_write_regs(p, regs)
 	frame->f_sr = regs->r_sr;
 	frame->f_pc = regs->r_pc;
 
-	return 0;
+	return (0);
 }
 
 int
 process_sstep(p, sstep)
 	struct proc *p;
-	int	    sstep;
+	int sstep;
 {
-	int error;
-	struct reg r;
+	struct frame *frame;
 
-	error = process_read_regs(p, &r);
-	if (error == 0) {
-		if (sstep)
-			r.r_sr |= PSL_T;
-		else
-			r.r_sr &= ~PSL_T;
-		error = process_write_regs(p, &r);
-	}
+	if ((p->p_flag & P_INMEM) == 0)
+		return (EIO);
 
-	return (error);
+	frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
+
+	if (sstep)
+		frame->f_sr |= PSL_T;
+	else
+		frame->f_sr &= ~PSL_T;
+
+	return (0);
 }
 
 int
 process_fix_sstep(p)
 	struct proc *p;
 {
-	return 0;
+
+	return (0);
 }
 
 int
@@ -158,8 +160,13 @@ process_set_pc(p, addr)
 	struct proc *p;
 	u_int addr;
 {
-	int error;
-	struct reg r;
+	struct frame *frame;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (EIO);
+
+	frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	/*
 	 * in the hp300 machdep.c _set_pc, PC alignment is guaranteed
@@ -170,11 +177,7 @@ process_set_pc(p, addr)
 	 * No reasonable debugger would let this happen, but
 	 * it's not our problem.
 	 */
-	error = process_read_regs(p, &r);
-	if (error == 0) {
-		r.r_pc = addr;
-		error = process_write_regs(p, &r);
-	}
+	frame->f_pc = addr;
 
-	return (error);
+	return (0);
 }
