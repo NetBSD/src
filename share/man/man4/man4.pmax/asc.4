@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: asc.4,v 1.7 2000/07/05 16:13:51 msaitoh Exp $
+.\"	$NetBSD: asc.4,v 1.8 2001/07/08 17:22:54 wiz Exp $
 .\"
 .Dd August 6, 1996
 .Dt ASC 4 pmax
@@ -44,13 +44,13 @@ TurboChannel SCSI adaptor
 .Sh DESCRIPTION
 The
 .Nm
-driver provies support for the NCR 53c94-based SCSI host adaptor
+driver provides support for the NCR 53c94-based SCSI host adaptor
 on the DECstation 5000 series, and for the PMAZ-AA and related
 TurboChannel SCSI-adaptor option boards.
 The
 .Nm
 is a medium-performance implementation of the SCSI-I common command set
-supporting synchronous and asychronous SCSI devices.
+supporting synchronous and asynchronous SCSI devices.
 The driver provides no support for targets with multiple Logical
 Unit Numbers (LUNs).
 .Sh SEE ALSO
@@ -75,8 +75,8 @@ higher-level layer, and the
 .Nm rz
 and
 .Nm tz
-devices, which first appeared in 
-.Bx 4.4 /pmax.
+devices, which first appeared in
+.Bx 4.4 /pmax .
 It should be re-written to support the
 .Nm scsibus
 machine-independent higher-level SCSI layer and the
