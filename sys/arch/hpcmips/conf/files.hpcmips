@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.28 2000/03/20 12:45:41 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.29 2000/03/25 15:08:26 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -52,7 +52,7 @@ file	arch/hpcmips/hpcmips/platid_mask.c
 file	arch/hpcmips/hpcmips/platid_name.c
 file	arch/hpcmips/hpcmips/mainbus.c
 file	arch/hpcmips/hpcmips/bus_space.c
-#file	arch/hpcmips/hpcmips/bus_dma.c
+file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/disksubr.c	disk
 file	arch/hpcmips/hpcmips/config_hook.c
 
@@ -316,8 +316,8 @@ attach plumisab at plumiobusif
 file arch/hpcmips/isa/plumisa_machdep.c	plumisab
 
 # OHCI USB controller
-#attach	ohci at plumif with plumohci
-#file	arch/hpcmips/dev/plumohci.c	plumohci
+attach	ohci at plumif with plumohci
+file	arch/hpcmips/dev/plumohci.c	plumohci
 
 #device txisab: isabus
 #attach txisab at txcsbus
@@ -377,4 +377,4 @@ file	arch/hpcmips/vr/com_vrip.c			com_vrip
 file arch/hpcmips/dev/md_root.c		memory_disk_hooks
 major	{md = 6}
 
-#include "dev/usb/files.usb"
+include "dev/usb/files.usb"

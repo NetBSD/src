@@ -1,7 +1,7 @@
-/*	$NetBSD: plumvideoreg.h,v 1.1 1999/11/21 06:50:27 uch Exp $ */
+/*	$NetBSD: plumvideoreg.h,v 1.2 2000/03/25 15:08:26 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -131,6 +131,7 @@
 #define	PLUM_VIDEO_PLPIT1_REG		0x0cc
 /* VRAM Pitch 2 */
 #define	PLUM_VIDEO_PLPIT2_REG		0x0d0
+#define PLUM_VIDEO_PLPIT2_MASK		0xffffffe0
 /* VRAM Offset */
 #define	PLUM_VIDEO_PLOFS_REG		0x0d4
 /* VRAM Lower Screen Address offset */
