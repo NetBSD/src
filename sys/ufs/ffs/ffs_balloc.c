@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.4.1 1999/06/07 04:25:34 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.4.2 1999/07/04 01:50:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,29 +66,40 @@
  * the inode and the logical block number in a file.
  */
 int
-ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
-	struct inode *ip;
-	ufs_daddr_t lbn;
-	int size;
-	struct ucred *cred;
-	struct buf **bpp;
-	daddr_t *blknop;
-	int flags;
+ffs_balloc(v)
+	void *v;
 {
-	struct fs *fs;
+	struct vop_balloc_args /* {
+		struct vnode *a_vp;
+		off_t a_offset;
+		int a_size;
+		struct ucred *a_cred;
+		int a_flags;
+		struct buf **a_bpp;
+	} */ *ap = v;
+
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	ufs_daddr_t lbn = lblkno(fs, ap->a_offset);
+	int size = ap->a_size;
+	struct ucred *cred = ap->a_cred;
+	int flags = ap->a_flags;
+	struct buf **bpp = ap->a_bpp;
+
 	ufs_daddr_t nb;
 	struct buf *bp, *nbp;
-	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
 	ufs_daddr_t newb, *bap, pref;
 	int deallocated, osize, nsize, num, i, error;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
+
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x size 0x%x",
+		    vp, (int)ap->a_offset, ap->a_size,0);
 
 	if (bpp != NULL) {
 		*bpp = NULL;
-	}
-	if (blknop != NULL) {
-		*blknop = (daddr_t)-1;
 	}
 
 	if (lbn < 0)
@@ -161,15 +172,14 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 				}
 				*bpp = bp;
 			}
-			if (blknop) {
-				*blknop = fsbtodb(fs, nb);
-			}
 			return (0);
 		}
 		if (nb != 0) {
+
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
+
 			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
@@ -189,9 +199,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 					}
 					*bpp = bp;
 				}
-				if (blknop) {
-					*blknop = fsbtodb(fs, nb);
-				}
 				return 0;
 			} else {
 
@@ -206,6 +213,11 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 					bpp, &newb);
 				if (error)
 					return (error);
+				if (vp->v_type == VREG) {
+					uvm_vnp_zerorange(vp,
+							  lblktosize(fs, lbn) +
+							  osize, nsize);
+				}
 			}
 		} else {
 
@@ -230,13 +242,13 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 					clrbuf(bp);
 				*bpp = bp;
 			}
+			if (vp->v_type == VREG) {
+				uvm_vnp_zerorange(vp, lblktosize(fs, lbn),
+						  nsize);
+			}
 		}
 		ip->i_ffs_db[lbn] = ufs_rw32(newb, UFS_MPNEEDSWAP(vp->v_mount));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-
-		if (blknop != NULL) {
-			*blknop = fsbtodb(fs, newb);
-		}
 		return (0);
 	}
 
@@ -364,8 +376,8 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 				clrbuf(nbp);
 			*bpp = nbp;
 		}
-		if (blknop != NULL) {
-			*blknop = fsbtodb(fs, nb);
+		if (vp->v_type == VREG) {
+			uvm_vnp_zerorange(vp, lblktosize(fs, lbn), ap->a_size);
 		}
 		return (0);
 	}
@@ -385,9 +397,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, blknop, flags)
 			clrbuf(nbp);
 		}
 		*bpp = nbp;
-	}
-	if (blknop != NULL) {
-		*blknop = fsbtodb(fs, nb);
 	}
 	return (0);
 fail:
@@ -412,56 +421,4 @@ fail:
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	return (error);
-}
-
-int
-ffs_balloc_range(ip, off, len, cred, flags)
-	struct inode *ip;
-	off_t off, len;
-	struct ucred *cred;
-	int flags;
-{
-	struct fs *fs = ip->i_fs;
-	int lbn, bsize, delta, error;
-	off_t pagestart, pageend;
-
-	/*
-	 * pagestart and pageend describe the range of pages that are
-	 * completely covered by the range of blocks being allocated.
-	 */
-
-	pagestart = round_page(off);
-	pageend = trunc_page(off + len);
-
-	/*
-	 * adjust off to be block-aligned.
-	 */
-
-	delta = off - lblktosize(fs, lblkno(fs, off));
-	off -= delta;
-	len += delta;
-
-	while (len > 0) {
-		lbn = lblkno(fs, off);
-		bsize = min(fs->fs_bsize, len);
-
-		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, NULL,
-					flags))) {
-			return error;
-		}
-
-		/*
-		 * bump file size now.
-		 * ffs_balloc() needs to know in the case where we loop here.
-		 */
-
-		if (ip->i_ffs_size < lblktosize(fs, lbn) + bsize) {
-			ip->i_ffs_size = lblktosize(fs, lbn) + bsize;
-			uvm_vnp_setsize(ip->i_vnode, ip->i_ffs_size);
-		}
-
-		len -= bsize;
-		off += bsize;
-	}
-	return 0;
 }
