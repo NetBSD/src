@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.10 2003/10/10 01:50:47 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.11 2003/10/14 09:46:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.10 2003/10/10 01:50:47 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.11 2003/10/14 09:46:43 lukem Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: i386.c,v 1.10 2003/10/10 01:50:47 lukem Exp $");
 int
 i386_setboot(ib_params *params)
 {
-	int		retval, i;
-	char		*bootstrapbuf;
+	int		retval, i, bpbsize;
+	uint8_t		*bootstrapbuf;
 	uint		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
@@ -142,16 +142,22 @@ i386_setboot(ib_params *params)
 	}
 
 	/*
-	 * Ensure bootxx hasn't got code (i.e, non-zero bytes) in
-	 * the BIOS Parameter Block (BPB) or the partition table.
+	 * Determine size of BIOS Parameter Block (BPB) to copy from
+	 * original MBR to the temporary buffer by examining the first
+	 * few instruction in the new bootblock.  Supported values:
+	 *	eb 3c 90	jmp ENDOF(mbr_bpbFAT16)+1, nop
+	 *	eb 58 90	jmp ENDOF(mbr_bpbFAT32)+1, nop
+	 *      (anything else)	; don't preserve
 	 */
-	for (i = 0; i < sizeof(mbr.mbr_bpb); i++) {
-		if (*(uint8_t *)(bootstrapbuf + MBR_BPB_OFFSET + i) != 0) {
-			warnx("BPB has non-zero byte at offset %d in `%s'",
-			    MBR_BPB_OFFSET + i, params->stage1);
-			goto done;
-		}
-	}
+	bpbsize = 0;
+	if (bootstrapbuf[0] == 0xeb && bootstrapbuf[2] == 0x90 &&
+	    (bootstrapbuf[1] == 0x3c || bootstrapbuf[1] == 0x58))
+		bpbsize = bootstrapbuf[1] + 2 - MBR_BPB_OFFSET;
+
+	/*
+	 * Ensure bootxx hasn't got any code or date (i.e, non-zero bytes) in
+	 * the partition table.
+	 */
 	for (i = 0; i < sizeof(mbr.mbr_parts); i++) {
 		if (*(uint8_t *)(bootstrapbuf + MBR_PART_OFFSET + i) != 0) {
 			warnx(
@@ -165,8 +171,12 @@ i386_setboot(ib_params *params)
 	 * Copy the BPB and the partition table from the original MBR to the
 	 * temporary buffer so that they're written back to the fs.
 	 */
-	memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb,
-	    sizeof(mbr.mbr_bpb));
+	if (bpbsize != 0) {
+		if (params->flags & IB_VERBOSE)
+			printf("Preserving %d (%#x) bytes of the BPB\n",
+			    bpbsize, bpbsize);
+		memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb, bpbsize);
+	}
 	memcpy(bootstrapbuf + MBR_PART_OFFSET, &mbr.mbr_parts,
 	    sizeof(mbr.mbr_parts));
 
