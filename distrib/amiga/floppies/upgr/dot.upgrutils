@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.upgrutils,v 1.1 1995/10/02 12:57:43 chopps Exp $
+#	$Id: dot.upgrutils,v 1.2 1995/10/09 02:41:32 chopps Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
@@ -42,7 +42,6 @@ Cleanup()
 	fi
 
 	echo	"Cleaning up miscellaneous files in /etc..."
-	mv $upgrade_dir/etc/rc.bak $upgrade_dir/etc/rc
 	chroot $upgrade_dir /usr/sbin/pwd_mkdb -p /etc/master.passwd
 	chroot $upgrade_dir /bin/rm /etc/sendmail.fc > /dev/null 2>&1
 	sync
@@ -51,8 +50,5 @@ Cleanup()
 	echo	""
 	echo	"All that's left to do now is to install a new NetBSD kernel"
 	echo	"on your hard disk.  You should now halt your machine using"
-	echo	"the 'halt' command.  Once the machine is halted, replace the"
-	echo	"installation floppy with the kernel-copy floppy and hit any"
-	echo	"key to reboot.  Use the kernel-copy floppy to copy a kernel"
-	echo	"to your hard disk."
+	echo	"the 'halt' command."
 }
