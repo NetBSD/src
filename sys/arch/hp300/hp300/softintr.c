@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2002/03/15 05:52:54 gmcgarry Exp $	*/
+/*	$NetBSD: softintr.c,v 1.3 2003/07/19 16:06:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2002/03/15 05:52:54 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2003/07/19 16:06:27 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2002/03/15 05:52:54 gmcgarry Exp $"
 #include <sys/vmmeter.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <m68k/asm_single.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -102,8 +104,8 @@ softintr_dispatch()
 	u_int8_t mask;
 
 	do {
-		mask = 0x1;
-		for (mask = 1, hsi = hp300_soft_intrs, handled = 0;
+		mask = 0x01;
+		for (hsi = hp300_soft_intrs, handled = 0;
 		    hsi < &hp300_soft_intrs[IPL_NSOFT];
 		    hsi++, mask <<= 1) {
 
@@ -112,6 +114,7 @@ softintr_dispatch()
 
 			hsi->hsi_evcnt.ev_count++;
 			handled++;
+			single_inst_bclr_b(ssir, mask);
 
 			for (sih = LIST_FIRST(&hsi->hsi_q);
 			     sih != NULL;
@@ -122,8 +125,6 @@ softintr_dispatch()
 					(*sih->sih_fn)(sih->sih_arg);
 				}
 			}
-
-			ssir &= ~mask;
 		}
 	} while (handled);
 }
