@@ -1,4 +1,4 @@
-.\"	$NetBSD: getconf.1,v 1.3 1997/10/08 22:26:29 jtc Exp $
+.\"	$NetBSD: getconf.1,v 1.4 1997/10/19 02:13:39 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Nm getconf
 .Nd get configuration values
 .Sh SYNOPSIS
-.Nm getconf
+.Nm
 .Ar name
 .Op Ar pathname
 .Sh DESCRIPTION
 The
-.Nm getconf
+.Nm
 utility writes the current value of a configurable system limit or 
 option variable to the standard output.
 .Pp
@@ -59,7 +59,7 @@ argument must be supplied for system variables associated with a
 pathname.
 .Sh RETURN VALUE
 The
-.Nm getconf 
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr pathconf 2 ,
@@ -67,6 +67,6 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr sysconf 3
 .Sh STANDARDS
 The
-.Nm getconf
+.Nm
 utility conforms to
 .St -p1003.2-92 .
