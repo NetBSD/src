@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.68 2004/10/30 17:29:47 dsl Exp $	*/
+/*	$NetBSD: fstat.c,v 1.69 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.68 2004/10/30 17:29:47 dsl Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.69 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -727,11 +727,7 @@ inet6_addrstr(p)
 {
 	struct sockaddr_in6 sin6;
 	static char hbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
