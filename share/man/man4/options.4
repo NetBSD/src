@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.44 1998/03/18 17:17:06 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.45 1998/03/19 07:40:04 fair Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -288,6 +288,7 @@ used with UID or GID greater than 65535. See
 .Xr mount_ext2fs 8
 for details.
 .It Cd file-system LFS
+.Em [EXPERIMENTAL]
 Include the log structured file system
 .Em ( LFS ) .
 See
@@ -376,7 +377,8 @@ provide an example of a stackable file system layer. See
 .Xr mount_null 8
 for details.
 .It Cd file-system PORTAL
-Includes the (experimental) portal filesystem. This permits
+.Em [EXPERIMENTAL]
+Includes the portal filesystem. This permits
 interesting tricks like opening TCP sockets by opening files in the
 file system. The portal file system is conventionally mounted on
 .Pa /p
@@ -401,6 +403,7 @@ See
 .Xr mount_umap 8
 for details.
 .It Cd file-system UNION
+.Em [EXPERIMENTAL]
 Includes code for the union file system, which permits directories to
 be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
@@ -437,9 +440,10 @@ file systems, although
 permits them to be accessed over 
 .Em NFS .
 .It Cd options FFS_EI
-Enable ``Endian-Independant'' FFS support. This allow a system to mount a
-FFS filesystem created for another architecture, at a small performance cost
-for all FFS filesytems. See also
+Enable ``Endian-Independant'' FFS support.
+This allows a system to mount an FFS filesystem created for another
+architecture, at a small performance cost for all FFS filesytems.
+See also
 .Xr newfs 8 ,
 .Xr fsck_ffs 8 ,
 .Xr dumpfs 8 
