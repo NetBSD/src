@@ -1,4 +1,4 @@
-/*	$NetBSD: bootufs.c,v 1.1.1.1.4.2 1996/06/17 07:33:13 oki Exp $	*/
+/*	$NetBSD: bootufs.c,v 1.1.1.1.4.3 1996/07/08 20:06:25 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -585,15 +585,6 @@ bootufs()
 	if (SFT & 0x2000)
 		bootflags |= RB_KDB;
 
-	debug_print("\r\n\r\nInsert file system floppy\r\n");
-	for (;;) {
-		switch ((B_KEYINP() >> 8) & 0xFF) {
- 		case 0x1D:
-		case 0x4E:
-			goto system_floppy_ready;
-		}
-	}
- system_floppy_ready:
 	/* esym == 32 + tsize + dsize + ssize + strsize */
 
 	/* ヘッダをコピーする */
