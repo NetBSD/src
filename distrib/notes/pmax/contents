@@ -73,8 +73,9 @@ recompile the following programs:
 	ed, ftpd, makekey, rexecd, uucpd, init, lock, login, passwd,
 	skeyinit, su, tn3270, pppd
 
-(Remember, because of United States law, this distribution set may not
-be exported to  locations outside of the United States and Canada.)
+(Remember, because of United States law, it may not be legal to
+distribute this set to locations outside of the United States and
+Canada.)
 [ 128K gzipped, 275K uncompressed ]
 
 The pmax binary distribution sets are distributed as gzipped tar files.
