@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.1 1996/04/18 18:30:54 chuck Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.2 1996/04/26 19:00:20 chuck Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -35,30 +35,32 @@
  *
  *  @(#)wdsc.c
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#include <mvme68k/mvme68k/isr.h>
-#include <mvme68k/dev/iio.h>
-#include <mvme68k/dev/pccreg.h>
+
 #include <mvme68k/dev/dmavar.h>
+#include <mvme68k/dev/pccreg.h>
+#include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/sbicreg.h>
 #include <mvme68k/dev/sbicvar.h>
 #include <mvme68k/dev/wdscreg.h>
 
 int     wdscprint       __P((void *auxp, char *));
-void    wdscattach      __P((struct device *, struct device *, void *));
-int     wdscmatch       __P((struct device *, struct cfdata *, void *));
+void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
+int     wdsc_pcc_match  __P((struct device *, void *, void *));
 
 void    wdsc_enintr     __P((struct sbic_softc *));
 int     wdsc_dmago      __P((struct sbic_softc *, char *, int, int));
 int     wdsc_dmanext    __P((struct sbic_softc *));
 void    wdsc_dmastop    __P((struct sbic_softc *));
-int     wdsc_dmaintr    __P((struct sbic_softc *));
-int     wdsc_scsiintr   __P((struct sbic_softc *));
+int     wdsc_dmaintr    __P((void *));
+int     wdsc_scsiintr   __P((void *));
 
 struct scsi_adapter wdsc_scsiswitch = {
     sbic_scsicmd,
@@ -74,8 +76,8 @@ struct scsi_device wdsc_scsidev = {
     NULL,       /* Use default done routine */
 };
 
-struct cfattach wdsc_ca = {
-	sizeof(struct sbic_softc), (cfmatch_t)wdscmatch, wdscattach
+struct cfattach wdsc_pcc_ca = {
+	sizeof(struct sbic_softc), wdsc_pcc_match, wdsc_pcc_attach
 };
 
 struct cfdriver wdsc_cd = {
@@ -93,36 +95,36 @@ int         shift_nosync = 0;
  * Match for SCSI devices on the onboard WD33C93 chip
  */
 int
-wdscmatch(pdp, cdp, auxp)
+wdsc_pcc_match(pdp, match, auxp)
     struct device *pdp;
-    struct cfdata *cdp;
-    void *auxp;
+    void *match, *auxp;
 {
-    /*
-     * Match everything
-     */
-    return(1);
-}
+    struct cfdata *cf = match;
+    struct pcc_attach_args *pa = auxp;
 
+    if (strcmp(pa->pa_name, wdsc_cd.cd_name))
+	return (0);
+
+    pa->pa_ipl = cf->pcccf_ipl;
+    return (1);
+}
 
 /*
  * Attach the wdsc driver
  */
 void
-wdscattach(pdp, dp, auxp)
+wdsc_pcc_attach(pdp, dp, auxp)
     struct device *pdp, *dp;
     void *auxp;
 {
     struct sbic_softc   *sc = (struct sbic_softc *)dp;
-    int                 ipl;
+    struct pcc_attach_args *pa = auxp;
     static int          attached = 0;
 
     if ( attached )
         panic("wdsc: Driver already attached!");
 
     attached = 1;
-
-    iio_print(dp->dv_cfdata);
 
     sc->sc_enintr  = wdsc_enintr;
     sc->sc_dmago   = wdsc_dmago;
@@ -136,14 +138,13 @@ wdscattach(pdp, dp, auxp)
     sc->sc_link.device         = &wdsc_scsidev;
     sc->sc_link.openings       = 2;
 
-    printf(": target %d\n", sc->sc_link.adapter_target);
+    printf(": WD33C93 SCSI, target %d\n", sc->sc_link.adapter_target);
 
     sc->sc_cregs = (volatile void *)sys_pcc;
-    sc->sc_sbicp = (sbic_regmap_p) IIO_CFLOC_ADDR(dp->dv_cfdata);
+    sc->sc_sbicp = (sbic_regmap_p) PCC_VADDR(pa->pa_offset);
 
     /*
      * Eveything is a valid dma address.
-     * 
      */
     sc->sc_dmamask = 0;
 
@@ -161,7 +162,7 @@ wdscattach(pdp, dp, auxp)
     /*
      * Fix up the interrupts
      */
-    sc->sc_ipl = IIO_CFLOC_LEVEL(dp->dv_cfdata) & PCC_IMASK;
+    sc->sc_ipl = pa->pa_ipl & PCC_IMASK;
 
     sys_pcc->scsi_int = sc->sc_ipl | PCC_ICLEAR;
     sys_pcc->dma_int  = sc->sc_ipl | PCC_ICLEAR;
@@ -175,7 +176,7 @@ wdscattach(pdp, dp, auxp)
     /*
      * Attach all scsi units on us
      */
-    config_found(dp, &sc->sc_link, wdscprint);
+    (void)config_found(dp, &sc->sc_link, wdscprint);
 }
 
 /*
@@ -186,9 +187,12 @@ wdscprint(auxp, pnp)
     void *auxp;
     char *pnp;
 {
-    if (pnp == NULL)
-        return(UNCONF);
-    return(QUIET);
+
+    /* Only scsibusses can attach to wdscs...easy. */
+    if (pnp)
+	printf("scsibus at %s", pnp);
+
+    return (UNCONF);
 }
 
 
@@ -296,9 +300,10 @@ wdsc_dmastop(dev)
  * Come here following a DMA interrupt
  */
 int
-wdsc_dmaintr(dev)
-    struct sbic_softc *dev;
+wdsc_dmaintr(arg)
+    void *arg;
 {
+    struct sbic_softc *dev = arg;
     volatile struct pcc *pc = dev->sc_cregs;
     int                 found = 0;
 
@@ -325,9 +330,10 @@ wdsc_dmaintr(dev)
  * Come here for SCSI interrupts
  */
 int
-wdsc_scsiintr(dev)
-    struct sbic_softc *dev;
+wdsc_scsiintr(arg)
+    void *arg;
 {
+    struct sbic_softc *dev = arg;
     volatile struct pcc *pc = dev->sc_cregs;
     int                 found;
 
