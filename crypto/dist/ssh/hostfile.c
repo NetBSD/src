@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.10 2002/12/06 03:39:09 thorpej Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.11 2003/07/10 01:09:44 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,6 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: hostfile.c,v 1.30 2002/07/24 16:11:18 markus Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.11 2003/07/10 01:09:44 lukem Exp $");
 
 #include "packet.h"
 #include "match.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.12 2003/05/14 18:22:07 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.13 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor.c,v 1.39 2003/05/14 02:15:47 markus Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.13 2003/07/10 01:09:45 lukem Exp $");
 
 #include <openssl/dh.h>
 

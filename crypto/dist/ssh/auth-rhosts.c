@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.13 2003/05/17 01:17:08 itojun Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.14 2003/07/10 01:09:42 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,6 +16,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth-rhosts.c,v 1.28 2002/05/13 21:26:49 markus Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.14 2003/07/10 01:09:42 lukem Exp $");
 
 #include "packet.h"
 #include "uidswap.h"

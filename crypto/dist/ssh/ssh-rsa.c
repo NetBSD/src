@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.13 2003/04/03 06:21:36 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.14 2003/07/10 01:09:48 lukem Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,6 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh-rsa.c,v 1.28 2003/02/12 09:33:04 markus Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.14 2003/07/10 01:09:48 lukem Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>

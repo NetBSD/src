@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.10 2003/07/04 21:57:16 wiz Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.11 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,6 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshlogin.c,v 1.5 2002/08/29 15:57:25 stevesk Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.11 2003/07/10 01:09:49 lukem Exp $");
 
 #include <util.h>
 #ifdef SUPPORT_UTMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.9 2003/04/03 06:21:37 itojun Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.10 2003/07/10 01:09:49 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshpty.c,v 1.8 2003/02/03 08:56:16 markus Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.10 2003/07/10 01:09:49 lukem Exp $");
 
 #include <util.h>
 #include "sshpty.h"

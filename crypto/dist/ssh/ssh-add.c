@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.20 2003/04/03 06:21:35 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.21 2003/07/10 01:09:47 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh-add.c,v 1.66 2003/03/05 22:33:43 markus Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.21 2003/07/10 01:09:47 lukem Exp $");
 
 #include <openssl/evp.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.18 2003/04/03 06:21:33 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.19 2003/07/10 01:09:45 lukem Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,6 +34,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: key.c,v 1.51 2003/02/12 09:33:04 markus Exp $");
+__RCSID("$NetBSD: key.c,v 1.19 2003/07/10 01:09:45 lukem Exp $");
 
 #include <openssl/evp.h>
 

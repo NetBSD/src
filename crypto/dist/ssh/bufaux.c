@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.3 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.4 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,6 +39,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: bufaux.c,v 1.28 2002/10/23 10:40:16 markus Exp $");
+__RCSID("$NetBSD: bufaux.c,v 1.4 2003/07/10 01:09:43 lukem Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"

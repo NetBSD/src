@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.7 2002/06/26 14:02:54 itojun Exp $	*/
+/*	$NetBSD: buffer.c,v 1.2 2003/07/10 01:09:43 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,6 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: buffer.c,v 1.16 2002/06/26 08:54:18 markus Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.2 2003/07/10 01:09:43 lukem Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
