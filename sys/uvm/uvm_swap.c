@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.33 2000/01/21 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.34 2000/02/07 20:16:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1295,6 +1295,7 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_error    = 0;
 		nbp->vb_buf.b_data     = addr;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
+		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_proc     = bp->b_proc;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = NULLVP;
