@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.18 2000/03/20 00:41:55 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.19 2000/03/20 01:31:10 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -170,6 +170,7 @@ static struct kue_type kue_devs[] = {
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650C },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10T },
+	{ USB_VENDOR_KLSI, USB_PRODUCT_KLSI_USB101 },
 	{ 0, 0 }
 };
 
