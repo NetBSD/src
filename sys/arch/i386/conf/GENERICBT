@@ -1,7 +1,7 @@
 #
 # GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICBT,v 1.8 1994/05/21 08:37:35 cgd Exp $
+#	$Id: GENERICBT,v 1.9 1994/06/14 03:59:30 jtc Exp $
 #
 
 machine		"i386"
@@ -34,9 +34,9 @@ device		com0	at isa? port "IO_COM1" irq 4
 device		com1	at isa? port "IO_COM2" irq 3
 device		com2	at isa? port "IO_COM3" irq 5
 
-device		lpt0	at isa? port "IO_LPT3" irq 7
-device		lpt1	at isa? port "IO_LPT1"
-device		lpt2	at isa? port "IO_LPT2"
+device		lpt0	at isa? port "IO_LPT1" irq 7
+device		lpt1	at isa? port "IO_LPT2"
+device		lpt2	at isa? port "IO_LPT3"
 
 controller	wdc0	at isa? port "IO_WD1" irq 14
 disk		wd0	at wdc0 drive ?
