@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 1995/04/10 12:42:26 mycroft Exp $ */
+/*	$NetBSD: pmap.c,v 1.43 1995/04/13 14:38:11 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
@@ -131,6 +132,8 @@ struct pmap_stats {
 #define	PDB_MMU_STEAL	0x0200
 #define	PDB_CTX_ALLOC	0x0400
 #define	PDB_CTX_STEAL	0x0800
+#define	PDB_MMUREG_ALLOC	0x1000
+#define	PDB_MMUREG_STEAL	0x2000
 int	pmapdebug = 0x0;
 #endif
 
@@ -212,30 +215,24 @@ struct pvlist *pv_table;	/* array of entries, one per physical page */
  * for kernel entries; both are doubly linked queues headed by `mmuhd's.
  * The free list is a simple list, headed by a free list pointer.
  */
-struct mmuhd {
-	struct	mmuentry *mh_next;
-	struct	mmuentry *mh_prev;
-};
 struct mmuentry {
-	struct	mmuentry *me_next;	/* queue (MUST BE FIRST) or next free */
-	struct	mmuentry *me_prev;	/* queue (MUST BE FIRST) */
+	TAILQ_ENTRY(mmuentry)	me_list;	/* usage list link */
+	TAILQ_ENTRY(mmuentry)	me_pmchain;	/* pmap owner link */
 	struct	pmap *me_pmap;		/* pmap, if in use */
-	struct	mmuentry *me_pmforw;	/* pmap pmeg chain */
-	struct	mmuentry **me_pmback;	/* pmap pmeg chain */
-	u_short	me_vseg;		/* virtual segment number in pmap */
-	pmeg_t	me_pmeg;		/* hardware PMEG number */
+	u_short	me_vreg;		/* associated virtual region/segment */
+	u_short	me_vseg;		/* associated virtual region/segment */
+	pmeg_t	me_cookie;		/* hardware SMEG/PMEG number */
 };
-struct mmuentry *mmuentry;	/* allocated in pmap_bootstrap */
+struct mmuentry *mmusegments;	/* allocated in pmap_bootstrap */
+struct mmuentry *mmuregions;	/* allocated in pmap_bootstrap */
 
-struct mmuentry *me_freelist;	/* free list (not a queue) */
-struct mmuhd me_lru = {		/* LRU (user) entries */
-	(struct mmuentry *)&me_lru, (struct mmuentry *)&me_lru
-};
-struct mmuhd me_locked = {	/* locked (kernel) entries */
-	(struct mmuentry *)&me_locked, (struct mmuentry *)&me_locked
-};
+struct mmuhd segm_freelist, segm_lru, segm_locked;
+struct mmuhd region_freelist, region_lru, region_locked;
 
 int	seginval;		/* the invalid segment number */
+#ifdef MMU_3L
+int	reginval;		/* the invalid region number */
+#endif
 
 /*
  * A context is simply a small number that dictates which set of 4096
@@ -262,8 +259,12 @@ caddr_t	vpage[2];		/* two reserved MD virtual pages */
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t vdumppages;		/* 32KB worth of reserved dump pages */
 
-struct pmap	kernel_pmap_store;	/* the kernel's pmap */
-struct ksegmap	kernel_segmap_store;	/* the kernel's segmap */
+#ifdef MMU_3L
+smeg_t		tregion;
+#endif
+struct pmap	kernel_pmap_store;		/* the kernel's pmap */
+struct regmap	kernel_regmap_store[NKREG];	/* the kernel's regmap */
+struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 #ifdef MACHINE_NONCONTIG
@@ -304,7 +305,7 @@ vm_offset_t prom_vend;
  * pmegs.   then the PROM's pmegs get used during autoconfig and everything
  * falls apart!  (not very fun to debug, BTW.)
  *
- * solution: "and" off the invalid bits in the getsetmap macro
+ * solution: mask the invalid bits in the getsetmap macro.
  */
 
 static u_long segfixmask = 0xffffffff; /* all bits valid to start */
@@ -330,6 +331,10 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 				    : (lduha(va, ASI_SEGMAP) & segfixmask))
 #define	setsegmap(va, pmeg)	(cputyp==CPU_SUN4C ? stba(va, ASI_SEGMAP, pmeg) \
 				    : stha(va, ASI_SEGMAP, pmeg))
+#endif
+#if defined(SUN4) && defined(MMU_3L)
+#define	getregmap(va)		((unsigned)lduha(va+2, ASI_REGMAP) >> 8)
+#define	setregmap(va, smeg)	stha(va+2, ASI_REGMAP, (smeg << 8))
 #endif
 
 #define	getpte(va)		lda(va, ASI_PTE)
@@ -381,6 +386,32 @@ int	pmap_stod[BTSIZE];		/* sparse to dense */
 #define	HWTOSW(pg) (pg)
 #define	SWTOHW(pg) (pg)
 #endif /* MACHINE_NONCONTIG */
+
+#ifdef MMU_3L
+#define CTX_USABLE(pm,rp)	((pm)->pm_ctx && \
+				 (!mmu_3l || (rp)->rg_smeg != reginval))
+#else
+#define CTX_USABLE(pm,rp)	((pm)->pm_ctx)
+#endif
+
+#define GAP_WIDEN(pm,vr) do {		\
+	if (vr + 1 == pm->pm_gap_start)	\
+		pm->pm_gap_start = vr;	\
+	if (vr == pm->pm_gap_end)	\
+		pm->pm_gap_end = vr + 1;\
+} while (0)
+
+#define GAP_SHRINK(pm,vr) do {						\
+	register int x;							\
+	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;	\
+	if (vr > x) {							\
+		if (vr < pm->pm_gap_end)				\
+			pm->pm_gap_end = vr;				\
+	} else {							\
+		if (vr >= pm->pm_gap_start && x != pm->pm_gap_start)	\
+			pm->pm_gap_start = vr + 1;			\
+	}								\
+} while (0)
 
 /*
  * Sort a memory array by address.
@@ -638,12 +669,13 @@ pmap_pa_exists(pa)
  * description of *free* virtual memory.  Rather than invert this, we
  * resort to two magic constants from the PROM vector description file.
  */
-int
-mmu_reservemon(nmmu)
-	register int nmmu;
+void
+mmu_reservemon(nrp, nsp)
+	register int *nrp, *nsp;
 {
 	register u_int va, eva;
-	register int mmuseg, i;
+	register int mmureg, mmuseg, i, nr, ns, vr, lastvr;
+	register struct regmap *rp;
 
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
@@ -657,21 +689,55 @@ mmu_reservemon(nmmu)
 		prom_vend = eva = OPENPROM_ENDVADDR;
 	}
 #endif
+	ns = *nsp;
+	nr = *nrp;
+	lastvr = 0;
 	while (va < eva) {
+		vr = VA_VREG(va);
+		rp = &pmap_kernel()->pm_regmap[vr];
+
+#ifdef MMU_3L
+		if (mmu_3l && vr != lastvr) {
+			lastvr = vr;
+			mmureg = getregmap(va);
+			if (mmureg < nr)
+				rp->rg_smeg = nr = mmureg;
+			/*
+			 * On 3-level MMU machines, we distribute regions,
+			 * rather than segments, amongst the contexts.
+			 */
+			for (i = ncontext; --i > 0;)
+				(*promvec->pv_setctxt)(i, (caddr_t)va, mmureg);
+		}
+#endif
 		mmuseg = getsegmap(va);
-		if (mmuseg < nmmu)
-			nmmu = mmuseg;
-		for (i = ncontext; --i > 0;)
-			(*promvec->pv_setctxt)(i, (caddr_t)va, mmuseg);
+		if (mmuseg < ns)
+			ns = mmuseg;
+#ifdef MMU_3L
+		if (!mmu_3l)
+#endif
+			for (i = ncontext; --i > 0;)
+				(*promvec->pv_setctxt)(i, (caddr_t)va, mmuseg);
+
 		if (mmuseg == seginval) {
 			va += NBPSG;
 			continue;
 		}
+		/*
+		 * Another PROM segment. Enter into region map.
+		 * Assume the entire segment is valid.
+		 */
+		rp->rg_nsegmap += 1;
+		rp->rg_segmap[VA_VSEG(va)].sg_pmeg = mmuseg;
+		rp->rg_segmap[VA_VSEG(va)].sg_npte = NPTESG;
+
 		/* PROM maps its memory user-accessible: fix it. */
 		for (i = NPTESG; --i >= 0; va += NBPG)
 			setpte(va, getpte(va) | PG_S);
 	}
-	return (nmmu);
+	*nsp = ns;
+	*nrp = nr;
+	return;
 }
 
 /*
@@ -684,6 +750,10 @@ mmu_reservemon(nmmu)
 /*
  * MMU management.
  */
+struct mmuentry *me_alloc __P((struct mmuhd *, struct pmap *, int, int));
+void		me_free __P((struct pmap *, u_int));
+struct mmuentry	*region_alloc __P((struct mmuhd *, struct pmap *, int));
+void		region_free __P((struct pmap *, u_int));
 
 /*
  * Change contexts.  We need the old context number as well as the new
@@ -711,63 +781,69 @@ mmu_reservemon(nmmu)
  * since it implements the dynamic allocation of MMU entries.
  */
 struct mmuentry *
-me_alloc(mh, newpm, newvseg)
+me_alloc(mh, newpm, newvreg, newvseg)
 	register struct mmuhd *mh;
 	register struct pmap *newpm;
-	register int newvseg;
+	register int newvreg, newvseg;
 {
 	register struct mmuentry *me;
 	register struct pmap *pm;
 	register int i, va, pa, *pte, tpte;
 	int ctx;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	/* try free list first */
-	if ((me = me_freelist) != NULL) {
-		me_freelist = me->me_next;
+	if ((me = segm_freelist.tqh_first) != NULL) {
+		TAILQ_REMOVE(&segm_freelist, me, me_list);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
 			panic("me_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMU_ALLOC)
-			printf("me_alloc: got pmeg %x\n", me->me_pmeg);
+			printf("me_alloc: got pmeg %d\n", me->me_cookie);
 #endif
-		insque(me, mh->mh_prev);	/* onto end of queue */
+		TAILQ_INSERT_TAIL(mh, me, me_list);
 
 		/* onto on pmap chain; pmap is already locked, if needed */
-		me->me_pmforw = NULL;
-		me->me_pmback = newpm->pm_mmuback;
-		*newpm->pm_mmuback = me;
-		newpm->pm_mmuback = &me->me_pmforw;
+		TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
 
 		/* into pmap segment table, with backpointers */
-		newpm->pm_segmap[newvseg] = me->me_pmeg;
+		newpm->pm_regmap[newvreg].rg_segmap[newvseg].sg_pmeg = me->me_cookie;
 		me->me_pmap = newpm;
 		me->me_vseg = newvseg;
+		me->me_vreg = newvreg;
 
 		return (me);
 	}
 
 	/* no luck, take head of LRU list */
-	if ((me = me_lru.mh_next) == (struct mmuentry *)&me_lru)
+	if ((me = segm_lru.tqh_first) == NULL)
 		panic("me_alloc: all pmegs gone");
+
 	pm = me->me_pmap;
 	if (pm == NULL)
 		panic("me_alloc: LRU entry has no pmap");
 	if (pm == pmap_kernel())
 		panic("me_alloc: stealing from kernel");
-	pte = pm->pm_pte[me->me_vseg];
-	if (pte == NULL)
-		panic("me_alloc: LRU entry's pmap has no ptes");
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
 		printf("me_alloc: stealing pmeg %x from pmap %x\n",
-		    me->me_pmeg, pm);
+		    me->me_cookie, pm);
 #endif
 	/*
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
 	 */
-	remque(me);
-	insque(me, mh->mh_prev);
+	TAILQ_REMOVE(&segm_lru, me, me_list);
+	TAILQ_INSERT_TAIL(mh, me, me_list);
+
+	rp = &pm->pm_regmap[me->me_vreg];
+	if (rp->rg_segmap == NULL)
+		panic("me_alloc: LRU entry's pmap has no segments");
+	sp = &rp->rg_segmap[me->me_vseg];
+	pte = sp->sg_pte;
+	if (pte == NULL)
+		panic("me_alloc: LRU entry's pmap has no ptes");
 
 	/*
 	 * The PMEG must be mapped into some context so that we can
@@ -781,14 +857,18 @@ me_alloc(mh, newpm, newvseg)
 	 * XXX do not have to flush cache immediately
 	 */
 	ctx = getcontext();
-	if (pm->pm_ctx) {
+	if (CTX_USABLE(pm,rp)) {
 		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
 		if (vactype != VAC_NONE)
-			cache_flush_segment(me->me_vseg);
-		va = VSTOVA(me->me_vseg);
+			cache_flush_segment(me->me_vreg, me->me_vseg);
+		va = VSTOVA(me->me_vreg,me->me_vseg);
 	} else {
 		CHANGE_CONTEXTS(ctx, 0);
-		setsegmap(0, me->me_pmeg);
+#ifdef MMU_3L
+		if (mmu_3l)
+			setregmap(0, tregion);
+#endif
+		setsegmap(0, me->me_cookie);
 		/*
 		 * No cache flush needed: it happened earlier when
 		 * the old context was taken.
@@ -815,29 +895,23 @@ me_alloc(mh, newpm, newvseg)
 
 	/* update segment tables */
 	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
-	if (pm->pm_ctx)
-		setsegmap(VSTOVA(me->me_vseg), seginval);
-	pm->pm_segmap[me->me_vseg] = seginval;
+	if (CTX_USABLE(pm,rp))
+		setsegmap(VSTOVA(me->me_vreg,me->me_vseg), seginval);
+	sp->sg_pmeg = seginval;
 
 	/* off old pmap chain */
-	if ((*me->me_pmback = me->me_pmforw) != NULL) {
-		me->me_pmforw->me_pmback = me->me_pmback;
-		me->me_pmforw = NULL;
-	} else
-		pm->pm_mmuback = me->me_pmback;
+	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
 	simple_unlock(&pm->pm_lock);
 	setcontext(ctx);	/* done with old context */
 
 	/* onto new pmap chain; new pmap is already locked, if needed */
-	/* me->me_pmforw = NULL; */	/* done earlier */
-	me->me_pmback = newpm->pm_mmuback;
-	*newpm->pm_mmuback = me;
-	newpm->pm_mmuback = &me->me_pmforw;
+	TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
 
 	/* into new segment table, with backpointers */
-	newpm->pm_segmap[newvseg] = me->me_pmeg;
+	newpm->pm_regmap[newvreg].rg_segmap[newvseg].sg_pmeg = me->me_cookie;
 	me->me_pmap = newpm;
 	me->me_vseg = newvseg;
+	me->me_vreg = newvreg;
 
 	return (me);
 }
@@ -857,24 +931,37 @@ me_free(pm, pmeg)
 	register struct pmap *pm;
 	register u_int pmeg;
 {
-	register struct mmuentry *me = &mmuentry[pmeg];
+	register struct mmuentry *me = &mmusegments[pmeg];
 	register int i, va, pa, tpte;
+	register int vr;
+	register struct regmap *rp;
+
+	vr = me->me_vreg;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_MMU_ALLOC)
-		printf("me_free: freeing pmeg %x from pmap %x\n",
-		    me->me_pmeg, pm);
-	if (me->me_pmeg != pmeg)
+		printf("me_free: freeing pmeg %d from pmap %x\n",
+		    me->me_cookie, pm);
+	if (me->me_cookie != pmeg)
 		panic("me_free: wrong mmuentry");
 	if (pm != me->me_pmap)
 		panic("me_free: pm != me_pmap");
 #endif
 
+	rp = &pm->pm_regmap[vr];
+
 	/* just like me_alloc, but no cache flush, and context already set */
-	if (pm->pm_ctx)
-		va = VSTOVA(me->me_vseg);
-	else {
-		setsegmap(0, me->me_pmeg);
+	if (CTX_USABLE(pm,rp)) {
+		va = VSTOVA(vr,me->me_vseg);
+	} else {
+#ifdef DEBUG
+if (getcontext() != 0) panic("me_free: ctx != 0");
+#endif
+#ifdef MMU_3L
+		if (mmu_3l)
+			setregmap(0, tregion);
+#endif
+		setsegmap(0, me->me_cookie);
 		va = 0;
 	}
 	i = NPTESG;
@@ -889,22 +976,161 @@ me_free(pm, pmeg)
 	} while (--i > 0);
 
 	/* take mmu entry off pmap chain */
-	*me->me_pmback = me->me_pmforw;
-	if ((*me->me_pmback = me->me_pmforw) != NULL)
-		me->me_pmforw->me_pmback = me->me_pmback;
-	else
-		pm->pm_mmuback = me->me_pmback;
+	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
 	/* ... and remove from segment map */
-	pm->pm_segmap[me->me_vseg] = seginval;
+	if (rp->rg_segmap == NULL)
+		panic("me_free: no segments in pmap");
+	rp->rg_segmap[me->me_vseg].sg_pmeg = seginval;
 
 	/* off LRU or lock chain */
-	remque(me);
+	if (pm == pmap_kernel()) {
+		TAILQ_REMOVE(&segm_locked, me, me_list);
+	} else {
+		TAILQ_REMOVE(&segm_lru, me, me_list);
+	}
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
-	me->me_next = me_freelist;
-	me_freelist = me;
+	TAILQ_INSERT_TAIL(&segm_freelist, me, me_list);
 }
+
+#ifdef MMU_3L
+
+/* XXX - Merge with segm_alloc/segm_free ? */
+
+struct mmuentry *
+region_alloc(mh, newpm, newvr)
+	register struct mmuhd *mh;
+	register struct pmap *newpm;
+	register int newvr;
+{
+	register struct mmuentry *me;
+	register struct pmap *pm;
+	register int i, va, pa;
+	int ctx;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	/* try free list first */
+	if ((me = region_freelist.tqh_first) != NULL) {
+		TAILQ_REMOVE(&region_freelist, me, me_list);
+#ifdef DEBUG
+		if (me->me_pmap != NULL)
+			panic("region_alloc: freelist entry has pmap");
+		if (pmapdebug & PDB_MMUREG_ALLOC)
+			printf("region_alloc: got smeg %x\n", me->me_cookie);
+#endif
+		TAILQ_INSERT_TAIL(mh, me, me_list);
+
+		/* onto on pmap chain; pmap is already locked, if needed */
+		TAILQ_INSERT_TAIL(&newpm->pm_reglist, me, me_pmchain);
+
+		/* into pmap segment table, with backpointers */
+		newpm->pm_regmap[newvr].rg_smeg = me->me_cookie;
+		me->me_pmap = newpm;
+		me->me_vreg = newvr;
+
+		return (me);
+	}
+
+	/* no luck, take head of LRU list */
+	if ((me = region_lru.tqh_first) == NULL)
+		panic("region_alloc: all smegs gone");
+
+	pm = me->me_pmap;
+	if (pm == NULL)
+		panic("region_alloc: LRU entry has no pmap");
+	if (pm == pmap_kernel())
+		panic("region_alloc: stealing from kernel");
+#ifdef DEBUG
+	if (pmapdebug & (PDB_MMUREG_ALLOC | PDB_MMUREG_STEAL))
+		printf("region_alloc: stealing smeg %x from pmap %x\n",
+		    me->me_cookie, pm);
+#endif
+	/*
+	 * Remove from LRU list, and insert at end of new list
+	 * (probably the LRU list again, but so what?).
+	 */
+	TAILQ_REMOVE(&region_lru, me, me_list);
+	TAILQ_INSERT_TAIL(mh, me, me_list);
+
+	rp = &pm->pm_regmap[me->me_vreg];
+	ctx = getcontext();
+	if (pm->pm_ctx) {
+		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
+		if (vactype != VAC_NONE)
+			cache_flush_region(me->me_vreg);
+	}
+
+	/* update region tables */
+	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
+	if (pm->pm_ctx)
+		setregmap(VRTOVA(me->me_vreg), reginval);
+	rp->rg_smeg = reginval;
+
+	/* off old pmap chain */
+	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
+	simple_unlock(&pm->pm_lock);
+	setcontext(ctx);	/* done with old context */
+
+	/* onto new pmap chain; new pmap is already locked, if needed */
+	TAILQ_INSERT_TAIL(&newpm->pm_reglist, me, me_pmchain);
+
+	/* into new segment table, with backpointers */
+	newpm->pm_regmap[newvr].rg_smeg = me->me_cookie;
+	me->me_pmap = newpm;
+	me->me_vreg = newvr;
+
+	return (me);
+}
+
+/*
+ * Free an MMU entry.
+ *
+ * Assumes the corresponding pmap is already locked.
+ * Does NOT flush cache. ???
+ * CALLER MUST SET CONTEXT to pm->pm_ctxnum (if pmap has
+ * a context) or to 0 (if not).  Caller must also update
+ * pm->pm_regmap and (possibly) the hardware.
+ */
+void
+region_free(pm, smeg)
+	register struct pmap *pm;
+	register u_int smeg;
+{
+	register struct mmuentry *me = &mmuregions[smeg];
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_MMUREG_ALLOC)
+		printf("region_free: freeing smeg %x from pmap %x\n",
+		    me->me_cookie, pm);
+	if (me->me_cookie != smeg)
+		panic("region_free: wrong mmuentry");
+	if (pm != me->me_pmap)
+		panic("region_free: pm != me_pmap");
+#endif
+
+	if (pm->pm_ctx)
+		if (vactype != VAC_NONE)
+			cache_flush_region(me->me_vreg);
+
+	/* take mmu entry off pmap chain */
+	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
+	/* ... and remove from segment map */
+	pm->pm_regmap[smeg].rg_smeg = reginval;
+
+	/* off LRU or lock chain */
+	if (pm == pmap_kernel()) {
+		TAILQ_REMOVE(&region_locked, me, me_list);
+	} else {
+		TAILQ_REMOVE(&region_lru, me, me_list);
+	}
+
+	/* no associated pmap; on free list */
+	me->me_pmap = NULL;
+	TAILQ_INSERT_TAIL(&region_freelist, me, me_list);
+}
+#endif
 
 /*
  * `Page in' (load or inspect) an MMU entry; called on page faults.
@@ -920,19 +1146,52 @@ mmu_pagein(pm, va, bits)
 {
 	register int *pte;
 	register struct mmuentry *me;
-	register int vseg = VA_VSEG(va), pmeg, i, s;
+	register int vr, vs, pmeg, i, s;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+#ifdef DEBUG
+if (pm == pmap_kernel())
+printf("mmu_pagein: kernel wants map at va %x, vr %d, vs %d\n", va, vr, vs);
+#endif
+
+	/* return 0 if we have no PMEGs to load */
+	if (rp->rg_segmap == NULL)
+		return (0);
+#ifdef MMU_3L
+	if (mmu_3l && rp->rg_smeg == reginval) {
+		smeg_t smeg;
+		unsigned int tva = VA_ROUNDDOWNTOREG(va);
+		struct segmap *sp = rp->rg_segmap;
+
+		s = splpmap();		/* paranoid */
+		smeg = region_alloc(&region_lru, pm, vr)->me_cookie;
+		setregmap(tva, smeg);
+		i = NSEGRG;
+		do {
+			setsegmap(tva, sp++->sg_pmeg);
+			tva += NBPSG;
+		} while (--i > 0);
+		splx(s);
+	}
+#endif
+	sp = &rp->rg_segmap[vs];
 
 	/* return 0 if we have no PTEs to load */
-	if ((pte = pm->pm_pte[vseg]) == NULL)
+	if ((pte = sp->sg_pte) == NULL)
 		return (0);
+
 	/* return -1 if the fault is `hard', 0 if not */
-	if (pm->pm_segmap[vseg] != seginval)
+	if (sp->sg_pmeg != seginval)
 		return (bits && (getpte(va) & bits) == bits ? -1 : 0);
 
 	/* reload segment: write PTEs into a new LRU entry */
 	va = VA_ROUNDDOWNTOSEG(va);
 	s = splpmap();		/* paranoid */
-	pmeg = me_alloc(&me_lru, pm, vseg)->me_pmeg;
+	pmeg = me_alloc(&segm_lru, pm, vr, vs)->me_cookie;
 	setsegmap(va, pmeg);
 	i = NPTESG;
 	do {
@@ -956,7 +1215,7 @@ ctx_alloc(pm)
 {
 	register union ctxinfo *c;
 	register int cnum, i;
-	register pmeg_t *segp;
+	register struct regmap *rp;
 	register int gap_start, gap_end;
 	register unsigned long va;
 
@@ -1003,11 +1262,11 @@ ctx_alloc(pm)
 	pm->pm_ctxnum = cnum;
 
 	/*
-	 * Write pmap's segment table into the MMU.
+	 * Write pmap's region (3-level MMU) or segment table into the MMU.
 	 *
-	 * Only write those pmeg numbers that seems interesting by
-	 * maintaining a pair of segment pointers in between the pmap
-	 * has no valid mappings.
+	 * Only write those entries that actually map something in this
+	 * context by maintaining a pair of region numbers in between
+	 * which the pmap has no valid mappings.
 	 *
 	 * If a context was just allocated from the free list, trust that
 	 * all its pmeg numbers are `seginval'. We make sure this is the
@@ -1019,17 +1278,31 @@ ctx_alloc(pm)
 	 * pmap, we possibly shrink the gap to be the disjuction of the new
 	 * and the previous map.
 	 */
-	segp = pm->pm_segmap;
-	for (va = 0, i = NUSEG; --i >= 0; va += NBPSG) {
-		if (VA_VSEG(va) >= gap_start) {
-			va = VSTOVA(gap_end);
+
+
+	rp = pm->pm_regmap;
+	for (va = 0, i = NUREG; --i >= 0; ) {
+		if (VA_VREG(va) >= gap_start) {
+			va = VRTOVA(gap_end);
 			i -= gap_end - gap_start;
-			segp += gap_end - gap_start;
+			rp += gap_end - gap_start;
 			if (i < 0)
 				break;
-			gap_start = NUSEG; /* mustn't re-enter this branch */
+			gap_start = NUREG; /* mustn't re-enter this branch */
 		}
-		setsegmap(va, *segp++);
+#ifdef MMU_3L
+		if (mmu_3l) {
+			setregmap(va, rp++->rg_smeg);
+			va += NBPRG;
+		} else
+#endif
+		{
+			register int j;
+			register struct segmap *sp = rp->rg_segmap;
+			for (j = NSEGRG; --j >= 0; va += NBPSG)
+				setsegmap(va, sp?sp++->sg_pmeg:seginval);
+			rp++;
+		}
 	}
 }
 
@@ -1087,8 +1360,10 @@ pv_changepte(pv0, bis, bic)
 	register int *pte;
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int va, vseg, pmeg, i, flags;
+	register int va, vr, vs, i, flags;
 	int ctx, s;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	write_user_windows();		/* paranoid? */
 
@@ -1103,13 +1378,26 @@ pv_changepte(pv0, bis, bic)
 		pm = pv->pv_pmap;
 if(pm==NULL)panic("pv_changepte 1");
 		va = pv->pv_va;
-		vseg = VA_VSEG(va);
-		pte = pm->pm_pte[vseg];
-		if ((pmeg = pm->pm_segmap[vseg]) != seginval) {
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_segmap == NULL)
+			panic("pv_changepte: no segments");
+
+		sp = &rp->rg_segmap[vs];
+		pte = sp->sg_pte;
+
+		if (sp->sg_pmeg == seginval) {
+			/* not in hardware: just fix software copy */
+			if (pte == NULL)
+				panic("pv_changepte 2");
+			pte += VA_VPG(va);
+			*pte = (*pte | bis) & ~bic;
+		} else {
 			register int tpte;
 
 			/* in hardware: fix hardware copy */
-			if (pm->pm_ctx) {
+			if (CTX_USABLE(pm,rp)) {
 				extern vm_offset_t pager_sva, pager_eva;
 
 				/*
@@ -1126,11 +1414,15 @@ if(pm==NULL)panic("pv_changepte 1");
 				/* XXX should flush only when necessary */
 				tpte = getpte(va);
 				if (vactype != VAC_NONE && (tpte & PG_M))
-						cache_flush_page(va);
+					cache_flush_page(va);
 			} else {
 				/* XXX per-cpu va? */
 				setcontext(0);
-				setsegmap(0, pmeg);
+#ifdef MMU_3L
+				if (mmu_3l)
+					setregmap(0, tregion);
+#endif
+				setsegmap(0, sp->sg_pmeg);
 				va = VA_VPG(va) << PGSHIFT;
 				tpte = getpte(va);
 			}
@@ -1141,12 +1433,6 @@ if(pm==NULL)panic("pv_changepte 1");
 			setpte(va, tpte);
 			if (pte != NULL)	/* update software copy */
 				pte[VA_VPG(va)] = tpte;
-		} else {
-			/* not in hardware: just fix software copy */
-			if (pte == NULL)
-				panic("pv_changepte 2");
-			pte += VA_VPG(va);
-			*pte = (*pte | bis) & ~bic;
 		}
 	}
 	pv0->pv_flags = flags;
@@ -1167,8 +1453,10 @@ pv_syncflags(pv0)
 {
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int tpte, va, vseg, pmeg, i, flags;
+	register int tpte, va, vr, vs, pmeg, i, flags;
 	int ctx, s;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	write_user_windows();		/* paranoid? */
 
@@ -1182,10 +1470,17 @@ pv_syncflags(pv0)
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
 		va = pv->pv_va;
-		vseg = VA_VSEG(va);
-		if ((pmeg = pm->pm_segmap[vseg]) == seginval)
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_segmap == NULL)
+			panic("pv_syncflags: no segments");
+		sp = &rp->rg_segmap[vs];
+
+		if ((pmeg = sp->sg_pmeg) == seginval)
 			continue;
-		if (pm->pm_ctx) {
+
+		if (CTX_USABLE(pm,rp)) {
 			setcontext(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
 			tpte = getpte(va);
@@ -1194,6 +1489,10 @@ pv_syncflags(pv0)
 		} else {
 			/* XXX per-cpu va? */
 			setcontext(0);
+#ifdef MMU_3L
+			if (mmu_3l)
+				setregmap(0, tregion);
+#endif
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
 			tpte = getpte(va);
@@ -1222,7 +1521,7 @@ pv_syncflags(pv0)
  * definition nonempty, since it must have at least two elements
  * in it to have PV_NC set, and we only remove one here.)
  */
-static void
+/*static*/ void
 pv_unlink(pv, pm, va)
 	register struct pvlist *pv;
 	register struct pmap *pm;
@@ -1278,7 +1577,7 @@ pv_unlink(pv, pm, va)
  * It returns PG_NC if the (new) pvlist says that the address cannot
  * be cached.
  */
-static int
+/*static*/ int
 pv_link(pv, pm, va)
 	register struct pvlist *pv;
 	register struct pmap *pm;
@@ -1309,6 +1608,12 @@ pv_link(pv, pm, va)
 		/* MAY NEED TO DISCACHE ANYWAY IF va IS IN DVMA SPACE? */
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
 			if (BADALIAS(va, npv->pv_va)) {
+#ifdef DEBUG
+				if (pmapdebug) printf(
+				"pv_link: badalias: pid %d, %x<=>%x, pa %x\n",
+				curproc?curproc->p_pid:-1, va, npv->pv_va,
+				vm_first_phys + (pv-pv_table)*NBPG);
+#endif
 				pv->pv_flags |= PV_NC;
 				pv_changepte(pv, ret = PG_NC, 0);
 				break;
@@ -1366,16 +1671,20 @@ int nptesg;
 /*
  * Bootstrap the system enough to run with VM enabled.
  *
- * nmmu is the number of mmu entries (``PMEGs'');
+ * nsegment is the number of mmu segment entries (``PMEGs'');
+ * nregion is the number of mmu region entries (``SMEGs'');
  * nctx is the number of contexts.
  */
 void
-pmap_bootstrap(nmmu, nctx)
-	int nmmu, nctx;
+pmap_bootstrap(nctx, nregion, nsegment)
+	int nsegment, nctx, nregion;
 {
 	register union ctxinfo *ci;
-	register struct mmuentry *me;
-	register int i, j, n, z, vs;
+	register struct mmuentry *mmuseg, *mmureg;
+	struct   regmap *rp;
+	register int i, j;
+	register int npte, zseg, vr, vs;
+	register int rcookie, scookie;
 	register caddr_t p;
 	register struct memarr *mp;
 	register void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
@@ -1390,8 +1699,6 @@ pmap_bootstrap(nmmu, nctx)
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
 
-	ncontext = nctx;
-
 #if defined(SUN4) && defined(SUN4C)
 	/* In this case NPTESG is not a #define */
 	nptesg = (NBPSG >> pgshift);
@@ -1401,14 +1708,50 @@ pmap_bootstrap(nmmu, nctx)
 	/*
 	 * set up the segfixmask to mask off invalid bits
 	 */
-	segfixmask =  nmmu - 1; /* assume nmmu is a power of 2 */
+	segfixmask =  nsegment - 1; /* assume nsegment is a power of 2 */
+#ifdef DIAGNOSTIC
+	if (((nsegment & segfixmask) | (nsegment & ~segfixmask)) != nsegment) {
+		printf("pmap_bootstrap: unsuitable number of segments (%d)\n",
+			nsegment);
+		callrom();
+	}
 #endif
+#endif
+
+	ncontext = nctx;
 
 	/*
 	 * Last segment is the `invalid' one (one PMEG of pte's with !pg_v).
 	 * It will never be used for anything else.
 	 */
-	seginval = --nmmu;
+	seginval = --nsegment;
+
+#ifdef MMU_3L
+	if (mmu_3l)
+		reginval = --nregion;
+#endif
+
+	/*
+	 * Intialize the kernel pmap.
+	 */
+	/* kernel_pmap_store.pm_ctxnum = 0; */
+	simple_lock_init(kernel_pmap_store.pm_lock);
+	kernel_pmap_store.pm_refcount = 1;
+#ifdef MMU_3L
+	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
+#endif
+	TAILQ_INIT(&kernel_pmap_store.pm_seglist);
+
+	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
+	for (i = NKREG; --i >= 0;) {
+#ifdef MMU_3L
+		kernel_regmap_store[i].rg_smeg = reginval;
+#endif
+		kernel_regmap_store[i].rg_segmap =
+			&kernel_segmap_store[i * NSEGRG];
+		for (j = NSEGRG; --j >= 0;)
+			kernel_segmap_store[i * NSEGRG + j].sg_pmeg = seginval;
+	}
 
 	/*
 	 * Preserve the monitor ROM's reserved VM region, so that
@@ -1416,25 +1759,45 @@ pmap_bootstrap(nmmu, nctx)
 	 * effect we map the ROM's reserved VM into all contexts
 	 * (otherwise L1-A crashes the machine!).
 	 */
-	nmmu = mmu_reservemon(nmmu);
+
+	mmu_reservemon(&nregion, &nsegment);
+
+#ifdef MMU_3L
+	/* Reserve one region for temporary mappings */
+	tregion = --nregion;
+#endif
 
 	/*
-	 * Allocate and clear mmu entry and context structures.
+	 * Allocate and clear mmu entries and context structures.
 	 */
 	p = end;
 #ifdef DDB
 	if (esym != 0)
 		theend = p = esym;
 #endif
-	mmuentry = me = (struct mmuentry *)p;
-	p += nmmu * sizeof *me;
-	ctxinfo = ci = (union ctxinfo *)p;
+#ifdef MMU_3L
+	mmuregions = mmureg = (struct mmuentry *)p;
+	p += nregion * sizeof(struct mmuentry);
+#endif
+	mmusegments = mmuseg = (struct mmuentry *)p;
+	p += nsegment * sizeof(struct mmuentry);
+	pmap_kernel()->pm_ctx = ctxinfo = ci = (union ctxinfo *)p;
 	p += nctx * sizeof *ci;
 #ifdef DDB
 	bzero(theend, p - theend);
 #else
 	bzero(end, p - end);
 #endif
+
+	/* Initialize MMU resource queues */
+#ifdef MMU_3L
+	TAILQ_INIT(&region_freelist);
+	TAILQ_INIT(&region_lru);
+	TAILQ_INIT(&region_locked);
+#endif
+	TAILQ_INIT(&segm_freelist);
+	TAILQ_INIT(&segm_lru);
+	TAILQ_INIT(&segm_locked);
 
 	/*
 	 * Set up the `constants' for the call to vm_init()
@@ -1487,25 +1850,6 @@ pmap_bootstrap(nmmu, nctx)
 	p = (caddr_t)i;			/* retract to first free phys */
 
 	/*
-	 * Intialize the kernel pmap.
-	 */
-	{
-		register struct pmap *k = pmap_kernel();
-
-		k->pm_ctx = ctxinfo;
-		/* k->pm_ctxnum = 0; */
-		simple_lock_init(&k->pm_lock);
-		k->pm_refcount = 1;
-		/* k->pm_mmuforw = 0; */
-		k->pm_mmuback = &k->pm_mmuforw;
-		k->pm_segmap = &kernel_segmap_store.ks_segmap[-NUSEG];
-		k->pm_pte = &kernel_segmap_store.ks_pte[-NUSEG];
-		k->pm_npte = &kernel_segmap_store.ks_npte[-NUSEG];
-		for (i = NKSEG; --i >= 0;)
-			kernel_segmap_store.ks_segmap[i] = seginval;
-	}
-
-	/*
 	 * All contexts are free except the kernel's.
 	 *
 	 * XXX sun4c could use context 0 for users?
@@ -1520,74 +1864,141 @@ pmap_bootstrap(nmmu, nctx)
 	ctx_kick = 0;
 	ctx_kickdir = -1;
 
-	/* me_freelist = NULL; */	/* already NULL */
-
 	/*
 	 * Init mmu entries that map the kernel physical addresses.
-	 * If the page bits in p are 0, we filled the last segment
-	 * exactly (now how did that happen?); if not, it is
-	 * the last page filled in the last segment.
 	 *
 	 * All the other MMU entries are free.
 	 *
 	 * THIS ASSUMES SEGMENT i IS MAPPED BY MMU ENTRY i DURING THE
 	 * BOOT PROCESS
 	 */
-	z = ((((u_int)p + NBPSG - 1) & ~SGOFSET) - KERNBASE) >> SGSHIFT;
+
+	rom_setmap = promvec->pv_setctxt;
+	zseg = ((((u_int)p + NBPSG - 1) & ~SGOFSET) - KERNBASE) >> SGSHIFT;
 	lastpage = VA_VPG(p);
 	if (lastpage == 0)
+		/*
+		 * If the page bits in p are 0, we filled the last segment
+		 * exactly (now how did that happen?); if not, it is
+		 * the last page filled in the last segment.
+		 */
 		lastpage = NPTESG;
+
 	p = (caddr_t)KERNBASE;		/* first va */
 	vs = VA_VSEG(KERNBASE);		/* first virtual segment */
-	rom_setmap = promvec->pv_setctxt;
-	for (i = 0;;) {
+	vr = VA_VREG(KERNBASE);		/* first virtual region */
+	rp = &pmap_kernel()->pm_regmap[vr];
+
+	for (rcookie = 0, scookie = 0;;) {
+
 		/*
-		 * Distribute each kernel segment into all contexts.
+		 * Distribute each kernel region/segment into all contexts.
 		 * This is done through the monitor ROM, rather than
 		 * directly here: if we do a setcontext we will fault,
 		 * as we are not (yet) mapped in any other context.
 		 */
-		for (j = 1; j < nctx; j++)
-			rom_setmap(j, p, i);
+
+		if ((vs % NSEGRG) == 0) {
+			/* Entering a new region */
+			if (VA_VREG(p) > vr) {
+#ifdef DEBUG
+				printf("note: giant kernel!\n");
+#endif
+				vr++, rp++;
+			}
+#ifdef MMU_3L
+			if (mmu_3l) {
+				for (i = 1; i < nctx; i++)
+					rom_setmap(i, p, rcookie);
+
+				TAILQ_INSERT_TAIL(&region_locked,
+						  mmureg, me_list);
+				TAILQ_INSERT_TAIL(&pmap_kernel()->pm_reglist,
+						  mmureg, me_pmchain);
+				mmureg->me_cookie = rcookie;
+				mmureg->me_pmap = pmap_kernel();
+				mmureg->me_vreg = vr;
+				rp->rg_smeg = rcookie;
+				mmureg++;
+				rcookie++;
+			}
+#endif
+		}
+
+#ifdef MMU_3L
+		if (!mmu_3l)
+#endif
+			for (i = 1; i < nctx; i++)
+				rom_setmap(i, p, scookie);
 
 		/* set up the mmu entry */
-		me->me_pmeg = i;
-		insque(me, me_locked.mh_prev);
-		/* me->me_pmforw = NULL; */
-		me->me_pmback = pmap_kernel()->pm_mmuback;
-		*pmap_kernel()->pm_mmuback = me;
-		pmap_kernel()->pm_mmuback = &me->me_pmforw;
-		me->me_pmap = pmap_kernel();
-		me->me_vseg = vs;
-		pmap_kernel()->pm_segmap[vs] = i;
-		n = ++i < z ? NPTESG : lastpage;
-		pmap_kernel()->pm_npte[vs] = n;
-		me++;
+		TAILQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
+		TAILQ_INSERT_TAIL(&pmap_kernel()->pm_seglist, mmuseg, me_pmchain);
+		mmuseg->me_cookie = scookie;
+		mmuseg->me_pmap = pmap_kernel();
+		mmuseg->me_vreg = vr;
+		mmuseg->me_vseg = vs % NSEGRG;
+		rp->rg_segmap[vs % NSEGRG].sg_pmeg = scookie;
+		npte = ++scookie < zseg ? NPTESG : lastpage;
+		rp->rg_segmap[vs % NSEGRG].sg_npte = npte;
+		rp->rg_nsegmap += 1;
+		mmuseg++;
 		vs++;
-		if (i < z) {
+		if (scookie < zseg) {
 			p += NBPSG;
 			continue;
 		}
+
 		/*
 		 * Unmap the pages, if any, that are not part of
 		 * the final segment.
 		 */
-		for (p += n << PGSHIFT; n < NPTESG; n++, p += NBPG)
+		for (p += npte << PGSHIFT; npte < NPTESG; npte++, p += NBPG)
 			setpte(p, 0);
+
+#ifdef MMU_3L
+		if (mmu_3l) {
+			/*
+			 * Unmap the segments, if any, that are not part of
+			 * the final region.
+			 */
+			for (i = rp->rg_nsegmap; i < NSEGRG; i++, p += NBPSG)
+				setsegmap(p, seginval);
+		}
+#endif
 		break;
 	}
-	for (; i < nmmu; i++, me++) {
-		me->me_pmeg = i;
-		me->me_next = me_freelist;
-		/* me->me_pmap = NULL; */
-		me_freelist = me;
+
+#ifdef MMU_3L
+	if (mmu_3l)
+		for (; rcookie < nregion; rcookie++, mmureg++) {
+			mmureg->me_cookie = rcookie;
+			TAILQ_INSERT_TAIL(&region_freelist, mmureg, me_list);
+		}
+#endif
+
+	for (; scookie < nsegment; scookie++, mmuseg++) {
+		mmuseg->me_cookie = scookie;
+		TAILQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
 	}
 
 	/* Erase all spurious user-space segmaps */
 	for (i = 1; i < ncontext; i++) {
 		setcontext(i);
-		for (p = 0, j = NUSEG; --j >= 0; p += NBPSG)
-			setsegmap(VSTOVA(VA_VSEG(p)), seginval);
+#ifdef MMU_3L
+		if (mmu_3l)
+			for (p = 0, j = NUREG; --j >= 0; p += NBPRG)
+				setregmap(p, reginval);
+		else
+#endif
+			for (p = 0, vr = 0; vr < NUREG; vr++) {
+				if (vr == 32) {
+					vr = (256 - 32);
+					p = (caddr_t)VRTOVA(vr);
+				}
+				for (j = NSEGRG; --j >= 0; p += NBPSG)
+					setsegmap(p, seginval);
+			}
 	}
 	setcontext(0);
 
@@ -1787,30 +2198,33 @@ void
 pmap_pinit(pm)
 	register struct pmap *pm;
 {
-	register int i;
-	register struct usegmap *usp;
+	register int i, size;
+	void *urp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
 		printf("pmap_pinit(%x)\n", pm);
 #endif
-	usp = malloc(sizeof(struct usegmap), M_VMPMAP, M_WAITOK);
-	bzero((caddr_t)usp, sizeof (struct usegmap));
-	pm->pm_segstore = usp;
 
+	size = NUREG * sizeof(struct regmap);
+	pm->pm_regstore = urp = malloc(size, M_VMPMAP, M_WAITOK);
+	bzero((caddr_t)urp, size);
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_refcount = 1;
-	/* pm->pm_mmuforw = NULL; */
-	pm->pm_mmuback = &pm->pm_mmuforw;
-	pm->pm_segmap = usp->us_segmap;
-	pm->pm_pte = usp->us_pte;
-	pm->pm_npte = usp->us_npte;
-	for (i = NUSEG; --i >= 0;)
-		usp->us_segmap[i] = seginval;
-	/*bzero((caddr_t)usp->us_pte, sizeof usp->us_pte);*/
-	/*bzero((caddr_t)usp->us_npte, sizeof usp->us_npte);*/
-	pm->pm_gap_end = VA_VSEG(VM_MAXUSER_ADDRESS);
+#ifdef MMU_3L
+	TAILQ_INIT(&pm->pm_reglist);
+#endif
+	TAILQ_INIT(&pm->pm_seglist);
+	pm->pm_regmap = urp;
+#ifdef MMU_3L
+	if (mmu_3l)
+		for (i = NUREG; --i >= 0;)
+			pm->pm_regmap[i].rg_smeg = reginval;
+#endif
+	pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
+
+	return;
 }
 
 /*
@@ -1853,16 +2267,46 @@ pmap_release(pm)
 	if (pmapdebug & PDB_DESTROY)
 		printf("pmap_release(%x)\n", pm);
 #endif
-	if (pm->pm_mmuforw)
-		panic("pmap_release mmuforw");
+#ifdef MMU_3L
+	if (pm->pm_reglist.tqh_first)
+		panic("pmap_release: region list not empty");
+#endif
+	if (pm->pm_seglist.tqh_first)
+		panic("pmap_release: segment list not empty");
 	if ((c = pm->pm_ctx) != NULL) {
 		if (pm->pm_ctxnum == 0)
 			panic("pmap_release: releasing kernel");
 		ctx_free(pm);
 	}
 	splx(s);
-	if (pm->pm_segstore)
-		free((caddr_t)pm->pm_segstore, M_VMPMAP);
+#ifdef DEBUG
+{
+	int vs, vr;
+	for (vr = 0; vr < NUREG; vr++) {
+		struct regmap *rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap != 0)
+			printf("pmap_release: %d segments remain in "
+				"region %d\n", rp->rg_nsegmap, vr);
+		if (rp->rg_segmap != NULL) {
+			printf("pmap_release: segments still "
+				"allocated in region %d\n", vr);
+			for (vs = 0; vs < NSEGRG; vs++) {
+				struct segmap *sp = &rp->rg_segmap[vs];
+				if (sp->sg_npte != 0)
+					printf("pmap_release: %d ptes "
+					     "remain in segment %d\n",
+						sp->sg_npte, vs);
+				if (sp->sg_pte != NULL) {
+					printf("pmap_release: ptes still "
+					     "allocated in segment %d\n", vs);
+				}
+			}
+		}
+	}
+}
+#endif
+	if (pm->pm_regstore)
+		free((caddr_t)pm->pm_regstore, M_VMPMAP);
 }
 
 /*
@@ -1880,10 +2324,10 @@ pmap_reference(pm)
 	}
 }
 
-static int pmap_rmk __P((struct pmap *, vm_offset_t, vm_offset_t,
-			 int, int, int));
-static int pmap_rmu __P((struct pmap *, vm_offset_t, vm_offset_t,
-			 int, int, int));
+static void pmap_rmk __P((struct pmap *, vm_offset_t, vm_offset_t,
+			  int, int));
+static void pmap_rmu __P((struct pmap *, vm_offset_t, vm_offset_t,
+			  int, int));
 
 /*
  * Remove the given range of mapping entries.
@@ -1897,9 +2341,8 @@ pmap_remove(pm, va, endva)
 	register vm_offset_t va, endva;
 {
 	register vm_offset_t nva;
-	register int vseg, nleft, s, ctx;
-	register int (*rm)(struct pmap *, vm_offset_t, vm_offset_t,
-			    int, int, int);
+	register int vr, vs, s, ctx;
+	register void (*rm)(struct pmap *, vm_offset_t, vm_offset_t, int, int);
 
 	if (pm == NULL)
 		return;
@@ -1927,13 +2370,12 @@ pmap_remove(pm, va, endva)
 	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
-		vseg = VA_VSEG(va);
-		nva = VSTOVA(vseg + 1);
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		nva = VSTOVA(vr, vs + 1);
 		if (nva == 0 || nva > endva)
 			nva = endva;
-		if ((nleft = pm->pm_npte[vseg]) != 0)
-			pm->pm_npte[vseg] = (*rm)(pm, va, nva,
-			    vseg, nleft, pm->pm_segmap[vseg]);
+		(*rm)(pm, va, nva, vr, vs);
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
@@ -1961,15 +2403,34 @@ pmap_remove(pm, va, endva)
  * These are egregiously complicated routines.
  */
 
-/* remove from kernel, return new nleft */
-static int
-pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
+/* remove from kernel */
+static void
+pmap_rmk(pm, va, endva, vr, vs)
 	register struct pmap *pm;
 	register vm_offset_t va, endva;
-	register int vseg, nleft, pmeg;
+	register int vr, vs;
 {
 	register int i, tpte, perpage, npg;
 	register struct pvlist *pv;
+	register int nleft, pmeg;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	rp = &pm->pm_regmap[vr];
+	sp = &rp->rg_segmap[vs];
+
+	if (rp->rg_nsegmap == 0)
+		return;
+
+#ifdef DEBUG
+	if (rp->rg_segmap == NULL)
+		panic("pmap_rmk: no segments");
+#endif
+
+	if ((nleft = sp->sg_npte) == 0)
+		return;
+
+	pmeg = sp->sg_pmeg;
 
 #ifdef DEBUG
 	if (pmeg == seginval)
@@ -1985,7 +2446,7 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 		/* flush the whole segment */
 		perpage = 0;
 		if (vactype != VAC_NONE)
-			cache_flush_segment(vseg);
+			cache_flush_segment(vr, vs);
 	} else {
 		/* flush each page individually; some never need flushing */
 		perpage = (vactype != VAC_NONE);
@@ -2016,16 +2477,31 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 	 * If the segment is all gone, remove it from everyone and
 	 * free the MMU entry.
 	 */
-	if (nleft == 0) {
-		va = VSTOVA(vseg);		/* retract */
-		setsegmap(va, seginval);
-		for (i = ncontext; --i > 0;) {
-			setcontext(i);
+	if ((sp->sg_npte = nleft) == 0) {
+		va = VSTOVA(vr,vs);		/* retract */
+#ifdef MMU_3L
+		if (mmu_3l)
 			setsegmap(va, seginval);
-		}
+		else
+#endif
+			for (i = ncontext; --i >= 0;) {
+				setcontext(i);
+				setsegmap(va, seginval);
+			}
 		me_free(pm, pmeg);
+		if (--rp->rg_nsegmap == 0) {
+#ifdef MMU_3L
+			if (mmu_3l) {
+				for (i = ncontext; --i >= 0;) {
+					setcontext(i);
+					setregmap(va, reginval);
+				}
+				/* note: context is 0 */
+				region_free(pm, rp->rg_smeg);
+			}
+#endif
+		}
 	}
-	return (nleft);
 }
 
 /*
@@ -2039,16 +2515,34 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 #endif
 
 /* remove from user */
-static int
-pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
+static void
+pmap_rmu(pm, va, endva, vr, vs)
 	register struct pmap *pm;
 	register vm_offset_t va, endva;
-	register int vseg, nleft, pmeg;
+	register int vr, vs;
 {
 	register int *pte0, i, pteva, tpte, perpage, npg;
 	register struct pvlist *pv;
+	register int nleft, pmeg;
+	struct regmap *rp;
+	struct segmap *sp;
 
-	pte0 = pm->pm_pte[vseg];
+	rp = &pm->pm_regmap[vr];
+	if (rp->rg_nsegmap == 0)
+		return;
+	if (rp->rg_segmap == NULL)
+		panic("pmap_rmu: no segments");
+
+	sp = &rp->rg_segmap[vs];
+	if ((nleft = sp->sg_npte) == 0)
+		return;
+	if (sp->sg_pte == NULL)
+		panic("pmap_rmu: no pages");
+
+
+	pmeg = sp->sg_pmeg;
+	pte0 = sp->sg_pte;
+
 	if (pmeg == seginval) {
 		register int *pte = pte0 + VA_VPG(va);
 
@@ -2069,31 +2563,49 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 			nleft--;
 			*pte = 0;
 		}
-		if (nleft == 0) {
+		if ((sp->sg_npte = nleft) == 0) {
 			free((caddr_t)pte0, M_VMPMAP);
-			pm->pm_pte[vseg] = NULL;
+			sp->sg_pte = NULL;
+			if (--rp->rg_nsegmap == 0) {
+				free((caddr_t)rp->rg_segmap, M_VMPMAP);
+				rp->rg_segmap = NULL;
+#ifdef MMU_3L
+				if (mmu_3l && rp->rg_smeg != reginval) {
+					if (pm->pm_ctx) {
+						setcontext(pm->pm_ctxnum);
+						setregmap(va, reginval);
+					} else
+						setcontext(0);
+					region_free(pm, rp->rg_smeg);
+				}
+#endif
+			}
 		}
-		return (nleft);
+		return;
 	}
 
 	/*
 	 * PTEs are in MMU.  Invalidate in hardware, update ref &
 	 * mod bits, and flush cache if required.
 	 */
-	if (pm->pm_ctx) {
+	if (CTX_USABLE(pm,rp)) {
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
 		setcontext(pm->pm_ctxnum);
 		if (npg > PMAP_RMU_MAGIC) {
 			perpage = 0; /* flush the whole segment */
 			if (vactype != VAC_NONE)
-				cache_flush_segment(vseg);
+				cache_flush_segment(vr, vs);
 		} else
 			perpage = (vactype != VAC_NONE);
 		pteva = va;
 	} else {
 		/* no context, use context 0; cache flush unnecessary */
 		setcontext(0);
+#ifdef MMU_3L
+		if (mmu_3l)
+			setregmap(0, tregion);
+#endif
 		/* XXX use per-cpu pteva? */
 		setsegmap(0, pmeg);
 		pteva = VA_VPG(va) << PGSHIFT;
@@ -2116,26 +2628,52 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		}
 		nleft--;
 		setpte(pteva, 0);
+#define PMAP_PTESYNC
+#ifdef PMAP_PTESYNC
+		pte0[VA_VPG(pteva)] = 0;
+#endif
 	}
 
 	/*
 	 * If the segment is all gone, and the context is loaded, give
 	 * the segment back.
 	 */
-	if (nleft == 0 && pm->pm_ctx != NULL) {
-		va = VSTOVA(vseg);		/* retract */
-		setsegmap(va, seginval);
+	if ((sp->sg_npte = nleft) == 0 /* ??? && pm->pm_ctx != NULL*/) {
+#ifdef DEBUG
+if (pm->pm_ctx == NULL) {
+	printf("pmap_rmu: no context here...");
+}
+#endif
+		va = VSTOVA(vr,vs);		/* retract */
+		if (CTX_USABLE(pm,rp))
+			setsegmap(va, seginval);
+#ifdef MMU_3L
+		else if (mmu_3l && rp->rg_smeg != reginval) {
+			/* note: context already set earlier */
+			setregmap(0, rp->rg_smeg);
+			setsegmap(vs << SGSHIFT, seginval);
+		}
+#endif
 		free((caddr_t)pte0, M_VMPMAP);
-		pm->pm_pte[vseg] = NULL;
+		sp->sg_pte = NULL;
 		me_free(pm, pmeg);
 
-		if (vseg + 1 == pm->pm_gap_start)
-			pm->pm_gap_start = vseg;
-		if (vseg == pm->pm_gap_end)
-			pm->pm_gap_end = vseg + 1;
+		if (--rp->rg_nsegmap == 0) {
+			free((caddr_t)rp->rg_segmap, M_VMPMAP);
+			rp->rg_segmap = NULL;
+			GAP_WIDEN(pm,vr);
+
+#ifdef MMU_3L
+			if (mmu_3l && rp->rg_smeg != reginval) {
+				/* note: context already set */
+				if (pm->pm_ctx)
+					setregmap(va, reginval);
+				region_free(pm, rp->rg_smeg);
+			}
+#endif
+		}
 
 	}
-	return (nleft);
 }
 
 /*
@@ -2153,11 +2691,14 @@ pmap_page_protect(pa, prot)
 {
 	register struct pvlist *pv, *pv0, *npv;
 	register struct pmap *pm;
-	register int *pte;
-	register int va, vseg, pteva, tpte;
-	register int flags, nleft, i, pmeg, s, ctx, doflush;
+	register int va, vr, vs, pteva, tpte;
+	register int flags, nleft, i, s, ctx, doflush;
+	struct regmap *rp;
+	struct segmap *sp;
 
 #ifdef DEBUG
+	if (!pmap_pa_exists(pa))
+		panic("pmap_page_protect: no such address: %x", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
 		printf("pmap_page_protect(%x, %x)\n", pa, prot);
@@ -2192,63 +2733,117 @@ pmap_page_protect(pa, prot)
 	flags = pv->pv_flags & ~PV_NC;
 	for (;; pm = pv->pv_pmap) {
 		va = pv->pv_va;
-		vseg = VA_VSEG(va);
-		if ((nleft = pm->pm_npte[vseg]) == 0)
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap == 0)
+			panic("pmap_remove_all: empty vreg");
+		sp = &rp->rg_segmap[vs];
+		if ((nleft = sp->sg_npte) == 0)
 			panic("pmap_remove_all: empty vseg");
 		nleft--;
-		pm->pm_npte[vseg] = nleft;
-		pmeg = pm->pm_segmap[vseg];
-		pte = pm->pm_pte[vseg];
-		if (pmeg == seginval) {
+		sp->sg_npte = nleft;
+
+		if (sp->sg_pmeg == seginval) {
+			/* Definitely not a kernel map */
 			if (nleft) {
-				pte += VA_VPG(va);
-				*pte = 0;
+				sp->sg_pte[VA_VPG(va)] = 0;
 			} else {
-				free((caddr_t)pte, M_VMPMAP);
-				pm->pm_pte[vseg] = NULL;
+				free((caddr_t)sp->sg_pte, M_VMPMAP);
+				sp->sg_pte = NULL;
+				if (--rp->rg_nsegmap == 0) {
+					free((caddr_t)rp->rg_segmap, M_VMPMAP);
+					rp->rg_segmap = NULL;
+					GAP_WIDEN(pm,vr);
+#ifdef MMU_3L
+					if (mmu_3l && rp->rg_smeg != reginval) {
+						if (pm->pm_ctx) {
+							setcontext(pm->pm_ctxnum);
+							setregmap(va, reginval);
+						} else
+							setcontext(0);
+						region_free(pm, rp->rg_smeg);
+					}
+#endif
+				}
 			}
 			goto nextpv;
 		}
-		if (pm->pm_ctx) {
+		if (CTX_USABLE(pm,rp)) {
 			setcontext(pm->pm_ctxnum);
 			pteva = va;
-			doflush = (vactype != VAC_NONE);
+			if (vactype != VAC_NONE)
+				cache_flush_page(va);
 		} else {
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
-			setsegmap(0, pmeg);
+#ifdef MMU_3L
+			if (mmu_3l)
+				setregmap(0, tregion);
+#endif
+			setsegmap(0, sp->sg_pmeg);
 			pteva = VA_VPG(va) << PGSHIFT;
-			doflush = 0;
 		}
+
+		tpte = getpte(pteva);
+		if ((tpte & PG_V) == 0)
+			panic("pmap_page_protect !PG_V");
+		flags |= MR(tpte);
+
 		if (nleft) {
-			if (doflush)
-				cache_flush_page(va);
-			tpte = getpte(pteva);
-			if ((tpte & PG_V) == 0)
-				panic("pmap_page_protect !PG_V 1");
-			flags |= MR(tpte);
 			setpte(pteva, 0);
+#ifdef PMAP_PTESYNC
+			sp->sg_pte[VA_VPG(pteva)] = 0;
+#endif
 		} else {
-			if (doflush)
-				cache_flush_page(va);
-			tpte = getpte(pteva);
-			if ((tpte & PG_V) == 0)
-				panic("pmap_page_protect !PG_V 2");
-			flags |= MR(tpte);
-			if (pm->pm_ctx) {
-				setsegmap(va, seginval);
-				if (pm == pmap_kernel()) {
-					for (i = ncontext; --i > 0;) {
+			if (pm == pmap_kernel()) {
+#ifdef MMU_3L
+				if (!mmu_3l)
+#endif
+					for (i = ncontext; --i >= 0;) {
 						setcontext(i);
 						setsegmap(va, seginval);
 					}
-					goto skipptefree;
+				me_free(pm, sp->sg_pmeg);
+				if (--rp->rg_nsegmap == 0) {
+#ifdef MMU_3L
+					if (mmu_3l) {
+						for (i = ncontext; --i >= 0;) {
+							setcontext(i);
+							setregmap(va, reginval);
+						}
+						region_free(pm, rp->rg_smeg);
+					}
+#endif
+				}
+			} else {
+				if (CTX_USABLE(pm,rp))
+					/* `pteva'; we might be using tregion */
+					setsegmap(pteva, seginval);
+#ifdef MMU_3L
+				else if (mmu_3l && rp->rg_smeg != reginval) {
+					/* note: context already set earlier */
+					setregmap(0, rp->rg_smeg);
+					setsegmap(vs << SGSHIFT, seginval);
+				}
+#endif
+				free((caddr_t)sp->sg_pte, M_VMPMAP);
+				sp->sg_pte = NULL;
+				me_free(pm, sp->sg_pmeg);
+
+				if (--rp->rg_nsegmap == 0) {
+#ifdef MMU_3L
+					if (mmu_3l && rp->rg_smeg != reginval) {
+						if (pm->pm_ctx)
+							setregmap(va, reginval);
+						region_free(pm, rp->rg_smeg);
+					}
+#endif
+					free((caddr_t)rp->rg_segmap, M_VMPMAP);
+					rp->rg_segmap = NULL;
+					GAP_WIDEN(pm,vr);
 				}
 			}
-			free((caddr_t)pte, M_VMPMAP);
-			pm->pm_pte[vseg] = NULL;
-		skipptefree:
-			me_free(pm, pmeg);
 		}
 	nextpv:
 		npv = pv->pv_next;
@@ -2279,11 +2874,14 @@ pmap_protect(pm, sva, eva, prot)
 	vm_offset_t sva, eva;
 	vm_prot_t prot;
 {
-	register int va, nva, vseg, pteva, pmeg;
+	register int va, nva, vr, vs, pteva;
 	register int s, ctx;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	if (pm == NULL || prot & VM_PROT_WRITE)
 		return;
+
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -2295,25 +2893,39 @@ pmap_protect(pm, sva, eva, prot)
 	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
-		vseg = VA_VSEG(va);
-		nva = VSTOVA(vseg + 1);
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		rp = &pm->pm_regmap[vr];
+		nva = VSTOVA(vr,vs + 1);
 if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 		if (nva > eva)
 			nva = eva;
-		if (pm->pm_npte[vseg] == 0) {
+		if (rp->rg_nsegmap == 0) {
 			va = nva;
 			continue;
 		}
-		pmeg = pm->pm_segmap[vseg];
-		if (pmeg == seginval) {
-			register int *pte = &pm->pm_pte[vseg][VA_VPG(va)];
+#ifdef DEBUG
+		if (rp->rg_segmap == NULL)
+			panic("pmap_protect: no segments");
+#endif
+		sp = &rp->rg_segmap[vs];
+		if (sp->sg_npte == 0) {
+			va = nva;
+			continue;
+		}
+#ifdef DEBUG
+		if (pm != pmap_kernel() && sp->sg_pte == NULL)
+			panic("pmap_protect: no pages");
+#endif
+		if (sp->sg_pmeg == seginval) {
+			register int *pte = &sp->sg_pte[VA_VPG(va)];
 
 			/* not in MMU; just clear PG_W from core copies */
 			for (; va < nva; va += NBPG)
 				*pte++ &= ~PG_W;
 		} else {
 			/* in MMU: take away write bits from MMU PTEs */
-			if (pm->pm_ctx) {
+			if (CTX_USABLE(pm,rp)) {
 				register int tpte;
 
 				/*
@@ -2342,7 +2954,11 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				 */
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
-				setsegmap(0, pmeg);
+#ifdef MMU_3L
+				if (mmu_3l)
+					setregmap(0, tregion);
+#endif
+				setsegmap(0, sp->sg_pmeg);
 				pteva = VA_VPG(va) << PGSHIFT;
 				for (; va < nva; pteva += NBPG, va += NBPG)
 					setpte(pteva, getpte(pteva) & ~PG_W);
@@ -2366,7 +2982,9 @@ pmap_changeprot(pm, va, prot, wired)
 	vm_prot_t prot;
 	int wired;
 {
-	register int vseg, tpte, newprot, pmeg, ctx, i, s;
+	register int vr, vs, tpte, newprot, ctx, i, s;
+	struct regmap *rp;
+	struct segmap *sp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
@@ -2380,13 +2998,30 @@ pmap_changeprot(pm, va, prot, wired)
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
 		newprot = prot & VM_PROT_WRITE ? PG_W : 0;
-	vseg = VA_VSEG(va);
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
 	s = splpmap();		/* conservative */
+	rp = &pm->pm_regmap[vr];
+	if (rp->rg_nsegmap == 0) {
+		printf("pmap_changeprot: no segments in %d\n", vr);
+		return;
+	}
+	if (rp->rg_segmap == NULL) {
+		printf("pmap_changeprot: no segments in %d!\n", vr);
+		return;
+	}
+	sp = &rp->rg_segmap[vs];
+
 	pmap_stats.ps_changeprots++;
 
+#ifdef DEBUG
+	if (pm != pmap_kernel() && sp->sg_pte == NULL)
+		panic("pmap_changeprot: no pages");
+#endif
+
 	/* update PTEs in software or hardware */
-	if ((pmeg = pm->pm_segmap[vseg]) == seginval) {
-		register int *pte = &pm->pm_pte[vseg][VA_VPG(va)];
+	if (sp->sg_pmeg == seginval) {
+		register int *pte = &sp->sg_pte[VA_VPG(va)];
 
 		/* update in software */
 		if ((*pte & PG_PROT) == newprot)
@@ -2395,7 +3030,7 @@ pmap_changeprot(pm, va, prot, wired)
 	} else {
 		/* update in hardware */
 		ctx = getcontext();
-		if (pm->pm_ctx) {
+		if (CTX_USABLE(pm,rp)) {
 			/* use current context; flush writeback cache */
 			setcontext(pm->pm_ctxnum);
 			tpte = getpte(va);
@@ -2409,7 +3044,11 @@ pmap_changeprot(pm, va, prot, wired)
 		} else {
 			setcontext(0);
 			/* XXX use per-cpu va? */
-			setsegmap(0, pmeg);
+#ifdef MMU_3L
+			if (mmu_3l)
+				setregmap(0, tregion);
+#endif
+			setsegmap(0, sp->sg_pmeg);
 			va = VA_VPG(va) << PGSHIFT;
 			tpte = getpte(va);
 			if ((tpte & PG_PROT) == newprot) {
@@ -2499,12 +3138,35 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 	register struct pvlist *pv;
 	register int pteproto;
 {
-	register int vseg, tpte, pmeg, i, s;
+	register int vr, vs, tpte, i, s;
+	struct regmap *rp;
+	struct segmap *sp;
 
-	vseg = VA_VSEG(va);
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+	sp = &rp->rg_segmap[vs];
 	s = splpmap();		/* XXX way too conservative */
-	if (pm->pm_segmap[vseg] != seginval &&
-	    (tpte = getpte(va)) & PG_V) {
+
+#ifdef MMU_3L
+	if (mmu_3l && rp->rg_smeg == reginval) {
+		vm_offset_t tva;
+		rp->rg_smeg = region_alloc(&region_locked, pm, vr)->me_cookie;
+		i = ncontext - 1;
+		do {
+			setcontext(i);
+			setregmap(va, rp->rg_smeg);
+		} while (--i >= 0);
+
+		/* set all PTEs to invalid, then overwrite one PTE below */
+		tva = VA_ROUNDDOWNTOREG(va);
+		for (i = 0; i < NSEGRG; i++) {
+			setsegmap(tva, rp->rg_segmap[i].sg_pmeg);
+			tva += NBPSG;
+		};
+	}
+#endif
+	if (sp->sg_pmeg != seginval && (tpte = getpte(va)) & PG_V) {
 		register int addr;
 
 		/* old mapping exists, and is of the same pa type */
@@ -2517,7 +3179,10 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 		}
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
-/*printf("pmap_enk: changing existing va=>pa entry\n");*/
+#ifdef DEBUG
+printf("pmap_enk: changing existing va=>pa entry: va %x, pteproto %x\n",
+	va, pteproto);
+#endif
 			/*
 			 * Switcheroo: changing pa for this va.
 			 * If old pa was managed, remove from pvlist.
@@ -2534,7 +3199,7 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 		}
 	} else {
 		/* adding new entry */
-		pm->pm_npte[vseg]++;
+		sp->sg_npte++;
 	}
 
 	/*
@@ -2545,8 +3210,7 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 	if (pv != NULL)
 		pteproto |= pv_link(pv, pm, va);
 
-	pmeg = pm->pm_segmap[vseg];
-	if (pmeg == seginval) {
+	if (sp->sg_pmeg == seginval) {
 		register int tva;
 
 		/*
@@ -2559,13 +3223,21 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 		if (pm->pm_ctx == NULL || pm->pm_ctxnum != 0)
 			panic("pmap_enk: kern seg but no kern ctx");
 #endif
-		pmeg = me_alloc(&me_locked, pm, vseg)->me_pmeg;
-		pm->pm_segmap[vseg] = pmeg;
-		i = ncontext - 1;
-		do {
-			setcontext(i);
-			setsegmap(va, pmeg);
-		} while (--i >= 0);
+		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs)->me_cookie;
+		rp->rg_nsegmap++;
+
+#ifdef MMU_3L
+		if (mmu_3l)
+			setsegmap(va, sp->sg_pmeg);
+		else
+#endif
+		{
+			i = ncontext - 1;
+			do {
+				setcontext(i);
+				setsegmap(va, sp->sg_pmeg);
+			} while (--i >= 0);
+		}
 
 		/* set all PTEs to invalid, then overwrite one PTE below */
 		tva = VA_ROUNDDOWNTOSEG(va);
@@ -2590,11 +3262,14 @@ pmap_enu(pm, va, prot, wired, pv, pteproto)
 	register struct pvlist *pv;
 	register int pteproto;
 {
-	register int vseg, *pte, tpte, pmeg, s, doflush;
-	register int x;
+	register int vr, vs, *pte, tpte, pmeg, s, doflush;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	write_user_windows();		/* XXX conservative */
-	vseg = VA_VSEG(va);
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
 	s = splpmap();			/* XXX conservative */
 
 	/*
@@ -2606,14 +3281,7 @@ pmap_enu(pm, va, prot, wired, pv, pteproto)
 	 * AND IN pmap_rmu()
 	 */
 
-	x = pm->pm_gap_start + (pm->pm_gap_end - pm->pm_gap_start) / 2;
-	if (vseg > x) {
-		if (vseg < pm->pm_gap_end)
-			pm->pm_gap_end = vseg;
-	} else {
-		if (vseg >= pm->pm_gap_start && x != pm->pm_gap_start)
-			pm->pm_gap_start = vseg + 1;
-	}
+	GAP_SHRINK(pm,vr);
 
 #ifdef DEBUG
 	if (pm->pm_gap_end < pm->pm_gap_start) {
@@ -2623,38 +3291,65 @@ pmap_enu(pm, va, prot, wired, pv, pteproto)
 	}
 #endif
 
-retry:
-	pte = pm->pm_pte[vseg];
-	if (pte == NULL) {
+rretry:
+	if (rp->rg_segmap == NULL) {
+		/* definitely a new mapping */
+		register int i;
+		register int size = NSEGRG * sizeof (struct segmap);
+
+		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
+		if (rp->rg_segmap != NULL) {
+printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
+			free((caddr_t)sp, M_VMPMAP);
+			goto rretry;
+		}
+		bzero((caddr_t)sp, size);
+		rp->rg_segmap = sp;
+		rp->rg_nsegmap = 0;
+		for (i = NSEGRG; --i >= 0;)
+			sp++->sg_pmeg = seginval;
+	}
+
+	sp = &rp->rg_segmap[vs];
+
+sretry:
+	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		register int size = NPTESG * sizeof *pte;
 
 		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
-		if (pm->pm_pte[vseg] != NULL) {
+		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free((caddr_t)pte, M_VMPMAP);
-			goto retry;
+			goto sretry;
 		}
 #ifdef DEBUG
-		if (pm->pm_segmap[vseg] != seginval)
+		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
 #endif
 		bzero((caddr_t)pte, size);
-		pm->pm_pte[vseg] = pte;
-		pm->pm_npte[vseg] = 1;
+		sp->sg_pte = pte;
+		sp->sg_npte = 1;
+		rp->rg_nsegmap++;
 	} else {
 		/* might be a change: fetch old pte */
 		doflush = 0;
-		if ((pmeg = pm->pm_segmap[vseg]) == seginval)
-			tpte = pte[VA_VPG(va)];	/* software pte */
-		else {
-			if (pm->pm_ctx) {	/* hardware pte */
+		if ((pmeg = sp->sg_pmeg) == seginval) {
+			/* software pte */
+			tpte = pte[VA_VPG(va)];
+		} else {
+			/* hardware pte */
+			if (CTX_USABLE(pm,rp)) {
 				setcontext(pm->pm_ctxnum);
 				tpte = getpte(va);
 				doflush = 1;
 			} else {
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
+#ifdef MMU_3L
+				if (mmu_3l)
+					setregmap(0, tregion);
+#endif
 				setsegmap(0, pmeg);
 				tpte = getpte(VA_VPG(va) << PGSHIFT);
 			}
@@ -2692,7 +3387,7 @@ curproc->p_comm, curproc->p_pid, va);*/
 			}
 		} else {
 			/* adding new entry */
-			pm->pm_npte[vseg]++;
+			sp->sg_npte++;
 
 			/*
 			 * Increment counters
@@ -2706,15 +3401,19 @@ curproc->p_comm, curproc->p_pid, va);*/
 		pteproto |= pv_link(pv, pm, va);
 
 	/*
-	 * Update hardware or software PTEs (whichever are active).
+	 * Update hardware & software PTEs.
 	 */
-	if ((pmeg = pm->pm_segmap[vseg]) != seginval) {
+	if ((pmeg = sp->sg_pmeg) != seginval) {
 		/* ptes are in hardare */
-		if (pm->pm_ctx)
+		if (CTX_USABLE(pm,rp))
 			setcontext(pm->pm_ctxnum);
 		else {
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
+#ifdef MMU_3L
+			if (mmu_3l)
+				setregmap(0, tregion);
+#endif
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
 		}
@@ -2752,29 +3451,44 @@ pmap_extract(pm, va)
 	vm_offset_t va;
 {
 	register int tpte;
-	register int vseg;
+	register int vr, vs;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	if (pm == NULL) {
 		printf("pmap_extract: null pmap\n");
 		return (0);
 	}
-	vseg = VA_VSEG(va);
-	if (pm->pm_segmap[vseg] != seginval) {
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+	if (rp->rg_segmap == NULL) {
+		printf("pmap_extract: invalid segment (%d)\n", vr);
+		return (0);
+	}
+	sp = &rp->rg_segmap[vs];
+
+	if (sp->sg_pmeg != seginval) {
 		register int ctx = getcontext();
 
-		if (pm->pm_ctx) {
+		if (CTX_USABLE(pm,rp)) {
 			setcontext(pm->pm_ctxnum);
 			tpte = getpte(va);
 		} else {
 			setcontext(0);
+#ifdef MMU_3L
+			if (mmu_3l)
+				setregmap(0, tregion);
+#endif
+			setsegmap(0, sp->sg_pmeg);
 			tpte = getpte(VA_VPG(va) << PGSHIFT);
 		}
 		setcontext(ctx);
 	} else {
-		register int *pte = pm->pm_pte[vseg];
+		register int *pte = sp->sg_pte;
 
 		if (pte == NULL) {
-			printf("pmap_extract: invalid vseg\n");
+			printf("pmap_extract: invalid segment\n");
 			return (0);
 		}
 		tpte = pte[VA_VPG(va)];
@@ -3029,13 +3743,19 @@ pmap_count_ptes(pm)
 	register struct pmap *pm;
 {
 	register int idx, total;
+	register struct regmap *rp;
+	register struct segmap *sp;
 
-	if (pm == pmap_kernel())
-		idx = NKSEG;
-	else
-		idx = NUSEG;
+	if (pm == pmap_kernel()) {
+		rp = &pm->pm_regmap[NUREG];
+		idx = NKREG;
+	} else {
+		rp = pm->pm_regmap;
+		idx = NUREG;
+	}
 	for (total = 0; idx;)
-		total += pm->pm_npte[--idx];
+		if ((sp = rp[--idx].rg_segmap) != NULL)
+			total += sp->sg_npte;
 	pm->pm_stats.resident_count = total;
 	return (total);
 }
@@ -3062,9 +3782,14 @@ pmap_prefer(pa, va)
 		return va;
 
 	pv = pvhead(pa);
-	if (pv->pv_pmap == NULL)
+	if (pv->pv_pmap == NULL) {
+#if 0
+		return ((va + m - 1) & ~(m - 1));
+#else
 		/* Unusable, tell caller to try another one */
 		return (vm_offset_t)-1;
+#endif
+	}
 
 	d = (long)(pv->pv_va & (m - 1)) - (long)(va & (m - 1));
 	if (d < 0)
@@ -3078,3 +3803,97 @@ pmap_redzone()
 {
 	setpte(KERNBASE, 0);
 }
+
+#ifdef DEBUG
+/*
+ * Check consistency of a pmap (time consuming!).
+ */
+int
+pm_check(s, pm)
+	char *s;
+	struct pmap *pm;
+{
+	if (pm == pmap_kernel())
+		pm_check_k(s, pm);
+	else
+		pm_check_u(s, pm);
+}
+
+int
+pm_check_u(s, pm)
+	char *s;
+	struct pmap *pm;
+{
+	struct regmap *rp;
+	struct segmap *sp;
+	int n, vs, vr, j, m, *pte;
+
+	for (vr = 0; vr < NUREG; vr++) {
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap == 0)
+			continue;
+		if (rp->rg_segmap == NULL)
+			panic("%s: CHK(vr %d): nsegmap = %d; sp==NULL",
+				s, vr, rp->rg_nsegmap);
+		if ((unsigned int)rp < KERNBASE)
+			panic("%s: rp=%x", s, rp);
+		n = 0;
+		for (vs = 0; vs < NSEGRG; vs++) {
+			sp = &rp->rg_segmap[vs];
+			if ((unsigned int)sp < KERNBASE)
+				panic("%s: sp=%x", s, sp);
+			if (sp->sg_npte != 0) {
+				n++;
+				if (sp->sg_pte == NULL)
+					panic("%s: CHK(vr %d, vs %d): npte=%d, "
+					   "pte=NULL", s, vr, vs, sp->sg_npte);
+
+				pte=sp->sg_pte;
+				m = 0;
+				for (j=0; j<NPTESG; j++,pte++)
+					if (*pte & PG_V)
+						m++;
+				if (m != sp->sg_npte)
+				    /*if (pmapdebug & 0x10000)*/
+					printf("%s: user CHK(vr %d, vs %d): "
+					    "npte(%d) != # valid(%d)\n",
+						s, vr, vs, sp->sg_npte, m);
+			}
+		}
+		if (n != rp->rg_nsegmap)
+			panic("%s: CHK(vr %d): inconsistent "
+				"# of pte's: %d, should be %d",
+				s, vr, rp->rg_nsegmap, n);
+	}
+	return 0;
+}
+
+int
+pm_check_k(s, pm)
+	char *s;
+	struct pmap *pm;
+{
+	struct regmap *rp;
+	struct segmap *sp;
+	int vr, vs, n;
+
+	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_segmap == NULL)
+			panic("%s: CHK(vr %d): nsegmap = %d; sp==NULL",
+				s, vr, rp->rg_nsegmap);
+		if (rp->rg_nsegmap == 0)
+			continue;
+		n = 0;
+		for (vs = 0; vs < NSEGRG; vs++) {
+			if (rp->rg_segmap[vs].sg_npte)
+				n++;
+		}
+		if (n != rp->rg_nsegmap)
+			printf("%s: kernel CHK(vr %d): inconsistent "
+				"# of pte's: %d, should be %d\n",
+				s, vr, rp->rg_nsegmap, n);
+	}
+	return 0;
+}
+#endif
