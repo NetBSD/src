@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.3 1999/12/07 10:14:01 lukem Exp $ */
+/* $NetBSD: defs.h,v 1.4 1999/12/07 10:37:57 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -58,10 +58,5 @@
 #ifndef MAX
 #define MAX(a,b)	(((a) > (b)) ? (a) : (b))
 #endif
-
-#define STRNCPY(to, from, size)	do {					\
-	(void) strncpy(to, from, size);					\
-	to[(size) - 1] = 0;						\
-} while( /* CONSTCOND */ 0)
 
 #endif /* !DEFS_H_ */
