@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.112 2000/11/24 13:01:24 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.113 2000/11/27 16:08:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.112 2000/11/24 13:01:24 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.113 2000/11/27 16:08:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1627,8 +1627,10 @@ initconn(void)
 #endif
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			tmp = data_addr;
+#ifdef INET6
 			if (tmp.su_family == AF_INET6)
 				tmp.si_su.su_sin6.sin6_scope_id = 0;
+#endif
 			if (getnameinfo((struct sockaddr *)&tmp.si_su,
 			    tmp.su_len, hname, sizeof(hname), sname,
 			    sizeof(sname), NI_NUMERICHOST | NI_NUMERICSERV)) {
