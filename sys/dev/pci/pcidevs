@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.303 2001/03/02 06:51:07 thorpej Exp $
+$NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1312,10 +1312,19 @@ product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 
 /* Mylex products */
-product MYLEX RAID_V2	0x0001	DAC960 RAID (v2 interface)
-product MYLEX RAID_V3	0x0002	DAC960 RAID (v3 interface)
-product MYLEX RAID_V4	0x0010	DAC960 RAID (v4 interface)
-product MYLEX RAID_V5	0x0020	DAC960 RAID (v5 interface)
+product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
+product MYLEX RAID_V3		0x0002	DAC960 RAID (v3 interface)
+product MYLEX RAID_V4		0x0010	DAC960 RAID (v4 interface)
+product MYLEX RAID_V5		0x0020	DAC960 RAID (v5 interface)
+product MYLEX ACCELERAID	0x0050	AcceleRAID (i960)
+product MYLEX EXTREMERAID	0xba56	eXtremeRAID (StrongARM)
+
+/* Mylex subsystem IDs */
+product MYLEX ACCELERAID_352	0x0050	AcceleRAID 352
+product MYLEX ACCELERAID_170	0x0052	AcceleRAID 170
+product MYLEX ACCELERAID_160	0x0054	AcceleRAID 160
+product MYLEX EXTREMERAID_2000	0x0040	eXtremeRAID 2000
+product MYLEX EXTREMERAID_3000	0x0030	eXtremeRAID 3000
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
