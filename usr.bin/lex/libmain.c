@@ -1,6 +1,6 @@
 /* libmain - flex run-time support library "main" function */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/libmain.c,v 1.3 1995/06/05 19:44:52 pk Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/libmain.c,v 1.4 1996/12/10 07:18:47 mikel Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -13,5 +13,8 @@ int argc;
 char *argv[];
 char *envp[];
 	{
-	return yylex();
+	while ( yylex() != 0 )
+		;
+
+	return 0;
 	}
