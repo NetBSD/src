@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.35 2003/08/22 21:53:02 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.36 2003/11/12 13:40:16 cl Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.35 2003/08/22 21:53:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.36 2003/11/12 13:40:16 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -522,7 +522,7 @@ stf_checkaddr4(sc, in, inifp)
 	/*
 	 * reject packets with broadcast
 	 */
-	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
+	TAILQ_FOREACH(ia4, &in_ifaddrhead, ia_list)
 	{
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
