@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2000/06/04 02:19:26 matt Exp $
+#	$NetBSD: genassym.cf,v 1.21 2000/06/05 00:09:20 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -155,3 +155,5 @@ define	SH_NEXT		offsetof(struct softintr_handler, sh_link.le_next)
 define	SH_PENDING	offsetof(struct softintr_handler, sh_pending)
 
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
+
+define	PSL_IS		PSL_IS
