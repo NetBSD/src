@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.17 2000/07/07 04:35:35 cgd Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.18 2001/05/08 03:19:52 sommerfeld Exp $
 
 # System configuration variables:
 #
@@ -91,7 +91,7 @@ __incinstall: .USE
 	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
 		-g ${BINGRP} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
-.for I in ${INCS}
+.for I in ${INCS:O:u}
 ${DESTDIR}${INCSDIR}/$I: $I __incinstall
 .endfor
 .endif
@@ -110,7 +110,7 @@ __depincinstall: .USE
 	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
-.for I in ${DEPINCS}
+.for I in ${DEPINCS:O:u}
 ${DESTDIR}${INCSDIR}/$I: $I __depincinstall
 .endfor
 .endif
