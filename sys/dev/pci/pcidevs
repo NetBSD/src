@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp $
+$NetBSD: pcidevs,v 1.221 2000/05/27 16:38:02 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1328,7 +1328,7 @@ product SMC 83C175	0x0006	83C175 (\"EPIC/100\") Fast Ethernet
 /* Solidum Systems Corporation */
 product SOLIDUM AMD971		0x2000 SNP8023: AMD 971
 product SOLIDUM CLASS802	0x8023 SNP8023: Classifier Engine
-  
+
 /* Sony products */
 product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
 product SONY	CXD32222	0x8039  CXD3222 OHCI i.LINK(IEEE 1394) PCI controller
