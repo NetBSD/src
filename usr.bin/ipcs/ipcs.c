@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.8 1994/12/24 16:46:18 cgd Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.9 1995/03/28 17:24:49 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#define KERNEL
+#define _KERNEL
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>

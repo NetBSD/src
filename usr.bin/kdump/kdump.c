@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.7 1995/03/26 07:56:27 cgd Exp $";
+static char *rcsid = "$Id: kdump.c,v 1.8 1995/03/28 17:23:01 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,9 +49,9 @@ static char *rcsid = "$Id: kdump.c,v 1.7 1995/03/26 07:56:27 cgd Exp $";
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
-#define KERNEL
+#define _KERNEL
 #include <sys/errno.h>
-#undef KERNEL
+#undef _KERNEL
 
 #include <err.h>
 #include <signal.h>

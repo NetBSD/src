@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: fstat.c,v 1.13 1995/02/15 02:10:41 mycroft Exp $";
+static char *rcsid = "$Id: fstat.c,v 1.14 1995/03/28 17:24:12 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,11 +55,11 @@ static char *rcsid = "$Id: fstat.c,v 1.13 1995/02/15 02:10:41 mycroft Exp $";
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
-#define	KERNEL
+#define	_KERNEL
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
-#undef KERNEL
+#undef _KERNEL
 #define NFS
 #include <sys/mount.h>
 #include <nfs/nfsv2.h>
