@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.56 2003/08/19 12:52:13 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.57 2003/11/15 11:54:34 ragge Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.56 2003/08/19 12:52:13 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.57 2003/11/15 11:54:34 ragge Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -413,6 +414,7 @@ sidewaysintpr(interval, off)
 	unsigned interval;
 	u_long off;
 {
+	struct itimerval it;
 	struct ifnet ifnet;
 	u_long firstifnet;
 	struct iftot *ip, *total;
@@ -455,7 +457,11 @@ sidewaysintpr(interval, off)
 
 	(void)signal(SIGALRM, catchalarm);
 	signalled = NO;
-	(void)alarm(interval);
+
+	it.it_interval.tv_sec = it.it_value.tv_sec = interval;
+	it.it_interval.tv_usec = it.it_value.tv_usec = 0;
+	setitimer(ITIMER_REAL, &it, NULL);
+
 banner:
 	if (bflag)
 		printf("%7.7s in %8.8s %6.6s out %5.5s",
@@ -600,7 +606,6 @@ loop:
 	}
 	sigsetmask(oldmask);
 	signalled = NO;
-	(void)alarm(interval);
 	if (line == 21)
 		goto banner;
 	goto loop;
