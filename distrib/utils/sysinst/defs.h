@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.62 2000/10/11 11:06:03 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.63 2000/10/11 23:47:55 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,13 @@
 /* For run.c: collect() */
 #define T_FILE 0
 #define T_OUTPUT 1
+
+/* run_prog flags */
+#define RUN_DISPLAY	0x0001		/* run in subwindow */
+#define RUN_FATAL	0x0002		/* errors are fatal */
+#define RUN_CHROOT	0x0004		/* chroot to target disk */
+#define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
+#define RUN_SYSTEM	0x0010		/* just use system(3) */
 
 /* Macros */
 
@@ -304,7 +311,7 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, int, msg, const char *, ...));
+int	run_prog __P((int, msg, const char *, ...));
 void	do_logging __P((void));
 int	do_system __P((const char *));
 
@@ -334,6 +341,7 @@ void	ask_verbose_dist __P((void));
 int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check __P((void));
 int	set_timezone __P((void));
+int	set_root_password __P((void));
 
 /* from target.c */
 int	must_mount_root __P((void));

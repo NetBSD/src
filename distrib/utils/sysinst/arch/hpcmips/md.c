@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 2000/10/02 12:05:11 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.7 2000/10/11 23:47:58 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,7 +203,8 @@ md_post_disklabel(void)
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		msg_display(MSG_dobad144);
-		return run_prog(0, 1, NULL, "/usr/sbin/bad144 %s 0", diskdev);
+		return run_prog(RUN_DISPLAY, NULL, "/usr/sbin/bad144 %s 0",
+		    diskdev);
 	}
 	return 0;
 }
@@ -216,7 +217,7 @@ md_post_newfs(void)
 #else
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(0, 1, NULL,
+	return run_prog(RUN_DISPLAY, NULL,
 	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
 	    diskdev);
 #endif
@@ -416,7 +417,7 @@ custom:		ask_sizemult(dlcylsize);
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -512,10 +513,10 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int

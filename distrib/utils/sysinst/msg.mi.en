@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.71 2000/10/11 11:06:47 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.72 2000/10/11 23:47:56 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,16 +319,23 @@ message dotarfail
 {The bootstrapping binaries and config file installation failed.
 Can't continue ...}
 
+message extractcomplete
+{The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
+The system is now able to boot from the selected harddisk. To complete
+the installation, sysinst will give you the opportunity to configure
+some essential things first.
+}
+
 message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
 should boot from hard disk.  Follow the instructions in the INSTALL
 document about final configuration of your system.
 
-At a minimum, you should set a root password and edit /etc/rc.conf to
-match your needs. See /etc/default/rc.conf for the default values.
+At a minimum, you should edit /etc/rc.conf to match your needs. See
+/etc/default/rc.conf for the default values.
 }
 
-message unpackcomplete
+message upgrcomplete
 {The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
 now need to follow the instructions in the INSTALL document as to
 what you need to do to get your system reconfigured for your
@@ -339,7 +346,7 @@ rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
 }
 
 
-message upgrcomplete
+message unpackcomplete
 {Unpacking additional release sets of NetBSD-@@VERSION@@ is now
 complete.  Unpacking sets has clobbered the target /etc.  Any /etc.old
 saved by an earlier upgrade was not touched.  You will now need to
@@ -787,3 +794,6 @@ an error, please restart the system and try again.}
 message swapdelfailed
 {Sysinst failed to deactivate the swap partition on the disk that you
 chose for installation. Please reboot and try again.}
+
+message rootpw
+{Do you want to set a root password for the system now?}

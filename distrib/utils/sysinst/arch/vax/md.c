@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2000/10/02 12:05:12 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.13 2000/10/11 23:48:01 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -139,7 +139,7 @@ md_post_newfs(void)
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 0, NULL, "/sbin/disklabel -B %s", diskdev);
+	run_prog(0, NULL, "/sbin/disklabel -B %s", diskdev);
 	return 0;
 }
 
@@ -201,11 +201,11 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.23 2000/09/26 23:12:44 fvdl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.24 2000/10/11 23:47:57 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,6 @@ int	merge_X __P((void));
 void
 do_upgrade()
 {
-
 	doingwhat = msg_string(MSG_upgrade);
 
 	msg_display(MSG_upgradeusure);
@@ -85,6 +84,7 @@ do_upgrade()
 
 	if (!fsck_disks())
 		return;
+
 
 	/*
 	 * Save X symlink, ...
@@ -267,6 +267,7 @@ do_reinstall_sets()
 
 	fflush(stdout);
 	puts(CL);		/* XXX */
+	touchwin(stdscr);
 	wclear(stdscr);
 	wrefresh(stdscr);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.63 2000/09/26 13:26:02 fvdl Exp $	*/
+/*	$NetBSD: net.c,v 1.64 2000/10/11 23:47:56 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -588,7 +588,7 @@ again:
 		fclose(f);
 	}
 
-	run_prog(0, 0, NULL, "/sbin/ifconfig lo0 127.0.0.1");
+	run_prog(0, NULL, "/sbin/ifconfig lo0 127.0.0.1");
 
 	/*
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
@@ -608,26 +608,26 @@ again:
 	}
 
 	if (*net_media != '\0')
-		run_prog(0, 1, NULL, "/sbin/ifconfig %s media %s",
+		run_prog(0, NULL, "/sbin/ifconfig %s media %s",
 		    net_dev, net_media);
 
 #ifdef INET6
 	if (v6config) {
 		init_v6kernel(1);
-		run_prog(0, 0, NULL, "/sbin/ifconfig %s up", net_dev);
+		run_prog(0, NULL, "/sbin/ifconfig %s up", net_dev);
 		sleep(get_v6wait() + 1);
-		run_prog(0, 1, NULL, "/sbin/rtsol -D %s", net_dev);
+		run_prog(RUN_DISPLAY, NULL, "/sbin/rtsol -D %s", net_dev);
 		sleep(get_v6wait() + 1);
 	}
 #endif
 
 	if (strcmp(net_ip, "") != 0) {
 		if (strcmp(net_mask, "") != 0) {
-			run_prog(0, 0, NULL, 
+			run_prog(0, NULL, 
 			    "/sbin/ifconfig %s inet %s netmask %s",
 			    net_dev, net_ip, net_mask);
 		} else {
-			run_prog(0, 0, NULL, 
+			run_prog(0, NULL, 
 			    "/sbin/ifconfig %s inet %s", net_dev, net_ip);
 		}
 	}
@@ -638,9 +638,9 @@ again:
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
-		run_prog(0, 0, NULL, 
+		run_prog(0, NULL, 
 		    "/sbin/route -n flush -inet");
-		run_prog(0, 0, NULL, 
+		run_prog(0, NULL, 
 		    "/sbin/route -n add default %s",
 			  net_defroute);
 	}
@@ -652,22 +652,22 @@ again:
 
 #ifdef INET6
 	if (v6config && network_up) {
-		network_up = !run_prog(0, 1, NULL, 
+		network_up = !run_prog(0, NULL, 
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
 		if (strcmp(net_namesvr6, "") != 0)
-			network_up = !run_prog(0, 1, NULL, 
+			network_up = !run_prog(RUN_DISPLAY, NULL, 
 			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
-		network_up = !run_prog(0, 1, NULL, 
+		network_up = !run_prog(0, NULL, 
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s",
 					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
-		network_up = !run_prog(0, 1, NULL, 
+		network_up = !run_prog(0, NULL, 
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s",
 					net_defroute);
 	fflush(NULL);
@@ -722,14 +722,14 @@ get_via_ftp()
 		 * unsafe by a strict reading of RFC 1738).
 		 */
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog(0, 1, NULL, 
+			ret = run_prog(RUN_DISPLAY, NULL, 
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		else {
-			ret = run_prog(0, 1, NULL, 
+			ret = run_prog(RUN_DISPLAY, NULL, 
 			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL, 0),
@@ -745,6 +745,7 @@ get_via_ftp()
 			msg_display(MSG_ftperror_cont);
 			getchar();
 			puts(CL);		/* XXX */
+			touchwin(stdscr);
 			wclear(stdscr);
 			wrefresh(stdscr);
 			msg_display(MSG_ftperror);
@@ -758,6 +759,7 @@ get_via_ftp()
 
 	}
 	puts(CL);		/* XXX */
+	touchwin(stdscr);
 	wclear(stdscr);
 	wrefresh(stdscr);
 #ifndef DEBUG
@@ -784,11 +786,11 @@ get_via_nfs()
 	process_menu(MENU_nfssource);
 again:
 
-	run_prog(0, 0, NULL, 
+	run_prog(0, NULL, 
 	    "/sbin/umount /mnt2");
 	
 	/* Mount it */
-	if (run_prog(0, 0, NULL, 
+	if (run_prog(0, NULL, 
 	    "/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
@@ -968,7 +970,7 @@ char *inter;
 	process_menu(MENU_dhcpautoconf);
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
-		dhcpautoconf = run_prog(0, 1, NULL, "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s", DHCLIENT_EX,inter);
+		dhcpautoconf = run_prog(RUN_DISPLAY, NULL, "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s", DHCLIENT_EX,inter);
 		return dhcpautoconf?0:1;
 	}
 	return 0;
