@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.22 2002/06/20 23:53:06 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.23 2002/06/20 23:56:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@
 #include <sys/ucontext.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
