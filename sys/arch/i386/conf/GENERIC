@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.23 2001/12/29 21:09:03 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.24 2001/12/29 23:21:18 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.23 $"
+#ident 		"GENERIC-$Revision: 1.300.2.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -206,6 +206,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+
 cpu* at mainbus? apid ?
 #ioapic* at mainbus? apid ?
 
