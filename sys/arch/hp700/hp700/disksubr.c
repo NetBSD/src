@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2004/06/15 20:40:17 jkunz Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9 2003/12/10 12:06:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10 2004/06/15 20:40:17 jkunz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,9 +668,9 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 			if (p->dir_type == LIF_DIR_FS)
 				fsoff = lifstodb(p->dir_addr);
 
-		/* if no suitable lifdir entry found assume LIF_FILESTART */
+		/* if no suitable lifdir entry found assume 0 */
 		if (fsoff < 0)
-			fsoff = btodb(LIF_FILESTART);
+			fsoff = 0;
 	}
 
 	if (partoffp)
