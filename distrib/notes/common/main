@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.70 2000/07/29 11:40:49 skrll Exp $
+.\" $NetBSD: main,v 1.71 2000/08/07 11:58:04 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -356,12 +356,6 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system. The source distribution sets 
 are as follows:
 .Bl -tag -width sharesrc.tgz...
-.It secrsrc.tgz:
-This set contains the "domestic" sources. These
-sources may be subject to United States export
-regulations.
-.br
-.Em 421K gzipped, 2M uncompressed
 .It gnusrc.tgz:
 This set contains the "gnu" sources, including
 the source for the compiler, assembler, groff,
@@ -391,19 +385,9 @@ are not mentioned above.
 .Em 16.1M gzipped, 73.6M uncompressed
 .El
 .Pp
-Most of the above source sets are located in the
+All the above source sets are located in the
 .Pa source/sets
-subdirectory of the distribution tree. The secrsrc.tgz set is
-contained in the
-.Pa source/security
-subdirectory. This set, which is
-available only to users in the United States and Canada, contains the
-sources normally found in
-.Pa /usr/src/domestic
-\- primarily kerberos and
-other cryptographic security related software. (Remember, because of
-United States law, it may not be legal to distribute this set to
-locations outside of the United States and Canada.)
+subdirectory of the distribution tree.
 .Pp
 The source sets are distributed as compressed tar files. They may be
 unpacked into
