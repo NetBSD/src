@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_opts.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_field_opts.3,v 1.6 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -53,21 +53,25 @@
 .Sh DESCRIPTION
 The function
 .Fn field_opts
-returns the current options settings for the given field.  The
+returns the current options settings for the given field.
+The
 .Fn field_opts_off
 will turn the options given in
 .Fa options
 off for the given field, options not specified in
 .Fa options
-will remain unchanged.  Conversely, the function
+will remain unchanged.
+Conversely, the function
 .Fn field_opts_on
 will turn on the options given in
 .Fa options
 for the specified field, again, any options not specified will remain
-unchanged.  The options for a field may be set to a specific set of
+unchanged.
+The options for a field may be set to a specific set of
 options by calling the
 .Fn set_field_opts
-function.  Options may only be changed if the field given is not the
+function.
+Options may only be changed if the field given is not the
 currently active one.
 .Sh PARAMETERS
 The following options are available for a field:
