@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.1.2.3 2002/10/13 23:12:16 lukem Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.1.2.4 2002/10/13 23:19:59 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -170,7 +170,7 @@ message fsize
 {rozmiar frag}
 
 message mountpoint
-{mountpoint}
+{mount point (or 'none')}
 
 message cylname
 {cyl}
