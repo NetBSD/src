@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2001/09/15 20:36:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2001/09/19 07:54:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3159,7 +3159,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
 		}
