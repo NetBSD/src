@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 1994/10/26 07:51:09 cgd Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 1994/11/14 20:53:55 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,6 +41,8 @@ jmp_buf	*db_recover;
 /*
  * Register list
  */
+static int db_var_short(struct db_variable *, db_expr_t *, int);
+extern int ddb_regs_ssp;
 struct db_variable db_regs[] = {
 	{ "d0",	(int *)&ddb_regs.d0,	FCN_NULL },
 	{ "d1",	(int *)&ddb_regs.d1,	FCN_NULL },
@@ -57,11 +59,23 @@ struct db_variable db_regs[] = {
 	{ "a4",	(int *)&ddb_regs.a4,	FCN_NULL },
 	{ "a5",	(int *)&ddb_regs.a5,	FCN_NULL },
 	{ "a6",	(int *)&ddb_regs.a6,	FCN_NULL },
-	{ "sp",	(int *)&ddb_regs.sp,	FCN_NULL },
+	{ "ssp",&ddb_regs_ssp,  	FCN_NULL },
+	{ "usp",(int *)&ddb_regs.sp,	FCN_NULL },
 	{ "pc",	(int *)&ddb_regs.pc,	FCN_NULL },
-	{ "sr",	(int *)&ddb_regs.sr,	FCN_NULL }
+	{ "sr",	(int *)&ddb_regs.sr,	db_var_short }
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+static int db_var_short(varp, valp, op)
+    struct db_variable *varp;
+    db_expr_t *valp;
+    int op;
+{
+    if (op == DB_VAR_GET)
+	*valp = (db_expr_t) *((short*)varp->valuep);
+    else
+	*((short*)varp->valuep) = (short) *valp;
+}
 
 #define	MAXINT	0x7fffffff
 
