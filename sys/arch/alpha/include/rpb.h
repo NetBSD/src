@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.2 1995/03/08 00:39:00 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.3 1995/03/24 15:00:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -93,9 +93,9 @@ struct rpb {
 #define	SV_ST_SABLE		0x00000400	/* Sable (???) */
 
 #define	SV_ST_PELICAN		0x00000000	/* Pelican;	 3000/300 */
-#define	SV_ST_PELICANL		0x00000400	/* ???;		 3000/300L */
-#define	SV_ST_PELICANX		0x00000800	/* ???;		 3000/300X */
-#define	SV_ST_PELICANLX		0x00000c00	/* ???;		 3000/300LX */
+#define	SV_ST_PELICA		0x00000400	/* Pelica;	 3000/300L */
+#define	SV_ST_PELICANPLUS	0x00000800	/* Pelican+;	 3000/300X */
+#define	SV_ST_PELICAPLUS	0x00000c00	/* Pelica+;	 3000/300LX */
 
 	u_int64_t	rpb_variation;		/*  58 */
 
