@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.26 2003/06/29 22:32:02 fvdl Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.27 2003/07/08 07:20:11 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ void	frag6_slowtimo __P((void));
 void	frag6_drain __P((void));
 
 void	rip6_init __P((void));
-int	rip6_input __P((struct mbuf **mp, int *offp, int proto));
+int	rip6_input __P((struct mbuf **, int *, int));
 void	rip6_ctlinput __P((int, struct sockaddr *, void *));
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	rip6_output __P((struct mbuf *, ...));
