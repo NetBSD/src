@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.67 2002/06/16 00:13:16 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.68 2002/06/20 20:43:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.67 2002/06/16 00:13:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.68 2002/06/20 20:43:17 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -722,14 +722,6 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	lastino = LFS_UNUSED_INUM;
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
-#ifdef DEBUG
-		if (dtosn(fs, fs->lfs_curseg) == dtosn(fs, blkp->bi_daddr)) {
-			printf("lfs_bmapv: attempt to clean current segment? (#%d)\n",
-			       dtosn(fs, fs->lfs_curseg));
-			vfs_unbusy(mntp);
-			return (EBUSY);
-		}
-#endif /* DEBUG */
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
 		 * exists.
