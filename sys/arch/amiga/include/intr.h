@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1997/10/27 22:13:25 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1998/04/16 21:28:00 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis.
@@ -47,7 +47,6 @@
 
 #define __GENERIC_SOFT_INTERRUPTS
 #define IPL_SOFTSERIAL 1
-#define splserial spltty
 
 #ifdef splaudio
 #undef splaudio
