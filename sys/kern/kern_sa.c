@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.53 2004/07/18 21:29:26 chs Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.54 2004/07/20 14:56:10 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.53 2004/07/18 21:29:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.54 2004/07/20 14:56:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,8 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 
 	if (l) {
 		getucontext(l, &ss->ss_captured.ss_ctx);
-		sp = (void *)_UC_MACHINE_SP(&ss->ss_captured.ss_ctx);
+		sp = (void *)
+			((intptr_t)_UC_MACHINE_SP(&ss->ss_captured.ss_ctx));
 		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
 		ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
 		ss->ss_captured.ss_sa.sa_context = (ucontext_t *)
