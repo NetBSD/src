@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1999/12/30 16:39:53 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 2000/01/10 03:53:21 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -130,6 +130,7 @@
 #define LDPTRA	ldxa
 #define STPTR	stx
 #define STPTRA	stxa
+#define	CASPTR	casxa
 /* Now something to calculate the stack bias */
 #define STKB	BIAS
 #else
@@ -141,6 +142,7 @@
 #define LDPTRA	lduwa
 #define STPTR	stw
 #define STPTRA	stwa
+#define	CASPTR	casa
 #define STKB	0
 #endif
 
@@ -3768,11 +3770,18 @@ setup_sparcintr:
 	mov	8, %g7			! Number of slots to search
 	sll	%g6, PTRSHFT+3, %g2	! Find start of table for this IPL
 	add	%g1, %g2, %g1
-	LDPTR	[%g1], %g2		! Get slot
-	dec	%g7
-	brz,a,pt	%g2, 4f		! Available?
-	 STPTR	%g5, [%g1]		! Put intrhand in slot
-	brgz,pt	%g7, 1b
+2:
+#if 1
+	mov	%g5, %g2
+	CASPTR	[%g1] ASI_N, %g0, %g2	! Try a slot -- MPU safe
+	brz,pt	%g2, 4f			! Available?
+#else
+	LDPTR	[%g1], %g2		! Try a slog
+	brz,a	%g2, 4f			! Available?
+	 STPTR	%g5, [%g1]		! Grab it
+#endif
+	 dec	%g7
+	brgz,pt	%g7, 2b
 	 inc	PTRSZ, %g1		! Next slot
 	
 	!! If we get here we have a problem.
@@ -3995,10 +4004,17 @@ _C_LABEL(sparc_interrupt):
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
 	brz,pt	%o0, intrcmplt		! Done?
 	 nop
-	call	_C_LABEL(strayintr)	! strayintr(&intrframe)
+	mov	1, %o1
+	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
 	 add	%sp, CC64FSZ + STKB, %o0
 	ba,a,pt	%icc, intrcmplt		! done
 2:	
+#endif
+#ifdef TRAPSTATS
+	set	_C_LABEL(intrpoll), %l4
+	ld	[%l4], %o0
+	inc	%o0			! Increment non-vectored interrupts.
+	st	%o0, [%l4]
 #endif
 	set	_C_LABEL(intrhand), %l4		! %l4 = intrhand[intlev];
 	LDPTR	[%l4 + %l3], %l4
@@ -4073,21 +4089,23 @@ _C_LABEL(sparc_interrupt):
 	 clr	%l3			! Make sure we don't have a valid pointer
 	brnz,pn	%l5, intrcmplt		!	if (handled) break
 	 nop
-!	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
+	clr	%o1
+!	call	_C_LABEL(strayintr)	!	strayintr(&intrframe, 0)
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #else
-	brz,a,pn	%o0, 2f
-	 add	%sp, CC64FSZ + STKB, %o0
-2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 LDPTR	[%l4 + IH_CLR], %l3
+	add	%sp, CC64FSZ + STKB, %o2
+	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
+	 movrz	%o0, %o2, %o0
+	LDPTR	[%l4 + IH_CLR], %l3
 	brnz,a,pt	%l3, 5f		! Clear intr?
 	 stx	%g0, [%l3]		! Yes
 5:	brnz,pn	%o0, intrcmplt		! if (handled) break
 	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
-	call	_C_LABEL(strayintr)		!	strayintr(&intrframe)
+	clr	%o1
+	call	_C_LABEL(strayintr)	!	strayintr(&intrframe, 0)
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #endif
@@ -9202,7 +9220,7 @@ Lbzero_block:
 #ifdef DEBUG
 	LDPTR	[%l1 + %lo(_C_LABEL(fpproc))], %l7
 	cmp	%l7, %l5
-	tnz	1		! fpproc has changed!
+!	tnz	1		! fpproc has changed!
 	LDPTR	[%l5 + P_FPSTATE], %l7
 	cmp	%l7, %l0
 	tnz	1		! fpstate has changed!	
