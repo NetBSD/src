@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.38 1994/03/18 00:58:20 cgd Exp $
+#	$Id: rc,v 1.39 1994/03/28 05:47:28 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -92,7 +92,8 @@ fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
 	echo -n ' amd'
-	amd -l syslog -x error,noinfo,nostats -a ${amd_dir} `cat ${amd_master}`
+	amd -l syslog -x error,noinfo,nostats -p > /var/run/amd.pid \
+	    -a ${amd_dir} `cat ${amd_master}`
 fi
 
 echo '.'
