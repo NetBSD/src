@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" 
-.\"	$NetBSD: ddb.4,v 1.12 1997/10/09 07:51:46 mycroft Exp $
+.\"	$NetBSD: ddb.4,v 1.13 1997/10/09 08:31:45 mycroft Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -30,6 +30,7 @@
 .SH NAME
 ddb \- kernel debugger
 .de XX
+.br
 .sp
 .ti -4n
 \\$1
@@ -44,6 +45,8 @@ ddb \- kernel debugger
 ..
 .SH SYNOPSIS
 .B "options DDB"
+.br
+.B "options DDB_ONPANIC=0"
 .SH DESCRIPTION
 The kernel debugger has most of the features of the old kdb,
 but with a more rational (gdb-like) syntax.
@@ -78,6 +81,7 @@ one more page
 one more line
 .IP \fB\q\fR 10n
 abort the current command, and return to the command input mode.
+.LP
 .XE 4n
 .SH COMMANDS
 .XS 4n
@@ -86,10 +90,8 @@ Display the addressed locations according to the formats in the modifier.
 Multiple modifier formats display multiple locations.
 If no format is specified, the last formats specified for this command
 is used.
-.br
-The format characters are
 .sp
-.LP
+The format characters are:
 .XS 2n
 .IP b 5n
 look at by bytes(8 bits)
@@ -127,24 +129,22 @@ display as an instruction
 .IP I 5n
 display as an instruction with possible alternative formats depending on the
 machine:
+.LP
+.XS 2n
+.IP i386 8n
+don't round to the next long word boundary.
+.IP mips 8n
+print register contents.
+.IP vax 8n
+don't assume that each external label is a procedure entry mask.
+.LP
 .XE 2n
-.LP
-.XS 5n
-.LP
-.IP vax 6n
-don't assume that each external label is a procedure entry mask
-.IP i386 6n
-don't round to the next long word boundary
-.IP mips 6n
-print register contents
-.LP
-.XE 5n
-.LP
-.XX xf
+.XE 2n
+.XX "\fBxf\fR"
 Examine forward.
 It executes an examine command with the last specified parameters to it
 except that the next address displayed by it is used as the start address.
-.XX xb
+.XX "\fBxb\fR"
 Examine backward.
 It executes an examine command with the last specified parameters to it
 except that the last start address subtracted by the size displayed by it
@@ -153,28 +153,24 @@ is used as the start address.
 Print 'addr's according to the modifier character.
 Valid formats are: a x z o d u r c.
 If no modifier is specified, the last one specified to it is used.  'addr'
-can be a string, and it is printed as it is.  For example,
-.br
+can be a string, and it is printed as it is.  For example:
 .sp
 .ti +4n
 print/x "eax = " $eax "\\necx = " $ecx "\\n"
-.br
 .sp
-will print like
+will print like:
 .sp
 .in +4n
 eax = xxxxxx
 .br
 ecx = yyyyyy
 .in -4n
-.sp
-.br
 .XX "\fBwrite[/bhl] \fI<addr> <expr1> [ <expr2> ... ]\fR"
 Write the expressions at succeeding locations.
 The write unit size can be specified in the modifier with a letter
 b (byte), h (half word) or l(long word) respectively.  If omitted,
 long word is assumed.
-.br
+.sp
 Warning: since there is no delimiter between expressions, strange
 things may happen.
 It's best to enclose each expression in parentheses.
@@ -187,7 +183,6 @@ If count is supplied, continues (count-1) times before stopping at the
 break point.  If the break point is set, a break point number is
 printed with '#'.  This number can be used in deleting the break point
 or adding conditions to it.
-.LP
 .XS 2n
 .IP u 5n
 Set a break point in user space address. Without 'u' option,
@@ -208,7 +203,6 @@ command.
 Single step 'count' times.
 If 'p' option is specified, print each instruction at each step.
 Otherwise, only print the last instruction.
-.br
 .sp
 Warning: depending on machine type, it may not be possible to
 single-step through some low-level code paths or user space code.
@@ -219,7 +213,6 @@ do the wrong thing.
 Continue execution until a breakpoint or watchpoint.
 If /c, count instructions while executing.
 Some machines (e.g., pmax) also count loads and stores.
-.br
 .sp
 Warning: when counting, the debugger is really silently single-stepping.
 This means that single-stepping on low-level code may cause strange
@@ -240,7 +233,6 @@ A synonym for 'next'.
 Stack trace.  'u' option traces user space; if omitted, only traces
 kernel space. 'count' is the number of frames to be traced. 
 If the 'count' is omitted, all frames are printed.
-.br
 .sp
 Warning: User space stack trace is valid
 only if the machine dependent code supports it.
@@ -259,7 +251,6 @@ ddb doesn't always recover from touching bad memory.  The optional
 count argument limits the search.
 .XX "\fBreboot \fI[<flags>]\fR"
 Reboot, using the optionally supplied boot flags.
-.br
 .sp
 Note:  Limitations of the command line interface
 preclude specification of a boot string.
@@ -273,14 +264,12 @@ supported in the machine, or the bottom of the stack of the
 target process is not in the main memory at that time.
 The 'm' options will alter the 'ps' display to show vm_map
 addresses for the process and not show other info.
-.br
 .XX "\fBps[/m]\fR"
 A synonym for 'show all procs'.
 .XX "\fBshow registers\fR"
 Display the register set.
 If 'u' option is specified, it displays user registers instead of
 kernel or currently saved one.
-.br
 .sp
 Warning: The support of 'u' option depends on the machine.  If
 not supported, incorrect information will be displayed.
@@ -296,10 +285,9 @@ Displays all watchpoints.
 Set a watchpoint for a region.  Execution stops
 when an attempt to modify the region occurs.
 The 'size' argument defaults to 4.
-.br
+.sp
 If you specify a wrong space address, the request is rejected
 with an error message.
-.br
 .sp
 Warning: Attempts to watch wired kernel memory
 may cause unrecoverable error in some systems such as i386.
@@ -314,10 +302,8 @@ Some variables are suffixed with numbers, and may have some modifier
 following a colon immediately after the variable name.
 For example, register variables can have 'u' modifier to indicate
 user register (e.g. $eax:u).
-.br
 .sp
 Built-in variables currently supported are:
-.sp
 .IP radix 12n
 Input and output radix
 .IP maxoff 12n
@@ -343,7 +329,6 @@ Almost all expression operators in C are supported except '~', '^',
 and unary '&'.
 Special rules in "\fBddb\fR"
 are:
-.br
 .IP "<identifier>" 15n
 name of a symbol.  It is translated to the address(or value) of it.  '.'
 and ':' can be used in the identifier.  If supported by an object format
@@ -375,3 +360,22 @@ a binary operator which rounds up the left hand side to the next
 multiple of right hand side.
 .IP "*<expr>" 15n
 indirection.  It may be followed by a ':' and  modifiers as described above.
+.LP
+.SH ENTERING THE DEBUGGER
+Unless \fBDDB_ONPANIC\fR is set to 0, the debugger will be activated
+whenever the kernel would otherwise panic.
+.sp
+The debugger may also be activated from the console.  In general, sending a
+break on a serial console will activate the debugger.  There are also key
+sequences for each port that will activate the debugger from the keyboard:
+.XS 2n
+.IP hp300 8n
+Shift-Reset
+.IP i386 8n
+Ctrl-Alt-Esc
+.IP sparc 8n
+L1-A or Stop-A
+.LP
+.XE 2n
+In addition, the debugger may be explicitly activated by debugging code in
+the kernel if \fBDDB\fR is configured.
