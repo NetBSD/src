@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.16 1999/11/18 23:32:31 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.17 2000/01/16 09:34:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ typedef struct device *device_ptr_t;
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
+#define USBGETSOFTC(d) ((void *)(d))
 
 #define DECLARE_USB_DMA_T \
 	struct usb_dma_block; \
@@ -186,6 +187,7 @@ typedef struct device device_ptr_t;
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
+#define USBGETSOFTC(d) ((void *)(d))
 
 #define DECLARE_USB_DMA_T \
 	struct usb_dma_block; \
@@ -280,6 +282,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define USBDEV(bdev) (bdev)
 #define USBDEVNAME(bdev) device_get_nameunit(bdev)
 #define USBDEVPTRNAME(bdev) device_get_nameunit(bdev)
+#define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
 #define DECLARE_USB_DMA_T typedef void * usb_dma_t
 
