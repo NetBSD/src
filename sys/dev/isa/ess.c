@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.12 1998/08/09 03:48:42 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.13 1998/08/09 04:14:47 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1068,6 +1068,23 @@ ess_set_params(addr, setmode, usemode, play, rec)
 
 	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
 
+	if (play->sample_rate != rec->sample_rate) {
+		/*
+		 * The manual claims that in full-duplex operation the sample
+		 * rates must be the same.  This is a lie.  It appears that
+		 * the only bit in common is the crystal selection.  However,
+		 * we'll be conservative here.  - mycroft
+		 */
+		if (usemode == AUMODE_PLAY) {
+			rec->sample_rate = play->sample_rate;
+			setmode |= AUMODE_RECORD;
+		} else if (usemode == AUMODE_RECORD) {
+			play->sample_rate = rec->sample_rate;
+			setmode |= AUMODE_PLAY;
+		} else
+			return (EINVAL);
+	}
+
 	/* Set first record info, then play info */
 	for(mode = AUMODE_RECORD; mode != -1; 
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -1994,14 +2011,12 @@ ess_reset(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	sc->sc_in.intr = 0;
-
 	if (sc->sc_in.active) {
 		isa_dmaabort(sc->sc_ic, sc->sc_in.drq);
 		sc->sc_in.active = 0;
 	}
 
 	sc->sc_out.intr = 0;
-	sc->sc_out.dmacnt = 0;
 	if (sc->sc_out.active) {
 		isa_dmaabort(sc->sc_ic, sc->sc_out.drq);
 		sc->sc_out.active = 0;

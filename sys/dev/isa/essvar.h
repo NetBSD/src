@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.4 $ (SHARK) $Date: 1998/08/04 13:14:42 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.5 $ (SHARK) $Date: 1998/08/09 04:14:47 $
 **
 **++
 **
@@ -103,8 +103,6 @@ struct ess_audio_channel
 	/* Status information */
 	int	active;			/* boolean: channel in use? */
 	u_int	channels;		/* 1:mono, 2:stereo */
-
-	u_int	dmacnt;
 };
 
 struct ess_softc
