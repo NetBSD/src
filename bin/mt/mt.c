@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.8 1995/09/28 07:18:20 tls Exp $	*/
+/*	$NetBSD: mt.c,v 1.9 1996/03/05 20:39:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.8 1995/09/28 07:18:20 tls Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.9 1996/03/05 20:39:32 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.8 1995/09/28 07:18:20 tls Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+
+#include "mt.h"
 
 struct commands {
 	char *c_name;
@@ -85,6 +87,8 @@ struct commands {
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
+
+char	*host = NULL;	/* remote host (if any) */
 
 int
 main(argc, argv)
@@ -116,6 +120,15 @@ main(argc, argv)
 	if (argc < 1 || argc > 2)
 		usage();
 
+	if (strchr(tape, ':')) {
+		host = tape;
+		tape = strchr(host, ':');
+		*tape++ = '\0';
+		if (rmthost(host) == 0)
+			exit(X_ABORT);
+	}
+	(void)setuid(getuid()); /* rmthost() is the only reason to be setuid */
+
 	len = strlen(p = *argv++);
 	for (comp = com;; comp++) {
 		if (comp->c_name == NULL)
@@ -123,7 +136,8 @@ main(argc, argv)
 		if (strncmp(p, comp->c_name, len) == 0)
 			break;
 	}
-	if ((mtfd = open(tape, comp->c_ronly ? O_RDONLY : O_RDWR)) < 0)
+	if ((mtfd = host ? rmtopen(tape, 2) :
+	    open(tape, O_WRONLY|O_CREAT, 0666)) < 0)
 		err(2, "%s", tape);
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
@@ -134,14 +148,23 @@ main(argc, argv)
 		}
 		else
 			mt_com.mt_count = 1;
-		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
+		if ((host ? rmtioctl(mt_com.mt_op, mt_com.mt_count) :
+		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0)
 			err(2, "%s: %s", tape, comp->c_name);
 	} else {
-		if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
-			err(2, "ioctl MTIOCGET");
-		status(&mt_status);
+		if (host) {
+			status(rmtstatus());
+		} else {
+			if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
+				err(2, "ioctl MTIOCGET");
+			status(&mt_status);
+		}
 	}
-	exit (0);
+
+	if (host)
+		rmtclose();
+
+	exit(X_FINOK);
 	/* NOTREACHED */
 }
 
@@ -232,5 +255,5 @@ void
 usage()
 {
 	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
-	exit(1);
+	exit(X_USAGE);
 }
