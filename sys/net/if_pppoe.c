@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.43 2003/06/18 08:12:51 oki Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.44 2003/06/27 16:24:32 oki Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.43 2003/06/18 08:12:51 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.44 2003/06/27 16:24:32 oki Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -559,6 +559,7 @@ breakbreak:;
 			sc->sc_hunique_len = hunique_len;
 			memcpy(sc->sc_hunique, hunique, hunique_len);
 		}
+		memcpy(&sc->sc_dest, eh->ether_shost, sizeof sc->sc_dest);
 		sc->sc_state = PPPOE_STATE_PADO_SENT;
 		pppoe_send_pado(sc);
 		break;
