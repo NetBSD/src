@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.6 2004/09/14 00:34:19 lukem Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.7 2004/09/14 00:35:10 lukem Exp $	*/
 /*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.6 2004/09/14 00:34:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.7 2004/09/14 00:35:10 lukem Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -456,12 +456,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 	wh = mtod(m, struct ieee80211_frame *);
 
-	if (ic->ic_opmode != IEEE80211_M_STA) {
-		ni = ieee80211_find_node(ic, wh->i_addr2);
-		if (ni == NULL)
-			ni = ieee80211_ref_node(ic->ic_bss);
-	} else
-		ni = ieee80211_ref_node(ic->ic_bss);
+	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* Send it up to the upper layer */
 	ieee80211_input(ifp, m, ni, status->rssi, 0/*rstamp*/);
