@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)move.c	5.4 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
-# include	"robots.h"
-# include	<ctype.h>
+#include <sys/ttydefaults.h>
+#include <ctype.h>
+#include "robots.h"
 
 # define	ESC	'\033'
 
@@ -169,13 +170,13 @@ teleport:
 			refresh();
 			flush_in();
 			goto ret;
-		  case CTRL(L):
+		  case CTRL('L'):
 			wrefresh(curscr);
 			break;
 		  case EOF:
 			break;
 		  default:
-			putchar(CTRL(G));
+			putchar(CTRL('G'));
 			reset_count();
 			fflush(stdout);
 			break;
@@ -240,7 +241,7 @@ int	dy, dx;
 			refresh();
 		}
 		else {
-			putchar(CTRL(G));
+			putchar(CTRL('G'));
 			reset_count();
 		}
 		return FALSE;
