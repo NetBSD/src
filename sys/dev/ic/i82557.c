@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.21 2000/02/28 10:16:17 joda Exp $	*/
+/*	$NetBSD: i82557.c,v 1.22 2000/03/06 21:02:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1619,7 +1619,7 @@ fxp_statchg(self)
 	struct device *self;
 {
 
-	/* XXX Update ifp->if_baudrate */
+	/* Nothing to do. */
 }
 
 void

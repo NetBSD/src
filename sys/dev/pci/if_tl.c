@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.30 2000/02/02 17:09:40 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.31 2000/03/06 21:02:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -809,8 +809,6 @@ tl_statchg(self)
 	else
 		reg &= ~TL_NETCOMMAND_DUPLEX;
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 void tl_i2c_set(v, bit)
