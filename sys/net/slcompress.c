@@ -44,7 +44,7 @@
  * so that the entire packet being decompressed doesn't have
  * to be in contiguous memory (just the compressed header).
  *
- *	$Id: slcompress.c,v 1.6 1994/01/21 06:33:31 glass Exp $
+ *	$Id: slcompress.c,v 1.7 1994/05/08 12:34:21 paulus Exp $
  */
   
 #include <sys/types.h>
@@ -85,6 +85,34 @@ sl_compress_init(comp)
 		tstate[i].cs_next = &tstate[i - 1];
 	}
 	tstate[0].cs_next = &tstate[MAX_STATES - 1];
+	tstate[0].cs_id = 0;
+	comp->last_cs = &tstate[0];
+	comp->last_recv = 255;
+	comp->last_xmit = 255;
+	comp->flags = SLF_TOSS;
+}
+
+
+/*
+ * Like sl_compress_init, but we get to specify the maximum connection
+ * ID to use on transmission.
+ */
+void
+sl_compress_setup(comp, max_state)
+	struct slcompress *comp;
+	int max_state;
+{
+	register u_int i;
+	register struct cstate *tstate = comp->tstate;
+
+	if ((unsigned) max_state > MAX_STATES - 1)
+		max_state = MAX_STATES - 1;
+	bzero((char *)comp, sizeof(*comp));
+	for (i = max_state; i > 0; --i) {
+		tstate[i].cs_id = i;
+		tstate[i].cs_next = &tstate[i - 1];
+	}
+	tstate[0].cs_next = &tstate[max_state];
 	tstate[0].cs_id = 0;
 	comp->last_cs = &tstate[0];
 	comp->last_recv = 255;
