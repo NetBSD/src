@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.6 2004/03/12 05:24:33 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.7 2004/03/12 05:56:01 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -36,3 +36,9 @@ usr.sbin/dhcp/clientscript/dhclient-script	1.5
 	Update resolv.conf if we have new nameservers. 
 	Don't require a domain, because it is not needed.
 	[aymeric, ticket #1546]
+
+sys/sys/stat.h					1.45 via patch
+
+	Define S_IFSOCK as an XSI extension, define S_ISLNK() for POSIX-2001,
+	and define S_ISSOCK() for POSIX-2001. PR#22902
+	[kleink, ticket #1556]
