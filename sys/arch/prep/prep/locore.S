@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2003/02/02 20:43:25 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2003/03/18 16:40:24 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -173,15 +173,15 @@ loop:
 	.globl	_C_LABEL(enable_intr)
 _C_LABEL(enable_intr):
 	mfmsr	3
-	ori	3,3,PSL_EE@l
-	mtmsr	3
+	ori	4,3,PSL_EE@l
+	mtmsr	4
 	blr
 
 	.globl	_C_LABEL(disable_intr)
 _C_LABEL(disable_intr):
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l
-	mtmsr	3
+	andi.	4,3,~PSL_EE@l
+	mtmsr	4
 	blr
 
 /*
@@ -193,3 +193,8 @@ _C_LABEL(disable_intr):
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Pull in common pio / bus_space code.
+ */
+#include <powerpc/powerpc/pio_subr.S>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2003/02/03 17:10:14 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2003/03/18 16:40:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -123,8 +124,9 @@ void lcsplx __P((int));
 #ifdef DDB
 extern void *startsym, *endsym;
 #endif
-extern void consinit (void);
-extern void ext_intr (void);
+void consinit(void);
+void ext_intr(void);
+void sandpoint_bus_space_init(void);
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
@@ -252,7 +254,7 @@ cpu_startup(void)
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
-	sandpoint_bus_space_mallocok();
+	bus_space_mallocok();
 
 	/*
 	 * Now allow hardware interrupts.
@@ -373,4 +375,58 @@ void
 lcsplx(int ipl)
 {
 	splx(ipl);
+}
+
+struct powerpc_bus_space sandpoint_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0xfe000000, 0x00000000, 0x00c00000,
+};
+struct powerpc_bus_space sandpoint_isa_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0xfe000000, 0x00000000, 0x00010000,
+};
+struct powerpc_bus_space sandpoint_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0x80000000, 0xfe000000,
+};
+struct powerpc_bus_space sandpoint_isa_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0xfd000000, 0xfe000000,
+};
+
+static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+void
+sandpoint_bus_space_init(void)
+{
+	int error;
+
+	error = bus_space_init(&sandpoint_io_bs_tag, "ioport",
+	    ex_storage[0], sizeof(ex_storage[0]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init ioport tag");
+
+	error = extent_alloc_region(sandpoint_io_bs_tag.pbs_extent,
+	    0x00010000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("sandpoint_bus_space_init: can't block out reserved"
+		    " I/O space 0x10000-0x7fffff: error=%d", error);
+
+	sandpoint_isa_io_bs_tag.pbs_extent = sandpoint_io_bs_tag.pbs_extent;
+	error = bus_space_init(&sandpoint_isa_io_bs_tag, "isa-iomem",
+	    ex_storage[1], sizeof(ex_storage[1]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init isa iomem tag");
+
+	error = bus_space_init(&sandpoint_mem_bs_tag, "iomem",
+	    ex_storage[2], sizeof(ex_storage[2]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init iomem tag");
+
+	sandpoint_isa_mem_bs_tag.pbs_extent = sandpoint_mem_bs_tag.pbs_extent;
+	error = bus_space_init(&sandpoint_isa_mem_bs_tag, "isa-iomem",
+	    ex_storage[3], sizeof(ex_storage[3]));
+	if (error)
+		panic("sandpoint_bus_space_init: can't init isa iomem tag");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2003/02/03 17:09:54 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2003/03/18 16:40:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -117,6 +118,10 @@ char *bootpath;
 
 paddr_t avail_end;			/* XXX temporary */
 
+void bebox_bus_space_init(void);
+void consinit(void);
+void ext_intr(void);
+
 extern void *startsym, *endsym;
 
 void
@@ -124,9 +129,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	u_int startkernel, endkernel, args;
 	void *btinfo;
 {
-	extern void consinit __P((void));
-	extern void ext_intr __P((void));
-
 	/*
 	 * copy bootinfo
 	 */
@@ -254,7 +256,7 @@ cpu_startup()
 	/*
 	 * Now that we have VM, malloc's are OK in bus_space.
 	 */
-	bebox_bus_space_mallocok();
+	bus_space_mallocok();
 
 	/*
 	 * Now allow hardware interrupts.
@@ -438,4 +440,55 @@ lcsplx(ipl)
 	int ipl;
 {
 	splx(ipl);
+}
+
+struct powerpc_bus_space bebox_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	BEBOX_BUS_SPACE_IO, 0x00000000, 0x3f800000,
+};
+struct powerpc_bus_space bebox_isa_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	BEBOX_BUS_SPACE_IO, 0x00000000, 0x00010000,
+};
+struct powerpc_bus_space bebox_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x3f000000,
+};
+struct powerpc_bus_space bebox_isa_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	BEBOX_BUS_SPACE_MEM, 0x00000000, 0x01000000,
+};
+
+static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+void
+bebox_bus_space_init(void)
+{
+	int error;
+
+	error = bus_space_init(&bebox_io_bs_tag, "ioport",
+	    ex_storage[0], sizeof(ex_storage[0]));
+	if (error)
+		panic("bebox_bus_space_init: can't init io tag");
+
+	error = extent_alloc_region(bebox_io_bs_tag.pbs_extent,
+	    0x10000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("bebox_bus_space_init: can't block out reserved I/O"
+		    " space 0x10000-0x7fffff: error=%d", error);
+	error = bus_space_init(&bebox_mem_bs_tag, "iomem",
+	    ex_storage[1], sizeof(ex_storage[1]));
+	if (error)
+		panic("bebox_bus_space_init: can't init mem tag");
+
+	bebox_isa_io_bs_tag.pbs_extent = bebox_io_bs_tag.pbs_extent;
+	error = bus_space_init(&bebox_isa_io_bs_tag, "isa-ioport", NULL, 0);
+	if (error)
+		panic("bebox_bus_space_init: can't init isa io tag");
+
+	bebox_isa_mem_bs_tag.pbs_extent = bebox_mem_bs_tag.pbs_extent;
+	error = bus_space_init(&bebox_isa_mem_bs_tag, "isa-iomem", NULL, 0);
+	if (error)
+		panic("bebox_bus_space_init: can't init isa mem tag");
 }

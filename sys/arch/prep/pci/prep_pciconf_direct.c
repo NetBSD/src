@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.1 2002/02/24 13:19:08 kleink Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.2 2003/03/18 16:40:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -51,6 +51,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
+
+#include <powerpc/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
