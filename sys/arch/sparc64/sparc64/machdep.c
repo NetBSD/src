@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2000/04/22 12:03:33 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.60 2000/04/22 17:06:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1280,6 +1280,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 */
 	segs[0].ds_addr = NULL; /* UPA does not map things */
 	segs[0].ds_len = size;
+	segs[0]._ds_boundary = boundary;
 	*rsegs = 1;
 
 	/*
@@ -1478,7 +1479,6 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	u_int64_t pa;
 	paddr_t	pm_flags;
 static	vaddr_t iobase = IODEV_BASE;
-
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
