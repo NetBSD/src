@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.5 2003/08/07 16:32:35 agc Exp $	*/
+/*	$NetBSD: layer.h,v 1.5.2.1 2004/05/30 15:09:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -116,6 +116,7 @@ struct layer_node {
 };
 
 #define	LAYERFS_RESFLAGS	0x00000fff	/* flags reserved for layerfs */
+#define	LAYERFS_REMOVED 	0x00000001	/* Did a remove on this node */
 
 /*
  * The following macros handle upperfs-specific locking. They are needed
