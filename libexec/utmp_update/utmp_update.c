@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.6 2003/02/26 18:16:50 christos Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.7 2004/11/07 07:04:31 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.6 2003/02/26 18:16:50 christos Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.7 2004/11/07 07:04:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	}
 
 	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, utx->ut_line);
-	fd = open(tty, O_RDONLY, 0);
+	fd = open(tty, O_RDONLY|O_NONBLOCK, 0);
 	if (fd != -1) {
 		if (fstat(fd, &st) == -1)
 			err(1, "Cannot stat `%s'", tty);
