@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15 1998/06/15 20:10:31 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.16 1998/07/13 03:31:57 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ pcibmatch(parent, match, aux)
 	case PCI_VENDOR_ALI:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ALI_M1449:
+		case PCI_PRODUCT_ALI_M1543:
 			return (1);
 		}
 		break;
