@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.39 2002/03/16 20:43:56 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.40 2002/03/18 17:18:28 manu Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.39 2002/03/16 20:43:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.40 2002/03/18 17:18:28 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,8 @@ svr4_sys_fcntl(p, v, retval)
 				struct flock		*flp, fl;
 				caddr_t sg = stackgap_init(p, 0);
 
-				flp = stackgap_alloc(p, &sg, sizeof(struct flock));
+				flp = stackgap_alloc(p, &sg, 
+				    sizeof(struct flock));
 				SCARG(&fa, arg) = (void *) flp;
 
 				error = copyin(SCARG(uap, arg), &ifl,
