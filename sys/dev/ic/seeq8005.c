@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.18 2001/03/29 17:46:39 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.19 2001/03/29 20:49:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.18 2001/03/29 17:46:39 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.19 2001/03/29 20:49:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -589,9 +589,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 static void
 ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 {
-
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int runup;
 
 	DPRINTF(SEEQ_DEBUG_MISC, ("readbuf: st=%04x addr=%04x len=%d\n",
 	    bus_space_read_2(iot, ioh, SEEQ_STATUS), addr, len));
@@ -608,14 +608,30 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		len++;
 
 	if (addr != -1) {
+		/*
+		 * SEEQ 80C04 bug:
+		 * Starting reading from certain addresses seems to cause
+		 * us to get bogus results, so we avoid them.
+		 */
+		runup = 0;
+		if (sc->sc_variant == SEEQ_8004 &&
+		    ((addr & 0x00ff) == 0x00ea ||
+		     (addr & 0x00ff) == 0x00ee ||
+		     (addr & 0x00ff) == 0x00f0))
+			runup = (addr & 0x00ff) - 0x00e8;
+
 		ea_await_fifo_empty(sc);
 
 		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
-		bus_space_write_2(iot, ioh, SEEQ_DMA_ADDR, addr);
+		bus_space_write_2(iot, ioh, SEEQ_DMA_ADDR, addr - runup);
 		bus_space_write_2(iot, ioh, SEEQ_COMMAND,
 		    sc->sc_command | SEEQ_CMD_FIFO_READ);
 
 		ea_await_fifo_full(sc);
+		while (runup > 0) {
+			(void)bus_space_read_2(iot, ioh, SEEQ_BUFWIN);
+			runup -= 2;
+		}
 	}
 
 	if (len > 0)
@@ -1101,7 +1117,9 @@ ea_getpackets(struct seeq8005_softc *sc)
 			log(LOG_WARNING,
 			    "%s: rx packet error at %04x (err=%02x)\n",
 			    sc->sc_dev.dv_xname, addr, status & 0x0f);
-			goto pktdone;
+			/* XXX shouldn't need to reset if it's genuine. */
+			ea_init(ifp);
+			return;
 		}
 		/*
 		 * Is the packet too big ? - this will probably be trapped
@@ -1124,7 +1142,6 @@ ea_getpackets(struct seeq8005_softc *sc)
 		/* Pass data up to upper levels. */
 		ea_read(sc, addr + 4, len);
 
-	pktdone:
 		addr = ptr;
 		++pack;
 	} while (len != 0);
