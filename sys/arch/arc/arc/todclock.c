@@ -1,4 +1,4 @@
-/* $NetBSD: todclock.c,v 1.1 2001/06/13 15:00:27 soda Exp $ */
+/* $NetBSD: todclock.c,v 1.2 2001/11/04 14:01:42 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.1 2001/06/13 15:00:27 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.2 2001/11/04 14:01:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,7 +150,7 @@ inittodr(base)
 	dt.dt_sec = ct.sec;
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 #ifdef DEBUG
-	printf("=>%ld (%d)\n", time.tv_sec, base);
+	printf("=>%ld (%ld)\n", time.tv_sec, base);
 #endif
 
 	if (!badbase) {
