@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.83 2004/03/16 07:46:24 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.84 2004/03/22 18:57:38 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -179,7 +179,8 @@ typedef	char	bool;
 #define    KEY_SUSPEND    0x197    /* Suspend key */
 #define    KEY_UNDO       0x198    /* Undo key */
 #define    KEY_MOUSE      0x199    /* Mouse event has occurred */
-#define    KEY_MAX        0x199    /* maximum extended key value */
+#define    KEY_RESIZE     0x200    /* Resize event has occurred */
+#define    KEY_MAX        0x240    /* maximum extended key value */
 
 #include <unctrl.h>
 
@@ -193,18 +194,18 @@ typedef	char	bool;
  */
 #define __CHARTEXT	0x000000ff	/* bits for 8-bit characters */
 #define __NORMAL	0x00000000	/* Added characters are normal. */
-#define __STANDOUT	0x00010000	/* Added characters are standout. */
-#define __UNDERSCORE	0x00020000	/* Added characters are underscored. */
-#define __REVERSE	0x00040000	/* Added characters are reverse
+#define __STANDOUT	0x00000100	/* Added characters are standout. */
+#define __UNDERSCORE	0x00000200	/* Added characters are underscored. */
+#define __REVERSE	0x00000400	/* Added characters are reverse
 					   video. */
-#define __BLINK		0x00080000	/* Added characters are blinking. */
-#define __DIM		0x00100000	/* Added characters are dim. */
-#define __BOLD		0x00200000	/* Added characters are bold. */
-#define __BLANK		0x00400000	/* Added characters are blanked. */
-#define __PROTECT	0x00800000	/* Added characters are protected. */
-#define __ALTCHARSET	0x01000000	/* Added characters are ACS */
-#define __COLOR		0x7e000000	/* Color bits */
-#define __ATTRIBUTES	0x7fff0000	/* All 8-bit attribute bits */
+#define __BLINK		0x00000800	/* Added characters are blinking. */
+#define __DIM		0x00001000	/* Added characters are dim. */
+#define __BOLD		0x00002000	/* Added characters are bold. */
+#define __BLANK		0x00004000	/* Added characters are blanked. */
+#define __PROTECT	0x00008000	/* Added characters are protected. */
+#define __ALTCHARSET	0x00010000	/* Added characters are ACS */
+#define __COLOR		0x03fe0000	/* Color bits */
+#define __ATTRIBUTES	0x03ffff00	/* All 8-bit attribute bits */
 
 typedef struct __ldata __LDATA;
 typedef struct __line  __LINE;
@@ -289,8 +290,8 @@ extern chtype _acs_char[NUM_ACS];
 #define	COLOR_CYAN	0x06
 #define	COLOR_WHITE	0x07
 
-#define	COLOR_PAIR(n)	((((u_int32_t)n) << 25) & A_COLOR)
-#define	PAIR_NUMBER(n)	((((u_int32_t)n) & A_COLOR) >> 25)
+#define	COLOR_PAIR(n)	((((u_int32_t)n) << 17) & A_COLOR)
+#define	PAIR_NUMBER(n)	((((u_int32_t)n) & A_COLOR) >> 17)
 
 /* Curses external declarations. */
 extern WINDOW	*curscr;		/* Current screen. */
@@ -510,7 +511,6 @@ int	 baudrate(void);
 int	 beep(void);
 int	 box(WINDOW *, chtype, chtype);
 bool	 can_change_color(void);
-bool	 can_change_colors(void);
 int	 cbreak(void);
 int	 clearok(WINDOW *, bool);
 int	 color_content(short, short *, short *, short *);

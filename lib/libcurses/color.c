@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.28 2004/03/16 07:52:43 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.29 2004/03/22 18:57:38 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.28 2004/03/16 07:52:43 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.29 2004/03/22 18:57:38 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -89,17 +89,6 @@ can_change_color(void)
 }
 
 /*
- * can_change_colors --
- *	Alias for can_change_color().
- *	To be removed at next major number increment.
- */
-bool
-can_change_colors(void)
-{
-	return can_change_color();
-}
-
-/*
  * start_color --
  *	Initialise colour support.
  */
@@ -124,10 +113,10 @@ start_color(void)
 			COLOR_PAIRS = 0;
 			COLORS = 0;
 		} else {
-			COLOR_PAIRS = (__tc_pa > MAX_PAIRS ?
-			    MAX_PAIRS : __tc_pa) - 1;
+			COLOR_PAIRS = (__tc_pa > MAX_PAIRS - 1 ?
+			    MAX_PAIRS - 1 : __tc_pa);
 			 /* Use the last colour pair for curses default. */
-			__default_color = COLOR_PAIR(COLOR_PAIRS);
+			__default_color = COLOR_PAIR(MAX_PAIRS - 1);
 		}
 	}
 	if (!COLORS)
@@ -238,7 +227,7 @@ start_color(void)
 	_cursesi_screen->colour_pairs[0].flags = 0;
 
 	/* Initialise user colour pairs to default (white on black) */
-	for (i = 1; i < COLOR_PAIRS; i++) {
+	for (i = 0; i < COLOR_PAIRS; i++) {
 		_cursesi_screen->colour_pairs[i].fore = COLOR_WHITE;
 		_cursesi_screen->colour_pairs[i].back = COLOR_BLACK;
 		_cursesi_screen->colour_pairs[i].flags = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.34 2003/08/10 07:37:11 dsl Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.35 2004/03/22 18:57:38 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -245,6 +245,7 @@ struct __screen {
 	int endwin;
 	int notty;
 	int half_delay;
+	int resized;
 };
 
 
@@ -283,9 +284,11 @@ void     __restore_cursor_vis(void);
 void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
+void	 __restore_winchhandler(void);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);
+void	 __set_winchhandler(void);
 void	 __set_subwin(WINDOW *, WINDOW *);
 void	 __startwin(SCREEN *);
 void	 __stop_signal_handler(int);
@@ -299,6 +302,7 @@ void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);
 int	 __wgetnstr(WINDOW *, char *, int);
+void	 __winch_signal_handler(int);
 
 /* Private #defines. */
 #define	min(a,b)	((a) < (b) ? (a) : (b))
