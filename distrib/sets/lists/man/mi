@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.276 2000/10/10 10:03:16 itojun Exp $
+# $NetBSD: mi,v 1.277 2000/10/19 15:00:58 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -496,7 +496,6 @@
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
-./usr/share/man/cat4/ca.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/cardslot.0
@@ -622,6 +621,7 @@
 ./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
+./usr/share/man/cat4/lsu.0
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -788,6 +788,7 @@
 ./usr/share/man/cat4/tr.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
+./usr/share/man/cat4/twe.0
 ./usr/share/man/cat4/uaudio.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
@@ -1913,7 +1914,6 @@
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/bt.4
-./usr/share/man/man4/ca.4
 ./usr/share/man/man4/cac.4
 ./usr/share/man/man4/cardbus.4
 ./usr/share/man/man4/cardslot.4
@@ -2039,6 +2039,7 @@
 ./usr/share/man/man4/lm.4
 ./usr/share/man/man4/lmc.4
 ./usr/share/man/man4/lo.4
+./usr/share/man/man4/lsu.4
 ./usr/share/man/man4/lxtphy.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
@@ -2205,6 +2206,7 @@
 ./usr/share/man/man4/tr.4
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
+./usr/share/man/man4/twe.4
 ./usr/share/man/man4/uaudio.4
 ./usr/share/man/man4/ucom.4
 ./usr/share/man/man4/udp.4
