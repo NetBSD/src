@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.92 2005/01/17 15:20:35 wiz Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.93 2005/03/15 04:54:59 briggs Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.92 2005/01/17 15:20:35 wiz Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.93 2005/03/15 04:54:59 briggs Exp $");
 #endif
 #endif				/* not lint */
 
@@ -337,7 +337,7 @@ main(argc, argv)
 		exname = *argv;
 	else
 		exname = _PATH_EXPORTS;
-	openlog("mountd", LOG_PID, LOG_DAEMON);
+	openlog("mountd", LOG_PID | (debug ? LOG_PERROR : 0), LOG_DAEMON);
 
 	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (s < 0)
