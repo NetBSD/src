@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.11 2001/08/25 03:34:07 thorpej Exp $
+.\"	$NetBSD: mii.4,v 1.12 2001/08/25 04:11:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Nd IEEE 802.3 Media Independent Interface network bus
 .Sh SYNOPSIS
 .Cd "acphy*    at mii? phy ?		# Altima AC101 10/100 PHY"
+.Cd "amhphy*   at mii? phy ?		# AMD 79c901 PHY (10BASE-T part)"
 .Cd "bmtphy*   at mii? phy ?		# Broadcom BCM5201/5202 PHYs"
 .Cd "brgphy*   at mii? phy ?		# Broadcom BCM5400/5401 Gig-E PHYs"
 .Cd "dmphy*    at mii? phy ?		# Davicom DM9101 PHYs"
@@ -96,6 +97,7 @@ for use with the
 program.
 .Sh SEE ALSO
 .Xr acphy 4 ,
+.Xr amhphy 4 ,
 .Xr bmtphy 4 ,
 .Xr brgphy 4 ,
 .Xr dmphy 4 ,
