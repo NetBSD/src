@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.9 2002/04/09 02:32:51 thorpej Exp $	*/
+/*	$NetBSD: ipf.c,v 1.10 2002/05/02 17:11:37 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -51,10 +51,8 @@
 #include "ipl.h"
 
 #if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: ipf.c,v 2.10.2.13 2002/02/22 15:32:53 darrenr Exp";
+static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.14 2002/04/10 04:56:36 darrenr Exp";
 #endif
 
 #if	SOLARIS
@@ -229,7 +227,7 @@ u_int	enable;
 		if (ioctl(fd, SIOCFRENB, &enable) == -1) {
 			if (errno == EBUSY)
 				fprintf(stderr,
-					"IP FIlter: already initialized\n");
+					"IP Filter: already initialized\n");
 			else
 				perror("SIOCFRENB");
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.15 2002/04/09 02:32:51 thorpej Exp $	*/
+/*	$NetBSD: fils.c,v 1.16 2002/05/02 17:11:37 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -95,10 +95,8 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: fils.c,v 2.21.2.34 2002/02/22 15:32:45 darrenr Exp";
+static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.35 2002/04/03 14:18:36 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -1204,15 +1202,15 @@ int topclosed;
 			if (c == ERR)
 				continue;
 
-			if (tolower(c) == 'l') {
+			if (isalpha(c) && isupper(c))
+				c = tolower(c);
+			if (c == 'l') {
 				redraw = 1;
-			} else if (tolower(c) == 'q') {
-				nocbreak();
-				endwin();
-				exit(0);
-			} else if (tolower(c) == 'r') {
+			} else if (c == 'q') {
+				break;	/* exits while() loop */
+			} else if (c == 'r') {
 				reverse = !reverse;
-			} else if (tolower(c) == 's') {
+			} else if (c == 's') {
 				sorting++;
 				if (sorting > STSORT_MAX)
 					sorting = 0;
