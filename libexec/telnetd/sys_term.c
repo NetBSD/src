@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.13 1998/08/05 00:15:25 perry Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.14 1998/08/29 17:31:56 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.13 1998/08/05 00:15:25 perry Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.14 1998/08/29 17:31:56 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -1902,16 +1902,19 @@ cleanup(sig)
 {
 #ifndef	PARENT_DOES_UTMP
 # if (BSD > 43) || defined(convex)
-	char *p;
+	char *p, c;
 
 	p = line + sizeof("/dev/") - 1;
 	if (logout(p))
 		logwtmp(p, "", "");
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
-	*p = 'p';
+	c = *p; *p = 'p';
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
+	*p = c;
+	if (ttyaction(line, "telnetd", "root"))
+		syslog(LOG_ERR, "%s: ttyaction failed", line);
 	(void) shutdown(net, 2);
 	exit(1);
 # else

@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.5,v 1.2 1997/10/08 22:00:17 jtc Exp $
+.\" $NetBSD: ttyaction.5,v 1.3 1998/08/29 17:31:57 tsarna Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,10 +58,11 @@ directory, similar to how such devices are named in the
 file.
 .It action
 Name of the action for which this line should apply.
-The action names currently defined are "login" and "getty"
+The action names currently defined are "login", "getty",
+"telnetd" and "rlogind"
 which indicate which program is processing this file.
-(Note that "login" begins a login session, and "getty" is
-run after a login session ends.)
+(Note that "login" begins a login session, while the other
+three are run after a login session ends.)
 .It command
 What command to run if this record matches.
 .El

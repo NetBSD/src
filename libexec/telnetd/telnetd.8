@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnetd.8,v 1.12 1998/04/28 06:00:54 fair Exp $
+.\"	$NetBSD: telnetd.8,v 1.13 1998/08/29 17:31:56 tsarna Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -516,6 +516,14 @@ Only sent if
 is compiled with support for data encryption, and
 indicates a willingness to decrypt
 the data stream.
+.El
+.Pp
+At the end of a login session,
+.Nm
+invokes the
+.Xr ttyaction 3
+facility with an action of "telnetd" and user "root"
+to execute site-specific commands.
 .Sh ENVIRONMENT
 .Sh FILES
 .Pa /etc/services
@@ -529,6 +537,7 @@ the data stream.
 .Sh "SEE ALSO"
 .Xr telnet 1 ,
 .Xr login 1 ,
+.Xr ttyaction 3 .
 .Sh STANDARDS
 .Bl -tag -compact -width RFC-1572
 .It Cm RFC-854

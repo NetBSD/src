@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogind.8,v 1.8 1998/04/29 19:27:23 fair Exp $
+.\"	$NetBSD: rlogind.8,v 1.9 1998/08/29 17:31:56 tsarna Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,6 +143,13 @@ Transport-level keepalive messages are enabled unless the
 option is present.
 The use of keepalive messages allows sessions to be timed out
 if the client crashes or becomes unreachable.
+.Pp
+At the end of a login session,
+.Nm
+invokes the
+.Xr ttyaction 3
+facility with an action of "rlogind" and user "root"
+to execute site-specific commands.
 .Sh DIAGNOSTICS
 All initial diagnostic messages are indicated
 by a leading byte with a value of 1,
@@ -159,6 +166,7 @@ by the server failed.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr ruserok 3 ,
+.Xr ttyacion 3 ,
 .Xr rshd 8
 .Sh BUGS
 The authentication procedure used here assumes the integrity

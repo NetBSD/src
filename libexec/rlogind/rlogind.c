@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.17 1998/08/26 00:46:23 perry Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.18 1998/08/29 17:31:56 tsarna Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.17 1998/08/26 00:46:23 perry Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.18 1998/08/29 17:31:56 tsarna Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,16 +495,19 @@ void
 cleanup(signo)
 	int signo;
 {
-	char *p;
+	char *p, c;
 
 	p = line + sizeof(_PATH_DEV) - 1;
 	if (logout(p))
 		logwtmp(p, "", "");
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
-	*p = 'p';
+	c = *p; *p = 'p';
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
+	*p = c;
+	if (ttyaction(line, "rlogind", "root"))
+		syslog(LOG_ERR, "%s: ttyaction failed", line);
 	shutdown(netf, 2);
 	exit(1);
 }
