@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.11.4.5 2000/08/23 12:27:27 lukem Exp $
+# $NetBSD: network,v 1.11.4.6 2001/03/20 18:19:27 he Exp $
 #
 
 # PROVIDE: network
@@ -91,6 +91,13 @@ network_start()
 	if [ "$net_interfaces" != NO ]; then
 		if checkyesno auto_ifconfig; then
 			tmp="`ifconfig -l`"
+			for cloner in `ifconfig -C 2>/dev/null`; do
+				for int \
+		    in `/bin/ls /etc/ifconfig.${cloner}[0-9]* 2>/dev/null`; do
+					int=`IFS='.'; set -- $int; echo $2`
+					tmp="$tmp $int"
+				done
+			done
 		else
 			tmp="$net_interfaces"
 		fi
