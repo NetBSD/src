@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.4 2002/08/26 10:38:52 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.5 2002/08/28 21:05:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -178,7 +178,7 @@
 	sub	r15, r0, r15		/* Make space for trapframe */	      ;\
 	getcon	sr, r1			/* Fetch current status register */   ;\
 	LDC32(SH5_CONREG_SR_BL, r0)	/* Unblock exceptions. This allows */ ;\
-	andc	r0, r1, r1		/* us to take a TLB miss exception */ ;\
+	andc	r1, r0, r1		/* us to take a TLB miss exception */ ;\
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0 /* But don't allow IRQs */    ;\
 	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
 	putcon	r0, sr			/* Now safe to touch kernel stack */  ;\
