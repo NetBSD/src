@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 1995/10/10 04:54:33 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178 1995/10/11 04:19:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -79,6 +79,7 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/gdt.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -896,6 +897,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;
 
 #if NNPX > 0
@@ -904,10 +906,17 @@ setregs(p, pack, stack, retval)
 		npxdrop();
 #endif
 
+#ifdef USER_LDT
+	if (pcb->pcb_flags & PCB_USER_LDT)
+		i386_user_cleanup(pcb);
+#endif
+
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-	p->p_addr->u_pcb.pcb_flags = 0;
+	pcb->pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
+	__asm("movl %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
+	__asm("movl %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ebp = 0;
@@ -922,22 +931,42 @@ setregs(p, pack, stack, retval)
 }
 
 /*
- * Initialize 386 and configure to run kernel
- */
-
-/*
  * Initialize segments and descriptor tables
  */
 
-union descriptor gdt[NGDT];
+union descriptor gdt[NGDT + 2];
 union descriptor ldt[NLDT];
 struct gate_descriptor idt[NIDT];
 
-int currentldt;
-
-struct	i386tss	tss;
-
 extern  struct user *proc0paddr;
+
+void
+setgate(gd, func, args, type, dpl)
+	struct gate_descriptor *gd;
+	void *func;
+	int args, type, dpl;
+{
+
+	gd->gd_looffset = (int)func;
+	gd->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
+	gd->gd_stkcpy = args;
+	gd->gd_xx = 0;
+	gd->gd_type = type;
+	gd->gd_dpl = dpl;
+	gd->gd_p = 1;
+	gd->gd_hioffset = (int)func >> 16;
+}
+
+void
+setregion(rd, base, limit)
+	struct region_descriptor *rd;
+	void *base;
+	size_t limit;
+{
+
+	rd->rd_limit = (int)limit;
+	rd->rd_base = (int)base;
+}
 
 void
 setsegment(sd, base, limit, type, dpl, def32, gran)
@@ -957,23 +986,6 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 	sd->sd_def32 = def32;
 	sd->sd_gran = gran;
 	sd->sd_hibase = (int)base >> 24;
-}
-
-void
-setgate(gd, func, args, type, dpl)
-	struct gate_descriptor *gd;
-	void *func;
-	int args, type, dpl;
-{
-
-	gd->gd_looffset = (int)func;
-	gd->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
-	gd->gd_stkcpy = args;
-	gd->gd_xx = 0;
-	gd->gd_type = type;
-	gd->gd_dpl = dpl;
-	gd->gd_p = 1;
-	gd->gd_hioffset = (int)func >> 16;
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
@@ -1000,24 +1012,13 @@ init386(first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-	/* Set up proc 0's PCB and TSS. */
-	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->pcb_flags = 0;
-	pcb->pcb_tss.tss_esp0 = (int)USRSTACK + USPACE;
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_ioopt = sizeof(struct i386tss) << 16;
-
 	/* make gdt gates memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
-	    0, 0);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GPROC0_SEL].sd, (void *)USRSTACK, sizeof(tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
 	/* make ldt gates memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
@@ -1048,16 +1049,30 @@ init386(first_avail)
 	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
 
+	setregion(&region, gdt, sizeof(gdt) - 1);
+	lgdt(&region);
+	setregion(&region, idt, sizeof(idt) - 1);
+	lidt(&region);
+
+	/* Set up proc 0's PCB and TSS. */
+	curpcb = pcb = &proc0.p_addr->u_pcb;
+	pcb->pcb_flags = 0;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
+		pcb->pcb_iomap[x] = 0xffffffff;
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+	tss_alloc(pcb);
+	ltr(pcb->pcb_tss_sel);
+	ldt_alloc(pcb, ldt, sizeof(ldt));
+	lldt(pcb->pcb_ldt_sel);
+
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+
 #if NISA > 0
 	isa_defaultirq();
 #endif
-
-	region.rd_limit = sizeof(gdt)-1;
-	region.rd_base = (int) gdt;
-	lgdt(&region);
-	region.rd_limit = sizeof(idt)-1;
-	region.rd_base = (int) idt;
-	lidt(&region);
 
 	splhigh();
 	enable_intr();
@@ -1112,9 +1127,6 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
-
-	ltr(GSEL(GPROC0_SEL, SEL_KPL));
-	lldt(currentldt = GSEL(GLDT_SEL, SEL_KPL));
 }
 
 struct queue {
@@ -1356,8 +1368,7 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by setting the
 	 * IDT to point to nothing.
 	 */
-	region.rd_limit = 0;
-	region.rd_base = 0;
+	setregion(&region, 0, 0);
 	lidt(&region);
 
 	/*

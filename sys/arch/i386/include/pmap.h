@@ -1,6 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.20 1995/06/26 13:25:29 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 1995/10/11 04:20:20 mycroft Exp $	*/
 
 /* 
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -64,7 +65,6 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	UPTDI		0x3de		/* ptd entry for u./kernel&user stack */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
 #define	NKPDE		12

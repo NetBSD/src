@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 1995/10/10 18:27:25 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 1995/10/11 04:19:40 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -136,13 +136,6 @@
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
-/*
- * Access to each processes kernel stack is via a region of per-process address
- * space (at the beginning), immediatly above the user process stack.
- */
-	.set	_kstack,USRSTACK
-	.globl	_kstack
-
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
@@ -152,7 +145,7 @@
 	.data
 
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr
+	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -345,14 +338,13 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | usr stk map | proc0 kstack | Sysmap
- *			      0          1             2       3      4
+ * text | data | bss | [syms] | page dir | proc0 kstack | Sysmap
+ *			      0          1       2      3
  */
 #define	PROC0PDIR	((0)              * NBPG)
-#define	PROC0STACKMAP	((1)		  * NBPG)
-#define	PROC0STACK	((2)              * NBPG)
-#define	SYSMAP		((2+UPAGES)       * NBPG)
-#define	TABLESIZE	((2+UPAGES+NKPDE) * NBPG)
+#define	PROC0STACK	((1)              * NBPG)
+#define	SYSMAP		((1+UPAGES)       * NBPG)
+#define	TABLESIZE	((1+UPAGES+NKPDE) * NBPG)
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
@@ -436,14 +428,6 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
 	fillkpt
 
-	/* Map proc 0's kernel stack into user page table page. */
-	movl	$UPAGES,%ecx				# for this many pte s,
-	leal	(PROC0STACK+KERNBASE)(%esi),%edx
-	movl	%edx,RELOC(_proc0paddr)			# remember VA for 0th process init
-	leal	(PROC0STACK+PG_V|PG_KW)(%esi),%eax	# physical address in proc 0
-	leal	(PROC0STACKMAP+NBPG-UPAGES*4)(%esi),%ebx # physical address of stack pt in proc 0
-	fillkpt
-
 /*
  * Construct a page table directory.
  */
@@ -458,10 +442,6 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
-
-	/* Install a PDE to map kernel stack for proc 0. */
-	leal	(PROC0STACKMAP+PG_V|PG_KW)(%esi),%eax	# pte for pt in proc 0
-	movl	%eax,(PROC0PDIR+UPTDI*4)(%esi)		# which is where kernel stack maps!
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_PTDpaddr)
@@ -486,9 +466,10 @@ begin:
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
-	movl	_proc0paddr,%eax
-	movl	%esi,PCB_CR3(%eax)
-	movl	$(_kstack+USPACE-4*12),%esp # bootstrap stack end location
+	leal	(PROC0STACK+KERNBASE)(%esi),%eax
+	movl	%eax,_proc0paddr
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
@@ -496,27 +477,12 @@ begin:
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp
 
-	/*
-	 * Set up the initial stack frame for execve() to munge.
-	 */
-	movl	$LSEL(LUCODE_SEL, SEL_UPL),%eax
-	movl	$LSEL(LUDATA_SEL, SEL_UPL),%ecx
-	pushl	%ecx			# user ss
-	pushl	$0xdeadbeef		# user esp (set by execve)
-	pushl	$PSL_USERSET		# user eflags
-	pushl	%eax			# user cs
-	pushl	$0xdeadbeef		# user eip (set by execve)
-	subl	$40,%esp		# error code, trap number, registers
-	pushl	%ecx			# user ds
-	pushl	%ecx			# user es
-	movl	%cx,%fs			# user fs (not used)
-	movl	%cx,%gs			# user gs (not used)
-
-	movl	%esp,%eax		# push pointer to frame
-	pushl	%eax
 	call 	_main
-	addl	$4,%esp
 
+ENTRY(proc_trampoline)
+	pushl	%ebx
+	call	%esi
+	addl	$4,%esp
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -1661,27 +1627,38 @@ switch_exited:
 	cli
 	movl	P_ADDR(%edi),%esi
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
+#if 0
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$P_SYSTEM,P_FLAG(%edi)
+	jnz	switch_restored
+#endif
+
+	/* Load TSS info. */
+	movl	_dynamic_gdt,%eax
+	movl	PCB_TSS_SEL(%esi),%edx
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
+
 #ifdef USER_LDT
-	cmpl	$0,PCB_USERLDT(%esi)
-	jnz	1f
-	movl	$GSEL(GLDT_SEL, SEL_KPL),%ecx
-	cmpl	_currentldt,%ecx
-	je	2f
-	lldt	%ecx
-	movl	%ecx,_currentldt
-	jmp	2f
-1:	pushl	%esi
-	call	_set_user_ldt
-	addl	$4,%esp
-2:
+	/*
+	 * Switch LDT.
+	 *
+	 * XXX
+	 * Always do this, because the LDT could have been swapped into a
+	 * different selector after a process exited.  (See gdt_compact().)
+	 */
+	movl	PCB_LDT_SEL(%esi),%edx
+	lldt	%dx
 #endif /* USER_LDT */
 
 	/* Restore segment registers. */
@@ -1690,6 +1667,7 @@ switch_exited:
 	movl	%ax,%fs
 	movl	%cx,%gs
 
+switch_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
 	movl	%ecx,%cr0
@@ -1718,7 +1696,7 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free
+	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free,_tss_free
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
@@ -1730,15 +1708,23 @@ ENTRY(switch_exit)
 	cli
 	movl	P_ADDR(%ebx),%esi
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
-	/* Can't have a user-set ldt. */
+	/* Load TSS info. */
+	movl	_dynamic_gdt,%eax
+	movl	PCB_TSS_SEL(%esi),%edx
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Switch TSS. */
+	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
+	ltr	%dx
+
+	/* We're always in the kernel, so we don't need the LDT. */
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
@@ -1756,13 +1742,15 @@ ENTRY(switch_exit)
 	sti
 
 	/* Thoroughly nuke the old process's resources. */
+	pushl	P_ADDR(%edi)
+	call	_tss_free
 	pushl	P_VMSPACE(%edi)
 	call	_vmspace_free
 	pushl	$USPACE
 	pushl	P_ADDR(%edi)
 	pushl	_kernel_map
 	call	_kmem_free
-	addl	$16,%esp
+	addl	$20,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
@@ -1775,46 +1763,18 @@ ENTRY(switch_exit)
  * return in cpu_switch() if altreturn is true.
  */
 ENTRY(savectx)
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	pushl	_cpl
-
-	/* Save the context. */
-	movl	20(%esp),%esi		# esi = p2->p_addr
+	movl	4(%esp),%edx		# edx = p->p_addr
   
 	/* Save segment registers. */
 	movl	%fs,%ax
 	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
+	movl	%eax,PCB_FS(%edx)
+	movl	%ecx,PCB_GS(%edx)
 
 	/* Save stack pointers. */
-	movl	%esp,PCB_ESP(%esi)
-	movl	%ebp,PCB_EBP(%esi)
+	movl	%esp,PCB_ESP(%edx)
+	movl	%ebp,PCB_EBP(%edx)
 
-	/* Copy the stack if requested. */
-	cmpl	$0,24(%esp)
-	je	1f
-	movl	%esp,%eax		# eax = stack pointer
-	movl	%eax,%edx		# edx = stack offset from bottom
-	subl	$_kstack,%edx
-	movl	$USPACE,%ecx		# ecx = USPACE - offset
-	subl	%edx,%ecx
-	pushl	%ecx
-	addl	%edx,%esi		# esi = stack in p2
-	pushl	%esi
-	pushl	%eax
-	call	_bcopy
-	addl	$12,%esp
-
-1:	/* This is the parent.  The child will return from cpu_switch(). */
-	xorl	%eax,%eax		# return 0
-
-	addl	$4,%esp			# drop saved _cpl on the floor
-	popl	%edi
-	popl	%esi
-	popl	%ebx
 	ret
 
 /*****************************************************************************/
@@ -1947,8 +1907,12 @@ calltrap:
 	cmpb	$0,_astpending
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
+#ifdef VM86
+	jnz	5f
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+#endif
 	jz	1f
-	movb	$0,_astpending
+5:	movb	$0,_astpending
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 1995/10/10 04:45:35 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.19 1995/10/11 04:19:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -71,19 +71,17 @@
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
+
 #include <machine/psl.h>
 #include <machine/reg.h>
-
-extern int kstack[];		/* XXX */
+#include <machine/segments.h>
 
 static inline struct trapframe *
 process_frame(p)
 	struct proc *p;
 {
-	void *ptr;
 
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-	return (ptr);
+	return (p->p_md.md_regs);
 }
 
 static inline struct save87 *
@@ -100,9 +98,22 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	regs->r_es     = tf->tf_es;
-	regs->r_ds     = tf->tf_ds;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		regs->r_gs = tf->tf_vm86_gs;
+		regs->r_fs = tf->tf_vm86_fs;
+		regs->r_es = tf->tf_vm86_es;
+		regs->r_ds = tf->tf_vm86_ds;
+	} else
+#endif
+	{
+		regs->r_gs = pcb->pcb_gs;
+		regs->r_fs = pcb->pcb_fs;
+		regs->r_es = tf->tf_es;
+		regs->r_ds = tf->tf_ds;
+	}
 	regs->r_edi    = tf->tf_edi;
 	regs->r_esi    = tf->tf_esi;
 	regs->r_ebp    = tf->tf_ebp;
@@ -146,6 +157,7 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	/*
 	 * Check for security violations.
@@ -154,8 +166,42 @@ process_write_regs(p, regs)
 	    !USERMODE(regs->r_cs, regs->r_eflags))
 		return (EINVAL);
 
-	tf->tf_es     = regs->r_es;
-	tf->tf_ds     = regs->r_ds;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		tf->tf_vm86_gs = regs->r_gs;
+		tf->tf_vm86_fs = regs->r_fs;
+		tf->tf_vm86_es = regs->r_es;
+		tf->tf_vm86_ds = regs->r_ds;
+	} else
+#endif
+	{
+		extern int gdt_size;
+		extern union descriptor *dynamic_gdt;
+
+#define	verr_ldt(slot)	(slot < pcb->pcb_ldt_len && \
+			 (pcb->pcb_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
+			 pcb->pcb_ldt[slot].sd.sd_dpl == SEL_UPL && \
+			 pcb->pcb_ldt[slot].sd.sd_p == 1)
+#define	verr_gdt(slot)	(slot < gdt_size && \
+			 (dynamic_gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
+			 dynamic_gdt[slot].sd.sd_dpl == SEL_UPL && \
+			 dynamic_gdt[slot].sd.sd_p == 1)
+#define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
+				      verr_gdt(IDXSEL(sel)))
+#define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
+#define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
+
+		if ((regs->r_gs != pcb->pcb_gs && \
+		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
+		    (regs->r_fs != pcb->pcb_fs && \
+		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
+			return (EINVAL);
+
+		pcb->pcb_gs = regs->r_gs;
+		pcb->pcb_fs = regs->r_fs;
+		tf->tf_es   = regs->r_es;
+		tf->tf_ds   = regs->r_ds;
+	}
 	tf->tf_edi    = regs->r_edi;
 	tf->tf_esi    = regs->r_esi;
 	tf->tf_ebp    = regs->r_ebp;

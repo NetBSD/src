@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.42 1995/07/04 07:00:47 paulus Exp $	*/
+/*	$NetBSD: icu.s,v 1.43 1995/10/11 04:20:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -109,8 +109,12 @@ IDTVEC(doreti)
 	cmpb	$0,_astpending
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
+#ifdef VM86
+	jnz	4f
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+#endif
 	jz	3f
-	movb	$0,_astpending
+4:	movb	$0,_astpending
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap

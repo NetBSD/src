@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.19 1995/08/06 05:33:22 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.20 1995/10/11 04:20:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,9 +46,12 @@
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
 
+#include <sys/signal.h>
+
 #include <machine/segments.h>
 #include <machine/tss.h>
 #include <machine/npx.h>
+#include <machine/sysarch.h>
 
 struct pcb {
 	struct	i386tss pcb_tss;
@@ -57,21 +60,20 @@ struct pcb {
 #define	pcb_ebp	pcb_tss.tss_ebp
 #define	pcb_fs	pcb_tss.tss_fs
 #define	pcb_gs	pcb_tss.tss_gs
-#ifdef	notyet
-	u_char	pcb_iomap[NPORT/sizeof(u_char)]; /* i/o port bitmap */
-#endif
-	int	pcb_cr0;		/* saved image of CR0 */
-        caddr_t	pcb_ldt;		/* per process (user) LDT */
+#define	pcb_ldt_sel	pcb_tss.tss_ldt
+	int	pcb_tss_sel;
+        union	descriptor *pcb_ldt;	/* per process (user) LDT */
         int	pcb_ldt_len;		/*      number of LDT entries */
-	struct	segment_descriptor pcb_ldt_desc;
-	struct	save87	pcb_savefpu;	/* floating point state for 287/387 */
-	struct	emcsts	pcb_saveemc;	/* Cyrix EMC state */
+	int	pcb_cr0;		/* saved image of CR0 */
+	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
+	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 /*
  * Software pcb (extension)
  */
 	int	pcb_flags;
-#define	FP_USESEMC	0x08	/* process uses EMC memory-mapped mode */
-	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
+#define	PCB_USER_LDT	0x01		/* has user-set LDT */
+	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
+	u_long	pcb_iomap[1024/32];	/* I/O bitmap */
 };
 
 /*    

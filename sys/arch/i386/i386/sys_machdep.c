@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.22 1995/10/09 06:34:25 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23 1995/10/11 04:19:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,6 +61,7 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/gdt.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
@@ -125,13 +126,22 @@ vdoualarm(arg)
 #endif
 
 #ifdef USER_LDT
+/*
+ * If the process has a local LDT, deallocate it, and restore the default from
+ * proc0.     
+ */   
 void
-set_user_ldt(pcb)
+i386_user_cleanup(pcb)
 	struct pcb *pcb;
 {
 
-	gdt[GUSERLDT_SEL] = pcb->pcb_ldt_desc;
-	lldt(currentldt = GSEL(GUSERLDT_SEL, SEL_KPL));
+	ldt_free(pcb);
+	pcb->pcb_ldt_sel = proc0.p_addr->u_pcb.pcb_ldt_sel;
+	if (pcb == curpcb)
+		lldt(pcb->pcb_ldt_sel);
+	kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
+	pcb->pcb_ldt = 0;
 }
 
 int
@@ -140,41 +150,39 @@ i386_get_ldt(p, args, retval)
 	char *args;
 	register_t *retval;
 {
-	int error = 0;
+	int error;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int nldt, num;
 	union descriptor *lp;
 	int s;
-	struct i386_get_ldt_args ua, *uap;
+	struct i386_get_ldt_args ua;
 
-	if ((error = copyin(args, &ua, sizeof(struct i386_get_ldt_args))) < 0)
+	if (error = copyin(args, &ua, sizeof(ua)))
 		return (error);
 
-	uap = &ua;
-
 #ifdef	DEBUG
-	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start,
-	    uap->num, uap->desc);
+	printf("i386_get_ldt: start=%d num=%d descs=%x\n", ua.start,
+	    ua.num, ua.desc);
 #endif
 
-	if (uap->start < 0 || uap->num < 0)
+	if (ua.start < 0 || ua.num < 0)
 		return (EINVAL);
 
-	if (pcb->pcb_ldt) {
+	if (pcb->pcb_ldt != 0) {
 		nldt = pcb->pcb_ldt_len;
-		lp = (union descriptor *)pcb->pcb_ldt;
+		lp = pcb->pcb_ldt;
 	} else {
 		nldt = NLDT;
 		lp = ldt;
 	}
-	if (uap->start > nldt) {
+	if (ua.start > nldt) {
 		splx(s);
 		return (EINVAL);
 	}
-	lp += uap->start;
-	num = min(uap->num, nldt - uap->start);
+	lp += ua.start;
+	num = min(ua.num, nldt - ua.start);
 
-	if (error = copyout(lp, uap->desc, num * sizeof(union descriptor)))
+	if (error = copyout(lp, ua.desc, num * sizeof(union descriptor)))
 		return (error);
 
 	*retval = num;
@@ -187,42 +195,43 @@ i386_set_ldt(p, args, retval)
 	char *args;
 	register_t *retval;
 {
-	int error = 0, i, n;
+	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	union descriptor *lp;
+	int fsslot, gsslot;
 	int s;
-	struct i386_set_ldt_args ua, *uap;
+	struct i386_set_ldt_args ua;
+	union descriptor desc;
 
-	if (error = copyin(args, &ua, sizeof(struct i386_set_ldt_args)))
+	if (error = copyin(args, &ua, sizeof(ua)))
 		return (error);
 
-	uap = &ua;
-
 #ifdef	DEBUG
-	printf("i386_set_ldt: start=%d num=%d descs=%x\n", uap->start,
-	    uap->num, uap->desc);
+	printf("i386_set_ldt: start=%d num=%d descs=%x\n", ua.start,
+	    ua.num, ua.desc);
 #endif
 
-	if (uap->start < 0 || uap->num < 0)
+	if (ua.start < 0 || ua.num < 0)
 		return (EINVAL);
-
-	if (uap->start > 8192 || (uap->start + uap->num) > 8192)
+	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
 		return (EINVAL);
 
 	/* allocate user ldt */
-	if (!pcb->pcb_ldt || (uap->start + uap->num) > pcb->pcb_ldt_len) {
+	if (pcb->pcb_ldt == 0 || (ua.start + ua.num) > pcb->pcb_ldt_len) {
 		size_t oldlen, len;
 		union descriptor *new_ldt;
 
-		if (!pcb->pcb_ldt)
+		if (pcb->pcb_flags & PCB_USER_LDT)
+			ldt_free(pcb);
+		else
 			pcb->pcb_ldt_len = 512;
-		while ((uap->start + uap->num) > pcb->pcb_ldt_len)
+		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
 			pcb->pcb_ldt_len *= 2;
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
-		if (!pcb->pcb_ldt) {
+		if (pcb->pcb_ldt == 0) {
 			oldlen = NLDT * sizeof(union descriptor);
 			bcopy(ldt, new_ldt, oldlen);
+			pcb->pcb_flags |= PCB_USER_LDT;
 		} else {
 			oldlen = pcb->pcb_ldt_len * sizeof(union descriptor);
 			bcopy(pcb->pcb_ldt, new_ldt, oldlen);
@@ -230,36 +239,34 @@ i386_set_ldt(p, args, retval)
 			    oldlen);
 		}
 		bzero((caddr_t)new_ldt + oldlen, len - oldlen);
-		pcb->pcb_ldt = (caddr_t)new_ldt;
-		setsegment(&pcb->pcb_ldt_desc, new_ldt, len - 1, SDT_SYSLDT,
-		    SEL_KPL, 0, 0);
-		if (p == curproc)
-			set_user_ldt(pcb);
+		pcb->pcb_ldt = new_ldt;
+		ldt_alloc(pcb, new_ldt, len);
+		if (pcb == curpcb)
+			lldt(pcb->pcb_ldt_sel);
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
 #endif
 	}
 
-	/* Check descriptors for access violations */
-	for (i = 0, n = uap->start; i < uap->num; i++, n++) {
-		union descriptor desc, *dp;
-		dp = &uap->desc[i];
-		error = copyin(dp, &desc, sizeof(union descriptor));
-		if (error)
+	if (pcb == curpcb)
+		savectx(curpcb);
+	fsslot = IDXSEL(pcb->pcb_fs);
+	gsslot = IDXSEL(pcb->pcb_gs);
+
+	/* Check descriptors for access violations. */
+	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
+		if (error = copyin(&ua.desc[i], &desc, sizeof(desc)))
 			return (error);
-
-		/* Only user (ring-3) descriptors */
-		if (desc.sd.sd_dpl != SEL_UPL)
-			return (EACCES);
-
-		/* Must be "present" */
-		if (desc.sd.sd_p == 0)
-			return (EACCES);
 
 		switch (desc.sd.sd_type) {
 		case SDT_SYSNULL:
+			desc.sd.sd_p = 0;
+			break;
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
+			/* Can't replace in use descriptor with gate. */
+			if (n == fsslot || n == gsslot)
+				return (EBUSY);
 			break;
 		case SDT_MEMRO:
 		case SDT_MEMROA:
@@ -271,43 +278,101 @@ i386_set_ldt(p, args, retval)
 		case SDT_MEMEA:
 		case SDT_MEMER:
 		case SDT_MEMERA:
-		case SDT_MEMEC:
-		case SDT_MEMEAC:
-		case SDT_MEMERC:
-		case SDT_MEMERAC: {
-#if 0
-			unsigned long base = (desc.sd.sd_hibase << 24)&0xFF000000;
-			base |= (desc.sd.sd_lobase&0x00FFFFFF);
-			if (base >= KERNBASE)
+			break;
+		default:
+			/* Only care if it's present. */
+			if (desc.sd.sd_p != 0)
 				return (EACCES);
-#endif
 			break;
 		}
-		default:
-			return (EACCES);
-			/*NOTREACHED*/
+
+		if (desc.sd.sd_p != 0) {
+			/* Only user (ring-3) descriptors may be present. */
+			if (desc.sd.sd_dpl != SEL_UPL)
+				return (EACCES);
+		} else {
+			/* Must be "present" if in use. */
+			if (n == fsslot || n == gsslot)
+				return (EBUSY);
 		}
 	}
 
 	s = splhigh();
 
-	/* Fill in range */
-	for (i = 0, n = uap->start; i < uap->num && !error; i++, n++) {
-		union descriptor desc, *dp;
-		dp = &uap->desc[i];
-		lp = &((union descriptor *)(pcb->pcb_ldt))[n];
-#ifdef DEBUG
-		printf("i386_set_ldt(%d): ldtp=%x\n", p->p_pid, lp);
-#endif
-		error = copyin(dp, lp, sizeof(union descriptor));
-	}
-	if (!error)
-		*retval = uap->start;
+	/* Now actually replace the descriptors. */
+	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
+		if (error = copyin(&ua.desc[i], &desc, sizeof(desc)))
+			goto out;
 
+		pcb->pcb_ldt[n] = desc;
+	}
+
+	*retval = ua.start;
+
+out:
 	splx(s);
 	return (error);
 }
 #endif	/* USER_LDT */
+
+int
+i386_iopl(p, args, retval)
+	struct proc *p;
+	char *args;
+	register_t *retval;
+{
+	int error;
+	struct trapframe *tf = p->p_md.md_regs;
+	struct i386_iopl_args ua;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return error;
+
+	if (error = copyin(args, &ua, sizeof(ua)))
+		return error;
+
+	if (ua.iopl)
+		tf->tf_eflags |= PSL_IOPL;
+	else
+		tf->tf_eflags &= ~PSL_IOPL;
+
+	return 0;
+}
+
+int
+i386_get_ioperm(p, args, retval)
+	struct proc *p;
+	char *args;
+	register_t *retval;
+{
+	int error;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct i386_get_ioperm_args ua;
+
+	if (error = copyin(args, &ua, sizeof(ua)))
+		return (error);
+
+	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
+}
+
+int
+i386_set_ioperm(p, args, retval)
+	struct proc *p;
+	char *args;
+	register_t *retval;
+{
+	int error;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct i386_set_ioperm_args ua;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return error;
+
+	if (error = copyin(args, &ua, sizeof(ua)))
+		return (error);
+
+	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
+}
 
 int
 sys_sysarch(p, v, retval)
@@ -331,6 +396,19 @@ sys_sysarch(p, v, retval)
 		error = i386_set_ldt(p, SCARG(uap, parms), retval);
 		break;
 #endif
+
+	case I386_IOPL: 
+		error = i386_iopl(p, SCARG(uap, parms), retval);
+		break;
+
+	case I386_GET_IOPERM: 
+		error = i386_get_ioperm(p, SCARG(uap, parms), retval);
+		break;
+
+	case I386_SET_IOPERM: 
+		error = i386_set_ioperm(p, SCARG(uap, parms), retval);
+		break;
+
 	default:
 		error = EINVAL;
 		break;
