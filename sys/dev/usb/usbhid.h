@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.3 1998/12/26 12:53:04 augustss Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.4 1999/04/22 01:57:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ typedef struct usb_hid_descriptor {
 #define HUP_SIMULATION		0x0002
 #define HUP_LEDS		0x0008
 #define HUP_BUTTON		0x0009
+#define HUP_DIGITIZERS		0x000d
 
 /* Usages, generic desktop */
 #define HUG_POINTER		0x0001
@@ -113,6 +114,12 @@ typedef struct usb_hid_descriptor {
 #define HUG_SYSTEM_MENU_LEFT	0x008b
 #define HUG_SYSTEM_MENU_UP	0x008c
 #define HUG_SYSTEM_MENU_DOWN	0x008d
+
+/* Usages Digitizers */
+#define HUD_TIP_PRESSURE	0x0030
+#define HUD_IN_RANGE		0x0032
+#define HUD_INVERT		0x003c
+#define HUD_BARREL_SWITCH	0x0044
 
 #define HID_USAGE2(p,u) (((p) << 16) | u)
 
