@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.5.2.1 1993/09/24 08:49:39 mycroft Exp $
+ *	$Id: wt.c,v 1.5.2.2 1994/02/02 19:49:51 mycroft Exp $
  */
 
 /*
- *
  * Copyright (c) 1989 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -62,8 +61,6 @@
  * rights to redistribute these changes.
  */
 
-#include "wt.h"
-#if NWT > 0
 /* 
  * (Mach) HISTORY
  * Revision 2.2.1.3  90/01/08  13:29:38  rvb
@@ -150,9 +147,6 @@ lbufptr		dw	0	; buffer pointer to data buffers, low word
 hbufptr		dw	0	; buffer pointer to data buffers, high word
 numbytes	dw	0	; number of bytes to read or write (new)
 */
-
-#define PAGESIZ		4096
-#define HZ		60
 
 /* tape controller ports */
 #define STATPORT	wtport
@@ -292,7 +286,7 @@ extern time_t	lbolt;
 
 void
 wtstrategy(bp)
-register struct buf *bp;
+	register struct buf *bp;
 {
 	unsigned ucnt1, ucnt2, finished;
 	unsigned long adr1, adr2;
@@ -309,8 +303,7 @@ register struct buf *bp;
 	debug("WTstart: adr1 %lx cnt %x\n", adr1, ucnt1);
 #endif
 	/* 64K boundary? (XXX) */
-	if (ftoseg(adr1) != ftoseg(adr1 + (unsigned) ucnt1 - 1))
-	{
+	if (ftoseg(adr1) != ftoseg(adr1 + (unsigned) ucnt1 - 1)) {
 		adr2 = (adr1 & 0xffff0000L) + 0x10000L;
 		ucnt2 = (adr1 + ucnt1) - adr2;
 		ucnt1 -= ucnt2;
@@ -328,8 +321,7 @@ register struct buf *bp;
 		bp->b_resid = bp->b_bcount;
 		goto xit;
 	}
-	if ((Hogproc == (struct proc *) 0) && TPHOG(bp->b_dev))
-	{
+	if ((Hogproc == (struct proc *) 0) && TPHOG(bp->b_dev)) {
 #ifdef DEBUG
 		printf("setting Hogproc\n");
 #endif
@@ -388,15 +380,14 @@ register struct buf *bp;
 
 		/* If write command outstanding, just skip down */
 		if (!(wtflags & TPWO)) {
-			if (ERROR == wtsense(0))	/* clear status */
-			{
+			if (ERROR == wtsense(0)) {	/* clear status */
 #ifdef DEBUG
 				debug("TPstart: sense 0\n");
 #endif
 				goto errxit;
 			}
 			if (!(wtflags & TPWRITE) || (wtflags & TPRANY) ||
-			    (wstart() == ERROR))  {
+			    (wstart() == ERROR)) {
 #ifdef DEBUG
 				debug("Tpstart: write init error\n"); /* */
 #endif
@@ -406,7 +397,7 @@ errxit:				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				goto xit;
 			}
-			wtflags |= TPWO|TPWANY;
+			wtflags |= TPWO | TPWANY;
 		} 
 
 		/* and hold your nose */
@@ -425,12 +416,13 @@ errxit:				bp->b_flags |= B_ERROR;
 		bad = pollrdy();
 	}
 
-	endio:
-	if(bad == EIO) bad = 0;
+endio:
+	if (bad == EIO)
+		bad = 0;
 	wterror.wt_err = 0;
 	if (exflag && wtsense((bp->b_flags & B_READ) ? TP_WRP : 0)) {
 		if ((wterror.wt_err & TP_ST0) 
-			&& (wterror.wt_err & (TP_FIL|TP_EOM))) {
+			&& (wterror.wt_err & (TP_FIL | TP_EOM))) {
 #ifdef DEBUG
 			debug("WTsta: Hit end of tape\n"); /* */
 #endif
@@ -446,7 +438,7 @@ errxit:				bp->b_flags |= B_ERROR;
 		/* Reading file marks or writing end of tape return 0 bytes */
 		} else	{
 			bp->b_flags |= B_ERROR;
-			wtflags &= ~(TPWO|TPRO);
+			wtflags &= ~(TPWO | TPRO);
 		}
 	}
 
@@ -470,6 +462,7 @@ xit:
  */
 wtimer()
 {
+
 	/* If I/O going and not in isr(), simulate interrupt
 	 * If no I/O for at least 1 second, stop being a Hog
 	 * If I/O done and not a Hog, turn off wtimer()
@@ -477,19 +470,20 @@ wtimer()
 	if (wtio && !isrlock)
 		isr();
 
-	if ((Hogproc == myproc) && Hogtime && (lbolt-Hogtime > HZ))
+	if ((Hogproc == myproc) && Hogtime && (lbolt-Hogtime > hz))
 		Hogproc = (struct proc *) 0;
 
 	if (wtio || (Hogproc == myproc))
-		timeout(wtimer, (caddr_t) 0, HZ);
+		timeout(wtimer, (caddr_t) 0, hz);
 	else
 		wtimeron = 0;
 }
 
 
 wtrawio(bp)
-struct buf	*bp;
+	struct buf	*bp;
 {
+
 	wtstrategy(bp);
 	biowait(bp);
 	return(0);
@@ -500,14 +494,13 @@ struct buf	*bp;
  *  for user level QIC commands only
  */
 wtioctl(dev, cmd, arg, mode)
-int dev, cmd;
-unsigned long arg;
-int mode;
+	int dev, cmd;
+	unsigned long arg;
+	int mode;
 {
-	if (cmd == WTQICMD)
-	{
-		if ((qicmd((int)arg) == ERROR) || (rdyexc(HZ) == ERROR))
-		{
+
+	if (cmd == WTQICMD) {
+		if ((qicmd((int)arg) == ERROR) || (rdyexc(hz) == ERROR)) {
 			wtsense(0);
 			return(EIO);
 		}
@@ -521,8 +514,9 @@ int mode;
  * called on every device open
  */
 wtopen(dev, flag)
-int	dev, flag;
+	int	dev, flag;
 {
+
 	if (first_wtopen_ever) {
 		wtinit();
 		first_wtopen_ever = 0;
@@ -530,15 +524,12 @@ int	dev, flag;
 #ifdef DEBUG
 	printf("wtopen ...\n");
 #endif
-	if (!pageaddr) {
+	if (!pageaddr)
 		return(ENXIO);
-	}
-	if (wtflags & (TPINUSE)) {
+	if (wtflags & TPINUSE)
 		return(ENXIO);
-	}
-	if (wtflags & (TPDEAD)) {
+	if (wtflags & TPDEAD)
 		return(EIO);
-	}
 	/* If a rewind from the last session is going on, wait */
 	while(wtflags & TPREW) {
 #ifdef DEBUG
@@ -549,15 +540,13 @@ int	dev, flag;
 	/* Only do reset and select when tape light is off, and tape is rewound.
 	 * This allows multiple volumes. */
 	if (wtflags & TPSTART) { 
-		if (t_reset() != SUCCESS) {
+		if (t_reset() != SUCCESS)
 			return(ENXIO);
-		}
 #ifdef DEBUG
 		debug("reset done. calling wtsense\n");
 #endif
-		if (wtsense(TP_WRP) == ERROR) {
+		if (wtsense(TP_WRP) == ERROR)
 			return (EIO);
-		}
 #ifdef DEBUG
 		debug("wtsense done\n");
 #endif
@@ -603,7 +592,7 @@ wtclose(dev)
 #endif
 	if (Hogproc == myproc)
 		Hogproc = (struct proc *) 0;
-	if (!exflag && (wtflags & TPWANY) && !(wtflags & (TPSESS|TPDEAD))) {
+	if (!exflag && (wtflags & TPWANY) && !(wtflags & (TPSESS | TPDEAD))) {
 		if (!(wtflags & TPWO))
 			wstart();
 #ifdef DEBUG
@@ -613,30 +602,26 @@ wtclose(dev)
 #ifdef DEBUG
 		debug("WT: Wrote file mark, going to wait\n");
 #endif
-		if (rdyexc(HZ/10) == ERROR) {
+		if (rdyexc(hz/10) == ERROR)
 			wtsense(0);
-			}
-		}
-	if (TP_REWCLOSE(dev) || (wtflags & (TPSESS|TPDEAD))) {
+	}
+	if (TP_REWCLOSE(dev) || (wtflags & (TPSESS | TPDEAD))) {
 	/* rewind tape to beginning of tape, deselect tape, and make a note */
 	/* don't wait until rewind, though */
 		/* Ending read or write causes rewind to happen, if no error,
 		 * and READY and EXCEPTION stay up until it finishes */
-		if (wtflags & (TPRO|TPWO))
-		{
+		if (wtflags & (TPRO | TPWO)) {
 #ifdef DEBUG
 			debug("End read or write\n");
 #endif
-			rdyexc(HZ/10);
+			rdyexc(hz/10);
 			ioend();
-			wtflags &= ~(TPRO|TPWO);
-		}
-		else	wtwind();
+			wtflags &= ~(TPRO | TPWO);
+		} else
+			wtwind();
 		wtflags |= TPSTART | TPREW;
-		timeout(wtdsl2, 0, HZ);
-	}
-	else if (!(wtflags & (TPVOL|TPWANY)))
-	{
+		timeout(wtdsl2, 0, hz);
+	} else if (!(wtflags & (TPVOL | TPWANY))) {
 		/* space forward to after next file mark no writing done */
 		/* This allows skipping data without reading it.*/
 #ifdef DEBUG
@@ -645,12 +630,10 @@ wtclose(dev)
 		if (!(wtflags & TPRO))
 			rstart();
 		rmark();
-		if (rdyexc(HZ/10))
-		{
+		if (rdyexc(hz/10))
 			wtsense(TP_WRP);
-		}
 	}
-	wtflags &= TPREW|TPDEAD|TPSTART|TPRO|TPWO;
+	wtflags &= TPREW | TPDEAD | TPSTART | TPRO | TPWO;
 	return(0);
 }
 
@@ -658,23 +641,21 @@ wtclose(dev)
 
 wtsense(ignor)
 {
-	wtflags &= ~(TPRO|TPWO);
+
+	wtflags &= ~(TPRO | TPWO);
 #ifdef DEBUGx
 	debug("WTsense: start ");
 #endif
-	if (rdstatus(&wterror) == ERROR)
-	{
+	if (rdstatus(&wterror) == ERROR) {
 #ifdef DEBUG
 		debug("WTsense: Can't read status\n");
 #endif
 		return(ERROR);
 	}
 #ifdef DEBUG
-	if (wterror.wt_err & (TP_ST0|TP_ST1))
-	{
+	if (wterror.wt_err & (TP_ST0 | TP_ST1))
 		debug("Tperror: status %x error %d underruns %d\n",
 			wterror.wt_err, wterror.wt_ercnt, wterror.wt_urcnt);
-	}
 	else
 		debug("done. no error\n");
 #endif
@@ -689,9 +670,9 @@ wtsense(ignor)
 
 /* lifted from tdriver.c from Wangtek */
 reperr(srb0)
-int srb0;
+	int srb0;
 {
-	int s0 = srb0 & (TP_ERR0|TP_ERR1);	/* find out which exception to report */
+	int s0 = srb0 & (TP_ERR0 | TP_ERR1);	/* find out which exception to report */
  
 	if (s0) {
 		if (s0 & TP_USL) 
@@ -711,16 +692,16 @@ int srb0;
 			sterr("Block in error not located");
 		else if (s0 & TP_UDA)
 			sterr("Unrecoverable data error");
-		/*
+#ifdef notdef
 		else if (s0 & TP_EOM)
 			sterr("End of tape");
-		*/
+#endif
 		else if (s0 & TP_NDT)
 			sterr("No data detected");
-		/*
+#ifdef notdef
 		if (s0 & TP_POR)
 			sterr("Reset occured");
-		*/
+#endif
 		else if (s0 & TP_BOM)
 			sterr("Beginning of tape");
 		else if (s0 & TP_ILL)
@@ -731,53 +712,59 @@ int srb0;
 sterr(errstr)
 char	*errstr;
 {
+
 	printf("Streamer: %s\n", errstr);
 }
 
 /* Wait until rewind finishes, and deselect drive */
-wtdsl2() {
+wtdsl2()
+{
 	int	stat;
 
-	stat = inb(wtport) & (READY|EXCEP);
+	stat = inb(wtport) & (READY | EXCEP);
 #ifdef DEBUG
 	debug("Timeout: Waiting for rewind to finish: stat %x\n", stat);
 #endif
 	switch (stat) {
-		/* They're active low, ya'know */
-		case READY|EXCEP:
-			timeout(wtdsl2, (caddr_t) 0, HZ);
-			return;
-		case EXCEP: 
-			wtflags &= ~TPREW;
-			return;
-		case READY:
-		case	0:
-			wtflags &= ~TPREW;
-			sterr("Rewind failed");
-			wtsense(TP_WRP);
-			return;
-			}
+	/* They're active low, ya'know */
+	case READY|EXCEP:
+		timeout(wtdsl2, (caddr_t) 0, hz);
+		return;
+	case EXCEP: 
+		wtflags &= ~TPREW;
+		return;
+	case READY:
+	case	0:
+		wtflags &= ~TPREW;
+		sterr("Rewind failed");
+		wtsense(TP_WRP);
+		return;
 	}
+}
 
-wtwind() {
+wtwind()
+{
+
 #ifdef DEBUG
 	debug("WT: About to rewind\n");
 #endif
 	rwind();	/* actually start rewind */
 }
 
-wtintr(unit) {
-	if (wtflags & (TPWO|TPRO))
-	{
+wtintr(unit)
+	int unit;
+{
+
+	if (wtflags & (TPWO|TPRO)) {
 		isrlock = 1;
-		if (wtio) isr();
+		if (wtio)
+			isr();
 		isrlock = 0;
 	}
 }
 
 wtinit() {
-	if (wtchan < 1 || wtchan > 3)
-	{
+	if (wtchan < 1 || wtchan > 3) {
 		sterr("Bad DMA channel, cannot init driver");
 		return;
 	}
@@ -788,6 +775,7 @@ wtinit() {
 rdyexc(ticks)
 {
 	int s;
+
 #ifdef DEBUG
 	int os = 0xffff;		/* force printout first time */
 #endif
@@ -797,39 +785,40 @@ rdyexc(ticks)
 		if (os != s) {
 			debug("Status reg = %x\n", s); /* */
 			os = s;
-			}
+		}
 #endif
 		if (!(s & EXCEP))	/* check if exception have occured */
 			break;
 		if (!(s & READY))	/* check if controller is ready */
 			break;
 		s = splbio();
-		DELAY((ticks/HZ)*1000000); /* */
+		DELAY((ticks/hz)*1000000); /* */
 		splx(s);
 	}
 #ifdef DEBUG
 	debug("Status reg = %x on return\n", s); /* */
 #endif
-	return((s & EXCEP)?SUCCESS:ERROR);  /* return exception if it occured */
+	return((s & EXCEP) ? SUCCESS : ERROR);  /* return exception if it occured */
 }
 
 pollrdy()
 {
-	int	 sps;
+	int s;
+
 #ifdef DEBUG
 	debug("Pollrdy\n");
 #endif
-	sps = splbio();
+	s = splbio();
 	while (wtio) {
 		int error;
 
 		if (error = tsleep((caddr_t)&wci, WTPRI | PCATCH,
 			"wtpoll", 0)) {
-			splx(sps);
+			splx(s);
 			return(error);
 		}
 	}
-	splx(sps);
+	splx(s);
 #ifdef DEBUG
 	debug("Finish poll, wci %d exflag %d\n", wci, exflag);
 #endif
@@ -839,15 +828,15 @@ pollrdy()
 wtdma()		/* start up i/o operation, called from dma() in wtlib1.s */
 {
 	wtio = 1;
-	if (!wtimeron)
-	{
+	if (!wtimeron) {
 		wtimeron = 1;
-		timeout(wtimer, (caddr_t) 0, HZ/2);
+		timeout(wtimer, (caddr_t) 0, hz/2);
 	}
 }
 
 wtwake()	/* end i/o operation, called from isr() in wtlib1.s */
 {
+
 	wtio = 0;
 	wakeup(&wci);
 }
@@ -863,27 +852,24 @@ pageset()
 #endif
 }
 
-
-
-#define near
-
-static near
+static
 sendcmd()
 {
-	/* desired command in global mbits */
 
+	/* desired command in global mbits */
 	outb(CTLPORT, mbits | REQUEST);		/* set request */
 	while (inb(STATPORT) & READY);		/* wait for ready */
 	outb(CTLPORT, mbits & ~REQUEST);	/* reset request */
 	while ((inb(STATPORT) & READY) == 0);	/* wait for not ready */
 }
 
-static near		/* execute command */
+static		/* execute command */
 cmds(cmd)
 {
 	register s;
 
-	do s = inb(STATPORT);
+	do
+		s = inb(STATPORT);
 	while ((s & STAT) == STAT);	/* wait for ready */
 
 	if ((s & EXCEP) == 0)		/* if exception */
@@ -904,16 +890,19 @@ qicmd(cmd)
 
 rstart()
 {
+
 	return cmds(RDDATA);
 }
 
 rmark()
 {
+
 	return cmds(READFM);
 }
 
 wstart()
 {
+
 	return cmds(WRTDATA);
 }
 
@@ -922,7 +911,8 @@ ioend()
 	register s;
 	register rval = SUCCESS;
 
-	do s = inb(STATPORT);
+	do
+		s = inb(STATPORT);
 	while ((s & STAT) == STAT);	/* wait for ready */
 
 	if ((s & EXCEP) == 0)		/* if exception */
@@ -943,7 +933,8 @@ wmark()
 	if (cmds(WRITEFM) == ERROR)
 		return ERROR;
 
-	do s = inb(STATPORT);
+	do
+		s = inb(STATPORT);
 	while ((s & STAT) == STAT);	/* wait for ready */
 
 	if ((s & EXCEP) == 0)		/* if exception */
@@ -958,7 +949,8 @@ rwind()
 
 	mbits = CMDOFF;
 
-	do s = inb(STATPORT);
+	do
+		s = inb(STATPORT);
 	while ((s & STAT) == STAT);	/* wait for ready */
 
 	outb(CMDPORT, REWIND);
@@ -973,18 +965,19 @@ char *stp;		/* pointer to 6 byte buffer */
 	register s;
 	int n;
 
-	do s = inb(STATPORT);
+	do
+		s = inb(STATPORT);
 	while ((s & STAT) == STAT);	/* wait for ready or exception */
 
 	outb(CMDPORT, RDSTAT);
 	sendcmd();			/* send read status command */
 
-	for (n=0; n<6; n++)
-	{
+	for (n = 0; n < 6; n++) {
 #ifdef DEBUGx
 		debug("rdstatus: waiting, byte %d\n", n);
 #endif
-		do s = inb(STATPORT);
+		do
+			s = inb(STATPORT);
 		while ((s & STAT) == STAT);	/* wait for ready */
 #ifdef DEBUGx
 		debug("rdstatus: done\n");
@@ -998,7 +991,7 @@ char *stp;		/* pointer to 6 byte buffer */
 #ifdef DEBUGx
 		debug("rdstatus: waiting after request, byte %d\n", n);
 #endif
-		while ((inb(STATPORT)&READY) == 0);	/* wait for not ready */
+		while ((inb(STATPORT) & READY) == 0);	/* wait for not ready */
 		for (s=100; s>0; s--);		/* wait an additional time */
 
 		outb(CTLPORT, mbits & ~REQUEST);/* unset request */
@@ -1011,12 +1004,12 @@ char *stp;		/* pointer to 6 byte buffer */
 
 t_reset()
 {
-	register i;
+
 	mbits |= RESET;
-	outb(CTLPORT, mbits);		/* send reset */
+	outb(CTLPORT, mbits);	/* send reset */
 	DELAY(20);
 	mbits &= ~RESET;
-	outb(CTLPORT, mbits);		/* turn off reset */
+	outb(CTLPORT, mbits);	/* turn off reset */
 	if ((inb(STATPORT) & RESETMASK) == RESETVAL)
 		return SUCCESS;
 	return ERROR;
@@ -1025,7 +1018,8 @@ t_reset()
 static
 dma()
 {
-	int x=splbio();
+	int s = splbio();
+
 	wtdma();
 	outb(CLEARFF, 0);
 	outb(MODEREG, mode);	/* set dma mode */
@@ -1036,13 +1030,13 @@ dma()
 	outb(dmareg+1, (BLKSIZE-1) >> 8);
 	outb(wtport, eqdma+ONLINE);
 	outb(MASKREG, wtchan);	/* enable command to 8237, start dma */
-	splx(x);
+	splx(s);
 }
 
-static near
+static
 wtstart(buf, cnt)
-long buf;
-int cnt;
+	long buf;
+	int cnt;
 {
 	register s;
 
@@ -1052,11 +1046,11 @@ int cnt;
 	exflag = 0;
 	bytes = 0;		/* init counter */
 
-	do s = inb(STATPORT) & STAT;
-	while (s == STAT);	/* wait for ready or error */
+	do
+		s = inb(STATPORT);
+	while ((s & STAT) == STAT);	/* wait for ready or error */
 
-	if (s & EXCEP)		/* no error */
-	{
+	if (s & EXCEP) {	/* no error */
 		dma();
 		return SUCCESS;
 	}
@@ -1064,17 +1058,19 @@ int cnt;
 }
 
 rtape(buf, cnt)
-long buf;			/* physical address */
-int cnt;			/* number of bytes */
+	long buf;		/* physical address */
+	int cnt;		/* number of bytes */
 {
+
 	mode = dma_read;
 	return wtstart(buf,cnt);
 }
 
 wtape(buf, cnt)
-long buf;			/* physical address */
-int cnt;			/* number of bytes */
+	long buf;		/* physical address */
+	int cnt;		/* number of bytes */
 {
+
 	mode = dma_write;
 	return wtstart(buf,cnt);
 }
@@ -1082,8 +1078,8 @@ int cnt;			/* number of bytes */
 isr()
 {
 	int stat = inb(wtport);
-	if (!(stat & EXCEP))	/* exception during I/O */
-	{
+
+	if (!(stat & EXCEP)) {		/* exception during I/O */
 		if (bytes + BLKSIZE >= numbytes) wci = 1;
 		exflag = 1;
 		goto isrwake;
@@ -1093,15 +1089,12 @@ isr()
 	exflag = 0;
 	outb(wtport, ONLINE);
 	bytes += BLKSIZE;
-	if (bytes >= numbytes)	/* normal completion of I/O */
-	{
+	if (bytes >= numbytes) {	/* normal completion of I/O */
 		wci = 1;
 isrwake:
 		outb(MASKREG, 4+wtchan);	/* turn off dma */
 		wtwake();			/* wake up user level */
-	}
-	else
-	{			/* continue I/O */
+	} else {				/* continue I/O */
 		bufptr += BLKSIZE;
 		dma();
 	}
@@ -1158,5 +1151,3 @@ wtprobe(dvp)
 }
 
 wtattach() { }
-
-#endif NWT
