@@ -3,7 +3,7 @@
    Parser for /etc/resolv.conf file. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: resolv.c,v 1.1.1.3 2000/04/22 07:11:37 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: resolv.c,v 1.1.1.3.4.1 2001/04/04 20:55:47 he Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -74,8 +74,8 @@ void read_resolv_conf (parse_time)
 	cfile -> eol_token = 1;
 
 	do {
-		token = next_token (&val, cfile);
-		if (token == EOF)
+		token = next_token (&val, (unsigned *)0, cfile);
+		if (token == END_OF_FILE)
 			break;
 		else if (token == EOL)
 			continue;
@@ -106,14 +106,15 @@ void read_resolv_conf (parse_time)
 					dn = (char *)0;
 				}
 				nd -> rcdate = parse_time;
-				token = peek_token (&val, cfile);
+				token = peek_token (&val,
+						    (unsigned *)0, cfile);
 			} while (token != EOL);
 			if (token != EOL) {
 				parse_warn (cfile,
 					    "junk after domain declaration");
 				skip_to_semi (cfile);
 			}
-			token = next_token (&val, cfile);
+			token = next_token (&val, (unsigned *)0, cfile);
 		} else if (token == NAMESERVER) {
 			struct name_server *ns, **sp;
 			struct iaddr iaddr;
@@ -149,7 +150,7 @@ void read_resolv_conf (parse_time)
 		} else
 			skip_to_semi (cfile); /* Ignore what we don't grok. */
 	} while (1);
-	token = next_token (&val, cfile); /* Clear the peek buffer */
+	token = next_token (&val, (unsigned *)0, cfile);
 
 	/* Lose servers that are no longer in /etc/resolv.conf. */
 	sl = (struct name_server *)0;
