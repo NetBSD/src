@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.121 2004/07/12 21:41:43 he Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.122 2004/07/23 14:24:13 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1190,3 +1190,41 @@ gnu/dist/gettext/src/Makefile.in		1.3
 	Disable rules that try to rebuild files in the source tree
 	(only affects MKMAINTAINER=yes builds.)
 	[dbj, ticket #1722]
+
+lib/csu/powerpc/crt0.c				1.23
+lib/csu/powerpc/dot_init.h			1.2
+lib/libc/arch/powerpc/SYS.h			1.11
+lib/libc/arch/powerpc/gen/__setjmp14.S		1.2
+lib/libc/arch/powerpc/gen/__sigsetjmp14.S	1.2
+lib/libc/arch/powerpc/gen/_setjmp.S		1.2
+lib/libc/arch/powerpc/gen/setjmp.S		1.4
+lib/libc/arch/powerpc/gen/sigsetjmp.S		1.5
+lib/libc/arch/powerpc/string/bzero.S		1.5
+lib/libc/arch/powerpc/string/ffs.S		1.2
+lib/libc/arch/powerpc/string/strlen.S		1.2
+lib/libc/arch/powerpc/sys/Ovfork.S		1.4
+lib/libc/arch/powerpc/sys/__clone.S		1.2
+lib/libc/arch/powerpc/sys/__vfork14.S		1.3
+lib/libc/arch/powerpc/sys/brk.S			1.10
+lib/libc/arch/powerpc/sys/cerror.S		1.6
+lib/libc/arch/powerpc/sys/fork.S		1.4
+lib/libc/arch/powerpc/sys/pipe.S		1.7
+lib/libc/arch/powerpc/sys/ptrace.S		1.4
+lib/libc/arch/powerpc/sys/sbrk.S		1.9
+lib/libc/arch/powerpc/sys/setlogin.S		1.4
+lib/libc/arch/powerpc/sys/sigpending.S		1.8
+lib/libc/arch/powerpc/sys/sigprocmask.S		1.8
+lib/libc/arch/powerpc/sys/sigsuspend.S		1.8
+sys/arch/powerpc/include/asm.h			1.10
+
+	Fix build problems of ppc platforms caused by ticket #1708.
+	This closes PR port-powerpc/25941.
+	[skrll, ticket #1725]
+
+libexec/ld.elf_so/reloc.c			1.84
+
+	Don't print relocated content (in DEBUG mode) as it can cause
+	misaligned access. It needs to be done differently if needed at all.
+	Fix PR port-sparc64/20907.
+	[skrll, ticket #1726]
+
