@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2002/07/20 08:36:24 grant Exp $  */
+/*	$NetBSD: md.c,v 1.14 2002/11/22 12:40:20 simonb Exp $  */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ put_disp(addr, val, n)
 		*addr++ = val;
 		break;
 	case 4:
-#if 1
+#if 0
 		if (val < -0x1f000000 || val >= 0x20000000)
 #else
 		if (val < -0x20000000 || val >= 0x20000000)
