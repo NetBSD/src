@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.8 2000/07/06 22:30:18 mjl Exp $	*/
+/*	$NetBSD: put.c,v 1.9 2002/06/23 12:20:10 itojun Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -2121,6 +2121,7 @@ int etob(char *out, const char *e)
   int i, p, v, l, low, high;
   char b[9];
   char input[36];
+  char *last;
 
   if (e == NULL)
     return -1;
@@ -2130,7 +2131,7 @@ int etob(char *out, const char *e)
   memset (out, 0, 8);
   for (i = 0, p = 0; i < 6; i++, p += 11)
   {
-    if ((word = strtok (i == 0 ? input : NULL, " ")) == NULL)
+    if ((word = strtok_r(i == 0 ? input : NULL, " ", &last)) == NULL)
       return -1;
 
     l = strlen (word);
