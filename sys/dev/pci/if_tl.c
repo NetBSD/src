@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.21 1998/10/30 23:30:16 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.22 1999/01/11 22:45:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -200,21 +200,21 @@ struct cfattach tl_ca = {
 
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
-	  0, "Compaq Netelligent 10/100 TX" },
+	  "Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
-	  0, "Compaq Netelligent 10 T" },
+	  "Compaq Netelligent 10 T" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
-	  0, "Compaq Integrated NetFlex 3/P" },
+	  "Compaq Integrated NetFlex 3/P" },
 	{ PCI_PRODUCT_COMPAQ_IntPL100TX, TLPHY_MEDIA_10_2|TLPHY_MEDIA_NO_10_T,
-	  0, "Compaq ProLiant Integrated Netelligent 10/100 TX" },
+	  "Compaq ProLiant Integrated Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_DPNet100TX, TLPHY_MEDIA_10_5|TLPHY_MEDIA_NO_10_T,
-	  0, "Compaq Dual Port Netelligent 10/100 TX" },
+	  "Compaq Dual Port Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_DP4000, TLPHY_MEDIA_10_5,
-	  0, "Compaq Deskpro 4000 5233MMX" },
+	  "Compaq Deskpro 4000 5233MMX" },
 	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, TLPHY_MEDIA_10_2,
-	  0, "Compaq NetFlex 3/P w/ BNC" },
+	  "Compaq NetFlex 3/P w/ BNC" },
 	{ PCI_PRODUCT_COMPAQ_NF3P, TLPHY_MEDIA_10_5,
-	  0, "Compaq NetFlex 3/P" },
+	  "Compaq NetFlex 3/P" },
 	{ 0, 0, NULL },
 };
 
@@ -222,10 +222,9 @@ const struct tl_product_desc tl_ti_products[] = {
 	/*
 	 * Built-in Ethernet on the TI TravelMate 5000
 	 * docking station; better product description?
-	 * XXX Seems to have broken memory-mapped access.
 	 */
 	{ PCI_PRODUCT_TI_TLAN, 0,
-	  TPF_BROKEN_MEM, "Texas Instruments ThunderLAN" },
+	  "Texas Instruments ThunderLAN" },
 	{ 0, 0, NULL },
 };
 
@@ -313,12 +312,12 @@ tl_pci_attach(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    0, &memt, &memh, NULL, NULL) == 0);
 
-	if (memh_valid && (tp->tp_flags & TPF_BROKEN_MEM) == 0) {
-		sc->tl_bustag = memt;
-		sc->tl_bushandle = memh;
-	} else if (ioh_valid) {
+	if (ioh_valid) {
 		sc->tl_bustag = iot;
 		sc->tl_bushandle = ioh;
+	} else if (memh_valid) {
+		sc->tl_bustag = memt;
+		sc->tl_bushandle = memh;
 	} else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
