@@ -1,4 +1,4 @@
-/*	$NetBSD: lseek.c,v 1.3 1995/02/27 11:23:04 cgd Exp $	*/
+/*	$NetBSD: lseek.c,v 1.4 1996/12/20 20:17:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)lseek.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: lseek.c,v 1.3 1995/02/27 11:23:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: lseek.c,v 1.4 1996/12/20 20:17:24 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 /*
  * This function provides 64-bit offset padding that
@@ -54,7 +55,6 @@ lseek(fd, offset, whence)
 	off_t	offset;
 	int	whence;
 {
-	extern off_t __syscall();
 
 	return(__syscall((quad_t)SYS_lseek, fd, 0, offset, whence));
 }
