@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/08/27 06:23:33 eeh Exp $
+#	$NetBSD: Makefile,v 1.6 1998/11/22 17:22:50 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -6,23 +6,17 @@ S=	${CURDIR}/../../../..
 #
 # Override normal settings
 #
-#MACHINE=sparc64
-#MACHINE_ARCH=sparc64
-LD?=	/usr/ccs/bin/ld	
-LORDER=lorder 
-TSORT=tsort 
-NM=nm
 
 PROG=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c #net.c netif_of.c 
 .PATH:		${S}/arch/sparc64/sparc64
-#SRCS+=		ofwmagic.S
 
 .if CROSS
-CFLAGS+=	-DNETIF_DEBUG -D__ELF__ -nostdinc
+CEXTRAFLAG=	-nostdinc
 .else
-CFLAGS+=	-DNETIF_DEBUG -D__ELF__ -D_LP64 -dp # -Wa,-Av9a #-nostdinc
+CEXTRAFLAG=	-D_LP64
 .endif
+CFLAGS+=	${COPTS} -DNETIF_DEBUG -D__ELF__ -D_STANDALONE
 
 NOMAN=
 STRIPFLAG=
@@ -31,12 +25,10 @@ OBJCOPY?=	objcopy
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 
-# For now...
-.if CROSS
-RELOC=		20000
-.else
+#
+# Elf64 defaults to 1MB
+#
 RELOC=		100000
-.endif
 
 ENTRY=		_start
 
@@ -69,27 +61,21 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if CROSS
-${OBJS}:: machine
+${OBJS}: machine
 	ln -s ../../include machine
 
+.if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
 	    ${OBJS} vers.o -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
-	mv ${PROG} ${PROG}.elf
-#	${OBJCOPY} --input-target=elf32-sparc \
-#	    --output-target=a.out-sunos-big ${PROG}.elf ${PROG}.aout
 .else
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 	${LD} -X -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
-	mv ${PROG} ${PROG}.elf
-#	${OBJCOPY} --input-target=elf32-sparc \
-#	    --output-target=a.out-sunos-big ${PROG}.elf ${PROG}.aout
 .endif
 
 .include <bsd.prog.mk>
