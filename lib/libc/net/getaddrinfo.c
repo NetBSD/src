@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.25 2000/01/27 08:25:51 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.26 2000/01/28 08:09:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -235,14 +235,13 @@ freeaddrinfo(ai)
 {
 	struct addrinfo *next;
 
-	while (ai) {
+	do {
 		next = ai->ai_next;
 		if (ai->ai_canonname)
 			free(ai->ai_canonname);
 		/* no need to free(ai->ai_addr) */
 		free(ai);
-		ai = next;
-	}
+	} while ((ai = next) != NULL);
 }
 
 static int
