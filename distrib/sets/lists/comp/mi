@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.721 2004/08/12 16:07:07 lukem Exp $
+#	$NetBSD: mi,v 1.722 2004/08/19 09:54:06 drochner Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1286,6 +1286,7 @@
 ./usr/include/sys/dkstat.h			comp-c-include
 ./usr/include/sys/dmap.h			comp-obsolete		obsolete
 ./usr/include/sys/domain.h			comp-c-include
+./usr/include/sys/drvctlio.h			comp-c-include
 ./usr/include/sys/dvdio.h			comp-c-include
 ./usr/include/sys/endian.h			comp-c-include
 ./usr/include/sys/envsys.h			comp-c-include
