@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2003/08/07 11:15:49 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2003/10/16 12:11:12 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2003/08/07 11:15:49 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2003/10/16 12:11:12 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ main(int argc, char *argv[])
 {
 	int c, fflag;
 
+	setprogname(*argv);
 	fflag = 0;
 	while ((c = getopt(argc, argv, "ae:f:nE")) != -1)
 		switch (c) {
@@ -167,8 +168,8 @@ main(int argc, char *argv[])
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\t%s script [-anE] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n",
-			    getprogname());
+"usage:\t%s script [-anE] [file ...]\n\t%s [-an] [-e script] ... [-f script_file] ... [file ...]\n",
+			    getprogname(), getprogname());
 			exit(1);
 		}
 	argc -= optind;
