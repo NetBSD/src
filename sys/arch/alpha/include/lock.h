@@ -1,7 +1,7 @@
-/* $NetBSD: lock.h,v 1.8 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.9 2000/08/14 17:18:50 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -124,8 +124,9 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 
 	__asm __volatile(
 		"# BEGIN __cpu_simple_unlock\n"
-		"	stl	$31, %0		\n"
 		"	mb			\n"
+		"	stl	$31, %0		\n"
+		"	mb	# XXX unnecessary?\n"
 		"	# END __cpu_simple_unlock"
 		: "=m" (*alp));
 }
