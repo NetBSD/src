@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.6 2003/03/10 00:57:38 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.7 2003/06/19 16:19:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,6 +46,10 @@
 
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
+
+#if !defined(__attribute__) && (defined(__cplusplus) || !defined(__GNUC__)  || __GNUC__ == 2 && __GNUC_MINOR__ < 8)
+# define __attribute__(A)
 #endif
 
 #ifndef public
