@@ -542,6 +542,13 @@ syscall(code, frame)
 
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
+#if 0
+{
+int arg;
+extern char *syscallnames[];
+printf("{%d %s} ", p->p_pid, syscallnames[code]);
+}
+#endif
 	error = (*callp->sy_call)(p, &args, rval);
 #if 0
 {

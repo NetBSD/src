@@ -59,10 +59,10 @@ int itecnprobe(), itecninit(), itecngetc(), itecnputc();
 
 
 struct	consdev constab[] = {
-	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
 #if NITE > 0
 	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
 #endif
+	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
 	{ 0 },
 };
 /* end XXX */
@@ -74,7 +74,6 @@ struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
 cninit()
 {
 	register struct consdev *cp;
-
 	/*
 	 * Collect information about all possible consoles
 	 * and find the one with highest priority

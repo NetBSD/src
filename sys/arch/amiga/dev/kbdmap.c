@@ -13,7 +13,8 @@
 #define C KBD_MODE_CAPS
 #define K KBD_MODE_KPAD
 
-struct kbdmap kbdmap = {
+struct kbdmap kbdmap;
+struct kbdmap ascii_kbdmap = {
 	/* normal map */
 	{
 	   0, '`',	/* 0x00 */
@@ -182,8 +183,8 @@ struct kbdmap kbdmap = {
 	   0, ' ',	/* 0x40 */
 	   0, DEL,	/* really BS, DEL & BS swapped */
 	   S, 0x99,	/* shift TAB */
-	   K, '\n',	/* enter */
-	   0, '\n',	/* return */
+	   K, '\r',	/* enter */
+	   0, '\r',	/* return */
 	   0, ESC,
 	   0, '\b',	/* really DEL, BS & DEL swapped */
 	   0, 0,
@@ -282,8 +283,8 @@ struct kbdmap kbdmap = {
 	   0, ' ',	/* 0x40 */
 	   0, DEL,	/* really BS, DEL & BS swapped */
 	   0, '\t',
-	   K, '\n',	/* enter */
-	   0, '\n',	/* return */
+	   K, '\r',	/* enter */
+	   0, '\r',	/* return */
 	   S, 0x9d,	/* CSI */
 	   0, '\b',	/* really DEL, BS & DEL swapped */
 	   0, 0,
@@ -381,8 +382,8 @@ struct kbdmap kbdmap = {
 	   0, ' ',	/* 0x40 */
 	   0, DEL,	/* really BS, DEL & BS swapped */
 	   0, '\t',
-	   K, '\n',	/* enter */
-	   0, '\n',	/* return */
+	   K, '\r',	/* enter */
+	   0, '\r',	/* return */
 	   S, 0x9d,	/* CSI */
 	   0, '\b',	/* really DEL, BS & DEL swapped */
 	   0, 0,
@@ -450,7 +451,7 @@ struct kbdmap kbdmap = {
 	  5, ESC, '[', '1', '8', '~',	/* 0x8D: shift F9 */
 	  5, ESC, '[', '1', '9', '~',	/* 0x93: shift F10 */
 	  3, ESC, '[', 'Z',		/* 0x99: shift TAB */
-	  2, ESC, '[',			/* 0x9D: alt ESC == CSI */
+	  2, ESC, '[',			/* 0x9d: alt ESC == CSI */
 	},
 };
 

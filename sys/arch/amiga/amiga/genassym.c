@@ -98,7 +98,7 @@ main()
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
-	printf("#define\TUSRTEXT %d\n", USRTEXT);
+	printf("#define\tUSRTEXT %d\n", USRTEXT);
 	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);
