@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.4 2004/07/03 12:49:21 uch Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.5 2004/07/04 23:19:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.4 2004/07/03 12:49:21 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.5 2004/07/04 23:19:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,7 +124,7 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 	callout_reset(&sc->sc_poll_ch, 5 * hz,
 		      j6x0pwr_poll_callout, sc);
 
-	*(volatile u_int8_t *)0xa4000132 = 0;	/* Green LED on */
+	_reg_write_1(SH7709_PKDR, 0);	/* Green LED on */
 	printf("\n");
 }
 
@@ -201,9 +201,9 @@ j6x0pwr_sleep(void *self)
 	do {
 		/* Disable interrupt except for power button. */
 		s = _cpu_intr_resume(IPL_CLOCK << 4);
-		*(volatile u_int8_t *)0xa4000132 = 255;	/* Green LED off */
+		_reg_write_1(SH7709_PKDR, 0xff);	/* Green LED off */
 		__asm__ __volatile__("sleep");
-		*(volatile u_int8_t *)0xa4000132 = 0;	/* Green LED on */
+		_reg_write_1(SH7709_PKDR, 0);		/* Green LED on */
 		_cpu_intr_resume(s);
 	} while (sc->sc_poweroff);
 
