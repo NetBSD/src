@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.7 1999/05/30 15:41:44 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.8 1999/06/02 05:02:13 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1216,6 +1216,12 @@ uvn_findpage(uobj, offset, pps, flags)
 			continue;
 		}
 			
+		/* skip PG_RDONLY pages if requested */
+		if ((flags & UFP_NORDONLY) && (ptmp->flags & PG_RDONLY)) {
+			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
+			return 0;
+		}
+
 		/* BUSY the page and we're done. */
 		ptmp->flags |= PG_BUSY;
 		UVM_PAGE_OWN(ptmp, "uvn_findpage");
