@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2002/04/12 21:52:47 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2002/04/24 17:35:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2002/04/12 21:52:47 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2002/04/24 17:35:10 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1741,14 +1741,11 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 				break;
 			}
 #if 0
-			/* This doesn't work, because pmap_protect
-			   doesn't flush changes on pages that it
-			   has write-protected.  */
-
-			/* If the page is not writable and this
-			   is the source, then there is no need
-			   to flush it from the cache.  */
-			else if (is_src && ! (npv->pv_flags & PVF_WRITE))
+			/*
+			 * XXX Can't do this because pmap_protect doesn't
+			 * XXX clean the page when it does a write-protect.
+			 */
+			else if (is_src && (npv->pv_flags & PVF_WRITE) == 0)
 				continue;
 #endif
 			if (cache_needs_cleaning){
@@ -2549,6 +2546,14 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	PMAP_MAP_TO_HEAD_LOCK();
 	
 	ptes = pmap_map_ptes(pmap);
+
+	/*
+	 * OK, at this point, we know we're doing write-protect operation.
+	 * If the pmap is active, write-back the range.
+	 */
+	if (pmap_is_curpmap(pmap))
+		cpu_dcache_wb_range(sva, eva - sva);
+
 	/*
 	 * We need to acquire a pointer to a page table page before entering
 	 * the following loop.
@@ -3800,18 +3805,15 @@ pmap_pte_init_arm9(void)
 void
 pmap_pte_init_xscale(void)
 {
+	uint32_t auxctl;
 
-	/*
-	 * Use write-back caching with read/write-allocate.
-	 */
-
-	pte_l1_s_cache_mode = L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X);
+	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_xscale;
 
-	pte_l2_l_cache_mode = L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X);
+	pte_l2_l_cache_mode = L2_B|L2_C;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_xscale;
 
-	pte_l2_s_cache_mode = L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X);
+	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
 
 #ifdef XSCALE_CACHE_WRITE_THROUGH
@@ -3841,6 +3843,16 @@ pmap_pte_init_xscale(void)
 
 	pmap_copy_page_func = pmap_copy_page_xscale;
 	pmap_zero_page_func = pmap_zero_page_xscale;
+
+	/*
+	 * Disable ECC protection of page table access, for now.
+	 */
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+		: "=r" (auxctl));
+	auxctl &= ~XSCALE_AUXCTL_P;
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+		:
+		: "r" (auxctl));
 }
 
 /*
@@ -3858,6 +3870,7 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	pt_entry_t *pte;
 	vsize_t size;
+	uint32_t auxctl;
 
 	xscale_minidata_clean_addr = va;
 
@@ -3875,5 +3888,30 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
 		    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);
 	}
+
+	/*
+	 * Configure the mini-data cache for write-back with
+	 * read/write-allocate.
+	 *
+	 * NOTE: In order to reconfigure the mini-data cache, we must
+	 * make sure it contains no valid data!  In order to do that,
+	 * we must issue a global data cache invalidate command!
+	 *
+	 * WE ASSUME WE ARE RUNNING UN-CACHED WHEN THIS ROUTINE IS CALLED!
+	 * THIS IS VERY IMPORTANT!
+	 */
+	
+	/* Invalidate data and mini-data. */
+	__asm __volatile("mcr p15, 0, %0, c7, c6, 0"
+		:
+		: "r" (auxctl));
+
+
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+		: "=r" (auxctl));
+	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+		:
+		: "r" (auxctl));
 }
 #endif /* ARM_MMU_XSCALE == 1 */
