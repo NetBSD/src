@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.2.2 2004/12/17 11:24:51 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.2.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.2.2 2004/12/17 11:24:51 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -235,8 +235,8 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-struct bi_devmatch *i386_alldisks = NULL;
-int i386_ndisks = 0;
+extern struct bi_devmatch *x86_alldisks;
+extern int x86_ndisks;
 
 #ifdef CPURESET_DELAY
 int	cpureset_delay = CPURESET_DELAY;
@@ -546,9 +546,9 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = i386_alldisks;
+	node.sysctl_data = x86_alldisks;
 	node.sysctl_size = sizeof(struct disklist) +
-	    (i386_ndisks - 1) * sizeof(struct nativedisk_info);
+	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
         return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -958,7 +958,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->pdppaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
@@ -1477,7 +1477,7 @@ init386(paddr_t first_avail)
 
 	XENPRINTK(("proc0paddr %p pcb %p first_avail %p\n",
 	    proc0paddr, cpu_info_primary.ci_curpcb, (void *)first_avail));
-	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PTDpaddr,
+	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 		      (void *)atdevbase));
 
 	x86_bus_space_init();
