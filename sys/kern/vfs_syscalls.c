@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.107 1997/12/21 17:49:18 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.108 1997/12/21 18:50:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1665,7 +1665,7 @@ change_owner(vp, uid, gid, p)
 	 * Unless the caller is the superuser, clear the (S_ISUID | S_ISGID)
 	 * bits, but alter va_mode only if those are actually set on the vnode.
 	 */
-	if ((suser(p->p_ucred, &p->p_acflag) != 0) &&
+	if ((suser(p->p_ucred, NULL) != 0) &&
 	    (vattr.va_mode & (S_ISUID | S_ISGID)))
 		newmode = vattr.va_mode & ~(S_ISUID | S_ISGID);
 
