@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.6 2001/02/20 23:53:27 cgd Exp $	*/
+/*	$NetBSD: main1.c,v 1.7 2001/02/24 00:43:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: main1.c,v 1.7 2001/02/24 00:43:51 cgd Exp $");
 #endif
 
 #define FD_SETSIZE 512	/* more than the total number of error messages */

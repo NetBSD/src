@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.12 2000/07/06 01:09:20 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.13 2001/02/24 00:43:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: err.c,v 1.13 2001/02/24 00:43:51 cgd Exp $");
 #endif
 
 #define FD_SETSIZE 512

@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.3 1998/02/22 15:40:39 christos Exp $	*/
+/*	$NetBSD: emit.c,v 1.4 2001/02/24 00:43:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: emit.c,v 1.4 2001/02/24 00:43:51 cgd Exp $");
 #endif
 
 #include <stdio.h>
