@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.148 2003/01/03 09:22:11 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.149 2003/01/03 15:49:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -647,7 +647,7 @@ void
 xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	int	(*func)(int, int, int, int);
 	int	arg0, arg1, arg2, arg3;
-	int	cpuset;	/* XXX unused; cpus to send to: we do all */
+	u_int	cpuset;
 {
 	int s, n, i, done;
 	volatile struct xpmsg_func *p;
@@ -659,7 +659,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 */
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
-		if (func)
+		if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
 			p->retval = (*func)(arg0, arg1, arg2, arg3); 
 		return;
 	}
@@ -676,7 +676,9 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 		if (CPU_NOTREADY(cpi))
 			continue;
-		
+
+		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+			continue;
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_FUNC;
 		cpi->flags &= ~CPUFLG_GOTMSG;
@@ -693,7 +695,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * Second, call ourselves.
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
-	if (func)
+	if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
 		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
@@ -716,6 +718,8 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 			if (CPU_NOTREADY(cpi))
 				continue;
+			if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+				continue;
 
 			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
 				done = 0;
@@ -727,6 +731,8 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		struct cpu_info *cpi = cpus[n];
 
 		if (CPU_NOTREADY(cpi))
+			continue;
+		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 		simple_unlock(&cpi->msg.lock);
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
