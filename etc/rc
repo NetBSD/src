@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.89 1997/08/29 02:24:05 cjs Exp $
+#	$NetBSD: rc,v 1.90 1997/08/29 09:33:34 veego Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -67,10 +67,10 @@ umount -a >/dev/null 2>&1
 mount /
 rm -f /fastboot		# XXX (root now writeable)
 
-if [ -f /etc/rc.func ]; then
-	. /etc/rc.func
+if [ -f /etc/rc.subr ]; then
+	. /etc/rc.subr
 else
-	echo "Can't read /etc/rc.func; aborting."
+	echo "Can't read /etc/rc.subr; aborting."
 	exit 1;
 fi
 
@@ -199,7 +199,7 @@ fi
 mount -a
 
 # now start the rpc servers, for NFS server/client.
-echo -n 'starting nfs-rpc daemons:'
+echo -n 'starting nfs daemons:'
 
 nfs_locking=NO
 
