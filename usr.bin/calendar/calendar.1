@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)calendar.1	6.13 (Berkeley) 6/17/91
-.\"	$Id: calendar.1,v 1.5 1994/02/03 17:47:18 jtc Exp $
+.\"	$Id: calendar.1,v 1.6 1995/03/26 03:59:14 hpeyerl Exp $
 .\"
 .Dd June 17, 1991
 .Dt CALENDAR 1
@@ -43,7 +43,7 @@
 .Op Fl a
 .Sh DESCRIPTION
 .Nm Calendar
-checks the current directory for a file named named
+checks the current directory or the directory specified by the CALENDAR_DIR environment variable for a file named
 .Pa calendar
 and displays lines that begin with either today's date
 or tomorrow's.
