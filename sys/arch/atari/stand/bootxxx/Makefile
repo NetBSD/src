@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/14 19:43:44 leo Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/24 20:12:58 leo Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ SRCS=	bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
 MKMAN=	no
 
 STRIPFLAG=
-BINDIR=	/
+BINDIR=	/usr/mdec
 BINMODE=${NONBINMODE}
 
 LIBCRT0=
@@ -53,6 +53,7 @@ beforeinstall:
 	@mv -f ${PROG}X ${PROG};
 
 afterinstall:
+	cp -p ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/
 	@mv -f ${PROG}XX ${PROG}
 
 .s.o:
