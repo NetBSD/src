@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1998/11/17 12:11:27 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1999/01/03 02:23:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -375,7 +375,7 @@ cpu_startup()
 	vm_size_t bufsize;
 	int base, residual;
 
-	proc0paddr = (struct user *)kernelstack.virtual;
+	proc0paddr = (struct user *)kernelstack.pv_va;
 	proc0.p_addr = proc0paddr;
 
 	/* Set the cpu control register */
@@ -726,7 +726,7 @@ void
 zero_page_readonly()
 {
 	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.physical & PG_FRAME), AP_KR));
+	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
@@ -742,7 +742,7 @@ void
 zero_page_readwrite()
 {
 	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.physical & PG_FRAME), AP_KRW));
+	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 

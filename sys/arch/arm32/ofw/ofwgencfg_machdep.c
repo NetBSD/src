@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.9 1998/08/29 03:55:57 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.10 1999/01/03 02:23:28 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -180,8 +180,8 @@ initarm(ofw_handle)
 	 * this routine. All we need to do is prepare for abort-handling 
 	 * and undefined exceptions.
 	 */
-	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
+	set_stackptr(PSR_UND32_MODE, undstack.pv_va + NBPG);
+	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + NBPG);
 
 	/* Set-up exception handlers.
 	 * Take control of selected vectors from OFW.
@@ -238,7 +238,7 @@ initarm(ofw_handle)
 #endif
 
 	/* Return the new stackbase. */
-	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
+	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
 

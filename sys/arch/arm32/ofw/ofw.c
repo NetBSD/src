@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.17 1998/08/29 04:58:16 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.18 1999/01/03 02:23:28 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -778,7 +778,7 @@ ofw_configmem(void)
 	OF_set_callback((void(*)())ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
-	setttb(proc0_ttbbase.physical);
+	setttb(proc0_ttbbase.pv_pa);
 
 	/* Aaaaaaaah, running in the proc0 address space! */
 	/* I feel good... */
@@ -870,7 +870,7 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
-	pmap_bootstrap(proc0_ttbbase.virtual, proc0_ptpt);
+	pmap_bootstrap(proc0_ttbbase.pv_va, proc0_ptpt);
 }
 
 
@@ -1216,27 +1216,27 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	struct mem_translation *tp;
 
 	/* Set-up the system page. */
-	systempage.virtual = ofw_claimvirt(0, NBPG, 0);
-	if (systempage.virtual == -1) {
+	systempage.pv_va = ofw_claimvirt(0, NBPG, 0);
+	if (systempage.pv_va == -1) {
 		/* Something was already mapped to VA 0. */
-		systempage.virtual = 0;
-		systempage.physical = ofw_gettranslation(0);
-		if (systempage.physical == -1)
+		systempage.pv_va = 0;
+		systempage.pv_pa = ofw_gettranslation(0);
+		if (systempage.pv_pa == -1)
 			panic("bogus result from gettranslation(0)");
 	} else {
 		/* We were just allocated the page-length range at VA 0. */
-		if (systempage.virtual != 0)
+		if (systempage.pv_va != 0)
 			panic("bogus result from claimvirt(0, NBPG, 0)");
 
 		/* Now allocate a physical page, and establish the mapping. */
-		systempage.physical = ofw_claimphys(0, NBPG, NBPG);
-		if (systempage.physical == -1)
+		systempage.pv_pa = ofw_claimphys(0, NBPG, NBPG);
+		if (systempage.pv_pa == -1)
 			panic("bogus result from claimphys(0, NBPG, NBPG)");
-		ofw_settranslation(systempage.virtual, systempage.physical,
+		ofw_settranslation(systempage.pv_va, systempage.pv_pa,
 		    NBPG, -1);	/* XXX - mode? -JJK */
 
 		/* Zero the memory. */
-		bzero((char *)systempage.virtual, NBPG);
+		bzero((char *)systempage.pv_va, NBPG);
 	}
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
@@ -1262,7 +1262,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Allocate/initialize space for msgbuf area. */
 	ofw_claimpages(&virt_freeptr, &msgbuf, MSGBUFSIZE);
-	msgbufphys = msgbuf.physical;
+	msgbufphys = msgbuf.pv_pa;
 
 	/*
 	 * OK, we're done allocating.
@@ -1295,12 +1295,12 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			switch (va >> (PDSHIFT + 2)) {
 			case 0:
 				/* page0 */
-				L2pagetable = proc0_pt_sys.virtual;
+				L2pagetable = proc0_pt_sys.pv_va;
 				break;
 
 			case (KERNEL_BASE >> (PDSHIFT +	2)):
 				/* kernel static area */
-				L2pagetable = proc0_pt_kernel.virtual;
+				L2pagetable = proc0_pt_kernel.pv_va;
 				break;
 
 			case ( OFW_VIRT_BASE               >> (PDSHIFT + 2)):
@@ -1309,7 +1309,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			case ((OFW_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
 				/* ofw area */
 				L2pagetable = proc0_pt_ofw[(va >> (PDSHIFT + 2))
-				    & 0x3].virtual;
+				    & 0x3].pv_va;
 				break;
 
 			case ( IO_VIRT_BASE               >> (PDSHIFT + 2)):
@@ -1318,7 +1318,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			case ((IO_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
 				/* io area */
 				L2pagetable = proc0_pt_io[(va >> (PDSHIFT + 2))
-				    & 0x3].virtual;
+				    & 0x3].pv_va;
 				break;
 
 			default:
@@ -1350,21 +1350,21 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * we don't want aliases to physical addresses that the kernel
 	 * has-mapped/will-map elsewhere.
 	 */
-	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    proc0_pt_sys.virtual, PT_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    proc0_pt_kernel.virtual, PT_SIZE);
+	ofw_discardmappings(proc0_pt_kernel.pv_va,
+	    proc0_pt_sys.pv_va, PT_SIZE);
+	ofw_discardmappings(proc0_pt_kernel.pv_va,
+	    proc0_pt_kernel.pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.virtual,
-		    proc0_pt_vmdata[i].virtual, PT_SIZE);
+		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		    proc0_pt_vmdata[i].pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.virtual,
-		    proc0_pt_ofw[i].virtual, PT_SIZE);
+		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		    proc0_pt_ofw[i].pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.virtual,
-		    proc0_pt_io[i].virtual, PT_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.virtual,
-	    msgbuf.virtual, MSGBUFSIZE);
+		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		    proc0_pt_io[i].pv_va, PT_SIZE);
+	ofw_discardmappings(proc0_pt_kernel.pv_va,
+	    msgbuf.pv_va, MSGBUFSIZE);
 
 	/*
 	 * We did not throw away the proc0_pt_pte and proc0_pagedir
@@ -1372,51 +1372,51 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * cached ...
 	 * Really these should be uncached when allocated.
 	 */
-	map_entry_nc(proc0_pt_kernel.virtual, proc0_pt_pte.virtual,
-	    proc0_pt_pte.physical);
+	map_entry_nc(proc0_pt_kernel.pv_va, proc0_pt_pte.pv_va,
+	    proc0_pt_pte.pv_pa);
 	for (i = 0; i < (PD_SIZE / NBPG); ++i)
-		map_entry_nc(proc0_pt_kernel.virtual,
-		    proc0_pagedir.virtual + NBPG * i,
-		    proc0_pagedir.physical + NBPG * i);
+		map_entry_nc(proc0_pt_kernel.pv_va,
+		    proc0_pagedir.pv_va + NBPG * i,
+		    proc0_pagedir.pv_pa + NBPG * i);
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
 	 */
 
 	/* Map entries in the L2pagetable used to map L2PTs. */
-	L2pagetable = proc0_pt_pte.virtual;
+	L2pagetable = proc0_pt_pte.pv_va;
 	map_entry_nc(L2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    proc0_pt_sys.physical);
+	    proc0_pt_sys.pv_pa);
 	map_entry_nc(L2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    proc0_pt_kernel.physical);
+	    proc0_pt_kernel.pv_pa);
 	map_entry_nc(L2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    proc0_pt_pte.physical);
+	    proc0_pt_pte.pv_pa);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		map_entry_nc(L2pagetable, ((KERNEL_VM_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].physical);
+		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		map_entry_nc(L2pagetable, ((OFW_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_ofw[i].physical);
+		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		map_entry_nc(L2pagetable, ((IO_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_io[i].physical);
+		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa);
 
 	/* Construct the proc0 L1 pagetable. */
-	L1pagetable = proc0_pagedir.virtual;
+	L1pagetable = proc0_pagedir.pv_va;
 
-	map_pagetable(L1pagetable, 0x0, proc0_pt_sys.physical);
-	map_pagetable(L1pagetable, KERNEL_BASE, proc0_pt_kernel.physical);
+	map_pagetable(L1pagetable, 0x0, proc0_pt_sys.pv_pa);
+	map_pagetable(L1pagetable, KERNEL_BASE, proc0_pt_kernel.pv_pa);
 	map_pagetable(L1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    proc0_pt_pte.physical);
+	    proc0_pt_pte.pv_pa);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		map_pagetable(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
-		    proc0_pt_vmdata[i].physical);
+		    proc0_pt_vmdata[i].pv_pa);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		map_pagetable(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
-		    proc0_pt_ofw[i].physical);
+		    proc0_pt_ofw[i].pv_pa);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		map_pagetable(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
-		    proc0_pt_io[i].physical);
+		    proc0_pt_io[i].pv_pa);
 
 	/* 
          * gross hack for the sake of not thrashing the TLB and making
@@ -1832,7 +1832,7 @@ ofw_malloc(size)
 
 	if (*ppLeftover) { /* have a leftover of the right size */
 		/* remember the leftover */
-		new.virtual = (vm_offset_t)*ppLeftover;
+		new.pv_va = (vm_offset_t)*ppLeftover;
 		if ((*ppLeftover)->size < (size + sizeof(LEFTOVER))) {
 			/* splice out of chain */
 			*ppLeftover = (*ppLeftover)->pNext;
@@ -1850,14 +1850,14 @@ ofw_malloc(size)
 		claim_size = (size + NBPG - 1) & ~(NBPG - 1);
 		ofw_claimpages(&virt_freeptr, &new, claim_size);
 		if ((size + sizeof(LEFTOVER)) <= claim_size) {
-			pLeft = (PLEFTOVER)(new.virtual + size);
+			pLeft = (PLEFTOVER)(new.pv_va + size);
 			pLeft->pNext = leftovers;
 			pLeft->size = claim_size - size;
 			leftovers = pLeft;
 		}
 	}
 
-	return (void *)(new.virtual);
+	return (void *)(new.pv_va);
 }
 
 /*
@@ -1926,8 +1926,8 @@ ofw_claimpages(free_pp, pv_p, size)
 
 	/* Set OUT parameters. */
 	*free_pp = va;
-	pv_p->virtual = va;
-	pv_p->physical = pa;
+	pv_p->pv_va = va;
+	pv_p->pv_pa = pa;
 }
 
 
