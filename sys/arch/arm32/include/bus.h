@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2000/01/25 22:13:19 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2000/04/17 17:39:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,9 @@ struct bus_space {
 			    bus_addr_t *, bus_space_handle_t *));
 	void		(*bs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
+
+	/* get kernel virtual address */
+	void *		(*bs_vaddr) __P((void *, bus_space_handle_t));
 
 	/* barrier */
 	void		(*bs_barrier) __P((void *, bus_space_handle_t,
@@ -247,6 +250,12 @@ struct bus_space {
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
 	(*(t)->bs_free)((t)->bs_cookie, (h), (s))
+
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define	bus_space_vaddr(t, h)						\
+	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
 
 /*
  * Bus barrier operations.
@@ -392,6 +401,9 @@ int	__bs_c(f,_bs_alloc) __P((void *t, bus_addr_t rstart,		\
 #define bs_free_proto(f)						\
 void	__bs_c(f,_bs_free) __P((void *t, bus_space_handle_t bsh,	\
 	    bus_size_t size));
+
+#define bs_vaddr_proto(f)						\
+void *	__bs_c(f,_bs_vaddr) __P((void *t, bus_space_handle_t bsh));
 
 #define bs_barrier_proto(f)						\
 void	__bs_c(f,_bs_barrier) __P((void *t, bus_space_handle_t bsh,	\
@@ -551,6 +563,7 @@ bs_unmap_proto(f);		\
 bs_subregion_proto(f);		\
 bs_alloc_proto(f);		\
 bs_free_proto(f);		\
+bs_vaddr_proto(f);		\
 bs_barrier_proto(f);		\
 bs_r_1_proto(f);		\
 bs_r_2_proto(f);		\
