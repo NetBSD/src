@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.187 2003/11/19 20:47:00 jonathan Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.188 2004/01/02 12:01:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.187 2003/11/19 20:47:00 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.188 2004/01/02 12:01:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2875,10 +2875,8 @@ syn_cache_insert(sc, tp)
 	 * the hash secrets.
 	 */
 	if (syn_cache_count == 0) {
-		struct timeval tv;
-		microtime(&tv);
-		syn_hash1 = arc4random() ^ (u_long)&sc;
-		syn_hash2 = arc4random() ^ tv.tv_usec;
+		syn_hash1 = arc4random();
+		syn_hash2 = arc4random();
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);
@@ -3444,7 +3442,7 @@ syn_cache_unreach(src, dst, th)
 	}
 
 	/*
-	 * If we've rertransmitted 3 times and this is our second error,
+	 * If we've retransmitted 3 times and this is our second error,
 	 * we remove the entry.  Otherwise, we allow it to continue on.
 	 * This prevents us from incorrectly nuking an entry during a
 	 * spurious network outage.
@@ -3663,7 +3661,7 @@ syn_cache_respond(sc, m)
 	default:
 		if (m)
 			m_freem(m);
-		return EAFNOSUPPORT;
+		return (EAFNOSUPPORT);
 	}
 
 	/* Compute the size of the TCP options. */
