@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.13 1995/06/09 04:36:14 phil Exp $  */
+/*	$NetBSD: ncr.c,v 1.14 1995/06/18 07:18:02 phil Exp $  */
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -169,6 +169,7 @@ typedef struct	req_q {
     u_char		phase;	    /* current SCSI phase		    */
     u_char		msgout;	    /* message to send when requested       */
     u_char		targ_id;    /* target for command		    */
+    u_char		targ_lun;   /* lun for command			    */
     u_char		status;	    /* returned status byte		    */
     u_char		message;    /* returned message byte		    */
 #ifdef REAL_DMA
@@ -387,14 +388,6 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	/*
-	 * LWP: No lun support yet XXX
-	 */
-	if(xs->sc_link->lun != 0) {
-		xs->error = XS_DRIVER_STUFFUP; /* XXX */
-		return(COMPLETE);
-	}
-
-	/*
 	 * We do not queue RESET commands
 	 */
 	if(flags & SCSI_RESET) {
@@ -424,9 +417,11 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->link      = NULL;
 	reqp->xs        = xs;
 	reqp->targ_id   = xs->sc_link->target;
+	reqp->targ_lun  = xs->sc_link->lun;
 	reqp->xdata_ptr = (u_char*)xs->data;
 	reqp->xdata_len = xs->datalen;
 	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
+	reqp->xcmd.bytes[0] |= xs->sc_link->lun << 5;
 
 	/*
 	 * Check if DMA can be used on this request
@@ -886,7 +881,7 @@ SC_REQ	*reqp;
 	 * phase should follow. Here we send an 'IDENTIFY' message.
 	 * Allow disconnect only when interrups are allowed.
 	 */
-	tmp[0] = MSG_IDENTIFY(0, (reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
+	tmp[0] = MSG_IDENTIFY(reqp->targ_lun, (reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
 	cnt    = 1;
 	phase  = PH_MSGOUT;
 	if(transfer_pio(&phase, tmp, &cnt) || cnt) {
@@ -1859,12 +1854,12 @@ scsi_show()
 	splx(sps);
 }
 
-#define TIMEOUT	1000000
+#define TIMEOUT	100000
 #define READY(dataout) \
 	i = TIMEOUT; \
-	while (((dmstat = SCSI_5380->scsi_dmstat) & (SC_DMA_REQ|SC_PHS_MTCH)) \
+	while ((SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH)) \
 	       != (SC_DMA_REQ|SC_PHS_MTCH)) \
-		if (   !(dmstat & SC_PHS_MTCH) \
+		if (   !(SCSI_5380->scsi_dmstat & SC_PHS_MTCH) \
 		    || !(SCSI_5380->scsi_idstat & SC_S_BSY) \
 		    || (i-- < 0) ) { \
 			if (i < 0) printf("ncr.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
@@ -1906,7 +1901,7 @@ static void
 transfer_pdma(u_char *phase, u_char *data, u_long *count)
 {
 	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int len = *count, dmstat, i, idstat;
+	register int len = *count, i, idstat;
 
 	if (len < 256) {
 		transfer_pio(phase, data, count);
@@ -1920,24 +1915,30 @@ transfer_pdma(u_char *phase, u_char *data, u_long *count)
 		SCSI_5380->scsi_ircv = 0;
 		while (len >= 64) {
 			READY(0);
+			di();
 			R4( 0); R4( 1); R4( 2); R4( 3);
 			R4( 4); R4( 5); R4( 6); R4( 7);
 			R4( 8); R4( 9); R4(10); R4(11);
 			R4(12); R4(13); R4(14); R4(15);
+			ei();
 			data += 64;
 			len  -= 64;
 		}
-		while (len) {
-			READY(0);
-			R1(0);
-			data++;
-			len--;
+		if (len) {
+			di();
+			while (len) {
+				READY(0);
+				R1(0);
+				data++;
+				len--;
+			}
+			ei();
 		}
 	} else {
 		SCSI_5380->scsi_mode = IMODE_BASE | SC_M_DMA;
 		SCSI_5380->scsi_icom = SC_ADTB;
 		SCSI_5380->scsi_dmstat = SC_S_SEND;
-		while (len >= 256) {
+		while (len >= 64) {
 			/* The second ready is to
 			 * compensate for DMA-prefetch.
 			 * Since we adjust len only at
@@ -1945,22 +1946,27 @@ transfer_pdma(u_char *phase, u_char *data, u_long *count)
 			 * is no need to correct the
 			 * residue.
 			 */
-			READY(1); W1(0); READY(1); W1(1);
+			READY(1);
+			di();
+			W1(0); READY(1); W1(1);
 			W2( 1); W4( 1); W4( 2); W4( 3);
 			W4( 4); W4( 5); W4( 6); W4( 7);
 			W4( 8); W4( 9); W4(10); W4(11);
 			W4(12); W4(13); W4(14); W4(15);
+			ei();
 			data += 64;
 			len  -= 64;
 		}
 		if (len) {
 			READY(1);
+			di();
 			while (len) {
 				W1(0);
 				READY(1);
 				data++;
 				len--;
 			}
+			ei();
 		}
 		i = TIMEOUT;
 		while (((SCSI_5380->scsi_dmstat & (SC_DMA_REQ|SC_PHS_MTCH))
