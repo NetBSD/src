@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.5 1998/05/02 16:45:31 scottr Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.6 1998/07/08 04:18:54 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -34,6 +34,8 @@
  * MACE ethernet chip). Also uses the PSC (Peripheral Subsystem
  * Controller) for DMA to and from the MACE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

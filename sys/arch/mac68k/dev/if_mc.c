@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.10 1998/07/05 06:49:05 jonathan Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.11 1998/07/08 04:18:53 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -87,14 +87,6 @@
 #include <machine/bus.h>
 #include <mac68k/dev/if_mcreg.h>
 #include <mac68k/dev/if_mcvar.h>
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
 
 hide void	mcwatchdog __P((struct ifnet *));
 hide int	mcinit __P((struct mc_softc *sc));
