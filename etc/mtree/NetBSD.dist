@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.266 2004/07/12 23:55:33 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.267 2004/09/10 15:12:51 ian Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -606,7 +606,6 @@
 ./usr/share/locale/zh_CN.eucCN
 ./usr/share/locale/zh_CN/LC_MESSAGES
 ./usr/share/locale/zh_TW
-./usr/share/locale/zh_TW.BIG5
 ./usr/share/locale/zh_TW.Big5
 ./usr/share/locale/zh_TW.eucTW
 ./usr/share/locale/zh_TW/LC_MESSAGES
