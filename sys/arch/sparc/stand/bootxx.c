@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1995/09/16 23:20:27 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.5 1995/09/18 20:24:53 chuck Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -77,10 +77,9 @@ main()
 	 */
 	if ((io.f_dev->dv_strategy)(io.f_devdata, F_READ,
 				   btodb(SBOFF), SBSIZE,
-				   (char *)LOADADDR, &n) || n != SBSIZE) {
+				   (char *)&sblock, &n) || n != SBSIZE) {
 		panic("%s: can't read superblock", progname);
 	}
-	bcopy(LOADADDR, sblock, SBSIZE);
 	fs = (struct fs *)sblock;
 
 	(void)loadboot(&io, LOADADDR);
