@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/06/08 22:23:03 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/06/21 09:29:39 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -108,25 +108,12 @@
  * You only need to increase these values if you find that the number of
  * buffers is being limited due to lack of VA space.
  */
-#if defined(FOOTBRIDGE)
+
 /*
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x07000000
-#elif defined(SHARK)
-/*
- * The range 0xf1000000 - 0xf6ffffff is available for kernel VM space
- * OFW sites at 0xf7000000
- */
-#define	KERNEL_VM_SIZE		0x04000000
-#else
-/*
- * The range 0xf1000000 - 0xf5ffffff is available for kernel VM space
- * Fixed mappings exist from 0xf6000000 - 0xffffffff
- */
-#define	KERNEL_VM_SIZE		0x05000000
-#endif
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
 /*
@@ -188,13 +175,11 @@
  *
  *	- DEFAULT for all systems
  *	- ISADMA for the ISA DMA range on Sharks only
- *	- RPCDMA for the DMA range on RiscPC's + Kinetic cards
  */
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
-#define VM_FREELIST_RPCDMA	1
 
 /*
  * define structure pmap_physseg: there is one of these structures
