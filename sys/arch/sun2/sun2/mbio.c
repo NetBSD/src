@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.10 2002/10/01 05:39:45 thorpej Exp $	*/
+/*	$NetBSD: mbio.c,v 1.11 2002/10/02 16:02:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct mbio_softc {
 };
 
 CFATTACH_DECL(mbio, sizeof(struct mbio_softc),
-    mbio_match, mbio_attach, NULL, NULL)
+    mbio_match, mbio_attach, NULL, NULL);
 
 static	paddr_t mbio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       off_t, int, int));

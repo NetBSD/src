@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.17 2002/10/01 05:32:46 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.18 2002/10/02 16:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ static int  obmem_match __P((struct device *, struct cfdata *, void *));
 static void obmem_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(obmem, sizeof(struct device),
-    obmem_match, obmem_attach, NULL, NULL)
+    obmem_match, obmem_attach, NULL, NULL);
 
 static int
 obmem_match(parent, cf, aux)

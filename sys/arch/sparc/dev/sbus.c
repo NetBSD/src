@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.51 2002/10/01 18:57:52 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.52 2002/10/02 16:02:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,13 +126,13 @@ static	int sbus_error __P((void));
 int	(*sbuserr_handler) __P((void));
 
 CFATTACH_DECL(sbus_mainbus, sizeof(struct sbus_softc),
-    sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL)
+    sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL);
 
 CFATTACH_DECL(sbus_iommu, sizeof(struct sbus_softc),
-    sbus_match_iommu, sbus_attach_iommu, NULL, NULL)
+    sbus_match_iommu, sbus_attach_iommu, NULL, NULL);
 
 CFATTACH_DECL(sbus_xbox, sizeof(struct sbus_softc),
-    sbus_match_xbox, sbus_attach_xbox, NULL, NULL)
+    sbus_match_xbox, sbus_attach_xbox, NULL, NULL);
 
 extern struct cfdriver sbus_cd;
 

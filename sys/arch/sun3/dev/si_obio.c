@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.24 2002/10/01 05:32:43 thorpej Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.25 2002/10/02 16:02:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ static int	si_obio_match __P((struct device *, struct cfdata *, void *));
 static void	si_obio_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(si_obio, sizeof(struct si_softc),
-    si_obio_match, si_obio_attach, NULL, NULL)
+    si_obio_match, si_obio_attach, NULL, NULL);
 
 /*
  * Options for disconnect/reselect, DMA, and interrupts.

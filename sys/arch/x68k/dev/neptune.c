@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.7 2002/10/01 04:43:06 thorpej Exp $	*/
+/*	$NetBSD: neptune.c,v 1.8 2002/10/02 16:02:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ static int neptune_search __P((struct device *, struct cfdata *cf, void *));
 static int neptune_print __P((void *, const char *));
 
 CFATTACH_DECL(neptune, sizeof(struct neptune_softc),
-    neptune_match, neptune_attach, NULL, NULL)
+    neptune_match, neptune_attach, NULL, NULL);
 
 static int
 neptune_match(parent, cf, aux)

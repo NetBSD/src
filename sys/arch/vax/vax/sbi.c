@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.25 2002/10/01 05:19:03 thorpej Exp $ */
+/*	$NetBSD: sbi.c,v 1.26 2002/10/02 16:02:36 thorpej Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -128,7 +128,7 @@ sbi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 CFATTACH_DECL(sbi_mainbus, sizeof(struct device),
-    sbi_match, sbi_attach, NULL, NULL)
+    sbi_match, sbi_attach, NULL, NULL);
 
 CFATTACH_DECL(sbi_abus, sizeof(struct device),
-    sbi_match_abus, sbi_attach, NULL, NULL)
+    sbi_match_abus, sbi_attach, NULL, NULL);

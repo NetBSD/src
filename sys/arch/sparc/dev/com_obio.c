@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.11 2002/10/01 18:57:51 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.12 2002/10/02 16:02:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ static void com_obio_attach __P((struct device *, struct device *, void *));
 static void com_obio_cleanup __P((void *));
 
 CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
-    com_obio_match, com_obio_attach, NULL, NULL)
+    com_obio_match, com_obio_attach, NULL, NULL);
 
 static int
 com_obio_match(parent, cf, aux)

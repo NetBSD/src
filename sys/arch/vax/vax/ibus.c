@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.9 2002/10/01 05:19:02 thorpej Exp $ */
+/*	$NetBSD: ibus.c,v 1.10 2002/10/02 16:02:35 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,7 +44,7 @@ static	int ibus_match(struct device *, struct cfdata *, void *);
 static	void ibus_attach(struct device *, struct device *, void*);
 
 CFATTACH_DECL(ibus, sizeof(struct device),
-    ibus_match, ibus_attach, NULL, NULL)
+    ibus_match, ibus_attach, NULL, NULL);
 
 int
 ibus_print(void *aux, const char *name)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2002/10/01 04:31:18 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2002/10/02 16:02:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -134,7 +134,7 @@ int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
-    sysbeepmatch, sysbeepattach, NULL, NULL)
+    sysbeepmatch, sysbeepattach, NULL, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;

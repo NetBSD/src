@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.8 2002/10/01 04:31:18 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.9 2002/10/02 16:02:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ int pcintr __P((void *));
 void pcinit __P((void));
 
 CFATTACH_DECL(pc, sizeof(struct pc_softc),
-    pcprobe, pcattach, NULL, NULL)
+    pcprobe, pcattach, NULL, NULL);
 
 extern struct cfdriver pc_cd;
 
@@ -220,7 +220,7 @@ void pcconskbdattach __P((struct device *, struct device *, void *));
 void pcinput __P((void *, int));
 
 CFATTACH_DECL(pcconskbd, sizeof(struct pcconskbd_softc),
-    pcconskbdprobe, pcconskbdattach, NULL, NULL)
+    pcconskbdprobe, pcconskbdattach, NULL, NULL);
 
 extern struct cfdriver pcconskbd_cd;
 #endif
