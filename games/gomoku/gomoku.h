@@ -1,3 +1,5 @@
+/* $NetBSD: gomoku.h,v 1.2 1996/12/28 18:57:01 tls Exp $
+*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
