@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.2 2001/09/24 14:29:31 takemura Exp $	*/
+/*	$NetBSD: platid.c,v 1.3 2001/09/27 16:31:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -47,6 +47,7 @@ platid_t platid = {{ PLATID_UNKNOWN, PLATID_UNKNOWN }};
 void
 platid_ntoh(platid_t *pid)
 {
+
 	pid->dw.dw0 = ntohl(pid->dw.dw0);
 	pid->dw.dw1 = ntohl(pid->dw.dw1);
 }
@@ -54,6 +55,7 @@ platid_ntoh(platid_t *pid)
 void
 platid_hton(platid_t *pid)
 {
+
 	pid->dw.dw0 = htonl(pid->dw.dw0);
 	pid->dw.dw1 = htonl(pid->dw.dw1);
 }
@@ -63,6 +65,7 @@ platid_dump(char *name, void* pxx)
 {
 	int i;
 	unsigned char* p = (unsigned char*)pxx;
+
 	printf("%14s: ", name);
 
 	for (i = 0; i < 8; i++) {
@@ -74,7 +77,8 @@ platid_dump(char *name, void* pxx)
 int
 platid_match(platid_t *platid, platid_mask_t *mask)
 {
-	return platid_match_sub(platid, mask, 0);
+
+	return (platid_match_sub(platid, mask, 0));
 }
 
 int
@@ -127,8 +131,9 @@ platid_search_data(platid_t *platid, struct platid_data *datap)
 	while (datap->mask != NULL && !platid_match(platid, datap->mask))
 		datap++;
 	if (datap->mask == NULL && datap->data == NULL)
-		return NULL;
-	return datap;
+		return (NULL);
+
+	return (datap);
 }
 
 void *
