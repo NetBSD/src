@@ -32,8 +32,15 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.8.5.3 (Berkeley) 1/21/97')
-#
+
 divert(0)
-# Configuration version number
-DZ8.8.5`'ifdef(`confCF_VERSION', `/confCF_VERSION')
+VERSIONID(`@(#)solaris2.m4	8.9 (Berkeley) 9/25/96')
+divert(-1)
+
+define(`ALIAS_FILE', /etc/mail/aliases)
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /etc/mail/sendmail.hf)')
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /etc/mail/sendmail.st)')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `SnE9')')
+ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', `mail -f $g -d $u')')
+ifdef(`UUCP_MAILER_ARGS',, `define(`UUCP_MAILER_ARGS', `uux - -r -a$g $h!rmail ($u)')')
+define(`confCW_FILE', /etc/mail/sendmail.cw)
