@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.5 1994/10/26 19:41:13 mycroft Exp $
+ *	$Id: mdprologue.S,v 1.6 1994/10/26 20:03:31 mycroft Exp $
  */
 
 /*
@@ -91,30 +91,3 @@ _binder_entry:
 	popa				# restore regs
 	leave				# remove our stack frame
 	ret
-
- # Special system call stubs which return real and effective user and group
- # id's.  Saves overhead of making separate calls for each.
- # !! Relies on compatability option in BSD 4.three-and-a-half
-
-	.globl	_getreuid, _getregid
-_getreuid:
-	movl	$SYS_getuid,%eax
-	int	$0x80
-	jc	out
-	movl	4(%esp),%ecx		# get 1st arg
-	movl	%eax,(%ecx)		# put value in it
-	movl	8(%esp),%ecx		# same for 2nd arg
-	movl	%edx,(%ecx)		#
-	ret				# done
-
-_getregid:
-	movl	$SYS_getgid,%eax
-	int	$0x80
-	jc	out
-	movl	4(%esp),%ecx		# get 1st arg
-	movl	%eax,(%ecx)		# put value in it
-	movl	8(%esp),%ecx		# same for 2nd arg
-	movl	%edx,(%ecx)		#
-	ret				# done
-
-out:	jmp	cerror@PLT		# Call common error routine
