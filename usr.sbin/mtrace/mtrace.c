@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.19 2002/06/02 13:47:04 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.20 2002/07/14 01:10:56 wiz Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.19 2002/06/02 13:47:04 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.20 2002/07/14 01:10:56 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -66,11 +66,7 @@ __RCSID("$NetBSD: mtrace.c,v 1.19 2002/06/02 13:47:04 itojun Exp $");
 #include <string.h>
 #include "defs.h"
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #ifdef SUNOS5
 #include <sys/systeminfo.h>
 #endif
@@ -138,42 +134,41 @@ u_int32_t tdst = 0;		/* Address where trace is sent (last-hop) */
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see kern.c) */
 
-u_long			byteswap __P((u_long));
-char *			inet_name __P((u_int32_t addr));
-u_int32_t			host_addr __P((char *name));
+u_long			byteswap(u_long);
+char *			inet_name(u_int32_t addr);
+u_int32_t			host_addr(char *name);
 /* u_int is promoted u_char */
-char *			proto_type __P((u_int type));
-char *			flag_type __P((u_int type));
+char *			proto_type(u_int type);
+char *			flag_type(u_int type);
 
-u_int32_t		get_netmask __P((int s, u_int32_t dst));
-int			get_ttl __P((struct resp_buf *buf));
-int			t_diff __P((u_long a, u_long b));
-u_long			fixtime __P((u_long time));
-int			send_recv __P((u_int32_t dst, int type, int code,
-					int tries, struct resp_buf *save));
-char *			print_host __P((u_int32_t addr));
-char *			print_host2 __P((u_int32_t addr1, u_int32_t addr2));
-void			print_trace __P((int index, struct resp_buf *buf));
-int			what_kind __P((struct resp_buf *buf, char *why));
-char *			scale __P((int *hop));
-void			stat_line __P((struct tr_resp *r, struct tr_resp *s,
-					int have_next, int *res));
-void			fixup_stats __P((struct resp_buf *base,
-					struct resp_buf *prev,
-					struct resp_buf *new));
-int			print_stats __P((struct resp_buf *base,
-					struct resp_buf *prev,
-					struct resp_buf *new));
-void			check_vif_state __P((void));
-void			passive_mode __P((void));
+u_int32_t		get_netmask(int s, u_int32_t dst);
+int			get_ttl(struct resp_buf *buf);
+int			t_diff(u_long a, u_long b);
+u_long			fixtime(u_long time);
+int			send_recv(u_int32_t dst, int type, int code,
+				  int tries, struct resp_buf *save);
+char *			print_host(u_int32_t addr);
+char *			print_host2(u_int32_t addr1, u_int32_t addr2);
+void			print_trace(int index, struct resp_buf *buf);
+int			what_kind(struct resp_buf *buf, char *why);
+char *			scale(int *hop);
+void			stat_line(struct tr_resp *r, struct tr_resp *s,
+				  int have_next, int *res);
+void			fixup_stats(struct resp_buf *base,
+				    struct resp_buf *prev,
+				    struct resp_buf *new);
+int			print_stats(struct resp_buf *base,
+				    struct resp_buf *prev,
+				    struct resp_buf *new);
+void			check_vif_state(void);
+void			passive_mode(void);
 
-int			main __P((int argc, char *argv[]));
+int			main(int argc, char *argv[]);
 /* log() prototyped in defs.h */
 
 
 char   *
-inet_name(addr)
-    u_int32_t  addr;
+inet_name(u_int32_t addr)
 {
     struct hostent *e;
 
@@ -184,8 +179,7 @@ inet_name(addr)
 
 
 u_int32_t 
-host_addr(name)
-    char   *name;
+host_addr(char *name)
 {
     struct hostent *e = (struct hostent *)0;
     u_int32_t  addr;
@@ -224,8 +218,7 @@ host_addr(name)
 
 
 char *
-proto_type(type)
-    u_int type;
+proto_type(u_int type)
 {
     static char buf[80];
 
@@ -254,8 +247,7 @@ proto_type(type)
 
 
 char *
-flag_type(type)
-    u_int type;
+flag_type(u_int type)
 {
     static char buf[80];
 
@@ -301,9 +293,7 @@ flag_type(type)
  */
 
 u_int32_t
-get_netmask(s, dst)
-    int s;
-    u_int32_t dst;
+get_netmask(int s, u_int32_t dst)
 {
     unsigned int i;
     char ifbuf[5000];
@@ -341,8 +331,7 @@ get_netmask(s, dst)
 
 
 int
-get_ttl(buf)
-    struct resp_buf *buf;
+get_ttl(struct resp_buf *buf)
 {
     int rno;
     struct tr_resp *b;
@@ -369,8 +358,7 @@ get_ttl(buf)
  * the result in milliseconds.
  */
 int
-t_diff(a, b)
-    u_long a, b;
+t_diff(u_long a, u_long b)
 {
     int d = a - b;
 
@@ -383,8 +371,7 @@ t_diff(a, b)
  * so correct and incorrect times will be far apart.
  */
 u_long
-fixtime(time)
-    u_long time;
+fixtime(u_long time)
 {
     if (abs((int)(time-base.qtime)) > 0x3FFFFFFF)
         time = ((time & 0xFFFF0000) + (JAN_1970 << 16)) +
@@ -396,18 +383,14 @@ fixtime(time)
  * Swap bytes for poor little-endian machines that don't byte-swap
  */
 u_long
-byteswap(v)
-    u_long v;
+byteswap(u_long v)
 {
     return ((v << 24) | ((v & 0xff00) << 8) |
 	    ((v >> 8) & 0xff00) | (v >> 24));
 }
 
 int
-send_recv(dst, type, code, tries, save)
-    u_int32_t dst;
-    int type, code, tries;
-    struct resp_buf *save;
+send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 {
     fd_set  fds;
     struct timeval tq, tr, tv;
@@ -638,7 +621,7 @@ send_recv(dst, type, code, tries, save)
  * it just snoops on what traces it can.
  */
 void
-passive_mode()
+passive_mode(void)
 {
     struct timeval tr;
     struct ip *ip;
@@ -751,8 +734,7 @@ passive_mode()
 }
 
 char *
-print_host(addr)
-    u_int32_t addr;
+print_host(u_int32_t addr)
 {
     return print_host2(addr, 0);
 }
@@ -764,8 +746,7 @@ print_host(addr)
  * confusing but should be slightly more helpful than just a "?".
  */
 char *
-print_host2(addr1, addr2)
-    u_int32_t addr1, addr2;
+print_host2(u_int32_t addr1, u_int32_t addr2)
 {
     char *name;
 
@@ -784,9 +765,7 @@ print_host2(addr1, addr2)
  * Print responses as received (reverse path from dst to src)
  */
 void
-print_trace(index, buf)
-    int index;
-    struct resp_buf *buf;
+print_trace(int index, struct resp_buf *buf)
 {
     struct tr_resp *r;
     char *name;
@@ -819,9 +798,7 @@ print_trace(index, buf)
  * See what kind of router is the next hop
  */
 int
-what_kind(buf, why)
-    struct resp_buf *buf;
-    char *why;
+what_kind(struct resp_buf *buf, char *why)
 {
     u_int32_t smask;
     int retval;
@@ -879,8 +856,7 @@ what_kind(buf, why)
 
 
 char *
-scale(hop)
-    int *hop;
+scale(int *hop)
 {
     if (*hop > -1000 && *hop < 10000) return (" ms");
     *hop /= 1000;
@@ -897,10 +873,7 @@ scale(hop)
 #define OUTS    2
 #define BOTH    3
 void
-stat_line(r, s, have_next, rst)
-    struct tr_resp *r, *s;
-    int have_next;
-    int *rst;
+stat_line(struct tr_resp *r, struct tr_resp *s, int have_next, int *rst)
 {
     int timediff = (fixtime(ntohl(s->tr_qarr)) -
 			 fixtime(ntohl(r->tr_qarr))) >> 16;
@@ -997,8 +970,7 @@ stat_line(r, s, have_next, rst)
  * byteorder bugs in mrouted 3.6 on little-endian machines.
  */
 void
-fixup_stats(base, prev, new)
-    struct resp_buf *base, *prev, *new;
+fixup_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 {
     int rno = base->len;
     struct tr_resp *b = base->resps + rno;
@@ -1077,8 +1049,7 @@ fixup_stats(base, prev, new)
  * Print responses with statistics for forward path (from src to dst)
  */
 int
-print_stats(base, prev, new)
-    struct resp_buf *base, *prev, *new;
+print_stats(struct resp_buf *base, struct resp_buf *prev, struct resp_buf *new)
 {
     int rtt, hop;
     char *ms;
@@ -1171,9 +1142,7 @@ print_stats(base, prev, new)
  ***************************************************************************/
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char **argv)
 {
     int udp;
     struct sockaddr_in addr;
@@ -1699,7 +1668,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 }
 
 void
-check_vif_state()
+check_vif_state(void)
 {
     log(LOG_WARNING, errno, "sendto");
 }
@@ -1709,17 +1678,8 @@ check_vif_state()
  * of the message and the current debug level.  For errors of severity
  * LOG_ERR or worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, const char *format, ...)
-#else
-/*VARARGS3*/
-void 
-log(severity, syserr, format, va_alist)
-	int     severity, syserr;
-	const char   *format;
-	va_dcl
-#endif
 {
     va_list ap;
     char    fmt[100];
@@ -1733,11 +1693,7 @@ log(severity, syserr, format, va_alist)
 	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
 	    strncat(fmt, format, 80);
 	    format = fmt;
-#ifdef __STDC__
 	    va_start(ap, format);
-#else
-	    va_start(ap);
-#endif
 	    vfprintf(stderr, format, ap);
 	    va_end(ap);
 	    if (syserr == 0)
@@ -1749,90 +1705,58 @@ log(severity, syserr, format, va_alist)
 }
 
 /* dummies */
-void accept_probe(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+void accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
+		  u_int32_t level)
 {
 }
-void accept_group_report(src, dst, group, r_type)
-	u_int32_t src, dst, group;
-	int r_type;
+void accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
+			 int r_type)
 {
 }
-void accept_neighbor_request2(src, dst)
-	u_int32_t src, dst;
+void accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_report(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+void accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
+		   u_int32_t level)
 {
 }
-void accept_neighbor_request(src, dst)
-	u_int32_t src, dst;
+void accept_neighbor_request(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_prune(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_graft(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_graft(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_g_ack(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_g_ack(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void add_table_entry(origin, mcastgrp)
-	u_int32_t origin, mcastgrp;
+void add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
 {
 }
-void accept_leave_message(src, dst, group)
-	u_int32_t src, dst, group;
+void accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 {
 }
-void accept_mtrace(src, dst, group, data, no, datalen)
-	u_int32_t src, dst, group;
-	char *data;
-	u_int no;
-	int datalen;
+void accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group, char *data,
+		   u_int no, int datalen)
 {
 }
-void accept_membership_query(src, dst, group, tmo)
-	u_int32_t src, dst, group;
-	int tmo;
+void accept_membership_query(u_int32_t src, u_int32_t dst, u_int32_t group,
+			     int tmo)
 {
 }
-void accept_neighbors(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	u_char *p;
-	int datalen;
+void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+		      u_int32_t level)
 {
 }
-void accept_neighbors2(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	u_char *p;
-	int datalen;
+void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+		       u_int32_t level)
 {
 }
-void accept_info_request(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+void accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
-void accept_info_reply(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+void accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
