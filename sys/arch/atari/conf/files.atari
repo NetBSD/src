@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.53 1998/04/22 08:01:17 leo Exp $
+#	$NetBSD: files.atari,v 1.54 1998/04/23 09:26:26 leo Exp $
 
 maxpartitions 16
 
@@ -81,6 +81,11 @@ file	arch/atari/vme/vme_machdep.c	vme
 # device defined in sys/conf/files
 attach	le at vme with le_vme
 file	arch/atari/vme/if_le_vme.c	le_vme
+
+# ET4000 (Crazy Dots II) color video
+device	et
+attach	et at vme
+file	arch/atari/vme/et4000.c		et needs-count
 
 # graphic devices
 define	grfb {}

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1998/04/10 10:37:04 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1998/04/23 09:26:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -126,8 +126,16 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, read, write, ioctl, mmap */
+#define cdev_et_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	dev_init(c,n,mmap) }
+
 #include "bpfilter.h"
 #include "ch.h"
+#include "et.h"
 #include "grfcc.h"
 #include "grfet.h"
 #define	NGRF	(NGRFCC + NGRFET)
@@ -180,6 +188,7 @@ cdev_decl(uk);
 cdev_decl(view);
 cdev_decl(wd);
 cdev_decl(zs);
+cdev_decl(et);
 
 struct cdevsw	cdevsw[] =
 {
@@ -222,6 +231,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
 	cdev_disk_init(NMD,md),		/* 37: memory disk - for install disk */
 	cdev_rnd_init(NRND,rnd),	/* 38: random source pseudo-device */
+  	cdev_notdef(),			/* 39 */
+	cdev_et_init(NET,et),		/* 40: ET4000 color video */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -323,6 +334,8 @@ static int chrtoblktab[] = {
 	/* 36 */	NODEV,
 	/* 37 */	1,
 	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
 };
 
 /*
