@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.6 2002/02/20 20:41:16 thorpej Exp $ */
+/* $NetBSD: machdep.h,v 1.7 2002/02/21 02:52:21 thorpej Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -10,9 +10,6 @@ void data_abort_handler __P((trapframe_t *));
 void prefetch_abort_handler __P((trapframe_t *));
 void undefinedinstruction_bounce __P((trapframe_t *));
 void dumpsys	__P((void));
-
-vsize_t map_chunk(vaddr_t, vaddr_t, vaddr_t, paddr_t, vsize_t,
-	    u_int, u_int);
 
 /* 
  * note that we use void * as all the platforms have different ideas on what

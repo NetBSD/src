@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.24 2002/02/20 20:47:40 skrll Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.25 2002/02/21 02:52:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -622,21 +622,21 @@ initarm(void *arg)
 		/*
 		 * This maps the kernel text/data/bss VA==PA.
 		 */
-		logical += map_chunk(l1pagetable, l2pagetable,
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 		    KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 		    KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 #if 0 /* XXX No symbols yet. */
-		logical += map_chunk(l1pagetable, l2pagetable,
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 		    KERNEL_BASE + logical,
 		    physical_start + logical, kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 	}
 
@@ -645,20 +645,21 @@ initarm(void *arg)
 #endif
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the Mini-Data cache clean area. */
-	map_chunk(0, l2pagetable, minidataclean.pv_va, minidataclean.pv_pa,
-	    NBPG, AP_KRW, PT_CACHEABLE);
+	pmap_map_chunk(0, l2pagetable, minidataclean.pv_va, minidataclean.pv_pa,
+	    NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
@@ -725,8 +726,9 @@ initarm(void *arg)
 	    I80312_PCI_XLATE_PIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
 	    IQ80310_PIOW_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_PIOW_VBASE,
-	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, IQ80310_PIOW_VBASE,
+	    I80312_PCI_XLATE_PIOW_BASE, I80312_PCI_XLATE_IOSIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping SIOW 0x%08lx -> 0x%08lx @ 0x%08lx\n",
@@ -734,8 +736,9 @@ initarm(void *arg)
 	    I80312_PCI_XLATE_SIOW_BASE + I80312_PCI_XLATE_IOSIZE - 1,
 	    IQ80310_SIOW_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_SIOW_VBASE,
-	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, IQ80310_SIOW_VBASE,
+	    I80312_PCI_XLATE_SIOW_BASE, I80312_PCI_XLATE_IOSIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping 80312 0x%08lx -> 0x%08lx @ 0x%08lx\n",
@@ -743,8 +746,9 @@ initarm(void *arg)
 	    I80312_PMMR_BASE + I80312_PMMR_SIZE - 1,
 	    IQ80310_80312_VBASE);
 #endif
-	map_chunk(0, l2pagetable, IQ80310_80312_VBASE,
-	    I80312_PMMR_BASE, I80312_PMMR_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, IQ80310_80312_VBASE,
+	    I80312_PMMR_BASE, I80312_PMMR_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately

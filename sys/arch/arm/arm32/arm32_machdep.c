@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.15 2002/02/20 20:41:15 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.16 2002/02/21 02:52:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -148,86 +148,6 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
-}
-
-/*
- * A few functions that are used to help construct the page tables
- * during the bootstrap process.
- */
-
-/* cats kernels have a 2nd l2 pt, so the range is bigger hence the 0x7ff etc */
-vsize_t
-map_chunk(pd, pt, va, pa, size, acc, flg)
-	vaddr_t pd;
-	vaddr_t pt;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t size;
-	u_int acc;
-	u_int flg;
-{
-	pd_entry_t *l1pt = (pd_entry_t *)pd;
-	pt_entry_t *l2pt = (pt_entry_t *)pt;
-	vsize_t remain;
-	u_int loop;
-
-	remain = (size + (NBPG - 1)) & ~(NBPG - 1);
-#ifdef VERBOSE_INIT_ARM
-	printf("map_chunk: pa=%lx va=%lx sz=%lx rem=%lx acc=%x flg=%x\n",
-	    pa, va, size, remain, acc, flg);
-	printf("map_chunk: ");
-#endif
-	size = remain;
-
-	while (remain > 0) {
-		/* Can we do a section mapping ? */
-		if (l1pt && !((pa | va) & (L1_SEC_SIZE - 1))
-		    && remain >= L1_SEC_SIZE) {
-#ifdef VERBOSE_INIT_ARM
-			printf("S");
-#endif
-			l1pt[(va >> PDSHIFT)] = L1_SECPTE(pa, acc, flg);
-			va += L1_SEC_SIZE;
-			pa += L1_SEC_SIZE;
-			remain -= L1_SEC_SIZE;
-		} else
-		/* Can we do a large page mapping ? */
-		if (!((pa | va) & (L2_LPAGE_SIZE - 1))
-		    && (remain >= L2_LPAGE_SIZE)) {
-#ifdef VERBOSE_INIT_ARM
-			printf("L");
-#endif
-			for (loop = 0; loop < 16; ++loop)
-#ifndef cats
-				l2pt[((va >> PGSHIFT) & 0x3f0) + loop] =
-				    L2_LPTE(pa, acc, flg);
-#else
-				l2pt[((va >> PGSHIFT) & 0x7f0) + loop] =
-				    L2_LPTE(pa, acc, flg);
-#endif	
-			va += L2_LPAGE_SIZE;
-			pa += L2_LPAGE_SIZE;
-			remain -= L2_LPAGE_SIZE;
-		} else
-		/* All we can do is a small page mapping */
-		{
-#ifdef VERBOSE_INIT_ARM
-			printf("P");
-#endif
-#ifndef cats			
-			l2pt[((va >> PGSHIFT) & 0x3ff)] = L2_SPTE(pa, acc, flg);
-#else
-			l2pt[((va >> PGSHIFT) & 0x7ff)] = L2_SPTE(pa, acc, flg);
-#endif
-			va += NBPG;
-			pa += NBPG;
-			remain -= NBPG;
-		}
-	}
-#ifdef VERBOSE_INIT_ARM
-	printf("\n");
-#endif
-	return(size);
 }
 
 /*

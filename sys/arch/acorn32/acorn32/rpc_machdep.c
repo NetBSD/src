@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.19 2002/02/20 20:41:15 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.20 2002/02/21 02:52:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.19 2002/02/20 20:41:15 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.20 2002/02/21 02:52:19 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -185,10 +185,6 @@ static vaddr_t sa110_cc_base;
 /* Prototypes */
 void physcon_display_base	__P((u_int addr));
 extern void consinit		__P((void));
-
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
 
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -713,25 +709,26 @@ initarm(void *cookie)
 	 */
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
-		logical = map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
-		    physical_start, kernexec->a_text,
-		    AP_KRW, PT_CACHEABLE);
+		logical = pmap_map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_TEXT_BASE, physical_start, kernexec->a_text,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #else	/* CPU_ARM6 || CPU_ARM7 */
-		logical = map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
-		    physical_start, kernexec->a_text,
-		    AP_KR, PT_CACHEABLE);
+		logical = pmap_map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_TEXT_BASE, physical_start, kernexec->a_text,
+		    VM_PROT_READ, PTE_CACHE);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
-		logical += map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kerneldatasize - kernexec->a_text,
-		    AP_KRW, PT_CACHEABLE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_TEXT_BASE + logical, physical_start + logical,
+		    kerneldatasize - kernexec->a_text,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	} else {	/* !ZMAGIC */
 		/*
 		 * Most likely an ELF kernel ...
 		 * XXX no distinction yet between read only and read/write area's ...
 		 */
-		map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
+		pmap_map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kerneldatasize,
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	};
 
 
@@ -740,16 +737,17 @@ initarm(void *cookie)
 #endif
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa - physical_start,
@@ -767,11 +765,12 @@ initarm(void *cookie)
 	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_VMEM];
 
-	map_chunk(l1pagetable, l2pagetable, VMEM_VBASE, videomemory.vidm_pbase,
-	    videomemory.vidm_size, AP_KRW, PT_CACHEABLE);
-	map_chunk(l1pagetable, l2pagetable, VMEM_VBASE + videomemory.vidm_size,
+	pmap_map_chunk(l1pagetable, l2pagetable, VMEM_VBASE,
 	    videomemory.vidm_pbase, videomemory.vidm_size,
-	    AP_KRW, PT_CACHEABLE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, l2pagetable,
+	    VMEM_VBASE + videomemory.vidm_size, videomemory.vidm_pbase,
+	    videomemory.vidm_size, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.30 2002/02/20 20:41:17 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.31 2002/02/21 02:52:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -176,10 +176,6 @@ extern vaddr_t sa11x0_idle_mem;
 
 void physcon_display_base	__P((u_int addr));
 void consinit		__P((void));
-
-vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
-			     vaddr_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
 
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -527,17 +523,19 @@ initarm(argc, argv, bi)
 	 */
 #if 0
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
-		logical = map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
+		logical = pmap_map_chunk(l1pagetable, l2pagetable,
+		    KERNEL_TEXT_BASE,
 		    physical_start, kernexec->a_text,
-		    AP_KR, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+		    VM_PROT_READ, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 		    KERNEL_TEXT_BASE + logical, physical_start + logical,
-		    kerneldatasize - kernexec->a_text, AP_KRW, PT_CACHEABLE);
+		    kerneldatasize - kernexec->a_text,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	} else
 #endif
-		map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
+		pmap_map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
 		    KERNEL_TEXT_BASE, kerneldatasize,
-		    AP_KRW, PT_CACHEABLE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Constructing L2 page tables\n");
@@ -545,16 +543,17 @@ initarm(argc, argv, bi)
 
 	/* Map the stack pages */
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
@@ -607,9 +606,9 @@ initarm(argc, argv, bi)
 
 #ifdef CPU_SA110
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
-	map_chunk(0, l2pagetable, sa110_cache_clean_addr,
+	pmap_map_chunk(0, l2pagetable, sa110_cache_clean_addr,
 	    0xe0000000, CPU_SA110_CACHE_CLEAN_SIZE,
-	    AP_KRW, PT_CACHEABLE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 	/*
 	 * Now we have the real page tables in place so we can switch to them.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2002/02/20 20:41:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2002/02/21 02:52:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2002/02/20 20:41:16 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2002/02/21 02:52:20 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3731,13 +3731,12 @@ void
 pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
+	pd_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
+	pd_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
 
 	KASSERT(((va | pa) & (L1_SEC_SIZE - 1)) == 0);
 
-	/* XXXJRT Always creates r/w mappings for now */
-
-	pde[va >> PDSHIFT] = L1_SEC(pa & PD_MASK,
-	    cache == PTE_CACHE ? pte_cache_mode : 0);
+	pde[va >> PDSHIFT] = L1_SECPTE(pa & PD_MASK, ap, fl);
 }
 
 /*
@@ -3779,4 +3778,86 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, paddr_t l2pa)
 	pde[slot + 1] = L1_PTE(l2pa + 0x400);
 	pde[slot + 2] = L1_PTE(l2pa + 0x800);
 	pde[slot + 3] = L1_PTE(l2pa + 0xc00);
+}
+
+/*
+ * pmap_map_chunk:
+ *
+ *	Map a chunk of memory using the most efficient mappings
+ *	possible (section, large page, small page) into the
+ *	provided L1 and L2 tables at the specified virtual address.
+ */
+vsize_t
+pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
+    vsize_t size, int prot, int cache)
+{
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
+	pt_entry_t *pte = (pt_entry_t *) l2pt;
+	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
+	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+	vsize_t resid;  
+	int i;
+
+	resid = (size + (NBPG - 1)) & ~(NBPG - 1);
+
+#ifdef VERBOSE_INIT_ARM     
+	printf("pmap_map_chunk: pa=0x%lx va=0x%lx size=0x%lx resid=0x%lx "
+	    "prot=0x%x cache=%d\n", pa, va, size, resid, prot, cache);
+#endif
+
+	size = resid;
+
+	while (resid > 0) {
+		/* See if we can use a section mapping. */
+		if (l1pt &&
+		    ((pa | va) & (L1_SEC_SIZE - 1)) == 0 &&
+		    resid >= L1_SEC_SIZE) {
+#ifdef VERBOSE_INIT_ARM
+			printf("S");
+#endif
+			pde[va >> PDSHIFT] = L1_SECPTE(pa, ap, fl);
+			va += L1_SEC_SIZE;
+			pa += L1_SEC_SIZE;
+			resid -= L1_SEC_SIZE;
+			continue;
+		}
+
+		/* See if we can use a L2 large page mapping. */
+		if (((pa | va) & (L2_LPAGE_SIZE - 1)) == 0 &&
+		    resid >= L2_LPAGE_SIZE) {
+#ifdef VERBOSE_INIT_ARM
+			printf("L");
+#endif
+			for (i = 0; i < 16; i++) {
+#ifdef cats	/* XXXJRT */
+				pte[((va >> PGSHIFT) & 0x7f0) + i] =
+				    L2_LPTE(pa, ap, fl);
+#else
+				pte[((va >> PGSHIFT) & 0x3f0) + i] =
+				    L2_LPTE(pa, ap, fl);
+#endif
+			}
+			va += L2_LPAGE_SIZE;
+			pa += L2_LPAGE_SIZE;
+			resid -= L2_LPAGE_SIZE;
+			continue;
+		}
+
+		/* Use a small page mapping. */
+#ifdef VERBOSE_INIT_ARM
+		printf("P");
+#endif
+#ifdef cats	/* XXXJRT */
+		pte[(va >> PGSHIFT) & 0x7ff] = L2_SPTE(pa, ap, fl);
+#else
+		pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa, ap, fl);
+#endif
+		va += NBPG;
+		pa += NBPG;
+		resid -= NBPG;
+	}
+#ifdef VERBOSE_INIT_ARM
+	printf("\n");
+#endif
+	return (size);
 }
