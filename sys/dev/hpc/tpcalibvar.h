@@ -1,7 +1,8 @@
-/*	$NetBSD: pckbd_encode.h,v 1.1 2000/05/04 08:20:26 takemura Exp $	*/
+/*	$NetBSD: tpcalibvar.h,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
-/*-
- * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
+/*
+ * Copyright (c) 1999 Shin Takemura All rights reserved.
+ * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the PocketBSD project
- *	and its contributors.
- * 4. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -33,4 +27,17 @@
  *
  */
 
-extern int pckbd_encode __P((u_int, int, u_char *));
+struct tpcalib_softc {
+	int sc_minx, sc_miny;
+	int sc_maxx, sc_maxy;
+	int sc_ax, sc_bx, sc_cx;
+	int sc_ay, sc_by, sc_cy;
+
+	struct wsmouse_calibcoords sc_saved;
+};
+
+int	tpcalib_init __P((struct tpcalib_softc *sc));
+void	tpcalib_reset __P((struct tpcalib_softc *sc));
+void	tpcalib_trans __P((struct tpcalib_softc*, int, int, int*, int*));
+int	tpcalib_ioctl __P((struct tpcalib_softc *, u_long, caddr_t,
+			   int, struct proc*));

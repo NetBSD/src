@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.17 2001/02/15 09:17:18 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.17 2001/02/15 09:17:18 sato Exp $";
+    "$Id: bivideo.c,v 1.1 2001/02/22 18:37:54 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,10 @@ static const char _rcsid[] __attribute__ ((unused)) =
 
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
-#include <arch/hpcmips/dev/bivideovar.h>
-#include <arch/hpcmips/dev/hpccmapvar.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
+#include <dev/hpc/bivideovar.h>
+#include <dev/hpc/hpccmapvar.h>
 
 #define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
 

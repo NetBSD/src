@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181var.h,v 1.1 2000/10/02 03:57:54 sato Exp $	*/
+/*	$NetBSD: ite8181var.h,v 1.2 2001/02/22 18:38:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -33,8 +33,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 struct ite8181_softc {
 	struct device		sc_dev;
