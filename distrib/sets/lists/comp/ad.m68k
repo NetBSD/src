@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.8 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: ad.m68k,v 1.9 1999/04/19 21:34:16 kleink Exp $
 ./usr/include/m68k
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/aout_machdep.h
@@ -31,6 +31,7 @@
 ./usr/include/m68k/setjmp.h
 ./usr/include/m68k/signal.h
 ./usr/include/m68k/stdarg.h
+./usr/include/m68k/svr4_machdep.h
 ./usr/include/m68k/sync_icache.h
 ./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
