@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/11/26 16:48:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1996/11/28 04:32:32 mrg Exp $
 
 LIB=	wrap 
 
 SRCS=	hosts_access.c options.c shell_cmd.c rfc931.c eval.c hosts_ctl.c \
 	refuse.c percent_x.c clean_exit.c fix_options.c socket.c \
-	workarounds.c update.c misc.c diag.c percent_m.c
+	workarounds.c update.c misc.c diag.c
 MAN=	hosts_access.3 hosts_access.5 hosts_options.5
 
 CFLAGS+= -DFACILITY=LOG_AUTHPRIV -DSEVERITY=LOG_INFO -DPARANOID
