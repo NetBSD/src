@@ -8,6 +8,7 @@
 ./etc/csh.login
 ./etc/csh.logout
 ./etc/daily
+./etc/daily.conf
 ./etc/disktab
 ./etc/dm.conf
 ./etc/dumpdates
@@ -20,12 +21,14 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
+./etc/lkm.conf
 ./etc/localtime
 ./etc/magic
 ./etc/mail.rc
 ./etc/man.conf
 ./etc/master.passwd
 ./etc/monthly
+./etc/monthly.conf
 ./etc/motd
 ./etc/mrouted.conf
 ./etc/mtree/4.4BSD.dist
@@ -44,11 +47,14 @@
 ./etc/pwd.db
 ./etc/rbootd.conf
 ./etc/rc
+./etc/rc.conf
+./etc/rc.lkm
 ./etc/rc.local
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
 ./etc/security
+./etc/security.conf
 ./etc/sendmail.cf
 ./etc/services
 ./etc/shells
@@ -57,6 +63,7 @@
 ./etc/syslog.conf
 ./etc/ttys
 ./etc/weekly
+./etc/weekly.conf
 ./root/.cshrc
 ./root/.klogin
 ./root/.login
