@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/04/09 00:32:35 tv Exp $	
+#	$NetBSD: Makefile,v 1.17 1998/11/01 03:48:35 lukem Exp $	
 
 LIB=	pcap
 MAN=	pcap.3 
@@ -9,8 +9,8 @@ CPPFLAGS+=-I. -I${.CURDIR} -DYYBISON
 CPPFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_IOCCOM_H=1 -DHAVE_SYS_SOCKIO_H=1
 CPPFLAGS+=-DHAVE_ETHER_HOSTTON=1 -DHAVE_STRERROR=1 -DHAVE_SOCKADDR_SA_LEN=1
 CFPPLAGS+=-DLBL_ALIGN=1
-LFLAGS+=-olex.yy.c -Ppcap_
-YFLAGS+=-ppcap_
+LPREFIX=pcap_
+YPREFIX=pcap_
 YHEADER=1
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
