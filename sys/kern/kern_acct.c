@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.51 2003/01/18 10:06:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.51 2003/01/18 10:06:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $")
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*
@@ -185,8 +186,8 @@ acct_chkfree()
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(p, v, retval)
-	struct proc *p;
+sys_acct(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -195,6 +196,7 @@ sys_acct(p, v, retval)
 	} */ *uap = v;
 	struct nameidata nd;
 	int error;
+	struct proc *p = l->l_proc;
 
 	/* Make sure that the caller is root. */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.25 2001/11/12 15:25:21 lukem Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.26 2003/01/18 10:06:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.25 2001/11/12 15:25:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.26 2003/01/18 10:06:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.25 2001/11/12 15:25:21 lukem Exp $")
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 
@@ -162,8 +163,8 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
  */
 /* ARGSUSED */
 int
-sys_profil(p, v, retval)
-	struct proc *p;
+sys_profil(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -173,6 +174,7 @@ sys_profil(p, v, retval)
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct uprof *upp;
 	int s;
 

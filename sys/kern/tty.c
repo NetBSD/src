@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.144 2002/11/26 18:44:35 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.145 2003/01/18 10:06:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.144 2002/11/26 18:44:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.145 2003/01/18 10:06:36 thorpej Exp $");
 
 #include "opt_uconsole.h"
 
@@ -2013,6 +2013,7 @@ ttsetwater(struct tty *tp)
 void
 ttyinfo(struct tty *tp)
 {
+	struct lwp	*l;
 	struct proc	*p, *pick;
 	struct timeval	utime, stime;
 	int		tmp;
@@ -2036,10 +2037,13 @@ ttyinfo(struct tty *tp)
 			if (proc_compare(pick, p))
 				pick = p;
 
-		ttyprintf(tp, " cmd: %s %d [%s] ", pick->p_comm, pick->p_pid,
-		    pick->p_stat == SONPROC ? "running" :
-		    pick->p_stat == SRUN ? "runnable" :
-		    pick->p_wmesg ? pick->p_wmesg : "iowait");
+		ttyprintf(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
+		LIST_FOREACH(l, &pick->p_lwps, l_sibling)
+		    ttyprintf(tp, "%s%s",
+		    l->l_stat == LSONPROC ? "running" :
+		    l->l_stat == LSRUN ? "runnable" :
+		    l->l_wmesg ? l->l_wmesg : "iowait",
+			(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 
 		calcru(pick, &utime, &stime, NULL);
 
@@ -2091,8 +2095,7 @@ ttyinfo(struct tty *tp)
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
  *	4) Further ties are broken by picking the highest pid.
  */
-#define	ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
-			 ((p)->p_stat == SONPROC))
+#define	ISRUN(p)	((p)->p_nrlwps > 0)
 #define	TESTAB(a, b)	((a)<<1 | (b))
 #define	ONLYA	2
 #define	ONLYB	1
@@ -2133,6 +2136,7 @@ proc_compare(struct proc *p1, struct proc *p2)
 	case BOTH:
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}
+#if 0 /* XXX NJWLWP */
 	/*
 	 * pick the one with the smallest sleep time
 	 */
@@ -2147,6 +2151,7 @@ proc_compare(struct proc *p1, struct proc *p2)
 		return (1);
 	if (p2->p_flag & P_SINTR && (p1->p_flag & P_SINTR) == 0)
 		return (0);
+#endif
 	return (p2->p_pid > p1->p_pid);		/* tie - return highest pid */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.183 2002/12/29 06:47:57 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.184 2003/01/18 10:06:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.183 2002/12/29 06:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.184 2003/01/18 10:06:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.183 2002/12/29 06:47:57 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/dirent.h>
@@ -2461,7 +2462,8 @@ vfs_shutdown()
 {
 	struct buf *bp;
 	int iter, nbusy, nbusy_prev = 0, dcount, s;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 
 	/* XXX we're certainly not running in proc0's context! */
 	if (p == NULL)
@@ -2476,7 +2478,7 @@ vfs_shutdown()
 	/* avoid coming back this way again if we panic. */
 	doing_shutdown = 1;
 
-	sys_sync(p, NULL, NULL);
+	sys_sync(l, NULL, NULL);
 
 	/* Wait for sync to finish. */
 	dcount = 10000;
