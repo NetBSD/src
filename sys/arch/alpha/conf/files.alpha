@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.38 1997/02/27 01:20:53 thorpej Exp $
+#	$NetBSD: files.alpha,v 1.39 1997/03/12 01:54:23 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -65,6 +65,28 @@ file	arch/alpha/wscons/wscons_emul.c	wscons
 file	arch/alpha/wscons/event.c	wscons
 file	arch/alpha/wscons/kbd.c		wscons
 file	arch/alpha/wscons/ms.c		wscons
+
+
+#
+# TurboLaser Bus Support
+#
+
+device	tlsb { node = -1 ,  offset = -1  }
+attach	tlsb at mainbus
+file	arch/alpha/tlsb/tlsb.c		tlsb & dec_kn8ae
+
+device	kft { }
+attach	kft at tlsb
+file	arch/alpha/tlsb/kftxx.c		kft
+
+device	tlsbmem
+attach	tlsbmem at tlsb
+file	arch/alpha/tlsb/tlsbmem.c	tlsbmem
+
+device	gbus { offset = -1 }
+attach	gbus at tlsb
+file	arch/alpha/tlsb/gbus.c		gbus
+
 
 #
 # TurboChannel Devices
@@ -202,6 +224,13 @@ file	arch/alpha/pci/pci_eb164.c	dec_eb164
 file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
+device	dwlpx:	pcibus
+attach	dwlpx at kft
+file	arch/alpha/pci/dwlpx.c		dwlpx
+file	arch/alpha/pci/dwlpx_pci.c	dwlpx
+file	arch/alpha/pci/pci_kn8ae.c	dwlpx
+file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
+file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 
 #
 # PCI Bus devices
@@ -223,7 +252,6 @@ file	arch/alpha/pci/tga_conf.c	tga
 file	arch/alpha/pci/tga_bt463.c	tga
 file	arch/alpha/pci/tga_bt485.c	tga
 
-
 attach	vga at pci with vga_pci
 file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 
@@ -235,9 +263,12 @@ file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
+attach	mcclock at gbus with mcclock_tlsb
 file	arch/alpha/alpha/mcclock.c	mcclock
 file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
+file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
+
 
 #
 # Standard files
@@ -276,12 +307,12 @@ file	arch/alpha/alpha/promcons.c
 # XXX
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
-file	arch/alpha/alpha/dec_21000.c		dec_21000	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
+file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
