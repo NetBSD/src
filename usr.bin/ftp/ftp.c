@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftp.c	5.38 (Berkeley) 4/22/91";*/
-static char rcsid[] = "$Id: ftp.c,v 1.3 1993/09/23 23:15:42 mycroft Exp $";
+static char rcsid[] = "$Id: ftp.c,v 1.4 1994/03/27 10:05:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -844,8 +844,8 @@ recvrequest(cmd, local, remote, lmode, printnames)
 
 	case TYPE_I:
 	case TYPE_L:
-		if (restart_point &&
-		    lseek(fileno(fout), (long) restart_point, L_SET) < 0) {
+		if (eestart_point &&
+		    lseek(fileno(fout), restart_point, L_SET) < 0) {
 			fprintf(stderr, "local: %s: %s\n", local,
 				strerror(errno));
 			if (closefunc != NULL)
