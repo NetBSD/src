@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.4 2003/08/15 10:10:17 agc Exp $
+#	$NetBSD: TODO,v 1.5 2003/08/16 12:27:54 agc Exp $
 
 THINGS TO BE DONE:
 
@@ -64,6 +64,7 @@ This is a list of suggested smaller projects (in no particular order):
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
   any memory leakage
 + someone investigate time taken to boot
++ implement POSIX async IO
 + help in implementing various things in pkgsrc
 + simplify some of the quirks in our build system
 + help out with scripts for tgm/autobuild
