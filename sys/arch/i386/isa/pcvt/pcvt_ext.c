@@ -2409,21 +2409,12 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	case KDENABIO:
 		/* grant the process IO access; only allowed if euid == 0 */
 	{
-
-#if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
-		struct trapframe *fp = (struct trapframe *)p->p_regs;
-#else
-		struct syscframe *fp = (struct syscframe *)p->p_regs;
-#endif /* PCVT_NETBSD || PCVT_FREEBSD > 102 */
+		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		
 		if(suser(p->p_ucred, &p->p_acflag) != 0)
 			return (EPERM);
 
-#if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		fp->tf_eflags |= PSL_IOPL;
-#else
-		fp->sf_eflags |= PSL_IOPL;
-#endif /* PCVT_NETBSD || PCVT_FREEBSD > 102 */
 	
 		return 0;
 	}
@@ -2432,14 +2423,8 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	case KDDISABIO:
 		/* abandon IO access permission */
 	{
-
-#if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
-		struct trapframe *fp = (struct trapframe *)p->p_regs;
+		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;
-#else
-		struct syscframe *fp = (struct syscframe *)p->p_regs;
-		fp->sf_eflags &= ~PSL_IOPL;
-#endif /* PCVT_NETBSD || PCVT_FREEBSD > 102 */
 
 		return 0;
 	}
