@@ -152,7 +152,10 @@ fetch_inferior_registers (regno)
      all (16 ptrace calls!) if we really need them.  */
   if (regno == -1)
     {
-      target_read_memory (*(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)],
+      CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
+      if (sp & 0x1) 
+	      sp += BIAS;
+      target_read_memory (sp,
 		          &registers[REGISTER_BYTE (L0_REGNUM)],
 			  16*REGISTER_RAW_SIZE (L0_REGNUM));
       for (i = L0_REGNUM; i <= I7_REGNUM; i++)
@@ -161,6 +164,8 @@ fetch_inferior_registers (regno)
   else if (regno >= L0_REGNUM && regno <= I7_REGNUM)
     {
       CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
+      if (sp & 0x1) 
+	      sp += BIAS;
       i = REGISTER_BYTE (regno);
       if (register_valid[regno])
 	printf_unfiltered("register %d valid and read\n", regno);
@@ -318,11 +323,25 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
 	 &tf->tf_global[0], sizeof(tf->tf_global));
   memcpy(&registers[REGISTER_BYTE (O0_REGNUM)],
 	 &tf->tf_out[0], sizeof(tf->tf_out));
-  *(int *)&registers[REGISTER_BYTE (TSTATE_REGNUM)]  = tf->tf_tstate;
-  *(int *)&registers[REGISTER_BYTE (PC_REGNUM)]  = tf->tf_pc;
-  *(int *)&registers[REGISTER_BYTE (NPC_REGNUM)] = tf->tf_npc;
-  *(int *)&registers[REGISTER_BYTE (Y_REGNUM)]   = tf->tf_y;
+  *(long *)&registers[REGISTER_BYTE (TSTATE_REGNUM)]  = tf->tf_tstate;
+  *(long *)&registers[REGISTER_BYTE (PC_REGNUM)]  = tf->tf_pc;
+  *(long *)&registers[REGISTER_BYTE (NPC_REGNUM)] = tf->tf_npc;
+  *(long *)&registers[REGISTER_BYTE (Y_REGNUM)]   = tf->tf_y;
 
+      /*
+       * Now we need to decompose good old tstate into
+       * its constituent parts.
+       */
+      *(long *)&registers[REGISTER_BYTE (CWP_REGNUM)] =
+	      (tf->tf_tstate&TSTATE_CWP);
+      *(long *)&registers[REGISTER_BYTE (ASI_REGNUM)] = 
+	      ((tf->tf_tstate&TSTATE_ASI)>>TSTATE_ASI_SHIFT);
+      *(long *)&registers[REGISTER_BYTE (PSTATE_REGNUM)] = 
+	      ((tf->tf_tstate&TSTATE_PSTATE)>>TSTATE_PSTATE_SHIFT);
+      *(long *)&registers[REGISTER_BYTE (CCR_REGNUM)] = 
+	      ((tf->tf_tstate&TSTATE_CCR)>>TSTATE_CCR_SHIFT);
+
+ 
   /* Clear out the G0 slot (see reg.h) */
   *(int *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
 
@@ -332,9 +351,11 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      from blowing away the stack pointer (as is possible) then this
      won't work, but it's worth the try. */
   {
-    int sp;
+    CORE_ADDR sp;
 
-    sp = *(int *)&registers[REGISTER_BYTE (SP_REGNUM)];
+    sp = *(CORE_ADDR *)&registers[REGISTER_BYTE (SP_REGNUM)];
+      if (sp & 0x1) 
+	      sp += BIAS;
     if (0 != target_read_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)], 
 				 16 * REGISTER_RAW_SIZE (L0_REGNUM)))
       {
