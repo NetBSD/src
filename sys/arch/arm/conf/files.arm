@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.20 2001/03/08 21:30:35 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.21 2001/03/11 00:11:05 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -37,7 +37,7 @@ file	arch/arm/mainbus/mainbus_io_asm.S	mainbus & arm32
 
 device	cpu { }
 attach	cpu at mainbus
-file	arch/arm/mainbus/cpu.c			cpu & arm32 needs-flag
+file	arch/arm/mainbus/cpu.c			cpu & arm32
 
 # files related to debugging
 file	arch/arm/arm/disassem.c
