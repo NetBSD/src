@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.3 1997/07/19 22:28:50 is Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.4 1999/05/30 20:17:48 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,18 +79,16 @@ static u_int	fpu_ftox __P((struct fpemu *fe, struct fpn *fp, u_int *));
 int
 round(register struct fpemu *fe, register struct fpn *fp)
 {
-	register u_int m0, m1, m2, m3;
+	register u_int m0, m1, m2;
 	register int gr, s;
 
 	m0 = fp->fp_mant[0];
 	m1 = fp->fp_mant[1];
 	m2 = fp->fp_mant[2];
-	m3 = fp->fp_mant[3];
-	gr = m3 & 3;
+	gr = m2 & 3;
 	s = fp->fp_sticky;
 
 	/* mant >>= FP_NG */
-	m3 = (m3 >> FP_NG) | (m2 << (32 - FP_NG));
 	m2 = (m2 >> FP_NG) | (m1 << (32 - FP_NG));
 	m1 = (m1 >> FP_NG) | (m0 << (32 - FP_NG));
 	m0 >>= FP_NG;
@@ -112,7 +110,7 @@ round(register struct fpemu *fe, register struct fpn *fp)
 		 */
 		if ((gr & 2) == 0)
 			goto rounddown;
-		if ((gr & 1) || fp->fp_sticky || (m3 & 1))
+		if ((gr & 1) || fp->fp_sticky || (m2 & 1))
 			break;
 		goto rounddown;
 
@@ -134,26 +132,19 @@ round(register struct fpemu *fe, register struct fpn *fp)
 	}
 
 	/* Bump low bit of mantissa, with carry. */
-#ifdef sparc /* ``cheating'' (left out FPU_DECL_CARRY; know this is faster) */
-	FPU_ADDS(m3, m3, 1);
-	FPU_ADDCS(m2, m2, 0);
-	FPU_ADDCS(m1, m1, 0);
-	FPU_ADDC(m0, m0, 0);
-#else
-	if (++m3 == 0 && ++m2 == 0 && ++m1 == 0)
+	if (++m2 == 0 && ++m1 == 0)
 		m0++;
-#endif
+	fp->fp_sticky = 0;
 	fp->fp_mant[0] = m0;
 	fp->fp_mant[1] = m1;
 	fp->fp_mant[2] = m2;
-	fp->fp_mant[3] = m3;
 	return (1);
 
 rounddown:
+	fp->fp_sticky = 0;
 	fp->fp_mant[0] = m0;
 	fp->fp_mant[1] = m1;
 	fp->fp_mant[2] = m2;
-	fp->fp_mant[3] = m3;
 	return (0);
 }
 
@@ -228,7 +219,7 @@ fpu_ftoi(fe, fp)
 			/* m68881/2 do not underflow when
 			   converting to integer */;
 		round(fe, fp);
-		i = fp->fp_mant[3];
+		i = fp->fp_mant[2];
 		if (i >= ((u_int)0x80000000 + sign))
 			break;
 		return (sign ? -i : i);
@@ -297,20 +288,20 @@ fpu_ftos(fe, fp)
 		fe->fe_fpsr |= FPSR_UNFL;
 		/* -NG for g,r; -SNG_FRACBITS-exp for fraction */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
+		if (round(fe, fp) && fp->fp_mant[2] == SNG_EXP(1))
 			return (sign | SNG_EXP(1) | 0);
 		if (fe->fe_fpsr & FPSR_INEX2)
 			fe->fe_fpsr |= FPSR_UNFL
 			/* mc68881/2 don't underflow when converting */;
-		return (sign | SNG_EXP(0) | fp->fp_mant[3]);
+		return (sign | SNG_EXP(0) | fp->fp_mant[2]);
 	}
 	/* -FP_NG for g,r; -1 for implied 1; -SNG_FRACBITS for fraction */
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - 1 - SNG_FRACBITS);
 #ifdef DIAGNOSTIC
-	if ((fp->fp_mant[3] & SNG_EXP(1 << FP_NG)) == 0)
+	if ((fp->fp_mant[2] & SNG_EXP(1 << FP_NG)) == 0)
 		panic("fpu_ftos");
 #endif
-	if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(2))
+	if (round(fe, fp) && fp->fp_mant[2] == SNG_EXP(2))
 		exp++;
 	if (exp >= SNG_EXP_INFNAN) {
 		/* overflow to inf or to max single */
@@ -321,7 +312,7 @@ fpu_ftos(fe, fp)
 	}
 done:
 	/* phew, made it */
-	return (sign | SNG_EXP(exp) | (fp->fp_mant[3] & SNG_MASK));
+	return (sign | SNG_EXP(exp) | (fp->fp_mant[2] & SNG_MASK));
 }
 
 /*
@@ -360,7 +351,7 @@ fpu_ftod(fe, fp, res)
 	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
 		fe->fe_fpsr |= FPSR_UNFL;
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - DBL_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
+		if (round(fe, fp) && fp->fp_mant[1] == DBL_EXP(1)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
@@ -371,7 +362,7 @@ fpu_ftod(fe, fp, res)
 		goto done;
 	}
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - 1 - DBL_FRACBITS);
-	if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(2))
+	if (round(fe, fp) && fp->fp_mant[1] == DBL_EXP(2))
 		exp++;
 	if (exp >= DBL_EXP_INFNAN) {
 		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
@@ -383,8 +374,8 @@ fpu_ftod(fe, fp, res)
 		return (sign | DBL_EXP(DBL_EXP_INFNAN) | DBL_MASK);
 	}
 done:
-	res[1] = fp->fp_mant[3];
-	return (sign | DBL_EXP(exp) | (fp->fp_mant[2] & DBL_MASK));
+	res[1] = fp->fp_mant[2];
+	return (sign | DBL_EXP(exp) | (fp->fp_mant[1] & DBL_MASK));
 }
 
 /*
@@ -404,10 +395,16 @@ fpu_ftox(fe, fp, res)
 	register int exp;
 
 #define	EXT_EXP(e)	((e) << 16)
-#define	EXT_MASK	(EXT_EXP(1) - 1)
+/*
+ * on m68k extended prec, significand does not share the same long
+ * word with exponent
+ */
+#define	EXT_MASK	0
+#define EXT_EXPLICIT1	(1UL << (63 & 31))
+#define EXT_EXPLICIT2	(1UL << (64 & 31))
 
 	if (ISNAN(fp)) {
-		(void) fpu_shr(fp, FP_NMANT - 1 - EXT_FRACBITS);
+		(void) fpu_shr(fp, FP_NMANT - EXT_FRACBITS);
 		exp = EXT_EXP_INFNAN;
 		goto done;
 	}
@@ -421,12 +418,12 @@ fpu_ftox(fe, fp, res)
 		return (sign);
 	}
 
-	if ((exp = fp->fp_exp + EXT_EXP_BIAS) <= 0) {
+	if ((exp = fp->fp_exp + EXT_EXP_BIAS) < 0) {
 		fe->fe_fpsr |= FPSR_UNFL;
 		/* I'm not sure about this <=... exp==0 doesn't mean
 		   it's a denormal in extended format */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS - exp);
-		if (round(fe, fp) && fp->fp_mant[2] == EXT_EXP(1)) {
+		if (round(fe, fp) && fp->fp_mant[1] == EXT_EXPLICIT1) {
 			res[1] = res[2] = 0;
 			return (sign | EXT_EXP(1) | 0);
 		}
@@ -436,8 +433,10 @@ fpu_ftox(fe, fp, res)
 		exp = 0;
 		goto done;
 	}
+#if (FP_NMANT - FP_NG - EXT_FRACBITS) > 0
 	(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS);
-	if (round(fe, fp) && fp->fp_mant[2] == EXT_EXP(2))
+#endif
+	if (round(fe, fp) && fp->fp_mant[0] == EXT_EXPLICIT2)
 		exp++;
 	if (exp >= EXT_EXP_INFNAN) {
 		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
@@ -449,8 +448,8 @@ fpu_ftox(fe, fp, res)
 		return (sign | EXT_EXP(EXT_EXP_INFNAN) | EXT_MASK);
 	}
 done:
-	res[1] = fp->fp_mant[2];
-	res[2] = fp->fp_mant[3];
+	res[1] = fp->fp_mant[1];
+	res[2] = fp->fp_mant[2];
 	return (sign | EXT_EXP(exp));
 }
 

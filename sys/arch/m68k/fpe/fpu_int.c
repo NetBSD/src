@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_int.c,v 1.1 1995/11/03 04:47:14 briggs Exp $	*/
+/*	$NetBSD: fpu_int.c,v 1.2 1999/05/30 20:17:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -50,7 +50,7 @@ fpu_intrz(fe)
   /* when |x| < 1.0 */
   if (x->fp_exp < 0) {
     x->fp_class = FPC_ZERO;
-    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = x->fp_mant[3] = 0;
+    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
     return x;
   }
 
@@ -63,7 +63,7 @@ fpu_intrz(fe)
   clr = 3 - sh / 32;
   mask = (0xffffffff << (sh % 32));
 
-  for (i = 3; i > clr; i--) {
+  for (i = 2; i > clr; i--) {
     x->fp_mant[i] = 0;
   }
   x->fp_mant[i] &= mask;
@@ -87,7 +87,7 @@ fpu_int(fe)
      that the result >= 1.0 when mantissa ~= 1.0 and rounded up */
   if (x->fp_exp < -1) {
     x->fp_class = FPC_ZERO;
-    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = x->fp_mant[3] = 0;
+    x->fp_mant[0] = x->fp_mant[1] = x->fp_mant[2] = 0;
     return x;
   }
 
@@ -100,7 +100,7 @@ fpu_int(fe)
   fpu_shr(x, rsh - FP_NG);	/* shift to the right */
 
   if (round(fe, x) == 1 /* rounded up */ &&
-      x->fp_mant[3 - (FP_NMANT-rsh)/32] & (1 << ((FP_NMANT-rsh)%32))
+      x->fp_mant[2 - (FP_NMANT-rsh)/32] & (1 << ((FP_NMANT-rsh)%32))
       /* x >= 2.0 */) {
     rsh--;			/* reduce shift count by 1 */
     x->fp_exp++;		/* adjust exponent */
@@ -110,11 +110,11 @@ fpu_int(fe)
   wsh = rsh / 32;
   lsh = rsh % 32;
   rsh = 32 - lsh;
-  for (i = 0; i + wsh < 3; i++) {
+  for (i = 0; i + wsh < 2; i++) {
     x->fp_mant[i] = (x->fp_mant[i+wsh] << lsh) | (x->fp_mant[i+wsh+1] >> rsh);
   }
   x->fp_mant[i++] = (x->fp_mant[i+wsh] << lsh);
-  for (; i < 4; i++) {
+  for (; i < 3; i++) {
     x->fp_mant[i] = 0;
   }
 
