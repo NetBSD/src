@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.5 1998/10/30 16:56:30 matt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.6 1998/12/19 19:24:32 he Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -239,6 +239,8 @@ get_volume(f, vn)
 		getchar();
 		printf("\n");
 		e = ustarfs_cylinder_read(f, 0, 1);
+		if (e)		/* Try again on error, needed on i386 */
+			e = ustarfs_cylinder_read(f, 0, 1);
 		if (e)
 			return e;
 		if(strncmp(formatid, ustf->uas_1cyl, strlen(formatid))) {
