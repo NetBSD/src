@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.160 2004/05/31 11:42:00 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.161 2004/06/06 05:32:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.160 2004/05/31 11:42:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.161 2004/06/06 05:32:17 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1253,53 +1253,14 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-/* TBD factor with ieee80211_media_change */
 static int
 wi_media_change(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifmedia_entry *ime;
-	enum ieee80211_opmode newmode;
-	int i, rate, error = 0;
+	int error;
 
-	ime = ic->ic_media.ifm_cur;
-	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
-		i = -1;
-	} else {
-		struct ieee80211_rateset *rs =
-		    &ic->ic_sup_rates[ieee80211_chan2mode(ic,
-		        ic->ic_bss->ni_chan)];
-		rate = ieee80211_media2rate(ime->ifm_media);
-		if (rate == 0)
-			return EINVAL;
-		for (i = 0; i < rs->rs_nrates; i++) {
-			if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == rate)
-				break;
-		}
-		if (i == rs->rs_nrates)
-			return EINVAL;
-	}
-	if (ic->ic_fixed_rate != i) {
-		ic->ic_fixed_rate = i;
-		error = ENETRESET;
-	}
-
-	if ((ime->ifm_media & IFM_IEEE80211_ADHOC) &&
-	    (ime->ifm_media & IFM_FLAG0))
-		newmode = IEEE80211_M_AHDEMO;
-	else if (ime->ifm_media & IFM_IEEE80211_ADHOC)
-		newmode = IEEE80211_M_IBSS;
-	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
-		newmode = IEEE80211_M_HOSTAP;
-	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
-		newmode = IEEE80211_M_MONITOR;
-	else
-		newmode = IEEE80211_M_STA;
-	if (ic->ic_opmode != newmode) {
-		ic->ic_opmode = newmode;
-		error = ENETRESET;
-	}
+	error = ieee80211_media_change(ifp);
 	if (error == ENETRESET) {
 		if (sc->sc_enabled)
 			error = wi_init(ifp);
