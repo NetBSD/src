@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2003/05/21 18:07:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2003/06/15 17:45:21 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2003/05/21 18:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2003/06/15 17:45:21 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4492,6 +4492,75 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 	printf("\n");
 #endif
 	return (size);
+}
+
+/********************** Static device map routines ***************************/
+
+static const struct pmap_devmap *pmap_devmap_table;
+
+/*
+ * Map all of the static regions in the devmap table, and remember
+ * the devmap table so other parts of the kernel can look up entries
+ * later.
+ */
+void
+pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
+{
+	int i;
+
+	KASSERT(pmap_devmap_table == NULL);
+	pmap_devmap_table = table;
+
+	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
+#ifdef VERBOSE_INIT_ARM
+		printf("devmap: %08lx -> %08lx @ %08lx\n",
+		    pmap_devmap_table[i].pd_pa,
+		    pmap_devmap_table[i].pd_pa +
+			pmap_devmap_table[i].pd_size - 1,
+		    pmap_devmap_table[i].pd_va);
+#endif
+		pmap_map_chunk(l1pt, pmap_devmap_table[i].pd_va,
+		    pmap_devmap_table[i].pd_pa,
+		    pmap_devmap_table[i].pd_size,
+		    pmap_devmap_table[i].pd_prot,
+		    pmap_devmap_table[i].pd_cache);
+	}
+}
+
+const struct pmap_devmap *
+pmap_devmap_find_pa(paddr_t pa, psize_t size)
+{
+	int i;
+
+	if (pmap_devmap_table == NULL)
+		return (NULL);
+
+	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
+		if (pa >= pmap_devmap_table[i].pd_pa &&
+		    pa + size <= pmap_devmap_table[i].pd_pa +
+				 pmap_devmap_table[i].pd_size)
+			return (&pmap_devmap_table[i]);
+	}
+
+	return (NULL);
+}
+
+const struct pmap_devmap *
+pmap_devmap_find_va(vaddr_t va, vsize_t size)
+{
+	int i;
+
+	if (pmap_devmap_table == NULL)
+		return (NULL);
+
+	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
+		if (va >= pmap_devmap_table[i].pd_va &&
+		    va + size <= pmap_devmap_table[i].pd_va +
+				 pmap_devmap_table[i].pd_size)
+			return (&pmap_devmap_table[i]);
+	}
+
+	return (NULL);
 }
 
 /********************** PTE initialization routines **************************/
