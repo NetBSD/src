@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.34 2004/02/06 23:22:44 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.35 2004/03/19 12:34:40 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -457,6 +457,15 @@ will be set to
 .Dq no
 unconditionally.
 .DFLTy
+.
+.It Sy MKTTINTERP
+.YorN
+For X builds, decides if the TrueType bytecode interpreter
+is turned on.
+See
+.Pa http://www.freetype.org/patents.html
+for details.
+.DFLTn
 .
 .It Sy MKUNPRIVED
 .YorN
