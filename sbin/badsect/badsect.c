@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.27 2004/03/27 12:52:16 dsl Exp $	*/
+/*	$NetBSD: badsect.c,v 1.28 2004/08/08 00:55:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.27 2004/03/27 12:52:16 dsl Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.28 2004/08/08 00:55:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,45 +70,45 @@ __RCSID("$NetBSD: badsect.c,v 1.27 2004/03/27 12:52:16 dsl Exp $");
 #include <unistd.h>
 #include <err.h>
 
-union {
+static union {
 	struct	fs fs;
 	char	fsx[SBLOCKSIZE];
 } ufs;
 #define sblock	ufs.fs
-union {
+static union {
 	struct	cg cg;
 	char	cgx[MAXBSIZE];
 } ucg;
 #define	acg	ucg.cg
-struct	fs *fs;
-int	fso, fsi;
-int	errs;
-long	dev_bsize = 1;
-int needswap = 0;
-int is_ufs2;
+static struct	fs *fs;
+static int	fso, fsi;
+static int	errs;
+static off_t	dev_bsize = 1;
+static int needswap = 0;
+static int is_ufs2;
 
-char buf[MAXBSIZE];
+static char buf[MAXBSIZE];
 
-void	rdfs __P((daddr_t, int, char *));
-int	chkuse __P((daddr_t, int));
-int	main __P((int, char *[]));
+static void	rdfs(off_t, int, void *);
+static int	chkuse(daddr_t, int);
 
-const off_t sblock_try[] = SBLOCKSEARCH;
+int	main(int, char *[]);
+
+static const off_t sblock_try[] = SBLOCKSEARCH;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	daddr_t number;
 	struct stat stbuf, devstat;
 	struct direct *dp;
-	int i;
+	int i, did = 0;
 	DIR *dirp;
 	char name[MAXPATHLEN];
+	size_t dl = sizeof(_PATH_DEV);
 
 	if (argc < 3) {
-		(void) fprintf(stderr, "usage: %s bbdir blkno [ blkno ]\n",
+		(void)fprintf(stderr, "usage: %s bbdir blkno [ blkno ]\n",
 		    getprogname());
 		exit(1);
 	}
@@ -118,33 +118,31 @@ main(argc, argv)
 	if (stat(".", &stbuf) == -1)
 		err(1, "Cannot stat `%s'", argv[1]);
 
-	(void) strlcpy(name, _PATH_DEV, sizeof(name));
+	(void)strlcpy(name, _PATH_DEV, sizeof(name));
 	if ((dirp = opendir(name)) == NULL)
 		err(1, "Cannot opendir `%s'", argv[1]);
 
 	while ((dp = readdir(dirp)) != NULL) {
-		(void) snprintf(name, sizeof(name), "%s%s", _PATH_DEV,
-		    dp->d_name);
+		(void)strlcpy(name + dl - 1, dp->d_name, sizeof(name) - dl + 1);
 		if (stat(name, &devstat) == -1)
 			err(1, "Cannot stat `%s'", name);
 		if (stbuf.st_dev == devstat.st_rdev &&
 		    S_ISBLK(devstat.st_mode))
 			break;
 	}
-	if (dp == NULL) {
-		closedir(dirp);
+
+	if (dp == NULL)
 		errx(1, "Cannot find dev 0%o corresponding to %s", 
 		    stbuf.st_rdev, argv[1]);
-	}
 
 	/*
 	 * The filesystem is mounted; use the character device instead.
 	 * XXX - Assume that prepending an `r' will give us the name of
 	 * the character device.
 	 */
-	(void) snprintf(name, sizeof(name), "%sr%s", _PATH_DEV, dp->d_name);
-
-	closedir(dirp); /* now *dp is invalid */
+	name[dl - 1] = 'r';
+	(void)strlcpy(name + dl,  dp->d_name, sizeof(name) - dl);
+	(void)closedir(dirp); /* now *dp is invalid */
 
 	if ((fsi = open(name, O_RDONLY)) == -1)
 		err(1, "Cannot open `%s'", argv[1]);
@@ -154,7 +152,7 @@ main(argc, argv)
 	for (i = 0; ; i++) {
 		if (sblock_try[i] == -1)
 			errx(1, "%s: bad superblock", name);
-		rdfs(sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, (char *)fs);
+		rdfs(sblock_try[i], SBLOCKSIZE, fs);
 		switch (fs->fs_magic) {
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
@@ -192,71 +190,71 @@ main(argc, argv)
 		    dbtofsb(fs, number)) == -1) {
 			warn("Cannot mknod `%s'", *argv);
 			errs++;
+			continue;
 		}
+		did++;
 	}
 
-	warnx("Don't forget to run ``fsck %s''", name);
+	if (did)
+		warnx("Don't forget to run `fsck %s'", name);
+	else
+		warnx("File system `%s' was not modified", name);
 	return errs;
 }
 
-int
-chkuse(blkno, cnt)
-	daddr_t blkno;
-	int cnt;
+static int
+chkuse(off_t blkno, int cnt)
 {
 	int cg;
-	daddr_t fsbn, bn;
+	off_t fsbn, bn, fsbe;
 
 	fsbn = dbtofsb(fs, blkno);
-	if (fsbn+cnt > fs->fs_size) {
+	fsbe = fsbn + cnt;
+	if (fsbe > fs->fs_size) {
 		warnx("block %lld out of range of file system",
 		    (long long)blkno);
-		return (1);
+		return 1;
 	}
 
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
-		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
-			warnx("block %lld in non-data area: cannot attach",
+		if (cg == 0 || fsbe > cgsblock(fs, cg)) {
+			warnx("block %lld in superblock area: cannot attach",
 			    (long long)blkno);
-			return (1);
+			return 1;
 		}
 	} else {
-		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			warnx("block %lld in non-data area: cannot attach",
-			    (long long)blkno);
-			return (1);
+		if (fsbe > cgbase(fs, cg + 1)) {
+			warnx("block %lld in beyond end of cylinder group: "
+			    "cannot attach", (long long)blkno);
+			return 1;
 		}
 	}
 
-	rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize,
-	    (char *)&acg);
+	rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize, &acg);
 
 	if (!cg_chkmagic(&acg, needswap)) {
 		warnx("cg %d: bad magic number", cg);
 		errs++;
-		return (1);
+		return 1;
 	}
 
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg, needswap), bn))
 		warnx("Warning: sector %lld is in use", (long long)blkno);
 
-	return (0);
+	return 0;
 }
 
 /*
  * read a block from the file system
  */
-void
-rdfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	char *bf;
+static void
+rdfs(off_t bno, int size, void *bf)
 {
 	int n;
 
-	if (lseek(fsi, (off_t)bno * dev_bsize, SEEK_SET) == -1)
+	if (lseek(fsi, bno * dev_bsize, SEEK_SET) == -1)
 		err(1, "seek error at block %lld", (long long)bno);
 
 	switch (n = read(fsi, bf, size)) {
