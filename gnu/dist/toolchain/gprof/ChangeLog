@@ -1,3 +1,86 @@
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-05-16  Alexandre Oliva  <aoliva@redhat.com>
+	* gmon_io.c (gmon_io_read, gmon_io_write_vma,
+	gmon_io_write_32, gmon_io_write_8, gmon_io_write): Adjust
+	argument list for K&R C.
+
+	2001-03-13  David Mosberger  <davidm@hpl.hp.com>
+	* hist.c (hist_dimension): Declare as an array of 16 characters.
+	(hist_read_rec): If SAMPLEDEBUG, print each histogram bin count.
+	* basic_blocks.c: Whitespace and formatting changes.
+	* bb_exit_func.c: Ditto.
+	* call_graph.c: Ditto.
+	* call_graph.h: Ditto.
+	* cg_arcs.c: Ditto.
+	* cg_print.c: Ditto.
+	* cg_print.h: Ditto.
+	* corefile.c: Ditto.
+	* corefile.h: Ditto.
+	* gmon_io.c: Ditto.
+	* gmon_io.h: Ditto.
+	* gmon_out.h: Ditto.
+	* gprof.c: Ditto.
+	* hist.c: Ditto.
+	* hist.h: Ditto.
+	* i386.c: Ditto.
+	* search_list.c: Ditto.
+	* search_list.h: Ditto.
+	* source.c: Ditto.
+	* source.h: Ditto.
+	* sym_ids.c: Ditto.
+	* sym_ids.h: Ditto.
+	* symtab.c: Ditto.
+	* symtab.h: Ditto.
+	* tahoe.c: Ditto.
+	* utils.c: Ditto.
+	* vax.c: Ditto.
+	* gmon_out.h (gmon_hist_hdr): Delete.
+	(gmon_cg_arc_record): Delete.
+	* gmon_io.c (put_vma): Declare "static".
+	(get_vma): Ditto.
+	(gmon_io_write): New function.
+	(gmon_io_write_8): Ditto.
+	(gmon_io_write_32): Ditto.
+	(gmon_io_write_vma): Ditto.
+	(gmon_io_read): Ditto.
+	(gmon_io_read_32): Ditto.
+	(gmon_io_read_vma): Ditto.
+	* basic_blocks.c (bb_read_rec): Use gmon_io_read* / gmon_io_write*
+	to read/write data file in a more portable fashion.
+	(bb_write_blocks): Ditto.
+	* call_graph.c (cg_read_rec): Ditto.
+	(cg_write_arcs): Ditto.
+	* hist.c (hist_read_rec): Ditto.
+	(hist_write_hist): Ditto.
+	From Jes Sorensen  <jes@linuxcare.com>
+	* gmon_out.h: Use GMON_PTR_SIZE instead of sizeof(char*).
+	* gmon.h: Ditto.
+	* configure.in: Get GMON_PTR_SIZE from existing <sys/gmon_out.h>
+	if it exists.
+	* acconfig.h: New file. Mention and document GMON_PTR_SIZE.
+	* gconfig.h: Regenerate.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+	2001-02-27  Alan Modra  <alan@linuxcare.com.au>
+	* configure.in (BFD_VERSION): New.
+	(AM_INIT_AUTOMAKE): Use $BFD_VERSION.
+	* configure: Regenerate.
+	* gconfig.in: Regenerate.
+	* Makefile.am: Run "make dep-am"
+	* Makefile.in: Regenerate.
+
+2001-06-10  Philip Blundell  <philb@gnu.org>
+
+	* configure.in: Set version to 2.11.1.
+	* configure: Regenerate.
+
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* Many files: Update copyright notices.
+
 2001-03-16  Philip Blundell  <philb@gnu.org>
 
 	* configure: Regenerate.
@@ -67,8 +150,8 @@
 
 2000-07-05  Kenneth Block  <krblock@computer.org>
 
-        * gprof/gprof.c: Add optional style to demangle switch
-        * gprof/gprof.texi: Document optional style to demangle switch.
+        * gprof.c: Add optional style to demangle switch
+        * gprof.texi: Document optional style to demangle switch.
 
 2000-06-05  DJ Delorie  <dj@redhat.com>
 
@@ -1304,7 +1387,7 @@ Tue Jan 31 16:18:18 1995  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	   -S: annotate source file
 	   -t: set table length (with -S)
 
-	* Makefile (OBJS): added basic_blocks.o call_graph.o gmon_io.o
+	* Makefile.am (OBJS): added basic_blocks.o call_graph.o gmon_io.o
 	source.o time_hist.o
 
 	Fri Jul	 1 15:23:50 1994  David Mosberger-Tang	(davidm@piston.cs.arizona.edu)
@@ -1455,7 +1538,7 @@ Mon Apr 26 12:37:46 1993  Ian Lance Taylor  (ian@cygnus.com)
 
 Tue Apr 13 16:14:03 1993  Per Bothner  (bothner@cygnus.com)
 
-	* M Makefile.in:  Add -g to CFLAGS.
+	* Makefile.in:  Add -g to CFLAGS.
 	Ads LDFLAGS and use in place of CFLAGS where appropriate.
 	* configure.in:  Make a sysdep.hlink in the same way other
 	bfd-based directories do.

@@ -1,6 +1,6 @@
 /* call_graph.c  -  Create call graphs.
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -46,7 +46,7 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
      line number in the calling routing, but the child should always
      point to a function entry point, so we back up in the symbol
      table until we find it.
-   
+
      For normal profiling, is_func will be set on all symbols, so this
      code will do nothing.  */
   while (child >= symtab.base && ! child->is_func)
@@ -78,22 +78,21 @@ void
 DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
 {
   bfd_vma from_pc, self_pc;
-  struct gmon_cg_arc_record arc;
-  unsigned long count;
+  unsigned int count;
 
-  if (fread (&arc, sizeof (arc), 1, ifp) != 1)
+  if (gmon_io_read_vma (ifp, &from_pc)
+      || gmon_io_read_vma (ifp, &self_pc)
+      || gmon_io_read_32 (ifp, &count))
     {
       fprintf (stderr, _("%s: %s: unexpected end of file\n"),
 	       whoami, filename);
       done (1);
     }
-  
-  from_pc = get_vma (core_bfd, (bfd_byte *) arc.from_pc);
-  self_pc = get_vma (core_bfd, (bfd_byte *) arc.self_pc);
-  count = bfd_get_32 (core_bfd, (bfd_byte *) arc.count);
+
   DBG (SAMPLEDEBUG,
        printf ("[cg_read_rec] frompc 0x%lx selfpc 0x%lx count %lu\n",
-	       (unsigned long) from_pc, (unsigned long) self_pc, count));
+	       (unsigned long) from_pc, (unsigned long) self_pc,
+	       (unsigned long) count));
   /* Add this arc:  */
   cg_tally (from_pc, self_pc, count);
 }
@@ -105,8 +104,6 @@ DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
 void
 DEFUN (cg_write_arcs, (ofp, filename), FILE * ofp AND const char *filename)
 {
-  const unsigned char tag = GMON_TAG_CG_ARC;
-  struct gmon_cg_arc_record raw_arc;
   Arc *arc;
   Sym *sym;
 
@@ -114,11 +111,10 @@ DEFUN (cg_write_arcs, (ofp, filename), FILE * ofp AND const char *filename)
     {
       for (arc = sym->cg.children; arc; arc = arc->next_child)
 	{
-	  put_vma (core_bfd, arc->parent->addr, (bfd_byte *) raw_arc.from_pc);
-	  put_vma (core_bfd, arc->child->addr, (bfd_byte *) raw_arc.self_pc);
-	  bfd_put_32 (core_bfd, arc->count, (bfd_byte *) raw_arc.count);
-	  if (fwrite (&tag, sizeof (tag), 1, ofp) != 1
-	      || fwrite (&raw_arc, sizeof (raw_arc), 1, ofp) != 1)
+	  if (gmon_io_write_8 (ofp, GMON_TAG_CG_ARC)
+	      || gmon_io_write_vma (ofp, arc->parent->addr)
+	      || gmon_io_write_vma (ofp, arc->child->addr)
+	      || gmon_io_write_32 (ofp, arc->count))
 	    {
 	      perror (filename);
 	      done (1);

@@ -1,5 +1,5 @@
 /* ia64-opc.c -- Functions to access the compacted opcode table
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Written by Bob Manson of Cygnus Solutions, <manson@cygnus.com>
 
    This file is part of GDB, GAS, and the GNU binutils.

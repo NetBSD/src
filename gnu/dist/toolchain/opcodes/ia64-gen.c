@@ -1,5 +1,5 @@
 /* ia64-gen.c -- Generate a shrunk set of opcode tables
-   Copyright (c) 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Written by Bob Manson, Cygnus Solutions, <manson@cygnus.com>
 
    This file is part of GDB, GAS, and the GNU binutils.

@@ -1,5 +1,6 @@
 /* mips-opc.c -- MIPS opcode list.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
    Extended for MIPS32 support by Anders Norlander, and by SiByte, Inc.
@@ -38,15 +39,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 
 #define WR_d    INSN_WRITE_GPR_D
 #define WR_t    INSN_WRITE_GPR_T
-#define WR_31   INSN_WRITE_GPR_31       
-#define WR_D    INSN_WRITE_FPR_D        
+#define WR_31   INSN_WRITE_GPR_31
+#define WR_D    INSN_WRITE_FPR_D
 #define WR_T	INSN_WRITE_FPR_T
 #define WR_S	INSN_WRITE_FPR_S
-#define RD_s    INSN_READ_GPR_S         
-#define RD_b    INSN_READ_GPR_S         
-#define RD_t    INSN_READ_GPR_T         
-#define RD_S    INSN_READ_FPR_S         
-#define RD_T    INSN_READ_FPR_T         
+#define RD_s    INSN_READ_GPR_S
+#define RD_b    INSN_READ_GPR_S
+#define RD_t    INSN_READ_GPR_T
+#define RD_S    INSN_READ_FPR_S
+#define RD_T    INSN_READ_FPR_T
 #define RD_R	INSN_READ_FPR_R
 #define WR_CC	INSN_WRITE_COND_CODE
 #define RD_CC	INSN_READ_COND_CODE
@@ -86,7 +87,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define V1      INSN_4100
 #define T3      INSN_3900
 
-#define G1      (T3                   \
+#define G1      (T3             \
                  )
 
 #define G2      (T3                   \

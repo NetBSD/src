@@ -1,6 +1,6 @@
 /* source.c - Keep track of source files.
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -44,19 +44,19 @@ DEFUN (source_file_lookup_path, (path), const char *path)
       if (FILENAME_CMP (path, sf->name) == 0)
 	break;
     }
-  
+
   if (!sf)
     {
       /* Create a new source file descriptor.  */
       sf = (Source_File *) xmalloc (sizeof (*sf));
-      
+
       memset (sf, 0, sizeof (*sf));
-      
+
       sf->name = xstrdup (path);
       sf->next = first_src_file;
       first_src_file = sf;
     }
-  
+
   return sf;
 }
 
@@ -66,7 +66,7 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
 {
   const char *fname;
   Source_File *sf;
-  
+
   /* The user cannot know exactly how a filename will be stored in
      the debugging info (e.g., ../include/foo.h
      vs. /usr/include/foo.h).  So we simply compare the filename
@@ -74,7 +74,7 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
   for (sf = first_src_file; sf; sf = sf->next)
     {
       fname = strrchr (sf->name, '/');
-      
+
       if (fname)
 	++fname;
       else
@@ -83,7 +83,7 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
       if (FILENAME_CMP (filename, fname) == 0)
 	break;
     }
-  
+
   return sf;
 }
 
@@ -106,7 +106,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
   /* Open input file.  If open fails, walk along search-list until
      open succeeds or reaching end of list.  */
   strcpy (fname, sf->name);
-  
+
   if (IS_ABSOLUTE_PATH (sf->name))
     sle = 0;			/* Don't use search list for absolute paths.  */
 
@@ -115,7 +115,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
     {
       DBG (SRCDEBUG, printf ("[annotate_source]: looking for %s, trying %s\n",
 			     sf->name, fname));
-      
+
       ifp = fopen (fname, FOPEN_RB);
       if (ifp)
 	break;
@@ -139,7 +139,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	      sle = src_search_list.head;
 	    }
 	}
-      
+
       if (sle)
 	{
 	  strcpy (fname, sle->path);
@@ -149,7 +149,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	    strcat (fname, ".");
 #endif
 	  strcat (fname, "/");
-	  
+
 	  if (name_only)
 	    strcat (fname, name_only);
 	  else
@@ -170,7 +170,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
     }
 
   ofp = stdout;
-  
+
   if (create_annotation_files)
     {
       /* Try to create annotated source file.  */
@@ -213,7 +213,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
       }
 #endif
       ofp = fopen (fname, "w");
-      
+
       if (!ofp)
 	{
 	  perror (fname);
@@ -241,7 +241,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
   annotation = xmalloc (max_width + 1);
   line_num = 1;
   new_line = TRUE;
-  
+
   while ((nread = fread (buf, 1, sizeof (buf), ifp)) > 0)
     {
       for (i = 0; i < nread; ++i)
@@ -253,12 +253,12 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	      ++line_num;
 	      new_line = FALSE;
 	    }
-	  
+
 	  new_line = (buf[i] == '\n');
 	  fputc (buf[i], ofp);
 	}
     }
-  
+
   free (annotation);
   return ofp;
 }

@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
 This program is free software; you can redistribute it and/or modify

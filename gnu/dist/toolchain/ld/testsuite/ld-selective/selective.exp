@@ -1,5 +1,5 @@
 # Expect script for LD selective linking tests
-#   Copyright (C) 1998, 1999, 2000, 2001 Free Software Foundation
+#   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,10 +44,10 @@ if {[istarget "m6811-*-*"] || [istarget "m6812-*-*"]} {
 # FIXME: Instead of table, read settings from each source-file.
 set seltests {
   {selective1 C 1.c {} {} {dropme1 dropme2} {}}
-  {selective2 C 2.c {} {} {foo} {}}
-  {selective3 C 2.c {-u foo} {foo} {{foo 0}} {}}
-  {selective4 C++ 3.cc {} {start foo__1A foo__1B} {bar__1A} {}}
-  {selective5 C++ 4.cc {} {} {foo__1B foo__1A} {}}
+  {selective2 C 2.c {} {} {foo} {mips*-*}}
+  {selective3 C 2.c {-u foo} {foo} {{foo 0}} {mips*-*}}
+  {selective4 C++ 3.cc {} {start foo__1A foo__1B} {bar__1A} {mips*-*}}
+  {selective5 C++ 4.cc {} {} {foo__1B foo__1A} {mips*-*}}
   {selective6 C++ 5.cc {} {} {foo__1B foo__1A dropme1__Fv dropme2__Fv} {*-*-*}}
 }
 

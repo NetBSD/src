@@ -1,6 +1,6 @@
 /* search-list.c
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -37,7 +37,7 @@ DEFUN (search_list_append, (list, paths),
     {
       beg = colon + 1;
       colon = strchr (beg, PATH_SEP_CHAR);
-      
+
       if (colon)
 	len = colon - beg;
       else
@@ -49,7 +49,7 @@ DEFUN (search_list_append, (list, paths),
 
       /* Append new path at end of list.  */
       new_el->next = 0;
-      
+
       if (list->tail)
 	list->tail->next = new_el;
       else

@@ -1,5 +1,5 @@
 /* ia64-asmtab.h -- Header for compacted IA-64 opcode tables.
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Contributed by Bob Manson of Cygnus Support <manson@cygnus.com>
 
    This file is part of GDB, GAS, and the GNU binutils.
