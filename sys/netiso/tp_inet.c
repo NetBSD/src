@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_inet.c	7.8 (Berkeley) 5/6/91
- *	$Id: tp_inet.c,v 1.4 1993/12/18 04:58:05 mycroft Exp $
+ *	$Id: tp_inet.c,v 1.5 1994/01/10 22:01:47 mycroft Exp $
  */
 
 /***********************************************************
@@ -102,6 +102,7 @@ SOFTWARE.
 #include <netiso/tp_tpdu.h>
 
 #include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 
 #ifndef ISO
 #include <netiso/iso_chksum.c>
@@ -504,7 +505,7 @@ tpip_output_dg(laddr, faddr, m0, datalen, ro, nochksum)
 		dump_mbuf(m, "tpip_output_dg before ip_output\n");
 	ENDDEBUG
 
-	error = ip_output(m, (struct mbuf *)0, ro, IP_ALLOWBROADCAST);
+	error = ip_output(m, NULL, ro, IP_ALLOWBROADCAST, NULL); /* XXX */
 
 	IFDEBUG(D_EMIT)
 		printf("tpip_output_dg after ip_output\n");
