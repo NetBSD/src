@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1998/09/07 08:15:25 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 1998/09/12 20:46:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ extern	struct passwd  *pw;
 extern	char		remotehost[];
 extern	off_t		restart_point;
 extern	char		tmpline[];
-extern	int		transflag;
+extern	sig_atomic_t	transflag;
 extern	int		type;
 extern	int		usedefault;
 extern	const char	version[];
