@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.21 2001/11/13 02:08:58 lukem Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.22 2002/02/15 16:48:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.21 2001/11/13 02:08:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.22 2002/02/15 16:48:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ linux_sys_sigaction(p, v, retval)
 		error = copyin(SCARG(uap, nsa), &nlsa, sizeof(nlsa));
 		if (error)
 			return (error);
-		linux_old_to_native_sigaction(&nlsa, &nbsa);
+		linux_old_to_native_sigaction(&nbsa, &nlsa);
 	}
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)
@@ -106,7 +106,7 @@ linux_sys_sigaction(p, v, retval)
 			return (error);
 	}
 	if (SCARG(uap, osa)) {
-		native_to_linux_old_sigaction(&obsa, &olsa);
+		native_to_linux_old_sigaction(&olsa, &obsa);
 		error = copyout(&olsa, SCARG(uap, osa), sizeof(olsa));
 		if (error)
 			return (error);
