@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97.2.4 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.5 2004/11/21 08:53:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,7 +145,7 @@ struct execsw {
 	union {				/* probe function */
 		int (*elf_probe_func) __P((struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *));
-		int (*ecoff_probe_func) __P((struct proc *,
+		int (*ecoff_probe_func) __P((struct lwp *,
 			struct exec_package *));
 		int (*mach_probe_func) __P((char **));
 	} u;

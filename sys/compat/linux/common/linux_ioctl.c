@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.38.2.6 2004/11/18 21:20:23 skrll Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.38.2.7 2004/11/21 08:53:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.6 2004/11/18 21:20:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.7 2004/11/21 08:53:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -124,6 +124,7 @@ linux_sys_ioctl(l, v, retval)
 		struct vnode *vp;
 		struct vattr va;
 		extern const struct cdevsw sequencer_cdevsw;
+		struct proc *p = l->l_proc;
 
 		fdp = p->p_fd;
 		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
