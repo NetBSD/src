@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2004/06/16 10:13:46 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2004/08/05 13:31:38 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2004/06/16 10:13:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2004/08/05 13:31:38 cube Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -183,7 +183,6 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 u_int64_t	dumpmem_low;
 u_int64_t	dumpmem_high;
-int	boothowto;
 int	cpu_class;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
