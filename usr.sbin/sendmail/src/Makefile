@@ -1,7 +1,7 @@
 #
 #  NetBSD Makefile
 #
-#	$Id: Makefile,v 1.17 1994/01/31 08:37:32 glass Exp $
+#	$Id: Makefile,v 1.18 1994/02/01 05:33:42 glass Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
@@ -32,8 +32,7 @@ LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin
 BINOWN=	root
-BINGRP=	kmem
-BINMODE=6555
+BINMODE=4555
 
 beforeinstall:
 #	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
