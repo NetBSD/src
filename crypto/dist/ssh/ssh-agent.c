@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.1 2000/09/28 22:10:29 thorpej Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh-agent.c,v 1.1.1.1 2000/09/28 22:10:29 thorpej Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -673,7 +673,7 @@ main(int ac, char **av)
 	/* check if RSA support exists */
 	if (rsa_alive() == 0) {
 		fprintf(stderr,
-			"%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
+			"%s: failed to generate RSA key: rnd(4) is mandatory.\n",
 			__progname);
 		exit(1);
 	}
