@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1998/02/18 02:05:34 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -177,8 +177,6 @@ struct pmap	kernel_pmap_store;
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_entry *pv_table;	/* array of entries, one per page */
-
-#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)

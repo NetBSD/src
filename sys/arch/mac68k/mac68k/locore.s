@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 1998/04/20 05:46:04 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.97 1998/04/24 05:27:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
+#include "opt_uvm.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
@@ -211,8 +212,6 @@ Lstart2:
 	jbsr	_C_LABEL(getenvvars)	| Parse the environment buffer
 	addql	#8,sp
 	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
-
-	jbsr	_C_LABEL(vm_set_page_size) | Set the vm system page size, now.
 	jbsr	_C_LABEL(consinit)	| XXX Should only be if graybar on
 
 /*
@@ -293,8 +292,13 @@ Lloaddone:
 /*
  * Should be running mapped from this point on
  */
-
-/* init mem sizes */
+/* select the software page size now */
+	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+#else
+	jbsr	_C_LABEL(vm_set_page_size) | select software page size
+#endif
 
 /* set kernel stack, user SP, proc0, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
@@ -319,9 +323,7 @@ Lloaddone:
 
 Lnocache0:
 /* Final setup for call to main(). */
-	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
-	jbsr	_C_LABEL(via_init)	| Initialize VIA hardware
-	jbsr	_C_LABEL(psc_init)	| Initialize PSC (if present)
+	jbsr	_C_LABEL(mac68k_init)
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
@@ -815,7 +817,11 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)
@@ -827,7 +833,11 @@ ENTRY_NOPROFILE(lev1intr)
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev2intr)
@@ -840,7 +850,11 @@ ENTRY_NOPROFILE(lev2intr)
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev3intr)
@@ -853,7 +867,11 @@ ENTRY_NOPROFILE(lev3intr)
 	addql	#4,sp
 	moveml	sp@+, #0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev4intr)
@@ -872,7 +890,11 @@ ENTRY_NOPROFILE(lev4intr)
 normal_rei:
 	moveml	sp@+, #0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev5intr)
@@ -885,7 +907,11 @@ ENTRY_NOPROFILE(lev5intr)
 	addql	#4,sp
 	moveml	sp@+, #0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev6intr)
@@ -898,7 +924,11 @@ ENTRY_NOPROFILE(lev6intr)
 	addql	#4,sp
 	moveml	sp@+, #0xFFFF
 	addql	#4,sp
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev7intr)
@@ -932,7 +962,11 @@ ENTRY_NOPROFILE(rtclock_intr)
 	lea	sp@(12),sp		| pop params
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
 	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
 	movl	#1,d0			| clock taken care of
@@ -1064,7 +1098,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address of process's u-area
 	movl	_C_LABEL(kernel_map),sp@- | map it was allocated in
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
 	jbsr	_C_LABEL(kmem_free)	| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_C_LABEL(cpu_switch)

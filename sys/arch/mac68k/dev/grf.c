@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.50 1998/01/17 17:32:07 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.51 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,8 @@
  * Hardware access is through the grfdev routines below.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 
 #include <sys/device.h>
@@ -70,6 +72,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/itevar.h>
@@ -369,8 +375,13 @@ grfmap(dev, addrp, p)
 	vn.v_specinfo = &si;	/* XXX */
 	vn.v_rdev = dev;	/* XXX */
 
+#if defined(UVM)
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+#else
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
 	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+#endif
 
 	/* Offset into page: */
 	*addrp += (unsigned long)gm->fboff + ofs;
@@ -405,7 +416,12 @@ grfunmap(dev, addr, p)
 
 	size = round_page(gp->sc_grfmode->fbsize);
 
+#if defined(UVM)
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
+	    (vm_offset_t)addr + size, FALSE);
+#else
 	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+#endif
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
 }
