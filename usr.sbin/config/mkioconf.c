@@ -682,49 +682,20 @@ i386_ioconf()
 		first = 1;
 		for (dp = dtab; dp != 0; dp = dp->d_next) {
 			mp = dp->d_conn;
-			if (dp->d_unit == QUES || mp == 0 ||
-			    mp == TO_NEXUS || !eq(mp->d_name, "wdc"))
+			if (mp == 0 || mp == TO_NEXUS || eq(mp->d_name, "isa"))
 				continue;
 			if(first) {
 				first = 0;
-				fprintf(fp, "struct isa_device isa_biotab_wdc[] = {\n");
+				fprintf(fp, "struct isa_device isa_biotab_dktp[] = {\n");
 				fprintf(fp, "\
 /* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
 			}
-			if (mp->d_port)
-				fprintf(fp, "{ &%sdriver, %8.8s, ",
-					mp->d_name, mp->d_port);
-			else
-				fprintf(fp, "{ &%sdriver,    0x%03x, ",
-					mp->d_name, mp->d_portn);
+			fprintf(fp, "{ &%sdriver,        0, ", mp->d_name);
+			/* KLUDGE: master unit in drq field */
 			fprintf(fp,
-				"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d},\n",
-				"0", 0, 0, 0, 0, dp->d_unit, dp->d_flags, dp->d_drive);	
-		}
-		if(!first)
-			fprintf(fp, "0\n};\n\n");
-
-		first = 1;
-		for (dp = dtab; dp != 0; dp = dp->d_next) {
-			mp = dp->d_conn;
-			if (dp->d_unit == QUES || mp == 0 ||
-			    mp == TO_NEXUS || !eq(mp->d_name, "fdc"))
-				continue;
-			if(first) {
-				first = 0;
-				fprintf(fp, "struct isa_device isa_biotab_fdc[] = {\n");
-				fprintf(fp, "\
-/* driver       iobase    irq drq      maddr   msiz    intr unit flags phys */\n");
-			}
-			if (mp->d_port)
-				fprintf(fp, "{ &%sdriver, %8.8s, ",
-					mp->d_name, mp->d_port);
-			else
-				fprintf(fp, "{ &%sdriver,    0x%03x, ",
-					mp->d_name, mp->d_portn);
-			fprintf(fp,
-				"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d},\n",
-				"0", 0, 0, 0, 0, dp->d_unit, dp->d_flags, dp->d_drive);
+			"%5.5s, %2d, C 0x%05X, %5d, %6d,  %2d, 0x%02x, %3d, %d},\n",
+				"0", mp->d_unit, 0, 0, 0, dp->d_unit, dp->d_flags,
+				dp->d_drive, mp->d_unit);
 		}
 		if(!first)
 			fprintf(fp, "0\n};\n\n");
