@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.15 1998/07/05 00:51:27 jonathan Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.16 1998/07/07 03:22:03 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@
 #include <net/netisr.h>
 #include <net/route.h>
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
