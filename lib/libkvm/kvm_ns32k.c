@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_ns32k.c,v 1.12 2000/06/29 06:34:25 mrg Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.13 2000/10/10 20:44:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_ns32k.c,v 1.12 2000/06/29 06:34:25 mrg Exp $");
+__RCSID("$NetBSD: kvm_ns32k.c,v 1.13 2000/10/10 20:44:17 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,7 +149,7 @@ _kvm_kvatop(kd, va, pa)
 	return (NBPG - offset);
 
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
