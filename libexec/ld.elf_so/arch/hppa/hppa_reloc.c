@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.2 2002/09/05 15:38:25 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.3 2002/09/05 16:33:57 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -292,9 +292,7 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 		 * Look up the symbol.  While we're relocating self,
 		 * _rtld_objlist is NULL, so just pass in self.
 		 */
-		def = _rtld_find_symdef((_rtld_objlist == NULL ?
-				    obj : _rtld_objlist), rela->r_info,
-				    NULL, obj, &defobj, false);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
 		if (def == NULL)
 			return -1;
 		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +

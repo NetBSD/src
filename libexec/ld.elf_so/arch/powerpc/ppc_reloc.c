@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.11 2002/09/05 15:38:29 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.12 2002/09/05 16:33:58 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -92,8 +92,7 @@ _rtld_relocate_plt_object(
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-					&defobj, true);
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
 		if (def == NULL)
 			return (-1);
 
