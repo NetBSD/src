@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.17 1995/04/17 12:08:36 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.18 1995/06/26 04:08:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ astattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct ast_attach_args aa;
 	struct isa_attach_args isa;
+	int subunit;
 
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -130,9 +131,10 @@ astattach(parent, self, aux)
 		isa.ia_drq = DRQUNK;
 		isa.ia_msize = 0;
 		if ((cf = config_search(astsubmatch, self, &isa)) != 0) {
+			subunit = cf->cf_unit;	/* can change if unit == * */
 			config_attach(self, cf, &isa, astprint);
 			sc->sc_slaves[aa.aa_slave] =
-			    cf->cf_driver->cd_devs[cf->cf_unit];
+			    cf->cf_driver->cd_devs[subunit];
 			sc->sc_alive |= 1 << aa.aa_slave;
 		}
 	}

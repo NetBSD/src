@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.4 1995/04/17 12:08:37 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.5 1995/06/26 04:08:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ bocaattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct boca_attach_args ba;
 	struct isa_attach_args isa;
+	int subunit;
 
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -125,9 +126,10 @@ bocaattach(parent, self, aux)
 		isa.ia_drq = DRQUNK;
 		isa.ia_msize = 0;
 		if ((cf = config_search(bocasubmatch, self, &isa)) != 0) {
+			subunit = cf->cf_unit;	/* can change if unit == * */
 			config_attach(self, cf, &isa, bocaprint);
 			sc->sc_slaves[ba.ba_slave] =
-			    cf->cf_driver->cd_devs[cf->cf_unit];
+			    cf->cf_driver->cd_devs[subunit];
 			sc->sc_alive |= 1 << ba.ba_slave;
 		}
 	}

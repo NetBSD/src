@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.12 1995/04/17 12:09:22 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.13 1995/06/26 04:12:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -118,6 +118,7 @@ rtfpsattach(parent, self, aux)
 		IOBASEUNK,     0x2f2,     0x6f2,     0x6f3,
 		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK
 	};
+	int subunit;
 
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -138,9 +139,10 @@ rtfpsattach(parent, self, aux)
 		isa.ia_drq = DRQUNK;
 		isa.ia_msize = 0;
 		if ((cf = config_search(rtfpssubmatch, self, &isa)) != 0) {
+			subunit = cf->cf_unit;	/* can change if unit == * */
 			config_attach(self, cf, &isa, rtfpsprint);
 			sc->sc_slaves[ra.ra_slave] =
-			    cf->cf_driver->cd_devs[cf->cf_unit];
+			    cf->cf_driver->cd_devs[subunit];
 			sc->sc_alive |= 1 << ra.ra_slave;
 		}
 	}
