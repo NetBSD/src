@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.h,v 1.7 2000/07/06 22:30:19 mjl Exp $	*/
+/*	$NetBSD: skey.h,v 1.8 2000/07/28 16:35:11 thorpej Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.h)
@@ -86,7 +86,7 @@ char *readpass __P ((char *, int));
 char *readskey __P ((char *, int));
 int skey_authenticate __P ((const char *));
 int skey_passcheck __P ((const char *, char *));
-char *skey_keyinfo __P ((const char *));
+const char *skey_keyinfo __P ((const char *));
 int skey_haskey __P ((const char *));
 int getskeyprompt __P ((struct skey *, char *, char *));
 int atob8 __P((char *, const char *));
