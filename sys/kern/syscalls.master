@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.125 2003/01/24 01:23:27 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.126 2003/01/24 01:27:21 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -684,3 +684,14 @@
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec *timeout); }
+;
+; Syscalls 346-353 are reserved for the IEEE Std1003.1b scheduling syscalls
+;
+346	UNIMPL		sys_sched_setparam
+347	UNIMPL		sys_sched_getparam
+348	UNIMPL		sys_sched_setscheduler
+349	UNIMPL		sys_sched_getscheduler
+350	UNIMPL		sys_sched_yield
+351	UNIMPL		sys_sched_get_priority_max
+352	UNIMPL		sys_sched_get_priority_min
+353	UNIMPL		sys_sched_rr_get_interval
