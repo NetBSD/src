@@ -2168,6 +2168,17 @@ Error: %s passes floats in %s registers, whereas %s passes them in %s registers"
 	  flags_compatible = false;
 	}
 
+      if ((in_flags & EF_VFP_FLOAT) != (out_flags & EF_VFP_FLOAT))
+	{
+	  _bfd_error_handler (_("\
+Error: %s uses %s instructions, whereas %s uses %s instructions"),
+	  		bfd_get_filename (ibfd),
+		in_flags & EF_VFP_FLOAT ? _("VFP") : _("FPA"),
+			bfd_get_filename (obfd),
+		out_flags & EF_VFP_FLOAT ? _("VFP") : _("FPA"));
+	  flags_compatible = false;
+	}
+
 #ifdef EF_SOFT_FLOAT
       if ((in_flags & EF_SOFT_FLOAT) != (out_flags & EF_SOFT_FLOAT))
 	{
@@ -2230,6 +2241,11 @@ elf32_arm_print_private_bfd_data (abfd, ptr)
       else
 	fprintf (file, _(" [APCS-32]"));
 
+      if (flags & EF_VFP_FLOAT)
+	fprintf (file, _(" [VFP float format]"));
+      else
+	fprintf (file, _(" [FPA float format]"));
+
       if (flags & EF_APCS_FLOAT)
 	fprintf (file, _(" [floats passed in float registers]"));
 
@@ -2246,7 +2262,7 @@ elf32_arm_print_private_bfd_data (abfd, ptr)
 	fprintf (file, _(" [software FP]"));
 
       flags &= ~(EF_INTERWORK | EF_APCS_26 | EF_APCS_FLOAT | EF_PIC
-		 | EF_NEW_ABI | EF_OLD_ABI | EF_SOFT_FLOAT);
+		 | EF_NEW_ABI | EF_OLD_ABI | EF_SOFT_FLOAT | EF_VFP_FLOAT);
       break;
 
     case EF_ARM_EABI_VER1:
