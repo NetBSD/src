@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.18 2004/11/26 02:07:09 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.19 2004/11/26 22:29:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.18 2004/11/26 02:07:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.19 2004/11/26 22:29:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,9 @@ static void	igsfb_accel_cursor(void *, int, int, int);
 
 static int	igsfb_accel_wait(struct igsfb_devconfig *);
 static void	igsfb_accel_fill(struct igsfb_devconfig *,
-				 u_int32_t, u_int32_t, u_int16_t, u_int16_t);
+				 uint32_t, uint32_t, uint16_t, uint16_t);
 static void	igsfb_accel_copy(struct igsfb_devconfig *,
-				 u_int32_t, u_int32_t, u_int16_t, u_int16_t);
+				 uint32_t, uint32_t, uint16_t, uint16_t);
 
 static void	igsfb_accel_copycols(void *, int, int, int, int);
 static void	igsfb_accel_erasecols(void *, int, int, int, long);
@@ -128,7 +128,7 @@ static void	igsfb_accel_putchar(void *, int, int, u_int, long);
  */
 static int	igsfb_init_video(struct igsfb_devconfig *);
 static void	igsfb_init_cmap(struct igsfb_devconfig *);
-static u_int16_t igsfb_spread_bits_8(u_int8_t);
+static uint16_t	igsfb_spread_bits_8(uint8_t);
 static void	igsfb_init_bit_table(struct igsfb_devconfig *);
 static void	igsfb_init_wsdisplay(struct igsfb_devconfig *);
 
@@ -200,7 +200,7 @@ igsfb_attach_subr(sc, isconsole)
 
 	printf("%s: %dMB, %s%dx%d, %dbpp\n",
 	       sc->sc_dev.dv_xname,
-	       (u_int32_t)(dc->dc_vmemsz >> 20),
+	       (uint32_t)(dc->dc_vmemsz >> 20),
 	       (dc->dc_hwflags & IGSFB_HW_BSWAP)
 		   ? (dc->dc_hwflags & IGSFB_HW_BE_SELECT)
 		       ? "hardware bswap, " : "software bswap, "
@@ -222,11 +222,11 @@ igsfb_init_video(dc)
 	struct igsfb_devconfig *dc;
 {
 	bus_space_handle_t tmph;
-	u_int8_t *p;
+	uint8_t *p;
 	int need_bswap;
 	bus_addr_t fbaddr, craddr;
 	off_t croffset;
-	u_int8_t busctl, curctl;
+	uint8_t busctl, curctl;
 
 	/* Total amount of video memory. */
 	busctl = igs_ext_read(dc->dc_iot, dc->dc_ioh, IGS_EXT_BUS_CTL);
@@ -243,8 +243,8 @@ igsfb_init_video(dc)
 	 * the video memory (off-screen) and reading it back byte-by-byte.
 	 */
 	if (bus_space_map(dc->dc_memt,
-			  dc->dc_memaddr + dc->dc_vmemsz - sizeof(u_int32_t),
-			  sizeof(u_int32_t),
+			  dc->dc_memaddr + dc->dc_vmemsz - sizeof(uint32_t),
+			  sizeof(uint32_t),
 			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &tmph) != 0)
 	{
@@ -254,16 +254,16 @@ igsfb_init_video(dc)
 
 	p = bus_space_vaddr(dc->dc_memt, tmph);
 #if BYTE_ORDER == BIG_ENDIAN
-	*((u_int32_t *)p) = 0x12345678;
+	*((uint32_t *)p) = 0x12345678;
 #else
-	*((u_int32_t *)p) = 0x78563412;
+	*((uint32_t *)p) = 0x78563412;
 #endif
 	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
 		need_bswap = 0;
 	else
 		need_bswap = 1;
 
-	bus_space_unmap(dc->dc_memt, tmph, sizeof(u_int32_t));
+	bus_space_unmap(dc->dc_memt, tmph, sizeof(uint32_t));
 
 	/*
 	 * On CyberPro we can use magic bswap bit in linear address.
@@ -382,7 +382,7 @@ igsfb_init_cmap(dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
-	const u_int8_t *p;
+	const uint8_t *p;
 	int i;
 
 	p = rasops_cmap;	/* "ANSI" color map */
@@ -498,8 +498,8 @@ igsfb_make_text_cursor(dc)
 	struct igsfb_devconfig *dc;
 {
 	struct wsdisplay_font *f = dc->dc_ri.ri_font;
-	u_int16_t cc_scan[8];	/* one sprite scanline */
-	u_int16_t s;
+	uint16_t cc_scan[8];	/* one sprite scanline */
+	uint16_t s;
 	int w, i;
 
 	KASSERT(f->fontwidth <= IGS_CURSOR_MAX_SIZE);
@@ -531,7 +531,7 @@ igsfb_make_text_cursor(dc)
 
 	for (i = 0; i < f->fontheight; ++i)
 		memcpy(&dc->dc_cursor.cc_sprite[i * 8],
-		       cc_scan, f->stride * sizeof(u_int16_t));
+		       cc_scan, f->stride * sizeof(uint16_t));
 
 	return (0);
 }
@@ -541,11 +541,11 @@ igsfb_make_text_cursor(dc)
  * Spread a byte (abcd.efgh) into two (0a0b.0c0d 0e0f.0g0h).
  * Helper function for igsfb_init_bit_table().
  */
-static u_int16_t
+static uint16_t
 igsfb_spread_bits_8(b)
-	u_int8_t b;
+	uint8_t b;
 {
-	u_int16_t s = b;
+	uint16_t s = b;
 
 	s = ((s & 0x00f0) << 4) | (s & 0x000f);
 	s = ((s & 0x0c0c) << 2) | (s & 0x0303);
@@ -562,9 +562,9 @@ static void
 igsfb_init_bit_table(dc)
 	struct igsfb_devconfig *dc;
 {
-	u_int16_t *expand = dc->dc_bexpand;
+	uint16_t *expand = dc->dc_bexpand;
 	int need_bswap = IGSFB_HW_SOFT_BSWAP(dc);
-	u_int16_t s;
+	uint16_t s;
 	u_int i;
 
 	for (i = 0; i < 256; ++i) {
@@ -1022,9 +1022,9 @@ igsfb_convert_cursor_data(dc, width, height)
 	u_int width, height;
 {
 	struct igs_hwcursor *cc = &dc->dc_cursor;
-	u_int16_t *expand = dc->dc_bexpand;
-	u_int8_t *ip, *mp;
-	u_int16_t is, ms, *dp;
+	uint16_t *expand = dc->dc_bexpand;
+	uint8_t *ip, *mp;
+	uint16_t is, ms, *dp;
 	u_int line, i;
 
 	/* init sprite to be all transparent */
@@ -1062,7 +1062,7 @@ igsfb_update_cursor(dc, which)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
-	u_int8_t curctl;
+	uint8_t curctl;
 
 	curctl = 0;		/* XXX: gcc */
 
@@ -1075,7 +1075,7 @@ igsfb_update_cursor(dc, which)
 	}
 
 	if (which & WSDISPLAY_CURSOR_DOSHAPE) {
-		u_int8_t *dst = bus_space_vaddr(dc->dc_memt, dc->dc_crh);
+		uint8_t *dst = bus_space_vaddr(dc->dc_memt, dc->dc_crh);
 
 		/*
 		 * memcpy between spaces of different endianness would
@@ -1084,7 +1084,7 @@ igsfb_update_cursor(dc, which)
 		 * so do it byte-by-byte to preserve byte ordering.
 		 */
 		if (IGSFB_HW_SOFT_BSWAP(dc)) {
-			u_int8_t *src = (u_int8_t *)dc->dc_cursor.cc_sprite;
+			uint8_t *src = (uint8_t *)dc->dc_cursor.cc_sprite;
 			int i;
 
 			for (i = 0; i < IGS_CURSOR_DATA_SIZE; ++i)
@@ -1101,7 +1101,7 @@ igsfb_update_cursor(dc, which)
 	}
 
 	if (which & WSDISPLAY_CURSOR_DOCMAP) {
-		u_int8_t *p;
+		uint8_t *p;
 
 		/* tell DAC we want access to the cursor palette */
 		igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
@@ -1249,7 +1249,7 @@ igsfb_accel_wait(dc)
 	bus_space_tag_t t = dc->dc_iot;
 	bus_space_handle_t h = dc->dc_coph;
 	int timo = 100000;
-	u_int8_t reg;
+	uint8_t reg;
 
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
@@ -1264,13 +1264,13 @@ igsfb_accel_wait(dc)
 static void
 igsfb_accel_copy(dc, src, dst, width, height)
 	struct igsfb_devconfig *dc;
-	u_int32_t src, dst;
-	u_int16_t width, height;
+	uint32_t src, dst;
+	uint16_t width, height;
 {
 	bus_space_tag_t t = dc->dc_iot;
 	bus_space_handle_t h = dc->dc_coph;
-	u_int32_t toend;
-	u_int8_t drawcmd;
+	uint32_t toend;
+	uint8_t drawcmd;
 
 	drawcmd = IGS_COP_DRAW_ALL;
 	if (dst > src) {
@@ -1301,9 +1301,9 @@ igsfb_accel_copy(dc, src, dst, width, height)
 static void
 igsfb_accel_fill(dc, color, dst, width, height)
 	struct igsfb_devconfig *dc;
-	u_int32_t color;
-	u_int32_t dst;
-	u_int16_t width, height;
+	uint32_t color;
+	uint32_t dst;
+	uint16_t width, height;
 {
 	bus_space_tag_t t = dc->dc_iot;
 	bus_space_handle_t h = dc->dc_coph;
@@ -1333,8 +1333,8 @@ igsfb_accel_copyrows(cookie, src, dst, num)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
-	u_int32_t srp, dsp;
-	u_int16_t width, height;
+	uint32_t srp, dsp;
+	uint16_t width, height;
 
 	width = ri->ri_emuwidth;
 	height = num * ri->ri_font->fontheight;
@@ -1357,8 +1357,8 @@ igsfb_accel_copycols(cookie, row, src, dst, num)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
-	u_int32_t rowp, srp, dsp;
-	u_int16_t width, height;
+	uint32_t rowp, srp, dsp;
+	uint16_t width, height;
 	
 	width = num * ri->ri_font->fontwidth;
 	height = ri->ri_font->fontheight;
@@ -1382,9 +1382,9 @@ igsfb_accel_eraserows(cookie, row, num, attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
-	u_int32_t color;
-	u_int32_t dsp;
-	u_int16_t width, height;
+	uint32_t color;
+	uint32_t dsp;
+	uint16_t width, height;
 
 	width = ri->ri_emuwidth;
 	height = num * ri->ri_font->fontheight;
@@ -1408,9 +1408,9 @@ igsfb_accel_erasecols(cookie, row, col, num, attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
-	u_int32_t color;
-	u_int32_t rowp, dsp;
-	u_int16_t width, height;
+	uint32_t color;
+	uint32_t rowp, dsp;
+	uint16_t width, height;
 
 	width = num * ri->ri_font->fontwidth;
 	height = ri->ri_font->fontheight;
