@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.7 2002/05/14 19:22:34 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.8 2002/08/06 17:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -598,12 +598,12 @@ Lkernel_map:
 	.word	_C_LABEL(kernel_map)
 
 /*
- * void switch_exit(struct proc *p);
+ * void switch_exit(struct proc *p, struct proc *p0);
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
 
-/* LINTSTUB: Func: void switch_exit(struct proc *p) */
+/* LINTSTUB: Func: void switch_exit(struct proc *p, struct proc *p0) */
 ENTRY(switch_exit)
 	/*
 	 * r0 = proc
@@ -611,7 +611,6 @@ ENTRY(switch_exit)
 	 */
 
 	mov	r3, r0
- 	ldr	r1, Lproc0
 
 	/* In case we fault */
 	ldr	r0, Lcurproc
@@ -667,7 +666,7 @@ Lse_context_switched:
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
-	ldr	r5, Lproc0
+	mov	r5, #0x00000000		/* r5 = old proc = NULL */
 	b	Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
