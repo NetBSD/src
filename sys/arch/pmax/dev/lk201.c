@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.12 1999/03/22 03:25:29 ad Exp $ */
+/* $NetBSD: lk201.c,v 1.13 1999/04/13 03:19:28 ad Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -319,14 +319,19 @@ kbdMapChar(cc)
 			"lk201: keyboard error, code=%x\n", cc);
 		return (NULL);
 	}
+	
 	if (shiftDown)
 		cc = shiftedAscii[cc];
 	else
 		cc = unshiftedAscii[cc];
-	if (cc >= KBD_NOKEY) {
+
+	/* Map keypad 'Enter' key to return */
+	if (cc == KBD_KP_ENTER)
+		cc = KBD_RET;
+	else if (cc >= KBD_NOKEY) {
 		int i;
 		
-		/* XXX slow, although keyboard interrupts aren't frequent... */
+		/* XXX slow, although keyboard interrupts aren't frequent */
 		
 		/* Check for keys that have multi-character codes */
 		for (i = 0; i < NUM_TOSTRING; i++)
@@ -346,6 +351,7 @@ kbdMapChar(cc)
 			 * return as F15 and F16 since that's what they
 			 * really are.
 			 * XXX termcap can only handle F0->F9. Is this right?
+			 * XXX 'Do' is used for dropping into ddb.
 			 */
 			if (cc >= KBD_F1 && cc <= KBD_F6) {
 				buf[3] = '2';
@@ -365,7 +371,7 @@ kbdMapChar(cc)
 			cp = buf;
 		}
 	}
-	if (cc >= 'a' && cc <= 'z') {
+	else if (cc >= 'a' && cc <= 'z') {
 		if (ctrlDown)
 			cc = cc - 'a' + '\1'; /* ^A */
 		else if (shiftDown ^ capsLock)
@@ -472,22 +478,22 @@ MouseInit(mdev, putc, getc)
 		return;
 	}
 	if (id_byte1 < 0) {
-		printf("MouseInit: Timeout on 1st byte of self-test report\n");
+		printf("MouseInit: Timeout on %s byte of self-test report\n", "1st");
 		return;
 	}
 	id_byte2 = (*getc)(mdev);
 	if (id_byte2 < 0) {
-		printf("MouseInit: Timeout on 2nd byte of self-test report\n");
+		printf("MouseInit: Timeout on %s byte of self-test report\n", "2nd");
 		return;
 	}
 	id_byte3 = (*getc)(mdev);
 	if (id_byte3 < 0) {
-		printf("MouseInit: Timeout on 3rd byte of self-test report\n");
+		printf("MouseInit: Timeout on %s byte of self-test report\n", "3rd");
 		return;
 	}
 	id_byte4 = (*getc)(mdev);
 	if (id_byte4 < 0) {
-		printf("MouseInit: Timeout on 4th byte of self-test report\n");
+		printf("MouseInit: Timeout on %s byte of self-test report\n", "4th");
 		return;
 	}
 	if ((id_byte2 & 0x0f) != 0x2)
