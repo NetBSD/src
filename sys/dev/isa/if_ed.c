@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.13 1993/12/12 20:24:37 hpeyerl Exp $
+ * $Id: if_ed.c,v 1.14 1993/12/15 03:01:07 mycroft Exp $
  */
 
 /*
@@ -2091,12 +2091,11 @@ ed_get_packet(sc, buf, len)
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((sc->arpcom.ac_if.if_flags & IFF_PROMISC) &&
-			bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-				sizeof(eh->ether_dhost)) != 0 &&
-			bcmp(eh->ether_dhost, etherbroadcastaddr,
-				sizeof(eh->ether_dhost)) != 0 &&
-			(eh->ether_dhost[0] & 1) == 0) {
-
+		    (eh->ether_dhost[0] & 1) == 0 &&
+		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
+			 sizeof(eh->ether_dhost)) != 0 &&
+		    bcmp(eh->ether_dhost, etherbroadcastaddr,
+			 sizeof(eh->ether_dhost)) != 0) {
 			m_freem(head);
 			return;
 		}
