@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1998/07/01 02:35:24 tv Exp $ */
+/*	$NetBSD: asm.h,v 1.7 1998/07/01 21:42:51 tv Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -64,8 +64,8 @@
  */
 #define PIC_PROLOGUE(dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
-	sethi %hi(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
-	or dest,%lo(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
+	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
+	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add dest,%o7,dest; mov tmp,%o7
 
 /*
