@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.15.4.1 1996/12/05 07:36:25 rat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -175,8 +175,6 @@ struct shutdownhook_desc {
 
 LIST_HEAD(, shutdownhook_desc) shutdownhook_list;
 
-int shutdownhooks_done;
-
 void *
 shutdownhook_establish(fn, arg)
 	void (*fn) __P((void *));
@@ -212,22 +210,34 @@ shutdownhook_disestablish(vhook)
 #endif
 
 	LIST_REMOVE((struct shutdownhook_desc *)vhook, sfd_list);
+	free(vhook, M_DEVBUF);
 }
 
 /*
  * Run shutdown hooks.  Should be invoked immediately before the
  * system is halted or rebooted, i.e. after file systems unmounted,
  * after crash dump done, etc.
+ *
+ * Each shutdown hook is removed from the list before it's run, so that
+ * it won't be run again.
  */
 void
 doshutdownhooks()
 {
 	struct shutdownhook_desc *dp;
 
-	if (shutdownhooks_done)
-		return;
-
-	for (dp = shutdownhook_list.lh_first; dp != NULL; dp =
-	    dp->sfd_list.le_next)
+	while ((dp = shutdownhook_list.lh_first) != NULL) {
+		LIST_REMOVE(dp, sfd_list);
 		(*dp->sfd_fn)(dp->sfd_arg);
+#if 0
+		/*
+		 * Don't bother freeing the hook structure,, since we may
+		 * be rebooting because of a memory corruption problem,
+		 * and this might only make things worse.  It doesn't
+		 * matter, anyway, since the system is just about to
+		 * reboot.
+		 */
+		free(dp, M_DEVBUF);
+#endif
+	}
 }
