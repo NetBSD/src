@@ -1,4 +1,4 @@
-/*	$NetBSD: tweio.h,v 1.2 2003/09/22 01:44:57 thorpej Exp $	*/
+/*	$NetBSD: tweio.h,v 1.3 2003/09/25 01:35:25 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
@@ -96,5 +96,8 @@ struct twe_paramcommand {
 /*
  * Request a drive addition or deletion
  */
-#define	TWEIO_ADD_UNIT	_IOW('U', 107, int)
-#define	TWEIO_DEL_UNIT	_IOW('U', 108, int)
+struct twe_drivecommand {
+	int		td_unit;
+};
+#define	TWEIO_ADD_UNIT	_IOW('U', 107, struct twe_drivecommand)
+#define	TWEIO_DEL_UNIT	_IOW('U', 108, struct twe_drivecommand)
