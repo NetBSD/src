@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.7 1996/05/01 23:19:50 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.7.4.1 1996/06/05 00:39:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,6 +32,9 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -215,16 +218,27 @@ tc_3000_300_iointr(framep, vec)
 		tc_wmb();
 
 		ifound = 0;
+
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN16 + slot]++
+#endif /* EVCNT_COUNTERS */
+
 #define	CHECKINTR(slot, flag)						\
-		if (flag) {					\
+		if (flag) {						\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*tc_3000_300_intr[slot].tci_func)		\
 			    (tc_3000_300_intr[slot].tci_arg);		\
 		}
 		/* Do them in order of priority; highest slot # first. */
 		CHECKINTR(TC_3000_300_DEV_CXTURBO,
 		    tcir & TC_3000_300_IR_CXTURBO);
-		CHECKINTR(TC_3000_300_DEV_IOASIC, tcir & TC_3000_300_IR_IOASIC);
+		CHECKINTR(TC_3000_300_DEV_IOASIC,
+		    (tcir & TC_3000_300_IR_IOASIC) &&
+	            (ioasicir & ~(IOASIC_INTR_300_OPT1|IOASIC_INTR_300_OPT0)));
 		CHECKINTR(TC_3000_300_DEV_TCDS, tcir & TC_3000_300_IR_TCDS);
 		CHECKINTR(TC_3000_300_DEV_OPT1,
 		    ioasicir & IOASIC_INTR_300_OPT1);
