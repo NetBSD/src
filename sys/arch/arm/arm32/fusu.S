@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.4 2002/08/09 04:13:20 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.5 2002/08/15 01:37:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -49,10 +49,10 @@ ENTRY(fuword)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #fusufault - . - 8
+	add	r1, pc, #.Lfusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -73,10 +73,10 @@ ENTRY(fusword)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #fusufault - . - 8
+	add	r1, pc, #.Lfusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrt	r3, [r0]
@@ -105,7 +105,7 @@ ENTRY(fuswintr)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
 	add	r1, pc, #_C_LABEL(fusubailout) - . - 8
@@ -140,10 +140,10 @@ ENTRY(fubyte)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r1, pc, #fusufault - . - 8
+	add	r1, pc, #.Lfusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
 	ldrbt	r3, [r0]
@@ -157,7 +157,7 @@ ENTRY(fubyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 
-fusufault:
+.Lfusufault:
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
@@ -182,7 +182,7 @@ _C_LABEL(fusubailout):
  * Handle earlier faults from [fs]u*(), due to no pcb
  */
 
-fusupcbfault:
+.Lfusupcbfault:
 	mov	r1, r0
 	add	r0, pc, #fusupcbfaulttext - . - 8
 	b	_C_LABEL(panic)
@@ -203,10 +203,10 @@ ENTRY(suword)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #fusufault - . - 8
+	add	r3, pc, #.Lfusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strt	r1, [r0]
@@ -233,7 +233,7 @@ ENTRY(suswintr)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
 	add	r3, pc, #_C_LABEL(fusubailout) - . - 8
@@ -258,10 +258,10 @@ ENTRY(susword)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #fusufault - . - 8
+	add	r3, pc, #.Lfusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0], #1
@@ -284,10 +284,10 @@ ENTRY(subyte)
 
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	fusupcbfault
+	beq	.Lfusupcbfault
 #endif
 
-	add	r3, pc, #fusufault - . - 8
+	add	r3, pc, #.Lfusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
 	strbt	r1, [r0]
