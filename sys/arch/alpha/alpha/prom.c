@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.24 1998/06/24 01:11:09 ross Exp $ */
+/* $NetBSD: prom.c,v 1.25 1998/09/24 00:30:19 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.24 1998/06/24 01:11:09 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.25 1998/09/24 00:30:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ hwrpb_restart_setup()
 	struct pcs *p;
 
 	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
-	p = LOCATE_PCS(hwrpb, 0);
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_BIP;
 
 	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
