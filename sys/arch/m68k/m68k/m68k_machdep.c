@@ -1,11 +1,8 @@
-/*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.4 2000/06/14 16:11:24 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Bernd Ernesti.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
