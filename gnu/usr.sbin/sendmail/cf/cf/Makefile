@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/08/23 10:43:06 enami Exp $
+#	$NetBSD: Makefile,v 1.11 2000/08/25 02:47:37 hubertf Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -32,6 +32,9 @@ OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
+
+# netbsd-proto.mc pulls in netbsd-proto-IPv4only.mc
+netbsd-proto.cf: netbsd-proto-IPv4only.mc
 
 # XXX not friendly with "make obj"
 others: ${OTHERS}
