@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.2 1999/03/03 00:35:16 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1999/03/22 05:02:40 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 1999/03/03 00:35:16 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 1999/03/22 05:02:40 hubertf Exp $");
 #endif
 
 /*
@@ -51,10 +51,12 @@ void usage(void);
 
 extern const char *__progname;          /* from crt0.o */
 
+int filecnt;
+
 /*
  *  assumes CWD is in /var/db/pkg/<pkg>!
  */
-static void check1pkg(const char *pkgdir, int *filecnt)
+static void check1pkg(const char *pkgdir)
 {
     FILE *f;
     plist_t *p;
@@ -103,7 +105,7 @@ static void check1pkg(const char *pkgdir, int *filecnt)
 		    }
 		}
  
-		(*filecnt)++;
+		filecnt++;
 	    }
 	    break;
 	case PLIST_CWD:
@@ -150,7 +152,9 @@ static void rebuild(void)
     plist_t *p;
     char *PkgName, dir[FILENAME_MAX], *dirp=NULL;
     char *PkgDBDir=NULL, file[FILENAME_MAX];
-    int filecnt=0, pkgcnt=0;
+    int pkgcnt=0;
+
+    filecnt=0;
 
     if (unlink(_pkgdb_getPKGDB_FILE()) != 0 && errno!=ENOENT)
 	err(1, "unlink %s", _pkgdb_getPKGDB_FILE());
@@ -268,8 +272,10 @@ static void checkall(void)
 {
     DIR *dp;
     struct dirent *de;
-    int filecnt=0, pkgcnt=0;
+    int pkgcnt=0;
 
+    filecnt = 0;
+    
     setbuf(stdout, NULL);
     chdir(_pkgdb_getPKGDB_DIR());
     
@@ -286,7 +292,7 @@ static void checkall(void)
 
 	chdir(de->d_name);
 
-	check1pkg(de->d_name, &filecnt);
+	check1pkg(de->d_name);
 	printf(".");
 	    
 	chdir("..");
@@ -303,6 +309,22 @@ static void checkall(void)
 	   pkgcnt, (pkgcnt==1)?"":"s");
 }
 
+static int
+checkpattern_fn(const char *pkg, char *data)
+{
+    int rc;
+
+    rc = chdir(pkg);
+    if (rc == -1)
+	err(1, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+    
+    check1pkg(pkg);
+    printf(".");
+    
+    chdir("..");
+
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -320,9 +342,11 @@ int main(int argc, char *argv[])
 	
 	if (*argv != NULL) {
 	    /* args specified */
-	    int filecnt=0, pkgcnt=0;
+	    int pkgcnt=0;
 	    int rc;
- 
+
+	    filecnt = 0;
+	    
 	    setbuf(stdout, NULL);
 	    
 	    rc = chdir(_pkgdb_getPKGDB_DIR());
@@ -330,14 +354,19 @@ int main(int argc, char *argv[])
 		err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 	    
 	    while (*argv != NULL) {
+		if (ispkgpattern(*argv)){
+		    if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) == 0)
+			errx(1, "No matching pkg for %s.", *argv);
+		}else {
 		rc = chdir(*argv);
-		if (rc == -1)
-		    err(1, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), *argv);
-		
-		check1pkg(*argv, &filecnt);
-		printf(".");
+		    if (rc == -1)
+		        err(1, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), *argv);
 
-		chdir("..");
+		    check1pkg(*argv);
+		    printf(".");
+
+		    chdir("..");
+		}
  
 		pkgcnt++;
 		argv++;

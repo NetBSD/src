@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.8 1999/01/19 17:01:57 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/03/22 05:02:39 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1999/01/19 17:01:57 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/03/22 05:02:39 hubertf Exp $");
 #endif
 #endif
 
@@ -49,10 +49,6 @@ char	*Directory	= NULL;
 char	FirstPen[FILENAME_MAX];
 add_mode_t AddMode	= NORMAL;
 
-#define MAX_PKGS	20
-char	pkgnames[MAX_PKGS][MAXPATHLEN];
-char	*pkgs[MAX_PKGS];
-
 static void
 usage(void)
 {
@@ -66,10 +62,11 @@ int
 main(int argc, char **argv)
 {
     int ch, error;
-    char **start;
+    lpkg_head_t pkgs;
+    lpkg_t *lpp;
     char *cp;
+    char pkgname[MAXPATHLEN];
 
-    start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1) {
 	switch(ch) {
 	case 'v':
@@ -119,40 +116,38 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
-    if (argc > MAX_PKGS) {
-	warnx("too many packages (max %d)", MAX_PKGS);
-	return(1);
-    }
-
+    TAILQ_INIT(&pkgs);
+    
     if (AddMode != SLAVE) {
-	for (ch = 0; ch < MAX_PKGS; pkgs[ch++] = NULL) ;
-
 	/* Get all the remaining package names, if any */
 	for (ch = 0; *argv; ch++, argv++) {
 	    if (!strcmp(*argv, "-"))	/* stdin? */
-		pkgs[ch] = "-";
+		lpp = alloc_lpkg("-");
 	    else if (isURL(*argv))	/* preserve URLs */
-		pkgs[ch] = strcpy(pkgnames[ch], *argv);
+		lpp = alloc_lpkg(*argv);
 	    else {			/* expand all pathnames to fullnames */
 		char *s;
 		    
-		if (fexists(*argv)) /* refers to a file directly */
-		    pkgs[ch] = realpath(*argv, pkgnames[ch]);
-		else if (ispkgpattern(*argv)
+		if (fexists(*argv)) {	/* refers to a file directly */
+		    lpp = alloc_lpkg(realpath(*argv, pkgname));
+		} else if (ispkgpattern(*argv)
 			 && (s=findbestmatchingname(dirname_of(*argv),
-						    basename_of(*argv))) > 0) {
+						    basename_of(*argv))) != NULL) {
 		    if (Verbose)
 			printf("Using %s for %s\n",s, *argv);
-		    
-		    pkgs[ch] = realpath(s, pkgnames[ch]);
+
+		    lpp = alloc_lpkg(realpath(s, pkgname));
 		} else {
 		    /* look for the file(pattern) in the expected places */
-		    if (!(cp = fileFindByPath(NULL, *argv)))
+		    if (!(cp = fileFindByPath(NULL, *argv))) {
+			lpp = NULL;
 			warnx("can't find package '%s'", *argv);
-		    else
-			pkgs[ch] = strcpy(pkgnames[ch], cp);
+		    } else
+			lpp = alloc_lpkg(cp);
 		}
 	    }
+	    if (lpp)
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 	}
     }
     /* If no packages, yelp */
@@ -161,7 +156,7 @@ main(int argc, char **argv)
     else if (ch > 1 && AddMode == MASTER)
 	warnx("only one package name may be specified with master mode"),
 	usage();
-    if ((error = pkg_perform(pkgs)) != 0) {
+    if ((error = pkg_perform(&pkgs)) != 0) {
 	if (Verbose)
 	    warnx("%d package addition(s) failed", error);
 	return error;

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.10 1999/03/08 00:20:21 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1999/03/22 05:02:40 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1999/03/08 00:20:21 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 1999/03/22 05:02:40 hubertf Exp $");
 #endif
 #endif
 
@@ -45,6 +45,7 @@ Boolean File2Pkg	= FALSE;
 Boolean Recurse_up	= FALSE;
 Boolean Recurse_down	= FALSE;
 Boolean OnlyDeleteFromPkgDB = FALSE;
+lpkg_head_t pkgs;
 
 static void
 usage(void)
@@ -53,15 +54,25 @@ usage(void)
     exit(1);
 }
 
+static int
+find_fn(const char *pkg, char *data)
+{
+    lpkg_t *lpp;
+
+    lpp=alloc_lpkg(pkg);
+    TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
     int ch, error;
-    char **pkgs, **start;
+    lpkg_t *lpp;
 
     ProgramPath = argv[0];
 
-    pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
 	switch(ch) {
 	case 'v':
@@ -115,6 +126,8 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
+    TAILQ_INIT(&pkgs);
+
     /* Get all the remaining package names, if any */
     if (File2Pkg)
 	if (pkgdb_open(1)==-1) {
@@ -122,7 +135,7 @@ main(int argc, char **argv)
 	}
     /* Get all the remaining package names, if any */
     while (*argv) {
-	/* pkgdb: if -F flag given, don't add pkgnames to *pkgs but
+	/* pkgdb: if -F flag given, don't add pkgnames to pkgs but
 	 * rather resolve the given filenames to pkgnames using
 	 * pkgdb_retrieve, then add them. 
 	 */
@@ -131,12 +144,19 @@ main(int argc, char **argv)
 
 	    s = pkgdb_retrieve(*argv);
 
-	    if (s)
-		*pkgs++ = s;
-	    else
-		warnx("No matching pkg for %s.", *argv);
+	    if (s) {
+		lpp = alloc_lpkg(s);
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	    } else
+		errx(1, "No matching pkg for %s in pkgdb.", *argv);
 	} else {
-	    *pkgs++ = *argv;
+	    if (ispkgpattern(*argv)) {
+		if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL) == 0)
+		    errx(1, "No matching pkg for %s.", *argv);
+	    }else {
+		lpp = alloc_lpkg(*argv);
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	    }
 	}
 	argv++;
     }
@@ -145,9 +165,8 @@ main(int argc, char **argv)
 	pkgdb_close();
 
     /* If no packages, yelp */
-    if (pkgs == start)
+    if (TAILQ_FIRST(&pkgs) == NULL)
 	warnx("missing package name(s)"), usage();
-    *pkgs = NULL;
     if (!Fake && getuid() != 0)
 	errx(1, "you must be root to delete packages");
     if (OnlyDeleteFromPkgDB) {
@@ -155,7 +174,6 @@ main(int argc, char **argv)
 	 * the pkg itself. Used by "make reinstall" in bsd.pkg.mk
 	 */
 	char *key, *val;
-	char **s;
 	
 	if (pkgdb_open(0)==-1) {
 	    err(1, "cannot open %s", _pkgdb_getPKGDB_FILE());
@@ -165,27 +183,32 @@ main(int argc, char **argv)
 	while ((key=pkgdb_iter())) {
 	    val=pkgdb_retrieve(key);
 
-	    for (s=start; *s; s++) {
-		if (strcmp(val, *s) == 0) {
-		    if (Verbose)
-			printf("Removing file %s from pkgdb\n", key);
-
-		    errno=0;
-		    if (pkgdb_remove(key)) {
-			if (errno)
-			    printf("Error removing %s from pkgdb: %s\n", key, strerror(errno));
-			else
-			    printf("Key %s not present in pkgdb?!\n", key);
-			error = 1;
+	    lpp = TAILQ_FIRST(&pkgs);
+	    if (lpp != NULL) {
+		do {
+		    if (strcmp(val, lpp->lp_name) == 0) {
+			if (Verbose)
+			    printf("Removing file %s from pkgdb\n", key);
+			
+			errno=0;
+			if (pkgdb_remove(key)) {
+			    if (errno)
+				printf("Error removing %s from pkgdb: %s\n", key, strerror(errno));
+			    else
+				printf("Key %s not present in pkgdb?!\n", key);
+			    error = 1;
+			}
 		    }
-		}
+		    
+		    lpp = TAILQ_NEXT(lpp, lp_link);
+		} while(lpp != NULL);
 	    }
 	}
 	pkgdb_close();
 
 	return error;
 	
-    } else if ((error = pkg_perform(start)) != 0) {
+    } else if ((error = pkg_perform(&pkgs)) != 0) {
 	if (Verbose)
 	    warnx("%d package deletion(s) failed", error);
 	return error;

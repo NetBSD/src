@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.16 1999/03/09 11:10:40 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.17 1999/03/22 05:02:40 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.16 1999/03/09 11:10:40 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.17 1999/03/22 05:02:40 hubertf Exp $");
 #endif
 #endif
 
@@ -187,13 +187,17 @@ cleanup(int sig)
 }
 
 int
-pkg_perform(char **pkgs)
+pkg_perform(lpkg_head_t *pkgs)
 {
-    char *pkg = *pkgs;		/* Only one arg to create */
+    char *pkg;
     char *cp;
     FILE *pkg_in, *fp;
     package_t plist;
     char *suffix;  /* What we tack on to the end of the finished package */
+    lpkg_t *lpp;
+
+    lpp = TAILQ_FIRST(pkgs);
+    pkg = lpp->lp_name;			/* Only one arg to create */
 
     /* Preliminary setup */
     sanity_check();

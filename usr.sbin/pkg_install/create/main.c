@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.12 1999/01/19 17:01:59 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1999/03/22 05:02:40 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 1999/01/19 17:01:59 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 1999/03/22 05:02:40 hubertf Exp $");
 #endif
 #endif
 
@@ -65,9 +65,9 @@ int
 main(int argc, char **argv)
 {
     int ch;
-    char **pkgs, **start;
+    lpkg_head_t pkgs;
+    lpkg_t *lpp;    
 
-    pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
 	switch(ch) {
 	case 'v':
@@ -163,18 +163,25 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
 
+    TAILQ_INIT(&pkgs);
+
     /* Get all the remaining package names, if any */
-    while (*argv)
-	*pkgs++ = *argv++;
+    while (*argv) {
+	lpp = alloc_lpkg(*argv);
+	TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	argv++;
+    }
 
     /* If no packages, yelp */
-    if (pkgs == start)
+    lpp = TAILQ_FIRST(&pkgs);
+    if (lpp == NULL)
 	warnx("missing package name"), usage();
-    *pkgs = NULL;
-    if (start[1])
-	warnx("only one package name allowed ('%s' extraneous)", start[1]),
+    lpp = TAILQ_NEXT(lpp, lp_link);
+    if (lpp != NULL)
+	warnx("only one package name allowed ('%s' extraneous)",
+	      lpp->lp_name),
 	usage();
-    if (!pkg_perform(start)) {
+    if (!pkg_perform(&pkgs)) {
 	if (Verbose)
 	    warnx("package creation failed");
 	return 1;
