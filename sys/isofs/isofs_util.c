@@ -1,88 +1,116 @@
 /*
- *	$Id: isofs_util.c,v 1.3 1993/07/19 13:40:08 cgd Exp $
+ *	$Id: isofs_util.c,v 1.4 1993/09/03 04:37:56 cgd Exp $
  */
+
+#include "param.h"
+#include "systm.h"
+#include "namei.h"
+#include "resourcevar.h"
+#include "kernel.h"
+#include "file.h"
+#include "stat.h"
+#include "buf.h"
+#include "proc.h"
+#include "conf.h"
+#include "mount.h"
+#include "vnode.h"
+#include "specdev.h"
+#include "fifo.h"
+#include "malloc.h"
+#include "dir.h"
+
+#include "iso.h"
+#include "dirent.h"
+#include "machine/endian.h"
 
 int
 isonum_711 (p)
-char *p;
+unsigned char *p;
 {
-	return (*p & 0xff);
+	return (*p);
 }
 
 int
 isonum_712 (p)
-char *p;
+signed char *p;
 {
-	int val;
-
-	val = *p;
-	if (val & 0x80)
-		val |= 0xffffff00;
-	return (val);
+	return (*p);
 }
 
 int
 isonum_721 (p)
-char *p;
+unsigned char *p;
 {
-	return ((p[0] & 0xff) | ((p[1] & 0xff) << 8));
+	/* little endian short */
+#if BYTE_ORDER != LITTLE_ENDIAN
+	printf ("isonum_721 called on non little-endian machine!\n");
+#endif
+
+	return *(short *)p;
 }
 
 int
 isonum_722 (p)
-char *p;
+unsigned char *p;
 {
-	return (((p[0] & 0xff) << 8) | (p[1] & 0xff));
+        /* big endian short */
+#if BYTE_ORDER != BIG_ENDIAN
+        printf ("isonum_722 called on non big-endian machine!\n");
+#endif
+
+	return *(short *)p;
 }
 
 int
 isonum_723 (p)
-char *p;
+unsigned char *p;
 {
-#if 0
-	if (p[0] != p[3] || p[1] != p[2]) {
-		fprintf (stderr, "invalid format 7.2.3 number\n");
-		exit (1);
-	}
+#if BYTE_ORDER == BIG_ENDIAN
+        return isonum_722 (p + 2);
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	return isonum_721 (p);
+#else
+	printf ("isonum_723 unsupported byte order!\n");
+	return 0;
 #endif
-	return (isonum_721 (p));
 }
 
 int
 isonum_731 (p)
 unsigned char *p;
 {
-	return ((p[0] & 0xff)
-		| ((p[1] & 0xff) << 8)
-		| ((p[2] & 0xff) << 16)
-		| ((p[3] & 0xff) << 24));
+        /* little endian long */
+#if BYTE_ORDER != LITTLE_ENDIAN
+        printf ("isonum_731 called on non little-endian machine!\n");
+#endif
+
+	return *(long *)p;
 }
 
 int
 isonum_732 (p)
 unsigned char *p;
 {
-	return (((p[0] & 0xff) << 24)
-		| ((p[1] & 0xff) << 16)
-		| ((p[2] & 0xff) << 8)
-		| (p[3] & 0xff));
+        /* big endian long */
+#if BYTE_ORDER != BIG_ENDIAN
+        printf ("isonum_732 called on non big-endian machine!\n");
+#endif
+
+	return *(long *)p;
 }
 
 int
 isonum_733 (p)
 unsigned char *p;
 {
-	int i;
-
-#if 0
-	for (i = 0; i < 4; i++) {
-		if (p[i] != p[7-i]) {
-			fprintf (stderr, "bad format 7.3.3 number\n");
-			exit (1);
-		}
-	}
+#if BYTE_ORDER == BIG_ENDIAN
+        return isonum_732 (p + 4);
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	return isonum_731 (p);
+#else
+	printf ("isonum_733 unsupported byte order!\n");
+	return 0;
 #endif
-	return (isonum_731 (p));
 }
 
 /*

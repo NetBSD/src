@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.5 1993/07/19 13:40:09 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.6 1993/09/03 04:37:57 cgd Exp $
  */
 
 #include "param.h"
@@ -20,6 +20,12 @@
 
 #include "iso.h"
 #include "isofs_node.h"
+
+#ifdef ISOFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 extern int enodev ();
 
@@ -145,8 +151,10 @@ isofs_mount(mp, path, data, ndp, p)
 	ndp->ni_nameiop = LOOKUP | FOLLOW;
 	ndp->ni_segflg = UIO_USERSPACE;
 	ndp->ni_dirp = args.fspec;
-	if (error = namei(ndp, p))
+	if (error = namei(ndp, p)) {
+	        DPRINTF(("isofs: can't lookup mountpoint\n"));
 		return (error);
+	}
 	devvp = ndp->ni_vp;
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -157,12 +165,15 @@ isofs_mount(mp, path, data, ndp, p)
 		return (ENXIO);
 	}
 
-	if ((mp->mnt_flag & MNT_UPDATE) == 0)
+	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		error = iso_mountfs(devvp, mp, p);
-	else {
-		if (devvp != imp->im_devvp)
+		if (error)
+		  DPRINTF(("isofs: iso_mountfs = %d\n", error));
+	} else {
+		if (devvp != imp->im_devvp) {
+		        DPRINTF(("isofs: devvp != imp->im_devvp"));
 			error = EINVAL;	/* needs translation */
-		else
+		} else
 			vrele(devvp);
 	}
 	if (error) {
@@ -181,11 +192,13 @@ isofs_mount(mp, path, data, ndp, p)
 	}
 
 	(void) copyinstr(path, imp->im_fsmnt, sizeof(imp->im_fsmnt)-1, &size);
+	DPRINTF(("isofs: imp->im_fsmnt = %s, size = %d\n", imp->im_fsmnt, size));
 	bzero(imp->im_fsmnt + size, sizeof(imp->im_fsmnt) - size);
 	bcopy((caddr_t)imp->im_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
 	    MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
+	DPRINTF(("isofs: mntfromname = %s, size = %d\n", mp->mnt_stat.f_mntfromname, size));
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	(void) isofs_statfs(mp, &mp->mnt_stat, p);
 	return (0);
@@ -225,13 +238,17 @@ iso_mountfs(devvp, mp, p)
 	 * (except for root, which might share swap device for miniroot).
 	 * Flush out any old buffers remaining from a previous use.
 	 */
-	if (error = iso_mountedon(devvp))
+	if (error = iso_mountedon(devvp)) {
+	        DPRINTF(("iso_mountfs: iso_mountedon = %d\n", error));
 		return (error);
+	}
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
 	vinvalbuf(devvp, 1);
-	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p))
+	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p)) {
+                DPRINTF(("iso_mountfs: VOP_OPEN = %d\n", error));
 		return (error);
+	}
 	needclose = 1;
 
 	/* This is the "logical sector size".  The standard says this
@@ -247,11 +264,15 @@ iso_mountfs(devvp, mp, p)
 
 		vdp = (struct iso_volume_descriptor *)bp->b_un.b_addr;
 		if (bcmp (vdp->id, ISO_STANDARD_ID, sizeof vdp->id) != 0) {
+		        DPRINTF(("isofs: vpd->id == %x != ISO_STANDARD_ID(%x)\n",
+				 vdp->id, ISO_STANDARD_ID));
 			error = EINVAL;
 			goto out;
 		}
 
 		if (isonum_711 (vdp->type) == ISO_VD_END) {
+		        DPRINTF(("isofs: vpd->type == %x == ISO_VD_END(%x)\n",
+				 isonum_711 (vdp->type), ISO_VD_END));
 			error = EINVAL;
 			goto out;
 		}
@@ -262,6 +283,8 @@ iso_mountfs(devvp, mp, p)
 	}
 
 	if (isonum_711 (vdp->type) != ISO_VD_PRIMARY) {
+	        DPRINTF(("isofs: vdp->type == %x != ISO_VD_PRIMARY(%x)\n",
+			 isonum_711 (vdp->type), ISO_VD_PRIMARY));
 		error = EINVAL;
 		goto out;
 	}
@@ -273,6 +296,7 @@ iso_mountfs(devvp, mp, p)
 	if (logical_block_size < DEV_BSIZE
 	    || logical_block_size >= MAXBSIZE
 	    || (logical_block_size & (logical_block_size - 1)) != 0) {
+	        DPRINTF(("isofs: logical_block_size = %d\n", logical_block_size));
 		error = EINVAL;
 		goto out;
 	}
@@ -508,8 +532,7 @@ isofs_fhtovp(mp, fhp, vpp)
 	if (ifhp->ifid_lbn >= imp->volume_space_size)
 		return (EINVAL);
 
-	if (ifhp->ifid_offset + sizeof (struct iso_directory_record)
-	    >= imp->im_bsize)
+	if (ifhp->ifid_offset + ISO_DIRECTORY_RECORD_SIZE >= imp->im_bsize)
 		return (EINVAL);
 
 	if (error = bread (imp->im_devvp,

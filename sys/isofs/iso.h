@@ -1,5 +1,5 @@
 /*
- *	$Id: iso.h,v 1.3 1993/07/19 13:40:01 cgd Exp $
+ *	$Id: iso.h,v 1.4 1993/09/03 04:37:52 cgd Exp $
  */
 
 #define ISODCL(from, to) (to - from + 1)
@@ -67,6 +67,9 @@ struct iso_directory_record {
 	char name_len			[ISODCL (33, 33)]; /* 711 */
 	char name			[0];
 };
+/* can't take sizeof(iso_directory_record), because of possible alignment
+   of the last entry (34 instead of 33) */
+#define ISO_DIRECTORY_RECORD_SIZE	33
 
 /* CD-ROM Fromat type */
 enum ISO_FTYPE  { ISO_FTYPE_9660, ISO_FTYPE_RRIP, ISO_FTYPE_ECMA };
@@ -111,3 +114,22 @@ int isofs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
 int isofs_vptofh __P((struct vnode *vp, struct fid *fhp));
 int isofs_init __P(());
 
+struct iso_node;
+int iso_bmap __P((struct iso_node *ip, int lblkno, daddr_t *result)); 
+int iso_blkatoff __P((struct iso_node *ip, off_t offset, char **res, struct buf **bpp)); 
+int iso_iget __P((struct iso_node *xp, ino_t ino, struct iso_node **ipp, 
+		  struct iso_directory_record *isodir));
+int iso_iput __P((struct iso_node *ip)); 
+int iso_ilock __P((struct iso_node *ip)); 
+int iso_iunlock __P((struct iso_node *ip)); 
+int isonum_711 __P((unsigned char *p)); 
+int isonum_712 __P((signed char *p)); 
+int isonum_721 __P((unsigned char *p)); 
+int isonum_722 __P((unsigned char *p)); 
+int isonum_723 __P((unsigned char *p)); 
+int isonum_731 __P((unsigned char *p)); 
+int isonum_732 __P((unsigned char *p)); 
+int isonum_733 __P((unsigned char *p)); 
+int isofs_mountroot __P((void)); 
+int iso_mountfs __P((struct vnode *devvp, struct mount *mp, struct proc *p)); 
+int iso_mountedon __P((struct vnode *vp)); 
