@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 2003/04/26 11:05:11 ragge Exp $ */
+/* $NetBSD: machdep.c,v 1.9 2003/06/27 07:39:35 he Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/04/26 11:05:11 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/06/27 07:39:35 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,7 +187,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	delay(160000000 / aucomcnrate);
 	if (aucomcnattach(&pbc->pc_cpuregt, UART0_BASE, aucomcnrate,
-	    curcpu()->ci_cpu_freq / 4,
+	    curcpu()->ci_cpu_freq / 4, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
 		panic("pb1000: unable to initialize serial console");
 #else
