@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.113 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.114 1999/11/18 05:50:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 }  
 /* TAILQ_HEAD(freelst, vnode) vnode_free_list =	vnode free list (in vnode.h) */
 struct freelst vnode_free_list = TAILQ_HEAD_INITIALIZER(vnode_free_list);
-struct freelst vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_free_list);
+struct freelst vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
 
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
