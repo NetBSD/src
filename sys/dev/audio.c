@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.63 1997/08/08 00:03:26 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.64 1997/08/11 01:38:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -56,8 +56,8 @@
 
 /*
  * Todo:
- * - Add softaudio() isr processing for wakeup, poll and signals.
- * - Add SIGIO generation for changes in the mixer device.
+ * - Add softaudio() isr processing for wakeup, poll, signals, 
+ *   and silence fill.
  */
 
 #include "audio.h"
@@ -115,6 +115,7 @@ int	audio_mmap __P((dev_t, int, int));
 int	mixer_open __P((dev_t, int, int, struct proc *));
 int	mixer_close __P((dev_t, int, int, struct proc *));
 int	mixer_ioctl __P((dev_t, int, caddr_t, int, struct proc *));
+static	void mixer_remove __P((struct audio_softc *, struct proc *p));
     
 void	audio_init_record __P((struct audio_softc *));
 void	audio_init_play __P((struct audio_softc *));
@@ -816,7 +817,7 @@ audio_close(dev, flags, ifmt, p)
 	if (flags & FWRITE)
 		sc->sc_open &= ~AUOPEN_WRITE;
 
-	sc->sc_async = 0;
+	sc->sc_async_audio = 0;
 	splx(s);
 	DPRINTF(("audio_close: done\n"));
 
@@ -1222,13 +1223,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
 		break;
+
 	case FIOASYNC:
 		if (*(int *)addr) {
-			if (sc->sc_async)
+			if (sc->sc_async_audio)
 				return (EBUSY);
-			sc->sc_async = p;
+			sc->sc_async_audio = p;
+			DPRINTF(("audio_ioctl: FIOASYNC %p\n", p));
 		} else
-			sc->sc_async = 0;
+			sc->sc_async_audio = 0;
 		break;
 
 	case AUDIO_FLUSH:
@@ -1578,7 +1581,7 @@ audio_pint(v)
 	cb->outp += cb->blksize;
 	if (cb->outp >= cb->end)
 		cb->outp = cb->start;
-	cb->stamp += cb->blksize;
+	cb->stamp += cb->blksize / sc->sc_pparams.factor;
 	if (cb->mmapped) {
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 2)
@@ -1670,8 +1673,14 @@ audio_pint(v)
 		if (cb->used <= cb->usedlow) {
 			audio_wakeup(&sc->sc_wchan);
 			selwakeup(&sc->sc_wsel);
-			if (sc->sc_async)
-				psignal(sc->sc_async, SIGIO);
+			if (sc->sc_async_audio) {
+#ifdef AUDIO_DEBUG
+				if (audiodebug > 3)
+					printf("audio_pint: sending SIGIO %p\n", 
+					       sc->sc_async_audio);
+#endif
+				psignal(sc->sc_async_audio, SIGIO);
+			}
 		}
 	}
 
@@ -1679,8 +1688,8 @@ audio_pint(v)
 	if (!sc->sc_full_duplex && sc->sc_rchan) {
 		audio_wakeup(&sc->sc_rchan);
 		selwakeup(&sc->sc_rsel);
-		if (sc->sc_async)
-			psignal(sc->sc_async, SIGIO);
+		if (sc->sc_async_audio)
+			psignal(sc->sc_async_audio, SIGIO);
 	}
 }
 
@@ -1768,8 +1777,8 @@ audio_rint(v)
 
 	audio_wakeup(&sc->sc_rchan);
 	selwakeup(&sc->sc_rsel);
-	if (sc->sc_async)
-		psignal(sc->sc_async, SIGIO);
+	if (sc->sc_async_audio)
+		psignal(sc->sc_async_audio, SIGIO);
 }
 
 int
@@ -2143,6 +2152,26 @@ mixer_open(dev, flags, ifmt, p)
 }
 
 /*
+ * Remove a process from those to be signalled on mixer activity.
+ */
+static void
+mixer_remove(sc, p)
+	struct audio_softc *sc;
+	struct proc *p;
+{
+	struct mixer_asyncs **pm, *m;
+
+	for(pm = &sc->sc_async_mixer; *pm; pm = &(*pm)->next) {
+		if ((*pm)->proc == p) {
+			m = *pm;
+			*pm = m->next;
+			free(m, M_DEVBUF);
+			return;
+		}
+	}
+}
+
+/*
  * Close a mixer device
  */
 /* ARGSUSED */
@@ -2152,8 +2181,13 @@ mixer_close(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
+	int unit = AUDIOUNIT(dev);
+	struct audio_softc *sc = audio_softc[unit];
+
 	DPRINTF(("mixer_close: unit %d\n", AUDIOUNIT(dev)));
 	
+	mixer_remove(sc, p);
+
 	return (0);
 }
 
@@ -2174,6 +2208,18 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 
 	switch (cmd) {
+	case FIOASYNC:
+		mixer_remove(sc, p); /* remove old entry */
+		if (*(int *)addr) {
+			struct mixer_asyncs *ma;
+			ma = malloc(sizeof (struct mixer_asyncs), M_DEVBUF, M_WAITOK);
+			ma->next = sc->sc_async_mixer;
+			ma->proc = p;
+			sc->sc_async_mixer = ma;
+		}
+		error = 0;
+		break;
+
 	case AUDIO_GETDEV:
 		DPRINTF(("AUDIO_GETDEV\n"));
 		error = hw->getdev(sc->hw_hdl, (audio_device_t *)addr);
@@ -2194,6 +2240,11 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 		error = hw->set_port(sc->hw_hdl, (mixer_ctrl_t *)addr);
 		if (!error && hw->commit_settings)
 			error = hw->commit_settings(sc->hw_hdl);
+		if (!error) {
+			struct mixer_asyncs *m;
+			for(m = sc->sc_async_mixer; m; m = m->next)
+				psignal(m->proc, SIGIO);
+		}
 		break;
 
 	default:
