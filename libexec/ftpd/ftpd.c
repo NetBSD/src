@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.115 2000/11/30 02:59:11 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.116 2000/11/30 06:06:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.115 2000/11/30 02:59:11 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.116 2000/11/30 06:06:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,7 @@ int	swaitint = SWAITINT;
 static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
+static int	 checkpassword(const struct passwd *, const char *);
 static void	 dolog(struct sockinet *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
@@ -218,7 +219,6 @@ static void	 lostconn(int);
 static void	 myoob(int);
 static int	 receive_data(FILE *, FILE *);
 static int	 send_data(FILE *, FILE *, off_t, int);
-static int	 valid_passwd(const struct passwd *, const char *);
 static struct passwd *sgetpwnam(const char *);
 
 int	main(int, char *[]);
@@ -865,15 +865,12 @@ pass(const char *passwd)
 			}
 		}
 #endif
-		if (!sflag && valid_passwd(pw, passwd)) {
-			rval = 0;
-			goto skip;
-		}
-		rval = 1;
+		if (!sflag)
+			rval = checkpassword(pw, passwd);
+		else
+			rval = 1;
 
  skip:
-		if (pw != NULL && pw->pw_expire && time(NULL) >= pw->pw_expire)
-			rval = 2;
 
 			/*
 			 * If rval > 0, the user failed the authentication check
@@ -2777,25 +2774,33 @@ logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
 }
 
 /*
- * determine if password is valid for user given in pw
- * returns 1 if ok, 0 if not.
+ * Determine if `password' is valid for user given in `pw'.
+ * Returns 2 if password expired, 1 if otherwise failed, 0 if ok
  */
 int
-valid_passwd(const struct passwd *pw, const char *password)
+checkpassword(const struct passwd *pw, const char *password)
 {
-	char *orig, *new;
-	int rv;
+	char	*orig, *new;
+	time_t	 expire;
 
-			/* save existing password */
-	orig = pw->pw_passwd;
-			/* don't let people without passwords in */
-	if (orig[0] == '\0')
-		return 0;
-			/* encrypt given password */
-	new = crypt(password, orig);
-			/* compare */
-	rv = strcmp(new, orig) == 0;
-	return (rv);
+	expire = 0;
+	if (pw == NULL)
+		return 1;
+
+	orig = pw->pw_passwd;		/* save existing password */
+	expire = pw->pw_expire;
+
+	if (orig[0] == '\0')		/* don't allow empty passwords */
+		return 1;
+
+	new = crypt(password, orig);	/* encrypt given password */
+	if (strcmp(new, orig) != 0)	/* compare */
+		return 1;
+
+	if (expire && time(NULL) >= expire)
+		return 2;		/* check if expired */
+
+	return 0;			/* OK! */
 }
 
 char *
