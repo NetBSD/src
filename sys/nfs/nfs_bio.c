@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.62 2001/02/18 15:52:32 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63 2001/02/27 04:37:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -259,7 +259,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 				return (error);
 			}
 		}
-		n = min(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
+		n = MIN(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
 		got_buf = 1;
 		on = 0;
 		break;
@@ -894,7 +894,7 @@ nfs_doio(bp, p)
 			len = np->n_size - ((((off_t)bp->b_blkno) << DEV_BSHIFT)
 				+ diff);
 			if (len > 0) {
-				len = min(len, uiop->uio_resid);
+				len = MIN(len, uiop->uio_resid);
 				memset((char *)bp->b_data + diff, 0, len);
 			}
 		}
