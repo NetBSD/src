@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.8 2003/08/07 10:04:13 agc Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.9 2003/10/20 13:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.8 2003/08/07 10:04:13 agc Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.9 2003/10/20 13:10:48 pooka Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -106,12 +106,12 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 	if (ctsformat && lp->d_secpercyl && lp->d_nsectors) {
 		char sbuf[64], obuf[64];
 
-		(void)snprintf(sbuf, sizeof(sbuf), "%d/%d/%d",
+		(void)snprintf(sbuf, sizeof(sbuf), "%u/%u/%u",
 		    pp->p_size/lp->d_secpercyl,
 		    (pp->p_size%lp->d_secpercyl) / lp->d_nsectors,
 		    pp->p_size%lp->d_nsectors);
 
-		(void)snprintf(obuf, sizeof(obuf), "%d/%d/%d",
+		(void)snprintf(obuf, sizeof(obuf), "%u/%u/%u",
 		    pp->p_offset/lp->d_secpercyl,
 		    (pp->p_offset%lp->d_secpercyl) / lp->d_nsectors,
 		    pp->p_offset%lp->d_nsectors);
@@ -119,7 +119,7 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 		(void)fprintf(f, " %c: %9s %9s ",
 		    'a' + i, sbuf, obuf);
 	} else {
-		(void)fprintf(f, " %c: %9d %9d ", 'a' + i,
+		(void)fprintf(f, " %c: %9u %9u ", 'a' + i,
 		    pp->p_size, pp->p_offset);
 	}
 
@@ -160,7 +160,7 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 		break;
 	}
 	if (lp->d_secpercyl != 0) {
-		(void)fprintf(f, " # (Cyl. %6d",
+		(void)fprintf(f, " # (Cyl. %6u",
 		    pp->p_offset / lp->d_secpercyl);
 
 		if (pp->p_offset % lp->d_secpercyl)
@@ -168,7 +168,7 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 		else
 		    putc(' ', f);
 
-		(void)fprintf(f, "- %6d",
+		(void)fprintf(f, "- %6u",
 		    (pp->p_offset + 
 		    pp->p_size + lp->d_secpercyl - 1) /
 		    lp->d_secpercyl - 1);
