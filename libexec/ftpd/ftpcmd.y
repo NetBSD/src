@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.49 2000/07/08 18:24:28 sommerfeld Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.50 2000/07/15 03:45:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.49 2000/07/08 18:24:28 sommerfeld Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.50 2000/07/15 03:45:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -964,7 +964,7 @@ cmd
 		}
 
 
-				/* extensions from draft-ietf-ftpext-mlst-10 */
+				/* extensions from draft-ietf-ftpext-mlst-11 */
 
 		/*
 		 * Return size of file in a format suitable for
@@ -1445,7 +1445,7 @@ struct tab cmdtab[] = {
 	{ "FEAT", FEAT, NOARGS,	1,	"(display extended features)" },
 	{ "OPTS", OPTS, STR1,	1,	"<sp> command [ <sp> options ]" },
 
-				/* from draft-ietf-ftpext-mlst-10 */
+				/* from draft-ietf-ftpext-mlst-11 */
 	{ "MDTM", MDTM, OSTR,	1,	"<sp> path-name" },
 	{ "SIZE", SIZE, OSTR,	1,	"<sp> path-name" },
 	{ "MLST", MLST, OSTR,	2,	"[ <sp> path-name ]" },
