@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1996/03/17 02:04:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1996/03/21 23:01:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -178,7 +178,7 @@ void bus_scan(parent, child, bustype)
 		ca.ca_intvec = -1;
 	}
 
-	match = cf->cf_driver->cd_match;
+	match = cf->cf_attach->ca_match;
 	if ((*match)(parent, cf, &ca) > 0) {
 		config_attach(parent, cf, &ca, bus_print);
 	}
