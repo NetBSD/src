@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_new.3,v 1.3 2001/02/26 01:26:05 blymn Exp $
+.\"	$NetBSD: menu_item_new.3,v 1.4 2001/04/29 19:07:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,12 +29,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENU_ITEM_NEW 3
-.Os BSD 4
+.Os
 .Sh NAME
-.Nm free_item
-.Nd menu library
+.Nm free_item ,
+.Nm new_item
+.Nd create or delete menu item
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
@@ -47,32 +48,32 @@
 The
 .Fn free_item
 function destroys the item and frees all allocated storage for that
-item.  The 
+item.  The
 .Fn new_item
 allocates storage for a new item then copies in the item name and
 description for the new item.  A pointer to the newly created item is
 returned to the caller.
 .Sh RETURN VALUES
-The new_item function returns NULL on failure, all other functions
-return one of the following error values:
+The
+.Fn new_item
+function returns NULL on failure, the
+.Fn free_item
+returns one of the following error values:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_BAD_ARGUMENT -compact
+.It Er E_OK
+The function was successful.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
 The header
-.Xr <menu.h>
+.Pa <menu.h>
 automatically includes both
-.Xr <curses.h>
+.Pa <curses.h>
 and
-.Xr <eti.h>
+.Pa <eti.h>
 
