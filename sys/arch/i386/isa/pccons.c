@@ -51,7 +51,7 @@
  * 14 Mar 93	Chris G. Demetriou	Moved pg() to i386/cons.c, code
  *					cleanup, removed ctl-alt-del.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.3 1993/04/08 08:26:57 deraadt Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -281,9 +281,11 @@ struct isa_device *dev;
 	u_short *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
 	u_short was;
 
+	printf("pc%d: ", dev->id_unit);
 	if (vs.color == 0)
-		printf("<mono>");
-	else	printf("<color>");
+		printf("mono");
+	else	printf("color");
+	printf("\n");
 	cursor(0);
 }
 

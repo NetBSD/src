@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.3 1993/04/08 08:26:55 deraadt Exp $";
 
 /*
  * code to manage AT bus
@@ -215,20 +215,24 @@ config_isadev(isdp, mp)
 		isdp->id_alive = (*dp->probe)(isdp);
 		if (isdp->id_alive) {
 			printf("%s%d", dp->name, isdp->id_unit);
-			(*dp->attach)(isdp);
 			printf(" at 0x%x ", isdp->id_iobase);
+			if(isdp->id_irq)
+				printf("irq %d ", ffs(isdp->id_irq)-1);
+			if (isdp->id_drq != -1)
+				printf("drq %d ", isdp->id_drq);
+			printf("on isa\n");
+
+			(*dp->attach)(isdp);
 			if(isdp->id_irq) {
 				int intrno;
 
 				intrno = ffs(isdp->id_irq)-1;
-				printf("irq %d ", intrno);
 				INTREN(isdp->id_irq);
-				if(mp)INTRMASK(*mp,isdp->id_irq);
+				if(mp)
+					INTRMASK(*mp,isdp->id_irq);
 				setidt(ICU_OFFSET+intrno, isdp->id_intr,
 					 SDT_SYS386IGT, SEL_KPL);
 			}
-			if (isdp->id_drq != -1) printf("drq %d ", isdp->id_drq);
-			printf("on isa\n");
 		}
 		return (1);
 	} else	return(0);

@@ -537,7 +537,7 @@ struct	isa_dev	*dev;
 
 
 #ifdef  __386BSD__
-	printf(" probing for scsi devices**\n");
+	printf("ahb%d: probing for scsi devices..\n", unit);
 #endif  __386BSD__
 
 	/***********************************************\
@@ -551,9 +551,6 @@ struct	isa_dev	*dev;
 	{
 		ahb_timeout(0);
 	}
-#ifdef  __386BSD__
-	printf("ahb%d",unit);
-#endif  __386BSD__
 	return;
 }
 

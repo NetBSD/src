@@ -42,7 +42,7 @@
  * 09 Aug 92	Christoph Robitschko	Correct minor number on com ports
  * 10 Feb 93	Jordan K. Hubbard	Added select code
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/ic/com.c,v 1.3 1993/03/27 09:24:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/ic/com.c,v 1.4 1993/04/08 08:26:50 deraadt Exp $";
 
 #include "com.h"
 #if NCOM > 0
@@ -153,7 +153,7 @@ struct isa_device *isdp;
 	DELAY(100);
 	if ((inb(port+com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
 		com_hasfifo |= 1 << unit;
-		printf(" fifo");
+		printf("com%d: fifo\n", isdp->id_unit);
 	}
 
 	outb(port+com_ier, 0);

@@ -255,7 +255,7 @@ wdattach(struct isa_device *dvp)
 			int i, blank;
 			if(first==0) {
 				first = 1;
-				printf(": controller <", dvp->id_unit);
+				printf("wdc%d: <", dvp->id_unit);
 
 				for (i=blank=0; i<sizeof(du->dk_params.wdp_model); i++) {
 					char c = du->dk_params.wdp_model[i];
@@ -273,15 +273,14 @@ wdattach(struct isa_device *dvp)
 				}
 				printf(">\n");
 			}
-			printf("wd%d: on wdc%d slave %d\n", lunit, dvp->id_unit, unit);
+			printf("wd%d at wdc%d slave %d\n", lunit, dvp->id_unit, unit);
 		} else {
-			/*printf("wd%d: on wdc%d slave %d -- error\n",
+			/*printf("wd%d at wdc%d slave %d -- error\n",
 				lunit, dvp->id_unit, unit);*/
 			wddrives[lunit] = 0;
 			free(du, M_TEMP);
 		}
 	}
-	printf("wdc%d", dvp->id_unit);
 	return(1);
 }
 

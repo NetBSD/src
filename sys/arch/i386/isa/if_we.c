@@ -61,7 +61,11 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.3  1993/03/24 23:54:19  cgd
+ * Revision 1.4  1993/04/08 08:26:54  deraadt
+ * dmesg output at boottime now tries to print out information as
+ * soon as it is available. The output looks much more like Sunos.
+ *
+ * Revision 1.3  1993/03/24  23:54:19  cgd
  * brought in drivers from David Greenman's (davidg@implode.rain.com)
  * BPF package
  *
@@ -342,7 +346,7 @@ weattach(is)
 	/*
 	 * Banner...
 	 */
-	printf(" %saddr %s",
+	printf("we%d: %saddr %s\n", is->id_unit,
 		(sc->we_type & WD_ETHERNET) ? "enet" : "slan",
 		ether_sprintf(sc->we_addr));
 }
