@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.16 1997/10/17 03:33:39 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.16.2.1 1997/10/22 01:06:59 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -366,7 +366,7 @@ si_obio_dma_setup(ncr_sc)
 	}
 
 	/* Tell the DMA chip where the control block is. */
-	cmd_pa = dvma_kvtopa((long)cmd, BUS_OBIO);
+	cmd_pa = dvma_kvtopa(cmd, BUS_OBIO);
 	si_obio_udc_write(si, UDC_ADR_CAR_HIGH,
 					  (cmd_pa & 0xff0000) >> 8);
 	si_obio_udc_write(si, UDC_ADR_CAR_LOW,
