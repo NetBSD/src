@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.16 1994/04/24 11:37:49 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.17 1994/04/26 19:50:37 pk Exp $
  */
 
 /*
@@ -932,4 +932,45 @@ sun_sysconf(p, uap, retval)
 		return EINVAL;
 	}
 	return 0;
+}
+
+#define SUN_RLIMIT_NOFILE	6	/* Other RLIMIT_* are the same */
+#define SUN_RLIM_NLIMITS	7
+
+struct sun_getrlimit_args {
+	int	which;
+	struct	rlimit *rlp;
+};
+
+sun_getrlimit(p, uap, retval)
+	struct proc *p;
+	struct sun_getrlimit_args *uap;
+	int *retval;
+{
+	if (uap->which >= SUN_RLIM_NLIMITS)
+		return EINVAL;
+
+	if (uap->which == SUN_RLIMIT_NOFILE)
+		uap->which = RLIMIT_NOFILE;
+
+	return getrlimit(p, uap, retval);
+}
+
+struct sun_setrlimit_args {
+	int	which;
+	struct	rlimit *rlp;
+};
+
+sun_setrlimit(p, uap, retval)
+	struct proc *p;
+	struct sun_getrlimit_args *uap;
+	int *retval;
+{
+	if (uap->which >= SUN_RLIM_NLIMITS)
+		return EINVAL;
+
+	if (uap->which == SUN_RLIMIT_NOFILE)
+		uap->which = RLIMIT_NOFILE;
+
+	return setrlimit(p, uap, retval);
 }
