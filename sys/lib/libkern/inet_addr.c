@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.2 1999/04/12 01:05:01 ross Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.3 1999/04/12 17:23:23 drochner Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -44,7 +44,7 @@
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
-u_long
+u_int32_t
 inet_addr(src)
 	const char *src;
 {
