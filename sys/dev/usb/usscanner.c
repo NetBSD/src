@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.3 2001/01/11 06:33:22 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.4 2001/01/15 03:52:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * else
  *     don't do anything.
  * Read status byte on the interrupt pipe (which doesn't seem to be
- * an interrupt pipe at all).  This operations sometimes times out.
+ * an interrupt pipe at all).  This operation sometimes times out.
  */
 
 #include <sys/param.h>
