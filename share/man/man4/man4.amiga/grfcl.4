@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfcl.4,v 1.4 2001/09/11 22:52:55 wiz Exp $
+.\"	$NetBSD: grfcl.4,v 1.5 2001/10/28 18:47:03 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,12 +43,12 @@
 .Cd "ite3 at grf3"
 .Sh DESCRIPTION
 The
-.Nm ""
+.Nm
 device driver supports graphics boards with the Cirrus Logic chipset.
 It supports the minimal ioctl's needed to run X11.
 .Sh HARDWARE
 The
-.Nm ""
+.Nm
 interface supports the following ZorroII/III expansion cards:
 .Bl -tag -width "xxxxxxxxxxxxxx" -offset indent
 .It Em Picasso II/II+
@@ -89,16 +89,16 @@ console interface special file for the internal terminal emulator
 .El
 .Sh SEE ALSO
 .Xr console 4 ,
-.Xr grfconfig 8 ,
-.Xr ite 4
+.Xr ite 4 ,
+.Xr grfconfig 8
 .Sh HISTORY
 The
-.Nm ""
+.Nm
 interface first appeared in
 .Nx 1.0
 .Pp
 .Sh BUGS
-.Nm ""
+.Nm
 will not work with Zorro II cards in the segmented mode and it does not
 support the sync-on-green flag from
 .Xr grfconfig 8 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: qn.4,v 1.6 2001/04/11 18:40:54 wiz Exp $
+.\"	$NetBSD: qn.4,v 1.7 2001/10/28 18:47:03 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1995 Mika Kortelainen. All rights reserved.
@@ -69,7 +69,6 @@ interface employs the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
 network.
-.Pp
 .Sh HARDWARE
 The
 .Nm
@@ -78,19 +77,17 @@ interface supports the following Zorro II expansion cards:
 .It Em QuickNet
 Resource Management Force's Ethernet card, manufacturer\ 2011, product\ 2
 .El
-.Pp
 .Sh NOTES
 Multicasting not done yet. If the driver happens to lock up, you may use
 .Xr ifconfig 8
 to force the driver down and up again. This usually helps.
-.Pp
-.Sh HISTORY
-The
-.Nm
-interface first appeared in
-.Nx 1.1
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 1.1
