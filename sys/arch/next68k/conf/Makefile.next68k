@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.9 1999/07/26 05:20:47 cgd Exp $
+# $NetBSD: Makefile.next68k,v 1.10 2000/01/08 12:41:14 dbj Exp $
 
 # Makefile for NetBSD
 #
@@ -21,11 +21,6 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-# since we are cross compiling, these get set wrong
-# if we don't put them here.
-MACHINE=next68k
-MACHINE_ARCH=m68k
-
 AR?=	ar
 AS?=	as
 CC?=	cc
@@ -39,8 +34,7 @@ SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
 
-DEBUG=-g
-COPTS?= -O2
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -50,10 +44,7 @@ NEXT68K=	$S/arch/next68k
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-undef -Dnext68k -D__NetBSD__
-#		-U__NeXT__ -UNeXT -U__NeXT -U_NEXT_SOURCE -U__MACH__ \
-#		-DCROSS_COMPILE_NEXTSTEP
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dnext68k
 CWARNFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format \
 		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
@@ -61,29 +52,30 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-n -Ttext 0 -e start 
-#LINKFLAGS=	-seg1addr 0x4000000
-STRIPFLAGS?=	-d
-# -S is used in gnu strip, rather than -d:
-#STRIPFLAGS=	-S
+LINKFLAGS=	-n -Ttext 0 -e start
+STRIPFLAGS=	-d
 
 %INCLUDES
 
-### Find out what to use for libkern.
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
+
+### find out what to use for libkern
 KERN_AS=	obj
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
-LIBKERN=${KERNLIB}
+LIBKERN=	${KERNLIB}
 .else
-LIBKERN=${KERNLIB_PROF}
+LIBKERN=	${KERNLIB_PROF}
 .endif
 
 ### Find out what to use for libcompat.
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
-LIBCOMPAT=${COMPATLIB}
+LIBCOMPAT=	${COMPATLIB}
 .else
-LIBCOMPAT=${COMPATLIB_PROF}
+LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
@@ -93,8 +85,10 @@ LIBCOMPAT=${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-#NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's/^\#.*//' | ${AS} -o ${.TARGET}
+
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
