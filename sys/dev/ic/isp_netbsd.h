@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.21 1999/12/20 00:37:49 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.22 2000/02/19 01:51:21 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -206,12 +206,14 @@ extern void isp_uninit __P((struct ispsoftc *));
         bcopy(src, dest, sizeof (isp_pdb_t))
 #define ISP_SWIZZLE_ICB(a, b)
 #ifdef	__sparc__
+#define	ISP_SWIZZLE_CONTINUATION(a, b)	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
 #define ISP_SWIZZLE_REQUEST(a, b)			\
 	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
         ISP_SBUSIFY_ISPREQ(a, b)
 #define ISP_UNSWIZZLE_RESPONSE(a, b)			\
 	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
 #else
+#define	ISP_SWIZZLE_CONTINUATION(a, b)
 #define ISP_SWIZZLE_REQUEST(a, b)
 #define ISP_UNSWIZZLE_RESPONSE(a, b)
 #endif
