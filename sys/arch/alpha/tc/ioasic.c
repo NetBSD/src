@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.18 1998/02/04 00:10:32 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.19 1998/05/27 00:18:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.18 1998/02/04 00:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.19 1998/05/27 00:18:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,11 +127,16 @@ struct ioasic_dev {
 	u_int32_t	iad_intrbits;
 } ioasic_devs[] = {
 	/* XXX lance name */
-	{ "lance",    0x000c0000, C(IOASIC_DEV_LANCE), IOASIC_INTR_LANCE, },
-	{ "z8530   ", 0x00100000, C(IOASIC_DEV_SCC0),  IOASIC_INTR_SCC_0, },
-	{ "z8530   ", 0x00180000, C(IOASIC_DEV_SCC1),  IOASIC_INTR_SCC_1, },
-	{ "TOY_RTC ", 0x00200000, C(IOASIC_DEV_BOGUS), 0,                 },
-	{ "AMD79c30", 0x00240000, C(IOASIC_DEV_ISDN),  IOASIC_INTR_ISDN,  },
+	{ "lance",    IOASIC_SLOT_3_START, C(IOASIC_DEV_LANCE),
+	  IOASIC_INTR_LANCE, },
+	{ "z8530   ", IOASIC_SLOT_4_START, C(IOASIC_DEV_SCC0),
+	  IOASIC_INTR_SCC_0, },
+	{ "z8530   ", IOASIC_SLOT_6_START, C(IOASIC_DEV_SCC1),
+	  IOASIC_INTR_SCC_1, },
+	{ "TOY_RTC ", IOASIC_SLOT_8_START, C(IOASIC_DEV_BOGUS),
+	  0, },
+	{ "AMD79c30", IOASIC_SLOT_9_START, C(IOASIC_DEV_ISDN),
+	  IOASIC_INTR_ISDN,  },
 };
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
