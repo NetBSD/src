@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.9 2000/12/10 03:59:00 christos Exp $	*/
+/*	$NetBSD: assert.c,v 1.10 2000/12/19 14:32:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.9 2000/12/10 03:59:00 christos Exp $");
+__RCSID("$NetBSD: assert.c,v 1.10 2000/12/19 14:32:59 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,21 @@ __RCSID("$NetBSD: assert.c,v 1.9 2000/12/10 03:59:00 christos Exp $");
 extern char *__progname;
 
 void
+__assert13(file, line, function, failedexpr)
+	const char *file, *function, *failedexpr;
+	int line;
+{
+	(void)fprintf(stderr,
+	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
+	    failedexpr, file, line,
+	    function ? ", function \"" : "",
+	    function ? function : "",
+	    function ? "\"" : "");
+	abort();
+	/* NOTREACHED */
+}
+
+void
 __assert(file, line, failedexpr)
 	const char *file, *failedexpr;
 	int line;
@@ -61,6 +76,29 @@ __assert(file, line, failedexpr)
 	    failedexpr, file, line);
 	abort();
 	/* NOTREACHED */
+}
+
+void
+__diagassert13(file, line, function, failedexpr)
+	const char *file, *function, *failedexpr;
+	int line;
+{
+		/*
+		 * XXX: check $DIAGASSERT here, and do user-defined actions
+		 */
+	(void)fprintf(stderr,
+	 "%s: assertion \"%s\" failed: file \"%s\", line %d%s%s\n",
+	     __progname, failedexpr, file, line,
+	    function ? ", function \"" : "",
+	    function ? function : "",
+	    function ? "\"" : "");
+	syslog(LOG_DEBUG|LOG_USER,
+	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s",
+	    failedexpr, file, line,
+	    function ? ", function \"" : "",
+	    function ? function : "",
+	    function ? "\"" : "");
+	return;
 }
 
 void
