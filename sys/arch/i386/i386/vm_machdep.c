@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.10 2002/10/18 02:37:52 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.11 2002/10/18 04:13:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.10 2002/10/18 02:37:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.11 2002/10/18 04:13:07 nathanw Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.10 2002/10/18 02:37:52 nathanw
 #ifndef NOREDZONE
 static void setredzone __P((struct lwp *l));
 #endif
-
-void	setredzone __P((u_short *, caddr_t));
 
 void
 cpu_proc_fork(p1, p2)
@@ -123,7 +121,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
 	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(l1, 1);
+		npxsave_lwp(l1, 1);
 #endif
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
@@ -161,7 +159,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	*tf = *l1->l_md.md_regs;
 
 #ifndef NOREDZONE
-	setredzone(p2);
+	setredzone(l2);
 #endif
 	/*
 	 * If specified, give the child a different stack.
@@ -187,7 +185,6 @@ cpu_setfunc(l, func, arg)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-	sf->sf_ppl = 0;
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
@@ -195,6 +192,7 @@ cpu_setfunc(l, func, arg)
 	pcb->pcb_ebp = 0;
 }	
 
+void
 cpu_swapin(l)
 	struct lwp *l;
 {
@@ -212,7 +210,7 @@ cpu_swapout(l)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	npxsave_proc(l, 1);
+	npxsave_lwp(l, 1);
 #endif
 }
 
@@ -234,7 +232,7 @@ cpu_exit(struct lwp *l, int proc)
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(l, 0);
+		npxsave_lwp(l, 0);
 #endif
 
 #ifdef MTRR
@@ -253,7 +251,7 @@ cpu_exit(struct lwp *l, int proc)
 	 * vmspace's context until the switch to the idle process
 	 * in switch_exit().
 	 */
-	pmap_deactivate(p);
+	pmap_deactivate(l);
 
 	uvmexp.swtch++;
 	if (proc)
@@ -335,10 +333,10 @@ cpu_coredump(l, vp, cred, chdr)
  * Set a red zone in the kernel stack after the u. area.
  */
 static void
-setredzone(struct proc *p)
+setredzone(struct lwp *l)
 {
-	pmap_remove(pmap_kernel(), (vaddr_t)p->p_addr + PAGE_SIZE,
-	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
+	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
+	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
 }
 #endif
