@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.71 2004/09/24 13:10:46 he Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.72 2004/10/07 19:30:28 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.71 2004/09/24 13:10:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.72 2004/10/07 19:30:28 erh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,9 +292,7 @@ linux_sys_utime(l, v, retval)
 }
 
 /*
- * waitpid(2). Passed on to the NetBSD call, surrounded by code to
- * reserve some space for a NetBSD-style wait status, and converting
- * it to what Linux wants.
+ * waitpid(2).  Just forward on to linux_sys_wait4 with a NULL rusage.
  */
 int
 linux_sys_waitpid(l, v, retval)
@@ -307,36 +305,14 @@ linux_sys_waitpid(l, v, retval)
 		syscallarg(int *) status;
 		syscallarg(int) options;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_wait4_args w4a;
-	int error, *status, tstat;
-	caddr_t sg;
+	struct linux_sys_wait4_args linux_w4a;
 
-	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p, 0);
-		status = (int *) stackgap_alloc(p, &sg, sizeof status);
-	} else
-		status = NULL;
+	SCARG(&linux_w4a, pid) = SCARG(uap, pid);
+	SCARG(&linux_w4a, status) = SCARG(uap, status);
+	SCARG(&linux_w4a, options) = SCARG(uap, options);
+	SCARG(&linux_w4a, rusage) = NULL;
 
-	SCARG(&w4a, pid) = SCARG(uap, pid);
-	SCARG(&w4a, status) = status;
-	SCARG(&w4a, options) = SCARG(uap, options);
-	SCARG(&w4a, rusage) = NULL;
-
-	if ((error = sys_wait4(l, &w4a, retval)))
-		return error;
-
-	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
-
-	if (status != NULL) {
-		if ((error = copyin(status, &tstat, sizeof tstat)))
-			return error;
-
-		bsd_to_linux_wstat(&tstat);
-		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
-	}
-
-	return 0;
+	return linux_sys_wait4(l, &linux_w4a, retval);
 }
 
 int
