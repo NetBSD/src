@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.5 1998/01/29 03:23:41 mouse Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.6 1999/05/03 15:37:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashrdi3.c,v 1.5 1998/01/29 03:23:41 mouse Exp $");
+__RCSID("$NetBSD: ashrdi3.c,v 1.6 1999/05/03 15:37:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,13 +71,13 @@ __ashrdi3(a, shift)
 		 * LONG_BITS is undefined, so we shift (LONG_BITS-1),
 		 * then 1 more, to get our answer.
 		 */
-		s = (aa.sl[H] >> (LONG_BITS - 1)) >> 1;
-		aa.ul[L] = aa.sl[H] >> (shift - LONG_BITS);
+		s = ((u_long)aa.sl[H] >> (LONG_BITS - 1)) >> 1;
+		aa.ul[L] = (u_long)aa.sl[H] >> (shift - LONG_BITS);
 		aa.ul[H] = s;
 	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
 		    (aa.ul[H] << (LONG_BITS - shift));
-		aa.sl[H] >>= shift;
+		aa.sl[H] = (u_long)aa.sl[H] >> shift;
 	}
 	return (aa.q);
 }
