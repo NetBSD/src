@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.117 2002/10/01 15:00:04 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.118 2002/10/21 03:58:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.117 2002/10/01 15:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.118 2002/10/21 03:58:07 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -559,18 +559,29 @@ nfs_mount(mp, path, data, ndp, p)
 	int error;
 	struct nfs_args args;
 	struct mbuf *nam;
+	struct nfsmount *nmp = VFSTONFS(mp);
+	struct sockaddr *sa;
 	struct vnode *vp;
 	char *pth, *hst;
 	size_t len;
 	u_char *nfh;
 
+	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	if (error)
+		return (error);
+
 	if (mp->mnt_flag & MNT_GETARGS) {
-		struct nfsmount *nmp = VFSTONFS(mp);
+
 		if (nmp == NULL)
-			return EIO;
+			return (EIO);
+		if (args.addr != NULL) {
+			sa = mtod(nmp->nm_nam, struct sockaddr *);
+			error = copyout(sa, args.addr, sa->sa_len);
+			if (error)
+				return (error);
+		}
 		args.version = NFS_ARGSVERSION;
-		args.addr = NULL;
-		args.addrlen = 0;
+		args.addrlen = sa->sa_len;
 		args.sotype = nmp->nm_sotype;
 		args.proto = nmp->nm_soproto;
 		args.fh = NULL;
@@ -586,12 +597,9 @@ nfs_mount(mp, path, data, ndp, p)
 		args.leaseterm = nmp->nm_leaseterm;
 		args.deadthresh = nmp->nm_deadthresh;
 		args.hostname = NULL;
-		return copyout(&args, data, sizeof(args));
+		return (copyout(&args, data, sizeof(args)));
 	}
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
-	if (error)
-		return (error);
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
 #ifdef NFS_V2_ONLY
@@ -601,8 +609,6 @@ nfs_mount(mp, path, data, ndp, p)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
-		struct nfsmount *nmp = VFSTONFS(mp);
-
 		if (nmp == NULL)
 			return (EIO);
 		/*

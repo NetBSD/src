@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.35 2002/10/01 03:08:56 itojun Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.36 2002/10/21 03:58:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.35 2002/10/01 03:08:56 itojun Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.36 2002/10/21 03:58:08 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,7 @@ mount_nfs(argc, argv)
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	struct nfsd_cargs ncd;
+	struct sockaddr_storage sa;
 	int mntflags, altflags, i, nfssvc_flag, num;
 	char *name, *p, *spec, *ospec;
 #ifdef NFSKERB
@@ -448,7 +449,11 @@ mount_nfs(argc, argv)
 		err(1, "strdup");
 	}
 
-	if ((mntflags & MNT_GETARGS) == 0) {
+	if ((mntflags & MNT_GETARGS) != 0) {
+		memset(&sa, 0, sizeof(sa));
+		nfsargsp->addr = (struct sockaddr *)&sa;
+		nfsargsp->addrlen = sizeof(sa);
+	} else {
 		if (!getnfsargs(spec, nfsargsp))
 			exit(1);
 	}
@@ -464,7 +469,7 @@ mount_nfs(argc, argv)
 		err(1, "%s on %s", ospec, name);
 	if (mntflags & MNT_GETARGS) {
 		shownfsargs(nfsargsp);
-		return 0;
+		return (0);
 	}
 		
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
@@ -573,14 +578,27 @@ shownfsargs(nfsargsp)
 	const struct nfs_args *nfsargsp;
 {
 	char fbuf[2048];
+	char host[NI_MAXHOST], serv[NI_MAXSERV];
+	int error;
 
 	(void)snprintb(fbuf, sizeof(fbuf), NFSMNT_BITS, nfsargsp->flags);
-	printf("version=%d, addrlen=%d, sotype=%d, proto=%d, fhsize=%d, "
+	if (nfsargsp->addr != NULL) {
+		error = getnameinfo(nfsargsp->addr, nfsargsp->addrlen, host,
+		    sizeof(host), serv, sizeof(serv),
+		    NI_NUMERICHOST | NI_NUMERICSERV);
+		if (error != 0)
+			warnx("getnameinfo: %s", gai_strerror(error));
+	} else
+		error = -1;
+
+	printf("version=%d", nfsargsp->version);
+	if (error == 0)
+		printf(", addr=%s, port=%s, addrlen=%d",
+		    host, serv, nfsargsp->addrlen);
+	printf(", sotype=%d, proto=%d, fhsize=%d, "
 	    "flags=%s, wsize=%d, rsize=%d, readdirsize=%d, timeo=%d, "
 	    "retrans=%d, maxgrouplist=%d, readahead=%d, leaseterm=%d, "
 	    "deadthresh=%d\n",
-	    nfsargsp->version,
-	    nfsargsp->addrlen,
 	    nfsargsp->sotype,
 	    nfsargsp->proto,
 	    nfsargsp->fhsize,
