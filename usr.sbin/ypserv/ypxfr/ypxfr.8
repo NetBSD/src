@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypxfr.8,v 1.2 1997/10/02 14:17:02 lukem Exp $
+.\"	$NetBSD: ypxfr.8,v 1.3 1997/10/07 14:23:59 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -53,17 +53,26 @@ The options are as follows:
 .It Fl b
 Preserve the entry in the database informing a YP server to use
 DNS to get information about unknown hosts. This option will only have
-effect on the two maps hosts.byname and hosts.byaddr.
+effect on the maps
+.Pa hosts.byname
+and
+.Pa hosts.byaddr .
 .It Fl c
-Don't send a "Clear current map" to local ypserv process. Useful if ypserv
-isn't running localy to avoid timeout message. 
+Don't send a "Clear current map" to local
+.Nm ypserv
+process. Useful if
+.Nm ypserv
+isn't running locally to avoid timeout message. 
 .It Fl C Ar tid prog ipadd port
-This option is only used by ypserv. This is to open communication with
-an yppush on another host.
+This option is only used by
+.Nm ypserv .
+This is to open communication with
+.Nm yppush
+on another host.
 .It Fl d Ar domain
-Don't use default domain, use the specifiyed domain.
+Don't use default domain, use the specified domain.
 .It Fl f 
-Force map transfer, even if version of master is older than local copy.
+Force map transfer, even if the master's version is older than the local copy.
 .It Fl h Ar host
 Get map from host insteed of the maps master host.
 .It Fl s Ar domain
