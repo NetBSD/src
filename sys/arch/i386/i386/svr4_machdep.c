@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.31 1998/01/22 00:39:28 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.32 1998/01/24 12:42:25 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -61,6 +61,16 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+
+void
+svr4_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+
+	setregs(p, epp, stack);
+}
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
