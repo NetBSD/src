@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.3 2001/06/13 23:10:31 wiz Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.4 2001/07/29 21:28:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,11 +72,11 @@ extern int linux_sp_wrap_entry;
 /*
  * Alpha and PowerPC specific linux copyargs function.
  */
-void *
-ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
+int
+ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	size_t len;
@@ -88,6 +88,7 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 	char	linux_sp_wrap_code[LINUX_SP_WRAP];
 	unsigned long*	cga;
 #endif
+	int error;
 
 #ifdef LINUX_SHIFT
 	/* 
@@ -95,12 +96,11 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 	 * aligned address. And we need one more 16 byte shift if it was already
 	 * 16 bytes aligned,	
 	 */
-	(unsigned long)stack = ((unsigned long)stack - 1) & ~LINUX_SHIFT; 
+	*stackp = (char *)((unsigned long)*stackp - 1) & ~LINUX_SHIFT; 
 #endif
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return(NULL);
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 #ifdef LINUX_SHIFT
 	/* 
@@ -108,7 +108,8 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 	 * expects the ELF auxiliary table to start on a 16 bytes boundary on
 	 * the PowerPC.
 	 */
-	stack = (void *)(((unsigned long) stack + LINUX_SHIFT) & ~LINUX_SHIFT);
+	*stackp = (char *)(((unsigned long)(*stackp) + LINUX_SHIFT)
+	    & ~LINUX_SHIFT);
 #endif 
 
 	memset(ai, 0, sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES);
@@ -205,20 +206,21 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stack, argp)
 
 #ifdef LINUX_SP_WRAP
 	if (prog_entry != NULL) 
-		prog_entry->a_v = (unsigned long)stack + len;
+		prog_entry->a_v = (unsigned long)(*stackp) + len;
 #endif
 
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len; 
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len; 
 
 #ifdef LINUX_SP_WRAP
 	if (prog_entry != NULL) {
-		if (copyout(linux_sp_wrap_code, stack, LINUX_SP_WRAP))
-			return NULL;
-		stack = (caddr_t)stack + LINUX_SP_WRAP;
+		if ((error = copyout(linux_sp_wrap_code, *stackp,
+		    LINUX_SP_WRAP)) != 0)
+			return error;
+		*stackp += LINUX_SP_WRAP;
 	}
 #endif
 
-	return(stack);
+	return 0;
 }
