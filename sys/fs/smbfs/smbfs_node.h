@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.6 2003/02/24 21:52:53 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.7 2003/02/27 09:14:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -48,6 +48,8 @@
 /*efine	NNEW			0x0008*//* smb/vnode has been allocated */
 #define	NREFPARENT		0x0010	/* node holds parent from recycling */
 
+#define SMBFS_ATTRTIMO		5	/* Attribute cache timeout in sec */
+
 struct smbfs_fctx;
 
 struct smbnode {
@@ -92,10 +94,6 @@ int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp);
 #define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
 
-#ifndef __NetBSD__
-int  smbfs_getpages(void *);
-int  smbfs_putpages(void *);
-#endif
 int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
 int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
 void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);
