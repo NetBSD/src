@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.53 1999/11/28 22:49:53 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.54 2000/01/16 09:37:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -1048,14 +1048,14 @@ usbd_dopoll(iface)
 }
 
 void
-usbd_set_polling(iface, on)
-	usbd_interface_handle iface;
+usbd_set_polling(dev, on)
+	usbd_device_handle dev;
 	int on;
 {
 	if (on)
-		iface->device->bus->use_polling++;
+		dev->bus->use_polling++;
 	else
-		iface->device->bus->use_polling--;
+		dev->bus->use_polling--;
 }
 
 
