@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.6.4 2001/08/08 18:13:22 jhawk Exp $	*/
+/*	$NetBSD: main.c,v 1.25.6.5 2002/01/16 09:41:39 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25.6.4 2001/08/08 18:13:22 jhawk Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.6.5 2002/01/16 09:41:39 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ main(argc, argv)
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:ef:h:k:L:nr:s:ST:uWw")) != -1)
+	    "0123456789B:b:cd:ef:h:k:l:L:nr:s:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -180,6 +180,11 @@ main(argc, argv)
 
 		case 'k':
 			readblksize = numarg("read block size", 0, 64) * 1024;
+			break;
+
+		case 'l':		/* autoload after eject full tapes */
+			eflag = 1;
+			lflag = numarg("timeout (in seconds)", 1, 0);
 			break;
 
 		case 'L':
@@ -581,7 +586,7 @@ usage()
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
 "usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density]",
 "            [-f file] [-h level] [-k read block size] [-L label]",
-"            [-r read cache size] [-s feet] [-T date] filesystem",
+"            [-l timeout] [-r read cache size] [-s feet] [-T date] filesystem",
 "       dump [-W | -w]");
 	exit(1);
 }
