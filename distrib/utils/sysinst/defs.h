@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.81 2003/06/06 14:31:22 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.82 2003/06/06 17:05:02 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,8 +107,6 @@ typedef struct _partinfo {
 } partinfo;	/* Single partition from a disklabel */
 
 /* variables */
-
-EXTERN char m_continue[STRSIZE] INIT("");
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
 EXTERN char machine[SSTRSIZE] INIT(MACH);
@@ -229,9 +227,6 @@ EXTERN char distfs_mnt[STRSIZE] INIT ("/mnt2");
 EXTERN int  mnt2_mounted INIT(0);
 
 EXTERN char dist_postfix[STRSIZE] INIT(".tgz");
-
-/* Vars for runing commands ... */
-EXTERN char command[STRSIZE];
 
 /* Access to network information */
 EXTERN char net_devices[STRSIZE] INIT("");
