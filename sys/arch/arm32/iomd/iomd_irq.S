@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.25 2001/07/10 20:10:49 bjh21 Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.26 2001/07/28 12:28:56 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -270,6 +270,7 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
+	addeq	lr, pc, #nextirq - . - 8   /* return Address */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
 #ifdef IRQSTATS
@@ -305,7 +306,7 @@ nextinchain:
 	/* if it was it'll just fall through this: */
 	teqne	r6, #0x00000000
 	bne	irqchainloop
-
+nextirq:
 	/* Check for next irq */
 	rsb	r4, r11, #0
 	ands	r10, r11, r4
