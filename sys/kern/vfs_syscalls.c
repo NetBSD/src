@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.151 2000/03/03 05:21:04 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.152 2000/03/15 16:30:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2712,8 +2712,6 @@ sys_fdatasync(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, p);
-	if (error == 0 && bioops.io_fsync != NULL)
-		(*bioops.io_fsync)(vp);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
