@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.11 2002/04/27 20:24:49 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.12 2002/05/18 21:42:40 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.11 2002/04/27 20:24:49 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35.2.12 2002/05/18 21:42:40 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ struct {
  */
 struct i386_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
-	_bus_dmamap_create, 
+	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
 	_bus_dmamap_load_mbuf,
@@ -481,6 +481,7 @@ pci_intr_map(pa, ihp)
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
 #if NIOAPIC > 0
+	int rawpin = pa->pa_rawintrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct mp_intr_map *mip;
 	int bus, dev, func;
@@ -528,13 +529,11 @@ pci_intr_map(pa, ihp)
 	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		/*
-		 * Assumes 1:1 mapping between PCI bus numbers and
+		 * Note: assumes 1:1 mapping between PCI bus numbers and
 		 * the numbers given by the MP bios.
-		 * XXX Is this a valid assumption?
 		 */
-		int mpspec_pin = (dev<<2)|(pin-1);
-		
-		
+		int mpspec_pin = (dev<<2)|(rawpin-1);
+
 		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
 			if (mip->bus_pin == mpspec_pin) {
 				*ihp = mip->ioapic_ih | line;
@@ -544,12 +543,12 @@ pci_intr_map(pa, ihp)
 		if (mip == NULL) {
 			printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
 			    bus, dev, func, pin, line);
-			
+
 			printf("pci_intr_map: no MP mapping found\n");
 		}
 	}
 #endif
-	
+
 	*ihp = line;
 	return 0;
 
@@ -582,7 +581,7 @@ pci_intr_string(pc, ih)
 	sprintf(irqstr, "irq %d", ih&0xff);
 #endif
 	return (irqstr);
-	
+
 }
 
 const struct evcnt *
