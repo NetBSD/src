@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.3 1998/02/06 06:06:57 perry Exp $
+.\"   $NetBSD: apm.4,v 1.4 1998/09/02 21:23:52 jtk Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -52,7 +52,8 @@ protected mode operation.  The
 kernel start-up routines establish the 32-bit protected mode connection
 to the APM BIOS.
 .Pp
-The APM driver may be adjusted with several configuration options:
+The APM driver's behavior may be adjusted by specifying any of the
+following kernel configuration options:
 .Bl -tag -width indent -compact
 .It Dv APM_NO_IDLE
 Do not call the BIOS CPU idle function from the system idle loop.  (Some
