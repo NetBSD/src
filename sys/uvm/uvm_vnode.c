@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.45 2001/02/18 19:40:25 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46 2001/02/22 01:02:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1015,6 +1015,7 @@ uvm_vnp_setsize(vp, newsize)
 	voff_t newsize;
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
+	voff_t pgend = round_page(newsize);
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
 	simple_lock(&uvn->u_obj.vmobjlock);
@@ -1026,8 +1027,8 @@ uvm_vnp_setsize(vp, newsize)
 	 * toss some pages...
 	 */
 
-	if (uvn->u_size > newsize && uvn->u_size != VSIZENOTSET) {
-		(void) uvn_flush(&uvn->u_obj, newsize, 0, PGO_FREE);
+	if (uvn->u_size > pgend && uvn->u_size != VSIZENOTSET) {
+		(void) uvn_flush(&uvn->u_obj, pgend, 0, PGO_FREE);
 	}
 	uvn->u_size = newsize;
 	simple_unlock(&uvn->u_obj.vmobjlock);
