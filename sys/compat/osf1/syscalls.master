@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1999/04/29 22:08:49 cgd Exp $
+	$NetBSD: syscalls.master,v 1.23 1999/04/30 04:33:51 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -50,9 +50,8 @@
 			    u_int nbyte); }
 5	UNIMPL		old open
 6	NOARGS		{ int sys_close(int fd); }
-; XXX
-7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
-			    struct rusage *rusage); }
+7	STD		{ int osf1_sys_wait4(int pid, int *status, \
+			    int options, struct osf1_rusage *rusage); }
 8	UNIMPL		old creat
 9	NOARGS		{ int sys_link(const char *path, const char *link); }
 10	NOARGS		{ int sys_unlink(const char *path); }
@@ -178,7 +177,7 @@
 102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
 			    int flags); }
 103	NOARGS		{ int compat_13_sys_sigreturn(\
-			    struct sigcontext *sigcntxp); }
+			    struct sigcontext13 *sigcntxp); }
 104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    caddr_t val, int valsize); }
@@ -266,8 +265,10 @@
 162	UNIMPL
 163	UNIMPL		async_daemon
 164	UNIMPL		getfh
-165	UNIMPL		getdomainname
-166	UNIMPL		setdomainname
+165	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); }
+166	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); }
 167	UNIMPL
 168	UNIMPL
 169	UNIMPL		exportfs
