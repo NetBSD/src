@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.229 2003/01/14 13:56:07 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.230 2003/01/17 14:15:17 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7147,7 +7147,7 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pm = p->p_vmspace->vm_map.pmap;
 	int s;
 
 	/*
@@ -7160,18 +7160,18 @@ pmap_activate(p)
 	s = splvm();
 	if (p == curproc) {
 		write_user_windows();
-		if (pmap->pm_ctx == NULL) {
-			ctx_alloc(pmap);	/* performs setcontext() */
+		if (pm->pm_ctx == NULL) {
+			ctx_alloc(pm);	/* performs setcontext() */
 		} else {
 			/* Do any cache flush needed on context switch */
 			(*cpuinfo.pure_vcache_flush)();
-			setcontext(pmap->pm_ctxnum);
+			setcontext(pm->pm_ctxnum);
 		}
-	}
 #if defined(MULTIPROCESSOR)
-	if (pmap != pmap_kernel())
-		PMAP_SET_CPUSET(pmap, &cpuinfo);
+		if (pm != pmap_kernel())
+			PMAP_SET_CPUSET(pm, &cpuinfo);
 #endif
+	}
 	splx(s);
 }
 
@@ -7183,15 +7183,15 @@ pmap_deactivate(p)
 	struct proc *p;
 {
 #if defined(MULTIPROCESSOR)
-	pmap_t pmap;
+	pmap_t pm;
 
 	if (p && p->p_vmspace &&
-	    (pmap = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
-		if (pmap->pm_ctx)
-			sp_tlb_flush(0, pmap->pm_ctxnum, ASI_SRMMUFP_L0);
+	    (pm = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
+		if (pm->pm_ctx && CPU_HAS_SRMMU)
+			sp_tlb_flush(0, pm->pm_ctxnum, ASI_SRMMUFP_L0);
 
 		/* we no longer need broadcast tlb flushes for this pmap. */
-		PMAP_CLR_CPUSET(pmap, &cpuinfo);
+		PMAP_CLR_CPUSET(pm, &cpuinfo);
 	}
 #endif
 }
