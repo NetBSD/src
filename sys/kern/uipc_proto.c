@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_proto.c	7.6 (Berkeley) 5/9/91
- *	$Id: uipc_proto.c,v 1.2 1993/05/20 02:55:27 cgd Exp $
+ *	$Id: uipc_proto.c,v 1.2.4.1 1993/11/10 20:05:31 mycroft Exp $
  */
 
 #include "param.h"
@@ -69,5 +69,5 @@ struct protosw unixsw[] = {
 int	unp_externalize(), unp_dispose();
 
 struct domain unixdomain =
-    { AF_UNIX, "unix", 0, unp_externalize, unp_dispose,
+    { AF_LOCAL, "unix", 0, unp_externalize, unp_dispose,
       unixsw, &unixsw[sizeof(unixsw)/sizeof(unixsw[0])] };

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fifo_vnops.c	7.7 (Berkeley) 4/15/91
- *	$Id: fifo_vnops.c,v 1.5 1993/06/27 06:01:28 andrew Exp $
+ *	$Id: fifo_vnops.c,v 1.5.4.1 1993/11/10 20:04:49 mycroft Exp $
  */
 
 #include "param.h"
@@ -136,13 +136,13 @@ fifo_open(vp, mode, cred, p)
 		vp->v_fifoinfo = fip;
 		fip->fi_readers=0;
 		fip->fi_writers=0;
-		if (error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0)) {
+		if (error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) {
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
-		if (error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0)) {
+		if (error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) {
 			(void)soclose(rso);
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
