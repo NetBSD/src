@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.25 2004/12/27 20:07:09 thorpej Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.26 2004/12/28 00:08:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -171,8 +171,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 					/* catch other enumerations for gcc */
 					break;
 				}
-				if (ELF_ST_BIND(sym.st_info) !=
-				    STB_LOCAL)
+				if (ELF_ST_BIND(sym.st_info) != STB_LOCAL)
 					p->n_type |= N_EXT;
 			} else {
 				nent++;
@@ -265,7 +264,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 				 * Translate (roughly) from ELF to nlist
 				 */
 				p->n_value = symp[i].st_value;
-				switch (ELFDEFNNAME(ST_TYPE)(symp[i].st_info)) {
+				switch (ELF_ST_TYPE(symp[i].st_info)) {
 				case STT_NOTYPE:
 					p->n_type = N_UNDF;
 					break;
@@ -282,8 +281,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 					/* catch other enumerations for gcc */
 					break;
 				}
-				if (ELFDEFNNAME(ST_BIND)(symp[i].st_info) !=
-				    STB_LOCAL)
+				if (ELF_ST_BIND(symp[i].st_info) != STB_LOCAL)
 					p->n_type |= N_EXT;
 				p->n_desc = 0;			/* XXX */
 				p->n_other = 0;			/* XXX */
