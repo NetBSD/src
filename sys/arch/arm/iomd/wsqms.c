@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.4 2002/04/04 01:03:23 reinoud Exp $ */
+/* $NetBSD: wsqms.c,v 1.4.2.1 2002/07/16 00:55:30 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -44,9 +44,13 @@
 
 #include <sys/param.h>
 
+__KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.4.2.1 2002/07/16 00:55:30 gehenna Exp $");
+
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h> 
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h> 
@@ -67,13 +71,12 @@
 #define QMS_MOUSEY	1		/* 16 bits Y register */
 #define QMS_BUTTONS	0 		/* mouse buttons in bits 4,5,6 */
 
-#define MAX_XYREG	4096
-
 /* forward declarations */
 
-static int wsqms_enable		__P((void *cookie));
-static int wsqms_ioctl		__P((void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p));
-static void wsqms_disable	__P((void *cookie));
+static int wsqms_enable(void *);
+static int wsqms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void wsqms_disable(void *cookie);
+static void wsqms_intr(void *arg);
 
 
 static struct wsmouse_accessops wsqms_accessops = {
@@ -82,58 +85,56 @@ static struct wsmouse_accessops wsqms_accessops = {
 
 
 void
-wsqms_attach(sc, self)
-	struct wsqms_softc *sc;
-	struct device *self;
+wsqms_attach(struct wsqms_softc *sc)
 {
 	struct wsmousedev_attach_args wsmouseargs;
 
 	/* set up wsmouse attach arguments */
 	wsmouseargs.accessops = &wsqms_accessops;
-	wsmouseargs.accesscookie = self;
+	wsmouseargs.accesscookie = sc;
 
 	printf("\n");
 
-	sc->sc_wsmousedev = config_found(self, &wsmouseargs, wsmousedevprint);
+	sc->sc_wsmousedev =
+	    config_found(&sc->sc_dev, &wsmouseargs, wsmousedevprint);
+
+	callout_init(&sc->sc_callout);
 }
 
 
 static int
-wsqms_enable(cookie)
-	void *cookie;
+wsqms_enable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
+	int b;
 
-	sc->sc_flags |= WSQMS_ENABLED;
+	/* We don't want the mouse to warp on open. */
+	sc->lastx = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	sc->lasty = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
+	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
 
-	/* enable interrupts */
-	sc->sc_intenable(sc, 1);
+	/* patch up the buttons */
+	b >>= 4;
+	sc->lastb = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
+	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 	return 0;
 }
 
 
 static void
-wsqms_disable(cookie)
-	void *cookie;
+wsqms_disable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
 
-	sc->sc_flags &= ~WSQMS_ENABLED;
-
-	/* disable interrupts */
-	sc->sc_intenable(sc, 0);
+	callout_stop(&sc->sc_callout);
 }
 
 
 static int
-wsqms_ioctl(cookie, cmd, data, flag, p)
-	void *cookie;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsqms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(int *)data = WSMOUSE_TYPE_ARCHIMEDES;
@@ -144,47 +145,35 @@ wsqms_ioctl(cookie, cmd, data, flag, p)
 }
 
 
-/* We can really put in the mouse XY as absolutes ? */
-int
-wsqms_intr(arg)
-	void *arg;
+static void
+wsqms_intr(void *arg)
 {
 	struct wsqms_softc *sc = arg;
-	int x, y, b;
+	int b;
+	u_int16_t x, y;
+	int16_t dx, dy;
 
-	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX) & 0xffff;
-	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY) & 0xffff;
+	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
 	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
-	b >>= 4;
-	if (x & 0x8000) x |= 0xffff0000;
-	if (y & 0x8000) y |= 0xffff0000;
 
 	/* patch up the buttons */
+	b >>= 4;
 	b = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
 	if ((x != sc->lastx) || (y != sc->lasty) || (b != sc->lastb)) {
-		/* do we have to bound x and y ? => yes */
-		if (x < -MAX_XYREG) x = -MAX_XYREG;
-		if (x >  MAX_XYREG) x =  MAX_XYREG;
-		if (y < -MAX_XYREG) y = -MAX_XYREG;
-		if (y >  MAX_XYREG) y =  MAX_XYREG;
-
-		/* write the bounded values back */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, x);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, y);
-
-		wsmouse_input(sc->sc_wsmousedev, b, x - sc->lastx, y - sc->lasty, 0,
-				WSMOUSE_INPUT_DELTA);
-		wsmouse_input(sc->sc_wsmousedev, b, x, y, 0,
-				WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+		/* This assumes that int16_t is two's complement. */
+		dx = x - sc->lastx;
+		dy = y - sc->lasty;
+		wsmouse_input(sc->sc_wsmousedev, b, dx, dy, 0,
+		    WSMOUSE_INPUT_DELTA);
 
 		/* save old values */
 		sc->lastx = x;
 		sc->lasty = y;
 		sc->lastb = b;
 	};
-
-	return (0);	/* pass on */
+	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11.2.1 2002/07/14 17:45:53 gehenna Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11.2.2 2002/07/16 00:55:23 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,10 +128,14 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 #ifdef DEBUG_DMA
 	printf("dmamap_destroy: t=%p map=%p\n", t, map);
 #endif	/* DEBUG_DMA */
-#ifdef DIAGNOSTIC
-	if (map->dm_nsegs > 0)
-		printf("bus_dmamap_destroy() called for map with valid mappings\n");
-#endif	/* DIAGNOSTIC */
+
+	/*
+	 * Explicit unload.
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+	map->_dm_proc = NULL;
+
 	free(map, M_DEVBUF);
 }
 
