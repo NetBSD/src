@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.45 2000/11/02 00:42:38 eeh Exp $ */
+/*	$NetBSD: scn.c,v 1.46 2000/12/19 16:23:57 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -655,7 +655,7 @@ scn_config(unit, ispeed, ospeed, mr1, mr2)
 			}
 		}
 	}
-	return EINVAL;	
+	return EINVAL;
 
     gotit:
 	s = spltty();
@@ -1005,7 +1005,7 @@ scnattach(parent, self, aux)
 		printf("%c flags %d", delim, sc->sc_swflags);
 		delim = ',';
 	}
-		
+
 #ifdef KGDB
 	if (kgdb_dev == makedev(scnmajor, unit)) {
 		if (scnconsole == unit)
@@ -1127,7 +1127,7 @@ scnopen(dev, flag, mode, p)
 		 *
 		 * This used to be more compact (while loop with lots of nots)
 		 * but it was incomprehensible.
-		 * 
+		 *
 		 * "getty" is the classic case of a program that waits here...
 		 */
 		for (;;) {
@@ -1271,7 +1271,7 @@ dcd_int(sc, tp, new)
 #endif
 
 /* XXX set some flag to have some lower (soft) int call line discipline? */
-	if (!(*linesw[(u_char) tp->t_line].l_modem) (tp, new == 0? 1: 0)) {
+	if (!(*tp->t_linesw->l_modem) (tp, new == 0? 1: 0)) {
 		SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
 	}
 }
@@ -1351,7 +1351,7 @@ scnintr(arg)
 					scn_setchip(sc0);
 				}
 
-				(*linesw[tp0->t_line].l_start) (tp0);
+				(*tp0->t_linesw->l_start) (tp0);
 				rs_work = TRUE;
 			}
 		}
@@ -1369,7 +1369,7 @@ scnintr(arg)
 					scn_setchip(sc1);
 				}
 
-				(*linesw[tp1->t_line].l_start) (tp1);
+				(*tp1->t_linesw->l_start) (tp1);
 				rs_work = TRUE;
 			}
 		}
@@ -1603,7 +1603,7 @@ scnsoft(arg)
 					SCN_OP_BIS(sc, sc->sc_op_rts);
 					splx(s);
 				}
-					
+
 			}
 			sc->sc_rbget = get;
 		}
