@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.6 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.7 1998/06/20 19:11:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.6 1998/06/15 17:48:33 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.7 1998/06/20 19:11:05 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -258,7 +258,7 @@ wsemul_sun_output_normal(edp, c, kernel)
 		edp->ccol += n;
 		break;
 
-	case ASCII_NP:		/* "Form Feed (FF)" */
+	case ASCII_FF:		/* "Form Feed (FF)" */
 		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
 				kernel ? edp->kernattr : edp->curattr);
 				/* XXX possible in kernel output? */
