@@ -1,4 +1,4 @@
-/*	$NetBSD: mmureg.h,v 1.5 2002/02/08 06:11:38 uch Exp $	*/
+/*	$NetBSD: mmureg.h,v 1.6 2002/02/11 18:03:48 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -96,6 +96,10 @@ extern int PageDirReg;
 #define SH3_PTEH			0xfffffff0
 #define   SH3_PTEH_ASID_MASK		  0x0000000f
 #define   SH3_PTEH_VPN_MASK		  0xfffffc00
+#define SH3_PTEL			0xfffffff4
+#define   SH3_PTEL_HWBITS		  0x1ffff17e /* [28:12][8][6:1] */
+#define SH3_TTB				0xfffffff8
+#define SH3_TEA				0xfffffffc
 #define SH3_MMUCR			0xffffffe0
 #define   SH3_MMUCR_AT			  0x00000001
 #define   SH3_MMUCR_IX			  0x00000002
@@ -148,6 +152,8 @@ extern int PageDirReg;
 #define     SH4_PTEL_SZ_64K		  0x00000080
 #define     SH4_PTEL_SZ_1M		  0x00000090
 #define   SH4_PTEL_V			  0x00000100
+#define   SH4_PTEL_HWBITS		  0x1ffff1ff /* [28:12]PFN [8:0]attr. */
+
 #define SH4_PTEA			0xff000034
 #define   SH4_PTEA_SA_MASK		  0x00000007
 #define   SH4_PTEA_SA_TC		  0x00000008
