@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.57 2000/06/29 09:02:56 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.58 2000/06/30 00:00:26 mjacob Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2000/06/29 09:02:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2000/06/30 00:00:26 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2000/06/29 09:02:56 mrg Exp $");
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
