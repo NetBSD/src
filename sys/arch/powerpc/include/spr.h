@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.27 2003/03/14 06:22:51 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.28 2003/04/04 04:00:16 matt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -382,9 +382,11 @@
 #define	   L2CLK_DIS		  0x00000000 /* disable L2 clock */
 #define	   L2CLK_10		  0x02000000 /* core clock / 1   */
 #define	   L2CLK_15		  0x04000000 /*            / 1.5 */
+#define	   L2CLK_35		  0x06000000 /*            / 3.5 */
 #define	   L2CLK_20		  0x08000000 /*            / 2   */
 #define	   L2CLK_25		  0x0a000000 /*            / 2.5 */
 #define	   L2CLK_30		  0x0c000000 /*            / 3   */
+#define	   L2CLK_40		  0x0e000000 /*            / 4   */
 #define	  L2CR_L2RAM		  0x01800000 /* 7-8: L2 RAM type */
 #define	   L2RAM_FLOWTHRU_BURST	  0x00000000
 #define	   L2RAM_PIPELINE_BURST	  0x01000000
