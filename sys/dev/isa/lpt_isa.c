@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.7 1993/07/17 16:20:32 mycroft Exp $
+ *	$Id: lpt_isa.c,v 1.8 1993/09/28 21:26:59 cgd Exp $
  */
 
 /*
@@ -239,8 +239,7 @@ lptopen(dev, flag)
 	int trys, port;
 
 	if (sc->sc_state) {
-lprintf("lp: still open\n") ;
-printf("still open %x\n", sc->sc_state);
+lprintf("lp: still open %x\n", sc->sc_state);
 		return(EBUSY);
 	} else	sc->sc_state |= INIT;
 
@@ -266,7 +265,7 @@ lprintf("lp flags 0x%x\n", sc->sc_flags);
 		if (trys++ >= LPINITRDY*4) {
 			splx(s);
 			sc->sc_state = 0;
-printf ("status %x\n", inb(port+lpt_status) );
+lprintf ("status %x\n", inb(port+lpt_status) );
 			return (EBUSY);
 		}
 
