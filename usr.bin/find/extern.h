@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2002/09/27 15:56:25 provos Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2003/02/23 14:43:25 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -46,7 +46,6 @@ int	 f_expr __P((PLAN *, FTSENT *));
 PLAN	*not_squish __P((PLAN *));
 PLAN	*or_squish __P((PLAN *));
 PLAN	*paren_squish __P((PLAN *));
-struct stat;
 void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
 void	 show_path __P((int));
