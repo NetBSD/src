@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.226 2002/02/11 15:00:17 augustss Exp $
+$NetBSD: usbdevs,v 1.227 2002/02/11 21:05:34 mjl Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ vendor AVM		0x057c	AVM GmbH
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
-vendor RATOC		0x0584	RATOC Systems,Inc.
+vendor RATOC		0x0584	RATOC Systems, Inc.
 vendor ZYXEL		0x0586	ZyXEL Communication
 vendor ALCOR		0x058f	Alcor Micro
 vendor IOMEGA		0x059b	Iomega
@@ -248,7 +248,7 @@ vendor MICROTECH	0x07af	Microtech
 vendor OLYMPUS		0x07b4	Olympus
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
-vendor ONSPEC		0x07c4	OnSpec
+vendor ONSPEC		0x07c4	OnSpec Electronic, Inc.
 vendor APG		0x07c5	APG Cash Drawer
 vendor BUG		0x07c8	B.U.G.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
@@ -919,6 +919,7 @@ product ONSPEC DATAFAB4		0xa004	Datafab-based Reader
 product ONSPEC PNYCFSM		0xa005	PNY/Datafab CF+SM Reader
 product ONSPEC STECHCFSM	0xa006	Simple Tech/Datafab CF+SM Reader
 product ONSPEC LC1		0xa109	CF + SM Combo (LC1)
+product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
