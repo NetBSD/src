@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.9 2001/07/13 20:30:19 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.9.2.1 2002/06/02 15:28:13 tv Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <ufs/ufs/dir.h>
 #include <sys/mount.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
 
 #include <string.h>
 #include "fsck.h"
