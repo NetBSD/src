@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.4 2000/07/17 07:37:50 jeffs Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.5 2000/07/18 01:20:24 enami Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */
@@ -30,7 +30,7 @@ XLEAF(memcpy)
 	 */
 	sltu	t0,a1,a0	# t0 == a1 < a0
 	addu	a3,a1,a2	# a3 == end of source
-	sltu	t1,a0,a3	# t1 == a0 < a0+a2
+	sltu	t1,a0,a3	# t1 == a0 < a1+a2
 	and	t2,t0,t1	# overlap -- copy backwards
 	bne	t2,zero,backcopy
 
