@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.4 1998/01/09 22:23:44 perry Exp $ */
+/* $NetBSD: limits.h,v 1.5 1998/08/06 11:25:04 kleink Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -73,7 +73,7 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 /* Quads and longs are the same on the alpha */
@@ -81,10 +81,11 @@
 #define	QUAD_MAX	(LONG_MAX)	/* max value for a quad_t */
 #define	QUAD_MIN	(LONG_MIN)	/* min value for a quad_t */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 #define	LONG_BIT	64
 #define	WORD_BIT	32
 
