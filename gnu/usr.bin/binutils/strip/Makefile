@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/02 22:06:02 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/09 19:21:55 tv Exp $
 
-PROG=	strip
-SRCS=	objcopy.c is-strip.c
-MAN=	strip.1
+PROG=		strip
+SRCS=		objcopy.c is-strip.c
+MAN=		strip.1
 
 .include <bsd.prog.mk>
 
