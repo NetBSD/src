@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48.2.3 1999/05/02 21:57:48 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.48.2.4 1999/11/21 15:41:35 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -906,9 +906,17 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
+
+	| Check PSW and see what happen.
+	|   T=0 S=0	(should not happen)
+	|   T=1 S=0	trace trap from user mode
+	|   T=0 S=1	trace trap on a trap instruction
+	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
+
 	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
+	notw	d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	jeq	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
