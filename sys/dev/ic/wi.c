@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.73 2002/05/31 15:52:55 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.74 2002/08/10 23:16:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.73 2002/05/31 15:52:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.74 2002/08/10 23:16:14 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -147,7 +147,7 @@ static int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
 static int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 struct wi_card_ident wi_card_ident[] = {
-	/* CARD_ID	CARD_NAME	FIRM_TYPE */
+	/* CARD_ID			CARD_NAME		FIRM_TYPE */
 	{ WI_NIC_LUCENT_ID,		WI_NIC_LUCENT_STR,	WI_LUCENT },
 	{ WI_NIC_SONY_ID,		WI_NIC_SONY_STR,	WI_LUCENT },
 	{ WI_NIC_LUCENT_EMB_ID,		WI_NIC_LUCENT_EMB_STR,	WI_LUCENT },
