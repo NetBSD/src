@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 1999/08/16 22:27:13 augustss Exp $
+# $NetBSD: GENERIC,v 1.128 1999/08/29 16:55:48 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -312,6 +312,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass? channel ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
