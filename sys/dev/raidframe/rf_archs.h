@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.10 2001/01/26 04:40:03 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.11 2001/01/26 04:43:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -56,8 +56,8 @@
 #define RF_INCLUDE_CHAINDECLUSTER 1
 #define RF_INCLUDE_INTERDECLUSTER 1
 
-#define RF_INCLUDE_PARITY_DECLUSTERING 0
-#define RF_INCLUDE_PARITY_DECLUSTERING_DS 0
+#define RF_INCLUDE_PARITY_DECLUSTERING 1
+#define RF_INCLUDE_PARITY_DECLUSTERING_DS 1
 
 #define RF_INCLUDE_RAID0   1
 #define RF_INCLUDE_RAID1   1
