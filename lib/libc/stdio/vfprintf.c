@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.11 1994/09/19 04:43:03 mycroft Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.12 1994/09/30 02:39:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -171,6 +171,7 @@ vfprintf(fp, fmt0, ap)
 	int prec;		/* precision from format (%.3d), or -1 */
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
 #ifdef FLOATING_POINT
+	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
 	double _double;		/* double precision arguments %[eEfgG] */
 	int expt;		/* integer value of exponent */
@@ -635,14 +636,14 @@ number:			if ((dprec = prec) >= 0)
 			if (ch >= 'f') {	/* 'f' or 'g' */
 				if (_double == 0) {
 					/* kludge for __dtoa irregularity */
-					if (expt >= ndig && (flags & ALT) == 0) {
-						PRINT("0", 1);
-					} else {
-						PRINT("0.", 2);
+					PRINT("0", 1);
+					if (expt < ndig || (flags & ALT) != 0) {
+						PRINT(decimal_point, 1);
 						PAD(ndig - 1, zeroes);
 					}
 				} else if (expt <= 0) {
-					PRINT("0.", 2);
+					PRINT("0", 1);
+					PRINT(decimal_point, 1);
 					PAD(-expt, zeroes);
 					PRINT(cp, ndig);
 				} else if (expt >= ndig) {
