@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.16 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.17 2002/10/31 02:01:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.16 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.17 2002/10/31 02:01:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -668,7 +668,7 @@ private const el_action_t el_map_vi_command[] = {
 	/*  34 */	ED_UNASSIGNED,		/* " */
 	/*  35 */	ED_UNASSIGNED,		/* # */
 	/*  36 */	ED_MOVE_TO_END,		/* $ */
-	/*  37 */	ED_UNASSIGNED,		/* % */
+	/*  37 */	VI_MATCH,		/* % */
 	/*  38 */	ED_UNASSIGNED,		/* & */
 	/*  39 */	ED_UNASSIGNED,		/* ' */
 	/*  40 */	ED_UNASSIGNED,		/* ( */
