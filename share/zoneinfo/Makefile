@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/05/07 09:43:32 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1997/05/07 16:12:00 mycroft Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -74,7 +74,7 @@ posix_right: posix_only other_two
 .PHONY:	right_posix
 right_posix: right_only other_two
 
-realinstall: ${DATA} ${REDO}
+afterinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
