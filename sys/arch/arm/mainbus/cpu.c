@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2001/03/10 21:27:06 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2001/03/11 15:05:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -62,8 +62,7 @@
 #endif	/* ARMFPE */
 
 struct cpu_softc {
-	struct	device sc_device;
-	int	sc_open;
+	struct	device sc_dev;
 };
 
 /* Array of cpu structures, one per possible cpu */
@@ -74,9 +73,9 @@ volatile int undefined_test;	/* Used for FPA test */
 extern int cpuctrl;		/* cpu control register value */
 
 /* Prototypes */
-void identify_master_cpu __P((int cpu_number, char *dev_name));
-void identify_arm_cpu	__P((int cpu_number));
-void identify_arm_fpu	__P((int cpu_number));
+void identify_master_cpu __P((struct cpu_softc *sc, int cpu_number));
+void identify_arm_cpu	__P((struct cpu_softc *sc, int cpu_number));
+void identify_arm_fpu	__P((struct cpu_softc *sc, int cpu_number));
 
 
 /*
@@ -108,19 +107,18 @@ cpuattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct cpu_softc *sc = (void *)self;
 	int loop;
 
 	for (loop = 0; loop < MAX_CPUS; ++loop)
 		memset(&cpus[loop], 0, sizeof(cpu_t));
 
-	identify_master_cpu(CPU_MASTER, self->dv_xname);
+	identify_master_cpu(sc, CPU_MASTER);
 }
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpumatch, cpuattach
 };
-
-extern struct cfdriver cpu_cd;
 
 /*
  * Used to test for an FPA. The following function is installed as a coproc1
@@ -168,9 +166,9 @@ fpa_handler(address, instruction, frame, fault_code)
  */
  
 void
-identify_master_cpu(cpu_number, dev_name)
+identify_master_cpu(sc, cpu_number)
+	struct cpu_softc *sc;
 	int cpu_number;
-	char *dev_name;
 {
 	u_int fpsr;
 
@@ -180,19 +178,20 @@ identify_master_cpu(cpu_number, dev_name)
 
 	cpus[cpu_number].cpu_id = cpu_id();
 
-	identify_arm_cpu(cpu_number);
+	identify_arm_cpu(sc, cpu_number);
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
 	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SA1
 	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
-		printf("%s: SA-110 with bugged STM^ instruction\n", dev_name);
+		printf("%s: SA-110 with bugged STM^ instruction\n",
+		       sc->sc_dev.dv_xname);
 	}
 
 #ifdef CPU_ARM8
 	if ((cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
-		printf("%s: ARM810 cp15=%02x", dev_name, clock);
+		printf("%s: ARM810 cp15=%02x", sc->sc_dev.dv_xname, clock);
 		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
 		printf("%s", (clock & 2) ? " sync" : "");
 		switch ((clock >> 2) & 3) {
@@ -266,14 +265,14 @@ identify_master_cpu(cpu_number, dev_name)
 			ptr = strstr(boot_args, "noarmfpe");
 			if (!ptr) {
 				if (initialise_arm_fpe(&cpus[cpu_number]) != 0)
-					identify_arm_fpu(cpu_number);
+					identify_arm_fpu(sc, cpu_number);
 			}
 		}
 
 #endif
 	}
 
-	identify_arm_fpu(cpu_number);
+	identify_arm_fpu(sc, cpu_number);
 }
 
 struct cpuidtab {
@@ -339,7 +338,8 @@ const struct cpu_classtab cpu_classes[] = {
  */
 
 void
-identify_arm_cpu(cpu_number)
+identify_arm_cpu(sc, cpu_number)
+	struct cpu_softc *sc;
 	int cpu_number;
 {
 	cpu_t *cpu;
@@ -428,13 +428,15 @@ identify_arm_cpu(cpu_number)
 		break;
 	default:
 		if (cpu_classes[cpu->cpu_class].class_option != NULL)
-			printf("WARNING: %s does not fully support this CPU."
-			       "\n", ostype);
-		else
-			printf("WARNING: This kernel does not fully support "
-			       "this CPU.\nRecompile with \"options %s\" to "
-			       "correct this.\n",
+			printf("%s: %s does not fully support this CPU."
+			       "\n", sc->sc_dev.dv_xname, ostype);
+		else {
+			printf("%s: This kernel does not fully support "
+			       "this CPU.\n", sc->sc_dev.dv_xname);
+			printf("%s: Recompile with \"options %s\" to "
+			       "correct this.\n", sc->sc_dev.dv_xname,
 			       cpu_classes[cpu->cpu_class].class_option);
+		}
 		break;
 	}
 			       
@@ -448,7 +450,8 @@ identify_arm_cpu(cpu_number)
  */
 
 void
-identify_arm_fpu(cpu_number)
+identify_arm_fpu(sc, cpu_number)
+	struct cpu_softc *sc;
 	int cpu_number;
 {
 	cpu_t *cpu;
@@ -462,19 +465,17 @@ identify_arm_fpu(cpu_number)
 		strcpy(cpu->fpu_model, "None");
 		break;
 	case FPU_CLASS_FPE :
-		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number,
-		    cpu->fpu_model);
-		printf("fpe%d: no hardware found\n", cpu_number);
+		printf("%s: FPE: %s\n", sc->sc_dev.dv_xname, cpu->fpu_model);
+		printf("%s: no FP hardware found\n", sc->sc_dev.dv_xname);
 		break;
 	case FPU_CLASS_FPA :
-		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number,
-		    cpu->fpu_model);
+		printf("%s: FPE: %s\n", sc->sc_dev.dv_xname, cpu->fpu_model);
 		if (cpu->fpu_type == FPU_TYPE_FPA11) {
 			strcpy(cpu->fpu_model, "FPA11");
-			printf("fpe%d: FPA11 found\n", cpu_number);
+			printf("%s: FPA11 found\n", sc->sc_dev.dv_xname);
 		} else {
 			strcpy(cpu->fpu_model, "FPA");
-			printf("fpe%d: FPA10 found\n", cpu_number);
+			printf("%s: FPA10 found\n", sc->sc_dev.dv_xname);
 		}
 		if ((cpu->fpu_flags & 4) == 0)
 			strcat(cpu->fpu_model, "");
@@ -484,8 +485,7 @@ identify_arm_fpu(cpu_number)
 	case FPU_CLASS_FPU :
 		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n",
 		    cpu->fpu_type);
-		printf("fpu%d at cpu%d: %s\n", cpu_number, cpu_number,
-		    cpu->fpu_model);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, cpu->fpu_model);
 		break;
 	}
 }
