@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1995/05/10 07:07:30 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1995/05/14 15:23:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,8 +111,11 @@ int	safepri = PSL_LOWIPL;
 extern  int   freebufspace;
 extern	u_int lowram;
 
-/* used in init_main.c */
-char *cpu_type = "m68k";
+/*
+ * For the fpu emulation and the fpu driver
+ */
+int	fputype;
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "atari";
 
@@ -363,6 +366,7 @@ setregs(p, pack, stack, retval)
 	
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
+
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -379,7 +383,7 @@ extern char version[];
 identifycpu()
 {
         /* there's alot of XXX in here... */
-	char *mach, *mmu, *fpu;
+	char *mach, *mmu, *fpu, *cpu;
 
 	if(machineid & ATARI_TT)
 		mach = "Atari TT";
@@ -387,27 +391,40 @@ identifycpu()
 		mach = "Atari Falcon";
 	else mach = "Atari UNKNOWN";
 
-	fpu = NULL;
+	cpu     = "m68k";
+	fpu     = NULL;
+	fputype = 0;
 	if (machineid & ATARI_68040) {
-		cpu_type = "m68040";
-		mmu = "/MMU";
-		fpu = "/FPU";
+		cpu     = "m68040";
+		mmu     = "/MMU";
+		fpu     = "/FPU";
+		fputype = 3;	/* XXX define ??? */
 	} else if (machineid & ATARI_68030) {
-		cpu_type = "m68030";	/* XXX */
+		cpu = "m68030";	/* XXX */
 		mmu = "/MMU";
 	} else {
-		cpu_type = "m68020";
+		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
 	if (fpu == NULL) {
-		if (machineid & ATARI_68882)
-			fpu = " m68882 FPU";
-		else if (machineid & ATARI_68881)
-			fpu = " m68881 FPU";
-		else
-			fpu = " no FPU";
+		if (machineid & ATARI_68882) {
+			fpu     = " m68882 FPU";
+			fputype = 2;	/* XXX define ??? */
+		}
+		else if (machineid & ATARI_68881) {
+			fpu     = " m68881 FPU";
+			fputype = 1;	/* XXX define ??? */
+		}
+		else {
+#ifdef FPU_EMULATE
+			fpu     = " FPU emulator";
+#else
+			fpu     = " no FPU";
+#endif
+			fputype = 0;	/* XXX define ??? */
+		}
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
 
@@ -780,7 +797,7 @@ boot(howto)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr, 0);
+		savectx(curproc->p_addr);
 
 	boothowto = howto;
 	if((howto&RB_NOSYNC) == 0)
@@ -1196,8 +1213,7 @@ regdump(fp, sbytes)
 	splx(s);
 }
 
-extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
+#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
