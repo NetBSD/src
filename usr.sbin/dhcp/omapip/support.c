@@ -63,6 +63,7 @@ isc_result_t omapi_init (void)
 {
 	isc_result_t status;
 
+#if !defined (SMALL)
 	dst_init();
 
 	/* Register all the standard object types... */
@@ -91,6 +92,7 @@ isc_result_t omapi_init (void)
 					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
+#endif
 
 	status = omapi_object_type_register (&omapi_type_io_object,
 					     "io",
@@ -104,6 +106,7 @@ isc_result_t omapi_init (void)
 	if (status != ISC_R_SUCCESS)
 		return status;
 
+#if !defined (SMALL)
 	status = omapi_object_type_register (&omapi_type_generic,
 					     "generic",
 					     omapi_generic_set_value,
@@ -154,6 +157,7 @@ isc_result_t omapi_init (void)
 					     0);
 	if (status != ISC_R_SUCCESS)
 		return status;
+#endif
 
 	status = omapi_object_type_register (&omapi_type_waiter,
 					     "waiter",
@@ -167,6 +171,7 @@ isc_result_t omapi_init (void)
 	if (status != ISC_R_SUCCESS)
 		return status;
 
+#if !defined (SMALL)
 	status = omapi_object_type_register (&omapi_type_auth_key,
 					     "authenticator",
 					     0,
@@ -179,6 +184,7 @@ isc_result_t omapi_init (void)
 					     sizeof (omapi_auth_key_t), 0);
 	if (status != ISC_R_SUCCESS)
 		return status;
+#endif
 
 #if defined (TRACING)
 	omapi_listener_trace_setup ();

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.12 2001/04/06 17:08:53 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.13 2001/04/06 19:01:07 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -79,6 +79,7 @@ int interface_max;
 
 OMAPI_OBJECT_ALLOC (interface, struct interface_info, dhcp_type_interface)
 
+#if !defined (SMALL)
 isc_result_t interface_setup ()
 {
 	isc_result_t status;
@@ -101,6 +102,7 @@ isc_result_t interface_setup ()
 
 	return status;
 }
+#endif
 
 #if defined (TRACING)
 void interface_trace_setup ()
@@ -776,6 +778,7 @@ isc_result_t got_one (h)
 	return ISC_R_SUCCESS;
 }
 
+#if !defined (SMALL)
 isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 					omapi_object_t *id,
 					omapi_data_string_t *name,
@@ -1005,6 +1008,7 @@ isc_result_t dhcp_interface_create (omapi_object_t **lp,
 	interface_dereference (&hp, MDL);
 	return status;
 }
+#endif
 
 isc_result_t dhcp_interface_remove (omapi_object_t *lp,
 				    omapi_object_t *id)
