@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.5 2001/11/28 10:21:10 lukem Exp $
+#	$NetBSD: files.acorn32,v 1.6 2001/12/15 23:48:38 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -190,7 +190,7 @@ file	arch/acorn32/podulebus/netslot.c		podulebus
 # Ethernet devices
 
 # Novell NE1000 and NE2000 clones (EtherM, EtherH)
-attach	ne at podulebus with ne_pbus
+attach	ne at podulebus with ne_pbus: mx98905
 file	arch/acorn32/podulebus/if_ne_pbus.c	ne_pbus
 
 device	ie: ether, ifnet, arp
