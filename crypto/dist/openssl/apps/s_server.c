@@ -83,6 +83,7 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
+#include <openssl/rand.h>
 #include "s_apps.h"
 
 #ifdef WINDOWS
@@ -242,6 +243,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	}
 
 static int local_argc=0;
@@ -285,7 +287,7 @@ static int ebcdic_new(BIO *bi)
 {
 	EBCDIC_OUTBUFF *wbuf;
 
-	wbuf = (EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
+	wbuf = (EBCDIC_OUTBUFF *)OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + 1024);
 	wbuf->alloced = 1024;
 	wbuf->buff[0] = '\0';
 
@@ -299,7 +301,7 @@ static int ebcdic_free(BIO *a)
 {
 	if (a == NULL) return(0);
 	if (a->ptr != NULL)
-		Free(a->ptr);
+		OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;
@@ -336,8 +338,8 @@ static int ebcdic_write(BIO *b, char *in, int inl)
 		num = num + num;  /* double the size */
 		if (num < inl)
 			num = inl;
-		Free(wbuf);
-		wbuf=(EBCDIC_OUTBUFF *)Malloc(sizeof(EBCDIC_OUTBUFF) + num);
+		OPENSSL_free(wbuf);
+		wbuf=(EBCDIC_OUTBUFF *)OPENSSL_malloc(sizeof(EBCDIC_OUTBUFF) + num);
 
 		wbuf->alloced = num;
 		wbuf->buff[0] = '\0';
@@ -411,6 +413,7 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+	char *inrand=NULL;
 #ifndef NO_DH
 	DH *dh=NULL;
 #endif
@@ -565,6 +568,11 @@ int MAIN(int argc, char *argv[])
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -581,7 +589,14 @@ bad:
 		goto end;
 		}
 
-	app_RAND_load_file(NULL, bio_err, 0);
+	if (!app_RAND_load_file(NULL, bio_err, 1) && inrand == NULL
+		&& !RAND_status())
+		{
+		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
+		}
+	if (inrand != NULL)
+		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
+			app_RAND_load_files(inrand));
 
 	if (bio_s_out == NULL)
 		{
@@ -676,7 +691,8 @@ bad:
 
 #ifndef NO_RSA
 #if 1
-	SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
+	if (!no_tmp_rsa)
+		SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
 #else
 	if (!no_tmp_rsa && SSL_CTX_need_tmp_RSA(ctx))
 		{
@@ -766,7 +782,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	struct timeval tv;
 #endif
 
-	if ((buf=Malloc(bufsize)) == NULL)
+	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto err;
@@ -1028,7 +1044,7 @@ err:
 	if (buf != NULL)
 		{
 		memset(buf,0,bufsize);
-		Free(buf);
+		OPENSSL_free(buf);
 		}
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
@@ -1145,7 +1161,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	BIO *io,*ssl_bio,*sbio;
 	long total_bytes;
 
-	buf=Malloc(bufsize);
+	buf=OPENSSL_malloc(bufsize);
 	if (buf == NULL) return(0);
 	io=BIO_new(BIO_f_buffer());
 	ssl_bio=BIO_new(BIO_f_ssl());
@@ -1336,15 +1352,29 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 			/* skip the '/' */
 			p= &(buf[5]);
-			dot=0;
+
+			dot = 1;
 			for (e=p; *e != '\0'; e++)
 				{
-				if (e[0] == ' ') break;
-				if (	(e[0] == '.') &&
-					(strncmp(&(e[-1]),"/../",4) == 0))
-					dot=1;
+				if (e[0] == ' ')
+					break;
+
+				switch (dot)
+					{
+				case 1:
+					dot = (e[0] == '.') ? 2 : 0;
+					break;
+				case 2:
+					dot = (e[0] == '.') ? 3 : 0;
+					break;
+				case 3:
+					dot = (e[0] == '/') ? -1 : 0;
+					break;
+					}
+				if (dot == 0)
+					dot = (e[0] == '/') ? 1 : 0;
 				}
-			
+			dot = (dot == 3) || (dot == -1); /* filename contains ".." component */
 
 			if (*e == '\0')
 				{
@@ -1368,9 +1398,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				break;
 				}
 
+#if 0
 			/* append if a directory lookup */
 			if (e[-1] == '/')
 				strcat(p,"index.html");
+#endif
 
 			/* if a directory, do the index thang */
 			if (stat(p,&st_buf) < 0)
@@ -1382,7 +1414,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				}
 			if (S_ISDIR(st_buf.st_mode))
 				{
+#if 0 /* must check buffer size */
 				strcat(p,"/index.html");
+#else
+				BIO_puts(io,text);
+				BIO_printf(io,"'%s' is a directory\r\n",p);
+				break;
+#endif
 				}
 
 			if ((file=BIO_new_file(p,"r")) == NULL)
@@ -1474,7 +1512,7 @@ err:
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
-	if (buf != NULL) Free(buf);
+	if (buf != NULL) OPENSSL_free(buf);
 	if (io != NULL) BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return(ret);

@@ -99,7 +99,6 @@ DH_METHOD *DH_OpenSSL(void)
 static int generate_key(DH *dh)
 	{
 	int ok=0;
-	unsigned int i;
 	BN_CTX ctx;
 	BN_MONT_CTX *mont;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
@@ -108,15 +107,11 @@ static int generate_key(DH *dh)
 
 	if (dh->priv_key == NULL)
 		{
-		i=dh->length;
-		if (i == 0)
-			{
-			/* Make the number p-1 bits long */
-			i=BN_num_bits(dh->p)-1;
-			}
 		priv_key=BN_new();
 		if (priv_key == NULL) goto err;
-		if (!BN_rand(priv_key,i,0,0)) goto err;
+		do
+			if (!BN_rand_range(priv_key, dh->p)) goto err;
+		while (BN_is_zero(priv_key));
 		}
 	else
 		priv_key=dh->priv_key;
@@ -193,19 +188,26 @@ err:
 static int dh_bn_mod_exp(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *m_ctx)
-{
-	return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
-}
+	{
+	if (a->top == 1)
+		{
+		BN_ULONG A = a->d[0];
+		return BN_mod_exp_mont_word(r,A,p,m,ctx,m_ctx);
+		}
+	else
+		return BN_mod_exp_mont(r,a,p,m,ctx,m_ctx);
+	}
+
 
 static int dh_init(DH *dh)
-{
+	{
 	dh->flags |= DH_FLAG_CACHE_MONT_P;
 	return(1);
-}
+	}
 
 static int dh_finish(DH *dh)
-{
+	{
 	if(dh->method_mont_p)
 		BN_MONT_CTX_free((BN_MONT_CTX *)dh->method_mont_p);
 	return(1);
-}
+	}

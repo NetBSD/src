@@ -101,15 +101,14 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 	{
 	DSA *ret;
 
-	ret=(DSA *)Malloc(sizeof(DSA));
+	ret=(DSA *)OPENSSL_malloc(sizeof(DSA));
 	if (ret == NULL)
 		{
 		DSAerr(DSA_F_DSA_NEW,ERR_R_MALLOC_FAILURE);
 		return(NULL);
 		}
-	if(!default_DSA_method) default_DSA_method = DSA_OpenSSL();
 	if(meth) ret->meth = meth;
-	else ret->meth = default_DSA_method;
+	else ret->meth = DSA_get_default_method();
 	ret->pad=0;
 	ret->version=0;
 	ret->write_params=1;
@@ -126,13 +125,13 @@ DSA *DSA_new_method(DSA_METHOD *meth)
 
 	ret->references=1;
 	ret->flags=ret->meth->flags;
+	CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
-		Free(ret);
+		CRYPTO_free_ex_data(dsa_meth,ret,&ret->ex_data);
+		OPENSSL_free(ret);
 		ret=NULL;
 		}
-	else
-		CRYPTO_new_ex_data(dsa_meth,ret,&ret->ex_data);
 	
 	return(ret);
 	}
@@ -156,9 +155,9 @@ void DSA_free(DSA *r)
 		}
 #endif
 
-	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
-
 	if(r->meth->finish) r->meth->finish(r);
+
+	CRYPTO_free_ex_data(dsa_meth, r, &r->ex_data);
 
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->q != NULL) BN_clear_free(r->q);
@@ -167,7 +166,7 @@ void DSA_free(DSA *r)
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	if (r->kinv != NULL) BN_clear_free(r->kinv);
 	if (r->r != NULL) BN_clear_free(r->r);
-	Free(r);
+	OPENSSL_free(r);
 	}
 
 int DSA_size(DSA *r)
