@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.22 2004/02/18 08:19:48 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.23 2004/03/06 09:41:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.22 2004/02/18 08:19:48 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.23 2004/03/06 09:41:36 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -718,17 +718,14 @@ close_it:
 			unlink(outfile);
 			goto lose;
 		}
-
 		if (ferror(in) || fclose(in)) {
 			unlink(outfile);
 			maybe_err(1, "failed infile fclose");
 		}
-
 		if (fclose(out)) {
 			unlink(outfile);
 			maybe_err(1, "failed outfile close");
 		}
-
 	} else {
 		if (lflag) {
 			int fd;
@@ -760,8 +757,6 @@ close_it:
 			unlink(outfile);
 			goto lose;
 		}
-
-		/* close the file */
 		if (fclose(out))
 			maybe_err(1, "failed fclose");
 	}
