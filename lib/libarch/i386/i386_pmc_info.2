@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_pmc_info.2,v 1.3 2002/02/08 01:28:13 ross Exp $
+.\"     $NetBSD: i386_pmc_info.2,v 1.4 2002/06/07 04:59:13 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,10 +73,29 @@ struct i386_pmc_info_args {
 The
 .Em type
 member describes the class of performance counters available.  Valid
-values are PMC_TYPE_NONE, PMC_TYPE_I586, and PMC_TYPE_I686.  The
+values are:
+.Pp
+.Bl -tag -offset indent -width PMC_INFO_HASTSC -compact
+.It PMC_TYPE_NONE
+No PMC support
+.It PMC_TYPE_I586
+586-class CPUs
+.It PMC_TYPE_I686
+686-class Intel CPUs
+.It PMC_TYPE_K7
+686-class AMD CPUs
+.El
+.Pp
+The
 .Em flags
 member describes additional capabilities of the processor.  Valid
-values are PMC_INFO_HASTSC.
+values are:
+.Pp
+.Bl -tag -offset indent -width PMC_INFO_HASTSC -compact
+.It PMC_INFO_HASTSC
+CPU has time-stamp counter
+.El
+.Pp
 .Pp
 .Fn i386_pmc_startstop
 is used to start and stop the measurement of the CPU performance
