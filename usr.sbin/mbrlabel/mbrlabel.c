@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.2 1998/12/03 11:20:50 fair Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.2 1998/12/03 11:20:50 fair Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.3 1999/01/27 20:44:04 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,9 +44,9 @@ __RCSID("$NetBSD: mbrlabel.c,v 1.2 1998/12/03 11:20:50 fair Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_mbr.h>
 #include <sys/ioctl.h>
 
-#include "mbrlabel.h"
 #include "dkcksum.h"
 
 #define	FIRSTPART	0
@@ -98,15 +98,15 @@ static struct typetab {
 	int mbrtype;
 	int nbsdtype;
 } typetable[] = {
-	{ MBR_NETBSD, FS_BSDFFS },
-	{ MBR_386BSD, FS_BSDFFS },
-	{ MBR_FAT12, FS_MSDOS },
-	{ MBR_FAT16S, FS_MSDOS },
-	{ MBR_FAT16B, FS_MSDOS },
-	{ MBR_FAT32, FS_MSDOS },
-	{ MBR_FAT32L, FS_MSDOS },
-	{ MBR_FAT16L, FS_MSDOS },
-	{ MBR_LNXEXT2, FS_EX2FS },
+	{ MBR_PTYPE_NETBSD, FS_BSDFFS },
+	{ MBR_PTYPE_386BSD, FS_BSDFFS },
+	{ MBR_PTYPE_FAT12, FS_MSDOS },
+	{ MBR_PTYPE_FAT16S, FS_MSDOS },
+	{ MBR_PTYPE_FAT16B, FS_MSDOS },
+	{ MBR_PTYPE_FAT32, FS_MSDOS },
+	{ MBR_PTYPE_FAT32L, FS_MSDOS },
+	{ MBR_PTYPE_FAT16L, FS_MSDOS },
+	{ MBR_PTYPE_LNXEXT2, FS_EX2FS },
 	{ 0, 0 }
 };
 
@@ -153,20 +153,20 @@ getparts(sd, np, off)
 	}
 	if (buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
 		return np;
-	mpart = (void *)(buf + MBRPARTOFF);
+	mpart = (void *)(buf + MBR_PARTOFF);
 	for (epart = mpart + NMBRPART; mpart < epart; mpart++) {
-		switch (mpart->mp_typ) {
+		switch (mpart->mbrp_typ) {
 		case 0:
 			/* Nothing to do */
 			break;
-		case MBR_EXT:
-		case MBR_EXT_LBA:
+		case MBR_PTYPE_EXT:
+		case MBR_PTYPE_EXT_LBA:
 			/* Will be handled below */
 			break;
 		default:
-			label.d_partitions[np].p_size = getlong(&mpart->mp_size);
-			label.d_partitions[np].p_offset = getlong(&mpart->mp_start) + off;
-			label.d_partitions[np].p_fstype = nbsdtype(mpart->mp_typ);
+			label.d_partitions[np].p_size = getlong(&mpart->mbrp_size);
+			label.d_partitions[np].p_offset = getlong(&mpart->mbrp_start) + off;
+			label.d_partitions[np].p_fstype = nbsdtype(mpart->mbrp_typ);
 			switch (label.d_partitions[np].p_fstype) {
 			case FS_BSDFFS:
 				label.d_partitions[np].p_size = 16384;
@@ -191,12 +191,12 @@ getparts(sd, np, off)
 		if (np == RAW_PART)
 			np++;
 	}
-	mpart = (void *)(buf + MBRPARTOFF);
+	mpart = (void *)(buf + MBR_PARTOFF);
 	for (epart = mpart + NMBRPART; mpart < epart; mpart++) {
-		switch (mpart->mp_typ) {
-		case MBR_EXT:
-		case MBR_EXT_LBA:
-			np = getparts(sd, np, getlong(&mpart->mp_start) + off);
+		switch (mpart->mbrp_typ) {
+		case MBR_PTYPE_EXT:
+		case MBR_PTYPE_EXT_LBA:
+			np = getparts(sd, np, getlong(&mpart->mbrp_start) + off);
 			break;
 		default:
 			break;
@@ -231,7 +231,7 @@ main(argc, argv)
 		exit(1);
 	}
 	getlabel(sd);
-	np = getparts(sd, FIRSTPART, MBRSECTOR);
+	np = getparts(sd, FIRSTPART, MBR_BBSECTOR);
 	if (np > label.d_npartitions)
 		label.d_npartitions = np;
 	setlabel(sd);
