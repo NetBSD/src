@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/06/13 22:21:58 tron Exp $
+#	$NetBSD: Makefile,v 1.11 2000/10/28 16:01:25 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,10 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -DDEFPATH=\".:/usr/share/awk\" \
 		-I${.CURDIR} -I${.CURDIR}/../../dist/gawk
 LDADD=		-lm
 CLEANFILES+=	${PROG}.1 ${PROG}.texi
+
+.if (${MACHINE_ARCH} == "sparc64")
+CFLAGS+=	-msoft-quad-float
+.endif
 
 ${PROG}.1:	gawk.1
 		@-rm -f $@
