@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 1999/03/12 01:01:42 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 1999/04/01 00:37:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,6 +132,7 @@ extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 void	delay __P((int));
 void	dumpconf __P((void));
 void	cpu_reset __P((void));
+void	i386_proc0_tss_ldt_init __P((void));
 void	i386_bufinit __P((void));
 
 /* locore.s */
