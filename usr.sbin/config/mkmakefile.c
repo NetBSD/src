@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.22 1994/03/10 22:09:51 mycroft Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.23 1994/04/05 23:57:29 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -156,8 +156,8 @@ makefile()
 		perror(path("Makefile"));
 		exit(1);
 	}
-	fprintf(ofp, "KERN_IDENT=%s\n", raise(ident));		/* 29 Jun 92*/
-	fprintf(ofp, "IDENT=-D%s", raise(ident));
+	fprintf(ofp, "KERN_IDENT=%s\n", raisestr(ident));		/* 29 Jun 92*/
+	fprintf(ofp, "IDENT=-D%s", raisestr(ident));
 	if (profiling)
 		fprintf(ofp, " -DGPROF");
 	if (cputype == 0) {
@@ -245,7 +245,7 @@ read_files()
 		    machinearch);
 		read_file(fname,1,0);
 	}
-	(void) sprintf(fname, "files.%s", raise(ident));
+	(void) sprintf(fname, "files.%s", raisestr(ident));
 	read_file(fname,0,1);
 	(void) strcpy(fname, "../../../conf/options");
 	read_file(fname,0,0);
@@ -256,7 +256,7 @@ read_files()
 		    machinearch);
 		read_file(fname,0,0);
 	}
-	(void) sprintf(fname, "options.%s", raise(ident));
+	(void) sprintf(fname, "options.%s", raisestr(ident));
 	read_file(fname,0,1);
 }
 
@@ -486,7 +486,7 @@ do_swapspec(f, name)
 }
 
 char *
-raise(str)
+raisestr(str)
 	register char *str;
 {
 	register char *cp = str;

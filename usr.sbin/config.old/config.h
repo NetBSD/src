@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.14 1994/03/12 03:26:52 mycroft Exp $
+ *	$Id: config.h,v 1.15 1994/04/05 23:57:26 deraadt Exp $
  */
 
 /*
@@ -178,7 +178,7 @@ char	*qu();
 char	*get_word();
 char	*get_quoted_word();
 char	*path();
-char	*raise();
+char	*raisestr();
 
 int	do_trace;
 

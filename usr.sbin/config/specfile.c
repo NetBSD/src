@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: specfile.c,v 1.8 1994/03/30 04:25:22 cgd Exp $";
+static char rcsid[] = "$Id: specfile.c,v 1.9 1994/04/05 23:57:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -512,7 +512,7 @@ read_file(filename, fatal_on_open, override)
             dev.d_slave = 0;
             dev.d_flags++;
             for (op=opt; op; lop=op, op=op->op_next) {
-                char *od = raise(ns(kf_name));
+                char *od = raisestr(ns(kf_name));
  
                 /*
                  *  Found an option which matches the current device
