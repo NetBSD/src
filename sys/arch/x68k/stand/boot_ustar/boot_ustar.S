@@ -3,7 +3,7 @@
 |         Yasha(itohy@netbsd.org)
 |	  minoura@netbsd.org
 |
-| $NetBSD: boot_ustar.S,v 1.2 2001/10/01 16:58:01 minoura Exp $
+| $NetBSD: boot_ustar.S,v 1.3 2001/12/28 02:12:55 minoura Exp $
 
 | supports floppy only
 
@@ -157,9 +157,9 @@ boot_read_done:
 
 		jmp	%a0@			| here we go
 
-error_invalidboot:	BOOT_ERROR("Illegal secondary boot");
-error_invalidname:	BOOT_ERROR("Invalid filename");
-error_invalidfs:	BOOT_ERROR("Not a ustarfs");
-error_invalidmagic:	BOOT_ERROR("Not an OMAGIC a.out")
+error_invalidboot:
+error_invalidname:	BOOT_ERROR("Illegal secondary boot");
+error_invalidfs:
+error_invalidmagic:	BOOT_ERROR("Invalid magic")
 
 ASGLOBAL(first_kbyte)
