@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2003/03/05 23:56:08 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.13 2003/03/15 23:41:26 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,10 +202,6 @@ define	TF_RSP			offsetof(struct trapframe, tf_rsp)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
 
 define	FRAMESIZE		sizeof(struct trapframe)
-
-define	SC_FS			offsetof(struct sigcontext, sc_fs)
-define	SC_GS			offsetof(struct sigcontext, sc_gs)
-define	SC_RFLAGS		offsetof(struct sigcontext, sc_rflags)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
 define  CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
