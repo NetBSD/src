@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.385 2004/10/24 12:58:44 augustss Exp $
+$NetBSD: usbdevs,v 1.386 2004/10/25 11:31:03 sketch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -734,6 +734,7 @@ product DALLAS J6502		0x4201	J-6502 speakers
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 
 /* Dell products */
+product DELL PORT		0x0058	Port Replicator
 product DELL X3			0x4002	Dell Axim X3 PDA
 product DELL X30		0x4003	Dell Axim X30 PDA
 product DELL BC02		0x8000	Dell BC02 Bluetooth USB Adapter
