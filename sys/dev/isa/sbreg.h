@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
- *	$Id: sbreg.h,v 1.2 1994/03/29 04:36:28 mycroft Exp $
+ *	$Id: sbreg.h,v 1.3 1994/09/16 23:48:22 mycroft Exp $
  */
 
 /*
@@ -139,8 +139,13 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
+#ifdef SBPRO
+#define SB_IRQ_VALID(mask)  ((mask) & 0x04a4)	/* IRQ 2,5,7,10 */
+#define SB_DRQ_VALID(chan)  ((chan) == 0 || (chan) == 1 || (chan) == 3)
+#else /* !SBPRO */
 #define SB_IRQ_VALID(mask)  ((mask) & 0x00ac)	/* IRQ 2,3,5,7 */
 #define SB_DRQ_VALID(chan)  ((chan) == 1)
+#endif /* !SBPRO */
 #define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240)
 
 #define SB_INPUT_RATE	0
