@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.3 2003/05/03 05:19:00 bsh Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.4 2003/05/13 05:15:08 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -48,6 +48,7 @@
 #include <arm/s3c2xx0/s3c2800var.h>
 
 #include "locators.h"
+#include "opt_cpuoptions.h"
 
 /* prototypes */
 static int	s3c2800_match(struct device *, struct cfdata *, void *);
@@ -141,9 +142,13 @@ s3c2800_attach(struct device *parent, struct device *self, void *aux)
 		S3C2800_TIMER_SIZE, 0, &sc->sc_tmr1_ioh))
 		FAIL("TIMER1");
 
+	/* calculate current clock frequency */
+	s3c2800_clock_freq(sc);
+	printf("fclk %d MHz hclk %d MHz pclk %d MHz\n",
+	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
+	       sc->sc_sx.sc_pclk / 1000000);
 
 	printf("\n");
-
 
 	/*
 	 *  Attach devices.
@@ -177,8 +182,43 @@ s3c2800_search(struct device * parent, struct cfdata * cf, void *aux)
 	return 0;
 }
 
+/*
+ * Issue software reset command.
+ * called with MMU off.
+ */
 void
 s3c2800_softreset(void)
 {
-	/* XXX */
+	*(volatile unsigned int *)(S3C2800_CLKMAN_BASE + CLKMAN_SWRCON)
+	    = SWRCON_SWR;
 }
+
+/*
+ * fill sc_pclk, sc_hclk, sc_fclk from values of clock controller register.
+ */
+void
+s3c2800_clock_freq(struct s3c2800_softc *__sc)
+{
+	int mdiv, pdiv, sdiv;
+	int pllcon, clkcon;
+	struct s3c2xx0_softc *sc = (struct s3c2xx0_softc *)__sc;
+
+	pllcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
+	    CLKMAN_PLLCON);
+	clkcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
+	    CLKMAN_CLKCON);
+
+	mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
+	pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
+	sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
+
+	sc->sc_fclk = ((mdiv + 8) * S3C2XX0_XTAL_CLK) / 
+	    ((pdiv + 2) * (1 << sdiv));
+	sc->sc_hclk = sc->sc_fclk;
+	if (clkcon & CLKCON_HCLK)
+		sc->sc_hclk /= 2;
+	sc->sc_pclk = sc->sc_hclk;
+	if (clkcon & CLKCON_PCLK)
+		sc->sc_pclk /= 2;
+}
+
