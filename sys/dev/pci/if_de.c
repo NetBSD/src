@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.65 1998/03/29 22:36:43 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.66 1998/04/02 13:49:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3508,6 +3508,15 @@ tulip_rx_intr(
 		}
 #endif
 	    }
+
+#if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
+	    map = M_GETCTX(me, bus_dmamap_t);
+	    bus_dmamap_unload(sc->tulip_dmatag, map);
+	    sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
+#if defined(DIAGNOSTIC)
+	    M_SETCTX(me, NULL);
+#endif
+#endif /* TULIP_BUS_DMA */
 	}
       next:
 #if defined(TULIP_DEBUG)
