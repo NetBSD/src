@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1996/09/10 19:13:42 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1996/10/01 14:25:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -802,10 +802,12 @@ boot(howto, bootstr)
 	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		savectx(&dumppcb, 0);
+#if 0
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+#else
+	if (howto & RB_DUMP)
+#endif
 		dumpsys();
-	}
 
 haltsys:
 
@@ -855,7 +857,6 @@ dumpconf()
 	if (nblks <= ctod(1))
 		return;
 
-	/* XXX XXX XXX STARTING MEMORY LOCATION */
 	dumpsize = physmem;
 
 	/* Always skip the first CLBYTES, in case there is a label there. */
@@ -870,26 +871,72 @@ dumpconf()
 }
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Dump the kernel's image to the swap partition.
  */
+#define	BYTES_PER_DUMP	NBPG
+
 void
 dumpsys()
 {
+	unsigned bytes, i, n;
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int error;
 
-	msgbufmapped = 0;
+	/* Save registers. */
+	savectx(&dumppcb);
+
+	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
-	if (dumpsize == 0) {
+
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
 		dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
+	if (dumplo < 0)
+		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+
+	/* XXX should purge all outstanding keystrokes. */
+
+	bytes = ctob(1 + lastusablepage - firstusablepage);
+	maddr = ctob(firstusablepage);
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	error = 0;
+	for (i = 0; i < bytes; i += n) {
+
+		/* Print out how many MBs we to go. */
+		n = bytes - i;
+		if (n && (n % (1024*1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n =  BYTES_PER_DUMP;
+
+		error = (*dump)(dumpdev, blkno,
+		    (caddr_t)ALPHA_PHYS_TO_K0SEG(maddr), n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);			/* XXX? */
+
+		/* XXX should look for keystrokes, to cancel. */
+	}
+
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -911,8 +958,12 @@ dumpsys()
 		printf("aborted from console\n");
 		break;
 
-	default:
+	case 0:
 		printf("succeeded\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
 		break;
 	}
 	printf("\n\n");
