@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50.2.3 2002/11/30 14:37:42 he Exp $
+#	$NetBSD: Makefile,v 1.50.2.4 2002/12/26 07:53:20 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile cat cksum compile_et config installboot lint1 \
-		makefs menuc mklocale msgc pax pwd_mkdb zic
+		makefs menuc mklocale msgc pax pwd_mkdb sunlabel zic
 
 .if ${MKMAN} != "no"
 SUBDIR+=	groff
