@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)mtree.8	5.11 (Berkeley) 12/11/91
-.\"	$Id: mtree.8,v 1.1 1993/11/02 07:51:11 cgd Exp $
+.\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1991
+.Dd December 11, 1993
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -52,7 +51,7 @@ The utility
 compares the file hierarchy rooted in the current directory against a
 specification read from the standard input.
 Messages are written to the standard output for any files whose
-characteristics do not match the specification's, or which are
+characteristics do not match the specifications, or which are
 missing from either the file hierarchy or the specification.
 .Pp
 The options are as follows:
