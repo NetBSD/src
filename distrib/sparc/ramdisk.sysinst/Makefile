@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/01/10 15:17:32 pk Exp $
+#	$NetBSD: Makefile,v 1.6 2000/02/07 11:09:35 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -92,7 +92,7 @@ ${CBIN}: libhack.o
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
