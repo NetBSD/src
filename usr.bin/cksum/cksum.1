@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.17 2002/02/08 01:36:20 ross Exp $
+.\"	$NetBSD: cksum.1,v 1.18 2002/09/30 11:08:58 grant Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,9 +118,11 @@ as output a 128-bit
 .Dq fingerprint
 or
 .Dq message digest
-of the input.  It is conjectured that it is computationally infeasible
+of the input.
+It is conjectured that it is computationally infeasible
 to product two messages having the same message digest, or to produce
-any message having a given prespecified target message digest.  The
+any message having a given prespecified target message digest.
+The
 MD5 algorithm is intended for digital signature applications, where
 a large file must be
 .Dq compressed
@@ -205,10 +207,12 @@ selected message digest.
 .It Fl t
 Run a built-in message digest time trial.
 .It Fl x
-Run a built-in message digest test script.  The tests that are run
+Run a built-in message digest test script.
+The tests that are run
 are supposed to encompass all the various tests in the suites that
 accompany the algorithms' descriptions with the exception of the the
-last test for the SHA-1 algorithm and the RIPEMD-160 algorithm.  The
+last test for the SHA-1 algorithm and the RIPEMD-160 algorithm.
+The
 last test for these is one million copies of the lower letter a.
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: units.1,v 1.11 2002/04/02 18:08:28 atatat Exp $
+.\"	$NetBSD: units.1,v 1.12 2002/09/30 11:09:15 grant Exp $
 .Dd December 18, 2001
 .Dt UNITS 1
 .Os
@@ -15,9 +15,9 @@
 .Oc
 .Sh DESCRIPTION
 The units program converts quantities expression in various scales to
-their equivalents in other scales.  The units program can only
-handle multiplicative scale changes.  It cannot convert Centigrade
-to Fahrenheit, for example.
+their equivalents in other scales.
+The units program can only handle multiplicative scale changes.
+It cannot convert Centigrade to Fahrenheit, for example.
 .Pp
 The following options are supported:
 .Bl -tag -width "from-unit to-unit" -offset indent
@@ -30,8 +30,11 @@ about the number of units loaded.
 Prints the version number.
 .It Ar from-unit Ar to-unit
 Allows a single unit conversion to be done directly from the command
-line.  No prompting will occur.  The units program will print out
-only the result of this single conversion.  The
+line.
+No prompting will occur.
+The units program will print out
+only the result of this single conversion.
+The
 .Ar count
 argument can be prepended to the
 .Ar from-unit
@@ -59,7 +62,8 @@ character as shown in the example, or by simple concatenation:
 is equivalent to
 .Dq cm^3 .
 Multiplication of units can be specified by using spaces, a dash or
-an asterisk.  Division of units is indicated by the slash
+an asterisk.
+Division of units is indicated by the slash
 .Pq Sq \&/ .
 Note that multiplication has a higher precedence than division,
 so
@@ -79,9 +83,11 @@ it will display the reduced form for each unit:
             2.1166667e-05 kg^2 m / sec
 .Ed
 .Pp
-The conversion information is read from a units data file.  The default
+The conversion information is read from a units data file.
+The default
 file includes definitions for most familiar units, abbreviations and
-metric prefixes.  Some constants of nature included are:
+metric prefixes.
+Some constants of nature included are:
 .Bl -tag -width mercury -compact -offset indent
 .It pi
 ratio of circumference to diameter
@@ -104,10 +110,12 @@ astronomical unit
 .El
 .Pp
 .Dq pound
-is a unit of mass.  Compound names are run together
+is a unit of mass.
+Compound names are run together
 so
 .Dq poundforce
-is a unit of force.  British units that differ from their
+is a unit of force.
+British units that differ from their
 US counterparts are prefixed with
 .Dq br ,
 and currency is prefixed with
@@ -123,8 +131,10 @@ or a trailing
 and check again for a match.
 .Pp
 All of these definitions can be read in the standard units file, or you
-can supply your own file.  A unit is specified on a single line by
-giving its name and an equivalence.  One should be careful to define
+can supply your own file.
+A unit is specified on a single line by
+giving its name and an equivalence.
+One should be careful to define
 new units in terms of old ones so that a reduction leads to the
 primitive units which are marked with
 .Sq \&!
@@ -155,8 +165,8 @@ The user must use
 .Sq \&|
 to indicate division of numbers and
 .Sq \&/
-to indicate division of symbols.  This distinction should not
-be necessary.
+to indicate division of symbols.
+This distinction should not be necessary.
 .Pp
 The program contains various arbitrary limits on the length
 of the units converted and on the length of the data file.

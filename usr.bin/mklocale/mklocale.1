@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.7 2002/02/08 01:36:29 ross Exp $
+.\" $NetBSD: mklocale.1,v 1.8 2002/09/30 11:09:05 grant Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -67,7 +67,8 @@ The format of
 .Ar src-file
 is quite simple.
 It consists of a series of lines which start with a keyword and have
-associated data following.  C style comments are used
+associated data following.
+C style comments are used
 to place comments in the file.
 .Pp
 Following options are available:
@@ -123,9 +124,11 @@ Used to indicate ranges.
 The follow characters are taken literally:
 .Bl -tag -width "\*[Lt]\|\|(\|\|["
 .It Dv "\*[Lt]\|(\|["
-Used to start a mapping.  All are equivalent.
+Used to start a mapping.
+All are equivalent.
 .It Dv "\*[Gt]\|\^)\|]"
-Used to end a mapping.  All are equivalent.
+Used to end a mapping.
+All are equivalent.
 .It Dv :
 Used as a delimiter in mappings.
 .El

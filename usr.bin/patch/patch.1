@@ -1,4 +1,4 @@
-.\"	$NetBSD: patch.1,v 1.7 2002/02/08 01:36:30 ross Exp $ -*- nroff -*-
+.\"	$NetBSD: patch.1,v 1.8 2002/09/30 11:09:08 grant Exp $ -*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -70,9 +70,11 @@ environment variable, which is overridden by above switches.
 If the backup file already exists,
 .B patch
 creates a new backup file name by changing the first lowercase letter
-in the last component of the file's name into uppercase.  If there are
+in the last component of the file's name into uppercase.
+If there are
 no more lowercase letters in the name, it removes the first character
-from the name.  It repeats this process until it comes up with a
+from the name.
+It repeats this process until it comes up with a
 backup file that does not already exist.
 .PP
 You may also specify where you want the output to go with a
@@ -216,7 +218,8 @@ used in place of \*(L".orig\*(R" or \*(L"~\*(R".
 .TP 5
 .B \-B or \-\-prefix
 causes the next argument to be interpreted as a prefix to the backup file
-name. If this argument is specified any argument from -b will be ignored.
+name.
+If this argument is specified any argument from -b will be ignored.
 .TP 5
 .B \-c or \-\-context
 forces
@@ -252,7 +255,8 @@ to remove output files that are empty after the patches have been applied.
 forces
 .I patch
 to assume that the user knows exactly what he or she is doing, and to not
-ask any questions.  It assumes the following: skip patches for which a
+ask any questions.
+It assumes the following: skip patches for which a
 file to patch can't be found; patch files even though they have the
 wrong version for the ``Prereq:'' line in the patch; and assume that
 patches are not reversed even if they look like they are.
@@ -402,7 +406,8 @@ to print out its revision header and patch level.
 .TP 5
 .B \-V or \-\-version-control
 causes the next argument to be interpreted as a method for creating
-backup file names.  The type of backups made can also be given in the
+backup file names.
+The type of backups made can also be given in the
 .B VERSION_CONTROL
 environment variable, which is overridden by this option.
 The
@@ -415,7 +420,8 @@ environment variable and the argument to the
 .B -V
 option are like the GNU
 Emacs `version-control' variable; they also recognize synonyms that
-are more descriptive.  The valid values are (unique abbreviations are
+are more descriptive.
+The valid values are (unique abbreviations are
 accepted):
 .RS
 .TP
