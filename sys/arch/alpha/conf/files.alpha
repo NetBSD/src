@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.94 1998/10/01 16:18:53 erh Exp $
+# $NetBSD: files.alpha,v 1.95 1998/10/05 00:49:15 matt Exp $
 #
 # alpha-specific configuration info
 
@@ -480,3 +480,7 @@ file	dev/pci/i82365_pci.c		pcic_pci
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
+#
+# Machine-independent USB device support
+#
+include "dev/usb/files.usb"
