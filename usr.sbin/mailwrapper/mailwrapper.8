@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.7 2000/07/05 15:45:32 msaitoh Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.8 2000/09/04 07:37:21 kleink Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -117,13 +117,13 @@ is kept in
 is typically set up as a symlink to
 .Nm
 which is not usually invoked on its own.
+.Sh EXIT STATUS
+.Nm
+exits 0 on success, and >0 if an error occurs.
 .Sh DIAGNOSTICS
 .Nm
-will return an error value and print a diagnostic if its configuration 
-file is missing or malformed, or does not contain a mapping for the
-name under which
-.Nm
-was invoked.
+will print a diagnostic if its configuration file is missing or malformed,
+or does not contain a mapping for the name under which it was invoked.
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,

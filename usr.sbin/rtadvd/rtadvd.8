@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.8,v 1.9 2000/07/06 12:37:56 itojun Exp $
+.\"	$NetBSD: rtadvd.8,v 1.10 2000/09/04 07:37:21 kleink Exp $
 .\"	$KAME: rtadvd.8,v 1.9 2000/05/27 13:37:01 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,8 +121,10 @@ In this case,
 will transmit router advertisement with router lifetime 0
 to all the interfaces
 .Pq according to RFC2461 6.2.5 .
-.Sh RETURN VALUES
-The program exits with 0 on success, and non-zero on failures.
+.Sh EXIT STATUS
+The
+.Nm
+program exits 0 on success, and >0 on failures.
 .Sh FILES
 .Bl -tag -width /etc/rtadvd.conf -compact
 .It Pa /etc/rtadvd.conf

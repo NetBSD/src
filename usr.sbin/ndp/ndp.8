@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.8 2000/06/20 22:23:01 itojun Exp $
+.\"	$NetBSD: ndp.8,v 1.9 2000/09/04 07:37:21 kleink Exp $
 .\"	$KAME: ndp.8,v 1.12 2000/06/20 21:50:17 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -164,10 +164,10 @@ Most useful when used with
 .Fl A .
 .El
 .\"
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 The
 .Nm
-command will exit with 0 on success, and non-zero on errors.
+command exits 0 on success, and >0 on errors.
 .\"
 .Sh SEE ALSO
 .Xr arp 8

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.21 2000/07/27 03:48:08 cgd Exp $
+.\"	$NetBSD: install.1,v 1.22 2000/09/04 07:35:21 kleink Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -236,10 +236,11 @@ utility attempts to prevent moving a file onto itself.
 Installing
 .Pa /dev/null
 creates an empty file.
-.Sh RETURN VALUES
-.Pp
-Upon successful completion a value of 0 is returned.
-Otherwise, a value of 1 is returned.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success,
+and >0 if an error occurs.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev STRIP
