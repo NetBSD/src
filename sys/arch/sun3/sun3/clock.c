@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 1997/03/18 22:21:53 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.40 1997/04/28 22:04:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -59,14 +59,14 @@
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/cpu.h>
-#include <machine/mon.h>
+#include <machine/leds.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
-#include <dev/clock_subr.h>
-
 #include <sun3/sun3/interreg.h>
-#include "intersil7170.h"
+
+#include <dev/clock_subr.h>
+#include <dev/ic/intersil7170.h>
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
@@ -95,21 +95,6 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
-/*
- * This is called very early (by obio_init()) but after
- * intreg_init() has found the PROM mapping for the
- * interrupt register and cleared it.
- */
-void
-clock_init()
-{
-	intersil_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
-	if (!intersil_va) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
-	}
-}
-
 static int
 clock_match(parent, cf, args)
     struct device *parent;
@@ -122,8 +107,12 @@ clock_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_CLOCK)
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
+	/* Make sure there is something there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
 	/* Default interrupt priority. */
@@ -139,8 +128,16 @@ clock_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
+	struct confargs *ca = args;
+	caddr_t va;
 
 	printf("\n");
+
+	/* Get a mapping for it. */
+	va = obio_mapin(ca->ca_paddr, OBIO_CLOCK_SIZE);
+	if (!va)
+		panic("clock_attach");
+	intersil_va = va;
 
 	/*
 	 * Set the clock to the correct interrupt rate, but
@@ -276,6 +273,7 @@ void
 clock_intr(cf)
 	struct clockframe cf;
 {
+	extern char _Idle[];	/* locore.s */
 
 	/* Read the clock interrupt register. */
 	intersil_clear();
@@ -287,11 +285,12 @@ clock_intr(cf)
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
 
+	/* Entertainment! */
+	if (cf.cf_pc == (long)_Idle)
+		leds_intr();
+
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
-
-	/* Entertainment! */
-	leds_intr();
 }
 
 
@@ -339,8 +338,8 @@ microtime(tvp)
  * Resettodr restores the time of day hardware after a time change.
  */
 
-static long clk_get_secs(void);
-static void clk_set_secs(long);
+static long clk_get_secs __P((void));
+static void clk_set_secs __P((long));
 
 /*
  * Initialize the time of day register, based on the time base
@@ -403,14 +402,53 @@ void resettodr()
 
 
 /*
+ * Now routines to get and set clock as POSIX time.
+ * Our clock keeps "years since 1/1/1968".
+ */
+#define	CLOCK_BASE_YEAR 1968
+static void intersil_get_dt __P((struct clock_ymdhms *));
+static void intersil_set_dt __P((struct clock_ymdhms *));
+
+static long
+clk_get_secs()
+{
+	struct clock_ymdhms dt;
+	long secs;
+
+	intersil_get_dt(&dt);
+
+	if ((dt.dt_hour > 24) ||
+		(dt.dt_day  > 31) ||
+		(dt.dt_mon  > 12))
+		return (0);
+
+	dt.dt_year += CLOCK_BASE_YEAR;
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
+}
+
+static void
+clk_set_secs(secs)
+	long secs;
+{
+	struct clock_ymdhms dt;
+
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
+
+	intersil_set_dt(&dt);
+}
+
+
+/*
  * Routines to copy state into and out of the clock.
- * The clock registers have to be read or written
+ * The intersil registers have to be read or written
  * in sequential order (or so it appears). -gwr
  */
 static void
-clk_get_dt(struct clock_ymdhms *dt)
+intersil_get_dt(struct clock_ymdhms *dt)
 {
-	register volatile struct date_time *isdt;
+	volatile struct intersil_dt *isdt;
 	int s;
 
 	isdt = &intersil_clock->counters;
@@ -437,9 +475,9 @@ clk_get_dt(struct clock_ymdhms *dt)
 }
 
 static void
-clk_set_dt(struct clock_ymdhms *dt)
+intersil_set_dt(struct clock_ymdhms *dt)
 {
-	register volatile struct date_time *isdt;
+	volatile struct intersil_dt *isdt;
 	int s;
 
 	isdt = &intersil_clock->counters;
@@ -463,41 +501,4 @@ clk_set_dt(struct clock_ymdhms *dt)
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
-}
-
-
-/*
- * Now routines to get and set clock as POSIX time.
- * Our clock keeps "years since 1/1/1968".
- */
-#define	CLOCK_BASE_YEAR 1968
-
-static long
-clk_get_secs()
-{
-	struct clock_ymdhms dt;
-	long secs;
-
-	clk_get_dt(&dt);
-
-	if ((dt.dt_hour > 24) ||
-		(dt.dt_day  > 31) ||
-		(dt.dt_mon  > 12))
-		return (0);
-
-	dt.dt_year += CLOCK_BASE_YEAR;
-	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
-}
-
-static void
-clk_set_secs(secs)
-	long secs;
-{
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
-
-	clk_set_dt(&dt);
 }
