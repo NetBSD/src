@@ -1941,7 +1941,7 @@ for machine in $build $host $target; do
 		tmake_file=arm/t-netbsd
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
-		use_collect2=yes
+		use_collect2=no
 		;;
 	arm-*-linux-gnuaout*)		# ARM Linux
 		cpu_type=arm
@@ -2334,6 +2334,7 @@ for machine in $build $host $target; do
 		xm_file=i386/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
 	i[3456]86-*-coff*)
@@ -2993,6 +2994,7 @@ for machine in $build $host $target; do
 		xm_file=m68k/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
 	m68k-*-sysv3*)			# Motorola m68k's running system V.3
@@ -3292,6 +3294,7 @@ for machine in $build $host $target; do
 		xm_file=mips/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
 	mips-sony-bsd* | mips-sony-newsos*)	# Sony NEWS 3600 or risc/news.
@@ -3612,6 +3615,7 @@ for machine in $build $host $target; do
 		xm_file=ns32k/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
         pdp11-*-bsd)
@@ -3648,6 +3652,7 @@ for machine in $build $host $target; do
 		xm_file=rs6000/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
 	powerpc-*-eabiaix*)
@@ -3867,6 +3872,7 @@ for machine in $build $host $target; do
 		xm_file=sparc/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		;;
 	sparc-*-bsd*)
@@ -4027,6 +4033,7 @@ for machine in $build $host $target; do
 		xm_file="${xm_file} xm-netbsd.h"
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
+		use_collect2=no
 		tmake_file=t-netbsd
 		float_format=vax
 		;;
