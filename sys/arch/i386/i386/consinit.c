@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2000/06/11 02:46:29 mycroft Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2001/02/21 22:52:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -87,7 +87,7 @@
 int comcnmode = CONMODE;
 #endif /* NCOM */
 
-struct btinfo_console default_consinfo = {
+const struct btinfo_console default_consinfo = {
 	{0, 0},
 	CONSDEVNAME,
 #if (NCOM > 0)
@@ -101,7 +101,7 @@ struct btinfo_console default_consinfo = {
 #ifndef KGDB_DEVNAME
 #define KGDB_DEVNAME "com"
 #endif
-char kgdb_devname[] = KGDB_DEVNAME;
+const char kgdb_devname[] = KGDB_DEVNAME;
 
 #if (NCOM > 0)
 #ifndef KGDBADDR
@@ -129,7 +129,7 @@ int comkgdbmode = KGDBMODE;
 void
 consinit()
 {
-	struct btinfo_console *consinfo;
+	const struct btinfo_console *consinfo;
 	static int initted;
 
 	if (initted)
