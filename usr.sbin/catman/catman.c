@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.4 1994/04/26 20:15:51 chopps Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.5 1994/04/26 20:39:22 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,7 +107,7 @@ main(argc, argv)
 		usage ();
 	sp = *argv;
 
-	if (f_noformat == 0)
+	if (f_noformat == 0 || f_nowhatis == 0)
 		catman(mp, sp);
 	if (f_nowhatis == 0 && dowhatis)
 		makewhatis(mp);
@@ -131,7 +131,7 @@ catman(path, section)
 	struct dirent *dp;
 	DIR *dirp;
 	char *s, *tmp;
-	int sectlen;
+	int sectlen, error;
 
 	for (s = section; *s; s += sectlen) {
 		tmp = s;
@@ -192,24 +192,29 @@ catman(path, section)
 				warnx("not a regular file %s", manpage);
 				continue;
 			}
-			if (stat(catpage, &catstat) < 0 && errno != ENOENT) {
+			if ((error = stat(catpage, &catstat)) &&
+			    errno != ENOENT) {
 				warn("can't stat %s", catpage);
 				continue;
 			}
 
-			if (errno == ENOENT || 
+			if ((error && errno == ENOENT) || 
 			    manstat.st_mtime >= catstat.st_mtime) {
-				/*
-				 * manpage is out of date,
-				 * reformat
-				 */
-				sprintf(sysbuf, "nroff -mandoc %s > %s",
-				    manpage, catpage);
-				if (f_noprint == 0)
-					printf("%s\n", sysbuf);
-				if (f_noaction == 0)
-					dosystem(sysbuf);
-				dowhatis = 1;
+				if (f_noformat)
+					dowhatis = 1;
+				else {
+					/*
+					 * manpage is out of date,
+					 * reformat
+					 */
+					sprintf(sysbuf, "nroff -mandoc %s > %s",
+					    manpage, catpage);
+					if (f_noprint == 0)
+						printf("%s\n", sysbuf);
+					if (f_noaction == 0)
+						dosystem(sysbuf);
+					dowhatis = 1;
+				}
 			}
 		}
 		closedir(dirp);
