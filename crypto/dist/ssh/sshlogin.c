@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.12 2003/08/26 16:48:34 wiz Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.13 2004/07/06 02:59:55 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshlogin.c,v 1.5 2002/08/29 15:57:25 stevesk Exp $");
-__RCSID("$NetBSD: sshlogin.c,v 1.12 2003/08/26 16:48:34 wiz Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.13 2004/07/06 02:59:55 christos Exp $");
 
 #include <util.h>
 #ifdef SUPPORT_UTMP
@@ -174,7 +174,9 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		} else
 			strncpy(ux.ut_id, ttyname, sizeof(ux.ut_id));
 		/* XXX: It would be better if we had sockaddr_storage here */
-		memcpy(&ux.ut_ss, addr, sizeof(*addr));
+		if (addrlen > sizeof(ux.ut_ss))
+			addrlen = sizeof(ux.ut_ss);
+		(void)memcpy(&ux.ut_ss, addr, addrlen);
 		if (pututxline(&ux) == NULL)
 			logit("could not add utmpx line: %.100s",
 			    strerror(errno));
