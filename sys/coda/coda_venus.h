@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.h,v 1.3 1998/09/15 02:02:59 rvb Exp $	*/
+/*	$NetBSD: coda_venus.h,v 1.4 2002/03/27 05:10:40 phil Exp $	*/
 
 /*
  * 
@@ -126,6 +126,10 @@ venus_readdir(void *mdp, ViceFid *fid,
     	int count, int offset,
 	struct ucred *cred, struct proc *p,
 /*out*/	char *buffer, int *len);
+
+int
+venus_statfs(void *mdp, struct ucred *cred, struct proc *p,
+   /*out*/   struct coda_statfs *fsp);
 
 int
 venus_fhtovp(void *mdp, ViceFid *fid,
