@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.27 2003/06/14 16:58:00 wiz Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.28 2003/06/14 17:56:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.27 2003/06/14 16:58:00 wiz Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.28 2003/06/14 17:56:24 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -73,6 +73,10 @@ __RCSID("$NetBSD: makewhatis.c,v 1.27 2003/06/14 16:58:00 wiz Exp $");
 
 #include <man/manconf.h>
 #include <man/pathnames.h>
+
+#ifndef NROFF
+#define NROFF "nroff"
+#endif
 
 typedef struct manpagestruct manpage;
 struct manpagestruct {
@@ -683,7 +687,7 @@ nroff(gzFile *in, const char *inname)
 			(void)dup2(devnull, STDERR_FILENO);
 			(void)close(devnull);
 		}
-		(void)execlp("nroff", "nroff", "-S", "-man", NULL);
+		(void)execlp(NROFF, NROFF, "-S", "-man", NULL);
 		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 	default:
@@ -710,7 +714,7 @@ nroff(gzFile *in, const char *inname)
 	if ((data != NULL) &&
 	    !(WIFEXITED(status) && (WEXITSTATUS(status) == 0))) {
 		free(data);
-		errx(EXIT_FAILURE, "nroff on `%s' exited with %d status",
+		errx(EXIT_FAILURE, NROFF " on `%s' exited with %d status",
 		    inname, WEXITSTATUS(status));
 	}
 
