@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.271 2004/06/14 04:18:14 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.272 2004/06/14 18:26:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3709,3 +3709,47 @@ usr.bin/sed/compile.c				1.26-1.28
 
 	sed(1) fixes for PR#25899, PR#24234, PR#25911
 	[grant, ticket #494]
+
+sys/arch/amd64/include/endian_machdep.h		1.2
+sys/arch/arm/include/endian_machdep.h		1.6
+sys/arch/i386/include/endian_machdep.h		1.2
+sys/arch/sh5/include/endian_machdep.h		1.4
+
+	Reflect <sys/endian.h> rev. 1.4: make htonl() et al. arguments and
+	results uint{16,32}_t.
+	[kleink, ticket #467]
+
+sys/netinet6/in6.h				1.45
+sys/netinet6/in6_pcb.h				1.25
+sys/netinet6/ip6_output.c			1.83
+sys/netinet6/raw_ip6.c				1.65
+sys/netinet6/udp6_output.c			1.18
+
+	Implement IPV6_USE_MIN_MTU sockopt.
+	[itojun, ticket #468]
+
+share/mk/bsd.own.mk				1.421
+
+	Clean up HOST_OSTYPE a bit more and turn any spaces into _'s as well as
+	stripping paren'd values from HOST_ARCH. Fixes PR toolchain/25586 for
+	uname -p output on linux hosts which return multi-word values
+	[jmc, ticket #472]
+
+tools/Makefile.gnuhost				1.27
+
+	MKUPDATE cannot possibly do the right thing with GNU wrapped tools
+	installs as no dependencies are known in advance. So a simple
+	'build.sh -r -u' will often lose and end up with a TOOLDIR without a
+	toolchain, groff, etc. Fix by forcing .install_done to always run.
+	[jmc, ticket #473]
+
+gnu/usr.bin/gcc3/backend/Makefile		1.16
+gnu/usr.bin/gcc3/host-libiberty/Makefile	1.5
+
+	Fix some missing $HOST_SH needs as highlighted in PR toolchain/25606
+	Redo this rule so it depends on libiberty.a rather than just the
+	directory. Otherwise an aborted build would cause this to be skipped
+	on MKUPDATE. Also, run configure w. $HOST_SH as highlighted in
+	PR toolchain/25606
+	[jmc, ticket #474]
+
