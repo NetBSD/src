@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.118 1999/07/11 17:35:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.119 1999/07/12 22:12:06 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
 .include <bsd.own.mk>
+
+SRCTOP=	..
+.include <bsd.crypto.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl config cron dbsym dev_mkdb \
@@ -34,6 +37,10 @@ SUBDIR+=	sendmail
 
 .if defined(BUILD_POSTFIX)
 SUBDIR+=	postfix
+.endif
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.sbin/Makefile.frag"
 .endif
 
 .include <bsd.subdir.mk>
