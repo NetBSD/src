@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/04 21:46:57 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/04 22:14:32 christos Exp $
 
-.include "../Makefile.inc"
+.include "${.CURDIR}/../Makefile.inc"
 
 PROG=	rcs2log
 
