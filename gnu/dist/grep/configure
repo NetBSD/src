@@ -710,7 +710,7 @@ fi
 
 PACKAGE=grep
 
-VERSION=2.2f
+VERSION=2.3
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { echo "configure: error: source directory already configured; run "make distclean" there first" 1>&2; exit 1; }
@@ -3840,12 +3840,12 @@ fi
 
          test -d po || mkdir po
    if test "x$srcdir" != "x."; then
-     if test "x`echo $srcdir | sed 's@/.*@@'`" = "x"; then
+        if test "x`echo $srcdir | sed -e 's@^[A-z]:@@' -e 's@/.*@@'`" = "x"; then
        posrcprefix="$srcdir/"
      else
        posrcprefix="../$srcdir/"
      fi
-   else
+      else
      posrcprefix="../"
    fi
    rm -f po/POTFILES
@@ -3969,8 +3969,8 @@ rm -f conftest*
 fi
 
 echo "$ac_t""$ac_cv_djgpp" 1>&6
-DJGPP=
-test "$ac_cv_djgpp" = yes && DJGPP=yes
+DJ_GPP=
+test "$ac_cv_djgpp" = yes && DJ_GPP=yes
 
 
 
@@ -3979,7 +3979,7 @@ echo "configure:3979: checking for environ variable separator" >&5
 if eval "test \"`echo '$''{'ac_cv_sep'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-  if test "$CYGWIN" = yes || test "$MINGW32" = yes || test "$DJGPP" = yes ; then
+  if test "$CYGWIN" = yes || test "$MINGW32" = yes || test "$DJ_GPP" = yes ; then
   ac_cv_sep=yes
 else
   ac_cv_sep=no
@@ -4050,96 +4050,82 @@ ac_objext=$ac_cv_objext
 
 
 
-    echo $ac_n "checking whether we are using the GNU C Library""... $ac_c" 1>&6
-echo "configure:4055: checking whether we are using the GNU C Library" >&5
-if eval "test \"`echo '$''{'ac_cv_gnu_library'+set}'`\" = set"; then
+        
+    # Assume we'll default to using the included regex.c.
+    ac_use_included_regex=yes
+
+    # However, if the system regex support is good enough that it passes the
+    # the following run test, then default to *not* using the included regex.c.
+    # If cross compiling, assume the test would fail and use the included
+    # regex.c.  The failing regular expression is from `Spencer ere test #75'
+    # in grep-2.3.
+    echo $ac_n "checking for working re_compile_pattern""... $ac_c" 1>&6
+echo "configure:4064: checking for working re_compile_pattern" >&5
+if eval "test \"`echo '$''{'jm_cv_func_working_re_compile_pattern'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
+else
+  if test "$cross_compiling" = yes; then
+  	       jm_cv_func_working_re_compile_pattern=no
 else
   cat > conftest.$ac_ext <<EOF
-#line 4060 "configure"
+#line 4072 "configure"
 #include "confdefs.h"
-
-#include <features.h>
-#ifdef __GNU_LIBRARY__
-  Thanks for using GNU
-#endif
+	
+#include <stdio.h>
+#include <regex.h>
+	  int
+	  main ()
+	  {
+	    static struct re_pattern_buffer regex;
+	    const char *s;
+	    re_set_syntax (RE_SYNTAX_POSIX_EGREP);
+	    /* Add this third left square bracket, , to balance the
+	       three right ones below.  Otherwise autoconf-2.14 chokes.  */
+	    s = re_compile_pattern ("a[[:]:]b\n", 9, &regex);
+	    /* This should fail with _Invalid character class name_ error.  */
+	    exit (s ? 0 : 1);
+	  }
 	
 EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "Thanks for using GNU" >/dev/null 2>&1; then
-  rm -rf conftest*
-  ac_cv_gnu_library=yes
-else
-  rm -rf conftest*
-  ac_cv_gnu_library=no
-fi
-rm -f conftest*
-
-      
-    
-fi
-
-echo "$ac_t""$ac_cv_gnu_library" 1>&6
-    echo $ac_n "checking for version 2 of the GNU C Library""... $ac_c" 1>&6
-echo "configure:4085: checking for version 2 of the GNU C Library" >&5
-if eval "test \"`echo '$''{'ac_cv_glibc'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 4090 "configure"
-#include "confdefs.h"
-
-#include <features.h>
-#ifdef __GLIBC__
-  Thanks for using GNU too
-#endif
-	
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "Thanks for using GNU too" >/dev/null 2>&1; then
-  rm -rf conftest*
-  ac_cv_glibc=yes
-else
-  rm -rf conftest*
-  ac_cv_glibc=no
-fi
-rm -f conftest*
-
-      
-    
-fi
-
-echo "$ac_t""$ac_cv_glibc" 1>&6
+if { (eval echo configure:4091: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+then
   
-
-
-echo $ac_n "checking whether compiling regex.c""... $ac_c" 1>&6
-echo "configure:4118: checking whether compiling regex.c" >&5
-if eval "test \"`echo '$''{'ac_cv_included_regex'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
+	       jm_cv_func_working_re_compile_pattern=yes
 else
-  
-# By default, don't use the included regex.c on systems with glibc 2
-if test x"$ac_cv_glibc" = xyes ; then
-	default=no
-else
-	default=yes
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -fr conftest*
+  jm_cv_func_working_re_compile_pattern=no
 fi
+rm -fr conftest*
+fi
+
+fi
+
+echo "$ac_t""$jm_cv_func_working_re_compile_pattern" 1>&6
+    if test $jm_cv_func_working_re_compile_pattern = yes; then
+      ac_use_included_regex=no
+    fi
+
+    test -n "src/regex.c" || { echo "configure: error: missing argument" 1>&2; exit 1; }
+    
+    
+
 	# Check whether --with-included-regex or --without-included-regex was given.
 if test "${with_included_regex+set}" = set; then
   withval="$with_included_regex"
-  ac_cv_included_regex=$withval
+  jm_with_regex=$withval
 else
-  ac_cv_included_regex=$default
+  jm_with_regex=$ac_use_included_regex
 fi
 
-if test x"$ac_cv_included_regex" = xyes; then
-	LIBOBJS="$LIBOBJS regex.${ac_objext}"
-fi
+	if test "$jm_with_regex" = yes; then
+	  
+	  LIBOBJS="$LIBOBJS regex.$ac_objext"
+	fi
+      
+  
 
-fi
-
-echo "$ac_t""$ac_cv_included_regex" 1>&6
 
 trap '' 1 2 15
 cat > confcache <<\EOF
@@ -4242,7 +4228,7 @@ done
 ac_given_srcdir=$srcdir
 ac_given_INSTALL="$INSTALL"
 
-trap 'rm -fr `echo "Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile config.h:config.hin" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile bootstrap/Makefile config.h:config.hin" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -4356,7 +4342,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile"}
+CONFIG_FILES=\${CONFIG_FILES-"Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile djgpp/Makefile vms/Makefile bootstrap/Makefile"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
@@ -4453,7 +4439,7 @@ for ac_file in .. $CONFIG_HEADERS; do if test "x$ac_file" != x..; then
   echo creating $ac_file
 
   rm -f conftest.frag conftest.in conftest.out
-  ac_file_inputs=`echo $ac_file_in|sed -e "s%^%$ac_given_srcdir/%" -e "s%:% $ac_given_srcdir/%g"`
+  ac_file_inputs=`echo $ac_file_in|sed -e "s%:% $ac_given_srcdir/%g" -e "s%^%$ac_given_srcdir/%"`
   cat $ac_file_inputs > conftest.in
 
 EOF

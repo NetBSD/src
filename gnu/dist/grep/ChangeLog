@@ -1,3 +1,45 @@
+1999-02-14 Alain Magloire
+
+	* m4/gettext.m4 : Guard [] with changequote.
+	From Elie Zaretskii.
+
+	* djgpp/config.bat : Makefile.in.in --> Makefile.in-in
+	From Elie Zaretskii.
+
+	* src/dosbuf: k&r function parameter.
+
+	* release of 2.3.
+
+1999-02-10 Alain Magloire
+
+	* bootstrap/{Makefile{try,am},REAMDE} : skeleton
+	provided for system lacking the tools to autoconfigure.
+
+	* src/{e,f,}grepmat.c: added guard [HAVE_CONFIG_H]
+
+1999-02-10 Alain Magloire
+
+	* PATCHES-AC, PATCHES-AM: updated.
+
+	* m4/regex.m4 : updated.
+
+1999-02-05 Eli Zaretskii
+
+	* m4/gettext.m4 : Support DOS-style D:/foo/bar absolute file
+	names.
+
+	* aclocal.m4 (DJGPP) : Use $DJ_GPP instead, since changing the
+	latter prevents GCC from finding headers and libraries.
+
+	* djgpp/config.bat: Make building from another directory work
+
+	* djgpp/config.sed: Remove redundant command wich edited path
+	separator: now done by configure.
+
+	* src/grep.c [O_BINARY]: Add prototype for undossify_input.
+
+	* doc/grep.texi (Introduction): Typo fixed.
+
 1999-02-03 Alain Magloire
 
 	* grep-2.2f beta release.
