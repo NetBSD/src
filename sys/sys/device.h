@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.44 2000/07/22 05:02:24 matt Exp $ */
+/* $NetBSD: device.h,v 1.45 2000/12/01 02:07:04 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -101,7 +101,7 @@ enum devclass {
  */
 enum devact {
 	DVACT_ACTIVATE,		/* activate the device */
-	DVACT_DEACTIVATE,	/* deactivate the device */
+	DVACT_DEACTIVATE	/* deactivate the device */
 };
 
 struct device {
