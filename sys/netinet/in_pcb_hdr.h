@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.1 2003/09/04 09:16:58 itojun Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.2 2003/10/28 17:18:37 provos Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -72,6 +72,7 @@ struct inpcbpolicy;
  */
 struct inpcb_hdr {
 	LIST_ENTRY(inpcb_hdr) inph_hash;
+	LIST_ENTRY(inpcb_hdr) inph_lhash;
 	CIRCLEQ_ENTRY(inpcb_hdr) inph_queue;
 	int	  inph_af;		/* address family - AF_INET */
 	caddr_t	  inph_ppcb;		/* pointer to per-protocol pcb */
@@ -87,8 +88,10 @@ LIST_HEAD(inpcbhead, inpcb_hdr);
 
 struct inpcbtable {
 	CIRCLEQ_HEAD(, inpcb_hdr) inpt_queue;
+	struct	  inpcbhead *inpt_porthashtbl;
 	struct	  inpcbhead *inpt_bindhashtbl;
 	struct	  inpcbhead *inpt_connecthashtbl;
+	u_long	  inpt_porthash;
 	u_long	  inpt_bindhash;
 	u_long	  inpt_connecthash;
 	u_int16_t inpt_lastport;
