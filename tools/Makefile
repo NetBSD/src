@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2002/02/08 17:48:38 pk Exp $
+#	$NetBSD: Makefile,v 1.34 2002/02/10 15:46:42 pk Exp $
 
 # XXX Note: NO_DBSYM is a stopgap temporary variable for use
 # with the development of non-NetBSD hosting support.  This will go away.
@@ -56,16 +56,14 @@ all-${dir} depend-${dir} dependall-${dir} install-${dir}:
 
 # For each .WAIT point, make sure the previous target is installed before
 # building a dependent target.
-_dep:=
 _last:=
 .for d in ${SUBDIR}
 _this:=		${d}
 .if ${_this} == ".WAIT"
-_dep:=		${_dep} install-${_last}
-install-${_last}: all-${_last}
+.ORDER: depend-${_last} all-${_last} dependall-${_last} install-${_last}
 .else
+.ORDER: depend-${d} all-${d} dependall-${d} install-${_last}
 _last:=		${d}
-depend-${d} all-${d} dependall-${d}: ${_dep}
 .endif
 .endfor
 
