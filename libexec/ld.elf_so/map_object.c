@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.15 2002/09/13 03:12:40 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.16 2002/09/23 23:56:47 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,7 +53,7 @@ static int protflags __P((int));	/* Elf flags -> mmap protection */
  */
 Obj_Entry *
 _rtld_map_object(path, fd, sb)
-	const char *path;
+	char *path;
 	int fd;
 	const struct stat *sb;
 {
@@ -61,8 +61,7 @@ _rtld_map_object(path, fd, sb)
 	union {
 		Elf_Ehdr hdr;
 		char     buf[PAGESIZE];
-	} u;
-	int             nbytes;
+	} *u;
 	Elf_Phdr       *phdr;
 	Elf_Phdr       *phlimit;
 	Elf_Phdr       *segs[2];
@@ -89,33 +88,34 @@ _rtld_map_object(path, fd, sb)
 	size_t          nclear;
 #endif
 
-	if ((nbytes = read(fd, u.buf, PAGESIZE)) == -1) {
+	u = mmap(NULL, PAGESIZE, PROT_READ, MAP_FILE | MAP_SHARED, fd,
+	    (off_t)0);
+	if (u == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		return NULL;
 	}
 	/* Make sure the file is valid */
-	if (nbytes < sizeof(Elf_Ehdr) ||
-	    memcmp(ELFMAG, u.hdr.e_ident, SELFMAG) != 0 ||
-	    u.hdr.e_ident[EI_CLASS] != ELFCLASS) {
+	if (memcmp(ELFMAG, u->hdr.e_ident, SELFMAG) != 0 ||
+	    u->hdr.e_ident[EI_CLASS] != ELFCLASS) {
 		_rtld_error("%s: unrecognized file format", path);
-		return NULL;
+		goto bad;
 	}
 	/* Elf_e_ident includes class */
-	if (u.hdr.e_ident[EI_VERSION] != EV_CURRENT ||
-	    u.hdr.e_version != EV_CURRENT ||
-	    u.hdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
-		_rtld_error("%s: Unsupported file version", path);
-		return NULL;
+	if (u->hdr.e_ident[EI_VERSION] != EV_CURRENT ||
+	    u->hdr.e_version != EV_CURRENT ||
+	    u->hdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS)) {
+		_rtld_error("%s: unsupported file version", path);
+		goto bad;
 	}
-	if (u.hdr.e_type != ET_EXEC && u.hdr.e_type != ET_DYN) {
-		_rtld_error("%s: Unsupported file type", path);
-		return NULL;
+	if (u->hdr.e_type != ET_EXEC && u->hdr.e_type != ET_DYN) {
+		_rtld_error("%s: unsupported file type", path);
+		goto bad;
 	}
-	switch (u.hdr.e_machine) {
+	switch (u->hdr.e_machine) {
 		ELFDEFNNAME(MACHDEP_ID_CASES)
 	default:
-		_rtld_error("%s: Unsupported machine", path);
-		return NULL;
+		_rtld_error("%s: unsupported machine", path);
+		goto bad;
 	}
 
 	/*
@@ -123,9 +123,8 @@ _rtld_map_object(path, fd, sb)
          * not strictly required by the ABI specification, but it seems to
          * always true in practice.  And, it simplifies things considerably.
          */
-	assert(u.hdr.e_phentsize == sizeof(Elf_Phdr));
-	assert(u.hdr.e_phoff + u.hdr.e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
-	assert(u.hdr.e_phoff + u.hdr.e_phnum * sizeof(Elf_Phdr) <= nbytes);
+	assert(u->hdr.e_phentsize == sizeof(Elf_Phdr));
+	assert(u->hdr.e_phoff + u->hdr.e_phnum * sizeof(Elf_Phdr) <= PAGESIZE);
 
 	/*
          * Scan the program header entries, and save key information.
@@ -133,8 +132,8 @@ _rtld_map_object(path, fd, sb)
          * We rely on there being exactly two load segments, text and data,
          * in that order.
          */
-	phdr = (Elf_Phdr *) (u.buf + u.hdr.e_phoff);
-	phlimit = phdr + u.hdr.e_phnum;
+	phdr = (Elf_Phdr *) (u->buf + u->hdr.e_phoff);
+	phlimit = phdr + u->hdr.e_phnum;
 	nsegs = 0;
 	phdyn = phphdr = phinterp = NULL;
 	while (phdr < phlimit) {
@@ -162,12 +161,12 @@ _rtld_map_object(path, fd, sb)
 	}
 	if (phdyn == NULL) {
 		_rtld_error("%s: not dynamically linked", path);
-		return NULL;
+		goto bad;
 	}
 	if (nsegs != 2) {
 		_rtld_error("%s: wrong number of segments (%d != 2)", path,
 		    nsegs);
-		return NULL;
+		goto bad;
 	}
 
 	/*
@@ -189,7 +188,7 @@ _rtld_map_object(path, fd, sb)
 	mapsize = base_vlimit - base_vaddr;
 
 #ifdef RTLD_LOADER
-	base_addr = u.hdr.e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
+	base_addr = u->hdr.e_type == ET_EXEC ? (caddr_t) base_vaddr : NULL;
 #else
 	base_addr = NULL;
 #endif
@@ -199,7 +198,7 @@ _rtld_map_object(path, fd, sb)
 	if (mapbase == MAP_FAILED) {
 		_rtld_error("mmap of entire address space failed: %s",
 		    xstrerror(errno));
-		return NULL;
+		goto bad;
 	}
 
 	base_addr = mapbase;
@@ -215,7 +214,7 @@ _rtld_map_object(path, fd, sb)
 	    == MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
 		munmap(mapbase, mapsize);
-		return NULL;
+		goto bad;
 	}
 
 	/* Overlay the bss segment onto the proper region. */
@@ -225,7 +224,7 @@ _rtld_map_object(path, fd, sb)
 	    == MAP_FAILED) {
 		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
 		munmap(mapbase, mapsize);
-		return NULL;
+		goto bad;
 	}
 
 	/* Unmap the gap between the text and data. */
@@ -235,7 +234,7 @@ _rtld_map_object(path, fd, sb)
 		_rtld_error("munmap of text -> data gap failed: %s",
 		    xstrerror(errno));
 		munmap(mapbase, mapsize);
-		return NULL;
+		goto bad;
 	}
 
 #ifdef RTLD_LOADER
@@ -249,6 +248,7 @@ _rtld_map_object(path, fd, sb)
 #endif
 
 	obj = _rtld_obj_new();
+	obj->path = path;
 	if (sb != NULL) {
 		obj->dev = sb->st_dev;
 		obj->ino = sb->st_ino;
@@ -260,8 +260,8 @@ _rtld_map_object(path, fd, sb)
 	obj->vaddrbase = base_vaddr;
 	obj->relocbase = mapbase - base_vaddr;
 	obj->dynamic = (Elf_Dyn *)(obj->relocbase + phdyn->p_vaddr);
-	if (u.hdr.e_entry != 0)
-		obj->entry = (caddr_t)(obj->relocbase + u.hdr.e_entry);
+	if (u->hdr.e_entry != 0)
+		obj->entry = (caddr_t)(obj->relocbase + u->hdr.e_entry);
 	if (phphdr != NULL) {
 		obj->phdr = (const Elf_Phdr *)
 		    (obj->relocbase + phphdr->p_vaddr);
@@ -269,9 +269,13 @@ _rtld_map_object(path, fd, sb)
 	}
 	if (phinterp != NULL)
 		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
-	obj->isdynamic = u.hdr.e_type == ET_DYN;
+	obj->isdynamic = u->hdr.e_type == ET_DYN;
 
 	return obj;
+
+bad:
+	munmap(u, PAGESIZE);
+	return NULL;
 }
 
 void

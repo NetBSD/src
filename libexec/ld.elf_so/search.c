@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.10 2000/07/27 10:44:39 kleink Exp $	 */
+/*	$NetBSD: search.c,v 1.11 2002/09/23 23:56:49 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -55,61 +55,19 @@
 /*
  * Data declarations.
  */
-static bool _rtld_check_library __P((const char *));
-static char *_rtld_search_library_path __P((const char *, size_t, const char *,
-    size_t));
+static Obj_Entry *_rtld_search_library_path __P((const char *, size_t,
+    const char *, size_t, int));
 
-static bool
-_rtld_check_library(pathname)
-	const char *pathname;
-{
-	struct stat mystat;
-	Elf_Ehdr ehdr;
-	int fd;
-
-	if (stat(pathname, &mystat) == -1 || !S_ISREG(mystat.st_mode))
-		return false;
-
-	if ((fd = open(pathname, O_RDONLY)) == -1)
-		return false;
-
-	if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
-		goto lose;
-
-	/* ELF_Ehdr.e_ident includes class */
-	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
-	    ehdr.e_ident[EI_CLASS] != ELFCLASS)
-		goto lose;
-
-	switch (ehdr.e_machine) {
-		ELFDEFNNAME(MACHDEP_ID_CASES)
-	default:
-		goto lose;
-	}
-
-	if (ehdr.e_ident[EI_VERSION] != EV_CURRENT ||
-	    ehdr.e_version != EV_CURRENT ||
-	    ehdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
-	    ehdr.e_type != ET_DYN)
-		goto lose;
-
-	close(fd);
-	return true;
-
-lose:
-	close(fd);
-	return false;
-}
-
-
-static char *
-_rtld_search_library_path(name, namelen, dir, dirlen)
+static Obj_Entry *
+_rtld_search_library_path(name, namelen, dir, dirlen, mode)
 	const char *name;
 	size_t namelen;
 	const char *dir;
 	size_t dirlen;
+	int mode;
 {
 	char *pathname;
+	Obj_Entry *obj;
 
 	pathname = xmalloc(dirlen + 1 + namelen + 1);
 	(void)strncpy(pathname, dir, dirlen);
@@ -117,11 +75,10 @@ _rtld_search_library_path(name, namelen, dir, dirlen)
 	strcpy(pathname + dirlen + 1, name);
 
 	dbg(("  Trying \"%s\"", pathname));
-	if (_rtld_check_library(pathname))	/* We found it */
-		return pathname;
-
-	free(pathname);
-	return NULL;
+	obj = _rtld_load_object(pathname, mode);
+	if (obj == NULL)
+		free(pathname);
+	return obj;
 }
 
 /*
@@ -132,14 +89,16 @@ _rtld_search_library_path(name, namelen, dir, dirlen)
  * If the second argument is non-NULL, then it refers to an already-
  * loaded shared object, whose library search path will be searched.
  */
-char *
-_rtld_find_library(name, refobj)
+Obj_Entry *
+_rtld_load_library(name, refobj, mode)
 	const char *name;
 	const Obj_Entry *refobj;
+	int mode;
 {
 	Search_Path *sp;
 	char *pathname;
 	int namelen;
+	Obj_Entry *obj;
 
 	if (strchr(name, '/') != NULL) {	/* Hard coded pathname */
 		if (name[0] != '/' && !_rtld_trust) {
@@ -160,45 +119,39 @@ _rtld_find_library(name, refobj)
 			(void)strcpy(pathname, LIBDIR);
 			(void)strcpy(pathname + LIBDIRLEN, name +
 			    SVR4_LIBDIRLEN);
-			return pathname;
+			goto found2;
 		}
 #endif /* SVR4_LIBDIR */
-		return xstrdup(name);
+		pathname = xstrdup(name);
+		goto found2;
 	}
 	dbg((" Searching for \"%s\" (%p)", name, refobj));
 
 	namelen = strlen(name);
 
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
-		if ((pathname = _rtld_search_library_path(name, namelen,
-		    sp->sp_path, sp->sp_pathlen)) != NULL)
-			return (pathname);
+		if ((obj = _rtld_search_library_path(name, namelen,
+		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
+			goto found;
 
 	if (refobj != NULL)
 		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
-			if ((pathname = _rtld_search_library_path(name,
-			    namelen, sp->sp_path, sp->sp_pathlen)) != NULL)
-				return (pathname);
+			if ((obj = _rtld_search_library_path(name,
+			    namelen, sp->sp_path, sp->sp_pathlen, mode)) != NULL)
+				goto found;
 
 	for (sp = _rtld_default_paths; sp != NULL; sp = sp->sp_next)
-		if ((pathname = _rtld_search_library_path(name, namelen,
-		    sp->sp_path, sp->sp_pathlen)) != NULL)
-			return (pathname);
-
-#if 0
-	if ((refobj != NULL &&
-	    (pathname = _rtld_search_library_path(name,
-	    refobj->rpath)) != NULL) ||
-	    (pathname = _rtld_search_library_path(name,
-	    ld_library_path)) != NULL
-#ifdef SVR4_LIBDIR
-	    LOSE !
-	    ||(pathname = _rtld_search_library_path(name, SVR4_LIBDIR)) != NULL
-#endif
-	    )
-		return pathname;
-#endif
+		if ((obj = _rtld_search_library_path(name, namelen,
+		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
+			goto found;
 
 	_rtld_error("Shared object \"%s\" not found", name);
 	return NULL;
+
+found2:
+	obj = _rtld_load_object(pathname, mode);
+	if (obj == NULL)
+		free(pathname);
+found:
+	return obj;
 }
