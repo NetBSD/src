@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.18 2002/06/11 14:24:52 leo Exp $
+.\"	$NetBSD: install,v 1.19 2002/06/29 09:46:39 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
