@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.35 1995/03/21 13:34:02 mycroft Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.36 1995/06/13 05:31:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -199,7 +199,6 @@ slattach()
 
 	for (sc = sl_softc; i < NSL; sc++) {
 		sc->sc_if.if_name = "sl";
-		sc->sc_if.if_next = NULL;
 		sc->sc_if.if_unit = i++;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags =
