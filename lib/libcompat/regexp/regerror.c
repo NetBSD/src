@@ -1,7 +1,7 @@
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: regerror.c,v 1.8 1999/09/20 04:48:04 lukem Exp $");
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: regerror.c,v 1.9 2000/09/14 01:24:32 msaitoh Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <regexp.h>
