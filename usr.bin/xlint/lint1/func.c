@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.2 1995/07/03 21:24:11 cgd Exp $	*/
+/*	$NetBSD: func.c,v 1.3 1995/10/02 17:08:38 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.2 1995/07/03 21:24:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.3 1995/10/02 17:08:38 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -207,7 +207,7 @@ funcdef(fsym)
 	 * Put all symbols declared in the argument list back to the
 	 * symbol table.
 	 */
-	for (sym = dcs->fpsyms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = dcs->d_fpsyms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_blklev != -1) {
 			if (sym->s_blklev != 1)
 				lerror("funcdef() 1");
@@ -267,16 +267,16 @@ funcdef(fsym)
 	 * the record for the function definition is written to the
 	 * output file.
 	 */
-	dcs->ftype = fsym->s_type;
+	dcs->d_ftype = fsym->s_type;
 
 	/*
 	 * We must also remember the position. s_dpos is overwritten
 	 * if this is an old style definition and we had already a
 	 * prototype.
 	 */
-	STRUCT_ASSIGN(dcs->fdpos, fsym->s_dpos);
+	STRUCT_ASSIGN(dcs->d_fdpos, fsym->s_dpos);
 
-	if ((rdsym = dcs->rdcsym) != NULL) {
+	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
 		if (!isredec(fsym, (warn = 0, &warn))) {
 
@@ -318,7 +318,7 @@ funcdef(fsym)
 			warning(286);
 	}
 
-	if (dcs->notyp)
+	if (dcs->d_notyp)
 		/* return value is implizitly declared to be int */
 		fsym->s_rimpl = 1;
 
@@ -353,7 +353,7 @@ funcend()
 		warning(216, funcsym->s_name);
 
 	/* Print warnings for unused arguments */
-	arg = dcs->fargs;
+	arg = dcs->d_fargs;
 	n = 0;
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
 		chkusg1(arg);
@@ -366,8 +366,8 @@ funcend()
 	 * Write the information about the function definition to the
 	 * output file
 	 */
-	outfdef(funcsym, dcs->ftype, &dcs->fdpos, cstk->c_retval,
-		funcsym->s_osdef, dcs->fargs);
+	outfdef(funcsym, dcs->d_ftype, &dcs->d_fdpos, cstk->c_retval,
+		funcsym->s_osdef, dcs->d_fargs);
 
 	if (funcsym->s_type->t_proto) {
 		/* from now the prototype is valid */
@@ -379,9 +379,9 @@ funcend()
 	 * remove all symbols declared during argument declaration from
 	 * the symbol table
 	 */
-	if (dcs->nxt != NULL || dcs->ctx != EXTERN)
+	if (dcs->d_nxt != NULL || dcs->d_ctx != EXTERN)
 		lerror("funcend() 1");
-	rmsyms(dcs->fpsyms);
+	rmsyms(dcs->d_fpsyms);
 
 	/* must be set on level 0 */
 	reached = 1;
@@ -1073,7 +1073,7 @@ argsused(n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "ARGSUSED");
 		return;
@@ -1099,7 +1099,7 @@ varargs(n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "VARARGS");
 		return;
@@ -1125,7 +1125,7 @@ printflike(n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "PRINTFLIKE");
 		return;
@@ -1151,7 +1151,7 @@ scanflike(n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "SCANFLIKE");
 		return;
@@ -1206,7 +1206,7 @@ void
 lintlib(n)
 	int	n;
 {
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "LINTLIBRARY");
 		return;
@@ -1235,7 +1235,7 @@ void
 protolib(n)
 	int	n;
 {
-	if (dcs->ctx != EXTERN) {
+	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "PROTOLIB");
 		return;

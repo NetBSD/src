@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.2 1995/07/03 21:23:55 cgd Exp $	*/
+/*	$NetBSD: cgram.y,v 1.3 1995/10/02 17:08:31 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.2 1995/07/03 21:23:55 cgd Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.3 1995/10/02 17:08:31 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -254,7 +254,7 @@ data_def:
 		}
 	  }
 	| declmods deftyp T_SEMI {
-		if (dcs->scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
 		} else {
@@ -264,10 +264,10 @@ data_def:
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
 	| declspecs deftyp T_SEMI {
-		if (dcs->scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
-		} else if (!dcs->nedecl) {
+		} else if (!dcs->d_nedecl) {
 			/* empty declaration */
 			warning(2);
 		}
@@ -343,19 +343,19 @@ arg_declaration:
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
 	| declspecs deftyp T_SEMI {
-		if (!dcs->nedecl) {
+		if (!dcs->d_nedecl) {
 			/* empty declaration */
 			warning(2);
 		} else {
-			tspec_t	ts = dcs->type->t_tspec;
+			tspec_t	ts = dcs->d_type->t_tspec;
 			/* %s declared in argument declaration list */
 			warning(3, ts == STRUCT ? "struct" :
 				(ts == UNION ? "union" : "enum"));
 		}
 	  }
 	| declspecs deftyp type_init_decls T_SEMI {
-		if (dcs->nedecl) {
-			tspec_t	ts = dcs->type->t_tspec;
+		if (dcs->d_nedecl) {
+			tspec_t	ts = dcs->d_type->t_tspec;
 			/* %s declared in argument declaration list */
 			warning(3, ts == STRUCT ? "struct" :
 				(ts == UNION ? "union" : "enum"));
@@ -367,7 +367,7 @@ arg_declaration:
 
 declaration:
 	  declmods deftyp T_SEMI {
-		if (dcs->scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
 		} else {
@@ -377,10 +377,10 @@ declaration:
 	  }
 	| declmods deftyp notype_init_decls T_SEMI
 	| declspecs deftyp T_SEMI {
-		if (dcs->scl == TYPEDEF) {
+		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
-		} else if (!dcs->nedecl) {
+		} else if (!dcs->d_nedecl) {
 			/* empty declaration */
 			warning(2);
 		}
@@ -477,14 +477,14 @@ struct_spec:
 		$$ = mktag($2, $1, 0, yychar == T_SEMI);
 	  }
 	| struct struct_tag {
-		dcs->tagtyp = mktag($2, $1, 1, 0);
+		dcs->d_tagtyp = mktag($2, $1, 1, 0);
 	  } struct_declaration {
-		$$ = compltag(dcs->tagtyp, $4);
+		$$ = compltag(dcs->d_tagtyp, $4);
 	  }
 	| struct {
-		dcs->tagtyp = mktag(NULL, $1, 1, 0);
+		dcs->d_tagtyp = mktag(NULL, $1, 1, 0);
 	  } struct_declaration {
-		$$ = compltag(dcs->tagtyp, $3);
+		$$ = compltag(dcs->d_tagtyp, $3);
 	  }
 	| struct error {
 		symtyp = FVFT;
@@ -496,8 +496,8 @@ struct:
 	  T_SOU {
 		symtyp = FTAG;
 		pushdecl($1 == STRUCT ? MOS : MOU);
-		dcs->offset = 0;
-		dcs->stralign = CHAR_BIT;
+		dcs->d_offset = 0;
+		dcs->d_stralign = CHAR_BIT;
 		$$ = $1;
 	  }
 	;
@@ -657,14 +657,14 @@ enum_spec:
 		$$ = mktag($2, ENUM, 0, 0);
 	  }
 	| enum enum_tag {
-		dcs->tagtyp = mktag($2, ENUM, 1, 0);
+		dcs->d_tagtyp = mktag($2, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = compltag(dcs->tagtyp, $4);
+		$$ = compltag(dcs->d_tagtyp, $4);
 	  }
 	| enum {
-		dcs->tagtyp = mktag(NULL, ENUM, 1, 0);
+		dcs->d_tagtyp = mktag(NULL, ENUM, 1, 0);
 	  } enum_declaration {
-		$$ = compltag(dcs->tagtyp, $3);
+		$$ = compltag(dcs->d_tagtyp, $3);
 	  }
 	| enum error {
 		symtyp = FVFT;
@@ -979,7 +979,7 @@ abs_decl_param_list:
 		$$ = NULL;
 	  }
 	| abs_decl_lparn vararg_parameter_type_list T_RPARN {
-		dcs->proto = 1;
+		dcs->d_proto = 1;
 		$$ = $2;
 	  }
 	| abs_decl_lparn error T_RPARN {
@@ -999,7 +999,7 @@ vararg_parameter_type_list:
 		$$ = $1;
 	  }
 	| parameter_type_list T_COMMA T_ELLIPSE {
-		dcs->vararg = 1;
+		dcs->d_vararg = 1;
 		$$ = $1;
 	  }
 	| T_ELLIPSE {
@@ -1010,7 +1010,7 @@ vararg_parameter_type_list:
 			/* ANSI C requires formal parameter before "..." */
 			warning(84);
 		}
-		dcs->vararg = 1;
+		dcs->d_vararg = 1;
 		$$ = NULL;
 	  }
 	;
@@ -1560,7 +1560,7 @@ toicon(tn)
 	 * Abstract declarations are used inside expression. To free
 	 * the memory would be a fatal error.
 	 */
-	if (dcs->ctx != ABSTRACT)
+	if (dcs->d_ctx != ABSTRACT)
 		tfreeblk();
 
 	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
@@ -1593,7 +1593,7 @@ idecl(decl, initflg)
 	initerr = 0;
 	initsym = decl;
 
-	switch (dcs->ctx) {
+	switch (dcs->d_ctx) {
 	case EXTERN:
 		decl1ext(decl, initflg);
 		break;

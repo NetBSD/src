@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.2 1995/07/03 21:24:21 cgd Exp $	*/
+/*	$NetBSD: lint1.h,v 1.3 1995/10/02 17:08:40 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -288,33 +288,33 @@ typedef	struct tnode {
  *
  */
 typedef	struct dinfo {
-	tspec_t	atyp;		/* VOID, CHAR, INT, FLOAT or DOUBLE */
-	tspec_t	smod;		/* SIGNED or UNSIGN */
-	tspec_t	lmod;		/* SHORT, LONG or QUAD */
-	scl_t	scl;		/* storage class */
-	type_t	*type;		/* after deftyp() pointer to the type used
+	tspec_t	d_atyp;		/* VOID, CHAR, INT, FLOAT or DOUBLE */
+	tspec_t	d_smod;		/* SIGNED or UNSIGN */
+	tspec_t	d_lmod;		/* SHORT, LONG or QUAD */
+	scl_t	d_scl;		/* storage class */
+	type_t	*d_type;	/* after deftyp() pointer to the type used
 				   for all declarators */
-	sym_t	*rdcsym;	/* redeclared symbol */
-	int	offset;		/* offset of next structure member */
-	int	stralign;	/* alignment required for current structure */
-	scl_t	ctx;		/* context of declaration */
-	u_int	qconst : 1;	/* const in declaration specifiers */
-	u_int	qvolatile : 1;	/* volatile in declaration specifiers */
-	u_int	mscl : 1;	/* multiple storage classes */
-	u_int	terr : 1;	/* invalid type combination */
-	u_int	nedecl : 1;	/* 1 if at least a tag is declared */
-	u_int	vararg : 1;	/* ... in in current function decl. */
-	u_int	proto : 1;	/* current funct. decl. is prototype */
-	u_int	notyp : 1;	/* set if no type specifier was present */
-	type_t	*tagtyp;	/* tag during member declaration */
-	sym_t	*fargs;		/* list of arguments during function def. */
-	type_t	*ftype;		/* type as specified in function def. */
-	pos_t	fdpos;		/* position of function definition */
-	sym_t	*dlsyms;	/* first symbol declared at this level */
-	sym_t	**ldlsym;	/* points to s_dlnxt in last symbol decl.
+	sym_t	*d_rdcsym;	/* redeclared symbol */
+	int	d_offset;	/* offset of next structure member */
+	int	d_stralign;	/* alignment required for current structure */
+	scl_t	d_ctx;		/* context of declaration */
+	u_int	d_const : 1;	/* const in declaration specifiers */
+	u_int	d_volatile : 1;	/* volatile in declaration specifiers */
+	u_int	d_mscl : 1;	/* multiple storage classes */
+	u_int	d_terr : 1;	/* invalid type combination */
+	u_int	d_nedecl : 1;	/* 1 if at least a tag is declared */
+	u_int	d_vararg : 1;	/* ... in in current function decl. */
+	u_int	d_proto : 1;	/* current funct. decl. is prototype */
+	u_int	d_notyp : 1;	/* set if no type specifier was present */
+	type_t	*d_tagtyp;	/* tag during member declaration */
+	sym_t	*d_fargs;	/* list of arguments during function def. */
+	type_t	*d_ftype;	/* type as specified in function def. */
+	pos_t	d_fdpos;	/* position of function definition */
+	sym_t	*d_dlsyms;	/* first symbol declared at this level */
+	sym_t	**d_ldlsym;	/* points to s_dlnxt in last symbol decl.
 				   at this level */
-	sym_t	*fpsyms;	/* symbols defined in prototype */
-	struct	dinfo *nxt;	/* next level */
+	sym_t	*d_fpsyms;	/* symbols defined in prototype */
+	struct	dinfo *d_nxt;	/* next level */
 } dinfo_t;
 
 /*
