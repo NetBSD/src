@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.17 1996/02/13 17:39:01 gwr Exp $	*/
+/*	$NetBSD: db_command.c,v 1.18 1996/03/07 14:33:39 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -30,6 +30,7 @@
  * Command dispatcher.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
