@@ -194,7 +194,12 @@ arm-*-aout | armel-*-aout) targ_emul=armaoutl ;;
 armeb-*-aout)		targ_emul=armaoutb ;;
 arm-*-coff)		targ_emul=armcoff ;;
 arm-*-freebsd*)		targ_emul=armelf ;;
-arm-*-netbsd*)		targ_emul=armnbsd ;;
+arm*-*-netbsdelf*)	targ_emul=armelf_nbsd
+			targ_extra_emuls=armnbsd
+			;;
+arm-*-netbsd*)		targ_emul=armnbsd
+			targ_extra_emuls=armelf_nbsd
+			;;
 arm-*-rtems*)		targ_emul=armelf ;;
 arm-*-elf)		targ_emul=armelf ;;
 arm-*-oabi)		targ_emul=armelf_oabi ;;
@@ -265,6 +270,10 @@ hppa*-*-*elf*)		targ_emul=hppaelf ;;
 hppa*-*-lites*)		targ_emul=hppaelf ;;
 hppa*-*-rtems*)		targ_emul=hppaelf ;;
 vax-dec-ultrix* | vax-dec-bsd*) targ_emul=vax ;;
+vax-*-netbsdelf*)	targ_emul=elf32vax
+			targ_extra_emuls=vaxnbsd ;;
+vax-*-netbsd*)		targ_emul=vaxnbsd
+			targ_extra_emuls=elf32vax ;;
 mips*-*-pe)		targ_emul=mipspe ;
 			targ_extra_ofiles="deffilep.o pe-dll.o" ;;
 mips*-dec-ultrix*)	targ_emul=mipslit ;;
