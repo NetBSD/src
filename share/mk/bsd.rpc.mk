@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.7 2003/07/29 01:12:46 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.8 2003/07/29 02:42:49 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -14,7 +14,8 @@ ${I}: ${I:.h=.x}
 	${TOOL_RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
 .endfor
 
-CLEANFILES += ${RPC_INCS}
+DPSRCS+=	${RPC_INCS}
+CLEANFILES+=	${RPC_INCS}
 
 .endif								# }
 
@@ -26,7 +27,8 @@ ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
 	${TOOL_RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
-CLEANFILES += ${RPC_XDRFILES}
+DPSRCS+=	${RPC_XDRFILES}
+CLEANFILES+=	${RPC_XDRFILES}
 
 .endif								# }
 
@@ -44,7 +46,8 @@ ${I}: ${RPC_XDIR}${I:_svc.c=.x}
 		-o ${.TARGET}
 .endfor
 
-CLEANFILES += ${RPC_SVCFILES}
+DPSRCS+=	${RPC_SVCFILES}
+CLEANFILES+=	${RPC_SVCFILES}
 
 .endif								# }
 
@@ -52,6 +55,3 @@ CLEANFILES += ${RPC_SVCFILES}
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
-
-
-${DEPENDSRCS}: ${RPC_INCS} ${RPC_XDRFILES} ${RPC_SVCFILES}
