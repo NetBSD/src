@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.161 2004/11/19 16:03:58 ginsbach Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.162 2004/12/09 20:58:39 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.161 2004/11/19 16:03:58 ginsbach Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.162 2004/12/09 20:58:39 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -3343,7 +3343,7 @@ checkpassword(const struct passwd *pwent, const char *password)
 	if (strcmp(new, orig) != 0)	/* compare */
 		return 1;
 
-	if ((expire && now >= expire) || (change && change >= now))
+	if ((expire && now >= expire) || (change && now >= change))
 		return 2;		/* check if expired */
 
 	return 0;			/* OK! */
