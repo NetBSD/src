@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 1997/07/20 20:48:42 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 1997/07/26 19:46:40 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -355,6 +355,7 @@ unsigned MachEmulateBranch __P((unsigned *regsPtr,
 			     int allowNonBranch));
 
 struct proc *fpcurproc;
+struct pcb *curpcb;
 
 /* extern functions used but not declared elsewhere */
 extern void clearsoftclock __P((void));
@@ -755,10 +756,10 @@ trap(status, cause, vaddr, opc, frame)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (curpcb->pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
+		if (curpcb->pcb_onfault == (caddr_t)fswintrberr) {
 			frame.f_regs[PC] = (int)fswintrberr;
 			return; /* KERN */
 		}
@@ -828,9 +829,9 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 	copyfault:
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (curpcb->pcb_onfault == NULL)
 			goto dopanic;
-		frame.f_regs[PC] = (int)p->p_addr->u_pcb.pcb_onfault;
+		frame.f_regs[PC] = (int)curpcb->pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
