@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 1998/04/10 08:20:04 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1998/05/25 09:08:27 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ struct atari_bus_space {
 			    bus_size_t, u_int32_t *, bus_size_t));
 	void		(*abs_rms_8) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, u_int64_t *, bus_size_t));
+
 	/* read region */
 	void		(*abs_rr_1) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, u_int8_t *, bus_size_t));
@@ -172,6 +173,16 @@ struct atari_bus_space {
 	void		(*abs_rr_4) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, u_int32_t *, bus_size_t));
 	void		(*abs_rr_8) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, u_int64_t *, bus_size_t));
+
+	/* read region stream */
+	void		(*abs_rrs_1) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+	void		(*abs_rrs_2) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t));
+	void		(*abs_rrs_4) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t));
+	void		(*abs_rrs_8) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, u_int64_t *, bus_size_t));
 
 	/* write (single) */
@@ -222,6 +233,16 @@ struct atari_bus_space {
 	void		(*abs_wr_4) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, const u_int32_t *, bus_size_t));
 	void		(*abs_wr_8) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, const u_int64_t *, bus_size_t));
+
+	/* write region stream */
+	void		(*abs_wrs_1) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
+	void		(*abs_wrs_2) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t));
+	void		(*abs_wrs_4) __P((bus_space_tag_t, bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t));
+	void		(*abs_wrs_8) __P((bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, const u_int64_t *, bus_size_t));
 
 	/* set multiple */
@@ -343,6 +364,17 @@ struct atari_bus_space {
 #define	bus_space_read_region_8(t, h, o, a, c)				\
 	__abs_nonsingle(rr,8,(t),(h),(o),(a),(c))
 
+/*
+ * Bus read region stream operations.
+ */
+#define	bus_space_read_region_stream_1(t, h, o, a, c)			\
+	__abs_nonsingle(rrs,1,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_2(t, h, o, a, c)			\
+	__abs_nonsingle(rrs,2,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_4(t, h, o, a, c)			\
+	__abs_nonsingle(rrs,4,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_8(t, h, o, a, c)			\
+	__abs_nonsingle(rrs,8,(t),(h),(o),(a),(c))
 
 /*
  * Bus write (single) operations.
@@ -397,6 +429,18 @@ struct atari_bus_space {
 	__abs_nonsingle(wr,4,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
 	__abs_nonsingle(wr,8,(t),(h),(o),(a),(c))
+
+/*
+ * Bus write region stream operations.
+ */
+#define	bus_space_write_region_stream_1(t, h, o, a, c)			\
+	__abs_nonsingle(wrs,1,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_2(t, h, o, a, c)			\
+	__abs_nonsingle(wrs,2,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_4(t, h, o, a, c)			\
+	__abs_nonsingle(wrs,4,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_8(t, h, o, a, c)			\
+	__abs_nonsingle(wrs,8,(t),(h),(o),(a),(c))
 
 
 /*
