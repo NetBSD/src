@@ -1,0 +1,28 @@
+cntrl  host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
+src.nfstools host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=nfstools crypt=CRYPT
+mach.fs host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=sys crypt=CRYPT
+bin.cmu  host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
+src.local  host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
+
+src.MISC host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
+src.bin host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=bin crypt=CRYPT
+src.cci host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=cci crypt=CRYPT
+src.doc host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=doc crypt=CRYPT
+src.etc host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=etc crypt=CRYPT
+src.games host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=games crypt=CRYPT
+src.include host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=include crypt=CRYPT
+src.lib host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=lib crypt=CRYPT
+src.man host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=man crypt=CRYPT
+src.new host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=new crypt=CRYPT
+src.old host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=old crypt=CRYPT
+src.tests host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=tests crypt=CRYPT
+src.ucb host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=ucb crypt=CRYPT
+src.undoc host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=undoc crypt=CRYPT
+src.usr.bin host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=usr.bin crypt=CRYPT
+src.gnu host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=gnu crypt=CRYPT
+src.usr.lib host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=usr.lib crypt=CRYPT
+
+mach.sys host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src prefix=sys crypt=CRYPT
+
+bin.root host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
+bin.usr  host=x29.mach.cs.cmu.edu hostbase=/i386 base=DESTINATION/usr/src crypt=CRYPT
