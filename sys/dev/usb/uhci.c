@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.110 2000/04/14 14:11:36 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.111 2000/04/21 15:40:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -3111,12 +3111,14 @@ uhci_root_ctrl_start(xfer)
 				    index, UREAD2(sc, port)));
 			sc->sc_isreset = 1;
 			break;
+		case UHF_PORT_POWER:
+			/* Pretend we turned on power */
+			goto ret;
 		case UHF_C_PORT_CONNECTION:
 		case UHF_C_PORT_ENABLE:
 		case UHF_C_PORT_OVER_CURRENT:
 		case UHF_PORT_CONNECTION:
 		case UHF_PORT_OVER_CURRENT:
-		case UHF_PORT_POWER:
 		case UHF_PORT_LOW_SPEED:
 		case UHF_C_PORT_SUSPEND:
 		case UHF_C_PORT_RESET:
