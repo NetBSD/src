@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.16 1999/04/13 18:45:42 ad Exp $
+#	$NetBSD: files.sparc64,v 1.17 1999/04/17 21:27:00 kleink Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -15,12 +15,12 @@ device iommu {}
 attach iommu at mainbus
 file	arch/sparc64/sparc64/iommu.c		iommu
 
-include "../../../dev/sbus/files.sbus"
+include "dev/sbus/files.sbus"
 attach sbus at mainbus, iommu
 file	arch/sparc64/dev/sbus.c			sbus
 
 # network devices MII bus
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
 
 #device auxreg
 #attach auxreg at mainbus, sbus
@@ -82,7 +82,7 @@ file dev/sun/ms.c			ms needs-flag
 #
 # Machine-independent SCSI drivers
 #
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 
 major	{ cd = 18 }
 major	{ fd = 16 }
@@ -181,9 +181,9 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #
 # Raster Console
 #
-include "../../../dev/rcons/files.rcons"
-include "../../../dev/rasops/files.rasops"
-include "../../../dev/wsfont/files.wsfont"
+include "dev/rcons/files.rcons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # Compatibility modules
@@ -193,15 +193,15 @@ include "../../../dev/wsfont/files.wsfont"
 file	arch/sparc64/sparc64/compat_13_machdep.c compat_13
 
 # NetBSD/sparc Binary compatibility (COMPAT_NETBSD32)
-include "../../../compat/netbsd32/files.netbsd32"
+include "compat/netbsd32/files.netbsd32"
 file	arch/sparc64/sparc64/netbsd32_machdep.c	compat_netbsd32
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
-include "../../../compat/svr4/files.svr4"
+include "compat/svr4/files.svr4"
 file	arch/sparc64/sparc64/svr4_machdep.c	compat_svr4
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file	arch/sparc64/sparc64/sunos_machdep.c	compat_sunos
 
 # Miscellaneous
