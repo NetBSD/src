@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1996/06/14 20:40:49 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 1996/07/09 00:33:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,8 +65,10 @@
 struct clockframe {
 	struct trapframe	cf_tf;
 };
-#define	CLKF_USERMODE(framep)	(((framep)->cf_tf.tf_ps & PSL_U) != 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->cf_tf.tf_ps & PSL_IPL) == 0)
+#define	CLKF_USERMODE(framep)						\
+	(((framep)->cf_tf.tf_ps & ALPHA_PSL_USERMODE) != 0)
+#define	CLKF_BASEPRI(framep)						\
+	(((framep)->cf_tf.tf_ps & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_pc)
 /*
  * XXX No way to accurately tell if we were in interrupt mode before taking
@@ -98,18 +100,6 @@ struct clockframe {
 u_int64_t astpending;		/* need to trap before returning to user mode */
 u_int64_t want_resched;		/* resched() was called */
 
-
-/*
- * simulated software interrupt register
- */
-extern u_int64_t ssir;
-
-#define	SIR_NET		0x1
-#define	SIR_CLOCK	0x2
-
-#define	siroff(x)	ssir &= ~(x)
-#define	setsoftnet()	ssir |= SIR_NET
-#define	setsoftclock()	ssir |= SIR_CLOCK
 
 /*
  * CTL_MACHDEP definitions.
