@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.35.4.1 2000/09/11 19:13:14 is Exp $
+#	$NetBSD: install.sub,v 1.35.4.2 2000/10/30 23:34:48 tv Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1347,7 +1347,7 @@ __install_sets_1
 		verbose_flag=v
 		;;
 	*)
-		echo "Not using verbose listing.."
+		echo "Not using verbose listing."
 		verbose_flag=""
 		;;
 	esac
