@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.10 1998/07/15 19:59:45 mjacob Exp $ */
-/* $Id: isp_sbus.c,v 1.10 1998/07/15 19:59:45 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.11 1998/07/18 21:02:06 mjacob Exp $ */
+/* $Id: isp_sbus.c,v 1.11 1998/07/18 21:02:06 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -111,8 +111,10 @@ isp_match(parent, cf, aux)
 		strcmp("QLGC,isp", sa->sa_name) == 0);
 	if (rv && oneshot) {
 		oneshot = 0;
-		printf("***Qlogic ISP Driver, NetBSD (sbus) Version\n");
-		printf("***%s\n", ISP_VERSION_STRING);
+		printf("***Qlogic ISP Driver, NetBSD (sbus) Platform Version "
+		    "%d.%d Core Version %d.%d\n",
+		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
+		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
 	return (rv);
 }
@@ -126,6 +128,7 @@ isp_sbus_attach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
+	ISP_LOCKVAL_DECL;
 
 	printf(" for %s\n", sa->sa_name);
 
@@ -176,13 +179,16 @@ isp_sbus_attach(parent, self, aux)
 	bzero(isp->isp_param, sizeof (sdparam));
 
 
+	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
+		ISP_UNLOCK(isp);
 		return;
 	}
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
+		ISP_UNLOCK(isp);
 		return;
 	}
 
@@ -197,8 +203,8 @@ isp_sbus_attach(parent, self, aux)
 	isp_attach(isp);
 	if (isp->isp_state != ISP_RUNSTATE) {
 		isp_uninit(isp);
-		return;
 	}
+	ISP_UNLOCK(isp);
 }
 
 #define  SBUS_BIU_REGS_OFF		0x00
