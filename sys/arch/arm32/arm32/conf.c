@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1998/08/20 06:30:56 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1998/08/22 22:50:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -144,6 +144,8 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "beep.h"
 #include "kbd.h"
 #include "audio.h"
+#include "midi.h"
+#include "sequencer.h"
 #include "cpu.h"
 #include "iic.h"
 #include "rtc.h"
@@ -234,6 +236,8 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 54: */
 	cdev_lkm_dummy(),		/* 55: */
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
+	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -332,6 +336,8 @@ static int chrtoblktbl[] = {
     /* 54 */        NODEV,
     /* 55 */        NODEV,
     /* 56 */	    NODEV,
+    /* 57 */	    NODEV,
+    /* 58 */	    NODEV,
 };
 
 /*

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1997/11/26 03:09:32 tv Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1998/08/22 22:50:53 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -97,6 +97,7 @@ all)
 	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
 	sh $0 mouse-qms0 random
+	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	;;
 
 ramdisk|floppy)
@@ -368,6 +369,29 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=57
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chown root.wheel $rmidi
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=58
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chown root.wheel $music $sequencer
+	chmod 666 $music $sequencer
 	;;
 
 random)
