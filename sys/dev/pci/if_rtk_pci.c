@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtk_pci.c,v 1.1 2000/05/10 00:19:55 haya Exp $ */
+/*	$NetBSD: if_rtk_pci.c,v 1.2 2000/05/15 01:55:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -143,8 +143,8 @@
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
 
-struct rl_pci_softc {
-	struct rl_softc sc_rl;		/* real rl softc */
+struct rtk_pci_softc {
+	struct rtk_softc sc_rtk;	/* real rtk softc */
 	
 	/* PCI-specific goo.*/
 	void *sc_ih;
@@ -152,42 +152,43 @@ struct rl_pci_softc {
 	pcitag_t sc_pcitag;		/* PCI tag */
 };
 
-static struct rl_type rl_pci_devs[] = {
+static const struct rtk_type rtk_pci_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
-		"RealTek 8129 10/100BaseTX" },
+		"RealTek 8129 10/100BaseTX",
+		RL_8129 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
-		"RealTek 8139 10/100BaseTX" },
+		"RealTek 8139 10/100BaseTX",
+		RL_8139 },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
-		"Accton MPX 5030/5038 10/100BaseTX" },
+		"Accton MPX 5030/5038 10/100BaseTX",
+		RL_8139 },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
-		"Delta Electronics 8139 10/100BaseTX" },
+		"Delta Electronics 8139 10/100BaseTX",
+		RL_8139 },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
-		"Addtron Technology 8139 10/100BaseTX" },
-#if 0
-	{ SIS_VENDORID, SIS_DEVICEID_8139,
-		"SiS 900 10/100BaseTX" },
-#endif
-	{ 0, 0, NULL }
+		"Addtron Technology 8139 10/100BaseTX",
+		RL_8139 },
+	{ 0, 0, NULL, 0 }
 };
 
-const struct rl_type *rl_pci_lookup
-	__P((const struct pci_attach_args *));
-int rl_pci_match	__P((struct device *, struct cfdata *, void *));
-void rl_pci_attach	__P((struct device *, struct device *, void *));
+const struct rtk_type *rtk_pci_lookup __P((const struct pci_attach_args *));
+
+int	rtk_pci_match __P((struct device *, struct cfdata *, void *));
+void	rtk_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach rtk_pci_ca = {
-	sizeof(struct rl_pci_softc), rl_pci_match, rl_pci_attach,
+	sizeof(struct rtk_pci_softc), rtk_pci_match, rtk_pci_attach,
 };
 
-const struct rl_type *
-rl_pci_lookup(pa)
+const struct rtk_type *
+rtk_pci_lookup(pa)
 	const struct pci_attach_args *pa;
 {
-	struct rl_type		*t;
+	const struct rtk_type *t;
 
-	for (t = rl_pci_devs; t->rl_name != NULL; t++){ 	
-		if (PCI_VENDOR(pa->pa_id) == t->rl_vid &&
-		    PCI_PRODUCT(pa->pa_id)  == t->rl_did) {
+	for (t = rtk_pci_devs; t->rtk_name != NULL; t++){ 	
+		if (PCI_VENDOR(pa->pa_id) == t->rtk_vid &&
+		    PCI_PRODUCT(pa->pa_id) == t->rtk_did) {
 			return (t);
 		}
 	}
@@ -195,15 +196,16 @@ rl_pci_lookup(pa)
 }
 
 int
-rl_pci_match(parent, match, aux)
+rtk_pci_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
-	if (rl_pci_lookup(pa) != NULL)
+	if (rtk_pci_lookup(pa) != NULL)
 		return (1);
+
 	return (0);
 }
 
@@ -212,31 +214,29 @@ rl_pci_match(parent, match, aux)
  * setup and ethernet/BPF attach.
  */
 void
-rl_pci_attach(parent, self, aux)
+rtk_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s, pmreg;
-	pcireg_t		command;
-	struct rl_pci_softc *psc = (struct rl_pci_softc *)self;
-	struct rl_softc *sc = &psc->sc_rl;
+	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
+	struct rtk_softc *sc = &psc->sc_rtk;
+	pcireg_t command;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	const struct rl_type *t;
+	const struct rtk_type *t;
+	int pmreg;
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
-	t = rl_pci_lookup(pa);
+	t = rtk_pci_lookup(pa);
 	if (t == NULL) {
 		printf("\n");
-		panic("rl_pci_attach: impossible");
+		panic("rtk_pci_attach: impossible");
 	}
-	printf(": %s\n", t->rl_name);
-
-	s = splimp();
+	printf(": %s\n", t->rtk_name);
 
 	/*
 	 * Handle power management nonsense.
@@ -245,7 +245,7 @@ rl_pci_attach(parent, self, aux)
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
-			pcireg_t		iobase, membase, irq;
+			pcireg_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOIO);
@@ -273,15 +273,15 @@ rl_pci_attach(parent, self, aux)
 	 */
 #ifdef RL_USEIOSPACE
 	if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, NULL)) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		goto fail;
+		return;
 	}
 #else
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, NULL)) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		goto fail;
+		return;
 	}
 #endif
 
@@ -289,39 +289,24 @@ rl_pci_attach(parent, self, aux)
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		goto fail;
+		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, rl_intr, sc);
+	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, rtk_intr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		return;
 	}
 
-	if (t->rl_did == PCI_PRODUCT_REALTEK_RT8139 ||
-	    t->rl_did == PCI_PRODUCT_ACCTON_MPX5030 ||
-	    t->rl_did == PCI_PRODUCT_DELTA_8139 ||
-	    t->rl_did == PCI_PRODUCT_ADDTRON_8139
-#if 0
-	    || t->rl_did == SIS_DEVICEID_8139
-#endif
-	    ) {
-		sc->rl_type = RL_8139;
-	} else if (t->rl_did == PCI_PRODUCT_REALTEK_RT8129) {
-		sc->rl_type = RL_8129;
-	} else {
-		goto fail;
-	}
+	sc->rtk_type = t->rtk_type;
+
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 	
-	rl_attach(sc);
-fail:
-	splx(s);
-	return;
+	rtk_attach(sc);
 }
