@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.55 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: dca.c,v 1.56 2003/06/29 15:58:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.55 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.56 2003/06/29 15:58:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -343,10 +343,10 @@ dcaattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-dcaopen(dev, flag, mode, p)
+dcaopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DCAUNIT(dev);
 	struct dca_softc *sc;
@@ -375,7 +375,7 @@ dcaopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -432,10 +432,10 @@ dcaopen(dev, flag, mode, p)
  
 /*ARGSUSED*/
 int
-dcaclose(dev, flag, mode, p)
+dcaclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dca_softc *sc;
 	struct tty *tp;
@@ -512,15 +512,15 @@ dcawrite(dev, uio, flag)
 }
 
 int
-dcapoll(dev, events, p)
+dcapoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -706,12 +706,12 @@ dcamint(sc)
 }
 
 int
-dcaioctl(dev, cmd, data, flag, p)
+dcaioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = DCAUNIT(dev);
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
@@ -719,11 +719,11 @@ dcaioctl(dev, cmd, data, flag, p)
 	struct dcadevice *dca = sc->sc_dca;
 	int error;
  
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -776,7 +776,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (EPERM);
 
