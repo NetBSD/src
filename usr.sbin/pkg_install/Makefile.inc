@@ -1,5 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.2 1997/06/05 12:59:19 agc Exp $
+# $NetBSD: Makefile.inc,v 1.3 1997/10/17 12:03:44 lukem Exp $
 # Original from Freebsd, no rcs id.
+
+WARNS?=	0
 
 # Figure out what to use for libinstall
 INSTALLLIBDIR=		${.CURDIR}/../lib
@@ -12,4 +14,8 @@ INSTALLOBJDIR=		${INSTALLLIBDIR}/obj
 .else
 INSTALLOBJDIR=		${INSTALLLIBDIR}
 .endif
+.endif
+
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
 .endif
