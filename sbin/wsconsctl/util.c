@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 1998/12/30 13:14:22 augustss Exp $ */
+/*	$NetBSD: util.c,v 1.3 1998/12/30 13:54:04 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ static struct nameint mstype_tab[] = {
 };
 
 static struct nameint dpytype_tab[] = {
+	{ WSDISPLAY_TYPE_UNKNOWN,	"unknown" },
 	{ WSDISPLAY_TYPE_PM_MONO,	"dec-?mono" },
 	{ WSDISPLAY_TYPE_PM_COLOR,	"dec-?color" },
 	{ WSDISPLAY_TYPE_CFB,		"dec-cfb" },

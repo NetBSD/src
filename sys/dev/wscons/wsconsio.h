@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.9 1998/12/30 13:14:21 augustss Exp $ */
+/* $NetBSD: wsconsio.h,v 1.10 1998/12/30 13:54:03 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -159,6 +159,7 @@ struct wskbd_map_data {
 
 /* Get display type */
 #define	WSDISPLAYIO_GTYPE	_IOR('W', 64, u_int)
+#define		WSDISPLAY_TYPE_UNKNOWN	0	/* unknown */
 #define		WSDISPLAY_TYPE_PM_MONO	1	/* ??? */
 #define		WSDISPLAY_TYPE_PM_COLOR	2	/* ??? */
 #define		WSDISPLAY_TYPE_CFB	3	/* DEC TC CFB */
