@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1999/05/05 13:38:51 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1999/05/05 13:41:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -213,6 +213,11 @@ consinit()
 
 	if (mmutype == MMU_68040)
 		cpuspeed *= 2;	/* XXX */
+
+  	/*
+	 * bring graphics layer up.
+  	 */
+	config_console();
 
 	/*
 	 * Initialize the console before we print anything out.
