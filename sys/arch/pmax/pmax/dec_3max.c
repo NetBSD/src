@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.39 2003/12/13 23:04:38 ad Exp $ */
+/* $NetBSD: dec_3max.c,v 1.40 2005/01/11 08:05:14 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.39 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.40 2005/01/11 08:05:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ found:
 
 #define CALLINTR(vvv)						\
 	do {							\
-		intrcnt[vvv] += 1;				\
+		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	} while (0)
 
