@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.15 2000/12/13 22:07:51 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.16 2000/12/18 20:50:36 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -387,7 +387,6 @@ static void sppp_keepalive(void *dummy);
 static void sppp_phase_network(struct sppp *sp);
 static void sppp_print_bytes(const u_char *p, u_short len);
 static void sppp_print_string(const char *p, u_short len);
-static void sppp_qflush(struct ifqueue *ifq);
 static void sppp_set_ip_addr(struct sppp *sp, u_long src);
 #ifdef INET6
 static void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
@@ -980,9 +979,9 @@ sppp_flush(struct ifnet *ifp)
 {
 	struct sppp *sp = (struct sppp*) ifp;
 
-	sppp_qflush (&sp->pp_if.if_snd);
-	sppp_qflush (&sp->pp_fastq);
-	sppp_qflush (&sp->pp_cpq);
+	IFQ_PURGE (&sp->pp_if.if_snd);
+	IFQ_PURGE (&sp->pp_fastq);
+	IFQ_PURGE (&sp->pp_cpq);
 }
 
 /*
@@ -1196,7 +1195,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
 					if_down (ifp);
-					sppp_qflush (&sp->pp_cpq);
+					IFQ_PURGE (&sp->pp_cpq);
 				}
 			}
 			++sp->pp_loopcnt;
@@ -1696,7 +1695,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			printf(SPP_FMT "loopback\n", SPP_ARGS(ifp));
 			if_down (ifp);
-			sppp_qflush (&sp->pp_cpq);
+			IFQ_PURGE (&sp->pp_cpq);
 
 			/* Shut down the PPP link. */
 			/* XXX */
@@ -2243,7 +2242,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
 					if_down(ifp);
-					sppp_qflush(&sp->pp_cpq);
+					IFQ_PURGE(&sp->pp_cpq);
 					/* XXX ? */
 					lcp.Down(sp);
 					lcp.Up(sp);
@@ -4597,24 +4596,6 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 }
 
 /*
- * Flush interface queue.
- */
-static void
-sppp_qflush(struct ifqueue *ifq)
-{
-	struct mbuf *m, *n;
-
-	n = ifq->ifq_head;
-	while ((m = n)) {
-		n = m->m_act;
-		m_freem (m);
-	}
-	ifq->ifq_head = 0;
-	ifq->ifq_tail = 0;
-	ifq->ifq_len = 0;
-}
-
-/*
  * Send keepalive packets, every 10 seconds.
  */
 static void
@@ -4641,7 +4622,7 @@ sppp_keepalive(void *dummy)
 			/* No keepalive packets got.  Stop the interface. */
 			printf (SPP_FMT "down\n", SPP_ARGS(ifp));
 			if_down (ifp);
-			sppp_qflush (&sp->pp_cpq);
+			IFQ_PURGE (&sp->pp_cpq);
 			if (! (sp->pp_flags & PP_CISCO)) {
 				/* XXX */
 				/* Shut down the PPP link. */
