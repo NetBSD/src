@@ -1,6 +1,6 @@
-#	$Id: Makefile.inc,v 1.1 1994/06/03 03:44:41 glass Exp $
+#	$Id: Makefile.inc,v 1.2 1994/06/15 15:27:42 glass Exp $
 #	There are likely more that we will notice when we go native
 #
 
-SRCS+=	random.c scan.c skpc.c strcat.c strcpy.c strncmp.c strncpy.c 
+SRCS+=	random.c scanc.c skpc.c strcat.c strcpy.c strncmp.c strncpy.c 
 
