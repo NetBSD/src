@@ -1,13 +1,14 @@
-/*	$NetBSD: bktr_tuner.h,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/* $SourceForge: bktr_tuner.h,v 1.3 2003/03/11 23:11:28 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_tuner.h,v 1.1 1999/09/26 22:06:20 roger Exp */
+/*	$NetBSD: bktr_tuner.h,v 1.1.1.2 2003/03/12 00:02:40 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_tuner.h,v 1.1 1999/09/26 22:06:20 roger Exp$ */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
  * and TV Tuner cards using the Brooktree Bt848, Bt848A, Bt849A, Bt878, Bt879
  * chipset.
  * Copyright Roger Hardiman and Amancio Hasty.
- * 
+ *
  * bktr_tuner : This deals with controlling the tuner fitted to TV cards.
  *
  */
@@ -63,21 +64,21 @@
 #define ALPS_TSBH1              13
 #define Bt848_MAX_TUNER         14
 
-/* experimental code for Automatic Frequency Control */ 
+/* experimental code for Automatic Frequency Control */
 #define TUNER_AFC
 
 /*
  * Fill in the tuner entries in the bktr_softc based on the selected tuner
  * type (from the list of tuners above)
  */
-void	select_tuner( bktr_ptr_t bktr, int tuner_type );
+void	select_tuner(bktr_ptr_t bktr, int tuner_type);
 
 
 /*
  * The Channel Set maps TV channels eg Ch 36, Ch 51, onto frequencies
  * and is country specific.
  */
-int	tuner_getchnlset( struct bktr_chnlset *chnlset );
+int	tuner_getchnlset(struct bktr_chnlset *chnlset);
 
 /*
  * tv_channel sets the tuner to channel 'n' using the current Channel Set
@@ -86,19 +87,19 @@ int	tuner_getchnlset( struct bktr_chnlset *chnlset );
  */
 #define TV_FREQUENCY       0
 #define FM_RADIO_FREQUENCY 1
-int	tv_channel( bktr_ptr_t bktr, int channel );
-int	tv_freq( bktr_ptr_t bktr, int frequency, int type );
-int	get_tuner_status( bktr_ptr_t bktr );
+int	tv_channel(bktr_ptr_t bktr, int channel);
+int	tv_freq(bktr_ptr_t bktr, int frequency, int type);
+int	get_tuner_status(bktr_ptr_t bktr);
 
-#if defined( TUNER_AFC )
-int	do_afc( bktr_ptr_t bktr, int addr, int frequency );
+#if defined(TUNER_AFC)
+int	do_afc(bktr_ptr_t bktr, int addr, int frequency);
 #endif /* TUNER_AFC */
 
 
-/* 
+/*
  * This is for start-up convenience only, NOT mandatory.
  */
-#if !defined( DEFAULT_CHNLSET )
+#if !defined(DEFAULT_CHNLSET)
 #define DEFAULT_CHNLSET CHNLSET_WEUROPE
 #endif
 

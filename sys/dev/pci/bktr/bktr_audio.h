@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_audio.h,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/* $SourceForge: bktr_audio.h,v 1.4 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_audio.h,v 1.2 1999/10/28 13:58:14 roger Exp */
+/*	$NetBSD: bktr_audio.h,v 1.1.1.2 2003/03/12 00:02:19 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_audio.h,v 1.2 1999/10/28 13:58:14 roger Exp$ */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -52,35 +53,35 @@
 /*
  * Select Audio source, and allow muting
  */
-int	set_audio( bktr_ptr_t bktr, int mode );
-void	temp_mute( bktr_ptr_t bktr, int flag );
+int	set_audio(bktr_ptr_t bktr, int mode);
+void	temp_mute(bktr_ptr_t bktr, int flag);
 
 
 /*
  * Initialise any MSP or TDA devices
  */
-void	init_audio_devices( bktr_ptr_t bktr );
+void	init_audio_devices(bktr_ptr_t bktr);
 
 
 /*
  * MSP34xx Audio Chip functions.
  */
-void	msp_autodetect( bktr_ptr_t bktr );
-void	msp_read_id( bktr_ptr_t bktr );
+void	msp_autodetect(bktr_ptr_t bktr);
+void	msp_read_id(bktr_ptr_t bktr);
 
 
 /*
  * DPL35xx Audio Chip functions.
  */
-void	dpl_autodetect( bktr_ptr_t bktr );
-void	dpl_read_id( bktr_ptr_t bktr );
+void	dpl_autodetect(bktr_ptr_t bktr);
+void	dpl_read_id(bktr_ptr_t bktr);
 
 
 /*
  * TDA98xx Audio Chip functions.
  */
-void	init_BTSC( bktr_ptr_t bktr ); 
-int	set_BTSC( bktr_ptr_t bktr, int control );
+void	init_BTSC(bktr_ptr_t bktr);
+int	set_BTSC(bktr_ptr_t bktr, int control);
 
 
 
