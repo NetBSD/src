@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 2004/10/30 17:21:15 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.23 2004/11/12 21:48:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.22 2004/10/30 17:21:15 dsl Exp $");
+__RCSID("$NetBSD: util.c,v 1.23 2004/11/12 21:48:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,6 @@ PERSON *
 find_person(name)
 	char *name;
 {
-	int cnt;
 	DBT data, key;
 	PERSON *p;
 
@@ -276,7 +275,7 @@ find_person(name)
 		return(NULL);
 
 	key.data = name;
-	key.size = cnt;
+	key.size = strlen(name);
 
 	if ((*db->get)(db, &key, &data, 0))
 		return (NULL);
