@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.47 1998/10/12 16:09:20 bouyer Exp $
+#	$NetBSD: files.pci,v 1.48 1998/10/31 00:45:48 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -93,7 +93,7 @@ attach	fxp at pci
 file	dev/pci/if_fxp.c		fxp
 
 # NE2000-compatible PCI Ethernet cards
-attach	ne at pci with ne_pci
+attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
 
 # Texas Instruments ThunderLAN Chip.
