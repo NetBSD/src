@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.34 2002/12/08 02:00:10 mrg Exp $	*/
+/*	$NetBSD: tar.c,v 1.35 2003/01/09 17:22:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.34 2002/12/08 02:00:10 mrg Exp $");
+__RCSID("$NetBSD: tar.c,v 1.35 2003/01/09 17:22:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static int ul_oct(u_long, char *, int, int);
 static int ull_oct(unsigned long long, char *, int, int);
 #endif
 static int tar_gnutar_exclude_one(const char *, size_t);
+static int check_sum(char *, size_t, char *, size_t);
 
 /*
  * Routines common to all versions of tar
@@ -92,6 +93,23 @@ static char *gnu_hack_string;		/* ././@LongLink hackery */
 static int gnu_hack_len;		/* len of gnu_hack_string */
 char *gnu_name_string;			/* ././@LongLink hackery name */
 char *gnu_link_string;			/* ././@LongLink hackery link */
+
+static int
+check_sum(char *hd, size_t hdlen, char *bl, size_t bllen)
+{
+	u_long hdck, blck;
+
+	hdck = asc_ul(hd, hdlen, OCT);
+	blck = tar_chksm(bl, bllen);
+
+	if (hdck != blck) {
+		tty_warn(0, "Header checksum %lo does not match %lo",
+		    hdck, blck);
+		return(-1);
+	}
+	return(0);
+}
+
 
 /*
  * tar_endwr()
@@ -139,8 +157,10 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 * look for all zero, trailer is two consecutive blocks of zero
 	 */
 	for (i = 0; i < BLKMULT; ++i) {
-		if (buf[i] != '\0')
+		if (buf[i] != '\0') {
+			fprintf(stderr, "non zero at %d\n", i);
 			break;
+		}
 	}
 
 	/*
@@ -345,9 +365,7 @@ tar_id(char *blk, int size)
 		return(-1);
 	if (strncmp(uhd->magic, TMAGIC, TMAGLEN - 1) == 0)
 		return(-1);
-	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
-		return(-1);
-	return(0);
+	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT);
 }
 
 /*
@@ -716,9 +734,12 @@ ustar_id(char *blk, int size)
 {
 	HD_USTAR *hd;
 
-	if (size < BLKMULT)
+	if (size < BLKMULT) {
+fprintf(stderr, "not a block multiple\n");
 		return(-1);
+	}
 	hd = (HD_USTAR *)blk;
+fprintf(stderr, "hd->name = %s\n", hd->name);
 
 	/*
 	 * check for block of zero's first, a simple and fast test then check
@@ -726,10 +747,19 @@ ustar_id(char *blk, int size)
 	 * programs are fouled up and create archives missing the \0. Last we
 	 * check the checksum. If ok we have to assume it is a valid header.
 	 */
-	if (hd->name[0] == '\0')
+	if (hd->name[0] == '\0') {
+		int i;
+fprintf(stderr, "null name\n");
+		for (i = 0; i < BLKMULT; i++)
+			if (blk[i] != '\0')
+				fprintf(stderr, "%c", blk[i]);
+		printf("\n");
 		return(-1);
-	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
+	}
+	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0) {
+fprintf(stderr, "bad magic %s\n", hd->magic);
 		return(-1);
+	}
 	/* This is GNU tar */
 	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar &&
 	    !seen_gnu_warning) {
@@ -737,9 +767,7 @@ ustar_id(char *blk, int size)
 		tty_warn(0,
 		    "Trying to read GNU tar archive with extensions off");
 	}
-	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
-		return(-1);
-	return(0);
+	return check_sum(hd->chksum, sizeof(hd->chksum), blk, BLKMULT);
 }
 
 /*
