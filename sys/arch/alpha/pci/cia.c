@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.37 1998/06/04 21:34:45 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.38 1998/06/04 22:58:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.37 1998/06/04 21:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.38 1998/06/04 22:58:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,23 @@ cia_init(ccp, mallocsafe)
 	if (cia_use_bwx != 0 &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
 	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
-	    alpha_amask(ALPHA_AMASK_BWX) == 0)
+	    alpha_amask(ALPHA_AMASK_BWX) == 0) {
+		u_int32_t ctrl;
+
 		ccp->cc_flags |= CCF_USEBWX;
+
+		/*
+		 * For whatever reason, the firmware seems to enable PCI
+		 * loopback mode if it also enables BWX.  Make sure it's
+		 * enabled if we have an old, buggy firmware rev.
+		 */
+		alpha_mb();
+		ctrl = REGVAL(CIA_CSR_CTRL);
+		if ((ctrl & CTRL_PCI_LOOP_EN) == 0) {
+			REGVAL(CIA_CSR_CTRL) = ctrl | CTRL_PCI_LOOP_EN;
+			alpha_mb();
+		}
+	}
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
