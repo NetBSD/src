@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.50 2002/11/16 16:59:58 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.51 2002/11/19 01:45:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.50 2002/11/16 16:59:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.51 2002/11/19 01:45:29 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -420,31 +420,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	         * disk at a time for each array.
 	         */
 		RF_LOCK_MUTEX(raidPtr->mutex);
-		if ((raidPtr->Disks[row][col].status == rf_ds_optimal) &&
-		    (raidPtr->numFailures > 0)) { 
-			/* XXX 0 above shouldn't be constant!!! */
-			/* some component other than this has failed.
-			   Let's not make things worse than they already
-			   are... */
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:     Row: %d Col: %d   Too many failures.\n",
-			       raidPtr->raidid, row, col);
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
-			printf("raid%d: Unable to reconstruct to disk at:\n",
-			       raidPtr->raidid);
-			printf("raid%d:    Row: %d Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, row, col);
-
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
-		if (raidPtr->Disks[row][col].status == rf_ds_spared) {
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return (EINVAL);
-		}
 
 		if (raidPtr->Disks[row][col].status != rf_ds_failed) {
 			/* "It's gone..." */

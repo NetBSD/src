@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.69 2002/11/16 16:59:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.70 2002/11/19 01:45:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.69 2002/11/16 16:59:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.70 2002/11/19 01:45:28 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,18 +708,6 @@ rf_FailDisk(
     int initRecon)
 {
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	if ((raidPtr->Disks[frow][fcol].status == rf_ds_optimal) &&
-	    (raidPtr->numFailures > 0)) { 
-		/* some other component has failed.  Let's not make
-                   things worse. XXX wrong for RAID6 */
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
-		return (EINVAL);
-	}
-	if (raidPtr->Disks[frow][fcol].status == rf_ds_spared) {
-		/* Can't fail a spared disk! */
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
-		return (EINVAL);
-	}
 	if (raidPtr->Disks[frow][fcol].status != rf_ds_failed) {
 		/* must be failing something that is valid, or else it's
 		   already marked as failed (in which case we don't 
