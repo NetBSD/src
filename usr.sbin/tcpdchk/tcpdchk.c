@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.7 1999/05/09 16:07:20 christos Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.8 1999/08/27 16:07:23 itojun Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -19,9 +19,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
+static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.7 1999/05/09 16:07:20 christos Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.8 1999/08/27 16:07:23 itojun Exp $");
 #endif
 #endif
 
@@ -254,7 +254,8 @@ struct request_info *request;
 #ifdef PROCESS_OPTIONS
 	    real_verdict = defl_verdict;
 	    if (sh_cmd) {
-		if ((verdict = setjmp(tcpd_buf)) != 0) {
+		verdict = setjmp(tcpd_buf);
+		if (verdict != 0) {
 		    real_verdict = (verdict == AC_PERMIT);
 		} else {
 		    dry_run = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.5 1999/05/09 21:22:53 thorpej Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.6 1999/08/27 16:07:23 itojun Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -9,9 +9,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
+static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.5 1999/05/09 21:22:53 thorpej Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.6 1999/08/27 16:07:23 itojun Exp $");
 #endif
 #endif
 
@@ -124,7 +124,7 @@ char   *host;
     }
     if (STR_NE(host, hp->h_name)) {
 	tcpd_warn("%s: hostname alias", host);
-	tcpd_warn("(official name: %s)", hp->h_name);
+	tcpd_warn("(official name: %.*s)", STRING_LENGTH, hp->h_name);
     }
     return (dup_hostent(hp));
 }

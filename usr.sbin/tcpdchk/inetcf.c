@@ -1,4 +1,4 @@
-/*	$NetBSD: inetcf.c,v 1.4 1997/10/11 21:41:37 christos Exp $	*/
+/*	$NetBSD: inetcf.c,v 1.5 1999/08/27 16:07:23 itojun Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -10,9 +10,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#) inetcf.c 1.6 96/02/11 17:01:29";
+static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-__RCSID("$NetBSD: inetcf.c,v 1.4 1997/10/11 21:41:37 christos Exp $");
+__RCSID("$NetBSD: inetcf.c,v 1.5 1999/08/27 16:07:23 itojun Exp $");
 #endif
 #endif
 
@@ -147,6 +147,8 @@ char   *conf;
 	    if ((path = strtok((char *) 0, whitespace)) == 0)
 		continue;
 	}
+	if (path[0] == '?')			/* IRIX optional service */
+	    path++;
 	if (STR_EQ(path, "internal"))
 	    continue;
 	if (path[strspn(path, "-0123456789")] == 0) {
