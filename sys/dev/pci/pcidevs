@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp $
+$NetBSD: pcidevs,v 1.34 1997/08/16 00:25:45 mjacob Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -808,6 +808,7 @@ product PROMISE DC5030	0x5300	DC5030
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
 product QLOGIC ISP1022	0x1022	ISP1022
+product QLOGIC ISP2100	0x2100	ISP2100
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500

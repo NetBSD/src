@@ -813,6 +813,7 @@
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
 #define	PCI_PRODUCT_QLOGIC_ISP1022	0x1022		/* ISP1022 */
+#define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100		/* ISP2100 */
 
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
