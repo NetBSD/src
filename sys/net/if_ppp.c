@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.15.2.1 1994/07/20 02:56:01 cgd Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -1030,6 +1030,7 @@ pppgetm(sc)
 	    MCLGET(m, M_DONTWAIT);
 	}
 	len -= M_DATASIZE(m);
+	mp = &m->m_next;
     }
     splx(s);
     return len <= 0;
