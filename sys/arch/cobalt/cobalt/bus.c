@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.5 2000/06/26 14:20:41 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.6 2000/06/27 18:10:04 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,8 +48,6 @@
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
