@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.33 2002/06/07 00:01:19 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.34 2002/11/03 14:59:06 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.33 2002/06/07 00:01:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.34 2002/11/03 14:59:06 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,6 +459,7 @@ ea_stoprx(struct seeq8005_softc *sc)
  * Stop all IO and shut the interface down
  */
 
+/* ARGSUSED */
 static void
 ea_stop(struct ifnet *ifp, int disable)
 {
@@ -610,6 +611,7 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 			    (u_int8_t *)buf, len);
 		else
 			bus_space_write_multi_2(iot, ioh, SEEQ_BUFWIN,
+			    /* LINTED: alignment checked above */
 			    (u_int16_t *)buf, len / 2);
 	}
 	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
@@ -679,6 +681,7 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 
 		ea_await_fifo_full(sc);
 		while (runup > 0) {
+			/* LINTED: Reading a volatile _does_ have an effect */
 			(void)SEEQ_READ16(sc, iot, ioh, SEEQ_BUFWIN);
 			runup -= 2;
 		}
@@ -690,6 +693,7 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 			    (u_int8_t *)buf, len);
 		else
 			bus_space_read_multi_2(iot, ioh, SEEQ_BUFWIN,
+			    /* LINTED: pointer alignment checked above */
 			    (u_int16_t *)buf, len / 2);
 	}
 	if (!(sc->sc_flags & SF_8BIT) && len % 2) {
@@ -761,7 +765,7 @@ ea_init(struct ifnet *ifp)
 	}
 
 	/* Write the station address - the receiver must be off */
-	ea_set_address(sc, 0, LLADDR(ifp->if_sadl));
+	ea_set_address(sc, 0, (u_int8_t *)LLADDR(ifp->if_sadl));
 
 	/* Split board memory into Rx and Tx. */
 	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
@@ -951,7 +955,7 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 	for (m = m0; m; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		ea_writebuf(sc, mtod(m, caddr_t), bufstart + 4 + len,
+		ea_writebuf(sc, mtod(m, u_char *), bufstart + 4 + len,
 		    m->m_len);
 		len += m->m_len;
 	}
@@ -1114,7 +1118,6 @@ ea_rxint(struct seeq8005_softc *sc)
 	int len;
 	int ctrl;
 	int ptr;
-	int pack;
 	int status;
 	u_int8_t rxhdr[4];
 	struct ifnet *ifp;
@@ -1202,7 +1205,6 @@ ea_rxint(struct seeq8005_softc *sc)
 		ea_read(sc, addr + 4, len);
 
 		addr = ptr;
-		++pack;
 	} while (len != 0);
 
 	sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
