@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.43 2001/09/16 18:08:37 hubertf Exp $ */
+/* $NetBSD: user.c,v 1.44 2001/09/24 13:22:39 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.43 2001/09/16 18:08:37 hubertf Exp $");
+__RCSID("$NetBSD: user.c,v 1.44 2001/09/24 13:22:39 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -319,17 +319,17 @@ asprintf(char **str, char const *fmt, ...)
 	FILE f;
 	unsigned char *_base;
 
-	va_start(ap, fmt);
 	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = (unsigned char *)malloc(128);
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
+	va_start(ap, fmt);
 	ret = vfprintf(&f, fmt, ap);
+	va_end(ap);
 	if (ret == -1)
 		goto err;
 	*f._p = '\0';
-	va_end(ap);
 	_base = realloc(f._bf._base, (size_t)(ret + 1));
 	if (_base == NULL)
 		goto err;

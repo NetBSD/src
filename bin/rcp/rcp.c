@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.27 2001/01/04 15:39:51 lukem Exp $	*/
+/*	$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.27 2001/01/04 15:39:51 lukem Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,23 +932,31 @@ run_err(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
+
+	++errs;
+	if (fp == NULL && !(fp = fdopen(rem, "w")))
+		return;
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
 
-	++errs;
-	if (fp == NULL && !(fp = fdopen(rem, "w")))
-		return;
 	(void)fprintf(fp, "%c", 0x01);
 	(void)fprintf(fp, "rcp: ");
 	(void)vfprintf(fp, fmt, ap);
 	(void)fprintf(fp, "\n");
 	(void)fflush(fp);
-
-	if (!iamremote)
-		vwarnx(fmt, ap);
-
 	va_end(ap);
+
+	if (!iamremote) {
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
+		vwarnx(fmt, ap);
+		va_end(ap);
+	}
 }

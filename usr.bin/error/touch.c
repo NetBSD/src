@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.11 2001/02/05 01:44:07 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.12 2001/09/24 13:22:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.11 2001/02/05 01:44:07 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.12 2001/09/24 13:22:35 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -787,18 +787,18 @@ inquire(fmt, va_alist)
 	va_list ap;
 	char	buffer[128];
 
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-
 	if (queryfile == NULL)
 		return(0);
 	for(;;){
 		do{
 			fflush(stdout);
+#if __STDC__
+			va_start(ap, fmt);
+#else
+			va_start(ap);
+#endif
 			vfprintf(stderr, fmt, ap);
+			va_end(ap);
 			fflush(stderr);
 		} while (fgets(buffer, 127, queryfile) == NULL);
 		switch(buffer[0]){

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.23 2001/01/07 23:39:07 lukem Exp $	*/
+/*	$NetBSD: output.c,v 1.24 2001/09/24 13:22:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.23 2001/01/07 23:39:07 lukem Exp $");
+__RCSID("$NetBSD: output.c,v 1.24 2001/09/24 13:22:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,6 +316,7 @@ fmtstr(va_alist)
 	outc('\0', &strout);
 	if (strout.flags & OUTPUT_ERR)
 		outbuf[length - 1] = '\0';
+	va_end(ap);
 }
 
 /*

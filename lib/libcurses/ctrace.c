@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.10 2000/04/20 09:36:11 blymn Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.11 2001/09/24 13:22:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.10 2000/04/20 09:36:11 blymn Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.11 2001/09/24 13:22:30 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,11 +75,7 @@ va_dcl
 	struct timeval tv;
         static int seencr = 1;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
+
 	if (tracefp == NULL)
 		tracefp = fopen(TFILE, "w");
 	if (tracefp == NULL)
@@ -89,6 +85,11 @@ va_dcl
                 gettimeofday(&tv, NULL);
                 (void) fprintf(tracefp, "%lu.%06lu: ", tv.tv_sec, tv.tv_usec);
         }
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
         (void) vfprintf(tracefp, fmt, ap);
         seencr = (strchr(fmt, '\n') != NULL);
 	va_end(ap);

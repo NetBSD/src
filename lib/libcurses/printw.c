@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.16 2000/12/30 17:20:55 martin Exp $	*/
+/*	$NetBSD: printw.c,v 1.17 2001/09/24 13:22:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.16 2000/12/30 17:20:55 martin Exp $");
+__RCSID("$NetBSD: printw.c,v 1.17 2001/09/24 13:22:30 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -129,13 +129,13 @@ va_dcl
 	va_list ap;
 	int     ret;
 
+	if (move(y, x) != OK)
+		return (ERR);
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	if (move(y, x) != OK)
-		return (ERR);
 	ret = vwprintw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
@@ -155,14 +155,14 @@ va_dcl
 	va_list ap;
 	int     ret;
 
+	if (wmove(win, y, x) != OK)
+		return (ERR);
+
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	if (wmove(win, y, x) != OK)
-		return (ERR);
-
 	ret = vwprintw(win, fmt, ap);
 	va_end(ap);
 	return (ret);

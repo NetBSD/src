@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.42 2001/01/11 13:06:28 enami Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.43 2001/09/24 13:22:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.42 2001/01/11 13:06:28 enami Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.43 2001/09/24 13:22:38 wiz Exp $");
 #endif
 
 
@@ -998,6 +998,12 @@ va_dcl
 		else
 			(void)fprintf(stderr, "rarpd: warning: ");
 		(void)vfprintf(stderr, fmt, ap);
+		va_end(ap);
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_ERR, fmt, ap);
@@ -1026,6 +1032,12 @@ va_dcl
 	if (dflag) {
 		(void)fprintf(stderr, "rarpd: ");
 		(void)vfprintf(stderr, fmt, ap);
+		va_end(ap);
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_WARNING, fmt, ap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.21 1999/08/02 05:36:05 erh Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.22 2001/09/24 13:22:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -805,7 +805,6 @@ va_list ap;
 	int *recvmore;
 
 	recvmore = va_arg(ap, int *);
-	va_end(ap);
 	/* check for end of file list */
 	if (t == NULL) {
 		*recvmore = FALSE;

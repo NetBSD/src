@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.17 2000/09/13 04:06:47 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.18 2001/09/24 13:22:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,6 +127,7 @@ rzopen(struct open_file *f, ...)
 	ctlr = va_arg(ap, int);
 	unit = va_arg(ap, int);
 	part = va_arg(ap, int);
+	va_end(ap);
 	if (unit >= 8 || part >= 8)
 		return (ENXIO);
 	device[5] = '0' + unit;

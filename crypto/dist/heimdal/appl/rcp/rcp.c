@@ -684,21 +684,23 @@ run_err(const char *fmt, ...)
 {
 	static FILE *fp;
 	va_list ap;
-	va_start(ap, fmt);
 
 	++errs;
 	if (fp == NULL && !(fp = fdopen(remout, "w")))
 		return;
+	va_start(ap, fmt);
 	fprintf(fp, "%c", 0x01);
 	fprintf(fp, "rcp: ");
 	vfprintf(fp, fmt, ap);
 	fprintf(fp, "\n");
 	fflush(fp);
-
-	if (!iamremote)
-		vwarnx(fmt, ap);
-
 	va_end(ap);
+
+	if (!iamremote) {
+		va_start(ap, fmt);
+		vwarnx(fmt, ap);
+		va_end(ap);
+	}
 }
 
 /*

@@ -395,6 +395,7 @@ my_sprintf (
       }
 
  DOCOMM: *bp = 0;
+  va_end (ap);
 }
 
 static void 

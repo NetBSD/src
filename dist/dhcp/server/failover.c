@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.1.1.1 2001/08/03 11:35:42 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.2 2001/09/24 13:22:28 wiz Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3463,8 +3463,10 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 	/* Allocate a buffer for the option. */
 	option.count = size;
 	option.data = dmalloc (option.count, MDL);
-	if (!option.data)
+	if (!option.data) {
+		va_end (va);
 		return &null_failover_option;
+	}
 
 	/* Put in the option code and option length. */
 	putUShort (option.data, code);
@@ -3495,6 +3497,7 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 				dfree (option.data, MDL);
 				log_error ("IP addrlen=%d, should be 4.",
 					   ilen);
+				va_end (va);
 				return &null_failover_option;
 			}
 				
@@ -3581,6 +3584,7 @@ failover_option_t *dhcp_failover_make_option (unsigned code,
 #if defined DEBUG_FAILOVER_MESSAGES
 	failover_print (obuf, obufix, obufmax, ")");
 #endif
+	va_end (va);
 
 	/* Now allocate a place to store what we just set up. */
 	op = dmalloc (sizeof (failover_option_t), MDL);
@@ -3642,6 +3646,7 @@ isc_result_t dhcp_failover_put_message (dhcp_failover_link_t *link,
 			dfree (option, MDL);
 		}
 	}
+	va_end (list);
 
 	if (bad_option)
 		return ISC_R_INVALIDARG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.3 2000/03/30 12:19:49 augustss Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.4 2001/09/24 13:22:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -190,7 +190,6 @@ reswitch:	switch (ch = *fmt++) {
 			put(ch);
 		}
 	}
-	va_end(ap);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.8 2000/02/17 03:12:27 itohy Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.9 2001/09/24 13:22:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.8 2000/02/17 03:12:27 itohy Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.9 2001/09/24 13:22:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,13 +122,13 @@ tty_prnt(fmt, va_alist)
 #endif
 {
 	va_list ap;
+	if (ttyoutf == NULL)
+		return;
 #	if __STDC__
 	va_start(ap, fmt);
 #	else
 	va_start(ap);
 #	endif
-	if (ttyoutf == NULL)
-		return;
 	(void)vfprintf(ttyoutf, fmt, ap);
 	va_end(ap);
 	(void)fflush(ttyoutf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.23 2001/02/04 22:14:57 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.24 2001/09/24 13:22:31 wiz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.23 2001/02/04 22:14:57 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.24 2001/09/24 13:22:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -648,6 +648,7 @@ error(fmt, va_alist)
 		len = 0;
 	(void)vsnprintf(bp, sizeof(buf) - 1, fmt, ap);
 	(void)write(STDERR_FILENO, buf, len + strlen(bp));
+	va_end(ap);
 }
 
 void

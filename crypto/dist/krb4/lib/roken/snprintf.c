@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.1.1.3 2001/09/17 12:09:57 assar Exp $");
+RCSID("$Id: snprintf.c,v 1.2 2001/09/24 13:22:27 wiz Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -496,6 +496,7 @@ snprintf (char *str, size_t sz, const char *format, ...)
 
   va_start(args, format);
   ret = vsnprintf (str, sz, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -506,14 +507,15 @@ snprintf (char *str, size_t sz, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (ret != ret2 || strcmp(str, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return ret;
 }
 #endif
@@ -527,6 +529,7 @@ asprintf (char **ret, const char *format, ...)
 
   va_start(args, format);
   val = vasprintf (ret, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -536,14 +539,15 @@ asprintf (char **ret, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (val != ret2 || strcmp(*ret, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return val;
 }
 #endif
@@ -557,6 +561,7 @@ asnprintf (char **ret, size_t max_sz, const char *format, ...)
 
   va_start(args, format);
   val = vasnprintf (ret, max_sz, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -566,14 +571,15 @@ asnprintf (char **ret, size_t max_sz, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (val != ret2 || strcmp(*ret, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return val;
 }
 #endif

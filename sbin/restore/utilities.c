@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.13 1997/09/16 13:44:17 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.14 2001/09/24 13:22:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.13 1997/09/16 13:44:17 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.14 2001/09/24 13:22:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,6 +432,7 @@ panic(fmt, va_alist)
 #endif
 
 	vfprintf(stderr, fmt, ap);
+	va_end(ap);
 	if (yflag)
 		return;
 	if (reply("abort") == GOOD) {

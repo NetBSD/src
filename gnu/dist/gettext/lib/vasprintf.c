@@ -172,6 +172,7 @@ checkit
   format = va_arg (args, char *);
 #endif
   vasprintf (&result, format, args);
+  va_end (args);
   if (strlen (result) < global_total_width)
     printf ("PASS: ");
   else

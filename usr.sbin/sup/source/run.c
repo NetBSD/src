@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.8 1997/07/30 15:33:22 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.9 2001/09/24 13:22:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -144,8 +144,10 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	if ((argv = makearglist(ap)) == NULL)
+	if ((argv = makearglist(ap)) == NULL) {
+		va_end(ap);
 		return -1;
+	}
 	val = runv (name, argv);
 	va_end(ap);
 	return(val);

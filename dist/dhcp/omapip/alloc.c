@@ -816,8 +816,10 @@ isc_result_t omapi_typed_data_new (const char *file, int line,
 		obj = va_arg (l, omapi_object_t *);
 		break;
 	      default:
+		va_end(l);
 		return ISC_R_INVALIDARG;
 	}
+	va_end(l);
 
 	new = dmalloc (len, file, line);
 	if (!new)

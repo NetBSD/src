@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.14 2001/09/24 13:22:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -244,7 +244,7 @@ tpcons_input(m, va_alist)
 	faddr = va_arg(ap, struct sockaddr *);
 	laddr = va_arg(ap, struct sockaddr *);
 	channel = va_arg(ap, caddr_t);
-
+	va_end(ap);
 
 	m = (struct mbuf *) tp_inputprep(m);
 
