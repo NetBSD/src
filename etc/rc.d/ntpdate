@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.8 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: ntpdate,v 1.9 2002/07/19 03:22:09 bad Exp $
 #
 
 # PROVIDE: ntpdate
@@ -17,7 +17,7 @@ ntpdate_start()
 {
 	if [ -z "$ntpdate_hosts" ]; then
 		ntpdate_hosts=`awk '
-		    /^server[ \t]*127.127/	{next}
+		    /^(server|peer)[ \t]*127.127/	{next}
 		    /^(server|peer)/		{print $2}
 		' </etc/ntp.conf`
 	fi
