@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.11 1997/03/13 01:10:34 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -200,7 +200,11 @@ aic7770probe(void)
 #endif
 
 int	ahc_eisa_irq __P((bus_space_tag_t, bus_space_handle_t));
+#ifdef	__BROKEN_INDIRECT_CONFIG
 int	ahc_eisa_match __P((struct device *, void *, void *));
+#else
+int	ahc_eisa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
 
@@ -246,7 +250,12 @@ ahc_eisa_irq(iot, ioh)
 int
 ahc_eisa_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef	__BROKEN_INDIRECT_CONFIG
+        void *match;
+#else
+        struct cfdata *match;
+#endif
+        void *aux; 
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -510,12 +519,14 @@ ahc_eisa_attach(parent, self, aux)
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-	ahc->sc_ih = eisa_intr_establish(ec, ih,
-	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc
 #ifdef __OpenBSD__
-	    , ahc->sc_dev.dv_xname
+	ahc->sc_ih = eisa_intr_establish(ec, ih,
+	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc,
+	    ahc->sc_dev.dv_xname);
+#else
+	ahc->sc_ih = eisa_intr_establish(ec, ih,
+	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc);
 #endif
-	    );
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    ahc->sc_dev.dv_xname);
