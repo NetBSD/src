@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.15 1998/07/26 23:11:09 mycroft Exp $	*/
+/*	$NetBSD: vacation.c,v 1.16 1998/12/19 23:37:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.15 1998/07/26 23:11:09 mycroft Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.16 1998/12/19 23:37:14 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -128,7 +128,7 @@ main(argc, argv)
 			iflag = 1;
 			break;
 		case 'r':
-			if (isdigit(*optarg)) {
+			if (isdigit((unsigned char)*optarg)) {
 				interval = atol(optarg) * SECSPERDAY;
 				if (interval < 0)
 					usage();
@@ -230,7 +230,7 @@ readheaders()
 				break;
 			if (!(p = strchr(buf, ':')))
 				break;
-			while (*++p && isspace(*p));
+			while (*++p && isspace((unsigned char)*p));
 			if (!*p)
 				break;
 			if (!strncasecmp(p, "junk", 4) ||
@@ -249,7 +249,7 @@ readheaders()
 			cont = 1;
 			goto findme;
 		default:
-			if (!isspace(*buf) || !cont || tome) {
+			if (!isspace((unsigned char)*buf) || !cont || tome) {
 				cont = 0;
 				break;
 			}
