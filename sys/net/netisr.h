@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.15 1997/04/02 21:23:29 christos Exp $	*/
+/*	$NetBSD: netisr.h,v 1.16 1998/02/09 17:43:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)netisr.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_NETISR_H_
+#define _NET_NETISR_H_
 
 /*
  * The networking code runs off software interrupts.
@@ -71,3 +74,5 @@
 int	netisr;				/* scheduling bits for network */
 #endif
 #endif
+
+#endif /* _NET_NETISR_H_ */
