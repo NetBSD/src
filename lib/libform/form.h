@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.11 2001/04/06 05:24:59 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.12 2001/05/11 14:04:48 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -182,6 +182,8 @@ typedef struct _form_fieldtype FIELDTYPE;
 
 typedef struct _formi_page_struct _FORMI_PAGE_START;
 typedef struct formi_type_link_struct _FORMI_TYPE_LINK;
+typedef struct _formi_field_lines _FORMI_FIELD_LINES;
+
 
 typedef void (*Form_Hook)(FORM *);
 
@@ -221,6 +223,9 @@ struct _form_field {
 	FIELDTYPE *type; /* type struct for the field */
 	CIRCLEQ_ENTRY(_form_field) glue; /* circle queue glue for sorting fields */
 	char *args; /* args for field type. */
+	unsigned int lines_alloced; /* number of slots allocated in lines
+				       array */
+	_FORMI_FIELD_LINES *lines; /* array of the starts and ends of lines */
 	FORM_STR *buffers; /* array of buffers for the field */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.5 2001/02/03 12:41:08 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.6 2001/05/11 14:04:48 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -73,6 +73,16 @@ struct _formi_page_struct
 	int bottom_right;
 };
 
+/* lines structure for the field - keeps start and ends and length of the
+ * lines in a field.
+ */
+struct _formi_field_lines
+{
+	unsigned length;
+	unsigned start;
+	unsigned end;
+};
+
 /* function prototypes */
 unsigned
 _formi_skip_blanks(char *, unsigned int);
@@ -80,10 +90,6 @@ int
 _formi_add_char(FIELD *cur, unsigned pos, char c);
 int
 _formi_draw_page(FORM *form);
-int
-_formi_find_bol(const char *string, unsigned int offset);
-int
-_formi_find_eol(const char *string, unsigned int offset);
 int
 _formi_find_pages(FORM *form);
 int
