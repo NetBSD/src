@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.42 2000/01/08 01:52:42 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.43 2000/01/08 02:04:06 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -728,13 +728,11 @@ raidioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 
-
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
-
-		db3_printf(("rf_ioctl: RAIDFRAME_CONFIGURE\n"));
 		/* copy-in the configuration information */
 		/* data points to a pointer to the configuration structure */
+
 		u_cfg = *((RF_Config_t **) data);
 		RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
 		if (k_cfg == NULL) {
@@ -754,14 +752,12 @@ raidioctl(dev, cmd, data, flag, p)
 			if (k_cfg->layoutSpecificSize > 10000) {
 				/* sanity check */
 				RF_Free(k_cfg, sizeof(RF_Config_t));
-				db3_printf(("rf_ioctl: EINVAL %d\n", retcode));
 				return (EINVAL);
 			}
 			RF_Malloc(specific_buf, k_cfg->layoutSpecificSize,
 			    (u_char *));
 			if (specific_buf == NULL) {
 				RF_Free(k_cfg, sizeof(RF_Config_t));
-				db3_printf(("rf_ioctl: ENOMEM %d\n", retcode));
 				return (ENOMEM);
 			}
 			retcode = copyin(k_cfg->layoutSpecific,
@@ -809,9 +805,6 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 		RF_Free(k_cfg, sizeof(RF_Config_t));
 
-		db3_printf(("rf_ioctl: retcode=%d RAIDFRAME_CONFIGURE\n",
-			retcode));
-
 		return (retcode);
 
 		/* shutdown the system */
@@ -850,9 +843,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 		c_label_ptr = (RF_ComponentLabel_t **) data;
 		/* need to read the component label for the disk indicated
-		   by row,column in component_label
-		   XXX need to sanity check these values!!! 
-		   */
+		   by row,column in component_label */
 
 		/* For practice, let's get it directly fromdisk, rather 
 		   than from the in-core copy */
@@ -973,8 +964,6 @@ raidioctl(dev, cmd, data, flag, p)
 			/* Re-write is already in progress! */
 			return(EINVAL);
 		}
-
-		/* borrow the thread of the requesting process */
 
 		retcode = RF_CREATE_THREAD(raidPtr->parity_rewrite_thread,
 					   rf_RewriteParityThread,
