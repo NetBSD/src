@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.18 2002/10/23 09:13:26 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.19 2003/05/02 08:45:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.18 2002/10/23 09:13:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.19 2003/05/02 08:45:27 dsl Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -488,7 +488,7 @@ edgetdisklabel(dev, ed)
 	struct ed_softc *ed;
 {
 	struct disklabel *lp = ed->sc_dk.dk_label;
-	char *errstring;
+	const char *errstring;
 
 	WDCDEBUG_PRINT(("edgetdisklabel\n"), DEBUG_FUNCS);
 

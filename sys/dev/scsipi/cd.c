@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.181 2003/04/03 22:18:24 fvdl Exp $	*/
+/*	$NetBSD: cd.c,v 1.182 2003/05/02 08:45:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.181 2003/04/03 22:18:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.182 2003/05/02 08:45:29 dsl Exp $");
 
 #include "rnd.h"
 
@@ -1523,7 +1523,7 @@ cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
 	struct disklabel *lp = cd->sc_dk.dk_label;
-	char *errstring;
+	const char *errstring;
 
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 

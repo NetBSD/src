@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.59 2003/02/25 20:35:31 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.60 2003/05/02 08:45:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.59 2003/02/25 20:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.60 2003/05/02 08:45:13 dsl Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -425,7 +425,7 @@ sdgetinfo(dev)
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct partition *pi;
-	char *msg;
+	const char *msg;
 #ifdef COMPAT_NOLABEL
 	int usedefault = 1;
 

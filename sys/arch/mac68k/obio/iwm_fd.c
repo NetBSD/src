@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.22 2003/02/03 22:38:23 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23 2003/05/02 08:45:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1736,7 +1736,7 @@ fdGetDiskLabel(fd, dev)
 	fd_softc_t *fd;
 	dev_t dev;
 {
-	char *msg;
+	const char *msg;
 	int fdType;
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2003/04/08 06:54:24 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2003/05/02 08:45:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -65,7 +65,7 @@ int mipsvh_cksum(struct sgilabel *vhp);
  * Returns null on success and an error string on failure.
  */
 
-char *
+const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;

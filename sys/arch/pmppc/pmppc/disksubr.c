@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2003/04/16 15:01:06 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2003/05/02 08:45:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -122,7 +122,7 @@ mbr_findslice(struct mbr_partition *dp, struct buf *bp)
  *
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev_t dev,
 	      void (*strat)(struct buf *),
 	      struct disklabel *lp,

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.4 2002/12/17 01:55:44 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.5 2003/05/02 08:45:26 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ dk_getdisklabel(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 	struct	 cpu_disklabel *clp = dksc->sc_dkdev.dk_cpulabel;
 	struct	 partition *pp;
 	int	 i;
-	char	*errstring;
+	const char	*errstring;
 
 	memset(clp, 0x0, sizeof(*clp));
 	dk_getdefaultlabel(di, dksc, lp);

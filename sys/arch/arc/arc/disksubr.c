@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2003/04/16 15:00:59 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2003/05/02 08:45:22 dsl Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -145,7 +145,7 @@ mbr_findslice(dp, bp)
  *
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
