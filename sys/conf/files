@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.270 1999/01/26 17:14:11 christos Exp $
+#	$NetBSD: files,v 1.271 1999/02/07 09:34:58 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -100,6 +100,9 @@ defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
 # debugging options
 defopt	DDB
 defopt	opt_ddbparam.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+
+# memory (ram) disk options
+defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT
 
 # device classes
 devclass disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.18 1998/09/01 06:13:33 enami Exp $	*/
+/*	$NetBSD: md.c,v 1.19 1999/02/07 09:34:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -45,6 +45,7 @@
  * to the authors of the MFS implementation.
  */
 
+#include "opt_md.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
