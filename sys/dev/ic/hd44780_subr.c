@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.1 2003/01/20 01:20:50 soren Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.2 2005/01/08 20:17:22 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.1 2003/01/20 01:20:50 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.2 2005/01/08 20:17:22 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ hd44780_attach_subr(sc)
 	struct hd44780_chip *sc;
 {
 	/* Putc/getc are supposed to be set by platform-dependent code. */
-	if ((sc->sc_rwrite == NULL) || (sc->sc_rread == NULL))
+	if ((sc->sc_writereg == NULL) || (sc->sc_readreg == NULL))
 		sc->sc_dev_ok = 0;
 
 	/* Make sure that HD_MAX_CHARS is enough. */
@@ -69,7 +69,8 @@ hd44780_attach_subr(sc)
 		sc->sc_dev_ok = 0;
 
 	if (sc->sc_dev_ok) {
-		hd44780_init(sc);
+		if ((sc->sc_flags & HD_UP) == 0)
+			hd44780_init(sc);
 
 		/* Turn display on and clear it. */
 		hd44780_ir_write(sc, cmd_dispctl(1, 0, 0));
@@ -86,20 +87,11 @@ hd44780_init(sc)
 {
 	u_int8_t cmd;
 
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioir;
-
-	if (sc->sc_irwrite == NULL)
-		sc->sc_irwrite = sc->sc_rwrite;
-
 	cmd = cmd_init(sc->sc_flags & HD_8BIT);
-	sc->sc_irwrite(iot, ioh, cmd);
-	delay(TIMEOUT_LONG);
-	sc->sc_irwrite(iot, ioh, cmd);
-	sc->sc_irwrite(iot, ioh, cmd);
+	hd44780_ir_write(sc, cmd);
+	delay(HD_TIMEOUT_LONG);
+	hd44780_ir_write(sc, cmd);
+	hd44780_ir_write(sc, cmd);
 
 	cmd = cmd_funcset(
 			sc->sc_flags & HD_8BIT,
@@ -107,16 +99,14 @@ hd44780_init(sc)
 			sc->sc_flags & HD_BIGFONT);
 
 	if ((sc->sc_flags & HD_8BIT) == 0)
-		sc->sc_irwrite(iot, ioh, cmd);
+		hd44780_ir_write(sc, cmd);
 
-	/* Interface is set to the proper width, use normal 'write' op. */
-	sc->sc_rwrite(iot, ioh, cmd);
-	cmd = cmd_dispctl(0, 0, 0);
-	sc->sc_rwrite(iot, ioh, cmd);
-	cmd = cmd_clear();
-	sc->sc_rwrite(iot, ioh, cmd);
-	cmd = cmd_modset(1, 0);
-	sc->sc_rwrite(iot, ioh, cmd);
+	sc->sc_flags |= HD_UP;
+
+	hd44780_ir_write(sc, cmd);
+	hd44780_ir_write(sc, cmd_dispctl(0, 0, 0));
+	hd44780_ir_write(sc, cmd_clear());
+	hd44780_ir_write(sc, cmd_modset(1, 0));
 }
 
 /*
@@ -320,70 +310,86 @@ hd44780_ddram_redraw(sc, io)
 
 #if defined(HD44780_STD_WIDE)
 /*
- * Standard 8-bit version of 'sc_rwrite' (8-bit port, 8-bit access)
+ * Standard 8-bit version of 'sc_writereg' (8-bit port, 8-bit access)
  */
 void
-hd44780_rwrite(iot, ioh, cmd)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+hd44780_writereg(sc, reg, cmd)
+	struct hd44780_chip *sc;
+	u_int32_t reg;
 	u_int8_t cmd;
 {
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh;
+
+	if (reg == 0)
+		ioh = sc->sc_ioir; 
+	else
+		ioh = sc->sc_iodr;
+
 	bus_space_write_1(iot, ioh, 0x00, cmd);
-	delay(TIMEOUT_NORMAL);
+	delay(HD_TIMEOUT_NORMAL);
 }
 
 /*
- * Standard 8-bit version of 'sc_rread' (8-bit port, 8-bit access)
+ * Standard 8-bit version of 'sc_readreg' (8-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_rread(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+hd44780_readreg(sc, reg)
+	struct hd44780_chip *sc;
+	u_int32_t reg;
 {
-	delay(TIMEOUT_NORMAL);
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh;
+
+	if (reg == 0)
+		ioh = sc->sc_ioir; 
+	else
+		ioh = sc->sc_iodr;
+
+	delay(HD_TIMEOUT_NORMAL);
 	return bus_space_read_1(iot, ioh, 0x00);
 }
 #elif defined(HD44780_STD_SHORT)
 /*
- * Standard 4-bit version of 'sc_irwrite' (4-bit port, 8-bit access)
+ * Standard 4-bit version of 'sc_writereg' (4-bit port, 8-bit access)
  */
 void
-hd44780_irwrite(iot, ioh, cmd)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+hd44780_writereg(sc, reg, cmd)
+	struct hd44780_chip *sc;
+	u_int32_t reg;
 	u_int8_t cmd;
 {
-	/* first four instructions emitted in 8-bit mode */
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh;
+
+	if (reg == 0)
+		ioh = sc->sc_ioir; 
+	else
+		ioh = sc->sc_iodr;
+
 	bus_space_write_1(iot, ioh, 0x00, hi_bits(cmd));
-	delay(TIMEOUT_NORMAL);
+	if (sc->sc_flags & HD_UP) 
+		bus_space_write_1(iot, ioh, 0x00, lo_bits(cmd));
+	delay(HD_TIMEOUT_NORMAL);
 }
 
 /*
- * Standard 4-bit version of 'sc_rrwrite' (4-bit port, 8-bit access)
- */
-void
-hd44780_rwrite(iot, ioh, cmd)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t cmd;
-{
-	bus_space_write_1(iot, ioh, 0x00, hi_bits(cmd));
-	bus_space_write_1(iot, ioh, 0x00, lo_bits(cmd));
-	delay(TIMEOUT_NORMAL);
-}
-
-/*
- * Standard 4-bit version of 'sc_rread' (4-bit port, 8-bit access)
+ * Standard 4-bit version of 'sc_readreg' (4-bit port, 8-bit access)
  */
 u_int8_t
-hd44780_rread(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+hd44780_readreg(sc, reg)
+	struct hd44780_chip *sc;
+	u_int32_t reg;
 {
-	u_int8_t rd;
-	u_int8_t dat;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh;
+	u_int8_t rd, dat;
 
-	delay(TIMEOUT_NORMAL);
+	if (reg == 0)
+		ioh = sc->sc_ioir; 
+	else
+		ioh = sc->sc_iodr;
+
 	rd = bus_space_read_1(iot, ioh, 0x00);
 	dat = (rd & 0x0f) << 4;
 	rd = bus_space_read_1(iot, ioh, 0x00);
