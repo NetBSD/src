@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.3 2001/09/04 02:51:16 wiz Exp $
+.\"     $NetBSD: isa.9,v 1.4 2001/09/04 03:00:46 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,7 +215,7 @@ Valid values for the
 argument are the same as for
 .Fn bus_dmamap_create
 (see
-.Xr bus_dma 9 ).
+.Xr bus_dma 9 ) .
 This function returns zero on success or an error value on failure.
 .It Fn isa_dmamap_destroy "ic" "chan"
 Destroy the DMA map for DMA channel
@@ -230,7 +230,7 @@ Valid values for the
 argument are the same as for
 .Fn bus_dmamem_alloc
 (see
-.Xr bus_dma 9 ).
+.Xr bus_dma 9 ) .
 The bus-address of the memory is returned in
 .Fa addrp .
 This function returns zero on success or an error value on failure.
@@ -258,7 +258,7 @@ Valid values for the
 argument are the same as for
 .Fn bus_dmamem_map
 (see
-.Xr bus_dma 9 ).
+.Xr bus_dma 9 ) .
 The kernel virtual address is returned in
 .Fa kvap .
 This function returns zero on success or an error value on failure.
@@ -332,7 +332,7 @@ The argument
 is the bus-space flags.  Valid values are the same as for
 .Fn bus_dmamap_load
 (see
-.Xr bus_dma 9 ).
+.Xr bus_dma 9 ) .
 .It Fn isa_dmaabort "ic" "chan"
 Abort a DMA transfer on channel
 .Fa chan .
@@ -394,7 +394,7 @@ respectively.
 .Pp
 During the driver attach step, the I/O and memory address spaces
 should be mapped (see
-.Xr bus_space 9 ).
+.Xr bus_space 9 ) .
 .Sh DMA SUPPORT
 Extensive DMA facilities are provided for the ISA bus.  A driver can
 use up to two DMA channels simultaneously.  The DMA channels allocated
@@ -458,7 +458,7 @@ This section describes places within the
 source tree where actual code implementing or utilising the
 machine-independent ISA subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The ISA subsystem itself is implemented within the files
 .Pa sys/dev/isa/isa.c
