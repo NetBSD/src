@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.258 2004/11/18 21:29:43 heas Exp $
+#	$NetBSD: 3RDPARTY,v 1.259 2004/11/22 13:32:00 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -553,7 +553,7 @@ Notes:
 
 Package:	ppp
 Version:	2.4.1
-Current Vers:	2.4.2
+Current Vers:	2.4.3
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
 CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
