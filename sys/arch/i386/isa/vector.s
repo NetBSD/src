@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.53 2002/10/05 21:29:02 fvdl Exp $	*/
+/*	$NetBSD: vector.s,v 1.54 2002/11/11 09:17:16 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,12 +162,12 @@
 
 #ifdef __STDC__
 #define	XINTR(irq_num)		Xintr ## irq_num
-#define XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
+#define	XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
 #define	XHOLD(irq_num)		Xhold ## irq_num
 #define	XSTRAY(irq_num)		Xstray ## irq_num
 #else
 #define	XINTR(irq_num)		Xintr/**/irq_num
-#define XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
+#define	XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
 #define	XHOLD(irq_num)		Xhold/**/irq_num
 #define	XSTRAY(irq_num)		Xstray/**/irq_num
 #endif /* __STDC__ */
@@ -197,10 +197,12 @@
 
 #ifdef __STDC__
 #define	XINTR(irq_num)		_Xintr ## irq_num
+#define	XINTR_TSS(irq_num)	_Xintr_tss_ ## irq_num
 #define	XHOLD(irq_num)		_Xhold ## irq_num
 #define	XSTRAY(irq_num)		_Xstray ## irq_num
 #else
 #define	XINTR(irq_num)		_Xintr/**/irq_num
+#define	XINTR_TSS(irq_num)	_Xintr_tss_/**/irq_num
 #define	XHOLD(irq_num)		_Xhold/**/irq_num
 #define	XSTRAY(irq_num)		_Xstray/**/irq_num
 #endif /* __STDC__ */
