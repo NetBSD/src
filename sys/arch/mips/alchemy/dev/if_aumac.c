@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.7 2003/01/16 01:05:39 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.8 2003/01/16 01:14:17 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.7 2003/01/16 01:05:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.8 2003/01/16 01:14:17 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -157,6 +157,8 @@ struct aumac_softc {
 
 #ifdef AUMAC_EVENT_COUNTERS
 #define	AUMAC_EVCNT_INCR(ev)	(ev)->ev_count++
+#else
+#define	AUMAC_EVCNT_INCR(ev)	/* nothing */
 #endif
 
 #define	AUMAC_INIT_RXDESC(sc, x)					\
@@ -407,9 +409,7 @@ aumac_start(struct ifnet *ifp)
 		if (sc->sc_txfree == 0) {
 			/* No more slots left; notify upper layer. */
 			ifp->if_flags |= IFF_OACTIVE;
-#ifdef AUMAC_EVENT_COUNTERS
 			AUMAC_EVCNT_INCR(&sc->sc_ev_txstall);
-#endif
 			return;
 		}
 		nexttx = sc->sc_txnext;
@@ -585,10 +585,8 @@ aumac_txintr(struct aumac_softc *sc)
 		aumac_start(ifp);
 	}
 
-#ifdef AUMAC_EVENT_COUNTERS
 	if (gotone)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_txintr);
-#endif
 
 	/* Update the dirty descriptor pointer. */
 	sc->sc_txdirty = i;
@@ -721,12 +719,10 @@ aumac_rxintr(struct aumac_softc *sc)
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 	}
-#ifdef AUMAC_EVENT_COUNTERS
 	if (pkts)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_rxintr);
 	if (pkts == AUMAC_NRXDESC)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_rxstall);
-#endif
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
