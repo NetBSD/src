@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.5 2000/08/25 16:43:46 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.6 2000/09/18 18:01:39 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.5 2000/08/25 16:43:46 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.6 2000/09/18 18:01:39 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -130,6 +130,3 @@ int sys_sysarch(p, v, retval)
 {
 	panic("sys_sysarch not implemented");
 }
-
-static struct user user0;
-struct user *proc0paddr = &user0;
