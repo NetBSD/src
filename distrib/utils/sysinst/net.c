@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.38.2.2 1999/04/19 15:19:28 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.38.2.3 1999/06/24 23:01:31 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -56,12 +56,16 @@ int network_up = 0;
 /* URL encode unsafe characters.  */
 
 static char *url_encode __P((char *dst, const char *src, size_t len,
-				const char *safe_chars));
+				const char *safe_chars,
+				int encode_leading_slash));
 
 /* Get the list of network interfaces. */
 
 static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
+
+static void write_etc_hosts(FILE *f);
+
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
@@ -74,12 +78,13 @@ static void get_ifinterface_info __P((void));
  * len is the length of the destination buffer.  The result will be
  * truncated if necessary to fit in the destination buffer.
  *
- * safe_chars is a string of characters that should not be encoded.  Any
- * characters in this string, as well as any alphanumeric characters,
- * will be copied from src to dst without encoding.  Some potentially
- * useful settings for this parameter are:
+ * safe_chars is a string of characters that should not be encoded.  If
+ * safe_chars is non-NULL, any characters in safe_chars as well as any
+ * alphanumeric characters will be copied from src to dst without
+ * encoding.  Some potentially useful settings for this parameter are:
  *
- *	NULL or ""	Everything except alphanumerics are encoded
+ *	NULL		Everything is encoded (even alphanumerics)
+ *	""		Everything except alphanumerics are encoded
  *	"/"		Alphanumerics and '/' remain unencoded
  *	"$-_.+!*'(),"	Consistent with a strict reading of RFC 1738
  *	"$-_.+!*'(),/"	As above, except '/' is not encoded
@@ -109,17 +114,29 @@ static void get_ifinterface_info __P((void));
 
 static char *
 url_encode(char *dst, const char *src, size_t len,
-	const char *safe_chars)
+	const char *safe_chars, int encode_leading_slash)
 {
 	char *p = dst;
+	const char *initialsrc = src;
 
-	if (safe_chars == NULL)
-		safe_chars = "";
 	/* Remove any initial '/'s if present */
 	while (*src == '/')
 		src++;
+
+	/*
+	 * If encoding of a leading slash was desired, and there was in
+	 * fact one or more leading shashes, encode one in the output string.
+	 */
+	if (encode_leading_slash && (src != initialsrc)) {
+		if (len < 3)
+			goto done;
+		sprintf(p, "%%%02X", '/');
+		p += 3;
+	}
+
 	while (--len > 0 && *src != '\0') {
-		if (isalnum(*src) || strchr(safe_chars, *src)) {
+		if (safe_chars != NULL &&
+		    (isalnum(*src) || strchr(safe_chars, *src))) {
 			*p++ = *src++;
 		} else {
 			/* encode this char */
@@ -130,16 +147,35 @@ url_encode(char *dst, const char *src, size_t len,
 			len -= 2;
 		}
 	}
+done:
 	*p = '\0';
 	return dst;
 }
+
+static const char *ignored_if_names[] = {
+	"eon",			/* netiso */
+	"gre",			/* net */
+	"ipip",			/* netinet */
+	"lo",			/* net */
+#if 0
+	"mdecap",		/* netinet -- never in IF list (?) XXX */
+#endif
+	"nsip",			/* netns */
+	"ppp",			/* net */
+	"sl",			/* net */
+	"strip",		/* net */
+	"tun",			/* net */
+	/* XXX others? */
+	NULL,
+};
 
 static void
 get_ifconfig_info()
 {
 	char *textbuf;
-	int   textsize;
-	char *t;
+	char *t, *nt, *ndest;
+	const char **ignore;
+	int textsize, len;
 
 	/* Get ifconfig information */
 	
@@ -151,14 +187,27 @@ get_ifconfig_info()
 		exit(1);
 	}
 	(void)strtok(textbuf,"\n");
-	strncpy(net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
-	net_devices[STRSIZE] = 0;
-	free(textbuf);
 
-	/* Remove lo0 and anything after ... */
-	t = strstr(net_devices, "lo0");
-	if (t != NULL)
-		*t = 0;
+	nt = textbuf;
+	ndest = net_devices;
+	*ndest = '\0';
+	while ((t = strsep(&nt, " ")) != NULL) {
+		for (ignore = ignored_if_names; *ignore != NULL; ignore++) {
+			len = strlen(*ignore);
+			if (strncmp(t, *ignore, len) == 0 &&
+			    isdigit((unsigned char)t[len]))
+				goto loop;
+		}
+
+		if (strlen(ndest) + 1 + strlen(t) + 1 > STRSIZE)
+			break;			/* would overflow */
+
+		strcat(ndest, t);
+		strcat(ndest, " ");	/* net_devices needs trailing space! */
+loop:
+		t = nt;
+	}
+	free(textbuf);
 }
 
 /* Fill in defaults network values for the selected interface */
@@ -220,7 +269,6 @@ config_network()
 	if (network_up)
 		return (1);
 
-	network_up = 1;
 	net_devices[0] = '\0';
 	get_ifconfig_info();
 	if (strlen(net_devices) == 0) {
@@ -229,6 +277,8 @@ config_network()
 		process_menu(MENU_ok);
 		return (-1);
 	}
+	network_up = 1;
+
 	strncpy(defname, net_devices, 255);
 	tp = defname;
 	strsep(&tp, " ");
@@ -326,7 +376,7 @@ config_network()
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
 	 * Our UI gies no way to set an option back to null-string if it
 	 * gets accidentally set.
-	 * good way to re-set the media media to null-string.
+	 * good way to reset the media to null-string.
 	 * Check for plausible alternatives.
 	 */
 	if (strcmp(net_media, "<default>") == 0 ||
@@ -368,12 +418,12 @@ config_network()
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
 		network_up = !run_prog(0, 1, NULL, 
-		    "/sbin/ping -c 2 %s",
+		    "/sbin/ping -v -c 5 -w 5 -o -n %s",
 					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
 		network_up = !run_prog(0, 1, NULL, 
-		    "/sbin/ping -c 2 %s",
+		    "/sbin/ping -v -c 5 -w 5 -o -n %s",
 					net_defroute);
 	fflush(NULL);
 
@@ -390,7 +440,9 @@ get_via_ftp()
 	char filename[SSTRSIZE];
 	int  ret;
 
-	while (!config_network()) {
+	while ((ret = config_network()) <= 0) {
+		if (ret < 0)
+			return (-1);
 		msg_display(MSG_netnotup);
 		process_menu(MENU_yesno);
 		if (!yesno)
@@ -429,25 +481,26 @@ get_via_ftp()
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		else {
 			ret = run_prog(0, 1, NULL, 
 			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL),
+					RFC1738_SAFE_LESS_SHELL, 0),
 			    url_encode(ftp_pass_encoded, ftp_pass, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL),
+					NULL, 0),
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
-					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
+					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		}
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
 			msg_display(MSG_ftperror_cont);
 			getchar();
-			puts(CL);
+			puts(CL);		/* XXX */
+			wclear(stdscr);
 			wrefresh(stdscr);
 			msg_display(MSG_ftperror);
 			process_menu(MENU_yesno);
@@ -459,7 +512,8 @@ get_via_ftp()
 			list++;
 
 	}
-	puts(CL); /* Just to make sure. */
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 #ifndef DEBUG
 	chdir("/");	/* back to current real root */
@@ -470,8 +524,11 @@ get_via_ftp()
 int
 get_via_nfs()
 {
+	int ret;
 
-        while (!config_network()) {
+        while ((ret = config_network()) <= 0) {
+		if (ret < 0)
+			return (-1);
                 msg_display(MSG_netnotup);
                 process_menu(MENU_yesno);
                 if (!yesno)
@@ -515,6 +572,31 @@ again:
 }
 
 /*
+ * write the new contents of /etc/hosts to the specified file
+ */
+static void
+write_etc_hosts(FILE *f)
+{
+	int l;
+
+	fprintf(f, "#\n");
+	fprintf(f, "# Added by NetBSD sysinst\n");
+	fprintf(f, "#\n");
+
+	fprintf(f, "127.0.0.1	localhost\n");
+
+	fprintf(f, "%s\t", net_ip);
+	l = strlen(net_host) - strlen(net_domain);
+	if (l <= 0 ||
+	    net_host[l - 1] != '.' ||
+	    strcasecmp(net_domain, net_host + l) != 0) {
+		/* net_host isn't an FQDN. */
+		fprintf(f, "%s.%s ", net_host, net_domain);
+	}
+	fprintf(f, "%s\n", net_host);
+}
+
+/*
  * Write the network config info the user entered via menus into the
  * config files in the target disk.  Be careful not to lose any
  * information we don't immediately add back, in case the install
@@ -552,13 +634,11 @@ mnt_net_config(void)
 			 */
 			f = target_fopen("/etc/hosts", "a");
 			if (f != 0) {
-				(void)fprintf(f, msg_string(MSG_etc_hosts),
-				    net_ip, net_host, net_domain, net_host);
+				write_etc_hosts(f);
 				(void)fclose(f);
 				if (scripting) {
 					(void)fprintf(script, "cat <<EOF >>%s/etc/hosts\n", target_prefix());
-					(void)fprintf(script, msg_string(MSG_etc_hosts),
-					    net_ip, net_host, net_domain, net_host);
+					write_etc_hosts(script);
 					(void)fprintf(script, "EOF\n");
 				}
 			}
