@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.373.2.3 2000/07/30 17:54:11 bouyer Exp $
+#	$NetBSD: files,v 1.373.2.4 2000/08/06 02:12:13 briggs Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -347,7 +347,7 @@ device	fxp: ether, ifnet, arp, mii
 file	dev/ic/i82557.c			fxp
 
 # SMC 91Cxx Ethernet Controller
-device	sm: arp, ether, ifnet
+device	sm: arp, ether, ifnet, mii, mii_bitbang
 file	dev/ic/smc91cxx.c		sm
 
 # SMC 83C170 EPIC/100 Fast Ethernet Controller
