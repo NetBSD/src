@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.48 2003/10/29 23:41:49 christos Exp $
+#	$NetBSD: files.mips,v 1.49 2003/12/12 14:55:58 sekiya Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -11,8 +11,7 @@ defflag	opt_cputype.h		NOFPU
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
-defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
-					MIPS3_NO_PV_UNCACHED
+defflag	opt_mips_cache.h		MIPS3_NO_PV_UNCACHED
 					ENABLE_MIPS4_CACHE_R10K
 
 file	arch/mips/mips/locore_mips1.S		mips1
