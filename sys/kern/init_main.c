@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.185 2000/11/27 08:39:43 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.186 2000/12/08 22:07:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
@@ -482,6 +483,9 @@ main(void)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
 #endif
+
+	/* Initialize exec structures */
+	exec_init(1);
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
