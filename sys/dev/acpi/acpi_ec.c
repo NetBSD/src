@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.26 2004/04/11 08:36:19 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.27 2004/04/11 10:36:35 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.26 2004/04/11 08:36:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.27 2004/04/11 10:36:35 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,13 +530,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	if (io0 == NULL) {
 		printf("%s: unable to find data register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	if (bus_space_map(sc->sc_data_st, io0->ar_base, io0->ar_length,
 	    0, &sc->sc_data_sh) != 0) {
 		printf("%s: unable to map data register\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_csr_st = aa->aa_iot;
@@ -544,13 +544,13 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	if (io1 == NULL) {
 		printf("%s: unable to find csr register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	if (bus_space_map(sc->sc_csr_st, io1->ar_base, io1->ar_length,
 	    0, &sc->sc_csr_sh) != 0) {
 		printf("%s: unable to map csr register\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/*
@@ -577,7 +577,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to evaluate _GPE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		return;
+		goto out;
 	}
 	sc->sc_gpebit = v;
 
@@ -594,7 +594,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to install GPE handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		return;
+		goto out;
 	}
 
 	/* Install address space handler. */
@@ -605,9 +605,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		(void)AcpiRemoveGpeHandler(NULL, sc->sc_gpebit,
 		    EcGpeHandler);
-		return;
 	}
 
+ out:
+	acpi_resource_cleanup(&sc->sc_res);
 	return_VOID;
 }
 

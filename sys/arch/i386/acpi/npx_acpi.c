@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.7 2004/04/11 08:36:45 kochi Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.8 2004/04/11 10:36:45 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.7 2004/04/11 08:36:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.8 2004/04/11 10:36:45 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our IRQ */
@@ -109,14 +109,14 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &sc->sc_ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_type = npxprobe1(sc->sc_iot, sc->sc_ioh, irq->ar_irq);
@@ -135,10 +135,13 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: error reporting broken; not using\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_type = NPX_NONE;
-		return;
+		goto out;
 	case NPX_NONE:
 		panic("npx_acpi_attach");
 	}
 
 	npxattach(sc);
+
+ out:
+	acpi_resource_cleanup(&res);
 }

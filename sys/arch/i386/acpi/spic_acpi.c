@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.10 2004/04/11 08:36:45 kochi Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.11 2004/04/11 10:36:45 kochi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.10 2004/04/11 08:36:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.11 2004/04/11 10:36:45 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ struct spic_acpi_softc {
 	struct spic_softc sc_spic;	/* spic device */
 
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
-
-	struct acpi_resources sc_res;	/* our bus resources */
 
 	void *sc_ih;
 };
@@ -93,6 +91,8 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_io *io;
 	struct acpi_irq *irq;
+	struct acpi_resources res;
+
 	ACPI_STATUS rv;
 
 	printf(": Sony Programmable I/O Controller\n");
@@ -101,29 +101,29 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Parse our resources. */
 	rv = acpi_resource_parse(&sc->sc_spic.sc_dev, sc->sc_node->ad_handle,
-	    "_CRS", &sc->sc_res, &acpi_resource_parse_ops_default);
+	    "_CRS", &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
 	sc->sc_spic.sc_iot = aa->aa_iot;
-	io = acpi_res_io(&sc->sc_res, 0);
+	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
 		printf("%s: unable to find io resource\n",
 		    sc->sc_spic.sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	if (bus_space_map(sc->sc_spic.sc_iot, io->ar_base, io->ar_length,
 	    0, &sc->sc_spic.sc_ioh) != 0) {
 		printf("%s: unable to map data register\n",
 		    sc->sc_spic.sc_dev.dv_xname);
-		return;
+		goto out;
 	}
-	irq = acpi_res_irq(&sc->sc_res, 0);
+	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_spic.sc_dev.dv_xname);
 		/* XXX unmap */
-		return;
+		goto out;
 	}
 #if 0
 	sc->sc_ih = isa_intr_establish(NULL, irq->ar_irq,
@@ -131,5 +131,6 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	spic_attach(&sc->sc_spic);
+ out:
+	acpi_resource_cleanup(&res);
 }
-

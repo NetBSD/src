@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.3 2004/04/11 09:38:19 kochi Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.4 2004/04/11 10:36:35 kochi Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.3 2004/04/11 09:38:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.4 2004/04/11 10:36:35 kochi Exp $");
 
 #include "opt_atppc.h"
 
@@ -134,7 +134,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our IRQ */
@@ -142,7 +142,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	nirq = irq->ar_irq;
 
@@ -151,7 +151,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (drq == NULL) {
 		printf("%s: unable to find drq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	asc->sc_drq = drq->ar_drq;
 
@@ -166,7 +166,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		&sc->sc_ioh) != 0) {
 		printf("%s: attempt to map bus space failed, device not "
 			"properly attached.\n", self->dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_ieh = isa_intr_establish(aa->aa_ic, nirq,
@@ -187,6 +187,8 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Run soft configuration attach */
 	atppc_sc_attach(sc);
+ out:
+	acpi_resource_cleanup(&res);
 }
 
 /* Start DMA operation over ISA bus */

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.20 2004/04/11 08:36:19 kochi Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.21 2004/04/11 10:36:35 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.20 2004/04/11 08:36:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.21 2004/04/11 10:36:35 kochi Exp $");
 
 #include "rnd.h"
 
@@ -69,7 +69,6 @@ struct fdc_acpi_softc {
 	struct fdc_softc sc_fdc;
 	bus_space_handle_t sc_baseioh;
 	struct acpi_devnode *sc_node;	/* ACPI devnode */
-	struct acpi_resources res;
 };
 
 static int	fdc_acpi_enumerate(struct fdc_acpi_softc *);
@@ -115,6 +114,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_io *io, *ctlio;
 	struct acpi_irq *irq;
 	struct acpi_drq *drq;
+	struct acpi_resources res;
 	ACPI_STATUS rv;
 
 	printf("\n");
@@ -124,32 +124,32 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
-	    &asc->res, &acpi_resource_parse_ops_default);
+	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
 	/* find our i/o registers */
-	io = acpi_res_io(&asc->res, 0);
+	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our IRQ */
-	irq = acpi_res_irq(&asc->res, 0);
+	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our DRQ */
-	drq = acpi_res_drq(&asc->res, 0);
+	drq = acpi_res_drq(&res, 0);
 	if (drq == NULL) {
 		printf("%s: unable to find drq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	sc->sc_drq = drq->ar_drq;
 
@@ -157,7 +157,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &asc->sc_baseioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	switch (io->ar_length) {
@@ -169,26 +169,26 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    &sc->sc_ioh)) {
 			printf("%s: unable to subregion i/o space\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto out;
 		}
 		break;
 	default:
 		printf("%s: unknown size: %d of io mapping\n",
 		    sc->sc_dev.dv_xname, io->ar_length);
-		return;
+		goto out;
 	}
 
 	/*
 	 * omitting the controller I/O port. (One has to exist for there to
 	 * be a working fdc). Just try and force the mapping in.
 	 */
-	ctlio = acpi_res_io(&asc->res, 1);
+	ctlio = acpi_res_io(&res, 1);
 	if (ctlio == NULL) {
 		if (bus_space_map(sc->sc_iot, io->ar_base + io->ar_length + 1,
 		    1, 0, &sc->sc_fdctlioh)) {
 			printf("%s: unable to force map ctl i/o space\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto out;
 		}
 		printf("%s: ctl io %x did't probe. Forced attach\n",
 		    sc->sc_dev.dv_xname, io->ar_base + io->ar_length + 1);
@@ -197,7 +197,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    0, &sc->sc_fdctlioh)) {
 			printf("%s: unable to map ctl i/o space\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto out;
 		}
 	}
 
@@ -222,6 +222,9 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	fdcattach(sc);
+
+ out:
+	acpi_resource_cleanup(&res);
 }
 
 static int
