@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1998/11/24 12:55:06 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1998/11/27 20:02:57 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -571,8 +571,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* 
 	 * Calculate approx TSB size.  This probably needs tweaking.
 	 */
-	if( physmem > 64 * 1024 * 1024 ) tsbsize = 0;
-	else if( physmem > 512 * 1024 * 1024 ) tsbsize = 1;
+	if( physmem < 64 * 1024 * 1024 ) tsbsize = 0;
+	else if( physmem < 512 * 1024 * 1024 ) tsbsize = 1;
 	else tsbsize = 2;
 
 	/*
