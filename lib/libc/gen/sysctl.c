@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.16 2004/03/24 15:34:56 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.17 2004/03/24 16:29:10 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.16 2004/03/24 15:34:56 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.17 2004/03/24 16:29:10 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,26 +70,6 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	size_t oldlen, savelen;
 	int error;
-
-	if (getenv("SYSCTL_TRACE") != NULL) {
-		char trb[128];
-		uint l, i;
-
-		l = snprintf(trb, sizeof(trb), "sysctl(%p {", name);
-		write(2, &trb[0], l);
-		for (i = 0; i < namelen; i++) {
-			l = snprintf(trb, sizeof(trb), "%s%d", i ? "." : "",
-				     name[i]);
-			write(2, &trb[0], l);
-		}
-		l = snprintf(trb, sizeof(trb), "}, %d, %p, %p (%lu), %p, %lu)\n",
-			     namelen,
-			     oldp,
-			     oldlenp, (ulong)(oldlenp ? *oldlenp : 0),
-			     newp,
-			     (ulong)newlen);
-		write(2, &trb[0], l);
-	}
 
 	if (name[0] != CTL_USER)
 		/* LINTED will fix when sysctl interface gets corrected */
