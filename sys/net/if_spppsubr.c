@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.13 2000/10/08 02:37:42 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.14 2000/10/10 11:43:51 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -148,7 +148,7 @@
 #define LCP_OPT_ADDR_COMP	8	/* address/control field compression */
 
 #define IPCP_OPT_ADDRESSES	1	/* both IP addresses; deprecated */
-#define IPCP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
+#define IPCP_OPT_COMPRESSION	2	/* IP compression protocol */
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
 
 #define IPV6CP_OPT_IFID		1	/* interface identifier */
