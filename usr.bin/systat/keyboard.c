@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.11 2000/04/11 01:01:26 jwise Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.11.4.1 2000/09/01 16:37:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.11 2000/04/11 01:01:26 jwise Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.11.4.1 2000/09/01 16:37:09 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: keyboard.c,v 1.11 2000/04/11 01:01:26 jwise Exp $");
 #include "extern.h"
 
 int
-keyboard()
+keyboard(void)
 {
 	char ch, rch, *line;
 	int i, linesz;
