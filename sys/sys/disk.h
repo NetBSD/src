@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.25 2004/09/25 03:30:44 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.26 2004/10/01 05:16:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -92,8 +92,10 @@
 #include <sys/lock.h>
 
 struct buf;
+struct disk;
 struct disklabel;
 struct cpu_disklabel;
+struct vnode;
 
 /*
  * dkwedge_info:
@@ -121,6 +123,31 @@ struct dkwedge_list {
 	u_int		dkwl_nwedges;	/* total number of wedges */
 	u_int		dkwl_ncopied;	/* number actually copied */
 };
+
+#ifdef _KERNEL
+/*
+ * dkwedge_discovery_method:
+ *
+ *	Structure used to describe partition map parsing schemes
+ *	used for wedge autodiscovery.
+ */
+struct dkwedge_discovery_method {
+					/* link in wedge driver's list */
+	LIST_ENTRY(dkwedge_discovery_method) ddm_list;
+	const char	*ddm_name;	/* name of this method */
+	int		ddm_priority;	/* search priority */
+	int		(*ddm_discover)(struct disk *, struct vnode *);
+};
+
+#define	DKWEDGE_DISCOVERY_METHOD_DECL(name, prio, discover)		\
+static struct dkwedge_discovery_method name ## _ddm = {			\
+	{ 0 },								\
+	#name,								\
+	prio,								\
+	discover							\
+};									\
+__link_set_add_data(dkwedge_methods, name ## _ddm)
+#endif /* _KERNEL */
 
 /* Some common partition types */
 #define	DKW_PTYPE_UNKNOWN	""
@@ -301,6 +328,7 @@ int	dkwedge_del(struct dkwedge_info *);
 void	dkwedge_delall(struct disk *);
 int	dkwedge_list(struct disk *, struct dkwedge_list *, struct proc *);
 void	dkwedge_discover(struct disk *);
+int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 #endif
 
 #endif /* _SYS_DISK_H_ */

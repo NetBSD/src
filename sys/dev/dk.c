@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.5 2004/09/30 23:20:41 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.6 2004/10/01 05:16:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.5 2004/09/30 23:20:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.6 2004/10/01 05:16:04 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -120,6 +120,11 @@ const struct cdevsw dk_cdevsw = {
 static struct dkwedge_softc **dkwedges;
 static u_int ndkwedges;
 static struct lock dkwedges_lock = LOCK_INITIALIZER(PRIBIO, "dkwgs", 0, 0);
+
+static LIST_HEAD(, dkwedge_discovery_method) dkwedge_discovery_methods;
+static int dkwedge_discovery_methods_initialized;
+static struct lock dkwedge_discovery_methods_lock =
+    LOCK_INITIALIZER(PRIBIO, "dkddm", 0, 0);
 
 /*
  * dkwedge_wait_drain:
@@ -523,8 +528,76 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
 	return (error);
 }
 
+/*
+ * We need a dummy objet to stuff into the dkwedge discovery method link
+ * set to ensure that there is always at least one object in the set.
+ */
+static struct dkwedge_discovery_method dummy_discovery_method;
+__link_set_add_bss(dkwedge_methods, dummy_discovery_method);
+
+/*
+ * dkwedge_discover_init:
+ *
+ *	Initialize the disk wedge discovery method list.
+ */
+static void
+dkwedge_discover_init(void)
+{
+	__link_set_decl(dkwedge_methods, struct dkwedge_discovery_method);
+	struct dkwedge_discovery_method * const *ddmp;
+	struct dkwedge_discovery_method *lddm, *ddm;
+
+	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_EXCLUSIVE, NULL);
+
+	if (dkwedge_discovery_methods_initialized) {
+		(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE,
+			       NULL);
+		return;
+	}
+
+	LIST_INIT(&dkwedge_discovery_methods);
+
+	__link_set_foreach(ddmp, dkwedge_methods) {
+		ddm = *ddmp;
+		if (ddm == &dummy_discovery_method)
+			continue;
+		if (LIST_EMPTY(&dkwedge_discovery_methods)) {
+			LIST_INSERT_HEAD(&dkwedge_discovery_methods,
+					 ddm, ddm_list);
+			continue;
+		}
+		LIST_FOREACH(lddm, &dkwedge_discovery_methods, ddm_list) {
+			if (ddm->ddm_priority == lddm->ddm_priority) {
+				aprint_error("dk-method-%s: method \"%s\" "
+				    "already exists at priority %d\n",
+				    ddm->ddm_name, lddm->ddm_name,
+				    lddm->ddm_priority);
+				/* Not inserted. */
+				break;
+			}
+			if (ddm->ddm_priority < lddm->ddm_priority) {
+				/* Higher priority; insert before. */
+				LIST_INSERT_BEFORE(lddm, ddm, ddm_list);
+				break;
+			}
+			if (LIST_NEXT(lddm, ddm_list) == NULL) {
+				/* Last one; insert after. */
+				KASSERT(lddm->ddm_priority < ddm->ddm_priority);
+				LIST_INSERT_AFTER(lddm, ddm, ddm_list);
+				break;
+			}
+		}
+	}
+
+	dkwedge_discovery_methods_initialized = 1;
+
+	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE, NULL);
+}
+
 #ifdef DKWEDGE_AUTODISCOVER
-static int	dkwedge_discover_gpt(struct disk *, struct vnode *);
+int	dkwedge_autodiscover = 1;
+#else
+int	dkwedge_autodiscover = 0;
 #endif
 
 /*
@@ -535,28 +608,34 @@ static int	dkwedge_discover_gpt(struct disk *, struct vnode *);
 void
 dkwedge_discover(struct disk *pdk)
 {
-#ifndef DKWEDGE_AUTODISCOVER
+	struct dkwedge_discovery_method *ddm;
+	struct vnode *vp;
+	int error;
+	dev_t pdev;
+
 	/*
 	 * Require people playing with wedges to enable this explicitly.
 	 */
-	return;
-#else
-	int error;
-	dev_t pdev;
-	struct vnode *vp;
+	if (dkwedge_autodiscover == 0)
+		return;
+
+	if (dkwedge_discovery_methods_initialized == 0)
+		dkwedge_discover_init();
+
+	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_SHARED, NULL);
 
 	error = dkwedge_compute_pdev(pdk->dk_name, &pdev);
 	if (error) {
 		aprint_error("%s: unable to compute pdev, error = %d\n",
 		    pdk->dk_name, error);
-		return;
+		goto out;
 	}
 
 	error = bdevvp(pdev, &vp);
 	if (error) {
 		aprint_error("%s: unable to find vnode for pdev, error = %d\n",
 		    pdk->dk_name, error);
-		return;
+		goto out;
 	}
 
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -564,7 +643,7 @@ dkwedge_discover(struct disk *pdk)
 		aprint_error("%s: unable to lock vnode for pdev, error = %d\n",
 		    pdk->dk_name, error);
 		vrele(vp);
-		return;
+		goto out;
 	}
 
 	error = VOP_OPEN(vp, FREAD | FWRITE, NOCRED, 0);
@@ -572,7 +651,7 @@ dkwedge_discover(struct disk *pdk)
 		aprint_error("%s: unable to open device, error = %d\n",
 		    pdk->dk_name, error);
 		vput(vp);
-		return;
+		goto out;
 	}
 	/* VOP_OPEN() doesn't do this for us. */
 	vp->v_writecount++;
@@ -583,8 +662,13 @@ dkwedge_discover(struct disk *pdk)
 	 * this map type exists.  If so, parse it and add the
 	 * corresponding wedges.
 	 */
-	/* XXX Just GPT, for now. */
-	dkwedge_discover_gpt(pdk, vp);
+	LIST_FOREACH(ddm, &dkwedge_discovery_methods, ddm_list) {
+		error = (*ddm->ddm_discover)(pdk, vp);
+		if (error == 0) {
+			/* Successfully created wedges; we're done. */
+			break;
+		}
+	}
 
 	error = vn_close(vp, FREAD | FWRITE, NOCRED, curproc);
 	if (error) {
@@ -592,20 +676,17 @@ dkwedge_discover(struct disk *pdk)
 		    pdk->dk_name, error);
 		/* We'll just assume the vnode has been cleaned up. */
 	}
-#endif /* DKWEDGE_AUTODISCOVER */
+ out:
+	(void) lockmgr(&dkwedge_discovery_methods_lock, LK_RELEASE, NULL);
 }
 
-
-#ifdef DKWEDGE_AUTODISCOVER
 /*
  * dkwedge_read:
  *
  *	Read the some data from the specified disk, used for
  *	partition discovery.
- *
- *	XXX static, for now.
  */
-static int
+int
 dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
     size_t len)
 {
@@ -624,7 +705,6 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
 	VOP_STRATEGY(vp, &b);
 	return (biowait(&b));
 }
-#endif /* DKWEDGE_AUTODISCOVER */
 
 /*
  * dkwedge_lookup:
@@ -978,266 +1058,3 @@ dkdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	/* XXX */
 	return (ENXIO);
 }
-
-#ifdef DKWEDGE_AUTODISCOVER
-/*****************************************************************************
- * EFI GUID Partition Table support
- *****************************************************************************/
-
-#include <sys/disklabel_gpt.h>
-#include <sys/uuid.h>
-
-static const struct {
-	struct uuid ptype_guid;
-	const char *ptype_str;
-} gpt_ptype_guid_to_str_tab[] = {
-	{ GPT_ENT_TYPE_EFI,		"msdos" },	/* XXX yes? */
-#if 0
-	{ GPT_ENT_TYPE_FREEBSD,		??? },
-#endif
-	{ GPT_ENT_TYPE_FREEBSD_SWAP,	"swap" },	/* XXX for now */
-	{ GPT_ENT_TYPE_FREEBSD_UFS,	"ffs" },	/* XXX for now */
-
-	/* XXX What about the MS and Linux types? */
-
-	{ { 0 },			NULL },
-};
-
-static const char *
-gpt_ptype_guid_to_str(const struct uuid *guid)
-{
-	int i;
-
-	for (i = 0; gpt_ptype_guid_to_str_tab[i].ptype_str != NULL; i++) {
-		if (memcmp(&gpt_ptype_guid_to_str_tab[i].ptype_guid,
-			   guid, sizeof(*guid)) == 0)
-			return (gpt_ptype_guid_to_str_tab[i].ptype_str);
-	}
-
-	return (NULL);
-}
-
-static const uint32_t gpt_crc_tab[16] = {
-	0x00000000U, 0x1db71064U, 0x3b6e20c8U, 0x26d930acU,
-	0x76dc4190U, 0x6b6b51f4U, 0x4db26158U, 0x5005713cU,
-	0xedb88320U, 0xf00f9344U, 0xd6d6a3e8U, 0xcb61b38cU,
-	0x9b64c2b0U, 0x86d3d2d4U, 0xa00ae278U, 0xbdbdf21cU
-};
-
-static uint32_t
-gpt_crc32(const void *vbuf, size_t len)
-{
-	const uint8_t *buf = vbuf;
-	uint32_t crc;
-
-	crc = 0xffffffffU;
-	while (len--) {
-		crc ^= *buf++;
-		crc = (crc >> 4) ^ gpt_crc_tab[crc & 0xf];
-		crc = (crc >> 4) ^ gpt_crc_tab[crc & 0xf];
-	}
-
-	return (crc ^ 0xffffffffU);
-}
-
-static int
-gpt_verify_header_crc(struct gpt_hdr *hdr)
-{
-	uint32_t crc;
-	int rv;
-
-	crc = hdr->hdr_crc_self;
-	hdr->hdr_crc_self = 0;
-	rv = le32toh(crc) == gpt_crc32(hdr, le32toh(hdr->hdr_size));
-	hdr->hdr_crc_self = crc;
-
-	return (rv);
-}
-
-static int
-dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
-{
-	static const struct uuid ent_type_unused = GPT_ENT_TYPE_UNUSED;
-	static const char gpt_hdr_sig[] = GPT_HDR_SIG;
-	struct dkwedge_info dkw;
-	void *buf;
-	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
-	uint32_t entries, entsz;
-	daddr_t lba_start, lba_end, lba_table;
-	uint32_t gpe_crc;
-	int error;
-	u_int i;
-
-	buf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
-
-	/*
-	 * Note: We don't bother with a Legacy or Protective MBR
-	 * here.  If a GPT is found, then the search stops, and
-	 * the GPT is authoritative.
-	 */
-
-	/* Read in the GPT Header. */
-	error = dkwedge_read(pdk, vp, GPT_HDR_BLKNO, buf, DEV_BSIZE);
-	if (error)
-		goto out;
-	hdr = buf;
-
-	/* Validate it. */
-	if (memcmp(gpt_hdr_sig, hdr->hdr_sig, sizeof(hdr->hdr_sig)) != 0) {
-		/* XXX Should check at end-of-disk. */
-		error = ESRCH;
-		goto out;
-	}
-	if (hdr->hdr_revision != htole32(GPT_HDR_REVISION)) {
-		/* XXX Should check at end-of-disk. */
-		error = ESRCH;
-		goto out;
-	}
-	if (le32toh(hdr->hdr_size) > DEV_BSIZE) {
-		/* XXX Should check at end-of-disk. */
-		error = ESRCH;
-		goto out;
-	}
-	if (gpt_verify_header_crc(hdr) == 0) {
-		/* XXX Should check at end-of-disk. */
-		error = ESRCH;
-		goto out;
-	}
-
-	/* XXX Now that we found it, should we validate the backup? */
-
-	{
-		struct uuid disk_guid;
-		char guid_str[UUID_STR_LEN];
-		uuid_dec_le(hdr->hdr_guid, &disk_guid);
-		uuid_snprintf(guid_str, sizeof(guid_str), &disk_guid);
-		aprint_verbose("%s: GPT GUID: %s\n", pdk->dk_name, guid_str);
-	}
-
-	entries = le32toh(hdr->hdr_entries);
-	entsz = roundup(le32toh(hdr->hdr_entsz), 8);
-	if (entsz > roundup(sizeof(struct gpt_ent), 8)) {
-		aprint_error("%s: bogus GPT entry size: %u\n",
-		    pdk->dk_name, le32toh(hdr->hdr_entsz));
-		error = EINVAL;
-		goto out;
-	}
-	gpe_crc = le32toh(hdr->hdr_crc_table);
-
-	/* XXX Clamp entries at 128 for now. */
-	if (entries > 128) {
-		aprint_error("%s: WARNING: clamping number of GPT entries to "
-		    "128 (was %u)\n", pdk->dk_name, entries);
-		entries = 128;
-	}
-
-	lba_start = le64toh(hdr->hdr_lba_start);
-	lba_end = le64toh(hdr->hdr_lba_end);
-	lba_table = le64toh(hdr->hdr_lba_table);
-	if (lba_start < 0 || lba_end < 0 || lba_table < 0) {
-		aprint_error("%s: GPT block numbers out of range\n",
-		    pdk->dk_name);
-		error = EINVAL;
-		goto out;
-	}
-
-	free(buf, M_DEVBUF);
-	buf = malloc(roundup(entries * entsz, DEV_BSIZE), M_DEVBUF, M_WAITOK);
-	error = dkwedge_read(pdk, vp, lba_table, buf,
-			     roundup(entries * entsz, DEV_BSIZE));
-	if (error) {
-		/* XXX Should check alternate location. */
-		aprint_error("%s: unable to read GPT partition array, "
-		    "error = %d\n", pdk->dk_name, error);
-		goto out;
-	}
-
-	if (gpt_crc32(buf, entries * entsz) != gpe_crc) {
-		/* XXX Should check alternate location. */
-		aprint_error("%s: bad GPT partition array CRC\n",
-		    pdk->dk_name);
-		error = EINVAL;
-		goto out;
-	}
-
-	/*
-	 * Walk the partitions, adding a wedge for each type we know about.
-	 */
-	for (i = 0; i < entries; i++) {
-		struct uuid ptype_guid, ent_guid;
-		const char *ptype;
-		int j;
-		char ptype_guid_str[UUID_STR_LEN], ent_guid_str[UUID_STR_LEN];
-
-		ent = (struct gpt_ent *)((caddr_t)buf + (i * entsz));
-
-		uuid_dec_le(ent->ent_type, &ptype_guid);
-		if (memcmp(&ptype_guid, &ent_type_unused,
-			   sizeof(ptype_guid)) == 0)
-			continue;
-
-		uuid_dec_le(ent->ent_guid, &ent_guid);
-
-		uuid_snprintf(ptype_guid_str, sizeof(ptype_guid_str),
-		    &ptype_guid);
-		uuid_snprintf(ent_guid_str, sizeof(ent_guid_str),
-		    &ent_guid);
-
-		/* Skip it if we don't grok this ptype. */
-		if ((ptype = gpt_ptype_guid_to_str(&ptype_guid)) == NULL) {
-			/*
-			 * XXX Should probably just add these... maybe
-			 * XXX just have an empty ptype?
-			 */
-			aprint_verbose("%s: skipping entry %u (%s), type %s\n",
-			    pdk->dk_name, i, ent_guid_str, ptype_guid_str);
-			continue;
-		}
-		strcpy(dkw.dkw_ptype, ptype);
-
-		strcpy(dkw.dkw_parent, pdk->dk_name);
-		dkw.dkw_offset = le64toh(ent->ent_lba_start);
-		dkw.dkw_size = le64toh(ent->ent_lba_end) - dkw.dkw_offset + 1;
-
-		/* XXX Make sure it falls within the disk's data area. */
-
-		if (ent->ent_name[0] == 0x0000)
-			strcpy(dkw.dkw_wname, ent_guid_str);
-		else {
-			for (j = 0; ent->ent_name[j] != 0x0000; j++) {
-				/* XXX UTF-16 -> UTF-8 */
-				dkw.dkw_wname[j] =
-				    le16toh(ent->ent_name[j]) & 0xff;
-			}
-			dkw.dkw_wname[j] = '\0';
-		}
-
-		/*
-		 * Try with the partition name first.  If that fails,
-		 * use the GUID string.  If that fails, punt.
-		 */
-		if ((error = dkwedge_add(&dkw)) == EEXIST) {
-			aprint_error("%s: wedge named '%s' already exists, "
-			    "trying '%s'\n", pdk->dk_name,
-			    dkw.dkw_wname, /* XXX Unicode */
-			    ent_guid_str);
-			strcpy(dkw.dkw_wname, ent_guid_str);
-			error = dkwedge_add(&dkw);
-		}
-		if (error == EEXIST)
-			aprint_error("%s: wedge named '%s' already exists, "
-			    "manual intervention required\n", pdk->dk_name,
-			    dkw.dkw_wname);
-		else if (error)
-			aprint_error("%s: error %d adding entry %u (%s), "
-			    "type %s\n", pdk->dk_name, error, i, ent_guid_str,
-			    ptype_guid_str);
-	}
-	error = 0;
-
- out:
-	free(buf, M_DEVBUF);
-	return (error);
-}
-#endif /* DKWEDGE_AUTODISCOVER */
