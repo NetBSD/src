@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2003/11/09 05:29:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #ifndef _ARM32_BUS_H_
 #define _ARM32_BUS_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_arm_bus_space.h"
 #endif
 

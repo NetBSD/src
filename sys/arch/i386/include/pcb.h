@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.35 2003/08/24 17:52:33 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.36 2003/11/09 05:29:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 
