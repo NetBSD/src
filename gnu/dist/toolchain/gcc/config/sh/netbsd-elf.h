@@ -76,7 +76,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Let code know that this is ELF.  */
 #define CPP_PREDEFINES \
-"-D__sh__ -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
+"-D__sh__ -D__NetBSD__ -D__ELF__ -D__NO_LEADING_UNDERSCORES__ \
+-D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(sh) -Amachine(sh)"
 
 /* Pass -ml and -mrelax to the assembler and linker.  */
