@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.72 1997/08/20 18:20:12 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1719,6 +1719,10 @@ st_interpret_sense(xs)
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
+#ifdef	SCSIVERBOSE
+	else
+		scsi_print_sense(xs, 0);	/* tell folks what happened */
+#endif
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
