@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.147 2004/04/12 05:05:00 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.148 2004/04/12 05:09:59 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2589,3 +2589,8 @@ usr.sbin/route6d/route6d.c			patch
 
 	Don't age non-gateway host routes. PR#22568
 	[itojun, ticket #73]
+
+usr.sbin/route6d/route6d.c			patch
+
+	Validate packet length.
+	[itojun, ticket #105]
