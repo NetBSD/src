@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.249 1999/08/02 17:44:59 augustss Exp $
+#	$NetBSD: GENERIC,v 1.250 1999/08/03 03:23:29 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -438,6 +438,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
