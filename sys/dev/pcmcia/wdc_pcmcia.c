@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.86 2004/08/11 18:41:46 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.87 2004/08/11 19:48:57 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.86 2004/08/11 18:41:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.87 2004/08/11 19:48:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,8 @@ struct wdc_pcmcia_softc {
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
-static int wdc_pcmcia_validate_config __P((struct pcmcia_config_entry *));
+static int wdc_pcmcia_validate_config_io __P((struct pcmcia_config_entry *));
+static int wdc_pcmcia_validate_config_memory __P((struct pcmcia_config_entry *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
 static int wdc_pcmcia_detach	__P((struct device *, int));
 
@@ -164,22 +165,25 @@ wdc_pcmcia_match(parent, match, aux)
 }
 
 static int
-wdc_pcmcia_validate_config(cfe)
+wdc_pcmcia_validate_config_io(cfe)
 	struct pcmcia_config_entry *cfe;
 {
-	/*
-	 * NOTE: We can't use pure memory card mode, because we wouldn't get
-	 * any interrupts.
-	 */
-	switch (cfe->iftype) {
-	case PCMCIA_IFTYPE_IO:
-		if (cfe->num_iospace < 1 || cfe->num_iospace > 2 ||
-		    cfe->num_memspace > 1)
-			return (EINVAL);
-		break;
-	default:
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1 || cfe->num_iospace > 2)
 		return (EINVAL);
-	}
+	cfe->num_memspace = 0;
+	return (0);
+}
+
+static int
+wdc_pcmcia_validate_config_memory(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_MEMORY ||
+	    cfe->num_memspace > 1 ||
+	    cfe->memspace[0].length < 2048)
+		return (EINVAL);
+	cfe->num_iospace = 0;
 	return (0);
 }
 
@@ -198,8 +202,12 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	sc->sc_pf = pa->pf;
 
-	/*XXXmem16|common*/
-	error = pcmcia_function_configure(pa->pf, wdc_pcmcia_validate_config);
+	error = pcmcia_function_configure(pa->pf,
+	    wdc_pcmcia_validate_config_io);
+	if (error)
+		/*XXXmem16|common*/
+		error = pcmcia_function_configure(pa->pf,
+		    wdc_pcmcia_validate_config_memory);
 	if (error) {
 		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
 		    error);
@@ -208,22 +216,32 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	cfe = pa->pf->cfe;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 
-	sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
-	sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
-	offset = 0;
-
-	if (cfe->num_iospace == 1) {
-		sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
-		if (bus_space_subregion(cfe->iospace[0].handle.iot,
-		    cfe->iospace[0].handle.ioh,
-		    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
+	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
+		sc->wdc_channel.cmd_iot = cfe->memspace[0].handle.memt;
+		sc->wdc_channel.cmd_baseioh = cfe->memspace[0].handle.memh;
+		offset = cfe->memspace[0].offset;
+		sc->wdc_channel.ctl_iot = cfe->memspace[0].handle.memt;
+		if (bus_space_subregion(cfe->memspace[0].handle.memt,
+		    cfe->memspace[0].handle.memh,
+		    offset + WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
 		    &sc->wdc_channel.ctl_ioh))
 			goto fail;
 	} else {
-		sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
-		sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
+		sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
+		sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
+		offset = 0;
+		if (cfe->num_iospace == 1) {
+			sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
+			if (bus_space_subregion(cfe->iospace[0].handle.iot,
+			    cfe->iospace[0].handle.ioh,
+			    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
+			    &sc->wdc_channel.ctl_ioh))
+				goto fail;
+		} else {
+			sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
+			sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
+		}
 	}
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
@@ -237,22 +255,21 @@ wdc_pcmcia_attach(parent, self, aux)
 		}
 	}
 
-	if (cfe->num_memspace == 1) {
+	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
+		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
 		sc->wdc_channel.data32iot = cfe->memspace[0].handle.memt;
 		if (bus_space_subregion(cfe->memspace[0].handle.memt,
-		    cfe->memspace[0].handle.memh,
-		    cfe->memspace[0].offset + 1024, 1024,
+		    cfe->memspace[0].handle.memh, offset + 1024, 1024,
 		    &sc->wdc_channel.data32ioh))
 			goto fail;
-		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
-#if 0
-		sc->wdc_channel.datain_pio = wdc_pcmcia_datain_memory;
-		sc->wdc_channel.dataout_pio = wdc_pcmcia_dataout_memory;
-#endif
+		sc->sc_wdcdev.datain_pio = wdc_pcmcia_datain_memory;
+		sc->sc_wdcdev.dataout_pio = wdc_pcmcia_dataout_memory;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
 	} else {
+		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
 		sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 		sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[wd_data];
-		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
 
 	error = wdc_pcmcia_enable(self, 1);
