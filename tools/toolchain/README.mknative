@@ -1,13 +1,17 @@
-$NetBSD: README.mknative,v 1.1 2002/02/27 17:21:56 tv Exp $
+$NetBSD: README.mknative,v 1.2 2002/02/27 17:49:19 tv Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
-files may be generated on a cross-compile host without problems; in fact,
-the instructions below are the same no matter whether bootstrapping on a
-cross or native host.
+files may be generated on a cross-compile host without problems.
 
-DO NOT RUN "mknative" BY HAND!  It requires the Makefile in this directory
-to set up certain environments first.
+NOTE:  DO NOT RUN "mknative" BY HAND!  It requires the Makefile in this
+directory to set up certain environments first.
+
+Since libc's features change over time, the config.h files can change as a
+result; thus the instructions below are the same no matter whether
+bootstrapping on a cross or native host.  This is important: even on a
+"native" host, you should bootstrap the toolchain by building from an
+up-to-date source tree to a $DESTDIR using the exact same instructions.
 
 In these notes, MACHINE is the $MACHINE of the target.  These files can be
 cross-generated.  Though a $MACHINE_ARCH all uses the same config files, you
