@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.5 1995/06/24 15:03:53 pk Exp $
+ * $Id: bootparamd.c,v 1.6 1996/03/30 23:53:51 mark Exp $
  */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ main(argc, argv)
 	struct hostent *he;
 	struct stat buf;
 	char   *optstring;
-	char    c;
+	int    c;
 
 	progname = rindex(argv[0], '/');
 	if (progname)
@@ -75,7 +75,7 @@ main(argc, argv)
 	else
 		progname = argv[0];
 
-	while ((c = getopt(argc, argv, "dsr:f:")) != EOF)
+	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
 		switch (c) {
 		case 'd':
 			debug = 1;
