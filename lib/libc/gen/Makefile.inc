@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.9 1993/08/01 05:41:00 mycroft Exp $
+#	$Id: Makefile.inc,v 1.10 1993/08/06 20:56:34 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
@@ -12,7 +12,7 @@ SRCS+=	alarm.c assert.c clock.c crypt.c ctermid.c ctime.c ctype_.c difftime.c \
 	nlist.c pause.c popen.c psignal.c raise.c \
 	scandir.c setjmperr.c \
 	setmode.c setrgid.c setruid.c siginterrupt.c \
-	siglist.c signal.c sigsetops.c sleep.c syslog.c \
+	siglist.c signal.c signame.c sigsetops.c sleep.c syslog.c \
 	termios.c time.c times.c timezone.c ttyname.c ttyslot.c \
 	ualarm.c unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
@@ -78,7 +78,7 @@ MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
 MLINKS+=popen.3 pclose.3
-MLINKS+=psignal.3 sys_siglist.3
+MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=regexp.3 regcomp.3 regexp.3 regexec.3 regexp.3 regsub.3 \
 	regexp.3 regerror.3
 MLINKS+=scandir.3 alphasort.3
