@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2000/05/26 21:19:56 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2000/05/26 21:19:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2000/05/27 00:40:35 sommerfeld Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ syscall(status, cause, opc)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args);
+		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	rval[0] = 0;
 	rval[1] = frame->f_regs[V1];
@@ -341,7 +341,7 @@ syscall(status, cause, opc)
 	userret(p, opc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -362,7 +362,7 @@ child_return(arg)
 	userret(p, frame->f_regs[PC] - sizeof(int), 0); /* XXX */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 
