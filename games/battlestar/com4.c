@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.15 2000/09/24 09:39:56 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.16 2000/09/24 09:46:03 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.15 2000/09/24 09:39:56 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.16 2000/09/24 09:46:03 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -371,9 +371,13 @@ eat()
 	wordnumber++;
 	while (wordnumber <= wordcount) {
 		value = wordvalue[wordnumber];
-		if (wordtype[wordnumber] != OBJECT)
-			value = -1;
+		if (wordtype[wordnumber] != OBJECT || objsht[value] == NULL)
+			value = -2;
 		switch (value) {
+
+		case -2:
+			puts("You can't eat that!");
+			return (firstnumber);
 
 		case -1:
 			puts("Eat what?");
@@ -402,12 +406,12 @@ eat()
 				snooze += CYCLE / 10;
 				ourtime++;
 				puts("Eaten.  You can explore a little longer now.");
-			} else if (ourtime < ate - CYCLE)
-				puts("You're stuffed.");
+			} else if (!testbit(inven, value))
+				printf("You aren't holding the %s.\n", objsht[value]);
 			else if (!testbit(inven, KNIFE))
 				puts("You need a knife.");
 			else
-				printf("You aren't holding the %s.\n", objsht[value]);
+				puts("You're stuffed.");
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
