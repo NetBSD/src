@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.19 2001/05/27 06:19:39 chs Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.20 2001/06/05 05:20:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,12 +51,11 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
 #include <machine/eeprom.h>
-
-#define HZ 100	/* XXX */
 
 #ifndef EEPROM_SIZE
 #define EEPROM_SIZE 0x800
@@ -248,7 +247,7 @@ ee_update(int off, int cnt)
 			 * holding the lock to prevent all access to
 			 * the EEPROM while it recovers.
 			 */
-			(void)tsleep(eeprom_va, PZERO-1, "eeprom", HZ/50);
+			(void)tsleep(eeprom_va, PZERO-1, "eeprom", hz/50);
 		}
 		/* Make sure the write worked. */
 		if (*ep != *bp)
