@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.7 2000/03/19 07:37:58 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.8 2000/06/11 17:26:47 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -548,8 +548,10 @@ ms_processevent(event, amsc)
 	if (!aed_input(&new_event))
 #endif
 #if NWSMOUSE > 0
-		wsmouse_input(amsc->sc_wsmousedev, new_event.u.m.buttons,
-		    new_event.u.m.dx, new_event.u.m.dy, 0, 0);
+		if (amsc->sc_wsmousedev != NULL) /* wsmouse is attached? */
+			wsmouse_input(amsc->sc_wsmousedev,
+			    new_event.u.m.buttons,
+			    new_event.u.m.dx, new_event.u.m.dy, 0, 0);
 #else
 		/* do nothing */ ;
 #endif
