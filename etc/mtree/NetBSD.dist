@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.196 2002/06/19 09:23:52 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.197 2002/06/29 17:27:43 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -27,6 +27,7 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
+./etc/systrace
 ./etc/uucp
 ./home
 ./mnt
