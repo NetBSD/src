@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.44 2004/05/18 16:08:33 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.45 2004/06/03 18:31:53 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -183,6 +183,7 @@ STP	shielded twisted pair
 SVGA	super video graphics array
 TCL	tool command language
 TCP	transmission control protocol
+TDD	test driven development
 TFT	thin film transistor
 TIFF	tagged image file format
 TLA	top level aggregator
