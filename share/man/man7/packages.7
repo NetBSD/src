@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.42 2001/01/18 10:19:42 pooka Exp $
+.\"	$NetBSD: packages.7,v 1.43 2001/01/21 22:41:48 veego Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -173,6 +173,15 @@ Name of the package file to create if the
 .Pa ${DISTNAME}
 isn't really relevant for the package.  The default is
 .Pa ${DISTNAME} .
+.It SVR4_PKGNAME	
+Name of the package file to create if the
+.Pa ${PKGNAME}
+isn't unique enough on a SVR4 system. The default is
+.Pa ${PKGNAME}
+which may be shortened when you use gensolpkg. Only add SVR4_PKGNAME if
+.Pa ${PKGNAME}
+does not produce an unique package name on a SVR4 system.
+The lenght of SVR4_PKGNAME is limited to 5 characters.
 .It EXTRACT_ONLY
 If defined, a subset of
 .Pa ${DISTFILES}
