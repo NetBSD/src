@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.14 2000/05/27 06:08:28 matt Exp $	*/
+/*	$NetBSD: paths.h,v 1.15 2000/07/03 23:40:00 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,6 +73,7 @@
 #define	_PATH_OAUDIOCTL	"/dev/audioctl"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
+#define	_PATH_SKEYKEYS	"/etc/skeykeys"
 #define	_PATH_SOUND	"/dev/sound0"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
