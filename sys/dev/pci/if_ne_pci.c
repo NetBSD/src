@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.5 1998/04/10 01:28:59 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.6 1998/05/05 17:23:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,12 @@ struct ne_pci_compatdev ne_pci_compatdevs[] = {
 	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, "Winbond 89C940F" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 		"VIA Technologies VT86C926" },
+	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34, "Surecom NE-34" },
+	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000, "NetVin 5000" },
+	/* XXX The following entries need sanity checking in pcidevs */
+	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_NE2KETHER, "Compex" },
+	{ PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER, "ProLAN" },
+	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER, "KTI" },
 	{ 0, 0, NULL },
 };
 
