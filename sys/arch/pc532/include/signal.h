@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.7 1998/09/16 23:14:15 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.8 1998/10/01 21:16:06 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -54,7 +54,7 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-#if defined(__LIBC12_SOURCE) || defined(_KERNEL)
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
