@@ -1,2 +1,6 @@
+# $NetBSD: shlib_version,v 1.33 1997/05/14 19:01:52 gwr Exp $
+# Note: the next time $major is changed, look at:
+#	gen/setproctitle.c (XXX __ps_strings)
+#
 major=12
 minor=14
