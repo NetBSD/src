@@ -1,3 +1,5 @@
+/*	$NetBSD: scrio.h,v 1.2 1998/07/08 07:56:14 thorpej Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
