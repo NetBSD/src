@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1997/10/04 17:20:17 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2001/05/13 00:01:45 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>
 #include <hp300/stand/common/samachdep.h>
