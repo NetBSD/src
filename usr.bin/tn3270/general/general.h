@@ -1,4 +1,4 @@
-/*	$NetBSD: general.h,v 1.6 1998/03/04 13:16:08 christos Exp $	*/
+/*	$NetBSD: general.h,v 1.7 1998/03/11 16:49:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,6 +39,8 @@
  * Some general definitions.
  */
 
+#include <sys/types.h>
+
 #define	numberof(x)	(sizeof x/sizeof x[0])
 #define	highestof(x)	(numberof(x)-1)
 
@@ -72,4 +74,4 @@
 /* genbsubs.c */
 int bunequal __P((char *, char *, int));
 int bskip __P((char *, int, int));
-unsigned char *memNSchr __P((char *, int, unsigned int, int, int));
+unsigned char *memNSchr __P((char *, int, unsigned int, int, ssize_t));
