@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.38 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: hme.c,v 1.39 2003/11/03 20:30:14 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.38 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.39 2003/11/03 20:30:14 petrov Exp $");
 
-#define HMEDEBUG
+/* #define HMEDEBUG */
 
 #include "opt_inet.h"
 #include "opt_ns.h"
