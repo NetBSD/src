@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe.h,v 1.6 1996/10/15 00:42:46 mark Exp $ */
+/* $NetBSD: armfpe.h,v 1.7 1996/12/27 01:39:14 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -42,20 +42,8 @@
  */
 
 #include <machine/fp.h>
+#include <machine/ieeefp.h>
 #include <machine/reg.h>
-
-#if 0
-/* Get this from <machine/fp.h> */
-/*
- * An extended precision floating point number
- */
- 
-typedef struct {
-	u_int32_t exponent;
-	u_int32_t mantissa_hi;
-	u_int32_t mantissa_lo;
-} fp_extended_precision_t;
-#endif
 
 #ifdef _KERNEL
 
@@ -108,8 +96,7 @@ typedef struct {
 	/*
 	 * Data pointers for extra information
 	 */
-	u_char *version_addr;
-	u_char *identity_addr;
+	u_char *core_identity_addr;
 
 } arm_fpe_mod_hdr_t;
 
@@ -138,4 +125,11 @@ void arm_fpe_core_loadcontext	__P((u_int context, fp_context_frame_t *loadarea))
 void arm_fpe_copycontext	__P((u_int c1, u_int c2));
 void arm_fpe_getcontext		__P((struct proc *p, fp_reg_t *fpregs));
 void arm_fpe_setcontext		__P((struct proc *p, fp_reg_t *fpregs));
+
+void arm_fpe_exception_glue	__P((int exception));
+void arm_fpe_panic		__P((void));
+void undefined_entry		__P((void));
+void arm_fpe_post_proc_glue	__P((void));
+void arm_fpe_set_exception_mask	__P((fp_except));
+
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.10 1996/10/15 01:31:28 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.11 1996/12/27 01:39:16 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -57,16 +57,10 @@
 #include <machine/katelib.h>
 #include <machine/frame.h>
 
-#include "armfpe.h"		/* Prototypes for things */
+#include <arm32/fpe-arm/armfpe.h>	/* Prototypes for things */
 
 extern int want_resched;
 extern u_int fpe_nexthandler;
-
-void undefinedinstruction_bounce __P(());
-void arm_fpe_exception_glue	__P((int exception));
-void arm_fpe_panic		__P(());
-void undefined_entry		__P(());
-void arm_fpe_post_proc_glue	__P(());
 
 extern u_int fpe_arm_start[];
 extern arm_fpe_mod_hdr_t fpe_arm_header;
@@ -101,7 +95,7 @@ initialise_arm_fpe(cpu)
 
 	cpu->fpu_class = FPU_CLASS_FPE;
 	cpu->fpu_type = FPU_TYPE_ARMLTD_FPE;
-	strcpy(cpu->fpu_model, fpe_arm_header.identity_addr);
+	strcpy(cpu->fpu_model, fpe_arm_header.core_identity_addr);
 	error = arm_fpe_boot(cpu);
 	if (error != 0) {
 		strcat(cpu->fpu_model, " - boot failed");
@@ -183,6 +177,16 @@ arm_fpe_boot(cpu)
 
 	arm_fpe_core_initcontext(FP_CONTEXT(&proc0));
 	arm_fpe_core_changecontext(FP_CONTEXT(&proc0));
+
+	/*
+	 * Set the default excpection mask. This will be inherited on
+	 * a fork when the context is copied.
+	 *
+	 * XXX - The is done with FP instructions - the only ones in
+	 * the kernel
+	 */
+
+	arm_fpe_set_exception_mask(FP_X_DZ | FP_X_OFL);
 
 	return(0);
 }
