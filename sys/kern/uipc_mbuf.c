@@ -346,14 +346,14 @@ mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, NULL, waitok));
+	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
 
 void
 mclpool_release(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+	uvm_km_free_poolpage(mb_map, (vaddr_t)v);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.95 2005/01/14 17:03:58 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.95.4.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95 2005/01/14 17:03:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.95.4.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -307,10 +307,11 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
 		simple_unlock(&malloc_slock);
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
-		    (vsize_t)ctob(npg),
+		va = (caddr_t) uvm_km_alloc(kmem_map,
+		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
-		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
+		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0) |
+		    UVM_KMF_WIRED);
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -517,7 +518,8 @@ free(void *addr, struct malloc_type *ksp)
 		    addr, size, ksp->ks_shortdesc, alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
-		uvm_km_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt));
+		uvm_km_free(kmem_map, (vaddr_t)addr, ctob(kup->ku_pagecnt),
+		    UVM_KMF_WIRED);
 #ifdef KMEMSTATS
 		size = kup->ku_pagecnt << PGSHIFT;
 		ksp->ks_memuse -= size;
@@ -842,8 +844,9 @@ kmeminit(void)
 	 */
 	kmeminit_nkmempages();
 
-	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
-	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
+	kmemusage = (struct kmemusage *) uvm_km_alloc(kernel_map,
+	    (vsize_t)(nkmempages * sizeof(struct kmemusage)), 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
 	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT), 

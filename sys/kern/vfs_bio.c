@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.141.4.1 2005/01/25 12:59:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.141.4.1 2005/01/25 12:59:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,15 +213,17 @@ static void *
 bufpool_page_alloc(struct pool *pp, int flags)
 {
 
-	return (void *)uvm_km_kmemalloc1(buf_map,
-	    uvm.kernel_object, MAXBSIZE, MAXBSIZE, UVM_UNKNOWN_OFFSET,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
+	return (void *)uvm_km_alloc(buf_map,
+	    MAXBSIZE, MAXBSIZE,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
 }
 
 static void
 bufpool_page_free(struct pool *pp, void *v)
 {
-	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE);
+
+	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE, UVM_KMF_WIRED);
 }
 
 static struct pool_allocator bufmempool_allocator = {
