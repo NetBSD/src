@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fdopen.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fdopen.c,v 1.3 1993/08/26 00:46:34 jtc Exp $";
+static char *rcsid = "$Id: fdopen.c,v 1.4 1994/12/30 04:40:13 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,11 +52,7 @@ fdopen(fd, mode)
 	const char *mode;
 {
 	register FILE *fp;
-	static int nofile;
 	int flags, oflags, fdflags, tmp;
-
-	if (nofile == 0)
-		nofile = getdtablesize();
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);
