@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.208 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.209 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -495,3 +495,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[lukem 20031008].
 	whois(1): Has been replaced by the OpenBSD version by jrf.
 		[christos 20031009]
+	arm: Xscale micro-optimisations for libc/libkern, plus some
+		kernel tweaks to use the mini-data cache, and speedup
+		cpuswitch() amongst other things. Contributed by Wasabi
+		Systems.
+		[scw 20031014]
