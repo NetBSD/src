@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 2002/10/01 12:57:07 fvdl Exp $	*/
+/*	$NetBSD: lock.h,v 1.7 2003/01/30 19:59:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #ifndef _I386_LOCK_H_
 #define	_I386_LOCK_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
