@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19 1997/08/05 11:00:10 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.20 1998/09/12 13:59:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -380,6 +380,12 @@ struct srmmu_pte {
 #define SRMMU_L2SIZE 	0x40
 #define SRMMU_L3SIZE	0x40
 
+#define SRMMU_PTE_BITS	"\177\020"					\
+	"f\0\2TYPE\0=\1PTD\0=\2PTE\0f\2\3PROT\0"			\
+	"=\0R_R\0=\4RW_RW\0=\10RX_RX\0=\14RWX_RWX\0=\20X_X\0=\24R_RW\0"	\
+	"=\30N_RX\0=\34N_RWX\0"						\
+	"b\5R\0b\6M\0b\7C\0f\10\30PFN\0"
+
 /*
  * IOMMU PTE bits.
  */
@@ -388,3 +394,7 @@ struct srmmu_pte {
 #define IOPTE_RSVD      0x000000f1
 #define IOPTE_WRITE     0x00000004
 #define IOPTE_VALID     0x00000002
+
+#define IOMMU_PTE_BITS	"\177\020"					\
+	"f\10\23PPN\0b\2W\0b\1V\0"
+
