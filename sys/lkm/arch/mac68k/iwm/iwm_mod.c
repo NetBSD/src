@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.7 2003/09/06 13:20:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.7 2003/09/06 13:20:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
 #include <sys/errno.h>
 
 /* The module entry */
-int iwmfd_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
+int iwmfd_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
 
-extern int fd_mod_init __P((void));
-extern void fd_mod_free __P((void));
+extern int fd_mod_init(void);
+extern void fd_mod_free(void);
 
 extern const struct bdevsw fd_bdevsw;
 extern const struct cdevsw fd_cdevsw;
@@ -61,10 +61,7 @@ MOD_DEV("iwmfd", "fd", &fd_bdevsw, -1, &fd_cdevsw, -1)
  * External entry point; should generally match name of .o file.
  */
 int
-iwmfd_lkmentry (lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;		  
-	int cmd;
-	int ver;
+iwmfd_lkmentry (struct lkm_table *lkmtp, int cmd, int ver)
 {
 	int error = 0;
 
