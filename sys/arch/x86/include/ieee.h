@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.2 2003/08/07 16:30:32 agc Exp $ */
+/*	$NetBSD: ieee.h,v 1.3 2003/10/23 23:28:29 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
 #define	DBL_FRACBITS	52
 
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define	EXT_FRACBITS	64
 
 struct ieee_single {
 	u_int	sng_frac:23;
@@ -96,11 +96,17 @@ struct ieee_double {
 	u_int	dbl_sign:1;
 };
 
+/*
+ * Note that ieee_ext is the raw storage layout of the 80-bit
+ * extended-precision type as implemented by the FPU.  Per the
+ * respective ABI specifications, it is followed by a tail padding of
+ *
+ *   amd64: 48 bits,
+ *   i386:  16 bits.
+ */
 struct ieee_ext {
 	u_int	ext_fracl;
-	u_int	ext_fraclm;
-	u_int	ext_frachm;
-	u_int	ext_frach:16;
+	u_int	ext_frach;
 	u_int	ext_exp:15;
 	u_int	ext_sign:1;
 };
