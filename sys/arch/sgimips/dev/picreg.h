@@ -1,4 +1,4 @@
-/*	$NetBSD: picreg.h,v 1.1 2004/01/12 12:07:06 sekiya Exp $	*/
+/*	$NetBSD: picreg.h,v 1.2 2004/04/10 19:02:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -70,6 +70,8 @@
 
 #define PIC_MEMCFG0		0x10000	/* memory config register 0 */
 #define PIC_MEMCFG1		0x10004	/* memory config register 1 */
+#define PIC_MEMCFG0_PHYSADDR	(0x1fa00000 + PIC_MEMCFG0)
+#define PIC_MEMCFG1_PHYSADDR	(0x1fa00000 + PIC_MEMCFG1)
 
 #define PIC_MEMCFG_4MB		0x0000	/* 4 megabytes (never occurs) */
 #define PIC_MEMCFG_8MB		0x0001	/* 8 megabytes */
