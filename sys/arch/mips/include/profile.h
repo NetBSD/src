@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.14 2000/05/25 03:07:10 simonb Exp $	*/
+/*	$NetBSD: profile.h,v 1.15 2000/07/18 06:25:32 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,13 +42,28 @@
 #define _MIPS_PROFILE_H_
 
 #ifdef _KERNEL
+ /*
+  *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
+  *  see MCOUNT_ENTER and MCOUNT_EXIT.
+  */
+#define	_KERNEL_MCOUNT_DECL			\
+	int _splraise_noprof __P((int));	\
+	int _splset_noprof __P((int));
+#else   /* !_KERNEL */
+/* Make __mcount static. */
+#define	_KERNEL_MCOUNT_DECL	static
+#endif	/* !_KERNEL */
+
+#ifdef _KERNEL
 # define _PROF_CPLOAD	""
 #else
 # define _PROF_CPLOAD	".cpload $25;"
 #endif
 
+
 #define	_MCOUNT_DECL \
-    static void __attribute__((unused)) __mcount
+    _KERNEL_MCOUNT_DECL \
+    void __attribute__((unused)) __mcount
 
 #define	MCOUNT \
 	__asm__(".globl _mcount;" \
@@ -57,7 +72,7 @@
 	".set noreorder;" \
 	".set noat;" \
 	_PROF_CPLOAD \
-	"subu $29,$29,16;" \
+	"addu $29,$29,-16;" \
 	"sw $4,8($29);" \
 	"sw $5,12($29);" \
 	"sw $6,16($29);" \
@@ -81,38 +96,14 @@
 
 #ifdef _KERNEL
 /*
- * Block interrupts during mcount so that those interrupts can also be
- * counted (as soon as we get done with the current counting).
+ * The following two macros do splhigh and splx respectively.
+ * We use versions of _splraise() and _splset that don't
+ * including profiling support.
  */
 
-/* $1 is at, $8 is t0, $12 is MIPS_COP_0_STATUS */
-#define	MCOUNT_ENTER	__asm__( \
-	".set	noat;" \
-	".set	noreorder;" \
-	"mfc0	$1,$12;" \
-	"nop;" \
-	"andi	%0,$1,1;" \
-	"beq	$1,$0,1f;" \
-	"li	$8,-2;" \
-	"and	$1,$1,$8;" \
-	"mtc0	$1,$12;" \
-	"nop;" \
-	"1:;" \
-	".set	at;" \
-	".set	reorder" : "=g" (s) :: "t0", "at");
+#define	MCOUNT_ENTER	s = _splraise_noprof(MIPS_INT_MASK)
 
-#define	MCOUNT_EXIT	__asm__( \
-	".set	noat;" \
-	".set	noreorder;" \
-	"beq	%0,$0,1f;" \
-	"mfc0	$1,$12;" \
-	"nop;" \
-	"ori	$1,$1,1;" \
-	"mtc0	$1,$12;" \
-	"nop;" \
-	"1:;" \
-	".set	at;" \
-	".set	reorder" :: "g" (s) : "at");
-
+#define	MCOUNT_EXIT	(void)_splset_noprof(s)
 #endif /* _KERNEL */
+
 #endif /* _MIPS_PROFILE_H_ */
