@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.4 1999/01/31 06:44:25 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.5 1999/01/31 10:34:25 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -154,9 +154,12 @@ file	arch/x68k/dev/neptune.c		neptune
 attach	ne at neptune with ne_neptune: rtl80x9
 file	arch/x68k/dev/if_ne_neptune.c	ne_neptune
 
+device	opm
+attach	opm at intio
+file	arch/x68k/dev/opm.c		opm
+
 pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
-file	arch/x68k/dev/opm.c		bell|fdc
 
 pseudo-device sram
 file	arch/x68k/dev/sram.c		sram needs-flag
