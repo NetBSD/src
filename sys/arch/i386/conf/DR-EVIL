@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.15 2000/05/28 20:10:29 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.16 2000/05/28 21:48:52 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -210,10 +210,10 @@ apm0	at mainbus0			# Advanced power management
 pnpbios*	at mainbus?
 
 # mainboard audio chips
-#ess*		at pnpbios0 index ?	# ESS AudioDrive  
-#sb*		at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*		at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios0 index ?	# OPL3-SA3 
+#ess*		at pnpbios* index ?	# ESS AudioDrive  
+#sb*		at pnpbios* index ?	# NeoMagic 256AV in sb mode
+#wss*		at pnpbios* index ?	# NeoMagic 256AV in wss mode
+#ym*		at pnpbios* index ?	# OPL3-SA3 
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
@@ -231,7 +231,7 @@ pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
+#pciide* at pnpbios* index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
