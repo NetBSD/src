@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.h,v 1.1.1.1 2000/09/28 22:09:44 thorpej Exp $	*/
+/*	$NetBSD: authfd.h,v 1.1.1.2 2001/01/14 04:50:03 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: authfd.h,v 1.12 2000/09/21 11:07:51 markus Exp */
+/* from OpenBSD: authfd.h,v 1.16 2000/12/20 19:37:21 markus Exp */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
@@ -31,6 +31,7 @@
 #define SSH_AGENTC_REMOVE_RSA_IDENTITY		8
 #define SSH_AGENTC_REMOVE_ALL_RSA_IDENTITIES	9
 
+/* private OpenSSH extensions for SSH2 */
 #define SSH2_AGENTC_REQUEST_IDENTITIES		11
 #define SSH2_AGENT_IDENTITIES_ANSWER		12
 #define SSH2_AGENTC_SIGN_REQUEST		13
@@ -38,6 +39,9 @@
 #define SSH2_AGENTC_ADD_IDENTITY		17
 #define SSH2_AGENTC_REMOVE_IDENTITY		18
 #define SSH2_AGENTC_REMOVE_ALL_IDENTITIES	19
+
+/* additional error code for ssh.com's ssh-agent2 */
+#define SSH_COM_AGENT2_FAILURE                   102
 
 #define	SSH_AGENT_OLD_SIGNATURE			0x01
 
@@ -73,6 +77,11 @@ AuthenticationConnection *ssh_get_authentication_connection(void);
 void    ssh_close_authentication_connection(AuthenticationConnection *auth);
 
 /*
+ * Returns the number authentication identity held by the agent.
+ */
+int	ssh_get_num_identities(AuthenticationConnection *auth, int version);
+
+/*
  * Returns the first authentication identity held by the agent or NULL if
  * no identies are available. Caller must free comment and key.
  * Note that you cannot mix calls with different versions.
@@ -94,16 +103,16 @@ Key	*ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int v
 int
 ssh_decrypt_challenge(AuthenticationConnection *auth,
     Key *key, BIGNUM * challenge,
-    unsigned char session_id[16],
-    unsigned int response_type,
-    unsigned char response[16]);
+    u_char session_id[16],
+    u_int response_type,
+    u_char response[16]);
 
 /* Requests the agent to sign data using key */
 int
 ssh_agent_sign(AuthenticationConnection *auth,
     Key *key,
-    unsigned char **sigp, int *lenp,
-    unsigned char *data, int datalen);
+    u_char **sigp, int *lenp,
+    u_char *data, int datalen);
 
 /*
  * Adds an identity to the authentication server.  This call is not meant to

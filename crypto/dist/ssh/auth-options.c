@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,11 +15,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-options.c,v 1.4 2000/09/07 21:13:36 markus Exp */
+/* from OpenBSD: auth-options.c,v 1.7 2000/12/19 23:17:54 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-options.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -43,44 +43,67 @@ char *forced_command = NULL;
 /* "environment=" options. */
 struct envstring *custom_environment = NULL;
 
+void
+auth_clear_options(void)
+{
+	no_agent_forwarding_flag = 0;
+	no_port_forwarding_flag = 0;
+	no_pty_flag = 0;
+	no_x11_forwarding_flag = 0;
+	while (custom_environment) {
+		struct envstring *ce = custom_environment;
+		custom_environment = ce->next;
+		xfree(ce->s);
+		xfree(ce);
+	}
+	if (forced_command) {
+		xfree(forced_command);
+		forced_command = NULL;
+	}
+}
+
 /* return 1 if access is granted, 0 if not. side effect: sets key option flags */
 int
-auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
+auth_parse_options(struct passwd *pw, char *options, u_long linenum)
 {
 	const char *cp;
 	if (!options)
 		return 1;
+
+	/* reset options */
+	auth_clear_options();
+
 	while (*options && *options != ' ' && *options != '\t') {
 		cp = "no-port-forwarding";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			packet_send_debug("Port forwarding disabled.");
 			no_port_forwarding_flag = 1;
 			options += strlen(cp);
 			goto next_option;
 		}
 		cp = "no-agent-forwarding";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			packet_send_debug("Agent forwarding disabled.");
 			no_agent_forwarding_flag = 1;
 			options += strlen(cp);
 			goto next_option;
 		}
 		cp = "no-X11-forwarding";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			packet_send_debug("X11 forwarding disabled.");
 			no_x11_forwarding_flag = 1;
 			options += strlen(cp);
 			goto next_option;
 		}
 		cp = "no-pty";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			packet_send_debug("Pty allocation disabled.");
 			no_pty_flag = 1;
 			options += strlen(cp);
 			goto next_option;
 		}
 		cp = "command=\"";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			int i;
 			options += strlen(cp);
 			forced_command = xmalloc(strlen(options) + 1);
@@ -97,9 +120,9 @@ auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
 			}
 			if (!*options) {
 				debug("%.100s, line %lu: missing end quote",
-				      _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
-						  _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
 				continue;
 			}
 			forced_command[i] = 0;
@@ -108,7 +131,7 @@ auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
 			goto next_option;
 		}
 		cp = "environment=\"";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			int i;
 			char *s;
 			struct envstring *new_envstring;
@@ -127,9 +150,9 @@ auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
 			}
 			if (!*options) {
 				debug("%.100s, line %lu: missing end quote",
-				      _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
-						  _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
 				continue;
 			}
 			s[i] = 0;
@@ -143,7 +166,7 @@ auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
 			goto next_option;
 		}
 		cp = "from=\"";
-		if (strncmp(options, cp, strlen(cp)) == 0) {
+		if (strncasecmp(options, cp, strlen(cp)) == 0) {
 			int mname, mip;
 			char *patterns = xmalloc(strlen(options) + 1);
 			int i;
@@ -185,21 +208,6 @@ auth_parse_options(struct passwd *pw, char *options, unsigned long linenum)
 				    get_remote_ipaddr());
 				packet_send_debug("Your host '%.200s' is not permitted to use this key for login.",
 				get_canonical_hostname());
-				/* key invalid for this host, reset flags */
-				no_agent_forwarding_flag = 0;
-				no_port_forwarding_flag = 0;
-				no_pty_flag = 0;
-				no_x11_forwarding_flag = 0;
-				while (custom_environment) {
-					struct envstring *ce = custom_environment;
-					custom_environment = ce->next;
-					xfree(ce->s);
-					xfree(ce);
-				}
-				if (forced_command) {
-					xfree(forced_command);
-					forced_command = NULL;
-				}
 				/* deny access */
 				return 0;
 			}

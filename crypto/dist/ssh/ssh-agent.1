@@ -1,5 +1,5 @@
 .\"
-.\"	$NetBSD: ssh-agent.1,v 1.1.1.1 2000/09/28 22:10:27 thorpej Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.1.1.2 2001/01/14 04:50:42 itojun Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,12 +45,12 @@
 .Nd authentication agent for the Secure Shell
 .Sh SYNOPSIS
 .Nm ssh-agent
-.Op Fl c Li | Fl s
-.Op Fl k
-.Oo
 .Ar command
-.Op Ar args ...
-.Oc
+.Ar args ...
+.Nm ssh-agent
+.Op Fl c Li | Fl s
+.Nm ssh-agent
+.Fl k
 .Sh DESCRIPTION
 .Nm
 is a program to hold private keys used for public key (RSA or DSA)
@@ -193,11 +193,24 @@ fi
 .Ed
 .Sh FILES
 .Bl -tag -width Ds
+.It Pa $HOME/.ssh/identity
+Contains the RSA authentication identity of the user.
+This file should not be readable by anyone but the user.
+It is possible to
+specify a passphrase when generating the key; that passphrase will be
+used to encrypt the private part of this file.
+This file is not used by
+.Nm
+but is normally added to the agent using
+.Xr ssh-add 1
+at login time.
+.It Pa $HOME/.ssh/id_dsa
+Contains the DSA authentication identity of the user.
 .It Pa /tmp/ssh-XXXXXXXX/agent.<pid>
-Unix-domain sockets used to communicate with the
-authentication agent.  These sockets should only be readable by the
-owner.  The sockets should get automatically removed when the agent
-exits.
+Unix-domain sockets used to contain the connection to the
+authentication agent.
+These sockets should only be readable by the owner.
+The sockets should get automatically removed when the agent exits.
 .El
 .Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>, Markus Friedl

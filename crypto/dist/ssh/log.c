@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2001/01/14 04:50:23 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,11 +37,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: log.c,v 1.10 2000/09/12 20:53:10 markus Exp */
+/* from OpenBSD: log.c,v 1.12 2000/12/19 23:17:57 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: log.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
+__RCSID("$NetBSD: log.c,v 1.1.1.2 2001/01/14 04:50:23 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -163,7 +163,7 @@ fatal_remove_cleanup(void (*proc) (void *context), void *context)
 		}
 	}
 	fatal("fatal_remove_cleanup: no such cleanup function: 0x%lx 0x%lx\n",
-	      (unsigned long) proc, (unsigned long) context);
+	      (u_long) proc, (u_long) context);
 }
 
 /* Cleanup and exit */
@@ -180,7 +180,7 @@ fatal_cleanup(void)
 	for (cu = fatal_cleanups; cu; cu = next_cu) {
 		next_cu = cu->next;
 		debug("Calling cleanup 0x%lx(0x%lx)",
-		      (unsigned long) cu->proc, (unsigned long) cu->context);
+		      (u_long) cu->proc, (u_long) cu->context);
 		(*cu->proc) (cu->context);
 	}
 	exit(255);
@@ -216,6 +216,7 @@ static struct {
 	{ "ERROR",	SYSLOG_LEVEL_ERROR },
 	{ "INFO",	SYSLOG_LEVEL_INFO },
 	{ "VERBOSE",	SYSLOG_LEVEL_VERBOSE },
+	{ "DEBUG",	SYSLOG_LEVEL_DEBUG1 },
 	{ "DEBUG1",	SYSLOG_LEVEL_DEBUG1 },
 	{ "DEBUG2",	SYSLOG_LEVEL_DEBUG2 },
 	{ "DEBUG3",	SYSLOG_LEVEL_DEBUG3 },

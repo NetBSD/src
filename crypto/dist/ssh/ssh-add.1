@@ -1,6 +1,6 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: ssh-add.1,v 1.1.1.1 2000/09/28 22:10:25 thorpej Exp $
+.\" $NetBSD: ssh-add.1,v 1.1.1.2 2001/01/14 04:50:41 itojun Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -79,8 +79,7 @@ The options are as follows:
 .It Fl l
 Lists fingerprints of all identities currently represented by the agent.
 .It Fl L
-Lists public key parameters of all identities currently represented by
-the agent.
+Lists public key parameters of all identities currently represented by the agent.
 .It Fl d
 Instead of adding the identity, removes the identity from the agent.
 .It Fl D
@@ -105,22 +104,30 @@ Contains the DSA authentication identity of the user.
 .Pp
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width "SSH_ASKPASS"
-.It Ev DISPLAY
-If set, indicates the X11 display associated with a session.  This
-is the display that the external Passphrase prompting program will
-be run on.
-.It Ev SSH_ASKPASS
-If set, indicates the program to use as the external Passphrase
-prompter.  If unset,
+.Bl -tag -width Ds
+.It Ev "DISPLAY" and "SSH_ASKPASS"
+If
 .Nm
-will use the default
-.Pa /usr/X11R6/bin/ssh-askpass .
-This environment variable is useful for selecting Passphrase prompters
-that are part of integrated desktop environments, such as
-.Em GNOME
-or
-.Em KDE .
+needs a passphrase, it will read the passphrase from the current
+terminal if it was run from a terminal.
+If
+.Nm
+does not have a terminal associated with it but
+.Ev DISPLAY
+and
+.Ev SSH_ASKPASS
+are set, it will execute the program specified by
+.Ev SSH_ASKPASS
+and open an X11 window to read the passphrase.
+This is particularly useful when calling
+.Nm
+from a
+.Pa .Xsession
+or related script.
+(Note that on some machines it
+may be necessary to redirect the input from
+.Pa /dev/null
+to make this work.)
 .El
 .Sh AUTHOR
 Tatu Ylonen <ylo@cs.hut.fi>, Markus Friedl

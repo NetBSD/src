@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $	*/
+/*	$NetBSD: auth.c,v 1.1.1.2 2001/01/14 04:50:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,11 +70,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: auth.c,v 1.10 2000/09/07 21:13:36 markus Exp */
+/* from OpenBSD: auth.c,v 1.11 2000/10/11 20:27:23 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth.c,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $");
+__RCSID("$NetBSD: auth.c,v 1.1.1.2 2001/01/14 04:50:00 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -85,7 +85,6 @@ __RCSID("$NetBSD: auth.c,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $");
 #include "pty.h"
 #include "packet.h"
 #include "buffer.h"
-#include "cipher.h"
 #include "mpaux.h"
 #include "servconf.h"
 #include "compat.h"

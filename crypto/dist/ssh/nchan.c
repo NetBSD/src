@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.1.1.1 2000/09/28 22:10:05 thorpej Exp $	*/
+/*	$NetBSD: nchan.c,v 1.1.1.2 2001/01/14 04:50:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: nchan.c,v 1.19 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: nchan.c,v 1.20 2000/11/06 23:04:56 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nchan.c,v 1.1.1.1 2000/09/28 22:10:05 thorpej Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.1.1.2 2001/01/14 04:50:25 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -261,6 +261,8 @@ chan_send_oclose1(Channel *c)
 static void
 chan_delete_if_full_closed1(Channel *c)
 {
+	debug3("channel %d: chan_delete_if_full_closed1: istate %d ostate %d",
+	    c->self, c->istate, c->ostate);
 	if (c->istate == CHAN_INPUT_CLOSED && c->ostate == CHAN_OUTPUT_CLOSED) {
 		debug("channel %d: full closed", c->self);
 		channel_free(c->self);
@@ -411,6 +413,8 @@ chan_send_close2(Channel *c)
 static void
 chan_delete_if_full_closed2(Channel *c)
 {
+	debug3("channel %d: chan_delete_if_full_closed2: istate %d ostate %d",
+	    c->self, c->istate, c->ostate);
 	if (c->istate == CHAN_INPUT_CLOSED && c->ostate == CHAN_OUTPUT_CLOSED) {
 		if (!(c->flags & CHAN_CLOSE_SENT)) {
 			chan_send_close2(c);

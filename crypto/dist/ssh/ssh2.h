@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh2.h,v 1.1.1.1 2000/09/28 22:10:34 thorpej Exp $	*/
+/*	$NetBSD: ssh2.h,v 1.1.1.2 2001/01/14 04:50:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -55,7 +55,7 @@
  *     192-255  Local extensions
  */
 
-/* from OpenBSD: ssh2.h,v 1.4 2000/09/07 20:27:54 deraadt Exp */
+/* from OpenBSD: ssh2.h,v 1.5 2000/10/11 04:02:17 provos Exp */
 
 /* transport layer: generic */
 
@@ -75,6 +75,12 @@
 
 #define SSH2_MSG_KEXDH_INIT				30
 #define SSH2_MSG_KEXDH_REPLY				31
+
+/* dh-group-exchange */
+#define SSH2_MSG_KEX_DH_GEX_REQUEST			30
+#define SSH2_MSG_KEX_DH_GEX_GROUP			31
+#define SSH2_MSG_KEX_DH_GEX_INIT			32
+#define SSH2_MSG_KEX_DH_GEX_REPLY			33
 
 /* user authentication: generic */
 

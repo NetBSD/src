@@ -1,4 +1,4 @@
-/*	$NetBSD: match.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: match.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: match.c,v 1.9 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: match.c,v 1.10 2000/12/19 23:17:57 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: match.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
+__RCSID("$NetBSD: match.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -96,12 +96,12 @@ match_pattern(const char *s, const char *pattern)
  */
 
 int
-match_hostname(const char *host, const char *pattern, unsigned int len)
+match_hostname(const char *host, const char *pattern, u_int len)
 {
 	char sub[1024];
 	int negated;
 	int got_positive;
-	unsigned int i, subi;
+	u_int i, subi;
 
 	got_positive = 0;
 	for (i = 0; i < len;) {

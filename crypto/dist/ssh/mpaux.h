@@ -1,4 +1,4 @@
-/*	$NetBSD: mpaux.h,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: mpaux.h,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: mpaux.h,v 1.8 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: mpaux.h,v 1.9 2000/12/19 23:17:57 markus Exp */
 
 #ifndef MPAUX_H
 #define MPAUX_H
@@ -25,8 +25,8 @@
  * representations of host_key_n, session_key_n, and the cookie.
  */
 void
-compute_session_id(unsigned char session_id[16],
-    unsigned char cookie[8],
+compute_session_id(u_char session_id[16],
+    u_char cookie[8],
     BIGNUM * host_key_n,
     BIGNUM * session_key_n);
 

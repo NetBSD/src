@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $	*/
+/*	$NetBSD: pty.c,v 1.1.1.2 2001/01/14 04:50:29 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: pty.c,v 1.16 2000/09/07 21:13:37 markus Exp */
+/* from OpenBSD: pty.c,v 1.19 2000/12/20 20:00:34 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pty.c,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $");
+__RCSID("$NetBSD: pty.c,v 1.1.1.2 2001/01/14 04:50:29 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -219,12 +219,8 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	/* Make it our controlling tty. */
 #ifdef TIOCSCTTY
 	debug("Setting controlling tty using TIOCSCTTY.");
-	/*
-	 * We ignore errors from this, because HPSUX defines TIOCSCTTY, but
-	 * returns EINVAL with these arguments, and there is absolutely no
-	 * documentation.
-	 */
-	ioctl(*ttyfd, TIOCSCTTY, NULL);
+	if (ioctl(*ttyfd, TIOCSCTTY, NULL) < 0)
+		error("ioctl(TIOCSCTTY): %.100s", strerror(errno));
 #endif /* TIOCSCTTY */
 	fd = open(ttyname, O_RDWR);
 	if (fd < 0)
@@ -262,6 +258,7 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 	struct group *grp;
 	gid_t gid;
 	mode_t mode;
+	struct stat st;
 
 	/* Determine the group to make the owner of the tty. */
 	grp = getgrnam("tty");
@@ -273,11 +270,36 @@ pty_setowner(struct passwd *pw, const char *ttyname)
 		mode = S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH;
 	}
 
-	/* Change ownership of the tty. */
-	if (chown(ttyname, pw->pw_uid, gid) < 0)
-		fatal("chown(%.100s, %d, %d) failed: %.100s",
-		    ttyname, pw->pw_uid, gid, strerror(errno));
-	if (chmod(ttyname, mode) < 0)
-		fatal("chmod(%.100s, 0%o) failed: %.100s",
-		    ttyname, mode, strerror(errno));
+	/*
+	 * Change owner and mode of the tty as required.
+	 * Warn but continue if filesystem is read-only and the uids match.
+	 */
+	if (stat(ttyname, &st))
+		fatal("stat(%.100s) failed: %.100s", ttyname,
+		    strerror(errno));
+
+	if (st.st_uid != pw->pw_uid || st.st_gid != gid) {
+		if (chown(ttyname, pw->pw_uid, gid) < 0) {
+			if (errno == EROFS && st.st_uid == pw->pw_uid)
+				error("chown(%.100s, %d, %d) failed: %.100s",
+				      ttyname, pw->pw_uid, gid, 
+				      strerror(errno));
+			else
+				fatal("chown(%.100s, %d, %d) failed: %.100s",
+				      ttyname, pw->pw_uid, gid, 
+				      strerror(errno));
+		}
+	}
+
+	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
+		if (chmod(ttyname, mode) < 0) {
+			if (errno == EROFS &&
+			    (st.st_mode & (S_IRGRP | S_IROTH)) == 0)
+				error("chmod(%.100s, 0%o) failed: %.100s",
+				      ttyname, mode, strerror(errno));
+			else
+				fatal("chmod(%.100s, 0%o) failed: %.100s",
+				      ttyname, mode, strerror(errno));
+		}
+	}
 }

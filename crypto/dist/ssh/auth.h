@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $	*/
+/*	$NetBSD: auth.h,v 1.1.1.2 2001/01/14 04:50:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -22,22 +22,37 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $OpenBSD: auth.h,v 1.8 2000/12/28 14:25:51 markus Exp $
  */
 
 #ifndef AUTH_H
 #define AUTH_H
 
+typedef struct Authctxt Authctxt;
+struct Authctxt {
+	int success;
+	int valid;
+	int attempt;
+	int failures;
+	char *user;
+	char *service;
+	struct passwd *pw;
+};
+
 void	do_authentication(void);
 void	do_authentication2(void);
 
-struct passwd *
-auth_get_user(void);
+void	userauth_log(Authctxt *authctxt, int authenticated, char *method);
+void	userauth_reply(Authctxt *authctxt, int authenticated);
+
+int	auth2_skey(Authctxt *authctxt);
 
 int allowed_user(struct passwd *);
+struct passwd * auth_get_user(void);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 #endif
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.h,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $	*/
+/*	$NetBSD: auth-options.h,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -24,5 +24,8 @@ extern char *forced_command;
 extern struct envstring *custom_environment;
 
 /* return 1 if access is granted, 0 if not. side effect: sets key option flags */
-int	auth_parse_options(struct passwd *pw, char *options, unsigned long linenum);
+int	auth_parse_options(struct passwd *pw, char *options, u_long linenum);
+/* reset options flags */
+void	auth_clear_options(void);
+
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb4.c,v 1.1.1.1 2000/09/28 22:09:38 thorpej Exp $	*/
+/*	$NetBSD: auth-krb4.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from: OpenBSD: auth-krb4.c,v 1.18 2000/09/07 20:27:49 deraadt Exp */
+/* from: OpenBSD: auth-krb4.c,v 1.20 2000/12/19 23:17:54 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-krb4.c,v 1.1.1.1 2000/09/28 22:09:38 thorpej Exp $");
+__RCSID("$NetBSD: auth-krb4.c,v 1.1.1.2 2001/01/14 04:49:57 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -53,7 +53,7 @@ auth_krb4_password(struct passwd * pw, const char *password)
 	AUTH_DAT adata;
 	KTEXT_ST tkt;
 	struct hostent *hp;
-	unsigned long faddr;
+	u_long faddr;
 	char localhost[MAXHOSTNAMELEN];
 	char phost[INST_SZ];
 	char realm[REALM_SZ];
@@ -287,6 +287,8 @@ auth_kerberos_tgt(struct passwd *pw, const char *string)
 {
 	CREDENTIALS creds;
 
+	if (pw == NULL)
+		goto auth_kerberos_tgt_failure;
 	if (!radix_to_creds(string, &creds)) {
 		log("Protocol error decoding Kerberos V4 tgt");
 		packet_send_debug("Protocol error decoding Kerberos V4 tgt");
@@ -341,8 +343,16 @@ int
 auth_afs_token(struct passwd *pw, const char *token_string)
 {
 	CREDENTIALS creds;
-	uid_t uid = pw->pw_uid;
+	uid_t uid;
 
+	if (pw == NULL) {
+		/* XXX fake protocol error */
+		packet_send_debug("Protocol error decoding AFS token");
+		packet_start(SSH_SMSG_FAILURE);
+		packet_send();
+		packet_write_wait();
+		return 0;
+	}
 	if (!radix_to_creds(token_string, &creds)) {
 		log("Protocol error decoding AFS token");
 		packet_send_debug("Protocol error decoding AFS token");
@@ -356,6 +366,8 @@ auth_afs_token(struct passwd *pw, const char *token_string)
 
 	if (strncmp(creds.pname, "AFS ID ", 7) == 0)
 		uid = atoi(creds.pname + 7);
+	else
+		uid = pw->pw_uid;
 
 	if (kafs_settoken(creds.realm, uid, &creds)) {
 		log("AFS token (%s@%s) rejected for %s", creds.pname, creds.realm,

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: compat.c,v 1.23 2000/09/07 21:13:37 markus Exp */
+/* from OpenBSD: compat.c,v 1.32 2000/12/09 23:51:11 provos Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: compat.c,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $");
+__RCSID("$NetBSD: compat.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: compat.c,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $");
 #include "packet.h"
 #include "xmalloc.h"
 #include "compat.h"
+#include <regex.h>
 
 int compat13 = 0;
 int compat20 = 0;
@@ -58,27 +59,49 @@ enable_compat13(void)
 void
 compat_datafellows(const char *version)
 {
-	int i;
-	size_t len;
-	struct {
-		char	*version;
+	int i, ret;
+	char ebuf[1024];
+	regex_t reg;
+	static struct {
+		char	*pat;
 		int	bugs;
 	} check[] = {
-		{"2.1.0",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC},
-		{"2.0.1",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC|SSH_BUG_PUBKEYAUTH|SSH_BUG_X11FWD},
-		{"2.",		SSH_BUG_HMAC|SSH_COMPAT_SESSIONID_ENCODING},
-		{NULL,		0}
+		{ "^OpenSSH[-_]2\\.[012]",	SSH_OLD_SESSIONID },
+		{ "MindTerm",		0 },
+		{ "^2\\.1\\.0",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
+					SSH_OLD_SESSIONID|SSH_BUG_DEBUG },
+		{ "^2\\.0\\.1[3-9]",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
+					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
+					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD },
+		{ "^2\\.0\\.",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
+					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
+					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
+					SSH_BUG_PKAUTH },
+		{ "^2\\.[23]\\.0",	SSH_BUG_HMAC},
+		{ "^2\\.[2-9]\\.",	0 },
+		{ "^2\\.4$",		SSH_OLD_SESSIONID}, /* Van Dyke */
+		{ "^3\\.0 SecureCRT",	SSH_OLD_SESSIONID},
+		{ "^1\\.7 SecureFX",	SSH_OLD_SESSIONID},
+		{ NULL,			0 }
 	};
 	/* process table, return first match */
-	for (i = 0; check[i].version; i++) {
-		len = strlen(check[i].version);
-		if (strlen(version) >= len &&
-		   (strncmp(version, check[i].version, len) == 0)) {
-			verbose("datafellows: %.200s", version);
+	for (i = 0; check[i].pat; i++) {
+		ret = regcomp(&reg, check[i].pat, REG_EXTENDED|REG_NOSUB);
+		if (ret != 0) {
+			regerror(ret, &reg, ebuf, sizeof(ebuf));
+			ebuf[sizeof(ebuf)-1] = '\0';
+			error("regerror: %s", ebuf);
+			continue;
+		}
+		ret = regexec(&reg, version, 0, NULL, 0);
+		regfree(&reg);
+		if (ret == 0) {
+			debug("match: %s pat %s", version, check[i].pat);
 			datafellows = check[i].bugs;
 			return;
 		}
 	}
+	debug("no match: %s", version);
 }
 
 #define	SEP	","

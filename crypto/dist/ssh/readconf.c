@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.1 2000/09/28 22:10:10 thorpej Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.2 2001/01/14 04:50:31 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,17 +13,16 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: readconf.c,v 1.47 2000/09/07 21:13:37 markus Exp */
+/* from OpenBSD: readconf.c,v 1.52 2000/12/27 12:30:19 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readconf.c,v 1.1.1.1 2000/09/28 22:10:10 thorpej Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.1.1.2 2001/01/14 04:50:31 itojun Exp $");
 #endif
 
 #include "includes.h"
 
 #include "ssh.h"
-#include "cipher.h"
 #include "pathnames.h"
 #include "readconf.h"
 #include "match.h"
@@ -78,7 +77,7 @@ __RCSID("$NetBSD: readconf.c,v 1.1.1.1 2000/09/28 22:10:10 thorpej Exp $");
    # Defaults for various options
    Host *
      ForwardAgent no
-     ForwardX11 yes
+     ForwardX11 no
      RhostsAuthentication yes
      PasswordAuthentication yes
      RSAAuthentication yes
@@ -111,8 +110,9 @@ typedef enum {
 	oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
 	oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
 	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication,
-	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oIdentityFile2,
-	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oDSAAuthentication
+	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol,
+	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
+	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -128,8 +128,11 @@ static struct {
 	{ "useprivilegedport", oUsePrivilegedPort },
 	{ "rhostsauthentication", oRhostsAuthentication },
 	{ "passwordauthentication", oPasswordAuthentication },
+	{ "kbdinteractiveauthentication", oKbdInteractiveAuthentication },
+	{ "kbdinteractivedevices", oKbdInteractiveDevices },
 	{ "rsaauthentication", oRSAAuthentication },
-	{ "dsaauthentication", oDSAAuthentication },
+	{ "pubkeyauthentication", oPubkeyAuthentication },
+	{ "dsaauthentication", oPubkeyAuthentication },		/* alias */
 	{ "skeyauthentication", oSkeyAuthentication },
 #ifdef KRB4
 	{ "kerberosauthentication", oKerberosAuthentication },
@@ -141,8 +144,9 @@ static struct {
 	{ "fallbacktorsh", oFallBackToRsh },
 	{ "usersh", oUseRsh },
 	{ "identityfile", oIdentityFile },
-	{ "identityfile2", oIdentityFile2 },
+	{ "identityfile2", oIdentityFile },			/* alias */
 	{ "hostname", oHostName },
+	{ "hostkeyalias", oHostKeyAlias },
 	{ "proxycommand", oProxyCommand },
 	{ "port", oPort },
 	{ "cipher", oCipher },
@@ -219,7 +223,7 @@ add_remote_forward(Options *options, u_short port, const char *host,
 static OpCodes
 parse_token(const char *cp, const char *filename, int linenum)
 {
-	unsigned int i;
+	u_int i;
 
 	for (i = 0; keywords[i].name; i++)
 		if (strcasecmp(cp, keywords[i].name) == 0)
@@ -297,8 +301,16 @@ parse_flag:
 		intptr = &options->password_authentication;
 		goto parse_flag;
 
-	case oDSAAuthentication:
-		intptr = &options->dsa_authentication;
+	case oKbdInteractiveAuthentication:
+		intptr = &options->kbd_interactive_authentication;
+		goto parse_flag;
+
+	case oKbdInteractiveDevices:
+		charptr = &options->kbd_interactive_devices;
+		goto parse_string;
+
+	case oPubkeyAuthentication:
+		intptr = &options->pubkey_authentication;
 		goto parse_flag;
 
 	case oRSAAuthentication:
@@ -399,20 +411,15 @@ parse_flag:
 		goto parse_int;
 
 	case oIdentityFile:
-	case oIdentityFile2:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (*activep) {
-			intptr = (opcode == oIdentityFile) ?
-			    &options->num_identity_files :
-			    &options->num_identity_files2;
+			intptr = &options->num_identity_files;
 			if (*intptr >= SSH_MAX_IDENTITY_FILES)
 				fatal("%.200s line %d: Too many identity files specified (max %d).",
 				      filename, linenum, SSH_MAX_IDENTITY_FILES);
-			charptr = (opcode == oIdentityFile) ?
-			    &options->identity_files[*intptr] :
-			    &options->identity_files2[*intptr];
+			charptr =  &options->identity_files[*intptr];
 			*charptr = xstrdup(arg);
 			*intptr = *intptr + 1;
 		}
@@ -450,6 +457,10 @@ parse_string:
 
 	case oHostName:
 		charptr = &options->hostname;
+		goto parse_string;
+
+	case oHostKeyAlias:
+		charptr = &options->host_key_alias;
 		goto parse_string;
 
 	case oProxyCommand:
@@ -590,10 +601,10 @@ parse_int:
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (arg[0] == '^' && arg[2] == 0 &&
-		    (unsigned char) arg[1] >= 64 && (unsigned char) arg[1] < 128)
-			value = (unsigned char) arg[1] & 31;
+		    (u_char) arg[1] >= 64 && (u_char) arg[1] < 128)
+			value = (u_char) arg[1] & 31;
 		else if (strlen(arg) == 1)
-			value = (unsigned char) arg[0];
+			value = (u_char) arg[0];
 		else if (strcmp(arg, "none") == 0)
 			value = -2;
 		else {
@@ -677,7 +688,7 @@ initialize_options(Options * options)
 	options->use_privileged_port = -1;
 	options->rhosts_authentication = -1;
 	options->rsa_authentication = -1;
-	options->dsa_authentication = -1;
+	options->pubkey_authentication = -1;
 	options->skey_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
@@ -687,6 +698,8 @@ initialize_options(Options * options)
 	options->afs_token_passing = -1;
 #endif
 	options->password_authentication = -1;
+	options->kbd_interactive_authentication = -1;
+	options->kbd_interactive_devices = NULL;
 	options->rhosts_rsa_authentication = -1;
 	options->fallback_to_rsh = -1;
 	options->use_rsh = -1;
@@ -703,8 +716,8 @@ initialize_options(Options * options)
 	options->ciphers = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->num_identity_files = 0;
-	options->num_identity_files2 = 0;
 	options->hostname = NULL;
+	options->host_key_alias = NULL;
 	options->proxy_command = NULL;
 	options->user = NULL;
 	options->escape_char = -1;
@@ -741,8 +754,8 @@ fill_default_options(Options * options)
 		options->rhosts_authentication = 1;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
-	if (options->dsa_authentication == -1)
-		options->dsa_authentication = 1;
+	if (options->pubkey_authentication == -1)
+		options->pubkey_authentication = 1;
 	if (options->skey_authentication == -1)
 		options->skey_authentication = 1;
 #ifdef KRB4
@@ -757,6 +770,8 @@ fill_default_options(Options * options)
 #endif /* AFS */
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
+	if (options->kbd_interactive_authentication == -1)
+		options->kbd_interactive_authentication = 0;
 	if (options->rhosts_rsa_authentication == -1)
 		options->rhosts_rsa_authentication = 1;
 	if (options->fallback_to_rsh == -1)
@@ -788,16 +803,18 @@ fill_default_options(Options * options)
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2|SSH_PROTO_1_PREFERRED;
 	if (options->num_identity_files == 0) {
-		options->identity_files[0] =
-			xmalloc(2 + strlen(_PATH_SSH_CLIENT_IDENTITY) + 1);
-		sprintf(options->identity_files[0], "~/%.100s", _PATH_SSH_CLIENT_IDENTITY);
-		options->num_identity_files = 1;
-	}
-	if (options->num_identity_files2 == 0) {
-		options->identity_files2[0] =
-			xmalloc(2 + strlen(_PATH_SSH_CLIENT_ID_DSA) + 1);
-		sprintf(options->identity_files2[0], "~/%.100s", _PATH_SSH_CLIENT_ID_DSA);
-		options->num_identity_files2 = 1;
+		if (options->protocol & SSH_PROTO_1) {
+			options->identity_files[options->num_identity_files] =
+			    xmalloc(2 + strlen(_PATH_SSH_CLIENT_IDENTITY) + 1);
+			sprintf(options->identity_files[options->num_identity_files++],
+			    "~/%.100s", _PATH_SSH_CLIENT_IDENTITY);
+		}
+		if (options->protocol & SSH_PROTO_2) {
+			options->identity_files[options->num_identity_files] =
+			    xmalloc(2 + strlen(_PATH_SSH_CLIENT_ID_DSA) + 1);
+			sprintf(options->identity_files[options->num_identity_files++],
+			    "~/%.100s", _PATH_SSH_CLIENT_ID_DSA);
+		}
 	}
 	if (options->escape_char == -1)
 		options->escape_char = '~';
@@ -814,4 +831,5 @@ fill_default_options(Options * options)
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
+	/* options->host_key_alias should not be set by default */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.1.1.1 2000/09/28 22:10:10 thorpej Exp $	*/
+/*	$NetBSD: readconf.h,v 1.1.1.2 2001/01/14 04:50:32 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: readconf.h,v 1.21 2000/09/07 20:27:53 deraadt Exp */
+/* from OpenBSD: readconf.h,v 1.24 2000/12/27 12:30:20 markus Exp */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -37,7 +37,7 @@ typedef struct {
 	int     rhosts_rsa_authentication;	/* Try rhosts with RSA
 						 * authentication. */
 	int     rsa_authentication;	/* Try RSA authentication. */
-	int     dsa_authentication;	/* Try DSA authentication. */
+	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     skey_authentication;	/* Try S/Key or TIS authentication. */
 #ifdef KRB4
 	int     kerberos_authentication;	/* Try Kerberos
@@ -49,6 +49,8 @@ typedef struct {
 #endif
 	int     password_authentication;	/* Try password
 						 * authentication. */
+	int     kbd_interactive_authentication; /* Try keyboard-interactive auth. */
+	char	*kbd_interactive_devices; /* Keyboard-interactive auth devices. */
 	int     fallback_to_rsh;/* Use rsh if cannot connect with ssh. */
 	int     use_rsh;	/* Always use rsh (don\'t try ssh). */
 	int     batch_mode;	/* Batch mode: do not ask for passwords. */
@@ -69,6 +71,7 @@ typedef struct {
 	char   *ciphers;	/* SSH2 ciphers in order of preference. */
 	int	protocol;	/* Protocol in order of preference. */
 	char   *hostname;	/* Real host to connect. */
+	char   *host_key_alias;	/* hostname alias for .ssh/known_hosts */
 	char   *proxy_command;	/* Proxy command for connecting the host. */
 	char   *user;		/* User to log in as. */
 	int     escape_char;	/* Escape character; -2 = none */
@@ -78,10 +81,9 @@ typedef struct {
 	char   *system_hostfile2;
 	char   *user_hostfile2;
 
-	int     num_identity_files;	/* Number of files for RSA identities. */
-	int     num_identity_files2;	/* DSA identities. */
+	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];
-	char   *identity_files2[SSH_MAX_IDENTITY_FILES];
+	int	identity_files_type[SSH_MAX_IDENTITY_FILES];
 
 	/* Local TCP/IP forward requests. */
 	int     num_local_forwards;

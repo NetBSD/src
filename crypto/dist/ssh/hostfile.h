@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.h,v 1.1.1.1 2000/09/28 22:10:02 thorpej Exp $	*/
+/*	$NetBSD: hostfile.h,v 1.1.1.2 2001/01/14 04:50:20 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -24,8 +24,10 @@
 typedef enum {
 	HOST_OK, HOST_NEW, HOST_CHANGED
 }       HostStatus;
+
 HostStatus
-check_host_in_hostfile(const char *filename, const char *host, Key *key, Key *found);
+check_host_in_hostfile(const char *filename, const char *host, Key *key,
+    Key *found, int *line);
 
 /*
  * Appends an entry to the host file.  Returns false if the entry could not
