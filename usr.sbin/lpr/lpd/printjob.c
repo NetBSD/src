@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.35 2002/09/03 18:35:11 abs Exp $	*/
+/*	$NetBSD: printjob.c,v 1.36 2002/09/04 13:49:20 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.35 2002/09/03 18:35:11 abs Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.36 2002/09/04 13:49:20 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,8 @@ static void	opentty(void);
 static void	openrem(void);
 static int	print(int, char *);
 static int	printit(char *);
-static void	pstatus(const char *, ...);
+static void	pstatus(const char *, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 static char	response(void);
 static void	scan_out(int, char *, int);
 static char	*scnline(int, char *, int);
