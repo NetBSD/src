@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.6 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.6.2.1 1999/07/02 16:46:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -655,6 +655,12 @@ tv_clear(ip, y, x, height, width)
 {
 	char *p;
 	short fh;
+
+	/* XXX: reset scroll register on clearing whole screen */
+	if (y == 0 && x == 0 && height == ip->rows && width == ip->cols) {
+		CRTC.r10 = 0;
+		CRTC.r11 = tv_top * FONTHEIGHT;
+	}
 
 	CRTC.r21 = 0x01f0;
 	while (height--) {
