@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: unix.c,v 1.11 1994/11/02 09:20:33 deraadt Exp $";
+static char *rcsid = "$Id: unix.c,v 1.12 1995/03/28 17:26:54 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -47,7 +47,7 @@ static char *rcsid = "$Id: unix.c,v 1.11 1994/11/02 09:20:33 deraadt Exp $";
 #include <sys/sysctl.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
-#define KERNEL
+#define _KERNEL
 struct uio;
 struct proc;
 #include <sys/file.h>
