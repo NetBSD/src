@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.15 1994/01/18 03:26:53 brezak Exp $
+ *	$Id: ip_output.c,v 1.16 1994/01/19 21:36:56 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -486,8 +486,8 @@ ip_ctloutput(op, so, level, optname, mp)
 	struct mbuf **mp;
 {
 	register struct inpcb *inp = sotoinpcb(so);
+	register struct mbuf *m = *mp;
 	register int optval;
-	struct mbuf *m = *mp;
 	int error = 0;
 
 	if (level != IPPROTO_IP)
@@ -544,13 +544,13 @@ ip_ctloutput(op, so, level, optname, mp)
 			break;
 #undef OPTSET
 #ifdef MULTICAST
-			case IP_MULTICAST_IF:
-			case IP_MULTICAST_TTL:
-			case IP_MULTICAST_LOOP:
-			case IP_ADD_MEMBERSHIP:
-			case IP_DROP_MEMBERSHIP:
-				error = ip_setmoptions(optname, &inp->inp_moptions, m);
-				break;
+                case IP_MULTICAST_IF:
+                case IP_MULTICAST_TTL:
+                case IP_MULTICAST_LOOP:
+                case IP_ADD_MEMBERSHIP:
+                case IP_DROP_MEMBERSHIP:
+                        error = ip_setmoptions(optname, &inp->inp_moptions, m);
+                        break;
 #endif
 
 		default:
@@ -608,13 +608,13 @@ ip_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = optval;
 			break;
 #ifdef MULTICAST
-			case IP_MULTICAST_IF:
-			case IP_MULTICAST_TTL:
-			case IP_MULTICAST_LOOP:
-			case IP_ADD_MEMBERSHIP:
-			case IP_DROP_MEMBERSHIP:
-				error = ip_getmoptions(optname, inp->inp_moptions, &m);
-				break;
+                case IP_MULTICAST_IF:
+                case IP_MULTICAST_TTL:
+                case IP_MULTICAST_LOOP:
+                case IP_ADD_MEMBERSHIP:
+                case IP_DROP_MEMBERSHIP:
+                        error = ip_getmoptions(optname, inp->inp_moptions, mp);
+                        break;
 #endif
 
 		default:
