@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.72 2000/12/08 15:17:23 briggs Exp $
+$NetBSD: acronyms,v 1.73 2000/12/18 15:05:30 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -34,6 +34,7 @@ FAQ	frequently asked question
 FIIK	fuck[ed] if I know
 FOAD	fall over and die
 FSDO	for some definition of
+FSVO	for some value of
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
 FWIW	for what it's worth
