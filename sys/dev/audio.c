@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.84 1998/04/28 23:19:20 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.85 1998/05/15 15:45:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -254,12 +254,14 @@ audioattach(parent, self, aux)
 	error = audio_alloc_ring(sc, &sc->sc_pr, AU_RING_SIZE);
 	if (error) {
 		sc->hw_if = 0;
+		printf("audio: could not allocate play buffer\n");
 		return;
 	}
 	error = audio_alloc_ring(sc, &sc->sc_rr, AU_RING_SIZE);
 	if (error) {
 		audio_free_ring(sc, &sc->sc_pr);
 		sc->hw_if = 0;
+		printf("audio: could not allocate record buffer\n");
 		return;
 	}
 	
