@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.8 2004/06/24 08:36:44 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.9 2004/06/24 08:38:18 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.8 2004/06/24 08:36:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.9 2004/06/24 08:38:18 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -759,9 +759,8 @@ ehci_idone(struct ehci_xfer *ex)
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
-				 "\20\3MISSEDMICRO\4XACT\5BABBLE\6BABBLE"
-				 "\7HALTED",
-				 sbuf, sizeof(sbuf));
+				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
+				 "\3MISSED", sbuf, sizeof(sbuf));
 
 		DPRINTFN((status == EHCI_QTD_HALTED)*/*10*/2,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
