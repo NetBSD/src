@@ -1,9 +1,8 @@
-# $NetBSD: _mips.mk,v 1.2 1997/10/17 18:50:45 gwr Exp $
+# $NetBSD: _mips.mk,v 1.3 1997/10/17 19:17:27 gwr Exp $
 
 BFD_MACHINES =	cpu-mips.c
-
-BFD_BACKENDS =	elf32-mips.o elf32.o elf.o elflink.o ecofflink.o \
-		elf64-mips.o elf64.o coff-mips.o ecoff.o
+BFD_BACKENDS =	elf32-mips.c elf32.c elf.c elflink.c ecofflink.c \
+		elf64-mips.c elf64.c coff-mips.c ecoff.c
 
 TDEFAULTS = \
  -DSELECT_ARCHITECTURES='&bfd_mips_arch' \
