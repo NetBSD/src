@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.12 2004/02/17 22:03:52 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.13 2004/03/11 15:40:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.12 2004/02/17 22:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.13 2004/03/11 15:40:13 christos Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -774,7 +774,7 @@ cpu_tau_setup(struct cpu_info *ci)
 	} *datap;
 	int error;
 
-	datap = malloc(sizeof(*datap), M_DEVBUF, M_WAITOK);
+	datap = malloc(sizeof(*datap), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ci->ci_sysmon_cookie = &datap->sme;
 	datap->sme.sme_nsensors = 1;
@@ -789,6 +789,7 @@ cpu_tau_setup(struct cpu_info *ci)
 	datap->sme.sme_cookie = ci;
 	datap->sme.sme_gtredata = cpu_tau_gtredata;
 	datap->sme.sme_streinfo = cpu_tau_streinfo;
+	datap->sme.sme_flags = 0;
 
 	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
 		aprint_error("%s: unable to register with sysmon (%d)\n",
