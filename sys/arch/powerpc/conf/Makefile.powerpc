@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.24 2002/08/23 12:01:58 scw Exp $
+#	$NetBSD: Makefile.powerpc,v 1.25 2003/01/01 16:14:36 augustss Exp $
 #
 # Makefile for NetBSD
 #
@@ -69,13 +69,19 @@ TEXTADDR?=	0x100000
 LINKFORMAT=	-N
 ENTRYPOINT=	__start
 
-.if defined(NEED_SREC)
+.if defined(NEED_SYMTAB)
 SYSTEM_LD_TAIL_EXTRA=; \
+		echo ${DBSYM} $@; \
+		${DBSYM} $@
+.endif
+
+.if defined(NEED_SREC)
+SYSTEM_LD_TAIL_EXTRA+=; \
 		${OBJCOPY} -v -O srec $@ $@.srec
 .endif
 
 .if defined(NEED_BINARY)
-SYSTEM_LD_TAIL_EXTRA=; \
+SYSTEM_LD_TAIL_EXTRA+=; \
 		${OBJCOPY} -v -O binary $@ $@.bin
 .endif
 
