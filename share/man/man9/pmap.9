@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.27 2005/01/09 09:53:32 yamt Exp $
+.\"	$NetBSD: pmap.9,v 1.28 2005/01/11 09:43:19 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1054,13 +1054,13 @@ and returns the physical address of that page on a MIPS processor.
 .It void Fn "PMAP_PREFER" "vaddr_t hint" "vaddr_t *vap"
 This function is used by
 .Xr uvm_map 9
-to adjust virtual address being allocated in order to avoid
+to adjust a virtual address being allocated in order to avoid
 cache alias problems.
-If necessary, a virtual address pointed by
+If necessary, the virtual address pointed by
 .Fa vap
 will be advanced.
 .Fa hint
-is an object offset which will be mapped into the resulted
+is an object offset which will be mapped into the resulting
 virtual address.
 .Pp
 The use of
