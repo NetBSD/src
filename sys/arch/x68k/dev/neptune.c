@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.4 2000/01/16 14:20:56 minoura Exp $	*/
+/*	$NetBSD: neptune.c,v 1.5 2002/09/27 03:18:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ neptune_search(parent, cf, aux)
 
 	na->na_addr = cf->neptune_cf_addr;
 
-	return (*cf->cf_attach->ca_match)(parent, cf, na);
+	return config_match(parent, cf, na);
 }
 
 static int

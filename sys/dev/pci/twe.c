@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.27 2002/08/06 20:47:44 kim Exp $	*/
+/*	$NetBSD: twe.c,v 1.28 2002/09/27 03:18:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.27 2002/08/06 20:47:44 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.28 2002/09/27 03:18:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,7 @@ twe_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->tweacf_unit != twea->twea_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

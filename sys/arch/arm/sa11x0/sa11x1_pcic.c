@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.3 2001/09/24 14:29:30 takemura Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.4 2002/09/27 03:17:45 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ sacpcic_submatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return (*cf->cf_attach->ca_match)(parent, cf, aux);
+	return config_match(parent, cf, aux);
 }
 
 

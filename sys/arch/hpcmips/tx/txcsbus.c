@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.9 2002/09/27 02:24:15 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.10 2002/09/27 03:17:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
 	ca.ca_irq2		= cf->cf_loc[TXCSBUSCF_IRQ2];
 	ca.ca_irq3		= cf->cf_loc[TXCSBUSCF_IRQ3];
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ca)) {
+	if (config_match(parent, cf, &ca)) {
 		config_attach(parent, cf, &ca, txcsbus_print);
 	}
 

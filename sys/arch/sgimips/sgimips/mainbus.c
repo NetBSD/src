@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2002/03/13 13:12:29 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2002/09/27 03:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -94,7 +94,7 @@ mainbus_search(parent, cf, aux)
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
 		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
-		if ((*cf->cf_attach->ca_match)(parent, cf, ma) > 0)
+		if (config_match(parent, cf, ma) > 0)
 			config_attach(parent, cf, ma, mainbus_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
 

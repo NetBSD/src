@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.2 2002/06/01 23:50:59 lukem Exp $	*/
+/*	$NetBSD: amr.c,v 1.3 2002/09/27 03:18:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.2 2002/06/01 23:50:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.3 2002/09/27 03:18:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ amr_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->amracf_unit != amra->amra_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: dio.c,v 1.17 2002/09/27 03:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.17 2002/09/27 03:17:50 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -183,7 +183,7 @@ diosubmatch(parent, cf, aux)
 	    cf->diocf_scode != da->da_scode)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

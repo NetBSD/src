@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.36 2002/01/07 21:47:15 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.37 2002/09/27 03:18:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.36 2002/01/07 21:47:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.37 2002/09/27 03:18:15 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -608,8 +608,7 @@ isapnp_submatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = (struct cfdata *) match;
-	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 

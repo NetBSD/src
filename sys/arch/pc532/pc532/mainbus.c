@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2002/09/27 02:24:20 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2002/09/27 03:18:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -128,7 +128,7 @@ mbsearch(parent, cf, aux)
 	ca.ca_irq   = cf->cf_irq;
 	ca.ca_flags = cf->cf_flags;
 
-	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
+	while (config_match(parent, cf, &ca) > 0) {
 		config_attach(parent, cf, &ca, mbprint);
 		if (cf->cf_fstate != FSTATE_STAR)
 			break;

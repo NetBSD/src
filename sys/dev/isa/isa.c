@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.111 2002/09/27 02:24:30 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.112 2002/09/27 03:18:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.111 2002/09/27 02:24:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.112 2002/09/27 03:18:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ isasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		}
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -379,7 +379,7 @@ isasearch(struct device *parent, struct cfdata *cf, void *aux)
 		ia.ia_ndrq = 2;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
+		if (config_match(parent, cf, &ia) > 0) {
 			config_attach(parent, cf, &ia, isaprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.2 2001/08/02 18:51:01 ichiro Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.3 2002/09/27 03:17:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -138,7 +138,7 @@ atmelgpio_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, atmelgpio_print);
 	return 0;
 }

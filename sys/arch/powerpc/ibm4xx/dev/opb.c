@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.6 2002/09/27 02:24:21 thorpej Exp $ */
+/* $NetBSD: opb.c,v 1.7 2002/09/27 03:18:03 thorpej Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -128,7 +128,7 @@ opb_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[OPBCF_ADDR] != oaa->opb_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

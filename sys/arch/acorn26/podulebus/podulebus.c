@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.3 2002/05/22 22:13:13 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.4 2002/09/27 03:17:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.3 2002/05/22 22:13:13 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.4 2002/09/27 03:17:41 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -351,7 +351,7 @@ podulebus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT ||
 	    cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_slotnum)
-		return (*cf->cf_attach->ca_match)(parent, cf, aux);
+		return config_match(parent, cf, aux);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2002/09/27 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 2002/09/27 03:18:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,7 +171,6 @@ obio_submatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	cfmatch_t submatch;
 
 	/*
 	 * Note that a defaulted address locator can never match
@@ -204,12 +203,7 @@ obio_submatch(parent, cf, aux)
 	ca->ca_intvec = cf->cf_intvec;
 
 	/* Now call the match function of the potential child. */
-	submatch = cf->cf_attach->ca_match;
-	if (submatch == NULL)
-		panic("obio_submatch: no match function for: %s\n",
-			  cf->cf_name);
-
-	return ((*submatch)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.15 2002/09/27 02:24:33 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.16 2002/09/27 03:18:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.15 2002/09/27 02:24:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.16 2002/09/27 03:18:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -428,7 +428,7 @@ zs_ioasic_submatch(parent, cf, aux)
 		if (strcmp(cf->cf_name, defname))
 			return (0);
 	}
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*
