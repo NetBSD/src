@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7 1997/08/03 23:42:05 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8 1997/10/01 18:13:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,13 +82,15 @@ pchbmatch(parent, match, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_PCMC:
-		case PCI_PRODUCT_INTEL_82437:
-		case PCI_PRODUCT_INTEL_82437MX:
-		case PCI_PRODUCT_INTEL_82439:
-		case PCI_PRODUCT_INTEL_82440FX:
-		case PCI_PRODUCT_INTEL_82430VX:
 		case PCI_PRODUCT_INTEL_CDC:
+		case PCI_PRODUCT_INTEL_PCMC:
+		case PCI_PRODUCT_INTEL_82437FX:
+		case PCI_PRODUCT_INTEL_82437MX:
+		case PCI_PRODUCT_INTEL_82437VX:
+		case PCI_PRODUCT_INTEL_82439HX:
+		case PCI_PRODUCT_INTEL_82439TX:
+		case PCI_PRODUCT_INTEL_82441FX:
+		case PCI_PRODUCT_INTEL_82443LX:
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 		case PCI_PRODUCT_INTEL_PCI450_MC:
 			return (1);

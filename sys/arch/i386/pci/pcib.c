@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 1997/08/03 23:42:06 fvdl Exp $	*/
+/*	$NetBSD: pcib.c,v 1.8 1997/10/01 18:13:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,11 +80,12 @@ pcibmatch(parent, match, aux)
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_SIO:
-		case PCI_PRODUCT_INTEL_PCIB:
+		case PCI_PRODUCT_INTEL_82426EX:
 		case PCI_PRODUCT_INTEL_82371MX:
-		case PCI_PRODUCT_INTEL_82371SB:
-		case PCI_PRODUCT_INTEL_82371AB:
-		case PCI_PRODUCT_INTEL_82471:
+		case PCI_PRODUCT_INTEL_82380AB:
+		case PCI_PRODUCT_INTEL_82471FB_ISA:
+		case PCI_PRODUCT_INTEL_82371SB_ISA:
+		case PCI_PRODUCT_INTEL_82371AB_ISA:
 			return (1);
 		}
 		break;
