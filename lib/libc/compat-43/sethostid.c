@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostid.c,v 1.6 2003/08/07 16:42:39 agc Exp $	*/
+/*	$NetBSD: sethostid.c,v 1.7 2004/04/19 13:16:42 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sethostid.c,v 1.6 2003/08/07 16:42:39 agc Exp $");
+__RCSID("$NetBSD: sethostid.c,v 1.7 2004/04/19 13:16:42 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,11 +46,12 @@ __RCSID("$NetBSD: sethostid.c,v 1.6 2003/08/07 16:42:39 agc Exp $");
 int
 sethostid(long hostid)
 {
-	int mib[2];
+	int mib[2], value;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_HOSTID;
-	if (sysctl(mib, 2, NULL, NULL, &hostid, sizeof hostid) == -1)
+	value = (int)hostid;
+	if (sysctl(mib, 2, NULL, NULL, &value, sizeof(value)) == -1)
 		return (-1);
 	return (0);
 }
