@@ -121,10 +121,12 @@ realinstall:
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.if !defined(NOPROFILE)
 	ranlib lib${LIB}_p.a
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
 #	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 #	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .if defined(LINKS) && !empty(LINKS)
