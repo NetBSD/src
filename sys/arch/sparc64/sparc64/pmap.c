@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2000/11/10 11:57:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2000/12/01 17:17:29 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1744,6 +1744,9 @@ pmap_collect(pm)
 	/* This is a good place to scan the pmaps for page tables with
 	 * no valid mappings in them and free them. */
 	
+	/* NEVER GARBAGE COLLECT THE KERNEL PMAP */
+	if (pm == pmap_kernel()) return;
+
 	s = splimp();
 	simple_lock(&pm->pm_lock);
 	for (i=0; i<STSZ; i++) {
