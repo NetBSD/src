@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.7 1995/06/03 07:01:19 jtc Exp $";
+static char *rcsid = "$NetBSD: chown.c,v 1.8 1997/03/06 06:26:10 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,11 +78,11 @@ main(argc, argv)
 	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
 	char *cp;
 	
-	myname = (cp = rindex(*argv, '/')) ? cp + 1 : *argv;
+	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = myname[2] == 'o';
 	
 	Hflag = Lflag = Pflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfh")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
