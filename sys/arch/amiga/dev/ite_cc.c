@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.28 2000/05/24 19:36:29 is Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.29 2000/06/21 21:28:39 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -85,7 +85,10 @@ extern u_char kernel_font_lo, kernel_font_hi;
 extern u_char kernel_font[], kernel_cursor[];
 
 
+#if !defined(USE_C_BFOPS) && !defined(__m68k__)
 #define USE_C_BFOPS
+#endif
+
 #if !defined(USE_C_BFOPS)
 #define BFEXT(v,p,o,w)	asm("bfextu %1@{%2:%3},%0" : "=d" (v) : \
 		"a"(p), "d"(o), "d"(w))
@@ -213,8 +216,7 @@ ite_newsize(ip, winsz)
 	 */
 	cci->view = views[0].view; 
 
-	/* -1 for bold. */
-	ip->cols = (cci->view->display.width - 1) / ip->ftwidth; 
+	ip->cols = cci->view->display.width / ip->ftwidth; 
 	ip->rows = cci->view->display.height / ip->ftheight;
 
 	/*
@@ -586,8 +588,8 @@ putc_bd (cci,p,f,co,ro,fw,fh)
     
     while (fh--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(ch,p,co,fw);
 	p += ro;
     }
 }
@@ -606,8 +608,8 @@ putc_bd_in (cci,p,f,co,ro,fw,fh)
     
     while (fh--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(~ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(~ch,p,co,fw);
 	p += ro;
     }
 }
@@ -628,21 +630,21 @@ putc_bd_ul (cci,p,f,co,ro,fw,fh)
 
     while (underline--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(ch,p,co,fw);
 	p += ro;
     }
 
     ch = *f++;
-    ch |= ch << 1;
-    BFINS(expbits(ch),p,co,fw+1);
+    ch |= ch >> 1;
+    BFINS(expbits(ch),p,co,fw);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(ch,p,co,fw);
 	p += ro;
     }
 }
@@ -663,21 +665,21 @@ putc_bd_ul_in (cci,p,f,co,ro,fw,fh)
     
     while (underline--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(~ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(~ch,p,co,fw);
 	p += ro;
     }
 
     ch = *f++;
-    ch |= ch << 1;
-    BFINS(~expbits(ch),p,co,fw+1);
+    ch |= ch >> 1;
+    BFINS(~expbits(ch),p,co,fw);
     p += ro;
 
     underline = fh - cci->underline - 1;
     while (underline--) {
 	ch = *f++;
-	ch |= ch << 1;
-	BFINS(~ch,p,co,fw+1);
+	ch |= ch >> 1;
+	BFINS(~ch,p,co,fw);
 	p += ro;
     }
 }
