@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/22 16:20:46 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/13 15:55:14 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -44,7 +44,7 @@ BUILDSYMLINKS=	afbblt.c afbbltC.c \
 		afbtile.c afbtileC.c \
 		afbtile.c afbtileG.c
 
-CPPFLAGS.afbbltC.c=	-DMROP=MCopy
+CPPFLAGS.afbbltC.c=	-DMROP=Mcopy
 CPPFLAGS.afbbltCI.c=	-DMROP=McopyInverted
 CPPFLAGS.afbbltG.c=	-DMROP=0
 CPPFLAGS.afbbltO.c=	-DMROP=Mor
