@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.2 1998/11/03 05:02:25 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.3 1998/11/05 03:43:57 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.2 1998/11/03 05:01:49 thorpej Exp 
+ *	NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp 
  */
 
 /*-
@@ -48,6 +48,7 @@
  * List of known MII OUIs
  */
 
+#define	MII_OUI_AMD	0x00606e	/* Advanced Micro Devices */
 #define	MII_OUI_ICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x1e0400	/* Level 1 */
@@ -59,6 +60,10 @@
 /*
  * List of known models.  Grouped by oui.
  */
+
+/* Advanced Micro Devices PHYs */
+#define	MII_MODEL_AMD_79C873	0x0000
+#define	MII_STR_AMD_79C873	"Am79C873 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
