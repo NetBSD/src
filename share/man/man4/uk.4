@@ -1,3 +1,5 @@
+.\"	$NetBSD: uk.4,v 1.2 1996/10/16 03:12:03 explorer Exp $
+.\" Copyright history unknown...
 .Dd October 11, 1993
 .Dt UK 4
 .Os NetBSD
@@ -12,17 +14,6 @@ The
 driver provides support for a 
 process to address devices on the scsi bus for which there is no configured
 driver. 
-.\".Pp
-.\"In FreeBSD releases prior to 2.1, the first unknown device
-.\"found will be attached as
-.\".Em uk0
-.\"and the next, 
-.\".Em uk1
-.\"etc.
-.\"Beginning in 2.1 it is possible to specify what uk unit a device should
-.\"come on line as; refer to
-.\".Xr scsi 4
-.\"for details on kernel configuration.
 .Pp
 A scsi adapter must also be separately configured into the system
 before this driver makes sense.
@@ -65,4 +56,3 @@ devices.
 The
 .Nm
 driver appeared in 386BSD 0.1
-
