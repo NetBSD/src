@@ -1,10 +1,9 @@
-/*	$NetBSD: md-prologue.c,v 1.2 1996/07/03 03:31:56 thorpej Exp $	*/
+/*	$NetBSD: md-prologue.c,v 1.3 2004/04/05 19:27:01 veego Exp $	*/
 
 /*
  * rtld entry pseudo code - turn into assembler and tweak it
  */
 
-#include <sys/types.h>
 #include <sys/types.h>
 #include <a.out.h>
 #include "link.h"
