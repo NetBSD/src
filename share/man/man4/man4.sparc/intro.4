@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
+.\"	$NetBSD: intro.4,v 1.6 1998/06/11 07:00:45 fair Exp $
 .\"
 .Dd August 13, 1997
 .Dt INTRO 4 sparc
@@ -90,11 +90,29 @@ The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
 .Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr bwtwo 4 ,
 .Xr cd 4 ,
+.Xr cgeight 4 ,
+.Xr cgfour 4 ,
+.Xr cgfourteen 4 ,
+.Xr cgsix 4 ,
+.Xr cgthree 4 ,
+.Xr cgtwo 4 ,
+.Xr ch 4 ,
+.Xr fd 4 ,
+.Xr kbd 4 ,
+.Xr le 4 ,
+.Xr magma 4 ,
+.Xr mem 4 ,
+.Xr ms 4 ,
+.Xr openprom 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr autoconf 4 ,
+.Xr tcx 4 ,
+.Xr uk 4 ,
 .Xr config 8 .
 .Sh SUPPORTED SYSTEMS
 The following Sun SPARC system architectures and models are supported:
@@ -178,7 +196,7 @@ The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width speaker
+.Bl -tag -width cgfourteen
 .It audio
 AMD 79C30 obio (sun4c) audio controller
 .It bwtwo
@@ -213,10 +231,18 @@ Qlogic ISP Sbus SCSI controller
 Sun type 2, type 3, type 4, and type 5 keyboards (on zs)
 .It le/lebuffer
 AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, Sbus)
+.It magma
+Magma Sp Serial/Parallel board device driver
 .It ms
 Sun mouse (on zs)
 .It openprom
 Sun Open boot PROM (what became IEEE 1275) configuration driver
+.It power
+sun4m power management; the
+.Xr halt 8
+and
+.Xr shutdown 8
+commands can use it to power down the system.
 .It si
 NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
 .It sw
@@ -241,8 +267,6 @@ Bi-directional Parallel port
 Dual Basic Rate Interface (BRI) ISDN (SPARC LX & SPARCstation 10)
 .It audio
 sun4m audio that is dependent on the dbri
-.It power
-sun4m power management is recognized but unused
 .El
 .Sh HISTORY
 This
