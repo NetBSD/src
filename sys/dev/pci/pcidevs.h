@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.311 2001/03/04 21:28:06 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312 2001/03/05 01:32:53 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.306 2001/03/05 01:29:26 matt Exp 
  */
 
 /*
@@ -1854,6 +1854,8 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
+#define	PCI_PRODUCT_WINBOND_W83C553F_0	0x0565		/* W83C553F PCI-ISA Bridge */
+#define	PCI_PRODUCT_WINBOND_W83C553F_1	0x0105		/* W83C553F IDE Controller */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
