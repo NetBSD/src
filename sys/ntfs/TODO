@@ -2,11 +2,11 @@ NTFS - list of things to do in no particular order:
 
 - handle Unicode chars more inteligently - currently only iso-8859-1
   chars are supported, it should be possible to get the filename
-  converted into koi-8, iso-8859-2 & utf-8 at least - there is
-  some Unicode support present under FreeBSD, would be worth considering
-  for adoption (it's needed to properly support Juliet CDs anyway)
-  FreeBSD info: http://triaez.kaisei.org/~mzaki/joliet/
-  * not very hard
+  converted into koi-8, iso-8859-2 & utf-8 at least - there is a set
+  of patches for FreeBSD adding Unicode support for Joliet CDs worth
+  adopting:
+  	http://triaez.kaisei.org/~mzaki/joliet/
+  [almost done]
 
 - better support for writing; tricky is crash recovery
 
@@ -31,3 +31,5 @@ NTFS - list of things to do in no particular order:
 - really implement sync
 
 - write necessary bits to support NTFS in libsa
+
+- NTFS ACL support (though usefullness of such feature is arguable)
