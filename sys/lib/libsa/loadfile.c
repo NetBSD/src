@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.16 2001/07/31 21:09:52 bjh21 Exp $ */
+/* $NetBSD: loadfile.c,v 1.17 2001/07/31 22:11:57 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -382,6 +382,10 @@ elf_exec(fd, elf, marks, flags)
 					if (shp[j].sh_type == SHT_SYMTAB &&
 					    shp[j].sh_link == i)
 						goto havesym;
+				/* FALLTHROUGH */
+			default:
+				/* Not loading this, so zero out the offset. */
+				shp[i].sh_offset = 0;
 				break;
 			havesym:
 			case SHT_SYMTAB:
@@ -406,6 +410,8 @@ elf_exec(fd, elf, marks, flags)
 				    sizeof(long));
 				first = 0;
 			}
+			/* Since we don't load .shstrtab, zero the name. */
+			shp[i].sh_name = 0;
 		}
 		if (flags & LOAD_SYM) {
 			BCOPY(shp, shpp, sz);
@@ -425,6 +431,7 @@ elf_exec(fd, elf, marks, flags)
 		elf->e_shoff = sizeof(Elf_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
+		elf->e_shstrndx = SHN_UNDEF;
 		BCOPY(elf, elfp, sizeof(*elf));
 	}
 
