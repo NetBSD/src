@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.34 1996/10/13 02:03:06 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.35 1997/08/14 06:42:33 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -790,8 +790,11 @@ add_mfc(m)
 			if (rt->mfc_expire)
 				nexpire[hash]--;
 
+			rte = rt->mfc_stall;
+			update_mfc(mfccp, rt);
+
 			/* free packets Qed at the end of this entry */
-			for (rte = rt->mfc_stall; rte != 0; rte = nrte) {
+			for (; rte != 0; rte = nrte) {
 				nrte = rte->next;
 #ifdef RSVP_ISI
 				ip_mdq(rte->m, rte->ifp, rt, -1);
@@ -804,8 +807,6 @@ add_mfc(m)
 #endif /* UPCALL_TIMING */
 				free(rte, M_MRTABLE);
 			}
-
-			update_mfc(mfccp, rt);
 		}
 	}
 
