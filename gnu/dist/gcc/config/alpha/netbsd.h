@@ -68,9 +68,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Generate calls to memcpy, etc., not bcopy, etc. */
-#define TARGET_MEM_FUNCTIONS
-
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  Under NetBSD/Alpha, the assembler does
    nothing special with -pg. */
