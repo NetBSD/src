@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.13 2004/10/20 13:49:15 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.14 2004/10/20 13:53:56 augustss Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.13 2004/10/20 13:49:15 augustss Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.14 2004/10/20 13:53:56 augustss Exp $");
 #endif
 
 #include <stdio.h>
@@ -99,10 +99,11 @@ main(int argc, char **argv)
 	char devnamebuf[PATH_MAX];
 	struct command *cmd;
 	int reportid;
+	const char *table = NULL;
 
 	demon = 1;
 	ignore = 0;
-	while ((ch = getopt(argc, argv, "c:df:iv")) != -1) {
+	while ((ch = getopt(argc, argv, "c:df:it:v")) != -1) {
 		switch(ch) {
 		case 'c':
 			conf = optarg;
@@ -115,6 +116,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			dev = optarg;
+			break;
+		case 't':
+			table = optarg;
 			break;
 		case 'v':
 			demon = 0;
@@ -131,7 +135,7 @@ main(int argc, char **argv)
 	if (conf == NULL || dev == NULL)
 		usage();
 
-	hid_init(NULL);
+	hid_init(table);
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
@@ -209,7 +213,7 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s -c config_file [-d] -f hid_dev "
-		"[-i] [-v]\n", getprogname());
+		"[-i] [-t table] [-v]\n", getprogname());
 	exit(1);
 }
 
