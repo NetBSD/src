@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1998/01/19 03:47:42 sakamoto Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1998/03/26 23:43:43 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -109,12 +109,26 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl, poll -- XXX should be a generic device */
+#define cdev_ocis_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
+        (dev_type_mmap((*))) enodev, 0 }
+#define cdev_apm_init cdev_ocis_init
+
 /* open, close, read, ioctl */
 #define cdev_satlink_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, ioctl, stop, tty, poll, mmap */
+#define cdev_wsdisplay_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+        dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+        dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -179,6 +193,15 @@ cdev_decl(joy);
 #include "satlink.h"
 cdev_decl(satlink);
 
+#include "rnd.h"
+
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -231,6 +254,14 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
 	cdev_satlink_init(NSATLINK,satlink), /* 45: planetconnect satlink */
+	cdev_rnd_init(NRND,rnd),	/* 46: random source pseudo-device */
+
+	cdev_wsdisplay_init(NWSDISPLAY,
+			    wsdisplay), /* 47: frame buffers, etc. */
+
+	cdev_mouse_init(NWSKBD, wskbd), /* 48: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+			wsmouse),       /* 49: mice */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
