@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 1998/09/13 16:02:48 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.16 1998/09/13 16:45:43 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -660,7 +660,7 @@ sendsig(catcher, sig, mask, code)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	sf.sf_sc.sc_onstack = onstack;
-	sf.sf_sc.sc_mask = mask->__bits[0];
+	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
 	 * XXX We always have to save an old style signal mask because
