@@ -1,4 +1,5 @@
-/*	$NetBSD: cftoken.l,v 1.3 2000/10/06 00:13:02 itojun Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.4 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: cftoken.l,v 1.8 2000/12/04 06:45:29 itojun Exp $	*/
 
 %{
 /*

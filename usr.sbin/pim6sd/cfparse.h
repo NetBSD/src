@@ -1,4 +1,5 @@
-/*	$NetBSD: cfparse.h,v 1.1 2000/01/28 19:32:46 itojun Exp $	*/
+/*	$NetBSD: cfparse.h,v 1.2 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: cfparse.h,v 1.2 2000/12/04 06:45:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.

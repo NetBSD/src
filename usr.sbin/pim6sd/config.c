@@ -1,4 +1,5 @@
-/*	$NetBSD: config.c,v 1.3 2000/05/19 10:43:47 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: config.c,v 1.22 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -59,29 +60,39 @@
  */
 
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <syslog.h>
-#include <stdlib.h>
-#include "vif.h"
-#include "pim6.h"
-#include "inet6.h"
-#include "rp.h"
-#include "pimd.h"
-#include "timer.h"
-#include "route.h"
+#include <sys/socket.h>
+#include <sys/queue.h>
+#include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
 #endif
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_var.h>
+#include <arpa/inet.h>
+#include <syslog.h>
+#include <stdlib.h>
 #ifdef HAVE_GETIFADDRS
 #include <ifaddrs.h>
 #endif 
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include "config.h"
-#include <arpa/inet.h>
 #include <stdio.h>
+#include "defs.h"
+#include "config.h"
+#include "vif.h"
+#include "pim6.h"
+#include "inet6.h"
+#include "mrt.h"
+#include "rp.h"
+#include "pimd.h"
+#include "timer.h"
+#include "route.h"
 #include "debug.h"
 
 void add_phaddr(struct uvif *v, struct sockaddr_in6 *addr,

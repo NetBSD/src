@@ -1,4 +1,5 @@
-/*	$NetBSD: timer.h,v 1.1 2000/01/28 19:32:52 itojun Exp $	*/
+/*	$NetBSD: timer.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: timer.h,v 1.4 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.

@@ -1,4 +1,5 @@
-/*	$NetBSD: routesock.h,v 1.1 2000/01/28 19:32:51 itojun Exp $	*/
+/*	$NetBSD: routesock.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: routesock.h,v 1.4 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.

@@ -1,4 +1,5 @@
-/*	$NetBSD: kern.h,v 1.1 2000/01/28 19:32:48 itojun Exp $	*/
+/*	$NetBSD: kern.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: kern.h,v 1.5 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,8 +49,6 @@
 
 #ifndef KERN_H 
 #define KERN_H
-#include "vif.h"
-#include "mrt.h"
 
 extern void     k_set_rcvbuf    __P((int socket, int bufsize, int minsize));
 extern void     k_set_hlim       __P((int socket, int t));

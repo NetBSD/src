@@ -1,4 +1,5 @@
-/*	$NetBSD: mld6.c,v 1.6 2000/10/12 06:33:24 augustss Exp $	*/
+/*	$NetBSD: mld6.c,v 1.7 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: mld6.c,v 1.29 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -78,19 +79,27 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <errno.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
+#include <netinet/ip_mroute.h>
 #include <netinet/ip6.h>
+#include <netinet6/ip6_mroute.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include "defs.h"
+#include "vif.h"
+#include "mrt.h"
 #include "mld6.h"
 #include "kern.h"
-#include "defs.h"
 #include "inet6.h"
 #include "debug.h"
 #include "mld6_proto.h"
@@ -168,7 +177,13 @@ init_mld6()
     k_set_rcvbuf(mld6_socket, SO_RECV_BUF_SIZE_MAX,
 		 SO_RECV_BUF_SIZE_MIN);	/* lots of input buffering */
     k_set_hlim(mld6_socket, MINHLIM);	/* restrict multicasts to one hop */
+#if 0
+    /*
+     * Since we don't have to handle DMVRP messages via the MLD6 socket,
+     * we can just let outgoing multicast packets be loop-backed.
+     */
     k_set_loop(mld6_socket, FALSE);	/* disable multicast loopback     */
+#endif
 
     /* address initialization */
     allnodes_group.sin6_addr = in6addr_linklocal_allnodes;
@@ -473,7 +488,7 @@ make_mld6_msg(type, code, src, dst, group, ifindex, delay, datalen, alert)
 	    if (ifindex != -1 || src) {
 		    struct in6_pktinfo *pktinfo;
 
-		    cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
+		    cmsgp->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
 		    cmsgp->cmsg_level = IPPROTO_IPV6;
 		    cmsgp->cmsg_type = IPV6_PKTINFO;
 		    pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
@@ -489,7 +504,7 @@ make_mld6_msg(type, code, src, dst, group, ifindex, delay, datalen, alert)
 		    int currentlen;
 		    void *hbhbuf, *optp = NULL;
 
-		    cmsgp->cmsg_len = CMSG_SPACE(hbhlen);
+		    cmsgp->cmsg_len = CMSG_LEN(hbhlen);
 		    cmsgp->cmsg_level = IPPROTO_IPV6;
 		    cmsgp->cmsg_type = IPV6_HOPOPTS;
 		    hbhbuf = CMSG_DATA(cmsgp);
@@ -533,15 +548,11 @@ send_mld6(type, code, src, dst, group, index, delay, datalen, alert)
     int index, delay, alert;
     int datalen;		/* for trace packets only */
 {
-    int setloop = 0;
     struct sockaddr_in6 *dstp;
 	
     make_mld6_msg(type, code, src, dst, group, index, delay, datalen, alert);
     dstp = (struct sockaddr_in6 *)sndmh.msg_name;
-    if (IN6_ARE_ADDR_EQUAL(&dstp->sin6_addr, &allnodes_group.sin6_addr)) {
-	setloop = 1;
-	k_set_loop(mld6_socket, TRUE);
-    }
+
     if (sendmsg(mld6_socket, &sndmh, 0) < 0) {
 	if (errno == ENETDOWN)
 	    check_vif_state();
@@ -552,8 +563,6 @@ send_mld6(type, code, src, dst, group, index, delay, datalen, alert)
 		src ? inet6_fmt(&src->sin6_addr) : "(unspec)",
 		ifindex2str(index));
 
-	if (setloop)
-	    k_set_loop(mld6_socket, FALSE);
 	return;
     }
     

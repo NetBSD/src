@@ -1,4 +1,5 @@
-/*	$NetBSD: mrt.c,v 1.3 2000/05/19 10:43:49 itojun Exp $	*/
+/*	$NetBSD: mrt.c,v 1.4 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: mrt.c,v 1.6 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -49,9 +50,18 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
 #include <syslog.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include "defs.h"
 #include "mrt.h"
 #include "vif.h"
 #include "rp.h"
@@ -815,7 +825,7 @@ create_grpentry(group)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the previous entry
  * (or NULL if first in the chain.
  */
 static int
@@ -852,7 +862,7 @@ search_srcmrtlink(srcentry_ptr, group, mrtPtr)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points the the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the previous entry
  * (or NULL if first in the chain.
  */
 static int

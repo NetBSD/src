@@ -1,4 +1,5 @@
-/*	$NetBSD: var.h,v 1.1 2000/01/28 19:32:53 itojun Exp $	*/
+/*	$NetBSD: var.h,v 1.2 2000/12/04 07:09:37 itojun Exp $	*/
+/*	$KAME: var.h,v 1.3 2000/07/24 01:00:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,12 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* YIPS Id: var.h,v 1.1 1999/10/29 09:04:54 jinmei Exp */
 
 #if !defined(_VAR_H_)
 #define _VAR_H_
-
-#include <sys/socket.h>
 
 #define MAX3(a,b,c) (a > b ? (a > c ? a : c) : (b > c ? b : c))
 

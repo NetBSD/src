@@ -1,4 +1,5 @@
-/*	$NetBSD: vif.h,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
+/*	$NetBSD: vif.h,v 1.3 2000/12/04 07:09:37 itojun Exp $	*/
+/*	$KAME: vif.h,v 1.13 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -60,17 +61,6 @@
 
 #ifndef VIF_H
 #define VIF_H
-
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/route.h>
-#include <net/if.h>
-#include <netinet6/ip6_mroute.h>
-#include <netinet/ip_mroute.h>
-#include "defs.h"
 
 extern int total_interfaces;
 extern int udp_socket;

@@ -1,4 +1,5 @@
-/*	$NetBSD: callout.h,v 1.1 2000/01/28 19:32:46 itojun Exp $	*/
+/*	$NetBSD: callout.h,v 1.2 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: callout.h,v 1.4 2000/12/04 06:45:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -49,8 +50,6 @@
 
 #ifndef CALLOUT_H
 #define CALLOUT_H
-
-#include "defs.h"
 
 extern void     callout_init      __P((void));
 extern void     free_all_callouts __P((void));

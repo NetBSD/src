@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6_proto.h,v 1.1 2000/01/28 19:32:50 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pim6_proto.h,v 1.5 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -51,9 +52,6 @@
 
 #ifndef PIM6_PROTO_H
 #define PIM6_PROTO_H
-#include "defs.h"
-#include "vif.h"
-#include "mrt.h"
 
 extern build_jp_message_t *build_jp_message_pool;
 extern int               build_jp_message_pool_counter;

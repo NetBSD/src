@@ -1,4 +1,5 @@
-/*	$NetBSD: rp.c,v 1.3 2000/07/23 23:05:38 mycroft Exp $	*/
+/*	$NetBSD: rp.c,v 1.4 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: rp.c,v 1.15 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -77,12 +78,24 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet6/ip6_mroute.h>
+#include <netinet6/pim6.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <string.h>
+#include <stdio.h>
+#include "defs.h"
+#include "vif.h"
+#include "mrt.h"
 #include "rp.h"
 #include "pim6_proto.h"
 #include "pimd.h"
-#include <netinet6/pim6.h>
 #include "timer.h"
 #include "inet6.h"
 #include "route.h"
@@ -323,10 +336,10 @@ add_cand_rp(used_cand_rp_list, address)
      */
 
     if (local_address(&rpentry_ptr->address) == NO_VIF)
-	{
-		/* TODO: check for error and delete */
-		set_incoming(rpentry_ptr, PIM_IIF_RP);
-	}
+    {
+	/* TODO: check for error and delete */
+	set_incoming(rpentry_ptr, PIM_IIF_RP);
+    }
     else
     {
 	/* TODO: XXX: CHECK!!! */
@@ -435,7 +448,7 @@ add_rp_grp_entry(used_cand_rp_list, used_grp_mask_list,
 
     if (!IN6_IS_ADDR_MULTICAST(&group_addr->sin6_addr))
     {
-		return (rp_grp_entry_t *) NULL;
+	return (rp_grp_entry_t *) NULL;
     }
     grp_mask_ptr = add_grp_mask(used_grp_mask_list, group_addr, group_mask,
 				bsr_hash_mask);

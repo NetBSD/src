@@ -1,4 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pathnames.h,v 1.8 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -61,7 +62,7 @@
 #ifndef PATHNAMES_H
 #define PATHNAMES_H
 
-#define _PATH_PIM6D_CONF	"/etc/pim6sd.conf"
+#define _PATH_PIM6D_CONF	"/usr/local/v6/etc/pim6sd.conf"
 #define _PATH_PIM6D_LOGFILE	"/var/log/pim6sd.log"
 
 #if (defined(BSD) && (BSD >= 199103))

@@ -1,4 +1,5 @@
-/*	$NetBSD: callout.c,v 1.1 2000/01/28 19:32:46 itojun Exp $	*/
+/*	$NetBSD: callout.c,v 1.2 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: callout.c,v 1.6 2000/12/04 06:45:28 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -32,8 +33,9 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <stdlib.h>
-#include "debug.h"
+#include <unistd.h>
 #include "defs.h"
+#include "debug.h"
 #include "callout.h"
 
 /* the code below implements a callout queue */

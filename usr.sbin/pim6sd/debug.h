@@ -1,4 +1,5 @@
-/*	$NetBSD: debug.h,v 1.3 2000/10/11 20:23:54 is Exp $	*/
+/*	$NetBSD: debug.h,v 1.4 2000/12/04 07:09:35 itojun Exp $	*/
+/*	$KAME: debug.h,v 1.11 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -49,9 +50,6 @@
 
 #ifndef DEBUG_H
 #define DEBUG_H 
-#include <sys/types.h>
-#include <stdio.h>
-
 extern unsigned long	debug;
 extern int log_nmsgs;
 extern FILE *log_fp;

@@ -1,4 +1,5 @@
-/*	$NetBSD: pimd.h,v 1.1 2000/01/28 19:32:50 itojun Exp $	*/
+/*	$NetBSD: pimd.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pimd.h,v 1.10 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -51,11 +52,6 @@
 
 #ifndef PIMD_H
 #define PIMD_H
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include "defs.h"
 
 #define PIM_PROTOCOL_VERSION		2
 
@@ -274,6 +270,9 @@ typedef struct pim_jp_encod_grp_ {
 #define PIM_MESSAGE_HELLO_HOLDTIME              1
 #define PIM_MESSAGE_HELLO_HOLDTIME_LENGTH       2
 #define PIM_MESSAGE_HELLO_HOLDTIME_FOREVER      0xffff
+
+/* PIM HELLO additional addresses option (experimental) */
+#define PIM_MESSAGE_HELLO_ADDRESSES		65001
 
 /* PIM_REGISTER definitions */
 #define PIM_MESSAGE_REGISTER_BORDER_BIT         0x80000000

@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6_proto.c,v 1.2 2000/05/19 10:43:49 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.3 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pim6_proto.c,v 1.37 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -107,13 +108,20 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
+#include <netinet/ip_mroute.h>
 #include <netinet6/pim6.h>
+#include <netinet6/ip6_mroute.h>
 #include <netinet/ip6.h>
 #include <syslog.h>
 #include <stdlib.h>
-#include "mrt.h"
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include "defs.h"
+#include "mrt.h"
 #include "vif.h"
 #include "debug.h"
 #include "pim6.h"
@@ -127,13 +135,19 @@
 #include "kern.h"
 #include "routesock.h"
 
+struct pim_hello_options {
+    int holdtime;		/* mandatory */
+    struct phaddr *addrs;	/* additional addresses (experimental) */
+};
+
 /*
  * Local functions definitions.
  */
-
-static int parse_pim6_hello 			__P((char *pktPtr , int datalen , struct sockaddr_in6 *src,
-						     u_int16 *holdtime));
-
+static int parse_pim6_hello __P((char *pktPtr, int datalen,
+				 struct sockaddr_in6 *src,
+				 struct pim_hello_options *));
+static void set_pim6_nbr_param __P((pim_nbr_entry_t *,
+				    struct pim_hello_options *));
 static int send_pim6_register_stop 		__P((struct sockaddr_in6 *reg_src , struct sockaddr_in6 *reg_dst , 
 	                       		     	     struct sockaddr_in6 *inner_source,
 		                	             struct sockaddr_in6 *inner_grp));
@@ -175,7 +189,9 @@ receive_pim6_hello(src, pim_message, datalen)
     u_int8         		*data_ptr;
     srcentry_t     		*srcentry_ptr;
     mrtentry_t     		*mrtentry_ptr;
-
+    struct pim_hello_options	hopts;
+    struct phaddr *addr, *naddr;
+    int result = TRUE;
 
     if ((mifi = find_vif_direct(src)) == NO_VIF)
     {
@@ -197,10 +213,13 @@ receive_pim6_hello(src, pim_message, datalen)
 
     data_ptr = (u_int8 *) (pim_message + sizeof(struct pim));
 
-    /* Get the Holdtime (in seconds) from the message. Return if error. */
-
-    if (parse_pim6_hello(pim_message, datalen, src, &holdtime) == FALSE)
-	return (FALSE);
+    /* Get Hello options (including Holdtime in seconds) from the message. */
+    memset(&hopts, 0, sizeof(hopts));
+    if (parse_pim6_hello(pim_message, datalen, src, &hopts) == FALSE) {
+	result = FALSE;
+	goto end;
+    }
+    holdtime = hopts.holdtime;
     IF_DEBUG(DEBUG_PIM_HELLO | DEBUG_PIM_TIMER)
 	log(LOG_DEBUG, 0, "PIM HELLO holdtime from %s is %u",
 	    inet6_fmt(&src->sin6_addr), holdtime);
@@ -228,14 +247,13 @@ receive_pim6_hello(src, pim_message, datalen)
 		 * wants to inform us by sending "holdtime=0". Thanks buddy
 		 * and see you again!
 		 */
-
 		log(LOG_INFO, 0, "PIM HELLO received: neighbor %s going down",
 		    inet6_fmt(&src->sin6_addr));
 		delete_pim6_nbr(nbr);
-		return (TRUE);
+		goto end;
 	    }
-	    SET_TIMER(nbr->timer, holdtime);
-	    return (TRUE);
+	    set_pim6_nbr_param(nbr, &hopts);
+	    goto end;
 	}
 	else
 	    /*
@@ -253,7 +271,7 @@ receive_pim6_hello(src, pim_message, datalen)
     new_nbr = (pim_nbr_entry_t *) malloc(sizeof(pim_nbr_entry_t));
     new_nbr->address 		= *src;
     new_nbr->vifi 		= mifi;
-    SET_TIMER(new_nbr->timer, holdtime);
+    set_pim6_nbr_param(new_nbr, &hopts);
     new_nbr->build_jp_message 	= (build_jp_message_t *) NULL;
     new_nbr->next 		= nbr;
     new_nbr->prev 		= prev_nbr;
@@ -284,12 +302,12 @@ receive_pim6_hello(src, pim_message, datalen)
 	 */
 
 	if ((bsr_length = create_pim6_bootstrap_message(pim6_send_buf)))
-    		send_pim6(pim6_send_buf, &v->uv_linklocal->pa_addr , src , PIM_BOOTSTRAP,
-	     		  bsr_length);
-
+    		send_pim6(pim6_send_buf, &v->uv_linklocal->pa_addr, src,
+			  PIM_BOOTSTRAP, bsr_length);
 
 	/* The router with highest network address is the elected DR */
-	if (inet6_lessthan(&v->uv_linklocal->pa_addr,&v->uv_pim_neighbors->address))
+	if (inet6_lessthan(&v->uv_linklocal->pa_addr,
+			   &v->uv_pim_neighbors->address))
 	{
 	    /*
 	     * I was the DR, but not anymore. Remove all register_vif from
@@ -329,12 +347,44 @@ receive_pim6_hello(src, pim_message, datalen)
      * TODO: XXX: does a new neighbor change any routing entries info? Need
      * to trigger joins?
      */
-
     IF_DEBUG(DEBUG_PIM_HELLO)
-	log(LOG_DEBUG,0,"I'have got a new neighbor %s on vif %s",inet6_fmt(&src->sin6_addr),v->uv_name);
-    return (TRUE);
+	log(LOG_DEBUG, 0, "I've got a new neighbor %s on vif %s",
+	    inet6_fmt(&src->sin6_addr), v->uv_name);
+
+ end:
+    /* free all temporary option data and return */
+    for (addr = hopts.addrs; addr; addr = naddr) {
+	naddr = addr->pa_next;
+	free(addr);
+    }
+    return(result);
 }
 
+static void
+set_pim6_nbr_param(nbr, opts)
+    pim_nbr_entry_t *nbr;
+    struct pim_hello_options *opts;
+{
+    struct phaddr *pa, *next_pa;
+
+    if (opts == NULL)
+	return;
+
+    /* set holdtime */
+    SET_TIMER(nbr->timer, opts->holdtime);
+
+    /*
+     * Replace addtional addresses.
+     * XXX: we just replace them, but should we do something special if
+     *      there's change in the list?
+     */
+    for (pa = nbr->aux_addrs; pa; pa = next_pa) {
+	next_pa = pa->pa_next;
+	free(pa);
+    }
+    nbr->aux_addrs = opts->addrs;
+    opts->addrs = NULL;		/* copied */
+}
 
 void
 delete_pim6_nbr(nbr_delete)
@@ -350,6 +400,7 @@ delete_pim6_nbr(nbr_delete)
     rp_grp_entry_t *rp_grp_entry_ptr;
     rpentry_t      *rpentry_ptr;
     struct uvif    *v;
+    struct phaddr *pa, *next_pa;
 
     v = &uvifs[nbr_delete->vifi];
 
@@ -506,24 +557,30 @@ delete_pim6_nbr(nbr_delete)
 	}
     }
 
+    /* free additional addresses */
+    for (pa = nbr_delete->aux_addrs; pa; pa = next_pa) {
+	next_pa = pa->pa_next;
+	free(pa);
+    }
     free((char *) nbr_delete);
 }
 
 
 /* TODO: simplify it! */
 static int
-parse_pim6_hello(pim_message, datalen, src, holdtime)
+parse_pim6_hello(pim_message, datalen, src, opts)
     char           	*pim_message;
     int             	datalen;
     struct sockaddr_in6 *src;
-    u_int16        	*holdtime;
+    struct pim_hello_options *opts;
 {
     u_int8         *pim_hello_message;
-    u_int8         *data_ptr;
+    u_int8         *data_ptr, *lim;
     u_int16         option_type;
     u_int16         option_length;
     int             holdtime_received_ok = FALSE;
     int             option_total_length;
+    pim6_encod_uni_addr_t 	encod_uniaddr;
 
     pim_hello_message = (u_int8 *) (pim_message + sizeof(struct pim));
     datalen -= sizeof(struct pim);
@@ -539,13 +596,56 @@ parse_pim6_hello(pim_message, datalen, src, holdtime)
 	    if (PIM_MESSAGE_HELLO_HOLDTIME_LENGTH != option_length)
 	    {
 		IF_DEBUG(DEBUG_PIM_HELLO)
-		    log(LOG_DEBUG, 0,
+		    log(LOG_INFO, 0,
 		    "PIM HELLO Holdtime from %s: invalid OptionLength = %u",
-			inet6_fmt(&src->sin6_addr), option_length);
+			sa6_fmt(src), option_length);
 		return (FALSE);
 	    }
-	    GET_HOSTSHORT(*holdtime, data_ptr);
+	    GET_HOSTSHORT(opts->holdtime, data_ptr);
 	    holdtime_received_ok = TRUE;
+	    break;
+	case PIM_MESSAGE_HELLO_ADDRESSES:
+	    for (lim = data_ptr + option_length; data_ptr < lim; ) {
+		struct phaddr *addr;
+
+		if (*data_ptr != ADDRF_IPv6) {
+		    log(LOG_INFO, 0,
+			"PIM HELLO additional address from %s:"
+			"unsupported address type (%d)",
+			sa6_fmt(src), *data_ptr);
+		    return(FALSE); /* XXX: should skip */
+		}
+		if (data_ptr + 18 > lim) { /* 18 = sizeof(encoded ipv6 addr) */
+		    IF_DEBUG(DEBUG_PIM_HELLO)
+		    log(LOG_INFO, 0,
+			"PIM HELLO additional address from %s: "
+			"length inconsistent", sa6_fmt(src));
+		    return(FALSE);
+		}
+
+		GET_EUADDR6(&encod_uniaddr, data_ptr);
+		IF_DEBUG(DEBUG_PIM_HELLO)
+		    log(LOG_DEBUG, 0, "PIM HELLO additional address %s",
+			inet6_fmt(&encod_uniaddr.unicast_addr));
+		if (IN6_ARE_ADDR_EQUAL(&encod_uniaddr.unicast_addr,
+				       &src->sin6_addr)) {
+		    IF_DEBUG(DEBUG_PIM_HELLO)
+			log(LOG_DEBUG, 0,
+			    "   same as the neighbor's own address (ignored)");
+		    continue;
+		}
+
+		if ((addr = (struct phaddr *)malloc(sizeof(*addr))) == NULL)
+		    log(LOG_ERR, errno, "malloc failed in pim6 hello parsing");
+
+		/* XXX: we only use part of the structure */
+		memset(addr, 0, sizeof(*addr));
+		addr->pa_addr.sin6_family = AF_INET6;
+		addr->pa_addr.sin6_len = sizeof(struct sockaddr_in6);
+		addr->pa_addr.sin6_addr = encod_uniaddr.unicast_addr;
+		addr->pa_next = opts->addrs;
+		opts->addrs = addr;
+	    }
 	    break;
 	default:
 	    /* Ignore any unknown options */
@@ -568,9 +668,13 @@ parse_pim6_hello(pim_message, datalen, src, holdtime)
 	datalen -= option_total_length;
 	pim_hello_message += option_total_length;
     }
+
+    if (datalen != 0)		/* malformed packet */
+	return(FALSE);
+
+    /* holdtime is actually mandatory, so we return FALSE if not included. */
     return (holdtime_received_ok);
 }
-
 
 int
 send_pim6_hello(v, holdtime)
@@ -578,15 +682,35 @@ send_pim6_hello(v, holdtime)
     u_int16         holdtime;
 {
     char           *buf;
-    u_int8         *data_ptr;
+    u_int8         *data_ptr, *data_ptr0;
+    struct phaddr  *pa;
 
     int             datalen;
 
     buf = pim6_send_buf + sizeof(struct pim);
     data_ptr = (u_int8 *) buf;
+
+    /* encode the holdtime option */
     PUT_HOSTSHORT(PIM_MESSAGE_HELLO_HOLDTIME, data_ptr);
     PUT_HOSTSHORT(PIM_MESSAGE_HELLO_HOLDTIME_LENGTH, data_ptr);
     PUT_HOSTSHORT(holdtime, data_ptr);
+
+    /* encode the additional addresses option (experimental) */
+    data_ptr0 = data_ptr;
+    data_ptr += 4;		/* sizeof(type + length) */
+    for (pa = v->uv_addrs; pa; pa = pa->pa_next) {
+	if (inet6_equal(&v->uv_linklocal->pa_addr, &pa->pa_addr))
+	    continue;
+
+	PUT_EUADDR6(pa->pa_addr.sin6_addr, data_ptr);
+    }
+    if ((datalen = data_ptr - data_ptr0 - 4) > 0) {
+	/* at least one address is encoded. */
+	PUT_HOSTSHORT(PIM_MESSAGE_HELLO_ADDRESSES, data_ptr0);
+	PUT_HOSTSHORT(datalen, data_ptr0);
+    }
+    else
+	data_ptr = data_ptr0;	/* rewind the pointer */
 
     datalen = data_ptr - (u_int8 *) buf;
 
@@ -626,6 +750,21 @@ receive_pim6_register(reg_src, reg_dst, pim_message, datalen)
 
     pim6dstat.in_pim6_register++;
 
+    /*
+     * Message length validation.
+     * This is almost done in the kernel, but the kernel does not pefrome
+     * the check for NULL register messages. Thus, we always check this for
+     * safety.
+     */
+    if (sizeof(struct pim) + sizeof(pim_register_t) +
+	sizeof(struct ip6_hdr) > datalen) {
+	    IF_DEBUG(DEBUG_PIM_REGISTER)
+		    log(LOG_INFO, 0,
+			"PIM register: short packet (len = %d) from %s",
+			datalen, sa6_fmt(reg_src));
+	    return(FALSE);
+    }
+
     register_p = (pim_register_t *) (pim_message + sizeof(struct pim));
 
     borderBit = ntohl(register_p->reg_flags) & PIM_MESSAGE_REGISTER_BORDER_BIT;
@@ -633,7 +772,18 @@ receive_pim6_register(reg_src, reg_dst, pim_message, datalen)
 	ntohl(register_p->reg_flags) & PIM_MESSAGE_REGISTER_NULL_REGISTER_BIT;
 
     /* initialize the pointer to the encapsulated packet */
-    ip = (struct ip6_hdr *) (register_p + 1);
+    ip = (struct ip6_hdr *)(register_p + 1);
+
+    /* check the IP version (especially for the null register...see above) */
+    if ((ip->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+	    IF_DEBUG(DEBUG_PIM_REGISTER)
+		    log(LOG_INFO, 0,
+			"PIM register: incorrect IP version (%d) of the inner"
+			" packet from %s",
+			ip->ip6_vfc & IPV6_VERSION_MASK,
+			sa6_fmt(reg_src));
+	    return(FALSE);
+    }
 
     /*
      * We are keeping all addresses in network order,
@@ -1557,7 +1707,7 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 			    if (my_action == PIM_ACTION_JOIN)
 			    {
 				/* Override the Prune by scheduling a Join */
-				jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+				jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 				/* TODO: XXX: TIMER implem. dependency! */
 				if (mrtentry_rp->jp_timer > jp_value)
 				    SET_TIMER(mrtentry_rp->jp_timer, jp_value);
@@ -1577,7 +1727,13 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 			    if (my_action == PIM_ACTION_JOIN)
 			    {
 
-				jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+				/*
+				 * make a random delay between 0 to
+				 * PIM_RANDOM_DELAY_JOIN_TIMEOUT.
+				 * Note that the default value of the random
+				 * delay is 4.5, thus we need to multiply 10.
+				 */
+				jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 				/* TODO: XXX: TIMER implem. dependency! */
 				if (grpentry_ptr->grp_route->jp_timer >
 				    jp_value)
@@ -1592,7 +1748,7 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 				if (my_action == PIM_ACTION_JOIN)
 				{
 
-				    jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+				    jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 				    /* TODO: XXX: TIMER implem. dependency! */
 				    if (mrtentry_srcs->jp_timer > jp_value)
 					SET_TIMER(mrtentry_srcs->jp_timer, jp_value);
@@ -1721,7 +1877,7 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 			if (my_action == PIM_ACTION_JOIN)
 			{
 			    /* Override the Prune by scheduling a Join */
-			    jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+			    jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 			    /* TODO: XXX: TIMER implem. dependency! */
 			    if (mrtentry_ptr->jp_timer > jp_value)
 				SET_TIMER(mrtentry_ptr->jp_timer, jp_value);
@@ -1740,7 +1896,7 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 						  upstream_router);
 			if (my_action == PIM_ACTION_JOIN)
 			{
-			    jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+			    jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 			    /* TODO: XXX: TIMER implem. dependency! */
 			    if (mrtentry_ptr->jp_timer > jp_value)
 				SET_TIMER(mrtentry_ptr->jp_timer, jp_value);
@@ -1771,7 +1927,7 @@ receive_pim6_join_prune(src, dst, pim_message, datalen)
 		    if (my_action == PIM_ACTION_JOIN)
 		    {
 			/* Override the Prune by scheduling a Join */
-			jp_value = (RANDOM() % 11) / (10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT);
+			jp_value = (RANDOM() % (int)(10 * PIM_RANDOM_DELAY_JOIN_TIMEOUT)) / 10;
 			/* TODO: XXX: TIMER implem. dependency! */
 			if (mrtentry_ptr->jp_timer > jp_value)
 			    SET_TIMER(mrtentry_ptr->jp_timer, jp_value);
@@ -3582,7 +3738,7 @@ receive_pim6_bootstrap(src, dst, pim_message, datalen)
     }
     else
     {
-	if (local_address(dst) == NO_VIF)
+	if (local_address(dst) == NO_VIF) {
 	    /*
 	     * TODO: XXX: this situation should be handled earlier: The
 	     * destination is neither ALL_PIM_ROUTERS nor me
@@ -3591,6 +3747,7 @@ receive_pim6_bootstrap(src, dst, pim_message, datalen)
 		"receive_pim6_bootstrap: Bootstrap with an invalid dst(%s)",
 		inet6_fmt(&dst->sin6_addr));
 	    return (FALSE);
+	}
 
 	/* Probably unicasted from the current DR */
 	if (cand_rp_list != (cand_rp_t *) NULL)
@@ -3633,13 +3790,12 @@ receive_pim6_bootstrap(src, dst, pim_message, datalen)
 
     if (cand_rp_flag == TRUE)
     {
-	/* If change in the BSR address, send immediately Cand-RP-Adv */
+	/* If change in the BSR address, schedule immediate Cand-RP-Adv */
 	/* TODO: use some random delay? */
 
 	if (!inet6_equal(&new_bsr_address , &curr_bsr_address))
 	{
-	    send_pim6_cand_rp_adv();
-	    SET_TIMER(pim_cand_rp_adv_timer, my_cand_rp_adv_period);
+	    SET_TIMER(pim_cand_rp_adv_timer, 0);
 	}
     }
 

@@ -1,4 +1,5 @@
-.\"	$NetBSD: pim6stat.1,v 1.4 2000/11/07 06:43:37 lukem Exp $
+.\"	$NetBSD: pim6stat.1,v 1.5 2000/12/04 07:09:36 itojun Exp $
+.\"	$KAME: pim6stat.1,v 1.8 2000/12/04 06:28:26 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
@@ -26,8 +27,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     KAME Id: pim6stat.1,v 1.5 2000/05/05 14:57:14 sumikawa Exp
 .\"
 .Dd July 28, 1999
 .Dt PIM6STAT 1
@@ -64,7 +63,7 @@ specifies the PID file of the currently running daemon.
 specifies to dump statistics instead of status (for sparse mode only).
 .It Fl w
 specifies the wait period in seconds between sending a signal to the
-daemon and outputs the dumpfile.
+daemon and dumping the status or statistics to the dumpfile.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/pim6sd.pidX -compact
