@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 2000/08/30 19:16:15 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 2000/09/08 10:15:24 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -57,6 +57,7 @@
 #include <machine/trap.h>
 
 #define INIT_STACK	0x8c3ff000
+#define SHREG_BBRA	0xffffffb8
 #define SHREG_EXPEVT	0xffffffd4
 #define SHREG_INTEVT	0xffffffd8
 #define SHREG_MMUCR	0xffffffe0
@@ -1048,6 +1049,12 @@ NENTRY(exphandler)
 	bt	3b
 
 	INTRENTRY
+#ifdef DDB
+	mov	#0, r0
+	mov	#SHREG_BBRA, r1
+	mov.w	r0, @r1		/* disable UBC */
+	mov.l	r0, @r15	/* clear frame->tf_ubc */
+#endif
 	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
@@ -1088,6 +1095,12 @@ NENTRY(exphandler)
 	nop
 1:
 	CLI
+
+#ifdef DDB
+	mov.l	@r15, r0
+	mov	#SHREG_BBRA, r1
+	mov.w	r0, @r1
+#endif
 	INTRFASTEXIT
 
 	.align	2
