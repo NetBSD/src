@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.19 2004/06/02 21:18:25 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.20 2004/06/03 00:20:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.19 2004/06/02 21:18:25 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.20 2004/06/03 00:20:24 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -57,6 +57,9 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.19 2004/06/02 21:18:25 nathanw Exp $");
 #undef PT_STACKMASK
 #define PT_STACKMASK (proc->stackmask)
 #endif
+
+/* Compensate for debuggers that want a zero ID to be a sentinel */
+#define TN_OFFSET 1
 
 static int td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp);
 static int td__getsync(td_proc_t *proc, caddr_t addr, td_sync_t **syncp);
@@ -332,6 +335,8 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	    thread->addr + offsetof(struct __pthread_st, pt_num),
 	    &info->thread_id, sizeof(info->thread_id))) != 0)
 		return val;
+
+	info->thread_id += TN_OFFSET;
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_sigmask),
@@ -846,6 +851,8 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 	if (val != 0)
 		return val;
 	
+	/* Correct for offset */
+	threadid -= TN_OFFSET;
 	next = (void *)allq.ptqh_first;
 	while (next != NULL) {
 		val = READ(proc, 
