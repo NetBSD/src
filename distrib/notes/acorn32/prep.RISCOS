@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.2 2002/02/15 23:22:45 reinoud Exp $
+	$NetBSD: prep.RISCOS,v 1.3 2002/02/15 23:32:50 reinoud Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -26,9 +26,10 @@ You will need the following RiscOS software:
 	A program that can uncompress gzip files for the current bootloader
 	can't read gzip'ed kernels (yet!).
 
-		The included command line gzip program gzip_ff8 (!)
-		wich is a mirror a version that Laurent Domisse has
-		patched to work on SA. This is also available from:
+		The included command line gzip program
+		installation/misc/gzip_ff8 (!) wich is a mirror a version
+		that Laurent Domisse has patched to work on SA. This is
+		also available from:
         	http://www.users.dircon.co.uk/~arcangel/files/index.html
 		Just set the type of the file to `ff8'.
 
