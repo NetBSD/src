@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compare.c	5.10 (Berkeley) 3/31/92"; */
-static char *rcsid = "$Id: compare.c,v 1.4 1993/11/02 07:51:07 cgd Exp $";
+static char *rcsid = "$Id: compare.c,v 1.5 1993/11/17 11:00:52 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -130,10 +130,10 @@ typeerr:		LABEL;
 		    tab, s->st_gid, p->fts_statp->st_gid);
 		if (uflag)
 			if (chown(p->fts_accpath, -1, s->st_gid))
-				(void)printf(", not modified: %s)",
+				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
-				(void)printf(", modified)");
+				(void)printf(", modified)\n");
 		else
 			(void)printf(")\n");
 		tab = "\t";
@@ -145,10 +145,10 @@ typeerr:		LABEL;
 		    tab, s->st_mode, p->fts_statp->st_mode & MBITS);
 		if (uflag)
 			if (chmod(p->fts_accpath, s->st_mode))
-				(void)printf(", not modified: %s)",
+				(void)printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
-				(void)printf(", modified)");
+				(void)printf(", modified)\n");
 		else
 			(void)printf(")\n");
 		tab = "\t";
