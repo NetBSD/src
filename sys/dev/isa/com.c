@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.87 1996/10/06 01:46:04 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.88 1996/10/06 01:52:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -81,6 +81,7 @@ struct com_softc {
 
 	int sc_overflows;
 	int sc_floods;
+	int sc_failures;
 	int sc_errors;
 
 	int sc_halt;
@@ -673,6 +674,7 @@ comclose(dev, flag, mode, p)
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
 		/* XXX perhaps only clear DTR */
 		bus_io_write_1(bc, ioh, com_mcr, 0);
+		bus_io_write_1(bc, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
@@ -1074,7 +1076,7 @@ comdiag(arg)
 	void *arg;
 {
 	struct com_softc *sc = arg;
-	int overflows, floods;
+	int overflows, floods, failures;
 	int s;
 
 	s = spltty();
@@ -1083,12 +1085,15 @@ comdiag(arg)
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
+	failures = sc->sc_failures;
+	sc->sc_failures = 0;
 	splx(s);
 
-	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s\n",
+	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s, %d uart failure%s\n",
 	    sc->sc_dev.dv_xname,
 	    overflows, overflows == 1 ? "" : "s",
-	    floods, floods == 1 ? "" : "s");
+	    floods, floods == 1 ? "" : "s",
+	    failures, failures == 1 ? "" : "s");
 }
 
 void
@@ -1179,7 +1184,7 @@ comintr(arg)
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
-	u_char lsr, data, msr, delta;
+	u_char iir, lsr, data, msr, delta;
 #ifdef COM_DEBUG
 	int n;
 	struct {
@@ -1189,12 +1194,11 @@ comintr(arg)
 
 #ifdef COM_DEBUG
 	n = 0;
-	if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-		return (0);
-#else
-	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-		return (0);
+	iter[n].iir =
 #endif
+	iir = bus_io_read_1(bc, ioh, com_iir);
+	if (ISSET(iir, IIR_NOPEND))
+		return (0);
 
 	tp = sc->sc_tty;
 
@@ -1235,8 +1239,8 @@ comintr(arg)
 					    ISSET(tp->t_cflag, CRTSCTS)) {
 						/* XXX */
 						CLR(sc->sc_mcr, MCR_RTS);
-						bus_io_write_1(bc, ioh, com_mcr,
-						    sc->sc_mcr);
+						bus_io_write_1(bc, ioh,
+						    com_mcr, sc->sc_mcr);
 					}
 				}
 #ifdef DDB
@@ -1251,11 +1255,22 @@ comintr(arg)
 			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
-		}
+		} else {
 #ifdef COM_DEBUG
-		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-			printf("weird lsr %02x\n", lsr);
+			if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
+				printf("weird lsr %02x\n", lsr);
 #endif
+			if ((iir & IIR_IMASK) == IIR_RXRDY) {
+				sc->sc_failures++;
+				if (sc->sc_errors++ == 0)
+					timeout(comdiag, sc, 60 * hz);
+				bus_io_write_1(bc, ioh, com_ier, 0);
+				delay(10);
+				bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+				iir = IIR_NOPEND;
+				continue;
+			}
+		}
 
 #ifdef COM_DEBUG
 		iter[n].msr =
@@ -1288,13 +1303,13 @@ comintr(arg)
 #ifdef COM_DEBUG
 		if (++n >= 32)
 			goto ohfudge;
-		if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-			return (1);
-#else
-		if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-			return (1);
+		iter[n].iir =
 #endif
+		iir = bus_io_read_1(bc, ioh, com_iir);
+		if (ISSET(iir, IIR_NOPEND))
+			return (1);
 	}
+
 #ifdef COM_DEBUG
 ohfudge:
 	printf("comintr: too many iterations");
@@ -1308,6 +1323,7 @@ ohfudge:
 	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
 	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
 	    sc->sc_tty->t_outq.c_cc);
+	return (1);
 #endif
 }
 
