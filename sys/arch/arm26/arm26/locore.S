@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.16 2001/08/13 23:16:11 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -339,6 +339,7 @@ Lirq_to_ast:
 	bl	_C_LABEL(ast_handler)
 	b	pull_trapframe
 
+/* LINTSTUB: Func: void atomic_set_bit(u_int *address, u_int setmask) */
 ENTRY(atomic_set_bit)
 	/* disable interrupts */
 	/* Note that this is evil and only works due to prefetching */
@@ -349,6 +350,7 @@ ENTRY(atomic_set_bit)
 	str	r2, [r0]
 	/* restore interrupt state and return */
 	movs	pc, lr
+/* LINTSTUB: Func: void atomic_clear_bit(u_int *address, u_int clearmask) */
 ENTRY(atomic_clear_bit)
 	/* disable interrupts */
 	/* Note that this is evil and only works due to prefetching */
@@ -360,8 +362,9 @@ ENTRY(atomic_clear_bit)
 	/* restore interrupt state and return */
 	movs	pc, lr
 
+/* XXX: Return type should be register_t */
+/* LINTSTUB: Func: int set_r13_irq(register_t r13_irq) */
 ENTRY(set_r13_irq)
-	/* register_t set_r13_irq(register_t r13_irq) */
 	/* XXX Is enabling FIQs OK? */
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
 	mov	r1, r0
@@ -376,14 +379,18 @@ ENTRY(set_r13_irq)
 	 * is part of the state that's restored on function exit, so the
 	 * effect of these only persists until then.
 	 */
+/* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
+/* LINTSTUB: Func: void int_off(void) */
 ENTRY(int_off)
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
 	/* These are used by mcount */
+/* LINTSTUB: Func: int int_off_save(void) */
 ENTRY_NP(int_off_save)
 	mov	r0, r15
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
+/* LINTSTUB: Func: void int_restore(int) */
 ENTRY_NP(int_restore)
 	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
 	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
@@ -400,6 +407,7 @@ ENTRY_NP(int_restore)
 	 * and return to the context in to.  This should be called in
 	 * splhigh();
 	 */
+/* LINTSTUB: Func: void cpu_loswitch(struct switchframe **fromp, struct switchframe *to) */
 ENTRY(cpu_loswitch)
 	mov	r2, sp			/* Temporary stack pointer */
 	stmfd	r2!, {r4-r11, r13-r14}	/* Save all relevant registers */
@@ -428,13 +436,13 @@ ENTRY(proc_trampoline)
 Lproc_trampoline_nofunc:
 	b	pull_trapframe
 
-/* int setjmp(label_t *); */
+/* LINTSTUB: Func: int setjmp(label_t *) */
 ENTRY(setjmp)
 	stmia	r0, {r4-r11, r13-r14}	/* Save relevant registers */
 	mov	r0, #0			/* Return 0 */
 	movs	pc, lr
 
-/* void longjmp(label_t *); */
+/* LINTSTUB: Func: void longjmp(label_t *) */
 ENTRY(longjmp)
 	ldmia	r0, {r4-r11, r13-r14}	/* Restore registers */
 	mov	r0, #1			/* Return 1 through longjmp */
@@ -442,7 +450,7 @@ ENTRY(longjmp)
 
 #ifdef DDB
 /* Enter DDB -- shove registers in a trapframe first */
-/* void cpu_Debugger(void); */
+/* LINTSTUB: Func: void cpu_Debugger(void) */
 ENTRY(cpu_Debugger)
 	stmfd	r13!, {r14}
 	.word	KERNEL_BREAKPOINT
@@ -452,6 +460,7 @@ ENTRY(cpu_Debugger)
 /*
  * Dummy symbols for vmstat -i
  */
+/* LINTSTUB: Var: char intrnames[1], eintrnames[1], intrcnt[1], eintrcnt[1] */
 	.global	_C_LABEL(intrnames)
 _C_LABEL(intrnames):
 	.global	_C_LABEL(eintrnames)
@@ -461,4 +470,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.15 2001/05/01 11:01:12 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.16 2001/08/13 23:16:11 bjh21 Exp $")
