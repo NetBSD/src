@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.7 1996/04/13 01:31:24 jtc Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_kernfs.c,v 1.7 1996/04/13 01:31:24 jtc Exp $";
+static char rcsid[] = "$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$NetBSD: mount_kernfs.c,v 1.7 1996/04/13 01:31:24 jtc Exp
 
 #include "mntopts.h"
 
-struct const mntopt mopts[] = {
+const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
