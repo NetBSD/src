@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.5 1999/02/04 15:26:42 fvdl Exp $	*/
+/*	$NetBSD: md5c.c,v 1.6 1999/09/10 13:21:14 drochner Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -75,7 +75,7 @@ typedef u_int32_t UINT4;
 #define S43 15
 #define S44 21
 
-#if !defined(_KERNEL) && defined(__weak_alias)
+#if !defined(_KERNEL) && !defined(_STANDALONE) && defined(__weak_alias)
 __weak_alias(MD5Init,_MD5Init);
 __weak_alias(MD5Update,_MD5Update);
 __weak_alias(MD5Final,_MD5Final);
@@ -213,6 +213,7 @@ MD5Update(context, input, inputLen)
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
+		/* LINTED const castaway ok */
 		memcpy((POINTER)&context->buffer[idx],
 		    (POINTER)input, partLen);
 		MD5Transform(context->state, context->buffer);
@@ -225,6 +226,7 @@ MD5Update(context, input, inputLen)
 		i = 0;
 
 	/* Buffer remaining input */
+	/* LINTED const castaway ok */
 	memcpy((POINTER)&context->buffer[idx], (POINTER)&input[i],
 	    inputLen - i);
 }
@@ -256,7 +258,7 @@ MD5Final(digest, context)
 	Encode(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)context, sizeof(*context));
+	ZEROIZE((POINTER)(void *)context, sizeof(*context));
 }
 
 /*
@@ -349,5 +351,5 @@ MD5Transform(state, block)
 	state[3] += d;
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)x, sizeof (x));
+	ZEROIZE((POINTER)(void *)x, sizeof (x));
 }
