@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.138 2004/03/26 08:52:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.139 2004/04/01 14:41:53 martin Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SUBDIR= apply apropos asa at audio awk banner basename biff \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis usbhidaction usbhidctl users \
 	uudecode uuencode vacation vgrind vi vis vmstat w \
-	wall wc what whatis whereis which who whois window \
+	wall wc what whatis whereis who whois window \
 	write xargs xinstall xlint xstr yacc yes
 
 .if (${MKHESIOD} != "no")
