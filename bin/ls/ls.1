@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.48 2003/12/26 11:19:50 wiz Exp $
+.\"	$NetBSD: ls.1,v 1.49 2004/08/06 03:17:19 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,11 @@ but use C escape codes whenever possible.
 .It Fl C
 Force multi-column output; this is the default when output is to a terminal.
 .It Fl c
-Use time when file status was last changed for sorting or printing.
+Use time when file status was last changed,
+instead of time of last modification of the file for sorting
+.Pq Fl t
+or printing
+.Pq Fl l .
 .It Fl d
 Directories are listed as plain files (not searched recursively) and
 symbolic links in the argument list are not indirected through.
