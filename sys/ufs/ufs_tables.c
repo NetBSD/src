@@ -31,14 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_tables.c	7.4 (Berkeley) 6/28/90
- *	$Id: ufs_tables.c,v 1.2 1993/05/20 03:53:44 cgd Exp $
+ *	$Id: ufs_tables.c,v 1.2.4.1 1993/11/14 22:02:42 mycroft Exp $
  */
 
-#ifdef KERNEL
-#include "param.h"
-#else
 #include <sys/param.h>
-#endif
 
 /*
  * Bit patterns for identifying fragments in the block map

@@ -34,22 +34,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_quota.c	7.11 (Berkeley) 6/21/91
- *	$Id: ufs_quota.c,v 1.3 1993/08/01 19:26:33 mycroft Exp $
+ *	$Id: ufs_quota.c,v 1.3.2.1 1993/11/14 22:02:39 mycroft Exp $
  */
-#include "param.h"
-#include "kernel.h"
-#include "systm.h"
-#include "namei.h"
-#include "malloc.h"
-#include "file.h"
-#include "proc.h"
-#include "vnode.h"
-#include "mount.h"
 
-#include "fs.h"
-#include "quota.h"
-#include "inode.h"
-#include "ufsmount.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/malloc.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+
+#include <ufs/fs.h>
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#include <ufs/ufsmount.h>
 
 /*
  * Quota name to error message mapping.
