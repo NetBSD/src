@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.148 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: if.c,v 1.149 2004/12/04 18:31:43 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.148 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.149 2004/12/04 18:31:43 peter Exp $");
 
 #include "opt_inet.h"
 
@@ -807,8 +807,7 @@ if_clone_destroy(name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
-	(*ifc->ifc_destroy)(ifp);
-	return (0);
+	return ((*ifc->ifc_destroy)(ifp));
 }
 
 /*

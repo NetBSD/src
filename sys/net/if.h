@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.97 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: if.h,v 1.98 2004/12/04 18:31:43 peter Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ struct if_clone {
 	size_t ifc_namelen;		/* length of name */
 
 	int	(*ifc_create)(struct if_clone *, int);
-	void	(*ifc_destroy)(struct ifnet *);
+	int	(*ifc_destroy)(struct ifnet *);
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\

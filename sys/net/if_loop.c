@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.52 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.53 2004/12/04 18:31:43 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.52 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.53 2004/12/04 18:31:43 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -151,7 +151,7 @@ struct loop_softc {
 LIST_HEAD(, loop_softc) loop_softc_list;
 
 int loop_clone_create(struct if_clone *, int);
-void loop_clone_destroy(struct ifnet *);
+int loop_clone_destroy(struct ifnet *);
 
 struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
@@ -207,13 +207,13 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void
+int
 loop_clone_destroy(struct ifnet *ifp)
 {
 	struct loop_softc *sc = ifp->if_softc;
 
-	if (ifp == lo0ifp)		/* don't kill lo0 */
-		return;
+	if (ifp == lo0ifp)
+		return (EPERM);
 
 #ifdef MBUFTRACE
 	MOWNER_DETACH(ifp->if_mowner);
@@ -227,6 +227,8 @@ loop_clone_destroy(struct ifnet *ifp)
 
 	LIST_REMOVE(sc, sc_list);
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 int

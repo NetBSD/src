@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.55 2004/11/28 17:16:10 skrll Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.56 2004/12/04 18:31:43 peter Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.55 2004/11/28 17:16:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.56 2004/12/04 18:31:43 peter Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -204,7 +204,7 @@ static int pppoe_ifattach_hook(void *, struct mbuf **, struct ifnet *, int);
 LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
 int	pppoe_clone_create __P((struct if_clone *, int));
-void	pppoe_clone_destroy __P((struct ifnet *));
+int	pppoe_clone_destroy __P((struct ifnet *));
 
 struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
@@ -274,7 +274,7 @@ pppoe_clone_create(ifc, unit)
 	return 0;
 }
 
-void
+int
 pppoe_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -298,6 +298,8 @@ pppoe_clone_destroy(ifp)
 	if (sc->sc_ac_cookie)
 		free(sc->sc_ac_cookie, M_DEVBUF);
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 /*
