@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.52 2001/07/03 18:08:50 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.53 2001/07/24 05:06:40 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1320,7 +1320,7 @@ JobExec(job, argv)
 #endif /* RMT_NO_EXEC */
 
     if ((cpid = vfork()) == -1) {
-	Punt("Cannot vfork");
+	Punt("Cannot vfork: %s", strerror(errno));
     } else if (cpid == 0) {
 
 	/*
