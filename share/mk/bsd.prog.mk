@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.182 2003/08/01 17:04:01 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.183 2003/08/22 19:17:00 dsl Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -152,6 +152,9 @@ ${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif	# defined(DESTDIR)
 .endif	# !commands(${PROG})
+
+${PROG}.ro: ${OBJS} ${DPADD}
+	${LD} -r -dc -o ${.TARGET} ${OBJS}
 
 .endif	# defined(OBJS) && !empty(OBJS)
 
