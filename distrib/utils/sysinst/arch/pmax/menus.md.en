@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.14 2000/03/28 00:29:57 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.15 2000/07/25 18:17:09 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,9 +64,8 @@ menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	option  "Online Manual Pages", 	 action { toggle_getit (5); };
 	option  "Miscellaneous", 	 action { toggle_getit (6); };
 	option  "Text Processing Tools", action { toggle_getit (7); };
-	option	"Security (Crypto)",	 action { toggle_getit (8); };
-	option  "X11 base and clients",	 action { toggle_getit (9); };
-	option  "X11 fonts",		 action { toggle_getit (10); };
-	option  "X11 servers",		 action { toggle_getit (11); };
-	option  "X contrib clients",	 action { toggle_getit (12); };
-	option  "X11 programming",	 action { toggle_getit (13); };
+	option  "X11 base and clients",	 action { toggle_getit (8); };
+	option  "X11 fonts",		 action { toggle_getit (9); };
+	option  "X11 servers",		 action { toggle_getit (10); };
+	option  "X contrib clients",	 action { toggle_getit (11); };
+	option  "X11 programming",	 action { toggle_getit (12); };

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.25 2000/03/28 00:29:55 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.26 2000/07/25 18:17:07 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -190,12 +190,11 @@ menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	option  "Pages de manuel", 	 action { toggle_getit (5); };
 	option  "Divers", 	 action { toggle_getit (6); };
 	option  "Outils de manipulation de textes", action { toggle_getit (7); };
-	option	"Security (Crypto)",	 action { toggle_getit (8); };
-	option  "X11 base et clients",	 action { toggle_getit (9); };
-	option  "X11 polices",		 action { toggle_getit (10); };
-	option  "X11 serveurs",		 action { toggle_getit (11); };
-	option  "X11 clients contribués",	 action { toggle_getit (12); };
-	option  "X11 développement",	 action { toggle_getit (13); };
+	option  "X11 base et clients",	 action { toggle_getit (8); };
+	option  "X11 polices",		 action { toggle_getit (9); };
+	option  "X11 serveurs",		 action { toggle_getit (10); };
+	option  "X11 clients contribués",	 action { toggle_getit (11); };
+	option  "X11 développement",	 action { toggle_getit (12); };
 
 menu biosonematch;
 	option "C'est le bon géométrie", exit, action {

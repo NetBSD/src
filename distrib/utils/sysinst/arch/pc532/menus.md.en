@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.13 2000/03/28 00:29:56 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.14 2000/07/25 18:17:09 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,4 +64,3 @@ menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	option  "Online Manual Pages", 	 action { toggle_getit (5); };
 	option  "Miscellaneous", 	 action { toggle_getit (6); };
 	option  "Text Processing Tools", action { toggle_getit (7); };
-	option	"Security (Crypto)",	 action { toggle_getit (8); };
