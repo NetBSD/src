@@ -31,52 +31,27 @@
 #include "DEFS.h"
 
 /*
- * bzero (void *b, size_t len)
- *	write len zero bytes to the string b.
+ * memchr (b, c, len)
+ *	locates the first occurance of c in string b.
  *
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-#include "DEFS.h"
-
-ENTRY(bzero)
+ENTRY(memchr)
 	pushl	%edi
-	pushl	%ebx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
-
-	cld				/* set fill direction forward */
-	xorl	%eax,%eax		/* set fill data to 0 */
-
-	/*
-	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain 
-	 * unaligned set.
-	 */
-	cmpl	$0x0f,%ecx
-	jle	L1
-
-	movl	%edi,%edx		/* compute misalignment */
-	negl	%edx
-	andl	$3,%edx
-	movl	%ecx,%ebx
-	subl	%edx,%ebx
-
-	movl	%edx,%ecx		/* zero until word aligned */
-	rep
-	stosb
-
-	movl	%ebx,%ecx		/* zero by words */
-	shrl	$2,%ecx
-	rep
-	stosl
-
-	movl	%ebx,%ecx
-	andl	$3,%ecx			/* zero remainder by bytes */
-L1:	rep
-	stosb
-
-	popl	%ebx
+	movl	8(%esp),%edi		/* string address */
+	movl	12(%esp),%eax		/* set character to search for */
+	movl	16(%esp),%ecx		/* set length of search */
+	testl	%eax,%eax		/* clear Z flag, for len == 0 */
+	cld				/* set search forward */
+	repne				/* search! */
+	scasb
+	jnz	L1			/* scan failed, return null */
+	leal	-1(%edi),%eax		/* adjust result of scan */
+	popl	%edi
+	ret
+	.align 2,0x90
+L1:	xorl	%eax,%eax
 	popl	%edi
 	ret
