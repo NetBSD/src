@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.1 1996/07/20 17:58:28 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.2 1998/05/22 09:49:08 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,10 +76,50 @@ struct confargs {
 #define ca_leflags	ca_aux2
 };
 
-int vsbus_intr_register __P((struct confargs *, int(*)(void*), void*));
-int vsbus_intr_enable __P((struct confargs *));
-int vsbus_intr_disable  __P((struct confargs *));
-int vsbus_intr_unregister __P((struct confargs *));
+struct	vsbus_attach_args {
+	int va_type;
+};
+
+/*
+ * Some chip addresses and constants, same on all VAXstations.
+ */
+#define NI_ADDR         0x20090000      /* Ethernet address */
+#define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
+#define VS_CLOCK        0x200b0000      /* clock chip address */
+#define NI_BASE         0x200e0000      /* LANCE CSRs */
+#define NI_IOSIZE       (128 * NBPG)    /* IO address size */
+#define VS_REGS         0x20080000      /* Misc cpu internal regs */
+
+/*
+ * interrupt vector numbers
+ */
+#define IVEC_BASE       0x20040020
+#define IVEC_SR         0x000002C0
+#define INR_SR          7
+#define IVEC_ST         0x000002C4
+#define INR_ST          6
+#define IVEC_NP         0x00000250
+#define INR_NP          5
+#define IVEC_NS         0x00000254
+#define INR_NS          4
+#define IVEC_VF         0x00000244
+#define INR_VF          3
+#define IVEC_VS         0x00000248
+#define INR_VS          2
+#define IVEC_SC         0x000003F8
+#define INR_SC          1
+#define IVEC_DC         0x000003FC
+#define INR_DC          0
+
+caddr_t	dz_regs;	/* On-board serial line */
+caddr_t	le_iomem;       /* base addr of RAM -- CPU's view */
+short   *lance_csr;     /* LANCE CSR virtual address */
+int     *lance_addr;    /* Ethernet address */
+struct  vs_cpu *vs_cpu; /* Common CPU registers */
+
+void vsbus_intr_enable __P((int));
+void vsbus_intr_disable  __P((int));
+void vsbus_intr_attach __P((int, void(*)(int), int));
 
 int vsbus_lockDMA __P((struct confargs *));
 int vsbus_unlockDMA __P((struct confargs *));

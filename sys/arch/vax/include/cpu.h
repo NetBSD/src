@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.26 1998/04/13 12:12:59 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.27 1998/05/22 09:49:07 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -55,10 +55,6 @@ struct	cpu_dep {
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
 	int	cpu_vups;	/* speed of cpu */
-	u_char  *cpu_intreq;	/* Used on some VAXstations */
-	u_char  *cpu_intclr;	/* Used on some VAXstations */
-	u_char  *cpu_intmsk;	/* Used on some VAXstations */
-	struct	uc_map *cpu_map; /* Map containing important addresses */
 	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
 	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
 	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
