@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.9 2003/03/05 21:05:39 wiz Exp $	*/
+/*	$NetBSD: inet.c,v 1.10 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -103,12 +103,12 @@ inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
  * Convert an IP address in u_long (network) format into a printable string.
  */
 char *
-inet_fmt(u_int32_t addr, char *s)
+inet_fmt(u_int32_t addr, char *s, size_t len)
 {
     u_char *a;
 
     a = (u_char *)&addr;
-    sprintf(s, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
+    snprintf(s, len, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
     return (s);
 }
 
@@ -118,24 +118,24 @@ inet_fmt(u_int32_t addr, char *s)
  * string including the netmask as a number of bits.
  */
 char *
-inet_fmts(u_int32_t addr, u_int32_t mask, char *s)
+inet_fmts(u_int32_t addr, u_int32_t mask, char *s, size_t len)
 {
     u_char *a, *m;
     int bits;
 
     if ((addr == 0) && (mask == 0)) {
-	sprintf(s, "default");
+	snprintf(s, len, "default");
 	return (s);
     }
     a = (u_char *)&addr;
     m = (u_char *)&mask;
     bits = 33 - ffs(ntohl(mask));
 
-    if      (m[3] != 0) sprintf(s, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
+    if      (m[3] != 0) snprintf(s, len, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
 						bits);
-    else if (m[2] != 0) sprintf(s, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
-    else if (m[1] != 0) sprintf(s, "%u.%u/%d",       a[0], a[1], bits);
-    else                sprintf(s, "%u/%d",          a[0], bits);
+    else if (m[2] != 0) snprintf(s, len, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
+    else if (m[1] != 0) snprintf(s, len, "%u.%u/%d",       a[0], a[1], bits);
+    else                snprintf(s, len, "%u/%d",          a[0], bits);
 
     return (s);
 }
