@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 1998/05/22 19:29:00 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.33 1998/06/10 04:33:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,8 @@ static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
+static	void	dependopts __P((void));
+static	void	do_depend __P((struct nvlist *));
 static	void	stop __P((void));
 static	int	do_option __P((struct hashtab *, struct nvlist ***,
 		    const char *, const char *, const char *));
@@ -204,6 +206,11 @@ usage:
 		stop();
 
 	/*
+	 * Deal with option dependencies.
+	 */
+	dependopts();
+
+	/*
 	 * Fix (as in `set firmly in place') files.
 	 */
 	if (fixfiles())
@@ -253,6 +260,39 @@ usage:
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);
+}
+
+/*
+ * Set any options that are implied by other options.
+ */
+static void
+dependopts()
+{
+	struct nvlist *nv, *opt;
+
+	for (nv = options; nv != NULL; nv = nv->nv_next) {
+		if ((opt = ht_lookup(defopttab, nv->nv_name)) != NULL) {
+			for (opt = opt->nv_ptr; opt != NULL;
+			    opt = opt->nv_next) {
+				do_depend(opt);
+			}
+		}
+	}
+}
+
+static void
+do_depend(nv)
+	struct nvlist *nv;
+{
+	struct nvlist *nextnv;
+
+	if (nv != NULL) {
+		if (ht_lookup(opttab, nv->nv_name) == NULL)
+			addoption(nv->nv_name, NULL);
+		if ((nextnv = ht_lookup(defopttab, nv->nv_name)) != NULL)
+			do_depend(nextnv->nv_ptr);
+	}
+	
 }
 
 /*
@@ -356,14 +396,29 @@ deffilesystem(fname, fses)
  * an option file for each option.
  */
 void
-defoption(fname, opts)
+defoption(fname, opts, deps)
 	const char *fname;
-	struct nvlist *opts;
+	struct nvlist *opts, *deps;
 {
-	struct nvlist *nv, *nextnv;
-	const char *n;
+	struct nvlist *nv, *nextnv, *oldnv;
+	const char *name, *n;
 	char *p, c;
 	char low[500];
+
+	if (fname != NULL) {
+		/*
+		 * We're putting multiple options into one file.  Sanity
+		 * check the file name.
+		 */
+		if (strchr(fname, '/') != NULL) {
+			error("option file name contains a `/'");
+			return;
+		}
+		if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
+			error("option file name does not end in `.h'");
+			return;
+		}
+	}
 
 	/*
 	 * Mark these options as ones to skip when creating the Makefile.
@@ -390,43 +445,32 @@ defoption(fname, opts)
 			*p = '\0';
 			strcat(low, ".h");
 
-			n = intern(low);
-
-			/*
-			 * This is the only option in the file, so remove
-			 * it from the list.
-			 */
-			nv->nv_next = NULL;
-
-			if (ht_insert(optfiletab, n, nv)) {
-				error("option file `%s' already exists", n);
-				return;
-			}
+			name = intern(low);
+		} else {
+			name = fname;
 		}
-	}
 
-	/*
-	 * No more to do if no option file name was specified.
-	 */
-	if (fname == NULL)
-		return;
+		/* Use nv_ptr to link any other options that are implied. */
+		nv->nv_ptr = deps;
 
-	/*
-	 * We're putting multiple options into one file.  Sanity
-	 * check the file name.
-	 */
-	if (strchr(fname, '/') != NULL) {
-		error("option file name contains a `/'");
-		return;
-	}
-	if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
-		error("option file name does not end in `.h'");
-		return;
-	}
+		/*
+		 * Remove this option from the parameter list before adding
+		 * it to the list associated with this option file.
+		 */
+		nv->nv_next = NULL;
 
-	if (ht_insert(optfiletab, fname, opts)) {
-		error("option file `%s' already exists", fname);
-		return;
+		/*
+		 * Add this option file if we haven't seen it yet.
+		 * Otherwise, append to the list of options already
+		 * associated with this file.
+		 */
+		if ((oldnv = ht_lookup(optfiletab, name)) == NULL) {
+			(void)ht_insert(optfiletab, name, nv);
+		} else {
+			while (oldnv->nv_next != NULL)
+				oldnv = oldnv->nv_next;
+			oldnv->nv_next = nv;
+		}
 	}
 }
 

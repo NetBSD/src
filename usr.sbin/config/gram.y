@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.22 1998/02/19 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.23 1998/06/10 04:33:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,6 +132,7 @@ static	void	check_maxpart __P((void));
 %type	<str>	fsoptfile_opt
 %type	<str>	defopt
 %type	<list>	defopts
+%type	<list>	defoptdeps
 %type	<str>	optfile_opt
 
 %%
@@ -238,7 +239,8 @@ one_def:
 	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |
 	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3, 0); } |
-	DEFOPT optfile_opt defopts	{ defoption($2, $3); } |
+	DEFOPT optfile_opt defopts defoptdeps
+					{ defoption($2, $3, $4); } |
 	DEVICE devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
@@ -262,6 +264,10 @@ deffses:
 
 deffs:
 	WORD				{ $$ = $1; };
+
+defoptdeps:
+	':' defopts			{ $$ = $2; } |
+	/* empty */			{ $$ = NULL; };
 
 defopts:
 	defopts defopt			{ $$ = new_nx($2, $1); } |
