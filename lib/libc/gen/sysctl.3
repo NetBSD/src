@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.109 2003/02/27 01:42:10 thorpej Exp $
+.\"	$NetBSD: sysctl.3,v 1.110 2003/03/01 04:43:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -821,6 +821,7 @@ The currently defined protocols and names are:
 .It tcp	syn_bucket_limit	integer	yes
 .It tcp	syn_cache_interval	integer	yes
 .It tcp	init_win	integer	yes
+.It tcp	init_win_local	integer	yes
 .It tcp	mss_ifmtu	integer	yes
 .It tcp	sack	integer	yes
 .It tcp	win_scale	integer	yes
@@ -942,6 +943,10 @@ Returns a value indicating the TCP initial congestion window.
 If this value is 0, an auto-tuning algorithm designed to use an initial
 window of approximately 4K bytes is in use.
 Otherwise, this value indicates a fixed number of packets.
+.It Li tcp.init_win_local
+Like
+.Li tcp.init_win ,
+but used when communicating with hosts on a local network.
 .It Li tcp.mss_ifmtu
 Returns 1 if TCP calculates the outgoing maximum segment size based on
 the MTU of the appropriate interface.
