@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.2 2000/10/09 14:57:22 is Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -174,6 +174,9 @@ static	void	true_receive	P((struct recvbuf *));
 static	void	true_poll	P((int, struct peer *));
 static	void	true_send	P((struct peer *, const char *));
 static	void	true_doevent	P((struct peer *, enum true_event));
+static  void    true_debug	P((struct peer *peer, const char *fmt, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+
 
 #ifdef CLOCK_PPS720
 static	u_long	true_sample720	P((void));
