@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.6 1994/11/03 23:14:50 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.7 1994/11/04 21:32:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -269,8 +269,8 @@ egreadPCB(sc)
 		return 1;
 	if (egreadPCBstat(sc, EG_PCB_DONE))
 		return 1;
-	if ((b = inb(sc->eg_cmd)) != sc->eg_pcb[1]+2) {
-		dprintf(("%d != %d\n", b, sc->eg_pcb[1]+2));
+	if ((b = inb(sc->eg_cmd)) != sc->eg_pcb[1] + 2) {
+		dprintf(("%d != %d\n", b, sc->eg_pcb[1] + 2));
 		return 1;
 	}
 	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)) | EG_PCB_ACCEPT);
@@ -383,7 +383,7 @@ egattach(parent, self, aux)
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
-	   sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
+	    sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
 		dprintf(("parse error2\n"));
 		egprintpcb(sc);
 		return;
@@ -441,7 +441,8 @@ eginit(sc)
 		dprintf(("read error\n"));
 		egprintpcb(sc);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		printf("eg: configure card command failed.\n");
+		printf("%s: configure card command failed\n",
+		    sc->sc_dev.dv_xname);
 
 	if (sc->eg_inbuf == NULL)
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
@@ -566,13 +567,13 @@ egintr(sc)
 		egreadPCB(sc);
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
-			len = sc->eg_pcb[6]+(sc->eg_pcb[7]<<8);
+			len = sc->eg_pcb[6] | (sc->eg_pcb[7] << 8);
 			for (ptr = (short *) sc->eg_inbuf; len > 0; len -= 2) {
 				while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
 					;
 				*ptr++ = inw(sc->eg_data);
 			}
-			len = sc->eg_pcb[8]+(sc->eg_pcb[9]<<8);
+			len = sc->eg_pcb[8] | (sc->eg_pcb[9] << 8);
 			egrecv(sc);
 			sc->sc_arpcom.ac_if.if_ipackets++;
 			egread(sc, sc->eg_inbuf, len);
@@ -604,7 +605,7 @@ egintr(sc)
 			
 		default:
 			dprintf(("egintr: Unknown response %x??\n",
-			      sc->eg_pcb[0]));
+			    sc->eg_pcb[0]));
 			egprintpcb(sc);
 			break;
 		}
