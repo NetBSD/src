@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.9 2001/08/03 14:26:13 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2001/11/05 15:11:40 lukem Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
 .endif
+
+.include "../../Makefile.inc"
 
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=${ELFSIZE}
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
