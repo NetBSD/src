@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.7 1996/01/31 08:47:22 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.8 1996/02/02 18:08:03 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 
-#include <scc.h>
+#include "scc.h"
 #if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the

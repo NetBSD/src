@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.12 1995/12/30 19:42:16 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.13 1996/02/02 18:08:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -45,49 +45,49 @@
  *	timeout routine (get statistics)
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
-#include "sys/syslog.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
-#include "netiso/iso.h"
-#include "netiso/iso_var.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
 extern char all_es_snpa[], all_is_snpa[];
 #endif
 
-#include "../include/cpu.h"
-#include "../include/mtpr.h"
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
 #include "if_dereg.h"
 #include "if_uba.h"
-#include "../uba/ubareg.h"
-#include "../uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define	NXMT	3	/* number of transmit buffers */
 #define	NRCV	7	/* number of receive buffers (must be > 1) */

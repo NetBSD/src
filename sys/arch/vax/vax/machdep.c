@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23 1996/01/28 12:22:54 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.24 1996/02/02 18:08:59 mycroft Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,44 +45,44 @@
  * @(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/map.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/time.h"
-#include "sys/signal.h"
-#include "sys/kernel.h"
-#include "sys/reboot.h"
-#include "sys/msgbuf.h"
-#include "sys/buf.h"
-#include "sys/mbuf.h"
-#include "sys/reboot.h"
-#include "sys/conf.h"
-#include "sys/callout.h"
-#include "sys/device.h"
-#include "sys/exec.h"
-#include "sys/mount.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/time.h>
+#include <sys/signal.h>
+#include <sys/kernel.h>
+#include <sys/reboot.h>
+#include <sys/msgbuf.h>
+#include <sys/buf.h>
+#include <sys/mbuf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/callout.h>
+#include <sys/device.h>
+#include <sys/exec.h>
+#include <sys/mount.h>
 #ifdef SYSVMSG
-#include "sys/msg.h"
+#include <sys/msg.h>
 #endif
 #ifdef SYSVSEM
-#include "sys/sem.h"
+#include <sys/sem.h>
 #endif
 #ifdef SYSVSHM
-#include "sys/shm.h"
+#include <sys/shm.h>
 #endif
-#include "machine/sid.h"
-#include "machine/pte.h"
-#include "machine/mtpr.h"
-#include "machine/cpu.h"
-#include "machine/macros.h"
-#include "machine/nexus.h"
-#include "machine/trap.h"
-#include "machine/reg.h"
-#include "machine/../vax/gencons.h"
-#include "vm/vm_kern.h"
-#include "net/netisr.h"
+#include <machine/sid.h>
+#include <machine/pte.h>
+#include <machine/mtpr.h>
+#include <machine/cpu.h>
+#include <machine/macros.h>
+#include <machine/nexus.h>
+#include <machine/trap.h>
+#include <machine/reg.h>
+#include <machine/../vax/gencons.h>
+#include <vm/vm_kern.h>
+#include <net/netisr.h>
 
 #include <sys/syscallargs.h>
 

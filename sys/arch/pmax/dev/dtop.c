@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.10 1996/01/29 22:52:19 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.11 1996/02/02 18:07:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ SOFTWARE.
 
 ********************************************************/
 
-#include <dtop.h>
+#include "dtop.h"
 #if NDTOP > 0
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 1996/02/02 02:36:54 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 1996/02/02 18:06:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1040,7 +1040,7 @@ _esigcode:
  * Primitives
  */ 
 
-#include "m68k/asm.h"
+#include <m68k/asm.h>
 
 /*
  * copypage(fromaddr, toaddr)

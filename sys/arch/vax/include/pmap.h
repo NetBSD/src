@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.11 1995/11/12 14:41:41 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.12 1996/02/02 18:08:27 mycroft Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,7 +46,7 @@
 #ifndef	PMAP_H
 #define	PMAP_H
 
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 
 
 #define VAX_PAGE_SIZE	NBPG

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1996/01/31 08:47:00 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 1996/02/02 18:07:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,10 +78,10 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <asc.h>
-#include <sii.h>
-#include <le.h>
-#include <dc.h>
+#include "asc.h"
+#include "sii.h"
+#include "le.h"
+#include "dc.h"
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>

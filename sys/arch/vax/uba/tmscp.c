@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.7 1995/12/13 19:02:53 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.8 1996/02/02 18:08:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -158,27 +158,27 @@
 #include "tmscp.h"
 #if NTMSCP > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/conf.h"
-#include "sys/errno.h"
-#include "sys/file.h"
-#include "sys/map.h"
-#include "sys/ioctl.h"
-#include "sys/syslog.h"
-#include "sys/mtio.h"
-/* #include "sys/cmap.h" */
-#include "sys/uio.h"
-#include "sys/proc.h"
-#include "sys/tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/map.h>
+#include <sys/ioctl.h>
+#include <sys/syslog.h>
+#include <sys/mtio.h>
+/* #include <sys/cmap.h> */
+#include <sys/uio.h>
+#include <sys/proc.h>
+#include <sys/tprintf.h>
 
-#include "vax/include/pte.h"
-#include "vax/include/cpu.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/sid.h"
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <machine/sid.h>
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define TENSEC	(1000)
 #define	TMS_PRI	LOG_INFO
@@ -189,8 +189,8 @@
 #define NCMD    (1<<NCMDL2)
 
 #include "tmscpreg.h"
-#include "vax/vax/tmscpinf.h"
-#include "vax/vax/mscpvar.h"
+#include <vax/vax/tmscpinf.h>
+#include <vax/vax/mscpvar.h>
 
 int	tmscp_match __P((struct device *, void *, void *));
 void	tmscp_attach __P((struct device *, struct device *, void *));

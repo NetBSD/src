@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.2 1996/02/02 02:35:30 mycroft Exp $ */
+/* $NetBSD: bcopyinout.S,v 1.3 1996/02/02 18:05:47 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,11 +43,11 @@
  * Created      : 16/05/95
  * Last updated : 16/05/95
  *
- *    $Id: bcopyinout.S,v 1.2 1996/02/02 02:35:30 mycroft Exp $
+ *    $Id: bcopyinout.S,v 1.3 1996/02/02 18:05:47 mycroft Exp $
  */
 
 #include "assym.h"
-#include "sys/errno.h"
+#include <sys/errno.h>
 
 sp	.req	r13
 lr	.req	r14

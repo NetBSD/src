@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.9 1995/12/13 18:45:56 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.10 1996/02/02 18:08:49 mycroft Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,8 +33,8 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#include "machine/mtpr.h"
-#include "machine/sid.h"
+#include <machine/mtpr.h>
+#include <machine/sid.h>
 
 #define SEC_PER_DAY (60*60*24)
 

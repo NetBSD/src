@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_disp.s,v 1.2 1996/02/01 22:28:35 mycroft Exp $	*/
+/*	$NetBSD: prom_disp.s,v 1.3 1996/02/02 18:05:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,9 +28,9 @@
  */
 
 #ifndef _LOCORE
-#include "../include/asm.h"
-#include "../include/prom.h"
-#include "../include/rpb.h"
+#include <machine/asm.h>
+#include <machine/prom.h>
+#include <machine/rpb.h>
 #endif
 
 	.globl	prom_dispatch_v

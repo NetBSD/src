@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1996/01/29 04:10:00 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 1996/02/02 18:06:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,14 +78,14 @@
  */
 
 #if !defined(STANDALONE)
-#include "param.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
 
-#include "machine/psl.h"
-#include "machine/cpu.h"
+#include <machine/psl.h>
+#include <machine/cpu.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
-#include "sys/gprof.h"
+#include <sys/gprof.h>
 #endif
 
 #else				/* STANDALONE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.9 1996/01/29 22:52:20 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.10 1996/02/02 18:07:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,8 +80,8 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
-#include <fb.h>
-#include <mfb.h>
+#include "fb.h"
+#include "mfb.h"
 #if NMFB > 0
 #include <sys/param.h>
 #include <sys/kernel.h>

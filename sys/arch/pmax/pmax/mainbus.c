@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1996/01/29 22:52:34 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 1996/02/02 18:07:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 #include <machine/autoconf.h>
 /*#include <machine/rpb.h>*/
 #include "pmaxtype.h"
-#include "machine/machConst.h"
+#include <machine/machConst.h>
 #include "nameglue.h"
 #include "kn01.h"
 

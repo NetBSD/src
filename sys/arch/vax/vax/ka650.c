@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.1 1995/12/13 18:45:52 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.2 1996/02/02 18:08:55 mycroft Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -41,19 +41,19 @@
  * vax650-specific code.
  */
 
-#include "sys/param.h"
-#include "sys/time.h"
-#include "sys/kernel.h"
-#include "sys/systm.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "machine/ka650.h"
-#include "machine/cpu.h"
-#include "machine/psl.h"
-#include "machine/mtpr.h"
-#include "machine/nexus.h"
+#include <machine/ka650.h>
+#include <machine/cpu.h>
+#include <machine/psl.h>
+#include <machine/mtpr.h>
+#include <machine/nexus.h>
 
 struct	ka650_merr *ka650merr_ptr;
 struct	ka650_cbd *ka650cbd_ptr;
