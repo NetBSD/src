@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.16 1997/01/28 09:41:03 pk Exp $	*/
+/*	$NetBSD: open.c,v 1.17 1998/09/22 00:36:45 ross Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -71,6 +71,10 @@ struct open_file files[SOPEN_MAX];
 /*
  *	File primitives proper
  */
+
+#ifdef HELLO_CTAGS
+oopen(){}
+#endif
 
 int
 #ifndef __INTERNAL_LIBSA_CREAD
