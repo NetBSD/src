@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.79 1996/03/17 00:53:39 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.80 1996/04/11 22:25:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -35,6 +35,9 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#ifndef i386							/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -74,9 +77,11 @@ isaattach(parent, self, aux)
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
 
+	isa_attach_hook(parent, self, iba);
 	printf("\n");
 
 	sc->sc_bc = iba->iba_bc;
+	sc->sc_ic = iba->iba_ic;
 
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
@@ -118,6 +123,7 @@ isascan(parent, match)
 		panic("clone devices not supported on ISA bus");
 
 	ia.ia_bc = sc->sc_bc;
+	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2];
