@@ -1,7 +1,7 @@
-/*	$NetBSD: rrunner.c,v 1.1 1998/05/14 00:04:57 kml Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.2 1998/05/17 16:46:28 kml Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
@@ -768,13 +768,13 @@ eshintr(arg)
 
 			/* Send events */
 
-		case RR_EC_PACKET_SENT:
+		case RR_EC_PACKET_SENT:   	/* not used in firmware 2.x */
 			ifp->if_opackets++;
-			/* fallthrough */
+			/* FALLTHROUGH */
 
 		case RR_EC_SET_SND_CONSUMER:
 			assert(sc->sc_version == 1);
-			/* fallthrough */
+			/* FALLTHROUGH */
 
 		case RR_EC_SEND_RING_LOW:
 			eshstart_cleanup(sc, event->re_index, 0); 
@@ -948,6 +948,15 @@ eshstart(ifp)
 		}
 #endif
 
+		/* 
+		 * Version 1 over the firmware sent an event each
+		 * time it sent out a packet.  Later versions do not
+		 * (which results in a considerable speedup), so we
+		 * have to keep track here.
+		 */
+
+		if (sc->sc_version != 1)
+			sc->sc_if.if_opackets++;
 		m_write_len = write_len = m->m_pkthdr.len;
 
 		if (write_len > max_write_len)
@@ -1270,38 +1279,9 @@ eshstart_cleanup(sc, consumer, error)
 			     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (send->ec_consumer != consumer) {
-		int packet_end;
 		offset = send->ec_consumer;
 		assert(send->ec_dma[offset]->dm_nsegs);
 		assert(send->ec_m[offset]);
-
-		/* 
-		 * We need a way to increment ifp->if_opackets in here,
-		 * but we have to be careful that we don't just blindly
-		 * increment the counter even when we are cleaning up 
-		 * packets that were never sent.
-		 *
-		 * Thus, we check for end of packet, and check to see if
-		 * the error flag has been set (events denoting errors 
-		 * will set the flag).  Further, the error flag could be
-		 * set, and if we aren't yet at the end of the packet,
-		 * we are still okay.
-		 */
-
-
-		if (sc->sc_options & RR_OP_LONG_TX) {
-			packet_end = send->ec_descr[offset].rd_control & 
-				RR_CT_PACKET_END;
-		} else {
-			packet_end = send->ec2_descr[offset].rd_control 
-				& RR2_CT_PACKET_END;
-		}
-
-		if (packet_end && (!error || consumer != 
-				   (sc->sc_options & RR_OP_LONG_TX) ? 
-				   NEXT_SEND2(offset) : NEXT_SEND(offset))) {
-			sc->sc_if.if_opackets++;
-		}
 
 		bus_dmamap_sync(sc->sc_dmat, send->ec_dma[offset], 
 				0, send->ec_m[offset]->m_len, 
