@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.2 2001/11/30 21:56:03 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.3 2001/12/01 22:14:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.2 2001/11/30 21:56:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.3 2001/12/01 22:14:15 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -160,7 +160,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	int prot;
 	int flags;
 	u_long size;
-	u_long addr, uaddr, msize, psize, rm, rf;
+	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -206,14 +206,17 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	FILE_USE(fp);
 	pht = kph;
 	for (i = 0; i < count; i++) {
+#ifdef INSANE_DEBUG_IRIX
+		printf("i = %d\n", i);
+#endif
 		vcset.evs_cnt = 0;
 		vcset.evs_used = 0;
 
-		addr = pht->p_vaddr;
-		uaddr = pht->p_vaddr;
 		if (pht->p_align > 1)
-			addr = ELF_TRUNC(uaddr, pht->p_align);
-		diff = uaddr - addr;
+			uaddr = ELF_TRUNC(pht->p_vaddr, pht->p_align);
+		else
+			uaddr = pht->p_vaddr;
+		diff = pht->p_vaddr - uaddr;
 
 		prot |= (pht->p_flags & PF_R) ? VM_PROT_READ : 0;
 		prot |= (pht->p_flags & PF_W) ? VM_PROT_WRITE : 0;
@@ -241,28 +244,28 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		if (psize > 0) {
 #ifdef INSANE_DEBUG_IRIX
 			printf("irix_mapelf(): psize > 0; NEW_VMCMD2\n");
-			printf("psize = 0x%lx, addr = 0x%lx\n", psize, addr);
+			printf("psize = 0x%lx, uaddr = 0x%lx\n", psize, uaddr);
 			printf("vp = %p, offset = 0x%lx\n", vp, offset);
 			printf("pht->p_align = 0x%lx\n", (long)pht->p_align);
 #endif
 			NEW_VMCMD2(&vcset, pht->p_align < PAGE_SIZE ?
 			    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, 
-			    addr, vp, offset, prot, flags);
+			    uaddr, vp, offset, prot, flags);
 		}
 		if (psize < size) {
 #ifdef INSANE_DEBUG_IRIX
 			printf("irix_mapelf(): psize < size; NEW_VMCMD2\n");
 #endif
 			NEW_VMCMD2(&vcset, vmcmd_map_readvn, size - psize,
-			    addr + psize, vp, offset + psize, prot,
+			    uaddr + psize, vp, offset + psize, prot,
 			    psize > 0 ? flags & VMCMD_RELATIVE : flags);
 		}
 
 		/*
 		 * Check if we need to extend the size of the segment
 		 */
-		rm = round_page(addr + msize);
-		rf = round_page(addr + size);
+		rm = round_page(uaddr + msize);
+		rf = round_page(uaddr + size);
 
 		if (rm != rf) {
 #ifdef INSANE_DEBUG_IRIX
@@ -286,8 +289,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 #ifdef INSANE_DEBUG_IRIX
 	printf("irix_syssgi_mapelf(): mapping i = %d, j = %d, *pht = %p\n",
 	    i, j, pht);
-	printf("addr = 0x%lx, uaddr = 0x%lx, size = 0x%lx, msize = 0x%lx\n",
-	    addr, uaddr, size, msize);
+	printf("uaddr = 0x%lx, size = 0x%lx, msize = 0x%lx\n",
+	    uaddr, size, msize);
 	printf("psize = 0x%lx, rm = 0x%lx, rf = 0x%lx\n",
 	    psize, rm, rf);
 #endif
@@ -297,6 +300,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			base_vcp = vcp;
 		}
 		pht++;
+		kill_vmcmds(&vcset);
 	}
 
 	FILE_UNUSE(fp, p);
