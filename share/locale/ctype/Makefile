@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2003/09/02 10:26:46 junyoung Exp $
+# $NetBSD: Makefile,v 1.16 2003/09/02 10:29:27 junyoung Exp $
 
 NOMAN=	# defined
 
@@ -293,14 +293,14 @@ LOCALES += zh_CN.GB18030
  LOCALESRC_zh_CN.GB18030 = zh_CN.GB18030
    ALIASES_zh_CN.GB18030+=
 
+LOCALES += zh_TW.Big5
+ LOCALESRC_zh_TW.Big5 = zh_TW.BIG5
+   ALIASES_zh_TW.Big5+= zh_TW.BIG5
+
 # XXX: EUC-TW is not EUC!
 LOCALES += zh_TW.eucTW
  LOCALESRC_zh_TW.eucTW = zh_TW.eucTW
    ALIASES_zh_TW.eucTW+=
-
-LOCALES += zh_TW.Big5
- LOCALESRC_zh_TW.Big5 = zh_TW.BIG5
-   ALIASES_zh_TW.Big5+= zh_TW.BIG5
 
 all: ${LOCALES:S/$/.out/g}
 realall: ${LOCALES:S/$/.out/g}
