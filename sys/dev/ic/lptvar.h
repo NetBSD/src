@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.46 1997/10/14 15:50:17 is Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.47 1997/12/07 16:09:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -60,7 +60,7 @@ struct lpt_softc {
 	struct device sc_dev;
 	void *sc_ih;
 	size_t sc_count;
-	struct buf *sc_inbuf;
+	void *sc_inbuf;
 	u_char *sc_cp;
 	int sc_spinmax;
 	bus_space_tag_t sc_iot;
