@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/03/31 16:02:30 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/04/01 19:12:16 bjh21 Exp $
 #
 #	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
@@ -18,4 +18,4 @@ snap_md_post:
 	cp -p ${DESTDIR}/usr/mdec/boot26,ffa ${RELEASEDIR}/installation/misc/.
 
 	# compute checksums
-	sh ${.CURDIR}/../distrib/sets/makesums -t ${RELEASEDIR}/installation '*'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/misc 'boot26,ffa'
