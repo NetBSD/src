@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.11 1998/09/04 19:54:41 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.12 1998/10/03 21:22:57 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -346,7 +346,8 @@ svr4_ttold_ioctl(fp, p, retval, fd, cmd, data)
 	case SVR4_TIOCLGET:
 		{
 			int flags;
-			if ((error = (*ctl)(fp, cmd, (caddr_t) &flags, p)) != 0)
+			if ((error = (*ctl)(fp, TIOCLGET,
+			    (caddr_t) &flags, p)) != 0)
 				return error;
 			DPRINTF(("SVR4_TIOCLGET %o\n", flags));
 			return copyout(&flags, data, sizeof(flags));
