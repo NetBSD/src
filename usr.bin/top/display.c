@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.9 2003/03/05 01:10:46 jrf Exp $	*/
+/*	$NetBSD: display.c,v 1.10 2003/06/23 13:05:52 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -44,6 +44,11 @@
  *        *_procstates, *_cpustates, *_memory, *_message, *_header,
  *        *_process, u_endscreen.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: display.c,v 1.10 2003/06/23 13:05:52 agc Exp $");
+#endif
 
 #include "os.h"
 #include <ctype.h>

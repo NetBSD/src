@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
+/*      $NetBSD: usbhid.c,v 1.23 2003/06/23 13:05:54 agc Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: usbhid.c,v 1.23 2003/06/23 13:05:54 agc Exp $");
+#endif
 
 #include <sys/types.h>
 

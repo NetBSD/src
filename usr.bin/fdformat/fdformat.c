@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.9 2001/03/28 03:17:41 simonb Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.10 2003/06/23 13:05:47 agc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,12 @@
  * fdformat: format a floppy diskette, using interface provided in
  * <sys/fdio.h>
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: fdformat.c,v 1.10 2003/06/23 13:05:47 agc Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/fdio.h>
 #include <sys/ioctl.h>
