@@ -1,9 +1,12 @@
-#	$NetBSD: COMPUTEX7750,v 1.7 2000/09/24 15:59:31 jdolecek Exp $
+#	$NetBSD: COMPUTEX7750,v 1.8 2001/01/03 23:49:21 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include "arch/evbsh3/conf/std.evbsh3"
+# for big endian
+include "arch/evbsh3/conf/std.evbsh3.eb"
+# for little endian
+#include "arch/evbsh3/conf/std.evbsh3.el"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -48,9 +51,6 @@ options		BSC_RTCOR_VAL	=0xa582
 #options		BSC_RFCR_VAL	=0xa400
 options		FRQCR_VAL	=0x0e23
 options		BSC_SDMR3_VAL	=0xff940110
-
-makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
-#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
