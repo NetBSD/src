@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.60 2001/12/29 15:44:11 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.61 2002/01/01 14:23:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -471,6 +471,7 @@ typedef struct {
 #define UICLASS_FIRM_UPD	0x0c
 
 #define UICLASS_APPL_SPEC	0xfe
+#define  UISUBCLASS_FIRMWARE_DOWNLOAD	1
 #define  UISUBCLASS_IRDA		2
 #define  UIPROTO_IRDA			0
 
