@@ -165,8 +165,8 @@ extern void master_delete_children(MASTER_SERV *);
  /*
   * master_flow.c
   */
-void    master_flow_init(void);
-int     master_flow_pipe[2];
+extern void master_flow_init(void);
+extern int master_flow_pipe[2];
 
 /* DIAGNOSTICS
 /* BUGS

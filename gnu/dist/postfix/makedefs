@@ -61,14 +61,13 @@ case "$SYSTEM.$RELEASE" in
    SCO_SV.3.2)	SYSTYPE=SCO5
 		# Use the native compiler by default
 		: ${CC="/usr/bin/cc -b elf"}
-		: ${DEBUG=}
+		CCARGS="-DPIPES_CANT_FIONREAD $CCARGS"
 		SYSLIBS="-lsocket -ldbm"
 		RANLIB=echo
 		;;
   UnixWare.5*)	SYSTYPE=UW7
 		# Use the native compiler by default
 		: ${CC=/usr/bin/cc}
-		: ${DEBUG=}
 		RANLIB=echo
 		SYSLIBS="-lresolv -lsocket -lnsl"
 		;;
