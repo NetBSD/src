@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.23 2001/04/07 18:01:48 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.24 2001/06/03 03:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,7 @@
 #define	ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define	ETHER_MIN_LEN	64	/* minimum frame length, including CRC */
 #define	ETHER_MAX_LEN	1518	/* maximum frame length, including CRC */
+#define	ETHER_MAX_LEN_JUMBO 9018 /* maximum jumbo frame len, including CRC */
 
 /*
  * Some Ethernet extensions.
@@ -74,6 +75,7 @@ struct	ether_header {
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
+#define	ETHERMTU_JUMBO	(ETHER_MAX_LEN_JUMBO - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
@@ -155,6 +157,7 @@ struct	ethercom {
 
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
+#define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
 
 #ifdef	_KERNEL
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];

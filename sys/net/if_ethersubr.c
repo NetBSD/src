@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.81 2001/04/29 09:50:37 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.82 2001/06/03 03:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1385,11 +1385,20 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
+	    {
+		int maxmtu;
+
+		if (ec->ec_capabilities & ETHERCAP_JUMBO_MTU)
+			maxmtu = ETHERMTU_JUMBO;
+		else
+			maxmtu = ETHERMTU;
+
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
+	    }
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
