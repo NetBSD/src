@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.12 1999/09/09 07:09:32 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.13 1999/10/26 16:58:32 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.12 1999/09/09 07:09:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.13 1999/10/26 16:58:32 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,13 +185,6 @@ ioasic_intr_disestablish(ioa, cookie)
 {
 	printf("device %s with cookie %d: ", ioa->dv_xname, (int)cookie);
 	panic("ioasic_intr_disestablish called");
-}
-
-char *
-ioasic_lance_ether_address()
-{
-
-	return (char *)(ioasic_base + IOASIC_SLOT_2_START);
 }
 
 /*
