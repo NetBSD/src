@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.14 1998/10/10 07:50:29 mrg Exp $	*/
+/*	$NetBSD: spec.c,v 1.15 1998/12/06 19:07:53 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.14 1998/10/10 07:50:29 mrg Exp $");
+__RCSID("$NetBSD: spec.c,v 1.15 1998/12/06 19:07:53 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ set(t, ip)
 	NODE *ip;
 {
 	int type;
-	char *kw, *val;
+	char *kw, *val, *md;
 	struct group *gr;
 	struct passwd *pw;
 	mode_t *m;
@@ -211,6 +211,14 @@ set(t, ip)
 		case F_IGN:
 			/* just set flag bit */
 			break;
+		case F_MD5:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->md5sum = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
+			break;
 		case F_MODE:
 			if ((m = setmode(val)) == NULL)
 				mtree_err("invalid file mode %s", val);
@@ -229,7 +237,7 @@ set(t, ip)
 			break;
 		case F_SLINK:
 			if ((ip->slink = strdup(val)) == NULL)
-				mtree_err("%s", strerror(errno));
+				mtree_err("memory allocation error");
 			break;
 		case F_TIME:
 #ifndef __APPLE__

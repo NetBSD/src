@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1998/10/10 07:50:28 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1998/12/06 19:07:53 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.7 1998/10/10 07:50:28 mrg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 1998/12/06 19:07:53 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ static KEY keylist[] = {
 	{"gname",	F_GNAME,	NEEDVALUE},
 	{"ignore",	F_IGN,		0},
 	{"link",	F_SLINK,	NEEDVALUE},
+	{"md5",		F_MD5,		NEEDVALUE},
 	{"mode",	F_MODE,		NEEDVALUE},
 	{"nlink",	F_NLINK,	NEEDVALUE},
 	{"optional",	F_OPT,		0},
@@ -92,6 +93,7 @@ parsekey(name, needvaluep)
 
 	if (needvaluep)
 		*needvaluep = k->flags & NEEDVALUE ? 1 : 0;
+
 	return (k->val);
 }
 
