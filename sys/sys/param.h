@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1994/07/10 22:26:30 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.16 1994/10/18 04:27:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,7 +44,7 @@
 #define BSD4_3	1
 #define BSD4_4	1
 
-#define NetBSD	1994070		/* NetBSD version (year, month, release) */
+#define NetBSD	1994101		/* NetBSD version (year, month, release) */
 #define NetBSD1_0 2		/* NetBSD 1.0A */
 
 #ifndef NULL
