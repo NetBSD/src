@@ -1,40 +1,40 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.10 1993/09/17 19:23:48 phil Exp $
+#	$Id: Makefile.inc,v 1.11 1993/10/05 18:30:18 jtc Exp $
 
 # string sources
 .PATH: ${.CURDIR}/${MACHINE}/string ${.CURDIR}/string
 
 SRCS+=	memccpy.c strcasecmp.c strcoll.c strdup.c \
-	strftime.c strmode.c strtok.c strxfrm.c swab.c
+	strftime.c strmode.c strtok.c strxfrm.c 
 
 .if   (${MACHINE} == "hp300")
 SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.s memchr.c memcmp.c memset.c \
 	rindex.s strcat.c strcmp.s strcpy.s strcspn.c strlen.s \
 	strncat.c strncmp.s strncpy.s strpbrk.c strsep.c \
-	strspn.c strstr.c
+	strspn.c strstr.c swab.c
 .elif (${MACHINE} == "i386")
 SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.s memchr.s memcmp.s memset.s \
 	rindex.s strcat.s strcmp.s strcpy.s strcspn.c strlen.s \
 	strncat.c strncmp.s strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c
+	strspn.c strstr.c swab.s
 SRCS+=	memmove.s strchr.s strrchr.s
 .elif (${MACHINE} == "pc532")
 SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
 	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
 	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
-	strspn.c strstr.c
+	strspn.c strstr.c swab.c
 SRCS+=	memmove.c strchr.c strrchr.c
 .elif (${MACHINE} == "tahoe")
 SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.c memchr.c memcmp.s memset.c \
 	rindex.c strcat.s strcmp.s strcpy.s strcspn.c strlen.s \
 	strncat.s strncmp.s strncpy.s strpbrk.c strsep.c \
-	strspn.c strstr.c
+	strspn.c strstr.c swab.c
 SRCS+=	memmove.s
 .elif (${MACHINE} == "vax")
 SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.c memchr.s memcmp.s memset.s \
 	rindex.s strcat.s strcmp.s strcpy.s strcspn.s strlen.s \
 	strncat.s strncmp.s strncpy.s strpbrk.s strsep.s \
-	strspn.s strstr.s
+	strspn.s strstr.s swab.c
 SRCS+=	memmove.s strchr.s strrchr.s
 .endif
 
