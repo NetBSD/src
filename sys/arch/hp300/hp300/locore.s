@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 2000/11/26 11:47:24 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 2001/05/12 00:55:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1195,7 +1195,11 @@ GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
 
 ASLOCAL(mdpflag)
 	.byte	0		| copy of proc md_flags low byte
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 
 ASBSS(nullpcb,SIZEOF_PCB)
 
@@ -1860,7 +1864,11 @@ ENTRY_NOPROFILE(_delay)
 	 * operations and that the loop will run from a single cache
 	 * half-line.
 	 */
+#ifdef __ELF__
 	.align	8
+#else
+	.align	3
+#endif
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
