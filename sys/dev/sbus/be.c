@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $	*/
+/*	$NetBSD: be.c,v 1.40 2003/10/16 07:20:54 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.40 2003/10/16 07:20:54 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -479,6 +479,9 @@ beattach(parent, self, aux)
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* claim 802.1q capability */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -582,15 +585,14 @@ be_read(sc, idx, len)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 
-	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
-
+#ifdef DIAGNOSTIC
+	if (len < ETHER_MIN_LEN || len > ETHER_MAX_LEN + ETHERCAP_VLAN_MTU) {
 		printf("%s: invalid packet size %d; dropping\n",
 			ifp->if_xname, len);
-
 		ifp->if_ierrors++;
 		return;
 	}
+#endif
 
 	/*
 	 * Pull packet off interface.
@@ -1162,6 +1164,13 @@ beinit(sc)
 	bus_space_write_4(t, cr, BE_CRI_QMASK, 0);
 	bus_space_write_4(t, cr, BE_CRI_BMASK, 0);
 	bus_space_write_4(t, cr, BE_CRI_CCNT, 0);
+
+	/* Set max packet length */
+	v = ETHER_MAX_LEN;
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		v += ETHER_VLAN_ENCAP_LEN;
+	bus_space_write_4(t, br, BE_BRI_RXMAX, v);
+	bus_space_write_4(t, br, BE_BRI_TXMAX, v);
 
 	/* Enable transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG,
