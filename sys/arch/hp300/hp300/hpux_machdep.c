@@ -1,7 +1,7 @@
-/*	$NetBSD: hpux_machdep.c,v 1.5 1996/10/14 06:51:50 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.6 1997/03/15 23:20:20 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -98,10 +98,12 @@ extern	int grfopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
 extern	int hilopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
 #endif
 
-static	struct {
-	int	machine_id;
-	char	*machine_str;
-} machine_table[] = {
+struct valtostr {
+	int	val;
+	const char *str;
+};
+
+static struct valtostr machine_table[] = {
 	{ HP_320,	"320" },
 	{ HP_330,	"330" },	/* includes 318 and 319 */
 	{ HP_340,	"340" },
@@ -114,18 +116,23 @@ static	struct {
 	{     -1,	"3?0" },	/* unknown system (???) */
 };
 
-/* 6.0 and later style context */
-#ifdef M68040
-static char hpux_040context[] =
-    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#endif
-#ifdef FPCOPROC
-static char hpux_context[] =
-    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#else
-static char hpux_context[] =
-    "standalone HP-MC68020 HP-MC68010 localroot default";
-#endif
+/*
+ * 6.0 and later context.
+ * XXX what are the HP-UX "localroot" semantics?  Should we handle
+ * XXX diskless systems here?
+ */
+static struct valtostr context_table[] = {
+	{ FPU_68040,
+    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ FPU_68881,
+    "standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ FPU_NONE,
+    "standalone HP-MC68020 HP-MC68010 localroot default"
+	},
+	{ 0, NULL },
+};
 
 #define UOFF(f)		((int)&((struct user *)0)->f)
 #define HPUOFF(f)	((int)&((struct hpux_user *)0)->f)
@@ -222,11 +229,11 @@ hpux_cpu_uname(ut)
 	 * Find the current machine-ID in the table and
 	 * copy the string into the uname.
 	 */
-	for (i = 0; machine_table[i].machine_id != -1; ++i)
-		if (machine_table[i].machine_id == machineid)
+	for (i = 0; machine_table[i].val != -1; ++i)
+		if (machine_table[i].val == machineid)
 			break;
 
-	sprintf(ut->machine, "9000/%s", machine_table[i].machine_str);
+	sprintf(ut->machine, "9000/%s", machine_table[i].str);
 }
 
 /*
@@ -302,25 +309,28 @@ hpux_sys_getcontext(p, v, retval)
 	register_t *retval; 
 {
 	struct hpux_sys_getcontext_args *uap = v;
-	int error = 0;
+	int l, i, error = 0;
 	register int len; 
 
-#ifdef M68040
-	if ((machineid == HP_380) || (machineid == HP_433)) {
-		len = min(SCARG(uap, len), sizeof(hpux_040context));
-		if (len)
-			error = copyout(hpux_040context, SCARG(uap, buf), len);
-		if (error == 0)
-			*retval = sizeof(hpux_040context);
-		return (error);
+	for (i = 0; context_table[i].str != NULL; i++)
+		if (context_table[i].val == fputype)
+			break;
+	if (context_table[i].str == NULL) {
+		/*
+		 * XXX What else?  It's not like this can happen...
+		 */
+		return (EINVAL);
 	}
-#endif
-	len = min(SCARG(uap, len), sizeof(hpux_context));
+
+	/* + 1 ... count the terminating \0. */
+	l = strlen(context_table[i].str) + 1;
+	len = min(SCARG(uap, len), l);
+
 	if (len)
-		error = copyout(hpux_context, SCARG(uap, buf), (u_int)len);
+		error = copyout(context_table[i].str, SCARG(uap, buf), len);
 	if (error == 0)
-		*retval = sizeof(hpux_context);
-	return (error);
+		*retval = l;
+	return (0);
 }
 
 /*
@@ -343,18 +353,17 @@ hpux_to_bsd_uoff(off, isps, p)
 	if ((int)off == HPUOFF(hpuxu_ar0))
 		return(UOFF(U_ar0)); 
 
+	if (fputype) {
+		/* FP registers from PCB */
+		hp = (struct hpux_fp *)HPUOFF(hpuxu_fp);
+		bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
 
-#ifdef FPCOPROC
-	/* FP registers from PCB */
-	hp = (struct hpux_fp *)HPUOFF(hpuxu_fp);
-	bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
+		if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
+			return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
 
-	if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
-		return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
-
-	if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
-		return((int)&bp->reg[off - hp->hpfp_reg]);
-#endif
+		if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
+			return((int)&bp->reg[off - hp->hpfp_reg]);
+	}
 
 	/*
 	 * Everything else we recognize comes from the kernel stack,
@@ -454,18 +463,18 @@ hpux_dumpu(vp, cred)
 	foop[33] = foop[34];
 	foop[34] = foop[35];
 
-#ifdef FPCOPROC
-	/*
-	 * Copy 68881 registers from our PCB format to HP-UX format
-	 */
-	bp = (struct bsdfp *) &p->p_addr->u_pcb.pcb_fpregs;
-	bcopy((caddr_t)bp->save, (caddr_t)faku->hpuxu_fp.hpfp_save,
-	    sizeof(bp->save));
-	bcopy((caddr_t)bp->ctrl, (caddr_t)faku->hpuxu_fp.hpfp_ctrl,
-	    sizeof(bp->ctrl));
-	bcopy((caddr_t)bp->reg, (caddr_t)faku->hpuxu_fp.hpfp_reg,
-	    sizeof(bp->reg));
-#endif
+	if (fputype) {
+		/*
+		 * Copy 68881 registers from our PCB format to HP-UX format
+		 */
+		bp = (struct bsdfp *) &p->p_addr->u_pcb.pcb_fpregs;
+		bcopy((caddr_t)bp->save, (caddr_t)faku->hpuxu_fp.hpfp_save,
+		    sizeof(bp->save));
+		bcopy((caddr_t)bp->ctrl, (caddr_t)faku->hpuxu_fp.hpfp_ctrl,
+		    sizeof(bp->ctrl));
+		bcopy((caddr_t)bp->reg, (caddr_t)faku->hpuxu_fp.hpfp_reg,
+		    sizeof(bp->reg));
+	}
 
 	/*
 	 * Slay the dragon
