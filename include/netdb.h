@@ -55,7 +55,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$Id: netdb.h,v 8.6 1995/12/03 08:31:12 vixie Exp 
+ *	$Id: netdb.h,v 1.7 1997/04/13 09:26:21 mrg Exp $
  */
 
 #ifndef _NETDB_H_
@@ -135,7 +135,7 @@ struct hostent	*gethostbyaddr __P((const char *, int, int));
 struct hostent	*gethostbyname __P((const char *));
 struct hostent	*gethostbyname2 __P((const char *, int));
 struct hostent	*gethostent __P((void));
-struct netent	*getnetbyaddr __P((long, int)); /* u_long? */
+struct netent	*getnetbyaddr __P((unsigned long, int));
 struct netent	*getnetbyname __P((const char *));
 struct netent	*getnetent __P((void));
 struct protoent	*getprotobyname __P((const char *));
