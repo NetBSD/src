@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.1 2001/03/04 10:11:56 mrg Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.2 2002/05/06 22:12:43 eeh Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on
@@ -73,6 +73,7 @@ SECTIONS
     *(.gnu.linkonce.d*)
     CONSTRUCTORS
   }
+  PROVIDE(pci_cd = ofpci_cd);
   .data1   : { *(.data1) }
   .ctors         :
   {
