@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 1997/09/26 17:54:10 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1998/07/16 07:08:26 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* main sysinst program. */
 
 #include "menu_defs.h"
+#include "msg_defs.h"
 
 int main(void);
 
@@ -51,3 +52,73 @@ int main(void)
 	return 0;
 }
 	
+/* Dynamic menu suff! */
+
+char  ent_text[5][50] = {"name: ", "strt: ", "city: ", "opt 4", "NUM: "};
+
+/* opt processing routines .. */
+
+void opt_1 (void);
+
+void opt_1 (void)
+{
+	msg_clear();
+	msg_prompt (MSG_name, "", &ent_text[0][6], 40);
+	msg_clear();
+}
+
+void opt_2 (void);
+
+void opt_2 (void)
+{
+	msg_clear();
+	msg_prompt (MSG_street, "", &ent_text[1][6], 40);
+	msg_clear();
+}
+
+void opt_3 (void);
+
+void opt_3 (void)
+{
+	msg_clear();
+	msg_prompt (MSG_city, "", &ent_text[2][6], 40);
+	msg_clear();
+}
+
+
+menu_ent  mymenu [5] = {
+		{ ent_text[0], OPT_NOMENU, 0, opt_1},
+		{ ent_text[1], OPT_NOMENU, 0, opt_2},
+		{ ent_text[2], OPT_NOMENU, 0, opt_3},
+		{ ent_text[3], OPT_NOMENU, 0, NULL},
+		{ ent_text[4], OPT_NOMENU, 0, NULL} };
+
+int num = 0;
+
+
+void do_dynamic(void);
+void dyn_disp (void);
+
+void dyn_disp (void)
+{
+    sprintf (&ent_text[4][5], "%d", num++);
+}
+
+void do_dynamic(void)
+{
+	int menu_no;
+
+	num = 0;
+	menu_no = new_menu ("  A test dynamic menu! ", mymenu, 5, 10, 10,
+		0, 55, MC_SCROLL, dyn_disp, NULL,
+		"Make sure you try at least one option before exiting.\n"
+		"Then look at what changes.\n");
+	if (menu_no < 0) {
+		endwin();
+		(void) fprintf (stderr, "Dynamic memu creation failure. \n");
+		exit (1);
+	}
+	process_menu (menu_no);
+	free_menu (menu_no);
+}
+
