@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 2004/04/04 16:57:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2004/01/04 11:33:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2004/04/04 16:57:00 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -188,6 +188,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_sp = (register_t)sf;
 	pcb->pcb_kmapsr = 0;
 	pcb->pcb_umapsr = 0;
+#ifdef PPC_HAVE_FPU
+	pcb->pcb_flags = PSL_FE_DFLT;
+#endif
 }
 
 void
