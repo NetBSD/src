@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 2000/03/07 18:24:16 tsubai Exp $
+#	$NetBSD: MAKEDEV,v 1.27 2000/06/09 16:59:05 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,8 @@
 #
 # Terminal ports:
 #	tty*	standard built-in serial ports
+#	ttyCZ*	Cyclades-Z multiport serial boards.  Each "unit"
+#		makes 16 ports.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -102,7 +104,7 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	sh $0 random tty00 tty01 tty10 pty0 pty1 adb grf0 wscons
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1 ipl usbs
+	sh $0 tun0 tun1 ipl usbs ttyCZ0
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
@@ -251,6 +253,39 @@ ccd*|fd*|raid*|sd*|vnd*|wd*)
 	mknod r${name}${unit}h	c $chr $(($unit * 16 + 7))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+ttyCZ*)
+	unit=${i#ttyCZ}
+	case $unit in
+	[0-9])  un=$unit ;;
+	a)      un=10 ;;
+	b)      un=11 ;;
+	c)      un=12 ;;
+	d)      un=13 ;;
+	e)      un=14 ;;
+	f)      un=15 ;;
+	esac
+	major=46
+	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		case $j in
+		[0-9])  jn=$j ;;
+		a)      jn=10 ;;
+		b)      jn=11 ;;
+		c)      jn=12 ;;
+		d)      jn=13 ;;
+		e)      jn=14 ;;
+		f)      jn=15 ;;
+		esac
+		minor=$(($un * 16 + $jn))
+		nminor=$unit$j
+		rm -f ttyCZ$nminor dtyCZ$nminor
+		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
+		chown uucp.wheel ttyCZ$nminor dtyCZ$nminor
+		chmod 600 ttyCZ$nminor dtyCZ$nminor
+	done
 	;;
 
 ttyU*)
