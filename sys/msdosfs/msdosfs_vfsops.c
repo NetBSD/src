@@ -13,27 +13,27 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.5 1993/12/02 06:23:48 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.6 1993/12/18 00:51:19 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "proc.h"
-#include "kernel.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */	/* defines v_rdev */
-#include "mount.h"
-#include "buf.h"
-#include "file.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
+#include <sys/mount.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
 
-#include "bpb.h"
-#include "bootsect.h"
-#include "direntry.h"
-#include "denode.h"
-#include "msdosfsmount.h"
-#include "fat.h"
+#include <msdosfs/bpb.h>
+#include <msdosfs/bootsect.h>
+#include <msdosfs/direntry.h>
+#include <msdosfs/denode.h>
+#include <msdosfs/msdosfsmount.h>
+#include <msdosfs/fat.h>
 
 int msdosfsdoforce = 0;		/* 1 = force unmount */
 

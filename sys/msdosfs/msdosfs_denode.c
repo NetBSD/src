@@ -13,22 +13,22 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_denode.c,v 1.1 1993/08/13 11:35:35 cgd Exp $
+ *	$Id: msdosfs_denode.c,v 1.2 1993/12/18 00:50:51 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mount.h"
-#include "proc.h"
-#include "buf.h"
-#include "vnode.h"
-#include "kernel.h"		/* defines "time"			 */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>		/* defines "time" */
 
-#include "bpb.h"
-#include "msdosfsmount.h"
-#include "direntry.h"
-#include "denode.h"
-#include "fat.h"
+#include <msdosfs/bpb.h>
+#include <msdosfs/msdosfsmount.h>
+#include <msdosfs/direntry.h>
+#include <msdosfs/denode.h>
+#include <msdosfs/fat.h>
 
 #define	DEHSZ	512
 #if ((DEHSZ & (DEHSZ-1)) == 0)
