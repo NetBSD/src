@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.6 2002/05/09 02:55:49 simonb Exp $	*/
+/*	$NetBSD: dir.c,v 1.7 2003/07/13 08:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.6 2002/05/09 02:55:49 simonb Exp $");
+__RCSID("$NetBSD: dir.c,v 1.7 2003/07/13 08:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,7 +280,7 @@ fileerror(cwd, ino, errmesg)
 	pwarn("%s ", errmesg);
 	pinode(ino);
 	printf("\n");
-	getpathname(pathbuf, cwd, ino);
+	getpathname(pathbuf, sizeof(pathbuf), cwd, ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
@@ -529,7 +529,7 @@ makeentry(parent, ino, name)
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
 		return (1);
-	getpathname(pathbuf, parent, parent);
+	getpathname(pathbuf, sizeof(pathbuf), parent, parent);
 	dp = ginode(parent);
 	if (expanddir(dp, pathbuf) == 0)
 		return (0);
