@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.33 2002/02/24 00:17:44 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.34 2002/04/27 14:39:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.33 2002/02/24 00:17:44 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.34 2002/04/27 14:39:36 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -465,6 +465,14 @@ cpu_startup()
 	}
 #endif
 #endif
+
+#ifdef TRAPLOG
+	/*
+	 * Enable recording of branch from/to in MSR's
+	 */
+	wrmsr(MSR_DEBUGCTLMSR, 0x1);
+#endif
+
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 

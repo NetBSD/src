@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.26 2002/02/24 01:58:57 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.27 2002/04/27 14:39:33 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@
 #include <machine/segments.h>
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
+#include <machine/tlog.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -125,7 +126,13 @@ struct cfattach cpu_ca = {
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
+#ifdef TRAPLOG
+struct tlog tlog_primary;
+struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
+#else  /* TRAPLOG */
 struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+#endif /* !TRAPLOG */
+
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #ifdef MULTIPROCESSOR
@@ -236,6 +243,10 @@ cpu_attach(parent, self, aux)
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
 		cpu_info[cpunum] = ci;
+#endif
+#ifdef TRAPLOG
+		ci->ci_tlog_base = malloc(sizeof(struct tlog),
+		    M_DEVBUF, M_WAITOK);
 #endif
 	} else {
 		ci = &cpu_info_primary;

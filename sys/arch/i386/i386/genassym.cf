@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.14 2001/12/29 23:31:00 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.15 2002/04/27 14:39:34 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ if NISA > 0
 include <machine/isa_machdep.h>
 endif
 
+include <machine/tlog.h>
+
 define	SRUN			SRUN
 define	SONPROC			SONPROC
 
@@ -244,9 +246,25 @@ define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
 define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
 
+define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
+define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
+
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
+
+define	TREC_SP			offsetof(struct trec, tr_sp)
+define	TREC_HPC		offsetof(struct trec, tr_hpc)
+define	TREC_IPC		offsetof(struct trec, tr_ipc)
+define	TREC_TSC		offsetof(struct trec, tr_tsc)
+define	TREC_LBF		offsetof(struct trec, tr_lbf)
+define	TREC_LBT		offsetof(struct trec, tr_lbt)
+define	TREC_IBF		offsetof(struct trec, tr_ibf)
+define	TREC_IBT		offsetof(struct trec, tr_ibt)
+
+define	SIZEOF_TREC		sizeof(struct trec)
+define	SIZEOF_TLOG		sizeof(struct tlog)
+
 
 if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
