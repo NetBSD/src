@@ -1,5 +1,4 @@
-.\" Copyright (c) 1987 Sun Microsystems
-.\" Copyright (c) 1990, 1991, 1993
+.\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -30,81 +29,94 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)portmap.8	8.1 (Berkeley) 6/6/93
+.\"     @(#)kgmon.8	8.1 (Berkeley) 6/6/93
 .\"
 .Dd June 6, 1993
-.Dt PORTMAP 8
-.Os BSD 4.3
+.Dt KGMON 8
+.Os BSD 4.2
 .Sh NAME
-.Nm portmap
-.Nd
-.Tn DARPA
-port to
-.Tn RPC
-program number mapper
+.Nm kgmon
+.Nd generate a dump of the operating system's profile buffers
 .Sh SYNOPSIS
-.Nm portmap
-.Op Fl d
+.Nm kgmon
+.Op Fl bhpr
+.Op Fl M core
+.Op Fl N system
 .Sh DESCRIPTION
-.Nm Portmap
-is a server that converts
-.Tn RPC
-program numbers into
-.Tn DARPA
-protocol port numbers.
-It must be running in order to make
-.Tn RPC
-calls.
+.Nm Kgmon
+is a tool used when profiling the operating system.
+When no arguments are supplied,
+.Nm kgmon
+indicates the state of operating system profiling as running,
+off, or not configured.
+(see
+.Xr config 8 )
+If the
+.Fl p
+flag is specified,
+.Nm kgmon
+extracts profile data from the operating system and produces a
+.Pa gmon.out
+file suitable for later analysis by
+.Xr gprof 1 .
 .Pp
-When an
-.Tn RPC
-server is started, it will tell
-.Nm portmap
-what port number it is listening to, and what
-.Tn RPC
-program numbers it is prepared to serve.
-When a client wishes to make an
-.Tn RPC
-call to a given program number,
-it will first contact
-.Nm portmap
-on the server machine to determine
-the port number where
-.Tn RPC
-packets should be sent.
-.Pp
-.Nm Portmap
-must be started before any
-.Tn RPC
-servers are invoked.
-.Pp
-Normally
-.Nm portmap
-forks and dissociates itself from the terminal
-like any other daemon.
-.Nm Portmap
-then logs errors using
-.Xr syslog 3 .
-.Pp
-Option available:
+The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
-(debug) prevents
-.Nm portmap
-from running as a daemon,
-and causes errors and debugging information
-to be printed to the standard error output.
+.It Fl b
+Resume the collection of profile data.
+.It Fl h
+Stop the collection of profile data.
+.It Fl p
+Dump the contents of the profile buffers into a
+.Pa gmon.out
+file.
+.It Fl r
+Reset all the profile buffers. 
+If the
+.Fl p
+flag is also specified, the
+.Pa gmon.out
+file is generated before the buffers are reset.
+.It Fl M
+Extract values associated with the name list from the specified core
+instead of the default ``/dev/kmem''.
+.It Fl N
+Extract the name list from the specified system instead of the
+default ``/vmunix''.
+.El
+.Pp
+If neither 
+.Fl b
+nor
+.Fl h
+is specified, the state of profiling collection remains unchanged.
+For example, if the
+.Fl p
+flag is specified and profile data is being collected,
+profiling will be momentarily suspended,
+the operating system profile buffers will be dumped,
+and profiling will be immediately resumed.
+.Sh FILES
+.Bl -tag -width /dev/kmemx -compact
+.It Pa /vmunix
+the default system
+.It Pa /dev/kmem
+the default memory
 .El
 .Sh SEE ALSO
-.Xr inetd.conf 5 ,
-.Xr rpcinfo 8 ,
-.Xr inetd 8
-.Sh BUGS
-If
-.Nm portmap
-crashes, all servers must be restarted.
+.Xr gprof 1 ,
+.Xr config 8
+.Sh DIAGNOSTICS
+Users with only read permission on
+.Pa /dev/kmem
+cannot change the state
+of profiling collection. 
+They can get a 
+.Pa gmon.out
+file with the warning that the data may be
+inconsistent if profiling is in progress.
 .Sh HISTORY
 The
 .Nm
 command appeared in
-.Bx 4.3
+.Bx 4.2 .
