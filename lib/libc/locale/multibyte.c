@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.10 2001/06/21 02:20:24 yamt Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.11 2001/06/21 19:37:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.10 2001/06/21 02:20:24 yamt Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.11 2001/06/21 19:37:06 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,6 +117,7 @@ _mbstate_fixup(ps)
 
 	_DIAGASSERT(ps != NULL);
 
+	/*LINTED disgusting const castaway can pointer cast */
 	rl = *(_RuneLocale **)ps;
 	if (!rl) {
 		/*
@@ -489,7 +490,7 @@ wcsrtombs(s, pwcs, n, ps)
 	}
 
 	pwcs0 = *pwcs;
-	while (1) {
+	while (1/*CONSTCOND*/) {
 		siz = (*___wcrtomb(rl0))(rl0, buf, sizeof(buf), *pwcs0, state);
 		if (siz == (size_t)-1) {
 			errno = EILSEQ;
