@@ -1,4 +1,4 @@
-/*	$NetBSD: pcppi.c,v 1.2.2.2 1996/12/08 00:31:27 cgd Exp $	*/
+/*	$NetBSD: pcppi.c,v 1.2.2.3 1997/02/01 02:17:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -39,6 +39,8 @@
 #include <dev/isa/isavar.h>
 #include <alpha/isa/pcppivar.h>
 
+#include "pckbd.h"
+
 struct pcppi_softc {
 	struct device sc_dv;
 
@@ -59,6 +61,10 @@ struct cfdriver pcppi_cd = {
 
 int	pcppiprint __P((void *, const char *));
 
+static int	pcppi_console, pcppi_console_attached;
+bus_space_tag_t	pcppi_console_iot;
+bus_space_handle_t pcppi_console_pit1_ioh, pcppi_console_ppi_ioh;
+
 int
 pcppi_match(parent, match, aux)
 	struct device *parent;
@@ -78,6 +84,12 @@ pcppi_match(parent, match, aux)
 
 	rv = 0;
 	have_pit1 = have_ppi = 0;
+
+	if (pcppi_console && !pcppi_console_attached &&
+	    pcppi_console_iot == ia->ia_iot) {
+		rv = 1;
+		goto lose;	/* XXX misnomer */
+	}
 
 	if (bus_space_map(ia->ia_iot, 0x40, 4, 0, &pit1_ioh))	/* XXX */
 		goto lose;
@@ -135,7 +147,14 @@ pcppi_attach(parent, self, aux)
 	bus_space_tag_t iot;
 
 	sc->sc_iot = iot = ia->ia_iot;
-	if (bus_space_map(iot, 0x40, 4, 0, &sc->sc_pit1_ioh) ||		/*XXX*/
+
+	if (pcppi_console && pcppi_console_iot == ia->ia_iot) {
+		KASSERT(!pcppi_console_attached);
+		pcppi_console_attached = 1;
+
+		sc->sc_pit1_ioh = pcppi_console_pit1_ioh;
+		sc->sc_ppi_ioh = pcppi_console_ppi_ioh;
+	} else if (bus_space_map(iot, 0x40, 4, 0, &sc->sc_pit1_ioh) ||	/*XXX*/
 	    bus_space_map(iot, 0x60, 5, 0, &sc->sc_ppi_ioh))		/*XXX*/
 		panic("pcppi_attach: couldn't map");
 
@@ -183,4 +202,23 @@ pcppiprint(aux, pnp)
         if (pnp)
                 printf("%s at %s", type, pnp);
         return (UNCONF);
+}
+
+void
+pcppi_attach_console(iot)
+	bus_space_tag_t iot;
+{
+	extern void pckbd_attach_console __P((bus_space_tag_t,
+	    bus_space_handle_t, bus_space_handle_t));
+
+	pcppi_console = 1;
+
+	pcppi_console_iot = iot;
+
+	if (bus_space_map(iot, 0x40, 4, 0, &pcppi_console_pit1_ioh) ||	/*XXX*/
+            bus_space_map(iot, 0x60, 5, 0, &pcppi_console_ppi_ioh))	/*XXX*/
+                panic("pcppi_attach_console: couldn't map");
+
+	pckbd_attach_console(iot, pcppi_console_ppi_ioh,
+	    pcppi_console_pit1_ioh);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.13.2.4 1997/01/31 02:24:50 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.13.2.5 1997/02/01 02:17:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -65,6 +65,11 @@
 
 #include <machine/wsconsio.h>
 #include <alpha/wscons/wskbdvar.h>
+
+#include "pckbd.h"
+#if NPCKBD > 1
+#error TOO MANY PCKBD UNITS CONFIGURED
+#endif
 
 #undef KBDATAP
 #undef KBOUTP
@@ -141,6 +146,12 @@ int	kbd_cmd __P((u_char, u_char));
 void	do_async_update __P((void *));
 void	async_update __P((void));
 
+int pckbd_console;
+struct pckbd_softc *pckbd_console_device;
+
+void	pckbd_attach_console __P((bus_space_tag_t, bus_space_handle_t,
+	    bus_space_handle_t));
+
 /*
  * DANGER WIL ROBINSON -- the values of SCROLL, NUM, CAPS, and ALT are
  * important.
@@ -156,11 +167,15 @@ void	async_update __P((void));
 #define	KP		0x0200	/* Keypad keys */
 #define	NONE		0x0400	/* no function */
 
+#if 0
 #define	KBD_DELAY \
 	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
 	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
 	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); } \
 	{ u_char x; x = bus_space_read_1(pckbd_iot, pckbd_delay_ioh, 0); }
+#else
+#define	KBD_DELAY	DELAY(8)
+#endif
 
 static inline int
 kbd_wait_output()
@@ -313,7 +328,9 @@ pckbdprobe(parent, match, aux)
 	pckbd_ic = pa->pa_ic;
 	pckbd_ioh = pa->pa_ioh;
 	pckbd_timer_ioh = pa->pa_pit_ioh;
+#if 0
 	pckbd_delay_ioh = pa->pa_delaybah;
+#endif
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -405,14 +422,18 @@ pckbdattach(parent, self, aux)
 	pckbd_ic = pa->pa_ic;
 	pckbd_ioh = pa->pa_ioh;
 	pckbd_timer_ioh = pa->pa_pit_ioh;
+#if 0
 	pckbd_delay_ioh = pa->pa_delaybah;
+#endif
 
 	sc->sc_ih = isa_intr_establish(pckbd_ic, 1, IST_EDGE, IPL_TTY,
 	    pckbdintr, sc);
 
 	sc->sc_bellactive = sc->sc_bellpitch = 0;
 
-	a.console = 0;				/* XXX */
+	a.console = pckbd_console;
+	if (pckbd_console)
+		pckbd_console_device = sc;
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
@@ -878,6 +899,20 @@ pckbd_translate(v, type, value)
 	return (NULL);
 }
 
+void
+pckbd_attach_console(iot, kbdioh, timerioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t kbdioh, timerioh;
+{
+
+	pckbd_iot = iot;
+	pckbd_ioh = kbdioh;
+	pckbd_timer_ioh = timerioh;
+
+	pckbd_console = 1;
+
+	wskbd_attach_console(&pckbd_consops, NULL);
+}
 
 /* ARGSUSED */
 int
@@ -885,8 +920,10 @@ pckbd_cngetc(v)
 	void *v;
 {
         register const char *cp = NULL;
-	u_char data;
+	u_int type, data;
+#if 0
 	static u_char last;
+#endif
 
         do {
 		/* wait for byte */
@@ -901,17 +938,30 @@ pckbd_cngetc(v)
                         ack = 1;
                         continue;
 		}
-                if (data ==  KBR_RESEND) {
+                if (data == KBR_RESEND) {
                         nak = 1;
                         continue;
 		}
 
+#if 0
 		/* Ignore typematic keys */
 		if (data == last)
 			continue;
 		last = data;
+#endif
 
-		cp = pckbd_translate(NULL, 0, data);
+		switch (data) { 
+		case KBR_EXTENDED:
+			type = WSCONS_EVENT_KEY_OTHER;
+			break;
+		default:
+			type = (data & 0x80) ? WSCONS_EVENT_KEY_UP :
+			    WSCONS_EVENT_KEY_DOWN;
+			data &= ~0x80;
+			break;
+		}
+
+		cp = pckbd_translate(NULL, type, data);
         } while (!cp);
         if (*cp == '\r')
                 return '\n';
@@ -923,7 +973,6 @@ pckbd_cnpollc(v, on)
 	void *v;
         int on;
 {
-	struct pckbd_softc *sc = v;
 
         polling = on;
         if (!on) {
@@ -935,9 +984,9 @@ pckbd_cnpollc(v, on)
                  * the interrupt line.  Otherwise we won't get any further
                  * interrupts.
                  */
-		if (sc != 0) {
+		if (pckbd_console_device != 0) {
 			s = spltty();
-			pckbdintr(sc);
+			pckbdintr(pckbd_console_device);
 			splx(s);
 		}
         }
