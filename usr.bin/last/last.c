@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
+/*	$NetBSD: last.c,v 1.7 1997/07/17 02:36:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: last.c,v 1.7 1997/07/17 02:36:56 perry Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,6 +86,7 @@ TTY	*ttylist;				/* head of linked list */
 static time_t	currentout;			/* current logout value */
 static long	maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
+static int	fulltime = 0;                   /* Display seconds? */
 
 void	 addarg __P((int, char *));
 TTY	*addtty __P((char *));
@@ -106,7 +107,7 @@ main(argc, argv)
 	char *p;
 
 	maxrec = -1;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789f:h:t:T")) != EOF)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -134,10 +135,13 @@ main(argc, argv)
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));
 			break;
+		case 'T':
+			fulltime = 1;
+			break;
 		case '?':
 		default:
 			(void)fprintf(stderr,
-	"usage: last [-#] [-f file] [-t tty] [-h hostname] [user ...]\n");
+	"usage: last [-#] [-f file] [-t tty] [-h hostname] [-T] [user ...]\n");
 			exit(1);
 		}
 
@@ -163,16 +167,22 @@ main(argc, argv)
 void
 wtmp()
 {
-	struct utmp	*bp;			/* current structure */
-	TTY	*T;				/* tty list entry */
-	struct stat	stb;			/* stat of file for size */
-	time_t	bl, delta;			/* time difference */
+	struct utmp	*bp;		/* current structure */
+	TTY	*T;			/* tty list entry */
+	struct stat	stb;		/* stat of file for size */
+	time_t	bl, delta;		/* time difference */
+	int	timesize;		/* how much of time string to print */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
 
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
+
+	if (fulltime)
+		timesize = 8;	/* HH:MM:SS */
+	else
+		timesize = 5;	/* HH:MM */
 
 	(void)time(&buf[0].ut_time);
 	(void)signal(SIGINT, onintr);
@@ -196,12 +206,13 @@ wtmp()
 				    UT_NAMESIZE) ? "crash" : "shutdown";
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
 					    UT_NAMESIZE, UT_NAMESIZE,
 					    bp->ut_name, UT_LINESIZE,
 					    UT_LINESIZE, bp->ut_line,
 					    UT_HOSTSIZE, UT_HOSTSIZE,
-					    bp->ut_host, ct, ct + 11);
+					    bp->ut_host, ct, timesize,
+				            timesize, ct + 11);
 					if (maxrec != -1 && !--maxrec)
 						return;
 				}
@@ -215,11 +226,11 @@ wtmp()
 			    && !bp->ut_line[1]) {
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
 				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
 				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 				    UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
-				    ct, ct + 11);
+				    ct, timesize, timesize, ct + 11);
 					if (maxrec && !--maxrec)
 						return;
 				}
@@ -237,11 +248,11 @@ wtmp()
 			}
 			if (bp->ut_name[0] && want(bp, YES)) {
 				ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s ",
+				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
 				UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
 				UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 				UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
-				ct, ct + 11);
+				ct, timesize, timesize, ct + 11);
 				if (!T->logout)
 					puts("  still logged in");
 				else {
@@ -250,15 +261,18 @@ wtmp()
 						printf("- %s", crmsg);
 					}
 					else
-						printf("- %5.5s",
+						printf("- %*.*s",
+						    timesize, timesize,
 						    ctime(&T->logout)+11);
 					delta = T->logout - bp->ut_time;
 					if (delta < SECSPERDAY)
-						printf("  (%5.5s)\n",
+						printf("  (%*.*s)\n",
+						    timesize, timesize,
 						    asctime(gmtime(&delta))+11);
 					else
-						printf(" (%ld+%5.5s)\n",
+						printf(" (%ld+%*.*s)\n",
 						    delta / SECSPERDAY,
+						    timesize, timesize,
 						    asctime(gmtime(&delta))+11);
 				}
 				if (maxrec != -1 && !--maxrec)
@@ -268,7 +282,7 @@ wtmp()
 		}
 	}
 	ct = ctime(&buf[0].ut_time);
-	printf("\nwtmp begins %10.10s %5.5s \n", ct, ct + 11);
+	printf("\nwtmp begins %10.10s %*.*s \n", ct, timesize, timesize, ct + 11);
 }
 
 /*
@@ -418,7 +432,7 @@ onintr(signo)
 	char *ct;
 
 	ct = ctime(&buf[0].ut_time);
-	printf("\ninterrupted %10.10s %5.5s \n", ct, ct + 11);
+	printf("\ninterrupted %10.10s %8.8s \n", ct, ct + 11);
 	if (signo == SIGINT)
 		exit(1);
 	(void)fflush(stdout);			/* fix required for rsh */
