@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.25 2000/07/07 04:35:36 cgd Exp $
+#	$NetBSD: bsd.obj.mk,v 1.26 2001/03/11 07:32:31 cgd Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -19,9 +19,9 @@ __objdir:= ${MAKEOBJDIR}
 # If that fails - we do a mkdir to get the appropriate error message
 # before bailing out.
 obj:
-	@if ! test -d ${__objdir}; then \
+	@if test ! -d ${__objdir}; then \
 		mkdir -p ${__objdir}; \
-		if ! test -d ${__objdir}; then \
+		if test ! -d ${__objdir}; then \
 			mkdir ${__objdir}; exit 1; \
 		fi; \
 		echo "${.CURDIR} -> ${__objdir}"; \
