@@ -238,9 +238,17 @@ static void super(char **queues, int action)
 	    }
 
 	    /*
-	     * Skip temporary files that aren't old enough.
+	     * Skip over files with illegal names. The library routines
+	     * refuse to operate on them.
 	     */
 	    if (mail_queue_id_ok(path) == 0)
+		continue;
+
+	    /*
+	     * Skip temporary files that aren't old enough.
+	     */
+	    if (qp->perms == MAIL_QUEUE_STAT_READY
+		&& (st.st_mode & S_IRWXU) != qp->perms)
 		continue;
 
 	    /*

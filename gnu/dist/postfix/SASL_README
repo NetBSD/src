@@ -186,6 +186,16 @@ remote part of an email address).
 	foo.com		username:password
 	bar.com		username
 
+Note: some SMTP servers support PLAIN or LOGIN authentication only.
+By default, the Postfix SMTP client does not use authentication
+methods that send plaintext passwords, and defers delivery with
+the following error message:  "Authentication failed: cannot SASL
+authenticate to server". To enable plaintext authentication specify,
+for example:
+
+    /etc/postfix/main.cf:
+	smtp_sasl_security_options = 
+
 The SASL client password file is opened before the SMTP server
 enters the optional chroot jail, so you can keep the file in
 /etc/postfix.
