@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.43 1994/04/24 01:29:58 mycroft Exp $
+ *	$Id: if_ed.c,v 1.44 1994/04/28 04:53:09 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -78,6 +78,11 @@ struct ed_softc {
  * being write-only.  It's sort of a prototype/shadow of the real thing.
  */
 	u_char	wd_laar_proto;
+/*
+ * This `proto' variable is so we can turn MENB on and off without reading
+ * the value back from the card all the time.
+ */
+	u_char	wd_msr_proto;
 	u_char	ed_cr_rd2;	/* ED_CR_RD2 if not 790; 0 if 790 */
 	u_char	isa16bit;	/* width of access to card 0=8 or 1=16 */
 	u_char	is790;		/* set by probe if NIC is a 790 */
@@ -485,15 +490,12 @@ ed_probe_WD80x3(sc, cf, ia)
 			    ((kvtop(sc->mem_start) >> 8) & 0xe0) | 4);
 			outb(sc->asic_addr + ED_WD_MSR + 2,
 			    ((kvtop(sc->mem_start) >> 16) & 0x0f));
-			outb(sc->asic_addr + ED_WD_MSR,
-			    ED_WD_MSR_MENB | ED_WD_MSR_POW);
+			sc->wd_msr_proto = ED_WD_MSR_POW;
 #else
-			outb(sc->asic_addr + ED_WD_MSR,
-			    ((kvtop(sc->mem_start) >> 13) & ED_WD_MSR_ADDR) |
-			    ED_WD_MSR_MENB);
+			sc->wd_msr_proto =
+			    (kvtop(sc->mem_start) >> 13) & ED_WD_MSR_ADDR;
 #endif
 		} else {
-			outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_MENB);
 			outb(sc->asic_addr + 0x04,
 			    inb(sc->asic_addr + 0x04) | 0x80);
 			outb(sc->asic_addr + 0x0b,
@@ -502,7 +504,10 @@ ed_probe_WD80x3(sc, cf, ia)
 			    (inb(sc->asic_addr + 0x0b) & 0xb0));
 			outb(sc->asic_addr + 0x04,
 			    inb(sc->asic_addr + 0x04) & ~0x80);
+			sc->wd_msr_proto = 0x00;
 		}
+		outb(sc->asic_addr + ED_WD_MSR,
+		    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
 		/*
 		 * Set upper address bits and 8/16 bit access to shared memory.
@@ -510,18 +515,16 @@ ed_probe_WD80x3(sc, cf, ia)
 		if (isa16bit) {
 			if (sc->is790) {
 				sc->wd_laar_proto =
-				    inb(sc->asic_addr + ED_WD_LAAR);
-				outb(sc->asic_addr + ED_WD_LAAR,
-				    ED_WD_LAAR_M16EN);
-				(void) inb(0x84);
+				    inb(sc->asic_addr + ED_WD_LAAR) &
+				    ~ED_WD_LAAR_M16EN;
 			} else {
 				sc->wd_laar_proto =
-				    ED_WD_LAAR_L16EN | ED_WD_LAAR_M16EN |
+				    ED_WD_LAAR_L16EN |
 				    ((kvtop(sc->mem_start) >> 19) &
 				    ED_WD_LAAR_ADDRHI);
-				outb(sc->asic_addr + ED_WD_LAAR,
-				    sc->wd_laar_proto);
 			}
+			outb(sc->asic_addr + ED_WD_LAAR,
+			    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 		} else  {
 			if ((sc->type & ED_WD_SOFTCONFIG) ||
 #ifdef TOSH_ETHER
@@ -537,6 +540,8 @@ ed_probe_WD80x3(sc, cf, ia)
 				    sc->wd_laar_proto);
 			}
 		}
+		(void) inb(0x84);
+		(void) inb(0x84);
 
 		/* Now zero memory and verify that it is clear. */
 		bzero(sc->mem_start, memsize);
@@ -548,12 +553,13 @@ ed_probe_WD80x3(sc, cf, ia)
 				    kvtop(sc->mem_start + i));
 
 				/* Disable 16 bit access to shared memory. */
-				if (isa16bit) {
-					sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
+				if (isa16bit)
 					outb(sc->asic_addr + ED_WD_LAAR,
 					    sc->wd_laar_proto);
-					(void) inb(0x84);
-				}
+				outb(sc->asic_addr + ED_WD_MSR,
+				    sc->wd_msr_proto);
+				(void) inb(0x84);
+				(void) inb(0x84);
 				return 0;
 			}
 	
@@ -565,11 +571,11 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * and 2) so that other 8 bit devices with shared memory can be
 		 * used in this 128k region, too.
 		 */
-		if (isa16bit) {
-			sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
+		if (isa16bit)
 			outb(sc->asic_addr + ED_WD_LAAR, sc->wd_laar_proto);
-			(void) inb(0x84);
-		}
+		outb(sc->asic_addr + ED_WD_MSR, sc->wd_msr_proto);
+		(void) inb(0x84);
+		(void) inb(0x84);
 	}
 
 	ia->ia_iosize = ED_WD_IO_PORTS;
@@ -1020,8 +1026,16 @@ edattach(parent, self, aux)
 	 * Set default state for LINK0 flag (used to disable the tranceiver
 	 * for AUI operation), based on compile-time config option.
 	 */
-	if (cf->cf_flags & ED_FLAGS_DISABLE_TRANCEIVER)
-		ifp->if_flags |= IFF_LINK0;
+	switch (sc->vendor) {
+	case ED_VENDOR_3COM:
+		if (cf->cf_flags & ED_FLAGS_DISABLE_TRANCEIVER)
+			ifp->if_flags |= IFF_LINK0;
+		break;
+	case ED_VENDOR_WD_SMC:
+		if ((inb(sc->asic_addr + ED_WD_IRR) & ED_WD_IRR_OUT2) == 0)
+			ifp->if_flags |= IFF_LINK0;
+		break;
+	}
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1057,8 +1071,17 @@ edattach(parent, self, aux)
 
 	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
 
-	printf("%s\n", ((sc->vendor == ED_VENDOR_3COM) &&
-	    (ifp->if_flags & IFF_LINK0)) ? " tranceiver disabled" : "");
+	switch (sc->vendor) {
+	case ED_VENDOR_3COM:
+	case ED_VENDOR_WD_SMC:
+		if (ifp->if_flags & IFF_LINK0)
+			printf(" aui");
+		else
+			printf(" bnc");
+		break;
+	}
+
+	printf("\n");
 
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -1240,11 +1263,22 @@ ed_init(sc)
 	 * If this is a 3Com board, the tranceiver must be software enabled
 	 * (there is no settable hardware default).
 	 */
-	if (sc->vendor == ED_VENDOR_3COM) {
+	switch (sc->vendor) {
+		u_char x;
+	case ED_VENDOR_3COM:
 		if (ifp->if_flags & IFF_LINK0)
 			outb(sc->asic_addr + ED_3COM_CR, 0);
 		else
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+		break;
+	case ED_VENDOR_WD_SMC:
+		x = inb(sc->asic_addr + ED_WD_IRR);
+		if (ifp->if_flags & IFF_LINK0)
+			x &= ~ED_WD_IRR_OUT2;
+		else
+			x |= ED_WD_IRR_OUT2;
+		outb(sc->asic_addr + ED_WD_IRR, x);
+		break;
 	}
 
 	i = ED_RCR_AB | ED_RCR_AM;
@@ -1361,36 +1395,33 @@ outloop:
 
 	if (sc->mem_shared) {
 		/* Special case setup for 16 bit boards... */
-		if (sc->isa16bit) {
-			switch (sc->vendor) {
-			/*
-			 * For 16bit 3Com boards (which have 16k of memory), we
-			 * have the xmit buffers in a different page of memory
-			 * ('page 0') - so change pages.
-			 */
-			case ED_VENDOR_3COM:
+		switch (sc->vendor) {
+		/*
+		 * For 16bit 3Com boards (which have 16k of memory), we
+		 * have the xmit buffers in a different page of memory
+		 * ('page 0') - so change pages.
+		 */
+		case ED_VENDOR_3COM:
+			if (sc->isa16bit)
 				outb(sc->asic_addr + ED_3COM_GACFR,
 				    ED_3COM_GACFR_RSEL);
-				break;
-			/*
-			 * Enable 16bit access to shared memory on WD/SMC
-			 * boards don't update wd_laar_proto because we want to
-			 * restore the previous state (because an arp reply in
-			 * the input code may cause a call-back to ed_start).
-			 * XXX - the call-back to 'start' is a bug, IMHO.
-			 */
-			case ED_VENDOR_WD_SMC:
+			break;
+		/*
+		 * Enable 16bit access to shared memory on WD/SMC
+		 * boards don't update wd_laar_proto because we want to
+		 * restore the previous state (because an arp reply in
+		 * the input code may cause a call-back to ed_start).
+		 * XXX - the call-back to 'start' is a bug, IMHO.
+		 */
+		case ED_VENDOR_WD_SMC:
+			if (sc->isa16bit)
 				outb(sc->asic_addr + ED_WD_LAAR,
-				    (sc->wd_laar_proto | ED_WD_LAAR_M16EN));
-				(void) inb(0x84);
-				if (sc->is790) {
-					outb(sc->asic_addr + ED_WD_MSR,
-					    ED_WD_MSR_MENB);
-					(void) inb(0x84);
-				}
-				(void) inb(0x84);
-				break;
-			}
+				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
+			outb(sc->asic_addr + ED_WD_MSR,
+			    sc->wd_msr_proto | ED_WD_MSR_MENB);
+			(void) inb(0x84);
+			(void) inb(0x84);
+			break;
 		}
 
 		for (len = 0; m; m = m->m_next) {
@@ -1400,22 +1431,21 @@ outloop:
 		}
 
 		/* Restore previous shared memory access. */
-		if (sc->isa16bit) {
-			switch (sc->vendor) {
-			case ED_VENDOR_3COM:
+		switch (sc->vendor) {
+		case ED_VENDOR_3COM:
+			if (sc->isa16bit)
 				outb(sc->asic_addr + ED_3COM_GACFR,
 				    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
-				break;
-			case ED_VENDOR_WD_SMC:
+			break;
+		case ED_VENDOR_WD_SMC:
+			if (sc->isa16bit)
 				outb(sc->asic_addr + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-				(void) inb(0x84);
-				if (sc->is790) {
-					outb(sc->asic_addr + ED_WD_MSR, 0x00);
-					(void) inb(0x84);
-				}
-				break;
-			}
+			outb(sc->asic_addr + ED_WD_MSR,
+			    sc->wd_msr_proto);
+			(void) inb(0x84);
+			(void) inb(0x84);
+			break;
 		}
 	} else
 		len = ed_pio_write_mbufs(sc, m, (u_short)buffer);
@@ -1720,33 +1750,27 @@ edintr(sc)
 				 * Enable 16bit access to shared memory first
 				 * on WD/SMC boards.
 				 */
-				if (sc->isa16bit &&
-				    sc->vendor == ED_VENDOR_WD_SMC) {
-					sc->wd_laar_proto |= ED_WD_LAAR_M16EN;
-					outb(sc->asic_addr + ED_WD_LAAR,
-					    sc->wd_laar_proto);
+				if (sc->vendor == ED_VENDOR_WD_SMC) {
+					if (sc->isa16bit)
+						outb(sc->asic_addr + ED_WD_LAAR,
+						    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
+					outb(sc->asic_addr + ED_WD_MSR,
+					    sc->wd_msr_proto | ED_WD_MSR_MENB);
 					(void) inb(0x84);
-					if (sc->is790) {
-						outb(sc->asic_addr + ED_WD_MSR,
-						    ED_WD_MSR_MENB);
-						(void) inb(0x84);
-					}
+					(void) inb(0x84);
 				}
 
 				ed_rint(sc);
 
 				/* Disable 16-bit access. */
-				if (sc->isa16bit &&
-				    sc->vendor == ED_VENDOR_WD_SMC) {
-					sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
-					outb(sc->asic_addr + ED_WD_LAAR,
-					    sc->wd_laar_proto);
+				if (sc->vendor == ED_VENDOR_WD_SMC) {
+					if (sc->isa16bit)
+						outb(sc->asic_addr + ED_WD_LAAR,
+						    sc->wd_laar_proto);
+					outb(sc->asic_addr + ED_WD_MSR,
+					    sc->wd_msr_proto);
 					(void) inb(0x84);
-					if (sc->is790) {
-						outb(sc->asic_addr + ED_WD_MSR,
-						    0x00);
-						(void) inb(0x84);
-					}
+					(void) inb(0x84);
 				}
 			}
 		}
