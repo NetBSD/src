@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.8 1997/07/28 05:39:17 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.9 1997/10/18 11:23:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.8 1997/07/28 05:39:17 thorpej Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.9 1997/10/18 11:23:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,8 @@ BpfOpen()
 	ifr.ifr_addr.sa_len = RMP_ADDRLEN + 2;
 #endif
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
-	bcopy(&RmpMcastAddr[0], (char *)&ifr.ifr_addr.sa_data[0], RMP_ADDRLEN);
+	memmove((char *)&ifr.ifr_addr.sa_data[0], &RmpMcastAddr[0],
+	    RMP_ADDRLEN);
 	if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) < 0) {
 		syslog(LOG_ERR, "bpf: can't set promiscuous mode: %m");
 		Exit(0);
@@ -313,7 +314,7 @@ BpfRead(rconn, doread)
 	RMPCONN *rconn;
 	int doread;
 {
-	register int datlen, caplen, hdrlen;
+	int datlen, caplen, hdrlen;
 	static u_int8_t *bp = NULL, *ep = NULL;
 	int cc;
 
@@ -350,9 +351,10 @@ BpfRead(rconn, doread)
 			       caplen);
 		else {
 			rconn->rmplen = caplen;
-			bcopy((char *)&bhp->bh_tstamp, (char *)&rconn->tstamp,
-			      sizeof(struct timeval));
-			bcopy((char *)bp + hdrlen, (char *)&rconn->rmp, caplen);
+			memmove((char *)&rconn->tstamp, (char *)&bhp->bh_tstamp,
+			  sizeof(struct timeval));
+			memmove((char *)&rconn->rmp, (char *)bp + hdrlen,
+			    caplen);
 		}
 		bp += BPF_WORDALIGN(caplen + hdrlen);
 		return(1);
@@ -415,7 +417,8 @@ BpfClose()
 	ifr.ifr_addr.sa_len = RMP_ADDRLEN + 2;
 #endif
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
-	bcopy(&RmpMcastAddr[0], (char *)&ifr.ifr_addr.sa_data[0], RMP_ADDRLEN);
+	memmove((char *)&ifr.ifr_addr.sa_data[0], &RmpMcastAddr[0],
+	    RMP_ADDRLEN);
 	if (ioctl(BpfFd, SIOCDELMULTI, (caddr_t)&ifr) < 0)
 		(void) ioctl(BpfFd, BIOCPROMISC, (caddr_t)0);
 
