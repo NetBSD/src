@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.6 1999/05/06 14:01:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,9 +42,9 @@
 
 	.data
 	.align	0
-	.globl	_C_FUNC(__minbrk)		/* XXX not a function */
-	.type	_C_FUNC(__minbrk),#object
-_C_FUNC(__minbrk):
+	.globl	_C_LABEL(__minbrk)
+	.type	_C_LABEL(__minbrk),#object
+_C_LABEL(__minbrk):
 	.word	_end
 
 /*
@@ -83,7 +83,7 @@ L1:
 	/* Store the new address in curbrk */
 	str	r2, [r1]
 
-	/* Return 0 for sucess */
+	/* Return 0 for success */
 	mov	r0, #0x00000000
 	mov	r15, r14
 
@@ -93,6 +93,6 @@ Lgot:
 	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
 #endif
 Lminbrk:
-	.word	_C_FUNC(__minbrk)
+	.word	_C_LABEL(__minbrk)
 Lcurbrk:
 	.word	curbrk
