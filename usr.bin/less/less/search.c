@@ -1,7 +1,7 @@
-/*	$NetBSD: search.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ static int is_ucase __P((char *));
 static int prev_pattern __P((void));
 static int compile_pattern __P((char *, int));
 static void uncompile_pattern __P((void));
-static int match_pattern __P((char *, char **, char **));
+static int match_pattern __P((char *, char **, char **, int));
 struct hilite;
 static void add_hilite __P((struct hilite *, struct hilite *));
 static void adj_hilite __P((struct hilite *, POSITION));
@@ -81,11 +81,14 @@ extern int linenums;
 extern int sc_height;
 extern int jump_sline;
 extern int bs_mode;
+extern POSITION start_attnpos;
+extern POSITION end_attnpos;
 #if HILITE_SEARCH
 extern int hilite_search;
 extern int screen_trashed;
 extern int size_linebuf;
 extern int squished;
+extern int can_goto_line;
 static int hide_hilite;
 static POSITION prep_startpos;
 static POSITION prep_endpos;
@@ -96,7 +99,7 @@ struct hilite
 	POSITION hl_startpos;
 	POSITION hl_endpos;
 };
-static struct hilite hilite_anchor = { NULL };
+static struct hilite hilite_anchor = { NULL, NULL_POSITION, NULL_POSITION };
 #define	hl_first	hl_next
 #endif
 
@@ -206,7 +209,6 @@ repaint_hilite(on)
 	POSITION pos;
 	POSITION epos;
 	int save_hide_hilite;
-	extern int can_goto_line;
 
 	if (squished)
 		repaint();
@@ -244,6 +246,48 @@ repaint_hilite(on)
 		}
 	}
 	hide_hilite = save_hide_hilite;
+}
+
+/*
+ * Clear the attn hilite.
+ */
+	public void
+clear_attn()
+{
+	int slinenum;
+	POSITION old_start_attnpos;
+	POSITION old_end_attnpos;
+	POSITION pos;
+	POSITION epos;
+
+	if (start_attnpos == NULL_POSITION)
+		return;
+	old_start_attnpos = start_attnpos;
+	old_end_attnpos = end_attnpos;
+	start_attnpos = end_attnpos = NULL_POSITION;
+
+	if (!can_goto_line)
+	{
+		repaint();
+		return;
+	}
+	if (squished)
+		repaint();
+
+	for (slinenum = TOP;  slinenum < TOP + sc_height-1;  slinenum++)
+	{
+		pos = position(slinenum);
+		if (pos == NULL_POSITION)
+			continue;
+		epos = position(slinenum+1);
+		if (pos < old_end_attnpos &&
+		     (epos == NULL_POSITION || epos > old_start_attnpos))
+		{
+			(void) forw_line(pos);
+			goto_line(slinenum);
+			put_line();
+		}
+	}
 }
 #endif
 
@@ -364,10 +408,11 @@ uncompile_pattern()
  * Set sp and ep to the start and end of the matched string.
  */
 	static int
-match_pattern(line, sp, ep)
+match_pattern(line, sp, ep, notbol)
 	char *line;
 	char **sp;
 	char **ep;
+	int notbol;
 {
 	int matched;
 
@@ -377,7 +422,8 @@ match_pattern(line, sp, ep)
 #if HAVE_POSIX_REGCOMP
 	{
 		regmatch_t rm;
-		matched = !regexec(regpattern, line, 1, &rm, 0);
+		int flags = (notbol) ? REG_NOTBOL : 0;
+		matched = !regexec(regpattern, line, 1, &rm, flags);
 		if (!matched)
 			return (0);
 		*sp = line + rm.rm_so;
@@ -454,6 +500,13 @@ is_hilited(pos, epos, nohide)
 		 */
 		return (0);
 
+	if (start_attnpos != NULL_POSITION && 
+	    pos < end_attnpos &&
+	     (epos == NULL_POSITION || epos > start_attnpos))
+		/*
+		 * The attn line overlaps this range.
+		 */
+		return (1);
 	/*
 	 * Look at each highlight and see if any part of it falls in the range.
 	 */
@@ -625,7 +678,7 @@ hilite_line(linepos, line, sp, ep)
 			searchp++;
 		else /* end of line */
 			break;
-	} while (match_pattern(searchp, &sp, &ep));
+	} while (match_pattern(searchp, &sp, &ep, 1));
 
 	if (bs_mode == BS_SPECIAL) 
 	{
@@ -873,7 +926,7 @@ search_range(pos, endpos, search_type, matches, maxlines, plinepos, pendpos)
 		 * We are successful if we either want a match and got one,
 		 * or if we want a non-match and got one.
 		 */
-		line_match = match_pattern(line, &sp, &ep);
+		line_match = match_pattern(line, &sp, &ep, 0);
 		line_match = (!(search_type & SRCH_NO_MATCH) && line_match) ||
 				((search_type & SRCH_NO_MATCH) && !line_match);
 		if (!line_match)

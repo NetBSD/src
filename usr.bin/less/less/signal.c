@@ -1,7 +1,7 @@
-/*	$NetBSD: signal.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
+/*	$NetBSD: signal.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -180,6 +180,9 @@ init_signals(on)
 #ifdef SIGWIND
 		(void) LSIGNAL(SIGWIND, winch);
 #endif
+#ifdef SIGQUIT
+		(void) LSIGNAL(SIGQUIT, SIG_IGN);
+#endif
 #endif
 	} else
 	{
@@ -198,6 +201,9 @@ init_signals(on)
 #endif
 #ifdef SIGWIND
 		(void) LSIGNAL(SIGWIND, SIG_IGN);
+#endif
+#ifdef SIGQUIT
+		(void) LSIGNAL(SIGQUIT, SIG_DFL);
 #endif
 	}
 }
