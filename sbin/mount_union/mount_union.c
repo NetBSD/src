@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.13 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.14 2005/02/05 15:14:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.13 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.14 2005/02/05 15:14:25 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,25 +66,20 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_union __P((int argc, char **argv));
-static int	subdir __P((const char *, const char *));
-static void	usage __P((void));
+int	mount_union(int argc, char **argv);
+static int	subdir(const char *, const char *);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_union(argc, argv);
 }
 #endif
 
 int
-mount_union(argc, argv)
-	int argc;
-	char *argv[];
+mount_union(int argc, char *argv[])
 {
 	struct union_args args;
 	int ch, mntflags;
@@ -148,9 +143,7 @@ mount_union(argc, argv)
 }
 
 static int
-subdir(p, dir)
-	const char *p;
-	const char *dir;
+subdir(const char *p, const char *dir)
 {
 	int l;
 
@@ -165,7 +158,7 @@ subdir(p, dir)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_union [-br] [-o options] target_fs mount_point\n");

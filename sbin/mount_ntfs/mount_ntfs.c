@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.11 2005/01/31 05:19:19 erh Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.12 2005/02/05 15:06:15 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.11 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.12 2005/02/05 15:06:15 xtraeme Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -63,24 +63,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-static void	usage __P((void)) __attribute__((__noreturn__));
-int main __P((int, char **));
-int mount_ntfs __P((int argc, char **argv));
+static void	usage(void) __attribute__((__noreturn__));
+int mount_ntfs(int argc, char **argv);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_ntfs(argc, argv);
 }
 #endif
 
 int
-mount_ntfs(argc, argv)
-	int argc;
-	char **argv;
+mount_ntfs(int argc, char **argv)
 {
 	struct ntfs_args args;
 	struct stat sb;
@@ -173,7 +168,7 @@ mount_ntfs(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: mount_ntfs [-a] [-i] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(EX_USAGE);
