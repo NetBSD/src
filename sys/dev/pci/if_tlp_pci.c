@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.22 1999/11/04 01:20:55 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.23 1999/11/19 18:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
@@ -531,13 +532,15 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_flags |= TULIPF_MWI;
 
 	/*
-	 * Read the contents of the Ethernet Address ROM/SROM.
+	 * Read the contents of the Ethernet Address ROM/SROM.  PCI
+	 * chips have a 128 byte SROM (6 address bits).
 	 */
+	sc->sc_srom_addrbits = 6;
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
 			for (j = 0; j < 10000; j++) {
 				val = TULIP_READ(sc, CSR_MIIROM);
 				if ((val & MIIROM_DN) == 0)
@@ -577,10 +580,11 @@ tlp_pci_attach(parent, self, aux)
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1, sc->sc_srom);
+		tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
+		    sc->sc_srom);
 #if 0
 		printf("SROM CONTENTS:");
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
 			if ((i % 8) == 0)
 				printf("\n\t");
 			printf("0x%02x ", sc->sc_srom[i]);
