@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.69 1996/09/20 19:51:50 jtc Exp $
+#	$NetBSD: bsd.lib.mk,v 1.70 1996/09/23 18:15:48 jtc Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -65,14 +65,14 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
-	@echo "${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${TARGET}.o
+	@echo "${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o"
+	@${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo "${COMPILE.S} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${TARGET}.o
-	@${COMPILE.S} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${TARGET}.o
+	@echo "${COMPILE.S} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o"
+	@${COMPILE.S} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
