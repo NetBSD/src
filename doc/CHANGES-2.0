@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.493 2004/10/08 03:11:30 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.494 2004/10/08 03:19:35 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7779,3 +7779,16 @@ sys/net/if_bridge.c				1.26
 	forwarded over the bridge need to have csum_flags cleared before being
 	put on the output queue.  Do so in bridge_enqueue(). PR#27007 PR#21831
 	[bad, ticket #900]
+
+sys/netinet/ip_state.c				patch
+
+	* Prevent hang when attempting to flush state entries for ipv4 when ipv6
+	  are present or vice versa
+	* Fix matching of IPv6 state entries when the initial packet is a
+	  sent to a multicast address.  This includes not updating the address 
+	  as being fixed when a second (or further) such packet is seen before 
+	  a reply.
+	* Disable code, for now, that limited how many ICMP packets could 
+	  match a state entry based on the number of real packets seen.
+
+	[darrenr, ticket #902]
