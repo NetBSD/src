@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.6 1995/11/21 20:57:39 gwr Exp $
+#	$Id: MAKEDEV,v 1.7 1996/02/13 23:55:09 jtc Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -81,7 +81,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh MAKEDEV std sd0 sd1 sd2 sd3 st0 st1 pty0
+	sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0
 	;;
 
 std)
@@ -102,6 +102,9 @@ std)
 	mk klog		c 16 0 600
 	mk fb		c 22 0
 	mk kbd		c 29 0
+	mk stdin	c 23 0
+	mk stdout	c 23 1
+	mk stderr	c 23 2
 	;;
 
 fd)
