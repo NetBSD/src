@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.47.2.1 1998/11/23 08:12:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.47.2.1 1998/11/23 08:12:08 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,11 @@ static int	debug;
 
 #ifdef __i386__
 static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
+static int mbrpt_nobsd; /* MBR partition table exists, but no BSD partition */
 static struct dos_partition *readmbr __P((int));
+#define MBRSIGOFS 0x1fe
+static char mbrsig[2] = {0x55, 0xaa};
+static void confirm __P((const char *));
 #endif
 #ifdef __arm32__
 static u_int filecore_partition_offset;
@@ -266,10 +270,7 @@ main(argc, argv)
 	/*
 	 * Check for presence of DOS partition table in
 	 * master boot record. Return pointer to NetBSD/i386
-	 * partition, if present. If no valid partition table,
-	 * return 0. If valid partition table present, but no
-	 * partition to use, return a pointer to a non-386bsd
-	 * partition.
+	 * partition, if present.
 	 */
 	dosdp = readmbr(f);
 #endif
@@ -418,6 +419,23 @@ makelabel(type, name, lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
+#ifdef __i386__
+static void
+confirm(txt)
+	const char *txt;
+{
+	int first, ch;
+
+	(void) printf(txt);
+	(void) fflush(stdout);
+	first = ch = getchar();
+	while (ch != '\n' && ch != EOF)
+		ch = getchar();
+	if (first != 'y' && first != 'Y')
+		exit(0);
+}
+#endif
+
 int
 writelabel(f, boot, lp)
 	int f;
@@ -449,24 +467,15 @@ writelabel(f, boot, lp)
 		 * the label to be written is not within partition,
 		 * prompt first. Need to allow this in case operator
 		 * wants to convert the drive for dedicated use.
-		 * In this case, partition 'a' had better start at 0,
-		 * otherwise we reject the request as meaningless. -wfj
 		 */
-		if (dosdp && dosdp->dp_typ == DOSPTYP_386BSD && pp->p_size &&
-			dosdp->dp_start == pp->p_offset) {
+		if (dosdp) {
+			if (dosdp->dp_start != pp->p_offset)
+				confirm("Write outside MBR partition? [n]: ");
 		        sectoffset = pp->p_offset * lp->d_secsize;
 		} else {
-			if (dosdp) {
-				int first, ch;
-
-				(void) printf("Erase the previous contents of the disk? [n]: ");
-				(void) fflush(stdout);
-				first = ch = getchar();
-				while (ch != '\n' && ch != EOF)
-					ch = getchar();
-				if (first != 'y' && first != 'Y')
-					exit(0);
-			}
+			if (mbrpt_nobsd)
+				confirm("Erase the previous contents "
+					"of the disk? [n]: ");
 			sectoffset = 0;
 		}
 #endif
@@ -607,23 +616,28 @@ readmbr(f)
 	 * disklabel from there.
 	 */
 	/* Check if table is valid. */
-	for (part = 0; part < NDOSPART; part++) {
-		if ((dp[part].dp_flag & ~0x80) != 0)
-			return (0);
-	}
+	if (bcmp(&mbr[MBRSIGOFS], mbrsig, sizeof(mbrsig)))
+		return(0);
 	/* Find NetBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD)
+		if (dp[part].dp_typ == DOSPTYP_NETBSD)
 			return (&dp[part]);
 	}
-	/* If no NetBSD partition, find first used partition. */
+#ifdef COMPAT_386BSD_MBRPART
+	/* didn't find it -- look for 386BSD partition */
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size) {
-			warnx("warning, DOS partition table with no valid NetBSD partition");
+		if (dp[part].dp_typ == DOSPTYP_386BSD) {
+			fprintf(stderr, "old BSD partition ID!\n");
 			return (&dp[part]);
 		}
 	}
-	/* Table appears to be empty. */
+#endif
+
+	/*
+	 * Table doesn't contain a partition for us. Keep a flag
+	 * remembering us to warn before it is destroyed.
+	 */
+	mbrpt_nobsd = 1;
 	return (0);
 }
 #endif
@@ -759,7 +773,7 @@ readlabel(f)
 		off_t sectoffset = 0;
 
 #ifdef __i386__
-		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
+		if (dosdp)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
@@ -1619,8 +1633,7 @@ checklabel(lp)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 #ifdef __i386__notyet__
-	if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD
-		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
+	if (dosdp && lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
 		warnx("exceeds DOS partition size");
 		errors++;
 		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
