@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.21.4.1 2001/11/25 19:20:09 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.21.4.1 2001/11/25 19:20:09 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ dumpfs(name)
 	const char *name;
 {
 	int fd, c, i, j, k, size;
+	time_t t;
 
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
 		goto err;
@@ -148,8 +149,9 @@ dumpfs(name)
 	if (afs.fs_postblformat == FS_42POSTBLFMT)
 		afs.fs_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
+	t = afs.fs_time;
 	printf("magic\t%x\ttime\t%s", afs.fs_magic,
-	    ctime(&afs.fs_time));
+	    ctime(&t));
 	i = 0;
 	if (afs.fs_postblformat != FS_42POSTBLFMT) {
 		i++;
@@ -190,7 +192,7 @@ dumpfs(name)
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
 	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
 	    afs.fs_contigsumsize);
-	printf("maxfilesize 0x%016qx\n",
+	printf("maxfilesize 0x%016llx\n",
 	    (unsigned long long)afs.fs_maxfilesize);
 	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
 	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
@@ -271,6 +273,7 @@ dumpcg(name, fd, c)
 {
 	off_t cur;
 	int i, j;
+	time_t t;
 
 	printf("\ncg %d:\n", c);
 	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
@@ -282,10 +285,11 @@ dumpcg(name, fd, c)
 	}
 	if (needswap)
 		swap_cg(&acg);
-	printf("magic\t%x\ttell\t%qx\ttime\t%s",
+	t = acg.cg_time;
+	printf("magic\t%x\ttell\t%llx\ttime\t%s",
 	    afs.fs_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
-	    (long long)cur, ctime(&acg.cg_time));
+	    (long long)cur, ctime(&t));
 	printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
 	    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
