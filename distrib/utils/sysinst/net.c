@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.50 1999/06/22 18:47:07 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.51 1999/06/23 22:55:14 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,6 +63,9 @@ static char *url_encode __P((char *dst, const char *src, size_t len,
 
 static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
+
+static void write_etc_hosts(FILE *f);
+
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
@@ -569,6 +572,31 @@ again:
 }
 
 /*
+ * write the new contents of /etc/hosts to the specified file
+ */
+static void
+write_etc_hosts(FILE *f)
+{
+	int l;
+
+	fprintf(f, "#\n");
+	fprintf(f, "# Added by NetBSD sysinst\n");
+	fprintf(f, "#\n");
+
+	fprintf(f, "127.0.0.1	localhost\n");
+
+	fprintf(f, "%s\t", net_ip);
+	l = strlen(net_host) - strlen(net_domain);
+	if (l <= 0 ||
+	    net_host[l - 1] != '.' ||
+	    strcasecmp(net_domain, net_host + l) != 0) {
+		/* net_host isn't an FQDN. */
+		fprintf(f, "%s.%s ", net_host, net_domain);
+	}
+	fprintf(f, "%s\n", net_host);
+}
+
+/*
  * Write the network config info the user entered via menus into the
  * config files in the target disk.  Be careful not to lose any
  * information we don't immediately add back, in case the install
@@ -606,13 +634,11 @@ mnt_net_config(void)
 			 */
 			f = target_fopen("/etc/hosts", "a");
 			if (f != 0) {
-				(void)fprintf(f, msg_string(MSG_etc_hosts),
-				    net_ip, net_host, net_domain, net_host);
+				write_etc_hosts(f);
 				(void)fclose(f);
 				if (scripting) {
 					(void)fprintf(script, "cat <<EOF >>%s/etc/hosts\n", target_prefix());
-					(void)fprintf(script, msg_string(MSG_etc_hosts),
-					    net_ip, net_host, net_domain, net_host);
+					write_etc_hosts(script);
 					(void)fprintf(script, "EOF\n");
 				}
 			}
