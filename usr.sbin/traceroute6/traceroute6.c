@@ -1,5 +1,5 @@
-/*	$NetBSD: traceroute6.c,v 1.11.2.2 2000/07/27 16:25:18 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.30 2000/06/30 18:56:01 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.11.2.3 2000/10/18 02:03:03 tv Exp $	*/
+/*	$KAME: traceroute6.c,v 1.33 2000/10/07 06:22:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.11.2.2 2000/07/27 16:25:18 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.11.2.3 2000/10/18 02:03:03 tv Exp $");
 #endif
 #endif
 
@@ -268,6 +268,9 @@ __RCSID("$NetBSD: traceroute6.c,v 1.11.2.2 2000/07/27 16:25:18 itojun Exp $");
 #include <netdb.h>
 #include <stdio.h>
 #include <err.h>
+#ifdef HAVE_POLL
+#include <poll.h>
+#endif
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -873,18 +876,36 @@ wait_for_reply(sock, mhdr)
 	int sock;
 	struct msghdr *mhdr;
 {
-	fd_set fds;
-	struct timeval wait;
+#ifdef HAVE_POLL
+	struct pollfd pfd[1];
 	int cc = 0;
 
-	FD_ZERO(&fds);
-	FD_SET(sock, &fds);
-	wait.tv_sec = waittime; wait.tv_usec = 0;
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
 
-	if (select(sock+1, &fds, (fd_set *)0, (fd_set *)0, &wait) > 0)
+	if (poll(pfd, 1, waittime * 1000) > 0)
 		cc = recvmsg(rcvsock, mhdr, 0);
 
 	return(cc);
+#else
+	fd_set *fdsp;
+	struct timeval wait;
+	int cc = 0, fdsn;
+
+	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+	memset(fdsp, 0, fdsn);
+	FD_SET(sock, fdsp);
+	wait.tv_sec = waittime; wait.tv_usec = 0;
+
+	if (select(sock+1, fdsp, (fd_set *)0, (fd_set *)0, &wait) > 0)
+		cc = recvmsg(rcvsock, mhdr, 0);
+
+	free(fdsp);
+	return(cc);
+#endif
 }
 
 #ifdef IPSEC
