@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.50 1996/12/18 02:54:43 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.51 1997/02/22 02:17:40 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -56,7 +56,9 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/bus.h>
 #include <machine/viareg.h>
+
 #include "nubus.h"
 #include <dev/ic/dp8390reg.h>
 #include "if_aereg.h"
@@ -68,6 +70,9 @@
  */
 struct ae_softc {
 	struct device	sc_dev;
+	bus_space_tag_t	sc_tag;
+	bus_space_handle_t sc_handle;
+
 	nubus_slot	sc_slot;
 /*	struct	intrhand sc_ih;	*/
 
