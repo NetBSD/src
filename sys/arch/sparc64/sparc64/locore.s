@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2000/08/01 00:40:15 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2000/08/02 22:24:40 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6868,12 +6868,17 @@ _C_LABEL(svr4_esigcode):
 #endif
 
 #ifdef GPROF
-	.globl	mcount
+	.globl	_mcount
 #define	ENTRY(x) \
 	.globl _C_LABEL(x); _C_LABEL(x): ; \
+	.data; \
+	.align 8; \
+0:	.uaword 0; .uaword 0; \
+	.text;	\
 	save	%sp, -CC64FSZ, %sp; \
-	call	mcount; \
-	nop; \
+	sethi	%hi(0b), %o0; \
+	call	_mcount; \
+	or	%o0, %lo(0b), %o0; \
 	restore
 #else
 #define	ENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
