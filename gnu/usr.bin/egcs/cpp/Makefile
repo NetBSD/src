@@ -1,6 +1,9 @@
 #	from: @{#}Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.10 1999/01/18 21:14:50 christos Exp $
+#	$NetBSD: Makefile,v 1.10.8.1 2000/08/07 01:51:15 mrg Exp $
 
+.include <bsd.own.mk>
+
+.if (${MACHINE_ARCH} != "sparc64")
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 PROG=		cpp
@@ -10,6 +13,7 @@ CPPFLAGS+=	-DGCC_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\" -DLINTCOMMENT
 .if empty(HAVE_GCC28)
 CWARNFLAGS+=	-Wno-error
+.endif
 .endif
 
 LINKS=		/usr/bin/cpp /usr/bin/gcpp
@@ -21,8 +25,10 @@ FILESMODE=	${BINMODE}
 MAN=		cccp.1
 MLINKS=		cccp.1 cpp.1 cccp.1 gcpp.1
 
+.include <bsd.prog.mk>
+
+.if (${MACHINE_ARCH} != "sparc64")
 .NOPATH: cexp.c
 .BEGIN:
 	@rm -f ${DIST}/cexp.c
-
-.include <bsd.prog.mk>
+.endif
