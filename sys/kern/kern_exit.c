@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.45 1997/04/28 13:17:05 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.46 1998/01/03 02:48:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -140,8 +140,8 @@ exit1(p, rv)
 	/* The next three chunks should probably be moved to vmspace_exit. */
 	vm = p->p_vmspace;
 #ifdef SYSVSHM
-	if (vm->vm_shm)
-		shmexit(p);
+	if (vm->vm_shm && vm->vm_refcnt == 1)
+		shmexit(vm);
 #endif
 #ifdef SYSVSEM
 	semexit(p);
