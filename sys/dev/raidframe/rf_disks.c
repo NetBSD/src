@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.47 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.48 2003/12/30 17:46:59 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.47 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.48 2003/12/30 17:46:59 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -525,8 +525,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 			/* Didn't find it at all!!  Component must
 			   really be dead */
 			disks[c].status = rf_ds_failed;
-			sprintf(disks[c].devname,"component%d",
-				raidPtr->numCol + c);
+			sprintf(disks[c].devname, "component%d", c);
 			numFailuresThisRow++;
 		}
 	}
