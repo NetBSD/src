@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dirs.c	8.2 (Berkeley) 1/21/94";*/
-static char *rcsid = "$Id: dirs.c,v 1.8 1994/06/18 18:14:07 mycroft Exp $";
+static char *rcsid = "$Id: dirs.c,v 1.9 1994/06/18 18:20:46 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -351,25 +351,16 @@ putdir(buf, size)
 	} else {
 		for (loc = 0; loc < size; ) {
 			dp = (struct direct *)(buf + loc);
-			if (oldinofmt) {
-				if (Bcvt) {
-					swabst((u_char *)"ls", (u_char *) dp);
-				}
-				if (dp->d_ino != 0) {
+			if (Bcvt)
+				swabst((u_char *)"ls", (u_char *) dp);
+			if (oldinofmt && dp->d_ino != 0) {
 #if BYTE_ORDER == BIG_ENDIAN
-					if (Bcvt) {
+				if (Bcvt)
 #else
-					if (!Bcvt) {
+				if (!Bcvt)
 #endif
-						dp->d_namlen = dp->d_type;
-						dp->d_type = DT_UNKNOWN;
-					} else
-						dp->d_type = DT_UNKNOWN;
-				}
-			} else {
-				if (Bcvt) {
-					swabst((u_char *)"ls", (u_char *) dp);
-				}
+					dp->d_namlen = dp->d_type;
+				dp->d_type = DT_UNKNOWN;
 			}
 			i = DIRBLKSIZ - (loc & (DIRBLKSIZ - 1));
 			if ((dp->d_reclen & 0x3) != 0 ||
