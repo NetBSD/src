@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.5 1998/03/26 06:44:19 thorpej Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -318,7 +318,7 @@ rfc1048_print(bp, length)
 		len = *bp++;
 		if (bp + len > ep) {
 			/* truncated option */
-			printf(" |(%d>%d)", len, ep - bp);
+			printf(" |(%d>%ld)", len, (long)(ep - bp));
 			return;
 		}
 		/* Print the option value(s). */
