@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.8 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.9 2004/09/14 20:20:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.8 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.9 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static const int we_584_irq[] = {
 #define	NWE_584_IRQ	(sizeof(we_584_irq) / sizeof(we_584_irq[0]))
 
 static const int we_790_irq[] = {
-	ISACF_IRQ_DEFAULT, 9, 3, 5, 7, 10, 11, 15,
+	ISA_UNKNOWN_IRQ, 9, 3, 5, 7, 10, 11, 15,
 };
 #define	NWE_790_IRQ	(sizeof(we_790_irq) / sizeof(we_790_irq[0]))
 
@@ -172,11 +172,11 @@ we_isa_probe(parent, cf, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o addresses. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* Disallow wildcarded mem address. */
-	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
 		return (0);
 
 	/* Attempt to map the device. */
@@ -258,7 +258,7 @@ we_isa_probe(parent, cf, aux)
 		bus_space_write_1(asict, asich, WE790_HWR,
 		    hwr & ~WE790_HWR_SWH);
 
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != we_790_irq[i])
 			printf("%s%d: overriding configured IRQ %d to %d\n",
 			    we_cd.cd_name, cf->cf_unit, ia->ia_irq[0].ir_irq,
@@ -270,7 +270,7 @@ we_isa_probe(parent, cf, aux)
 		    ((bus_space_read_1(asict, asich, WE_IRR) &
 		      (WE_IRR_IR0 | WE_IRR_IR1)) >> 5);
 
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != we_584_irq[i])
 			printf("%s%d: overriding configured IRQ %d to %d\n",
 			    we_cd.cd_name, cf->cf_unit, ia->ia_irq[0].ir_irq,
@@ -376,7 +376,7 @@ we_isa_attach(parent, self, aux)
 	else if (wsc->sc_type & WE_SOFTCONFIG)
 		bus_space_write_1(asict, asich, WE_IRR,
 		    bus_space_read_1(asict, asich, WE_IRR) | WE_IRR_IEN);
-	else if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	else if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		printf("%s: can't wildcard IRQ on a %s\n",
 		    sc->sc_dev.dv_xname, typestr);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.70 2003/01/15 22:01:16 bouyer Exp $	*/
+/*	$NetBSD: if_el.c,v 1.71 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.70 2003/01/15 22:01:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.71 2004/09/14 20:20:47 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -145,9 +145,9 @@ elprobe(parent, match, aux)
 
 	iobase = ia->ia_io[0].ir_addr;
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* First check the base. */
