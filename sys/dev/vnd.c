@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.81 2002/07/20 11:28:08 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.82 2002/07/21 15:32:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.81 2002/07/20 11:28:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.82 2002/07/21 15:32:18 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -202,12 +202,17 @@ vndattach(num)
 	numvnd = num;
 
 	for (i = 0; i < numvnd; i++)
-		bufq_init(&vnd_softc[i].sc_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+		bufq_alloc(&vnd_softc[i].sc_tab,
+		    BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 }
 
 void
 vnddetach()
 {
+	int i;
+
+	for (i = 0; i < numvnd; i++)
+		bufq_free(&vnd_softc[i].sc_tab);
 
 	free(vnd_softc, M_DEVBUF);
 }
