@@ -5,4 +5,19 @@
 
 #include <sys/cdefs.h>
 
+#ifdef __weak_reference
 __weak_reference(_err, err);
+#else
+
+#define	_err	err
+#define _errx	errx
+#define	_warn	warn
+#define	_warnx	warnx
+#define	_verr	verr
+#define _verrx	verrx
+#define	_vwarn	vwarn
+#define	_vwarnx	vwarnx
+#define	rcsid	_rcsid
+#include "err.c"
+
+#endif
