@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2 1998/09/05 14:42:06 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.3 2000/05/08 13:25:35 augustss Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,6 +93,7 @@ function collectline(f, line) {
 BEGIN {
 	nmodels = nouis = 0
 	hfile="miidevs.h"
+	dfile="miidevs_data.h"
 }
 NR == 1 {
 	VERSION = $0
@@ -106,6 +107,15 @@ NR == 1 {
 	printf(" * generated from:\n") > hfile
 	printf(" *\t%s\n", VERSION) > hfile
 	printf(" */\n") > hfile
+
+	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
+	printf("/*\n") > dfile
+	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
+	    > dfile
+	printf(" *\n") > dfile
+	printf(" * generated from:\n") > dfile
+	printf(" *\t%s\n", VERSION) > dfile
+	printf(" */\n") > dfile
 
 	next
 }
@@ -138,8 +148,24 @@ $1 == "model" {
 	    models[nmodels, 1], models[nmodels, 2],
 	    models[nmodels, 4]) > hfile
 
+	if (!firstdone) {
+		printf("struct mii_knowndev mii_knowndevs[] = {\n") > dfile
+		firstdone = 1
+	}
+
+	printf(" { MII_OUI_%s, MII_MODEL_%s_%s, MII_STR_%s_%s }, \n",
+	       $2, $2, $3, $2, $3) > dfile
+
 	next
 }
 {
+	if ($0 == "")
+		blanklines++
 	print $0 > hfile
+	if (blanklines < 2)
+		print $0 > dfile
+}
+END {
+	printf(" { 0, 0, NULL }\n") > dfile
+	printf("};\n") > dfile
 }

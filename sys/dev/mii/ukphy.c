@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.10 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.11 2000/05/08 13:25:35 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -84,6 +84,16 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#ifdef MIIVERBOSE
+struct mii_knowndev {
+	int oui;
+	int model;
+	const char *descr;
+};
+#include <dev/mii/miidevs.h>
+#include <dev/mii/miidevs_data.h>
+#endif
+
 int	ukphymatch __P((struct device *, struct cfdata *, void *));
 void	ukphyattach __P((struct device *, struct device *, void *));
 
@@ -115,11 +125,27 @@ ukphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	int model = MII_MODEL(ma->mii_id2);
+	int rev = MII_REV(ma->mii_id2);
+#ifdef MIIVERBOSE
+	int i;
+#endif
 
 	printf(": Generic IEEE 802.3u media interface\n");
-	printf("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
-	    sc->mii_dev.dv_xname, MII_OUI(ma->mii_id1, ma->mii_id2),
-	    MII_MODEL(ma->mii_id2), MII_REV(ma->mii_id2));
+#ifdef MIIVERBOSE
+	for (i = 0; mii_knowndevs[i].descr != NULL; i++)
+		if (mii_knowndevs[i].oui == oui &&
+		    mii_knowndevs[i].model == model)
+			break;
+	if (mii_knowndevs[i].descr != NULL)
+		printf("%s: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		       sc->mii_dev.dv_xname, mii_knowndevs[i].descr,
+		       oui, model, rev);
+	else
+#endif
+		printf("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
+		       sc->mii_dev.dv_xname, oui, model, rev);
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
