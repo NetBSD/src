@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.7 1999/09/26 10:27:40 kleink Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.8 2002/07/14 00:07:00 wiz Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.7 1999/09/26 10:27:40 kleink Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.8 2002/07/14 00:07:00 wiz Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -116,17 +116,9 @@ unsigned char vm_rfc1048[4] = VM_RFC1048;
 short secs;						/* How long client has waited */
 
 
-#ifdef	__STDC__
-#define P(args) args
-#else
-#define P(args) ()
-#endif
-
-extern int getether P((char *, char *));
-int main P((int, char **));
-void send_request P((int));
-
-#undef P
+extern int getether(char *, char *);
+int main(int, char **);
+void send_request(int);
 
 /*
  * Initialization such as command-line processing is done, then
@@ -134,9 +126,7 @@ void send_request P((int));
  */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct bootp *bp;
 	struct servent *sep;
@@ -441,8 +431,7 @@ main(argc, argv)
 }
 
 void
-send_request(s)
-	int s;
+send_request(int s)
 {
 	/* Print the request packet. */
 	printf("Sending to %s", inet_ntoa(sin_server.sin_addr));
@@ -464,8 +453,7 @@ send_request(s)
  * Return true if truncated.
  */
 int
-printfn(s, ep)
-	register u_char *s, *ep;
+printfn(register u_char *s, register u_char *ep)
 {
 	register u_char c;
 
@@ -495,8 +483,7 @@ printfn(s, ep)
  * (like inet_ntoa, but ina is a pointer)
  */
 char *
-ipaddr_string(ina)
-	struct in_addr *ina;
+ipaddr_string(struct in_addr *ina)
 {
 	static char b[24];
 	u_char *p;

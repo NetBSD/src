@@ -1,8 +1,8 @@
-/*	$NetBSD: trygetea.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+/*	$NetBSD: trygetea.c,v 1.4 2002/07/14 00:07:01 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trygetea.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: trygetea.c,v 1.4 2002/07/14 00:07:01 wiz Exp $");
 #endif
 
 /*
@@ -28,8 +28,8 @@ __RCSID("$NetBSD: trygetea.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
 int debug = 0;
 char *progname;
 
-main(argc, argv)
-	char **argv;
+int
+main(int argc, char **argv)
 {
 	u_char ea[16];				/* Ethernet address */
 	int i;
