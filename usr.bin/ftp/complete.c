@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.19 1999/02/08 05:27:56 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.20 1999/02/18 23:08:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.19 1999/02/08 05:27:56 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.20 1999/02/18 23:08:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -119,7 +119,7 @@ complete_ambiguous(word, list, words)
 		}
 		if (matchlen > wordlen) {
 			ftpvis(insertstr, sizeof(insertstr),
-			    lastmatch + wordlen, matchlen);
+			    lastmatch + wordlen, matchlen - wordlen);
 			if (el_insertstr(el, insertstr) == -1)
 				return (CC_ERROR);
 			else	
