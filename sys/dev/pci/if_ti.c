@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.54 2003/01/20 05:30:07 simonb Exp $ */
+/* $NetBSD: if_ti.c,v 1.55 2003/01/21 05:39:57 itojun Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.54 2003/01/20 05:30:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.55 2003/01/21 05:39:57 itojun Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2076,7 +2076,7 @@ static void ti_rxeof(sc)
 			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
 			    M_NOWAIT);
 			if (mtag)
-				*(u_int *)mtag = vlan_tag;
+				*(u_int *)(mtag + 1) = vlan_tag;
 			else {
 				printf("%s: no mbuf for tag\n", ifp->if_xname);
 				m_freem(m);
