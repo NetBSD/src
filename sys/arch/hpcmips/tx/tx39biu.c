@@ -1,30 +1,41 @@
-/*	$NetBSD: tx39biu.c,v 1.4 2000/10/22 10:42:32 uch Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.5 2001/06/14 11:09:55 uch Exp $ */
 
-/*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_tx39_debug.h"
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biudebug.h"
@@ -41,18 +52,18 @@
 #include <hpcmips/tx/txcsbusvar.h>
 
 #define ISSET(x, s)	((x) & (1 << (s)))
-#define ISSETPRINT(r, s, m) __is_set_print((u_int32_t)(r), \
+#define ISSETPRINT(r, s, m) __is_set_print((u_int32_t)(r),		\
 	TX39_MEMCONFIG##s##_##m, #m)
 
-int	tx39biu_match __P((struct device*, struct cfdata*, void*));
-void	tx39biu_attach __P((struct device*, struct device*, void*));
-void	tx39biu_callback __P((struct device*));
-int	tx39biu_print __P((void*, const char*));
-int	tx39biu_intr __P((void*));
+int	tx39biu_match(struct device *, struct cfdata *, void *);
+void	tx39biu_attach(struct device *, struct device *, void *);
+void	tx39biu_callback(struct device *);
+int	tx39biu_print(void *, const char *);
+int	tx39biu_intr(void *);
 
 static void *__sc; /* XXX */
 
-void	tx39biu_dump __P((tx_chipset_tag_t));
+void	tx39biu_dump(tx_chipset_tag_t);
 
 struct tx39biu_softc {
 	struct	device sc_dev;
@@ -69,7 +80,7 @@ tx39biu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return ATTACH_NORMAL;
+	return (ATTACH_NORMAL);
 }
 
 void
@@ -136,7 +147,7 @@ tx39biu_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+	return (pnp ? QUIET : UNCONF);
 }
 
 int
@@ -148,7 +159,7 @@ tx39biu_intr(arg)
 	txreg_t reg;
 
 	if (!sc) {
-		return 0;
+		return (0);
 	}
 	tc = sc->sc_tc;
 	/* Clear interrupt */
@@ -159,7 +170,7 @@ tx39biu_intr(arg)
 	reg &= ~TX39_MEMCONFIG4_CLRWRBUSERRINT;
 	tx_conf_write(tc, TX39_MEMCONFIG4_REG, reg);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -199,7 +210,7 @@ tx39biu_dump(tc)
 		int r, c;
 		printf(" BANK%d: ", i);
 		switch (i ? TX39_MEMCONFIG0_BANK1CONF(reg)
-			: TX39_MEMCONFIG0_BANK0CONF(reg)) {
+		    : TX39_MEMCONFIG0_BANK0CONF(reg)) {
 		case TX39_MEMCONFIG0_BANKCONF_16BITSDRAM:
 			printf("16bit SDRAM");
 			break;
@@ -275,4 +286,3 @@ tx39biu_dump(tc)
 	}
 	printf("\n");
 }
-
