@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1997/10/12 15:41:39 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1997/10/13 00:19:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,8 +396,7 @@ Lnocache0:
 /* final setup for C code */
 	movl	#_vectab,d0		| set VBR
 	movc	d0,vbr
-	jbsr	_isrinit		| be ready for stray ints
-	jbsr	_mvme68k_init		| early model-dependent init
+	jbsr	_mvme68k_init		| additional pre-main initialization
 	movw	#PSL_LOWIPL,sr		| lower SPL
 
 /*
