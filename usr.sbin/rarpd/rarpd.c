@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.13 1997/01/18 02:22:21 mikel Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.13 1997/01/18 02:22:21 mikel Exp $";
 #endif
 
 
@@ -538,7 +538,7 @@ rarp_process(ii, pkt)
 
 	ep = (struct ether_header *) pkt;
 
-	if (ether_ntohost(ename, &ep->ether_shost) != 0 ||
+	if (ether_ntohost(ename, (struct ether_addr *)&ep->ether_shost) != 0 ||
 	    (hp = gethostbyname(ename)) == 0)
 		return;
 
