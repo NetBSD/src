@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.25 2001/01/01 22:07:35 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.26 2001/03/05 16:48:35 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.25 2001/01/01 22:07:35 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.26 2001/03/05 16:48:35 wiz Exp $");
 #endif
 #endif
 
@@ -109,6 +109,22 @@ deweycmp(char *a, deweyop_t op, char *b)
 	char	*b_nb;
 	int	in_nb = 0;
 	int     cmp;
+
+	if ((a == NULL) || (b == NULL)) {
+		/*
+		 * At least one of the supposed versions is not
+		 * really a version; treat nonexisting versions as
+		 * lowest possible.
+		 */
+		if (a == NULL)
+			cmp = -1;
+		else if (b == NULL)
+			cmp = 1;
+		else
+			cmp = 0;
+
+		return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
+	}
 
 	/* Null out 'n' in any "nb" suffixes for initial pass */
 	if ((a_nb = strstr(a, "nb")))
@@ -400,7 +416,11 @@ findbestmatchingname_fn(const char *found, char *best)
 	/* The same suffix-hack-off again, but we can't do it
 	 * otherwise without chaning the function call interface
 	 */
-	found_version = strrchr(found, '-') + 1;
+	found_version = strrchr(found, '-');
+	if (found_version) {
+		/* skip '-', if any version found */
+		found_version++;
+	}
 	found_tgz = strstr(found, ".tgz");
 	if (found_tgz) {
 		/* strip off any ".tgz" */
@@ -425,7 +445,11 @@ findbestmatchingname_fn(const char *found, char *best)
 
 	best_version=NULL;
 	if (best && best[0] != '\0') {
-		best_version = strrchr(best, '-') + 1;
+		best_version = strrchr(best, '-');
+		if (best_version) {
+			/* skip '-' if any version found */
+			best_version++;
+		}
 		best_tgz = strstr(best, ".tgz");
 		if (best_tgz) {
 			/* strip off any ".tgz" */
