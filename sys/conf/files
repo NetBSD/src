@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.414 2000/12/29 00:54:58 thorpej Exp $
+#	$NetBSD: files,v 1.415 2001/01/05 13:09:16 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -567,6 +567,25 @@ device	fwohci: fwbus
 # Attribute used by various things that need BPF's virtual machine
 define	bpf_filter
 
+# Attributes used by the ISDN subsystem
+define isdn		# the ISDN subsystem
+define passive_isdn	# files needed by passive cards (XXX - protocol specific)
+define spppi4b		# synchronous PPP support
+
+# ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
+device isic: isdn, passive_isdn
+
+file dev/ic/i4b_isic.c         isic
+file dev/ic/i4b_isac.c         isic
+file dev/ic/i4b_hscx.c         isic
+file dev/ic/i4b_isicl1.c       isic
+file dev/ic/i4b_isicl1fsm.c    isic
+file dev/ic/i4b_isicbchan.c    isic
+
+# (old) Diehl active ISDN cards
+device daic: isdn
+file dev/ic/daic.c	daic
+
 # legitimate pseudo-devices
 defpseudo vnd: disk
 defpseudo ccd: disk
@@ -594,6 +613,15 @@ defpseudo faith: ifnet
 defpseudo stf: ifnet
 
 defpseudo sequencer
+
+# ISDN userland pseudo devices
+defpseudo	i4btrc: isdn
+defpseudo	i4brbch: isdn
+defpseudo	i4btel: isdn
+defpseudo	i4bipr: isdn
+defpseudo	i4bisppp:	isdn, sppp
+defpseudo	i4bctl: isdn
+defpseudo	i4b:	isdn
 
 # kernel sources
 file adosfs/adlookup.c			adosfs
@@ -884,7 +912,7 @@ file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
-file net/slcompress.c			sl | ppp | strip
+file net/slcompress.c			sl | ppp | strip | i4bipr 
 file net/zlib.c				(ppp & ppp_deflate) | ipsec
 file netatalk/aarp.c			netatalk
 file netatalk/at_control.c		netatalk
@@ -1111,3 +1139,33 @@ file uvm/uvm_swap.c
 file uvm/uvm_unix.c
 file uvm/uvm_user.c
 file uvm/uvm_vnode.c
+
+file netisdn/i4b_ctl.c i4bctl	needs-flag
+file netisdn/i4b_isppp.c i4bisppp	needs-count
+file netisdn/i4b_ipr.c i4bipr	needs-count
+file netisdn/i4b_rbch.c i4brbch	needs-count
+file netisdn/i4b_tel.c i4btel	needs-count
+file netisdn/i4b_trace.c i4btrc	needs-count
+
+file netisdn/i4b_mbuf.c i4btrc	needs-count
+file netisdn/i4b_l2.c passive_isdn
+file netisdn/i4b_l2fsm.c  passive_isdn
+file netisdn/i4b_uframe.c  passive_isdn
+file netisdn/i4b_tei.c  passive_isdn
+file netisdn/i4b_sframe.c  passive_isdn
+file netisdn/i4b_iframe.c  passive_isdn
+file netisdn/i4b_l2timer.c  passive_isdn
+file netisdn/i4b_util.c  passive_isdn
+file netisdn/i4b_lme.c  passive_isdn
+# Q.931 handler
+file netisdn/i4b_q931.c  passive_isdn
+file netisdn/i4b_q932fac.c  passive_isdn
+file netisdn/i4b_l3fsm.c  passive_isdn
+file netisdn/i4b_l3timer.c  passive_isdn
+file netisdn/i4b_l2if.c  passive_isdn
+file netisdn/i4b_l4if.c  passive_isdn
+# isdn device driver, interface to i4bd
+file netisdn/i4b_i4bdrv.c	i4b	needs-flag
+file netisdn/i4b_l4.c  isdn		needs-flag
+file netisdn/i4b_l4mgmt.c  isdn	needs-flag
+file netisdn/i4b_l4timer.c  isdn	needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.134 2000/12/14 23:55:31 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.135 2001/01/05 13:09:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -242,7 +242,6 @@ cdev_decl(esh_fp);
 cdev_decl(scsibus);
 #include "bktr.h"
 
-#ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -288,7 +287,6 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
-#endif
 
 /* open, close, read, write, ioctl, mmap */
 #define cdev_vmegen_init(c,n) { \
@@ -362,20 +360,11 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd), /* 48: keyboards */
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),       /* 49: mice */
-	/* reserve range for i4b (distributed separately) */
-#ifdef __I4B_IS_INTEGRATED
 	cdev_i4b_init(NI4B, i4b),		/* 50: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 51: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 52: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 53: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 54: i4b phone device */
-#else
-	cdev_notdef(),			/* 50 */
-	cdev_notdef(),			/* 51 */
-	cdev_notdef(),			/* 52 */
-	cdev_notdef(),			/* 53 */
-	cdev_notdef(),			/* 54 */
-#endif
 	cdev_usb_init(NUSB,usb),	/* 55: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
