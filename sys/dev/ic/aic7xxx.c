@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.44 2000/03/23 07:01:29 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.45 2000/03/25 19:52:12 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.41 2000/02/09 21:24:58 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.42 2000/03/18 22:28:18 gibbs Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -325,6 +325,8 @@ static void ahcminphys(struct buf *);
 static __inline struct scsipi_xfer *ahc_first_xs(struct ahc_softc *);
 static __inline void ahc_swap_hscb(struct hardware_scb *);
 static __inline void ahc_swap_sg(struct ahc_dma_seg *);
+static void ahc_check_tags(struct ahc_softc *, struct scsipi_xfer *);
+static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *);
 
 #if defined(AHC_DEBUG) && 0
 static void ahc_dumptinfo(struct ahc_softc *, struct ahc_initiator_tinfo *);
@@ -353,8 +355,9 @@ ahc_first_xs(struct ahc_softc *ahc)
 	while (xs != NULL) {
 		target = xs->sc_link->scsipi_scsi.target;
 		if (ahc->devqueue_blocked[target] == 0 &&
-		    ahc_index_busy_tcl(ahc, XS_TCL(ahc, xs), FALSE) ==
-			SCB_LIST_NULL)
+		    (!ahc_istagged_device(ahc, xs) &&
+		     ahc_index_busy_tcl(ahc, XS_TCL(ahc, xs), FALSE) ==
+		    SCB_LIST_NULL))
 			break;
 		xs = TAILQ_NEXT(xs, adapter_q);
 	}
@@ -808,8 +811,8 @@ static const int num_phases = (sizeof(phase_table)/sizeof(phase_table[0])) - 1;
  */
 #define AHC_SYNCRATE_DT		0
 #define AHC_SYNCRATE_ULTRA2	1
-#define AHC_SYNCRATE_ULTRA	2
-#define AHC_SYNCRATE_FAST	5
+#define AHC_SYNCRATE_ULTRA	3
+#define AHC_SYNCRATE_FAST	6
 static struct ahc_syncrate ahc_syncrates[] = {
       /* ultra2    fast/ultra  period     rate */
 	{ 0x42,      0x000,      9,      "80.0" },
@@ -3340,7 +3343,8 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	 * XXX if we are holding two commands per lun, 
 	 *     send the next command.
 	 */
-	ahc_index_busy_tcl(ahc, scb->hscb->tcl, /*unbusy*/TRUE);
+	if (!(scb->hscb->control & TAG_ENB))
+		ahc_index_busy_tcl(ahc, scb->hscb->tcl, /*unbusy*/TRUE);
 
 	/*
 	 * If the recovery SCB completes, we have to be
@@ -3420,6 +3424,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		splx(s);
 	} else {
 		xs->xs_status |= XS_STS_DONE;
+		ahc_check_tags(ahc, xs);
 		scsipi_done(xs);
 	}
 
@@ -3887,10 +3892,11 @@ ahc_action(struct scsipi_xfer *xs)
 	 * private queue to wait for our turn.
 	 */
 	tcl = XS_TCL(ahc, xs);
-
+	
 	if (ahc->queue_blocked ||
 	    ahc->devqueue_blocked[xs->sc_link->scsipi_scsi.target] ||
-	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL) {
+	    (!ahc_istagged_device(ahc, xs) &&
+	     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)) {
 		if (dontqueue) {
 			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -3965,7 +3971,8 @@ get_scb:
 	tcl = XS_TCL(ahc, xs);
 
 #ifdef DIAGNOSTIC
-	if (ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
+	if (!ahc_istagged_device(ahc, xs) &&
+	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
 		panic("ahc: queuing for busy target");
 #endif
 	
@@ -3973,7 +3980,10 @@ get_scb:
 	hscb = scb->hscb;
 	hscb->tcl = tcl;
 
-	ahc_busy_tcl(ahc, scb);
+	if (ahc_istagged_device(ahc, xs))
+		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
+	else
+		ahc_busy_tcl(ahc, scb);
 
 	splx(s);
  
@@ -4075,7 +4085,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	 * be aborted.
 	 */
 	if (xs->xs_status & XS_STS_DONE) {
-		ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
+		if (!ahc_istagged_device(ahc, xs))
+			ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
 		if (nsegments != 0)
 			bus_dmamap_unload(ahc->parent_dmat, scb->dmamap);
 		ahcfreescb(ahc, scb);
@@ -4205,7 +4216,8 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 			    (xs->xs_control & XS_CTL_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		if (error) {
-			ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
+			if (!ahc_istagged_device(ahc, xs))
+				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			return (TRY_AGAIN_LATER);	/* XXX fvdl */
 		}
 		error = ahc_execute_scb(scb,
@@ -5564,3 +5576,68 @@ ahc_dumptinfo(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo)
 	    tinfo->user.offset, tinfo->user.ppr_flags);
 }
 #endif
+
+static void
+ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
+{
+	struct scsipi_inquiry_data *inq;
+	struct ahc_devinfo devinfo;
+	int target_id, our_id;
+
+	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
+		return;
+
+	target_id = xs->sc_link->scsipi_scsi.target;
+	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+
+	/*
+	 * Sneak a look at the results of the SCSI Inquiry
+	 * command and see if we can do Tagged queing.  This
+	 * should really be done by the higher level drivers.
+	 */
+	inq = (struct scsipi_inquiry_data *)xs->data;
+	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
+	        printf("%s: target %d using tagged queuing\n",
+			ahc_name(ahc), xs->sc_link->scsipi_scsi.target);
+
+		ahc_compile_devinfo(&devinfo,
+		    our_id, target_id, xs->sc_link->scsipi_scsi.lun,	
+		    SIM_CHANNEL(ahc, xs->sc_link), ROLE_INITIATOR);
+		ahc_set_tags(ahc, &devinfo, TRUE);
+
+		if (ahc->scb_data->maxhscbs >= 16 ||
+		    (ahc->flags & AHC_PAGESCBS)) {
+			/* Default to 8 tags */
+			xs->sc_link->openings += 6;
+		} else {
+			/*
+			 * Default to 4 tags on whimpy
+			 * cards that don't have much SCB
+			 * space and can't page.  This prevents
+			 * a single device from hogging all
+			 * slots.  We should really have a better
+			 * way of providing fairness.
+			 */
+			xs->sc_link->openings += 2;
+		}
+	}
+}
+
+static int
+ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs)
+{
+	char channel;
+	u_int our_id, target;
+	struct tmode_tstate *tstate;
+	struct ahc_devinfo devinfo;
+
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+	target = xs->sc_link->scsipi_scsi.target;
+	(void)ahc_fetch_transinfo(ahc, channel, our_id, target, &tstate);
+
+	ahc_compile_devinfo(&devinfo, our_id, target,
+	    xs->sc_link->scsipi_scsi.lun, channel, ROLE_INITIATOR);
+
+	return (tstate->tagenable & devinfo.target_mask);
+}
