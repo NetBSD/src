@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2002/07/14 12:30:36 fvdl Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2003/01/26 00:05:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -91,6 +91,66 @@ struct sigcontext {
 
 	u_int64_t	sc_rsp;
 };
+
+#define _MCONTEXT_TO_SIGCONTEXT(uc, sc) 				\
+do {									\
+	(sc)->sc_gs  = (uc)->uc_mcontext.__gregs[_REG_GS];		\
+	(sc)->sc_fs  = (uc)->uc_mcontext.__gregs[_REG_FS];		\
+	(sc)->sc_es  = (uc)->uc_mcontext.__gregs[_REG_ES];		\
+	(sc)->sc_ds  = (uc)->uc_mcontext.__gregs[_REG_DS];		\
+	(sc)->sc_r8  = (uc)->uc_mcontext.__gregs[_REG_R8];		\
+	(sc)->sc_r9  = (uc)->uc_mcontext.__gregs[_REG_R9];		\
+	(sc)->sc_r10 = (uc)->uc_mcontext.__gregs[_REG_R10];		\
+	(sc)->sc_r11 = (uc)->uc_mcontext.__gregs[_REG_R11];		\
+	(sc)->sc_r12 = (uc)->uc_mcontext.__gregs[_REG_R12];		\
+	(sc)->sc_r13 = (uc)->uc_mcontext.__gregs[_REG_R13];		\
+	(sc)->sc_r14 = (uc)->uc_mcontext.__gregs[_REG_R14];		\
+	(sc)->sc_r15 = (uc)->uc_mcontext.__gregs[_REG_R15];		\
+	(sc)->sc_rdi = (uc)->uc_mcontext.__gregs[_REG_RDI];		\
+	(sc)->sc_rsi = (uc)->uc_mcontext.__gregs[_REG_RSI];		\
+	(sc)->sc_rbp = (uc)->uc_mcontext.__gregs[_REG_RBP];		\
+	(sc)->sc_rbx = (uc)->uc_mcontext.__gregs[_REG_RBX];		\
+	(sc)->sc_rdx = (uc)->uc_mcontext.__gregs[_REG_RDX];		\
+	(sc)->sc_rcx = (uc)->uc_mcontext.__gregs[_REG_RCX];		\
+	(sc)->sc_rax = (uc)->uc_mcontext.__gregs[_REG_RAX];		\
+	(sc)->sc_trapno = (uc)->uc_mcontext.__gregs[_REG_TRAPNO];	\
+	(sc)->sc_err = (uc)->uc_mcontext.__gregs[_REG_ERR];		\
+	(sc)->sc_rip = (uc)->uc_mcontext.__gregs[_REG_RIP];		\
+	(sc)->sc_cs  = (uc)->uc_mcontext.__gregs[_REG_CS];		\
+	(sc)->sc_rflags  = (uc)->uc_mcontext.__gregs[_REG_RFL];		\
+	(sc)->sc_ss  = (uc)->uc_mcontext.__gregs[_REG_SS];		\
+	(sc)->sc_rsp  = (uc)->uc_mcontext.__gregs[_REG_URSP];		\
+} while (/*CONSTCOND*/0)
+
+#define _SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_GS]  = (sc)->sc_gs;		\
+	(uc)->uc_mcontext.__gregs[_REG_FS]  = (sc)->sc_fs;		\
+	(uc)->uc_mcontext.__gregs[_REG_ES]  = (sc)->sc_es;		\
+	(uc)->uc_mcontext.__gregs[_REG_DS]  = (sc)->sc_ds;		\
+	(uc)->uc_mcontext.__gregs[_REG_R8]  = (sc)->sc_r8;		\
+	(uc)->uc_mcontext.__gregs[_REG_R9]  = (sc)->sc_r9;		\
+	(uc)->uc_mcontext.__gregs[_REG_R10] = (sc)->sc_r10;		\
+	(uc)->uc_mcontext.__gregs[_REG_R11] = (sc)->sc_r11;		\
+	(uc)->uc_mcontext.__gregs[_REG_R12] = (sc)->sc_r12;		\
+	(uc)->uc_mcontext.__gregs[_REG_R13] = (sc)->sc_r13;		\
+	(uc)->uc_mcontext.__gregs[_REG_R14] = (sc)->sc_r14;		\
+	(uc)->uc_mcontext.__gregs[_REG_R15] = (sc)->sc_r15;		\
+	(uc)->uc_mcontext.__gregs[_REG_RDI] = (sc)->sc_rdi;		\
+	(uc)->uc_mcontext.__gregs[_REG_RSI] = (sc)->sc_rsi;		\
+	(uc)->uc_mcontext.__gregs[_REG_RBP] = (sc)->sc_rbp;		\
+	(uc)->uc_mcontext.__gregs[_REG_RBX] = (sc)->sc_rbx;		\
+	(uc)->uc_mcontext.__gregs[_REG_RDX] = (sc)->sc_rdx;		\
+	(uc)->uc_mcontext.__gregs[_REG_RCX] = (sc)->sc_rcx;		\
+	(uc)->uc_mcontext.__gregs[_REG_RAX] = (sc)->sc_rax;		\
+	(uc)->uc_mcontext.__gregs[_REG_TRAPNO]  = (sc)->sc_trapno;	\
+	(uc)->uc_mcontext.__gregs[_REG_ERR] = (sc)->sc_err;		\
+	(uc)->uc_mcontext.__gregs[_REG_RIP] = (sc)->sc_rip;		\
+	(uc)->uc_mcontext.__gregs[_REG_CS]  = (sc)->sc_cs;		\
+	(uc)->uc_mcontext.__gregs[_REG_RFL] = (sc)->sc_rflags;		\
+	(uc)->uc_mcontext.__gregs[_REG_SS]  = (sc)->sc_ss;		\
+	(uc)->uc_mcontext.__gregs[_REG_URSP]  = (sc)->sc_rsp;		\
+} while (/*CONSTCOND*/0)
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_X86_64_SIGNAL_H_ */

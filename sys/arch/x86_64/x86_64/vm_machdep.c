@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2002/06/18 08:35:14 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,17 +70,25 @@
 
 void	setredzone __P((u_short *, caddr_t));
 
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+	p2->p_md.md_flags = p1->p_md.md_flags;
+	if (p1->p_flag & P_32)
+		p2->p_flag |= P_32;
+}
+
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a new thread operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the thread being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -89,16 +97,16 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 
 	/*
 	 * If fpuproc != p1, then the fpu h/w state is irrelevant and the
@@ -108,23 +116,21 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * If fpuproc == p1, then we have to save the fpu h/w state to
 	 * p1's pcb so that we can copy it.
 	 */
-	if (fpuproc == p1)
-		fpusave();
+	if (fpulwp == l1)
+		fpusave(l1);
 
-	p2->p_md.md_flags = p1->p_md.md_flags;
-	if (p1->p_flag & P_32)
-		p2->p_flag |= P_32;
+	l2->l_md.md_flags = l1->l_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
-	if (p1 == curproc) {
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
+	else if (l1 != &lwp0)
 		panic("cpu_fork: curproc");
 #endif
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
 
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called
@@ -133,17 +139,18 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
 	 * we run the new process.
 	 */
-	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+	l2->l_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)p2->p_addr + USPACE - 16;
-	tss_alloc(p2);
+	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
+
+	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe.
 	 */
-	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	*tf = *p1->p_md.md_regs;
+	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	*tf = *l1->l_md.md_regs;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -152,10 +159,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_rsp = (u_int64_t)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_ppl = 0;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return && !(p2->p_flag & P_32))
+	if (func == child_return && !(l2->l_proc->p_flag & P_32))
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	else
 		sf->sf_rip = (u_int64_t)proc_trampoline;
@@ -164,15 +170,32 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
+	sf->sf_r12 = (u_int64_t)func;
+	sf->sf_r13 = (u_int64_t)arg;
+	if (func == child_return && !(l->l_proc->p_flag & P_32))
+		sf->sf_rip = (u_int64_t)child_trampoline;
+	else
+		sf->sf_rip = (u_int64_t)proc_trampoline;
+	pcb->pcb_rsp = (u_int64_t)sf;
+	pcb->pcb_rbp = 0;
+}
+
+void
+cpu_swapout(l)
+	struct lwp *l;
 {
 
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (fpuproc == p)
-		fpusave();
+	if (fpulwp == l)
+		fpusave(l);
 }
 
 /*
@@ -183,24 +206,25 @@ cpu_swapout(p)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct lwp *l, int proc)
 {
 
 	/* If we were using the FPU, forget about it. */
-	if (fpuproc == p)
-		fpuproc = 0;
+	if (fpulwp == l)
+		fpulwp = 0;
 
-	if (p->p_md.md_flags & MDP_USEDMTRR)
-		mtrr_clean(p);
+	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(l->l_proc);
 
 	/*
 	 * No need to do user LDT cleanup here; it's handled in
 	 * pmap_destroy().
 	 */
 
+	pmap_deactivate(l);
+
 	uvmexp.swtch++;
-	switch_exit(p);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 /*
@@ -209,11 +233,10 @@ cpu_exit(p)
  * in cpu_exit().
  */
 void
-cpu_wait(p)
-	struct proc *p;
+cpu_wait(struct lwp *l)
 {
 	/* Nuke the TSS. */
-	tss_free(p);
+	tss_free(l->l_md.md_tss_sel);
 }
 
 /*
@@ -223,13 +246,15 @@ struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
 };
+
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -240,12 +265,12 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
+	error = process_read_regs(l, &md_core.intreg);
 	if (error)
 		return error;
 
 	/* Save floating point registers. */
-	error = process_read_fpregs(p, &md_core.freg);
+	error = process_read_fpregs(l, &md_core.freg);
 	if (error)
 		return error;
 

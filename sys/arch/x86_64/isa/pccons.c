@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.10 2002/10/23 09:12:49 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.11 2003/01/26 00:05:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2699,7 +2699,7 @@ pc_xmode_on()
 
 #ifdef COMPAT_10
 	/* This is done by i386_iopl(3) now. */
-	fp = curproc->p_md.md_regs;
+	fp = curlwp->l_md.md_regs;
 	fp->tf_rflags |= PSL_IOPL;
 #endif
 }
@@ -2719,7 +2719,7 @@ pc_xmode_off()
 #endif
 	async_update();
 
-	fp = curproc->p_md.md_regs;
+	fp = curlwp->l_md.md_regs;
 	fp->tf_rflags &= ~PSL_IOPL;
 }
 #endif /* XSERVER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2003/01/20 05:30:03 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -97,10 +98,13 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/extent.h>
-#include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 #include <machine/kcore.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
+#include <sys/syscallargs.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -349,7 +353,7 @@ x86_64_proc0_tss_ldt_init()
 	int x;
 
 	gdt_init();
-	curpcb = pcb = &proc0.p_addr->u_pcb;
+	curpcb = pcb = &lwp0.l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
 	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
@@ -359,14 +363,14 @@ x86_64_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)proc0.p_addr + USPACE - 16;
+	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)&x86_64_doubleflt_stack[NBPG - 8];
-	tss_alloc(&proc0);
+	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(proc0.p_md.md_tss_sel);
+	ltr(lwp0.l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 }
 
 /*
@@ -480,7 +484,8 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	char *sp;
@@ -489,7 +494,7 @@ sendsig(sig, mask, code)
 	size_t tocopy;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -509,9 +514,9 @@ sendsig(sig, mask, code)
 	sp = (char *)((unsigned long)sp & ~15) - 8;
 	fp = (struct sigframe *)sp - 1;
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 		frame.sf_sc.sc_fpstate = &fp->sf_fp;
-		memcpy(&frame.sf_fp, &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		memcpy(&frame.sf_fp, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64));
 		tocopy = sizeof (struct sigframe);
 	} else {
@@ -533,7 +538,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	/* Save register context. */
@@ -575,7 +580,7 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -602,6 +607,31 @@ sendsig(sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+	tf->tf_rdi = type;
+	tf->tf_rsi = (u_int64_t)sas;
+	tf->tf_rdx = nevents;
+	tf->tf_rcx = ninterrupted;
+	tf->tf_r8 = (u_int64_t)ap;
+
+	tf->tf_rip = (u_int64_t)upcall;
+	tf->tf_rsp = ((unsigned long)sp & ~15) - 8;
+	tf->tf_rbp = 0; /* indicate call-frame-top to debuggers */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -613,14 +643,15 @@ sendsig(sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
@@ -634,7 +665,7 @@ sys___sigreturn14(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	/*
 	 * Check for security violations.  If we're returning to
 	 * protected mode, the CPU will validate the segment registers
@@ -671,12 +702,12 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore (possibly fixed up) FP state and force it to be reloaded */
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 		if (copyin(context.sc_fpstate,
-		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64)) != 0)
 			return EFAULT;
-		fpudiscard(p);
+		fpudiscard(l);
 	}
 
 	/* Restore signal stack. */
@@ -1016,31 +1047,31 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
-	if (fpuproc == p)
+	if (fpulwp == l)
 		fpudrop();
 
 #ifdef USER_LDT
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
-	p->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~P_32;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1048,7 +1079,7 @@ setregs(p, pack, stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)p->p_psstr;
+	tf->tf_rbx = (u_int64_t)l->l_proc->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -1161,8 +1192,8 @@ init_x86_64(first_avail)
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
 
-	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr;
+	curpcb = &lwp0.l_addr->u_pcb;
 
 	x86_64_bus_space_init();
 
@@ -1720,4 +1751,47 @@ microtime(struct timeval *tv)
 		*tv = mtv;
 	} else
 		mtv = *tv;
+}
+
+void
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
+{
+	const struct trapframe *tf = l->l_md.md_regs;
+
+	memcpy(mcp->__gregs, tf, sizeof *tf);
+	*flags |= _UC_CPU;
+
+	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+		if (l == fpulwp)
+			fpusave(l);
+		memcpy(mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    sizeof (mcp->__fpregs));
+		*flags |= _UC_FPU;
+	}
+}
+
+int
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+	int64_t rflags;
+
+	if ((flags & _UC_CPU) != 0) {
+		if (!USERMODE(gr[_REG_CS], gr[_REG_EFL]))
+			return EINVAL;
+		rflags = tf->tf_rflags;
+		memcpy(tf, gr, sizeof *tf);
+		rflags &= ~PSL_USER;
+		tf->tf_rflags = rflags | (gr[_REG_RFL] & PSL_USER);
+	}
+
+	if ((flags & _UC_FPU) != 0) {
+		if (l == fpulwp)
+			fpudrop();
+		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, mcp->__fpregs,
+		    sizeof (mcp->__fpregs));
+		l->l_md.md_flags |= MDP_USEDFPU;
+	}
+	return 0;
 }

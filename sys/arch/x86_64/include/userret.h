@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2001/06/19 00:20:13 fvdl Exp $	*/
+/*	$NetBSD: userret.h,v 1.2 2003/01/26 00:05:38 fvdl Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -77,21 +77,27 @@
  *
  */
 
-static __inline void userret __P((register struct proc *));
+static __inline void userret __P((register struct lwp *));
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(p)
-	register struct proc *p;
+userret(l)
+	register struct lwp *l;
 {
 	int sig;
+	struct proc *p = l->l_proc;
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.4 2002/07/07 23:27:00 fvdl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.5 2003/01/26 00:05:38 fvdl Exp $	*/
 
 #ifndef _X86_64_SYSARCH_H_
 #define _X86_64_SYSARCH_H_
@@ -99,9 +99,9 @@ struct x86_64_set_mtrr_args {
 
 
 #ifdef _KERNEL
-int x86_64_iopl __P((struct proc *, void *, register_t *));
-int x86_64_get_mtrr __P((struct proc *, void *, register_t *));
-int x86_64_set_mtrr __P((struct proc *, void *, register_t *));
+int x86_64_iopl __P((struct lwp *, void *, register_t *));
+int x86_64_get_mtrr __P((struct lwp *, void *, register_t *));
+int x86_64_set_mtrr __P((struct lwp *, void *, register_t *));
 #else
 int x86_64_get_ldt __P((int, union descriptor *, int));
 int x86_64_set_ldt __P((int, union descriptor *, int));

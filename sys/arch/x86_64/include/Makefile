@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/12/03 22:13:58 fvdl Exp $
+#	$NetBSD: Makefile,v 1.9 2003/01/26 00:05:37 fvdl Exp $
 
 INCSDIR= /usr/include/x86_64
 
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	intr.h isa_machdep.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mtrr.h \
+	math.h mcontext.h mtrr.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pccons.h pci_machdep.h pio.h pmap.h pmc.h proc.h \
 	profile.h psl.h pte.h ptrace.h \

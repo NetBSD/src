@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.12 2002/09/25 22:21:32 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.13 2003/01/26 00:05:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -121,13 +121,14 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 void
 netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct netbsd32_sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
