@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.31 2000/08/13 18:20:55 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.32 2000/08/15 22:16:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,8 +157,10 @@ _splraise(int s)
 #define	ALPHA_IPI_SHOOTDOWN	0x0000000000000008UL
 #define	ALPHA_IPI_IMB		0x0000000000000010UL
 #define	ALPHA_IPI_AST		0x0000000000000020UL
+#define	ALPHA_IPI_SYNCH_FPU	0x0000000000000040UL
+#define	ALPHA_IPI_DISCARD_FPU	0x0000000000000080UL
 
-#define	ALPHA_NIPIS		6	/* must not exceed 64 */
+#define	ALPHA_NIPIS		8	/* must not exceed 64 */
 
 typedef void (*ipifunc_t)(void);
 extern	ipifunc_t ipifuncs[ALPHA_NIPIS];

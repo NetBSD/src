@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.59 2000/06/29 09:02:56 mrg Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.60 2000/08/15 22:16:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2000/06/29 09:02:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2000/08/15 22:16:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +70,11 @@ cpu_coredump(p, vp, cred, chdr)
 
 	cpustate.md_tf = *p->p_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
-	if (p->p_md.md_flags & MDP_FPUSED)
-		if (p == fpcurproc) {
-			alpha_pal_wrfen(1);
-			savefpstate(&cpustate.md_fpstate);
-			alpha_pal_wrfen(0);
-		} else
-			cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
-	else
+	if (p->p_md.md_flags & MDP_FPUSED) {
+		if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+			synchronize_fpstate(p, 1);
+		cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
+	} else
 		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
@@ -111,8 +108,8 @@ cpu_exit(p)
 	struct proc *p;
 {
 
-	if (p == fpcurproc)
-		fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 0);
 
 	/*
 	 * Deactivate the exiting address space before the vmspace
@@ -167,11 +164,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Copy floating point state from the FP chip to the PCB
 	 * if this process has state stored there.
 	 */
-	if (p1 == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-		alpha_pal_wrfen(0);
-	}
+	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p1, 1);
 
 	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
@@ -262,13 +256,8 @@ cpu_swapout(p)
 	struct proc *p;
 {
 
-	if (p != fpcurproc)
-		return;
-
-	alpha_pal_wrfen(1);
-	savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-	alpha_pal_wrfen(0);
-	fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.14 2000/08/13 18:20:55 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.15 2000/08/15 22:16:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2000/08/13 18:20:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.15 2000/08/15 22:16:17 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2000/08/13 18:20:55 thorpej Exp $"
 
 #include <machine/atomic.h>
 #include <machine/alpha_cpu.h>
+#include <machine/alpha.h>
 #include <machine/cpu.h>
 #include <machine/cpuvar.h>
 #include <machine/intr.h>
@@ -63,6 +64,8 @@ void	alpha_ipi_tbia(void);
 void	alpha_ipi_tbiap(void);
 void	alpha_ipi_imb(void);
 void	alpha_ipi_ast(void);
+void	alpha_ipi_synch_fpu(void);
+void	alpha_ipi_discard_fpu(void);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -75,6 +78,8 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	pmap_do_tlb_shootdown,
 	alpha_ipi_imb,
 	alpha_ipi_ast,
+	alpha_ipi_synch_fpu,
+	alpha_ipi_discard_fpu,
 };
 
 /*
@@ -184,4 +189,18 @@ alpha_ipi_ast(void)
 {
 
 	aston(curcpu());
+}
+
+void
+alpha_ipi_synch_fpu(void)
+{
+
+	release_fpu(1);
+}
+
+void
+alpha_ipi_discard_fpu(void)
+{
+
+	release_fpu(0);
 }

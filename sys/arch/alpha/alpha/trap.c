@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.58 2000/06/30 00:00:26 mjacob Exp $ */
+/* $NetBSD: trap.c,v 1.59 2000/08/15 22:16:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2000/06/30 00:00:26 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2000/08/15 22:16:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,18 +417,15 @@ trap(a0, a1, a2, entry, framep)
 				goto dopanic;
 			}
 	
+			if (fpcurproc != NULL)
+				release_fpu(1);
+			if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+				synchronize_fpstate(p, 1);
+
 			alpha_pal_wrfen(1);
-			if (fpcurproc)
-				savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-			/*
-			 * XXXSMP
-			 * Need to find out where this process's FP
-			 * state actually is and possible cause it
-			 * to be saved there first (via an IPI)
-			 * before we can retore it here.
-			 */
+			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
+			p->p_addr->u_pcb.pcb_fpcpu = curcpu();
 			fpcurproc = p;
-			restorefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
 			alpha_pal_wrfen(0);
 
 			p->p_md.md_flags |= MDP_FPUSED;
@@ -813,12 +810,8 @@ const static int reg_to_framereg[32] = {
 	(&(p)->p_addr->u_pcb.pcb_fp.fpr_regs[(reg)])
 
 #define	dump_fp_regs()							\
-	if (p == fpcurproc) {						\
-		alpha_pal_wrfen(1);					\
-		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);		\
-		alpha_pal_wrfen(0);					\
-		fpcurproc = NULL;					\
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)				\
+		synchronize_fpstate(p, 1)
 
 #define	unaligned_load(storage, ptrf, mod)				\
 	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\

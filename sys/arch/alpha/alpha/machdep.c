@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.218 2000/07/03 17:52:33 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.219 2000/08/15 22:16:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2000/07/03 17:52:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2000/08/15 22:16:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1503,12 +1503,8 @@ sendsig(catcher, sig, mask, code)
 	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
 
 	/* save the floating-point state, if necessary, then copy it. */
-	if (p == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(&p->p_addr->u_pcb.pcb_fp);
-		alpha_pal_wrfen(0);
-		fpcurproc = NULL;
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
 	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
@@ -1635,8 +1631,8 @@ sys___sigreturn14(p, v, retval)
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	/* XXX ksc.sc_ownedfp ? */
-	if (p == fpcurproc)
-		fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 0);
 	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 	/* XXX ksc.sc_fp_control ? */
@@ -1759,8 +1755,69 @@ setregs(p, pack, stack)
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (fpcurproc == p)
-		fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 0);
+}
+
+/*
+ * Release the FPU.
+ */
+void
+release_fpu(int save)
+{
+	struct proc *p;
+	int s;
+
+	s = splhigh();
+	if ((p = fpcurproc) == NULL) {
+		splx(s);
+		return;
+	}
+	fpcurproc = NULL;
+	splx(s);
+
+	if (save) {
+		alpha_pal_wrfen(1);
+		savefpstate(&p->p_addr->u_pcb.pcb_fp);
+#if defined(MULTIPROCESSOR)
+		alpha_mb();
+#endif
+		alpha_pal_wrfen(0);
+	}
+
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+#if defined(MULTIPROCESSOR)
+	alpha_mb();
+#endif
+}
+
+/*
+ * Synchronize FP state for this process.
+ */
+void
+synchronize_fpstate(struct proc *p, int save)
+{
+
+	if (p->p_addr->u_pcb.pcb_fpcpu == NULL) {
+		/* Already in-sync. */
+		return;
+	}
+
+#if defined(MULTIPROCESSOR)
+	if (p->p_addr->u_pcb.pcb_fpcpu == curcpu()) {
+		KASSERT(fpcurproc == p);
+		release_fpu(save);
+	} else {
+		alpha_send_ipi(p->p_addr->u_pcb.pcb_fpcpu->ci_cpuid, save ?
+		    ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU);
+		do {
+			alpha_mb();
+		} while (p->p_addr->u_pcb.pcb_fpcpu != NULL);
+	}
+#else
+	KASSERT(fpcurproc == p);
+	release_fpu(save);
+#endif /* MULTIPROCESSOR */
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.10 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.11 2000/08/15 22:16:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,6 +94,9 @@ void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 void	trap_init(void);
 void	enable_nsio_ide(bus_space_tag_t);
 char *	dot_conv(unsigned long);
+
+void	release_fpu(int);
+void	synchronize_fpstate(struct proc *, int);
 
 /* Multiprocessor glue; cpu.c */
 struct cpu_info;
