@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2004/06/04 07:42:34 sekiya Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2004/06/15 11:27:38 fvdl Exp $	*/
 
 /*
  *
@@ -435,6 +435,7 @@ static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
+void		pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
