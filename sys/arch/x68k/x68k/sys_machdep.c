@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24 2001/12/19 14:53:26 minoura Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.25 2002/10/28 00:55:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -53,6 +53,7 @@
 
 #include <sys/syscallargs.h>
 
+#include <m68k/cacheops.h>
 #include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */

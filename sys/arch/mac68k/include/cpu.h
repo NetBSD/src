@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2002/04/10 04:38:49 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71 2002/10/28 00:55:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,6 @@
  */
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
-#include <m68k/cacheops.h>
 
 /*
  * Get interrupt glue.

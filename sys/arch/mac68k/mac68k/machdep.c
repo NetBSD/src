@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280 2002/09/19 10:38:02 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.281 2002/10/28 00:55:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,6 +111,8 @@
 #endif
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+
+#include <m68k/cacheops.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
