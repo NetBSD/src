@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 1999/01/13 07:30:05 ross Exp $	
+.\"	$NetBSD: prep,v 1.8 1999/05/04 20:07:02 fvdl Exp $	
 
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -95,18 +95,6 @@ uses is the
 .Li Sysinst
 will try to discover both the real geometry and
 .Tn BIOS
-geometry. If a Master Boot Record
-.Pq Tn MBR No
-has been written to your disk by
-.Tn DOS ,
-Windows 95, NT, or another system,
-.Li sysinst
-should have no trouble finding the
-.Tn BIOS
-geometry. If the disk has not had a
-.Tn MBR
-written to it, it may be much more difficult to get the
-.Tn BIOS
 geometry.
 .Pp
 It is
@@ -123,15 +111,3 @@ It is less of a concern if the disk is going to be used entirely for
 .Nx .
 If you intend to have several OSes on your disk, this becomes
 a much larger issue.
-.Pp
-Another issue with geometry is with
-.Tn SCSI
-disks. The geometry reported
-by the disk often does not address all addressable sectors on the disk.
-.Li sysinst
-will assist you if you want to choose a fake geometry for
-.Nx
-to use so it can get access to more sectors. This is not
-the same as the
-.Tn BIOS
-fake geometry.
