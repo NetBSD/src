@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.28 2003/08/07 16:29:00 agc Exp $	*/
+/*	$NetBSD: psl.h,v 1.29 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #ifndef _NS532_PSL_H_
-#define _NS532_PSL_H_
+#define	_NS532_PSL_H_
 
 /*
  * 32532 processor status longword.
@@ -48,9 +48,9 @@
 #define	PSL_Z		0x00000040	/* zero bit */
 #define	PSL_N		0x00000080	/* negative bit */
 
-#define PSL_USER	0x00000100	/* User mode bit */
-#define PSL_US		0x00000200	/* User stack mode bit */
-#define PSL_P		0x00000400	/* Prevent TRC trap */
+#define	PSL_USER	0x00000100	/* User mode bit */
+#define	PSL_US		0x00000200	/* User stack mode bit */
+#define	PSL_P		0x00000400	/* Prevent TRC trap */
 #define	PSL_I		0x00000800	/* interrupt enable bit */
 
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
@@ -58,6 +58,6 @@
 #define	USERMODE(psr)	(((psr) & PSL_USER) == PSL_USER)
 
 /* The PSR versions ... */
-#define PSR_USR PSL_USER
+#define	PSR_USR PSL_USER
 
 #endif /* _NS532_PSL_H_ */

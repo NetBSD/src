@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2003/11/06 00:41:20 simonb Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -32,17 +32,17 @@
  */
 
 #ifndef _MACHINE_SIGNAL_H_
-#define _MACHINE_SIGNAL_H_
+#define	_MACHINE_SIGNAL_H_
 
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
 
-#define __HAVE_SIGINFO
+#define	__HAVE_SIGINFO
 #ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
+#define	SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
 #else
-#define SIGTRAMP_VALID(vers) ((vers) == 2)
+#define	SIGTRAMP_VALID(vers) ((vers) == 2)
 #endif
 
 #if defined(_NETBSD_SOURCE)

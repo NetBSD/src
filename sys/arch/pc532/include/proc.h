@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2003/08/07 16:29:00 agc Exp $	*/
+/*	$NetBSD: proc.h,v 1.8 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #ifndef _NS532_PROC_H_
-#define _NS532_PROC_H_
+#define	_NS532_PROC_H_
 
 /*
  * Machine-dependent part of the lwp structure for the pc532.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/11/06 00:41:20 simonb Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _NS32K_MCONTEXT_H_
-#define _NS32K_MCONTEXT_H_
+#define	_NS32K_MCONTEXT_H_
 
 /*
  * Layout of mcontext_t for the ns32k architecture.  Lacking an SVR4

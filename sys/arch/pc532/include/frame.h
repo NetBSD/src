@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2003/11/06 00:41:20 simonb Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #ifndef _NS532_FRAME_H_
-#define _NS532_FRAME_H_
+#define	_NS532_FRAME_H_
 
 #include <sys/signal.h>
 #include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: jmpbuf.h,v 1.3 1994/10/26 08:24:30 cgd Exp $	*/
+/*	$NetBSD: jmpbuf.h,v 1.4 2004/01/23 04:03:38 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -35,19 +35,19 @@
  */
 
 #ifndef _MACHINE_JMPBUF_H_
-#define _MACHINE_JMPBUF_H_
+#define	_MACHINE_JMPBUF_H_
 
 /* These are byte offsets into the jmp buffer. */
 
-#define JMP_BUF_R3	0
-#define JMP_BUF_R4	4
-#define JMP_BUF_R5	8
-#define JMP_BUF_R6	12
-#define JMP_BUF_R7	16
-#define JMP_BUF_PC	20
-#define JMP_BUF_SP	24
-#define JMP_BUF_FP	28
-#define JMP_BUF_SB	32
-#define JMP_BUF_SIGMASK 36
+#define	JMP_BUF_R3	0
+#define	JMP_BUF_R4	4
+#define	JMP_BUF_R5	8
+#define	JMP_BUF_R6	12
+#define	JMP_BUF_R7	16
+#define	JMP_BUF_PC	20
+#define	JMP_BUF_SP	24
+#define	JMP_BUF_FP	28
+#define	JMP_BUF_SB	32
+#define	JMP_BUF_SIGMASK 36
 
 #endif

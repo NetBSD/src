@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2004/01/23 04:03:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #ifndef _NS532_CPU_H_
-#define _NS532_CPU_H_
+#define	_NS532_CPU_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -71,7 +71,7 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_proc_fork(p1, p2)		/* nothing */
-#define cpu_swapin(p)           	/* nothing */
+#define	cpu_swapin(p)           	/* nothing */
 #define	cpu_number()			0
 
 /*
@@ -80,7 +80,7 @@ extern struct cpu_info cpu_info_store;
  * clockframe; for now, use generic intrframe.
  */
 
-#define clockframe intrframe 
+#define	clockframe intrframe 
 
 #define	CLKF_USERMODE(framep)	USERMODE((framep)->if_regs.r_psr)
 #define	CLKF_BASEPRI(framep)	((framep)->if_pl == imask[IPL_ZERO])
