@@ -4486,11 +4486,7 @@ alpha_align (n, pfill, label, force)
       if (n > 2
 	  && (bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE) != 0)
 	{
-	  static char const unop[4] = { 0x00, 0x00, 0xe0, 0x2f };
-	  static char const nopunop[8] = {
-		0x1f, 0x04, 0xff, 0x47,
-		0x00, 0x00, 0xe0, 0x2f
-	  };
+	  static char const nop[4] = { 0x1f, 0x04, 0xff, 0x47 };
 
 	  /* First, make sure we're on a four-byte boundary, in case
 	     someone has been putting .byte values into the text
@@ -4499,10 +4495,7 @@ alpha_align (n, pfill, label, force)
 	     with proper alignment.  */
 	  if (alpha_current_align < 2)
 	    frag_align (2, 0, 0);
-	  if (alpha_current_align < 3)
-	    frag_align_pattern (3, unop, sizeof unop, 0);
-	  if (n > 3)
-	    frag_align_pattern (n, nopunop, sizeof nopunop, 0);
+	  frag_align_pattern (n, nop, sizeof nop, 0);
 	}
       else
 	frag_align (n, 0, 0);
