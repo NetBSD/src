@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.12 1999/03/05 10:40:54 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.13 1999/12/03 19:02:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -77,6 +77,7 @@ struct pckbc_softc {
 
 	struct pckbc_internal *id;
 
+	int sc_irq[2];
 	pckbc_inputfcn inputhandler[2];
 	void *inputarg[2];
 };
@@ -142,6 +143,8 @@ int pckbc_cmdresponse __P((struct pckbc_internal *, pckbc_slot_t, u_char));
 void pckbc_start __P((struct pckbc_internal *, pckbc_slot_t));
 
 int pckbcintr __P((void *));
+
+const char *pckbc_slot_names[] = { "kbd", "aux" };
 
 #define KBC_DEVCMD_ACK 0xfa
 #define KBC_DEVCMD_RESEND 0xfe
@@ -389,6 +392,14 @@ pckbc_attach(parent, self, aux)
 	sc->sc_ic = ia->ia_ic;
 	iot = ia->ia_iot;
 
+	/*
+	 * Set up IRQs for "normal" ISA.
+	 *
+	 * XXX The "aux" slot is different on the Alpha AXP150 Jensen.
+	 */
+	sc->sc_irq[PCKBC_KBD_SLOT] = 1;
+	sc->sc_irq[PCKBC_AUX_SLOT] = 12;
+
 	if (pckbc_is_console(iot)) {
 		t = &pckbc_consdata;
 		ioh_d = t->t_ioh_d;
@@ -489,8 +500,7 @@ pckbcprint(aux, pnp)
 	struct pckbc_attach_args *pa = aux;
 
 	if (!pnp)
-		printf(" (%s slot)",
-		       pa->pa_slot == PCKBC_KBD_SLOT ? "kbd" : "aux");
+		printf(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
 	return (QUIET);
 }
 
@@ -972,34 +982,19 @@ pckbc_set_inputhandler(self, slot, func, arg)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
-	const char *name;
-	int irq;
 	void *rv;
 
-	/* XXX use machdep hook? */
-
-	switch (slot) {
-	    case PCKBC_KBD_SLOT:
-		irq = 1;
-		name = "kbd";
-		break;
-	    case PCKBC_AUX_SLOT:
-		/* XXX irq 9 on alpha AXP150 "Jensen" */
-		irq = 12;
-		name = "aux";
-		break;
-	    default:
+	if (slot != PCKBC_KBD_SLOT && slot != PCKBC_AUX_SLOT)
 		panic("pckbc_set_inputhandler: bad slot %d", slot);
-	}
 
-	rv = isa_intr_establish(sc->sc_ic, irq, IST_EDGE, IPL_TTY,
-	    pckbcintr, sc);
+	rv = isa_intr_establish(sc->sc_ic, sc->sc_irq[slot], IST_EDGE,
+	    IPL_TTY, pckbcintr, sc);
 	if (rv == NULL) {
 		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, name);
+		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
 	} else {
 		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
-		    irq, name);
+		    sc->sc_irq[slot], pckbc_slot_names[slot]);
 	}
 
 	sc->inputhandler[slot] = func;
