@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.44 2003/08/17 21:36:56 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.45 2003/08/17 21:43:29 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.44 2003/08/17 21:36:56 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.45 2003/08/17 21:43:29 itojun Exp $");
 #endif
 #endif
 
@@ -1867,9 +1867,7 @@ GetMask(addr)
     u_int32_t addr;
 {
     u_int32_t mask, nmask, ina;
-    struct ifreq *ifr, *ifend, ifreq;
-    struct ifconf ifc;
-    struct ifreq ifs[MAX_IFS];
+    struct ifaddrs *ifap, *ifa;
 
     addr = ntohl(addr);
     if (IN_CLASSA(addr))	/* determine network mask for address class */
@@ -1884,40 +1882,32 @@ GetMask(addr)
     /*
      * Scan through the system's network interfaces.
      */
-    ifc.ifc_len = sizeof(ifs);
-    ifc.ifc_req = ifs;
-    if (ioctl(sock_fd, SIOCGIFCONF, &ifc) < 0) {
-	warn("ioctl(SIOCGIFCONF): %m");
-	return mask;
+    if (getifaddrs(&ifap) != 0) {
+	warn("getifaddrs: %m");
+	return NULL;
     }
-    ifend = (struct ifreq *) (ifc.ifc_buf + ifc.ifc_len);
-    for (ifr = ifc.ifc_req; ifr < ifend; ifr = (struct ifreq *)
-	 	((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len)) {
+
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 	/*
 	 * Check the interface's internet address.
 	 */
-	if (ifr->ifr_addr.sa_family != AF_INET)
+	if (ifa->ifa_addr->sa_family != AF_INET)
 	    continue;
-	ina = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
+	ina = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	if ((ntohl(ina) & nmask) != (addr & nmask))
 	    continue;
 	/*
 	 * Check that the interface is up, and not point-to-point or loopback.
 	 */
-	strlcpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
-	if (ioctl(sock_fd, SIOCGIFFLAGS, &ifreq) < 0)
-	    continue;
-	if ((ifreq.ifr_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))
-	    != IFF_UP)
+	if ((ifa->ifa_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK)) != IFF_UP)
 	    continue;
 	/*
 	 * Get its netmask and OR it into our mask.
 	 */
-	if (ioctl(sock_fd, SIOCGIFNETMASK, &ifreq) < 0)
-	    continue;
-	mask |= ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr.s_addr;
+	mask |= ((struct sockaddr_in *)&ifa->ifa_netmask)->sin_addr.s_addr;
     }
 
+    freeifaddrs(ifap);
     return mask;
 }
 
