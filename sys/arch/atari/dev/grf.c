@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.19 1997/02/26 12:28:40 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.20 1997/04/25 19:25:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -390,7 +390,7 @@ struct grf_softc *gp;
 	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
   
 	gi->gd_fbaddr  = bm.hw_address;
-	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
+	gi->gd_fbsize  = bm.phys_mappable;
 	gi->gd_regaddr = bm.hw_regs;
 	gi->gd_regsize = bm.reg_size;
 
