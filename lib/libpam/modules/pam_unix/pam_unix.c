@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.3 2005/01/11 23:23:33 christos Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.4 2005/01/12 03:36:12 christos Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.3 2005/01/11 23:23:33 christos Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.4 2005/01/12 03:36:12 christos Exp $");
 #endif
 
 
@@ -519,6 +519,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	}
 
 	if (flags & PAM_UPDATE_AUTHTOK) {
+		char option[LINE_MAX], *key, *opt;
+
 		PAM_LOG("UPDATE round");
 
 		if ((lc = login_getclass(pwd->pw_class)) != NULL) {
@@ -572,12 +574,15 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			/* Password is OK. */
 			break;
 		}
-
-		if (pw_gensalt(salt, _PASSWORD_LEN, pwd,
+		pw_getpwconf(option, sizeof(option), pwd, 
 #ifdef YP
-		    strcmp(passwd_db, "nis") == 0 ? 'y' :
+		    strcmp(passwd_db, "nis") == 0 ? "ypcipher" :
 #endif
-		    'l') == -1) {
+		    "localcipher");
+		opt = option;
+		key = strsep(&opt, ",");
+
+		if (pw_gensalt(salt, _PASSWORD_LEN, key, opt) == -1) {
 			pam_error(pamh, "Couldn't generate salt.");
 			return (PAM_SERVICE_ERR);
 		}
