@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)var.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: var.c,v 1.10 1994/12/05 19:07:58 cgd Exp $";
+static char *rcsid = "$Id: var.c,v 1.11 1995/01/20 18:21:16 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -98,7 +98,7 @@ const struct varinit varinit[] = {
 	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
 	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
 	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
-	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=:/bin:/usr/bin"},
+	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin"},
 	/* 
 	 * vps1 depends on uid
 	 */
