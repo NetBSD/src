@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 1995/06/03 13:16:05 pk Exp $	*/
+/*	$NetBSD: common.h,v 1.2 1995/06/05 00:13:05 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -30,24 +30,10 @@
  *
  */
 
-static char		*_strrchr __P((char *, char));
-int			_callmain __P((void));
-extern int		main __P((int, char **, char **));
-#ifdef MCRT0
-extern void		monstartup __P((u_long, u_long));
-extern void		_mcleanup __P((void));
-#endif
-
-char			**environ;
-int			errno;
-static char		empty[1];
-char			*__progname = empty;
-
-extern unsigned char	etext;
-extern unsigned char	eprol asm ("eprol");
-
+#include <string.h>
 
 #ifdef DYNAMIC
+
 #include <sys/syscall.h>
 #include <a.out.h>
 #ifndef N_GETMAGIC
@@ -56,12 +42,15 @@ extern unsigned char	eprol asm ("eprol");
 #ifndef N_BSSADDR
 #define N_BSSADDR(x)	(N_DATADDR(x)+(x).a_data)
 #endif
+
 #include <sys/mman.h>
 #ifdef sun
 #define MAP_COPY	MAP_PRIVATE
 #define MAP_ANON	0
 #endif
+
 #include <link.h>
+#include <dlfcn.h>
 
 extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld __P((struct _dynamic *));
@@ -102,3 +91,20 @@ static int		_strncmp __P((char *, char *, int));
 	_exit(1);
 
 #endif /* DYNAMIC */
+
+static char		*_strrchr __P((char *, char));
+int			_callmain __P((void));
+extern int		main __P((int, char **, char **));
+#ifdef MCRT0
+extern void		monstartup __P((u_long, u_long));
+extern void		_mcleanup __P((void));
+#endif
+
+char			**environ;
+int			errno;
+static char		empty[1];
+char			*__progname = empty;
+
+extern unsigned char	etext;
+extern unsigned char	eprol asm ("eprol");
+
