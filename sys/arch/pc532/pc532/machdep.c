@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1996/01/31 21:33:58 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1996/02/15 08:39:27 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1000,9 +1000,11 @@ init532()
  * insert an element into a queue 
  */
 void
-_insque(element, head)
-	register struct prochd *element, *head;
+_insque(v1, v2)
+     void *v1, *v2;
 {
+	register struct prochd *element=v1, *head=v2;
+
 	element->ph_link = head->ph_link;
 	head->ph_link = (struct proc *)element;
 	element->ph_rlink = (struct proc *)head;
@@ -1013,9 +1015,11 @@ _insque(element, head)
  * remove an element from a queue
  */
 void
-_remque(element)
-	register struct prochd *element;
+_remque(v1)
+     void *v1;
 {
+	register struct prochd *element = v1;
+
 	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
 	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
 	element->ph_rlink = (struct proc *)0;
