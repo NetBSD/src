@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.8 1993/12/23 09:37:43 pk Exp $
+ * $Id: warnings.c,v 1.9 1994/01/28 20:56:42 pk Exp $
  */
 
 #include <sys/param.h>
@@ -159,30 +159,24 @@ void
 print_symbols(outfile)
 	FILE           *outfile;
 {
-	register int    i;
-
 	fprintf(outfile, "\nFiles:\n\n");
-
 	each_file(describe_file_sections, outfile);
 
 	fprintf(outfile, "\nGlobal symbols:\n\n");
-
-	for (i = 0; i < TABSIZE; i++) {
-		register symbol *sp;
-		for (sp = symtab[i]; sp; sp = sp->link) {
-			if (sp->defined == (N_UNDF|N_EXT))
-				fprintf(outfile, "  %s: common, length %#x\n",
-						sp->name, sp->max_common_size);
-			if (!sp->referenced)
-				fprintf(outfile, "  %s: unreferenced\n",
-								sp->name);
-			else if (!sp->defined)
-				fprintf(outfile, "  %s: undefined\n", sp->name);
-			else
-				fprintf(outfile, "  %s: %#x, size %#x\n",
+	FOR_EACH_SYMBOL(i, sp) {
+		if (sp->defined == (N_UNDF|N_EXT))
+			fprintf(outfile, "  %s: common, length %#x\n",
+						sp->name, sp->common_size);
+		if (!(sp->flags & GS_REFERENCED))
+			fprintf(outfile, "  %s: unreferenced\n", sp->name);
+		else if (sp->so_defined)
+			fprintf(outfile, "  %s: sodefined\n", sp->name);
+		else if (!sp->defined)
+			fprintf(outfile, "  %s: undefined\n", sp->name);
+		else
+			fprintf(outfile, "  %s: %#x, size %#x\n",
 						sp->name, sp->value, sp->size);
-		}
-	}
+	} END_EACH_SYMBOL;
 
 	each_file(list_file_locals, outfile);
 }
@@ -194,7 +188,7 @@ describe_file_sections(entry, outfile)
 {
 	fprintf(outfile, "  ");
 	print_file_name(entry, outfile);
-	if (entry->just_syms_flag || entry->is_dynamic)
+	if (entry->flags & (E_JUST_SYMS | E_DYNAMIC))
 		fprintf(outfile, " symbols only\n", 0);
 	else
 		fprintf(outfile, " text %x(%x), data %x(%x), bss %x(%x) hex\n",
@@ -606,7 +600,7 @@ do_file_warnings (entry, outfile)
 		read_entry_strings (desc, entry);
 	}
 
-	if (! entry->is_dynamic) {
+	if (!(entry->flags & E_DYNAMIC)) {
 		/* Do text warnings based on a scan through the relocation info. */
 		do_relocation_warnings (entry, 0, outfile, nlist_bitvector);
 
@@ -622,7 +616,7 @@ do_file_warnings (entry, outfile)
 
 	for (i = 0; i < number_of_syms; i++) {
 		struct nlist *s;
-		struct glosym *g;
+		symbol *g;
 
 	        g = entry->symbols[i].symbol;
 		s = &entry->symbols[i].nzlist.nlist;
@@ -630,14 +624,14 @@ do_file_warnings (entry, outfile)
 		if (!(s->n_type & N_EXT))
 			continue;
 
-		if (!g->referenced) {
+		if (!(g->flags & GS_REFERENCED)) {
 #if 0
 			/* Check for undefined shobj symbols */
 			struct localsymbol	*lsp;
 			register int		type;
 
-			for (lsp = g->dynrefs; lsp; lsp = lsp->next) {
-				type = lsp->nlist.n_type;
+			for (lsp = g->sorefs; lsp; lsp = lsp->next) {
+				type = lsp->nzlist.nz_type;
 				if ((type & N_EXT) &&
 						type != (N_UNDF | N_EXT)) {
 					break;
@@ -655,7 +649,7 @@ do_file_warnings (entry, outfile)
 
 		dont_allow_symbol_name = 0;
 
-		if (list_multiple_defs && g->multiply_defined) {
+		if (list_multiple_defs && g->mult_defs) {
 			errfmt = "Definition of symbol %s (multiply defined)";
 			switch (s->n_type) {
 
@@ -673,7 +667,7 @@ do_file_warnings (entry, outfile)
 			case N_SETT | N_EXT:
 			case N_SETD | N_EXT:
 			case N_SETB | N_EXT:
-				if (g->multiply_defined == 2)
+				if (g->mult_defs == 2)
 					continue;
 				errfmt = "First set element definition of symbol %s (multiply defined)";
 				break;
