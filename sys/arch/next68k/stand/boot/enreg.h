@@ -1,4 +1,4 @@
-/*	$NetBSD: enreg.h,v 1.2 2002/09/11 01:46:36 mycroft Exp $	*/
+/*	$NetBSD: enreg.h,v 1.3 2002/09/11 02:17:15 mycroft Exp $	*/
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -35,11 +35,7 @@
 #define	SLOT_ID_BMAP	0x0
 #endif
 #ifdef	MC68040
-#ifdef DISABLE_NEXT_BMAP_CHIP		/* @@@ For turbo testing */
-#define	SLOT_ID_BMAP	0x0
-#else
 #define	SLOT_ID_BMAP	0x00100000
-#endif
 #endif
 
 #define P_ENETX_CSR     ((caddr_t)(SLOT_ID+0x02000110))

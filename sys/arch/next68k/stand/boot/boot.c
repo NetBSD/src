@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2002/09/11 01:46:36 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2002/09/11 02:17:14 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -63,6 +63,7 @@ extern int build;
 #define KNAMEN 100
 char kernel[KNAMEN];
 int entry_point;		/* return value filled in by machdep_start */
+int turbo;
 
 extern void rtc_init(void);
 
@@ -77,13 +78,21 @@ main(char *boot_arg)
 	u_long marks[MARK_MAX];
 	int dev;
 	char count, lun, part;
+	char machine;
 	char *file;
 #ifdef PROCESS_ARGS
 	char *kernel_args = MON(char *, MG_boot_dev);
 #endif
 
+	machine = MON(char, MG_machine_type);
+	if (machine == NeXT_TURBO_MONO || machine == NeXT_TURBO_COLOR)
+		turbo = 1;
+	else
+		turbo = 0;
+
 	memset(marks, 0, sizeof(marks));
 	printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
+	printf(">> type %d, %sturbo\n", machine, turbo ? "" : "non-");
 	rtc_init();
 
 	try_bootp = 1;
