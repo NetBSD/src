@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.34 1994/05/13 11:11:42 mycroft Exp $
+ *	$Id: icu.s,v 1.35 1994/07/22 07:52:50 mycroft Exp $
  */
 
 /*
@@ -148,7 +148,7 @@ IDTVEC(softtty)
 
 #define DONET(s, c) \
 	.globl  c	;\
-	btrl	$s,%edi	;\
+	btl	$s,%edi	;\
 	jnc	1f	;\
 	call	c	;\
 1:
