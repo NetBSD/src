@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.31 2002/01/23 19:06:41 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.32 2002/01/24 22:49:38 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1402,3 +1402,35 @@ libexec/makewhatis/makewhatis.c			1.18-1.19 via patch
 
   Cleanup and enhance error handling.  Handle ``.Xr'' commands with
   text after the section number properly.  Fixes PR#15253.
+
+sys/dev/ic/ac97reg.h				1.2-1.3
+sys/dev/ic/ac97.c				1.22
+sys/dev/pci/pcidevs				1.352-1.353
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/esa.c				1.1-1.8 (new) via patch
+sys/dev/pci/esavar.h				1.1-1.3 (new)
+sys/dev/pci/esareg.h				1.1-1.6 (new)
+sys/dev/pci/esadsp.h				1.1-1.4 (new)
+sys/dev/pci/files.pci				1.156
+sys/dev/DEVNAMES				1.92 via patch
+sys/arch/i386/conf/GENERIC			1.461
+sys/arch/i386/conf/GENERIC_LAPTOP		1.38 via patch
+sys/arch/i386/conf/CARDBUS			1.49 via patch
+share/man/man4/esa.4				1.1-1.4 (new)
+share/man/man4/Makefile				patch
+distrib/sets/lists/man/mi			patch
+
+  Add driver for the ESS Allegro-1 / Maestro-3 audio hardware.
+
+sys/netinet/tcp_input.c				1.134
+sys/netinet/tcp_output.c			1.77
+sys/netinet/tcp_var.h				1.88
+
+  Clean up the NRL copyright.
+
+sys/arch/macppc/dev/mesh.c			1.8
+
+  Honour SCSI command timeout.  This fixes a problem with some SCSI
+  commands which take longer than 10s to complete, and were falling
+  into a timeout, e.g. CD-R fixating.
