@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.13.2.1 1998/01/25 22:57:31 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.13.2.2 1998/01/27 19:36:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,23 +53,6 @@
 
 #ifdef _KERNEL
 
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_CONTROL	3	/* sun control space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-#define IC_CLEAR (IC_CLR|IC_ENABLE)
-
-
 /* Prototypes... */
 
 struct frame;
@@ -77,11 +60,9 @@ struct fpframe;
 struct pcb;
 struct proc;
 struct reg;
-struct sun3_kcore_hdr;
 struct trapframe;
 struct uio;
 
-extern int cache_size;
 extern int cold;
 extern int fputype;
 
@@ -89,34 +70,25 @@ extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
 
-/* Kernel virtual address space available: */
-extern vm_offset_t virtual_avail, virtual_end;
-/* Physical address space available: */
-extern vm_offset_t avail_start, avail_end;
-/* The "hole" (used to skip the Sun3/50 video RAM) */
-extern vm_offset_t hole_start, hole_size;
-
 /* Cache flush functions. */
 void	DCIA __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
 
-void	cache_enable __P((void));
-void	cache_flush_page(vm_offset_t pgva);
-void	cache_flush_segment(vm_offset_t sgva);
-void	cache_flush_context(void);
-
 int 	cachectl __P((int req, caddr_t addr, int len));
 
 void	child_return __P((struct proc *));
 
+void	clock_init  __P((void));
 void	configure __P((void));
 void	cninit __P((void));
 
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
-int 	eeprom_uio __P((struct uio *uio));
+void	enable_fpu __P((int));
+void	enable_init __P((void));
+void	enable_video __P((int));
 
 int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
 
@@ -128,9 +100,8 @@ int 	getsfc __P((void));
 
 void**	getvbr __P((void));
 
-vm_offset_t high_segment_alloc __P((int npages));
-
 void	initfpu __P((void));
+void	intreg_init __P((void));
 
 void	isr_init __P((void));
 void	isr_config __P((void));
@@ -139,11 +110,11 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
 void	netintr __P((void));
-void	proc_trampoline __P((void));
 
-void	pmap_bootstrap __P((vm_offset_t nextva));
-void	pmap_kcore_hdr __P((struct sun3_kcore_hdr *));
-void	pmap_get_pagemap __P((int *pt, int off));
+caddr_t	obio_find_mapping __P((int pa, int size));
+void	obio_init __P((void));
+
+void	proc_trampoline __P((void));
 
 void	savectx __P((struct pcb *));
 
@@ -157,5 +128,66 @@ void	sunmon_reboot __P((char *));
 void	swapconf __P((void));
 
 void	switch_exit __P((struct proc *));
+
+void	zs_init __P((void));
+
+#ifdef	_SUN3_
+
+struct sun3_kcore_hdr;
+
+extern int cache_size;
+void	cache_enable __P((void));
+
+/* Kernel virtual address space available: */
+extern vm_offset_t virtual_avail, virtual_end;
+/* Physical address space available: */
+extern vm_offset_t avail_start, avail_end;
+/* The "hole" (used to skip the Sun3/50 video RAM) */
+extern vm_offset_t hole_start, hole_size;
+
+/* cache.c */
+void	cache_enable __P((void));
+void	cache_flush_page(vm_offset_t pgva);
+void	cache_flush_segment(vm_offset_t sgva);
+void	cache_flush_context(void);
+
+/* pmap.c */
+void	pmap_bootstrap __P((vm_offset_t nextva));
+void	pmap_kcore_hdr __P((struct sun3_kcore_hdr *));
+void	pmap_get_pagemap __P((int *pt, int off));
+
+#endif	/* SUN3 */
+
+#ifdef	_SUN3X_
+
+struct mmu_rootptr;
+struct sun3x_kcore_hdr;
+
+extern int has_iocache;
+
+/* This is set by locore.s with the monitor's root ptr. */
+extern struct mmu_rootptr mon_crp;
+
+/* Lowest "managed" kernel virtual address. */
+extern vm_offset_t virtual_avail;
+
+/* Cache flush ops, Sun3X specific. */
+void	DCIAS __P((vm_offset_t));
+void	DCIS __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+/* ATC flush operations. */
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+
+void	loadcrp __P((struct mmu_rootptr *));
+
+void	pmap_bootstrap __P((vm_offset_t nextva));
+void	pmap_kcore_hdr __P((struct sun3x_kcore_hdr *));
+int 	pmap_pa_exists __P((vm_offset_t pa));
+
+#endif	/* SUN3X */
 
 #endif	/* _KERNEL */
