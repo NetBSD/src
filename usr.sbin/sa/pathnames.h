@@ -1,3 +1,5 @@
+/* $NetBSD: pathnames.h,v 1.3 2000/06/14 06:49:26 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$NetBSD: pathnames.h,v 1.2 1997/10/18 04:38:10 lukem Exp $
  */
 
 #define	_PATH_ACCT	"/var/account/acct"

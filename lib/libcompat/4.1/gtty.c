@@ -1,3 +1,5 @@
+/* $NetBSD: gtty.c,v 1.5 2000/06/14 06:49:11 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gtty.c,v 1.4 1999/09/20 04:48:01 lukem Exp $");
+__RCSID("$NetBSD: gtty.c,v 1.5 2000/06/14 06:49:11 cgd Exp $");
 #endif /* not lint */
 
 #include <assert.h>

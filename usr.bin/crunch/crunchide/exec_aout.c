@@ -1,4 +1,5 @@
-/*	$NetBSD: exec_aout.c,v 1.8 2000/05/07 18:16:51 mycroft Exp $	*/
+/* $NetBSD: exec_aout.c,v 1.9 2000/06/14 06:49:20 cgd Exp $ */
+
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -25,9 +26,10 @@
  *			   Computer Science Department
  *			   University of Maryland at College Park
  */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.8 2000/05/07 18:16:51 mycroft Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.9 2000/06/14 06:49:20 cgd Exp $");
 #endif
  
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 1996/10/17 03:08:13 cgd Exp $	*/
+/* $NetBSD: ffs.S,v 1.4 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

@@ -1,4 +1,5 @@
-/*	$NetBSD: crunchide.c,v 1.10 1999/11/26 13:47:52 msaitoh Exp $	*/
+/* $NetBSD: crunchide.c,v 1.11 2000/06/14 06:49:20 cgd Exp $ */
+
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -25,6 +26,7 @@
  *			   Computer Science Department
  *			   University of Maryland at College Park
  */
+
 /*
  * crunchide.c - tiptoes through an a.out symbol table, hiding all defined
  *	global symbols.  Allows the user to supply a "keep list" of symbols
@@ -58,9 +60,10 @@
  *	  that the final crunched binary BSS size is the max of all the
  *	  component programs' BSS sizes, rather than their sum.
  */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.10 1999/11/26 13:47:52 msaitoh Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.11 2000/06/14 06:49:20 cgd Exp $");
 #endif
 
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_labs.c,v 1.1 1997/11/06 00:51:39 cgd Exp $	*/
+/* $NetBSD: Lint_labs.c,v 1.2 2000/06/14 06:49:07 cgd Exp $ */
 
 /*
  * This file placed in the public domain.

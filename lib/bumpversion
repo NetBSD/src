@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: bumpversion,v 1.7 1999/07/02 15:12:15 simonb Exp $
+# $NetBSD: bumpversion,v 1.8 2000/06/14 06:48:58 cgd Exp $
 #
 # Copyright (c) 1993 Christopher G. Demetriou
 # All rights reserved.
@@ -28,7 +28,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 while :
 	do case "$1" in

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.17 1999/09/12 16:08:15 itojun Exp $	*/
+/* $NetBSD: nlist.c,v 1.18 2000/06/14 06:49:25 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.17 1999/09/12 16:08:15 itojun Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.18 2000/06/14 06:49:25 cgd Exp $");
 #endif
 #endif /* not lint */
 

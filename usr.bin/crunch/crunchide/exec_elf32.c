@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.10 1999/11/04 02:00:18 erh Exp $	*/
+/* $NetBSD: exec_elf32.c,v 1.11 2000/06/14 06:49:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.10 1999/11/04 02:00:18 erh Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.11 2000/06/14 06:49:20 cgd Exp $");
 #endif
  
 #ifndef ELFSIZE
