@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.9 2002/10/06 11:34:12 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.10 2002/10/06 12:37:59 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.9 2002/10/06 11:34:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.10 2002/10/06 12:37:59 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.9 2002/10/06 11:34:12 bjh21 Exp $");
 #include <arch/arm/mainbus/mainbus.h>
 #include <arch/acorn32/acorn32/hydrareg.h>
 #include <arch/acorn32/acorn32/hydravar.h>
+
+#include <machine/bootconfig.h>
 
 #include "locators.h"
 
@@ -306,7 +308,7 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	int slave = ha->ha_slave;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i, ret, error;
+	int i, error;
 	vaddr_t uaddr;
 	struct hydraboot_vars *hb;
 
@@ -341,24 +343,18 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_1(iot, ioh, HYDRA_RESET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_HALT_CLR, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_RESET, 0);
-	ret = 0;
+
+	/* The slave will halt itself when it's ready. */
 	for (i = 0; i < 100000; i++) {
 		if ((bus_space_read_1(iot, ioh, HYDRA_HALT_STATUS) &
-			(1 << slave)) != 0) {
-			ret = 1;
-			break;
-		}
+			(1 << slave)) != 0)
+			return;
 	}
+
+	printf(": failed to spin up\n");
 	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 1 << slave);
-
-	cpu_dcache_inv_range((vaddr_t)hb, sizeof(*hb));
-
-	if (ret == 0) {
-		printf(": failed to spin up\n");
-		return;
-	}
-	printf("\n");
+	return;
 }
 
 static void
@@ -369,7 +365,8 @@ cpu_hydra_hatch(void)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	cpuid_t cpunum = cpu_number();
 
-	printf(": Number %ld is alive!", cpunum);
+	cpu_setup(boot_args);
+	cpu_attach(curcpu()->ci_dev);
 	for (;;) { 
 		bus_space_write_1(iot, ioh,
 		    HYDRA_HALT_SET, 1 << (cpunum & 3));
