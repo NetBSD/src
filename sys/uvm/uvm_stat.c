@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.11 1999/03/25 18:48:56 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.12 1999/03/26 17:34:16 chs Exp $	 */
 
 /*
  *
@@ -244,6 +244,8 @@ uvm_dump()
 	    uvmexp.pdpending, uvmexp.nswget);
 	printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
 	    uvmexp.nanon, uvmexp.nfreeanon);
+	printf("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
+	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 
 	printf("  kernel pointers:\n");
 	printf("    objs(kern/kmem/mb)=%p/%p/%p\n", uvm.kernel_object,
