@@ -1,4 +1,4 @@
-#	$NetBSD: LAST_MINUTE,v 1.1.2.2 2002/09/23 07:47:08 lukem Exp $
+#	$NetBSD: LAST_MINUTE,v 1.1.2.3 2002/09/23 07:48:08 lukem Exp $
 
 This file contains important information on the NetBSD 1.6 release that
 did not make it into the main documentation.
@@ -41,3 +41,8 @@ did not make it into the main documentation.
 	a 68881 or 68882 floating point processor may be vulnerable
 	to the flaw.
 	This issue may affect both installation and normal operation.
+
+[cats]
+	The xserver.tgz is built from XFree86 4.x sources (xsrc/xfree/xc),
+	not XFree86 3.x sources (xsrc/xc).  The rest of the X sets are
+	still the shared arm32 XFree86 3.x sets.
