@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.1.1.1 1996/02/29 11:36:12 leo Exp $	*/
+/*	$NetBSD: diskio.c,v 1.2 1997/06/28 21:36:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -31,6 +31,7 @@
  */
 
 #include "stand.h"
+#include "atari_stand.h"
 #include <sys/disklabel.h>
 
 typedef int (*rdsec_f)__P((void *buffer, u_int offset, u_int count));

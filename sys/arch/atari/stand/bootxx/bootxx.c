@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1.1.1 1996/02/29 11:35:05 leo Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 1997/06/28 21:36:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -38,6 +38,7 @@ start:
 #define	boot_BSD	bsd_startup
 
 #include <stand.h>
+#include <atari_stand.h>
 #include <string.h>
 #include <libkern.h>
 #include <kparamb.h>
@@ -64,7 +65,7 @@ bootxx(readsector, disklabel, autoboot)
 
 	bzero(edata, end - edata);
 
-	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.1.1.1 $)\n\n");
+	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.2 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
