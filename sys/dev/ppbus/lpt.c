@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.9 2004/01/30 11:40:55 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.10 2004/02/03 18:48:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.9 2004/01/30 11:40:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.10 2004/02/03 18:48:39 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -140,8 +140,6 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 	char buf[64];
 	int error;
 
-	sc->sc_dev_ok = LPT_NOK;
-	
 	error = lpt_request_ppbus(sc, 0);
 	if(error) {
 		printf("%s(%s): error (%d) requesting bus(%s). Device not "
@@ -182,12 +180,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 		"\3PS2\4EPP\5ECP\6FAST_CENTR", buf, sizeof(buf));
 	printf(": port mode = %s\n", buf);
 
-	/* Set ok flag */
-	sc->sc_dev_ok = LPT_OK;
-
 	lpt_release_ppbus(sc, 0);
-
-	return;
 }
 
 static int
@@ -196,17 +189,6 @@ lpt_detach(struct device * self, int flags)
 	struct lpt_softc * lpt = (struct lpt_softc *) self;
 	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *) lpt;
 	int err;
-
-	if(lpt->sc_dev_ok == LPT_NOK) {
-		printf("%s: device not properly attached,\n", self->dv_xname);
-		if(flags & DETACH_FORCE) {
-			printf(", continuing (DETACH_FORCE)!\n");
-		}
-		else {
-			printf(", terminating!\n"); 
-			return 0;
-		}
-	}
 
 	if(lpt->sc_state & HAVEBUS) {
 		err = lpt_release_ppbus(lpt, 0);
@@ -223,9 +205,6 @@ lpt_detach(struct device * self, int flags)
 		}
 		lpt->sc_state &= ~HAVEBUS;
 	}
-
-	lpt->sc_dev_ok = LPT_NOK;
-	lpt->sc_irq = 0;
 
 	ppbdev->ctx.valid = 0;
 
@@ -444,12 +423,6 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 	
 	lpt = (struct lpt_softc *) dev;
 	
-	if(lpt->sc_dev_ok != LPT_OK) {
-		LPT_DPRINTF(("%s(): device not attached properly [sc = %p, "
-			"sc_dev_ok = %x].\n", __func__, dev, lpt->sc_dev_ok));
-		return ENODEV;
-	}
-	
 	ppbus = dev->dv_parent;
 	ppbus_dev = &(lpt->ppbus_dev);
 
@@ -541,7 +514,6 @@ lptopen(dev_t dev_id, int flags, int fmt, struct proc *p)
 	/* Write out the control register */
 	ppbus_wctr(ppbus, lpt->sc_control);
 
-	lpt->sc_xfercnt = 0;
 	lpt->sc_state |= OPEN;
 
 	return 0;
@@ -566,7 +538,6 @@ lptclose(dev_t dev_id, int flags, int fmt, struct proc *p)
 	}
 
 	sc->sc_state = 0;
-	sc->sc_xfercnt = 0;
 	
 	return err;
 }
@@ -619,9 +590,8 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 int
 lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 {
-	unsigned n;
-	int err = 0;
-	size_t cnt;
+	int error=0;
+	size_t n, cnt;
 	struct device * dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	struct lpt_softc * sc = (struct lpt_softc *) dev;
 
@@ -633,28 +603,30 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 		return EINVAL;
 	}
 
+	LPT_VPRINTF(("%s(%s): writing %d bytes\n", __func__,
+	    dev->dv_xname, uio->uio_resid));
+
 	/* Write the data */
 	sc->sc_state &= ~INTERRUPTED;
-	while(uio->uio_resid) {
-		n = min(BUFSIZE, uio->uio_resid);
-		err = uiomove(sc->sc_inbuf, n, uio);
-		if(err)
+	while (uio->uio_resid) {
+		n = MIN(BUFSIZE, uio->uio_resid);
+		error = uiomove(sc->sc_inbuf, n, uio);
+		if (error)
 			break;
 
-		err = ppbus_write(dev->dv_parent, sc->sc_inbuf, n, ioflag, 
+		error = ppbus_write(dev->dv_parent, sc->sc_inbuf, n, ioflag, 
 			&cnt);
-		sc->sc_xfercnt += cnt;
-		if(err) {
-			if(err != EWOULDBLOCK)
+		if (error) {
+			if (error != EWOULDBLOCK)
 				sc->sc_state |= INTERRUPTED;	
 			break;
-		} 
+		}
 	}
 
-	LPT_VPRINTF(("%s(%s): %d bytes sent.\n", __func__, dev->dv_xname, 
-		sc->sc_xfercnt));
+	LPT_VPRINTF(("%s(%s): transfer finished, error %d.\n", __func__,
+	    dev->dv_xname, error));
 
-	return err;
+	return error;
 }
 
 /* Printer ioctl */
