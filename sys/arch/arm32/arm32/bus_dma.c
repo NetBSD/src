@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 1998/06/27 02:13:39 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 1998/06/28 07:32:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,9 @@
 #include <machine/psl.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, vm_offset_t *, int *, int));
+	    struct proc *, int, bus_dma_segment_t *, int, vm_offset_t *,
+	    int *, int));
+int	_bus_dma_inrange __P((bus_dma_segment_t *, int, bus_addr_t));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -180,7 +182,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+	    t->_ranges, t->_nranges, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -229,7 +231,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = _bus_dmamap_load_buffer(map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		    NULL, flags, t->_ranges, t->_nranges, &lastaddr, &seg,
+		    first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -577,12 +580,15 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(map, buf, buflen, p, flags, ranges, nranges, lastaddrp,
+    segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
+	bus_dma_segment_t *ranges;
+	int nranges;
 	vm_offset_t *lastaddrp;
 	int *segp;
 	int first;
@@ -611,6 +617,13 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		 * Get the physical address for this segment.
 		 */
 		curaddr = pmap_extract(pmap, (vm_offset_t)vaddr);
+
+		/*
+		 * Make sure we're in an allowed DMA range.
+		 */
+		if (ranges != NULL &&
+		    _bus_dma_inrange(ranges, nranges, curaddr) == 0)
+			return (EINVAL);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -670,6 +683,26 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 	return (0);
 }
 
+/*
+ * Check to see if the specified page is in an allowed DMA range.
+ */
+int
+_bus_dma_inrange(ranges, nranges, curaddr)
+	bus_dma_segment_t *ranges;
+	int nranges;
+	bus_addr_t curaddr;
+{
+	bus_dma_segment_t *ds;
+	int i;
+
+	for (i = 0, ds = ranges; i < nranges; i++, ds++) {
+		if (curaddr >= ds->ds_addr &&
+		    round_page(curaddr) <= (ds->ds_addr + ds->ds_len))
+			return (1);
+	}
+
+	return (0);
+}
 
 /*
  * Allocate physical memory from the given physical address range.
