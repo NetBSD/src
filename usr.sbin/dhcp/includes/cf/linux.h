@@ -111,6 +111,12 @@ extern int h_errno;
 #  define USE_LPF
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
+#  define HAVE_ARPHRD_TUNNEL
+#  define HAVE_ARPHRD_METRICOM
+#  define HAVE_ARPHRD_IEEE802
+#  define HAVE_ARPHRD_LOOPBACK
+#  define HAVE_SO_BINDTODEVICE
+#  define HAVE_SIOCGIFHWADDR
 # else
 #  define USE_SOCKETS
 #  define IGNORE_HOSTUNREACH

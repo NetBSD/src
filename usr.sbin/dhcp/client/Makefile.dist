@@ -1,6 +1,6 @@
 # Makefile.dist
 #
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# Copyright (c) 1996, 1997, 1999 The Internet Software Consortium.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,34 +45,32 @@ CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 all:	$(PROG) $(CATMANPAGES)
 
 install: $(PROG) $(CATMANPAGES)
-	$(INSTALL) dhclient $(CLIENTBINDIR)
-	$(CHMOD) 755 $(CLIENTBINDIR)/dhclient
+	for dir in $(CLIENTBINDIR) $(ETC) $(FFMANDIR) $(ADMMANDIR); do \
+	  foo=""; \
+	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \
+	    foo=$${foo}/$$bar; \
+	    if [ ! -d $$foo ]; then \
+	      mkdir $$foo; \
+	      chmod 755 $$foo; \
+	    fi; \
+	  done; \
+	done
+	$(INSTALL) dhclient $(DESTDIR)$(CLIENTBINDIR)
+	$(CHMOD) 755 $(DESTDIR)$(CLIENTBINDIR)/dhclient
 	if [ x$(SCRIPT) = xnone ]; then \
 	  echo "No client script available."; \
 	else \
-	  $(INSTALL) scripts/$(SCRIPT) $(ETC)/dhclient-script; \
-	  $(CHMOD) 700 $(ETC)/dhclient-script; \
-	fi
-	if [ ! -d $(ADMMANDIR) ]; then \
-	  mkdir $(ADMMANDIR); \
-	  chmod 755 $(ADMMANDIR); \
-        fi
-	if [ ! -d $(FFMANDIR) ]; then \
-	  mkdir $(FFMANDIR); \
-	  chmod 755 $(FFMANDIR); \
-        fi
-	if [ ! -d $(VARDB) ]; then \
-	  mkdir $(VARDB); \
-	  chmod 755 $(VARDB); \
+	  $(INSTALL) scripts/$(SCRIPT) $(DESTDIR)$(ETC)/dhclient-script; \
+	  $(CHMOD) 700 $(DESTDIR)$(ETC)/dhclient-script; \
 	fi
 	$(MANINSTALL) $(MANFROM) dhclient.cat8 $(MANTO) \
-				$(ADMMANDIR)/dhclient$(ADMMANEXT)
+			$(DESTDIR)$(ADMMANDIR)/dhclient$(ADMMANEXT)
 	$(MANINSTALL) $(MANFROM) dhclient-script.cat8 $(MANTO) \
-				$(ADMMANDIR)/dhclient-script$(ADMMANEXT)
+			$(DESTDIR)$(ADMMANDIR)/dhclient-script$(ADMMANEXT)
 	$(MANINSTALL) $(MANFROM) dhclient.conf.cat5 $(MANTO) \
-				$(FFMANDIR)/dhclient.conf$(FFMANEXT)
+			$(DESTDIR)$(FFMANDIR)/dhclient.conf$(FFMANEXT)
 	$(MANINSTALL) $(MANFROM) dhclient.leases.cat5 $(MANTO) \
-				$(FFMANDIR)/dhclient.leases$(FFMANEXT)
+			$(DESTDIR)$(FFMANDIR)/dhclient.leases$(FFMANEXT)
 
 clean:
 	-rm -f $(OBJS)

@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.6 1999/02/18 21:48:47 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.7 1999/02/19 21:58:12 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -92,7 +92,7 @@ int save_scripts;
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl13";
+static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl14";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -1701,7 +1701,7 @@ void make_release (ip, lease)
 	ip -> client -> packet.htype = ip -> hw_address.htype;
 	ip -> client -> packet.hlen = ip -> hw_address.hlen;
 	ip -> client -> packet.hops = 0;
-	ip -> client -> packet.xid = ip -> client -> xid;
+	ip -> client -> packet.xid = random ();
 	ip -> client -> packet.secs = 0;
 	ip -> client -> packet.flags = 0;
 	memcpy (&ip -> client -> packet.ciaddr,

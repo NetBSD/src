@@ -44,21 +44,20 @@ CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 all:	$(PROG) $(CATMANPAGES)
 
 install: $(PROG) $(CATMANPAGES)
-	$(INSTALL) dhcrelay $(BINDIR); $(CHMOD) 755 $(BINDIR)/dhcrelay
-	if [ ! -d $(ADMMANDIR) ]; then \
-	  mkdir $(ADMMANDIR); \
-	  chmod 755 $(ADMMANDIR); \
-        fi
-	if [ ! -d $(FFMANDIR) ]; then \
-	  mkdir $(FFMANDIR); \
-	  chmod 755 $(FFMANDIR); \
-        fi
-	if [ ! -d $(VARDB) ]; then \
-	  mkdir $(VARDB); \
-	  chmod 755 $(VARDB); \
-	fi
+	for dir in $(BINDIR) $(ADMMANDIR); do \
+	  foo=""; \
+	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \
+	    foo=$${foo}/$$bar; \
+	    if [ ! -d $$foo ]; then \
+	      mkdir $$foo; \
+	      chmod 755 $$foo; \
+	    fi; \
+	  done; \
+	done
+	$(INSTALL) dhcrelay $(DESTDIR)$(BINDIR)
+	$(CHMOD) 755 $(DESTDIR)$(BINDIR)/dhcrelay
 	$(MANINSTALL) $(MANFROM) dhcrelay.cat8 $(MANTO) \
-				$(ADMMANDIR)/dhcrelay$(ADMMANEXT)
+				$(DESTDIR)$(ADMMANDIR)/dhcrelay$(ADMMANEXT)
 
 clean:
 	-rm -f $(OBJS) dhclient.o
