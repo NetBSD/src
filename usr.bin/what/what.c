@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.6 1997/10/20 03:16:31 lukem Exp $	*/
+/*	$NetBSD: what.c,v 1.7 1999/02/22 22:23:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,13 +43,19 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.6 1997/10/20 03:16:31 lukem Exp $");
+__RCSID("$NetBSD: what.c,v 1.7 1999/02/22 22:23:10 kleink Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-void search __P((void));
 int main __P((int, char **));
+static void search __P((void));
+static void usage __P((void));
+
+static int matches;
+static int sflag;
 
 /*
  * what
@@ -60,20 +66,39 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	if (!*++argv) 
-		search();
-	else do {
-		if (!freopen(*argv, "r", stdin)) {
+	int c;
+
+	matches = sflag = 0;
+	while ((c = getopt(argc, argv, "s")) != -1) {
+		switch (c) {
+		case 's':
+			sflag = 1;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1) {
+		usage();
+	} else do {
+		if (freopen(*argv, "r", stdin) == NULL) {
 			perror(*argv);
-			exit(1);
+			exit(matches ? EXIT_SUCCESS : 1);
 		}
 		printf("%s\n", *argv);
 		search();
-	} while(*++argv);
-	exit(0);
+	} while (*++argv != NULL);
+
+	/* Note: the standard explicitly specifies an exit status of 1. */
+	exit(matches ? EXIT_SUCCESS : 1);
+	/* NOTREACHED */
 }
 
-void
+static void
 search()
 {
 	int c;
@@ -88,9 +113,20 @@ loop:		if (c != '@')
 		if ((c = getchar()) != ')')
 			goto loop;
 		putchar('\t');
-		while ((c = getchar()) != EOF && c && c != '"' &&
-		    c != '>' && c != '\n')
+		while ((c = getchar()) != EOF && c != '\0' && c != '"' &&
+		    c != '>' && c != '\n' && c != '\\')
 			putchar(c);
 		putchar('\n');
+		matches++;
+		if (sflag)
+			break;
 	}
+}
+
+static void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: what [-s] file ...\n");
+	exit(1);
 }
