@@ -13,9 +13,6 @@ Bugs:
 - MD bug: tetts/thread2 panics the alpha somewhere after the first
   unblocked upcall. The kernel appears to jump into space.
 
-- lwp-exit2: kill -9 should succeed against processes whose LWPs are
-  all suspended.
-
 - Implement better management of the lwp cache for a sa process. High-water 
   mark needed, at the very least.
 
