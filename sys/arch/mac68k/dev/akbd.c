@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.5 2000/02/14 07:01:45 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.6 2000/02/17 02:07:07 ender Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -58,7 +58,7 @@
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/aedvar.h>
-#include <macppc/dev/akbdmap.h>
+#include <mac68k/dev/akbdmap.h>
 #include <mac68k/dev/akbdvar.h>
 #include <mac68k/dev/amsvar.h>
 
