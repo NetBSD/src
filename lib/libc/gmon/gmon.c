@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.11 1998/02/03 18:25:07 perry Exp $	*/
+/*	$NetBSD: gmon.c,v 1.12 1998/07/04 20:22:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.11 1998/02/03 18:25:07 perry Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.12 1998/07/04 20:22:05 kleink Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ static int	s_scale;
 /* see profil(2) where this is describe (incorrectly) */
 #define		SCALE_1_TO_1	0x10000L
 
-#define ERR(s) write(2, s, sizeof(s))
+#define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
 void	moncontrol __P((int));
 void	monstartup __P((u_long, u_long));
