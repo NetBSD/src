@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ MLINKS=	XDGA.3 XF86DGA.3 \
 	XDGA.3 XDGASetViewport.3 \
 	XDGA.3 XDGASync.3
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 
 CPPFLAGS.XF86DGA2.c=	-Wno-error	# gcc3
 

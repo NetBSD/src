@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	XpAttr.c XpContext.c XpDoc.c XpExtUtil.c XpExtVer.c \
 	XpNotifyPdm.c XpPage.c XpPageDim.c XpPrinter.c XpPutData.c \
 	XpScreens.c
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 
 LIBDPLIBS=\
 	Xau	${.CURDIR}/../Xau \

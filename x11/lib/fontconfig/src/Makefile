@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ LIBDPLIBS=\
 
 MAN=	fontconfig.3
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.xc}/extras/expat/lib
 CPPFLAGS+=	-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT

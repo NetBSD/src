@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ INCS=	Composite.h CompositeP.h ConstrainP.h Constraint.h Core.h \
 	RectObjP.h Shell.h ShellP.h StringDefs.h Vendor.h VendorP.h
 INCSDIR=${X11INCDIR}/X11
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-DUSE_POLL -DUSE_SNPRINTF -DLIBXT -I.
 
 CPPFLAGS.Intrinsic.c=	-DXFILESEARCHPATHDEFAULT=\"${X11LIBDIR}/%L/%T/%N%C%S:${X11LIBDIR}/%l/%T/%N%C%S:${X11LIBDIR}/%T/%N%C%S:${X11LIBDIR}/%L/%T/%N%S:${X11LIBDIR}/%l/%T/%N%S:${X11LIBDIR}/%T/%N%S\"
