@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.59 2000/05/03 18:28:46 jdolecek Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.60 2000/05/16 04:55:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -283,7 +283,7 @@ static const char *const fscknames[] = {
 	NULL,		/* Eighth edition */
 	"ffs",		/* 4.2BSD */
 	"msdos",	/* MSDOS */
-	NULL,		/* 4.4LFS */
+	"lfs",		/* 4.4LFS */
 	NULL,		/* unknown */
 	NULL,		/* HPFS */
 	NULL,		/* ISO9660 */

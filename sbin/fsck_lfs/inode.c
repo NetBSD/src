@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.4 2000/01/20 21:32:31 perseant Exp $	*/
+/*	$NetBSD: inode.c,v 1.5 2000/05/16 04:55:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -52,13 +52,13 @@
 #include "fsutil.h"
 #include "extern.h"
 
-extern struct dinode **din_table;
 extern SEGUSE *seg_table;
+extern daddr_t *din_table;
 
 static int iblock __P((struct inodesc *, long, u_int64_t));
 int blksreqd(struct lfs *, int);
 int lfs_maxino(void);
-SEGUSE *lfs_gseguse(int);
+SEGUSE *lfs_gseguse(int, struct bufarea **);
 /* static void dump_inoblk __P((struct lfs *, struct dinode *)); */
 
 /* stolen from lfs_inode.c */
@@ -205,109 +205,123 @@ getfileblk(struct lfs *fs, struct dinode *idinode, ino_t lbn)
     return bp;
 }
 
-int lfs_maxino(void)
-{
-#if 1
-    struct dinode *idinode;
-
-    idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
-    return ((idinode->di_size
-            - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
-        / sblock.lfs_bsize) * sblock.lfs_ifpb - 1;
-#else
-    return sblock.lfs_nfiles;
-#endif
-}
-
+#if 0
 static struct dinode *gidinode(void)
 {
     static struct dinode *idinode;
 
     if(!idinode) {              /* only need to do this once */
         idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
-        if(din_table[LFS_IFILE_INUM]
-           && din_table[LFS_IFILE_INUM]->di_gen > idinode->di_gen) {
-            printf("XXX replacing IFILE gen %d with gen %d\n",
-                   idinode->di_gen, din_table[LFS_IFILE_INUM]->di_gen);
-            idinode = din_table[LFS_IFILE_INUM];
-        }
     }
     return idinode;
 }
-
-struct bufarea *
-lfs_bginode(ino_t ino)
-{
-    ino_t blkno;
-
-    /* this is almost verbatim from lfs.h LFS_IENTRY */
-    blkno = ino/sblock.lfs_ifpb + sblock.lfs_cleansz + sblock.lfs_segtabsz;
-
-    return getfileblk(&sblock,gidinode(),blkno);
-}
+#endif
 
 struct ifile *
-lfs_ientry(ino_t ino)
+lfs_ientry(ino_t ino, struct bufarea **bpp)
 {
     struct ifile *ifp;
-    struct bufarea *bp;
 
-    bp = lfs_bginode(ino);
-    if(bp)
+    *bpp = getfileblk(&sblock, lfs_ginode(LFS_IFILE_INUM),
+		      ino/sblock.lfs_ifpb + sblock.lfs_cleansz +
+		      sblock.lfs_segtabsz);
+    if(*bpp)
     {
-        ifp = (struct ifile *)malloc(sizeof(*ifp));
-        *ifp = (((struct ifile *)(bp->b_un.b_buf))[ino%sblock.lfs_ifpb]);
-        bp->b_flags &= ~B_INUSE;
-        
-        return ifp;
+	    ifp = (((struct ifile *)((*bpp)->b_un.b_buf)) +
+		   (ino%sblock.lfs_ifpb));
+	    return ifp;
     }
     else
-        return NULL;
+	    return NULL;
 }
 
 SEGUSE *
-lfs_gseguse(int segnum)
+lfs_gseguse(int segnum, struct bufarea **bpp)
 {
     int blkno;
-    struct bufarea *bp;
 
     blkno = segnum/(sblock.lfs_bsize/sizeof(SEGUSE)) + sblock.lfs_cleansz;
-    bp = getfileblk(&sblock,gidinode(),blkno);
-    bp->b_flags &= ~B_INUSE;
-    return ((SEGUSE *)bp->b_un.b_buf) + segnum%(sblock.lfs_bsize/sizeof(SEGUSE));
+    (*bpp) = getfileblk(&sblock,lfs_ginode(LFS_IFILE_INUM),blkno);
+    return ((SEGUSE *)(*bpp)->b_un.b_buf) + segnum%(sblock.lfs_bsize/sizeof(SEGUSE));
+}
+
+daddr_t
+lfs_ino_daddr(ino_t inumber)
+{
+	daddr_t daddr;
+	IFILE *ifp;
+	struct bufarea *bp;
+
+	if(din_table[inumber]) {
+		daddr = din_table[inumber];
+	} else {
+		if(inumber == LFS_IFILE_INUM)
+			daddr = sblock.lfs_idaddr;
+		else {
+			ifp = lfs_ientry(inumber, &bp);
+			if(ifp==NULL) {
+				return NULL;
+			}
+			if(ifp->if_daddr == LFS_UNUSED_DADDR) {
+				bp->b_flags &= ~B_INUSE;
+				return NULL;
+			}
+			
+			bp->b_flags &= ~B_INUSE;
+			daddr = ifp->if_daddr;
+		}
+		
+		din_table[inumber] = daddr;
+		seg_table[datosn(&sblock,daddr)].su_nbytes += DINODE_SIZE;
+	}
+	return daddr;
 }
 
 struct dinode *
-lfs_ginode(ino_t inumber) {
+lfs_ginode(ino_t inumber)
+{
     struct ifile *ifp;
     struct dinode *din;
+    struct bufarea *bp;
+    daddr_t daddr;
 
-    if (inumber == LFS_IFILE_INUM)
-        return gidinode();
-    if (/* inumber < ROOTINO || */ inumber > maxino)
-        errexit("bad inode number %d to lfs_ginode\n", inumber);
-    /* printf("[lfs_ginode: looking up inode %ld]\n",inumber); */
-    ifp = lfs_ientry(inumber);
-    if(ifp==NULL
-       || ifp->if_daddr == LFS_UNUSED_DADDR
-       || ifp->if_daddr == UNASSIGNED) {
-        return NULL;
+    if (inumber > maxino)
+	    errexit("bad inode number %d to lfs_ginode\n", inumber);
+
+#if 0
+    if (inumber == LFS_IFILE_INUM) {
+	    daddr = sblock.lfs_idaddr;
+	    if(din_table[LFS_IFILE_INUM] == 0) {
+		    din_table[LFS_IFILE_INUM] = daddr;
+		    seg_table[datosn(&sblock,daddr)].su_nbytes += DINODE_SIZE;
+	    }
+	    return gidinode();
     }
+#endif
+
+    daddr = lfs_ino_daddr(inumber);
+    if(daddr == 0)
+	    return NULL;
+
     if(pbp)
-        pbp->b_flags &= ~B_INUSE;
-    if ( !(seg_table[datosn(&sblock,ifp->if_daddr)].su_flags & SEGUSE_DIRTY) )
-    {
-        printf("! INO %d: daddr 0x%x is in clean segment %d\n", inumber,
-               ifp->if_daddr, datosn(&sblock,ifp->if_daddr));
-    }
-    pbp = getddblk(ifp->if_daddr,sblock.lfs_bsize);
+	    pbp->b_flags &= ~B_INUSE;
+
+    pbp = getddblk(daddr,sblock.lfs_bsize);
     din=lfs_difind(&sblock, inumber, pbp->b_un.b_dinode);
 
-    /* debug */
-    if(din && din->di_inumber != inumber)
-        printf("! lfs_ginode: got ino #%ld instead of %ld\n",
-               (long)din->di_inumber, (long)inumber);
-    free(ifp);
+    if(din == NULL) {
+	    pfatal("INODE %d NOT FOUND\n", inumber);
+	    if(reply("free")) {
+		    ifp = lfs_ientry(inumber, &bp);
+		    ifp->if_daddr = LFS_UNUSED_DADDR;
+		    ifp->if_nextfree = sblock.lfs_free;
+		    sblock.lfs_free = inumber;
+		    sbdirty();
+		    dirty(bp);
+		    bp->b_flags &= ~B_INUSE;
+	    }
+    }
+
     return din;
 }
 
@@ -317,27 +331,25 @@ ino_to_fsba(struct lfs *fs, ino_t ino)
 {
     daddr_t daddr = LFS_UNUSED_DADDR;
     struct ifile *ifp;
+    struct bufarea *bp;
 
     /* Translate the inode number to a disk address. */
     if (ino == LFS_IFILE_INUM)
         daddr = fs->lfs_idaddr;
     else {
-        /* LFS_IENTRY(ifp, fs, ino, bp); */
-        ifp = lfs_ientry(ino);
+        ifp = lfs_ientry(ino,&bp);
         if(ifp) {
             daddr = ifp->if_daddr;
-            free(ifp);
         } else {
             pwarn("Can't locate inode #%ud\n",ino);
         }
+	bp->b_flags &= ~B_INUSE;
     }
     return daddr;
 }
 
 /*
  * Check validity of held (direct) blocks in an inode.
- * Note that this does not check held indirect blocks (although it does
- * check that the first level of indirection is valid).
  */
 int
 ckinode(dp, idesc)
@@ -530,10 +542,6 @@ chkrange(blk, cnt)
         printf("daddr 0x%x too large\n", blk);
         return (1);
     }
-    if ( !(seg_table[datosn(&sblock,blk)].su_flags & SEGUSE_DIRTY) ) {
-        printf("daddr 0x%x is in clean segment 0x%x\n", blk, datosn(&sblock,blk));
-        return (1);
-    }
     return (0);
 }
 
@@ -630,7 +638,6 @@ inocleanup()
 void
 inodirty()
 {
-	
     dirty(pbp);
 }
 
@@ -641,6 +648,8 @@ clri(idesc, type, flag)
     int flag;
 {
     register struct dinode *dp;
+    struct bufarea *bp;
+    IFILE *ifp;
 
     dp = ginode(idesc->id_number);
     if (flag == 1) {
@@ -656,6 +665,16 @@ clri(idesc, type, flag)
         clearinode(dp);
         statemap[idesc->id_number] = USTATE;
         inodirty();
+
+	/* Send cleared inode to the free list */
+
+	ifp = lfs_ientry(idesc->id_number, &bp);
+	ifp->if_daddr = LFS_UNUSED_DADDR;
+	ifp->if_nextfree = sblock.lfs_free;
+	sblock.lfs_free = idesc->id_number;
+	sbdirty();
+	dirty(bp);
+	bp->b_flags &= ~B_INUSE;
     }
 }
 
@@ -819,5 +838,6 @@ freeino(ino)
     clearinode(dp);
     inodirty();
     statemap[ino] = USTATE;
+
     n_files--;
 }
