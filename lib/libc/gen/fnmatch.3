@@ -1,4 +1,4 @@
-.\"	$NetBSD: fnmatch.3,v 1.17 2002/02/07 07:00:11 ross Exp $
+.\"	$NetBSD: fnmatch.3,v 1.18 2002/10/06 03:15:46 provos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,6 +98,12 @@ Additionally, if
 .Dv FNM_PATHNAME
 is set,
 a period is ``leading'' if it immediately follows a slash.
+.It Dv FNM_LEADING_DIR
+Ignore
+.Nm /*
+rest after successful
+.Fa pattern
+matching.
 .It Dv FNM_CASEFOLD
 The pattern is matched in a case-insensitive fashion.
 .El
