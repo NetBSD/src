@@ -72,10 +72,11 @@ fi
   
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
    [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
-  current_hostname=`/bin/hostname`
+  current_hostname=`hostname`
   if [ x$current_hostname = x ] || \
      [ x$current_hostname = x$old_host_name ]; then
-    if [ x$new_host_name != x$old_host_name ]; then
+    if [ x$current_hostname = x ] || \
+       [ x$new_host_name != x$old_host_name ]; then
       hostname $new_host_name
     fi
   fi
@@ -84,7 +85,8 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
-  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]; then
+  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]
+   then
     ifconfig $interface inet -alias $old_ip_address $medium
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for router in $old_routers; do
