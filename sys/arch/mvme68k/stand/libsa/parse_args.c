@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.3 2000/07/10 20:33:49 jdolecek Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.4 2000/07/10 22:48:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -67,7 +67,7 @@ int *flagp;
 
 	if (bugargs.arg_start != bugargs.arg_end) {
 		ptr = bugargs.arg_start;
-		while (c = *ptr) {
+		while ((c = *ptr)) {
 			while (c == ' ')
 				c = *++ptr;
 			if (c == '\0')
