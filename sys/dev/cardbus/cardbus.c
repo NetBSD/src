@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.50 2004/07/22 16:18:32 mycroft Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.51 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.50 2004/07/22 16:18:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.51 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "opt_cardbus.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.50 2004/07/22 16:18:32 mycroft Exp $")
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
 
@@ -456,7 +456,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
 
 		/* Invalid vendor ID value? */
-		if (CARDBUS_VENDOR(id) == CARDBUS_VENDOR_INVALID) {
+		if (CARDBUS_VENDOR(id) == PCI_VENDOR_INVALID) {
 			continue;
 		}
 

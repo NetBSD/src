@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.3 2004/07/22 15:50:50 mycroft Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.3 2004/07/22 15:50:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.3 2004/07/22 15:50:50 mycroft E
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers

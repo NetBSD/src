@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.22 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.22 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -103,23 +103,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.21 2004/07/22 15:50:50 mycroft 
  * Various supported device vendors/types and their names.
  */
 static const struct rtk_type rtk_cardbus_devs[] = {
-	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
 		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
-	{ CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE_690TXD,
 		RTK_8139, "D-Link DFE-690TXD 10/100BaseTX" },
-	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
 		RTK_8139, "Realtek 8138 10/100BaseTX" },
-	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 		RTK_8139, "Realtek 8139 10/100BaseTX" },
-	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD,
 		RTK_8139, "Corega FEther CB-TXD 10/100BaseTX" },
-	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_2CB_TXD,
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD,
 		RTK_8139, "Corega FEther II CB-TXD 10/100BaseTX" },
-	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
+	{ PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
 		RTK_8139, "Planex FNW-3603 10/100BaseTX" },
-	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3800_TX,
+	{ PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX,
 		RTK_8139, "Planex 10/100BaseTX FNW-3800-TX" },
-	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2000VX,
+	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2000VX,
 		RTK_8139, "AboCom FE2000VX 10/100BaseTX" },
 
 	{ 0, 0, 0, NULL }

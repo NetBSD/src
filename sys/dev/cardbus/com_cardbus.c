@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.12 2004/07/22 17:34:48 mycroft Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.13 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.12 2004/07/22 17:34:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.13 2004/08/02 19:14:28 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.12 2004/07/22 17:34:48 mycroft Exp
 #include <sys/device.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 
@@ -88,15 +88,15 @@ static struct csdev {
 	cardbusreg_t	reg;
 	int		type;
 } csdevs[] = {
-	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
-	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
-	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656_M,
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
-	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656B_M,
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
-	{ CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656C_M,
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 };
 

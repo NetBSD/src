@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.10 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Ex
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers used by the ADM8211.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.32 2004/07/22 17:30:43 mycroft Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.33 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.32 2004/07/22 17:30:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.33 2004/08/02 19:14:28 mycroft Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.32 2004/07/22 17:30:43 mycroft E
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/mii/miivar.h>
 
@@ -131,13 +131,13 @@ const struct ex_cardbus_product {
 	int		ecp_cardtype;	/* card type */
 	const char	*ecp_name;	/* device name */
 } ex_cardbus_products[] = {
-	{ CARDBUS_PRODUCT_3COM_3C575TX,
+	{ PCI_PRODUCT_3COM_3C575TX,
 	  EX_CONF_MII | EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
 	  EX_CB_BOOMERANG,
 	  "3c575-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C575BTX,
+	{ PCI_PRODUCT_3COM_3C575BTX,
 	  EX_CONF_90XB|EX_CONF_MII|EX_CONF_INV_LED_POLARITY |
 	    EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -145,7 +145,7 @@ const struct ex_cardbus_product {
 	  EX_CB_CYCLONE,
 	  "3c575B-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C575CTX,
+	{ PCI_PRODUCT_3COM_3C575CTX,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -153,7 +153,7 @@ const struct ex_cardbus_product {
 	  EX_CB_CYCLONE,
 	  "3c575CT Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C656_E,
+	{ PCI_PRODUCT_3COM_3C656_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -161,7 +161,7 @@ const struct ex_cardbus_product {
 	  EX_CB_CYCLONE,
 	  "3c656-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C656B_E,
+	{ PCI_PRODUCT_3COM_3C656B_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -169,7 +169,7 @@ const struct ex_cardbus_product {
 	  EX_CB_CYCLONE,
 	  "3c656B-TX Ethernet" },
 
-	{ CARDBUS_PRODUCT_3COM_3C656C_E,
+	{ PCI_PRODUCT_3COM_3C656C_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
@@ -196,7 +196,7 @@ ex_cardbus_lookup(ca)
 {
 	const struct ex_cardbus_product *ecp;
 
-	if (CARDBUS_VENDOR(ca->ca_id) != CARDBUS_VENDOR_3COM)
+	if (CARDBUS_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
 		return (NULL);
 
 	for (ecp = ex_cardbus_products; ecp->ecp_name != NULL; ecp++)

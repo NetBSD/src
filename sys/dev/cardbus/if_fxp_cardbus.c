@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.17 2002/10/02 16:33:42 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.18 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.17 2002/10/02 16:33:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.18 2004/08/02 19:14:28 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.17 2002/10/02 16:33:42 thorpej 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 static int fxp_cardbus_match __P((struct device *, struct cfdata *, void *));
 static void fxp_cardbus_attach __P((struct device *, struct device *, void *));
@@ -130,8 +130,8 @@ fxp_cardbus_match(parent, match, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == CARDBUS_VENDOR_INTEL &&
-	    CARDBUS_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_INTEL_82557)
+	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
+	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
 		return (1);
 
 	return (0);

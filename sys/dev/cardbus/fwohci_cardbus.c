@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.11 2004/04/23 21:13:08 itojun Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.12 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.11 2004/04/23 21:13:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.12 2004/08/02 19:14:28 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.11 2004/04/23 21:13:08 itojun E
 #endif
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ieee1394/ieee1394reg.h>
 #include <dev/ieee1394/ieee1394var.h>
