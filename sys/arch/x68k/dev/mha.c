@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.17.2.1 2000/11/20 20:30:01 bouyer Exp $	*/
+/*	$NetBSD: mha.c,v 1.17.2.2 2001/03/27 13:16:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -252,8 +252,9 @@ int	mha_dataout	__P((struct mha_softc *, u_char *, int));
 int	mha_datain	__P((struct mha_softc *, u_char *, int));
 void	mha_abort	__P((struct mha_softc *, struct acb *));
 void 	mha_init	__P((struct mha_softc *));
-int	mha_scsi_cmd	__P((struct scsipi_xfer *));
-int	mha_poll	__P((struct mha_softc *, struct acb *));
+void	mha_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
+void	mha_poll	__P((struct mha_softc *, struct acb *));
 void	mha_sched	__P((struct mha_softc *));
 void	mha_done	__P((struct mha_softc *, struct acb *));
 int	mhaintr		__P((void*));
@@ -276,12 +277,6 @@ struct cfattach mha_ca = {
 
 extern struct cfdriver mha_cd;
 
-struct scsipi_device mha_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
 
 /*
  * returns non-zero value if a controller is found.
@@ -355,21 +350,20 @@ mhaattach(parent, self, aux)
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.scsipi_cmd = mha_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = mha_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = mha_minphys;
+	sc->sc_adapter.adapt_request = mha_scsi_request;
 
-	/*
-	 * Fill in the prototype scsi_link
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &mha_dev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = sc->sc_id;
 
 	sc->sc_spcinitialized = 0;
 	WAR = WA_INITWIN;
@@ -407,7 +401,7 @@ mhaattach(parent, self, aux)
 
 	tmpsc = NULL;
 
-	config_found(self, &sc->sc_link, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 }
 
 #if 0
@@ -581,9 +575,6 @@ mhaselect(sc, target, lun, cmd, clen)
 	u_char *cmd;
 	u_char clen;
 {
-#if 0
-	struct scsi_link *sc_link = acb->xs->sc_link;
-#endif
 	struct spc_tinfo *ti = &sc->sc_tinfo[target];
 	int i;
 	int s;
@@ -633,7 +624,7 @@ mha_reselect(sc, message)
 {
 	u_char selid, target, lun;
 	struct acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct spc_tinfo *ti;
 
 	/*
@@ -659,9 +650,9 @@ mha_reselect(sc, message)
 	lun = message & 0x07;
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	     acb = acb->chain.tqe_next) {
-		sc_link = acb->xs->sc_link;
-		if (sc_link->scsipi_scsi.target == target &&
-		    sc_link->scsipi_scsi.lun == lun)
+		periph = acb->xs->xs_periph;
+		if (periph->periph_target == target &&
+		    periph->periph_lun == lun)
 			break;
 	}
 	if (acb == NULL) {
@@ -706,66 +697,85 @@ abort:
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-int
-mha_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+mha_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan; 
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct mha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct mha_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct acb *acb;
 	int s, flags;
 
-	SPC_TRACE(("[mha_scsi_cmd] "));
-	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
-	    sc_link->scsipi_scsi.target));
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	flags = xs->xs_control;
+		SPC_TRACE(("[mha_scsi_cmd] "));
+		SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+		    periph->periph_target));
 
-	/* Get a mha command block */
-	s = splbio();
-	acb = sc->free_list.tqh_first;
-	if (acb) {
-		TAILQ_REMOVE(&sc->free_list, acb, chain);
-		ACB_SETQ(acb, ACB_QNONE);
-	}
-	splx(s);
+		flags = xs->xs_control;
 
-	if (acb == NULL) {
-		SPC_MISC(("TRY_AGAIN_LATER"));
-		return TRY_AGAIN_LATER;
-	}
+		/* Get a mha command block */
+		s = splbio();
+		acb = sc->free_list.tqh_first;
+		if (acb) {
+			TAILQ_REMOVE(&sc->free_list, acb, chain);
+			ACB_SETQ(acb, ACB_QNONE);
+		}
 
-	/* Initialize acb */
-	acb->xs = xs;
-	bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
-	acb->clen = xs->cmdlen;
-	acb->daddr = xs->data;
-	acb->dleft = xs->datalen;
-	acb->stat = 0;
+		if (acb == NULL) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			splx(s);
+			return;
+		}
+		splx(s);
 
-	s = splbio();
-	ACB_SETQ(acb, ACB_QREADY);
-	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
+		/* Initialize acb */
+		acb->xs = xs;
+		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		acb->clen = xs->cmdlen;
+		acb->daddr = xs->data;
+		acb->dleft = xs->datalen;
+		acb->stat = 0;
+
+		s = splbio();
+		ACB_SETQ(acb, ACB_QREADY);
+		TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 #if 1
-	callout_reset(&acb->xs->xs_callout, (xs->timeout*hz)/1000,
-	    mha_timeout, acb);
+		callout_reset(&acb->xs->xs_callout,
+		    ((u_int64_t)xs->timeout * (u_int64_t)hz) / 1000,
+		    mha_timeout, acb);
 #endif
 
-	/*
-	 * キューの処理中でなければ、スケジューリング開始する
-	 */
-	if (sc->sc_state == SPC_IDLE)
-		mha_sched(sc);
+		/*
+		 * キューの処理中でなければ、スケジューリング開始する
+		 */
+		if (sc->sc_state == SPC_IDLE)
+			mha_sched(sc);
 
-	splx(s);
+		splx(s);
 
-	if (flags & XS_CTL_POLL) {
-		/* Not allowed to use interrupts, use polling instead */
-		return mha_poll(sc, acb);
-	}
+		if (flags & XS_CTL_POLL) {
+			/* Not allowed to use interrupts, use polling instead */
+			mha_poll(sc, acb);
+		}
 
-	SPC_MISC(("SUCCESSFULLY_QUEUED"));
-	return SUCCESSFULLY_QUEUED;
+		SPC_MISC(("SUCCESSFULLY_QUEUED"));
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 }
 
 /*
@@ -783,7 +793,7 @@ mha_minphys(bp)
 /*
  * Used when interrupt driven I/O isn't allowed, e.g. during boot.
  */
-int
+void
 mha_poll(sc, acb)
 	struct mha_softc *sc;
 	struct acb *acb;
@@ -818,7 +828,7 @@ mha_poll(sc, acb)
 		mha_timeout((caddr_t)acb);
 	}
 	splx(s);
-	return COMPLETE;
+	scsipi_done(xs);
 }
 
 /*
@@ -846,7 +856,7 @@ void
 mha_sched(sc)
 	register struct mha_softc *sc;
 {
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct acb *acb;
 	int t;
 
@@ -863,10 +873,10 @@ mha_sched(sc)
 	 */
 	for (acb = sc->ready_list.tqh_first; acb ; acb = acb->chain.tqe_next) {
 		struct spc_tinfo *ti;
-		sc_link = acb->xs->sc_link;
-		t = sc_link->scsipi_scsi.target;
+		periph = acb->xs->xs_periph;
+		t = periph->periph_target;
 		ti = &sc->sc_tinfo[t];
-		if (!(ti->lubusy & (1 << sc_link->scsipi_scsi.lun))) {
+		if (!(ti->lubusy & (1 << periph->periph_lun))) {
 			if ((acb->flags & ACB_QBITS) != ACB_QREADY)
 				panic("mha: busy entry on ready list");
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
@@ -876,53 +886,18 @@ mha_sched(sc)
 			sc->sc_prevphase = INVALID_PHASE;
 			sc->sc_dp = acb->daddr;
 			sc->sc_dleft = acb->dleft;
-			ti->lubusy |= (1<<sc_link->scsipi_scsi.lun);
-			mhaselect(sc, t, sc_link->scsipi_scsi.lun,
+			ti->lubusy |= (1<<periph->periph_lun);
+			mhaselect(sc, t, periph->periph_lun,
 				     (u_char *)&acb->cmd, acb->clen);
 			break;
 		} else {
 			SPC_MISC(("%d:%d busy\n",
-			    sc_link->scsipi_scsi.target,
-			    sc_link->scsipi_scsi.lun));
+			    periph->periph_target,
+			    periph->periph_lun));
 		}
 	}
 }
 
-void
-mha_sense(sc, acb)
-	struct mha_softc *sc;
-	struct acb *acb;
-{
-	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-	struct scsipi_sense *ss = (void *)&acb->cmd;
-
-	SPC_MISC(("requesting sense  "));
-	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
-	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = sc_link->scsipi_scsi.lun << 5;
-	ss->length = sizeof(struct scsipi_sense_data);
-	acb->clen = sizeof(*ss);
-	acb->daddr = (char *)&xs->sense;
-	acb->dleft = sizeof(struct scsipi_sense_data);
-	acb->flags |= ACB_CHKSENSE;
-	ti->senses++;
-	if (acb->flags & ACB_QNEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
-	if (acb == sc->sc_nexus) {
-		mhaselect(sc, sc_link->scsipi_scsi.target,
-			  sc_link->scsipi_scsi.lun,
-			     (void *)&acb->cmd, acb->clen);
-	} else {
-		mha_dequeue(sc, acb);
-		TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
-		if (sc->sc_state == SPC_IDLE)
-			mha_sched(sc);
-	}
-}
-
 /*
  * POST PROCESSING OF SCSI_CMD (usually current)
  */
@@ -932,8 +907,8 @@ mha_done(sc, acb)
 	struct acb *acb;
 {
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct spc_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct spc_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
 
 	SPC_TRACE(("[mha_done(error:%x)] ", xs->error));
 
@@ -955,44 +930,11 @@ mha_done(sc, acb)
 		} else if (acb->flags & ACB_CHKSENSE) {
 			xs->error = XS_SENSE;
 		} else {
-			switch (acb->stat & ST_MASK) {
+			xs->status = acb->stat & ST_MASK;
+			switch (xs->status) {
 			case SCSI_CHECK:
-			{
-				struct scsipi_sense *ss = (void *)&acb->cmd;
-				SPC_MISC(("requesting sense "));
-				/* First, save the return values */
 				xs->resid = acb->dleft;
-				xs->status = acb->stat;
-				/* Next, setup a request sense command block */
-				bzero(ss, sizeof(*ss));
-				ss->opcode = REQUEST_SENSE;
-				/*ss->byte2 = sc_link->lun << 5;*/
-				ss->length = sizeof(struct scsipi_sense_data);
-				acb->clen = sizeof(*ss);
-				acb->daddr = (char *)&xs->sense;
-				acb->dleft = sizeof(struct scsipi_sense_data);
-				acb->flags |= ACB_CHKSENSE;
-/*XXX - must take off queue here */
-				if (acb != sc->sc_nexus) {
-					panic("%s: mha_sched: floating acb %p",
-						sc->sc_dev.dv_xname, acb);
-				}
-				TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
-				ACB_SETQ(acb, ACB_QREADY);
-				ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
-				ti->senses++;
-				callout_reset(&acb->xs->xs_callout,
-				    (xs->timeout*hz)/1000, mha_timeout, acb);
-				if (sc->sc_nexus == acb) {
-					sc->sc_nexus = NULL;
-					sc->sc_state = SPC_IDLE;
-					mha_sched(sc);
-				}
-#if 0
-				mha_sense(sc, acb);
-#endif
-				return;
-			}
+				/* FALLTHOUGH */
 			case SCSI_BUSY:
 				xs->error = XS_BUSY;
 				break;
@@ -1009,8 +951,6 @@ mha_done(sc, acb)
 			}
 		}
 	}
-
-	xs->xs_status |= XS_STS_DONE;
 
 #if SPC_DEBUG
 	if ((mha_debug & SPC_SHOWMISC) != 0) {
@@ -1033,7 +973,7 @@ mha_done(sc, acb)
 		}
 		sc->sc_nexus = NULL;
 		sc->sc_state = SPC_IDLE;
-		ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
+		ti->lubusy &= ~(1<<periph->periph_lun);
 		mha_sched(sc);
 		break;
 	case ACB_QREADY:
@@ -1041,7 +981,7 @@ mha_done(sc, acb)
 		break;
 	case ACB_QNEXUS:
 		TAILQ_REMOVE(&sc->nexus_list, acb, chain);
-		ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
+		ti->lubusy &= ~(1<<periph->periph_lun);
 		break;
 	case ACB_QFREE:
 		panic("%s: dequeue: busy acb on free list",
@@ -1178,17 +1118,17 @@ gotit:
 	if (sc->sc_state == SPC_HASNEXUS) {
 		struct acb *acb = sc->sc_nexus;
 		struct spc_tinfo *ti =
-			&sc->sc_tinfo[acb->xs->sc_link->scsipi_scsi.target];
+			&sc->sc_tinfo[acb->xs->xs_periph->periph_target];
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
 			SPC_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
-				struct scsipi_link *sc_link = acb->xs->sc_link;
+				struct scsipi_periph *periph = acb->xs->xs_periph;
 				printf("mha: %d extra bytes from %d:%d\n",
 					-sc->sc_dleft,
-					sc_link->scsipi_scsi.target,
-				        sc_link->scsipi_scsi.lun);
+					periph->periph_target,
+				        periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
 			acb->xs->resid = acb->dleft = sc->sc_dleft;
@@ -1202,7 +1142,7 @@ gotit:
 					sc->sc_dev.dv_xname);
 #endif
 #if 1 /* XXX - must remember last message */
-			scsi_print_addr(acb->xs->sc_link);
+			scsipi_printaddr(acb->xs->xs_periph);
 			printf("MSG_MESSAGE_REJECT>>");
 #endif
 			if (sc->sc_flags & SPC_SYNCHNEGO) {
@@ -1222,7 +1162,7 @@ gotit:
 			ti->dconns++;
 			sc->sc_flags |= SPC_DISCON;
 			sc->sc_flags |= SPC_BUSFREE_OK;
-			if ((acb->xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+			if ((acb->xs->xs_periph->periph_quirks & PQUIRK_AUTOSAVE) == 0)
 				break;
 			/*FALLTHROUGH*/
 		case MSG_SAVEDATAPOINTER:
@@ -1244,7 +1184,7 @@ gotit:
 		case MSG_PARITY_ERROR:
 			printf("%s:target%d: MSG_PARITY_ERROR\n",
 				sc->sc_dev.dv_xname,
-				acb->xs->sc_link->scsipi_scsi.target);
+				acb->xs->xs_periph->periph_target);
 			break;
 		case MSG_EXTENDED:
 			SPC_MSGS(("extended(%x) ", sc->sc_imess[2]));
@@ -1260,12 +1200,12 @@ gotit:
 					mha_sched_msgout(SEND_SDTR);
 				} else if (ti->offset == 0) {
 					printf("%s:%d: async\n", "mha",
-						acb->xs->sc_link->scsipi_scsi.target);
+						acb->xs->xs_periph->periph_target);
 					ti->offset = 0;
 					sc->sc_flags &= ~SPC_SYNCHNEGO;
 				} else if (ti->period > 124) {
 					printf("%s:%d: async\n", "mha",
-						acb->xs->sc_link->scsipi_scsi.target);
+						acb->xs->xs_periph->periph_target);
 					ti->offset = 0;
 					mha_sched_msgout(SEND_SDTR);
 				} else {
@@ -1278,7 +1218,7 @@ gotit:
 #endif
 
 #if SPC_DEBUG
-					scsi_print_addr(acb->xs->sc_link);
+					scsipi_printaddr(acb->xs->xs_periph);
 #endif
 					if ((sc->sc_flags&SPC_SYNCHNEGO) == 0) {
 						/* Target initiated negotiation */
@@ -1324,7 +1264,7 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			break;
 		}
 	} else if (sc->sc_state == SPC_RESELECTED) {
-		struct scsipi_link *sc_link = NULL;
+		struct scsipi_periph *periph = NULL;
 		struct acb *acb;
 		struct spc_tinfo *ti;
 		u_char lunit;
@@ -1340,9 +1280,9 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			lunit = sc->sc_imess[0] & 0x07;
 			for (acb = sc->nexus_list.tqh_first; acb;
 			     acb = acb->chain.tqe_next) {
-				sc_link = acb->xs->sc_link;
-				if (sc_link->scsipi_scsi.lun == lunit &&
-				    sc->sc_selid == (1<<sc_link->scsipi_scsi.target)) {
+				periph = acb->xs->xs_periph;
+				if (periph->periph_lun == lunit &&
+				    sc->sc_selid == (1<<periph->periph_target)) {
 					TAILQ_REMOVE(&sc->nexus_list, acb,
 					    chain);
 					ACB_SETQ(acb, ACB_QNONE);
@@ -1359,12 +1299,12 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 				 * Setup driver data structures and
 				 * do an implicit RESTORE POINTERS
 				 */
-				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+				ti = &sc->sc_tinfo[periph->periph_target];
 				sc->sc_nexus = acb;
 				sc->sc_dp = acb->daddr;
 				sc->sc_dleft = acb->dleft;
-				sc->sc_tinfo[sc_link->scsipi_scsi.target].lubusy
-					|= (1<<sc_link->scsipi_scsi.lun);
+				sc->sc_tinfo[periph->periph_target].lubusy
+					|= (1<<periph->periph_lun);
 				if (ti->flags & T_SYNCMODE) {
 					TMR = TM_SYNC;	/* XXX */
 				} else {
@@ -1448,14 +1388,14 @@ nextmsg:
 	case SEND_IDENTIFY:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		sc->sc_omess[0] =
-		    MSG_IDENTIFY(sc->sc_nexus->xs->sc_link->scsipi_scsi.lun, 1);
+		    MSG_IDENTIFY(sc->sc_nexus->xs->xs_periph->periph_lun, 1);
 		n = 1;
 		break;
 
 #if SPC_USE_SYNCHRONOUS
 	case SEND_SDTR:
 		SPC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[4] = MSG_EXTENDED;
 		sc->sc_omess[3] = 3;
 		sc->sc_omess[2] = MSG_EXT_SDTR;
@@ -1468,7 +1408,7 @@ nextmsg:
 #if SPC_USE_WIDE
 	case SEND_WDTR:
 		SPC_ASSERT(sc->sc_nexus != NULL);
-		ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[3] = MSG_EXTENDED;
 		sc->sc_omess[2] = 2;
 		sc->sc_omess[1] = MSG_EXT_WDTR;
@@ -1776,7 +1716,7 @@ mhaintr(arg)
 	u_char ints;
 #endif
 	struct acb *acb;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct spc_tinfo *ti;
 	u_char ph;
 	u_short r;
@@ -2086,10 +2026,11 @@ mha_timeout(arg)
 	int s = splbio();
 	struct acb *acb = (struct acb *)arg;
 	struct scsipi_xfer *xs = acb->xs;
-	struct scsipi_link *sc_link = xs->sc_link;
-	struct mha_softc *sc = sc_link->adapter_softc;
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct mha_softc *sc =
+	    (void*)periph->periph_chan->chan_adapter->adapt_dev;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 again:
 	printf("%s: timed out [acb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) >",
@@ -2128,10 +2069,10 @@ mha_show_scsi_cmd(acb)
 	struct acb *acb;
 {
 	u_char  *b = (u_char *)&acb->cmd;
-	struct scsipi_link *sc_link = acb->xs->sc_link;
+	struct scsipi_periph *periph = acb->xs->xs_periph;
 	int i;
 
-	scsi_print_addr(sc_link);
+	scsipi_printaddr(periph);
 	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->clen; i++) {
 			if (i)

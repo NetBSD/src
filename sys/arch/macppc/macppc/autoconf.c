@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.2.1 2000/11/20 20:13:00 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.2 2001/03/27 13:16:25 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -241,10 +241,10 @@ device_register(dev, aux)
 		struct scsipibus_attach_args *sa = aux;
 
 		if (dev->dv_parent->dv_xname[0] == 's') {
-			if (addr != sa->sa_sc_link->scsipi_scsi.target)
+			if (addr != sa->sa_periph->periph.target)
 				return;
 		} else {
-			if (addr != sa->sa_sc_link->scsipi_atapi.drive)
+			if (addr != sa->sa_periph->periph.drive)
 				return;
 		}
 	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {

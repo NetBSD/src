@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.45.2.1 2000/11/20 20:12:18 bouyer Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.45.2.2 2001/03/27 13:16:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -78,16 +78,9 @@ static volatile int	main_running = 0;
 static u_char	busy;
 
 static void	ncr5380_minphys __P((struct buf *bp));
-static int	ncr5380_scsi_cmd __P((struct scsipi_xfer *xs));
+static void	ncr5380_scsi_request __P((struct scsipi_channel *,
+					scsipi_adapter_req_t, void *));  
 static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
-
-struct scsipi_device ncr5380_dev = {
-	NULL,		/* use default error handler		*/
-	NULL,		/* do not have a start functio		*/
-	NULL,		/* have no async handler		*/
-	NULL		/* Use default done routine		*/
-};
-
 
 static SC_REQ	req_queue[NREQ];
 static SC_REQ	*free_head = NULL;	/* Free request structures	*/
@@ -229,18 +222,19 @@ void		*auxp;
 
 	sc = (struct ncr_softc *)dp;
 
-	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = ncr5380_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = ncr5380_minphys;
+	sc->sc_adapter.adapt_request = ncr5380_scsi_request;
 
-	sc->sc_link.scsipi_scsi.channel         = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc   = sc;
-	sc->sc_link.scsipi_scsi.adapter_target  = 7;
-	sc->sc_link.adapter         = &sc->sc_adapter;
-	sc->sc_link.device          = &ncr5380_dev;
-	sc->sc_link.openings        = NREQ - 1;
-	sc->sc_link.scsipi_scsi.max_target      = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype; 
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = 7;
 
 	/*
 	 * bitmasks
@@ -276,7 +270,7 @@ void		*auxp;
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -286,50 +280,61 @@ void		*auxp;
 /*
  * Carry out a request from the high level driver.
  */
-static int
-ncr5380_scsi_cmd(struct scsipi_xfer *xs)
+static void
+ncr5380_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph; 
+	struct ncr_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int	sps;
 	SC_REQ	*reqp, *link, *tmp;
 	int	flags = xs->xs_control;
 
-	/*
-	 * We do not queue RESET commands
-	 */
-	if (flags & XS_CTL_RESET) {
-		scsi_reset_verbose(xs->sc_link->adapter_softc,
-				   "Got reset-command");
-		return (COMPLETE);
-	}
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
 
-	/*
-	 * Get a request block
-	 */
-	sps = splbio();
-	if ((reqp = free_head) == 0) {
+		/*
+		 * We do not queue RESET commands
+		 */
+		if (flags & XS_CTL_RESET) {
+			scsi_reset_verbose(sc, "Got reset-command");
+			return (COMPLETE);
+		}
+
+		/*
+		 * Get a request block
+		 */
+		sps = splbio();
+		if ((reqp = free_head) == 0) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
+		}
+		free_head  = reqp->next;
+		reqp->next = NULL;
 		splx(sps);
-		return (TRY_AGAIN_LATER);
-	}
-	free_head  = reqp->next;
-	reqp->next = NULL;
-	splx(sps);
 
-	/*
-	 * Initialize our private fields
-	 */
-	reqp->dr_flag   = (flags & XS_CTL_POLL) ? DRIVER_NOINT : 0;
-	reqp->phase     = NR_PHASE;
-	reqp->msgout    = MSG_NOOP;
-	reqp->status    = SCSGOOD;
-	reqp->message   = 0xff;
-	reqp->link      = NULL;
-	reqp->xs        = xs;
-	reqp->targ_id   = xs->sc_link->scsipi_scsi.target;
-	reqp->targ_lun  = xs->sc_link->scsipi_scsi.lun;
-	reqp->xdata_ptr = (u_char*)xs->data;
-	reqp->xdata_len = xs->datalen;
-	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
-	reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
+		/*
+		 * Initialize our private fields
+		 */
+		reqp->dr_flag   = (flags & XS_CTL_POLL) ? DRIVER_NOINT : 0;
+		reqp->phase     = NR_PHASE;
+		reqp->msgout    = MSG_NOOP;
+		reqp->status    = SCSGOOD;
+		reqp->message   = 0xff;
+		reqp->link      = NULL;
+		reqp->xs        = xs;
+		reqp->targ_id   = xs->xs_periph->periph_target;
+		reqp->targ_lun  = xs->xs_periph->periph_lun;
+		reqp->xdata_ptr = (u_char*)xs->data;
+		reqp->xdata_len = xs->datalen;
+		memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
+		reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
 
 #ifdef REAL_DMA
 	/*
@@ -397,25 +402,29 @@ ncr5380_scsi_cmd(struct scsipi_xfer *xs)
 		tmp->next = issue_q;
 		issue_q = tmp;
 #ifdef DBG_REQ
-		if (dbg_target_mask & (1 << tmp->targ_id))
-			show_request(tmp, "LINKCHK");
+			if (dbg_target_mask & (1 << tmp->targ_id))
+				show_request(tmp, "LINKCHK");
 #endif
-	}
+		}
 #endif
-	splx(sps);
+		splx(sps);
 
 #ifdef DBG_REQ
-	if (dbg_target_mask & (1 << reqp->targ_id))
-		show_request(reqp, (reqp->xcmd.opcode == REQUEST_SENSE) ?
+		if (dbg_target_mask & (1 << reqp->targ_id))
+			show_request(reqp, (reqp->xcmd.opcode == REQUEST_SENSE) ?
 								"HEAD":"TAIL");
 #endif
 
-	run_main(xs->sc_link->adapter_softc);
+		run_main(sc);
+		return;
 
-	if ((xs->xs_control & XS_CTL_POLL) != 0 &&
-	    (xs->xs_status & XS_STS_DONE) != 0)
-		return (COMPLETE); /* We're booting or run_main has completed */
-	return (SUCCESSFULLY_QUEUED);
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 }
 
 static void
@@ -433,10 +442,8 @@ ncr5380_show_scsi_cmd(struct scsipi_xfer *xs)
 	u_char	*b = (u_char *) xs->cmd;
 	int	i  = 0;
 
+	scsipi_printaddr(xs->xs_periph);
 	if (!(xs->xs_control & XS_CTL_RESET)) {
-		printf("(%d:%d:%d,0x%x)-", xs->sc_link->scsipi_scsi.scsibus,
-		    xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun,
-			xs->sc_link->flags);
 		while (i < xs->cmdlen) {
 			if (i)
 				printf(",");
@@ -445,9 +452,7 @@ ncr5380_show_scsi_cmd(struct scsipi_xfer *xs)
 		printf("-\n");
 	}
 	else {
-		printf("(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsipi_scsi.scsibus,xs->sc_link->scsipi_scsi.target,
-			xs->sc_link->scsipi_scsi.lun);
+		printf("-RESET-\n");
 	}
 }
 
@@ -714,7 +719,7 @@ int	code;
 	u_int8_t		targ_bit;
 	struct ncr_softc	*sc;
 
-	sc = reqp->xs->sc_link->adapter_softc;
+	sc = reqp->xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
 	DBG_SELPRINT ("Starting arbitration\n", 0);
 	PID("scsi_select1");
 
@@ -1920,7 +1925,7 @@ ncr_tprint(SC_REQ *reqp, char *fmt, ...)
 	va_list	ap;
 
 	va_start(ap, fmt);
-	scsi_print_addr(reqp->xs->sc_link);
+	scsipi_printaddr(reqp->xs->xs_periph);
 	vprintf(fmt, ap);
 	va_end(ap);
 }

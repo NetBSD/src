@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.11 1998/11/19 21:46:24 thorpej Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.11.12.1 2001/03/27 13:16:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -158,7 +158,7 @@
 
 struct	ncr_softc {
 	struct	device		sc_dev;
-	struct	scsipi_link	sc_link;
+	struct	scsipi_channel	sc_channel;
 	struct	scsipi_adapter	sc_adapter;
 
 	/*
