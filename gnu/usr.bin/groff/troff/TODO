@@ -1,14 +1,11 @@
+Give a more helpful error message when the indent is set to a value
+greater than the line-length.
+
 Tracing. This is a pain to implement because requests are responsible
 for reading their own arguments.
 
 Possibly implement -s option (stop every N pages). This functionality
 would be more appropriate in a postprocessor.
-
-Make it possible to have multilingual documents, by having a ``current
-language'' with which hyphenation information (the pattern trie and
-exception dictionary) is associated; the current language should be
-associated with the environment.  Get some pattern tries for other
-languages (assuming ISO Latin-1).
 
 Line breaking should be smarter.  In particular, it should be possible
 to shrink spaces.  Also avoid having a line that's been shrunk a lot
@@ -90,8 +87,6 @@ Make it possible to suppress hyphenation on a word-by-word basis.
 
 Possibly allow multiple simultaneous input line traps.
 
-Paddable, unbreakable space escape sequence.
-
 Unpaddable, breakable space escape sequence.
 
 Support hanging punctuation.
@@ -117,5 +112,21 @@ Generalized ligatures.
 Provide some way for a macro to tell whether it was called with `'' or
 `.'.  This would be useful for implementing a tracing macro packge.
 
-Request to remove an environment. (Need to check it's not on the
-environment stack).
+Request to remove an environment. (Maintain a count of the references
+to the environment from the environment table, environment dictionary
+or environment stack.)
+
+Perhaps in the nr request a leading `-' should only be recognized as a
+decrement when it's at the same input level as the request.
+
+Don't ever change a charinfo.  Create new variants instead and chain
+them together.
+
+Make it possible to tr characters onto \~.
+
+Unix troff appears to read the first character of a request name in
+copy mode.  Should we do the same?
+
+Number register giving name of end macro.
+
+More thorough range checking.

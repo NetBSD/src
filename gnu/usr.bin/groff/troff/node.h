@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
@@ -170,6 +170,7 @@ public:
 };
 
 class word_space_node : public space_node {
+protected:
   word_space_node(hunits, int, node * = 0);
 public:
   word_space_node(hunits, node * = 0);
@@ -179,7 +180,20 @@ public:
   const char *type();
 };
 
-  
+class unbreakable_space_node : public word_space_node {
+  unbreakable_space_node(hunits, int, node * = 0);
+public:
+  unbreakable_space_node(hunits, node * = 0);
+  node *copy();
+  int same(node *);
+  const char *type();
+  breakpoint *get_breakpoints(hunits width, int nspaces, breakpoint *rest = 0,
+			      int is_inner = 0);
+  int nbreaks();
+  void split(int, node **, node **);
+  int merge_space(hunits);
+};
+
 class diverted_space_node : public node {
 public:
   vunits n;
@@ -389,33 +403,6 @@ public:
   const char *type();
 };
 
-class charinfo;
-
-class composite_node : public node {
-  charinfo *ci;
-  node *n;
-  font_size sz;
-public:
-  composite_node(node *, charinfo *, font_size, node * = 0);
-  ~composite_node();
-  node *copy();
-  hunits width();
-  node *last_char_node();
-  units size();
-  void tprint(troff_output_file *);
-  hyphenation_type get_hyphenation_type();
-  int overlaps_horizontally();
-  int overlaps_vertically();
-  void ascii_print(ascii_output_file *);
-  void asciify(macro *);
-  hyphen_list *get_hyphen_list(hyphen_list *tail);
-  node *add_self(node *, hyphen_list **);
-  tfont *get_tfont();
-  int same(node *);
-  const char *type();
-  void vertical_extent(vunits *, vunits *);
-  vunits vertical_width();
-};
 
 struct hvpair {
   hunits h;
@@ -440,6 +427,7 @@ public:
   const char *type();
 };
 
+class charinfo;
 node *make_node(charinfo *ci, environment *);
 int character_exists(charinfo *, environment *);
 
@@ -448,10 +436,6 @@ node *reverse_node_list(node *n);
 void delete_node_list(node *);
 node *copy_node_list(node *);
 
-hunits env_digit_width(environment *);
-hunits env_space_width(environment *);
-hunits env_narrow_space_width(environment *);
-hunits env_half_narrow_space_width(environment *);
 int get_bold_fontno(int f);
 
 inline hyphen_list::hyphen_list(unsigned char code, hyphen_list *p)
@@ -473,6 +457,7 @@ class output_file {
 public:
   output_file();
   virtual ~output_file();
+  virtual void trailer(vunits page_length);
   virtual void flush() = 0;
   virtual void transparent_char(unsigned char) = 0;
   virtual void print_line(hunits x, vunits y, node *n,

@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,11 +15,11 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 
 const char **symbol::table = 0;
@@ -29,6 +29,10 @@ char *symbol::block = 0;
 int symbol::block_size = 0;
 
 const symbol NULL_SYMBOL;
+
+#ifdef BLOCK_SIZE
+#undef BLOCK_SIZE
+#endif
 
 const int BLOCK_SIZE = 1024;
 // the table will increase in size as necessary
@@ -72,7 +76,7 @@ symbol::symbol(const char *p, int how)
   }
   if (table == 0) {
     table_size = table_sizes[0];
-    table = new char*[table_size];
+    table = (const char **)new char*[table_size];
     for (int i = 0; i < table_size; i++)
       table[i] = 0;
     table_used = 0;
@@ -97,7 +101,7 @@ symbol::symbol(const char *p, int how)
 	fatal("too many symbols");
     table_size = table_sizes[i];
     table_used = 0;
-    table = new char*[table_size];
+    table = (const char **)new char*[table_size];
     for (i = 0; i < table_size; i++)
       table[i] = 0;
     for (pp = old_table + old_table_size - 1; 
@@ -105,7 +109,7 @@ symbol::symbol(const char *p, int how)
 	 --pp) {
 	   symbol temp(*pp, 1); /* insert it into the new table */
 	 }
-    delete old_table;
+    a_delete old_table;
     for (pp = table + hc % table_size;
 	 *pp != 0; 
 	 (pp == table ? pp = table + table_size - 1 : --pp))
@@ -134,7 +138,7 @@ symbol concat(symbol s1, symbol s2)
   strcpy(buf, s1.contents());
   strcat(buf, s2.contents());
   symbol res(buf);
-  delete buf;
+  a_delete buf;
   return res;
 }
 

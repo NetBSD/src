@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 typedef void (*REQUEST_FUNCP)();
@@ -58,6 +58,7 @@ public:
   void invoke(symbol);
   macro *to_macro();
   void print_size();
+  int empty();
   friend class string_iterator;
   friend void chop_macro();
   friend int operator==(const macro &, const macro &);
@@ -76,4 +77,4 @@ extern int no_break_flag;	// indicates whether request was invoked with . or '
 class charinfo;
 class environment;
 
-node *charinfo_to_node(charinfo *, const environment *);
+node *charinfo_to_node_list(charinfo *, const environment *);
