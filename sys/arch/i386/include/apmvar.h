@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.17 2003/04/02 07:35:59 thorpej Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.18 2003/10/27 13:44:20 junyoung Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,12 +68,12 @@ struct apm_attach_args {
 #ifdef _KERNEL
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
-int apmcall __P((int function, struct bioscallregs *regs));
-void bioscall __P((int function, struct bioscallregs *regs));
-void apm_cpu_busy __P((void));
-void apm_cpu_idle __P((void));
-void apminit __P((void));
-int apm_set_powstate __P((u_int devid, u_int powstate));
-int apm_busprobe __P((void));
+int apmcall(int function, struct bioscallregs *regs);
+void bioscall(int function, struct bioscallregs *regs);
+void apm_cpu_busy(void);
+void apm_cpu_idle(void);
+void apminit(void);
+int apm_set_powstate(u_int devid, u_int powstate);
+int apm_busprobe(void);
 #endif /* _KERNEL */
 #endif /* __i386_apm_h__ */

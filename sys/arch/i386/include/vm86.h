@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.11 2003/09/11 19:17:07 christos Exp $	*/
+/*	$NetBSD: vm86.h,v 1.12 2003/10/27 13:44:20 junyoung Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -76,18 +76,18 @@ struct vm86_struct {
 #define VCPU_586		5
 
 #ifdef _KERNEL
-int i386_vm86 __P((struct lwp *, char *, register_t *));
+int i386_vm86(struct lwp *, char *, register_t *);
 #ifdef COMPAT_16
-int compat_16_i386_vm86 __P((struct lwp *, char *, register_t *));
+int compat_16_i386_vm86(struct lwp *, char *, register_t *);
 #endif
-void vm86_gpfault __P((struct lwp *, int));
-void vm86_return __P((struct lwp *, int));
-static __inline void clr_vif __P((struct lwp *));
-static __inline void set_vif __P((struct lwp *));
-static __inline void set_vflags __P((struct lwp *, int));
-static __inline int get_vflags __P((struct lwp *));
-static __inline void set_vflags_short __P((struct lwp *, int));
-static __inline int get_vflags_short __P((struct lwp *));
+void vm86_gpfault(struct lwp *, int);
+void vm86_return(struct lwp *, int);
+static __inline void clr_vif(struct lwp *);
+static __inline void set_vif(struct lwp *);
+static __inline void set_vflags(struct lwp *, int);
+static __inline int get_vflags(struct lwp *);
+static __inline void set_vflags_short(struct lwp *, int);
+static __inline int get_vflags_short(struct lwp *);
 
 static __inline void
 clr_vif(l)
@@ -180,5 +180,5 @@ get_vflags_short(l)
 	return (flags);
 }
 #else
-int i386_vm86 __P((struct vm86_struct *vmcp));
+int i386_vm86(struct vm86_struct *vmcp);
 #endif
