@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.4 1995/02/02 02:09:42 jtc Exp $	*/
+/*	$NetBSD: ftell.c,v 1.4.2.1 1995/03/22 18:21:10 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: ftell.c,v 1.4 1995/02/02 02:09:42 jtc Exp $";
+static char rcsid[] = "$NetBSD: ftell.c,v 1.4.2.1 1995/03/22 18:21:10 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: ftell.c,v 1.4 1995/02/02 02:09:42 jtc Exp $";
  */
 long
 ftell(fp)
-	register const FILE *fp;
+	register FILE *fp;
 {
 	register fpos_t pos;
 
