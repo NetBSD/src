@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.5 2001/03/22 19:44:27 tshiozak Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.6 2003/07/04 04:46:14 tshiozak Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -69,6 +69,13 @@
 #define CRNCYSTR	50	/* Currency symbol */
 
 #define CODESET		51	/* codeset name */
+
+#define ERA		52	/* Era description segments */
+#define ERA_D_FMT	53	/* Era date format string */
+#define ERA_D_T_FMT	54	/* Era date and time format string */
+#define ERA_T_FMT	55	/* Era time format string */
+
+#define ALT_DIGITS	56	/* Alternative symbols for digits */
 
 __BEGIN_DECLS
 char *nl_langinfo __P((nl_item));
