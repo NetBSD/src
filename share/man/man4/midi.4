@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.17 2001/01/31 04:32:18 augustss Exp $
+.\" $NetBSD: midi.4,v 1.18 2001/09/11 22:52:53 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,13 +81,13 @@ a simple patchboard for MIDI devices.  For example, a MIDI keyboard could
 be connected to a synthesizer by the command
 .Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
 .Pp
-The 
+The
 .Pa /dev/music
 device is a MIDI sequencer device.  Data sent to and from this device
 not only contains the information sent to the MIDI device, but also
 timing information.  The kernel will make sure that data is sent
 to the physical device at the indicated time.  The sequencer device
-uses the 
+uses the
 .Pa /dev/rmidiN
 devices internally and they are unavailable when used by the sequencer.
 .Pp

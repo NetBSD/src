@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.8 2001/05/06 12:29:20 wiz Exp $
+.\"	$NetBSD: unix.4,v 1.9 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ that provides local (on-machine) interprocess
 communication through the normal
 .Xr socket 2
 mechanisms.
-The 
+The
 .Tn UNIX Ns -domain
 family supports the
 .Dv SOCK_STREAM
@@ -84,7 +84,7 @@ removed when the socket is closed\(em\c
 .Xr unlink 2
 must be used to remove the file.
 .Pp
-The length of 
+The length of
 .Tn UNIX Ns -domain
 address, required by
 .Xr bind 2
@@ -107,7 +107,7 @@ The
 protocol family does not support broadcast addressing or any form
 of
 .Dq wildcard
-matching on incoming messages. 
+matching on incoming messages.
 All addresses are absolute- or relative-pathnames
 of other
 .Tn UNIX Ns -domain
@@ -120,7 +120,7 @@ or
 .Xr sendto 2
 must be writable.
 .Sh PROTOCOLS
-The 
+The
 .Tn UNIX Ns -domain
 protocol family comprises simple
 transport protocols that support the
@@ -129,7 +129,7 @@ and
 .Dv SOCK_DGRAM
 abstractions.
 .Dv SOCK_STREAM
-sockets also support the communication of 
+sockets also support the communication of
 .Ux
 file descriptors through the use of the
 .Ar msg_control
@@ -141,7 +141,7 @@ and
 .Xr recvmsg 2 .
 .Pp
 Any valid descriptor may be sent in a message.
-The file descriptor(s) to be passed are described using a 
+The file descriptor(s) to be passed are described using a
 .Ar struct cmsghdr
 that is defined in the include file
 .Aq Pa sys/socket.h .
@@ -154,13 +154,13 @@ by the length field of the message;
 the length field is the sum of the size of the header
 plus the size of the array of file descriptors.
 .Pp
-The received descriptor is a 
+The received descriptor is a
 .Em duplicate
 of the sender's descriptor, as if it were created with a call to
 .Xr dup 2 .
 Per-process descriptor flags, set with
 .Xr fcntl 2 ,
-are 
+are
 .Em not
 passed to a receiver.
 Descriptors that are awaiting delivery, or that are

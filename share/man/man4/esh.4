@@ -1,4 +1,4 @@
-.\"	$NetBSD: esh.4,v 1.7 2001/06/05 13:45:10 wiz Exp $
+.\"	$NetBSD: esh.4,v 1.8 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,14 +46,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the Essential Communications RoadRunner-based 
-HIPPI interfaces.  With some modifications, the driver could be 
+device driver supports the Essential Communications RoadRunner-based
+HIPPI interfaces.  With some modifications, the driver could be
 made to support the Gigabit Ethernet card based on the same chip.
 .Pp
 The driver supports both a normal network interface and a raw
 HIPPI Framing Protocol (HIPPI-FP) device.
-The HIPPI-FP interface is accessed via the 
-.Pa /dev/esh Ns Sy N/ulp Ns Sy N 
+The HIPPI-FP interface is accessed via the
+.Pa /dev/esh Ns Sy N/ulp Ns Sy N
 set of devices.  There are 255 available Upper Layer Protocols
 in FP;  these are selectable via the various device entries.
 .Pp
@@ -82,7 +82,7 @@ Media selection is not yet supported for this device.
 .\" .Sh DIAGNOSTICS
 .Sh BUGS
 The card must be tuned for proper and efficient DMA operation.
-The appropriate values vary based on the system.  
+The appropriate values vary based on the system.
 The
 .Xr eshconfig 8
 program is used for this.
@@ -91,4 +91,4 @@ program is used for this.
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr route 8 ,
-.Xr pci 4 
+.Xr pci 4

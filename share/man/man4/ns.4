@@ -1,4 +1,4 @@
-.\"	$NetBSD: ns.4,v 1.5 2001/05/06 12:29:20 wiz Exp $
+.\"	$NetBSD: ns.4,v 1.6 2001/09/11 22:52:53 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ protocol family is a collection of protocols
 layered atop the
 .Em Internet  Datagram  Protocol
 .Pq Tn IDP
-transport layer, and using the Xerox 
+transport layer, and using the Xerox
 .Tn NS
 address formats.
 The
@@ -66,13 +66,13 @@ entering, (or with toggling kernel variable, additionally leaving) the local
 host.
 .Sh ADDRESSING
 .Tn NS
-addresses are 12 byte quantities, consisting of a 
+addresses are 12 byte quantities, consisting of a
 4 byte Network number, a 6 byte Host number and a 2 byte port number,
 all stored in network standard format.
 (on the
 .Tn VAX
 these are word and byte reversed; on the
-.Tn SUN 
+.Tn SUN
 they are not
 reversed).  The include file
 .Aq Pa netns/ns.h

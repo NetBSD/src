@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.9 2000/12/09 02:11:51 augustss Exp $
+.\" $NetBSD: uaudio.4,v 1.10 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,11 +47,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for 
+driver provides support for
 .Tn USB
 audio class devices.
 .Pp
-A 
+A
 .Tn USB
 audio device consists of a number of components:
 input terminals (e.g. USB digital input), output terminals (e.g.
@@ -67,7 +67,7 @@ A mixer has a number of inputs and one output.  Each input has a control
 that determines its volume in the output.
 The name of the control is
 .Ar mixN-S ,
-where 
+where
 .Ar N
 is a number that identifies which mixer it is and
 .Ar S
@@ -79,7 +79,7 @@ A feature unit changes the sound in some way, like bass, treble, or
 volume.
 The name of the control is
 .Ar feaN-S-F ,
-where 
+where
 .Ar N
 is a number that identifies which feature unit it is,
 .Ar S
@@ -91,7 +91,7 @@ A processing unit does one of a number of audio processing functions
 (e.g., channel up-down mixing, Dolby ProLogic, or chorus effects).
 The name of the on-off control is
 .Ar proN.M-enable ,
-where 
+where
 .Ar N
 is a number that identifies which processing unit it is and
 .Ar M
@@ -102,7 +102,7 @@ as well.
 An extension unit performs some unspecified audio processing
 The name of the on-off control is
 .Ar extN-enable ,
-where 
+where
 .Ar N
 is a number that identifies which processing unit it is.
 .El
@@ -117,8 +117,8 @@ The mixer interface is really incomplete.
 There should be some heuristics that allows important controls,
 e.g., volume, to be identified and given its traditional name.
 .Sh SEE ALSO
-The 
-.Tn USB 
+The
+.Tn USB
 specifications can be found at
 .Dv http://www.usb.org/developers/docs.htm .
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.4,v 1.14 2000/05/13 15:22:15 mycroft Exp $
+.\"	$NetBSD: cd.4,v 1.15 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -197,7 +197,7 @@ struct ioc_play_blocks
 	int	len;
 };
 .Ed
-.It Dv CDIOCPLAYMSF	
+.It Dv CDIOCPLAYMSF
 .Pq Li "struct ioc_play_msf"
 Start audio playback given a `minutes-seconds-frames' address and length.
 The structure is defined as follows:
@@ -282,26 +282,26 @@ struct	ioc_vol
 	/* one for each channel */
 };
 .Ed
-.It Dv CDIOCSETMONO	
+.It Dv CDIOCSETMONO
 Patch all output channels to all source channels.
 .It Dv CDIOCSETSTEREO
 Patch left source channel to the left output channel and the right
 source channel to the right output channel.
-.It Dv CDIOCSETMUTE	
+.It Dv CDIOCSETMUTE
 Mute output without changing the volume settings.
 .It Dv CDIOCSETLEFT
 .It Dv CDIOCSETRIGHT
 Attach both output channels to the left (right) source channel.
-.It Dv CDIOCSETDEBUG	
-.It Dv CDIOCCLRDEBUG	
+.It Dv CDIOCSETDEBUG
+.It Dv CDIOCCLRDEBUG
 Turn on (off) debugging for the appropriate device.
-.It Dv CDIOCPAUSE	
-.It Dv CDIOCRESUME	
+.It Dv CDIOCPAUSE
+.It Dv CDIOCRESUME
 Pause (resume) audio play, without resetting the location of the read-head.
-.It Dv CDIOCRESET	
+.It Dv CDIOCRESET
 Reset the drive.
-.It Dv CDIOCSTART	
-.It Dv CDIOCSTOP	
+.It Dv CDIOCSTART
+.It Dv CDIOCSTOP
 Tell the drive to spin-up (-down) the
 .Tn CD-ROM .
 .It Dv CDIOCALLOW
@@ -310,7 +310,7 @@ Tell the drive to allow (prevent) manual ejection of the
 .Tn CD-ROM
 disc.
 Not all drives support this feature.
-.It Dv CDIOCEJECT	
+.It Dv CDIOCEJECT
 Eject the
 .Tn CD-ROM .
 .It Dv CDIOCLOADUNLOAD

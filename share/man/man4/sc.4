@@ -1,4 +1,4 @@
-.\"     $NetBSD: sc.4,v 1.2 2001/09/11 00:08:29 wiz Exp $
+.\"     $NetBSD: sc.4,v 1.3 2001/09/11 22:52:53 wiz Exp $
 .\"
 .\" written from a reading of config files and driver source code
 .\" Erik E. Fair <fair@netbsd.org>
@@ -22,7 +22,7 @@ driver provides support for the
 Sun Microsystems
 .Qq Sun-2
 .Tn SCSI
-Bus Controller chipset found on various 
+Bus Controller chipset found on various
 VME boards
 .Pq Sun part #s 501-1045, 501-1138, 501-1149, and 501-1167
 and on the
@@ -30,7 +30,7 @@ and on the
 .Pq Sun part # 501-1006
 Multibus board.
 .Pp
-All 
+All
 versions of this driver can be configured with a
 .Em flags
 directive in the
@@ -66,12 +66,12 @@ ID number of a particular device on a particular
 .Tn SCSI
 bus.
 .Sh BUGS
-This 
-.Tn SCSI 
+This
+.Tn SCSI
 chipset is rumored to have bugs in its handling of
 .Tn SCSI
 parity, therefore it is recommended that you disable parity
-on all 
+on all
 .Tn SCSI
 devices connected to this controller, and configure it with
 a
@@ -82,7 +82,7 @@ directive in the
 .Xr config 8
 file.
 .Pp
-This 
+This
 chipset has no support for raising the
 .Tn ATN
 signal, so there is no way to ever schedule a
@@ -105,9 +105,9 @@ non-SCSI devices behind
 .Tn Emulex
 or
 .Tn Adaptec
-bridges, which are common in 
+bridges, which are common in
 .Tn Sun
-2s and in 
+2s and in
 .Tn Sun
 Shoebox-type configurations.
 These devices pre-date the
@@ -119,14 +119,14 @@ spec, and might not behave the way the chipset code currently expects.
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,
-.Xr ch 4  
+.Xr ch 4
 .Sh AUTHORS
 Matt Fredette,
 .Aq fredette@netbsd.org ,
 .br
 David Jones,
 .br
-Gordon Ross 
+Gordon Ross
 .Aq gwr@netbsd.org ,
 .br
 Adam Glass
