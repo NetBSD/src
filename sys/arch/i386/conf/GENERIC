@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.498 2002/06/25 03:12:06 lukem Exp $
+# $NetBSD: GENERIC,v 1.499 2002/06/27 06:34:23 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.498 $"
+#ident 		"GENERIC-$Revision: 1.499 $"
 
 maxusers	32		# estimated number of users
 
@@ -202,6 +202,8 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
