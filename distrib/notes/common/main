@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.81 2000/10/11 12:18:45 tsutsui Exp $
+.\"	$NetBSD: main,v 1.82 2000/10/29 12:24:57 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd October 10, 2000
+.Dd October 29, 2000
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -60,6 +60,7 @@
 .Sh DESCRIPTION
 .
 .Ss About this Document
+.Pp
 .
 This document describes the installation procedure for
 .Nx \*V
@@ -78,7 +79,9 @@ PostScript.
 .It Pa \&.html
 .No Standard Internet Tn HTML .
 .It Pa \&.more
-The enhanced text format used on Unix-like systems by the
+The enhanced text format used on
+.Ul
+systems by the
 .Xr more 1
 and
 .Xr less 1
@@ -95,12 +98,14 @@ You are reading the
 version.
 .
 .Ss "What is NetBSD?"
+.Pp
 .
 The
 .Nx
 Operating System is a fully functional
 .Tn Open Source
-UN*X-like operating system derived from the University of California, Berkeley
+.Ul
+operating system derived from the University of California, Berkeley
 Networking Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 .Nx
 runs on thirty-one different system architectures featuring twelve distinct
@@ -130,8 +135,9 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-.Ss Changes Since The Last Release
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Since The Last Release
+.Pp
 The
 .Nx \*V
 release is a substantial improvement over its predecessors.  We have
@@ -145,10 +151,10 @@ It is impossible to completely summarize over one year of
 development that went into the
 .Nx \*V
 release. Some highlights include:
+.
+.Ss2 Kernel
+.
 .(bullet
-.
-.\" Kernel
-.
 Ports to new platforms including:
 arc,
 arm26,
@@ -190,10 +196,11 @@ PDA devices.
 .It
 Numerous hardware improvements, including areas such as:
 audio, UDMA/66 support for ATA drives, USB, and wireless networking.
+.bullet)
 .
-.\" Networking
+.Ss2 Networking
 .
-.It
+.(bullet
 Addition of IP version 6 and IPsec to the networking stack, from the
 KAME project.
 This includes addition of kernel code for IPv6/IPsec,
@@ -202,40 +209,51 @@ Due to this, shlib major version for
 .Xr pcap 3
 is incremented and you may need a recompilation of your userland tools.
 The KAME IPv6 part includes result from unified-ipv6 effort.
+.bullet)
 .
-.\" Filesystem
+.Ss2 File system
 .
-.It
+.(bullet
 Significant Fast file system (FFS) performance enhancements via
 integration of Kirk McKusick's soft updates and trickle sync code.
 .It
-Read-only support for the NTFS (Windows NT) file system.
+Read-only support for the
+.Tn "Windows NT"
+.Sq NTFS
+file system.
 .It
-Support for the extfs revision 1 (Linux) file system.
+Support for the
+.Tn Linux
+.Sq extfs
+(revision 1) file system.
 .It
-Enhanced stability and usability of LFS (the BSD log-structured file system).
+Enhanced stability and usability of LFS (the
+.Bx
+log-structured file system).
 .It
 Various RAIDframe enhancements including: auto-detection of RAID components
 and auto-configuration of RAID sets, and the ability to configure the root
-filesystem on a RAID set.
+file system
+.Pq Pa /
+on a RAID set.
 .It
-Support for the Microsoft Joliet extensions to the ISO9660 CD file system.
+Support for the
+.Tn Microsoft
+Joliet extensions to the ISO9660 CD file system.
 .It
-The filesystem vnode locking mechanisms have been improved,
+The file system vnode locking mechanisms have been improved,
 thus resolving a source of many panics in the past.
-.
-.\"XXX.It
-.\"XXXSupport for booting off RAIDframe and LFS partitions (port specific).
 .It
 NFS (and RPC) are supported over IPv6.
 .It
 The NFS locking protocol (implemented with
 .Xr rpc.lockd 8 )
 now works.
+.bullet)
 .
-.\" Security
+.Ss2 Security
 .
-.It
+.(bullet
 Strong cryptographic libraries and applications integrated,
 including the AES cipher Rijndael, the OpenSSL library, more
 complete Kerberos IV and Kerberos V support, and an SSH client.
@@ -252,15 +270,18 @@ security).
 .It
 Disable various services by default, and set the default options for
 disable daemons to a higher level of logging.
+.bullet)
 .
-.\" System administration / userland
+.Ss2 System administration and user tools
 .
-.It
+.(bullet
 Convert the
 .Xr rc 8
 system startup and shutdown scripts to an
 .Sq rc.d
-mechanism, with separate control scripts for each service.
+mechanism, with separate control scripts for each service, and
+appropriate dependency ordering provided by
+.Xr rcorder 8 .
 .It
 Provide
 .Xr postfix 1
@@ -277,8 +298,9 @@ and
 .Xr groupdel 8 .
 .It
 Incorporation of a login class capability database
-.Pa ( /etc/login.conf )
-from BSD/OS.
+.Pq Pa /etc/login.conf
+from
+.Tn BSD/OS .
 .It
 Improve support for usernames longer than eight characters in programs
 such as
@@ -293,15 +315,16 @@ such as user classes, connection limits, improved support for
 virtual hosting, transfer statistics, transfer rate throttling,
 and support for various IETF ftpext working group extensions.
 .It
-Everyone's favorite
+The
 .Xr ftp 1
 client has been improved even further, including
 transfer rate throttling, improved URL support, command line uploads.
 See the man page for details.
+.bullet)
 .
-.\" Misc
+.Ss2 Miscellaneous
 .
-.It
+.(bullet
 Update the
 .Nx
 source code style code (located in
@@ -337,9 +360,10 @@ and device drivers are shared among the different ports. You can look
 for this trend to continue.
 .Pp
 .so whatis -----------------------------------------------
-.\}
+.\} \" \n[FOR_RELEASE]
 .
 .Ss "The Future of NetBSD"
+.Pp
 .
 The
 .Nx
@@ -403,12 +427,14 @@ exists.
 .br_ne 10P
 .
 .Ss "Sources of NetBSD"
+.Pp
 .
 Refer to
 .Lk http://www.netbsd.org/Sites/net.html .
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
+.Pp
 .
 The root directory of the
 .Nx \*V
@@ -434,25 +460,30 @@ README describing the distribution's contents.
 .It Li TODO
 .Nx 's
 todo list (also somewhat incomplete and out of date).
-.It Li patches/
+.It Pa patches/
 Post-release source code patches.
-.It Li source/
+.It Pa source/
 Source distribution sets; see below.
 .tag)
 .Pp
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
 .Nx \*V
-has a binary distribution. There are also
-\&'README.export-control' files sprinkled liberally throughout the
+has a binary distribution.
+There are also
+.Pa README.export-control
+files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
-distribution (i.e. the `domestic' portion) that may be subject to
+distribution (i.e. the
+.Sq domestic
+portion) that may be subject to
 export regulations of the United States.  It is your responsibility
 to determine whether or not it is legal for you to export these portions
 and to act accordingly.
 .Pp
 The source distribution sets can be found in subdirectories of the
-"source" subdirectory of the distribution tree. They contain the
+.Pa source
+subdirectory of the distribution tree. They contain the
 complete sources to the system. The source distribution sets
 are as follows:
 .(tag sharesrc
@@ -510,30 +541,43 @@ The source sets are distributed as compressed tar files. They may be
 unpacked into
 .Pa /usr/src
 with the command:
-.D1 Ic "tar -C / -zxpf set_name.tgz"
 .Pp
-.No The Pa sets/Split/
+.Dl # Ic "tar -C / -zxpf set_name.tgz"
+.Pp
+The
+.Pa sets/Split/
 subdirectory contains split
 versions of the source sets for those users who need to load the
 source sets from floppy or otherwise need a split distribution. The
-split sets are are named "set_name.xx" where "set_name" is the
-distribution set name, and "xx" is the sequence number of the file,
-starting with "aa" for the first file in the distribution set, then
-"ab" for the next, and so on. All of these files except the last one
+split sets are are named
+.Pa "set_name." Ns Ar xx
+where
+.Pa set_name
+is the distribution set name, and
+.Ar xx
+is the sequence number of the file,
+starting with
+.Dq aa
+for the first file in the distribution set, then
+.Dq ab
+for the next, and so on. All of these files except the last one
 of each set should be exactly 240,640 bytes long. (The last file is
 just long enough to contain the remainder of the data for that
 distribution set.)
 .Pp
 The split distributions may be reassembled and extracted with
-.Ic cat No as follows:
-.D1 Ic "cat set_name.?? | tar -C / -xzpf -"
+.Ic cat
+as follows:
+.Pp
+.Dl # Ic "cat set_name.?? | tar -C / -xzpf -"
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:
 .(tag SYSVSUM -offset indent
 .It Li BSDSUM
 Historic
-.Tn BSD No checksums for the various files
+.Bx
+checksums for the various files
 in that directory, in the format produced by the command:
 .Ic cksum -o 1 Ar file
 .It Li CKSUM
@@ -562,10 +606,15 @@ of the release files.
 .el \{\
 .Pp
 .Pa \&.../NetBSD-current/tar_files/
-.Dl doc.tar.gz
-.Dl pkgsrc.tar.gz
-.Dl src/*.tar.gz
-.Dl xsrc.tar.gz
+.(item -compact -offset indent
+.Pa doc.tar.gz
+.It
+.Pa pkgsrc.tar.gz
+.It
+.Pa src/*.tar.gz
+.It
+.Pa xsrc/*.tar.gz
+.item)
 .Pp
 Other directories provide unpacked source trees for distribution via
 the source update protocol, for more information see:
@@ -613,21 +662,79 @@ own checksum files, just as the source distribution does.
 .br_ne 7P
 .
 .Ss "Compatibility Issues With Previous NetBSD Releases"
+.Pp
 .
 Users upgrading from previous versions of
 .Nx
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
-.Nx \*V
-.(Note
-Only issues effecting an upgrade from
-.Nx
-1.4 or
-.Nx
-1.4.x
-are decribed here.
-.Note)
+.Nx \*V .
+.Ss2 General issues
+.(bullet
+.Pa /etc/rc
+modified to use
+.Pa /etc/rc.d/*
 .Pp
+In previous releases of
+.Nx ,
+.Pa /etc/rc
+was a traditional
+.Bx
+style monolithic file.
+As of
+.Nx 1.5 ,
+each discrete program or substem from
+.Pa /etc/rc
+and
+.Pa /etc/netstart
+has been moved into separate scripts in
+.Pa /etc/rc.d/ .
+.Pp
+At system startup,
+.Pa /etc/rc
+uses
+.Xr rcorder 8
+to build a dependency list of the files in
+.Pa /etc/rc.d
+and then executes each script in turn with an argument of
+.Sq start .
+Many
+.Pa rc.d
+scripts won't start unless the appropriate
+.Xr rc.conf 5
+entry in
+.Pa /etc/rc.conf
+is set to
+.Sq YES.
+.Pp
+At system shutdown,
+.Pa /etc/rc.shutdown
+uses
+.Xr rcorder 8
+to build a dependency list of the files in
+.Pa /etc/rc.d
+that have a
+.Dq "KEYWORD: shutdown"
+line, reverses the resulting list, and then executes each script in turn
+with an argument of
+.Sq stop .
+The following scripts support a specific shutdown method:
+.Pa cron ,
+.Pa inetd ,
+.Pa local ,
+and
+.Pa xdm .
+.Pp
+Local and third-party scripts may be installed into
+.Pa /etc/rc.d
+as necessary.
+Refer to the other scripts in that directory and
+.Xr rc 8
+for more information on implementing
+.Pa rc.d
+scripts.
+.bullet)
+.Ss2 Issues affecting an upgrading from NetBSD 1.4 or later
 .(bullet
 .Xr named 8
 leaks version information
@@ -702,7 +809,7 @@ Documentation is available if you first install the manual
 distribution set. Traditionally, the
 .Dq man pages
 (documentation) are denoted by
-.Dq Li name(section) .
+.Sq Li name(section) .
 Some examples of this are
 .Pp
 .(bullet -compact -offset indent
@@ -734,13 +841,17 @@ section should not be entered, but rather indicate that the section is
 optional. If you don't ask for a particular section, the topic with the
 lowest numbered section name will be displayed. For instance, after
 logging in, enter
-.D1 Ic "man passwd
+.Pp
+.Dl # Ic "man passwd"
+.Pp
 to read the documentation for
 .Xr passwd 1 .
 To view the documentation for
 .Xr passwd 5 m
 enter
-.D1 Ic man 5 passwd
+.Pp
+.Dl # Ic "man 5 passwd"
+.Pp
 instead.
 .Pp
 If you are unsure of what man page you are looking for, enter
@@ -752,6 +863,7 @@ is your topic of interest; a list of possibly
 related man pages will be displayed.
 .
 .Ss Administrivia
+.Pp
 .
 If you've got something to say, do so! We'd like your input.
 There are various mailing lists available via the mailing list
@@ -787,7 +899,9 @@ each port of
 .Nx .
 Use majordomo to find their addresses. If
 you're interested in doing a serious amount of work on a specific
-port, you probably should contact the "owner" of that port (listed
+port, you probably should contact the
+.Sq owner
+of that port (listed
 below).
 .Pp
 If you'd like to help with this effort, and have an idea as to how
@@ -812,7 +926,9 @@ Mike Karels
 Marshall Kirk McKusick
 .Ed
 .Pp
-for their ongoing work on BSD systems, support, and encouragement.
+for their ongoing work on
+.Bx
+systems, support, and encouragement.
 .It
 Also, our thanks go to:
 .Bd -unfilled -offset indent
@@ -943,6 +1059,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta Curt Sampson Ta Mt cjs@netbsd.org
 .It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
+.It Ta Todd Vierling Ta Mt tv@netbsd.org
 .It Ta Ta
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
@@ -1097,9 +1214,10 @@ them, and would like to mentioned, tell us!)
 .El
 .
 .Ss "Legal Mumbo-Jumbo"
+.Pp
 .
-All product names mentioned herein are trademarks of their respective
-owners.
+All product names mentioned herein are trademarks or registered
+trademarks of their respective owners.
 .Pp
 The following notices are required to satisfy the license terms of
 the software that we have mentioned in this document:
