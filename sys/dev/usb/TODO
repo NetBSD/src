@@ -12,8 +12,6 @@ Use some encapsulation in the upl driver to allow multiple protocols.
 
 Get the uezcom driver (with Doug Ambrisko's firmware) running.
 
-Allow a device to be moved to the unconfigured state.
-
 
 Bug reports:
 ------------
