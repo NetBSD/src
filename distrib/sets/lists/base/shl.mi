@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.258 2004/03/04 23:44:24 kleink Exp $
+# $NetBSD: shl.mi,v 1.259 2004/03/22 19:02:06 jdc Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.113				base-sys-shlib
 ./lib/libcrypt.so.0.1				base-sys-shlib
@@ -37,11 +37,11 @@
 ./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.1			base-sys-shlib
 ./usr/lib/libcrypto.so.2.1			base-crypto-shlib	crypto
-./usr/lib/libcurses.so.5.11			base-sys-shlib
+./usr/lib/libcurses.so.6.0			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libedit.so.2.9			base-sys-shlib
 ./usr/lib/libevent.so.0.1			base-sys-shlib
-./usr/lib/libform.so.3.1			base-sys-shlib
+./usr/lib/libform.so.4.0			base-sys-shlib
 ./usr/lib/libgnumalloc.so.0.0			base-sys-shlib
 ./usr/lib/libgssapi.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libhdb.so.9.0				base-krb5-shlib		kerberos
@@ -58,7 +58,7 @@
 ./usr/lib/libkvm.so.5.2				base-sys-shlib
 ./usr/lib/libm.so.0.1				base-sys-shlib
 ./usr/lib/libmagic.so.0.1			base-sys-shlib
-./usr/lib/libmenu.so.4.1			base-sys-shlib
+./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
 ./usr/lib/libpcap.so.1.3			base-net-shlib
 ./usr/lib/libpci.so.0.0				base-sys-shlib
