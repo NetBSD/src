@@ -1,5 +1,8 @@
 #!/bin/sh
-# $NetBSD: script,v 1.3 2004/03/09 21:36:37 garbled Exp $
+# $NetBSD: script,v 1.4 2005/01/11 22:16:24 peter Exp $
+
+BIGLIST=`grep -v ^# /usr/share/sushi/system/rcconf/form | \
+    awk '{print $1}' | sed -e 's/.*\,\(.*\)/\1/'`
 
 BACKUPDIR="/var/sushi"
 CONFFILE="/etc/rc.conf"
@@ -13,8 +16,12 @@ if [ ! -d $BACKUPDIR ]; then
 	chmod 700 $BACKUPDIR
 fi
 
-# backup
+# create a backup
 cp -p $CONFFILE $BACKUP
+if [ $? -ne 0 ]; then
+	echo "Can't create a backup"
+	exit 1
+fi
 
 # temporary files
 cp -p $BACKUP $BACKUP.new
@@ -24,14 +31,14 @@ cp -p $BACKUP $BACKUP.old
 . $CONFFILE
 
 a=1
-for i in `/usr/share/sushi/system/rcconf/script3`
+for i in $BIGLIST
 do
 	new=$(echo `eval echo \\$${a}` | sed -e 's/ $//')
 	old=`eval echo \\$${i}`
 	if [ "$new" != "$old" ]; then
-		line=`grep -n $i $BACKUP | cut -f1 -d:`
-		# if no line, add new entry, otherwise edit the entry.
-		if [ -z $line ]; then
+		line=`grep -n "^${i}=" $BACKUP | cut -f1 -d:`
+		# if no such line, add a new entry, otherwise edit the entry.
+		if [ -z "$line" ]; then
 			if [ "$new" = "YES" -o "$new" = "NO" ]; then
 				echo "$i=$new" >> $BACKUP.new
 			else
@@ -54,7 +61,7 @@ cp -p $BACKUP.new $CONFFILE
 
 if [ $? -eq 0 ]; then
 	echo "Successfully wrote a new $CONFFILE"
-	echo ""
+	echo
 	cat $CONFFILE
 else
 	echo "Failed"
