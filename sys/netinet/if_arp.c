@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.56 1999/03/22 22:30:42 bad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.57 1999/05/04 14:58:27 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -592,10 +592,22 @@ in_arpinput(m)
 	la = arplookup(&isaddr, in_hosteq(itaddr, myaddr), 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
-		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen))
-			log(LOG_INFO, "arp info overwritten for %s by %s\n",
-			    in_fmtaddr(isaddr),
-			    lla_snprintf(ar_sha(ah), ah->ar_hln));
+		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
+			if (rt->rt_ifp != ifp) {
+				log(LOG_INFO,
+				    "%s on %s tried to overwrite "
+				    "arp info for %s on %s\n",
+				    lla_snprintf(ar_sha(ah), ah->ar_hln),
+				    ifp->if_xname, in_fmtaddr(isaddr),
+				    rt->rt_ifp->if_xname);
+				    goto out;
+			} else {
+				log(LOG_INFO,
+				    "arp info overwritten for %s by %s\n",
+				    in_fmtaddr(isaddr),
+				    lla_snprintf(ar_sha(ah), ah->ar_hln));
+			}
+		}
 		/* 
 		 * sanity check for the address length.
 		 * XXX this does not work for protocols with variable address
