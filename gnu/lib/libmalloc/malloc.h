@@ -59,8 +59,12 @@ extern "C"
 #endif
 
 #if defined (__cplusplus) || (defined (__STDC__) && __STDC__)
+#ifndef __NetBSD__
 #undef	__P
 #define	__P(args)	args
+#else
+#include <sys/cdefs.h>
+#endif
 #undef	__ptr_t
 #define	__ptr_t		void *
 #else /* Not C++ or ANSI C.  */
