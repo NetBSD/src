@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.3 2002/06/29 08:50:34 lukem Exp $
+.\"	$NetBSD: prep,v 1.4 2002/07/11 04:52:48 scottr Exp $
 .
 If you're planning on installing
 .Nx*M
@@ -9,4 +9,4 @@ ability to share a hard disk with RISC OS is at best untested.
 .Pp
 Alternatively,
 .Nx*M
-can be made to run diskless, getting all its filesystems from an NFS server.
+can be made to run diskless, getting all its file systems from an NFS server.

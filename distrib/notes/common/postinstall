@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.37 2002/07/08 21:51:02 skrll Exp $
+.\"	$NetBSD: postinstall,v 1.38 2002/07/11 04:52:49 scottr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ At this point, you need to configure at least
 one file in the
 .Pa /etc
 directory.
-You will need to mount your root filesystem read/write with:
+You will need to mount your root file system read/write with:
 .Dl # Ic "/sbin/mount -u -w /"
 Change to the
 .Pa /etc

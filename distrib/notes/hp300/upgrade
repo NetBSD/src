@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.16 2002/06/29 11:01:28 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.17 2002/07/11 04:52:50 scottr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ partition and boot from that.
 .(enum
 Download the files you'll need to upgrade
 .Pp
-In particular, make sure you have on your locally mounted filesystems
+In particular, make sure you have on your locally mounted file systems
 .Pa base.tgz
 and
 .Pa miniroot.fs.gz
@@ -89,7 +89,7 @@ We'll assume
 .Li rd0
 for now.
 .It
-Install the miniroot filesystem:
+Install the miniroot file system:
 .Pp
 First make sure that your
 .Sq Li "b"

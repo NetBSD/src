@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.19 2002/06/30 12:43:05 lukem Exp $
+.\"	$NetBSD: prep,v 1.20 2002/07/11 04:52:51 scottr Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -416,9 +416,9 @@ Assuming a classic partition scheme with
 .Pa /
 (root) and
 .Pa /usr
-filesystems, a comfortable size for the
+file systems, a comfortable size for the
 .Nx
-root filesystem partition is
+root file system partition is
 about 20 MB; a good initial size for the swap partition is twice the amount
 of physical memory in your machine (though, unlike
 .Tn SunOS 4.x ,
