@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/11 16:22:44 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2001/01/11 01:49:47 phil Exp $
 
 PROG=		dc
 SRCS=		array.c dc.c eval.c misc.c numeric.c stack.c string.c \
-		number.c getopt.c getopt1.c
+		number.c
 CPPFLAGS+=	-D_POSIX_SOURCE -I. -I${.CURDIR}/../bc \
 		-I${DIST}/bc/dc -I${DIST}/bc/h
 
