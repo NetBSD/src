@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.95 2003/08/30 17:12:49 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.96 2003/08/31 16:41:53 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,9 +67,7 @@ static struct biosdisk_info *biosdisk = NULL;
 static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, mbr_sector_t *);
-#if defined(__i386__)
 static unsigned int get_bootmodel(void);
-#endif
 
 
 int
@@ -578,10 +576,10 @@ mbr_root_above_chs(void)
 	return ptstart + DEFROOTSIZE * (MEG / 512) >= bcyl * bhead * bsec;
 }
 
-#if defined(__i386__)
 unsigned int
 get_bootmodel(void)
 {
+#if defined(__i386__)
 	struct utsname ut;
 #ifdef DEBUG
 	char *envstr;
@@ -600,19 +598,16 @@ get_bootmodel(void)
 		return SET_KERNEL_LAPTOP;
 	if (strstr(ut.version, "PS2") != NULL)
 		return SET_KERNEL_PS2;
+#endif
 	return SET_KERNEL_GENERIC;
 }
-#endif
 
 void
 md_init(void)
 {
 
 	/* Default to install same type of kernel as we are running */
-	sets_selected = (sets_selected & ~SET_KERNEL);
-#if defined(__i386)
-	sets_selected |= get_bootmodel();
-#endif
+	sets_selected = (sets_selected & ~SET_KERNEL) | get_bootmodel();
 }
 
 void
