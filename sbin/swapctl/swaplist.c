@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.5 1998/06/17 07:46:35 ross Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.6 1998/08/29 13:27:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -60,8 +60,9 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 	struct	swapent *sep, *fsep;
 	long	blocksize;
 	char	*header;
-	int	hlen, totalsize, size, totalinuse, inuse, ncounted;
-	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0);
+	size_t	l;
+	int	hlen, totalsize, size, totalinuse, inuse, ncounted, pathmax;
+	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
 
 	if (nswap < 1) {
 		puts("no swap devices configured");
@@ -72,11 +73,13 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 	if (sep == NULL)
 		err(1, "malloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
-	if (nswap < 0)
+	if (rnswap < 0)
 		errx(1, "SWAP_STATS");
 	if (nswap != rnswap)
-		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
+		warnx("SWAP_STATS different to SWAP_NSWAP (%d != %d)",
+		    rnswap, nswap);
 
+	pathmax = 11;
 	if (dolong && tflag == 0) {
 		if (kflag) {
 			header = "1K-blocks";
@@ -84,8 +87,12 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 			hlen = strlen(header);
 		} else
 			header = getbsize(&hlen, &blocksize);
-		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
-		    "Device", hlen, header,
+		for (i = rnswap; i-- > 0; sep++)
+			if (pathmax < (l = strlen(sep->se_path)))
+				pathmax = l;
+		sep = fsep;
+		(void)printf("%-*s %*s %8s %8s %8s  %s\n",
+		    pathmax, "Device", hlen, header,
 		    "Used", "Avail", "Capacity", "Priority");
 	}
 	totalsize = totalinuse = ncounted = 0;
@@ -99,10 +106,8 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 		totalinuse += inuse;
 
 		if (dolong && tflag == 0) {
-			/* XXX handle se_dev == NODEV */
-			(void)printf("/dev/%-6s %*ld ",
-			    devname(sep->se_dev, S_IFBLK),
-				hlen, (long)(dbtoqb(size) / blocksize));
+			(void)printf("%-*s %*ld ", pathmax, sep->se_path, hlen,
+			    (long)(dbtoqb(size) / blocksize));
 
 			(void)printf("%8ld %8ld %5.0f%%    %d\n",
 			    (long)(dbtoqb(inuse) / blocksize),
@@ -122,7 +127,8 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 		    (long)(dbtoqb(totalinuse) / 1024),
 		    (long)(dbtoqb(totalsize - totalinuse) / 1024));
 	else if (ncounted > 1)
-		    printf("%-11s %*ld %8ld %8ld %5.0f%%\n", "Total", hlen,
+		(void)printf("%-*s %*ld %8ld %8ld %5.0f%%\n", pathmax, "Total",
+		    hlen,
 		    (long)(dbtoqb(totalsize) / blocksize),
 		    (long)(dbtoqb(totalinuse) / blocksize),
 		    (long)(dbtoqb(totalsize - totalinuse) / blocksize),

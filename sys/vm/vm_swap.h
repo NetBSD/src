@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.8 1998/02/10 14:09:08 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.9 1998/08/29 13:27:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -31,24 +31,43 @@
 #ifndef _VM_VM_SWAP_H_
 #define _VM_VM_SWAP_H_
 
+#include <sys/syslimits.h>
+
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvm.h"
 #endif
 
 /* These structures are used to return swap information for userland */
+
+/*
+ * NetBSD 1.3 swapctl(SWAP_STATS, ...) swapent structure; now used as an
+ * overlay for both the new swapent structure, and the hidden swapdev
+ * structure (see vm_swap.c).
+ */
+struct oswapent {
+	dev_t	ose_dev;		/* device id */
+	int	ose_flags;		/* flags */
+	int	ose_nblks;		/* total blocks */
+	int	ose_inuse;		/* blocks in use */
+	int	ose_priority;		/* priority of this device */
+};
+
 struct swapent {
-	dev_t	se_dev;
-	int	se_flags;
-	int	se_nblks;
-	int	se_inuse;
-	int	se_priority;
+	struct oswapent se_ose;
+#define	se_dev		se_ose.ose_dev
+#define	se_flags	se_ose.ose_flags
+#define	se_nblks	se_ose.ose_nblks
+#define	se_inuse	se_ose.ose_inuse
+#define	se_priority	se_ose.ose_priority
+	char	se_path[PATH_MAX+1];	/* path name */
 };
 
 #define SWAP_ON		1
 #define SWAP_OFF	2
 #define SWAP_NSWAP	3
-#define SWAP_STATS	4
-#define	SWAP_CTL	5
+#define SWAP_OSTATS	4
+#define SWAP_CTL	5
+#define SWAP_STATS	6
 
 #define SWF_INUSE	0x00000001
 #define SWF_ENABLE	0x00000002

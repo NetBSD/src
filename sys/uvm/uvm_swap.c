@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.15 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.16 1998/08/29 13:27:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -33,6 +33,7 @@
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,24 +132,26 @@
  * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
  */
 struct swapdev {
-	struct swapent		swd_se;            /* swap entry struct */
-#define swd_dev			swd_se.se_dev      /* dev_t for this dev */
-#define swd_flags		swd_se.se_flags    /* flags:inuse/enable/fake*/
-#define swd_priority		swd_se.se_priority /* our priority */
-	/* also: swd_se.se_nblks, swd_se.se_inuse */
-	int			swd_npages;	   /* #pages we can use */
-	int			swd_npginuse;	   /* #pages in use */
-	int			swd_drumoffset;	   /* page0 offset in drum */
-	int			swd_drumsize;	   /* #pages in drum */
-	struct extent		*swd_ex;           /* extent for this swapdev*/
-	struct vnode		*swd_vp;           /* backing vnode */
-	CIRCLEQ_ENTRY(swapdev)	swd_next;          /* priority circleq */
+	struct oswapent swd_ose;
+#define	swd_dev		swd_ose.ose_dev		/* device id */
+#define	swd_flags	swd_ose.ose_flags	/* flags:inuse/enable/fake */
+#define	swd_priority	swd_ose.ose_priority	/* our priority */
+	/* also: swd_ose.ose_nblks, swd_ose.ose_inuse */
+	char			*swd_path;	/* saved pathname of device */
+	int			swd_pathlen;	/* length of pathname */
+	int			swd_npages;	/* #pages we can use */
+	int			swd_npginuse;	/* #pages in use */
+	int			swd_drumoffset;	/* page0 offset in drum */
+	int			swd_drumsize;	/* #pages in drum */
+	struct extent		*swd_ex;	/* extent for this swapdev */
+	struct vnode		*swd_vp;	/* backing vnode */
+	CIRCLEQ_ENTRY(swapdev)	swd_next;	/* priority circleq */
 
 #ifdef SWAP_TO_FILES
-	int			swd_bsize;         /* blocksize (bytes) */
-	int			swd_maxactive;     /* max active i/o reqs */
-	struct buf		swd_tab;           /* buffer list */
-	struct ucred		*swd_cred;         /* cred for file access */
+	int			swd_bsize;	/* blocksize (bytes) */
+	int			swd_maxactive;	/* max active i/o reqs */
+	struct buf		swd_tab;	/* buffer list */
+	struct ucred		*swd_cred;	/* cred for file access */
 #endif
 };
 
@@ -518,7 +521,8 @@ sys_swapctl(p, v, retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	int	count, error, misc;
+	char	userpath[PATH_MAX + 1];
+	int	count, error, misc, len;
 	int	priority;
 	UVMHIST_FUNC("sys_swapctl"); UVMHIST_CALLED(pdhist);
 
@@ -539,8 +543,8 @@ sys_swapctl(p, v, retval)
 		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%d", uvmexp.nswapdev,
 		    0, 0, 0);
 		*retval = uvmexp.nswapdev;
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -551,7 +555,11 @@ sys_swapctl(p, v, retval)
 	 * to grab the swap_data_lock because we may fault&sleep during 
 	 * copyout() and we don't want to be holding that lock then!
 	 */
-	if (SCARG(uap, cmd) == SWAP_STATS) {
+	if (SCARG(uap, cmd) == SWAP_STATS
+#if defined(COMPAT_13)
+	    || SCARG(uap, cmd) == SWAP_OSTATS
+#endif
+	    ) {
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
@@ -560,35 +568,53 @@ sys_swapctl(p, v, retval)
 			for (sdp = spp->spi_swapdev.cqh_first;
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = sdp->swd_next.cqe_next) {
-			  	/* backwards compatibility for system call */
-				sdp->swd_se.se_inuse = 
-				  btodb(sdp->swd_npginuse * PAGE_SIZE);
-				error = copyout((caddr_t)&sdp->swd_se,
-				    (caddr_t)sep, sizeof(struct swapent));
-				if (error) {
-					lockmgr(&swap_syscall_lock, 
-					    LK_RELEASE, (void *)0);
-					return (error);
-				}
+			  	/*
+				 * backwards compatibility for system call.
+				 * note that we use 'struct oswapent' as an
+				 * overlay into both 'struct swapdev' and
+				 * the userland 'struct swapent', as we
+				 * want to retain backwards compatibility
+				 * with NetBSD 1.3.
+				 */
+				sdp->swd_ose.ose_inuse = 
+				    btodb(sdp->swd_npginuse * PAGE_SIZE);
+				error = copyout((caddr_t)&sdp->swd_ose,
+				    (caddr_t)sep, sizeof(struct oswapent));
+
+				/* now copy out the path if necessary */
+#if defined(COMPAT_13)
+				if (error == 0 && SCARG(uap, cmd) == SWAP_STATS)
+#else
+				if (error == 0)
+#endif
+					error = copyout((caddr_t)sdp->swd_path,
+					    (caddr_t)&sep->se_path,
+					    sdp->swd_pathlen);
+
+				if (error)
+					goto out;
 				count++;
-				sep++;
+#if defined(COMPAT_13)
+				if (SCARG(uap, cmd) == SWAP_OSTATS)
+					((struct oswapent *)sep)++;
+				else
+#endif
+					sep++;
 			}
 		}
 
-		UVMHIST_LOG(pdhist, "<-done SWAP_STATS", 0, 0, 0, 0);
+		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
 
 		*retval = count;
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
-		return (0);
+		error = 0;
+		goto out;
 	} 
 
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag))) {
-		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
-		return (error);
-	}
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
+		goto out;
 
 	/*
 	 * at this point we expect a path name in arg.   we will
@@ -596,23 +622,34 @@ sys_swapctl(p, v, retval)
 	 * the vnode (VOP_LOCK).
 	 *
 	 * XXX: a NULL arg means use the root vnode pointer (e.g. for
-	 * miniroot
+	 * miniroot)
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
 		if (vget(vp, LK_EXCLUSIVE)) {
-			lockmgr(&swap_syscall_lock, LK_RELEASE, 
-				(void *)0);
-			return (EBUSY);
+			error = EBUSY;
+			goto out;
 		}
+		if (SCARG(uap, cmd) == SWAP_ON &&
+		    copystr("miniroot", userpath, sizeof userpath, &len))
+			panic("swapctl: miniroot copy failed");
 	} else {
-		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE,
-		       SCARG(uap, arg), p);
-		if ((error = namei(&nd))) {
-			lockmgr(&swap_syscall_lock, LK_RELEASE, 
-				(void *)0);
-			return (error);
+		int	space;
+		char	*where;
+
+		if (SCARG(uap, cmd) == SWAP_ON) {
+			if ((error = copyinstr(SCARG(uap, arg), userpath,
+			    sizeof userpath, &len)))
+				goto out;
+			space = UIO_SYSSPACE;
+			where = userpath;
+		} else {
+			space = UIO_USERSPACE;
+			where = (char *)SCARG(uap, arg);
 		}
+		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, p);
+		if ((error = namei(&nd)))
+			goto out;
 		vp = nd.ni_vp;
 	}
 	/* note: "vp" is referenced and locked */
@@ -652,7 +689,7 @@ sys_swapctl(p, v, retval)
 		if ((sdp = swaplist_find(vp, 0)) != NULL) {
 			error = EBUSY;
 			simple_unlock(&swap_data_lock);
-			goto bad;
+			break;
 		}
 		sdp = (struct swapdev *)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
@@ -672,6 +709,11 @@ sys_swapctl(p, v, retval)
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&swap_data_lock);
 
+		sdp->swd_pathlen = len;
+		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
+		if ((error = copystr(userpath, sdp->swd_path,
+		    sdp->swd_pathlen, 0)))
+			break;
 		/*
 		 * we've now got a FAKE placeholder in the swap list.
 		 * now attempt to enable swap on it.  if we fail, undo
@@ -717,11 +759,11 @@ sys_swapctl(p, v, retval)
 		if ((sdp->swd_flags & (SWF_INUSE|SWF_ENABLE)) == 0) {
 			simple_unlock(&swap_data_lock);
 			error = EBUSY;
-			goto bad;
+			break;
 		}
 		/* XXXCDC: should we call with list locked or unlocked? */
 		if ((error = swap_off(p, sdp)) != 0)
-			goto bad;
+			break;
 		/* XXXCDC: might need relock here */
 
 		/*
@@ -744,11 +786,11 @@ sys_swapctl(p, v, retval)
 		error = EINVAL;
 	}
 
-bad:
 	/*
 	 * done!   use vput to drop our reference and unlock
 	 */
 	vput(vp);
+out:
 	lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
@@ -858,7 +900,7 @@ swap_on(p, sdp)
 	 * save nblocks in a safe place and convert to pages.
 	 */
 
-	sdp->swd_se.se_nblks = nblocks;
+	sdp->swd_ose.ose_nblks = nblocks;
 	npages = dbtob((u_int64_t)nblocks) / PAGE_SIZE;
 
 	/*
