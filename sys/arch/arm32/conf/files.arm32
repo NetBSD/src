@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.57 1998/08/15 02:59:01 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.58 1998/08/20 06:28:18 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -78,6 +78,10 @@ file	arch/arm32/isa/isadma_machdep.c		isadma
 # XXX files.isa)
 define	sbdsp
 file	dev/isa/sbdsp.c				sbdsp
+
+# XXX ISA joystick driver
+device	joy
+file	arch/arm32/isa/joy.c			joy needs-flag
 
 device	sb: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c				sb needs-flag
