@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.383 2001/10/17 05:22:32 jmc Exp $
+#	$NetBSD: mi,v 1.384 2001/10/18 09:12:13 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -583,6 +583,7 @@
 ./usr/include/netinet6/nd6.h		comp-c-include
 ./usr/include/netinet6/pim6.h		comp-c-include
 ./usr/include/netinet6/pim6_var.h	comp-c-include
+./usr/include/netinet6/raw_ip6.h	comp-c-include
 ./usr/include/netinet6/udp6.h		comp-c-include
 ./usr/include/netinet6/udp6_var.h	comp-c-include
 ./usr/include/netisdn/i4b_cause.h	comp-c-include
