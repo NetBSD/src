@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.113 2004/01/27 11:35:23 dan Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.114 2004/01/30 11:32:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.113 2004/01/27 11:35:23 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.114 2004/01/30 11:32:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.113 2004/01/27 11:35:23 dan Exp $");
 #  error BUFCACHE is not between 5 and 95
 # endif
 #else
-# define BUFCACHE 10
+# define BUFCACHE 15
 #endif
 
 u_int	nbuf;			/* XXX - for softdep_lockedbufs */
@@ -338,8 +338,8 @@ bufinit(void)
 	 */
 	bufmem = 0;
 	bufmem_hiwater = buf_memcalc();
-	/* lowater is approx. 2% of memory (with bufcache=30) */
-	bufmem_lowater = (bufmem_hiwater >> 4);
+	/* lowater is approx. 2% of memory (with bufcache=15) */
+	bufmem_lowater = (bufmem_hiwater >> 3);
 	if (bufmem_lowater < 64 * 1024)
 		/* Ensure a reasonable minimum value */
 		bufmem_lowater = 64 * 1024;
@@ -393,8 +393,21 @@ bufinit(void)
 static int
 buf_lotsfree(void)
 {
-	return (bufmem < bufmem_lowater ||
-		(bufmem < bufmem_hiwater && uvmexp.free > 2*uvmexp.freetarg));
+	int try, thresh;
+
+	if (bufmem < bufmem_lowater) {
+		return 1;
+	}
+
+	try = random() & 0x0000000fL;
+
+	thresh = (16 * bufmem) / bufmem_hiwater;
+
+	if ((try > thresh) && (uvmexp.free > ( 2 * uvmexp.freetarg))) {
+		return 1;
+	}
+
+	return 0;
 }
 
 /*
@@ -411,8 +424,8 @@ buf_canrelease(void)
 
 	n = uvmexp.freetarg - uvmexp.free;
 	if (n < 0)
-		n = 0;
-	return 2*n;
+		return 0;
+	return 2 * n;
 }
 
 /*
@@ -1223,8 +1236,9 @@ buf_drain(int n)
 
 	s = splbio();
 	simple_lock(&bqueue_slock);
-	while (n-- > 0 && bufmem > bufmem_lowater)
+	while (size < n && bufmem > bufmem_lowater)
 		size += buf_trim();
+
 	simple_unlock(&bqueue_slock);
 	splx(s);
 	return size;
@@ -1470,7 +1484,11 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 			return (EINVAL);
 		bufcache = t;
 		bufmem_hiwater = buf_memcalc();
-		bufmem_lowater = (bufmem_hiwater >> 4);
+		bufmem_lowater = (bufmem_hiwater >> 3);
+		if (bufmem_lowater < 64 * 1024) 
+			/* Ensure a reasonable minimum value */
+			bufmem_lowater = 64 * 1024;
+
 	} else if (rnode->sysctl_num == sysctlnum_bufmemlowater) {
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_num == sysctlnum_bufmemhiwater) {
