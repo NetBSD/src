@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/17 06:39:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2000/08/13 19:42:48 thorpej Exp $
 
 LIB=	kstream
 
@@ -8,8 +8,5 @@ CPPFLAGS+=-I${DESTDIR}/usr/include/kerberosIV
 
 INCS=	kstream.h
 INCSDIR=/usr/include/kerberosIV
-
-SHLIB_MAJOR?= 1
-SHLIB_MINOR?= 0
 
 .include <bsd.lib.mk>
