@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2000/05/05 20:13:32 mycroft Exp $
+#	$NetBSD: Makefile,v 1.27 2000/06/07 19:41:47 thorpej Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -28,7 +28,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
 RAMDISKSPC=	128
-RAMDISKCYLS=	23
+RAMDISKCYLS=	24
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
 install.sh: install.tmpl
