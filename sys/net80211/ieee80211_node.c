@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.33 2004/08/10 00:57:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.34 2004/08/10 21:58:31 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.33 2004/08/10 00:57:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.34 2004/08/10 21:58:31 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -475,7 +475,6 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 static void
 node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-
         if (ni->ni_challenge != NULL) {
                 FREE(ni->ni_challenge, M_DEVBUF);
                 ni->ni_challenge = NULL;
