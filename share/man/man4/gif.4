@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.19 2002/03/04 14:50:54 wiz Exp $
+.\"	$NetBSD: gif.4,v 1.20 2002/03/14 21:29:02 kleink Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -133,6 +133,22 @@ enable ECN CE bit on the inner.
 .Pp
 Note that the ECN friendly behavior violates RFC2893.
 This should be used in mutual agreement with the peer.
+.Ss Packet format
+Every inner packet is encapsulated in an outer packet.
+The inner packet may be IPv4, IPv6, or ISO CLNP.
+The outer packet may be IPv4 or IPv6, and has all the
+usual IP headers, including a protocol field that identifies the
+type of inner packet.
+.Pp
+When the inner packet is IPv4, the protocol field of the outer packet
+is 4
+.Po Dv IPPROTO_IPV4 Pc .
+When the inner packet is IPv6, the protocol field of the outer packet
+is 41
+.Po Dv IPPROTO_IPV6 Pc .
+When the inner packet is ISO CNLP, the protocol field of the outer packet
+is 80
+.Po Dv IPPROTO_EON Pc .
 .Ss Security
 Malicious party may try to circumvent security filters by using
 tunnelled packets.
@@ -197,6 +213,13 @@ and on the cisco
 .Xr inet6 4 ,
 .Xr ifconfig 8
 .Rs
+.%A	C. Perkins
+.%B	RFC2003
+.%T	IP Encapsulation within IP
+.%D	October 1996
+.%O	ftp://ftp.isi.edu/in-notes/rfc2003.txt
+.Re
+.Rs
 .%A	R. Gilligan
 .%A	E. Nordmark
 .%B	RFC2893
@@ -212,6 +235,10 @@ and on the cisco
 .%D	December 1999
 .%O	draft-ietf-ipsec-ecn-02.txt
 .Re
+.\"
+.Sh STANDARDS
+IPv4 over IPv4 encapsulation is compatible with RFC2003.
+IPv6 over IPv4 encapsulation is compatible with RFC2893.
 .\"
 .Sh HISTORY
 The
