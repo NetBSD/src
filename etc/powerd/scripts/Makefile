@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/18 05:40:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/20 20:55:39 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 #	src/etc/mtree/special
 #	src/distrib/sets/lists/etc/mi
 
-FILES=	power_button
+FILES=	power_button reset_button
 
 FILESDIR=	/etc/powerd/scripts
 FILESMODE=	${BINMODE}
