@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2001/01/15 20:19:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2001/01/22 13:57:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -201,11 +201,6 @@ mach_init(argc, argv, envp)
 	}
 
 #ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
-
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

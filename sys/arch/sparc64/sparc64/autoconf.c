@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 2000/10/04 23:05:08 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.42 2001/01/22 13:56:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -217,9 +217,9 @@ bootstrap(nctx)
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
-	 * We can do this because ddb_machine_init() and 
-	 * ddb_init() do not allocate anything, just initialze
-	 * some pointers to important things like the symtab.
+	 * We can do this because ddb_init() does not allocate anything,
+	 * just initialze some pointers to important things
+	 * like the symtab.
 	 *
 	 * By doing this first and installing the OBP callbacks
 	 * we get to do symbolic debugging of pmap_bootstrap().
@@ -231,7 +231,6 @@ bootstrap(nctx)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
-	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
 	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
 #else
