@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.22 1996/05/23 16:13:19 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.23 1996/05/23 17:03:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -98,11 +98,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
-	if (control && control->m_len) {
-		m_freem(control);
-		error = EINVAL;
-		goto release;
-	}
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("tcp_usrreq: unexpected control mbuf");
+#endif
 	/*
 	 * When a TCP is attached to a socket, then there will be
 	 * a (struct inpcb) pointed at by the socket, and this
@@ -264,6 +263,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * marker if URG set.  Possibly send more data.
 	 */
 	case PRU_SEND:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		sbappend(&so->so_snd, m);
 		error = tcp_output(tp);
 		break;
@@ -283,6 +288,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 		return (0);
 
 	case PRU_RCVOOB:
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
+			break;
+		}
 		if ((so->so_oobmark == 0 &&
 		    (so->so_state & SS_RCVATMARK) == 0) ||
 		    so->so_options & SO_OOBINLINE ||
