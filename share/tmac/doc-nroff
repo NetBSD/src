@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-nroff,v 1.5 1999/01/13 07:06:35 ross Exp $
+.\"	$NetBSD: doc-nroff,v 1.6 1999/03/23 03:53:26 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,6 @@
 .ds If infinity
 .ds Na \fINaN\fP
 .ds Ba \fR\&|\fP
-
 .\"
 .de hK
 .nr % 1
