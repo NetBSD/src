@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 1997/08/04 20:02:59 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.93 1997/08/04 20:09:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -648,11 +648,9 @@ setpte4m(va, pte)
 	register struct segmap *sm;
 	register union ctxinfo *c;
 
-	cache_flush_page(va);
-
 	/*
-	 * Now walk tables to find pte. We use ctxinfo to locate the pmap
-	 * from the current context
+	 * Walk tables to find pte. We use ctxinfo to locate the pmap
+	 * from the current context.
 	 */
 #if 0
 #ifdef DEBUG
