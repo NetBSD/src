@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.39 1999/11/10 05:02:53 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.40 2000/01/25 09:30:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1929,9 +1929,10 @@ printf("<<RESELECT CONT'd>>");
 			}
 			if ((NCR_READ_REG(sc, NCR_FFLAG)
 			    & NCRFIFO_FF) != 2) {
+				/* Drop excess bytes from the queue */
 				int i = (NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) - 2;
-				while (i--)
+				while (i-- > 0)
 					(void) NCR_READ_REG(sc, NCR_FIFO);
 			}
 			ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
