@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.12 2002/12/19 16:33:48 hannken Exp $	*/
+/*	$NetBSD: gencode.h,v 1.13 2004/06/25 12:22:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -180,6 +180,14 @@ struct block *gen_broadcast(int);
 struct block *gen_multicast(int);
 struct block *gen_inbound(int);
 struct block *gen_vlan(int);
+
+struct block *gen_pf_ifname(char *);
+struct block *gen_pf_rnr(int);
+struct block *gen_pf_srnr(int);
+struct block *gen_pf_ruleset(char *);
+struct block *gen_pf_reason(int);
+struct block *gen_pf_action(int);
+struct block *gen_pf_dir(int);
 
 void bpf_optimize(struct block **);
 #if __STDC__

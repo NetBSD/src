@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.9 2002/12/19 16:33:48 hannken Exp $	*/
+/*	$NetBSD: grammar.y,v 1.10 2004/06/25 12:22:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: grammar.y,v 1.56 96/11/02 21:54:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.9 2002/12/19 16:33:48 hannken Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.10 2004/06/25 12:22:23 itojun Exp $");
 #endif
 #endif
 
@@ -50,7 +50,10 @@ struct rtentry;
 #include <netinet/if_ether.h>
 #endif
 
+#include <net/pfvar.h>
+
 #include <stdio.h>
+#include <strings.h>
 
 #include "pcap-int.h"
 
@@ -110,7 +113,7 @@ pcap_parse()
 %type	<a>	arth narth
 %type	<i>	byteop pname pnum relop irelop
 %type	<blk>	and or paren not null prog
-%type	<rblk>	other
+%type	<rblk>	other pfvar
 
 %token  DST SRC HOST GATEWAY
 %token  NET MASK PORT LESS GREATER PROTO PROTOCHAIN BYTE
@@ -118,6 +121,7 @@ pcap_parse()
 %token  ATALK DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
+%token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
 %token  LINK
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6 AID
@@ -130,7 +134,7 @@ pcap_parse()
 %type	<e> EID
 %type	<e> AID
 %type	<s> HID HID6
-%type	<i> NUM
+%type	<i> NUM action reason
 
 %left OR AND
 %nonassoc  '!'
@@ -285,7 +289,42 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| OUTBOUND		{ $$ = gen_inbound(1); }
 	| VLAN pnum		{ $$ = gen_vlan($2); }
 	| VLAN			{ $$ = gen_vlan(-1); }
+	| pfvar			{ $$ = $1; }
 	;
+
+pfvar:	  PF_IFNAME ID		{ $$ = gen_pf_ifname($2); }
+	| PF_RSET ID		{ $$ = gen_pf_ruleset($2); }
+	| PF_RNR NUM		{ $$ = gen_pf_rnr($2); }
+	| PF_SRNR NUM		{ $$ = gen_pf_srnr($2); }
+	| PF_REASON reason	{ $$ = gen_pf_reason($2); }
+	| PF_ACTION action	{ $$ = gen_pf_action($2); }
+	;
+
+reason:	  NUM			{ $$ = $1; }
+	| ID			{ const char *reasons[] = PFRES_NAMES;
+				  int i;
+				  for (i = 0; reasons[i]; i++) {
+					  if (strcasecmp($1, reasons[i]) == 0) {
+						  $$ = i;
+						  break;
+					  }
+				  }
+				  if (reasons[i] == NULL)
+					  bpf_error("unknown PF reason");
+				}
+	;
+
+action:	  ID			{ if (strcasecmp($1, "pass") == 0 ||
+				      strcasecmp($1, "accept") == 0)
+					$$ = PF_PASS;
+				  else if (strcasecmp($1, "drop") == 0 ||
+				      strcasecmp($1, "block") == 0)
+					$$ = PF_DROP;
+				  else
+					  bpf_error("unknown PF action");
+				}
+	;
+
 relop:	  '>'			{ $$ = BPF_JGT; }
 	| GEQ			{ $$ = BPF_JGE; }
 	| '='			{ $$ = BPF_JEQ; }
