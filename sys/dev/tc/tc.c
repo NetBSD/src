@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.8 1996/03/02 01:16:51 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.9 1996/03/02 02:44:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -306,7 +306,7 @@ tc_devinfo(id, cp)
 #ifdef TCVERBOSE
 	struct tc_knowndev *tdp;
 	int match;
-	const char *unmatched = "unknown device ";
+	const char *unmatched = "unknown ";
 #else
 	const char *unmatched = "";
 #endif
@@ -328,7 +328,7 @@ tc_devinfo(id, cp)
 #endif
 
 	if (name == NULL)
-		cp += sprintf(cp, "%s%s", unmatched, id);
+		cp += sprintf(cp, "%sdevice %s", unmatched, id);
 	else
 		cp += sprintf(cp, "%s (%s)", name, id);
 }
