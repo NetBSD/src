@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.172 1999/12/01 15:07:44 drochner Exp $
+$NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -804,11 +804,12 @@ product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
 product COMPAQ USB		0x7020	USB Controller
+product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
-product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
+product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P		0xf130	NetFlex 3/P
@@ -860,6 +861,7 @@ product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
 product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
+product DEC CPQ42XX	0x0046	Compaq SMART RAID 42xx
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
@@ -1081,6 +1083,7 @@ product SYMBIOS 815	0x0004	53c815
 product SYMBIOS 810AP	0x0005	53c810AP
 product SYMBIOS 860	0x0006	53c860
 product SYMBIOS 875	0x000f	53c875
+product SYMBIOS 1510	0x0010	53c1510
 product SYMBIOS 875J	0x008f	53c875J
 
 /* Packet Engines products */
