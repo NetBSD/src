@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.12 2004/12/23 05:47:42 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.13 2004/12/23 05:50:24 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.12 2004/12/23 05:47:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.13 2004/12/23 05:50:24 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2014,7 +2014,7 @@ rtw_transmit_config(struct rtw_regs *regs)
 	tcr &= ~(RTW_TCR_SRL_MASK|RTW_TCR_LRL_MASK);
 	tcr |= LSHIFT(4, RTW_TCR_SRL_MASK) | LSHIFT(4, RTW_TCR_LRL_MASK);
 
-	tcr |= RTW_TCR_CRC;	/* NIC appends CRC32 */
+	tcr &= ~RTW_TCR_CRC;	/* NIC appends CRC32 */
 
 	RTW_WRITE(regs, RTW_TCR, tcr);
 	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
