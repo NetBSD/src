@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.57 2002/08/07 14:24:52 wiz Exp $ */
+/* $NetBSD: user.c,v 1.58 2002/08/27 11:25:29 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.57 2002/08/07 14:24:52 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.58 2002/08/27 11:25:29 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1157,9 +1157,9 @@ rm_user_from_groups(char *login_name)
 	return 1;
 }
 
-/* check that the user is a local user, not from YP/NIS */
+/* check that the user or group is local, not from YP/NIS */
 static int
-is_local_user(char *login_name)
+is_local(char *name, const char *file)
 {
 	regmatch_t	matchv[10];
 	regex_t		r;
@@ -1168,12 +1168,12 @@ is_local_user(char *login_name)
 	char		re[MaxEntryLen];
 	int		ret;
 
-	(void) snprintf(re, sizeof(re), "^%s:", login_name);
+	(void) snprintf(re, sizeof(re), "^%s:", name);
 	if (regcomp(&r, re, REG_EXTENDED) != 0) {
 		errx(EXIT_FAILURE, "can't compile regular expression `%s'", re);
 	}
-	if ((fp = fopen(_PATH_MASTERPASSWD, "r")) == NULL) {
-		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
+	if ((fp = fopen(file, "r")) == NULL) {
+		err(EXIT_FAILURE, "can't open `%s'", file);
 	}
 	for (ret = 0 ; fgets(buf, sizeof(buf), fp) != NULL ; ) {
 		if (regexec(&r, buf, 10, matchv, 0) == 0) {
@@ -1212,7 +1212,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if ((pwp = getpwnam(login_name)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
-	if (!is_local_user(login_name)) {
+	if (!is_local(login_name, _PATH_MASTERPASSWD)) {
 		errx(EXIT_FAILURE, "User `%s' must be a local user", login_name);
 	}
 	/* keep dir name in case we need it for '-m' */
@@ -1948,6 +1948,9 @@ groupmod(int argc, char **argv)
 	}
 	if ((grp = getgrnam(*argv)) == NULL) {
 		err(EXIT_FAILURE, "can't find group `%s' to modify", *argv);
+	}
+	if (!is_local(*argv, _PATH_GROUP)) {
+		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
 	}
 	if (newname != NULL && !valid_group(newname)) {
 		warn("warning - invalid group name `%s'", newname);
