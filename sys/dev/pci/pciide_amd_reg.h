@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_amd_reg.h,v 1.2 2000/07/06 15:08:11 bouyer Exp $	*/
+/*	$NetBSD: pciide_amd_reg.h,v 1.3 2001/05/06 20:06:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 David Sainty.
@@ -34,8 +34,10 @@
  */
 
 /*
- * Registers definitions for AMD 756 PCI IDE controller.  Documentation
- * available at: http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf
+ * Registers definitions for AMD 7x6 PCI IDE controller.  Documentation
+ * available at:
+ * 	http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf (756)
+ *	http://www.amd.com/products/cpg/athlon/techdocs/pdf/23167.pdf (766)
  */
 
 /* Chip revisions */
@@ -54,28 +56,28 @@
 
 
 /* Channel enable */
-#define AMD756_CHANSTATUS_EN		0x40
-#define AMD756_CHAN_EN(chan)		(0x01 << (1 - (chan)))
+#define AMD7X6_CHANSTATUS_EN		0x40
+#define AMD7X6_CHAN_EN(chan)		(0x01 << (1 - (chan)))
 
 /* Data port timing controls */
-#define AMD756_DATATIM 0x48
-#define AMD756_DATATIM_MASK(channel) (0xffff << ((1 - (channel)) << 4))
-#define AMD756_DATATIM_RECOV(channel, drive, x) (((x) & 0xf) << \
+#define AMD7X6_DATATIM 0x48
+#define AMD7X6_DATATIM_MASK(channel) (0xffff << ((1 - (channel)) << 4))
+#define AMD7X6_DATATIM_RECOV(channel, drive, x) (((x) & 0xf) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
-#define AMD756_DATATIM_PULSE(channel, drive, x) (((x) & 0xf) << \
+#define AMD7X6_DATATIM_PULSE(channel, drive, x) (((x) & 0xf) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3) + 4))
 
-static const int8_t amd756_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
-static const int8_t amd756_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
+static const int8_t amd7x6_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
+static const int8_t amd7x6_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 
 /* Ultra-DMA/33 control */
-#define AMD756_UDMA 0x50
-#define AMD756_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
-#define AMD756_UDMA_TIME(channel, drive, x) (((x) & 0x7) << \
+#define AMD7X6_UDMA 0x50
+#define AMD7X6_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
+#define AMD7X6_UDMA_TIME(channel, drive, x) (((x) & 0x7) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
-#define AMD756_UDMA_EN(channel, drive) (0x40 << \
+#define AMD7X6_UDMA_EN(channel, drive) (0x40 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
-#define AMD756_UDMA_EN_MTH(channel, drive) (0x80 << \
+#define AMD7X6_UDMA_EN_MTH(channel, drive) (0x80 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 
-static const int8_t amd756_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05};
+static const int8_t amd7x6_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05, 0x06};
