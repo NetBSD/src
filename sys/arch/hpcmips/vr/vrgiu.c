@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.29 2002/01/26 10:50:44 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.30 2002/01/27 14:18:12 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -49,8 +49,8 @@
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripreg.h>
-#include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
 #include <hpcmips/vr/vrgiuvar.h>
 
@@ -219,8 +219,8 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
     
 	for (i = 0; i < MAX_GPIO_INOUT; i++)
 		TAILQ_INIT(&sc->sc_intr_head[i]);
-	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, IPL_BIO,
-	    vrgiu_intr, sc))) {
+	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
+	    IPL_BIO, vrgiu_intr, sc))) {
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -232,7 +232,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
 	sc->sc_iochip.hc_sc = sc;
 	/* Register functions to upper interface */
-	vrip_gpio_register(va->va_vc, &sc->sc_iochip);
+	vrip_register_gpio(va->va_vc, &sc->sc_iochip);
 
 	/* Display port status (Input/Output) for debugging */
 	VPRINTF(DEBUG_IO, ("I/O setting:                                "));
@@ -675,7 +675,7 @@ vrgiu_register_iochip(hpcio_chip_t hc, hpcio_chip_t iochip)
 {
 	struct vrgiu_softc *sc = hc->hc_sc;
 
-	vrip_gpio_register(sc->sc_vc, iochip);
+	vrip_register_gpio(sc->sc_vc, iochip);
 }
 
 /* interrupt handler */
@@ -692,7 +692,7 @@ vrgiu_intr(void *arg)
 	int ledvalue = CONFIG_HOOK_LED_FLASH;
 
 	/* Get Level 2 interrupt status */
-	vrip_intr_get_status2 (sc->sc_vc, sc->sc_ih, &reg);
+	vrip_intr_getstatus2 (sc->sc_vc, sc->sc_ih, &reg);
 #ifdef DUMP_GIU_LEVEL2_INTR
 #warning DUMP_GIU_LEVEL2_INTR
 	{

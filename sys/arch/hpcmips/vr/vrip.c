@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.14 2002/01/26 10:50:44 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.15 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -46,9 +46,12 @@
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripunit.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/icureg.h>
+#include <hpcmips/vr/cmureg.h>
 #include "locators.h"
 
 #define VRIPDEBUG
@@ -59,12 +62,15 @@
 int	vrip_debug = VRIPDEBUG_CONF;
 #define DPRINTF(arg) if (vrip_debug) printf arg;
 #define DBITDISP32(reg) if (vrip_debug) bitdisp32(reg);
-#define DDUMP_LEVEL2MASK(sc,arg) if (vrip_debug) vrip_dump_level2mask(sc,arg)
+#define DDUMP_LEVEL2MASK(sc,arg) if (vrip_debug) __vrip_dump_level2mask(sc,arg)
 #else
 #define DPRINTF(arg)
 #define DBITDISP32(arg)
 #define DDUMP_LEVEL2MASK(sc,arg)
 #endif
+
+#define MAX_LEVEL1 32
+#define VALID_UNIT(sc, unit)	(0 <= (unit) && (unit) < (sc)->sc_nunits)
 
 struct vrip_softc {
 	struct	device sc_dv;
@@ -72,9 +78,16 @@ struct vrip_softc {
 	bus_space_handle_t sc_ioh;
 	hpcio_chip_t sc_gpio_chips[VRIP_NIOCHIPS];
 	vrcmu_chipset_tag_t sc_cc;
-	vrcmu_function_tag_t sc_cf;
 	int sc_pri; /* attaching device priority */
 	u_int32_t sc_intrmask;
+	struct vrip_chipset_tag sc_chipset;
+	const struct vrip_unit *sc_units;
+	int sc_nunits;
+	struct intrhand {
+		int	(*ih_fun)(void *);
+		void	*ih_arg;
+		const struct vrip_unit *ih_unit;
+	} sc_intrhands[MAX_LEVEL1];
 };
 
 int	vripmatch(struct device *, struct cfdata *, void *);
@@ -83,40 +96,87 @@ int	vrip_print(void *, const char *);
 int	vrip_search(struct device *, struct cfdata *, void *);
 int	vrip_intr(void *, u_int32_t, u_int32_t);
 
-static void vrip_dump_level2mask(vrip_chipset_tag_t, void *);
+int __vrip_power(vrip_chipset_tag_t, int, int);
+vrip_intr_handle_t __vrip_intr_establish(vrip_chipset_tag_t, int, int,
+    int, int(*)(void*), void*);
+void __vrip_intr_disestablish(vrip_chipset_tag_t, vrip_intr_handle_t);
+void __vrip_intr_setmask1(vrip_chipset_tag_t, vrip_intr_handle_t, int);
+void __vrip_intr_setmask2(vrip_chipset_tag_t, vrip_intr_handle_t,
+    u_int32_t, int);
+void __vrip_intr_getstatus2(vrip_chipset_tag_t, vrip_intr_handle_t,
+    u_int32_t*);
+void __vrip_register_cmu(vrip_chipset_tag_t, vrcmu_chipset_tag_t);
+void __vrip_register_gpio(vrip_chipset_tag_t, hpcio_chip_t);
+void __vrip_dump_level2mask(vrip_chipset_tag_t, void *);
 
 struct cfattach vrip_ca = {
 	sizeof(struct vrip_softc), vripmatch, vripattach
 };
 
-#define MAX_LEVEL1 32
-
 struct vrip_softc *the_vrip_sc = NULL;
 
-static struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	int	ih_l1line;
-	int	ih_ipl;
-	bus_addr_t	ih_lreg;
-	bus_addr_t	ih_mlreg;
-	bus_addr_t	ih_hreg;
-	bus_addr_t	ih_mhreg;
-} intrhand[MAX_LEVEL1] = {
-	[VRIP_INTR_PIU] = { 0, 0, 0, 0, ICUPIUINT_REG_W,MPIUINT_REG_W	},
-	[VRIP_INTR_AIU] = { 0, 0, 0, 0, AIUINT_REG_W,	MAIUINT_REG_W	},
-	[VRIP_INTR_KIU] = { 0, 0, 0, 0, KIUINT_REG_W,	MKIUINT_REG_W	},
-	[VRIP_INTR_GIU] = { 0, 0, 0, 0, GIUINT_L_REG_W,	MGIUINT_L_REG_W,
-			    GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
-	[VRIP_INTR_FIR] = { 0, 0, 0, 0, FIRINT_REG_W,	MFIRINT_REG_W	},
-	[VRIP_INTR_DSIU] = { 0, 0, 0, 0, DSIUINT_REG_W,	MDSIUINT_REG_W	},
-	[VRIP_INTR_PCI] = { 0, 0, 0, 0, PCIINT_REG_W,	MPCIINT_REG_W	},
-	[VRIP_INTR_SCU] = { 0, 0, 0, 0, SCUINT_REG_W,	MSCUINT_REG_W	},
-	[VRIP_INTR_CSI] = { 0, 0, 0, 0, CSIINT_REG_W,	MCSIINT_REG_W	},
-	[VRIP_INTR_BCU] = { 0, 0, 0, 0, BCUINT_REG_W,	MBCUINT_REG_W	}
+static const struct vrip_chipset_tag vrip_chipset_methods = {
+	.vc_power		= __vrip_power,
+	.vc_intr_establish	= __vrip_intr_establish,
+	.vc_intr_disestablish	= __vrip_intr_disestablish,
+	.vc_intr_setmask1	= __vrip_intr_setmask1,
+	.vc_intr_setmask2	= __vrip_intr_setmask2,
+	.vc_intr_getstatus2	= __vrip_intr_getstatus2,
+	.vc_register_cmu	= __vrip_register_cmu,
+	.vc_register_gpio	= __vrip_register_gpio,
 };
 
-#define	LEGAL_LEVEL1(x)	((x) >= 0 && (x) < MAX_LEVEL1)
+static const struct vrip_unit vrip_units[] = {
+	[VRIP_UNIT_PMU] = { "pmu",
+			    { VRIP_INTR_POWER,	VRIP_INTR_BAT,	},	},
+	[VRIP_UNIT_RTC] = { "rtc",
+			    { VRIP_INTR_RTCL1,	},		},
+	[VRIP_UNIT_PIU] = { "piu",
+			    { VRIP_INTR_PIU, },
+			    CMUMASK_PIU,
+			    ICUPIUINT_REG_W,	MPIUINT_REG_W	},
+	[VRIP_UNIT_KIU] = { "kiu",
+			    { VRIP_INTR_KIU,	},
+			    CMUMASK_KIU,
+			    KIUINT_REG_W,	MKIUINT_REG_W	},
+	[VRIP_UNIT_SIU] = { "siu",
+			    { VRIP_INTR_SIU,	},		},
+	[VRIP_UNIT_GIU] = { "giu",
+			    { VRIP_INTR_GIU,	},
+			    0,
+			    GIUINT_L_REG_W,MGIUINT_L_REG_W,
+			    GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
+	[VRIP_UNIT_LED] = { "led",
+			    { VRIP_INTR_LED,	},		},
+	[VRIP_UNIT_AIU] = { "aiu",
+			    { VRIP_INTR_AIU,	},
+			    CMUMASK_AIU,
+			    AIUINT_REG_W,	MAIUINT_REG_W	},
+	[VRIP_UNIT_FIR] = { "fir",
+			    { VRIP_INTR_FIR,	},
+			    CMUMASK_FIR,
+			    FIRINT_REG_W,	MFIRINT_REG_W	},
+	[VRIP_UNIT_DSIU]= { "dsiu",
+			    { VRIP_INTR_DSIU,	},
+			    CMUMASK_DSIU,
+			    DSIUINT_REG_W,	MDSIUINT_REG_W	},
+	[VRIP_UNIT_PCIU]= { "pciu",
+			    { VRIP_INTR_PCI,	},
+			    CMUMASK_PCIU,
+			    PCIINT_REG_W,	MPCIINT_REG_W	},
+	[VRIP_UNIT_SCU] = { "scu",
+			    { VRIP_INTR_SCU,	},
+			    0,
+			    SCUINT_REG_W,	MSCUINT_REG_W	},
+	[VRIP_UNIT_CSI] = { "csi",
+			    { VRIP_INTR_CSI,	},
+			    CMUMASK_CSI,
+			    CSIINT_REG_W,	MCSIINT_REG_W	},
+	[VRIP_UNIT_BCU] = { "bcu",
+			    { VRIP_INTR_BCU,	},
+			    0,
+			    BCUINT_REG_W,	MBCUINT_REG_W	}
+};
 
 int
 vripmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -136,10 +196,25 @@ vripmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 vripattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
 	struct vrip_softc *sc = (struct vrip_softc*)self;
 
 	printf("\n");
+
+	sc->sc_units = vrip_units;
+	sc->sc_nunits = sizeof(vrip_units)/sizeof(struct vrip_unit);
+
+	vripattach_common(parent, self, aux);
+}
+
+void
+vripattach_common(struct device *parent, struct device *self, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+	struct vrip_softc *sc = (struct vrip_softc*)self;
+
+	sc->sc_chipset = vrip_chipset_methods; /* structure assignment */
+	sc->sc_chipset.vc_sc = sc;
+
 	/*
 	 *  Map ICU (Interrupt Control Unit) register space.
 	 */
@@ -184,8 +259,6 @@ vrip_print(void *aux, const char *hoge)
 		printf(" addr 0x%lx", va->va_addr);
 	if (va->va_size > 1)
 		printf("-0x%lx", va->va_addr + va->va_size - 1);
-	if (va->va_intr != VRIPCF_INTR_DEFAULT)
-		printf(" intr %d", va->va_intr);
 
 	return (UNCONF);
 }
@@ -196,36 +269,53 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 	struct vrip_softc *sc = (struct vrip_softc *)parent;
 	struct vrip_attach_args va;
 
-	va.va_vc = sc;
+	va.va_vc = &sc->sc_chipset;
 	va.va_iot = sc->sc_iot;
-	va.va_addr = cf->cf_loc[VRIPCF_ADDR];
-	va.va_size = cf->cf_loc[VRIPCF_SIZE];
-	va.va_intr = cf->cf_loc[VRIPCF_INTR];
-	va.va_addr2 = cf->cf_loc[VRIPCF_ADDR2];
-	va.va_size2 = cf->cf_loc[VRIPCF_SIZE2];
+	va.va_unit = cf->cf_loc[VRIPIFCF_UNIT];
+	va.va_addr = cf->cf_loc[VRIPIFCF_ADDR];
+	va.va_size = cf->cf_loc[VRIPIFCF_SIZE];
+	va.va_addr2 = cf->cf_loc[VRIPIFCF_ADDR2];
+	va.va_size2 = cf->cf_loc[VRIPIFCF_SIZE2];
 	va.va_gpio_chips = sc->sc_gpio_chips;
-	va.va_cc = sc->sc_cc;
-	va.va_cf = sc->sc_cf;
 	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
 		config_attach(parent, cf, &va, vrip_print);
 
 	return (0);
 }
 
-void *
-vrip_intr_establish(vrip_chipset_tag_t vc, int intr, int level,
+int
+__vrip_power(vrip_chipset_tag_t vc, int unit, int onoff)
+{
+	struct vrip_softc *sc = vc->vc_sc;
+	const struct vrip_unit *vu;
+
+	if (sc->sc_chipset.vc_cc == NULL)
+		return (0);	/* You have no clock mask unit yet. */
+	if (!VALID_UNIT(sc, unit))
+		return (0);
+	vu = &sc->sc_units[unit];
+
+	return (*sc->sc_chipset.vc_cc->cc_clock)(sc->sc_chipset.vc_cc, 
+	    vu->vu_clkmask, onoff);
+}
+
+vrip_intr_handle_t
+__vrip_intr_establish(vrip_chipset_tag_t vc, int unit, int line, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
+	struct vrip_softc *sc = vc->vc_sc;
+	const struct vrip_unit *vu;
 	struct intrhand *ih;
 
-	if (!LEGAL_LEVEL1(intr))
-		return (0);
-	ih = &intrhand[intr];
+	if (!VALID_UNIT(sc, unit))
+		return (NULL);
+	vu = &sc->sc_units[unit];
+	ih = &sc->sc_intrhands[vu->vu_intr[line]];
 	if (ih->ih_fun) /* Can't share level 1 interrupt */
-		return (0);
-	ih->ih_l1line = intr;
+		return (NULL);
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
+	ih->ih_unit = vu;
     
 	/* Mask level 2 interrupt mask register. (disable interrupt) */
 	vrip_intr_setmask2(vc, ih, ~0, 0);
@@ -236,9 +326,9 @@ vrip_intr_establish(vrip_chipset_tag_t vc, int intr, int level,
 }
 
 void
-vrip_intr_disestablish(vrip_chipset_tag_t vc, void *arg)
+__vrip_intr_disestablish(vrip_chipset_tag_t vc, vrip_intr_handle_t handle)
 {
-	struct intrhand *ih = arg;
+	struct intrhand *ih = handle;
 
 	ih->ih_fun = NULL;
 	ih->ih_arg = NULL;
@@ -271,15 +361,17 @@ vrip_intr_resume()
 
 /* Set level 1 interrupt mask. */
 void
-vrip_intr_setmask1(vrip_chipset_tag_t vc, void *arg, int enable)
+__vrip_intr_setmask1(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
+    int enable)
 {
-	struct vrip_softc *sc = (void*)vc;
-	struct intrhand *ih = arg;
-	int level1 = ih->ih_l1line;
+	struct vrip_softc *sc = vc->vc_sc;
+	struct intrhand *ih = handle;
+	int level1 = ih - sc->sc_intrhands;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t reg = sc->sc_intrmask;
 
+printf("__vrip_intr_setmask1: SYSINT: %s %d\n", enable ? "enable" : "disable", level1);
 	reg = (bus_space_read_2 (iot, ioh, MSYSINT1_REG_W)&0xffff) |
 	    ((bus_space_read_2 (iot, ioh, MSYSINT2_REG_W)<< 16)&0xffff0000);
 	if (enable)
@@ -295,18 +387,19 @@ vrip_intr_setmask1(vrip_chipset_tag_t vc, void *arg, int enable)
 	return;
 }
 
-static void
-vrip_dump_level2mask(vrip_chipset_tag_t vc, void *arg)
+void
+__vrip_dump_level2mask(vrip_chipset_tag_t vc, vrip_intr_handle_t handle)
 {
-	struct vrip_softc *sc = (void*)vc;
-	struct intrhand *ih = arg;
+	struct vrip_softc *sc = vc->vc_sc;
+	struct intrhand *ih = handle;
+	const struct vrip_unit *vu = ih->ih_unit;
 	u_int32_t reg;
     
-	if (ih->ih_mlreg) {
-		printf ("level1[%d] level2 mask:", ih->ih_l1line);
-		reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ih->ih_mlreg);
-		if (ih->ih_mhreg) { /* GIU [16:31] case only */
-			reg |= (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ih->ih_mhreg) << 16);
+	if (vu->vu_mlreg) {
+		printf ("level1[%d] level2 mask:", vu->vu_intr[0]);
+		reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg);
+		if (vu->vu_mhreg) { /* GIU [16:31] case only */
+			reg |= (bus_space_read_2(sc->sc_iot, sc->sc_ioh, vu->vu_mhreg) << 16);
 			bitdisp32(reg);
 		} else
 			bitdisp16(reg);
@@ -315,55 +408,57 @@ vrip_dump_level2mask(vrip_chipset_tag_t vc, void *arg)
 
 /* Get level 2 interrupt status */
 void
-vrip_intr_get_status2(vrip_chipset_tag_t vc, void *arg,
+__vrip_intr_getstatus2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
     u_int32_t *mask /* Level 2 mask */)
 {
-	struct vrip_softc *sc = (void*)vc;
-	struct intrhand *ih = arg;
+	struct vrip_softc *sc = vc->vc_sc;
+	struct intrhand *ih = handle;
+	const struct vrip_unit *vu = ih->ih_unit;
 	u_int32_t reg;
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
-	    ih->ih_lreg);
+	    vu->vu_lreg);
 	reg |= ((bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
-	    ih->ih_hreg) << 16)&0xffff0000);
+	    vu->vu_hreg) << 16)&0xffff0000);
 /*    bitdisp32(reg);*/
 	*mask = reg;
 }
 
 /* Set level 2 interrupt mask. */
 void
-vrip_intr_setmask2(vrip_chipset_tag_t vc, void *arg,
+__vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
     u_int32_t mask /* Level 2 mask */, int onoff)
 {
-	struct vrip_softc *sc = (void*)vc;
-	struct intrhand *ih = arg;
+	struct vrip_softc *sc = vc->vc_sc;
+	struct intrhand *ih = handle;
+	const struct vrip_unit *vu = ih->ih_unit;
 	u_int16_t reg;
 
 	DPRINTF(("vrip_intr_setmask2:\n"));
-	DDUMP_LEVEL2MASK(vc, arg);
+	DDUMP_LEVEL2MASK(vc, handle);
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
-	if (ih->ih_mlreg) {
-		reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ih->ih_mlreg);
+	if (vu->vu_mlreg) {
+		reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg);
 		if (onoff)
 			reg |= (mask&0xffff);
 		else
 			reg &= ~(mask&0xffff);
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, ih->ih_mlreg, reg);
-		if (ih->ih_mhreg != -1) { /* GIU [16:31] case only */
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg, reg);
+		if (vu->vu_mhreg != -1) { /* GIU [16:31] case only */
 			reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-			    ih->ih_mhreg);
+			    vu->vu_mhreg);
 			if (onoff)
 				reg |= ((mask >> 16) & 0xffff);
 			else
 				reg &= ~((mask >> 16) & 0xffff);
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    ih->ih_mhreg, reg);
+			    vu->vu_mhreg, reg);
 		}
 	}
 #endif /* WINCE_DEFAULT_SETTING */
-	DDUMP_LEVEL2MASK(vc, arg);
+	DDUMP_LEVEL2MASK(vc, handle);
 
 	return;
 }
@@ -389,7 +484,7 @@ vrip_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 	 *  Dispatch each handler.
 	 */
 	for (i = 0; i < 32; i++) {
-		register struct intrhand *ih = &intrhand[i];
+		register struct intrhand *ih = &sc->sc_intrhands[i];
 		if (ih->ih_fun && (reg & (1 << i))) {
 			ih->ih_fun(ih->ih_arg);
 		}
@@ -399,19 +494,17 @@ vrip_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 }
 
 void
-vrip_cmu_function_register(vrip_chipset_tag_t vc, vrcmu_function_tag_t func,
-    vrcmu_chipset_tag_t arg)
+__vrip_register_cmu(vrip_chipset_tag_t vc, vrcmu_chipset_tag_t cmu)
 {
-	struct vrip_softc *sc = (void*)vc;
+	struct vrip_softc *sc = vc->vc_sc;
 
-	sc->sc_cf = func;
-	sc->sc_cc = arg;
+	sc->sc_chipset.vc_cc = cmu;
 }
 
 void
-vrip_gpio_register(vrip_chipset_tag_t vc, hpcio_chip_t chip)
+__vrip_register_gpio(vrip_chipset_tag_t vc, hpcio_chip_t chip)
 {
-	struct vrip_softc *sc = (void*)vc;
+	struct vrip_softc *sc = vc->vc_sc;
 
 	if (chip->hc_chipid < 0 || VRIP_NIOCHIPS <= chip->hc_chipid)
 		panic("%s: '%s' has unknown id, %d", __FUNCTION__,
