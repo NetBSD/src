@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.87.2.1 2004/05/28 07:10:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.87.2.1 2004/05/28 07:10:38 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3070,17 +3070,18 @@ SIP_DECL(sis900_mii_readreg)(struct device *self, int phy, int reg)
 	 * The PHY of recent SiS chipsets is accessed through bitbang
 	 * operations.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev >= SIS_REV_635)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900)
 		return (mii_bitbang_readreg(self, &SIP_DECL(mii_bitbang_ops),
 		    phy, reg));
 
+#ifndef SIS900_MII_RESTRICT
 	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return (0);
+#endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
 	    (phy << ENPHY_PHYADDR_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
@@ -3102,19 +3103,20 @@ SIP_DECL(sis900_mii_writereg)(struct device *self, int phy, int reg, int val)
 	struct sip_softc *sc = (struct sip_softc *) self;
 	u_int32_t enphy;
 
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev >= SIS_REV_635) {
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900) {
 		mii_bitbang_writereg(self, &SIP_DECL(mii_bitbang_ops),
 		    phy, reg, val);
 		return;
 	}
 
+#ifndef SIS900_MII_RESTRICT
 	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return;
+#endif
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
 	    (val << ENPHY_DATA_SHIFT) | (phy << ENPHY_PHYADDR_SHIFT) |
