@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.1 1998/02/07 00:46:52 cgd Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -53,9 +53,7 @@ struct cfattach ofisa_ca = {
 	sizeof(struct device), ofisamatch, ofisaattach
 };
 
-struct cfdriver ofisa_cd = {
-	NULL, "ofisa", DV_DULL
-};
+extern struct cfdriver ofisa_cd;
 
 static int	ofisaprint __P((void *, const char *));
 
@@ -64,10 +62,10 @@ ofisaprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char name[64];
 
-	(void)of_packagename(ofp->phandle, name, sizeof name);
+	(void)of_packagename(oba->oba_phandle, name, sizeof name);
 	if (pnp)
 		printf("%s at %s", name, pnp);
 	else
@@ -81,11 +79,11 @@ ofisamatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	const char *compatible_strings[] = { "pnpPNP,a00", NULL };
 	int rv = 0;
 
-	if (of_compatible(ofp->phandle, compatible_strings) != -1)
+	if (of_compatible(oba->oba_phandle, compatible_strings) != -1)
 		rv = 5;
 
 #ifdef _OFISA_MD_MATCH
@@ -102,26 +100,27 @@ ofisaattach(parent, dev, aux)
 	void *aux;
 {
 
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	struct isabus_attach_args iba;
 	struct ofisa_attach_args aa;
 	int child;
 
-	if (ofisa_get_isabus_data(ofp->phandle, &iba) < 0) {
+	if (ofisa_get_isabus_data(oba->oba_phandle, &iba) < 0) {
 		printf(": couldn't get essential bus data\n");
 		return;
 	}
 
 	printf("\n");
 
-	for (child = OF_child(ofp->phandle); child;
+	for (child = OF_child(oba->oba_phandle); child;
 	    child = OF_peer(child)) {
-		if (ofisa_ignore_child(ofp->phandle, child))
+		if (ofisa_ignore_child(oba->oba_phandle, child))
 			continue;
 
 		bzero(&aa, sizeof aa);
 
-		aa.ofp.phandle = child;
+		aa.oba.oba_busname = "ofw";			/* XXX */
+		aa.oba.oba_phandle = child;
 		aa.iot = iba.iba_iot;
 		aa.memt = iba.iba_memt;
 		aa.dmat = iba.iba_dmat;
