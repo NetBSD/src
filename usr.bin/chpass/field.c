@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.10 2004/10/30 17:11:24 dsl Exp $	*/
+/*	$NetBSD: field.c,v 1.11 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.10 2004/10/30 17:11:24 dsl Exp $");
+__RCSID("$NetBSD: field.c,v 1.11 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,7 @@ __RCSID("$NetBSD: field.c,v 1.10 2004/10/30 17:11:24 dsl Exp $");
 
 /* ARGSUSED */
 int
-p_login(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_login(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!*p) {
@@ -85,10 +82,7 @@ p_login(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_passwd(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_passwd(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!*p)
@@ -103,10 +97,7 @@ p_passwd(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_uid(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_uid(const char *p, struct passwd *pw, ENTRY *ep)
 {
 	unsigned long id;
 	char *np;
@@ -135,10 +126,7 @@ p_uid(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_gid(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_gid(const char *p, struct passwd *pw, ENTRY *ep)
 {
 	struct group *gr;
 	unsigned long id;
@@ -172,10 +160,7 @@ p_gid(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_class(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_class(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!*p)
@@ -190,10 +175,7 @@ p_class(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_change(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_change(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!atot(p, &pw->pw_change))
@@ -204,10 +186,7 @@ p_change(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_expire(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_expire(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!atot(p, &pw->pw_expire))
@@ -218,10 +197,7 @@ p_expire(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_gecos(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_gecos(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!(ep->save = strdup(p))) {
@@ -233,10 +209,7 @@ p_gecos(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_hdir(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_hdir(const char *p, struct passwd *pw, ENTRY *ep)
 {
 
 	if (!*p) {
@@ -252,10 +225,7 @@ p_hdir(p, pw, ep)
 
 /* ARGSUSED */
 int
-p_shell(p, pw, ep)
-	const char *p;
-	struct passwd *pw;
-	ENTRY *ep;
+p_shell(const char *p, struct passwd *pw, ENTRY *ep)
 {
 	const char *t;
 
