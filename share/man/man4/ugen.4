@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.8 1999/08/23 12:32:19 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,6 +113,9 @@ calls:
 Allow short read transfer.  Normally a transfer from the device
 which is shorter than the request specified is reported as an
 error.
+.It Dv USB_SET_TIMEOUT (int)
+Set the timeout on the device operations, the time is specified
+in milliseconds.
 .It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
 .It Dv USB_SET_CONFIG (int)
@@ -261,6 +264,14 @@ and
 .Dv alt_index
 should be set to
 .Dv USB_CURRENT_ALT_INDEX .
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ugenN.EE
+Endpoint
+.Pa EE
+of device
+.Pa N .
+.El
 .Sh SEE ALSO
 .Xr usb 4
 .Sh HISTORY
