@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.15 2005/01/31 02:51:17 thorpej Exp $	*/
+/*	$NetBSD: iopl.c,v 1.16 2005/02/26 12:12:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.15 2005/01/31 02:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.16 2005/02/26 12:12:10 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -341,7 +341,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_LAN_TRANSMIT_INFO,
 	    &param, sizeof(param), NULL);
-	if (rv != 0);
+	if (rv != 0)
 		return;
 
 	tmp = le32toh(param.p.ti.txmodes);
