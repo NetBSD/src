@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.23 2000/06/15 13:44:22 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.24 2000/06/24 00:15:52 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.132 2000/06/15 13:41:49 itojun Exp $	*/
 
 /*
@@ -1554,7 +1554,7 @@ key_spdadd(so, m, mhp)
 		printf("key_spdadd: Invalid SP direction.\n");
 #endif
 		mhp->msg->sadb_msg_errno = EINVAL;
-		return NULL;
+		return 0;
 	}
 
 	/* check policy */
@@ -1872,7 +1872,7 @@ key_spddelete2(so, m, mhp)
 		printf("key_spddelete2: invalid message is passed.\n");
 #endif
 		key_senderror(so, m, EINVAL);
-		return NULL;
+		return 0;
 	}
 
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
@@ -4860,7 +4860,7 @@ key_add(so, m, mhp)
 #endif
 		return key_senderror(so, m, EINVAL);
 	}
-	if (mhp->extlen[SADB_EXT_SA] == NULL < sizeof(struct sadb_sa) ||
+	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
 		/* XXX need more */
@@ -4916,7 +4916,7 @@ key_add(so, m, mhp)
 	}
 
 	/* check SA values to be mature. */
-	if ((error = key_mature(newsav)) != NULL) {
+	if ((error = key_mature(newsav)) != 0) {
 		key_freesav(newsav);
 		return key_senderror(so, m, error);
 	}
