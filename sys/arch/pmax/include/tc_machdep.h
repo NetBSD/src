@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.8.4.4 2000/02/03 09:46:48 nisimura Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.8.4.5 2000/03/14 09:45:55 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -77,7 +77,7 @@ typedef int32_t		tc_offset_t;
 
 extern int badaddr	 __P((void *, u_int));
 
-#define TC_KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
-#define TC_C(x)	 ((void *)(u_long)(x))
+#define KV(x)	((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+#define C(x)	((void *)(u_long)(x))
 
 #endif /* __MACHINE_TC_MACHDEP_H__*/
