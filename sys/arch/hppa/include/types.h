@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2004/07/19 03:12:31 chs Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -74,5 +74,13 @@ typedef int			register_t;
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
 #define	__HAVE_MD_RUNQUEUE
 #define	__HAVE_RAS
+
+/*
+ * On hppa, declaring RAS labels as functions doesn't work, since the toolchain
+ * will construct PLABELs for them.  Make them "const char []" instead.
+ */
+
+#define	RAS_DECL(name)							\
+extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 
 #endif	/* _HPPA_TYPES_H_ */
