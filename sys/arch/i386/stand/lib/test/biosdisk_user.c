@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_user.c,v 1.3 1999/03/30 11:51:35 drochner Exp $	*/
+/*	$NetBSD: biosdisk_user.c,v 1.4 1999/04/01 16:09:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -53,11 +53,11 @@
 static int currentdev, currentdte;
 static int fd = -1;
 
-void
-get_diskinfo(d)
-	struct biosdisk_ll *d;
+int
+get_diskinfo(dev)
+	int dev;
 {
-	int i;
+	int i, retval;
 
 	if (fd != -1) {
 		close(fd);
@@ -68,26 +68,28 @@ get_diskinfo(d)
 	for (;;) {
 		if (emuldisktab[i].biosdev == -1)
 			break;
-		if (emuldisktab[i].biosdev == d->dev)
+		if (emuldisktab[i].biosdev == dev)
 			goto ok;
 		i++;
 	}
-	warnx("unknown device %x", d->dev);
-	return;
+	warnx("unknown device %x", dev);
+	return (0); /* triggers error in set_geometry() */
 
 ok:
 	fd = open(emuldisktab[i].name, O_RDONLY, 0);
 	if (fd < 0) {
 		warn("open %s", emuldisktab[i].name);
-		return;
+		return (0);
 	}
 
-	currentdev = d->dev;
+	currentdev = dev;
 	currentdte = i;
 
-	d->sec = emuldisktab[i].spt;
-	d->head = emuldisktab[i].heads - 1;
-	d->cyl = emuldisktab[i].cyls;
+	retval = ((emuldisktab[i].cyls - 1) & 0xff) << 16;
+	retval |= ((emuldisktab[i].cyls - 1) & 0x300) << 6;
+	retval |= emuldisktab[i].spt << 8;
+	retval |= emuldisktab[i].heads - 1;
+	return (retval);
 }
 
 int
