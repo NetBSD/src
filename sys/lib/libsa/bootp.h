@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.2 1994/10/26 05:44:39 cgd Exp $	*/
+/*	$NetBSD: bootp.h,v 1.3 1996/09/26 23:22:01 cgd Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -26,7 +26,7 @@ struct bootp {
 	unsigned char	bp_htype;	/* hardware addr type */
 	unsigned char	bp_hlen;	/* hardware addr length */
 	unsigned char	bp_hops;	/* gateway hops */
-	unsigned long	bp_xid;		/* transaction ID */
+	unsigned int	bp_xid;		/* transaction ID */
 	unsigned short	bp_secs;	/* seconds since boot began */
 	unsigned short	bp_unused;
 	struct in_addr	bp_ciaddr;	/* client IP address */
@@ -94,7 +94,7 @@ struct bootp {
 
 struct cmu_vend {
 	unsigned char	v_magic[4];	/* magic number */
-	unsigned long	v_flags;	/* flags/opcodes, etc. */
+	unsigned int	v_flags;	/* flags/opcodes, etc. */
 	struct in_addr	v_smask;	/* Subnet mask */
 	struct in_addr	v_dgate;	/* Default gateway */
 	struct in_addr	v_dns1, v_dns2; /* Domain name servers */
