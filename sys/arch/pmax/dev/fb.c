@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.25 1999/04/26 23:26:11 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.26 1999/07/25 22:50:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@
 #include <sys/proc.h>
 #include <sys/mman.h>
 #include <sys/syslog.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <miscfs/specfs/specdev.h>
@@ -165,15 +166,15 @@ u_short defCursor[32] = {
 #include <sys/device.h>
 #include "fb.h"
 
+struct fbdev {
+	struct	fbinfo fd_info;
+	caddr_t	fd_base;
+} static fbdevs[NFB];
 
-static struct {
-	struct fbinfo *cd_devs[NFB];
-	int cd_ndevs;
-} fbcd =   { {NULL}, 0} ;
+static u_int	fbndevs;		/* number of devices */
+static u_char	cmap_bits[768];		/* colormap for console */
 
 void fbattach __P((int n));
-
-
 
 /*
  * attach routine: required for pseudo-device
@@ -182,50 +183,24 @@ void
 fbattach(n)
 	int n;
 {
-	/* allocate space  for n framebuffers... */
+
 }
 
 /*
  * Connect a framebuffer, described by a struct fbinfo, to the
- * raster-console pseudo-device subsystem. )This would be done
+ * raster-console pseudo-device subsystem. (This would be done
  * with BStreams, if only we had them.)
  */
 void
-fbconnect (name, info, silent)
+fbconnect (name, info, console)
 	char *name;
 	struct fbinfo *info;
-	int silent;
+	int console;
 {
-	int fbix;
-	static int first = 1;
-
-#ifndef FBDRIVER_DOES_ATTACH
-	/*
-	 * See if we've already configured this frame buffer;
-	 * if not, find an "fb" pseudo-device entry for it.
-	 */
-	for (fbix = 0; fbix < fbcd.cd_ndevs; fbix++)
-		if ((fbcd.cd_devs [fbix]->fi_type.fb_boardtype
-		     == info -> fi_type.fb_boardtype)
-		    && fbcd.cd_devs [fbix]->fi_unit == info -> fi_unit)
-			break;
-
-	if (fbix >= fbcd.cd_ndevs) {
-		if (fbcd.cd_ndevs >= NFB) {
-			printf("fb: more frame buffers probed than configured!\n");
-			return;
-		}
-
-		fbix = fbcd.cd_ndevs++;
-		fbcd.cd_devs [fbix] = info;
-	} else
-		info = fbcd.cd_devs [fbix];
-#endif /* FBDRIVER_DOES_ATTACH */
-
 	/*
 	 * If this is the first frame buffer we've seen, pass it to rcons.
 	 */
-	if (first) {
+	if (console) {
 		extern dev_t cn_in_dev;	/* XXX rcons hackery */
 
 		/* Only the first fb gets 4.4bsd/pmax style event ringbuffer */
@@ -234,22 +209,67 @@ fbconnect (name, info, silent)
 		/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 		rcons_connect (info);
 #endif  /* NRASTERCONSOLE */
-		first = 0;
-	}
-
-	if (!silent)
-		printf (": (%dx%dx%d)%s",
-			info -> fi_type.fb_width,
-			info -> fi_type.fb_height,
-			info -> fi_type.fb_depth,
-			(fbix != 0 ? ""
-			 : ((cn_tab -> cn_pri == CN_REMOTE)
-			    ? " (rcons)" : " (console)")));
-	return;
+	} else 
+		printf(": %dx%dx%d%s", info->fi_type.fb_width, 
+		    info->fi_type.fb_height, info->fi_type.fb_depth, 
+		    (console ? " (console)" : ""));
 }
 
 
-#include "fb_usrreq.c"	/* old pm-compatblie driver that supports X11R5 */
+/*
+ * Allocate a 'struct fbinfo' for a new fb device. Return zero on success 
+ * (i.e. if the device has not been configured before). Always return ptr 
+ * to struct fbinfo in 'fip' for that device, unless there are more fb's
+ * probed than configured.
+ */
+int
+fballoc(base, fip)
+	caddr_t base;
+	struct fbinfo **fip;
+{
+	int i;
+
+	if (base == NULL)
+		printf("fballoc: base == NULL");
+
+	for (i = 0; i < NFB; i++) {
+		/* Free entry? */
+		if (fbdevs[i].fd_base == NULL)
+			break;
+			
+		/* Already configured? */
+		if (fbdevs[i].fd_base == base) {
+			*fip = &fbdevs[i].fd_info;
+			return (-1);
+		}
+	}
+			
+	if (i == NFB) {
+		printf("fballoc: more framebuffers probed than configured!\n");
+		*fip = NULL;
+		return (-1);
+	}
+	
+	fbndevs = i + 1;
+	fbdevs[i].fd_base = base;
+	*fip = &fbdevs[i].fd_info;
+	
+	/* Console? */
+	if (i == 0)
+		(*fip)->fi_cmap_bits = cmap_bits;
+	else {
+		(*fip)->fi_cmap_bits = malloc(768, M_DEVBUF, M_NOWAIT);
+		if ((*fip)->fi_cmap_bits == NULL) {
+			printf("fballoc: no memory for cmap\n");
+			return (-1);
+		}
+	}
+		
+	return (0);
+}
+
+
+#include "fb_usrreq.c"	/* old pm-compatible driver that supports X11R5/R6 */
 
 
 /*
@@ -299,14 +319,4 @@ tb_kbdmouseconfig(fi)
 	};
 
 	return (0);
-}
-
-/*
- * pre-rcons glass-tty emulator (stub)
- */
-void
-fbScreenInit(fi)
-	struct fbinfo *fi;
-{
-	/* how to do this on rcons ? */
 }
