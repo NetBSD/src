@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.54 2000/03/19 01:43:25 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.55 2000/04/03 01:48:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.54 2000/03/19 01:43:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.55 2000/04/03 01:48:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,8 +223,7 @@ cia_init(ccp, mallocsafe)
 	 */
 	if ((pci_use_bwx || bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
-	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
-	    alpha_amask(ALPHA_AMASK_BWX) == 0) {
+	    (cpu_amask & ALPHA_AMASK_BWX) != 0) {
 		u_int32_t ctrl;
 
 		if (pci_use_bwx)
