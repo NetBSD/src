@@ -1,4 +1,4 @@
-.\" $NetBSD: irframe.4,v 1.7 2001/12/12 15:29:23 augustss Exp $
+.\" $NetBSD: irframe.4,v 1.8 2002/01/04 11:09:05 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .Cd "irframe* at oboe?"
 .Cd "irframe* at uirda?"
+.Cd "irframe* at ustir?"
 .Cd "pseudo-device irframetty"
 .Pp
 .Cd "#include <dev/irdaio.h>"
@@ -82,6 +83,7 @@ Get the set of allowable turn around times.
 .Xr irframetty 4 ,
 .Xr oboe 4 ,
 .Xr uirda 4
+.Xr ustir 4
 .\" .Xr smccir 4 ,
 .\" .Xr ircomm 8 ,
 .\" .Xr irobex 8
