@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.11 1998/11/04 19:37:56 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.12 1998/11/04 19:40:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.11 1998/11/04 19:37:56 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.12 1998/11/04 19:40:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,10 +421,11 @@ ar_close()
 	if (frmt == NULL) {
 #	ifdef NET2_STAT
 		(void)fprintf(outf, "%s: unknown format, %lu bytes skipped.\n",
+		    argv0, (unsigned long) rdcnt);
 #	else
 		(void)fprintf(outf, "%s: unknown format, %qu bytes skipped.\n",
-#	endif
 		    argv0, (unsigned long long) rdcnt);
+#	endif
 		(void)fflush(outf);
 		flcnt = 0;
 		return;
@@ -433,12 +434,15 @@ ar_close()
 	(void)fprintf(outf,
 #	ifdef NET2_STAT
 	    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
+	    argv0, frmt->name, arvol-1, flcnt,
+	    (unsigned long) rdcnt, 
+	    (unsigned long) wrcnt);
 #	else
 	    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
-#	endif
 	    argv0, frmt->name, arvol-1, flcnt,
 	    (unsigned long long) rdcnt, 
 	    (unsigned long long) wrcnt);
+#	endif
 	(void)fflush(outf);
 	flcnt = 0;
 }
