@@ -1,7 +1,7 @@
-/* $NetBSD: iomd_clock.c,v 1.13 1997/07/31 01:08:01 mark Exp $ */
+/*	$NetBSD: iomd_clock.c,v 1.14 1997/10/14 11:09:56 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,15 +17,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -50,26 +50,87 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
-#include <dev/clock_subr.h>
+#include <sys/device.h>
 
 #include <machine/katelib.h>
-#include <machine/iomd.h>
 #include <machine/irqhandler.h>
-#include <machine/cpu.h>
-#include <machine/rtc.h>
+/*#include <machine/cpu.h>*/
+#include <arm32/iomd/iomdvar.h>
+#include <arm32/iomd/iomdreg.h>
 
-#include "rtc.h"
+struct clock_softc {
+	struct device 		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+};
 
-#if NRTC == 0
-#error "Need at least one RTC device for timeofday management"
-#endif
-
-#define TIMER0_COUNT 20000		/* 100Hz */
+/*#define TIMER0_COUNT  20000*/	/* 100Hz */
 #define TIMER_FREQUENCY 2000000		/* 2MHz clock */
 #define TICKS_PER_MICROSECOND (TIMER_FREQUENCY / 1000000)
 
-static irqhandler_t clockirq;
-static irqhandler_t statclockirq;
+/*static irqhandler_t clockirq;
+static irqhandler_t statclockirq;*/
+static void *clockirq;
+static void *statclockirq;
+static struct clock_softc *clock_sc;
+static int timer0_count;
+
+static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
+static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+
+struct cfattach clock_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, 0
+};
+
+/*
+ * int clockmatch(struct device *parent, void *match, void *aux)
+ *
+ * Just return ok for this if it is device 0
+ */ 
+ 
+static int
+clockmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct clk_attach_args *ca = aux;
+
+	if (strcmp(ca->ca_name, "clk") == 0 && cf->cf_unit == 0)
+		return(1);
+	return(0);
+}
+
+
+/*
+ * void clockattach(struct device *parent, struct device *dev, void *aux)
+ *
+ * Map the IOMD and identify it.
+ * Then configure the child devices based on the IOMD ID.
+ */
+  
+static void
+clockattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct clock_softc *sc = (struct clock_softc *)self;
+	struct clk_attach_args *ca = aux;
+
+	sc->sc_iot = ca->ca_iot;
+	sc->sc_ioh = ca->ca_ioh; /* This is a handle for the whole IOMD */
+
+	clock_sc = sc;
+
+	/* Cannot do anything until cpu_initclocks() has been called */
+	
+	printf("\n");
+}
 
 
 /*
@@ -129,15 +190,24 @@ setstatclockrate(hz)
 	int count;
     
 	count = TIMER_FREQUENCY / hz;
-    
+
 	printf("Setting statclock to %dHz (%d ticks)\n", hz, count);
-    
+
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T1LOW, (count >> 0) & 0xff);
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T1HIGH, (count >> 8) & 0xff);
+
+/*
 	WriteByte(IOMD_T1LOW,  (count >> 0) & 0xff);
 	WriteByte(IOMD_T1HIGH, (count >> 8) & 0xff);
+*/
 
 	/* reload the counter */
 
-	WriteByte(IOMD_T1GO, 0);
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T1GO, 0);
+/*	WriteByte(IOMD_T1GO, 0);*/
 }
 
 
@@ -153,8 +223,6 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
-	int count;
-
 	/*
 	 * Load timer 0 with count down value
 	 * This timer generates 100Hz interrupts for the system clock
@@ -162,29 +230,45 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
-	count = TIMER_FREQUENCY / hz;
-	WriteByte(IOMD_T0LOW,  (count >> 0) & 0xff);
-	WriteByte(IOMD_T0HIGH, (count >> 8) & 0xff);
+	timer0_count = TIMER_FREQUENCY / hz;
+
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0LOW, (timer0_count >> 0) & 0xff);
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0HIGH, (timer0_count >> 8) & 0xff);
 
 	/* reload the counter */
 
-	WriteByte(IOMD_T0GO, 0);
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0GO, 0);
 
+	clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK, "tmr0 hard clk",
+	    clockhandler, 0);
+
+#if 0
 	clockirq.ih_func = clockhandler;
-	clockirq.ih_arg = 0;
+	clockirq.ih_arg = 0;	/* pass trapframe as arg */
 	clockirq.ih_level = IPL_CLOCK;
 	clockirq.ih_name = "TMR0 hard clk";
 	if (irq_claim(IRQ_TIMER0, &clockirq) == -1)
-		panic("Cannot installer timer 0 IRQ handler\n");
+#endif
+	if (clockirq == NULL)
+		panic("%s: Cannot installer timer 0 IRQ handler\n",
+		    clock_sc->sc_dev.dv_xname);
 
 	if (stathz) {
 		setstatclockrate(stathz);
-        
+#if 0
 		statclockirq.ih_func = statclockhandler;
-		statclockirq.ih_arg = 0;
+		statclockirq.ih_arg = 0;	/* pass trapframe as arg */
 		statclockirq.ih_level = IPL_CLOCK;
 		if (irq_claim(IRQ_TIMER1, &clockirq) == -1)
-			panic("Cannot installer timer 1 IRQ handler\n");
+#endif
+       		statclockirq = intr_claim(IRQ_TIMER1, IPL_CLOCK,
+       		    "tmr1 stat clk", statclockhandler, 0);
+		if (statclockirq == NULL)
+			panic("%s: Cannot installer timer 1 IRQ handler\n",
+			    clock_sc->sc_dev.dv_xname);
 	}
 }
 
@@ -212,11 +296,20 @@ microtime(tvp)
 	 * Latch the current value of the timer and then read it.
 	 * This garentees an atmoic reading of the time.
 	 */
+
+	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0LATCH, 0);
  
-	WriteByte(IOMD_T0LATCH, 0);
-	tm = ReadByte(IOMD_T0LOW) + (ReadByte(IOMD_T0HIGH) << 8);
+/*	WriteByte(IOMD_T0LATCH, 0);*/
+
+	tm = bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0LOW);
+	tm += (bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    IOMD_T0HIGH) << 8);
+
+/*	tm = ReadByte(IOMD_T0LOW) + (ReadByte(IOMD_T0HIGH) << 8);*/
 	deltatm = tm - oldtm;
-	if (deltatm < 0) deltatm += TIMER0_COUNT;
+	if (deltatm < 0) deltatm += timer0_count;
 	if (deltatm < 0) {
 		printf("opps deltatm < 0 tm=%d oldtm=%d deltatm=%d\n",
 		    tm, oldtm, deltatm);
@@ -262,117 +355,4 @@ need_proftick(p)
 {
 }
 
-/*
- * Machine-dependent clock routines.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
-
-static int timeset = 0;
-
-/*
- * Write back the time of day to the rtc
- */
-
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-	int s;
-	rtc_t rtc;
-
-	if (!timeset)
-		return;
-
-	/* Convert from secs to ymdhms fields */
-	clock_secs_to_ymdhms(time.tv_sec - (rtc_offset * 60), &dt);
-
-	/* Fill out an RTC structure */
-	rtc.rtc_cen = dt.dt_year / 100;
-	rtc.rtc_year = dt.dt_year % 100;
-	rtc.rtc_mon = dt.dt_mon;
-	rtc.rtc_day = dt.dt_day;
-	rtc.rtc_hour = dt.dt_hour;
-	rtc.rtc_min = dt.dt_min;
-	rtc.rtc_sec = dt.dt_sec;
-	rtc.rtc_centi = 0;
-	rtc.rtc_micro = 0;
-
-/*	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
-	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
-	    rtc.rtc_min, rtc.rtc_sec);*/
-
-	/* Pass the time to the todclock device */
-	s = splclock();
-	rtc_write(&rtc);
-	(void)splx(s);
-}
-
-/*
- * Initialise the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-
-void
-inittodr(base)
-	time_t base;
-{
-	struct clock_ymdhms dt;
-	time_t diff;
-	int s;
-	int days;
-	rtc_t rtc;
-
-	/*
-	 * Get the time from the todclock device
-	 */
-
-	s = splclock();
-	if (rtc_read(&rtc) == 0) {
-		(void)splx(s);
-		return;
-	}
-
-	(void)splx(s);
-
-	/* Convert to clock_ymdhms structure */
-	dt.dt_sec = rtc.rtc_sec;
-	dt.dt_min = rtc.rtc_min;
-	dt.dt_hour = rtc.rtc_hour;
-	dt.dt_day = rtc.rtc_day;
-	dt.dt_mon = rtc.rtc_mon;
-	dt.dt_year = rtc.rtc_year + (rtc.rtc_cen * 100);
-
-	/* Convert to seconds */
-	time.tv_sec = clock_ymdhms_to_secs(&dt) + (rtc_offset * 60);
-	time.tv_usec = 0;
-
-	/* timeset is used to ensure the time is valid before a resettodr() */
-
-	timeset = 1;
-
-	/* If the base was 0 then no time so keep quiet */
-
-	if (base) {
-		printf("inittodr: %02d:%02d:%02d %02d/%02d/%04d\n",
-		    dt.dt_hour, dt.dt_min, dt.dt_sec, dt.dt_day,
-		    dt.dt_mon, dt.dt_year);
-
-		diff = time.tv_sec - base;
-		if (diff < 0)
-			diff = - diff;
-
-		if (diff > 60) {
-			days = diff / 86400;
-			printf("Clock has %s %d day%c %ld hours %ld minutes %ld secs\n",
-			    ((time.tv_sec - base) > 0) ? "gained" : "lost", 
-			    days, ((days == 1) ? 0 : 's'), (diff  / 3600) % 24,
-			    (diff / 60) % 60, diff % 60);
-		}
-	}
-}  
-
-/* End of clock.c */
+/* End of iomd_clock.c */
