@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.367 2004/01/28 21:56:51 augustss Exp $
+$NetBSD: usbdevs,v 1.368 2004/02/19 01:10:42 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -380,6 +380,7 @@ vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
 vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
+vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770  NHJ
 vendor VIDZMEDIA	0x3275	VidzMedia Pte Ltd
@@ -1558,6 +1559,9 @@ product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
 product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
+
+/* Tripp-Lite products */
+product TRIPPLITE U209		0x2008	U209 Serial adapter
 
 /* Trumpion products */
 product	TRUMPION T33521		0x1003	USB/MP3 decoder
