@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.25 1996/11/15 09:19:37 fvdl Exp $
+#	$NetBSD: INSTOTHER,v 1.26 1996/11/16 01:16:44 fvdl Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -28,9 +28,6 @@ maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by
 options		DST=0		# daylight savings time used by RTC
 #options	NTP		# NTP phase/frequency locked loop
-
-options		VNODEPAGER	# mmap() of files
-options		DEVPAGER	# mmap() of devices
 
 #options	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table

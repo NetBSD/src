@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.31 1996/11/15 09:19:34 fvdl Exp $
+#	$NetBSD: GENERICOTHER,v 1.32 1996/11/16 01:16:42 fvdl Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -25,9 +25,6 @@ maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by
 options		DST=0		# daylight savings time used by RTC
 #options	NTP		# NTP phase/frequency locked loop
-
-options		VNODEPAGER	# mmap() of files
-options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
