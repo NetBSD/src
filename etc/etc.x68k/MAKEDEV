@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.49 2002/05/07 14:13:02 isaki Exp $
+#	$NetBSD: MAKEDEV,v 1.50 2002/06/15 11:12:28 isaki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -130,7 +130,7 @@ case $i in
 all)
 	makedev std fd st0 st1 ttye0 ttye1 mouse0 mouse1
 	makedev tty00 tty01 tty02 tty03 com0 com1 grf0 grf1 kbd
-	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	makedev vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 pty0
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev cd0 ss0 fd0 fd1 fd2 fd3
@@ -144,7 +144,7 @@ all)
 	;;
 
 floppy)
-	makedev std fd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	makedev std fd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	makedev tty00 cd0 ttye0 opty
 	;;
 
