@@ -40,7 +40,7 @@ arc
 
 arm26
 
-arm32			not yet
+arm32
 
 atari
 
@@ -74,7 +74,7 @@ mipsco
 
 mmeye
 
-mvme68k		not yet
+mvme68k
 
 news68k
 
@@ -84,9 +84,9 @@ next68k
 
 ofppc
 
-pc532		not yet
+pc532
 
-pmax		not yet
+pmax
 
 prep
 
@@ -102,7 +102,6 @@ sparc64		compiles		tested on U5(+siop)
 
 sun3
 
-vax		not yet
+vax
 
 x68k
-
