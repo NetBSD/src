@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.9 2000/06/13 01:21:53 simonb Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.10 2000/12/13 21:58:56 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ const ns_dbt	*_nsdbtget __P((const char *));
 int		 _nsdbtput __P((const ns_dbt *));
 void		 _nsyyerror __P((const char *));
 int		 _nsyylex __P((void));
-int		 _nsyylineno;
+extern int	 _nsyylineno;
 #endif /* _NS_PRIVATE */
 
 __END_DECLS
