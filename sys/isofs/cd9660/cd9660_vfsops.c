@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.57 2001/09/15 16:12:57 chs Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.58 2001/09/15 20:36:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,6 +99,10 @@ struct vfsops cd9660_vfsops = {
 	cd9660_mountroot,
 	cd9660_check_export,
 	cd9660_vnodeopv_descs,
+};
+
+struct genfs_ops cd9660_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -937,6 +941,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 	
+	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

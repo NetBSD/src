@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.17 2001/09/15 20:36:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -112,15 +112,14 @@ ext2fs_read(v)
 	if (vp->v_type == VREG) {
 		error = 0;
 		while (uio->uio_resid > 0) {
-
 			bytelen = MIN(ip->i_e2fs_size - uio->uio_offset,
 			    uio->uio_resid);
 
 			if (bytelen == 0) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
-					&bytelen, UBC_READ);
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
+			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
 			if (error) {
@@ -145,18 +144,13 @@ ext2fs_read(v)
 
 		if (lblktosize(fs, nextlbn) >= ip->i_e2fs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
-		else if (doclusterread)
-			error = cluster_read(vp,
-				ip->i_e2fs_size, lbn, size, NOCRED, &bp);
-		else if (lbn - 1 == vp->v_lastr) {
+		else {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
 				size, &nextlbn, &nextsize, 1, NOCRED, &bp);
-		} else
-			error = bread(vp, lbn, size, NOCRED, &bp);
+		}
 		if (error)
 			break;
-		vp->v_lastr = lbn;
 
 		/*
 		 * We should only get non-zero b_resid when an I/O error
@@ -213,7 +207,6 @@ ext2fs_write(v)
 	vsize_t bytelen;
 	void *win;
 	off_t oldoff;
-	boolean_t rv;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -271,17 +264,12 @@ ext2fs_write(v)
 			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
-			/*
-			 * XXXUBC if file is mapped and this is the last block,
-			 * process one page at a time.
-			 */
-
 			error = ext2fs_balloc_range(vp, uio->uio_offset,
 			    bytelen, ap->a_cred, 0);
 			if (error) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -295,13 +283,18 @@ ext2fs_write(v)
 			 */
 
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-				rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-				    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+				simple_lock(&vp->v_uobj.vmobjlock);
+				error = vp->v_uobj.pgops->pgo_put(
+				    &vp->v_uobj, (oldoff >> 16) << 16,
 				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-				simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 			}
 		}
+		if (error == 0 && ioflag & IO_SYNC) {
+			simple_lock(&vp->v_uobj.vmobjlock);
+			error = vp->v_uobj.pgops->pgo_put(&vp->v_uobj, oldoff,
+			    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
+		}
+
 		goto out;
 	}
 
@@ -325,10 +318,7 @@ ext2fs_write(v)
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize)
-			if (doclusterwrite)
-				cluster_write(bp, ip->i_e2fs_size);
-			else
-				bawrite(bp);
+			bawrite(bp);
 		else
 			bdwrite(bp);
 		if (error || xfersize == 0)
@@ -344,13 +334,12 @@ out:
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (error) {
-		if (ioflag & IO_UNIT) {
-			(void)VOP_TRUNCATE(vp, osize,
-				ioflag & IO_SYNC, ap->a_cred, uio->uio_procp);
-			uio->uio_offset -= resid - uio->uio_resid;
-			uio->uio_resid = resid;
-		}
+		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
+		    uio->uio_procp);
+		uio->uio_offset -= resid - uio->uio_resid;
+		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+	KASSERT(vp->v_size == ip->i_e2fs_size);
 	return (error);
 }

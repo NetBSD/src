@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2001/09/13 23:56:01 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2001/09/15 20:36:33 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2001/09/13 23:56:01 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2001/09/15 20:36:33 chs Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -563,35 +563,21 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
+
 	if (pv_cachedva == 0) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		s = splvm();
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		splx(s);
 		if (pv_cachedva == 0) {
-			splx(s);
 			return (NULL);
 		}
 	}
 
-	/*
-	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splvm to protect kmem_object
-	 */
-
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
-		return (NULL);
-	}
-
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-			   vm_map_min(kernel_map),
-			   NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
+	    UVM_PGA_USERESERVE);
 	if (pg)
 		pg->flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
-	splx(s);
-	/* splvm now dropped */
 
 	if (pg == NULL)
 		return (NULL);
@@ -3193,15 +3179,6 @@ pmap_clearbit(pa, maskbits)
 	 */
 	for (pv = pvh->pvh_list; pv; pv = pv->pv_next) {
 		va = pv->pv_va;
-
-		/*
-		 * XXX don't write protect pager mappings
-		 */
-		if (va >= uvm.pager_sva && va < uvm.pager_eva) {
-			printf("pmap_clearbit: found page VA on pv_list\n");
-			continue;
-		}
-
 		pv->pv_flags &= ~maskbits;
 		pte = pmap_pte(pv->pv_pmap, va);
 		KASSERT(pte != NULL);

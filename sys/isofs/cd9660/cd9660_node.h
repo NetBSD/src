@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.21 2001/09/15 16:12:56 chs Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.22 2001/09/15 20:36:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -40,6 +40,8 @@
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  */
 
+#include <miscfs/genfs/genfs_node.h>
+
 /*
  * Theoretically, directories can be more than 2Gb in length,
  * however, in practice this seems unlikely. So, we define
@@ -73,6 +75,7 @@ struct iso_dnode {
 #endif
 
 struct iso_node {
+	struct	genfs_node i_gnode;
 	LIST_ENTRY(iso_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */

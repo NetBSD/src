@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.44 2001/09/15 16:13:04 chs Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.45 2001/09/15 20:36:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -106,6 +106,12 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_mountroot,
 	ufs_check_export,
 	ext2fs_vnodeopv_descs,
+};
+
+struct genfs_ops ext2fs_genfsops = {
+	genfs_size,
+	ext2fs_gop_alloc,
+	genfs_gop_write,
 };
 
 struct pool ext2fs_inode_pool;
@@ -789,7 +795,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 		{   
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -872,7 +878,7 @@ ext2fs_vget(mp, ino, vpp)
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct inode));
+	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;
@@ -887,6 +893,7 @@ ext2fs_vget(mp, ino, vpp)
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
+
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
@@ -894,12 +901,14 @@ ext2fs_vget(mp, ino, vpp)
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 			  (int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
+
 		/*
 		 * The inode does not contain anything useful, so it would
 		 * be misleading to leave it on its hash chain. With mode
 		 * still zero, it will be unlinked and returned to the free
 		 * list by vput().
 		 */
+
 		vput(vp);
 		brelse(bp);
 		*vpp = NULL;
@@ -920,6 +929,7 @@ ext2fs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
+
 	error = ext2fs_vinit(mp, ext2fs_specop_p, ext2fs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
@@ -929,12 +939,16 @@ ext2fs_vget(mp, ino, vpp)
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &ext2fs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
+
 	/*
 	 * Set up a generation number for this inode if it does not
 	 * already have one. This should only happen on old filesystems.
 	 */
+
 	if (ip->i_e2fs_gen == 0) {
 		if (++ext2gennumber < (u_long)time.tv_sec)
 			ext2gennumber = time.tv_sec;
@@ -942,8 +956,7 @@ ext2fs_vget(mp, ino, vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-
-	vp->v_uvm.u_size = ip->i_e2fs_size;
+	vp->v_size = ip->i_e2fs_size;
 	*vpp = vp;
 	return (0);
 }

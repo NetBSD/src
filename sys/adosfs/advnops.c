@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.60 2001/05/30 11:40:35 mrg Exp $	*/
+/*	$NetBSD: advnops.c,v 1.61 2001/09/15 20:36:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -144,7 +144,7 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_update_desc, adosfs_update },		/* update */
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
-	{ &vop_size_desc, genfs_size },			/* size */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 
@@ -279,7 +279,7 @@ adosfs_read(v)
 			if (bytelen == 0) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -314,8 +314,6 @@ adosfs_read(v)
 			brelse(bp);
 			goto reterr;
 		}
-		sp->a_vp->v_lastr = lbn;
-
 		if (!IS_FFS(amp)) {
 			if (bp->b_resid > 0)
 				error = EIO; /* OFS needs the complete block */
@@ -875,7 +873,7 @@ adosfs_inactive(v)
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, (struct simplelock *)0, p);
+	vrecycle(vp, NULL, p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
@@ -912,7 +910,6 @@ adosfs_reclaim(v)
 	vp->v_data = NULL;
 	return(0);
 }
-
 
 /*
  * POSIX pathconf info, grabbed from kern/u fs, probably need to 

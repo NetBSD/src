@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.16 2001/07/19 16:36:16 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.17 2001/09/15 20:36:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -820,7 +820,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
 		s = splvm();
 		/* XXX */
-		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, NULL,
 		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
 		splx(s);
 		data = (void *)ccb->ccb_abuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.5 2001/09/15 16:12:56 chs Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.6 2001/09/15 20:36:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -36,6 +36,8 @@
  *	filecore_node.h		1.1	1998/6/26
  */
 
+#include <miscfs/genfs/genfs_node.h>
+
 /*
  * In a future format, directories may be more than 2Gb in length,
  * however, in practice this seems unlikely. So, we define
@@ -46,6 +48,7 @@
 #define doff_t	long
 
 struct filecore_node {
+	struct	genfs_node i_gnode;
 	LIST_ENTRY(filecore_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.187 2001/08/31 04:44:54 simonb Exp $ */
+/* $NetBSD: pmap.c,v 1.188 2001/09/15 20:36:32 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2001/08/31 04:44:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2001/09/15 20:36:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1482,10 +1482,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pg->mdpage.pvh_slock);
 		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
-			/* XXX Don't write-protect pager mappings. */
-			if (pv->pv_va >= uvm.pager_sva &&
-			    pv->pv_va < uvm.pager_eva)
-				continue;
 			PMAP_LOCK(pv->pv_pmap);
 			if (*pv->pv_pte & (PG_KWE | PG_UWE)) {
 				*pv->pv_pte &= ~(PG_KWE | PG_UWE);

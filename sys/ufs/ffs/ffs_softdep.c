@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.16 2001/09/15 16:33:53 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.17 2001/09/15 20:36:42 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -1544,10 +1544,10 @@ handle_workitem_freefrag(freefrag)
 	vp.v_data = &tip;
 	vp.v_mount = freefrag->ff_devvp->v_specmountpoint;
 	tip.i_vnode = &vp;
-	lockinit(&vp.v_glock, PVFS, "fglock", 0, 0);
-	lockmgr(&vp.v_glock, LK_EXCLUSIVE, NULL);
+	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
+	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
 	ffs_blkfree(&tip, freefrag->ff_blkno, freefrag->ff_fragsize);
-	lockmgr(&vp.v_glock, LK_RELEASE, NULL);
+	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
 	pool_put(&freefrag_pool, freefrag);
 }
 
@@ -2205,8 +2205,8 @@ handle_workitem_freeblocks(freeblks)
 	nblocks = btodb(fs->fs_bsize);
 	blocksreleased = 0;
 
-	lockinit(&vp.v_glock, PVFS, "fglock", 0, 0);
-	lockmgr(&vp.v_glock, LK_EXCLUSIVE, NULL);
+	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
+	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
 
 	/*
 	 * Indirect blocks first.
@@ -2230,7 +2230,7 @@ handle_workitem_freeblocks(freeblks)
 		ffs_blkfree(&tip, bn, bsize);
 		blocksreleased += btodb(bsize);
 	}
-	lockmgr(&vp.v_glock, LK_RELEASE, NULL);
+	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
 
 #ifdef DIAGNOSTIC
 	if (freeblks->fb_chkcnt != blocksreleased)
@@ -4409,7 +4409,7 @@ flush_inodedep_deps(fs, ino)
 
 	vp = softdep_lookupvp(fs, ino);
 	KASSERT(vp != NULL);
-	uobj = &vp->v_uvm.u_obj;
+	uobj = &vp->v_uobj;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -4441,13 +4441,16 @@ flush_inodedep_deps(fs, ino)
 
 		FREE_LOCK(&lk);
 		simple_lock(&uobj->vmobjlock);
-		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
+		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|
 		    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
-		simple_unlock(&uobj->vmobjlock);
 		if (waitfor == MNT_WAIT) {
 			drain_output(vp, 0);
 		}
 		ACQUIRE_LOCK(&lk);
+		if (error) {
+			return error;
+		}
 
 		for (adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
 		     adp = TAILQ_NEXT(adp, ad_next)) {

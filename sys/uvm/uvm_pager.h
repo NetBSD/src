@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.23 2001/05/26 21:27:21 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.24 2001/09/15 20:36:47 chs Exp $	*/
 
 /*
  *
@@ -82,37 +82,36 @@
  */
 
 /*
+ * forward structure declarations
+ */
+
+struct uvm_faultinfo;
+
+/*
  * pager ops
  */
 
 struct uvm_pagerops {
-	void		(*pgo_init) __P((void));/* init pager */
-	void		(*pgo_reference)	/* add reference to obj */
-			 __P((struct uvm_object *));
-	void			(*pgo_detach)	/* drop reference to obj */
-			 __P((struct uvm_object *));
-	int			(*pgo_fault)	/* special nonstd fault fn */
-			 __P((struct uvm_faultinfo *, vaddr_t,
-				 struct vm_page **, int, int, vm_fault_t,
-				 vm_prot_t, int));
-	boolean_t		(*pgo_flush)	/* flush pages out of obj */
-			 __P((struct uvm_object *, voff_t, voff_t, int));
-	int			(*pgo_get)	/* get/read page */
-			 __P((struct uvm_object *, voff_t,
-				 struct vm_page **, int *, int, vm_prot_t, int,
-			         int));
-	int			(*pgo_put)	/* put/write page */
-			 __P((struct uvm_object *, struct vm_page **,
-				 int, boolean_t));
-	void			(*pgo_cluster)	/* return range of cluster */
-			__P((struct uvm_object *, voff_t, voff_t *,
-				voff_t *));
-	struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */
-			 __P((struct uvm_object *, struct vm_page **,
-				 int *, struct vm_page *, int, voff_t,
-				 voff_t));
-	boolean_t		(*pgo_releasepg)	/* release page */
-			 __P((struct vm_page *, struct vm_page **));
+
+	/* init pager */
+	void	(*pgo_init) __P((void));
+
+	/* add reference to obj */
+	void	(*pgo_reference)(struct uvm_object *);
+
+	/* drop reference to obj */
+	void	(*pgo_detach)(struct uvm_object *);
+
+	/* special non-standard fault processing */
+	int	(*pgo_fault)(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
+			     int, int, vm_fault_t, vm_prot_t, int);
+
+	/* get/read pages */
+	int	(*pgo_get)(struct uvm_object *, voff_t, struct vm_page **,
+			   int *, int, vm_prot_t, int, int);
+
+	/* put/write pages */
+	int	(*pgo_put)(struct uvm_object *, voff_t, voff_t, int);
 };
 
 /* pager flags [mostly for flush] */
@@ -124,10 +123,7 @@ struct uvm_pagerops {
 /* if PGO_FREE is not set then the pages stay where they are. */
 
 #define PGO_ALLPAGES	0x010	/* flush whole object/get all pages */
-#define PGO_DOACTCLUST	0x020	/* flag to mk_pcluster to include active */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
-#define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
-#define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
 #define PGO_WEAK	0x400	/* "weak" put, for nfs */
 #define PGO_PASTEOF	0x800	/* allow allocation of pages past EOF */
@@ -151,26 +147,15 @@ struct uvm_pagerops {
  * prototypes
  */
 
-void		uvm_pager_dropcluster __P((struct uvm_object *,
-					struct vm_page *, struct vm_page **,
-					int *, int));
-void		uvm_pager_init __P((void));
-int		uvm_pager_put __P((struct uvm_object *, struct vm_page *,
-				   struct vm_page ***, int *, int,
-				   voff_t, voff_t));
-
+void	uvm_pager_init __P((void));
 PAGER_INLINE struct vm_page *uvm_pageratop __P((vaddr_t));
-
-vaddr_t		uvm_pagermapin __P((struct vm_page **, int, int));
-void		uvm_pagermapout __P((vaddr_t, int));
-struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
-				       int *, struct vm_page *, int,
-				       voff_t, voff_t));
+vaddr_t	uvm_pagermapin __P((struct vm_page **, int, int));
+void	uvm_pagermapout __P((vaddr_t, int));
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
-#define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */
-#define	UVMPAGER_MAPIN_WRITE	0x00	/* device -> host (pseudo flag) */
+#define	UVMPAGER_MAPIN_READ	0x02	/* device -> host */
+#define	UVMPAGER_MAPIN_WRITE	0x00	/* host -> device (pseudo flag) */
 
 /*
  * XXX

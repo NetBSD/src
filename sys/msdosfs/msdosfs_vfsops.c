@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.75 2001/09/15 16:13:01 chs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.76 2001/09/15 20:36:39 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -901,7 +901,7 @@ loop:
 		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		      vp->v_uvm.u_obj.uo_npages == 0))) {
+		      vp->v_uobj.uo_npages == 0))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}

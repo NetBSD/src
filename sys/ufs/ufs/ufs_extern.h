@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.26 2001/09/15 16:13:06 chs Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.27 2001/09/15 20:36:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -160,8 +160,8 @@ int ufs_check_export __P((struct mount *, struct mbuf *, int *,
 		struct ucred **));
 
 /* ufs_vnops.c */
-int ufs_vinit __P((struct mount *, int (**) __P((void *)),
-		   int (**) __P((void *)), struct vnode **));
+void ufs_vinit __P((struct mount *, int (**) __P((void *)),
+    int (**) __P((void *)), struct vnode **));
 int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
 

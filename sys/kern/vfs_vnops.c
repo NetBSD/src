@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.48 2001/04/09 10:22:02 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.49 2001/09/15 20:36:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -200,8 +200,8 @@ vn_marktext(vp)
 	struct vnode *vp;
 {
 	if ((vp->v_flag & VTEXT) == 0) {
-		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages -= vp->v_uobj.uo_npages;
+		uvmexp.vtextpages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag |= VTEXT;
 }
@@ -602,13 +602,17 @@ vn_lock(vp, flags)
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
+			if (flags & LK_NOWAIT) {
+				simple_unlock(&vp->v_interlock);
+				return EBUSY;
+			}
 			vp->v_flag |= VXWANT;
-			ltsleep((caddr_t)vp, PINOD | PNORELOCK,
+			ltsleep(vp, PINOD | PNORELOCK,
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
-			if (error == 0 || error == EDEADLK)
+			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
 		flags &= ~LK_INTERLOCK;

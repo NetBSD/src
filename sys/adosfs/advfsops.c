@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.47 2001/09/15 16:12:54 chs Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.48 2001/09/15 20:36:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -587,8 +587,9 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	*vpp = vp;		/* return vp */
-	brelse(bp);		/* release buffer */
+	*vpp = vp;
+	brelse(bp);
+	vp->v_size = ap->fsize;
 	return (0);
 }
 

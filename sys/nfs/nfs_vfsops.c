@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.107 2001/09/15 16:13:02 chs Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.108 2001/09/15 20:36:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -689,7 +689,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	mp->mnt_stat.f_type = 0;
 #endif
 	mp->mnt_fs_bshift = DEV_BSHIFT;
-	mp->mnt_dev_bshift = -1;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
@@ -882,11 +882,11 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) || 
+		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56 2001/08/18 05:34:46 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.57 2001/09/15 20:36:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -227,7 +227,7 @@ spec_open(v)
 		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
-			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
+			vp->v_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;
 		}
 		return 0;
@@ -262,7 +262,7 @@ spec_read(v)
 	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr_t bn, nextbn;
+	daddr_t bn;
 	int bsize, bscale, ssize;
 	struct partinfo dpart;
 	int n, on, majordev;
@@ -307,13 +307,7 @@ spec_read(v)
 			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
-			if (vp->v_lastr + bscale == bn) {
-				nextbn = bn + bscale;
-				error = breadn(vp, bn, bsize, &nextbn,
-					&bsize, 1, NOCRED, &bp);
-			} else
-				error = bread(vp, bn, bsize, NOCRED, &bp);
-			vp->v_lastr = bn;
+			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
@@ -746,21 +740,4 @@ spec_advlock(v)
 	struct vnode *vp = ap->a_vp;
 
 	return lf_advlock(ap, &vp->v_speclockf, (off_t)0);
-}
-
-/*
- * glue for genfs_{get,put}pages()
- */
-int
-spec_size(v)
-	void *v;
-{
-	struct vop_size_args /* {
-		struct vnode *a_vp;
-		off_t a_size;
-		off_t *a_eobp;
-	} */ *ap = v;
-
-	*ap->a_eobp = ap->a_size;
-	return 0;
 }

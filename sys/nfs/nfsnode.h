@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.33 2001/05/28 02:50:53 chs Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.34 2001/09/15 20:36:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,8 @@
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
 #endif
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
 
 /*
  * Silly rename structure that hangs off the nfsnode until the name
@@ -96,6 +98,7 @@ struct nfsdircache {
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
  */
 struct nfsnode {
+	struct genfs_node	n_gnode;
 	u_quad_t		n_size;		/* Current size of file */
 	u_quad_t		n_brev;		/* Modify rev when cached */
 	u_quad_t		n_lrev;		/* Modify rev for lease */
@@ -239,6 +242,7 @@ int	nfs_truncate	__P((void *));
 int	nfs_update	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
+int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
 
