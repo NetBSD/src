@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.24 1994/07/29 00:52:20 grantham Exp $
+ *	$Id: machdep.c,v 1.25 1994/07/31 08:22:31 lkestel Exp $
  */
 
 #include <param.h>
@@ -138,6 +138,22 @@ unsigned long		IOBase;
 extern unsigned long	videoaddr;
 extern unsigned long	videorowbytes;
 u_int			cache_copyback = PG_CCB;
+unsigned long		int_video_start, int_video_length;
+
+extern vm_size_t	Sysptsize; /* in pmap.c */
+
+/* These are used to map kernel space: */
+extern int		numranges;
+extern unsigned long	low[8];
+extern unsigned long	high[8];
+
+/* These are used to map NuBus space: */
+#define		NBMAXRANGES	16
+int		nbnumranges;  /* = 0 == don't use the ranges */
+unsigned long	nbphys[NBMAXRANGES];    /* Start physical addr of this range */
+unsigned long	nblog[NBMAXRANGES];     /* Start logical addr of this range */
+/* If the length is negative, the all physical addresses are the same: */
+long		nblen[NBMAXRANGES];     /* Length of this range */
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -181,14 +197,21 @@ consinit(void)
 	 * Generic console: sys/dev/cons.c
 	 *	Initializes either ite or ser as console.
 	 */
-	cninit();
+
+	/* Cause called from locore sometimes: */
+	static int	init; /* = 0 */
+
+	if (!init) {
+		cninit();
 
 #ifdef  DDB
-	/*
-	 * Initialize kernel debugger, if compiled in.
-	 */
-	ddb_init();
+		/*
+		 * Initialize kernel debugger, if compiled in.
+		 */
+		ddb_init();
 #endif
+		init = 1;
+	}
 }
 
 /*
@@ -204,7 +227,7 @@ cpu_startup(void)
 	extern long Usrptsize;
 	extern struct map *useriomap;
 	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vm_size_t size = 0; /* To avoid compiler warning */
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -1933,51 +1956,6 @@ cpu_exec_prep_oldzmagic(p, epp)
 }
 #endif /* COMPAT_NOMID */
 
-#if defined(MACHINE_NONCONTIG)
-/*
- * LAK: These functions are from NetBSD/i386 and are used for
- *  the non-contiguous memory machines, such as the IIci and IIsi.
- *  See the functions in sys/vm that ifdef MACHINE_NONCONTIG.
- */
-
-unsigned int
-pmap_free_pages()
-{
-
-	return avail_remaining;
-}
-
-int
-pmap_next_page(addrp)
-	vm_offset_t *addrp;
-{
-
-	if (avail_next == avail_end)
-		return FALSE;
-	
-	/* skip the hole */
-	if (avail_next == hole_start)
-		avail_next = hole_end;
-	
-	*addrp = avail_next;
-	avail_next += NBPG;
-	avail_remaining--;
-	return TRUE;
-}
-
-unsigned int
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-
-	if (pa >= avail_start && pa < hole_start)
-		return i386_btop(pa - avail_start);
-	if (pa >= hole_end && pa < avail_end)
-		return i386_btop(pa - hole_end + hole_start - avail_start);
-	return -1;
-}
-#endif  /* MACHINE_NONCONTIG */
-
 void ddprintf (char *fmt, int val)
 {
 #if 0
@@ -2564,4 +2542,291 @@ gray_bar(void)
    asm("movl sp@+, d0");
    asm("movl sp@+, a1");
    asm("movl sp@+, a0");
+}
+
+extern int	get_pte (unsigned int addr, unsigned long pte[2],
+			unsigned short *psr); /* in locore */
+
+/*
+ * LAK (7/24/94): given a logical address, puts the physical address
+ *  in *phys and return 1, or returns 0 on failure.  This is intended
+ *  to look through MacOS page tables.
+ */
+
+unsigned long get_physical (unsigned int addr, unsigned long *phys)
+{
+	unsigned long		pte[2], ph;
+	unsigned short		psr;
+	int			i, numbits;
+	extern unsigned int	macos_tc;
+
+	i = get_pte (addr, pte, &psr);
+
+	switch (i) {
+		case -1:	return 0;
+		case 0:		ph = pte[0] & 0xFFFFFF00; break;
+		case 1:		ph = pte[1] & 0xFFFFFF00; break;
+		default:	panic ("get_physical(): bad get_pte()");
+	}
+
+	/*
+	 * We must now figure out how many levels down we went and
+	 * mask the bits appropriately -- the returned value may only
+	 * be the upper n bits, and we've got to take the rest from addr.
+	 */
+
+	numbits = 0;
+	psr &= 0x0007;	/* Number of levels we went */
+	for (i = 0; i < psr; i++) {
+		numbits += (macos_tc >> (12 - i * 4)) & 0x0f;
+	}
+
+	/*
+	 * We have to take the most significant "numbits" from
+	 * the returned value "ph", and the rest from our addr.
+	 * Assume that the lower (32-numbits) bits of ph are
+	 * already zero.  Also assume numbits != 0.  Also, notice
+	 * that this is an addition, not an "or".
+	 */
+
+	*phys = ph + (addr & ((1 << (32 - numbits)) - 1));
+
+	return 1;
+}
+
+void printstar (void)
+{
+	/*
+	 * Be careful calling this from assembly, it doesn't seem to
+	 * save these registers properly.
+	 */
+
+	asm("movl a0, sp@-");
+	asm("movl a1, sp@-");
+	asm("movl d0, sp@-");
+	asm("movl d1, sp@-");
+
+	/* printf ("*"); */
+
+	asm("movl sp@+, d1");
+	asm("movl sp@+, d0");
+	asm("movl sp@+, a1");
+	asm("movl sp@+, a0");
+}
+
+/*
+ * Find out how MacOS has mapped itself so we can do the same thing.
+ * Returns the address of logical 0 so that locore can map the kernel
+ * properly.
+ */
+unsigned int get_mapping (void)
+{
+	int			i, same;
+	unsigned long		addr;
+	unsigned long		phys;
+
+	numranges = 0;
+	for (i = 0; i < 8; i++) {
+		low[i] = 0;
+		high[i] = 0;
+	}
+
+	for (addr = 0; get_physical (addr, &phys); addr += NBPG) {
+		/* printf ("0x%x --> 0x%x\n", addr, phys); */
+		if (numranges > 0 && phys == high[numranges - 1]) {
+			high[numranges - 1] += NBPG;
+		} else {
+			numranges++;
+			low[numranges - 1] = phys;
+			high[numranges - 1] = phys + NBPG;
+		}
+	}
+#if 1
+	for (i = 0; i < numranges; i++) {
+		printf ("Low = 0x%x, high = 0x%x\n", low[i], high[i]);
+	}
+	printf ("%d bytes available (%d pages)\n", addr, addr / NBPG);
+#endif
+
+	/*
+	 * We should now look through all of NuBus space to find where
+	 * the internal video is being mapped.  Just to be sure we handle
+	 * all the cases, we simply map our NuBus space exactly how
+	 * MacOS did it.  As above, we find a bunch of ranges that are
+	 * contiguously mapped.  Since there are a lot of pages that
+	 * are all mapped to 0, we handle that as a special case where
+	 * the length is negative.  We search in increments of 32768
+	 * because that's the page size that MacOS uses.
+	 */
+
+	int_video_start = 0;	/* Logical address */
+	int_video_length = 0;	/* Length in bytes */
+
+#if 0
+	for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
+		/*
+		 * If this address is not mapped, skip it, cause we're
+		 * not interested.  I don't think this happens in
+		 * NuBus space.
+		 */
+		if (get_physical (addr, &phys) && addr != phys) {
+			break;
+		}
+	}
+
+	/*
+	 * We must do some guessing here because the pages map
+	 * like to these physical locations: 0, 0, 32768, 65536, ..., 
+	 * 0, 0, 0, ....  Hence the bizarre checks below.
+	 */
+
+	if (addr < 0xFF000000) {
+		/* Assume only one such block */
+		do {
+			printf ("0x%x --> 0x%x\n", addr, phys);
+			if (phys == 32768) {
+				int_video_start = addr - 32768;
+			}
+			addr += 32768;
+		} while ((addr & 0x00FFFFFF) && get_physical (addr, &phys) &&
+			addr != phys && !(int_video_start != 0 && phys == 0));
+		int_video_length = addr - int_video_start;
+	}
+#else
+	nbnumranges = 0;
+	for (i = 0; i < NBMAXRANGES; i++) {
+		nbphys[i] = 0;
+		nblog[i] = 0;
+		nblen[i] = 0;
+	}
+
+	same = 0;
+	for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
+		if (!get_physical (addr, &phys)) {
+			continue;
+		}
+		/* printf ("0x%x --> 0x%x\n", addr, phys); */
+		if (nbnumranges > 0 &&
+			addr == nblog[nbnumranges-1] + nblen[nbnumranges-1] &&
+			phys == nbphys[nbnumranges-1]) { /* Same as last one */
+			nblen[nbnumranges-1] += 32768;
+			same = 1;
+		} else if (nbnumranges > 0 && !same &&
+			addr == nblog[nbnumranges-1] + nblen[nbnumranges-1] &&
+			phys == nbphys[nbnumranges-1] + nblen[nbnumranges-1]) {
+			nblen[nbnumranges-1] += 32768;
+		} else {
+			if (same) {
+				nblen[nbnumranges-1] = -nblen[nbnumranges-1];
+				same = 0;
+			}
+			if (nbnumranges == NBMAXRANGES) {
+				printf ("get_mapping(): Too many NuBus "
+					"ranges.\n");
+				break;
+			}
+			nbnumranges++;
+			nblog[nbnumranges-1] = addr;
+			nbphys[nbnumranges-1] = phys;
+			nblen[nbnumranges-1] = 32768;
+		}
+	}
+	if (same) {
+		nblen[nbnumranges-1] = -nblen[nbnumranges-1];
+		same = 0;
+	}
+#if 1
+	for (i = 0; i < nbnumranges; i++) {
+		printf ("Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%ld)\n",
+			nblog[i], nbphys[i], nblen[i], nblen[i]);
+	}
+#endif
+
+	/*
+	 * We must now find the logical address of internal video in the
+	 * ranges we made above.  Internal video is at physical 0, but
+	 * a lot of pages map there.  Instead, we look for the logical
+	 * page that maps to 32768 and go back one page.
+	 */
+
+	for (i = 0; i < nbnumranges; i++) {
+		if (nblen[i] > 0 && nbphys[i] <= 32768 &&
+			32768 <= nbphys[i] + nblen[i]) {
+			int_video_start = nblog[i] - nbphys[i];
+			/* XXX Guess: */
+			int_video_length = nblen[i] + nbphys[i];
+			break;
+		}
+	}
+	if (i == nbnumranges) {
+		printf ("get_mapping(): no internal video.\n");
+	}
+#endif
+
+	printf ("  Video address = 0x%x\n", videoaddr);
+	printf ("  Weird mapping starts at 0x%x\n", int_video_start);
+	printf ("  Length = 0x%x (%d) bytes\n", int_video_length, int_video_length);
+
+	return low[0];	 /* Return physical address of logical 0 */
+}
+
+static void remap_kernel (unsigned long *pt)
+{
+	int		i, len, numleft;
+	unsigned long	pte;
+
+	numleft = Sysptsize * NPTEPG;
+	for (i = 0; i < numranges; i++) {
+		pte = low[i] & PG_FRAME;
+		len = (high[i] - low[i]) >> PGSHIFT;
+		while (len--) {
+			if ((*pt & PG_V) == 0 || numleft == 0) {
+				/* End of kernel mapping */
+				return;
+			}
+			*pt = (*pt & ~PG_FRAME) | pte;
+			pt++;
+			numleft--;
+			pte += NBPG;
+		}
+	}
+	/* Not likely to get here */
+}
+
+static void remap_nubus (unsigned long *pt)
+{
+	int		i, len;
+	unsigned long	*pteptr, pte, offset;
+
+	for (i = 0; i < nbnumranges; i++) {
+		pteptr = pt + ((nblog[i] - NBBASE) >> PGSHIFT);
+		pte = (nbphys[i] & PG_FRAME) | PG_RW | PG_CI | PG_V;
+		if (nblen[i] < 0) {
+			len = -nblen[i] >> PGSHIFT;
+			offset = 0;
+			while (len--) {
+				*pteptr++ = pte + offset;
+				/* Wrap around every 32k: */
+				offset = (offset + NBPG) & 0x7fff;
+			}
+		} else {
+			len = nblen[i] >> PGSHIFT;
+			while (len--) {
+				*pteptr++ = pte;
+				pte += NBPG;
+			}
+		}
+	}
+}
+
+/*
+ * LAK: (7/30/94) This function remaps kernel and NuBus pages the way they
+ *  were done in MacOS.  "pt" is the address of the first kernel page table.
+ */
+
+void remap_MMU (unsigned long pt)
+{
+	remap_kernel ((unsigned long *)pt);
+	remap_nubus ((unsigned long *)(pt +
+		((Sysptsize + (IIOMAPSIZE+NPTEPG-1)/NPTEPG) << PGSHIFT)));
 }
