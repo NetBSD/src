@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.47 2002/10/01 12:56:50 fvdl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48 2003/01/31 15:35:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2002/10/01 12:56:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2003/01/31 15:35:04 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,9 @@ mbr_findslice(dp, bp)
 	if (!ourdp) {
 		for (i = 0; i < NMBRPART; i++) {
 			if (dp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+#ifdef DEBUG
 				printf("WARNING: old BSD partition ID!\n");
+#endif
 				ourdp = &dp[i];
  				/*
 				 * If more than one matches, take last,
