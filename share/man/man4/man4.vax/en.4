@@ -1,4 +1,4 @@
-.\"	$NetBSD: en.4,v 1.7 2001/04/11 19:21:18 wiz Exp $
+.\"	$NetBSD: en.4,v 1.8 2001/04/11 19:23:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ is specified at boot time with an
 .Xr ioctl 2 .
 The station address is discovered by probing the on-board Ethernet
 address register, and is used to verify the protocol addresses.
-No packets will be sent or accepted until 
+No packets will be sent or accepted until
 a network address is supplied.
 .Pp
 The interface software implements an exponential backoff algorithm
@@ -137,12 +137,12 @@ painful.
 The hardware does word at a time
 .Tn DMA
 without byte swapping.
-To compensate, byte swapping of user data must either be done 
+To compensate, byte swapping of user data must either be done
 by the user or by the system.  A kludge to byte swap only
 .Tn IP
 packets is provided if the
 .Dv ENF_SWABIPS
 flag is defined in
-the driver and set at boot time with an 
-.Dv SIOCSIFFLAGS 
+the driver and set at boot time with an
+.Dv SIOCSIFFLAGS
 .Xr ioctl 2 .
