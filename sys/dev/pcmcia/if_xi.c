@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.37 2004/08/07 01:18:06 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.38 2004/08/07 01:44:45 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.37 2004/08/07 01:18:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.38 2004/08/07 01:44:45 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -220,45 +220,21 @@ static void xi_pcmcia_power __P((int, void *));
 #define XIFLAGS_MODEM	0x004		/* modem also present */
 
 const struct xi_pcmcia_product {
-	u_int32_t	xpp_vendor;	/* vendor ID */
-	u_int32_t	xpp_product;	/* product ID */
-	int		xpp_expfunc;	/* expected function number */
+	u_int16_t	xpp_id;		/* product ID */
 	int		xpp_flags;	/* initial softc flags */
 } xi_pcmcia_products[] = {
-#ifdef NOT_SUPPORTED
-	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
-	  0,				0 },
-#endif
-	{ PCMCIA_VENDOR_XIRCOM,		0x0141,
-	  0,				0 },
-	{ PCMCIA_VENDOR_XIRCOM,		0x0142,
-	  0,				0 },
-	{ PCMCIA_VENDOR_XIRCOM,		0x0143,
-	  0,				XIFLAGS_MOHAWK },
-	{ PCMCIA_VENDOR_COMPAQ2,	0x0143,
-	  0,				XIFLAGS_MOHAWK },
-	{ PCMCIA_VENDOR_INTEL,		0x0143,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_XE2000,
-	  0,				XIFLAGS_MOHAWK },
-	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_REM56,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
-#ifdef NOT_SUPPORTED
-	{ PCMCIA_VENDOR_XIRCOM,		0x1141,
-	  0,				XIFLAGS_MODEM },
-#endif
-	{ PCMCIA_VENDOR_XIRCOM,		0x1142,
-	  0,				XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		0x1143,
-	  0,				XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		0x1144,
-	  0,				XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		0x1145,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		0x1146,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
-	{ PCMCIA_VENDOR_XIRCOM,		0x1147,
-	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
+	{ 0x0141, 0 },
+	{ 0x0142, 0 },
+	{ 0x0143, XIFLAGS_MOHAWK },
+	{ 0x0153, XIFLAGS_MOHAWK },
+
+	{ 0x1141, XIFLAGS_MODEM },
+	{ 0x1142, XIFLAGS_MODEM },
+	{ 0x1143, XIFLAGS_MODEM },
+	{ 0x1144, XIFLAGS_MODEM },
+	{ 0x1145, XIFLAGS_MOHAWK | XIFLAGS_MODEM },
+	{ 0x1146, XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
+	{ 0x1147, XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM },
 };
 
 
@@ -268,27 +244,22 @@ xi_pcmcia_identify(dev, pa)
         struct pcmcia_attach_args *pa;
 {
 	const struct xi_pcmcia_product *xpp;
-        u_int8_t id;
-	u_int32_t prod;
+        u_int16_t id;
 	int n;
 
 	/*
-	 * The Xircom ethernet cards swap the revision and product fields
-	 * inside the CIS, which makes identification just a little
-	 * bit different.
+	 * The high byte of the product field tells us which types of
+	 * interfaces the card supports (i.e. Ethernet or modem), and the
+	 * revision field tells us which chip we have.
 	 */
         pcmcia_scan_cis(dev, xi_pcmcia_manfid_ciscallback, &id);
 
-	prod = (pa->product & ~0xff) | id;
-
-	DPRINTF(XID_CONFIG, ("product=0x%x\n", prod));
+	DPRINTF(XID_CONFIG, ("id=0x%x\n", id));
 
 	for (xpp = xi_pcmcia_products,
 	    n = sizeof(xi_pcmcia_products) / sizeof(xi_pcmcia_products[0]);
 	    n; xpp++, n--) {
-		if (pa->manufacturer == xpp->xpp_vendor &&
-		    prod == xpp->xpp_product &&
-		    pa->pf->number == xpp->xpp_expfunc)
+		if (id == xpp->xpp_id)
 			return (xpp);
 	}
 	return (NULL);
@@ -757,7 +728,7 @@ xi_pcmcia_manfid_ciscallback(tuple, arg)
 	struct pcmcia_tuple *tuple;
 	void *arg;
 {
-	u_int8_t *id = arg;
+	u_int16_t *id = arg;
 
 	DPRINTF(XID_CONFIG, ("xi_pcmcia_manfid_callback()\n"));
 
@@ -767,7 +738,8 @@ xi_pcmcia_manfid_ciscallback(tuple, arg)
 	if (tuple->length < 2)
 		return (0);
 
-	*id = pcmcia_tuple_read_1(tuple, 4);
+	*id = (pcmcia_tuple_read_1(tuple, 3) << 8) |
+	      pcmcia_tuple_read_1(tuple, 4);
 	return (1);
 }
 
