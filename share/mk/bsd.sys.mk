@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.48 2001/07/04 17:46:06 scw Exp $
+#	$NetBSD: bsd.sys.mk,v 1.49 2001/08/14 11:55:04 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -45,6 +45,9 @@ HOST_CC?=	cc
 HOST_CFLAGS?=	-O
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+
+HOST_CXX?=	c++
+HOST_CXXFLAGS?=	-O
 
 HOST_CPP?=	cpp
 HOST_CPPFLAGS?=
