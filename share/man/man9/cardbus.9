@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.3 2001/09/04 02:51:15 wiz Exp $
+.\"     $NetBSD: cardbus.9,v 1.4 2001/09/04 03:03:46 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -315,14 +315,15 @@ through this interface.
 .Sh DMA SUPPORT
 No additional support is provided for Cardbus DMA beyond the
 facilities provided by the
-.Xr bus_dma 9 interface.
+.Xr bus_dma 9
+interface.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
 machine-independent Cardbus subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The Cardbus subsystem itself is implemented within the files
 .Pa sys/dev/cardbus/cardbus.c ,
@@ -344,7 +345,7 @@ file.  The database can be regenerated using the Makefile
 .Xr bus_space 9 ,
 .Xr driver 9 ,
 .Xr pci 9 ,
-.Xr pcmcia 9 .
+.Xr pcmcia 9
 .Sh HISTORY
 The machine-independent
 .Nm
