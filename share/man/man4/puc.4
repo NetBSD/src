@@ -1,4 +1,4 @@
-.\"	$NetBSD: puc.4,v 1.1 1998/07/01 01:48:20 cgd Exp $
+.\"	$NetBSD: puc.4,v 1.2 1998/07/12 02:22:28 cgd Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -57,17 +57,20 @@ defined and standard as they should be.
 The driver currently supports the following cards:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Tn Dolphin 4014 (dual parallel)
-.It Tn Dolphin 4035 (dual serial)
-.It Tn SIIG CyberSerial PCI (single serial)
+.It Tn "Dolphin 4014 (dual parallel)"
+.It Tn "Dolphin 4035 (dual serial)"
+.It Tn "SIIG CyberSerial PCI (single serial)"
 .El
 .Pp
 The driver does not support the cards:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Tn Dolphin 4006 (single parallel)
-.It Tn Dolphin 4025 (single serial)
-.It Tn SIIG CyberParallel PCI (single parallel)
+.It Tn "Dolphin 4006 (single parallel)"
+.It Tn "Dolphin 4025 (single serial)"
+.It Tn "Dolphin 4078 (dual serial and single parallel)"
+.It Tn "SIIG CyberParallel PCI (single parallel)"
+.It Tn "SIIG CyberParallel Dual PCI (dual parallel)"
+.It Tn "SIIG Cyber 2S1P PCI (dual serial and single parallel)"
 .El
 .Pp
 but support for them (and for similar cards) should be trivial to add.
