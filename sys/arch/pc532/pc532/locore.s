@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 1995/05/16 07:30:49 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1995/06/09 06:00:02 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -32,6 +32,7 @@
  *
  *	locore.s
  *
+ *	locore.s,v 1.2 1993/09/13 07:26:47 phil Exp
  */
 
 /*
@@ -71,7 +72,7 @@
 
 .data
 .globl _cold, __save_sp, __save_fp, __old_intbase
-_cold:		.long 0
+_cold:		.long 1
 __save_sp: 	.long 0
 __save_fp: 	.long 0
 __old_intbase:	.long 0
@@ -990,11 +991,12 @@ ENTRY(_int)
 	movb	@ICU_ADR+HVCT,r0	/* fetch vector */
 	andd	0x0f,r0
 	movd	r0,tos
-	movqd	1,r1			/* 2 + 2 */
-	lshd	r0,r1			/* 3 + 2 */
-	ord	r1,_Cur_pl(pc)		/* 2 + 2 = 13 */
-					/* sbit would be 16 */
-	movw	_Cur_pl(pc),@ICU_ADR+IMSK
+	movqd	1,r1
+	lshd	r0,r1
+	orw	r1,_Cur_pl(pc)		/* or bit to Cur_pl */
+	orw	r1,@ICU_ADR+IMSK	/* and to IMSK */
+					/* bits set by idisabled in IMSK */
+					/* have to be preserved */
 	ints_on
 	addqd	1,_intrcnt(pc)[r0:d]
 	lshd	4,r0
@@ -1006,7 +1008,7 @@ ENTRY(_int)
 	addr	0(sp),r1		/* NULL -> push frame address */
 1:	movd	r1,tos
 	movd	_ivt+IV_VEC(r0),r0	/* call the handler */
-	jsr	0(r0)			
+	jsr	0(r0)
 
 	adjspd	-8			/* Remove arg and vec from stack */
 	bsr	_splx			/* Restore Cur_pl */

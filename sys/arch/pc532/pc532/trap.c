@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1995/05/16 07:30:53 phil Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1995/06/09 06:00:10 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -394,9 +394,6 @@ syscall(frame)
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
 
-/*printf ("Syscall ... pid=%d, pc=0x%x code=%d, psr=0x%x usp=0x%x params=0x%x\n",
-curproc->p_pid, frame.sf_pc, code, frame.sf_psr, frame.sf_usp, params); */
-
 	/* Set new return address and save old one. */
 	opc = frame.sf_pc++;
 
@@ -415,18 +412,6 @@ curproc->p_pid, frame.sf_pc, code, frame.sf_psr, frame.sf_usp, params); */
 		/* do nothing by default */
 		break;
 	}
-
-#if 1
-if (code == -1 && p->p_pid == 1) {
-  int fmt, ap;
-  fmt = fuword(params);
-  params += sizeof (int);
-  ap  = fuword(params);
-  if (fmt != -1 && ap != -1)
-    printf ("%r", fmt, ap);
-  return;
-}
-#endif
 
 	/* Guard against bad sys call numbers! */
         if (code < 0 || code >= nsys)
@@ -524,43 +509,20 @@ done:
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 
-#if 0
-/* if (code == 59 && !error) { */
-if (code == 2 && !error) {
-    int i;
-    printf ("ret sys_fork: "); 
-    printf ("  pc = 0x%x, sp = 0x%x, fp = 0x%x\n", frame.sf_pc, frame.sf_usp,
-	frame.sf_fp);
-    for (i=frame.sf_pc; i<frame.sf_pc+0x20; i++) {
-	printf ("  0x%2x", RD_ADR(u_char, i));
-	if (i % 12 == 11) printf ("\n");
-    } 
-    printf ("\n");
- }
-#endif
 }
 
+/* For the child, do the stuff after mi_swtch() in syscall so
+   low_level_fork does not have to rethread the kernel stack. */
+void
+ll_fork_sig()
+{
+	register struct proc *p = curproc;
+	int i;
 
-
-
-
-
-#if 0
-/*
- * Compensate for 386 brain damage (missing URKR)
- */
-int trapwrite(unsigned addr) {
-	int rv;
-	vm_offset_t va;
-
-	va = trunc_page((vm_offset_t)addr);
-	if (va > VM_MAXUSER_ADDRESS) return(1);
-	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
-		VM_PROT_READ | VM_PROT_WRITE, FALSE);
-	if (rv == KERN_SUCCESS) return(0);
-	else return(1);
+	(void) splnone();
+	while (i = CURSIG(p))
+		postsig(i);
 }
-#endif
 
 
 /* #define dbg_user */
