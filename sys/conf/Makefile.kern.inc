@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.45 2003/11/17 09:39:29 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.46 2003/11/20 07:08:02 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -30,6 +30,13 @@ OBJDUMP?=	objdump
 CSCOPE?=	cscope
 MKID?=		mkid
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
+
+_MKMSG?=		@\#
+_MKSHMSG?=		: echo
+_MKSHECHO?=		: echo
+_MKMSG_CREATE?=		:
+_MKTARGET_COMPILE?=	:
+_MKTARGET_CREATE?=	:
 
 ##
 ## (1) port independent source tree identification
