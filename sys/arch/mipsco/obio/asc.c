@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.12 2002/10/02 05:38:10 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.13 2003/04/02 04:00:46 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,6 +43,8 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -116,7 +118,7 @@ static int	asc_intr (void *);
 
 #define MAX_SCSI_XFER   (64*1024)
 #define	MAX_DMA_SZ	MAX_SCSI_XFER
-#define	DMA_SEGS	(MAX_DMA_SZ/NBPG)
+#define	DMA_SEGS	(MAX_DMA_SZ/PAGE_SIZE)
 
 static int
 ascmatch(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2003/01/18 23:20:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2003/04/02 03:59:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 #include <sys/sysctl.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
@@ -488,14 +490,14 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 	    *(volatile int *)(page + 4) != ~x)
 		return;
 
-	for (page += NBPG; page < endaddr; page += NBPG) {
+	for (page += PAGE_SIZE; page < endaddr; page += PAGE_SIZE) {
 		if (*(volatile int *)(page + 0) == x &&
 		    *(volatile int *)(page + 4) == ~x) {
 			goto memend_found;
 		}
 	}
 
-	page -= NBPG;
+	page -= PAGE_SIZE;
 	*(volatile int *)(page + 0) = x;
 	*(volatile int *)(page + 4) = ~x;
 
@@ -524,18 +526,18 @@ __check_dram(paddr_t start, paddr_t end)
 	int i, x;
 
 	_DPRINTF(" checking...");
-	for (; start < end; start += NBPG) {
+	for (; start < end; start += PAGE_SIZE) {
 		page = (u_int8_t *)SH3_PHYS_TO_P2SEG (start);
 		x = random();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			if (*(volatile int *)(page + i) != (x ^ i))
 				goto bad;
 		x = random();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			*(volatile int *)(page + i) = (x ^ i);
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			if (*(volatile int *)(page + i) != (x ^ i))
 				goto bad;
 	}

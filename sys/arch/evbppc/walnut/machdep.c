@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2003/03/11 10:40:17 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2003/04/02 03:52:58 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -378,8 +378,8 @@ cpu_startup(void)
 	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
-			msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
+		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
@@ -427,7 +427,7 @@ cpu_startup(void)
 		struct vm_page *pg;
 
 		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base + 1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -462,7 +462,7 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 2002/06/02 14:44:43 drochner Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 2003/04/02 04:00:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -688,7 +688,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		segs[curseg]._ds_vaddr = va;
 		for (addr = segs[curseg]._ds_paddr;
 		    addr < (segs[curseg]._ds_paddr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,

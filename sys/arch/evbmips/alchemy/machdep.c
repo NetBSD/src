@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2003/04/01 17:35:45 hpeyerl Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2003/04/01 17:35:45 hpeyerl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -239,7 +239,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	printf("Memory size: 0x%08lx\n", memsize);
 	physmem = btoc(memsize);
 
-	mem_clusters[mem_cluster_cnt].start = NBPG;
+	mem_clusters[mem_cluster_cnt].start = PAGE_SIZE;
 	mem_clusters[mem_cluster_cnt].size =
 	    memsize - mem_clusters[mem_cluster_cnt].start;
 	mem_cluster_cnt++;
@@ -384,7 +384,7 @@ cpu_startup(void)
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -423,7 +423,7 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
