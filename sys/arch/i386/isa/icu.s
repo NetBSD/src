@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.3 1993/10/09 08:48:31 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.4 1993/10/09 09:17:56 mycroft Exp $
  */
 
 /*
@@ -95,17 +95,6 @@ vec:
 	.long	INTRLOCAL(vec9), INTRLOCAL(vec10), INTRLOCAL(vec11)
 	.long	INTRLOCAL(vec12), INTRLOCAL(vec13), INTRLOCAL(vec14)
 	.long	INTRLOCAL(vec15)
-
-#define	GENSPL(name, mask, event) \
-	.globl  _spl/**/name ; \
-	ALIGN_TEXT ; \
-_spl/**/name: ; \
-	COUNT_EVENT(_intrcnt_spl, event) ; \
-	movl	mask,%eax ; \
-	orl	_cpl,%eax ; \
-	xchg	%eax,_cpl ; \
-	SHOW_CPL ; \
-	ret
 
 #define	FASTSPL(mask) \
 	movl	mask,_cpl ; \
@@ -224,7 +213,7 @@ test_ASTs:
 	btrl	$NETISR_SCLK,_netisr
 	jnc	test_resched
 	COUNT_EVENT(_intrcnt_spl, 9)
-	FASTSPL($SOFTCLOCKMASK)
+	FASTSPL($ASTMASK)
 /*
  * Back to an interrupt frame for a moment.
  */
@@ -264,9 +253,6 @@ test_resched:
  *	-- h/w masks for currently active or unused interrupts (imen)
  *	-- ipending = active interrupts currently masked by cpl
  */
-
-	/* XXXX */
-	GENSPL(softclock, $SOFTCLOCKMASK, 17)
 
 	.globl _splnone
 	ALIGN_TEXT
