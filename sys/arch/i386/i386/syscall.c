@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2000/12/11 16:49:15 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2000/12/11 17:36:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
 void syscall_intern __P((struct proc *));
 void syscall_plain __P((struct trapframe));
 void syscall_fancy __P((struct trapframe));
+#ifdef VM86
+void syscall_vm86 __P((struct trapframe));
+#endif
 
 void
 syscall_intern(p)
@@ -98,17 +101,6 @@ syscall_plain(frame)
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
-
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
 
 	switch (code) {
 	case SYS_syscall:
@@ -191,17 +183,6 @@ syscall_fancy(frame)
 	callp = p->p_emul->e_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
-
 	switch (code) {
 	case SYS_syscall:
 		/*
@@ -272,6 +253,19 @@ syscall_fancy(frame)
 		ktrsysret(p, code, error, rval[0]);
 #endif /* KTRACE */
 }
+
+#ifdef VM86
+void
+syscall_vm86(frame)
+	struct trapframe frame;
+{
+	register struct proc *p;
+
+	p = curproc;
+	trapsignal(p, SIGBUS, T_PROTFLT);
+	userret(p);
+}
+#endif
 
 void
 child_return(arg)
