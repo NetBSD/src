@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.31 2002/09/27 20:38:25 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.32 2002/09/28 17:18:28 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.31 2002/09/27 20:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.32 2002/09/28 17:18:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +67,6 @@ struct ate_softc {
 const struct cfattach ate_isa_ca = {
 	sizeof(struct ate_softc), ate_match, ate_attach
 };
-
-#if NetBSD <= 199712
-struct cfdriver ate_isa_cd = {
-	NULL, "ate", DV_IFNET
-};
-#endif
 
 struct fe_simple_probe_struct {
 	u_char port;	/* Offset from the base I/O address. */
