@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/20 21:50:10 eeh Exp $
+#	$NetBSD: Makefile,v 1.2 2002/06/09 04:28:58 lukem Exp $
 #
 # boot.fs is the image for cdrom booting.
 #
@@ -26,6 +26,7 @@ RAMDISKDIR!=	cd ${.CURDIR}/../instfs && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/install.fs
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootblk
 
+PARSELISTENV=	RAMDISKDIR=${RAMDISKDIR:Q}
 IMAGEDEPENDS=	${RAMDISKDIR}/netbsd.INSTALL.gz ${DESTDIR}/usr/mdec/ofwboot \
 		${PRIMARYBOOT}
 IMAGEPOSTBUILD=	${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT} /boot
