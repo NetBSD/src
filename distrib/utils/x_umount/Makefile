@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/10/30 22:58:02 pk Exp $
+# $NetBSD: Makefile,v 1.2 2001/08/20 12:19:46 martin Exp $
 #
 # Build umount(8) without network support
 #
@@ -8,7 +8,9 @@ PROG=	umount
 MKMAN=	no
 LDSTATIC?=-static
 CPPFLAGS+= -DSMALL
+.if ${MACHINE_ARCH} != "sparc64"
 COPTS+= -Os
+.endif
 WARNS?=	1
 
 all: ${PROG}
