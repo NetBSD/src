@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.19 2003/12/28 22:36:37 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.20 2004/01/17 03:33:24 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.19 2003/12/28 22:36:37 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.20 2004/01/17 03:33:24 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -837,7 +837,7 @@ sysctl_kern_securelevel(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (newsecurelevel < securelevel && l->l_proc->p_pid != 1)
+	if (newsecurelevel < securelevel && l && l->l_proc->p_pid != 1)
 		return (EPERM);
 	securelevel = newsecurelevel;
 
