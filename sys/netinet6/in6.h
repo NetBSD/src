@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.7 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.8 2000/01/06 06:41:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -521,21 +521,34 @@ struct in6_pktinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
-#ifdef MAPPED_ADDR_ENABLED
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #define IPV6CTL_MAPPED_ADDR	23
-#endif /* MAPPED_ADDR_ENABLED */
+#endif
+#if defined(__NetBSD__)
+#define IPV6CTL_BINDV6ONLY	24
+#endif
 /* New entries should be added here from current IPV6CTL_MAXID value. */
-#define IPV6CTL_MAXID		24
+#define IPV6CTL_MAXID		25
 
-#ifdef MAPPED_ADDR_ENABLED
+#ifdef IPV6CTL_MAPPED_ADDR
 #define IPV6CTL_NAMES_MAPPED_ADDR	"mapped_addr"
 #define IPV6CTL_TYPE_MAPPED_ADDR	CTLTYPE_INT
 #define IPV6CTL_VARS_MAPPED_ADDR	&ip6_mapped_addr_on
-#else  /* MAPPED_ADDR_ENABLED */
+#else
 #define IPV6CTL_NAMES_MAPPED_ADDR	0
 #define IPV6CTL_TYPE_MAPPED_ADDR	0
 #define IPV6CTL_VARS_MAPPED_ADDR	0
-#endif /* MAPPED_ADDR_ENABLED */
+#endif
+
+#ifdef IPV6CTL_BINDV6ONLY
+#define IPV6CTL_NAMES_BINDV6ONLY	"bindv6only"
+#define IPV6CTL_TYPE_BINDV6ONLY		CTLTYPE_INT
+#define IPV6CTL_VARS_BINDV6ONLY		&ip6_bindv6only
+#else
+#define IPV6CTL_NAMES_BINDV6ONLY	0
+#define IPV6CTL_TYPE_BINDV6ONLY	0
+#define IPV6CTL_VARS_BINDV6ONLY	0
+#endif
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -562,6 +575,7 @@ struct in6_pktinfo {
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ IPV6CTL_NAMES_MAPPED_ADDR, IPV6CTL_TYPE_MAPPED_ADDR }, \
+	{ IPV6CTL_NAMES_BINDV6ONLY, IPV6CTL_TYPE_BINDV6ONLY }, \
 }
 
 #define IPV6CTL_VARS { \
@@ -589,6 +603,7 @@ struct in6_pktinfo {
 	&ip6_use_deprecated, \
 	&ip6_rr_prune, \
 	IPV6CTL_VARS_MAPPED_ADDR, \
+	IPV6CTL_VARS_BINDV6ONLY, \
 }
 #endif /* !_XOPEN_SOURCE */
 

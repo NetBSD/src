@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.6 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.7 2000/01/06 06:41:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -194,6 +194,9 @@ extern int	ip6_rr_prune;		/* router renumbering prefix
 #ifdef MAPPED_ADDR_ENABLED
 extern int	ip6_mapped_addr_on;
 #endif /* MAPPED_ADDR_ENABLED */
+#ifndef INET6_BINDV6ONLY
+extern int	ip6_bindv6only;
+#endif
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */

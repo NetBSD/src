@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.9 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.10 2000/01/06 06:41:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,12 +101,12 @@
 #endif
 #include <netinet6/ip6.h>
 #include <netinet6/icmp6.h>
+#include <netinet6/ip6_var.h>
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #include <netinet/in_pcb.h>
 #else
 #include <netinet6/in6_pcb.h>
 #endif
-#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
 #ifdef __OpenBSD__ /*KAME IPSEC*/
@@ -1243,6 +1243,9 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
+#ifndef INET6_BINDV6ONLY
+			case IPV6_BINDV6ONLY:
+#endif
 				if (!m || m->m_len != sizeof(int))
 					error = EINVAL;
 				else {
@@ -1302,6 +1305,12 @@ ip6_ctloutput(op, so, level, optname, mp)
 					case IPV6_FAITH:
 						OPTSET(IN6P_FAITH);
 						break;
+
+#ifndef INET6_BINDV6ONLY
+					case IPV6_BINDV6ONLY:
+						OPTSET(IN6P_BINDV6ONLY);
+						break;
+#endif
 					}
 				}
 				break;
@@ -1394,6 +1403,9 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
+#ifndef INET6_BINDV6ONLY
+			case IPV6_BINDV6ONLY:
+#endif
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(int);
 				switch (optname) {
@@ -1443,6 +1455,12 @@ ip6_ctloutput(op, so, level, optname, mp)
 				case IPV6_FAITH:
 					optval = OPTBIT(IN6P_FAITH);
 					break;
+
+#ifndef INET6_BINDV6ONLY
+				case IPV6_BINDV6ONLY:
+					optval = OPTBIT(IN6P_BINDV6ONLY);
+					break;
+#endif
 				}
 				*mtod(m, int *) = optval;
 				break;
