@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.5.2.3 2000/10/30 23:02:59 tv Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.5.2.4 2000/11/09 22:57:30 tv Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -220,6 +220,9 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 		return ISC_R_NOTFOUND;
 
 	len = strlen (name);
+	if (len == 0)
+		return ISC_R_NOTFOUND;
+
 	if (name [len - 1] != '.') {
 		tname = dmalloc (len + 2, MDL);
 		if (!tname)
