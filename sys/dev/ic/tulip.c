@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.38 2000/01/25 19:29:17 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.39 2000/01/25 22:11:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -374,10 +374,23 @@ tlp_attach(sc, enaddr)
 
 	/*
 	 * Create the transmit buffer DMA maps.
+	 *
+	 * Note that on the Xircom clone, transmit buffers must be
+	 * 4-byte aligned.  We're almost guaranteed to have to copy
+	 * the packet in that case, so we just limit ourselves to
+	 * one segment.
 	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_X3201_3:
+		sc->sc_ntxsegs = 1;
+		break;
+
+	default:
+		sc->sc_ntxsegs = TULIP_NTXSEGS;
+	}
 	for (i = 0; i < TULIP_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    TULIP_NTXSEGS, MCLBYTES, 0, 0,
+		    sc->sc_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -544,9 +557,16 @@ tlp_start(ifp)
 		 * didn't fit in the alloted number of segments, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
+		 *
+		 * Note that if we're only allowed 1 Tx segment, we
+		 * have an alignment restriction.  Do this test before
+		 * attempting to load the DMA map, because it's more
+		 * likely we'll trip the alignment test than the
+		 * more-than-one-segment test.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		if ((sc->sc_ntxsegs == 1 && (mtod(m0, bus_addr_t) & 3) != 0) ||
+		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		      BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -1346,6 +1366,16 @@ tlp_reset(sc)
 	int i;
 
 	TULIP_WRITE(sc, CSR_BUSMODE, BUSMODE_SWR);
+
+	/*
+	 * Xircom clone doesn't bring itself out of reset automatically.
+	 * Instead, we have to wait at least 50 PCI cycles, and then
+	 * clear SWR.
+	 */
+	if (sc->sc_chip == TULIP_CHIP_X3201_3) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_BUSMODE, 0);
+	}
 
 	for (i = 0; i < 1000; i++) {
 		/*

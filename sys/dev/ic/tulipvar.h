@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.24 2000/01/25 19:29:17 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.25 2000/01/25 22:11:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -362,6 +362,7 @@ struct tulip_softc {
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
+	int	sc_ntxsegs;		/* number of transmit segs per pkt */
 
 	struct tulip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
