@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.5 1995/03/21 14:20:18 mycroft Exp $";
+static char *rcsid = "$Id: kdump.c,v 1.6 1995/03/21 14:22:38 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -176,9 +176,9 @@ fread_tail(buf, size, num)
 dumpheader(kth)
 	struct ktr_header *kth;
 {
-	static char unknown[64];
-	static struct timeval prevtime, temp;
-	char *type;
+	char unknown[64], *type;
+	static struct timeval prevtime;
+	struct timeval temp;
 
 	switch (kth->ktr_type) {
 	case KTR_SYSCALL:
