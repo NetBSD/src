@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.9 1996/04/10 17:38:22 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.10 1996/05/19 15:57:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,6 @@
 #include "dc.h"
 #include "dtop.h"
 #include "scc.h"
-#include "le.h"
 #include "asc.h"
 
 #if NDC > 0
