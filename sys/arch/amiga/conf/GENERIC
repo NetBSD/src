@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.119.2.4 2000/01/15 16:39:59 he Exp $
+#	$NetBSD: GENERIC,v 1.119.2.5 2000/02/04 23:19:29 he Exp $
 
 #
 #if 0
@@ -30,6 +30,7 @@ options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
 				# bootblock.
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
+options		P5PPC68KBOARD	# Phase5 PPC/68K board support
 #endif
 #
 # processors this kernel should support
