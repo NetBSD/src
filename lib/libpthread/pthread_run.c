@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.8 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.9 2003/04/04 01:08:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.8 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.9 2003/04/04 01:08:25 nathanw Exp $");
 
 #include <ucontext.h>
 
@@ -78,7 +78,11 @@ sched_yield(void)
 	        next = PTQ_FIRST(&pthread__runqueue);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 		next->pt_state = PT_STATE_RUNNING;
-		pthread__locked_switch(self, next, &pthread__runqueue_lock);
+		if (next != self)
+			pthread__locked_switch(self, next,
+			    &pthread__runqueue_lock);
+		else
+			pthread_spinunlock(self, &pthread__runqueue_lock);
 	}
 
 	return 0;
