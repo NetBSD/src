@@ -1,7 +1,7 @@
-/*	$NetBSD: icmp.c,v 1.4 2000/06/13 13:37:12 ad Exp $	*/
+/*	$NetBSD: icmp.c,v 1.5 2000/07/05 11:03:21 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.4 2000/06/13 13:37:12 ad Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.5 2000/07/05 11:03:21 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,11 +56,20 @@ __RCSID("$NetBSD: icmp.c,v 1.4 2000/06/13 13:37:12 ad Exp $");
 #define RHD(row, str) mvwprintw(wnd, row, 45, str);
 #define BD(row, str) LHD(row, str); RHD(row, str)
 #define SHOW(stat, row, col) \
-    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)stats.stat)
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
 #define SHOW2(type, row) SHOW(icps_inhist[type], row, 0); \
     SHOW(icps_outhist[type], row, 35)
 
-static struct icmpstat stats;
+enum update {
+	UPDATE_TIME,
+	UPDATE_BOOT,
+	UPDATE_RUN,
+};
+
+static enum update update = UPDATE_TIME;
+static struct icmpstat curstat;
+static struct icmpstat newstat;
+static struct icmpstat oldstat;
 
 static struct nlist namelist[] = {
 	{ "_icmpstat" },
@@ -75,8 +84,7 @@ openicmp(void)
 }
 
 void
-closeicmp(w)
-	WINDOW *w;
+closeicmp(WINDOW *w)
 {
 
 	if (w != NULL) {
@@ -92,11 +100,11 @@ labelicmp(void)
 
 	wmove(wnd, 0, 0); wclrtoeol(wnd);
 
-	mvwprintw(wnd, 1, 0,  "------------ ICMP input -------------");
-	mvwprintw(wnd, 1, 38, "------------- ICMP output -------------");
+	mvwprintw(wnd, 1, 0,  "------------ ICMP input -----------");
+	mvwprintw(wnd, 1, 36, "------------- ICMP output ---------------");
 
-	mvwprintw(wnd, 8, 0,  "---------- Input histogram ----------");
-	mvwprintw(wnd, 8, 38, "---------- Output histogram -----------");
+	mvwprintw(wnd, 8, 0,  "---------- Input histogram --------");
+	mvwprintw(wnd, 8, 36, "---------- Output histogram -------------");
 	
 	LHD(3, "with bad code");
 	LHD(4, "with bad length");
@@ -126,12 +134,12 @@ showicmp(void)
 	int i;
 
 	for (i = tin = tout = 0; i <= ICMP_MAXTYPE; i++) {
-		tin += stats.icps_inhist[i];
-		tout += stats.icps_outhist[i];
+		tin += curstat.icps_inhist[i];
+		tout += curstat.icps_outhist[i];
 	}
 
-	tin += stats.icps_badcode + stats.icps_badlen + stats.icps_checksum + 
-	    stats.icps_tooshort;
+	tin += curstat.icps_badcode + curstat.icps_badlen + 
+	    curstat.icps_checksum + curstat.icps_tooshort;
 	mvwprintw(wnd, 2, 0, "%9lu", tin);
 	mvwprintw(wnd, 2, 35, "%9lu", tout);
 
@@ -175,6 +183,60 @@ initicmp(void)
 void
 fetchicmp(void)
 {
+	int i;
 
-	KREAD((void *)namelist[0].n_value, &stats, sizeof(stats));
+	KREAD((void *)namelist[0].n_value, &newstat, sizeof(newstat));
+
+	ADJINETCTR(curstat, oldstat, newstat, icps_badcode);
+	ADJINETCTR(curstat, oldstat, newstat, icps_badlen);
+	ADJINETCTR(curstat, oldstat, newstat, icps_checksum);
+	ADJINETCTR(curstat, oldstat, newstat, icps_tooshort);
+	ADJINETCTR(curstat, oldstat, newstat, icps_error);
+	ADJINETCTR(curstat, oldstat, newstat, icps_oldshort);
+	ADJINETCTR(curstat, oldstat, newstat, icps_oldicmp);
+	ADJINETCTR(curstat, oldstat, newstat, icps_reflect);
+
+	for (i = 0; i <= ICMP_MAXTYPE; i++) {
+		ADJINETCTR(curstat, oldstat, newstat, icps_inhist[i]);
+		ADJINETCTR(curstat, oldstat, newstat, icps_outhist[i]);
+	}
+
+	if (update == UPDATE_TIME)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+}
+
+void
+icmp_boot(char *args)
+{
+
+	memset(&oldstat, 0, sizeof(oldstat));
+	update = UPDATE_BOOT;
+}
+
+void
+icmp_run(char *args)
+{
+
+	if (update != UPDATE_RUN) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_RUN;
+	}
+}
+
+void
+icmp_time(char *args)
+{
+
+	if (update != UPDATE_TIME) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_TIME;
+	}
+}
+
+void
+icmp_zero(char *args)
+{
+
+	if (update == UPDATE_RUN)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
 }
