@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 1998/09/30 14:09:59 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.9 1999/03/09 12:57:58 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -111,3 +111,4 @@ define	SYS_exit	SYS_exit
 define	VAX_TYP_UV2	VAX_TYP_UV2
 define	VAX_TYP_8SS	VAX_TYP_8SS
 define	VAX_BTYP_46	VAX_BTYP_46
+define	VAX_BTYP_48	VAX_BTYP_48

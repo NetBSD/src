@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 1999/02/02 18:37:20 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.26 1999/03/09 12:57:58 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -153,7 +153,7 @@ delay(i)
 	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
-#if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800
+#if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800 || VAX48
 /*
  * On most VAXen there are a microsecond clock that should
  * be used for interval interrupts. Have a generic version here.

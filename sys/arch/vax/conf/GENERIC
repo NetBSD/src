@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 1998/12/10 18:24:52 ragge Exp $
+#	$NetBSD: GENERIC,v 1.43 1999/03/09 12:57:57 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -15,6 +15,7 @@ options 	"VAX650"	# MV III, 3600, 3800, 3900
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
+options 	"VAX48"		# VS 4000 VLC
 
 # Max users on system; this is just a hint
 maxusers	8
