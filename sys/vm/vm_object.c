@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.43 1997/02/23 09:01:37 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.44 1997/02/24 22:19:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -1188,11 +1188,20 @@ vm_object_overlay(object)
 	 * 3) The page is being paged in from a backing object behind the one
 	 *    we're deleting.  We'll never notice this case, because the
 	 *    backing object we're deleting won't have the page.
+	 *
+	 * XXXXX FIXME
+	 * Because pagedaemon can call vm_object_collapse(), we must *not*
+	 * sleep waiting for pages.
 	 */
 
 	vm_object_unlock(object);
 RetryRename:
+#if 0 /* XXXXX FIXME */
 	vm_object_paging_wait(backing_object);
+#else
+	if (vm_object_paging(backing_object))
+		goto fail;
+#endif
 	/*
 	 * While we were asleep, the parent object might have been deleted.  If
 	 * so, the backing object will now have only one reference (the one we
@@ -1312,10 +1321,14 @@ RetryRename:
 			backing_page = vm_page_alloc(backing_object,
 			    paged_offset);
 			if (backing_page == NULL) {
+#if 0 /* XXXXX FIXME */
 				vm_object_unlock(backing_object);
 				VM_WAIT;
 				vm_object_lock(backing_object);
 				goto RetryRename;
+#else
+				goto fail;
+#endif
 			}
 
 			vm_object_paging_begin(backing_object);
@@ -1339,6 +1352,12 @@ RetryRename:
 				FREE_PAGE(backing_page);
 				goto fail;
 			}
+
+#ifdef DIAGNOSTIC
+			if (rv != VM_PAGER_OK)
+				panic("vm_object_overlay: pager returned %d",
+				    rv);
+#endif
 
 			/*
 			 * The pager might have moved the page while we
@@ -1433,8 +1452,10 @@ vm_object_bypass(object)
 	 * the parent object.
 	 */
 	if (vm_object_paging(backing_object) ||
-	    backing_object->pager != NULL)
+	    backing_object->pager != NULL) {
+		vm_object_unlock(object);
 		goto fail;
+	}
 
 	/*
 	 * Should have a check for a 'small' number
@@ -1464,6 +1485,7 @@ vm_object_bypass(object)
 			/*
 			 * Page still needed.  Can't go any further.
 			 */
+			vm_object_unlock(object);
 			goto fail;
 		}
 	}
@@ -1732,10 +1754,12 @@ _vm_object_print(object, full, pr)
 	if (object == NULL)
 		return;
 
-	iprintf(pr, "Object 0x%lx: size=0x%lx, res=%d, ref=%d, ",
+	iprintf(pr, "Object 0x%lx: size=0x%lx, res=%d, ref=%d, flags=0x%x, ",
 		(long) object, (long) object->size,
-		object->resident_page_count, object->ref_count);
-	(*pr)("pager=0x%lx+0x%lx, shadow=(0x%lx)+0x%lx\n",
+		object->resident_page_count, object->ref_count,
+		object->flags);
+	(*pr)("pip=%d, pager=0x%lx+0x%lx, shadow=(0x%lx)+0x%lx\n",
+	       object->paging_in_progress,
 	       (long) object->pager, (long) object->paging_offset,
 	       (long) object->shadow, (long) object->shadow_offset);
 	(*pr)("shadowers=(");
