@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.74 2000/02/03 06:03:39 enami Exp $	*/
+/*	$NetBSD: elink3.c,v 1.75 2000/02/08 12:49:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -346,7 +346,7 @@ ep_discard_rxtop(iot, ioh)
 /*
  * Back-end attach and configure.
  */
-void
+int
 epconfig(sc, chipset, enaddr)
 	struct ep_softc *sc;
 	u_short chipset;
@@ -410,7 +410,7 @@ epconfig(sc, chipset, enaddr)
 		printf("%s: wrote 0x%x to TX_AVAIL_THRESH, read back 0x%x. "
 		    "Interface disabled\n",
 		    sc->sc_dev.dv_xname, ELINK_LARGEWIN_PROBE, (int) i);
-		return;
+		return (1);
 	}
 
 	/*
@@ -524,6 +524,7 @@ epconfig(sc, chipset, enaddr)
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+	return (0);
 }
 
 
