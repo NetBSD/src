@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/10/13 06:15:21 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/12/07 06:57:50 minoura Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -28,7 +28,7 @@ RAMDISKGEOM=	512/${RAMDISKSPT}/${RAMDISKHEADS}/${RAMDISKCYLS}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${RAMDISKGEOM}
+	vnconfig -v -c ${VND_CRDEV} ${IMAGE} ${RAMDISKGEOM}
 	newfs -B be -m 0 -o space -i ${RAMDISKBPI} -c ${RAMDISKCPG} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
@@ -39,11 +39,11 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND_CRDEV}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND_RDEV}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2000/09/12 16:42:51 minoura Exp $
+#	$NetBSD: list,v 1.10 2001/12/07 06:57:51 minoura Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -61,6 +61,8 @@ SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/tar
 SYMLINK	/bin/cat		usr/mdec/newdisk
+SYMLINK	/bin/cat		usr/mdec/installboot
+SYMLINK	/bin/cat		usr/mdec/installboot.new
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
 SYMLINK	/bin/cat		usr/sbin/memswitch
@@ -79,10 +81,9 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot blocks in /usr/mdec
-COPY	${COMMONDIR}/installboot.sh	usr/mdec/installboot
-SPECIAL	/bin/chmod 555 usr/mdec/installboot
-COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
-LINK	usr/mdec/sdboot			usr/mdec/fdboot
+COPY	${DESTDIR}/usr/mdec/sdboot_ufs	usr/mdec/sdboot_ufs
+LINK	usr/mdec/sdboot_ufs		usr/mdec/fdboot_ufs
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/mboot	usr/mdec/mboot
 
 # and the common installation tools
