@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.18 1997/09/26 19:52:23 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.19 1997/09/26 20:22:26 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.32 1997/07/14 03:52:33 paulus Exp ";
 #else
-__RCSID("$NetBSD: auth.c,v 1.18 1997/09/26 19:52:23 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.19 1997/09/26 20:22:26 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: auth.c,v 1.18 1997/09/26 19:52:23 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <utmp.h>
+#include <fcntl.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -817,6 +819,22 @@ login(user, passwd, msg, msglen)
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
     logwtmp(tty, user, remote_name);		/* Add wtmp login entry */
+
+#ifdef _PATH_LASTLOG
+    {
+	    struct lastlog ll;
+	    int fd;
+
+	    if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
+		(void)lseek(fd, (off_t)(pw->pw_uid * sizeof(ll)), SEEK_SET);
+		memset((void *)&ll, 0, sizeof(ll));
+		(void)time(&ll.ll_time);
+		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
+		(void)write(fd, (char *)&ll, sizeof(ll));
+		(void)close(fd);
+	    }
+    }
+#endif
     logged_in = TRUE;
 
     return (UPAP_AUTHACK);
