@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.21 1997/03/30 17:18:19 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.22 1997/07/06 19:32:39 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -512,7 +512,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
 
-	DPRINTF(("svr4_sendsig signum=%d si = %x uc = %x handler = %x\n",
+	DPRINTF(("svr4_sendsig signum=%d si = %p uc = %p handler = %p\n",
 	         frame.sf_signum, frame.sf_sip,
 		 frame.sf_ucp, frame.sf_handler));
 	/*
