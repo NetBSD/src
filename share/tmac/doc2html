@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.32 2001/11/29 14:58:24 wiz Exp $
+.\" $NetBSD: doc2html,v 1.33 2001/12/28 23:06:31 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -582,6 +582,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libposix" \&POSIX Compatibility Library (libposix, -lposix)
 .if "\\$1"libresolv" \&DNS Resolver Library (libresolv, -lresolv)
 .if "\\$1"libtermcap" \&Termcap Access Library (libtermcap, -ltermcap)
+.if "\\$1"libusbhid" \&USB Human Interface Devices Library (libusbhid, -lusbhid)
 .if "\\$1"libutil" \&System Utilities Library (libutil, -lutil)
 .if "\\$1"libz" \&Compression Library (libz, -lz) 
 .. 
