@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *	$Id: nfs_syscalls.c,v 1.8 1994/02/06 11:28:39 mycroft Exp $
+ *	$Id: nfs_syscalls.c,v 1.9 1994/02/14 05:58:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -203,7 +203,7 @@ nfssvc(p, uap, retval)
 	m_freem(nam);
 
 	/* Copy the cred so others don't see changes */
-	cr = p->p_ucred = crcopy(p->p_ucred);
+	cr = crdup(p->p_ucred);
 
 	/*
 	 * Set protocol specific options { for now TCP only } and
@@ -234,8 +234,8 @@ nfssvc(p, uap, retval)
 	 */
 	for (;;) {
 		if (error = nfs_getreq(so, nfs_prog, nfs_vers, NFS_NPROCS-1,
-		   &nam, &mrep, &md, &dpos, &retxid, &procid, cr,
-/* 08 Sep 92*/	   &msk, &mtch, &wascomp, &repstat)) {
+		    &nam, &mrep, &md, &dpos, &retxid, &procid, cr,
+		    &msk, &mtch, &wascomp, &repstat)) {
 			if (nam)
 				m_freem(nam);
 			if (error == EPIPE || error == EINTR ||
@@ -312,6 +312,7 @@ nfssvc(p, uap, retval)
 		};
 	}
 bad:
+	crfree(cr);
 	return (error);
 }
 
