@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.4 1994/01/11 00:16:13 briggs Exp $
+ *	$Id: autoconf.c,v 1.5 1994/01/30 01:01:14 briggs Exp $
  */
 
 /*
@@ -91,24 +91,23 @@
  * and the drivers are initialized.
  */
 
-#include "sys/param.h"
-#include "sys/device.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/conf.h"
-#include "sys/dmap.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+#include <sys/reboot.h>
 
-#include "sys/disklabel.h"  /* CPC: For MAXPARTITIONS */
-#include "sd.h"			/* for NSD MF */
+#include <sys/disklabel.h>
+#include <sys/disk.h>
 int root_scsi_id;           /* CPC: set in locore.s */
 
-#include "../include/vmparam.h"
-#include "../include/param.h"  /* LAK: Added this for some constants */
-#include "../include/cpu.h"
-#include "machine/pte.h"
-#include "../dev/device.h"
+#include <machine/vmparam.h>
+#include <machine/param.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
 
 /*
  * The following several variables are related to
@@ -116,11 +115,6 @@ int root_scsi_id;           /* CPC: set in locore.s */
  * the machine.
  */
 int	cold;		    /* if 1, still working on cold-start */
-int	dkn;		    /* number of iostat dk numbers assigned so far */
-/*
-struct	isr isrqueue[NISR];
-*/
-struct	adb_hw adb_table[MAXADB];
 
 #ifdef DEBUG
 int	acdebug = 0;
@@ -136,8 +130,6 @@ configure()
 	VIA_initialize();
 
 	adb_init();		/* ADB device subsystem & driver */
-
-/*	isrinit(); */
 
 	startrtclock();
 
@@ -229,58 +221,6 @@ struct cfdriver mainbuscd =
       { NULL, "mainbus", root_matchbyname, mainbus_attach,
 	DV_DULL, sizeof(struct device), NULL, 0 };
 
-extern int dummy_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
-{
-	return 0;
-}
-
-static void
-dummy_attach(parent, dev, aux)
-	struct device	*parent, *dev;
-	void		*aux;
-{
-	printf("\n");
-}
-
-struct cfdriver scsibuscd =
-      { NULL, "scsibus", dummy_match, dummy_attach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
-struct cfdriver sdcd =
-      { NULL, "sd", dummy_match, dummy_attach,
-	DV_DISK, sizeof(struct device), NULL, 0 };
-struct cfdriver stcd =
-      { NULL, "st", dummy_match, dummy_attach,
-	DV_TAPE, sizeof(struct device), NULL, 0 };
-struct cfdriver cdcd =
-      { NULL, "cd", dummy_match, dummy_attach,
-	DV_DISK, sizeof(struct device), NULL, 0 };
-
-/*
-isrinit()
-{
-	register int i;
-
-	for (i = 0; i < NISR; i++)
-		isrqueue[i].isr_forw = isrqueue[i].isr_back = &isrqueue[i];
-}
-
-void
-isrlink(isr)
-	register struct isr *isr;
-{
-	int i = ISRIPL(isr->isr_ipl);
-
-	if (i < 0 || i >= NISR) {
-		printf("bad IPL %d\n", i);
-		panic("configure");
-	}
-	insque(isr, isrqueue[i].isr_back);
-}
-*/
-
 /*
  * Configure swap space and related parameters.
  */
@@ -303,18 +243,51 @@ swapconf()
 	dumpconf();
 }
 
+#define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	0,0,		/* 0 = ct */
-	0,0,		/* 1 = xx */
-	'r','d',	/* 2 = rd */
-	0,0,		/* 3 = sw */
-	's','d',	/* 4 = rd */
-};
+struct	device *bootdv = NULL;
+struct	dkdevice *bootdk;
 
 #define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
+#define	UNITSHIFT	3
+
+static int
+target_to_unit(u_long target)
+{
+	return sd_target_to_unit(target);
+}
+
+/*
+ * Yanked from i386/i386/autoconf.c
+ */
+void
+findbootdev()
+{
+	register struct dkdevice *dk;
+	register void (*strat)(struct buf *);
+	register int unit;
+	int major;
+
+	major = B_TYPE(bootdev);
+	if (major < 0 || major >= nblkdev)
+		return;
+	strat = bdevsw[major].d_strategy;
+
+	unit = B_UNIT(bootdev);
+
+	bootdev &= ~(B_UNITMASK << B_UNITSHIFT);
+	unit = target_to_unit(unit);
+	bootdev |= (unit << B_UNITSHIFT);
+
+	for (dk = dkhead; dk; dk = dk->dk_next) {
+		if (dk->dk_driver->d_strategy == strat &&
+		    dk->dk_device.dv_unit == unit) {
+			bootdk = dk;
+			bootdv = &dk->dk_device;
+			return;
+		}
+	}
+}
 
 /*
  * Attempt to find the device from which we were booted.
@@ -323,65 +296,64 @@ static	char devname[][2] = {
  */
 setroot()
 {
-/* MF BARF BARF */
-/* what we should do is take root_scsi_id and figure out the real
-disk to mount, the value to mount is the n'th mountable volume
-so scsiid5 may be device 0 to the system, beware, this has bitten
-us before.  Remember to be nice to women, even the evil hateful ones,
-which is all of them, or so the rumor goes... */
+	register struct swdevt	*swp;
+	register int		majdev, mindev, part;
+	dev_t			nrootdev, nswapdev;
+#ifdef DOSWAP
+	dev_t			temp;
+#endif
 
-/* MF we really want sd0 to be root, so when we find the real
-   disk that is root, lets switch it with sd0 !!! HAHAHAHA!
+	findbootdev();
+	if (bootdv == NULL) {
+		panic("ARGH!!  No boot device????");
+	}
+	switch (bootdv->dv_class) {
+		case DV_DISK:
+			nrootdev = makedev(B_TYPE(bootdev),
+					   B_UNIT(bootdev) << UNITSHIFT
+					   + B_PARTITION(bootdev));
+			break;
+		default:
+			printf("Only supports DISK device for booting.\n");
+			break;
+	}
 
-   Please close your eyes, that may be dirty. Don't try this
-   kludge in kansas, utah, or south dakota
-*/
+	if (rootdev == nrootdev)
+		return;
 
-#if 0
-{
-	extern struct	sd_data
-	{
-		int	flags;
-		struct	scsi_switch *sc_sw;	/* address of scsi low level switch */
-		int	ctlr;			/* so they know which one we want */
-		int	targ;			/* our scsi target ID */
-		int	lu;			/* out scsi lu */
-	} *sd_data[];
-	int i;
+	majdev = major(nrootdev);
+	mindev = minor(nrootdev);
+	part = mindev & PARTITIONMASK;
+	mindev -= part;
 
-	for(i=0;i<NSD;i++)
-	{
-		if (root_scsi_id==sd_data[i]->targ)
-		{
-			struct sd_data *swap;
+	rootdev = nrootdev;
+	printf("Changing root device to %s%c.\n", bootdv->dv_xname, part + 'a');
 
-			swap=sd_data[i];
-			sd_data[i]=sd_data[0];
-			sd_data[0]=swap;
+#ifndef DOSWAP
+	swapdev = makedev(majdev, mindev | 1);
+	dumpdev = swapdev;
 
-			printf("Swapping sd%d and sd%d\n",i,0);
+#else
+	temp = NODEV;
+	for (swp = swdevt ; swp->sw_dev != NODEV ; swp++) {
+		if (majdev == major(swp->sw_dev) &&
+		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+			temp = swdevt[0].sw_dev;
+			printf("swapping %x and %x.\n", swp->sw_dev, temp);
+			swdevt[0].sw_dev = swp->sw_dev;
+			swp->sw_dev = temp;
 			break;
 		}
 	}
+	if (swp->sw_dev == NODEV)
+		return;
 
+	swapdev = swdevt[0].sw_dev;
 
-	/* rootdev = makedev(4, i * MAXPARTITIONS); */
-	rootdev = makedev(4, 0 * MAXPARTITIONS);
+	if (temp == dumpdev)
+		dumpdev = swdevt[0].sw_dev;
 
-
-}
-#endif
-	rootdev = makedev(4, 0 * MAXPARTITIONS);
-
-#if NO_SERIAL_ECHO
-	{
-		extern char	serial_boot_echo;
-
-		if (serial_boot_echo) {
-			printf("Serial echo going out now.\n");
-			serial_boot_echo = 0;
-		}
-	}
+	printf("swapdev = %x, dumpdev = %x.\n", swdevt[0].sw_dev, dumpdev);
 #endif
 }
 
