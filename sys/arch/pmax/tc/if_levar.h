@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.1 1995/08/11 02:12:58 jonathan Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.2 1995/08/17 22:28:27 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,12 +42,12 @@
 struct lereg1 {
 	volatile u_int16_t	ler1_rdp;	/* data port */
 	int16_t	pad0;
-#ifdef SPARSE /* Should be here for Alpha, shouldn't for pmax */
+#ifdef alpha /* Should be here for Alpha, shouldn't for pmax */
 	int32_t	pad1;
 #endif
 	volatile u_int16_t	ler1_rap;	/* register select port */
 	int16_t	pad2;
-#ifdef SPARSE  /* Should be here for Alpha, shouldn't for pmax */
+#ifdef alpha  /* Should be here for Alpha, shouldn't for pmax */
 	int32_t	pad3;
 #endif
 };
