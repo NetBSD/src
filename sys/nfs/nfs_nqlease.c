@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.5 1994/08/18 22:47:49 mycroft Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.6 1994/08/21 21:07:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,7 +287,8 @@ doreply:
 	nqsrv_addhost(&lp->lc_host, nd->nd_slp, nam);
 	lp->lc_vp = vp;
 	lp->lc_fsid = fh.fh_fsid;
-	bcopy(fh.fh_fid.fid_data, lp->lc_fiddata, fh.fh_fid.fid_len - sizeof (long));
+	bcopy(fh.fh_fid.fid_data, lp->lc_fiddata,
+	    fh.fh_fid.fid_len - sizeof (long));
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
 	vp->v_lease = lp;
 	s = splsoftclock();
