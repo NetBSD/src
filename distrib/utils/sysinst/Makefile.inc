@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.inc,v 1.3 1997/10/22 02:17:22 lukem Exp $
+#
 # Makefile for install
 
 PROG=sysinst
@@ -12,7 +14,7 @@ VER != sh ${.CURDIR}/../../../../sys/conf/osrelease.sh
 VER != sh ${.CURDIR}/../../../../../sys/conf/osrelease.sh
 .endif
 
-CFLAGS+= -I. -I${.CURDIR}/../.. -I${.CURDIR} \
+CPPFLAGS+= -I. -I${.CURDIR}/../.. -I${.CURDIR} \
 	 -DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
 
 NOMAN=y
@@ -43,3 +45,5 @@ menus.def: menus.mi.${LANG} menus.md.${LANG}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
 
 menu_defs.c: msg_defs.h
+
+disks.o install.o main.o net.o upgrade.o util.o: msg_defs.h menu_defs.h
