@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.21 2000/02/06 08:47:03 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.22 2000/02/27 16:34:14 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -231,6 +231,14 @@ file arch/hpcmips/dev/ucbtp.c		ucbtp
 device ucbsnd
 attach ucbsnd at ucbif
 file arch/hpcmips/dev/ucbsnd.c		ucbsnd
+
+device ucbio: newgpbusif
+attach ucbio at ucbif
+file arch/hpcmips/dev/ucbio.c		ucbio
+
+device ucbioport
+attach ucbioport at newgpbusif
+file arch/hpcmips/dev/ucbioport.c	ucbioport
 
 device tx39uart: txcomif
 attach tx39uart at txsim

@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.10 2000/02/12 03:21:07 shin Exp $
+#	$NetBSD: TX3912,v 1.11 2000/02/27 16:34:14 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -37,6 +37,11 @@ options		DEBUG			# extra kernel debugging support
 options		KTRACE			# system call tracing support
 #options 	SYSCALL_DEBUG		# for debug
 #options	 MINIROOTSIZE=10000
+
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MINIROOTSIZE=12288	# size of memory disk, in blocks
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -98,15 +103,17 @@ tc5165buf*	at	txcsbus5 iocs 4 iocsbase 0 iocssize 0x100 iocswidth 16
 skbd*		at	tc5165buf?
 
 # ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
-# card		... 3:2 (98)
-# insert/remove ... 5:1/8 (161/168)
+# card/insert	... 3:2 (98)
+# remove	... 5:8 (168)
 options	IT8368E_LEGACY_MODE	# Mobilon HC-4100 requires this
-it8368e*	at	txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
+it8368e*	at	txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 98 irq2 168 irq3 98
 
 # PHILIPS UCB1200 / TOSHIBA TC35413F (modem/audio analog front-end)
 ucb*		at	tx39sib? slot 0
 ucbtp*		at	ucb?
 ucbsnd*		at	ucb?
+ucbio*		at	ucb?
+ucbioport*	at	ucbio? platform COMPAQ_C_810 id BTN_LIGHT port 5
 
 # WS console uses SUN or VT100 terminal emulation
 fb*		at	tx3912video?

@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.1 1999/12/23 06:26:09 takemura Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.2 2000/02/27 16:34:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  *
  */
+#define BTNMGRDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +45,15 @@
 
 #include <machine/config_hook.h>
 
+#ifdef BTNMGRDEBUG
+int	btnmgr_debug = 0;
+#define	DPRINTF(arg) if (btnmgr_debug) printf arg;
+#define	DPRINTFN(n, arg) if (btnmgr_debug > (n)) printf arg;
+#else
+#define	DPRINTF(arg)
+#define DPRINTFN(n, arg)
+#endif
+
 cdev_decl(btnmgr);
 
 struct btnmgr_softc {
@@ -52,12 +62,11 @@ struct btnmgr_softc {
 
 static struct btnmgr_softc *the_btnmgr_sc;
 
-void		btnmgrattach  __P((int n));
-static int	btnmgr_hook __P((void *ctx, int type, long id,
-				 void *msg));
-static char*	btnmgr_name __P((long id));
+void		btnmgrattach  __P((int));
+char*		btnmgr_name __P((long));
+static int	btnmgr_hook __P((void *, int, long, void *));
 
-static struct {
+static const struct {
 	long id;
 	char *name;
 } button_names[] = {
@@ -75,7 +84,8 @@ static struct {
 	{ CONFIG_HOOK_BUTTONEVENT_APP2,		"Application 2"	},
 	{ CONFIG_HOOK_BUTTONEVENT_APP3,		"Application 3"	},
 };
-static int n_button_names = sizeof(button_names)/sizeof(*button_names);
+static const int n_button_names = 
+	sizeof(button_names) / sizeof(*button_names);
 
 void
 btnmgrattach (n)
@@ -99,7 +109,7 @@ btnmgrattach (n)
 				    the_btnmgr_sc);
 }
 
-int
+static int
 btnmgr_hook(ctx, type, id, msg)
 	void *ctx;
 	int type;
@@ -110,7 +120,7 @@ btnmgr_hook(ctx, type, id, msg)
 	struct btnmgr_softc *sc = ctx;
 #endif /* not yet */
 
-	printf("%s button: %s\n", btnmgr_name(id), msg ? "ON" : "OFF");
+	DPRINTF(("%s button: %s\n", btnmgr_name(id), msg ? "ON" : "OFF"));
 
 	return (0);
 }
