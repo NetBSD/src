@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.33 2003/01/06 20:30:38 wiz Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.33 2003/01/06 20:30:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.33 2003/01/06 20:30:38 wiz Exp $"
 #include <sys/queue.h>
 #include <sys/stat.h>
 
-#include <miscfs/union/union.h>
+#include <fs/union/union.h>
 
 int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		     struct proc *));
