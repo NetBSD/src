@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.1 1998/06/12 23:29:27 tv Exp $
+#	$NetBSD: SHARK,v 1.2 1998/06/18 17:39:17 tv Exp $
 #
 #	SHARK
 #
@@ -143,9 +143,9 @@ cpu0 at mainbus?
 # Open Firmware devices
 ofbus*		at root
 ofbus*		at ofbus?
-ofdisk* 	at ofbus?
+#ofdisk* 	at ofbus?
 #ofnet*		at ofbus?	# don't use with cs0
-ofcons* 	at ofbus?
+#ofcons* 	at ofbus?	# don't use with pc0
 ofrtc*		at ofisa?
 ofrom*		at ofbus?
 
