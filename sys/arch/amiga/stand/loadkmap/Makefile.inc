@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.1.2.2 1996/06/08 15:41:58 is Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.3 1996/06/25 01:13:36 jtc Exp $
 
-BINDIR=/usr/share/keymaps/amiga
+BINDIR=$(DESTDIR)/usr/share/keymaps/amiga
 NOMAN=
 
 realinstall: ${PROG}
