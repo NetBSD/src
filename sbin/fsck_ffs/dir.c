@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.33 2002/05/09 02:55:50 simonb Exp $	*/
+/*	$NetBSD: dir.c,v 1.34 2002/09/28 20:11:05 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.33 2002/05/09 02:55:50 simonb Exp $");
+__RCSID("$NetBSD: dir.c,v 1.34 2002/09/28 20:11:05 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,13 +145,17 @@ dirscan(idesc)
 	struct bufarea *bp;
 	int dsize, n;
 	long blksiz;
+#if DIRBLKSIZ > APPLEUFS_DIRBLKSIZ
 	char dbuf[DIRBLKSIZ];
+#else
+	char dbuf[APPLEUFS_DIRBLKSIZ];
+#endif
 
 	if (idesc->id_type != DATA)
 		errx(EEXIT, "wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
-	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
-		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
+	    (idesc->id_filesize & (dirblksiz - 1)) != 0)
+		idesc->id_filesize = roundup(idesc->id_filesize, dirblksiz);
 	blksiz = idesc->id_numfrags * sblock->fs_fsize;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
@@ -238,7 +242,7 @@ fsck_readdir(idesc)
 
 	blksiz = idesc->id_numfrags * sblock->fs_fsize;
 	bp = getdirblk(idesc->id_blkno, blksiz);
-	if (idesc->id_loc % DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
+	if (idesc->id_loc % dirblksiz == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 		if (dircheck(idesc, dp))
@@ -248,7 +252,7 @@ fsck_readdir(idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
-		dp->d_reclen = iswap16(DIRBLKSIZ);
+		dp->d_reclen = iswap16(dirblksiz);
 		dp->d_ino = 0;
 		dp->d_type = 0;
 		dp->d_namlen = 0;
@@ -257,8 +261,8 @@ fsck_readdir(idesc)
 			dirty(bp);
 		else 
 			markclean=  0;
-		idesc->id_loc += DIRBLKSIZ;
-		idesc->id_filesize -= DIRBLKSIZ;
+		idesc->id_loc += dirblksiz;
+		idesc->id_filesize -= dirblksiz;
 		return (dp);
 	}
 dpok:
@@ -268,12 +272,12 @@ dpok:
 	dp = (struct direct *)(bp->b_un.b_buf + dploc);
 	idesc->id_loc += iswap16(dp->d_reclen);
 	idesc->id_filesize -= iswap16(dp->d_reclen);
-	if ((idesc->id_loc % DIRBLKSIZ) == 0)
+	if ((idesc->id_loc % dirblksiz) == 0)
 		return (dp);
 	ndp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
-		size = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
+		size = dirblksiz - (idesc->id_loc % dirblksiz);
 		idesc->id_loc += size;
 		idesc->id_filesize -= size;
 		if (idesc->id_fix == IGNORE)
@@ -304,11 +308,11 @@ dircheck(idesc, dp)
 	u_char namlen, type;
 	int spaceleft;
 
-	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
+	spaceleft = dirblksiz - (idesc->id_loc % dirblksiz);
 	if (iswap32(dp->d_ino) >= maxino ||
 	    dp->d_reclen == 0 ||
 	    iswap16(dp->d_reclen) > spaceleft ||
-	    (iswap16(dp->d_reclen) & 0x3) != 0)
+	    (iswap16(dp->d_reclen) & 0x3) != 0) 
 		return (0);
 	if (dp->d_ino == 0)
 		return (1);
@@ -629,8 +633,8 @@ makeentry(parent, ino, name)
 	idesc.id_fix = DONTKNOW;
 	idesc.id_name = name;
 	dp = ginode(parent);
-	if (iswap64(dp->di_size) % DIRBLKSIZ) {
-		dp->di_size = iswap64(roundup(iswap64(dp->di_size), DIRBLKSIZ));
+	if (iswap64(dp->di_size) % dirblksiz) {
+		dp->di_size = iswap64(roundup(iswap64(dp->di_size), dirblksiz));
 		inodirty();
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
@@ -652,7 +656,12 @@ expanddir(dp, name)
 {
 	ufs_daddr_t lastbn, newblk;
 	struct bufarea *bp;
-	char *cp, firstblk[DIRBLKSIZ];
+	char *cp;
+#if DIRBLKSIZ > APPLEUFS_DIRBLKSIZ
+	char firstblk[DIRBLKSIZ];
+#else
+	char firstblk[APPLEUFS_DIRBLKSIZ];
+#endif
 
 	lastbn = lblkno(sblock, iswap64(dp->di_size));
 	if (lastbn >= NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
@@ -667,15 +676,15 @@ expanddir(dp, name)
 		(long)dblksize(sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
-	memmove(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
+	memmove(firstblk, bp->b_un.b_buf, dirblksiz);
 	bp = getdirblk(newblk, sblock->fs_bsize);
 	if (bp->b_errs)
 		goto bad;
-	memmove(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
-	emptydir.dot_reclen = iswap16(DIRBLKSIZ);
-	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
+	memmove(bp->b_un.b_buf, firstblk, dirblksiz);
+	emptydir.dot_reclen = iswap16(dirblksiz);
+	for (cp = &bp->b_un.b_buf[dirblksiz];
 	     cp < &bp->b_un.b_buf[sblock->fs_bsize];
-	     cp += DIRBLKSIZ)
+	     cp += dirblksiz)
 		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	bp = getdirblk(iswap32(dp->di_db[lastbn + 1]),
@@ -717,9 +726,9 @@ allocdir(parent, request, mode)
 
 	ino = allocino(request, IFDIR|mode);
 	dirhead.dot_reclen = iswap16(12);
-	dirhead.dotdot_reclen = iswap16(DIRBLKSIZ - 12);
+	dirhead.dotdot_reclen = iswap16(dirblksiz - 12);
 	odirhead.dot_reclen = iswap16(12);
-	odirhead.dotdot_reclen = iswap16(DIRBLKSIZ - 12);
+	odirhead.dotdot_reclen = iswap16(dirblksiz - 12);
 	odirhead.dot_namlen = iswap16(1);
 	odirhead.dotdot_namlen = iswap16(2);
 	if (newinofmt)
@@ -735,10 +744,10 @@ allocdir(parent, request, mode)
 		return (0);
 	}
 	memmove(bp->b_un.b_buf, dirp, sizeof(struct dirtemplate));
-	emptydir.dot_reclen = iswap16(DIRBLKSIZ);
-	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
+	emptydir.dot_reclen = iswap16(dirblksiz);
+	for (cp = &bp->b_un.b_buf[dirblksiz];
 	     cp < &bp->b_un.b_buf[sblock->fs_fsize];
-	     cp += DIRBLKSIZ)
+	     cp += dirblksiz)
 		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	dp->di_nlink = iswap16(2);
