@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2002/02/21 06:36:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2002/02/21 21:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2002/02/21 06:36:11 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2002/02/21 21:58:01 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3723,6 +3723,27 @@ pmap_alloc_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
 /************************ Bootstrapping routines ****************************/
 
 /*
+ * This list exists for the benefit of pmap_map_chunk().  It keeps track
+ * of the kernel L2 tables during bootstrap, so that pmap_map_chunk() can
+ * find them as necessary.
+ *
+ * Note that the data on this list is not valid after initarm() returns.
+ */
+SLIST_HEAD(, pv_addr) kernel_pt_list = SLIST_HEAD_INITIALIZER(kernel_pt_list);
+
+static vaddr_t
+kernel_pt_lookup(paddr_t pa)
+{
+	pv_addr_t *pv;
+
+	SLIST_FOREACH(pv, &kernel_pt_list, pv_list) {
+		if (pv->pv_pa == pa)
+			return (pv->pv_va);
+	}
+	return (0);
+}
+
+/*
  * pmap_map_section:
  *
  *	Create a single section mapping.
@@ -3767,17 +3788,19 @@ pmap_map_entry(vaddr_t l2pt, vaddr_t va, paddr_t pa, int prot, int cache)
  *	page table at the slot for "va".
  */
 void
-pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, paddr_t l2pa)
+pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	u_int slot = va >> PDSHIFT;
 
-	KASSERT((l2pa & PGOFSET) == 0);
+	KASSERT((l2pv->pv_pa & PGOFSET) == 0);
 
-	pde[slot + 0] = L1_PTE(l2pa + 0x000);
-	pde[slot + 1] = L1_PTE(l2pa + 0x400);
-	pde[slot + 2] = L1_PTE(l2pa + 0x800);
-	pde[slot + 3] = L1_PTE(l2pa + 0xc00);
+	pde[slot + 0] = L1_PTE(l2pv->pv_pa + 0x000);
+	pde[slot + 1] = L1_PTE(l2pv->pv_pa + 0x400);
+	pde[slot + 2] = L1_PTE(l2pv->pv_pa + 0x800);
+	pde[slot + 3] = L1_PTE(l2pv->pv_pa + 0xc00);
+
+	SLIST_INSERT_HEAD(&kernel_pt_list, l2pv, pv_list);
 }
 
 /*
@@ -3788,13 +3811,13 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, paddr_t l2pa)
  *	provided L1 and L2 tables at the specified virtual address.
  */
 vsize_t
-pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
-    vsize_t size, int prot, int cache)
+pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
+    int prot, int cache)
 {
 	pd_entry_t *pde = (pd_entry_t *) l1pt;
-	pt_entry_t *pte = (pt_entry_t *) l2pt;
 	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+	pt_entry_t *pte;
 	vsize_t resid;  
 	int i;
 
@@ -3830,8 +3853,13 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 		 * for the current VA.
 		 */
 		if ((pde[va >> PDSHIFT] & L1_MASK) != L1_PAGE)
-			panic("pmap_map_chunk: no L2 table for VA 0x%08lx\n",
-			    va);
+			panic("pmap_map_chunk: no L2 table for VA 0x%08lx", va);
+
+		pte = (pt_entry_t *)
+		    kernel_pt_lookup(pde[va >> PDSHIFT] & PG_FRAME);
+		if (pte == NULL)
+			panic("pmap_map_chunk: can't find L2 table for VA"
+			    "0x%08lx", va);
 
 		/* See if we can use a L2 large page mapping. */
 		if (((pa | va) & (L2_LPAGE_SIZE - 1)) == 0 &&
@@ -3840,13 +3868,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 			printf("L");
 #endif
 			for (i = 0; i < 16; i++) {
-#ifdef cats	/* XXXJRT */
-				pte[((va >> PGSHIFT) & 0x7f0) + i] =
-				    L2_LPTE(pa, ap, fl);
-#else
 				pte[((va >> PGSHIFT) & 0x3f0) + i] =
 				    L2_LPTE(pa, ap, fl);
-#endif
 			}
 			va += L2_LPAGE_SIZE;
 			pa += L2_LPAGE_SIZE;
@@ -3858,11 +3881,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 #ifdef VERBOSE_INIT_ARM
 		printf("P");
 #endif
-#ifdef cats	/* XXXJRT */
-		pte[(va >> PGSHIFT) & 0x7ff] = L2_SPTE(pa, ap, fl);
-#else
 		pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa, ap, fl);
-#endif
 		va += NBPG;
 		pa += NBPG;
 		resid -= NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2002/02/21 02:52:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2002/02/21 21:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -123,8 +123,8 @@ struct pv_head {
  * entry address for each page hook.
  */
 typedef struct {
-        vaddr_t va;
-        pt_entry_t *pte;
+	vaddr_t va;
+	pt_entry_t *pte;
 } pagehook_t;
 
 /*
@@ -132,7 +132,8 @@ typedef struct {
  * during bootstrapping) we need to keep track of the physical and virtual
  * addresses of various pages
  */
-typedef struct {
+typedef struct pv_addr {
+	SLIST_ENTRY(pv_addr) pv_list;
 	paddr_t pv_pa;
 	vaddr_t pv_va;
 } pv_addr_t;
@@ -188,9 +189,8 @@ pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
-vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, vaddr_t, paddr_t, vsize_t,
-	    int, int);
-void	pmap_link_l2pt(vaddr_t, vaddr_t, paddr_t);
+vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
+void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
