@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.31 2000/10/22 08:20:09 explorer Exp $	*/
+/*	$NetBSD: umodem.c,v 1.32 2000/11/10 13:53:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Comm Class spec: http://www.usb.org/developers/data/usbcdc11.pdf
+ * Comm Class spec:  http://www.usb.org/developers/data/usbspec.zip
  */
 
 /*
