@@ -1,9 +1,10 @@
-# $NetBSD: shl.mi,v 1.17 2001/01/04 21:01:26 garbled Exp $
+# $NetBSD: shl.mi,v 1.18 2001/01/25 09:49:55 wiz Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbfd.so.3.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
+./usr/lib/libcdk_pic.a		comp-c-piclib
 ./usr/lib/libcom_err_pic.a	comp-c-piclib
 ./usr/lib/libcompat_pic.a	comp-c-piclib
 ./usr/lib/libcrypt_pic.a	comp-c-piclib
@@ -11,6 +12,7 @@
 ./usr/lib/libcurses_pic.a	comp-c-piclib
 ./usr/lib/libdes_pic.a		comp-c-piclib
 ./usr/lib/libedit_pic.a		comp-c-piclib
+./usr/lib/libform_pic.a		comp-c-piclib
 ./usr/lib/libg2c_pic.a		comp-fortran-piclib
 ./usr/lib/libgnumalloc_pic.a	comp-c-piclib
 ./usr/lib/libgssapi_pic.a	comp-c-piclib

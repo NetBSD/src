@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.300 2001/01/12 05:39:37 jwise Exp $
+#	$NetBSD: mi,v 1.301 2001/01/25 09:49:54 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-miscutil-bin
 ./usr/bin/ar			comp-util-bin
@@ -422,6 +422,7 @@
 ./usr/include/float.h			comp-c-include
 ./usr/include/fmtmsg.h			comp-c-include
 ./usr/include/fnmatch.h			comp-c-include
+./usr/include/form.h			comp-c-include
 ./usr/include/frame.h			comp-c-include
 ./usr/include/fstab.h			comp-c-include
 ./usr/include/fts.h			comp-c-include
@@ -1236,6 +1237,8 @@
 ./usr/lib/libedit_p.a		comp-c-proflib
 ./usr/lib/libfl.a		comp-c-lib
 ./usr/lib/libfl_p.a		comp-c-proflib
+./usr/lib/libform.a		comp-c-lib
+./usr/lib/libform_p.a		comp-c-proflib
 ./usr/lib/libg2c.a		comp-fortran-lib
 ./usr/lib/libg2c_p.a		comp-fortran-proflib
 ./usr/lib/libgcc.a		comp-c-lib
@@ -1321,6 +1324,7 @@
 ./usr/libdata/lint/llib-lcrypto.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lcurses.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-ledit.ln	comp-c-lintlib
+./usr/libdata/lint/llib-lform.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lgnumalloc.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lintl.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lipsec.ln	comp-c-lintlib
