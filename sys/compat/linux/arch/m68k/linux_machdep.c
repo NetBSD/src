@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11 2002/02/19 22:42:25 is Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.11 2002/02/19 22:42:25 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.12 2002/03/31 22:22:46 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -131,7 +131,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */
-	kf.sf_signum = native_to_linux_sig[sig];
+	kf.sf_signum = native_to_linux_signo[sig];
 	kf.sf_code = frame->f_vector;		/* Does anyone use it? */
 	kf.sf_scp = &fp->sf_c.c_sc;
 
@@ -291,7 +291,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 
 	/* Build stack frame. */
 	kf.sf_psigtramp = fp->sf_sigtramp;	/* return addr for handler */
-	kf.sf_signum = native_to_linux_sig[sig];
+	kf.sf_signum = native_to_linux_signo[sig];
 	kf.sf_pinfo = &fp->sf_info;
 	kf.sf_puc = &fp->sf_uc;
 

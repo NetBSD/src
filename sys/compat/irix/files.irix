@@ -1,4 +1,4 @@
-#	$NetBSD: files.irix,v 1.17 2002/03/16 13:29:42 manu Exp $
+#	$NetBSD: files.irix,v 1.18 2002/03/31 22:22:44 christos Exp $
 #
 
 file	arch/mips/mips/irix_syscall.c		compat_irix
@@ -27,6 +27,7 @@ file	compat/svr4/svr4_fcntl.c		compat_irix
 file	compat/svr4/svr4_misc.c			compat_irix
 file	compat/svr4/svr4_stat.c			compat_irix
 file	compat/svr4/svr4_signal.c		compat_irix
+file	compat/svr4/svr4_signo.c		compat_irix
 file	compat/svr4/svr4_ipc.c			compat_irix
 file	compat/svr4/svr4_ioctl.c		compat_irix
 file	compat/svr4/svr4_stream.c		compat_irix
