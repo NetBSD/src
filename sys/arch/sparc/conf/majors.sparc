@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.17 2003/12/10 02:04:02 jmc Exp $
+#	$NetBSD: majors.sparc,v 1.18 2004/07/24 12:37:20 mrg Exp $
 #
 # Device majors for sparc
 #
@@ -84,6 +84,8 @@ device-major	wsfont		char 94			wsfont
 device-major	cgfourteen	char 99			cgfourteen
 device-major	mtty		char 100		mtty
 device-major	mbpp		char 101		mbpp
+device-major	stty		char 102		stty
+device-major	sbpp		char 103		sbpp
 
 device-major	bpf		char 105		bpfilter
 
