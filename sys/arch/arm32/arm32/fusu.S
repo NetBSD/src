@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.7 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: fusu.S,v 1.8 2000/12/12 06:32:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -160,7 +160,7 @@ ENTRY(fuswintr)
 	ldr	r2, Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
-	mvnne	r0, #0
+	mvnne	r0, #-1
 	movne	pc, lr
 
 	ldr	r2, Lvm_min_address
@@ -316,7 +316,7 @@ ENTRY(suswintr)
 	ldr	r2, Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
-	mvnne	r0, #0
+	mvnne	r0, #-1
 	movne	pc, lr
 
 	ldr	r2, Lvm_min_address
