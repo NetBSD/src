@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.81 2004/10/06 05:23:05 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.82 2004/10/06 05:29:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.81 2004/10/06 05:23:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.82 2004/10/06 05:29:51 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -135,6 +135,8 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #define	WM_TXDESCSIZE(sc)	(WM_NTXDESC(sc) * sizeof(wiseman_txdesc_t))
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
+
+#define	WM_MAXTXDMA		ETHER_MAX_LEN_JUMBO
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -995,7 +997,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) ?
 	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
+		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
 					       WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
 					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Tx DMA map %d, "
