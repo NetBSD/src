@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1999/09/17 20:04:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1999/09/21 12:36:32 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,6 +118,7 @@ struct pmap ofw_pmap;
 int	ofkbd_ihandle;
 int	ofkbd_cngetc __P((dev_t));
 void	ofkbd_cnpollc __P((dev_t, int));
+int	lcsplx __P((int));
 
 int msgbufmapped = 0;
 
@@ -948,13 +949,12 @@ callback(p)
 	panic("callback");	/* for now			XXX */
 }
 
-void
+int
 lcsplx(ipl)
 	int ipl;
 {
-	splx(ipl); 
+	return spllower(ipl); 	/* XXX */
 }
-
 
 /*
  * Convert kernel VA to physical address
