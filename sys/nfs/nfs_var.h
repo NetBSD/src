@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.1 1996/02/09 21:48:37 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.2 1996/02/13 17:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -52,6 +52,8 @@ struct nameidata;
 struct nfsnode;
 struct sillyrename;
 struct componentname;
+struct nfsd_srvargs;
+struct nfsd_cargs;
 
 
 /* nfs_bio.c */
