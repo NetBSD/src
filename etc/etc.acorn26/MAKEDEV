@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.6 2002/10/04 18:53:22 elric Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2002/10/21 04:14:47 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -305,16 +305,15 @@ opty)
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
-		
 pty*)
 	class=${i#pty}
 	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
 	case $name in
 	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
-		continue;;
-	?)      ;;
-	*)      echo "$0: $i: pty unit must be between 0 and 15"
-	        continue ;;
+		continue ;;
+	?)	;;
+	*)	echo "$0: $i: pty unit must be between 0 and 15"
+		continue ;;
 	esac
 	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0
