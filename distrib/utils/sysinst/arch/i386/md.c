@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.55 2001/01/27 07:34:39 jmc Exp $ */
+/*	$NetBSD: md.c,v 1.56 2001/09/13 18:09:19 jdolecek Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -645,6 +645,8 @@ get_bootmodel()
 		return "small";
 	else if (strstr(ut.version, "LAPTOP") != NULL)
 		return "laptop";
+	else if (strstr(ut.version, "PS2") != NULL)
+		return "ps2";
 	return "";
 }
 
@@ -658,6 +660,8 @@ md_init()
 		dist_list[0] = special_kernel_list[0];
 	else if (strcmp(bootmodel, "tiny") == 0)
 		dist_list[0] = special_kernel_list[1];
+	else if (strcmp(bootmodel, "ps2") == 0)
+		dist_list[0] = special_kernel_list[2];
 }
 
 /*
