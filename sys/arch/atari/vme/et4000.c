@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.4 1999/10/21 15:33:49 leo Exp $	*/
+/*	$NetBSD: et4000.c,v 1.4.6.1 2000/06/30 16:27:20 simonb Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -480,10 +480,11 @@ etioctl(dev, cmd, data, flags, p)
 	return(0);
 }
 
-int
+paddr_t
 etmmap(dev, offset, prot)
 	dev_t dev;
-	int offset, prot;
+	off_t offset;
+	int prot;
 {
 	struct et_softc *sc;
 

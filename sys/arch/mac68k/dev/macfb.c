@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.3 2000/03/17 04:46:32 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.3.4.1 2000/06/30 16:27:28 simonb Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -91,7 +91,7 @@ const struct wsscreen_list macfb_screenlist = {
 };
 
 static int	macfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	macfb_mmap __P((void *, off_t, int));
+static paddr_t	macfb_mmap __P((void *, off_t, int));
 static int	macfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *));
 static void	macfb_free_screen __P((void *, void *));
@@ -294,7 +294,7 @@ macfb_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int
+static paddr_t
 macfb_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -302,7 +302,7 @@ macfb_mmap(v, offset, prot)
 {
 	struct macfb_softc *sc = v;
 	struct macfb_devconfig *dc = sc->sc_dc;
-	u_long addr;
+	paddr_t addr;
 
 	if (offset >= 0 &&
 	    offset < m68k_round_page(dc->dc_rowbytes * dc->dc_ht))
@@ -310,7 +310,7 @@ macfb_mmap(v, offset, prot)
 	else
 		addr = (-1);	/* XXX bogus */
 
-	return (int)addr;
+	return addr;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1999/12/04 21:20:07 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.13.4.1 2000/06/30 16:27:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -183,10 +183,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -203,7 +204,7 @@ mmmmap(dev, off, prot)
 
 	/* minor device 0 is physical memory */
 
-	if ((unsigned)off >= ctob(physmem) &&
+	if (off >= ctob(physmem) &&
 	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return -1;
 	return arm_byte_to_page(off);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.140 2000/06/05 22:20:56 sommerfeld Exp $	*/
+/*	$NetBSD: pccons.c,v 1.140.2.1 2000/06/30 16:27:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2623,14 +2623,14 @@ strans(dt)
 	return (0);
 }
 
-int
+paddr_t
 pcmmap(dev, offset, nprot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 
-	if ((unsigned int)offset > 0x20000)
+	if (offset > 0x20000)
 		return (-1);
 	return (i386_btop(0xa0000 + offset));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.13 2000/06/19 19:35:20 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.13.2.1 2000/06/30 16:27:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -81,7 +81,7 @@ struct wsscreen_list ofb_screenlist = {
 };
 
 static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int ofb_mmap __P((void *, off_t, int));
+static paddr_t ofb_mmap __P((void *, off_t, int));
 static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void ofb_free_screen __P((void *, void *));
@@ -316,7 +316,7 @@ ofb_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-int
+paddr_t
 ofb_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

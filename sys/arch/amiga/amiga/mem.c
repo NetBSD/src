@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 1999/12/04 21:20:02 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.4.1 2000/06/30 16:27:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,15 +58,13 @@
 
 #include <uvm/uvm_extern.h>
 
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
 static caddr_t devzeropage;
-
-int mmopen __P((dev_t, int, int, struct proc *));
-int mmclose __P((dev_t, int, int, struct proc *));
-int mmrw __P((dev_t, struct uio *, int));
-int mmmmap __P((dev_t, int, int));
-
 
 /*ARGSUSED*/
 int
@@ -232,10 +230,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

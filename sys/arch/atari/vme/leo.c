@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.2 1999/10/25 14:52:56 leo Exp $	*/
+/*	$NetBSD: leo.c,v 1.2.6.1 2000/06/30 16:27:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -441,10 +441,10 @@ leoioctl(dev, cmd, data, flags, p)
 	}
 }
 
-int
+paddr_t
 leommap(dev, offset, prot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int prot;
 {
 	struct leo_softc *sc;

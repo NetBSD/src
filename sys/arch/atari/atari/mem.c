@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1999/12/04 21:20:14 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.17.4.1 2000/06/30 16:27:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,10 +62,9 @@
 
 #include "nvr.h"
 
-dev_type_open(mmopen);
-dev_type_close(mmclose);
-dev_type_mmap(mmmmap);
-dev_type_read(mmrw);
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -203,10 +202,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

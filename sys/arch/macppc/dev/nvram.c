@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.2 1998/11/19 15:38:23 mrg Exp $	*/
+/*	$NetBSD: nvram.c,v 1.2.20.1 2000/06/30 16:27:29 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -211,10 +211,11 @@ nvramioctl(dev, cmd, data, flag, p)
 	return ENOTTY;
 }
 
-int
+paddr_t
 nvrammmap(dev, off, prot)
         dev_t dev;
-        int off, prot;
+        off_t off;
+	int prot;
 {
 	return -1;
 }

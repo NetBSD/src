@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.20 2000/02/03 04:20:01 nisimura Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.20.4.1 2000/06/30 16:27:33 simonb Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -259,10 +259,11 @@ fbpoll(dev, events, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct fbinfo *fi;
 	int len;
@@ -278,9 +279,9 @@ fbmmap(dev, off, prot)
 	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
 	if (off < len)
-		return (int)mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
+		return mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
 	off -= len;
 	if (off >= fi->fi_type.fb_size)
 		return (-1);
-	return (int)mips_btop(MIPS_KSEG1_TO_PHYS(fi->fi_pixels) + off);
+	return mips_btop(MIPS_KSEG1_TO_PHYS(fi->fi_pixels) + off);
 }
