@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.5 1999/02/01 23:40:22 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.6 1999/02/02 00:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -61,9 +61,7 @@
  * transmission.
  */
 
-#if defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,20 +70,17 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#endif
-#if defined(__NetBSD__)
 #include <net/if_ether.h>
+
 #if defined(INET)
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
 #endif
 
 #include "bpfilter.h"
@@ -94,32 +89,13 @@
 #endif
 
 #include <vm/vm.h>		/* for vtophys */
-#if defined(__FreeBSD__)
-#include <vm/pmap.h>		/* for vtophys */
-#endif
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#else
-#include <sys/device.h>
-#endif
-#if defined(__FreeBSD__)
-#include <machine/bus_pio.h>
-#include <machine/bus_memio.h>
-#endif
 #include <machine/bus.h>
+#include <machine/intr.h>
 
-#if defined(__FreeBSD__)
-#include <pci/pcireg.h>
-#include <pci/pcivar.h>
-#include <pci/if_vrreg.h>
-#endif 
-
-#if defined(__NetBSD__)
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/if_vrreg.h>
-#endif 
 
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
@@ -131,15 +107,7 @@
 
 /* #define	VR_BACKGROUND_AUTONEG */
 
-#if defined(__NetBSD__)
-#define	bootverbose	0
-#define	ETHER_CRC_LEN	4
-#endif
-
-#if !defined(lint) && !defined(__NetBSD__)
-static const char rcsid[] =
-	"$FreeBSD: if_vr.c,v 1.7 1999/01/10 18:51:49 wpaul Exp $";
-#endif
+#define	ETHER_CRC_LEN	4	/* XXX Should be in a common header. */
 
 /*
  * Various supported device vendors/types and their names.
@@ -497,16 +465,12 @@ static void vr_setmulti(sc)
 	struct ifnet		*ifp;
 	int			h = 0;
 	u_int32_t		hashes[2] = { 0, 0 };
-#if defined(__NetBSD__)
 	struct ether_multistep	step;
 	struct ether_multi	*enm;
-#else
-	struct ifmultiaddr	*ifma;
-#endif
 	int			mcnt = 0;
 	u_int8_t		rxfilt;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
@@ -523,29 +487,18 @@ static void vr_setmulti(sc)
 	CSR_WRITE_4(sc, VR_MAR1, 0);
 
 	/* now program new ones */
-#if defined(__NetBSD__)
 	ETHER_FIRST_MULTI(step, &sc->vr_ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0)
 			continue;
 
 		h = vr_calchash(enm->enm_addrlo);
-#else
-	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-				ifma = ifma->ifma_link.le_next) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-
-		h = vr_calchash(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-#endif
 
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else
 			hashes[1] |= (1 << (h - 32));
-#if defined(__NetBSD__)
 		ETHER_NEXT_MULTI(step, enm);
-#endif
 		mcnt++;
 	}
 
@@ -594,7 +547,7 @@ static void vr_autoneg_mii(sc, flag, verbose)
 	struct ifmedia		*ifm;
 
 	ifm = &sc->ifmedia;
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
 
@@ -614,9 +567,8 @@ static void vr_autoneg_mii(sc, flag, verbose)
 	phy_sts = vr_phy_readreg(sc, PHY_BMSR);
 	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
 		if (verbose)
-			printf(VR_PRINTF_FMT
-				": autonegotiation not supported\n",
-				VR_PRINTF_ARGS);
+			printf("%s: autonegotiation not supported\n",
+				sc->vr_dev.dv_xname);
 		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 		return;
 	}
@@ -655,20 +607,20 @@ static void vr_autoneg_mii(sc, flag, verbose)
 		sc->vr_autoneg = 0;
 		break;
 	default:
-		printf(VR_PRINTF_FMT ": invalid autoneg flag: %d\n",
-			VR_PRINTF_ARGS, flag);
+		printf("%s: invalid autoneg flag: %d\n",
+			sc->vr_dev.dv_xname, flag);
 		return;
 	}
 
 	if (vr_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
 		if (verbose)
-			printf(VR_PRINTF_FMT ": autoneg complete, ",
-				VR_PRINTF_ARGS);
+			printf("%s: autoneg complete, ",
+				sc->vr_dev.dv_xname);
 		phy_sts = vr_phy_readreg(sc, PHY_BMSR);
 	} else {
 		if (verbose)
-			printf(VR_PRINTF_FMT ": autoneg not complete, ",
-				VR_PRINTF_ARGS);
+			printf("%s: autoneg not complete, ",
+				sc->vr_dev.dv_xname);
 	}
 
 	media = vr_phy_readreg(sc, PHY_BMCR);
@@ -737,41 +689,26 @@ static void vr_getmode_mii(sc)
 	u_int16_t		bmsr;
 	struct ifnet		*ifp;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	bmsr = vr_phy_readreg(sc, PHY_BMSR);
-	if (bootverbose)
-		printf(VR_PRINTF_FMT ": PHY status word: %x\n",
-			VR_PRINTF_ARGS, bmsr);
 
 	/* fallback */
 	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 
 	if (bmsr & PHY_BMSR_10BTHALF) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT
-				": 10Mbps half-duplex mode supported\n",
-				VR_PRINTF_ARGS);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 	}
 
 	if (bmsr & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT
-				": 10Mbps full-duplex mode supported\n",
-				VR_PRINTF_ARGS);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
 	}
 
 	if (bmsr & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT
-				": 100Mbps half-duplex mode supported\n",
-				VR_PRINTF_ARGS);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -780,10 +717,6 @@ static void vr_getmode_mii(sc)
 	}
 
 	if (bmsr & PHY_BMSR_100BTXFULL) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT
-				": 100Mbps full-duplex mode supported\n",
-				VR_PRINTF_ARGS);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
@@ -792,26 +725,16 @@ static void vr_getmode_mii(sc)
 
 	/* Some also support 100BaseT4. */
 	if (bmsr & PHY_BMSR_100BT4) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT ": 100baseT4 mode supported\n",
-				VR_PRINTF_ARGS);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
 #ifdef FORCE_AUTONEG_TFOUR
-		if (bootverbose)
-			printf(VR_PRINTF_FMT
-				": forcing on autoneg support for BT4\n",
-				VR_PRINTF_ARGS);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
 
 	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT ": autoneg supported\n",
-				VR_PRINTF_ARGS);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 	}
@@ -829,21 +752,21 @@ static void vr_setmode_mii(sc, media)
 	u_int16_t		bmcr;
 	struct ifnet		*ifp;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	/*
 	 * If an autoneg session is in progress, stop it.
 	 */
 	if (sc->vr_autoneg) {
-		printf(VR_PRINTF_FMT ": canceling autoneg session\n",
-			VR_PRINTF_ARGS);
+		printf("%s: canceling autoneg session\n",
+			sc->vr_dev.dv_xname);
 		ifp->if_timer = sc->vr_autoneg = sc->vr_want_auto = 0;
 		bmcr = vr_phy_readreg(sc, PHY_BMCR);
 		bmcr &= ~PHY_BMCR_AUTONEGENBL;
 		vr_phy_writereg(sc, PHY_BMCR, bmcr);
 	}
 
-	printf(VR_PRINTF_FMT ": selecting MII, ", VR_PRINTF_ARGS);
+	printf("%s: selecting MII, ", sc->vr_dev.dv_xname);
 
 	bmcr = vr_phy_readreg(sc, PHY_BMCR);
 
@@ -920,8 +843,8 @@ static void vr_reset(sc)
 			break;
 	}
 	if (i == VR_TIMEOUT)
-		printf(VR_PRINTF_FMT ": reset never completed!\n",
-			VR_PRINTF_ARGS);
+		printf("%s: reset never completed!\n",
+			sc->vr_dev.dv_xname);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1011,17 +934,15 @@ static int vr_newbuf(sc, c)
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
-		printf(VR_PRINTF_FMT
-			": no memory for rx list -- packet dropped!\n",
-			VR_PRINTF_ARGS);
+		printf("%s: no memory for rx list -- packet dropped!\n",
+			sc->vr_dev.dv_xname);
 		return (ENOBUFS);
 	}
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
-		printf(VR_PRINTF_FMT
-			": no memory for rx list -- packet dropped!\n",
-			VR_PRINTF_ARGS);
+		printf("%s: no memory for rx list -- packet dropped!\n",
+			sc->vr_dev.dv_xname);
 		m_freem(m_new);
 		return (ENOBUFS);
 	}
@@ -1048,7 +969,7 @@ static void vr_rxeof(sc)
 	int			total_len = 0;
 	u_int32_t		rxstat;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	while (!((rxstat = sc->vr_cdata.vr_rx_head->vr_ptr->vr_status) &
 							VR_RXSTAT_OWN)) {
@@ -1063,7 +984,7 @@ static void vr_rxeof(sc)
 		 */
 		if (rxstat & VR_RXSTAT_RXERR) {
 			ifp->if_ierrors++;
-			printf(VR_PRINTF_FMT ": rx error: ", VR_PRINTF_ARGS);
+			printf("%s: rx error: ", sc->vr_dev.dv_xname);
 			switch (rxstat & 0x000000FF) {
 			case VR_RXSTAT_CRCERR:
 				printf("crc error\n");
@@ -1134,11 +1055,7 @@ static void vr_rxeof(sc)
 		 * address or the interface is in promiscuous mode.
 		 */
 		if (ifp->if_bpf) {
-#if defined(__NetBSD__)
 			bpf_mtap(ifp->if_bpf, m);
-#else
-			bpf_mtap(ifp, m);
-#endif
 			if (ifp->if_flags & IFF_PROMISC &&
 				(memcmp(eh->ether_dhost, sc->vr_enaddr,
 						ETHER_ADDR_LEN) &&
@@ -1181,7 +1098,7 @@ static void vr_txeof(sc)
 	struct ifnet		*ifp;
 	register struct mbuf	*n;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	/* Clear the timeout timer. */
 	ifp->if_timer = 0;
@@ -1237,7 +1154,7 @@ static void vr_txeoc(sc)
 {
 	struct ifnet		*ifp;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	ifp->if_timer = 0;
 
@@ -1259,7 +1176,7 @@ static void vr_intr(arg)
 	u_int16_t		status;
 
 	sc = arg;
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 
 	/* Supress unwanted interrupts. */
 	if (!(ifp->if_flags & IFF_UP)) {
@@ -1347,16 +1264,16 @@ static int vr_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf(VR_PRINTF_FMT ": no memory for tx list",
-				VR_PRINTF_ARGS);
+			printf("%s: no memory for tx list",
+				sc->vr_dev.dv_xname);
 			return (1);
 		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
-				printf(VR_PRINTF_FMT ": no memory for tx list",
-					VR_PRINTF_ARGS);
+				printf("%s: no memory for tx list",
+					sc->vr_dev.dv_xname);
 				return (1);
 			}
 		}
@@ -1442,11 +1359,7 @@ static void vr_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-#if defined(__NetBSD__)
 			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf);
-#else
-			bpf_mtap(ifp, cur_tx->vr_mbuf);
-#endif
 #endif
 		VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_TX_GO);
@@ -1475,7 +1388,7 @@ static void vr_init(xsc)
 	void			*xsc;
 {
 	struct vr_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->vr_if;
+	struct ifnet		*ifp = &sc->vr_ec.ec_if;
 	u_int16_t		phy_bmcr = 0;
 	int			s;
 
@@ -1501,8 +1414,8 @@ static void vr_init(xsc)
 
 	/* Init circular RX list. */
 	if (vr_list_rx_init(sc) == ENOBUFS) {
-		printf(VR_PRINTF_FMT ": initialization failed: no "
-			"memory for rx buffers\n", VR_PRINTF_ARGS);
+		printf("%s: initialization failed: no "
+			"memory for rx buffers\n", sc->vr_dev.dv_xname);
 		vr_stop(sc);
 		(void)splx(s);
 		return;
@@ -1639,16 +1552,13 @@ static int vr_ioctl(ifp, command, data)
 	caddr_t			data;
 {
 	struct vr_softc		*sc = ifp->if_softc;
-#if defined(__NetBSD__)
+	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-#endif
-	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
 
 	s = splimp();
 
 	switch (command) {
-#if defined(__NetBSD__)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
@@ -1678,14 +1588,6 @@ static int vr_ioctl(ifp, command, data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
-#else /* __NetBSD__ */
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, command, data);
-		break;
-
-#endif /* __NetBSD__ */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			vr_init(sc);
@@ -1734,12 +1636,11 @@ static void vr_watchdog(ifp)
 	}
 
 	ifp->if_oerrors++;
-	printf(VR_PRINTF_FMT ": watchdog timeout\n", VR_PRINTF_ARGS);
+	printf("%s: watchdog timeout\n", sc->vr_dev.dv_xname);
 
 	if (!(vr_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
-		printf(VR_PRINTF_FMT
-			": no carrier - transceiver cable problem?\n",
-			VR_PRINTF_ARGS);
+		printf("%s: no carrier - transceiver cable problem?\n",
+			sc->vr_dev.dv_xname);
 
 	vr_stop(sc);
 	vr_reset(sc);
@@ -1761,7 +1662,7 @@ static void vr_stop(sc)
 	register int		i;
 	struct ifnet		*ifp;
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_STOP);
@@ -1800,48 +1701,6 @@ static void vr_stop(sc)
 	return;
 }
 
-#if defined(__FreeBSD__)
-static const char *vr_probe __P((pcici_t, pcidi_t));
-static void vr_attach __P((pcici_t, int));
-static void vr_shutdown __P((int, void *));
-
-static unsigned long vr_count = 0;
-
-/*
- * Probe for a VIA Rhine chip. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-static const char *
-vr_probe(config_id, device_id)
-	pcici_t			config_id;
-	pcidi_t			device_id;
-{
-	struct vr_type		*t;
-
-	t = vr_devs;
-
-	while (t->vr_name != NULL) {
-		if ((device_id & 0xFFFF) == t->vr_vid &&
-		    ((device_id >> 16) & 0xFFFF) == t->vr_did) {
-			return (t->vr_name);
-		}
-		t++;
-	}
-
-	return (NULL);
-}
-
-static struct pci_device vr_device = {
-	"vr",
-	vr_probe,
-	vr_attach,
-	&vr_count,
-	NULL
-};
-DATA_SET(pcidevice_set, vr_device);
-#endif /* __FreeBSD__ */
-
-#if defined(__NetBSD__)
 static struct vr_type *vr_lookup __P((struct pci_attach_args *));
 static int vr_probe __P((struct device *, struct cfdata *, void *));
 static void vr_attach __P((struct device *, struct device *, void *));
@@ -1878,21 +1737,13 @@ vr_probe(parent, match, aux)
 
 	return (0);
 }
-#endif /* __NetBSD__ */
 
 /*
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-#if defined(__FreeBSD__)
-static void vr_shutdown(howto, arg)
-	int howto;
-	void *arg;
-#endif
-#if defined(__NetBSD__)
 static void vr_shutdown(arg)
 	void *arg;
-#endif
 {
 	struct vr_softc		*sc = (struct vr_softc *)arg;
 
@@ -1905,37 +1756,17 @@ static void vr_shutdown(arg)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-#if defined(__FreeBSD__)
-static void
-vr_attach(config_id, unit)
-	pcici_t			config_id;
-	int			unit;
-#endif
-#if defined(__NetBSD__)
 static void
 vr_attach(parent, self, aux)
 	struct device * const parent;
 	struct device * const self;
 	void * const aux;
-#endif
 {
-#if defined(__FreeBSD__)
-#define	PCI_CONF_WRITE(r, v)	pci_conf_write(config_id, (r), (v))
-#define	PCI_CONF_READ(r)	pci_conf_read(config_id, (r))
-	int			s;
-	struct vr_softc		*sc;
-#ifndef VR_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
-#endif
-
-#if defined(__NetBSD__)
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 	struct vr_softc * const sc = (struct vr_softc *) self;
 	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
 	struct vr_type *vrt;
-#endif
 	int			i;
 	u_int32_t		command;
 	struct ifnet		*ifp;
@@ -1946,20 +1777,6 @@ vr_attach(parent, self, aux)
 	struct vr_type		*p;
 	u_int16_t		phy_vid, phy_did, phy_sts;
 
-#if defined(__FreeBSD__)
-	s = splimp();
-
-	sc = malloc(sizeof (struct vr_softc), M_DEVBUF, M_NOWAIT);
-	if (sc == NULL) {
-		printf("vr%d: no memory for softc struct!\n", unit);
-		return;
-	}
-	bzero(sc, sizeof (struct vr_softc));
-
-	sc->vr_unit = unit;
-#endif
-
-#if defined(__NetBSD__)
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {
 		printf("\n");
@@ -1967,7 +1784,6 @@ vr_attach(parent, self, aux)
 	}
 
 	printf(": %s Ethernet\n", vrt->vr_name);
-#endif
 
 	/*
 	 * Handle power management nonsense.
@@ -1986,9 +1802,9 @@ vr_attach(parent, self, aux)
 			irq = PCI_CONF_READ(VR_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf(VR_PRINTF_FMT ": chip is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 				"-- setting to D0\n",
-				VR_PRINTF_ARGS, command & VR_PSTATE_MASK);
+				sc->vr_dev.dv_xname, command & VR_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			PCI_CONF_WRITE(VR_PCI_PWRMGMTCTRL, command);
 
@@ -2003,59 +1819,12 @@ vr_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
-#if defined(__FreeBSD__)
-	command |= (PCIM_CMD_PORTEN|PCIM_CMD_MEMEN|PCIM_CMD_BUSMASTEREN);
-#endif
-#if defined(__NetBSD__)
 	command |= (PCI_COMMAND_IO_ENABLE |
 		    PCI_COMMAND_MEM_ENABLE |
 		    PCI_COMMAND_MASTER_ENABLE);
-#endif
 	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
 	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
 
-#if defined(__FreeBSD__)
-#ifdef VR_USEIOSPACE
-	if (!(command & PCIM_CMD_PORTEN)) {
-		printf(VR_PRINTF_FMT ": failed to enable I/O ports!\n",
-			VR_PRINTF_ARGS);
-		free(sc, M_DEVBUF);
-		goto fail;
-	}
-
-	if (!pci_map_port(config_id, VR_PCI_LOIO,
-					(u_int16_t *)(&sc->vr_bhandle))) {
-		printf (VR_PRINTF_FMT ": couldn't map ports\n",
-			VR_PRINTF_ARGS);
-		goto fail;
-	}
-	sc->vr_btag = I386_BUS_SPACE_IO;
-#else
-	if (!(command & PCIM_CMD_MEMEN)) {
-		printf(VR_PRINTF_FMT ": failed to enable memory mapping!\n",
-			VR_PRINTF_ARGS);
-		goto fail;
-	}
-
-	if (!pci_map_mem(config_id, VR_PCI_LOMEM, &vbase, &pbase)) {
-		printf (VR_PRINTF_FMT ": couldn't map memory\n",
-			VR_PRINTF_ARGS);
-		goto fail;
-	}
-
-	sc->vr_bhandle = vbase;
-	sc->vr_btag = I386_BUS_SPACE_MEM;
-#endif
-
-	/* Allocate interrupt */
-	if (!pci_map_int(config_id, vr_intr, sc, &net_imask)) {
-		printf(VR_PRINTF_FMT ": couldn't map interrupt\n",
-			VR_PRINTF_ARGS);
-		goto fail;
-	}
-#endif /* __FreeBSD__ */
-
-#if defined(__NetBSD__)
 	{
 		bus_space_tag_t iot, memt;
 		bus_space_handle_t ioh, memh;
@@ -2095,29 +1864,27 @@ vr_attach(parent, self, aux)
 		/* Allocate interrupt */
 		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 				pa->pa_intrline, &intrhandle)) {
-			printf(VR_PRINTF_FMT ": couldn't map interrupt\n",
-				VR_PRINTF_ARGS);
+			printf("%s: couldn't map interrupt\n",
+				sc->vr_dev.dv_xname);
 			goto fail;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 						(void *)vr_intr, sc);
 		if (sc->vr_ih == NULL) {
-			printf(VR_PRINTF_FMT ": couldn't establish interrupt",
-				VR_PRINTF_ARGS);
+			printf("%s: couldn't establish interrupt",
+				sc->vr_dev.dv_xname);
 			if (intrstr != NULL)
 				printf(" at %s", intrstr);
 			printf("\n");
 		}
-		printf(VR_PRINTF_FMT ": interrupting at %s\n",
-			VR_PRINTF_ARGS, intrstr);
+		printf("%s: interrupting at %s\n",
+			sc->vr_dev.dv_xname, intrstr);
 	}
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)
-		printf(VR_PRINTF_FMT
-			": warning: couldn't establish shutdown hook\n",
-			VR_PRINTF_ARGS);
-#endif /* __NetBSD__ */
+		printf("%s: warning: couldn't establish shutdown hook\n",
+			sc->vr_dev.dv_xname);
 
 	/* Reset the adapter. */
 	vr_reset(sc);
@@ -2137,8 +1904,8 @@ vr_attach(parent, self, aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	printf(VR_PRINTF_FMT ": Ethernet address: %s\n",
-		VR_PRINTF_ARGS, ether_sprintf(eaddr));
+	printf("%s: Ethernet address: %s\n",
+		sc->vr_dev.dv_xname, ether_sprintf(eaddr));
 
 	bcopy(eaddr, sc->vr_enaddr, ETHER_ADDR_LEN);
 
@@ -2146,8 +1913,8 @@ vr_attach(parent, self, aux)
 				M_DEVBUF, M_NOWAIT);
 	if (sc->vr_ldata_ptr == NULL) {
 		free(sc, M_DEVBUF);
-		printf(VR_PRINTF_FMT ": no memory for list buffers!\n",
-			VR_PRINTF_ARGS);
+		printf("%s: no memory for list buffers!\n",
+			sc->vr_dev.dv_xname);
 		return;
 	}
 
@@ -2164,7 +1931,7 @@ vr_attach(parent, self, aux)
 	sc->vr_ldata = (struct vr_list_data *)roundptr;
 	bzero(sc->vr_ldata, sizeof (struct vr_list_data));
 
-	ifp = &sc->vr_if;
+	ifp = &sc->vr_ec.ec_if;
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -2173,22 +1940,9 @@ vr_attach(parent, self, aux)
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_baudrate = 10000000;
-#if defined(__NetBSD__)
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-#else
-	ifp->if_unit = unit;
-	ifp->if_name = "vr";
-	ifp->if_init = vr_init;
-#endif
 
-	if (bootverbose)
-		printf(VR_PRINTF_FMT ": probing for a PHY\n",
-			VR_PRINTF_ARGS);
 	for (i = VR_PHYADDR_MIN; i < VR_PHYADDR_MAX + 1; i++) {
-		if (bootverbose)
-			printf(VR_PRINTF_FMT ": checking address: %d\n",
-						VR_PRINTF_ARGS, i);
-
 		sc->vr_phy_addr = i;
 		vr_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 		DELAY(500);
@@ -2200,12 +1954,6 @@ vr_attach(parent, self, aux)
 	if (phy_sts) {
 		phy_vid = vr_phy_readreg(sc, PHY_VENID);
 		phy_did = vr_phy_readreg(sc, PHY_DEVID);
-		if (bootverbose)
-			printf(VR_PRINTF_FMT ": found PHY at address %d, ",
-					VR_PRINTF_ARGS, sc->vr_phy_addr);
-		if (bootverbose)
-			printf("vendor id: %x device id: %x\n",
-				phy_vid, phy_did);
 		p = vr_phys;
 		while (p->vr_vid) {
 			if (phy_vid == p->vr_vid &&
@@ -2217,12 +1965,9 @@ vr_attach(parent, self, aux)
 		}
 		if (sc->vr_pinfo == NULL)
 			sc->vr_pinfo = &vr_phys[PHY_UNKNOWN];
-		if (bootverbose)
-			printf(VR_PRINTF_FMT ": PHY type: %s\n",
-				VR_PRINTF_ARGS, sc->vr_pinfo->vr_name);
 	} else {
-		printf(VR_PRINTF_FMT ": MII without any phy!\n",
-			VR_PRINTF_ARGS);
+		printf("%s: MII without any phy!\n",
+			sc->vr_dev.dv_xname);
 		goto fail;
 	}
 
@@ -2242,33 +1987,18 @@ vr_attach(parent, self, aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
-#if defined(__NetBSD__)
 	ether_ifattach(ifp, sc->vr_enaddr);
-#else
-	ether_ifattach(ifp);
-#endif
 
 #if NBPFILTER > 0
-#if defined(__NetBSD__)
-	bpfattach(&sc->vr_if.if_bpf,
+	bpfattach(&sc->vr_ec.ec_if.if_bpf,
 		ifp, DLT_EN10MB, sizeof (struct ether_header));
-#else
-	bpfattach(ifp, DLT_EN10MB, sizeof (struct ether_header));
-#endif
 #endif
 
-#if defined(__NetBSD__)
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)
 		printf("%s: warning: couldn't establish shutdown hook\n",
 			sc->vr_dev.dv_xname);
-#else
-	at_shutdown(vr_shutdown, sc, SHUTDOWN_POST_SYNC);
-#endif
 
 fail:
-#if !defined(__NetBSD__)
-	splx(s);
-#endif
 	return;
 }

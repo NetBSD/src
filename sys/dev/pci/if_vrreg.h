@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.4 1999/01/26 06:31:28 sakamoto Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.5 1999/02/02 00:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -373,13 +373,8 @@ struct vr_chain_data {
 };
 
 struct vr_type {
-#if defined(__NetBSD__)
 	pci_vendor_id_t		vr_vid;
 	pci_product_id_t	vr_did;
-#else
-	u_int16_t		vr_vid;
-	u_int16_t		vr_did;
-#endif
 	char			*vr_name;
 };
 
@@ -405,7 +400,6 @@ struct vr_mii_frame {
 #define	VR_FLAG_DELAYTIMEO	3
 
 struct vr_softc {
-#if defined(__NetBSD__)
 	struct device		vr_dev;
 	void			*vr_ih;
 	void			*vr_ats;
@@ -414,9 +408,6 @@ struct vr_softc {
 	pci_chipset_tag_t	vr_pc;
 	struct ethercom		vr_ec;
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
-#else
-	struct arpcom		arpcom;		/* interface info */
-#endif
 	struct ifmedia		ifmedia;	/* media info */
 	bus_space_handle_t	vr_bhandle;	/* bus space handle */
 	bus_space_tag_t		vr_btag;	/* bus space tag */
@@ -432,18 +423,6 @@ struct vr_softc {
 	struct vr_list_data	*vr_ldata;
 	struct vr_chain_data	vr_cdata;
 };
-
-#if defined(__NetBSD__)
-#define	vr_if			vr_ec.ec_if
-#define	vr_enaddr		vr_enaddr
-#define	VR_PRINTF_FMT		"%s"
-#define	VR_PRINTF_ARGS		sc->vr_dev.dv_xname
-#else
-#define	vr_if			arpcom.ac_if
-#define	vr_enaddr		arpcom.ac_enaddr
-#define	VR_PRINTF_FMT		"vr%d"
-#define	VR_PRINTF_ARGS		sc->vr_unit
-#endif
 
 /*
  * register space access macros
