@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.7.16.1 2003/06/16 21:14:47 grant Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.7.16.2 2004/07/12 21:24:32 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,13 @@ struct pciide_softc {
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/*
+	 * Some controllers might have DMA restrictions other than
+	 * the norm.
+	 */
+	bus_size_t		sc_dma_maxsegsz;
+	bus_size_t		sc_dma_boundary;
 
 	/* For Cypress */
 	const struct cy82c693_handle *sc_cy_handle;
