@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 2002/10/09 07:00:56 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 2003/03/22 14:26:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 
 struct confargs {

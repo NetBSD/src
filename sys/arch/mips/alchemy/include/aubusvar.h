@@ -1,4 +1,4 @@
-/* $NetBSD: aubusvar.h,v 1.1 2002/07/29 15:39:15 simonb Exp $ */
+/* $NetBSD: aubusvar.h,v 1.2 2003/03/22 14:26:42 simonb Exp $ */
 
 #ifndef _MIPS_ALCHEMY_DEV_AUBUSVAR_H_
 #define	_MIPS_ALCHEMY_DEV_AUBUSVAR_H_
@@ -6,7 +6,7 @@
 #include <machine/bus.h>
 
 /*
- * Machine-dependent structures of autoconfiguration
+ * Machine-dependent structures for autoconfiguration
  */
 struct aubus_attach_args {
 	const char	*aa_name;	/* device name */
