@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: div.h,v 1.3 1993/08/02 17:45:34 mycroft Exp $
+	$Id: div.h,v 1.4 1995/09/27 14:02:02 cgd Exp $
 */
 class diversion {
   friend void do_divert(int append);
@@ -145,4 +145,4 @@ void continue_page_eject();
 void handle_first_page_transition();
 void blank_line();
 
-extern void cleanup_and_exit(int);
+extern volatile void cleanup_and_exit(int);
