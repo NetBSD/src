@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.74.2.1 2002/05/16 03:48:08 gehenna Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.74.2.2 2002/05/30 13:52:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.1 2002/05/16 03:48:08 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.2 2002/05/30 13:52:43 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1204,7 +1204,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 	if ((error = VFS_SYNC(mp, 1, p->p_ucred, p)) != 0)
 		return (error);
-	if (fs->lfs_ivnode->v_dirtyblkhd.lh_first)
+	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
 		panic("lfs_unmount: still dirty blocks on ifile vnode\n");
 
 	/* Explicitly write the superblock, to update serial and pflags */
@@ -1217,7 +1217,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS)
 			printf("lfs_unmount: please consider increasing"
 				" NBUF to at least %lld\n",
-				(fs->lfs_ivnode->v_size / fs->lfs_bsize) *
+				(long long)(fs->lfs_ivnode->v_size /
+					    fs->lfs_bsize) *
 				(long long)(nbuf / LFS_MAX_BUFS));
 		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
 			printf("lfs_unmount: please consider increasing"

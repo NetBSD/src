@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.10.8.1 2002/05/30 13:52:32 gehenna Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10 2002/01/22 03:53:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10.8.1 2002/05/30 13:52:32 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -326,7 +326,7 @@ in6_selecthlim(in6p, ifp)
 	if (in6p && in6p->in6p_hops >= 0)
 		return(in6p->in6p_hops);
 	else if (ifp)
-		return(nd_ifinfo[ifp->if_index].chlim);
+		return(ND_IFINFO(ifp)->chlim);
 	else
 		return(ip6_defhlim);
 }
@@ -519,7 +519,6 @@ in6_recoverscope(sin6, in6, ifp)
 
 /*
  * just clear the embedded scope identifer.
- * XXX: currently used for bsdi4 only as a supplement function.
  */
 void
 in6_clearscope(addr)

@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.9.2.1 2002/05/16 03:54:51 gehenna Exp $
+ *	$Id: i4b_trace.c,v 1.9.2.2 2002/05/30 13:52:38 gehenna Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.9.2.1 2002/05/16 03:54:51 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.9.2.2 2002/05/30 13:52:38 gehenna Exp $");
 
 #include "isdntrc.h"
 
@@ -138,7 +138,7 @@ isdntrcattach()
  *	device's queue the data is put into.
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_trace_ind(struct l2_softc *sc, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
+isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
 	struct mbuf *m;
 	int bri, x;
@@ -146,7 +146,7 @@ isdn_layer2_trace_ind(struct l2_softc *sc, i4b_trace_hdr *hdr, size_t len, unsig
 	int totlen = len + sizeof(i4b_trace_hdr);
 
 	MICROTIME(hdr->time);
-	hdr->bri = sc->bri;
+	hdr->bri = sc->drv->bri;
 
 	/*
 	 * for telephony (or better non-HDLC HSCX mode) we get 

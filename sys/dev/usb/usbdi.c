@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.99 2002/02/28 04:49:16 thorpej Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.99.8.1 2002/05/30 14:47:49 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.99 2002/02/28 04:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.99.8.1 2002/05/30 14:47:49 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	/* Copy data if going out. */
 	if (!(xfer->flags & USBD_NO_COPY) && size != 0 && 
 	    !usbd_xfer_isread(xfer))
-		memcpy(KERNADDR(dmap), xfer->buffer, size);
+		memcpy(KERNADDR(dmap, 0), xfer->buffer, size);
 
 	err = pipe->methods->transfer(xfer);
 
@@ -369,7 +369,7 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size)
 	if (err)
 		return (NULL);
 	xfer->rqflags |= URQ_DEV_DMABUF;
-	return (KERNADDR(&xfer->dmabuf));
+	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
 void
@@ -390,7 +390,7 @@ usbd_get_buffer(usbd_xfer_handle xfer)
 {
 	if (!(xfer->rqflags & URQ_DEV_DMABUF))
 		return (0);
-	return (KERNADDR(&xfer->dmabuf));
+	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
 usbd_xfer_handle 
@@ -795,7 +795,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			xfer->actlen = xfer->length;
 		}
 #endif
-		memcpy(xfer->buffer, KERNADDR(dmap), xfer->actlen);
+		memcpy(xfer->buffer, KERNADDR(dmap, 0), xfer->actlen);
 	}
 
 	/* if we allocated the buffer in usbd_transfer() we free it here. */

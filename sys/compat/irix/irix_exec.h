@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.7 2002/04/20 16:19:22 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.7.2.1 2002/05/30 14:44:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,10 @@
 
 /* IRIX specific per-process data */
 struct irix_emuldata {
+#define ied_startcopy ied_sigtramp
 	void *ied_sigtramp;	/* Address of signal trampoline */
+#define ied_endcopy ied_pptr	
+	struct proc *ied_pptr;	/* parent process or NULL */
 };
 
 /* e_flags used by IRIX for ABI selection */

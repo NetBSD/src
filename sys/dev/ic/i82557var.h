@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.28 2002/05/03 00:09:06 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.28.2.1 2002/05/30 14:45:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -210,13 +210,11 @@ struct fxp_softc {
 #define	FXPF_ATTACHED		0x0002	/* attach has succeeded */
 #define	FXPF_WANTINIT		0x0004	/* want a re-init */
 #define	FXPF_HAS_RESUME_BUG	0x0008	/* has the resume bug */
-#define	FXPF_FIX_RESUME_BUG	0x0010	/* currently need to work-around
-					   the resume bug */
-#define	FXPF_MWI		0x0020	/* enable PCI MWI */
-#define	FXPF_READ_ALIGN		0x0040	/* align read access w/ cacheline */
-#define	FXPF_WRITE_ALIGN	0x0080	/* end write on cacheline */
-#define	FXPF_EXT_TXCB		0x0100	/* enable extended TxCB */
-#define	FXPF_UCODE_LOADED	0x0200	/* microcode is loaded */
+#define	FXPF_MWI		0x0010	/* enable PCI MWI */
+#define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
+#define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
+#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
+#define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */

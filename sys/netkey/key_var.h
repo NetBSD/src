@@ -1,5 +1,5 @@
-/*	$NetBSD: key_var.h,v 1.10 2001/07/27 04:48:14 itojun Exp $	*/
-/*	$KAME: key_var.h,v 1.8 2000/05/24 17:28:23 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.10.12.1 2002/05/30 13:52:40 gehenna Exp $	*/
+/*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,7 +48,10 @@
 #define KEYCTL_LARVAL_LIFETIME		6
 #define KEYCTL_BLOCKACQ_COUNT		7
 #define KEYCTL_BLOCKACQ_LIFETIME	8
-#define KEYCTL_MAXID			9
+#define KEYCTL_ESP_KEYMIN		9
+#define KEYCTL_ESP_AUTH			10
+#define KEYCTL_AH_KEYMIN		11
+#define KEYCTL_MAXID			12
 
 #define KEYCTL_NAMES { \
 	{ 0, 0 }, \
@@ -60,6 +63,9 @@
 	{ "larval_lifetime", CTLTYPE_INT }, \
 	{ "blockacq_count", CTLTYPE_INT }, \
 	{ "blockacq_lifetime", CTLTYPE_INT }, \
+	{ "esp_keymin", CTLTYPE_INT }, \
+	{ "esp_auth", CTLTYPE_INT }, \
+	{ "ah_keymin", CTLTYPE_INT }, \
 }
 
 #define KEYCTL_VARS { \
@@ -72,6 +78,9 @@
 	&key_larval_lifetime, \
 	&key_blockacq_count, \
 	&key_blockacq_lifetime, \
+	&ipsec_esp_keymin, \
+	&ipsec_esp_auth, \
+	&ipsec_ah_keymin, \
 }
 
 #ifdef _KERNEL

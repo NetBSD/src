@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.53 2002/03/23 00:43:59 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.53.2.1 2002/05/30 13:52:30 gehenna Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.53 2002/03/23 00:43:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.53.2.1 2002/05/30 13:52:30 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -366,6 +366,7 @@ in6_control(so, cmd, data, ifp, p)
 		if (!privileged)
 			return(EPERM);
 		/* fall through */
+	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
 	case SIOCGDRLST_IN6:
 	case SIOCGPRLST_IN6:
@@ -566,26 +567,19 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFSTAT_IN6:
 		if (ifp == NULL)
 			return EINVAL;
-		if (in6_ifstat == NULL || ifp->if_index >= in6_ifstatmax
-		 || in6_ifstat[ifp->if_index] == NULL) {
-			/* return EAFNOSUPPORT? */
-			bzero(&ifr->ifr_ifru.ifru_stat,
-				sizeof(ifr->ifr_ifru.ifru_stat));
-		} else
-			ifr->ifr_ifru.ifru_stat = *in6_ifstat[ifp->if_index];
+		bzero(&ifr->ifr_ifru.ifru_stat,
+		    sizeof(ifr->ifr_ifru.ifru_stat));
+		ifr->ifr_ifru.ifru_stat =
+		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->in6_ifstat;
 		break;
 
 	case SIOCGIFSTAT_ICMP6:
 		if (ifp == NULL)
 			return EINVAL;
-		if (icmp6_ifstat == NULL || ifp->if_index >= icmp6_ifstatmax ||
-		    icmp6_ifstat[ifp->if_index] == NULL) {
-			/* return EAFNOSUPPORT? */
-			bzero(&ifr->ifr_ifru.ifru_stat,
-				sizeof(ifr->ifr_ifru.ifru_icmp6stat));
-		} else
-			ifr->ifr_ifru.ifru_icmp6stat =
-				*icmp6_ifstat[ifp->if_index];
+		bzero(&ifr->ifr_ifru.ifru_stat,
+		    sizeof(ifr->ifr_ifru.ifru_icmp6stat));
+		ifr->ifr_ifru.ifru_icmp6stat =
+		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;
 		break;
 
 #ifdef COMPAT_IN6IFIOCTL		/* should be unused */
@@ -797,36 +791,11 @@ in6_control(so, cmd, data, ifp, p)
 			ia->ia6_lifetime.ia6t_preferred = 0;
 
 		/*
-		 * make sure to initialize ND6 information.  this is to
-		 * workaround issues with interfaces with IPv6 addresses,
-		 * which have never brought # up.  we are assuming that it is
-		 * safe to nd6_ifattach multiple times.
-		 */
-		nd6_ifattach(ifp);
-
-		/*
 		 * Perform DAD, if needed.
-		 * XXX It may be of use, if we can administratively
-		 * disable DAD.
 		 */
-		switch (ifp->if_type) {
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-		case IFT_IEEE1394:
-#if 0
-		case IFT_ATM:
-		case IFT_SLIP:
-		case IFT_PPP:
-#endif
+		if (in6if_do_dad(ifp)) {
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			nd6_dad_start(&ia->ia_ifa, NULL);
-			break;
-		case IFT_FAITH:
-		case IFT_GIF:
-		case IFT_LOOP:
-		default:
-			break;
 		}
 
 		if (hostIsNew) {
@@ -2210,6 +2179,40 @@ in6_if_up(ifp)
 	}
 }
 
+int
+in6if_do_dad(ifp)
+	struct ifnet *ifp;
+{
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+		return(0);
+
+	switch (ifp->if_type) {
+	case IFT_FAITH:
+		/*
+		 * These interfaces do not have the IFF_LOOPBACK flag,
+		 * but loop packets back.  We do not have to do DAD on such
+		 * interfaces.  We should even omit it, because loop-backed
+		 * NS would confuse the DAD procedure.
+		 */
+		return(0);
+	default:
+		/*
+		 * Our DAD routine requires the interface up and running.
+		 * However, some interfaces can be up before the RUNNING
+		 * status.  Additionaly, users may try to assign addresses
+		 * before the interface becomes up (or running).
+		 * We simply skip DAD in such a case as a work around.
+		 * XXX: we should rather mark "tentative" on such addresses,
+		 * and do DAD after the interface becomes ready.
+		 */
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			return(0);
+
+		return(1);
+	}
+}
+
 /*
  * Calculate max IPv6 MTU through all the interfaces and store it
  * to in6_maxmtu.
@@ -2222,10 +2225,48 @@ in6_setmaxmtu()
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 	{
+		/* this function can be called during ifnet initialization */
+		if (!ifp->if_afdata[AF_INET6])
+			continue;
 		if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
-		    nd_ifinfo[ifp->if_index].linkmtu > maxmtu)
-			maxmtu =  nd_ifinfo[ifp->if_index].linkmtu;
+		    IN6_LINKMTU(ifp) > maxmtu)
+			maxmtu = IN6_LINKMTU(ifp);
 	}
-	if (maxmtu)	/* update only when maxmtu is positive */
+	if (maxmtu)	     /* update only when maxmtu is positive */
 		in6_maxmtu = maxmtu;
+}
+
+void *
+in6_domifattach(ifp)
+	struct ifnet *ifp;
+{
+	struct in6_ifextra *ext;
+
+	ext = (struct in6_ifextra *)malloc(sizeof(*ext), M_IFADDR, M_WAITOK);
+	bzero(ext, sizeof(*ext));
+
+	ext->in6_ifstat = (struct in6_ifstat *)malloc(sizeof(struct in6_ifstat),
+	    M_IFADDR, M_WAITOK);
+	bzero(ext->in6_ifstat, sizeof(*ext->in6_ifstat));
+
+	ext->icmp6_ifstat =
+	    (struct icmp6_ifstat *)malloc(sizeof(struct icmp6_ifstat),
+	    M_IFADDR, M_WAITOK);
+	bzero(ext->icmp6_ifstat, sizeof(*ext->icmp6_ifstat));
+
+	ext->nd_ifinfo = nd6_ifattach(ifp);
+	return ext;
+}
+
+void
+in6_domifdetach(ifp, aux)
+	struct ifnet *ifp;
+	void *aux;
+{
+	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
+
+	nd6_ifdetach(ext->nd_ifinfo);
+	free(ext->in6_ifstat, M_IFADDR);
+	free(ext->icmp6_ifstat, M_IFADDR);
+	free(ext, M_IFADDR);
 }

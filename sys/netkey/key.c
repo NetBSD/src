@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $	*/
-/*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.60.4.1 2002/05/30 13:52:39 gehenna Exp $	*/
+/*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,14 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60 2002/03/21 02:27:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.60.4.1 2002/05/30 13:52:39 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-
-/* this is for backward compatibility. we should not touch those. */
-#define ss_len		__ss_len
-#define ss_family	__ss_family
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,14 +206,10 @@ static const int maxsize[] = {
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
 };
 
-static const int ipsec_esp_keymin = 256;
-static const int ipsec_esp_auth = 0;
-static const int ipsec_ah_keymin = 128;
+static int ipsec_esp_keymin = 256;
+static int ipsec_esp_auth = 0;
+static int ipsec_ah_keymin = 128;
 
-#ifndef LIST_FOREACH
-#define LIST_FOREACH(elm, head, field)                                     \
-	for (elm = LIST_FIRST(head); elm; elm = LIST_NEXT(elm, field))
-#endif
 #define __LIST_CHAINED(elm) \
 	(!((elm)->chain.le_next == NULL && (elm)->chain.le_prev == NULL))
 #define LIST_INSERT_TAIL(head, elm, type, field) \
@@ -336,6 +328,7 @@ static int key_spddump __P((struct socket *, struct mbuf *,
 static struct mbuf *key_setdumpsp __P((struct secpolicy *,
 	u_int8_t, u_int32_t, u_int32_t));
 static u_int key_getspreqmsglen __P((struct secpolicy *));
+static int key_spdexpire __P((struct secpolicy *));
 static struct secashead *key_newsah __P((struct secasindex *));
 static void key_delsah __P((struct secashead *));
 static struct secasvar *key_newsav __P((struct mbuf *,
@@ -359,6 +352,8 @@ static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
 static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadblifetime __P((u_int16_t, u_int32_t,
+	u_int64_t, u_int64_t, u_int64_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
@@ -432,6 +427,8 @@ static const char *key_getfqdn __P((void));
 static const char *key_getuserfqdn __P((void));
 #endif
 static void key_sa_chgstate __P((struct secasvar *, u_int8_t));
+static void key_sp_dead __P((struct secpolicy *));
+static void key_sp_unlink __P((struct secpolicy *));
 static struct mbuf *key_alloc_mbuf __P((int));
 struct callout key_timehandler_ch;
 
@@ -488,6 +485,7 @@ found:
 	KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp");
 
 	/* found a SPD entry */
+	sp->lastused = time.tv_sec;
 	sp->refcnt++;
 	splx(s);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
@@ -498,8 +496,8 @@ found:
 }
 
 /*
- * allocating a SA entry for a *OUTBOUND* packet.
- * checking each request entries in SP, and acquire SA if need.
+ * allocating an SA entry for a *OUTBOUND* packet.
+ * checking each request entries in SP, and acquire an SA if need.
  * OUT:	0: there are valid requests.
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
@@ -959,17 +957,12 @@ key_delsp(sp)
 
 	/* sanity check */
 	if (sp == NULL)
-		panic("key_delsp: NULL pointer is passed.\n");
-
-	sp->state = IPSEC_SPSTATE_DEAD;
+		panic("key_delsp: NULL pointer is passed.");
 
 	if (sp->refcnt > 0)
-		return; /* can't free */
+		panic("key_delsp: called with positive refcnt");
 
 	s = splsoftnet();	/*called from softclock()*/
-	/* remove from SP index */
-	if (__LIST_CHAINED(sp))
-		LIST_REMOVE(sp, chain);
 
     {
 	struct ipsecrequest *isr = sp->req, *nextisr;
@@ -1464,11 +1457,11 @@ fail:
 /*
  * SADB_X_SPDADD, SADB_X_SPDSETIDX or SADB_X_SPDUPDATE processing
  * add a entry to SP database, when received
- *   <base, address(SD), policy>
+ *   <base, address(SD), (lifetime(H),) policy>
  * from the user(?).
  * Adding to SP database,
  * and send
- *   <base, address(SD), policy>
+ *   <base, address(SD), (lifetime(H),) policy>
  * to the socket which was send.
  *
  * SPDADD set a unique policy entry.
@@ -1485,6 +1478,7 @@ key_spdadd(so, m, mhp)
 {
 	struct sadb_address *src0, *dst0;
 	struct sadb_x_policy *xpl0, *xpl;
+	struct sadb_lifetime *lft = NULL;
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
 	int error;
@@ -1504,6 +1498,14 @@ key_spdadd(so, m, mhp)
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
 		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->ext[SADB_EXT_LIFETIME_HARD] != NULL) {
+		if (mhp->extlen[SADB_EXT_LIFETIME_HARD]
+			< sizeof(struct sadb_lifetime)) {
+			ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
+			return key_senderror(so, m, EINVAL);
+		}
+		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
 	}
 
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
@@ -1556,8 +1558,10 @@ key_spdadd(so, m, mhp)
 	newsp = key_getsp(&spidx);
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		if (newsp) {
-			newsp->state = IPSEC_SPSTATE_DEAD;
-			key_freesp(newsp);
+			key_sp_dead(newsp);
+			key_freesp(newsp);	/* ref gained by key_getsp */
+			key_sp_unlink(newsp);
+			newsp = NULL;
 		}
 	} else {
 		if (newsp != NULL) {
@@ -1616,6 +1620,11 @@ key_spdadd(so, m, mhp)
 	}
 #endif
 
+	newsp->created = time.tv_sec;
+	newsp->lastused = time.tv_sec;
+	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
+	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
+
 	newsp->refcnt = 1;	/* do not reclaim until I say I do */
 	newsp->state = IPSEC_SPSTATE_ALIVE;
 	LIST_INSERT_TAIL(&sptree[newsp->spidx.dir], newsp, secpolicy, chain);
@@ -1639,8 +1648,15 @@ key_spdadd(so, m, mhp)
 	int off;
 
 	/* create new sadb_msg to reply. */
-	n = key_gather_mbuf(m, mhp, 2, 4, SADB_EXT_RESERVED,
-	    SADB_X_EXT_POLICY, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	if (lft) {
+		n = key_gather_mbuf(m, mhp, 2, 5, SADB_EXT_RESERVED,
+		    SADB_X_EXT_POLICY, SADB_EXT_LIFETIME_HARD,
+		    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	} else {
+		n = key_gather_mbuf(m, mhp, 2, 4, SADB_EXT_RESERVED,
+		    SADB_X_EXT_POLICY,
+		    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	}
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
@@ -1776,8 +1792,10 @@ key_spddelete(so, m, mhp)
 	/* save policy id to buffer to be returned. */
 	xpl0->sadb_x_policy_id = sp->id;
 
-	sp->state = IPSEC_SPSTATE_DEAD;
-	key_freesp(sp);
+	key_sp_dead(sp);
+	key_freesp(sp);	/* ref gained by key_getsp */
+	key_sp_unlink(sp);
+	sp = NULL;
 
 	/* invalidate all cached SPD pointers on pcb */
 	ipsec_invalpcbcacheall();
@@ -1841,8 +1859,10 @@ key_spddelete2(so, m, mhp)
 		key_senderror(so, m, EINVAL);
 	}
 
-	sp->state = IPSEC_SPSTATE_DEAD;
-	key_freesp(sp);
+	key_sp_dead(sp);
+	key_freesp(sp);	/* ref gained by key_getsp */
+	key_sp_unlink(sp);
+	sp = NULL;
 
 	/* invalidate all cached SPD pointers on pcb */
 	ipsec_invalpcbcacheall();
@@ -2040,7 +2060,7 @@ key_spdflush(so, m, mhp)
 	const struct sadb_msghdr *mhp;
 {
 	struct sadb_msg *newmsg;
-	struct secpolicy *sp;
+	struct secpolicy *sp, *nextsp;
 	u_int dir;
 
 	/* sanity check */
@@ -2051,8 +2071,13 @@ key_spdflush(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
-			sp->state = IPSEC_SPSTATE_DEAD;
+		for (sp = LIST_FIRST(&sptree[dir]); sp != NULL; sp = nextsp) {
+			nextsp = LIST_NEXT(sp, chain);
+			if (sp->state == IPSEC_SPSTATE_DEAD)
+				continue;
+			key_sp_dead(sp);
+			key_sp_unlink(sp);
+			sp = NULL;
 		}
 	}
 
@@ -2159,6 +2184,18 @@ key_setdumpsp(sp, type, seq, pid)
 		goto fail;
 	m_cat(result, m);
 
+	m = key_setsadblifetime(SADB_EXT_LIFETIME_CURRENT,
+		0, 0, (u_int64_t)sp->created, (u_int64_t)sp->lastused);
+	if (!m)
+		goto fail;
+	m_cat(result, m);
+
+	m = key_setsadblifetime(SADB_EXT_LIFETIME_HARD,
+		0, 0, (u_int64_t)sp->lifetime, (u_int64_t)sp->validtime);
+	if (!m)
+		goto fail;
+	m_cat(result, m);
+
 	if ((result->m_flags & M_PKTHDR) == 0)
 		goto fail;
 
@@ -2212,6 +2249,127 @@ key_getspreqmsglen(sp)
     }
 
 	return tlen;
+}
+
+/*
+ * SADB_SPDEXPIRE processing
+ * send
+ *   <base, address(SD), lifetime(CH), policy>
+ * to KMD by PF_KEY.
+ *
+ * OUT:	0	: succeed
+ *	others	: error number
+ */
+static int
+key_spdexpire(sp)
+	struct secpolicy *sp;
+{
+	int s;
+	struct mbuf *result = NULL, *m;
+	int len;
+	int error = -1;
+	struct sadb_lifetime *lt;
+
+	/* XXX: Why do we lock ? */
+#ifdef __NetBSD__
+	s = splsoftnet();	/*called from softclock()*/
+#else
+	s = splnet();	/*called from softclock()*/
+#endif
+
+	/* sanity check */
+	if (sp == NULL)
+		panic("key_spdexpire: NULL pointer is passed.\n");
+
+	/* set msg header */
+	m = key_setsadbmsg(SADB_X_SPDEXPIRE, 0, 0, 0, 0, 0);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	result = m;
+
+	/* create lifetime extension (current and hard) */
+	len = PFKEY_ALIGN8(sizeof(*lt)) * 2;
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		error = ENOBUFS;
+		goto fail;
+	}
+	bzero(mtod(m, caddr_t), len);
+	lt = mtod(m, struct sadb_lifetime *);
+	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
+	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
+	lt->sadb_lifetime_allocations = 0;
+	lt->sadb_lifetime_bytes = 0;
+	lt->sadb_lifetime_addtime = sp->created;
+	lt->sadb_lifetime_usetime = sp->lastused;
+	lt = (struct sadb_lifetime *)(mtod(m, caddr_t) + len / 2);
+	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
+	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+	lt->sadb_lifetime_allocations = 0;
+	lt->sadb_lifetime_bytes = 0;
+	lt->sadb_lifetime_addtime = sp->lifetime;
+	lt->sadb_lifetime_usetime = sp->validtime;
+	m_cat(result, m);
+
+	/* set sadb_address for source */
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+	    (struct sockaddr *)&sp->spidx.src,
+	    sp->spidx.prefs, sp->spidx.ul_proto);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
+
+	/* set sadb_address for destination */
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+	    (struct sockaddr *)&sp->spidx.dst,
+	    sp->spidx.prefd, sp->spidx.ul_proto);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
+
+	/* set secpolicy */
+	m = key_sp2msg(sp);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
+
+	if ((result->m_flags & M_PKTHDR) == 0) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL) {
+			error = ENOBUFS;
+			goto fail;
+		}
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
+
+ fail:
+	if (result)
+		m_freem(result);
+	splx(s);
+	return error;
 }
 
 /* %%% SAD management */
@@ -2413,7 +2571,7 @@ key_delsav(sav)
 		panic("key_delsav: NULL pointer is passed.\n");
 
 	if (sav->refcnt > 0)
-		return;		/* can't free */
+		panic("key_delsav: called with positive refcnt");
 
 	/* remove from SA header */
 	if (__LIST_CHAINED(sav))
@@ -2761,7 +2919,12 @@ key_setsaval(sav, m, mhp)
 			error = ENOBUFS;
 			goto fail;
 		}
-		/* to be initialize ? */
+		/* we no longer support byte lifetime */
+		if (sav->lft_h->sadb_lifetime_bytes) {
+			error = EINVAL;
+			goto fail;
+		}
+		/* initialize? */
 	}
 
 	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_SOFT];
@@ -2777,7 +2940,12 @@ key_setsaval(sav, m, mhp)
 			error = ENOBUFS;
 			goto fail;
 		}
-		/* to be initialize ? */
+		/* we no longer support byte lifetime */
+		if (sav->lft_s->sadb_lifetime_bytes) {
+			error = EINVAL;
+			goto fail;
+		}
+		/* initialize? */
 	}
     }
 
@@ -3353,6 +3521,40 @@ key_setsadbxsa2(mode, seq, reqid)
 }
 
 /*
+ * set data into sadb_lifetime
+ */
+static struct mbuf *
+key_setsadblifetime(type, alloc, bytes, addtime, usetime)
+	u_int16_t type;
+	u_int32_t alloc;
+	u_int64_t bytes, addtime, usetime;
+{
+	struct mbuf *m;
+	struct sadb_lifetime *p;
+	size_t len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_lifetime));
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_lifetime *);
+
+	bzero(p, len);
+	p->sadb_lifetime_len = PFKEY_UNIT64(len);
+	p->sadb_lifetime_exttype = type;
+	p->sadb_lifetime_allocations = alloc;
+	p->sadb_lifetime_bytes = bytes;
+	p->sadb_lifetime_addtime = addtime;
+	p->sadb_lifetime_usetime = usetime;
+
+	return m;
+}
+
+/*
  * set data into sadb_x_policy
  */
 static struct mbuf *
@@ -3858,11 +4060,26 @@ key_timehandler(arg)
 		for (sp = LIST_FIRST(&sptree[dir]);
 		     sp != NULL;
 		     sp = nextsp) {
-
 			nextsp = LIST_NEXT(sp, chain);
 
-			if (sp->state == IPSEC_SPSTATE_DEAD)
-				key_freesp(sp);
+			if (sp->state == IPSEC_SPSTATE_DEAD) {
+				key_sp_unlink(sp);	/*XXX*/
+				sp = NULL;
+				continue;
+			}
+
+			if (sp->lifetime == 0 && sp->validtime == 0)
+				continue;
+
+			/* the deletion will occur next time */
+			if ((sp->lifetime &&
+			     tv.tv_sec - sp->created > sp->lifetime) ||
+			    (sp->validtime &&
+			     tv.tv_sec - sp->lastused > sp->validtime)) {
+				key_sp_dead(sp);
+				key_spdexpire(sp);
+				continue;
+			}
 		}
 	}
     }
@@ -4088,13 +4305,6 @@ key_timehandler(arg)
 static void
 key_srandom()
 {
-	struct timeval tv;
-	int i;
-
-	microtime(&tv);
-
-	for (i = (int)((tv.tv_sec ^ tv.tv_usec) & 0x3ff); i > 0; i--)
-		(void)random();
 
 	return;
 }
@@ -7091,6 +7301,26 @@ key_sa_stir_iv(sav)
 	key_randomfill(sav->iv, sav->ivlen);
 }
 
+static void
+key_sp_dead(sp)
+	struct secpolicy *sp;
+{
+
+	/* mark the SP dead */
+	sp->state = IPSEC_SPSTATE_DEAD;
+}
+
+static void
+key_sp_unlink(sp)
+	struct secpolicy *sp;
+{
+
+	/* remove from SP index */
+	if (__LIST_CHAINED(sp))
+		LIST_REMOVE(sp, chain);
+	key_freesp(sp);
+}
+
 /* XXX too much? */
 static struct mbuf *
 key_alloc_mbuf(l)
@@ -7166,6 +7396,15 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case KEYCTL_BLOCKACQ_LIFETIME:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 		    &key_blockacq_lifetime);
+	case KEYCTL_ESP_KEYMIN:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_esp_keymin);
+	case KEYCTL_ESP_AUTH:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_esp_auth);
+	case KEYCTL_AH_KEYMIN:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipsec_ah_keymin);
 	default:
 		return EOPNOTSUPP;
 	}

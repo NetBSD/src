@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.24 2001/12/21 08:54:54 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.24.8.1 2002/05/30 13:52:32 gehenna Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -88,6 +88,13 @@ struct in6_addrlifetime {
 	time_t ia6t_preferred;	/* preferred lifetime expiration time */
 	u_int32_t ia6t_vltime;	/* valid lifetime */
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
+};
+
+struct nd_ifinfo;
+struct in6_ifextra {
+	struct in6_ifstat *in6_ifstat;
+	struct icmp6_ifstat *icmp6_ifstat;
+	struct nd_ifinfo *nd_ifinfo;
 };
 
 struct	in6_ifaddr {
@@ -381,7 +388,10 @@ struct	in6_rrenumreq {
 
 #define SIOCGDRLST_IN6		_IOWR('i', 74, struct in6_drlist)
 #define SIOCGPRLST_IN6		_IOWR('i', 75, struct in6_prlist)
-#define SIOCGIFINFO_IN6		_IOWR('i', 76, struct in6_ndireq)
+#ifdef _KERNEL
+#define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
+#endif
+#define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
@@ -428,18 +438,11 @@ struct	in6_rrenumreq {
 #ifdef _KERNEL
 extern struct in6_ifaddr *in6_ifaddr;
 
-extern struct in6_ifstat **in6_ifstat;
-extern size_t in6_ifstatmax;
 extern struct icmp6stat icmp6stat;
-extern struct icmp6_ifstat **icmp6_ifstat;
-extern size_t icmp6_ifstatmax;
 #define in6_ifstat_inc(ifp, tag) \
 do {								\
-	if ((ifp) && (ifp)->if_index <= if_index		\
-	 && (ifp)->if_index < in6_ifstatmax			\
-	 && in6_ifstat && in6_ifstat[(ifp)->if_index]) {	\
-		in6_ifstat[(ifp)->if_index]->tag++;		\
-	}							\
+	if (ifp)						\
+		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
 } while (0)
 
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
@@ -568,9 +571,12 @@ extern void in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *));
 void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
+int	in6if_do_dad __P((struct ifnet *));
 void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
+void	*in6_domifattach __P((struct ifnet *));
+void	in6_domifdetach __P((struct ifnet *, void *));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
 void	in6_createmkludge __P((struct ifnet *));
 void	in6_purgemkludge __P((struct ifnet *));

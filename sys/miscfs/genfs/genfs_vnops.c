@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.62 2002/05/14 19:37:18 perseant Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.62.2.1 2002/05/30 14:48:20 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.62 2002/05/14 19:37:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.62.2.1 2002/05/30 14:48:20 gehenna Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -66,7 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.62 2002/05/14 19:37:18 perseant Ex
 #include <nfs/nfs_var.h>
 #endif
 
+static __inline void genfs_rel_pages(struct vm_page **, int);
+
 #define MAX_READ_AHEAD	16 	/* XXXUBC 16 */
+int genfs_rapages = MAX_READ_AHEAD; /* # of pages in each chunk of readahead */
+int genfs_racount = 2;		/* # of page chunks to readahead */
+int genfs_raskip = 2;		/* # of busy page chunks allowed to skip */
 
 int
 genfs_poll(void *v)
@@ -414,6 +419,25 @@ genfs_mmap(void *v)
 	return (0);
 }
 
+static __inline void
+genfs_rel_pages(struct vm_page **pgs, int npages)
+{
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		struct vm_page *pg = pgs[i];
+
+		if (pg == NULL)
+			continue;
+		if (pg->flags & PG_FAKE) {
+			pg->flags |= PG_RELEASED;
+		}
+	}
+	uvm_lock_pageq();
+	uvm_page_unbusy(pgs, npages);
+	uvm_unlock_pageq();
+}
+
 /*
  * generic VM getpages routine.
  * Return PG_BUSY pages for the given range,
@@ -532,7 +556,16 @@ genfs_getpages(void *v)
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	memset(pgs, 0, sizeof(pgs));
-	uvn_findpages(uobj, origoffset, &npages, &pgs[ridx], UFP_ALL);
+	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
+	    ridx, npages, startoffset, endoffset);
+	KASSERT(&pgs[ridx + npages] <= &pgs[MAX_READ_AHEAD]);
+	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
+	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
+		KASSERT(async != 0);
+		genfs_rel_pages(&pgs[ridx], orignpages);
+		simple_unlock(&uobj->vmobjlock);
+		return (EBUSY);
+	}
 
 	/*
 	 * if the pages are already resident, just return them.
@@ -584,20 +617,19 @@ genfs_getpages(void *v)
 		 * already have locked.  unlock them all and start over.
 		 */
 
-		for (i = 0; i < orignpages; i++) {
-			struct vm_page *pg = pgs[ridx + i];
-
-			if (pg->flags & PG_FAKE) {
-				pg->flags |= PG_RELEASED;
-			}
-		}
-		uvm_page_unbusy(&pgs[ridx], orignpages);
+		genfs_rel_pages(&pgs[ridx], orignpages);
 		memset(pgs, 0, sizeof(pgs));
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 		    startoffset, endoffset, 0,0);
 		npgs = npages;
-		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
+		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
+		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
+			KASSERT(async != 0);
+			genfs_rel_pages(pgs, npages);
+			simple_unlock(&uobj->vmobjlock);
+			return (EBUSY);
+		}
 	}
 	simple_unlock(&uobj->vmobjlock);
 
@@ -837,20 +869,24 @@ raout:
 	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
 	    PAGE_SHIFT <= 16) {
 		off_t rasize;
-		int racount;
+		int rapages, err, i, skipped;
 
 		/* XXXUBC temp limit, from above */
-		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
-		rasize = racount << PAGE_SHIFT;
-		(void) VOP_GETPAGES(vp, raoffset, NULL, &racount, 0,
-		    VM_PROT_READ, 0, 0);
-		simple_lock(&uobj->vmobjlock);
-
-		/* XXXUBC temp limit, from above */
-		racount = MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD);
-		(void) VOP_GETPAGES(vp, raoffset + rasize, NULL, &racount, 0,
-		    VM_PROT_READ, 0, 0);
-		simple_lock(&uobj->vmobjlock);
+		rapages = MIN(MIN(1 << (16 - PAGE_SHIFT), MAX_READ_AHEAD),
+		    genfs_rapages);
+		rasize = rapages << PAGE_SHIFT;
+		for (i = skipped = 0; i < genfs_racount; i++) {
+			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
+			    VM_PROT_READ, 0, 0);
+			simple_lock(&uobj->vmobjlock);
+			if (err) {
+				if (err != EBUSY ||
+				    skipped++ == genfs_raskip)
+					break;
+			}
+			raoffset += rasize;
+			rapages = rasize >> PAGE_SHIFT;
+		}
 	}
 
 	/*

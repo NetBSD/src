@@ -27,7 +27,7 @@
  *	i4b_uframe.c - routines for handling U-frames
  *	-----------------------------------------------
  *
- *	$Id: i4b_uframe.c,v 1.4 2002/03/24 20:36:03 martin Exp $ 
+ *	$Id: i4b_uframe.c,v 1.4.2.1 2002/05/30 13:52:38 gehenna Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.4 2002/03/24 20:36:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.4.2.1 2002/05/30 13:52:38 gehenna Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.4 2002/03/24 20:36:03 martin Exp $"
  *	process a received U-frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
+i4b_rxd_u_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
 
@@ -95,7 +95,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				l2sc->stat.rx_sabme++;
 				NDBGL2(L2_U_MSG, "SABME, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
-				i4b_next_l2state(l2sc, EV_RXSABME);
+				i4b_next_l2state(l2sc, drv, EV_RXSABME);
 			}
 			i4b_Dfreembuf(m);
 			break;
@@ -107,7 +107,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 			{
 				/* layer 2 management (SAPI = 63) */
 				l2sc->stat.rx_tei++;
-				i4b_tei_rxframe(l2sc, m);
+				i4b_tei_rxframe(l2sc, drv, m);
 			}
 			else if(sapi == SAPI_CCP && tei == GROUP_TEI)
 			{
@@ -116,7 +116,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				/* strip ui header */
 				m_adj(m, UI_HDR_LEN);
 				/* to upper layer */
-				i4b_dl_unit_data_ind(l2sc->bri, m);
+				i4b_dl_unit_data_ind(l2sc->drv, m);
 			}
 			else
 			{
@@ -133,7 +133,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				l2sc->stat.rx_disc++;
 				NDBGL2(L2_U_MSG, "DISC, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
-				i4b_next_l2state(l2sc, EV_RXDISC);
+				i4b_next_l2state(l2sc, drv, EV_RXDISC);
 			}
 			i4b_Dfreembuf(m);
 			break;
@@ -158,7 +158,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				NDBGL2(L2_U_MSG, "DM, sapi = %d, tei = %d", sapi, tei);
 				i4b_print_frame(m->m_len, m->m_data);
 				l2sc->rxd_PF = pfbit;
-				i4b_next_l2state(l2sc, EV_RXDM);
+				i4b_next_l2state(l2sc, drv, EV_RXDM);
 			}
 			i4b_Dfreembuf(m);
 			break;
@@ -170,7 +170,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				l2sc->stat.rx_ua++;
 				NDBGL2(L2_U_MSG, "UA, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
-				i4b_next_l2state(l2sc, EV_RXUA);
+				i4b_next_l2state(l2sc, drv, EV_RXUA);
 			}
 			i4b_Dfreembuf(m);			
 			break;			
@@ -182,7 +182,7 @@ i4b_rxd_u_frame(l2_softc_t *l2sc, struct mbuf *m)
 				l2sc->stat.rx_frmr++;
 				NDBGL2(L2_U_MSG, "FRMR, sapi = %d, tei = %d", sapi, tei);
 				l2sc->rxd_PF = pfbit;
-				i4b_next_l2state(l2sc, EV_RXFRMR);
+				i4b_next_l2state(l2sc, drv, EV_RXFRMR);
 			}
 			i4b_Dfreembuf(m);			
 			break;
