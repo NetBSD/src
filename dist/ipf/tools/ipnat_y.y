@@ -1,5 +1,3 @@
-/*	$NetBSD: ipnat_y.y,v 1.2 2004/05/26 20:32:48 christos Exp $	*/
-
 %{
 #ifdef  __FreeBSD__
 # ifndef __FreeBSD_cc_version
@@ -124,9 +122,12 @@ assigning:
 xx:					{ newnatrule(); }
 	;
 
-rule:	map
-	| mapblock
-	| redir
+rule:	map eol
+	| mapblock eol
+	| redir eol
+	;
+
+eol:	| ';'
 	;
 
 map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
@@ -153,7 +154,7 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 					strncpy(nat->in_ifnames[1],
 						nat->in_ifnames[0],
 						sizeof(nat->in_ifnames[0]));
-				  if ((nat->in_flags & IPN_TCPUDP) == 0)
+				  if ((nat->in_flags & IPN_TCPUDPICMPQ) == 0)
 					setnatproto(nat->in_p);
 				  if (((nat->in_redir & NAT_MAPBLK) != 0) ||
 				      ((nat->in_flags & IPN_AUTOPORTMAP) != 0))
@@ -179,7 +180,7 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 					strncpy(nat->in_ifnames[1],
 						nat->in_ifnames[0],
 						sizeof(nat->in_ifnames[0]));
-				  if ((nat->in_flags & IPN_TCPUDP) == 0)
+				  if ((nat->in_flags & IPN_TCPUDPICMPQ) == 0)
 					setnatproto(nat->in_p);
 				  if (((nat->in_redir & NAT_MAPBLK) != 0) ||
 				      ((nat->in_flags & IPN_AUTOPORTMAP) != 0))
@@ -289,9 +290,14 @@ dport:	| IPNY_PORT YY_NUMBER			{ nat->in_pmin = htons($2);
 						  nat->in_pmax = htons($2); }
 	| IPNY_PORT YY_NUMBER '-' YY_NUMBER	{ nat->in_pmin = htons($2);
 						  nat->in_pmax = htons($4); }
+	| IPNY_PORT YY_NUMBER ':' YY_NUMBER	{ nat->in_pmin = htons($2);
+						  nat->in_pmax = htons($4); }
 	;
 
-nport:	IPNY_PORT YY_NUMBER			{ nat->in_pnext = htons($2); }
+nport:	IPNY_PORT YY_NUMBER		{ nat->in_pnext = htons($2); }
+	| IPNY_PORT '=' YY_NUMBER	{ nat->in_pnext = htons($3);
+					  nat->in_flags |= IPN_FIXEDDPORT;
+					}
 	;
 
 ports:	| IPNY_PORTS numports		{ nat->in_pmin = $2; }
@@ -346,11 +352,23 @@ otherifname:
 
 mapport:
 	IPNY_PORTMAP tcpudp YY_NUMBER ':' YY_NUMBER
-					{ nat->in_pmin = htons($3);
-					  nat->in_pmax = htons($5); }
-	| IPNY_PORTMAP tcpudp IPNY_AUTO	{ nat->in_flags |= IPN_AUTOPORTMAP;
-					  nat->in_pmin = htons(1024);
-					  nat->in_pmax = htons(65535); }
+			{ nat->in_pmin = htons($3);
+			  nat->in_pmax = htons($5);
+			}
+	| IPNY_PORTMAP tcpudp IPNY_AUTO
+			{ nat->in_flags |= IPN_AUTOPORTMAP;
+			  nat->in_pmin = htons(1024);
+			  nat->in_pmax = htons(65535);
+			}
+	| IPNY_ICMPIDMAP YY_STR YY_NUMBER ':' YY_NUMBER
+			{ if (strcmp($2, "icmp") != 0) {
+				yyerror("icmpidmap not followed by icmp");
+			  }
+			  free($2);
+			  nat->in_flags = IPN_ICMPQUERY;
+			  nat->in_pmin = htons($3);
+			  nat->in_pmax = htons($5);
+			}
 	;
 
 sobject:
@@ -684,8 +702,8 @@ int fd;
 ioctlfunc_t ioctlfunc;
 void *ptr;
 {
-	ipfobj_t obj;
 	ioctlcmd_t add, del;
+	ipfobj_t obj;
 	ipnat_t *ipn;
 
 	ipn = ptr;

@@ -1,5 +1,3 @@
-/*	$NetBSD: lexer.c,v 1.3 2004/05/22 17:59:37 christos Exp $	*/
-
 /*
  * Copyright (C) 2003 by Darren Reed.
  *
@@ -34,6 +32,7 @@ extern int	string_start;
 extern int	string_end;
 extern char	*string_val;
 extern int	pos;
+extern int	yydebug;
 
 char		*yystr = NULL;
 int		yytext[YYBUFSIZ+1];
@@ -44,8 +43,10 @@ int		yyexpectaddr = 0;
 int		yybreakondot = 0;
 int		yyvarnext = 0;
 int		yytokentype = 0;
-int            *yycont;
 wordtab_t	*yywordtab = NULL;
+int		yysavedepth = 0;
+wordtab_t	*yysavewords[30];
+
 
 static	wordtab_t	*yyfindkey __P((char *));
 static	int		yygetc __P((void));
@@ -53,7 +54,6 @@ static	void		yyunputc __P((int));
 static	int		yyswallow __P((int));
 static	char		*yytexttostr __P((int, int));
 static	void		yystrtotext __P((char *));
-
 
 static int yygetc()
 {
@@ -72,6 +72,8 @@ static int yygetc()
 		yypos++;
 	} else {
 		c = fgetc(yyin);
+		if (c == '\n')
+			yylineNum++;
 	}
 	yytext[yypos++] = c;
 	yylast = yypos;
@@ -84,8 +86,6 @@ static int yygetc()
 static void yyunputc(c)
 int c;
 {
-	if (c == '\n')
-		yylineNum--;
 	yytext[--yypos] = c;
 }
 
@@ -148,7 +148,7 @@ int offset, max;
 
 int yylex()
 {
-	int c, n, isbuilding, rval, lnext;
+	int c, n, isbuilding, rval, lnext, nokey = 0;
 	char *name;
 
 	isbuilding = 0;
@@ -166,7 +166,6 @@ nextchar:
 	switch (c)
 	{
 	case '\n' :
-		yylineNum++;
 	case '\t' :
 	case '\r' :
 	case ' ' :
@@ -190,6 +189,8 @@ nextchar:
 				yypos--;
 			} else
 				yypos--;
+			if (yypos == 0)
+				nokey = 1;
 			goto nextchar;
 		}
 		break;
@@ -431,7 +432,6 @@ nextchar:
 		} while (isdigit(n));
 		yyunputc(n);
 		rval = YY_NUMBER;
-		yyvarnext = 0;
 		goto done;
 	}
 
@@ -447,9 +447,13 @@ done:
 		w = NULL;
 		isbuilding = 0;
 
-		if (yyvarnext == 0)
+		if ((yyvarnext == 0) && (nokey == 0)) {
 			w = yyfindkey(yystr);
-		else
+			if (w == NULL) {
+				yyresetdict();
+				w = yyfindkey(yystr);
+			}
+		} else
 			yyvarnext = 0;
 		if (w != NULL)
 			rval = w->w_value;
@@ -553,6 +557,25 @@ char *msg;
 		free(txt);
 	exit(1);
 }
+
+
+void yysetdict(newdict)
+wordtab_t *newdict;
+{
+	yysavewords[yysavedepth++] = yysettab(newdict);
+	if (yydebug)
+		printf("yysavedepth++ => %d\n", yysavedepth);
+}
+
+void yyresetdict()
+{
+	if (yysavedepth > 0) {
+		yysettab(yysavewords[--yysavedepth]);
+		if (yydebug)
+			printf("yysavedepth-- => %d\n", yysavedepth);
+	}
+}
+
 
 
 #ifdef	TEST_LEXER

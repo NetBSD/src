@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.5 2004/03/28 09:00:53 martti Exp $	*/
+/*	$NetBSD: ipf.h,v 1.6 2004/07/08 02:51:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -195,7 +195,7 @@ extern char *fac_toname __P((int));
 extern int fac_findname __P((char *));
 extern void fill6bits __P((int, u_int *));
 extern int gethost __P((char *, u_32_t *));
-extern int getport __P((char *));
+extern int getport __P((struct frentry *, char *));
 extern int getportproto __P((char *, int));
 extern int getproto __P((char *));
 extern char *getline __P((char *, size_t, FILE *, int *));

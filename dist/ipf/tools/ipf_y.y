@@ -1,5 +1,3 @@
-/*	$NetBSD: ipf_y.y,v 1.8 2004/06/29 22:33:25 christos Exp $	*/
-
 %{
 #include "ipf.h"
 #include <sys/ioctl.h>
@@ -48,9 +46,9 @@ static	int		nrules = 0;
 static	int		newlist = 0;
 static	int		added = 0;
 static	int		ipffd = -1;
+static	int		*yycont = 0;
 static	ioctlfunc_t	ipfioctl[IPL_LOGSIZE];
 static	addfunc_t	ipfaddfunc = NULL;
-static	wordtab_t	*savewords;
 
 %}
 %union	{
@@ -74,7 +72,7 @@ static	wordtab_t	*savewords;
 
 %type	<num>	portnum facility priority icmpcode seclevel secname icmptype
 %type	<num>	opt compare range opttype flagset optlist ipv6hdrlist ipv6hdr
-%type	<ipa>	hostname ipv4 ipv4mask
+%type	<ipa>	hostname ipv4 ipv4mask ipv4_16 ipv4_24
 %type	<ip6>	ipv6mask
 %type	<ipp>	addr
 %type	<str>	servicename name interfacename
@@ -177,8 +175,11 @@ assigning:
 	'='				{ yyvarnext = 1; }
 	;
 
-rule:	inrule
-	| outrule
+rule:	inrule eol
+	| outrule eol
+	;
+
+eol:	| ';'
 	;
 
 inrule:
@@ -261,7 +262,7 @@ blockreturn:
 	IPFY_RETICMP			{ fr->fr_flags |= FR_RETICMP; }
 	| IPFY_RETICMP returncode	{ fr->fr_flags |= FR_RETICMP; }
 	| IPFY_RETICMPASDST		{ fr->fr_flags |= FR_FAKEICMP; }
-	| IPFY_RETICMPASDST returncode  { fr->fr_flags |= FR_FAKEICMP; }
+	| IPFY_RETICMPASDST returncode	{ fr->fr_flags |= FR_FAKEICMP; }
 	| IPFY_RETRST			{ fr->fr_flags |= FR_RETRST; }
 	;
 
@@ -315,9 +316,6 @@ tos:	| settos YY_NUMBER	{ DOALL(fr->fr_tos = $2; fr->fr_mtos = 0xff;) }
 settos:	IPFY_TOS			{ setipftype(); }
 	;
 
-seticmptype: IPFY_ICMPTYPE		{ setipftype(); }
-	;
-
 toslist:
 	YY_NUMBER	{ DOALL(fr->fr_tos = $1; fr->fr_mtos = 0xff;) }
 	| YY_HEX	{ DOREM(fr->fr_tos = $1; fr->fr_mtos = 0xff;) }
@@ -342,6 +340,8 @@ lmore:	lanother			{ if (newlist == 1) {
 						newlist = 0;
 					  }
 					  fr = addrule();
+					  if (yycont != NULL)
+						*yycont = 1;
 					}
 	;
 
@@ -420,6 +420,7 @@ tagoutspec:
 
 matchtagin:
 	| IPFY_MATCHTAG '(' tagoutlist ')'
+	;
 
 matchtagout:
 	| IPFY_MATCHTAG '(' taginlist ')'
@@ -549,7 +550,11 @@ logoption:
 	;
 
 returncode:
-	'(' icmpcode ')'		{ fr->fr_icode = $2; }
+	starticmpcode icmpcode ')'	{ fr->fr_icode = $2; yyresetdict(); }
+	;
+
+starticmpcode:
+	'('				{ yysetdict(icmpcodewords); }
 	;
 
 srcdst:	IPFY_ALL
@@ -579,21 +584,23 @@ protocol:
 					}
 	;
 
-fromto:	from srcobject to dstobject	{ yyexpectaddr = 0; }
-	| to dstobject			{ yyexpectaddr = 0; }
-	| from srcobject		{ yyexpectaddr = 0; }
+fromto:	from srcobject to dstobject	{ yyexpectaddr = 0; yycont = NULL; }
+	| to dstobject			{ yyexpectaddr = 0; yycont = NULL; }
+	| from srcobject		{ yyexpectaddr = 0; yycont = NULL; }
 	;
 
 from:	IPFY_FROM			{ setipftype();
 					  if (fr == NULL)
 						fr = frc;
 					  yyexpectaddr = 1;
+					  yycont = &yyexpectaddr;
 					  resetaddr(); }
 	;
 
 to:	IPFY_TO				{ if (fr == NULL)
 						fr = frc;
 					  yyexpectaddr = 1;
+					  yycont = &yyexpectaddr;
 					  resetaddr(); }
 	;
 
@@ -605,30 +612,22 @@ andwith:
 	| IPFY_AND			{ nowith = 0; setipftype(); }
 	;
 
-flags:	| startflags flagset	
+flags:	| IPFY_FLAGS flagset	
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| startflags flagset '/' flagset
+	| IPFY_FLAGS flagset '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| startflags '/' flagset
+	| IPFY_FLAGS '/' flagset
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| startflags YY_NUMBER
+	| IPFY_FLAGS YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| startflags '/' YY_NUMBER
+	| IPFY_FLAGS '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| startflags YY_NUMBER '/' YY_NUMBER
+	| IPFY_FLAGS YY_NUMBER '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| startflags flagset '/' YY_NUMBER
+	| IPFY_FLAGS flagset '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| startflags YY_NUMBER '/' flagset
+	| IPFY_FLAGS YY_NUMBER '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	;
-
-startflags:
-	IPFY_FLAGS	{ if (frc->fr_type != FR_T_IPF)
-				yyerror("flags with non-ipf type rule");
-			  if (frc->fr_proto != IPPROTO_TCP)
-				yyerror("flags with non-TCP rule");
-			}
 	;
 
 flagset:
@@ -869,10 +868,10 @@ addrlist:
 			  bcopy(&($3.m), &($$->al_i6mask), sizeof($3.m)); }
 	;
 
-pool:	IPFY_POOL	{ yyexpectaddr = 0; }
+pool:	IPFY_POOL	{ yyexpectaddr = 0; yycont = NULL; }
 	;
 
-hash:	IPFY_HASH	{ yyexpectaddr = 0; }
+hash:	IPFY_HASH	{ yyexpectaddr = 0; yycont = NULL; }
 	;
 
 poollist:
@@ -894,28 +893,48 @@ poollist:
 			  bcopy(&($4.m), &($$->al_i6mask), sizeof($4.m)); }
 	;
 
-port:	IPFY_PORT			{ yyexpectaddr = 0; yyvarnext = 1; }
+port:	IPFY_PORT			{ yyexpectaddr = 0;
+					  yycont = NULL;
+					  yysetdict(NULL); }
 	;
 
 portcomp:
-	port compare portnum		{ $$.pc = $2; $$.p1 = $3; }
+	port compare portnum		{ $$.pc = $2;
+					  $$.p1 = $3;
+					  yyresetdict(); }
 	;
 
 portrange:
-	port portnum range portnum	{ $$.p1 = $2; $$.pc = $3; $$.p2 = $4; }
+	port portnum range portnum	{ $$.p1 = $2;
+					  $$.pc = $3;
+					  $$.p2 = $4;
+					  yyresetdict(); }
 	;
 
 icmp:	| itype icode
 	;
 
 itype:	seticmptype icmptype
-	{ DOALL(fr->fr_icmp = htons($2 << 8); fr->fr_icmpm = htons(0xff00);) }
-	| seticmptype lstart typelist lend
+	{ DOALL(fr->fr_icmp = htons($2 << 8); fr->fr_icmpm = htons(0xff00););
+	  yyresetdict();
+	}
+	| seticmptype lstart typelist lend	{ yyresetdict(); }
 	;
 
-icode:	| IPFY_ICMPCODE icmpcode
-	{ DOALL(fr->fr_icmp |= htons($2); fr->fr_icmpm |= htons(0xff);) }
-	| IPFY_ICMPCODE lstart codelist lend
+seticmptype:
+	IPFY_ICMPTYPE				{ setipftype();
+						  yysetdict(icmptypewords); }
+	;
+
+icode:	| seticmpcode icmpcode
+	{ DOALL(fr->fr_icmp |= htons($2); fr->fr_icmpm |= htons(0xff););
+	  yyresetdict();
+	}
+	| seticmpcode lstart codelist lend	{ yyresetdict(); }
+	;
+
+seticmpcode:
+	IPFY_ICMPCODE				{ yysetdict(icmpcodewords); }
 	;
 
 typelist:
@@ -950,6 +969,7 @@ keepstate:
 
 keepfrag:
 	IPFY_FRAGS fragoptlist		{ DOALL(fr->fr_flags |= FR_KEEPFRAG;) }
+	| IPFY_FRAG fragoptlist		{ DOALL(fr->fr_flags |= FR_KEEPFRAG;) }
 	;
 
 fragoptlist:
@@ -990,7 +1010,7 @@ stateopt:
 	;
 
 portnum:
-	servicename			{ $$ = ntohs(getport($1));
+	servicename			{ $$ = ntohs(getport(frc, $1));
 					  free($1);
 					}
 	| YY_NUMBER			{ $$ = $1; }
@@ -1005,15 +1025,19 @@ withlist:
 withopt:
 	opttype		{ DOALL(fr->fr_flx |= $1; fr->fr_mflx |= $1;) }
 	| notwith opttype
-			{ DOALL(fr->fr_mflx |= $2;) }
-	| IPFY_OPT ipopts
-	| notwith IPFY_OPT ipopts
-	| startv6hdrs ipv6hdrs
+					{ DOALL(fr->fr_mflx |= $2;) }
+	| ipopt ipopts			{ yyresetdict(); }
+	| notwith ipopt ipopts		{ yyresetdict(); }
+	| startv6hdrs ipv6hdrs		{ yyresetdict(); }
+	;
+
+ipopt:	IPFY_OPT			{ yysetdict(ipv4optwords); }
 	;
 
 startv6hdrs:
 	IPF6_V6HDRS	{ if (use_inet6 == 0)
 				yyerror("only available with IPv6");
+			  yysetdict(ipv6optwords);
 			}
 	;
 
@@ -1031,6 +1055,7 @@ opttype:
 	| IPFY_BADSRC			{ $$ = FI_BADSRC; }
 	| IPFY_LOWTTL			{ $$ = FI_LOWTTL; }
 	| IPFY_FRAG			{ $$ = FI_FRAG; }
+	| IPFY_FRAGS			{ $$ = FI_FRAG; }
 	| IPFY_MBCAST			{ $$ = FI_MBCAST; }
 	| IPFY_MULTICAST		{ $$ = FI_MULTICAST; }
 	| IPFY_BROADCAST		{ $$ = FI_BROADCAST; }
@@ -1141,12 +1166,17 @@ opt:
 	| IPFY_IPOPT_NSAPA		{ $$ = getoptbyvalue(IPOPT_NSAPA); }
 	| IPFY_IPOPT_RTRALRT		{ $$ = getoptbyvalue(IPOPT_RTRALRT); }
 	| IPFY_IPOPT_UMP		{ $$ = getoptbyvalue(IPOPT_UMP); }
-	| IPFY_SECCLASS secname
+	| setsecclass secname
 			{ DOALL(fr->fr_mip.fi_secmsk |= $2;
 				if (!nowith)
 					fr->fr_ip.fi_secmsk |= $2;)
 			  $$ = 0;
+			  yyresetdict();
 			}
+	;
+
+setsecclass:
+	IPFY_SECCLASS	{ yysetdict(ipv4secwords); }
 	;
 
 ipv6hdr:
@@ -1236,20 +1266,42 @@ interfacename:	YY_STR				{ $$ = $1; }
 name:	YY_STR				{ $$ = $1; }
 	;
 
-ipv4:	YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER
-		{ if ($1 > 255 || $3 > 255 || $5 > 255 || $7 > 255) {
+ipv4_16:
+	YY_NUMBER '.' YY_NUMBER
+		{ if ($1 > 255 || $3 > 255) {
 			yyerror("Invalid octet string for IP address");
 			return 0;
 		  }
-		  $$.s_addr = ($1 << 24) | ($3 << 16) | ($5 << 8) | $7;
+		  $$.s_addr = ($1 << 24) | ($3 << 16);
 		  $$.s_addr = htonl($$.s_addr);
 		}
 	;
+
+ipv4_24:
+	ipv4_16 '.' YY_NUMBER
+		{ if ($3 > 255) {
+			yyerror("Invalid octet string for IP address");
+			return 0;
+		  }
+		  $$.s_addr |= htonl($3 << 8);
+		}
+	;
+
+ipv4:	ipv4_24 '.' YY_NUMBER
+		{ if ($3 > 255) {
+			yyerror("Invalid octet string for IP address");
+			return 0;
+		  }
+		  $$.s_addr |= htonl($3);
+		}
+	| ipv4_24
+	| ipv4_16
+	;
+
 %%
 
 
 static	struct	wordtab ipfwords[] = {
-	{ "addext",			IPFY_IPOPT_ADDEXT },
 	{ "age",			IPFY_AGE },
 	{ "ah",				IPFY_AH },
 	{ "all",			IPFY_ALL },
@@ -1268,26 +1320,15 @@ static	struct	wordtab ipfwords[] = {
 #endif
 	{ "broadcast",			IPFY_BROADCAST },
 	{ "call",			IPFY_CALL },
-	{ "cipso",			IPFY_IPOPT_CIPSO },
 	{ "code",			IPFY_ICMPCODE },
-	{ "confid",			IPFY_SEC_CONF },
 	{ "count",			IPFY_COUNT },
-	{ "cutoff-preced",		IPFY_ICMPC_CUTPRE },
 	{ "divert",			IPFY_DIVERT },
-	{ "dps",			IPFY_IPOPT_DPS },
 	{ "dstopts",			IPFY_IPV6OPT_DSTOPTS },
 	{ "dup-to",			IPFY_DUPTO },
-	{ "e-sec",			IPFY_IPOPT_ESEC },
-	{ "echo",			IPFY_ICMPT_ECHO },
-	{ "echorep",			IPFY_ICMPT_ECHOR },
-	{ "eip",			IPFY_IPOPT_EIP },
-	{ "encode",			IPFY_IPOPT_ENCODE },
 	{ "eq",				YY_CMP_EQ },
 	{ "esp",			IPFY_ESP },
 	{ "fastroute",			IPFY_FROUTE },
-	{ "filter-prohib",		IPFY_ICMPC_FLTPRO },
 	{ "first",			IPFY_FIRST },
-	{ "finn",			IPFY_IPOPT_FINN },
 	{ "frag",			IPFY_FRAG },
 	{ "flags",			IPFY_FLAGS },
 	{ "frags",			IPFY_FRAGS },
@@ -1297,124 +1338,155 @@ static	struct	wordtab ipfwords[] = {
 	{ "gt",				YY_CMP_GT },
 	{ "hash",			IPFY_HASH },
 	{ "head",			IPFY_HEAD },
-	{ "hopopts",			IPFY_IPV6OPT_HOPOPTS },
-	{ "host-preced",		IPFY_ICMPC_HSTPRE },
-	{ "host-prohib",		IPFY_ICMPC_HSTPRO },
-	{ "host-tos",			IPFY_ICMPC_HSTTOS },
-	{ "host-unk",			IPFY_ICMPC_HSTUNK },
-	{ "host-unr",			IPFY_ICMPC_HSTUNR },
 	{ "icmp",			IPFY_ICMP },
 	{ "icmp-type",			IPFY_ICMPTYPE },
-	{ "imitd",			IPFY_IPOPT_IMITD },
 	{ "in",				IPFY_IN },
 	{ "in-via",			IPFY_INVIA },
-	{ "inforeq",			IPFY_ICMPT_INFOREQ },
-	{ "inforep",			IPFY_ICMPT_INFOREP },
 	{ "ipopt",			IPFY_IPOPTS },
 	{ "ipopts",			IPFY_IPOPTS },
-	{ "ipv6",			IPFY_IPV6OPT_IPV6 },
-	{ "isolate",			IPFY_ICMPC_ISOLATE },
 	{ "keep",			IPFY_KEEP },
 	{ "le",				YY_CMP_LE },
 	{ "level",			IPFY_LEVEL },
 	{ "limit",			IPFY_LIMIT },
 	{ "log",			IPFY_LOG },
 	{ "lowttl",			IPFY_LOWTTL },
-	{ "lsrr",			IPFY_IPOPT_LSRR },
 	{ "lt",				YY_CMP_LT },
 	{ "mask",			IPFY_MASK },
-	{ "maskrep",			IPFY_ICMPT_MASKREP },
-	{ "maskreq",			IPFY_ICMPT_MASKREQ },
 	{ "match-tag",			IPFY_MATCHTAG },
 	{ "mbcast",			IPFY_MBCAST },
-	{ "mtup",			IPFY_IPOPT_MTUP },
-	{ "mtur",			IPFY_IPOPT_MTUR },
 	{ "multicast",			IPFY_MULTICAST },
 	{ "nat",			IPFY_NAT },
 	{ "ne",				YY_CMP_NE },
-	{ "needfrag",			IPFY_ICMPC_NEEDF },
 	{ "net",			IPFY_NETWORK },
-	{ "net-prohib",			IPFY_ICMPC_NETPRO },
-	{ "net-tos",			IPFY_ICMPC_NETTOS },
-	{ "net-unk",			IPFY_ICMPC_NETUNK },
-	{ "net-unr",			IPFY_ICMPC_NETUNR },
 	{ "netmasked",			IPFY_NETMASKED },
 	{ "network",			IPFY_NETWORK },
 	{ "newisn",			IPFY_NEWISN },
 	{ "no",				IPFY_NO },
 	{ "no-icmp-err",		IPFY_NOICMPERR },
-	{ "none",			IPFY_IPV6OPT_NONE },
-	{ "nop",			IPFY_IPOPT_NOP },
 	{ "now",			IPFY_NOW },
 	{ "not",			IPFY_NOT },
-	{ "nsapa",			IPFY_IPOPT_NSAPA },
 	{ "oow",			IPFY_OOW },
 	{ "on",				IPFY_ON },
 	{ "opt",			IPFY_OPT },
 	{ "or-block",			IPFY_ORBLOCK },
 	{ "out",			IPFY_OUT },
 	{ "out-via",			IPFY_OUTVIA },
-	{ "paramprob",			IPFY_ICMPT_PARAMP },
 	{ "pass",			IPFY_PASS },
 	{ "peer",			IPFY_PEER },
 	{ "pool",			IPFY_POOL },
 	{ "port",			IPFY_PORT },
-	{ "port-unr",			IPFY_ICMPC_PORUNR },
 	{ "pps",			IPFY_PPS },
 	{ "preauth",			IPFY_PREAUTH },
 	{ "proto",			IPFY_PROTO },
-	{ "proto-unr",			IPFY_ICMPC_PROUNR },
 	{ "quick",			IPFY_QUICK },
-	{ "redir",			IPFY_ICMPT_REDIR },
 	{ "reply-to",			IPFY_REPLY_TO },
-	{ "reserv-1",			IPFY_SEC_RSV1 },
-	{ "reserv-2",			IPFY_SEC_RSV2 },
-	{ "reserv-3",			IPFY_SEC_RSV3 },
-	{ "reserv-4",			IPFY_SEC_RSV4 },
 	{ "return-icmp",		IPFY_RETICMP },
 	{ "return-icmp-as-dest",	IPFY_RETICMPASDST },
 	{ "return-rst",			IPFY_RETRST },
 	{ "route-to",			IPFY_ROUTETO },
+	{ "sec-class",			IPFY_SECCLASS },
+	{ "set-tag",			IPFY_SETTAG },
+	{ "skip",			IPFY_SKIP },
+	{ "short",			IPFY_SHORT },
+	{ "state",			IPFY_STATE },
+	{ "strict",			IPFY_STRICT },
+	{ "tcp",			IPFY_TCP },
+	{ "tcp-udp",			IPFY_TCPUDP },
+	{ "tos",			IPFY_TOS },
+	{ "to",				IPFY_TO },
+	{ "ttl",			IPFY_TTL },
+	{ "udp",			IPFY_UDP },
+	{ "v6hdrs",			IPF6_V6HDRS },
+	{ "with",			IPFY_WITH },
+	{ NULL,				0 }
+};
+
+static	struct	wordtab icmptypewords[] = {
+	{ "echo",			IPFY_ICMPT_ECHO },
+	{ "echorep",			IPFY_ICMPT_ECHOR },
+	{ "inforeq",			IPFY_ICMPT_INFOREQ },
+	{ "inforep",			IPFY_ICMPT_INFOREP },
+	{ "maskrep",			IPFY_ICMPT_MASKREP },
+	{ "maskreq",			IPFY_ICMPT_MASKREQ },
+	{ "paramprob",			IPFY_ICMPT_PARAMP },
+	{ "redir",			IPFY_ICMPT_REDIR },
+	{ "unreach",			IPFY_ICMPT_UNR },
 	{ "routerad",			IPFY_ICMPT_ROUTERAD },
 	{ "routersol",			IPFY_ICMPT_ROUTERSOL },
-	{ "routing",			IPFY_IPV6OPT_ROUTING },
+	{ "squench",			IPFY_ICMPT_SQUENCH },
+	{ "timest",			IPFY_ICMPT_TIMEST },
+	{ "timestrep",			IPFY_ICMPT_TIMESTREP },
+	{ "timex",			IPFY_ICMPT_TIMEX },
+	{ NULL,				0 },
+};
+
+static	struct	wordtab icmpcodewords[] = {
+	{ "cutoff-preced",		IPFY_ICMPC_CUTPRE },
+	{ "filter-prohib",		IPFY_ICMPC_FLTPRO },
+	{ "isolate",			IPFY_ICMPC_ISOLATE },
+	{ "needfrag",			IPFY_ICMPC_NEEDF },
+	{ "net-prohib",			IPFY_ICMPC_NETPRO },
+	{ "net-tos",			IPFY_ICMPC_NETTOS },
+	{ "host-preced",		IPFY_ICMPC_HSTPRE },
+	{ "host-prohib",		IPFY_ICMPC_HSTPRO },
+	{ "host-tos",			IPFY_ICMPC_HSTTOS },
+	{ "host-unk",			IPFY_ICMPC_HSTUNK },
+	{ "host-unr",			IPFY_ICMPC_HSTUNR },
+	{ "net-unk",			IPFY_ICMPC_NETUNK },
+	{ "net-unr",			IPFY_ICMPC_NETUNR },
+	{ "port-unr",			IPFY_ICMPC_PORUNR },
+	{ "proto-unr",			IPFY_ICMPC_PROUNR },
+	{ "srcfail",			IPFY_ICMPC_SRCFAIL },
+	{ NULL,				0 },
+};
+
+static	struct	wordtab ipv4optwords[] = {
+	{ "addext",			IPFY_IPOPT_ADDEXT },
+	{ "cipso",			IPFY_IPOPT_CIPSO },
+	{ "dps",			IPFY_IPOPT_DPS },
+	{ "e-sec",			IPFY_IPOPT_ESEC },
+	{ "eip",			IPFY_IPOPT_EIP },
+	{ "encode",			IPFY_IPOPT_ENCODE },
+	{ "finn",			IPFY_IPOPT_FINN },
+	{ "imitd",			IPFY_IPOPT_IMITD },
+	{ "lsrr",			IPFY_IPOPT_LSRR },
+	{ "mtup",			IPFY_IPOPT_MTUP },
+	{ "mtur",			IPFY_IPOPT_MTUR },
+	{ "nop",			IPFY_IPOPT_NOP },
+	{ "nsapa",			IPFY_IPOPT_NSAPA },
 	{ "rr",				IPFY_IPOPT_RR },
 	{ "rtralrt",			IPFY_IPOPT_RTRALRT },
 	{ "satid",			IPFY_IPOPT_SATID },
 	{ "sdb",			IPFY_IPOPT_SDB },
 	{ "sec",			IPFY_IPOPT_SEC },
-	{ "sec-class",			IPFY_SECCLASS },
-	{ "secret",			IPFY_SEC_SEC },
-	{ "set-tag",			IPFY_SETTAG },
-	{ "skip",			IPFY_SKIP },
-	{ "squench",			IPFY_ICMPT_SQUENCH },
-	{ "short",			IPFY_SHORT },
-	{ "srcfail",			IPFY_ICMPC_SRCFAIL },
 	{ "ssrr",			IPFY_IPOPT_SSRR },
-	{ "state",			IPFY_STATE },
-	{ "strict",			IPFY_STRICT },
-	{ "tcp",			IPFY_TCP },
-	{ "tcp-udp",			IPFY_TCPUDP },
-	{ "timest",			IPFY_ICMPT_TIMEST },
-	{ "timestrep",			IPFY_ICMPT_TIMESTREP },
-	{ "timex",			IPFY_ICMPT_TIMEX },
-	{ "tos",			IPFY_TOS },
-	{ "topsecret",			IPFY_SEC_TS },
-	{ "to",				IPFY_TO },
 	{ "tr",				IPFY_IPOPT_TR },
 	{ "ts",				IPFY_IPOPT_TS },
-	{ "ttl",			IPFY_TTL },
-	{ "udp",			IPFY_UDP },
 	{ "ump",			IPFY_IPOPT_UMP },
-	{ "unclass",			IPFY_SEC_UNC },
-	{ "unreach",			IPFY_ICMPT_UNR },
-	{ "v6hdrs",			IPF6_V6HDRS },
 	{ "visa",			IPFY_IPOPT_VISA },
-	{ "with",			IPFY_WITH },
 	{ "zsu",			IPFY_IPOPT_ZSU },
-	{ NULL,				0 }
+	{ NULL,				0 },
 };
 
+static	struct	wordtab ipv4secwords[] = {
+	{ "confid",			IPFY_SEC_CONF },
+	{ "reserv-1",			IPFY_SEC_RSV1 },
+	{ "reserv-2",			IPFY_SEC_RSV2 },
+	{ "reserv-3",			IPFY_SEC_RSV3 },
+	{ "reserv-4",			IPFY_SEC_RSV4 },
+	{ "secret",			IPFY_SEC_SEC },
+	{ "topsecret",			IPFY_SEC_TS },
+	{ "unclass",			IPFY_SEC_UNC },
+	{ NULL,				0 },
+};
+
+static	struct	wordtab ipv6optwords[] = {
+	{ "hopopts",			IPFY_IPV6OPT_HOPOPTS },
+	{ "ipv6",			IPFY_IPV6OPT_IPV6 },
+	{ "none",			IPFY_IPV6OPT_NONE },
+	{ "routing",			IPFY_IPV6OPT_ROUTING },
+	{ NULL,				0 },
+};
 
 static	struct	wordtab logwords[] = {
 	{ "kern",			IPFY_FAC_KERN },
@@ -1910,17 +1982,16 @@ void *ptr;
 	}
 }
 
-
 static void setsyslog()
 {
-	savewords = yysettab(logwords);
+	yysetdict(logwords);
 	yybreakondot = 1;
 }
 
 
 static void unsetsyslog()
 {
-	yysettab(savewords);
+	yyresetdict();
 	yybreakondot = 0;
 }
 
