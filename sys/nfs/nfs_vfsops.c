@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.34 1995/03/09 12:06:06 mycroft Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.35 1995/03/18 05:54:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -197,7 +197,8 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	mp = nfs_mount_diskless(&nd.nd_root, "/", MNT_RDONLY, &vp);
+	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
+	printf("root on %s\n", &nd.nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
@@ -237,8 +238,10 @@ nfs_mountroot()
 	 */
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("nfs_mountroot: can't setup swap vp");
-	if (swdevt[0].sw_dev != NODEV)
+	if (swdevt[0].sw_dev != NODEV) {
+		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
 		return (0);
+	}
 
 	/*
 	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
@@ -246,6 +249,7 @@ nfs_mountroot()
 	 * swap file can be on a different server from the rootfs.
 	 */
 	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
+	printf("swap on %s\n", &nd.nd_swap.ndm_host);
 
 	/*
 	 * Since the swap file is not the root dir of a file system,
@@ -303,6 +307,9 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	args.hostname = ndmntp->ndm_host;
 	args.flags    = NFSMNT_RESVPORT;
 
+#ifdef	NFS_BOOT_OPTIONS
+	args.flags    |= NFS_BOOT_OPTIONS;
+#endif
 #ifdef	NFS_BOOT_RWSIZE
 	/*
 	 * Reduce rsize,wsize for interfaces that consistently
