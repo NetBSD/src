@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
+/*	$NetBSD: bzero.S,v 1.3 2003/10/14 07:51:45 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,5 @@
 
 #include <machine/asm.h>
 
-ENTRY(bzero)
-	mov	r2, r1
-	mov	r1, #0
-	b	PIC_SYM(_C_LABEL(memset), PLT)
+#define _BZERO
+#include "memset.S"
