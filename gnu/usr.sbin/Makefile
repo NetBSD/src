@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/10/19 03:34:59 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2004/01/06 02:10:43 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,10 +12,8 @@ SUBDIR+=	ncdcs
 SUBDIR+=	postfix
 .endif
 
-.if (!defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no")
 .if ${MKSENDMAIL} != "no"
 SUBDIR+=	sendmail
-.endif
 .endif
 
 # Speedup stubs for some subtrees that don't need to run these rules
