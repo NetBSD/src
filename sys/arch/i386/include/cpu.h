@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.10 1993/09/02 02:10:35 cgd Exp $
+ *	$Id: cpu.h,v 1.11 1993/09/11 00:16:40 jtc Exp $
  */
 
 /*
@@ -48,16 +48,6 @@
  * referenced in generic code
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
-
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* need ffs function */
-#define	NEED_BCMP		/* need bcmp function */
-#undef	NEED_STRLEN		/* need strlen function */
 
 #define	cpu_exec(p)	/* nothing */
 
