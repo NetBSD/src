@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 2003/09/26 21:41:16 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 2004/03/24 15:44:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,6 @@
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
- * Copyright (c) 1995 Paul Kranenburg.
  *
  * This code is derived from software contributed to Berkeley by
  * Don Ahn.
@@ -73,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39 2003/09/26 21:41:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2004/03/24 15:44:46 pk Exp $");
 
 #include "opt_ddb.h"
 
