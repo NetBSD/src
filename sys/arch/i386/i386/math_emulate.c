@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.11 1994/11/04 20:47:07 mycroft Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.12 1995/05/01 08:06:42 mycroft Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -68,7 +68,7 @@ static temp_real_unaligned * __st(int i);
 	I387.twd = 0x0000;		\
 } while (0)
 
-math_emulate(struct trapframe * info)
+math_emulate(struct trapframe *info)
 {
 	u_short code;
 	temp_real tmp;
@@ -529,7 +529,7 @@ static int __regoffset[] = {
 	tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI
 };
 
-#define REG(x) (curproc->p_md.md_regs[__regoffset[(x)]])
+#define REG(x) (((int *)curproc->p_md.md_regs)[__regoffset[(x)]])
 
 static char * sib(struct trapframe * info, int mod)
 {
