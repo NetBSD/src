@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.8 2002/01/29 12:40:33 kleink Exp $	*/
+/*	$NetBSD: difftime.c,v 1.9 2002/01/29 12:58:32 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	7.9";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.8 2002/01/29 12:40:33 kleink Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.9 2002/01/29 12:58:32 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,9 +43,15 @@ const time_t	time0;
 		double		d;
 		long_double	ld;
 
-		if (sizeof tt < sizeof d)
+#ifdef __lint__
+		/* LINTED unused warning bug */&tt;
+		/* LINTED unused warning bug */&d;
+		/* LINTED unused warning bug */&ld;
+#endif
+
+		if (/* LINTED constant */sizeof tt < sizeof d)
 			return (double) time1 - (double) time0;
-		if (sizeof tt < sizeof ld)
+		if (/* LINTED constant */sizeof tt < sizeof ld)
 			return (long_double) time1 - (long_double) time0;
 	}
 	if (time1 < time0)
