@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.7 1998/06/28 07:27:54 thorpej Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.8 2000/04/17 17:39:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -59,6 +59,9 @@ struct bus_space podulebus_bs_tag = {
 	/* allocation/deallocation */
 	podulebus_bs_alloc,
 	podulebus_bs_free,
+
+	/* get kernel virtual address */
+	0, /* there is no linear mapping */
 
 	/* barrier */
 	podulebus_bs_barrier,

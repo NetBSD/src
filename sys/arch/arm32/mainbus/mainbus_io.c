@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.4 1998/06/28 07:27:53 thorpej Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.5 2000/04/17 17:39:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -59,6 +59,9 @@ struct bus_space mainbus_bs_tag = {
 	/* allocation/deallocation */
 	mainbus_bs_alloc,
 	mainbus_bs_free,
+
+	/* get kernel virtual address */
+	0, /* there is no linear mapping */
 
 	/* barrier */
 	mainbus_bs_barrier,

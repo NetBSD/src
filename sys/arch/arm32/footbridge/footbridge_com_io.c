@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.1 1998/09/06 02:20:34 mark Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.2 2000/04/17 17:39:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -65,6 +65,9 @@ struct bus_space fcomcons_bs_tag = {
 	/* allocation/deallocation */
 	fcomcons_bs_alloc,
 	fcomcons_bs_free,
+
+	/* get kernel virtual address */
+	0, /* never used */
 
 	/* barrier */
 	fcomcons_bs_barrier,
