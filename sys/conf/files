@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.264 1999/01/11 21:33:02 thorpej Exp $
+#	$NetBSD: files,v 1.265 1999/01/13 23:02:48 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -616,7 +616,7 @@ file net/if_atmsubr.c			atm
 file net/if_ethersubr.c			ether | fddi
 file net/if_fddisubr.c			fddi
 file net/if_hippisubr.c                 hippi                   needs-flag
-file net/if_gre.c			gre				needs-count	
+file net/if_gre.c			gre			needs-count	
 file net/if_loop.c			loop			needs-count
 file net/if_media.c
 file net/if_sl.c			sl			needs-count
@@ -661,7 +661,7 @@ file netinet/in_proto.c			inet
 file netinet/ip_gre.c			inet
 file netinet/ip_flow.c			inet & gateway
 file netinet/ip_icmp.c			inet
-file netinet/ip_ipip.c			ipip			needs-count
+file netinet/ip_ipip.c			ipip | mrouting		needs-flag
 file netinet/ip_input.c			inet
 file netinet/ip_mroute.c		inet & mrouting
 file netinet/ip_output.c		inet
