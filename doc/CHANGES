@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.261 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.262 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -585,3 +585,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	acorn32: beep(4) removed.  [bjh21 20040125]
 	arm: Change ARM9 support code to use the Dcache in write-back mode.
 		[rearnsha 20040126]
+	install(1): Add -h {none,md5,rmd160,sha1} to determine the appropriate
+		hash (digest) of a copied file to store in the -M METALOG.
+		[lukem 20040129]
