@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.32 2003/03/02 22:17:30 christos Exp $
+#	$NetBSD: newvers.sh,v 1.33 2003/10/14 06:46:57 lukem Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -66,14 +66,14 @@ cat << _EOF > vers.c
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
+#define NETBSDVERSION \
+	"${ost} ${osr} (${id}) #${v}: ${t}\n" \
+	"\t${u}@${h}:${d}\n"
+
 const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
-const char sccs[] = 
-    "@(#)${ost} ${osr} (${id}) #${v}: ${t}\n"
-    "\t${u}@${h}:${d}\n";
-const char version[] = 
-    "${ost} ${osr} (${id}) #${v}: ${t}\n"
-    "\t${u}@${h}:${d}\n";
+const char sccs[] = "@(#)" NETBSDVERSION;
+const char version[] = NETBSDVERSION;
 
 #ifdef notyet
 /*
