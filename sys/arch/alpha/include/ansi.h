@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.10 1998/04/27 17:39:10 kleink Exp $ */
+/* $NetBSD: ansi.h,v 1.11 2000/05/10 17:53:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,8 @@
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
 
+#include <sys/cdefs.h>
+
 /*
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
@@ -52,12 +54,16 @@
 #define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
 #define	_BSD_SSIZE_T_		long		/* byte count or error */
 #define	_BSD_TIME_T_		int		/* time() */
+#if __GNUC_PREREQ__(2, 96)
+#define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
+#else
 typedef struct {
 	char *__base;
 	int __offset;
 	int __pad;
 } __va_list;
 #define	_BSD_VA_LIST_		__va_list	/* va_list */
+#endif
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
