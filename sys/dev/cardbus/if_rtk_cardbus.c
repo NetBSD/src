@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.3.8.7 2002/11/11 22:09:05 nathanw Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.3.8.8 2002/12/29 20:49:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.3.8.7 2002/11/11 22:09:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.3.8.8 2002/12/29 20:49:15 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -318,10 +318,10 @@ rtk_cardbus_setup(csc)
 			membase = cardbus_conf_read(cc, cf,csc->sc_tag,
 			    RTK_PCI_LOMEM);
 			irq = cardbus_conf_read(cc, cf,csc->sc_tag,
-			    PCI_PRODUCT_DELTA_8139);
+			    CARDBUS_INTERRUPT_REG);
 
 			/* Reset the power state. */
-			printf("%s: chip is is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RTK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
@@ -334,7 +334,7 @@ rtk_cardbus_setup(csc)
 			cardbus_conf_write(cc, cf, csc->sc_tag,
 			    RTK_PCI_LOMEM, membase);
 			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    PCI_PRODUCT_DELTA_8139, irq);
+			    CARDBUS_INTERRUPT_REG, irq);
 		}
 	}
 

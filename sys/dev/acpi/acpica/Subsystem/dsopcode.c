@@ -2,7 +2,7 @@
  *
  * Module Name: dsopcode - Dispatcher Op Region support and handling of
  *                         "control" opcodes
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 84 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.1.1.4.4 2002/06/20 03:43:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.1.1.4.5 2002/12/29 20:45:47 thorpej Exp $");
 
 #define __DSOPCODE_C__
 
@@ -191,7 +191,7 @@ AcpiDsExecuteArguments (
         return_ACPI_STATUS (Status);
     }
 
-    WalkState->ParseFlags = 0;
+    WalkState->ParseFlags = ACPI_PARSE_DEFERRED_OP;
 
     /* Pass1: Parse the entire declaration */
 
@@ -276,7 +276,7 @@ AcpiDsGetBufferFieldArguments (
     ExtraDesc = AcpiNsGetSecondaryObject (ObjDesc);
     Node = ObjDesc->BufferField.Node;
 
-    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (Node, "  [Field]"));
+    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (ACPI_TYPE_BUFFER_FIELD, Node, NULL));
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[%4.4s] BufferField JIT Init\n",
         Node->Name.Ascii));
 
@@ -322,7 +322,7 @@ AcpiDsGetBufferArguments (
     Node = ObjDesc->Buffer.Node;
     if (!Node)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, 
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
                 "No pointer back to NS node in buffer %p\n", ObjDesc));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
@@ -371,7 +371,7 @@ AcpiDsGetPackageArguments (
     Node = ObjDesc->Package.Node;
     if (!Node)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, 
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
                 "No pointer back to NS node in package %p\n", ObjDesc));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
@@ -426,7 +426,7 @@ AcpiDsGetRegionArguments (
 
     Node = ObjDesc->Region.Node;
 
-    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (Node, "  [Operation Region]"));
+    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (ACPI_TYPE_REGION, Node, NULL));
 
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[%4.4s] OpRegion Init at AML %p\n",
         Node->Name.Ascii, ExtraDesc->Extra.AmlStart));
@@ -518,7 +518,7 @@ AcpiDsInitBufferField (
     /*
      * The last parameter to all of these opcodes (ResultDesc) started
      * out as a NameString, and should therefore now be a NS node
-     * after resolution in AcpiExResolveOperands().  
+     * after resolution in AcpiExResolveOperands().
      */
     if (ACPI_GET_DESCRIPTOR_TYPE (ResultDesc) != ACPI_DESC_TYPE_NAMED)
     {
@@ -714,10 +714,10 @@ AcpiDsEvalBufferFieldOperands (
 
     /* Resolve the operands */
 
-    Status = AcpiExResolveOperands (Op->Common.AmlOpcode, 
+    Status = AcpiExResolveOperands (Op->Common.AmlOpcode,
                     ACPI_WALK_OPERANDS, WalkState);
 
-    ACPI_DUMP_OPERANDS (ACPI_WALK_OPERANDS, ACPI_IMODE_EXECUTE, 
+    ACPI_DUMP_OPERANDS (ACPI_WALK_OPERANDS, ACPI_IMODE_EXECUTE,
                     AcpiPsGetOpcodeName (Op->Common.AmlOpcode),
                     WalkState->NumOperands, "after AcpiExResolveOperands");
 
@@ -735,16 +735,16 @@ AcpiDsEvalBufferFieldOperands (
     {
         /* NOTE: Slightly different operands for this opcode */
 
-        Status = AcpiDsInitBufferField (Op->Common.AmlOpcode, ObjDesc, 
-                    WalkState->Operands[0], WalkState->Operands[1], 
+        Status = AcpiDsInitBufferField (Op->Common.AmlOpcode, ObjDesc,
+                    WalkState->Operands[0], WalkState->Operands[1],
                     WalkState->Operands[2], WalkState->Operands[3]);
     }
     else
     {
         /* All other, CreateXxxField opcodes */
 
-        Status = AcpiDsInitBufferField (Op->Common.AmlOpcode, ObjDesc, 
-                    WalkState->Operands[0], WalkState->Operands[1], 
+        Status = AcpiDsInitBufferField (Op->Common.AmlOpcode, ObjDesc,
+                    WalkState->Operands[0], WalkState->Operands[1],
                                       NULL, WalkState->Operands[2]);
     }
 
@@ -851,7 +851,6 @@ AcpiDsEvalRegionOperands (
 }
 
 
-
 /*****************************************************************************
  *
  * FUNCTION:    AcpiDsEvalDataObjectOperands
@@ -913,7 +912,7 @@ AcpiDsEvalDataObjectOperands (
 
     AcpiUtRemoveReference (ArgDesc);
 
-    /* 
+    /*
      * Create the actual data object
      */
     switch (Op->Common.AmlOpcode)
@@ -951,7 +950,6 @@ AcpiDsEvalDataObjectOperands (
 
     return_ACPI_STATUS (Status);
 }
-
 
 
 /*******************************************************************************
@@ -1163,7 +1161,7 @@ AcpiDsExecEndControlOp (
              * Allow references created by the Index operator to return unchanged.
              */
             if ((ACPI_GET_DESCRIPTOR_TYPE (WalkState->Results->Results.ObjDesc[0]) == ACPI_DESC_TYPE_OPERAND) &&
-                (ACPI_GET_OBJECT_TYPE (WalkState->Results->Results.ObjDesc [0]) == INTERNAL_TYPE_REFERENCE) &&
+                (ACPI_GET_OBJECT_TYPE (WalkState->Results->Results.ObjDesc [0]) == ACPI_TYPE_LOCAL_REFERENCE) &&
                 ((WalkState->Results->Results.ObjDesc [0])->Reference.Opcode != AML_INDEX_OP))
             {
                 Status = AcpiExResolveToValue (&WalkState->Results->Results.ObjDesc [0], WalkState);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.1.4.6 2002/12/11 06:38:55 thorpej Exp $	*/
+/*	$NetBSD: ustir.c,v 1.1.4.7 2002/12/29 20:49:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.6 2002/12/11 06:38:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.7 2002/12/29 20:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ struct ustir_softc {
 
 	u_int8_t		*sc_wr_buf;
 	int			sc_wr_addr;
+	int			sc_wr_stalewrite;
 	usbd_xfer_handle	sc_wr_xfer;
 	usbd_pipe_handle	sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
@@ -277,12 +278,12 @@ ustir_write_reg(struct ustir_softc *sc, unsigned int reg, u_int8_t data)
 
 #ifdef USTIR_DEBUG
 static void
-ustir_dumpdata(char const *data, size_t dlen, char const *desc)
+ustir_dumpdata(u_int8_t const *data, size_t dlen, char const *desc)
 {
 	size_t bdindex;
 	printf("%s: (%lx)", desc, (unsigned long)dlen);
 	for (bdindex = 0; bdindex < dlen; bdindex++)
-		printf(" %02x", (unsigned int)(unsigned char)data[bdindex]);
+		printf(" %02x", (unsigned int)data[bdindex]);
 	printf("\n");
 }
 #endif
@@ -609,7 +610,7 @@ ustir_periodic(struct ustir_softc *sc)
 
 		err = ustir_read_reg(sc, STIR_REG_STATUS,
 				     &regval);
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: status register read failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -636,11 +637,11 @@ ustir_periodic(struct ustir_softc *sc)
 						      STIR_RSTATUS_FFCLR);
 				/* XXX if we fail partway through
 				 * this, we may not recover? */
-				if (!err)
+				if (err == USBD_NORMAL_COMPLETION)
 					err = ustir_write_reg(sc,
 							      STIR_REG_STATUS,
 							      0);
-				if (err) {
+				if (err != USBD_NORMAL_COMPLETION) {
 					printf("%s: FIFO reset failed: %s\n",
 					       USBDEVNAME(sc->sc_dev),
 					       usbd_errstr(err));
@@ -650,6 +651,18 @@ ustir_periodic(struct ustir_softc *sc)
 				}
 			}
 		}
+	}
+
+	if (sc->sc_wr_stalewrite && sc->sc_direction == udir_idle) {
+		/*
+		 * In a stale write case, we need to check if the
+		 * write has completed.  Once that has happened, the
+		 * write is no longer stale.
+		 *
+		 * But note that we may immediately start a read poll...
+		 */
+		sc->sc_wr_stalewrite = 0;
+		wakeup(&sc->sc_wr_buf);
 	}
 
 	if (!sc->sc_rd_readinprogress &&
@@ -769,6 +782,8 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (sc->sc_direction == udir_input &&
 	    ((size == 0 && sc->sc_rd_expectdataticks == 0) ||
 	     USTIR_BLOCK_RX_DATA(sc))) {
+		DPRINTFN(8,("%s: idling on packet timeout, "
+			    "complete frame, or no data\n", __func__));
 		sc->sc_direction = udir_idle;
 
 		/* Wake up for possible output */
@@ -814,7 +829,7 @@ ustir_start_read(struct ustir_softc *sc)
 			USBD_NO_TIMEOUT, ustir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		DPRINTFN(0, ("%s: err=%d\n", __func__, err));
+		DPRINTFN(0, ("%s: err=%d\n", __func__, (int)err));
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
@@ -850,12 +865,12 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_rd_addr, 0, &sc->sc_rd_pipe);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad1;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_wr_addr, 0, &sc->sc_wr_pipe);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad2;
 	}
@@ -893,6 +908,7 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	sc->sc_rd_expectdataticks = 0;
 	sc->sc_ur_framelen = 0;
 	sc->sc_rd_err = 0;
+	sc->sc_wr_stalewrite = 0;
 	sc->sc_speedrec = NULL;
 	sc->sc_direction = udir_idle;
 	sc->sc_params.speed = 0;
@@ -976,6 +992,7 @@ ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 	return 0;
 }
 
+/* ARGSUSED */
 Static int
 ustir_read(void *h, struct uio *uio, int flag)
 {
@@ -1045,6 +1062,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_write(void *h, struct uio *uio, int flag)
 {
@@ -1071,15 +1089,33 @@ ustir_write(void *h, struct uio *uio, int flag)
 
 	sc->sc_refcnt++;
 
-	if (!sc->sc_rd_readinprogress && !USTIR_BLOCK_RX_DATA(sc) &&
-	    (sc->sc_direction == udir_idle || sc->sc_direction == udir_input))
-		/* If idle, check for input before outputting */
-		ustir_start_read(sc);
+	if (!USTIR_BLOCK_RX_DATA(sc)) {
+		/*
+		 * If reads are not blocked, determine what action we
+		 * should potentially take...
+		 */
+		if (sc->sc_direction == udir_output) {
+			/*
+			 * If the last operation was an output, wait for the
+			 * polling thread to check for incoming data.
+			 */
+			sc->sc_wr_stalewrite = 1;
+			wakeup(&sc->sc_thread);
+		} else if (!sc->sc_rd_readinprogress &&
+			   (sc->sc_direction == udir_idle ||
+			    sc->sc_direction == udir_input)) {
+			/* If idle, check for input before outputting */
+			ustir_start_read(sc);
+		}
+	}
 
 	s = splusb();
-	while (sc->sc_direction != udir_output &&
-	       sc->sc_direction != udir_idle) {
-		DPRINTFN(5, ("%s: calling tsleep()\n", __func__));
+	while (sc->sc_wr_stalewrite ||
+	       (sc->sc_direction != udir_output &&
+		sc->sc_direction != udir_idle)) {
+		DPRINTFN(5, ("%s: sc=%p stalewrite=%d direction=%d, "
+			     "calling tsleep()\n", __func__,
+			     sc, sc->sc_wr_stalewrite, sc->sc_direction));
 		error = tsleep(&sc->sc_wr_buf, PZERO | PCATCH,
 			       "usirwr", 0);
 		if (sc->sc_dying)
@@ -1128,7 +1164,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 					 USTIR_WR_TIMEOUT,
 					 wrbuf, &btlen, "ustiwr");
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
 			else if (err == USBD_TIMEOUT)
@@ -1191,6 +1227,7 @@ filt_ustirrdetach(struct knote *kn)
 	splx(s);
 }
 
+/* ARGSUSED */
 static int
 filt_ustirread(struct knote *kn, long hint)
 {
@@ -1211,6 +1248,7 @@ filt_ustirwdetach(struct knote *kn)
 	splx(s);
 }
 
+/* ARGSUSED */
 static int
 filt_ustirwrite(struct knote *kn, long hint)
 {
@@ -1284,7 +1322,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 			      regnum, (unsigned int)regdata));
 
 		*(unsigned int *)addr = regdata;
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: register read failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -1306,7 +1344,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 			      regnum, (unsigned int)regdata));
 
 		err = ustir_write_reg(sc, regnum, regdata);
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			printf("%s: register write failed: %s\n",
 			       USBDEVNAME(sc->sc_dev),
 			       usbd_errstr(err));
@@ -1389,12 +1427,12 @@ ustir_set_params(void *h, struct irda_params *p)
 		DPRINTFN(10, ("%s: setting BRATE = %x\n", __func__,
 			      (unsigned int)regbrate));
 		err = ustir_write_reg(sc, STIR_REG_BRATE, regbrate);
-		if (!err) {
+		if (err == USBD_NORMAL_COMPLETION) {
 			DPRINTFN(10, ("%s: setting MODE = %x\n", __func__,
 				      (unsigned int)regmode));
 			err = ustir_write_reg(sc, STIR_REG_MODE, regmode);
 		}
-		if (err) {
+		if (err != USBD_NORMAL_COMPLETION) {
 			DPRINTFN(10, ("%s: error setting register: %s\n",
 				      __func__, usbd_errstr(err)));
 			return EIO;

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.25 2002/12/19 00:48:11 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.26 2002/12/29 20:49:26 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
  */
 
 /*
@@ -982,6 +982,10 @@
 /* Broadcom Corporation products */
 #define	PCI_PRODUCT_BROADCOM_BCM5700	0x1644		/* BCM5700 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5701	0x1645		/* BCM5701 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5702	0x1646		/* BCM5702 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5703	0x1647		/* BCM5703 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5702X	0x16a6		/* BCM5702X 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5703X	0x16a7		/* BCM5703X 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 
 /* Brooktree products */
@@ -1823,6 +1827,7 @@
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
 
 /* Promise products */
+#define	PCI_PRODUCT_PROMISE_SATA150TX2PLUS	0x3376		/* Serial ATA/150 TX2plus Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.8.2.9 2002/12/11 06:38:53 thorpej Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.8.2.10 2002/12/29 20:49:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -257,6 +257,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
+
+	{ { USB_VENDOR_SIIG, USB_PRODUCT_SIIG_MULTICARDREADER }, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_NO_START_STOP,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL,NULL
+	}, 
 
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DRIVEV2 },
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,

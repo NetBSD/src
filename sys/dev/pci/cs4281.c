@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.3.4.7 2002/10/18 02:42:58 nathanw Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3.4.8 2002/12/29 20:49:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.7 2002/10/18 02:42:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.8 2002/12/29 20:49:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ cs4281_attach(parent, self, aux)
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
 			       &pci_pwrmgmt_cap_reg, 0)) {
 
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				    pci_pwrmgmt_csr_reg);
 		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {

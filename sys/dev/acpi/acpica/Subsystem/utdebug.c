@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 105 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.1.1.4.4 2002/06/20 03:44:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.1.1.4.5 2002/12/29 20:46:02 thorpej Exp $");
 
 #define __UTDEBUG_C__
 
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.1.1.4.4 2002/06/20 03:44:16 nathanw 
         ACPI_MODULE_NAME    ("utdebug")
 
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 
 static UINT32   AcpiGbl_PrevThreadId = 0xFFFFFFFF;
 static char     *AcpiGbl_FnEntryStr = "----Entry";
@@ -253,7 +253,7 @@ AcpiUtDebugPrint (
 
     if (ACPI_LV_THREADS & AcpiDbgLevel)
     {
-        AcpiOsPrintf ("[%04lX] ", ThreadId, AcpiGbl_NestingLevel, DbgInfo->ProcName);
+        AcpiOsPrintf ("[%04lX] ", ThreadId);
     }
 
     AcpiOsPrintf ("[%02ld] %-22.22s: ", AcpiGbl_NestingLevel, DbgInfo->ProcName);
@@ -623,7 +623,7 @@ AcpiUtDumpBuffer (
     {
         /* Print current offset */
 
-        AcpiOsPrintf ("%05X    ", i);
+        AcpiOsPrintf ("%05X    ", (UINT32) i);
 
         /* Print 16 hex chars */
 

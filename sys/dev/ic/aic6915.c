@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.1.2.6 2002/11/11 22:09:16 nathanw Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.1.2.7 2002/12/29 20:49:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.1.2.6 2002/11/11 22:09:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.1.2.7 2002/12/29 20:49:16 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -103,8 +103,6 @@ void	sf_tick(void *);
 
 int	sf_mediachange(struct ifnet *);
 void	sf_mediastatus(struct ifnet *, struct ifmediareq *);
-
-int	sf_copy_small = 0;
 
 #define	sf_funcreg_read(sc, reg)					\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh_func, (reg))

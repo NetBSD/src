@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 80 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.1.1.1.4.4 2002/06/20 03:44:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.1.1.1.4.5 2002/12/29 20:45:55 thorpej Exp $");
 
 #define __NSNAMES_C__
 
@@ -183,7 +183,7 @@ AcpiNsBuildExternalPath (
         /* Prefix name with the path separator */
 
         Index--;
-        NameBuffer[Index] = PATH_SEPARATOR;
+        NameBuffer[Index] = ACPI_PATH_SEPARATOR;
     }
 
     /* Overwrite final separator with the root prefix character */
@@ -201,7 +201,7 @@ AcpiNsBuildExternalPath (
 }
 
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 /*******************************************************************************
  *
  * FUNCTION:    AcpiNsGetExternalPathname
@@ -278,9 +278,9 @@ AcpiNsGetPathnameLength (
     Size = 0;
     NextNode = Node;
 
-    while (NextNode != AcpiGbl_RootNode)
+    while (NextNode && (NextNode != AcpiGbl_RootNode))
     {
-        Size += PATH_SEGMENT_LENGTH;
+        Size += ACPI_PATH_SEGMENT_LENGTH;
         NextNode = AcpiNsGetParentNode (NextNode);
     }
 

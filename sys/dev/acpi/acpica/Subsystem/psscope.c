@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psscope - Parser scope stack management routines
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 35 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psscope.c,v 1.1.1.1.4.4 2002/06/20 03:44:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psscope.c,v 1.1.1.1.4.5 2002/12/29 20:45:58 thorpej Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

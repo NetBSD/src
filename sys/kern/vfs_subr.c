@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.19 2002/11/11 22:14:12 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.20 2002/12/29 20:54:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.19 2002/11/11 22:14:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.20 2002/12/29 20:54:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1377,10 +1377,15 @@ vref(vp)
 /*
  * Remove any vnodes in the vnode table belonging to mount point mp.
  *
- * If MNT_NOFORCE is specified, there should not be any active ones,
+ * If FORCECLOSE is not specified, there should not be any active ones,
  * return error if any are found (nb: this is a user error, not a
- * system error). If MNT_FORCE is specified, detach any active vnodes
+ * system error). If FORCECLOSE is specified, detach any active vnodes
  * that are found.
+ *
+ * If WRITECLOSE is set, only flush out regular file vnodes open for
+ * writing.
+ *
+ * SKIPSYSTEM causes any vnodes marked V_SYSTEM to be skipped.
  */
 #ifdef DEBUG
 int busyprt = 0;	/* print out busy vnodes */

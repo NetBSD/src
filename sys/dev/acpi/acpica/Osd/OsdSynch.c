@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.1.4.4 2002/06/20 03:43:31 nathanw Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.1.4.5 2002/12/29 20:45:33 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.1.4.4 2002/06/20 03:43:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.1.4.5 2002/12/29 20:45:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -154,7 +154,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
  *	Wait for units from a semaphore.
  */
 ACPI_STATUS
-AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT32 Timeout)
+AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 	ACPI_STATUS rv;
@@ -171,8 +171,8 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT32 Timeout)
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	/* A timeout of -1 means "forever". */
-	if (Timeout == -1)
+	/* A timeout of 0xFFFF means "forever". */
+	if (Timeout == 0xFFFF)
 		timo = 0;
 	else {
 		/* Compute the timeout using uSec per tick. */

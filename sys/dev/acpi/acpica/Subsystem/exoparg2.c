@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
- *              $Revision: 1.2.2.2 $
+ *              xRevision: 115 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.2.2.2 2002/06/20 03:43:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg2.c,v 1.2.2.3 2002/12/29 20:45:52 thorpej Exp $");
 
 #define __EXOPARG2_C__
 
@@ -177,7 +177,7 @@ AcpiExOpcode_2A_0T_0R (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_0T_0R", 
+    ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_0T_0R",
             AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -216,7 +216,7 @@ AcpiExOpcode_2A_0T_0R (
 
     default:
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_2A_0T_0R: Unknown opcode %X\n", 
+        ACPI_REPORT_ERROR (("AcpiExOpcode_2A_0T_0R: Unknown opcode %X\n",
                 WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
     }
@@ -346,11 +346,12 @@ ACPI_STATUS
 AcpiExOpcode_2A_1T_1R (
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_OPERAND_OBJECT     **Operand   = &WalkState->Operands[0];
+    ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
     ACPI_OPERAND_OBJECT     *ReturnDesc = NULL;
-    ACPI_OPERAND_OBJECT     *TempDesc;
+    ACPI_OPERAND_OBJECT     *TempDesc = NULL;
     UINT32                  Index;
-    ACPI_STATUS             Status      = AE_OK;
+    ACPI_STATUS             Status = AE_OK;
+    ACPI_SIZE               Length;
 
 
     ACPI_FUNCTION_TRACE_STR ("ExOpcode_2A_1T_1R", AcpiPsGetOpcodeName (WalkState->Opcode));
@@ -392,7 +393,6 @@ AcpiExOpcode_2A_1T_1R (
 
         Status = AcpiUtDivide (&Operand[0]->Integer.Value, &Operand[1]->Integer.Value,
                         NULL, &ReturnDesc->Integer.Value);
-
         break;
 
 
@@ -408,15 +408,15 @@ AcpiExOpcode_2A_1T_1R (
         switch (ACPI_GET_OBJECT_TYPE (Operand[0]))
         {
         case ACPI_TYPE_INTEGER:
-            Status = AcpiExConvertToInteger (Operand[1], &Operand[1], WalkState);
+            Status = AcpiExConvertToInteger (Operand[1], &TempDesc, WalkState);
             break;
 
         case ACPI_TYPE_STRING:
-            Status = AcpiExConvertToString (Operand[1], &Operand[1], 16, ACPI_UINT32_MAX, WalkState);
+            Status = AcpiExConvertToString (Operand[1], &TempDesc, 16, ACPI_UINT32_MAX, WalkState);
             break;
 
         case ACPI_TYPE_BUFFER:
-            Status = AcpiExConvertToBuffer (Operand[1], &Operand[1], WalkState);
+            Status = AcpiExConvertToBuffer (Operand[1], &TempDesc, WalkState);
             break;
 
         default:
@@ -433,14 +433,69 @@ AcpiExOpcode_2A_1T_1R (
          * (Both are Integer, String, or Buffer), and we can now perform the
          * concatenation.
          */
-        Status = AcpiExDoConcatenate (Operand[0], Operand[1], &ReturnDesc, WalkState);
+        Status = AcpiExDoConcatenate (Operand[0], TempDesc, &ReturnDesc, WalkState);
+        if (TempDesc != Operand[1])
+        {
+            AcpiUtRemoveReference (TempDesc);
+        }
         break;
 
 
     case AML_TO_STRING_OP:          /* ToString (Buffer, Length, Result) (ACPI 2.0) */
 
-        Status = AcpiExConvertToString (Operand[0], &ReturnDesc, 16,
-                        (UINT32) Operand[1]->Integer.Value, WalkState);
+        /*
+         * Input object is guaranteed to be a buffer at this point (it may have
+         * been converted.)  Copy the raw buffer data to a new object of type String.
+         */
+
+        /* Get the length of the new string */
+
+        Length = 0;
+        if (Operand[1]->Integer.Value == 0)
+        {
+            /* Handle optional length value */
+
+            Operand[1]->Integer.Value = ACPI_INTEGER_MAX;
+        }
+
+        while ((Length < Operand[0]->Buffer.Length) &&
+               (Length < Operand[1]->Integer.Value) &&
+               (Operand[0]->Buffer.Pointer[Length]))
+        {
+            Length++;
+        }
+
+        if (Length > ACPI_MAX_STRING_CONVERSION)
+        {
+            Status = AE_AML_STRING_LIMIT;
+            goto Cleanup;
+        }
+
+        /* Create the internal return object */
+
+        ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_STRING);
+        if (!ReturnDesc)
+        {
+            Status = AE_NO_MEMORY;
+            goto Cleanup;
+        }
+        
+        /* Allocate a new string buffer (Length + 1 for null terminator) */
+
+        ReturnDesc->String.Pointer = ACPI_MEM_CALLOCATE (Length + 1);
+        if (!ReturnDesc->String.Pointer)
+        {
+            Status = AE_NO_MEMORY;
+            goto Cleanup;
+        }
+
+        /* Copy the raw buffer data with no transform */
+
+        ACPI_MEMCPY (ReturnDesc->String.Pointer, Operand[0]->Buffer.Pointer, Length);
+
+        /* Set the string length */
+
+        ReturnDesc->String.Length = (UINT32) Length;
         break;
 
 
@@ -454,7 +509,7 @@ AcpiExOpcode_2A_1T_1R (
 
         /* Create the internal return object */
 
-        ReturnDesc = AcpiUtCreateInternalObject (INTERNAL_TYPE_REFERENCE);
+        ReturnDesc = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
         if (!ReturnDesc)
         {
             Status = AE_NO_MEMORY;
@@ -472,64 +527,42 @@ AcpiExOpcode_2A_1T_1R (
 
             if (Index >= Operand[0]->Package.Count)
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Index value beyond package end\n"));
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Index value (%X) beyond package end (%X)\n",
+                    Index, Operand[0]->Package.Count));
                 Status = AE_AML_PACKAGE_LIMIT;
                 goto Cleanup;
             }
 
-            if ((ACPI_GET_OBJECT_TYPE (Operand[2]) == ACPI_TYPE_INTEGER) &&
-                (Operand[2]->Common.Flags & AOPOBJ_AML_CONSTANT))
-            {
-                /*
-                 * There is no actual result descriptor (the ZeroOp/Constant Result
-                 * descriptor is a placeholder), so just delete the placeholder and
-                 * return a reference to the package element
-                 */
-                AcpiUtRemoveReference (Operand[2]);
-            }
-
-            else
-            {
-                /*
-                 * Each element of the package is an internal object.  Get the one
-                 * we are after.
-                 */
-                TempDesc                         = Operand[0]->Package.Elements [Index];
-                ReturnDesc->Reference.Opcode     = AML_INDEX_OP;
-                ReturnDesc->Reference.TargetType = ACPI_GET_OBJECT_TYPE (TempDesc);
-                ReturnDesc->Reference.Object     = TempDesc;
-
-                Status = AcpiExStore (ReturnDesc, Operand[2], WalkState);
-                ReturnDesc->Reference.Object     = NULL;
-            }
-
-            /*
-             * The local return object must always be a reference to the package element,
-             * not the element itself.
-             */
-            ReturnDesc->Reference.Opcode     = AML_INDEX_OP;
             ReturnDesc->Reference.TargetType = ACPI_TYPE_PACKAGE;
+            ReturnDesc->Reference.Object     = Operand[0]->Package.Elements [Index];
             ReturnDesc->Reference.Where      = &Operand[0]->Package.Elements [Index];
         }
-
         else
         {
             /* Object to be indexed is a Buffer */
 
             if (Index >= Operand[0]->Buffer.Length)
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Index value beyond end of buffer\n"));
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Index value (%X) beyond end of buffer (%X)\n",
+                    Index, Operand[0]->Buffer.Length));
                 Status = AE_AML_BUFFER_LIMIT;
                 goto Cleanup;
             }
 
-            ReturnDesc->Reference.Opcode       = AML_INDEX_OP;
-            ReturnDesc->Reference.TargetType   = ACPI_TYPE_BUFFER_FIELD;
-            ReturnDesc->Reference.Object       = Operand[0];
-            ReturnDesc->Reference.Offset       = Index;
-
-            Status = AcpiExStore (ReturnDesc, Operand[2], WalkState);
+            ReturnDesc->Reference.TargetType = ACPI_TYPE_BUFFER_FIELD;
+            ReturnDesc->Reference.Object     = Operand[0];
         }
+
+        /* Complete the Index reference object */
+
+        ReturnDesc->Reference.Opcode     = AML_INDEX_OP;
+        ReturnDesc->Reference.Offset     = Index;
+
+        /* Store the reference to the Target */
+
+        Status = AcpiExStore (ReturnDesc, Operand[2], WalkState);
+
+        /* Return the reference */
 
         WalkState->ResultObj = ReturnDesc;
         goto Cleanup;
@@ -558,7 +591,10 @@ StoreResultToTarget:
             goto Cleanup;
         }
 
-        WalkState->ResultObj = ReturnDesc;
+        if (!WalkState->ResultObj)
+        {
+            WalkState->ResultObj = ReturnDesc;
+        }
     }
 
 
@@ -647,7 +683,8 @@ AcpiExOpcode_2A_0T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("AcpiExOpcode_2A_0T_1R: Unknown opcode %X\n", WalkState->Opcode));
+        ACPI_REPORT_ERROR (("AcpiExOpcode_2A_0T_1R: Unknown opcode %X\n",
+            WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
     }

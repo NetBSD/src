@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsxface - Public interfaces to the resource manager
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 19 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.1.1.1.4.4 2002/06/20 03:44:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsxface.c,v 1.1.1.1.4.5 2002/12/29 20:46:00 thorpej Exp $");
 
 #define __RSXFACE_C__
 

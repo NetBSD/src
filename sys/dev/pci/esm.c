@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.7.2.6 2002/10/18 02:43:01 nathanw Exp $      */
+/*      $NetBSD: esm.c,v 1.7.2.7 2002/12/29 20:49:22 thorpej Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.7.2.6 2002/10/18 02:43:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.7.2.7 2002/12/29 20:49:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,9 +511,10 @@ esm_power(struct esm_softc *ess, int status)
 
 	if (pci_get_capability(ess->pc, ess->tag, PCI_CAP_PWRMGMT,
 	    &pmcapreg, 0)) {
-		data = pci_conf_read(ess->pc, ess->tag, pmcapreg + 4);
+		data = pci_conf_read(ess->pc, ess->tag, pmcapreg + PCI_PMCSR);
 		if ((data && PCI_PMCSR_STATE_MASK) != status)
-			pci_conf_write(ess->pc, ess->tag, pmcapreg + 4, status);
+			pci_conf_write(ess->pc, ess->tag,
+			    pmcapreg + PCI_PMCSR, status);
 	}
 }
 

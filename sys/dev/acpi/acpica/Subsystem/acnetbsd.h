@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1.4.4 $
+ *       $Revision: 1.1.4.5 $
  *
  *****************************************************************************/
 
@@ -157,6 +157,7 @@
 #define	ACPI_EXTERNAL_XFACE     
 #define	ACPI_INTERNAL_XFACE
 #define	ACPI_INTERNAL_VAR_XFACE
+#define	ACPI_DISASSEMBLER
 
 /* XXX This is not a perfect world. */
 #ifdef __i386__
@@ -205,13 +206,14 @@ do { \
 #endif /* __i386__ */
 
 #ifdef ACPI_DEBUG
+#define ACPI_DEBUG_OUTPUT
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */
 #define DEBUGGER_THREADING 0	/* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
-#define ENABLE_DEBUGGER
+#define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
 
@@ -240,4 +242,9 @@ strupr(char *str)
     return(str);
 }
 
+static __inline int
+isprint(int ch)
+{
+	return(isspace(ch) || isascii(ch));
+}
 #endif /* __ACNETBSD_H__ */

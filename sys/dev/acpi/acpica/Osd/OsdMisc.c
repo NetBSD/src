@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.1.4.4 2002/06/20 03:43:30 nathanw Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.1.4.5 2002/12/29 20:45:32 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.1.4.4 2002/06/20 03:43:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.1.4.5 2002/12/29 20:45:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -125,7 +125,7 @@ ACPI_STATUS
 AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable,
 		    ACPI_TABLE_HEADER **NewTable)
 {
-	/* XXX TBD */
+	*NewTable = NULL;
 	return (AE_OK);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.8 2002/10/18 02:41:29 nathanw Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.9 2002/12/29 20:45:30 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.8 2002/10/18 02:41:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.9 2002/12/29 20:45:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = aa->aa_memt;
 	sc->sc_pc = aa->aa_pc;
 	sc->sc_pciflags = aa->aa_pciflags;
+	sc->sc_ic = aa->aa_ic;
 
 	acpi_softc = sc;
 
@@ -406,6 +407,7 @@ acpi_build_tree(struct acpi_softc *sc)
 			aa.aa_memt = sc->sc_memt;
 			aa.aa_pc = sc->sc_pc;
 			aa.aa_pciflags = sc->sc_pciflags;
+			aa.aa_ic = sc->sc_ic;
 
 			/*
 			 * XXX We only attach devices which are:

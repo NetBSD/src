@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.1.2.6 2002/11/11 22:09:18 nathanw Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.1.2.7 2002/12/29 20:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.1.2.6 2002/11/11 22:09:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.1.2.7 2002/12/29 20:49:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -158,7 +158,7 @@ const struct cdevsw cdtty_cdevsw = {
 	cdttystop, cdttytty, cdttypoll, nommap, ttykqfilter, D_TTY
 };
 
-static void	cdtty_shutdown(struct cd18xx_softc *, struct cdtty_port*);
+static void	cdtty_shutdown(struct cd18xx_softc *, struct cdtty_port *);
 static void	cdttystart(struct tty *);
 static int	cdttyparam(struct tty *, struct termios *);
 static void	cdtty_break(struct cd18xx_softc *, struct cdtty_port *, int);
@@ -359,7 +359,7 @@ cdtty_attach(sc, port)
 }
 
 /*
- * below here are the tty portion device routines.
+ * cdtty_shutdown: called when the device is last closed.
  */
 void
 cdtty_shutdown(sc, p)
@@ -468,7 +468,7 @@ cdttyopen(dev, flag, mode, p)
 			SET(t.c_cflag, MDMBUF);
 
 		/* Make sure param will see changes. */
-		tp->t_ospeed = 0;
+		tp->t_ospeed = 0;	/* XXX set above ignored? */
 		(void)cdttyparam(tp, &t);
 
 		tp->t_iflag = TTYDEF_IFLAG;

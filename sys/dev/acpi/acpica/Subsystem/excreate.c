@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 97 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.1.1.1.4.4 2002/06/20 03:43:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.1.1.1.4.5 2002/12/29 20:45:50 thorpej Exp $");
 
 #define __EXCREATE_C__
 
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.1.1.1.4.4 2002/06/20 03:43:53 nathanw
         ACPI_MODULE_NAME    ("excreate")
 
 
+#ifndef ACPI_NO_METHOD_EXECUTION
 /*****************************************************************************
  *
  * FUNCTION:    AcpiExCreateAlias
@@ -148,8 +149,9 @@ ACPI_STATUS
 AcpiExCreateAlias (
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_NAMESPACE_NODE     *SourceNode;
-    ACPI_STATUS             Status;
+    ACPI_NAMESPACE_NODE     *TargetNode;
+    ACPI_NAMESPACE_NODE     *AliasNode;
+    ACPI_STATUS             Status = AE_OK;
 
 
     ACPI_FUNCTION_TRACE ("ExCreateAlias");
@@ -157,21 +159,59 @@ AcpiExCreateAlias (
 
     /* Get the source/alias operands (both namespace nodes) */
 
-    SourceNode = (ACPI_NAMESPACE_NODE *) WalkState->Operands[1];
+    AliasNode =  (ACPI_NAMESPACE_NODE *) WalkState->Operands[0];
+    TargetNode = (ACPI_NAMESPACE_NODE *) WalkState->Operands[1];
 
-
-    /* Attach the original source object to the new Alias Node */
-
-    Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) WalkState->Operands[0],
-                                    AcpiNsGetAttachedObject (SourceNode),
-                                    SourceNode->Type);
+    if (TargetNode->Type == ACPI_TYPE_LOCAL_ALIAS)
+    {
+        /* 
+         * Dereference an existing alias so that we don't create a chain
+         * of aliases.  With this code, we guarantee that an alias is
+         * always exactly one level of indirection away from the 
+         * actual aliased name.
+         */
+        TargetNode = (ACPI_NAMESPACE_NODE *) TargetNode->Object;
+    }
 
     /*
-     * The new alias assumes the type of the source, but it points
-     * to the same object.  The reference count of the object has an
-     * additional reference to prevent deletion out from under either the
-     * source or the alias Node
+     * For objects that can never change (i.e., the NS node will
+     * permanently point to the same object), we can simply attach
+     * the object to the new NS node.  For other objects (such as
+     * Integers, buffers, etc.), we have to point the Alias node
+     * to the original Node.
      */
+    switch (TargetNode->Type)
+    {
+    case ACPI_TYPE_INTEGER:
+    case ACPI_TYPE_STRING:
+    case ACPI_TYPE_BUFFER:
+    case ACPI_TYPE_PACKAGE:
+    case ACPI_TYPE_BUFFER_FIELD:
+
+        /*
+         * The new alias has the type ALIAS and points to the original
+         * NS node, not the object itself.  This is because for these
+         * types, the object can change dynamically via a Store.
+         */
+        AliasNode->Type = ACPI_TYPE_LOCAL_ALIAS;
+        AliasNode->Object = ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, TargetNode);
+        break;
+
+    default:
+
+        /* Attach the original source object to the new Alias Node */
+
+        /*
+         * The new alias assumes the type of the target, and it points
+         * to the same object.  The reference count of the object has an
+         * additional reference to prevent deletion out from under either the
+         * target node or the alias Node
+         */
+        Status = AcpiNsAttachObject (AliasNode,
+                                AcpiNsGetAttachedObject (TargetNode),
+                                TargetNode->Type);
+        break;
+    }
 
     /* Since both operands are Nodes, we don't need to delete them */
 
@@ -283,9 +323,10 @@ AcpiExCreateMutex (
     /* Init object and attach to NS node */
 
     ObjDesc->Mutex.SyncLevel = (UINT8) WalkState->Operands[1]->Integer.Value;
+    ObjDesc->Mutex.Node = (ACPI_NAMESPACE_NODE *) WalkState->Operands[0];
 
-    Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) WalkState->Operands[0],
-                                ObjDesc, ACPI_TYPE_MUTEX);
+    Status = AcpiNsAttachObject (ObjDesc->Mutex.Node,
+                ObjDesc, ACPI_TYPE_MUTEX);
 
 
 Cleanup:
@@ -602,6 +643,7 @@ AcpiExCreatePowerResource (
     return_ACPI_STATUS (Status);
 }
 
+#endif
 
 /*****************************************************************************
  *

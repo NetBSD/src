@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.3.4.5 2002/08/01 02:44:35 nathanw Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.3.4.6 2002/12/29 20:45:31 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
 
 #include <machine/bus.h>
 #include <dev/pci/pcivar.h>
+#include <dev/isa/isavar.h>
 
 #include <dev/acpi/acpica.h>
 
@@ -57,6 +58,7 @@ struct acpibus_attach_args {
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset */
 	int aa_pciflags;		/* PCI bus flags */
+	isa_chipset_tag_t aa_ic;	/* ISA chipset */
 };
 
 /*
@@ -108,6 +110,7 @@ struct acpi_softc {
 	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
 	int sc_pciflags;		/* PCI bus flags */
 	int sc_pci_bus;			/* internal PCI fixup */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
 
 	void *sc_sdhook;		/* shutdown hook */
 
@@ -136,6 +139,7 @@ struct acpi_attach_args {
 	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t aa_pc;	/* PCI chipset tag */
 	int aa_pciflags;		/* PCI bus flags */
+	isa_chipset_tag_t aa_ic;	/* ISA chipset */
 };
 
 /*
@@ -185,6 +189,7 @@ struct acpi_irq {
 	SIMPLEQ_ENTRY(acpi_irq) ar_list;
 	int		ar_index;
 	uint32_t	ar_irq;
+	uint32_t	ar_type;
 };
 
 struct acpi_drq {
@@ -231,7 +236,7 @@ struct acpi_resource_parse_ops {
 	void	(*memrange)(struct device *, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*irq)(struct device *, void *, uint32_t);
+	void	(*irq)(struct device *, void *, uint32_t, uint32_t);
 	void	(*drq)(struct device *, void *, uint32_t);
 
 	void	(*start_dep)(struct device *, void *, int);

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 92 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.1.1.1.4.4 2002/06/20 03:43:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.1.1.1.4.5 2002/12/29 20:45:51 thorpej Exp $");
 
 #define __EXNAMES_C__
 
@@ -357,9 +357,9 @@ AcpiExGetNameString (
     ACPI_FUNCTION_TRACE_PTR ("ExGetNameString", AmlAddress);
 
 
-    if (INTERNAL_TYPE_REGION_FIELD == DataType   ||
-        INTERNAL_TYPE_BANK_FIELD == DataType     ||
-        INTERNAL_TYPE_INDEX_FIELD == DataType)
+    if (ACPI_TYPE_LOCAL_REGION_FIELD == DataType   ||
+        ACPI_TYPE_LOCAL_BANK_FIELD == DataType     ||
+        ACPI_TYPE_LOCAL_INDEX_FIELD == DataType)
     {
         /* Disallow prefixes for types associated with FieldUnit names */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.14 2002/09/17 21:20:39 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.15 2002/12/29 20:49:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.177 2002/09/15 17:43:48 bouyer Exp 
+ *	NetBSD: pcmciadevs,v 1.178 2002/12/29 12:04:48 jdc Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1217,6 +1217,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DFE-670TXD",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DWL650H,
+	    PCMCIA_CIS_DLINK_DWL650H,
+	    0,
+	    "D-Link",
+	    "D-Link DWL-650H",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DYNALINK_L10C,

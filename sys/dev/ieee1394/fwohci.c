@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.14 2002/12/19 00:48:06 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.15 2002/12/29 20:49:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.14 2002/12/19 00:48:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.15 2002/12/29 20:49:18 thorpej Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2197,6 +2197,10 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			DPRINTFN(1, ("fwohci_arrq_input: no listener: tcode "
 			    "0x%x, addr=0x%04x %08x\n", pkt.fp_tcode, key1,
 			    key2));
+			DPRINTFN(2, ("fwohci_arrq_input: no listener: hdr[0]: "
+			    "0x%08x, hdr[1]: 0x%08x,  hdr[2]: 0x%08x, hdr[3]: "
+			    "0x%08x\n",  pkt.fp_hdr[0],  pkt.fp_hdr[1],
+			     pkt.fp_hdr[2],  pkt.fp_hdr[3]));
 		}
 		if (((*pkt.fp_trail & 0x001f0000) >> 16) !=
 		    OHCI_CTXCTL_EVENT_ACK_PENDING)

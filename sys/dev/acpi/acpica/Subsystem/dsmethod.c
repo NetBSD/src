@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 89 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.1.1.1.4.4 2002/06/20 03:43:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.1.1.1.4.5 2002/12/29 20:45:47 thorpej Exp $");
 
 #define __DSMETHOD_C__
 
@@ -252,7 +252,7 @@ AcpiDsParseMethod (
         return_ACPI_STATUS (Status);
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, 
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
         "**** [%4.4s] Parsed **** NamedObj=%p Op=%p\n",
         ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii, ObjHandle, Op));
 
@@ -323,7 +323,7 @@ AcpiDsBeginMethodExecution (
          * interpreter if we block
          */
         Status = AcpiExSystemWaitSemaphore (ObjDesc->Method.Semaphore,
-                                            WAIT_FOREVER);
+                                            ACPI_WAIT_FOREVER);
     }
 
     /*
@@ -401,7 +401,7 @@ AcpiDsCallControlMethod (
 
     /* Create and init a Root Node */
 
-    Op = AcpiPsAllocOp (AML_SCOPE_OP);
+    Op = AcpiPsCreateScopeOp ();
     if (!Op)
     {
         Status = AE_NO_MEMORY;
@@ -462,7 +462,7 @@ AcpiDsCallControlMethod (
 
     ThisWalkState->NumOperands = 0;
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, 
+    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
         "Starting nested execution, newstate=%p\n", NextWalkState));
 
     return_ACPI_STATUS (AE_OK);

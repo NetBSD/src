@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2reg.h,v 1.1.2.4 2002/12/19 00:48:08 thorpej Exp $	*/
+/*	$NetBSD: sbp2reg.h,v 1.1.2.5 2002/12/29 20:49:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -180,7 +180,8 @@
 #define SBP2_ORB_PAGESIZE_SHIFT	16
 #define SBP2_ORB_DATASIZE_SHIFT	0
 
-#define SBP2_ORB_SET_SPEED(x)   ((x << SBP2_ORB_SPD_SHIFT))
+#define SBP2_ORB_SET_SPEED(x)   (x << SBP2_ORB_SPD_SHIFT)
+#define SBP2_ORB_SET_MAXTRANS(x) ((x + 7) << SBP2_ORB_PAYLOAD_SHIFT)
 
 #define SBP2_ORB_INIT_STATE	0
 #define SBP2_ORB_SENT_STATE	1
@@ -231,7 +232,13 @@
 #define SBP2_STATE_SUSPENDED	0x2
 #define SBP2_STATE_DEAD		0x3
 
-#define SBP2_MAXPHYS		(0x10000 - 2048)
+#define SBP2_MAXPHYS		0xffff
+#define SBP2_PHYS_SEGMENT	(0x10000 - 512)
+
+#define SBP2_PTENT_SIZE		8
+#define SBP2_PTENT_SIZEQ	2
+
+#define SBP2_PT_MAKELEN(x)	(htonl(x << 16))
 
 struct sbp2_pte_u {
 	uint32_t seg_hi_length;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 57 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.1.1.1.4.4 2002/06/20 03:43:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.1.1.1.4.5 2002/12/29 20:45:45 thorpej Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -125,9 +125,9 @@ __KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.1.1.1.4.4 2002/06/20 03:43:46 nathanw 
 #include "acdispat.h"
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbutils")
 
 
@@ -263,7 +263,7 @@ AcpiDbDumpObject (
         break;
 
 
-    case INTERNAL_TYPE_REFERENCE:
+    case ACPI_TYPE_LOCAL_REFERENCE:
 
         AcpiOsPrintf ("[Object Reference] = %p\n", ObjDesc->Reference.Handle);
         break;
@@ -488,6 +488,6 @@ AcpiDbLocalNsLookup (
 }
 
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */
 
 

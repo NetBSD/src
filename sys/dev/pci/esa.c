@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.3.4.7 2002/10/18 02:43:00 nathanw Exp $ */
+/* $NetBSD: esa.c,v 1.3.4.8 2002/12/29 20:49:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -1597,9 +1597,9 @@ esa_power(struct esa_softc *sc, int state)
 	int pmcapreg;
 
 	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
-		data = pci_conf_read(pc, tag, pmcapreg + 4);
+		data = pci_conf_read(pc, tag, pmcapreg + PCI_PMCSR);
 		if ((data & PCI_PMCSR_STATE_MASK) != state)
-			pci_conf_write(pc, tag, pmcapreg + 4, state);
+			pci_conf_write(pc, tag, pmcapreg + PCI_PMCSR, state);
 	}
 		
 	return (0);

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acmacros.h - C macros for the entire subsystem.
- *       $Revision: 1.2.4.3 $
+ *       xRevision: 133 $
  *
  *****************************************************************************/
 
@@ -182,7 +182,7 @@
 
 #define ACPI_TO_POINTER(i)              ACPI_PTR_ADD (void, (void *) NULL,(NATIVE_UINT)i)
 #define ACPI_TO_INTEGER(p)              ACPI_PTR_DIFF (p,(void *) NULL)
-#define ACPI_OFFSET(d,f)                (ACPI_SIZE) ACPI_PTR_DIFF (&(((d *)0)->f),(void *) NULL) 
+#define ACPI_OFFSET(d,f)                (ACPI_SIZE) ACPI_PTR_DIFF (&(((d *)0)->f),(void *) NULL)
 #define ACPI_FADT_OFFSET(f)             ACPI_OFFSET (FADT_DESCRIPTOR, f)
 
 #define ACPI_CAST_PTR(t, p)             ((t *)(void *)(p))
@@ -378,10 +378,16 @@
 /*
  * Macros for the master AML opcode table
  */
-#if defined(ACPI_DEBUG) || defined(ENABLE_DEBUGGER)
+#if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUG_OUTPUT)
 #define ACPI_OP(Name,PArgs,IArgs,ObjType,Class,Type,Flags)     {Name,PArgs,IArgs,Flags,ObjType,Class,Type}
 #else
 #define ACPI_OP(Name,PArgs,IArgs,ObjType,Class,Type,Flags)     {PArgs,IArgs,Flags,ObjType,Class,Type}
+#endif
+
+#ifdef ACPI_DISASSEMBLER
+#define ACPI_DISASM_ONLY_MEMBERS(a)      a;
+#else
+#define ACPI_DISASM_ONLY_MEMBERS(a)
 #endif
 
 #define ARG_TYPE_WIDTH                  5
@@ -438,11 +444,11 @@
 
 /*
  * Error reporting.  These versions add callers module and line#.  Since
- * _THIS_MODULE gets compiled out when ACPI_DEBUG isn't defined, only
+ * _THIS_MODULE gets compiled out when ACPI_DEBUG_OUTPUT isn't defined, only
  * use it in debug mode.
  */
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 
 #define ACPI_REPORT_INFO(fp)                {AcpiUtReportInfo(_THIS_MODULE,__LINE__,_COMPONENT); \
                                                 AcpiOsPrintf ACPI_PARAM_LIST(fp);}
@@ -450,6 +456,9 @@
                                                 AcpiOsPrintf ACPI_PARAM_LIST(fp);}
 #define ACPI_REPORT_WARNING(fp)             {AcpiUtReportWarning(_THIS_MODULE,__LINE__,_COMPONENT); \
                                                 AcpiOsPrintf ACPI_PARAM_LIST(fp);}
+#define ACPI_REPORT_NSERROR(s,e)            AcpiNsReportError(_THIS_MODULE,__LINE__,_COMPONENT, s, e);
+
+#define ACPI_REPORT_METHOD_ERROR(s,n,p,e)   AcpiNsReportMethodError(_THIS_MODULE,__LINE__,_COMPONENT, s, n, p, e);
 
 #else
 
@@ -459,6 +468,9 @@
                                                 AcpiOsPrintf ACPI_PARAM_LIST(fp);}
 #define ACPI_REPORT_WARNING(fp)             {AcpiUtReportWarning("ACPI",__LINE__,_COMPONENT); \
                                                 AcpiOsPrintf ACPI_PARAM_LIST(fp);}
+#define ACPI_REPORT_NSERROR(s,e)            AcpiNsReportError("ACPI",__LINE__,_COMPONENT, s, e);
+
+#define ACPI_REPORT_METHOD_ERROR(s,n,p,e)   AcpiNsReportMethodError("ACPI",__LINE__,_COMPONENT, s, n, p, e);
 
 #endif
 
@@ -475,10 +487,9 @@
  * Debug macros that are conditionally compiled
  */
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 
-#define ACPI_MODULE_NAME(name)               static char *_THIS_MODULE \
-			__attribute__((__unused__)) = name;
+#define ACPI_MODULE_NAME(name)               static char ACPI_UNUSED_VAR *_THIS_MODULE = name;
 
 /*
  * Function entry tracing.
@@ -527,7 +538,6 @@
 
 #define ACPI_DEBUG_DEFINE(a)            a;
 #define ACPI_DEBUG_ONLY_MEMBERS(a)      a;
-#define _OPCODE_NAMES
 #define _VERBOSE_STRUCTURES
 
 
@@ -539,7 +549,7 @@
 
 #define ACPI_DUMP_ENTRY(a,b)            AcpiNsDumpEntry (a,b)
 #define ACPI_DUMP_TABLES(a,b)           AcpiNsDumpTables(a,b)
-#define ACPI_DUMP_PATHNAME(a,b,c,d)     (void) AcpiNsDumpPathname(a,b,c,d)
+#define ACPI_DUMP_PATHNAME(a,b,c,d)     AcpiNsDumpPathname(a,b,c,d)
 #define ACPI_DUMP_RESOURCE_LIST(a)      AcpiRsDumpResourceList(a)
 #define ACPI_DUMP_BUFFER(a,b)           AcpiUtDumpBuffer((UINT8 *)a,b,DB_BYTE_DISPLAY,_COMPONENT)
 #define ACPI_BREAK_MSG(a)               AcpiOsSignal (ACPI_SIGNAL_BREAKPOINT,(a))
@@ -607,18 +617,14 @@
 #define return_VALUE(s)                 return(s)
 #define return_PTR(s)                   return(s)
 
-#ifdef ENABLE_DEBUGGER
-#define _OPCODE_NAMES
-#endif
-
 #endif
 
 /*
  * Some code only gets executed when the debugger is built in.
  * Note that this is entirely independent of whether the
- * DEBUG_PRINT stuff (set by ACPI_DEBUG) is on, or not.
+ * DEBUG_PRINT stuff (set by ACPI_DEBUG_OUTPUT) is on, or not.
  */
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 #define ACPI_DEBUGGER_EXEC(a)           a
 #else
 #define ACPI_DEBUGGER_EXEC(a)
@@ -627,7 +633,7 @@
 
 /*
  * For 16-bit code, we want to shrink some things even though
- * we are using ACPI_DEBUG to get the debug output
+ * we are using ACPI_DEBUG_OUTPUT to get the debug output
  */
 #if ACPI_MACHINE_WIDTH == 16
 #undef ACPI_DEBUG_ONLY_MEMBERS
@@ -636,7 +642,7 @@
 #endif
 
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 /*
  * 1) Set name to blanks
  * 2) Copy the object name

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.6.4.6 2002/11/11 22:11:10 nathanw Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6.4.7 2002/12/29 20:49:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.4.6 2002/11/11 22:11:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.4.7 2002/12/29 20:49:24 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -439,8 +439,9 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (pmode == 3) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
+		    PCI_PMCSR_STATE_MASK;
+		if (pmode == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -452,7 +453,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		if (pmode != 0) {
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    PCI_PMCSR_STATE_D0);
 		}
 	}
 

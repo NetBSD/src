@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              $Revision: 1.2.4.4 $
+ *              xRevision: 90 $
  *
  ******************************************************************************/
 
@@ -115,15 +115,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.2.4.4 2002/06/20 03:43:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.2.4.5 2002/12/29 20:45:44 thorpej Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbinput")
 
 
@@ -271,7 +271,6 @@ AcpiDbDisplayHelp (
         AcpiOsPrintf ("    [METHOD]        Control Method Execution Commands\n");
         AcpiOsPrintf ("    [FILE]          File I/O Commands\n");
         return;
-
     }
 
     /*
@@ -302,9 +301,7 @@ AcpiDbDisplayHelp (
 
     case 'N':
         AcpiOsPrintf ("\nNamespace Access Commands\n\n");
-        AcpiOsPrintf ("Debug <Namepath> [Arguments]        Single Step a control method\n");
         AcpiOsPrintf ("Event <F|G> <Value>                 Generate AcpiEvent (Fixed/GPE)\n");
-        AcpiOsPrintf ("Execute <Namepath> [Arguments]      Execute control method\n");
         AcpiOsPrintf ("Find <Name>   (? is wildcard)       Find ACPI name(s) with wildcards\n");
         AcpiOsPrintf ("Method                              Display list of loaded control methods\n");
         AcpiOsPrintf ("Namespace [<Addr>|<Path>] [Depth]   Display loaded namespace tree/subtree\n");
@@ -323,6 +320,8 @@ AcpiDbDisplayHelp (
         AcpiOsPrintf ("Arguments (or Args)                 Display method arguments\n");
         AcpiOsPrintf ("Breakpoint <AmlOffset>              Set an AML execution breakpoint\n");
         AcpiOsPrintf ("Call                                Run to next control method invocation\n");
+        AcpiOsPrintf ("Debug <Namepath> [Arguments]        Single Step a control method\n");
+        AcpiOsPrintf ("Execute <Namepath> [Arguments]      Execute control method\n");
         AcpiOsPrintf ("Go                                  Allow method to run to completion\n");
         AcpiOsPrintf ("Information                         Display info about the current method\n");
         AcpiOsPrintf ("Into                                Step into (not over) a method call\n");
@@ -343,7 +342,7 @@ AcpiDbDisplayHelp (
         return;
 
     default:
-        AcpiOsPrintf ("Unrecognized Command Class: %X\n", HelpType);
+        AcpiOsPrintf ("Unrecognized Command Class: %s\n", HelpType);
         return;
     }
 }
@@ -806,7 +805,7 @@ AcpiDbCommandDispatch (
 
         if (!AcpiGbl_DbOutputToFile)
         {
-            AcpiDbgLevel = DEBUG_DEFAULT;
+            AcpiDbgLevel = ACPI_DEBUG_DEFAULT;
         }
 
         /* Shutdown */
@@ -982,5 +981,5 @@ AcpiDbUserCommands (
 }
 
 
-#endif  /* ENABLE_DEBUGGER */
+#endif  /* ACPI_DEBUGGER */
 

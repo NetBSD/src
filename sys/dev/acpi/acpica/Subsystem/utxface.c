@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 100 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.1.1.1.4.4 2002/06/20 03:44:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.1.1.1.4.5 2002/12/29 20:46:03 thorpej Exp $");
 
 #define __UTXFACE_C__
 
@@ -262,6 +262,8 @@ AcpiEnableSubsystem (
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Going into ACPI mode\n"));
 
+        AcpiGbl_OriginalMode = AcpiHwGetMode();
+
         Status = AcpiEnable ();
         if (ACPI_FAILURE (Status))
         {
@@ -299,6 +301,31 @@ AcpiEnableSubsystem (
             return_ACPI_STATUS (Status);
         }
     }
+
+    return_ACPI_STATUS (Status);
+}
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiInitializeObjects
+ *
+ * PARAMETERS:  Flags           - Init/enable Options
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Completes namespace initialization by initializing device
+ *              objects and executing AML code for Regions, buffers, etc.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiInitializeObjects (
+    UINT32                  Flags)
+{
+    ACPI_STATUS             Status = AE_OK;
+
+
+    ACPI_FUNCTION_TRACE ("AcpiInitializeObjects");
 
     /*
      * Initialize all device objects in the namespace
@@ -378,7 +405,7 @@ AcpiTerminate (void)
     AcpiUtMutexTerminate ();
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
     /* Shut down the debugger */
 
