@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.2.3 1997/11/20 09:00:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.78.2.4 1997/11/24 02:04:06 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -121,7 +121,7 @@ distribution: distrib-dirs
 	${INSTALL} -c -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/cfscores
 	${INSTALL} -c -o games -g games -m 664 /dev/null \
-		${DESTDIR}/var/games/cribloo
+		${DESTDIR}/var/games/criblog
 	${INSTALL} -c -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/robots_roll
 	${INSTALL} -c -o games -g games -m 664 /dev/null \
