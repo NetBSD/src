@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.21.4.2 2005/03/17 17:49:45 tron Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.21.4.3 2005/03/19 01:44:26 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -194,7 +194,8 @@ void	siop_sdtr_msg __P((struct siop_common_cmd *, int, int, int));
 void	siop_wdtr_msg __P((struct siop_common_cmd *, int, int));
 void	siop_ppr_msg __P((struct siop_common_cmd *, int, int, int));
 void	siop_update_xfer_mode __P((struct siop_common_softc *, int));
-/* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
+int	siop_iwr __P((struct siop_common_cmd *));
+/* actions to take at return of siop_wdtr_neg(), siop_sdtr_neg() and siop_iwr */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
