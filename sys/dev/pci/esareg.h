@@ -1,4 +1,4 @@
-/* $NetBSD: esareg.h,v 1.5 2002/01/13 14:48:01 jmcneill Exp $ */
+/* $NetBSD: esareg.h,v 1.6 2002/01/14 19:24:39 pooka Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -37,13 +37,6 @@
 /* Allegro PCI configuration registers */
 #define PCI_LEGACY_AUDIO_CTRL   0x40
 #define DISABLE_LEGACY          0x00008000
-
-/* Power management */
-#define ESA_CONF_PM_PTR             0x34
-#define ESA_PPMI_D0                 0
-#define ESA_PPMI_D1                 1
-#define ESA_PPMI_D2                 2
-#define ESA_PPMI_D3                 3
 
 #define ESA_PCI_ALLEGRO_CONFIG      0x50
 #define ESA_SB_ADDR_240             0x00000004
