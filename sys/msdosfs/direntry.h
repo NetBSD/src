@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.7 1994/08/21 18:43:54 ws Exp $	*/
+/*	$NetBSD: direntry.h,v 1.8 1994/10/29 07:59:31 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -51,24 +51,24 @@
  * Structure of a dos directory entry.
  */
 struct direntry {
-	u_char deName[8];	/* filename, blank filled */
-#define	SLOT_EMPTY	0x00	/* slot has never been used */
-#define	SLOT_E5		0x05	/* the real value is 0xe5 */
-#define	SLOT_DELETED	0xe5	/* file in this slot deleted */
-	u_char deExtension[3];	/* extension, blank filled */
-	u_char deAttributes;	/* file attributes */
-#define	ATTR_NORMAL	0x00	/* normal file */
-#define	ATTR_READONLY	0x01	/* file is readonly */
-#define	ATTR_HIDDEN	0x02	/* file is hidden */
-#define	ATTR_SYSTEM	0x04	/* file is a system file */
-#define	ATTR_VOLUME	0x08	/* entry is a volume label */
-#define	ATTR_DIRECTORY	0x10	/* entry is a directory name */
-#define	ATTR_ARCHIVE	0x20	/* file is new or modified */
-	u_char deReserved[10];	/* reserved */
-	u_char deTime[2];	/* create/last update time */
-	u_char deDate[2];	/* create/last update date */
-	u_char deStartCluster[2]; /* starting cluster of file */
-	u_char deFileSize[4];	/* size of file in bytes */
+	u_int8_t	deName[8];	/* filename, blank filled */
+#define	SLOT_EMPTY	0x00		/* slot has never been used */
+#define	SLOT_E5		0x05		/* the real value is 0xe5 */
+#define	SLOT_DELETED	0xe5		/* file in this slot deleted */
+	u_int8_t	deExtension[3];	/* extension, blank filled */
+	u_int8_t	deAttributes;	/* file attributes */
+#define	ATTR_NORMAL	0x00		/* normal file */
+#define	ATTR_READONLY	0x01		/* file is readonly */
+#define	ATTR_HIDDEN	0x02		/* file is hidden */
+#define	ATTR_SYSTEM	0x04		/* file is a system file */
+#define	ATTR_VOLUME	0x08		/* entry is a volume label */
+#define	ATTR_DIRECTORY	0x10		/* entry is a directory name */
+#define	ATTR_ARCHIVE	0x20		/* file is new or modified */
+	u_int8_t	deReserved[10];	/* reserved */
+	u_int8_t	deTime[2];	/* create/last update time */
+	u_int8_t	deDate[2];	/* create/last update date */
+	u_int8_t	deStartCluster[2]; /* starting cluster of file */
+	u_int8_t	deFileSize[4];	/* size of file in bytes */
 };
 
 /*
@@ -96,8 +96,8 @@ struct direntry {
 #define DD_YEAR_SHIFT		9
 
 #ifdef KERNEL
-void unix2dostime __P((struct timespec * tsp, u_short * ddp, u_short * dtp));
-void dos2unixtime __P((u_short dd, u_short dt, struct timespec * tsp));
-int dos2unixfn __P((u_char dn[11], u_char * un));
-void unix2dosfn __P((u_char * un, u_char dn[11], int unlen));
+void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
+void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
+int dos2unixfn __P((u_char dn[11], u_char *un));
+void unix2dosfn __P((u_char *un, u_char dn[11], int unlen));
 #endif	/* KERNEL */
