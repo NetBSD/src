@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.h,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.h,v 1.2 1996/02/29 19:32:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -142,6 +142,8 @@ struct keyboard {
 };
 
 extern char kbd_stringtab[16][10];
+extern unsigned short kbd_numlock_map[64];
+
 extern struct keyboard * keyboards[];
 extern int kbd_max_type;
 #define	KBD_MIN_TYPE 2
