@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/01/05 19:24:08 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.16 2003/07/29 02:48:47 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -28,5 +28,3 @@ RPC_SVCFLAGS=	-I
 CLEANFILES += clnt.pcnfsd pcnfsd_test.o pcnfsd_test.ln pcnfsd_clnt.*
 
 .include <bsd.prog.mk>
-
-${OBJS}: pcnfsd.h
