@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2004/03/08 14:45:07 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2004/03/17 09:02:06 scw Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -24,6 +24,9 @@ LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 
 DPSRCS+=	${.CURDIR}/../arch/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
+.if !empty(G_LIB1ASMFUNCS)
+CLEANFILES+=	${LIB1ASMFUNCS}
+.endif
 
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
@@ -39,7 +42,9 @@ CLEANFILES+=	fpgnulib.c xfgnulib.c
 .endif
 .if ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb"
+    ${MACHINE_ARCH} == "sh3eb" || \
+    ${MACHINE_ARCH} == "sh5el" || \
+    ${MACHINE_ARCH} == "sh5eb"
 _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
