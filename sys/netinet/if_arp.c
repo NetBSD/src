@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.57 1999/05/04 14:58:27 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.58 1999/05/04 20:50:35 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -593,7 +593,14 @@ in_arpinput(m)
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
-			if (rt->rt_ifp != ifp) {
+			if (rt->rt_flags & RTF_STATIC) {
+				log(LOG_INFO,
+				    "%s tried to overwrite permanent arp info"
+				    " for %s\n",
+				    lla_snprintf(ar_sha(ah), ah->ar_hln),
+				    in_fmtaddr(isaddr));
+				goto out;
+			} else if (rt->rt_ifp != ifp) {
 				log(LOG_INFO,
 				    "%s on %s tried to overwrite "
 				    "arp info for %s on %s\n",
