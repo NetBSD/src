@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasctl.2,v 1.3 2002/09/01 02:50:33 gmcgarry Exp $
+.\"     $NetBSD: rasctl.2,v 1.4 2002/09/15 23:05:13 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,6 +103,13 @@ Remove the specified registered sequences for this process.
 .It RAS_PURGE_ALL
 Remove all registers sequences for this process.
 .El
+.Pp
+The RAS_PURGE and RAS_PURGE_ALL operations should be considered to have
+undefined behaviour if there are any other runnable threads in the
+address space which might be executing within the restartable atomic
+sequence(s) at the time of the purge.  The caller must be responsible
+for ensuring that there is some form of coordination with other threads
+to prevent unexpected behaviour.
 .Pp
 To preserve the atomicity of sequences, the kernel attempts to protect
 the sequences from alteration by the
