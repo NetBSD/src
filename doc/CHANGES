@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.456 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.457 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -18,3 +18,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	/rescue: Add tetris.  [lukem 20050401]
 	uvm(9): Simplify kernel memory allocation API and its implementation.
 		[yamt 20050401]
+	identd(8): Add support for forwarding ident queries and receiving of
+		proxied ident queries. [peter 20050104]
