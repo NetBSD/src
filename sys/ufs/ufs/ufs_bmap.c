@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.29 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.30 2004/07/24 15:02:32 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.29 2004/05/25 14:55:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.30 2004/07/24 15:02:32 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 		*bnp = -1;
 		return (0);
 	}
-	*bnp = blkptrtodb(ump, (int32_t)daddr); /* XXX ondisk32 */
+	*bnp = blkptrtodb(ump, daddr);
 	if (*bnp == 0) {
 		if (ip->i_flags & SF_SNAPSHOT) {
 			*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
