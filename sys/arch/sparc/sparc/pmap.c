@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.10 1994/05/19 07:13:06 deraadt Exp $
+ * $Id: pmap.c,v 1.11 1994/05/30 20:03:57 pk Exp $
  */
 
 /*
@@ -1033,6 +1033,10 @@ pv_unlink(pv, pm, va)
 {
 	register struct pvlist *npv;
 
+#ifdef DIAGNOSTIC
+	if (pv->pv_pmap == NULL)
+		panic("pv_unlink0");
+#endif
 	/*
 	 * First entry is special (sigh).
 	 */
@@ -1974,6 +1978,7 @@ pmap_page_protect(pa, prot)
 			break;
 	}
 	pv0->pv_pmap = NULL;
+	pv0->pv_next = NULL; /* ? */
 	pv0->pv_flags = flags;
 	setcontext(ctx);
 	splx(s);
@@ -2067,6 +2072,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 		}
 	}
 	simple_unlock(&pm->pm_lock);
+	setcontext(ctx);
 	splx(s);
 }
 
@@ -2115,8 +2121,10 @@ pmap_changeprot(pm, va, prot, wired)
 			/* use current context; flush writeback cache */
 			setcontext(pm->pm_ctxnum);
 			tpte = getpte(va);
-			if ((tpte & PG_PROT) == newprot)
+			if ((tpte & PG_PROT) == newprot) {
+				setcontext(ctx);
 				goto useless;
+			}
 			if (vactype == VAC_WRITEBACK &&
 			    (newprot & PG_W) == 0 &&
 			    (tpte & (PG_W | PG_NC)) == PG_W)
@@ -2127,8 +2135,10 @@ pmap_changeprot(pm, va, prot, wired)
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) * NBPG;
 			tpte = getpte(va);
-			if ((tpte & PG_PROT) == newprot)
+			if ((tpte & PG_PROT) == newprot) {
+				setcontext(ctx);
 				goto useless;
+			}
 		}
 		tpte = (tpte & ~PG_PROT) | newprot;
 		setpte(va, tpte);
