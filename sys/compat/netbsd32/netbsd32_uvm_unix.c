@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_uvm_unix.c,v 1.1 2001/06/06 21:24:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_uvm_unix.c,v 1.2 2001/06/06 21:30:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -70,8 +70,8 @@ uvm_coredump32(p, vp, cred, chdr)
 	struct core32 *chdr;
 {
 	struct vmspace *vm = p->p_vmspace;
-	vm_map_t map = &vm->vm_map;
-	vm_map_entry_t entry;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
 	vaddr_t start, end, maxstack;
 	struct coreseg32 cseg;
 	off_t offset;
@@ -103,8 +103,7 @@ uvm_coredump32(p, vp, cred, chdr)
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
 			if (end <= maxstack)
 				continue;
-			if (start < maxstack)
-				start = maxstack;
+			if (start < maxstack) start = maxstack;
 			flag = CORE_STACK;
 		} else
 			flag = CORE_DATA;
