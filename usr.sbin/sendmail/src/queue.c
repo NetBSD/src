@@ -431,6 +431,7 @@ orderq(doall)
 	WORK wlist[QUEUESIZE+1];
 	int wn = -1;
 	extern workcmpf();
+	extern bool shouldqueue();
 
 	/* clear out old WorkQ */
 	for (w = WorkQ; w != NULL; )
@@ -912,6 +913,8 @@ printqueue()
 		cbuf[0] = '\0';
 		while (fgets(buf, sizeof buf, f) != NULL)
 		{
+			extern long atol();
+
 			fixcrlf(buf, TRUE);
 			switch (buf[0])
 			{

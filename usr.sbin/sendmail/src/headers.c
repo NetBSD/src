@@ -725,6 +725,7 @@ commaize(h, p, fp, oldstyle, m)
 	int opos;
 	bool firstone = TRUE;
 	char obuf[MAXLINE + 3];
+	extern char *capitalize();
 
 	/*
 	**  Output the address list translated by the
