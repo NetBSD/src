@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.37 2001/07/07 16:47:44 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.38 2001/07/07 17:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2565,10 +2565,11 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm != NULL) {
-		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
+	if (enm == NULL)
+		goto setit;
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2577,31 +2578,29 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-				goto allmulti;
-			}
-
-#ifdef DP83820
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-			/* Just want the 11 most significant bits. */
-			hash = crc >> 21;
-#else
-			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-			/* Just want the 9 most significant bits. */
-			hash = crc >> 23;
-#endif /* DP83820 */
-			slot = hash >> 4;
-			bit = hash & 0xf;
-
-			/* Set the corresponding bit in the hash table. */
-			mchash[slot] |= 1 << bit;
-
-			ETHER_NEXT_MULTI(step, enm);
+			goto allmulti;
 		}
 
-		sc->sc_rfcr |= RFCR_MHEN;
+#ifdef DP83820
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 11 most significant bits. */
+		hash = crc >> 21;
+#else
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 9 most significant bits. */
+		hash = crc >> 23;
+#endif /* DP83820 */
+		slot = hash >> 4;
+		bit = hash & 0xf;
+
+		/* Set the corresponding bit in the hash table. */
+		mchash[slot] |= 1 << bit;
+
+		ETHER_NEXT_MULTI(step, enm);
 	}
+	sc->sc_rfcr |= RFCR_MHEN;
 	goto setit;
 
  allmulti:
