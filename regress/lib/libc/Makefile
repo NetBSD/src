@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.1 1993/05/27 21:53:47 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/07/10 18:46:29 jtc Exp $
 
-SUBDIR+= db
+SUBDIR+= db regex
 
 regress: _SUBDIRUSE
 
