@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.17 1997/02/13 20:48:36 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.18 1997/02/28 17:17:22 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -151,7 +151,7 @@
 #include "if_iereg.h"
 #include "if_ievar.h"
 
-#define	IEDEBUG	XXX
+/* #define	IEDEBUG	XXX */
 
 /*
  * IED: ie debug flags
@@ -177,6 +177,9 @@ int     in_ierint = 0;
 int     in_ietint = 0;
 int     ie_debug_flags = 0;
 #endif
+
+/* XXX - Skip TDR for now - it always complains... */
+int 	ie_run_tdr = 0;
 
 static void iewatchdog __P((struct ifnet *));
 static int ieinit __P((struct ie_softc *));
@@ -340,9 +343,11 @@ ie_attach(sc)
 	if (sc->nrxbuf > MXRXBUF)
 		sc->nrxbuf = MXRXBUF;
 
+#ifdef	IEDEBUG
 	printf("%s: %dK memory, %d tx frames, %d rx frames, %d rx bufs\n",
 	    sc->sc_dev.dv_xname, (sc->sc_msize >> 10),
 	    sc->ntxbuf, sc->nframes, sc->nrxbuf);
+#endif
 
 	if ((sc->nframes <= 0) || (sc->nrxbuf <= 0))
 		panic("ie_attach: weird memory size");
@@ -520,13 +525,15 @@ loop:
 	}
 
 	/*
-	 * Receiver not ready (RNR) just means it is
-	 * out of resources (buffers or frames).
-	 * You can cause this with spray if desired.
-	 * XXX: Maybe this error should be silent...
+	 * Receiver not ready (RNR) just means it has
+	 * run out of resources (buffers or frames).
+	 * One can easily cause this with (i.e.) spray.
+	 * This is not really an error, so be silent.
 	 */
 	if (status & IE_ST_RNR) {
+#ifdef IEDEBUG
 		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+#endif
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		iereset(sc);
 	}
@@ -1202,9 +1209,7 @@ iereset(sc)
 {
 	int s = splnet();
 
-#if 1	/* XXX */
-	printf("%s: reset\n", sc->sc_dev.dv_xname);
-#endif
+	/* No message here.  The caller does that. */
 	iestop(sc);
 
 	/*
@@ -1569,7 +1574,8 @@ ieinit(sc)
 	/*
 	 * Now run the time-domain reflectometer.
 	 */
-	run_tdr(sc, ptr);
+	if (ie_run_tdr)
+		run_tdr(sc, ptr);
 
 	/*
 	 * Acknowledge any interrupts we have generated thus far.
