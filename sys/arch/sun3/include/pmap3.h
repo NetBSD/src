@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.34 2001/09/10 21:19:27 chris Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.35 2002/09/22 07:17:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,6 +80,12 @@ extern segsz_t pmap_wired_pages(pmap_t);
 
 /* Map a given physical region to a virtual region */
 extern vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 /*
  * Since PTEs also contain type bits, we have to have some way
