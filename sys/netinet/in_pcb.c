@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.41 1997/11/27 14:03:32 mrg Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.42 1997/12/30 02:54:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -82,7 +82,7 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	    hashinit(bindhashsize, M_PCB, &table->inpt_bindhash);
 	table->inpt_connecthashtbl =
 	    hashinit(connecthashsize, M_PCB, &table->inpt_connecthash);
-	table->inpt_lastport = IPPORT_RESERVED;
+	table->inpt_lastport = IPPORT_USERLOW;
 }
 
 int
@@ -178,15 +178,13 @@ in_pcbbind(v, nam, p)
 noname:
 	if (lport == 0) {
 		for (lport = table->inpt_lastport + 1;
-		    lport < IPPORT_USERRESERVED; lport++)
+		    lport != table->inpt_lastport; lport++) {
+			if (lport < IPPORT_USERLOW || lport > IPPORT_USERHIGH)
+				lport = IPPORT_USERLOW;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), wild))
 				goto found;
-		for (lport = IPPORT_RESERVED;
-		    lport <= table->inpt_lastport; lport++)
-			if (!in_pcblookup_port(table, inp->inp_laddr,
-			    htons(lport), wild))
-				goto found;
+		}
 		if (!in_nullhost(inp->inp_laddr))
 			inp->inp_laddr.s_addr = INADDR_ANY;
 		return (EAGAIN);
