@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.9 1996/10/23 04:12:37 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.10 1996/12/02 06:12:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -55,10 +55,10 @@ int		tc_mem_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t,
 void		tc_mem_free __P((void *, bus_space_handle_t, bus_size_t));
 
 /* read (single) */
-u_int8_t	tc_mem_read_1 __P((void *, bus_space_handle_t, bus_size_t));
-u_int16_t	tc_mem_read_2 __P((void *, bus_space_handle_t, bus_size_t));
-u_int32_t	tc_mem_read_4 __P((void *, bus_space_handle_t, bus_size_t));
-u_int64_t	tc_mem_read_8 __P((void *, bus_space_handle_t, bus_size_t));
+inline u_int8_t	tc_mem_read_1 __P((void *, bus_space_handle_t, bus_size_t));
+inline u_int16_t tc_mem_read_2 __P((void *, bus_space_handle_t, bus_size_t));
+inline u_int32_t tc_mem_read_4 __P((void *, bus_space_handle_t, bus_size_t));
+inline u_int64_t tc_mem_read_8 __P((void *, bus_space_handle_t, bus_size_t));
 
 /* read multiple */
 void		tc_mem_read_multi_1 __P((void *, bus_space_handle_t,
@@ -81,13 +81,13 @@ void		tc_mem_read_region_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t *, bus_size_t));
 
 /* write (single) */
-void		tc_mem_write_1 __P((void *, bus_space_handle_t, bus_size_t,
+inline void	tc_mem_write_1 __P((void *, bus_space_handle_t, bus_size_t,
 		    u_int8_t));
-void		tc_mem_write_2 __P((void *, bus_space_handle_t, bus_size_t,
+inline void	tc_mem_write_2 __P((void *, bus_space_handle_t, bus_size_t,
 		    u_int16_t));
-void		tc_mem_write_4 __P((void *, bus_space_handle_t, bus_size_t,
+inline void	tc_mem_write_4 __P((void *, bus_space_handle_t, bus_size_t,
 		    u_int32_t));
-void		tc_mem_write_8 __P((void *, bus_space_handle_t, bus_size_t,
+inline void	tc_mem_write_8 __P((void *, bus_space_handle_t, bus_size_t,
 		    u_int64_t));
 
 /* write multiple */
@@ -258,7 +258,7 @@ tc_mem_free(v, bsh, size)
 	panic("tc_mem_free unimplemented");
 }
 
-u_int8_t
+inline u_int8_t
 tc_mem_read_1(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -275,7 +275,7 @@ tc_mem_read_1(v, memh, off)
 	return (*p);
 }
 
-u_int16_t
+inline u_int16_t
 tc_mem_read_2(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -292,7 +292,7 @@ tc_mem_read_2(v, memh, off)
 	return (*p);
 }
 
-u_int32_t
+inline u_int32_t
 tc_mem_read_4(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -310,7 +310,7 @@ tc_mem_read_4(v, memh, off)
 	return (*p);
 }
 
-u_int64_t
+inline u_int64_t
 tc_mem_read_8(v, memh, off)
 	void *v;
 	bus_space_handle_t memh;
@@ -326,7 +326,6 @@ tc_mem_read_8(v, memh, off)
 	p = (u_int64_t *)(memh + off);
 	return (*p);
 }
-
 
 #define	tc_mem_read_multi_N(BYTES,TYPE)					\
 void									\
@@ -366,7 +365,7 @@ tc_mem_read_region_N(2,u_int16_t)
 tc_mem_read_region_N(4,u_int32_t)
 tc_mem_read_region_N(8,u_int64_t)
 
-void
+inline void
 tc_mem_write_1(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -396,7 +395,7 @@ tc_mem_write_1(v, memh, off, val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-void
+inline void
 tc_mem_write_2(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -426,7 +425,7 @@ tc_mem_write_2(v, memh, off, val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-void
+inline void
 tc_mem_write_4(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -444,7 +443,7 @@ tc_mem_write_4(v, memh, off, val)
         alpha_mb();		/* XXX XXX XXX */
 }
 
-void
+inline void
 tc_mem_write_8(v, memh, off, val)
 	void *v;
 	bus_space_handle_t memh;
@@ -460,6 +459,7 @@ tc_mem_write_8(v, memh, off, val)
 	*p = val;
         alpha_mb();		/* XXX XXX XXX */
 }
+
 #define	tc_mem_write_multi_N(BYTES,TYPE)				\
 void									\
 __abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
