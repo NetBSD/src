@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.51 1994/08/15 23:33:59 mycroft Exp $
+#	$Id: files.i386,v 1.52 1994/08/23 17:59:33 deraadt Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/conf.c		standard
@@ -31,6 +31,7 @@ arch/i386/isa/dma.c		standard
 arch/i386/isa/elink.c		optional ep or ie
 arch/i386/isa/fd.c		optional fd device-driver requires isa
 arch/i386/isa/if_ed.c		optional ed requires ether isa
+arch/i386/isa/if_eg.c		optional eg requires ether isa
 arch/i386/isa/if_el.c		optional el requires ether isa
 arch/i386/isa/if_ep.c		optional ep requires ether isa
 arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa

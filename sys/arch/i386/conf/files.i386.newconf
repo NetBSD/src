@@ -46,6 +46,8 @@ file	arch/i386/isa/sb.c		sb needs-flag
 
 device	ed at isa: ether, ifnet
 file	arch/i386/isa/if_ed.c		ed needs-count
+device	eg at isa: ether, ifnet
+file	arch/i386/isa/if_eg.c		eg
 device	ep at isa: ether, ifnet
 file	arch/i386/isa/if_ep.c		ep needs-count
 #device	hp at isa: ether, ifnet
