@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: name2name.c,v 1.1.1.1 2000/06/16 18:45:54 thorpej Exp $");
+RCSID("$Id: name2name.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
 
 /* convert host to a more fully qualified domain name, returns 0 if
  * phost is the same as host, 1 otherwise. phost should be

@@ -35,7 +35,7 @@
 #include <kafs.h>
 #include <getarg.h>
 
-RCSID("$Id: kdestroy.c,v 1.1.1.1 2000/06/16 18:45:32 thorpej Exp $");
+RCSID("$Id: kdestroy.c,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $");
 
 #ifdef LEGACY_KDESTROY
 int ticket_flag = 1;

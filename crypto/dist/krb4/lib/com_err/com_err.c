@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: com_err.c,v 1.1.1.1 2000/06/16 18:45:48 thorpej Exp $");
+RCSID("$Id: com_err.c,v 1.1.1.2 2000/12/29 01:43:55 assar Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ RCSID("$Id: com_err.c,v 1.1.1.1 2000/06/16 18:45:48 thorpej Exp $");
 #include <roken.h>
 #include "com_err.h"
 
-struct et_list *_et_list;
+struct et_list *_et_list = NULL;
 
 
 const char *

@@ -1,5 +1,5 @@
 #include <popper.h>
-RCSID("$Id: pop_xover.c,v 1.1.1.1 2000/06/16 18:46:26 thorpej Exp $");
+RCSID("$Id: pop_xover.c,v 1.1.1.2 2000/12/29 01:42:47 assar Exp $");
 
 int
 pop_xover (POP *p)

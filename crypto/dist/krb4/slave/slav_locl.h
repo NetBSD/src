@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: slav_locl.h,v 1.1.1.1 2000/06/16 18:46:34 thorpej Exp $ */
+/* $Id: slav_locl.h,v 1.1.1.2 2000/12/29 01:44:08 assar Exp $ */
 
 #ifndef __slav_locl_h
 #define __slav_locl_h

@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: save_credentials.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: save_credentials.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
 
 /*
  * This routine takes a ticket and associated info and calls

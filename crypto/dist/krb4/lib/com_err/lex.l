@@ -43,7 +43,7 @@
 #include "compile_et.h"
 #include "parse.h"
 
-RCSID("$Id: lex.l,v 1.1.1.1 2000/06/16 18:45:49 thorpej Exp $");
+RCSID("$Id: lex.l,v 1.1.1.2 2000/12/29 01:43:55 assar Exp $");
 
 static unsigned lineno = 1;
 void error_message(char *, ...);

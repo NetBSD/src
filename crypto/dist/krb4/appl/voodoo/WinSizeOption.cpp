@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: WinSizeOption.cpp,v 1.1.1.1 2000/06/16 18:46:23 thorpej Exp $ */
+/* $Id: WinSizeOption.cpp,v 1.1.1.2 2000/12/29 01:42:30 assar Exp $ */
 
 #include <string.h>
 #include "WinSizeOption.h"

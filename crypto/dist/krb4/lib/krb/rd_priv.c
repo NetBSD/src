@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: rd_priv.c,v 1.1.1.1 2000/06/16 18:45:55 thorpej Exp $");
+RCSID("$Id: rd_priv.c,v 1.1.1.2 2000/12/29 01:43:18 assar Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -83,7 +83,7 @@ krb_rd_priv(void *in, u_int32_t in_length,
     if(clen + 2 > in_length)
 	return RD_AP_MODIFIED;
 
-    des_pcbc_encrypt(p, p, clen, 
+    des_pcbc_encrypt((des_cblock*)p, (des_cblock*)p, clen, 
 		     schedule, key, DES_DECRYPT);
     
     p += krb_get_int(p, &m_data->app_length, 4, little_endian);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: parse_units.h,v 1.1.1.1 2000/06/16 18:46:02 thorpej Exp $ */
+/* $Id: parse_units.h,v 1.1.1.2 2000/12/29 01:43:27 assar Exp $ */
 
 #ifndef __PARSE_UNITS_H__
 #define __PARSE_UNITS_H__

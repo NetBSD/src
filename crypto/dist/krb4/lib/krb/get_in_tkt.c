@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_in_tkt.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: get_in_tkt.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
 
 /*
  * This file contains three routines: passwd_to_key() and

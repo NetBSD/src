@@ -19,7 +19,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kinit.c,v 1.1.1.1 2000/06/16 18:45:32 thorpej Exp $");
+RCSID("$Id: kinit.c,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $");
 
 #define	LIFE	DEFAULT_TKT_LIFE /* lifetime of ticket in 5-minute units */
 #define CHPASSLIFE 2

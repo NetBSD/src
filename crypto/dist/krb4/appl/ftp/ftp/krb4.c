@@ -38,7 +38,7 @@
 #endif
 #include <krb.h>
 
-RCSID("$Id: krb4.c,v 1.1.1.1 2000/06/16 18:46:19 thorpej Exp $");
+RCSID("$Id: krb4.c,v 1.1.1.2 2000/12/29 01:42:55 assar Exp $");
 
 #ifdef FTP_SERVER
 #define LOCAL_ADDR ctrl_addr

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: mini_inetd.c,v 1.1.1.1 2000/06/16 18:46:02 thorpej Exp $");
+RCSID("$Id: mini_inetd.c,v 1.1.1.2 2000/12/29 01:43:27 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -162,12 +162,16 @@ mini_inetd (int port)
     sock_v4 = listen_v4 (port);
     if (sock_v4 >= 0) {
 	max_fd  = max(max_fd, sock_v4);
+	if (max_fd >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(sock_v4, &orig_read_set);
     }
 #ifdef HAVE_IPV6
     sock_v6 = listen_v6 (port);
     if (sock_v6 >= 0) {
 	max_fd  = max(max_fd, sock_v6);
+	if (max_fd >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(sock_v6, &orig_read_set);
     }
 #endif    

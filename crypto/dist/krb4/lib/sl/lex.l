@@ -35,7 +35,7 @@
 #include "make_cmds.h"
 #include "parse.h"
 
-RCSID("$Id: lex.l,v 1.1.1.1 2000/06/16 18:45:45 thorpej Exp $");
+RCSID("$Id: lex.l,v 1.1.1.2 2000/12/29 01:43:51 assar Exp $");
 
 static unsigned lineno = 1;
 void error_message(char *, ...);
