@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.1 1999/02/14 12:23:04 pk Exp $ */
+/*	$NetBSD: promlib.h,v 1.2 1999/05/03 16:14:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -193,8 +193,5 @@ void	prom_boot __P((char *))	__attribute__((__noreturn__));
 #define prom_cpuresume(m)	((*promops.po_cpuresume)(m))
 
 extern void	*romp;		/* PROM-supplied argument (see locore) */
-
-/* Default core address where the PROM loads boot programs */
-#define PROM_LOADADDR		((caddr_t)0x4000)
 
 #endif /* _SPARC_PROMLIB_H_ */
