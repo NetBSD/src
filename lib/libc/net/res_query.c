@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.26 2000/04/25 13:27:22 itojun Exp $	*/
+/*	$NetBSD: res_query.c,v 1.27 2000/04/26 06:51:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.26 2000/04/25 13:27:22 itojun Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.27 2000/04/26 06:51:37 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -401,7 +401,13 @@ __hostalias(name)
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
 #if 0
-	/* Why do we bother turning off buffering in the stream? */
+	/*
+	 * if a setuid binary dumps core into a weak-privileged file, malicious
+	 * user may try to use $HOSTALIASES to peep content of protected files
+	 * kept in *fp.
+	 * NetBSD does not dump core for setuid binary, so it is safe to
+	 * comment the line out.  see sys/kern/kern_sig.c:coredump().
+	 */
 	setbuf(fp, NULL);
 #endif
 	buf[sizeof(buf) - 1] = '\0';
