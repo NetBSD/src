@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.69 1999/09/30 05:38:19 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.70 1999/10/01 06:18:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.69 1999/09/30 05:38:19 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.70 1999/10/01 06:18:32 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -104,7 +104,6 @@ __RCSID("$NetBSD: util.c,v 1.69 1999/09/30 05:38:19 lukem Exp $");
 #include <unistd.h>
 
 #include "ftp_var.h"
-#include "pathnames.h"
 
 /*
  * Connect to peer server and
