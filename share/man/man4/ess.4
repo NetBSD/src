@@ -1,4 +1,4 @@
-.\" $NetBSD: ess.4,v 1.1 1998/08/01 16:35:31 augustss Exp $
+.\" $NetBSD: ess.4,v 1.2 1998/08/07 01:00:36 matt Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Cd "device ess0 at isa? port 0x220 irq 5 drq 0 drq2 1"
 .Cd "device ess* at ofisa?"
+.Cd "device ess* at isapnp?"
 .Cd "audio* at ess?"
 .Sh DESCRIPTION
 The
@@ -56,4 +57,5 @@ channel also to 5.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr isa 4 ,
+.Xr isapnp 4 ,
 .Xr ofisa 4
