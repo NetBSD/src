@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.7 1997/03/16 03:43:39 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.8 1997/03/16 09:10:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -838,4 +838,35 @@ hpux_sys_sigreturn(p, v, retval)
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
+}
+
+/*
+ * Set registers on exec.
+ * XXX Should clear registers except sp, pc.
+ */
+void
+hpux_setregs(p, pack, stack, retval)
+	register struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
+{
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_pc = pack->ep_entry & ~1;
+	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
+
+	/* restore a null state frame */
+	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	if (fputype)
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+
+	p->p_md.md_flags &= ~MDP_HPUXMMAP;
+	frame->f_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
+	retval[0] = 0;		/* no float card */
+	if (fputype)
+		retval[1] = 1;	/* yes 68881 */
+	else
+		retval[1] = 0;	/* no 68881 */
 }
