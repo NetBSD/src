@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2002/04/03 02:06:33 thorpej Exp $
+# $NetBSD: GENERIC,v 1.18 2002/04/03 03:25:55 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -53,11 +53,11 @@ file-system	NFS		# Network file system
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
-#file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 
