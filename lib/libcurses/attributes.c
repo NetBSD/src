@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.6 2000/04/24 14:09:42 blymn Exp $	*/
+/*	$NetBSD: attributes.c,v 1.7 2000/04/28 23:37:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.6 2000/04/24 14:09:42 blymn Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.7 2000/04/28 23:37:11 mycroft Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -93,84 +93,38 @@ wattron(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE ("wattron: %08x, %08x\n", attr, __nca);
 #endif
-	if ((attr_t) attr & __BLINK) {
-		/* If can do blink, set the screen blink bit. */
-		if (MB != NULL && ME != NULL) {
+	/* If can enter modes, set the relevent attribute bits. */
+	if (ME != NULL) {
+		if ((attr_t) attr & __BLINK && MB != NULL)
 			win->wattr |= __BLINK;
-			/*
-			 * Check for conflict with color.
-			 */
-			if ((win->wattr & __COLOR) && (__nca & __BLINK)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
-	}
-	if ((attr_t) attr & __BOLD) {
-		/* If can do bold, set the screen bold bit. */
-		if (MD != NULL && ME != NULL) {
+		if ((attr_t) attr & __BOLD && MD != NULL)
 			win->wattr |= __BOLD;
-			if ((win->wattr & __COLOR) && (__nca & __BOLD)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
-	}
-	if ((attr_t) attr & __DIM) {
-		/* If can do dim, set the screen dim bit. */
-		if (MH != NULL && ME != NULL) {
+		if ((attr_t) attr & __DIM && MH != NULL)
 			win->wattr |= __DIM;
-			if ((win->wattr & __COLOR) && (__nca & __DIM)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
-	}
-	if ((attr_t) attr & __BLANK) {
-		/* If can do blank, set the screen blank bit. */
-		if (MK != NULL && ME != NULL) {
+		if ((attr_t) attr & __BLANK && MK != NULL)
 			win->wattr |= __BLANK;
-			if ((win->wattr & __COLOR) && (__nca & __BLANK)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
-	}
-	if ((attr_t) attr & __PROTECT) {
-		/* If can do protected, set the screen protected bit. */
-		if (MP != NULL && ME != NULL) {
+		if ((attr_t) attr & __PROTECT && MP != NULL)
 			win->wattr |= __PROTECT;
-			if ((win->wattr & __COLOR) && (__nca & __PROTECT)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
-	}
-	if ((attr_t) attr & __REVERSE) {
-		/* If can do reverse video, set the screen reverse video bit. */
-		if (MR != NULL && ME != NULL)
-		{
+		if ((attr_t) attr & __REVERSE && MR != NULL)
 			win->wattr |= __REVERSE;
-			if ((win->wattr & __COLOR) && (__nca & __REVERSE)) {
-				win->wattr &= ~__COLOR;
-			}
-		}
 	}
-	if ((attr_t) attr & __STANDOUT) {
+	if ((attr_t) attr & __STANDOUT)
 		wstandout(win);
-	}
-	if ((attr_t) attr & __UNDERSCORE) {
+	if ((attr_t) attr & __UNDERSCORE)
 		wunderscore(win);
-	}
+	/* Check for conflict with color. */
+	if (win->wattr & __nca)
+		win->wattr &= ~__COLOR;
 	if ((attr_t) attr & __COLOR) {
 		/* If another color pair is set, turn that off first. */
-		if ((win->wattr & __COLOR) != ((attr_t) attr & __COLOR))
-			win->wattr &= ~__COLOR;
+		win->wattr &= ~__COLOR;
 		/* If can do color video, set the color pair bits. */
-		if (cO != NULL)
-		{
+		if (cO != NULL) {
 			win->wattr |= attr & __COLOR;
-			if (__nca != __NORMAL) {
-				win->wattr &= ~__nca;
-			}
+			win->wattr &= ~__nca;
 		}
 	}
-	return (1);
+	return (OK);
 }
 
 /*
@@ -187,50 +141,29 @@ wattroff(WINDOW *win, int attr)
 	__CTRACE ("wattroff: %08x\n", attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
-	if ((attr_t) attr & __BLINK) {
-		if (ME != NULL) {
+	if (ME != NULL) {
+		if ((attr_t) attr & __BLINK)
 			win->wattr &= ~__BLINK;
-		}
-	}
-	if ((attr_t) attr & __BOLD) {
-		if (ME != NULL) {
+		if ((attr_t) attr & __BOLD)
 			win->wattr &= ~__BOLD;
-		}
-	}
-	if ((attr_t) attr & __DIM) {
-		if (ME != NULL) {
+		if ((attr_t) attr & __DIM)
 			win->wattr &= ~__DIM;
-		}
-	}
-	if ((attr_t) attr & __BLANK) {
-		if (ME != NULL) {
+		if ((attr_t) attr & __BLANK)
 			win->wattr &= ~__BLANK;
-		}
-	}
-	if ((attr_t) attr & __PROTECT) {
-		if (ME != NULL) {
+		if ((attr_t) attr & __PROTECT)
 			win->wattr &= ~__PROTECT;
-		}
-	}
-	if ((attr_t) attr & __REVERSE) {
-		if (ME != NULL) {
+		if ((attr_t) attr & __REVERSE)
 			win->wattr &= ~__REVERSE;
-		}
 	}
-	if ((attr_t) attr & __STANDOUT) {
+	if ((attr_t) attr & __STANDOUT)
 		wstandend(win);
-	}
-	if ((attr_t) attr & __UNDERSCORE) {
+	if ((attr_t) attr & __UNDERSCORE)
 		wunderend(win);
-	}
 	if ((attr_t) attr & __COLOR) {
 		if (cO != NULL)
-		{
 			win->wattr &= ~__COLOR;
-		}
 	}
-
-	return (1);
+	return (OK);
 }
 
 /*
@@ -244,41 +177,7 @@ wattrset(WINDOW *win, int attr)
 #ifdef DEBUG
 	__CTRACE ("wattrset: %08x\n", attr, __nca);
 #endif
-	if ((attr_t) attr & __BLINK)
-		wattron(win, __BLINK);
-	else
-		wattroff(win, __BLINK);
-	if ((attr_t) attr & __BOLD)
-		wattron(win, __BOLD);
-	else
-		wattroff(win, __BOLD);
-	if ((attr_t) attr & __DIM)
-		wattron(win, __DIM);
-	else
-		wattroff(win, __DIM);
-	if ((attr_t) attr & __BLANK)
-		wattron(win, __BLANK);
-	else
-		wattroff(win, __BLANK);
-	if ((attr_t) attr & __PROTECT)
-		wattron(win, __PROTECT);
-	else
-		wattroff(win, __PROTECT);
-	if ((attr_t) attr & __REVERSE)
-		wattron(win, __REVERSE);
-	else
-		wattroff(win, __REVERSE);
-	if ((attr_t) attr & __STANDOUT)
-		wstandout(win);
-	else
-		wstandend(win);
-	if ((attr_t) attr & __UNDERSCORE)
-		wunderscore(win);
-	else
-		wunderend(win);
-	if ((attr_t) attr & __COLOR)
-		wattron(win, attr & (int) __COLOR);
-	else
-		wattroff(win, (int) __COLOR);
-	return (1);
+	wattron(win, attr);
+	wattroff(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR));
+	return (OK);
 }
