@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.14 2002/07/20 08:36:18 grant Exp $	*/
+/*	$NetBSD: installboot.c,v 1.15 2002/08/09 10:08:13 soren Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -176,8 +176,7 @@ oscheck ()
 	struct stat	sb;
 
 	if (stat(_PATH_UNIX, &sb) < 0) {
-		warnx("Cannot stat %s, no bootversion check done\n",
-							_PATH_UNIX);
+		warnx("Cannot stat %s, no bootversion check done", _PATH_UNIX);
 		return;
 	}
 
