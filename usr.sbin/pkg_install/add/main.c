@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.13 1999/11/10 18:51:47 abs Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2000/01/19 23:28:28 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 1999/11/10 18:51:47 abs Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2000/01/19 23:28:28 hubertf Exp $");
 #endif
 #endif
 
@@ -134,24 +134,54 @@ main(int argc, char **argv)
 						warn("realpath failed for '%s'", *argv);
 					} else
 						lpp = alloc_lpkg(cp);
-				} else if (ispkgpattern(*argv)
-					    && (s = findbestmatchingname(dirname_of(*argv),
+				} else if (ispkgpattern(*argv)) {
+					    if ((s = findbestmatchingname(dirname_of(*argv),
 					    basename_of(*argv))) != NULL) {
+						    char tmp[FILENAME_MAX];
+						    
+						    snprintf(tmp, sizeof(tmp), "%s/%s", dirname_of(*argv), s);
+						    
+						    if (Verbose)
+							    printf("Using %s for %s\n", tmp, *argv);
+						    
+						    if (!(cp = realpath(tmp, pkgname))) {
+							    lpp = NULL;
+							    warn("realpath failed for '%s'", tmp);
+						    } else
+							    lpp = alloc_lpkg(cp);
+					    } else {
+						    lpp = NULL;
+						    warnx("can't find package pattern '%s'", *argv);
+					    }
+				} else {
+					/* Maybe just a pkg name w/o pattern was given */
+					char tmp[FILENAME_MAX];
+						
+					snprintf(tmp, sizeof(tmp), "%s-[0-9]*.tgz", *argv);
+					s=findbestmatchingname(dirname_of(tmp),
+							       basename_of(tmp));
+					if (s) {
+						char tmp2[FILENAME_MAX];
+						
+						snprintf(tmp2, sizeof(tmp2), "%s/%s", dirname_of(tmp), s);
+						
 					if (Verbose)
-						printf("Using %s for %s\n", s, *argv);
+							printf("Using %s for %s\n", tmp2, *argv);
 
-					if (!(cp = realpath(s, pkgname))) {
+						if (!(cp = realpath(tmp2, pkgname))) {
 						lpp = NULL;
-						warn("realpath failed for '%s'", s);
+							warn("realpath failed for '%s'", tmp2);
 					} else
 						lpp = alloc_lpkg(cp);
 				} else {
+						/* No go there... */
 					/* look for the file(pattern) in the expected places */
 					if (!(cp = fileFindByPath(NULL, *argv))) {
 						lpp = NULL;
 						warnx("can't find package '%s'", *argv);
 					} else
 						lpp = alloc_lpkg(cp);
+					}
 				}
 			}
 			if (lpp)
