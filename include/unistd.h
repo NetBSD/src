@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.39 1997/07/20 19:18:49 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.40 1997/10/06 01:43:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -81,6 +81,7 @@ pid_t	 getpid __P((void));
 pid_t	 getppid __P((void));
 uid_t	 getuid __P((void));
 int	 isatty __P((int));
+int	 lchown __P((const char *, uid_t, gid_t));
 int	 link __P((const char *, const char *));
 off_t	 lseek __P((int, off_t, int));
 long	 pathconf __P((const char *, int));	/* not yet */
