@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_dma.c,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_dma.c,v 1.2 2001/06/14 17:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include <algor/algor/algor_p4032reg.h>
 #include <algor/algor/algor_p4032var.h>
 
+#include <algor/pci/vtpbcvar.h>
+
 void
 algor_p4032_dma_init(struct p4032_config *acp)
 {
@@ -58,7 +60,7 @@ algor_p4032_dma_init(struct p4032_config *acp)
 	 */
 	t = &acp->ac_pci_dmat;
 	t->_cookie = acp;
-	t->_wbase = P4032_DMA_PCI_PCIBASE;
+	t->_wbase = vtpbc_configuration.vt_dma_winbase;
 	t->_physbase = P4032_DMA_PCI_PHYSBASE;
 	t->_wsize = P4032_DMA_PCI_SIZE;
 	t->_dmamap_create = _bus_dmamap_create;

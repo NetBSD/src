@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.2 2001/06/14 17:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,6 +99,18 @@ vtpbc_init(pci_chipset_tag_t pc, struct vtpbc_config *vt)
 	pc->pc_conf_write = vtpbc_conf_write;
 
 	vt->vt_rev = V96X_PCI_CC_REV(vt) & V96X_PCI_CC_REV_VREV;
+
+	/*
+	 * Determine the PCI memory space base that our PCI
+	 * memory window maps to.
+	 */
+	vt->vt_pci_membase = (V96X_LB_MAP1(vt) & V96X_LB_MAPx_MAP_ADR) << 16;
+
+	/*
+	 * Determine the PCI window base that maps host RAM for
+	 * DMA.
+	 */
+	vt->vt_dma_winbase = V96X_PCI_BASE1(vt) & 0xfffffff0;
 }
 
 void
