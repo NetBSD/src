@@ -1,4 +1,4 @@
-/*	$NetBSD: db_load.c,v 1.5 2002/06/20 11:42:56 itojun Exp $	*/
+/*	$NetBSD: db_load.c,v 1.6 2003/01/28 22:19:22 wiz Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
@@ -2378,7 +2378,7 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 			ERRTO("No ObjectID in key");
 		break;
 	default:
-		ERRTO("UNKOWN SIG algorithm");
+		ERRTO("UNKNOWN SIG algorithm");
 	}
 
 	/* Should we complain about algorithm-ID's that we	

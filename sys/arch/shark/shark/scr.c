@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.9 2003/01/06 13:05:07 wiz Exp $	*/
+/*	$NetBSD: scr.c,v 1.10 2003/01/28 22:19:27 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -398,7 +398,7 @@ int scrdebug =  //SCRPROBE_DEBUG_INFO	    |
 
 
 /* byte logic level and msb/lsb coding */
-#define CONVENTION_UNKOWN		        0
+#define CONVENTION_UNKNOWN		        0
 #define CONVENTION_INVERSE		        1
 #define CONVENTION_DIRECT		        2    
 #define CONVENIONT_INVERSE_ID			0x3f
@@ -1469,7 +1469,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                         
                         /* set initial values */
                         sc->status          = 0;        
-                        sc->convention      = CONVENTION_UNKOWN;            
+                        sc->convention      = CONVENTION_UNKNOWN;            
                         sc->protocolType    = 0;        
                         sc->N               = N_DEFAULT;    
                         sc->Fi              = Fi_DEFAULT;   
@@ -2913,7 +2913,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                     if (sc->shiftBits < 8)
                     {
                         if (sc->convention == CONVENTION_INVERSE || 
-                            sc->convention == CONVENTION_UNKOWN)
+                            sc->convention == CONVENTION_UNKNOWN)
                         {
                             /* logic 1 is low, msb is first */
                             sc->shiftByte <<= 1;
@@ -2940,7 +2940,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
 
 
                         /* in TS byte, check if we have a card that works at 1/2 freq */
-                        if (sc->convention == CONVENTION_UNKOWN  &&   /* in TS byte */
+                        if (sc->convention == CONVENTION_UNKNOWN  &&   /* in TS byte */
                             sc->shiftBits == 3 &&                     /* test at bit 3 in word */
                             sc->shiftByte == 4 &&                     /* check for 1/2 freq pattern */
                             sc->cardFreq  == CARD_FREQ_DEF)           /* only do this if at full freq */
@@ -2987,7 +2987,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                         else
                         {
                             /* sc->convention not set so sort it out */
-                            ASSERT(sc->convention == CONVENTION_UNKOWN);
+                            ASSERT(sc->convention == CONVENTION_UNKNOWN);
                             if (sc->shiftByte == CONVENIONT_INVERSE_ID && scrGetData())
                             {
                                 sc->convention = CONVENTION_INVERSE;
@@ -4055,7 +4055,7 @@ char * getText(int x)
 
 
         default:
-            printf("unkown case, %x\n",x);
+            printf("unknown case, %x\n",x);
             break;
     }
     return "???";

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.7 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$NetBSD: parser.c,v 1.8 2003/01/28 22:19:30 wiz Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -1184,7 +1184,7 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		    != 0)
 			return (0);
 	} else {
-		LOG(LOG_ERR, 0, "unkown action type %s");
+		LOG(LOG_ERR, 0, "unknown action type %s");
 		return (0);
 	}
 

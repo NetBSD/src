@@ -544,7 +544,7 @@ TrDoSwitch (
         }
         else
         {
-            /* Unkown peer opcode */
+            /* Unknown peer opcode */
 
             printf ("Unknown parse opcode for switch statement: %s (%d)\n",
                         Next->Asl.ParseOpName, Next->Asl.ParseOpcode);

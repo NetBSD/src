@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.10 2002/07/14 00:30:03 wiz Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.11 2003/01/28 22:19:30 wiz Exp $");
 #endif
 
 
@@ -690,7 +690,7 @@ process_entry(struct host *host, char *src)
 		case E_BAD_VALUE:
 			msg = "bad value";
 		default:
-			msg = "unkown error";
+			msg = "unknown error";
 			break;
 		}						/* switch */
 		report(LOG_ERR, "in entry named \"%s\", symbol \"%s\": %s",

@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.8 2002/05/30 18:32:18 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.9 2003/01/28 22:19:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ dsklabel()
 		/* NOTREACHED */
 
 	default:
-		printf("unkown command: %s\n", line);
+		printf("unknown command: %s\n", line);
 	}
 
 	goto disklabel_loop;
