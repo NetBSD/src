@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.11 1999/09/12 09:02:23 jsm Exp $	*/
+/*	$NetBSD: snscore.c,v 1.12 2000/01/21 00:27:03 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.11 1999/09/12 09:02:23 jsm Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.12 2000/01/21 00:27:03 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,10 @@ main()
 	if (fd == NULL)
 		err(1, "opening `%s'", recfile);
 	printf("Snake players scores to date\n");
-	fread(&whoallbest, sizeof(short), 1, fd);
+	if (fread(&whoallbest, sizeof(short), 1, fd) == 0) {
+		printf("No scores recorded yet!\n");
+		exit(0);
+	}
 	fread(&allbest, sizeof(short), 1, fd);
 	noplayers = 0;
 	for (uid = 2; ;uid++) {
@@ -104,7 +107,7 @@ main()
 			q = p -> pw_name;
 			players[noplayers].name = strdup(q);
 			if (players[noplayers].name == NULL)
-				errx(1, "out of memory");
+				err(1, NULL);
 			noplayers++;
 		}
 	}
