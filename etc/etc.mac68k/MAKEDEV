@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.20 1997/01/13 23:38:43 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1997/01/22 19:31:37 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -210,8 +210,8 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 5 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
+				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d; \
+				    rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
 				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		;;
