@@ -8,8 +8,6 @@
 
 /* -*-C-*-
  *
- * $Revision: 1.2 $
- *     $Date: 1999/02/10 22:18:21 $
  *
  *
  * hostchan.c - Semi Synchronous Host side channel interface for Angel.
