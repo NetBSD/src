@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.49 2000/07/06 17:37:40 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.50 2000/07/17 02:54:04 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -103,23 +103,23 @@ JSBENTRY(start)
 #else
 ASENTRY(start, 0)
 #endif
-2:	bisl3	$0x80000000,r9,_esym		# End of loaded code
+2:	bisl3	$0x80000000,r9,_C_LABEL(esym)	# End of loaded code
 	pushl	$0x1f0000			# Push a nice PSL
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
-to:	movw	$0xfff,_panic			# Save all regs in panic
-	addl3	_esym,$0x3ff,r0			# Round symbol table end
-	bicl3	$0x3ff,r0,_proc0paddr		# save proc0 uarea pointer
-	bicl3	$0x80000000,_proc0paddr,r0	# get phys proc0 uarea addr
+to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
+	addl3	_C_LABEL(esym),$0x3ff,r0	# Round symbol table end
+	bicl3	$0x3ff,r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
+	bicl3	$0x80000000,_C_LABEL(proc0paddr),r0 # get phys proc0 uarea addr
 	mtpr	r0,$PR_PCBB			# Save in IPR PCBB
-	addl3	$USPACE,_proc0paddr,r0		# Get kernel stack top
+	addl3	$USPACE,_C_LABEL(proc0paddr),r0	# Get kernel stack top
 	mtpr	r0,$PR_KSP			# put in IPR KSP
 	movl	r0,_Sysmap			# SPT start addr after KSP
 	movab	IFTRAP(r0),4(r0)		# Save trap address in ESP
 	mtpr	4(r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
-	movl	_proc0paddr,r0
+	movl	_C_LABEL(proc0paddr),r0
 	clrl	P0LR(r0)
 	clrl	P1LR(r0)
 	mtpr	$0,$PR_P0LR
@@ -136,15 +136,15 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
 #if defined(COMPAT_14)
 	tstl	(ap)				# Any arguments?
 	bneq	1f				# Yes, called from new boot
-	movl	r11,_boothowto			# Howto boot (single etc...)
-#	movl	r10,_bootdev			# uninteresting, will complain
-	movl	r8,_avail_end			# Usable memory (from VMB)
+	movl	r11,_C_LABEL(boothowto)		# Howto boot (single etc...)
+#	movl	r10,_C_LABEL(bootdev)		# uninteresting, will complain
+	movl	r8,_C_LABEL(avail_end)		# Usable memory (from VMB)
 	clrl	-(sp)				# Have no RPB
 	brb	2f
 #endif
 
 1:	pushl	4(ap)				# Address of old rpb
-2:	calls	$1,_start			# Jump away.
+2:	calls	$1,_C_LABEL(start)		# Jump away.
 	/* NOTREACHED */
 
 
@@ -152,102 +152,105 @@ to:	movw	$0xfff,_panic			# Save all regs in panic
  * Signal handler code.
  */
 
-		.align	2
-		.globl	_sigcode,_esigcode
-_sigcode:	pushr	$0x3f
-		subl2	$0xc,sp
-		movl	0x24(sp),r0
-		calls	$3,(r0)
-		popr	$0x3f
-		chmk	$SYS___sigreturn14
-		chmk	$SYS_exit
-		halt	
-_esigcode:
+	.align	2
+	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
+_C_LABEL(sigcode):
+	pushr	$0x3f
+	subl2	$0xc,sp
+	movl	0x24(sp),r0
+	calls	$3,(r0)
+	popr	$0x3f
+	chmk	$SYS___sigreturn14
+	chmk	$SYS_exit
+	halt	
+_C_LABEL(esigcode):
 
 #ifdef COMPAT_IBCS2
-		.align	2
-		.globl	_ibcs2_sigcode,_ibcs2_esigcode
-_ibcs2_sigcode:	pushr	$0x3f
-		subl2	$0xc,sp
-		movl	0x24(sp),r0
-		calls	$3,(r0)
-		popr	$0x3f
-		chmk	$SYS___sigreturn14
-		chmk	$SYS_exit
-		halt	
-_ibcs2_esigcode:
+	.align	2
+	.globl	_C_LABEL(ibcs2_sigcode),_C_LABEL(ibcs2_esigcode)
+_C_LABEL(ibcs2_sigcode):
+	pushr	$0x3f
+	subl2	$0xc,sp
+	movl	0x24(sp),r0
+	calls	$3,(r0)
+	popr	$0x3f
+	chmk	$SYS___sigreturn14
+	chmk	$SYS_exit
+	halt	
+_C_LABEL(ibcs2_esigcode):
 #endif /* COMPAT_IBCS2 */
 
 #ifdef COMPAT_ULTRIX
-		.align	2
-		.globl	_ultrix_sigcode,_ultrix_esigcode
-_ultrix_sigcode:	pushr	$0x3f
-		subl2	$0xc,sp
-		movl	0x24(sp),r0
-		calls	$3,(r0)
-		popr	$0x3f
-		chmk	$ULTRIX_SYS_sigreturn
-		chmk	$SYS_exit
-		halt	
-_ultrix_esigcode:
+	.align	2
+	.globl	_C_LABEL(ultrix_sigcode),_C_LABEL(ultrix_esigcode)
+_C_LABEL(ultrix_sigcode):
+	pushr	$0x3f
+	subl2	$0xc,sp
+	movl	0x24(sp),r0
+	calls	$3,(r0)
+	popr	$0x3f
+	chmk	$ULTRIX_SYS_sigreturn
+	chmk	$SYS_exit
+	halt	
+_C_LABEL(ultrix_esigcode):
 #endif
 
-		.align	2
-		.globl	_idsptch, _eidsptch
-_idsptch:	pushr	$0x3f
-		.word	0x9f16		# jsb to absolute address
-		.long	_cmn_idsptch	# the absolute address
-		.long	0		# the callback interrupt routine
-		.long	0		# its argument
-		.long	0		# ptr to correspond evcnt struct
-_eidsptch:
+	.align	2
+	.globl	_C_LABEL(idsptch), _C_LABEL(eidsptch)
+_C_LABEL(idsptch):	pushr	$0x3f
+	.word	0x9f16		# jsb to absolute address
+	.long	_C_LABEL(cmn_idsptch)	# the absolute address
+	.long	0		# the callback interrupt routine
+	.long	0		# its argument
+	.long	0		# ptr to correspond evcnt struct
+_C_LABEL(eidsptch):
 
-_cmn_idsptch:
-		movl	(sp)+,r0	# get pointer to idspvec
-		movl	8(r0),r1	# get evcnt pointer
-		beql	1f		# no ptr, skip increment
-		incl	EV_COUNT(r1)	# increment low longword
-		adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
-1:		pushl	4(r0)		# push argument
-		calls	$1,*(r0)	# call interrupt routine
-		popr	$0x3f		# pop registers
-		rei			# return from interrut
+_C_LABEL(cmn_idsptch):
+	movl	(sp)+,r0	# get pointer to idspvec
+	movl	8(r0),r1	# get evcnt pointer
+	beql	1f		# no ptr, skip increment
+	incl	EV_COUNT(r1)	# increment low longword
+	adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
+1:	pushl	4(r0)		# push argument
+	calls	$1,*(r0)	# call interrupt routine
+	popr	$0x3f		# pop registers
+	rei			# return from interrut
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
-		mfpr	$PR_IPL,r0	# splhigh()
-		mtpr	$IPL_HIGH,$PR_IPL
-		movl	4(ap),r2	# First argument, the address
-		movl	8(ap),r1	# Sec arg, b,w,l
-		pushl	r0		# Save old IPL
-		clrl	r3
-		movab	4f,_memtest	# Set the return address
+	mfpr	$PR_IPL,r0	# splhigh()
+	mtpr	$IPL_HIGH,$PR_IPL
+	movl	4(ap),r2	# First argument, the address
+	movl	8(ap),r1	# Sec arg, b,w,l
+	pushl	r0		# Save old IPL
+	clrl	r3
+	movab	4f,_C_LABEL(memtest)	# Set the return address
 
-		caseb	r1,$1,$4	# What is the size
-1:		.word	1f-1b		
-		.word	2f-1b
-		.word	3f-1b		# This is unused
-		.word	3f-1b
+	caseb	r1,$1,$4	# What is the size
+1:	.word	1f-1b		
+	.word	2f-1b
+	.word	3f-1b		# This is unused
+	.word	3f-1b
 		
-1:		movb	(r2),r1		# Test a byte
-		brb	5f
+1:	movb	(r2),r1		# Test a byte
+	brb	5f
 
-2:		movw	(r2),r1		# Test a word
-		brb	5f
+2:	movw	(r2),r1		# Test a word
+	brb	5f
 
-3:		movl	(r2),r1		# Test a long
-		brb	5f
+3:	movl	(r2),r1		# Test a long
+	brb	5f
 
-4:		incl	r3		# Got machine chk => addr bad
-5:		mtpr	(sp)+,$PR_IPL
-		movl	r3,r0
-		ret
+4:	incl	r3		# Got machine chk => addr bad
+5:	mtpr	(sp)+,$PR_IPL
+	movl	r3,r0
+	ret
 
 #ifdef DDB
 /*
  * DDB is the only routine that uses setjmp/longjmp.
  */
-	.globl	_setjmp, _longjmp
-_setjmp:.word	0
+	.globl	_C_LABEL(setjmp), _C_LABEL(longjmp)
+_C_LABEL(setjmp):.word	0
 	movl	4(ap), r0
 	movl	8(fp), (r0)
 	movl	12(fp), 4(r0)
@@ -256,7 +259,7 @@ _setjmp:.word	0
 	clrl	r0
 	ret
 
-_longjmp:.word	0
+_C_LABEL(longjmp):.word	0
 	movl	4(ap), r1
 	movl	8(ap), r0
 	movl	(r1), ap
@@ -274,27 +277,27 @@ JSBENTRY(Setrq)
 	tstl	4(r0)	# Check that process actually are off the queue
 	beql	1f
 	pushab	setrq
-	calls	$1,_panic
+	calls	$1,_C_LABEL(panic)
 setrq:	.asciz	"setrunqueue"
 #endif
-1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
-	movaq	_sched_qs[r1],r2	# get address of queue
-	insque	(r0),*PH_RLINK(r2)	# put proc last in queue
-	bbss	r1,_sched_whichqs,1f	# set queue bit.
+1:	extzv	$2,$6,P_PRIORITY(r0),r1		# get priority
+	movaq	_C_LABEL(sched_qs)[r1],r2	# get address of queue
+	insque	(r0),*PH_RLINK(r2)		# put proc last in queue
+	bbss	r1,_C_LABEL(sched_whichqs),1f	# set queue bit.
 1:	rsb
 
 JSBENTRY(Remrq)
 	extzv	$2,$6,P_PRIORITY(r0),r1
 #ifdef DIAGNOSTIC
-	bbs	r1,_sched_whichqs,1f
+	bbs	r1,_C_LABEL(sched_whichqs),1f
 	pushab	remrq
-	calls	$1,_panic
+	calls	$1,_C_LABEL(panic)
 remrq:	.asciz	"remrunqueue"
 #endif
 1:	remque	(r0),r2
-	bneq	1f			# Not last process on queue
-	bbsc	r1,_sched_whichqs,1f
-1:	clrl	P_BACK(r0)		# saftey belt
+	bneq	2f			# Not last process on queue
+	bbsc	r1,_C_LABEL(sched_whichqs),2f
+2:	clrl	P_BACK(r0)		# saftey belt
 	rsb
 
 #
@@ -302,12 +305,12 @@ remrq:	.asciz	"remrunqueue"
 # pi or something.
 #
 idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
-1:	tstl	_uvm+UVM_PAGE_IDLE_ZERO
+1:	tstl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO
 	beql	2f
 #if 0
-	calls	$0,_uvm_pageidlezero
+	calls	$0,_C_LABEL(uvm_pageidlezero)
 #endif
-2:	tstl	_sched_whichqs		# Anything ready to run?
+2:	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
 	beql	1b			# no, continue to loop
 	brb	Swtch			# Yes, goto switch again.
 
@@ -320,20 +323,20 @@ JSBENTRY(Swtch)
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	clrl	CI_CURPROC(r1)		# Stop process accounting
 	mtpr	$IPL_HIGH,$PR_IPL	# block all interrupts
-	ffs	$0,$32,_sched_whichqs,r3 # Search for bit set
+	ffs	$0,$32,_C_LABEL(sched_whichqs),r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
-	movaq	_sched_qs[r3],r1	# get address of queue head
+	movaq	_C_LABEL(sched_qs)[r3],r1	# get address of queue head
 	remque	*(r1),r2		# remove proc pointed to by queue head
 					# proc ptr is now in r2
 #ifdef DIAGNOSTIC
 	bvc	1f			# check if something on queue
 	pushab	noque
-	calls	$1,_panic
+	calls	$1,_C_LABEL(panic)
 noque:	.asciz	"swtch"
 #endif
 1:	bneq	2f			# more processes on queue?
-	bbsc	r3,_sched_whichqs,2f	# no, clear bit in whichqs
+	bbsc	r3,_C_LABEL(sched_whichqs),2f	# no, clear bit in whichqs
 2:	clrl	P_BACK(r2)		# clear proc backpointer
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	/* p->p_cpu initialized in fork1() for single-processor */
@@ -357,7 +360,7 @@ noque:	.asciz	"swtch"
 # Nice routine to get physical from virtual adresses.
 #
 	extzv	$9,$21,r0,r1		# extract offset
-	ashl	$9,*_Sysmap[r1],r3
+	ashl	$9,*_C_LABEL(Sysmap)[r1],r3
 
 #
 # Do the actual process switch. pc + psl are already on stack, from
@@ -365,7 +368,8 @@ noque:	.asciz	"swtch"
 #
 	svpctx
 	mtpr	r3,$PR_PCBB
-_tramp:	.globl	_tramp	# used to kick off multiprocessor systems.
+	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
+_C_LABEL(tramp):
 	ldpctx
 	rei
 
@@ -383,7 +387,7 @@ ENTRY(cpu_exit,0)
 	mtpr	r8,$PR_PCBB	# new PCB
 	mtpr	r7,$PR_SSP	# In case...
 	pushl	r6
-	calls	$1,_exit2	# release last resources.
+	calls	$1,_C_LABEL(exit2)	# release last resources.
 	clrl	r0
 	brw	Swtch
 
@@ -554,4 +558,6 @@ ENTRY(blkclr,R6)
 #
 	.data
 
-_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+	.globl _C_LABEL(memtest)
+_C_LABEL(memtest):		# memory test in progress
+	.long 0
