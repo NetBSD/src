@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 1998/06/09 18:49:47 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15 1998/06/15 20:10:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ pcibmatch(parent, match, aux)
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_VIATECH_VT82C570MV:
-		case PCI_PRODUCT_VIATECH_VT82C586:
+		case PCI_PRODUCT_VIATECH_VT82C586_ISA:
 			return (1);
 		}
 		break;
