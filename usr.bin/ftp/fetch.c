@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.139 2003/02/28 09:54:51 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.140 2003/03/07 08:13:48 grant Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.139 2003/02/28 09:54:51 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.140 2003/03/07 08:13:48 grant Exp $");
 #endif /* not lint */
 
 /*
@@ -509,7 +509,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			rval = fetch_ftp(url);
 			goto cleanup_fetch_url;
 		}
-		warnx("Invalid URL (no file after directory) `%s'", url);
+		warnx("no file after directory (you must specify an "
+		    "output file) `%s'", url);
 		goto cleanup_fetch_url;
 	} else {
 		if (debug)
