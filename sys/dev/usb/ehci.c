@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.29 2001/12/31 12:16:57 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.29 2001/12/31 12:16:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
 	pipe = xfer->pipe;
 	epipe = (struct ehci_pipe *)pipe;
 
-	p = KERNADDR(&xfer->dmabuf);
+	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
 	memset(p, 0, xfer->length);
 	for (i = 1; i <= m; i++) {
@@ -1490,7 +1490,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf);
+		buf = KERNADDR(&xfer->dmabuf, 0);
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
@@ -1977,7 +1977,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 			return (NULL);
 		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
 			offs = i * EHCI_SQH_SIZE;
-			sqh = (ehci_soft_qh_t *)((char *)KERNADDR(&dma) + offs);
+			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma) + offs;
 			sqh->next = sc->sc_freeqhs;
 			sc->sc_freeqhs = sqh;
@@ -2019,7 +2019,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		s = splusb();
 		for(i = 0; i < EHCI_SQTD_CHUNK; i++) {
 			offs = i * EHCI_SQTD_SIZE;
-			sqtd = (ehci_soft_qtd_t *)((char *)KERNADDR(&dma)+offs);
+			sqtd = KERNADDR(&dma, offs);
 			sqtd->physaddr = DMAADDR(&dma) + offs;
 			sqtd->nextqtd = sc->sc_freeqtds;
 			sc->sc_freeqtds = sqtd;
@@ -2504,7 +2504,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 		next = stat;
 	}
 
-	memcpy(KERNADDR(&epipe->u.ctl.reqdma), req, sizeof *req);
+	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof *req);
 
 	setup->qtd.qtd_status = htole32(
 	    EHCI_QTD_ACTIVE |
