@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.165 2002/03/10 20:05:42 lukem Exp $
+.\"	$NetBSD: options.4,v 1.166 2002/03/23 09:56:58 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -113,6 +113,9 @@ option is set, the kernel will read (pre) 1.1 style disk labels as a
 last resort.
 When a disklabel is re-written, the old style label will be replaced
 with a post 1.1 style label.
+This also enables
+.Em EXEC_ELF_NOTELESS
+option.
 .It Cd options COMPAT_12
 Enable binary compatibility with
 .Nx 1.2 .
@@ -125,6 +128,9 @@ The syscall numbers were changed post 1.2 to add functionality to the
 syscall, and the new
 .Xr swapctl 2
 interface was introduced.
+This also enables
+.Em EXEC_ELF_NOTELESS
+option.
 .It Cd options COMPAT_13
 Enable binary compatibility with
 .Nx 1.3 .
@@ -280,7 +286,7 @@ Currently only some system calls which use
 are adjusted and some binaries which use
 .Xr sysctl 3
 to retrieve network details would not work properly.
-.It Cd options EXEC_ELF_CATCHALL
+.It Cd options EXEC_ELF_NOTELESS
 Run unidentified ELF binaries as
 .Nx
 binaries.
