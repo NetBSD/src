@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.39 1997/05/21 22:46:08 jeremy Exp $
+#	$NetBSD: NetBSD.dist,v 1.40 1997/05/21 22:50:12 jeremy Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1068,6 +1068,72 @@ x68k
 
 # ./usr/share/man/cat9
 cat9
+
+# ./usr/share/man/cat9/alpha
+alpha
+# ./usr/share/man/cat9/alpha
+..
+
+# ./usr/share/man/cat9/amiga
+amiga
+# ./usr/share/man/cat9/amiga
+..
+
+# ./usr/share/man/cat9/arm32
+arm32
+# ./usr/share/man/cat9/arm32
+..
+
+# ./usr/share/man/cat9/atari
+atari
+# ./usr/share/man/cat9/atari
+..
+
+# ./usr/share/man/cat9/hp300
+hp300
+# ./usr/share/man/cat9/hp300
+..
+
+# ./usr/share/man/cat9/i386
+i386
+# ./usr/share/man/cat9/i386
+..
+
+# ./usr/share/man/cat9/mac68k
+mac68k
+# ./usr/share/man/cat9/mac68k
+..
+
+# ./usr/share/man/cat9/pc532
+pc532
+# ./usr/share/man/cat9/pc532
+..
+
+# ./usr/share/man/cat9/pmax
+pmax
+# ./usr/share/man/cat9/pmax
+..
+
+# ./usr/share/man/cat9/sparc
+sparc
+# ./usr/share/man/cat9/sparc
+..
+
+# ./usr/share/man/cat9/sun3
+sun3
+# ./usr/share/man/cat9/sun3
+..
+
+# ./usr/share/man/cat9/vax
+vax
+# ./usr/share/man/cat9/vax
+..
+
+# ./usr/share/man/cat9/x68k
+x68k
+# ./usr/share/man/cat9/x68k
+..
+
 # ./usr/share/man/cat9
 ..
 
