@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.4 1995/02/25 03:01:38 cgd Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.5 1995/04/14 19:48:23 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,12 +32,13 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
 /*static char *sccsid = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_generic.c,v 1.4 1995/02/25 03:01:38 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_generic.c,v 1.5 1995/04/14 19:48:23 jtc Exp $";
 #endif
 
 /*
  * Copyright (C) 1987, Sun Microsystems, Inc.
  */
+#include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
@@ -75,7 +76,7 @@ clnt_create(hostname, prog, vers, proto)
 		rpc_createerr.cf_error.re_errno = EAFNOSUPPORT; 
 		return (NULL);
 	}
-	bzero((char *)&sin, sizeof sin);
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = h->h_addrtype;
 	sin.sin_port = 0;
 	bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);

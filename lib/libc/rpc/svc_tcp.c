@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.4 1995/02/25 03:02:01 cgd Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.5 1995/04/14 19:48:29 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_tcp.c,v 1.4 1995/02/25 03:02:01 cgd Exp $";
+static char *rcsid = "$NetBSD: svc_tcp.c,v 1.5 1995/04/14 19:48:29 jtc Exp $";
 #endif
 
 /*
@@ -47,6 +47,7 @@ static char *rcsid = "$NetBSD: svc_tcp.c,v 1.4 1995/02/25 03:02:01 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -139,7 +140,7 @@ svctcp_create(sock, sendsize, recvsize)
 		}
 		madesock = TRUE;
 	}
-	bzero((char *)&addr, sizeof (addr));
+	memset(&addr, 0, sizeof (addr));
 	addr.sin_family = AF_INET;
 	if (bindresvport(sock, &addr)) {
 		addr.sin_port = 0;

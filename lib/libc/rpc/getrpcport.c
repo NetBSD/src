@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.3 1995/02/25 03:01:46 cgd Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.4 1995/04/14 19:48:25 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcport.c 1.3 87/08/11 SMI";*/
 /*static char *sccsid = "from: @(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: getrpcport.c,v 1.3 1995/02/25 03:01:46 cgd Exp $";
+static char *rcsid = "$NetBSD: getrpcport.c,v 1.4 1995/04/14 19:48:25 jtc Exp $";
 #endif
 
 /*
@@ -40,6 +40,7 @@ static char *rcsid = "$NetBSD: getrpcport.c,v 1.3 1995/02/25 03:01:46 cgd Exp $"
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -52,7 +53,7 @@ getrpcport(host, prognum, versnum, proto)
 
 	if ((hp = gethostbyname(host)) == NULL)
 		return (0);
-	bzero((char *)&addr, sizeof addr);
+	memset(&addr, 0, sizeof(addr));
 	bcopy(hp->h_addr, (char *) &addr.sin_addr, hp->h_length);
 	addr.sin_family = AF_INET;
 	addr.sin_port =  0;

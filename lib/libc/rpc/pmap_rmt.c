@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.4 1995/02/25 03:01:52 cgd Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.5 1995/04/14 19:48:26 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.4 1995/02/25 03:01:52 cgd Exp $";
+static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.5 1995/04/14 19:48:26 jtc Exp $";
 #endif
 
 /*
@@ -50,6 +50,7 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.4 1995/02/25 03:01:52 cgd Exp $";
 #include <sys/socket.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
@@ -266,7 +267,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	FD_ZERO(&mask);
 	FD_SET(sock, &mask);
 	nets = getbroadcastnets(addrs, sock, inbuf);
-	bzero((char *)&baddr, sizeof (baddr));
+	memset(&baddr, 0, sizeof (baddr));
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
