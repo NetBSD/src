@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.461 2001/09/16 00:11:41 eeh Exp $
+#	$NetBSD: files,v 1.462 2001/09/16 07:33:31 manu Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -693,6 +693,7 @@ defpseudo faith: ifnet
 defpseudo stf: ifnet
 
 defpseudo sequencer
+defpseudo clockctl
 
 # ISDN userland pseudo devices
 defpseudo i4btrc: isdn
@@ -1264,3 +1265,4 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
+file	dev/clockctl.c			clockctl		needs-flag
