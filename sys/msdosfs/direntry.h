@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.11 1995/11/29 15:08:34 ws Exp $	*/
+/*	$NetBSD: direntry.h,v 1.12 1996/10/25 23:14:05 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -118,13 +118,17 @@ struct winentry {
 #define DD_YEAR_SHIFT		9
 
 #ifdef _KERNEL
-void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
-void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
-int dos2unixfn __P((u_char dn[11], u_char *un, int lower));
-int unix2dosfn __P((u_char *un, u_char dn[12], int unlen, u_int gen));
-int unix2winfn __P((u_char *un, int unlen, struct winentry *wep, int cnt, int chksum));
-int winChkName __P((u_char *un, int unlen, struct winentry *wep, int chksum));
-int win2unixfn __P((struct winentry *wep, struct dirent *dp, int chksum));
+void	unix2dostime __P((struct timespec *tsp, u_int16_t *ddp,
+	    u_int16_t *dtp));
+void	dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
+int	dos2unixfn __P((u_char dn[11], u_char *un, int lower));
+int	unix2dosfn __P((const u_char *un, u_char dn[12], int unlen,
+	    u_int gen));
+int	unix2winfn __P((const u_char *un, int unlen, struct winentry *wep,
+	    int cnt, int chksum));
+int	winChkName __P((const u_char *un, int unlen, struct winentry *wep,
+	    int chksum));
+int	win2unixfn __P((struct winentry *wep, struct dirent *dp, int chksum));
 u_int8_t winChksum __P((u_int8_t *name));
-int winSlotCnt __P((u_char *un, int unlen));
+int	winSlotCnt __P((const u_char *un, int unlen));
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.19 1996/10/13 02:32:52 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.20 1996/10/25 23:14:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -250,7 +250,7 @@ int
 lookup(ndp)
 	register struct nameidata *ndp;
 {
-	register char *cp;		/* pointer into pathname argument */
+	register const char *cp;	/* pointer into pathname argument */
 	register struct vnode *dp = 0;	/* the directory we are searching */
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */

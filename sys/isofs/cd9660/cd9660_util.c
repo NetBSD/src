@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.10 1996/02/29 20:36:39 gwr Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.11 1996/10/25 23:14:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -65,7 +65,7 @@
  */
 int
 isofncmp(fn, fnlen, isofn, isolen)
-	u_char *fn, *isofn;
+	const u_char *fn, *isofn;
 	int fnlen, isolen;
 {
 	int i, j;

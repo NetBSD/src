@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.29 1996/10/13 04:16:33 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.30 1996/10/25 23:14:08 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -210,17 +210,20 @@ msdosfs_lookup(v)
 		goto foundroot;
 	}
 
-	switch (unix2dosfn((u_char *)cnp->cn_nameptr, dosfilename, cnp->cn_namelen, 0)) {
+	switch (unix2dosfn((const u_char *)cnp->cn_nameptr, dosfilename,
+	    cnp->cn_namelen, 0)) {
 	case 0:
 		return (EINVAL);
 	case 1:
 		break;
 	case 2:
-		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr,cnp->cn_namelen) + 1;
+		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen) + 1;
 		break;
 	case 3:
 		olddos = 0;
-		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr,cnp->cn_namelen) + 1;
+		wincnt = winSlotCnt((const u_char *)cnp->cn_nameptr,
+		    cnp->cn_namelen) + 1;
 		break;
 	}
 	if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
@@ -308,7 +311,7 @@ msdosfs_lookup(v)
 					if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 						continue;
 
-					chksum = winChkName((u_char *)cnp->cn_nameptr,
+					chksum = winChkName((const u_char *)cnp->cn_nameptr,
 							    cnp->cn_namelen,
 							    (struct winentry *)dep,
 							    chksum);
@@ -641,7 +644,7 @@ createde(dep, ddep, depp, cnp)
 	 */
 	if (ddep->de_fndcnt > 0) {
 		u_int8_t chksum = winChksum(ndep->deName);
-		u_char *un = (u_char *)cnp->cn_nameptr;
+		const u_char *un = (const u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
 		int cnt = 1;
 		
@@ -971,7 +974,8 @@ uniqdosname(dep, cnp, cp)
 		/*
 		 * Generate DOS name with generation number
 		 */
-		if (!unix2dosfn((u_char *)cnp->cn_nameptr, cp, cnp->cn_namelen, gen))
+		if (!unix2dosfn((const u_char *)cnp->cn_nameptr, cp,
+		    cnp->cn_namelen, gen))
 			return gen == 1 ? EINVAL : EEXIST;
 		
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.32 1996/10/13 01:39:08 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.33 1996/10/25 23:14:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1008,7 +1008,7 @@ int
 nfsm_strtmbuf(mb, bpos, cp, siz)
 	struct mbuf **mb;
 	char **bpos;
-	char *cp;
+	const char *cp;
 	long siz;
 {
 	register struct mbuf *m1 = NULL, *m2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.13 1996/10/04 03:23:36 thorpej Exp $	*/
+/*	$NetBSD: iso.h,v 1.14 1996/10/25 23:14:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -295,7 +295,7 @@ isonum_733(p)
 
 #endif /* UNALIGNED_ACCESS */
 
-int isofncmp __P((u_char *, int, u_char *, int));
+int isofncmp __P((const u_char *, int, const u_char *, int));
 void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));
 ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));
 
