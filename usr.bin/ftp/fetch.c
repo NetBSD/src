@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.52.2.1 1999/06/22 21:01:48 perry Exp $	*/
+/*	$NetBSD: fetch.c,v 1.52.2.2 1999/06/25 01:15:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.52.2.1 1999/06/22 21:01:48 perry Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.52.2.2 1999/06/25 01:15:14 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -1369,7 +1369,7 @@ go_fetch(url)
 	const char *url;
 {
 
-#ifndef SMALL
+#ifndef NO_ABOUT
 	/*
 	 * Check for about:*
 	 */
@@ -1388,7 +1388,7 @@ go_fetch(url)
 		}
 		return (0);
 	}
-#endif /* SMALL */
+#endif /* NO_ABOUT */
 
 	/*
 	 * Check for file:// and http:// URLs.
