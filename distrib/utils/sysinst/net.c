@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.95 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.96 2003/11/04 01:53:28 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -384,6 +384,28 @@ get_ifinterface_info(void)
 	}
 }
 
+/*
+ * recombine name parts split in get_ifinterface_info and config_network
+ * (common code moved here from write_etc_hosts)
+ */
+static char *
+recombine_host_domain(void)
+{
+	static char recombined[MAXHOSTNAMELEN + 1];
+	int l = strlen(net_host) - strlen(net_domain);
+
+	strlcpy(recombined, net_host, sizeof(recombined));
+
+	if (l <= 0 ||
+	    net_host[l - 1] != '.' ||
+	    strcasecmp(net_domain, net_host + l) != 0) {
+		/* net_host isn't an FQDN. */
+		strlcat(recombined, ".", sizeof(recombined));
+		strlcat(recombined, net_domain, sizeof(recombined));
+	}
+	return recombined;
+}
+
 #ifdef INET6
 static int
 is_v6kernel(void)
@@ -497,13 +519,13 @@ again:
 
 	/* Preload any defaults we can find */
 	get_ifinterface_info();
-	pass = net_mask[0] == 0 ? 0 : 1;
+	pass = net_mask[0] == '\0' ? 0 : 1;
 
 	/* domain and host */
 	msg_display(MSG_netinfo);
 
 	/* ethernet medium */
-	if (net_media[0] != 0)
+	if (net_media[0] != '\0')
 		msg_prompt_add(MSG_net_media, net_media, net_media,
 		    sizeof net_media);
 
@@ -522,17 +544,17 @@ again:
 		/* pull nameserver info out of /etc/resolv.conf */
 		get_command_out(net_namesvr, sizeof(net_namesvr), AF_INET,
 		    "cat /etc/resolv.conf 2> /dev/null", "nameserver");
-		if (net_namesvr[0] != 0)
+		if (net_namesvr[0] != '\0')
 			net_dhcpconf |= DHCPCONF_NAMESVR;
 
 		/* pull domainname out of leases file */
 		get_dhcp_value(net_domain, sizeof(net_domain), "domain-name");
-		if (net_domain[0] != 0)
+		if (net_domain[0] != '\0')
 			net_dhcpconf |= DHCPCONF_DOMAIN;
 
 		/* pull hostname out of leases file */
 		get_dhcp_value(net_host, sizeof(net_host), "hostname");
-		if (net_host[0] != 0)
+		if (net_host[0] != '\0')
 			net_dhcpconf |= DHCPCONF_HOST;
 	}
 
@@ -607,9 +629,9 @@ again:
 	 */
 
 	/* Create /etc/resolv.conf if a nameserver was given */
-	if (net_namesvr[0] != 0
+	if (net_namesvr[0] != '\0'
 #ifdef INET6
-	    || net_namesvr6[0] != 0
+	    || net_namesvr6[0] != '\0'
 #endif
 		) {
 #ifdef DEBUG
@@ -629,10 +651,10 @@ again:
 		/* NB: ctime() returns a string ending in  '\n' */
 		scripting_fprintf(f, ";\n; BIND data file\n; %s %s;\n",
 		    "Created by NetBSD sysinst on", ctime(&now));
-		if (net_namesvr[0] != 0)
+		if (net_namesvr[0] != '\0')
 			scripting_fprintf(f, "nameserver %s\n", net_namesvr);
 #ifdef INET6
-		if (net_namesvr6[0] != 0)
+		if (net_namesvr6[0] != '\0')
 			scripting_fprintf(f, "nameserver %s\n", net_namesvr6);
 #endif
 		scripting_fprintf(f, "search %s\n", net_domain);
@@ -673,8 +695,8 @@ again:
 	}
 #endif
 
-	if (net_ip[0] != 0) {
-		if (net_mask[0] != 0) {
+	if (net_ip[0] != '\0') {
+		if (net_mask[0] != '\0') {
 			run_prog(0, NULL,
 			    "/sbin/ifconfig %s inet %s netmask %s",
 			    net_dev, net_ip, net_mask);
@@ -685,11 +707,11 @@ again:
 	}
 
 	/* Set host name */
-	if (net_host[0] != 0)
+	if (net_host[0] != '\0')
 	  	sethostname(net_host, strlen(net_host));
 
 	/* Set a default route if one was given */
-	if (net_defroute[0] != 0) {
+	if (net_defroute[0] != '\0') {
 		run_prog(0, NULL, "/sbin/route -n flush -inet");
 		run_prog(0, NULL,
 		    "/sbin/route -n add default %s", net_defroute);
@@ -711,17 +733,17 @@ again:
 		network_up = !run_prog(0, NULL,
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
-		if (net_namesvr6[0] != 0)
+		if (net_namesvr6[0] != '\0')
 			network_up = !run_prog(RUN_DISPLAY, NULL,
 			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
-	if (net_namesvr[0] != 0 && network_up)
+	if (net_namesvr[0] != '\0' && network_up)
 		network_up = !run_prog(0, NULL,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
 
-	if (net_defroute[0] != 0 && network_up)
+	if (net_defroute[0] != '\0' && network_up)
 		network_up = !run_prog(0, NULL,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	fflush(NULL);
@@ -888,8 +910,6 @@ again:
 static void
 write_etc_hosts(FILE *f)
 {
-	int l;
-
 	scripting_fprintf(f, "#\n");
 	scripting_fprintf(f, "# Added by NetBSD sysinst\n");
 	scripting_fprintf(f, "#\n");
@@ -897,14 +917,7 @@ write_etc_hosts(FILE *f)
 	scripting_fprintf(f, "127.0.0.1	localhost\n");
 
 	scripting_fprintf(f, "%s\t", net_ip);
-	l = strlen(net_host) - strlen(net_domain);
-	if (l <= 0 ||
-	    net_host[l - 1] != '.' ||
-	    strcasecmp(net_domain, net_host + l) != 0) {
-		/* net_host isn't an FQDN. */
-		scripting_fprintf(f, "%s.%s ", net_host, net_domain);
-	}
-	scripting_fprintf(f, "%s\n", net_host);
+	scripting_fprintf(f, "%s\n", recombine_host_domain());
 }
 
 /*
@@ -929,19 +942,19 @@ mnt_net_config(void)
 
 	/* Write hostname to /etc/rc.conf */
 	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
-		add_rc_conf("hostname=%s\n", net_host);
+		add_rc_conf("hostname=%s\n", recombine_host_domain());
 
 	/* If not running in target, copy resolv.conf there. */
 	if ((net_dhcpconf & DHCPCONF_NAMESVR) == 0) {
 #ifndef INET6
-		if (net_namesvr[0] != 0)
+		if (net_namesvr[0] != '\0')
 			dup_file_into_target("/etc/resolv.conf");
 #else
 		/*
 		 * not sure if it is a good idea, to allow dhcp config to
 		 * override IPv6 configuration
 		 */
-		if (net_namesvr[0] != 0 || net_namesvr6[0] != 0)
+		if (net_namesvr[0] != '\0' || net_namesvr6[0] != '\0')
 			dup_file_into_target("/etc/resolv.conf");
 #endif
 	}
