@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.25 1997/06/30 22:20:34 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.26 1997/09/15 06:23:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.25 1997/06/30 22:20:34 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.26 1997/09/15 06:23:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(argc, argv)
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
 	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
-	while ((ch = getopt(argc, argv, opstring)) != EOF)
+	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'N':
 			Nflag = 1;
