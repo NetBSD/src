@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.9 2000/08/01 00:28:55 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10 2000/12/17 21:54:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,8 @@ compat_13_sys_sigreturn(p, v, retval)
 	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
 #ifdef DEBUG
 	{
-		printf("compat_13_sys_sigreturn: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		printf("compat_13_sys_sigreturn: pc %qx or npc %qx invalid\n",
+			(u_int64_t)scp->sc_pc, (u_int64_t)scp->sc_npc);
 #ifdef DDB
 		Debugger();
 #endif
@@ -141,8 +142,9 @@ compat_13_sys_sigreturn(p, v, retval)
 	tf->tf_out[6] = scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("compat_13_sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
-		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		printf("compat_13_sys_sigreturn: return trapframe pc=%qx sp=%qx tstate=%qx\n",
+			(u_int64_t)tf->tf_pc, (u_int64_t)tf->tf_out[6],
+			(u_int64_t)tf->tf_tstate);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
