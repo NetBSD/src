@@ -1,15 +1,22 @@
-.TH ED 1 386BSD
+.TH ED 1 "21 May 1993"
 .SH NAME
-ed \- text editor
+ed, red \- text editor
 .SH SYNOPSIS
 ed [-] [-sx] [-p \fIstring\fR] [\fIfile\fR]
+.LP
+red [-] [-sx] [-p \fIstring\fR] [\fIfile\fR]
 .SH DESCRIPTION
 .B ed
 is a line-oriented text editor.
 It is used to create, display, modify and otherwise manipulate text
 files.
+.B red
+is a restricted 
+.BR ed :
+it can edit files only in the current 
+directory and cannot execute shell commands.
 
-If invoked with the
+If invoked with a
 .I file
 argument, then a copy of
 .I file
@@ -35,7 +42,7 @@ executed to manipulate the contents of the editor buffer.
 A typical command might look like:
 .sp
 .RS
-,s/\fIold\fR/\fInew\fR/gp
+,s/\fIold\fR/\fInew\fR/g
 .RE
 .sp
 which replaces all occurences of the string
@@ -55,7 +62,10 @@ enters input mode.  This is the primary means
 of adding text to a file.
 In this mode, no commands are available;
 instead, the standard input is written
-directly to the editor buffer.  Input mode is terminated by
+directly to the editor buffer.  Lines must end with a
+.IR newline
+character (entered by hitting the RETURN key).
+Input mode is terminated by
 entering a single period  (\fI.\fR) on a line.
 
 All
@@ -106,18 +116,21 @@ Specifies a command prompt.  This may be toggled on and off with the
 command.
 
 .TP 8
-name
+.I file
 Specifies the name of a file to read.  If
-.I name
+.I file
 is prefixed with a
 bang (!), then it is interpreted as a shell command.  In this case,
 what is read is
 the standard output of
-.I name
+.I file
 executed via
 .IR sh (1).
 To read a file whose name begins with a bang, prefix the
 name with a backslash (\\).
+The default filename is set to
+.I file
+only if it is not prefixed with a bang.
 
 .SS LINE ADDRESSING
 An address represents the number of line in the buffer.
@@ -144,7 +157,7 @@ relative to the current address.
 
 One exception to the rule that addresses represent line numbers is the
 address
-.I `0'
+.I 0
 (zero).
 This means "before the first line,"
 and is legal wherever it makes sense.
@@ -317,6 +330,16 @@ in
 it must be the first character.
 A range of characters may be specified by separating the end characters
 of the range with a `-', e.g., `a-z' specifies the lower case characters.
+The following literal expressions can also be used in
+.I char-class
+to specify sets of characters:
+
+\ \ [:alnum:]\ \ [:cntrl:]\ \ [:lower:]\ \ [:space:]
+.PD 0
+\ \ [:alpha:]\ \ [:digit:]\ \ [:print:]\ \ [:upper:]
+.PD 0
+\ \ [:blank:]\ \ [:graph:]\ \ [:punct:]\ \ [:xdigit:]
+
 If `-' appears as the first or last
 character of
 .IR char-class ,
@@ -324,6 +347,26 @@ then it matches itself.
 All other characters in
 .I char-class
 match themselves.
+
+Patterns in
+.I char-class
+of the form: 
+
+\ \ [.\fIcol-elm\fR.] or,
+.PD 0
+\ \ [=\fIcol-elm\fR=]
+
+where
+.I col-elm
+is a
+.I collating element
+are interpreted according to
+.IR locale (5)
+(not currently supported).
+See
+.IR regex (3)
+for an explanation of these constructs.
+
 
 .TP 8
 [^\fIchar-class\fR]
@@ -399,13 +442,19 @@ If the comma is also omitted, then it matches exactly
 .I n
 times.
 
+.LP
+Additional regular expression operators may be defined depending on the
+particular
+.IR regex (3)
+implementation.
+
 .SS COMMANDS
 All
 .B ed
 commands are single characters, though some require additonal parameters.
-If a command's paramters extend over several lines, then
+If a command's parameters extend over several lines, then
 each line except for the last
-must end in a backslash (\\).
+must be terminated with a backslash (\\).
 
 In general, at most one command is allowed per line.
 However, most commands accept a print suffix, which is any of
@@ -461,9 +510,8 @@ The current address is set to the last line read.
 .TP 8
 .RI e \ !command
 Edits the standard output of
-.I command
-executed via
-.IR sh (1).
+.I !command
+executed as described below.
 The default filename is unchanged.
 Any lines in the buffer are deleted before the output of
 .I command
@@ -570,7 +618,7 @@ The current address is set to the resultant line.
 Marks a line with a lower case letter
 .IR lc .
 The  line can then be addressed as
-.I `'lc'
+.I 'lc
 (i.e., a single quote followed by
 .I lc
 ) in subsequent commands.  The mark is not cleared until the line is
@@ -586,7 +634,7 @@ printed.
 (.,.)m(.)
 Moves lines in the buffer.  The addressed lines are moved to after the
 right-hand destination address, which may be the address
-.IR `0'
+.IR 0
 (zero).
 The current address is set to the
 last line moved.
@@ -636,9 +684,8 @@ The current address is set to the last line read.
 .TP 8
 .RI ($)r \ !command
 Reads the standard output of
-.I command
-executed via
-.IR sh (1)
+.I !command
+executed as described below.
 to after the addressed line.
 The default filename is unchanged.
 The current address is set to the last line read.
@@ -663,6 +710,16 @@ is a postive number, causes only the
 match to be replaced.
 The current address is set the last line affected.
 
+.I re
+and
+.I replacement
+may be delimited by any character other than space and newline.
+If one or two of the last delimiters is omitted, then the last line
+affected is printed as though the print suffix
+.I `p'
+were specified.
+
+
 An unescaped `&' in
 .I replacement
 is replaced by the currently matched text.
@@ -681,15 +738,6 @@ from the last substitution is used.
 Newlines may be included in
 .I replacement
 if they are escaped with a backslash (\\).
-
-.I re
-and
-.I replacement
-may be delimited by any character other than space and newline.
-If one or two of the last delimiters is omitted, then the last line
-affected is printed as though the print suffix
-.I `p'
-were specified.
 
 .TP 8
 .RI (.,.)s [rgp]*
@@ -719,7 +767,7 @@ The current address is set to the last line affected.
 (.,.)t(.)
 Copies (i.e., transfers) the addressed lines to after the right-hand
 destination address, which may be the address
-.IR `0'
+.IR 0
 (zero).
 The current address is set to the last line
 copied.
@@ -780,9 +828,8 @@ command.
 .TP 8
 .RI (1,$)w \ !command
 Writes the addressed lines to the standard input of
-.I command
-executed via
-.IR sh (1).
+.I !command
+executed as described below.
 The default filename and current address are unchanged.
 
 .TP 8
@@ -835,9 +882,8 @@ The current line is unchanged.
 .TP 8
 .RI (.,.)! command
 Replaces the addressed lines with the output of
-.I command
-executed via
-.IR sh (1).
+.I !command
+as described above.
 The current address is set to the last line read.
 
 .TP 8
@@ -853,7 +899,7 @@ that line.
 .TP 20
 /tmp/ed.*
 Buffer file
-
+.PD 0
 .TP 20
 \fR./ed.hup\fR, $HOME/ed.hup
 First and second files to which
