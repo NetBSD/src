@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 1998/07/01 02:16:28 tv Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7 1999/03/31 18:14:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,14 +44,14 @@
 #if 0
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: cerror.S,v 1.6 1998/07/01 02:16:28 tv Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.7 1999/03/31 18:14:27 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 #ifdef _REENTRANT
-FUNC(cerror)
+FUNC(CERROR)
 	save	%sp, -96, %sp
 	call	_C_LABEL(__errno)
 	 nop
@@ -62,14 +62,14 @@ FUNC(cerror)
 #else
 	.globl	_C_LABEL(errno)
 #ifdef PIC
-FUNC(cerror)
+FUNC(CERROR)
 	ld	[%g1 + _C_LABEL(errno)], %g1
 	st	%o0, [%g1]
 	mov	-1, %o0
 	retl
 	 mov	-1, %o1
 #else
-FUNC(cerror)
+FUNC(CERROR)
 	sethi	%hi(_C_LABEL(errno)), %g1
 	st	%o0, [%g1 + %lo(_C_LABEL(errno))]
 	mov	-1, %o0
