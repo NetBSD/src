@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: fsck.h,v 1.3 2000/01/20 21:32:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -211,8 +211,7 @@ struct bufarea *getfileblk __P((struct lfs *, struct dinode *, ino_t));
 struct bufarea *lfs_bginode __P((ino_t));
 struct dinode *ginode __P((ino_t));
 struct dinode *lfs_ginode __P((ino_t));
-struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct dinode *));
-struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct dinode *));
+struct dinode *lfs_difind __P((struct lfs *, ino_t, struct dinode *));
 struct ifile *lfs_ientry __P((ino_t));
 struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
