@@ -25,7 +25,7 @@
 
 @ifinfo
 @direntry
-* grep: (grep).                   print lines matching a pattern.
+* grep: (grep).                 print lines matching a pattern.
 @end direntry
 This file documents @sc{grep}, a pattern matching engine.
 

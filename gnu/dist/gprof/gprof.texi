@@ -8,7 +8,7 @@
 @c manuals to an info tree.  zoo@cygnus.com is developing this facility.
 @format
 START-INFO-DIR-ENTRY
-* gprof: (gprof).                Profiling your program's execution
+* gprof: (gprof).               Profiling your program's execution
 END-INFO-DIR-ENTRY
 @end format
 @end ifinfo
