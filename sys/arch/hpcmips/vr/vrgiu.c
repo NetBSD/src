@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.5 2000/01/27 06:23:05 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.6 2000/02/22 04:11:24 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -294,7 +294,6 @@ vrgiu_port_read(vc, port)
 	vrgiu_chipset_tag_t vc;
 	int port;
 {
-	struct vrgiu_softc *sc = (void*)vc;
 	int on;
 
 	if (!LEGAL_OUT_PORT(port))
