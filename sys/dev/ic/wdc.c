@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.50 1998/12/03 15:38:59 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.51 1998/12/03 17:30:32 bouyer Exp $ */
 
 
 /*
@@ -839,7 +839,7 @@ wdc_probe_caps(drvp)
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;
-				printf("%s UDMA mode %d", sep, i);
+				printf("%s Ultra-DMA mode %d", sep, i);
 				sep = ",";
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
