@@ -1,12 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/06/21 01:42:48 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/11/08 00:40:08 thorpej Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 bzero.S htonl.S htons.S ntohl.S ntohs.S \
 	byte_swap_2.S byte_swap_4.S ffs.S
 #KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
-
-# Sources used to provide lint prototypes
-LSRCS+=	LintAlphaGen.c LintAlphaNet.c LintAlphaString.c LintAlphaSys.c
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
