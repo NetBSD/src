@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 1999/04/06 02:07:51 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.12 2000/11/02 21:18:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ static int obio_alist[] = {
 	OBIO_IOC_FLUSH,
 
 	OBIO_FDC,	/* floppy disk (3/80) */
-	OBIO_PRINTER_PORT, /* printer port (3/80 */
+	OBIO_PRINTER_PORT, /* printer port (3/80) */
 };
 #define OBIO_ALIST_LEN (sizeof(obio_alist) / \
                         sizeof(obio_alist[0]))
