@@ -146,13 +146,25 @@ tags: ${SRCS}
 obj:
 .else
 obj:
-	@cd ${.CURDIR}; rm -rf obj; \
-	here=`pwd`; dest=/usr/obj/`echo $$here | sed 's,/usr/src/,,'`; \
-	echo "$$here -> $$dest"; ln -s $$dest obj; \
-	if test -d /usr/obj -a ! -d $$dest; then \
-		mkdir -p $$dest; \
+	@cd ${.CURDIR}; \
+	here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
+	if test $$here != $$subdir ; then \
+		rm -rf obj; \
+		dest=/usr/obj/$$subdir ; \
+		echo "$$here -> $$dest"; ln -s $$dest obj; \
+		if test -d /usr/obj -a ! -d $$dest; then \
+			mkdir -p $$dest; \
+		else \
+			true; \
+		fi; \
 	else \
-		true; \
+		true ; \
+		dest=$$here/obj ; \
+		/bin/rm -f $$dest 2> /dev/null || true; \
+		echo "making $$here/obj" ; \
+		if test ! -d obj ; then \
+			mkdir $$here/obj; \
+		fi; \
 	fi;
 .endif
 .endif
