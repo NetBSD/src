@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2003/01/19 19:49:57 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2003/01/20 22:32:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -200,6 +200,11 @@ trap(struct lwp *l, struct trapframe *tf)
 		printf("pid=%d cmd=%s, usp=0x%lx ", p->p_pid, p->p_comm,
 		    (uintptr_t)tf->tf_caller.r15);
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
+		if (traptype & T_USER) {
+			sig = SIGSEGV;
+			ucode = vaddr;
+			break;
+		}
 #if defined(DDB)
 		kdb_trap(traptype, tf);
 #else
