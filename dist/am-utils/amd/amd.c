@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.1.1.2 2000/11/19 23:43:33 wiz Exp $	*/
+/*	$NetBSD: amd.c,v 1.2 2000/11/20 03:19:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -478,7 +478,7 @@ main(int argc, char *argv[])
   verstr = strtok(get_version_string(), "\n");
   plog(XLOG_INFO, "AM-UTILS VERSION INFORMATION:");
   while (verstr) {
-    plog(XLOG_INFO, verstr);
+    plog(XLOG_INFO, "%s", verstr);
     verstr = strtok(NULL, "\n");
   }
 
