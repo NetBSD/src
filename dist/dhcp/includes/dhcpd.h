@@ -722,12 +722,15 @@ struct client_config {
 
 	struct iaddrlist *reject_list;	/* Servers to reject. */
 
-	int omapi_port;			/* port on which to accept OMAPI
-					   connections, or -1 for no
-					   listener. */
 	int do_forward_update;		/* If nonzero, and if we have the
 					   information we need, update the
 					   A record for the address we get. */
+
+	omapi_auth_key_t *omapi_key;	/* Key to use for authenticating
+					   OMAPI connections. */
+	int omapi_port;			/* Port on which to listen for OMAPI
+					   connections. */
+
 };
 
 /* Per-interface state used in the dhcp client... */
