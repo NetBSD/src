@@ -1,4 +1,4 @@
-#	$NetBSD: DREAMCAST,v 1.4 2000/08/12 06:53:38 msaitoh Exp $
+#	$NetBSD: DREAMCAST,v 1.5 2000/08/12 06:59:02 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -72,10 +72,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables
 file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
 #file-system 	NFS		# Network File System client
-#file-system 	PROCFS		# /proc
-#file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	PROCFS		# /proc
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
 
 # File system options
 #options 	QUOTA		# UFS quotas
