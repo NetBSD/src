@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6.2.1 2002/01/08 00:25:28 nathanw Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.6.2.2 2002/01/09 02:50:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.1 2002/01/08 00:25:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.2 2002/01/09 02:50:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,13 +176,13 @@ procfs_machdep_allocvp(struct vnode *vp)
 }
 
 int
-procfs_machdep_rw(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+procfs_machdep_rw(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
     struct uio *uio)
 {
 
 	switch (pfs->pfs_type) {
 	case Pmachdep_xmmregs:
-		return (procfs_machdep_doxmmregs(curp, p, pfs, uio));
+		return (procfs_machdep_doxmmregs(curp, l, pfs, uio));
 
 	default:
 		panic("procfs_machdep_rw");

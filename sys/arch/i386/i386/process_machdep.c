@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.5 2002/01/08 00:25:28 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.6 2002/01/09 02:50:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.5 2002/01/08 00:25:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.6 2002/01/09 02:50:41 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -402,20 +402,20 @@ process_set_pc(struct lwp *l, caddr_t addr)
 
 #ifdef __HAVE_PTRACE_MACHDEP
 int
-process_machdep_read_xmmregs(p, regs)
-	struct proc *p;
+process_machdep_read_xmmregs(l, regs)
+	struct lwp *l;
 	struct xmmregs *regs;
 {
-	union savefpu *frame = process_fpframe(p);
+	union savefpu *frame = process_fpframe(l);
 
 	if (i386_use_fxsave == 0)
 		return (EINVAL);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
+		extern struct lwp *npxproc;
 
-		if (npxproc == p)
+		if (npxproc == l)
 			npxsave();
 #endif
 	} else {
@@ -434,7 +434,7 @@ process_machdep_read_xmmregs(p, regs)
 		frame->sv_xmm.sv_env.en_sw = 0x0000;
 		frame->sv_xmm.sv_env.en_tw = 0x00;
 
-		p->p_md.md_flags |= MDP_USEDFPU;  
+		l->l_md.md_flags |= MDP_USEDFPU;  
 	}
 
 	memcpy(regs, &frame->sv_xmm, sizeof(*regs));
@@ -442,24 +442,24 @@ process_machdep_read_xmmregs(p, regs)
 }
 
 int
-process_machdep_write_xmmregs(p, regs)
-	struct proc *p;
+process_machdep_write_xmmregs(l, regs)
+	struct lwp *l;
 	struct xmmregs *regs;
 {
-	union savefpu *frame = process_fpframe(p);
+	union savefpu *frame = process_fpframe(l);
 
 	if (i386_use_fxsave == 0)
 		return (EINVAL);
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
+		extern struct lwp *npxproc;
 
-		if (npxproc == p)
+		if (npxproc == l)
 			npxdrop();
 #endif
 	} else {
-		p->p_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
 	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
@@ -467,8 +467,9 @@ process_machdep_write_xmmregs(p, regs)
 }
 
 int
-ptrace_machdep_dorequest(p, t, req, addr, data)
-	struct proc *p, *t;
+ptrace_machdep_dorequest(p, lt, req, addr, data)
+	struct proc *p;
+	struct lwp *lt;
 	int req;
 	caddr_t addr;
 	int data;
@@ -483,7 +484,7 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
 
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
-		if (!procfs_machdep_validxmmregs(t, NULL))
+		if (!procfs_machdep_validxmmregs(lt, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = addr;
@@ -495,7 +496,7 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_machdep_doxmmregs(p, t, NULL, &uio));
+			return (procfs_machdep_doxmmregs(p, lt, NULL, &uio));
 		}
 	}
 
@@ -512,9 +513,9 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
  */
 
 int
-procfs_machdep_doxmmregs(curp, p, pfs, uio)
+procfs_machdep_doxmmregs(curp, l, pfs, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
@@ -523,7 +524,7 @@ procfs_machdep_doxmmregs(curp, p, pfs, uio)
 	char *kv;
 	int kl;
 
-	if ((error = procfs_checkioperm(curp, p)) != 0)
+	if ((error = procfs_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
@@ -534,34 +535,34 @@ procfs_machdep_doxmmregs(curp, p, pfs, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
 	if (kl < 0)
 		error = EINVAL;
 	else
-		error = process_machdep_read_xmmregs(p, &r);
+		error = process_machdep_read_xmmregs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_proc->p_stat != SSTOP)
 			error = EBUSY;
 		else
-			error = process_machdep_write_xmmregs(p, &r);
+			error = process_machdep_write_xmmregs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);
 }
 
 int
-procfs_machdep_validxmmregs(p, mp)
-	struct proc *p;
+procfs_machdep_validxmmregs(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
 
-	if (p->p_flag & P_SYSTEM)
+	if (l->l_proc->p_flag & P_SYSTEM)
 		return (0);
 
 	return (i386_use_fxsave);
