@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2000/11/03 12:20:55 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2001/02/27 03:47:02 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -180,6 +180,9 @@ obio_print(aux, obio)
 
 	if (ca->ca_nreg > 0)
 		printf(" offset 0x%x", ca->ca_reg[0]);
+
+	if (ca->ca_nintr > 0)
+		printf(" irq %d", ca->ca_intr[0]);
 
 	return UNCONF;
 }
