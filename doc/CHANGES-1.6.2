@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.36 2003/06/19 00:19:13 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.37 2003/06/19 00:23:23 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -527,3 +527,11 @@ sbin/mount_union/mount_union.8			1.14
 
 	Add some mdoc macros. Add text from PR 13878, modified.
 	[fair, ticket #1283]
+
+usr.bin/du/du.c					1.21 (via patch)
+
+	If no files are specified on the command line, put { ".", NULL } in
+	it's own little array instead of writing over argv.  Fixes problems
+	where du shows up in ps as ". fts_open `%s'" (and shorter or longer
+	combinations of that depending in what argc was).
+	[simonb, ticket #1284]
