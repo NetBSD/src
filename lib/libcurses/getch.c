@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.22 2000/04/22 14:32:45 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.23 2000/04/22 21:14:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.22 2000/04/22 14:32:45 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.23 2000/04/22 21:14:19 thorpej Exp $");
 #endif
 #endif					/* not lint */
 
@@ -352,8 +352,9 @@ new_keymap(void)
 		new_map->mapping[i] = -1;	/* no mapping for char */
 	}
 
-          /* key array will be allocated when first key is added */
-        
+	/* key array will be allocated when first key is added */
+	new_map->key = NULL;
+
 	return new_map;
 }
 
