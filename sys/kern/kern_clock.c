@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.41 1997/05/05 19:25:26 tls Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.42 1997/05/21 19:55:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -1330,41 +1330,3 @@ sysctl_clockrate(where, sizep)
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
 }
 
-#ifdef DDB
-#include <machine/db_machdep.h>
-
-#include <ddb/db_interface.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
-
-void db_show_callout(addr, haddr, count, modif)
-	db_expr_t addr; 
-	int haddr; 
-	db_expr_t count;
-	char *modif;
-{
-	register struct callout *p1;
-	register int	cum;
-	register int	s;
-	db_expr_t	offset;
-	char		*name;
-
-	db_printf("      cum     ticks      arg  func\n");
-	s = splhigh();
-	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
-		register int t = p1->c_time;
-
-		if (t > 0)
-			cum += t;
-
-		db_find_sym_and_offset((db_addr_t)p1->c_func, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-		db_printf("%9d %9d %p  %s (%p)\n",
-			  cum, t, p1->c_arg, name, p1->c_func);
-	}
-	splx(s);
-}
-#endif
