@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1995/04/10 07:01:04 mycroft Exp $ */
+/*	$NetBSD: conf.c,v 1.26 1995/04/10 10:02:13 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,33 +79,33 @@ bdev_decl(fd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/*  0 */
-	bdev_notdef(),			/*  1 */
-	bdev_notdef(),			/*  2 */
-	bdev_swap_init(),		/*  3 */
-	bdev_notdef(),			/*  4 */
-	bdev_notdef(),			/*  5 */
-	bdev_notdef(),			/*  6 */
-	bdev_disk_init(NSD,sd),		/*  7: SCSI disk */
-	bdev_disk_init(NVND,vnd),	/*  8: vnode disk driver */
-	bdev_notdef(),			/*  9: */
-	bdev_notdef(),			/* 10: */
+	bdev_notdef(),			/* 0 */
+	bdev_notdef(),			/* 1 */
+	bdev_notdef(),			/* 2 */
+	bdev_swap_init(),		/* 3 */
+	bdev_notdef(),			/* 4 */
+	bdev_notdef(),			/* 5 */
+	bdev_notdef(),			/* 6 */
+	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
+	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
+	bdev_notdef(),			/* 9 */
+	bdev_notdef(),			/* 10 */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
-	bdev_notdef(),			/* 12: */
-	bdev_notdef(),			/* 13: */
-	bdev_notdef(),			/* 14: */
-	bdev_notdef(),			/* 15: */
+	bdev_notdef(),			/* 12 */
+	bdev_notdef(),			/* 13 */
+	bdev_notdef(),			/* 14 */
+	bdev_notdef(),			/* 15 */
 #define fdopen  Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 16: floppy disk */
 #undef  fdopen
-	bdev_notdef(),			/* 17: */
+	bdev_notdef(),			/* 17 */
 	bdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
-	bdev_lkm_dummy(),		/* 19: LKM STUB */
-	bdev_lkm_dummy(),		/* 20: LKM STUB */
-	bdev_lkm_dummy(),		/* 21: LKM STUB */
-	bdev_lkm_dummy(),		/* 22: LKM STUB */
-	bdev_lkm_dummy(),		/* 23: LKM STUB */
-	bdev_lkm_dummy(),		/* 24: LKM STUB */
+	bdev_lkm_dummy(),		/* 19 */
+	bdev_lkm_dummy(),		/* 20 */
+	bdev_lkm_dummy(),		/* 21 */
+	bdev_lkm_dummy(),		/* 22 */
+	bdev_lkm_dummy(),		/* 23 */
+	bdev_lkm_dummy(),		/* 24 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -293,13 +293,13 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 109 */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 112: loadable kernel modules */
-	cdev_lkm_dummy(),		/* 113: LKM STUB */
-	cdev_lkm_dummy(),		/* 114: LKM STUB */
-	cdev_lkm_dummy(),		/* 115: LKM STUB */
-	cdev_lkm_dummy(),		/* 116: LKM STUB */
-	cdev_lkm_dummy(),		/* 117: LKM STUB */
-	cdev_lkm_dummy(),		/* 118: LKM STUB */
+	cdev_lkm_init(NLKM,lkm),	/* 112: loadable module driver */
+	cdev_lkm_dummy(),		/* 113 */
+	cdev_lkm_dummy(),		/* 114 */
+	cdev_lkm_dummy(),		/* 115 */
+	cdev_lkm_dummy(),		/* 116 */
+	cdev_lkm_dummy(),		/* 117 */
+	cdev_lkm_dummy(),		/* 118 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

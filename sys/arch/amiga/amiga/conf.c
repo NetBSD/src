@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1995/04/10 09:22:28 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1995/04/10 10:01:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -74,8 +74,8 @@ bdev_decl(fd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* 0: */
-	bdev_notdef(),			/* 1: */
+	bdev_notdef(),			/* 0 */
+	bdev_notdef(),			/* 1 */
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 #undef	fdopen
@@ -255,6 +255,7 @@ iszerodev(dev)
 }
 
 static int chrtoblktab[] = {
+	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,

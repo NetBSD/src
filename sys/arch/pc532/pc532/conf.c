@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1995/04/10 07:43:49 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1995/04/10 10:02:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -124,14 +124,14 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NSCN,scn),	/* 8: serial ports */
-	cdev_notdef(),			/* 9: */
+	cdev_notdef(),			/* 9 */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_fd_init(1,fd),		/* 11: file descriptor pseudo-device */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
 	cdev_disk_init(NVND,vnd),	/* 13: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 14: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 15: network tunnel */
-	cdev_notdef(),			/* 16: */
+	cdev_notdef(),			/* 16 */
 	cdev_lpt_init(NLPT, lpt),	/* 17: Centronix */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

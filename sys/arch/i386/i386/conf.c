@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62 1995/04/10 04:21:20 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.63 1995/04/10 10:01:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -183,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #define	fdopen	Fdopen
-	cdev_disk_init(NFDC,fd),	/* 9: floppy diskette */
+	cdev_disk_init(NFDC,fd),	/* 9: floppy disk */
 #undef	fdopen
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
@@ -193,15 +193,15 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
-	cdev_notdef(),			/* 18: unused */
-	cdev_notdef(),			/* 19: unused */
-	cdev_notdef(),			/* 20: unused */
-	cdev_notdef(),			/* 21: unused */
+	cdev_notdef(),			/* 18 */
+	cdev_notdef(),			/* 19 */
+	cdev_notdef(),			/* 20 */
+	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_notdef(),			/* 24: unused */
-	cdev_notdef(),			/* 25: unused */
-	cdev_notdef(),			/* 26: unused */
+	cdev_notdef(),			/* 24 */
+	cdev_notdef(),			/* 25 */
+	cdev_notdef(),			/* 26 */
 	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
@@ -221,7 +221,7 @@ struct cdevsw	cdevsw[] =
 #ifdef COMPAT_SVR4
 	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
 #else
-	cdev_notdef(),			/* 43: unused */
+	cdev_notdef(),			/* 43 */
 #endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
