@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.19 1995/06/04 05:07:03 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.20 1995/06/04 05:58:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -239,23 +239,20 @@ next:
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
 	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
-		if (IA_SIN(ia)->sin_addr.s_addr == ip->ip_dst.s_addr)
+		if (ip->ip_dst.s_addr == ia->ia_addr.sin_addr.s_addr)
 			goto ours;
 		if (
 #ifdef	DIRECTED_BROADCAST
 		    ia->ia_ifp == m->m_pkthdr.rcvif &&
 #endif
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
-			if (ip->ip_dst.s_addr ==
-			    satosin(&ia->ia_broadaddr)->sin_addr.s_addr)
-				goto ours;
-			if (ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr)
-				goto ours;
-			/*
-			 * Look for all-0's host part (old broadcast addr),
-			 * either for subnet or net.
-			 */
-			if (ip->ip_dst.s_addr == ia->ia_subnet ||
+			if (ip->ip_dst.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
+			    ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr ||
+			    /*
+			     * Look for all-0's host part (old broadcast addr),
+			     * either for subnet or net.
+			     */
+			    ip->ip_dst.s_addr == ia->ia_subnet ||
 			    ip->ip_dst.s_addr == ia->ia_net)
 				goto ours;
 		}
@@ -732,7 +729,7 @@ ip_dooptions(m)
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
-			bcopy((caddr_t)&(IA_SIN(ia)->sin_addr),
+			bcopy((caddr_t)&ia->ia_addr.sin_addr,
 			    (caddr_t)(cp + off), sizeof(struct in_addr));
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
@@ -764,7 +761,7 @@ ip_dooptions(m)
 				code = ICMP_UNREACH_HOST;
 				goto bad;
 			}
-			bcopy((caddr_t)&(IA_SIN(ia)->sin_addr),
+			bcopy((caddr_t)&ia->ia_addr.sin_addr,
 			    (caddr_t)(cp + off), sizeof(struct in_addr));
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
@@ -794,7 +791,7 @@ ip_dooptions(m)
 							    m->m_pkthdr.rcvif);
 				if (ia == 0)
 					continue;
-				bcopy((caddr_t)&IA_SIN(ia)->sin_addr,
+				bcopy((caddr_t)&ia->ia_addr.sin_addr,
 				    (caddr_t)sin, sizeof(struct in_addr));
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
