@@ -1,8 +1,8 @@
-/*	$NetBSD: pathnames.h,v 1.3 1997/01/09 20:21:14 tls Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 1997/02/16 15:01:03 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.2 (Berkeley) 4/9/90
- *	$NetBSD: pathnames.h,v 1.3 1997/01/09 20:21:14 tls Exp $
+ *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	$NetBSD: pathnames.h,v 1.4 1997/02/16 15:01:03 mrg Exp $
  */
 
 #define	_PATH_RLOGIN	"/usr/bin/rlogin"
