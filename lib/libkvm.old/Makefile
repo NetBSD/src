@@ -1,10 +1,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.2 1996/04/01 19:28:03 cgd Exp $
+#	$Id: Makefile,v 1.3 1996/05/09 12:41:38 pk Exp $
 
 .PATH: ${.CURDIR}/../libkvm
 
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
+CFLAGS+=-I- -I${.CURDIR}
 
 # Try most specific name first.
 .if	exists(kvm_${MACHINE}.c)
