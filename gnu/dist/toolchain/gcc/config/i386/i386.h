@@ -1581,17 +1581,8 @@ do {						\
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
 
-#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
-{									\
-  /* Compute offset from the end of the jmp to the target function.  */	\
-  rtx disp = expand_binop (SImode, sub_optab, FNADDR,			\
-			   plus_constant (TRAMP, 10),			\
-			   NULL_RTX, 1, OPTAB_DIRECT);			\
-  emit_move_insn (gen_rtx_MEM (QImode, TRAMP), GEN_INT (0xb9));		\
-  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 1)), CXT); \
-  emit_move_insn (gen_rtx_MEM (QImode, plus_constant (TRAMP, 5)), GEN_INT (0xe9));\
-  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 6)), disp); \
-}
+#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT) \
+  x86_initialize_trampoline ((TRAMP), (FNADDR), (CXT))
 
 /* Definitions for register eliminations.
 
@@ -2766,6 +2757,7 @@ extern int ix86_can_use_return_insn_p ();
 extern int small_shift_operand ();
 extern char *output_ashl ();
 extern int memory_address_info ();
+extern void x86_initialize_trampoline ();
 
 #ifdef NOTYET
 extern struct rtx_def *copy_all_rtx ();

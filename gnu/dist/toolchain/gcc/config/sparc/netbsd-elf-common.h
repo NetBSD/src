@@ -64,6 +64,9 @@
 
 #undef STDC_0_IN_SYSTEM_HEADERS
 
+/* Attempt to enable execute permissions on the stack.  */
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+
 /* XXX Redefine this; <sparc/sparc.h> mucks with it. */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);
