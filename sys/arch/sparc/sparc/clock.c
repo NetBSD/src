@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.51 1997/05/02 08:30:42 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -245,8 +245,7 @@ oclockattach(parent, self, aux)
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	i7 = (struct intersil7170 *)
-		mapiodev(ra->ra_reg, 0, sizeof(*i7), ca->ca_bustype);
+	i7 = (struct intersil7170 *) mapiodev(ra->ra_reg, 0, sizeof(*i7));
 
 	idp = &idprom;
 	h = idp->id_machine << 24;
@@ -332,7 +331,7 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE, ca->ca_bustype);
+	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE);
 
 	eeprom_nvram = 0;
 #endif /* SUN4 */
@@ -406,8 +405,7 @@ clockattach(parent, self, aux)
 		/*
 		 * the MK48T08 is 8K
 		 */
-		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192,
-						 ca->ca_bustype);
+		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0, 8192);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + 4096,
 				VM_PROT_READ, 1);
@@ -417,8 +415,7 @@ clockattach(parent, self, aux)
 		 * the MK48T02 is 2K
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_reg, 0,
-						 sizeof *clockreg,
-						 ca->ca_bustype);
+						 sizeof *clockreg);
 		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 	}
 	idp = &cl->cl_idprom;
@@ -493,9 +490,9 @@ timerattach(parent, self, aux)
 
 	if (CPU_ISSUN4M) {
 		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
-			     sizeof(struct timer_4m), ca->ca_bustype);
+			     sizeof(struct timer_4m));
 		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
-			     sizeof(struct counter_4m), ca->ca_bustype);
+			     sizeof(struct counter_4m));
 		timerreg_4m = (struct timer_4m *)TIMERREG_VA;
 		counterreg_4m = (struct counter_4m *)COUNTERREG_VA;
 
@@ -513,7 +510,7 @@ timerattach(parent, self, aux)
 		 * microtime() faster (in SUN4/SUN4C kernel only).
 		 */
 		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
-			     sizeof(struct timerreg_4), ca->ca_bustype);
+			     sizeof(struct timerreg_4));
 
 		cnt = &timerreg4->t_c14.t_counter;
 		lim = &timerreg4->t_c14.t_limit;
