@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.55 1998/01/11 23:32:55 pk Exp $
+# 	$NetBSD: GENERIC,v 1.56 1998/01/20 22:12:51 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -338,15 +338,17 @@ pseudo-device	ccd	4
 ## directly like the sun4c on-board, one uses the ledma device like the
 ## sun4m on-board, and one uses the lebuffer device.
 
-le0	at obio0 addr 0xf9000000 level 6		# sun4/300
-le0	at sbus0 slot ? offset ?			# sun4c on-board
-ledma0	at sbus0 slot ? offset ?			# sun4m on-board
-le0	at ledma0					# sun4m on-board
-le*	at sbus? slot ? offset ?			# SBus
-ledma*	at sbus? slot ? offset ?			# SBus
-le*	at ledma?					# SBus
+le0		at obio0 addr 0xf9000000 level 6	# sun4/300
+le0		at sbus0 slot ? offset ?		# sun4c on-board
+ledma0		at sbus0 slot ? offset ?		# sun4m on-board
+le0		at ledma0				# sun4m on-board
+le*		at sbus? slot ? offset ?		# SBus
+ledma*		at sbus? slot ? offset ?		# SBus
+le*		at ledma?				# SBus
+lebuffer0	at sbus? slot ? offset ?		# SBus
+le0		at lebuffer?				# SBus
 lebuffer*	at sbus? slot ? offset ?		# SBus
-le*	at lebuffer?					# SBus
+le*		at lebuffer?				# SBus
 
 
 ## sun4/100 and sun4/200 Ethernet - an Intel 82586 on-board
