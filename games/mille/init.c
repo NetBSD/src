@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)init.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init.c,v 1.3 1994/01/13 01:19:58 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 5/31/93";*/
+static char rcsid[] = "$Id: init.c,v 1.4 1994/05/12 17:39:31 jtc Exp $";
 #endif /* not lint */
 
 # include	"mille.h"
@@ -94,7 +94,7 @@ shuffle() {
 		r = roll(1, DECK_SZ) - 1;
 		if (r < 0 || r > DECK_SZ - 1) {
 			fprintf(stderr, "shuffle: card no. error: %d\n", r);
-			die();
+			die(1);
 		}
 		temp = Deck[r];
 		Deck[r] = Deck[i];
@@ -185,8 +185,7 @@ newscore() {
 		mvaddstr(4, 37, "300");
 		new = TRUE;
 	}
-	else if (((Window == W_FULL || Finished) ^ was_full) ||
-		 pp->was_finished != Finished) {
+	else if ((Window == W_FULL || Finished) ^ was_full) {
 		move(5, 1);
 		clrtobot();
 		new = TRUE;
@@ -197,7 +196,7 @@ newscore() {
 		for (i = 0; i < SCORE_Y; i++)
 			mvaddch(i, 0, '|');
 		move(SCORE_Y - 1, 1);
-		for (i = 0; i < SCORE_X - 1; i++)
+		for (i = 0; i < SCORE_X; i++)
 			addch('_');
 		for (pp = Player; pp <= &Player[COMP]; pp++) {
 			pp->sh_hand_tot = -1;

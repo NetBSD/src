@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)comp.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: comp.c,v 1.2 1993/08/01 18:54:05 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)comp.c	8.1 (Berkeley) 5/31/93";*/
+static char rcsid[] = "$Id: comp.c,v 1.3 1994/05/12 17:39:27 jtc Exp $";
 #endif /* not lint */
 
 # include	"mille.h"
@@ -64,6 +64,8 @@ calcmove()
 	cango = 0;
 	canstop = FALSE;
 	foundend = FALSE;
+
+	/* Try for a Coup Forre, and see what we have. */
 	for (i = 0; i < NUM_CARDS; i++)
 		count[i] = 0;
 	for (i = 0; i < HAND_SZ; i++) {
@@ -104,12 +106,16 @@ norm:
 			playit[i] = TRUE;
 			break;
 		}
-		++count[card];
+		if (card >= 0)
+			++count[card];
 	}
+
+	/* No Coup Forre.  Draw to fill hand, then restart, as needed. */
 	if (pp->hand[0] == C_INIT && Topcard > Deck) {
 		Movetype = M_DRAW;
 		return;
 	}
+
 #ifdef DEBUG
 	if (Debug)
 		fprintf(outf, "CALCMOVE: cango = %d, canstop = %d, safe = %d\n",
@@ -375,16 +381,8 @@ normbad:
 	if (cango) {
 play_it:
 		mvaddstr(MOVE_Y + 1, MOVE_X, "PLAY\n");
-#ifdef DEBUG
-		if (Debug)
-			getmove();
-		if (!Debug || Movetype == M_DRAW) {
-#else
-		if (Movetype == M_DRAW) {
-#endif
-			Movetype = M_PLAY;
-			Card_no = nummax;
-		}
+		Movetype = M_PLAY;
+		Card_no = nummax;
 	}
 	else {
 		if (issafety(pp->hand[nummin])) { /* NEVER discard a safety */
@@ -392,20 +390,15 @@ play_it:
 			goto play_it;
 		}
 		mvaddstr(MOVE_Y + 1, MOVE_X, "DISCARD\n");
-#ifdef DEBUG
-		if (Debug)
-			getmove();
-		if (!Debug || Movetype == M_DRAW) {
-#else
-		if (Movetype == M_DRAW) {
-#endif
-			Movetype = M_DISCARD;
-			Card_no = nummin;
-		}
+		Movetype = M_DISCARD;
+		Card_no = nummin;
 	}
 	mvprintw(MOVE_Y + 2, MOVE_X, "%16s", C_name[pp->hand[Card_no]]);
 }
 
+/*
+ * Return true if the given player could conceivably win with his next card.
+ */
 onecard(pp)
 register PLAY	*pp;
 {
@@ -416,7 +409,7 @@ register PLAY	*pp;
 	card = -1;
 	if (pp->can_go || ((isrepair(bat) || bat == C_STOP || spd == C_LIMIT) &&
 			   Numseen[S_RIGHT_WAY] != 0) ||
-	    Numseen[safety(bat)] != 0)
+	    bat >= 0 && Numseen[safety(bat)] != 0)
 		switch (End - pp->mileage) {
 		  case 200:
 			if (pp->nummiles[C_200] == 2)

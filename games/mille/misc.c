@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,18 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)misc.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: misc.c,v 1.2 1993/08/01 18:53:59 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 5/31/93";*/
+static char rcsid[] = "$Id: misc.c,v 1.3 1994/05/12 17:39:35 jtc Exp $";
 #endif /* not lint */
+
+#include <sys/file.h>
+#include <termios.h>
 
 #include	"mille.h"
 #ifndef	unctrl
 #include	"unctrl.h"
 #endif
 
-# include	<sys/file.h>
 
 # ifdef	attron
 #	include	<term.h>
@@ -197,6 +199,9 @@ register int	promptno; {
 			refresh();
 			Saved = save();
 			continue;
+		  case CTRL('L'):
+			wrefresh(curscr);
+			break;
 		  default:
 			addstr(unctrl(c));
 			refresh();
@@ -212,8 +217,6 @@ register int	promptno; {
  * it.  Exit appropriately.
  */
 check_more() {
-
-	flush_input();
 
 	On_exit = TRUE;
 	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000)
@@ -236,7 +239,7 @@ check_more() {
 	if (!Saved && getyn(SAVEGAMEPROMPT))
 		if (!save())
 			return;
-	die();
+	die(0);
 }
 
 readch()
@@ -248,15 +251,4 @@ readch()
 		if (cnt > 100)
 			exit(1);
 	return c;
-}
-
-flush_input()
-{
-# ifdef	TIOCFLUSH
-	static int	ioctl_args = O_RDONLY;
-
-	(void) ioctl(fileno(stdin), TIOCFLUSH, &ioctl_args);
-# else
-	fflush(stdin);
-# endif
 }

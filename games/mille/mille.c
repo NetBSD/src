@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1982 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1982, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mille.c	5.5 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: mille.c,v 1.2 1993/08/01 18:54:01 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)mille.c	8.1 (Berkeley) 5/31/93";*/
+static char rcsid[] = "$Id: mille.c,v 1.3 1994/05/12 17:39:33 jtc Exp $";
 #endif /* not lint */
 
 # include	"mille.h"
@@ -82,13 +82,6 @@ reg char	*av[]; {
 	}
 	Play = PLAYER;
 	initscr();
-# ifdef attron
-#	define	CA	cursor_address
-# endif
-	if (!CA) {
-		printf("Sorry.  Need cursor addressing to play mille\n");
-		exit(-1);
-	}
 	delwin(stdscr);
 	stdscr = Board = newwin(BOARD_Y, BOARD_X, 0, 0);
 	Score = newwin(SCORE_Y, SCORE_X, 0, 40);
@@ -152,20 +145,20 @@ rub() {
 
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))
-		die();
+		die(0);
 	(void)signal(SIGINT, rub);
 }
 
 /*
  *	Time to go beddy-by
  */
-die() {
+die(code)
+int code; {
 
 	(void)signal(SIGINT, SIG_IGN);
 	if (outf)
 		fflush(outf);
 	mvcur(0, COLS - 1, LINES - 1, 0);
 	endwin();
-	exit(1);
+	exit(code);
 }
-
