@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.11 1997/11/06 00:08:02 lukem Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.12 1998/07/03 11:50:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.11 1997/11/06 00:08:02 lukem Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.12 1998/07/03 11:50:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,9 +134,6 @@ struct formats {
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
 	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
-#ifdef notdef
-	{ "mail",	validate_user,		sendmail,	recvmail, 1 },
-#endif
 	{ 0 }
 };
 
