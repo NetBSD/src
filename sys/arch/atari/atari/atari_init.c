@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.48 2000/03/28 23:57:25 simonb Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.48.4.1 2000/07/06 11:35:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -174,6 +174,7 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  * 
  * Very crude 68040 support by Michael L. Hitch.
  */
+int kernel_copyback = 1;
 
 void
 start_c(id, ttphystart, ttphysize, stphysize, esym_addr)
@@ -367,13 +368,19 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
 	if (mmutype == MMU_68040) {
+
+	    if (kernel_copyback)
+		pg_proto |= PG_CCB;
+
 	    for (; i < (u_int)Sysseg; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
+
 	    pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
-	    for (; i < (u_int)&Sysseg[kstsize * NPTEPG]; i += NBPG,
-							 pg_proto += NBPG)
+	    for (; i < pstart; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
-	    pg_proto = (pg_proto & ~PG_CI) | PG_CCB;
+	    pg_proto = (pg_proto & ~PG_CI);
+	    if (kernel_copyback)
+		pg_proto |= PG_CCB;
 	}
 #endif /* defined(M68040) || defined(M68060) */
 
