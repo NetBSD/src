@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.291 2001/01/09 23:20:22 rh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.292 2001/01/12 05:14:37 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3026,6 +3026,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LAN Media Corporation",
 	    "SSI",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_T1,
+	    0,
+	    "LAN Media Corporation",
+	    "T1 Interface",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
