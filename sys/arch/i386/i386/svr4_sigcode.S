@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.2 2002/11/23 02:05:51 lha Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.3 2002/11/23 10:50:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,69 +85,9 @@
 #include <machine/segments.h>
 #include <machine/trap.h>
 #include <compat/svr4/svr4_syscall.h>
-
-/*
- * override user-land alignment before including asm.h
- */
-#ifdef __ELF__
-#define	ALIGN_DATA	.align	4
-#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
-#else
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
-#endif
-#define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 
-/*
- * These are used on interrupt or trap entry or exit.
- */
-#define	INTRENTRY \
-	pushl	%eax		; \
-	pushl	%ecx		; \
-	pushl	%edx		; \
-	pushl	%ebx		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	pushl	%ebp		; \
-	pushl	%esi		; \
-	pushl	%edi		; \
-	pushl	%ds		; \
-	pushl	%es		; \
-	movw	%ax,%ds		; \
-	movw	%ax,%es		; \
-	pushl	%fs		; \
-	pushl	%gs		; \
-	movw	%ax,%gs		; \
-	movw	$GSEL(GCPU_SEL, SEL_KPL),%ax	; \
-	movw	%ax,%fs		
-	
-#define	INTRFASTEXIT \
-	popl	%gs		; \
-	popl	%fs		; \
-	popl	%es		; \
-	popl	%ds		; \
-	popl	%edi		; \
-	popl	%esi		; \
-	popl	%ebp		; \
-	popl	%ebx		; \
-	popl	%edx		; \
-	popl	%ecx		; \
-	popl	%eax		; \
-	addl	$8,%esp		; \
-	iret
-	
-#define _CONCAT(a,b) a/**/b
-
-#if defined(MULTIPROCESSOR)
-#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
-#else
-#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
-#endif
-#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
-#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
-	
 /*
  * Signal trampoline; copied to top of user stack.
  */
