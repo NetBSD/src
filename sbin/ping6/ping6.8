@@ -1,5 +1,5 @@
-.\"     $NetBSD: ping6.8,v 1.8 2000/06/12 16:21:04 itojun Exp $
-.\"     $KAME: ping6.8,v 1.23 2000/06/12 16:16:09 itojun Exp $
+.\"     $NetBSD: ping6.8,v 1.8.2.1 2001/03/11 20:43:51 he Exp $
+.\"	$KAME: ping6.8,v 1.31 2000/11/11 00:40:56 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -39,9 +39,9 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
 .\" without ipsec, or new ipsec
-.Op Fl dfHnNqRvw
+.Op Fl dfHnNqRtvw
 .\" old ipsec
-.\" .Op Fl AdEfnNqRvw
+.\" .Op Fl AdEfnNqRtvw
 .Bk -words
 .Op Fl a Ar addrtype
 .Ek
@@ -183,7 +183,7 @@ option.
 If
 .Ar preload
 is specified,
-.Nm ping
+.Nm
 sends that many packets as fast as possible before falling into its normal
 mode of behavior.
 Only the super-user may use this option.
@@ -258,6 +258,13 @@ header data.
 You may need to specify
 .Fl b
 as well to extend socket buffer size.
+.It Fl t
+Generate ICMPv6 Node Information supported query types query,
+rather than echo-request.
+.Fl s
+has no effect if
+.Fl t
+is specified.
 .It Fl v
 Verbose output.
 .Tn ICMP
@@ -265,7 +272,7 @@ packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
 .It Fl w
-Generate ICMPv6 Node Information FQDN query, rather than echo-request.
+Generate ICMPv6 Node Information DNS Name query, rather than echo-request.
 .Fl s
 has no effect if
 .Fl w
@@ -334,7 +341,7 @@ during normal operations or from automated scripts.
 .\" If less than eight bytes of pad are specified, no round trip times are
 .\" given.
 .Sh DUPLICATE AND DAMAGED PACKETS
-.Nm Ping6
+.Nm
 will report duplicate and damaged packets.
 Duplicate packets should never occur when pinging a unicast address,
 and seem to be caused by
@@ -349,7 +356,7 @@ to the same request.
 .Pp
 Damaged packets are obviously serious cause for alarm and often
 indicate broken hardware somewhere in the
-.Nm ping
+.Nm
 packet's path
 .Pq in the network or in the hosts .
 .Sh TRYING DIFFERENT DATA PATTERNS
@@ -380,10 +387,10 @@ You can then examine this file for repeated patterns that you can test
 using the
 .Fl p
 option of
-.Nm Ns .
-.Sh RETURN VALUES
+.Nm "" .
+.Sh EXIT STATUS
 .Nm
-returns 0 on success (the host is alive),
+exits 0 on success (the host is alive),
 and non-zero if the arguments are incorrect or the host is not responding.
 .Sh SEE ALSO
 .Xr netstat 1 ,
@@ -402,13 +409,13 @@ and non-zero if the arguments are incorrect or the host is not responding.
 .Rs
 .%A Matt Crawford
 .%T "IPv6 Node Information Queries"
-.%N draft-ietf-ipngwg-icmp-name-lookups-05.txt
-.%D October 22, 1999
+.%N draft-ietf-ipngwg-icmp-name-lookups-06.txt
+.%D July 2000
 .%O work in progress material
 .Re
 .Sh HISTORY
 The
-.Nm ping
+.Xr ping 8
 command appeared in
 .Bx 4.3 .
 The
