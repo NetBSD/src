@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2002/06/29 22:37:39 lukem Exp $
+.\"	$NetBSD: hardware,v 1.16 2002/11/18 12:39:50 lukem Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8 MB or more of RAM.
@@ -129,7 +129,7 @@ Vr4131-based
 .It
 TX3912-based: TX3912 machines are not supported with installation kernel and
 GENERIC kernel.
-Use special kernel for TX3912 (netbsd.TX3912.gz).
+Use special kernel for TX3912 (netbsd-TX3912.gz).
 .It
 TX3922-based
 .bullet)

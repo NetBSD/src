@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/09/24 12:15:11 shin Exp $
+#	$NetBSD: Makefile,v 1.23 2002/11/18 12:39:44 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,7 @@ MINIROOTOBJ!=	cd ${.CURDIR}/../miniroot && ${PRINTOBJDIR}
 MINIROOT=	${MINIROOTOBJ}/miniroot.fs
 
 MDSETTARGETS=		RAMDISK		${MINIROOT}	netbsd		\
-			INSTALL_TX3912	${MINIROOT}	netbsd.TX3912
+			INSTALL_TX3912	${MINIROOT}	netbsd-TX3912
 MDSET_RELEASEDIR=	installation
 
 PBSDBOOTDIR=	${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/08/18 14:43:16 isaki Exp $
+#	$NetBSD: Makefile,v 1.12 2002/11/18 12:39:56 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ FLOPPY_RELEASEDIR=	installation/floppy
 
 MDEC=		${DESTDIR}/usr/mdec
 KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
-FLOPPY_NETBSD=	${KERNOBJ}/netbsd.INSTALL.gz
+FLOPPY_NETBSD=	${KERNOBJ}/netbsd-INSTALL.gz
 # XXXDISTRIB: use MI installboot
 FLOPPYINSTBOOT=\
 	"dd if=${MDEC}/fdboot_ustar of=@IMAGE@ bs=8k count=1 conv=sync,notrunc"
