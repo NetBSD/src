@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.111 2005/01/16 08:51:55 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.112 2005/01/16 08:56:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.111 2005/01/16 08:51:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.112 2005/01/16 08:56:29 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2460,6 +2460,14 @@ pccbb_pcmcia_socket_enable(pch)
 	/* power up the socket */
 	if (pccbb_power(sc, voltage) == 0)
 		return;
+
+	/*
+	 * Table 4-18 and figure 4-6 of the PC Card specifiction say:
+	 * Vcc Rising Time (Tpr) = 100ms (handled in pccbb_power() above)
+	 * RESET Width (Th (Hi-z RESET)) = 1ms
+	 * RESET Width (Tw (RESET)) = 10us
+	 */
+	pccbb_pcmcia_delay(ph, 1, "pccen1");
 
 	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
