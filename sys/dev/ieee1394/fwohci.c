@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.75 2003/05/03 18:11:24 wiz Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.76 2003/05/26 16:10:36 haya Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.75 2003/05/03 18:11:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.76 2003/05/26 16:10:36 haya Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -5101,7 +5101,7 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 
 	while (fd->fd_status != 0 &&
 	    (copylen = fd->fd_reqcount - fd->fd_rescount - hdrshim - headoffs)
-	    + fwisohdrsiz < uio->uio_resid) {
+	    + fwisohdrsiz <= uio->uio_resid) {
 
 		DPRINTF(("pkt %04x:%04x uiomove %p, %d\n",
 		    fd->fd_status, fd->fd_rescount,
