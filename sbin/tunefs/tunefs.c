@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.31 2004/03/27 13:05:07 dsl Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.32 2004/06/25 14:35:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.31 2004/03/27 13:05:07 dsl Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.32 2004/06/25 14:35:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,12 +313,9 @@ usage(void)
 
 	fprintf(stderr, "usage: tunefs [-AFN] tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
-	fprintf(stderr, "\t-a maximum contiguous blocks\n");
-	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-g average file size\n");
 	fprintf(stderr, "\t-h expected number of files per directory\n");
-	fprintf(stderr, "\t-k track skew in sectors\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 #ifdef TUNEFS_SOFTDEP
 	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
