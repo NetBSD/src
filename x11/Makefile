@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/04/13 12:50:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,17 @@ afterinstall: .PHONY
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/share/man makedb \
 	    WHATISDBDIR=${X11MANDIR}
 .endif
+
+
+DISTRIBTARGETS=	Xserver/Xext/ext \
+		bin/lbxproxy bin/proxymngr bin/rstart bin/twm \
+		bin/xdm/config bin/xfs bin/xinit bin/xsm \
+		lib/fontconfig/etc
+
+distribution: check_X11SRCDIR
+.for tgt in ${DISTRIBTARGETS}
+	${MAKEDIRTARGET} ${tgt} configinstall
+.endfor
 
 
 check_X11SRCDIR: .PHONY .NOTMAIN
