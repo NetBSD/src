@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.87 1999/02/14 12:48:01 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.88 1999/02/27 13:11:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -107,7 +107,7 @@ struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
 };
 
-static char *fsrtoname __P((int, int, int, char *));
+static char *fsrtoname __P((int, int, int));
 void cache_print __P((struct cpu_softc *));
 void cpu_setup __P((struct cpu_softc *));
 void cpu_spinup __P((struct cpu_softc *));
@@ -303,6 +303,10 @@ static	int cpu_number;
 
 	if (cpi->master) {
 		cpu_setup(sc);
+		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+			cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
+		printf(": %s\n", cpu_model);
+		cache_print(sc);
 		return;
 	}
 
@@ -313,6 +317,10 @@ static	int cpu_number;
 
 	/* Now start this CPU */
 	cpu_spinup(sc);
+	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_name,
+		clockfreq(cpi->hz), cpi->fpu_name);
+
+	cache_print(sc);
 
 	if (cpu_number == ncpu) {
 		/* Install MP cache flush functions on boot cpu */
@@ -339,33 +347,15 @@ void
 cpu_setup(sc)
 	struct cpu_softc *sc;
 {
-	char *fpuname;
-	char fpbuf[40];
 
 	if (cpuinfo.hotfix)
 		(*cpuinfo.hotfix)(&cpuinfo);
 
 	/* Initialize FPU */
 	fpu_init(&cpuinfo);
-	fpuname = cpuinfo.fpupresent
-			? fsrtoname(cpuinfo.cpu_impl, cpuinfo.cpu_vers,
-				    cpuinfo.fpuvers, fpbuf)
-			: "no";
-
-	printf(": %s @ %s MHz, %s FPU\n", cpuinfo.cpu_name,
-		clockfreq(cpuinfo.hz), fpuname);
-
-	if (cpuinfo.cacheinfo.c_totalsize != 0)
-		cache_print(sc);
 
 	/* Enable the cache */
 	cpuinfo.cache_enable();
-
-	if (cpuinfo.master) {
-		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
-			cpuinfo.cpu_name,
-			clockfreq(cpuinfo.hz), fpuname);
-	}
 
 	cpu_hatched = 1;
 #if 0
@@ -465,6 +455,7 @@ fpu_init(sc)
 	struct cpu_info *sc;
 {
 	struct fpstate fpstate;
+	int fpuvers;
 
 	/*
 	 * Get the FSR and clear any exceptions.  If we do not unload
@@ -479,11 +470,20 @@ fpu_init(sc)
 	/* 7 is reserved for "none" */
 	fpstate.fs_fsr = 7 << FSR_VER_SHIFT;
 	savefpstate(&fpstate);
-	sc->fpuvers =
+	sc->fpuvers = fpuvers =
 		(fpstate.fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
 
-	if (sc->fpuvers != 7)
-		sc->fpupresent = 1;
+	if (fpuvers == 7) {
+		sc->fpu_name = "no";
+		return;
+	}
+
+	sc->fpupresent = 1;
+	sc->fpu_name = fsrtoname(sc->cpu_impl, sc->cpu_vers, fpuvers);
+	if (sc->fpu_name == NULL) {
+		sprintf(sc->fpu_namebuf, "version 0x%x", fpuvers);
+		sc->fpu_name = sc->fpu_namebuf;
+	}
 }
 
 void
@@ -492,12 +492,17 @@ cache_print(sc)
 {
 	struct cacheinfo *ci = &sc->sc_cpuinfo->cacheinfo;
 
-	printf("%s:", sc->sc_dv.dv_xname);
+	printf("%s: ", sc->sc_dv.dv_xname);
+
+	if (ci->c_totalsize == 0) {
+		printf("no cache\n");
+		return;
+	}
 
 	if (ci->c_split) {
 		char *sep = "";
 
-		printf("%s", (ci->c_physical ? " physical " : " "));
+		printf("%s", (ci->c_physical ? "physical " : ""));
 		if (ci->ic_totalsize > 0) {
 			printf("%s%dK instruction (%d b/l)", sep,
 			    ci->ic_totalsize/1024, ci->ic_linesize);
@@ -509,11 +514,11 @@ cache_print(sc)
 		}
 	} else if (ci->c_physical) {
 		/* combined, physical */
-		printf(" physical %dK combined cache (%d bytes/line)",
+		printf("physical %dK combined cache (%d bytes/line)",
 		    ci->c_totalsize/1024, ci->c_linesize);
 	} else {
 		/* combined, virtual */
-		printf(" %dK byte write-%s, %d bytes/line, %cw flush",
+		printf("%dK byte write-%s, %d bytes/line, %cw flush",
 		    ci->c_totalsize/1024,
 		    (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		    ci->c_linesize,
@@ -525,6 +530,9 @@ cache_print(sc)
 		    ci->ec_totalsize/1024, ci->ec_linesize);
 	}
 	printf(": ");
+	if (ci->c_enabled)
+		printf("cache enabled");
+	printf("\n");
 }
 
 
@@ -1109,6 +1117,7 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
+sc->flags |= CPUFLG_CACHE_MANDATORY;
 	if (node == 0)
 		sta(0, ASI_HICACHECLR, 0);
 	printf("warning: hypersparc support still under construction\n");
@@ -1485,17 +1494,16 @@ static struct info fpu_types[] = {
 };
 
 static char *
-fsrtoname(impl, vers, fver, buf)
-	register int impl, vers, fver;
-	char *buf;
+fsrtoname(impl, vers, fver)
+	int impl, vers, fver;
 {
-	register struct info *p;
+	struct info *p;
 
-	for (p = fpu_types; p->valid; p++)
+	for (p = fpu_types; p->valid; p++) {
 		if (p->iu_impl == impl &&
 		    (p->iu_vers == vers || p->iu_vers == ANY) &&
 		    (p->fpu_vers == fver))
 			return (p->name);
-	sprintf(buf, "version 0x%x", fver);
-	return (buf);
+	}
+	return (NULL);
 }
