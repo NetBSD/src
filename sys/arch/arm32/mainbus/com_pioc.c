@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.3 1998/02/02 23:05:50 cgd Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.4 1998/06/17 00:37:00 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,17 +39,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 
 #include <machine/irqhandler.h>
@@ -58,6 +51,8 @@
 #include <arm32/mainbus/piocvar.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+
+#include <dev/cons.h>
 
 #include "locators.h"
 
@@ -77,6 +72,8 @@ static void com_pioc_cleanup __P((void *));
 struct cfattach com_pioc_ca = {
 	sizeof(struct com_pioc_softc), com_pioc_probe, com_pioc_attach
 };
+
+extern bus_space_tag_t comconstag;	/* From pioc.c */
 
 /*
  * int com_pioc_probe(struct device *parent, struct cfdata *cf, void *aux)
@@ -192,5 +189,40 @@ com_pioc_cleanup(arg)
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_fifo, 0);
 }
+
+/*
+ * Console attachment functions
+ */
+
+void
+comcnprobe(cp)
+	struct consdev *cp;
+{
+
+#ifdef  COMCONSOLE
+	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
+#else
+	cp->cn_pri = CN_NORMAL;
+#endif
+}
+
+void
+comcninit(cp)
+	struct consdev *cp;
+{
+
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+#ifndef CONSPEED
+#define CONSPEED 38400
+#endif
+#ifndef CONADDR
+#define CONADDR	0x3f8
+#endif
+	if (comcnattach(comconstag, CONADDR << 2, CONSPEED, COM_FREQ, CONMODE))
+		panic("can't init serial console @%x", CONADDR << 2);
+}
+
 
 /* End of com_pioc.c */
