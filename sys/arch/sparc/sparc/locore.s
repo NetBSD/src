@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.18 1994/09/20 07:48:24 deraadt Exp $
+ * $Id: locore.s,v 1.19 1994/09/25 20:51:51 deraadt Exp $
  */
 
 #define	LOCORE
@@ -1068,11 +1068,77 @@ ctw_invalid:
  */
 memfault:
 	TRAP_SETUP(-CCFSZ-80)
-
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
+
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+	sethi	%hi(_cputyp), %o0	! what cpu are we running on?
+	ld	[%o0 + %lo(_cputyp)], %o0
+	cmp	%o0, CPU_SUN4
+	bne	9f
+	 nop
+#endif
+#if defined(SUN4)
+	/*
+	 * registers:
+	 * memerr.ctrl	= memory error control reg., error if 0x80 set
+	 * memerr.vaddr	= address of memory error
+	 * buserr	= basically just like sun4c sync error reg but
+	 *		  no SER_WRITE bit (have to figure out from code).
+	 */
+	set     _par_err_reg, %o0       ! memerr ctrl addr -- XXX mapped?
+	ld      [%o0], %o0              ! get it
+	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
+	ld	[%o0], %o1		! memerr ctrl register
+	inc	4, %o0			! now VA of memerr vaddr register
+	std	%g4, [%sp + CCFSZ + 32]	! (sneak g4,g5 in here)
+	ld	[%o0], %o2		! memerr virt addr
+	st	%g0, [%o0]		! NOTE: this clears latching!!!
+	btst	ME_REG_IERR, %o1	! memory error?
+					! XXX this value may not be correct
+					! as I got some parity errors and the
+					! correct bits were not on?
+	std	%g6, [%sp + CCFSZ + 40]
+	bz,a	xnormal_mem_fault	! no, just a regular fault
+	 wr	%l0, PSR_ET, %psr	! (and reenable traps)
+
+	/* memory error = death for now XXX */
+	clr	%o3
+	clr	%o4
+	call 	_memerr	! (0, ser, sva, 0, 0)
+	 clr	%o0
+	call	_callrom
+	 nop
+
+xnormal_mem_fault:
+	/*
+	 * have to make SUN4 emulate SUN4C.   4C code expects
+	 * SER in %o1 and the offending VA in %o2, everything else is ok.
+	 * (must figure out if SER_WRITE should be set)
+	 */
+	set	AC_BUS_ERR, %o0		! bus error register
+	cmp	%l3, T_TEXTFAULT	! text fault always on PC
+	beq	normal_mem_fault	! go
+	 lduba	[%o0]ASI_CONTROL, %o1	! get its value
+
+#define STORE_BIT 21 /* bit that indicates a store instruction for sparc */
+	ld	[%l1], %o3		! offending instruction in %o3 [l1=pc]
+	srl	%o3, STORE_BIT, %o3	! get load/store bit (wont fit simm13)
+	btst	1, %o3			! test for store operation
+
+	bz	normal_mem_fault	! if (z) is a load (so branch)
+	 sethi	%hi(SER_WRITE), %o5     ! damn SER_WRITE wont fit simm13
+!	or	%lo(SER_WRITE), %o5, %o5! not necessary since %lo is zero
+	or	%o5, %o1, %o1		! set SER_WRITE
+#if defined(SUN4C) || defined(SUN4M)
+	ba	normal_mem_fault
+	 nop				! XXX make efficient later
+#endif /* SUN4C || SUN4M */
+#endif /* SUN4 */
+9:
+#if defined(SUN4C) || defined(SUN4M)
 
 #if AC_SYNC_ERR + 4 != AC_SYNC_VA || \
     AC_SYNC_ERR + 8 != AC_ASYNC_ERR || AC_SYNC_ERR + 12 != AC_ASYNC_VA
@@ -1152,6 +1218,7 @@ memfault:
 	b	return_from_trap
 	 wr	%l0, 0, %psr
 	/* NOTREACHED */
+#endif /* SUN4C || SUN4M */
 
 normal_mem_fault:
 	/*
@@ -1702,6 +1769,25 @@ nmi:
 	rd	%y, %l4			! save y
 
 	! must read the sync error register too.
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+	sethi	%hi(_cputyp), %o0	! what cpu are we running on?
+	ld	[%o0 + %lo(_cputyp)], %o0
+	cmp	%o0, CPU_SUN4
+	bne	1f
+	 nop
+#endif
+#if defined(SUN4)
+	std	%g4, [%sp + CCFSZ + 8]	! save g4, g5
+	mov	%g1, %l5		! save g1, g6, g7
+	mov	%g6, %l6
+	mov	%g7, %l7
+#if defined(SUN4C) || defined(SUN4M)
+	b	2f
+	 nop
+#endif /* SUN4C || SUN4M */
+#endif /* SUN4 */
+1:
+#if defined(SUN4C) || defined(SUN4M)
 	set	AC_SYNC_ERR, %o0
 	lda	[%o0] ASI_CONTROL, %o1	! sync err reg
 	inc	4, %o0
@@ -1714,7 +1800,8 @@ nmi:
 	lda	[%o0] ASI_CONTROL, %o3	! async err reg
 	inc	4, %o0
 	lda	[%o0] ASI_CONTROL, %o4	! async virt addr
-
+#endif /* SUN4C || SUN4M */
+2:
 	! and call C code
 	call	_memerr			! memerr(0, ser, sva, aer, ava)
 	clr	%o0
