@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2001/06/02 18:09:23 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2001/06/16 00:38:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -560,6 +560,8 @@ u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
+#define DUMP_EXTRA	1	/* CPU-dependent extra pages */
+
 /*
  * This is called by main to set dumplo, dumpsize.
  * Dumps always skip the first NBPG of disk space
@@ -570,7 +572,8 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int devblks;	/* size of dump device in blocks */
+	int dumpblks;	/* size of dump image in blocks */
 	int maj;
 	int (*getsize)__P((dev_t));
 
@@ -583,20 +586,26 @@ cpu_dumpconf()
 	getsize = bdevsw[maj].d_psize;
 	if (getsize == NULL)
 		return;
-	nblks = (*getsize)(dumpdev);
-	if (nblks <= ctod(1))
+	devblks = (*getsize)(dumpdev);
+	if (devblks <= ctod(1))
 		return;
+	devblks &= ~(ctod(1) - 1);
+
+	/*
+	 * Note: savecore expects dumpsize to be the
+	 * number of pages AFTER the dump header.
+	 */
+	dumpsize = physmem; 	/* pages */
 
 	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem; 	/* pages */
-	dumplo = nblks - ctod(dumpsize);
-	dumplo &= ~(ctod(1)-1);
+	dumpblks = ctod(physmem + DUMP_EXTRA);
+	dumplo = devblks - dumpblks;
 
 	/* If it does not fit, truncate it by moving dumplo. */
 	/* Note: Must force signed comparison. */
 	if (dumplo < ((long)ctod(1))) {
 		dumplo = ctod(1);
-		dumpsize = dtoc(nblks - dumplo);
+		dumpsize = dtoc(devblks - dumplo) - DUMP_EXTRA;
 	}
 }
 
@@ -652,19 +661,21 @@ dumpsys()
 	    minor(dumpdev), dumplo);
 
 	/*
-	 * We put the dump header is in physical page zero,
-	 * so there is no extra work here to write it out.
-	 * All we do is initialize the header.
+	 * Prepare the dump header
 	 */
+	blkno = dumplo;
+	todo = dumpsize;	/* pages */
+	vaddr = (char *)dumppage;
+	bzero(vaddr, NBPG);
 
 	/* Set pointers to all three parts. */
-	kseg_p = (kcore_seg_t *)dumppage;
+	kseg_p = (kcore_seg_t *)vaddr;
 	chdr_p = (cpu_kcore_hdr_t *)(kseg_p + 1);
 	sh = &chdr_p->un._sun3x;
 
 	/* Fill in kcore_seg_t part. */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = sizeof(*chdr_p);
+	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
 
 	/* Fill in cpu_kcore_hdr_t part. */
 	strncpy(chdr_p->name, kernel_arch, sizeof(chdr_p->name));
@@ -674,31 +685,23 @@ dumpsys()
 	/* Fill in the sun3x_kcore_hdr part. */
 	pmap_kcore_hdr(sh);
 
+	/* Write out the dump header. */
+	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+	if (error)
+		goto fail;
+	blkno += btodb(NBPG);
+
 	/*
 	 * Now dump physical memory.  Note that physical memory
 	 * might NOT be congiguous, so do it by segments.
 	 */
 
-	blkno = dumplo;
-	todo = dumpsize;	/* pages */
 	vaddr = (char *)vmmap;	/* Borrow /dev/mem VA */
 
 	for (seg = 0; seg < SUN3X_NPHYS_RAM_SEGS; seg++) {
 		crs_p = &sh->ram_segs[seg];
 		paddr = crs_p->start;
 		segsz = crs_p->size;
-		/*
-		 * Our header lives in the first little bit of
-		 * physical memory (not written separately), so
-		 * we have to adjust the first ram segment size
-		 * and start address to reflect the stolen RAM.
-		 * (Nothing interesing in that RAM anyway 8^).
-		 */
-		if (seg == 0) {
-			int adj = sizeof(*kseg_p) + sizeof(*chdr_p);
-			crs_p->start += adj;
-			crs_p->size  -= adj;
-		}
 
 		while (todo && (segsz > 0)) {
 
@@ -708,7 +711,7 @@ dumpsys()
 
 			/* Make a temporary mapping for the page. */
 			pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-					   VM_PROT_READ, 0);
+			    VM_PROT_READ, 0);
 			pmap_update();
 			error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
