@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/10/06 17:19:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2002/10/06 17:28:46 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,6 +29,8 @@ PARSELISTENV+=	LDD_CMD=ldd_aout
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 
+# XXX Make sure to update distrib/sets/makeflist when this conditional
+# XXX is changed or removed.
 .if ${MACHINE_CPU} == "mips"						# {
 
 realall install:
