@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp $
+$NetBSD: pcmciadevs,v 1.18 1998/10/08 20:11:59 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
 /* Megahertz Products */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
+product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
 /* US Robotics Products */
