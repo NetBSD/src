@@ -179,13 +179,13 @@ file netimp/if_imp.c		imp needs-count
 file netimp/if_imphost.c	imp needs-count
 file netimp/raw_imp.c	 	imp needs-count
 file netinet/if_ether.c		ether
-file netinet/igmp.c		multicast
+file netinet/igmp.c
 file netinet/in.c		inet
 file netinet/in_pcb.c	 	inet
 file netinet/in_proto.c	 	inet
 file netinet/ip_icmp.c	 	inet
 file netinet/ip_input.c	 	inet
-file netinet/ip_mroute.c	multicast mrouting
+file netinet/ip_mroute.c
 file netinet/ip_output.c	inet
 file netinet/raw_ip.c	 	inet
 file netinet/tcp_debug.c	inet
