@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2001/09/24 03:56:03 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2001/10/18 02:36:33 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -237,12 +237,32 @@ mach_init(argc, argv, envp)
 
 	uvm_setpagesize();
 
+	/*
+	 * argv[0] can be either the bootloader loaded by the PROM, or a
+	 * kernel loaded directly by the PROM.
+	 *
+	 * If argv[0] is the bootloader, then argv[1] might be the kernel
+	 * that was loaded.  How to tell which one to use?
+	 *
+	 * If argv[1] isn't an environment string, try to use it to set the
+	 * boot device.
+	 */
+	if (strchr(argv[1], '=') != 0)
+		makebootdev(argv[1]);
+
 	boothowto = RB_SINGLE;
 
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0) {
 			boothowto &= ~RB_SINGLE;
 		}
+		/*
+		 * If this is OSLoadPartition, use it to set the boot device.
+		 * XXX This probably should not be done if we used a path
+		 * XXX from argv[1], but how to tell?
+		 */
+		if (strncmp(argv[i], "OSLoadPartition=", 16) == 0)
+			makebootdev(argv[i] + 16);
 #if 0
 		printf("argv[%d]: %s\n", i, argv[i]);
 		/* delay(20000); */ /* give the user a little time.. */
