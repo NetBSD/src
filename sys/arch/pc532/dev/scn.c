@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.34 1997/02/08 09:34:31 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.35 1997/03/01 09:50:44 matthias Exp $ */
 
 /*
  * Copyright (c) 1996 Philip L. Budne.
@@ -120,24 +120,22 @@ static void scnrxintr __P((void *));
 static int scn_rxintr __P((struct scn_softc *, int));
 static void scnsoft __P((void *));
 
+static int scnsir = -1;		/* s/w intr number */
+#define setsoftscn()	softintr(scnsir)
+
+#ifdef SCN_TIMING
 /*
  * Keep timing info on latency of software interrupt used by
  * the ringbuf code to empty ring buffer.
  * "getinfo" program reads data from /dev/kemm.
  */
-/* #define SCN_TIMING */
-
-static int scnsir = -1;		/* s/w intr number */
-#define setsoftscn()	softintr(scnsir)
-
-#ifdef SCN_TIMING
 static struct timeval tstart;
 #define NJITTER 100
 int     scn_njitter = NJITTER;
 int     scn_jitter[NJITTER];
 #endif
 
-#define SCN_CLOCK	3686400	/* input clock */
+#define SCN_CLOCK	3686400		/* input clock */
 
 /*
  * Make some use of the counter/timer;
