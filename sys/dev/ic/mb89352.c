@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.21 2003/07/27 03:51:28 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.22 2003/08/01 00:38:38 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.21 2003/07/27 03:51:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.22 2003/08/01 00:38:38 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -116,6 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.21 2003/07/27 03:51:28 tsutsui Exp $")
 #endif
 
 #define	SPC_ABORT_TIMEOUT	2000	/* time to wait for abort */
+
+/* threshold length for DMA transfer */
+#define SPC_MIN_DMA_LEN	32
 
 #ifdef x68k	/* XXX it seems x68k SPC SCSI hardware has some quirks */
 #define NEED_DREQ_ON_HARDWARE_XFER
@@ -550,8 +553,19 @@ spc_scsipi_request(chan, req, arg)
 		/* XXX Not supported. */
 		return;
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX Not supported. */
+	    {
+		/*
+		 * We don't support Sync, Wide, or Tagged Command Queuing.
+		 * Just callback now, to report this.
+		 */
+		struct scsipi_xfer_mode *xm = arg;
+
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
+	    }
 	}
 }
 
@@ -663,9 +677,10 @@ spc_select(sc, acb)
 	 * X = 2 + 113 / 256
 	 *  ==> tch = 2, tcm = 113 (correct?)
 	 */
+	/* Time to the information transfer phase start. */
+	/* XXX These values should be calculated from sc_freq */
 	bus_space_write_1(iot, ioh, TCH, 2);
 	bus_space_write_1(iot, ioh, TCM, 113);
-	/* Time to the information transfer phase start. */
 	bus_space_write_1(iot, ioh, TCL, 3);
 	bus_space_write_1(iot, ioh, SCMD, SCMD_SELECT);
 
@@ -1633,6 +1648,17 @@ spc_intr(arg)
 
 	SPC_TRACE(("spc_intr  "));
 
+	ints = bus_space_read_1(iot, ioh, INTS);
+	if (ints == 0)
+		goto out;
+
+	if (sc->sc_dma_done != NULL &&
+	    sc->sc_state == SPC_CONNECTED &&
+	    (sc->sc_flags & SPC_DOINGDMA) != 0 &&
+	    (sc->sc_phase == PH_DATAOUT || sc->sc_phase == PH_DATAIN)) {
+		(*sc->sc_dma_done)(sc);
+	}
+
 loop:
 	/*
 	 * Loop until transfer completion.
@@ -1939,6 +1965,12 @@ dophase:
 		if (sc->sc_state != SPC_CONNECTED)
 			break;
 		SPC_MISC(("dataout dleft=%d  ", sc->sc_dleft));
+		if (sc->sc_dma_start != NULL &&
+		    sc->sc_dleft > SPC_MIN_DMA_LEN) {
+			(*sc->sc_dma_start)(sc, sc->sc_dp, sc->sc_dleft, 0);
+			sc->sc_prevphase = PH_DATAOUT;
+			goto out;
+		}
 		n = spc_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -1949,6 +1981,12 @@ dophase:
 		if (sc->sc_state != SPC_CONNECTED)
 			break;
 		SPC_MISC(("datain  "));
+		if (sc->sc_dma_start != NULL &&
+		    sc->sc_dleft > SPC_MIN_DMA_LEN) {
+			(*sc->sc_dma_start)(sc, sc->sc_dp, sc->sc_dleft, 1);
+			sc->sc_prevphase = PH_DATAIN;
+			goto out;
+		}
 		n = spc_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
