@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.1.1.4 1994/01/20 02:47:25 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.1.1.5 1994/01/26 19:09:39 jtc Exp $";
 #endif
 
 
@@ -29,7 +29,7 @@ env_init()
 	register char	**p = (char **) malloc(sizeof(char **));
 
 	p[0] = NULL;
-	return p;
+	return (p);
 }
 
 
@@ -58,7 +58,7 @@ env_copy(envp)
 	for (i = 0;  i < count;  i++)
 		p[i] = strdup(envp[i]);
 	p[count] = NULL;
-	return p;
+	return (p);
 }
 
 
@@ -88,7 +88,7 @@ env_set(envp, envstr)
 		 */
 		free(envp[found]);
 		envp[found] = strdup(envstr);
-		return envp;
+		return (envp);
 	}
 
 	/*
@@ -100,7 +100,7 @@ env_set(envp, envstr)
 			      (unsigned) ((count+1) * sizeof(char **)));
 	p[count] = p[count-1];
 	p[count-1] = strdup(envstr);
-	return p;
+	return (p);
 }
 
 
@@ -122,7 +122,7 @@ load_env(envstr, f)
 	fileline = LineNumber;
 	skip_comments(f);
 	if (EOF == get_string(envstr, MAX_ENVSTR, f, "\n"))
-		return ERR;
+		return (ERR);
 
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
@@ -132,7 +132,7 @@ load_env(envstr, f)
 		Debug(DPARS, ("load_env, not 2 fields (%d)\n", fields))
 		fseek(f, filepos, 0);
 		Set_LineNum(fileline);
-		return FALSE;
+		return (FALSE);
 	}
 
 	/* 2 fields from scanf; looks like an env setting
@@ -156,7 +156,7 @@ load_env(envstr, f)
 
 	(void) sprintf(envstr, "%s=%s", name, val);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
-	return TRUE;
+	return (TRUE);
 }
 
 
@@ -165,10 +165,14 @@ env_get(name, envp)
 	register char	*name;
 	register char	**envp;
 {
-	for (;  *envp;  envp++) {
-		register char	*p = strchr(*envp, '=');
-		if (p && !strncmp(*envp, name, p - *envp))
-			return p+1;
+	register int	len = strlen(name);
+	register char	*p, *q;
+
+	while (p = *envp++) {
+		if (!(q = strchr(p, '=')))
+			continue;
+		if ((q - p) == len && !strncmp(p, name, len))
+			return (q+1);
 	}
-	return NULL;
+	return (NULL);
 }
