@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.3 1996/02/15 22:54:45 mark Exp $ */
+/* $NetBSD: console.c,v 1.4 1996/03/16 00:17:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -40,8 +40,6 @@
  *
  * Created      : 17/09/94
  * Last updated : 15/11/95
- *
- *    $Id: console.c,v 1.3 1996/02/15 22:54:45 mark Exp $
  */
 
 #include <sys/types.h>
