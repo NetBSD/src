@@ -1,7 +1,7 @@
-/*	$NetBSD: ifwatchd.c,v 1.4 2002/01/10 19:38:51 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.5 2002/01/10 20:21:50 martin Exp $	*/
 
 /*
- * Copyright (c) 2001 Martin Husemann <martin@duskware.de>
+ * Copyright (c) 2001-2002 Martin Husemann <martin@duskware.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Define this for special treatment of sys/net/if_spppsubr.c based interfaces.
+ */
+#define SPPP_IF_SUPPORT
+ 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -31,6 +36,9 @@
 #include <sys/queue.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#ifdef SPPP_IF_SUPPORT
+#include <net/if_sppp.h>
+#endif
 #include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -53,6 +61,12 @@ static void rescan_interfaces(void);
 static void free_interfaces(void);
 static int find_interface(int index);
 static void run_initial_ups(void);
+
+#ifdef SPPP_IF_SUPPORT
+static int if_is_connected(const char * ifname);
+#else
+#define	if_is_connected(X)	1
+#endif
 
 /* stolen from /sbin/route */
 #define ROUNDUP(a) \
@@ -339,7 +353,8 @@ static void run_initial_ups()
 		    continue;
 		SLIST_FOREACH(ifd, &ifs, next) {
 		    if (strcmp(ifd->ifname, p->ifa_name) == 0) {
-			invoke_script(p->ifa_addr, p->ifa_dstaddr, 1, ifd->index);
+		    	if (if_is_connected(ifd->ifname))
+			    invoke_script(p->ifa_addr, p->ifa_dstaddr, 1, ifd->index);
 			break;
 		    }
 		}
@@ -347,3 +362,33 @@ static void run_initial_ups()
 	    freeifaddrs(res);
 	}
 }
+
+#ifdef SPPP_IF_SUPPORT
+/*
+ * Special case support for in-kernel PPP interfaces.
+ * If these are IFF_UP, but have not yet connected or completed authentication
+ * we don't want to call the up script in the initial interface scan (there
+ * will be an UP event generated later, when IPCP completes, anyway).
+ *
+ * If this is no if_spppsubr.c based interface, this ioctl just fails and we
+ * treat is as connected.
+ */
+static int
+if_is_connected(const char * ifname)
+{
+	int s, err;
+	struct spppstatus status;
+
+	memset(&status, 0, sizeof status);
+	strncpy(status.ifname, ifname, sizeof status.ifname);
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	if (s < 0)
+	    return 1;	/* no idea how to handle this... */
+	err = ioctl(s, SPPPGETSTATUS, &status);
+	if (err != 0)
+	    /* not if_spppsubr.c based - call it connected */
+	    status.phase = SPPP_PHASE_NETWORK;
+	close(s);
+	return status.phase == SPPP_PHASE_NETWORK;
+}
+#endif
