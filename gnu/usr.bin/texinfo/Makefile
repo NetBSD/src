@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2004/07/18 15:42:25 wiz Exp $
+#	$NetBSD: Makefile,v 1.20 2004/07/18 16:34:45 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,11 @@ FILES=		epsf.tex texinfo.cat texinfo.dtd texinfo.tex texinfo.xsl
 VERSION!=	sed -n "s/^\#define VERSION \"\(.*\)\"/\1/p" ${NETBSDSRCDIR}/gnu/usr.bin/texinfo/common/config.h
 
 texinfo.cat: texinfo-cat.in
-	sed 's/__VERSION__/${VERSION}/g' ${.ALLSRC} >$@
+	sed 's/__VERSION__/${VERSION}/g' ${.ALLSRC} >${.TARGET}
+
+realall:	texinfo.cat
+
+CLEANFILES+=	texinfo.cat
 .endif
 
 .if ${MKNLS} != "no"
