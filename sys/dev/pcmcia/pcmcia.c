@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.18 2000/02/07 09:35:29 augustss Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.19 2000/02/08 12:51:30 enami Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -316,6 +316,7 @@ pcmcia_print(arg, pnp)
 void
 pcmcia_devinfo(card, showhex, cp, cplen)
 	struct pcmcia_card *card;
+	int showhex;
 	char *cp;
 	int cplen;
 {
