@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1998/10/08 17:36:56 wsanchez Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1999/02/09 04:51:30 dean Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1998/10/08 17:36:56 wsanchez Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1999/02/09 04:51:30 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ main(argc, argv)
 			 * Next argument is person to pretend to be.
 			 */
 			myname = optarg;
+			unsetenv("MAIL");
 			break;
 		case 'i':
 			/*
