@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.3 2003/09/13 09:20:27 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.4 2004/06/03 12:50:37 uebayasi Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -133,8 +133,8 @@ esac
 case $check in
 yes)
 	checkdir $fromdir
-	(cd $fromdir; 
-	ex=0;
+	(cd $fromdir
+	ex=0
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
 		if [ -e $todir/$newf ]; then
@@ -158,7 +158,7 @@ esac
 case $delete in
 yes)	
 	checkdir $fromdir
-	(cd $fromdir;
+	(cd $fromdir
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
 		ignore=no
@@ -188,7 +188,7 @@ esac
 case $create in
 yes)
 	checkdir $fromdir
-	(cd $fromdir; 
+	(cd $fromdir
 	for d in `$findprog . -type d -print`; do
 		newd=`echo $d | $sedprog -e 's|^\./||'`
 		case "$d" in
