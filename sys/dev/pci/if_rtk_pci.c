@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.2 2000/05/15 01:55:12 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.3 2000/05/19 13:42:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -138,7 +138,7 @@
  * on the part of RealTek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
-#define RL_USEIOSPACE
+#define RTK_USEIOSPACE
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
@@ -155,19 +155,19 @@ struct rtk_pci_softc {
 static const struct rtk_type rtk_pci_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
 		"RealTek 8129 10/100BaseTX",
-		RL_8129 },
+		RTK_8129 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 		"RealTek 8139 10/100BaseTX",
-		RL_8139 },
+		RTK_8139 },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
 		"Accton MPX 5030/5038 10/100BaseTX",
-		RL_8139 },
+		RTK_8139 },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 		"Delta Electronics 8139 10/100BaseTX",
-		RL_8139 },
+		RTK_8139 },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 		"Addtron Technology 8139 10/100BaseTX",
-		RL_8139 },
+		RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
 
@@ -244,25 +244,25 @@ rtk_pci_attach(parent, self, aux)
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
-		if (command & RL_PSTATE_MASK) {
+		if (command & RTK_PSTATE_MASK) {
 			pcireg_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOIO);
-			membase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOMEM);
+			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
+			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
 			irq = pci_conf_read(pc, pa->pa_tag,
 					    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
 			printf("%s: chip is is in D%d power mode "
 			"-- setting to D0\n", sc->sc_dev.dv_xname,
-			       command & RL_PSTATE_MASK);
+			       command & RTK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, command);
 
 			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
+			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
+			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
 			pci_conf_write(pc, pa->pa_tag,
 				       PCI_PRODUCT_DELTA_8139, irq);
 		}
@@ -271,14 +271,14 @@ rtk_pci_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-#ifdef RL_USEIOSPACE
-	if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+#ifdef RTK_USEIOSPACE
+	if (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 #else
-	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;

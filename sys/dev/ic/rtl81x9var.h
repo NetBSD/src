@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.4 2000/05/15 01:55:14 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.5 2000/05/19 13:42:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,25 +34,25 @@
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
 
-#define RL_ETHER_ALIGN	2
+#define RTK_ETHER_ALIGN	2
 
 struct rtk_chain_data {
 	u_int16_t		cur_rx;
 	caddr_t			rtk_rx_buf;
 	caddr_t			rtk_rx_buf_ptr;
 
-	struct mbuf		*rtk_tx_chain[RL_TX_LIST_CNT];
+	struct mbuf		*rtk_tx_chain[RTK_TX_LIST_CNT];
 	u_int8_t		last_tx;
 	u_int8_t		cur_tx;
 };
 
-#define RL_INC(x)		(x = (x + 1) % RL_TX_LIST_CNT)
-#define RL_CUR_TXADDR(x)	((x->rtk_cdata.cur_tx * 4) + RL_TXADDR0)
-#define RL_CUR_TXSTAT(x)	((x->rtk_cdata.cur_tx * 4) + RL_TXSTAT0)
-#define RL_CUR_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.cur_tx])
-#define RL_LAST_TXADDR(x)	((x->rtk_cdata.last_tx * 4) + RL_TXADDR0)
-#define RL_LAST_TXSTAT(x)	((x->rtk_cdata.last_tx * 4) + RL_TXSTAT0)
-#define RL_LAST_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.last_tx])
+#define RTK_INC(x)		(x = (x + 1) % RTK_TX_LIST_CNT)
+#define RTK_CUR_TXADDR(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXADDR0)
+#define RTK_CUR_TXSTAT(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXSTAT0)
+#define RTK_CUR_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.cur_tx])
+#define RTK_LAST_TXADDR(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXADDR0)
+#define RTK_LAST_TXSTAT(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXSTAT0)
+#define RTK_LAST_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.last_tx])
 
 struct rtk_type {
 	u_int16_t		rtk_vid;
@@ -73,27 +73,42 @@ struct rtk_mii_frame {
 /*
  * MII constants
  */
-#define RL_MII_STARTDELIM	0x01
-#define RL_MII_READOP		0x02
-#define RL_MII_WRITEOP		0x01
-#define RL_MII_TURNAROUND	0x02
+#define RTK_MII_STARTDELIM	0x01
+#define RTK_MII_READOP		0x02
+#define RTK_MII_WRITEOP		0x01
+#define RTK_MII_TURNAROUND	0x02
 
-#define RL_8129			1
-#define RL_8139			2
+#define RTK_8129		1
+#define RTK_8139		2
 
 struct rtk_softc {
 	struct device sc_dev;		/* generic device structures */
-	struct ethercom		ethercom;		/* interface info */
+	struct ethercom		ethercom;	/* interface info */
 	struct mii_data		mii;
 	struct callout		rtk_tick_ch;	/* tick callout */
 	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
 	u_int8_t		rtk_type;
 	struct rtk_chain_data	rtk_cdata;
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t recv_dmamap, snd_dmamap[RL_TX_LIST_CNT];
+	bus_dma_tag_t 		sc_dmat;
+	bus_dma_segment_t 	sc_dmaseg;
+	int			sc_dmanseg;
+	bus_dmamap_t 		recv_dmamap, snd_dmamap[RTK_TX_LIST_CNT];
+
+	int			sc_flags;	/* misc flags */
+	void	*sc_sdhook;			/* shutdown hook */
+	void	*sc_powerhook;			/* power management hook */
+
+	/* Power management hooks. */
+	int	(*sc_enable)	__P((struct rtk_softc *));
+	void	(*sc_disable)	__P((struct rtk_softc *));
+	void	(*sc_power)	__P((struct rtk_softc *, int));
 };
 
+#define RTK_ATTACHED 0x00000001 /* attach has succeeded */
+#define RTK_ENABLED  0x00000002 /* chip is enabled	*/
+
+#define RTK_IS_ENABLED(sc)	((sc)->sc_flags & RTK_ENABLED)
 /*
  * register space access macros
  */
@@ -111,25 +126,27 @@ struct rtk_softc {
 #define CSR_READ_1(sc, reg)		\
 	bus_space_read_1(sc->rtk_btag, sc->rtk_bhandle, reg)
 
-#define RL_TIMEOUT		1000
+#define RTK_TIMEOUT		1000
 
 /*
  * PCI low memory base and low I/O base register, and
  * other PCI registers.
  */
 
-#define RL_PCI_LOIO		0x10
-#define RL_PCI_LOMEM		0x14
+#define RTK_PCI_LOIO		0x10
+#define RTK_PCI_LOMEM		0x14
 
-#define RL_PSTATE_MASK		0x0003
-#define RL_PSTATE_D0		0x0000
-#define RL_PSTATE_D1		0x0002
-#define RL_PSTATE_D2		0x0002
-#define RL_PSTATE_D3		0x0003
-#define RL_PME_EN		0x0010
-#define RL_PME_STATUS		0x8000
+#define RTK_PSTATE_MASK		0x0003
+#define RTK_PSTATE_D0		0x0000
+#define RTK_PSTATE_D1		0x0002
+#define RTK_PSTATE_D2		0x0002
+#define RTK_PSTATE_D3		0x0003
+#define RTK_PME_EN		0x0010
+#define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-void	rtk_attach __P((struct rtk_softc *));
-int	rtk_intr __P((void *));
+void	rtk_attach	__P((struct rtk_softc *));
+int	rtk_detach	__P((struct rtk_softc *));
+int	rtk_activate	__P((struct device *, enum devact));
+int	rtk_intr	__P((void *));
 #endif /* _KERNEL */
