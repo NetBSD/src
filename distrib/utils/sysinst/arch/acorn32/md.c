@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2002/01/31 00:33:49 reinoud Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2002/02/15 00:40:23 reinoud Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -300,6 +300,7 @@ int md_make_bsd_partitions (void)
 	int remain;
 	char isize[20];
 	int maxpart = getmaxpartitions();
+	struct disklabel l;
 
 	/*
 	 * Initialize global variables that track  space used on this disk.
@@ -455,6 +456,30 @@ int md_make_bsd_partitions (void)
 			part++;
 		}
 
+		break;
+
+	case 4: /* use existing disklabel */
+
+		if (get_real_geom(diskdev, &l) == 0) {
+			msg_display(MSG_abort); /* XXX more informative */
+			return 0;
+		}
+
+		for (i = 0; i < maxpart; i++) {
+#define p l.d_partitions[i]
+			bsdlabel[i].pi_size = p.p_size;
+			bsdlabel[i].pi_offset = p.p_offset;
+			if (i != RAW_PART) {
+				bsdlabel[i].pi_fstype = p.p_fstype;
+				bsdlabel[i].pi_bsize = p.p_fsize * p.p_frag;
+				bsdlabel[i].pi_fsize = p.p_fsize;
+				/* menu to get fsmount[] entry */
+#undef p
+			} else
+				bsdlabel[i].pi_fstype = FS_UNUSED;
+		}
+		msg_display(MSG_postuseexisting);
+		getchar();
 		break;
 	}
 
