@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.99 1998/12/21 13:37:00 drochner Exp $
+$NetBSD: pcidevs,v 1.100 1998/12/30 13:49:49 hwr Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -915,6 +915,9 @@ product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 
 /* NEC products */
 product NEC POWERVR2	0x0046	PowerVR PCX2
+
+/* Neomagic products */
+product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
 
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
