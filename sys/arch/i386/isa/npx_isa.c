@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.7 2002/10/02 05:47:13 thorpej Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.8 2002/11/22 15:23:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.7 2002/10/02 05:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.8 2002/11/22 15:23:50 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-		    IST_EDGE, IPL_NONE, npxintr, 0);
+		    IST_EDGE, IPL_NONE, (int (*)(void *))npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
