@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.39 2004/03/27 14:49:13 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.40 2004/03/27 14:52:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.39 2004/03/27 14:49:13 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.40 2004/03/27 14:52:36 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,8 +96,10 @@ VAR var[] = {
 	{"%mem", "%MEM", 0, pmem, POFF(p_vm_rssize), INT32},
 	PVAR("acflag", "ACFLG", 0, p_acflag, USHORT, "x"),
 	{"acflg", "acflag", ALIAS},
+	{"args", "command", ALIAS},
 	{"blocked", "sigmask", ALIAS},
 	{"caught", "sigcatch", ALIAS},
+	{"comm", "COMMAND", COMM|ARGV0|LJUST, command},
 	{"command", "COMMAND", COMM|LJUST, command},
 	PVAR("cpu", "CPU", 0, p_estcpu, UINT, "u"),
 	{"cputime", "time", ALIAS},
