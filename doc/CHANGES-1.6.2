@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.32 2003/06/16 21:46:12 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.33 2003/06/16 21:52:40 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -470,3 +470,8 @@ src/distrib/sets/lists/man/mi			1.573
 
 	New sentence, new line; drop trailing spaces.
 	[fredette, ticket #1278]
+
+crypto/dist/kame/racoon/crypto_openssl.c	1.6
+
+	fix "round up to 8" code.  from kame
+	[itojun, ticket #1270]
