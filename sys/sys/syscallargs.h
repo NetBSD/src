@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallargs.h,v 1.56 1998/02/19 03:31:12 thorpej Exp $	*/
+/*	$NetBSD: syscallargs.h,v 1.57 1998/02/25 21:31:19 perry Exp $	*/
 
 /*
  * System call argument lists.
@@ -716,7 +716,7 @@ struct compat_09_sys_uname_args {
 
 struct sys_sysarch_args {
 	syscallarg(int) op;
-	syscallarg(char *) parms;
+	syscallarg(void *) parms;
 };
 
 struct compat_10_sys_semsys_args {
