@@ -36,9 +36,9 @@
 
 #ifndef lint
 #ifdef SMTP
-static char sccsid[] = "@(#)srvrsmtp.c	8.32 (Berkeley) 3/8/94 (with SMTP)";
+static char sccsid[] = "@(#)srvrsmtp.c	8.37 (Berkeley) 4/13/94 (with SMTP)";
 #else
-static char sccsid[] = "@(#)srvrsmtp.c	8.32 (Berkeley) 3/8/94 (without SMTP)";
+static char sccsid[] = "@(#)srvrsmtp.c	8.37 (Berkeley) 4/13/94 (without SMTP)";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ smtp(e)
 	bool vrfy;			/* set if this is a vrfy command */
 	char *protocol;			/* sending protocol */
 	char *sendinghost;		/* sending hostname */
-	long msize;			/* approximate maximum message size */
+	unsigned long msize;		/* approximate maximum message size */
 	char *peerhostname;		/* name of SMTP peer or "localhost" */
 	auto char *delimptr;
 	char *id;
@@ -165,11 +165,23 @@ smtp(e)
 	expand("\201e", inp, &inp[sizeof inp], e);
 	if (BrokenSmtpPeers)
 	{
+		p = strchr(inp, '\n');
+		if (p != NULL)
+			*p = '\0';
 		message("220 %s", inp);
 	}
 	else
 	{
-		message("220-%s", inp);
+		char *q = inp;
+
+		while (q != NULL)
+		{
+			p = strchr(q, '\n');
+			if (p != NULL)
+				*p++ = '\0';
+			message("220-%s", q);
+			q = p;
+		}
 		message("220 ESMTP spoken here");
 	}
 	protocol = NULL;
@@ -285,7 +297,7 @@ smtp(e)
 			
 			/* print extended message and brag */
 			message("250-%s Hello %s, pleased to meet you",
-				MyHostName, p);
+				MyHostName, CurSmtpClient);
 			if (!bitset(PRIV_NOEXPN, PrivacyFlags))
 				message("250-EXPN");
 			if (MaxMessageSize > 0)
@@ -389,7 +401,7 @@ smtp(e)
 
 			/* now parse ESMTP arguments */
 			msize = 0;
-			for (; p != NULL && *p != '\0'; p++)
+			while (p != NULL && *p != '\0')
 			{
 				char *kp;
 				char *vp = NULL;
@@ -420,7 +432,7 @@ smtp(e)
 					*p++ = '\0';
 
 				if (tTd(19, 1))
-					printf("MAIL: got arg %s=%s\n", kp,
+					printf("MAIL: got arg %s=\"%s\"\n", kp,
 						vp == NULL ? "<null>" : vp);
 
 				if (strcasecmp(kp, "size") == 0)
@@ -430,7 +442,11 @@ smtp(e)
 						usrerr("501 SIZE requires a value");
 						/* NOTREACHED */
 					}
-					msize = atol(vp);
+# ifdef __STDC__
+					msize = strtoul(vp, (char **) NULL, 10);
+# else
+					msize = strtol(vp, (char **) NULL, 10);
+# endif
 				}
 				else if (strcasecmp(kp, "body") == 0)
 				{
