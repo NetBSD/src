@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.46 1999/07/03 13:37:34 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.46.2.1 2000/11/20 18:11:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,7 +74,17 @@
 /*
  * Data types.
  */
-typedef	unsigned int	socklen_t;
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	__sa_family_t
+#endif
+
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	__socklen_t
+#endif
 
 /*
  * Socket types.
@@ -179,9 +189,9 @@ struct	linger {
  * addresses.
  */
 struct sockaddr {
-	u_char	sa_len;			/* total length */
-	u_char	sa_family;		/* address family */
-	char	sa_data[14];		/* actually longer; address value */
+	u_char		sa_len;		/* total length */
+	sa_family_t	sa_family;	/* address family */
+	char		sa_data[14];	/* actually longer; address value */
 };
 
 #if defined(_KERNEL)
@@ -207,11 +217,11 @@ struct sockproto {
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	u_char	__ss_len;	/* address length */
-	u_char	__ss_family;	/* address family */
-	char	__ss_pad1[_SS_PAD1SIZE];
-	int64_t	__ss_align;	/* force desired structure storage alignment */
-	char	__ss_pad2[_SS_PAD2SIZE];
+	u_char		ss_len;		/* address length */
+	sa_family_t	ss_family;	/* address family */
+	char		__ss_pad1[_SS_PAD1SIZE];
+	int64_t      __ss_align;/* force desired structure storage alignment */
+	char		__ss_pad2[_SS_PAD2SIZE];
 };
 #endif /* !_XOPEN_SOURCE || ... */
 #endif /* 1 */
@@ -223,7 +233,6 @@ struct sockaddr_storage {
 #define	PF_LOCAL	AF_LOCAL
 #define	PF_UNIX		PF_LOCAL	/* backward compatibility */
 #define	PF_INET		AF_INET
-#define	PF_INET6	AF_INET6
 #define	PF_IMPLINK	AF_IMPLINK
 #define	PF_PUP		AF_PUP
 #define	PF_CHAOS	AF_CHAOS
@@ -339,13 +348,15 @@ struct sockcred {
  */
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
-#define NET_RT_IFLIST	3		/* survey interface list */
-#define	NET_RT_MAXID	4
+#define NET_RT_OIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
+#define NET_RT_IFLIST	4		/* survey interface list */
+#define	NET_RT_MAXID	5
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
 	{ "dump", CTLTYPE_STRUCT }, \
 	{ "flags", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
 #endif /* !_XOPEN_SOURCE */
@@ -395,26 +406,35 @@ struct cmsghdr {
 };
 
 /* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg)		((u_char *)((cmsg) + 1))
+#define	CMSG_DATA(cmsg) \
+	((u_char *)(void *)(cmsg) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
 
 /*
  * Alignment requirement for CMSG struct manipulation.
- * This is different from ALIGN() defined in ARCH/include/param.h.
- * XXX think again carefully about architecture dependencies.
+ * This basically behaves the same as ALIGN() ARCH/include/param.h.
+ * We declare it separately for two reasons:
+ * (1) avoid dependency between machine/param.h, and (2) to sync with kernel's
+ * idea of ALIGNBYTES at runtime.
+ * without (2), we can't guarantee binary compatibility in case of future
+ * changes in ALIGNBYTES.
  */
-#define CMSG_ALIGN(n)		(((n) + 3) & ~3)
+#define __CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
+#ifdef _KERNEL
+#define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
+#endif
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((caddr_t)(cmsg) + (cmsg)->cmsg_len + sizeof(struct cmsghdr) > \
+	(((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
+			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (((caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)NULL : \
-	    (struct cmsghdr *)((caddr_t)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)))
+	    (struct cmsghdr *)((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len)))
 
 #define	CMSG_FIRSTHDR(mhdr)	((struct cmsghdr *)(mhdr)->msg_control)
 
-#define CMSG_SPACE(l)	(CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(l))
-#define CMSG_LEN(l)	(CMSG_ALIGN(sizeof(struct cmsghdr)) + (l))
+#define CMSG_SPACE(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + __CMSG_ALIGN(l))
+#define CMSG_LEN(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + (l))
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
@@ -452,9 +472,13 @@ struct omsghdr {
 };
 #endif
 
-#ifndef	_KERNEL
-
 #include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int	__cmsg_alignbytes __P((void));
+__END_DECLS
+
+#ifndef	_KERNEL
 
 __BEGIN_DECLS
 int	accept __P((int, struct sockaddr *, socklen_t *));
@@ -481,8 +505,6 @@ __END_DECLS
 #ifdef COMPAT_OLDSOCK
 #define MSG_COMPAT	0x8000
 #endif
-
-void	pfctlinput __P((int, struct sockaddr *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SOCKET_H_ */

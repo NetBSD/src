@@ -1,9 +1,10 @@
-/*	$NetBSD: in6_cksum.c,v 1.5 1999/07/11 17:45:11 itojun Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.5.2.1 2000/11/20 18:10:47 bouyer Exp $	*/
+/*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -68,7 +69,9 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <netinet/in.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
+
+#include <net/net_osdep.h>
 
 /*
  * Checksum routine for Internet Protocol family headers (Portable Version).
@@ -79,15 +82,6 @@
 
 #define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
 #define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
-
-static union {
-	u_int16_t phs[4];
-	struct {
-		u_int32_t	ph_len;
-		u_int8_t	ph_zero[3];
-		u_int8_t	ph_nxt;
-	} ph;
-} uph;
 
 /*
  * m MUST contain a continuous IP6 header.
@@ -100,7 +94,7 @@ int
 in6_cksum(m, nxt, off, len)
 	register struct mbuf *m;
 	u_int8_t nxt;
-	register int off, len;
+	u_int32_t off, len;
 {
 	register u_int16_t *w;
 	register int sum = 0;
@@ -110,7 +104,14 @@ in6_cksum(m, nxt, off, len)
 	int srcifid = 0, dstifid = 0;
 #endif
 	struct ip6_hdr *ip6;	
-	
+	union {
+		u_int16_t phs[4];
+		struct {
+			u_int32_t	ph_len;
+			u_int8_t	ph_zero[3];
+			u_int8_t	ph_nxt;
+		} ph __attribute__((__packed__));
+	} uph;
 	union {
 		u_int8_t	c[2];
 		u_int16_t	s;
@@ -125,6 +126,8 @@ in6_cksum(m, nxt, off, len)
 		panic("in6_cksum: mbuf len (%d) < off+len (%d+%d)\n",
 			m->m_pkthdr.len, off, len);
 	}
+
+	bzero(&uph, sizeof(uph));
 
 	/*
 	 * First create IP6 pseudo header and calculate a summary.
@@ -148,7 +151,7 @@ in6_cksum(m, nxt, off, len)
 	sum += w[0];
 	if (!IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 		sum += w[1];
-	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5]; 
+	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
 	sum += w[6]; sum += w[7];
 	/* IPv6 destination address */
 	sum += w[8];
@@ -244,7 +247,7 @@ in6_cksum(m, nxt, off, len)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous 
+			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
 			s_util.c[1] = *(char *)w;

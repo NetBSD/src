@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.81 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.81.2.1 2000/11/20 18:08:39 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #include <compat/svr4/svr4_mman.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -514,7 +512,7 @@ svr4_sys_mmap(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
@@ -549,7 +547,7 @@ svr4_sys_mmap64(p, v, retval)
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
 
-	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	rp = (void *) round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
@@ -631,9 +629,6 @@ svr4_sys_sysconfig(p, v, retval)
 	extern int	maxfiles;
 
 	switch (SCARG(uap, name)) {
-	case SVR4_CONFIG_UNUSED:
-		*retval = 0;
-		break;
 	case SVR4_CONFIG_NGROUPS:
 		*retval = NGROUPS_MAX;
 		break;
@@ -703,6 +698,45 @@ svr4_sys_sysconfig(p, v, retval)
 	case SVR4_CONFIG_AVPHYS_PAGES:
 		*retval = uvmexp.active;	/* XXX: active instead of avg */
 		break;
+	case SVR4_CONFIG_COHERENCY:
+		*retval = 0;	/* XXX */
+		break;
+	case SVR4_CONFIG_SPLIT_CACHE:
+		*retval = 0;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHESZ:
+		*retval = 256;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHESZ:
+		*retval = 256;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHELINESZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHELINESZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHEBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHEBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHETBLKSZ:
+		*retval = 64;	/* XXX */
+		break;
+	case SVR4_CONFIG_ICACHE_ASSOC:
+		*retval = 1;	/* XXX */
+		break;
+	case SVR4_CONFIG_DCACHE_ASSOC:
+		*retval = 1;	/* XXX */
+		break;
+	case SVR4_CONFIG_MAXPID:
+		*retval = PID_MAX;
+		break;
+	case SVR4_CONFIG_STACK_PROT:
+		*retval = PROT_READ|PROT_WRITE|PROT_EXEC;
+		break;
 	default:
 		return EINVAL;
 	}
@@ -724,7 +758,7 @@ svr4_sys_break(p, v, retval)
 	int    diff;
 
 	old = (vaddr_t) vm->vm_daddr;
-	new = round_page(SCARG(uap, nsize));
+	new = round_page((vaddr_t)SCARG(uap, nsize));
 	diff = new - old;
 
 	DPRINTF(("break(1): old %lx new %lx diff %x\n", old, new, diff));
@@ -741,6 +775,7 @@ svr4_sys_break(p, v, retval)
 
 	if (diff > 0) {
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+			0,
            		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, 
 			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
@@ -1552,7 +1587,7 @@ svr4_sys_memcntl(p, v, retval)
 
 			SCARG(&msa, addr) = SCARG(uap, addr);
 			SCARG(&msa, len) = SCARG(uap, len);
-			SCARG(&msa, flags) = (int)SCARG(uap, arg);
+			SCARG(&msa, flags) = (int)(u_long)SCARG(uap, arg);
 
 			return sys___msync13(p, &msa, retval);
 		}
@@ -1562,7 +1597,7 @@ svr4_sys_memcntl(p, v, retval)
 
 			SCARG(&maa, addr) = SCARG(uap, addr);
 			SCARG(&maa, len) = SCARG(uap, len);
-			SCARG(&maa, behav) = (int)SCARG(uap, arg);
+			SCARG(&maa, behav) = (int)(u_long)SCARG(uap, arg);
 
 			return sys_madvise(p, &maa, retval);
 		}
@@ -1624,7 +1659,7 @@ svr4_sys_resolvepath(p, v, retval)
 
 	*retval = len;
 bad:
-	vput(nd.ni_vp);
-	FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+	vrele(nd.ni_vp);
+	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	return error;
 }

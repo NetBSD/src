@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.44 1999/10/16 23:53:27 wrstuden Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.44.2.1 2000/11/20 18:09:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,6 +63,16 @@ const char	devout[] = "devout";
 const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
 
+/*
+ * This vnode operations vector is used for two things only:
+ * - special device nodes created from whole cloth by the kernel.
+ * - as a temporary vnodeops replacement for vnodes which were found to
+ *	be aliased by callers of checkalias().
+ * For the ops vector for vnodes built from special devices found in a
+ * filesystem, see (e.g) ffs_specop_entries[] in ffs_vnops.c or the
+ * equivalent for other filesystems.
+ */
+
 int (**spec_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -77,6 +87,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
+	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
@@ -147,7 +158,7 @@ spec_open(v)
 	struct proc *p = ap->a_p;
 	struct vnode *bvp, *vp = ap->a_vp;
 	dev_t bdev, dev = (dev_t)vp->v_rdev;
-	register int maj = major(dev);
+	int maj = major(dev);
 	int error;
 
 	/*
@@ -234,8 +245,8 @@ spec_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn, nextbn;
@@ -320,8 +331,8 @@ spec_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
@@ -449,7 +460,7 @@ spec_poll(v)
 		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-	register dev_t dev;
+	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
 
@@ -473,9 +484,11 @@ spec_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type == VBLK)
 		vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
@@ -492,8 +505,13 @@ spec_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct buf *bp;
 
-	(*bdevsw[major(ap->a_bp->b_dev)].d_strategy)(ap->a_bp);
+	bp = ap->a_bp;
+	if (!(bp->b_flags & B_READ) &&
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
+		(*bioops.io_start)(bp);
+	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	return (0);
 }
 
@@ -548,7 +566,7 @@ spec_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
@@ -712,8 +730,7 @@ spec_advlock(v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
-	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id, ap->a_op,
-	                   ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &vp->v_speclockf, (off_t)0);
 }

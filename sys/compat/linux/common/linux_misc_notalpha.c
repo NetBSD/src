@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.52 1999/08/16 19:06:29 tron Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.52.2.1 2000/11/20 18:08:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,15 +45,13 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_fcntl.h>
@@ -93,7 +91,7 @@ linux_sys_alarm(p, v, retval)
 	/*
 	 * Clear any pending timer alarms.
 	 */
-	untimeout(realitexpire, p);
+	callout_stop(&p->p_realit_ch);
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
 	    timercmp(&itp->it_value, &time, >))
@@ -126,8 +124,13 @@ linux_sys_alarm(p, v, retval)
 	}
 
 	if (timerisset(&it.it_value)) {
+		/*
+		 * Don't need to check hzto() return value, here.
+		 * callout_reset() does it for us.
+		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		timeout(realitexpire, p, hzto(&it.it_value));
+		callout_reset(&p->p_realit_ch, hzto(&it.it_value),
+		    realitexpire, p);
 	}
 	p->p_realtimer = it;
 	splx(s);
@@ -225,6 +228,7 @@ linux_sys_utime(p, v, retval)
 	struct linux_utimbuf lut;
 
 	sg = stackgap_init(p->p_emul);
+	tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
@@ -235,7 +239,6 @@ linux_sys_utime(p, v, retval)
 		tv[0].tv_usec = tv[1].tv_usec = 0;
 		tv[0].tv_sec = lut.l_actime;
 		tv[1].tv_sec = lut.l_modtime;
-		tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
 		if ((error = copyout(tv, tvp, sizeof tv)))
 			return error;
 		SCARG(&ua, tptr) = tvp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.35 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.35.8.1 2000/11/20 18:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -62,6 +62,7 @@
 dev_t rrootdev = NODEV;
 
 void	kernfs_init __P((void));
+void	kernfs_done __P((void));
 void	kernfs_get_rrootdev __P((void));
 int	kernfs_mount __P((struct mount *, const char *, void *,
 	    struct nameidata *, struct proc *));
@@ -82,6 +83,11 @@ int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 
 void
 kernfs_init()
+{
+}
+
+void
+kernfs_done()
 {
 }
 
@@ -148,7 +154,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	vfs_getnewfsid(mp, MOUNT_KERNFS);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
@@ -375,6 +381,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	kernfs_done,
 	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	kernfs_checkexp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.31 1999/02/26 23:44:46 wrstuden Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.31.8.1 2000/11/20 18:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -57,10 +57,14 @@
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/malloc.h>
+
 #include <miscfs/procfs/procfs.h>
-#include <vm/vm.h>			/* for PAGE_SIZE */
+
+#include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
 void	procfs_init __P((void));
+void	procfs_done __P((void));
 int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
@@ -91,6 +95,7 @@ procfs_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	size_t size;
+	struct procfsmount *pmnt;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
@@ -101,13 +106,20 @@ procfs_mount(mp, path, data, ndp, p)
 		return (EOPNOTSUPP);
 
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = 0;
-	vfs_getnewfsid(mp, MOUNT_PROCFS);
+	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
+	    M_UFSMNT, M_WAITOK);   /* XXX need new malloc type */
+
+	mp->mnt_data = (qaddr_t)pmnt;
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, "procfs", sizeof("procfs"));
+
+	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
+	pmnt->pmnt_mp = mp;
+
 	return (0);
 }
 
@@ -128,6 +140,11 @@ procfs_unmount(mp, mntflags, p)
 
 	if ((error = vflush(mp, 0, flags)) != 0)
 		return (error);
+
+	exechook_disestablish(VFSTOPROC(mp)->pmnt_exechook);
+
+	free(mp->mnt_data, M_UFSMNT);
+	mp->mnt_data = 0;
 
 	return (0);
 }
@@ -255,6 +272,13 @@ procfs_vptofh(vp, fhp)
 void
 procfs_init()
 {
+	procfs_hashinit();
+}
+
+void
+procfs_done()
+{
+	procfs_hashdone();
 }
 
 int
@@ -290,6 +314,7 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	procfs_done,
 	procfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	procfs_checkexp,

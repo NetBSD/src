@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.1 1999/09/13 10:31:43 itojun Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.1.2.1 2000/11/20 18:09:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,34 +40,36 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sdivsi3.S,v 1.1 1999/09/13 10:31:43 itojun Exp $")
+	RCSID("$NetBSD: sdivsi3.S,v 1.1.2.1 2000/11/20 18:09:31 bouyer Exp $")
 #endif
 
 /* r0 <= r4 / r5 */
 ENTRY(__sdivsi3)
-	tst	r5, r5
+	mov	r4, r0
+	mov	r5, r1
+
+	tst	r1, r1
 	bt	div_by_zero
 
 	mov	#0, r2
-	div0s	r2, r4
+	div0s	r2, r0
 	subc	r3, r3
-	subc	r2, r4
-	div0s	r5, r3
-#define DIVSTEP	rotcl r4; div1 r5, r3
+	subc	r2, r0
+	div0s	r1, r3
+#define DIVSTEP	rotcl r0; div1 r1, r3
 	/* repeat 32 times */
 	DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP;
 	DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP;
 	DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP;
 	DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP; DIVSTEP;
 #undef DIVSTEP
-	rotcl	r4
-	addc	r2, r4
+	rotcl	r0
 
 	rts
-	mov	r4, r0		/* delay slot */
+	addc	r2, r0		/* delay slot */
 
 div_by_zero:
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	rts
 	mov	#0, r0		/* delay slot */
 #else

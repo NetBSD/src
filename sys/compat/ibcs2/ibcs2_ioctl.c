@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.17 1999/01/14 15:00:38 jtk Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.17.8.1 2000/11/20 18:08:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -121,7 +121,7 @@ stios2btios(st, bt)
 	struct ibcs2_termios *st;
 	struct termios *bt;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = st->c_iflag;	r = 0;
 	if (l & IBCS2_IGNBRK)	r |= IGNBRK;
@@ -214,7 +214,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct ibcs2_termios *st;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = bt->c_iflag;	r = 0;
 	if (l & IGNBRK)		r |= IBCS2_IGNBRK;
@@ -552,10 +552,49 @@ ibcs2_sys_ioctl(p, v, retval)
 		return sys_ioctl(p, uap, retval);
 
 	default:
-		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%lx ",
+		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%x ",
 			 p->p_pid, SCARG(uap, cmd)));
 		return ENOSYS;
 	}
 	return ENOSYS;
 }
 
+int
+ibcs2_sys_gtty(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_gtty_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct sgttyb *) tb;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct sgttyb tb;
+	struct ibcs2_sgttyb itb;
+	int error;
+
+	if (SCARG(uap, fd) < 0 || SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL) {
+		DPRINTF(("ibcs2_sys_gtty(%d): bad fd %d ", p->p_pid,
+			 SCARG(uap, fd)));
+		return EBADF;
+	}
+
+	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
+		DPRINTF(("ibcs2_sys_gtty(%d): bad fp flag ", p->p_pid));
+		return EBADF;
+	}
+
+	error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETP, (caddr_t)&tb, p);
+	if (error)
+		return error;
+
+	itb.sg_ispeed = tb.sg_ispeed;
+	itb.sg_ospeed = tb.sg_ospeed;
+	itb.sg_erase = tb.sg_erase;
+	itb.sg_kill = tb.sg_kill;
+	itb.sg_flags = tb.sg_flags & ~(IBCS2_GHUPCL|IBCS2_GXTABS);
+	return copyout((caddr_t)&itb, SCARG(uap, tb), sizeof(itb));
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.11 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_print.c,v 1.11.2.1 2000/11/20 18:08:49 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,19 +51,22 @@ db_show_regs(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	register struct db_variable *regp;
+	struct db_variable *regp;
 	db_expr_t	value, offset;
 	char *		name;
 
 	for (regp = db_regs; regp < db_eregs; regp++) {
 	    db_read_variable(regp, &value);
-	    db_printf("%-12s%#*ln", regp->name, (int)(sizeof (value) * 2) + 2,
-		value);
+	    db_printf("%-12s%s", regp->name, db_num_to_str(value));
 	    db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
 	    if (name != 0 && offset <= db_maxoff && offset != value) {
 		db_printf("\t%s", name);
-		if (offset != 0)
-		    db_printf("+%#lr", offset);
+		if (offset != 0) {
+		    char tbuf[24];
+
+		    db_format_radix(tbuf, 24, offset, TRUE);
+		    db_printf("+%s", tbuf);
+		}
 	    }
 	    db_printf("\n");
 	}

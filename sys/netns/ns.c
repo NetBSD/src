@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.16 1998/09/13 15:21:32 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.16.12.1 2000/11/20 18:11:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -35,8 +35,6 @@
  *	@(#)ns.c	8.5 (Berkeley) 2/9/95
  */
 
-#include "opt_ns.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -54,8 +52,6 @@
 #include <netns/ns_if.h>
 #include <netns/ns_var.h>
 
-#ifdef NS
-
 struct ns_ifaddrhead ns_ifaddr;
 int ns_interfaces;
 extern struct sockaddr_ns ns_netmask, ns_hostmask;
@@ -69,11 +65,11 @@ ns_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct proc *p;
 {
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register struct ns_ifaddr *ia = 0;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ns_ifaddr *ia = 0;
 	struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
 	struct sockaddr_ns oldaddr;
 	int error = 0, dstIsNew, hostIsNew;
@@ -113,8 +109,10 @@ ns_control(so, cmd, data, ifp, p)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&ns_ifaddr, ia, ia_list);
+			IFAREF((struct ifaddr *)ia);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
+			IFAREF((struct ifaddr *)ia);
 			ia->ia_ifa.ifa_addr = snstosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_netmask = snstosa(&ns_netmask);
 			ia->ia_ifa.ifa_dstaddr = snstosa(&ia->ia_dstaddr);
@@ -197,16 +195,7 @@ ns_control(so, cmd, data, ifp, p)
 		return (error);
 
 	case SIOCDIFADDR:
-		ns_ifscrub(ifp, ia);
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-		TAILQ_REMOVE(&ns_ifaddr, ia, ia_list);
-		IFAFREE((&ia->ia_ifa));
-		if (0 == --ns_interfaces) {
-			/*
-			 * We reset to virginity and start all over again
-			 */
-			ns_thishost = ns_zerohost;
-		}
+		ns_purgeaddr(&ia->ia_ifa, ifp);
 		break;
 
 	default:
@@ -217,13 +206,47 @@ ns_control(so, cmd, data, ifp, p)
 	return (0);
 }
 
+void
+ns_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct ns_ifaddr *ia = (void *) ifa;
+
+	ns_ifscrub(ifp, ia);
+	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	IFAFREE(&ia->ia_ifa);
+	TAILQ_REMOVE(&ns_ifaddr, ia, ia_list);
+	IFAFREE((&ia->ia_ifa));
+	if (0 == --ns_interfaces) {
+		/*
+		 * We reset to virginity and start all over again
+		 */
+		ns_thishost = ns_zerohost;
+	}
+}
+
+void
+ns_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_NS)
+			continue;
+		ns_purgeaddr(ifa, ifp);
+	}
+}
+
 /*
  * Delete any previous route for an old address.
  */
 void
 ns_ifscrub(ifp, ia)
-	register struct ifnet *ifp;
-	register struct ns_ifaddr *ia; 
+	struct ifnet *ifp;
+	struct ns_ifaddr *ia; 
 {
 
 	if ((ia->ia_flags & IFA_ROUTE) == 0)
@@ -240,13 +263,13 @@ ns_ifscrub(ifp, ia)
  */
 int
 ns_ifinit(ifp, ia, sns, scrub)
-	register struct ifnet *ifp;
-	register struct ns_ifaddr *ia;
-	register struct sockaddr_ns *sns;
+	struct ifnet *ifp;
+	struct ns_ifaddr *ia;
+	struct sockaddr_ns *sns;
 	int scrub;
 {
 	struct sockaddr_ns oldaddr;
-	register union ns_host *h = &ia->ia_addr.sns_addr.x_host;
+	union ns_host *h = &ia->ia_addr.sns_addr.x_host;
 	int s = splimp(), error;
 
 	/*
@@ -316,11 +339,11 @@ bad:
  */
 struct ns_ifaddr *
 ns_iaonnetof(dst)
-	register struct ns_addr *dst;
+	struct ns_addr *dst;
 {
-	register struct ns_ifaddr *ia;
-	register struct ns_addr *compare;
-	register struct ifnet *ifp;
+	struct ns_ifaddr *ia;
+	struct ns_addr *compare;
+	struct ifnet *ifp;
 	struct ns_ifaddr *ia_maybe = 0;
 	union ns_net net = dst->x_net;
 
@@ -340,4 +363,3 @@ ns_iaonnetof(dst)
 	}
 	return (ia_maybe);
 }
-#endif

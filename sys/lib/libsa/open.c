@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.19 1999/03/31 01:50:26 cgd Exp $	*/
+/*	$NetBSD: open.c,v 1.19.8.1 2000/11/20 18:09:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -85,10 +85,10 @@ oopen(fname, mode)
 	const char *fname;
 	int mode;
 {
-	register struct open_file *f;
-	register int fd, error;
+	struct open_file *f;
+	int fd, error;
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
-	register int i, besterror;
+	int i, besterror;
 #endif
 	char *file;
 

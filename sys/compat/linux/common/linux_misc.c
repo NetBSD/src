@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.61 1999/10/05 09:22:04 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.61.2.1 2000/11/20 18:08:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
@@ -93,9 +94,6 @@
 
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 
@@ -106,7 +104,21 @@
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_ptrace.h>
+#include <compat/linux/common/linux_reboot.h>
 
+int linux_ptrace_request_map[] = {
+	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
+	LINUX_PTRACE_PEEKTEXT,	PT_READ_I,
+	LINUX_PTRACE_PEEKDATA,	PT_READ_D,
+	LINUX_PTRACE_POKETEXT,	PT_WRITE_I,
+	LINUX_PTRACE_POKEDATA,	PT_WRITE_D,
+	LINUX_PTRACE_CONT,	PT_CONTINUE,
+	LINUX_PTRACE_KILL,	PT_KILL,
+	LINUX_PTRACE_ATTACH,	PT_ATTACH,
+	LINUX_PTRACE_DETACH,	PT_DETACH,
+	-1
+};
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
@@ -338,8 +350,6 @@ linux_sys_uname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_utsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[],
-	    domainname[];
 	struct linux_utsname luts;
 	int len;
 	char *cp;
@@ -351,7 +361,7 @@ linux_sys_uname(p, v, retval)
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
-	/* This part taken from the the uname() in libc */
+	/* This part taken from the uname() in libc */
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp) {
 		if (*cp == '\n' || *cp == '\t') {
@@ -402,7 +412,7 @@ linux_sys_mmap(p, v, retval)
 	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
 		SCARG(&cma,prot) |= VM_PROT_READ;
 	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = SCARG(uap, fd);
+	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
 	SCARG(&cma,pos) = SCARG(uap, offset);
 
@@ -548,7 +558,7 @@ linux_sys_getdents(p, v, retval)
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
-	register struct dirent *bdp;
+	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
@@ -893,6 +903,40 @@ linux_sys_setregid(p, v, retval)
 	return sys_setregid(p, &bsa, retval);
 }
 
+/*
+ * We have nonexistent fsuid equal to uid.
+ * If modification is requested, refuse.
+ */
+int
+linux_sys_setfsuid(p, v, retval)
+	 struct proc *p;
+	 void *v;
+	 register_t *retval;
+{
+	 struct linux_sys_setfsuid_args /* {
+		 syscallarg(uid_t) uid;
+	 } */ *uap = v;
+	 uid_t uid;
+
+	 uid = SCARG(uap, uid);
+	 if (p->p_cred->p_ruid != uid)
+		 return sys_nosys(p, v, retval);
+	 else
+		 return (0);
+}
+
+/* XXX XXX XXX */
+#ifndef alpha
+int
+linux_sys_getfsuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_getuid(p, v, retval);
+}
+#endif
+
 int
 linux_sys___sysctl(p, v, retval)
 	struct proc *p;
@@ -1018,4 +1062,93 @@ linux_sys_getresuid(p, v, retval)
 		return (error);
 
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
+}
+
+int
+linux_sys_ptrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_ptrace_args /* {
+		i386, m68k: T=int
+		alpha: T=long
+		syscallarg(T) request;
+		syscallarg(T) pid;
+		syscallarg(T) addr;
+		syscallarg(T) data;
+	} */ *uap = v;
+	int *ptr, request;
+
+	ptr = linux_ptrace_request_map;
+	request = SCARG(uap, request);
+	while (*ptr != -1)
+		if (*ptr++ == request) {
+			struct sys_ptrace_args pta;
+			caddr_t sg;
+
+			sg = stackgap_init(p->p_emul);
+
+			SCARG(&pta, req) = *ptr;
+			SCARG(&pta, pid) = SCARG(uap, pid);
+			SCARG(&pta, addr) = (caddr_t)SCARG(uap, addr);
+			SCARG(&pta, data) = SCARG(uap, data);
+
+			return sys_ptrace(p, &pta, retval);
+		}
+		else
+			ptr++;
+
+	return LINUX_SYS_PTRACE_ARCH(p, uap, retval);
+}
+
+int
+linux_sys_reboot(struct proc *p, void *v, register_t *retval)
+{
+	struct linux_sys_reboot_args /* {
+		syscallarg(int) magic1;
+		syscallarg(int) magic2;
+		syscallarg(int) cmd;
+		syscallarg(void *) arg;
+	} */ *uap = v;
+	struct sys_reboot_args /* {
+		syscallarg(int) opt;
+		syscallarg(char *) bootstr;
+	} */ sra;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return(error);
+
+	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)
+		return(EINVAL);
+	if (SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2 &&
+	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2A &&
+	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2B)
+		return(EINVAL);
+
+	switch (SCARG(uap, cmd)) {
+	case LINUX_REBOOT_CMD_RESTART:
+		SCARG(&sra, opt) = RB_AUTOBOOT;
+		break;
+	case LINUX_REBOOT_CMD_HALT:
+		SCARG(&sra, opt) = RB_HALT;
+		break;
+	case LINUX_REBOOT_CMD_POWER_OFF:
+		SCARG(&sra, opt) = RB_HALT|RB_POWERDOWN;
+		break;
+	case LINUX_REBOOT_CMD_RESTART2:
+		/* Reboot with an argument. */
+		SCARG(&sra, opt) = RB_AUTOBOOT|RB_STRING;
+		SCARG(&sra, bootstr) = SCARG(uap, arg);
+		break;
+	case LINUX_REBOOT_CMD_CAD_ON:
+		return(EINVAL);	/* We don't implement ctrl-alt-delete */
+	case LINUX_REBOOT_CMD_CAD_OFF:
+		return(0);
+	default:
+		return(EINVAL);
+	}
+
+	return(sys_reboot(p, &sra, retval));
 }

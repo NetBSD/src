@@ -1,3 +1,5 @@
+/*	$NetBSD: if_faith.c,v 1.4.2.1 2000/11/20 18:10:00 bouyer Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,9 +41,7 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include "faith.h"
 #if NFAITH > 0
@@ -54,6 +54,8 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/queue.h>
+
 #include <machine/cpu.h>
 
 #include <net/if.h>
@@ -69,100 +71,105 @@
 #include <netinet/ip.h>
 #endif
 
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
 #ifdef INET6
 #ifndef INET
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#endif
-
-#ifdef NETATALK
-#include <netinet/if_ether.h>
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
-#endif NETATALK
 
 #include "bpfilter.h"
 
-#ifdef __FreeBSD__
-static int faithioctl __P((struct ifnet *, int, caddr_t));
-#else
+#include <net/net_osdep.h>
+
+struct faith_softc {
+	struct ifnet sc_if;	/* must be first */
+	LIST_ENTRY(faith_softc) sc_list;
+};
+
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
-#endif
-int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
-	register struct rtentry *));
+int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	struct rtentry *));
 static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
-void faithattach __P((void *));
-#ifdef __FreeBSD__
-PSEUDO_SET(faithattach, if_faith);
-#endif
+void faithattach __P((int));
 
-static struct ifnet faithif[NFAITH];
+LIST_HEAD(, faith_softc) faith_softc_list;
+
+int	faith_clone_create __P((struct if_clone *, int));
+void	faith_clone_destroy __P((struct ifnet *));
+
+struct if_clone faith_cloner =
+    IF_CLONE_INITIALIZER("faith", faith_clone_create, faith_clone_destroy);
 
 #define	FAITHMTU	1500
 
 /* ARGSUSED */
 void
-faithattach(faith)
-	void *faith;
+faithattach(count)
+	int count;
 {
-	register struct ifnet *ifp;
-	register int i;
 
-	for (i = 0; i < NFAITH; i++) {
-		ifp = &faithif[i];
-		bzero(ifp, sizeof(faithif[i]));
-#ifdef __NetBSD__
-		sprintf(ifp->if_xname, "faith%d", i);
-#else
-		ifp->if_name = "faith";
-		ifp->if_unit = i;
-#endif
-		ifp->if_mtu = FAITHMTU;
-		/* Change to BROADCAST experimentaly to announce its prefix. */
-		ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
-		ifp->if_ioctl = faithioctl;
-		ifp->if_output = faithoutput;
-		ifp->if_type = IFT_FAITH;
-		ifp->if_hdrlen = 0;
-		ifp->if_addrlen = 0;
-		if_attach(ifp);
+	LIST_INIT(&faith_softc_list);
+	if_clone_attach(&faith_cloner);
+}
+
+int
+faith_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct faith_softc *sc;
+
+	sc = malloc(sizeof(struct faith_softc), M_DEVBUF, M_WAITOK);
+	bzero(sc, sizeof(struct faith_softc));
+
+	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+
+	sc->sc_if.if_mtu = FAITHMTU;
+	/* Change to BROADCAST experimentaly to announce its prefix. */
+	sc->sc_if.if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
+	sc->sc_if.if_ioctl = faithioctl;
+	sc->sc_if.if_output = faithoutput;
+	sc->sc_if.if_type = IFT_FAITH;
+	sc->sc_if.if_hdrlen = 0;
+	sc->sc_if.if_addrlen = 0;
+	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-#ifdef __FreeBSD__
-		bpfattach(ifp, DLT_NULL, sizeof(u_int));
+#ifdef HAVE_OLD_BPF
+	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
 #endif
-	}
+	LIST_INSERT_HEAD(&faith_softc_list, sc, sc_list);
+	return (0);
+}
+
+void
+faith_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct faith_softc *sc = (void *) ifp;
+
+	LIST_REMOVE(sc, sc_list);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+	free(sc, M_DEVBUF);
 }
 
 int
 faithoutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
@@ -190,7 +197,7 @@ faithoutput(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
-#ifdef __FreeBSD__
+#ifdef HAVE_OLD_BPF
 		bpf_mtap(ifp, &m0);
 #else
 		bpf_mtap(ifp->if_bpf, &m0);
@@ -206,6 +213,12 @@ faithoutput(ifp, m, dst, rt)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	switch (dst->sa_family) {
+#ifdef INET
+	case AF_INET:
+		ifq = &ipintrq;
+		isr = NETISR_IP;
+		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;
@@ -260,17 +273,13 @@ faithrtrequest(cmd, rt, sa)
 /* ARGSUSED */
 static int
 faithioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-#ifdef __FreeBSD__
-	int cmd;
-#else
+	struct ifnet *ifp;
 	u_long cmd;
-#endif
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -290,6 +299,10 @@ faithioctl(ifp, cmd, data)
 			break;
 		}
 		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
 #ifdef INET6
 		case AF_INET6:
 			break;

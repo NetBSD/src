@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.22 1999/04/30 21:23:50 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.22.2.1 2000/11/20 18:11:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -147,7 +147,9 @@ void	gsignal __P((int pgid, int sig));
 int	issignal __P((struct proc *p));
 void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
 void	postsig __P((int sig));
-void	psignal __P((struct proc *p, int sig));
+void	psignal1 __P((struct proc *p, int sig, int dolock));
+#define	psignal(p, sig)		psignal1((p), (sig), 1)
+#define	sched_psignal(p, sig)	psignal1((p), (sig), 0)
 void	siginit __P((struct proc *p));
 void	trapsignal __P((struct proc *p, int sig, u_long code));
 void	sigexit __P((struct proc *, int));
@@ -175,10 +177,13 @@ void	sigactsfree __P((struct proc *));
  */
 void	sendsig __P((sig_t action, int sig, sigset_t *returnmask, u_long code));
 struct core;
+struct core32;
 struct vnode;
 struct ucred;
 int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
 			  struct core *));
+int	cpu_coredump32 __P((struct proc *, struct vnode *, struct ucred *, 
+			       struct core32 *));
 
 /*
  * Compatibility functions.  See compat/common/kern_sig_13.c.

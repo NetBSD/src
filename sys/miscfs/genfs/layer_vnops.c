@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.1 1999/07/08 01:19:01 wrstuden Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.1.4.1 2000/11/20 18:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.1 1999/07/08 01:19:01 wrstuden Exp $
+ *	$Id: layer_vnops.c,v 1.1.4.1 2000/11/20 18:09:46 bouyer Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -291,7 +291,7 @@ layer_bypass(v)
 		<other random data follows, presumably>
 	} */ *ap = v;
 	int (**our_vnodeop_p) __P((void *)); 
-	register struct vnode **this_vp_p;
+	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
@@ -716,6 +716,8 @@ layer_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 
@@ -822,7 +824,7 @@ layer_print(v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	printf ("\ttag VT_LAYERFS, vp=%p, lowervp=%p\n", vp, LAYERVPTOLOWERVP(vp));
 	return (0);
 }

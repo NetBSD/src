@@ -1,9 +1,10 @@
-/*	$NetBSD: keydb.h,v 1.3 1999/07/03 21:32:48 thorpej Exp $	*/
+/*	$NetBSD: keydb.h,v 1.3.2.1 2000/11/20 18:11:11 bouyer Exp $	*/
+/*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,119 +33,69 @@
 #ifndef _NETKEY_KEYDB_H_
 #define _NETKEY_KEYDB_H_
 
-#ifdef __NetBSD__
-# ifdef _KERNEL
-#  define KERNEL
-# endif
-#endif
-
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #include <netkey/key_var.h>
 
-/* Must include ipsec.h and keyv2.h before in its use. */
-
-/* management for the tree and nodes. */
-struct keytree {
-	struct keynode *head;
-	struct keynode *tail;
-	int len;
+/* Security Assocciation Index */
+/* NOTE: Ensure to be same address family */
+struct secasindex {
+	struct sockaddr_storage src;	/* srouce address for SA */
+	struct sockaddr_storage dst;	/* destination address for SA */
+	u_int16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
+	u_int8_t mode;			/* mode of protocol, see ipsec.h */
+	u_int32_t reqid;		/* reqid id who owned this SA */
+					/* see IPSEC_MANUAL_REQID_MAX. */
 };
-
-struct keynode {
-	struct keynode *next;
-	struct keynode *prev;
-	struct keytree *back;	/* pointer to the keytree */
-};
-
-/* index structure for SPD and SAD */
-/* NOTE: All field are network byte order. */
-struct secindex {
-	u_int8_t family;	/* AF_INET or AF_INET6 */
-	u_int8_t prefs;		/* preference for srouce address in bits */
-	u_int8_t prefd;		/* preference for destination address in bits */
-	u_int8_t proto;		/* upper layer Protocol */
-	u_int16_t ports;	/* source port */
-	u_int16_t portd;	/* destination port */
-	union {
-#if 0	/* #include dependency... */
-		struct in_addr src4;
-		struct in6_addr src6;
-#endif
-		u_int8_t srcany[16];	/*guarantee minimum size*/
-	} src;			/* buffer for source address */
-	union {
-#if 0	/* #include dependency... */
-		struct in_addr dst4;
-		struct in6_addr dst6;
-#endif
-		u_int8_t dstany[16];	/*guarantee minimum size*/
-	} dst;			/* buffer for destination address */
-};
-
-/* direction of SA */
-#define SADB_X_DIR_UNKNOWN	0	/* initial */
-#define SADB_X_DIR_INBOUND	1
-#define SADB_X_DIR_OUTBOUND	2
-#define SADB_X_DIR_BIDIRECT	3	/* including loopback */
-#define SADB_X_DIR_MAX		4
-#define SADB_X_DIR_INVALID	4
-			/*
-			 * Since X_DIR_INVALID is equal to SADB_X_DIR_MAX,
-			 * it can be used just as flag. The other are too
-			 * used for loop counter.
-			 */
 
 /* Security Association Data Base */
-struct secasindex {
-	struct secasindex *next;
-	struct secasindex *prev;
-	struct keytree *saidxt;		/* back pointer to */
-					/* the top of SA index tree */
+struct secashead {
+	LIST_ENTRY(secashead) chain;
 
-	struct secindex idx;		/* security index */
+	struct secasindex saidx;
 
-	struct keytree satree[SADB_SASTATE_MAX+1];
+	struct sadb_ident *idents;	/* source identity */
+	struct sadb_ident *identd;	/* destination identity */
+					/* XXX I don't know how to use them. */
+
+	u_int8_t state;			/* MATURE or DEAD. */
+	LIST_HEAD(_satree, secasvar) savtree[SADB_SASTATE_MAX+1];
 					/* SA chain */
+					/* The first of this list is newer SA */
 
-	struct route sa_route;		/* XXX */
+	struct route sa_route;		/* route cache */
 };
 
 /* Security Association */
-struct secas {
-	struct secas *next;
-	struct secas *prev;
-	struct keytree *sat;		/* back pointer to the top of SA tree */
+struct secasvar {
+	LIST_ENTRY(secasvar) chain;
 
 	int refcnt;			/* reference count */
 	u_int8_t state;			/* Status of this Association */
-	u_int8_t type;			/* Type of this association: protocol */
+
 	u_int8_t alg_auth;		/* Authentication Algorithm Identifier*/
 	u_int8_t alg_enc;		/* Cipher Algorithm Identifier */
 	u_int32_t spi;			/* SPI Value, network byte order */
 	u_int32_t flags;		/* holder for SADB_KEY_FLAGS */
+
 	struct sadb_key *key_auth;	/* Key for Authentication */
-					/* length has been shifted up to 3. */
 	struct sadb_key *key_enc;	/* Key for Encryption */
-					/* length has been shifted up to 3. */
-	struct sockaddr *proxy;		/* Proxy IP address for Destination */
+	caddr_t iv;			/* Initilization Vector */
+	u_int ivlen;			/* length of IV */
+	void *sched;			/* intermediate encryption key */
+	size_t schedlen;
+
 	struct secreplay *replay;	/* replay prevention */
-	u_int32_t tick;			/* for lifetime */
+	long created;			/* for lifetime */
+
 	struct sadb_lifetime *lft_c;	/* CURRENT lifetime, it's constant. */
 	struct sadb_lifetime *lft_h;	/* HARD lifetime */
 	struct sadb_lifetime *lft_s;	/* SOFT lifetime */
-			/* sadb_lifetime_len is in 32 bits. */
-
-	caddr_t iv;			/* Initilization Vector */
-	u_int ivlen;			/* XXX: quick hack */
-	caddr_t misc1;			/* the use for example DES's setkey. */
-	caddr_t misc2;
-	caddr_t misc3;
 
 	u_int32_t seq;			/* sequence number */
-	u_int32_t pid;			/* pid */
+	pid_t pid;			/* message's pid */
 
-	struct secasindex *saidx;	/* back pointer to the secasindex */
+	struct secashead *sah;		/* back pointer to the secashead */
 };
 
 /* replay prevention */
@@ -154,34 +105,25 @@ struct secreplay {
 	u_int32_t seq;		/* used by sender */
 	u_int32_t lastseq;	/* used by receiver */
 	caddr_t bitmap;		/* used by receiver */
+	int overflow;		/* overflow flag */
 };
 
-/* socket table due to send PF_KEY messages. */ 
+/* socket table due to send PF_KEY messages. */
 struct secreg {
-	struct secreg *next;
-	struct secreg *prev;
-	struct keytree *regt;	/* back pointer to the top of secreg tree */
+	LIST_ENTRY(secreg) chain;
 
 	struct socket *so;
 };
 
-#ifndef IPSEC_BLOCK_ACQUIRE
-/* acquiring list table. */ 
+#ifndef IPSEC_NONBLOCK_ACQUIRE
+/* acquiring list table. */
 struct secacq {
-	struct secacq *next;
-	struct secacq *prev;
-	struct keytree *acqt;	/* back pointer to the top of secacq tree */
+	LIST_ENTRY(secacq) chain;
 
-#if 1
-	struct secindex idx;	/* security index */
-	u_int8_t proto;		/* Type of this association: IPsec protocol */
-	u_int8_t proxy[16];	/* buffer for proxy address */
-#else
-	u_int8_t hash[16];
-#endif
+	struct secasindex saidx;
 
 	u_int32_t seq;		/* sequence number */
-	u_int32_t tick;		/* for lifetime */
+	long created;		/* for lifetime */
 	int count;		/* for lifetime */
 };
 #endif
@@ -196,6 +138,23 @@ struct key_cb {
 	int any_count;
 };
 
-#endif /* KERNEL */
+/* secpolicy */
+extern struct secpolicy *keydb_newsecpolicy __P((void));
+extern void keydb_delsecpolicy __P((struct secpolicy *));
+/* secashead */
+extern struct secashead *keydb_newsecashead __P((void));
+extern void keydb_delsecashead __P((struct secashead *));
+/* secasvar */
+extern struct secasvar *keydb_newsecasvar __P((void));
+extern void keydb_refsecasvar __P((struct secasvar *));
+extern void keydb_freesecasvar __P((struct secasvar *));
+/* secreplay */
+extern struct secreplay *keydb_newsecreplay __P((size_t));
+extern void keydb_delsecreplay __P((struct secreplay *));
+/* secreg */
+extern struct secreg *keydb_newsecreg __P((void));
+extern void keydb_delsecreg __P((struct secreg *));
+
+#endif /* _KERNEL */
 
 #endif /* _NETKEY_KEYDB_H_ */

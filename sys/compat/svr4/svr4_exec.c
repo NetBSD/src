@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.29 1999/02/09 20:46:40 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.29.8.1 2000/11/20 18:08:38 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -49,9 +49,6 @@
 #include <sys/exec.h>
 
 #include <sys/mman.h>
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -99,19 +96,19 @@ svr4_copyargs(pack, arginfo, stack, argp)
 		return NULL;
 #ifdef SVR4_COMPAT_SOLARIS2
 	if (pack->ep_emul_arg) {
-		a->au_id = AUX_sun_uid;
+		a->au_type = AT_SUN_UID;
 		a->au_v = p->p_ucred->cr_uid;
 		a++;
 
-		a->au_id = AUX_sun_ruid;
+		a->au_type = AT_SUN_RUID;
 		a->au_v = p->p_cred->ruid;
 		a++;
 
-		a->au_id = AUX_sun_gid;
+		a->au_type = AT_SUN_GID;
 		a->au_v = p->p_ucred->cr_gid;
 		a++;
 
-		a->au_id = AUX_sun_rgid;
+		a->au_type = AT_SUN_RGID;
 		a->au_v = p->p_cred->rgid;
 		a++;
 	}

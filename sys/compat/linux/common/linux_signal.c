@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.24 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.24.2.1 2000/11/20 18:08:25 bouyer Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -318,7 +318,7 @@ native_to_linux_sigaction(bsa, lsa)
  */
 int
 linux_sys_rt_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -330,7 +330,7 @@ linux_sys_rt_sigaction(p, v, retval)
 	} */ *uap = v;
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
-	int error;
+	int error, sig;
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
@@ -341,10 +341,20 @@ linux_sys_rt_sigaction(p, v, retval)
 			return (error);
 		linux_to_native_sigaction(&nlsa, &nbsa);
 	}
-	error = sigaction1(p, linux_to_native_sig[SCARG(uap, signum)],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
-	if (error)
-		return (error);
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	if (sig > 0 && !linux_to_native_sig[sig]) {
+		/* Pretend that we did something useful for unknown signals. */
+		obsa.sa_handler = SIG_IGN;
+		sigemptyset(&obsa.sa_mask);
+		obsa.sa_flags = 0;
+	} else {
+		error = sigaction1(p, linux_to_native_sig[sig],
+		    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
+		if (error)
+			return (error);
+	}
 	if (SCARG(uap, osa)) {
 		native_to_linux_sigaction(&obsa, &olsa);
 		error = copyout(&olsa, SCARG(uap, osa), sizeof(olsa));
@@ -356,7 +366,7 @@ linux_sys_rt_sigaction(p, v, retval)
 
 int
 linux_sigprocmask1(p, how, set, oset)
-	register struct proc *p;
+	struct proc *p;
 	int how;
 	const linux_old_sigset_t *set;
 	linux_old_sigset_t *oset;
@@ -386,7 +396,7 @@ linux_sigprocmask1(p, how, set, oset)
 		linux_old_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    set ? &nbss : 0, oset ? &obss : 0);
+	    set ? &nbss : NULL, oset ? &obss : NULL);
 	if (error)
 		return (error); 
 	if (oset) {
@@ -400,7 +410,7 @@ linux_sigprocmask1(p, how, set, oset)
 
 int
 linux_sys_rt_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -443,21 +453,17 @@ linux_sys_rt_sigprocmask(p, v, retval)
 		linux_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    set ? &nbss : 0, oset ? &obss : 0);
-	if (error)
-		return (error); 
-	if (oset) {
+	    set ? &nbss : NULL, oset ? &obss : NULL);
+	if (!error && oset) {
 		native_to_linux_sigset(&obss, &olss);
 		error = copyout(&olss, oset, sizeof(olss));
-		if (error)
-			return (error);
 	}       
 	return (error);
 }
 
 int
 linux_sys_rt_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -478,7 +484,7 @@ linux_sys_rt_sigpending(p, v, retval)
 
 int
 linux_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -495,7 +501,7 @@ linux_sys_sigpending(p, v, retval)
 
 int
 linux_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -513,7 +519,7 @@ linux_sys_sigsuspend(p, v, retval)
 }
 int
 linux_sys_rt_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -543,7 +549,7 @@ linux_sys_rt_sigsuspend(p, v, retval)
  */
 int
 linux_sys_rt_queueinfo(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -563,7 +569,7 @@ linux_sys_rt_queueinfo(p, v, retval)
 
 int
 linux_sys_kill(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -572,8 +578,82 @@ linux_sys_kill(p, v, retval)
 		syscallarg(int) signum;
 	} */ *uap = v;
 	struct sys_kill_args ka;
+	int sig;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = linux_to_native_sig[SCARG(uap, signum)];
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	SCARG(&ka, signum) = linux_to_native_sig[sig];
 	return sys_kill(p, &ka, retval);
 }
+
+#ifdef LINUX_SS_ONSTACK
+static void linux_to_native_sigaltstack __P((struct sigaltstack *,
+    const struct linux_sigaltstack *));
+static void native_to_linux_sigaltstack __P((struct linux_sigaltstack *,
+    const struct sigaltstack *));
+
+static void
+linux_to_native_sigaltstack(bss, lss)
+	struct sigaltstack *bss;
+	const struct linux_sigaltstack *lss;
+{
+	bss->ss_sp = lss->ss_sp;
+	bss->ss_size = lss->ss_size;
+	if (lss->ss_flags & LINUX_SS_ONSTACK)
+	    bss->ss_flags = SS_ONSTACK;
+	else if (lss->ss_flags & LINUX_SS_DISABLE)
+	    bss->ss_flags = SS_DISABLE;
+	else
+	    bss->ss_flags = 0;
+}
+
+static void
+native_to_linux_sigaltstack(lss, bss)
+	struct linux_sigaltstack *lss;
+	const struct sigaltstack *bss;
+{
+	lss->ss_sp = bss->ss_sp;
+	lss->ss_size = bss->ss_size;
+	if (bss->ss_flags & SS_ONSTACK)
+	    lss->ss_flags = LINUX_SS_ONSTACK;
+	else if (bss->ss_flags & SS_DISABLE)
+	    lss->ss_flags = LINUX_SS_DISABLE;
+	else
+	    lss->ss_flags = 0;
+}
+
+int
+linux_sys_sigaltstack(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sigaltstack_args /* {
+		syscallarg(const struct linux_sigaltstack *) ss;
+		syscallarg(struct linux_sigaltstack *) oss;
+	} */ *uap = v;
+	struct linux_sigaltstack ss;
+	struct sigaltstack nss, oss;
+	int error;
+
+	if (SCARG(uap, ss) != NULL) {
+		if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
+			return error;
+		linux_to_native_sigaltstack(&nss, &ss);
+	}
+
+	error = sigaltstack1(p,
+	    SCARG(uap, ss) ? &nss : NULL, SCARG(uap, oss) ? &oss : NULL);
+	if (error)
+		return error;
+
+	if (SCARG(uap, oss) != NULL) {
+		native_to_linux_sigaltstack(&ss, &oss);
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
+			return error;
+	}
+	return 0;
+}
+#endif

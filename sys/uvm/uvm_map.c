@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.69 1999/09/12 01:17:37 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.69.2.1 2000/11/20 18:12:02 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -85,10 +85,6 @@
 #include <sys/shm.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-
 #define UVM_MAP
 #include <uvm/uvm.h>
 
@@ -156,9 +152,10 @@ vaddr_t uvm_maxkaddr;
  *
  * => map need not be locked (protected by hint_lock).
  */
-#define SAVE_HINT(map,value) do { \
+#define SAVE_HINT(map,check,value) do { \
 	simple_lock(&(map)->hint_lock); \
-	(map)->hint = (value); \
+	if ((map)->hint == (check)) \
+		(map)->hint = (value); \
 	simple_unlock(&(map)->hint_lock); \
 } while (0)
 
@@ -463,16 +460,23 @@ uvm_map_clip_end(map, entry, end)
  *    case [4] is for kernel mappings where we don't know the offset until
  *    we've found a virtual address.   note that kernel object offsets are
  *    always relative to vm_map_min(kernel_map).
+ *
+ * => if `align' is non-zero, we try to align the virtual address to
+ *	the specified alignment.  this is only a hint; if we can't
+ *	do it, the address will be unaligned.  this is provided as
+ *	a mechanism for large pages.
+ *
  * => XXXCDC: need way to map in external amap?
  */
 
 int
-uvm_map(map, startp, size, uobj, uoffset, flags)
+uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	vm_map_t map;
 	vaddr_t *startp;	/* IN/OUT */
 	vsize_t size;
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
+	voff_t uoffset;
+	vsize_t align;
 	uvm_flag_t flags;
 {
 	vm_map_entry_t prev_entry, new_entry;
@@ -507,7 +511,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 		vm_map_lock(map); /* could sleep here */
 	}
 	if ((prev_entry = uvm_map_findspace(map, *startp, size, startp, 
-	    uobj, uoffset, flags & UVM_FLAG_FIXED)) == NULL) {
+	    uobj, uoffset, align, flags)) == NULL) {
 		UVMHIST_LOG(maphist,"<- uvm_map_findspace failed!",0,0,0,0);
 		vm_map_unlock(map);
 		return (KERN_NO_SPACE);
@@ -670,6 +674,7 @@ step3:
 		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = amap;
 	} else {
+		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = NULL;
 	}
 
@@ -766,7 +771,7 @@ uvm_map_lookup_entry(map, address, entry)
 				 */
 
 				*entry = cur;
-				SAVE_HINT(map, cur);
+				SAVE_HINT(map, map->hint, cur);
 				UVMHIST_LOG(maphist,"<- search got it (0x%x)",
 					cur, 0, 0, 0);
 				return (TRUE);
@@ -776,44 +781,59 @@ uvm_map_lookup_entry(map, address, entry)
 		cur = cur->next;
 	}
 	*entry = cur->prev;
-	SAVE_HINT(map, *entry);
+	SAVE_HINT(map, map->hint, *entry);
 	UVMHIST_LOG(maphist,"<- failed!",0,0,0,0);
 	return (FALSE);
 }
 
-
 /*
  * uvm_map_findspace: find "length" sized space in "map".
  *
- * => "hint" is a hint about where we want it, unless fixed is true
- *	(in which case we insist on using "hint").
+ * => "hint" is a hint about where we want it, unless FINDSPACE_FIXED is
+ *	set (in which case we insist on using "hint").
  * => "result" is VA returned
  * => uobj/uoffset are to be used to handle VAC alignment, if required
+ * => if `align' is non-zero, we attempt to align to that value.
  * => caller must at least have read-locked map
  * => returns NULL on failure, or pointer to prev. map entry if success
  * => note this is a cross between the old vm_map_findspace and vm_map_find
  */
 
 vm_map_entry_t
-uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
+uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	vm_map_t map;
 	vaddr_t hint;
 	vsize_t length;
 	vaddr_t *result; /* OUT */
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
-	boolean_t fixed;
+	voff_t uoffset;
+	vsize_t align;
+	int flags;
 {
 	vm_map_entry_t entry, next, tmp;
-	vaddr_t end;
+	vaddr_t end, orig_hint;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, hint=0x%x, len=%d, fixed=%d)", 
-		map, hint, length, fixed);
+	UVMHIST_LOG(maphist, "(map=0x%x, hint=0x%x, len=%d, flags=0x%x)", 
+		map, hint, length, flags);
+
+#ifdef DIAGNOSTIC
+	if ((align & (align - 1)) != 0)
+		panic("uvm_map_findspace: alignment not power of 2");
+	if ((flags & UVM_FLAG_FIXED) != 0 && align != 0)
+		panic("uvm_map_findslace: fixed and alignment both specified");
+#endif
+
+	/*
+	 * remember the original hint.  if we are aligning, then we
+	 * may have to try again with no alignment constraint if
+	 * we fail the first time.
+	 */
+	orig_hint = hint;
 
 	if (hint < map->min_offset) {	/* check ranges ... */
-		if (fixed) {
+		if (flags & UVM_FLAG_FIXED) {
 			UVMHIST_LOG(maphist,"<- VA below map range",0,0,0,0);
 			return(NULL);
 		}
@@ -830,13 +850,13 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 	 * something at this address, we have to start after it.
 	 */
 
-	if (!fixed && hint == map->min_offset) {
+	if ((flags & UVM_FLAG_FIXED) == 0 && hint == map->min_offset) {
 		if ((entry = map->first_free) != &map->header) 
 			hint = entry->end;
 	} else {
 		if (uvm_map_lookup_entry(map, hint, &tmp)) {
 			/* "hint" address already in use ... */
-			if (fixed) {
+			if (flags & UVM_FLAG_FIXED) {
 				UVMHIST_LOG(maphist,"<- fixed & VA in use",
 				    0, 0, 0, 0);
 				return(NULL);
@@ -866,23 +886,38 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 		 * push hint forward as needed to avoid VAC alias problems.
 		 * we only do this if a valid offset is specified.
 		 */
-		if (!fixed && uoffset != UVM_UNKNOWN_OFFSET)
-		  PMAP_PREFER(uoffset, &hint);
+		if ((flags & UVM_FLAG_FIXED) == 0 &&
+		    uoffset != UVM_UNKNOWN_OFFSET)
+			PMAP_PREFER(uoffset, &hint);
 #endif
+		if (align != 0) {
+			if ((hint & (align - 1)) != 0)
+				hint = roundup(hint, align);
+			/*
+			 * XXX Should we PMAP_PREFER() here again?
+			 */
+		}
 		end = hint + length;
 		if (end > map->max_offset || end < hint) {
 			UVMHIST_LOG(maphist,"<- failed (off end)", 0,0,0,0);
+			if (align != 0) {
+				UVMHIST_LOG(maphist,
+				    "calling recursively, no align",
+				    0,0,0,0);
+				return (uvm_map_findspace(map, orig_hint,
+				    length, result, uobj, uoffset, 0, flags));
+			}
 			return (NULL);
 		}
 		next = entry->next;
 		if (next == &map->header || next->start >= end)
 			break;
-		if (fixed) {
+		if (flags & UVM_FLAG_FIXED) {
 			UVMHIST_LOG(maphist,"<- fixed mapping failed", 0,0,0,0);
 			return(NULL); /* only one shot at it ... */
 		}
 	}
-	SAVE_HINT(map, entry);
+	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
 	return (entry);
@@ -925,7 +960,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		entry = first_entry;
 		UVM_MAP_CLIP_START(map, entry, start);
 		/* critical!  prevents stale hint */
-		SAVE_HINT(map, entry->prev);
+		SAVE_HINT(map, entry, entry->prev);
 
 	} else {
 		entry = first_entry->next;
@@ -967,7 +1002,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		UVM_MAP_CLIP_END(map, entry, end); 
 		next = entry->next;
 		len = entry->end - entry->start;
-	
+
 		/*
 		 * unwire before removing addresses from the pmap; otherwise
 		 * unwiring will put the entries back into the pmap (XXX).
@@ -1055,6 +1090,10 @@ uvm_unmap_remove(map, start, end, entry_list)
 		 * that we've nuked.  then go do next entry.
 		 */
 		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
+
+		/* critical!  prevents stale hint */
+		SAVE_HINT(map, entry, entry->prev);
+
 		uvm_map_entry_unlink(map, entry);
 		map->size -= len;
 		entry->next = first_entry;
@@ -1154,11 +1193,12 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
  */
 
 int
-uvm_map_reserve(map, size, offset, raddr)
+uvm_map_reserve(map, size, offset, align, raddr)
 	vm_map_t map;
 	vsize_t size;
-	vaddr_t offset;    /* hint for pmap_prefer */
-	vaddr_t *raddr;	/* OUT: reserved VA */
+	vaddr_t offset;	/* hint for pmap_prefer */
+	vsize_t align;	/* alignment hint */
+	vaddr_t *raddr;	/* IN:hint, OUT: reserved VA */
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
  
@@ -1173,7 +1213,7 @@ uvm_map_reserve(map, size, offset, raddr)
 	 * reserve some virtual space.
 	 */
  
-	if (uvm_map(map, raddr, size, NULL, offset,
+	if (uvm_map(map, raddr, size, NULL, offset, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != KERN_SUCCESS) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
@@ -1266,7 +1306,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 		last = newents->prev;		/* we expect this */
 
 		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, newents);
+		SAVE_HINT(map, map->hint, newents);
 		if (map->first_free == oldent)
 			map->first_free = last;
 
@@ -1279,7 +1319,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 	} else {
 
 		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, oldent->prev);
+		SAVE_HINT(map, map->hint, oldent->prev);
 		if (map->first_free == oldent)
 			map->first_free = oldent->prev;
 
@@ -1350,8 +1390,8 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = *dstaddrp;
-	if (uvm_map_reserve(dstmap, len, start, &dstaddr) == FALSE)
+	dstaddr = vm_map_min(dstmap);
+	if (uvm_map_reserve(dstmap, len, start, 0, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */
 	UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
@@ -1387,7 +1427,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 			 * fudge is zero)
 			 */
 			UVM_MAP_CLIP_START(srcmap, entry, start);
-			SAVE_HINT(srcmap, entry->prev);
+			SAVE_HINT(srcmap, srcmap->hint, entry->prev);
 			fudge = 0;
 		}
 
@@ -1546,7 +1586,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 
 		/* purge possible stale hints from srcmap */
 		if (flags & UVM_EXTRACT_REMOVE) {
-			SAVE_HINT(srcmap, orig_entry->prev);
+			SAVE_HINT(srcmap, srcmap->hint, orig_entry->prev);
 			if (srcmap->first_free->start >= start)
 				srcmap->first_free = orig_entry->prev;
 		}
@@ -1558,13 +1598,15 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		while (entry->start < end && entry != &srcmap->header) {
 
 			if (copy_ok) {
-	oldoffset = (entry->start + fudge) - start;
-	elen = min(end, entry->end) - (entry->start + fudge);
-	pmap_copy(dstmap->pmap, srcmap->pmap, dstaddr + oldoffset, 
-		  elen, entry->start + fudge);
+				oldoffset = (entry->start + fudge) - start;
+				elen = min(end, entry->end) -
+				    (entry->start + fudge);
+				pmap_copy(dstmap->pmap, srcmap->pmap,
+				    dstaddr + oldoffset, elen,
+				    entry->start + fudge);
 			}
 
-      /* we advance "entry" in the following if statement */
+			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
 				pmap_remove(srcmap->pmap, entry->start, 
 						entry->end);
@@ -1837,9 +1879,9 @@ uvm_map_inherit(map, start, end, new_inheritance)
 	    map, start, end, new_inheritance);
 
 	switch (new_inheritance) {
-	case VM_INHERIT_NONE:
-	case VM_INHERIT_COPY:
-	case VM_INHERIT_SHARE:
+	case MAP_INHERIT_NONE:
+	case MAP_INHERIT_COPY:
+	case MAP_INHERIT_SHARE:
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
@@ -2752,7 +2794,6 @@ uvmspace_unshare(p)
 	struct proc *p; 
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
-	int s;
  
 	if (ovm->vm_refcnt == 1)
 		/* nothing to do: vmspace isn't shared in the first place */
@@ -2761,11 +2802,9 @@ uvmspace_unshare(p)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
-	s = splhigh();			/* make this `atomic' */
 	pmap_deactivate(p);		/* unbind old vmspace */
 	p->p_vmspace = nvm; 
 	pmap_activate(p);		/* switch to new vmspace */
-	splx(s);			/* end of critical section */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -2782,9 +2821,8 @@ uvmspace_exec(p)
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
-	int s;
 
-#ifdef sparc
+#ifdef __sparc__
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 	kill_user_windows(p);   /* before stack addresses go away */
 #endif
@@ -2835,11 +2873,9 @@ uvmspace_exec(p)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
-		s = splhigh();
 		pmap_deactivate(p);
 		p->p_vmspace = nvm;
 		pmap_activate(p);
-		splx(s);
 
 		uvmspace_free(ovm);
 	}
@@ -2932,13 +2968,13 @@ uvmspace_fork(vm1)
 
 
 		switch (old_entry->inheritance) {
-		case VM_INHERIT_NONE:
+		case MAP_INHERIT_NONE:
 			/*
 			 * drop the mapping
 			 */
 			break;
 
-		case VM_INHERIT_SHARE:
+		case MAP_INHERIT_SHARE:
 			/*
 			 * share the mapping: this means we want the old and
 			 * new entries to share amaps and backing objects.
@@ -2995,7 +3031,7 @@ uvmspace_fork(vm1)
 
 			break;
 
-		case VM_INHERIT_COPY:
+		case MAP_INHERIT_COPY:
 
 			/*
 			 * copy-on-write the mapping (using mmap's
@@ -3230,9 +3266,9 @@ uvm_map_printit(map, full, pr)
 		return;
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
-		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%x, amap=%p/%d\n",
+		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
-		    entry->offset, entry->aref.ar_amap, entry->aref.ar_pageoff);
+		    (long long)entry->offset, entry->aref.ar_amap, entry->aref.ar_pageoff);
 		(*pr)(
 "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
@@ -3269,21 +3305,35 @@ uvm_object_printit(uobj, full, pr)
 	struct vm_page *pg;
 	int cnt = 0;
 
-	(*pr)("OBJECT %p: pgops=%p, npages=%d, ", uobj, uobj->pgops,
-	    uobj->uo_npages);
+	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
+	    uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else
 		(*pr)("refs=%d\n", uobj->uo_refs);
 
-	if (!full) return;
-	(*pr)("  PAGES <pg,offset>:\n  ");
-	for (pg = uobj->memq.tqh_first ; pg ; pg = pg->listq.tqe_next, cnt++) {
-		(*pr)("<%p,0x%lx> ", pg, pg->offset);
-		if ((cnt % 3) == 2) (*pr)("\n  ");
+	if (!full) {
+		return;
 	}
-	if ((cnt % 3) != 2) (*pr)("\n");
+	(*pr)("  PAGES <pg,offset>:\n  ");
+	for (pg = TAILQ_FIRST(&uobj->memq);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, listq), cnt++) {
+		(*pr)("<%p,0x%lx> ", pg, pg->offset);
+		if ((cnt % 3) == 2) {
+			(*pr)("\n  ");
+		}
+	}
+	if ((cnt % 3) != 2) {
+		(*pr)("\n");
+	}
 } 
+
+const char page_flagbits[] =
+	"\20\4CLEAN\5BUSY\6WANTED\7TABLED\12FAKE\13FILLED\14DIRTY\15RELEASED"
+	"\16FAULTING\17CLEANCHK";
+const char page_pqflagbits[] =
+	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
 
 /*
  * uvm_page_print: print out a page
@@ -3311,12 +3361,16 @@ uvm_page_printit(pg, full, pr)
 	struct vm_page *lcv;
 	struct uvm_object *uobj;
 	struct pglist *pgl;
+	char pgbuf[128];
+	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	(*pr)("  flags=0x%x, pqflags=0x%x, vers=%d, wire_count=%d, pa=0x%lx\n", 
-	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
+	bitmask_snprintf(pg->flags, page_flagbits, pgbuf, sizeof(pgbuf));
+	bitmask_snprintf(pg->pqflags, page_pqflagbits, pqbuf, sizeof(pqbuf));
+	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
+	    pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
-	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	    pg->uobject, pg->uanon, pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",
@@ -3355,8 +3409,11 @@ uvm_page_printit(pg, full, pr)
 	}
 
 	/* cross-verify page queue */
-	if (pg->pqflags & PQ_FREE)
-		pgl = &uvm.page_free[uvm_page_lookup_freelist(pg)];
+	if (pg->pqflags & PQ_FREE) {
+		int fl = uvm_page_lookup_freelist(pg);
+		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->flags & PG_ZERO) ?
+		    PGFL_ZEROS : PGFL_UNKNOWN];
+	}
 	else if (pg->pqflags & PQ_INACTIVE)
 		pgl = (pg->pqflags & PQ_SWAPBACKED) ? 
 		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.101 1999/05/05 20:01:05 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.101.2.1 2000/11/20 18:08:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,6 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-
-#include <vm/vm.h>
 
 static int sunstatfs __P((struct statfs *, caddr_t));
 
@@ -447,7 +445,7 @@ sunos_sys_sigpending(p, v, retval)
 
 int     
 sunos_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -596,15 +594,15 @@ out:
 
 int
 sunos_sys_mmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_mmap_args *uap = v;
+	struct sunos_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
-	register struct filedesc *fdp;
-	register struct file *fp;
-	register struct vnode *vp;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -620,8 +618,8 @@ sunos_sys_mmap(p, v, retval)
 
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	    SCARG(&ouap, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (caddr_t)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
@@ -653,11 +651,11 @@ sunos_sys_mmap(p, v, retval)
 
 int
 sunos_sys_mctl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_mctl_args *uap = v;
+	struct sunos_sys_mctl_args *uap = v;
 
 	switch (SCARG(uap, func)) {
 	case MC_ADVISE:		/* ignore for now */
@@ -675,7 +673,7 @@ sunos_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_setsockopt_args *uap = v;
+	struct sunos_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -752,7 +750,6 @@ sunos_sys_uname(p, v, retval)
 {
 	struct sunos_sys_uname_args *uap = v;
 	struct sunos_utsname sut;
-	extern char ostype[], machine[], osrelease[];
 
 	memset(&sut, 0, sizeof(sut));
 
@@ -946,8 +943,8 @@ sunos_sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_statfs_args *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -975,7 +972,7 @@ sunos_sys_fstatfs(p, v, retval)
 	struct sunos_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */

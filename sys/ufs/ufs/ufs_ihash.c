@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.8 1999/07/08 01:06:07 wrstuden Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.8.2.1 2000/11/20 18:11:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,6 +68,15 @@ ufs_ihashinit()
 }
 
 /*
+ * Free inode hash table.
+ */
+void
+ufs_ihashdone()
+{
+	hashdone(ihashtbl, M_UFSMNT);
+}
+
+/*
  * Use the device/inum pair to find the incore inode, and return a pointer
  * to it. If it is in core, return it, even if it is locked.
  */
@@ -94,9 +103,10 @@ ufs_ihashlookup(dev, inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev, inum)
+ufs_ihashget(dev, inum, flags)
 	dev_t dev;
 	ino_t inum;
+	int flags;
 {
 	struct inode *ip;
 	struct vnode *vp;
@@ -108,7 +118,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&ufs_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, flags | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

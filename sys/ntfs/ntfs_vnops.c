@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.19 1999/10/10 14:19:54 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.19.2.1 2000/11/20 18:11:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,16 +52,13 @@
 #include <sys/buf.h>
 #include <sys/dirent.h>
 
+#if !defined(__NetBSD__)
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_page.h>
-#include <vm/vm_object.h>
-#include <vm/vm_pager.h>
+#endif
+
 #if defined(__FreeBSD__)
 #include <vm/vnode_pager.h>
 #endif
-#include <vm/vm_extern.h>
 
 #include <sys/sysctl.h>
 
@@ -153,9 +150,9 @@ ntfs_read(ap)
 		struct ucred *a_cred;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
+	struct vnode *vp = ap->a_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
 	struct uio *uio = ap->a_uio;
 	struct ntfsmount *ntmp = ip->i_mp;
 	u_int64_t toread;
@@ -208,10 +205,10 @@ ntfs_getattr(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
-	register struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
+	struct vattr *vap = ap->a_vap;
 
 	dprintf(("ntfs_getattr: %d, flags: %d\n",ip->i_number,ip->i_flag));
 
@@ -221,10 +218,10 @@ ntfs_getattr(ap)
 	vap->va_fsid = ip->i_dev;
 #endif
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode;
+	vap->va_mode = ip->i_mp->ntm_mode;
 	vap->va_nlink = ip->i_nlink;
-	vap->va_uid = ip->i_uid;
-	vap->va_gid = ip->i_gid;
+	vap->va_uid = ip->i_mp->ntm_uid;
+	vap->va_gid = ip->i_mp->ntm_gid;
 	vap->va_rdev = 0;				/* XXX UNODEV ? */
 	vap->va_size = fp->f_size;
 	vap->va_bytes = fp->f_allocated;
@@ -249,34 +246,26 @@ ntfs_inactive(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct ntnode *ip = VTONT(vp);
-	int error;
+	struct vnode *vp = ap->a_vp;
+#ifdef NTFS_DEBUG
+	struct ntnode *ip = VTONT(vp);
+#endif
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
 	if (ntfs_prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
 
-	error = 0;
+	VOP__UNLOCK(vp, 0, ap->a_p);
 
-	VOP__UNLOCK(vp,0,ap->a_p);
-
-	/*
-	 * If we are done with the ntnode, reclaim it
-	 * so that it can be reused immediately.
+	/* XXX since we don't support any filesystem changes
+	 * right now, nothing more needs to be done
 	 */
-	if (vp->v_usecount == 0 && ip->i_mode == 0)
-#if defined(__FreeBSD__)
-		vrecycle(vp, (struct simplelock *)0, ap->a_p);
-#else /* defined(__NetBSD__) */
-		vgone(vp);
-#endif
-	return (error);
+	return (0);
 }
 
 /*
- * Reclaim an inode so that it can be used for other purposes.
+ * Reclaim an fnode/ntnode so that it can be used for other purposes.
  */
 int
 ntfs_reclaim(ap)
@@ -284,21 +273,19 @@ ntfs_reclaim(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
+	struct vnode *vp = ap->a_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
 	int error;
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	error = ntfs_ntget(ip);
-	if (error)
+	if (ntfs_prtactive && vp->v_usecount != 0)
+		vprint("ntfs_reclaim: pushing active", vp);
+
+	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);
-
-#if defined(__FreeBSD__)
-	VOP__UNLOCK(vp,0,ap->a_p);
-#endif
-
+	
 	/* Purge old data structures associated with the inode. */
 	cache_purge(vp);
 	if (ip->i_devvp) {
@@ -306,10 +293,9 @@ ntfs_reclaim(ap)
 		ip->i_devvp = NULL;
 	}
 
-	vp->v_data = NULL;
-
 	ntfs_frele(fp);
 	ntfs_ntput(ip);
+	vp->v_data = NULL;
 
 	return (0);
 }
@@ -320,8 +306,6 @@ ntfs_print(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
-/*	printf("[ntfs_print]");*/
-	
 	return (0);
 }
 
@@ -335,10 +319,10 @@ ntfs_strategy(ap)
 		struct buf *a_bp;
 	} */ *ap;
 {
-	register struct buf *bp = ap->a_bp;
-	register struct vnode *vp = bp->b_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
+	struct buf *bp = ap->a_bp;
+	struct vnode *vp = bp->b_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
 	struct ntfsmount *ntmp = ip->i_mp;
 	int error;
 
@@ -417,9 +401,9 @@ ntfs_write(ap)
 		struct ucred *a_cred;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
+	struct vnode *vp = ap->a_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
 	struct uio *uio = ap->a_uio;
 	struct ntfsmount *ntmp = ip->i_mp;
 	u_int64_t towrite;
@@ -430,7 +414,7 @@ ntfs_write(ap)
 	dprintf(("ntfs_write: filesize: %d",(u_int32_t)fp->f_size));
 
 	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
-		printf("ntfs_write: CAN'T WRITE BEYOND OF FILE\n");
+		printf("ntfs_write: CAN'T WRITE BEYOND END OF FILE\n");
 		return (EFBIG);
 	}
 
@@ -440,12 +424,12 @@ ntfs_write(ap)
 
 	error = ntfs_writeattr_plain(ntmp, ip, fp->f_attrtype,
 		fp->f_attrname, uio->uio_offset, towrite, NULL, &written, uio);
-	if (error) {
-		printf("ntfs_write: ntfs_writeattr failed: %d\n",error);
-		return (error);
-	}
+#ifdef NTFS_DEBUG
+	if (error)
+		printf("ntfs_write: ntfs_writeattr failed: %d\n", error);
+#endif
 
-	return (0);
+	return (error);
 }
 
 int
@@ -461,7 +445,7 @@ ntfs_access(ap)
 	struct ntnode *ip = VTONT(vp);
 	struct ucred *cred = ap->a_cred;
 	mode_t mask, mode = ap->a_mode;
-	register gid_t *gp;
+	gid_t *gp;
 	int i;
 #ifdef QUOTA
 	int error;
@@ -489,12 +473,6 @@ ntfs_access(ap)
 		}
 	}
 
-	/* If immutable bit set, nobody gets to write it. */
-/*
-	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
-		return (EPERM);
-*/
-
 	/* Otherwise, user id 0 always gets access. */
 	if (cred->cr_uid == 0)
 		return (0);
@@ -502,26 +480,26 @@ ntfs_access(ap)
 	mask = 0;
 
 	/* Otherwise, check the owner. */
-	if (cred->cr_uid == ip->i_uid) {
+	if (cred->cr_uid == ip->i_mp->ntm_uid) {
 		if (mode & VEXEC)
 			mask |= S_IXUSR;
 		if (mode & VREAD)
 			mask |= S_IRUSR;
 		if (mode & VWRITE)
 			mask |= S_IWUSR;
-		return ((ip->i_mode & mask) == mask ? 0 : EACCES);
+		return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
 	}
 
 	/* Otherwise, check the groups. */
 	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (ip->i_gid == *gp) {
+		if (ip->i_mp->ntm_gid == *gp) {
 			if (mode & VEXEC)
 				mask |= S_IXGRP;
 			if (mode & VREAD)
 				mask |= S_IRGRP;
 			if (mode & VWRITE)
 				mask |= S_IWGRP;
-			return ((ip->i_mode & mask) == mask ? 0 : EACCES);
+			return ((ip->i_mp->ntm_mode&mask) == mask ? 0 : EACCES);
 		}
 
 	/* Otherwise, check everyone else. */
@@ -531,7 +509,7 @@ ntfs_access(ap)
 		mask |= S_IROTH;
 	if (mode & VWRITE)
 		mask |= S_IWOTH;
-	return ((ip->i_mode & mask) == mask ? 0 : EACCES);
+	return ((ip->i_mp->ntm_mode & mask) == mask ? 0 : EACCES);
 }
 
 /*
@@ -550,8 +528,8 @@ ntfs_open(ap)
 	} */ *ap;
 {
 #if NTFS_DEBUG
-	register struct vnode *vp = ap->a_vp;
-	register struct ntnode *ip = VTONT(vp);
+	struct vnode *vp = ap->a_vp;
+	struct ntnode *ip = VTONT(vp);
 
 	printf("ntfs_open: %d\n",ip->i_number);
 #endif
@@ -579,8 +557,8 @@ ntfs_close(ap)
 	} */ *ap;
 {
 #if NTFS_DEBUG
-	register struct vnode *vp = ap->a_vp;
-	register struct ntnode *ip = VTONT(vp);
+	struct vnode *vp = ap->a_vp;
+	struct ntnode *ip = VTONT(vp);
 
 	printf("ntfs_close: %d\n",ip->i_number);
 #endif
@@ -598,9 +576,9 @@ ntfs_readdir(ap)
 		u_int **cookies;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct fnode *fp = VTOF(vp);
-	register struct ntnode *ip = FTONT(fp);
+	struct vnode *vp = ap->a_vp;
+	struct fnode *fp = VTOF(vp);
+	struct ntnode *ip = FTONT(fp);
 	struct uio *uio = ap->a_uio;
 	struct ntfsmount *ntmp = ip->i_mp;
 	int i, error = 0;
@@ -708,8 +686,7 @@ ntfs_readdir(ap)
 		MALLOC(cookies, u_long *, ncookies * sizeof(u_long),
 		       M_TEMP, M_WAITOK);
 #else /* defined(__NetBSD__) */
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t),
-		       M_TEMP, M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 #endif
 		for (dp = dpStart, cookiep = cookies, i=0;
 		     i < ncookies;
@@ -735,8 +712,8 @@ ntfs_lookup(ap)
 		struct componentname *a_cnp;
 	} */ *ap;
 {
-	register struct vnode *dvp = ap->a_dvp;
-	register struct ntnode *dip = VTONT(dvp);
+	struct vnode *dvp = ap->a_dvp;
+	struct ntnode *dip = VTONT(dvp);
 	struct ntfsmount *ntmp = dip->i_mp;
 	struct componentname *cnp = ap->a_cnp;
 	struct ucred *cred = cnp->cn_cred;
@@ -789,9 +766,7 @@ ntfs_lookup(ap)
 			return (error);
 
 		VOP__UNLOCK(dvp,0,cnp->cn_proc);
-#ifdef __NetBSD__
 		cnp->cn_flags |= PDIRUNLOCK;
-#endif
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
@@ -799,22 +774,18 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0) {
-#ifdef __NetBSD__
+			if (VN_LOCK(dvp,LK_EXCLUSIVE|LK_RETRY,cnp->cn_proc)==0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
-#endif
-			}
-			return(error);
+			return (error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
+			error = VN_LOCK(dvp, LK_EXCLUSIVE, cnp->cn_proc);
+			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);
 			}
-#ifdef __NetBSD__
 			cnp->cn_flags &= ~PDIRUNLOCK;
-#endif
 		}
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
@@ -849,6 +820,8 @@ ntfs_fsync(ap)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap;
 {

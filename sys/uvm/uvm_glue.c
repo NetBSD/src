@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.29 1999/07/25 06:30:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29.2.1 2000/11/20 18:12:00 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -83,10 +83,6 @@
 #include <sys/shm.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
@@ -109,31 +105,6 @@ int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 
 
 /*
- * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
- */
-
-void
-uvm_sleep(event, slock, canintr, msg, timo)
-	void *event;
-	struct simplelock *slock;
-	boolean_t canintr;
-	const char *msg;
-	int timo;
-{
-	int s, pri;
-
-	pri = PVM;
-	if (canintr)
-		pri |= PCATCH;
-
-	s = splhigh();
-	if (slock != NULL)
-		simple_unlock(slock);
-	(void) tsleep(event, pri, msg, timo);
-	splx(s);
-}
-
-/*
  * uvm_kernacc: can the kernel access a region of memory
  *
  * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
@@ -149,8 +120,8 @@ uvm_kernacc(addr, len, rw)
 	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	saddr = trunc_page(addr);
-	eaddr = round_page(addr+len);
+	saddr = trunc_page((vaddr_t)addr);
+	eaddr = round_page((vaddr_t)addr+len);
 	vm_map_lock_read(kernel_map);
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
@@ -190,8 +161,8 @@ uvm_useracc(addr, len, rw)
 	map = &curproc->p_vmspace->vm_map;
 
 	vm_map_lock_read(map);
-	rv = uvm_map_checkprot(map, trunc_page(addr), round_page(addr+len),
-	    prot);
+	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
+	    round_page((vaddr_t)addr+len), prot);
 	vm_map_unlock_read(map);
 
 	return(rv);
@@ -212,7 +183,7 @@ uvm_useracc(addr, len, rw)
  */
 void
 uvm_chgkprot(addr, len, rw)
-	register caddr_t addr;
+	caddr_t addr;
 	size_t len;
 	int rw;
 {
@@ -221,8 +192,8 @@ uvm_chgkprot(addr, len, rw)
 	vaddr_t sva, eva;
 
 	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
-	eva = round_page(addr + len);
-	for (sva = trunc_page(addr); sva < eva; sva += PAGE_SIZE) {
+	eva = round_page((vaddr_t)addr + len);
+	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
 		 * We use a cheezy hack to differentiate physical
@@ -231,7 +202,7 @@ uvm_chgkprot(addr, len, rw)
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa, prot, TRUE, 0);
+		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
 }
 #endif
@@ -255,8 +226,8 @@ uvm_vslock(p, addr, len, access_type)
 	int rv;
 
 	map = &p->p_vmspace->vm_map;
-	start = trunc_page(addr);
-	end = round_page(addr + len);
+	start = trunc_page((vaddr_t)addr);
+	end = round_page((vaddr_t)addr + len);
 
 	rv = uvm_fault_wire(map, start, end, access_type);
 
@@ -276,8 +247,8 @@ uvm_vsunlock(p, addr, len)
 	caddr_t	addr;
 	size_t	len;
 {
-	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page(addr), 
-		round_page(addr+len));
+	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr), 
+		round_page((vaddr_t)addr+len));
 }
 
 /*
@@ -296,18 +267,21 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared, stack, stacksize)
+uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	boolean_t shared;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct user *up = p2->p_addr;
 	int rv;
 
-	if (shared == TRUE)
+	if (shared == TRUE) {
+		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);			/* share vmspace */
-	else
+	} else
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
 
 	/*
@@ -337,11 +311,13 @@ uvm_fork(p1, p2, shared, stack, stacksize)
 	 (caddr_t)&up->u_stats.pstat_startcopy));
 	
 	/*
-	 * cpu_fork will copy and update the kernel stack and pcb, and make
-	 * the child ready to run.  The child will exit directly to user
-	 * mode on its first time slice, and will not return here.
+	 * cpu_fork() copy and update the pcb, and make the child ready
+	 * to run.  If this is a normal user fork, the child will exit
+	 * directly to user mode via child_return() on its first time
+	 * slice and will not return here.  If this is a kernel thread,
+	 * the specified entry point will be executed.
 	 */
-	cpu_fork(p1, p2, stack, stacksize);
+	cpu_fork(p1, p2, stack, stacksize, func, arg);
 }
 
 /*
@@ -359,6 +335,7 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_addr = NULL;
 }
 
 /*
@@ -414,11 +391,11 @@ uvm_swapin(p)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(p);
-	s = splstatclock();
+	SCHED_LOCK(s);
 	if (p->p_stat == SRUN)
 		setrunqueue(p);
 	p->p_flag |= P_INMEM;
-	splx(s);
+	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
 	++uvmexp.swapins;
 }
@@ -434,8 +411,8 @@ uvm_swapin(p)
 void
 uvm_scheduler()
 {
-	register struct proc *p;
-	register int pri;
+	struct proc *p;
+	int pri;
 	struct proc *pp;
 	int ppri;
 	UVMHIST_FUNC("uvm_scheduler"); UVMHIST_CALLED(maphist);
@@ -460,6 +437,10 @@ loop:
 			}
 		}
 	}
+	/*
+	 * XXXSMP: possible unlock/sleep race between here and the
+	 * "scheduler" tsleep below..
+	 */
 	proclist_unlock_read();
 
 #ifdef DEBUG
@@ -499,9 +480,7 @@ loop:
 		printf("scheduler: no room for pid %d(%s), free %d\n",
 	   p->p_pid, p->p_comm, uvmexp.free);
 #endif
-	(void) splhigh();
 	uvm_wait("schedpwait");
-	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: room again, free %d\n", uvmexp.free);
@@ -530,7 +509,7 @@ loop:
 void
 uvm_swapout_threads()
 {
-	register struct proc *p;
+	struct proc *p;
 	struct proc *outp, *outp2;
 	int outpri, outpri2;
 	int didswap = 0;
@@ -554,6 +533,7 @@ uvm_swapout_threads()
 			continue;
 		switch (p->p_stat) {
 		case SRUN:
+		case SONPROC:
 			if (p->p_swtime > outpri2) {
 				outp2 = p;
 				outpri2 = p->p_swtime;
@@ -602,7 +582,7 @@ uvm_swapout_threads()
 
 static void
 uvm_swapout(p)
-	register struct proc *p;
+	struct proc *p;
 {
 	vaddr_t addr;
 	int s;
@@ -630,11 +610,11 @@ uvm_swapout(p)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	s = splstatclock();
+	SCHED_LOCK(s);
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrunqueue(p);
-	splx(s);
+	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
 	++uvmexp.swapouts;
 }

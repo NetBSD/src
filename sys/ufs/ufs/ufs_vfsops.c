@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.9 1999/02/26 23:44:50 wrstuden Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.9.8.1 2000/11/20 18:11:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,9 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+
+/* how many times ufs_init() was called */
+int ufs_initcount = 0;
 
 /*
  * Make a filesystem operational.
@@ -168,13 +171,13 @@ ufs_quotactl(mp, cmds, uid, arg, p)
  */
 int
 ufs_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
+	struct netcred *np;
+	struct ufsmount *ump = VFSTOUFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
@@ -194,12 +197,12 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  */
 int
 ufs_fhtovp(mp, ufhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct ufid *ufhp;
 	struct vnode **vpp;
 {
 	struct vnode *nvp;
-	register struct inode *ip;
+	struct inode *ip;
 	int error;
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
@@ -219,17 +222,29 @@ ufs_fhtovp(mp, ufhp, vpp)
 /*
  * Initialize UFS filesystems, done only once.
  */
-
 void
 ufs_init()
 {
-	static int done = 0;
-
-	if (done)
+	if (ufs_initcount++ > 0)
 		return;
-	done = 1;
+
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
+#endif
+}
+
+/*
+ * Free UFS filesystem resources, done only once.
+ */
+void
+ufs_done()
+{
+	if (--ufs_initcount > 0)
+		return;
+
+	ufs_ihashdone();
+#ifdef QUOTA
+	dqdone();
 #endif
 }

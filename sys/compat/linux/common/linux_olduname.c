@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.51 1998/10/07 22:58:19 erh Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.51.12.1 2000/11/20 18:08:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,9 +45,6 @@
 
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
@@ -68,7 +65,6 @@ linux_sys_olduname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldutsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
 	struct linux_oldutsname luts;
 	int len;
 	char *cp;
@@ -79,7 +75,7 @@ linux_sys_olduname(p, v, retval)
 	strncpy(luts.l_version, version, sizeof(luts.l_version));
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
 
-	/* This part taken from the the uname() in libc */
+	/* This part taken from the uname() in libc */
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp) {
 		if (*cp == '\n' || *cp == '\t') {

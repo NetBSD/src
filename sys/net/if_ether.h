@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.12 1999/08/10 18:16:07 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.12.2.1 2000/11/20 18:10:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,12 +49,17 @@
 #define	ETHER_MAX_LEN	1518	/* maximum frame length, including CRC */
 
 /*
+ * Some Ethernet extensions.
+ */
+#define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+
+/*
  * Ethernet address - 6 octets
  * this is only used by the ethers(3) functions.
  */
 struct ether_addr {
 	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
-};
+} __attribute__((__packed__));
 
 /*
  * Structure of a 10Mb/s Ethernet header.
@@ -63,7 +68,7 @@ struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
 	u_int16_t ether_type;
-};
+} __attribute__((__packed__));
 
 #include <net/ethertypes.h>
 
@@ -71,6 +76,21 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+/*
+ * Compute the maximum frame size based on ethertype (i.e. possible
+ * encapsulation) and whether or not an FCS is present.
+ */
+#define	ETHER_MAX_FRAME(etype, hasfcs)					\
+	(ETHERMTU + ETHER_HDR_LEN +					\
+	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
+	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
+
+/*
+ * Ethernet CRC32 polynomials (big- and little-endian verions).
+ */
+#define	ETHER_CRC_POLY_LE	0xedb88320
+#define	ETHER_CRC_POLY_BE	0x04c11db6
 
 #ifndef _STANDALONE
 
@@ -121,17 +141,31 @@ struct	ether_header {
  */
 struct	ethercom {
 	struct	 ifnet ec_if;			/* network-visible interface */
-	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast addrs */
-	int	 ec_multicnt;			/* length of ac_multiaddrs list */
+	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast
+						   addrs */
+	int	 ec_multicnt;			/* length of ec_multiaddrs
+						   list */
+	int	 ec_capabilities;		/* capabilities, provided by
+						   driver */
+	int	 ec_capenable;			/* tells hardware which
+						   capabilities to enable */
+
+	int	 ec_nvlans;			/* # VLANs on this interface */
 };
 
-#ifdef	_KERNEL
-u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+#define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
+#define	ETHERCAP_VLAN_TAGGING	0x00000002	/* VLAN tag support */
 
-int	ether_addmulti __P((struct ifreq *, struct ethercom *));
-int	ether_delmulti __P((struct ifreq *, struct ethercom *));
+#ifdef	_KERNEL
+extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+
+int	ether_ioctl(struct ifnet *, u_long, caddr_t);
+int	ether_addmulti (struct ifreq *, struct ethercom *);
+int	ether_delmulti (struct ifreq *, struct ethercom *);
+int	ether_changeaddr (struct ifreq *, struct ethercom *);
+int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 #endif /* _KERNEL */
 
 /*
@@ -198,10 +232,13 @@ struct ether_multistep {
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 
+#ifdef _KERNEL
+u_int32_t ether_crc32_le (const u_int8_t *, size_t);
+u_int32_t ether_crc32_be (const u_int8_t *, size_t);
+#else
 /*
  * Prototype ethers(3) functions.
  */
-#ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 char *	ether_ntoa __P((struct ether_addr *));

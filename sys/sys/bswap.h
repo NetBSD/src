@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.1 1999/08/21 05:20:50 simonb Exp $      */
+/*      $NetBSD: bswap.h,v 1.1.2.1 2000/11/20 18:11:25 bouyer Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -14,7 +14,7 @@
 #include <sys/types.h>
 
 __BEGIN_DECLS
-#if defined(_KERNEL) || !defined(__BSWAP_RENAME)
+#if defined(_KERNEL) || defined(_STANDALONE) || !defined(__BSWAP_RENAME)
 u_int16_t       bswap16 __P((u_int16_t));
 u_int32_t       bswap32 __P((u_int32_t));
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.13 1999/08/03 20:19:19 wrstuden Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.13.2.1 2000/11/20 18:09:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,9 +79,11 @@ genfs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	int wait;
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
@@ -89,7 +91,7 @@ genfs_fsync(v)
 	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
 		return (0);
 	else
-		return (VOP_UPDATE(ap->a_vp, NULL, NULL, wait));
+		return (VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0));
 }
 
 int
@@ -119,7 +121,7 @@ genfs_abortop(v)
 	} */ *ap = v;
  
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	return (0);
 }
 
@@ -237,7 +239,7 @@ genfs_enoioctl(v)
 
 
 /*
- * Eliminate all activity associated with  the requested vnode
+ * Eliminate all activity associated with the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 int
@@ -311,7 +313,6 @@ genfs_lock(v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -328,7 +329,6 @@ genfs_unlock(v)
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

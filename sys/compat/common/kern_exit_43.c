@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.4 1997/09/03 21:06:50 jonathan Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.4.18.1 2000/11/20 18:08:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -67,8 +67,6 @@
 #include <machine/reg.h>
 #include <compat/common/compat_util.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 #ifdef m68k
 #include <machine/psl.h>		/* only m68k ports use PSL_ALLCC */
 #include <machine/frame.h>

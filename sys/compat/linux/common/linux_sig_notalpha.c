@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.18 1998/10/07 23:05:09 erh Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.18.12.1 2000/11/20 18:08:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -68,33 +68,37 @@
  */
 int
 linux_sys_signal(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_signal_args /* {
-		syscallarg(int) sig;
+		syscallarg(int) signum;
 		syscallarg(linux_handler_t) handler;
 	} */ *uap = v;
 	struct sigaction nbsa, obsa;
-	int error;
+	int error, sig;
+
+	*retval = -1;
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
 
 	nbsa.sa_handler = SCARG(uap, handler);
 	sigemptyset(&nbsa.sa_mask);
 	nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
-	error = sigaction1(p, linux_to_native_sig[SCARG(uap, sig)],
+	error = sigaction1(p, linux_to_native_sig[sig],
 	    &nbsa, &obsa);
-	if (error)
-		return (error);
-	*retval = (int)obsa.sa_handler;
-	return (0);
+	if (error == 0)
+		*retval = (int)obsa.sa_handler;
+	return (error);
 }
 
 
 /* ARGSUSED */
 int
 linux_sys_siggetmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -117,7 +121,7 @@ linux_sys_siggetmask(p, v, retval)
  */
 int
 linux_sys_sigsetmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -140,7 +144,7 @@ linux_sys_sigsetmask(p, v, retval)
 
 int
 linux_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -160,10 +164,11 @@ linux_sys_sigprocmask(p, v, retval)
  */
 int
 linux_sys_pause(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;	
 	register_t *retval;
 {	
 
 	return (sigsuspend1(p, 0));
 }
+

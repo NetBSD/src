@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.4 1999/07/30 10:35:35 itojun Exp $	*/
+/*	$NetBSD: dest6.c,v 1.4.2.1 2000/11/20 18:10:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,12 +45,10 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 /*
  * Destination options header processing.
@@ -66,12 +64,24 @@ dest6_input(mp, offp, proto)
 	u_int8_t *opt;
 
 	/* validation of the length of the header */
+#ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(*dstopts), IPPROTO_DONE);
 	dstopts = (struct ip6_dest *)(mtod(m, caddr_t) + off);
+#else
+	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, sizeof(*dstopts));
+	if (dstopts == NULL)
+		return IPPROTO_DONE;
+#endif
 	dstoptlen = (dstopts->ip6d_len + 1) << 3;
 
+#ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, dstoptlen, IPPROTO_DONE);
 	dstopts = (struct ip6_dest *)(mtod(m, caddr_t) + off);
+#else
+	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, dstoptlen);
+	if (dstopts == NULL)
+		return IPPROTO_DONE;
+#endif
 	off += dstoptlen;
 	dstoptlen -= sizeof(struct ip6_dest);
 	opt = (u_int8_t *)dstopts + sizeof(struct ip6_dest);

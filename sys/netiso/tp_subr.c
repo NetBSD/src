@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.10 1996/10/13 02:04:42 christos Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.10.28.1 2000/11/20 18:11:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,6 @@ SOFTWARE.
 #include <netiso/tp_var.h>
 
 int             tprexmtthresh = 3;
-extern int      ticks;
 
 /*
  * CALLED FROM:
@@ -165,11 +164,14 @@ tp_goodXack(tpcb, seq)
 
 void
 tp_rtt_rtv(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
 	int             old = tpcb->tp_rtt;
-	int             delta = 0,
-			elapsed = ticks - tpcb->tp_rttemit;
+	int             s, elapsed, delta = 0;
+
+	s = splclock();
+	elapsed = (int)(hardclock_ticks - tpcb->tp_rttemit);
+	splx(s);
 
 	if (tpcb->tp_rtt != 0) {
 		/*
@@ -249,9 +251,9 @@ tp_rtt_rtv(tpcb)
  */
 int
 tp_goodack(tpcb, cdt, seq, subseq)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	u_int           cdt;
-	register SeqNum seq;
+	SeqNum seq;
 	u_int           subseq;
 {
 	int             old_fcredit = 0;
@@ -442,11 +444,11 @@ done:
  */
 int
 tp_sbdrop(tpcb, seq)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 	SeqNum          seq;
 {
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
-	register int    i = SEQ_SUB(tpcb, seq, tpcb->tp_snduna);
+	int    i = SEQ_SUB(tpcb, seq, tpcb->tp_snduna);
 	int             oldcc = sb->sb_cc, oldi = i;
 
 	if (i >= tpcb->tp_seqhalf)
@@ -484,18 +486,22 @@ tp_sbdrop(tpcb, seq)
  */
 void
 tp_send(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register int    len;
-	register struct mbuf *m;
+	int    len;
+	struct mbuf *m;
 	struct mbuf    *mb = 0;
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
 	unsigned int    eotsdu = 0;
 	SeqNum          highseq, checkseq;
-	int             idle, idleticks, off, cong_win;
+	int             s, idle, idleticks, off, cong_win;
 #ifdef TP_PERF_MEAS
-	int             send_start_time = ticks;
+	u_int64_t       send_start_time;
 	SeqNum          oldnxt = tpcb->tp_sndnxt;
+
+	s = splclock();
+	send_start_time = hardclock_ticks;
+	splx(s);
 #endif /* TP_PERF_MEAS */
 
 	idle = (tpcb->tp_snduna == tpcb->tp_sndnew);
@@ -598,7 +604,9 @@ tp_send(tpcb)
 			 * not currently timing anything.
 			 */
 			if (tpcb->tp_rttemit == 0) {
-				tpcb->tp_rttemit = ticks;
+				s = splclock();
+				tpcb->tp_rttemit = hardclock_ticks;
+				splx(s);
 				tpcb->tp_rttseq = tpcb->tp_sndnxt;
 			}
 			tpcb->tp_sndnxt = tpcb->tp_sndnew;
@@ -622,9 +630,13 @@ tp_send(tpcb)
 		tpcb->tp_oktonagle = 0;
 #ifdef TP_PERF_MEAS
 	if (DOPERF(tpcb)) {
-		register int    npkts;
-		int             elapsed = ticks - send_start_time, *t;
+		int    npkts;
+		int             s, elapsed, *t;
 		struct timeval  now;
+
+		s = splclock();
+		elapsed = (int)(hardclock_ticks - send_start_time);
+		splx(s);
 
 		npkts = SEQ_SUB(tpcb, tpcb->tp_sndnxt, oldnxt);
 
@@ -667,12 +679,12 @@ int             TPNagled;
 
 int
 tp_packetize(tpcb, m, eotsdu)
-	register struct tp_pcb *tpcb;
-	register struct mbuf *m;
+	struct tp_pcb *tpcb;
+	struct mbuf *m;
 	int             eotsdu;
 {
-	register struct mbuf *n = NULL;
-	register struct sockbuf *sb = &tpcb->tp_sock->so_snd;
+	struct mbuf *n = NULL;
+	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
 	int             maxsize = tpcb->tp_l_tpdusize
 			    - tp_headersize(DT_TPDU_type, tpcb)
 			    - (tpcb->tp_use_checksum ? 4 : 0);
@@ -773,16 +785,16 @@ out:
 
 int
 tp_stash(tpcb, e)
-	register struct tp_pcb *tpcb;
-	register struct tp_event *e;
+	struct tp_pcb *tpcb;
+	struct tp_event *e;
 {
-	register int    ack_reason = tpcb->tp_ack_strat & ACK_STRAT_EACH;
+	int    ack_reason = tpcb->tp_ack_strat & ACK_STRAT_EACH;
 	/* 0--> delay acks until full window */
 	/* 1--> ack each tpdu */
 #define E e->TPDU_ATTR(DT)
 
 	if (E.e_eot) {
-		register struct mbuf *n = E.e_data;
+		struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
 		n->m_act = 0;
 	}
@@ -830,7 +842,7 @@ tp_stash(tpcb, e)
 		 * move chains from the reassembly queue to the socket buffer
 		 */
 		if (tpcb->tp_rsycnt) {
-			register struct mbuf **mp;
+			struct mbuf **mp;
 			struct mbuf   **mplim;
 
 			mp = tpcb->tp_rsyq + (tpcb->tp_rcvnxt %
@@ -855,7 +867,7 @@ tp_stash(tpcb, e)
 #endif
 
 	} else {
-		register struct mbuf **mp;
+		struct mbuf **mp;
 		SeqNum          uwe;
 
 #ifdef TPPT
@@ -936,7 +948,7 @@ tp_stash(tpcb, e)
 			}
 #endif
 			{
-				register int    i;
+				int    i;
 
 				/*
 				 * keep track of all reasons
@@ -959,9 +971,9 @@ tp_stash(tpcb, e)
  */
 void
 tp_rsyflush(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct mbuf **mp;
+	struct mbuf **mp;
 	if (tpcb->tp_rsycnt) {
 		for (mp = tpcb->tp_rsyq + tpcb->tp_maxlcredit;
 		     --mp >= tpcb->tp_rsyq;)
@@ -980,9 +992,9 @@ tp_rsyflush(tpcb)
 
 void
 tp_rsyset(tpcb)
-	register struct tp_pcb *tpcb;
+	struct tp_pcb *tpcb;
 {
-	register struct socket *so = tpcb->tp_sock;
+	struct socket *so = tpcb->tp_sock;
 	int             maxcredit = tpcb->tp_xtd_format ? 0xffff : 0xf;
 	int             old_credit = tpcb->tp_maxlcredit;
 	caddr_t         rsyq;
@@ -1006,8 +1018,8 @@ tpsbcheck(tpcb, i)
 	struct tp_pcb  *tpcb;
 	int i;
 {
-	register struct mbuf *n, *m;
-	register int    len = 0, mbcnt = 0, pktlen;
+	struct mbuf *n, *m;
+	int    len = 0, mbcnt = 0, pktlen;
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
 
 	for (n = sb->sb_mb; n; n = n->m_nextpkt) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.74 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.74.2.1 2000/11/20 18:08:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -116,9 +116,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 /*
@@ -126,10 +123,7 @@
  *	Death of process.
  */
 int
-sys_exit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_exit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int) rval;
@@ -146,15 +140,13 @@ sys_exit(p, v, retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(p, rv)
-	register struct proc *p;
-	int rv;
+exit1(struct proc *p, int rv)
 {
-	register struct proc *q, *nq;
-	register struct vmspace *vm;
+	struct proc *q, *nq;
+	struct vmspace *vm;
 	int s;
 
-	if (p == initproc)
+	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
@@ -176,7 +168,7 @@ exit1(p, rv)
 	sigfillset(&p->p_sigignore);
 	sigemptyset(&p->p_siglist);
 	p->p_sigcheck = 0;
-	untimeout(realitexpire, (caddr_t)p);
+	callout_stop(&p->p_realit_ch);
 
 	/*
 	 * Close open files and release open-file table.
@@ -207,7 +199,7 @@ exit1(p, rv)
 		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 
 	if (SESS_LEADER(p)) {
-		register struct session *sp = p->p_session;
+		struct session *sp = p->p_session;
 
 		if (sp->s_ttyvp) {
 			/*
@@ -239,7 +231,6 @@ exit1(p, rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
-	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	(void)acct_process(p);
 #ifdef KTRACE
 	/* 
@@ -327,6 +318,10 @@ exit1(p, rv)
 	 */
 	curproc = NULL;
 	limfree(p->p_limit);
+	p->p_limit = NULL;
+
+	/* This process no longer needs to hold the kernel lock. */
+	KERNEL_PROC_UNLOCK(p);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
@@ -343,7 +338,8 @@ exit1(p, rv)
 
 /*
  * We are called from cpu_exit() once it is safe to schedule the
- * dead process's resources to be freed.
+ * dead process's resources to be freed (i.e., once we've switched to
+ * the idle PCB for the current CPU).
  *
  * NOTE: One must be careful with locking in this routine.  It's
  * called from a critical section in machine-dependent code, so
@@ -353,8 +349,7 @@ exit1(p, rv)
  * list (using the p_hash member), and wake up the reaper.
  */
 void
-exit2(p)
-	struct proc *p;
+exit2(struct proc *p)
 {
 
 	simple_lock(&deadproc_slock);
@@ -370,7 +365,7 @@ exit2(p)
  * a zombie, and the parent is allowed to read the undead's status.
  */
 void
-reaper()
+reaper(void *arg)
 {
 	struct proc *p;
 
@@ -379,8 +374,8 @@ reaper()
 		p = LIST_FIRST(&deadproc);
 		if (p == NULL) {
 			/* No work for us; go to sleep until someone exits. */
-			simple_unlock(&deadproc_slock);
-			(void) tsleep(&deadproc, PVM, "reaper", 0);
+			(void) ltsleep(&deadproc, PVM|PNORELOCK,
+			    "reaper", 0, &deadproc_slock);
 			continue;
 		}
 
@@ -414,19 +409,16 @@ reaper()
 }
 
 int
-sys_wait4(q, v, retval)
-	register struct proc *q;
-	void *v;
-	register_t *retval;
+sys_wait4(struct proc *q, void *v, register_t *retval)
 {
-	register struct sys_wait4_args /* {
+	struct sys_wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	register int nfound;
-	register struct proc *p, *t;
+	int nfound;
+	struct proc *p, *t;
 	int status, error, s;
 
 	if (SCARG(uap, pid) == 0)
@@ -486,7 +478,7 @@ loop:
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
-			scheduler_wait_hook(curproc, p);
+			scheduler_wait_hook(q, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			pool_put(&rusage_pool, p->p_ru);
@@ -556,9 +548,7 @@ loop:
  * make process 'parent' the new parent of process 'child'.
  */
 void
-proc_reparent(child, parent)
-	register struct proc *child;
-	register struct proc *parent;
+proc_reparent(struct proc *child, struct proc *parent)
 {
 
 	if (child->p_pptr == parent)

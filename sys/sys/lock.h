@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.24 1999/08/14 06:56:07 ross Exp $	*/
+/*	$NetBSD: lock.h,v 1.24.2.1 2000/11/20 18:11:31 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -88,6 +88,7 @@
 #endif
 
 #include <sys/queue.h>
+#include <machine/lock.h>
 
 /*
  * The simple lock.  Provides a simple spinning mutex.  Note the
@@ -95,7 +96,7 @@
  * order for it to work on the widest range of processor types.
  */
 struct simplelock {
-	int lock_data __attribute__((__aligned__));
+	__cpu_simple_lock_t lock_data;
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	const char *unlock_file;
@@ -106,21 +107,11 @@ struct simplelock {
 #endif
 };
 
-/*
- * Machine-dependent code may #undef and override these.
- */
-#define	SIMPLELOCK_LOCKED	1
-#define	SIMPLELOCK_UNLOCKED	0
-
-#if defined(MULTIPROCESSOR)
-#include <machine/lock.h>
-#endif
-
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED, NULL, 0, NULL, 0, \
-				  { NULL, NULL }, 0 }
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0,	\
+				  0, { NULL, NULL }, LK_NOCPU }
 #else
-#define	SIMPLELOCK_INITIALIZER	{ SIMPLELOCK_UNLOCKED }
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
 
 /* XXXCDC: kill typedefs later? */
@@ -278,14 +269,19 @@ struct lock {
 #define	LK_NOPROC	((pid_t) -1)
 #define	LK_NOCPU	((cpuid_t) -1)
 
+#ifdef _KERNEL
+
 struct proc;
 
-void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
-			int flags));
-int	lockmgr __P((__volatile struct lock *, u_int flags,
-			struct simplelock *));
-int	lockstatus __P((struct lock *));
-void	lockmgr_printinfo __P((__volatile struct lock *));
+void	lockinit(struct lock *, int prio, const char *wmesg, int timo,
+			int flags);
+int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
+int	lockstatus(struct lock *);
+void	lockmgr_printinfo(__volatile struct lock *);
+
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+void	spinlock_switchcheck(void);
+#endif
 
 #define	spinlockinit(lkp, name, flags)					\
 	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
@@ -293,29 +289,40 @@ void	lockmgr_printinfo __P((__volatile struct lock *));
 #define	spinlockmgr(lkp, flags, intrlk)					\
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 
+int	spinlock_release_all(__volatile struct lock *);
+void	spinlock_acquire_count(__volatile struct lock *, int);
+
 #if defined(LOCKDEBUG)
-void	_simple_lock __P((__volatile struct simplelock *, const char *, int));
-int	_simple_lock_try __P((__volatile struct simplelock *, const char *,
-	    int));
-void	_simple_unlock __P((__volatile struct simplelock *, const char *, int));
+void	_simple_lock(__volatile struct simplelock *, const char *, int);
+int	_simple_lock_try(__volatile struct simplelock *, const char *, int);
+void	_simple_unlock(__volatile struct simplelock *, const char *, int);
+int	_simple_lock_held(__volatile struct simplelock *);
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
 #define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
+#define	simple_lock_held(alp)	_simple_lock_held((alp))
 
-void	simple_lock_init __P((struct simplelock *));
-void	simple_lock_dump __P((void));
-void	simple_lock_freecheck __P((void *, void *));
+#define	LOCK_ASSERT(x)		KASSERT(x)
+
+void	simple_lock_init(struct simplelock *);
+void	simple_lock_dump(void);
+void	simple_lock_freecheck(void *, void *);
+void	simple_lock_switchcheck(void);
 #elif defined(MULTIPROCESSOR)
-#define	simple_lock_init(alp)	cpu_simple_lock_init((alp))
-#define	simple_lock(alp)	cpu_simple_lock((alp))
-#define	simple_lock_try(alp)	cpu_simple_lock_try((alp))
-#define	simple_unlock(alp)	cpu_simple_unlock((alp))
+#define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
+#define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
+#define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
+#define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
+#define	LOCK_ASSERT(x)		/* nothing */
 #else
-#define	simple_lock_init(alp)	(alp)->lock_data = SIMPLELOCK_UNLOCKED
+#define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
 #define	simple_lock(alp)		/* nothing */
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)		/* nothing */
+#define	LOCK_ASSERT(x)			/* nothing */
 #endif
+
+#endif /* _KERNEL */
 
 #endif /* _SYS_LOCK_H_ */

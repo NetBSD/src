@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.3 1999/05/05 01:51:34 cgd Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.3.6.1 2000/11/20 18:08:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <vm/vm.h>				/* XXX UVM headers are Cool */
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 
 #include <compat/osf1/osf1.h>
@@ -174,22 +173,22 @@ osf1_sys_mmap(p, v, retval)
 	 *   provide a better way to avoid the data region altogether.
 	 */
 	if ((SCARG(&a, flags) & MAP_FIXED) == 0) {
-		vaddr_t addr = round_page(SCARG(&a, addr));
-		vsize_t size = round_page(SCARG(&a, len));
+		vaddr_t addr = round_page((vaddr_t)SCARG(&a, addr));
+		vsize_t size = round_page((vsize_t)SCARG(&a, len));
 		int fixed = 0;
 
 		vm_map_lock(&p->p_vmspace->vm_map);
 
 		/* if non-NULL address given, start looking there */
 		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
-		    addr, size, &addr, NULL, 0, 0) != NULL) {
+		    addr, size, &addr, NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}
 
 		/* didn't find anything.  take it again from the top. */
 		if (uvm_map_findspace(&p->p_vmspace->vm_map, NBPG, size, &addr,
-		    NULL, 0, 0) != NULL) {
+		    NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}

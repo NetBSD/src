@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.28 1999/09/25 17:49:28 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.28.2.1 2000/11/20 18:09:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -73,7 +73,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_ifattach.h>
 #endif
 
 #define ARCNET_ALLOW_BROKEN_ARP
@@ -110,7 +109,7 @@ static	void arc_input __P((struct ifnet *, struct mbuf *));
  */
 static int
 arc_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -233,13 +232,13 @@ arc_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef NEWIP6OUTPUT
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
-			return(0); /* it must be impossible, but... */
-#else
+#ifdef OLDIP6OUTPUT
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)&adst))
 			return(0);	/* if not yet resolves */
-#endif /* NEWIP6OUTPUT */
+#else
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
+			return(0); /* it must be impossible, but... */
+#endif /* OLDIP6OUTPUT */
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;
@@ -553,8 +552,8 @@ arc_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct arc_header *ah;
-	register struct ifqueue *inq;
+	struct arc_header *ah;
+	struct ifqueue *inq;
 	u_int8_t atype;
 	int s;
 	struct arphdr *arph;
@@ -640,10 +639,10 @@ arc_input(ifp, m)
 static char digits[] = "0123456789abcdef";
 char *
 arc_sprintf(ap)
-	register u_int8_t *ap;
+	u_int8_t *ap;
 {
 	static char arcbuf[3];
-	register char *cp = arcbuf;
+	char *cp = arcbuf;
 
 	*cp++ = digits[*ap >> 4];
 	*cp++ = digits[*ap++ & 0xf];
@@ -659,7 +658,7 @@ arc_storelladdr(ifp, lla)
 	struct ifnet *ifp;
 	u_int8_t lla;
 {
-	register struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl;
 	if ((sdl = ifp->if_sadl) &&
 	   sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ARCNET;
@@ -674,10 +673,10 @@ arc_storelladdr(ifp, lla)
  */
 void
 arc_ifattach(ifp, lla)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_int8_t lla;
 {
-	register struct arccom *ac;
+	struct arccom *ac;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
@@ -702,7 +701,4 @@ arc_ifattach(ifp, lla)
 	arc_storelladdr(ifp, lla);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
-#ifdef INET6
-	in6_ifattach_getifid(ifp);
-#endif          
 }

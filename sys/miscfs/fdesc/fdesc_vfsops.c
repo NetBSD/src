@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.28 1999/07/08 01:26:26 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.28.2.1 2000/11/20 18:09:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -65,7 +65,6 @@ int	fdesc_mount __P((struct mount *, const char *, void *,
 			 struct nameidata *, struct proc *));
 int	fdesc_start __P((struct mount *, int, struct proc *));
 int	fdesc_unmount __P((struct mount *, int, struct proc *));
-int	fdesc_root __P((struct mount *, struct vnode **));
 int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			    struct proc *));
 int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
@@ -111,7 +110,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	vfs_getnewfsid(mp, MOUNT_FDESC);
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
@@ -345,6 +344,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
+	fdesc_done,
 	fdesc_sysctl,
 	NULL,				/* vfs_mountroot */
 	fdesc_checkexp,

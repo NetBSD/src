@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.19 1999/10/11 01:36:23 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.1 2000/11/20 18:08:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,12 +28,15 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_43.h"
+#include "opt_sysv.h"
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
     defined(COMPAT_FREEBSD)
 #define COMPAT_OLDSOCK /* used by <sys/socket.h> */
@@ -44,6 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -71,9 +75,13 @@
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
+#include <sys/acct.h>
+#include <sys/exec.h>
+#define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -82,6 +90,10 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <machine/frame.h>
+
+#if defined(DDB)
+#include <ddb/ddbvar.h>
+#endif
 
 static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
 static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
@@ -167,7 +179,7 @@ netbsd32_to_timespec(s32p, p)
 	struct timespec *p;
 {
 
-	p->tv_sec = s32p->tv_sec;
+	p->tv_sec = (time_t)s32p->tv_sec;
 	p->tv_nsec = (long)s32p->tv_nsec;
 }
 
@@ -177,7 +189,7 @@ netbsd32_from_timespec(p, s32p)
 	struct netbsd32_timespec *s32p;
 {
 
-	s32p->tv_sec = p->tv_sec;
+	s32p->tv_sec = (netbsd32_time_t)p->tv_sec;
 	s32p->tv_nsec = (netbsd32_long)p->tv_nsec;
 }
 
@@ -248,7 +260,6 @@ netbsd32_to_iovecin(iov32p, iovp, len)
 	 * each field separately.  I'm doing the latter to reduce
 	 * the number of MALLOC()s.
 	 */
-printf("converting iovec at %p len %lx to %p\n", iov32p, len, iovp);
 	for (i = 0; i < len; i++, iovp++, iov32p++) {
 		if ((error = copyin((caddr_t)&iov32p->iov_base, &iov_base, sizeof(iov_base))))
 		    return (error);
@@ -256,7 +267,6 @@ printf("converting iovec at %p len %lx to %p\n", iov32p, len, iovp);
 		    return (error);
 		iovp->iov_base = (void *)(u_long)iov_base;
 		iovp->iov_len = (size_t)iov_len;
-printf("iovec slot %d base %p len %lx\n", i, iovp->iov_base, iovp->iov_len);
 	}
 }
 
@@ -295,7 +305,6 @@ netbsd32_from_statfs(sbp, sb32p)
 	struct statfs *sbp;
 	struct netbsd32_statfs *sb32p;
 {
-
 	sb32p->f_type = sbp->f_type;
 	sb32p->f_flags = sbp->f_flags;
 	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;
@@ -388,11 +397,11 @@ netbsd32_from___stat13(sbp, sb32p)
 		sb32p->st_size = sbp->st_size;
 	else
 		sb32p->st_size = -2;
-	sb32p->st_atimespec.tv_sec = sbp->st_atimespec.tv_sec;
+	sb32p->st_atimespec.tv_sec = (netbsd32_time_t)sbp->st_atimespec.tv_sec;
 	sb32p->st_atimespec.tv_nsec = (netbsd32_long)sbp->st_atimespec.tv_nsec;
-	sb32p->st_mtimespec.tv_sec = sbp->st_mtimespec.tv_sec;
+	sb32p->st_mtimespec.tv_sec = (netbsd32_time_t)sbp->st_mtimespec.tv_sec;
 	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
-	sb32p->st_ctimespec.tv_sec = sbp->st_ctimespec.tv_sec;
+	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
 	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
 	sb32p->st_blksize = sbp->st_blksize;
 	sb32p->st_blocks = sbp->st_blocks;
@@ -554,10 +563,10 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
- * environment, witht he necessary conversions to 64bit before
- * calling the real syscall.
+ * environment, with the necessary conversions to 64bit before
+ * calling the real syscall, unless we need to inline the whole
+ * syscall here, sigh.
  */
-
 
 int
 netbsd32_exit(p, v, retval)
@@ -624,7 +633,7 @@ netbsd32_close(p, v, retval)
 	struct sys_close_args ua;
 
 	NETBSD32TO64_UAP(fd);
-	return sys_write(p, &ua, retval);
+	return sys_close(p, &ua, retval);
 }
 
 int
@@ -663,8 +672,8 @@ netbsd32_wait4(q, v, retval)
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
 	struct netbsd32_rusage ru32;
-	register int nfound;
-	register struct proc *p, *t;
+	int nfound;
+	struct proc *p, *t;
 	int status, error;
 
 	if (SCARG(uap, pid) == 0)
@@ -929,28 +938,58 @@ netbsd32_getfsstat(p, v, retval)
 		syscallarg(netbsd32_long) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_getfsstat_args ua;
-	struct statfs sb;
-	struct netbsd32_statfs *sb32p;
-	int error;
+	struct mount *mp, *nmp;
+	struct statfs *sp;
+	struct netbsd32_statfs sb32;
+	caddr_t sfsp;
+	long count, maxcount, error;
 
-	sb32p = (struct netbsd32_statfs *)(u_long)SCARG(uap, buf);
-	if (sb32p)
-		SCARG(&ua, buf) = &sb;
-	else
-		SCARG(&ua, buf) = NULL;
-	NETBSD32TOX_UAP(bufsize, long);
-	NETBSD32TO64_UAP(flags);
-	error = sys_getfsstat(p, &ua, retval);
-	if (error)
-		return (error);
-
-	if (sb32p) {
-		struct netbsd32_statfs sb32;
-		netbsd32_from_statfs(&sb, &sb32);
-		if (copyout(&sb32, sb32p, sizeof(sb32)))
-			return EFAULT;
+	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
+	sfsp = (caddr_t)(u_long)SCARG(uap, buf);
+	simple_lock(&mountlist_slock);
+	count = 0;
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = mp->mnt_list.cqe_next;
+			continue;
+		}
+		if (sfsp && count < maxcount) {
+			sp = &mp->mnt_stat;
+			/*
+			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
+			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+			 * overrides MNT_NOWAIT.
+			 */
+			if (SCARG(uap, flags) != MNT_NOWAIT &&
+			    SCARG(uap, flags) != MNT_LAZY &&
+			    (SCARG(uap, flags) == MNT_WAIT ||
+			     SCARG(uap, flags) == 0) &&
+			    (error = VFS_STATFS(mp, sp, p)) != 0) {
+				simple_lock(&mountlist_slock);
+				nmp = mp->mnt_list.cqe_next;
+				vfs_unbusy(mp);
+				continue;
+			}
+			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			sp->f_oflags = sp->f_flags & 0xffff;
+			netbsd32_from_statfs(sp, &sb32);
+			error = copyout(&sb32, sfsp, sizeof(sb32));
+			if (error) {
+				vfs_unbusy(mp);
+				return (error);
+			}
+			sfsp += sizeof(sb32);
+		}
+		count++;
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_next;
+		vfs_unbusy(mp);
 	}
+	simple_unlock(&mountlist_slock);
+	if (sfsp && count > maxcount)
+		*retval = maxcount;
+	else
+		*retval = count;
 	return (0);
 }
 
@@ -1041,7 +1080,7 @@ netbsd32_recvmsg(p, v, retval)
 	} */ *uap = v;
 	struct netbsd32_msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
-	register int error;
+	int error;
 
 	error = copyin((caddr_t)(u_long)SCARG(uap, msg), (caddr_t)&msg,
 		       sizeof(msg));
@@ -1089,7 +1128,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 {
 	struct file *fp;
 	struct uio auio;
-	register int i;
+	int i;
 	int len, error;
 	struct mbuf *from = 0, *control = 0;
 	struct socket *so;
@@ -1146,8 +1185,8 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_READ,
-				ktriov, len - auio.uio_resid, error);
+			ktrgenio(p, s, UIO_READ, ktriov,
+			    len - auio.uio_resid, error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
@@ -1695,6 +1734,9 @@ netbsd32_readlink(p, v, retval)
 	return (sys_readlink(p, &ua, retval));
 }
 
+/* 
+ * Need to completly reimplement this syscall due to argument copying.
+ */
 int
 netbsd32_execve(p, v, retval)
 	struct proc *p;
@@ -1708,6 +1750,25 @@ netbsd32_execve(p, v, retval)
 	} */ *uap = v;
 	struct sys_execve_args ua;
 	caddr_t sg;
+	/* Function args */
+	int error, i;
+	struct exec_package pack;
+	struct nameidata nid;
+	struct vattr attr;
+	struct ucred *cred = p->p_ucred;
+	char *argp;
+	netbsd32_charp const *cpp;
+	char *dp;
+	netbsd32_charp sp;
+	long argc, envc;
+	size_t len;
+	char *stack;
+	struct ps_strings arginfo;
+	struct vmspace *vm;
+	char **tmpfap;
+	int szsigcode;
+	extern struct emul emul_netbsd;
+
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
@@ -1715,7 +1776,320 @@ netbsd32_execve(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
-	return (sys_execve(p, &ua, retval));
+	/*
+	 * figure out the maximum size of an exec header, if necessary.
+	 * XXX should be able to keep LKM code from modifying exec switch
+	 * when we're still using it, but...
+	 */
+	if (exec_maxhdrsz == 0) {
+		for (i = 0; i < nexecs; i++)
+			if (execsw[i].es_check != NULL
+			    && execsw[i].es_hdrsz > exec_maxhdrsz)
+				exec_maxhdrsz = execsw[i].es_hdrsz;
+	}
+
+	/* init the namei data to point the file user's program name */
+	/* XXX cgd 960926: why do this here?  most will be clobbered. */
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(&ua, path), p);
+
+	/*
+	 * initialize the fields of the exec package.
+	 */
+	pack.ep_name = SCARG(&ua, path);
+	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdrlen = exec_maxhdrsz;
+	pack.ep_hdrvalid = 0;
+	pack.ep_ndp = &nid;
+	pack.ep_emul_arg = NULL;
+	pack.ep_vmcmds.evs_cnt = 0;
+	pack.ep_vmcmds.evs_used = 0;
+	pack.ep_vap = &attr;
+	pack.ep_emul = &emul_netbsd;
+	pack.ep_flags = 0;
+
+	/* see if we can run it. */
+	if ((error = check_exec(p, &pack)) != 0)
+		goto freehdr;
+
+	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
+
+	/* allocate an argument buffer */
+	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
+#ifdef DIAGNOSTIC
+	if (argp == (vaddr_t) 0)
+		panic("execve: argp == NULL");
+#endif
+	dp = argp;
+	argc = 0;
+
+	/* copy the fake args list, if there's one, freeing it as we go */
+	if (pack.ep_flags & EXEC_HASARGL) {
+		tmpfap = pack.ep_fa;
+		while (*tmpfap != NULL) {
+			char *cp;
+
+			cp = *tmpfap;
+			while (*cp)
+				*dp++ = *cp++;
+			dp++;
+
+			FREE(*tmpfap, M_EXEC);
+			tmpfap++; argc++;
+		}
+		FREE(pack.ep_fa, M_EXEC);
+		pack.ep_flags &= ~EXEC_HASARGL;
+	}
+
+	/* Now get argv & environment */
+	if (!(cpp = (netbsd32_charp *)SCARG(&ua, argp))) {
+		error = EINVAL;
+		goto bad;
+	}
+
+	if (pack.ep_flags & EXEC_SKIPARG)
+		cpp++;
+
+	while (1) {
+		len = argp + ARG_MAX - dp;
+		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+			goto bad;
+		if (!sp)
+			break;
+		if ((error = copyinstr((char *)(u_long)sp, dp, 
+				       len, &len)) != 0) {
+			if (error == ENAMETOOLONG)
+				error = E2BIG;
+			goto bad;
+		}
+		dp += len;
+		cpp++;
+		argc++;
+	}
+
+	envc = 0;
+	/* environment need not be there */
+	if ((cpp = (netbsd32_charp *)SCARG(&ua, envp)) != NULL ) {
+		while (1) {
+			len = argp + ARG_MAX - dp;
+			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+				goto bad;
+			if (!sp)
+				break;
+			if ((error = copyinstr((char *)(u_long)sp, 
+					       dp, len, &len)) != 0) {
+				if (error == ENAMETOOLONG)
+					error = E2BIG;
+				goto bad;
+			}
+			dp += len;
+			cpp++;
+			envc++;
+		}
+	}
+
+	dp = (char *) ALIGN(dp);
+
+	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
+
+	/* Now check if args & environ fit into new stack */
+	if (pack.ep_flags & EXEC_32)
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
+	else
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
+
+	len = ALIGN(len);	/* make the stack "safely" aligned */
+
+	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
+		error = ENOMEM;
+		goto bad;
+	}
+
+	/* adjust "active stack depth" for process VSZ */
+	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
+
+	/*
+	 * Do whatever is necessary to prepare the address space
+	 * for remapping.  Note that this might replace the current
+	 * vmspace with another!
+	 */
+	uvmspace_exec(p);
+
+	/* Now map address space */
+	vm = p->p_vmspace;
+	vm->vm_taddr = (char *) pack.ep_taddr;
+	vm->vm_tsize = btoc(pack.ep_tsize);
+	vm->vm_daddr = (char *) pack.ep_daddr;
+	vm->vm_dsize = btoc(pack.ep_dsize);
+	vm->vm_ssize = btoc(pack.ep_ssize);
+	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
+	vm->vm_minsaddr = (char *) pack.ep_minsaddr;
+
+	/* create the new process's VM space by running the vmcmds */
+#ifdef DIAGNOSTIC
+	if (pack.ep_vmcmds.evs_used == 0)
+		panic("execve: no vmcmds");
+#endif
+	for (i = 0; i < pack.ep_vmcmds.evs_used && !error; i++) {
+		struct exec_vmcmd *vcp;
+
+		vcp = &pack.ep_vmcmds.evs_cmds[i];
+		error = (*vcp->ev_proc)(p, vcp);
+	}
+
+	/* free the vmspace-creation commands, and release their references */
+	kill_vmcmds(&pack.ep_vmcmds);
+
+	/* if an error happened, deallocate and punt */
+	if (error)
+		goto exec_abort;
+
+	/* remember information about the process */
+	arginfo.ps_nargvstr = argc;
+	arginfo.ps_nenvstr = envc;
+
+	stack = (char *) (vm->vm_minsaddr - len);
+	/* Now copy argc, args & environ to new stack */
+	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+		goto exec_abort;
+
+	/* fill process ps_strings info */
+	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
+	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
+	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
+	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
+	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
+
+	/* copy out the process's ps_strings structure */
+	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo)))
+		goto exec_abort;
+
+	/* copy out the process's signal trapoline code */
+	if (szsigcode) {
+		if (copyout((char *)pack.ep_emul->e_sigcode,
+		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
+		    szsigcode))
+			goto exec_abort;
+#ifdef PMAP_NEED_PROCWR
+		/* This is code. Let the pmap do what is needed. */
+		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+#endif
+	}
+
+	stopprofclock(p);	/* stop profiling */
+	fdcloseexec(p);		/* handle close on exec */
+	execsigs(p);		/* reset catched signals */
+	p->p_ctxlink = NULL;	/* reset ucontext link */
+
+	/* set command name & other accounting info */
+	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
+	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, len);
+	p->p_comm[len] = 0;
+	p->p_acflag &= ~AFORK;
+
+	/* record proc's vnode, for use by procfs and others */
+        if (p->p_textvp)
+                vrele(p->p_textvp);
+	VREF(pack.ep_vp);
+	p->p_textvp = pack.ep_vp;
+
+	p->p_flag |= P_EXEC;
+	if (p->p_flag & P_PPWAIT) {
+		p->p_flag &= ~P_PPWAIT;
+		wakeup((caddr_t) p->p_pptr);
+	}
+
+	/*
+	 * deal with set[ug]id.
+	 * MNT_NOSUID and P_TRACED have already been used to disable s[ug]id.
+	 */
+	if (((attr.va_mode & S_ISUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
+	 || ((attr.va_mode & S_ISGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
+		p->p_ucred = crcopy(cred);
+#ifdef KTRACE
+		/*
+		 * If process is being ktraced, turn off - unless
+		 * root set it.
+		 */
+		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT))
+			ktrderef(p);
+#endif
+		if (attr.va_mode & S_ISUID)
+			p->p_ucred->cr_uid = attr.va_uid;
+		if (attr.va_mode & S_ISGID)
+			p->p_ucred->cr_gid = attr.va_gid;
+		p_sugid(p);
+	} else
+		p->p_flag &= ~P_SUGID;
+	p->p_cred->p_svuid = p->p_ucred->cr_uid;
+	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	vput(pack.ep_vp);
+
+	/* setup new registers and do misc. setup. */
+	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
+
+	if (p->p_flag & P_TRACED)
+		psignal(p, SIGTRAP);
+
+	p->p_emul = pack.ep_emul;
+	FREE(pack.ep_hdr, M_EXEC);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_EMUL))
+		ktremul(p);
+#endif
+
+	return (EJUSTRETURN);
+
+bad:
+	/* free the vmspace-creation commands, and release their references */
+	kill_vmcmds(&pack.ep_vmcmds);
+	/* kill any opened file descriptor, if necessary */
+	if (pack.ep_flags & EXEC_HASFD) {
+		pack.ep_flags &= ~EXEC_HASFD;
+		(void) fdrelease(p, pack.ep_fd);
+	}
+	/* close and put the exec'd file */
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	vput(pack.ep_vp);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+
+freehdr:
+	FREE(pack.ep_hdr, M_EXEC);
+	return error;
+
+exec_abort:
+	/*
+	 * the old process doesn't exist anymore.  exit gracefully.
+	 * get rid of the (new) address space we have created, if any, get rid
+	 * of our namei data and vnode, and exit noting failure
+	 */
+	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
+		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	if (pack.ep_emul_arg)
+		FREE(pack.ep_emul_arg, M_TEMP);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
+	vput(pack.ep_vp);
+	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
+	FREE(pack.ep_hdr, M_EXEC);
+	exit1(p, W_EXITCODE(0, SIGABRT));
+	exit1(p, -1);
+
+	/* NOTREACHED */
+	return 0;
 }
 
 int
@@ -1862,8 +2236,8 @@ netbsd32_getgroups(p, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register int ngrp;
+	struct pcred *pc = p->p_cred;
+	int ngrp;
 	int error;
 
 	ngrp = SCARG(uap, gidsetsize);
@@ -1953,10 +2327,15 @@ netbsd32_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (which == ITIMER_REAL) {
-		untimeout(realitexpire, p);
+		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, p, hzto(&aitv.it_value));
+			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
+			    realitexpire, p);
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -2100,12 +2479,6 @@ netbsd32_select(p, v, retval)
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
 		splx(s);
 	} else
 		timo = 0;
@@ -2116,11 +2489,15 @@ retry:
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
+	if (SCARG(uap, tv)) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0)
+			goto done;
 	}
+	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
@@ -2338,10 +2715,11 @@ netbsd32_gettimeofday(p, v, retval)
 	return (error);
 }
 
-static int settime __P((struct timeval *));
+#if 0
+static int settime32 __P((struct timeval *));
 /* This function is used by clock_settime and settimeofday */
 static int
-settime(tv)
+settime32(tv)
 	struct timeval *tv;
 {
 	struct timeval delta;
@@ -2361,13 +2739,17 @@ settime(tv)
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
 #	if defined(NFS) || defined(NFSSERVER)
+	{
+		extern void	nqnfs_lease_updatetime __P((int));
+
 		nqnfs_lease_updatetime(delta.tv_sec);
+	}
 #	endif
 	splx(s);
 	resettodr();
 	return (0);
 }
-
+#endif
 
 int
 netbsd32_settimeofday(p, v, retval)
@@ -2544,8 +2926,8 @@ netbsd32_readv(p, v, retval)
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -2569,7 +2951,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -2632,7 +3014,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
 			    error);
 		FREE(ktriov, M_TEMP);
 	}
@@ -2657,8 +3039,8 @@ netbsd32_writev(p, v, retval)
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -2681,7 +3063,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -2747,7 +3129,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
 			    error);
 		FREE(ktriov, M_TEMP);
 	}
@@ -2772,8 +3154,8 @@ netbsd32_rename(p, v, retval)
 	} */ *uap = v;
 	struct sys_rename_args ua;
 
-	NETBSD32TOP_UAP(from, const char *);
-	NETBSD32TOP_UAP(to, const char *)
+	NETBSD32TOP_UAP(from, const char);
+	NETBSD32TOP_UAP(to, const char)
 
 	return (sys_rename(p, &ua, retval));
 }
@@ -3058,8 +3440,8 @@ netbsd32_statfs(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 	struct nameidata nd;
@@ -3088,8 +3470,8 @@ netbsd32_fstatfs(p, v, retval)
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
 	struct file *fp;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 
@@ -3169,7 +3551,7 @@ netbsd32_pread(p, v, retval)
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	error = sys_pread(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3196,7 +3578,7 @@ netbsd32_pwrite(p, v, retval)
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	error = sys_pwrite(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3288,7 +3670,7 @@ netbsd32_ntp_gettime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = (register_t)time_state;
+			*retval = time_state;
 	}
 	return(error);
 }
@@ -3381,8 +3763,9 @@ netbsd32_ntp_adjtime(p, v, retval)
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	netbsd32_from_timeval(&ntv, &ntv32);
-	error = copyout((caddr_t)&ntv32, (caddr_t)SCARG(uap, tp), sizeof(ntv32));
+	netbsd32_from_timex(&ntv, &ntv32);
+	error = copyout((caddr_t)&ntv32, (caddr_t)(u_long)SCARG(uap, tp),
+	    sizeof(ntv32));
 	if (!error) {
 
 		/*
@@ -3398,9 +3781,27 @@ netbsd32_ntp_adjtime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = (register_t)time_state;
+			*retval = time_state;
 	}
 	return error;
+}
+#else
+int
+netbsd32_ntp_gettime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return(ENOSYS);
+}
+
+int
+netbsd32_ntp_adjtime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (ENOSYS);
 }
 #endif
 
@@ -3451,7 +3852,7 @@ netbsd32_seteuid(p, v, retval)
 
 #ifdef LFS
 int
-netbsd32_lfs_bmapv(p, v, retval)
+netbsd32_sys_lfs_bmapv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -3474,43 +3875,51 @@ netbsd32_lfs_bmapv(p, v, retval)
 }
 
 int
-netbsd32_lfs_markv(p, v, retval)
+netbsd32_sys_lfs_markv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct netbsd32_lfs_markv_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_block_infop_t) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
+#endif
 
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_lfs_segclean(p, v, retval)
+netbsd32_sys_lfs_segclean(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct netbsd32_lfs_segclean_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_u_long) segment;
 	} */ *uap = v;
+#endif
+
 	return (ENOSYS);	/* XXX */
 }
 
 int
-netbsd32_lfs_segwait(p, v, retval)
+netbsd32_sys_lfs_segwait(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct netbsd32_lfs_segwait_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_timevalp_t) tv;
 	} */ *uap = v;
+#endif
+
 	return (ENOSYS);	/* XXX */
 }
 #endif
@@ -3532,7 +3941,7 @@ netbsd32_pathconf(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(name);
 	error = sys_pathconf(p, &ua, (register_t *)&rt);
-	*(netbsd32_long *)retval = (netbsd32_long)rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3553,7 +3962,7 @@ netbsd32_fpathconf(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(name);
 	error = sys_fpathconf(p, &ua, (register_t *)&rt);
-	*(netbsd32_long *)retval = (netbsd32_long)rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3702,7 +4111,7 @@ netbsd32___sysctl(p, v, retval)
 		syscallarg(netbsd32_voidp) new;
 		syscallarg(netbsd32_size_t) newlen;
 	} */ *uap = v;
-	int error, dolock = 1;
+	int error;
 	netbsd32_size_t savelen = 0;
 	size_t oldlen = 0;
 	sysctlfn *fn;
@@ -3730,8 +4139,6 @@ netbsd32___sysctl(p, v, retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		if (name[2] != KERN_VNODE)	/* XXX */
-			dolock = 0;
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
@@ -3758,61 +4165,45 @@ netbsd32___sysctl(p, v, retval)
 		fn = ddb_sysctl;
 		break;
 #endif
+	case CTL_PROC:
+		fn = proc_sysctl;
+		break;
 	default:
 		return (EOPNOTSUPP);
 	}
 
+	/*
+	 * XXX Hey, we wire `old', but what about `new'?
+	 */
+
 	if (SCARG(uap, oldlenp) &&
-	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen, sizeof(savelen))))
+	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen,
+	     sizeof(savelen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		if (!uvm_useracc((caddr_t)(u_long)SCARG(uap, old), savelen, B_WRITE))
+		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
+		if (error)
+			return (error);
+		if (uvm_vslock(p, (void *)(u_long)SCARG(uap, old), savelen,
+		    VM_PROT_READ|VM_PROT_WRITE) != KERN_SUCCESS) {
+			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return (EFAULT);
-#if 0 /* XXXXXXXX */
-		while (memlock.sl_lock) {
-			memlock.sl_want = 1;
-			sleep((caddr_t)&memlock, PRIBIO+1);
-			memlock.sl_locked++;
-		}
-		memlock.sl_lock = 1;
-#endif /* XXXXXXXX */
-		if (dolock) {
-			/*
-			 * XXX Um, this is kind of evil.  What should
-			 * XXX we be passing here?
-			 */
-			if (uvm_vslock(p, SCARG(uap, old), savelen,
-			    VM_PROT_NONE) != KERN_SUCCESS) {
-#if 0 /* XXXXXXXX */
-				memlock.sl_lock = 0;
-				if (memlock.sl_want) {
-					memlock.sl_want = 0;
-					wakeup((caddr_t)&memlock);
-				}
-#endif /* XXXXXXXX */
-				return (EFAULT);
-			}
 		}
 		oldlen = savelen;
 	}
-	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
-	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
+	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, 
+		      (void *)(u_long)SCARG(uap, old), &oldlen, 
+		      (void *)(u_long)SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
-		if (dolock)
-			uvm_vsunlock(p, SCARG(uap, old), savelen);
-#if 0 /* XXXXXXXXXXX */
-		memlock.sl_lock = 0;
-		if (memlock.sl_want) {
-			memlock.sl_want = 0;
-			wakeup((caddr_t)&memlock);
-		}
-#endif /* XXXXXXXXX */
+		uvm_vsunlock(p, (void *)(u_long)SCARG(uap, old), savelen);
+		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 	}
 	savelen = oldlen;
 	if (error)
 		return (error);
 	if (SCARG(uap, oldlenp))
-		error = copyout(&savelen, (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
+		error = copyout(&savelen,
+		    (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
 	return (error);
 }
 
@@ -3939,6 +4330,7 @@ netbsd32_poll(p, v, retval)
 	return (sys_poll(p, &ua, retval));
 }
 
+#if defined(SYSVSEM)
 /*
  * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  *
@@ -3948,7 +4340,7 @@ netbsd32_poll(p, v, retval)
  * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  */
 int
-netbsd32___semctl(p, v, retval)
+netbsd32___semctl14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -3958,7 +4350,7 @@ netbsd32___semctl(p, v, retval)
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(netbsd32_semunu_t) arg;
+		syscallarg(netbsd32_semunu_t *) arg;
 	} */ *uap = v;
 	union netbsd32_semun sem32;
 	int semid = SCARG(uap, semid);
@@ -3969,7 +4361,7 @@ netbsd32___semctl(p, v, retval)
 	struct ucred *cred = p->p_ucred;
 	int i, rval, eval;
 	struct netbsd32_semid_ds sbuf;
-	register struct semid_ds *semaptr;
+	struct semid_ds *semaptr;
 
 	semlock(p);
 
@@ -4165,9 +4557,12 @@ netbsd32_semconfig(p, v, retval)
 	NETBSD32TO64_UAP(flag);
 	return (sys_semconfig(p, &ua, retval));
 }
+#endif /* SYSVSEM */
+
+#if defined(SYSVMSG)
 
 int
-netbsd32_msgctl(p, v, retval)
+netbsd32___msgctl13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -4273,12 +4668,15 @@ netbsd32_msgrcv(p, v, retval)
 	NETBSD32TOX_UAP(msgtyp, long);
 	NETBSD32TO64_UAP(msgflg);
 	error = sys_msgrcv(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 #else
 	return (ENOSYS);
 #endif
 }
+#endif /* SYSVMSG */
+
+#if defined(SYSVSHM)
 
 int
 netbsd32_shmat(p, v, retval)
@@ -4300,7 +4698,7 @@ netbsd32_shmat(p, v, retval)
 	NETBSD32TOP_UAP(shmaddr, void);
 	NETBSD32TO64_UAP(shmflg);
 	error = sys_shmat(p, &ua, (register_t *)&rt);
-	*retval = (netbsd32_voidp)(u_long)rt;
+	*retval = rt;
 	return (error);
 #else
 	return (ENOSYS);
@@ -4308,7 +4706,7 @@ netbsd32_shmat(p, v, retval)
 }
 
 int
-netbsd32_shmctl(p, v, retval)
+netbsd32___shmctl13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -4385,6 +4783,7 @@ netbsd32_shmget(p, v, retval)
 	return (ENOSYS);
 #endif
 }
+#endif /* SYSVSHM */
 
 int
 netbsd32_clock_gettime(p, v, retval)
@@ -4569,8 +4968,8 @@ netbsd32___posix_rename(p, v, retval)
 	} */ *uap = v;
 	struct sys___posix_rename_args ua;
 
-	NETBSD32TOP_UAP(from, const char *);
-	NETBSD32TOP_UAP(to, const char *);
+	NETBSD32TOP_UAP(from, const char);
+	NETBSD32TOP_UAP(to, const char);
 
 	return (sys___posix_rename(p, &ua, retval));
 }
@@ -4736,9 +5135,14 @@ netbsd32___stat13(p, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+	char *path;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    (caddr_t)(u_long)SCARG(uap, path), p);
+	path = (char *)(u_long)SCARG(uap, path);
+	sg = stackgap_init(p->p_emul);
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -4761,8 +5165,8 @@ netbsd32___fstat13(p, v, retval)
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct netbsd32_stat sb32;
 	struct stat ub;
 	int error = 0;
@@ -4805,9 +5209,14 @@ netbsd32___lstat13(p, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+	char *path;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    (caddr_t)(u_long)SCARG(uap, path), p);
+	path = (char *)(u_long)SCARG(uap, path);
+	sg = stackgap_init(p->p_emul);
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -4942,7 +5351,7 @@ netbsd32_fktrace(p, v, retval)
 	} */ *uap = v;
 	struct sys_fktrace_args ua;
 
-	NETBSD32TO64_UAP(fd);
+	NETBSD32TOX_UAP(fd, int);
 	NETBSD32TO64_UAP(ops);
 	NETBSD32TO64_UAP(facs);
 	NETBSD32TO64_UAP(pid);
@@ -5033,43 +5442,235 @@ netbsd32_pwritev(p, v, retval)
 	    &offset, 0, retval));
 }
 
+/* ARGSUSED */
 int
-compat_13_netbsd32_sigprocmask(p, v, retval)
-	register struct proc *p;
+netbsd32___sigaction14(p, v, retval)
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_netbsd32_sigprocmask_args /* {
-		syscallarg(int) how;
-		syscallarg(int) mask;
+	struct netbsd32___sigaction14_args /* {
+		syscallarg(int) signum;
+		syscallarg(const struct sigaction *) nsa;
+		syscallarg(struct sigaction *) osa;
 	} */ *uap = v;
-	sigset13_t ness, oess;
-	sigset_t nbss, obss;
+	struct netbsd32_sigaction sa32;
+	struct sigaction nsa, osa;
 	int error;
 
-	ness = SCARG(uap, mask);
-	native_sigset13_to_sigset(&ness, &nbss);
-	error = sigprocmask1(p, SCARG(uap, how), &nbss, &obss);
+	if (SCARG(uap, nsa)) {
+		error = copyin((caddr_t)(u_long)SCARG(uap, nsa), 
+			       &sa32, sizeof(sa32));
+		if (error)
+			return (error);
+		nsa.sa_handler = (void *)(u_long)sa32.sa_handler;
+		nsa.sa_mask = sa32.sa_mask;
+		nsa.sa_flags = sa32.sa_flags;
+	}
+	error = sigaction1(p, SCARG(uap, signum),
+	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0);
 	if (error)
 		return (error);
-	native_sigset_to_sigset13(&obss, &oess);
-	*retval = oess;
+	if (SCARG(uap, osa)) {
+		sa32.sa_handler = (netbsd32_voidp)(u_long)osa.sa_handler;
+		sa32.sa_mask = osa.sa_mask;
+		sa32.sa_flags = osa.sa_flags;
+		error = copyout(&sa32, (caddr_t)(u_long)SCARG(uap, osa), sizeof(sa32));
+		if (error)
+			return (error);
+	}
 	return (0);
 }
 
+int netbsd32___sigpending14(p, v, retval) 
+	struct proc *p;
+	void   *v;
+	register_t *retval;
+{
+	struct netbsd32___sigpending14_args /* {
+		syscallarg(sigset_t *) set;
+	} */ *uap = v;
+	struct sys___sigpending14_args ua;
+
+	NETBSD32TOP_UAP(set, sigset_t);
+	return (sys___sigpending14(p, &ua, retval));
+}
+
+int netbsd32___sigprocmask14(p, v, retval) 
+	struct proc *p;
+	void   *v;
+	register_t *retval;
+{
+	struct netbsd32___sigprocmask14_args /* {
+		syscallarg(int) how;
+		syscallarg(const sigset_t *) set;
+		syscallarg(sigset_t *) oset;
+	} */ *uap = v;
+	struct sys___sigprocmask14_args ua;
+
+	NETBSD32TO64_UAP(how);
+	NETBSD32TOP_UAP(set, sigset_t);
+	NETBSD32TOP_UAP(oset, sigset_t);
+	return (sys___sigprocmask14(p, &ua, retval));
+}
+
+int netbsd32___sigsuspend14(p, v, retval) 
+	struct proc *p;
+	void   *v;
+	register_t *retval;
+{
+	struct netbsd32___sigsuspend14_args /* {
+		syscallarg(const sigset_t *) set;
+	} */ *uap = v;
+	struct sys___sigsuspend14_args ua;
+
+	NETBSD32TOP_UAP(set, sigset_t);
+	return (sys___sigsuspend14(p, &ua, retval));
+};
+
+
+/*
+ * Find pathname of process's current directory.
+ *
+ * Use vfs vnode-to-name reverse cache; if that fails, fall back
+ * to reading directory contents.
+ */
 int
-compat_13_netbsd32_sigsuspend(p, v, retval)
-	register struct proc *p;
+getcwd_common __P((struct vnode *, struct vnode *,
+		   char **, char *, int, int, struct proc *));
+
+int netbsd32___getcwd(p, v, retval) 
+	struct proc *p;
+	void   *v;
+	register_t *retval;
+{
+	struct netbsd32___getcwd_args /* {
+		syscallarg(char *) bufp;
+		syscallarg(size_t) length;
+	} */ *uap = v;
+
+	int     error;
+	char   *path;
+	char   *bp, *bend;
+	int     len = (int)SCARG(uap, length);
+	int	lenused;
+
+	if (len > MAXPATHLEN*4)
+		len = MAXPATHLEN*4;
+	else if (len < 2)
+		return ERANGE;
+
+	path = (char *)malloc(len, M_TEMP, M_WAITOK);
+	if (!path)
+		return ENOMEM;
+
+	bp = &path[len];
+	bend = bp;
+	*(--bp) = '\0';
+
+	/*
+	 * 5th argument here is "max number of vnodes to traverse".
+	 * Since each entry takes up at least 2 bytes in the output buffer,
+	 * limit it to N/2 vnodes for an N byte buffer.
+	 */
+#define GETCWD_CHECK_ACCESS 0x0001
+	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
+			       GETCWD_CHECK_ACCESS, p);
+
+	if (error)
+		goto out;
+	lenused = bend - bp;
+	*retval = lenused;
+	/* put the result into user buffer */
+	error = copyout(bp, (caddr_t)(u_long)SCARG(uap, bufp), lenused);
+
+out:
+	free(path, M_TEMP);
+	return error;
+}
+
+int netbsd32_fchroot(p, v, retval)
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_netbsd32_sigsuspend_args /* {
-		syscallarg(sigset13_t) mask;
+	struct netbsd32_fchroot_args /* {
+		syscallarg(int) fd;
 	} */ *uap = v;
-	sigset13_t ess;
-	sigset_t bss;
-
-	ess = SCARG(uap, mask);
-	native_sigset13_to_sigset(&ess, &bss);
-	return (sigsuspend1(p, &bss));
+	struct sys_fchroot_args ua;
+	
+	NETBSD32TO64_UAP(fd);
+	return (sys_fchroot(p, &ua, retval));
 }
+
+/*
+ * Open a file given a file handle.
+ *
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+netbsd32_fhopen(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_fhopen_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct sys_fhopen_args ua;
+
+	NETBSD32TOP_UAP(fhp, fhandle_t);
+	NETBSD32TO64_UAP(flags);
+	return (sys_fhopen(p, &ua, retval));
+}
+
+int netbsd32_fhstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_fhstat_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(struct stat *) sb;
+	} */ *uap = v;
+	struct sys_fhstat_args ua;
+
+	NETBSD32TOP_UAP(fhp, const fhandle_t);
+	NETBSD32TOP_UAP(sb, struct stat);
+	return (sys_fhstat(p, &ua, retval));
+}
+
+int netbsd32_fhstatfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_fhstatfs_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(struct statfs *) buf;
+	} */ *uap = v;
+	struct sys_fhstatfs_args ua;
+
+	NETBSD32TOP_UAP(fhp, const fhandle_t);
+	NETBSD32TOP_UAP(buf, struct statfs);
+	return (sys_fhstatfs(p, &ua, retval));
+}
+
+/* virtual memory syscalls */
+int
+netbsd32_ovadvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_ovadvise_args /* {
+		syscallarg(int) anom;
+	} */ *uap = v;
+	struct sys_ovadvise_args ua;
+
+	NETBSD32TO64_UAP(anom);
+	return (sys_ovadvise(p, &ua, retval));
+}
+

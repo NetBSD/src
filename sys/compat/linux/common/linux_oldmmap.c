@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.50 1998/10/07 23:06:17 erh Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.50.12.1 2000/11/20 18:08:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,9 +41,6 @@
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>

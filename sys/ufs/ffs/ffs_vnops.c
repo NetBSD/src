@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.19 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.19.2.1 2000/11/20 18:11:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,15 +43,10 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -65,6 +60,8 @@
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+static int ffs_full_fsync __P((void *));
 
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p) __P((void *));
@@ -110,6 +107,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
+	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
@@ -229,6 +227,200 @@ int doclusterwrite = 1;
 
 #include <ufs/ufs/ufs_readwrite.c>
 
+int
+ffs_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_flags;
+		off_t offlo;
+		off_t offhi;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct buf *bp, *nbp, *ibp;
+	int s, num, error, i;
+	struct indir ia[NIADDR + 1];
+	int bsize;
+	daddr_t blk_low, blk_high;
+	struct vnode *vp;
+
+	/*
+	 * XXX no easy way to sync a range in a file with softdep.
+	 */
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp))
+		return ffs_full_fsync(v);
+
+	vp = ap->a_vp;
+
+	bsize = ap->a_vp->v_mount->mnt_stat.f_iosize;
+	blk_low = ap->a_offlo / bsize;
+	blk_high = ap->a_offhi / bsize;
+	if (ap->a_offhi % bsize != 0)
+		blk_high++;
+
+	/*
+	 * First, flush all data blocks in range.
+	 */
+loop:
+	s = splbio();
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if ((bp->b_flags & B_BUSY))
+			continue;
+		if (bp->b_lblkno < blk_low || bp->b_lblkno > blk_high)
+			continue;
+		bp->b_flags |= B_BUSY | B_VFLUSH;
+		splx(s);
+		bawrite(bp);
+		goto loop;
+	}
+
+	/*
+	 * Then, flush possibly unwritten indirect blocks. Without softdeps,
+	 * these should be the only ones left.
+	 */
+	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
+		error = ufs_getlbns(vp, blk_high, ia, &num);
+		if (error != 0)
+			return error;
+		for (i = 0; i < num; i++) {
+			ibp = incore(vp, ia[i].in_lbn);
+			if (ibp != NULL && !(ibp->b_flags & B_BUSY) &&
+			    (ibp->b_flags & B_DELWRI)) {
+				ibp->b_flags |= B_BUSY | B_VFLUSH;
+				splx(s);
+				bawrite(ibp);
+				s = splbio();
+			}
+		}
+	}
+
+	if (ap->a_flags & FSYNC_WAIT) {
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
+			    "fsync_range", 0);
+		}
+	}
+
+	splx(s);
+
+	return (VOP_UPDATE(vp, NULL, NULL,
+	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+}
+
+/*
+ * Synch an open file.
+ */
+/* ARGSUSED */
+static int
+ffs_full_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_flags;
+		off_t offlo;
+		off_t offhi;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct buf *bp, *nbp;
+	int s, error, passes, skipmeta;
+
+	if (vp->v_type == VBLK &&
+	    vp->v_specmountpoint != NULL &&
+	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
+		softdep_fsync_mountdev(vp);
+
+	/* 
+	 * Flush all dirty buffers associated with a vnode
+	 */
+	passes = NIADDR + 1;
+	skipmeta = 0;
+	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
+		skipmeta = 1;
+	s = splbio();
+loop:
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
+	     bp = LIST_NEXT(bp, b_vnbufs))
+		bp->b_flags &= ~B_SCANNED;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_flags & (B_BUSY | B_SCANNED))
+			continue;
+		if ((bp->b_flags & B_DELWRI) == 0)
+			panic("ffs_fsync: not dirty");
+		if (skipmeta && bp->b_lblkno < 0)
+			continue;
+		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
+		splx(s);
+		/*
+		 * On our final pass through, do all I/O synchronously
+		 * so that we can find out if our flush is failing
+		 * because of write errors.
+		 */
+		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
+			(void) bawrite(bp);
+		else if ((error = bwrite(bp)) != 0)
+			return (error);
+		s = splbio();
+		/*
+		 * Since we may have slept during the I/O, we need
+		 * to start from a known point.
+		 */
+		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
+	}
+	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
+		skipmeta = 0;
+		goto loop;
+	}
+	if (ap->a_flags & FSYNC_WAIT) {
+		while (vp->v_numoutput) {
+			vp->v_flag |= VBWAIT;
+			(void) tsleep(&vp->v_numoutput, PRIBIO + 1,
+			    "ffsfsync", 0);
+		}
+		splx(s);
+
+		if (ap->a_flags & FSYNC_DATAONLY)
+			return (0);
+
+		/* 
+		 * Ensure that any filesystem metadata associated
+		 * with the vnode has been written.
+		 */
+		if ((error = softdep_sync_metadata(ap)) != 0)
+			return (error);
+
+		s = splbio();
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			/*
+			* Block devices associated with filesystems may
+			* have new I/O requests posted for them even if
+			* the vnode is locked, so no amount of trying will
+			* get them clean. Thus we give block devices a
+			* good effort, then just give up. For all other file
+			* types, go around and try again until it is clean.
+			*/
+			if (passes > 0) {
+				passes--;
+				goto loop;
+			}
+#ifdef DIAGNOSTIC
+			if (vp->v_type != VBLK)
+				vprint("ffs_fsync: dirty", vp);
+#endif
+		}
+	}
+	splx(s);
+	return (VOP_UPDATE(vp, NULL, NULL,
+	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+}
+
 /*
  * Reclaim an inode so that it can be used for other purposes.
  */
@@ -240,7 +432,7 @@ ffs_reclaim(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	int error;
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)

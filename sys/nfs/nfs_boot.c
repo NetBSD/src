@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.52 1999/09/03 20:06:46 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.52.2.1 2000/11/20 18:11:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@
  * about where to mount root from, what pathnames, etc.
  */
 
+#include "opt_nfs.h"
 #include "opt_nfs_boot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
@@ -565,8 +565,11 @@ nfs_boot_getfh(ndm)
 #endif
 	args->fh       = ndm->ndm_fh;
 	args->hostname = ndm->ndm_host;
-	args->flags    = NFSMNT_NFSV3 | NFSMNT_NOCONN | NFSMNT_RESVPORT;
+	args->flags    = NFSMNT_NOCONN | NFSMNT_RESVPORT;
 
+#ifndef NFS_V2_ONLY
+	args->flags    |= NFSMNT_NFSV3;
+#endif
 #ifdef	NFS_BOOT_OPTIONS
 	args->flags    |= NFS_BOOT_OPTIONS;
 #endif

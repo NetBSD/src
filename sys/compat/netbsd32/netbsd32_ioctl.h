@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.3 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.3.8.1 2000/11/20 18:08:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -41,9 +41,9 @@ struct netbsd32_fbcmap {
 	netbsd32_u_charp	green;		/* green color map elements */
 	netbsd32_u_charp	blue;		/* blue color map elements */
 };
-#if 0
-#define	FBIOPUTCMAP	_IOW('F', 3, struct fbcmap)
-#define	FBIOGETCMAP	_IOW('F', 4, struct fbcmap)
+#if 1
+#define	FBIOPUTCMAP32	_IOW('F', 3, struct netbsd32_fbcmap)
+#define	FBIOGETCMAP32	_IOW('F', 4, struct netbsd32_fbcmap)
 #endif
 
 struct netbsd32_fbcursor {
@@ -56,9 +56,9 @@ struct netbsd32_fbcursor {
 	netbsd32_charp image;	/* cursor's image bits */
 	netbsd32_charp mask;	/* cursor's mask bits */
 };
-#if 0
-#define FBIOSCURSOR	_IOW('F', 24, struct fbcursor)
-#define FBIOGCURSOR	_IOWR('F', 25, struct fbcursor)
+#if 1
+#define FBIOSCURSOR32	_IOW('F', 24, struct netbsd32_fbcursor)
+#define FBIOGCURSOR32	_IOWR('F', 25, struct netbsd32_fbcursor)
 #endif
 
 /* from arch/sparc/include/openpromio.h */
@@ -69,10 +69,10 @@ struct netbsd32_opiocdesc {
 	int	op_buflen;		/* length of op_buf (value-result) */
 	netbsd32_charp op_buf;		/* pointer to field value */
 };
-#if 0
-#define	OPIOCGET	_IOWR('O', 1, struct opiocdesc) /* get openprom field */
-#define	OPIOCSET	_IOW('O', 2, struct opiocdesc) /* set openprom field */
-#define	OPIOCNEXTPROP	_IOWR('O', 3, struct opiocdesc) /* get next property */
+#if 1
+#define	OPIOCGET32	_IOWR('O', 1, struct netbsd32_opiocdesc) /* get openprom field */
+#define	OPIOCSET32	_IOW('O', 2, struct netbsd32_opiocdesc) /* set openprom field */
+#define	OPIOCNEXTPROP32	_IOWR('O', 3, struct netbsd32_opiocdesc) /* get next property */
 #endif
  
 /* from <sys/audioio.h> */
@@ -87,8 +87,8 @@ struct netbsd32_partinfo {
 	netbsd32_disklabel_tp_t disklab;
 	netbsd32_partition_tp_t part;
 };
-#if 0
-#define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
+#if 1
+#define DIOCGPART32	_IOW('d', 104, struct netbsd32_partinfo)	/* get partition */
 #endif
 
 struct netbsd32_format_op {
@@ -97,9 +97,9 @@ struct netbsd32_format_op {
 	daddr_t	 df_startblk;
 	int	 df_reg[8];		/* result */
 };
-#if 0
-#define DIOCRFORMAT	_IOWR('d', 105, struct format_op)
-#define DIOCWFORMAT	_IOWR('d', 106, struct format_op)
+#if 1
+#define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
+#define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
 
 /* can wait! */
@@ -206,41 +206,41 @@ struct	netbsd32_ifreq {
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
-#if 0
+#if 1
 /* from <dev/pci/if_devar.h> */
-#define	SIOCGADDRROM		_IOW('i', 240, struct ifreq)	/* get 128 bytes of ROM */
-#define	SIOCGCHIPID		_IOWR('i', 241, struct ifreq)	/* get chipid */
+#define	SIOCGADDRROM32		_IOW('i', 240, struct netbsd32_ifreq)	/* get 128 bytes of ROM */
+#define	SIOCGCHIPID32		_IOWR('i', 241, struct netbsd32_ifreq)	/* get chipid */
 /* from <sys/sockio.h> */
-#define	SIOCSIFADDR	 _IOW('i', 12, struct ifreq)	/* set ifnet address */
-#define	OSIOCGIFADDR	_IOWR('i', 13, struct ifreq)	/* get ifnet address */
-#define	SIOCGIFADDR	_IOWR('i', 33, struct ifreq)	/* get ifnet address */
-#define	SIOCSIFDSTADDR	 _IOW('i', 14, struct ifreq)	/* set p-p address */
-#define	OSIOCGIFDSTADDR	_IOWR('i', 15, struct ifreq)	/* get p-p address */
-#define	SIOCGIFDSTADDR	_IOWR('i', 34, struct ifreq)	/* get p-p address */
-#define	SIOCSIFFLAGS	 _IOW('i', 16, struct ifreq)	/* set ifnet flags */
-#define	SIOCGIFFLAGS	_IOWR('i', 17, struct ifreq)	/* get ifnet flags */
-#define	OSIOCGIFBRDADDR	_IOWR('i', 18, struct ifreq)	/* get broadcast addr */
-#define	SIOCGIFBRDADDR	_IOWR('i', 35, struct ifreq)	/* get broadcast addr */
-#define	SIOCSIFBRDADDR	 _IOW('i', 19, struct ifreq)	/* set broadcast addr */
-#define	OSIOCGIFNETMASK	_IOWR('i', 21, struct ifreq)	/* get net addr mask */
-#define	SIOCGIFNETMASK	_IOWR('i', 37, struct ifreq)	/* get net addr mask */
-#define	SIOCSIFNETMASK	 _IOW('i', 22, struct ifreq)	/* set net addr mask */
-#define	SIOCGIFMETRIC	_IOWR('i', 23, struct ifreq)	/* get IF metric */
-#define	SIOCSIFMETRIC	 _IOW('i', 24, struct ifreq)	/* set IF metric */
-#define	SIOCDIFADDR	 _IOW('i', 25, struct ifreq)	/* delete IF addr */
-#define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
-#define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
-#define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
-#define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
-#define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
-#define	SIOCSIFASYNCMAP  _IOW('i', 125, struct ifreq)	/* set ppp asyncmap */
-#define	SIOCGIFASYNCMAP _IOWR('i', 124, struct ifreq)	/* get ppp asyncmap */
+#define	SIOCSIFADDR32	 _IOW('i', 12, struct netbsd32_ifreq)	/* set ifnet address */
+#define	OSIOCGIFADDR32	_IOWR('i', 13, struct netbsd32_ifreq)	/* get ifnet address */
+#define	SIOCGIFADDR32	_IOWR('i', 33, struct netbsd32_ifreq)	/* get ifnet address */
+#define	SIOCSIFDSTADDR32	 _IOW('i', 14, struct netbsd32_ifreq)	/* set p-p address */
+#define	OSIOCGIFDSTADDR32	_IOWR('i', 15, struct netbsd32_ifreq)	/* get p-p address */
+#define	SIOCGIFDSTADDR32	_IOWR('i', 34, struct netbsd32_ifreq)	/* get p-p address */
+#define	SIOCSIFFLAGS32	 _IOW('i', 16, struct netbsd32_ifreq)	/* set ifnet flags */
+#define	SIOCGIFFLAGS32	_IOWR('i', 17, struct netbsd32_ifreq)	/* get ifnet flags */
+#define	OSIOCGIFBRDADDR32	_IOWR('i', 18, struct netbsd32_ifreq)	/* get broadcast addr */
+#define	SIOCGIFBRDADDR32	_IOWR('i', 35, struct netbsd32_ifreq)	/* get broadcast addr */
+#define	SIOCSIFBRDADDR32	 _IOW('i', 19, struct netbsd32_ifreq)	/* set broadcast addr */
+#define	OSIOCGIFNETMASK32	_IOWR('i', 21, struct netbsd32_ifreq)	/* get net addr mask */
+#define	SIOCGIFNETMASK32	_IOWR('i', 37, struct netbsd32_ifreq)	/* get net addr mask */
+#define	SIOCSIFNETMASK32	 _IOW('i', 22, struct netbsd32_ifreq)	/* set net addr mask */
+#define	SIOCGIFMETRIC32	_IOWR('i', 23, struct netbsd32_ifreq)	/* get IF metric */
+#define	SIOCSIFMETRIC32	 _IOW('i', 24, struct netbsd32_ifreq)	/* set IF metric */
+#define	SIOCDIFADDR32	 _IOW('i', 25, struct netbsd32_ifreq)	/* delete IF addr */
+#define	SIOCADDMULTI32	 _IOW('i', 49, struct netbsd32_ifreq)	/* add m'cast addr */
+#define	SIOCDELMULTI32	 _IOW('i', 50, struct netbsd32_ifreq)	/* del m'cast addr */
+#define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
+#define	SIOCSIFMTU32	 _IOW('i', 127, struct netbsd32_ifreq)	/* set ifnet mtu */
+#define	SIOCGIFMTU32	_IOWR('i', 126, struct netbsd32_ifreq)	/* get ifnet mtu */
+#define	SIOCSIFASYNCMAP32  _IOW('i', 125, struct netbsd32_ifreq)	/* set ppp asyncmap */
+#define	SIOCGIFASYNCMAP32 _IOWR('i', 124, struct netbsd32_ifreq)	/* get ppp asyncmap */
 /* from <net/bpf.h> */
-#define BIOCGETIF	_IOR('B',107, struct ifreq)
-#define BIOCSETIF	_IOW('B',108, struct ifreq)
+#define BIOCGETIF32	_IOR('B',107, struct netbsd32_ifreq)
+#define BIOCSETIF32	_IOW('B',108, struct netbsd32_ifreq)
 /* from <netatalk/phase2.h> */
-#define SIOCPHASE1	_IOW('i', 100, struct ifreq)	/* AppleTalk phase 1 */
-#define SIOCPHASE2	_IOW('i', 101, struct ifreq)	/* AppleTalk phase 2 */
+#define SIOCPHASE1_32	_IOW('i', 100, struct netbsd32_ifreq)	/* AppleTalk phase 1 */
+#define SIOCPHASE2_32	_IOW('i', 101, struct netbsd32_ifreq)	/* AppleTalk phase 2 */
 #endif
 
 /* from <net/if.h> */
@@ -253,10 +253,10 @@ struct	netbsd32_ifconf {
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
-#if 0
+#if 1
 /* from <sys/sockio.h> */
-#define	OSIOCGIFCONF	_IOWR('i', 20, struct ifconf)	/* get ifnet list */
-#define	SIOCGIFCONF	_IOWR('i', 36, struct ifconf)	/* get ifnet list */
+#define	OSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
+#define	SIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
 #endif
 
 /* from <net/if.h> */
@@ -270,9 +270,9 @@ struct netbsd32_ifmediareq {
 						   array */
 	netbsd32_intp	ifm_ulist;		/* media words */
 };
-#if 0
+#if 1
 /* from <sys/sockio.h> */
-#define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
+#define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
 #endif
 
 /* from <net/if.h> */
@@ -282,9 +282,9 @@ struct  netbsd32_ifdrv {
 	size_t		ifd_len;
 	void		*ifd_data;
 }; 
-#if 0
+#if 1
 /* from <sys/sockio.h> */
-#define SIOCSDRVSPEC     _IOW('i', 123, struct ifdrv)   /* set driver-specific */
+#define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)   /* set driver-specific */
 #endif
 
 /* from <netinet/ip_mroute.h> */
@@ -295,9 +295,9 @@ struct netbsd32_sioc_vif_req {
 	netbsd32_u_long	ibytes;		/* input byte count on vif */
 	netbsd32_u_long	obytes;		/* output byte count on vif */
 };
-#if 0
+#if 1
 /* from <sys/sockio.h> */
-#define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
+#define	SIOCGETVIFCNT32	_IOWR('u', 51, struct netbsd32_sioc_vif_req)/* vif pkt cnt */
 #endif
 
 struct netbsd32_sioc_sg_req {
@@ -307,7 +307,7 @@ struct netbsd32_sioc_sg_req {
 	u_long	bytecnt;
 	u_long	wrong_if;
 };
-#if 0
+#if 1
 /* from <sys/sockio.h> */
-#define	SIOCGETSGCNT	_IOWR('u', 52, struct sioc_sg_req) /* sg pkt cnt */
+#define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
 #endif

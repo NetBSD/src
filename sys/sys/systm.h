@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.97 1999/10/14 18:42:16 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.97.2.1 2000/11/20 18:11:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -71,18 +71,32 @@
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#include "opt_multiprocessor.h"
+#endif
+
 #include <machine/endian.h>
 
+struct clockframe;
 struct device;
 struct proc;
-struct uio;
+struct timeval;
 struct tty;
+struct uio;
 struct vnode;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
-extern char version[];		/* system version */
-extern char copyright[];	/* system copyright */
+extern int doing_shutdown;	/* shutting down */
+
+extern const char copyright[];	/* system copyright */
+extern char cpu_model[];	/* machine/cpu model name */
+extern char machine[];		/* machine type */
+extern char machine_arch[];	/* machine architecture */
+extern const char osrelease[];	/* short system version */
+extern const char ostype[];	/* system type */
+extern const char version[];	/* system version */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
@@ -91,8 +105,6 @@ extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
 
 extern int selwait;		/* select timeout address */
-
-extern u_char curpriority;	/* priority of current process */
 
 extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */
@@ -115,15 +127,12 @@ extern const char *rootspec;	/* how root device was specified */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
-struct proc;
-struct tty;
-struct uio;
+typedef int	sy_call_t(struct proc *, void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
-				/* implementing function */
-	int	(*sy_call) __P((struct proc *, void *, register_t *));
+	sy_call_t *sy_call;     /* implementing function */
 } sysent[];
 extern int nsysent;
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -135,6 +144,8 @@ extern int nsysent;
 #endif
 
 extern int boothowto;		/* reboot flags, from console subsystem */
+#define	bootverbose	(boothowto & AB_VERBOSE)
+#define	bootquiet	(boothowto & AB_QUIET)
 
 extern void (*v_putc) __P((int)); /* Virtual console putc routine */
 
@@ -161,11 +172,12 @@ int	lkmenodev __P((void));
 
 int	seltrue __P((dev_t dev, int events, struct proc *p));
 void	*hashinit __P((int count, int type, int flags, u_long *hashmask));
+void	hashdone __P((void *hashtbl, int type));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
 void	printf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *buf, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
 int	snprintf __P((char *buf, size_t, const char *, ...))
@@ -175,22 +187,18 @@ int	vsprintf __P((char *buf, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *buf, size_t, const char *, _BSD_VA_LIST_));
 
 void	panic __P((const char *, ...))
-#ifdef __KPRINTF_ATTRIBUTE__
-    __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
-#else
-    __attribute__((__noreturn__));
-#endif
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));
 void	uprintf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf __P((struct tty *, const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+    __attribute__((__format__(__printf__,2,3)));
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 
-int	humanize_number __P((char *, size_t, u_int64_t, const char *));
+int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
-void	tablefull __P((const char *));
+void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
@@ -220,13 +228,9 @@ int	fuswintr __P((const void *));
 long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
-struct timeval;
 int	hzto __P((struct timeval *tv));
-void	timeout __P((void (*func)(void *), void *arg, int ticks));
-void	untimeout __P((void (*func)(void *), void *arg));
 void	realitexpire __P((void *));
 
-struct clockframe;
 void	hardclock __P((struct clockframe *frame));
 void	softclock __P((void));
 void	statclock __P((struct clockframe *frame));
@@ -275,6 +279,14 @@ void	mountroothook_disestablish __P((void *));
 void	mountroothook_destroy __P((void));
 void	domountroothook __P((void));
 
+/*
+ * Exec hooks. Subsystems may want to do cleanup when a process
+ * execs.
+ */
+void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
+void	exechook_disestablish __P((void *));
+void	doexechooks __P((struct proc *));
+
 int	uiomove __P((void *, int, struct uio *));
 
 #ifdef _KERNEL
@@ -294,8 +306,6 @@ void	cpu_startup __P((void));
 void	cpu_configure __P((void));
 void	cpu_rootconf __P((void));
 void	cpu_dumpconf __P((void));
-void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
-
 
 #ifdef GPROF
 void	kmstartup __P((void));
@@ -306,9 +316,13 @@ void	kmstartup __P((void));
 #endif
 
 #ifdef _KERNEL
-#ifdef DDB
+#if defined(DDB) || defined(_SUN3_) || defined(_SUN3X_)
+/* note that cpu_Debugger() is always available on sun3/sun3x */
 void	cpu_Debugger __P((void));
 #define Debugger	cpu_Debugger
+#endif
+
+#ifdef DDB
 /*
  * Enter debugger(s) from console attention if enabled
  */
@@ -323,5 +337,50 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 void scdebug_call __P((struct proc *, register_t, register_t[]));
 void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
 #endif /* SYSCALL_DEBUG */
+
+#if defined(MULTIPROCESSOR)
+#include <sys/lock.h>
+
+extern struct lock kernel_lock;
+
+#define	KERNEL_LOCK_INIT()	spinlockinit(&kernel_lock, "klock", 0)
+
+/*
+ * Acquire/release kernel lock.
+ * Intended for use in the scheduler and the lower half of the kernel.
+ */
+#define	KERNEL_LOCK(flag)						\
+do {									\
+	SCHED_ASSERT_UNLOCKED();					\
+	spinlockmgr(&kernel_lock, (flag), 0);				\
+} while (0)
+
+#define	KERNEL_UNLOCK()		spinlockmgr(&kernel_lock, LK_RELEASE, 0)
+
+/*
+ * Acquire/release kernel lock on behalf of a process.
+ * Intended for use in the top half of the kernel.
+ */
+#define	KERNEL_PROC_LOCK(p)						\
+do {									\
+	KERNEL_LOCK(LK_EXCLUSIVE);					\
+	(p)->p_flag |= P_BIGLOCK;					\
+} while (0)
+
+#define	KERNEL_PROC_UNLOCK(p)						\
+do {									\
+	p->p_flag &= ~P_BIGLOCK;					\
+	KERNEL_UNLOCK();						\
+} while (0)
+
+#else /* ! MULTIPROCESSOR */
+
+#define	KERNEL_LOCK_INIT()		/* nothing */
+#define	KERNEL_LOCK(flag)		/* nothing */
+#define	KERNEL_UNLOCK()			/* nothing */
+#define	KERNEL_PROC_LOCK(p)		/* nothing */
+#define	KERNEL_PROC_UNLOCK(p)		/* nothing */
+
+#endif /* MULTIPROCESSOR */
 
 #endif	/* !_SYS_SYSTM_H_ */

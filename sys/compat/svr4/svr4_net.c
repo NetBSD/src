@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.21 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.21.2.1 2000/11/20 18:08:40 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	if ((error = socreate(family, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
-		p->p_fd->fd_ofiles[fd] = 0;
+		fdremove(p->p_fd, fd);
 		FILE_UNUSE(fp, NULL);
 		ffree(fp);
 		return error;
@@ -245,13 +245,8 @@ svr4_ptm_alloc(p)
 	 * ENXIO), short circuit the cycle and exit.
 	 */
 	static char ptyname[] = "/dev/ptyXX";
-#if _MACHINE_ARCH == i386
-	/* XXX.  Fix this, pcvt people! */
-	static char ttyletters[] = "pqrstuwxyzPQRST";
-#else
-	static char ttyletters[] = "pqrstuvwxyzPQRST";
-#endif
-	static char ttynumbers[] = "0123456789abcdef";
+	static const char ttyletters[] = "pqrstuvwxyzPQRST";
+	static const char ttynumbers[] = "0123456789abcdef";
 	caddr_t sg = stackgap_init(p->p_emul);
 	char *path = stackgap_alloc(&sg, sizeof(ptyname));
 	struct sys_open_args oa;

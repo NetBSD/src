@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.15 1999/10/17 23:39:16 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.15.2.1 2000/11/20 18:08:05 bouyer Exp $	*/
 
 /*
  * 
@@ -66,7 +66,6 @@ symlink
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/user.h>
-#include <vm/vm.h>
 #include <miscfs/genfs/genfs.h>
 
 #include <coda/coda.h>
@@ -195,7 +194,7 @@ coda_vop_nop(void *anon) {
 int
 coda_vnodeopstats_init(void)
 {
-	register int i;
+	int i;
 	
 	for(i=0;i<CODA_VNODEOPS_SIZE;i++) {
 		coda_vnodeopstats[i].opcode = i;
@@ -224,7 +223,7 @@ coda_open(v)
      */
 /* true args */
     struct vop_open_args *ap = v;
-    register struct vnode **vpp = &(ap->a_vp);
+    struct vnode **vpp = &(ap->a_vp);
     struct cnode *cp = VTOC(*vpp);
     int flag = ap->a_mode & (~O_EXCL);
     struct ucred *cred = ap->a_cred;
@@ -442,7 +441,9 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE), 
 			     cred, p);
+#ifdef	CODA_VERBOSE
 printf("coda_rdwr: Internally Opening %p\n", vp);
+#endif
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
@@ -628,9 +629,9 @@ coda_setattr(v)
 {
 /* true args */
     struct vop_setattr_args *ap = v;
-    register struct vnode *vp = ap->a_vp;
+    struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    register struct vattr *vap = ap->a_vap;
+    struct vattr *vap = ap->a_vap;
     struct ucred *cred = ap->a_cred;
     struct proc *p = ap->a_p;
 /* locals */
@@ -719,7 +720,7 @@ coda_abortop(v)
 /* locals */
 
     if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-	FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
     return (0);
 }
 
@@ -807,7 +808,7 @@ coda_fsync(v)
     }
 
     if (convp)
-    	VOP_FSYNC(convp, cred, MNT_WAIT, p);
+    	VOP_FSYNC(convp, cred, MNT_WAIT, 0, 0, p);
 
     /*
      * We can expect fsync on any vnode at all if venus is pruging it.
@@ -872,9 +873,9 @@ coda_inactive(v)
 
     if (IS_UNMOUNTING(cp)) {
 #ifdef	DEBUG
-	printf("coda_inactive: IS_UNMOUNTING use %d: vp %p, cp %p\n", vp->v_usecount, vp, cp);
+	printf("coda_inactive: IS_UNMOUNTING use %ld: vp %p, cp %p\n", vp->v_usecount, vp, cp);
 	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
+	    printf("coda_inactive: cp->ovp != NULL use %ld: vp %p, cp %p\n",
 	    	   vp->v_usecount, vp, cp);
 #endif
 	lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
@@ -1168,7 +1169,7 @@ coda_create(v)
      * why it's here, but what the hey...
      */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1243,7 +1244,7 @@ coda_remove(v)
     vput(dvp);
 
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1322,7 +1323,7 @@ exit:
 
     /* Drop the name buffer if we don't need to SAVESTART */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1431,7 +1432,7 @@ coda_mkdir(v)
     struct vnode *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);	
     struct componentname  *cnp = ap->a_cnp;
-    register struct vattr *va = ap->a_vap;
+    struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
     struct ucred *cred = cnp->cn_cred;
     struct proc *p = cnp->cn_proc;
@@ -1510,7 +1511,7 @@ coda_mkdir(v)
      * follow their lead, but this seems like it is probably
      * incorrect.  
      */
-    FREE(cnp->cn_pnbuf, M_NAMEI);
+    PNBUF_PUT(cnp->cn_pnbuf);
     return(error);
 }
 
@@ -1572,7 +1573,7 @@ coda_rmdir(v)
     vput(dvp);
 
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
     return(error);
 }
@@ -1671,7 +1672,7 @@ coda_symlink(v)
      * Free the name buffer 
      */
     if ((cnp->cn_flags & SAVESTART) == 0) {
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
     }
 
  exit:    
@@ -1690,7 +1691,7 @@ coda_readdir(v)
     struct vop_readdir_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    register struct uio *uiop = ap->a_uio;
+    struct uio *uiop = ap->a_uio;
     struct ucred *cred = ap->a_cred;
     int *eofflag = ap->a_eofflag;
     off_t **cookies = ap->a_cookies;
@@ -1719,7 +1720,9 @@ coda_readdir(v)
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, FREAD, cred, p);
+#ifdef	CODA_VERBOSE
 printf("coda_readdir: Internally Opening %p\n", vp);
+#endif
 	    if (error) return(error);
 	}
 	
@@ -1778,7 +1781,7 @@ coda_strategy(v)
 {
 /* true args */
     struct vop_strategy_args *ap = v;
-    register struct buf *bp __attribute__((unused)) = ap->a_bp;
+    struct buf *bp __attribute__((unused)) = ap->a_bp;
     struct proc *p __attribute__((unused)) = curproc;
 /* upcall decl */
 /* locals */

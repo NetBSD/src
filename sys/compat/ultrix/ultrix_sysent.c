@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_sysent.c,v 1.37 1999/07/30 16:04:41 drochner Exp $	*/
+/* $NetBSD: ultrix_sysent.c,v 1.37.2.1 2000/11/20 18:08:44 bouyer Exp $ */
 
 /*
  * System call switch table.

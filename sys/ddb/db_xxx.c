@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.6 1999/07/22 21:11:26 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.6.2.1 2000/11/20 18:08:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -171,13 +171,14 @@ db_show_all_procs(addr, haddr, count, modif)
 				    p->p_emul->e_name,p->p_priority);
 				calcru(p, tv+0, tv+1, tv+2);
 				for(i = 0; i < 2; ++i) {
-					db_printf("%4ld.%1ld", tv[i].tv_sec,
-					    tv[i].tv_usec/100000);
+					db_printf("%4ld.%1ld",
+					    (long)tv[i].tv_sec,
+					    (long)tv[i].tv_usec/100000);
 				}
 				if(p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
 					db_printsym((db_expr_t)p->p_wchan,
-					    DB_STGY_XTRN);
+					    DB_STGY_XTRN, db_printf);
 				}
 				db_printf("\n");
 				break;
@@ -197,26 +198,6 @@ db_show_callout(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	register struct callout *p1;
-	register int	cum;
-	register int	s;
-	db_expr_t	offset;
-	char		*name;
 
-	db_printf("      cum     ticks      arg  func\n");
-	s = splhigh();
-	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
-		register int t = p1->c_time;
-
-		if (t > 0)
-			cum += t;
-
-		db_find_sym_and_offset((db_expr_t)p1->c_func, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-		db_printf("%9d %9d %p  %s (%p)\n",
-			  cum, t, p1->c_arg, name, p1->c_func);
-	}
-	splx(s);
+	db_printf("`show callout' not currently implemented\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.20 1998/11/13 20:09:54 thorpej Exp $	*/
+/*	$NetBSD: nfs.h,v 1.20.10.1 2000/11/20 18:11:14 bouyer Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -61,13 +61,16 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
-#define	NFS_WSIZE	8192		/* Def. write data size <= 8192 */
-#define	NFS_RSIZE	8192		/* Def. read data size <= 8192 */
+#define	NFS_WSIZE	32768		/* Def. write data size */
+#define	NFS_RSIZE	32768		/* Def. read data size */
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
-#define	NFS_DEFRAHEAD	1		/* Def. read ahead # blocks */
+#define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
+#ifdef _KERNEL
+extern int nfs_niothreads;              /* Number of async_daemons desired */
+#endif
 #define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
 #ifndef NFS_GATHERDELAY
 #define NFS_GATHERDELAY		10	/* Default write gather delay (msec) */
@@ -99,7 +102,11 @@
 #define	NMOD(a)		((a) % nfs_asyncdaemons)
 #define NFS_CMPFH(n, f, s) \
 	((n)->n_fhsize == (s) && !memcmp((caddr_t)(n)->n_fhp,  (caddr_t)(f),  (s)))
+#ifdef NFS_V2_ONLY
+#define NFS_ISV3(v)	(0)
+#else
 #define NFS_ISV3(v)	(VFSTONFS((v)->v_mount)->nm_flag & NFSMNT_NFSV3)
+#endif
 #define NFS_SRVMAXDATA(n) \
 		(((n)->nd_flag & ND_NFSV3) ? (((n)->nd_nam2) ? \
 		 NFS_MAXDGRAMDATA : NFS_MAXDATA) : NFS_V2MAXDATA)
@@ -238,11 +245,13 @@ struct nfsstats {
  * fs.nfs sysctl(3) identifiers
  */
 #define NFS_NFSSTATS	1		/* struct: struct nfsstats */
-#define	NFS_MAXID	2
+#define NFS_IOTHREADS	2		/* number of io threads */
+#define	NFS_MAXID	3
 
 #define NFS_NAMES { \
 	{ 0, 0 }, \
 	{ "nfsstats", CTLTYPE_STRUCT }, \
+	{ "iothreads", CTLTYPE_INT }, \
 }
 
 /*
@@ -375,7 +384,13 @@ struct nfsuid {
 /* Bits for nu_flag */
 #define	NU_INETADDR	0x1
 #define NU_NAM		0x2
+#ifdef INET6
+#define NU_NETFAM(u) \
+	(((u)->nu_flag & NU_INETADDR) ? \
+	(((u)->nu_flag & NU_NAM) ? AF_INET6 : AF_INET) : AF_ISO)
+#else
 #define NU_NETFAM(u)	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_ISO)
+#endif
 
 struct nfssvc_sock {
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.19 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_output.c,v 1.19.2.1 2000/11/20 18:08:48 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -70,8 +70,6 @@ int	db_output_position = 0;		/* output column */
 int	db_output_line = 0;		/* output line number */
 int	db_last_non_space = 0;		/* last non-space character */
 int	db_tab_stop_width = 8;		/* how wide are tab stops? */
-#define	NEXT_TAB(i) \
-	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)
 int	db_max_line = DB_MAX_LINE;	/* output max lines */
 int	db_max_width = DB_MAX_WIDTH;	/* output line width */
 
@@ -83,11 +81,11 @@ static void db_more __P((void));
 void
 db_force_whitespace()
 {
-	register int last_print, next_tab;
+	int last_print, next_tab;
 
 	last_print = db_last_non_space;
 	while (last_print < db_output_position) {
-	    next_tab = NEXT_TAB(last_print);
+	    next_tab = DB_NEXT_TAB(last_print);
 	    if (next_tab <= db_output_position) {
 		while (last_print < next_tab) { /* DON'T send a tab!!! */
 			cnputc(' ');
@@ -105,7 +103,7 @@ db_force_whitespace()
 static void
 db_more()
 {
-	register  char *p;
+	char *p;
 	int quit_output = 0;
 
 	for (p = "--db_more--"; *p; p++)
@@ -151,7 +149,7 @@ db_putchar(c)
 	    cnputc(c);
 	    db_output_position++;
 	    if (db_max_width >= DB_MIN_MAX_WIDTH
-		&& db_output_position >= db_max_width-1) {
+		&& db_output_position >= db_max_width) {
 		/* auto new line */
 		cnputc('\n');
 		db_output_position = 0;
@@ -170,7 +168,7 @@ db_putchar(c)
 	}
 	else if (c == '\t') {
 	    /* assume tabs every 8 positions */
-	    db_output_position = NEXT_TAB(db_output_position);
+	    db_output_position = DB_NEXT_TAB(db_output_position);
 	}
 	else if (c == ' ') {
 	    /* space */
@@ -200,4 +198,55 @@ db_end_line()
 {
 	if (db_output_position >= db_max_width)
 	    db_printf("\n");
+}
+
+/*
+ * Replacement for old '%r' kprintf format.
+ */
+void
+db_format_radix(buf, bufsiz, val, altflag)
+	char *buf;
+	size_t bufsiz;
+	quad_t val;
+	int altflag;
+{
+	const char *fmt;
+
+	if (db_radix == 16) {
+		db_format_hex(buf, bufsiz, val, altflag);
+		return;
+	}
+
+	if (db_radix == 8)
+		fmt = altflag ? "-%#qo" : "-%qo";
+	else
+		fmt = altflag ? "-%#qu" : "-%qu";
+
+	if (val < 0)
+		val = -val;
+	else
+		++fmt;
+
+	snprintf(buf, bufsiz, fmt, val);
+}
+
+/*
+ * Replacement for old '%z' kprintf format.
+ */
+void
+db_format_hex(buf, bufsiz, val, altflag)
+	char *buf;
+	size_t bufsiz;
+	quad_t val;
+	int altflag;
+{
+	/* Only use alternate form if val is nonzero. */
+	const char *fmt = (altflag && val) ? "-%#qx" : "-%qx";
+
+	if (val < 0)
+		val = -val;
+	else
+		++fmt;
+
+	snprintf(buf, bufsiz, fmt, val);
 }

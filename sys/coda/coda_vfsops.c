@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.8 1999/10/17 23:39:16 cgd Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.8.2.1 2000/11/20 18:08:05 bouyer Exp $	*/
 
 /*
  * 
@@ -109,6 +109,9 @@ struct vfsops coda_vfsops = {
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
+#ifdef __NetBSD__
+    coda_done,
+#endif
     coda_sysctl,
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
@@ -120,7 +123,7 @@ struct vfsops coda_vfsops = {
 int
 coda_vfsopstats_init(void)
 {
-	register int i;
+	int i;
 	
 	for (i=0;i<CODA_VFSOPS_SIZE;i++) {
 		coda_vfsopstats[i].opcode = i;
@@ -412,7 +415,7 @@ coda_quotactl(vfsp, cmd, uid, arg, p)
  */
 int
 coda_nb_statfs(vfsp, sbp, p)
-    register struct mount *vfsp;
+    struct mount *vfsp;
     struct statfs *sbp;
     struct proc *p;
 {
@@ -479,7 +482,7 @@ coda_vget(vfsp, ino, vpp)
  */
 int
 coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
-    register struct mount *vfsp;    
+    struct mount *vfsp;    
     struct fid *fhp;
     struct mbuf *nam;
     struct vnode **vpp;
@@ -534,6 +537,14 @@ coda_init(void)
 {
     ENTRY;
 }
+
+#ifdef __NetBSD__
+void
+coda_done(void)
+{
+    ENTRY;
+}
+#endif
 
 int
 coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)

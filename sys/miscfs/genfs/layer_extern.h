@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.1 1999/07/08 01:19:00 wrstuden Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.1.4.1 2000/11/20 18:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
@@ -75,6 +75,7 @@
 
 /* misc routines in layer_subr.c */
 void	layerfs_init __P((void));
+void	layerfs_done __P((void));
 int	layer_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
 int	layer_node_create __P((struct mount *, struct vnode *, struct vnode **));
 struct vnode *

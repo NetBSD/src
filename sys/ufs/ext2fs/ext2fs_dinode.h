@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.5 1998/10/23 00:33:24 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.5.12.1 2000/11/20 18:11:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -75,16 +75,16 @@ struct ext2fs_dinode {
 	u_int32_t	e2di_dtime;	/*	20: Deletion time */
 	u_int16_t	e2di_gid;	/*  24: Owner GID */
 	u_int16_t	e2di_nlink;	/*  26: File link count */
-	u_int32_t	e2di_nblock;/*  28: Blocks count */
+	u_int32_t	e2di_nblock;	/*  28: Blocks count */
 	u_int32_t	e2di_flags;	/*  32: Status flags (chflags) */
 	u_int32_t	e2di_linux_reserved1; /* 36 */
 	u_int32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
-	u_int32_t	e2di_gen;		/* 100: generation number (file version) */
-	u_int32_t	e2di_facl;		/* 104: file ACL (not implemented) */
-	u_int32_t	e2di_dacl;		/* 108: dir ACL (not implemented) */
-	u_int32_t	e2di_faddr;		/* 112: fragment address */
-	u_int8_t	e2di_nfrag;		/* 116: fragment number */
-	u_int8_t	e2di_fsize;		/* 117: fragment size */
+	u_int32_t	e2di_gen;	/* 100: generation number */
+	u_int32_t	e2di_facl;	/* 104: file ACL (not implemented) */
+	u_int32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
+	u_int32_t	e2di_faddr;	/* 112: fragment address */
+	u_int8_t	e2di_nfrag;	/* 116: fragment number */
+	u_int8_t	e2di_fsize;	/* 117: fragment size */
 	u_int16_t	e2di_linux_reserved2; /* 118 */
 	u_int32_t	e2di_linux_reserved3[2]; /* 120 */
 };

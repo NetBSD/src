@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.10 1999/07/25 06:30:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.10.2.1 2000/11/20 18:12:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -44,7 +44,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 /*
@@ -103,6 +103,7 @@ uvm_loadav(avg)
 				continue;
 		/* fall through */
 		case SRUN:
+		case SONPROC:
 		case SIDL:
 			nrun++;
 		}
@@ -145,6 +146,9 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case VM_UVMEXP:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &uvmexp,
 		    sizeof(uvmexp)));
+
+	case VM_NKMEMPAGES:
+		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
 
 	default:
 		return (EOPNOTSUPP);
@@ -194,6 +198,7 @@ uvm_total(totalp)
 			break;
 
 		case SRUN:
+		case SONPROC:
 		case SIDL:
 			if (p->p_flag & P_INMEM)
 				totalp->t_rq++;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.1 2000/11/20 18:09:32 bouyer Exp $
 #
 #	Configuration variables (default values are below):
 #

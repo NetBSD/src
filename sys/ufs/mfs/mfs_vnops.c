@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.18 1999/10/01 22:12:02 mycroft Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.18.2.1 2000/11/20 18:11:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -141,8 +141,8 @@ mfs_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct mfsnode *mfsp;
+	struct buf *bp = ap->a_bp;
+	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
 
@@ -150,7 +150,7 @@ mfs_strategy(v)
 		panic("mfs_strategy: bad dev");
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */
-	if (mfsp->mfs_pid == 0) {
+	if (mfsp->mfs_proc == NULL) {
 		caddr_t base;
 
 		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
@@ -158,12 +158,21 @@ mfs_strategy(v)
 			memcpy(bp->b_data, base, bp->b_bcount);
 		else
 			memcpy(base, bp->b_data, bp->b_bcount);
+		bp->b_resid = 0;
 		biodone(bp);
-	} else if (mfsp->mfs_pid == p->p_pid) {
+	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
+	} else if (doing_shutdown) {
+		/* 
+		 * bitbucket I/O during shutdown.
+		 * Note that reads should *not* happen here, but..
+		 */
+		if (bp->b_flags & B_READ)
+			printf("warning: mfs read during shutdown\n");
+		bp->b_resid = 0;
+		biodone(bp);
 	} else {
-		bp->b_actf = mfsp->mfs_buflist;
-		mfsp->mfs_buflist = bp;
+		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
 		wakeup((caddr_t)vp);
 	}
 	return (0);
@@ -176,7 +185,7 @@ mfs_strategy(v)
  */
 void
 mfs_doio(bp, base)
-	register struct buf *bp;
+	struct buf *bp;
 	caddr_t base;
 {
 	base += (bp->b_blkno << DEV_BSHIFT);
@@ -229,16 +238,16 @@ mfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct mfsnode *mfsp = VTOMFS(vp);
-	register struct buf *bp;
+	struct vnode *vp = ap->a_vp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
 	int error;
 
 	/*
 	 * Finish any pending I/O requests.
 	 */
-	while ((bp = mfsp->mfs_buflist) != NULL) {
-		mfsp->mfs_buflist = bp->b_actf;
+	while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+		BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
 		mfs_doio(bp, mfsp->mfs_baseoff);
 		wakeup((caddr_t)bp);
 	}
@@ -255,12 +264,12 @@ mfs_close(v)
 	 */
 	if (vp->v_usecount > 1)
 		printf("mfs_close: ref count %ld > 1\n", vp->v_usecount);
-	if (vp->v_usecount > 1 || mfsp->mfs_buflist)
+	if (vp->v_usecount > 1 || BUFQ_FIRST(&mfsp->mfs_buflist) != NULL)
 		panic("mfs_close");
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
-	mfsp->mfs_buflist = (struct buf *)(-1);
+	BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
 	wakeup((caddr_t)vp);
 	return (0);
 }
@@ -280,9 +289,10 @@ mfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 
-	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
+	if (BUFQ_FIRST(&mfsp->mfs_buflist) != NULL &&
+	    BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
-			mfsp->mfs_buflist);
+			BUFQ_FIRST(&mfsp->mfs_buflist));
 	VOP_UNLOCK(vp, 0);
 	return (0);
 }
@@ -297,7 +307,7 @@ mfs_reclaim(v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	FREE(vp->v_data, M_MFSNODE);
 	vp->v_data = NULL;
@@ -314,9 +324,10 @@ mfs_print(v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
+	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
+	printf("tag VT_MFS, pid %d, base %p, size %ld\n",
+	    (mfsp->mfs_proc != NULL) ? mfsp->mfs_proc->p_pid : 0,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }

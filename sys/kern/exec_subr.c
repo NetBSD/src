@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.17 1999/07/07 20:23:45 ws Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.17.2.1 2000/11/20 18:08:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -39,8 +39,6 @@
 #include <sys/exec.h>
 #include <sys/mman.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm.h>
 
 /*
@@ -59,14 +57,10 @@
  */
 
 void
-new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
-	struct	exec_vmcmd_set *evsp;
-	int	(*proc) __P((struct proc * p, struct exec_vmcmd *));
-	u_long	len;
-	u_long	addr;
-	struct	vnode *vp;
-	u_long	offset;
-	u_int	prot;
+new_vmcmd(struct exec_vmcmd_set *evsp,
+    int (*proc)(struct proc * p, struct exec_vmcmd *),
+    u_long len, u_long addr, struct vnode *vp, u_long offset,
+    u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
 
@@ -80,12 +74,12 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
 		vref(vp);
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
+        vcp->ev_flags = flags;
 }
 #endif /* DEBUG */
 
 void
-vmcmdset_extend(evsp)
-	struct	exec_vmcmd_set *evsp;
+vmcmdset_extend(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *nvcp;
 	u_int ocnt;
@@ -100,20 +94,20 @@ vmcmdset_extend(evsp)
 	evsp->evs_cnt += ocnt ? ocnt : EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
-	MALLOC(nvcp, struct exec_vmcmd *, 
-	    (evsp->evs_cnt * sizeof(struct exec_vmcmd)), M_EXEC, M_WAITOK);
+	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
+	    M_EXEC, M_WAITOK);
 
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
-		memcpy(nvcp, evsp->evs_cmds, (ocnt * sizeof(struct exec_vmcmd)));
-		FREE(evsp->evs_cmds, M_EXEC);
+		memcpy(nvcp, evsp->evs_cmds,
+		    (ocnt * sizeof(struct exec_vmcmd)));
+		free(evsp->evs_cmds, M_EXEC);
 	}
 	evsp->evs_cmds = nvcp;
 }
 
 void
-kill_vmcmds(evsp)
-	struct	exec_vmcmd_set *evsp;
+kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
 	int i;
@@ -127,7 +121,7 @@ kill_vmcmds(evsp)
 			vrele(vcp->ev_vp);
 	}
 	evsp->evs_used = evsp->evs_cnt = 0;
-	FREE(evsp->evs_cmds, M_EXEC);
+	free(evsp->evs_cmds, M_EXEC);
 }
 
 /*
@@ -137,9 +131,7 @@ kill_vmcmds(evsp)
  */
 
 int
-vmcmd_map_pagedvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	/*
 	 * note that if you're going to map part of an process as being
@@ -161,6 +153,8 @@ vmcmd_map_pagedvn(p, cmd)
                 return(EINVAL);
 	if (cmd->ev_addr & PAGE_MASK)
 		return(EINVAL);
+	if (cmd->ev_len & PAGE_MASK)
+		return(EINVAL);
 
 	/*
 	 * first, attach to the object
@@ -175,7 +169,7 @@ vmcmd_map_pagedvn(p, cmd)
 	 */
 
 	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
-		uobj, cmd->ev_offset, 
+		uobj, cmd->ev_offset, 0,
 		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 
@@ -201,9 +195,7 @@ vmcmd_map_pagedvn(p, cmd)
  *	objects (a la OMAGIC and NMAGIC).
  */
 int
-vmcmd_map_readvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
@@ -217,13 +209,21 @@ vmcmd_map_readvn(p, cmd)
 	cmd->ev_len += diff;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
 	if (error)
 		return error;
+
+	return vmcmd_readvn(p, cmd);
+}
+
+int
+vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
+{
+	int error;
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
@@ -254,9 +254,7 @@ vmcmd_map_readvn(p, cmd)
  */
 
 int
-vmcmd_map_zero(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
@@ -269,7 +267,7 @@ vmcmd_map_zero(p, cmd)
 	cmd->ev_len += diff;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
-			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
+			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));

@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27 1998/08/10 08:11:13 matthias Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.12.1 2000/11/20 18:11:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,12 +94,6 @@ struct nfsdircache {
  * There is a unique nfsnode allocated for each active file,
  * each current directory, each mounted-on file, text file, and the root.
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
- * If this structure exceeds 256 bytes (it is currently 256 using 4.4BSD-Lite
- * type definitions), file handles of > 32 bytes should probably be split out
- * into a separate MALLOC()'d data structure. (Reduce the size of nfsfh_t by
- * changing the definition in nfsproto.h of NFS_SMALLFH.)
- * NB: Hopefully the current order of the fields is such that everything will
- *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
 	u_quad_t		n_size;		/* Current size of file */
@@ -136,7 +130,23 @@ struct nfsnode {
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	time_t			n_accstamp;	/* Access cache timestamp */
+	uid_t			n_accuid;	/* Last access requester */
+	int			n_accmode;	/* Mode last requested */
+	int			n_accerror;	/* Error last returned */
+	off_t			n_pushedlo;	/* 1st blk in commited range */
+	off_t			n_pushedhi;	/* Last block in range */
+	off_t			n_pushlo;	/* 1st block in commit range */
+	off_t			n_pushhi;	/* Last block in range */
+	struct lock		n_commitlock;	/* Serialize commits XXX */
+	int			n_commitflags;
 };
+
+/*
+ * Values for n_commitflags
+ */
+#define NFS_COMMIT_PUSH_VALID	0x0001		/* push range valid */
+#define NFS_COMMIT_PUSHED_VALID	0x0002		/* pushed range valid */
 
 #define n_atim		n_un1.nf_atim
 #define n_mtim		n_un2.nf_mtim
@@ -220,7 +230,6 @@ int	nfs_pathconf	__P((void *));
 int	nfs_advlock	__P((void *));
 #define	nfs_blkatoff	genfs_eopnotsupp
 int	nfs_bwrite	__P((void *));
-int	nfs_vget	__P((struct mount *, ino_t, struct vnode **));
 #define	nfs_valloc	genfs_eopnotsupp
 #define nfs_reallocblks	genfs_eopnotsupp
 #define	nfs_vfree	genfs_nullop

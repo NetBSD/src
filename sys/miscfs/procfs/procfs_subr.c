@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.28 1999/09/02 23:33:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.28.2.1 2000/11/20 18:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -51,8 +51,16 @@
 
 #include <miscfs/procfs/procfs.h>
 
-static struct pfsnode *pfshead;
-static int pfsvplock;
+void procfs_hashins __P((struct pfsnode *));
+void procfs_hashrem __P((struct pfsnode *));
+struct vnode *procfs_hashget __P((pid_t, pfstype, struct mount *));
+
+LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
+u_long	pfs_ihash;	/* size of hash table - 1 */
+#define PFSPIDHASH(pid)	(&pfs_hashtbl[(pid) & pfs_ihash])
+
+struct lock pfs_hashlock;
+struct simplelock pfs_hash_slock;
 
 #define	ISSET(t, f)	((t) & (f))
 
@@ -91,41 +99,23 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
-	struct pfsnode **pp;
 	int error;
 
-loop:
-	for (pfs = pfshead; pfs != 0; pfs = pfs->pfs_next) {
-		vp = PFSTOV(pfs);
-		if (pfs->pfs_pid == pid &&
-		    pfs->pfs_type == pfs_type &&
-		    vp->v_mount == mp) {
-			if (vget(vp, LK_EXCLUSIVE))
-				goto loop;
-			*vpp = vp;
+	do {
+		if ((*vpp = procfs_hashget(pid, pfs_type, mp)) != NULL)
 			return (0);
-		}
-	}
+	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
-	/*
-	 * otherwise lock the vp list while we call getnewvnode
-	 * since that can block.
-	 */ 
-	if (pfsvplock & PROCFS_LOCKED) {
-		pfsvplock |= PROCFS_WANT;
-		sleep((caddr_t) &pfsvplock, PINOD);
-		goto loop;
+	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0) {
+		*vpp = NULL;
+		lockmgr(&pfs_hashlock, LK_RELEASE, 0);
+		return (error);
 	}
-	pfsvplock |= PROCFS_LOCKED;
-
-	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0)
-		goto out;
 	vp = *vpp;
 
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
 
-	pfs->pfs_next = 0;
 	pfs->pfs_pid = (pid_t) pid;
 	pfs->pfs_type = pfs_type;
 	pfs->pfs_vnode = vp;
@@ -176,20 +166,8 @@ loop:
 		panic("procfs_allocvp");
 	}
 
-	VOP_LOCK(vp, LK_EXCLUSIVE);
-
-	/* add to procfs vnode list */
-	for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next)
-		continue;
-	*pp = pfs;
-
-out:
-	pfsvplock &= ~PROCFS_LOCKED;
-
-	if (pfsvplock & PROCFS_WANT) {
-		pfsvplock &= ~PROCFS_WANT;
-		wakeup((caddr_t) &pfsvplock);
-	}
+	procfs_hashins(pfs);
+	lockmgr(&pfs_hashlock, LK_RELEASE, 0);
 
 	return (error);
 }
@@ -198,15 +176,9 @@ int
 procfs_freevp(vp)
 	struct vnode *vp;
 {
-	struct pfsnode **pfspp;
 	struct pfsnode *pfs = VTOPFS(vp);
 
-	for (pfspp = &pfshead; *pfspp != 0; pfspp = &(*pfspp)->pfs_next) {
-		if (*pfspp == pfs) {
-			*pfspp = pfs->pfs_next;
-			break;
-		}
-	}
+	procfs_hashrem(pfs);
 
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = 0;
@@ -335,4 +307,102 @@ vfs_findname(nm, buf, buflen)
 			return (nm);
 
 	return (0);
+}
+
+/*
+ * Initialize pfsnode hash table.
+ */
+void
+procfs_hashinit()
+{
+	lockinit(&pfs_hashlock, PINOD, "pfs_hashlock", 0, 0);
+	pfs_hashtbl = hashinit(desiredvnodes / 4, M_UFSMNT, M_WAITOK,
+	    &pfs_ihash);
+	simple_lock_init(&pfs_hash_slock);
+}
+
+/*
+ * Free pfsnode hash table.
+ */
+void
+procfs_hashdone()
+{
+	hashdone(pfs_hashtbl, M_UFSMNT);
+}
+
+struct vnode *
+procfs_hashget(pid, type, mp)
+	pid_t pid;
+	pfstype type;
+	struct mount *mp;
+{
+	struct pfsnode *pp;
+	struct vnode *vp;
+
+loop:
+	simple_lock(&pfs_hash_slock);
+	for (pp = PFSPIDHASH(pid)->lh_first; pp; pp = pp->pfs_hash.le_next) {
+		vp = PFSTOV(pp);
+		if (pid == pp->pfs_pid && pp->pfs_type == type &&
+		    vp->v_mount == mp) {
+			simple_lock(&vp->v_interlock);
+			simple_unlock(&pfs_hash_slock);
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+				goto loop;
+			return (vp);
+		}
+	}
+	simple_unlock(&pfs_hash_slock);
+	return (NULL);
+}
+
+/*
+ * Insert the pfsnode into the hash table and lock it.
+ */
+void
+procfs_hashins(pp)
+	struct pfsnode *pp;
+{
+	struct pfs_hashhead *ppp;
+
+	/* lock the pfsnode, then put it on the appropriate hash list */
+	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+
+	simple_lock(&pfs_hash_slock);
+	ppp = PFSPIDHASH(pp->pfs_pid);
+	LIST_INSERT_HEAD(ppp, pp, pfs_hash);
+	simple_unlock(&pfs_hash_slock);
+}
+
+/*
+ * Remove the pfsnode from the hash table.
+ */
+void
+procfs_hashrem(pp)
+	struct pfsnode *pp;
+{
+	simple_lock(&pfs_hash_slock);
+	LIST_REMOVE(pp, pfs_hash);
+	simple_unlock(&pfs_hash_slock);
+}
+
+void
+procfs_revoke_vnodes(p, arg)
+	struct proc *p;
+	void *arg;
+{
+	struct pfsnode *pfs, *pnext;
+	struct vnode *vp;
+	struct mount *mp = (struct mount *)arg;
+
+	if (!(p->p_flag & P_SUGID))
+		return;
+
+	for (pfs = PFSPIDHASH(p->p_pid)->lh_first; pfs; pfs = pnext) {
+		vp = PFSTOV(pfs);
+		pnext = pfs->pfs_hash.le_next;
+		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
+		    vp->v_mount == mp)
+			VOP_REVOKE(vp, REVOKEALL);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52 1999/06/26 08:25:25 augustss Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52.2.1 2000/11/20 18:09:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -109,25 +109,26 @@
 /* XXX these should eventually move to subr_autoconf.c */
 static int findblkmajor __P((const char *));
 static const char *findblkname __P((int));
+static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));
-static int getstr __P((char *, int));
 
 int
 uiomove(buf, n, uio)
-	register void *buf;
-	register int n;
-	register struct uio *uio;
+	void *buf;
+	int n;
+	struct uio *uio;
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
+	struct proc *p = uio->uio_procp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
 		panic("uiomove proc");
 #endif
 	while (n > 0 && uio->uio_resid) {
@@ -143,6 +144,11 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
+			KDASSERT(p->p_cpu != NULL);
+			KDASSERT(p->p_cpu == curcpu());
+			if (p->p_cpu->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD)
+				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);
 			else
@@ -157,7 +163,7 @@ uiomove(buf, n, uio)
 			else
 				error = kcopy(iov->iov_base, cp, cnt);
 			if (error)
-				return(error);
+				return (error);
 			break;
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
@@ -175,10 +181,10 @@ uiomove(buf, n, uio)
  */
 int
 ureadc(c, uio)
-	register int c;
-	register struct uio *uio;
+	int c;
+	struct uio *uio;
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 
 	if (uio->uio_resid <= 0)
 		panic("ureadc: non-positive resid");
@@ -229,10 +235,24 @@ hashinit(elements, type, flags, hashmask)
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
 	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
+	if (hashtbl == NULL)
+		return (NULL);
 	for (i = 0; i < hashsize; i++)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
 	return (hashtbl);
+}
+
+/*
+ * Free memory from hash table previosly allocated via hashinit().
+ */
+void
+hashdone(hashtbl, type)
+	void *hashtbl;
+	int type;
+{
+
+	free(hashtbl, type);
 }
 
 /*
@@ -257,7 +277,7 @@ shutdownhook_establish(fn, arg)
 	ndp = (struct shutdownhook_desc *)
 	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
-		return NULL;
+		return (NULL);
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
@@ -316,15 +336,20 @@ doshutdownhooks()
 
 /*
  * "Power hook" types, functions, and variables.
+ * The list of power hooks is kept ordered with the last registered hook
+ * first.
+ * When running the hooks on power down the hooks are called in reverse
+ * registration order, when powering up in registration order.
  */
 
 struct powerhook_desc {
-	LIST_ENTRY(powerhook_desc) sfd_list;
+	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn) __P((int, void *));
 	void	*sfd_arg;
 };
 
-LIST_HEAD(, powerhook_desc) powerhook_list;
+CIRCLEQ_HEAD(, powerhook_desc) powerhook_list = 
+	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(fn, arg)
@@ -336,11 +361,11 @@ powerhook_establish(fn, arg)
 	ndp = (struct powerhook_desc *)
 	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
-		return NULL;
+		return (NULL);
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
-	LIST_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
+	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
 	return (ndp);
 }
@@ -352,15 +377,15 @@ powerhook_disestablish(vhook)
 #ifdef DIAGNOSTIC
 	struct powerhook_desc *dp;
 
-	for (dp = powerhook_list.lh_first; dp != NULL;
-	    dp = dp->sfd_list.le_next)
+	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
-			break;
-	if (dp == NULL)
-		panic("powerhook_disestablish: hook not established");
+			goto found;
+	panic("powerhook_disestablish: hook not established");
+ found:
 #endif
 
-	LIST_REMOVE((struct powerhook_desc *)vhook, sfd_list);
+	CIRCLEQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
+	    sfd_list);
 	free(vhook, M_DEVBUF);
 }
 
@@ -373,10 +398,14 @@ dopowerhooks(why)
 {
 	struct powerhook_desc *dp;
 
-	for (dp = LIST_FIRST(&powerhook_list); 
-	     dp != NULL; 
-	     dp = LIST_NEXT(dp, sfd_list)) {
-		(*dp->sfd_fn)(why, dp->sfd_arg);
+	if (why == PWR_RESUME) {
+		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
+	} else {
+		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
 	}
 }
 
@@ -456,6 +485,72 @@ domountroothook()
 }
 
 /*
+ * Exec hook code.
+ */
+
+struct exechook_desc {
+	LIST_ENTRY(exechook_desc) ehk_list;
+	void	(*ehk_fn) __P((struct proc *, void *));
+	void	*ehk_arg;
+};
+
+LIST_HEAD(, exechook_desc) exechook_list;
+
+void *
+exechook_establish(fn, arg)
+	void (*fn) __P((struct proc *, void *));
+	void *arg;
+{
+	struct exechook_desc *edp;
+
+	edp = (struct exechook_desc *)
+	    malloc(sizeof(*edp), M_DEVBUF, M_NOWAIT);
+	if (edp == NULL)
+		return (NULL);
+
+	edp->ehk_fn = fn;
+	edp->ehk_arg = arg;
+	LIST_INSERT_HEAD(&exechook_list, edp, ehk_list);
+
+	return (edp);
+}
+
+void
+exechook_disestablish(vhook)
+	void *vhook;
+{
+#ifdef DIAGNOSTIC
+	struct exechook_desc *edp;
+
+	for (edp = exechook_list.lh_first; edp != NULL;
+	    edp = edp->ehk_list.le_next)
+                if (edp == vhook)
+			break;
+	if (edp == NULL)
+		panic("exechook_disestablish: hook not established");
+#endif
+
+	LIST_REMOVE((struct exechook_desc *)vhook, ehk_list);
+	free(vhook, M_DEVBUF);
+}
+
+/*
+ * Run exec hooks.
+ */
+void
+doexechooks(p)
+	struct proc *p;
+{
+	struct exechook_desc *edp;
+
+	for (edp = LIST_FIRST(&exechook_list); 
+	     edp != NULL; 
+	     edp = LIST_NEXT(edp, ehk_list)) {
+		(*edp->ehk_fn)(p, edp->ehk_arg);
+	}
+}
+
+/*
  * Determine the root device and, if instructed to, the root file system.
  */
 
@@ -468,13 +563,23 @@ domountroothook()
 static struct device fakemdrootdev[NMD];
 #endif
 
+#include "raid.h"
+#if NRAID == 1
+#define BOOT_FROM_RAID_HOOKS 1 
+#endif
+
+#ifdef BOOT_FROM_RAID_HOOKS
+extern int numraid;
+extern struct device *raidrootdev;
+#endif
+
 void
 setroot(bootdv, bootpartition)
 	struct device *bootdv;
 	int bootpartition;
 {
 	struct device *dv;
-	int len, print_newline = 0;
+	int len;
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
@@ -554,7 +659,7 @@ setroot(bootdv, bootpartition)
 				printf(")");
 			}
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
@@ -594,30 +699,26 @@ setroot(bootdv, bootpartition)
 				printf(" (default %sb)", defdumpdv->dv_xname);
 			}
 			printf(": ");
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0) {
 				if (defdumpdv != NULL) {
 					ndumpdev = MAKEDISKDEV(major(nrootdev),
 					    DISKUNIT(nrootdev), 1);
 				}
-				if (rootdv->dv_class == DV_IFNET)
-					dumpdv = NULL;
-				else
-					dumpdv = rootdv;
+				dumpdv = defdumpdv;
 				break;
 			}
 			if (len == 4 && strcmp(buf, "none") == 0) {
-				dumpspec = "none";
-				goto havedump;
+				dumpdv = NULL;
+				break;
 			}
 			dv = getdisk(buf, len, 1, &ndumpdev, 1);
-			if (dv) {
+			if (dv != NULL) {
 				dumpdv = dv;
 				break;
 			}
 		}
 
- havedump:
 		rootdev = nrootdev;
 		dumpdev = ndumpdev;
 
@@ -636,7 +737,7 @@ setroot(bootdv, bootpartition)
 
 		for (;;) {
 			printf("file system (default %s): ", deffsname);
-			len = getstr(buf, sizeof(buf));
+			len = cngetsn(buf, sizeof(buf));
 			if (len == 0)
 				break;
 			if (len == 4 && strcmp(buf, "halt") == 0)
@@ -687,10 +788,7 @@ setroot(bootdv, bootpartition)
 		 * If it's a network interface, we can bail out
 		 * early.
 		 */
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next)
-			if (strcmp(dv->dv_xname, rootspec) == 0)
-				break;
+		dv = finddevice(rootspec);
 		if (dv != NULL && dv->dv_class == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
@@ -705,13 +803,7 @@ setroot(bootdv, bootpartition)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
 
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
-			if (strcmp(buf, dv->dv_xname) == 0) {
-				rootdv = dv;
-				break;
-			}
-		}
+		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
 			printf("device %s (0x%x) not configured\n",
 			    buf, rootdev);
@@ -726,13 +818,12 @@ setroot(bootdv, bootpartition)
 
 	switch (rootdv->dv_class) {
 	case DV_IFNET:
-		/* Nothing. */
+		printf("root on %s", rootdv->dv_xname);
 		break;
 
 	case DV_DISK:
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
-		print_newline = 1;
 		break;
 
 	default:
@@ -743,16 +834,7 @@ setroot(bootdv, bootpartition)
 
 	/*
 	 * Now configure the dump device.
-	 */
-
-	if (dumpspec != NULL && strcmp(dumpspec, "none") == 0) {
-		/*
-		 * Operator doesn't want a dump device.
-		 */
-		goto nodumpdev;
-	}
-
-	/*
+	 *
 	 * If we haven't figured out the dump device, do so, with
 	 * the following rules:
 	 *
@@ -767,22 +849,14 @@ setroot(bootdv, bootpartition)
 	 *	    of the root device.
 	 */
 
-	if (boothowto & RB_ASKNAME) {
-		if (dumpdv == NULL) {
+	if (boothowto & RB_ASKNAME) {		/* (a) */
+		if (dumpdv == NULL)
+			goto nodumpdev;
+	} else if (dumpspec != NULL) {		/* (b) */
+		if (strcmp(dumpspec, "none") == 0 || dumpdev == NODEV) {
 			/*
-			 * Just return; dumpdev is already set to NODEV
-			 * and we don't want to print a newline in this
-			 * case.
-			 */
-			return;
-		}
-		goto out;
-	}
-
-	if (dumpspec != NULL) {
-		if (dumpdev == NODEV) {
-			/*
-			 * Looks like they tried to pick a network
+			 * Operator doesn't want a dump device.
+			 * Or looks like they tried to pick a network
 			 * device.  Oops.
 			 */
 			goto nodumpdev;
@@ -794,34 +868,29 @@ setroot(bootdv, bootpartition)
 		memset(buf, 0, sizeof(buf));
 		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
 
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
-			if (strcmp(buf, dv->dv_xname) == 0) {
-				dumpdv = dv;
-				break;
-			}
-		}
-		if (dv == NULL) {
+		dumpdv = finddevice(buf);
+		if (dumpdv == NULL) {
 			/*
 			 * Device not configured.
 			 */
 			goto nodumpdev;
 		}
-	} else if (rootdv->dv_class == DV_IFNET)
-		goto nodumpdev;
-	else {
-		dumpdv = rootdv;
-		dumpdev = MAKEDISKDEV(major(rootdev), dumpdv->dv_unit, 1);
+	} else {				/* (c) */
+		if (rootdv->dv_class == DV_IFNET)
+			goto nodumpdev;
+		else {
+			dumpdv = rootdv;
+			dumpdev = MAKEDISKDEV(major(rootdev),
+			    dumpdv->dv_unit, 1);
+		}
 	}
 
- out:
 	printf(" dumps on %s%c\n", dumpdv->dv_xname, DISKPART(dumpdev) + 'a');
 	return;
 
  nodumpdev:
 	dumpdev = NODEV;
-	if (print_newline)
-		printf("\n");
+	printf("\n");
 }
 
 static int
@@ -850,6 +919,29 @@ findblkname(maj)
 }
 
 static struct device *
+finddevice(name)
+	const char *name;
+{
+	struct device *dv;
+#ifdef BOOT_FROM_RAID_HOOKS
+	int j;
+
+	for (j = 0; j < numraid; j++) {
+		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
+			dv = &raidrootdev[j];
+			return (dv);
+		}
+	}
+#endif;
+
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list))
+		if (strcmp(dv->dv_xname, name) == 0)
+			break;
+	return (dv);
+}
+
+static struct device *
 getdisk(str, len, defpart, devp, isdump)
 	char *str;
 	int len, defpart;
@@ -860,6 +952,9 @@ getdisk(str, len, defpart, devp, isdump)
 #ifdef MEMORY_DISK_HOOKS
 	int		i;
 #endif
+#ifdef BOOT_FROM_RAID_HOOKS
+	int 		j;
+#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -867,6 +962,12 @@ getdisk(str, len, defpart, devp, isdump)
 		if (isdump == 0)
 			for (i = 0; i < NMD; i++)
 				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
+				    'a' + MAXPARTITIONS - 1);
+#endif
+#ifdef BOOT_FROM_RAID_HOOKS
+		if (isdump == 0)
+			for (j = 0; j < numraid; j++)
+				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
@@ -896,7 +997,6 @@ parsedisk(str, len, defpart, devp)
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
-
 	if (len == 0)
 		return (NULL);
 
@@ -919,9 +1019,9 @@ parsedisk(str, len, defpart, devp)
 		}
 #endif
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class == DV_DISK &&
-		    strcmp(str, dv->dv_xname) == 0) {
+	dv = finddevice(str);
+	if (dv != NULL) {
+		if (dv->dv_class == DV_DISK) {
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
@@ -929,14 +1029,10 @@ parsedisk(str, len, defpart, devp)
 			if (majdev < 0)
 				panic("parsedisk");
 			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
-			break;
 		}
 
-		if (dv->dv_class == DV_IFNET &&
-		    strcmp(str, dv->dv_xname) == 0) {
+		if (dv->dv_class == DV_IFNET)
 			*devp = NODEV;
-			break;
-		}
 	}
 
 	*cp = c;
@@ -944,61 +1040,10 @@ parsedisk(str, len, defpart, devp)
 }
 
 /*
- * XXX shouldn't this be a common function?
- */
-static int
-getstr(cp, size)
-	char *cp;
-	int size;
-{
-	char *lp;
-	int c, len;
-
-	cnpollc(1);
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = cngetc();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			cnpollc(0);
-			return (len);
-		case '\b':
-		case '\177':
-		case '#':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u'&037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
-}
-
-/*
  * snprintf() `bytes' into `buf', reformatting it so that the number,
  * plus a possible `x' + suffix extension) fits into len bytes (including
  * the terminating NUL).
- * Returns the number of bytes stored in buf, or -1 * if there was a problem.
+ * Returns the number of bytes stored in buf, or -1 if there was a problem.
  * E.g, given a len of 9 and a suffix of `B': 
  *	bytes		result
  *	-----		------
@@ -1008,11 +1053,12 @@ getstr(cp, size)
  *	252215296	`240 MB'
  */
 int
-humanize_number(buf, len, bytes, suffix)
+humanize_number(buf, len, bytes, suffix, divisor)
 	char		*buf;
 	size_t		 len;
 	u_int64_t	 bytes;
 	const char	*suffix;
+	int 		divisor;
 {
 		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
 	static const char prefixes[] = " KMGTPE";
@@ -1034,7 +1080,7 @@ humanize_number(buf, len, bytes, suffix)
 	for (i = 0; i < len - suffixlen - 3; i++)
 		max *= 10;
 	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
-		bytes /= 1024;
+		bytes /= divisor;
 
 	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
 	    i == 0 ? "" : " ", prefixes[i], suffix);
@@ -1051,7 +1097,7 @@ format_bytes(buf, len, bytes)
 	int	rv;
 	size_t	nlen;
 
-	rv = humanize_number(buf, len, bytes, "B");
+	rv = humanize_number(buf, len, bytes, "B", 1024);
 	if (rv != -1) {
 			/* nuke the trailing ` B' if it exists */
 		nlen = strlen(buf) - 2;

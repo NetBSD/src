@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.13 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.13.2.1 2000/11/20 18:08:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -158,11 +157,12 @@ isofncmp(fn, fnlen, isofn, isolen, joliet_level)
  * translate a filename
  */
 void
-isofntrans(infn, infnlen, outfn, outfnlen, original, assoc, joliet_level)
+isofntrans(infn, infnlen, outfn, outfnlen, original, casetrans, assoc, joliet_level)
 	u_char *infn, *outfn;
 	int infnlen;
 	u_short *outfnlen;
 	int original;
+	int casetrans;
 	int assoc;
 	int joliet_level;
 {
@@ -178,7 +178,7 @@ isofntrans(infn, infnlen, outfn, outfnlen, original, assoc, joliet_level)
 
 		infn += isochar(infn, infnend, joliet_level, &c);
 
-		if (!original && joliet_level == 0 && c >= 'A' && c <= 'Z')
+		if (casetrans && joliet_level == 0 && c >= 'A' && c <= 'Z')
 			*outfn++ = c + ('a' - 'A');
 		else if (!original && c == ';') {
 			if (fnidx > 0 && outfn[-1] == '.')

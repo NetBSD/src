@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.26 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.26.2.1 2000/11/20 18:09:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,13 +59,10 @@
 #define SYSVMSG
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/msg.h>
-#include <sys/malloc.h>
-
-#include <sys/mount.h>
+#include <sys/sysctl.h>
+#include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
 
 #define MSG_DEBUG
@@ -77,16 +74,20 @@
 #define MSG_PRINTF(a)
 #endif
 
-int nfree_msgmaps;		/* # of free map entries */
-short free_msgmaps;		/* head of linked list of free map entries */
-struct __msg *free_msghdrs;	/* list of free msg headers */
+int	nfree_msgmaps;		/* # of free map entries */
+short	free_msgmaps;		/* head of linked list of free map entries */
+struct	__msg *free_msghdrs;	/* list of free msg headers */
+char	*msgpool;		/* MSGMAX byte long msg buffer pool */
+struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
+struct __msg *msghdrs;		/* MSGTQL msg headers */
+struct	msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
 static void msg_freehdr __P((struct __msg *));
 
 void
 msginit()
 {
-	register int i;
+	int i;
 
 	/*
 	 * msginfo.msgssz should be a power of two for efficiency reasons.
@@ -502,14 +503,7 @@ sys_msgsnd(p, v, retval)
 
 			if (msqptr->msg_qbytes == 0) {
 				MSG_PRINTF(("msqid deleted\n"));
-				/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 				return (EIDRM);
-#else
-				/* Unfortunately, BSD doesn't define that code
-				   yet! */
-				return (EINVAL);
-#endif
 			}
 		} else {
 			MSG_PRINTF(("got all the resources that we need\n"));
@@ -641,13 +635,7 @@ sys_msgsnd(p, v, retval)
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
-		/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 		return (EIDRM);
-#else
-		/* Unfortunately, BSD doesn't define that code yet! */
-		return (EINVAL);
-#endif
 	}
 
 	/*
@@ -678,7 +666,7 @@ sys_msgrcv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_msgrcv_args /* {
+	struct sys_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -692,8 +680,8 @@ sys_msgrcv(p, v, retval)
 	int msgflg = SCARG(uap, msgflg);
 	size_t len;
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
-	register struct __msg *msghdr;
+	struct msqid_ds *msqptr;
+	struct __msg *msghdr;
 	int error;
 	short next;
 
@@ -852,13 +840,7 @@ sys_msgrcv(p, v, retval)
 		if (msqptr->msg_qbytes == 0 ||
 		    msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 			MSG_PRINTF(("msqid deleted\n"));
-			/* The SVID says to return EIDRM. */
-#ifdef EIDRM
 			return (EIDRM);
-#else
-			/* Unfortunately, BSD doesn't define that code yet! */
-			return (EINVAL);
-#endif
 		}
 	}
 

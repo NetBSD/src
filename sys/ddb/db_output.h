@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.12 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_output.h,v 1.12.2.1 2000/11/20 18:08:49 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,5 +36,15 @@ void db_force_whitespace __P((void));
 void db_putchar __P((int));
 int db_print_position __P((void));
 void db_printf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
+void db_format_radix __P((char *, size_t, quad_t, int));
+void db_format_hex __P((char *, size_t, quad_t, int));
 void db_end_line __P((void));
+
+extern int	db_radix;
+extern int	db_max_width;
+extern int	db_tab_stop_width;
+extern int	db_max_line;
+
+#define	DB_NEXT_TAB(i) \
+	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)

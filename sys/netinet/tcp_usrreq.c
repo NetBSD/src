@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.42 1999/07/09 22:57:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.42.2.1 2000/11/20 18:10:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,7 +118,7 @@
 #include <sys/ucred.h>
 #include <sys/domain.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -173,11 +173,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct inpcb *inp;
+	struct inpcb *inp;
 #ifdef INET6
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 #endif
-	register struct tcpcb *tp = NULL;
+	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
 	int ostate;
@@ -187,9 +187,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_CONTROL) {
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			return (in_control(so, (long)m, (caddr_t)nam,
 			    (struct ifnet *)control, p));
+#endif
 #ifdef INET6
 		case PF_INET6:
 			return (in6_control(so, (long)m, (caddr_t)nam,
@@ -200,14 +202,36 @@ tcp_usrreq(so, req, m, nam, control, p)
 		}
 	}
 
+	if (req == PRU_PURGEIF) {
+		switch (family) {
+#ifdef INET
+		case PF_INET:
+			in_purgeif((struct ifnet *)control);
+			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
+			break;
+#endif
+#ifdef INET6
+		case PF_INET6:
+			in6_purgeif((struct ifnet *)control);
+			in6_pcbpurgeif(&tcb6, (struct ifnet *)control);
+			break;
+#endif
+		default:
+			return (EAFNOSUPPORT);
+		}
+		return (0);
+	}
+
 	s = splsoftnet();
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -220,6 +244,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 
 #ifdef DIAGNOSTIC
+#ifdef INET6
+	if (inp && in6p)
+		panic("tcp_usrreq: both inp and in6p set to non-NULL");
+#endif
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("tcp_usrreq: unexpected control mbuf");
 #endif
@@ -237,6 +265,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		error = EINVAL;
 		goto release;
 	}
+#ifdef INET
 	if (inp) {
 		tp = intotcpcb(inp);
 		/* WHAT IF TP IS 0? */
@@ -245,8 +274,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 #endif
 		ostate = tp->t_state;
 	}
+#endif
 #ifdef INET6
-	else if (in6p) {
+	if (in6p) {
 		tp = in6totcpcb(in6p);
 		/* WHAT IF TP IS 0? */
 #ifdef KPROF
@@ -294,12 +324,14 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 */
 	case PRU_BIND:
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			error = in_pcbbind(inp, nam, p);
 			break;
+#endif
 #ifdef INET6
 		case PF_INET6:
-			error = in6_pcbbind(in6p, nam /*, p*/ );
+			error = in6_pcbbind(in6p, nam, p);
 			/* mapped addr case */
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
 				tp->t_family = AF_INET;
@@ -312,16 +344,18 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
+#ifdef INET
 		if (inp && inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
 			    (struct proc *)0);
 			if (error)
 				break;
 		}
+#endif
 #ifdef INET6
-		else if (in6p && in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, (struct mbuf *)0 /*,
-			    (struct proc *)0 */ );
+		if (in6p && in6p->in6p_lport == 0) {
+			error = in6_pcbbind(in6p, (struct mbuf *)0,
+			    (struct proc *)0);
 			if (error)
 				break;
 		}
@@ -337,6 +371,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * Send initial segment on connection.
 	 */
 	case PRU_CONNECT:
+#ifdef INET
 		if (inp) {
 			if (inp->inp_lport == 0) {
 				error = in_pcbbind(inp, (struct mbuf *)0,
@@ -346,11 +381,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 			}
 			error = in_pcbconnect(inp, nam);
 		}
+#endif
 #ifdef INET6
-		else if (in6p) {
+		if (in6p) {
 			if (in6p->in6p_lport == 0) {
-				error = in6_pcbbind(in6p, (struct mbuf *)0 /*,
-				    (struct proc *)0 */ );
+				error = in6_pcbbind(in6p, (struct mbuf *)0,
+				    (struct proc *)0);
 				if (error)
 					break;
 			}
@@ -364,10 +400,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 			break;
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
+#ifdef INET
 			if (inp)
 				in_pcbdisconnect(inp);
+#endif
 #ifdef INET6
-			else if (in6p)
+			if (in6p)
 				in6_pcbdisconnect(in6p);
 #endif
 			error = ENOBUFS;
@@ -414,10 +452,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * of the peer, storing through addr.
 	 */
 	case PRU_ACCEPT:
+#ifdef INET
 		if (inp)
 			in_setpeeraddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setpeeraddr(in6p, nam);
 #endif
 		break;
@@ -514,19 +554,23 @@ tcp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SOCKADDR:
+#ifdef INET
 		if (inp)
 			in_setsockaddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setsockaddr(in6p, nam);
 #endif
 		break;
 
 	case PRU_PEERADDR:
+#ifdef INET
 		if (inp)
 			in_setpeeraddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setpeeraddr(in6p, nam);
 #endif
 		break;
@@ -561,23 +605,25 @@ tcp_ctloutput(op, so, level, optname, mp)
 	int error = 0, s;
 	struct inpcb *inp;
 #ifdef INET6
-	register struct in6pcb *in6p;
+	struct in6pcb *in6p;
 #endif
-	register struct tcpcb *tp;
-	register struct mbuf *m;
-	register int i;
+	struct tcpcb *tp;
+	struct mbuf *m;
+	int i;
 	int family;	/* family of the socket */
 
 	family = so->so_proto->pr_domain->dom_family;
 
 	s = splsoftnet();
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -601,9 +647,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 	}
 	if (level != IPPROTO_TCP) {
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			error = ip_ctloutput(op, so, level, optname, mp);
 			break;
+#endif
 #ifdef INET6
 		case PF_INET6:
 			error = ip6_ctloutput(op, so, level, optname, mp);
@@ -692,7 +740,7 @@ int
 tcp_attach(so)
 	struct socket *so;
 {
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	struct inpcb *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
@@ -708,6 +756,7 @@ tcp_attach(so)
 			return (error);
 	}
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		error = in_pcballoc(so, &tcbtable);
 		if (error)
@@ -717,6 +766,7 @@ tcp_attach(so)
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		error = in6_pcballoc(so, &tcb6);
@@ -730,14 +780,22 @@ tcp_attach(so)
 		return EAFNOSUPPORT;
 	}
 #ifdef IPSEC
-	if (inp && (error = ipsec_init_policy(&inp->inp_sp)) != 0) {
-		in_pcbdetach(inp);
-		return (error);
+#ifdef INET
+	if (inp) {
+		error = ipsec_init_policy(so, &inp->inp_sp);
+		if (error != 0) {
+			in_pcbdetach(inp);
+			return (error);
+		}
 	}
+#endif
 #ifdef INET6
-	else if (in6p && (error = ipsec_init_policy(&in6p->in6p_sp)) != 0) {
-		in6_pcbdetach(in6p);
-		return (error);
+	if (in6p) {
+		error = ipsec_init_policy(so, &in6p->in6p_sp);
+		if (error != 0) {
+			in6_pcbdetach(in6p);
+			return (error);
+		}
 	}
 #endif
 #endif /*IPSEC*/
@@ -754,10 +812,12 @@ tcp_attach(so)
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
+#ifdef INET
 		if (inp)
 			in_pcbdetach(inp);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_pcbdetach(in6p);
 #endif
 		so->so_state |= nofd;
@@ -777,7 +837,7 @@ tcp_attach(so)
  */
 struct tcpcb *
 tcp_disconnect(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 	struct socket *so;
 
@@ -816,7 +876,7 @@ tcp_disconnect(tp)
  */
 struct tcpcb *
 tcp_usrclosed(tp)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 {
 
 	switch (tp->t_state) {
@@ -880,6 +940,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);

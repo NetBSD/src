@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.61 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.61.2.1 2000/11/20 18:09:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,6 +41,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,22 +63,16 @@
 
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 int	nprocs = 1;		/* process 0 */
 
 /*ARGSUSED*/
 int
-sys_fork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fork(struct proc *p, void *v, register_t *retval)
 {
 
-	return (fork1(p, 0, SIGCHLD, NULL, 0, retval, NULL));
+	return (fork1(p, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
 }
 
 /*
@@ -86,13 +81,11 @@ sys_fork(p, v, retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_vfork(struct proc *p, void *v, register_t *retval)
 {
 
-	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, retval, NULL));
+	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
+	    retval, NULL));
 }
 
 /*
@@ -101,28 +94,20 @@ sys_vfork(p, v, retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___vfork14(struct proc *p, void *v, register_t *retval)
 {
 
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
-	    retval, NULL));
+	    NULL, NULL, retval, NULL));
 }
 
 int
-fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
-	register struct proc *p1;
-	int flags;
-	int exitsig;
-	void *stack;
-	size_t stacksize;
-	register_t *retval;
-	struct proc **rnewprocp;
+fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg, register_t *retval,
+    struct proc **rnewprocp)
 {
-	register struct proc *p2;
-	register uid_t uid;
+	struct proc *p2;
+	uid_t uid;
 	struct proc *newproc;
 	int count, s;
 	vaddr_t uaddr;
@@ -136,8 +121,9 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * processes, maxproc is the limit.
 	 */
 	uid = p1->p_cred->p_ruid;
-	if ((nprocs >= maxproc - 1 && uid != 0) || nprocs >= maxproc) {
-		tablefull("proc");
+	if (__predict_false((nprocs >= maxproc - 1 && uid != 0) ||
+			    nprocs >= maxproc)) {
+		tablefull("proc", "increase kern.maxproc or NPROC");
 		return (EAGAIN);
 	}
 
@@ -146,7 +132,8 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * a nonprivileged user to exceed their current limit.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+	if (__predict_false(uid != 0 && count >
+			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		return (EAGAIN);
 	}
@@ -158,7 +145,7 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * be allocated and wired in vm_fork().
 	 */
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
-	if (uaddr == 0) {
+	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		return (ENOMEM);
 	}
@@ -268,6 +255,22 @@ again:
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
+#if !defined(MULTIPROCESSOR)
+	/*
+	 * In the single-processor case, all processes will always run
+	 * on the same CPU.  So, initialize the child's CPU to the parent's
+	 * now.  In the multiprocessor case, the child's CPU will be
+	 * initialized in the low-level context switch code when the
+	 * process runs.
+	 */
+	p2->p_cpu = p1->p_cpu;
+#else
+	/*
+	 * zero child's cpu pointer so we don't get trash.
+	 */
+	p2->p_cpu = NULL;
+#endif /* ! MULTIPROCESSOR */
+
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
@@ -319,6 +322,9 @@ again:
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
+	callout_init(&p2->p_realit_ch);
+	callout_init(&p2->p_tsleep_ch);
+
 #ifdef KTRACE
 	/*
 	 * Copy traceflag and tracefile if enabled.
@@ -352,17 +358,19 @@ again:
 	 */
 	p2->p_addr = (struct user *)uaddr;
 	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
-	    stack, stacksize);
+	    stack, stacksize,
+	    (func != NULL) ? func : child_return,
+	    (arg != NULL) ? arg : p2);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	s = splstatclock();
+	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
-	splx(s);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Now can be swapped.
@@ -403,3 +411,18 @@ again:
 	}
 	return (0);
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX This is a slight hack to get newly-formed processes to
+ * XXX acquire the kernel lock as soon as they run.
+ */
+void
+proc_trampoline_mp(void)
+{
+	struct proc *p = curproc;
+
+	SCHED_ASSERT_UNLOCKED();
+	KERNEL_PROC_LOCK(p);
+}
+#endif

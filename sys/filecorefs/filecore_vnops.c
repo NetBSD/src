@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.8 1999/08/03 20:19:18 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.8.2.1 2000/11/20 18:08:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -282,8 +282,7 @@ filecore_readdir(v)
 	else {
 		*ap->a_ncookies = 0;
 		ncookies = uio->uio_resid/16;
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
 	for (; ; i++) {
@@ -335,7 +334,7 @@ out:
 	if (cookies) {
 		*ap->a_cookies = cookies;
 		if (error) {
-			FREE(cookies, M_TEMP);
+			free(cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		}

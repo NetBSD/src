@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.14 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_types.h,v 1.14.2.1 2000/11/20 18:10:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -178,7 +178,8 @@
 #define IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
 
 /* not based on IANA assignments - how should we treat these? */
-#define	IFT_GIF		0xf0
+#define IFT_GIF		0xf0
 #define IFT_PVC		0xf1
 #define IFT_FAITH	0xf2
+#define IFT_STF		0xf3
 #endif /* _NET_IF_TYPES_H_ */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 1999/09/07 06:24:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.44.2.1 2000/11/20 18:08:42 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -31,6 +31,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+#include "opt_ntp.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -216,7 +217,8 @@
 118	STD		{ int svr4_sys_fpathconf(int fd, int name); }
 119	NOARGS		{ int sys_vfork(void); }
 120	NOARGS		{ int sys_fchdir(int fd); }
-121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, u_int iovcnt); }
+121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
+			    u_int iovcnt); }
 122	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
 123	STD		{ int svr4_sys_xstat(int two, const char *path, \
@@ -402,5 +404,10 @@
 246	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
 247	UNIMPL		sockconfig
+; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 248	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+#if defined(NTP) || !defined(_KERNEL)
 249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
+#else
+249	EXCL		ntp_adjtime
+#endif

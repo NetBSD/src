@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.16 1999/05/31 06:53:45 ross Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.16.2.1 2000/11/20 18:08:47 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -71,8 +71,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 
 void
 db_examine(addr, fmt, count)
-	register
-	    db_addr_t	addr;
+	db_addr_t	addr;
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
@@ -81,6 +80,7 @@ db_examine(addr, fmt, count)
 	int		size;
 	int		width;
 	char *		fp;
+	char		tbuf[24];
 
 	while (--count >= 0) {
 		fp = fmt;
@@ -89,7 +89,7 @@ db_examine(addr, fmt, count)
 		while ((c = *fp++) != 0) {
 			if (db_print_position() == 0) {
 				/* Always print the address. */
-				db_printsym(addr, DB_STGY_ANY);
+				db_printsym(addr, DB_STGY_ANY, db_printf);
 				db_printf(":\t");
 				db_prev = addr;
 			}
@@ -116,7 +116,8 @@ db_examine(addr, fmt, count)
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lr", width, value);
+				db_format_radix(tbuf, 24, value, FALSE);
+				db_printf("%-*s", width, tbuf);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
@@ -126,7 +127,8 @@ db_examine(addr, fmt, count)
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lz", width, value);
+				db_format_hex(tbuf, 24, value, FALSE);
+				db_printf("%-*s", width, tbuf);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
@@ -199,17 +201,27 @@ db_print_cmd(addr, have_addr, count, modif)
 
 	switch (db_print_format) {
 	case 'a':
-		db_printsym((db_addr_t)addr, DB_STGY_ANY);
+		db_printsym((db_addr_t)addr, DB_STGY_ANY, db_printf);
 		break;
 	case 'r':
-		db_printf("%11lr", addr);
-		break;
+		{
+			char tbuf[24];
+
+			db_format_radix(tbuf, 24, addr, FALSE);
+			db_printf("%11s", tbuf);
+			break;
+		}
 	case 'x':
 		db_printf("%8lx", addr);
 		break;
 	case 'z':
-		db_printf("%8lz", addr);
-		break;
+		{
+			char tbuf[24];
+
+			db_format_hex(tbuf, 24, addr, FALSE);
+			db_printf("%8s", tbuf);
+			break;
+		}
 	case 'd':
 		db_printf("%11ld", addr);
 		break;
@@ -234,15 +246,15 @@ void
 db_print_loc_and_inst(loc)
 	db_addr_t	loc;
 {
-	db_printsym(loc, DB_STGY_PROC);
+	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
 	(void) db_disasm(loc, FALSE);
 }
 
 void
 db_strcpy(dst, src)
-	register char *dst;
-	register char *src;
+	char *dst;
+	char *src;
 {
 	while ((*dst++ = *src++) != '\0')
 		;
@@ -324,7 +336,6 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 
 void
 db_search(addr, size, value, mask, count)
-	register
 	db_addr_t	addr;
 	int		size;
 	db_expr_t	value;

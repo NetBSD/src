@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.30 1998/08/09 20:37:55 perry Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.30.12.1 2000/11/20 18:08:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -122,7 +122,7 @@ stios2btios(st, bt)
 	struct sunos_termios *st;
 	struct termios *bt;
 {
-	register u_long l, r;
+	u_long l, r;
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -244,7 +244,7 @@ btios2stios(bt, st)
 	struct termios *bt;
 	struct sunos_termios *st;
 {
-	register u_long l, r;
+	u_long l, r;
 	int s;
 
 	l = bt->c_iflag;
@@ -396,7 +396,7 @@ stio2stios(t, ts)
 
 int
 sunos_sys_ioctl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -405,9 +405,9 @@ sunos_sys_ioctl(p, v, retval)
 		u_long	com;
 		caddr_t	data;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	register int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
 	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -804,7 +804,7 @@ sunos_sys_ioctl(p, v, retval)
 	case _IO('S', 5):	/* I_FLUSH */
 	    {
 		int tmp = 0;
-		switch ((int)SCARG(uap, data)) {
+		switch ((int)(u_long)SCARG(uap, data)) {
 		case SUNOS_S_FLUSHR:	tmp = FREAD;
 		case SUNOS_S_FLUSHW:	tmp = FWRITE;
 		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
@@ -814,7 +814,8 @@ sunos_sys_ioctl(p, v, retval)
 	case _IO('S', 9):	/* I_SETSIG */
 	    {
 		int on = 1;
-		if (((int)SCARG(uap, data) & (SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
+		if (((int)(u_long)SCARG(uap, data) &
+			(SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
 		    SUNOS_S_HIPRI)
 			return EOPNOTSUPP;
                 return (*ctl)(fp, FIOASYNC, (caddr_t)&on, p);
@@ -974,7 +975,7 @@ static struct {
 
 int
 sunos_sys_fcntl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.29 1999/07/08 01:06:03 wrstuden Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29.2.1 2000/11/20 18:11:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
  *	@(#)nfs_node.c	8.6 (Berkeley) 5/22/95
  */
 
+#include "opt_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,16 +87,27 @@ nfs_nhinit()
 }
 
 /*
+ * Free resources previoslu allocated in nfs_nhinit().
+ */
+void
+nfs_nhdone()
+{
+	hashdone(nfsnodehashtbl, M_NFSNODE);
+	pool_destroy(&nfs_node_pool);
+	pool_destroy(&nfs_vattr_pool);
+}
+
+/*
  * Compute an entry in the NFS hash table structure
  */
 u_long
 nfs_hash(fhp, fhsize)
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 {
-	register u_char *fhpp;
-	register u_long fhsum;
-	register int i;
+	u_char *fhpp;
+	u_long fhsum;
+	int i;
 
 	fhpp = &fhp->fh_bytes[0];
 	fhsum = 0;
@@ -113,14 +125,13 @@ nfs_hash(fhp, fhsize)
 int
 nfs_nget(mntp, fhp, fhsize, npp)
 	struct mount *mntp;
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
 {
-	register struct nfsnode *np;
+	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
-	register struct vnode *vp;
-	extern int (**nfsv2_vnodeop_p)__P((void *));
+	struct vnode *vp;
 	struct vnode *nvp;
 	int error;
 
@@ -148,6 +159,7 @@ loop:
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset((caddr_t)np, 0, sizeof *np);
+	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
 	/*
@@ -155,11 +167,12 @@ loop:
 	 */
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
-		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
+		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
 	} else
 		np->n_fhp = &np->n_fh;
 	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
 	np->n_fhsize = fhsize;
+	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	memset(np->n_vattr, 0, sizeof (struct vattr));
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
@@ -175,8 +188,8 @@ nfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct nfsnode *np;
-	register struct sillyrename *sp;
+	struct nfsnode *np;
+	struct sillyrename *sp;
 	struct proc *p = ap->a_p;
 	extern int prtactive;
 
@@ -231,9 +244,9 @@ nfs_reclaim(v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct nfsnode *np = VTONFS(vp);
-	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
@@ -258,7 +271,7 @@ nfs_reclaim(v)
 		FREE(np->n_dircache, M_NFSDIROFF);
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
-		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
+		free((caddr_t)np->n_fhp, M_NFSBIGFH);
 	}
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);

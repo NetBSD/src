@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.9 1998/03/19 15:45:30 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.9.14.1 2000/11/20 18:10:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -31,10 +31,10 @@
 #ifndef _NET_PFIL_H_
 #define _NET_PFIL_H_
 
-/* note: this file needs <net/if.h> and <sys/mbuf.h> */
-
-#ifdef _KERNEL
 #include <sys/queue.h>
+
+struct mbuf;
+struct ifnet;
 
 /*
  * The packet filter hooks are designed for anything to call them to
@@ -49,15 +49,23 @@ struct packet_filter_hook {
 
 #define PFIL_IN		0x00000001
 #define PFIL_OUT	0x00000002
-#define PFIL_WAITOK	0x00000008
+#define PFIL_WAITOK	0x00000004
 #define PFIL_ALL	(PFIL_IN|PFIL_OUT)
 
-struct packet_filter_hook *pfil_hook_get __P((int));
-void	pfil_add_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int));
-void	pfil_remove_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int));
-#endif /* _KERNEL */
+typedef	TAILQ_HEAD(pfil_list, packet_filter_hook) pfil_list_t;
+
+struct pfil_head {
+	pfil_list_t	ph_in;
+	pfil_list_t	ph_out;
+	int		ph_init;
+};
+typedef struct pfil_head pfil_head_t;
+
+struct packet_filter_hook *pfil_hook_get __P((int, struct pfil_head *));
+int	pfil_add_hook __P((int (*func) __P((void *, int,
+	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
+int	pfil_remove_hook __P((int (*func) __P((void *, int,
+	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
 
 /* XXX */
 #if defined(_KERNEL) && !defined(_LKM)

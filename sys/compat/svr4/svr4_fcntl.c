@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.32 1999/09/07 18:20:18 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.32.2.1 2000/11/20 18:08:39 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ fd_truncate(p, fd, flp, retval)
 
 int
 svr4_sys_open(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -400,7 +400,7 @@ svr4_sys_open(p, v, retval)
 
 int
 svr4_sys_open64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -410,7 +410,7 @@ svr4_sys_open64(p, v, retval)
 
 int
 svr4_sys_creat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -430,7 +430,7 @@ svr4_sys_creat(p, v, retval)
 
 int
 svr4_sys_creat64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -440,7 +440,7 @@ svr4_sys_creat64(p, v, retval)
 
 int
 svr4_sys_llseek(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -463,7 +463,7 @@ svr4_sys_llseek(p, v, retval)
 
 int
 svr4_sys_access(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -482,7 +482,7 @@ svr4_sys_access(p, v, retval)
 
 int
 svr4_sys_pread(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -504,7 +504,7 @@ svr4_sys_pread(p, v, retval)
 
 int
 svr4_sys_pread64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v; 
 	register_t *retval;
 {
@@ -527,7 +527,7 @@ svr4_sys_pread64(p, v, retval)
 
 int
 svr4_sys_pwrite(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -549,7 +549,7 @@ svr4_sys_pwrite(p, v, retval)
 
 int
 svr4_sys_pwrite64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v; 
 	register_t *retval;
 {
@@ -571,7 +571,7 @@ svr4_sys_pwrite64(p, v, retval)
 
 int
 svr4_sys_fcntl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -603,7 +603,8 @@ svr4_sys_fcntl(p, v, retval)
 			 * we must save the O_ASYNC flag, as that is
 			 * handled by ioctl(_, I_SETSIG, _) emulation.
 			 */
-			int cmd, flags;
+			register_t flags;
+			int cmd;
 
 			cmd = SCARG(&fa, cmd); /* save it for a while */
 
@@ -657,7 +658,7 @@ svr4_sys_fcntl(p, v, retval)
 				struct sys_dup2_args du;
 
 				SCARG(&du, from) = SCARG(uap, fd);
-				SCARG(&du, to) = (int)SCARG(uap, arg);
+				SCARG(&du, to) = (int)(u_long)SCARG(uap, arg);
 				error = sys_dup2(p, &du, retval);
 				if (error)
 					return error;

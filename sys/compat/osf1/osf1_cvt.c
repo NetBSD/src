@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.7 1999/06/26 01:23:23 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.7.2.1 2000/11/20 18:08:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -78,7 +78,6 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
-#include <vm/vm.h>				/* XXX UVM headers are Cool */
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 
 #include <nfs/rpcv2.h>
@@ -234,8 +233,8 @@ const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
 #endif
     {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
     {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
-    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
 #if 0 /* no equivalents +++ */
+    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	???		},
     {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
     {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
     {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.27 1999/09/10 14:05:40 tron Exp $	*/
+/*	$NetBSD: libkern.h,v 1.27.2.1 2000/11/20 18:09:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)libkern.h	8.2 (Berkeley) 8/5/94
  */
+
+#ifndef _LIB_LIBKERN_LIBKERN_H_
+#define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
 
@@ -114,10 +117,10 @@ abs(j)
 #define	assert(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 :				    \
+#define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, #e))
 #else
-#define	assert(e)	((e) ? (void)0 :				    \
+#define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, "e"))
 #endif
 #endif
@@ -126,10 +129,10 @@ abs(j)
 #define	KASSERT(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	KASSERT(e)	((e) ? (void)0 :				    \
+#define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, #e))
 #else
-#define	KASSERT(e)	((e) ? (void)0 :				    \
+#define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("diagnostic ", __FILE__, __LINE__, "e"))
 #endif
 #endif
@@ -138,15 +141,17 @@ abs(j)
 #define	KDASSERT(e)	((void)0)
 #else
 #ifdef __STDC__
-#define	KDASSERT(e)	((e) ? (void)0 :				    \
+#define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("debugging ", __FILE__, __LINE__, #e))
 #else
-#define	KDASSERT(e)	((e) ? (void)0 :				    \
+#define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
 
+#ifndef offsetof
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
 
 /* Prototypes for non-quad routines. */
 void	 __assert __P((const char *, const char *, int, const char *))
@@ -154,6 +159,10 @@ void	 __assert __P((const char *, const char *, int, const char *))
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
+u_int32_t
+	 inet_addr __P((const char *));
+char	*intoa __P((u_int32_t));
+#define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr __P((const void *, int, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
@@ -168,10 +177,9 @@ char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
 char	*strcpy __P((char *, const char *));
 size_t	 strlen __P((const char *));
+int	 strncasecmp __P((const char *, const char *, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
 char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
-int	 strncasecmp __P((const char *, const char *, size_t));
-u_int32_t inet_addr __P((const char *));
-char *intoa __P((u_int32_t));
-#define inet_ntoa(a) intoa((a).s_addr)
+u_long	 strtoul __P((const char *, char **, int));
+#endif /* !_LIB_LIBKERN_LIBKERN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.12 1998/02/10 01:26:19 perry Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.12.14.1 2000/11/20 18:10:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,29 +44,37 @@
  */
 struct	icmpstat {
 /* statistics related to icmp packets generated */
-	u_long	icps_error;		/* # of calls to icmp_error */
-	u_long	icps_oldshort;		/* no error 'cuz old ip too short */
-	u_long	icps_oldicmp;		/* no error 'cuz old was icmp */
-	u_long	icps_outhist[ICMP_MAXTYPE + 1];
+	u_quad_t icps_error;		/* # of calls to icmp_error */
+	u_quad_t icps_oldshort;		/* no error 'cuz old ip too short */
+	u_quad_t icps_oldicmp;		/* no error 'cuz old was icmp */
+	u_quad_t icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
- 	u_long	icps_badcode;		/* icmp_code out of range */
-	u_long	icps_tooshort;		/* packet < ICMP_MINLEN */
-	u_long	icps_checksum;		/* bad checksum */
-	u_long	icps_badlen;		/* calculated bound mismatch */
-	u_long	icps_reflect;		/* number of responses */
-	u_long	icps_inhist[ICMP_MAXTYPE + 1];
+ 	u_quad_t icps_badcode;		/* icmp_code out of range */
+	u_quad_t icps_tooshort;		/* packet < ICMP_MINLEN */
+	u_quad_t icps_checksum;		/* bad checksum */
+	u_quad_t icps_badlen;		/* calculated bound mismatch */
+	u_quad_t icps_reflect;		/* number of responses */
+	u_quad_t icps_inhist[ICMP_MAXTYPE + 1];
+	u_quad_t icps_pmtuchg;		/* path MTU changes */
 };
 
 /*
  * Names for ICMP sysctl objects
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
-#define ICMPCTL_MTUDISC         2       /* allow path MTU discovery */
-#define ICMPCTL_MAXID           3
+#if 0	/*obsoleted*/
+#define ICMPCTL_ERRRATELIMIT	2	/* error rate limit */
+#endif
+#define ICMPCTL_RETURNDATABYTES	3	/* # of bytes to include in errors */
+#define ICMPCTL_ERRPPSLIMIT	4	/* ICMP error pps limitation */
+#define ICMPCTL_MAXID		5
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ "returndatabytes", CTLTYPE_INT }, \
+	{ "errppslimit", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL

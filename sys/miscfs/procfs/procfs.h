@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.27 1999/09/02 23:33:45 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.27.2.1 2000/11/20 18:09:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -63,7 +63,7 @@ typedef enum {
  * control data for the proc file system.
  */
 struct pfsnode {
-	struct pfsnode	*pfs_next;	/* next on list */
+	LIST_ENTRY(pfsnode) pfs_hash;	/* hash chain */
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
 	pfstype		pfs_type;	/* type of procfs node */
 	pid_t		pfs_pid;	/* associated process */
@@ -89,6 +89,14 @@ struct pfsnode {
 	(((type) < Pproc) ? \
 			((type) + 2) : \
 			((((pid)+1) << 4) + ((int) (type))))
+
+struct procfsmount {
+	void *pmnt_exechook;
+	struct mount *pmnt_mp;
+};
+
+#define VFSTOPROC(mp)	((struct procfsmount *)(mp)->mnt_data)
+#define PROCTOVFS(pp)	((pp)->pmnt_mp)
 
 /*
  * Convert between pfsnode vnode
@@ -127,6 +135,9 @@ int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 
 int procfs_checkioperm __P((struct proc *, struct proc *));
+void procfs_revoke_vnodes __P((struct proc *, void *));
+void procfs_hashinit __P((void));
+void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *));

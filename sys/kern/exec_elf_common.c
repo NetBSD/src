@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.8 1998/10/03 20:39:33 christos Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.8.12.1 2000/11/20 18:08:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,9 +52,6 @@
 #include <sys/resourcevar.h>
 
 #include <sys/mman.h>
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -81,13 +78,20 @@
  */
 
 int
-exec_elf_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_elf_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
+#ifndef	USRSTACK32
+#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
+#endif
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = USRSTACK32;
+		epp->ep_maxsaddr = epp->ep_minsaddr - MAXSSIZ;
+	} else {
+		epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+		epp->ep_minsaddr = USRSTACK;
+	}
 	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*

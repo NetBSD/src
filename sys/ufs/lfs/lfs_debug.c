@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_debug.c,v 1.9 1999/03/10 00:20:00 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.9.8.1 2000/11/20 18:11:49 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -155,12 +155,13 @@ lfs_dump_dinode(dip)
 {
 	int i;
 	
-	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\n",
-	       "mode  ", dip->di_mode,
-	       "nlink ", dip->di_nlink,
-	       "uid   ", dip->di_uid,
-	       "gid   ", dip->di_gid,
-	       "size  ", (long long)dip->di_size);
+	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\t%s%d\n",
+	       "mode   ", dip->di_mode,
+	       "nlink  ", dip->di_nlink,
+	       "uid    ", dip->di_uid,
+	       "gid    ", dip->di_gid,
+	       "size   ", (long long)dip->di_size,
+	       "blocks ", dip->di_blocks);
 	printf("inum  %d\n", dip->di_inumber);
 	printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
@@ -262,7 +263,7 @@ lfs_check_bpp(fs, sp, file, line)
 				       (*bpp)->b_blkno);
 			}
 		}
-		blkno += (*bpp)->b_bcount / DEV_BSIZE;
+		blkno += btodb((*bpp)->b_bcount);
 	}
 }
 #endif /* DEBUG */

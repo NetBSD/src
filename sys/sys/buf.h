@@ -1,4 +1,41 @@
-/*	$NetBSD: buf.h,v 1.34 1999/04/07 00:18:29 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.34.2.1 2000/11/20 18:11:26 bouyer Exp $	*/
+
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,9 +80,89 @@
 #ifndef _SYS_BUF_H_
 #define	_SYS_BUF_H_
 
+#include <sys/pool.h>
 #include <sys/queue.h>
 
 #define NOLIST ((struct buf *)0x87654321)
+
+/*
+ * To avoid including <ufs/ffs/softdep.h> 
+ */   
+LIST_HEAD(workhead, worklist);
+
+/*
+ * Device driver buffer queue.
+ */
+struct buf_queue {
+	TAILQ_HEAD(bufq_head, buf) bq_head; /* actual list of buffers */
+	struct buf *bq_barrier;		    /* last B_ORDERED request */
+};
+
+#ifdef _KERNEL
+#define	BUFQ_FIRST(bufq)	TAILQ_FIRST(&(bufq)->bq_head)
+#define	BUFQ_NEXT(bp)		TAILQ_NEXT((bp), b_actq)
+
+#define	BUFQ_INIT(bufq)							\
+do {									\
+	TAILQ_INIT(&(bufq)->bq_head);					\
+	(bufq)->bq_barrier = NULL;					\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_HEAD(bufq, bp)					\
+do {									\
+	TAILQ_INSERT_HEAD(&(bufq)->bq_head, (bp), b_actq);		\
+	if (((bp)->b_flags & B_ORDERED) != 0 &&				\
+	    (bufq)->bq_barrier == NULL)					\
+		(bufq)->bq_barrier = (bp);				\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_TAIL(bufq, bp)					\
+do {									\
+	TAILQ_INSERT_TAIL(&(bufq)->bq_head, (bp), b_actq);		\
+	if (((bp)->b_flags & B_ORDERED) != 0)				\
+		(bufq)->bq_barrier = (bp);				\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_AFTER(bufq, lbp, bp)				\
+do {									\
+	KASSERT((bufq)->bq_barrier == NULL);				\
+	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
+	TAILQ_INSERT_AFTER(&(bufq)->bq_head, (lbp), (bp), b_actq);	\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_INSERT_BEFORE(bufq, lbp, bp)				\
+do {									\
+	KASSERT((bufq)->bq_barrier == NULL);				\
+	KASSERT(((bp)->b_flags & B_ORDERED) == 0);			\
+	TAILQ_INSERT_BEFORE((lbp), (bp), b_actq);			\
+} while (/*CONSTCOND*/0)
+
+#define	BUFQ_REMOVE(bufq, bp)						\
+do {									\
+	if ((bufq)->bq_barrier == (bp))					\
+		(bufq)->bq_barrier = TAILQ_PREV((bp), bufq_head, b_actq); \
+	TAILQ_REMOVE(&(bufq)->bq_head, (bp), b_actq);			\
+} while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
+
+/*
+ * These are currently used only by the soft dependency code, hence
+ * are stored once in a global variable. If other subsystems wanted
+ * to use these hooks, a pointer to a set of bio_ops could be added
+ * to each buffer.
+ */
+struct buf;
+struct mount;
+struct vnode;
+extern struct bio_ops {
+ 	void	(*io_start) __P((struct buf *));
+ 	void	(*io_complete) __P((struct buf *));
+ 	void	(*io_deallocate) __P((struct buf *));
+ 	int	(*io_fsync) __P((struct vnode *));
+ 	int	(*io_sync) __P((struct mount *));
+	void	(*io_movedeps) __P((struct buf *, struct buf *));
+	int	(*io_countdeps) __P((struct buf *, int));
+} bioops;
 
 /*
  * The buffer header describes an I/O operation in the kernel.
@@ -54,7 +171,7 @@ struct buf {
 	LIST_ENTRY(buf) b_hash;		/* Hash chain. */
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
-	struct	buf *b_actf, **b_actb;	/* Device driver queue when active. */
+	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
 	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
@@ -67,7 +184,10 @@ struct buf {
 	} b_un;
 	void	*b_saveaddr;		/* Original b_addr for physio. */
 	daddr_t	b_lblkno;		/* Logical block number. */
-	daddr_t	b_blkno;		/* Underlying physical block number. */
+	daddr_t	b_blkno;		/* Underlying physical block number
+					   (partition relative) */
+	daddr_t	b_rawblkno;		/* Raw underlying physical block
+					   number (not partition relative) */
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
 	struct	vnode *b_vp;		/* Device vnode. */
@@ -78,6 +198,7 @@ struct buf {
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
 	off_t	b_dcookie;		/* Offset cookie if dir block */
+	struct  workhead b_dep;		/* List of filesystem dependencies. */
 };
 
 /*
@@ -87,11 +208,7 @@ struct buf {
 #define	b_cylinder b_resid		/* Cylinder number for disksort(). */
 
 /* Device driver compatibility definitions. */
-#define	b_active b_bcount		/* Driver queue head: drive active. */
 #define	b_data	 b_un.b_addr		/* b_un.b_addr is not changeable. */
-#define	b_errcnt b_resid		/* Retry count while I/O in progress. */
-#define	iodone	 biodone		/* Old name for biodone. */
-#define	iowait	 biowait		/* Old name for biowait. */
 
 /*
  * These flags are kept in b_flags.
@@ -101,6 +218,7 @@ struct buf {
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
+#define B_SCANNED	0x00000020	/* Block already pushed during sync */
 #define	B_CALL		0x00000040	/* Call b_iodone from biodone. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
@@ -111,6 +229,7 @@ struct buf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
+#define	B_ORDERED	0x00010000	/* ordered I/O request */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
@@ -138,25 +257,30 @@ struct cluster_save {
 /*
  * Zero out the buffer's data area.
  */
-#define	clrbuf(bp) {							\
+#define	clrbuf(bp)							\
+do {									\
 	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount);			\
 	(bp)->b_resid = 0;						\
-}
+} while (0)
 
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 #ifdef _KERNEL
-int	nbuf;			/* The number of buffer headers */
-struct	buf *buf;		/* The buffer headers. */
-char	*buffers;		/* The buffer contents. */
-int	bufpages;		/* Number of memory pages in the buffer pool. */
-extern int nswbuf;		/* Number of swap I/O buffer headers. */
+extern	int nbuf;		/* The number of buffer headers */
+extern	struct buf *buf;	/* The buffer headers. */
+extern	char *buffers;		/* The buffer contents. */
+extern	int bufpages;		/* Number of memory pages in the buffer pool. */
+extern	int nswbuf;		/* Number of swap I/O buffer headers. */
+
+extern struct pool bufpool;	/* I/O buf pool */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
 void	bawrite __P((struct buf *));
+void	bowrite __P((struct buf *));
+void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
 void	biodone __P((struct buf *));
 int	biowait __P((struct buf *));
@@ -182,9 +306,13 @@ struct buf *incore __P((struct vnode *, daddr_t));
 void	minphys __P((struct buf *bp));
 int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
 		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));
 void  bgetvp __P((struct vnode *, struct buf *));
+#ifdef DDB
+void	vfs_buf_print __P((struct buf *, int, void (*)(const char *, ...)));
+#endif
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */

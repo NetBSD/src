@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.18 1999/07/01 08:12:48 itojun Exp $	*/
+/* $NetBSD: netisr.h,v 1.18.2.1 2000/11/20 18:10:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _NET_NETISR_H_
-#define _NET_NETISR_H_
+#define _NET_NETISR_H_		/* checked by netisr_dispatch.h */
 
 /*
  * The networking code runs off software interrupts.
@@ -50,6 +50,69 @@
  * is defined in the machine-specific include files.
  */
 
+#if defined(_KERNEL)
+
+#if !defined(_LKM)
+#include "opt_inet.h"    
+#include "opt_atalk.h"
+#include "opt_ccitt.h"   
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_natm.h" 
+#include "arp.h"
+#include "ppp.h"
+#endif /* !defined(_LKM) */
+
+#if !defined(_LOCORE)
+
+/* XXX struct sockaddr defn for for if.h, if_arp.h */
+#include <sys/socket.h>
+
+/*
+ * XXX IFNAMSIZE for if_ppp.h, natm.h; struct ifnet decl for in6.h, in.h;
+ * XXX struct mbuf decl for in6.h, in.h, route.h (via in_var.h).
+ */
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
+#endif
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet/ip6.h> 
+#include <netinet6/ip6_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef CCITT
+#include <netccitt/x25isr.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
+
+#endif /* !defined(_LOCORE) */
+#endif /* defined(_KERNEL) */
+
+
 /*
  * Each ``pup-level-1'' input queue has a bit in a ``netisr'' status
  * word which is used to de-multiplex a single software
@@ -57,24 +120,23 @@
  * on the lowest level routine of each protocol.
  */
 #define	NETISR_IP	2		/* same as AF_INET */
-#define	NETISR_IMP	3		/* same as AF_IMPLINK */
 #define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_ISO	7		/* same as AF_ISO */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
-#define	NETISR_ARP	18		/* same as AF_LINK */
-#define NETISR_IPX	23		/* same as AF_IPX */
-#define NETISR_IPV6	24		/* same as AF_INET6 */
-#define NETISR_ISDN	26		/* same as AF_E164 */
-#define NETISR_NATM	27		/* same as AF_NATM */
-#define NETISR_PPP	28		/* for PPP processing */
+#define	NETISR_IPX	23		/* same as AF_IPX */
+#define	NETISR_IPV6	24		/* same as AF_INET6 */
+#define	NETISR_ISDN	26		/* same as AF_E164 */
+#define	NETISR_NATM	27		/* same as AF_NATM */
+#define	NETISR_ARP	28		/* same as AF_ARP */
+#define	NETISR_PPP	31		/* for PPP processing */
+
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 
-#ifndef _LOCORE
-#ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
-#endif
-#endif
+
+#endif /* defined(_KERNEL) && !defined(_LOCORE) */
 
 #endif /* _NET_NETISR_H_ */

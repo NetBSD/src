@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.2 1997/04/29 13:44:47 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.2.22.1 2000/11/20 18:10:14 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -78,6 +78,10 @@ ddp_usrreq(so, req, m, addr, rights, p)
 	if (req == PRU_CONTROL) {
 		return (at_control((long) m, (caddr_t) addr,
 		    (struct ifnet *) rights, (struct proc *) p));
+	}
+	if (req == PRU_PURGEIF) {
+		at_purgeif((struct ifnet *) rights);
+		return (0);
 	}
 	if (rights && rights->m_len) {
 		error = EINVAL;

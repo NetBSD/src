@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.5 1999/05/05 01:51:32 cgd Exp $ */
+/* $NetBSD: osf1_file.c,v 1.5.6.1 2000/11/20 18:08:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,8 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_syscall_debug.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -78,7 +80,6 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
-#include <vm/vm.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>

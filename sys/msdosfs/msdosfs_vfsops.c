@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.63.2.1 1999/10/20 22:56:35 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.63.2.2 2000/11/20 18:09:54 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -120,6 +120,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_fhtovp,
 	msdosfs_vptofh,
 	msdosfs_init,
+	msdosfs_done,
 	msdosfs_sysctl,
 	msdosfs_mountroot,
 	msdosfs_checkexp,
@@ -172,7 +173,6 @@ int
 msdosfs_mountroot()
 {
 	struct mount *mp;
-	extern struct vnode *rootvp;
 	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct msdosfs_args args;
@@ -373,7 +373,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
 	struct byte_bpb710 *b710;
-	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
 	int	ronly, error;
 	int	bsize = 0, dtype = 0, tmp;
@@ -504,10 +503,12 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_fatmult = 4;
 		pmp->pm_fatdiv = 1;
 		pmp->pm_FATsecs = getulong(b710->bpbBigFATsecs);
-		if (getushort(b710->bpbExtFlags) & FATMIRROR)
-			pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
-		else
+
+		/* mirrorring is enabled if the FATMIRROR bit is not set */
+		if ((getushort(b710->bpbExtFlags) & FATMIRROR) == 0)
 			pmp->pm_flags |= MSDOSFS_FATMIRROR;
+		else
+			pmp->pm_curfat = getushort(b710->bpbExtFlags) & FATNUM;
 	} else
 		pmp->pm_flags |= MSDOSFS_FATMIRROR;
 
@@ -707,7 +708,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 #endif
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	return (0);
 
@@ -757,13 +758,13 @@ msdosfs_unmount(mp, mntflags, p)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
 	if (pmp->pm_devvp->v_type != VBAD)
-		pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
+		pmp->pm_devvp->v_specmountpoint = NULL;
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-		printf("flag %08lx, usecount %d, writecount %d, holdcnt %ld\n",
+		printf("flag %08lx, usecount %ld, writecount %ld, holdcnt %ld\n",
 		    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 		printf("lastr %d, id %lu, mount %p, op %p\n",
 		    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
@@ -892,9 +893,10 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
-		if (((dep->de_flag
-		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0)
-		    && (vp->v_dirtyblkhd.lh_first == NULL)) {
+		if (vp->v_type == VNON || (((dep->de_flag &
+		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
+		    (vp->v_dirtyblkhd.lh_first == NULL ||
+		     waitfor == MNT_LAZY))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -907,7 +909,7 @@ loop:
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -917,9 +919,10 @@ loop:
 	 * Force stale file system control information to be flushed.
 	 */
 	if ((error = VOP_FSYNC(pmp->pm_devvp, cred,
-	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 		allerror = error;
 #ifdef QUOTA
+	/* qsync(mp); */
 #endif
 	return (allerror);
 }

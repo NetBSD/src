@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.68 1999/09/09 23:24:11 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.68.2.1 2000/11/20 18:11:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -85,12 +85,8 @@ struct bdevsw {
 	void	(*d_strategy)	__P((struct buf *bp));
 	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 	int	(*d_dump)	__P((dev_t dev, daddr_t blkno, caddr_t va,
 				    size_t size));
-#else /* not __BDEVSW_DUMP_OLD_TYPE */
-	int	(*d_dump)	();	/* parameters vary by architecture */
-#endif /* __BDEVSW_DUMP_OLD_TYPE */
 	int	(*d_psize)	__P((dev_t dev));
 	int	d_type;
 };
@@ -100,11 +96,7 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 
 /* bdevsw-specific types */
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 #define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, size_t))
-#else /* not __BDEVSW_DUMP_OLD_TYPE */
-#define	dev_type_dump(n)	int n()	/* parameters vary by architecture */
-#endif /* __BDEVSW_DUMP_OLD_TYPE */
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* bdevsw-specific initializations */
@@ -161,7 +153,7 @@ struct cdevsw {
 	struct tty *
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_poll)	__P((dev_t dev, int events, struct proc *p));
-	int	(*d_mmap)	__P((dev_t, int, int));
+	paddr_t	(*d_mmap)	__P((dev_t, off_t, int));
 	int	d_type;
 };
 
@@ -175,7 +167,7 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_stop(n)	void n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_poll(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_mmap(n)	int n __P((dev_t, int, int))
+#define	dev_type_mmap(n)	paddr_t n __P((dev_t, off_t, int))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
@@ -293,9 +285,11 @@ extern struct cdevsw cdevsw[];
 #define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_scsibus_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_se_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_ses_init(c,n)	cdev__oci_init(c,n)
+#define	cdev_sysmon_init(c,n)	cdev__oci_init(c,n)
 
 #define	cdev_usb_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
@@ -367,6 +361,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, 0 }
+
+/* open, close, read, ioctl, mmap */
+#define cdev_bktr_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_init(c,n,mmap)) }
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];
@@ -467,6 +468,17 @@ cdev_decl(ss);
 
 bdev_decl(uk);
 cdev_decl(uk);
+
+/*
+ * [bc]dev_decl()s for logical storage units.
+ */
+bdev_decl(lsu);
+cdev_decl(lsu);
+
+/*
+ * cdev_decl()s for Brooktree 8[47][89] based TV cards.
+ */
+cdev_decl(bktr);
 
 /*
  * [bc]dev_decl()s for 'fake' network devices.

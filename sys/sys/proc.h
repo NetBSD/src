@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.84.2.1 2000/11/20 18:11:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -47,12 +47,13 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#if defined(MULTIPROCESSOR)
+#if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * One structure allocated per session.
@@ -93,12 +94,13 @@ struct	emul {
 	struct sysent *e_sysent;	/* System call array */
 	char	**e_syscallnames;	/* System call name array */
 	int	e_arglen;		/* Extra argument size in words */
-					/* Copy arguments on the stack */
+					/* Copy arguments on the new stack */
 	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,
 				    void *, void *));
 					/* Set registers before execution */
 	void	(*e_setregs) __P((struct proc *, struct exec_package *,
 				  u_long));
+
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 };
@@ -133,6 +135,8 @@ struct	proc {
 
 	int	p_exitsig;		/* signal to sent to parent on exit */
 	int	p_flag;			/* P_* flags. */
+	struct cpu_info * __volatile p_cpu; /* CPU we're running on if
+					       SONPROC */
 	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
 	char	p_pad1[2];
@@ -155,10 +159,12 @@ struct	proc {
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
+	struct callout p_tsleep_ch;/* callout for tsleep */
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
 
+	struct	callout p_realit_ch;	/* real time callout */
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeval p_rtime;	/* Real time. */
 	u_quad_t p_uticks;		/* Statclock hits in user mode. */
@@ -166,15 +172,14 @@ struct	proc {
 	u_quad_t p_iticks;		/* Statclock hits processing intr. */
 
 	int	p_traceflag;		/* Kernel trace points. */
-	void	*p_tracep;		/* Trace to vnode or file */
+	struct 	file *p_tracep;		/* Trace to file */
 
 	sigset_t p_siglist;		/* Signals arrived but not delivered. */
 	char	p_sigcheck;		/* May have deliverable signals. */
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
-	short   p_locks;		/* DEBUG: lockmgr count of held locks */
-	short   p_simple_locks;		/* DEBUG: count of held simple locks */
+	int	p_locks;		/* DEBUG: lockmgr count of held locks */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
@@ -197,6 +202,12 @@ struct	proc {
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
 	void	*p_ctxlink;	/* uc_link {get,set}context */
 
+	struct	ps_strings *p_psstr;	/* address of process's ps_strings */
+	size_t	p_psargv;		/* offset of ps_argvstr in above */
+	size_t	p_psnargv;		/* offset of ps_nargvstr in above */
+	size_t	p_psenv;		/* offset of ps_envstr in above */
+	size_t	p_psnenv;		/* offset of ps_nenvstr in above */
+
 /* End area that is copied on creation. */
 #define	p_endcopy	p_thread
 
@@ -212,13 +223,21 @@ struct	proc {
 #define	p_session	p_pgrp->pg_session
 #define	p_pgid		p_pgrp->pg_id
 
-/* Status values. */
+/*
+ * Status values.
+ *
+ * A note about SRUN and SONPROC: SRUN indicates that a process is
+ * runnable but *not* yet running, i.e. is on a run queue.  SONPROC
+ * indicates that the process is actually executing on a CPU, i.e.
+ * it is no longer on a run queue.
+ */
 #define	SIDL	1		/* Process being created by fork. */
 #define	SRUN	2		/* Currently runnable. */
 #define	SSLEEP	3		/* Sleeping on an address. */
 #define	SSTOP	4		/* Process debugging or suspension. */
 #define	SZOMB	5		/* Awaiting collection by parent. */
 #define	SDEAD	6		/* Process is almost a zombie. */
+#define	SONPROC	7		/* Process is currently on a CPU */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
@@ -241,6 +260,9 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
+#define	P_32		0x40000	/* 32-bit process (used on 64-bit kernels) */
+#define P_BIGLOCK	0x80000 /* Process needs kernel "big lock" to run */
+
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -315,7 +337,7 @@ extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
 /*
- * Allow machine-dependent code to override curproc in <machine/proc.h> for
+ * Allow machine-dependent code to override curproc in <machine/cpu.h> for
  * its own convenience.  Otherwise, we declare it as appropriate.
  */
 #if !defined(curproc)
@@ -338,7 +360,7 @@ extern struct proclist zombproc;	/* List of zombie processes. */
 extern struct proclist deadproc;	/* List of dead processes. */
 extern struct simplelock deadproc_slock;
 
-struct proc *initproc;			/* Process slots for init, pager. */
+extern struct proc *initproc;		/* Process slots for init, pager. */
 
 extern const struct proclist_desc proclists[];
 
@@ -347,45 +369,46 @@ extern struct pool pcred_pool;		/* memory pool for pcreds */
 extern struct pool plimit_pool;		/* memory pool for plimits */
 extern struct pool rusage_pool;		/* memory pool for rusages */
 
-#define	NQS	32			/* 32 run queues. */
-int	whichqs;			/* Bit mask summary of non-empty Q's. */
-struct	prochd {
-	struct	proc *ph_link;		/* Linked list of running processes. */
-	struct	proc *ph_rlink;
-} qs[NQS];
-
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
+
+struct simplelock;
 
 int	chgproccnt __P((uid_t uid, int diff));
 int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
-int	inferior __P((struct proc *p));
+int	inferior __P((struct proc *p, struct proc *q));
 int	leavepgrp __P((struct proc *p));
-void	mi_switch __P((void));
+void	yield __P((void));
+void	preempt __P((struct proc *));
+void	mi_switch __P((struct proc *));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
 void	remrunqueue __P((struct proc *));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
-void	sleep __P((void *chan, int pri));
-void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
-int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
+void	suspendsched __P((void));
+int	ltsleep __P((void *chan, int pri, const char *wmesg, int timo,
+	    __volatile struct simplelock *));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
 void	wakeup_one __P((void *chan));
-void	reaper __P((void));
+void	reaper __P((void *));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
-int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *,
-	    struct proc **));
-void	kmeminit __P((void));
+int	fork1 __P((struct proc *, int, int, void *, size_t,
+	    void (*)(void *), void *, register_t *, struct proc **));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
 void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
+void	cpu_fork __P((struct proc *, struct proc *, void *, size_t,
+	    void (*)(void *), void *));
+
+void	child_return __P((void *));
+
 int	proc_isunder __P((struct proc *, struct proc*));
 
 void	proclist_lock_read __P((void));
@@ -393,5 +416,14 @@ void	proclist_unlock_read __P((void));
 int	proclist_lock_write __P((void));
 void	proclist_unlock_write __P((int));
 void	p_sugid __P((struct proc*));
+
+/* Compatbility with old, non-interlocked tsleep call. */
+#define	tsleep(chan, pri, wmesg, timo)					\
+	ltsleep(chan, pri, wmesg, timo, NULL)
+
+#if defined(MULTIPROCESSOR)
+void	proc_trampoline_mp(void);	/* XXX */
+#endif
+
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

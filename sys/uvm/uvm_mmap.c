@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.35 1999/07/17 21:35:50 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.35.2.1 2000/11/20 18:12:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -63,10 +63,6 @@
 #include <sys/stat.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <sys/syscallargs.h>
 
@@ -301,7 +297,7 @@ sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_mmap_args /* {
+	struct sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -317,8 +313,8 @@ sys_mmap(p, v, retval)
 	vm_prot_t prot, maxprot;
 	int flags, fd;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	caddr_t handle;
 	int error;
@@ -342,18 +338,6 @@ sys_mmap(p, v, retval)
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return (EINVAL);
-
-	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-	if (pos + size > (vaddr_t)-PAGE_SIZE) {
-#ifdef DEBUG
-		printf("mmap: pos=%qx, size=%lx too big\n", (long long)pos,
-		       (long)size);
-#endif
-		return (EINVAL);
-	}
 
 	/*
 	 * align file position and save offset.  adjust size.
@@ -391,8 +375,9 @@ sys_mmap(p, v, retval)
 		 * not fixed: make sure we skip over the largest possible heap.
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
-		if (addr < round_page(p->p_vmspace->vm_daddr + MAXDSIZ))
-			addr = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
+			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
+			    MAXDSIZ);
 	}
 
 	/*
@@ -414,6 +399,9 @@ sys_mmap(p, v, retval)
 		if (vp->v_type != VREG && vp->v_type != VCHR &&
 		    vp->v_type != VBLK)
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
+
+		if (vp->v_type == VREG && (pos + size) < pos)
+			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
 		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
@@ -657,11 +645,11 @@ sys___msync13(p, v, retval)
 
 int
 sys_munmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_munmap_args /* {
+	struct sys_munmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -799,7 +787,7 @@ sys_minherit(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	register vm_inherit_t inherit;
+	vm_inherit_t inherit;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
@@ -1112,7 +1100,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	vm_prot_t prot, maxprot;
 	int flags;
 	caddr_t handle;		/* XXX: VNODE? */
-	vaddr_t foff;
+	voff_t foff;
 	vsize_t locklimit;
 {
 	struct uvm_object *uobj;
@@ -1153,8 +1141,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if (flags & MAP_ANON) {
-		
-		foff = UVM_UNKNOWN_OFFSET;		
+		foff = UVM_UNKNOWN_OFFSET;
 		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
 			/* XXX: defer amap create */
@@ -1226,7 +1213,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 * do it!
 	 */
 
-	retval = uvm_map(map, addr, size, uobj, foff, uvmflag);
+	retval = uvm_map(map, addr, size, uobj, foff, 0, uvmflag);
 
 	if (retval == KERN_SUCCESS) {
 		/*
@@ -1243,10 +1230,6 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		vm_map_lock(map);
 
 		if (map->flags & VM_MAP_WIREFUTURE) {
-			/*
-			 * uvm_map_pageable() always returns the map
-			 * unlocked.
-			 */
 			if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
 #ifdef pmap_wired_count
 			    || (locklimit != 0 && (size +
@@ -1255,10 +1238,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 #endif
 			) {
 				retval = KERN_RESOURCE_SHORTAGE;
+				vm_map_unlock(map);
 				/* unmap the region! */
 				(void) uvm_unmap(map, *addr, *addr + size);
 				goto bad;
 			}
+			/*
+			 * uvm_map_pageable() always returns the map
+			 * unlocked.
+			 */
 			retval = uvm_map_pageable(map, *addr, *addr + size,
 			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.22 1999/06/24 14:07:44 kleink Exp $	*/
+/*	$NetBSD: un.h,v 1.22.2.1 2000/11/20 18:11:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,13 +38,20 @@
 #ifndef _SYS_UN_H_
 #define _SYS_UN_H_
 
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	__sa_family_t
+#endif
+
 /*
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
-	u_char	sun_len;		/* total sockaddr length */
-	u_char	sun_family;		/* AF_LOCAL */
-	char	sun_path[104];		/* path name (gag) */
+	u_int8_t	sun_len;	/* total sockaddr length */
+	sa_family_t	sun_family;	/* AF_LOCAL */
+	char		sun_path[104];	/* path name (gag) */
 };
 
 /*

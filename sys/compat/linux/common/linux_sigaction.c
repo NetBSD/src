@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.17 1998/10/07 23:47:44 erh Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.17.12.1 2000/11/20 18:08:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 int
 linux_sys_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -77,7 +77,7 @@ linux_sys_sigaction(p, v, retval)
 	} */ *uap = v;
 	struct linux_old_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
-	int error;
+	int error, sig;
 
 	/* XXX XAX handle switch to RT signal handler */
 	/* XXX XAX and update emuldata->ps_siginfo. */
@@ -88,10 +88,20 @@ linux_sys_sigaction(p, v, retval)
 			return (error);
 		linux_old_to_native_sigaction(&nlsa, &nbsa);
 	}
-	error = sigaction1(p, linux_to_native_sig[SCARG(uap, signum)],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
-	if (error)
-		return (error);
+	sig = SCARG(uap, signum);
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	if (sig > 0 && !linux_to_native_sig[sig]) {
+		/* Pretend that we did something useful for unknown signals. */
+		obsa.sa_handler = SIG_IGN;
+		sigemptyset(&obsa.sa_mask);
+		obsa.sa_flags = 0;
+	} else {
+		error = sigaction1(p, linux_to_native_sig[sig],
+		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+		if (error)
+			return (error);
+	}
 	if (SCARG(uap, osa)) {
 		native_to_linux_old_sigaction(&obsa, &olsa);
 		error = copyout(&olsa, SCARG(uap, osa), sizeof(olsa));

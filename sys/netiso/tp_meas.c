@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.7 1996/02/13 22:11:18 christos Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.7.30.1 2000/11/20 18:11:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -104,7 +104,7 @@ Tpmeas(ref, kind, timev, seq, win, size)
 	struct timeval *timev;
 	u_int           seq, win, size;
 {
-	register struct tp_Meas *tpm;
+	struct tp_Meas *tpm;
 	static int      mseq;
 
 	tpm = &tp_Meas[tp_Measn++];

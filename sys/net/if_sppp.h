@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.4 1999/04/04 06:57:03 explorer Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.4.2.1 2000/11/20 18:10:05 bouyer Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -26,6 +26,8 @@
 #ifndef _NET_IF_HDLC_H_
 #define _NET_IF_HDLC_H_ 1
 
+#include <sys/callout.h>
+
 #define IDX_LCP 0		/* idx into state table */
 
 struct slcp {
@@ -43,6 +45,7 @@ struct slcp {
 };
 
 #define IDX_IPCP 1		/* idx into state table */
+#define IDX_IPV6CP 2		/* idx into state table */
 
 struct sipcp {
 	u_long	opts;		/* IPCP options to send (bitfield) */
@@ -50,6 +53,10 @@ struct sipcp {
 #define IPCP_HISADDR_SEEN 1	/* have seen his address already */
 #define IPCP_MYADDR_DYN   2	/* my address is dynamically assigned */
 #define IPCP_MYADDR_SEEN  4	/* have seen his address already */
+#ifdef notdef
+#define IPV6CP_MYIFID_DYN   2	/* my ifid is dynamically assigned */
+#endif
+#define IPV6CP_MYIFID_SEEN  4	/* have seen his ifid already */
 };
 
 #define AUTHNAMELEN	32
@@ -66,8 +73,8 @@ struct sauth {
 	u_char	challenge[AUTHKEYLEN];	/* random challenge */
 };
 
-#define IDX_PAP		2
-#define IDX_CHAP	3
+#define IDX_PAP		3
+#define IDX_CHAP	4
 
 #define IDX_COUNT (IDX_CHAP + 1) /* bump this when adding cp's! */
 
@@ -90,19 +97,24 @@ struct sppp {
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
 	u_short pp_alivecnt;    /* keepalive packets counter */
 	u_short pp_loopcnt;     /* loopback detection counter */
-	u_long  pp_seq;         /* local sequence number */
-	u_long  pp_rseq;        /* remote sequence number */
+	u_long  pp_seq[IDX_COUNT];	/* local sequence number */
+	u_long  pp_rseq[IDX_COUNT];	/* remote sequence number */
 	enum ppp_phase pp_phase;	/* phase we're currently in */
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */
 	int	fail_counter[IDX_COUNT]; /* negotiation failure counter */
+#if defined(__NetBSD__)
+	struct	callout ch[IDX_COUNT];	/* per-proto and if callouts */
+	struct	callout pap_my_to_ch;	/* PAP needs one more... */
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
 #endif
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
+	struct sipcp ipv6cp;		/* IPv6CP params */
 	struct sauth myauth;		/* auth params, i'm peer */
 	struct sauth hisauth;		/* auth params, i'm authenticator */
 	/*
@@ -165,8 +177,7 @@ struct spppreq {
 };
 
 #if (defined(__FreeBSD_version) && __FreeBSD_version < 300000)  ||	\
-    (defined(__FreeBSD__) && __FreeBSD__ < 3)			||	\
-    defined(__NetBSD__) || defined (__OpenBSD__)
+    (defined(__FreeBSD__) && __FreeBSD__ < 3)
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
 #endif

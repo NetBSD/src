@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.29 1999/03/20 01:39:22 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.29.8.1 2000/11/20 18:11:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,6 +41,25 @@
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
 
+/*
+ * Macro to test if we're using a GNU C compiler of a specific vintage
+ * or later, for e.g. features that appeared in a particular version
+ * of GNU C.  Usage:
+ *
+ *	#if __GNUC_PREREQ__(major, minor)
+ *	...cool feature...
+ *	#else
+ *	...delete feature...
+ *	#endif
+ */
+#ifdef __GNUC__
+#define	__GNUC_PREREQ__(x, y)						\
+	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
+	 (__GNUC__ > (x)))
+#else
+#define	__GNUC_PREREQ__(x, y)	0
+#endif
+
 #include <machine/cdefs.h>
 #ifdef __ELF__
 #include <sys/cdefs_elf.h>
@@ -67,7 +86,7 @@
 #define	___STRING(x)	__STRING(x)
 #define	___CONCAT(x,y)	__CONCAT(x,y)
 
-#if defined(__STDC__) || defined(__cplusplus)
+#if __STDC__ || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
@@ -78,9 +97,9 @@
 #if defined(__cplusplus)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__lint__)
 #define	__inline			/* delete GCC keyword */
-#endif /* !__GNUC__ */
+#endif /* !__GNUC__  && !__lint__ */
 #endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
@@ -122,7 +141,7 @@
  * GCC2 provides __extension__ to suppress warnings for various GNU C
  * language extensions under "-ansi -pedantic".
  */
-#if !defined(__GNUC__) || __GNUC__ < 2
+#if !__GNUC_PREREQ__(2, 0)
 #define	__extension__		/* delete __extension__ if non-gcc or gcc1 */
 #endif
 
@@ -134,8 +153,7 @@
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
-	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#if !__GNUC_PREREQ__(2, 5)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
@@ -143,16 +161,20 @@
 #endif
 #endif
 
-#ifdef __KPRINTF_ATTRIBUTE__
-#define __kprintf_attribute__(a) __attribute__(a)
-#else
-#define __kprintf_attribute__(a)
-#endif
-
 /* Delete pseudo-keywords wherever they are not available or needed. */
 #ifndef __dead
 #define	__dead
 #define	__pure
+#endif
+
+/*
+ * C99 defines the restrict type qualifier keyword, which was made available
+ * in GCC 2.92.
+ */
+#if __STDC_VERSION__ >= 199901L || __GNUC_PREREQ__(2, 92)
+#define	__restrict	restrict
+#else
+#define	__restrict	/* delete __restrict when not supported */
 #endif
 
 #if defined(_KERNEL)
@@ -162,14 +184,54 @@
 #endif /* NO_KERNEL_RCSIDS */
 #endif /* _KERNEL */
 
+#if !defined(_STANDALONE) && !defined(_KERNEL)
 #ifdef __GNUC__
-#define	__RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#define	__RENAME(x)	___RENAME(x)
 #else
 #ifdef __lint__
 #define	__RENAME(x)	__symbolrename(x)
 #else
-#error "No function renaming possible"
+ #error "No function renaming possible"
 #endif /* __lint__ */
 #endif /* __GNUC__ */
+#else /* _STANDALONE || _KERNEL */
+#define	__RENAME(x)	no renaming in kernel or standalone environment
+#endif
+
+/*
+ * GNU C version 2.96 adds explicit branch prediction so that
+ * the CPU back-end can hint the processor and also so that
+ * code blocks can be reordered such that the predicted path
+ * sees a more linear flow, thus improving cache behavior, etc.
+ *
+ * The following two macros provide us with a way to utilize this
+ * compiler feature.  Use __predict_true() if you expect the expression
+ * to evaluate to true, and __predict_false() if you expect the
+ * expression to evaluate to false.
+ *
+ * A few notes about usage:
+ *
+ *	* Generally, __predict_false() error condition checks (unless
+ *	  you have some _strong_ reason to do otherwise, in which case
+ *	  document it), and/or __predict_true() `no-error' condition
+ *	  checks, assuming you want to optimize for the no-error case.
+ *
+ *	* Other than that, if you don't know the likelihood of a test
+ *	  succeeding from empirical or other `hard' evidence, don't
+ *	  make predictions.
+ *
+ *	* These are meant to be used in places that are run `a lot'.
+ *	  It is wasteful to make predictions in code that is run
+ *	  seldomly (e.g. at subsystem initialization time) as the
+ *	  basic block reordering that this affects can often generate
+ *	  larger code.
+ */
+#if __GNUC_PREREQ__(2, 96)
+#define	__predict_true(exp)	__builtin_expect(((exp) != 0), 1)
+#define	__predict_false(exp)	__builtin_expect(((exp) != 0), 0)
+#else
+#define	__predict_true(exp)	((exp) != 0)
+#define	__predict_false(exp)	((exp) != 0)
+#endif
 
 #endif /* !_SYS_CDEFS_H_ */

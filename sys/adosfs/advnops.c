@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.52 1999/08/19 03:42:23 itohy Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52.2.1 2000/11/20 18:08:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -322,7 +322,7 @@ adosfs_read(v)
 		printf(" %d+%d-%d+%d", lbn, on, lbn, n);
 #endif
 		n = min(n, (u_int)size - bp->b_resid);
-		error = uiomove(bp->b_un.b_addr + on +
+		error = uiomove(bp->b_data + on +
 				amp->bsize - amp->dbsize, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -638,8 +638,7 @@ adosfs_readdir(v)
 
 	if (sp->a_ncookies) {
 		ncookies = 0;
-		MALLOC(cookies, off_t *, sizeof (off_t) * uavail, M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(sizeof (off_t) * uavail, M_TEMP, M_WAITOK);
 		*sp->a_cookies = cookies;
 	}
 
@@ -752,7 +751,7 @@ reterr:
 #endif
 	if (sp->a_ncookies) {
 		if (error) {
-			FREE(*sp->a_cookies, M_TEMP);
+			free(*sp->a_cookies, M_TEMP);
 			*sp->a_ncookies = 0;
 			*sp->a_cookies = NULL;
 		} else

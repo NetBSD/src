@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.3 1999/02/20 23:25:55 thorpej Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.3.8.1 2000/11/20 18:08:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -53,8 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
 
@@ -162,7 +160,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

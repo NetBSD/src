@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.7.2.1 2000/11/20 18:10:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -67,12 +67,12 @@
 #include <net/if_types.h>
 
 #include <net/if_ether.h>
+#include <net/if_token.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
-#include <net/if_token.h>
 #endif
 
 #ifdef NS
@@ -138,7 +138,7 @@ static	void token_input __P((struct ifnet *, struct mbuf *));
  */
 static int
 token_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -146,8 +146,8 @@ token_output(ifp, m0, dst, rt0)
 	u_int16_t etype;
 	int s, error = 0;
 	u_char edst[ISO88025_ADDR_LEN];
-	register struct mbuf *m = m0;
-	register struct rtentry *rt;
+	struct mbuf *m = m0;
+	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	struct token_header *trh;
 #ifdef INET
@@ -286,7 +286,7 @@ token_output(ifp, m0, dst, rt0)
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		register struct sockaddr_dl *sdl;
+		struct sockaddr_dl *sdl;
 
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
@@ -331,7 +331,7 @@ token_output(ifp, m0, dst, rt0)
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		register struct sockaddr_dl *sdl =
+		struct sockaddr_dl *sdl =
 		    (struct sockaddr_dl *) rt -> rt_gateway;
 
 		if (sdl && sdl->sdl_family == AF_LINK
@@ -357,7 +357,7 @@ token_output(ifp, m0, dst, rt0)
 #ifdef LLC_DEBUG
 		{
 			int i;
-			register struct llc *l = mtod(m, struct llc *);
+			struct llc *l = mtod(m, struct llc *);
 
 			printf("token_output: sending LLC2 pkt to: ");
 			for (i=0; i < ISO88025_ADDR_LEN; i++)
@@ -403,7 +403,7 @@ token_output(ifp, m0, dst, rt0)
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 	if (etype != 0) {
-		register struct llc *l;
+		struct llc *l;
 		M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
 		if (m == 0)
 			senderr(ENOBUFS);
@@ -438,7 +438,9 @@ token_output(ifp, m0, dst, rt0)
 		trrif = TOKEN_RIF(trh);
 		bcopy(rif, trrif, riflen);
 	}
+#ifdef INET
 send:
+#endif
 
 	s = splimp();
 	/*
@@ -451,12 +453,12 @@ send:
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:
@@ -475,8 +477,8 @@ token_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
-	register struct llc *l;
+	struct ifqueue *inq;
+	struct llc *l;
 	struct token_header *trh;
 	int s, lan_hdr_len;
 
@@ -594,7 +596,7 @@ token_input(ifp, m)
 		case LLC_TEST_P:
 		{
 			struct sockaddr sa;
-			register struct ether_header *eh;
+			struct ether_header *eh;
 			int i;
 			u_char c = l->llc_dsap;
 
@@ -672,10 +674,10 @@ token_input(ifp, m)
  */
 void
 token_ifattach(ifp, lla)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	caddr_t	lla;
 {
-	register struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ISO88025;
 	ifp->if_addrlen = ISO88025_ADDR_LEN;
@@ -692,4 +694,12 @@ token_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+}
+
+void    
+token_ifdetach(ifp)
+        struct ifnet *ifp;
+{
+
+        /* Nothing. */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.4 1999/07/06 12:23:23 itojun Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.4.2.1 2000/11/20 18:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: pim6_var.h,v 1.1.4.2.6.2 1999/05/20 06:11:08 itojun Exp */
+/* KAME Id: pim6_var.h,v 1.3 1999/12/02 04:45:02 itojun Exp */
 
 #ifndef _NETINET6_PIM6_VAR_H_
 #define _NETINET6_PIM6_VAR_H_
@@ -42,13 +42,13 @@
  */
 
 struct pim6stat {
-	u_int	pim6s_rcv_total;	/* total PIM messages received	*/
-	u_int	pim6s_rcv_tooshort;	/* received with too few bytes	*/
-	u_int	pim6s_rcv_badsum;	/* received with bad checksum	*/
-	u_int	pim6s_rcv_badversion;	/* received bad PIM version	*/
-	u_int	pim6s_rcv_registers;	/* received registers		*/
-	u_int	pim6s_rcv_badregisters;	/* received invalid registers	*/
-	u_int	pim6s_snd_registers;	/* sent registers		*/
+	u_quad_t pim6s_rcv_total;	/* total PIM messages received	*/
+	u_quad_t pim6s_rcv_tooshort;	/* received with too few bytes	*/
+	u_quad_t pim6s_rcv_badsum;	/* received with bad checksum	*/
+	u_quad_t pim6s_rcv_badversion;	/* received bad PIM version	*/
+	u_quad_t pim6s_rcv_registers;	/* received registers		*/
+	u_quad_t pim6s_rcv_badregisters; /* received invalid registers	*/
+	u_quad_t pim6s_snd_registers;	/* sent registers		*/
 };
 
 #if (defined(KERNEL)) || (defined(_KERNEL))
@@ -60,14 +60,12 @@ int pim6_input __P((struct mbuf **, int*, int));
 /*
  * Names for PIM sysctl objects
  */
-#if (defined(__bsdi__)) || (defined(__NetBSD__))
-#define PIMCTL_STATS		1	/* statistics (read-only) */
-#define PIMCTL_MAXID		2
+#define PIM6CTL_STATS		1	/* statistics (read-only) */
+#define PIM6CTL_MAXID		2
 
-#define PIMCTL_NAMES { \
+#define PIM6CTL_NAMES { \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }
-#endif /* bsdi || NetBSD */
 
 #endif /* _NETINET6_PIM6_VAR_H_ */

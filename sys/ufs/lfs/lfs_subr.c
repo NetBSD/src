@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_subr.c,v 1.9 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.9.8.1 2000/11/20 18:11:51 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@ lfs_blkatoff(v)
 		char **a_res;
 		struct buf **a_bpp;
 		} */ *ap = v;
-	register struct lfs *fs;
+	struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
 	ufs_daddr_t lbn;
@@ -177,15 +177,70 @@ lfs_segunlock(fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	int s;
+	struct vnode *vp;
+	struct mount *mp;
+	extern int lfs_dirvcount;
 	
-	if (fs->lfs_seglock == 1) {
+	sp = fs->lfs_sp;
 
-		sp = fs->lfs_sp;
+	if (fs->lfs_seglock == 1 && !(sp->seg_flags & SEGM_PROT)) {
+
+		mp = fs->lfs_ivnode->v_mount;
+		/*
+		 * Go through and unmark all DIROP vnodes, possibly
+		 * calling VOP_INACTIVE (through vrele).  This is
+		 * delayed until now in order not to accidentally
+		 * write a DIROP node through lfs_flush.
+		 */
+#ifndef LFS_NO_BACKVP_HACK
+	/* BEGIN HACK */
+#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+	
+		/* Find last vnode. */
+	loop:	for (vp = mp->mnt_vnodelist.lh_first;
+		     vp && vp->v_mntvnodes.le_next != NULL;
+		     vp = vp->v_mntvnodes.le_next);
+		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+#else
+	loop:
+		 for (vp = mp->mnt_vnodelist.lh_first;
+		     vp != NULL;
+		     vp = vp->v_mntvnodes.le_next) {
+#endif
+			if (vp->v_mount != mp)
+				goto loop;
+			if (vp->v_type == VNON)
+				continue;
+			if (lfs_vref(vp))
+				continue;
+			if (VOP_ISLOCKED(vp) &&
+                            vp->v_lock.lk_lockholder != curproc->p_pid) {
+				lfs_vunref(vp);
+				continue;
+			}
+			if ((vp->v_flag & VDIROP) &&
+			    !(VTOI(vp)->i_flag & IN_ADIROP)) {
+				--lfs_dirvcount;
+				vp->v_flag &= ~VDIROP;
+				wakeup(&lfs_dirvcount);
+				fs->lfs_unlockvp = vp;
+				lfs_vunref(vp);
+				vrele(vp);
+				fs->lfs_unlockvp = NULL;
+			} else {
+				lfs_vunref(vp);
+			}
+		}
+	}
+
+	if (fs->lfs_seglock == 1) {
 		sync = sp->seg_flags & SEGM_SYNC;
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
-			fs->lfs_offset -= LFS_SUMMARY_SIZE / DEV_BSIZE;
+			fs->lfs_offset -= btodb(LFS_SUMMARY_SIZE);
                         lfs_freebuf(*sp->bpp);
 		} else
 			printf ("unlock to 0 with no summary");

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.6 1999/09/28 14:47:00 bouyer Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.6.2.1 2000/11/20 18:08:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -51,8 +51,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-
 /* ARGSUSED */
 int
 compat_43_sys_getrlimit(p, v, retval)
@@ -60,7 +58,7 @@ compat_43_sys_getrlimit(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_getrlimit_args /* {
+	struct compat_43_sys_getrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;

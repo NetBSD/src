@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.16 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.16.2.1 2000/11/20 18:08:50 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <machine/db_machdep.h>
@@ -43,6 +43,7 @@
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 
 
 /*
@@ -62,11 +63,6 @@ int		db_onpanic = DDB_ONPANIC;
 #endif
 int		db_fromconsole = DDB_FROMCONSOLE;
 
-
-extern int	db_radix;
-extern int	db_max_width;
-extern int	db_tab_stop_width;
-extern int	db_max_line;
 
 static int	db_rw_internal_variable __P((struct db_variable *, db_expr_t *,
 		    int));
@@ -238,6 +234,7 @@ db_set_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 	db_expr_t	value;
+	db_expr_t	old_value;
 	struct db_variable *vp;
 	int	t;
 
@@ -264,5 +261,8 @@ db_set_cmd(addr, have_addr, count, modif)
 	    /*NOTREACHED*/
 	}
 
+	db_read_variable(vp, &old_value);
+	db_printf("$%s\t\t%s = ", vp->name, db_num_to_str(old_value));
+	db_printf("%s\n", db_num_to_str(value));
 	db_write_variable(vp, &value);
 }

@@ -1,4 +1,40 @@
-/*	$NetBSD: kern_time.c,v 1.41 1999/10/10 18:41:53 hwr Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.41.2.1 2000/11/20 18:09:05 bouyer Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christopher G. Demetriou.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,6 +72,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
 
 #include <sys/param.h>
@@ -50,7 +87,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #if defined(NFS) || defined(NFSSERVER)
@@ -77,6 +113,7 @@ settime(tv)
 	struct timeval *tv;
 {
 	struct timeval delta;
+	struct cpu_info *ci;
 	int s;
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -91,8 +128,16 @@ settime(tv)
 	time = *tv;
 	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
-	timeradd(&runtime, &delta, &runtime);
-#	if defined(NFS) || defined(NFSSERVER)
+	/*
+	 * XXXSMP
+	 * This is wrong.  We should traverse a list of all
+	 * CPUs and add the delta to the runtime of those
+	 * CPUs which have a process on them.
+	 */
+	ci = curcpu();
+	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
+	    &ci->ci_schedstate.spc_runtime);
+#	if (defined(NFS) && !defined (NFS_V2_ONLY)) || defined(NFSSERVER)
 		nqnfs_lease_updatetime(delta.tv_sec);
 #	endif
 	splx(s);
@@ -107,7 +152,7 @@ sys_clock_gettime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_gettime_args /* {
+	struct sys_clock_gettime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -132,7 +177,7 @@ sys_clock_settime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_settime_args /* {
+	struct sys_clock_settime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
@@ -164,7 +209,7 @@ sys_clock_getres(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_getres_args /* {
+	struct sys_clock_getres_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -194,7 +239,7 @@ sys_nanosleep(p, v, retval)
 	register_t *retval;
 {
 	static int nanowait;
-	register struct sys_nanosleep_args/* {
+	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
@@ -256,7 +301,7 @@ sys_gettimeofday(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_gettimeofday_args /* {
+	struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
@@ -331,12 +376,12 @@ sys_adjtime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_adjtime_args /* {
+	struct sys_adjtime_args /* {
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
 	struct timeval atv;
-	register long ndelta, ntickdelta, odelta;
+	long ndelta, ntickdelta, odelta;
 	int s, error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -415,7 +460,7 @@ sys_getitimer(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getitimer_args /* {
+	struct sys_getitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
@@ -450,10 +495,10 @@ sys_getitimer(p, v, retval)
 int
 sys_setitimer(p, v, retval)
 	struct proc *p;
-	register void *v;
+	void *v;
 	register_t *retval;
 {
-	register struct sys_setitimer_args /* {
+	struct sys_setitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
@@ -461,7 +506,7 @@ sys_setitimer(p, v, retval)
 	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
-	register const struct itimerval *itvp;
+	const struct itimerval *itvp;
 	int s, error;
 
 	if ((u_int)which > ITIMER_PROF)
@@ -481,10 +526,15 @@ sys_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (which == ITIMER_REAL) {
-		untimeout(realitexpire, p);
+		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, p, hzto(&aitv.it_value));
+			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
+			    realitexpire, p);
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -505,7 +555,7 @@ void
 realitexpire(arg)
 	void *arg;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	p = (struct proc *)arg;
@@ -519,8 +569,12 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, p,
-			    hzto(&p->p_realtimer.it_value));
+			/*
+			 * Don't need to check hzto() return value, here.
+			 * callout_reset() does it for us.
+			 */
+			callout_reset(&p->p_realit_ch,
+			    hzto(&p->p_realtimer.it_value), realitexpire, p);
 			splx(s);
 			return;
 		}
@@ -559,7 +613,7 @@ itimerfix(tv)
  */
 int
 itimerdecr(itp, usec)
-	register struct itimerval *itp;
+	struct itimerval *itp;
 	int usec;
 {
 
@@ -588,4 +642,91 @@ expire:
 	} else
 		itp->it_value.tv_usec = 0;		/* sec is already 0 */
 	return (0);
+}
+
+/*
+ * ratecheck(): simple time-based rate-limit checking.  see ratecheck(9)
+ * for usage and rationale.
+ */
+int
+ratecheck(lasttime, mininterval)
+	struct timeval *lasttime;
+	const struct timeval *mininterval;
+{
+	struct timeval tv, delta;
+	int s, rv = 0;
+
+	s = splclock(); 
+	tv = mono_time;
+	splx(s);
+
+	timersub(&tv, lasttime, &delta);
+
+	/*
+	 * check for 0,0 is so that the message will be seen at least once,
+	 * even if interval is huge.
+	 */
+	if (timercmp(&delta, mininterval, >=) ||
+	    (lasttime->tv_sec == 0 && lasttime->tv_usec == 0)) {
+		*lasttime = tv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+
+/*
+ * ppsratecheck(): packets (or events) per second limitation.
+ */
+int
+ppsratecheck(lasttime, curpps, maxpps)
+	struct timeval *lasttime;
+	int *curpps;
+	int maxpps;	/* maximum pps allowed */
+{
+	struct timeval tv, delta;
+	int s, rv;
+
+	s = splclock(); 
+	tv = mono_time;
+	splx(s);
+
+	timersub(&tv, lasttime, &delta);
+
+	/*
+	 * check for 0,0 is so that the message will be seen at least once.
+	 * if more than one second have passed since the last update of
+	 * lasttime, reset the counter.
+	 *
+	 * we do increment *curpps even in *curpps < maxpps case, as some may
+	 * try to use *curpps for stat purposes as well.
+	 */
+	if ((lasttime->tv_sec == 0 && lasttime->tv_usec == 0) ||
+	    delta.tv_sec >= 1) {
+		*lasttime = tv;
+		*curpps = 0;
+		rv = 1;
+	} else if (maxpps < 0)
+		rv = 1;
+	else if (*curpps < maxpps)
+		rv = 1;
+	else
+		rv = 0;
+
+#if 1 /*DIAGNOSTIC?*/
+	/* be careful about wrap-around */
+	if (*curpps + 1 > *curpps)
+		*curpps = *curpps + 1;
+#else
+	/*
+	 * assume that there's not too many calls to this function.
+	 * not sure if the assumption holds, as it depends on *caller's*
+	 * behavior, not the behavior of this function.
+	 * IMHO it is wrong to make assumption on the caller's behavior,
+	 * so the above #if is #if 1, not #ifdef DIAGNOSTIC.
+	 */
+	*curpps = *curpps + 1;
+#endif
+
+	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.18 1999/09/12 01:17:41 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.18.2.1 2000/11/20 18:12:05 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,10 +78,6 @@
 #include <sys/kernel.h>
 #include <sys/pool.h>
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm.h>
 
 /*
@@ -110,8 +106,9 @@ static void		uvmpd_tune __P((void));
  * => should _not_ be called by the page daemon (to avoid deadlock)
  */
 
-void uvm_wait(wmsg)
-	char *wmsg;
+void
+uvm_wait(wmsg)
+	const char *wmsg;
 {
 	int timo = 0;
 	int s = splbio();
@@ -174,6 +171,10 @@ uvmpd_tune()
 	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
 	uvmexp.freemin = min(uvmexp.freemin, (256*1024) >> PAGE_SHIFT);
 
+	/* Make sure there's always a user page free. */
+	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
+		uvmexp.freemin = uvmexp.reserve_kernel + 1;
+
 	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
 	if (uvmexp.freetarg <= uvmexp.freemin)
 		uvmexp.freetarg = uvmexp.freemin + 1;
@@ -190,7 +191,7 @@ uvmpd_tune()
  */
 
 void
-uvm_pageout()
+uvm_pageout(void *arg)
 {
 	int npages = 0;
 	int s;

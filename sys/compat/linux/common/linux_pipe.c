@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.49 1998/10/04 00:02:40 fvdl Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.49.12.1 2000/11/20 18:08:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,9 +45,6 @@
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>

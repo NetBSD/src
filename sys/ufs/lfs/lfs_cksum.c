@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_cksum.c,v 1.11 1999/03/25 21:54:10 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.11.8.1 2000/11/20 18:11:49 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -93,10 +93,10 @@
  */
 u_long
 cksum(str, len)
-	register void *str;
-	register size_t len;
+	void *str;
+	size_t len;
 {
-	register u_long sum;
+	u_long sum;
 	
 	len &= ~(sizeof(u_short) - 1);
 	for (sum = 0; len; len -= sizeof(u_short)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.30 1999/10/10 02:44:55 sommerfeld Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.30.2.1 2000/11/20 18:11:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,9 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -123,6 +125,9 @@ int nqnfs_piggy[NFS_NPROCS] = {
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
 extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+#ifdef INET6
+extern struct nfssvc_sock *nfs_udp6sock;
+#endif
 extern int nfsd_waiting;
 extern struct nfsstats nfsstats;
 
@@ -130,6 +135,7 @@ extern struct nfsstats nfsstats;
 #define TRUE	1
 #define	FALSE	0
 
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 /*
  * Get or check for a lease for "vp", based on ND_CHECK flag.
  * The rules are as follows:
@@ -165,9 +171,9 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 	u_quad_t *frev;
 	struct ucred *cred;
 {
-	register struct nqlease *lp;
-	register struct nqfhhashhead *lpp = NULL;
-	register struct nqhost *lph = NULL;
+	struct nqlease *lp;
+	struct nqfhhashhead *lpp = NULL;
+	struct nqhost *lph = NULL;
 	struct nqlease *tlp;
 	struct nqm **lphp;
 	struct vattr vattr;
@@ -318,11 +324,11 @@ doreply:
  */
 void
 nqsrv_addhost(lph, slp, nam)
-	register struct nqhost *lph;
+	struct nqhost *lph;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_in *saddr;
+	struct sockaddr_in *saddr;
 
 	if (slp == NQLOCALSLP)
 		lph->lph_flag |= (LC_VALID | LC_LOCAL);
@@ -331,6 +337,11 @@ nqsrv_addhost(lph, slp, nam)
 		lph->lph_flag |= (LC_VALID | LC_UDP);
 		lph->lph_inetaddr = saddr->sin_addr.s_addr;
 		lph->lph_port = saddr->sin_port;
+#ifdef INET6
+	} else if (slp == nfs_udp6sock) {
+		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
+		lph->lph_flag |= (LC_VALID | LC_UDP6);
+#endif
 	} else if (slp == nfs_cltpsock) {
 		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
 		lph->lph_flag |= (LC_VALID | LC_CLTP);
@@ -346,10 +357,10 @@ nqsrv_addhost(lph, slp, nam)
  */
 void
 nqsrv_instimeq(lp, duration)
-	register struct nqlease *lp;
+	struct nqlease *lp;
 	u_int32_t duration;
 {
-	register struct nqlease *tlp;
+	struct nqlease *tlp;
 	time_t newexpiry;
 
 	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
@@ -384,11 +395,11 @@ nqsrv_instimeq(lp, duration)
  */
 int
 nqsrv_cmpnam(slp, nam, lph)
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 	struct mbuf *nam;
-	register struct nqhost *lph;
+	struct nqhost *lph;
 {
-	register struct sockaddr_in *saddr;
+	struct sockaddr_in *saddr;
 	struct mbuf *addr;
 	union nethostaddr lhaddr;
 	int ret;
@@ -399,7 +410,11 @@ nqsrv_cmpnam(slp, nam, lph)
 		else
 			return (0);
 	}
-	if (slp == nfs_udpsock || slp == nfs_cltpsock)
+	if (slp == nfs_udpsock || slp == nfs_cltpsock
+#ifdef INET6
+	    || slp == nfs_udp6sock
+#endif
+	)
 		addr = nam;
 	else
 		addr = slp->ns_nam;
@@ -426,14 +441,14 @@ nqsrv_cmpnam(slp, nam, lph)
 void
 nqsrv_send_eviction(vp, lp, slp, nam, cred)
 	struct vnode *vp;
-	register struct nqlease *lp;
+	struct nqlease *lp;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	struct ucred *cred;
 {
-	register struct nqhost *lph = &lp->lc_host;
-	register struct mbuf *m;
-	register int siz;
+	struct nqhost *lph = &lp->lc_host;
+	struct mbuf *m;
+	int siz;
 	struct nqm *lphnext = lp->lc_morehosts;
 	struct mbuf *mreq, *mb, *mb2, *nam2, *mheadend;
 	struct socket *so;
@@ -461,6 +476,11 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			} else if (lph->lph_flag & LC_CLTP) {
 				nam2 = lph->lph_nam;
 				so = nfs_cltpsock->ns_so;
+#ifdef INET6
+			} else if (lph->lph_flag & LC_UDP6) {
+				nam2 = lph->lph_nam;
+				so = nfs_udp6sock->ns_so;
+#endif
 			} else if (lph->lph_slp->ns_flag & SLP_VALID) {
 				nam2 = (struct mbuf *)0;
 				so = lph->lph_slp->ns_so;
@@ -503,7 +523,8 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				*mtod(m, u_int32_t *) = htonl(0x80000000 |
 					(m->m_pkthdr.len - NFSX_UNSIGNED));
 			}
-			if (((lph->lph_flag & (LC_UDP | LC_CLTP)) == 0 &&
+			if (((lph->lph_flag & (LC_UDP | LC_CLTP | LC_UDP6))
+			    == 0 &&
 			    (lph->lph_slp->ns_flag & SLP_VALID) == 0) ||
 			    (solockp && (*solockp & NFSMNT_SNDLOCK)))
 				m_freem(m);
@@ -539,10 +560,10 @@ nextone:
  */
 void
 nqsrv_waitfor_expiry(lp)
-	register struct nqlease *lp;
+	struct nqlease *lp;
 {
-	register struct nqhost *lph;
-	register int i;
+	struct nqhost *lph;
+	int i;
 	struct nqm *lphnext;
 	int len, ok;
 
@@ -573,6 +594,7 @@ tryagain:
 			lph++;
 	}
 }
+#endif /* NFSSERVER || (NFS && !NFS_V2_ONLY) */
 
 #ifdef NFSSERVER
 /*
@@ -584,8 +606,8 @@ tryagain:
 void
 nqnfs_serverd()
 {
-	register struct nqlease *lp;
-	register struct nqhost *lph;
+	struct nqlease *lp;
+	struct nqhost *lph;
 	struct nqlease *nextlp;
 	struct nqm *lphnext, *olphnext;
 	struct mbuf *n;
@@ -632,7 +654,7 @@ nqnfs_serverd()
 			i = 0;
 			ok = 1;
 			while (ok && (lph->lph_flag & LC_VALID)) {
-				if (lph->lph_flag & LC_CLTP)
+				if (lph->lph_flag & (LC_CLTP | LC_UDP6))
 					MFREE(lph->lph_nam, n);
 				if (lph->lph_flag & LC_SREF)
 					nfsrv_slpderef(lph->lph_slp);
@@ -677,13 +699,13 @@ nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct nfs_fattr *fp;
+	struct nfs_fattr *fp;
 	struct vattr va;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	u_quad_t frev;
 	caddr_t bpos;
 	int error = 0;
@@ -736,13 +758,13 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	register struct nqlease *lp;
-	register struct nqhost *lph;
+	struct nqlease *lp;
+	struct nqhost *lph;
 	struct nqlease *tlp = (struct nqlease *)0;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	struct nqm *lphnext;
 	struct mbuf *mreq, *mb;
 	int error = 0, i, len, ok, gotit = 0, cache = 0;
@@ -800,21 +822,21 @@ nfsmout:
 }
 #endif /* NFSSERVER */
 
-#ifdef NFS
+#if defined(NFS) && !defined(NFS_V2_ONLY)
 /*
  * Client get lease rpc function.
  */
 int
 nqnfs_getlease(vp, rwflag, cred, p)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int rwflag;
 	struct ucred *cred;
 	struct proc *p;
 {
-	register u_int32_t *tl;
-	register caddr_t cp;
-	register int32_t t1, t2;
-	register struct nfsnode *np;
+	u_int32_t *tl;
+	caddr_t cp;
+	int32_t t1, t2;
+	struct nfsnode *np;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	caddr_t bpos, dpos, cp2;
 	time_t reqtime;
@@ -851,14 +873,14 @@ nqnfs_getlease(vp, rwflag, cred, p)
  */
 int
 nqnfs_vacated(vp, cred)
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct ucred *cred;
 {
-	register caddr_t cp;
-	register struct mbuf *m;
-	register int i;
-	register u_int32_t *tl;
-	register int32_t t2;
+	caddr_t cp;
+	struct mbuf *m;
+	int i;
+	u_int32_t *tl;
+	int32_t t2;
 	caddr_t bpos;
 	u_int32_t xid;
 	int error = 0;
@@ -904,16 +926,16 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	struct mbuf *mrep, *md;
 	caddr_t dpos;
 {
-	register struct vnode *vp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	struct vnode *vp;
+	u_int32_t *tl;
+	int32_t t1;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	struct nfsnode *np;
 	struct nfsd tnfsd;
 	struct nfssvc_sock *slp;
 	struct nfsrv_descript ndesc;
-	register struct nfsrv_descript *nfsd = &ndesc;
+	struct nfsrv_descript *nfsd = &ndesc;
 	struct mbuf **mrq = (struct mbuf **)0, *mb, *mreq;
 	int error = 0, cache = 0;
 	char *cp2, *bpos;
@@ -952,7 +974,9 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	vrele(vp);
 	nfsm_srvdone;
 }
+#endif /* NFS && !NFS_V2_ONLY */
 
+#ifdef NFS /* Needed in V2_ONLY case for Kerberos stuff */
 /*
  * Nqnfs client helper daemon. Runs once a second to expire leases.
  * It also get authorization strings for "kerb" mounts.
@@ -962,18 +986,21 @@ nqnfs_callback(nmp, mrep, md, dpos)
  */
 int
 nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct ucred *cred;
 	struct nfsd_cargs *ncd;
 	int flag;
 	caddr_t argp;
 	struct proc *p;
 {
-	register struct nfsnode *np;
+#ifndef NFS_V2_ONLY
+	struct nfsnode *np;
 	struct vnode *vp;
 	struct nfsreq myrep;
+	int vpid;
+#endif
+	int error = 0, sleepreturn;
 	struct nfsuid *nuidp, *nnuidp;
-	int error = 0, vpid, sleepreturn;
 
 	/*
 	 * First initialize some variables
@@ -1018,6 +1045,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		sleepreturn = 0;
 		continue;
 	    }
+#ifndef NFS_V2_ONLY
 	    if (nmp->nm_flag & NFSMNT_NQNFS) {
 		/*
 		 * If there are no outstanding requests (and therefore no
@@ -1058,7 +1086,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 						(void) nqnfs_vacated(vp, cred);
 					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
-						    FSYNC_WAIT, p);
+						    FSYNC_WAIT, 0, 0, p);
 						np->n_flag &= ~NMODIFIED;
 					}
 				}
@@ -1084,6 +1112,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			np = nmp->nm_timerhead.cqh_first;
 		}
 	    }
+#endif /* !NFS_V2_ONLY */
 
 	    /*
 	     * Get an authorization string, if required.
@@ -1120,19 +1149,21 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		error = 0;
 	return (error);
 }
+#endif /* NFS */
 
+#if defined(NFS) && !defined(NFS_V2_ONLY)
 /*
  * Update a client lease.
  */
 void
 nqnfs_clientlease(nmp, np, rwflag, cachable, expiry, frev)
-	register struct nfsmount *nmp;
-	register struct nfsnode *np;
+	struct nfsmount *nmp;
+	struct nfsnode *np;
 	int rwflag, cachable;
 	time_t expiry;
 	u_quad_t frev;
 {
-	register struct nfsnode *tp;
+	struct nfsnode *tp;
 
 	if (np->n_timer.cqe_next != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1157,18 +1188,19 @@ nqnfs_clientlease(nmp, np, rwflag, cachable, expiry, frev)
 		CIRCLEQ_INSERT_AFTER(&nmp->nm_timerhead, tp, np, n_timer);
 	}
 }
-#endif /* NFS */
+#endif /* NFS && !NFS_V2_ONLY */
 
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 /*
  * Adjust all timer queue expiry times when the time of day clock is changed.
  * Called from the settimeofday() syscall.
  */
 void
 nqnfs_lease_updatetime(deltat)
-	register int deltat;
+	int deltat;
 {
-	register struct nqlease *lp;
-	register struct nfsnode *np;
+	struct nqlease *lp;
+	struct nfsnode *np;
 	struct mount *mp;
 	struct nfsmount *nmp;
 	int s;
@@ -1238,3 +1270,4 @@ nqsrv_unlocklease(lp)
 	if (lp->lc_flag & LC_WANTED)
 		wakeup((caddr_t)lp);
 }
+#endif /* NFSSERVER || NFS && !NFS_V2_ONLY */

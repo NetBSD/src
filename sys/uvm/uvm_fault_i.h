@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.9 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.9.2.1 2000/11/20 18:12:00 bouyer Exp $	*/
 
 /*
  *
@@ -40,6 +40,12 @@
 /*
  * uvm_fault_i.h: fault inline functions
  */
+static boolean_t uvmfault_check_intrsafe __P((struct uvm_faultinfo *));
+static boolean_t uvmfault_lookup __P((struct uvm_faultinfo *, boolean_t));
+static boolean_t uvmfault_relock __P((struct uvm_faultinfo *));
+static void uvmfault_unlockall __P((struct uvm_faultinfo *, struct vm_amap *,
+			            struct uvm_object *, struct vm_anon *));
+static void uvmfault_unlockmaps __P((struct uvm_faultinfo *, boolean_t));
 
 /*
  * uvmfault_unlockmaps: unlock the maps
@@ -50,6 +56,14 @@ uvmfault_unlockmaps(ufi, write_locked)
 	struct uvm_faultinfo *ufi;
 	boolean_t write_locked;
 {
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return;
+	}
 
 	if (write_locked) {
 		vm_map_unlock(ufi->map);
@@ -212,8 +226,17 @@ static __inline boolean_t
 uvmfault_relock(ufi)
 	struct uvm_faultinfo *ufi;
 {
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return TRUE;
+	}
 
 	uvmexp.fltrelck++;
+
 	/*
 	 * relock map.   fail if version mismatch (in which case nothing 
 	 * gets locked).

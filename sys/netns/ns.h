@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.12 1998/10/20 01:46:28 matt Exp $	*/
+/*	$NetBSD: ns.h,v 1.12.12.1 2000/11/20 18:11:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -120,9 +120,6 @@ struct sockaddr_ns {
 };
 #define sns_port sns_addr.x_port
 
-#if defined(__vax__) || defined(vax)
-#define ns_netof(a) (*(int32_t *) & ((a).x_net)) /* XXX - not needed */
-#endif
 #define ns_neteqnn(a,b) (((a).s_net[0]==(b).s_net[0]) && \
 					((a).s_net[1]==(b).s_net[1]))
 #define ns_neteq(a,b) ns_neteqnn((a).x_net, (b).x_net)

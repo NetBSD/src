@@ -1,4 +1,3 @@
-/*	$NetBSD: disklabel.h,v 1.53 1999/09/21 03:08:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -112,8 +111,8 @@ struct disklabel {
 	u_int16_t d_sparespertrack;	/* # of spare sectors per track */
 	u_int16_t d_sparespercyl;	/* # of spare sectors per cylinder */
 	/*
-	 * Alternate cylinders include maintenance, replacement, configuration
-	 * description areas, etc.
+	 * Alternative cylinders include maintenance, replacement,
+	 * configuration description areas, etc.
 	 */
 	u_int32_t d_acylinders;		/* # of alt. cylinders per unit */
 
@@ -193,6 +192,7 @@ struct disklabel {
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
 #define DTYPE_ATAPI		13		/* ATAPI */
 #define	DTYPE_RAID		14		/* RAIDframe */
+#define	DTYPE_LSU		15		/* logical storage unit */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -211,6 +211,7 @@ static const char *const dktypenames[] = {
 	"vnd",
 	"ATAPI",
 	"RAID",
+	"lsu",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
@@ -240,6 +241,8 @@ static const char *const dktypenames[] = {
 #define	FS_FILECORE	16		/* Acorn Filecore Filing System */
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 #define	FS_NTFS		18		/* Windows/NT file system */
+#define	FS_RAID		19		/* RAIDframe component */
+#define	FS_CCD		20		/* concatenated disk component */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -262,6 +265,8 @@ static const char *const fstypenames[] = {
 	"FILECORE",
 	"Linux Ext2",
 	"NTFS",
+	"RAID",
+	"ccd",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
@@ -279,7 +284,7 @@ static const char *const fscknames[] = {
 	NULL,		/* Eighth edition */
 	"ffs",		/* 4.2BSD */
 	"msdos",	/* MSDOS */
-	NULL,		/* 4.4LFS */
+	"lfs",		/* 4.4LFS */
 	NULL,		/* unknown */
 	NULL,		/* HPFS */
 	NULL,		/* ISO9660 */
@@ -288,10 +293,42 @@ static const char *const fscknames[] = {
 	NULL,		/* HFS */
 	NULL,		/* FILECORE */
 	"ext2fs",	/* Linux Ext2 */
-	"ntfs",		/* Windows/NT */
+	NULL,		/* Windows/NT */
+	NULL,		/* RAID Component */
+	NULL,		/* concatenated disk component */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
+
+#endif
+
+#ifdef MOUNTNAMES
+/* These are the names MOUNT_XXX from <sys/mount.h> */
+static const char *const mountnames[] = {
+	NULL,		/* unused */
+	NULL,		/* swap */
+	NULL,		/* Version 6 */
+	NULL,		/* Version 7 */
+	NULL,		/* System V */
+	NULL,		/* 4.1BSD */
+	NULL,		/* Eighth edition */
+	"ffs",		/* 4.2BSD */
+	"msdos",	/* MSDOS */
+	"lfs",		/* 4.4LFS */
+	NULL,		/* unknown */
+	NULL,		/* HPFS */
+	"cd9660",	/* ISO9660 */
+	NULL,		/* boot */
+	"ados",		/* ADOS */
+	NULL,		/* HFS */
+	"filecore",	/* FILECORE */
+	"ext2fs",	/* Linux Ext2 */
+	"ntfs",		/* Windows/NT */
+	NULL,		/* RAID Component */
+	NULL,		/* concatenated disk component */
+	NULL		/* NULL */
+};
+#define FSMAXMOUNTNAMES	(sizeof(mountnames) / sizeof(mountnames[0]) - 1)
 
 #endif
 
@@ -326,9 +363,9 @@ static const char *const fscknames[] = {
 
 #ifndef _LOCORE
 /*
- * Structure used to perform a format or other raw operation, returning
- * data and/or register values.  Register identification and format
- * are device- and driver-dependent.
+ * Structure used to perform a format or other raw operation,
+ * returning data and/or register values.  Register identification
+ * and format are device- and driver-dependent.
  */
 struct format_op {
 	char	*df_buf;
@@ -347,9 +384,13 @@ struct partinfo {
 };
 
 #ifdef _KERNEL
+struct buf_queue;
+
 void	 diskerr
 	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
-void	 disksort __P((struct buf *, struct buf *));
+void	 disksort_cylinder __P((struct buf_queue *, struct buf *));
+void	 disksort_blkno __P((struct buf_queue *, struct buf *));
+void	 disksort_tail __P((struct buf_queue *, struct buf *));
 u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));

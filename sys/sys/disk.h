@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.15 1998/09/13 14:46:23 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.15.12.1 2000/11/20 18:11:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -183,8 +183,10 @@ void	disk_unbusy __P((struct disk *, long));
 void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
 
+#ifdef __BROKEN_DK_ESTABLISH		/* XXX DEPRECATED */
 struct device;
 void	dk_establish __P((struct disk *, struct device *));
+#endif
 #endif
 
 #endif /* _SYS_DISK_H_ */

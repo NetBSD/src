@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.12 1998/08/09 20:15:40 perry Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.12.12.1 2000/11/20 18:11:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -67,7 +67,7 @@ static char *quotatypes[] = INITQFNAMES;
  */
 int
 getinoquota(ip)
-	register struct inode *ip;
+	struct inode *ip;
 {
 	struct ufsmount *ump;
 	struct vnode *vp = ITOV(ip);
@@ -100,13 +100,13 @@ getinoquota(ip)
  */
 int
 chkdq(ip, change, cred, flags)
-	register struct inode *ip;
+	struct inode *ip;
 	long change;
 	struct ucred *cred;
 	int flags;
 {
-	register struct dquot *dq;
-	register int i;
+	struct dquot *dq;
+	int i;
 	int ncurblocks, error;
 
 #ifdef DIAGNOSTIC
@@ -121,7 +121,7 @@ chkdq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				(void) tsleep(dq, PINOD+1, "chkdq", 0);
 			}
 			ncurblocks = dq->dq_curblocks + change;
 			if (ncurblocks >= 0)
@@ -133,7 +133,8 @@ chkdq(ip, change, cred, flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 && cred->cr_uid != 0) {
+	if ((flags & FORCE) == 0 &&
+	    (cred != NOCRED && cred->cr_uid != 0)) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
@@ -146,7 +147,7 @@ chkdq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			(void) tsleep(dq, PINOD+1, "chkdq", 0);
 		}
 		dq->dq_curblocks += change;
 		dq->dq_flags |= DQ_MOD;
@@ -165,7 +166,7 @@ chkdqchg(ip, change, cred, type)
 	struct ucred *cred;
 	int type;
 {
-	register struct dquot *dq = ip->i_dquot[type];
+	struct dquot *dq = ip->i_dquot[type];
 	long ncurblocks = dq->dq_curblocks + change;
 
 	/*
@@ -215,13 +216,13 @@ chkdqchg(ip, change, cred, type)
  */
 int
 chkiq(ip, change, cred, flags)
-	register struct inode *ip;
+	struct inode *ip;
 	long change;
 	struct ucred *cred;
 	int flags;
 {
-	register struct dquot *dq;
-	register int i;
+	struct dquot *dq;
+	int i;
 	int ncurinodes, error;
 
 #ifdef DIAGNOSTIC
@@ -236,7 +237,7 @@ chkiq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				(void) tsleep(dq, PINOD+1, "chkiq", 0);
 			}
 			ncurinodes = dq->dq_curinodes + change;
 			if (ncurinodes >= 0)
@@ -261,7 +262,7 @@ chkiq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			(void) tsleep(dq, PINOD+1, "chkiq", 0);
 		}
 		dq->dq_curinodes += change;
 		dq->dq_flags |= DQ_MOD;
@@ -280,7 +281,7 @@ chkiqchg(ip, change, cred, type)
 	struct ucred *cred;
 	int type;
 {
-	register struct dquot *dq = ip->i_dquot[type];
+	struct dquot *dq = ip->i_dquot[type];
 	long ncurinodes = dq->dq_curinodes + change;
 
 	/*
@@ -332,10 +333,10 @@ chkiqchg(ip, change, cred, type)
  */
 void
 chkdquot(ip)
-	register struct inode *ip;
+	struct inode *ip;
 {
 	struct ufsmount *ump = VFSTOUFS(ITOV(ip)->v_mount);
-	register int i;
+	int i;
 
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (ump->um_quotas[i] == NULLVP ||
@@ -360,7 +361,7 @@ int
 quotaon(p, mp, type, fname)
 	struct proc *p;
 	struct mount *mp;
-	register int type;
+	int type;
 	caddr_t fname;
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -409,7 +410,7 @@ quotaon(p, mp, type, fname)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
-		if (vp->v_writecount == 0)
+		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
@@ -434,7 +435,7 @@ int
 quotaoff(p, mp, type)
 	struct proc *p;
 	struct mount *mp;
-	register int type;
+	int type;
 {
 	struct vnode *vp;
 	struct vnode *qvp, *nextvp;
@@ -453,6 +454,8 @@ quotaoff(p, mp, type)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
 		ip = VTOI(vp);
@@ -508,7 +511,7 @@ setquota(mp, id, type, addr)
 	int type;
 	caddr_t addr;
 {
-	register struct dquot *dq;
+	struct dquot *dq;
 	struct dquot *ndq;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dqblk newlim;
@@ -522,7 +525,7 @@ setquota(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		(void) tsleep(dq, PINOD+1, "setquota", 0);
 	}
 	/*
 	 * Copy all but the current values.
@@ -568,7 +571,7 @@ setuse(mp, id, type, addr)
 	int type;
 	caddr_t addr;
 {
-	register struct dquot *dq;
+	struct dquot *dq;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dquot *ndq;
 	struct dqblk usage;
@@ -582,7 +585,7 @@ setuse(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		(void) tsleep(dq, PINOD+1, "setuse", 0);
 	}
 	/*
 	 * Reset time limit if have a soft limit and were
@@ -636,6 +639,8 @@ again:
 		if (vp->v_mount != mp)
 			goto again;
 		nextvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&mntvnode_slock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
@@ -680,9 +685,17 @@ long numdquot, desireddquot = DQUOTINC;
 void
 dqinit()
 {
-
 	dqhashtbl = hashinit(desiredvnodes, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
+}
+
+/*
+ * Free resources held by quota system.
+ */
+void
+dqdone()
+{
+	hashdone(dqhashtbl, M_DQUOT);
 }
 
 /*
@@ -693,8 +706,8 @@ int
 dqget(vp, id, ump, type, dqp)
 	struct vnode *vp;
 	u_long id;
-	register struct ufsmount *ump;
-	register int type;
+	struct ufsmount *ump;
+	int type;
 	struct dquot **dqp;
 {
 	struct dquot *dq;
@@ -739,7 +752,8 @@ dqget(vp, id, ump, type, dqp)
 		numdquot++;
 	} else {
 		if ((dq = dqfreelist.tqh_first) == NULL) {
-			tablefull("dquot");
+			tablefull("dquot",
+			    "increase kern.maxvnodes or NVNODE");
 			*dqp = NODQUOT;
 			return (EUSERS);
 		}
@@ -820,7 +834,7 @@ dqref(dq)
 void
 dqrele(vp, dq)
 	struct vnode *vp;
-	register struct dquot *dq;
+	struct dquot *dq;
 {
 
 	if (dq == NODQUOT)
@@ -842,7 +856,7 @@ dqrele(vp, dq)
 int
 dqsync(vp, dq)
 	struct vnode *vp;
-	register struct dquot *dq;
+	struct dquot *dq;
 {
 	struct vnode *dqvp;
 	struct iovec aiov;
@@ -859,7 +873,7 @@ dqsync(vp, dq)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+2);
+		(void) tsleep(dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp, 0);
@@ -892,9 +906,9 @@ dqsync(vp, dq)
  */
 void
 dqflush(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
-	register struct dquot *dq, *nextdq;
+	struct dquot *dq, *nextdq;
 	struct dqhash *dqh;
 
 	/*

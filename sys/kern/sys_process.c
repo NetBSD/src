@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.61 1999/03/25 04:45:57 sommerfe Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.61.8.1 2000/11/20 18:09:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -63,7 +63,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
@@ -93,7 +92,7 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	int error, write;
+	int s, error, write, tmp;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -120,13 +119,19 @@ sys_ptrace(p, v, retval)
 			return (EINVAL);
 
 		/*
-		 *	(2) it's already being traced, or
+		 *  (2) it's a system process
+		 */
+		if (t->p_flag & P_SYSTEM)
+			return (EPERM);
+
+		/*
+		 *	(3) it's already being traced, or
 		 */
 		if (ISSET(t->p_flag, P_TRACED))
 			return (EBUSY);
 
 		/*
-		 *	(3) it's not owned by you, or is set-id on exec
+		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
@@ -135,16 +140,15 @@ sys_ptrace(p, v, retval)
 			return (error);
 
 		/*
-		 *	(4) ...it's init, which controls the security level
+		 *	(5) ...it's init, which controls the security level
 		 *	    of the entire system, and the system was not
-		 *          compiled with permanently insecure mode turned
-		 *	    on.
+		 *	    compiled with permanently insecure mode turned on
 		 */
 		if (t == initproc && securelevel > -1)
 			return (EPERM);
 
 		/*
-		 * (4) the tracer is chrooted, and its root directory is
+		 * (6) the tracer is chrooted, and its root directory is
 		 * not at or above the root directory of the tracee
 		 */
 
@@ -211,6 +215,7 @@ sys_ptrace(p, v, retval)
 	/* Now do the operation. */
 	write = 0;
 	*retval = 0;
+	tmp = 0;
 
 	switch (SCARG(uap, req)) {
 	case  PT_TRACE_ME:
@@ -222,20 +227,23 @@ sys_ptrace(p, v, retval)
 	case  PT_WRITE_I:		/* XXX no seperate I and D spaces */
 	case  PT_WRITE_D:
 		write = 1;
+		tmp = SCARG(uap, data);
 	case  PT_READ_I:		/* XXX no seperate I and D spaces */
 	case  PT_READ_D:
 		/* write = 0 done above. */
-		iov.iov_base =
-		    write ? (caddr_t)&SCARG(uap, data) : (caddr_t)retval;
-		iov.iov_len = sizeof(int);
+		iov.iov_base = (caddr_t)&tmp;
+		iov.iov_len = sizeof(tmp);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
-		uio.uio_resid = sizeof(int);
+		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		return (procfs_domem(p, t, NULL, &uio));
+		error = procfs_domem(p, t, NULL, &uio);
+		if (!write)
+			*retval = tmp;
+		return (error);
 
 #ifdef PT_STEP
 	case  PT_STEP:
@@ -300,7 +308,9 @@ sys_ptrace(p, v, retval)
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
+			SCHED_LOCK(s);
 			setrunnable(t);
+			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
 				psignal(t, SCARG(uap, data));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.52 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.52.2.1 2000/11/20 18:09:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,19 +73,12 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/systm.h>
 #include <sys/stat.h>
-
-#include <sys/mount.h>
+#include <sys/sysctl.h>
+#include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
-#include <uvm/uvm_extern.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 
@@ -106,7 +99,8 @@ struct shmid_ds *shm_find_segment_by_shmid __P((int));
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
 
-int shm_last_free, shm_nused, shm_committed;
+int	shm_last_free, shm_nused, shm_committed;
+struct	shmid_ds *shmsegs;
 
 struct shm_handle {
 	struct uvm_object *shm_object;
@@ -164,7 +158,7 @@ shm_deallocate_segment(shmseg)
 	size_t size;
 
 	shm_handle = shmseg->_shm_internal;
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	uao_detach(shm_handle->shm_object);
 	free((caddr_t)shm_handle, M_SHM);
 	shmseg->_shm_internal = NULL;
@@ -184,7 +178,7 @@ shm_delete_mapping(vm, shmmap_s)
 	
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	if (result != KERN_SUCCESS)
 		return EINVAL;
@@ -266,7 +260,7 @@ sys_shmat(p, v, retval)
 	}
 	if (i >= shminfo.shmseg)
 		return EMFILE;
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	prot = VM_PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
@@ -283,12 +277,13 @@ sys_shmat(p, v, retval)
 	} else {
 		/* This is just a hint to vm_mmap() about where to put it. */
 		attach_va =
-		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
+		    round_page((vaddr_t)p->p_vmspace->vm_taddr +
+			MAXTSIZ + MAXDSIZ);
 	}
 	shm_handle = shmseg->_shm_internal;
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-		     shm_handle->shm_object, 0,
+		     shm_handle->shm_object, 0, 0,
 		     UVM_MAPFLAG(prot, prot, UVM_INH_SHARE,
 				 UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {
@@ -445,7 +440,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 		return EINVAL;
 	if (shm_nused >= shminfo.shmmni) /* any shmids left? */
 		return ENOSPC;
-	size = (SCARG(uap, size) + CLOFSET) & ~CLOFSET;
+	size = (SCARG(uap, size) + PGOFSET) & ~PGOFSET;
 	if (shm_committed + btoc(size) > shminfo.shmall)
 		return ENOMEM;
 	if (shm_last_free < 0) {

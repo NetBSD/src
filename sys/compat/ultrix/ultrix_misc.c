@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.53 1999/08/25 04:53:54 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.53.2.1 2000/11/20 18:08:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -100,8 +100,6 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-/*#include <sys/stat.h>*/
-/*#include <sys/ioctl.h>*/
 #include <sys/kernel.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
@@ -133,8 +131,6 @@
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-
-#include <vm/vm.h>					/* pmap declarations */
 
 #include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */
@@ -319,15 +315,15 @@ async_daemon(p, v, retval)
 
 int
 ultrix_sys_mmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_mmap_args *uap = v;
+	struct ultrix_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
-	register struct filedesc *fdp;
-	register struct file *fp;
-	register struct vnode *vp;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -343,8 +339,8 @@ ultrix_sys_mmap(p, v, retval)
 
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	    SCARG(&ouap, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
@@ -373,7 +369,7 @@ ultrix_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_setsockopt_args *uap = v;
+	struct ultrix_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -429,13 +425,14 @@ ultrix_sys_setsockopt(p, v, retval)
 	return (error);
 }
 
+#define	ULTRIX__SYS_NMLN	32
+
 struct ultrix_utsname {
-	char    sysname[9];
-	char    nodename[9];
-	char    nodeext[65-9];
-	char    release[9];
-	char    version[9];
-	char    machine[9];
+	char    sysname[ULTRIX__SYS_NMLN];
+	char    nodename[ULTRIX__SYS_NMLN];
+	char    release[ULTRIX__SYS_NMLN];
+	char    version[ULTRIX__SYS_NMLN];
+	char    machine[ULTRIX__SYS_NMLN];
 };
 
 int
@@ -446,16 +443,26 @@ ultrix_sys_uname(p, v, retval)
 {
 	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
-	extern char ostype[], machine[], osrelease[];
+	const char *cp;
+	char *dp, *ep;
 
 	memset(&sut, 0, sizeof(sut));
 
-	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
-	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
-	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-	memcpy(sut.version, "1", sizeof(sut.version) - 1);
-	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
+	strncpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename) - 1);
+	strncpy(sut.release, osrelease, sizeof(sut.release) - 1);
+	dp = sut.version;
+	ep = &sut.version[sizeof(sut.version) - 1];
+	for (cp = version; *cp && *cp != '('; cp++)
+		;
+	for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+		*dp++ = *cp;
+	for (; *cp && *cp != '#'; cp++)
+		;
+	for (; *cp && *cp != ':' && dp < ep; cp++)
+		*dp++ = *cp;
+	*dp = '\0';
+	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
 	    sizeof(struct ultrix_utsname));
@@ -577,18 +584,18 @@ ultrix_sys_vhangup(p, v, retval)
 #ifdef __mips
 int
 ultrix_sys_cacheflush(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_cacheflush_args /* {
+	struct ultrix_sys_cacheflush_args /* {
 		syscallarg(void *) addr;
 		syscallarg(int) nbytes;
 		syscallarg(int) flag;
 	} */ *uap = v;
-	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
-	register int nbytes     = SCARG(uap, nbytes);
-	register int whichcache = SCARG(uap, whichcache);
+	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
+	int nbytes     = SCARG(uap, nbytes);
+	int whichcache = SCARG(uap, whichcache);
 
 	return (mips_user_cacheflush(p, va, nbytes, whichcache));
 }
@@ -596,18 +603,18 @@ ultrix_sys_cacheflush(p, v, retval)
 
 int
 ultrix_sys_cachectl(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ultrix_sys_cachectl_args /* {
+	struct ultrix_sys_cachectl_args /* {
 		syscallarg(void *) addr;
 		syscallarg(int) nbytes;
 		syscallarg(int) cacheop;
 	} */ *uap = v;
-	register vaddr_t va  = (vaddr_t)SCARG(uap, addr);
-	register int nbytes  = SCARG(uap, nbytes);
-	register int cacheop = SCARG(uap, cacheop);
+	vaddr_t va  = (vaddr_t)SCARG(uap, addr);
+	int nbytes  = SCARG(uap, nbytes);
+	int cacheop = SCARG(uap, cacheop);
 
 	return mips_user_cachectl(p, va, nbytes, cacheop);
 }

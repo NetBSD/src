@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.21 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.21.2.1 2000/11/20 18:08:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -85,7 +85,6 @@ static u_int cd9660_chars2ui __P((u_char *, int));
 void
 cd9660_init()
 {
-
 	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
 #ifdef ISODEVMAP
@@ -95,6 +94,19 @@ cd9660_init()
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
 	    "cd9660nopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_ISOFSNODE);
+}
+
+/*
+ * Destroy node pool and hash table.
+ */
+void
+cd9660_done()
+{
+	hashdone(isohashtbl, M_ISOFSMNT);
+#ifdef ISODEVMAP
+	hashdone(idvhashtbl, M_ISOFSMNT);
+#endif
+	pool_destroy(&cd9660_node_pool);
 }
 
 #ifdef ISODEVMAP
@@ -107,7 +119,7 @@ iso_dmap(device, inum, create)
 	ino_t	inum;
 	int	create;
 {
-	register struct iso_dnode **dpp, *dp, *dq;
+	struct iso_dnode **dpp, *dp, *dq;
 
 	dpp = &idvhashtbl[DNOHASH(device, inum)];
 	for (dp = *dpp;; dp = dp->d_next) {
@@ -209,9 +221,9 @@ cd9660_ihashins(ip)
  */
 void
 cd9660_ihashrem(ip)
-	register struct iso_node *ip;
+	struct iso_node *ip;
 {
-	register struct iso_node *iq;
+	struct iso_node *iq;
 
 	simple_lock(&cd9660_ihash_slock);
 	if ((iq = ip->i_next) != NULL)
@@ -238,7 +250,7 @@ cd9660_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
-	register struct iso_node *ip = VTOI(vp);
+	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 	
 	if (prtactive && vp->v_usecount != 0)
@@ -266,8 +278,8 @@ cd9660_reclaim(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct iso_node *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_reclaim: pushing active", vp);

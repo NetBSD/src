@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.2 1999/10/11 01:18:35 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.2.2.1 2000/11/20 18:08:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
 
+#include <machine/cpu.h>
+
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 
@@ -87,7 +89,7 @@ linux_sys_clone(p, v, retval)
 		flags |= FORK_PPWAIT;
 
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-	if (sig < 0 || sig >= LINUX_NSIG)
+	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	sig = linux_to_native_sig[sig];
 
@@ -97,7 +99,8 @@ linux_sys_clone(p, v, retval)
 	 * or down.  So, we pass a stack size of 0, so that the code
 	 * that makes this adjustment is a noop.
 	 */
-	return (fork1(p, flags, sig, SCARG(uap, stack), 0, retval, NULL));
+	return (fork1(p, flags, sig, SCARG(uap, stack), 0,
+	    NULL, NULL, retval, NULL));
 }
 
 int
@@ -112,7 +115,7 @@ linux_sys_sched_setparam(cp, v, retval)
 	} */ *uap = v;
 	int error;
 	struct linux_sched_param lp;
-	register struct proc *p;
+	struct proc *p;
 
 /*
  * We only check for valid parameters and return afterwards.
@@ -126,7 +129,7 @@ linux_sys_sched_setparam(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -152,7 +155,7 @@ linux_sys_sched_getparam(cp, v, retval)
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */ *uap = v;
-	register struct proc *p;
+	struct proc *p;
 	struct linux_sched_param lp;
 
 /*
@@ -162,7 +165,7 @@ linux_sys_sched_getparam(cp, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -192,7 +195,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 	} */ *uap = v;
 	int error;
 	struct linux_sched_param lp;
-	register struct proc *p;
+	struct proc *p;
 
 /*
  * We only check for valid parameters and return afterwards.
@@ -206,7 +209,7 @@ linux_sys_sched_setscheduler(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -237,7 +240,7 @@ linux_sys_sched_getscheduler(cp, v, retval)
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 	} */ *uap = v;
-	register struct proc *p;
+	struct proc *p;
 
 	*retval = -1;
 /*
@@ -245,7 +248,7 @@ linux_sys_sched_getscheduler(cp, v, retval)
  */
 
 	if (SCARG(uap, pid) != 0) {
-		register struct pcred *pc = cp->p_cred;
+		struct pcred *pc = cp->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -271,7 +274,7 @@ linux_sys_sched_yield(cp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	need_resched();
+	need_resched(curcpu());
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.2 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.2.8.1 2000/11/20 18:08:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -39,8 +39,6 @@
 #include <sys/exec.h>
 #include <sys/mman.h>
 
-#include <vm/vm.h>
-
 #include <compat/vax1k/vax1k_exec.h>
 
 #include <uvm/uvm_extern.h>
@@ -56,7 +54,7 @@ vax1k_map_readvn(p, cmd)
 	struct proc *p;
 	struct exec_vmcmd *cmd;
 {
-	vm_offset_t oaddr;
+	vaddr_t oaddr;
 	int error;
 
 	if (cmd->ev_len == 0)
@@ -66,7 +64,7 @@ vax1k_map_readvn(p, cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
 			round_page(cmd->ev_len + (oaddr - cmd->ev_addr)),
-			NULL, UVM_UNKNOWN_OFFSET, 
+			NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));

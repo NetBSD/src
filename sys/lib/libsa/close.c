@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.8 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: close.c,v 1.8.8.1 2000/11/20 18:09:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,7 +74,7 @@ oclose(fd)
 #endif
 	int fd;
 {
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 	int err1 = 0, err2 = 0;
 
 #if !defined(LIBSA_NO_FD_CHECKING)

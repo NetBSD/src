@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.7 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: lockf.h,v 1.7.14.1 2000/11/20 18:11:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,6 +46,12 @@
  * associated with a byte range lock.  The lockf structures are linked into
  * the inode structure. Locks are sorted by the starting byte of the lock for
  * efficiency.
+ *
+ * lf_next is used for two purposes, depending on whether the lock is
+ * being held, or is in conflict with an existing lock.  If this lock
+ * is held, it indicates the next lock on the same vnode.
+ * For pending locks, if lock->lf_next is non-NULL, then lock->lf_block
+ * must be queued on the lf_blkhd TAILQ of lock->lf_next.
  */
 
 TAILQ_HEAD(locklist, lockf);
@@ -57,7 +63,7 @@ struct lockf {
 	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
 	caddr_t	lf_id;		 /* The id of the resource holding the lock */
 	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
-	struct	lockf *lf_next;	 /* A pointer to the next lock on this inode */
+	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
 	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
 };
@@ -65,10 +71,11 @@ struct lockf {
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
+#ifdef _KERNEL
+
 __BEGIN_DECLS
 void	 lf_addblock __P((struct lockf *, struct lockf *));
-int	 lf_advlock __P((struct lockf **,
-	    off_t, caddr_t, int, struct flock *, int));
+int	 lf_advlock __P((struct vop_advlock_args *, struct lockf **, off_t));
 int	 lf_clearlock __P((struct lockf *));
 int	 lf_findoverlap __P((struct lockf *,
 	    struct lockf *, int, struct lockf ***, struct lockf **));
@@ -88,5 +95,7 @@ void	lf_print __P((char *, struct lockf *));
 void	lf_printlist __P((char *, struct lockf *));
 __END_DECLS
 #endif /* LOCKF_DEBUG */
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_LOCKF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.10 1999/08/25 04:52:06 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.10.2.1 2000/11/20 18:08:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -56,8 +56,6 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.67 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: exec.h,v 1.67.14.1 2000/11/20 18:11:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -63,6 +63,12 @@ struct ps_strings {
 /*
  * Address of ps_strings structure.  We only use this as a default in user
  * space; normal access is done through __ps_strings.
+ *
+ * XXXX PS_STRINGS is deprecated since it can move around for different
+ * processes or emulations.
+ * In the kernel use p->p_psstr.
+ * In userland you should use what's passed in to crt0.s or system calls.
+ *
  */
 #define	PS_STRINGS \
 	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
@@ -72,6 +78,9 @@ struct ps_strings {
  * (used to copyin/copyout various emulation data structures).
  */
 #define	STACKGAPLEN	400	/* plenty enough for now */
+/*
+ * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
+ */
 #define	STACKGAPBASE_UNALIGNED	\
 	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
 #define	STACKGAPBASE		\
@@ -107,7 +116,7 @@ struct exec_vmcmd_set {
 	struct	exec_vmcmd *evs_cmds;
 };
 
-#define	EXEC_DEFAULT_VMCMD_SETSIZE	5	/* # of cmds in set to start */
+#define	EXEC_DEFAULT_VMCMD_SETSIZE	9	/* # of cmds in set to start */
 
 struct exec_package {
 	const char *ep_name;		/* file's name */
@@ -137,6 +146,7 @@ struct exec_package {
 #define	EXEC_HASARGL	0x0004		/* has fake args vector */
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
+#define	EXEC_32		0x0020		/* 32-bit binary emulation */
 
 struct exec_vmcmd {
 	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
@@ -146,6 +156,9 @@ struct exec_vmcmd {
 	struct	vnode *ev_vp;	/* vnode pointer for the file w/the data */
 	u_long	ev_offset;	/* offset in the file for the data */
 	u_int	ev_prot;	/* protections for segment */
+	int	ev_flags;
+#define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
+#define	VMCMD_BASE	0x0002	/* marks a base entry */
 };
 
 #ifdef _KERNEL
@@ -160,6 +173,7 @@ void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
 void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
 int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
+int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
 void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 				     void *, void *));
@@ -171,11 +185,15 @@ int	check_exec		__P((struct proc *, struct exec_package *));
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 		    int (*proc) __P((struct proc *p, struct exec_vmcmd *)),
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
-		    u_int prot));
+		    u_int prot, int flags));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot);
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0);
+#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags);
 #else	/* DEBUG */
-#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) { \
+#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
+	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
+#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
 	struct exec_vmcmd *vcp; \
 	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
 		vmcmdset_extend(evsp); \
@@ -187,7 +205,8 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
                 VREF(vp); \
         vcp->ev_offset = (offset); \
         vcp->ev_prot = (prot); \
-}
+	vcp->ev_flags = (flags); \
+} while (0)
 #endif /* EXEC_DEBUG */
 
 /*

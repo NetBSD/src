@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.55 1999/07/30 10:35:38 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.55.2.1 2000/11/20 18:10:04 bouyer Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -76,14 +76,17 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include "ppp.h"
-#if NPPP > 0
 
-#define VJC
-#define PPP_COMPRESS
+#if NPPP > 0
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_ppp.h"
+
+#ifdef INET
+#define VJC
+#endif
+#define PPP_COMPRESS
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -103,17 +106,11 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#ifdef INET
 #include <netinet/ip.h>
-#else
-#ifdef _KERNEL
-#ifdef VJC
-#error ppp device with VJC assumes INET
-#endif
-#endif
 #endif
 
 #include "bpfilter.h"
@@ -196,12 +193,13 @@ struct compressor *ppp_compressors[8] = {
 void
 pppattach()
 {
-    register struct ppp_softc *sc;
-    register int i = 0;
+    struct ppp_softc *sc;
+    int i = 0;
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
 	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
+	callout_init(&sc->sc_timo_ch);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = PPP_MTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
@@ -583,14 +581,14 @@ pppioctl(sc, cmd, data, flag, p)
  */
 static int
 pppsioctl(ifp, cmd, data)
-    register struct ifnet *ifp;
+    struct ifnet *ifp;
     u_long cmd;
     caddr_t data;
 {
-    register struct proc *p = curproc;	/* XXX */
-    register struct ppp_softc *sc = ifp->if_softc;
-    register struct ifaddr *ifa = (struct ifaddr *)data;
-    register struct ifreq *ifr = (struct ifreq *)data;
+    struct proc *p = curproc;	/* XXX */
+    struct ppp_softc *sc = ifp->if_softc;
+    struct ifaddr *ifa = (struct ifaddr *)data;
+    struct ifreq *ifr = (struct ifreq *)data;
     struct ppp_stats *psp;
 #ifdef	PPP_COMPRESS
     struct ppp_comp_stats *pcp;
@@ -713,11 +711,13 @@ pppoutput(ifp, m0, dst, rtp)
     struct sockaddr *dst;
     struct rtentry *rtp;
 {
-    register struct ppp_softc *sc = ifp->if_softc;
+    struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;
     u_char *cp;
     int s, error;
+#ifdef INET
     struct ip *ip;
+#endif
     struct ifqueue *ifq;
     enum NPmode mode;
     int len;
@@ -765,8 +765,8 @@ pppoutput(ifp, m0, dst, rtp)
 	ip = mtod(m0, struct ip *);
 	if (ip->ip_tos & IPTOS_LOWDELAY)
 	    m0->m_flags |= M_HIGHPRI;
-	break;
 #endif
+	break;
 #endif
     case AF_UNSPEC:
 	address = PPP_ADDRESS(dst->sa_data);
@@ -1282,11 +1282,14 @@ ppp_inproc(sc, m)
 {
     struct ifnet *ifp = &sc->sc_if;
     struct ifqueue *inq;
-    int s, ilen, xlen, proto, rv;
+    int s, ilen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
+#ifdef VJC
+    int xlen;
     u_char *iphdr;
     u_int hlen;
+#endif
 
     sc->sc_stats.ppp_ipackets++;
 

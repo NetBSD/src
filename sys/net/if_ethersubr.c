@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.50 1999/10/12 04:53:45 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.50.2.1 2000/11/20 18:10:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,6 +71,7 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_gateway.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,9 @@
 #include <net/if_types.h>
 
 #include <net/if_ether.h>
+#if NVLAN > 0
+#include <net/if_vlanvar.h>
+#endif
 
 #include <netinet/in.h>
 #ifdef INET
@@ -106,7 +110,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_ifattach.h>
 #endif
 
 #ifdef NS
@@ -162,11 +165,8 @@ static	void ether_input __P((struct ifnet *, struct mbuf *));
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(ifp, m0, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
 	int s, error = 0, hdrcmplt = 0;
@@ -264,13 +264,15 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef NEWIP6OUTPUT
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return(0); /* it must be impossible, but... */
-#else
+#ifdef OLDIP6OUTPUT
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
 			return(0);	/* if not yet resolves */
-#endif /* NEWIP6OUTPUT */
+#else
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
+			/* something bad happened */
+			return(0);
+		}
+#endif /* OLDIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
@@ -472,12 +474,12 @@ ether_output(ifp, m0, dst, rt0)
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:
@@ -492,9 +494,7 @@ bad:
  * the ether header.
  */
 static void
-ether_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+ether_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
@@ -510,20 +510,54 @@ ether_input(ifp, m)
 	}
 
 	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+
+	/*
+	 * Determine if the packet is within its size limits.
+	 */
+	if (m->m_pkthdr.len > ETHER_MAX_FRAME(etype, m->m_flags & M_HASFCS)) {
+		printf("%s: discarding oversize frame (len=%d)\n",
+		    ifp->if_xname, m->m_pkthdr.len);
+		m_freem(m);
+		return;
+	}
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
-	if (eh->ether_dhost[0] & 1) {
-		if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
-	}
-	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
+	} else if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+		   memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			  ETHER_ADDR_LEN) != 0) {
+		m_freem(m);
+		return;
+	}
 
-	etype = ntohs(eh->ether_type);
+	/*
+	 * Handle protocols that expect to have the Ethernet header
+	 * (and possibly FCS) intact.
+	 */
+	switch (etype) {
+#if NVLAN > 0
+	case ETHERTYPE_VLAN:
+		/*
+		 * vlan_input() will either recursively call ether_input()
+		 * or drop the packet.
+		 */
+		if (((struct ethercom *)ifp)->ec_nvlans != 0)
+			vlan_input(ifp, m);
+		else
+			m_freem(m);
+		return;
+#endif /* NVLAN > 0 */
+	default:
+		/* Nothing. */
+	}
 
 	/* Strip off the Ethernet header. */
 	m_adj(m, sizeof(struct ether_header));
@@ -735,8 +769,7 @@ ether_input(ifp, m)
  */
 static char digits[] = "0123456789abcdef";
 char *
-ether_sprintf(ap)
-	const u_char *ap;
+ether_sprintf(const u_char *ap)
 {
 	static char etherbuf[18];
 	char *cp = etherbuf;
@@ -755,9 +788,7 @@ ether_sprintf(ap)
  * Perform common duties while attaching to interface list
  */
 void
-ether_ifattach(ifp, lla)
-	struct ifnet *ifp;
-	const u_int8_t *lla;
+ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
 	struct sockaddr_dl *sdl;
 
@@ -767,6 +798,8 @@ ether_ifattach(ifp, lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_input = ether_input;
+	if (ifp->if_baudrate == 0)
+		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 	if ((sdl = ifp->if_sadl) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ETHER;
@@ -775,9 +808,106 @@ ether_ifattach(ifp, lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-#ifdef INET6
-	in6_ifattach_getifid(ifp);
+}
+
+void
+ether_ifdetach(struct ifnet *ifp)
+{
+	struct ethercom *ec = (void *) ifp;
+	struct sockaddr_dl *sdl = ifp->if_sadl;
+	struct ether_multi *enm;
+	int s;
+
+#if NVLAN > 0
+	if (ec->ec_nvlans)
+		vlan_ifdetach(ifp);
 #endif
+
+	s = splimp();
+	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
+		LIST_REMOVE(enm, enm_list);
+		free(enm, M_IFADDR);
+		ec->ec_multicnt--;
+	}
+	splx(s);
+
+	memset(LLADDR(sdl), 0, ETHER_ADDR_LEN);
+	sdl->sdl_alen = 0;
+	sdl->sdl_type = 0;
+}
+
+#if 0
+/*
+ * This is for reference.  We have a table-driven version
+ * of the little-endian crc32 generator, which is faster
+ * than the double-loop.
+ */
+u_int32_t
+ether_crc32_le(const u_int8_t *buf, size_t len)
+{
+	u_int32_t c, crc, carry;
+	size_t i, j;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		c = buf[i];
+		for (j = 0; j < 8; j++) {
+			carry = ((crc & 0x01) ? 1 : 0) ^ (c & 0x01);
+			crc >>= 1;
+			c >>= 1;
+			if (carry)
+				crc = (crc ^ ETHER_CRC_POLY_LE);
+		}
+	}
+
+	return (crc);
+}
+#else
+u_int32_t
+ether_crc32_le(const u_int8_t *buf, size_t len)
+{
+	static const u_int32_t crctab[] = {
+		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+	};
+	u_int32_t crc;
+	int i;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		crc ^= buf[i];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+	}
+
+	return (crc);
+}
+#endif
+
+u_int32_t
+ether_crc32_be(const u_int8_t *buf, size_t len)
+{
+	u_int32_t c, crc, carry;
+	size_t i, j;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		c = buf[i];
+		for (j = 0; j < 8; j++) {
+			carry = ((crc & 0x80000000U) ? 1 : 0) ^ (c & 0x01);
+			crc <<= 1;
+			c >>= 1;
+			if (carry)
+				crc = (crc ^ ETHER_CRC_POLY_BE) | carry;
+		}
+	}
+
+	return (crc);
 }
 
 #ifdef INET
@@ -788,66 +918,60 @@ u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
 u_char	ether_ip6multicast_min[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x00 };
 u_char	ether_ip6multicast_max[6] = { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
 #endif
+
 /*
- * Add an Ethernet multicast address or range of addresses to the list for a
- * given interface.
+ * Convert a sockaddr into an Ethernet address or range of Ethernet
+ * addresses.
  */
 int
-ether_addmulti(ifr, ec)
-	struct ifreq *ifr;
-	struct ethercom *ec;
+ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
+    u_int8_t addrhi[ETHER_ADDR_LEN])
 {
-	struct ether_multi *enm;
 #ifdef INET
 	struct sockaddr_in *sin;
 #endif /* INET */
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif /* INET6 */
-	u_char addrlo[6];
-	u_char addrhi[6];
-	int s = splimp();
 
-	switch (ifr->ifr_addr.sa_family) {
+	switch (sa->sa_family) {
 
 	case AF_UNSPEC:
-		bcopy(ifr->ifr_addr.sa_data, addrlo, 6);
-		bcopy(addrlo, addrhi, 6);
+		bcopy(sa->sa_data, addrlo, ETHER_ADDR_LEN);
+		bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
 		break;
 
 #ifdef INET
 	case AF_INET:
-		sin = (struct sockaddr_in *)&(ifr->ifr_addr);
+		sin = satosin(sa);
 		if (sin->sin_addr.s_addr == INADDR_ANY) {
 			/*
-			 * An IP address of INADDR_ANY means listen to all
-			 * of the Ethernet multicast addresses used for IP.
+			 * An IP address of INADDR_ANY means listen to
+			 * or stop listening to all of the Ethernet
+			 * multicast addresses used for IP.
 			 * (This is for the sake of IP multicast routers.)
 			 */
-			bcopy(ether_ipmulticast_min, addrlo, 6);
-			bcopy(ether_ipmulticast_max, addrhi, 6);
+			bcopy(ether_ipmulticast_min, addrlo, ETHER_ADDR_LEN);
+			bcopy(ether_ipmulticast_max, addrhi, ETHER_ADDR_LEN);
 		}
 		else {
 			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
-			bcopy(addrlo, addrhi, 6);
+			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
 		}
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)
-			&(((struct in6_ifreq *)ifr)->ifr_addr);
+		sin6 = satosin6(sa);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
-			 * An IP6 address of 0 means listen to all
-			 * of the Ethernet multicast address used for IP6.
+			 * An IP6 address of 0 means listen to or stop
+			 * listening to all of the Ethernet multicast
+			 * address used for IP6.
 			 * (This is used for multicast routers.)
 			 */
 			bcopy(ether_ip6multicast_min, addrlo, ETHER_ADDR_LEN);
 			bcopy(ether_ip6multicast_max, addrhi, ETHER_ADDR_LEN);
-#if 0
-			set_allmulti = 1;
-#endif
 		} else {
 			ETHER_MAP_IPV6_MULTICAST(&sin6->sin6_addr, addrlo);
 			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
@@ -856,8 +980,27 @@ ether_addmulti(ifr, ec)
 #endif
 
 	default:
-		splx(s);
 		return (EAFNOSUPPORT);
+	}
+	return (0);
+}
+
+/*
+ * Add an Ethernet multicast address or range of addresses to the list for a
+ * given interface.
+ */
+int
+ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
+{
+	struct ether_multi *enm;
+	u_char addrlo[ETHER_ADDR_LEN];
+	u_char addrhi[ETHER_ADDR_LEN];
+	int s = splimp(), error;
+
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	if (error != 0) {
+		splx(s);
+		return (error);
 	}
 
 	/*
@@ -906,71 +1049,21 @@ ether_addmulti(ifr, ec)
  * Delete a multicast address record.
  */
 int
-ether_delmulti(ifr, ec)
-	struct ifreq *ifr;
-	struct ethercom *ec;
+ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 {
 	struct ether_multi *enm;
-#ifdef INET
-	struct sockaddr_in *sin;
-#endif /* INET */
-#ifdef INET6
-	struct sockaddr_in6 *sin6;
-#endif /* INET6 */
-	u_char addrlo[6];
-	u_char addrhi[6];
-	int s = splimp();
+	u_char addrlo[ETHER_ADDR_LEN];
+	u_char addrhi[ETHER_ADDR_LEN];
+	int s = splimp(), error;
 
-	switch (ifr->ifr_addr.sa_family) {
-
-	case AF_UNSPEC:
-		bcopy(ifr->ifr_addr.sa_data, addrlo, 6);
-		bcopy(addrlo, addrhi, 6);
-		break;
-
-#ifdef INET
-	case AF_INET:
-		sin = (struct sockaddr_in *)&(ifr->ifr_addr);
-		if (sin->sin_addr.s_addr == INADDR_ANY) {
-			/*
-			 * An IP address of INADDR_ANY means stop listening
-			 * to the range of Ethernet multicast addresses used
-			 * for IP.
-			 */
-			bcopy(ether_ipmulticast_min, addrlo, 6);
-			bcopy(ether_ipmulticast_max, addrhi, 6);
-		}
-		else {
-			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
-			bcopy(addrlo, addrhi, 6);
-		}
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)&(ifr->ifr_addr);
-		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			/*
-			 * An IP6 address of all 0 means stop listening
-			 * to the range of Ethernet multicast addresses used
-			 * for IP6
-			 */
-			bcopy(ether_ip6multicast_min, addrlo, ETHER_ADDR_LEN);
-			bcopy(ether_ip6multicast_max, addrhi, ETHER_ADDR_LEN);
-		} else {
-			ETHER_MAP_IPV6_MULTICAST(&sin6->sin6_addr, addrlo);
-			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
-		}
-		break;
-#endif
-
-	default:
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	if (error != 0) {
 		splx(s);
-		return (EAFNOSUPPORT);
+		return (error);
 	}
 
 	/*
-	 * Look up the address in our list.
+	 * Look ur the address in our list.
 	 */
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm == NULL) {
@@ -996,4 +1089,97 @@ ether_delmulti(ifr, ec)
 	 * and its reception filter should be adjusted accordingly.
 	 */
 	return (ENETRESET);
+}
+
+/*
+ * Common ioctls for Ethernet interfaces.  Note, we must be
+ * called at splnet().
+ */
+int
+ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct ethercom *ec = (void *) ifp;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	int error = 0;
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if ((error = (*ifp->if_init)(ifp)) != 0)
+				break;
+			arp_ifinit(ifp, ifa);
+			break;
+#endif /* INET */
+#ifdef NS
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
+			else
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ifp->if_addrlen);
+			/* Set new address. */
+			error = (*ifp->if_init)(ifp);
+			break;
+		    }
+#endif /* NS */
+		default:
+			error = (*ifp->if_init)(ifp);
+			break;
+		}
+		break;
+
+	case SIOCGIFADDR:
+		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCSIFFLAGS:
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+			/*
+			 * If interface is marked down and it is running,
+			 * then stop and disable it.
+			 */
+			(*ifp->if_stop)(ifp, 1);
+		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			error = (*ifp->if_init)(ifp);
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect the hardware state.
+			 */
+			error = (*ifp->if_init)(ifp);
+		}
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, ec) :
+		    ether_delmulti(ifr, ec);
+		break;
+
+	default:
+		error = ENOTTY;
+	}
+
+	return (error);
 }

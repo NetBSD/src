@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.17 1999/04/25 02:42:01 simonb Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.17.2.1 2000/11/20 18:08:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -53,8 +53,6 @@
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
-
-#include <vm/vm.h>
 
 #define	ULTRIX_MAXPATHLEN	1024
 
@@ -157,8 +155,8 @@ make_ultrix_mntent __P(( struct statfs *sp, struct ultrix_fs_data *tem));
  */
 static void
 make_ultrix_mntent(sp, tem)
-	register struct statfs *sp;
-	register struct ultrix_fs_data *tem;
+	struct statfs *sp;
+	struct ultrix_fs_data *tem;
 {
 
 	memset(tem, 0, sizeof (*tem));

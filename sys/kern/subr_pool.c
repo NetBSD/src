@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.30 1999/08/29 00:26:01 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.30.2.1 2000/11/20 18:09:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -51,9 +51,6 @@
 #include <sys/pool.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm.h>
 
 /*
@@ -97,8 +94,8 @@ struct pool_item_header {
 struct pool_item {
 #ifdef DIAGNOSTIC
 	int pi_magic;
-#define	PI_MAGIC 0xdeadbeef
 #endif
+#define	PI_MAGIC 0xdeadbeef
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
 };
@@ -215,7 +212,7 @@ pr_enter(pp, file, line)
 	long line;
 {
 
-	if (pp->pr_entered_file != NULL) {
+	if (__predict_false(pp->pr_entered_file != NULL)) {
 		printf("pool %s: reentrancy at file %s line %ld\n",
 		    pp->pr_wchan, file, line);
 		printf("         previous entry at file %s line %ld\n",
@@ -232,7 +229,7 @@ pr_leave(pp)
 	struct pool *pp;
 {
 
-	if (pp->pr_entered_file == NULL) {
+	if (__predict_false(pp->pr_entered_file == NULL)) {
 		printf("pool %s not entered?\n", pp->pr_wchan);
 		panic("pr_leave");
 	}
@@ -404,7 +401,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	/*
 	 * Check arguments and construct default values.
 	 */
-	if (!powerof2(pagesz) || pagesz > PAGE_SIZE)
+	if (!powerof2(pagesz))
 		panic("pool_init: page size invalid (%lx)\n", (u_long)pagesz);
 
 	if (alloc == NULL && release == NULL) {
@@ -425,6 +422,11 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
+	size = ALIGN(size);
+	if (size >= pagesz)
+		panic("pool_init: pool item size (%lu) too large",
+		      (u_long)size);
+
 	/*
 	 * Initialize the pool structure.
 	 */
@@ -436,7 +438,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_maxpages = UINT_MAX;
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
-	pp->pr_size = ALIGN(size);
+	pp->pr_size = size;
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_mtype = mtype;
@@ -449,9 +451,10 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_nout = 0;
 	pp->pr_hardlimit = UINT_MAX;
 	pp->pr_hardlimit_warning = NULL;
-	pp->pr_hardlimit_ratecap = 0;
-	memset(&pp->pr_hardlimit_warning_last, 0,
-	    sizeof(pp->pr_hardlimit_warning_last));
+	pp->pr_hardlimit_ratecap.tv_sec = 0;
+	pp->pr_hardlimit_ratecap.tv_usec = 0;
+	pp->pr_hardlimit_warning_last.tv_sec = 0;
+	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -581,13 +584,15 @@ _pool_get(pp, flags, file, line)
 	struct pool_item_header *ph;
 
 #ifdef DIAGNOSTIC
-	if ((pp->pr_roflags & PR_STATIC) && (flags & PR_MALLOCOK)) {
+	if (__predict_false((pp->pr_roflags & PR_STATIC) &&
+			    (flags & PR_MALLOCOK))) {
 		pr_printlog(pp, NULL, printf);
 		panic("pool_get: static");
 	}
 #endif
 
-	if (curproc == NULL && (flags & PR_WAITOK) != 0)
+	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
+			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
 
 	simple_lock(&pp->pr_slock);
@@ -600,13 +605,13 @@ _pool_get(pp, flags, file, line)
 	 * the pool.
 	 */
 #ifdef DIAGNOSTIC
-	if (pp->pr_nout > pp->pr_hardlimit) {
+	if (__predict_false(pp->pr_nout > pp->pr_hardlimit)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		panic("pool_get: %s: crossed hard limit", pp->pr_wchan);
 	}
 #endif
-	if (pp->pr_nout == pp->pr_hardlimit) {
+	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
 			/*
 			 * XXX: A warning isn't logged in this case.  Should
@@ -614,27 +619,18 @@ _pool_get(pp, flags, file, line)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
-		if (pp->pr_hardlimit_warning != NULL) {
-			/*
-			 * Log a message that the hard limit has been hit.
-			 */
-			struct timeval curtime, logdiff;
-			int s = splclock();
-			curtime = mono_time;
-			splx(s);
-			timersub(&curtime, &pp->pr_hardlimit_warning_last,
-			    &logdiff);
-			if (logdiff.tv_sec >= pp->pr_hardlimit_ratecap) {
-				pp->pr_hardlimit_warning_last = curtime;
-				log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
-			}
-		}
+
+		/*
+		 * Log a message that the hard limit has been hit.
+		 */
+		if (pp->pr_hardlimit_warning != NULL &&
+		    ratecheck(&pp->pr_hardlimit_warning_last,
+			      &pp->pr_hardlimit_ratecap))
+			log(LOG_ERR, "%s\n", pp->pr_hardlimit_warning);
 
 		if (flags & PR_URGENT)
 			panic("pool_get: urgent");
@@ -708,9 +704,7 @@ _pool_get(pp, flags, file, line)
 			 */
 			pp->pr_flags |= PR_WANTED;
 			pr_leave(pp);
-			simple_unlock(&pp->pr_slock);
-			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
-			simple_lock(&pp->pr_slock);
+			ltsleep(pp, PSWP, pp->pr_wchan, 0, &pp->pr_slock);
 			pr_enter(pp, file, line);
 			goto startover;
 		}
@@ -723,13 +717,13 @@ _pool_get(pp, flags, file, line)
 		goto startover;
 	}
 
-	if ((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL) {
+	if (__predict_false((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		panic("pool_get: %s: page empty", pp->pr_wchan);
 	}
 #ifdef DIAGNOSTIC
-	if (pp->pr_nitems == 0) {
+	if (__predict_false(pp->pr_nitems == 0)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		printf("pool_get: %s: items on itemlist, nitems %u\n",
@@ -740,7 +734,7 @@ _pool_get(pp, flags, file, line)
 	pr_log(pp, v, PRLOG_GET, file, line);
 
 #ifdef DIAGNOSTIC
-	if (pi->pi_magic != PI_MAGIC) {
+	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
 		       " item addr %p\n",
@@ -756,7 +750,7 @@ _pool_get(pp, flags, file, line)
 	pp->pr_nout++;
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
-		if (pp->pr_nidle == 0)
+		if (__predict_false(pp->pr_nidle == 0))
 			panic("pool_get: nidle inconsistent");
 #endif
 		pp->pr_nidle--;
@@ -764,7 +758,7 @@ _pool_get(pp, flags, file, line)
 	ph->ph_nmissing++;
 	if (TAILQ_FIRST(&ph->ph_itemlist) == NULL) {
 #ifdef DIAGNOSTIC
-		if (ph->ph_nmissing != pp->pr_itemsperpage) {
+		if (__predict_false(ph->ph_nmissing != pp->pr_itemsperpage)) {
 			pr_leave(pp);
 			simple_unlock(&pp->pr_slock);
 			panic("pool_get: %s: nmissing inconsistent",
@@ -832,7 +826,7 @@ _pool_put(pp, v, file, line)
 	pr_enter(pp, file, line);
 
 #ifdef DIAGNOSTIC
-	if (pp->pr_nout == 0) {
+	if (__predict_false(pp->pr_nout == 0)) {
 		printf("pool %s: putting with none out\n",
 		    pp->pr_wchan);
 		panic("pool_put");
@@ -841,7 +835,7 @@ _pool_put(pp, v, file, line)
 
 	pr_log(pp, v, PRLOG_PUT, file, line);
 
-	if ((ph = pr_find_pagehead(pp, page)) == NULL) {
+	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
@@ -857,9 +851,18 @@ _pool_put(pp, v, file, line)
 	 * Return to item list.
 	 */
 #ifdef DIAGNOSTIC
-	/* XXX Should fill the item. */
 	pi->pi_magic = PI_MAGIC;
 #endif
+#ifdef DEBUG
+	{
+		int i, *ip = v;
+
+		for (i = 0; i < pp->pr_size / sizeof(int); i++) {
+			*ip++ = PI_MAGIC;
+		}
+	}
+#endif
+
 	TAILQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
 	pp->pr_nput++;
@@ -958,7 +961,7 @@ pool_prime(pp, n, storage)
 	int newnitems, newpages;
 
 #ifdef DIAGNOSTIC
-	if (storage && !(pp->pr_roflags & PR_STATIC))
+	if (__predict_false(storage && !(pp->pr_roflags & PR_STATIC)))
 		panic("pool_prime: static");
 	/* !storage && static caught below */
 #endif
@@ -1015,6 +1018,9 @@ pool_prime_page(pp, storage)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int s, n;
+
+	if (((u_long)cp & (pp->pr_pagesz - 1)) != 0)
+		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
@@ -1118,7 +1124,7 @@ pool_catchup(pp)
 		simple_unlock(&pp->pr_slock);
 		cp = (*pp->pr_alloc)(pp->pr_pagesz, 0, pp->pr_mtype);
 		simple_lock(&pp->pr_slock);
-		if (cp == NULL) {
+		if (__predict_false(cp == NULL)) {
 			error = ENOMEM;
 			break;
 		}
@@ -1182,9 +1188,9 @@ pool_sethardlimit(pp, n, warnmess, ratecap)
 
 	pp->pr_hardlimit = n;
 	pp->pr_hardlimit_warning = warnmess;
-	pp->pr_hardlimit_ratecap = ratecap;
-	memset(&pp->pr_hardlimit_warning_last, 0,
-	    sizeof(pp->pr_hardlimit_warning_last));
+	pp->pr_hardlimit_ratecap.tv_sec = ratecap;
+	pp->pr_hardlimit_warning_last.tv_sec = 0;
+	pp->pr_hardlimit_warning_last.tv_usec = 0;
 
 	/*
 	 * In-line version of pool_sethiwat(), because we don't want to

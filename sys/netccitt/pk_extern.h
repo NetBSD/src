@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.5 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.5.12.1 2000/11/20 18:10:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
  */
 
 #ifdef _KERNEL
+
+#ifndef _NETCCITT_PK_EXTERN_H_
+#define _NETCCITT_PK_EXTERN_H_
+
+#include <netccitt/x25isr.h>
+
 struct pklcd;
 struct mbuf_cache;
 struct x25_ifaddr;
@@ -55,7 +61,6 @@ void pk_trace __P((struct x25config *, struct mbuf *, char *));
 void mbuf_cache __P((struct mbuf_cache *, struct mbuf *));
 
 /* pk_input.c */
-void ccittintr __P((void));
 struct pkcb *pk_newlink __P((struct x25_ifaddr *, caddr_t));
 int pk_dellink __P((struct pkcb *));
 int pk_resize __P((struct pkcb *));
@@ -109,7 +114,9 @@ void pk_restartcause __P((struct pkcb *, struct x25_packet *));
 void pk_resetcause __P((struct pkcb *, struct x25_packet *));
 void pk_clearcause __P((struct pkcb *, struct x25_packet *));
 char *format_ntn __P((struct x25config *));
-void pk_message __P((int, struct x25config *, char *, ...));
+void pk_message __P((int, struct x25config *, char *, ...))
+     __attribute__((__format__(__printf__, 3, 4)));
+;
 int pk_fragment __P((struct pklcd *, struct mbuf *, int, int, int));
 
 /* pk_timer.c */
@@ -126,3 +133,5 @@ int pk_checksockaddr __P((struct mbuf *));
 int pk_send __P((struct mbuf *, void *));
 
 #endif
+
+#endif /* _NETCCITT_PK_EXTERN_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vnops.c,v 1.28 1999/09/03 22:48:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.28.2.1 2000/11/20 18:11:52 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,8 +86,6 @@
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 
-#include <vm/vm.h>
-
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -133,7 +131,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -145,6 +143,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, lfs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, lfs_valloc },		/* valloc */
+	{ &vop_balloc_desc, lfs_balloc },		/* balloc */
 	{ &vop_vfree_desc, lfs_vfree },			/* vfree */
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
@@ -184,7 +183,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* readdir */
 	{ &vop_readlink_desc, spec_readlink },		/* readlink */
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -235,7 +234,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
 	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -256,6 +255,17 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
 
+/*
+ * A function version of LFS_ITIMES, for the UFS functions which call ITIMES
+ */
+void
+lfs_itimes(ip, acc, mod, cre)
+	struct inode *ip;
+	struct timespec *acc, *mod, *cre;
+{
+	LFS_ITIMES(ip, acc, mod, cre);
+}
+
 #define	LFS_READWRITE
 #include <ufs/ufs/ufs_readwrite.c>
 #undef	LFS_READWRITE
@@ -272,11 +282,32 @@ lfs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	
 	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0)); /* XXX */
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
+}
+
+/*
+ * Take IN_ADIROP off, then call ufs_inactive.
+ */
+int
+lfs_inactive(v)
+	void *v;
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+
+	if (ip->i_flag & IN_ADIROP)
+		--ip->i_lfs->lfs_nadirop;
+	ip->i_flag &= ~IN_ADIROP;
+	return ufs_inactive(v);
 }
 
 /*
@@ -291,27 +322,54 @@ lfs_fsync(v)
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
  * is decremented during segment write, when VDIROP is taken off.
  */
-#define	SET_DIROP(fs) lfs_set_dirop(fs)
-static int lfs_set_dirop __P((struct lfs *));
+#define	SET_DIROP(vp) lfs_set_dirop(vp)
+static int lfs_set_dirop __P((struct vnode *));
+extern int lfs_dirvcount;
 
-static int lfs_set_dirop(fs)
-	struct lfs *fs;
+static int
+lfs_set_dirop(vp)
+	struct vnode *vp;
 {
+	struct lfs *fs;
 	int error;
 
-	while (fs->lfs_writer || fs->lfs_dirvcount>LFS_MAXDIROP) {
+	fs = VTOI(vp)->i_lfs;
+	/*
+	 * We might need one directory block plus supporting indirect blocks,
+	 * plus an inode block and ifile page for the new vnode.
+	 */
+	if ((error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 3))) != 0)
+		return (error);
+	if (fs->lfs_dirops == 0)
+		lfs_check(vp, LFS_UNUSED_LBN, 0);
+	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
 		if(fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
-		if(fs->lfs_dirvcount > LFS_MAXDIROP) {		
+		if(lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops==0) {
+                	++fs->lfs_writer;
+                	lfs_flush(fs, 0);
+                	if(--fs->lfs_writer==0)
+                        	wakeup(&fs->lfs_dirops);
+		}
+
+		if(lfs_dirvcount > LFS_MAXDIROP) {		
 #ifdef DEBUG_LFS
-			printf("(dirvcount=%d)\n",fs->lfs_dirvcount); 
+			printf("lfs_set_dirop: sleeping with dirops=%d, "
+			       "dirvcount=%d\n", fs->lfs_dirops,
+			       lfs_dirvcount); 
 #endif
-			if((error=tsleep(&fs->lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
+			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
+					   "lfs_maxdirop", 0)) !=0) {
+				lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3));
 				return error;
+			}
 		}							
 	}								
 	++fs->lfs_dirops;						
 	fs->lfs_doifile = 1;						
+
+	/* Hold a reference so SET_ENDOP will be happy */
+	lfs_vref(vp);
 
 	return 0;
 }
@@ -319,28 +377,42 @@ static int lfs_set_dirop(fs)
 #define	SET_ENDOP(fs,vp,str) {						\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
+		if ((fs)->lfs_nadirop) {				\
+			panic("SET_ENDOP: %s: no dirops but nadirop=%d\n", \
+			      (str), (fs)->lfs_nadirop);		\
+		}							\
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
+	lfs_reserve(fs, vp, -fsbtodb(fs, NIADDR + 3)); /* XXX */	\
+	lfs_vunref(vp);							\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
-        if(!((dvp)->v_flag & VDIROP)) {					\
-                lfs_vref(dvp);						\
-		++VTOI((dvp))->i_lfs->lfs_dirvcount;			\
+        if (!((dvp)->v_flag & VDIROP)) {				\
+                (void)lfs_vref(dvp);					\
+		++lfs_dirvcount;					\
 	}								\
         (dvp)->v_flag |= VDIROP;					\
+	if (!(VTOI(dvp)->i_flag & IN_ADIROP)) {				\
+		++VTOI(dvp)->i_lfs->lfs_nadirop;			\
+	}								\
+	VTOI(dvp)->i_flag |= IN_ADIROP;					\
 } while(0)
 
-#define MAYBE_INACTIVE(fs,vp) do {                                      \
-        if((vp) && ((vp)->v_flag & VDIROP) && (vp)->v_usecount == 1     \
-           && VTOI(vp) && VTOI(vp)->i_ffs_nlink == 0)                   \
-        {                                                               \
-		if (VOP_LOCK((vp), LK_EXCLUSIVE) == 0) { 		\
-                        VOP_INACTIVE((vp),curproc);                     \
-		}                                                       \
-        }                                                               \
-} while(0)
+#define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
+
+void lfs_unmark_vnode(vp)
+	struct vnode *vp;
+{
+	struct inode *ip;
+
+	ip = VTOI(vp);
+
+	if (ip->i_flag & IN_ADIROP)
+		--ip->i_lfs->lfs_nadirop;
+	ip->i_flag &= ~IN_ADIROP;
+}
 
 int
 lfs_symlink(v)
@@ -353,15 +425,19 @@ lfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vput(ap->a_dvp);
+		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_symlink(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symilnk");
-	return (ret);
+	error = ufs_symlink(ap);
+	UNMARK_VNODE(ap->a_dvp);
+	if (*(ap->a_vpp))
+		UNMARK_VNODE(*(ap->a_vpp));
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symlink");
+	return (error);
 }
 
 int
@@ -379,11 +455,16 @@ lfs_mknod(v)
         struct inode *ip;
         int error;
 
-	if((error=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vput(ap->a_dvp);
 		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
             ap->a_dvp, vpp, ap->a_cnp);
+	UNMARK_VNODE(ap->a_dvp);
+        if (*(ap->a_vpp))
+                UNMARK_VNODE(*(ap->a_vpp));
 
 	/* Either way we're done with the dirop at this point */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mknod");
@@ -413,15 +494,18 @@ lfs_mknod(v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, curproc)) != 0)
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, curproc)) != 0) {
+		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
+		       VTOI(*vpp)->i_number);
 		return (error);
+	}
         /*
-         * Remove inode so that it will be reloaded by VFS_VGET and
+         * Remove vnode so that it will be reloaded by VFS_VGET and
          * checked to see if it is an alias of an existing entry in
          * the inode cache.
          */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
-	VOP_UNLOCK(*vpp,0);
+	VOP_UNLOCK(*vpp, 0);
 	lfs_vunref(*vpp);
         (*vpp)->v_type = VNON;
         vgone(*vpp);
@@ -439,15 +523,19 @@ lfs_create(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vput(ap->a_dvp);
+		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_create(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	error = ufs_create(ap);
+	UNMARK_VNODE(ap->a_dvp);
+        if (*(ap->a_vpp))
+                UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
-	return (ret);
+	return (error);
 }
 
 int
@@ -459,14 +547,16 @@ lfs_whiteout(v)
 		struct componentname *a_cnp;
 		int a_flags;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if ((error = SET_DIROP(ap->a_dvp)) != 0)
+		/* XXX no unlock here? */
+		return error;
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_whiteout(ap);
+	error = ufs_whiteout(ap);
+	UNMARK_VNODE(ap->a_dvp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"whiteout");
-	return (ret);
+	return (error);
 }
 
 int
@@ -479,15 +569,19 @@ lfs_mkdir(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vput(ap->a_dvp);
+		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_mkdir(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	error = ufs_mkdir(ap);
+	UNMARK_VNODE(ap->a_dvp);
+        if (*(ap->a_vpp))
+                UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
-	return (ret);
+	return (error);
 }
 
 int
@@ -499,15 +593,38 @@ lfs_remove(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int ret;
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
-	MARK_VNODE(ap->a_dvp);
-	MARK_VNODE(ap->a_vp);
-	ret = ufs_remove(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"remove");
-	return (ret);
+	struct vnode *dvp, *vp;
+	int error;
+
+	dvp = ap->a_dvp;
+	vp = ap->a_vp;
+	if ((error = SET_DIROP(dvp)) != 0) {
+		if (dvp == vp)
+			vrele(vp);
+		else
+			vput(vp);
+		vput(dvp);
+		return error;
+	}
+	MARK_VNODE(dvp);
+	MARK_VNODE(vp);
+	error = ufs_remove(ap);
+	UNMARK_VNODE(dvp);
+	UNMARK_VNODE(vp);
+
+	/*
+	 * If ufs_remove failed, vp doesn't need to be VDIROP any more.
+	 * If it succeeded, we can go ahead and wipe out vp, since
+	 * its loss won't appear on disk until checkpoint, and by then
+	 * dvp will have been written, completing the dirop.
+	 */
+	--lfs_dirvcount;
+	vp->v_flag &= ~VDIROP;
+	wakeup(&lfs_dirvcount);
+	vrele(vp);
+
+	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
+	return (error);
 }
 
 int
@@ -520,16 +637,34 @@ lfs_rmdir(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vrele(ap->a_dvp);
+		if (ap->a_vp->v_mountedhere != NULL)
+			VOP_UNLOCK(ap->a_dvp, 0);
+		vput(ap->a_vp);
+		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
 	MARK_VNODE(ap->a_vp);
-	ret = ufs_rmdir(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
+	error = ufs_rmdir(ap);
+	UNMARK_VNODE(ap->a_dvp);
+	UNMARK_VNODE(ap->a_vp);
+
+	/*
+	 * If ufs_rmdir failed, vp doesn't need to be VDIROP any more.
+	 * If it succeeded, we can go ahead and wipe out vp, since
+	 * its loss won't appear on disk until checkpoint, and by then
+	 * dvp will have been written, completing the dirop.
+	 */
+	--lfs_dirvcount;
+	ap->a_vp->v_flag &= ~VDIROP;
+	wakeup(&lfs_dirvcount);
+	vrele(ap->a_vp);
+
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
-	return (ret);
+	return (error);
 }
 
 int
@@ -541,14 +676,17 @@ lfs_link(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
-		return ret;
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+		vput(ap->a_dvp);
+		return error;
+	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_link(ap);
+	error = ufs_link(ap);
+	UNMARK_VNODE(ap->a_dvp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"link");
-	return (ret);
+	return (error);
 }
 
 int
@@ -563,17 +701,51 @@ lfs_rename(v)
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
 	} */ *ap = v;
-	int ret;
-	
-	if((ret=SET_DIROP(VTOI(ap->a_fdvp)->i_lfs))!=0)
-		return ret;
-	MARK_VNODE(ap->a_fdvp);
-	MARK_VNODE(ap->a_tdvp);
-	ret = ufs_rename(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_fvp);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_tvp);
-	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,ap->a_fdvp,"rename");
-	return (ret);
+	struct vnode *tvp, *fvp, *tdvp, *fdvp;
+	int error;
+	struct lfs *fs;
+
+	fs = VTOI(ap->a_fdvp)->i_lfs;
+	tvp = ap->a_tvp;
+	tdvp = ap->a_tdvp;
+	fvp = ap->a_fvp;
+	fdvp = ap->a_fdvp;
+
+	/*
+	 * Check for cross-device rename.
+	 * If it is, we don't want to set dirops, just error out.
+	 * (In particular note that MARK_VNODE(tdvp) will DTWT on
+	 * a cross-device rename.)
+	 *
+	 * Copied from ufs_rename.
+	 */
+	if ((fvp->v_mount != tdvp->v_mount) ||
+	    (tvp && (fvp->v_mount != tvp->v_mount))) {
+		error = EXDEV;
+		goto errout;
+	}
+	if ((error = SET_DIROP(fdvp))!=0)
+		goto errout;
+	MARK_VNODE(fdvp);
+	MARK_VNODE(tdvp);
+	error = ufs_rename(ap);
+	UNMARK_VNODE(fdvp);
+	UNMARK_VNODE(tdvp);
+	SET_ENDOP(fs,fdvp,"rename");
+	return (error);
+
+    errout:
+	VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+	if (tvp)
+		vput(tvp);
+	VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
+	vrele(fdvp);
+	vrele(fvp);
+	return (error);
 }
 
 /* XXX hack to avoid calling ITIMES in getattr */
@@ -587,9 +759,9 @@ lfs_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct vattr *vap = ap->a_vap;
 	/*
 	 * Copy from inode table
 	 */
@@ -640,18 +812,14 @@ lfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
-	int mod;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	struct timespec ts;
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
-		mod = ip->i_flag & IN_MODIFIED;
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
-		if (!mod && ip->i_flag & IN_MODIFIED)
-			ip->i_lfs->lfs_uinodes++;
 	}
 	simple_unlock(&vp->v_interlock);
 	return (0);
@@ -673,6 +841,7 @@ lfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	int error;
 
+	LFS_CLR_UINO(VTOI(vp), IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
 	pool_put(&lfs_inode_pool, vp->v_data);

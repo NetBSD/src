@@ -1,9 +1,10 @@
-/*	$NetBSD: key.c,v 1.11 1999/09/07 07:41:45 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.1 2000/11/20 18:11:08 bouyer Exp $	*/
+/*	$KAME: key.c,v 1.170 2000/10/07 12:03:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,29 +30,21 @@
  * SUCH DAMAGE.
  */
 
-/* KAME Id: key.c,v 1.1.6.5.2.20 1999/07/31 08:34:27 itojun Exp */
-
 /*
- * This code is referd to RFC 2367,
- * and was consulted with NRL's netkey/osdep_44bsd.c.
+ * This code is referd to RFC 2367
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__
 #include "opt_ipsec.h"
-#endif
-#endif
 
-#ifdef __NetBSD__
-# ifdef _KERNEL
-#  define KERNEL
-# endif
-#endif
+/* this is for backward compatibility. we should not touch those. */
+#define ss_len		__ss_len
+#define ss_family	__ss_family
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -59,11 +52,9 @@
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#ifdef __FreeBSD__
-#include <sys/sysctl.h>
-#endif
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -73,15 +64,21 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
-#include <netinet/in_pcb.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
+#endif /* INET6 */
+
+#ifdef INET
+#include <netinet/in_pcb.h>
+#endif
+#ifdef INET6
 #include <netinet6/in6_pcb.h>
 #endif /* INET6 */
 
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key.h>
 #include <netkey/keysock.h>
@@ -94,16 +91,40 @@
 #endif
 #include <netinet6/ipcomp.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
+#include <machine/stdarg.h>
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
-#if defined(IPSEC_DEBUG)
+#include <net/net_osdep.h>
+
+#ifndef offsetof
+#define offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
+#ifndef satosin
+#define satosin(s) ((struct sockaddr_in *)s)
+#endif
+
+/*
+ * Note on SA reference counting:
+ * - SAs that are not in DEAD state will have (total external reference + 1)
+ *   following value in reference count field.  they cannot be freed and are
+ *   referenced from SA header.
+ * - SAs that are in DEAD state will have (total external reference)
+ *   in reference count field.  they are ready to be freed.  reference from
+ *   SA header will be removed in key_delsav(), when the reference count
+ *   field hits 0 (= no external reference other than from SA header.
+ */
+
+#ifdef IPSEC_DEBUG
 u_int32_t key_debug_level = 0;
-#endif /* defined(IPSEC_DEBUG) */
+#endif
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
+static u_int32_t policy_id = 0;
 static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
 static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
 static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
@@ -112,274 +133,307 @@ static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 static u_int32_t acq_seq = 0;
 static int key_tick_init_random = 0;
 
-#ifdef RESTRICTED_DIR
-static struct keytree sptree[SADB_X_DIR_MAX];		/* SPD */
-static struct keytree saidxtree[SADB_X_DIR_MAX];	/* SADB */
-static struct keytree regtree[SADB_SATYPE_MAX + 1];
-#else
-static struct keytree sptree;		/* SPD */
-static struct keytree saidxtree;	/* SADB */
-static struct keytree regtree[SADB_SATYPE_MAX + 1];
-#endif
+static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD */
+static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
+static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
+							/* registed list */
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-static struct keytree acqtree;
+static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 #endif
+static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
+
 struct key_cb key_cb;
 
 /* search order for SAs */
 static u_int saorder_state_valid[] = {
-	SADB_SASTATE_MATURE, SADB_SASTATE_DYING
+	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
+	/*
+	 * This order is important because we must select a oldest SA
+	 * for outbound processing.  For inbound, This is not important.
+	 */
 };
 static u_int saorder_state_alive[] = {
+	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
 };
 static u_int saorder_state_any[] = {
-	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, 
+	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
-#ifdef RESTRICTED_DIR
-static u_int saorder_dir_output[] = {
-	SADB_X_DIR_OUTBOUND, SADB_X_DIR_BIDIRECT
+
+static const int minsize[] = {
+	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
+	sizeof(struct sadb_sa),		/* SADB_EXT_SA */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_CURRENT */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_HARD */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_SOFT */
+	sizeof(struct sadb_address),	/* SADB_EXT_ADDRESS_SRC */
+	sizeof(struct sadb_address),	/* SADB_EXT_ADDRESS_DST */
+	sizeof(struct sadb_address),	/* SADB_EXT_ADDRESS_PROXY */
+	sizeof(struct sadb_key),	/* SADB_EXT_KEY_AUTH */
+	sizeof(struct sadb_key),	/* SADB_EXT_KEY_ENCRYPT */
+	sizeof(struct sadb_ident),	/* SADB_EXT_IDENTITY_SRC */
+	sizeof(struct sadb_ident),	/* SADB_EXT_IDENTITY_DST */
+	sizeof(struct sadb_sens),	/* SADB_EXT_SENSITIVITY */
+	sizeof(struct sadb_prop),	/* SADB_EXT_PROPOSAL */
+	sizeof(struct sadb_supported),	/* SADB_EXT_SUPPORTED_AUTH */
+	sizeof(struct sadb_supported),	/* SADB_EXT_SUPPORTED_ENCRYPT */
+	sizeof(struct sadb_spirange),	/* SADB_EXT_SPIRANGE */
+	0,				/* SADB_X_EXT_KMPRIVATE */
+	sizeof(struct sadb_x_policy),	/* SADB_X_EXT_POLICY */
+	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
 };
-static u_int saorder_dir_input[] = {
-	SADB_X_DIR_INBOUND, SADB_X_DIR_BIDIRECT
+static const int maxsize[] = {
+	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
+	sizeof(struct sadb_sa),		/* SADB_EXT_SA */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_CURRENT */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_HARD */
+	sizeof(struct sadb_lifetime),	/* SADB_EXT_LIFETIME_SOFT */
+	0,				/* SADB_EXT_ADDRESS_SRC */
+	0,				/* SADB_EXT_ADDRESS_DST */
+	0,				/* SADB_EXT_ADDRESS_PROXY */
+	0,				/* SADB_EXT_KEY_AUTH */
+	0,				/* SADB_EXT_KEY_ENCRYPT */
+	0,				/* SADB_EXT_IDENTITY_SRC */
+	0,				/* SADB_EXT_IDENTITY_DST */
+	0,				/* SADB_EXT_SENSITIVITY */
+	0,				/* SADB_EXT_PROPOSAL */
+	0,				/* SADB_EXT_SUPPORTED_AUTH */
+	0,				/* SADB_EXT_SUPPORTED_ENCRYPT */
+	sizeof(struct sadb_spirange),	/* SADB_EXT_SPIRANGE */
+	0,				/* SADB_X_EXT_KMPRIVATE */
+	0,				/* SADB_X_EXT_POLICY */
+	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
 };
-static u_int saorder_dir_any[] = {
-	SADB_X_DIR_OUTBOUND, SADB_X_DIR_INBOUND, SADB_X_DIR_BIDIRECT
-};
+
+static const int ipsec_esp_keymin = 256;
+static const int ipsec_esp_auth = 0;
+static const int ipsec_ah_keymin = 128;
+
+#ifndef LIST_FOREACH
+#define LIST_FOREACH(elm, head, field)                                     \
+	for (elm = LIST_FIRST(head); elm; elm = LIST_NEXT(elm, field))
 #endif
+#define __LIST_CHAINED(elm) \
+	(!((elm)->chain.le_next == NULL && (elm)->chain.le_prev == NULL))
+#define LIST_INSERT_TAIL(head, elm, type, field) \
+do {\
+	struct type *curelm = LIST_FIRST(head); \
+	if (curelm == NULL) {\
+		LIST_INSERT_HEAD(head, elm, field); \
+	} else { \
+		while (LIST_NEXT(curelm, field)) \
+			curelm = LIST_NEXT(curelm, field);\
+		LIST_INSERT_AFTER(curelm, elm, field);\
+	}\
+} while (0)
 
-#ifdef __FreeBSD__
-#if defined(IPSEC_DEBUG)
-SYSCTL_INT(_net_key, KEYCTL_DEBUG_LEVEL,	debug,	CTLFLAG_RW, \
-	&key_debug_level,	0,	"");
-#endif /* defined(IPSEC_DEBUG) */
+#define KEY_CHKSASTATE(head, sav, name) \
+do { \
+	if ((head) != (sav)) {                                               \
+		printf("%s: state mismatched (TREE=%d SA=%d)\n",             \
+			(name), (head), (sav));                              \
+		continue;                                                    \
+	}                                                                    \
+} while (0)
 
-/* max count of trial for the decision of spi value */
-SYSCTL_INT(_net_key, KEYCTL_SPI_TRY,		spi_trycnt,	CTLFLAG_RW, \
-	&key_spi_trycnt,	0,	"");
-
-/* minimum spi value to allocate automatically. */
-SYSCTL_INT(_net_key, KEYCTL_SPI_MIN_VALUE,	spi_minval,	CTLFLAG_RW, \
-	&key_spi_minval,	0,	"");
-
-/* maximun spi value to allocate automatically. */
-SYSCTL_INT(_net_key, KEYCTL_SPI_MAX_VALUE,	spi_maxval,	CTLFLAG_RW, \
-	&key_spi_maxval,	0,	"");
-
-/* interval to initialize randseed */
-SYSCTL_INT(_net_key, KEYCTL_RANDOM_INT,	int_random,	CTLFLAG_RW, \
-	&key_int_random,	0,	"");
-
-/* lifetime for larval SA */
-SYSCTL_INT(_net_key, KEYCTL_LARVAL_LIFETIME,	larval_lifetime,	CTLFLAG_RW, \
-	&key_larval_lifetime,	0,	"");
-
-/* counter for blocking to send SADB_ACQUIRE to IKEd */
-SYSCTL_INT(_net_key, KEYCTL_BLOCKACQ_COUNT,	blockacq_count,	CTLFLAG_RW, \
-	&key_blockacq_count,	0,	"");
-
-/* lifetime for blocking to send SADB_ACQUIRE to IKEd */
-SYSCTL_INT(_net_key, KEYCTL_BLOCKACQ_LIFETIME,	blockacq_lifetime,	CTLFLAG_RW, \
-	&key_blockacq_lifetime,	0,	"");
-
-#endif /* __FreeBSD__ */
-
-#if (defined(__bsdi__) && !defined(ALTQ)) || defined(__NetBSD__)
-typedef void (timeout_t)(void *);
-#endif
+#define KEY_CHKSPDIR(head, sp, name) \
+do { \
+	if ((head) != (sp)) {                                                \
+		printf("%s: direction mismatched (TREE=%d SP=%d), "          \
+			"anyway continue.\n",                                \
+			(name), (head), (sp));                               \
+	}                                                                    \
+} while (0)
 
 #if 1
-#define KMALLOC(p, t, n) \
+#define KMALLOC(p, t, n)                                                     \
 	((p) = (t) malloc((unsigned long)(n), M_SECA, M_NOWAIT))
-#define KFREE(p) \
+#define KFREE(p)                                                             \
 	free((caddr_t)(p), M_SECA);
 #else
 #define KMALLOC(p, t, n) \
-	do {								\
-		((p) = (t)malloc((unsigned long)(n), M_SECA, M_NOWAIT));\
-		printf("%s %d: %p <- KMALLOC(%s, %d)\n",		\
-			__FILE__, __LINE__, (p), #t, n);		\
-	} while (0)
+do { \
+	((p) = (t)malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
+	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
+		__FILE__, __LINE__, (p), #t, n);                             \
+} while (0)
 
-#define KFREE(p) \
-	do {								\
-		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));\
-		free((caddr_t)(p), M_SECA);				\
+#define KFREE(p)                                                             \
+	do {                                                                 \
+		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));   \
+		free((caddr_t)(p), M_SECA);                                  \
 	} while (0)
 #endif
 
-#define KEY_NEWBUF(dst, t, src, len) \
-	((dst) = (t)key_newbuf((src), (len)))
+/*
+ * set parameters into secpolicyindex buffer.
+ * Must allocate secpolicyindex buffer passed to this function.
+ */
+#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, idx) \
+do { \
+	bzero((idx), sizeof(struct secpolicyindex));                             \
+	(idx)->dir = (_dir);                                                 \
+	(idx)->prefs = (ps);                                                 \
+	(idx)->prefd = (pd);                                                 \
+	(idx)->ul_proto = (ulp);                                             \
+	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
+	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
+} while (0)
 
-#ifdef RESTRICTED_DIR
-#define KEY_SADBLOOP(statements) \
-    {\
-	u_int diridx, dir;\
-	u_int stateidx;\
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {\
-		dir = saorder_dir_any[diridx];\
-		for (saidx = (struct secasindex *)saidxtree[dir].head;\
-		     saidx != NULL;\
-		     saidx = saidx->next) {\
-			for (stateidx = 0;\
-			     stateidx < _ARRAYLEN(saorder_state_any); \
-			     stateidx++) {\
-				state = saorder_state_any[stateidx];\
-				{statements}\
-			}\
-		}\
-	}\
-    }
-
-#define KEY_SPDBLOOP(statements) \
-    {\
-	u_int diridx, dir;\
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {\
-		dir = saorder_dir_any[diridx];\
-		for (sp = (struct secpolicy *)sptree[dir].head;\
-		     sp != NULL;\
-		     sp = sp->next) {\
-			{statements}\
-		}\
-	}\
-    }
-#else
-#define KEY_SADBLOOP(statements) \
-    {\
-	u_int stateidx;\
-	for (saidx = (struct secasindex *)saidxtree.head;\
-	     saidx != NULL;\
-	     saidx = saidx->next) {\
-		for (stateidx = 0;\
-		     stateidx < _ARRAYLEN(saorder_state_any); \
-		     stateidx++) {\
-			state = saorder_state_any[stateidx];\
-			{statements}\
-		}\
-	}\
-    }
-
-#define KEY_SPDBLOOP(statements) \
-    {\
-	for (sp = (struct secpolicy *)sptree.head;\
-	     sp != NULL;\
-	     sp = sp->next) {\
-		{statements}\
-	}\
-    }
-#endif
-
+/*
+ * set parameters into secasindex buffer.
+ * Must allocate secasindex buffer before calling this function.
+ */
+#define KEY_SETSECASIDX(p, m, r, s, d, idx) \
+do { \
+	bzero((idx), sizeof(struct secasindex));                             \
+	(idx)->proto = (p);                                                  \
+	(idx)->mode = (m);                                                   \
+	(idx)->reqid = (r);                                                  \
+	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
+	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
+} while (0)
 
 /* key statistics */
 struct _keystat {
 	u_long getspi_count; /* the avarage of count to try to get new SPI */
 } keystat;
 
-#if 0
-static int key_checkpolicy __P((struct secpolicy *));
-#endif
-#ifdef RESTRICTED_DIR
-static struct secas *key_allocsa_policy __P((struct secindex *,
-					struct ipsecrequest *, int, u_int *));
-#else
-static struct secas *key_allocsa_policy __P((struct secindex *,
-					struct ipsecrequest *));
-#endif
-static struct secas *key_do_allocsa_policy __P((struct secasindex *,
-					u_int, u_int, u_int));
+struct sadb_msghdr {
+	struct sadb_msg *msg;
+	struct sadb_ext *ext[SADB_EXT_MAX + 1];
+	int extoff[SADB_EXT_MAX + 1];
+	int extlen[SADB_EXT_MAX + 1];
+};
 
-#ifdef RESTRICTED_DIR
-static struct secasindex *key_newsaidx __P((struct secindex *, u_int));
-#else
-static struct secasindex *key_newsaidx __P((struct secindex *));
-#endif
-static void key_delsaidx __P((struct secasindex *));
-static struct secas *key_newsa __P((caddr_t *, struct secasindex *));
-#if 0 
-static struct secas *key_newsa2 __P((u_int, struct secasindex *));
-#endif
-static void key_delsa __P((struct secas *));
-
-#ifdef RESTRICTED_DIR
-static struct secasindex *key_getsaidx __P((struct secindex *, u_int));
-#else
-static struct secasindex *key_getsaidx __P((struct secindex *));
-#endif
-static struct secasindex *key_getsaidxfromany __P((struct secindex *));
-static struct secas *key_checkspi __P((u_int32_t, u_int));
-static struct secas *key_getsabyspi __P((struct secasindex *, u_int, u_int32_t));
-static int key_setsaval __P((struct secas *, caddr_t *));
-static u_int key_getmsglen __P((struct secas *));
-static int key_mature __P((struct secas *));
-static u_int key_setdumpsa __P((struct secas *, struct sadb_msg *));
-static void key_issaidx_dead __P((struct secasindex *));
-static caddr_t key_copysadbext __P((caddr_t, caddr_t));
-static caddr_t key_setsadbaddr __P((caddr_t, u_int, u_int,
-				caddr_t, u_int, u_int, u_int));
-
+static struct secasvar *key_allocsa_policy __P((struct secasindex *));
+static void key_freesp_so __P((struct secpolicy **));
+static struct secasvar *key_do_allocsa_policy __P((struct secashead *, u_int));
 static void key_delsp __P((struct secpolicy *));
-#ifdef RESTRICTED_DIR
-static struct secpolicy *key_getinspointforsp __P((struct secpolicy *, u_int));
-static struct secpolicy *key_getsp __P((struct secindex *, u_int));
-#else
-static struct secpolicy *key_getinspointforsp __P((struct secpolicy *));
-static struct secpolicy *key_getsp __P((struct secindex *));
-#endif
-static struct sadb_msg *key_spdadd __P((caddr_t *));
-static struct sadb_msg *key_spddelete __P((caddr_t *));
-static struct sadb_msg *key_spdflush __P((caddr_t *));
-static int key_spddump __P((caddr_t *, struct socket *, int));
-static u_int key_setdumpsp __P((struct secpolicy *, struct sadb_msg *));
-static u_int key_getspmsglen __P((struct secpolicy *));
+static struct secpolicy *key_getsp __P((struct secpolicyindex *));
+static struct secpolicy *key_getspbyid __P((u_int32_t));
+static u_int32_t key_newreqid __P((void));
+static struct mbuf *key_gather_mbuf __P((struct mbuf *,
+	const struct sadb_msghdr *, int, int, ...));
+static int key_spdadd __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static u_int32_t key_getnewspid __P((void));
+static int key_spddelete __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_spddelete2 __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_spdget __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_spdflush __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_spddump __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static struct mbuf *key_setdumpsp __P((struct secpolicy *,
+	u_int8_t, u_int32_t, u_int32_t));
 static u_int key_getspreqmsglen __P((struct secpolicy *));
-
-static void *key_newbuf __P((void *, u_int));
-static void key_insnode __P((void *, void *, void *));
-static void key_remnode __P((void *));
-#ifdef RESTRICTED_DIR
-static u_int key_checkdir __P((struct secindex *, struct sockaddr *));
-static u_int key_getaddrtype __P((u_int, caddr_t, u_int));
+static struct secashead *key_newsah __P((struct secasindex *));
+static void key_delsah __P((struct secashead *));
+static struct secasvar *key_newsav __P((struct mbuf *,
+	const struct sadb_msghdr *, struct secashead *, int *));
+static void key_delsav __P((struct secasvar *));
+static struct secashead *key_getsah __P((struct secasindex *));
+static struct secasvar *key_checkspidup __P((struct secasindex *, u_int32_t));
+static struct secasvar *key_getsavbyspi __P((struct secashead *, u_int32_t));
+static int key_setsaval __P((struct secasvar *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_mature __P((struct secasvar *));
+static struct mbuf *key_setdumpsa __P((struct secasvar *, u_int8_t,
+	u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadbmsg __P((u_int8_t, u_int16_t, u_int8_t,
+	u_int32_t, pid_t, u_int16_t));
+static struct mbuf *key_setsadbsa __P((struct secasvar *));
+static struct mbuf *key_setsadbaddr __P((u_int16_t,
+	struct sockaddr *, u_int8_t, u_int16_t));
+#if 0
+static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
+	int, u_int64_t));
 #endif
+static struct mbuf *key_setsadbxsa2(u_int8_t, u_int32_t);
+static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
+	u_int32_t));
+static void *key_newbuf __P((const void *, u_int));
 #ifdef INET6
-static int key_ismyaddr6 __P((caddr_t));
+static int key_ismyaddr6 __P((struct sockaddr_in6 *));
 #endif
-#ifdef RESTRICTED_DIR
-static int key_ismysubnet __P((u_int, caddr_t, u_int));
-static int key_isloopback __P((u_int, caddr_t));
-#endif /*RESTRICTED_DIR*/
-static int key_cmpidx __P((struct secindex *, struct secindex *));
-static int key_cmpidxwithmask __P((struct secindex *, struct secindex *));
+static int key_cmpsaidx_exactly
+	__P((struct secasindex *, struct secasindex *));
+static int key_cmpsaidx_withmode
+	__P((struct secasindex *, struct secasindex *));
+static int key_cmpsaidx_withoutmode
+	__P((struct secasindex *, struct secasindex *));
+static int key_cmpspidx_exactly
+	__P((struct secpolicyindex *, struct secpolicyindex *));
+static int key_cmpspidx_withmask
+	__P((struct secpolicyindex *, struct secpolicyindex *));
+static int key_sockaddrcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
+static void key_srandom __P((void));
+static u_int16_t key_satype2proto __P((u_int8_t));
+static u_int8_t key_proto2satype __P((u_int16_t));
 
-static struct sadb_msg *key_getspi __P((caddr_t *));
-static u_int32_t key_do_getnewspi __P((struct sadb_spirange *, u_int));
-static struct sadb_msg *key_update __P((caddr_t *));
-static struct secas *key_getsabyseq __P((struct secasindex *, u_int32_t));
-static struct sadb_msg *key_add __P((caddr_t *));
-struct sadb_msg *key_getmsgbuf_x1 __P((caddr_t *));
-static struct sadb_msg *key_delete __P((caddr_t *));
-static struct sadb_msg *key_get __P((caddr_t *));
-static int key_acquire __P((struct secindex *, u_int, struct sockaddr *));
-static struct secacq *key_newacq __P((struct secindex *, u_int, struct sockaddr *));
-static void key_delacq __P((struct secacq *));
-static struct secacq *key_getacq __P((struct secindex *, u_int, struct sockaddr *));
+static int key_getspi __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static u_int32_t key_do_getnewspi __P((struct sadb_spirange *,
+					struct secasindex *));
+static int key_update __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+#ifdef IPSEC_DOSEQCHECK
+static struct secasvar *key_getsavbyseq __P((struct secashead *, u_int32_t));
+#endif
+static int key_add __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_setident __P((struct secashead *, struct mbuf *,
+	const struct sadb_msghdr *));
+static struct mbuf *key_getmsgbuf_x1 __P((struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_delete __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_get __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+
+static void key_getcomb_setlifetime __P((struct sadb_comb *));
+#ifdef IPSEC_ESP
+static struct mbuf *key_getcomb_esp __P((void));
+#endif
+static struct mbuf *key_getcomb_ah __P((void));
+static struct mbuf *key_getcomb_ipcomp __P((void));
+static struct mbuf *key_getprop __P((const struct secasindex *));
+
+static int key_acquire __P((struct secasindex *, struct secpolicy *));
+#ifndef IPSEC_NONBLOCK_ACQUIRE
+static struct secacq *key_newacq __P((struct secasindex *));
+static struct secacq *key_getacq __P((struct secasindex *));
 static struct secacq *key_getacqbyseq __P((u_int32_t));
-static struct sadb_msg *key_acquire2 __P((caddr_t *));
-static struct sadb_msg *key_register __P((caddr_t *, struct socket *));
-static int key_expire __P((struct secas *sa));
-static struct sadb_msg *key_flush __P((caddr_t *));
-static int key_dump __P((caddr_t *, struct socket *, int));
-static void key_promisc __P((caddr_t *, struct socket *));
-static int key_sendall __P((struct sadb_msg *, u_int));
-
-static int key_check __P((struct sadb_msg *, caddr_t *));
+#endif
+static struct secspacq *key_newspacq __P((struct secpolicyindex *));
+static struct secspacq *key_getspacq __P((struct secpolicyindex *));
+static int key_acquire2 __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_register __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_expire __P((struct secasvar *));
+static int key_flush __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_dump __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_promisc __P((struct socket *, struct mbuf *,
+	const struct sadb_msghdr *));
+static int key_senderror __P((struct socket *, struct mbuf *, int));
+static int key_validate_ext __P((const struct sadb_ext *, int));
+static int key_align __P((struct mbuf *, struct sadb_msghdr *));
 #if 0
 static const char *key_getfqdn __P((void));
 static const char *key_getuserfqdn __P((void));
 #endif
-
-static void key_sa_chgstate __P((struct secas *, u_int));
+static void key_sa_chgstate __P((struct secasvar *, u_int8_t));
+static struct mbuf *key_alloc_mbuf __P((int));
+struct callout key_timehandler_ch;
 
 /* %%% IPsec policy management */
 /*
@@ -389,75 +443,53 @@ static void key_sa_chgstate __P((struct secas *, u_int));
  *	others:	found and return the pointer.
  */
 struct secpolicy *
-key_allocsp(idx)
-	struct secindex *idx;
+key_allocsp(spidx, dir)
+	struct secpolicyindex *spidx;
+	u_int dir;
 {
 	struct secpolicy *sp;
-#ifdef RESTRICTED_DIR
-	u_int *order;
-	u_int diridx, diridxlen, dir;
-#endif
+	int s;
 
 	/* sanity check */
-	if (idx == NULL)
+	if (spidx == NULL)
 		panic("key_allocsp: NULL pointer is passed.\n");
 
-#ifdef RESTRICTED_DIR
-	/* checking the direciton. */ 
-	dir = key_checkdir(idx, NULL);
+	/* check direction */
 	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-		order = saorder_dir_input;
-		diridxlen = _ARRAYLEN(saorder_dir_input);
-		break;
-	case SADB_X_DIR_OUTBOUND:
-		order = saorder_dir_output;
-		diridxlen = _ARRAYLEN(saorder_dir_output);
-		break;
-	case SADB_X_DIR_BIDIRECT:
-	case SADB_X_DIR_INVALID:
-		order = saorder_dir_any;
-		diridxlen = _ARRAYLEN(saorder_dir_any);
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
 		break;
 	default:
 		panic("key_allocsp: Invalid direction is passed.\n");
 	}
-#endif
 
 	/* get a SP entry */
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < diridxlen; diridx++) {
+	s = splsoftnet();	/*called from softclock()*/
+	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+		printf("*** objects\n");
+		kdebug_secpolicyindex(spidx));
 
-		dir = order[diridx];
-		for (sp = (struct secpolicy *)sptree[dir].head;
-		     sp != NULL;
-		     sp = sp->next) {
-
-			if (sp->state == IPSEC_SPSTATE_DEAD)
-				continue;
-
-			if (key_cmpidxwithmask(&sp->idx, idx))
-				goto found;
-		}
-	}
-#else
-	for (sp = (struct secpolicy *)sptree.head;
-	     sp != NULL;
-	     sp = sp->next) {
+	LIST_FOREACH(sp, &sptree[dir], chain) {
+		KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+			printf("*** in SPD\n");
+			kdebug_secpolicyindex(&sp->spidx));
 
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
-
-		if (key_cmpidxwithmask(&sp->idx, idx))
+		if (key_cmpspidx_withmask(&sp->spidx, spidx))
 			goto found;
 	}
-#endif
 
+	splx(s);
 	return NULL;
 
 found:
+	/* sanity check */
+	KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp");
+
 	/* found a SPD entry */
 	sp->refcnt++;
+	splx(s);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP key_allocsp cause refcnt++:%d SP:%p\n",
 			sp->refcnt, sp));
@@ -465,71 +497,30 @@ found:
 	return sp;
 }
 
-#if 0
 /*
- * checking each SA entries in SP to acquire.
- * OUT:	0: valid.
- *	ENOENT: policy is valid, but some SA is on acquiring.
- */
-int
-key_checkpolicy(sp)
-	struct secpolicy *sp;
-{
-	struct ipsecrequest *isr;
-
-	/* sanity check */
-	if (sp == NULL)
-		panic("key_checkpolicy: NULL pointer is passed.\n");
-
-	/* checking policy */
-	switch (sp->policy) {
-	case IPSEC_POLICY_DISCARD:
-	case IPSEC_POLICY_NONE:
-		/* no need to check SA entries */
-		return 0;
-		/* NOTREACHED */
-	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL)
-			panic("key_checkpolicy: No IPsec request specified.\n");
-		break;
-	default:
-		panic("key_checkpolicy: Invalid policy defined.\n");
-	}
-
-	/* checking each IPsec request. */
-	for (isr = sp->req; isr != NULL; isr = isr->next) {
-		if (key_checkrequest(isr))
-			return ENOENT;
-	}
-
-	return 0;
-}
-#endif
-
-/*
- * checking each request entries in SP to acquire.
+ * allocating a SA entry for a *OUTBOUND* packet.
+ * checking each request entries in SP, and acquire SA if need.
  * OUT:	0: there are valid requests.
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
 int
-key_checkrequest(isr)
+key_checkrequest(isr, saidx)
 	struct ipsecrequest *isr;
+	struct secasindex *saidx;
 {
 	u_int level;
 	int error;
 
 	/* sanity check */
-	if (isr == NULL)
+	if (isr == NULL || saidx == NULL)
 		panic("key_checkrequest: NULL pointer is passed.\n");
 
-	/* checking mode */
-	switch (isr->mode) {
+	/* check mode */
+	switch (saidx->mode) {
 	case IPSEC_MODE_TRANSPORT:
-		break;
 	case IPSEC_MODE_TUNNEL:
-		if (isr->proxy == NULL)
-			panic("key_checkrequest: No proxy specified.\n");
 		break;
+	case IPSEC_MODE_ANY:
 	default:
 		panic("key_checkrequest: Invalid policy defined.\n");
 	}
@@ -537,110 +528,86 @@ key_checkrequest(isr)
 	/* get current level */
 	level = ipsec_get_reqlevel(isr);
 
-	/* new SA allocation for current policy */
-	if (isr->sa != NULL) {
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP checkrequest calls free SA:%p\n", isr->sa));
-		key_freesa(isr->sa);
-		isr->sa = NULL;
+#if 0
+	/*
+	 * We do allocate new SA only if the state of SA in the holder is
+	 * SADB_SASTATE_DEAD.  The SA for outbound must be the oldest.
+	 */
+	if (isr->sav != NULL) {
+		if (isr->sav->sah == NULL)
+			panic("key_checkrequest: sah is null.\n");
+		if (isr->sav == (struct secasvar *)LIST_FIRST(
+			    &isr->sav->sah->savtree[SADB_SASTATE_DEAD])) {
+			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+				printf("DP checkrequest calls free SA:%p\n",
+					isr->sav));
+			key_freesav(isr->sav);
+			isr->sav = NULL;
+		}
 	}
-
-#ifdef RESTRICTED_DIR
-	isr->sa = key_allocsa_policy(&isr->sp->idx, isr,
-	                             _ARRAYLEN(saorder_dir_output),
-	                             saorder_dir_output);
 #else
-	isr->sa = key_allocsa_policy(&isr->sp->idx, isr);
+	/*
+	 * we free any SA stashed in the IPsec request because a different
+	 * SA may be involved each time this request is checked, either
+	 * because new SAs are being configured, or this request is
+	 * associated with an unconnected datagram socket, or this request
+	 * is associated with a system default policy.
+	 *
+	 * The operation may have negative impact to performance.  We may
+	 * want to check cached SA carefully, rather than picking new SA
+	 * every time.
+	 */
+	if (isr->sav != NULL) {
+		key_freesav(isr->sav);
+		isr->sav = NULL;
+	}
 #endif
 
+	/*
+	 * new SA allocation if no SA found.
+	 * key_allocsa_policy should allocate the oldest SA available.
+	 * See key_do_allocsa_policy(), and draft-jenkins-ipsec-rekeying-03.txt.
+	 */
+	if (isr->sav == NULL)
+		isr->sav = key_allocsa_policy(saidx);
+
 	/* When there is SA. */
-	if (isr->sa != NULL)
+	if (isr->sav != NULL)
 		return 0;
 
 	/* there is no SA */
-    {
-	u_int proto;
-
-	/* mapping IPPROTO to SADB_SATYPE */
-	switch (isr->proto) {
-	case IPPROTO_ESP:
-		proto = SADB_SATYPE_ESP;
-		break;
-	case IPPROTO_AH:
-		proto = SADB_SATYPE_AH;
-		break;
-#if 1	/*nonstandard*/
-	case IPPROTO_IPCOMP:
-		proto = SADB_X_SATYPE_IPCOMP;
-		break;
-#endif
-	default:
-		panic("key_checkrequest: Invalid proto type passed.\n");
-	}
-
-	if ((error = key_acquire(&isr->sp->idx, proto, isr->proxy)) != 0) {
+	if ((error = key_acquire(saidx, isr->sp)) != 0) {
 		/* XXX What I do ? */
+#ifdef IPSEC_DEBUG
 		printf("key_checkrequest: error %d returned "
 			"from key_acquire.\n", error);
+#endif
 		return error;
 	}
-    }
 
 	return level == IPSEC_LEVEL_REQUIRE ? ENOENT : 0;
 }
 
 /*
- * allocating a SA for policy entry from SADB for the direction specified.
- * NOTE: searching SADB of aliving state.
+ * allocating a SA for policy entry from SAD.
+ * NOTE: searching SAD of aliving state.
  * OUT:	NULL:	not found.
  *	others:	found and return the pointer.
  */
-static struct secas *
-#ifdef RESTRICTED_DIR
-key_allocsa_policy(idx, isr, diridxplen, diridxp)
-	struct secindex *idx;
-	struct ipsecrequest *isr;
-	int diridxplen;
-	u_int diridxp[];
-#else
-key_allocsa_policy(idx, isr)
-	struct secindex *idx;
-	struct ipsecrequest *isr;
-#endif
-{
+static struct secasvar *
+key_allocsa_policy(saidx)
 	struct secasindex *saidx;
-	struct secas *sa;
+{
+	struct secashead *sah;
+	struct secasvar *sav;
 	u_int stateidx, state;
-#ifdef RESTRICTED_DIR
-	u_int diridx, dir;
-#endif
 
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < diridxplen; diridx++) {
-
-		dir = diridxp[diridx];
-
-		/* there is no SP in this tree */
-		if (saidxtree[dir].head == NULL)
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-
-		for (saidx = (struct secasindex *)saidxtree[dir].head;
-		     saidx != NULL;
-		     saidx = saidx->next) {
-
-			if (key_cmpidxwithmask(&saidx->idx, idx))
-				goto found;
-		}
-	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		if (key_cmpidxwithmask(&saidx->idx, idx))
+		if (key_cmpsaidx_withmode(&sah->saidx, saidx))
 			goto found;
 	}
-#endif
 
 	return NULL;
 
@@ -653,268 +620,211 @@ key_allocsa_policy(idx, isr)
 
 		state = saorder_state_valid[stateidx];
 
-		sa = key_do_allocsa_policy(saidx, isr->proto, isr->mode, state);
-		if (sa != NULL) {
-			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-				printf("DP allocsa_policy cause "
-					"refcnt++:%d SA:%p\n",
-					sa->refcnt, sa));
-			return sa;
-		}
+		sav = key_do_allocsa_policy(sah, state);
+		if (sav != NULL)
+			return sav;
 	}
 
 	return NULL;
 }
 
 /*
- * searching SADB with direction, protocol, mode and state.
+ * searching SAD with direction, protocol, mode and state.
  * called by key_allocsa_policy().
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
  */
-static struct secas *
-key_do_allocsa_policy(saidx, proto, mode, state)
-	struct secasindex *saidx;
-	u_int proto, mode, state;
+static struct secasvar *
+key_do_allocsa_policy(sah, state)
+	struct secashead *sah;
+	u_int state;
 {
-	struct secas *sa, *candidate;
-
-	switch (proto) {
-	case IPPROTO_ESP:
-		proto = SADB_SATYPE_ESP;
-		break;
-	case IPPROTO_AH:
-		proto = SADB_SATYPE_AH;
-		break;
-#if 1	/*nonstandard*/
-	case IPPROTO_IPCOMP:
-		proto = SADB_X_SATYPE_IPCOMP;
-		break;
-#endif
-	default:
-		printf("key_do_allocsa_policy: invalid proto type\n");
-		return NULL;
-	}
+	struct secasvar *sav, *candidate;
 
 	/* initilize */
 	candidate = NULL;
 
-	for (sa = (struct secas *)saidx->satree[state].head;
-	     sa != NULL;
-	     sa = sa->next) {
+	LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
 		/* sanity check */
-		if (sa->state != state) {
-			printf("key_do_allocsa_policy: state mismatch "
-			       "(DB:%u param:%u), anyway continue.\n",
-				sa->state, state);
-			continue;
-		}
-
-		if (sa->type != proto)
-			continue;
-
-		/* check transport mode */
-		if (mode == IPSEC_MODE_TRANSPORT && sa->proxy != NULL)
-			continue;
-
-		/* check proxy address for tunnel mode */
-		if (mode == IPSEC_MODE_TUNNEL && sa->proxy == NULL)
-			continue;
+		KEY_CHKSASTATE(sav->state, state, "key_do_allocsa_policy");
 
 		/* initialize */
 		if (candidate == NULL) {
-			candidate = sa;
+			candidate = sav;
 			continue;
 		}
 
 		/* Which SA is the better ? */
 
 		/* sanity check 2 */
-		if (candidate->lft_c == NULL || sa->lft_c == NULL) {
-			/*XXX do panic ? */
-			printf("key_do_allocsa_policy: "
+		if (candidate->lft_c == NULL || sav->lft_c == NULL)
+			panic("key_do_allocsa_policy: "
 				"lifetime_current is NULL.\n");
-			continue;
-		}
 
 		/* XXX What the best method is to compare ? */
-		if (candidate->lft_c->sadb_lifetime_addtime <
-				sa->lft_c->sadb_lifetime_addtime) {
-			candidate = sa;
+		if (candidate->lft_c->sadb_lifetime_addtime >
+				sav->lft_c->sadb_lifetime_addtime) {
+			candidate = sav;
 			continue;
 		}
 	}
 
-	if (candidate)
+	if (candidate) {
 		candidate->refcnt++;
+		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+			printf("DP allocsa_policy cause "
+				"refcnt++:%d SA:%p\n",
+				candidate->refcnt, candidate));
+	}
 	return candidate;
 }
 
 /*
  * allocating a SA entry for a *INBOUND* packet.
- * Must call key_freesa() later.
- * OUT: positive:	pointer to a sa.
+ * Must call key_freesav() later.
+ * OUT: positive:	pointer to a sav.
  *	NULL:		not found, or error occured.
+ *
+ * In the comparison, source address will be ignored for RFC2401 conformance.
+ * To quote, from section 4.1:
+ *	A security association is uniquely identified by a triple consisting
+ *	of a Security Parameter Index (SPI), an IP Destination Address, and a
+ *	security protocol (AH or ESP) identifier.
+ * Note that, however, we do need to keep source address in IPsec SA.
+ * IKE specification and PF_KEY specification do assume that we
+ * keep source address in IPsec SA.  We see a tricky situation here.
  */
-struct secas *
+struct secasvar *
 key_allocsa(family, src, dst, proto, spi)
 	u_int family, proto;
 	caddr_t src, dst;
 	u_int32_t spi;
 {
-	struct secasindex *saidx;
-	struct secas *sa;
+	struct secashead *sah;
+	struct secasvar *sav;
 	u_int stateidx, state;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	int s;
 
 	/* sanity check */
 	if (src == NULL || dst == NULL)
 		panic("key_allocsa: NULL pointer is passed.\n");
 
-	/* fix proto to use. */
-	switch (proto) {
-	case IPPROTO_ESP:
-		proto = SADB_SATYPE_ESP;
-		break;
-	case IPPROTO_AH:
-		proto = SADB_SATYPE_AH;
-		break;
-#if 1	/*nonstandard*/
-	case IPPROTO_IPCOMP:
-		proto = SADB_X_SATYPE_IPCOMP;
-		break;
-#endif
-	default:
-		printf("key_allocsa: invalid protocol type passed.\n");
-		return NULL;
-	}
-
-#ifdef RESTRICTED_DIR
-	/* set direction */
-	if (key_isloopback(family, dst))
-		dir = SADB_X_DIR_BIDIRECT;
-	else
-		dir = SADB_X_DIR_INBOUND;
-#endif
-
 	/*
-	 * searching SADB.
-	 * transport mode case looks trivial.
-	 * for tunnel mode case (sa->proxy != 0), we will only be able to
-	 * check (spi, dst).
-	 * when ESP tunnel packet is received, internal IP header is
+	 * searching SAD.
+	 * XXX: to be checked internal IP header somewhere.  Also when
+	 * IPsec tunnel packet is received.  But ESP tunnel mode is
 	 * encrypted so we can't check internal IP header.
-	 *
-	 * IP1 ESP(IP2 payload)
-	 *	sa->proxy == IP1.dst (my addr)
-	 *	sa->saidx->idx.src == IP2.src
-	 *	sa->saidx->idx.dst == IP2.dst
 	 */
-#ifdef RESTRICTED_DIR
-	for (saidx = (struct secasindex *)saidxtree[dir].head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
+	s = splsoftnet();	/*called from softclock()*/
+	LIST_FOREACH(sah, &sahtree, chain) {
 		/* search valid state */
 		for (stateidx = 0;
 		     stateidx < _ARRAYLEN(saorder_state_valid);
 		     stateidx++) {
-
 			state = saorder_state_valid[stateidx];
-			for (sa = (struct secas *)saidx->satree[state].head;
-			     sa != NULL;
-			     sa = sa->next) {
-
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				/* sanity check */
-				if (sa->state != state) {
-					printf("key_allocsa: "
-						"invalid sa->state "
-						"(queue: %d SA: %d)\n",
-						state, sa->state);
+				KEY_CHKSASTATE(sav->state, state, "key_allocsav");
+				if (proto != sav->sah->saidx.proto)
+					continue;
+				if (spi != sav->spi)
+					continue;
+				if (family != sav->sah->saidx.src.ss_family ||
+				    family != sav->sah->saidx.dst.ss_family)
+					continue;
+
+#if 0	/* don't check src */
+				/* check src address */
+				switch (family) {
+				case AF_INET:
+					bzero(&sin, sizeof(sin));
+					sin.sin_family = AF_INET;
+					sin.sin_len = sizeof(sin);
+					bcopy(src, &sin.sin_addr,
+					    sizeof(sin.sin_addr));
+					if (key_sockaddrcmp((struct sockaddr*)&sin,
+					    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
+						continue;
+
+					break;
+				case AF_INET6:
+					bzero(&sin6, sizeof(sin6));
+					sin6.sin6_family = AF_INET6;
+					sin6.sin6_len = sizeof(sin6);
+					bcopy(src, &sin6.sin6_addr,
+					    sizeof(sin6.sin6_addr));
+					if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
+						/* kame fake scopeid */
+						sin6.sin6_scope_id =
+						    ntohs(sin6.sin6_addr.s6_addr16[1]);
+						sin6.sin6_addr.s6_addr16[1] = 0;
+					}
+					if (key_sockaddrcmp((struct sockaddr*)&sin6,
+					    (struct sockaddr *)&sav->sah->saidx.src, 0) != 0)
+						continue;
+					break;
+				default:
+					printf("key_allocsa: unknown address family=%d.\n",
+						family);
 					continue;
 				}
 
-				if (sa->type != proto)
-					continue;
-				if (sa->spi != spi)
-					continue;
-
-				if (sa->proxy == NULL
-				 && key_bbcmp(src, (caddr_t)&sa->saidx->idx.src,
-				              sa->saidx->idx.prefs)
-				 && key_bbcmp(dst, (caddr_t)&sa->saidx->idx.dst,
-				              sa->saidx->idx.prefd)) {
-					goto found;
-				}
-
-				if (sa->proxy != NULL
-				 && bcmp(dst, _INADDRBYSA(sa->proxy),
-				      _INALENBYAF(sa->proxy->sa_family)) == 0) {
-					goto found;
-				}
-			}
-		}
-	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		/* search valid state */
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_valid);
-		     stateidx++) {
-
-			state = saorder_state_valid[stateidx];
-			for (sa = (struct secas *)saidx->satree[state].head;
-			     sa != NULL;
-			     sa = sa->next) {
-
-				/* sanity check */
-				if (sa->state != state) {
-					printf("key_allocsa: "
-						"invalid sa->state "
-						"(queue: %d SA: %d)\n",
-						state, sa->state);
-					continue;
-				}
-
-				if (sa->type != proto)
-					continue;
-				if (sa->spi != spi)
-					continue;
-
-				if (sa->proxy == NULL
-				 && key_bbcmp(src, (caddr_t)&sa->saidx->idx.src,
-				              sa->saidx->idx.prefs)
-				 && key_bbcmp(dst, (caddr_t)&sa->saidx->idx.dst,
-				              sa->saidx->idx.prefd)) {
-					goto found;
-				}
-
-				if (sa->proxy != NULL
-				 && bcmp(dst, _INADDRBYSA(sa->proxy),
-				      _INALENBYAF(sa->proxy->sa_family)) == 0) {
-					goto found;
-				}
-			}
-		}
-	}
 #endif
+				/* check dst address */
+				switch (family) {
+				case AF_INET:
+					bzero(&sin, sizeof(sin));
+					sin.sin_family = AF_INET;
+					sin.sin_len = sizeof(sin);
+					bcopy(dst, &sin.sin_addr,
+					    sizeof(sin.sin_addr));
+					if (key_sockaddrcmp((struct sockaddr*)&sin,
+					    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
+						continue;
+
+					break;
+				case AF_INET6:
+					bzero(&sin6, sizeof(sin6));
+					sin6.sin6_family = AF_INET6;
+					sin6.sin6_len = sizeof(sin6);
+					bcopy(dst, &sin6.sin6_addr,
+					    sizeof(sin6.sin6_addr));
+					if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
+						/* kame fake scopeid */
+						sin6.sin6_scope_id =
+						    ntohs(sin6.sin6_addr.s6_addr16[1]);
+						sin6.sin6_addr.s6_addr16[1] = 0;
+					}
+					if (key_sockaddrcmp((struct sockaddr*)&sin6,
+					    (struct sockaddr *)&sav->sah->saidx.dst, 0) != 0)
+						continue;
+					break;
+				default:
+					printf("key_allocsa: unknown address family=%d.\n",
+						family);
+					continue;
+				}
+
+				goto found;
+			}
+		}
+	}
 
 	/* not found */
+	splx(s);
 	return NULL;
 
 found:
-	sa->refcnt++;
+	sav->refcnt++;
+	splx(s);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP allocsa cause refcnt++:%d SA:%p\n",
-			sa->refcnt, sa));
-	return sa;
+			sav->refcnt, sav));
+	return sav;
 }
 
 /*
@@ -948,8 +858,6 @@ void
 key_freeso(so)
 	struct socket *so;
 {
-	struct secpolicy **sp;
-
 	/* sanity check */
 	if (so == NULL)
 		panic("key_freeso: NULL pointer is passed.\n");
@@ -961,33 +869,44 @@ key_freeso(so)
 		struct inpcb *pcb = sotoinpcb(so);
 
 		/* Does it have a PCB ? */
-		if (pcb == 0)
+		if (pcb == NULL)
 			return;
-		sp = &pcb->inp_sp;
+		key_freesp_so(&pcb->inp_sp->sp_in);
+		key_freesp_so(&pcb->inp_sp->sp_out);
 	    }
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
 	    {
-		struct in6pcb *pcb = sotoin6pcb(so);
+		struct in6pcb *pcb  = sotoin6pcb(so);
 
 		/* Does it have a PCB ? */
-		if (pcb == 0)
+		if (pcb == NULL)
 			return;
-		sp = &pcb->in6p_sp;
+		key_freesp_so(&pcb->in6p_sp->sp_in);
+		key_freesp_so(&pcb->in6p_sp->sp_out);
 	    }
 		break;
 #endif /* INET6 */
 	default:
+#ifdef IPSEC_DEBUG
 		printf("key_freeso: unknown address family=%d.\n",
 			so->so_proto->pr_domain->dom_family);
+#endif
 		return;
 	}
 
+	return;
+}
+
+static void
+key_freesp_so(sp)
+	struct secpolicy **sp;
+{
 	/* sanity check */
-	if (*sp == NULL)
-		panic("key_freeso: sp == NULL\n");
+	if (sp == NULL || *sp == NULL)
+		panic("key_freesp_so: sp == NULL\n");
 
 	switch ((*sp)->policy) {
 	case IPSEC_POLICY_IPSEC:
@@ -1000,7 +919,7 @@ key_freeso(so)
 	case IPSEC_POLICY_BYPASS:
 		return;
 	default:
-		panic("key_freeso: Invalid policy found %d", (*sp)->policy);
+		panic("key_freesp_so: Invalid policy found %d", (*sp)->policy);
 	}
 
 	return;
@@ -1012,20 +931,20 @@ key_freeso(so)
  * for a policy.
  */
 void
-key_freesa(sa)
-	struct secas *sa;
+key_freesav(sav)
+	struct secasvar *sav;
 {
 	/* sanity check */
-	if (sa == NULL)
-		panic("key_freesa: NULL pointer is passed.\n");
+	if (sav == NULL)
+		panic("key_freesav: NULL pointer is passed.\n");
 
-	sa->refcnt--;
+	sav->refcnt--;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP freesa cause refcnt--:%d SA:%p SPI %d\n",
-			sa->refcnt, sa, (u_int32_t)ntohl(sa->spi)));
+		printf("DP freesav cause refcnt--:%d SA:%p SPI %u\n",
+			sav->refcnt, sav, (u_int32_t)ntohl(sav->spi)));
 
-	if (sa->refcnt == 0)
-		key_delsa(sa);
+	if (sav->refcnt == 0)
+		key_delsav(sav);
 
 	return;
 }
@@ -1038,6 +957,8 @@ static void
 key_delsp(sp)
 	struct secpolicy *sp;
 {
+	int s;
+
 	/* sanity check */
 	if (sp == NULL)
 		panic("key_delsp: NULL pointer is passed.\n");
@@ -1047,33 +968,32 @@ key_delsp(sp)
 	if (sp->refcnt > 0)
 		return; /* can't free */
 
+	s = splsoftnet();	/*called from softclock()*/
 	/* remove from SP index */
-	if (sp->spt != NULL)
-		key_remnode(sp);
-
-	key_delsecidx(&sp->idx);
+	if (__LIST_CHAINED(sp))
+		LIST_REMOVE(sp, chain);
 
     {
-	struct ipsecrequest *isr = sp->req, *isr_next;
+	struct ipsecrequest *isr = sp->req, *nextisr;
 
 	while (isr != NULL) {
-		if (isr->proxy != NULL)
-			KFREE(isr->proxy);
-		if (isr->sa != NULL) {
+		if (isr->sav != NULL) {
 			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 				printf("DP delsp calls free SA:%p\n",
-					isr->sa));
-			key_freesa(isr->sa);
-			isr->sa = NULL;
+					isr->sav));
+			key_freesav(isr->sav);
+			isr->sav = NULL;
 		}
 
-		isr_next = isr->next;
+		nextisr = isr->next;
 		KFREE(isr);
-		isr = isr_next;
+		isr = nextisr;
 	}
     }
 
-	KFREE(sp);
+	keydb_delsecpolicy(sp);
+
+	splx(s);
 
 	return;
 }
@@ -1084,80 +1004,55 @@ key_delsp(sp)
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
-#ifdef RESTRICTED_DIR
-key_getinspointforsp(sp, dir)
-	struct secpolicy *sp;
-	u_int dir;
-#else
-key_getinspointforsp(sp)
-	struct secpolicy *sp;
-#endif
+key_getsp(spidx)
+	struct secpolicyindex *spidx;
 {
-	if (sp == NULL)
-		return NULL;
+	struct secpolicy *sp;
 
-	/* XXX Do code !*/
-	return NULL;
+	/* sanity check */
+	if (spidx == NULL)
+		panic("key_getsp: NULL pointer is passed.\n");
 
-#ifdef RESTRICTED_DIR
-	for (sp = (struct secpolicy *)sptree[dir].head;
-	     sp != NULL;
-	     sp = sp->next) {
-		/* XXX Do code ! */
-		;
+	LIST_FOREACH(sp, &sptree[spidx->dir], chain) {
+		if (sp->state == IPSEC_SPSTATE_DEAD)
+			continue;
+		if (key_cmpspidx_exactly(spidx, &sp->spidx)) {
+			sp->refcnt++;
+			return sp;
+		}
 	}
-#else
-	for (sp = (struct secpolicy *)sptree.head;
-	     sp != NULL;
-	     sp = sp->next) {
-		/* XXX Do code ! */
-		;
-	}
-#endif
 
 	return NULL;
 }
 
 /*
- * search SPD
+ * get SP by index.
  * OUT:	NULL	: not found
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
-#ifdef RESTRICTED_DIR
-key_getsp(idx, dir)
-	struct secindex *idx;
-	u_int dir;
-#else
-key_getsp(idx)
-	struct secindex *idx;
-#endif
+key_getspbyid(id)
+	u_int32_t id;
 {
 	struct secpolicy *sp;
 
-	/* sanity check */
-	if (idx == NULL)
-		panic("key_getsp: NULL pointer is passed.\n");
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_INBOUND], chain) {
+		if (sp->state == IPSEC_SPSTATE_DEAD)
+			continue;
+		if (sp->id == id) {
+			sp->refcnt++;
+			return sp;
+		}
+	}
 
-#ifdef RESTRICTED_DIR
-	for (sp = (struct secpolicy *)sptree[dir].head;
-	     sp != NULL;
-	     sp = sp->next) {
-		if (sp->state != IPSEC_SPSTATE_ALIVE)
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_OUTBOUND], chain) {
+		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
-		if (key_cmpidx(&sp->idx, idx))
+		if (sp->id == id) {
+			sp->refcnt++;
 			return sp;
+		}
 	}
-#else
-	for (sp = (struct secpolicy *)sptree.head;
-	     sp != NULL;
-	     sp = sp->next) {
-		if (sp->state != IPSEC_SPSTATE_ALIVE)
-			continue;
-		if (key_cmpidx(&sp->idx, idx))
-			return sp;
-	}
-#endif
 
 	return NULL;
 }
@@ -1167,12 +1062,9 @@ key_newsp()
 {
 	struct secpolicy *newsp = NULL;
 
-	KMALLOC(newsp, struct secpolicy *, sizeof(*newsp));
-	if (newsp == NULL) {
-		printf("key_newsp: No more memory.\n");
-		return NULL;
-	}
-	bzero(newsp, sizeof(*newsp));
+	newsp = keydb_newsecpolicy();
+	if (!newsp)
+		return newsp;
 
 	newsp->refcnt = 1;
 	newsp->req = NULL;
@@ -1182,21 +1074,37 @@ key_newsp()
 
 /*
  * create secpolicy structure from sadb_x_policy structure.
- * NOTE: `state', `secindex' in secpolicy structure are not set,
+ * NOTE: `state', `secpolicyindex' in secpolicy structure are not set,
  * so must be set properly later.
  */
 struct secpolicy *
-key_msg2sp(xpl0)
+key_msg2sp(xpl0, len, error)
 	struct sadb_x_policy *xpl0;
+	size_t len;
+	int *error;
 {
 	struct secpolicy *newsp;
 
 	/* sanity check */
 	if (xpl0 == NULL)
 		panic("key_msg2sp: NULL pointer was passed.\n");
-
-	if ((newsp = key_newsp()) == NULL)
+	if (len < sizeof(*xpl0))
+		panic("key_msg2sp: invalid length.\n");
+	if (len != PFKEY_EXTLEN(xpl0)) {
+#ifdef IPSEC_DEBUG
+		printf("key_msg2sp: Invalid msg length.\n");
+#endif
+		*error = EINVAL;
 		return NULL;
+	}
+
+	if ((newsp = key_newsp()) == NULL) {
+		*error = ENOBUFS;
+		return NULL;
+	}
+
+	newsp->spidx.dir = xpl0->sadb_x_policy_dir;
+	newsp->policy = xpl0->sadb_x_policy_type;
 
 	/* check policy */
 	switch (xpl0->sadb_x_policy_type) {
@@ -1204,7 +1112,6 @@ key_msg2sp(xpl0)
 	case IPSEC_POLICY_NONE:
 	case IPSEC_POLICY_ENTRUST:
 	case IPSEC_POLICY_BYPASS:
-		newsp->policy = xpl0->sadb_x_policy_type;
 		newsp->req = NULL;
 		break;
 
@@ -1213,417 +1120,953 @@ key_msg2sp(xpl0)
 		int tlen;
 		struct sadb_x_ipsecrequest *xisr;
 		struct ipsecrequest **p_isr = &newsp->req;
-		int xxx_len; /* for sanity check */
 
 		/* validity check */
-		if (PFKEY_UNUNIT64(xpl0->sadb_x_policy_len) <= sizeof(*xpl0)) {
+		if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
+#ifdef IPSEC_DEBUG
 			printf("key_msg2sp: Invalid msg length.\n");
+#endif
 			key_freesp(newsp);
+			*error = EINVAL;
 			return NULL;
 		}
 
-		tlen = PFKEY_UNUNIT64(xpl0->sadb_x_policy_len) - sizeof(*xpl0);
-		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xpl0
-			                                + sizeof(*xpl0));
+		tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
+		xisr = (struct sadb_x_ipsecrequest *)(xpl0 + 1);
 
 		while (tlen > 0) {
 
+			/* length check */
+			if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
+#ifdef IPSEC_DEBUG
+				printf("key_msg2sp: "
+					"invalid ipsecrequest length.\n");
+#endif
+				key_freesp(newsp);
+				*error = EINVAL;
+				return NULL;
+			}
+
+			/* allocate request buffer */
 			KMALLOC(*p_isr, struct ipsecrequest *, sizeof(**p_isr));
 			if ((*p_isr) == NULL) {
+#ifdef IPSEC_DEBUG
 				printf("key_msg2sp: No more memory.\n");
+#endif
 				key_freesp(newsp);
+				*error = ENOBUFS;
 				return NULL;
 			}
+			bzero(*p_isr, sizeof(**p_isr));
 
+			/* set values */
 			(*p_isr)->next = NULL;
-			(*p_isr)->proto = xisr->sadb_x_ipsecrequest_proto;
-			(*p_isr)->mode = xisr->sadb_x_ipsecrequest_mode;
-			(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
-			(*p_isr)->proxy = NULL;
-			(*p_isr)->sa = NULL;
-			(*p_isr)->sp = newsp;
 
-			xxx_len = sizeof(*xisr);
+			switch (xisr->sadb_x_ipsecrequest_proto) {
+			case IPPROTO_ESP:
+			case IPPROTO_AH:
+			case IPPROTO_IPCOMP:
+				break;
+			default:
+#ifdef IPSEC_DEBUG
+				printf("key_msg2sp: invalid proto type=%u\n",
+					xisr->sadb_x_ipsecrequest_proto);
+#endif
+				key_freesp(newsp);
+				*error = EPROTONOSUPPORT;
+				return NULL;
+			}
+			(*p_isr)->saidx.proto = xisr->sadb_x_ipsecrequest_proto;
 
-			/* if tunnel mode ? */
-			if (xisr->sadb_x_ipsecrequest_mode ==IPSEC_MODE_TUNNEL){
-				struct sockaddr *addr
-					= (struct sockaddr *)((caddr_t)xisr
-					                     + sizeof(*xisr));
+			switch (xisr->sadb_x_ipsecrequest_mode) {
+			case IPSEC_MODE_TRANSPORT:
+			case IPSEC_MODE_TUNNEL:
+				break;
+			case IPSEC_MODE_ANY:
+			default:
+#ifdef IPSEC_DEBUG
+				printf("key_msg2sp: invalid mode=%u\n",
+					xisr->sadb_x_ipsecrequest_mode);
+#endif
+				key_freesp(newsp);
+				*error = EINVAL;
+				return NULL;
+			}
+			(*p_isr)->saidx.mode = xisr->sadb_x_ipsecrequest_mode;
 
-				KEY_NEWBUF((*p_isr)->proxy,
-				           struct sockaddr *,
-				           addr,
-				           addr->sa_len);
-				if ((*p_isr)->proxy == NULL) {
-					key_freesp(newsp);
-					return NULL;
+			switch (xisr->sadb_x_ipsecrequest_level) {
+			case IPSEC_LEVEL_DEFAULT:
+			case IPSEC_LEVEL_USE:
+			case IPSEC_LEVEL_REQUIRE:
+				break;
+			case IPSEC_LEVEL_UNIQUE:
+				/* validity check */
+				/*
+				 * If range violation of reqid, kernel will
+				 * update it, don't refuse it.
+				 */
+				if (xisr->sadb_x_ipsecrequest_reqid
+						> IPSEC_MANUAL_REQID_MAX) {
+#ifdef IPSEC_DEBUG
+					printf("key_msg2sp: reqid=%d "
+						"range violation, "
+						"updated by kernel.\n",
+						xisr->sadb_x_ipsecrequest_reqid);
+#endif
+					xisr->sadb_x_ipsecrequest_reqid = 0;
 				}
 
-				xxx_len += PFKEY_ALIGN8(addr->sa_len);
-			}
+				/* allocate new reqid id if reqid is zero. */
+				if (xisr->sadb_x_ipsecrequest_reqid == 0) {
+					u_int32_t reqid;
+					if ((reqid = key_newreqid()) == 0) {
+						key_freesp(newsp);
+						*error = ENOBUFS;
+						return NULL;
+					}
+					(*p_isr)->saidx.reqid = reqid;
+					xisr->sadb_x_ipsecrequest_reqid = reqid;
+				} else {
+				/* set it for manual keying. */
+					(*p_isr)->saidx.reqid =
+						xisr->sadb_x_ipsecrequest_reqid;
+				}
+				break;
 
-			/* sanity check */
-			if (xisr->sadb_x_ipsecrequest_len != xxx_len) {
-				printf("key_msg2sp: Invalid request length, "
-				       "reqlen:%d real:%d\n",
-					xisr->sadb_x_ipsecrequest_len,
-					xxx_len);
+			default:
+#ifdef IPSEC_DEBUG
+				printf("key_msg2sp: invalid level=%u\n",
+					xisr->sadb_x_ipsecrequest_level);
+#endif
 				key_freesp(newsp);
+				*error = EINVAL;
 				return NULL;
 			}
+			(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
+
+			/* set IP addresses if there */
+			if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
+				struct sockaddr *paddr;
+
+				paddr = (struct sockaddr *)(xisr + 1);
+
+				/* validity check */
+				if (paddr->sa_len
+				    > sizeof((*p_isr)->saidx.src)) {
+#ifdef IPSEC_DEBUG
+					printf("key_msg2sp: invalid request "
+						"address length.\n");
+#endif
+					key_freesp(newsp);
+					*error = EINVAL;
+					return NULL;
+				}
+				bcopy(paddr, &(*p_isr)->saidx.src,
+					paddr->sa_len);
+
+				paddr = (struct sockaddr *)((caddr_t)paddr
+							+ paddr->sa_len);
+
+				/* validity check */
+				if (paddr->sa_len
+				    > sizeof((*p_isr)->saidx.dst)) {
+#ifdef IPSEC_DEBUG
+					printf("key_msg2sp: invalid request "
+						"address length.\n");
+#endif
+					key_freesp(newsp);
+					*error = EINVAL;
+					return NULL;
+				}
+				bcopy(paddr, &(*p_isr)->saidx.dst,
+					paddr->sa_len);
+			}
+
+			(*p_isr)->sav = NULL;
+			(*p_isr)->sp = newsp;
 
 			/* initialization for the next. */
 			p_isr = &(*p_isr)->next;
 			tlen -= xisr->sadb_x_ipsecrequest_len;
 
-			/* sanity check */
-			if (tlen < 0)
-				panic("key_msg2sp: "
-				       "becoming tlen < 0.\n");
+			/* validity check */
+			if (tlen < 0) {
+#ifdef IPSEC_DEBUG
+				printf("key_msg2sp: becoming tlen < 0.\n");
+#endif
+				key_freesp(newsp);
+				*error = EINVAL;
+				return NULL;
+			}
 
 			xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xisr
 			                 + xisr->sadb_x_ipsecrequest_len);
 		}
-
-		newsp->policy = IPSEC_POLICY_IPSEC;
 	    }
 		break;
 	default:
+#ifdef IPSEC_DEBUG
 		printf("key_msg2sp: invalid policy type.\n");
+#endif
 		key_freesp(newsp);
+		*error = EINVAL;
 		return NULL;
 	}
 
+	*error = 0;
 	return newsp;
+}
+
+static u_int32_t
+key_newreqid()
+{
+	static u_int32_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+
+	auto_reqid = (auto_reqid == ~0
+			? IPSEC_MANUAL_REQID_MAX + 1 : auto_reqid + 1);
+
+	/* XXX should be unique check */
+
+	return auto_reqid;
 }
 
 /*
  * copy secpolicy struct to sadb_x_policy structure indicated.
  */
-struct sadb_x_policy *
+struct mbuf *
 key_sp2msg(sp)
 	struct secpolicy *sp;
 {
 	struct sadb_x_policy *xpl;
-	int len;
+	int tlen;
 	caddr_t p;
+	struct mbuf *m;
 
 	/* sanity check. */
 	if (sp == NULL)
 		panic("key_sp2msg: NULL pointer was passed.\n");
 
-	len = key_getspreqmsglen(sp);
+	tlen = key_getspreqmsglen(sp);
 
-	KMALLOC(xpl, struct sadb_x_policy *, len);
-	if (xpl == NULL) {
-		printf("key_sp2msg: No more memory.\n");
+	m = key_alloc_mbuf(tlen);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
 		return NULL;
 	}
-	bzero(xpl, len);
 
-	xpl->sadb_x_policy_len = PFKEY_UNIT64(len);
+	m->m_len = tlen;
+	m->m_next = NULL;
+	xpl = mtod(m, struct sadb_x_policy *);
+	bzero(xpl, tlen);
+
+	xpl->sadb_x_policy_len = PFKEY_UNIT64(tlen);
 	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	xpl->sadb_x_policy_type = sp->policy;
+	xpl->sadb_x_policy_dir = sp->spidx.dir;
+	xpl->sadb_x_policy_id = sp->id;
 	p = (caddr_t)xpl + sizeof(*xpl);
 
 	/* if is the policy for ipsec ? */
 	if (sp->policy == IPSEC_POLICY_IPSEC) {
 		struct sadb_x_ipsecrequest *xisr;
 		struct ipsecrequest *isr;
-		int len;
 
 		for (isr = sp->req; isr != NULL; isr = isr->next) {
 
 			xisr = (struct sadb_x_ipsecrequest *)p;
-			xisr->sadb_x_ipsecrequest_proto = isr->proto;
-			xisr->sadb_x_ipsecrequest_mode = isr->mode;
-			xisr->sadb_x_ipsecrequest_level = isr->level;
-			len = sizeof(*xisr);
 
-			/* if tunnel mode ? */
-			if (isr->mode == IPSEC_MODE_TUNNEL) {
-				/* sanity check */
-				if (isr->proxy == NULL) {
-					printf("key_sp2msg: "
-					       "proxy is NULL.\n");
-				} else {
-					bcopy(isr->proxy,
-					      p + sizeof(*xisr),
-					      isr->proxy->sa_len);
-					len += isr->proxy->sa_len;
-				}
-			}
-			xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(len);
-			p += xisr->sadb_x_ipsecrequest_len;
+			xisr->sadb_x_ipsecrequest_proto = isr->saidx.proto;
+			xisr->sadb_x_ipsecrequest_mode = isr->saidx.mode;
+			xisr->sadb_x_ipsecrequest_level = isr->level;
+			xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
+
+			p += sizeof(*xisr);
+			bcopy(&isr->saidx.src, p, isr->saidx.src.ss_len);
+			p += isr->saidx.src.ss_len;
+			bcopy(&isr->saidx.dst, p, isr->saidx.dst.ss_len);
+			p += isr->saidx.src.ss_len;
+
+			xisr->sadb_x_ipsecrequest_len =
+				PFKEY_ALIGN8(sizeof(*xisr)
+					+ isr->saidx.src.ss_len
+					+ isr->saidx.dst.ss_len);
 		}
 	}
 
-	return xpl;
+	return m;
+}
+
+/* m will not be freed nor modified */
+static struct mbuf *
+#ifdef __STDC__
+key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
+	int ndeep, int nitem, ...)
+#else
+key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+	int ndeep;
+	int nitem;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int idx;
+	int i;
+	struct mbuf *result = NULL, *n;
+	int len;
+
+	if (m == NULL || mhp == NULL)
+		panic("null pointer passed to key_gather");
+
+	va_start(ap, nitem);
+	for (i = 0; i < nitem; i++) {
+		idx = va_arg(ap, int);
+		if (idx < 0 || idx > SADB_EXT_MAX)
+			goto fail;
+		/* don't attempt to pull empty extension */
+		if (idx == SADB_EXT_RESERVED && mhp->msg == NULL)
+			continue;
+		if (idx != SADB_EXT_RESERVED  &&
+		    (mhp->ext[idx] == NULL || mhp->extlen[idx] == 0))
+			continue;
+
+		if (idx == SADB_EXT_RESERVED) {
+			len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
+#ifdef DIAGNOSTIC
+			if (len > MHLEN)
+				panic("assumption failed");
+#endif
+			MGETHDR(n, M_DONTWAIT, MT_DATA);
+			if (!n)
+				goto fail;
+			n->m_len = len;
+			n->m_next = NULL;
+			m_copydata(m, 0, sizeof(struct sadb_msg),
+			    mtod(n, caddr_t));
+		} else if (i < ndeep) {
+			len = mhp->extlen[idx];
+			n = key_alloc_mbuf(len);
+			if (!n || n->m_next) {	/*XXX*/
+				if (n)
+					m_freem(n);
+				goto fail;
+			}
+			m_copydata(m, mhp->extoff[idx], mhp->extlen[idx],
+			    mtod(n, caddr_t));
+		} else {
+			n = m_copym(m, mhp->extoff[idx], mhp->extlen[idx],
+			    M_DONTWAIT);
+		}
+		if (n == NULL)
+			goto fail;
+
+		if (result)
+			m_cat(result, n);
+		else
+			result = n;
+	}
+	va_end(ap);
+
+	if ((result->m_flags & M_PKTHDR) != 0) {
+		result->m_pkthdr.len = 0;
+		for (n = result; n; n = n->m_next)
+			result->m_pkthdr.len += n->m_len;
+	}
+
+	return result;
+
+fail:
+	m_freem(result);
+	return NULL;
 }
 
 /*
- * SADB_SPDADD processing
+ * SADB_X_SPDADD, SADB_X_SPDSETIDX or SADB_X_SPDUPDATE processing
  * add a entry to SP database, when received
  *   <base, address(SD), policy>
  * from the user(?).
  * Adding to SP database,
  * and send
- *   <base, SA, address(SD)>
+ *   <base, address(SD), policy>
  * to the socket which was send.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * SPDADD set a unique policy entry.
+ * SPDSETIDX like SPDADD without a part of policy requests.
+ * SPDUPDATE replace a unique policy entry.
  *
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_spdadd(mhp)
-	caddr_t *mhp;
+static int
+key_spdadd(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_address *src0, *dst0;
-	struct sadb_x_policy *xpl0;
-	struct secindex idx;
+	struct sadb_x_policy *xpl0, *xpl;
+	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	int error;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spdadd: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
-	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL
-	 || mhp[SADB_X_EXT_POLICY] == NULL) {
+	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
+	    mhp->ext[SADB_X_EXT_POLICY] == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_spdadd: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spdadd: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
-	src0 = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
-	xpl0 = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
 	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
+	/* XXX boundary check against sa_len */
+	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
+	                src0 + 1,
+	                dst0 + 1,
+	                src0->sadb_address_prefixlen,
+	                dst0->sadb_address_prefixlen,
+	                src0->sadb_address_proto,
+	                &spidx);
 
-#ifdef RESTRICTED_DIR
-	/* checking the direciton. */ 
-	dir = key_checkdir(&idx, NULL);
-	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:
-	case SADB_X_DIR_OUTBOUND:
-		/* XXX What I do ? */
+	/* checking the direciton. */
+	switch (xpl0->sadb_x_policy_dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
 		break;
-	case SADB_X_DIR_INVALID:
-		printf("key_spdadd: Invalid SP direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
 	default:
-		panic("key_spdadd: unexpected direction %u", dir);
-	}
+#ifdef IPSEC_DEBUG
+		printf("key_spdadd: Invalid SP direction.\n");
 #endif
-
-	/* Is there SP in SPD ? */
-#ifdef RESTRICTED_DIR
-	if (key_getsp(&idx, dir)) {
-		printf("key_spdadd: a SPD entry exists already.\n");
-		msg0->sadb_msg_errno = EEXIST;
-		return NULL;
+		mhp->msg->sadb_msg_errno = EINVAL;
+		return 0;
 	}
-#else
-	if (key_getsp(&idx)) {
-		printf("key_spdadd: a SPD entry exists already.\n");
-		msg0->sadb_msg_errno = EEXIST;
-		return NULL;
-	}
-#endif
 
 	/* check policy */
 	/* key_spdadd() accepts DISCARD, NONE and IPSEC. */
 	if (xpl0->sadb_x_policy_type == IPSEC_POLICY_ENTRUST
 	 || xpl0->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
+#ifdef IPSEC_DEBUG
 		printf("key_spdadd: Invalid policy type.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	/* policy requests are mandatory when action is ipsec. */
+        if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX
+	 && xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC
+	 && mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spdadd: some policy requests part required.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	/*
+	 * checking there is SP already or not.
+	 * If type is SPDUPDATE and no SP found, then error.
+	 * If type is either SPDADD or SPDSETIDX and SP found, then error.
+	 */
+	newsp = key_getsp(&spidx);
+	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
+		if (newsp == NULL) {
+#ifdef IPSEC_DEBUG
+			printf("key_spdadd: no SP found.\n");
+#endif
+			return key_senderror(so, m, ENOENT);
+		}
+
+		newsp->state = IPSEC_SPSTATE_DEAD;
+		key_freesp(newsp);
+	} else {
+		if (newsp != NULL) {
+			key_freesp(newsp);
+#ifdef IPSEC_DEBUG
+			printf("key_spdadd: a SP entry exists already.\n");
+#endif
+			return key_senderror(so, m, EEXIST);
+		}
 	}
 
 	/* allocation new SP entry */
-	if ((newsp = key_msg2sp(xpl0)) == NULL) {
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	if ((newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error)) == NULL) {
+		return key_senderror(so, m, error);
 	}
 
-	if (key_setsecidx(src0, dst0, &newsp->idx, 1)) {
-		msg0->sadb_msg_errno = EINVAL;
-		key_freesp(newsp);
-		return NULL;
+	if ((newsp->id = key_getnewspid()) == 0) {
+		keydb_delsecpolicy(newsp);
+		return key_senderror(so, m, ENOBUFS);
 	}
 
-	newsp->next = 0;
-	newsp->refcnt = 1;	/* do not reclaim until I say I do */
-	newsp->state = IPSEC_SPSTATE_ALIVE;
+	/* XXX boundary check against sa_len */
+	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
+	                src0 + 1,
+	                dst0 + 1,
+	                src0->sadb_address_prefixlen,
+	                dst0->sadb_address_prefixlen,
+	                src0->sadb_address_proto,
+	                &newsp->spidx);
 
-	/*
-	 * By key_getinspointforsp(), searching SPD for the place where
-	 * SP sould be inserted, and insert into sptree
-	 */
-#ifdef RESTRICTED_DIR
-	key_insnode(&sptree[dir], key_getinspointforsp(newsp, dir), newsp);
-#else
-	key_insnode(&sptree, key_getinspointforsp(newsp), newsp);
+	/* sanity check on addr pair */
+	if (((struct sockaddr *)(src0 + 1))->sa_family !=
+			((struct sockaddr *)(dst0+ 1))->sa_family) {
+		keydb_delsecpolicy(newsp);
+		return key_senderror(so, m, EINVAL);
+	}
+	if (((struct sockaddr *)(src0 + 1))->sa_len !=
+			((struct sockaddr *)(dst0+ 1))->sa_len) {
+		keydb_delsecpolicy(newsp);
+		return key_senderror(so, m, EINVAL);
+	}
+#if 1
+	if (newsp->req && newsp->req->saidx.src.ss_family) {
+		struct sockaddr *sa;
+		sa = (struct sockaddr *)(src0 + 1);
+		if (sa->sa_family != newsp->req->saidx.src.ss_family) {
+			keydb_delsecpolicy(newsp);
+			return key_senderror(so, m, EINVAL);
+		}
+	}
+	if (newsp->req && newsp->req->saidx.dst.ss_family) {
+		struct sockaddr *sa;
+		sa = (struct sockaddr *)(dst0 + 1);
+		if (sa->sa_family != newsp->req->saidx.dst.ss_family) {
+			keydb_delsecpolicy(newsp);
+			return key_senderror(so, m, EINVAL);
+		}
+	}
 #endif
 
+	newsp->refcnt = 1;	/* do not reclaim until I say I do */
+	newsp->state = IPSEC_SPSTATE_ALIVE;
+	LIST_INSERT_TAIL(&sptree[newsp->spidx.dir], newsp, secpolicy, chain);
+
+	/* delete the entry in spacqtree */
+	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
+		struct secspacq *spacq;
+		if ((spacq = key_getspacq(&spidx)) != NULL) {
+			/* reset counter in order to deletion by timehandler. */
+			struct timeval tv;
+			microtime(&tv);
+			spacq->created = tv.tv_sec;
+			spacq->count = 0;
+		}
+    	}
+
     {
+	struct mbuf *n, *mpolicy;
 	struct sadb_msg *newmsg;
-	u_int len;
-	caddr_t p;
+	int off;
 
 	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-	    + PFKEY_EXTLEN(mhp[SADB_X_EXT_POLICY])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_SRC])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_DST]);
+	n = key_gather_mbuf(m, mhp, 2, 4, SADB_EXT_RESERVED,
+	    SADB_X_EXT_POLICY, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
 
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_spdadd: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	if (n->m_len < sizeof(*newmsg)) {
+		n = m_pullup(n, sizeof(*newmsg));
+		if (!n)
+			return key_senderror(so, m, ENOBUFS);
 	}
-	bzero((caddr_t)newmsg, len);
-
-	bcopy((caddr_t)msg0, (caddr_t)newmsg, sizeof(*msg0));
+	newmsg = mtod(n, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
 
-	p = key_copysadbext(p, mhp[SADB_X_EXT_POLICY]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_SRC]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_DST]);
+	off = 0;
+	mpolicy = m_pulldown(n, PFKEY_ALIGN8(sizeof(struct sadb_msg)),
+	    sizeof(*xpl), &off);
+	if (mpolicy == NULL) {
+		/* n is already freed */
+		return key_senderror(so, m, ENOBUFS);
+	}
+	xpl = (struct sadb_x_policy *)(mtod(mpolicy, caddr_t) + off);
+	if (xpl->sadb_x_policy_exttype != SADB_X_EXT_POLICY) {
+		m_freem(n);
+		return key_senderror(so, m, EINVAL);
+	}
+	xpl->sadb_x_policy_id = newsp->id;
 
-	return newmsg;
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+}
+
+/*
+ * get new policy id.
+ * OUT:
+ *	0:	failure.
+ *	others: success.
+ */
+static u_int32_t
+key_getnewspid()
+{
+	u_int32_t newid = 0;
+	int count = key_spi_trycnt;	/* XXX */
+	struct secpolicy *sp;
+
+	/* when requesting to allocate spi ranged */
+	while (count--) {
+		newid = (policy_id = (policy_id == ~0 ? 1 : ++policy_id));
+
+		if ((sp = key_getspbyid(newid)) == NULL)
+			break;
+
+		key_freesp(sp);
+	}
+
+	if (count == 0 || newid == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_getnewspid: to allocate policy id is failed.\n");
+#endif
+		return 0;
+	}
+
+	return newid;
 }
 
 /*
  * SADB_SPDDELETE processing
  * receive
- *   <base, address(SD)>
+ *   <base, address(SD), policy(*)>
  * from the user(?), and set SADB_SASTATE_DEAD,
  * and send,
- *   <base, address(SD)>
+ *   <base, address(SD), policy(*)>
  * to the ikmpd.
+ * policy(*) including direction of policy.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	other if success, return pointer to the message to send.
- *	0 if fail.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_spddelete(mhp)
-	caddr_t *mhp;
+static int
+key_spddelete(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_address *src0, *dst0;
-	struct secindex idx;
+	struct sadb_x_policy *xpl0;
+	struct secpolicyindex spidx;
 	struct secpolicy *sp;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spddelete: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
-	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
+	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
+	    mhp->ext[SADB_X_EXT_POLICY] == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_spddelete: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spddelete: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
 	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
+	/* XXX boundary check against sa_len */
+	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
+	                src0 + 1,
+	                dst0 + 1,
+	                src0->sadb_address_prefixlen,
+	                dst0->sadb_address_prefixlen,
+	                src0->sadb_address_proto,
+	                &spidx);
 
-#ifdef RESTRICTED_DIR
-	/* checking the direciton. */ 
-	dir = key_checkdir(&idx, NULL);
-	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:
-	case SADB_X_DIR_OUTBOUND:
-		/* XXX What I do ? */
+	/* checking the direciton. */
+	switch (xpl0->sadb_x_policy_dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
 		break;
-	case SADB_X_DIR_INVALID:
-		printf("key_spddelete: Invalid SA direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
 	default:
-		panic("key_spddelete: unexpected direction %u", dir);
-	}
+#ifdef IPSEC_DEBUG
+		printf("key_spddelete: Invalid SP direction.\n");
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
 
 	/* Is there SP in SPD ? */
-#ifdef RESTRICTED_DIR
-	if ((sp = key_getsp(&idx, dir)) == NULL) {
+	if ((sp = key_getsp(&spidx)) == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_spddelete: no SP found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
-	}
-#else
-	if ((sp = key_getsp(&idx)) == NULL) {
-		printf("key_spddelete: no SP found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
-	}
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	/* save policy id to buffer to be returned. */
+	xpl0->sadb_x_policy_id = sp->id;
 
 	sp->state = IPSEC_SPSTATE_DEAD;
+	key_freesp(sp);
 
     {
+	struct mbuf *n;
 	struct sadb_msg *newmsg;
-	u_int len;
-	caddr_t p;
 
 	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_SRC])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_DST]);
+	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
+	    SADB_X_EXT_POLICY, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
 
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_spddelete: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
-	}
-	bzero((caddr_t)newmsg, len);
-
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
+	newmsg = mtod(n, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
 
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_SRC]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_DST]);
-
-	return newmsg;
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+}
+
+/*
+ * SADB_SPDDELETE2 processing
+ * receive
+ *   <base, policy(*)>
+ * from the user(?), and set SADB_SASTATE_DEAD,
+ * and send,
+ *   <base, policy(*)>
+ * to the ikmpd.
+ * policy(*) including direction of policy.
+ *
+ * m will always be freed.
+ */
+static int
+key_spddelete2(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+{
+	u_int32_t id;
+	struct secpolicy *sp;
+
+	/* sanity check */
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+		panic("key_spddelete2: NULL pointer is passed.\n");
+
+	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
+	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spddelete2: invalid message is passed.\n");
+#endif
+		key_senderror(so, m, EINVAL);
+		return 0;
+	}
+
+	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
+
+	/* Is there SP in SPD ? */
+	if ((sp = key_getspbyid(id)) == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_spddelete2: no SP found id:%u.\n", id);
+#endif
+		key_senderror(so, m, EINVAL);
+	}
+
+	sp->state = IPSEC_SPSTATE_DEAD;
+	key_freesp(sp);
+
+    {
+	struct mbuf *n, *nn;
+	struct sadb_msg *newmsg;
+	int off, len;
+
+	/* create new sadb_msg to reply. */
+	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
+
+	if (len > MCLBYTES)
+		return key_senderror(so, m, ENOBUFS);
+	MGETHDR(n, M_DONTWAIT, MT_DATA);
+	if (n && len > MHLEN) {
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			n = NULL;
+		}
+	}
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
+
+	n->m_len = len;
+	n->m_next = NULL;
+	off = 0;
+
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, caddr_t) + off);
+	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
+
+#ifdef DIAGNOSTIC
+	if (off != len)
+		panic("length inconsistency in key_spddelete2");
+#endif
+
+	n->m_next = m_copym(m, mhp->extoff[SADB_X_EXT_POLICY],
+	    mhp->extlen[SADB_X_EXT_POLICY], M_DONTWAIT);
+	if (!n->m_next) {
+		m_freem(n);
+		return key_senderror(so, m, ENOBUFS);
+	}
+
+	n->m_pkthdr.len = 0;
+	for (nn = n; nn; nn = nn->m_next)
+		n->m_pkthdr.len += nn->m_len;
+
+	newmsg = mtod(n, struct sadb_msg *);
+	newmsg->sadb_msg_errno = 0;
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
+    }
+}
+
+/*
+ * SADB_X_GET processing
+ * receive
+ *   <base, policy(*)>
+ * from the user(?),
+ * and send,
+ *   <base, address(SD), policy>
+ * to the ikmpd.
+ * policy(*) including direction of policy.
+ *
+ * m will always be freed.
+ */
+static int
+key_spdget(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+{
+	u_int32_t id;
+	struct secpolicy *sp;
+	struct mbuf *n;
+
+	/* sanity check */
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+		panic("key_spdget: NULL pointer is passed.\n");
+
+	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
+	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spdget: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
+
+	/* Is there SP in SPD ? */
+	if ((sp = key_getspbyid(id)) == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_spdget: no SP found id:%u.\n", id);
+#endif
+		return key_senderror(so, m, ENOENT);
+	}
+
+	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	if (n != NULL) {
+		m_freem(m);
+		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
+	} else
+		return key_senderror(so, m, ENOBUFS);
+}
+
+/*
+ * SADB_X_SPDACQUIRE processing.
+ * Acquire policy and SA(s) for a *OUTBOUND* packet.
+ * send
+ *   <base, policy(*)>
+ * to KMD, and expect to receive
+ *   <base> with SADB_X_SPDACQUIRE if error occured,
+ * or
+ *   <base, policy>
+ * with SADB_X_SPDUPDATE from KMD by PF_KEY.
+ * policy(*) is without policy requests.
+ *
+ *    0     : succeed
+ *    others: error number
+ */
+int
+key_spdacquire(sp)
+	struct secpolicy *sp;
+{
+	struct mbuf *result = NULL, *m;
+	struct secspacq *newspacq;
+	int error;
+
+	/* sanity check */
+	if (sp == NULL)
+		panic("key_spdacquire: NULL pointer is passed.\n");
+	if (sp->req != NULL)
+		panic("key_spdacquire: called but there is request.\n");
+	if (sp->policy != IPSEC_POLICY_IPSEC)
+		panic("key_spdacquire: policy mismathed. IPsec is expected.\n");
+
+	/* get a entry to check whether sent message or not. */
+	if ((newspacq = key_getspacq(&sp->spidx)) != NULL) {
+		if (key_blockacq_count < newspacq->count) {
+			/* reset counter and do send message. */
+			newspacq->count = 0;
+		} else {
+			/* increment counter and do nothing. */
+			newspacq->count++;
+			return 0;
+		}
+	} else {
+		/* make new entry for blocking to send SADB_ACQUIRE. */
+		if ((newspacq = key_newspacq(&sp->spidx)) == NULL)
+			return ENOBUFS;
+
+		/* add to acqtree */
+		LIST_INSERT_HEAD(&spacqtree, newspacq, chain);
+	}
+
+	/* create new sadb_msg to reply. */
+	m = key_setsadbmsg(SADB_X_SPDACQUIRE, 0, 0, 0, 0, 0);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	result = m;
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+
+fail:
+	if (result)
+		m_freem(result);
+	return error;
 }
 
 /*
@@ -1636,46 +2079,47 @@ key_spddelete(mhp)
  * to the user.
  * NOTE: what to do is only marking SADB_SASTATE_DEAD.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	other if success, return pointer to the message to send.
- *	0 if fail.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_spdflush(mhp)
-	caddr_t *mhp;
+static int
+key_spdflush(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
+	struct sadb_msg *newmsg;
 	struct secpolicy *sp;
+	u_int dir;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spdflush: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	if (m->m_len != PFKEY_ALIGN8(sizeof(struct sadb_msg)))
+		return key_senderror(so, m, EINVAL);
 
-	KEY_SPDBLOOP(sp->state = IPSEC_SPSTATE_DEAD;);
-
-    {
-	struct sadb_msg *newmsg;
-	u_int len;
-
-	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg);
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_spdflush: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			sp->state = IPSEC_SPSTATE_DEAD;
+		}
 	}
-	bzero((caddr_t)newmsg, len);
 
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
+	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
+#ifdef IPSEC_DEBUG
+		printf("key_spdflush: No more memory.\n");
+#endif
+		return key_senderror(so, m, ENOBUFS);
+	}
+
+	if (m->m_next)
+		m_freem(m->m_next);
+	m->m_next = NULL;
+	m->m_pkthdr.len = m->m_len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
+	newmsg = mtod(m, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
+	newmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
 
-	return(newmsg);
-    }
+	return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 }
 
 /*
@@ -1687,151 +2131,107 @@ key_spdflush(mhp)
  *   <base> .....
  * to the ikmpd.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	other if success, return pointer to the message to send.
- *	0 if fail.
+ * m will always be freed.
  */
 static int
-key_spddump(mhp, so, target)
-	caddr_t *mhp;
+key_spddump(so, m, mhp)
 	struct socket *so;
-	int target;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct secpolicy *sp;
-	int len, cnt, cnt_sanity;
-	struct sadb_msg *newmsg;
+	int cnt;
+	u_int dir;
+	struct mbuf *n;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spddump: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
 	/* search SPD entry and get buffer size. */
-	cnt = cnt_sanity = 0;
-	KEY_SPDBLOOP(
-		cnt++;
-	);
+	cnt = 0;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			cnt++;
+		}
+	}
 
 	if (cnt == 0)
-		return ENOENT;
+		return key_senderror(so, m, ENOENT);
 
-	newmsg = NULL;
-	KEY_SPDBLOOP(
-		len = key_getspmsglen(sp);
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		LIST_FOREACH(sp, &sptree[dir], chain) {
+			--cnt;
+			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt,
+			    mhp->msg->sadb_msg_pid);
 
-		/* making buffer */
-		KMALLOC(newmsg, struct sadb_msg *, len);
-		if (newmsg == NULL) {
-			printf("key_spddump: No more memory.\n");
-			return ENOBUFS;
+			if (n)
+				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
 		}
-		bzero((caddr_t)newmsg, len);
+	}
 
-		(void)key_setdumpsp(sp, newmsg);
-		newmsg->sadb_msg_type = SADB_X_SPDDUMP;
-		newmsg->sadb_msg_seq = --cnt;
-		newmsg->sadb_msg_pid = msg0->sadb_msg_pid;
-
-		key_sendup(so, newmsg, len, target);
-		KFREE(newmsg);
-		newmsg = NULL;
-	);
-
+	m_freem(m);
 	return 0;
 }
 
-static u_int
-key_setdumpsp(sp, newmsg)
+static struct mbuf *
+key_setdumpsp(sp, type, seq, pid)
 	struct secpolicy *sp;
-	struct sadb_msg *newmsg;
+	u_int8_t type;
+	u_int32_t seq, pid;
 {
-	u_int tlen;
-	caddr_t p;
+	struct mbuf *result = NULL, *m;
 
-	newmsg->sadb_msg_version = PF_KEY_V2;
-	newmsg->sadb_msg_satype = SADB_SATYPE_UNSPEC; /* XXX */;
-	newmsg->sadb_msg_errno = 0;
-    {
-	/* XXX this is DEBUG use. */
-	caddr_t x = (caddr_t)&newmsg->sadb_msg_reserved;
+	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid, sp->refcnt);
+	if (!m)
+		goto fail;
+	result = m;
 
-#ifdef RESTRICTED_DIR
-	for (x[0] = 0; x[0] < _ARRAYLEN(saorder_dir_any); x[0]++) {
-		if (sp->spt == &sptree[saorder_dir_any[(int)x[0]]])
-			break;
-	}
-#else
-	x[0] = 0;
-#endif
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+	    (struct sockaddr *)&sp->spidx.src, sp->spidx.prefs,
+	    sp->spidx.ul_proto);
+	if (!m)
+		goto fail;
+	m_cat(result, m);
 
-	x[1] = sp->refcnt;
-    }
-	tlen = key_getspmsglen(sp);
-	newmsg->sadb_msg_len = PFKEY_UNIT64(tlen);
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+	    (struct sockaddr *)&sp->spidx.dst, sp->spidx.prefd,
+	    sp->spidx.ul_proto);
+	if (!m)
+		goto fail;
+	m_cat(result, m);
 
-	p = (caddr_t)newmsg;
-	p += sizeof(struct sadb_msg);
+	m = key_sp2msg(sp);
+	if (!m)
+		goto fail;
+	m_cat(result, m);
 
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_SRC,
-				sp->idx.family,
-				(caddr_t)&sp->idx.src,
-				sp->idx.prefs,
-				sp->idx.proto,
-				sp->idx.ports);
+	if ((result->m_flags & M_PKTHDR) == 0)
+		goto fail;
 
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_DST,
-				sp->idx.family,
-				(caddr_t)&sp->idx.dst,
-				sp->idx.prefd,
-				sp->idx.proto,
-				sp->idx.portd);
-
-    {
-	struct sadb_x_policy *tmp;
-
-	if ((tmp = key_sp2msg(sp)) == NULL) {
-		printf("key_setdumpsp: No more memory.\n");
-		return ENOBUFS;
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL)
+			goto fail;
 	}
 
-	/* validity check */
-	if (key_getspreqmsglen(sp) != PFKEY_UNUNIT64(tmp->sadb_x_policy_len))
-		panic("key_setdumpsp: length mismatch."
-		      "sp:%d msg:%d\n",
-			key_getspreqmsglen(sp),
-			PFKEY_UNUNIT64(tmp->sadb_x_policy_len));
-	
-	bcopy(tmp, p, PFKEY_UNUNIT64(tmp->sadb_x_policy_len));
-	KFREE(tmp);
-    }
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
 
-	return tlen;
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return result;
+
+fail:
+	m_freem(result);
+	return NULL;
 }
 
-/* get sadb message length for a SP. */
-static u_int
-key_getspmsglen(sp)
-	struct secpolicy *sp;
-{
-	u_int tlen;
-
-	/* sanity check */
-	if (sp == NULL)
-		panic("key_getspmsglen: NULL pointer is passed.\n");
-
-	tlen = (sizeof(struct sadb_msg)
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sp->idx.family))
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sp->idx.family)));
-
-	tlen += key_getspreqmsglen(sp);
-
-	return tlen;
-}
-
+/*
+ * get PFKEY message length for security policy and request.
+ */
 static u_int
 key_getspreqmsglen(sp)
 	struct secpolicy *sp;
@@ -1850,13 +2250,10 @@ key_getspreqmsglen(sp)
 	int len;
 
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
-		len = sizeof(struct sadb_x_ipsecrequest);
+		len = sizeof(struct sadb_x_ipsecrequest)
+			+ isr->saidx.src.ss_len
+			+ isr->saidx.dst.ss_len;
 
-		/* if tunnel mode ? */
-		if (isr->mode == IPSEC_MODE_TUNNEL
-		 && isr->proxy != NULL) {
-			len += isr->proxy->sa_len;
-		}
 		tlen += PFKEY_ALIGN8(len);
 	}
     }
@@ -1866,144 +2263,50 @@ key_getspreqmsglen(sp)
 
 /* %%% SAD management */
 /*
- * set sadb_address parameters into secindex buffer.
- * Must allocate secindex buffer passed to this function.
- * IN:	flag == 0: copy pointer.
- *	     == 1: with memory allocation for addresses and copy.
- *		   So must call key_delsecidx() later.
- * OUT:	0: success
- *	1: failure
- */
-int
-key_setsecidx(src0, dst0, idx, flag)
-	struct sadb_address *src0, *dst0;
-	struct secindex *idx;
-	int flag;
-{
-	struct sockaddr *src, *dst;
-
-	/* sanity check */
-	if (src0 == NULL || dst0 == NULL || idx == NULL)
-		panic("key_setsecidx: NULL pointer is passed.\n");
-
-	src = (struct sockaddr *)((caddr_t)src0 + sizeof(*src0));
-	dst = (struct sockaddr *)((caddr_t)dst0 + sizeof(*dst0));
-
-	/* check sa_family */
-	if (src->sa_family != dst->sa_family) {
-		printf("key_setsecidx: family mismatch.\n");
-		return 1;
-	}
-
-	/* check max prefixlen */
-	if ((_INALENBYAF(src->sa_family) << 3) < src0->sadb_address_prefixlen
-	 || (_INALENBYAF(dst->sa_family) << 3) < dst0->sadb_address_prefixlen) {
-		printf("key_setsecidx: illegal prefixlen.\n");
-		return 1;
-	}
-
-	/* check protocol */
-	if (src0->sadb_address_proto != dst0->sadb_address_proto) {
-		printf("key_setsecidx: protocol mismatch.\n");
-		return 1;
-	}
-
-	bzero((caddr_t)idx, sizeof(*idx));
-	idx->family = src->sa_family;
-	idx->prefs = src0->sadb_address_prefixlen;
-	idx->prefd = dst0->sadb_address_prefixlen;
-
-	/* initialize */
-	bzero(&idx->src, sizeof(idx->src));
-	bzero(&idx->dst, sizeof(idx->dst));
-
-	bcopy(_INADDRBYSA(src), &idx->src, _INALENBYAF(src->sa_family));
-	bcopy(_INADDRBYSA(dst), &idx->dst, _INALENBYAF(dst->sa_family));
-	idx->proto = src0->sadb_address_proto;
-	idx->ports = _INPORTBYSA(src);
-	idx->portd = _INPORTBYSA(dst);
-
-	return 0;
-}
-
-/*
- * delete secindex
- */
-void
-key_delsecidx(idx)
-	struct secindex *idx;
-{
-	/* nothing to do */
-	return;
-}
-
-/*
- * allocating a memory for new SA index, and copy from the values of mhp.
+ * allocating a memory for new SA head, and copy from the values of mhp.
  * OUT:	NULL	: failure due to the lack of memory.
- *	others	: pointer to new SA index leaf.
+ *	others	: pointer to new SA head.
  */
-static struct secasindex *
-#ifdef RESTRICTED_DIR
-key_newsaidx(idx, dir)
-	struct secindex *idx;
-	u_int dir;
-#else
-key_newsaidx(idx)
-	struct secindex *idx;
-#endif
+static struct secashead *
+key_newsah(saidx)
+	struct secasindex *saidx;
 {
-	struct secasindex *newsaidx = NULL;
+	struct secashead *newsah;
 
 	/* sanity check */
-	if (idx == NULL)
+	if (saidx == NULL)
 		panic("key_newsaidx: NULL pointer is passed.\n");
 
-	KMALLOC(newsaidx, struct secasindex *, sizeof(struct secasindex));
-	if (newsaidx == NULL) {
+	newsah = keydb_newsecashead();
+	if (newsah == NULL)
 		return NULL;
-	}
-	bzero((caddr_t)newsaidx, sizeof(struct secasindex));
 
-	newsaidx->idx.family = idx->family;
-	newsaidx->idx.prefs = idx->prefs;
-	newsaidx->idx.prefd = idx->prefd;
-	newsaidx->idx.proto = idx->proto;
-	newsaidx->idx.ports = idx->ports;
-	newsaidx->idx.portd = idx->portd;
-
-	bcopy(&idx->src, &newsaidx->idx.src, _INALENBYAF(idx->family));
-	bcopy(&idx->dst, &newsaidx->idx.dst, _INALENBYAF(idx->family));
+	bcopy(saidx, &newsah->saidx, sizeof(newsah->saidx));
 
 	/* add to saidxtree */
-#ifdef RESTRICTED_DIR
-	key_insnode(&saidxtree[dir], NULL, newsaidx);
-#else
-	key_insnode(&saidxtree, NULL, newsaidx);
-#endif
+	newsah->state = SADB_SASTATE_MATURE;
+	LIST_INSERT_HEAD(&sahtree, newsah, chain);
 
-	return(newsaidx);
+	return(newsah);
 }
 
 /*
  * delete SA index and all SA registerd.
  */
 static void
-key_delsaidx(saidx)
-	struct secasindex *saidx;
+key_delsah(sah)
+	struct secashead *sah;
 {
-	struct secas *sa, *nextsa;
+	struct secasvar *sav, *nextsav;
 	u_int stateidx, state;
 	int s;
+	int zombie = 0;
 
 	/* sanity check */
-	if (saidx == NULL)
-		panic("key_delsaidx: NULL pointer is passed.\n");
+	if (sah == NULL)
+		panic("key_delsah: NULL pointer is passed.\n");
 
-#ifdef __NetBSD__
 	s = splsoftnet();	/*called from softclock()*/
-#else
-	s = splnet();	/*called from softclock()*/
-#endif
 
 	/* searching all SA registerd in the secindex. */
 	for (stateidx = 0;
@@ -2011,342 +2314,276 @@ key_delsaidx(saidx)
 	     stateidx++) {
 
 		state = saorder_state_any[stateidx];
-		for (sa = (struct secas *)saidx->satree[state].head;
-		     sa != NULL;
-		     sa = nextsa) {
-			nextsa = sa->next;
+		for (sav = (struct secasvar *)LIST_FIRST(&sah->savtree[state]);
+		     sav != NULL;
+		     sav = nextsav) {
 
-			/* sanity check */
-			if (sa->state != state) {
-				printf("key_delsaidx: "
-					"invalid sa->state "
-					"(queue: %d SA: %d)\n",
-					state, sa->state);
+			nextsav = LIST_NEXT(sav, chain);
+
+			if (sav->refcnt > 0) {
+				/* give up to delete this sa */
+				zombie++;
 				continue;
 			}
-			/* remove back pointer */
-			sa->saidx = NULL;
 
-			if (sa->refcnt < 0) {
-				printf("key_delsaidx: why refcnt < 0 ?, "
-					"sa->refcnt=%d\n",
-					sa->refcnt);
-			}
-			key_freesa(sa);
-			sa = NULL;
+			/* sanity check */
+			KEY_CHKSASTATE(state, sav->state, "key_delsah");
+
+			key_freesav(sav);
+
+			/* remove back pointer */
+			sav->sah = NULL;
+			sav = NULL;
 		}
 	}
 
-	/* remove from tree of SA index */
-	if (saidx->saidxt != NULL)
-		key_remnode(saidx);
-
-	key_delsecidx(&saidx->idx);
-
-	if (saidx->sa_route.ro_rt) {
-		RTFREE(saidx->sa_route.ro_rt);
-		saidx->sa_route.ro_rt = (struct rtentry *)NULL;
+	/* don't delete sah only if there are savs. */
+	if (zombie) {
+		splx(s);
+		return;
 	}
 
-	KFREE(saidx);
+	if (sah->sa_route.ro_rt) {
+		RTFREE(sah->sa_route.ro_rt);
+		sah->sa_route.ro_rt = (struct rtentry *)NULL;
+	}
+
+	/* remove from tree of SA index */
+	if (__LIST_CHAINED(sah))
+		LIST_REMOVE(sah, chain);
+
+	KFREE(sah);
 
 	splx(s);
 	return;
 }
 
 /*
- * allocating a new SA for LARVAL state. key_add() and key_getspi() call,
+ * allocating a new SA with LARVAL state.  key_add() and key_getspi() call,
  * and copy the values of mhp into new buffer.
- * When SADB message type is GETSPI:
+ * When SAD message type is GETSPI:
  *	to set sequence number from acq_seq++,
  *	to set zero to SPI.
  *	not to call key_setsava().
  * OUT:	NULL	: fail
- *	others	: pointer to new secas leaf.
+ *	others	: pointer to new secasvar.
+ *
+ * does not modify mbuf.  does not free mbuf on error.
  */
-static struct secas *
-key_newsa(mhp, saidx)
-	caddr_t *mhp;
-	struct secasindex *saidx;
+static struct secasvar *
+key_newsav(m, mhp, sah, errp)
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+	struct secashead *sah;
+	int *errp;
 {
-	struct secas *newsa;
-	struct sadb_msg *msg0;
+	struct secasvar *newsav;
+	const struct sadb_sa *xsa;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL || saidx == NULL)
+	if (m == NULL || mhp == NULL || mhp->msg == NULL || sah == NULL)
 		panic("key_newsa: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
-	KMALLOC(newsa, struct secas *, sizeof(struct secas));
-	if (newsa == NULL) {
+	KMALLOC(newsav, struct secasvar *, sizeof(struct secasvar));
+	if (newsav == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_newsa: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
+#endif
+		*errp = ENOBUFS;
 		return NULL;
 	}
-	bzero((caddr_t)newsa, sizeof(struct secas));
+	bzero((caddr_t)newsav, sizeof(struct secasvar));
 
-	switch (msg0->sadb_msg_type) {
+	switch (mhp->msg->sadb_msg_type) {
 	case SADB_GETSPI:
-		newsa->spi = 0;
+		newsav->spi = 0;
 
+#ifdef IPSEC_DOSEQCHECK
 		/* sync sequence number */
-		if (msg0->sadb_msg_seq == 0)
-			newsa->seq =
+		if (mhp->msg->sadb_msg_seq == 0)
+			newsav->seq =
 				(acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
 		else
-			newsa->seq = msg0->sadb_msg_seq;
+#endif
+			newsav->seq = mhp->msg->sadb_msg_seq;
 		break;
 
 	case SADB_ADD:
 		/* sanity check */
-		if (mhp[SADB_EXT_SA] == 0) {
-			KFREE(newsa);
+		if (mhp->ext[SADB_EXT_SA] == NULL) {
+			KFREE(newsav);
+#ifdef IPSEC_DEBUG
 			printf("key_newsa: invalid message is passed.\n");
-			msg0->sadb_msg_errno = EINVAL;
+#endif
+			*errp = EINVAL;
 			return NULL;
 		}
-		newsa->spi = ((struct sadb_sa *)mhp[SADB_EXT_SA])->sadb_sa_spi;
-		newsa->seq = msg0->sadb_msg_seq;
+		xsa = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+		newsav->spi = xsa->sadb_sa_spi;
+		newsav->seq = mhp->msg->sadb_msg_seq;
 		break;
 	default:
-		KFREE(newsa);
-		msg0->sadb_msg_errno = EINVAL;
+		KFREE(newsav);
+		*errp = EINVAL;
 		return NULL;
 	}
 
-	newsa->refcnt = 1;
-	newsa->type = msg0->sadb_msg_satype;
-	newsa->pid = msg0->sadb_msg_pid;
-	newsa->state = SADB_SASTATE_LARVAL;
-	newsa->saidx = saidx;
-
-	/* reset tick */
-	newsa->tick = 0;
-
-	/* copy sa values */
-	if (msg0->sadb_msg_type != SADB_GETSPI && key_setsaval(newsa, mhp)) {
-		key_freesa(newsa);
-		return NULL;
+	/* copy sav values */
+	if (mhp->msg->sadb_msg_type != SADB_GETSPI) {
+		*errp = key_setsaval(newsav, m, mhp);
+		if (*errp) {
+			KFREE(newsav);
+			return NULL;
+		}
 	}
+
+	/* reset created */
+    {
+	struct timeval tv;
+	microtime(&tv);
+	newsav->created = tv.tv_sec;
+    }
+
+	newsav->pid = mhp->msg->sadb_msg_pid;
 
 	/* add to satree */
-	key_insnode(&saidx->satree[SADB_SASTATE_LARVAL], NULL, newsa);
+	newsav->sah = sah;
+	newsav->refcnt = 1;
+	newsav->state = SADB_SASTATE_LARVAL;
+	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_LARVAL], newsav,
+			secasvar, chain);
 
-	return newsa;
+	return newsav;
 }
-
-#if 0
-static struct secas *
-key_newsa2(type, saidx)
-	u_int type;
-	struct secasindex *saidx;
-{
-	struct secas *newsa;
-
-	/* sanity check */
-	if (saidx == NULL)
-		panic("key_newsa2: NULL pointer is passed.\n");
-
-	KMALLOC(newsa, struct secas *, sizeof(struct secas));
-	if (newsa == NULL) {
-		printf("key_newsa2: No more memory.\n");
-		return NULL;
-	}
-	bzero((caddr_t)newsa, sizeof(struct secas));
-
-	/* set sequence */
-	newsa->refcnt = 1;
-	newsa->state = SADB_SASTATE_LARVAL;
-	newsa->type = type;
-	newsa->spi = 0;
-	newsa->seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
-	newsa->pid = 0;
-	newsa->saidx = saidx;
-
-	/* add to satree */
-	key_insnode(&saidx->satree[newsa->state], NULL, newsa);
-
-	return newsa;
-}
-#endif
 
 /*
- * free() SA entry.
+ * free() SA variable entry.
  */
 static void
-key_delsa(sa)
-	struct secas *sa;
+key_delsav(sav)
+	struct secasvar *sav;
 {
 	/* sanity check */
-	if (sa == NULL)
-		panic("key_delsa: NULL pointer is passed.\n");
+	if (sav == NULL)
+		panic("key_delsav: NULL pointer is passed.\n");
 
-	if (sa->refcnt > 0) return; /* can't free */
+	if (sav->refcnt > 0)
+		return;		/* can't free */
 
-	/* remove from SA index */
-	if (sa->sat != NULL)
-		key_remnode(sa);
+	/* remove from SA header */
+	if (__LIST_CHAINED(sav))
+		LIST_REMOVE(sav, chain);
 
-	if (sa->key_auth != NULL)
-		KFREE(sa->key_auth);
-	if (sa->key_enc != NULL)
-		KFREE(sa->key_enc);
-	if (sa->proxy != NULL)
-		KFREE(sa->proxy);
-	if (sa->replay != NULL) {
-		if (sa->replay->bitmap != NULL)
-			KFREE(sa->replay->bitmap);
-		KFREE(sa->replay);
+	if (sav->key_auth != NULL) {
+		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+		KFREE(sav->key_auth);
+		sav->key_auth = NULL;
 	}
-	if (sa->lft_c != NULL)
-		KFREE(sa->lft_c);
-	if (sa->lft_h != NULL)
-		KFREE(sa->lft_h);
-	if (sa->lft_s != NULL)
-		KFREE(sa->lft_s);
-	if (sa->iv != NULL)
-		KFREE(sa->iv);
-	if (sa->misc1 != NULL)
-		KFREE(sa->misc1);
-	if (sa->misc2 != NULL)
-		KFREE(sa->misc2);
-	if (sa->misc3 != NULL)
-		KFREE(sa->misc3);
+	if (sav->key_enc != NULL) {
+		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+		KFREE(sav->key_enc);
+		sav->key_enc = NULL;
+	}
+	if (sav->sched) {
+		bzero(sav->sched, sav->schedlen);
+		KFREE(sav->sched);
+		sav->sched = NULL;
+	}
+	if (sav->replay != NULL) {
+		keydb_delsecreplay(sav->replay);
+		sav->replay = NULL;
+	}
+	if (sav->lft_c != NULL) {
+		KFREE(sav->lft_c);
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
+		KFREE(sav->lft_h);
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
+		KFREE(sav->lft_s);
+		sav->lft_s = NULL;
+	}
+	if (sav->iv != NULL) {
+		KFREE(sav->iv);
+		sav->iv = NULL;
+	}
 
-	KFREE(sa);
+	KFREE(sav);
 
 	return;
 }
 
 /*
- * search SADB specified the direction for a SA index entry.
+ * search SAD.
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
  */
-static struct secasindex *
-#ifdef RESTRICTED_DIR
-key_getsaidx(idx, dir)
-	struct secindex *idx;
-	u_int dir;
-#else
-key_getsaidx(idx)
-	struct secindex *idx;
-#endif
-{
+static struct secashead *
+key_getsah(saidx)
 	struct secasindex *saidx;
+{
+	struct secashead *sah;
 
-#ifdef RESTRICTED_DIR
-	for (saidx = (struct secasindex *)saidxtree[dir].head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		if (key_cmpidx(&saidx->idx, idx))
-			return(saidx);
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
+			continue;
+		if (key_cmpsaidx_exactly(&sah->saidx, saidx))
+			return(sah);
 	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		if (key_cmpidx(&saidx->idx, idx))
-			return(saidx);
-	}
-#endif
 
 	return NULL;
 }
 
 /*
- * search SADB in any direction for a SA index entry.
+ * check not to be duplicated SPI.
+ * NOTE: this function is too slow due to searching all SAD.
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
  */
-static struct secasindex *
-key_getsaidxfromany(idx)
-	struct secindex *idx;
-{
+static struct secasvar *
+key_checkspidup(saidx, spi)
 	struct secasindex *saidx;
-#ifdef RESTRICTED_DIR
-	u_int diridx;
-#endif
-
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
-
-		saidx = key_getsaidx(idx, saorder_dir_any[diridx]);
-		if (saidx != NULL)
-			return(saidx);
-	}
-#else
-	saidx = key_getsaidx(idx);
-	if (saidx != NULL)
-		return(saidx);
-#endif
-
-	return NULL;
-}
-
-/*
- * check the dupulication of SPI by searching only INBOUND SADB.
- * OUT:
- *	NULL	: not found
- *	others	: found, pointer to a SA.
- */
-static struct secas *
-key_checkspi(spi, proto)
-	u_int32_t spi;
-	u_int proto;
-{
-	struct secasindex *saidx;
-#ifdef RESTRICTED_DIR
-	u_int diridx, dir;
-#endif
-	struct secas *sa;
-
-	/* check all status of INBOUND SADB. */
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_input); diridx++) {
-
-		dir = saorder_dir_input[diridx];
-		for (saidx = (struct secasindex *)saidxtree[dir].head;
-		     saidx != NULL;
-		     saidx = saidx->next) {
-
-			sa = key_getsabyspi(saidx, proto, spi);
-			if (sa != NULL)
-				return sa;
-		}
-	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		sa = key_getsabyspi(saidx, proto, spi);
-		if (sa != NULL)
-			return sa;
-	}
-#endif
-
-	return NULL;
-}
-
-/*
- * search SADB limited to alive SA with direction, protocol, SPI.
- * OUT:
- *	NULL	: not found
- *	others	: found, pointer to a SA.
- */
-static struct secas *
-key_getsabyspi(saidx, proto, spi)
-	struct secasindex *saidx;
-	u_int proto;
 	u_int32_t spi;
 {
-	struct secas *sa;
+	struct secashead *sah;
+	struct secasvar *sav;
+
+	/* check address family */
+	if (saidx->src.ss_family != saidx->dst.ss_family) {
+#ifdef IPSEC_DEBUG
+		printf("key_checkspidup: address family mismatched.\n");
+#endif
+		return NULL;
+	}
+
+	/* check all SAD */
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (!key_ismyaddr((struct sockaddr *)&sah->saidx.dst))
+			continue;
+		sav = key_getsavbyspi(sah, spi);
+		if (sav != NULL)
+			return sav;
+	}
+
+	return NULL;
+}
+
+/*
+ * search SAD litmited alive SA, protocol, SPI.
+ * OUT:
+ *	NULL	: not found
+ *	others	: found, pointer to a SA.
+ */
+static struct secasvar *
+key_getsavbyspi(sah, spi)
+	struct secashead *sah;
+	u_int32_t spi;
+{
+	struct secasvar *sav;
 	u_int stateidx, state;
 
 	/* search all status */
@@ -2355,23 +2592,21 @@ key_getsabyspi(saidx, proto, spi)
 	     stateidx++) {
 
 		state = saorder_state_alive[stateidx];
-		for (sa = (struct secas *)saidx->satree[state].head;
-		     sa != NULL;
-		     sa = sa->next) {
+		LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
 			/* sanity check */
-			if (sa->state != state) {
-				printf("key_getsabyspi: "
-					"invalid sa->state "
+			if (sav->state != state) {
+#ifdef IPSEC_DEBUG
+				printf("key_getsavbyspi: "
+					"invalid sav->state "
 					"(queue: %d SA: %d)\n",
-					state, sa->state);
+					state, sav->state);
+#endif
 				continue;
 			}
 
-			if (sa->type != proto)
-				continue;
-			if (sa->spi == spi)
-				return sa;
+			if (sav->spi == spi)
+				return sav;
 		}
 	}
 
@@ -2381,342 +2616,303 @@ key_getsabyspi(saidx, proto, spi)
 /*
  * copy SA values from PF_KEY message except *SPI, SEQ, PID, STATE and TYPE*.
  * You must update these if need.
- * NOTE: When error occured in this function, we *FREE* sa passed.
  * OUT:	0:	success.
- *	1:	failure. set errno to (mhp[0])->sadb_msg_errno.
+ *	!0:	failure.
+ *
+ * does not modify mbuf.  does not free mbuf on error.
  */
 static int
-key_setsaval(sa, mhp)
-	struct secas *sa;
-	caddr_t *mhp;
+key_setsaval(sav, m, mhp)
+	struct secasvar *sav;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
+#ifdef IPSEC_ESP
+	const struct esp_algorithm *algo;
+#endif
 	int error = 0;
+	struct timeval tv;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_setsaval: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
 	/* initialization */
-	sa->key_auth = NULL;
-	sa->key_enc = NULL;
-	sa->proxy = NULL;
-	sa->replay = NULL;
-	sa->lft_c = NULL;
-	sa->lft_h = NULL;
-	sa->lft_s = NULL;
-	sa->iv = NULL;
-	sa->misc1 = NULL;
-	sa->misc2 = NULL;
-	sa->misc3 = NULL;
+	sav->replay = NULL;
+	sav->key_auth = NULL;
+	sav->key_enc = NULL;
+	sav->sched = NULL;
+	sav->schedlen = 0;
+	sav->iv = NULL;
+	sav->lft_c = NULL;
+	sav->lft_h = NULL;
+	sav->lft_s = NULL;
 
 	/* SA */
-	if (mhp[SADB_EXT_SA] != NULL) {
-		struct sadb_sa *sa0 = (struct sadb_sa *)mhp[SADB_EXT_SA];
+	if (mhp->ext[SADB_EXT_SA] != NULL) {
+		const struct sadb_sa *sa0;
 
-		sa->alg_auth = sa0->sadb_sa_auth;
-		sa->alg_enc = sa0->sadb_sa_encrypt;
-		sa->flags = sa0->sadb_sa_flags;
+		sa0 = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+		if (mhp->extlen[SADB_EXT_SA] < sizeof(*sa0)) {
+			error = EINVAL;
+			goto fail;
+		}
+
+		sav->alg_auth = sa0->sadb_sa_auth;
+		sav->alg_enc = sa0->sadb_sa_encrypt;
+		sav->flags = sa0->sadb_sa_flags;
 
 		/* replay window */
 		if ((sa0->sadb_sa_flags & SADB_X_EXT_OLD) == 0) {
-			KMALLOC(sa->replay, struct secreplay *,
-				sizeof(struct secreplay));
-			if (sa->replay == NULL) {
+			sav->replay = keydb_newsecreplay(sa0->sadb_sa_replay);
+			if (sav->replay == NULL) {
+#ifdef IPSEC_DEBUG
 				printf("key_setsaval: No more memory.\n");
+#endif
 				error = ENOBUFS;
-				goto err;
-			}
-			bzero(sa->replay, sizeof(struct secreplay));
-
-			if ((sa->replay->wsize = sa0->sadb_sa_replay) != 0) {
-				KMALLOC(sa->replay->bitmap, caddr_t,
-					sa->replay->wsize);
-				if (sa->replay->bitmap == NULL) {
-					printf("key_setsaval: "
-					       "No more memory.\n");
-					error = ENOBUFS;
-					goto err;
-				}
-				bzero(sa->replay->bitmap, sa0->sadb_sa_replay);
-			}
-		}
-	}
-
-	/* Proxy address */
-	if (mhp[SADB_EXT_ADDRESS_PROXY] != NULL) {
-		struct sockaddr *proxy;
-
-		proxy = (struct sockaddr *)(mhp[SADB_EXT_ADDRESS_PROXY]
-			+ sizeof(struct sadb_address));
-
-		/* copy proxy if exists. */
-		if (proxy != NULL) {
-			KEY_NEWBUF(sa->proxy, struct sockaddr *,
-			           proxy, proxy->sa_len);
-			if (sa->proxy == NULL) {
-				printf("key_setsaval: No more memory.\n");
-				error = ENOBUFS;
-				goto err;
+				goto fail;
 			}
 		}
 	}
 
 	/* Authentication keys */
-	if (mhp[SADB_EXT_KEY_AUTH] != NULL) {
-		struct sadb_key *key0;
-		u_int len;
+	if (mhp->ext[SADB_EXT_KEY_AUTH] != NULL) {
+		const struct sadb_key *key0;
+		int len;
 
-		key0 = (struct sadb_key *)mhp[SADB_EXT_KEY_AUTH];
-		len = PFKEY_UNUNIT64(key0->sadb_key_len);
+		key0 = (const struct sadb_key *)mhp->ext[SADB_EXT_KEY_AUTH];
+		len = mhp->extlen[SADB_EXT_KEY_AUTH];
 
 		error = 0;
-		if (len < sizeof(struct sadb_key))
+		if (len < sizeof(*key0)) {
 			error = EINVAL;
-		switch (msg0->sadb_msg_satype) {
+			goto fail;
+		}
+		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
-			if (len == sizeof(struct sadb_key)
-			 && sa->alg_auth != SADB_AALG_NULL) {
+			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
+			    sav->alg_auth != SADB_X_AALG_NULL)
 				error = EINVAL;
-			}
 			break;
 		case SADB_X_SATYPE_IPCOMP:
-			error = EINVAL;
-			break;
 		default:
 			error = EINVAL;
 			break;
 		}
 		if (error) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsaval: invalid key_auth values.\n");
-			goto err;
+#endif
+			goto fail;
 		}
 
-		KEY_NEWBUF(sa->key_auth, struct sadb_key *, key0, len);
-		if (sa->key_auth == NULL) {
+		sav->key_auth = (struct sadb_key *)key_newbuf(key0, len);
+		if (sav->key_auth == NULL) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsaval: No more memory.\n");
+#endif
 			error = ENOBUFS;
-			goto err;
+			goto fail;
 		}
-
-		/* make length shift up for kernel*/
-		sa->key_auth->sadb_key_len = len;
 	}
 
 	/* Encryption key */
-	if (mhp[SADB_EXT_KEY_ENCRYPT] != NULL) {
-		struct sadb_key *key0;
-		u_int len;
+	if (mhp->ext[SADB_EXT_KEY_ENCRYPT] != NULL) {
+		const struct sadb_key *key0;
+		int len;
 
-		key0 = (struct sadb_key *)mhp[SADB_EXT_KEY_ENCRYPT];
-		len = PFKEY_UNUNIT64(key0->sadb_key_len);
+		key0 = (const struct sadb_key *)mhp->ext[SADB_EXT_KEY_ENCRYPT];
+		len = mhp->extlen[SADB_EXT_KEY_ENCRYPT];
 
 		error = 0;
-		if (len < sizeof(struct sadb_key))
+		if (len < sizeof(*key0)) {
 			error = EINVAL;
-		switch (msg0->sadb_msg_satype) {
+			goto fail;
+		}
+		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_ESP:
-			if (len == sizeof(struct sadb_key)
-			 && sa->alg_enc != SADB_EALG_NULL) {
+			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
+			    sav->alg_enc != SADB_EALG_NULL) {
 				error = EINVAL;
+				break;
+			}
+			sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
+			if (sav->key_enc == NULL) {
+#ifdef IPSEC_DEBUG
+				printf("key_setsaval: No more memory.\n");
+#endif
+				error = ENOBUFS;
+				goto fail;
 			}
 			break;
-		case SADB_SATYPE_AH:
-			error = EINVAL;
-			break;
 		case SADB_X_SATYPE_IPCOMP:
+			if (len != PFKEY_ALIGN8(sizeof(struct sadb_key)))
+				error = EINVAL;
+			sav->key_enc = NULL;	/*just in case*/
 			break;
+		case SADB_SATYPE_AH:
 		default:
 			error = EINVAL;
 			break;
 		}
 		if (error) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsatval: invalid key_enc value.\n");
-			goto err;
+#endif
+			goto fail;
 		}
-
-		KEY_NEWBUF(sa->key_enc, struct sadb_key *, key0, len);
-		if (sa->key_enc == NULL) {
-			printf("key_setsaval: No more memory.\n");
-			error = ENOBUFS;
-			goto err;
-		}
-
-		/* make length shift up for kernel*/
-		sa->key_enc->sadb_key_len = len;
 	}
 
-	/* XXX: set iv */
-	sa->ivlen = 0;
+	/* set iv */
+	sav->ivlen = 0;
 
-	switch (sa->type) {
+	switch (mhp->msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
 #ifdef IPSEC_ESP
-	    {
-		struct esp_algorithm *algo;
-
-		algo = &esp_algorithms[sa->alg_enc];
+		algo = esp_algorithm_lookup(sav->alg_enc);
 		if (algo && algo->ivlen)
-			sa->ivlen = (*algo->ivlen)(sa);
-		KMALLOC(sa->iv, caddr_t, sa->ivlen);
-		if (sa->iv == 0) {
+			sav->ivlen = (*algo->ivlen)(algo, sav);
+		if (sav->ivlen == 0)
+			break;
+		KMALLOC(sav->iv, caddr_t, sav->ivlen);
+		if (sav->iv == 0) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsaval: No more memory.\n");
+#endif
 			error = ENOBUFS;
-			goto err;
+			goto fail;
 		}
-		/* initialize ? */
-		break;
-	    }
-#else
-		break;
+
+		/* initialize */
+		key_randomfill(sav->iv, sav->ivlen);
 #endif
+		break;
 	case SADB_SATYPE_AH:
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
-#endif
 		break;
 	default:
+#ifdef IPSEC_DEBUG
 		printf("key_setsaval: invalid SA type.\n");
+#endif
 		error = EINVAL;
-		goto err;
+		goto fail;
 	}
 
-	/* reset tick */
-	sa->tick = 0;
+	/* reset created */
+	microtime(&tv);
+	sav->created = tv.tv_sec;
 
 	/* make lifetime for CURRENT */
-    {
-	struct timeval tv;
-
-	KMALLOC(sa->lft_c, struct sadb_lifetime *,
-		sizeof(struct sadb_lifetime));
-	if (sa->lft_c == NULL) {
+	KMALLOC(sav->lft_c, struct sadb_lifetime *,
+	    sizeof(struct sadb_lifetime));
+	if (sav->lft_c == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_setsaval: No more memory.\n");
+#endif
 		error = ENOBUFS;
-		goto err;
+		goto fail;
 	}
 
 	microtime(&tv);
 
-	sa->lft_c->sadb_lifetime_len =
-		PFKEY_UNIT64(sizeof(struct sadb_lifetime));
-	sa->lft_c->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
-	sa->lft_c->sadb_lifetime_allocations = 0;
-	sa->lft_c->sadb_lifetime_bytes = 0;
-	sa->lft_c->sadb_lifetime_addtime = tv.tv_sec;
-	sa->lft_c->sadb_lifetime_usetime = 0;
-    }
+	sav->lft_c->sadb_lifetime_len =
+	    PFKEY_UNIT64(sizeof(struct sadb_lifetime));
+	sav->lft_c->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
+	sav->lft_c->sadb_lifetime_allocations = 0;
+	sav->lft_c->sadb_lifetime_bytes = 0;
+	sav->lft_c->sadb_lifetime_addtime = tv.tv_sec;
+	sav->lft_c->sadb_lifetime_usetime = 0;
 
 	/* lifetimes for HARD and SOFT */
     {
-	struct sadb_lifetime *lft0;
+	const struct sadb_lifetime *lft0;
 
-	lft0 = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
+	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
 	if (lft0 != NULL) {
-		KEY_NEWBUF(sa->lft_h, struct sadb_lifetime *,
-		           lft0, sizeof(*lft0));
-		if (sa->lft_h == NULL) {
+		if (mhp->extlen[SADB_EXT_LIFETIME_HARD] < sizeof(*lft0)) {
+			error = EINVAL;
+			goto fail;
+		}
+		sav->lft_h = (struct sadb_lifetime *)key_newbuf(lft0,
+		    sizeof(*lft0));
+		if (sav->lft_h == NULL) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsaval: No more memory.\n");
+#endif
 			error = ENOBUFS;
-			goto err;
+			goto fail;
 		}
 		/* to be initialize ? */
 	}
 
-	lft0 = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_SOFT];
+	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_SOFT];
 	if (lft0 != NULL) {
-		KEY_NEWBUF(sa->lft_s, struct sadb_lifetime *,
-		           lft0, sizeof(*lft0));
-		if (sa->lft_s == NULL) {
+		if (mhp->extlen[SADB_EXT_LIFETIME_SOFT] < sizeof(*lft0)) {
+			error = EINVAL;
+			goto fail;
+		}
+		sav->lft_s = (struct sadb_lifetime *)key_newbuf(lft0,
+		    sizeof(*lft0));
+		if (sav->lft_s == NULL) {
+#ifdef IPSEC_DEBUG
 			printf("key_setsaval: No more memory.\n");
+#endif
 			error = ENOBUFS;
-			goto err;
+			goto fail;
 		}
 		/* to be initialize ? */
 	}
     }
 
-#if 0
-	/* pre-processing for DES */
-	switch (sa->alg_enc) {
-	case SADB_EALG_DESCBC:
-        	if (des_key_sched((C_Block *)_KEYBUF(sa->key_enc),
-		                  (des_key_schedule)sa->misc1) != 0) {
-			printf("key_setsaval: error des_key_sched.\n");
-			sa->misc1 = NULL;
-			/* THROUGH */
-		}
-		break;
-	case SADB_EALG_3DESCBC:
-        	if (des_key_sched((C_Block *)_KEYBUF(sa->key_enc),
-		                  (des_key_schedule)sa->misc1) != 0
-        	 || des_key_sched((C_Block *)(_KEYBUF(sa->key_enc) + 8),
-		                  (des_key_schedule)sa->misc2) != 0
-        	 || des_key_sched((C_Block *)(_KEYBUF(sa->key_enc) + 16),
-		                  (des_key_schedule)sa->misc3) != 0) {
-			printf("key_setsaval: error des_key_sched.\n");
-			sa->misc1 = NULL;
-			sa->misc2 = NULL;
-			sa->misc3 = NULL;
-			/* THROUGH */
-		}
-	}
-#endif
-
-	msg0->sadb_msg_errno = 0;
 	return 0;
 
-    err:
-	msg0->sadb_msg_errno = error;
-	return 1;
-}
-
-/*
- * get message buffer length.
- */
-static u_int
-key_getmsglen(sa)
-	struct secas *sa;
-{
-	int len = sizeof(struct sadb_msg);
-
-	len += sizeof(struct sadb_sa);
-	len += (sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sa->saidx->idx.family)));
-	len += (sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sa->saidx->idx.family)));
-
-	if (sa->key_auth != NULL)
-		len += sa->key_auth->sadb_key_len;
-	if (sa->key_enc != NULL)
-		len += sa->key_enc->sadb_key_len;
-
-	if (sa->proxy != NULL) {
-		len += (sizeof(struct sadb_address)
-			+ PFKEY_ALIGN8(sa->proxy->sa_len));
+ fail:
+	/* initialization */
+	if (sav->replay != NULL) {
+		keydb_delsecreplay(sav->replay);
+		sav->replay = NULL;
+	}
+	if (sav->key_auth != NULL) {
+		KFREE(sav->key_auth);
+		sav->key_auth = NULL;
+	}
+	if (sav->key_enc != NULL) {
+		KFREE(sav->key_enc);
+		sav->key_enc = NULL;
+	}
+	if (sav->sched) {
+		KFREE(sav->sched);
+		sav->sched = NULL;
+	}
+	if (sav->iv != NULL) {
+		KFREE(sav->iv);
+		sav->iv = NULL;
+	}
+	if (sav->lft_c != NULL) {
+		KFREE(sav->lft_c);
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
+		KFREE(sav->lft_h);
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
+		KFREE(sav->lft_s);
+		sav->lft_s = NULL;
 	}
 
-	if (sa->lft_c != NULL)
-		len += sizeof(struct sadb_lifetime);
-	if (sa->lft_h != NULL)
-		len += sizeof(struct sadb_lifetime);
-	if (sa->lft_s != NULL)
-		len += sizeof(struct sadb_lifetime);
-
-	return len;
+	return error;
 }
 
 /*
- * validation with a secas entry, and set SADB_SATYPE_MATURE.
+ * validation with a secasvar entry, and set SADB_SATYPE_MATURE.
  * OUT:	0:	valid
  *	other:	errno
  */
 static int
-key_mature(sa)
-	struct secas *sa;
+key_mature(sav)
+	struct secasvar *sav;
 {
 	int mature;
 	int checkmask = 0;	/* 2^0: ealg  2^1: aalg  2^2: calg */
@@ -2725,401 +2921,566 @@ key_mature(sa)
 	mature = 0;
 
 	/* check SPI value */
-	if (ntohl(sa->spi) >= 0 && ntohl(sa->spi) <= 255) {
-		printf("key_mature: illegal range of SPI %d.\n", sa->spi);
-		return EINVAL;
+	switch (sav->sah->saidx.proto) {
+	case IPPROTO_ESP:
+	case IPPROTO_AH:
+		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: illegal range of SPI %u.\n",
+			    (u_int32_t)ntohl(sav->spi));
+#endif
+			return EINVAL;
+		}
+		break;
 	}
 
 	/* check satype */
-	switch (sa->type) {
-	case SADB_SATYPE_ESP:
+	switch (sav->sah->saidx.proto) {
+	case IPPROTO_ESP:
 		/* check flags */
-		if ((sa->flags & SADB_X_EXT_OLD) && (sa->flags & SADB_X_EXT_DERIV)) {
-			printf("key_mature: invalid flag (derived) given to old-esp.\n");
+		if ((sav->flags & SADB_X_EXT_OLD)
+		 && (sav->flags & SADB_X_EXT_DERIV)) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: "
+				"invalid flag (derived) given to old-esp.\n");
+#endif
 			return EINVAL;
 		}
-		checkmask = 3;
+		if (sav->alg_auth == SADB_AALG_NONE)
+			checkmask = 1;
+		else
+			checkmask = 3;
 		mustmask = 1;
 		break;
-	case SADB_SATYPE_AH:
+	case IPPROTO_AH:
 		/* check flags */
-		if (sa->flags & SADB_X_EXT_DERIV) {
-			printf("key_mature: invalid flag (derived) given to AH SA.\n");
+		if (sav->flags & SADB_X_EXT_DERIV) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: "
+				"invalid flag (derived) given to AH SA.\n");
+#endif
 			return EINVAL;
 		}
-		if (sa->alg_enc != SADB_EALG_NONE) {
-			printf("key_mature: protocol and algorithm mismated.\n");
+		if (sav->alg_enc != SADB_EALG_NONE) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: "
+				"protocol and algorithm mismated.\n");
+#endif
 			return(EINVAL);
 		}
 		checkmask = 2;
 		mustmask = 2;
 		break;
-#if 1	/*nonstandard*/
-	case SADB_X_SATYPE_IPCOMP:
-		if (sa->alg_auth != SADB_AALG_NONE) {
-			printf("key_mature: protocol and algorithm mismated.\n");
+	case IPPROTO_IPCOMP:
+		if (sav->alg_auth != SADB_AALG_NONE) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: "
+				"protocol and algorithm mismated.\n");
+#endif
 			return(EINVAL);
 		}
-		if ((sa->flags & SADB_X_EXT_RAWCPI) == 0
-		 && ntohl(sa->spi) >= 0x10000) {
+		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0
+		 && ntohl(sav->spi) >= 0x10000) {
+#ifdef IPSEC_DEBUG
 			printf("key_mature: invalid cpi for IPComp.\n");
+#endif
 			return(EINVAL);
 		}
 		checkmask = 4;
 		mustmask = 4;
 		break;
-#endif
 	default:
+#ifdef IPSEC_DEBUG
 		printf("key_mature: Invalid satype.\n");
+#endif
 		return EPROTONOSUPPORT;
 	}
 
 	/* check authentication algorithm */
 	if ((checkmask & 2) != 0) {
-		struct ah_algorithm *algo;
+		const struct ah_algorithm *algo;
 		int keylen;
 
-		/* XXX: should use algorithm map to check. */
-		switch (sa->alg_auth) {
-		case SADB_AALG_NONE:
-		case SADB_AALG_MD5HMAC:
-		case SADB_AALG_SHA1HMAC:
-		case SADB_AALG_MD5:
-		case SADB_AALG_SHA:
-		case SADB_AALG_NULL:
-			break;
-		default:
-			printf("key_mature: unknown authentication algorithm.\n");
+		algo = ah_algorithm_lookup(sav->alg_auth);
+		if (!algo) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: "
+				"unknown authentication algorithm.\n");
+#endif
 			return EINVAL;
 		}
 
 		/* algorithm-dependent check */
-		algo = &ah_algorithms[sa->alg_auth];
-
-		if (sa->key_auth)
-			keylen = sa->key_auth->sadb_key_bits;
+		if (sav->key_auth)
+			keylen = sav->key_auth->sadb_key_bits;
 		else
 			keylen = 0;
 		if (keylen < algo->keymin || algo->keymax < keylen) {
+#ifdef IPSEC_DEBUG
 			printf("key_mature: invalid AH key length %d "
 				"(%d-%d allowed)\n", keylen,
 				algo->keymin, algo->keymax);
+#endif
 			return EINVAL;
 		}
 
 		if (algo->mature) {
-			if ((*algo->mature)(sa)) {
-				/* message generated in per-algorithm function */
+			if ((*algo->mature)(sav)) {
+				/* message generated in per-algorithm function*/
 				return EINVAL;
 			} else
 				mature = SADB_SATYPE_AH;
 		}
 
-		if ((mustmask & 2) != 0 &&  mature != SADB_SATYPE_AH)
+		if ((mustmask & 2) != 0 &&  mature != SADB_SATYPE_AH) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: no satisfy algorithm for AH\n");
+#endif
 			return EINVAL;
+		}
 	}
 
 	/* check encryption algorithm */
 	if ((checkmask & 1) != 0) {
 #ifdef IPSEC_ESP
-		struct esp_algorithm *algo;
+		const struct esp_algorithm *algo;
 		int keylen;
 
-		switch (sa->alg_enc) {
-		case SADB_EALG_NONE:
-		case SADB_EALG_DESCBC:
-		case SADB_EALG_3DESCBC:
-		case SADB_EALG_NULL:
-		case SADB_EALG_BLOWFISHCBC:
-		case SADB_EALG_CAST128CBC:
-#ifdef SADB_EALG_RC5CBC
-		case SADB_EALG_RC5CBC:
-#endif
-			break;
-		default:
+		algo = esp_algorithm_lookup(sav->alg_enc);
+		if (!algo) {
+#ifdef IPSEC_DEBUG
 			printf("key_mature: unknown encryption algorithm.\n");
-			return(EINVAL);
+#endif
+			return EINVAL;
 		}
 
 		/* algorithm-dependent check */
-		algo = &esp_algorithms[sa->alg_enc];
-
-		if (sa->key_enc)
-			keylen = sa->key_enc->sadb_key_bits;
+		if (sav->key_enc)
+			keylen = sav->key_enc->sadb_key_bits;
 		else
 			keylen = 0;
 		if (keylen < algo->keymin || algo->keymax < keylen) {
+#ifdef IPSEC_DEBUG
 			printf("key_mature: invalid ESP key length %d "
 				"(%d-%d allowed)\n", keylen,
 				algo->keymin, algo->keymax);
+#endif
 			return EINVAL;
 		}
 
 		if (algo->mature) {
-			if ((*algo->mature)(sa)) {
-				/* message generated in per-algorithm function */
+			if ((*algo->mature)(sav)) {
+				/* message generated in per-algorithm function*/
 				return EINVAL;
 			} else
 				mature = SADB_SATYPE_ESP;
 		}
 
-		if ((mustmask & 1) != 0 &&  mature != SADB_SATYPE_ESP)
+		if ((mustmask & 1) != 0 &&  mature != SADB_SATYPE_ESP) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: no satisfy algorithm for ESP\n");
+#endif
 			return EINVAL;
-#else
+		}
+#else /*IPSEC_ESP*/
+#ifdef IPSEC_DEBUG
 		printf("key_mature: ESP not supported in this configuration\n");
+#endif
 		return EINVAL;
 #endif
 	}
 
 	/* check compression algorithm */
 	if ((checkmask & 4) != 0) {
-		struct ipcomp_algorithm *algo;
-
-		switch (sa->alg_enc) {
-		case SADB_X_CALG_NONE:
-		case SADB_X_CALG_OUI:
-		case SADB_X_CALG_DEFLATE:
-		case SADB_X_CALG_LZS:
-			break;
-		default:
-			printf("key_mature: unknown compression algorithm.\n");
-			return EINVAL;
-		}
+		const struct ipcomp_algorithm *algo;
 
 		/* algorithm-dependent check */
-		algo = &ipcomp_algorithms[sa->alg_enc];
-
-		if (!(algo->compress && algo->decompress)) {
-			printf("key_mature: "
-				"unsupported compression algorithm.\n");
+		algo = ipcomp_algorithm_lookup(sav->alg_enc);
+		if (!algo) {
+#ifdef IPSEC_DEBUG
+			printf("key_mature: unknown compression algorithm.\n");
+#endif
 			return EINVAL;
 		}
 	}
 
-#if 0 /* not need */
-	/* XXX: check flags */
-	if ((sa->flags & SADB_X_EXT_PMASK) == SADB_X_EXT_PMASK) {
-		printf("key_mature: invalid padding flag = %u.\n",
-			sa->flags);
-		return(EINVAL);
-	}
-#endif
-
-	key_sa_chgstate(sa, SADB_SASTATE_MATURE);
+	key_sa_chgstate(sav, SADB_SASTATE_MATURE);
 
 	return 0;
 }
 
 /*
  * subroutine for SADB_GET and SADB_DUMP.
- * the buf must be allocated sufficent space.
  */
-static u_int
-key_setdumpsa(sa, newmsg)
-	struct secas *sa;
-	struct sadb_msg *newmsg;
+static struct mbuf *
+key_setdumpsa(sav, type, satype, seq, pid)
+	struct secasvar *sav;
+	u_int8_t type, satype;
+	u_int32_t seq, pid;
 {
-	u_int tlen;
-	caddr_t p;
+	struct mbuf *result = NULL, *tres = NULL, *m;
+	int l = 0;
 	int i;
+	void *p;
+	int dumporder[] = {
+		SADB_EXT_SA, SADB_X_EXT_SA2,
+		SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
+		SADB_EXT_LIFETIME_CURRENT, SADB_EXT_ADDRESS_SRC,
+		SADB_EXT_ADDRESS_DST, SADB_EXT_ADDRESS_PROXY, SADB_EXT_KEY_AUTH,
+		SADB_EXT_KEY_ENCRYPT, SADB_EXT_IDENTITY_SRC,
+		SADB_EXT_IDENTITY_DST, SADB_EXT_SENSITIVITY,
+	};
 
-	newmsg->sadb_msg_version = PF_KEY_V2;
-	newmsg->sadb_msg_satype = sa->type;
-	newmsg->sadb_msg_errno = 0;
-    {
-	/* XXX this is DEBUG use. */
-	caddr_t x = (caddr_t)&newmsg->sadb_msg_reserved;
+	m = key_setsadbmsg(type, 0, satype, seq, pid, sav->refcnt);
+	if (m == NULL)
+		goto fail;
+	result = m;
 
-#ifdef RESTRICTED_DIR
-	for (x[0] = 0; x[0] < _ARRAYLEN(saorder_dir_any); x[0]++) {
-		if (sa->saidx->saidxt == &saidxtree[saorder_dir_any[(int)x[0]]])
-			break;
-	}
-#else
-	x[0] = (unsigned char)sa->seq;
-#endif
-
-	x[1] = sa->refcnt;
-    }
-	tlen = key_getmsglen(sa);
-	newmsg->sadb_msg_len = PFKEY_UNIT64(tlen);
-
-	p = (caddr_t)newmsg;
-	p += sizeof(struct sadb_msg);
-	for (i = 1; i <= SADB_EXT_MAX; i++) {
-		switch (i) {
+	for (i = sizeof(dumporder)/sizeof(dumporder[0]) - 1; i >= 0; i--) {
+		m = NULL;
+		p = NULL;
+		switch (dumporder[i]) {
 		case SADB_EXT_SA:
-		{
-			struct sadb_sa sa0;
+			m = key_setsadbsa(sav);
+			if (!m)
+				goto fail;
+			break;
 
-			sa0.sadb_sa_len = PFKEY_UNIT64(sizeof(struct sadb_sa));
-			sa0.sadb_sa_exttype = i;
-			sa0.sadb_sa_spi = sa->spi;
-			if (sa->replay)
-				sa0.sadb_sa_replay = sa->replay->wsize;
-			else
-				sa0.sadb_sa_replay = 0;
-			sa0.sadb_sa_state = sa->state;
-			sa0.sadb_sa_auth = sa->alg_auth;
-			sa0.sadb_sa_encrypt = sa->alg_enc;
-			sa0.sadb_sa_flags = sa->flags;
-			bcopy((caddr_t)&sa0, p, sizeof(sa0));
-			p += sizeof(sa0);
-		}
+		case SADB_X_EXT_SA2:
+			m = key_setsadbxsa2(sav->sah->saidx.mode,
+					sav->sah->saidx.reqid);
+			if (!m)
+				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_SRC:
-			p = key_setsadbaddr(p, i,
-					sa->saidx->idx.family,
-					(caddr_t)&sa->saidx->idx.src,
-					sa->saidx->idx.prefs,
-					sa->saidx->idx.proto,
-					sa->saidx->idx.ports);
+			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+			    (struct sockaddr *)&sav->sah->saidx.src,
+			    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+			if (!m)
+				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_DST:
-			p = key_setsadbaddr(p, i,
-					sa->saidx->idx.family,
-					(caddr_t)&sa->saidx->idx.dst,
-					sa->saidx->idx.prefd,
-					sa->saidx->idx.proto,
-					sa->saidx->idx.portd);
-			break;
-
-		case SADB_EXT_ADDRESS_PROXY:
-			if (sa->proxy == NULL) break;
-			p = key_setsadbaddr(p, i,
-					sa->proxy->sa_family,
-					_INADDRBYSA(sa->proxy),
-					_INALENBYAF(sa->proxy->sa_family) << 3,
-					0, 0);
+			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+			    (struct sockaddr *)&sav->sah->saidx.dst,
+			    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+			if (!m)
+				goto fail;
 			break;
 
 		case SADB_EXT_KEY_AUTH:
-		    {
-			u_int len;
-			if (sa->key_auth == NULL) break;
-			len = sa->key_auth->sadb_key_len; /* real length */
-			bcopy((caddr_t)sa->key_auth, p, len);
-			((struct sadb_ext *)p)->sadb_ext_len = PFKEY_UNIT64(len);
-			p += len;
-		    }
+			if (!sav->key_auth)
+				continue;
+			l = PFKEY_UNUNIT64(sav->key_auth->sadb_key_len);
+			p = sav->key_auth;
 			break;
 
 		case SADB_EXT_KEY_ENCRYPT:
-		    {
-			u_int len;
-			if (sa->key_enc == NULL) break;
-			len = sa->key_enc->sadb_key_len; /* real length */
-			bcopy((caddr_t)sa->key_enc, p, len);
-			((struct sadb_ext *)p)->sadb_ext_len = PFKEY_UNIT64(len);
-			p += len;
-		    }
-			break;;
+			if (!sav->key_enc)
+				continue;
+			l = PFKEY_UNUNIT64(sav->key_enc->sadb_key_len);
+			p = sav->key_enc;
+			break;
 
 		case SADB_EXT_LIFETIME_CURRENT:
-			if (sa->lft_c == NULL) break;
-			p = key_copysadbext(p, (caddr_t)sa->lft_c);
+			if (!sav->lft_c)
+				continue;
+			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
+			p = sav->lft_c;
 			break;
 
 		case SADB_EXT_LIFETIME_HARD:
-			if (sa->lft_h == NULL) break;
-			p = key_copysadbext(p, (caddr_t)sa->lft_h);
+			if (!sav->lft_h)
+				continue;
+			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_h)->sadb_ext_len);
+			p = sav->lft_h;
 			break;
 
 		case SADB_EXT_LIFETIME_SOFT:
-			if (sa->lft_s == NULL) break;
-			p = key_copysadbext(p, (caddr_t)sa->lft_s);
+			if (!sav->lft_s)
+				continue;
+			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_s)->sadb_ext_len);
+			p = sav->lft_s;
 			break;
 
+		case SADB_EXT_ADDRESS_PROXY:
 		case SADB_EXT_IDENTITY_SRC:
 		case SADB_EXT_IDENTITY_DST:
+			/* XXX: should we brought from SPD ? */
 		case SADB_EXT_SENSITIVITY:
 		default:
-			break;
+			continue;
+		}
+
+		if ((!m && !p) || (m && p))
+			goto fail;
+		if (p && tres) {
+			M_PREPEND(tres, l, M_DONTWAIT);
+			if (!tres)
+				goto fail;
+			bcopy(p, mtod(tres, caddr_t), l);
+			continue;
+		}
+		if (p) {
+			m = key_alloc_mbuf(l);
+			if (!m)
+				goto fail;
+			m_copyback(m, 0, l, p);
+		}
+
+		if (tres)
+			m_cat(m, tres);
+		tres = m;
+	}
+
+	m_cat(result, tres);
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL)
+			goto fail;
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return result;
+
+fail:
+	m_freem(result);
+	m_freem(tres);
+	return NULL;
+}
+
+/*
+ * set data into sadb_msg.
+ */
+static struct mbuf *
+key_setsadbmsg(type, tlen, satype, seq, pid, reserved)
+	u_int8_t type, satype;
+	u_int16_t tlen;
+	u_int32_t seq;
+	pid_t pid;
+	u_int16_t reserved;
+{
+	struct mbuf *m;
+	struct sadb_msg *p;
+	int len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
+	if (len > MCLBYTES)
+		return NULL;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m && len > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			m = NULL;
 		}
 	}
+	if (!m)
+		return NULL;
+	m->m_pkthdr.len = m->m_len = len;
+	m->m_next = NULL;
 
-	return tlen;
+	p = mtod(m, struct sadb_msg *);
+
+	bzero(p, len);
+	p->sadb_msg_version = PF_KEY_V2;
+	p->sadb_msg_type = type;
+	p->sadb_msg_errno = 0;
+	p->sadb_msg_satype = satype;
+	p->sadb_msg_len = PFKEY_UNIT64(tlen);
+	p->sadb_msg_reserved = reserved;
+	p->sadb_msg_seq = seq;
+	p->sadb_msg_pid = (u_int32_t)pid;
+
+	return m;
 }
 
 /*
- * set SADB_SASTATE_DEAD to secindex's state if there is no SA registerd.
+ * copy secasvar data into sadb_address.
  */
-static void
-key_issaidx_dead(saidx)
-	struct secasindex *saidx;
+static struct mbuf *
+key_setsadbsa(sav)
+	struct secasvar *sav;
 {
-	u_int stateidx;
-	int count;
+	struct mbuf *m;
+	struct sadb_sa *p;
+	int len;
 
-	/* sanity check */
-	if (saidx == NULL)
-		panic("key_issaidx_dead: NULL pointer is passed.\n");
-
-	/* searching all SA registerd in the secindex. */
-	count = 0;
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_any);
-	     stateidx++) {
-		count += saidx->satree[saorder_state_any[stateidx]].len;
+	len = PFKEY_ALIGN8(sizeof(struct sadb_sa));
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
 	}
 
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-	    printf("key_issaidx_dead: number of SA=%d\n", count));
+	p = mtod(m, struct sadb_sa *);
 
-	if (count == 0)
-		key_delsaidx(saidx);
-
-	return;
-}
-
-/*
- * copy sadb type buffer into sadb_ext.
- * assume that sadb_ext_len shifted down >> 3.
- */
-static caddr_t
-key_copysadbext(p, ext)
-	caddr_t p, ext;
-{
-	u_int len = PFKEY_UNUNIT64(((struct sadb_ext *)ext)->sadb_ext_len);
-
-	bcopy(ext, p, len);
-
-	return(p + len);
-}
-
-/*
- * `buf' must has been allocated sufficiently.
- */
-static caddr_t
-key_setsadbaddr(buf, type, family, addr, pref, proto, port)
-	caddr_t buf, addr;
-	u_int type, family, pref, proto, port;
-{
-	caddr_t p = buf; /* save */
-	u_int len;
-
-	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(_SALENBYAF(family));
 	bzero(p, len);
+	p->sadb_sa_len = PFKEY_UNIT64(len);
+	p->sadb_sa_exttype = SADB_EXT_SA;
+	p->sadb_sa_spi = sav->spi;
+	p->sadb_sa_replay = (sav->replay != NULL ? sav->replay->wsize : 0);
+	p->sadb_sa_state = sav->state;
+	p->sadb_sa_auth = sav->alg_auth;
+	p->sadb_sa_encrypt = sav->alg_enc;
+	p->sadb_sa_flags = sav->flags;
 
-	((struct sadb_address *)p)->sadb_address_len = PFKEY_UNIT64(len);
-	((struct sadb_address *)p)->sadb_address_exttype = type;
-	((struct sadb_address *)p)->sadb_address_proto = proto;
-	((struct sadb_address *)p)->sadb_address_prefixlen = pref;
-	((struct sadb_address *)p)->sadb_address_reserved = 0;
-	p += sizeof(struct sadb_address);
+	return m;
+}
 
-	((struct sockaddr *)p)->sa_len = _SALENBYAF(family);
-	((struct sockaddr *)p)->sa_family = family;
-	_INPORTBYSA(p) = port;
-	bcopy(addr, _INADDRBYSA(p), _INALENBYAF(family));
+/*
+ * set data into sadb_address.
+ */
+static struct mbuf *
+key_setsadbaddr(exttype, saddr, prefixlen, ul_proto)
+	u_int16_t exttype;
+	struct sockaddr *saddr;
+	u_int8_t prefixlen;
+	u_int16_t ul_proto;
+{
+	struct mbuf *m;
+	struct sadb_address *p;
+	size_t len;
 
-#ifdef INET6
-	/* XXX flowinfo ? scope_id ? */
-#endif /* INET6 */
+	len = PFKEY_ALIGN8(sizeof(struct sadb_address)) +
+	    PFKEY_ALIGN8(saddr->sa_len);
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
 
-	return(buf + len);
+	p = mtod(m, struct sadb_address *);
+
+	bzero(p, len);
+	p->sadb_address_len = PFKEY_UNIT64(len);
+	p->sadb_address_exttype = exttype;
+	p->sadb_address_proto = ul_proto;
+	p->sadb_address_prefixlen = prefixlen;
+	p->sadb_address_reserved = 0;
+
+	bcopy(saddr,
+	    mtod(m, caddr_t) + PFKEY_ALIGN8(sizeof(struct sadb_address)),
+	    saddr->sa_len);
+
+	return m;
+}
+
+#if 0
+/*
+ * set data into sadb_ident.
+ */
+static struct mbuf *
+key_setsadbident(exttype, idtype, string, stringlen, id)
+	u_int16_t exttype, idtype;
+	caddr_t string;
+	int stringlen;
+	u_int64_t id;
+{
+	struct mbuf *m;
+	struct sadb_ident *p;
+	size_t len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_ident)) + PFKEY_ALIGN8(stringlen);
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_ident *);
+
+	bzero(p, len);
+	p->sadb_ident_len = PFKEY_UNIT64(len);
+	p->sadb_ident_exttype = exttype;
+	p->sadb_ident_type = idtype;
+	p->sadb_ident_reserved = 0;
+	p->sadb_ident_id = id;
+
+	bcopy(string,
+	    mtod(m, caddr_t) + PFKEY_ALIGN8(sizeof(struct sadb_ident)),
+	    stringlen);
+
+	return m;
+}
+#endif
+
+/*
+ * set data into sadb_x_sa2.
+ */
+static struct mbuf *
+key_setsadbxsa2(mode, reqid)
+	u_int8_t mode;
+	u_int32_t reqid;
+{
+	struct mbuf *m;
+	struct sadb_x_sa2 *p;
+	size_t len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_sa2));
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_sa2 *);
+
+	bzero(p, len);
+	p->sadb_x_sa2_len = PFKEY_UNIT64(len);
+	p->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+	p->sadb_x_sa2_mode = mode;
+	p->sadb_x_sa2_reserved1 = 0;
+	p->sadb_x_sa2_reserved2 = 0;
+	p->sadb_x_sa2_reserved3 = 0;
+	p->sadb_x_sa2_reqid = reqid;
+
+	return m;
+}
+
+/*
+ * set data into sadb_x_policy
+ */
+static struct mbuf *
+key_setsadbxpolicy(type, dir, id)
+	u_int16_t type;
+	u_int8_t dir;
+	u_int32_t id;
+{
+	struct mbuf *m;
+	struct sadb_x_policy *p;
+	size_t len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_policy));
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_policy *);
+
+	bzero(p, len);
+	p->sadb_x_policy_len = PFKEY_UNIT64(len);
+	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	p->sadb_x_policy_type = type;
+	p->sadb_x_policy_dir = dir;
+	p->sadb_x_policy_id = id;
+
+	return m;
 }
 
 /* %%% utilities */
@@ -3128,309 +3489,59 @@ key_setsadbaddr(buf, type, family, addr, pref, proto, port)
  */
 static void *
 key_newbuf(src, len)
-	void *src;
+	const void *src;
 	u_int len;
 {
 	caddr_t new;
 
 	KMALLOC(new, caddr_t, len);
 	if (new == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_newbuf: No more memory.\n");
+#endif
 		return NULL;
 	}
-	bcopy((caddr_t)src, new, len);
+	bcopy(src, new, len);
 
 	return new;
 }
-
-/*
- * insert keynode after the node pointed as `place' in the keytree.
- * If the value of `place' is NULL, key_insnode adds node to the head of tree.
- */
-static void
-key_insnode(tree, place, node)
-	void *tree, *place, *node;
-{
-	register struct keytree *t = (struct keytree *)tree;
-	register struct keynode *p = (struct keynode *)place;
-	register struct keynode *n = (struct keynode *)node;
-
-	/* sanity check */
-	if (t == NULL || n == NULL)
-		panic("key_insnode: NULL pointer is passed.\n");
-
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-		printf("begin insnode: %p "
-			"into %p[len:%d head:%p tail:%p]\n",
-			n, t, t->len, t->head, t->tail));
-
-	/* add key into the table */
-	if (p == NULL) {
-#if 1	/* into head */
-		n->next = t->head;
-		n->prev = (struct keynode *)NULL;
-
-		if (t->head == NULL)
-			t->tail = n;	/* Must be first one. */
-		else
-			t->head->prev = n;
-
-		t->head = n;
-#else	/* into tail */
-		n->next = (struct keynode *)NULL;
-		n->prev = t->tail;
-		n->prev->next = n;
-
-		if (t->tail == NULL)
-			t->head = n;	/* Must be first one. */
-		else
-			t->tail->next = n;
-
-		t->tail = n;
-#endif
-	} else {
-	/* insert key after the place */
-		n->next = p->next;
-		n->next->prev = n;
-		n->prev = p;
-		n->prev->next = n;
-	}
-
-	n->back = (struct keytree *)t;
-	t->len++;
-
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-		printf("end insnode: %p[prev:%p next:%p] "
-			"into %p[len:%d head:%p tail:%p]\n",
-			n, n->prev, n->next, t, t->len, t->head, t->tail));
-
-	return;
-}
-
-/*
- * free keynode from keytree.
- */
-static void
-key_remnode(node)
-	void *node;
-{
-	register struct keynode *n = (struct keynode *)node;
-
-	/* sanity check */
-	if (n == NULL || n->back == NULL)
-		panic("key_remnode: NULL pointer is passed.\n");
-
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-		printf("begin remnode: %p "
-			"from %p[len:%d head:%p tail:%p]\n",
-			n, n->back, n->back->len, n->back->head, n->back->tail));
-
-	/* middle */
-	if (n->prev && n->next) {
-		n->prev->next = n->next;
-		n->next->prev = n->prev;
-	} else
-	/* tail */
-	if (n->prev && n->next == NULL) {
-		n->prev->next = NULL;
-		n->back->tail = n->prev;
-	} else
-	/* head */
-	if (n->prev == NULL && n->next) {
-		n->next->prev = NULL;
-		n->back->head = n->next;
-	} else {
-		/* maybe last one */
-		/* sn->next == NULL && sn->prev == NULL */
-
-		/* sanity check */
-		if (n->back == NULL) {
-			printf("key_remnode: Illegal pointer found.");
-			return;
-		}
-
-		n->back->head = NULL;
-		n->back->tail = NULL;
-	}
-
-	if (n->back)
-		n->back->len--;
-
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-		printf("end remnode: %p "
-			"from %p[len:%d head:%p tail:%p]\n",
-			n, n->back, n->back->len, n->back->head, n->back->tail));
-
-	return;
-}
-
-#ifdef RESTRICTED_DIR
-/*
- * The relation between the direction of SA and the addresses.
- *
- *	"my address"	means my interface's address.
- *	"my subnet"	means my network address.
- *	"other"		means the another of the above.
- *
- * SA Source	SA Destination	Proxy		Direction	Comment
- * ------	-----------	-----		---------	-------
- * my address	my address			bi-direction	i.e. loopback
- * my address	my address	my address	bi-direction	i.e. loopback
- * my address	my address	other		N/A
- * my address	my subnet			bi-direction	or outbound ?
- * my address	my subnet	my address	bi-direction	or outbound ?
- * my address	my subnet	other		N/A		The other way ?
- * my address	other				outbound
- * my address	other		my address	N/A
- * my address	other		other		outbound
- * my subnet	my address			inbound
- * my subnet	my address	my address	inbound		or bi-direction
- * my subnet	my address	other		N/A
- * my subnet	my subnet			bi-direction
- * my subnet	my subnet	my address	N/A		bi-direciton ?
- * my subnet	my subnet	other		N/A		The other way ?
- * my subnet	other				outbound
- * my subnet	other		my address	N/A
- * my subnet	other		other		outbound
- * other	my address			inbound
- * other	my address	my address	inbound
- * other	my address	other		N/A
- * other	my subnet			inbound
- * other	my subnet	my address	inbound
- * other	my subnet	other		N/A		The other way ?
- * other	other				N/A		SGW Trans. mode
- * other	other		my address	inbound
- * other	other		other		outbound
- */
-static u_int _sec_dirtype[4][4][4] = {
-{
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-},
-{
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_BIDIRECT,SADB_X_DIR_BIDIRECT,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_BIDIRECT,SADB_X_DIR_BIDIRECT,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_OUTBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_OUTBOUND},
-},
-{
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INBOUND,SADB_X_DIR_INBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_BIDIRECT,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_OUTBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_OUTBOUND},
-},
-{
-{SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INBOUND,SADB_X_DIR_INBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_INBOUND,SADB_X_DIR_INBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_INVALID},
-{SADB_X_DIR_OUTBOUND,SADB_X_DIR_INBOUND,SADB_X_DIR_INVALID,SADB_X_DIR_OUTBOUND},
-},
-};
-
-#define ADDRTYPE_NONE		0
-#define ADDRTYPE_MYADDRESS	1
-#define ADDRTYPE_MYSUBNET	2
-#define ADDRTYPE_OTHER		3
-
-/*
- * get address type.
- * OUT:
- *	ADDRTYPE_NONE
- *	ADDRTYPE_MYADDRESS
- *	ADDRTYPE_MYSUBNET
- *	ADDRTYPE_OTHER
- */
-static u_int
-key_getaddrtype(family, addr, preflen)
-	u_int family, preflen;
-	caddr_t addr;
-{
-	if (addr == NULL)
-		return ADDRTYPE_NONE;
-
-	if (key_ismyaddr(family, addr))
-		return ADDRTYPE_MYADDRESS;
-	else if (key_ismysubnet(family, addr, preflen))
-		return ADDRTYPE_MYSUBNET;
-
-	return ADDRTYPE_OTHER;
-}
-
-/*
- * check SA's direction.
- */
-static u_int
-key_checkdir(idx, proxy)
-	struct secindex *idx;
-	struct sockaddr *proxy;
-{
-	u_int srctype, dsttype, proxytype;
-	/* sanity check */
-	if (idx == NULL)
-		panic("key_checkdir: NULL pointer is passed.\n");
-
-	/* get src address type */
-	srctype = key_getaddrtype(idx->family, (caddr_t)&idx->src, idx->prefs);
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-	    printf("key_checkdir: srctype = %d\n", srctype));
-
-	/* get dst address type */
-	dsttype = key_getaddrtype(idx->family, (caddr_t)&idx->dst, idx->prefd);
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-	    printf("key_checkdir: dsttype = %d\n", dsttype));
-
-	/* get proxy address type */
-	if (proxy != NULL) {
-		proxytype = key_getaddrtype(proxy->sa_family,
-		                            _INADDRBYSA(proxy),
-		                            _INALENBYAF(proxy->sa_family) << 3);
-	} else
-		proxytype = ADDRTYPE_NONE;
-	KEYDEBUG(KEYDEBUG_KEY_DATA,
-	    printf("key_checkdir: proxytype = %d\n", proxytype));
-
-	return _sec_dirtype[srctype][dsttype][proxytype];
-}
-#endif /*RESTRICTED_DIR*/
 
 /* compare my own address
  * OUT:	1: true, i.e. my address.
  *	0: false
  */
 int
-key_ismyaddr(family, addr)
-	u_int family;
-	caddr_t addr;
+key_ismyaddr(sa)
+	struct sockaddr *sa;
 {
+#ifdef INET
+	struct sockaddr_in *sin;
+	struct in_ifaddr *ia;
+#endif
+
 	/* sanity check */
-	if (addr == NULL)
+	if (sa == NULL)
 		panic("key_ismyaddr: NULL pointer is passed.\n");
 
-	switch (family) {
+	switch (sa->sa_family) {
+#ifdef INET
 	case AF_INET:
-	{
-		struct in_ifaddr *ia;
-
-#ifdef __NetBSD__
+		sin = (struct sockaddr_in *)sa;
 		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
-#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
-		for (ia = in_ifaddrhead.tqh_first; ia;
-		     ia = ia->ia_link.tqe_next)
-#else
-		for (ia = in_ifaddr; ia; ia = ia->ia_next)
-#endif
-			if (bcmp(addr,
-			        (caddr_t)&ia->ia_addr.sin_addr,
-			        _INALENBYAF(family)) == 0)
+		{
+			if (sin->sin_family == ia->ia_addr.sin_family &&
+			    sin->sin_len == ia->ia_addr.sin_len &&
+			    sin->sin_addr.s_addr == ia->ia_addr.sin_addr.s_addr)
+			{
 				return 1;
-	}
+			}
+		}
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
-		return key_ismyaddr6(addr);
-#endif 
+		return key_ismyaddr6((struct sockaddr_in6 *)sa);
+#endif
 	}
 
 	return 0;
@@ -3443,173 +3554,191 @@ key_ismyaddr(family, addr)
  * 0: other
  * NOTE: derived ip6_input() in KAME. This is necessary to modify more.
  */
-#include <netinet6/in6.h>
 #include <netinet6/in6_var.h>
 
 static int
-key_ismyaddr6(addr)
-	caddr_t addr;
+key_ismyaddr6(sin6)
+	struct sockaddr_in6 *sin6;
 {
-	struct in6_addr *a = (struct in6_addr *)addr;
 	struct in6_ifaddr *ia;
+	struct in6_multi *in6m;
 
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
-		if (bcmp(addr, (caddr_t)&ia->ia_addr.sin6_addr,
-				_INALENBYAF(AF_INET6)) == 0) {
+		if (key_sockaddrcmp((struct sockaddr *)&sin6,
+		    (struct sockaddr *)&ia->ia_addr, 0) == 0)
 			return 1;
-		}
 
-		/* XXX Multicast */
-	    {
-	  	struct	in6_multi *in6m = 0;
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		IN6_LOOKUP_MULTI(*(struct in6_addr *)addr, ia->ia_ifp, in6m);
-#else
+		/*
+		 * XXX Multicast
+		 * XXX why do we care about multlicast here while we don't care
+		 * about IPv4 multicast??
+		 * XXX scope
+		 */
+		in6m = NULL;
 		for ((in6m) = ia->ia6_multiaddrs.lh_first;
 		     (in6m) != NULL &&
-		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, a);
+		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &sin6->sin6_addr);
 		     (in6m) = in6m->in6m_entry.le_next)
 			continue;
-#endif
 		if (in6m)
 			return 1;
-	    }
 	}
 
 	/* loopback, just for safety */
-	if (IN6_IS_ADDR_LOOPBACK(a))
+	if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
 		return 1;
-
-#if 0
-	/* FAITH */
-	if (ip6_keepfaith &&
-	    (a->s6_addr32[0] == ip6_faith_prefix.s6_addr32[0] &&
-	     a->s6_addr32[1] == ip6_faith_prefix.s6_addr32[1] &&
-	     a->s6_addr32[2] == ip6_faith_prefix.s6_addr32[2]))
-		return 1;
-#endif
-
-	/* XXX anycast */
 
 	return 0;
 }
 #endif /*INET6*/
 
-#ifdef RESTRICTED_DIR
-/* compare my subnet address
- * OUT:	1:	true, i.e. my address.
- *	0:	false
- */
-static int
-key_ismysubnet(family, addr, preflen)
-	u_int family, preflen;
-	caddr_t addr;
-{
-	/* sanity check */
-	if (addr == NULL)
-		panic("key_ismysubnet: NULL pointer is passed.\n");
-
-	switch (family) {
-	case AF_INET:
-	{
-		struct in_ifaddr *ia;
-
-#ifdef __NetBSD__
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
-#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
-		for (ia = in_ifaddrhead.tqh_first; ia;
-		     ia = ia->ia_link.tqe_next)
-#else
-		for (ia = in_ifaddr; ia; ia = ia->ia_next)
-#endif
-			if (key_bbcmp(addr,
-			              (caddr_t)&ia->ia_addr.sin_addr,
-			              preflen))
-				return 1;
-	}
-		break;
-#ifdef INET6
-	case AF_INET6:
-	{
-		struct in6_ifaddr *ia;
-
-		for (ia = in6_ifaddr; ia; ia = ia->ia_next)
-			if (key_bbcmp(addr,
-			              (caddr_t)&ia->ia_addr.sin6_addr,
-			              preflen))
-				return 1;
-	}
-		break;
-#endif 
-	}
-	return 0;
-}
-
-/* checking address is whether loopback or not.
- * OUT:	1:	true
- *	0:	false
- */
-static int
-key_isloopback(family, addr)
-	u_int family;
-	caddr_t addr;
-{
-	switch (family) {
-	case PF_INET:
-		if (((caddr_t)addr)[0] == IN_LOOPBACKNET)
-			return 1;
-		break;
-#ifdef INET6
-	case PF_INET6:
-		if (IN6_IS_ADDR_LOOPBACK((struct in6_addr *)addr))
-			return 1;
-		break;
-#endif /* INET6 */
-	default:
-		printf("key_isloopback: unknown address family=%d.\n", family);
-		return 0;
-	}
-
-	return 0;
-}
-#endif /*RESTRICTED_DIR*/
-
 /*
- * compare two secindex structure.
+ * compare two secasindex structure exactly.
  * IN:
- *	idx0: source
- *	idx1: object
+ *	saidx0: source, it can be in SAD.
+ *	saidx1: object.
  * OUT:
  *	1 : equal
  *	0 : not equal
  */
 static int
-key_cmpidx(idx0, idx1)
-	struct secindex *idx0, *idx1;
+key_cmpsaidx_exactly(saidx0, saidx1)
+	struct secasindex *saidx0, *saidx1;
 {
 	/* sanity */
-	if (idx0 == NULL && idx1 == NULL)
+	if (saidx0 == NULL && saidx1 == NULL)
 		return 1;
 
-	if (idx0 == NULL || idx1 == NULL)
+	if (saidx0 == NULL || saidx1 == NULL)
 		return 0;
 
-	if (idx0->family != idx1->family
-	 || idx0->prefs != idx1->prefs
-	 || idx0->prefd != idx1->prefd
-	 || idx0->proto != idx1->proto
-	 || idx0->ports != idx1->ports
-	 || idx0->portd != idx1->portd)
+	if (saidx0->proto != saidx1->proto
+	 || saidx0->mode != saidx1->mode
+	 || saidx0->reqid != saidx1->reqid)
 		return 0;
 
-    {
-	int sa_len = _INALENBYAF(idx0->family);;
-
-	if (bcmp((caddr_t)&idx0->src, (caddr_t)&idx1->src, sa_len) != 0
-	 || bcmp((caddr_t)&idx0->dst, (caddr_t)&idx1->dst, sa_len) != 0)
+	if (bcmp(&saidx0->src, &saidx1->src, saidx0->src.ss_len) != 0 ||
+	    bcmp(&saidx0->dst, &saidx1->dst, saidx0->dst.ss_len) != 0)
 		return 0;
-    }
+
+	return 1;
+}
+
+/*
+ * compare two secasindex structure with consideration mode.
+ * don't compare port.
+ * IN:
+ *	saidx0: source, it is often in SAD.
+ *	saidx1: object, it is often from SPD.
+ * OUT:
+ *	1 : equal
+ *	0 : not equal
+ */
+static int
+key_cmpsaidx_withmode(saidx0, saidx1)
+	struct secasindex *saidx0, *saidx1;
+{
+	/* sanity */
+	if (saidx0 == NULL && saidx1 == NULL)
+		return 1;
+
+	if (saidx0 == NULL || saidx1 == NULL)
+		return 0;
+
+	if (saidx0->proto != saidx1->proto)
+		return 0;
+
+	/*
+	 * If reqid of SPD is non-zero, unique SA is required.
+	 * The result must be of same reqid in this case.
+	 */
+	if (saidx1->reqid != 0 && saidx0->reqid != saidx1->reqid)
+		return 0;
+
+	if (saidx0->mode != IPSEC_MODE_ANY && saidx0->mode != saidx1->mode)
+		return 0;
+
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->src,
+	    (struct sockaddr *)&saidx1->src, 0) != 0) {
+		return 0;
+	}
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->dst,
+	    (struct sockaddr *)&saidx1->dst, 0) != 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * compare two secasindex structure without mode.
+ * don't compare port.
+ * IN:
+ *	saidx0: source, it is often in SAD.
+ *	saidx1: object, it is often from user.
+ * OUT:
+ *	1 : equal
+ *	0 : not equal
+ */
+static int
+key_cmpsaidx_withoutmode(saidx0, saidx1)
+	struct secasindex *saidx0, *saidx1;
+{
+	/* sanity */
+	if (saidx0 == NULL && saidx1 == NULL)
+		return 1;
+
+	if (saidx0 == NULL || saidx1 == NULL)
+		return 0;
+
+	if (saidx0->proto != saidx1->proto)
+		return 0;
+
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->src,
+	    (struct sockaddr *)&saidx1->src, 0) != 0) {
+		return 0;
+	}
+	if (key_sockaddrcmp((struct sockaddr *)&saidx0->dst,
+	    (struct sockaddr *)&saidx1->dst, 0) != 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * compare two secindex structure exactly.
+ * IN:
+ *	spidx0: source, it is often in SPD.
+ *	spidx1: object, it is often from PFKEY message.
+ * OUT:
+ *	1 : equal
+ *	0 : not equal
+ */
+static int
+key_cmpspidx_exactly(spidx0, spidx1)
+	struct secpolicyindex *spidx0, *spidx1;
+{
+	/* sanity */
+	if (spidx0 == NULL && spidx1 == NULL)
+		return 1;
+
+	if (spidx0 == NULL || spidx1 == NULL)
+		return 0;
+
+	if (spidx0->prefs != spidx1->prefs
+	 || spidx0->prefd != spidx1->prefd
+	 || spidx0->ul_proto != spidx1->ul_proto)
+		return 0;
+
+	if (key_sockaddrcmp((struct sockaddr *)&spidx0->src,
+	    (struct sockaddr *)&spidx1->src, 1) != 0) {
+		return 0;
+	}
+	if (key_sockaddrcmp((struct sockaddr *)&spidx0->dst,
+	    (struct sockaddr *)&spidx1->dst, 1) != 0) {
+		return 0;
+	}
 
 	return 1;
 }
@@ -3617,39 +3746,140 @@ key_cmpidx(idx0, idx1)
 /*
  * compare two secindex structure with mask.
  * IN:
- *	idx0: source
- *	idx1: object
+ *	spidx0: source, it is often in SPD.
+ *	spidx1: object, it is often from IP header.
  * OUT:
  *	1 : equal
  *	0 : not equal
  */
 static int
-key_cmpidxwithmask(idx0, idx1)
-	struct secindex *idx0, *idx1;
+key_cmpspidx_withmask(spidx0, spidx1)
+	struct secpolicyindex *spidx0, *spidx1;
 {
 	/* sanity */
-	if (idx0 == NULL && idx1 == NULL)
+	if (spidx0 == NULL && spidx1 == NULL)
 		return 1;
 
-	if (idx0 == NULL || idx1 == NULL)
+	if (spidx0 == NULL || spidx1 == NULL)
 		return 0;
 
-	if (idx0->family != idx1->family)
+	if (spidx0->src.ss_family != spidx1->src.ss_family ||
+	    spidx0->dst.ss_family != spidx1->dst.ss_family ||
+	    spidx0->src.ss_len != spidx1->src.ss_len ||
+	    spidx0->dst.ss_len != spidx1->dst.ss_len)
 		return 0;
 
-	/* XXXif the value in IDX is 0, then the value specified must ignore. */
-	if ((idx0->proto != 0 && (idx0->proto != idx1->proto))
-	 || (idx0->ports != 0 && (idx0->ports != idx1->ports))
-	 || (idx0->portd != 0 && (idx0->portd != idx1->portd)))
+	/* if spidx.ul_proto == IPSEC_ULPROTO_ANY, ignore. */
+	if (spidx0->ul_proto != (u_int16_t)IPSEC_ULPROTO_ANY
+	 && spidx0->ul_proto != spidx1->ul_proto)
 		return 0;
 
-	if (!key_bbcmp((caddr_t)&idx0->src, (caddr_t)&idx1->src, idx0->prefs))
-		return 0;
+	switch (spidx0->src.ss_family) {
+	case AF_INET:
+		if (satosin(&spidx0->src)->sin_port != IPSEC_PORT_ANY
+		 && satosin(&spidx0->src)->sin_port !=
+		    satosin(&spidx1->src)->sin_port)
+			return 0;
+		if (!key_bbcmp((caddr_t)&satosin(&spidx0->src)->sin_addr,
+		    (caddr_t)&satosin(&spidx1->src)->sin_addr, spidx0->prefs))
+			return 0;
+		break;
+	case AF_INET6:
+		if (satosin6(&spidx0->src)->sin6_port != IPSEC_PORT_ANY
+		 && satosin6(&spidx0->src)->sin6_port !=
+		    satosin6(&spidx1->src)->sin6_port)
+			return 0;
+		if (satosin6(&spidx0->src)->sin6_scope_id !=
+		    satosin6(&spidx1->src)->sin6_scope_id)
+			return 0;
+		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->src)->sin6_addr,
+		    (caddr_t)&satosin6(&spidx1->src)->sin6_addr, spidx0->prefs))
+			return 0;
+		break;
+	default:
+		/* XXX */
+		if (bcmp(&spidx0->src, &spidx1->src, spidx0->src.ss_len) != 0)
+			return 0;
+		break;
+	}
 
-	if (!key_bbcmp((caddr_t)&idx0->dst, (caddr_t)&idx1->dst, idx0->prefd))
-		return 0;
+	switch (spidx0->dst.ss_family) {
+	case AF_INET:
+		if (satosin(&spidx0->dst)->sin_port != IPSEC_PORT_ANY
+		 && satosin(&spidx0->dst)->sin_port !=
+		    satosin(&spidx1->dst)->sin_port)
+			return 0;
+		if (!key_bbcmp((caddr_t)&satosin(&spidx0->dst)->sin_addr,
+		    (caddr_t)&satosin(&spidx1->dst)->sin_addr, spidx0->prefd))
+			return 0;
+		break;
+	case AF_INET6:
+		if (satosin6(&spidx0->dst)->sin6_port != IPSEC_PORT_ANY
+		 && satosin6(&spidx0->dst)->sin6_port !=
+		    satosin6(&spidx1->dst)->sin6_port)
+			return 0;
+		if (satosin6(&spidx0->dst)->sin6_scope_id !=
+		    satosin6(&spidx1->dst)->sin6_scope_id)
+			return 0;
+		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->dst)->sin6_addr,
+		    (caddr_t)&satosin6(&spidx1->dst)->sin6_addr, spidx0->prefd))
+			return 0;
+		break;
+	default:
+		/* XXX */
+		if (bcmp(&spidx0->dst, &spidx1->dst, spidx0->dst.ss_len) != 0)
+			return 0;
+		break;
+	}
+
+	/* XXX Do we check other field ?  e.g. flowinfo */
 
 	return 1;
+}
+
+/* returns 0 on match */
+static int
+key_sockaddrcmp(sa1, sa2, port)
+	struct sockaddr *sa1;
+	struct sockaddr *sa2;
+	int port;
+{
+	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len)
+		return 1;
+
+	switch (sa1->sa_family) {
+	case AF_INET:
+		if (sa1->sa_len != sizeof(struct sockaddr_in))
+			return 1;
+		if (satosin(sa1)->sin_addr.s_addr !=
+		    satosin(sa2)->sin_addr.s_addr) {
+			return 1;
+		}
+		if (port && satosin(sa1)->sin_port != satosin(sa2)->sin_port)
+			return 1;
+		break;
+	case AF_INET6:
+		if (sa1->sa_len != sizeof(struct sockaddr_in6))
+			return 1;	/*EINVAL*/
+		if (satosin6(sa1)->sin6_scope_id !=
+		    satosin6(sa2)->sin6_scope_id) {
+			return 1;
+		}
+		if (!IN6_ARE_ADDR_EQUAL(&satosin6(sa1)->sin6_addr,
+		    &satosin6(sa2)->sin6_addr)) {
+			return 1;
+		}
+		if (port &&
+		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
+			return 1;
+		}
+	default:
+		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
+			return 1;
+		break;
+	}
+
+	return 0;
 }
 
 /*
@@ -3664,8 +3894,8 @@ key_cmpidxwithmask(idx0, idx1)
  */
 static int
 key_bbcmp(p1, p2, bits)
-	register caddr_t p1, p2;
-	register u_int bits;
+	caddr_t p1, p2;
+	u_int bits;
 {
 	u_int8_t mask;
 
@@ -3692,246 +3922,64 @@ key_bbcmp(p1, p2, bits)
 
 /*
  * time handler.
- * scanning SPDB and SADB to check status for each entries,
+ * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
+ * XXX: year 2038 problem may remain.
  */
 void
 key_timehandler(void)
 {
-#ifdef RESTRICTED_DIR
-	u_int diridx, dir;
-#endif
+	u_int dir;
 	int s;
+	struct timeval tv;
 
-#ifdef __NetBSD__
+	microtime(&tv);
+
 	s = splsoftnet();	/*called from softclock()*/
-#else
-	s = splnet();	/*called from softclock()*/
-#endif
 
 	/* SPD */
     {
-	struct secpolicy *sp, *spnext;
+	struct secpolicy *sp, *nextsp;
 
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
-
-		dir = saorder_dir_any[diridx];
-		for (sp = (struct secpolicy *)sptree[dir].head;
+	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
+		for (sp = LIST_FIRST(&sptree[dir]);
 		     sp != NULL;
-		     sp = spnext) {
+		     sp = nextsp) {
 
-			spnext = sp->next;
+			nextsp = LIST_NEXT(sp, chain);
 
 			if (sp->state == IPSEC_SPSTATE_DEAD)
 				key_freesp(sp);
 		}
 	}
-#else
-	for (sp = (struct secpolicy *)sptree.head;
-	     sp != NULL;
-	     sp = spnext) {
-
-		spnext = sp->next;
-
-		if (sp->state == IPSEC_SPSTATE_DEAD)
-			key_freesp(sp);
-	}
-#endif
     }
 
 	/* SAD */
     {
-	struct secasindex *saidx, *saidxnext;
-	struct secas *sa, *sanext;
+	struct secashead *sah, *nextsah;
+	struct secasvar *sav, *nextsav;
 
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
+	for (sah = LIST_FIRST(&sahtree);
+	     sah != NULL;
+	     sah = nextsah) {
 
-		dir = saorder_dir_any[diridx];
-		for (saidx = (struct secasindex *)saidxtree[dir].head;
-		     saidx != NULL;
-		     saidx = saidxnext) {
+		nextsah = LIST_NEXT(sah, chain);
 
-			saidxnext = saidx->next; /* save for removing */
-
-			/* if LARVAL entry doesn't become MATURE, delete it. */
-			for (sa = (struct secas *)saidx->satree[SADB_SASTATE_LARVAL].head;
-			     sa != NULL;
-			     sa = sanext) {
-
-				sanext = sa->next; /* save */
-
-				sa->tick++;
-
-				if (key_larval_lifetime < sa->tick) {
-					key_freesa(sa);
-				}
-			}
-
-			/*
-			 * check MATURE entry to start to send expire message
-			 * whether or not.
-			 */
-			for (sa = (struct secas *)saidx->satree[SADB_SASTATE_MATURE].head;
-			     sa != NULL;
-			     sa = sanext) {
-
-				sanext = sa->next; /* save */
-
-				sa->tick++;
-
-				/* we don't need to check. */
-				if (sa->lft_s == NULL)
-					continue;
-
-				/* sanity check */
-				if (sa->lft_c == NULL) {
-					printf("key_timehandler: "
-						"There is no the CURRENT, "
-						"why?\n");
-					continue;
-				}
-
-				/* compare SOFT lifetime and tick */
-				if (sa->lft_s->sadb_lifetime_addtime != 0
-				 && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
-					/*
-					 * check SA to be used whether or not.
-					 * when SA hasn't been used, delete it.
-					 */
-					if (sa->lft_c->sadb_lifetime_usetime == 0) {
-						key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-						key_freesa(sa);
-						sa = NULL;
-					} else {
-						key_sa_chgstate(sa, SADB_SASTATE_DYING);
-						/*
-						 * XXX If we keep to send expire
-						 * message in the status of
-						 * DYING. Do remove below code.
-						 */
-						key_expire(sa);
-					}
-				}
-				/* check SOFT lifetime by bytes */
-				/*
-				 * XXX I don't know the way to delete this SA
-				 * when new SA is installed.  Caution when it's
-				 * installed too big lifetime by time.
-				 */
-				else if (sa->lft_s->sadb_lifetime_bytes != 0
-				      && sa->lft_s->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
-
-					key_sa_chgstate(sa, SADB_SASTATE_DYING);
-					/*
-					 * XXX If we keep to send expire
-					 * message in the status of
-					 * DYING. Do remove below code.
-					 */
-					key_expire(sa);
-				}
-			}
-
-			/* check DYING entry to change status to DEAD. */
-			for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DYING].head;
-			     sa != NULL;
-			     sa = sanext) {
-
-				sanext = sa->next; /* save */
-
-				sa->tick++;
-
-				/* we don't need to check. */
-				if (sa->lft_h == NULL)
-					continue;
-
-				/* sanity check */
-				if (sa->lft_c == NULL) {
-					printf("key_timehandler: "
-						"There is no the CURRENT, "
-						"why?\n");
-					continue;
-				}
-
-				/* compare HARD lifetime and tick */
-				if (sa->lft_h->sadb_lifetime_addtime != 0
-				 && sa->lft_h->sadb_lifetime_addtime < sa->tick) {
-					key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-					key_freesa(sa);
-					sa = NULL;
-				}
-#if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
-				else if (sa->lft_s != NULL
-				      && sa->lft_s->sadb_lifetime_addtime != 0
-				      && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
-					/*
-					 * XXX: should be checked to be
-					 * installed the valid SA.
-					 */
-
-					/*
-					 * If there is no SA then sending
-					 * expire message.
-					 */
-					key_expire(sa);
-				}
-#endif
-				/* check HARD lifetime by bytes */
-				else if (sa->lft_h->sadb_lifetime_bytes != 0
-				      && sa->lft_h->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
-					key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-					key_freesa(sa);
-					sa = NULL;
-				}
-			}
-
-			/* delete entry in DEAD */
-			for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DEAD].head;
-			     sa != NULL;
-			     sa = sanext) {
-
-				sanext = sa->next; /* save */
-
-				/* sanity check */
-				if (sa->state != SADB_SASTATE_DEAD) {
-					printf("key_timehandler: "
-						"invalid sa->state "
-						"(queue: %d SA: %d): "
-						"kill it anyway\n",
-						SADB_SASTATE_DEAD, sa->state);
-				}
-
-				/*
-				 * do not call key_freesa() here.
-				 * sa should already be freed, and sa->refcnt
-				 * shows other references to sa
-				 * (such as from SPD).
-				 */
-			}
-
-			/* If there is no SA entry in SA index, marking DEAD. */
-			key_issaidx_dead(saidx);
+		/* if sah has been dead, then delete it and process next sah. */
+		if (sah->state == SADB_SASTATE_DEAD) {
+			key_delsah(sah);
+			continue;
 		}
-	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidxnext) {
-
-		saidxnext = saidx->next; /* save for removing */
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
-		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_LARVAL].head;
-		     sa != NULL;
-		     sa = sanext) {
+		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_LARVAL]);
+		     sav != NULL;
+		     sav = nextsav) {
 
-			sanext = sa->next; /* save */
+			nextsav = LIST_NEXT(sav, chain);
 
-			sa->tick++;
-
-			if (key_larval_lifetime < sa->tick) {
-				key_freesa(sa);
+			if (tv.tv_sec - sav->created > key_larval_lifetime) {
+				key_freesav(sav);
 			}
 		}
 
@@ -3939,45 +3987,44 @@ key_timehandler(void)
 		 * check MATURE entry to start to send expire message
 		 * whether or not.
 		 */
-		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_MATURE].head;
-		     sa != NULL;
-		     sa = sanext) {
+		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_MATURE]);
+		     sav != NULL;
+		     sav = nextsav) {
 
-			sanext = sa->next; /* save */
-
-			sa->tick++;
+			nextsav = LIST_NEXT(sav, chain);
 
 			/* we don't need to check. */
-			if (sa->lft_s == NULL)
+			if (sav->lft_s == NULL)
 				continue;
 
 			/* sanity check */
-			if (sa->lft_c == NULL) {
+			if (sav->lft_c == NULL) {
+#ifdef IPSEC_DEBUG
 				printf("key_timehandler: "
-					"There is no the CURRENT, "
-					"why?\n");
+					"There is no CURRENT time, why?\n");
+#endif
 				continue;
 			}
 
-			/* compare SOFT lifetime and tick */
-			if (sa->lft_s->sadb_lifetime_addtime != 0
-			 && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
+			/* check SOFT lifetime */
+			if (sav->lft_s->sadb_lifetime_addtime != 0
+			 && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * check SA to be used whether or not.
 				 * when SA hasn't been used, delete it.
 				 */
-				if (sa->lft_c->sadb_lifetime_usetime == 0) {
-					key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-					key_freesa(sa);
-					sa = NULL;
+				if (sav->lft_c->sadb_lifetime_usetime == 0) {
+					key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+					key_freesav(sav);
+					sav = NULL;
 				} else {
-					key_sa_chgstate(sa, SADB_SASTATE_DYING);
+					key_sa_chgstate(sav, SADB_SASTATE_DYING);
 					/*
 					 * XXX If we keep to send expire
 					 * message in the status of
 					 * DYING. Do remove below code.
 					 */
-					key_expire(sa);
+					key_expire(sav);
 				}
 			}
 			/* check SOFT lifetime by bytes */
@@ -3986,51 +4033,49 @@ key_timehandler(void)
 			 * when new SA is installed.  Caution when it's
 			 * installed too big lifetime by time.
 			 */
-			else if (sa->lft_s->sadb_lifetime_bytes != 0
-			      && sa->lft_s->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
+			else if (sav->lft_s->sadb_lifetime_bytes != 0
+			      && sav->lft_s->sadb_lifetime_bytes < sav->lft_c->sadb_lifetime_bytes) {
 
-				key_sa_chgstate(sa, SADB_SASTATE_DYING);
+				key_sa_chgstate(sav, SADB_SASTATE_DYING);
 				/*
 				 * XXX If we keep to send expire
 				 * message in the status of
 				 * DYING. Do remove below code.
 				 */
-				key_expire(sa);
+				key_expire(sav);
 			}
 		}
 
 		/* check DYING entry to change status to DEAD. */
-		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DYING].head;
-		     sa != NULL;
-		     sa = sanext) {
+		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_DYING]);
+		     sav != NULL;
+		     sav = nextsav) {
 
-			sanext = sa->next; /* save */
-
-			sa->tick++;
+			nextsav = LIST_NEXT(sav, chain);
 
 			/* we don't need to check. */
-			if (sa->lft_h == NULL)
+			if (sav->lft_h == NULL)
 				continue;
 
 			/* sanity check */
-			if (sa->lft_c == NULL) {
+			if (sav->lft_c == NULL) {
+#ifdef IPSEC_DEBUG
 				printf("key_timehandler: "
-					"There is no the CURRENT, "
-					"why?\n");
+					"There is no CURRENT time, why?\n");
+#endif
 				continue;
 			}
 
-			/* compare HARD lifetime and tick */
-			if (sa->lft_h->sadb_lifetime_addtime != 0
-			 && sa->lft_h->sadb_lifetime_addtime < sa->tick) {
-				key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-				key_freesa(sa);
-				sa = NULL;
+			if (sav->lft_h->sadb_lifetime_addtime != 0
+			 && tv.tv_sec - sav->created > sav->lft_h->sadb_lifetime_addtime) {
+				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+				key_freesav(sav);
+				sav = NULL;
 			}
 #if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
-			else if (sa->lft_s != NULL
-			      && sa->lft_s->sadb_lifetime_addtime != 0
-			      && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
+			else if (sav->lft_s != NULL
+			      && sav->lft_s->sadb_lifetime_addtime != 0
+			      && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * XXX: should be checked to be
 				 * installed the valid SA.
@@ -4040,67 +4085,83 @@ key_timehandler(void)
 				 * If there is no SA then sending
 				 * expire message.
 				 */
-				key_expire(sa);
+				key_expire(sav);
 			}
 #endif
 			/* check HARD lifetime by bytes */
-			else if (sa->lft_h->sadb_lifetime_bytes != 0
-			      && sa->lft_h->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
-				key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-				key_freesa(sa);
-				sa = NULL;
+			else if (sav->lft_h->sadb_lifetime_bytes != 0
+			      && sav->lft_h->sadb_lifetime_bytes < sav->lft_c->sadb_lifetime_bytes) {
+				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+				key_freesav(sav);
+				sav = NULL;
 			}
 		}
 
 		/* delete entry in DEAD */
-		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DEAD].head;
-		     sa != NULL;
-		     sa = sanext) {
+		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_DEAD]);
+		     sav != NULL;
+		     sav = nextsav) {
 
-			sanext = sa->next; /* save */
+			nextsav = LIST_NEXT(sav, chain);
 
 			/* sanity check */
-			if (sa->state != SADB_SASTATE_DEAD) {
+			if (sav->state != SADB_SASTATE_DEAD) {
+#ifdef IPSEC_DEBUG
 				printf("key_timehandler: "
-					"invalid sa->state "
+					"invalid sav->state "
 					"(queue: %d SA: %d): "
 					"kill it anyway\n",
-					SADB_SASTATE_DEAD, sa->state);
+					SADB_SASTATE_DEAD, sav->state);
+#endif
 			}
 
 			/*
-			 * do not call key_freesa() here.
-			 * sa should already be freed, and sa->refcnt
-			 * shows other references to sa
+			 * do not call key_freesav() here.
+			 * sav should already be freed, and sav->refcnt
+			 * shows other references to sav
 			 * (such as from SPD).
 			 */
 		}
-
-		/* If there is no SA entry in SA index, marking DEAD. */
-		key_issaidx_dead(saidx);
 	}
-#endif
     }
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* ACQ tree */
     {
-	struct secacq *acq, *acqnext;
+	struct secacq *acq, *nextacq;
 
-	for (acq = (struct secacq *)acqtree.head;
+	for (acq = LIST_FIRST(&acqtree);
 	     acq != NULL;
-	     acq = acqnext) {
+	     acq = nextacq) {
 
-		acqnext = acq->next;
+		nextacq = LIST_NEXT(acq, chain);
 
-		acq->tick++;
-
-		if (key_blockacq_lifetime < acq->tick) {
-			key_delacq(acq);
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
+			LIST_REMOVE(acq, chain);
+			KFREE(acq);
 		}
 	}
     }
 #endif
+
+	/* SP ACQ tree */
+    {
+	struct secspacq *acq, *nextacq;
+
+	for (acq = LIST_FIRST(&spacqtree);
+	     acq != NULL;
+	     acq = nextacq) {
+
+		nextacq = LIST_NEXT(acq, chain);
+
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
+			LIST_REMOVE(acq, chain);
+			KFREE(acq);
+		}
+	}
+    }
 
 	/* initialize random seed */
 	if (key_tick_init_random++ > key_int_random) {
@@ -4110,7 +4171,8 @@ key_timehandler(void)
 
 #ifndef IPSEC_DEBUG2
 	/* do exchange to tick time !! */
-	(void)timeout((void *)key_timehandler, (void *)0, 100);
+	callout_reset(&key_timehandler_ch, hz,
+	    (void *)key_timehandler, (void *)0);
 #endif /* IPSEC_DEBUG2 */
 
 	splx(s);
@@ -4120,30 +4182,110 @@ key_timehandler(void)
 /*
  * to initialize a seed for random()
  */
-void
+static void
 key_srandom()
 {
 	struct timeval tv;
-#ifdef __bsdi__
-	extern long randseed; /* it's defined at i386/i386/random.s */
-#endif /* __bsdi__ */
+	int i;
 
 	microtime(&tv);
 
-#ifdef __FreeBSD__
-	srandom(tv.tv_usec);
-#endif /* __FreeBSD__ */
-#ifdef __bsdi__
-	randseed = tv.tv_usec;
-#endif /* __bsdi__ */
+	for (i = (int)((tv.tv_sec ^ tv.tv_usec) & 0x3ff); i > 0; i--)
+		(void)random();
 
 	return;
+}
+
+u_long
+key_random()
+{
+	u_long value;
+
+	key_randomfill(&value, sizeof(value));
+	return value;
+}
+
+void
+key_randomfill(p, l)
+	void *p;
+	size_t l;
+{
+	size_t n;
+	u_long v;
+	static int warn = 1;
+
+	n = 0;
+#if NRND > 0
+	n = rnd_extract_data(p, l, RND_EXTRACT_ANY);
+#endif
+	/* last resort */
+	while (n < l) {
+		v = random();
+		bcopy(&v, (u_int8_t *)p + n,
+		    l - n < sizeof(v) ? l - n : sizeof(v));
+		n += sizeof(v);
+
+		if (warn) {
+			printf("WARNING: pseudo-random number generator "
+			    "used for IPsec processing\n");
+			warn = 0;
+		}
+	}
+}
+
+/*
+ * map SADB_SATYPE_* to IPPROTO_*.
+ * if satype == SADB_SATYPE then satype is mapped to ~0.
+ * OUT:
+ *	0: invalid satype.
+ */
+static u_int16_t
+key_satype2proto(satype)
+	u_int8_t satype;
+{
+	switch (satype) {
+	case SADB_SATYPE_UNSPEC:
+		return IPSEC_PROTO_ANY;
+	case SADB_SATYPE_AH:
+		return IPPROTO_AH;
+	case SADB_SATYPE_ESP:
+		return IPPROTO_ESP;
+	case SADB_X_SATYPE_IPCOMP:
+		return IPPROTO_IPCOMP;
+		break;
+	default:
+		return 0;
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * map IPPROTO_* to SADB_SATYPE_*
+ * OUT:
+ *	0: invalid protocol type.
+ */
+static u_int8_t
+key_proto2satype(proto)
+	u_int16_t proto;
+{
+	switch (proto) {
+	case IPPROTO_AH:
+		return SADB_SATYPE_AH;
+	case IPPROTO_ESP:
+		return SADB_SATYPE_ESP;
+	case IPPROTO_IPCOMP:
+		return SADB_X_SATYPE_IPCOMP;
+		break;
+	default:
+		return 0;
+	}
+	/* NOTREACHED */
 }
 
 /* %%% PF_KEY */
 /*
  * SADB_GETSPI processing is to receive
- *	<base, src address, dst address, (SPI range)>
+ *	<base, (SA2), src address, dst address, (SPI range)>
  * from the IKMPd, to assign a unique spi value, to hang on the INBOUND
  * tree with the status of LARVAL, and send
  *	<base, SA(*), address(SD)>
@@ -4153,168 +4295,203 @@ key_srandom()
  * OUT:	NULL if fail.
  *	other if success, return pointer to the message to send.
  */
-static struct sadb_msg *
-key_getspi(mhp)
-	caddr_t *mhp;
+static int
+key_getspi(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_address *src0, *dst0;
-	struct secindex idx;
-	struct secasindex *newsaidx;
-	struct secas *newsa;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	struct secasindex saidx;
+	struct secashead *newsah;
+	struct secasvar *newsav;
+	u_int8_t proto;
 	u_int32_t spi;
+	u_int8_t mode;
+	u_int32_t reqid;
+	int error;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_getspi: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
-	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
+	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_getspi: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-
-	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-
-#ifdef RESTRICTED_DIR
-	/* check the direciton. */ 
-	/*
-	 * We call key_checkdir with both the source address and
-	 * the destination address, but the proxy address is *ZERO*.
-	 * Even if Proxy address is set by SADB_UPDATE later, the SA direction
-	 * is not changed or is changed into invalid status.
-	 * When both the src and dst address are `other' and the proxy address
-	 * is null, key_checkdir() returns SADB_X_DIR_INVALID.  We take this
-	 * SA as SADB_X_DIR_INBOUND.  Because it will become inbound SA when
-	 * proxy address is set `my address'.  If the proxy address is set
-	 * either `none' or `other', it is invalid SA.
-	 */
-	dir = key_checkdir(&idx, NULL);
-	switch (dir) {
-	case SADB_X_DIR_INVALID:
-		dir = SADB_X_DIR_INBOUND;
-		/*FALLTHROUGH*/
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:
-		break;
-	case SADB_X_DIR_OUTBOUND:
-		printf("key_getspi: Invalid SA direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	default:
-		panic("key_getspi: unexpected direction.\n");
-	}
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+#ifdef IPSEC_DEBUG
+		printf("key_getspi: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
+		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
+		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+	} else {
+		mode = IPSEC_MODE_ANY;
+		reqid = 0;
+	}
+
+	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
+	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_getspi: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	/* make sure if port number is zero. */
+	switch (((struct sockaddr *)(src0 + 1))->sa_family) {
+	case AF_INET:
+		if (((struct sockaddr *)(src0 + 1))->sa_len !=
+		    sizeof(struct sockaddr_in))
+			return key_senderror(so, m, EINVAL);
+		((struct sockaddr_in *)(src0 + 1))->sin_port = 0;
+		break;
+	case AF_INET6:
+		if (((struct sockaddr *)(src0 + 1))->sa_len !=
+		    sizeof(struct sockaddr_in6))
+			return key_senderror(so, m, EINVAL);
+		((struct sockaddr_in6 *)(src0 + 1))->sin6_port = 0;
+		break;
+	default:
+		; /*???*/
+	}
+	switch (((struct sockaddr *)(dst0 + 1))->sa_family) {
+	case AF_INET:
+		if (((struct sockaddr *)(dst0 + 1))->sa_len !=
+		    sizeof(struct sockaddr_in))
+			return key_senderror(so, m, EINVAL);
+		((struct sockaddr_in *)(dst0 + 1))->sin_port = 0;
+		break;
+	case AF_INET6:
+		if (((struct sockaddr *)(dst0 + 1))->sa_len !=
+		    sizeof(struct sockaddr_in6))
+			return key_senderror(so, m, EINVAL);
+		((struct sockaddr_in6 *)(dst0 + 1))->sin6_port = 0;
+		break;
+	default:
+		; /*???*/
+	}
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
 
 	/* SPI allocation */
-	spi = key_do_getnewspi((struct sadb_spirange *)mhp[SADB_EXT_SPIRANGE],
-	                       msg0->sadb_msg_satype);
-	if (spi == 0) {
-		msg0->sadb_msg_errno = EEXIST;
-		return NULL;
-	}
+	spi = key_do_getnewspi((struct sadb_spirange *)mhp->ext[SADB_EXT_SPIRANGE],
+	                       &saidx);
+	if (spi == 0)
+		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
-#ifdef RESTRICTED_DIR
-	if ((newsaidx = key_getsaidx(&idx, dir)) == NULL) {
-
+	if ((newsah = key_getsah(&saidx)) == NULL) {
 		/* create a new SA index */
-		if ((newsaidx = key_newsaidx(&idx, dir)) == NULL) {
+		if ((newsah = key_newsah(&saidx)) == NULL) {
+#ifdef IPSEC_DEBUG
 			printf("key_getspi: No more memory.\n");
-			msg0->sadb_msg_errno = ENOBUFS;
-			return NULL;
-		}
-	}
-#else
-	if ((newsaidx = key_getsaidx(&idx)) == NULL) {
-
-		/* create a new SA index */
-		if ((newsaidx = key_newsaidx(&idx)) == NULL) {
-			printf("key_getspi: No more memory.\n");
-			msg0->sadb_msg_errno = ENOBUFS;
-			return NULL;
-		}
-	}
 #endif
+			return key_senderror(so, m, ENOBUFS);
+		}
+	}
 
 	/* get a new SA */
-	if ((newsa = key_newsa(mhp, newsaidx)) == NULL) {
-		msg0->sadb_msg_errno = ENOBUFS;
+	/* XXX rewrite */
+	newsav = key_newsav(m, mhp, newsah, &error);
+	if (newsav == NULL) {
 		/* XXX don't free new SA index allocated in above. */
-		return NULL;
+		return key_senderror(so, m, error);
 	}
 
 	/* set spi */
-	newsa->spi = htonl(spi);
+	newsav->spi = htonl(spi);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* delete the entry in acqtree */
-	if (msg0->sadb_msg_seq != 0) {
+	if (mhp->msg->sadb_msg_seq != 0) {
 		struct secacq *acq;
-		/*
-		 * it's only sequence number to connect
-		 * the entry for getspi and the entry in acqtree
-		 * because there is not proxy address in getspi message.
-		 */
-		if ((acq = key_getacqbyseq(msg0->sadb_msg_seq)) != NULL) {
+		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehander. */
-			acq->tick = key_blockacq_lifetime;
+			struct timeval tv;
+			microtime(&tv);
+			acq->created = tv.tv_sec;
 			acq->count = 0;
 		}
     	}
 #endif
 
     {
+	struct mbuf *n, *nn;
+	struct sadb_sa *m_sa;
 	struct sadb_msg *newmsg;
-	u_int len;
-	caddr_t p;
+	int off, len;
 
 	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-	    + sizeof(struct sadb_sa)
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_SRC])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_DST]);
+	len = PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
+	    PFKEY_ALIGN8(sizeof(struct sadb_sa));
+	if (len > MCLBYTES)
+		return key_senderror(so, m, ENOBUFS);
 
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_getspi: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	MGETHDR(n, M_DONTWAIT, MT_DATA);
+	if (len > MHLEN) {
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			n = NULL;
+		}
 	}
-	bzero((caddr_t)newmsg, len);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
 
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
-	newmsg->sadb_msg_seq = newsa->seq;
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
+	n->m_len = len;
+	n->m_next = NULL;
+	off = 0;
 
-      {
-	struct sadb_sa *m_sa;
-	m_sa = (struct sadb_sa *)p;
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, caddr_t) + off);
+	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
+
+	m_sa = (struct sadb_sa *)(mtod(n, caddr_t) + off);
 	m_sa->sadb_sa_len = PFKEY_UNIT64(sizeof(struct sadb_sa));
 	m_sa->sadb_sa_exttype = SADB_EXT_SA;
 	m_sa->sadb_sa_spi = htonl(spi);
-	p += sizeof(struct sadb_sa);
-      }
+	off += PFKEY_ALIGN8(sizeof(struct sadb_sa));
 
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_SRC]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_DST]);
+#ifdef DIAGNOSTIC
+	if (off != len)
+		panic("length inconsistency in key_getspi");
+#endif
 
-	return newmsg;
+	n->m_next = key_gather_mbuf(m, mhp, 0, 2, SADB_EXT_ADDRESS_SRC,
+	    SADB_EXT_ADDRESS_DST);
+	if (!n->m_next) {
+		m_freem(n);
+		return key_senderror(so, m, ENOBUFS);
+	}
+
+	if (n->m_len < sizeof(struct sadb_msg)) {
+		n = m_pullup(n, sizeof(struct sadb_msg));
+		if (n == NULL)
+			return key_sendup_mbuf(so, m, KEY_SENDUP_ONE);
+	}
+
+	n->m_pkthdr.len = 0;
+	for (nn = n; nn; nn = nn->m_next)
+		n->m_pkthdr.len += nn->m_len;
+
+	newmsg = mtod(n, struct sadb_msg *);
+	newmsg->sadb_msg_seq = newsav->seq;
+	newmsg->sadb_msg_errno = 0;
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
     }
 }
 
@@ -4326,9 +4503,9 @@ key_getspi(mhp)
  *	others: success.
  */
 static u_int32_t
-key_do_getnewspi(spirange, satype)
+key_do_getnewspi(spirange, saidx)
 	struct sadb_spirange *spirange;
-	u_int satype;
+	struct secasindex *saidx;
 {
 	u_int32_t newspi;
 	u_int32_t min, max;
@@ -4343,7 +4520,7 @@ key_do_getnewspi(spirange, satype)
 		max = key_spi_maxval;
 	}
 	/* IPCOMP needs 2-byte SPI */
-	if (satype == SADB_X_SATYPE_IPCOMP) {
+	if (saidx->proto == IPPROTO_IPCOMP) {
 		u_int32_t t;
 		if (min >= 0x10000)
 			min = 0xffff;
@@ -4355,8 +4532,10 @@ key_do_getnewspi(spirange, satype)
 	}
 
 	if (min == max) {
-		if (key_checkspi(min, satype) != NULL) {
+		if (key_checkspidup(saidx, min) != NULL) {
+#ifdef IPSEC_DEBUG
 			printf("key_do_getnewspi: SPI %u exists already.\n", min);
+#endif
 			return 0;
 		}
 
@@ -4371,14 +4550,16 @@ key_do_getnewspi(spirange, satype)
 		/* when requesting to allocate spi ranged */
 		while (count--) {
 			/* generate pseudo-random SPI value ranged. */
-			newspi = min + (random() % ( max - min + 1 ));
+			newspi = min + (key_random() % (max - min + 1));
 
-			if (key_checkspi(newspi, satype) == NULL)
+			if (key_checkspidup(saidx, newspi) == NULL)
 				break;
 		}
 
 		if (count == 0 || newspi == 0) {
+#ifdef IPSEC_DEBUG
 			printf("key_do_getnewspi: to allocate spi is failed.\n");
+#endif
 			return 0;
 		}
 	}
@@ -4393,438 +4574,464 @@ key_do_getnewspi(spirange, satype)
 /*
  * SADB_UPDATE processing
  * receive
- *   <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+ *   <base, SA, (SA2), (lifetime(HSC),) address(SD), (address(P),)
  *       key(AE), (identity(SD),) (sensitivity)>
- * from the ikmpd, and update a secas entry whose status is SADB_SASTATE_LARVAL.
+ * from the ikmpd, and update a secasvar entry whose status is SADB_SASTATE_LARVAL.
  * and send
- *   <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+ *   <base, SA, (SA2), (lifetime(HSC),) address(SD), (address(P),)
  *       (identity(SD),) (sensitivity)>
  * to the ikmpd.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_update(mhp)
-	caddr_t *mhp;
+static int
+key_update(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_sa *sa0;
 	struct sadb_address *src0, *dst0;
-	struct sockaddr *proxy;
-	struct secindex idx;
-	struct secasindex *saidx;
-	struct secas *sa;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	struct secasindex saidx;
+	struct secashead *sah;
+	struct secasvar *sav;
+	u_int16_t proto;
+	u_int8_t mode;
+	u_int32_t reqid;
+	int error;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_update: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_update: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
-	msg0->sadb_msg_errno = 0;
-	if (mhp[SADB_EXT_SA] == NULL
-	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
-		msg0->sadb_msg_errno = EINVAL;
-	}
-	switch (msg0->sadb_msg_satype) {
-	case SADB_SATYPE_AH:
-		if (mhp[SADB_EXT_KEY_AUTH] == NULL)
-			msg0->sadb_msg_errno = EINVAL;
-		break;
-	case SADB_SATYPE_ESP:
-		if (mhp[SADB_EXT_KEY_ENCRYPT] == NULL)
-			msg0->sadb_msg_errno = EINVAL;
-		break;
-	}
-	if (msg0->sadb_msg_errno) {
+	if (mhp->ext[SADB_EXT_SA] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
+	    (mhp->msg->sadb_msg_satype == SADB_SATYPE_ESP &&
+	     mhp->ext[SADB_EXT_KEY_ENCRYPT] == NULL) ||
+	    (mhp->msg->sadb_msg_satype == SADB_SATYPE_AH &&
+	     mhp->ext[SADB_EXT_KEY_AUTH] == NULL) ||
+	    (mhp->ext[SADB_EXT_LIFETIME_HARD] != NULL &&
+	     mhp->ext[SADB_EXT_LIFETIME_SOFT] == NULL) ||
+	    (mhp->ext[SADB_EXT_LIFETIME_HARD] == NULL &&
+	     mhp->ext[SADB_EXT_LIFETIME_SOFT] != NULL)) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: invalid message is passed.\n");
-		return NULL;
-	}
-
-	sa0 = (struct sadb_sa *)mhp[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-	if (mhp[SADB_EXT_ADDRESS_PROXY] == NULL)
-		proxy = NULL;
-	else
-		proxy = (struct sockaddr *)(mhp[SADB_EXT_ADDRESS_PROXY]
-		                          + sizeof(struct sadb_address));
-
-	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-
-#ifdef RESTRICTED_DIR
-	/*
-	 * check the direciton with proxy address.
-	 * We assumed that SA direction is not changed if valid SA.
-	 * See key_getspi().
-	 */
-	dir = key_checkdir(&idx, proxy);
-	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:
-		break;
-	case SADB_X_DIR_OUTBOUND:
-	case SADB_X_DIR_INVALID:
-		printf("key_update: Invalid SA direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	default:
-		panic("key_update: unexpected direction.\n");
-	}
-
-#if 1	/* XXX */
-	/* sanity check for direction */
-    {
-	u_int olddir;
-
-	olddir = key_checkdir(&idx, NULL);
-	if (dir != olddir) {
-		printf("key_update: mismatched SA direction %u -> %u.\n",
-			olddir, dir);
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-    }
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+#ifdef IPSEC_DEBUG
+		printf("key_update: invalid message is passed.\n");
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
+		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
+		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+	} else {
+		mode = IPSEC_MODE_ANY;
+		reqid = 0;
+	}
+	/* XXX boundary checking for other extensions */
 
-	/* get a SA index */
-#ifdef RESTRICTED_DIR
-	if ((saidx = key_getsaidx(&idx, dir)) == NULL) {
+	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
+	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+
+	/* get a SA header */
+	if ((sah = key_getsah(&saidx)) == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: no SA index found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
-	}
-#else
-	if ((saidx = key_getsaidx(&idx)) == NULL) {
-		printf("key_update: no SA index found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
-	}
 #endif
+		return key_senderror(so, m, ENOENT);
+	}
+
+	/* set spidx if there */
+	/* XXX rewrite */
+	error = key_setident(sah, m, mhp);
+	if (error)
+		return key_senderror(so, m, error);
 
 	/* find a SA with sequence number. */
-	if ((sa = key_getsabyseq(saidx, msg0->sadb_msg_seq)) == NULL) {
+#ifdef IPSEC_DOSEQCHECK
+	if (mhp->msg->sadb_msg_seq != 0
+	 && (sav = key_getsavbyseq(sah, mhp->msg->sadb_msg_seq)) == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: no larval SA with sequence %u exists.\n",
-			msg0->sadb_msg_seq);
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
+			mhp->msg->sadb_msg_seq);
+#endif
+		return key_senderror(so, m, ENOENT);
 	}
+#else
+	if ((sav = key_getsavbyspi(sah, sa0->sadb_sa_spi)) == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_update: no such a SA found (spi:%u)\n",
+			(u_int32_t)ntohl(sa0->sadb_sa_spi));
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+#endif
 
 	/* validity check */
-	/* Are these error ? Now warning. */
-	if (sa->type != msg0->sadb_msg_satype) {
-		printf("key_update: protocol mismatched (DB:%u param:%u)\n",
-			sa->type, msg0->sadb_msg_satype);
+	if (sav->sah->saidx.proto != proto) {
+#ifdef IPSEC_DEBUG
+		printf("key_update: protocol mismatched (DB=%u param=%u)\n",
+			sav->sah->saidx.proto, proto);
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
-	if (sa->spi != sa0->sadb_sa_spi) {
+#ifdef IPSEC_DOSEQCHECK
+	if (sav->spi != sa0->sadb_sa_spi) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: SPI mismatched (DB:%u param:%u)\n",
-			(u_int32_t)ntohl(sa->spi),
+			(u_int32_t)ntohl(sav->spi),
 			(u_int32_t)ntohl(sa0->sadb_sa_spi));
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
-	if (sa->pid != msg0->sadb_msg_pid) {
+#endif
+	if (sav->pid != mhp->msg->sadb_msg_pid) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: pid mismatched (DB:%u param:%u)\n",
-			sa->pid, msg0->sadb_msg_pid);
+			sav->pid, mhp->msg->sadb_msg_pid);
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
-	/* copy sa values */
-	if (key_setsaval(sa, mhp)) {
-		key_freesa(sa);
-		return NULL;
+	/* copy sav values */
+	error = key_setsaval(sav, m, mhp);
+	if (error) {
+		key_freesav(sav);
+		return key_senderror(so, m, error);
 	}
 
 	/* check SA values to be mature. */
-	if ((msg0->sadb_msg_errno = key_mature(sa)) != 0) {
-		key_freesa(sa);
-		return NULL;
+	if ((mhp->msg->sadb_msg_errno = key_mature(sav)) != 0) {
+		key_freesav(sav);
+		return key_senderror(so, m, 0);
 	}
-
-	/*
-	 * we must call key_freesa() whenever we leave a function context,
-	 * as we did not allocated a new sa (we updated existing sa).
-	 */
-	key_freesa(sa);
-	sa = NULL;
 
     {
-	struct sadb_msg *newmsg;
+	struct mbuf *n;
 
 	/* set msg buf from mhp */
-	if ((newmsg = key_getmsgbuf_x1(mhp)) == NULL) {
+	n = key_getmsgbuf_x1(m, mhp);
+	if (n == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+#endif
+		return key_senderror(so, m, ENOBUFS);
 	}
-	return newmsg;
+
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
 
 /*
- * search SADB with sequence for a SA which state is SADB_SASTATE_LARVAL.
+ * search SAD with sequence for a SA which state is SADB_SASTATE_LARVAL.
  * only called by key_update().
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
  */
-static struct secas *
-key_getsabyseq(saidx, seq)
-	struct secasindex *saidx;
+#ifdef IPSEC_DOSEQCHECK
+static struct secasvar *
+key_getsavbyseq(sah, seq)
+	struct secashead *sah;
 	u_int32_t seq;
 {
-	struct secas *sa;
+	struct secasvar *sav;
 	u_int state;
 
 	state = SADB_SASTATE_LARVAL;
 
-	/* Is there a SA with sequence number ? */
-	for (sa = (struct secas *)saidx->satree[state].head;
-	     sa != NULL;
-	     sa = sa->next) {
+	/* search SAD with sequence number ? */
+	LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
-		/* sanity check */
-		if (sa->state != state) {
-			printf("key_getsabyseq: invalid sa->state "
-				"(DB:%u param:%u)\n", sa->state, state);
-			continue;
-		}
+		KEY_CHKSASTATE(state, sav->state, "key_getsabyseq");
 
-		if (sa->seq == seq) {
-			sa->refcnt++;
-			return sa;
+		if (sav->seq == seq) {
+			sav->refcnt++;
+			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+				printf("DP key_getsavbyseq cause "
+					"refcnt++:%d SA:%p\n",
+					sav->refcnt, sav));
+			return sav;
 		}
 	}
 
 	return NULL;
 }
+#endif
 
 /*
  * SADB_ADD processing
  * add a entry to SA database, when received
- *   <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+ *   <base, SA, (SA2), (lifetime(HSC),) address(SD), (address(P),)
  *       key(AE), (identity(SD),) (sensitivity)>
  * from the ikmpd,
  * and send
- *   <base, SA, (lifetime(HSC),) address(SD), (address(P),)
+ *   <base, SA, (SA2), (lifetime(HSC),) address(SD), (address(P),)
  *       (identity(SD),) (sensitivity)>
  * to the ikmpd.
  *
  * IGNORE identity and sensitivity messages.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_add(mhp)
-	caddr_t *mhp;
+static int
+key_add(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_sa *sa0;
 	struct sadb_address *src0, *dst0;
-	struct sockaddr *proxy;
-	struct secindex idx;
-	struct secasindex *newsaidx;
-	struct secas *newsa;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	struct secasindex saidx;
+	struct secashead *newsah;
+	struct secasvar *newsav;
+	u_int16_t proto;
+	u_int8_t mode;
+	u_int32_t reqid;
+	int error;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_add: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_add: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
-	msg0->sadb_msg_errno = 0;
-	if (mhp[SADB_EXT_SA] == NULL 
-	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
-		msg0->sadb_msg_errno = EINVAL;
-	}
-	switch (msg0->sadb_msg_satype) {
-	case SADB_SATYPE_AH:
-		if (mhp[SADB_EXT_KEY_AUTH] == NULL)
-			msg0->sadb_msg_errno = EINVAL;
-		break;
-	case SADB_SATYPE_ESP:
-		if (mhp[SADB_EXT_KEY_ENCRYPT] == NULL)
-			msg0->sadb_msg_errno = EINVAL;
-		break;
-	}
-	if (msg0->sadb_msg_errno) {
+	if (mhp->ext[SADB_EXT_SA] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
+	    (mhp->msg->sadb_msg_satype == SADB_SATYPE_ESP &&
+	     mhp->ext[SADB_EXT_KEY_ENCRYPT] == NULL) ||
+	    (mhp->msg->sadb_msg_satype == SADB_SATYPE_AH &&
+	     mhp->ext[SADB_EXT_KEY_AUTH] == NULL) ||
+	    (mhp->ext[SADB_EXT_LIFETIME_HARD] != NULL &&
+	     mhp->ext[SADB_EXT_LIFETIME_SOFT] == NULL) ||
+	    (mhp->ext[SADB_EXT_LIFETIME_HARD] == NULL &&
+	     mhp->ext[SADB_EXT_LIFETIME_SOFT] != NULL)) {
+#ifdef IPSEC_DEBUG
 		printf("key_add: invalid message is passed.\n");
-		return NULL;
-	}
-
-	sa0 = (struct sadb_sa *)mhp[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-	if (mhp[SADB_EXT_ADDRESS_PROXY] == NULL)
-		proxy = NULL;
-	else
-		proxy = (struct sockaddr *)(mhp[SADB_EXT_ADDRESS_PROXY]
-		                          + sizeof(struct sadb_address));
-
-	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-
-#ifdef RESTRICTED_DIR
-	/* checking the direciton. */ 
-	dir = key_checkdir(&idx, proxy);
-	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:	/* XXX Is it need for bi-direction ? */
-		/* checking SPI duplication. */
-		if (key_checkspi(sa0->sadb_sa_spi, msg0->sadb_msg_satype)
-				!= NULL) {
-			printf("key_add: SPI %u exists already.\n",
-				(u_int32_t)ntohl(sa0->sadb_sa_spi));
-			msg0->sadb_msg_errno = EEXIST;
-			return NULL;
-		}
-		break;
-	case SADB_X_DIR_OUTBOUND:
-		/* checking SPI & address duplication. */
-	    {
-		struct secasindex *saidx_tmp;
-		saidx_tmp = key_getsaidx(&idx, dir);
-		if (saidx_tmp != NULL
-		 && key_getsabyspi(saidx_tmp,
-				msg0->sadb_msg_satype,
-				sa0->sadb_sa_spi) != NULL) {
-			printf("key_add: SA exists already, SPI=%u\n",
-				(u_int32_t)ntohl(sa0->sadb_sa_spi));
-			msg0->sadb_msg_errno = EEXIST;
-			return NULL;
-		}
-	    }
-		break;
-	case SADB_X_DIR_INVALID:
-		printf("key_add: Invalid SA direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	default:
-		panic("key_add: unexpected direction %u", dir);
-	}
 #endif
-
-	/* get a SA index */
-#ifdef RESTRICTED_DIR
-	if ((newsaidx = key_getsaidx(&idx, dir)) == NULL) {
-
-		/* create a new SA index */
-		if ((newsaidx = key_newsaidx(&idx, dir)) == NULL) {
-			printf("key_add: No more memory.\n");
-			msg0->sadb_msg_errno = ENOBUFS;
-			return NULL;
-		}
+		return key_senderror(so, m, EINVAL);
 	}
-#else
-	if ((newsaidx = key_getsaidx(&idx)) == NULL) {
-
-		/* create a new SA index */
-		if ((newsaidx = key_newsaidx(&idx)) == NULL) {
-			printf("key_add: No more memory.\n");
-			msg0->sadb_msg_errno = ENOBUFS;
-			return NULL;
-		}
-	}
+	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+		/* XXX need more */
+#ifdef IPSEC_DEBUG
+		printf("key_add: invalid message is passed.\n");
 #endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
+		mode = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_mode;
+		reqid = ((struct sadb_x_sa2 *)mhp->ext[SADB_X_EXT_SA2])->sadb_x_sa2_reqid;
+	} else {
+		mode = IPSEC_MODE_ANY;
+		reqid = 0;
+	}
+
+	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+
+	/* get a SA header */
+	if ((newsah = key_getsah(&saidx)) == NULL) {
+		/* create a new SA header */
+		if ((newsah = key_newsah(&saidx)) == NULL) {
+#ifdef IPSEC_DEBUG
+			printf("key_add: No more memory.\n");
+#endif
+			return key_senderror(so, m, ENOBUFS);
+		}
+	}
+
+	/* set spidx if there */
+	/* XXX rewrite */
+	error = key_setident(newsah, m, mhp);
+	if (error) {
+		return key_senderror(so, m, error);
+	}
 
 	/* create new SA entry. */
 	/* We can create new SA only if SPI is differenct. */
-	if ((newsa = key_newsa(mhp, newsaidx)) == NULL)
-		return NULL;
+	if (key_getsavbyspi(newsah, sa0->sadb_sa_spi)) {
+#ifdef IPSEC_DEBUG
+		printf("key_add: SA already exists.\n");
+#endif
+		return key_senderror(so, m, EEXIST);
+	}
+	newsav = key_newsav(m, mhp, newsah, &error);
+	if (newsav == NULL) {
+		return key_senderror(so, m, error);
+	}
 
 	/* check SA values to be mature. */
-	if ((msg0->sadb_msg_errno = key_mature(newsa)) != NULL) {
-		key_freesa(newsa);
-		return NULL;
+	if ((error = key_mature(newsav)) != 0) {
+		key_freesav(newsav);
+		return key_senderror(so, m, error);
 	}
 
 	/*
-	 * don't call key_freesa() here, as we would like to keep the SA
+	 * don't call key_freesav() here, as we would like to keep the SA
 	 * in the database on success.
 	 */
 
     {
-	struct sadb_msg *newmsg;
+	struct mbuf *n;
 
 	/* set msg buf from mhp */
-	if ((newmsg = key_getmsgbuf_x1(mhp)) == NULL) {
+	n = key_getmsgbuf_x1(m, mhp);
+	if (n == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_update: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+#endif
+		return key_senderror(so, m, ENOBUFS);
 	}
 
-	return newmsg;
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
 
-struct sadb_msg *
-key_getmsgbuf_x1(mhp)
-	caddr_t *mhp;
+/* m is retained */
+static int
+key_setident(sah, m, mhp)
+	struct secashead *sah;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
-	struct sadb_msg *newmsg;
-	u_int len;
-	caddr_t p;
+	const struct sadb_ident *idsrc, *iddst;
+	int idsrclen, iddstlen;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (sah == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
+		panic("key_setident: NULL pointer is passed.\n");
+
+	/* don't make buffer if not there */
+	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL &&
+	    mhp->ext[SADB_EXT_IDENTITY_DST] == NULL) {
+		sah->idents = NULL;
+		sah->identd = NULL;
+		return 0;
+	}
+	
+	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_IDENTITY_DST] == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_setident: invalid identity.\n");
+#endif
+		return EINVAL;
+	}
+
+	idsrc = (const struct sadb_ident *)mhp->ext[SADB_EXT_IDENTITY_SRC];
+	iddst = (const struct sadb_ident *)mhp->ext[SADB_EXT_IDENTITY_DST];
+	idsrclen = mhp->extlen[SADB_EXT_IDENTITY_SRC];
+	iddstlen = mhp->extlen[SADB_EXT_IDENTITY_DST];
+
+	/* validity check */
+	if (idsrc->sadb_ident_type != iddst->sadb_ident_type) {
+#ifdef IPSEC_DEBUG
+		printf("key_setident: ident type mismatch.\n");
+#endif
+		return EINVAL;
+	}
+
+	switch (idsrc->sadb_ident_type) {
+	case SADB_IDENTTYPE_PREFIX:
+	case SADB_IDENTTYPE_FQDN:
+	case SADB_IDENTTYPE_USERFQDN:
+	default:
+		/* XXX do nothing */
+		sah->idents = NULL;
+		sah->identd = NULL;
+	 	return 0;
+	}
+
+	/* make structure */
+	KMALLOC(sah->idents, struct sadb_ident *, idsrclen);
+	if (sah->idents == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_setident: No more memory.\n");
+#endif
+		return ENOBUFS;
+	}
+	KMALLOC(sah->identd, struct sadb_ident *, iddstlen);
+	if (sah->identd == NULL) {
+		KFREE(sah->idents);
+		sah->idents = NULL;
+#ifdef IPSEC_DEBUG
+		printf("key_setident: No more memory.\n");
+#endif
+		return ENOBUFS;
+	}
+	bcopy(idsrc, sah->idents, idsrclen);
+	bcopy(iddst, sah->identd, iddstlen);
+
+	return 0;
+}
+
+/*
+ * m will not be freed on return.
+ * it is caller's responsibility to free the result. 
+ */
+static struct mbuf *
+key_getmsgbuf_x1(m, mhp)
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
+{
+	struct mbuf *n;
+
+	/* sanity check */
+	if (m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_getmsgbuf_x1: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
 	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-	    + sizeof(struct sadb_sa)
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_SRC])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_DST])
-	    + (mhp[SADB_EXT_ADDRESS_PROXY] == NULL
-		? 0 : PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_PROXY]))
-	    + (mhp[SADB_EXT_LIFETIME_HARD] == NULL
-		? 0 : sizeof(struct sadb_lifetime))
-	    + (mhp[SADB_EXT_LIFETIME_SOFT] == NULL
-		? 0 : sizeof(struct sadb_lifetime));
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL)
+	n = key_gather_mbuf(m, mhp, 1, 9, SADB_EXT_RESERVED,
+	    SADB_EXT_SA, SADB_X_EXT_SA2,
+	    SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST,
+	    SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
+	    SADB_EXT_IDENTITY_SRC, SADB_EXT_IDENTITY_DST);
+	if (!n)
 		return NULL;
-	bzero((caddr_t)newmsg, len);
 
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
+	if (n->m_len < sizeof(struct sadb_msg)) {
+		n = m_pullup(n, sizeof(struct sadb_msg));
+		if (n == NULL)
+			return NULL;
+	}
+	mtod(n, struct sadb_msg *)->sadb_msg_errno = 0;
+	mtod(n, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(n->m_pkthdr.len);
 
-	p = key_copysadbext(p, mhp[SADB_EXT_SA]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_SRC]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_DST]);
-
-	if (mhp[SADB_EXT_ADDRESS_PROXY] != NULL)
-		p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_PROXY]);
-
-	if (mhp[SADB_EXT_LIFETIME_HARD] != NULL)
-		p = key_copysadbext(p, mhp[SADB_EXT_LIFETIME_HARD]);
-
-	if (mhp[SADB_EXT_LIFETIME_SOFT] != NULL)
-		p = key_copysadbext(p, mhp[SADB_EXT_LIFETIME_SOFT]);
-
-	return newmsg;
+	return n;
 }
 
 /*
@@ -4836,92 +5043,101 @@ key_getmsgbuf_x1(mhp)
  *   <base, SA(*), address(SD)>
  * to the ikmpd.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_delete(mhp)
-	caddr_t *mhp;
+static int
+key_delete(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_sa *sa0;
 	struct sadb_address *src0, *dst0;
-	struct secindex idx;
-	struct secasindex *saidx;
-	struct secas *sa;
+	struct secasindex saidx;
+	struct secashead *sah;
+	struct secasvar *sav = NULL;
+	u_int16_t proto;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_delete: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_delete: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
-	if (mhp[SADB_EXT_SA] == NULL 
-	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
+	if (mhp->ext[SADB_EXT_SA] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_delete: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
-	sa0 = (struct sadb_sa *)mhp[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-
-	/* get a SA index */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-	if ((saidx = key_getsaidxfromany(&idx)) == NULL) {
-		printf("key_delete: no SA index found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
+	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+#ifdef IPSEC_DEBUG
+		printf("key_delete: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
-	/* get a SA with SPI. */
-	sa = key_getsabyspi(saidx,
-	                    msg0->sadb_msg_satype,
-	                    sa0->sadb_sa_spi);
-	if (sa == NULL) {
-		printf("key_delete: no alive SA found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
+	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
+	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* get a SA header */
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
+			continue;
+		if (key_cmpsaidx_withoutmode(&sah->saidx, &saidx) == 0)
+			continue;
+
+		/* get a SA with SPI. */
+		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		if (sav)
+			break;
+	}
+	if (sah == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_delete: no SA found.\n");
+#endif
+		return key_senderror(so, m, ENOENT);
 	}
 
-	key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-	key_freesa(sa);
-	sa = NULL;
+	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+	key_freesav(sav);
+	sav = NULL;
 
     {
+	struct mbuf *n;
 	struct sadb_msg *newmsg;
-	u_int len;
-	caddr_t p;
 
 	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-	    + sizeof(struct sadb_sa)
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_SRC])
-	    + PFKEY_EXTLEN(mhp[SADB_EXT_ADDRESS_DST]);
+	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
+	    SADB_EXT_SA, SADB_EXT_ADDRESS_SRC, SADB_EXT_ADDRESS_DST);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
 
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_delete: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	if (n->m_len < sizeof(struct sadb_msg)) {
+		n = m_pullup(n, sizeof(struct sadb_msg));
+		if (n == NULL)
+			return key_senderror(so, m, ENOBUFS);
 	}
-	bzero((caddr_t)newmsg, len);
-
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
+	newmsg = mtod(n, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
+	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
 
-	p = key_copysadbext(p, mhp[SADB_EXT_SA]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_SRC]);
-	p = key_copysadbext(p, mhp[SADB_EXT_ADDRESS_DST]);
-
-	return newmsg;
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
 
@@ -4935,87 +5151,355 @@ key_delete(mhp)
  *       (identity(SD),) (sensitivity)>
  * to the ikmpd.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_get(mhp)
-	caddr_t *mhp;
+static int
+key_get(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct sadb_sa *sa0;
 	struct sadb_address *src0, *dst0;
-	struct secindex idx;
-	struct secasindex *saidx;
-	struct secas *sa;
+	struct secasindex saidx;
+	struct secashead *sah;
+	struct secasvar *sav = NULL;
+	u_int16_t proto;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_get: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_get: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
-	if (mhp[SADB_EXT_SA] == NULL 
-	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
+	if (mhp->ext[SADB_EXT_SA] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_get: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
-	sa0 = (struct sadb_sa *)mhp[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-
-	/* get a SA index */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-	if ((saidx = key_getsaidxfromany(&idx)) == NULL) {
-		printf("key_get: no SA index found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
+	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
+#ifdef IPSEC_DEBUG
+		printf("key_get: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
-	/* get a SA with SPI. */
-	sa = key_getsabyspi(saidx,
-	                    msg0->sadb_msg_satype,
-	                    sa0->sadb_sa_spi);
-	if (sa == NULL) {
-		printf("key_get: no SA with state of mature found.\n");
-		msg0->sadb_msg_errno = ENOENT;
-		return NULL;
+	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
+
+	/* get a SA header */
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
+			continue;
+		if (key_cmpsaidx_withoutmode(&sah->saidx, &saidx) == 0)
+			continue;
+
+		/* get a SA with SPI. */
+		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		if (sav)
+			break;
+	}
+	if (sah == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_get: no SA found.\n");
+#endif
+		return key_senderror(so, m, ENOENT);
 	}
 
     {
-	struct sadb_msg *newmsg;
-	u_int len;
+	struct mbuf *n;
+	u_int8_t satype;
 
-	/* calculate a length of message buffer */
-	len = key_getmsglen(sa);
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_get: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	/* map proto to satype */
+	if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_get: there was invalid proto in SAD.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
 	}
 
 	/* create new sadb_msg to reply. */
-	(void)key_setdumpsa(sa, newmsg);
-	newmsg->sadb_msg_type = SADB_GET;
-	newmsg->sadb_msg_seq = msg0->sadb_msg_seq;
-	newmsg->sadb_msg_pid = msg0->sadb_msg_pid;
+	n = key_setdumpsa(sav, SADB_GET, satype, mhp->msg->sadb_msg_seq,
+	    mhp->msg->sadb_msg_pid);
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
 
-	return newmsg;
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
     }
+}
+
+/* XXX make it sysctl-configurable? */
+static void
+key_getcomb_setlifetime(comb)
+	struct sadb_comb *comb;
+{
+
+	comb->sadb_comb_soft_allocations = 1;
+	comb->sadb_comb_hard_allocations = 1;
+	comb->sadb_comb_soft_bytes = 0;
+	comb->sadb_comb_hard_bytes = 0;
+	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
+	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+}
+
+#ifdef IPSEC_ESP
+/*
+ * XXX reorder combinations by preference
+ * XXX no idea if the user wants ESP authentication or not
+ */
+static struct mbuf *
+key_getcomb_esp()
+{
+	struct sadb_comb *comb;
+	const struct esp_algorithm *algo;
+	struct mbuf *result = NULL, *m, *n;
+	int encmin;
+	int i, off, o;
+	int totlen;
+	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
+
+	m = NULL;
+	for (i = 1; i <= SADB_EALG_MAX; i++) {
+		algo = esp_algorithm_lookup(i);
+		if (!algo)
+			continue;
+
+		if (algo->keymax < ipsec_esp_keymin)
+			continue;
+		if (algo->keymin < ipsec_esp_keymin)
+			encmin = ipsec_esp_keymin;
+		else
+			encmin = algo->keymin;
+
+		if (ipsec_esp_auth)
+			m = key_getcomb_ah();
+		else {
+#ifdef DIAGNOSTIC
+			if (l > MLEN)
+				panic("assumption failed in key_getcomb_esp");
+#endif
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m) {
+				M_ALIGN(m, l);
+				m->m_len = l;
+				m->m_next = NULL;
+				bzero(mtod(m, caddr_t), m->m_len);
+			}
+		}
+		if (!m)
+			goto fail;
+
+		totlen = 0;
+		for (n = m; n; n = n->m_next)
+			totlen += n->m_len;
+#ifdef DIAGNOSTIC
+		if (totlen % l)
+			panic("assumption failed in key_getcomb_esp");
+#endif
+
+		for (off = 0; off < totlen; off += l) {
+			n = m_pulldown(m, off, l, &o);
+			if (!n) {
+				/* m is already freed */
+				goto fail;
+			}
+			comb = (struct sadb_comb *)(mtod(n, caddr_t) + o);
+			bzero(comb, sizeof(*comb));
+			key_getcomb_setlifetime(comb);
+			comb->sadb_comb_encrypt = i;
+			comb->sadb_comb_encrypt_minbits = encmin;
+			comb->sadb_comb_encrypt_maxbits = algo->keymax;
+		}
+
+		if (!result)
+			result = m;
+		else
+			m_cat(result, m);
+	}
+
+	return result;
+
+ fail:
+	if (result)
+		m_freem(result);
+	return NULL;
+}
+#endif
+
+/*
+ * XXX reorder combinations by preference
+ */
+static struct mbuf *
+key_getcomb_ah()
+{
+	struct sadb_comb *comb;
+	const struct ah_algorithm *algo;
+	struct mbuf *m;
+	int min;
+	int i;
+	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
+
+	m = NULL;
+	for (i = 1; i <= SADB_AALG_MAX; i++) {
+#if 1
+		/* we prefer HMAC algorithms, not old algorithms */
+		if (i != SADB_AALG_SHA1HMAC && i != SADB_AALG_MD5HMAC)
+			continue;
+#endif
+		algo = ah_algorithm_lookup(i);
+		if (!algo)
+			continue;
+
+		if (algo->keymax < ipsec_ah_keymin)
+			continue;
+		if (algo->keymin < ipsec_ah_keymin)
+			min = ipsec_ah_keymin;
+		else
+			min = algo->keymin;
+
+		if (!m) {
+#ifdef DIAGNOSTIC
+			if (l > MLEN)
+				panic("assumption failed in key_getcomb_ah");
+#endif
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m) {
+				M_ALIGN(m, l);
+				m->m_len = l;
+				m->m_next = NULL;
+			}
+		} else
+			M_PREPEND(m, l, M_DONTWAIT);
+		if (!m)
+			return NULL;
+
+		comb = mtod(m, struct sadb_comb *);
+		bzero(comb, sizeof(*comb));
+		key_getcomb_setlifetime(comb);
+		comb->sadb_comb_auth = i;
+		comb->sadb_comb_auth_minbits = min;
+		comb->sadb_comb_auth_maxbits = algo->keymax;
+	}
+
+	return m;
+}
+
+/*
+ * not really an official behavior.  discussed in pf_key@inner.net in Sep2000.
+ * XXX reorder combinations by preference
+ */
+static struct mbuf *
+key_getcomb_ipcomp()
+{
+	struct sadb_comb *comb;
+	const struct ipcomp_algorithm *algo;
+	struct mbuf *m;
+	int i;
+	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
+
+	m = NULL;
+	for (i = 1; i <= SADB_X_CALG_MAX; i++) {
+		algo = ipcomp_algorithm_lookup(i);
+		if (!algo)
+			continue;
+
+		if (!m) {
+#ifdef DIAGNOSTIC
+			if (l > MLEN)
+				panic("assumption failed in key_getcomb_ah");
+#endif
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m) {
+				M_ALIGN(m, l);
+				m->m_len = l;
+				m->m_next = NULL;
+			}
+		} else
+			M_PREPEND(m, l, M_DONTWAIT);
+		if (!m)
+			return NULL;
+
+		comb = mtod(m, struct sadb_comb *);
+		bzero(comb, sizeof(*comb));
+		key_getcomb_setlifetime(comb);
+		comb->sadb_comb_encrypt = i;
+		/* what should we set into sadb_comb_*_{min,max}bits? */
+	}
+
+	return m;
+}
+
+/*
+ * XXX no way to pass mode (transport/tunnel) to userland
+ * XXX replay checking?
+ * XXX sysctl interface to ipsec_{ah,esp}_keymin
+ */
+static struct mbuf *
+key_getprop(saidx)
+	const struct secasindex *saidx;
+{
+	struct sadb_prop *prop;
+	struct mbuf *m, *n;
+	const int l = PFKEY_ALIGN8(sizeof(struct sadb_prop));
+	int totlen;
+
+	switch (saidx->proto)  {
+#ifdef IPSEC_ESP
+	case IPPROTO_ESP:
+		m = key_getcomb_esp();
+		break;
+#endif
+	case IPPROTO_AH:
+		m = key_getcomb_ah();
+		break;
+	case IPPROTO_IPCOMP:
+		m = key_getcomb_ipcomp();
+		break;
+	default:
+		return NULL;
+	}
+
+	if (!m)
+		return NULL;
+	M_PREPEND(m, l, M_DONTWAIT);
+	if (!m)
+		return NULL;
+
+	totlen = 0;
+	for (n = m; n; n = n->m_next)
+		totlen += n->m_len;
+
+	prop = mtod(m, struct sadb_prop *);
+	bzero(prop, sizeof(*prop));
+	prop->sadb_prop_len = PFKEY_UNIT64(totlen);
+	prop->sadb_prop_exttype = SADB_EXT_PROPOSAL;
+	prop->sadb_prop_replay = 32;	/* XXX */
+
+	return m;
 }
 
 /*
  * SADB_ACQUIRE processing called by key_checkrequest() and key_acquire2().
  * send
- *   <base, SA, address(SD), (address(P)),
+ *   <base, SA, address(SD), (address(P)), x_policy,
  *       (identity(SD),) (sensitivity,) proposal>
  * to KMD, and expect to receive
  *   <base> with SADB_ACQUIRE if error occured,
@@ -5023,81 +5507,46 @@ key_get(mhp)
  *   <base, src address, dst address, (SPI range)> with SADB_GETSPI
  * from KMD by PF_KEY.
  *
- * identity is not supported, must be to do.
- * sensitivity is not supported.
- *
- * XXX: How can I do process to acquire for tunnel mode. XXX
+ * XXX x_policy is outside of RFC2367 (KAME extension).
+ * XXX sensitivity is not supported.
+ * XXX for ipcomp, RFC2367 does not define how to fill in proposal.
+ * see comment for key_getcomb_ipcomp().
  *
  * OUT:
  *    0     : succeed
  *    others: error number
  */
 static int
-key_acquire(idx, proto, proxy)
-	struct secindex *idx;
-	u_int proto;
-	struct sockaddr *proxy;
+key_acquire(saidx, sp)
+	struct secasindex *saidx;
+	struct secpolicy *sp;
 {
+	struct mbuf *result = NULL, *m;
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	struct secacq *newacq;
 #endif
-#if 0
-	const char *fqdn = NULL;
-	const char *userfqdn = NULL;
-#endif
-#if 0 /* XXX Do it ?*/
-	u_int16_t idexttype;
-#endif
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
-	int error;
+	struct secpolicyindex *spidx = NULL;
+	u_int8_t satype;
+	int error = -1;
+	u_int32_t seq;
 
 	/* sanity check */
-	if (idx == NULL)
+	if (saidx == NULL || sp == NULL)
 		panic("key_acquire: NULL pointer is passed.\n");
+	if ((satype = key_proto2satype(saidx->proto)) == 0)
+		panic("key_acquire: invalid proto is passed.\n");
 
-#ifdef RESTRICTED_DIR
-	/* check the direciton. */
-	dir = key_checkdir(idx, NULL);
-	switch (dir) {
-	case SADB_X_DIR_OUTBOUND:
-	case SADB_X_DIR_BIDIRECT:
-		break;
-	case SADB_X_DIR_INBOUND:	/* XXX Move it if you need to kick IKE
-					 * by inbound packet. */
-	case SADB_X_DIR_INVALID:
-		printf("key_acquire: Invalid SA direction.\n");
-		return EINVAL;
-	default:
-		panic("key_acquire: unexpected direction.\n");
-	}
-#endif
+	spidx = &sp->spidx;
 
-#if 0 /* XXX Do it ?*/
-	switch (dir) {
-	case SADB_X_DIR_OUTBOUND:
-		idexttype = SADB_EXT_IDENTITY_SRC;
-		break;
-	case SADB_X_DIR_INBOUND:	/* XXX <-- ? */
-		idexttype = SADB_EXT_IDENTITY_DST;
-		break;
-	default:
-		idexttype = 0;
-		break;
-	}
-#endif
-
+#ifndef IPSEC_NONBLOCK_ACQUIRE
 	/*
 	 * We never do anything about acquirng SA.  There is anather
 	 * solution that kernel blocks to send SADB_ACQUIRE message until
 	 * getting something message from IKEd.  In later case, to be
 	 * managed with ACQUIRING list.
 	 */
-#ifndef IPSEC_NONBLOCK_ACQUIRE
-
 	/* get a entry to check whether sending message or not. */
-	if ((newacq = key_getacq(idx, proto, proxy)) != NULL) {
+	if ((newacq = key_getacq(saidx)) != NULL) {
 		if (key_blockacq_count < newacq->count) {
 			/* reset counter and do send message. */
 			newacq->count = 0;
@@ -5108,130 +5557,58 @@ key_acquire(idx, proto, proxy)
 		}
 	} else {
 		/* make new entry for blocking to send SADB_ACQUIRE. */
-		if ((newacq = key_newacq(idx, proto, proxy)) == NULL)
+		if ((newacq = key_newacq(saidx)) == NULL)
 			return ENOBUFS;
 
 		/* add to acqtree */
-		key_insnode(&acqtree, NULL, newacq);
+		LIST_INSERT_HEAD(&acqtree, newacq, chain);
 	}
 #endif
 
-    {
-	struct sadb_msg *newmsg = NULL;
-	u_int len;
-	caddr_t p;
-
-	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(idx->family))
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(idx->family))
-		+ sizeof(struct sadb_prop)
-		+ sizeof(struct sadb_comb); /* XXX to be multiple */
-#if 0 /* XXX Do it ?*/
-	/* NOTE: +1 is for terminating NUL */
-	fqdn = key_getfqdn();
-	userfqdn = key_getuserfqdn();
-	if (idexttype) {
-		if (fqdn)
-			len += (sizeof(struct sadb_ident)
-				+ PFKEY_ALIGN8(strlen(fqdn) + 1));
-		len += sizeof(struct sadb_ident);
-		if (userfqdn)
-			len += PFKEY_ALIGN8(strlen(userfqdn) + 1);
-	}
-#endif
-
-	/* adding proxy's sockaddr length, if present.*/
-	if (proxy != NULL) {
-		len += (sizeof(struct sadb_address) +
-			PFKEY_ALIGN8(_SALENBYAF(proxy->sa_family)));
-	}
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == 0) {
-		printf("key_acquire: No more memory.\n");
-		return ENOBUFS;
-	}
-	bzero((caddr_t)newmsg, len);
-
-	newmsg->sadb_msg_version = PF_KEY_V2;
-	newmsg->sadb_msg_type = SADB_ACQUIRE;
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_satype = proto;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-	newmsg->sadb_msg_seq = newacq->seq;
+	seq = newacq->seq;
 #else
-	newmsg->sadb_msg_seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
+	seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
 #endif
-
-	newmsg->sadb_msg_pid = 0;
-	p = (caddr_t)newmsg + sizeof(struct sadb_msg);
-
-	/* set sadb_address for source */
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_SRC,
-				idx->family,
-				(caddr_t)&idx->src,
-				idx->prefs,
-				idx->proto,
-				idx->ports);
-
-	/* set sadb_address for destination */
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_DST,
-				idx->family,
-				(caddr_t)&idx->dst,
-				idx->prefd,
-				idx->proto,
-				idx->portd);
-
-	/* set sadb_address for proxy, if exists. */
-	if (proxy != NULL) {
-		p = key_setsadbaddr(p, SADB_EXT_ADDRESS_PROXY,
-					proxy->sa_family,
-					_INADDRBYSA(proxy),
-					_INALENBYAF(proxy->sa_family),
-					0,
-					0);
+	m = key_setsadbmsg(SADB_ACQUIRE, 0, satype, seq, 0, 0);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
 	}
+	result = m;
 
-	/* create proposal extension */
-	/* set combination extension */
-	/* XXX: to be defined by proposal database */
-    {
-	struct sadb_prop *prop;
-	struct sadb_comb *comb;
+	/* set sadb_address for saidx's. */
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+	    (struct sockaddr *)&saidx->src, saidx->src.ss_len << 3,
+	    IPSEC_ULPROTO_ANY);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-	prop = (struct sadb_prop *)p;
-	prop->sadb_prop_len = PFKEY_UNIT64(sizeof(*prop) + sizeof(*comb));
-		/* XXX to be multiple */
-	prop->sadb_prop_exttype = SADB_EXT_PROPOSAL;
-	prop->sadb_prop_replay = 32;	/* XXX be variable ? */
-	p += sizeof(struct sadb_prop);
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+	    (struct sockaddr *)&saidx->dst, saidx->dst.ss_len << 3,
+	    IPSEC_ULPROTO_ANY);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-	comb = (struct sadb_comb *)p;
-	comb->sadb_comb_auth = SADB_AALG_SHA1HMAC; /* XXX ??? */
-	comb->sadb_comb_encrypt = SADB_EALG_DESCBC; /* XXX ??? */
-	comb->sadb_comb_flags = 0;
-	comb->sadb_comb_auth_minbits = 8; /* XXX */
-	comb->sadb_comb_auth_maxbits = 1024; /* XXX */
-	comb->sadb_comb_encrypt_minbits = 64; /* XXX */
-	comb->sadb_comb_encrypt_maxbits = 64; /* XXX */
-	comb->sadb_comb_soft_allocations = 0;
-	comb->sadb_comb_hard_allocations = 0;
-	comb->sadb_comb_soft_bytes = 0;
-	comb->sadb_comb_hard_bytes = 0;
-	comb->sadb_comb_soft_addtime = 0;
-	comb->sadb_comb_hard_addtime = 0;
-	comb->sadb_comb_soft_usetime = 0;
-	comb->sadb_comb_hard_usetime = 0;
+	/* XXX proxy address (optional) */
 
-	p += sizeof(*comb);
-    }
+	/* set sadb_x_policy */
+	m = key_setsadbxpolicy(sp->policy, sp->spidx.dir, sp->id);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-#if 0 /* XXX Do it ?*/
+	/* XXX identity (optional) */
+#if 0
 	if (idexttype && fqdn) {
 		/* create identity extension (FQDN) */
 		struct sadb_ident *id;
@@ -5271,103 +5648,93 @@ key_acquire(idx, proto, proxy)
 	}
 #endif
 
-	error = key_sendall(newmsg, len);
-	if (error != 0)
-		printf("key_acquire: key_sendall returned %d\n", error);
-	return error;
-    }
+	/* XXX sensitivity (optional) */
 
-	return 0;
+	/* create proposal/combination extension */
+	m = key_getprop(saidx);
+#if 0
+	/*
+	 * spec conformant: always attach proposal/combination extension,
+	 * the problem is that we have no way to attach it for ipcomp,
+	 * due to the way sadb_comb is declared in RFC2367.
+	 */
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
+#else
+	/*
+	 * outside of spec; make proposal/combination extension optional.
+	 */
+	if (m)
+		m_cat(result, m);
+#endif
+
+	if ((result->m_flags & M_PKTHDR) == 0) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL) {
+			error = ENOBUFS;
+			goto fail;
+		}
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
+
+ fail:
+	if (result)
+		m_freem(result);
+	return error;
 }
 
+#ifndef IPSEC_NONBLOCK_ACQUIRE
 static struct secacq *
-key_newacq(idx, proto, proxy)
-	struct secindex *idx;
-	u_int proto;
-	struct sockaddr *proxy;
+key_newacq(saidx)
+	struct secasindex *saidx;
 {
 	struct secacq *newacq;
+	struct timeval tv;
 
 	/* get new entry */
 	KMALLOC(newacq, struct secacq *, sizeof(struct secacq));
 	if (newacq == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_newacq: No more memory.\n");
+#endif
 		return NULL;
 	}
 	bzero(newacq, sizeof(*newacq));
 
-#if 1
 	/* copy secindex */
-	newacq->idx.family = idx->family;
-	newacq->idx.prefs = idx->prefs;
-	newacq->idx.prefd = idx->prefd;
-	newacq->idx.proto = idx->proto;
-	newacq->idx.ports = idx->ports;
-	newacq->idx.portd = idx->portd;
-	bcopy(&idx->src, &newacq->idx.src, _INALENBYAF(idx->family));
-	bcopy(&idx->dst, &newacq->idx.dst, _INALENBYAF(idx->family));
-
-	newacq->proto = proto;
-
-	if (proxy != NULL)
-		bcopy(_INADDRBYSA(proxy), newacq->proxy, sizeof(newacq->proxy));
-	else
-		bzero(&newacq->proxy, sizeof(newacq->proxy));
-#else
-	/* XXX to use HASH may be enough to manage. */
-	SOME_HASH_FUNCTION(newacq->hash, idx|proto|proxy);
-#endif
+	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->tick = 0;
+	microtime(&tv);
+	newacq->created = tv.tv_sec;
 	newacq->count = 0;
 
 	return newacq;
 }
 
-static void
-key_delacq(acq)
-	struct secacq *acq;
-{
-	/* sanity check */
-	if (acq == NULL)
-		panic("key_delacq: NULL pointer is passed.\n");
-
-	key_remnode(acq);
-	KFREE(acq);
-
-	return;
-}
-
 static struct secacq *
-key_getacq(idx, proto, proxy)
-	struct secindex *idx;
-	u_int proto;
-	struct sockaddr *proxy;
+key_getacq(saidx)
+	struct secasindex *saidx;
 {
 	struct secacq *acq;
 
-	for (acq = (struct secacq *)acqtree.head;
-	     acq != NULL;
-	     acq = acq->next) {
-
-		if (acq->proto != proto)
-			continue;
-		if (!key_cmpidx(&acq->idx, idx))
-			continue;
-	    {
-		int i;
-		for (i = 0; i < sizeof(acq->proxy); i++) {
-			if (acq->proxy[i] != 0)
-				break;
-		}
-		if (i == sizeof(acq->proxy) && proxy == NULL)
-			return acq;
-		if (i == sizeof(acq->proxy) && proxy != NULL)
-			continue;
-	    }
-
-		if (proxy != NULL
-		 && !bcmp(&acq->proxy, _INADDRBYSA(proxy), sizeof(acq->proxy)))
+	LIST_FOREACH(acq, &acqtree, chain) {
+		if (key_cmpsaidx_exactly(saidx, &acq->saidx))
 			return acq;
 	}
 
@@ -5380,11 +5747,49 @@ key_getacqbyseq(seq)
 {
 	struct secacq *acq;
 
-	for (acq = (struct secacq *)acqtree.head;
-	     acq != NULL;
-	     acq = acq->next) {
-
+	LIST_FOREACH(acq, &acqtree, chain) {
 		if (acq->seq == seq)
+			return acq;
+	}
+
+	return NULL;
+}
+#endif
+
+static struct secspacq *
+key_newspacq(spidx)
+	struct secpolicyindex *spidx;
+{
+	struct secspacq *acq;
+	struct timeval tv;
+
+	/* get new entry */
+	KMALLOC(acq, struct secspacq *, sizeof(struct secspacq));
+	if (acq == NULL) {
+#ifdef IPSEC_DEBUG
+		printf("key_newspacq: No more memory.\n");
+#endif
+		return NULL;
+	}
+	bzero(acq, sizeof(*acq));
+
+	/* copy secindex */
+	bcopy(spidx, &acq->spidx, sizeof(acq->spidx));
+	microtime(&tv);
+	acq->created = tv.tv_sec;
+	acq->count = 0;
+
+	return acq;
+}
+
+static struct secspacq *
+key_getspacq(spidx)
+	struct secpolicyindex *spidx;
+{
+	struct secspacq *acq;
+
+	LIST_FOREACH(acq, &spacqtree, chain) {
+		if (key_cmpspidx_exactly(spidx, &acq->spidx))
 			return acq;
 	}
 
@@ -5395,7 +5800,7 @@ key_getacqbyseq(seq)
  * SADB_ACQUIRE processing,
  * in first situation, is receiving
  *   <base>
- * from the ikmpd, and clear sequence of its secas entry.
+ * from the ikmpd, and clear sequence of its secasvar entry.
  *
  * In second situation, is receiving
  *   <base, address(SD), (address(P),) (identity(SD),) (sensitivity,) proposal>
@@ -5403,129 +5808,128 @@ key_getacqbyseq(seq)
  *   <base, address(SD), (address(P),) (identity(SD),) (sensitivity,) proposal>
  * to the socket.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_acquire2(mhp)
-	caddr_t *mhp;
+static int
+key_acquire2(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
-	struct sadb_address *src0, *dst0;
-	struct sockaddr *proxy;
-	struct secindex idx;
-	struct secasindex *saidx;
-#ifdef RESTRICTED_DIR
-	u_int dir;
-#endif
+	const struct sadb_address *src0, *dst0;
+	struct secasindex saidx;
+	struct secashead *sah;
+	u_int16_t proto;
+	int error;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_acquire2: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-
-	/* Is it a error message from KMd ? */
 	/*
-	 * It must be just size of sadb_msg structure if error was occured
-	 * by IKEd.
+	 * Error message from KMd.
+	 * We assume that if error was occured in IKEd, the length of PFKEY
+	 * message is equal to the size of sadb_msg structure.
+	 * We do not raise error even if error occured in this function.
 	 */
-	if (msg0->sadb_msg_len == PFKEY_UNIT64(sizeof(struct sadb_msg))) {
+	if (mhp->msg->sadb_msg_len == PFKEY_UNIT64(sizeof(struct sadb_msg))) {
+#ifndef IPSEC_NONBLOCK_ACQUIRE
+		struct secacq *acq;
+		struct timeval tv;
 
-	 	/* XXX To be managed with ACQUIRING list ? */
-
-		return (struct sadb_msg *)~0;	/* exit as normal status */
-
-		/* NOTREACHED */
-	}
-
-	/* Is this a acquire message from user land ? */
-	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL
-	 || mhp[SADB_EXT_PROPOSAL] == NULL) {
-		/* error */
-		printf("key_acquire2: invalid message is passed.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-	src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-	if (mhp[SADB_EXT_ADDRESS_PROXY] == NULL)
-		proxy = NULL;
-	else
-		proxy = (struct sockaddr *)(mhp[SADB_EXT_ADDRESS_PROXY]
-		                          + sizeof(struct sadb_address));
-
-	/* make secindex */
-	if (key_setsecidx(src0, dst0, &idx, 0)) {
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	}
-
-#ifdef RESTRICTED_DIR
-	/* checking the direciton. */ 
-	dir = key_checkdir(&idx, proxy);
-	switch (dir) {
-	case SADB_X_DIR_INBOUND:
-	case SADB_X_DIR_BIDIRECT:
-	case SADB_X_DIR_OUTBOUND:
-		/* XXX What I do ? */
-		break;
-	case SADB_X_DIR_INVALID:
-		printf("key_acquire2: Invalid SA direction.\n");
-		msg0->sadb_msg_errno = EINVAL;
-		return NULL;
-	default:
-		panic("key_acquire2: unexpected direction %u", dir);
-	}
+		/* check sequence number */
+		if (mhp->msg->sadb_msg_seq == 0) {
+#ifdef IPSEC_DEBUG
+			printf("key_acquire2: must specify sequence number.\n");
 #endif
+			m_freem(m);
+			return 0;
+		}
+
+		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) == NULL) {
+			/*
+			 * the specified larval SA is already gone, or we got
+			 * a bogus sequence number.  we can silently ignore it.
+			 */
+			m_freem(m);
+			return 0;
+		}
+
+		/* reset acq counter in order to deletion by timehander. */
+		microtime(&tv);
+		acq->created = tv.tv_sec;
+		acq->count = 0;
+#endif
+		m_freem(m);
+		return 0;
+	}
+
+	/*
+	 * This message is from user land.
+	 */
+
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_acquire2: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
+	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
+	    mhp->ext[SADB_EXT_PROPOSAL] == NULL) {
+		/* error */
+#ifdef IPSEC_DEBUG
+		printf("key_acquire2: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
+	    mhp->extlen[SADB_EXT_PROPOSAL] < sizeof(struct sadb_prop)) {
+		/* error */
+#ifdef IPSEC_DEBUG
+		printf("key_acquire2: invalid message is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
+
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+
+	/* XXX boundary check against sa_len */
+	KEY_SETSECASIDX(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1, &saidx);
 
 	/* get a SA index */
-#ifdef RESTRICTED_DIR
-	if ((saidx = key_getsaidx(&idx, dir)) != NULL) {
-		printf("key_acquire2: a SA exists already.\n");
-		msg0->sadb_msg_errno = EEXIST;
-		return NULL;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (sah->state == SADB_SASTATE_DEAD)
+			continue;
+		if (key_cmpsaidx_withmode(&sah->saidx, &saidx))
+			break;
 	}
-#else
-	if ((saidx = key_getsaidx(&idx)) != NULL) {
+	if (sah != NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_acquire2: a SA exists already.\n");
-		msg0->sadb_msg_errno = EEXIST;
-		return NULL;
-	}
 #endif
-
-	msg0->sadb_msg_errno = key_acquire(&idx, msg0->sadb_msg_satype, proxy);
-	if (msg0->sadb_msg_errno != 0) {
-		/* XXX What I do ? */
-		printf("key_acquire2: error occured.\n");
-		return NULL;
+		return key_senderror(so, m, EEXIST);
 	}
 
-    {
-	struct sadb_msg *newmsg;
-	u_int len;
-
-	/* create new sadb_msg to reply. */
-	len = PFKEY_UNUNIT64(msg0->sadb_msg_len);
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_acquire2: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+	error = key_acquire(&saidx, NULL);
+	if (error != 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_acquire2: error %d returned "
+			"from key_acquire.\n", mhp->msg->sadb_msg_errno);
+#endif
+		return key_senderror(so, m, error);
 	}
-	bzero((caddr_t)newmsg, len);
 
-	bcopy(mhp[0], (caddr_t)newmsg, len);
-
-	return newmsg;
-    }
+	return key_sendup_mbuf(so, m, KEY_SENDUP_REGISTERED);
 }
 
 /*
- * SADB_REGISTER processing
+ * SADB_REGISTER processing.
+ * If SATYPE_UNSPEC has been passed as satype, only return sabd_supported.
  * receive
  *   <base>
  * from the ikmpd, and register a socket to send PF_KEY messages,
@@ -5533,144 +5937,171 @@ key_acquire2(mhp)
  *   <base, supported>
  * to KMD by PF_KEY.
  * If socket is detached, must free from regnode.
- * OUT:
- *    0     : succeed
- *    others: error number
+ *
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_register(mhp, so)
-	caddr_t *mhp;
+static int
+key_register(so, m, mhp)
 	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	struct secreg *reg, *newreg = 0;
 
 	/* sanity check */
-	if (mhp == NULL || so == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_register: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* check for invalid register message */
+	if (mhp->msg->sadb_msg_satype >= sizeof(regtree)/sizeof(regtree[0]))
+		return key_senderror(so, m, EINVAL);
 
 	/* When SATYPE_UNSPEC is specified, only return sabd_supported. */
-	if (msg0->sadb_msg_satype == SADB_SATYPE_UNSPEC)
+	if (mhp->msg->sadb_msg_satype == SADB_SATYPE_UNSPEC)
 		goto setmsg;
 
 	/* check whether existing or not */
-	reg = (struct secreg *)regtree[msg0->sadb_msg_satype].head;
-	for (; reg != NULL; reg = reg->next) {
+	LIST_FOREACH(reg, &regtree[mhp->msg->sadb_msg_satype], chain) {
 		if (reg->so == so) {
+#ifdef IPSEC_DEBUG
 			printf("key_register: socket exists already.\n");
-			msg0->sadb_msg_errno = EEXIST;
-			return NULL;
+#endif
+			return key_senderror(so, m, EEXIST);
 		}
 	}
 
 	/* create regnode */
-	KMALLOC(newreg, struct secreg *, sizeof(struct secreg));
+	KMALLOC(newreg, struct secreg *, sizeof(*newreg));
 	if (newreg == NULL) {
+#ifdef IPSEC_DEBUG
 		printf("key_register: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
+#endif
+		return key_senderror(so, m, ENOBUFS);
 	}
-	bzero((caddr_t)newreg, sizeof(struct secreg));
+	bzero((caddr_t)newreg, sizeof(*newreg));
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
 
 	/* add regnode to regtree. */
-	key_insnode(&regtree[msg0->sadb_msg_satype], NULL, newreg);
+	LIST_INSERT_HEAD(&regtree[mhp->msg->sadb_msg_satype], newreg, chain);
 
-   setmsg:
-  {
+  setmsg:
+    {
+	struct mbuf *n;
 	struct sadb_msg *newmsg;
 	struct sadb_supported *sup;
 	u_int len, alen, elen;
-	caddr_t p;
-
-	/* create new sadb_msg to reply. */
-	alen = sizeof(struct sadb_supported)
-		+ ((SADB_AALG_MAX - 1) * sizeof(struct sadb_alg));
-
-#ifdef IPSEC_ESP
-	elen = sizeof(struct sadb_supported)
-		+ ((SADB_EALG_MAX - 1) * sizeof(struct sadb_alg));
-#else
-	elen = 0;
-#endif
-
-	len = sizeof(struct sadb_msg)
-		+ alen
-		+ elen;
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_register: No more memory.\n");
-		msg0->sadb_msg_errno = ENOBUFS;
-		return NULL;
-	}
-	bzero((caddr_t)newmsg, len);
-
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	p = (caddr_t)newmsg + sizeof(*msg0);
-
-	/* for authentication algorithm */
-	sup = (struct sadb_supported *)p;
-	sup->sadb_supported_len = PFKEY_UNIT64(alen);
-	sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
-	p += sizeof(*sup);
-
-    {
+	int off;
 	int i;
 	struct sadb_alg *alg;
-	struct ah_algorithm *algo;
 
-	for (i = 1; i < SADB_AALG_MAX; i++) {
-		algo = &ah_algorithms[i];
-		alg = (struct sadb_alg *)p;
-		alg->sadb_alg_id = i;
-		alg->sadb_alg_ivlen = 0;
-		alg->sadb_alg_minbits = algo->keymin;
-		alg->sadb_alg_maxbits = algo->keymax;
-		p += sizeof(struct sadb_alg);
+	/* create new sadb_msg to reply. */
+	alen = 0;
+	for (i = 1; i <= SADB_AALG_MAX; i++) {
+		if (ah_algorithm_lookup(i))
+			alen += sizeof(struct sadb_alg);
 	}
-    }
+	if (alen)
+		alen += sizeof(struct sadb_supported);
+	elen = 0;
+#ifdef IPSEC_ESP
+	for (i = 1; i <= SADB_EALG_MAX; i++) {
+		if (esp_algorithm_lookup(i))
+			elen += sizeof(struct sadb_alg);
+	}
+	if (elen)
+		elen += sizeof(struct sadb_supported);
+#endif
+
+	len = sizeof(struct sadb_msg) + alen + elen;
+
+	if (len > MCLBYTES)
+		return key_senderror(so, m, ENOBUFS);
+
+	MGETHDR(n, M_DONTWAIT, MT_DATA);
+	if (len > MHLEN) {
+		MCLGET(n, M_DONTWAIT);
+		if ((n->m_flags & M_EXT) == 0) {
+			m_freem(n);
+			n = NULL;
+		}
+	}
+	if (!n)
+		return key_senderror(so, m, ENOBUFS);
+
+	n->m_pkthdr.len = n->m_len = len;
+	n->m_next = NULL;
+	off = 0;
+
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, caddr_t) + off);
+	newmsg = mtod(n, struct sadb_msg *);
+	newmsg->sadb_msg_errno = 0;
+	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
+	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
+
+	/* for authentication algorithm */
+	if (alen) {
+		sup = (struct sadb_supported *)(mtod(n, caddr_t) + off);
+		sup->sadb_supported_len = PFKEY_UNIT64(alen);
+		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
+		off += PFKEY_ALIGN8(sizeof(*sup));
+
+		for (i = 1; i <= SADB_AALG_MAX; i++) {
+			const struct ah_algorithm *aalgo;
+
+			aalgo = ah_algorithm_lookup(i);
+			if (!aalgo)
+				continue;
+			alg = (struct sadb_alg *)(mtod(n, caddr_t) + off);
+			alg->sadb_alg_id = i;
+			alg->sadb_alg_ivlen = 0;
+			alg->sadb_alg_minbits = aalgo->keymin;
+			alg->sadb_alg_maxbits = aalgo->keymax;
+			off += PFKEY_ALIGN8(sizeof(*alg));
+		}
+	}
 
 #ifdef IPSEC_ESP
 	/* for encryption algorithm */
-	sup = (struct sadb_supported *)p;
-	sup->sadb_supported_len = PFKEY_UNIT64(elen);
-	sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
-	p += sizeof(*sup);
+	if (elen) {
+		sup = (struct sadb_supported *)(mtod(n, caddr_t) + off);
+		sup->sadb_supported_len = PFKEY_UNIT64(elen);
+		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
+		off += PFKEY_ALIGN8(sizeof(*sup));
 
-    {
-	int i;
-	struct sadb_alg *alg;
-	struct esp_algorithm *algo;
+		for (i = 1; i <= SADB_EALG_MAX; i++) {
+			const struct esp_algorithm *ealgo;
 
-	for (i = 1; i < SADB_EALG_MAX; i++) {
-		algo = &esp_algorithms[i];
-
-		alg = (struct sadb_alg *)p;
-		alg->sadb_alg_id = i;
-		if (algo && algo->ivlen) {
-			/*
-			 * give NULL to get the value preferred by algorithm
-			 * XXX SADB_X_EXT_DERIV ?
-			 */
-			alg->sadb_alg_ivlen = (*algo->ivlen)(NULL);
-		} else
-			alg->sadb_alg_ivlen = 0;
-		alg->sadb_alg_minbits = algo->keymin;
-		alg->sadb_alg_maxbits = algo->keymax;
-		p += sizeof(struct sadb_alg);
+			ealgo = esp_algorithm_lookup(i);
+			if (!ealgo)
+				continue;
+			alg = (struct sadb_alg *)(mtod(n, caddr_t) + off);
+			alg->sadb_alg_id = i;
+			if (ealgo && ealgo->ivlen) {
+				/*
+				 * give NULL to get the value preferred by
+				 * algorithm XXX SADB_X_EXT_DERIV ?
+				 */
+				alg->sadb_alg_ivlen =
+				    (*ealgo->ivlen)(ealgo, NULL);
+			} else
+				alg->sadb_alg_ivlen = 0;
+			alg->sadb_alg_minbits = ealgo->keymin;
+			alg->sadb_alg_maxbits = ealgo->keymax;
+			off += PFKEY_ALIGN8(sizeof(struct sadb_alg));
+		}
 	}
-    }
 #endif
 
-	return newmsg;
-  }
+#ifdef DIGAGNOSTIC
+	if (off != len)
+		panic("length assumption failed in key_register");
+#endif
+
+	m_freem(m);
+	return key_sendup_mbuf(so, n, KEY_SENDUP_REGISTERED);
+    }
 }
 
 /*
@@ -5688,12 +6119,16 @@ key_freereg(so)
 	if (so == NULL)
 		panic("key_freereg: NULL pointer is passed.\n");
 
-	/* check whether existing or not */
+	/*
+	 * check whether existing or not.
+	 * check all type of SA, because there is a potential that
+	 * one socket is registered to multiple type of SA.
+	 */
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
-		reg = (struct secreg *)regtree[i].head;
-		for (; reg; reg = reg->next) {
-			if (reg->so == so) {
-				key_remnode(reg);
+		LIST_FOREACH(reg, &regtree[i], chain) {
+			if (reg->so == so
+			 && __LIST_CHAINED(reg)) {
+				LIST_REMOVE(reg, chain);
 				KFREE(reg);
 				break;
 			}
@@ -5706,7 +6141,7 @@ key_freereg(so)
 /*
  * SADB_EXPIRE processing
  * send
- *   <base, SA, lifetime(C and one of HS), address(SD)>
+ *   <base, SA, SA2, lifetime(C and one of HS), address(SD)>
  * to KMD by PF_KEY.
  * NOTE: We send only soft lifetime extension.
  *
@@ -5714,113 +6149,119 @@ key_freereg(so)
  *	others	: error number
  */
 static int
-key_expire(sa)
-	struct secas *sa;
+key_expire(sav)
+	struct secasvar *sav;
 {
 	int s;
+	int satype;
+	struct mbuf *result = NULL, *m;
+	int len;
+	int error = -1;
+	struct sadb_lifetime *lt;
 
-#ifdef __NetBSD__
+	/* XXX: Why do we lock ? */
 	s = splsoftnet();	/*called from softclock()*/
-#else
-	s = splnet();	/*called from softclock()*/
-#endif
 
 	/* sanity check */
-	if (sa == NULL)
+	if (sav == NULL)
 		panic("key_expire: NULL pointer is passed.\n");
-
-	/* sanity check 2 */
-	if (sa->saidx == NULL)
+	if (sav->sah == NULL)
 		panic("key_expire: Why was SA index in SA NULL.\n");
+	if ((satype = key_proto2satype(sav->sah->saidx.proto)) == 0)
+		panic("key_expire: invalid proto is passed.\n");
 
-    {
-	struct sadb_msg *newmsg = NULL;
-	u_int len;
-	caddr_t p;
-	int error;
-
-	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg)
-		+ sizeof(struct sadb_sa)
-		+ sizeof(struct sadb_lifetime)
-		+ sizeof(struct sadb_lifetime)
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sa->saidx->idx.family))
-		+ sizeof(struct sadb_address)
-		+ PFKEY_ALIGN8(_SALENBYAF(sa->saidx->idx.family));
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_expire: No more memory.\n");
-		splx(s);
-		return ENOBUFS;
+	/* set msg header */
+	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, sav->refcnt);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
 	}
-	bzero((caddr_t)newmsg, len);
-
-	newmsg->sadb_msg_version = PF_KEY_V2;
-	newmsg->sadb_msg_type = SADB_EXPIRE;
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_satype = sa->type;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
-	newmsg->sadb_msg_seq = sa->seq;
-	newmsg->sadb_msg_pid = 0;
-	p = (caddr_t)newmsg + sizeof(struct sadb_msg);
+	result = m;
 
 	/* create SA extension */
-    {
-	struct sadb_sa *m_sa;
+	m = key_setsadbsa(sav);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-	m_sa = (struct sadb_sa *)p;
-	m_sa->sadb_sa_len = PFKEY_UNIT64(sizeof(struct sadb_sa));
-	m_sa->sadb_sa_exttype = SADB_EXT_SA;
-	m_sa->sadb_sa_spi = sa->spi;
-	m_sa->sadb_sa_replay = (sa->replay ? sa->replay->wsize : NULL);
-				/*XXX: unit?*/
-	m_sa->sadb_sa_state = sa->state;
-	m_sa->sadb_sa_auth = sa->alg_auth;
-	m_sa->sadb_sa_encrypt = sa->alg_enc;
-	m_sa->sadb_sa_flags = sa->flags;
-	p += sizeof(struct sadb_sa);
-    }
+	/* create SA extension */
+	m = key_setsadbxsa2(sav->sah->saidx.mode, sav->sah->saidx.reqid);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-	/* create lifetime extension */
-    {
-	struct sadb_lifetime *m_lt;
-
-	m_lt = (struct sadb_lifetime *)p;
-	m_lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
-	m_lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
-	m_lt->sadb_lifetime_allocations = sa->lft_c->sadb_lifetime_allocations;
-	m_lt->sadb_lifetime_bytes = sa->lft_c->sadb_lifetime_bytes;
-	m_lt->sadb_lifetime_addtime = sa->lft_c->sadb_lifetime_addtime;
-	m_lt->sadb_lifetime_usetime = sa->lft_c->sadb_lifetime_usetime;
-	p += sizeof(struct sadb_lifetime);
-
-	/* copy SOFT lifetime extension. */
-	bcopy(sa->lft_s, p, sizeof(struct sadb_lifetime));
-	p += sizeof(struct sadb_lifetime);
-    }
+	/* create lifetime extension (current and soft) */
+	len = PFKEY_ALIGN8(sizeof(*lt)) * 2;
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		error = ENOBUFS;
+		goto fail;
+	}
+	bzero(mtod(m, caddr_t), len);
+	lt = mtod(m, struct sadb_lifetime *);
+	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
+	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
+	lt->sadb_lifetime_allocations = sav->lft_c->sadb_lifetime_allocations;
+	lt->sadb_lifetime_bytes = sav->lft_c->sadb_lifetime_bytes;
+	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime;
+	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime;
+	lt = (struct sadb_lifetime *)(mtod(m, caddr_t) + len / 2);
+	bcopy(sav->lft_s, lt, sizeof(*lt));
+	m_cat(result, m);
 
 	/* set sadb_address for source */
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_SRC,
-				sa->saidx->idx.family,
-				(caddr_t)&sa->saidx->idx.src,
-				sa->saidx->idx.prefs,
-				sa->saidx->idx.proto,
-				sa->saidx->idx.ports);
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+	    (struct sockaddr *)&sav->sah->saidx.src,
+	    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
 	/* set sadb_address for destination */
-	p = key_setsadbaddr(p, SADB_EXT_ADDRESS_DST,
-				sa->saidx->idx.family,
-				(caddr_t)&sa->saidx->idx.dst,
-				sa->saidx->idx.prefd,
-				sa->saidx->idx.proto,
-				sa->saidx->idx.portd);
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+	    (struct sockaddr *)&sav->sah->saidx.dst,
+	    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+	if (!m) {
+		error = ENOBUFS;
+		goto fail;
+	}
+	m_cat(result, m);
 
-	error = key_sendall(newmsg, len);
+	if ((result->m_flags & M_PKTHDR) == 0) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL) {
+			error = ENOBUFS;
+			goto fail;
+		}
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
+
+ fail:
+	if (result)
+		m_freem(result);
 	splx(s);
 	return error;
-    }
 }
 
 /*
@@ -5833,259 +6274,255 @@ key_expire(sa)
  * to the ikmpd.
  * NOTE: to do is only marking SADB_SASTATE_DEAD.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	NULL if fail.
- *	other if success, return pointer to the message to send.
+ * m will always be freed.
  */
-static struct sadb_msg *
-key_flush(mhp)
-	caddr_t *mhp;
+static int
+key_flush(so, m, mhp)
+	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
-	struct secasindex *saidx;
-	struct secas *sa, *sanext; /* for save */
-	u_int state;
+	struct sadb_msg *newmsg;
+	struct secashead *sah, *nextsah;
+	struct secasvar *sav, *nextsav;
+	u_int16_t proto;
+	u_int8_t state;
+	u_int stateidx;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_flush: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_flush: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
 	/* no SATYPE specified, i.e. flushing all SA. */
-	KEY_SADBLOOP(
-		/*
-		 * no need to flush DEAD SAs,
-		 * they are already dead!
-		 */
-		if (state == SADB_SASTATE_DEAD)
+	for (sah = LIST_FIRST(&sahtree);
+	     sah != NULL;
+	     sah = nextsah) {
+		nextsah = LIST_NEXT(sah, chain);
+
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
+		 && proto != sah->saidx.proto)
 			continue;
 
-		for (sa = (struct secas *)saidx->satree[state].head;
-		     sa != NULL;
-		     sa = sanext) {
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_alive);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			for (sav = LIST_FIRST(&sah->savtree[state]);
+			     sav != NULL;
+			     sav = nextsav) {
 
-			sanext = sa->next; /* save */
+				nextsav = LIST_NEXT(sav, chain);
 
-			if (msg0->sadb_msg_satype != SADB_SATYPE_UNSPEC
-			 && msg0->sadb_msg_satype != sa->type)
-				continue;
-
-			key_sa_chgstate(sa, SADB_SASTATE_DEAD);
-			key_freesa(sa);
-			sa = NULL;
+				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+				key_freesav(sav);
+			}
 		}
-	);
 
-    {
-	struct sadb_msg *newmsg;
-	u_int len;
-
-	/* create new sadb_msg to reply. */
-	len = sizeof(struct sadb_msg);
-
-	KMALLOC(newmsg, struct sadb_msg *, len);
-	if (newmsg == NULL) {
-		printf("key_flush: No more memory.\n");
-		return NULL;
+		sah->state = SADB_SASTATE_DEAD;
 	}
-	bzero((caddr_t)newmsg, len);
 
-	bcopy((caddr_t)mhp[0], (caddr_t)newmsg, sizeof(*msg0));
+	if (m->m_len < sizeof(struct sadb_msg) ||
+	    sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
+#ifdef IPSEC_DEBUG
+		printf("key_flush: No more memory.\n");
+#endif
+		return key_senderror(so, m, ENOBUFS);
+	}
+
+	if (m->m_next)
+		m_freem(m->m_next);
+	m->m_next = NULL;
+	m->m_pkthdr.len = m->m_len = sizeof(struct sadb_msg);
+	newmsg = mtod(m, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
+	newmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
 
-	return newmsg;
-    }
+	return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 }
 
 /*
  * SADB_DUMP processing
+ * dump all entries including status of DEAD in SAD.
  * receive
  *   <base>
- * from the ikmpd, and dump all secas leaves
+ * from the ikmpd, and dump all secasvar leaves
  * and send,
  *   <base> .....
  * to the ikmpd.
  *
- * IN:	mhp: pointer to the pointer to each header.
- * OUT:	error code.  0 on success.
+ * m will always be freed.
  */
 static int
-key_dump(mhp, so, target)
-	caddr_t *mhp;
+key_dump(so, m, mhp)
 	struct socket *so;
-	int target;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
-	struct secas *sa;
-	struct secasindex *saidx;
-	u_int state;
-	int len, cnt;
+	struct secashead *sah;
+	struct secasvar *sav;
+	u_int16_t proto;
+	u_int stateidx;
+	u_int8_t satype;
+	u_int8_t state;
+	int cnt;
 	struct sadb_msg *newmsg;
+	struct mbuf *n;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_dump: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
+	/* map satype to proto */
+	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
+#ifdef IPSEC_DEBUG
+		printf("key_dump: invalid satype is passed.\n");
+#endif
+		return key_senderror(so, m, EINVAL);
+	}
 
-	/* count sa entries to be sent to the userland. */
+	/* count sav entries to be sent to the userland. */
 	cnt = 0;
-	KEY_SADBLOOP(
-		for (sa = (struct secas *)saidx->satree[state].head;
-		     sa != NULL;
-		     sa = sa->next) {
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
+		 && proto != sah->saidx.proto)
+			continue;
 
-			if (msg0->sadb_msg_satype != SADB_SATYPE_UNSPEC
-			 && msg0->sadb_msg_satype != sa->type)
-				continue;
-
-			cnt++;
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				cnt++;
+			}
 		}
-	);
+	}
 
 	if (cnt == 0)
-		return ENOENT;
+		return key_senderror(so, m, ENOENT);
 
 	/* send this to the userland, one at a time. */
 	newmsg = NULL;
-	KEY_SADBLOOP(
-		for (sa = (struct secas *)saidx->satree[state].head;
-		     sa != NULL;
-		     sa = sa->next) {
+	LIST_FOREACH(sah, &sahtree, chain) {
+		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
+		 && proto != sah->saidx.proto)
+			continue;
 
-			if (msg0->sadb_msg_satype != SADB_SATYPE_UNSPEC
-			 && msg0->sadb_msg_satype != sa->type)
-				continue;
-
-			len = key_getmsglen(sa);
-			KMALLOC(newmsg, struct sadb_msg *, len);
-			if (newmsg == NULL) {
-				printf("key_dump: No more memory.\n");
-				return ENOBUFS;
-			}
-			bzero((caddr_t)newmsg, len);
-
-			(void)key_setdumpsa(sa, newmsg);
-			newmsg->sadb_msg_type = SADB_DUMP;
-			newmsg->sadb_msg_seq = --cnt;
-			newmsg->sadb_msg_pid = msg0->sadb_msg_pid;
-
-			key_sendup(so, newmsg, len, target);
-			KFREE(newmsg);
-			newmsg = NULL;
+		/* map proto to satype */
+		if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
+#ifdef IPSEC_DEBUG
+			printf("key_dump: there was invalid proto in SAD.\n");
+#endif
+			return key_senderror(so, m, EINVAL);
 		}
-	);
 
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_any);
+		     stateidx++) {
+			state = saorder_state_any[stateidx];
+			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+				n = key_setdumpsa(sav, SADB_DUMP, satype,
+				    --cnt, mhp->msg->sadb_msg_pid);
+				if (!n)
+					return key_senderror(so, m, ENOBUFS);
+
+				key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
+			}
+		}
+	}
+
+	m_freem(m);
 	return 0;
 }
 
 /*
  * SADB_X_PROMISC processing
+ *
+ * m will always be freed.
  */
-static void
-key_promisc(mhp, so)
-	caddr_t *mhp;
+static int
+key_promisc(so, m, mhp)
 	struct socket *so;
+	struct mbuf *m;
+	const struct sadb_msghdr *mhp;
 {
-	struct sadb_msg *msg0;
 	int olen;
 
 	/* sanity check */
-	if (mhp == NULL || mhp[0] == NULL)
+	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_promisc: NULL pointer is passed.\n");
 
-	msg0 = (struct sadb_msg *)mhp[0];
-	olen = PFKEY_UNUNIT64(msg0->sadb_msg_len);
+	olen = PFKEY_UNUNIT64(mhp->msg->sadb_msg_len);
 
 	if (olen < sizeof(struct sadb_msg)) {
-		return;
+#if 1
+		return key_senderror(so, m, EINVAL);
+#else
+		m_freem(m);
+		return 0;
+#endif
 	} else if (olen == sizeof(struct sadb_msg)) {
 		/* enable/disable promisc mode */
 		struct keycb *kp;
-		int target = 0;
 
-		target = KEY_SENDUP_ONE;
-
-		if (so == NULL) {
-			return;
-		}
-		if ((kp = (struct keycb *)sotorawcb(so)) == NULL) {
-			msg0->sadb_msg_errno = EINVAL;
-			goto sendorig;
-		}
-		msg0->sadb_msg_errno = 0;
-		if (msg0->sadb_msg_satype == 1 || msg0->sadb_msg_satype == 0) {
-			kp->kp_promisc = msg0->sadb_msg_satype;
-		} else {
-			msg0->sadb_msg_errno = EINVAL;
-			goto sendorig;
+		if ((kp = (struct keycb *)sotorawcb(so)) == NULL)
+			return key_senderror(so, m, EINVAL);
+		mhp->msg->sadb_msg_errno = 0;
+		switch (mhp->msg->sadb_msg_satype) {
+		case 0:
+		case 1:
+			kp->kp_promisc = mhp->msg->sadb_msg_satype;
+			break;
+		default:
+			return key_senderror(so, m, EINVAL);
 		}
 
 		/* send the original message back to everyone */
-		msg0->sadb_msg_errno = 0;
-		target = KEY_SENDUP_ALL;
-sendorig:
-		key_sendup(so, msg0, PFKEY_UNUNIT64(msg0->sadb_msg_len), target);
+		mhp->msg->sadb_msg_errno = 0;
+		return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 	} else {
 		/* send packet as is */
-		struct sadb_msg *msg;
-		int len;
 
-		len = olen - sizeof(struct sadb_msg);
-		KMALLOC(msg, struct sadb_msg *, len);
-		if (msg == NULL) {
-			msg0->sadb_msg_errno = ENOBUFS;
-			key_sendup(so, msg0, PFKEY_UNUNIT64(msg0->sadb_msg_len),
-				KEY_SENDUP_ONE);	/*XXX*/
-		}
+		m_adj(m, PFKEY_ALIGN8(sizeof(struct sadb_msg)));
 
-		/* XXX if sadb_msg_seq is specified, send to specific pid */
-		key_sendup(so, msg, len, KEY_SENDUP_ALL);
-		KFREE(msg);
+		/* TODO: if sadb_msg_seq is specified, send to specific pid */
+		return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 	}
 }
 
-/*
- * send message to the socket.
- * OUT:
- *	0	: success
- *	others	: fail
- */
-static int
-key_sendall(msg, len)
-	struct sadb_msg *msg;
-	u_int len;
-{
-	struct secreg *req;
-	int error = 0;
-
-	/* sanity check */
-	if (msg == NULL)
-		panic("key_sendall: NULL pointer is passed.\n");
-
-	/* search table registerd socket to send a message. */
-	req = (struct secreg *)regtree[msg->sadb_msg_satype].head;
-	while (req != NULL) {
-		error = key_sendup(req->so, msg, len, KEY_SENDUP_ONE);
-		if (error != 0) {
-			if (error == ENOBUFS)
-				printf("key_sendall: No more memory.\n");
-			else {
-				printf("key_sendall: key_sendup returned %d\n",
-					error);
-			}
-			KFREE(msg);
-			return error;
-		}
-
-		req = req->next;
-	}
-
-	KFREE(msg);
-	return 0;
-}
+static int (*key_typesw[]) __P((struct socket *, struct mbuf *,
+		const struct sadb_msghdr *)) = {
+	NULL,		/* SADB_RESERVED */
+	key_getspi,	/* SADB_GETSPI */
+	key_update,	/* SADB_UPDATE */
+	key_add,	/* SADB_ADD */
+	key_delete,	/* SADB_DELETE */
+	key_get,	/* SADB_GET */
+	key_acquire2,	/* SADB_ACQUIRE */
+	key_register,	/* SADB_REGISTER */
+	NULL,		/* SADB_EXPIRE */
+	key_flush,	/* SADB_FLUSH */
+	key_dump,	/* SADB_DUMP */
+	key_promisc,	/* SADB_X_PROMISC */
+	NULL,		/* SADB_X_PCHANGE */
+	key_spdadd,	/* SADB_X_SPDUPDATE */
+	key_spdadd,	/* SADB_X_SPDADD */
+	key_spddelete,	/* SADB_X_SPDDELETE */
+	key_spdget,	/* SADB_X_SPDGET */
+	NULL,		/* SADB_X_SPDACQUIRE */
+	key_spddump,	/* SADB_X_SPDDUMP */
+	key_spdflush,	/* SADB_X_SPDFLUSH */
+	key_spdadd,	/* SADB_X_SPDSETIDX */
+	NULL,		/* SADB_X_SPDEXPIRE */
+	key_spddelete2,	/* SADB_X_SPDDELETE2 */
+};
 
 /*
  * parse sadb_msg buffer to process PFKEYv2,
@@ -6099,295 +6536,344 @@ key_sendall(msg, len)
  *    length for buffer to send to user process.
  */
 int
-key_parse(msgp, so, targetp)
-	struct sadb_msg **msgp;
+key_parse(m, so)
+	struct mbuf *m;
 	struct socket *so;
-	int *targetp;
 {
-	struct sadb_msg *msg = *msgp, *newmsg = NULL;
-	caddr_t mhp[SADB_EXT_MAX + 1];
+	struct sadb_msg *msg;
+	struct sadb_msghdr mh;
 	u_int orglen;
 	int error;
+	int target;
 
 	/* sanity check */
-	if (msg == NULL || so == NULL)
+	if (m == NULL || so == NULL)
 		panic("key_parse: NULL pointer is passed.\n");
 
+#if 0	/*kdebug_sadb assumes msg in linear buffer*/
 	KEYDEBUG(KEYDEBUG_KEY_DUMP,
 		printf("key_parse: passed sadb_msg\n");
 		kdebug_sadb(msg));
+#endif
 
+	if (m->m_len < sizeof(struct sadb_msg)) {
+		m = m_pullup(m, sizeof(struct sadb_msg));
+		if (!m)
+			return ENOBUFS;
+	}
+	msg = mtod(m, struct sadb_msg *);
 	orglen = PFKEY_UNUNIT64(msg->sadb_msg_len);
+	target = KEY_SENDUP_ONE;
 
-	if (targetp)
-		*targetp = KEY_SENDUP_ONE;
-
-	/* initialization for mhp */
-    {
-	int i;
-	for (i = 0; i < SADB_EXT_MAX + 1; i++)
-		mhp[i] = NULL;
-    }
-
-	/* check message and align. */
-	if ((msg->sadb_msg_errno = key_check(msg, mhp)) != 0)
-		return orglen;
-
-	switch (msg->sadb_msg_type) {
-	case SADB_GETSPI:
-		if ((newmsg = key_getspi(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		break;
-
-	case SADB_UPDATE:
-		if ((newmsg = key_update(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		break;
-
-	case SADB_ADD:
-		if ((newmsg = key_add(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		break;
-
-	case SADB_DELETE:
-		if ((newmsg = key_delete(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		break;
-
-	case SADB_GET:
-		if ((newmsg = key_get(mhp)) == NULL)
-			return orglen;
-		break;
-
-	case SADB_ACQUIRE:
-		if ((newmsg = key_acquire2(mhp)) == NULL)
-			return orglen;
-
-		if (newmsg == (struct sadb_msg *)~0) {
-			/*
-			 * It's not need to reply because of the message
-			 * that was reporting an error occured from the KMd.
-			 */
-			return 0;
-		}
-		break;
-
-	case SADB_REGISTER:
-		if ((newmsg = key_register(mhp, so)) == NULL)
-			return orglen;
-#if 1
-		if (targetp)
-			*targetp = KEY_SENDUP_REGISTERED;
-#else
-		/* send result to all registered sockets */
-		KFREE(msg);
-		key_sendall(newmsg, PFKEY_UNUNIT64(newmsg->sadb_msg_len));
-		return 0;
+	if ((m->m_flags & M_PKTHDR) == 0 ||
+	    m->m_pkthdr.len != m->m_pkthdr.len) {
+#ifdef IPSEC_DEBUG
+		printf("key_parse: invalid message length.\n");
 #endif
-		break;
-
-	case SADB_EXPIRE:
-		printf("key_parse: why is SADB_EXPIRE received ?\n");
-		msg->sadb_msg_errno = EINVAL;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		return orglen;
-
-	case SADB_FLUSH:
-		if ((newmsg = key_flush(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-		break;
-
-	case SADB_DUMP:
-		/* key_dump will call key_sendup() on her own */
-		error = key_dump(mhp, so, KEY_SENDUP_ONE);
-		if (error) {
-			msg->sadb_msg_errno = error;
-			return orglen;
-		} else
-			return 0;
-	        break;
-
-	case SADB_X_PROMISC:
-		/* everything is handled in key_promisc() */
-		key_promisc(mhp, so);
-		KFREE(msg);
-		return 0;	/*nothing to reply*/
-
-	case SADB_X_PCHANGE:
-		printf("key_parse: SADB_X_PCHANGE isn't supported.\n");
-		msg->sadb_msg_errno = EINVAL;
-		return orglen;
-#if 0
-		if (targetp)
-			*targetp = KEY_SENDUP_REGISTERED;
-#endif
-
-	case SADB_X_SPDADD:
-		if ((newmsg = key_spdadd(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-	        break;
-
-	case SADB_X_SPDDELETE:
-		if ((newmsg = key_spddelete(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-	        break;
-
-	case SADB_X_SPDDUMP:
-		/* key_spddump will call key_sendup() on her own */
-		error = key_spddump(mhp, so, KEY_SENDUP_ONE);
-		if (error) {
-			msg->sadb_msg_errno = error;
-			return orglen;
-		} else
-			return 0;
-	        break;
-
-
-	case SADB_X_SPDFLUSH:
-		if ((newmsg = key_spdflush(mhp)) == NULL)
-			return orglen;
-		if (targetp)
-			*targetp = KEY_SENDUP_ALL;
-	        break;
-
-	default:
-		msg->sadb_msg_errno = EOPNOTSUPP;
-		return orglen;
+		pfkeystat.out_invlen++;
+		error = EINVAL;
+		goto senderror;
 	}
 
-	/* switch from old sadb_msg to new one if success. */
-	KFREE(msg);
-	*msgp = newmsg;
-
-	return PFKEY_UNUNIT64((*msgp)->sadb_msg_len);
-}
-
-/*
- * check basic usage for sadb_msg,
- * and set the pointer to each header in this message buffer.
- * IN:	msg: pointer to message buffer.
- *	mhp: pointer to the buffer initialized like below:
- *
- *		caddr_t mhp[SADB_EXT_MAX + 1];
- *
- * OUT:	0 if success.
- *	other if error, return errno.
- *
- */
-static int
-key_check(msg, mhp)
-	struct sadb_msg *msg;
-	caddr_t *mhp;
-{
-	/* sanity check */
-	if (msg == NULL || mhp == NULL)
-		panic("key_check: NULL pointer is passed.\n");
-
-	/* initialize */
-    {
-	int i;
-	for (i = 0; i < SADB_EXT_MAX + 1; i++)
-		mhp[i] = NULL;
-    }
-
-	/* check version */
 	if (msg->sadb_msg_version != PF_KEY_V2) {
-		printf("key_check: PF_KEY version %u is too old.\n",
+#ifdef IPSEC_DEBUG
+		printf("key_parse: PF_KEY version %u is mismatched.\n",
 		    msg->sadb_msg_version);
-		return EINVAL;
+#endif
+		pfkeystat.out_invver++;
+		error = EINVAL;
+		goto senderror;
 	}
 
-	/* check type */
 	if (msg->sadb_msg_type > SADB_MAX) {
-		printf("key_check: invalid type %u is passed.\n",
+#ifdef IPSEC_DEBUG
+		printf("key_parse: invalid type %u is passed.\n",
 		    msg->sadb_msg_type);
-		return EINVAL;
+#endif
+		pfkeystat.out_invmsgtype++;
+		error = EINVAL;
+		goto senderror;
 	}
+
+	/* for old-fashioned code - should be nuked */
+	if (m->m_pkthdr.len > MCLBYTES) {
+		m_freem(m);
+		return ENOBUFS;
+	}
+	if (m->m_next) {
+		struct mbuf *n;
+
+		MGETHDR(n, M_DONTWAIT, MT_DATA);
+		if (n && m->m_pkthdr.len > MHLEN) {
+			MCLGET(n, M_DONTWAIT);
+			if ((n->m_flags & M_EXT) == 0) {
+				m_free(n);
+				n = NULL;
+			}
+		}
+		if (!n) {
+			m_freem(m);
+			return ENOBUFS;
+		}
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+		n->m_pkthdr.len = n->m_len = m->m_pkthdr.len;
+		n->m_next = NULL;
+		m_freem(m);
+		m = n;
+	}
+
+	/* align the mbuf chain so that extensions are in contiguous region. */
+	error = key_align(m, &mh);
+	if (error)
+		return error;
+
+	if (m->m_next) {	/*XXX*/
+		m_freem(m);
+		return ENOBUFS;
+	}
+
+	msg = mh.msg;
 
 	/* check SA type */
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_UNSPEC:
-		if (msg->sadb_msg_type != SADB_REGISTER
-		 && msg->sadb_msg_type != SADB_FLUSH
-		 && msg->sadb_msg_type != SADB_DUMP
-		 && msg->sadb_msg_type != SADB_X_PROMISC
-		 && msg->sadb_msg_type != SADB_X_SPDADD
-		 && msg->sadb_msg_type != SADB_X_SPDDELETE
-		 && msg->sadb_msg_type != SADB_X_SPDDUMP
-		 && msg->sadb_msg_type != SADB_X_SPDFLUSH) {
-			printf("key_check: type UNSPEC is invalid.\n");
-			return EINVAL;
+		switch (msg->sadb_msg_type) {
+		case SADB_GETSPI:
+		case SADB_UPDATE:
+		case SADB_ADD:
+		case SADB_DELETE:
+		case SADB_GET:
+		case SADB_ACQUIRE:
+		case SADB_EXPIRE:
+#ifdef IPSEC_DEBUG
+			printf("key_parse: must specify satype "
+				"when msg type=%u.\n",
+				msg->sadb_msg_type);
+#endif
+			pfkeystat.out_invsatype++;
+			error = EINVAL;
+			goto senderror;
 		}
 		break;
 	case SADB_SATYPE_AH:
 	case SADB_SATYPE_ESP:
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
+		switch (msg->sadb_msg_type) {
+		case SADB_X_SPDADD:
+		case SADB_X_SPDDELETE:
+		case SADB_X_SPDGET:
+		case SADB_X_SPDDUMP:
+		case SADB_X_SPDFLUSH:
+		case SADB_X_SPDSETIDX:
+		case SADB_X_SPDUPDATE:
+		case SADB_X_SPDDELETE2:
+#ifdef IPSEC_DEBUG
+			printf("key_parse: illegal satype=%u\n",
+			    msg->sadb_msg_type);
 #endif
+			pfkeystat.out_invsatype++;
+			error = EINVAL;
+			goto senderror;
+		}
 		break;
 	case SADB_SATYPE_RSVP:
 	case SADB_SATYPE_OSPFV2:
 	case SADB_SATYPE_RIPV2:
 	case SADB_SATYPE_MIP:
-		printf("key_check: type %u isn't supported.\n",
+#ifdef IPSEC_DEBUG
+		printf("key_parse: type %u isn't supported.\n",
 		    msg->sadb_msg_satype);
-		return EOPNOTSUPP;
-	case 1:
+#endif
+		pfkeystat.out_invsatype++;
+		error = EOPNOTSUPP;
+		goto senderror;
+	case 1:	/* XXX: What does it do? */
 		if (msg->sadb_msg_type == SADB_X_PROMISC)
 			break;
 		/*FALLTHROUGH*/
 	default:
-		printf("key_check: invalid type %u is passed.\n",
+#ifdef IPSEC_DEBUG
+		printf("key_parse: invalid type %u is passed.\n",
 		    msg->sadb_msg_satype);
-		return EINVAL;
+#endif
+		pfkeystat.out_invsatype++;
+		error = EINVAL;
+		goto senderror;
 	}
 
-	mhp[0] = (caddr_t)msg;
+	/* check field of upper layer protocol and address family */
+	if (mh.ext[SADB_EXT_ADDRESS_SRC] != NULL
+	 && mh.ext[SADB_EXT_ADDRESS_DST] != NULL) {
+		struct sadb_address *src0, *dst0;
+		u_int plen;
 
-    {
-	struct sadb_ext *ext;
-	int tlen, extlen;
+		src0 = (struct sadb_address *)(mh.ext[SADB_EXT_ADDRESS_SRC]);
+		dst0 = (struct sadb_address *)(mh.ext[SADB_EXT_ADDRESS_DST]);
 
-	tlen = PFKEY_UNUNIT64(msg->sadb_msg_len) - sizeof(struct sadb_msg);
-	ext = (struct sadb_ext *)((caddr_t)msg + sizeof(struct sadb_msg));
-
-	while (tlen > 0) {
-		/* duplicate check */
-		/* XXX Are there duplication either KEY_AUTH or KEY_ENCRYPT ?*/
-		if (mhp[ext->sadb_ext_type] != NULL) {
-			printf("key_check: duplicate ext_type %u is passed.\n",
-				ext->sadb_ext_type);
-			return EINVAL;
+		/* check upper layer protocol */
+		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
+#ifdef IPSEC_DEBUG
+			printf("key_parse: upper layer protocol mismatched.\n");
+#endif
+			pfkeystat.out_invaddr++;
+			error = EINVAL;
+			goto senderror;
 		}
+
+		/* check family */
+		if (PFKEY_ADDR_SADDR(src0)->sa_family !=
+		    PFKEY_ADDR_SADDR(dst0)->sa_family) {
+#ifdef IPSEC_DEBUG
+			printf("key_parse: address family mismatched.\n");
+#endif
+			pfkeystat.out_invaddr++;
+			error = EINVAL;
+			goto senderror;
+		}
+		if (PFKEY_ADDR_SADDR(src0)->sa_len !=
+		    PFKEY_ADDR_SADDR(dst0)->sa_len) {
+#ifdef IPSEC_DEBUG
+			printf("key_parse: address struct size mismatched.\n");
+#endif
+			pfkeystat.out_invaddr++;
+			error = EINVAL;
+			goto senderror;
+		}
+
+		switch (PFKEY_ADDR_SADDR(src0)->sa_family) {
+		case AF_INET:
+			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
+			    sizeof(struct sockaddr_in)) {
+				pfkeystat.out_invaddr++;
+				error = EINVAL;
+				goto senderror;
+			}
+			break;
+		case AF_INET6:
+			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
+			    sizeof(struct sockaddr_in6)) {
+				pfkeystat.out_invaddr++;
+				error = EINVAL;
+				goto senderror;
+			}
+			break;
+		default:
+#ifdef IPSEC_DEBUG
+			printf("key_parse: unsupported address family.\n");
+#endif
+			pfkeystat.out_invaddr++;
+			error = EAFNOSUPPORT;
+			goto senderror;
+		}
+
+		switch (PFKEY_ADDR_SADDR(src0)->sa_family) {
+		case AF_INET:
+			plen = sizeof(struct in_addr) << 3;
+			break;
+		case AF_INET6:
+			plen = sizeof(struct in6_addr) << 3;
+			break;
+		default:
+			plen = 0;	/*fool gcc*/
+			break;
+		}
+
+		/* check max prefix length */
+		if (src0->sadb_address_prefixlen > plen ||
+		    dst0->sadb_address_prefixlen > plen) {
+#ifdef IPSEC_DEBUG
+			printf("key_parse: illegal prefixlen.\n");
+#endif
+			pfkeystat.out_invaddr++;
+			error = EINVAL;
+			goto senderror;
+		}
+
+		/*
+		 * prefixlen == 0 is valid because there can be a case when
+		 * all addresses are matched.
+		 */
+	}
+
+	if (msg->sadb_msg_type >= sizeof(key_typesw)/sizeof(key_typesw[0]) ||
+	    key_typesw[msg->sadb_msg_type] == NULL) {
+		pfkeystat.out_invmsgtype++;
+		error = EINVAL;
+		goto senderror;
+	}
+
+	return (*key_typesw[msg->sadb_msg_type])(so, m, &mh);
+
+senderror:
+	msg->sadb_msg_errno = error;
+	return key_sendup_mbuf(so, m, target);
+}
+
+static int
+key_senderror(so, m, code)
+	struct socket *so;
+	struct mbuf *m;
+	int code;
+{
+	struct sadb_msg *msg;
+
+	if (m->m_len < sizeof(struct sadb_msg))
+		panic("invalid mbuf passed to key_senderror");
+
+	msg = mtod(m, struct sadb_msg *);
+	msg->sadb_msg_errno = code;
+	return key_sendup_mbuf(so, m, KEY_SENDUP_ONE);
+}
+
+/*
+ * set the pointer to each header into message buffer.
+ * m will be freed on error.
+ * XXX larger-than-MCLBYTES extension?
+ */
+static int
+key_align(m, mhp)
+	struct mbuf *m;
+	struct sadb_msghdr *mhp;
+{
+	struct mbuf *n;
+	struct sadb_ext *ext;
+	size_t off, end;
+	int extlen;
+	int toff;
+
+	/* sanity check */
+	if (m == NULL || mhp == NULL)
+		panic("key_align: NULL pointer is passed.\n");
+	if (m->m_len < sizeof(struct sadb_msg))
+		panic("invalid mbuf passed to key_align");
+
+	/* initialize */
+	bzero(mhp, sizeof(*mhp));
+
+	mhp->msg = mtod(m, struct sadb_msg *);
+	mhp->ext[0] = (struct sadb_ext *)mhp->msg;	/*XXX backward compat */
+
+	end = PFKEY_UNUNIT64(mhp->msg->sadb_msg_len);
+	extlen = end;	/*just in case extlen is not updated*/
+	for (off = sizeof(struct sadb_msg); off < end; off += extlen) {
+		n = m_pulldown(m, off, sizeof(struct sadb_ext), &toff);
+		if (!n) {
+			/* m is already freed */
+			return ENOBUFS;
+		}
+		ext = (struct sadb_ext *)(mtod(n, caddr_t) + toff);
 
 		/* set pointer */
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_SA:
-		case SADB_EXT_LIFETIME_CURRENT:
-		case SADB_EXT_LIFETIME_HARD:
-		case SADB_EXT_LIFETIME_SOFT:
 		case SADB_EXT_ADDRESS_SRC:
 		case SADB_EXT_ADDRESS_DST:
 		case SADB_EXT_ADDRESS_PROXY:
+		case SADB_EXT_LIFETIME_CURRENT:
+		case SADB_EXT_LIFETIME_HARD:
+		case SADB_EXT_LIFETIME_SOFT:
 		case SADB_EXT_KEY_AUTH:
-			/* must to be chek weak keys. */
 		case SADB_EXT_KEY_ENCRYPT:
-			/* must to be chek weak keys. */
 		case SADB_EXT_IDENTITY_SRC:
 		case SADB_EXT_IDENTITY_DST:
 		case SADB_EXT_SENSITIVITY:
@@ -6396,48 +6882,116 @@ key_check(msg, mhp)
 		case SADB_EXT_SUPPORTED_ENCRYPT:
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
-			mhp[ext->sadb_ext_type] = (caddr_t)ext;
+		case SADB_X_EXT_SA2:
+			/* duplicate check */
+			/*
+			 * XXX Are there duplication payloads of either
+			 * KEY_AUTH or KEY_ENCRYPT ?
+			 */
+			if (mhp->ext[ext->sadb_ext_type] != NULL) {
+#ifdef IPSEC_DEBUG
+				printf("key_align: duplicate ext_type %u "
+					"is passed.\n",
+					ext->sadb_ext_type);
+#endif
+				m_freem(m);
+				pfkeystat.out_dupext++;
+				return EINVAL;
+			}
 			break;
 		default:
-			printf("key_check: invalid ext_type %u is passed.\n", ext->sadb_ext_type);
+#ifdef IPSEC_DEBUG
+			printf("key_align: invalid ext_type %u is passed.\n",
+				ext->sadb_ext_type);
+#endif
+			m_freem(m);
+			pfkeystat.out_invexttype++;
 			return EINVAL;
 		}
 
 		extlen = PFKEY_UNUNIT64(ext->sadb_ext_len);
-		tlen -= extlen;
-		ext = (struct sadb_ext *)((caddr_t)ext + extlen);
+
+		if (key_validate_ext(ext, extlen)) {
+			m_freem(m);
+			pfkeystat.out_invlen++;
+			return EINVAL;
+		}
+
+		n = m_pulldown(m, off, extlen, &toff);
+		if (!n) {
+			/* m is already freed */
+			return ENOBUFS;
+		}
+		ext = (struct sadb_ext *)(mtod(n, caddr_t) + toff);
+
+		mhp->ext[ext->sadb_ext_type] = ext;
+		mhp->extoff[ext->sadb_ext_type] = off;
+		mhp->extlen[ext->sadb_ext_type] = extlen;
 	}
-    }
 
-	/* check field of upper layer protocol and address family */
-	if (mhp[SADB_EXT_ADDRESS_SRC] != NULL
-	 && mhp[SADB_EXT_ADDRESS_DST] != NULL) {
-		struct sadb_address *src0, *dst0;
-		struct sockaddr *src, *dst;
+	if (off != end) {
+		m_freem(m);
+		pfkeystat.out_invlen++;
+		return EINVAL;
+	}
 
-		src0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_SRC]);
-		dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
-		src = (struct sockaddr *)((caddr_t)src0 + sizeof(*src0));
-		dst = (struct sockaddr *)((caddr_t)dst0 + sizeof(*dst0));
+	return 0;
+}
 
-		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
-			printf("key_check: upper layer protocol mismatched.\n");
+static int
+key_validate_ext(ext, len)
+	const struct sadb_ext *ext;
+	int len;
+{
+	struct sockaddr *sa;
+	enum { NONE, ADDR } checktype = NONE;
+	int baselen;
+	const int sal = offsetof(struct sockaddr, sa_len) + sizeof(sa->sa_len);
+
+	if (len != PFKEY_UNUNIT64(ext->sadb_ext_len))
+		return EINVAL;
+
+	/* if it does not match minimum/maximum length, bail */
+	if (ext->sadb_ext_type >= sizeof(minsize) / sizeof(minsize[0]) ||
+	    ext->sadb_ext_type >= sizeof(maxsize) / sizeof(maxsize[0]))
+		return EINVAL;
+	if (!minsize[ext->sadb_ext_type] || len < minsize[ext->sadb_ext_type])
+		return EINVAL;
+	if (maxsize[ext->sadb_ext_type] && len > maxsize[ext->sadb_ext_type])
+		return EINVAL;
+
+	/* more checks based on sadb_ext_type XXX need more */
+	switch (ext->sadb_ext_type) {
+	case SADB_EXT_ADDRESS_SRC:
+	case SADB_EXT_ADDRESS_DST:
+	case SADB_EXT_ADDRESS_PROXY:
+		baselen = PFKEY_ALIGN8(sizeof(struct sadb_address));
+		checktype = ADDR;
+		break;
+	case SADB_EXT_IDENTITY_SRC:
+	case SADB_EXT_IDENTITY_DST:
+		if (((struct sadb_ident *)ext)->sadb_ident_type ==
+		    SADB_X_IDENTTYPE_ADDR) {
+			baselen = PFKEY_ALIGN8(sizeof(struct sadb_ident));
+			checktype = ADDR;
+		} else
+			checktype = NONE;
+		break;
+	default:
+		checktype = NONE;
+		break;
+	}
+
+	switch (checktype) {
+	case NONE:
+		break;
+	case ADDR:
+		sa = (struct sockaddr *)((caddr_t)ext + baselen);
+		if (len < baselen + sal)
 			return EINVAL;
-		}
-
-		if (src->sa_family != dst->sa_family) {
-			printf("key_check: address family mismatched.\n");
+		if (baselen + PFKEY_ALIGN8(sa->sa_len) != len)
 			return EINVAL;
-		}
-		if (src->sa_family != AF_INET && src->sa_family != AF_INET6) {
-			printf("key_check: invalid address family.\n");
-			return EINVAL;
-		}
-
-		/*
-		 * prefixlen == 0 is valid because there can be a case when
-		 * all addresses are matched.
-		 */
+		break;
 	}
 
 	return 0;
@@ -6450,36 +7004,36 @@ key_init()
 
 	bzero((caddr_t)&key_cb, sizeof(key_cb));
 
-	/* SAD */
-#ifdef RESTRICTED_DIR
-	for (i = 0; i < SADB_X_DIR_MAX; i++)
-		bzero(&saidxtree[i], sizeof(saidxtree[i]));
-#else
-	bzero(&saidxtree, sizeof(saidxtree));
-#endif
+	callout_init(&key_timehandler_ch);
 
-	/* SPD */
-#ifdef RESTRICTED_DIR
-	for (i = 0; i < SADB_X_DIR_MAX; i++)
-		bzero(&sptree[i], sizeof(saidxtree[i]));
-#else
-	bzero(&sptree, sizeof(saidxtree));
+	for (i = 0; i < IPSEC_DIR_MAX; i++) {
+		LIST_INIT(&sptree[i]);
+	}
+
+	LIST_INIT(&sahtree);
+
+	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
+		LIST_INIT(&regtree[i]);
+	}
+
+#ifndef IPSEC_NONBLOCK_ACQUIRE
+	LIST_INIT(&acqtree);
 #endif
+	LIST_INIT(&spacqtree);
 
 	/* system default */
+#ifdef INET
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
 	ip4_def_policy.refcnt++;	/*never reclaim this*/
+#endif
 #ifdef INET6
 	ip6_def_policy.policy = IPSEC_POLICY_NONE;
 	ip6_def_policy.refcnt++;	/*never reclaim this*/
 #endif
 
-	/* key register */
-	for (i = 0; i <= SADB_SATYPE_MAX; i++)
-		bzero(&regtree[i], sizeof(regtree[i]));
-
 #ifndef IPSEC_DEBUG2
-	timeout((void *)key_timehandler, (void *)0, 100);
+	callout_reset(&key_timehandler_ch, hz,
+	    (void *)key_timehandler, (void *)0);
 #endif /*IPSEC_DEBUG2*/
 
 	/* initialize key statistics */
@@ -6491,35 +7045,30 @@ key_init()
 }
 
 /*
+ * XXX: maybe This function is called after INBOUND IPsec processing.
+ *
  * Special check for tunnel-mode packets.
  * We must make some checks for consistency between inner and outer IP header.
  *
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(sa, family, src, dst)
-	struct secas *sa;
+key_checktunnelsanity(sav, family, src, dst)
+	struct secasvar *sav;
 	u_int family;
 	caddr_t src;
 	caddr_t dst;
 {
 	/* sanity check */
-	if (sa->saidx == NULL)
-		panic("sa->saidx == NULL in key_checktunnelsanity");
+	if (sav->sah == NULL)
+		panic("sav->sah == NULL at key_checktunnelsanity");
 
-	if (sa->saidx->idx.family == family
-	 && key_bbcmp(src, (caddr_t)&sa->saidx->idx.src, sa->saidx->idx.prefs)
-	 && key_bbcmp(dst, (caddr_t)&sa->saidx->idx.dst, sa->saidx->idx.prefd))
-		return 1;
+	/* XXX: check inner IP header */
 
-	return 0;
+	return 1;
 }
 
 #if 0
-#ifdef __FreeBSD__
-#define hostnamelen	strlen(hostname)
-#endif
-
 /*
  * Get FQDN for the host.
  * If the administrator configured hostname (by hostname(1)) without
@@ -6583,18 +7132,22 @@ key_getuserfqdn()
 
 /* record data transfer on SA, and update timestamps */
 void
-key_sa_recordxfer(sa, m)
-	struct secas *sa;
+key_sa_recordxfer(sav, m)
+	struct secasvar *sav;
 	struct mbuf *m;
 {
-	if (!sa)
-		panic("key_sa_recordxfer called with sa == NULL");
+	if (!sav)
+		panic("key_sa_recordxfer called with sav == NULL");
 	if (!m)
 		panic("key_sa_recordxfer called with m == NULL");
-	if (!sa->lft_c)
+	if (!sav->lft_c)
 		return;
 
-	sa->lft_c->sadb_lifetime_bytes += m->m_pkthdr.len;
+	/*
+	 * XXX Currently, there is a difference of bytes size
+	 * between inbound and outbound processing.
+	 */
+	sav->lft_c->sadb_lifetime_bytes += m->m_pkthdr.len;
 	/* to check bytes lifetime is done in key_timehandler(). */
 
 	/*
@@ -6602,7 +7155,7 @@ key_sa_recordxfer(sa, m)
 	 * sadb_lifetime_allocations.  We increment the variable
 	 * whenever {esp,ah}_{in,out}put is called.
 	 */
-	sa->lft_c->sadb_lifetime_allocations++;
+	sav->lft_c->sadb_lifetime_allocations++;
 	/* XXX check for expires? */
 
 	/*
@@ -6619,7 +7172,7 @@ key_sa_recordxfer(sa, m)
     {
 	struct timeval tv;
 	microtime(&tv);
-	sa->lft_c->sadb_lifetime_usetime = tv.tv_sec;
+	sav->lft_c->sadb_lifetime_usetime = tv.tv_sec;
 	/* XXX check for expires? */
     }
 
@@ -6631,89 +7184,89 @@ void
 key_sa_routechange(dst)
 	struct sockaddr *dst;
 {
-	struct secasindex *saidx;
+	struct secashead *sah;
 	struct route *ro;
-#ifdef RESTRICTED_DIR
-	u_int diridx, dir;
-#endif
 
-#ifdef RESTRICTED_DIR
-	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_output); diridx++) {
-
-		dir = saorder_dir_output[diridx];
-		for (saidx = (struct secasindex *)saidxtree[dir].head;
-		     saidx != NULL;
-		     saidx = saidx->next) {
-
-			ro = &saidx->sa_route;
-			if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
-			 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-				RTFREE(ro->ro_rt);
-				ro->ro_rt = (struct rtentry *)NULL;
-			}
-		}
-	}
-#else
-	for (saidx = (struct secasindex *)saidxtree.head;
-	     saidx != NULL;
-	     saidx = saidx->next) {
-
-		ro = &saidx->sa_route;
+	LIST_FOREACH(sah, &sahtree, chain) {
+		ro = &sah->sa_route;
 		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
 		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)NULL;
 		}
 	}
-#endif
 
 	return;
 }
 
 static void
-key_sa_chgstate(sa, state)
-	struct secas *sa;
-	u_int state;
+key_sa_chgstate(sav, state)
+	struct secasvar *sav;
+	u_int8_t state;
 {
-	if (sa == NULL)
-		panic("key_sa_chgstate called with sa == NULL");
+	if (sav == NULL)
+		panic("key_sa_chgstate called with sav == NULL");
 
-	if (sa->state == state)
+	if (sav->state == state)
 		return;
 
-	key_remnode(sa);
+	if (__LIST_CHAINED(sav))
+		LIST_REMOVE(sav, chain);
 
-	sa->state = state;
-	key_insnode(&sa->saidx->satree[state], NULL, sa);
+	sav->state = state;
+	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
 }
 
-#ifdef __bsdi__
-#include <sys/user.h>
-#include <sys/sysctl.h>
-
-int *key_sysvars[] = KEYCTL_VARS;
-
-int
-key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+void
+key_sa_stir_iv(sav)
+	struct secasvar *sav;
 {
-	if (name[0] >= KEYCTL_MAXID)
-		return EOPNOTSUPP;
-	switch (name[0]) {
-	default:
-		return sysctl_int_arr(key_sysvars, name, namelen,
-			oldp, oldlenp, newp, newlen);
-	}
-}
-#endif /*__bsdi__*/
 
-#ifdef __NetBSD__
-#include <vm/vm.h>
+	if (!sav->iv)
+		panic("key_sa_stir_iv called with sav == NULL");
+	key_randomfill(sav->iv, sav->ivlen);
+}
+
+/* XXX too much? */
+static struct mbuf *
+key_alloc_mbuf(l)
+	int l;
+{
+	struct mbuf *m = NULL, *n;
+	int len, t;
+
+	len = l;
+	while (len > 0) {
+		MGET(n, M_DONTWAIT, MT_DATA);
+		if (n && len > MLEN)
+			MCLGET(n, M_DONTWAIT);
+		if (!n) {
+			m_freem(m);
+			return NULL;
+		}
+
+		n->m_next = NULL;
+		n->m_len = 0;
+		n->m_len = M_TRAILINGSPACE(n);
+		/* use the bottom of mbuf, hoping we can prepend afterwards */
+		if (n->m_len > len) {
+			t = (n->m_len - len) & ~(sizeof(long) - 1);
+			n->m_data += t;
+			n->m_len = len;
+		}
+
+		len -= n->m_len;
+
+		if (m)
+			m_cat(m, n);
+		else
+			m = n;
+	}
+
+	return m;
+}
+
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 static int *key_sysvars[] = KEYCTL_VARS;
@@ -6737,4 +7290,3 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			key_sysvars[name[0]]);
 	}
 }
-#endif /*__NetBSD__*/

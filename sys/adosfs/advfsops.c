@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.38.2.1 1999/10/20 22:00:55 thorpej Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.38.2.2 2000/11/20 18:08:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,6 +53,7 @@
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
+void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct proc *));
 int adosfs_start __P((struct mount *, int, struct proc *));
@@ -235,7 +236,6 @@ adosfs_mountfs(devvp, mp, p)
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_flag |= MNT_LOCAL;
-	devvp->v_specflags |= SI_MOUNTEDON;
 
 	/*
 	 * init anode table.
@@ -301,7 +301,7 @@ adosfs_unmount(mp, mntflags, p)
 		return (error);
 	amp = VFSTOADOSFS(mp);
 	if (amp->devvp->v_type != VBAD)
-		amp->devvp->v_specflags &= ~SI_MOUNTEDON;
+		amp->devvp->v_specmountpoint = NULL;
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vput(amp->devvp);
@@ -795,6 +795,12 @@ adosfs_init()
 	    M_ANODE);
 }
 
+void
+adosfs_done()
+{
+	pool_destroy(&adosfs_node_pool);
+}
+
 int
 adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -832,6 +838,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
+	adosfs_done,
 	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	adosfs_checkexp,

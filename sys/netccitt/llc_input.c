@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.7.12.1 2000/11/20 18:10:15 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -76,10 +76,10 @@ struct ifqueue llcintrq;
 void
 llcintr()
 {
-	register struct mbuf *m;
-	register int i;
-	register int frame_kind;
-	register u_char cmdrsp;
+	struct mbuf *m;
+	int i;
+	int frame_kind;
+	u_char cmdrsp;
 	struct llc_linkcb *linkp;
 	struct npaidbentry *sapinfo = NULL;
 	struct sdl_hdr *sdlhdr;
@@ -383,7 +383,7 @@ llc_ctlinput(prc, addr, info)
 	struct rtentry *nlrt;
 	struct rtentry *llrt = NULL;
 	struct llc_linkcb *linkp = NULL;
-	register int i;
+	int i;
 
 	/* info must point to something valid at all times */
 	if (info == 0)
@@ -392,9 +392,11 @@ llc_ctlinput(prc, addr, info)
 	if (prc == PRC_IFUP || prc == PRC_IFDOWN) {
 		/* we use either this set ... */
 		ifa = ifa_ifwithaddr(addr);
-		ifp = ifa ? ifa->ifa_ifp : 0;
-		if (ifp == 0)
-			return 0;
+		if (ifa == NULL)
+			return (0);
+		ifp = ifa->ifa_ifp;
+		if (ifp == NULL)
+			return (0);
 
 		sap = ctlinfo->dlcti_lsap;
 		config = ctlinfo->dlcti_cfg;
@@ -420,9 +422,9 @@ llc_ctlinput(prc, addr, info)
 		return 0;
 
 	case PRC_IFDOWN: {
-		register struct llc_linkcb *linkp;
-		register struct llc_linkcb *nlinkp;
-		register int i;
+		struct llc_linkcb *linkp;
+		struct llc_linkcb *nlinkp;
+		int i;
 
 		/*
 		 * All links are accessible over the doubly linked list llccb_q

@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.12 1999/09/20 11:58:15 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.12.2.1 2000/11/20 18:09:38 bouyer Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -269,7 +269,7 @@ get_volume(f, vn)
 		printf("\nPlease ");
 		if (havevolume >= 0)
 			printf("remove disk %d, ", havevolume + 1);
-		printf("insert disk %d, and type return...",
+		printf("insert disk %d, and press return...",
 			needvolume + 1);
 		getchar();
 		printf("\n");

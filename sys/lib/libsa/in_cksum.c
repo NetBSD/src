@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4.8.1 2000/11/20 18:09:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -52,6 +52,8 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
+#include <machine/endian.h>
+
 #include "stand.h"
 #include "net.h"
 
@@ -63,11 +65,11 @@
  */
 int
 in_cksum(p, len)
-	register void *p;
-	register int len;
+	void *p;
+	int len;
 {
-	register int sum = 0, oddbyte = 0, v = 0;
-	register u_char *cp = p;
+	int sum = 0, oddbyte = 0, v = 0;
+	u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
 	while (len > 0) {
@@ -82,12 +84,21 @@ in_cksum(p, len)
 			}
 		} else {
 			while ((len -= 2) >= 0) {
+#if BYTE_ORDER == BIG_ENDIAN
 				sum += *cp++ << 8;
 				sum += *cp++;
+#else
+				sum += *cp++;
+				sum += *cp++ << 8;
+#endif
 			}
 		}
 		if ((oddbyte = len & 1) != 0)
+#if BYTE_ORDER == BIG_ENDIAN
 			v = *cp << 8;
+#else
+			v = *cp;
+#endif
 	}
 	if (oddbyte)
 		sum += v;
