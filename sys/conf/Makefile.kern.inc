@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.4 2001/11/23 05:18:59 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.5 2001/11/27 23:28:42 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -132,10 +132,10 @@ SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 SYSTEM_LD_TAIL?=	@${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
-LINKTEXT?=	-Ttext ${TEXTADDR}
-LINKDATA?=	${DATAADDR:D-Tdata ${DATAADDR}}
+LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
+LINKDATA?=	${DATAADDR:C/.+/-Tdata &/}
 ENTRYPOINT?=	start
-LINKENTRY?=	-e ${ENTRYPOINT}
+LINKENTRY?=	${ENTRYPOINT:C:/.+/-e &/}
 LINKFLAGS?=	${LINKFORMAT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
@@ -155,13 +155,16 @@ LINKFLAGS+=	${LINKFLAGS_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
+SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
+
 ##
 ## (6) port independent targets and dependencies: assym.h, newvers
 ##
 .if !target(assym.h)
-assym.h: $S/kern/genassym.sh ${GENASSYM}
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${GENASSYM} > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
+	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 .endif
 
@@ -213,8 +216,8 @@ MKDEP_CFLAGS?=	${CFLAGS}
 	${MKDEP} ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
 	${MKDEP} -a ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${GENASSYM}
+	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
+	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 .endif
