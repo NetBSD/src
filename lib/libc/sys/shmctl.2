@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.3 1997/03/27 08:20:39 mikel Exp $	
+.\"	$NetBSD: shmctl.2,v 1.4 1997/11/27 07:37:21 mikel Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -168,7 +168,7 @@ An attempt is made to increase the value of
 .Va shm_qbytes
 through IPC_SET
 but the caller is not the super-user.
-.It Bq Er EACCESS
+.It Bq Er EACCES
 The command is IPC_STAT
 and the caller has no read permission for this shared memory segment.
 .It Bq Er EINVAL
