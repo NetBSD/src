@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.2 2003/04/21 21:49:31 fvdl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.3 2003/04/21 22:00:44 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -67,7 +67,6 @@ char *ahd_chip_names[] =
 	"aic7902",
 	"aic7901A"
 };
-static const u_int num_chip_names = NUM_ELEMENTS(ahd_chip_names);
 
 /*
  * Hardware error codes.
