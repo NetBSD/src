@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.13 2002/04/13 10:53:00 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.14 2002/04/14 21:50:50 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.13 2002/04/13 10:53:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.14 2002/04/14 21:50:50 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.13 2002/04/13 10:53:00 manu Exp $"
 #include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
 extern const int native_to_svr4_signo[];
@@ -181,7 +182,6 @@ irix_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	struct proc *p = curproc;
-	void *fp;
 	void *sp;
 	struct frame *f;
 	int onstack;
@@ -226,41 +226,16 @@ irix_sendsig(catcher, sig, mask, code)
 	else
 		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, p);
 	
-	sf.isf_signo = native_to_svr4_signo[sig];
-
 	/*
-	 * XXX On, IRIX, the sigframe holds a pointer to 
-	 * errno in userspace. This is used by the signal
-	 * trampoline. No idea how to emulate this for now...
+	 * Compute the new stack address after copying sigframe
 	 */
-	/* sf.isf_uep = NULL; */
-	/* sf.isf_errno = 0 */
-
-	/*
-	 * Compute the new stack address after copying sigframe (hold by sp),
-	 * and the address of the sigcontext/ucontext (hold by fp)
-	 */
-	sp = (void *)((unsigned long)sp - sizeof(sf));
+	sp = (void *)((unsigned long)sp - sizeof(sf.isf_ctx));
 	sp = (void *)((unsigned long)sp & ~0xfUL); /* 16 bytes alignement */
-	fp = (void *)((unsigned long)sp + sizeof(sf) - sizeof(sf.isf_ctx));
-
-	
-	/* 
-	 * If SA_SIGINFO is used, then ucp is used, and scp = NULL, 
-	 * if it is not used, then scp is used, and ucp = scp
-	 */
-	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
-		sf.isf_ucp = (struct irix_ucontext *)fp;
-		sf.isf_scp = NULL;
-	} else {
-		sf.isf_ucp = (struct irix_ucontext *)fp;
-		sf.isf_scp = (struct irix_sigcontext *)fp;
-	}
 
 	/*
 	 * Install the sigframe onto the stack
 	 */
-	error = copyout(&sf, sp, sizeof(sf));
+	error = copyout(&sf.isf_ctx, sp, sizeof(sf.isf_ctx));
 	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -274,24 +249,37 @@ irix_sendsig(catcher, sig, mask, code)
 	}
 
 	/* 
-	 * Set up signal handler arguments. 
+	 * Set up signal trampoline arguments. 
 	 */
 	f->f_regs[A0] = native_to_svr4_signo[sig];	/* signo/signo */
 	f->f_regs[A1] = 0;			/* code/siginfo */
-	f->f_regs[A2] = (unsigned long)fp;	/* sigcontext/ucontext */
+	f->f_regs[A2] = (unsigned long)sp;	/* sigcontext/ucontext */
+	f->f_regs[A3] = (unsigned long)catcher; /* signal handler address */
 
+	/* 
+	 * When siginfo is selected, the higher bit of A0 is set
+	 * This is how the signal trampoline is able to discover if
+	 * A2 points to a struct irix_sigcontext or struct irix_ucontext.
+	 */
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) 
+		f->f_regs[A0] |= 0x80000000;
+
+	/*
+	 * Set up the new stack pointer
+	 */
+	f->f_regs[SP] = (unsigned long)sp;
 #ifdef DEBUG_IRIX
-	printf("sigcontext is at %p, stack pointer at %p\n", fp, sp);
+	printf("stack pointer at %p\n", sp);
 #endif /* DEBUG_IRIX */
 
 	/* 
-	 * Set up the registers to return to sigcode. 
+	 * Set up the registers to jump to the signal trampoline 
+	 * on return to userland.
+	 * see irix_sys_sigaction for details about how we get 
+	 * the signal trampoline address.
 	 */
-	f->f_regs[RA] = (unsigned long)p->p_sigctx.ps_sigcode;
-	f->f_regs[SP] = (unsigned long)sp;
-	f->f_regs[T9] = (unsigned long)catcher;
-	f->f_regs[A3] = (unsigned long)catcher;
-	f->f_regs[PC] = (unsigned long)catcher;
+	f->f_regs[PC] = (unsigned long)
+	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp);
 
 	/* 
 	 * Remember that we're now on the signal stack. 
@@ -373,7 +361,7 @@ irix_set_ucontext(ucp, mask, code, p)
 #endif
 	f = (struct frame *)p->p_md.md_regs;
 	/*
-	 * Build stack frame for signal trampoline.
+	 * Save general purpose registers
 	 */
 	native_to_irix_sigset(mask, &ucp->iuc_sigmask);
 	memcpy(&ucp->iuc_mcontext.svr4___gregs, 
@@ -382,8 +370,6 @@ irix_set_ucontext(ucp, mask, code, p)
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDLO] = f->f_regs[MULLO];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDHI] = f->f_regs[MULHI];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_EPC] = f->f_regs[PC];
-
-	ucp->iuc_flags = IRIX_UC_SIGMASK | IRIX_UC_MCONTEXT;
 
 	/* 
 	 * Save the floating-pointstate, if necessary, then copy it. 
@@ -404,7 +390,27 @@ irix_set_ucontext(ucp, mask, code, p)
 	    &p->p_addr->u_pcb.pcb_fpregs, 
 	    sizeof(ucp->iuc_mcontext.svr4___fpregs));
 #endif 
-	/* XXX Save signal stack */
+	/* 
+	 * Save signal stack 
+	 */
+	ucp->iuc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
+	ucp->iuc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+
+	if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+		ucp->iuc_stack.ss_flags |= IRIX_SS_ONSTACK;
+	else
+		ucp->iuc_stack.ss_flags &= ~IRIX_SS_ONSTACK;
+
+	if (p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE)
+		ucp->iuc_stack.ss_flags |= IRIX_SS_DISABLE;
+	else
+		ucp->iuc_stack.ss_flags &= ~IRIX_SS_DISABLE;
+
+	/*
+	 * Used fields in irix_ucontext: all
+	 */
+	ucp->iuc_flags = IRIX_UC_ALL;
+
 	return;
 }
 
@@ -503,9 +509,27 @@ irix_get_ucontext(ucp, p)
 #endif
 	}
 
-	if (ucp->iuc_flags & IRIX_UC_STACK)
-		; /* XXX Restore signal stack. */
+	/*
+	 * Restore stack 
+	 */
+	if (ucp->iuc_flags & IRIX_UC_STACK) {
+		p->p_sigctx.ps_sigstk.ss_sp = ucp->iuc_stack.ss_sp;
+		p->p_sigctx.ps_sigstk.ss_size = ucp->iuc_stack.ss_size;
 
+		if (ucp->iuc_stack.ss_flags & IRIX_SS_ONSTACK)
+			p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		else
+			p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+		if (ucp->iuc_stack.ss_flags & IRIX_SS_DISABLE)
+			p->p_sigctx.ps_sigstk.ss_flags |= IRIX_SS_DISABLE;
+		else
+			p->p_sigctx.ps_sigstk.ss_flags &= ~IRIX_SS_DISABLE;
+	}
+
+	/*
+	 * Restore signal mask
+	 */
 	if (ucp->iuc_flags & IRIX_UC_SIGMASK) {
 		/* Restore signal mask. */
 		irix_to_native_sigset(&ucp->iuc_sigmask, &mask);
@@ -895,4 +919,68 @@ irix_sys_sigprocmask(p, v, retval)
 		SCARG(&cup, how) = SVR4_SIG_SETMASK;
 	}
 	return svr4_sys_sigprocmask(p, &cup, retval);
+}
+
+int
+irix_sys_sigaction(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_sigaction_args /* {
+		syscallarg(int) signum;
+		syscallarg(const struct svr4_sigaction *) nsa;
+		syscallarg(struct svr4_sigaction *) osa;
+		syscallarg(void *) sigtramp;
+	} */ *uap = v;
+	struct svr4_sys_sigaction_args cup;
+	void *sigtramp;
+
+	/* 
+	 * On IRIX, the sigaction() system call has a fourth argument, which 
+	 * is a pointer to the signal trampoline code. The kernel does not
+	 * seems to provide a signal trampoline, the user process has to 
+	 * embed it. Of course, the sigaction() stub in libc only has three
+	 * argument. The fourth argument to the system call is filled by the 
+	 * libc. 
+	 *
+	 * The signal trampoline does the following job:
+	 *   - holds extra bytes on the stack (48 on IRIX 6, 24 on IRIX 5)
+	 *     for the signal frame. See struct irix_sigframe in irix_signal.h
+	 *     for the details of the signal frame fields for IRIX 6.
+	 *   - checks if the higher bit of a0 is set (the kernel sets this
+	 *     when SA_SIGINFO is set)
+	 *   - if so, stores in a2 sf.isf_ucp, and NULL in sf.isf_scp
+	 *     SA_SIGACTION is set, we are using a struct irix_ucontext in a2
+	 *   - if not, stores a2 in sf.isf_scp. Here SA_SIGACTION is clear
+	 *     and we are using a struct irix_sigcontext in a2.
+	 *   - finds the address of errno, and stores it in sf.isf_uep (IRIX 6
+	 *     only). This is done by looking up the Global Offset Table and
+	 *     assuming that the errnoaddr symbol is at a fixed offset from
+	 *     the signal trampoline. 
+	 *   - invoke the signal handler
+	 *   - sets errno using sf.isf_uep and sf.isf_errno (IRIX 6 only)
+	 *   - calls sigreturn(sf.isf_scp, sf.isf_ucp, sf.isf_signo) on IRIX 6
+	 *     and sigreturn(sf.isf_scp, sf.isf_ucp) on IRIX 5.  Note that if
+	 *     SA_SIGINFO was set, then the higher bit of sf.isf_signo is 
+	 *     still set.
+	 * 
+	 * We cannot handle per-sigaction signal trampoline. The signal 
+	 * trampoline is hence saved as per-process, in the p_emuldata
+	 * field of struct proc.
+	 */
+	sigtramp = ((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp;
+
+	if (sigtramp != NULL && sigtramp != SCARG(uap, sigtramp))
+		printf("Warning: unsupported per-sigaction sigtramp\n");
+
+	if (sigtramp == NULL)
+		((struct irix_emuldata *)
+		    (p->p_emuldata))->ied_sigtramp = SCARG(uap, sigtramp);
+
+	SCARG(&cup, signum) = SCARG(uap, signum);
+	SCARG(&cup, nsa) = SCARG(uap, nsa);
+	SCARG(&cup, osa) = SCARG(uap, osa);
+
+	return svr4_sys_sigaction(p, &cup, retval);
 }

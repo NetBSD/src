@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.9 2002/04/13 10:53:00 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.10 2002/04/14 21:50:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -158,6 +158,11 @@ typedef struct irix_irix5_siginfo {
 #define isi_addr	__data.__fault.__addr;
 #define isi_trap
 
+/* 
+ * This is the signal frame, as seen by the signal handler. The
+ * kernel only sets up isf_ctx, the signal trampoline does the
+ * other fields. 
+ */
 struct irix_sigframe {
 	int isf_pad1[7];
 	int *isf_uep;	/* Pointer to errno in userspace */
