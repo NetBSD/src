@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.9 2001/04/14 22:53:34 kleink Exp $
+# $NetBSD: ad.sh3,v 1.10 2001/04/15 15:33:08 kleink Exp $
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
 ./usr/include/sh3/aout_machdep.h	comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/sh3/ieee.h	comp-c-include
 ./usr/include/sh3/ieeefp.h	comp-c-include
 ./usr/include/sh3/int_const.h	comp-c-include
+./usr/include/sh3/int_limits.h	comp-c-include
 ./usr/include/sh3/int_mwgwtypes.h	comp-c-include
 ./usr/include/sh3/int_types.h	comp-c-include
 ./usr/include/sh3/intcreg.h	comp-c-include

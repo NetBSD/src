@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.43 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.mac68k,v 1.44 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/mac68k	comp-c-include
 ./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/mac68k/ieee.h	comp-c-include
 ./usr/include/mac68k/ieeefp.h	comp-c-include
 ./usr/include/mac68k/int_const.h	comp-c-include
+./usr/include/mac68k/int_limits.h	comp-c-include
 ./usr/include/mac68k/int_mwgwtypes.h	comp-c-include
 ./usr/include/mac68k/int_types.h	comp-c-include
 ./usr/include/mac68k/intr.h	comp-c-include
