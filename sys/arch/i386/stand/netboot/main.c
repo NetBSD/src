@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2001/06/01 23:26:32 jdolecek Exp $	 */
+/*	$NetBSD: main.c,v 1.9 2001/06/27 22:58:32 soren Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -54,7 +54,7 @@ void	command_help __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 
-struct bootblk_command commands[] = {
+const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "quit",	command_quit },
