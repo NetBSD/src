@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/12 12:06:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/03/16 08:26:49 jdolecek Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/miscfs/union ${.CURDIR}/../..
+.PATH:	$S/fs/union ${.CURDIR}/../..
 
 KMOD=	union
 
