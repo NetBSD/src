@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.574 2003/09/13 12:13:29 jdolecek Exp $
+$NetBSD: pcidevs,v 1.575 2003/09/15 19:50:45 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2503,7 +2503,7 @@ product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8237_EHCI	0x3104	VT8237 EHCI USB Controller
 product VIATECH VT6105		0x3106	VT6105 (Rhine III) 10/100 Ethernet
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
-product VIATECH VT8237_RAID	0x3149	VT8237 Integrated RAID Controller
+product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
