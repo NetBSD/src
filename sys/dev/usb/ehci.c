@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.74 2004/10/21 11:18:21 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.75 2004/10/21 16:18:42 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  *    Interrupt transfers are not difficult, it's just not done. 
  *
  * 3) The meaty part to implement is the support for USB 2.0 hubs.
- *    They are quite compolicated since the need to be able to do
+ *    They are quite complicated since the need to be able to do
  *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
  *    So the hub driver needs to handle and schedule these things, to
  *    assign place in frame where different devices get to go. See chapter
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.74 2004/10/21 11:18:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.75 2004/10/21 16:18:42 xtraeme Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
