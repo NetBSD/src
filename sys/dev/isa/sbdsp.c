@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.45.2.3 1997/05/24 20:12:38 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.45.2.4 1997/06/01 20:51:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -118,12 +118,12 @@ struct {
 #define SB_TC_TO_RATE(tc) (1000000 / (256 - (tc)))
 
 struct sbmode {
-	short	version;
+	short	model;
 	u_char	channels;
 	u_char	precision;
 	u_short	lowrate, highrate;
 	u_char	cmd;
-	short	cmdchan;
+	u_char	cmdchan;
 };
 static struct sbmode sbpmodes[] = {
  { SB_1,    1,  8,  4000, 22727, SB_DSP_WDMA      },
@@ -133,6 +133,7 @@ static struct sbmode sbpmodes[] = {
  { SB_PRO,  1,  8,  4000, 22727, SB_DSP_WDMA_LOOP },
  { SB_PRO,  1,  8, 22727, 45454, SB_DSP_HS_OUTPUT },
  { SB_PRO,  2,  8, 11025, 22727, SB_DSP_HS_OUTPUT },
+ /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
  { SB_JAZZ, 1,  8,  4000, 22727, SB_DSP_WDMA_LOOP, SB_DSP_RECORD_MONO },
  { SB_JAZZ, 1,  8, 22727, 45454, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_MONO },
  { SB_JAZZ, 2,  8, 11025, 22727, SB_DSP_HS_OUTPUT, SB_DSP_RECORD_STEREO },
@@ -420,7 +421,7 @@ sbdsp_query_encoding(addr, fp)
 	struct sbdsp_softc *sc = addr;
 	int emul;
 
-	emul = sc->sc_model != SB_16 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
+	emul = ISSB16CLASS(sc) ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 
 	switch (fp->index) {
 	case 0:
@@ -436,35 +437,41 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 2:
+		strcpy(fp->name, AudioEalaw);
+		fp->encoding = AUDIO_ENCODING_ALAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		return 0;
+	case 3:
 		strcpy(fp->name, AudioElinear);
 		fp->encoding = AUDIO_ENCODING_LINEAR;
 		fp->precision = 8;
 		fp->flags = emul;
 		return 0;
         }
-        if (sc->sc_model != SB_16 && sc->sc_model != SB_JAZZ)
+        if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
 		return EINVAL;
 
         switch(fp->index) {
-        case 3:
+        case 4:
 		strcpy(fp->name, AudioElinear_le);
 		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		return 0;
-	case 4:
+	case 5:
 		strcpy(fp->name, AudioEulinear_le);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = emul;
 		return 0;
-	case 5:
+	case 6:
 		strcpy(fp->name, AudioElinear_be);
 		fp->encoding = AUDIO_ENCODING_LINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
-	case 6:
+	case 7:
 		strcpy(fp->name, AudioEulinear_be);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
@@ -488,19 +495,19 @@ sbdsp_set_params(addr, mode, p, q)
 	void (*swcode) __P((void *, u_char *buf, int cnt));
 
 	for(m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes; 
-	    m->version != -1; m++) {
-		if (sc->sc_model == m->version &&
+	    m->model != -1; m++) {
+		if (sc->sc_model == m->model &&
 		    p->channels == m->channels &&
 		    p->precision == m->precision &&
 		    p->sample_rate >= m->lowrate && 
 		    p->sample_rate < m->highrate)
 			break;
 	}
-	if (m->version == -1)
+	if (m->model == -1)
 		return EINVAL;
 	rate = p->sample_rate;
 	swcode = 0;
-	if (m->version == SB_16) {
+	if (m->model == SB_16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_BE:
 			if (p->precision == 16)
@@ -521,12 +528,17 @@ sbdsp_set_params(addr, mode, p, q)
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
 			bmode = 0;
 			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
+			bmode = 0;
+			break;
 		default:
 			return EINVAL;
 		}
 		if (p->channels == 2)
 			bmode |= 0x20;
-	} else if (m->version == SB_JAZZ && m->precision == 16) {
+	} else if (m->model == SB_JAZZ && m->precision == 16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_LE:
 			break;
@@ -544,9 +556,15 @@ sbdsp_set_params(addr, mode, p, q)
 			swcode = mode == AUMODE_PLAY ? 
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
 			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
+			break;
 		default:
 			return EINVAL;
 		}
+		tc = SB_RATE_TO_TC(p->sample_rate * p->channels);
+		p->sample_rate = SB_TC_TO_RATE(tc) / p->channels;
 	} else {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_BE:
@@ -559,6 +577,10 @@ sbdsp_set_params(addr, mode, p, q)
 		case AUDIO_ENCODING_ULAW:
 			swcode = mode == AUMODE_PLAY ? 
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
 			break;
 		default:
 			return EINVAL;
@@ -592,7 +614,7 @@ sbdsp_set_params(addr, mode, p, q)
 	 */
 	sc->sc_dmadir = SB_DMA_NONE;
 
-	DPRINTF(("set_params: version=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p\n", 
+	DPRINTF(("set_params: model=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p\n", 
 		 sc->sc_model, p->sample_rate, p->precision, p->channels,
 		 p->encoding, tc, m->cmd, bmode, m->cmdchan, swcode));
 
@@ -1163,12 +1185,18 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = loop ? (NBPG/cc)*cc : cc;
 	sc->dmachan = sc->sc_imodep->precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
+#ifdef AUDIO_DEBUG
+	if (sbdspdebug > 1)
+		Dprintf("sbdsp_dma_input: dmastart %x %p %d %d\n", 
+			sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+#endif
 	isa_dmastart(sc->sc_isa, sc->dmachan, sc->dmaaddr,
 	    sc->dmacnt, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
-	if (sc->sc_imodep->precision == 16)
+	if ((sc->sc_model == SB_JAZZ && sc->dmachan > 3) ||
+	    (sc->sc_model != SB_JAZZ && sc->sc_omodep->precision == 16))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
@@ -1182,15 +1210,17 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		}
 	} else {
 		if (loop) {
+			DPRINTF(("sbdsp_dma_input: set blocksize=%d\n", cc));
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
 				DPRINTF(("sbdsp_dma_input: SB2 DMA start failed\n"));
 				goto giveup;
 			}
-			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0)
+			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0) {
 				DPRINTF(("sbdsp_dma_input: SB2 DMA restart failed\n"));
-			goto giveup;
+				goto giveup;
+			}
 		} else {
 			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
@@ -1229,7 +1259,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		Dprintf("sbdsp_dma_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
 #ifdef DIAGNOSTIC
-	if (sc->sc_omodep->channels == 2 && (cc & 1)) {
+	if (stereo && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
 		return EIO;
 	}
@@ -1279,7 +1309,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
-	if (sc->sc_omodep->precision == 16)
+	if ((sc->sc_model == SB_JAZZ && sc->dmachan > 3) ||
+	    (sc->sc_model != SB_JAZZ && sc->sc_omodep->precision == 16))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
@@ -1318,8 +1349,9 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 giveup:
 	sbdsp_reset(sc);
 	return EIO;
+
 badmode:
-	DPRINTF(("sbdsp_dma_input: can't set mode\n"));
+	DPRINTF(("sbdsp_dma_output: can't set mode\n"));
 	return EIO;
 }
 
