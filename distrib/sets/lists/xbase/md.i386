@@ -1,5 +1,4 @@
-# $NetBSD: md.i386,v 1.14 2004/01/08 05:12:32 rtr Exp $
-./usr/X11R6/bin/dga
+# $NetBSD: md.i386,v 1.15 2004/01/08 09:30:29 lukem Exp $
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
 ./usr/X11R6/bin/inl
@@ -34,7 +33,6 @@
 ./usr/X11R6/lib/X11/Cards
 ./usr/X11R6/lib/X11/Options
 ./usr/X11R6/lib/X11/app-defaults/Xvidtune
-./usr/X11R6/lib/X11/doc
 ./usr/X11R6/lib/X11/etc/sun.termcap
 ./usr/X11R6/lib/X11/etc/sun.terminfo
 ./usr/X11R6/lib/X11/etc/xmodmap.std
@@ -42,11 +40,9 @@
 ./usr/X11R6/lib/libXxf86dga.so.1
 ./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/man/cat1/XFree86.0
-./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/gtf.0
 ./usr/X11R6/man/cat1/kbd_mode.0
 ./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/scanpci.0
 ./usr/X11R6/man/cat1/xf86config.0
 ./usr/X11R6/man/cat1/xvidtune.0
-./usr/X11R6/man/cat5
