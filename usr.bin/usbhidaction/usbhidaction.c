@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.16 2004/10/31 21:10:59 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.17 2004/11/05 22:43:47 dsl Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.16 2004/10/31 21:10:59 augustss Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.17 2004/11/05 22:43:47 dsl Exp $");
 #endif
 
 #include <stdio.h>
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
-			 isdigit(dev[0]) ? "uhid" : "", dev);
+			 isdigit((unsigned char)dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
 
@@ -405,7 +405,7 @@ docmd(struct command *cmd, int value, const char *hid, int argc, char **argv)
 		if (*p == '$') {
 			p++;
 			len = &cmdbuf[SIZE-1] - q;
-			if (isdigit(*p)) {
+			if (isdigit((unsigned char)*p)) {
 				n = strtol(p, &p, 10) - 1;
 				if (n >= 0 && n < argc) {
 					strncpy(q, argv[n], len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.24 2003/08/07 09:46:52 agc Exp $	*/
+/*	$NetBSD: utility.c,v 1.25 2004/11/05 22:02:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.24 2003/08/07 09:46:52 agc Exp $");
+__RCSID("$NetBSD: utility.c,v 1.25 2004/11/05 22:02:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1074,7 +1074,7 @@ printdata(tag, ptr, cnt)
 		output_data("%s: ", tag);
 		for (i = 0; i < 20 && cnt; i++) {
 			output_data("%02x", *ptr);
-			if (isprint(*ptr)) {
+			if (isprint((unsigned char)*ptr)) {
 				xbuf[i] = *ptr;
 			} else {
 				xbuf[i] = '.';

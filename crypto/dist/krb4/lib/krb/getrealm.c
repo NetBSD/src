@@ -22,7 +22,7 @@ or implied warranty.
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: getrealm.c,v 1.36 1999/09/16 20:41:51 assar Exp $"
-      "$NetBSD: getrealm.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
+      "$NetBSD: getrealm.c,v 1.2 2004/11/05 22:41:38 dsl Exp $");
 
 #ifndef MATCH_SUBDOMAINS
 #define MATCH_SUBDOMAINS 0
@@ -178,7 +178,7 @@ krb_realmofhost(const char *host)
 	strlcpy(ret_realm, &domain[1], REALM_SZ);
 	/* Upper-case realm */
 	for (cp = ret_realm; *cp; cp++)
-	    *cp = toupper(*cp);
+	    *cp = toupper((unsigned char)*cp);
     } else {
 	strncpy(ret_realm, krb_get_default_realm(), REALM_SZ); /* Wild guess */
     }
