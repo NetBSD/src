@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2001/04/24 15:41:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2001/04/24 04:30:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2001/04/24 15:41:39 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -495,6 +495,12 @@ mach_init(argc, argv, bi)
 	mips_init_msgbuf();
 
 	/*
+	 * Compute the size of system data structures.  pmap_bootstrap()
+	 * needs some of this information.
+	 */
+	size = (unsigned)allocsys(NULL, NULL);
+
+	/*
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
@@ -505,7 +511,6 @@ mach_init(argc, argv, bi)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2001/04/24 04:30:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2001/04/24 15:41:38 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -733,6 +733,12 @@ mach_init(argc, argv, envv)
 	mips_init_msgbuf();
 
 	/*
+	 * Compute the size of system data structures.  pmap_bootstrap()
+	 * needs some of this information.
+	 */
+	size = (vsize_t)allocsys(NULL, NULL);
+
+	/*
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
@@ -752,7 +758,6 @@ mach_init(argc, argv, envv)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vsize_t)allocsys(NULL, NULL);
 	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
