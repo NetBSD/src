@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/09/05 14:58:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 1999/01/03 21:58:37 cjs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,8 +39,8 @@
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
 # XXX process.
 .if !exists(${.CURDIR}/../../domestic/usr.bin/telnet) || \
-    defined(EXPORTABLE_SYSTEM) || make(clean) || make(cleandir) || \
-    make(distclean)
+    defined(EXPORTABLE_SYSTEM) || \
+    make(obj) || make(clean) || make(cleandir) || make(distclean)
 
 PROG=	telnet
 
