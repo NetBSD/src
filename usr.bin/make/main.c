@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $	*/
+/*	$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $");
+__RCSID("$NetBSD: main.c,v 1.100 2004/03/27 00:17:08 enami Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -252,6 +252,13 @@ rearg:
 			arginc = 1;
 			argvalue = optscan;
 			if(*argvalue == '\0') {
+				if (argc < 3) {
+					(void)fprintf(stderr,
+					    "%s: option requires "
+					    "an argument -- %c\n",
+					    progname, c);
+					usage();
+				}
 				argvalue = argv[2];
 				arginc = 2;
 			}
