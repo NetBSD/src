@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.1 1997/10/19 18:55:23 veego Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.2 1997/10/29 20:00:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -67,10 +67,10 @@ struct grfcv3dtext_mode {
 	*((volatile caddr_t)(((caddr_t)ba)+(reg ^ 3))) = ((val) & 0xff)
 
 /* MMIO access */
-#define BYTEACCIO(x)	( ((x) & 0x3ffc) | (((x) & 3)^3) | (((x) & 3) <<14) )
+#define ByteAccessIO(x)	( ((x) & 0x3ffc) | (((x) & 3)^3) | (((x) & 3) <<14) )
 
 #define vgario(ba, reg) \
-	(*((volatile caddr_t)(((caddr_t)ba) + ( BYTEACCIO(reg) ))))
+	(*((volatile caddr_t)(((caddr_t)ba) + ( ByteAccessIO(reg) ))))
 
 #define vgawio(ba, reg, val) \
 	do { \
@@ -80,7 +80,7 @@ struct grfcv3dtext_mode {
 			asm volatile ("nop"); \
 		} \
 		*((volatile caddr_t)(((caddr_t)cv3d_special_register_base) + \
-		    ( BYTEACCIO(reg) & 0xffff ))) = ((val) & 0xff); \
+		    ( ByteAccessIO(reg) & 0xffff ))) = ((val) & 0xff); \
 		if (cv3d_zorroIII != 1) { \
 		        *((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
 			    0x04)) = (0x02 & 0xffff); \
@@ -101,6 +101,14 @@ struct grfcv3dtext_mode {
 /* write 16 Bit VGA register */
 #define vgaw16(ba, reg, val) \
 	*((unsigned short *) (((volatile caddr_t)ba)+reg)) = val
+
+/* XXX This is totaly untested */
+#define	Select_Zorro2_FrameBuffer(flag) \
+	do { \
+		*((volatile caddr_t)(((caddr_t)cv3d_vcode_switch_base) + \
+		    0x08)) = ((flag * 0x40) & 0xffff); \
+		asm volatile ("nop"); \
+} while (0)
 
 int grfcv3d_cnprobe __P((void));
 void grfcv3d_iteinit __P((struct grf_softc *));
@@ -161,7 +169,7 @@ static __inline unsigned char RGfx __P((volatile caddr_t, short));
 #define ACT_ID_OVERSCAN_COLOR	0x11
 #define ACT_ID_COLOR_PLANE_ENA	0x12
 #define ACT_ID_HOR_PEL_PANNING	0x13
-#define ACT_ID_COLOR_SELECT	0x14
+#define ACT_ID_COLOR_SELECT	0x14	/* ACT_ID_PIXEL_PADDING */
 
 /* Graphics Controller: */
 #define GCT_ADDRESS		0x03CE
