@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 1999/12/12 14:05:54 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2000/01/08 11:09:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,6 +103,7 @@
 void	blkfree __P((char **));
 char   *conffilename __P((const char *));
 char  **copyblk __P((char **));
+void	count_users __P((void));
 void	cwd __P((const char *));
 void	delete __P((const char *));
 char  **do_conversion __P((const char *));
@@ -112,6 +113,7 @@ int	format_file __P((const char *, int));
 int	ftpd_pclose __P((FILE *));
 FILE   *ftpd_popen __P((char *[], const char *, int));
 char   *getline __P((char *, int, FILE *));
+void	init_curclass __P((void));
 void	logcmd __P((const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *));
 void	logwtmp __P((const char *, const char *, const char *));
@@ -160,6 +162,8 @@ struct ftpclass {
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
 	char		*display;	/* Files to display upon chdir */
+	int	 	 limit;		/* Max connections (-1 = unlimited) */
+	char		*limitfile;	/* File to display if limit reached */
 	int		 maxrateget;	/* Maximum get transfer rate throttle */
 	int		 maxrateput;	/* Maximum put transfer rate throttle */
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
@@ -195,6 +199,7 @@ union sockunion {
 extern  int yyparse __P((void));
 
 extern	char		cbuf[];
+extern	int		connections;
 extern	struct ftpclass	curclass;
 extern	union sockunion data_dest;
 extern	int		debug;

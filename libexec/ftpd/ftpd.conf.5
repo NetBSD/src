@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.5 1999/12/26 09:42:18 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.6 2000/01/08 11:09:56 lukem Exp $
 .\"
-.\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 26, 1999
+.Dd January 8, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -109,7 +109,9 @@ encouraged that this option be used, espcially for sites concerned
 with potential security problems with
 .Tn FTP
 bounce attacks.
-If class is
+If
+.Ar class
+is
 .Dq none
 or
 .Sy off
@@ -201,18 +203,42 @@ Escape sequences are supported; refer to
 in 
 .Xr ftpd 8
 for more information.
+.It Xo Sy limit Ar class
+.Ar count Op Ar file
+.Xc
+Limit the maximum number of concurrent connections for
+.Ar class
+to
+.Ar count ,
+with
+.Sq 0
+meaning unlimited connections.
+If the limit is exceeded and
+.Ar file
+is given, display its contents to the user.
+Ignored if
+.Ar class
+is
+.Dq none
+or
+.Ar count
+is not specified.
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
 This cannot be less than 30 seconds, or the value for
 .Sy timeout .
-Ignored if class is
+Ignored if
+.Ar class
+is
 .Dq none
 or
 .Ar time
 is not specified.
 .It Sy modify Ar class Op Sy off
-If class is
+If
+.Ar class
+is
 .Dq none
 or
 .Sy off
@@ -247,14 +273,18 @@ Otherwise, each time the user enters a new directory,
 notify the user of any files matching
 .Ar fileglob .
 .It Sy passive Ar class Op Sy off
-If class is
+If
+.Ar class
+is
 .Dq none
 or
 .Sy off
 is given, disallow passive (PASV/LPSV/EPSV) connections.
 Otherwise, enable them.
-.It Sy rateget Ar rate
-Set the maximum get (RETR) transfer rate throttle to
+.It Sy rateget Ar class Ar rate
+Set the maximum get (RETR) transfer rate throttle for
+.Ar class
+to
 .Ar rate .
 If
 .Ar rate
@@ -273,8 +303,10 @@ Mega; multiply the argument by 1048576
 .It g
 Giga; multiply the argument by 1073741824
 .El
-.It Sy rateput Ar class
-Set the maximum put (STOR) transfer rate throttle to
+.It Sy rateput Ar class Ar rate
+Set the maximum put (STOR) transfer rate throttle for
+.Ar class
+to
 .Ar rate ,
 which is parsed as per
 .Sy rateget Ar rate .
@@ -283,7 +315,9 @@ Set the inactivity timeout period.
 (the default is fifteen minutes).
 This cannot be less than 30 seconds, or greater than the value for
 .Sy maxtimeout .
-Ignored if class is
+Ignored if
+.Ar class
+is
 .Dq none
 or
 .Ar time
@@ -291,13 +325,17 @@ is not specified.
 .It Sy umask Ar class Ar umaskval
 Set the umask to
 .Ar umaskval .
-Ignored if class is
+Ignored if
+.Ar class
+is
 .Dq none
 or
 .Ar umaskval
 is not specified.
 .It Sy upload Ar class Op Sy off
-If class is
+If
+.Ar class
+is
 .Dq none
 or
 .Sy off
