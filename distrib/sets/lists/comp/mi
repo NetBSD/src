@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.772 2005/03/25 20:13:21 christos Exp $
+#	$NetBSD: mi,v 1.773 2005/03/30 10:17:36 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4591,6 +4591,7 @@
 ./usr/share/man/cat3/wcscmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscspn.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcsftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcslcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcslcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcslen.0			comp-c-catman		.cat
@@ -8428,6 +8429,7 @@
 ./usr/share/man/man3/wcscmp.3			comp-c-man		.man
 ./usr/share/man/man3/wcscpy.3			comp-c-man		.man
 ./usr/share/man/man3/wcscspn.3			comp-c-man		.man
+./usr/share/man/man3/wcsftime.3			comp-c-man		.man
 ./usr/share/man/man3/wcslcat.3			comp-c-man		.man
 ./usr/share/man/man3/wcslcpy.3			comp-c-man		.man
 ./usr/share/man/man3/wcslen.3			comp-c-man		.man
