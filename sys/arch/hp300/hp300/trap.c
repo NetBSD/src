@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2002/03/15 05:55:39 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.96 2002/08/28 08:57:01 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2002/03/15 05:55:39 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2002/08/28 08:57:01 gmcgarry Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2002/03/15 05:55:39 gmcgarry Exp $");
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
+#include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
@@ -502,6 +503,12 @@ trap(type, code, v, frame)
 		/* FALLTHROUGH */
 	case T_TRACE:		/* tracing a trap instruction */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
+		/*
+		 * Don't go stepping into a RAS.
+		 */
+		if ((p->p_nras != 0) &&
+		    (ras_lookup(p, (caddr_t)frame.f_pc) != (caddr_t)-1))
+			goto out;
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
