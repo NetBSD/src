@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.3 2001/03/10 22:37:54 cgd Exp $ */
+/* $NetBSD: shquote.c,v 1.4 2001/03/12 03:20:10 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -44,6 +44,7 @@
 #undef	SHQUOTE_USE_MULTIBYTE
 
 #include <stdlib.h>
+#include <string.h>
 #ifdef SHQUOTE_USE_MULTIBYTE
 #include <limits.h>
 #include <stdio.h>
