@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.51 1998/02/05 08:00:24 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.52 1998/02/06 08:22:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -194,7 +194,7 @@ static u_char nfsrv_v2errmap[ELAST] = {
   NFSERR_NOTEMPTY, NFSERR_IO,	NFSERR_IO,	NFSERR_DQUOT,	NFSERR_STALE,
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,
+  NFSERR_IO,	NFSERR_IO,
 };
 
 /*
