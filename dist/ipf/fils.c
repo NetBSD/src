@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.5 2000/05/04 19:55:44 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.6 2000/05/05 21:49:47 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -157,7 +157,7 @@ void *ip;
 static void Usage(name)
 char *name;
 {
-	fprintf(stderr, "Usage: %s [-aAfhIinosv] [-d <device>]\n", name);
+	fprintf(stderr, "Usage: %s [-6aAfhIinosv] [-d <device>]\n", name);
 	fprintf(stderr, "       %s -t [-S source address] [-D destination address] [-P protocol] [-T refreshtime] [-C] [-d <device>]\n", name);
 	exit(1);
 }
