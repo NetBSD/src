@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.2.2.4 1998/10/08 16:16:56 cgd Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.2.2.5 1998/11/16 07:25:36 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -200,16 +200,21 @@ int check_geom (void)
 void set_fdisk_geom (void)
 {
 	char res[80];
+
 	msg_display_add(MSG_setbiosgeom);
 	disp_cur_geom();
-	msg_printf_add ("\n");
-	msg_prompt_add (MSG_cylinders, NULL, res, 80);
+	msg_printf_add("\n");
+	snprintf(res, 80, "%d", bcyl);
+	msg_prompt_add(MSG_cylinders, res, res, 80);
 	bcyl = atoi(res);
-	msg_prompt_add (MSG_heads, NULL, res, 80);
+
+	snprintf(res, 80, "%d", bhead);
+	msg_prompt_add(MSG_heads, res, res, 80);
 	bhead = atoi(res);
-	msg_prompt_add (MSG_sectors, NULL, res, 80);
+
+	snprintf(res, 80, "%d", bsec);
+	msg_prompt_add(MSG_sectors, res, res, 80);
 	bsec = atoi(res);
-	bstuffset = 1;
 }
 
 
