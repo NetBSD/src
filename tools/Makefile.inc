@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/10/27 01:57:40 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2001/10/31 01:20:10 tv Exp $
 
 .include <bsd.own.mk>
+
+.if ${USETOOLS} == "no"
+.undef HOSTPROG
+.endif
 
 # Stash the current directory (some builds here actually change .CURDIR).
 _CURDIR?=${.CURDIR}

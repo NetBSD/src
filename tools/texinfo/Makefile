@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/19 02:40:03 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/31 01:20:10 tv Exp $
 
 .include <bsd.own.mk>	# for TOOLDIR
 
@@ -10,9 +10,11 @@ ${TIMESTAMP}: \
 	${.CURDIR}/Makefile \
 	${DIST}/ChangeLog
 
+.if ${USETOOLS} == "yes"
 realall: texinfo.all
 realinstall: texinfo.install
 clean: texinfo.clean
+.endif
 
 texinfo.configure:
 	rm -rf texinfo

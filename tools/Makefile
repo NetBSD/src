@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/10/25 07:45:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 2001/10/31 01:20:10 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -12,3 +12,4 @@ SUBDIR=		binstall .WAIT gencat mkdep mtree rpcgen tsort \
 TARGETS+=	build
 
 .include <bsd.subdir.mk>
+.include <bsd.obj.mk>
