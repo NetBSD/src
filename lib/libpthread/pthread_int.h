@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.37 2002/12/30 22:24:34 thorpej Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.38 2003/01/13 18:53:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 #include "pthread_types.h"
 #include "pthread_queue.h"
+#include "pthread_debug.h"
 
 /*
  * The size of this structure needs to be no larger than struct
@@ -291,54 +292,5 @@ void	pthread__signal(pthread_t t, int sig, int code);
 
 void	pthread__destroy_tsd(pthread_t self);
 
-
-#define PTHREADD_CREATE		0
-#define PTHREADD_IDLE		1
-#define PTHREADD_UPCALLS	2
-#define PTHREADD_UP_BLOCK       3
-#define PTHREADD_UP_NEW		4
-#define PTHREADD_UP_PREEMPT	5
-#define PTHREADD_UP_UNBLOCK	6
-#define PTHREADD_UP_SIGNAL	7
-#define PTHREADD_UP_SIGEV	8
-#define PTHREADD_SPINLOCKS	9
-#define PTHREADD_SPINUNLOCKS	10
-#define PTHREADD_SPINPREEMPT	11
-#define PTHREADD_RESOLVELOCKS	12
-#define PTHREADD_SWITCHTO	13
-#define PTHREADD_NCOUNTERS	14
-
-#ifdef PTHREAD__DEBUG
-
-#define PTHREAD__DEBUG_SHMKEY	(0x000f)
-#define PTHREAD__DEBUG_SHMSIZE	(1<<18)
-
-extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
-
-extern int pthread__dbg; /* Set by libpthread_dbg */
-
-#define PTHREADD_ADD(x) (pthread__debug_counters[(x)]++)
-
-#define DPRINTF(x) pthread__debuglog_printf x
-
-struct	pthread_msgbuf {
-#define BUF_MAGIC	0x090976
-	int	msg_magic;
-	long	msg_bufw;
-	long	msg_bufr;
-	long	msg_bufs;
-	char	msg_bufc[1];
-};
-
-void pthread__debug_init(void);
-struct pthread_msgbuf* pthread__debuglog_init(int force);
-void pthread__debuglog_printf(const char *fmt, ...);
-
-#else /* PTHREAD_DEBUG */
-
-#define PTHREADD_ADD(x)
-#define DPRINTF(x)
-
-#endif /* PTHREAD_DEBUG */
 
 #endif /* _LIB_PTHREAD_INT_H */
