@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1999/11/21 00:17:19 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.14 1999/11/27 12:14:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@
  * of the `options SUN4?' combination a particular kernel was configured with.
  * See also the definitions of NBPG, PGOFSET and PGSHIFT below.
  */
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if (defined(_KERNEL) || defined(_STANDALONE)) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
 #endif
 
