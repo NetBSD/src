@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: cpw.c,v 1.1.1.3 2001/06/19 22:08:08 assar Exp $");
+RCSID("$Id: cpw.c,v 1.1.1.4 2001/09/17 12:24:57 assar Exp $");
 
 struct cpw_entry_data {
     int random_key;
@@ -54,7 +54,7 @@ static int num_args = sizeof(args) / sizeof(args[0]);
 static void
 usage(void)
 {
-    arg_printusage(args, num_args, "cpw", "principal...");
+    arg_printusage(args, num_args, "passwd", "principal...");
 }
 
 static int

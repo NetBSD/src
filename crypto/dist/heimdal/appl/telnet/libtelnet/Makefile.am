@@ -1,8 +1,8 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:24:37 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
 
 noinst_LIBRARIES = libtelnet.a
 

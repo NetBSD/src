@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_priv.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
+RCSID("$Id: rd_priv.c,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $");
 
 krb5_error_code
 krb5_rd_priv(krb5_context context,
@@ -65,12 +65,10 @@ krb5_rd_priv(krb5_context context,
       goto failure;
   }
 
-  /* XXX - Is this right? */
-
-  if (auth_context->local_subkey)
-      key = auth_context->local_subkey;
-  else if (auth_context->remote_subkey)
+  if (auth_context->remote_subkey)
       key = auth_context->remote_subkey;
+  else if (auth_context->local_subkey)
+      key = auth_context->local_subkey;
   else
       key = auth_context->keyblock;
 

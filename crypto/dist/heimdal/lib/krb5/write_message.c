@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: write_message.c,v 1.1.1.3 2001/06/19 22:08:23 assar Exp $");
+RCSID("$Id: write_message.c,v 1.1.1.4 2001/09/17 12:25:05 assar Exp $");
 
 krb5_error_code
 krb5_write_message (krb5_context context,
@@ -75,7 +75,6 @@ krb5_write_priv_message(krb5_context context,
 krb5_error_code
 krb5_write_safe_message(krb5_context context,
 			krb5_auth_context ac,
-			krb5_boolean priv,
 			krb5_pointer p_fd,
 			krb5_data *data)
 {

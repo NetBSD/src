@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:15 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/09/17 12:24:39 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -27,3 +27,5 @@ LDADD = \
 	$(LIB_des) \
 	$(LIB_roken) \
 	$(DBLIB)
+
+man_MANS = popper.8

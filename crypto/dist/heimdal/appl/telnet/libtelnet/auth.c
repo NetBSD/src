@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$Id: auth.c,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $");
+RCSID("$Id: auth.c,v 1.1.1.3 2001/09/17 12:24:37 assar Exp $");
 
 #if	defined(AUTHENTICATION)
 #include <stdio.h>
@@ -646,7 +646,7 @@ auth_gen_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
     buf[buflen-2] = '*';
     buflen -= 2;
     for (; cnt > 0; cnt--, data++) {
-	snprintf(tbuf, sizeof(tbuf), " %d", *data);
+	snprintf((char*)tbuf, sizeof(tbuf), " %d", *data);
 	for (cp = tbuf; *cp && buflen > 0; --buflen)
 	    *buf++ = *cp++;
 	if (buflen <= 0)
