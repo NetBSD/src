@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.1 2002/06/28 23:27:14 thorpej Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.2 2002/07/03 19:06:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -268,6 +268,10 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		if (space < resid && (atomic || space < so->so_snd.sb_lowat)) {
 			if (so->so_state & SS_NBIO)
 				snderr(EWOULDBLOCK);
+			SBLASTRECORDCHK(&so->so_rcv,
+			    "kttcp_soreceive sbwait 1");
+			SBLASTMBUFCHK(&so->so_rcv,
+			    "kttcp_soreceive sbwait 1");
 			sbunlock(&so->so_snd);
 			error = sbwait(&so->so_snd);
 			splx(s);
@@ -470,10 +474,18 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		goto restart;
 	}
  dontblock:
+	/*
+	 * On entry here, m points to the first record of the socket buffer.
+	 * While we process the initial mbufs containing address and control
+	 * info, we save a copy of m->m_nextpkt into nextrecord.
+	 */
 #ifdef notyet /* XXXX */
 	if (uio->uio_procp)
 		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
 #endif
+	KASSERT(m == so->so_rcv.sb_mb);
+	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 1");
+	SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 1");
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
@@ -498,13 +510,39 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			m = so->so_rcv.sb_mb;
 		}
 	}
+
+	/*
+	 * If m is non-NULL, we have some data to read.  From now on,
+	 * make sure to keep sb_lastrecord consistent when working on
+	 * the last packet on the chain (nextrecord == NULL) and we
+	 * change m->m_nextpkt.
+	 */
 	if (m) {
-		if ((flags & MSG_PEEK) == 0)
+		if ((flags & MSG_PEEK) == 0) {
 			m->m_nextpkt = nextrecord;
+			/*
+			 * If nextrecord == NULL (this is a single chain),
+			 * then sb_lastrecord may not be valid here if m
+			 * was changed earlier.
+			 */
+			if (nextrecord == NULL) {
+				KASSERT(so->so_rcv.sb_mb == m);
+				so->so_rcv.sb_lastrecord = m;
+			}
+		}
 		type = m->m_type;
 		if (type == MT_OOBDATA)
 			flags |= MSG_OOB;
+	} else {
+		if ((flags & MSG_PEEK) == 0) {
+			KASSERT(so->so_rcv.sb_mb == m);
+			so->so_rcv.sb_mb = nextrecord;
+			SB_UPDATE_TAIL(&so->so_rcv);
+		}
 	}
+	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 2");
+	SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 2");
+
 	moff = 0;
 	offset = 0;
 	while (m && resid > 0 && error == 0) {
@@ -550,8 +588,23 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 					MFREE(m, so->so_rcv.sb_mb);
 					m = so->so_rcv.sb_mb;
 				}
-				if (m)
+				/*
+				 * If m != NULL, we also know that
+				 * so->so_rcv.sb_mb != NULL.
+				 */
+				KASSERT(so->so_rcv.sb_mb == m);
+				if (m) {
 					m->m_nextpkt = nextrecord;
+					if (nextrecord == NULL)
+						so->so_rcv.sb_lastrecord = m;
+				} else {
+					so->so_rcv.sb_mb = nextrecord;
+					SB_UPDATE_TAIL(&so->so_rcv);
+				}
+				SBLASTRECORDCHK(&so->so_rcv,
+				    "kttcp_soreceive 3");
+				SBLASTMBUFCHK(&so->so_rcv,
+				    "kttcp_soreceive 3");
 			}
 		} else {
 			if (flags & MSG_PEEK)
@@ -590,6 +643,10 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		    !sosendallatonce(so) && !nextrecord) {
 			if (so->so_error || so->so_state & SS_CANTRCVMORE)
 				break;
+			SBLASTRECORDCHK(&so->so_rcv,
+			    "kttcp_soreceive sbwait 2");
+			SBLASTMBUFCHK(&so->so_rcv,
+			    "kttcp_soreceive sbwait 2");
 			error = sbwait(&so->so_rcv);
 			if (error) {
 				sbunlock(&so->so_rcv);
@@ -607,8 +664,21 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			(void) sbdroprecord(&so->so_rcv);
 	}
 	if ((flags & MSG_PEEK) == 0) {
-		if (m == 0)
+		if (m == 0) {
+			/*
+			 * First part is an SB_UPDATE_TAIL().  Second part
+			 * makes sure sb_lastrecord is up-to-date if
+			 * there is still data in the socket buffer.
+			 */
 			so->so_rcv.sb_mb = nextrecord;
+			if (so->so_rcv.sb_mb == NULL) {
+				so->so_rcv.sb_mbtail = NULL;
+				so->so_rcv.sb_lastrecord = NULL;
+			} else if (nextrecord->m_nextpkt == NULL)
+				so->so_rcv.sb_lastrecord = nextrecord;
+		}
+		SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 4");
+		SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
 			    (struct mbuf *)(long)flags, (struct mbuf *)0,

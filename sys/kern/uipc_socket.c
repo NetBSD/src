@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.68 2002/06/11 00:21:33 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.69 2002/07/03 19:06:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.68 2002/06/11 00:21:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.69 2002/07/03 19:06:48 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -894,6 +894,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			error = EWOULDBLOCK;
 			goto release;
 		}
+		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
+		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(&so->so_rcv);
 		error = sbwait(&so->so_rcv);
 		splx(s);
@@ -902,10 +904,18 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		goto restart;
 	}
  dontblock:
+	/*
+	 * On entry here, m points to the first record of the socket buffer.
+	 * While we process the initial mbufs containing address and control
+	 * info, we save a copy of m->m_nextpkt into nextrecord.
+	 */
 #ifdef notyet /* XXXX */
 	if (uio->uio_procp)
 		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
 #endif
+	KASSERT(m == so->so_rcv.sb_mb);
+	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
+	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
@@ -958,13 +968,39 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			controlp = &(*controlp)->m_next;
 		}
 	}
+
+	/*
+	 * If m is non-NULL, we have some data to read.  From now on,
+	 * make sure to keep sb_lastrecord consistent when working on
+	 * the last packet on the chain (nextrecord == NULL) and we
+	 * change m->m_nextpkt.
+	 */
 	if (m) {
-		if ((flags & MSG_PEEK) == 0)
+		if ((flags & MSG_PEEK) == 0) {
 			m->m_nextpkt = nextrecord;
+			/*
+			 * If nextrecord == NULL (this is a single chain),
+			 * then sb_lastrecord may not be valid here if m
+			 * was changed earlier.
+			 */
+			if (nextrecord == NULL) {
+				KASSERT(so->so_rcv.sb_mb == m);
+				so->so_rcv.sb_lastrecord = m;
+			}
+		}
 		type = m->m_type;
 		if (type == MT_OOBDATA)
 			flags |= MSG_OOB;
+	} else {
+		if ((flags & MSG_PEEK) == 0) {
+			KASSERT(so->so_rcv.sb_mb == m);
+			so->so_rcv.sb_mb = nextrecord;
+			SB_UPDATE_TAIL(&so->so_rcv);
+		}
 	}
+	SBLASTRECORDCHK(&so->so_rcv, "soreceive 2");
+	SBLASTMBUFCHK(&so->so_rcv, "soreceive 2");
+
 	moff = 0;
 	offset = 0;
 	while (m && uio->uio_resid > 0 && error == 0) {
@@ -992,6 +1028,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		 * block interrupts again.
 		 */
 		if (mp == 0) {
+			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
+			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
@@ -1033,8 +1071,21 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 					MFREE(m, so->so_rcv.sb_mb);
 					m = so->so_rcv.sb_mb;
 				}
-				if (m)
+				/*
+				 * If m != NULL, we also know that
+				 * so->so_rcv.sb_mb != NULL.
+				 */
+				KASSERT(so->so_rcv.sb_mb == m);
+				if (m) {
 					m->m_nextpkt = nextrecord;
+					if (nextrecord == NULL)
+						so->so_rcv.sb_lastrecord = m;
+				} else {
+					so->so_rcv.sb_mb = nextrecord;
+					SB_UPDATE_TAIL(&so->so_rcv);
+				}
+				SBLASTRECORDCHK(&so->so_rcv, "soreceive 3");
+				SBLASTMBUFCHK(&so->so_rcv, "soreceive 3");
 			}
 		} else {
 			if (flags & MSG_PEEK)
@@ -1090,6 +1141,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				    (struct mbuf *)(long)flags,
 				    (struct mbuf *)0,
 				    (struct proc *)0);
+			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
+			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
 			error = sbwait(&so->so_rcv);
 			if (error) {
 				sbunlock(&so->so_rcv);
@@ -1107,8 +1160,21 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			(void) sbdroprecord(&so->so_rcv);
 	}
 	if ((flags & MSG_PEEK) == 0) {
-		if (m == 0)
+		if (m == 0) {
+			/*
+			 * First part is an inline SB_UPDATE_TAIL().  Second
+			 * part makes sure sb_lastrecord is up-to-date if
+			 * there is still data in the socket buffer.
+			 */
 			so->so_rcv.sb_mb = nextrecord;
+			if (so->so_rcv.sb_mb == NULL) {
+				so->so_rcv.sb_mbtail = NULL;
+				so->so_rcv.sb_lastrecord = NULL;
+			} else if (nextrecord->m_nextpkt == NULL)
+				so->so_rcv.sb_lastrecord = nextrecord;
+		}
+		SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
+		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
 			    (struct mbuf *)(long)flags, (struct mbuf *)0,
