@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.10 1999/10/22 10:38:40 mrg Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.11 1999/10/22 10:43:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.10 1999/10/22 10:38:40 mrg Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.11 1999/10/22 10:43:11 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -767,7 +767,9 @@ rd_wrfile(arcn, ofd, left)
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
-        if (fstat(ofd, &sb) == 0) {
+	if (ofd == -1)
+		sz = PAXPATHLEN+1;
+        else if (fstat(ofd, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
         } else
@@ -813,7 +815,7 @@ rd_wrfile(arcn, ofd, left)
 	 * written. just closing with the file offset moved foward may not put
 	 * a hole at the end of the file.
 	 */
-	if (isem && (arcn->sb.st_size > 0L))
+	if (ofd != -1 && isem && (arcn->sb.st_size > 0L))
 		file_flush(ofd, fnm, isem);
 
 	/*
