@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.33 1999/02/19 21:49:43 abs Exp $
+$NetBSD: pcmciadevs,v 1.33.2.1 1999/04/27 13:53:47 perry Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@ product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
 product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
+
+/* Fujitsu Products */
+product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
 
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
