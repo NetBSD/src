@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.11 1999/03/22 19:45:00 garbled Exp $
+.\"	$NetBSD: accept.2,v 1.12 1999/06/26 04:12:45 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,6 +143,11 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The descriptor is invalid.
+.It Bq Er EINVAL
+The socket has not been set up to accept connections (using
+.Xr bind 2
+and
+.Xr listen 2 ).
 .It Bq Er ENOTSOCK
 The descriptor references a file, not a socket.
 .It Bq Er EOPNOTSUPP
