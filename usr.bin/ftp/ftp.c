@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.58 1999/08/29 22:21:57 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.59 1999/09/01 05:03:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.58 1999/08/29 22:21:57 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.59 1999/09/01 05:03:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1347,6 +1347,11 @@ initconn()
 	u_int af, hal, pal;
 	char *pasvcmd = NULL;
 
+	if (myctladdr.su_family == AF_INET6
+	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr)
+	  || IN6_IS_ADDR_SITELOCAL(&myctladdr.su_sin6.sin6_addr))) {
+		warnx("use of scoped address can be troublesome");
+	}
 reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
