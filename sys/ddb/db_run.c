@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.18 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_run.c,v 1.19 1999/04/21 00:00:06 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -81,30 +81,29 @@ db_stop_at_pc(regs, is_breakpoint)
 
 	pc = PC_REGS(regs);
 
+#ifdef	FIXUP_PC_AFTER_BREAK
+	if (*is_breakpoint) {
+		/*
+		 * Breakpoint trap.  Regardless if we treat this as a
+		 * real breakpoint (e.g. software single-step), fix up the PC.
+		 */
+		FIXUP_PC_AFTER_BREAK(regs);
+		pc = PC_REGS(regs);
+	}
+#endif
+
 #ifdef	SOFTWARE_SSTEP
 	/*
-	 * If we stopped at one of the single-step breakpoints,
-	 * say it's not really a breakpoint so that
-	 * we don't skip over the real instruction.
+	 * If we stopped at one of the single-step breakpoints, say it's not
+	 * really a breakpoint so that we don't skip over the real instruction.
 	 */
 	if (db_taken_bkpt.address == pc || db_not_taken_bkpt.address == pc)
 		*is_breakpoint = FALSE;
-#endif
+#endif	/* SOFTWARE_SSTEP */
 
 	db_clear_single_step(regs);
 	db_clear_breakpoints();
 	db_clear_watchpoints();
-
-#ifdef	FIXUP_PC_AFTER_BREAK
-	if (*is_breakpoint) {
-	    /*
-	     * Breakpoint trap.  Fix up the PC if the
-	     * machine requires it.
-	     */
-	    FIXUP_PC_AFTER_BREAK(regs);
-	    pc = PC_REGS(regs);
-	}
-#endif
 
 	/*
 	 * Now check for a breakpoint at this address.
