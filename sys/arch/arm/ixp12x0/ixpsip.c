@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.6 2003/03/25 06:12:47 igy Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.7 2003/07/13 02:48:41 igy Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.6 2003/03/25 06:12:47 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.7 2003/07/13 02:48:41 igy Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.6 2003/03/25 06:12:47 igy Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <arm/ixp12x0/ixp12x0var.h>
 #include <arm/ixp12x0/ixpsipvar.h>
 
 #include "locators.h"
@@ -59,8 +60,6 @@ static int	ixpsip_print(void *, const char *);
 CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
     ixpsip_match, ixpsip_attach, NULL, NULL);
 
-extern struct bus_space ixpsip_bs_tag;
-
 int
 ixpsip_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -71,7 +70,7 @@ void
 ixpsip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixpsip_softc *sc = (void *) self;
-	sc->sc_iot = &ixpsip_bs_tag;
+	sc->sc_iot = &ixp12x0_bs_tag;
 
 	printf("\n");
 
