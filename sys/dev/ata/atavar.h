@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.42 2004/05/27 02:23:12 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.43 2004/06/01 19:32:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -111,7 +111,6 @@ struct ata_drive_datas {
 #define	DRIVE_UDMA	0x0020
 #define	DRIVE_MODE	0x0040	/* the drive reported its mode */
 #define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
-#define	DRIVE_DMAERR	0x0100	/* Udma transfer had crc error, don't try DMA */
 #define	DRIVE_ATAPIST	0x0200	/* device is an ATAPI tape drive */
 
 	/*
