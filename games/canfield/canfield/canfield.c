@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.9 1998/08/29 22:47:56 hubertf Exp $	*/
+/*	$NetBSD: canfield.c,v 1.10 1998/09/11 13:19:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.9 1998/08/29 22:47:56 hubertf Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.10 1998/09/11 13:19:50 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ void	initall __P((void));
 void	initdeck __P((struct cardtype *[]));
 void	initgame __P((void));
 void	instruct __P((void));
-int	main __P((int, char *[]));
+int	main __P((void));
 void	makeboard __P((void));
 void	movebox __P((void));
 void	movecard __P((void));
@@ -1783,9 +1783,7 @@ askquit(dummy)
  * Can you tell that this used to be a Pascal program?
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main()
 {
 #ifdef MAXLOAD
 	double vec[3];
