@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gmreg.h,v 1.1 2000/02/27 18:00:55 tsubai Exp $	*/
+/*	$NetBSD: if_gmreg.h,v 1.2 2000/03/26 09:15:17 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,8 +37,9 @@ struct gmac_dma {
 #define GMAC_SOP	0x40000000	/* start of packet? */
 #define GMAC_LEN_MASK	0x00003fff
 
-#define GMAC_INT_TXDONE	0x04
-#define GMAC_INT_RXDONE	0x10
+#define GMAC_INT_TXEMPTY	0x02	/* TX ring empty */
+#define GMAC_INT_TXDONE		0x04
+#define GMAC_INT_RXDONE		0x10
 
 #define GMAC_RXMAC_PR	0x08
 
