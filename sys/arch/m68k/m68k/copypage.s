@@ -1,11 +1,12 @@
-/*	$NetBSD: copypage.s,v 1.2 1997/05/29 16:31:33 jtc Exp $	*/
+/*	$NetBSD: copypage.s,v 1.3 1997/05/30 01:20:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin
+ * by J.T. Conklin <jtc@netbsd.org> and 
+ * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -92,16 +93,26 @@ Lmlloop:
  */
 ENTRY(zeropage)
 	movl	sp@(4),a0		| dest address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-	movq	#0,d1
+	movql	#NBPG/256-1,d0		| number of 256 byte chunks - 1
+	movml	d2-d7,sp@-
+	movql	#0,d1
+	movql	#0,d2
+	movql	#0,d3
+	movql	#0,d4
+	movql	#0,d5
+	movql	#0,d6
+	movql	#0,d7
+	movl	d1,a1
+	lea	a0@(NBPG),a0
 Lzloop:
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
+	movml	d2-d7/a1,a0@-
 	dbf	d0,Lzloop
+	movml	sp@+,d2-d7
 	rts
