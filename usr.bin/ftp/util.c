@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.102 2000/09/08 11:54:53 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.103 2000/11/15 00:11:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.102 2000/09/08 11:54:53 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.103 2000/11/15 00:11:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -96,7 +96,6 @@ __RCSID("$NetBSD: util.c,v 1.102 2000/09/08 11:54:53 lukem Exp $");
 #include <signal.h>
 #include <limits.h>
 #include <netdb.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -366,7 +365,6 @@ ftp_login(const char *host, const char *user, const char *pass)
 {
 	char tmp[80];
 	const char *acct;
-	struct passwd *pw;
 	int n, aflag, rval, freeuser, freepass, freeacct;
 
 	acct = NULL;
@@ -397,12 +395,8 @@ ftp_login(const char *host, const char *user, const char *pass)
 	}
 
 	while (user == NULL) {
-		const char *myname = getlogin();
-
-		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
-			myname = pw->pw_name;
-		if (myname)
-			fprintf(ttyout, "Name (%s:%s): ", host, myname);
+		if (localname)
+			fprintf(ttyout, "Name (%s:%s): ", host, localname);
 		else
 			fprintf(ttyout, "Name (%s): ", host);
 		*tmp = '\0';
@@ -415,7 +409,7 @@ ftp_login(const char *host, const char *user, const char *pass)
 		tmp[strlen(tmp) - 1] = '\0';
 		freeuser = 0;
 		if (*tmp == '\0')
-			user = myname;
+			user = localname;
 		else
 			user = tmp;
 	}
