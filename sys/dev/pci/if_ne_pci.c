@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.14 1998/11/09 23:14:12 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.15 2000/03/06 03:07:08 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,11 @@ const struct ne_pci_product {
 	  "RealTek 8029" },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "Winbond 89C940F" },
+
+	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F_1,
 	  NULL,				NULL,
 	  NULL,				NULL,
 	  "Winbond 89C940F" },
