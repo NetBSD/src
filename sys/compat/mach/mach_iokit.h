@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.20 2003/11/01 00:32:44 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.21 2003/11/01 18:41:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ typedef struct {
 
 /* io_registry_entry_create_iterator */
 
+#define MACH_IOKIT_RECURSIVE_ITERATOR	1
+#define MACH_IOKIT_PARENT_ITERATOR	2
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
@@ -543,19 +545,21 @@ int mach_io_registry_entry_get_parent_iterator(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
-struct mach_device_iterator {
-	struct device *mdi_parent;
-	struct device *mdi_current;
-};
-
 struct mach_iokit_property {
 	const char *mip_name;
 	const char *mip_value;
 };
 
+struct mach_device_iterator {
+	int mdi_current;
+	struct mach_iokit_devclass *mdi_devices[1];
+};
+
+/* Make this dynamic if it ever gets useful */
+#define MACH_IOKIT_MAX_PARENTS	8
 struct mach_iokit_devclass {
 	char *mid_string;
-	struct mach_iokit_devclass *mid_parent;
+	struct mach_iokit_devclass *mid_parent[MACH_IOKIT_MAX_PARENTS];
 	char *mid_properties;
 	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
@@ -566,6 +570,8 @@ struct mach_iokit_devclass {
 	char *mid_name;
 	struct mach_right *mid_notify;
 };
+
+extern struct mach_iokit_devclass mach_ioroot_devclass;
 
 void mach_iokit_cleanup_notify(struct mach_right *);
 	
