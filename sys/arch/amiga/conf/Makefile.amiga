@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.43 1996/05/12 13:36:02 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.44 1996/05/15 21:10:57 is Exp $
 
 # Makefile for NetBSD
 #
@@ -63,7 +63,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
 ### for the Motorola 68060 Software Support Package
-# XXX not yet .include "$S/arch/m68k/060sp/Makefile.inc"
+.include "$S/arch/m68k/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
