@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.8 2005/03/25 20:16:37 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.9 2005/04/01 23:45:59 he Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,10 +78,6 @@
 #include <ufs/ufs/ufsmount.h>
 
 /* Override certain things to make <ufs/lfs/lfs.h> work */
-#undef simple_lock
-#define simple_lock(x)
-#undef simple_unlock
-#define simple_unlock(x)
 #define vnode uvnode
 #define buf ubuf
 #define panic call_panic
