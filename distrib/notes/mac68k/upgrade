@@ -22,7 +22,7 @@ carefully and completely before proceeding:
    beginning the upgrade process.  Although the upgrade should not
    damage your filesystem(s) in any way, you never know what may happen.
 
-2) Download the distribution sets you want from the "mac68k/binaries"
+2) Download the distribution sets you want from the "mac68k/binary/sets"
    subdirectory of the NetBSD _VER distribution.  You will need the base
    set and the kernel at a minimum.  Be sure to download the files in
    _binary_ mode.  If you will be upgrading from within NetBSD, make sure
@@ -30,17 +30,19 @@ carefully and completely before proceeding:
    reach from single-user mode.
 
 3) Install the _VER kernel.  You may either use the Installer utility
-   (included in the utils subdirectory) or install from within
-   NetBSD (the latter is recommended for speed reasons).  If you choose
-   the former, proceed as you normally would.  If you choose to install from
-   within NetBSD, then boot (or shutdown) into single-user mode and do the
-   following:
+   (included in the "installation/misc" subdirectory) or install from
+   within NetBSD (the latter is recommended for speed reasons).  If you
+   choose the former, proceed as you normally would.  If you choose to
+   install from within NetBSD, then boot (or shutdown) into single-user
+   mode and do the following:
 
      cd /
-     tar -zxvpf netbsd13  (substitute the full path to archive here)
+     tar -zxvpf /path/to/kern.tgz
 
    There is no need to explicitly backup your old kernel since it will be
-   incapable of running many the newer binaries you are about to install.
+   incapable of running many of the newer binaries you are about to
+   install (unless, of course, you have a backup copy of your older
+   binaries and want to revert to them for some reason).
 
 4) If you are installing using the Installer, skip to step 5.  Otherwise,
    reboot into NetBSD in single-user mode.  Run 'fsck -f' and then mount all
@@ -50,53 +52,53 @@ carefully and completely before proceeding:
    your partitions around.  You can do a 'disklabel sdX' (where X is a
    drive on which you have NetBSD partitions) to see how the partitions are
    currently layed out.  It is likely that a partition has shifted into
-   'sdXd', a slot that was not available under previous releases of NetBSD.
-   If this is the case, you will need to manually mount your root partition
-   (via 'mount -w /') and edit your /etc/fstab file to reflect the new
-   partition layout.  Unless you are familiar with 'ex', the easiest way to
-   fix your /etc/fstab file is probably to simply do a 'cat > /etc/fstab'
-   and type in the corrected file in its entirety. 
+   'sdXe', a slot that was often not available under previous releases of
+   NetBSD.  If this is the case, you will need to manually mount your root
+   partition  (via 'mount -w /') and edit your /etc/fstab file to reflect
+   the new partition layout.  Unless you are familiar with 'ex' or 'ed',
+   the easiest way to fix your /etc/fstab file is probably to simply do a
+   'cat > /etc/fstab' and type in the corrected file in its entirety. 
 
 5) Install the distribution sets.  Keep in mind that the NetBSD _VER
-   distribution takes up a considerable amount more of disk space than did
-   the 1.2 or 1.2.1 distributions.  If you are using the Installer, proceed
-   normally (remember that you will need to mount non-root partitions by
-   hand using the MiniShell before installing).  If you are installing from
-   with NetBSD, do the following:
+   distribution takes up a considerably larger amount of disk space than
+   did the 1.2 or 1.2.1 distributions.  If you are using the Installer,
+   proceed normally (remember that you will need to mount non-root
+   partitions by hand using the MiniShell before installing).  If you are
+   installing from within NetBSD, do the following:
 
      cd /
-     tar --unlink -zxvpf base13 (substitute the full path to the archive here)
+     tar --unlink -zxvpf /path/to/base.tgz
 
    It is crucial that you use the '--unlink' flag when invoking tar or you
    will fail to correctly overwrite some files.  Keep in mind that there is
    no going back once you have installed the base set short of a complete
-   reinstall of an earlier distribution.  Continue with the appropriate
-   command line for each of the other packages you have installed except for
-   the etc package.  If you are in the Installer, open up the Minishell and
-   do the following:
+   re-install of an earlier distribution.  Continue with the appropriate
+   command line for each of the other sets you wish to install except for
+   the etc set.  If you are in the Installer, open up the Minishell and do
+   the following:
 
      cd /tmp
      exit
 
-   Now, use the Installer to install the etc package (it will install into
+   Now, use the Installer to install the etc set (it will install into
    /tmp instead of the /etc/ directory).
 
    If you are in NetBSD, do the following instead:
 
      cd /tmp
-     tar --unlink -zxvpf etc13 (substitute the full path to the archive here)
+     tar --unlink -zxvpf /path/to/etc.tgz
 
 6) If you are in the Installer, quit it and boot into NetBSD in single-user
    mode.  From there, 'cd' to the /tmp/etc directory and compare each file
    there with your old files in /etc.  You will probably want to replace
    some of your system configuration files, or incorporate some of the
    changes in the new versions into yours.  You should take note of the
-   following when upgrading to the etc13 set:
+   following when upgrading to the NetBSD _VER etc.tgz set:
 
    * The first file to pay attention to is /etc/rc.conf.  This file did not
    exist under NetBSD 1.2, but it is used to configure the rc scripts
-   under NetBSD _VER.  Edit the file to your preferences, making sure that
-   you change the line that says:
+   under NetBSD _VER.  Edit the file to your preferences, making sure
+   that you change the line that says:
 
      rc_configured=NO
 
@@ -108,11 +110,11 @@ carefully and completely before proceeding:
 
    * The next important item to take note of is the new networking
    configuration files.  If you currently have an /etc/hostname.xxN file
-   (fill in the xxN with either ae0 or sn0), you will need to convert it
-   into an ifconfig.xxN file before networking automatically works.  The
-   format for the new file is simply the arguments which you would give
-   to ifconfig on the command line.  The following is an example of the
-   minimal ifconfig.xxN file:
+   (fill in the xx with either ae or sn and the X with a number), you will
+   need to convert it into an ifconfig.xxN file before networking
+   automatically works.  The format for the new file is simply the
+   arguments which you would give to ifconfig on the command line.  The
+   following is an example of the minimal ifconfig.xxN file:
 
      inet hostname.domain.dom netmask 0xffffff00
 

@@ -1,12 +1,14 @@
-NetBSD _VER is the fourth "real" release of NetBSD for the mac68k.
+NetBSD _VER is the fourth "real" release of NetBSD for the 68k-based
+Macintosh.
 
-For the mac68k port, NetBSD _VER brings a number of number of improvements,
-including a host of new drivers enabling support for many 68040-based
-Macintosh systems.  In addition, many previously unsupported 68030-based
-Macintoshes are now working.  Support for SONIC and MACE ethernet
-controllers has been added (via the "sn" and "mc" devices), and numerous
-enhancements to a number of existing drivers such as the "ae" driver for
-DP8390-based ethernet cards and "grf" video driver have been made as well.
+For the mac68k port, NetBSD _VER brings a number of improvements, 
+including a host of new drivers and kernel changes enabling support for
+many 68040-based Macintosh systems.  In addition, many previously
+unsupported 68030-based Macintoshes are now working.  Support for SONIC
+and MACE Ethernet controllers has been added (via the "sn" and "mc"
+devices), and numerous enhancements to a number of existing drivers such
+as the "ae" driver for DP8390-based Ethernet cards and "grf" video driver
+have been made as well.
 
 There is still a lot of work to be done and help is welcomed.  Please jump
 in!

@@ -33,7 +33,7 @@ specificially for the Macintosh port (in alphabetical order):
 	Bob Nestor for (unofficially) maintaining the Mkfs utility,
 		and providing a lot of useful information about the ROM
 		vectors used by different systems.
-	Brad Parker for serial and ethernet drivers/improvements.
+	Brad Parker for serial and Ethernet drivers/improvements.
 	Brian R. Gaeke and Nigel Pearson for tweaking and polishing the
 		Booter application.
 	Scott Redman for lending Brad Grantham a PowerBook 160.
