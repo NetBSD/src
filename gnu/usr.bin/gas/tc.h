@@ -18,7 +18,7 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
- * $Id: tc.h,v 1.1 1993/10/02 20:57:58 pk Exp $
+ * $Id: tc.h,v 1.2 1996/02/16 22:19:26 pk Exp $
  */
 
 
@@ -42,7 +42,7 @@ relax_typeS;
 
 extern const relax_typeS md_relax_table[]; /* Define it in MACHINE.c */
 
-extern int md_reloc_size; /* Size of a relocation record */
+extern const int md_reloc_size; /* Size of a relocation record */
 
 extern void (*md_emit_relocations)();
 
