@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.17 2003/04/01 08:35:42 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.18 2003/04/05 13:13:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.17 2003/04/01 08:35:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.18 2003/04/05 13:13:50 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ smb_vc_maxread(struct smb_vc *vcp)
 	 * Specs say up to 64k data bytes, but Windows traffic
 	 * uses 60k... no doubt for some good reason.
 	 */
-	if (vcp->vc_sopt.sv_caps & SMB_CAP_LARGE_READX)
+	if (SMB_CAPS(vcp) & SMB_CAP_LARGE_READX)
 		return (60*1024);
 	else
 		return (vcp->vc_sopt.sv_maxtx);
@@ -95,7 +95,7 @@ smb_vc_maxwrite(struct smb_vc *vcp)
 	 * Specs say up to 64k data bytes, but Windows traffic
 	 * uses 60k... probably for some good reason.
 	 */
-	if (vcp->vc_sopt.sv_caps & SMB_CAP_LARGE_WRITEX)
+	if (SMB_CAPS(vcp) & SMB_CAP_LARGE_WRITEX)
 		return (60*1024);
 	else
 		return (vcp->vc_sopt.sv_maxtx);
@@ -789,7 +789,7 @@ smb_read(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 {
 	size_t tsize, len, resid;
 	int error = 0;
-	int rx = (SSTOVC(ssp)->vc_sopt.sv_caps & SMB_CAP_LARGE_READX);
+	int rx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_READX);
 
 	tsize = uio->uio_resid;
 	while (tsize > 0) {
@@ -868,7 +868,7 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 {
 	int error = 0;
 	size_t len, tsize, resid;
-	int wx = (SSTOVC(ssp)->vc_sopt.sv_caps & SMB_CAP_LARGE_WRITEX);
+	int wx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX);
  
 	tsize = uio->uio_resid;
 	while (tsize > 0) {
