@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 2001/11/30 18:11:56 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 2001/12/15 22:13:11 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ obio_attach(parent, self, aux)
 	 */
 	oba = *ma;
 	oba.oba_bustag = &obio_space_tag;
+	oba.oba_paddr = LOCATOR_REQUIRED;
 	oba.oba_pri = LOCATOR_OPTIONAL;
 
 	/* Find all `early' obio devices */
