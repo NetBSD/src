@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.35.2.3 2002/12/12 22:47:28 he Exp $
+#	$NetBSD: MAKEDEV,v 1.35.2.4 2002/12/12 23:15:12 he Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -66,6 +66,7 @@
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
 # Printers:
+#	bpp	parallel printer port on sbus machines
 #	lpt*	stock lp
 #	lpa*	interuptless lp
 # USB devices:
@@ -137,7 +138,7 @@ all)
 	sh -$- $0 audio0 audio1 audio2 audio3
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio
 	sh -$- $0 tun0 tun1 tun2 tun3
-	sh -$- $0 lpt0 lpt1 lpt2
+	sh -$- $0 bpp lpt0 lpt1 lpt2
 	sh -$- $0 ccd0 ccd1 ccd2 ccd3
 	sh -$- $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
@@ -181,7 +182,7 @@ std)
 	mknod fb		c 22 0 ; chmod 666 fb
 	mknod mouse		c 13 0 ; chmod 666 mouse
 	mknod kbd		c 29 0 ; chmod 666 kbd
-	mknod bpp		c 107 0 ; chmod 666 bpp
+	makedev bpp
 	;;
 
 tty[abcd])
@@ -486,6 +487,13 @@ magma*)
 
 	mknod bpp${unit}0 c 101 $(($unit * 64 + 0))
 	mknod bpp${unit}1 c 101 $(($unit * 64 + 1))
+	;;
+
+bpp*)
+	unit=${i#bpp}
+	rm -f bpp$unit
+	mknod bpp$unit c 107 $(($unit + 0))
+	chmod 600 bpp$unit
 	;;
 
 lpt*|lpa*)
