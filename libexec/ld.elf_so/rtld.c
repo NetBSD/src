@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.11 1999/01/09 18:10:19 castor Exp $	*/
+/*	$NetBSD: rtld.c,v 1.12 1999/01/10 18:18:56 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -134,8 +134,11 @@ _rtld_init(
     _rtld_objself.path = _rtld_path;
     _rtld_objself.rtld = true;
     _rtld_objself.mapbase = mapbase;
-#ifdef __mips__
-    /* mips ld.so currently linked at load address, so no relocation needed */
+#if defined(__mips__) || defined(__i386__)
+    /*
+     * mips and i386 ld.so currently linked at load address,
+     * so no relocation needed
+     */
     _rtld_objself.relocbase = 0;
 #else
     _rtld_objself.relocbase = mapbase;
@@ -153,7 +156,8 @@ _rtld_init(
 _rtld_objself.pltgot = NULL;
 #endif
     assert(_rtld_objself.needed == NULL);
-#ifndef __mips__	/* no relocation for mips */
+#if !defined(__mips__) && !defined(__i386__)
+    /* no relocation for mips/i386 */
     assert(!_rtld_objself.textrel);
 #endif
 
@@ -213,6 +217,9 @@ _rtld(
     bool bind_now = 0;
     const char *ld_bind_now;
     const char **argv;
+#ifdef RTLD_DEBUG
+    int i = 0;
+#endif
 
     /*
      * On entry, the dynamic linker itself has not been relocated yet.
@@ -223,8 +230,8 @@ _rtld(
     /* Find the auxiliary vector on the stack. */
     /* first Elf_Word reserved to address of exit routine */
 #ifdef RTLD_DEBUG
-    int i;
-    xprintf("sp = %p, argc = %d, argv = %p <%s>\n", sp, sp[2], &sp[3], sp[3]);
+    xprintf("sp = %p, argc = %d, argv = %p <%s>\n", sp, sp[2],
+	&sp[3], (char *)sp[3]);
     xprintf("got is at %p, dynamic is at %p\n", _GLOBAL_OFFSET_TABLE_, &_DYNAMIC);
     debug = 1;
     xprintf("_ctype_ is %p\n", _ctype_);
@@ -236,7 +243,7 @@ _rtld(
     env = (char **) sp;
     while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
 #ifdef RTLD_DEBUG
-	xprintf("env[%d] = %p\n", i++, sp[-1]);
+	xprintf("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]);
 #endif
     }
     aux = (const AuxInfo *) sp;
@@ -286,7 +293,8 @@ _rtld(
 	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
     }
 
-    dbg("%s is initialized, base address = %p", __progname, pAUX_base->au_v);
+    dbg("%s is initialized, base address = %p", __progname,
+	(void *)pAUX_base->au_v);
 
     /*
      * Load the main program, or process its program header if it is
@@ -343,8 +351,8 @@ _rtld(
     dbg("calling _init functions");
     _rtld_call_init_functions(_rtld_objmain->next);
 
-    dbg("transferring control to program entry point = %p",
-	_rtld_objmain->entry);
+    dbg("control at program entry point = %p, obj = %p, exit = %p",
+	_rtld_objmain->entry, _rtld_objmain, _rtld_exit);
 
     /* Return with the entry point and the exit procedure in at the top of
      * stack.
