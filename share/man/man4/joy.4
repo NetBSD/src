@@ -1,4 +1,4 @@
-.\" $NetBSD: joy.4,v 1.4 2003/06/27 18:34:07 wiz Exp $
+.\" $NetBSD: joy.4,v 1.5 2004/05/11 22:42:47 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthieu Herrb
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm joy
-.Nd games adapter driver
+.Nd game adapter driver
 .Sh SYNOPSIS
 .Cd "joy0 at isa? port 0x201"
 .Cd "joy* at isapnp?"
@@ -42,7 +42,8 @@
 .Cd "joy* at pnpbios? index ?"
 .Cd "joy* at eso?"
 .Sh DESCRIPTION
-This driver provides access to the games adapter.  The lower bit in the
+This driver provides access to the game adapter.
+The lower bit in the
 minor device number selects the joystick: 0 is the first joystick and
 1 is the second.
 .Pp
