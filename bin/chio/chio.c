@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.22 2003/09/14 19:20:17 jschauma Exp $ */
+/* $NetBSD: chio.c,v 1.23 2004/01/04 03:34:00 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.22 2003/09/14 19:20:17 jschauma Exp $");
+__RCSID("$NetBSD: chio.c,v 1.23 2004/01/04 03:34:00 jschauma Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,12 +63,9 @@ __RCSID("$NetBSD: chio.c,v 1.22 2003/09/14 19:20:17 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
 #include "defs.h"
 #include "pathnames.h"
-
-int stdout_ok;
 
 int main(int, char *[]);
 static void usage(void);
@@ -166,8 +163,6 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 		/* NOTREACHED */
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	/* Get the default changer if not already specified. */
 	if (changer_name == NULL)
