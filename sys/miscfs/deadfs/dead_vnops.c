@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.11 1994/11/14 06:04:31 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.12 1994/12/16 03:18:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -164,7 +164,6 @@ dead_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct file *a_fp;
 	} */ *ap;
 {
 
