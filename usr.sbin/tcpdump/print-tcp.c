@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.17 2000/08/01 17:24:40 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.18 2000/08/01 17:34:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.17 2000/08/01 17:24:40 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.18 2000/08/01 17:34:00 itojun Exp $");
 #endif
 #endif
 
@@ -136,7 +136,7 @@ static int tcp_cksum(register const struct ip *ip,
 	/* pseudo-header.. */
 	phu.ph.len = htons(tlen);
 	phu.ph.mbz = 0;
-	phu.ph.proto = ip->ip_p;
+	phu.ph.proto = IPPROTO_TCP;
 	memcpy(&phu.ph.src, &ip->ip_src.s_addr, sizeof(u_int32_t));
 	memcpy(&phu.ph.dst, &ip->ip_dst.s_addr, sizeof(u_int32_t));
 
