@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2002/02/07 21:34:24 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 2002/02/08 01:41:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@ struct {
 	bus_addr_t od_addr;
 	int od_irq;
 } obio_devices[] =
-#if defined(TEAMASA_NPWR)
+#if defined(IOP310_TEAMASA_NPWR)
 {
 	/*
 	 * There is only one UART on the Npwr.
