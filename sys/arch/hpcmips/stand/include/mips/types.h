@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.1 1999/09/16 12:23:27 takemura Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2000/02/03 03:17:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,15 +92,8 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
-#ifdef NO_LONG_LONG
-typedef	INT64TYPE      		  int64_t;
-typedef	UINT64TYPE	     	u_int64_t;
-#else
-/* LONGLONG */
-typedef	long long		  int64_t;
-/* LONGLONG */
-typedef	unsigned long long	u_int64_t;
-#endif
+typedef	__int64      		  int64_t;
+typedef	unsigned __int64     	u_int64_t;
 
 typedef int32_t			register_t;
 
