@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.10 1998/06/30 23:42:08 thorpej Exp $	*/
+/*	$NetBSD: tip.h,v 1.11 1998/07/12 09:59:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -297,7 +297,7 @@ void	logent __P((char *, char *, char *, char *));
 void	loginit __P((void));
 void	pipefile __P((char));
 void	pipeout __P((char));
-int	prompt __P((char *, char *));
+int	prompt __P((char *, char *, size_t));
 void	xpwrite __P((int, char *, int));
 void	raw __P((void));
 void	send __P((char));

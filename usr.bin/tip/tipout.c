@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.6 1997/11/22 07:28:48 lukem Exp $	*/
+/*	$NetBSD: tipout.c,v 1.7 1998/07/12 09:59:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.6 1997/11/22 07:28:48 lukem Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.7 1998/07/12 09:59:30 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -83,7 +83,7 @@ intEMT(dummy)
 	char reply;
 
 	read(fildes[0], &c, 1);
-	while (c != '\n') {
+	while (c != '\n' && line + sizeof line - pline > 0) {
 		*pline++ = c;
 		read(fildes[0], &c, 1);
 	}
