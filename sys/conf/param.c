@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.11 1994/06/29 06:30:52 cgd Exp $	*/
+/*	$NetBSD: param.c,v 1.12 1994/08/22 23:37:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -95,7 +95,7 @@ int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
  * Values in support of System V compatible shared memory.	XXX
  */
 #ifdef SYSVSHM
-#define	SHMMAX	(SHMMAXPGS*NBPG)
+#define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= NBPG' */
 #define	SHMMIN	1
 #define	SHMMNI	32			/* <= SHMMMNI in shm.h */
 #define	SHMSEG	8
