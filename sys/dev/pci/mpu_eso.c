@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_eso.c,v 1.2 1999/08/14 22:42:16 kleink Exp $	*/
+/*	$NetBSD: mpu_eso.c,v 1.3 2001/11/13 07:48:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.3 2001/11/13 07:48:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

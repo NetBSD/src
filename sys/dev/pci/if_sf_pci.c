@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.2 2001/07/08 18:02:28 thorpej Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.3 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * PCI bus front-end for the Adaptec AIC-6915 (``Starfire'')
  * 10/100 Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.3 2001/11/13 07:48:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

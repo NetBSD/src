@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.12 2001/11/09 19:29:12 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.13 2001/11/13 07:48:48 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,6 +63,9 @@
  *    - Try to handle devices that are already configured (perhaps using that
  *      as a hint to where we put other devices)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.13 2001/11/13 07:48:48 lukem Exp $");
 
 #include "opt_pci.h"
 
