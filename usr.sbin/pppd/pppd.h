@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: pppd.h,v 1.5 1994/05/08 12:16:30 paulus Exp $
+ * $Id: pppd.h,v 1.6 1994/05/30 01:18:57 paulus Exp $
  */
 
 /*
@@ -89,7 +89,7 @@ u_long GetMask __ARGS((u_long)); /* get netmask for address */
 	(c) = *(cp)++; \
 }
 #define PUTCHAR(c, cp) { \
-	*(cp)++ = (c); \
+	*(cp)++ = (u_char) (c); \
 }
 
 
@@ -98,8 +98,8 @@ u_long GetMask __ARGS((u_long)); /* get netmask for address */
 	(s) |= *(cp)++; \
 }
 #define PUTSHORT(s, cp) { \
-	*(cp)++ = (s) >> 8; \
-	*(cp)++ = (s); \
+	*(cp)++ = (u_char) ((s) >> 8); \
+	*(cp)++ = (u_char) (s); \
 }
 
 #define GETLONG(l, cp) { \
@@ -109,10 +109,10 @@ u_long GetMask __ARGS((u_long)); /* get netmask for address */
 	(l) |= *(cp)++; \
 }
 #define PUTLONG(l, cp) { \
-	*(cp)++ = (l) >> 24; \
-	*(cp)++ = (l) >> 16; \
-	*(cp)++ = (l) >> 8; \
-	*(cp)++ = (l); \
+	*(cp)++ = (u_char) ((l) >> 24); \
+	*(cp)++ = (u_char) ((l) >> 16); \
+	*(cp)++ = (u_char) ((l) >> 8); \
+	*(cp)++ = (u_char) (l); \
 }
 
 #define INCPTR(n, cp)	((cp) += (n))
