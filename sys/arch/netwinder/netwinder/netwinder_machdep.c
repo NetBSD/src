@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.49 2003/05/03 03:49:07 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.50 2003/05/21 22:48:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -156,6 +156,8 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
+
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 struct user *proc0paddr;
 

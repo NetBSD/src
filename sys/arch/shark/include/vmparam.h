@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2003/05/03 18:25:35 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2003/05/21 22:48:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -49,9 +49,6 @@
  * Mappings >= KERNEL_BASE are constant across all processes
  */
 #define	KERNEL_BASE		0xf0000000
-
-/* Various constants used by the MD code */
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
  * The range 0xf1000000 - 0xf6ffffff is available for kernel VM space
