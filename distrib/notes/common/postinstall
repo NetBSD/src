@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.8 2001/05/09 00:04:48 he Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.9 2001/05/09 20:03:13 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -248,7 +248,6 @@ may depend, and simplifies installation (and deinstallation), both
 from source and precompiled binaries.
 .Pp
 .(bullet
-.It
 More information on the package system is at
 .Lk http://www.netbsd.org/Documentation/software/packages.html
 .It
@@ -259,17 +258,23 @@ Precompiled binaries can be found at
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages ,
 usually in the
 .Pa \*V/\*M/All
-subdir.  You can install them with the following commands (line continued
-to show entire line, there's obviously no requirement to do that):
-.Bd -literal
-# export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/\\
-packages/\*V/\*M/All
-# pkg_add -v tcsh
-# pkg_add -v cvs
-# pkg_add -v apache
-# pkg_add -v perl
-\&...
-.Ed
+subdir.  You can install them with the following commands (line
+continued to show entire line in 80 coloumn output, there's obviously
+no requirement to repeat that):
+.Pp
+.Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/\e
+.br
+.Ic packages/\*V/\*M/All
+.br
+.Ic # pkg_add -v tcsh
+.br
+.Ic # pkg_add -v cvs
+.br
+.Ic # pkg_add -v apache
+.br
+.Ic # pkg_add -v perl
+.br
+.Ic \&...
 .Pp
 These commands will install the tcsh shell, the CVS source code
 management system, the Apache web server and
