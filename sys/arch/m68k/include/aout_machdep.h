@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.3 2001/05/18 15:34:28 fredette Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.4 2002/12/10 17:14:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,8 +30,8 @@
 #ifndef _M68K_EXEC_H_
 #define _M68K_EXEC_H_
 
-#ifndef	__LDPGSZ
-#define __LDPGSZ	8192
+#ifndef	AOUT_LDPGSZ
+#define AOUT_LDPGSZ	8192
 #endif
 
 /*
@@ -39,7 +39,7 @@
  * XXX Nicer way to do this?
  */
 #undef N_PAGSIZ
-#define	N_PAGSIZ(ex)	(N_GETMID((ex)) == MID_M68K4K ? 4096 : __LDPGSZ)
+#define	N_PAGSIZ(ex)	(N_GETMID((ex)) == MID_M68K4K ? 4096 : AOUT_LDPGSZ)
 
 /* Relocation format. */
 struct relocation_info_m68k {

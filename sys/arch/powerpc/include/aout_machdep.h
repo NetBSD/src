@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.4 2002/10/28 18:00:40 manu Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.5 2002/12/10 17:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -49,6 +49,6 @@ struct relocation_info_ppc {
 };
 #define relocation_info	relocation_info_ppc
 
-#define	__LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 #endif	/* _POWERPC_AOUT_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2001/07/25 12:21:33 aymeric Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2002/12/10 17:14:38 thorpej Exp $	*/
 
 /*
  *	- m68k dependent definitions
@@ -25,11 +25,11 @@ void _cachectl __P((void *, size_t));
 #undef MID_MACHINE
 #define MID_MACHINE	MID_M68K
 
-#undef __LDPGSZ
-#define __LDPGSZ		8192
+#undef AOUT_LDPGSZ
+#define AOUT_LDPGSZ		8192
 #endif /* CROSS_LINKER */
 
-#define PAGSIZ			__LDPGSZ
+#define PAGSIZ			AOUT_LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), MID_MACHINE, \
 						N_GETFLAG(ex)|(f))
