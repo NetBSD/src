@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.626 2004/05/27 11:09:45 abs Exp $
+$NetBSD: pcidevs,v 1.627 2004/05/27 20:20:53 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1232,6 +1232,7 @@ product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 
 /* Creative Labs products */
 product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
+product CREATIVELABS AUDIGY	0x0004	SB Audigy EMU 10000
 product CREATIVELABS SBLIVE2	0x0006	SBLive! EMU 10000
 product CREATIVELABS SBAUDIGYLS	0x0007	SB Audigy LS
 product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
