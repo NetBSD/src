@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.37 2002/06/07 07:35:39 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.38 2002/06/07 07:38:51 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.37 2002/06/07 07:35:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.38 2002/06/07 07:38:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1093,7 +1093,7 @@ nd6_dad_start(ifa, tick)
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	if (tick == NULL) {
 		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp, 
+		nd6_dad_starttimer(dp,
 		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
 	} else {
 		int ntick;
@@ -1185,7 +1185,7 @@ nd6_dad_timer(ifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp, 
+		nd6_dad_starttimer(dp,
 		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
 	} else {
 		/*
