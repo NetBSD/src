@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.3 2002/04/13 07:34:18 tsutsui Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.4 2003/03/13 14:49:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,19 +47,18 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
-#include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/apcall.h>
 #include <promdev.h>
 
-static struct netif netif_prom;
+#include "netif_news.h"
 
 #ifdef NETIF_DEBUG
 int netif_debug;
 #endif
 
-struct iodesc sockets[SOPEN_MAX];
+static struct iodesc sdesc;
 
 struct iodesc *
 socktodesc(sock)
@@ -68,18 +67,17 @@ socktodesc(sock)
 	if (sock != 0) {
 		return(NULL);
 	}
-	return (sockets);
+	return (&sdesc);
 }
 
 int
-netif_open(machdep_hint)
-	void *machdep_hint;
+netif_news_open(pd)
+	struct romdev *pd;
 {
-	struct romdev *pd = machdep_hint;
 	struct iodesc *io;
 
 	/* find a free socket */
-	io = sockets;
+	io = &sdesc;
 	if (io->io_netif) {
 #ifdef	DEBUG
 		printf("netif_open: device busy\n");
@@ -89,8 +87,7 @@ netif_open(machdep_hint)
 	}
 	memset(io, 0, sizeof(*io));
 
-	netif_prom.nif_devdata = pd;
-	io->io_netif = &netif_prom;
+	io->io_netif = pd;
 
 	/* Put our ethernet address in io->myea */
 	prom_getether(pd, io->myea);
@@ -98,25 +95,14 @@ netif_open(machdep_hint)
 	return(0);
 }
 
-int
-netif_close(fd)
+void
+netif_news_close(fd)
 	int fd;
 {
 	struct iodesc *io;
-	struct netif *ni;
 
-	if (fd != 0) {
-		errno = EBADF;
-		return(-1);
-	}
-
-	io = &sockets[fd];
-	ni = io->io_netif;
-	if (ni != NULL) {
-		ni->nif_devdata = NULL;
-		io->io_netif = NULL;
-	}
-	return(0);
+	io = &sdesc;
+	io->io_netif = NULL;
 }
 
 /*
@@ -133,7 +119,7 @@ netif_put(desc, pkt, len)
 	ssize_t rv;
 	size_t sendlen;
 
-	pd = (struct romdev *)desc->io_netif->nif_devdata;
+	pd = (struct romdev *)desc->io_netif;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug) {
@@ -181,7 +167,7 @@ netif_get(desc, pkt, maxlen, timo)
 	int tick0;
 	ssize_t len;
 
-	pd = (struct romdev *)desc->io_netif->nif_devdata;
+	pd = (struct romdev *)desc->io_netif;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
