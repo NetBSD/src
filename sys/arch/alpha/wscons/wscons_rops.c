@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.2 1997/04/06 20:09:11 cgd Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.3 1997/04/07 23:41:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,7 +44,10 @@
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: wscons_rops.c,v 1.3 1997/04/07 23:41:21 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: cdefs.h,v 1.7 1997/04/06 08:47:19 cgd Exp $ */
+/* $NetBSD: cdefs.h,v 1.8 1997/04/07 23:40:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,5 +70,39 @@
 #define	__warn_references(sym,msg)	/* nothing */
 
 #endif /* !__ELF__ */
+
+
+#ifdef _KERNEL
+
+#ifdef __ELF__
+
+#ifdef __STDC__
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .text")
+#else
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	__asm__(".section _sec ; .asciz _str ; .text")
+#endif
+
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
+
+#else /* __ELF__ */
+
+#define	__KERNEL_RCSID(_n, _s)						\
+	static const char __CONCAT(rcsid,_n)[]				\
+	    __attribute__ ((unused)) = _s
+#define	__KERNEL_COPYRIGHT(_n, _s)					\
+	static const char __CONCAT(copyright,_n)[]			\
+	    __attribute__ ((unused)) = _s
+
+#endif /* __ELF__ */
+
+#ifdef NO_KERNEL_RCSIDS
+#undef __KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif
+
+#endif /* _KERNEL */
 
 #endif /* !_MACHINE_CDEFS_H_ */

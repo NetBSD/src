@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.16 1997/04/07 06:36:32 cgd Exp $ */
+/* $NetBSD: pmap.old.c,v 1.17 1997/04/07 23:40:02 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -96,7 +96,10 @@
  *	and to when physical maps must be made correct.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.17 1997/04/07 23:40:02 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.17 1997/04/07 06:09:10 cgd Exp $ */
+/* $NetBSD: pckbd.c,v 1.18 1997/04/07 23:40:21 cgd Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -43,7 +43,10 @@
  * code to work keyboard & display for PC-style console
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.18 1997/04/07 23:40:21 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
