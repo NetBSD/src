@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.45 1994/06/30 06:35:50 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.46 1994/07/06 04:13:37 mycroft Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -9,26 +9,27 @@
 
 CFLAGS+=	${COPTS}
 
-LIBCRT0?=	/usr/lib/crt0.o
-LIBC?=		/usr/lib/libc.a
-LIBCOMPAT?=	/usr/lib/libcompat.a
-LIBCRYPT?=	/usr/lib/libcrypt.a
-LIBCURSES?=	/usr/lib/libcurses.a
-LIBDBM?=	/usr/lib/libdbm.a
-LIBDES?=	/usr/lib/libdes.a
-LIBL?=		/usr/lib/libl.a
-LIBKDB?=	/usr/lib/libkdb.a
-LIBKRB?=	/usr/lib/libkrb.a
-LIBKVM?=	/usr/lib/libkvm.a
-LIBM?=		/usr/lib/libm.a
-LIBMP?=		/usr/lib/libmp.a
-LIBPC?=		/usr/lib/libpc.a
-LIBPLOT?=	/usr/lib/libplot.a
-LIBRESOLV?=	/usr/lib/libresolv.a
-LIBRPCSVC?=	/usr/lib/librpcsvc.a
-LIBSKEY?=	/usr/lib/libskey.a
-LIBTERMCAP?=	/usr/lib/libtermcap.a
-LIBUTIL?=	/usr/lib/libutil.a
+LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+LIBC?=		${DESTDIR}/usr/lib/libc.a
+LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBL?=		${DESTDIR}/usr/lib/libl.a
+LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
+LIBM?=		${DESTDIR}/usr/lib/libm.a
+LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
+LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
@@ -57,12 +58,12 @@ SRCS?=	${PROG}.c
 OBJS+=  ${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 .endif
 
-.if defined(LDONLY)
+.if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
-	${LD} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${LIBCRT0} ${OBJS} ${LIBC} ${LDADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${OBJS} ${LDADD} -lgcc -lc -lgcc
 
-.else defined(LDONLY)
+.else
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
