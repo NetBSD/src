@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.7 1997/07/13 20:28:11 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.8 1997/07/21 14:09:26 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.7 1997/07/13 20:28:11 christos Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.8 1997/07/21 14:09:26 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
@@ -45,6 +46,11 @@ __RCSID("$NetBSD: yp_first.c,v 1.7 1997/07/13 20:28:11 christos Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+
+#ifdef __weak_alias
+__weak_alias(yp_first,_yp_first);
+__weak_alias(yp_next,_yp_next);
+#endif
 
 int
 yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
@@ -106,7 +112,7 @@ again:
 		}
 	}
 	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {
 			free(*outkey);
@@ -185,7 +191,7 @@ again:
 		}
 	}
 	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outkey) {
 			free(*outkey);

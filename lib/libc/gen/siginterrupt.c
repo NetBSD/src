@@ -1,4 +1,4 @@
-/*	$NetBSD: siginterrupt.c,v 1.8 1997/07/13 19:46:16 christos Exp $	*/
+/*	$NetBSD: siginterrupt.c,v 1.9 1997/07/21 14:07:32 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,11 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siginterrupt.c,v 1.8 1997/07/13 19:46:16 christos Exp $");
+__RCSID("$NetBSD: siginterrupt.c,v 1.9 1997/07/21 14:07:32 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <signal.h>
+
+#ifdef __weak_alias
+__weak_alias(siginterrupt,_siginterrupt);
+#endif
 
 /*
  * Set signal state to prevent restart of system calls

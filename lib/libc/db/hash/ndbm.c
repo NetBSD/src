@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.12 1997/07/13 18:52:08 christos Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.13 1997/07/21 14:06:40 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbm.c,v 1.12 1997/07/13 18:52:08 christos Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.13 1997/07/21 14:06:40 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: ndbm.c,v 1.12 1997/07/13 18:52:08 christos Exp $");
  * This package provides a dbm compatible interface to the new hashing
  * package described in db(3).
  */
-
+#include "namespace.h"
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -57,6 +57,19 @@ __RCSID("$NetBSD: ndbm.c,v 1.12 1997/07/13 18:52:08 christos Exp $");
 
 #include <ndbm.h>
 #include "hash.h"
+
+#ifdef __weak_alias
+__weak_alias(dbm_clearerr,_dbm_clearerr);
+__weak_alias(dbm_close,_dbm_close);
+__weak_alias(dbm_delete,_dbm_delete);
+__weak_alias(dbm_dirfno,_dbm_dirfno);
+__weak_alias(dbm_error,_dbm_error);
+__weak_alias(dbm_fetch,_dbm_fetch);
+__weak_alias(dbm_firstkey,_dbm_firstkey);
+__weak_alias(dbm_nextkey,_dbm_nextkey);
+__weak_alias(dbm_open,_dbm_open);
+__weak_alias(dbm_store,_dbm_store);
+#endif
 
 /*
  * Returns:

@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.7 1997/07/13 19:46:13 christos Exp $	*/
+/*	$NetBSD: scandir.c,v 1.8 1997/07/21 14:07:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.7 1997/07/13 19:46:13 christos Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.8 1997/07/21 14:07:27 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,11 +49,17 @@ __RCSID("$NetBSD: scandir.c,v 1.7 1997/07/13 19:46:13 christos Exp $");
  * struct dirent (through namelist). Returns -1 if there were any errors.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(scandir,_scandir);
+__weak_alias(alphasort,_alphasort);
+#endif
 
 /*
  * The DIRSIZ macro is the minimum record length which will hold the directory

@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.9 1997/07/13 19:57:31 christos Exp $	*/
+/*	$NetBSD: ethers.c,v 1.10 1997/07/21 14:07:52 jtc Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -7,6 +7,7 @@
  * Public domain.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -20,6 +21,14 @@
 #include <string.h>
 #ifdef YP
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(ether_aton,_ether_aton);
+__weak_alias(ether_hostton,_ether_hostton);
+__weak_alias(ether_line,_ether_line);
+__weak_alias(ether_ntoa,_ether_ntoa);
+__weak_alias(ether_ntohost,_ether_ntohost);
 #endif
 
 #ifndef _PATH_ETHERS

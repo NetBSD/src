@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.4 1997/07/13 20:13:02 christos Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.5 1997/07/21 14:08:19 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.4 1997/07/13 20:13:02 christos Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.5 1997/07/21 14:08:19 jtc Exp $");
 #endif
 #endif
 
@@ -47,10 +47,16 @@ __RCSID("$NetBSD: auth_none.c,v 1.4 1997/07/13 20:13:02 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc. 
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
+
+#ifdef __weak_alias
+__weak_alias(authnone_create,_authnone_create);
+#endif
+
 #define MAX_MARSHEL_SIZE 20
 
 /*

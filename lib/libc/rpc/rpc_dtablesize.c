@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.9 1997/07/13 20:13:19 christos Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.10 1997/07/21 14:08:35 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,10 +35,11 @@
 static char *sccsid = "@(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";
 static char *sccsid = "@(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_dtablesize.c,v 1.9 1997/07/13 20:13:19 christos Exp $");
+__RCSID("$NetBSD: rpc_dtablesize.c,v 1.10 1997/07/21 14:08:35 jtc Exp $");
 #endif
 #endif
 
+#include "namespace.h"
 #include <unistd.h>
 
 int _rpc_dtablesize __P((void));	/* XXX */

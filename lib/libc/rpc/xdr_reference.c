@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_reference.c,v 1.6 1997/07/13 20:13:32 christos Exp $	*/
+/*	$NetBSD: xdr_reference.c,v 1.7 1997/07/21 14:08:47 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_reference.c 1.11 87/08/11 SMI";
 static char *sccsid = "@(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_reference.c,v 1.6 1997/07/13 20:13:32 christos Exp $");
+__RCSID("$NetBSD: xdr_reference.c,v 1.7 1997/07/21 14:08:47 jtc Exp $");
 #endif
 #endif
 
@@ -48,11 +48,17 @@ __RCSID("$NetBSD: xdr_reference.c,v 1.6 1997/07/13 20:13:32 christos Exp $");
  * "pointers".  See xdr.h for more info on the interface to xdr.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_pointer,_xdr_pointer);
+__weak_alias(xdr_reference,_xdr_reference);
+#endif
 
 /*
  * XDR an indirect pointer

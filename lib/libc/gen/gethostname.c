@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostname.c,v 1.4 1997/07/13 19:02:53 christos Exp $	*/
+/*	$NetBSD: gethostname.c,v 1.5 1997/07/21 14:07:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,13 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gethostname.c,v 1.4 1997/07/13 19:02:53 christos Exp $");
+__RCSID("$NetBSD: gethostname.c,v 1.5 1997/07/21 14:07:07 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(gethostname,_gethostname);
+#endif
 
 int
 gethostname(name, namelen)

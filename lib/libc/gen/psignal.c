@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.10 1997/07/13 19:16:45 christos Exp $	*/
+/*	$NetBSD: psignal.c,v 1.11 1997/07/21 14:07:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.10 1997/07/13 19:16:45 christos Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.11 1997/07/21 14:07:24 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,11 +46,16 @@ __RCSID("$NetBSD: psignal.c,v 1.10 1997/07/13 19:16:45 christos Exp $");
  * Print the name of the signal indicated
  * along with the supplied message.
  */
+#include "namespace.h"
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
 #include "extern.h"
+
+#ifdef __weak_alias
+__weak_alias(psignal,_psignal);
+#endif
 
 void
 psignal(sig, s)

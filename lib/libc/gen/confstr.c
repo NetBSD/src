@@ -1,4 +1,4 @@
-/*	$NetBSD: confstr.c,v 1.7 1997/07/13 19:45:42 christos Exp $	*/
+/*	$NetBSD: confstr.c,v 1.8 1997/07/21 14:06:50 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)confstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: confstr.c,v 1.7 1997/07/13 19:45:42 christos Exp $");
+__RCSID("$NetBSD: confstr.c,v 1.8 1997/07/21 14:06:50 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
@@ -50,6 +51,10 @@ __RCSID("$NetBSD: confstr.c,v 1.7 1997/07/13 19:45:42 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(confstr,_confstr);
+#endif
 
 size_t
 confstr(name, buf, len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_get.c,v 1.8 1997/07/13 18:51:52 christos Exp $	*/
+/*	$NetBSD: bt_get.c,v 1.9 1997/07/21 14:06:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)bt_get.c	8.6 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_get.c,v 1.8 1997/07/13 18:51:52 christos Exp $");
+__RCSID("$NetBSD: bt_get.c,v 1.9 1997/07/21 14:06:32 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>
