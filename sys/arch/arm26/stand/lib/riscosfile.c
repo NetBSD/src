@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosfile.c,v 1.1 2001/07/26 22:11:09 bjh21 Exp $	*/
+/*	$NetBSD: riscosfile.c,v 1.2 2001/07/27 01:03:34 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -97,6 +97,7 @@ riscos_read(struct open_file *f, void *buf, size_t size, size_t *residp)
 
 	rf = f->f_fsdata;
 
+	twiddle();
 	error = xosgbpb_read(rf->file, buf, size, &resid);
 	*residp = resid;
 	if (error)
@@ -113,6 +114,7 @@ riscos_write(struct open_file *f, void *buf, size_t size, size_t *residp)
 
 	rf = f->f_fsdata;
 
+	twiddle();
 	error = xosgbpb_write(rf->file, buf, size, &resid);
 	*residp = resid;
 	if (error)
