@@ -1,9 +1,10 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Jim R. Oldroyd at The Instruction Set.
+ * Jim R. Oldroyd at The Instruction Set and Keith Gabryelski at
+ * Commodore Business Machines.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,8 +36,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rxp.c	5.1 (Berkeley) 11/10/91";*/
-static char rcsid[] = "$Id: rxp.c,v 1.3 1993/08/01 18:52:58 mycroft Exp $";
+static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
