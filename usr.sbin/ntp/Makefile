@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2000/03/29 14:35:45 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/02 12:01:10 simonb Exp $
 
-SUBDIR=	libntp ntpd ntpdate ntpdc ntpq ntptime ntptimeset ntptrace
+SUBDIR=	libntp ntpd ntpdate ntpdc ntpq ntptime ntptimeset ntptrace html
 
 all-ntpd all-ntpdate all-ntpdc all-ntpq all-ntptime all-ntptimeset \
 	all-ntptrace: all-libntp

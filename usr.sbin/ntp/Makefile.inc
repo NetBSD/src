@@ -1,20 +1,28 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/03/29 13:13:42 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/05/02 12:01:10 simonb Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
 
-DIST=	${.CURDIR}/../../../dist/ntp
+NTPDOCDIR?=	${HTMLDOCDIR}/ntp
 
-CPPFLAGS+= -I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
+.if exists(${.CURDIR}/../../../dist/ntp)
+DIST=		${.CURDIR}/../../../dist/ntp
+.elif exists(${.CURDIR}/../../../../dist/ntp)
+DIST=		${.CURDIR}/../../../../dist/ntp
+.else
+# error here?
+.endif
 
-.if !defined(LIB) || empty(LIB)
-LIBNTP!=cd ${.CURDIR}/../libntp; make print-objdir
-LDADD+=	-L${LIBNTP} -lntp
-DPADD+=	${LIBNTP}/libntp.a
+CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
+
+.if defined(PROG)
+LIBNTP!=	cd ${.CURDIR}/../libntp; make print-objdir
+LDADD+=		-L${LIBNTP} -lntp
+DPADD+=		${LIBNTP}/libntp.a
 .endif
 
 NTPSRCDIR?= ${PROG}
-.PATH: ${DIST}/${NTPSRCDIR}
+.PATH:		${DIST}/${NTPSRCDIR}
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
