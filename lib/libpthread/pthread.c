@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.10 2003/02/22 00:53:29 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.11 2003/02/26 22:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,6 +100,12 @@ void *pthread__static_lib_binder[] = {
 	pthread_key_create,
 	&pthread__sched_binder,
 	&pthread__nanosleeping
+};
+
+/* Private data for pthread_attr_t */
+struct pthread_attr_private {
+	char ptap_name[PTHREAD_MAX_NAMELEN_NP];
+	void *ptap_namearg;
 };
 
 /*
@@ -206,6 +212,7 @@ pthread__initthread(pthread_t self, pthread_t t)
 	pthread_lockinit(&t->pt_join_lock);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
+	t->pt_name = NULL;
 #ifdef PTHREAD__DEBUG
 	t->blocks = 0;
 	t->preempts = 0;
@@ -220,6 +227,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 {
 	pthread_t self, newthread;
 	pthread_attr_t nattr;
+	struct pthread_attr_private *p;
+	char *name;
 	int ret;
 
 	PTHREADD_ADD(PTHREADD_CREATE);
@@ -241,6 +250,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	else
 		return EINVAL;
 
+	/* Fetch misc. attributes from the attr structure. */
+	if ((p = nattr.pta_private) != NULL) {
+		if (p->ptap_name[0] != '\0') {
+			if ((name = strdup(p->ptap_name)) == NULL)
+				return ENOMEM;
+		} else
+			name = NULL;
+	}
 
 	self = pthread__self();
 
@@ -262,8 +279,11 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	newthread->pt_flags = nattr.pta_flags;
 	newthread->pt_sigmask = self->pt_sigmask;
 
+	/* 3. Set up misc. attributes. */
+	newthread->pt_name = name;
+
 	/*
-	 * 3. Set up context.
+	 * 4. Set up context.
 	 *
 	 * The pt_uc pointer points to a location safely below the
 	 * stack start; this is arranged by pthread__stackalloc().
@@ -274,14 +294,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
 	    startfunc, arg);
 
-	/* 4. Add to list of all threads. */
+	/* 5. Add to list of all threads. */
 	pthread_spinlock(self, &pthread__allqueue_lock);
 	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
 	nthreads++;
 	pthread_spinunlock(self, &pthread__allqueue_lock);
 
 	SDPRINTF(("(pthread_create %p) Created new thread %p.\n", self, newthread));
-	/* 5. Put on run queue. */
+	/* 6. Put on run queue. */
 	pthread__sched(self, newthread);
 
 	*thread = newthread;
@@ -348,6 +368,7 @@ pthread_exit(void *retval)
 {
 	pthread_t self;
 	struct pt_clean_t *cleanup;
+	char *name;
 	int nt;
 
 	self = pthread__self();
@@ -371,7 +392,12 @@ pthread_exit(void *retval)
 
 	pthread_spinlock(self, &self->pt_join_lock);
 	if (self->pt_flags & PT_FLAG_DETACHED) {
+		name = self->pt_name;
+		self->pt_name = NULL;
 		pthread_spinunlock(self, &self->pt_join_lock);
+
+		if (name != NULL)
+			free(name);
 
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		PTQ_REMOVE(&pthread__allqueue, self, pt_allq);
@@ -390,6 +416,7 @@ pthread_exit(void *retval)
 		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
 		pthread__block(self, &pthread__deadqueue_lock);
 	} else {
+		/* Note: name will be freed by the joiner. */
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		nthreads--;
 		nt = nthreads;
@@ -417,6 +444,7 @@ int
 pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
+	char *name;
 	int num;
 
 	self = pthread__self();
@@ -475,6 +503,8 @@ pthread_join(pthread_t thread, void **valptr)
 
 	/* All ours. */
 	thread->pt_state = PT_STATE_DEAD;
+	name = thread->pt_name;
+	thread->pt_name = NULL;
 	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	if (valptr != NULL)
@@ -490,6 +520,9 @@ pthread_join(pthread_t thread, void **valptr)
 	pthread_spinlock(self, &pthread__deadqueue_lock);
 	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
 	pthread_spinunlock(self, &pthread__deadqueue_lock);
+
+	if (name != NULL)
+		free(name);
 
 	return 0;
 }
@@ -536,20 +569,109 @@ pthread_detach(pthread_t thread)
 
 
 int
-pthread_attr_init(pthread_attr_t *attr)
+pthread_getname_np(pthread_t thread, char *name, size_t len)
 {
+	pthread_t self;
 
-	attr->pta_magic = PT_ATTR_MAGIC;
-	attr->pta_flags = 0;
+	self = pthread__self();
+
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	if (thread->pt_magic != PT_MAGIC)
+		return EINVAL;
+
+	pthread_spinlock(self, &thread->pt_join_lock);
+	if (thread->pt_name == NULL)
+		name[0] = '\0';
+	else
+		strlcpy(name, thread->pt_name, len);
+	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	return 0;
 }
 
 
 int
-/*ARGSUSED*/
+pthread_setname_np(pthread_t thread, const char *name, void *arg)
+{
+	pthread_t self = pthread_self();
+	char *oldname, *cp, newname[PTHREAD_MAX_NAMELEN_NP];
+	int namelen;
+
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	if (thread->pt_magic != PT_MAGIC)
+		return EINVAL;
+
+	namelen = snprintf(newname, sizeof(newname), name, arg);
+	if (namelen >= PTHREAD_MAX_NAMELEN_NP)
+		return EINVAL;
+
+	cp = strdup(newname);
+	if (cp == NULL)
+		return ENOMEM;
+
+	pthread_spinlock(self, &thread->pt_join_lock);
+
+	if (thread->pt_state == PT_STATE_DEAD) {
+		pthread_spinunlock(self, &thread->pt_join_lock);
+		free(cp);
+		return EINVAL;
+	}
+
+	oldname = thread->pt_name;
+	thread->pt_name = cp;
+
+	pthread_spinunlock(self, &thread->pt_join_lock);
+
+	if (oldname != NULL)
+		free(oldname);
+
+	return 0;
+}
+
+
+static struct pthread_attr_private *
+pthread__attr_init_private(pthread_attr_t *attr)
+{
+	struct pthread_attr_private *p;
+
+	if ((p = attr->pta_private) != NULL)
+		return p;
+
+	p = malloc(sizeof(*p));
+	if (p != NULL) {
+		memset(p, 0, sizeof(*p));
+		attr->pta_private = p;
+	}
+	return p;
+}
+
+
+int
+pthread_attr_init(pthread_attr_t *attr)
+{
+
+	attr->pta_magic = PT_ATTR_MAGIC;
+	attr->pta_flags = 0;
+	attr->pta_private = NULL;
+
+	return 0;
+}
+
+
+int
 pthread_attr_destroy(pthread_attr_t *attr)
 {
+	struct pthread_attr_private *p;
+
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+
+	if ((p = attr->pta_private) != NULL)
+		free(p);
 
 	return 0;
 }
@@ -619,6 +741,50 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 		return EINVAL;
 
 	param->sched_priority = 0;
+
+	return 0;
+}
+
+
+int
+pthread_attr_getname_np(const pthread_attr_t *attr, char *name, size_t len,
+    void **argp)
+{
+	struct pthread_attr_private *p;
+
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+
+	if ((p = attr->pta_private) == NULL) {
+		name[0] = '\0';
+		if (argp != NULL)
+			*argp = NULL;
+	} else {
+		strlcpy(name, p->ptap_name, len);
+		if (argp != NULL)
+			*argp = p->ptap_namearg;
+	}
+
+	return 0;
+}
+
+
+int
+pthread_attr_setname_np(pthread_attr_t *attr, const char *name, void *arg)
+{
+	struct pthread_attr_private *p;
+	int namelen;
+
+	p = pthread__attr_init_private(attr);
+	if (p == NULL)
+		return ENOMEM;
+
+	namelen = snprintf(p->ptap_name, PTHREAD_MAX_NAMELEN_NP, name, arg);
+	if (namelen >= PTHREAD_MAX_NAMELEN_NP) {
+		p->ptap_name[0] = '\0';
+		return EINVAL;
+	}
+	p->ptap_namearg = arg;
 
 	return 0;
 }
