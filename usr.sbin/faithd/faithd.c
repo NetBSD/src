@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.3 1999/12/20 05:41:35 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.4 1999/12/20 15:35:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -229,7 +229,7 @@ main(int argc, char *argv[])
 	if (res->ai_family == AF_INET6) {
 		error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IPV6_FAITH): %s", ERRSTR);
 	}
 #endif
 #ifdef FAITH4
@@ -237,18 +237,18 @@ main(int argc, char *argv[])
 	if (res->ai_family == AF_INET) {
 		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_error("setsockopt: %s", ERRSTR);
+			exit_error("setsockopt(IP_FAITH): %s", ERRSTR);
 	}
 #endif
 #endif /* FAITH4 */
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_REUSEADDR): %s", ERRSTR);
 	
 	error = setsockopt(s_wld, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
@@ -452,14 +452,14 @@ play_child(int s_src, struct sockaddr *srcaddr)
 
 	error = setsockopt(s_dst, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_OOBINLINE): %s", ERRSTR);
 
 	error = setsockopt(s_src, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 	error = setsockopt(s_dst, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error == -1)
-		exit_error("setsockopt: %s", ERRSTR);
+		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 
 	error = connect(s_dst, sa4, sa4->sa_family);
 	if (error == -1)
@@ -513,6 +513,7 @@ faith_prefix(struct sockaddr *dst)
 	struct sockaddr_in *dst4;
 	struct sockaddr_in dstmap;
 
+	dst6 = (struct sockaddr_in6 *)dst;
 	if (dst->sa_family == AF_INET6
 	 && IN6_IS_ADDR_V4MAPPED(&dst6->sin6_addr)) {
 		/* ugly... */
