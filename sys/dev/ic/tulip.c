@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.16 1999/09/21 00:14:54 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.17 1999/09/25 00:27:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -171,6 +171,8 @@ void	tlp_pnic_mii_writereg __P((struct device *, int, int, int));
 
 void	tlp_2114x_preinit __P((struct tulip_softc *));
 void	tlp_pnic_preinit __P((struct tulip_softc *));
+
+void	tlp_21140_reset __P((struct tulip_softc *));
 
 u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 #define	tlp_mchash(addr)	(tlp_crc32((addr), ETHER_ADDR_LEN) &	\
@@ -1289,6 +1291,12 @@ tlp_reset(sc)
 		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
 
 	delay(1000);
+
+	/*
+	 * If the board has any GPIO reset sequences to issue, do them now.
+	 */
+	if (sc->sc_reset != NULL)
+		(*sc->sc_reset)(sc);
 }
 
 /*
@@ -2541,7 +2549,7 @@ tlp_sio_mii_sync(sc)
 	u_int32_t miirom;
 	int i;
 
-	miirom = MIIROM_MIIDIR|MIIROM_MDO;
+	miirom = MIIROM_MDO;
 
 	MII_EMIT(sc, miirom);
 	for (i = 0; i < 32; i++) {
@@ -2563,7 +2571,7 @@ tlp_sio_mii_sendbits(sc, data, nbits)
 {
 	u_int32_t miirom, i;
 
-	miirom = MIIROM_MIIDIR;
+	miirom = 0;
 	MII_EMIT(sc, miirom);
 
 	for (i = 1 << (nbits - 1); i != 0; i >>= 1) {
@@ -2597,25 +2605,28 @@ tlp_sio_mii_readreg(self, phy, reg)
 	tlp_sio_mii_sendbits(sc, phy, 5);
 	tlp_sio_mii_sendbits(sc, reg, 5);
 
+	/* Switch direction to PHY->host, without a clock transition. */
 	MII_EMIT(sc, MIIROM_MIIDIR);
-	MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
 
-	MII_EMIT(sc, 0);
-	MII_EMIT(sc, MIIROM_MDC);
+	MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
+	MII_EMIT(sc, MIIROM_MIIDIR);
 
 	err = TULIP_ISSET(sc, CSR_MIIROM, MIIROM_MDI);
 
-	MII_EMIT(sc, 0);
-	MII_EMIT(sc, MIIROM_MDC);
+	MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
+	MII_EMIT(sc, MIIROM_MIIDIR);
 
 	for (i = 0; i < 16; i++) {
 		val <<= 1;
-		MII_EMIT(sc, 0);
+		/* Read data prior to clock low-high transition. */
 		if (err == 0 && TULIP_ISSET(sc, CSR_MIIROM, MIIROM_MDI))
 			val |= 1;
-		MII_EMIT(sc, MIIROM_MDC);
+
+		MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
+		MII_EMIT(sc, MIIROM_MIIDIR);
 	}
 
+	/* Set direction to host->PHY, without a clock transition. */
 	MII_EMIT(sc, 0);
 
 	return (err ? 0 : val);
@@ -2719,28 +2730,32 @@ void
 tlp_2114x_preinit(sc)
 	struct tulip_softc *sc;
 {
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
 
 	/*
 	 * Always set the Must-Be-One bit.
 	 */
 	sc->sc_opmode |= OPMODE_MBO;
 
-	if (sc->sc_flags & TULIPF_HAS_MII) {
+	if (tm != NULL &&
+	    (tm->tm_type == TULIP_ROM_MB_21140_MII ||
+	     tm->tm_type == TULIP_ROM_MB_21142_MII)) {
 		/*
 		 * MII case: just set the port-select bit; we will never
 		 * be called during a media change.
 		 */
 		sc->sc_opmode |= OPMODE_PS;
-	} else {
-		/*
-		 * ENDEC/PCS mode; set according to selected media type.
-		 * XXX Auto-sense not supported yet.
-		 */
-		/*
-		 * XXX This sould come from the SROM.
-		 */
+		goto set_opmode;
 	}
 
+	/*
+	 * ENDEC/PCS mode; set according to selected media type.
+	 * XXX Auto-sense not supported yet.
+	 */
+	sc->sc_opmode |= tm->tm_opmode;
+
+ set_opmode:
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 }
 
@@ -2766,6 +2781,39 @@ tlp_pnic_preinit(sc)
 		 */
 		sc->sc_opmode |= OPMODE_PNIC_TBEN;
 	}
+}
+
+/*
+ * tlp_21140_reset:
+ *
+ *	Issue a reset sequence on the 21140 via the GPIO facility.
+ */
+void
+tlp_21140_reset(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
+	int i;
+
+	/* First, set the direction on the GPIO pins. */
+	TULIP_WRITE(sc, CSR_GPP, GPP_GPC|sc->sc_gp_dir);
+
+	/* Now, issue the reset sequence. */
+	for (i = 0; i < tm->tm_reset_length; i++) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_GPP, sc->sc_srom[tm->tm_reset_offset + i]);
+	}
+
+	/* Now, issue the selection sequence. */
+	for (i = 0; i < tm->tm_gp_length; i++) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_GPP, sc->sc_srom[tm->tm_gp_offset + i]);
+	}
+
+	/* If there were no sequences, just lower the pins. */
+	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0)
+		TULIP_WRITE(sc, CSR_GPP, 0);
 }
 
 /*****************************************************************************
@@ -2949,7 +2997,8 @@ tlp_21041_tmsw_init(sc)
 	if (i == devcnt)
 		goto not_isv_srom;
 
-	leaf_offset = sc->sc_srom[TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(i)];
+	leaf_offset = TULIP_ROM_GETW(sc->sc_srom,
+	    TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(i));
 	mb_offset = leaf_offset + TULIP_ROM_IL_MEDIAn_BLOCK_BASE;
 	m_cnt = sc->sc_srom[leaf_offset + TULIP_ROM_IL_MEDIA_COUNT];
 
@@ -3206,6 +3255,307 @@ tlp_21040_21041_tmsw_set(sc)
 	}
 
 	return (0);
+}
+
+/*
+ * DECchip 2114x ISV media switch.
+ * XXX Currently only handles 21140[A] MII.
+ */
+void	tlp_2114x_isv_tmsw_init __P((struct tulip_softc *));
+void	tlp_2114x_isv_tmsw_get __P((struct tulip_softc *, struct ifmediareq *));
+int	tlp_2114x_isv_tmsw_set __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_2114x_isv_mediasw = {
+	tlp_2114x_isv_tmsw_init, tlp_2114x_isv_tmsw_get, tlp_2114x_isv_tmsw_set
+};
+
+void
+tlp_2114x_isv_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifmedia_entry *ife;
+	struct mii_softc *phy;
+	struct tulip_2114x_media *tm;
+	int i, devcnt, leaf_offset, m_cnt, type, length, seen, defmedia;
+	u_int8_t *cp, *ncp;
+
+	seen = defmedia = 0;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	devcnt = sc->sc_srom[TULIP_ROM_CHIP_COUNT];
+	for (i = 0; i < devcnt; i++) {
+		if (sc->sc_srom[TULIP_ROM_CHIP_COUNT] == 1)
+			break;
+		if (sc->sc_srom[TULIP_ROM_CHIPn_DEVICE_NUMBER(i)] ==
+		    sc->sc_devno)
+			break;
+	}
+
+	if (i == devcnt) {
+		printf("%s: unable to locate info leaf in SROM\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	leaf_offset = TULIP_ROM_GETW(sc->sc_srom,
+	    TULIP_ROM_CHIPn_INFO_LEAF_OFFSET(i));
+
+	/* XXX SELECT CONN TYPE */
+
+	cp = &sc->sc_srom[leaf_offset + TULIP_ROM_IL_MEDIA_COUNT];
+
+	/*
+	 * On some chips, the first thing in the Info Leaf is the
+	 * GPIO pin direction data.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21140:
+	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_MX98713:
+	case TULIP_CHIP_MX98713A:
+	case TULIP_CHIP_AX88140:
+	case TULIP_CHIP_AX88141:
+		sc->sc_gp_dir = *cp++;
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	/* Get the media count. */
+	m_cnt = *cp++;
+
+	for (; m_cnt != 0; cp = ncp, m_cnt--) {
+		/*
+		 * Determine the type and length of this media block.
+		 */
+		if ((*cp & 0x80) == 0) {
+			length = 4;
+			type = TULIP_ROM_MB_21140_GPR;
+		} else {
+			length = (*cp++ & 0x7f) - 1;
+			type = *cp++ & 0x3f;
+		}
+
+		/* Compute the start of the next block. */
+		ncp = cp + length;
+
+		/* Now, parse the block. */
+		switch (type) {
+		case TULIP_ROM_MB_21140_GPR:
+			printf("%s: 21140 GPR block\n", sc->sc_dev.dv_xname);
+			break;
+
+		case TULIP_ROM_MB_21140_MII:
+			seen |= 1 << TULIP_ROM_MB_21140_MII;
+
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
+			memset(tm, 0, sizeof(*tm));
+
+			tm->tm_type = TULIP_ROM_MB_21140_MII;
+			tm->tm_get = tlp_mii_getmedia;
+			tm->tm_set = tlp_mii_setmedia;
+
+			sc->sc_reset = tlp_21140_reset;
+
+			/* First is the PHY number. */
+			tm->tm_phyno = *cp++;
+
+			/* Next is the MII select sequence length and offset. */
+			tm->tm_gp_length = *cp++;
+			tm->tm_gp_offset = cp - &sc->sc_srom[0];
+			cp += tm->tm_gp_length;
+
+			/* Next is the MII reset sequence length and offset. */
+			tm->tm_reset_length = *cp++;
+			tm->tm_reset_offset = cp - &sc->sc_srom[0];
+			cp += tm->tm_reset_length;
+
+			/*
+			 * The following items are left in the media block
+			 * that we don't particularly care about:
+			 *
+			 *	capabilities		W
+			 *	advertisement		W
+			 *	full duplex		W
+			 *	tx threshold		W
+			 *
+			 * These appear to be bits in the PHY registers,
+			 * which our MII code handles on its own.
+			 */
+
+			/*
+			 * Before we probe the MII bus, we need to reset
+			 * it and issue the selection sequence.
+			 */
+
+			/* Set the direction of the pins... */
+			TULIP_WRITE(sc, CSR_GPP, GPP_GPC|sc->sc_gp_dir);
+
+			for (i = 0; i < tm->tm_reset_length; i++) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_GPP,
+				    sc->sc_srom[tm->tm_reset_offset + i]);
+			}
+
+			for (i = 0; i < tm->tm_gp_length; i++) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_GPP,
+				    sc->sc_srom[tm->tm_gp_offset + i]);
+			}
+
+			/* If there were no sequences, just lower the pins. */
+			if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_GPP, 0);
+			}
+
+			/*
+			 * Now, probe the MII for the PHY.  Note, we know
+			 * the location of the PHY on the bus, but we don't
+			 * particularly care; the MII code just likes to
+			 * search the whole thing anyhow.
+			 */
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+
+			/*
+			 * Now, search for the PHY we hopefully just
+			 * configured.  If it's not configured into the
+			 * kernel, we lose.  The PHY's default media always
+			 * takes priority.
+			 */
+			for (phy = LIST_FIRST(&sc->sc_mii.mii_phys);
+			     phy != NULL;
+			     phy = LIST_NEXT(phy, mii_list))
+				if (phy->mii_offset == tm->tm_phyno)
+					break;
+			if (phy == NULL) {
+				printf("%s: unable to configure MII\n",
+				    sc->sc_dev.dv_xname);
+				break;
+			}
+
+			sc->sc_flags |= TULIPF_HAS_MII;
+			sc->sc_tick = tlp_mii_tick;
+			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0,
+			    phy->mii_inst);
+
+			/*
+			 * Okay, now that we've found the PHY and the MII
+			 * layer has added all of the media associated
+			 * with that PHY, we need to traverse the media
+			 * list, and add our `tm' to each entry's `aux'
+			 * pointer.
+			 *
+			 * We do this by looking for media with our
+			 * PHY's `instance'.
+			 */
+			for (ife = LIST_FIRST(&sc->sc_mii.mii_media.ifm_list);
+			     ife != NULL;
+			     ife = LIST_NEXT(ife, ifm_list)) {
+				if (IFM_INST(ife->ifm_media) != phy->mii_inst)
+					continue;
+				ife->ifm_aux = tm;
+			}
+			break;
+
+		case TULIP_ROM_MB_21142_SIA:
+			printf("%s: 21142 SIA block\n", sc->sc_dev.dv_xname);
+			break;
+
+		case TULIP_ROM_MB_21142_MII:
+			printf("%s: 21142 MII block\n", sc->sc_dev.dv_xname);
+			break;
+
+		case TULIP_ROM_MB_21143_SYM:
+			printf("%s: 21143 SYM block\n", sc->sc_dev.dv_xname);
+			break;
+
+		case TULIP_ROM_MB_21143_RESET:
+			printf("%s: 21143 reset block\n", sc->sc_dev.dv_xname);
+			break;
+
+		default:
+			printf("%s: unknown ISV media block type 0x%02x\n",
+			    sc->sc_dev.dv_xname, type);
+		}
+	}
+
+	/*
+	 * Deal with the case where no media is configured.
+	 */
+	if (LIST_FIRST(&sc->sc_mii.mii_media.ifm_list) == NULL) {
+		printf("%s: no media found!\n", sc->sc_dev.dv_xname);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		defmedia = IFM_ETHER|IFM_NONE;
+		goto set_default;
+	}
+
+	/*
+	 * Display any non-MII media we've located.
+	 */
+	if (seen & (1 << TULIP_ROM_MB_21140_GPR)) {
+		printf("%s: GPR media: ", sc->sc_dev.dv_xname);
+		/* XXX */
+		printf("\n");
+	}
+
+	if (seen & (1 << TULIP_ROM_MB_21142_SIA)) {
+		printf("%s: SIA media: ", sc->sc_dev.dv_xname);
+		/* XXX */
+		printf("\n");
+	}
+
+	if (seen & (1 << TULIP_ROM_MB_21143_SYM)) {
+		printf("%s: SYM media: ", sc->sc_dev.dv_xname);
+		/* XXX */
+		printf("\n");
+	}
+
+	/*
+	 * XXX Display default media if not MII.
+	 */
+
+ set_default:
+	/*
+	 * Set the default media.
+	 *
+	 * XXX Should make some attempt to care about the SROM default
+	 * setting, but we don't.
+	 */
+#ifdef DIAGNOSTIC
+	if (defmedia == 0)
+		panic("tlp_2114x_isv_tmsw_init: no default media");
+#endif
+	ifmedia_set(&sc->sc_mii.mii_media, defmedia);
+}
+
+void
+tlp_2114x_isv_tmsw_get(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
+
+	(*tm->tm_get)(sc, ifmr);
+}
+
+int
+tlp_2114x_isv_tmsw_set(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_2114x_media *tm = ife->ifm_aux;
+
+	return ((*tm->tm_set)(sc));
 }
 
 /*
