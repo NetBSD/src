@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.307 2004/06/28 08:39:07 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.308 2004/06/30 21:36:26 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4604,4 +4604,84 @@ sys/arch/i386/conf/INSTALL			1.241
 
 	Add mtd (Myson MTD803 3-in-1 Ethernet) driver.
 	[martin, ticket #564]
+
+sys/dev/usb/umass_quirks.c				1.66
+	The Sony Clie reports that it's SFF-8070 when it's really UFI.
+	This quirk allows the memory stick port to be used as a memory
+	stick reader.
+	[gendalia, ticket #565]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c	1.7
+	Support absolute mouse position events.
+	Fix a bug that caused an entire batch of events to be thrown out when
+	one of an unknown or invalid type was encountered.
+	[tsarna, ticket #566]
+
+sys/arch/acorn26/conf/GENERIC				1.20
+sys/arch/acorn32/conf/GENERIC				1.41
+sys/arch/alpha/conf/GENERIC				1.245
+sys/arch/amd64/conf/GENERIC				1.27
+sys/arch/amiga/conf/GENERIC.in				1.22
+sys/arch/arc/conf/GENERIC				1.102
+sys/arch/atari/conf/GENERIC.in				1.37
+sys/arch/bebox/conf/GENERIC				1.73
+sys/arch/cats/conf/GENERIC				1.65
+sys/arch/cesfic/conf/GENERIC				1.24
+sys/arch/cobalt/conf/GENERIC				1.59
+sys/arch/dreamcast/conf/GENERIC				1.42
+sys/arch/hp300/conf/GENERIC				1.101
+sys/arch/hp700/conf/GENERIC				1.25
+sys/arch/hpcmips/conf/GENERIC				1.151
+sys/arch/hpcsh/conf/GENERIC				1.37
+sys/arch/i386/conf/GENERIC				1.616
+sys/arch/i386/conf/GENERIC_LAPTOP			1.100
+sys/arch/i386/conf/GENERIC_PS2TINY			1.28
+sys/arch/i386/conf/GENERIC_TINY				1.66
+sys/arch/ibmnws/conf/GENERIC				1.7
+sys/arch/luna68k/conf/GENERIC				1.46
+sys/arch/mac68k/conf/GENERIC				1.145
+sys/arch/mac68k/conf/GENERICSBC				1.30
+sys/arch/macppc/conf/GENERIC				1.178
+sys/arch/mipsco/conf/GENERIC				1.35
+sys/arch/mmeye/conf/GENERIC				1.56
+sys/arch/mvme68k/conf/GENERIC				1.47
+sys/arch/netwinder/conf/GENERIC				1.49
+sys/arch/news68k/conf/GENERIC				1.51
+sys/arch/news68k/conf/GENERIC_TINY			1.25
+sys/arch/newsmips/conf/GENERIC				1.66
+sys/arch/next68k/conf/GENERIC				1.77
+sys/arch/ofppc/conf/GENERIC				1.66
+sys/arch/pc532/conf/GENERIC				1.39
+sys/arch/pdp10/conf/GENERIC				1.4
+sys/arch/playstation2/conf/GENERIC			1.5
+sys/arch/pmax/conf/GENERIC				1.118
+sys/arch/prep/conf/GENERIC				1.78
+sys/arch/sandpoint/conf/GENERIC.sandpoint		1.15
+sys/arch/sbmips/conf/GENERIC				1.27
+sys/arch/sgimips/conf/GENERIC32_IP2x			1.12
+sys/arch/sgimips/conf/GENERIC32_IP3x			1.9
+sys/arch/shark/conf/GENERIC				1.31
+sys/arch/sparc/conf/GENERIC				1.156
+sys/arch/sparc64/conf/GENERIC32				1.84
+sys/arch/sun2/conf/GENERIC				1.30
+sys/arch/sun3/conf/GENERIC				1.105
+sys/arch/sun3/conf/GENERIC3X				1.62
+sys/arch/vax/conf/GENERIC				1.122
+sys/arch/x68k/conf/GENERIC				1.97
+sys/arch/xen/conf/GENERIC				1.13
+sys/arch/amiga/conf/AMIGA				1.67
+sys/arch/amiga/conf/DRACO				1.83
+sys/arch/amiga/conf/GENERIC				1.203
+sys/arch/amiga/conf/INSTALL				1.44
+sys/arch/amiga/conf/WSCONS				1.21
+sys/arch/atari/conf/ATARITT				1.60
+sys/arch/atari/conf/BOOT				1.57
+sys/arch/atari/conf/BOOTX				1.52
+sys/arch/atari/conf/HADES				1.52
+sys/arch/atari/conf/FALCON				1.61
+sys/arch/atari/conf/MILAN-ISAIDE			1.28
+sys/arch/atari/conf/MILAN-PCIIDE			1.31
+	Add (commented out) ALTQ options to all GENERIC-like files.
+	Regenerate from master config files.
+	[abs, ticket #567]
 
