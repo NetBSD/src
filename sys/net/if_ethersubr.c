@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.114.2.1 2004/06/07 06:30:11 jdc Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.114.2.2 2004/07/14 11:08:01 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.114.2.1 2004/06/07 06:30:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.114.2.2 2004/07/14 11:08:01 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -211,7 +211,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	short mflags;
 
 #ifdef MBUFTRACE
-	m_claim(m, ifp->if_mowner);
+	m_claimm(m, ifp->if_mowner);
 #endif
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -672,7 +672,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 #ifdef MBUFTRACE
-	m_claim(m, &ec->ec_rx_mowner);
+	m_claimm(m, &ec->ec_rx_mowner);
 #endif
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
