@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.1 2005/01/11 00:57:56 joff Exp $ */
+/* $NetBSD: hd44780var.h,v 1.2 2005/02/04 05:58:44 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -74,6 +74,14 @@ struct hd44780_info {
 
 #ifdef _KERNEL
 
+struct  hlcd_screen {
+	int hlcd_curon;
+	int hlcd_curx;
+	int hlcd_cury;
+	u_char *image;			/* characters of screen */
+	struct hd44780_chip *hlcd_sc;
+};
+
 /* HLCD driver structure */
 struct hd44780_chip {
 #define HD_8BIT			0x01	/* 8-bit if set, 4-bit otherwise */
@@ -84,8 +92,8 @@ struct hd44780_chip {
 #define HD_TIMEDOUT		0x20	/* lcd has recently stopped talking */
 	u_char sc_flags;
 
-	u_char sc_rows;			/* visible rows */
-	u_char sc_vrows;		/* virtual rows (normally 40) */
+	u_char sc_cols;			/* visible columns */
+	u_char sc_vcols;		/* virtual columns (normally 40) */
 	u_char sc_dev_ok;
 
 	bus_space_tag_t sc_iot;
@@ -94,6 +102,9 @@ struct hd44780_chip {
 	bus_space_handle_t sc_iodr;	/* data register */
 
 	struct device *sc_dev;		/* Pointer to parent device */
+	struct hlcd_screen sc_screen;	/* currently displayed screen copy */
+	struct hlcd_screen *sc_curscr;	/* active screen */
+	struct callout redraw;		/* wsdisplay refresh/redraw timer */
 
 	/* Generic write/read byte entries. */
 	void     (* sc_writereg)(struct hd44780_chip *, u_int32_t, u_int8_t);
