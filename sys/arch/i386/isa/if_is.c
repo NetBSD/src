@@ -68,13 +68,9 @@
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-/*
- * Ethernet software status per interface.
- *
- * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, its address, ...
- */
+char *card_type[] = {"unknown", "BICC Isolan", "NE2100"};
+char *chip_type[] = ("unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
+
 struct	is_softc {
 	struct	device sc_dev;
 	struct	isadev sc_id;
@@ -82,6 +78,11 @@ struct	is_softc {
 
 	struct	arpcom sc_arpcom;	/* common ethernet gunk */
 	u_short	sc_iobase;
+	u_short	sc_rap, sc_rdp;
+	int	sc_chip, sc_card;
+#ifdef ISDEBUG
+	int	sc_debug;
+#endif
 	struct	init_block *sc_init;	/* Lance initialisation block */
 	struct	mds *sc_rd, *sc_td;
 	u_char	*sc_rbuf, *sc_tbuf;
@@ -90,11 +91,10 @@ struct	is_softc {
 	caddr_t	sc_bpf;			/* BPF "magic cookie" */
 };
 
-#ifdef ISDEBUG
-int is_debug;
-#endif
-
-int is_probe __P((struct device *, struct cfdata *, void *));
+int is_probe __P((struct device *, struct device *, void *));
+int ne2100_probe __P((struct isa_attach_args *, struct is_softc *));
+int bicc_probe __P((struct isa_attach_args *, struct is_softc *));
+int lance_probe __P((struct is_softc *));
 void is_forceintr __P((void *));
 void is_attach __P((struct device *, struct device *, void *));
 int is_intr __P((void *));
@@ -105,8 +105,8 @@ struct cfdriver iscd =
 int is_ioctl __P((struct ifnet *, int, caddr_t));
 void is_start __P((struct ifnet *));
 void is_watchdog __P((short));
-void iswrcsr __P((u_short, u_short, u_short));
-u_short isrdcsr __P((u_short, u_short));
+void iswrcsr __P((struct is_softc *, u_short, u_short));
+u_short isrdcsr __P((struct is_softc *, u_short));
 void is_init __P((struct is_softc *));
 void init_mem __P((struct is_softc *));
 void is_reset __P((struct is_softc *));
@@ -126,66 +126,158 @@ struct trailer_header {
 };
 
 void
-iswrcsr(iobase, port, val)
-	u_short iobase;
+iswrcsr(sc, port, val)
+	struct is_softc *sc;
 	u_short port;
 	u_short val;
 {
 
-	outw(iobase+RAP,port);
-	outw(iobase+RDP,val);
+	outw(sc->sc_rap, port);
+	outw(sc->sc_rdp, val);
 }
 
 u_short
-isrdcsr(iobase, port)
-	u_short iobase;
+isrdcsr(sc, port)
+	struct is_softc *sc;
 	u_short port;
 {
 	
-	outw(iobase+RAP,port);
-	return(inw(iobase+RDP));
+	outw(sc->sc_rap, port);
+	return(inw(sc->sc_rdp));
 } 
 
 int
-is_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
+is_probe(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	struct is_softc *sc = (struct is_softc *)self;
 
-	if (iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
+	if (ia->ia_iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
 		return 0;
 
-	/* stop the lance chip, put it in known state */	
-	iswrcsr(iobase, 0, STOP);
-	delay(100);
+	/*
+	 * It's impossible to do a non-invasive probe of the LANCE and
+	 * PCnet-ISA.  The LANCE requires setting the STOP bit to access
+	 * the registers and the PCnet-ISA address port resets to an
+	 * unknown state.
+	 *
+	 * Check for BICC cards first since for the NE2100 and PCnet-ISA
+	 * cards this write will hit the address PROM.
+	 */
 
-	/* is there a lance? */
-	iswrcsr(iobase, 3, 0xffff);
-	if (isrdcsr(iobase, 3) != 7) {
-		return 0;
-	}
-	iswrcsr(iobase, 3, 0);
+	if (bicc_probe(ia, sc))
+		goto found;
+	if (ne2100_probe(ia, sc))
+		goto found;
+	return 0;
 
+found:
 	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(is_forceintr, aux);
+		ia->ia_irq = isa_discoverintr(is_forceintr, sc);
 		if (ia->ia_irq == IRQNONE)
 			return 0;
-		if ((isrdcsr(iobase, 0) & IDON) == 0) {
+		if ((isrdcsr(sc, 0) & IDON) == 0) {
 			printf("is%d: failed to initialize\n", cf->cf_unit);
-#ifdef DIAGNOSTIC
 			printf("is%d: state is %04x\n", cf->cf_unit,
-			       isrdcsr(iobase, 0));
-#endif
+			       isrdcsr(sc, 0));
 			return 0;
 		}
 		/* had our fun; turn it off again */
-		iswrcsr(iobase, 0, IDON);
+		iswrcsr(sc, 0, IDON);
 	}
 
 	return 1;
+}
+
+int
+ne2100_probe(ia, sc)
+	struct isa_attach_args *ia;
+	struct is_softc *sc;
+{
+	u_short iobase = ia->ia_iobase;
+	int i;
+
+	sc->sc_iobase = iobase;
+	sc->sc_rap = iobase + NE2100_RAP;
+	sc->sc_rdp = iobase + NE2100_RDP;
+	sc->sc_card = NE2100;
+
+	if (!(sc->sc_chip = lance_probe(sc)))
+		return 0;
+
+	/*
+	 * Extract the physical MAC address from ROM
+	 */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
+
+	ia->ia_iosize = 24;
+	return 1;
+}
+
+int
+bicc_probe(ia, sc)
+	struct isa_attach_args *ia;
+	struct is_softc *sc;
+{
+	u_short iobase = ia->ia_iobase;
+	int i;
+
+	sc->sc_iobase = iobase;
+	sc->sc_rap = iobase + BICC_RAP;
+	sc->sc_rdp = iobase + BICC_RDP;
+	sc->sc_card = BICC;
+
+	if (!(sc->sc_chip = lance_probe(sc)))
+		return 0;
+
+	/*
+	 * Extract the physical MAC address from ROM
+	 */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + (i * 2));
+
+	ia->ia_iosize = 16;
+	return 1;
+}
+
+/*
+ * Determine which chip is present on the card.
+ */
+int
+lance_probe(sc)
+	struct is_softc *sc;
+{
+	int type;
+
+	/* stop the lance chip, put it in known state */	
+	iswrcsr(sc, 0, STOP);
+	delay(100);
+
+	if (isrdcsr(sc, 0) != STOP)
+		return 0;
+
+	/*
+	 * Which bits are settable will depend on the type of chip.
+	 */
+	iswrcsr(sc, 3, 0xffff);
+
+	switch (isrdcsr(sc, 3)) {
+	case LANCE_MASK:
+		type = LANCE;
+		break;
+	case PCnet_ISA_MASK:
+		type = PCnet_ISA;
+		break;
+	default:
+		type = 0;
+		break;
+	}
+
+	iswrcsr(sc, 3, 0);
+	return type;
 }
 
 /*
@@ -196,8 +288,7 @@ void
 is_forceintr(aux)
 	void *aux;
 {
-	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	struct is_softc *sc = aux;
 	struct _init {
 		struct init_block i_init;
 		struct mds i_md;
@@ -214,14 +305,14 @@ is_forceintr(aux)
 	init.i_init.tlen = init.i_init.rlen = (kvtop(&init.i_md) >> 16) & 0xff;
 
 	/* No byte swapping etc */
-	iswrcsr(iobase, 3, 0);
+	iswrcsr(sc, 3, 0);
 
 	/* Give lance the physical address of its memory area */
-	iswrcsr(iobase, 1, kvtop(init));
-	iswrcsr(iobase, 2, (kvtop(init) >> 16) & 0xff);
+	iswrcsr(sc, 1, kvtop(init));
+	iswrcsr(sc, 2, (kvtop(init) >> 16) & 0xff);
 
 	/* OK, let's try and initialise the Lance */
-	iswrcsr(iobase, 0, INIT|INEA);
+	iswrcsr(sc, 0, INIT|INEA);
 
 	/* expect an interrupt when it's done */
 }
@@ -238,17 +329,9 @@ is_attach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct is_softc *sc = (struct is_softc *)self;
-	u_short iobase = ia->ia_iobase;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
-	u_char i;
-
-	sc->sc_iobase = iobase;
-
-	/* Extract board address */
-	for(i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + (i * 2));
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iscd.cd_name;
@@ -316,7 +399,9 @@ is_attach(parent, self, aux)
 		bcopy(sc->sc_arpcom.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
 	}
 
-	printf (": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": %s %s, address %s\n",
+	       ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	       card_type[sc->sc_card], chip_type[sc->sc_chip]);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -419,7 +504,7 @@ is_stop(sc)
 	struct is_softc *sc;
 {
 
-	iswrcsr(sc->sc_iobase, 0, STOP);
+	iswrcsr(sc, 0, STOP);
 }
 
 /*
@@ -431,7 +516,6 @@ is_init(sc)
 	struct is_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_short iobase = sc->sc_iobase;
 	int s;
 	register i;
 
@@ -453,23 +537,23 @@ is_init(sc)
 	init_mem(sc);
 
 	/* No byte swapping etc */
-	iswrcsr(iobase, 3, 0);
+	iswrcsr(sc, 3, 0);
 
 	/* Give lance the physical address of its memory area */
-	iswrcsr(iobase, 1, kvtop(sc->sc_init));
-	iswrcsr(iobase, 2, (kvtop(sc->sc_init) >> 16) & 0xff);
+	iswrcsr(sc, 1, kvtop(sc->sc_init));
+	iswrcsr(sc, 2, (kvtop(sc->sc_init) >> 16) & 0xff);
 
 	/* OK, let's try and initialise the Lance */
-	iswrcsr(iobase, 0, INIT);
+	iswrcsr(sc, 0, INIT);
 
 	/* Wait for initialisation to finish */
 	for(i = 0; i < 1000; i++)
-		if (isrdcsr(iobase, 0) & IDON)
+		if (isrdcsr(sc, 0) & IDON)
 			break;
 
-	if (isrdcsr(iobase, 0) & IDON) {
+	if (isrdcsr(sc, 0) & IDON) {
 		/* start lance */
-		iswrcsr(iobase, 0, STRT|IDON|INEA);
+		iswrcsr(sc, 0, STRT|IDON|INEA);
 		ifp->if_flags |= IFF_RUNNING;
         	ifp->if_flags &= ~IFF_OACTIVE;
 		is_start(ifp);
@@ -504,7 +588,7 @@ is_start(ifp)
 	if (++sc->sc_no_td >= NTBUF) {
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;	
 #ifdef ISDEBUG
-		if (is_debug)	
+		if (sc->sc_debug)	
 			printf("no_td = %x, last_td = %x\n",sc->sc_no_td, sc->sc_last_td);
 #endif
 		return;
@@ -604,11 +688,11 @@ is_start(ifp)
 	cdm->mcnt = 0;
 
 #ifdef ISDEBUG
-	if (is_debug)
+	if (sc->sc_debug)
 		xmit_print(ifp->if_unit, sc->sc_last_td);
 #endif
 		
-	iswrcsr(sc->sc_iobase, 0, TDMD|INEA);
+	iswrcsr(sc, 0, TDMD|INEA);
 	if (++sc->sc_last_td >= NTBUF)
 		sc->sc_last_td = 0;
 
@@ -627,7 +711,7 @@ is_intr(arg)
 	register struct is_softc *sc = arg;
 	u_short isr;
 
-	isr = isrdcsr(sc->sc_iobase, 0);
+	isr = isrdcsr(sc, 0);
 	if ((isr & INTR) == 0)
 		return 0;
 
@@ -647,7 +731,7 @@ is_intr(arg)
 			}
 			if (isr & MERR)
 				printf("%s: MERR\n", sc->sc_dev.dv_xname);
-			iswrcsr(sc->sc_iobase, 0, BABL|CERR|MISS|MERR|INEA);
+			iswrcsr(sc, 0, BABL|CERR|MISS|MERR|INEA);
 		}
 		if ((isr & RXON) == 0) {
 			printf("%s: !RXON\n", sc->sc_dev.dv_xname);
@@ -670,11 +754,11 @@ is_intr(arg)
 		if (isr & TINT) {
 			/* reset watchdog timer */
 			sc->sc_arpcom.ac_if.if_timer = 0;
-			iswrcsr(sc->sc_iobase, 0, TINT|INEA);
+			iswrcsr(sc, 0, TINT|INEA);
 			is_tint(sc);
 		}
 
-		isr = isrdcsr(sc->sc_iobase, 0);
+		isr = isrdcsr(sc, 0);
 	} while (isr & INTR);
 
 	return 1;
@@ -693,7 +777,7 @@ is_tint(sc)
 			i += NTBUF;
 		cdm = sc->sc_td+i;
 #ifdef ISDEBUG
-		if (is_debug)
+		if (sc->sc_debug)
 			printf("trans cdm = %x\n",cdm);
 #endif
 		if (cdm->flags & OWN) {
@@ -724,14 +808,14 @@ is_rint(sc)
 	/* out of sync with hardware, should never happen */
 	if (cdm->flags & OWN) {
 		printf("%s: error: out of sync\n", sc->sc_dev.dv_xname);
-		iswrcsr(sc->sc_iobase, 0, RINT|INEA);
+		iswrcsr(sc, 0, RINT|INEA);
 		return;
 	}
 
 	/* process all buffers with valid data */
 	while ((cdm->flags & OWN) == 0) {
 		/* clear interrupt to avoid race condition */
-		iswrcsr(sc->sc_iobase, 0, RINT|INEA);
+		iswrcsr(sc, 0, RINT|INEA);
 		if (cdm->flags & ERR) {
 			if (cdm->flags & FRAM)
 				printf("%s: FRAM\n", sc->sc_dev.dv_xname);
@@ -743,7 +827,7 @@ is_rint(sc)
 				printf("%s: RBUFF\n", sc->sc_dev.dv_xname);
 		} else if (cdm->flags & (STP|ENP) != (STP|ENP)) {
 			do {
-				iswrcsr(sc->sc_iobase, 0, RINT|INEA);
+				iswrcsr(sc, 0, RINT|INEA);
 				cdm->mcnt = 0;
 				cdm->flags |= OWN;	
 				NEXTRDS;
@@ -756,7 +840,7 @@ is_rint(sc)
 			}
 		} else {
 #ifdef ISDEBUG
-			if (is_debug)
+			if (sc->sc_debug)
 				recv_print(sc, sc->sc_last_rd);
 #endif
 			is_read(sc, sc->sc_rbuf + (BUFSIZE*rmd), (int)cdm->mcnt);
@@ -767,7 +851,7 @@ is_rint(sc)
 		cdm->mcnt = 0;
 		NEXTRDS;
 #ifdef ISDEBUG
-		if (is_debug)
+		if (sc->sc_debug)
 			printf("last_rd = %x, cdm = %x\n", sc->sc_last_rd, cdm);
 #endif
 	} /* while */
@@ -824,8 +908,6 @@ is_read(sc, buf, len)
 	m = is_get(buf, len, off, &sc->sc_arpcom.ac_if);
 	if (m == 0)
 		return;
-
-	sc->sc_arpcom.ac_if.if_ipackets++;
 
 #if NBPFILTER > 0
 	/*
@@ -1023,9 +1105,9 @@ is_ioctl(ifp, cmd, data)
 		}
 #ifdef ISDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
-			is_debug = 1;
+			sc->sc_debug = 1;
 		else
-			is_debug = 0;
+			sc->sc_debug = 0;
 #endif
 		break;
 
@@ -1059,7 +1141,7 @@ recv_print(sc, no)
 	rmd = sc->sc_rd+no;
 	len = rmd->mcnt;
 	printf("%s: receive buffer %d, len = %d\n",sc->sc_dev.dv_xname, no, len);
-	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc->sc_iobase, 0));
+	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc, 0));
 	for (i = 0; i < len; i++) {
 		if (!printed) {
 			printed=1;
@@ -1083,7 +1165,7 @@ xmit_print(sc, no)
 	rmd = (sc->sc_td+no);
 	len = -(rmd->bcnt);
 	printf("%s: transmit buffer %d, len = %d\n", sc->sc_dev.dv_xname, no, len);
-	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc->sc_iobase, 0));
+	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc, 0));
 	printf("%s: addr %x, flags %x, bcnt %x, mcnt %x\n", sc->sc_dev.dv_xname,
 	       rmd->addr,rmd->flags,rmd->bcnt,rmd->mcnt);
 	for (i = 0; i < len; i++)  {
