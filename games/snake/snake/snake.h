@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.9 1997/10/14 01:02:53 lukem Exp $	*/
+/*	$NetBSD: snake.h,v 1.10 1998/09/13 15:27:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -89,7 +89,7 @@ void		clear __P((void));
 void		cook __P((void));
 void		cr __P((void));
 void		delay __P((int));
-void		done __P((void));
+void		done __P((void)) __attribute__((__noreturn__));
 void		down __P((void));
 void		drawbox __P((void));
 void		flushi __P((void));
@@ -118,7 +118,7 @@ void		snap __P((void));
 void		snap __P((void));
 void		snrand __P((struct point *));
 void		spacewarp __P((int));
-void		stop __P((int));
+void		stop __P((int)) __attribute__((__noreturn__));
 int		stretch __P((struct point *));
 int		stretch __P((struct point *));
 void		surround __P((struct point *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.7 1997/10/11 07:48:58 lukem Exp $	*/
+/*	$NetBSD: strfile.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.7 1997/10/11 07:48:58 lukem Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ void	getargs __P((int, char *[]));
 int	main __P((int, char *[]));
 void	randomize __P((void));
 char   *unctrl __P((char));
-void	usage __P((void));
+void	usage __P((void)) __attribute__((__noreturn__));
 
 
 /*
