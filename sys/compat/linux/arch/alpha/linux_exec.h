@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2000/11/17 03:55:18 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.3 2001/06/22 05:12:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _ALPHA_LINUX_EXEC_H
 
 #include <sys/exec_aout.h>
+#include <sys/exec_elf.h>
 
 #define LINUX_M_ALPHA		MID_ALPHA
 #define LINUX_MID_MACHINE	LINUX_M_ALPHA
