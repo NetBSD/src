@@ -37,48 +37,19 @@
  *
  *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	from: @(#)reg.h	7.2 (Berkeley) 11/3/90
- *	$Id: reg.h,v 1.4 1993/12/08 22:46:15 mycroft Exp $
+ *	$Id: reg.h,v 1.5 1994/01/06 16:50:26 mycroft Exp $
  */
+
+#ifndef _HP300_REG_H_
+#define _HP300_REG_H_
 
 /*
- * Location of the users' stored
- * registers relative to D0.
- * Usage is u.u_ar0[XX].
+ * Register set accessible via /proc/$pid/reg and ptrace()
  */
-#define	D0	(0)
-#define	D1	(1)
-#define	D2	(2)
-#define	D3	(3)
-#define	D4	(4)
-#define	D5	(5)
-#define	D6	(6)
-#define	D7	(7)
-#define	A0	(8)
-#define	A1	(9)
-#define	A2	(10)
-#define	A3	(11)
-#define	A4	(12)
-#define	A5	(13)
-#define	A6	(14)
-#define	A7	(15)
+struct reg {
+	int	r_regs[16];	/* D0-D7/A0-A7 */
+	int	r_pc;
+	int	r_sr;
+};
 
-#define	SP	A7
-#define	PC	(17)
-#define	PS	(16)
-
-#define	NIPCREG 17
-
-#ifdef IPCREG
-int ipcreg[NIPCREG] =
-	{D0,D1,D2,D3,D4,D5,D6,D7,A0,A1,A2,A3,A4,A5,A6,A7,PC};
-#endif
-
-#ifdef KERNEL
-/*
- * Due to a mental lapse somewhere down the line, wait returns its values
- * in strange registers.  Kludge it up here so we don't have to in the
- * machine-independent code.
- */
-#define	R0	D1
-#define	R1	A0
-#endif
+#endif /* !_HP300_REG_H_ */
