@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 1997/10/22 18:54:24 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173 1997/10/27 02:49:29 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2012,7 +2012,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ605_33, "Quadra", " 605/33 ", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[13]},
+	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ2, &romvecs[13]},
 	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSAV, &romvecs[7]},
 	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSAV, &romvecs[7]},
 
