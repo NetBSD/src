@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.33 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.34 2003/10/31 03:28:14 simonb Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.33 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.34 2003/10/31 03:28:14 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -688,7 +688,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 }
 
 int
-systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
+systrace_enter(struct proc *p, register_t code, void *v)
 {
 	const struct sysent *callp;
 	struct str_process *strp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2003/10/18 12:07:44 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.88 2003/10/31 03:28:14 simonb Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2003/10/18 12:07:44 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/10/31 03:28:14 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -447,7 +447,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 			goto bad;
 	}
 
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args, rval)) != 0)
+	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
 		goto bad;
 
 	err = (*callp->sy_call)(curlwp, args, rval);

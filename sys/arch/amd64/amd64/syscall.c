@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2003/10/14 18:54:34 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2003/10/14 18:54:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2003/10/31 03:28:12 simonb Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -266,7 +266,7 @@ syscall_fancy(frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, argp, rval)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
 		KERNEL_PROC_UNLOCK(l);
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.3 2003/08/20 21:48:48 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.4 2003/10/31 03:28:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.3 2003/08/20 21:48:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.4 2003/10/31 03:28:12 simonb Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -246,7 +246,7 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64, rval)) != 0)
+		if ((error = trace_enter(l, code, code, NULL, args64)) != 0)
 			goto bad;
 	}
 #endif

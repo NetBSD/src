@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2003/10/15 07:49:41 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.148 2003/10/31 03:28:13 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2003/10/15 07:49:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2003/10/31 03:28:13 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1477,7 +1477,7 @@ syscall(code, tf, pc)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(l, code, code, NULL, args.i, rval)) != 0) {
+	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
 		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 			KERNEL_PROC_UNLOCK(l);
 		goto bad;

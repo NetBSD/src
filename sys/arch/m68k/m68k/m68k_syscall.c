@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.12 2003/09/22 14:18:42 cl Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.13 2003/10/31 03:28:13 simonb Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.12 2003/09/22 14:18:42 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.13 2003/10/31 03:28:13 simonb Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -413,7 +413,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;

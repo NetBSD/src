@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.14 2003/10/29 04:58:26 mycroft Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.15 2003/10/31 03:28:12 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.14 2003/10/29 04:58:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.15 2003/10/31 03:28:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;
