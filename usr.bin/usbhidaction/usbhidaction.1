@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.8 2003/02/25 10:35:59 wiz Exp $
+.\" $NetBSD: usbhidaction.1,v 1.9 2004/10/19 13:39:51 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 29, 2000
+.Dd October 19, 2004
 .Dt USBHIDACTION 1
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Op Fl i
 .Fl f Ar device
 .Op Fl v
-.Ar arg ...
+.Op Ar arg ...
 .Sh DESCRIPTION
 .Nm
 can be used to execute commands when certain values appear on HID controls.
@@ -91,7 +91,12 @@ There must be whitespace between the parts.
 .Pp
 The item names are similar to those used by
 .Xr usbhidctl 1 ,
-but each part must be prefixed by its page name.
+but each part must be prefixed by its page name
+(use the
+.Ar -v
+flag to
+.Xr usbhidctl 1
+to see the page name).
 .Pp
 The value is simply a numeric value.
 When the item reports this value
@@ -129,6 +134,30 @@ Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down 1
 A sample invocation using this configuration would be
 .Bd -literal -offset indent
 usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
+.Ed
+.Pp
+This configuration file can be used for various keyboard with extra keys:
+.Bd -literal -offset indent
+# Configuration for extra keyboard keys
+Consumer:Consumer_Control.Consumer:Volume_Up			1
+	mixerctl -n -w outputs.master++
+Consumer:Consumer_Control.Consumer:Volume_Down			1
+	mixerctl -n -w outputs.master--
+Consumer:Consumer_Control.Consumer:Mute				1
+	mixerctl -n -w outputs.mute++
+Consumer:Consumer_Control.Consumer:Pause/Play			1
+	xmms -p
+Consumer:Consumer_Control.Consumer:Stop				1
+	xmms -s
+Consumer:Consumer_Control.Consumer:Scan_Previous_Track		1
+	xmms -r
+Consumer:Consumer_Control.Consumer:Scan_Next_Track		1
+	xmms -f
+.Ed
+.Pp
+And this configuration can be used with, e.g., 
+.Bd -literal -offset indent
+usbhidaction -f /dev/uhid0 -c conf -i
 .Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
