@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 1994/11/20 20:54:03 deraadt Exp $ */
+/*	$NetBSD: cache.c,v 1.4 1995/02/09 10:28:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,6 +181,9 @@ cache_flush(base, len)
 {
 	register int i, ls, baseoff;
 	register char *p;
+
+	if (vactype == VAC_NONE)
+		return;
 
 	/*
 	 * Figure out how much must be flushed.
