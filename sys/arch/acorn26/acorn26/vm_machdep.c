@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.3 2002/09/22 05:43:25 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.3 2002/09/22 05:43:25 gmcgarry Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -149,7 +149,7 @@ cpu_exit(struct proc *p)
 	/* Nothing to do here? */
 	exit2(p); /* I think this is safe on a uniprocessor machine */
 	SCHED_LOCK(s);		/* expected by cpu_switch */
-	cpu_switch(p);
+	cpu_switch(p, NULL);
 }
 
 void

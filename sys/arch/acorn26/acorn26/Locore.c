@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 2002/08/17 00:01:23 bjh21 Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4 2002/09/22 05:43:25 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.3 2002/08/17 00:01:23 bjh21 Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.4 2002/09/22 05:43:25 gmcgarry Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -127,7 +127,7 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
  * Find the highest-priority runnable process and switch to it.
  */
 void
-cpu_switch(struct proc *p1)
+cpu_switch(struct proc *p1, struct proc *newp)
 {
 	int which;
 	struct prochd *q;
