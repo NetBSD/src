@@ -1,4 +1,4 @@
-# $NetBSD: pckbd.pl.iso8859-2,v 1.1 2002/01/12 21:01:57 jdolecek Exp $
+# $NetBSD: pckbd.pl.iso8859-2,v 1.2 2002/02/14 20:12:36 jdolecek Exp $
 #
 # This is a Polish keymap for iso8859-2.
 # From Dawid Szymanski.
@@ -8,7 +8,7 @@ keycode 24=o O oacute Oacute
 keycode 30=a A plusminus exclamdown
 keycode 31=s S paragraph brokenbar
 keycode 38=l L threesuperior sterling
-keycode 44=€ zZ questiondown €cmar
+keycode 44=z Z questiondown macron
 keycode 45=x X onequarter notsign
 keycode 46=c C ae AE
 keycode 49=n N ntilde Ntilde
