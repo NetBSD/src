@@ -1,4 +1,4 @@
-.\" 	$NetBSD: kcont.9,v 1.1 2004/03/23 00:47:18 jonathan Exp $
+.\" 	$NetBSD: kcont.9,v 1.2 2004/03/23 06:00:08 snj Exp $
 .\"
 .\" The author of this man page is Jonathan Stone (jonathan@dsg.stanford.edu)
 .\"
@@ -17,26 +17,50 @@
 .\"
 .\"
 .\"
-.Dd February 4, 2004
+.Dd March 23, 2004
 .Dt KCONT 9
 .Os
 .Sh NAME
-.Nm kcont 
+.Nm kcont
 .Nd a continuation-passing framework for deferring execution and for
 notification of asynchronous events.
 .Sh SYNOPSIS
 .In sys/kcont.h
 .\"
-.Ft struct kc * 
-.Fn kcont "struct kc *" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *env_arg" "int continue_ipl"
+.Ft struct kc *
+.Fo kcont
+.Fa "struct kc *"
+.Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
+.Fa "void *env_arg"
+.Fa "int continue_ipl"
+.Fc
 .\"
 .Ft struct kc *
-.Fn kc_malloc "int mallocflags" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *env_arg" "int continue_ipl"
+.Fo kcont_malloc
+.Fa "int mallocflags"
+.Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
+.Fa "void *env_arg"
+.Fa "int continue_ipl"
+.Fc
 .\"
 .Ft void
-.Fn kcont_defer "struct kc *kc" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *kernel_obj" "void *env_arg" "int status" "int continue_ipl"
+.Fo kcont_defer
+.Fa "struct kc *kc"
+.Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
+.Fa "void *kernel_obj"
+.Fa "void *env_arg"
+.Fa "int status"
+.Fa "int continue_ipl"
+.Fc
 .Ft void
-.Fn kcont_defer_malloc "int mallocflags" "void (*fn) (void *kernel_obj, void *env_arg, int status)" "void *kernel_obj" "void *env_arg" "int status" "int continue_ipl"
+.Fo kcont_defer_malloc
+.Fa "int mallocflags"
+.Fa "void (*fn) (void *kernel_obj, void *env_arg, int status)"
+.Fa "void *kernel_obj"
+.Fa "void *env_arg"
+.Fa "int status"
+.Fa "int continue_ipl"
+.Fc
 .\"
 .Ft void
 .Fn kcont_enqueue "struct kcq *kcont_queue" "struct kc* kcont"
@@ -44,92 +68,117 @@ notification of asynchronous events.
 .Ft void
 .Fn kcont_run "kcq_t *kcq" "void *obj" "int status" "int curipl"
 .Sh DESCRIPTION
-.Nm kcont
+.Nm
 provides a method of asynchronous notification of kernel events
 (such as I/O completion events) loosely modelled on the
 continuation-passing model associated with functional languages such as
-Scheme.  In the context of  C and Unix kernels, a continuation can
+Scheme.
+In the context of C and Unix kernels, a continuation can
 be thought of as a combination of three items:
-A function pointer, or  ``callback'' function;
-an argument (or arguments) to that function;
-other ``environment'' state which is passed into the function.
+.Pp
+.Bl -bullet -compact
+.It
+a function pointer, or
+.Dq callback
+function;
+.It
+an argument (or arguments) to that function; and
+.It
+other
+.Dq environment
+state which is passed into the function.
+.El
 .Pp
 The continuations supported by
 .Nm
 can be used to defer execution from a high-priority context
 (such as a hardware-priority interrupt handler) to a lower-priority
-context (such as a software-interrupt callout queue specifically for 
+context (such as a software-interrupt callout queue specifically for
 executing
 .Nm
-functions). The 
+functions).
+The
 .Nm
 mechanism can also be used to deliver notification of asynchronous
 events, such as I/O completion.
 .Sh TRADITIONAL I/O COMPLETION NOTIFICATION
-The traditional Unix method for
-asynchronous notification are
+The traditional Unix methods for asynchronous notification are
 .Xr ltsleep 9 ,
 .Xr tsleep 9 ,
 .Xr sleep 9 ,
 and
-.Xr  wakeup 9 .
+.Xr wakeup 9 ,
 which assume the operation or I/O request are being issued from process
-context. Once the I/O operation is actually issued, the requesting process
-is suspended by issuing a  
+context.
+Once the I/O operation is actually issued, the requesting process
+is suspended by issuing a
 .Xr tsleep 9
-on the address of the I/O buffer. When the I/O operation completes,
-the I/O subsystem issues a
-.Xr wakeup
-call on the address of the I/O buffer. The process is then awakened,
-rescheduled, and continues execution from the sleep() function  call,
-eventually returning to the function  which requested I/O.
+on the address of the I/O buffer.
+When the I/O operation completes, the I/O subsystem issues a
+.Xr wakeup 9
+call on the address of the I/O buffer.
+The process is then awakened, rescheduled, and continues execution
+from the
+.Fn sleep
+function call, eventually returning to the function which requested I/O.
 .Sh CONTINUATIONS
-In contrast, 
-.Nm 
-constructs an object called  a continuation  -- a function
-representing ``the rest of the program to be performed''.
-Continations are constructed via the
+In contrast,
+.Nm
+constructs an object called a continuation -- a function representing
+.Dq the rest of the program to be performed .
+Continuations are constructed via the
 .Fn kcont
 and
-.Fn kcont_malloc()
+.Fn kcont_malloc
 functions, which use caller-supplied or dynamically-allocated space,
-respectively.  In addition to the continuation-function, argument-object,
-and environment, the constructor of each continuation specifies an 
+respectively.
+In addition to the continuation-function, argument-object,
+and environment, the constructor of each continuation specifies an
 target interrupt priority (IPL) above which the continuation should not be run.
 .Pp
 Once constructed, the continuation can be destined for execution
-in one of two ways. First, 
+in one of two ways.
+First,
 .Fn kcont_defer
 or
-.Fn kcont_defer_malloc()
+.Fn kcont_defer_malloc
 schedule a continuation for execution as soon as interrupt priority
 falls to or below the target IPL of the continuation.
 Alternatively, a
 .Nm
-can be passed by their creator across kernel interfaces which accepts
+can be passed by its creator across kernel interfaces which accept
 .Nm
-objects as a method for notifying the caller (i.e., the
-.Nm 
-creator) on completion of an asynchronous operations.
+objects as methods for notifying the caller (i.e., the
+.Nm
+creator) on completion of an asynchronous operation.
 .Nm
 .Sh DATA TYPES
 .Ss Deferral Priorities
-Arguments shown above with the name `desired_ipl' are drawn
-from the following namespace:
+Arguments shown above with the name
+.Sq desired_ipl
+are drawn from the following namespace:
 .Bl -tag -offset indent -width KC_IPL_DEFER_SOFTSERIAL
-.It KCL_IPL_IMMEDIATE	Execute the continuation as soon as possible, without regard to current IPL.
-.It KCL_IPL_DEFER_SOFTSERIAL	Execute the continuation once IPL falls to IPL_SOFTSERIAL or below.
-.It KCL_IPL_DEFER_SOFTCLOCK	Execute the continuation once IPL falls to  IPL_SOFTCLOCK or below.
-.It KCL_IPL_DEFER_SOFTNET	Execute the continuation once IPL falls to IPL_SOFTNET or below
-.It KCL_IPL_DEFER_PROCESS	Defer execution of  the continuation to process context.
+.It KCL_IPL_IMMEDIATE
+Execute the continuation as soon as possible, without regard to current IPL.
+.It KCL_IPL_DEFER_SOFTSERIAL
+Execute the continuation once IPL falls to IPL_SOFTSERIAL or below.
+.It KCL_IPL_DEFER_SOFTCLOC
+Execute the continuation once IPL falls to IPL_SOFTCLOCK or below.
+.It KCL_IPL_DEFER_SOFTNET
+Execute the continuation once IPL falls to IPL_SOFTNET or below.
+.It KCL_IPL_DEFER_PROCESS
+Defer execution of the continuation to process context.
 .El
 .Sh NOTES
-.Pp
 The "desired IPL" argument should be interpreted as an upper-bound:
-the continuation will not be executed before interrupt priority drops 
-to, or below, the requested level. In particular, the current implementation uses
-NetBSD generic software callouts.  On NetBSD ports which lack generic software
-callouts,  all
+the continuation will not be executed before interrupt priority drops
+to, or below, the requested level.
+In particular, the current implementation uses
+.Nx
+generic software callouts.
+On
+.Nx
+ports which lack generic software callouts, all
 .Nm
 continuations will always be deferred all the way to the context,
 of a "helper" kernel thread.
@@ -137,7 +186,7 @@ of a "helper" kernel thread.
 .Xr kthread 9 ,
 .Xr spl 9 ,
 .Xr tsleep 9 ,
-.Xr wakeup 9 ,
+.Xr wakeup 9
 .Sh AUTHORS
 The
 .Nm
