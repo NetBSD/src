@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.35 2002/10/02 16:51:00 thorpej Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.36 2003/01/20 04:10:26 simonb Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.35 2002/10/02 16:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.36 2003/01/20 04:10:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1136,10 +1136,9 @@ static int
 ahc_2940Pro_setup(struct pci_attach_args *pa, char *channel,
 		  ahc_chip *chip, ahc_feature *features, ahc_flag *flags)
 {
-	int error;
 
 	*flags |= AHC_INT50_SPEEDFLEX;
-	error = ahc_aic7880_setup(pa, channel, chip, features, flags);
+	ahc_aic7880_setup(pa, channel, chip, features, flags);
 	return (0);
 }
 
