@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 1994/10/26 08:25:58 cgd Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 1995/08/29 21:55:51 phil Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.
@@ -44,17 +44,26 @@
 #define PSR_I 0x800
 
 .data
-.globl _howto, _bootdev
+.globl _howto, _bootdev, _r3, _r6, _r7
 __save_sp: .long 0
 __save_fp: .long 0
 _bootdev: .long 0
 _howto:	.long 0
+_r3: .long 0
+_r6: .long 0
+_r7: .long 0
 
 .text
 .globl begin
 begin:
 	bicpsrw	PSR_I			/* make sure interrupts are off. */
 	bicpsrw	PSR_S			/* make sure we are using sp0. */
+
+	/* In case we are zboot: */
+	movd	r3,_r3(pc)		/* magic */
+	movd	r6,_r6(pc)		/* devtype */
+	movd	r7,_r7(pc)		/* howto */
+
 	lprd    sb, 0			/* gcc expects this. */
 	sprd	sp, __save_sp(pc)  	/* save monitor's sp. */
 	sprd	fp, __save_fp(pc)  	/* save monitor's fp. */

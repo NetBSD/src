@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.3 1994/12/09 21:04:43 phil Exp $	*/
+/*	$NetBSD: sd.c,v 1.4 1995/08/29 21:55:50 phil Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,7 +171,6 @@ sdstrategy(ss, func, dblk, size, buf, rsize)
 		return(0);
 
 	ss->sc_retry = 0;
-	twiddle();
 
 #ifdef SD_DEBUG
 	if (debug)
