@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.11 1998/01/22 06:35:02 jtc Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.12 1998/02/03 18:41:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.11 1998/01/22 06:35:02 jtc Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.12 1998/02/03 18:41:21 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,12 @@ __RCSID("$NetBSD: setvbuf.c,v 1.11 1998/01/22 06:35:02 jtc Exp $");
  */
 int
 setvbuf(fp, buf, mode, size)
-	register FILE *fp;
+	FILE *fp;
 	char *buf;
-	register int mode;
-	register size_t size;
+	int mode;
+	size_t size;
 {
-	register int ret, flags;
+	int ret, flags;
 	size_t iosize;
 	int ttyflag;
 

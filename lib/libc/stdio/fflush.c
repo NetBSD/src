@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.10 1998/01/22 08:21:45 jtc Exp $	*/
+/*	$NetBSD: fflush.c,v 1.11 1998/02/03 18:41:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.10 1998/01/22 08:21:45 jtc Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.11 1998/02/03 18:41:07 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ extern rwlock_t __sfp_lock;
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
 fflush(fp)
-	register FILE *fp;
+	FILE *fp;
 {
 	int r;
 
@@ -81,10 +81,10 @@ fflush(fp)
 
 int
 __sflush(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register unsigned char *p;
-	register int n, t;
+	unsigned char *p;
+	int n, t;
 
 	t = fp->_flags;
 	if ((t & __SWR) == 0)

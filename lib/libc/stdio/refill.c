@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.8 1998/01/22 08:21:48 jtc Exp $	*/
+/*	$NetBSD: refill.c,v 1.9 1998/02/03 18:41:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.8 1998/01/22 08:21:48 jtc Exp $");
+__RCSID("$NetBSD: refill.c,v 1.9 1998/02/03 18:41:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ lflush(fp)
  */
 int
 __srefill(fp)
-	register FILE *fp;
+	FILE *fp;
 {
 
 	/* make sure stdio is set up */

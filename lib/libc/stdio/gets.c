@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.9 1997/11/04 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: gets.c,v 1.10 1998/02/03 18:41:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)gets.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gets.c,v 1.9 1997/11/04 23:52:55 thorpej Exp $");
+__RCSID("$NetBSD: gets.c,v 1.10 1998/02/03 18:41:17 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,8 +53,8 @@ char *
 gets(buf)
 	char *buf;
 {
-	register int c;
-	register char *s;
+	int c;
+	char *s;
 
 	for (s = buf; (c = getchar()) != '\n';)
 		if (c == EOF)

@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.9 1997/07/21 14:08:17 jtc Exp $	*/
+/*	$NetBSD: regexec.c,v 1.10 1998/02/03 18:38:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.9 1997/07/21 14:08:17 jtc Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.10 1998/02/03 18:38:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,7 +170,7 @@ size_t nmatch;
 regmatch_t pmatch[];
 int eflags;
 {
-	register struct re_guts *g = preg->re_g;
+	struct re_guts *g = preg->re_g;
 #ifdef REDEBUG
 #	define	GOODFLAGS(f)	(f)
 #else

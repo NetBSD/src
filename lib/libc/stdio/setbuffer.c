@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuffer.c,v 1.5 1997/07/13 20:15:26 christos Exp $	*/
+/*	$NetBSD: setbuffer.c,v 1.6 1998/02/03 18:41:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setbuffer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuffer.c,v 1.5 1997/07/13 20:15:26 christos Exp $");
+__RCSID("$NetBSD: setbuffer.c,v 1.6 1998/02/03 18:41:21 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: setbuffer.c,v 1.5 1997/07/13 20:15:26 christos Exp $");
 
 void
 setbuffer(fp, buf, size)
-	register FILE *fp;
+	FILE *fp;
 	char *buf;
 	int size;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.10 1997/11/04 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.11 1998/02/03 18:41:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mktemp.c,v 1.10 1997/11/04 23:52:58 thorpej Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.11 1998/02/03 18:41:18 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,9 +83,9 @@ mktemp(path)
 static int
 _gettemp(path, doopen)
 	char *path;
-	register int *doopen;
+	int *doopen;
 {
-	register char *start, *trv;
+	char *start, *trv;
 	struct stat sbuf;
 	u_int pid;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.7 1997/10/19 18:07:29 mycroft Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.8 1998/02/03 18:41:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.7 1997/10/19 18:07:29 mycroft Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.8 1998/02/03 18:41:17 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,10 @@ __RCSID("$NetBSD: makebuf.c,v 1.7 1997/10/19 18:07:29 mycroft Exp $");
  */
 void
 __smakebuf(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register void *p;
-	register int flags;
+	void *p;
+	int flags;
 	size_t size;
 	int couldbetty;
 
@@ -94,7 +94,7 @@ __smakebuf(fp)
  */
 int
 __swhatbuf(fp, bufsize, couldbetty)
-	register FILE *fp;
+	FILE *fp;
 	size_t *bufsize;
 	int *couldbetty;
 {

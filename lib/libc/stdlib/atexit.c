@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.8 1998/01/30 23:37:45 perry Exp $	*/
+/*	$NetBSD: atexit.c,v 1.9 1998/02/03 18:44:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)atexit.c	8.2 (Berkeley) 7/3/94";
 #else
-__RCSID("$NetBSD: atexit.c,v 1.8 1998/01/30 23:37:45 perry Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.9 1998/02/03 18:44:13 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ atexit(fn)
 	void (*fn) __P((void));
 {
 	static struct atexit __atexit0;	/* one guaranteed table */
-	register struct atexit *p;
+	struct atexit *p;
 
 	if ((p = __atexit) == NULL)
 		__atexit = p = &__atexit0;
