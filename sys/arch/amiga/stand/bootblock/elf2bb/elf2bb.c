@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.2 2002/01/26 13:21:11 aymeric Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.3 2002/03/26 05:18:19 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,19 +108,20 @@ main(int argc, char *argv[])
 	int sumsize = 16;
 	int c;
 	u_int32_t *sect_offset;
+	int undefsyms;
 	
 
 	progname = argv[0];
 
 	/* insert getopt here, if needed */
-	while ((c = getopt(argc, argv, "dFS:")) != -1)
+	while ((c = getopt(argc, argv, "dFS")) != -1)
 	switch(c) {
 	case 'F':
 		sumsize = 2;
 		break;
 	case 'S':
-		bbsize = (atoi(optarg) + 511) & ~511;
-		sumsize = bbsize / 512;
+		/* Dynamically size second-stage boot */
+		sumsize = 0;
 		break;
 	case 'd':
 		debug = 1;
@@ -133,11 +134,6 @@ main(int argc, char *argv[])
 
 	if (argc < 2)
 		usage();
-
-	buffer = malloc(bbsize);
-	relbuf = (u_int32_t *)malloc(bbsize);
-	if (buffer == NULL || relbuf == NULL)
-		err(1, "Unable to allocate memory\n");
 
 	ifd = open(argv[0], O_RDONLY, 0);
 	if (ifd < 0)
@@ -200,6 +196,16 @@ main(int argc, char *argv[])
 
 	dprintf(("%d relocs\n", trsz/12));
 
+	if (sumsize == 0) {
+		bbsize = (tsz + dsz + bsz + 511) & ~511;
+		sumsize = bbsize / 512;
+	}
+
+	buffer = malloc(bbsize);
+	relbuf = (u_int32_t *)malloc(bbsize);
+	if (buffer == NULL || relbuf == NULL)
+		err(1, "Unable to allocate memory\n");
+
 	/*
 	 * We have one contiguous area allocated by the ROM to us.
 	 */
@@ -261,6 +267,7 @@ main(int argc, char *argv[])
 	 *    Add relocation table entry for 32-bit relocatable values
 	 *    PC-relative entries will be absolute and don't need relocation
 	 */
+	undefsyms = 0;
 	for (i = 0; i < htobe16(eh->e_shnum); ++i) {
 		int n;
 		Elf32_Rela *ra;
@@ -284,9 +291,16 @@ main(int argc, char *argv[])
 			    htobe32(sh[i].sh_name));
 		ra = (Elf32_Rela *)(image + htobe32(sh[i].sh_offset));
 		for (n = 0; n < htobe32(sh[i].sh_size); n += sizeof(Elf32_Rela), ++ra) {
+			Elf32_Sym *s;
 			int value;
-			value = htobe32(ra->r_addend) +
-			    eval(&symtab[ELF32_R_SYM(htobe32(ra->r_info))], sect_offset);
+
+			s = &symtab[ELF32_R_SYM(htobe32(ra->r_info))];
+			if (s->st_shndx == ELF_SYM_UNDEFINED) {
+				fprintf(stderr, "Undefined symbol: %s\n",
+				    strtab + s->st_name);
+				++undefsyms;
+			}
+			value = htobe32(ra->r_addend) + eval(s, sect_offset);
 			dprintf(("reloc %04x info %04x (type %d sym %d) add 0x%x val %x\n",
 			    htobe32(ra->r_offset), htobe32(ra->r_info),
 			    ELF32_R_TYPE(htobe32(ra->r_info)),
@@ -369,6 +383,9 @@ main(int argc, char *argv[])
 	if (delta < 0 ? rpo <= buffer+tsz+dsz
 	    : rpo >= buffer + bbsize)
 		errx(1, "Relocs don't fit.");
+
+	if (undefsyms > 0)
+		errx(1, "Undefined symbols referenced");
 
 	((u_int32_t *)buffer)[1] = 0;
 	((u_int32_t *)buffer)[1] =
