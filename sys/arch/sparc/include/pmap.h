@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 1994/11/20 20:53:22 deraadt Exp $ */
+/*	$NetBSD: pmap.h,v 1.9 1994/12/10 11:44:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,8 +170,11 @@ extern pmap_t		kernel_pmap;
 void	pmap_bootstrap __P((int nmmu, int nctx));
 void	pmap_init __P((vm_offset_t phys_start, vm_offset_t phys_end));
 int	pmap_count_ptes __P((struct pmap *));
+vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
 
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
+
+#define PMAP_PREFER(pa,va)		pmap_prefer((pa),(va))
 
 #endif /* KERNEL */
 
