@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.11 2000/07/19 00:58:25 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.12 2000/11/02 17:01:47 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -263,6 +263,8 @@ devopen(f, fname, file)
 	return 0;
 }
 
+extern struct disklabel romlabel;
+
 int
 romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *sc;
@@ -274,6 +276,15 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 {
 	int	block = dblk;
 	int     nsize = size;
+
+	if (romlabel.d_magic == DISKLABEL && romlabel.d_magic2 == DISKLABEL) {
+		if (romlabel.d_npartitions > 1) {
+			block += romlabel.d_partitions[0].p_offset;
+			if (romlabel.d_partitions[0].p_type == FS_RAID) {
+				block += 64; /* XXX */
+			}
+		}
+	}
 
 	if (from == FROMMV) {
 		romread_uvax(block, size, buf, rpb);
