@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.54 1996/03/18 16:19:58 hpeyerl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.55 1996/03/21 03:29:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -299,6 +299,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 
+	{{T_OPTICAL, T_REMOV,
+	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
+
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -341,6 +344,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
+
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
