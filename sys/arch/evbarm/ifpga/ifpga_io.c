@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.4 2002/10/06 17:13:58 thorpej Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.5 2003/04/02 03:49:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -198,8 +198,8 @@ ifpga_mem_bs_map(t, bpa, size, cacheable, bshp)
 		   we want.  */
 		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + startpa,
 			   VM_PROT_READ | VM_PROT_WRITE, 0);
-		va += NBPG;
-		startpa += NBPG;
+		va += PAGE_SIZE;
+		startpa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
