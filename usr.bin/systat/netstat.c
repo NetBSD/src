@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.22 2003/05/17 21:03:21 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.23 2003/07/05 06:48:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.22 2003/05/17 21:03:21 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.23 2003/07/05 06:48:52 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -338,7 +338,7 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 		p->ni_faddr = inp->inp_faddr;
 		p->ni_fport = inp->inp_fport;
 		p->ni_proto = proto;
-		p->ni_flags = NIF_LACHG|NIF_FACHG;
+		p->ni_flags = NIF_LACHG | NIF_FACHG;
 		p->ni_family = AF_INET;
 	}
 	p->ni_rcvcc = so->so_rcv.sb_cc;
@@ -387,7 +387,7 @@ enter6(struct in6pcb *in6p, struct socket *so, int state, char *proto)
 		p->ni_faddr6 = in6p->in6p_faddr;
 		p->ni_fport = in6p->in6p_fport;
 		p->ni_proto = proto;
-		p->ni_flags = NIF_LACHG|NIF_FACHG;
+		p->ni_flags = NIF_LACHG | NIF_FACHG;
 		p->ni_family = AF_INET6;
 	}
 	p->ni_rcvcc = so->so_rcv.sb_cc;
@@ -408,6 +408,7 @@ enter6(struct in6pcb *in6p, struct socket *so, int state, char *proto)
 void
 labelnetstat(void)
 {
+	struct netinfo *p;
 
 	if (namelist[X_TCBTABLE].n_type == 0)
 		return;
@@ -418,6 +419,13 @@ labelnetstat(void)
 	mvwaddstr(wnd, 0, RCVCC, "Recv-Q");
 	mvwaddstr(wnd, 0, SNDCC, "Send-Q");
 	mvwaddstr(wnd, 0, STATE, "(state)"); 
+	
+	p = netcb.ni_forw;
+	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+		if (p->ni_line == -1)
+			continue;
+		p->ni_flags |= NIF_LACHG | NIF_FACHG;
+	}
 }
 
 void
@@ -442,7 +450,7 @@ shownetstat(void)
 			if (q != p && q->ni_line > p->ni_line) {
 				q->ni_line--;
 				/* this shouldn't be necessary */
-				q->ni_flags |= NIF_LACHG|NIF_FACHG;
+				q->ni_flags |= NIF_LACHG | NIF_FACHG;
 			}
 		lastrow--;
 		q = p->ni_forw;
@@ -462,7 +470,7 @@ shownetstat(void)
 			if (lastrow > getmaxy(wnd))
 				continue;
 			p->ni_line = lastrow++;
-			p->ni_flags |= NIF_LACHG|NIF_FACHG;
+			p->ni_flags |= NIF_LACHG | NIF_FACHG;
 		}
 		if (p->ni_flags & NIF_LACHG) {
 			wmove(wnd, p->ni_line, LADDR);
@@ -655,17 +663,10 @@ netstat_all(char *args)
 void
 netstat_names(char *args)
 {
-	struct netinfo *p;
 
 	if (nflag == 0)
 		return;
 	
-	p = netcb.ni_forw;
-	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-		if (p->ni_line == -1)
-			continue;
-		p->ni_flags |= NIF_LACHG|NIF_FACHG;
-	}
 	nflag = 0;
 	wclear(wnd);
 	labelnetstat();
@@ -676,17 +677,10 @@ netstat_names(char *args)
 void
 netstat_numbers(char *args)
 {
-	struct netinfo *p;
 
 	if (nflag != 0)
 		return;
 	
-	p = netcb.ni_forw;
-	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-		if (p->ni_line == -1)
-			continue;
-		p->ni_flags |= NIF_LACHG|NIF_FACHG;
-	}
 	nflag = 1;
 	wclear(wnd);
 	labelnetstat();
