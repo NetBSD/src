@@ -1,4 +1,4 @@
-/* $NetBSD: fusu.S,v 1.1 1996/08/21 19:37:43 mark Exp $ */
+/* $NetBSD: fusu.S,v 1.2 1996/10/15 01:17:59 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -34,6 +34,7 @@
 
 #include "assym.h"
 
+ip	.req	r12
 lr	.req	r14
 pc	.req	r15
 
@@ -58,6 +59,12 @@ pc	.req	r15
         .global _fetchuserword
 
 _fetchuserword:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -333,7 +340,7 @@ _suswintr:
 
 	strb	r1, [r0, #0x0000]
 	mov	r1, r1, lsr #8
-	strb	r1, [r0, #0x0000]
+	strb	r1, [r0, #0x0001]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
@@ -367,7 +374,7 @@ _susword:
 
 	strb	r1, [r0, #0x0000]
 	mov	r1, r1, lsr #8
-	strb	r1, [r0, #0x0000]
+	strb	r1, [r0, #0x0001]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
