@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.39 1998/07/02 07:55:29 jonathan Exp $
+#       $NetBSD: files.vax,v 1.40 1998/08/10 14:48:53 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -93,7 +93,7 @@ file	arch/vax/bi/ni.c		ni needs-flag
 # TS11 at UBA
 device	ts: tape
 attach	ts at uba
-file	arch/vax/uba/ts.c		ts needs-count
+file	arch/vax/uba/ts.c		ts needs-flag
 
 # DHU-11 at UBA
 device	dhu: tty
@@ -113,11 +113,15 @@ file	arch/vax/vsa/dz_vsbus.c		dz_vsbus
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
 attach	hdc at vsbus
-file	arch/vax/vsa/hdc9224.c		hdc needs-flag
+file	arch/vax/vsa/hdc9224.c		ry | rd needs-flag
 
 device	rd: disk
 attach	rd at hdc
 major	{rd = 19}
+
+device	ry: disk
+attach	ry at hdc
+major	{ry = 24}
 
 #
 # Machine-independent SCSI driver.
@@ -136,7 +140,7 @@ attach	ncr at vsbus
 file	arch/vax/vsa/ncr.c		ncr needs-flag
 
 # LANCE ethernet controller on VAXstation
-device	ln: ifnet, ether
+device	ln: ifnet, ether, arp
 attach	ln at vsbus
 file	arch/vax/vsa/if_ln.c		ln
 
@@ -267,7 +271,7 @@ file	arch/vax/uba/vp.c		vp needs-flag
 # QVSS at UBA
 device	qv
 attach	qv at uba
-file	arch/vax/uba/qv.c		qv needs-count
+file	arch/vax/uba/qv.c		qv needs-flag
 
 # Interlan NP100 at UBA
 device	np: ifnet
@@ -315,6 +319,7 @@ file	arch/vax/vax/crl.c		vax8600
 file	arch/vax/vax/ka630.c		vax630
 file	arch/vax/vax/ka410.c		vax410
 file	arch/vax/vax/ka43.c		vax43
+file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/emulate.s		vax630|vax650|vax410
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/conf.c
@@ -332,6 +337,7 @@ file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 
 include "../../../compat/ultrix/files.ultrix"
+include "../../../compat/vax1k/files.vax1k"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/dkbad.c         standard
