@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 2000/01/28 19:32:44 itojun Exp $
+# $NetBSD: mi,v 1.144 2000/02/09 08:18:19 tron Exp $
 .
 ./altroot
 ./bin
@@ -1047,6 +1047,7 @@
 ./usr/share/nls/sv/libc.cat
 ./usr/share/postfix
 ./usr/share/sendmail
+./usr/share/sendmail/LICENSE
 ./usr/share/sendmail/cf
 ./usr/share/sendmail/domain
 ./usr/share/sendmail/feature
