@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2001/04/25 16:18:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2001/04/29 04:42:04 thorpej Exp $	*/
 
 /*
  *
@@ -1828,13 +1828,13 @@ pmap_zero_page(pa)
 }
 
 /*
- * pmap_zero_page_uncached: the same, except uncached.  Returns
- * TRUE if the page was zero'd, FALSE if we aborted for some
- * reason.
+ * pmap_pagezeroidle: the same, for the idle loop page zero'er.
+ * Returns TRUE if the page was zero'd, FALSE if we aborted for
+ * some reason.
  */
 
 boolean_t
-pmap_zero_page_uncached(pa)
+pmap_pageidlezero(pa)
 	paddr_t pa;
 {
 	boolean_t rv = TRUE;
@@ -1842,8 +1842,7 @@ pmap_zero_page_uncached(pa)
 
 	simple_lock(&pmap_zero_page_lock);
 
-	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
-	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 
 	for (i = 0, ptr = (int *) zerop; i < PAGE_SIZE / sizeof(int); i++) {
