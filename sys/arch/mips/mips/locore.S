@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.110 2000/07/20 18:33:42 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.111 2000/07/25 17:56:05 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -279,6 +279,7 @@ END(remrunqueue)
  */
 LEAF(mips_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
@@ -414,6 +415,7 @@ cpu_switch_queuescan:
 
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -501,6 +503,7 @@ END(setjmp)
 LEAF(longjmp)
 	REG_PROLOGUE
 	REG_L	v0, SF_REG_SR(a0)
+	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
 	REG_L	ra, SF_REG_RA(a0)
 	REG_L	s0, SF_REG_S0(a0)
 	REG_L	s1, SF_REG_S1(a0)
@@ -531,6 +534,7 @@ XLEAF(_splraise_noprof)				# does not get mcount hooks
 	and	a0, a0, MIPS_INT_MASK		# extract INT bits
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	a0, a0, v0			# disable retaining other bits
+	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -544,6 +548,7 @@ LEAF(_spllower)
 	nor	a0, zero, a0			# bitwise inverse of A0
 	and	a0, a0, MIPS_INT_MASK		# extract INT bits
 	or	a0, a0, v1			# disable making other bits on
+	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -556,6 +561,7 @@ LEAF(_splrestore)
 	li	v1, ~MIPS_INT_MASK
 	and	v1, v1, v0			# turn off every INT bit
 	or	v1, v1, a0			# set old INT bits
+	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -569,6 +575,7 @@ XLEAF(_splset_noprof)				# does not get mcount hooks
 	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
 	and	v1, v1, v0			# turn off every INT bit
 	or	v1, v1, a0			# set old INT bits
+	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
@@ -613,6 +620,7 @@ END(_clrsoftintr)
 LEAF(_splnone)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
 	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
 	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
 	nop
 	j	ra
@@ -1319,3 +1327,8 @@ _C_LABEL(mips_L2CacheLSize):
 	.word	0
 _C_LABEL(mips_L2CachePresent):
 	.word	0
+#ifdef MIPS_DYNAMIC_STATUS_MASK
+	.globl	_C_LABEL(mips_dynamic_status_mask)
+_C_LABEL(mips_dynamic_status_mask):
+	.word	0xffffffff
+#endif
