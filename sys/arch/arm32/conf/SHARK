@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.37 2000/08/04 02:23:22 hubertf Exp $
+#	$NetBSD: SHARK,v 1.38 2000/08/13 01:31:17 itojun Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.38 $"
 
 # estimated number of users
 maxusers	32
@@ -69,7 +69,6 @@ options 	SOFTDEP		# FFS soft updates support.
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options		PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
