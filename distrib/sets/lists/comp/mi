@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.639 2003/11/14 17:45:06 christos Exp $
+#	$NetBSD: mi,v 1.640 2003/11/16 15:10:46 yamt Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4308,6 +4308,8 @@
 ./usr/share/man/cat9/sched_unlock_idle.0		comp-sys-catman
 ./usr/share/man/cat9/scheduler.0		comp-sys-catman
 ./usr/share/man/cat9/scsipi.0		comp-sys-catman
+./usr/share/man/cat9/selrecord.0		comp-sys-catman
+./usr/share/man/cat9/selwakeup.0		comp-sys-catman
 ./usr/share/man/cat9/sendsig.0		comp-sys-catman
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman
 ./usr/share/man/cat9/setjmp.0	comp-sys-catman
@@ -7771,6 +7773,8 @@
 ./usr/share/man/man9/sched_unlock_idle.9		comp-sys-man
 ./usr/share/man/man9/scheduler.9		comp-sys-man
 ./usr/share/man/man9/scsipi.9		comp-sys-man
+./usr/share/man/man9/selrecord.9		comp-sys-man
+./usr/share/man/man9/selwakeup.9		comp-sys-man
 ./usr/share/man/man9/sendsig.9		comp-sys-man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man
 ./usr/share/man/man9/setjmp.9	comp-sys-man
