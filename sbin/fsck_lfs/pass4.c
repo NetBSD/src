@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.9 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: pass4.c,v 1.10 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -54,7 +54,7 @@
 extern SEGUSE *seg_table;
 
 void
-pass4()
+pass4(void)
 {
 	register ino_t inumber;
 	register struct zlncnt *zlnp;
