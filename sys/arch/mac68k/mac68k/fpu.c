@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 1995/03/29 07:38:42 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 1995/05/06 18:33:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,23 +53,11 @@ extern int *nofault;
 int  fpu_match  __P((struct device *,       void *vcf, void *args));
 void fpu_attach __P((struct device *, struct device *, void *));
 int  fpu_probe();
+extern int	matchbyname();
 
 struct cfdriver fpucd = {
-	NULL, "fpu", fpu_match, fpu_attach,
+	NULL, "fpu", matchbyname, fpu_attach,
 	DV_DULL, sizeof(struct device), 0 };
-
-int fpu_match(parent, vcf, args)
-    struct device *parent;
-    void *vcf, *args;
-{
-	struct cfdata *cf = vcf;
-
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
-		return (0);
-
-	return (1);
-}
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
