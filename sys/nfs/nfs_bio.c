@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.57 2000/12/13 18:15:56 jdolecek Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.58 2000/12/27 05:15:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -616,11 +616,6 @@ nfs_write(v)
 		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
 				UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
-		if (error) {
-			memset((void *)trunc_page((vaddr_t)win), 0,
-			       round_page((vaddr_t)win + bytelen) -
-			       trunc_page((vaddr_t)win));
-		}
 		ubc_release(win, 0);
 		rv = 1;
 		if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
@@ -643,6 +638,8 @@ nfs_write(v)
 		}
 		if (!rv) {
 			error = EIO;
+		}
+		if (error) {
 			break;
 		}
 	} while (uio->uio_resid > 0);
@@ -1061,6 +1058,11 @@ nfs_getpages(v)
 				pg->flags &= ~(PG_FAKE);
 			}
 		}
+		if (v3) {
+			simple_unlock(&uobj->vmobjlock);
+			npages += ridx;
+			goto uncommit;
+		}
 		goto out;
 	}
 
@@ -1090,10 +1092,27 @@ nfs_getpages(v)
 
 	if (startoffset != origoffset ||
 	    startoffset + (npages << PAGE_SHIFT) != endoffset) {
+
+		/*
+		 * XXXUBC we need to avoid deadlocks caused by locking
+		 * additional pages at lower offsets than pages we
+		 * already have locked.  for now, unlock them all and
+		 * start over.
+		 */
+
+		for (i = 0; i < npages; i++) {
+			struct vm_page *pg = pgs[ridx + i];
+
+			if (pg->flags & PG_FAKE) {
+				pg->flags |= PG_RELEASED;
+			}
+		}
+		uvm_page_unbusy(&pgs[ridx], npages);
+		memset(pgs, 0, sizeof(pgs));
+
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
-			    (int)startoffset, (int)endoffset, 0,0);
+			    startoffset, endoffset, 0,0);
 		npages = (endoffset - startoffset) >> PAGE_SHIFT;
-		KASSERT(npages != 0);
 		npgs = npages;
 		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
 	}
@@ -1159,13 +1178,7 @@ nfs_getpages(v)
 		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
 			size_t b;
 
-#ifdef DEBUG
-			if (offset & (PAGE_SIZE - 1)) {
-				panic("nfs_getpages: skipping from middle "
-				      "of page");
-			}
-#endif
-
+			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
 			b = min(PAGE_SIZE, bytes);
 			offset += b;
 			bytes -= b;
@@ -1245,15 +1258,18 @@ loopdone:
 	uvm_pagermapout(kva, npages);
 
 	if (write && v3) {
+uncommit:
 		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
 		nfs_del_committed_range(vp, origoffset, npages);
 		nfs_del_tobecommitted_range(vp, origoffset, npages);
+		simple_lock(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 			if (pgs[i] == NULL) {
 				continue;
 			}
 			pgs[i]->flags &= ~(PG_NEEDCOMMIT|PG_RDONLY);
 		}
+		simple_unlock(&uobj->vmobjlock);
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 	}
 
@@ -1420,8 +1436,9 @@ nfs_putpages(v)
 
 		if ((pgs[(offset - origoffset) >> PAGE_SHIFT]->flags &
 		     PG_NEEDCOMMIT) != 0) {
-			iobytes = PAGE_SIZE;
-			skipbytes += min(iobytes, vp->v_uvm.u_size - offset);
+			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
+			iobytes = min(PAGE_SIZE, bytes);
+			skipbytes += iobytes;
 			continue;
 		}
 
