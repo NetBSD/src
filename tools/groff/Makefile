@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/10/28 07:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2004/02/06 00:06:53 ross Exp $
 
 MODULE=		groff
 
@@ -25,7 +25,10 @@ _post_conf: .USE
 	  echo '.ORDER: all install' ) >> build/Makefile
 
 
+
 .include "${.CURDIR}/../Makefile.gnuhost"
+COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
+.-include	"${COMPATOBJ}/defs.mk"
 
 .PATH:		${.CURDIR}/../../share/tmac ${.CURDIR}/../../gnu/usr.bin/groff/tmac
 
@@ -68,7 +71,17 @@ afterinstall: install.grofflinks
 install.grofflinks:
 	@cd ${.CURDIR} && ${MAKE} install.grofflinks.recurse
 
-.for F in eqn groff indxbib nroff pic refer soelim tbl
+.for F in eqn groff indxbib pic refer soelim tbl
+install.grofflinks.recurse: ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}${HOSTEXEEXT}
+.if exists(${TOOLDIR}/lib/groff/g${F}${HOSTEXEEXT})
+${TOOLDIR}/bin/${_TOOL_PREFIX}${F}${HOSTEXEEXT}: ${TOOLDIR}/lib/groff/g${F}${HOSTEXEEXT}
+.else
+${TOOLDIR}/bin/${_TOOL_PREFIX}${F}${HOSTEXEEXT}: ${TOOLDIR}/lib/groff/${F}${HOSTEXEEXT}
+.endif
+	ln -f ${.ALLSRC} ${.TARGET}
+.endfor
+
+.for F in nroff
 install.grofflinks.recurse: ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}
 .if exists(${TOOLDIR}/lib/groff/g${F})
 ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}: ${TOOLDIR}/lib/groff/g${F}
