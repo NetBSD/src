@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.39 1997/01/16 21:03:32 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.40 1997/03/12 07:06:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -284,7 +284,7 @@ sb_getdev(addr, retp)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
 		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
-	sprintf(retp->version, "%d.%d", 
+	sprintf(retp->version, "%d.%02d", 
 		SBVER_MAJOR(sc->sc_model),
 		SBVER_MINOR(sc->sc_model));
 	strncpy(retp->config, "sb", sizeof(retp->config));
