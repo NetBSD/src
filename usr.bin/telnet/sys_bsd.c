@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.20 2002/09/18 19:40:35 mycroft Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.21 2002/09/23 03:29:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.20 2002/09/18 19:40:35 mycroft Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.21 2002/09/23 03:29:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.20 2002/09/18 19:40:35 mycroft Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <poll.h>
 #include <arpa/telnet.h>
 
 #include "ring.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.11 2002/09/18 20:57:02 mycroft Exp $	*/
+/*	$NetBSD: network.c,v 1.12 2002/09/23 03:29:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,17 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.11 2002/09/18 20:57:02 mycroft Exp $");
+__RCSID("$NetBSD: network.c,v 1.12 2002/09/23 03:29:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/poll.h>
 
 #include <errno.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <arpa/telnet.h>
 

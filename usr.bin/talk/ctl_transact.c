@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_transact.c,v 1.6 2002/09/18 19:16:09 mycroft Exp $	*/
+/*	$NetBSD: ctl_transact.c,v 1.7 2002/09/23 03:30:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl_transact.c,v 1.6 2002/09/18 19:16:09 mycroft Exp $");
+__RCSID("$NetBSD: ctl_transact.c,v 1.7 2002/09/23 03:30:20 itojun Exp $");
 #endif /* not lint */
 
 #include "talk.h"
 #include <sys/time.h>
-#include <sys/poll.h>
 #include <errno.h>
 #include <unistd.h>
+#include <poll.h>
 #include "talk_ctl.h"
 
 #define CTL_WAIT 2	/* time to wait for a response, in seconds */

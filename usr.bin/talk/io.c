@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.6 2002/09/18 19:16:09 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.7 2002/09/23 03:30:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: io.c,v 1.6 2002/09/18 19:16:09 mycroft Exp $");
+__RCSID("$NetBSD: io.c,v 1.7 2002/09/23 03:30:20 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -50,11 +50,11 @@ __RCSID("$NetBSD: io.c,v 1.6 2002/09/18 19:16:09 mycroft Exp $");
 #include "talk.h"
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/poll.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #define A_LONG_TIME 1000000
 
