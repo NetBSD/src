@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.39 1999/04/11 22:40:19 bouyer Exp $	*/
+/*	$NetBSD: defs.h,v 1.40 1999/04/13 20:17:47 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -308,6 +308,7 @@ void	append_to_target_file __P((const char *path, const char *string));
 void	echo_to_target_file __P(( const char *path, const char *string));
 void	sprintf_to_target_file __P(( const char *path, const char *fmt, ...));
 void	trunc_target_file __P((const char *path));
+const	char* target_prefix __P((void));
 int	target_chdir __P(( const char *path));
 void	target_chdir_or_die __P((const char *dir));
 int	target_already_root __P((void));

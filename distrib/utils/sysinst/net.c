@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.43 1999/04/13 14:49:56 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.44 1999/04/13 20:17:48 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,9 +62,6 @@ static char *url_encode __P((char *dst, const char *src, size_t len,
 
 static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
-
-/* external */
-const char* target_prefix __P((void));
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
