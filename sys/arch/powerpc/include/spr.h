@@ -261,7 +261,15 @@
 #define	SPR_ICCR		0x3fb	/* 4.. Instruction Cache Cachability Register */
 #define	SPR_THRM1		0x3fc	/* .6. Thermal Management Register */
 #define	SPR_THRM2		0x3fd	/* .6. Thermal Management Register */
+#define	 SPR_THRM_TIN		  0x80000000 /* Thermal interrupt bit (RO) */
+#define	 SPR_THRM_TIV		  0x40000000 /* Thermal interrupt valid (RO) */
+#define	 SPR_THRM_THRESHOLD(x)	  ((x) << 23) /* Thermal sensor threshold */
+#define	 SPR_THRM_TID		  0x00000004 /* Thermal interrupt direction */
+#define	 SPR_THRM_TIE		  0x00000002 /* Thermal interrupt enable */
+#define	 SPR_THRM_VALID		  0x00000001 /* Valid bit */
 #define	SPR_THRM3		0x3fe	/* .6. Thermal Management Register */
+#define	 SPR_THRM_TIMER(x)	  ((x) << 1) /* Sampling interval timer */
+#define	 SPR_THRM_ENABLE       	  0x00000001 /* TAU Enable */
 #define	SPR_FPECR		0x3fe	/* .6. Floating-Point Exception Cause Register */
 #define	SPR_PIR			0x3ff	/* .6. Processor Identification Register */
 
