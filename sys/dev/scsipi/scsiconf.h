@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.30 1996/07/05 16:19:12 christos Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.31 1996/08/28 18:47:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -132,8 +132,13 @@ struct scsi_device {
  * a device driver, and is used by each to call services provided by
  * the other, and to allow generic scsi glue code to call these services
  * as well.
+ *
+ * XXX Given the way NetBSD's autoconfiguration works, this is ...
+ * XXX nasty.
  */
 struct scsi_link {
+	int	 channel;		/* channel, i.e. bus # on controller */
+
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t target;		/* targ of this dev */
 	u_int8_t lun;			/* lun of this dev */
@@ -157,6 +162,16 @@ struct scsi_link {
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 };
+
+/*
+ * Other definitions used by autoconfiguration.
+ */
+#define	scsicf_channel		cf_loc[0]
+#define	SCSI_CHANNEL_UNKNOWN	-1
+
+#define	SCSI_CHANNEL_ONLY_ONE	-1	/* only one channel on controller */
+
+int	scsiprint __P((void *, const char *));
 
 /*
  * This describes matching information for scsi_inqmatch().  The more things
