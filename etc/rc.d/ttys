@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ttys,v 1.3 2001/04/25 12:59:16 lukem Exp $
+# $NetBSD: ttys,v 1.4 2002/02/12 01:23:11 lukem Exp $
 #
 
 # PROVIDE: tty
@@ -25,12 +25,12 @@ ttyflags_start()
 	#	XXX:	there may be more ptys than this; maybe use
 	#		sysctl kern.maxptys to find out how many?
 	#
-	chmod 666 /dev/tty[p-uw-zP-T][0-9a-f]
+	chmod 666 /dev/tty[p-uw-zP-T][0-9a-zA-Z]
 
 	#	only change ttyv* if ttyv0 is not reserved by a console.
 	#
 	if [ -c /dev/ttyv1 ]; then
-		chmod 666 /dev/ttyv[0-9a-f]
+		chmod 666 /dev/ttyv[0-9a-zA-Z]
 	fi
 }
 
