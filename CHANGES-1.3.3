@@ -442,6 +442,7 @@ sys/sys/Makefile				patch
 usr.sbin/pkg_install/add/add.h			1.3
 usr.sbin/pkg_install/add/extract.c		1.9-1.11
 usr.sbin/pkg_install/add/futil.c		1.6
+usr.sbin/pkg_install/add/main.c			1.5-1.7
 usr.sbin/pkg_install/add/perform.c		1.11-1.27
 usr.sbin/pkg_install/add/pkg_add.1		1.7-1.9
 usr.sbin/pkg_install/create/create.h		1.5-1.9
@@ -479,3 +480,10 @@ usr.sbin/pkg_install/lib/str.c			1.6-1.11
   conflicting packages.  Eliminate redundant options from
   pkg_create(1).  Improve documentation.  Use NetBSD's ftp(1)
   client to retrieve binary packages by URL.  (agc)
+
+lib/libc/stdio/vfscanf.c			1.21
+
+  Don't return immediately if EOF encountered while matching format
+  string white space in the input stream since there may be `conversion'
+  specifiers following the (format string) white space that do not
+  operate on the input stream, e.g., %n.  (kleink)
