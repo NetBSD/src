@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40 2003/02/25 21:25:40 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.41 2003/02/26 20:48:48 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2003/02/25 21:25:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41 2003/02/26 20:48:48 leo Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -144,7 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2003/02/25 21:25:40 thorpej Exp $");
 #define	FDCCF_DRIVE_DEFAULT	FDCISACF_DRIVE_DEFAULT
 
 #define	fd_cd	fdisa_cd
-#define	fd_ca	fdisa_ca
 #endif /* atari */
 
 #include <machine/intr.h>
@@ -211,8 +210,13 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
+#ifdef atari
+CFATTACH_DECL(fdisa, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
+#else
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
+#endif
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);
