@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.27 2003/06/29 22:29:53 fvdl Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.28 2004/04/21 05:20:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27 2003/06/29 22:29:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.28 2004/04/21 05:20:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ struct ultrix_getmnt_args {
 									
 
 static void
-make_ultrix_mntent __P(( struct statfs *sp, struct ultrix_fs_data *tem));
+make_ultrix_mntent __P(( struct statvfs *sp, struct ultrix_fs_data *tem));
 
 /*
  * Construct an Ultrix getmnt() ultrix_fs_data from the native NetBSD
@@ -159,13 +159,13 @@ make_ultrix_mntent __P(( struct statfs *sp, struct ultrix_fs_data *tem));
  */
 static void
 make_ultrix_mntent(sp, tem)
-	struct statfs *sp;
+	struct statvfs *sp;
 	struct ultrix_fs_data *tem;
 {
 
 	memset(tem, 0, sizeof (*tem));
 
-	tem->ufsd_flags = sp->f_flags;		/* XXX translate */
+	tem->ufsd_flags = sp->f_flag;		/* XXX translate */
 	tem->ufsd_mtsize = sp->f_bsize;		/* XXX max transfer size */
 	tem->ufsd_otsize = sp->f_iosize;
 	tem->ufsd_bsize = sp->f_bsize;
@@ -212,7 +212,7 @@ ultrix_sys_getmnt(l, v, retval)
 	struct ultrix_sys_getmnt_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	struct ultrix_fs_data *sfsp;
 	char *path;
 	int mntflags;
@@ -274,13 +274,13 @@ ultrix_sys_getmnt(l, v, retval)
 			 * If requested, refresh the fsstat cache.
 			 */
 			if (mntflags != MNT_WAIT &&
-			    (error = VFS_STATFS(mp, sp, p)) != 0)
+			    (error = VFS_STATVFS(mp, sp, p)) != 0)
 				continue;
 
 			/*
 			 * XXX what does this do? -- cgd
 			 */
-			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			if (path == NULL ||
 			    strcmp(path, sp->f_mntonname) == 0) {
 				make_ultrix_mntent(sp, &tem);
