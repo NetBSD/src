@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.9 1998/02/03 18:41:10 perry Exp $	*/
+/*	$NetBSD: findfp.c,v 1.10 1998/10/16 20:48:06 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.9 1998/02/03 18:41:10 perry Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.10 1998/10/16 20:48:06 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <unistd.h>
 #include <stdio.h>
