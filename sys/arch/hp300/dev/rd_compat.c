@@ -38,7 +38,7 @@
  * from: Utah $Hdr: rd_compat.c 1.1 92/12/21$
  *
  *	from: @(#)rd_compat.c	8.1 (Berkeley) 6/10/93
- *	$Id: rd_compat.c,v 1.1 1994/05/23 06:01:20 mycroft Exp $
+ *	$Id: rd_compat.c,v 1.2 1994/07/16 06:24:46 cgd Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <hp/dev/device.h>
+#include <hp300/dev/device.h>
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>
 
