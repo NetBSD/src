@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.3 1997/10/06 00:07:09 mark Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.4 1998/12/02 19:29:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(vfork, \
+    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();
