@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.11 1996/06/23 12:12:48 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.12 1996/09/09 17:14:05 mycroft Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -114,22 +114,18 @@ struct mrtstat {
 #ifdef _KERNEL
 
 /*
- * Token bucket filter at each vif
- */
-struct tbf {
-	u_int32_t last_pkt_t;		/* arr. time of last pkt */
-	u_int32_t n_tok;		/* no of tokens in bucket */
-	u_int32_t q_len;		/* length of queue at this vif */
-};
-
-/*
  * The kernel's virtual-interface structure.
  */
 struct vif {
+	struct	  mbuf *tbf_q, **tbf_t;	/* packet queue */
+	struct	  timeval tbf_last_pkt_t; /* arr. time of last pkt */
+	u_int32_t tbf_n_tok;		/* no of tokens in bucket */
+	u_int32_t tbf_q_len;		/* length of queue at this vif */
+	u_int32_t tbf_max_q_len;	/* max. queue length */
+
 	u_int8_t  v_flags;		/* VIFF_ flags defined above */
 	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
 	u_int32_t v_rate_limit;		/* max rate */
-	struct	  tbf v_tbf;		/* token bucket structure at intf. */
 	struct	  in_addr v_lcl_addr;	/* local interface address */
 	struct	  in_addr v_rmt_addr;	/* remote address (tunnels only) */
 	struct	  ifnet *v_ifp;		/* pointer to interface */
@@ -200,16 +196,7 @@ struct rtdetq {
 #define	MAX_BKT_SIZE    10000		/* 10K bytes size */
 #define	MAXQSIZE        10		/* max. no of pkts in token queue */
   
-/*
- * Queue structure at each vif
- */
-struct pkt_queue {
-	u_int32_t pkt_len;		/* length of packet in queue */
-	struct	  mbuf *pkt_m;		/* pointer to packet mbuf */
-	struct	  ip *pkt_ip;		/* pointer to ip header */
-};
-  
-  
+
 int ip_mrouter_set __P((struct socket *, int, struct mbuf **));
 int ip_mrouter_get __P((struct socket *, int, struct mbuf **));
 int mrt_ioctl __P((struct socket *, u_long, caddr_t));
