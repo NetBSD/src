@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1997/10/04 20:03:46 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1997/10/05 20:43:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -423,7 +423,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
+char	machine[16] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*
@@ -727,19 +727,31 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev %x, offset %d\n",
+	printf("\ndumping to dev 0x%x, offset %d\n",
 		   (int) dumpdev, (int) dumplo);
 
 	/*
 	 * We put the dump header is in physical page zero,
 	 * so there is no extra work here to write it out.
+	 * All we do is initialize the header.
 	 */
+
+	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)KERNBASE;
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
 	sh = &chdr_p->un._sun3x;
+
+	/* Fill in kcore_seg_t part. */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg_p->c_size = sizeof(*chdr_p);
-	pmap_set_kcore_hdr(chdr_p);
+
+	/* Fill in cpu_kcore_hdr_t part. */
+	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
+	chdr_p->page_size = NBPG;
+	chdr_p->kernbase = KERNBASE;
+
+	/* Fill in the sun3x_kcore_hdr part. */
+	pmap_kcore_hdr(sh);
 
 	/*
 	 * Now dump physical memory.  Note that physical memory
