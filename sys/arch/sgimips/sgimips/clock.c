@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2004/01/18 00:47:21 sekiya Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2004/01/19 03:26:14 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,9 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2004/01/18 00:47:21 sekiya Exp $");
-
-#include "opt_machtypes.h"
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2004/01/19 03:26:14 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
