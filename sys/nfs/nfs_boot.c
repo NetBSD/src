@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.31 1997/03/15 18:12:40 is Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.32 1997/03/17 17:41:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -137,7 +137,7 @@ nfs_boot_init(nd, procp)
 	 */
 	ifp = ifunit(root_device->dv_xname);
 	if (ifp == NULL) {
-		printf("nfs_boot: no suitable interface");
+		printf("nfs_boot: no suitable interface\n");
 		return (ENXIO);
 	}
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
@@ -164,7 +164,7 @@ nfs_boot_init(nd, procp)
 	 * Do RARP for the interface address.
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0) {
-		printf("revarp failed, error=%d", error);
+		printf("revarp failed, error=%d\n", error);
 		return (EIO);
 	}
 	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
@@ -201,7 +201,7 @@ nfs_boot_init(nd, procp)
 	/* this returns gateway IP address */
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error) {
-		printf("nfs_boot: bootparam whoami, error=%d", error);
+		printf("nfs_boot: bootparam whoami, error=%d\n", error);
 		return (error);
 	}
 	printf("nfs_boot: server_addr=0x%x\n",
