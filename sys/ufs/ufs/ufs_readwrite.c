@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.11 1997/04/04 14:21:32 kleink Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.12 1997/06/11 10:10:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -82,7 +82,7 @@ READ(v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mode = ip->i_mode;
+	mode = ip->i_ffs_mode;
 	uio = ap->a_uio;
 
 #ifdef DIAGNOSTIC
@@ -90,9 +90,9 @@ READ(v)
 		panic("%s: mode", READ_S);
 
 	if (vp->v_type == VLNK) {
-		if ((int)ip->i_size < vp->v_mount->mnt_maxsymlinklen ||
+		if ((int)ip->i_ffs_size < vp->v_mount->mnt_maxsymlinklen ||
 		    (vp->v_mount->mnt_maxsymlinklen == 0 &&
-		     ip->i_din.di_blocks == 0))
+		     ip->i_ffs_blocks == 0))
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);
@@ -104,7 +104,7 @@ READ(v)
 		return (0);
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
-		if ((bytesinfile = ip->i_size - uio->uio_offset) <= 0)
+		if ((bytesinfile = ip->i_ffs_size - uio->uio_offset) <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
@@ -118,13 +118,13 @@ READ(v)
 
 #ifdef LFS_READWRITE
 		(void)lfs_check(vp, lbn);
-		error = cluster_read(vp, ip->i_size, lbn, size, NOCRED, &bp);
+		error = cluster_read(vp, ip->i_ffs_size, lbn, size, NOCRED, &bp);
 #else
-		if (lblktosize(fs, nextlbn) >= ip->i_size)
+        if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
 			error = cluster_read(vp,
-			    ip->i_size, lbn, size, NOCRED, &bp);
+			    ip->i_ffs_size, lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == vp->v_lastr) {
 			int nextsize = BLKSIZE(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
@@ -199,8 +199,8 @@ WRITE(v)
 	switch (vp->v_type) {
 	case VREG:
 		if (ioflag & IO_APPEND)
-			uio->uio_offset = ip->i_size;
-		if ((ip->i_flags & APPEND) && uio->uio_offset != ip->i_size)
+			uio->uio_offset = ip->i_ffs_size;
+		if ((ip->i_ffs_flags & APPEND) && uio->uio_offset != ip->i_ffs_size)
 			return (EPERM);
 		/* FALLTHROUGH */
 	case VLNK:
@@ -230,7 +230,7 @@ WRITE(v)
 	}
 
 	resid = uio->uio_resid;
-	osize = ip->i_size;
+	osize = ip->i_ffs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
 	for (error = 0; uio->uio_resid > 0;) {
@@ -253,9 +253,9 @@ WRITE(v)
 #endif
 		if (error)
 			break;
-		if (uio->uio_offset + xfersize > ip->i_size) {
-			ip->i_size = uio->uio_offset + xfersize;
-			vnode_pager_setsize(vp, (u_long)ip->i_size);
+		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
+			ip->i_ffs_size = uio->uio_offset + xfersize;
+			vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
 		}
 		(void)vnode_pager_uncache(vp);
 
@@ -272,7 +272,7 @@ WRITE(v)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize)
 			if (doclusterwrite)
-				cluster_write(bp, ip->i_size);
+				cluster_write(bp, ip->i_ffs_size);
 			else
 				bawrite(bp);
 		else
@@ -288,7 +288,7 @@ WRITE(v)
 	 * tampering.
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
-		ip->i_mode &= ~(ISUID | ISGID);
+		ip->i_ffs_mode &= ~(ISUID | ISGID);
 	if (error) {
 		if (ioflag & IO_UNIT) {
 			(void)VOP_TRUNCATE(vp, osize,

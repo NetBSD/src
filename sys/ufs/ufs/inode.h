@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.9 1996/09/01 23:49:40 mycroft Exp $	*/
+/*	$NetBSD: inode.h,v 1.10 1997/06/11 10:10:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -42,6 +42,15 @@
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ext2fs/ext2fs_dinode.h>
+
+/*
+ * Per-filesystem inode extensions.
+ */
+struct ext2fs_inode_ext {
+		ufs_daddr_t ext2fs_last_lblk; /* last logical block allocated */
+		ufs_daddr_t ext2fs_last_blk; /* last block allocated on disk */
+};
 
 /*
  * The inode is used to describe each active (or recently active) file in the
@@ -64,9 +73,11 @@ struct inode {
 	union {			/* Associated filesystem. */
 		struct	fs *fs;		/* FFS */
 		struct	lfs *lfs;	/* LFS */
+		struct  m_ext2fs *e2fs;		/* EXT2FS */
 	} inode_u;
 #define	i_fs	inode_u.fs
 #define	i_lfs	inode_u.lfs
+#define i_e2fs  inode_u.e2fs
 
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
@@ -83,29 +94,61 @@ struct inode {
 	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
 	/*
+	 * Inode extensions
+	 */
+	union {
+		/* Other extensions could go here... */
+		struct ext2fs_inode_ext   e2fs;
+	} inode_ext;
+#define i_e2fs_last_lblk inode_ext.e2fs.ext2fs_last_lblk
+#define i_e2fs_last_blk inode_ext.e2fs.ext2fs_last_blk
+
+	/*
 	 * The on-disk dinode itself.
 	 */
-	struct	dinode i_din;	/* 128 bytes of the on-disk dinode. */
+	union {
+		struct	dinode ffs_din;	/* 128 bytes of the on-disk dinode. */
+		struct ext2fs_dinode e2fs_din; /* 128 bytes of the on-disk dinode. */
+	} i_din;
 };
 
-#define	i_atime		i_din.di_atime
-#define	i_atimensec	i_din.di_atimensec
-#define	i_blocks	i_din.di_blocks
-#define	i_ctime		i_din.di_ctime
-#define	i_ctimensec	i_din.di_ctimensec
-#define	i_db		i_din.di_db
-#define	i_flags		i_din.di_flags
-#define	i_gen		i_din.di_gen
-#define	i_gid		i_din.di_gid
-#define	i_ib		i_din.di_ib
-#define	i_mode		i_din.di_mode
-#define	i_mtime		i_din.di_mtime
-#define	i_mtimensec	i_din.di_mtimensec
-#define	i_nlink		i_din.di_nlink
-#define	i_rdev		i_din.di_rdev
-#define	i_shortlink	i_din.di_shortlink
-#define	i_size		i_din.di_size
-#define	i_uid		i_din.di_uid
+#define	i_ffs_atime		i_din.ffs_din.di_atime
+#define	i_ffs_atimensec	i_din.ffs_din.di_atimensec
+#define	i_ffs_blocks	i_din.ffs_din.di_blocks
+#define	i_ffs_ctime		i_din.ffs_din.di_ctime
+#define	i_ffs_ctimensec	i_din.ffs_din.di_ctimensec
+#define	i_ffs_db		i_din.ffs_din.di_db
+#define	i_ffs_flags		i_din.ffs_din.di_flags
+#define	i_ffs_gen		i_din.ffs_din.di_gen
+#define	i_ffs_gid		i_din.ffs_din.di_gid
+#define	i_ffs_ib		i_din.ffs_din.di_ib
+#define	i_ffs_mode		i_din.ffs_din.di_mode
+#define	i_ffs_mtime		i_din.ffs_din.di_mtime
+#define	i_ffs_mtimensec	i_din.ffs_din.di_mtimensec
+#define	i_ffs_nlink		i_din.ffs_din.di_nlink
+#define	i_ffs_rdev		i_din.ffs_din.di_rdev
+#define	i_ffs_shortlink	i_din.ffs_din.di_shortlink
+#define	i_ffs_size		i_din.ffs_din.di_size
+#define	i_ffs_uid		i_din.ffs_din.di_uid
+
+#define i_e2fs_mode		i_din.e2fs_din.e2di_mode
+#define i_e2fs_uid		i_din.e2fs_din.e2di_uid
+#define i_e2fs_size		i_din.e2fs_din.e2di_size
+#define i_e2fs_atime	i_din.e2fs_din.e2di_atime
+#define i_e2fs_ctime	i_din.e2fs_din.e2di_ctime
+#define i_e2fs_mtime	i_din.e2fs_din.e2di_mtime
+#define i_e2fs_dtime	i_din.e2fs_din.e2di_dtime
+#define i_e2fs_gid		i_din.e2fs_din.e2di_gid
+#define i_e2fs_nlink	i_din.e2fs_din.e2di_nlink
+#define i_e2fs_nblock	i_din.e2fs_din.e2di_nblock
+#define i_e2fs_flags	i_din.e2fs_din.e2di_flags
+#define i_e2fs_blocks	i_din.e2fs_din.e2di_blocks
+#define i_e2fs_gen		i_din.e2fs_din.e2di_gen
+#define i_e2fs_facl		i_din.e2fs_din.e2di_facl
+#define i_e2fs_dacl		i_din.e2fs_din.e2di_dacl
+#define i_e2fs_faddr	i_din.e2fs_din.e2di_faddr
+#define i_e2fs_nfrag	i_din.e2fs_din.e2di_nfrag
+#define i_e2fs_fsize	i_din.e2fs_din.e2di_fsize
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
@@ -134,24 +177,48 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-#define	ITIMES(ip, acc, mod, cre) {					\
+#define	FFS_ITIMES(ip, acc, mod, cre) {					\
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
 		(ip)->i_flag |= IN_MODIFIED;				\
 		if ((ip)->i_flag & IN_ACCESS) {				\
-			(ip)->i_atime = (acc)->tv_sec;			\
-			(ip)->i_atimensec = (acc)->tv_nsec;		\
+			(ip)->i_ffs_atime = (acc)->tv_sec;			\
+			(ip)->i_ffs_atimensec = (acc)->tv_nsec;		\
 		}							\
 		if ((ip)->i_flag & IN_UPDATE) {				\
-			(ip)->i_mtime = (mod)->tv_sec;			\
-			(ip)->i_mtimensec = (mod)->tv_nsec;		\
+			(ip)->i_ffs_mtime = (mod)->tv_sec;			\
+			(ip)->i_ffs_mtimensec = (mod)->tv_nsec;		\
 			(ip)->i_modrev++;				\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE) {				\
-			(ip)->i_ctime = (cre)->tv_sec;			\
-			(ip)->i_ctimensec = (cre)->tv_nsec;		\
+			(ip)->i_ffs_ctime = (cre)->tv_sec;			\
+			(ip)->i_ffs_ctimensec = (cre)->tv_nsec;		\
 		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
+}
+
+#define	EXT2FS_ITIMES(ip, acc, mod, cre) {					\
+	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
+		(ip)->i_flag |= IN_MODIFIED;				\
+		if ((ip)->i_flag & IN_ACCESS) {				\
+			(ip)->i_e2fs_atime = (acc)->tv_sec;			\
+		}							\
+		if ((ip)->i_flag & IN_UPDATE) {				\
+			(ip)->i_e2fs_mtime = (mod)->tv_sec;			\
+			(ip)->i_modrev++;				\
+		}							\
+		if ((ip)->i_flag & IN_CHANGE) {				\
+			(ip)->i_e2fs_ctime = (cre)->tv_sec;			\
+		}							\
+		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
+	}								\
+}
+
+#define ITIMES(ip, acc, mod, cre) { \
+	if (IS_EXT2_VNODE((ip)->i_vnode)) \
+		EXT2FS_ITIMES(ip, acc, mod, cre) \
+	else							\
+		FFS_ITIMES(ip, acc, mod, cre) \
 }
 
 /* This overlays the fid structure (see mount.h). */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.24 1997/03/10 06:18:29 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.25 1997/06/11 10:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -57,6 +57,7 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/ffs/fs.h>
@@ -400,7 +401,7 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		ip->i_din = *((struct dinode *)bp->b_data +
+		ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
 		    ino_to_fsbo(fs, ip->i_number));
 		brelse(bp);
 		vput(vp);
@@ -827,7 +828,7 @@ ffs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+	ip->i_din.ffs_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
 	brelse(bp);
 
 	/*
@@ -850,8 +851,8 @@ ffs_vget(mp, ino, vpp)
 	 * fix until fsck has been changed to do the update.
 	 */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_uid = ip->i_din.di_ouid;		/* XXX */
-		ip->i_gid = ip->i_din.di_ogid;		/* XXX */
+		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;		/* XXX */
+		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;		/* XXX */
 	}						/* XXX */
 
 	*vpp = vp;
@@ -904,7 +905,7 @@ ffs_vptofh(vp, fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	ufhp->ufid_gen = ip->i_ffs_gen;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.5 1997/06/11 10:10:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -193,7 +193,7 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
+	if (ip->i_ffs_mode == 0 || ip->i_ffs_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);

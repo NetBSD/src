@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.7 1996/10/12 21:58:51 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.8 1997/06/11 10:09:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -416,10 +416,10 @@ lfs_writeinode(fs, sp, ip)
 	if (ip->i_flag & IN_MODIFIED)
 		--fs->lfs_uinodes;
 	TIMESPEC_TO_TIMEVAL(&time, &ts);
-	ITIMES(ip, &ts, &ts, &ts);
+	FFS_ITIMES(ip, &ts, &ts, &ts);
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	bp = sp->ibp;
-	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] = ip->i_din;
+	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] = ip->i_din.ffs_din;
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *)(sp->segsum))->ss_ninos;
 
@@ -588,10 +588,10 @@ lfs_updatemeta(sp)
 		ip = VTOI(vp);
 		switch (num) {
 		case 0:
-			ip->i_db[lbn] = off;
+			ip->i_ffs_db[lbn] = off;
 			break;
 		case 1:
-			ip->i_ib[a[0].in_off] = off;
+			ip->i_ffs_ib[a[0].in_off] = off;
 			break;
 		default:
 			ap = &a[num - 1];
@@ -604,7 +604,7 @@ lfs_updatemeta(sp)
 			 */
 			if (bp->b_blkno == -1 && !(bp->b_flags & B_CACHE)) {
 printf ("Updatemeta allocating indirect block: shouldn't happen\n");
-				ip->i_blocks += btodb(fs->lfs_bsize);
+				ip->i_ffs_blocks += btodb(fs->lfs_bsize);
 				fs->lfs_bfree -= btodb(fs->lfs_bsize);
 			}
 			((daddr_t *)bp->b_data)[ap->in_off] = off;

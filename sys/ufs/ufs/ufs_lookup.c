@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.12 1997/05/12 19:04:16 kleink Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.13 1997/06/11 10:10:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -225,7 +225,7 @@ ufs_lookup(v)
 	 */
 	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-	    dp->i_diroff > dp->i_size) {
+	    dp->i_diroff > dp->i_ffs_size) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
@@ -238,7 +238,7 @@ ufs_lookup(v)
 		nchstats.ncs_2passes++;
 	}
 	prevoff = dp->i_offset;
-	endsearch = roundup(dp->i_size, DIRBLKSIZ);
+	endsearch = roundup(dp->i_ffs_size, DIRBLKSIZ);
 	enduseful = 0;
 
 searchloop:
@@ -393,7 +393,7 @@ notfound:
 	     (nameiop == DELETE &&
 	      (ap->a_cnp->cn_flags & DOWHITEOUT) &&
 	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
-	    (flags & ISLASTCN) && dp->i_nlink != 0) {
+	    (flags & ISLASTCN) && dp->i_ffs_nlink != 0) {
 		/*
 		 * Creation of files on a read-only mounted file system
 		 * is pointless, so don't proceed any further.
@@ -417,7 +417,7 @@ notfound:
 		 * dp->i_offset + dp->i_count.
 		 */
 		if (slotstatus == NONE) {
-			dp->i_offset = roundup(dp->i_size, DIRBLKSIZ);
+			dp->i_offset = roundup(dp->i_ffs_size, DIRBLKSIZ);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
 		} else if (nameiop == DELETE) {
@@ -466,9 +466,9 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep) > dp->i_size) {
+	if (entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep) > dp->i_ffs_size) {
 		ufs_dirbad(dp, dp->i_offset, "i_size too small");
-		dp->i_size = entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep);
+		dp->i_ffs_size = entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 
@@ -518,10 +518,10 @@ found:
 		 * may not delete it (unless she's root). This
 		 * implements append-only directories.
 		 */
-		if ((dp->i_mode & ISVTX) &&
+		if ((dp->i_ffs_mode & ISVTX) &&
 		    cred->cr_uid != 0 &&
-		    cred->cr_uid != dp->i_uid &&
-		    VTOI(tdp)->i_uid != cred->cr_uid) {
+		    cred->cr_uid != dp->i_ffs_uid &&
+		    VTOI(tdp)->i_ffs_uid != cred->cr_uid) {
 			vput(tdp);
 			return (EPERM);
 		}
@@ -699,7 +699,7 @@ ufs_direnter(ip, dvp, cnp)
 	newdir.d_namlen = cnp->cn_namelen;
 	bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
 	if (dvp->v_mount->mnt_maxsymlinklen > 0)
-		newdir.d_type = IFTODT(ip->i_mode);
+		newdir.d_type = IFTODT(ip->i_ffs_mode);
 	else {
 		newdir.d_type = 0;
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -760,7 +760,7 @@ ufs_direnter2(dvp, dirp, cr, p)
 			/* XXX should grow with balloc() */
 			panic("ufs_direnter2: frag size");
 		else if (!error) {
-			dp->i_size = roundup(dp->i_size, DIRBLKSIZ);
+			dp->i_ffs_size = roundup(dp->i_ffs_size, DIRBLKSIZ);
 			dp->i_flag |= IN_CHANGE;
 		}
 		return (error);
@@ -782,8 +782,8 @@ ufs_direnter2(dvp, dirp, cr, p)
 	 *
 	 * N.B. - THIS IS AN ARTIFACT OF 4.2 AND SHOULD NEVER HAPPEN.
 	 */
-	if (dp->i_offset + dp->i_count > dp->i_size)
-		dp->i_size = dp->i_offset + dp->i_count;
+	if (dp->i_offset + dp->i_count > dp->i_ffs_size)
+		dp->i_ffs_size = dp->i_offset + dp->i_count;
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
@@ -835,7 +835,7 @@ ufs_direnter2(dvp, dirp, cr, p)
 	bcopy((caddr_t)dirp, (caddr_t)ep, (u_int)newentrysize);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (!error && dp->i_endoff && dp->i_endoff < dp->i_size)
+	if (!error && dp->i_endoff && dp->i_endoff < dp->i_ffs_size)
 		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
 	return (error);
 }
@@ -925,7 +925,7 @@ ufs_dirrewrite(dp, ip, cnp)
 		return (error);
 	ep->d_ino = ip->i_number;
 	if (vdp->v_mount->mnt_maxsymlinklen > 0)
-		ep->d_type = IFTODT(ip->i_mode);
+		ep->d_type = IFTODT(ip->i_ffs_mode);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
@@ -952,7 +952,7 @@ ufs_dirempty(ip, parentino, cred)
 	int error, count, namlen;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
-	for (off = 0; off < ip->i_size; off += dp->d_reclen) {
+	for (off = 0; off < ip->i_ffs_size; off += dp->d_reclen) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*

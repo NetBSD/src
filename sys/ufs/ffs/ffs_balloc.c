@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.4 1997/06/11 10:09:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -84,18 +84,18 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 * and the file is currently composed of a fragment
 	 * this fragment has to be extended to be a full block.
 	 */
-	nb = lblkno(fs, ip->i_size);
+	nb = lblkno(fs, ip->i_ffs_size);
 	if (nb < NDADDR && nb < bn) {
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
-				ffs_blkpref(ip, nb, (int)nb, &ip->i_db[0]),
+				ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
 				osize, (int)fs->fs_bsize, cred, &bp);
 			if (error)
 				return (error);
-			ip->i_size = (nb + 1) * fs->fs_bsize;
-			vnode_pager_setsize(vp, (u_long)ip->i_size);
-			ip->i_db[nb] = dbtofsb(fs, bp->b_blkno);
+			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
+			vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
+			ip->i_ffs_db[nb] = dbtofsb(fs, bp->b_blkno);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)
 				bwrite(bp);
@@ -107,8 +107,8 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (bn < NDADDR) {
-		nb = ip->i_db[bn];
-		if (nb != 0 && ip->i_size >= (bn + 1) * fs->fs_bsize) {
+		nb = ip->i_ffs_db[bn];
+		if (nb != 0 && ip->i_ffs_size >= (bn + 1) * fs->fs_bsize) {
 			error = bread(vp, bn, fs->fs_bsize, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
@@ -121,7 +121,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
-			osize = fragroundup(fs, blkoff(fs, ip->i_size));
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 				error = bread(vp, bn, osize, NOCRED, &bp);
@@ -131,18 +131,18 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 				}
 			} else {
 				error = ffs_realloccg(ip, bn,
-				    ffs_blkpref(ip, bn, (int)bn, &ip->i_db[0]),
+				    ffs_blkpref(ip, bn, (int)bn, &ip->i_ffs_db[0]),
 				    osize, nsize, cred, &bp);
 				if (error)
 					return (error);
 			}
 		} else {
-			if (ip->i_size < (bn + 1) * fs->fs_bsize)
+			if (ip->i_ffs_size < (bn + 1) * fs->fs_bsize)
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, bn,
-			    ffs_blkpref(ip, bn, (int)bn, &ip->i_db[0]),
+			    ffs_blkpref(ip, bn, (int)bn, &ip->i_ffs_db[0]),
 			    nsize, cred, &newb);
 			if (error)
 				return (error);
@@ -151,7 +151,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 		}
-		ip->i_db[bn] = dbtofsb(fs, bp->b_blkno);
+		ip->i_ffs_db[bn] = dbtofsb(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
@@ -170,7 +170,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 	 * Fetch the first indirect block allocating if necessary.
 	 */
 	--num;
-	nb = ip->i_ib[indirs[0].in_off];
+	nb = ip->i_ffs_ib[indirs[0].in_off];
 	if (nb == 0) {
 		pref = ffs_blkpref(ip, lbn, 0, (daddr_t *)0);
 	        error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
@@ -189,7 +189,7 @@ ffs_balloc(ip, bn, size, cred, bpp, flags)
 			ffs_blkfree(ip, nb, fs->fs_bsize);
 			return (error);
 		}
-		ip->i_ib[indirs[0].in_off] = newb;
+		ip->i_ffs_ib[indirs[0].in_off] = newb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.3 1996/02/09 22:28:48 christos Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.4 1997/06/11 10:09:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -100,7 +100,7 @@ lfs_balloc(vp, iosize, lbn, bpp)
 						brelse(ibp);
 						error = ENOSPC;
 					} else {
-						ip->i_blocks += bb;
+						ip->i_ffs_blocks += bb;
 						ip->i_lfs->lfs_bfree -= bb;
 						clrbuf(ibp);
 						error = VOP_BWRITE(ibp);
@@ -123,7 +123,7 @@ lfs_balloc(vp, iosize, lbn, bpp)
 				brelse(bp);
 				return(ENOSPC);
 			} else {
-				ip->i_blocks += bb;
+				ip->i_ffs_blocks += bb;
 				ip->i_lfs->lfs_bfree -= bb;
 				if (iosize != fs->lfs_bsize)
 					clrbuf(bp);
