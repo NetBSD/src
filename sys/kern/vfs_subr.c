@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.231 2004/08/13 22:48:06 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.232 2004/08/15 07:19:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.231 2004/08/13 22:48:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.232 2004/08/15 07:19:54 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -3182,8 +3182,8 @@ vfs_mount_print(mp, full, pr)
 	(*pr)("vnodecovered = %p syncer = %p data = %p\n",
 			mp->mnt_vnodecovered,mp->mnt_syncer,mp->mnt_data);
 
-	(*pr)("fs_bshift %d dev_bshift = %d maxsymlinklen = %d\n",
-			mp->mnt_fs_bshift,mp->mnt_dev_bshift,mp->mnt_maxsymlinklen);
+	(*pr)("fs_bshift %d dev_bshift = %d\n",
+			mp->mnt_fs_bshift,mp->mnt_dev_bshift);
 
 	bitmask_snprintf(mp->mnt_flag, __MNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("flag = %s\n", sbuf);
