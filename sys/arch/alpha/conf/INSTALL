@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.65 2002/07/05 13:40:10 abs Exp $
+# $NetBSD: INSTALL,v 1.66 2002/07/22 14:51:02 wiz Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -164,9 +164,9 @@ pci*	at	ttwopci?
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
-#options 	ADW_WDTR_DISABLE		# 	disable WDTR
-#options 	ADW_SDTR_DISABLE		# 	disable SDTR
-#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
+#options 	SCSI_ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	SCSI_ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
