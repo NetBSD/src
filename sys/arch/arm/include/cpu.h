@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.2 2001/11/15 06:39:22 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.3 2001/11/15 07:37:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -165,12 +165,12 @@ extern int current_intr_depth;
 #endif
 
 /*
- * PROC_PC: Find out the program counter for the given process.
+ * LWP_PC: Find out the program counter for the given lwp.
  */
 #ifdef PROG32
-#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
+#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
 #else
-#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
+#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
 #endif
 
 
