@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.34 2004/07/07 06:43:22 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.35 2004/08/06 20:38:09 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.34 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.35 2004/08/06 20:38:09 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -119,6 +119,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.34 2004/07/07 06:43:22 mycroft Exp $");
 #define INLINE
 #endif	/* __GNUC__ */
 
+/*#define	XIDEBUG*/
+/*#define	XIDEBUG_VALUE	XID_CONFIG*/
+
 #ifdef XIDEBUG
 #define DPRINTF(cat, x) if (xidebug & (cat)) printf x
 
@@ -178,6 +181,7 @@ struct xi_pcmcia_softc {
 #define XI_RES_IO_ALLOC	2
 #define XI_RES_IO_MAP	4
 #define XI_RES_MI	8
+#define XI_RES_RND	16
 };
 
 CFATTACH_DECL(xi_pcmcia, sizeof(struct xi_pcmcia_softc),
@@ -335,24 +339,20 @@ xi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	
-	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
-	    pa->product == 0x110a)
-		return (2); /* prevent attach to com_pcmcia */
-	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
-		return (0);
-
 	if (pa->manufacturer == PCMCIA_VENDOR_COMPAQ2 &&
 	    pa->product == PCMCIA_PRODUCT_COMPAQ2_CPQ_10_100)
 		return (1);
 
 	if (pa->manufacturer == PCMCIA_VENDOR_INTEL &&
-	   pa->product == PCMCIA_PRODUCT_INTEL_EEPRO100)
+	    pa->product == PCMCIA_PRODUCT_INTEL_EEPRO100)
 		return (1);
 
-	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
-	    ((pa->product >> 8) == XIMEDIA_ETHER ||
-	    (pa->product >> 8) == (XIMEDIA_ETHER | XIMEDIA_MODEM)))
-		return (1);
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM) {
+		if (pa->product == 0x110a)
+			return (2); /* prevent attach to com_pcmcia */
+		if ((pa->product & (XIMEDIA_ETHER << 8)) != 0)
+			return (1);
+	}
 
 	return (0);
 }
@@ -505,6 +505,7 @@ xi_pcmcia_attach(parent, self, aux)
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, self->dv_xname,
 	    RND_TYPE_NET, 0);
+	psc->sc_resource |= XI_RES_RND;
 #endif
 
 	/*
@@ -559,7 +560,8 @@ xi_pcmcia_detach(self, flags)
 		powerhook_disestablish(psc->sc_powerhook);
 
 #if NRND > 0
-	rnd_detach_source(&sc->sc_rnd_source);
+	if ((psc->sc_resource & XI_RES_RND) != 0)
+		rnd_detach_source(&sc->sc_rnd_source);
 #endif
 
 	if ((psc->sc_resource & XI_RES_MI) != 0) {
