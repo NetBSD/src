@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.2 2001/06/10 05:26:59 thorpej Exp 
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-
-#if defined(ALGOR_P4032)
-#include <algor/algor/algor_p4032var.h>
-#endif
 
 struct com_mainbus_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
@@ -117,11 +113,7 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-#if defined(ALGOR_P4032)
-	msc->sc_ih = algor_p4032_intr_establish(&p4032_irqmap[ma->ma_irq],
-	    comintr, sc);
-#endif
-
+	msc->sc_ih = (*algor_intr_establish)(ma->ma_irq, comintr, sc);
 	if (msc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);

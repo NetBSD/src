@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.3 2001/06/10 09:13:07 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.4 2001/06/15 04:01:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -146,6 +146,15 @@ const char *p5064_intrnames[NIRQMAPS] = {
 	"IDE secondary",
 };
 
+struct p5064_irqmap { 
+	int	irqidx;
+	int	cpuintr;
+	int	irqreg;
+	int	irqbit;
+	int	xbarreg;
+	int	xbarshift;
+}; 
+
 const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	/*
 	 * PCI INTERRUPTS
@@ -171,17 +180,17 @@ const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	  2,			6 },
 
 	/* Ethernet */
-	{ 4,			1,
+	{ P5064_IRQ_ETHERNET,		1,
 	  IRQREG_PCIINT,	PCIINT_ETH,
 	  4,			2 },
 
 	/* SCSI */
-	{ 5,			1,
+	{ P5064_IRQ_SCSI,	1,
 	  IRQREG_PCIINT,	PCIINT_SCSI,
 	  4,			4 },
 
 	/* USB */
-	{ 6,			1,
+	{ P5064_IRQ_USB,	1,
 	  IRQREG_PCIINT,	PCIINT_USB,
 	  4,			6 },
 
@@ -189,32 +198,32 @@ const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	 * LOCAL INTERRUPTS
 	 */
 	/* keyboard */
-	{ 7,			2,
+	{ P5064_IRQ_MKBD,	2,
 	  IRQREG_LOCINT,	LOCINT_MKBD,
 	  0,			4 },
 
 	/* COM1 */
-	{ 8,			2,
+	{ P5064_IRQ_COM1,	2,
 	  IRQREG_LOCINT,	LOCINT_COM1,
 	  0,			6 },
 
 	/* COM2 */
-	{ 9,			2,
+	{ P5064_IRQ_COM2,	2,
 	  IRQREG_LOCINT,	LOCINT_COM2,
 	  1,			0 },
 
 	/* floppy controller */
-	{ 10,			2,
+	{ P5064_IRQ_FLOPPY,	2,
 	  IRQREG_LOCINT,	LOCINT_FLP,
 	  0,			2 },
 
 	/* parallel port */
-	{ 11,			2,
+	{ P5064_IRQ_CENTRONICS,	2,
 	  IRQREG_LOCINT,	LOCINT_CENT,
 	  1,			2 },
 
 	/* RTC */
-	{ 12,			2,
+	{ P5064_IRQ_RTC,	2,
 	  IRQREG_LOCINT,	LOCINT_RTC,
 	  1,			6 },
 
@@ -222,17 +231,17 @@ const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	 * ISA INTERRUPTS
 	 */
 	/* ISA bridge */
-	{ 13,			0,
+	{ P5064_IRQ_ISABRIDGE,	0,
 	  IRQREG_ISAINT,	ISAINT_ISABR,
 	  0,			4 },
 
 	/* IDE 0 */
-	{ 14,			0,
+	{ P5064_IRQ_IDE0,	0,
 	  IRQREG_ISAINT,	ISAINT_IDE0,
 	  3,			2 },
 
 	/* IDE 1 */
-	{ 15,			0,
+	{ P5064_IRQ_IDE1,	0,
 	  IRQREG_ISAINT,	ISAINT_IDE1,
 	  3,			4 },
 };
@@ -282,11 +291,15 @@ const char *p5064_intrgroups[NINTRS] = {
 	"local",
 };
 
+void	*algor_p5064_intr_establish(int, int (*)(void *), void *);
+void	algor_p5064_intr_disestablish(void *);
+
 int	algor_p5064_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *algor_p5064_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p5064_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p5064_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
+void	algor_p5064_pci_intr_disestablish(void *, void *);
 void	*algor_p5064_pciide_compat_intr_establish(void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
@@ -294,6 +307,7 @@ void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
 const struct evcnt *algor_p5064_isa_intr_evcnt(void *, int);
 void	*algor_p5064_isa_intr_establish(void *, int, int, int,
 	    int (*)(void *), void *);
+void	algor_p5064_isa_intr_disestablish(void *, void *);
 int	algor_p5064_isa_intr_alloc(void *, int, int, int *);
 
 void	algor_p5064_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
@@ -333,7 +347,7 @@ algor_p5064_intr_init(struct p5064_config *acp)
 	acp->ac_pc.pc_intr_string = algor_p5064_pci_intr_string;
 	acp->ac_pc.pc_intr_evcnt = algor_p5064_pci_intr_evcnt;
 	acp->ac_pc.pc_intr_establish = algor_p5064_pci_intr_establish;
-	acp->ac_pc.pc_intr_disestablish = algor_p5064_intr_disestablish;
+	acp->ac_pc.pc_intr_disestablish = algor_p5064_pci_intr_disestablish;
 	acp->ac_pc.pc_conf_interrupt = algor_p5064_pci_conf_interrupt;
 	acp->ac_pc.pc_pciide_compat_intr_establish =
 	    algor_p5064_pciide_compat_intr_establish;
@@ -341,9 +355,11 @@ algor_p5064_intr_init(struct p5064_config *acp)
 	acp->ac_ic.ic_v = NULL;
 	acp->ac_ic.ic_intr_evcnt = algor_p5064_isa_intr_evcnt;
 	acp->ac_ic.ic_intr_establish = algor_p5064_isa_intr_establish;
-	acp->ac_ic.ic_intr_disestablish = algor_p5064_intr_disestablish;
+	acp->ac_ic.ic_intr_disestablish = algor_p5064_isa_intr_disestablish;
 	acp->ac_ic.ic_intr_alloc = algor_p5064_isa_intr_alloc;
 
+	algor_intr_establish = algor_p5064_intr_establish;
+	algor_intr_disestablish = algor_p5064_intr_disestablish;
 	algor_iointr = algor_p5064_iointr;
 }
 
@@ -413,11 +429,15 @@ algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 }
 
 void *
-algor_p5064_intr_establish(const struct p5064_irqmap *irqmap,
-    int (*func)(void *), void *arg)
+algor_p5064_intr_establish(int irq, int (*func)(void *), void *arg)
 {
+	const struct p5064_irqmap *irqmap;
 	struct algor_intrhand *ih;
 	int s;
+
+	irqmap = &p5064_irqmap[irq];
+
+	KASSERT(irq == irqmap->irqidx);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -451,11 +471,13 @@ algor_p5064_intr_establish(const struct p5064_irqmap *irqmap,
 }
 
 void
-algor_p5064_intr_disestablish(void *v, void *cookie)
+algor_p5064_intr_disestablish(void *cookie)
 {
 	const struct p5064_irqmap *irqmap;
-	struct algor_intrhand *ih = v;
+	struct algor_intrhand *ih = cookie;
 	int s;
+
+	irqmap = ih->ih_irqmap;
 
 	s = splhigh();
 
@@ -621,7 +643,14 @@ algor_p5064_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (ih >= NPCIIRQS)
 		panic("algor_p5064_intr_establish: bogus IRQ %ld\n", ih);
 
-	return (algor_p5064_intr_establish(&p5064_irqmap[ih], func, arg));
+	return (algor_p5064_intr_establish(ih, func, arg));
+}
+
+void
+algor_p5064_pci_intr_disestablish(void *v, void *cookie)
+{
+
+	return (algor_p5064_intr_disestablish(cookie));
 }
 
 void
@@ -640,7 +669,6 @@ void *
 algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
-	const struct p5064_irqmap *irqmap;
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;
 	int bus;
@@ -653,14 +681,12 @@ algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
 	if (bus != 0)
 		return (NULL);
 
-	irqmap = &p5064_irqmap[P5064_IRQ_IDE0 + chan];
-
-	cookie = algor_p5064_intr_establish(irqmap, func, arg);
+	cookie = algor_p5064_intr_establish(P5064_IRQ_IDE0 + chan, func, arg);
 	if (cookie == NULL)
 		return (NULL);
 	printf("%s: %s channel interrupting at on-board %s IRQ\n",
 	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan),
-	    p5064_intrnames[irqmap->irqidx]);
+	    p5064_intrnames[P5064_IRQ_IDE0 + chan]);
 	return (cookie);
 }
 
@@ -688,7 +714,14 @@ algor_p5064_isa_intr_establish(void *v, int iirq, int type, int level,
 	if ((irqidx = p5064_isa_to_irqmap[iirq]) == -1)
 		return (NULL);
 
-	return (algor_p5064_intr_establish(&p5064_irqmap[irqidx], func, arg));
+	return (algor_p5064_intr_establish(irqidx, func, arg));
+}
+
+void
+algor_p5064_isa_intr_disestablish(void *v, void *cookie)
+{
+
+	algor_p5064_intr_disestablish(cookie);
 }
 
 int
