@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.4 2004/01/30 04:33:05 lukem Exp $
+#	$NetBSD: master.cf,v 1.5 2004/01/30 04:37:39 lukem Exp $
 #
 #
 # Postfix master process configuration file.  Each line describes how
@@ -27,7 +27,9 @@
 # Chroot: whether or not the service runs chrooted to the mail queue
 # directory (pathname is controlled by the queue_directory configuration
 # variable in the main.cf file). Presently, all Postfix daemons can run
-# chrooted, except for the proxymap, pipe, virtual and local delivery daemons.
+# chrooted, except for the pipe, virtual and local delivery daemons.
+# The proxymap server can run chrooted, but doing so defeats most of
+# the purpose of having that service in the first place.
 # The files in the examples/chroot-setup subdirectory describe how
 # to set up a Postfix chroot environment for your type of machine.
 #
