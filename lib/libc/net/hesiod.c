@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.14 2000/07/07 08:03:39 itohy Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.15 2000/10/31 12:47:21 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.15 2000/10/31 12:47:21 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: hesiod.c,v 1.14 2000/07/07 08:03:39 itohy Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(hesiod_init,_hesiod_init)
@@ -115,15 +116,25 @@ hesiod_init(context)
 	ctx = malloc(sizeof(struct hesiod_p));
 	if (ctx) {
 		*context = ctx;
-		configname = getenv("HESIOD_CONFIG");
+			/*
+			 * don't permit overrides from environment
+			 * for set.id programs
+			 */
+		if (issetugid())
+			configname = NULL;
+		else
+			configname = getenv("HESIOD_CONFIG");
 		if (!configname)
 			configname = _PATH_HESIOD_CONF;
 		if (read_config_file(ctx, configname) >= 0) {
 			/*
 			 * The default rhs can be overridden by an
-			 * environment variable.
+			 * environment variable, unless set.id.
 			 */
-			p = getenv("HES_DOMAIN");
+			if (issetugid())
+				p = NULL;
+			else
+				p = getenv("HES_DOMAIN");
 			if (p) {
 				if (ctx->rhs)
 					free(ctx->rhs);
