@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.41 2004/11/10 17:54:03 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.42 2005/01/17 15:28:51 cube Exp $
 #
 # Generic atari
 #
@@ -242,6 +242,7 @@ pseudo-device	md		3	# Boot memory disk
 #ifndef INSTALL_KERNEL
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

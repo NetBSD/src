@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.18 2005/01/01 21:20:19 rumble Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.19 2005/01/17 15:28:52 cube Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.18 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -397,6 +397,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

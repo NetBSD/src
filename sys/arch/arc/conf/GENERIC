@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2004/11/24 20:49:20 bouyer Exp $
+# $NetBSD: GENERIC,v 1.108 2005/01/17 15:28:51 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.107 $"
+#ident		"GENERIC-$Revision: 1.108 $"
 
 maxusers	32		# estimated number of users
 
@@ -418,6 +418,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
