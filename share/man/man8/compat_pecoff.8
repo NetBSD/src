@@ -1,0 +1,166 @@
+.\"	$NetBSD: compat_pecoff.8,v 1.2.2.2 2000/08/11 03:30:33 minoura Exp $
+.\"
+.\" Copyright (c) 2000 The PEACE Project.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 17, 2000
+.Dt COMPAT_PECOFF 8
+.Os
+.Sh NAME
+.Nm compat_pecoff
+.Nd setup procedure for running Win32 applications (a.k.a. PEACE)
+.Sh DESCRIPTION
+.Nx
+has partial support for running Win32 application.
+This manual page describes how to run Win32 (and hopefully WinCE
+in the future) applications on
+.Nx .
+Note that PE (Portable Executable) is Microsoft extention to COFF
+executable file format.
+
+.Sh BRIEF INTRODUCTION TO WIN32 API
+Win32 API is an application program interface (API) for 32-bit
+applications for Microsoft Windows 9x/NT/2000.  Win32 API is provided
+via a set of core DLLs (Dynamically Linked Libraries), including KERNEL32.DLL,
+USER32.DLL and GDI32.DLL.  
+.Pp
+Structure of these core DLLs and the interface between the
+operating system kernel and userland is implementation-dependent.
+Each implementation must provide their own core DLLs.
+Therfore, these DLLs are different between Windows 98 and Windows 2000.
+.Pp
+KERNEL32.DLL is used by all Win32 applications; it provides basic
+kernel interface such as file access, process control, memory management etc.
+.Pp
+USER32.DLL is used by most Win32 applications; it provides basic
+userland functions such as GUI and messaging.
+.Pp
+GDI32.DLL provides functions to draw images and characters.
+.Pp
+SHELL32.DLL is the Windows shell support, including file association.
+.Pp
+COMCTL32.DLL and COMDLG.32.DLL are GUI components which are commonly
+used in many applications.  WSOCK32.DLL provides networking API.
+DDRAW.DLL is for DirectDraw.
+.Pp
+Most of other DLLs are compatible among all the implementations and
+therefore can be shared.
+
+.Sh NETBSD SUPPORT FOR WIN32 API
+.Nx
+support for Win32 application is developed by the PEACE Project, and is
+under active development.
+Currently it can run some console applications including Windows 2000
+CMD.EXE, and very few GUI applications.
+.Pp
+PEACE system consists of three parts; kernel part, dynamic loader and
+core DLLs.
+.Pp
+The kernel part provides loading and executing PE/COFF format 
+executable binaries, i.e. it extends
+.Xr execve 2
+system call, just like other binary compatibility options.
+It is activated by enabling
+.Dv COMPAT_PECOFF
+option.
+.Pp
+The dynamic loader is PE/COFF version of
+.Xr ld.so 1 .
+It reads the file header of the executable binary, and
+loads required DLLs.  
+.Pp
+The core DLLs implement the actual Win32 API functions described in the
+previous section.  Since the kernel part does not provide
+any additional system calls and other kernel interface,
+all Win32 API functions are implemented on top of the existing
+.Nx
+APIs (system calls and standard libraries such as libc and libX11).
+
+.Sh PREPARING PEACE DYNAMIC LOADER AND CORE DLLS
+Development snapshots of the dynamic loader can be retrieved from 
+.Pa http://chiharu.haun.org/peace/dist/peace-i386-ld.so.dll-*.gz ,
+where `*' is replaced with the snapshot date.
+Simply
+.Xr gunzip 1
+the file and copy the resultant as
+.Pa /usr/libexec/ld.so.dll .
+.Pp
+The core DLLs can also be retrieved from
+.Pa http://chiharu.haun.org/peace/dist/peace-i386-dll-*.tgz .
+The dynamic loader searches required DLLs from the following directories;
+.Bl -enum -compact
+.It
+.Pa /usr/lib
+.It
+Directories listed in the environment variable DLLPATH (separated by
+colons)
+.It
+Same directory where the executable is located
+.El
+The core DLLs are required to be installed into
+.Pa /usr/lib ,
+in order to use CMD.EXE (or another Win32 application) as the login shell.
+.Pp
+Other DLLs can be stored into arbitrary directories specified by the
+environment variable DLLPATH.  To use Windows NT/2000
+DLLs installed on a separate partition of the local disk directly
+for
+.Nx ,
+type
+.Bd -literal -compact -offset indent
+mount -t ntfs -o ro /dev/wd0h /nthd
+setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
+.Ed
+(assuming csh).
+
+.Sh SEE ALSO
+.Xr config 8 , Xr options 4 ,
+.Xr execve 3 , Xr ld.so 1 ,
+.Xr mount_ntfs 8 , Xr gunzip 1
+.Pa http://chiharu.hauN.ORG/peace/
+
+.Sh HISTORY
+Kernel support for PE/COFF appeared in
+.Nx 1.5 .
+
+.Sh AUTHOR
+Implementation of Win32 binary compatibility support for
+.Nx
+was started by Masaru Oki.
+The PEACE Project is founded by him to implement enormous number of functions
+in Win32/WinCE API.
+
+.Sh BUGS
+.Bl -hyphen -compact
+.It
+Currently only i386 platform is supported.
+.It
+Most functions in Win32 are missing.
+.It
+The dynamic loader and core DLLs are not provided in the standard
+distribution of
+.Nx .
+This is because the cross-compiler is required to build them.
+.El
