@@ -152,11 +152,11 @@ NAME	[A-Za-z0-9.*=_/-]
 					}
 ^{WS}*help{WS}*$			{
 					    extern void PrintHelp();
-
 					    PrintHelp();
 					    return(1);
 					}
 ^{WS}*"?"{WS}*$				{
+					    extern void PrintHelp();
 					    PrintHelp();
 					    return(1);
 					}
