@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.h,v 1.2.4.1 1996/06/13 17:45:34 cgd Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2.4.2 1996/06/13 18:35:23 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
