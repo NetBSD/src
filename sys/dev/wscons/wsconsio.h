@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.41 2001/09/04 17:57:16 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.42 2001/09/18 23:25:25 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -149,6 +149,9 @@ struct wskbd_map_data {
 #define WSKBDIO_GETMODE		_IOR('W', 20, int)
 #define		WSKBD_TRANSLATED	0
 #define		WSKBD_RAW		1
+
+#define	WSKBDIO_SETKEYCLICK	_IOW('W', 21, int)
+#define	WSKBDIO_GETKEYCLICK	_IOR('W', 22, int)
 
 /*
  * Mouse ioctls (32 - 63)
