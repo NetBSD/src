@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2.8.3 2000/11/03 02:46:04 tv Exp $
+.\"	$NetBSD: prep,v 1.2.8.4 2000/11/04 05:19:25 lukem Exp $
 .
 .Ss2 Open Firmware System Preparation
 .
@@ -25,7 +25,7 @@ button, or the patches will not be saved to NVRAM.
 NVRAM patches and Open Firmware settings will be erased if you
 .Sq zap your PRAM
 by holding down
-.Dq COMMAND-OPTION-P-R
+.Key COMMAND-OPTION-P-R
 keys during the boot chimes
 .Note)
 .Pp
@@ -212,11 +212,11 @@ Expect devices to not work.
 .Note)
 .Pp
 After the chime starts, but before it stops, hold down the
-.Dq COMMAND-OPTION-O-F
+.Key COMMAND-OPTION-O-F
 keys (the
-.Dq COMMAND
+.Key COMMAND
 key looks like a four-leaf clover or an open apple, and the
-.Dq OPTION
+.Key OPTION
 key may look like a two-way switch with four straight line segments).
 .Pp
 You should now see the Open Firmware command prompt:
@@ -297,6 +297,7 @@ The last command reboots your machine so that the
 setting takes effect.
 .Pp
 If you will be netbooting your system, you can look up your MAC address.
+.Pp
 .Dl 0 > Ic "dev enet .properties"
 .Dl "[...]"
 .Dl "local-mac-address   CCCCCCCC CCCC"
@@ -563,9 +564,9 @@ which will load the installation kernel.
 .Em From a Windows machine
 .Pp
 Get either the
-.Nm rawrite.exe
+.Ic rawrite.exe
 program from the NetBSD/i386 distribution or
-.Nm rawrite32.exe
+.Ic rawrite32.exe
 from
 .Lk http://www.duskware.com/rawrite32/
 .Pp
@@ -573,7 +574,7 @@ from
 .Em From a MacOS machine
 .Pp
 Get
-.Nm suntar
+.Ic suntar
 from 
 .Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
 .(enum
@@ -766,7 +767,7 @@ and place it at the top level of any partition.
 Use a
 .Tn MacOS
 utility such as 
-.Nm Stuffit Expander
+.Ic Stuffit Expander
 to uncompress the kernel.
 Get to the Open Firmware prompt. Boot the kernel directly (i.e. without 
 the use of a bootloader) and use it to install
@@ -806,31 +807,48 @@ Now, set up your
 .Ic dhcpd
 server.  Make sure the following lines are in
 .Pa /etc/dhcpd.conf :
-.Dl allow bootp;                        #allow bootp requests, thus the dhcp
-.Dl                                     #server will act as a bootp server
-.Dl
-.Dl # which network interface the server will listen on
-.Dl subnet 192.168.1.0 netmask 255.255.255.0 { #the zeros indicate which range of
-.Dl }                                       #addresses are allowed to connect
-.Dl
-.Dl #set of parameters common to all clients
-.Dl group {                                
-.Dl  option broadcast-address 192.168.1.255;
-.Dl  option domain-name "test.net";
-.Dl  option domain-name-servers dns.test.net;
-.Dl  option routers router.test.net;
-.Dl  option subnet-mask 255.255.255.0;
-.Dl
-.Dl  host client.test.net {
-.Dl   hardware ethernet CC:CC:CC:CC:CC:CC;
-.Dl   fixed-address 192.168.1.10;
-.Dl   option host-name "client";        #name of the host (if the fixed address
-.Dl                                     #doesn't resolve to a simple name)
-.Dl   filename "ofwboot.xcf";           #name of the bootloader or kernel
-.Dl                                     #to download via tftp
-.Dl   option root-path "/export/client/root"; #the path on the NFS server.
-.Dl  }
-.Dl }
+.(disp
+allow bootp;	# Allow bootp requests, thus the dhcp server
+		# will act as a bootp server.
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+		# Which network interface the server will
+		# listen on.  The zeros indicate which
+		# range of addresses are allowed to connect.
+}
+
+group {                                
+		# Set of parameters common to all clients
+		# in this "group".
+		#
+	option broadcast-address	192.168.1.255;
+	option domain-name		"test.net";
+	option domain-name-servers	dns.test.net;
+	option routers			router.test.net;
+	option subnet-mask		255.255.255.0;
+
+		# An individual client.
+		#
+	host client.test.net {
+		hardware ethernet	CC:CC:CC:CC:CC:CC;
+		fixed-address		192.168.1.10;
+
+		# Name of the host (if the fixed address
+		# doesn't resolve to a simple name).
+		#
+		option host-name	"client";
+
+		# Name of the bootloader or kernel
+		# to download via tftp.
+		#
+		filename		"ofwboot.xcf";
+
+		# The path on the NFS server.
+		#
+		option	root-path	"/export/client/root";
+	}
+}
+.disp)
 .Pp
 You will need to make sure that the
 .Pa dhcpd.leases
@@ -843,8 +861,11 @@ You will need to
 the
 .Ic dhcpd
 and restart it to get it to re-read its configuration file.
+If the server is running
+.Nx 1.5 ,
+you can achieve this with:
 .Pp
-.Dl # Ic "usr/sbin/dhcpd"
+.Dl # Ic "/etc/rc.d/dhcpd restart"
 .Pp
 Now, place a copy of the
 .Pa installation/ofwboot.xcf
@@ -916,6 +937,7 @@ filesystem from the disk image.
 .Em From a UNIX machine
 .Pp
 .Dl # Ic "dd if=boot.fs of=/dev/rsd0c"
+.Pp
 where 
 .Pa /dev/rsd0c
 is the 
@@ -927,7 +949,7 @@ correctly, as it will erase the disk.
 .Em From a Windows machine
 .Pp
 Get
-.Nm rawrite32.exe
+.Ic rawrite32.exe
 from
 .Lk http://www.duskware.com/rawrite32/
 .Pp
@@ -938,7 +960,7 @@ contents.
 .Em From a MacOS machine
 .Pp
 Get
-.Nm suntar
+.Ic suntar
 from 
 .Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
 .(enum
