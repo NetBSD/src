@@ -39,14 +39,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)msgs.c	5.8 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: msgs.c,v 1.4 1993/12/04 01:57:30 jtc Exp $";
+static char rcsid[] = "$Id: msgs.c,v 1.5 1994/01/07 16:22:20 mycroft Exp $";
 #endif /* not lint */
 
 /*
  * msgs - a user bulletin board program
  *
  * usage:
- *	msgs [fhlopq] [[-]number]	to read messages
+ *	msgs [fhlopqr] [[-]number]	to read messages
  *	msgs -s				to place messages
  *	msgs -c [-days]			to clean up the bulletin board
  *
@@ -146,6 +146,7 @@ bool	locomode = NO;
 bool	use_pager = NO;
 bool	clean = NO;
 bool	lastcmd = NO;
+bool	restricted = NO;
 jmp_buf	tstpbuf;
 
 main(argc, argv)
@@ -216,13 +217,17 @@ int argc; char *argv[];
 				qopt = YES;
 				break;
 
+			case 'r':		/* restricted */
+				restricted = YES;
+				break;
+
 			case 's':		/* sending TO msgs */
 				send_msg = YES;
 				break;
 
 			default:
 				fprintf(stderr,
-					"usage: msgs [fhlopq] [[-]number]\n");
+					"usage: msgs [fhlopqr] [[-]number]\n");
 				exit(1);
 			}
 		}
@@ -383,12 +388,11 @@ int argc; char *argv[];
 	use_pager = use_pager && totty;
 
 	sprintf(fname, "%s/%s", getenv("HOME"), MSGSRC);
-	msgsrc = fopen(fname, "r");
+	msgsrc = fopen(fname, "r+");
 	if (msgsrc) {
 		newrc = NO;
-		fscanf(msgsrc, "%d\n", &nextmsg);
-		fclose(msgsrc);
-		if (nextmsg > lastmsg+1) {
+		if (fscanf(msgsrc, "%d\n", &nextmsg) != 1 ||
+		    nextmsg > lastmsg+1) {
 			printf("Warning: bounds have been reset (%d, %d)\n",
 				firstmsg, lastmsg);
 			truncate(fname, (off_t)0);
@@ -397,9 +401,10 @@ int argc; char *argv[];
 		else if (!rcfirst)
 			rcfirst = nextmsg - rcback;
 	}
-	else
+	else {
+		msgsrc = fopen(fname, "w+");
 		newrc = YES;
-	msgsrc = fopen(fname, "w");
+	}
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
@@ -596,11 +601,16 @@ prmesg(length)
 int length;
 {
 	FILE *outf;
+	char *env_pager;
 
 	if (use_pager && length > Lpp) {
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
-		sprintf(cmdbuf, _PATH_PAGER, Lpp);
+		if ((env_pager = getenv("PAGER")) == NULL) {
+			sprintf(cmdbuf, _PATH_PAGER, Lpp);
+		} else {
+			strcpy(cmdbuf, env_pager);
+		}
 		outf = popen(cmdbuf, "w");
 		if (!outf)
 			outf = stdout;
@@ -714,7 +724,7 @@ char *prompt;
 	/*
 	 * Handle 'mail' and 'save' here.
 	 */
-	if ((inch = inbuf[0]) == 's' || inch == 'm') {
+	if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
 		if (inbuf[1] == '-')
 			cmsg = prevmsg;
 		else if (isdigit(inbuf[1]))
