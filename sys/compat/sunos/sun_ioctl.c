@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_ioctl.c,v 1.11 1994/06/29 06:30:16 cgd Exp $	*/
+/*	$NetBSD: sun_ioctl.c,v 1.12 1994/10/20 04:47:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -388,7 +388,7 @@ int
 sun_ioctl(p, uap, retval)
 	register struct proc *p;
 	register struct sun_ioctl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
