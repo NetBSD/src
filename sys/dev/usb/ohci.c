@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.99 2001/01/21 02:39:52 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.100 2001/01/28 16:18:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1077,7 +1077,12 @@ ohci_intr1(ohci_softc_t *sc)
 		     (u_int)eintrs));
 
 	if (eintrs & OHCI_SO) {
-		printf("%s: scheduling overrun\n",USBDEVNAME(sc->sc_bus.bdev));
+		sc->sc_overrun_cnt++;
+		if (usbd_ratecheck(&sc->sc_overrun_ntc)) {
+			printf("%s: %u scheduling overruns\n",
+			    USBDEVNAME(sc->sc_bus.bdev), sc->sc_overrun_cnt);
+			sc->sc_overrun_cnt = 0;
+		}
 		/* XXX do what */
 		intrs &= ~OHCI_SO;
 	}
