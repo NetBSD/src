@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.83 2002/09/23 05:51:22 simonb Exp $        */
+/*      $NetBSD: ukbd.c,v 1.84 2002/10/09 01:02:26 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.83 2002/09/23 05:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.84 2002/10/09 01:02:26 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,7 @@ struct ukbd_softc {
 	char sc_rep[MAXKEYS];
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
+	int sc_spl;
 	int sc_polling;
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
@@ -719,7 +720,6 @@ void
 ukbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct ukbd_softc *sc = v;
-	int s;
 	int c;
 	int broken;
 
@@ -736,7 +736,6 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 		broken = 0;
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
-	s = splusb();
 	sc->sc_polling = 1;
 	while(sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
@@ -747,7 +746,6 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	       sc->sc_npollchar * sizeof(u_int16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
-	splx(s);
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
 	if (broken)
 		ukbd_cnpollc(v, 0);
@@ -762,7 +760,13 @@ ukbd_cnpollc(void *v, int on)
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
 	usbd_interface2device_handle(sc->sc_hdev.sc_parent->sc_iface, &dev);
-	if (on) pollenter++; else pollenter--;
+	if (on) {
+		sc->sc_spl = splusb();
+		pollenter++;
+	} else {
+		splx(sc->sc_spl);
+		pollenter--;
+	}
 	usbd_set_polling(dev, on);
 }
 
