@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.3 2000/01/24 22:05:53 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.4 2000/01/25 05:32:28 chopps Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1755,8 +1755,10 @@ ray_ccs_done(sc, ccs)
 		ray_cmd_done(sc, SCP_STARTASSOC);
 		if (stat == RAY_CCS_STATUS_FAIL)
 			rcmd = ray_start_join_net;	/* XXX check */
-		else
+		else {
+			sc->sc_havenet = 1;
 			rcmd = ray_intr_start;
+		}
 		break;
 	case RAY_CMD_UPDATE_APM:
 	case RAY_CMD_TEST_MEM:
@@ -1806,9 +1808,16 @@ ray_rccs_intr(sc, ccs)
 		ray_recv(sc, ccs);
 		goto done;
 	case RAY_ECMD_REJOIN_DONE:
+		if (sc->sc_mode == SC_MODE_ADHOC)
+			break;
+		/* get the current ssid */
+		SRAM_READ_FIELD_N(sc, ccs, ray_cmd_net, c_bss_id,
+		    sc->sc_bssid, sizeof(sc->sc_bssid));
 		rcmd = ray_start_assoc;
 		break;
 	case RAY_ECMD_ROAM_START:
+		/* no longer have network */
+		sc->sc_havenet = 0;
 		break;
 	case RAY_ECMD_JAPAN_CALL_SIGNAL:
 		break;
@@ -2464,6 +2473,7 @@ ray_start_join_net(sc)
 	    && sc->sc_omode == sc->sc_mode)
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param, 0);
 	else {
+		sc->sc_havenet = 0;
 		memset(&np, 0, sizeof(np));
 		np.p_net_type = sc->sc_mode;
 		memcpy(np.p_ssid, sc->sc_dnwid, sizeof(np.p_ssid));
@@ -2572,12 +2582,13 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 		SRAM_READ_FIELD_1(sc, ccs, ray_cmd_net, c_inited)));
 
 	/* network is now active */
-	sc->sc_havenet = 1;
 	ray_cmd_schedule(sc, SCP_UPD_MCAST|SCP_UPD_PROMISC);
 	if (cmd == RAY_CMD_JOIN_NET)
 		return (ray_start_assoc);
-	else
+	else {
+		sc->sc_havenet = 1;
 		return (ray_intr_start);
+	}
 }
 
 /*
