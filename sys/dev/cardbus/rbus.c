@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.16 2003/03/22 06:18:22 nakayama Exp $	*/
+/*	$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.16 2003/03/22 06:18:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17 2003/05/17 08:23:14 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
 	DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
-	    addr, size, mask, align));
+	    (u_long)addr, (u_long)size, (u_long)mask, (u_long)align));
 
 	addr += rbt->rb_offset;
 
@@ -151,7 +151,8 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 				    search_addr, search_addr + size, size,
 				    align, 0, exflags, &result);
 				DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
-				    search_addr, search_addr + size, align));
+				    (u_long)search_addr,
+				    (u_long)search_addr + size, (u_long)align));
 				if (val == 0) {
 					break;
 				}
@@ -260,7 +261,8 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
 	rb->rb_flags = flags;
 	rb->rb_ext = ex;
 
-	DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n", start, end,
+	DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n",
+	    (u_long)start, (u_long)end,
 	    flags == RBUS_SPACE_SHARE ? "share" :
 	    flags == RBUS_SPACE_DEDICATE ? "dedicated" :
 	    flags == RBUS_SPACE_ASK_PARENT ? "parent" : "invalid",
