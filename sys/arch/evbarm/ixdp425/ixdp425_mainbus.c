@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.3 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.
@@ -70,11 +70,6 @@ void
 ixp425_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixp425_softc *sc = (void *) self;
-
-	/*
-	 * Initialize the interrupt part of our PCI chipset tag
-	 */
-	ixdp425_pci_init(&sc->ia_pci_chipset, sc);
 
 	ixp425_attach(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.3 2003/07/27 04:52:28 thorpej Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.4 2003/10/08 14:55:04 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.3 2003/07/27 04:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.4 2003/10/08 14:55:04 scw Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -73,10 +73,11 @@ struct ixpclk_softc {
         bus_space_handle_t      sc_ioh;
 };
 
-#define	COUNTS_PER_SEC		66000000	/* 66MHz */
-#define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
+#define	COUNTS_PER_SEC		66666600	/* 66MHz */
+#define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
-static struct ixpclk_softc *ixpclk_sc = NULL;
+static struct ixpclk_softc *ixpclk_sc;
+static int ixpclk_first_timer;
 
 CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 		ixpclk_match, ixpclk_attach, NULL, NULL);
@@ -103,13 +104,28 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_baseaddr = sa->sa_addr;
 
 	/* using first timer for system ticks */
-	if (ixpclk_sc == NULL)
+	if (!ixpclk_first_timer) {
+		ixpclk_first_timer = 1;
 		ixpclk_sc = sc;
+	}
 	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
 
 	 aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
+}
+
+void
+ixp425_clk_bootstrap(bus_space_tag_t bt)
+{
+	static struct ixpclk_softc sc;
+	ixpclk_sc = &sc;
+
+	sc.sc_iot = bt;
+	sc.sc_baseaddr = IXP425_TIMER_HWBASE;
+
+	if (bus_space_map(sc.sc_iot, sc.sc_baseaddr, 0x30, 0, &sc.sc_ioh))
+		panic("ixp425_clk_bootstrap: Cannot map registers");
 }
 
 /*
