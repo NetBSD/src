@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.h,v 1.2 1996/04/13 00:24:35 cgd Exp $	*/
+/* $NetBSD: pci_kn20aa.h,v 1.3 1997/04/07 02:00:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

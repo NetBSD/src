@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
+/* $NetBSD: vga_pcivar.h,v 1.2 1997/04/07 02:00:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
