@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.5 1998/04/18 09:49:58 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.6 1998/04/28 17:48:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -184,11 +184,11 @@ pckbdprobe(parent, cf, aux)
 	cmd[0] = KBC_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
 	if (res) {
-		printf("pcprobe: reset error %d\n", 1);
+		printf("pckbdprobe: reset error %d\n", 1);
 		goto lose;
 	}
 	if (resp[0] != KBR_RSTDONE) {
-		printf("pcprobe: reset error %d\n", 2);
+		printf("pckbdprobe: reset error %d\n", 2);
 		goto lose;
 	}
 
@@ -203,7 +203,7 @@ pckbdprobe(parent, cf, aux)
 	cmd[0] = KBC_ENABLE;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
 	if (res) {
-		printf("pcprobe: reset error %d\n", 3);
+		printf("pckbdprobe: reset error %d\n", 3);
 		goto lose;
 	}
 
