@@ -478,6 +478,7 @@
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
+./usr/sbin/rdconfig
 ./usr/sbin/repquota
 ./usr/sbin/rmt
 ./usr/sbin/rpc.bootparamd
