@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.184 2004/05/06 05:34:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.185 2004/05/06 05:35:34 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1869,3 +1869,9 @@ lib/libpthread/pthread_cond.c			1.15
 	since this value is explicitly ruled out by POSIX.  Instead, return 0,
 	like a spurious wakeup. PR#24240.
 	[kleink, ticket #255]
+
+sys/dev/ic/ncr53c9x.c				1.111
+
+	On reset, clear state flags and the msgout queue and notify the upper 
+	layer.
+	[pk, ticket #255]
