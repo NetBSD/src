@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r96.c,v 1.2 2003/01/31 22:07:52 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_r96.c,v 1.3 2003/06/19 16:00:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -64,7 +64,7 @@ struct platform platform_nec_riscserver_2200 = {
 	c_jazz_eisa_mainbusdevs,
 	p_nec_riscserver_2200_match,
 	c_nec_eisa_init,
-	c_jazz_eisa_cons_init,
+	c_nec_eisa_cons_init,
 	jazzio_reset,
 	c_nec_jazz_set_intr,
 };
