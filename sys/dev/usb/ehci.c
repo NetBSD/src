@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.2 2004/06/24 08:19:06 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.3 2004/06/24 08:21:31 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.2 2004/06/24 08:19:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.3 2004/06/24 08:21:31 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1255,7 +1255,6 @@ ehci_open(usbd_pipe_handle pipe)
 		 EHCI_QH_CTL : 0) |
 		EHCI_QH_SET_NRL(naks)
 		);
-printf("sqh=%p endp=%08x\n", sqh, sqh->qh.qh_endp);
 	sqh->qh.qh_endphub = htole32(
 		EHCI_QH_SET_MULT(1)
 		/* XXX TT stuff */
@@ -2541,7 +2540,6 @@ ehci_device_request(usbd_xfer_handle xfer)
 	     EHCI_QH_SET_ADDR(addr) |
 	     EHCI_QH_SET_MPL(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize))
 	    );
-printf("sqh=%p endp=%08x\n", sqh, sqh->qh.qh_endp);
 
 	/* Set up data transaction */
 	if (len != 0) {
