@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.47 2000/04/23 00:46:59 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.48 2000/04/27 15:26:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

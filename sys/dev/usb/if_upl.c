@@ -1,10 +1,10 @@
-/*	$NetBSD: if_upl.c,v 1.2 2000/04/12 10:36:46 itojun Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.3 2000/04/27 15:26:46 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
