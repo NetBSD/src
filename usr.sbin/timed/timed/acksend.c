@@ -1,4 +1,4 @@
-/*	$NetBSD: acksend.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $	*/
+/*	$NetBSD: acksend.c,v 1.7 2002/07/06 22:08:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acksend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: acksend.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $");
+__RCSID("$NetBSD: acksend.c,v 1.7 2002/07/06 22:08:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,7 @@ struct tsp *answer;
 extern u_short sequence;
 
 void
-xmit(int type,
-     u_short seq,
-     struct sockaddr_in *addr)
+xmit(int type, u_short seq, struct sockaddr_in *addr)
 {
 	static struct tsp msg;
 
