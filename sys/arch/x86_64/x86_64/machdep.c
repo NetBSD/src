@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2003/01/30 02:05:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -614,6 +614,12 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 
 	tf = l->l_md.md_regs;
 
+#if 0
+	printf("proc %d: upcall to lwp %d, type %d ev %d int %d sas %p to %p\n",
+	    (int)l->l_proc->p_pid, (int)l->l_lid, type, nevents, ninterrupted,
+	    sas, (void *)upcall);
+#endif
+
 	tf->tf_rdi = type;
 	tf->tf_rsi = (u_int64_t)sas;
 	tf->tf_rdx = nevents;
@@ -630,6 +636,8 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+
+	l->l_md.md_flags |= MDP_IRET;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.17 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.18 2003/01/30 02:05:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -266,9 +266,10 @@ IDTVEC(syscall)
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
-	movq    _C_LABEL(curlwp)(%rip),%r15
-	movq	%rsp,L_MD_REGS(%r15)	# save pointer to frame
-	movq	L_PROC(%r15),%r15
+	movq    _C_LABEL(curlwp)(%rip),%r14
+	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
+	movq	L_PROC(%r14),%r15
+	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
@@ -282,6 +283,8 @@ IDTVEC(syscall)
 	jmp	1b
 2:
 	sti
+	testl	$MDP_IRET, L_MD_FLAGS(%r14)
+	jne	iret_return;
 syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$0,_C_LABEL(cpl)(%rip)
@@ -368,6 +371,7 @@ _C_LABEL(osyscall_return):
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
 	jmp	2b
+iret_return:
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
