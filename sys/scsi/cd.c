@@ -82,14 +82,12 @@ struct	scsi_xfer	cd_scsi_xfer[NCD][CDOUTSTANDING]; /* XXX */
 struct	scsi_xfer	*cd_free_xfer[NCD];
 int			cd_xfer_block_wait[NCD];
 
-struct	cd_data cd_data[NCD];
+struct	cd_data *cd_data[NCD];
 
 #define CD_STOP		0
 #define CD_START	1
 #define CD_EJECT	-2
 
-
-static	int	next_cd_unit = 0;
 /***********************************************************************\
 * The routine called by the low level scsi routine when it discovers	*
 * A device suitable for this driver					*
@@ -106,9 +104,14 @@ int	cdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 
 	if(unit >= NCD)
 		return -1;
-	cd = cd_data + unit;
-	if(cd->flags & CDINIT)
+	if(cd_data[unit])
 		return -1;
+
+	cd = cd_data[unit] = (struct cd_data *)malloc(sizeof *cd,
+		M_TEMP, M_NOWAIT);
+	if(!cd)
+		return -1;
+	bzero(cd, sizeof *cd);
 
 	dp  = &(cd->params);
 	if(scsi_debug & PRINTROUTINES) printf("cdattach: "); 
@@ -152,7 +155,7 @@ cdopen(dev_t dev)
 	int errcode = 0;
 	int unit, part;
 	struct cd_parms cd_parms;
-	struct cd_data *cd ;
+	struct cd_data *cd;
 
 	unit = UNIT(dev);
 	part = PARTITION(dev);
@@ -166,7 +169,9 @@ cdopen(dev_t dev)
 	\*******************************************************/
 	if( unit >= NCD )
 		return(ENXIO);
-	cd = cd_data + unit;
+	cd = cd_data[unit];
+	if(!cd)
+		return ENXIO;
 	if (! (cd->flags & CDINIT))
 		return(ENXIO);
 
@@ -319,7 +324,7 @@ cd_free_xs(int unit, struct scsi_xfer *xs, int flags)
 void	cdminphys(bp)
 struct buf	*bp;
 {
-	(*(cd_data[UNIT(bp->b_dev)].sc_sw->scsi_minphys))(bp);
+	(*(cd_data[UNIT(bp->b_dev)]->sc_sw->scsi_minphys))(bp);
 }
 
 /*******************************************************\
@@ -339,20 +344,26 @@ struct	buf	*bp;
 
 	cdstrats++;
 	unit = UNIT((bp->b_dev));
-	cd = cd_data + unit;
+	cd = cd_data[unit];
 	if(scsi_debug & PRINTROUTINES) printf("\ncdstrategy ");
 	if(scsi_debug & SHOWREQUESTS) printf("cd%d: %d bytes @ blk%d\n",
 					unit,bp->b_bcount,bp->b_blkno);
+
+	if(!cd) {
+		bp->b_error = EIO;
+		goto bad;
+	}
+	if(!(cd->flags & CDVALID)) {
+		bp->b_error = EIO;
+		goto bad;
+	}
+
 	cdminphys(bp);
 	/*******************************************************\
 	* If the device has been made invalid, error out	*
 	* maybe the media changed				*
 	\*******************************************************/
-	if(!(cd->flags & CDVALID))
-	{
-		bp->b_error = EIO;
-		goto bad;
-	}
+
 	/*******************************************************\
 	* can't ever write to a CD				*
 	\*******************************************************/
@@ -438,7 +449,7 @@ cdstart(int unit)
 	struct	scsi_xfer	*xs;
 	struct	scsi_rw_big	cmd;
 	int			blkno, nblk;
-	struct cd_data *cd = cd_data + unit;
+	struct cd_data *cd = cd_data[unit];
 	struct partition *p ;
 
 	if(scsi_debug & PRINTROUTINES) printf("cdstart%d ",unit);
@@ -580,7 +591,7 @@ struct	scsi_xfer	*xs;
 			{
 				xs->error = XS_NOERROR;
 				xs->flags &= ~ITSDONE;
-				if ( (*(cd_data[unit].sc_sw->scsi_cmd))(xs)
+				if ( (*(cd_data[unit]->sc_sw->scsi_cmd))(xs)
 					== SUCCESSFULLY_QUEUED)
 				{	/* shhh! don't wake the job, ok? */
 					/* don't tell cdstart either, */
@@ -623,14 +634,17 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 	\*******************************************************/
 	unit = UNIT(dev);
 	part = PARTITION(dev);
-	cd = &cd_data[unit];
+	cd = cd_data[unit];
 	if(scsi_debug & PRINTROUTINES) printf("cdioctl%d ",unit);
 
 	/*******************************************************\
 	* If the device is not valid.. abandon ship		*
 	\*******************************************************/
-	if (!(cd_data[unit].flags & CDVALID))
-		return(EIO);
+	if(!cd)
+		return ENXIO;
+	if (!(cd_data[unit]->flags & CDVALID))
+		return ENXIO;
+
 	switch(cmd)
 	{
 
@@ -913,7 +927,7 @@ unsigned char	unit;
 	/*unsigned int n, m;*/
 	char *errstring;
 	struct dos_partition *dos_partition_p;
-	struct cd_data *cd = cd_data + unit;
+	struct cd_data *cd = cd_data[unit];
 
 	/*******************************************************\
 	* If the inflo is already loaded, use it		*
@@ -996,8 +1010,8 @@ cd_size(unit, flags)
 		blksize += rdcap.length_3 << 24;
 	}
 	if(cd_debug)printf("cd%d: %d %d byte blocks\n",unit,size,blksize);
-	cd_data[unit].params.disksize = size;
-	cd_data[unit].params.blksize = blksize;
+	cd_data[unit]->params.disksize = size;
+	cd_data[unit]->params.blksize = blksize;
 	return(size);
 }
 	
@@ -1189,7 +1203,7 @@ cd_start_unit(unit,part,type)
 {
 	struct scsi_start_stop scsi_cmd;
 
-        if(type==CD_EJECT && (cd_data[unit].openparts&~(1<<part)) == 0 ) {
+        if(type==CD_EJECT && (cd_data[unit]->openparts&~(1<<part)) == 0 ) {
 		cd_prevent_unit(unit,CD_EJECT,0);
 	}
 
@@ -1217,7 +1231,7 @@ int     unit,type,flags;
 {
         struct  scsi_prevent    scsi_cmd;
 
-        if(type==CD_EJECT || type==PR_PREVENT || cd_data[unit].openparts == 0 ) {
+        if(type==CD_EJECT || type==PR_PREVENT || cd_data[unit]->openparts == 0 ) {
                 bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
                 scsi_cmd.op_code = PREVENT_ALLOW;
                 scsi_cmd.prevent=type==CD_EJECT?PR_ALLOW:type;
@@ -1310,12 +1324,14 @@ struct cd_toc_entry *data;
 
 int	cd_get_parms(unit, flags)
 {
-	struct cd_data *cd = cd_data + unit;
+	struct cd_data *cd = cd_data[unit];
 
-	/*******************************************************\
-	* First check if we have it all loaded			*
-	\*******************************************************/
-		if(cd->flags & CDVALID) return(0);
+
+	if(!cd)
+		return 0;
+	if(cd->flags & CDVALID)
+		return 0;
+
 	/*******************************************************\
 	* give a number of sectors so that sec * trks * cyls	*
 	* is <= disk_size 					*
@@ -1345,8 +1361,8 @@ cdclose(dev_t dev)
 	part = PARTITION(dev);
 	if(scsi_debug & TRACEOPENS)
 		printf("closing cd%d part %d\n",unit,part);
-	cd_data[unit].partflags[part] &= ~CDOPEN;
-	cd_data[unit].openparts &= ~(1 << part);
+	cd_data[unit]->partflags[part] &= ~CDOPEN;
+	cd_data[unit]->openparts &= ~(1 << part);
        	cd_prevent_unit(unit,PR_ALLOW,SCSI_SILENT);
 	return(0);
 }
@@ -1372,7 +1388,7 @@ int	datalen;
 	struct	scsi_xfer *xs;
 	int	retval;
 	int	s;
-	struct cd_data *cd = cd_data + unit;
+	struct cd_data *cd = cd_data[unit];
 
 	if(scsi_debug & PRINTROUTINES) printf("\ncd_scsi_cmd%d ",unit);
 	if(cd->sc_sw)	/* If we have a scsi driver */
@@ -1545,8 +1561,8 @@ struct	scsi_xfer *xs;
 			return(EINVAL);
 		case	0x6:
 			if(!silent)printf("cd%d: Unit attention.\n", unit); 
-			if (cd_data[unit].openparts)
-			cd_data[unit].flags &= ~(CDVALID | CDHAVELABEL);
+			if (cd_data[unit]->openparts)
+			cd_data[unit]->flags &= ~(CDVALID | CDHAVELABEL);
 			{
 				return(EIO);
 			}

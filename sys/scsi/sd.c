@@ -87,7 +87,6 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int unit)
 		M_TEMP, M_NOWAIT);
 	if(!sd)
 		return -1;
-
 	bzero(sd, sizeof *sd);
 
 	/* store information needed to contact our base driver */
