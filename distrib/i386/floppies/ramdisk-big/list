@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2001/01/24 18:18:57 jmc Exp $
+#	$NetBSD: list,v 1.5 2001/05/26 16:01:32 christos Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/group		etc/group
@@ -6,7 +6,7 @@ COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/netconfig	etc/netconfig
 COPY	${CURDIR}/../../../../etc/services	etc/services
-COPY	${CURDIR}/../../../../usr.sbin/dhcp/client/scripts/netbsd etc/dhclient-script
+COPY	${CURDIR}/../../../../usr.sbin/dhcp/client/scripts/netbsd sbin/dhclient-script
 
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 SPECIAL	/bin/rm etc/spwd.db
