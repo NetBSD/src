@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.17 2001/09/14 14:03:59 wiz Exp $ */
+/* $NetBSD: dir.c,v 1.18 2001/11/03 13:35:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.17 2001/09/14 14:03:59 wiz Exp $");
+__RCSID("$NetBSD: dir.c,v 1.18 2001/11/03 13:35:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,7 @@ dfree(struct directory *dp)
 Char *
 dcanon(Char *cp, Char *p)
 {
-    Char link[MAXPATHLEN];
+    Char slink[MAXPATHLEN];
     char tlink[MAXPATHLEN];
     Char *newcp, *sp;
     Char *p1, *p2;	/* general purpose */
@@ -685,8 +685,8 @@ dcanon(Char *cp, Char *p)
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof tlink)) >= 0) {
-		(void)Strcpy(link, str2short(tlink));
-		link[cc] = '\0';
+		(void)Strcpy(slink, str2short(tlink));
+		slink[cc] = '\0';
 
 		if (slash)
 		    *p = '/';
@@ -699,7 +699,7 @@ dcanon(Char *cp, Char *p)
 		 */
 		for (p1 = p; *p1++;)
 		    continue;
-		if (*link != '/') {
+		if (*slink != '/') {
 		    /*
 		     * Relative path, expand it between the "yyy/" and the
 		     * "/..". First, back sp up to the character past "yyy/".
@@ -709,7 +709,7 @@ dcanon(Char *cp, Char *p)
 		    sp++;
 		    *sp = 0;
 		    /*
-		     * New length is "yyy/" + link + "/.." and rest
+		     * New length is "yyy/" + slink + "/.." and rest
 		     */
 		    p1 = newcp = (Char *)xmalloc(
 		        (size_t)(((sp - cp) + cc + (p1 - p)) * sizeof(Char)));
@@ -718,7 +718,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    for (p2 = cp; (*p1++ = *p2++) != '\0';)
 			continue;
-		    for (p1--, p2 = link; (*p1++ = *p2++) != '\0';)
+		    for (p1--, p2 = slink; (*p1++ = *p2++) != '\0';)
 			continue;
 		    for (p1--, p2 = p; (*p1++ = *p2++) != '\0';)
 			continue;
@@ -729,14 +729,14 @@ dcanon(Char *cp, Char *p)
 		}
 		else {
 		    /*
-		     * New length is link + "/.." and rest
+		     * New length is slink + "/.." and rest
 		     */
 		    p1 = newcp = (Char *)xmalloc(
 		        (size_t)((cc + (p1 - p)) * sizeof(Char)));
 		    /*
 		     * Copy new path into newcp
 		     */
-		    for (p2 = link; (*p1++ = *p2++) != '\0';)
+		    for (p2 = slink; (*p1++ = *p2++) != '\0';)
 			continue;
 		    for (p1--, p2 = p; (*p1++ = *p2++) != '\0';)
 			continue;
@@ -768,8 +768,8 @@ dcanon(Char *cp, Char *p)
 	    if (sp != cp && adrof(STRchase_symlinks) &&
 		!adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink, sizeof(tlink))) >= 0) {
-		(void)Strcpy(link, str2short(tlink));
-		link[cc] = '\0';
+		(void)Strcpy(slink, str2short(tlink));
+		slink[cc] = '\0';
 
 		/*
 		 * restore the '/'.
@@ -787,7 +787,7 @@ dcanon(Char *cp, Char *p)
 		 */
 		for (p1 = p; *p1++;)
 		    continue;
-		if (*link != '/') {
+		if (*slink != '/') {
 		    /*
 		     * Relative path, expand it between the "yyy/" and the
 		     * remainder. First, back sp up to the character past
@@ -798,7 +798,7 @@ dcanon(Char *cp, Char *p)
 		    sp++;
 		    *sp = 0;
 		    /*
-		     * New length is "yyy/" + link + "/.." and rest
+		     * New length is "yyy/" + slink + "/.." and rest
 		     */
 		    p1 = newcp = (Char *)xmalloc(
 		        (size_t)(((sp - cp) + cc + (p1 - p)) * sizeof(Char)));
@@ -807,7 +807,7 @@ dcanon(Char *cp, Char *p)
 		     */
 		    for (p2 = cp; (*p1++ = *p2++) != '\0';)
 			continue;
-		    for (p1--, p2 = link; (*p1++ = *p2++) != '\0';)
+		    for (p1--, p2 = slink; (*p1++ = *p2++) != '\0';)
 			continue;
 		    for (p1--, p2 = p; (*p1++ = *p2++) != '\0';)
 			continue;
@@ -818,14 +818,14 @@ dcanon(Char *cp, Char *p)
 		}
 		else {
 		    /*
-		     * New length is link + the rest
+		     * New length is slink + the rest
 		     */
 		    p1 = newcp = (Char *)xmalloc(
 		        (size_t)((cc + (p1 - p)) * sizeof(Char)));
 		    /*
 		     * Copy new path into newcp
 		     */
-		    for (p2 = link; (*p1++ = *p2++) != '\0';)
+		    for (p2 = slink; (*p1++ = *p2++) != '\0';)
 			continue;
 		    for (p1--, p2 = p; (*p1++ = *p2++) != '\0';)
 			continue;
@@ -870,7 +870,7 @@ dcanon(Char *cp, Char *p)
 	/*
 	 * Start comparing dev & ino backwards
 	 */
-	p2 = Strcpy(link, cp);
+	p2 = Strcpy(slink, cp);
 	for (sp = NULL; *p2 && stat(short2str(p2), &statbuf) != -1;) {
 	    if (statbuf.st_dev == home_dev &&
 		statbuf.st_ino == home_ino) {

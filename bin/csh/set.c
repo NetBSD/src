@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.16 2001/09/14 14:04:01 wiz Exp $ */
+/* $NetBSD: set.c,v 1.17 2001/11/03 13:35:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.16 2001/09/14 14:04:01 wiz Exp $");
+__RCSID("$NetBSD: set.c,v 1.17 2001/11/03 13:35:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,10 +344,10 @@ static Char *putp;
 Char *
 putn(int n)
 {
-    static Char number[15];
+    static Char numbers[15];
     int num;
 
-    putp = number;
+    putp = numbers;
     if (n < 0) {
 	n = -n;
 	*putp++ = '-';
@@ -370,7 +370,7 @@ putn(int n)
 #endif
     putn1(n);
     *putp = 0;
-    return (Strsave(number));
+    return (Strsave(numbers));
 }
 
 static void

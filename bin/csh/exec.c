@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.16 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: exec.c,v 1.17 2001/11/03 13:35:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.16 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: exec.c,v 1.17 2001/11/03 13:35:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -607,19 +607,19 @@ executable(Char *dir, Char *name, bool dir_ok)
 void
 dowhich(Char **v, struct command *c)
 {
-    struct wordent lex[3];
+    struct wordent lexw[3];
     struct varent *vp;
 
-    lex[0].next = &lex[1];
-    lex[1].next = &lex[2];
-    lex[2].next = &lex[0];
+    lexw[0].next = &lexw[1];
+    lexw[1].next = &lexw[2];
+    lexw[2].next = &lexw[0];
 
-    lex[0].prev = &lex[2];
-    lex[1].prev = &lex[0];
-    lex[2].prev = &lex[1];
+    lexw[0].prev = &lexw[2];
+    lexw[1].prev = &lexw[0];
+    lexw[2].prev = &lexw[1];
 
-    lex[0].word = STRNULL;
-    lex[2].word = STRret;
+    lexw[0].word = STRNULL;
+    lexw[2].word = STRret;
 
     while (*++v) {
 	if ((vp = adrof1(*v, &aliases)) != NULL) {
@@ -629,8 +629,8 @@ dowhich(Char **v, struct command *c)
 	    set(STRstatus, Strsave(STR0));
 	}
 	else {
-	    lex[1].word = *v;
-	    set(STRstatus, Strsave(tellmewhat(lex, NULL) ? STR0 : STR1));
+	    lexw[1].word = *v;
+	    set(STRstatus, Strsave(tellmewhat(lexw, NULL) ? STR0 : STR1));
 	}
     }
 }
