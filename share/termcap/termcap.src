@@ -834,7 +834,7 @@ vt220|DEC VT220 in vt100 emulation mode:\
 	:@7=\E[4~:ac=kkllmmjjnnwwqquuttvvxx:ae=\E(B:al=\E[L:\
 	:as=\E(0:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:\
 	:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:\
-	:do=\E[B:ei=\E[4l:ho=\E[H:if=/usr/lib/tabset/vt100:\
+	:do=\E[B:ei=\E[4l:ho=\E[H:if=/usr/share/tabset/vt100:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:\
 	:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:k7=\E[19~:\
 	:k8=\E[20~:k9=\E[21~:k;=\E[29~:kD=\E[3~:kI=\E[2~:\
@@ -842,7 +842,7 @@ vt220|DEC VT220 in vt100 emulation mode:\
 	:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
 	:mr=\E[7m:nd=\E[C:\
 	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
-	:rf=/usr/lib/tabset/vt100:\
+	:rf=/usr/share/tabset/vt100:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;:\
 	:sc=\E7:se=\E[m:sf=20\ED:so=\E[7m:sr=14\EM:ta=^I:\
 	:ue=\E[m:up=\E[A:us=\E[4m:ve=\E[?25h:vi=\E[?25l:
@@ -876,7 +876,7 @@ vt220-8|dec vt220 8 bit terminal:\
 	:ae=^O:al=\E[L:as=^N:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:\
 	:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:\
 	:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:eA=\E)0:ec=\E[%dX:\
-	:ei=\E[4l:ho=\E[H:if=/usr/lib/tabset/vt100:im=\E[4h:\
+	:ei=\E[4l:ho=\E[H:if=/usr/share/tabset/vt100:im=\E[4h:\
 	:is=\E[?7h\E[>\E[?1h\E F\E[?4l:k1=\EOP:k2=\EOQ:\
 	:k3=\EOR:k4=\EOS:k6=\E[17~:k7=\E[18~:k8=\E[19~:\
 	:k9=\E[20~:k;=\E[21~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
@@ -905,14 +905,14 @@ vt420|DEC VT420:\
 	:ae=\E(B:al=\E[L:as=\E(0:bl=^G:cd=\E[J:ce=\E[K:\
 	:cl=\E[;H\E[2J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:\
 	:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:ho=\E[H:\
-	:i2=\E[?67h\E[64;1"p:if=/usr/lib/tabset/vt100:\
+	:i2=\E[?67h\E[64;1"p:if=/usr/share/tabset/vt100:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k0=\E[29~:k1=\EOP:\
 	:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:\
 	:k7=\E[19~:k8=\E[20~:k9=\E[21~:k;=\E[29~:kD=\E[3~:\
 	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:kd=\E[B:ke=\E>:\
 	:kl=\E[D:kr=\E[C:ks=\E=:ku=\E[A:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:\
-	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/lib/tabset/vt100:\
+	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/share/tabset/vt100:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;:\
 	:se=\E[m:sf=\ED:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:\
 	:up=\E[A:us=\E[4m:
@@ -1001,7 +1001,7 @@ vt520|DEC VT520:\
 	:ae=\E(B:al=\E[L:as=\E(0:bl=^G:cd=\E[J:ce=\E[K:\
 	:cl=\E[;H\E[2J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:\
 	:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:ho=\E[H:\
-	:i2=\E[?67h\E[64;1"p:if=/usr/lib/tabset/vt100:\
+	:i2=\E[?67h\E[64;1"p:if=/usr/share/tabset/vt100:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k0=\E[29~:k1=\EOP:\
 	:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:\
 	:k7=\E[19~:k8=\E[20~:k9=\E[21~:k;=\E[29~:kD=\E[3~:\
@@ -1009,7 +1009,7 @@ vt520|DEC VT520:\
 	:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
 	:mr=\E[7m:nd=\E[C:\
 	:..px=\EP1;1|%?%{16}%p1%>%t%{0}%e%{21}%p1%>%t%{1}%e%{25}%p1%>%t%{2}%e%{27}%p1%>%t%{3}%e%{30}%p1%>%t%{4}%e%{5}%;%p1%+%d/%p2%s\E\\:\
-	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/lib/tabset/vt100:\
+	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/share/tabset/vt100:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;:\
 	:se=\E[m:sf=\ED:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:\
 	:up=\E[A:us=\E[4m:
@@ -1027,7 +1027,7 @@ vt525|DEC VT525:\
 	:ae=\E(B:al=\E[L:as=\E(0:bl=^G:cd=\E[J:ce=\E[K:\
 	:cl=\E[;H\E[2J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:\
 	:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:ho=\E[H:\
-	:i2=\E[?67h\E[64;1"p:if=/usr/lib/tabset/vt100:\
+	:i2=\E[?67h\E[64;1"p:if=/usr/share/tabset/vt100:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k0=\E[29~:k1=\EOP:\
 	:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:\
 	:k7=\E[19~:k8=\E[20~:k9=\E[21~:k;=\E[29~:kD=\E[3~:\
@@ -1035,7 +1035,7 @@ vt525|DEC VT525:\
 	:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
 	:mr=\E[7m:nd=\E[C:\
 	:..px=\EP1;1|%?%{16}%p1%>%t%{0}%e%{21}%p1%>%t%{1}%e%{25}%p1%>%t%{2}%e%{27}%p1%>%t%{3}%e%{30}%p1%>%t%{4}%e%{5}%;%p1%+%d/%p2%s\E\\:\
-	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/lib/tabset/vt100:\
+	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/share/tabset/vt100:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;:\
 	:se=\E[m:sf=\ED:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:\
 	:up=\E[A:us=\E[4m:
@@ -1619,7 +1619,7 @@ hp2624|hp2624a|hp2624b|hp2624b-4p|2624-4p|2624|2624a|2624b|Hewlett Packard 2624 
 # uc, ul, vt, wind, wsl, xenl, xmc, xsb, xt
 # 
 # not needed if tset is used:
-# 	if=/usr/lib/tabset/std,
+# 	if=/usr/share/tabset/std,
 # 
 # This hp2626 entry does not use any of the fancy windowing stuff 
 # of the 2626.
@@ -1888,7 +1888,7 @@ hpsub|hp terminals -- capability subset:\
 	:li#24:\
 	:al=\EL:bl=^G:cd=\EJ:ce=\EK:ch=\E&a%dC:cl=\EH\EJ:\
 	:cr=^M:dc=\EP:dl=\EM:do=\EB:ei=\ER:\
-	:if=/usr/lib/tabset/stdcrt:is=\E&s1A\E<\E&k0\\:kb=^H:\
+	:if=/usr/share/tabset/stdcrt:is=\E&s1A\E<\E&k0\\:kb=^H:\
 	:kd=\EB:ke=\E&s0A:kh=\Eh:kl=\ED:kr=\EC:ks=\E&s1A:\
 	:ku=\EA:le=^H:nd=\EC:se=\E&d@:sf=^J:so=\E&dB:ta=^I:\
 	:up=\EA:
@@ -2403,7 +2403,7 @@ tvi924|televideo tvi924:\
 	:cr=^M:cs=\E_%+ %+ :ct=\E3:dc=\EW:dl=\ER:do=^V:\
 	:ds=\Es0:ei=:fs=^Y:ho=^^:\
 	:i1=\017\E%\E'\E(\EDF\EC\EG0\EN0\Es0\Ev0:ic=\EQ:\
-	:if=/usr/lib/tabset/stdcrt:im=:k0=^A@\r:k1=^AA\r:\
+	:if=/usr/share/tabset/stdcrt:im=:k0=^A@\r:k1=^AA\r:\
 	:k2=^AB\r:k3=^AC\r:k4=^AD\r:k5=^AE\r:k6=^AF\r:\
 	:k7=^AG\r:k8=^AH\r:k9=^AI\r:k;=^AJ\r:kA=\EE:kC=\E*0:\
 	:kD=\EW:kE=\Et:kI=\EQ:kL=\ER:kS=\Ey:kb=^H:kd=^V:\
@@ -4897,7 +4897,7 @@ ampex232|ampex-232|Ampex Model 232:\
 	:co#80:li#24:sg#1:ug#1:\
 	:al=5*\EE:bt=\EI:cd=\EY:ce=\ET:cl=\E+:cm=\E=%+ %+ :\
 	:dc=\EW:dl=5*\ER:do=^V:ei=:ic=\EQ:\
-	:if=/usr/lib/tabset/ampex:im=:is=\Eg\El:k0=^A@\r:\
+	:if=/usr/share/tabset/ampex:im=:is=\Eg\El:k0=^A@\r:\
 	:k1=^AA\r:k2=^AB\r:k3=^AC\r:k4=^AD\r:k5=^AE\r:\
 	:k6=^AF\r:k7=^AG\r:k8=^AH\r:k9=^AI\r:kb=^H:kd=^V:\
 	:kh=^^:kl=^H:kr=^L:ku=^K:le=^H:nd=^L:se=\EG0:so=\EG4:\
@@ -4906,7 +4906,7 @@ ampex232|ampex-232|Ampex Model 232:\
 	:ve=\E.4:vi=\E.0:
 ampex232w|Ampex Model 232 / 132 columns:\
 	:co#132:li#24:\
-	:if=/usr/lib/tabset/amp-132:is=\E\034Eg\El:tc=ampex232:
+	:if=/usr/share/tabset/amp-132:is=\E\034Eg\El:tc=ampex232:
 
 #### Ann Arbor (aa)
 #
@@ -6796,7 +6796,7 @@ uts30|sperry uts30 with cp/m@1R1:\
 	:kr=\EOC:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
 	:mr=\E[7m:nd=\EC:\
 	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\EX:\
-	:rf=/usr/lib/tabset/vt100:sc=\EW:se=\E[m:sf=^J:\
+	:rf=/usr/share/tabset/vt100:sc=\EW:se=\E[m:sf=^J:\
 	:so=\E[7m:sr=\EI:ta=^I:ts=\E]:uc=\EPB:ue=\E[m:\
 	:up=\E[A:us=\E[4m:ve=\ES:vi=\ER:
 
@@ -9020,7 +9020,7 @@ opus3n1+|Esprit  Opus3n1+ in wy60 mode with ANSI arrow keys +:\
 	:as=\EH^B:bl=^G:bt=\EI:cd=\EY:ce=\ET:cl=\E*:\
 	:cm=\Ea%i%dR%dC:cr=^M:ct=\E0:dc=\EW:dl=\ER:do=^J:\
 	:ds=\Ez(\r:ei=\Er:fs=^M:ho=\036:\
-	:if=/usr/lib/tabset/std:im=\Eq:ip=:\
+	:if=/usr/share/tabset/std:im=\Eq:ip=:\
 	:is=\E`\072\Ee(\EO\Ee6\Ec41\E~4\Ec21\Ed/\Ezz&\E[A\037\Ezz'\E[B\037\Ezz(\E[D\037\Ezz)\E[C\037\Ezz<\E[Q\037\Ezz`\E[F\037\EA1*\EZH12:\
 	:k1=^A@\r:k2=^AA\r:k3=^AB\r:k4=^AC\r:k5=^AD\r:\
 	:k6=^AE\r:k7=^AF\r:k8=^AG\r:k9=^AH\r:k;=^AI\r:kA=\EE:\
