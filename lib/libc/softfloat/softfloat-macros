@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-macros,v 1.1 2000/06/06 08:15:09 bjh21 Exp $ */
+/* $NetBSD: softfloat-macros,v 1.2 2002/03/04 21:27:19 jmc Exp $ */
 
 /*
 ===============================================================================
@@ -581,7 +581,6 @@ static bits64 estimateDiv128To64( bits64 a0, bits64 a1, bits64 b )
 
 }
 
-#ifndef SOFTFLOAT_FOR_GCC /* Not used */
 /*
 -------------------------------------------------------------------------------
 Returns an approximation to the square root of the 32-bit significand given
@@ -621,7 +620,6 @@ static bits32 estimateSqrt32( int16 aExp, bits32 a )
     return ( (bits32) ( ( ( (bits64) a )<<31 ) / z ) ) + ( z>>1 );
 
 }
-#endif
 
 /*
 -------------------------------------------------------------------------------
