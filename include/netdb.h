@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.42 2004/05/25 14:49:38 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.43 2004/08/11 16:13:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -304,16 +304,11 @@ void		endhostent __P((void));
 void		endnetent __P((void));
 void		endprotoent __P((void));
 void		endservent __P((void));
-#if (_XOPEN_SOURCE - 0) >= 500 && (_XOPEN_SOURCE - 0) < 600 || \
-    defined(_NETBSD_SOURCE)
-void		freehostent __P((struct hostent *));
-#endif
 struct hostent	*gethostbyaddr __P((const char *, socklen_t, int));
 struct hostent	*gethostbyname __P((const char *));
 #if defined(_NETBSD_SOURCE)
 struct hostent	*gethostbyname2 __P((const char *, int));
 #endif
-struct hostent	*gethostent __P((void));
 #if (_XOPEN_SOURCE - 0) >= 520 && (_XOPEN_SOURCE - 0) < 600 || \
     defined(_NETBSD_SOURCE)
 #if 0 /* we do not ship these */
