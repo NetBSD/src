@@ -104,6 +104,10 @@ SOURCE=.\../../../../lib/libsa/open.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\../../../../lib/libsa/printf.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\../../../../lib/libsa/read.c
 # End Source File
 # Begin Source File
@@ -128,15 +132,15 @@ SOURCE=.\devopen.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\printf.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\winblk.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\winfs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\winprintf.c
 # End Source File
 # End Target
 # End Project
