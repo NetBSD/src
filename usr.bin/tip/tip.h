@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.6 1997/04/19 06:06:06 thorpej Exp $	*/
+/*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,6 +89,7 @@ long	DL;			/* line delay for file transfers to remote */
 long	CL;			/* char delay for file transfers to remote */
 long	ET;			/* echocheck timeout */
 int	HD;			/* this host is half duplex - do local echo */
+char	DC;			/* this host is directly connected. */
 
 /*
  * String value table
