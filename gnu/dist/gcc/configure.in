@@ -1670,6 +1670,14 @@ for machine in $build $host $target; do
 		extra_headers=math-68881.h
 		float_format=m68k
 		;;
+	m68k*-*-netbsdelf*)
+		tm_file=m68k/netbsd-elf.h
+		xm_file=m68k/xm-netbsd.h
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.wrap
+		tmake_file=t-netbsd
+		float_format=m68k
+		;;
 	m68k*-*-netbsd*)
 		tm_file=m68k/netbsd.h
 		xm_file=m68k/xm-netbsd.h
