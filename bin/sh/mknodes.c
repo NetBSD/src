@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.16 1998/07/28 05:31:28 mycroft Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.17 2000/07/18 19:13:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+static const char copyright[] =
+    "@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mknodes.c,v 1.16 1998/07/28 05:31:28 mycroft Exp $");
+static const char rcsid[] =
+    "$NetBSD: mknodes.c,v 1.17 2000/07/18 19:13:20 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,18 +105,18 @@ static char line[1024];
 static int linno;
 static char *linep;
 
-static void parsenode __P((void));
-static void parsefield __P((void));
-static void output __P((char *));
-static void outsizes __P((FILE *));
-static void outfunc __P((FILE *, int));
-static void indent __P((int, FILE *));
-static int nextfield __P((char *));
-static void skipbl __P((void));
-static int readline __P((void));
-static void error __P((const char *, ...));
-static char *savestr __P((const char *));
-int main __P((int, char **));
+static void parsenode(void);
+static void parsefield(void);
+static void output(char *);
+static void outsizes(FILE *);
+static void outfunc(FILE *, int);
+static void indent(int, FILE *);
+static int nextfield(char *);
+static void skipbl(void);
+static int readline(void);
+static void error(const char *, ...);
+static char *savestr(const char *);
+int main(int, char **);
 
 
 int

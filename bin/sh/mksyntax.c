@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.22 1999/03/08 17:55:20 castor Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.23 2000/07/18 19:13:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+static const char copyright[] =
+    "@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.22 1999/03/08 17:55:20 castor Exp $");
+static const char rcsid[] =
+    "$NetBSD: mksyntax.c,v 1.23 2000/07/18 19:13:21 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,13 +114,13 @@ static int size;	/* number of values which a char variable can have */
 static int nbits;	/* number of bits in a character */
 static int digit_contig;/* true if digits are contiguous */
 
-static void filltable __P((char *));
-static void init __P((void));
-static void add __P((char *, char *));
-static void print __P((char *));
-static void output_type_macros __P((void));
-static void digit_convert __P((void));
-int main __P((int, char **));
+static void filltable(char *);
+static void init(void);
+static void add(char *, char *);
+static void print(char *);
+static void output_type_macros(void);
+static void digit_convert(void);
+int main(int, char **);
 
 int
 main(argc, argv)
