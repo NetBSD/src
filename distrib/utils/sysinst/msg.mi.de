@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.5 2004/03/07 00:40:45 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6 2004/03/08 10:44:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,22 +68,18 @@ message upgrade
 
 message hello
 {Willkommen bei Sysinst, dem Installationsprogramm von NetBSD-@@VERSION@@.
-Dieses menübasierte Programm wird Ihnen dabei helfen NetBSD
+Dieses Programm wird Ihnen helfen, NetBSD
 auf eine Festplatte zu installieren oder aber eine bereits bestehende
-Installation von NetBSD upzugraden - mit minimalem Aufwand. 
-In den folgenden Menüs können Sie mit Hilfe von Buchstaben (a, b, c, ...)
-die verschiedenen Menüeinträge anwählen.
-Alternativ können Sie durch Drücken von CTRL+N/CTRL+P den
-nächsten/vorhergehenden Eintrag anspringen.
-Die Cursor- und Bildlauftasten (Page-up/Page-down)
-sollten ebenfalls funktionieren. 
+Installation von NetBSD upzugraden. 
+In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
+die verschiedenen Menüeinträge wählen oder durch Drücken von CTRL+N/CTRL+P
+die Markierung auf- oder ab bewegen. Die Cursor- und Bildlauftasten
+(Page-up/Page-down) sollten ebenfalls funktionieren. 
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
-
 }
 
 message thanks
 {Danke, dass Sie NetBSD benutzen!
-
 }
 
 message installusure
@@ -476,47 +472,46 @@ modifiziert. Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
 Manpage kann ebenfalls nützlich sein.
   
-Zumindest müssen sie die rc.conf editieren, so dass die gewünschten Dienste
-gestartet werden. Vergessen sie nicht rc_configured=NO auf rc_configured=YES
-umzustellen. 
+Zumindest müssen sie die Datei rc.conf editieren, so dass die gewünschten
+Dienste gestartet werden. Vergessen sie nicht rc_configured=NO auf
+rc_configured=YES umzustellen. 
 }
 
-/* XXX translate */
 message distmedium
-{Ihre Disk ist nun für die Installation der Kernel- und Distributionssets
-bereit. Wie in Ihrem INSTALL Dokument vermerkt, haben Sie nun mehrere Optionen.
-Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein, der Zugriff auf
-solche Maschinen hat. Wenn Sie zu diesem Zeitpunkt noch nicht bereit sind diese
-Installation abzuschliessen, können Sie 'kein' auswählen, wodurch Sie zum
-Hauptmenü zurückbefördert werden. Sobald Sie zu einem späteren Zeitpunkt bereit
-dazu sind, können Sie "Upgrade" (Aufrüsten) - im Hauptmenü - anwählen, wodurch
-Sie die Installation fertigstellen können.
+{Ihre Festplatte ist nun bereit für die Installation der Kernel- und
+Distributionspakete. Wie im INSTALL Dokument beschrieben, haben Sie nun 
+mehrere Optionen.
+Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und Zugriff auf
+die entsprechenden Server haben. Wenn Sie zu diesem Zeitpunkt noch nicht
+bereit sind diese Installation zu vollenden, können Sie 'kein' auswählen,
+wodurch Sie zum Hauptmenü zurückkehren. Sie können dann zu einem späteren
+Zeitpunkt die Installation erneut starten und im Hauptmenü  "Upgrade"
+wählen.
 }
 
 message distset
-{Die NetBSD Distribution ist in Kollektionen von Distributionssets aufgeteilt.
-Es gibt einige grundlegende Sets, die für alle Installationen notwendig sind, 
-sowie deren andere, die nicht für alle Installationen installiert werden müssen.
-Es bleibt Ihnen überlassen, ob Sie alle Sets (volle Installation) installieren
-möchten oder bei den optionalen Sets doch lieber einiges weglassen möchten.
+{Die NetBSD Distribution ist in verschiedene Pakete aufgeteilt.
+Es gibt einige grundlegende Pakete, die auf jeden Fall benötigt werden,
+sowie optionale.
+Es bleibt Ihnen überlassen, ob Sie alle Pakete (volle Installation)
+installieren möchten oder bei den optionalen doch lieber einige auslassen
+wollen.
 }
 
 message ftpsource
 {
-Nachfolgend sehen Sie die für den Aufbau der FTP Verbindung benutzen Daten.
-Ist der Benutzer "ftp", so ist kein Passwort notwendig.
+Dies sind die Daten zum Aufbau einer ftp Verbindung.
+Falls der Benutzer "ftp" ist benötigen Sie kein Passwort.
 
-/* XXX translate */
-Host:		%s
+Server:		%s
 Verzeichnis:	%s
 Benutzer:	%s
 Passwort:	%s
 Proxy:		%s
 }
 
-/* XXX translate */
 message host
-{Host}
+{Server}
 
 message dir
 {Verzeichnis}
@@ -534,15 +529,14 @@ message email
 {E-Mail Adresse}
 
 message dev
-{Gerät}
+{Laufwerk}
 
-/* XXX translate */
 message nfssource
-{Geben Sie den NFS Host samt Verzeichnis an, wo die Distribution zu finden ist.
-Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten und NFS mountbar 
-sein muss.
+{Geben Sie den NFS Server samt Verzeichnis an, auf dem die Distribution zu
+finden ist. 
+(Das Verzeichnis muss .tgz Dateien enthalten und NFS mountbar sein)
 
-Host:		%s
+Server:		%s
 Verzeichnis:	%s
 }
 
@@ -550,28 +544,28 @@ message nfsbadmount
 {Das Verzeichnis %s:%s konnte nicht gemountet werden.}
 
 message cdromsource
-{Geben Sie das zu benutzende CDROM Gerät und dessen entsprechendes Verzeichnis 
-an, wo die Distribution zu finden ist.
-Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten muss.
+{Geben Sie das zu CD-Laufwer und das entsprechendes Verzeichnis 
+an, in dem die Distribution zu finden ist.
+(Das Verzeichnis muss .tgz Dateien enthalten)
 
-Gerät:		%s
+Laufwerk:	%s
 Verzeichnis:	%s
 }
 
-/* XXX translate */
 message localfssource
-{Geben Sie das ungemountete lokale Gerät und dessen entsprechendes Verzeichnis
-an, wo die Distribution zu finden ist.
-Denken Sie daran, dass das Verzeichnis .tgz Dateien enthalten muss.
+{Geben Sie das noch nicht gemountete lokale Gerät und dessen entsprechendes
+Verzeichnis an, in dem die Distribution zu finden ist.
+(Das Verzeichnis muss .tgz Dateien enthalten)
 
-Gerät:		%s 
+Laufwerk:	%s 
 Dateisystem:	%s 
 Verzeichnis:	%s
 }
 
 message localdir
-{Geben Sie das Verzeichnis des bereits gemounteten lokalen Geräts an, wo die
-Distribution zu finden ist.
+{Geben Sie das Verzeichnis des bereits gemounteten lokalen Geräts an, in dem
+die Distribution zu finden ist.
+(Das Verzeichnis muss .tgz Dateien enthalten)
 
 Verzeichnis:	%s
 }
@@ -580,78 +574,77 @@ message filesys
 {Dateisystem}
 
 message cdrombadmount
-{Das CDROM konnte via Gerät %s nicht gemountet werden.}
+{Die CD in %s konnte nicht gemountet werden.}
 
 message localfsbadmount
-{%s konnte via dem lokalen Gerät %s nicht gemountet werden.}
+{%s konnte auf dem Laufwerk %s nicht gemountet werden.}
 
 message badlocalsetdir
 {%s ist kein Verzeichnis.}
 
 message badsetdir
-{Die unerlässlichen etc.tgz und base.tgz Sets sind in %s nicht zu finden.
-and base.tgz. Sind Sie sicher, dass Sie das richtige Verzeichnis angegeben
-haben?}
+{Die notwendigen Pakete etc.tgz und base.tgz sind in %s nicht vorhanden.
+Sind Sie sicher, dass Sie das richtige Verzeichnis angegeben haben?}
 
 message nonet
-{Ich kann kein Netzwerkgerät finden, welches mit NetBSD verwendet werden kann.
-Sie werden zum vorhergehenden Menü zurückbefördert.
+{NetBSD hat keinen bekannten Netzwerkadapter gefunden.
+Zurück zum vorigen Menü.
 }
 
 message netup
-{Die folgenden Netzwerkgeräte sind aktiviert: %s 
-Hat eines davon Zugriff auf die benötigten Server?}
+{Die folgenden Netzwerkadapter sind verfügbar: %s 
+Hat einer davon Zugriff auf die benötigten Server?}
 
 message asknetdev
-{Ich habe die folgenden Netzwerkgeräte gefunden: %s
-\nWelches Gerät soll ich nutzen?}
+{NetBSD hat folgende Netzwerkadapter gefunden: %s
+\nWelchen möchten Sie benutze?}
 
 message badnet
-{Sie haben keines der angezeigten Netzwerkgeräte ausgewählt. Bitte versuchen Sie
-es erneut. Die folgenden Netzwerkgeräte sind verfügbar: %s
-\nWelches Gerät soll ich nutzen?}
+{Sie haben keinen der angezeigten Netzwerkadapter ausgewählt. Bitte versuchen
+Sie es erneut. 
+NetBSD hat folgende Netzwerkadapter gefunden: %s
+\nWelchen möchten Sie benutze?}
 
 message netinfo
-{Um das Netzwerk nutzen zu können, brauchen wir folgende Angaben:
+{Um das Netzwerk nutzen zu können, benötigen wir folgende Angaben:
 
 }
 
 message net_domain
-{Ihre DNS Domäne}
+{DNS Domäne}
 
 message net_host
-{Ihren Hostnamen}
+{Hostname}
 
 message net_ip
-{Ihre IPv4 Adresse}
+{IPv4 Adresse}
 
 message net_mask
-{Ihre IPv4 Netzmaske}
+{IPv4 Netzmaske}
 
 message net_namesrv6
-{Ihren IPv6 Nameserver}
+{IPv6 Nameserver}
 
 message net_namesrv
-{Ihren IPv4 Nameserver}
+{IPv4 Nameserver}
 
 message net_defroute
-{Ihren IPv4 Gateway}
+{IPv4 Gateway}
 
 message net_media
-{Der Medientyp (meda type) Ihrer Netzwerkkarte}
+{Der Medientyp (Art der Netzwerkverbindung) Ihres Netzwerkadapters}
 
-/* XXX translate */
 message netok
-{Nachfolgend sehen Sie die Werte, die Sie eingegeben haben. Sind diese OK?
+{Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen. Sind diese OK?
 
 DNS Domäne:		%s 
 Hostname:		%s 
-Hauptnetzwerkgerät:	%s 
-Host IP Adresse:	%s 
+Netzwerkadapter:	%s 
+IP Adresse:		%s 
 Netzmaske:		%s 
 IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
-Medientyp (meda type):	%s 
+Verbindunstyp:		%s 
 }
 
 message netokv6
@@ -660,16 +653,15 @@ IPv6 Autokonfiguration:	%s
 IPv6 Nameserver:	%s 
 }
 
-/* XXX translate */
 message netagain
-{Bitte geben Sie erneut die Informationen über Ihr Netzwerk an. Diese werden
+{Bitte geben Sie die Informationen über Ihr Netzwerk erneut an. Diese werden
 auch als Vorgabe beibehalten.
 
 }
 
 message wait_network
 {
-Bitte warten Sie während die Netzwerkgeräte initialisiert werden.
+Bitte warten Sie, während die Netzwerkgeräte initialisiert werden.
 }
 
 message resolv
@@ -688,40 +680,39 @@ message ftperror
 {Ftp konnte eine Datei nicht runterladen. Wollen Sie es erneut versuchen?}
 
 message distdir
-{Welches Verzeichnis soll ich für %s nutzen?}
+{Welches Verzeichnis möchten Sie für %s nutzen?}
 
 message delete_dist_files
-{Wollen Sie die NetBSD Sets von %s löschen?
-(Sie können diese auch dazu beibehalten ein weiteres System aufzusetzen oder zu
-erneuern.)}
+{Wollen Sie die NetBSD Pakete von %s löschen?
+(Sie können diese auch dazu beibehalten ein weiteres System zu installieren
+oder zu erneuern.)}
 
 message verboseextract
 {Was wollen Sie während des Extrahierens sehen?
 }
 
 message notarfile
-{Das Release Set %s existiert nicht.
+{Das Release Paket %s existiert nicht.
 
-Soll ich mit dem Extrahieren dennoch weiterfahren?}
+Möchten Sie dennoch mit der Extraktion fortfahren?}
 
 message endtarok
-{Alle Distributionssets wurden erfolgreich entpackt.}
+{Alle Distributionspakete wurden erfolgreich entpackt.}
 
 message endtar
-{Beim Entpacken der Distributionssets sind Probleme aufgetreten.
-Ihre Installation ist somit unvollständig.
+{Beim Entpacken der Distributionspakete sind Probleme aufgetreten.
+Ihre Installation ist daher unvollständig.
 
-Sie haben %d Distributionssets ausgewählt. %d derer konnten nicht gefunden
-werden während %d - nach dem Auftreten eines Fehlers - übersprungen wurden.
-Von den %d, die ich zu entpacken versucht habe, sind %d erfolgreich und %d
+Sie haben %d Distributionssets ausgewählt. %d davon wurden nicht
+gefunden und %d wegen eines Fehlers übersprungen.
+Von %d zu entpackenden Paketen sind %d erfolgreich und %d
 mit Fehler entpackt worden.
 
-Die Installation ist abgebrochen. Bitte prüfen Sie die Bezugsquellen ihrer
-Distribution und ziehen Sie in Betracht die Sets ab Hauptmenü erneut zu
-installieren.}
+Die Installation wird abgebrochen. Bitte prüfen Sie die Bezugsquellen ihrer
+Distribution und installieren Sie gegebenfalls die Pakete erneut.}
 
 message abort
-{Ihre Auswahl macht keine NetBSD Installation möglich. Installation abgebrochen.
+{Ihre Auswahl ermöglicht keine NetBSD Installation. Installation abgebrochen.
 }
 
 message abortinst
@@ -731,68 +722,71 @@ Installation abgebrochen.
 
 message abortupgr
 {Die Distribution konnte nicht geladen werden. Sie müssen manuell fortfahren.
-Upgrade (Aufrüsten) abgebrochen.
+Upgrade abgebrochen.
 }
 
 message abortunpack
-{Das Entpacken der zusätzlichen Sets schlug fehl. Sie müssen entweder manuell
-fortfahren oder eine andere Bezugsquelle für die Release Sets angeben und es
-erneut versuchen.
+{Das Entpacken der zusätzlichen Pakete ist fehlgeschlagen. Sie müssen
+entweder manuell fortfahren oder eine andere Bezugsquelle für die Release
+Pakete angeben und es erneut versuchen.
 }
 
 message createfstab
-{Es besteht ein grosses Problem! Konnte /mnt/etc/fstab nicht erstellen. Der
-Vorgang wird abgebrochen.
+{Unüberwindliches Problem! Die Datei /mnt/etc/fstab konnte nicht erstellt
+werden. Der Vorgang wird abgebrochen.
 }
 
 
 message noetcfstab
 {Hilfe! Die /etc/fstab konnte im Ziellaufwerk %s nicht gefunden werden. Das
-Upgrade (Aufrüsten) wird abgebrochen.
+Upgrade wird abgebrochen.
 }
 
 message badetcfstab
 {Hilfe! Es besteht eine fehlerhafte /etc/fstab im Ziellaufwerk %s. Das Upgrade
-(Aufrüsten) wird abgebrochen.
+wird abgebrochen.
 }
 
 message etc_oldexists
-{Ich kann /etc nicht als /etc.old sichern, weil das Ziellaufwerk bereits über
-eine /etc.old verfügt. Bitte korrigieren Sie dies bevor Sie weiterfahren.
+{Ich kann /etc nicht als /etc.old sichern, weil auf dem Ziellaufwerk bereits
+ein /etc.old Verzeichnis existiert. Bitte korrigieren Sie dies bevor Sie
+fortfahren.
 
-Eine Möglichkeit ist es eine Shell vom Werkzeugemenü (Utilities) zu starten,
-wodurch Sie den Inhalt der /etc.old prüfen können. Gehört die /etc.old zu
-einem früheren Upgrade (Aufrüsten), so können Sie diese mit rm -f /etc.old
-löschen und danach das System neustarten. Gehört die /etc.old aber zu einem 
-aktuellen, nicht vervollständigten Upgrade (Aufrüsten), so können Sie /etc
-mit mv /etc.old /etc überschreiben und das begonnene Upgrade (Aufrüsten) 
+Eine Möglichkeit dazu ist, im Extras-Menü eine Shell zu starten,
+wodurch Sie den Inhalt der /etc.old prüfen können. Gehört das /etc.old
+Verzeichnis zu einem früheren Upgrade, so können Sie dieses mit rm -f /etc.old
+löschen und danach das Upgrade neu starten. Gehört die /etc.old aber zu einem 
+aktuellen, nicht abgeschlossenen Upgrade, dann sollten Sie /etc
+mit mv /etc.old /etc überschreiben und das begonnene Upgrade
 fortsetzen. 
 
-Breche Upgrade (Aufrüsten) ab.}
+Upgrade wird abgebrochen.}
 
 message X_oldexists
-{Ich kann /usr/X11R6/bin/X nicht als /usr/X11R6/bin/X.old sichern, da letztere
-Datei bereits vorhanden ist. Bitte korrigieren Sie dies bevor Sie weiterfahren.
+{Der alte X Server /usr/X11R6/bin/X kann nicht als /usr/X11R6/bin/X.old
+gesichert werden, da eine Datei mit diesem Namen bereits existiert.
+Bitte korrigieren Sie dies bevor Sie weiterfahren.
 
-Eine Möglichkeit ist es eine Shell vom Werkzeugemenü (Utilities) zu starten,
-wodurch sie die /usr/X11R6/bin/X.old prüfen können. Gehört diese zu
-einem früheren Upgrade (Aufrüsten), so können Sie diese mit rm -f 
-/usr/X11R6/bin/x.old löschen und danach das System neustarten. Gehört die 
-/usr/X11R6/bin/X.old aber zu einem aktuellen, nicht vervollständigten Upgrade 
-(Aufrüsten), so können Sie die /usr/X11R6/bin/X mit mv /usr/X11R6/bin/X.old
-/usr/X11R6/bin/X überschreiben und das begonnene Upgrade (Aufrüsten) fortsetzen.
+Eine Möglichkeit ist es im Extras-Menü eine Shell zu starten,
+wodurch sie /usr/X11R6/bin/X.old prüfen können. Gehört diese Datei zu
+einem früheren Upgrade, so können Sie diese mit rm -f 
+/usr/X11R6/bin/x.old löschen und danach das Upgrade neu starten. Gehört die 
+Datei /usr/X11R6/bin/X.old aber zu einem aktuellen, abgebrochenen Upgrade,
+so können Sie die Datei /usr/X11R6/bin/X mit mv /usr/X11R6/bin/X.old
+/usr/X11R6/bin/X wieder herstellen und das unvollständige Upgrade fortsetzen.
 
-Breche Upgrade (Aufrüsten) ab.}
+Upgrade wird abgebrochen.}
 
 message netnotup
-{Beim Aufsetzen des Netzwerks ist ein Problem aufgetreten. Entweder war Ihr
-Gateway oder Ihr Nameserver durch Pingen nicht erreichbar. Wollen Sie Ihr
-Netzwerk erneut konfigurieren? ("Nein" ermöglicht es Ihnen fortzufahren oder aber
-die Installation abzubrechen.)
+{Beim Testen des Netzwerks ist ein Problem aufgetreten. Entweder Ihr
+Gateway oder Ihr Nameserver hat nicht auf "ping" reagiert. Wollen Sie Ihre
+Netzwerkkonfiguration überarbeiten?
+
+("Nein" ermöglicht Ihnen die Fortsetzung oder den Abbruch der Installation.)
 }
 
 message netnotup_continueanyway
-{Wollen sie den Installationsprozess dennoch fortführen? Sie können sich auch
+{Wollen sie die Installation dennoch fortsetzen? Sie können sich auch
 später um das Netzwerk kümmern. ("Nein" bricht die Installation ab.)
 }
 
@@ -801,93 +795,89 @@ message makedev
 }
 
 message badfs
-{Es scheint als ist /dev/%s%c kein BSD Dateisystem, andernfalls schlug die
-Prüfung des Dateisystems (fsck) fehl. Das Upgrade (Aurüsten) wurde abgebrochen.
-(Fehlernummer %d.)
+{Das Dateisystem auf /dev/%s%c scheint kein BSD Dateisystem zu sein,
+die Prüfung des Dateisystems (fsck) ist fehlgeschlagen.
+
+Das Upgrade wird abgebrochen. (Fehlernummer %d.)
 }
 
 message badmount
-{Ihr Dateisystem bei /dev/%s%c konnte nicht erfolgreich gemountet werden. Das
-Upgrade (Aufrüsten) wurde abgebrochen.}
+{Das Dateisystem auf /dev/%s%c konnte nicht erfolgreich gemountet werden. Das
+Upgrade wird abgebrochen.}
 
-/* XXX Missverständnis? */
 message rootmissing
-{ in / wird %s vermisst.
+{ Das Zielverzeichnis %s existiert nicht.
 }
 
-/* XXX suboptimal? */
 message badroot
-{Ein Test zur Prüfung Ihrer neuen Ordnerstruktur in / schlug fehl. Sind Sie
-sicher, dass Sie alle benötigten Sets installiert haben? 
+{Das neu installierte root Dateisystem scheint unvollständig zu sein.
+Sind Sie sicher, dass Sie alle benötigten Sets installiert haben? 
 }
 
 message fddev
 {Welches Diskettenlaufwerk wollen Sie nutzen? }
 
 message fdmount
-{Bitte mounten Sie die Diskette, welche die Datei "%s" enthält. }
+{Bitte legen Sie die Diskette ein, auf der sich die Datei "%s" befindet. }
 
 message fdnotfound
-{Ich konnte die Datei "%s" nicht finden. Bitte mounten Sie die entsprechende 
-Diskette.
-Wenn dies die letzte Disk des Sets war, so drücken Sie "Set fertig", um beim
-nächsten Set anzusetzen - falls ein weiteres vorhanden ist.}
+{Ich konnte die Datei "%s" nicht finden. Bitte legen Sie die entsprechende 
+Diskette ein.
+Wenn dies die letzte Disk des Paketes war, wählen Sie "Paket fertig", um zum
+nächsten Paket überzugehn - falls ein weiteres Paket folgt.}
 
 message fdremount
-{Die Diskette konnte nicht erfolgreich gemountet werden.
+{Die Diskette konnte nicht gemountet werden.
 
 Sie sollten: 
 
-Erneut probieren, die Diskette mit der Datei "%s" zu mounten.
+Erneut probieren, die Diskette mit der Datei "%s" einzulegen.
 
-Keine weiteren Dateien für dieses Set mehr laden, stattdessen beim
-nächsten Set ansetzen - falls ein weiteres vorhanden.
+Keine weiteren Disks für dieses Paket laden, und stattdessen mit dem
+nächsten Paket fortfahre - falls ein weiteres existiert.
 
-Keine weiteren Sets mehr ab dem Diskettenlaufwerk laden und die Installation
+Keine weiteren Pakete mehr vom dem Diskettenlaufwerk laden und die Installation
 abbrechen.
 }
 
 message mntnetconfig
-{Sind die Netzwerkangaben, die Sie gemacht haben, passabel für den
-regulären Gebrauch? Sollen diese in /etc abgelegt werden?}
+{Möchten Sie die aktuellen Netzwerkeinstellungen für den allgemeinen
+Gebrauch in /etc speichern?}
 
 message cur_distsets
-{Nachfolgend die Liste der Distributionssets, die zur Nutzung kommen.
+{Die folgenden Distributionspakete werden verwendet:
 
 }
 
 message cur_distsets_header
-{   Distributionsset         Ausgewählt
+{   Distributionspaket       Ausgewählt
    ------------------------ ----------
 }
 
 message set_base
-{Basisset}
+{Basispaket}
 
 message set_system
 {Systemkonfiguration (/etc)}
 
 message set_compiler
-{Kompillierungswerkzeuge}
+{Compiler}
 
 message set_games
 {Spiele}
 
-/* XXX Viel Anglizismus ;) */
 message set_man_pages
-{Online Manualseiten}
+{Manualseiten}
 
 message set_misc
 {Verschiedenes}
 
-/* XXX suboptimal? (könnte missverstanden werden) */
 message set_text_tools
-{Textverarbeitung}
+{Textbearbeitung}
 
 message set_X11
 {X11 Sets}
 
-/* XXX suboptimal? (Anglizismen) */
 message set_X11_base
 {X11 Basis und Clients}
 
@@ -895,30 +885,28 @@ message set_X11_etc
 {X11 Konfiguration}
 
 message set_X11_fonts
-{X11 Schriften}
+{X11 Schriftarten}
 
-/* XXX suboptimal? */
 message set_X11_servers
 {X11 Server}
 
-/* XXX suboptinmal? */
 message set_X_contrib
-{X Zusätzliche Clients}
+{X zusätzliche Clientsoftware}
 
 message set_X11_prog
 {X11 Programmierung}
 
 message set_X11_misc
-{X11 Verschiedenes}
+{X11 Diverses}
 
 message cur_distsets_row
 {%-27s %3s\n}
 
 message select_all
-{Alle der oben angezeigten Sets auswählen}
+{Alle oben angezeigten Pakete auswählen}
 
 message select_none
-{Alle der oben angezeigten Sets abwählen}
+{Kein Paket wählen}
 
 message install_selected_sets
 {Installieren der ausgewählten Sets}
@@ -928,29 +916,28 @@ message tarerror
 nicht alle Dateien korrekt extrahiert wurden und Ihr System somit nicht
 vollständig sein wird.
 
-Mit dem Extrahieren der Sets fortfahren?}
+Möchten Sie mit dem Extrahieren der Pakete fortfahren?}
 
 message must_be_one_root
-{Eine der Partitionen muss dafür markiert sein auf '/' gemountet zu werden.}
+{Für eine der Partitionen muss als Mountverzeichnis '/' festgelegt werden.}
 
 message partitions_overlap
-{Die Partitionen %c und %c überlappen sind.}
+{Die Partitionen %c und %c überlappen sich.}
 
 message edit_partitions_again
 {
 
-Sie können entweder die Partitionstabelle manuell editieren oder aber zum
-Hauptmenü zurückbefördert werden.
+Sie können entweder die Partitionstabelle noch einmal editieren oder aber zum
+Hauptmenü zurückkehren.
 
 Wollen Sie die Partitionstabelle erneut editieren?}
 
 
-/* XXX suboptimal? */
 message not_regular_file
 {Die Konfigurationsdatei %s ist keine reguläre Datei.\n}
 
 message out_of_memory
-{Wir haben keinen freien Arbeitsspeicher mehr (malloc fehlgeschlagen).\n}
+{Nicht genug freier Arbeitsspeicher (malloc ist fehlgeschlagen).\n}
 
 message config_open_error
 {Konnte Konfigurationsdatei %s nicht öffnen.\n}
@@ -961,17 +948,17 @@ message config_read_error
 message cmdfail
 {Das Kommando
 	%s
-hat fehlgeschlagen. Ich kann nicht weiterfahren.}
+ist fehlgeschlagen. Der Vorgang muss abgebrochen werden.}
 
 message upgradeparttype
-{Die einzige für NetBSD nutzbare Partition ist eine des alten
-NetBSD/386BSD/FreeBSD Typs. Wollen Sie den Typ dieser Partition zum neuen
-nur-NetBSD Partitionstyp abändern?}
+{Die einzige für NetBSD nutzbare Partition hat den alten
+NetBSD/386BSD/FreeBSD Typ. Möchten Sie den Typ dieser Partition in den
+aktuellen nur-NetBSD Partitionstyp ändern?}
 
 message choose_timezone
-{Bitte wählen Sie die für Sie passende Zeitzone von der unteren Liste aus.
+{Bitte wählen Sie die für Sie passende Zeitzone aus der folgenden Liste aus.
 Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
-die Taste 'x' gefolgt von der Eingabetaste, um die Zeitzonenauswahl zu beenden.
+die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 
  Vorgabe:	%s
  Ausgewählt:	%s
@@ -979,57 +966,56 @@ die Taste 'x' gefolgt von der Eingabetaste, um die Zeitzonenauswahl zu beenden.
 }
 
 message tz_back
-{ Zurück zur Hauptliste der Zeitzonen.}
+{ Zurück zum Zeitzonenmenü.}
 
 message choose_crypt
-{Bitte wählen Sie den gewünschten Ver-/Entschlüsselungsalgorythmus (Cipher).
-NetBSD kann dafür konfiguriert werden entweder DES, MD5 oder Blowfish zu
-benutzen.
+{Bitte wählen Sie den gewünschten Ver-/Entschlüsselungsalgorythmus (Cipher)
+für Benutzerpassworte. NetBSD kann DES, MD5 oder Blowfish benutzen.
 
-Das traditionelle DES System ist mit den meisten anderen UNIX artigen
+Das traditionelle DES System ist mit den meisten anderen UNIX-ähnlichen
 Betriebssystemen kompatibel, allerdings werden nur die ersten 8 Zeichen eines
 jeden Passworts berücksichtigt. Das MD5 und Blowfish System erlaubt längere
-Passwörter, einige finden dies sei auch sicherer.
+Passwörter, was unter Umständen als sicherer interpretiert werden kann.
 
 Wenn Sie ein Netzwerk haben und planen NIS zu nutzen, so berücksichtigen Sie
-die Fähigkeiten Ihrer anderen Maschinen, die an das Netzwerk angeschlossen sind.
+hier auch die Möglichkeiten der anderen Maschinen im Netzwerk.
 
-Wenn Sie am Upgraden (Aufrüsten) sind und die bestehende Konfiguration nicht
-zu verändern wünschen, so wählen Sie "Nicht verändern".
+Wenn Sie Upgraden und die bestehende Konfiguration nicht
+verändern möchten, so wählen Sie "Beibehalten".
 }
 
 message swapactive
 {Das Laufwerk, das Sie ausgewählt haben, verfügt über eine Swappartition, die
-gegenwärtig auch benutzt wird sofern Ihr System zuwenig Arbeitsspeicher hat.
-Weil Sie dabei sind dieses Laufwerk erneut zu partitionieren wird diese
-Swappartition jetzt abgestellt, weshalb Sie mit Swapfehlern zu rechnen haben.
-Sollte solch ein Fehler auftreten, so starten Sie ihr System neu und probieren
-Sie es erneut.}
+gegenwärtig auch benutzt wird.
+Da Sie dabei sind dieses Laufwerk erneut zu partitionieren wird diese
+Swappartition jetzt deaktiviert, weshalb eventuell Speicherprobleme auftreten
+können. Sollte solch ein Fehler auftreten, starten Sie bitte ihr System neu und
+probieren es erneut.}
 
 message swapdelfailed
 {Beim Versuch die Swappartition des Laufwerks, das Sie für die Installation
-von NetBSD ausgewählt haben, zu deaktivieren hat Sysinst einen Fehler
-verursacht. Bitte starten Sie das System neu.}
+von NetBSD ausgewählt haben, zu deaktivieren ist ein Fehler
+aufgetreten. Bitte starten Sie das System neu.}
 
 message rootpw
-{Das Rootpassword für das neu installierte System wurde noch nicht gesetzt, ist
-somit leer. Möchten Sie jetzt ein Rootpasswort für das System setzen?}
+{Das Rootpassword für das neu installierte System wurde noch nicht gesetzt
+und ist somit leer. Möchten Sie jetzt ein Rootpasswort für das System setzen?}
 
 message rootsh
-{Sie können jetzt die Standardshell (Vorgabe) für den Rootanwender auswählen.
-Die Vorgabe sieht dafür die /bin/csh vor, doch vielleicht mögen Sie eine
-andere wollen.}
+{Sie können jetzt die Standardshell für Benutzer "root" auswählen.
+Die Vorgabe dafür ist /bin/csh, aber vielleicht bevorzugen Sie eine andere
+Shell.}
 
 message postuseexisting
 {
-Vergessen Sie nicht alle Mountpoints für jedes Dateisystem, das gemountet
-werden soll, zu prüfen. Drücken Sie die Eingabetaste um fortzufahren.
+Vergessen Sie nicht alle Mountverzeichnisse für jedes Dateisystem, das
+gemountet werden soll, zu prüfen. Drücken Sie die Eingabetaste um fortzufahren.
 }
 
 message no_root_fs
 {
-Es ist kein Rootdateisystem (Wurzelverzeichnis) definiert. Zumindest müssen Sie
-ein Mountpoint mit "/" definieren.
+Für kein Dateisystem ist / als Mountverzeichnis gewählt. Sie müssen ein
+Dateisystem als / konfigurieren.
 
 Drücken Sie die Eingabetaste um fortzufahren.
 }
@@ -1040,21 +1026,19 @@ message Logging {Logging}
 
 message Status  { Status: }
 message Command {Kommando: }
-/* XXX suboptimal? */
 message Running {Wird ausgeführt}
 message Finished {Beendet}
 message Command_failed {Kommando fehlgeschlagen}
-/* XXX suboptimal? */
-message Command_ended_on_signal {Kommando beendet mit Signal}
+message Command_ended_on_signal {Kommando wurde von einem Signal abgebrochen}
 
 message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Installationssystem}
-message Exit_Install_System {Beende Installationssystem}
+message Exit_Install_System {Installationssystem beenden}
 message Install_NetBSD_to_hard_disk {NetBSD auf die Festplatte installieren}
 message Upgrade_NetBSD_on_a_hard_disk {Upgrade einer bestehenden NetBSD Installation}
-message Re_install_sets_or_install_additional_sets {Erneutes Installieren der Sets oder zusätzliche Sets installieren}
-message Reboot_the_computer {Computer neustarten}
-message Utility_menu {Werkzeugemenü (Utilities)}
-message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Werkzeuge (Utilities)}
+message Re_install_sets_or_install_additional_sets {Erneute Installation oder zusätzliche Pakete installieren}
+message Reboot_the_computer {Computer neu starten}
+message Utility_menu {Extras}
+message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Extras}
 message Run_bin_sh {Ausführen von /bin/sh}
 message Set_timezone {Setzen der Zeitzone}
 message Configure_network {Netzwerkkonfiguration}
@@ -1063,12 +1047,10 @@ message Logging_functions {Protokollierungsfunktionen (Logging)}
 message Halt_the_system {System herunterfahren}
 message yes_or_no {Ja oder Nein?}
 message Hit_enter_to_continue {Drücken Sie die Eingabetaste um fortzufahren.}
-/* XXX sinnvoll? */
 message Choose_your_installation {Wählen Sie ihre Installation}
 message Set_Sizes {Grössen der NetBSD Partitionen setzen}
-message Use_Existing {Bereits bestehende Partitionsgrössen belassen}
-/* XXX suboptimal? */
-message Choose_your_size_specifier {Wählen Sie ihre Grösseneinheit}
+message Use_Existing {Bereits bestehende Partitionsgrössen beibehalten}
+message Choose_your_size_specifier {Wählen Sie ihre Einheit}
 message Megabytes {Megabytes}
 message Cylinders {Zylinder}
 message Sectors {Sektoren}
@@ -1079,61 +1061,55 @@ message cdrom {CDROM}
 message floppy {Diskette}
 message local_fs {Ungemountetes Dateisysytem}
 message local_dir {Lokales Verzeichnis}
-/* XXX sinnvoll? */
-message Select_your_distribution {Wählen Sie ihre Distribution}
+message Select_your_distribution {Wählen Sie ihre Pakete}
 message Full_installation {Volle Installation}
 message Custom_installation {Benutzerdefinierte Installation}
-message Change {Verändern}
+message Change {Ändern}
 message hidden {** versteckt **}
 message Host {Host}
 message Directory {Verzeichnis}
 message User {Benutzer}
 message Password {Passwort}
 message Proxy {Proxy}
-/* XXX suboptimal? */
-message Get_Distribution {Distribution laden}
-message Continue {Fortfahren}
+message Get_Distribution {Distribution downloaden}
+message Continue {Weiter}
 message What_do_you_want_to_do {Was möchten Sie tun?}
 message Try_again {Versuchen Sie es erneut}
-/* XXX suboptimal? */
-message Give_up {Abbrechen}
-message Ignore_continue_anyway {Ignorieren und dennoch weiterfahren}
-message Set_finished {Set fertiggestellt}
+message Give_up {Aufgeben}
+message Ignore_continue_anyway {Ignorieren und dennoch fortsetzen}
+message Set_finished {Paket fertig}
 message Abort_install {Installation abbrechen}
-message Password_cipher {Passwort Cipher}
+message Password_cipher {Passwort Verschlüsselungsverfahren}
 message DES {DES}
 message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish mit 2^7 Runden}
-message do_not_change {Nicht verändern}
+message Blowfish_2_7_round {Blowfish mit 2^7 Wiederholungen}
+message do_not_change {Beibehalten}
 message Device {Gerät}
 message File_system {Dateisystem}
-message Change_directory_path {Verändern des Verzeichnispfades}
+message Change_directory_path {Verzeichnis ändern}
 message Select_IPv6_DNS_server {  Auswählen eines IPv6 DNS Servers}
-message other {Andere(r) }
+message other {andere }
 message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
-message Perform_DHCP_autoconfiguration {DHCP automatisch konfigurieren?}
-/* XXX 'Muschel' ist einfach zu hart ;) */
+message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
 message Root_shell {Root Shell}
-/* XXX argh */
-message Select_set_extraction_verbosity {Wählen Sie was Sie während des Extrahierens sehen möchten}
-message Progress_bar_recommended {Balkenbasierte Fortschrittsanzeige (empfohlen)
+message Select_set_extraction_verbosity {Wählen Sie, welche Ausgaben Sie während des Extrahierens sehen möchten}
+message Progress_bar_recommended {Fortschrittsbalken (empfohlen)
 }
-/* XXX Was besseres rum? */
-message Silent {Ruhig! ;) (schnell)}
-message Verbose_file_name_listing_slow {Auflisten aller installierten Dateien (langsam))}
+message Silent {Nichts (schnell)}
+message Verbose_file_name_listing_slow {Alle installierten Dateien (langsam))}
 
 .if AOUT2ELF
 message aoutfail
-{Das Verzeichnis, wohin die alten gemeinsamen (shared) a.out Bibliotheken
-hinverschoben werden sollten konnte nicht erstellt werden. Bitte starten Sie
-erneut die Upgrade (Aufrüsten) Prozedur und stellen Sie sicher, dass alle
-Dateisysteme gemountet sind.}
+{Das Verzeichnis, in das die alten a.out shared libraries gesichert
+werden sollten, konnte nicht erstellt werden. Bitte starten Sie
+das Upgrade erneut und stellen Sie sicher, dass alle Dateisysteme
+gemountet sind.}
 
 message emulbackup
-{Entweder war das /emul/aout oder das /emul Verzeichnis ein symbolischer 
-Verweis, der zu einem nicht-gemounteten Dateisystem zeigte. Es wurde mit einer
-'.old' (alt) Erweiterung gezeichnet. Sobald ihr upgegradetes (aufgerüstetes) 
-System gestartet ist müssen Sie das neu erstellte /emul/aout mit dem alten 
+{Entweder das /emul/aout oder das /emul Verzeichnis war ein symbolischer 
+Link, der auf ein nicht-gemountetes Dateisystem verwies. Der Link wurde
+mit einer '.old' Erweiterung versehen. Sobald ihr upgegradetes
+System gestartet ist, müssen Sie das neu erstellte /emul/aout mit dem alten 
 Verzeichnis abgleichen.
 }
 .endif
