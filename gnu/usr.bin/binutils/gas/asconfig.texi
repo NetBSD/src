@@ -1,0 +1,2 @@
+@c $NetBSD: asconfig.texi,v 1.1 2001/08/06 19:12:02 tv Exp $
+@include all.texi
