@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.26 2000/07/09 12:14:01 aymeric Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.27 2000/07/10 02:23:04 assar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.26 2000/07/09 12:14:01 aymeric Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.27 2000/07/10 02:23:04 assar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -346,7 +346,9 @@ log_examine(struct conf_entry *ent, int force)
 
 	if (verbose) {
 		if (ent->maxsize != (size_t)-1)
-			PRINFO(("size (Kb): %d [%d] ", size, ent->maxsize));
+			PRINFO(("size (Kb): %lu [%lu] ",
+				(u_long)size,
+				(u_long)ent->maxsize));
 		if (ent->maxage > 0)
 			PRINFO((" age (hr): %d [%d] ", modtime, ent->maxage));
 	}
