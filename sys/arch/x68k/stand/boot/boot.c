@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2001/10/01 16:59:34 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2001/10/15 16:13:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -31,6 +31,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/ufs.h>
 #include <lib/libkern/libkern.h>
 
 #include "libx68k.h"
@@ -45,7 +46,7 @@
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
 
 char default_kernel[20] = "sd0a:netbsd";
-int mpu, bootdev, hostadaptor;
+int mpu, hostadaptor;
 int console_device = -1;
 
 static void help(void);

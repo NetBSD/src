@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.1 2001/09/27 10:14:50 minoura Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.2 2001/10/15 16:13:40 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -234,7 +234,7 @@ load_file_ino(ino, fn, addr, header)
 	}
 
 	/* read text and data */
-	ufs_read(&dinode, (void *)addr-sizeof(struct exec), 0,/* XXX */
+	ufs_read(&dinode, ((char *)addr)-sizeof(struct exec), 0,/* XXX */
 		 header->a_text+header->a_data);
 
 	/* clear out bss */

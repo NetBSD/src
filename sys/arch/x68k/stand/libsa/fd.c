@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 2001/10/15 16:13:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -31,6 +31,10 @@
 
 #include "fdvar.h"
 #include "iocs.h"
+
+int fdopen(struct open_file *, int, int);
+int fdclose(struct open_file*);
+int fdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
 
 
 int
