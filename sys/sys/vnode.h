@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.75 2000/05/13 23:43:12 perseant Exp $	*/
+/*	$NetBSD: vnode.h,v 1.76 2000/05/28 04:13:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -229,7 +229,6 @@ extern int		vttoif_tab[];
 #define	WRITECLOSE	0x0004		/* vflush: only close writeable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
-#define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
 /*
  * Flags to various vnode operations.
@@ -505,6 +504,8 @@ void 	vgone __P((struct vnode *vp));
 void	vgonel __P((struct vnode *vp, struct proc *p));
 int	vinvalbuf __P((struct vnode *vp, int save, struct ucred *cred,
 	    struct proc *p, int slpflag, int slptimeo));
+int	vtruncbuf __P((struct vnode *vp, daddr_t lbn,
+	    int slpflag, int slptimeo));
 void	vprint __P((char *label, struct vnode *vp));
 int	vrecycle __P((struct vnode *vp, struct simplelock *inter_lkp,
 	    struct proc *p));
