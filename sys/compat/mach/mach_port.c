@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.18 2002/12/19 22:23:07 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.19 2002/12/21 23:50:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.18 2002/12/19 22:23:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.19 2002/12/21 23:50:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ mach_port_allocate(args)
 		break;
 
 	default:
-		uprintf("mach_port_allocate: unknown right %d\n", 
+		uprintf("mach_port_allocate: unknown right %x\n", 
 		    req->req_right);
 		break;
 	}
@@ -227,15 +227,15 @@ mach_port_insert_right(args)
 		
 	tp = tmr->mr_p; /* The target process */
 
-	switch (req->req_poly.name) {
+	switch (req->req_poly.disposition) {
 	case MACH_MSG_TYPE_MAKE_SEND:
 	case MACH_MSG_TYPE_MOVE_SEND:
 	case MACH_MSG_TYPE_COPY_SEND:
 		/* 
-		 * XXX We require that requester has send right. 
+		 * XXX We require that requester has any right. 
 		 * Not sure this is right
 		 */
-		if (mach_right_check(mr, p, MACH_PORT_TYPE_SEND) == 0)
+		if (mach_right_check(mr, p, MACH_PORT_TYPE_PORT_RIGHTS) == 0)
 			return mach_msg_error(args, EPERM);
 		nmr = mach_right_get(mr->mr_port, tp, MACH_PORT_RIGHT_SEND);
 		break;
@@ -243,10 +243,10 @@ mach_port_insert_right(args)
 	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
 	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
 		/* 
-		 * XXX We require that requester has send right. 
+		 * XXX We require that requester has any right. 
 		 * Not sure this is right
 		 */
-		if (mach_right_check(mr, p, MACH_PORT_TYPE_SEND_ONCE) == 0)
+		if (mach_right_check(mr, p, MACH_PORT_TYPE_PORT_RIGHTS) == 0)
 			return mach_msg_error(args, EPERM);
 		nmr = mach_right_get(mr->mr_port, 
 		    tp, MACH_PORT_RIGHT_SEND_ONCE);
@@ -263,8 +263,8 @@ mach_port_insert_right(args)
 		break;
 
 	default:
-		uprintf("mach_port_insert_right: unknown right %d\n",
-		    req->req_poly.name);
+		uprintf("mach_port_insert_right: unknown right %x\n",
+		    req->req_poly.disposition);
 		break;
 	}
 
@@ -461,7 +461,7 @@ mach_right_get(mp, p, type)
 		lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
 		LIST_FOREACH(mr, &med->med_right, mr_list) 
 			if ((mr->mr_port == mp) &&
-			    (mr->mr_type = type))
+			    (mr->mr_type == type))
 				break;
 		lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
