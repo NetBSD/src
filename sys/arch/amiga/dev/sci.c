@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.21.2.1 2000/11/20 19:58:41 bouyer Exp $	*/
+/*	$NetBSD: sci.c,v 1.21.2.2 2001/03/29 09:02:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -71,7 +71,6 @@
 
 int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
 int  scigo __P((struct sci_softc *, struct scsipi_xfer *));
-int  scigetsense __P((struct sci_softc *, struct scsipi_xfer *));
 int  sciselectbus __P((struct sci_softc *, u_char, u_char));
 void sciabort __P((struct sci_softc *, char *));
 void scierror __P((struct sci_softc *, u_char));
@@ -218,25 +217,17 @@ sci_scsidone(dev, stat)
 	if (xs == NULL)
 		panic("sci_scsidone");
 #endif
-	/*
-	 * is this right?
-	 */
 	xs->status = stat;
-
 	if (stat == 0)
 		xs->resid = 0;
 	else {
 		switch(stat) {
 		case SCSI_CHECK:
-			stat = scigetsense(dev, xs);
-			if (stat != 0)
-				goto bad_sense;
-			xs->error = XS_SENSE;
-			break;
+			xs->resid = 0;
+			/* FALLTHOUGH */
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
 			break;
-		bad_sense:
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
 			QPRINTF(("sci_scsicmd() bad %x\n", stat));
@@ -244,40 +235,8 @@ sci_scsidone(dev, stat)
 		}
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
-	/*
-	 * grab next command before scsipi_done()
-	 * this way no single device can hog scsi resources.
-	 */
 	scsipi_done(xs);
 
-}
-
-int
-scigetsense(dev, xs)
-	struct sci_softc *dev;
-	struct scsipi_xfer *xs;
-{
-	struct scsipi_sense rqs;
-	struct scsipi_periph *periph;
-
-	periph = xs->xs_periph;
-
-	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = periph->periph_lun << 5;
-#ifdef not_yet
-	rqs.length = xs->req_sense_length ? xs->req_sense_length :
-	    sizeof(xs->sense.scsi_sense);
-#else
-	rqs.length = sizeof(xs->sense.scsi_sense);
-#endif
-
-	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-
-	return(sciicmd(dev, periph->periph_target, &rqs, sizeof(rqs),
-		&xs->sense.scsi_sense,
-	    rqs.length, DATA_IN_PHASE));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10.2.1 2000/11/20 20:15:18 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10.2.2 2001/03/29 09:03:00 bouyer Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -148,7 +148,6 @@ int     sbicdma_saves   = 0;
 int     sbic_debug      = 0;    /* Debug all chip related things */
 int     sync_debug      = 0;    /* Debug all Synchronous Scsi related things */
 int     reselect_debug  = 0;    /* Debug all reselection related things */
-int     report_sense    = 0;    /* Always print Sense information */
 int     data_pointer_debug = 0; /* Debug Data Pointer related things */
 
 void    sbictimeout __P((struct sbic_softc *dev));
@@ -360,109 +359,124 @@ sbic_load_ptrs(dev)
  * so I will too.  I could plug it in, however so could they
  * in scsi_scsipi_cmd().
  */
-int
-sbic_scsicmd(xs)
-    struct scsipi_xfer *xs;
+void
+sbic_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-    struct scsipi_link    *slp = xs->sc_link;
-    struct sbic_softc   *dev = slp->adapter_softc;
+    struct scsipi_xfer *xs;
+    struct scsipi_periph;
+    struct sbic_softc   *dev = (void *)chan->chan_adapter->adapt_dev;
     struct sbic_acb     *acb;
-    int                 flags = xs->xs_control,
-                        s;
+    int                 flags, s;
 
-    if ( flags & XS_CTL_DATA_UIO )
-        panic("sbic: scsi data uio requested");
+    switch (req) {
+    case ADAPTER_REQ_RUN_XFER:
+	xs = arg;
+	periph = xs->xs_periph;
+        flags = xs->xs_control
 
-    if ( dev->sc_nexus && (flags & XS_CTL_POLL) )
-        panic("sbic_scsicmd: busy");
+        if ( flags & XS_CTL_DATA_UIO )
+            panic("sbic: scsi data uio requested");
 
-    if ( slp->scsipi_scsi.target == slp->scsipi_scsi.adapter_target )
-        return ESCAPE_NOT_SUPPORTED;
-
-    s = splbio();
-
-    if ( (acb = dev->free_list.tqh_first) != NULL )
-        TAILQ_REMOVE(&dev->free_list, acb, chain);
-
-    splx(s);
-
-    if ( acb == NULL ) {
-#ifdef DEBUG
-        printf("sbic_scsicmd: unable to queue request for target %d\n",
-            slp->scsipi_scsi.target);
-#ifdef DDB
-        Debugger();
-#endif
-#endif
-        xs->error = XS_DRIVER_STUFFUP;
-
-        return(TRY_AGAIN_LATER);
-    }
-
-    if ( flags & XS_CTL_DATA_IN )
-        acb->flags = ACB_ACTIVE | ACB_DATAIN;
-    else
-        acb->flags = ACB_ACTIVE;
-
-    acb->xs             = xs;
-    acb->clen           = xs->cmdlen;
-    acb->sc_kv.dc_addr  = xs->data;
-    acb->sc_kv.dc_count = xs->datalen;
-    acb->pa_addr        = xs->data ? (char *)kvtop((caddr_t)xs->data) : 0;
-    bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
-
-    if ( flags & XS_CTL_POLL ) {
-        /*
-         * This has major side effects -- it locks up the machine
-         */
-        int stat;
+        if ( dev->sc_nexus && (flags & XS_CTL_POLL) )
+            panic("sbic_scsicmd: busy");
 
         s = splbio();
 
-        dev->sc_flags |= SBICF_ICMD;
-
-        do {
-            /*
-             * If we already had a nexus, while away the time until idle...
-             * This is likely only to happen if a reselection occurs between
-             * here and our earlier check for ICMD && sc_nexus (which would
-             * have resulted in a panic() had it been true).
-             */
-            while ( dev->sc_nexus )
-                sbicpoll(dev);
-
-            /*
-             * Fix up the new nexus
-             */
-            dev->sc_nexus   = acb;
-            dev->sc_xs      = xs;
-            dev->target     = slp->scsipi_scsi.target;
-            dev->lun        = slp->scsipi_scsi.lun;
-
-            stat = sbicicmd(dev, &acb->cmd, acb->clen,
-                            acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
-
-        } while ( dev->sc_nexus != acb );
-
-        sbic_scsidone(acb, stat);
+        if ( (acb = dev->free_list.tqh_first) != NULL )
+            TAILQ_REMOVE(&dev->free_list, acb, chain);
 
         splx(s);
 
-        return(COMPLETE);
+        if ( acb == NULL ) {
+#ifdef DEBUG
+            printf("sbic_scsicmd: unable to queue request for target %d\n",
+                periph->periph_target);
+#ifdef DDB
+            Debugger();
+#endif
+#endif
+            xs->error = XS_RESOURCE_SHORTAGE;
+	    scsipi_done(xs);
+            return;
+        }
+
+        if ( flags & XS_CTL_DATA_IN )
+            acb->flags = ACB_ACTIVE | ACB_DATAIN;
+        else
+            acb->flags = ACB_ACTIVE;
+
+        acb->xs             = xs;
+        acb->clen           = xs->cmdlen;
+        acb->sc_kv.dc_addr  = xs->data;
+        acb->sc_kv.dc_count = xs->datalen;
+        acb->pa_addr        = xs->data ? (char *)kvtop((caddr_t)xs->data) : 0;
+        bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+
+        if ( flags & XS_CTL_POLL ) {
+            /*
+             * This has major side effects -- it locks up the machine
+             */
+            int stat;
+
+            s = splbio();
+
+            dev->sc_flags |= SBICF_ICMD;
+
+            do {
+                /*
+                 * If we already had a nexus, while away the time until idle...
+                 * This is likely only to happen if a reselection occurs between
+                 * here and our earlier check for ICMD && sc_nexus (which would
+                 * have resulted in a panic() had it been true).
+                 */
+                while ( dev->sc_nexus )
+                    sbicpoll(dev);
+
+                /*
+                 * Fix up the new nexus
+                 */
+                dev->sc_nexus   = acb;
+                dev->sc_xs      = xs;
+                dev->target     = periph->periph_target;
+                dev->lun        = periph->periph_lun;
+
+                stat = sbicicmd(dev, &acb->cmd, acb->clen,
+                                acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
+
+            } while ( dev->sc_nexus != acb );
+
+            sbic_scsidone(acb, stat);
+
+            splx(s);
+
+            return;
+        }
+
+        s = splbio();
+        TAILQ_INSERT_TAIL(&dev->ready_list, acb, chain);
+
+        /*
+         * If nothing is active, try to start it now.
+         */
+        if ( dev->sc_nexus == NULL )
+            sbic_sched(dev);
+
+        splx(s);
+
+        return;
+
+    case ADAPTER_REQ_GROW_RESOURCES:
+	/* XXX Not supported. */
+	return;
+
+    case ADAPTER_REQ_SET_XFER_MODE:
+	/* XXX Not supported. */
+	return;
     }
 
-    s = splbio();
-    TAILQ_INSERT_TAIL(&dev->ready_list, acb, chain);
-
-    /*
-     * If nothing is active, try to start it now.
-     */
-    if ( dev->sc_nexus == NULL )
-        sbic_sched(dev);
-
-    splx(s);
-
-    return(SUCCESSFULLY_QUEUED);
 }
 
 /*
@@ -473,7 +487,7 @@ sbic_sched(dev)
     struct sbic_softc *dev;
 {
     struct scsipi_xfer    *xs;
-    struct scsipi_link    *slp = NULL;    /* Gag the compiler */
+    struct scsipi_periph  *periph = NULL;    /* Gag the compiler */
     struct sbic_acb     *acb;
     int                 flags,
                         stat;
@@ -492,9 +506,9 @@ sbic_sched(dev)
     for (acb = dev->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
         int     i, j;
 
-        slp = acb->xs->sc_link;
-        i   = slp->scsipi_scsi.target;
-        j   = 1 << slp->scsipi_scsi.lun;
+        periph = acb->xs->xs_periph;
+        i   = periph->periph_target;
+        j   = 1 << periph->periph_lun;
 
         /*
          * We've found a potential command, but is the target/lun busy?
@@ -518,8 +532,8 @@ sbic_sched(dev)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbic_sched(%d,%d)\n", slp->scsipi_scsi.target,
-			slp->scsipi_scsi.lun);
+        printf("sbic_sched(%d,%d)\n", periph->periph_target,
+			periph->periph_lun);
 #endif
 
     dev->sc_xs = xs = acb->xs;
@@ -529,8 +543,8 @@ sbic_sched(dev)
         sbicreset(dev);
 
     dev->sc_stat[0] = -1;
-    dev->target     = slp->scsipi_scsi.target;
-    dev->lun        = slp->scsipi_scsi.lun;
+    dev->target     = periph->periph_target;
+    dev->lun        = periph->periph_lun;
 
     if ( flags & XS_CTL_POLL || (!sbic_parallel_operations &&
                               (sbicdmaok(dev, xs) == 0)) )
@@ -551,8 +565,8 @@ sbic_scsidone(acb, stat)
     int             stat;
 {
     struct scsipi_xfer    *xs  = acb->xs;
-    struct scsipi_link    *slp = xs->sc_link;
-    struct sbic_softc   *dev = slp->adapter_softc;
+    struct scsipi_periph  *periph = xs->xs_periph;
+    struct sbic_softc   *dev = periph->periph_channel->chan_adapter->adapt_dev;
     int                 dosched = 0;
 
 #ifdef DIAGNOSTIC
@@ -565,79 +579,24 @@ sbic_scsidone(acb, stat)
     }
 #endif
 
-    /*
-     * is this right?
-     */
-    xs->status = stat;
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("scsidone: (%d,%d)->(%d,%d)%02x\n", slp->scsipi_scsi.target,
-			slp->scsipi_scsi.lun,
+        printf("scsidone: (%d,%d)->(%d,%d)%02x\n", periph->periph_target,
+			periph->periph_lun,
                                                    dev->target, dev->lun, stat);
 
-    if ( xs->sc_link->scsipi_scsi.target ==
-		dev->sc_link.scsipi_scsi.adapter_target )
+    if ( xs->xs_periph->periph.target == dev->sc_channel->chan_id)
         panic("target == hostid");
 #endif
 
-    if ( xs->error == XS_NOERROR && (acb->flags & ACB_CHKSENSE) == 0 ) {
-
-        if ( stat == SCSI_CHECK ) {
-            /*
-             * Schedule a REQUEST SENSE
-             */
-            struct scsipi_sense *ss = (void *)&acb->cmd;
-
-#ifdef DEBUG
-            if ( report_sense )
-                printf("sbic_scsidone: autosense %02x targ %d lun %d",
-                        acb->cmd.opcode, slp->scsipi_scsi.target,
-						slp->scsipi_scsi.lun);
-#endif
-
-            bzero(ss, sizeof(*ss));
-
-            ss->opcode          = REQUEST_SENSE;
-            ss->byte2           = slp->scsipi_scsi.lun << 5;
-            ss->length          = sizeof(struct scsipi_sense_data);
-
-            acb->clen           = sizeof(*ss);
-            acb->sc_kv.dc_addr  = (char *)&xs->sense.scsi_sense;
-            acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
-            acb->pa_addr        = (char *)kvtop((caddr_t)&xs->sense.scsi_sense);
-            acb->flags          = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
-
-            TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
-
-            dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
-				~(1 << slp->scsipi_scsi.lun);
-            dev->sc_tinfo[slp->scsipi_scsi.target].senses++;
-
-            if ( dev->sc_nexus == acb ) {
-                dev->sc_nexus = NULL;
-                dev->sc_xs = NULL;
-                sbic_sched(dev);
-            }
-            return;
-        }
+    xs->status = stat;
+    xs->resid = 0;      /* XXXX */
+    if ( xs->error == XS_NOERROR) {
+        if ( stat == SCSI_CHECK || stat == SCSU_BUSY)
+            xs->error = XS_BUSY;
     }
 
-    if ( xs->error == XS_NOERROR && (acb->flags & ACB_CHKSENSE) != 0 ) {
-
-        xs->error = XS_SENSE;
-
-#ifdef DEBUG
-        if (report_sense)
-            printf(" => %02x %02x\n", xs->sense.scsi_sense.flags, 
-			xs->sense.scsi_sense.extra_bytes[3]);
-#endif
-
-    } else {
-        xs->resid = 0;      /* XXXX */
-    }
-
-    xs->xs_status |= XS_STS_DONE;
 
     /*
      * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -651,8 +610,8 @@ sbic_scsidone(acb, stat)
         dev->sc_nexus = NULL;
         dev->sc_xs    = NULL;
 
-        dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
-			~(1 << slp->scsipi_scsi.lun);
+        dev->sc_tinfo[periph->periph_target].lubusy &=
+			~(1 << periph->periph_lun);
 
         if ( dev->ready_list.tqh_first )
             dosched = 1;    /* start next command */
@@ -669,8 +628,8 @@ sbic_scsidone(acb, stat)
         for (a = dev->nexus_list.tqh_first; a; a = a->chain.tqe_next) {
             if ( a == acb ) {
                 TAILQ_REMOVE(&dev->nexus_list, acb, chain);
-                dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
-					~(1 << slp->scsipi_scsi.lun);
+                dev->sc_tinfo[periph->periph_target].lubusy &=
+					~(1 << periph->periph_lun);
                 break;
             }
         }
@@ -693,7 +652,7 @@ sbic_scsidone(acb, stat)
     acb->flags = ACB_FREE;
     TAILQ_INSERT_HEAD(&dev->free_list, acb, chain);
 
-    dev->sc_tinfo[slp->scsipi_scsi.target].cmds++;
+    dev->sc_tinfo[periph->periph_target].cmds++;
 
     scsipi_done(xs);
 
@@ -898,7 +857,7 @@ sbicreset(dev)
 
     s = splbio();
 
-    my_id = dev->sc_link.scsipi_scsi.adapter_target & SBIC_ID_MASK;
+    my_id = dev->sc_channel->chan_id & SBIC_ID_MASK;
 
     if (dev->sc_clkfreq < 110)
         my_id |= SBIC_ID_FS_8_10;
@@ -1572,8 +1531,8 @@ sbicgo(dev, xs)
                     asr,
                     *addr;
 
-    dev->target = xs->sc_link->scsipi_scsi.target;
-    dev->lun    = xs->sc_link->scsipi_scsi.lun;
+    dev->target = xs->xs_periph->periph_target;
+    dev->lun    = xs->xs_periph->periph_lun;
 
     usedma = sbicdmaok(dev, xs);
 
@@ -2492,8 +2451,8 @@ sbicnextstate(dev, csr, asr)
             for (acb = dev->nexus_list.tqh_first; acb;
                                                   acb = acb->chain.tqe_next) {
 
-                if ( acb->xs->sc_link->scsipi_scsi.target == newtarget &&
-                     acb->xs->sc_link->scsipi_scsi.lun    == newlun) {
+                if ( acb->xs->xs_periph->periph_target == newtarget &&
+                     acb->xs->xs_periph->periph_lun    == newlun) {
                     /*
                      * We've found the saved entry. Dequeue it, and 
                      * make it current again.

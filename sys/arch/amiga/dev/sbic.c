@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.36.2.1 2000/11/20 19:58:40 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.36.2.2 2001/03/29 09:02:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -141,7 +141,6 @@ int	sbic_debug = 0;
 int	sync_debug = 0;
 int	sbic_dma_debug = 0;
 int	reselect_debug = 0;
-int	report_sense = 0;
 int	data_pointer_debug = 0;
 u_char	debug_asr, debug_csr, routine;
 void sbictimeout __P((struct sbic_softc *dev));
@@ -559,11 +558,9 @@ sbic_scsidone(acb, stat)
 		return;
 	}
 #endif
-	/*
-	 * is this right?
-	 */
-	xs->status = stat;
 
+	xs->status = stat;
+	xs->resid = 0;		/* XXXX */
 #ifdef DEBUG
 	if( data_pointer_debug > 1 )
 		printf("scsidone: (%d,%d)->(%d,%d)%02x\n",
@@ -574,54 +571,10 @@ sbic_scsidone(acb, stat)
 		panic("target == hostid");
 #endif
 
-	if (xs->error == XS_NOERROR && !(acb->flags & ACB_CHKSENSE)) {
-		if (stat == SCSI_CHECK) {
-			/* Schedule a REQUEST SENSE */
-			struct scsipi_sense *ss = (void *)&acb->cmd;
-#ifdef DEBUG
-			if (report_sense)
-				printf("sbic_scsidone: autosense %02x targ %d lun %d",
-				    acb->cmd.opcode, periph->periph_target,
-					periph->periph_lun);
-#endif
-			bzero(ss, sizeof(*ss));
-			ss->opcode = REQUEST_SENSE;
-			ss->byte2 = periph->periph_lun << 5;
-			ss->length = sizeof(struct scsipi_sense_data);
-			acb->clen = sizeof(*ss);
-			acb->sc_kv.dc_addr = (char *)&xs->sense.scsi_sense;
-			acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
-			acb->pa_addr = (char *)kvtop((u_char *)&xs->sense.scsi_sense); /* XXX check */
-			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
-			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
-			dev->sc_tinfo[periph->periph_target].lubusy &=
-			    ~(1 << periph->periph_lun);
-			dev->sc_tinfo[periph->periph_target].senses++;
-			if (dev->sc_nexus == acb) {
-				dev->sc_nexus = NULL;
-				dev->sc_xs = NULL;
-				sbic_sched(dev);
-			}
-			SBIC_TRACE(dev);
-			return;
-		}
+	if (xs->error == XS_NOERROR) {
+		if (stat == SCSI_CHECK || stat == SCSI_BUSY)
+		xs->error == XS_BUSY;
 	}
-	if (xs->error == XS_NOERROR && (acb->flags & ACB_CHKSENSE)) {
-		xs->error = XS_SENSE;
-#ifdef DEBUG
-		if (report_sense)
-			printf(" => %02x %02x\n", xs->sense.scsi_sense.flags,
-			    xs->sense.scsi_sense.extra_bytes[3]);
-#endif
-	} else {
-		xs->resid = 0;		/* XXXX */
-	}
-#if whataboutthisone
-		case SCSI_BUSY:
-			xs->error = XS_BUSY;
-			break;
-#endif
-	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -2892,10 +2845,9 @@ sbic_dump(dev)
 	    dev->sc_dmacmd, dev->sc_dmamask);
 	for (i = 0; i < 8; ++i) {
 		if (dev->sc_tinfo[i].cmds > 2) {
-			printf("tgt %d: cmds %d disc %d senses %d lubusy %x\n",
+			printf("tgt %d: cmds %d disc %d lubusy %x\n",
 			    i, dev->sc_tinfo[i].cmds,
 			    dev->sc_tinfo[i].dconns,
-			    dev->sc_tinfo[i].senses,
 			    dev->sc_tinfo[i].lubusy);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.43.10.1 2000/11/20 20:19:18 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.43.10.2 2001/03/29 09:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -159,8 +159,8 @@ ncr_attach(parent, self, aux)
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, IPL_BIO, RISING_EDGE);
 
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	sc->sc_channel.chan_id = 7;
+	sc->sc_adapter.adapt_minphys = minphys;
 
 	/*
 	 *  Initialize the SCSI controller itself.

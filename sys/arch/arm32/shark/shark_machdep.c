@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.14.8.2 2001/03/12 13:27:47 bouyer Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.14.8.3 2001/03/29 09:03:00 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -453,9 +453,9 @@ ofw_device_register(struct device *dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		char *cp = strchr(boot_component, '@');
 		if (cp != NULL
-		    && sa->sa_sc_link->type == BUS_ATAPI
-		    && sa->sa_sc_link->scsipi_atapi.channel == 0
-		    && sa->sa_sc_link->scsipi_atapi.drive == strtoul(cp+1, NULL, 16)) {
+		    && sa->sa_periph->periph_channel->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI
+		    && sa->sa_periph->periph_channel->chan_channel == 0
+		    && sa->sa_periph->periph_target == strtoul(cp+1, NULL, 16)) {
 			booted_device = dev;
 		}
 		return;

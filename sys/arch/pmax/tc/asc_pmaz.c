@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.4.1 2000/11/20 20:20:50 bouyer Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.4.2 2001/03/29 09:03:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.4.1 2000/11/20 20:20:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.4.2 2001/03/29 09:03:04 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -266,7 +266,7 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 
 	asc->sc_bounce = asc->sc_base + PMAZ_OFFSET_RAM;
 	asc->sc_bounce += PER_TGT_DMA_SIZE *
-	    sc->sc_nexus->xs->sc_link->scsipi_scsi.target;
+	    sc->sc_nexus->xs->xs_periph->periph_target;
 	asc->sc_target = *addr;
 
 	if (!asc->sc_ispullup)

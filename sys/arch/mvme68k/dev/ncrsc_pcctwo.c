@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.2.8.2 2000/11/22 16:00:51 bouyer Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.2.8.3 2001/03/29 09:03:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,13 +73,6 @@ struct cfattach ncrsc_pcctwo_ca = {
 
 static int ncrsc_pcctwo_intr __P((void *));
 
-static struct scsipi_device ncrsc_pcctwo_scsidev = {
-	NULL,			/* use default error handler */
-	NULL,			/* do not have a start functio */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default done routine */
-};
-
 extern struct cfdriver ncrsc_cd;
 
 /*
@@ -150,19 +143,20 @@ ncrsc_pcctwo_attach(parent, self, args)
 	sc->sc_ctest7 = ctest7 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = SIOP_DCNTL_EA;
 
-	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
-	sc->sc_adapter.scsipi_minphys = siop_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7; 
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = siop_minphys;
+	sc->sc_adapter.adapt_request = siop_scsi_request;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;	/* Could use NVRAM
-							 * setting */
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &ncrsc_pcctwo_scsidev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = 7; /* Could use NVRAM setting */
 
 	/* Chip-specific initialisation */
 	siopinitialize(sc);
@@ -170,7 +164,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	/* Hook the chip's interrupt */
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
 
-	(void) config_found(self, &sc->sc_link, scsiprint);
+	(void) config_found(self, &sc->sc_channel, scsiprint);
 }
 
 static int

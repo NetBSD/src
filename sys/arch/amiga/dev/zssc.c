@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.28 1999/01/10 13:24:11 tron Exp $	*/
+/*	$NetBSD: zssc.c,v 1.28.8.1 2001/03/29 09:02:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -115,18 +115,20 @@ zsscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
-	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
-	sc->sc_adapter.scsipi_minphys = siop_minphys;
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7;
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL;
+	sc->sc_adapter.adapt_minphys = siop_minphys;
+	sc->sc_adapter.adapt_request = siop_scsi_request;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &zssc_scsidev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0; 
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8; 
+	sc->sc_channel.chan_id = 7;
 
 	siopinitialize(sc);
 
@@ -138,7 +140,7 @@ zsscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, &sc->sc_channel, scsiprint);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.14.2.1 2000/11/20 19:58:43 bouyer Exp $	*/
+/*	$NetBSD: siop2.c,v 1.14.2.2 2001/03/29 09:02:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -386,46 +386,14 @@ siopng_scsidone(acb, stat)
 	}
 	periph = xs->xs_periph;
 	sc = (void *)periph->periph_chan->chan_adapter->adapt_dev;
-	/*
-	 * is this right?
-	 */
-	xs->status = stat;
 
-	if (xs->error == XS_NOERROR && !(acb->flags & ACB_CHKSENSE)) {
-		if (stat == SCSI_CHECK) {
-			struct scsipi_sense *ss = (void *)&acb->cmd;
-			bzero(ss, sizeof(*ss));
-			ss->opcode = REQUEST_SENSE;
-			ss->byte2 = periph->periph_lun << 5;
-			ss->length = sizeof(struct scsipi_sense_data);
-			acb->clen = sizeof(*ss);
-			acb->daddr = (char *)&xs->sense.scsi_sense;
-			acb->dleft = sizeof(struct scsipi_sense_data);
-			acb->flags = ACB_ACTIVE | ACB_CHKSENSE;
-			TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
-			--sc->sc_active;
-			sc->sc_tinfo[periph->periph_target].lubusy &=
-			    ~(1 << periph->periph_lun);
-			sc->sc_tinfo[periph->periph_target].senses++;
-			if (sc->sc_nexus == acb) {
-				sc->sc_nexus = NULL;
-				siopng_sched(sc);
-			}
-			SIOP_TRACE('d','s',0,0)
-			return;
-		}
+	xs->status = stat;
+	xs->resid = 0;		/* XXXX */
+
+	if (xs->error == XS_NOERROR) {
+		if (stat == SCSI_CHECK || stat == SCSI_BUSY)
+			xs->error == XS_BUSY;
 	}
-	if (xs->error == XS_NOERROR && (acb->flags & ACB_CHKSENSE)) {
-		xs->error = XS_SENSE;
-	} else {
-		xs->resid = 0;		/* XXXX */
-	}
-#if whataboutthisone
-		case SCSI_BUSY:
-			xs->error = XS_BUSY;
-			break;
-#endif
-	xs->xs_status |= XS_STS_DONE;
 
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -1855,10 +1823,9 @@ siopng_dump(sc)
 	}
 	for (i = 0; i < 8; ++i) {
 		if (sc->sc_tinfo[i].cmds > 2) {
-			printf("tgt %d: cmds %d disc %d senses %d lubusy %x\n",
+			printf("tgt %d: cmds %d disc %d lubusy %x\n",
 			    i, sc->sc_tinfo[i].cmds,
 			    sc->sc_tinfo[i].dconns,
-			    sc->sc_tinfo[i].senses,
 			    sc->sc_tinfo[i].lubusy);
 		}
 	}
