@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.50 2002/09/21 21:14:56 manu Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.51 2002/11/01 19:26:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.50 2002/09/21 21:14:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.51 2002/11/01 19:26:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ const struct emul emul_ibcs2 = {
 	0,
 	native_to_ibcs2_errno,
 	IBCS2_SYS_syscall,
-	IBCS2_SYS_MAXSYSCALL,
+	IBCS2_SYS_NSYSENT,
 #endif
 	ibcs2_sysent,
 	ibcs2_syscallnames,

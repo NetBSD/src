@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.2 2002/09/21 21:14:59 manu Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.3 2002/11/01 19:26:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.2 2002/09/21 21:14:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.3 2002/11/01 19:26:24 jdolecek Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -78,7 +78,7 @@ const struct emul emul_pecoff = {
 	EMUL_HAS_SYS___syscall,
 	0,
 	PECOFF_SYS_syscall,
-	PECOFF_SYS_MAXSYSCALL,
+	PECOFF_SYS_NSYSENT,
 #endif
 	pecoff_sysent,
 #ifdef SYSCALL_DEBUG
