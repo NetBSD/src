@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.13 1997/10/19 13:59:20 lukem Exp $	*/
+/*	$NetBSD: server.c,v 1.14 1997/10/19 14:25:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.13 1997/10/19 13:59:20 lukem Exp $");
+__RCSID("$NetBSD: server.c,v 1.14 1997/10/19 14:25:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static int	chkparent __P((char *));
 static void	clean __P((char *));
 static void	comment __P((char *));
 static void	dospecial __P((char *));
-static int	fchog __P((int, char *, char *, char *, int));
+static int	fchtogm __P((int, char *, time_t, char *, char *, mode_t));
 static void	hardlink __P((char *));
 static void	note __P((const char *, ...));
 static void	query __P((char *));
@@ -334,7 +334,7 @@ sendf(rname, opts)
 		return;
 	}
 	if ((u = update(rname, opts, &stb)) == 0) {
-		if ((stb.st_mode & S_IFMT) == S_IFREG && stb.st_nlink > 1)
+		if (S_ISREG(stb.st_mode) && stb.st_nlink > 1)
 			(void) savelink(&stb);
 		return;
 	}
@@ -711,11 +711,11 @@ recvf(cmd, type)
 	int type;
 {
 	char *cp = cmd;
-	int f = -1, mode, opts = 0, wrerr, olderrno;
+	int f = -1, opts = 0, wrerr, olderrno;
+	mode_t mode;
 	off_t i, size;
 	time_t mtime;
 	struct stat stb;
-	struct timeval tvp[2];
 	char *owner, *group;
 	char new[BUFSIZ];
 	extern char *tempname;
@@ -782,7 +782,7 @@ recvf(cmd, type)
 			return;
 		}
 		if (lstat(target, &stb) == 0) {
-			if (ISDIR(stb.st_mode)) {
+			if (S_ISDIR(stb.st_mode)) {
 				if ((stb.st_mode & 07777) == mode) {
 					ack();
 					return;
@@ -795,9 +795,9 @@ recvf(cmd, type)
 				return;
 			}
 			errno = ENOTDIR;
-		} else if ((errno == ENOENT && (mkdir(target, mode) == 0)) ||
+		} else if ((errno == ENOENT && mkdir(target, mode) == 0) ||
 		    (chkparent(target) == 0 && mkdir(target, mode) == 0)) {
-			if (fchog(-1, target, owner, group, mode) == 0)
+			if (fchtogm(-1, target, mtime, owner, group, mode) == 0)
 				ack();
 			return;
 		}
@@ -923,17 +923,7 @@ differ:			buf[0] = '\0';
 		}
 	}
 
-	/*
-	 * Set last modified time
-	 */
-	tvp[0].tv_sec = time(0);
-	tvp[0].tv_usec = 0;
-	tvp[1].tv_sec = mtime;
-	tvp[1].tv_usec = 0;
-	if (futimes(f, tvp) < 0)
-		note("%s: utimes failed %s: %s\n", host, new, strerror(errno));
-
-	if (fchog(f, new, owner, group, mode) < 0) {
+	if (fchtogm(f, new, mtime, owner, group, mode) < 0) {
 badnew2:
 		if (f != -1)
 			(void) close(f);
@@ -990,9 +980,8 @@ hardlink(cmd)
 		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
 	}
 	if (lstat(target, &stb) == 0) {
-		int mode = stb.st_mode & S_IFMT;
-		if (mode != S_IFREG && mode != S_IFLNK) {
-			error("%s:%s: not a regular file\n", host, target);
+		if (!S_ISREG(stb.st_mode) && !S_ISLNK(stb.st_mode)) {
+			error("%s: %s: not a regular file\n", host, target);
 			return;
 		}
 		exists = 1;
@@ -1035,7 +1024,7 @@ chkparent(name)
 			*cp = '/';
 			return(0);
 		}
-	} else if (ISDIR(stb.st_mode)) {
+	} else if (S_ISDIR(stb.st_mode)) {
 		*cp = '/';
 		return(0);
 	}
@@ -1047,15 +1036,18 @@ chkparent(name)
  * Change owner, group and mode of file.
  */
 static int
-fchog(fd, file, owner, group, mode)
+fchtogm(fd, file, mtime, owner, group, mode)
 	int fd;
-	char *file, *owner, *group;
-	int mode;
+	char *file;
+	time_t mtime;
+	char *owner, *group;
+	mode_t mode;
 {
 	int i;
-	int uid, gid;
+	struct timeval tv[2];
+	uid_t uid;
+	gid_t gid;
 	extern char user[];
-	extern int userid;
 
 	uid = userid;
 	if (userid == 0) {
@@ -1098,10 +1090,16 @@ fchog(fd, file, owner, group, mode)
 		mode &= ~02000;
 		gid = -1;
 	}
-ok:	if ((fd != -1 && fchown(fd, uid, gid) < 0) || chown(file, uid, gid) < 0)
+ok:
+	(void) gettimeofday(&tv[0], (struct timezone *)0);
+	tv[1].tv_sec = mtime;
+	tv[1].tv_usec = 0;
+	if (fd != -1 ? futimes(fd, tv) < 0 : utimes(file, tv) < 0)
+		note("%s: %s utimes: %s", host, file, strerror(errno));
+	if (fd != -1 ? fchown(fd, uid, gid) < 0 : chown(file, uid, gid) < 0)
 		note("%s: %s chown: %s", host, file, strerror(errno));
 	else if (mode & 07000 &&
-	   ((fd != -1 && fchmod(fd, mode) < 0) || chmod(file, mode) < 0))
+	   (fd != -1 ? fchmod(fd, mode) < 0 : chmod(file, mode) < 0))
 		note("%s: %s chmod: %s", host, file, strerror(errno));
 	return(0);
 }
@@ -1343,7 +1341,6 @@ dospecial(cmd)
 	int fd[2], status, pid, i;
 	char *cp, *s;
 	char sbuf[BUFSIZ];
-	extern int userid, groupid;
 
 	if (pipe(fd) < 0) {
 		error("%s\n", strerror(errno));

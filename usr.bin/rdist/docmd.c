@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.13 1997/10/19 13:58:48 lukem Exp $	*/
+/*	$NetBSD: docmd.c,v 1.14 1997/10/19 14:25:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.13 1997/10/19 13:58:48 lukem Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.14 1997/10/19 14:25:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,6 @@ makeconn(rhost)
 	char tuser[20];
 	int n;
 	extern char user[];
-	extern int userid;
 
 	if (debug)
 		printf("makeconn(%s)\n", rhost);
