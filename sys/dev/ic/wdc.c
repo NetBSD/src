@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.2 1997/08/27 11:25:16 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.3 1997/08/28 11:05:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1085,7 +1085,7 @@ wdcwait(wdc, mask)
 		if ((status & WDCS_BSY) == 0 && (status & mask) == mask)
 			break;
 		if (++timeout > WDCNDELAY) {
-#ifdef ATAPI_DEBUG2
+#ifdef ATAPI_DEBUG
 			printf("wdcwait: timeout, status %x error %x\n", status, inb(iobase+wd_error));
 #endif
 			return -1;
