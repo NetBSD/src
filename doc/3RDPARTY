@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.184 2004/02/14 17:01:42 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.185 2004/02/23 01:41:01 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -246,12 +246,15 @@ See also nawk entry below.
 
 Package:	gcc
 Version:	2.95.3/3.3.2
-Current Vers:	3.3.2
+Current Vers:	3.3.3-20040209
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	thorpej, mrg
 Notes:
+before importing:
+	- delete all .cvsignore and .brik files
+	- delete gcc/java gcc/ada libffi zlib boehm-gc libjava fastjar
 
 Package:	gdb
 Version:	5.3
