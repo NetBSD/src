@@ -239,7 +239,7 @@ findentry(sp)
 	jmp_buf		db_jmpbuf;
 	jmp_buf		*savejmp = db_recover;
 
-	if (setjmp(db_recover = &db_jmpbuf)) {
+	if (setjmp(*(db_recover = &db_jmpbuf))) {
 		/* oops -- we touched something we ought not to have */
 		/* cannot trace caller of "start" */
 		sp->k_entry = MAXINT;
