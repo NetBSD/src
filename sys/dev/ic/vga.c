@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.31 2000/08/08 02:11:05 jeffs Exp $ */
+/* $NetBSD: vga.c,v 1.32 2000/08/14 20:14:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -101,9 +101,7 @@ struct vga_config {
 	void (*switchcb) __P((void *, int, int));
 	void *switchcbarg;
 
-#ifdef arc
 	paddr_t (*vc_mmap) __P((void *, off_t, int));
-#endif
 
 	struct callout vc_switch_callout;
 };
@@ -528,23 +526,12 @@ vga_init(vc, iot, memt)
 }
 
 void
-vga_common_attach(self, iot, memt, type)
-	struct device *self;
-	bus_space_tag_t iot, memt;
-	int type;
-{
-#ifdef arc
-	vga_extended_attach(self, iot, memt, type, NULL);
-}
-
-void
-vga_extended_attach(self, iot, memt, type, map)
+vga_common_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
 	paddr_t (*map) __P((void *, off_t, int));
 {
-#endif /* arc */
 	int console;
 	struct vga_config *vc;
 	struct wsemuldisplaydev_attach_args aa;
@@ -559,9 +546,7 @@ vga_extended_attach(self, iot, memt, type, map)
 		vga_init(vc, iot, memt);
 	}
 
-#ifdef arc
 	vc->vc_mmap = map;
-#endif
 
 	aa.console = console;
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
@@ -661,14 +646,11 @@ vga_mmap(v, offset, prot)
 	int prot;
 {
 
-#ifdef arc
 	struct vga_config *vc = v;
 
 	if (vc->vc_mmap != NULL)
 		return (*vc->vc_mmap)(v, offset, prot);
-#else
-	/* XXX */
-#endif
+
 	return -1;
 }
 

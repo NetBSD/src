@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp $ */
+/* $NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -98,7 +98,7 @@ vga_isa_attach(parent, self, aux)
 	printf("\n");
 
 	vga_common_attach(self, ia->ia_iot, ia->ia_memt,
-			  WSDISPLAY_TYPE_ISAVGA);
+			  WSDISPLAY_TYPE_ISAVGA, NULL);
 }
 
 int
