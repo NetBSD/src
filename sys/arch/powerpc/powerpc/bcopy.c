@@ -1,3 +1,5 @@
+/*	$NetBSD: bcopy.c,v 1.2 1997/04/16 22:09:41 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,12 +37,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bcopy.c	5.11 (Berkeley) 6/21/91";*/
-static char *rcsid = "$Id: bcopy.c,v 1.1 1996/09/30 16:34:40 ws Exp $";
+#if 0
+static char *sccsid = "from: @(#)bcopy.c      5.11 (Berkeley) 6/21/91";
+#else
+static char *rcsid = "$NetBSD: bcopy.c,v 1.2 1997/04/16 22:09:41 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
+#include <sys/param.h>
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
 #include <string.h>
+#endif
 
 /*
  * sizeof(word) MUST BE A POWER OF TWO
