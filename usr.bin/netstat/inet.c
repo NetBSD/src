@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.27 1997/12/17 06:17:26 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.28 1998/01/07 22:55:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.27 1997/12/17 06:17:26 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.28 1998/01/07 22:55:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ struct	tcpcb tcpcb;
 struct	socket sockb;
 
 char	*inetname __P((struct in_addr *));
-void	inetprint __P((struct in_addr *, int, char *));
+void	inetprint __P((struct in_addr *, u_int16_t, const char *, int));
 
 /*
  * Print a summary of connections related to an Internet
@@ -146,8 +146,17 @@ protopr(off, name)
 				printf("%8lx ", (u_long) prev);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
-		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
-		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name);
+		if (nflag) {
+			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
+			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 1);
+		} else if (inpcb.inp_flags & INP_ANONPORT) {
+			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
+			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 0);
+		} else {
+			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 0);
+			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 
+			    inpcb.inp_lport != inpcb.inp_fport);
+		}
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
 				printf(" %d", tcpcb.t_state);
@@ -461,23 +470,24 @@ igmp_stats(off, name)
  * If the nflag was specified, use numbers instead of names.
  */
 void
-inetprint(in, port, proto)
+inetprint(in, port, proto, numeric)
 	struct in_addr *in;
-	int port;
-	char *proto;
+	u_int16_t port;
+	const char *proto;
+	int numeric;
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
 	int width;
 
-	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
+	sprintf(line, "%.*s.", (Aflag && !numeric) ? 12 : 16, inetname(in));
 	cp = strchr(line, '\0');
-	if (!nflag && port)
+	if (!numeric && port)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
 		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
 	else
-		sprintf(cp, "%u", ntohs((u_short)port));
+		sprintf(cp, "%u", ntohs(port));
 	width = Aflag ? 18 : 22;
 	printf(" %-*.*s", width, width, line);
 }
