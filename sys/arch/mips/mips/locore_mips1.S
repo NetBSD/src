@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.47 2000/10/04 08:46:21 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.48 2000/10/09 10:14:23 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1185,6 +1185,7 @@ END(mips1_icsize)
  * int mips1_dcsize() R3900/R3920 special
  */
 LEAF(mips1_dcsize)	
+	mfc0	t0, R3900_COP_0_CONFIG
 	li	t1, R3900_CONFIG_DCS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_DCS_SHIFT
