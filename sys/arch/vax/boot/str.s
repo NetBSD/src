@@ -1,4 +1,4 @@
-/*	$NetBSD: str.s,v 1.3 1997/03/15 13:04:30 ragge Exp $ */
+/*	$NetBSD: str.s,v 1.4 1998/10/09 06:09:48 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,16 +85,11 @@ ENTRY(bcmp, 0);
  * Is movc3/movc5 emulated on any CPU? I dont think so; use them here.
  */
 ENTRY(bzero,0);
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movc5	$0,(r0),$0,r1,(r0)
+	movc5	$0,*4(ap),$0,8(ap),*4(ap)
 	ret
 
 ENTRY(bcopy,0);
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movl	12(ap), r2
-	movc3	r2, (r0), (r1)
+	movc3	12(ap), *4(ap), *8(ap)
 	ret
 
 ENTRY(strlen, 0);
@@ -128,3 +123,15 @@ ENTRY(strcmp, 0)
 1:	bgtr	3f
 	mnegl	r0, r0
 3:	ret
+
+ENTRY(strncpy, 0)
+	movl	4(ap), r1
+	movl	8(ap), r2
+	movl	12(ap), r3
+	bleq	2f
+
+1:	movb	(r2)+, (r1)+
+	beql	2f
+	decl	r3
+	bneq	1b
+2:	ret
