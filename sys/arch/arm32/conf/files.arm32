@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.83 2000/11/08 19:48:51 ad Exp $
+#	$NetBSD: files.arm32,v 1.84 2001/01/11 23:27:27 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -359,10 +359,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
-
-file	arch/arm32/arm32/in_cksum_arm32.c	inet
-file	netinet/in4_cksum.c			inet
-file	netns/ns_cksum.c			ns
 
 # library functions
 file	arch/arm32/arm32/strstr.c
