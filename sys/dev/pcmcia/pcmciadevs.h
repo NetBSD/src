@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.15 1998/09/05 14:18:04 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.16 1998/09/10 19:57:20 kenh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.14 1998/09/05 14:17:38 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.15 1998/09/10 19:55:30 kenh Exp 
  */
 
 /*-
@@ -47,6 +47,7 @@
  * List of known PCMCIA vendors
  */
 
+#define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
@@ -62,6 +63,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -89,6 +91,11 @@
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E	0x002d
 #define	PCMCIA_STR_DAYNA_COMMUNICARD_E	"Dayna CommuniCard E"
+
+/* DIGITAL Products */
+#define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
+#define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
 
 /* Motorola Products */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
@@ -135,6 +142,11 @@
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
 #define	PCMCIA_STR_USROBOTICS_WORLDPORT144	"US Robotics WorldPort 14.4 Modem"
 
+/* Sandisk Products */
+#define	PCMCIA_CIS_SANDISK_SDCFB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SANDISK_SDCFB	0x0401
+#define	PCMCIA_STR_SANDISK_SDCFB	"Sandisk CompactFlash Card"
+
 /* Simple Technology Products */
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288	0x0100
@@ -174,6 +186,7 @@
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
+#define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -202,3 +215,6 @@
 #define	PCMCIA_CIS_DIGITAL_DEPCMXX	{ "DIGITAL", "DEPCM-XX", NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_DEPCMXX	-1
 #define	PCMCIA_STR_DIGITAL_DEPCMXX	"DEC DEPCM-BA"
+#define	PCMCIA_CIS_TEAC_IDECARDII	{ NULL, "NinjaATA-", NULL, NULL }
+#define	PCMCIA_PRODUCT_TEAC_IDECARDII	-1
+#define	PCMCIA_STR_TEAC_IDECARDII	"TEAC IDE Card/II"
