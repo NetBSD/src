@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.10.4.1 2000/06/22 07:09:04 thorpej Exp $	*/
+/*	$NetBSD: ext.h,v 1.10.4.2 2001/07/29 04:12:58 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -112,8 +112,8 @@ extern void
 	dooption P((int)),
 	dontoption P((int)),
 	edithost P((char *, char *)),
-	fatal P((int, char *)),
-	fatalperror P((int, char *)),
+	fatal P((int, const char *)),
+	fatalperror P((int, const char *)),
 	get_slc_defaults P((void)),
 	init_env P((void)),
 	init_termbuf P((void)),
@@ -123,7 +123,7 @@ extern void
 	netclear P((void)),
 	netflush P((void)),
 #ifdef DIAGNOSTICS
-	printoption P((char *, int)),
+	printoption P((const char *, int)),
 	printdata P((char *, char *, int)),
 	printsub P((int, unsigned char *, int)),
 #endif
@@ -188,6 +188,10 @@ extern void
 	willoption P((int)),
 	wontoption P((int)),
 	writenet P((unsigned char *, int));
+
+extern int output_data __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+extern int output_datalen __P((const char *, size_t));
 
 #ifdef	ENCRYPTION
 extern int	(*decrypt_input) P((int));
