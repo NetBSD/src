@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.4 1996/04/25 02:16:35 thorpej Exp $
+$NetBSD: eisadevs,v 1.5 1996/05/17 19:27:48 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -40,6 +40,7 @@ vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor TCM		3Com
+vendor USC		UltraStor
 
 /*
  * List of known products, grouped by vendor.
@@ -70,3 +71,6 @@ product DEC 4250	DE425 Ethernet
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
+
+/* UltraStor products */
+product USC 0240	24f SCSI
