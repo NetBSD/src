@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.35 1998/04/13 12:03:07 lukem Exp $
+#	$NetBSD: bsd.README,v 1.36 1998/05/03 16:39:45 ross Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -42,7 +42,7 @@ way the V7 make behaved.
 It's fairly difficult to make the BSD .mk files work when you're building
 multiple programs in a single directory.  It's a lot easier split up the
 programs than to deal with the problem.  Most of the agony comes from making
-the "obj" directory stuff work right, not because we switch to a new version
+the "obj" directory stuff work right, not because we switched to a new version
 of make.  So, don't get mad at us, figure out a better way to handle multiple
 architectures so we can quit using the symbolic link stuff.  (Imake doesn't
 count.)
