@@ -1,7 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.8.2.1 2002/11/30 14:22:19 he Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8.2.2 2004/05/28 08:31:22 tron Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Portions copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,9 +30,6 @@
 
 #include <machine/asm.h>
 
-	.extern	_GLOBAL_OFFSET_TABLE_
-	.extern _GOT_END_
-
 /*
  * Note: we can call ourselves LEAF even though we use callee-saved
  * registers because we're the root of the call graph.
@@ -41,40 +39,21 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	br	pv, 1f
 1:	LDGP(pv)
 
-	/* XXX Partially relocate ourself. */
-
-	/* Step 1 -- Figure out the displacement */
-
-	br	t2, 2f		/* get our PC */
-2:	ldiq	t3, 2b		/* get where the linker thought we were */
-	subq	t2, t3, t8	/* calculate the displacement */
-
-
-	/* Step 2 -- Find bounds of global offset table */
-
-	lda	t5, _GLOBAL_OFFSET_TABLE_
-	addq	t8, t5, t9	/* add the displacement */
-	lda	t4, _GOT_END_	/* Get the address of the end of the GOT */
-	addq	t8, t4, t10	/* add the displacement */
-
 	/*
-	 * Step 3 -- Every entry in the global offset table needs to
-	 * modified for the displacement before any code will work.
+	 * Relocate ourself.
 	 */
+	br	s2, 2f		/* get our PC */
+2:	ldiq	s3, 2b		/* get where the linker thought we were */
 
-3:	ldq	t1, 0(t9)	/* load the value */
-	addq	t8, t1, t1	/* add the displacement */
-	stq	t1, 0(t9)	/* save the new value */
-	lda	t9, 8(t9)	/* point to next entry */
-	cmpult	t9, t10, t1	/* are we done? */
-	bne	t1, 3b		/* no, do more */
-
-	/*
-	 * Ya!  Things are far enough so we can do some dynamic linking!
-	 */
+	subq	s2, s3, a1	/* relocbase */
+	lda	t5, _DYNAMIC
+	addq	a1, t5, a0	/* &_DYNAMIC */
 
 	/* Squirrel away ps_strings. */
 	mov	a3, s0
+
+	bsr	ra, _rtld_relocate_nonplt_self
+	LDGP(ra)
 
 	/*
 	 * Allocate space on the stack for the cleanup and obj_main
@@ -82,8 +61,9 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	 */
 	lda	sp, -16(sp)
 
-	mov	sp, a0		/* v0 = _rtld(sp); */
-	CALL(_rtld)
+	subq	s2, s3, a1	/* relocbase */
+	mov	sp, a0		/* sp */
+	CALL(_rtld)		/* v0 = _rtld(sp, relocbase); */
 
 	ldq	a1, 0(sp)	/* cleanup */
 	ldq	a2, 8(sp)	/* obj_main */
@@ -166,6 +146,11 @@ END(_rtld_start)
 	ldq	t11, 152(sp)					;	\
 	ldq	gp, 160(sp)					;	\
 	/* XXX LDGP? */							\
+									\
+	/*								\
+	 * We've patched the PLT; sync the I-stream.			\
+	 */								\
+	imb							;	\
 									\
 	/* Pop the stack frame and turn control to the destination. */	\
 	lda     sp, 168(sp)					;	\

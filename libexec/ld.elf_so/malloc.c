@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.5 1999/06/17 21:13:14 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5.10.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -49,20 +45,22 @@
  */
 
 #include <sys/cdefs.h>
-#include "rtldenv.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+
+#include "rtld.h"
 
 /*
  * Pre-allocate mmap'ed pages
  */
 #define	NPOOLPAGES	(32*1024/pagesz)
 static caddr_t		pagepool_start, pagepool_end;
-static int		morepages __P((int));
+static int		morepages(int);
 
 /*
  * The overhead on a block is at least 4 bytes.  When free, this space
@@ -90,8 +88,8 @@ union	overhead {
 #define	ov_size		ovu.ovu_size
 };
 
-static void morecore __P((int));
-static int findbucket __P((union overhead *, int));
+static void morecore(int);
+static int findbucket(union overhead *, int);
 
 #define	MAGIC		0xef		/* magic # on accounting info */
 #define RMAGIC		0x5555		/* magic # on range info */
@@ -137,8 +135,7 @@ botch(
 #define TRACE()	xprintf("TRACE %s:%d\n", __FILE__, __LINE__)
 
 void *
-malloc(nbytes)
-	size_t nbytes;
+malloc(size_t nbytes)
 {
   	register union overhead *op;
   	register int bucket;
@@ -150,7 +147,7 @@ malloc(nbytes)
 	 * align break pointer so all data will be page aligned.
 	 */
 	if (pagesz == 0) {
-		pagesz = n = getpagesize();
+		pagesz = n = _rtld_pagesz;
 		if (morepages(NPOOLPAGES) == 0)
 			return NULL;
 		op = (union overhead *)(pagepool_start);
@@ -224,8 +221,7 @@ malloc(nbytes)
  * Allocate more memory to the indicated bucket.
  */
 static void
-morecore(bucket)
-	int bucket;
+morecore(int bucket)
 {
   	register union overhead *op;
 	register int sz;		/* size of desired block */
@@ -310,9 +306,7 @@ free(cp)
 int realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
-realloc(cp, nbytes)
-	void *cp;
-	size_t nbytes;
+realloc(void *cp, size_t nbytes)
 {
   	register u_int onb;
 	register int i;
@@ -381,9 +375,7 @@ realloc(cp, nbytes)
  * Return bucket number, or -1 if not found.
  */
 static int
-findbucket(freep, srchlen)
-	union overhead *freep;
-	int srchlen;
+findbucket(union overhead *freep, int srchlen)
 {
 	register union overhead *p;
 	register int i, j;
@@ -407,8 +399,7 @@ findbucket(freep, srchlen)
  * for each size category, the second showing the number of mallocs -
  * frees for each size category.
  */
-mstats(s)
-	char *s;
+mstats(char *s)
 {
   	register int i, j;
   	register union overhead *p;
@@ -434,8 +425,7 @@ mstats(s)
 
 
 static int
-morepages(n)
-int	n;
+morepages(int n)
 {
 	int	fd = -1;
 	int	offset;

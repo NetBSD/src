@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2001/12/14 21:33:59 fvdl Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3.2.1 2004/05/28 08:31:23 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,10 +43,20 @@
 	.type	.rtld_start,@function
 .rtld_start:
 	subq	$16,%rsp		# make room of obj_main and exit proc
-	movq	%rsp,%rdi		# stack pointer arg to _rtld
+	movq	%rsp,%r12		# stack pointer arg to _rtld
 	pushq	%rbx			# save ps_strings
 
-	call	_rtld@PLT		# _rtld(sp)
+	leaq	_GLOBAL_OFFSET_TABLE_(%rip),%rax
+	leaq	_DYNAMIC(%rip),%rdi	# &_DYNAMIC
+	movq	%rdi,%rbx
+	subq	(%rax),%rbx		# relocbase
+
+	movq	%rbx,%rsi
+	call	_rtld_relocate_nonplt_self@PLT
+
+	movq	%r12,%rdi
+	movq	%rbx,%rsi
+	call	_rtld@PLT		# _rtld(sp, relocbase)
 
 	popq	%rbx			# %rbx = ps_strings
 	popq	%rdx			# %rdx = cleanup
@@ -70,10 +80,6 @@ _rtld_bind_start:	# (obj, reloff)
 
 	movq	80(%rsp),%rdi
 	movq	88(%rsp),%rsi
-	movq	%rsi,%r11		# multiply by sizeof (Elf64_Rela) (24)
-	shlq	$3,%r11
-	shlq	$4,%rsi			# 16 * index + 8 * index = 24 * index
-	addq	%r11,%rsi
 
 	call	_rtld_bind@PLT		# call the binder
 	movq	%rax,88(%rsp)		# store function in obj

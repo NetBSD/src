@@ -1,7 +1,8 @@
-/*	$NetBSD: paths.c,v 1.15 2001/05/24 17:41:42 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.15.2.1 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,17 +52,111 @@
 #include "debug.h"
 #include "rtld.h"
 
-static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
-static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
-    const char *, const char *, bool));
-static void _rtld_process_mapping __P((Library_Xform **, char *, char *, bool));
+static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
+static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
+    const char *, const char *);
+static void _rtld_process_mapping(Library_Xform **, const char *,
+    const char *);
+static char *exstrdup(const char *, const char *);
+static const char *getstr(const char **, const char *, const char *);
+static const char *getcstr(const char **, const char *, const char *);
+static const char *getword(const char **, const char *, const char *);
+static int matchstr(const char *, const char *, const char *);
+
+static const char WS[] = " \t\n";
+
+/*
+ * Like xstrdup(), but takes end of string as a argument.
+ */
+static char *
+exstrdup(const char *bp, const char *ep)
+{
+	char *cp;
+	size_t len = ep - bp;
+
+	cp = xmalloc(len + 1);
+	memcpy(cp, bp, len);
+	cp[len] = '\0';
+	return (cp);
+}
+
+/*
+ * Like strsep(), but takes end of string and doesn't put any NUL.  To
+ * detect empty string, compare `*p' and return value.
+ */
+static const char *
+getstr(const char **p, const char *ep, const char *delim)
+{
+	const char *cp = *p, *q, *r;
+
+	if (ep < cp)
+		/* End of string */
+		return (NULL);
+
+	for (q = cp; q < ep; q++)
+		for (r = delim; *r != 0; r++)
+			if (*r == *q)
+				goto done;
+
+done:
+	*p = q;
+	return (cp);
+}
+
+/*
+ * Like getstr() above, but delim[] is complemented.
+ */
+static const char *
+getcstr(const char **p, const char *ep, const char *delim)
+{
+	const char *cp = *p, *q, *r;
+
+	if (ep < cp)
+		/* End of string */
+		return (NULL);
+
+	for (q = cp; q < ep; q++)
+		for (r = delim; *r != *q; r++)
+			if (*r == 0)
+				goto done;
+
+done:
+	*p = q;
+	return (cp);
+}
+
+static const char *
+getword(const char **p, const char *ep, const char *delim)
+{
+
+	(void)getcstr(p, ep, delim);
+
+	/*
+	 * Now, we're looking non-delim, or end of string.
+	 */
+
+	return (getstr(p, ep, delim));
+}
+
+/*
+ * Match `bp' against NUL terminated string pointed by `p'.
+ */
+static int
+matchstr(const char *p, const char *bp, const char *ep)
+{
+	int c;
+
+	while (bp < ep)
+		if ((c = *p++) == 0 || c != *bp++)
+			return (0);
+
+	return (*p == 0);
+}
 
 static Search_Path *
-_rtld_find_path(path, pathstr, pathlen)
-	Search_Path *path;
-	const char *pathstr;
-	size_t pathlen;
+_rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
 {
+
 	for (; path != NULL; path = path->sp_next) {
 		if (pathlen == path->sp_pathlen &&
 		    memcmp(path->sp_path, pathstr, pathlen) == 0)
@@ -71,41 +166,27 @@ _rtld_find_path(path, pathstr, pathlen)
 }
 
 static Search_Path **
-_rtld_append_path(head_p, path_p, bp, ep, dodebug)
-	Search_Path **head_p, **path_p;
-	const char *bp;
-	const char *ep;
-	bool dodebug;
+_rtld_append_path(Search_Path **head_p, Search_Path **path_p,
+    const char *bp, const char *ep)
 {
-	char *cp;
 	Search_Path *path;
-
-	if (bp == NULL || bp == ep || *bp == '\0')
-		return path_p;
 
 	if (_rtld_find_path(*head_p, bp, ep - bp) != NULL)
 		return path_p;
 
-	path = CNEW(Search_Path);
+	path = NEW(Search_Path);
 	path->sp_pathlen = ep - bp;
-	cp = xmalloc(path->sp_pathlen + 1);
-	strncpy(cp, bp, path->sp_pathlen);
-	cp[path->sp_pathlen] = '\0';
-	path->sp_path = cp;
+	path->sp_path = exstrdup(bp, ep);
 	path->sp_next = (*path_p);
 	(*path_p) = path;
 	path_p = &path->sp_next;
 
-	if (dodebug)
-		dbg((" added path \"%s\"", path->sp_path));
+	dbg((" added path \"%s\"", path->sp_path));
 	return path_p;
 }
 
 void
-_rtld_add_paths(path_p, pathstr, dodebug)
-	Search_Path **path_p;
-	const char *pathstr;
-	bool dodebug;
+_rtld_add_paths(Search_Path **path_p, const char *pathstr)
 {
 	Search_Path **head_p = path_p;
 
@@ -127,7 +208,7 @@ _rtld_add_paths(path_p, pathstr, dodebug)
 		if (ep == NULL)
 			ep = &pathstr[strlen(pathstr)];
 
-		path_p = _rtld_append_path(head_p, path_p, bp, ep, dodebug);
+		path_p = _rtld_append_path(head_p, path_p, bp, ep);
 
 		if (ep[0] == '\0')
 			break;
@@ -135,29 +216,23 @@ _rtld_add_paths(path_p, pathstr, dodebug)
 	}
 }
 
-
-struct sysctldesc {
-	const char *name;
-	int type;
-};
-
 struct list {
-	const struct sysctldesc *ctl;
+	const struct ctlname *ctl;
 	int numentries;
 };
 
 #ifdef CTL_MACHDEP_NAMES
-static struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+static const struct ctlname ctl_machdep[] = CTL_MACHDEP_NAMES;
 #endif
-static struct sysctldesc ctl_toplvl[] = CTL_NAMES;
+static const struct ctlname ctl_toplvl[] = CTL_NAMES;
 
-struct list toplevel[] = {
+const struct list toplevel[] = {
 	{ 0, 0 },
 	{ ctl_toplvl, CTL_MAXID },
 	{ 0, -1 },
 };
 
-struct list secondlevel[] = {
+const struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_UNSPEC */
 	{ 0, KERN_MAXID },		/* CTL_KERN */
 	{ 0, VM_MAXID },		/* CTL_VM */
@@ -176,7 +251,7 @@ struct list secondlevel[] = {
 	{ 0, -1 },
 };
 
-struct list *lists[] = {
+const struct list *lists[] = {
 	toplevel,
 	secondlevel,
 	0
@@ -189,44 +264,33 @@ struct list *lists[] = {
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
  */
 static void
-_rtld_process_mapping(lib_p, bp, ep, dodebug)
-	Library_Xform **lib_p;
-	char *bp, *ep;
-	bool dodebug;
+_rtld_process_mapping(Library_Xform **lib_p, const char *bp, const char *ep)
 {
-	static const char WS[] = " \t\n";
 	Library_Xform *hwptr = NULL;
-	char *ptr, *key, *lib, *l;
+	const char *ptr, *key, *ekey, *lib, *elib, *l;
 	int i, j, k;
 	
-	if (bp == NULL || bp == ep || *bp == '\0')
+	dbg((" processing mapping \"%.*s\"", (int)(ep - bp), bp));
+
+	if ((ptr = getword(&bp, ep, WS)) == NULL || ptr == bp)
 		return;
 
-	if (dodebug)
-		dbg((" processing mapping \"%s\"", bp));
-
-	if ((ptr = strsep(&bp, WS)) == NULL)
-		return;
-
-	if (dodebug)
-		dbg((" library \"%s\"", ptr));
+	dbg((" library \"%.*s\"", (int)(bp - ptr), ptr));
 
 	hwptr = xmalloc(sizeof(*hwptr));
 	memset(hwptr, 0, sizeof(*hwptr));
-	hwptr->name = xstrdup(ptr);
+	hwptr->name = exstrdup(ptr, bp);
 
-	while ((ptr = strsep(&bp, WS)) != NULL)
-		if (*ptr != '\0')
-			break;
-	if (ptr == NULL) {
+	bp++;
+
+	if ((ptr = getword(&bp, ep, WS)) == NULL || ptr == bp) {
 		xwarnx("missing sysctl variable name");
 		goto cleanup;
 	}
 
-	if (dodebug)
-		dbg((" sysctl \"%s\"", ptr));
+	dbg((" sysctl \"%.*s\"", (int)(bp - ptr), ptr));
 
-	for (i = 0; (l = strsep(&ptr, ".")) != NULL; i++) {
+	for (i = 0; (l = getstr(&ptr, bp, ".")) != NULL; i++, ptr++) {
 
 		if (lists[i] == NULL || i >= RTLD_MAX_CTL) {
 			xwarnx("sysctl nesting too deep");
@@ -238,79 +302,81 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 			if (lists[i][j].ctl == NULL)
 				continue;
 
-			for (k = 1; k < lists[i][j].numentries; k++) {
-				if (strcmp(lists[i][j].ctl[k].name, l) == 0)
+			for (k = 1; k < lists[i][j].numentries; k++)
+				if (matchstr(lists[i][j].ctl[k].ctl_name, l,
+				    ptr))
 					break;
-			}
 
 			if (lists[i][j].numentries == -1) {
-				xwarnx("unknown sysctl variable name `%s'", l);
+				xwarnx("unknown sysctl variable name `%.*s'",
+				    (int)(ptr - l), l);
 				goto cleanup;
 			}
 
 			hwptr->ctl[hwptr->ctlmax] = k;
 			hwptr->ctltype[hwptr->ctlmax++] =
-			    lists[i][j].ctl[k].type;
+			    lists[i][j].ctl[k].ctl_type;
 		}
 	}
 
-	if (dodebug)
-		for (i = 0; i < hwptr->ctlmax; i++)
-			dbg((" sysctl %d, %d", hwptr->ctl[i],
-			    hwptr->ctltype[i]));
+	for (i = 0; i < hwptr->ctlmax; i++)
+		dbg((" sysctl %d, %d", hwptr->ctl[i], hwptr->ctltype[i]));
 
-	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
-		if (*ptr == '\0') {
-			/* back up index and continue */
-			i--;
+	for (i = 0; bp++, (ptr = getword(&bp, ep, WS)) != NULL;) {
+		dbg((" ptr = %.*s", (int)(bp - ptr), ptr));
+		if (ptr == bp)
 			continue;
-		}
+
 		if (i == RTLD_MAX_ENTRY) {
 no_more:
 			xwarnx("maximum library entries exceeded `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
-		if ((key = strsep(&ptr, ":")) == NULL) {
+		if ((key = getstr(&ptr, bp, ":")) == NULL) {
 			xwarnx("missing sysctl variable value for `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
-		if ((lib = strsep(&ptr, ":")) == NULL) {
+		ekey = ptr++;
+		if ((lib = getstr(&ptr, bp, ":")) == NULL) {
 			xwarnx("missing sysctl library list for `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
-		for (j = 0; (l = strsep(&lib, ",")) != NULL; j++) {
+		elib = ptr;		/* No need to advance */
+		for (j = 0; (l = getstr(&lib, elib, ",")) != NULL;
+		    j++, lib++) {
 			if (j == RTLD_MAX_LIBRARY) {
 				xwarnx("maximum library entries exceeded `%s'",
 				    hwptr->name);
 				goto cleanup;
 			}
-			if (dodebug)
-				dbg((" library \"%s\"", l));
-			hwptr->entry[i].library[j] = xstrdup(l);
+			dbg((" library \"%.*s\"", (int)(lib - l), l));
+			hwptr->entry[i].library[j] = exstrdup(l, lib);
 		}
 		if (j == 0) {
-			xwarnx("No library map entries for `%s/%s'",
-				hwptr->name, ptr);
+			xwarnx("No library map entries for `%s/%.*s'",
+			    hwptr->name, (int)(bp - ptr), ptr);
 			goto cleanup;
 		}
 		j = i;
-		for (; (l = strsep(&key, ",")) != NULL; i++) {
-			if (dodebug)
-				dbg((" key \"%s\"", l));
+		for (; (l = getstr(&key, ekey, ",")) != NULL; i++, key++) {
+			/*
+			 * Allow empty key (it is valid as string
+			 * value).  Thus, we loop at least once and
+			 * `i' is incremented.
+			 */
+
+			dbg((" key \"%.*s\"", (int)(key - l), l));
 			if (i == RTLD_MAX_ENTRY)
 				goto no_more;
 			if (i != j)
 				(void)memcpy(hwptr->entry[i].library, 
 				    hwptr->entry[j].library,
 				    sizeof(hwptr->entry[j].library));
-			hwptr->entry[i].value = xstrdup(l);
+			hwptr->entry[i].value = exstrdup(l, key);
 		}
-
-		if (j != i)
-			i--;
 	}
 
 	if (i == 0) {
@@ -330,18 +396,15 @@ cleanup:
 }
 
 void
-_rtld_process_hints(path_p, lib_p, fname, dodebug)
-	Search_Path **path_p;
-	Library_Xform **lib_p;
-	const char *fname;
-	bool dodebug;
+_rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p,
+    const char *fname)
 {
 	int fd;
-	char *p, *buf, *b, *ebuf;
+	char *buf;
+	const char *b, *ep, *ptr;
 	struct stat st;
 	size_t sz;
 	Search_Path **head_p = path_p;
-	int doing_path = 0;
 
 	if ((fd = open(fname, O_RDONLY)) == -1) {
 		/* Don't complain */
@@ -356,9 +419,9 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 
 	sz = (size_t) st.st_size;
 
-	buf = mmap(0, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FILE, fd, 0);
+	buf = mmap(0, sz, PROT_READ, MAP_SHARED|MAP_FILE, fd, 0);
 	if (buf == MAP_FAILED) {
-		xwarn("fstat: %s", fname);
+		xwarn("mmap: %s", fname);
 		(void)close(fd);
 		return;
 	}
@@ -367,61 +430,29 @@ _rtld_process_hints(path_p, lib_p, fname, dodebug)
 	while ((*path_p) != NULL)
 		path_p = &(*path_p)->sp_next;
 
-	for (b = NULL, p = buf, ebuf = buf + sz; p < ebuf; p++) {
-
-		if ((p == buf || p[-1] == '\0') && b == NULL)
-			b = p;
-
-		switch (*p) {
-		case '/':
-			if (b == p)
-				doing_path = 1;
+	for (b = buf, ep = buf + sz; b < ep; b++) {
+		(void)getcstr(&b, ep, WS);
+		if (b == ep)
 			break;
 
-		case ' ': case '\t':
-			if (b == p)
-				b++;
-			break;
+		ptr = getstr(&b, ep, "\n#");
+		if (*ptr == '/') {
+			/*
+			 * Since '/' != '\n' and != '#', we know ptr <
+			 * b.  And we will stop when b[-1] == '/'.
+			 */
+			while (b[-1] == ' ' || b[-1] == '\t')
+				b--;
+			path_p = _rtld_append_path(head_p, path_p, ptr, b);
+		} else
+			_rtld_process_mapping(lib_p, ptr, b);
 
-		case '\n':
-			*p = '\0';
-			if (doing_path)
-				path_p = _rtld_append_path(head_p, path_p, b, p,
-				    dodebug);
-			else
-				_rtld_process_mapping(lib_p, b, p, dodebug);
-			b = NULL;
-			break;
-
-		case '#':
-			if (b != p) {
-				char *sp;
-				for  (sp = p - 1; *sp == ' ' ||
-				    *sp == '\t'; --sp)
-					continue;
-				*++sp = '\0';
-				if (doing_path)
-					path_p = _rtld_append_path(head_p,
-					    path_p, b, sp, dodebug);
-				else
-					_rtld_process_mapping(lib_p, b, sp,
-					    dodebug);
-				*sp = ' ';
-			}
-			b = NULL;
-			break;
-
-		default:
-			if (b == p)
-				doing_path = 0;
-			break;
-		}
+		/*
+		 * b points one of ' ', \t, \n, # or equal to ep.  So,
+		 * make sure we are at newline or end of string.
+		 */
+		(void)getstr(&b, ep, "\n");
 	}
-
-	if (doing_path)
-		path_p = _rtld_append_path(head_p, path_p, b, ebuf, dodebug);
-	else
-		_rtld_process_mapping(lib_p, b, ebuf, dodebug);
 
 	(void)munmap(buf, sz);
 }

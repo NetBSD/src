@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/10/18 03:26:53 itohy Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3.8.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,9 +44,22 @@
 	.type	.rtld_start,@function
 .rtld_start:
 	subql	#8,%sp			| storage for obj and cleanup
-	pea	(%sp)			| push sp
-	jbsr	_rtld@PLTPC		| entry = _rtld(sp)
-	addql	#4,%sp			| pop argument
+
+	lea	(%pc,_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
+	lea	(%pc,_DYNAMIC),%a1
+	movel	%a1,%a5
+	subl	(%a0),%a5
+
+	movel	%a5,-(%sp)		| relocbase
+	movel	%a1,-(%sp)		| &_DYNAMIC
+	jbsr	_rtld_relocate_nonplt_self@PLTPC
+	addql	#8,%sp			| pop arguments
+
+	movel	%a5,-(%sp)		| relocbase
+	pea	4(%sp)			| sp
+	jbsr	_rtld@PLTPC		| entry = _rtld(sp, relocbase)
+	addql	#8,%sp			| pop arguments
+
 	moveal	(%sp)+,%a1		| cleanup
 	moveal	(%sp)+,%a0		| obj
 	moveal	%d0,%a3
