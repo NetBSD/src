@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.137 2001/09/28 12:14:27 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.138 2001/10/21 19:24:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -306,9 +306,7 @@ int	uiomove __P((void *, int, struct uio *));
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
 #define	ALLOCSYS(base, name, type, num) \
 	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
-#endif
 
-#ifdef _KERNEL
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
 #endif
@@ -326,9 +324,6 @@ void	kmstartup __P((void));
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
-#endif
-
-#ifdef _KERNEL
 
 /*
  * Stuff to handle debugger magic key sequences.
