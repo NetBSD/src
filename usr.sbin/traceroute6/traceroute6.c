@@ -527,7 +527,7 @@ main(argc, argv)
 		errx(1, ipsec_strerror());
 	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
 		       buf, len) < 0)
-		err(1, NULL);
+		err(1, "Unable to set IPSec policy");
     }
 #else
     {
@@ -586,7 +586,7 @@ main(argc, argv)
 		errx(1, ipsec_strerror());
 	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
 		       buf, len) < 0)
-		err(1, NULL);
+		err(1, "Unable to set IPSec policy");
     }
 #else
     {
