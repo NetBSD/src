@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.47 1999/07/03 14:14:32 kleink Exp $
+.\"	$NetBSD: doc-syms,v 1.48 1999/07/04 01:27:20 itojun Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -412,6 +412,7 @@
 .if "\\$1"libcrypt" \&Crypt Library (libcrypt, -lcrypt)
 .if "\\$1"libcurses" \&Curses Library (libcurses, -lcurses)
 .if "\\$1"libedit" \&Command Line Editor Library (libedit, -ledit)
+.if "\\$1"libipsec" \&IPsec Policy Control Library (libipsec, -lipsec)
 .if "\\$1"libkvm" \&Kernel Data Access Library (libkvm, -lkvm)
 .if "\\$1"libm" \&Math Library (libm, -lm)
 .if "\\$1"libossaudio" \&OSS Audio Emulation Library (libossaudio, -lossaudio)
