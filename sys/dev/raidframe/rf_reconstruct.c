@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.68 2004/03/03 00:45:20 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.69 2004/03/03 16:12:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.68 2004/03/03 00:45:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.69 2004/03/03 16:12:28 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -99,37 +99,28 @@ static struct pool rf_recond_pool;
 #define RF_MAX_FREE_RECOND  4
 #define RF_RECOND_INC       1
 
-static RF_RaidReconDesc_t *
-AllocRaidReconDesc(RF_Raid_t * raidPtr,
-    RF_RowCol_t col, RF_RaidDisk_t * spareDiskPtr,
-    int numDisksDone, RF_RowCol_t scol);
-static void FreeReconDesc(RF_RaidReconDesc_t * reconDesc);
-static int 
-ProcessReconEvent(RF_Raid_t * raidPtr, RF_ReconEvent_t * event);
-static int 
-IssueNextReadRequest(RF_Raid_t * raidPtr, RF_RowCol_t col);
-static int TryToRead(RF_Raid_t * raidPtr, RF_RowCol_t col);
-static int 
-ComputePSDiskOffsets(RF_Raid_t * raidPtr, RF_StripeNum_t psid,
-    RF_RowCol_t col, RF_SectorNum_t * outDiskOffset,
-    RF_SectorNum_t * outFailedDiskSectorOffset,
-    RF_RowCol_t * spCol, RF_SectorNum_t * spOffset);
-static int IssueNextWriteRequest(RF_Raid_t * raidPtr);
-static int ReconReadDoneProc(void *arg, int status);
-static int ReconWriteDoneProc(void *arg, int status);
-static void 
-CheckForNewMinHeadSep(RF_Raid_t * raidPtr, RF_HeadSepLimit_t hsCtr);
-static int 
-CheckHeadSeparation(RF_Raid_t * raidPtr, RF_PerDiskReconCtrl_t * ctrl,
-    RF_RowCol_t col, RF_HeadSepLimit_t hsCtr,
-    RF_ReconUnitNum_t which_ru);
-static int 
-CheckForcedOrBlockedReconstruction(RF_Raid_t * raidPtr,
-    RF_ReconParityStripeStatus_t * pssPtr, RF_PerDiskReconCtrl_t * ctrl,
-    RF_RowCol_t col, RF_StripeNum_t psid,
-    RF_ReconUnitNum_t which_ru);
-static void ForceReconReadDoneProc(void *arg, int status);
-
+static RF_RaidReconDesc_t *AllocRaidReconDesc(RF_Raid_t *, RF_RowCol_t,
+					      RF_RaidDisk_t *, int, RF_RowCol_t);
+static void FreeReconDesc(RF_RaidReconDesc_t *);
+static int ProcessReconEvent(RF_Raid_t *, RF_ReconEvent_t *);
+static int IssueNextReadRequest(RF_Raid_t *, RF_RowCol_t);
+static int TryToRead(RF_Raid_t *, RF_RowCol_t);
+static int ComputePSDiskOffsets(RF_Raid_t *, RF_StripeNum_t, RF_RowCol_t, 
+				RF_SectorNum_t *, RF_SectorNum_t *, RF_RowCol_t *,
+				RF_SectorNum_t *);
+static int IssueNextWriteRequest(RF_Raid_t *);
+static int ReconReadDoneProc(void *, int);
+static int ReconWriteDoneProc(void *, int);
+static void CheckForNewMinHeadSep(RF_Raid_t *, RF_HeadSepLimit_t);
+static int CheckHeadSeparation(RF_Raid_t *, RF_PerDiskReconCtrl_t *,
+			       RF_RowCol_t, RF_HeadSepLimit_t,
+			       RF_ReconUnitNum_t);
+static int CheckForcedOrBlockedReconstruction(RF_Raid_t *,
+					      RF_ReconParityStripeStatus_t *,
+					      RF_PerDiskReconCtrl_t *,
+					      RF_RowCol_t, RF_StripeNum_t,
+					      RF_ReconUnitNum_t);
+static void ForceReconReadDoneProc(void *, int);
 static void rf_ShutdownReconstruction(void *);
 
 struct RF_ReconDoneProc_s {
