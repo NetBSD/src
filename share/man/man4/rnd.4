@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.10 2002/02/13 08:17:44 ross Exp $
+.\"	$NetBSD: rnd.4,v 1.11 2002/08/20 00:48:31 enami Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -128,6 +128,8 @@ collected from this source type, but entropy is not estimated.
 The device is a tape device.
 .It Dv RND_TYPE_TTY
 The device is a terminal, mouse, or other user input device.
+.It Dv RND_TYPE_RNG
+The device is a random number generator.
 .El
 .Pp
 .Va flags
