@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.211 2004/09/13 20:02:20 jdolecek Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.212 2004/10/01 16:30:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.211 2004/09/13 20:02:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.212 2004/10/01 16:30:56 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -399,7 +399,7 @@ checkdirs(olddp)
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
 	proclist_lock_read();
-	LIST_FOREACH(p, &allproc, p_list) {
+	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (cwdi->cwdi_cdir == olddp) {
 			vrele(cwdi->cwdi_cdir);
