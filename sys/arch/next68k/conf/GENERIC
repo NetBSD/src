@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 1999/04/19 21:23:00 kleink Exp $
+# $NetBSD: GENERIC,v 1.16 1999/07/20 07:40:36 christos Exp $
 #
 # GENERIC next68k
 #
@@ -89,10 +89,10 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.44 1999/04/19 21:22:58 kleink Exp $
+#	$NetBSD: GENERIC,v 1.45 1999/07/20 07:40:35 christos Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -60,7 +60,7 @@ options 	INET		# Internet protocols
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-#options 	PFIL_HOOKS	# packet filter hooks
+options 	PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
 options 	FPSP		# floating point interface for 68040
