@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2003/09/05 17:02:57 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2003/10/03 14:35:37 dsl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,6 +119,7 @@ init|all)
 
 std)
 	mk console	c 0 0 622
+	mk constty	c 0 1 622
 	mk tty		c 1 0
 
 	mk mem		c 2 0 640 kmem
