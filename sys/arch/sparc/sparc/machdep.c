@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.242 2003/12/30 12:33:22 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.243 2003/12/30 14:29:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2003/12/30 12:33:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2003/12/30 14:29:30 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -129,14 +129,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2003/12/30 12:33:22 pk Exp $");
 
 #include "fb.h"
 #include "power.h"
-#include "tctrl.h"
 
 #if NPOWER > 0
 #include <sparc/dev/power.h>
-#endif
-#if NTCTRL > 0
-#include <machine/tctrl.h>
-#include <sparc/dev/tctrlvar.h>
 #endif
 
 struct vm_map *exec_map = NULL;
@@ -1069,15 +1064,12 @@ cpu_reboot(howto, user_boot_string)
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		prom_interpret("power-off");
 #if NPOWER > 0
+		/* Fall back on `power' device if the PROM can't do it */ 
 		powerdown();
 #endif
-#if NTCTRL > 0
-		tadpole_powerdown();
-#endif
-#if NPOWER > 0 || NTCTRL > 0
-		printf("WARNING: powerdown failed!\n");
-#endif
+		printf("WARNING: powerdown not supported\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
