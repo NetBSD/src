@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.55 2001/06/15 22:16:00 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.56 2001/07/07 15:57:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ fxp_attach(struct fxp_softc *sc)
 			break;
 	(*fp->fp_init)(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = fxp_ioctl;
