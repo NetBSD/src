@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.2 2001/04/06 13:03:14 fredette Exp $	*/
+/*	$NetBSD: dvma.h,v 1.3 2001/06/14 13:17:04 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  * just use a logical AND with one of the following masks.
  * To convert back, just logical OR with the base address.
  */
-#define DVMA_OBIO_SLAVE_BASE	0x0F000000
+#define DVMA_OBIO_SLAVE_BASE	0x00000000
 #define DVMA_OBIO_SLAVE_MASK	0x00FFffff	/* 16MB */
 
 #define DVMA_MBMEM_SLAVE_BASE 	0x00F00000
