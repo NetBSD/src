@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.23 1994/07/31 19:25:11 briggs Exp $
+ *	$Id: locore.s,v 1.24 1994/08/01 04:50:03 lkestel Exp $
  */
 
 #include "assym.s"
@@ -2514,13 +2514,24 @@ _doboot:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
-	| XXX Turning off the MMU here causes the PC to be nowhere for IIci
-	| and IIsi machines.  Not turning off the MMU causes an MMU fault.
+	tstl	_mmutype
+	jeq	Lmap030rom		| don't turn off MMU if '030
+
 	lea	longscratch,a0		| make sure we have real memory
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
 	pmove	a0@,tc			| disable MMU
-	/* LAK: Reboot here... */
-	movl	#0x40800090,a1		| address of ROM
+	jra	Lreboot
+
+	| If '030, we can't turn off MMU because we might not be PA == VA.
+	| We must therefore map the ROMs using the tt registers before
+	| we jump there.
+Lmap030rom:
+	lea	longscratch,a0
+	movl	#0x400F8307,a0@		| map all of 0x4xxxxxxx
+	.long	0xf0100800		| pmove a0@,tt0
+
+Lreboot:
+	movl	#0x40800090,a1		| address of ROM reset routine
 	jra	a1@			| jump to ROM to reset machine
 
 	/*
@@ -2671,7 +2682,7 @@ pte_got_parent:
 	|  second long.  The reason we didn't do this in the first place
 	|  is that the first long might have been the last long of RAM.
 
-	movl	pte_tmp@,a1	| get address of our original pte
+	movl	pte_tmp,a1	| get address of our original pte
 	addl	#4,a1		| address of ite second long
 
 	| change tt0 back
