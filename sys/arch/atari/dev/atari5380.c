@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.14.4.1 1996/06/18 08:54:50 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.14.4.2 1996/07/20 00:08:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
