@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.27 1996/09/07 12:41:26 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.28 1996/10/10 22:59:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -60,7 +60,7 @@
 
 #include <net/if_tun.h>
 
-#define TUNDEBUG	if (tundebug) printf
+#define TUNDEBUG	if (tundebug) kprintf
 int	tundebug = 0;
 
 struct tun_softc tunctl[NTUN];
@@ -84,7 +84,7 @@ tunattach(unused)
 		tunctl[i].tun_flags = TUN_INITED;
 
 		ifp = &tunctl[i].tun_if;
-		sprintf(ifp->if_xname, "tun%d", i);
+		ksprintf(ifp->if_xname, "tun%d", i);
 		ifp->if_softc = &tunctl[i];
 		ifp->if_mtu = TUNMTU;
 		ifp->if_ioctl = tun_ioctl;

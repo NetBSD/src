@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.2 1996/10/05 23:41:53 mrg Exp $	*/
+/*	$NetBSD: pfil.c,v 1.3 1996/10/10 22:59:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -151,7 +151,7 @@ pfil_list_remove(list, func)
 			free(pfh, M_IFADDR);
 			return;
 		}
-	printf("pfil_list_remove:  no function on list\n");
+	kprintf("pfil_list_remove:  no function on list\n");
 #ifdef DIAGNOSTIC
 	panic("pfil_list_remove");
 #endif

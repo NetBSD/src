@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.4 1996/03/15 02:28:00 paulus Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.5 1996/10/10 22:59:42 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
@@ -865,8 +865,8 @@ bsd_decompress(state, cmp, dmpp)
      */
     if (seq != db->seqno) {
 	if (db->debug)
-	    printf("bsd_decomp%d: bad sequence # %d, expected %d\n",
-		   db->unit, seq, db->seqno - 1);
+	    kprintf("bsd_decomp%d: bad sequence # %d, expected %d\n",
+		db->unit, seq, db->seqno - 1);
 	return DECOMP_ERROR;
     }
     ++db->seqno;
@@ -934,7 +934,7 @@ bsd_decompress(state, cmp, dmpp)
 		if (len > 0) {
 		    m_freem(mret);
 		    if (db->debug)
-			printf("bsd_decomp%d: bad CLEAR\n", db->unit);
+			kprintf("bsd_decomp%d: bad CLEAR\n", db->unit);
 		    return DECOMP_FATALERROR;	/* probably a bug */
 		}
 	    }
@@ -947,10 +947,10 @@ bsd_decompress(state, cmp, dmpp)
 	    || (incode > max_ent && oldcode == CLEAR)) {
 	    m_freem(mret);
 	    if (db->debug) {
-		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
-		       db->unit, incode, oldcode);
-		printf("max_ent=0x%x explen=%d seqno=%d\n",
-		       max_ent, explen, db->seqno);
+		kprintf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
+		    db->unit, incode, oldcode);
+		kprintf("max_ent=0x%x explen=%d seqno=%d\n",
+		    max_ent, explen, db->seqno);
 	    }
 	    return DECOMP_FATALERROR;	/* probably a bug */
 	}
@@ -969,11 +969,11 @@ bsd_decompress(state, cmp, dmpp)
 	if (explen > db->mru + 1) {
 	    m_freem(mret);
 	    if (db->debug) {
-		printf("bsd_decomp%d: ran out of mru\n", db->unit);
+		kprintf("bsd_decomp%d: ran out of mru\n", db->unit);
 #ifdef DEBUG
 		while ((cmp = cmp->m_next) != NULL)
 		    len += cmp->m_len;
-		printf("  len=%d, finchar=0x%x, codelen=%d, explen=%d\n",
+		kprintf("  len=%d, finchar=0x%x, codelen=%d, explen=%d\n",
 		       len, finchar, codelen, explen);
 #endif
 	    }
@@ -1022,8 +1022,8 @@ bsd_decompress(state, cmp, dmpp)
 
 #ifdef DEBUG
 	if (--codelen != 0)
-	    printf("bsd_decomp%d: short by %d after code 0x%x, max_ent=0x%x\n",
-		   db->unit, codelen, incode, max_ent);
+	    kprintf("bsd_decomp%d: short by %d after code 0x%x, max_ent=0x%x\n",
+		db->unit, codelen, incode, max_ent);
 #endif
 
 	if (extra)		/* the KwKwK case again */
@@ -1088,7 +1088,7 @@ bsd_decompress(state, cmp, dmpp)
     db->bytes_out += ilen;
     db->in_count += explen;
     if (bsd_check(db) && db->debug) {
-	printf("bsd_decomp%d: peer should have cleared dictionary\n",
+	kprintf("bsd_decomp%d: peer should have cleared dictionary\n",
 	       db->unit);
     }
 
@@ -1103,13 +1103,13 @@ bsd_decompress(state, cmp, dmpp)
 #ifdef DEBUG
  bad:
     if (codelen <= 0) {
-	printf("bsd_decomp%d: fell off end of chain ", db->unit);
-	printf("0x%x at 0x%x by 0x%x, max_ent=0x%x\n",
+	kprintf("bsd_decomp%d: fell off end of chain ", db->unit);
+	kprintf("0x%x at 0x%x by 0x%x, max_ent=0x%x\n",
 	       incode, finchar, db->dict[finchar].cptr, max_ent);
     } else if (dictp->codem1 != finchar-1) {
-	printf("bsd_decomp%d: bad code chain 0x%x finchar=0x%x ",
+	kprintf("bsd_decomp%d: bad code chain 0x%x finchar=0x%x ",
 	       db->unit, incode, finchar);
-	printf("oldcode=0x%x cptr=0x%x codem1=0x%x\n", oldcode,
+	kprintf("oldcode=0x%x cptr=0x%x codem1=0x%x\n", oldcode,
 	       db->dict[finchar].cptr, dictp->codem1);
     }
     m_freem(mret);
