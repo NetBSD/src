@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1997/02/04 07:12:36 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1997/07/31 00:08:04 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -418,7 +418,11 @@ pagemove(from, to, size)
 	 * pages we are moving.
 	 */
 
-	cpu_cache_purgeID();	/* XXX can we limit the purge ? */
+	if (size <= 0x1000) {
+		cpu_cache_purgeID_rng((u_int)from, size);
+		cpu_cache_purgeID_rng((u_int)to, size);
+	} else 
+		cpu_cache_purgeID();
 
 	while (size > 0) {
 		*tpte++ = *fpte;
@@ -483,7 +487,11 @@ vmapbuf(bp, len)
 	 * pages we are replacing
 	 */
 
-	cpu_cache_purgeID();	/* XXX Can we limit the purge ? */
+	if (len <= 0x1000) {
+		cpu_cache_purgeID_rng(faddr, len);
+		cpu_cache_purgeID_rng(taddr, len);
+	} else 
+		cpu_cache_purgeID();
 
 	do {
 		*fpte = (*fpte) & ~(PT_C | PT_B);
@@ -517,14 +525,14 @@ vunmapbuf(bp, len)
 	 * pages we had mapped.
 	 */
 
-	cpu_cache_purgeID();	/* Can we limit the purge ? */
-
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
 	kmem_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+
+	cpu_cache_purgeID_rng(addr, len);
 
 	cpu_tlb_flushID();
 }
