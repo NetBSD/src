@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.357 2001/07/15 23:27:17 wiz Exp $
+#	$NetBSD: mi,v 1.358 2001/07/17 03:07:17 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -780,6 +780,7 @@
 ./usr/include/rpcsvc/ypclnt.h		comp-c-include
 ./usr/include/rpcsvc/yppasswd.h		comp-c-include
 ./usr/include/rpcsvc/yppasswd.x		comp-c-include
+./usr/include/sched.h			comp-c-include
 ./usr/include/search.h			comp-c-include
 ./usr/include/setjmp.h			comp-c-include
 ./usr/include/sgtty.h			comp-c-include
