@@ -1,4 +1,4 @@
-.\" $NetBSD: tsearch.3,v 1.5 2003/04/16 13:34:47 wiz Exp $
+.\" $NetBSD: tsearch.3,v 1.6 2003/06/27 18:01:08 wiz Exp $
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
@@ -35,11 +35,11 @@
 .Sh SYNOPSIS
 .In search.h
 .Ft void *
-.Fn tdelete "const void *key" "void **rootp", "int (*compar) (const void *, const void *)"
+.Fn tdelete "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
 .Ft void *
-.Fn tfind "const void *key" "const void **rootp", "int (*compar) (const void *, const void *)"
+.Fn tfind "const void *key" "const void **rootp" "int (*compar) (const void *, const void *)"
 .Ft void *
-.Fn tsearch "const void *key" "void **rootp", "int (*compar) (const void *, const void *)"
+.Fn tsearch "const void *key" "void **rootp" "int (*compar) (const void *, const void *)"
 .Ft void
 .Fn twalk "const void *root" "void (*compar) (const void *, VISIT, int)"
 .Sh DESCRIPTION
