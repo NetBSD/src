@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.18 2003/12/13 09:31:20 martin Exp $
+# $NetBSD: KRUPS,v 1.19 2003/12/14 03:29:52 uwe Exp $
 # From: NetBSD: GENERIC,v 1.148 2003/10/07 09:43:58 tron Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.18 $"
+#ident 		"KRUPS-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -19,7 +19,7 @@ maxusers	32
 # We currently support three architecture types; at least one is required.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-# microSPARC-IIep is PCI based sun4m (JavaStation 10, CP1200, etc)
+# microSPARC-IIep is PCI based sun4m (JavaStation-NC, CP1200, etc)
 # This option selects if SUN4M means "normal" 4m or IIep.  Kernels
 # with this option turned on will refuse to work on normal 4m.
 options		MSIIEP		# microSPARC-IIep
