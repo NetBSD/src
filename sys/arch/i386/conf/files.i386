@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.90 1997/10/16 23:32:37 thorpej Exp $
+#	$NetBSD: files.i386,v 1.91 1997/10/17 18:45:53 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -206,6 +206,9 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # OSS audio driver compatibility
 include "../../../compat/ossaudio/files.ossaudio"
+
+# network devices MII bus
+include "../../../dev/mii/files.mii"
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
