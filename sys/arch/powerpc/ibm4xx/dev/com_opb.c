@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.9 2003/07/04 02:21:02 thorpej Exp $ */
+/* $NetBSD: com_opb.c,v 1.10 2003/07/14 05:21:25 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -88,7 +88,7 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_ioh);
 
 	if (prop_get(dev_propdb, &sc->sc_dev, "frequency",
-		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) != 0) {
+		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) == -1) {
 		printf(": unable to get frequency property\n");
 		return;
 	}
