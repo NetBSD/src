@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41 2004/02/13 23:10:14 matt Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.42 2004/04/20 20:00:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41 2004/02/13 23:10:14 matt Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.42 2004/04/20 20:00:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ file_creat(ARCHD *arcn)
 		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			(void)fflush(listf);
 			syswarn(1, oerrno, "Cannot create %s", arcn->tmp_name);
+			xtmp_name = NULL;
 			free(arcn->tmp_name);
 			arcn->tmp_name = NULL;
 			return(-1);
