@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.83 1997/10/13 08:35:53 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.84 1997/10/17 00:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -617,7 +617,7 @@ nfs_setattr(v)
  		case VFIFO:
 			if (vap->va_mtime.tv_sec == VNOVAL &&
 			    vap->va_atime.tv_sec == VNOVAL &&
-			    vap->va_mode == (u_short)VNOVAL &&
+			    vap->va_mode == (mode_t)VNOVAL &&
 			    vap->va_uid == (uid_t)VNOVAL &&
 			    vap->va_gid == (gid_t)VNOVAL)
 				return (0);
@@ -681,7 +681,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	nfsm_reqhead(vp, NFSPROC_SETATTR, NFSX_FH(v3) + NFSX_SATTR(v3));
 	nfsm_fhtom(vp, v3);
 	if (v3) {
-		if (vap->va_mode != (u_short)VNOVAL) {
+		if (vap->va_mode != (mode_t)VNOVAL) {
 			nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = nfs_true;
 			*tl = txdr_unsigned(vap->va_mode);
@@ -743,7 +743,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 		*tl = nfs_false;
 	} else {
 		nfsm_build(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
-		if (vap->va_mode == (u_short)VNOVAL)
+		if (vap->va_mode == (mode_t)VNOVAL)
 			sp->sa_mode = nfs_xdrneg1;
 		else
 			sp->sa_mode = vtonfsv2_mode(vp->v_type, vap->va_mode);
