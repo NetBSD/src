@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmphy.4,v 1.1 2001/07/25 22:29:52 thorpej Exp $
+.\"	$NetBSD: dmphy.4,v 1.2 2001/08/25 03:43:57 thorpej Exp $
 .\"
 .\" Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,13 +40,16 @@
 .Os
 .Sh NAME
 .Nm dmphy
-.Nd Driver for Davicom DM9101 Ethernet PHY
+.Nd "Driver for Davicom DM9101 and AMD 79c873 10/100 Ethernet PHYs"
 .Sh SYNOPSIS
 .Cd "dmphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Davicom DM9101 10/100 Ethernet PHY.
+driver supports the Davicom DM9101 and AMD 79c873 10/100 Ethernet PHYs.
+.Pp
+The AMD 79c873 is a work-alike (most likely an OEM of the core) of the
+Davicom part.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
