@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.6 1993/10/16 21:58:39 pk Exp $
+ *	$Id: crt0.c,v 1.7 1993/10/23 00:47:18 pk Exp $
  */
 
 
@@ -332,7 +332,11 @@ __do_dynamic_link ()
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
 	entry = (void (*)())(crt.crt_ba + sizeof hdr);
+#ifdef SUN_COMPAT
+	(*entry)(CRT_VERSION_SUN, &crt);
+#else
 	(*entry)(CRT_VERSION_BSD, &crt);
+#endif
 #endif
 
 #if defined(sun) && defined(DUPZFD)
