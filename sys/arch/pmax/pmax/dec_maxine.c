@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.2 1998/10/20 02:46:41 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.3 1998/10/21 11:24:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.2 1998/10/20 02:46:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.3 1998/10/21 11:24:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.2 1998/10/20 02:46:41 nisimura 
 #include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+
+#include <dev/ic/z8530sc.h>
+#include <pmax/tc/zs_ioasicvar.h>	/* console */
 
 #include "wsdisplay.h"
 
@@ -207,9 +210,8 @@ dec_maxine_bus_reset()
 #include <sys/termios.h>
 
 extern void prom_findcons __P((int *, int *, int *));
+extern int xcfb_cnattach __P((tc_addr_t));
 extern int tc_fb_cnattach __P((int));
-extern void xcfb_cnattach __P((tc_addr_t));
-extern int zs_ioasic_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));
 extern int zs_major;
 
 void
@@ -220,18 +222,18 @@ dec_maxine_cons_init()
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
-#if NWSDISPLAY > 0
 	if (screen > 0) {
+#if NWSDISPLAY > 0
 		if (crt == 3) {
 			xcfb_cnattach(0x08000000 + MIPS_KSEG1_START);
 			return;
 		}
 		if (tc_fb_cnattach(crt) > 0)
 			return;
+#endif
 		printf("No framebuffer device configured for slot %d\n", crt);
 		printf("Using serial console\n");
 	}
-#endif
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -240,7 +242,7 @@ dec_maxine_cons_init()
 	DELAY(160000000 / 9600);        /* XXX */
 
 	/*
-	 * Console is channel B of the second SCC.
+	 * Console is channel B of the SCC.
 	 * XXX Should use ctb_line_off to get the
 	 * XXX line parameters.
 	 */

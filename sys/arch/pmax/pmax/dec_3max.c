@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.3 1998/10/21 11:24:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.2 1998/10/20 02:46:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.3 1998/10/21 11:24:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,9 @@ dec_3max_bus_reset()
 #include <sys/termios.h>
 
 extern void prom_findcons __P((int *, int *, int *));
-extern int dc_cnattach __P((tc_addr_t, tc_offset_t, int, int, int));
+extern int dc_cnattach __P((tc_addr_t, int, int, int));
+extern void dc_ws_cnattach __P((tc_addr_t));
 extern int tc_fb_cnattach __P((int));
-extern int dc_major;
 
 void
 dec_3max_cons_init()
@@ -223,15 +223,16 @@ dec_3max_cons_init()
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
-
-#if NWSDISPLAY > 0
 	if (screen > 0) {
-		if (tc_fb_cnattach(crt) > 0)
+#if NWSDISPLAY > 0
+		if (tc_fb_cnattach(crt) > 0) {
+			dc_ws_cnattach(KN02_SYS_DZ);
 			return;
+		}
+#endif
 		printf("No framebuffer device configured for slot %d\n", crt);
 		printf("Using serial console\n");
 	}
-#endif
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -239,12 +240,9 @@ dec_3max_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-	if (dc_cnattach(KN02_SYS_DZ, 0x0, 3,
+	if (dc_cnattach(KN02_SYS_DZ, 3,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 		panic("can't init serial console");
-
-	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(dc_major, 3);
 }
 
 void
