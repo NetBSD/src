@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.1 1998/10/22 00:53:24 briggs Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.2 1998/10/22 08:37:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,16 +45,7 @@
  */
 
 /*
- * Keyboard driver (/dev/kbd -- note that we do not have minor numbers
- * [yet?]).  Translates incoming bytes to ASCII or to `firm_events' and
- * passes them up to the appropriate reader.
- */
-
-/*
- * Zilog Z8530 Dual UART driver (keyboard interface)
- *
- * This is the "slave" driver that will be attached to
- * the "zsc" driver for a Sun keyboard.
+ * LK200/LK400 keyboard attached with channel A of the 2nd SCC
  */
 
 #include <sys/param.h>
@@ -96,14 +87,14 @@
 #define ZSKBD_BPS 4800
 
 struct zskbd_internal {
-	struct	zs_chanstate *zsi_cs;
+	struct zs_chanstate *zsi_cs;
 	struct lk201_state zsi_ks;
 };
 
 struct zskbd_internal zskbd_console_internal;
 
 struct zskbd_softc {
-	struct	device zskbd_dev;	/* required first: base device */
+	struct device zskbd_dev;	/* required first: base device */
 
 	struct zskbd_internal *sc_itl;
 
@@ -169,10 +160,12 @@ const struct wskbd_mapdata zskbd_keymapdata = {
 #endif
 };
 
+int zskbd_cnattach __P((struct zs_chanstate *));	/* EXPORTED */
+
 /*
  * kbd_match: how is this zs channel configured?
  */
-int
+static int
 zskbd_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -191,25 +184,20 @@ zskbd_match(parent, cf, aux)
 	return 0;
 }
 
-void
+static void
 zskbd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct zskbd_softc *zskbd = (void *) self;
+	struct zsc_softc *zsc = (void *)parent;
+	struct zskbd_softc *zskbd = (void *)self;
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
-	struct cfdata *cf;
-	int channel, zskbd_unit;
-	int reset, s, isconsole;
 	struct zskbd_internal *zsi;
 	struct wskbddev_attach_args a;
+	int s, isconsole;
 
-	cf = zskbd->zskbd_dev.dv_cfdata;
-	zskbd_unit = zskbd->zskbd_dev.dv_unit;
-	channel = args->channel;
-	cs = zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[args->channel];
 	cs->cs_private = zskbd;
 	cs->cs_ops = &zsops_zskbd;
 
@@ -230,9 +218,7 @@ zskbd_attach(parent, self, aux)
 	/* Initialize the speed, etc. */
 	s = splzs();
 	/* May need reset... */
-	reset = (channel == 0) ?
-		ZSWR9_A_RESET : ZSWR9_B_RESET;
-	zs_write_reg(cs, 9, reset);
+	zs_write_reg(cs, 9, ZSWR9_A_RESET);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
@@ -243,18 +229,17 @@ zskbd_attach(parent, self, aux)
 	zskbd->sc_enabled = 0;
 	zskbd_lk201_init(cs);
 
+	/* XXX should identify keyboard ID here XXX */
+	/* XXX layout and the number of LED is varying XXX */
 
 	zskbd->kbd_type = WSKBD_TYPE_LK201;
-
 	zskbd->leds_state = 0;
+	zskbd->sc_enabled = 1;
 
 	a.console = isconsole;
 	a.keymap = &zskbd_keymapdata;
-
 	a.accessops = &zskbd_accessops;
 	a.accesscookie = zskbd;
-
-	zskbd->sc_enabled = 1;
 
 	zskbd->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
@@ -274,10 +259,10 @@ zskbd_cnattach(cs)
 	wskbd_cnattach(&zskbd_consops, &zskbd_console_internal,
 		       &zskbd_keymapdata);
 
-	return (0);
+	return 0;
 }
 
-int
+static int
 zskbd_enable(v, on)
 	void *v;
 	int on;
@@ -285,10 +270,10 @@ zskbd_enable(v, on)
 	struct zskbd_softc *sc = v;
 
 	sc->sc_enabled = on;
-	return (0);
+	return 0;
 }
 
-void
+static void
 zskbd_cngetc(v, type, data)
 	void *v;
 	u_int *type;
@@ -302,7 +287,7 @@ zskbd_cngetc(v, type, data)
 	} while (!lk201_decode(&zsi->zsi_ks, c, type, data));
 }
 
-void
+static void
 zskbd_cnpollc(v, on)
 	void *v;
         int on;
@@ -312,7 +297,8 @@ zskbd_cnpollc(v, on)
 #endif
 }
 
-void
+/* XXX needs adjustment between upper layer and various LK keyboard XXX */
+static void
 zskbd_set_leds(v, leds)
 	void *v;
 	int leds;
@@ -353,32 +339,32 @@ zskbd_set_leds(v, leds)
   zs_write_data(cs, enable_leds);
 }
 
-void
+static void
 zskbd_bell(v)
 	void *v;
 {
-  struct zskbd_softc *sc = (struct zskbd_softc *)v;
-  struct zs_chanstate *cs;
+	struct zskbd_softc *sc = (struct zskbd_softc *)v;
+	struct zs_chanstate *cs;
 
-  cs = sc->sc_itl->zsi_cs;
+	cs = sc->sc_itl->zsi_cs;
 
-  zs_write_data(cs, LK_RING_BELL);
+	zs_write_data(cs, LK_RING_BELL);
 }
 
-void
+static void
 zskbd_complexbell(v, bell)
 	void *v;
 	struct wskbd_bell_data *bell;
 {
-  struct zskbd_softc *sc = (struct zskbd_softc *)v;
-  struct zs_chanstate *cs;
+	struct zskbd_softc *sc = (struct zskbd_softc *)v;
+	struct zs_chanstate *cs;
 
-  cs = sc->sc_itl->zsi_cs;
+	cs = sc->sc_itl->zsi_cs;
 
-  zs_write_data(cs, LK_RING_BELL);
+	zs_write_data(cs, LK_RING_BELL);
 }
 
-int
+static int
 zskbd_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -386,29 +372,30 @@ zskbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-  struct zskbd_softc *sc = (struct zskbd_softc *)v;
+	struct zskbd_softc *sc = (struct zskbd_softc *)v;
 
-  switch (cmd) {
-  case WSKBDIO_GTYPE:
-    *(int *)data = sc->kbd_type;
-    return 0;
-  case WSKBDIO_SETLEDS:
-    zskbd_set_leds(sc, *(int *)data);
-    return 0;
-  case WSKBDIO_GETLEDS:
-    *(int *)data = sc->leds_state;
-    return 0;
-  case WSKBDIO_BELL:
-    zskbd_bell(sc);
-    return 0;
-  case WSKBDIO_COMPLEXBELL:
-    zskbd_complexbell(sc, (struct wskbd_bell_data *)data);
-    return 0;
-  }
-  return (-1);
+	switch (cmd) {
+	case WSKBDIO_GTYPE:
+		*(int *)data = sc->kbd_type;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		zskbd_set_leds(sc, *(int *)data);
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = sc->leds_state;
+		return 0;
+	case WSKBDIO_BELL:
+		zskbd_bell(sc);
+		return 0;
+	case WSKBDIO_COMPLEXBELL:
+		zskbd_complexbell(sc, (struct wskbd_bell_data *)data);
+		return 0;
+	}
+	return -1;
 }
 
-void zskbd_input(sc, data)
+static void
+zskbd_input(sc, data)
 	struct zskbd_softc *sc;
 	int data;
 {
@@ -422,7 +409,10 @@ void zskbd_input(sc, data)
 		wskbd_input(sc->sc_wskbddev, type, val);
 }
 
-void zskbd_lk201_init(struct zs_chanstate *cs)
+/* XXX Ledendary Mach and derivatives do a bit different here XXX */
+static void
+zskbd_lk201_init(cs)
+	struct zs_chanstate *cs;
 {
   int i;
 
@@ -474,11 +464,11 @@ static void zskbd_softint __P((struct zs_chanstate *));
 
 static void
 zskbd_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zskbd_softc *zskbd;
-	register int put, put_next;
-	register u_char c, rr1;
+	struct zskbd_softc *zskbd;
+	int put, put_next;
+	u_char c, rr1;
 
 	zskbd = cs->cs_private;
 	put = zskbd->zskbd_rbput;
@@ -515,9 +505,9 @@ zskbd_rxint(cs)
 
 static void
 zskbd_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zskbd_softc *zskbd;
+	struct zskbd_softc *zskbd;
 
 	zskbd = cs->cs_private;
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -529,10 +519,10 @@ zskbd_txint(cs)
 
 static void
 zskbd_stint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct zskbd_softc *zskbd;
-	register int rr0;
+	struct zskbd_softc *zskbd;
+	int rr0;
 
 	zskbd = cs->cs_private;
 
@@ -559,10 +549,10 @@ static void
 zskbd_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct zskbd_softc *zskbd;
-	register int get, c, s;
+	struct zskbd_softc *zskbd;
+	int get, c, s;
 	int intr_flags;
-	register u_short ring_data;
+	u_short ring_data;
 
 	zskbd = cs->cs_private;
 
