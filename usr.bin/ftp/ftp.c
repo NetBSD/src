@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftp.c	5.38 (Berkeley) 4/22/91";*/
-static char rcsid[] = "$Id: ftp.c,v 1.2 1993/08/01 18:15:28 mycroft Exp $";
+static char rcsid[] = "$Id: ftp.c,v 1.3 1993/09/23 23:15:42 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1095,15 +1095,16 @@ ptransfer(direction, bytes, t0, t1)
 	struct timeval *t0, *t1;
 {
 	struct timeval td;
-	float s, bs;
+	float s;
+	long bs;
 
 	if (verbose) {
 		tvsub(&td, t1, t0);
 		s = td.tv_sec + (td.tv_usec / 1000000.);
 #define	nz(x)	((x) == 0 ? 1 : (x))
 		bs = bytes / nz(s);
-		printf("%ld bytes %s in %.2g seconds (%.2g Kbytes/s)\n",
-		    bytes, direction, s, bs / 1024.);
+		printf("%ld bytes %s in %.3g secs (%ld bytes/sec)\n",
+		    bytes, direction, s, bs);
 	}
 }
 
