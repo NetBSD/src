@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.21 2001/11/13 01:10:50 lukem Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.21 2001/11/13 01:10:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -646,7 +646,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			goto done;
 		}
 		if (tpcb->tp_perf_on) {
-			MCLGET(*mp, M_WAITOK);
+			m_clget(*mp, M_WAIT);
 			if (((*mp)->m_flags & M_EXT) == 0) {
 				error = ENOBUFS; goto done;
 			}

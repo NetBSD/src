@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.50 2003/01/28 22:35:20 wiz Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.51 2003/02/26 06:31:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -201,6 +201,10 @@ extern int   anonportmax;		/* maximum ephemeral port */
 extern int   lowportmin;		/* minimum reserved port */
 extern int   lowportmax;		/* maximum reserved port */
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
+#ifdef MBUFTRACE
+extern struct mowner ip_rx_mowner;
+extern struct mowner ip_tx_mowner;
+#endif
 #ifdef GATEWAY
 extern int ip_maxflows;
 #endif

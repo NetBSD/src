@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.81 2002/09/11 05:36:27 itojun Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.82 2003/02/26 06:31:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.81 2002/09/11 05:36:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.82 2003/02/26 06:31:13 matt Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -231,8 +231,8 @@ slinit(sc)
 {
 
 	if (sc->sc_mbuf == NULL) {
-		MGETHDR(sc->sc_mbuf, M_WAIT, MT_DATA);
-		MCLGET(sc->sc_mbuf, M_WAIT);
+		sc->sc_mbuf = m_gethdr(M_WAIT, MT_DATA);
+		m_clget(sc->sc_mbuf, M_WAIT);
 	}
 	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
 	    sc->sc_mbuf->m_ext.ext_size;

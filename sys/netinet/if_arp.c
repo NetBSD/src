@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.91 2002/11/20 03:52:08 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.91 2002/11/20 03:52:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92 2003/02/26 06:31:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -142,6 +142,8 @@ int	arpt_prune = (5*60*1);	/* walk list every 5 minutes */
 int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
+
+extern	struct domain arpdomain;
 
 static	void arprequest __P((struct ifnet *,
 	    struct in_addr *, struct in_addr *, u_int8_t *));
@@ -615,6 +617,7 @@ arprequest(ifp, sip, tip, enaddr)
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
+	MCLAIM(m, &arpdomain.dom_mowner);
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
 		m->m_len = sizeof(*ah) + 2 * sizeof(struct in_addr) +
@@ -767,6 +770,7 @@ arpintr()
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
 
+		MCLAIM(m, &arpdomain.dom_mowner);
 		arpstat.as_rcvtotal++;
 
 		/*
@@ -1312,6 +1316,7 @@ revarprequest(ifp)
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
+	MCLAIM(m, &arpdomain.dom_mowner);
 	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
 	    2*ifp->if_addrlen;
 	m->m_pkthdr.len = m->m_len;

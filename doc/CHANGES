@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.103 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.104 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -290,3 +290,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[jhawk 20030221]
 	kernel: Add LFSv2 support to libsa [simonb 20030324]
 	i386: Add LFS support to bootblocks [simonb 20030324]
+	kernel: Add MBUFTRACE kernel option.  Change all MGET*(...M_WAIT,...)
+		to m_get*(M_WAIT, ...) to shrink kernel.  Add m_clget 
+		analogue to MCLGET and use it if M_WAIT is passed.  Adapt
+		netinet, if_loop, gem, tulip, fxp driver to MBUFTRACE.  Bump
+		version to 1.6P.  [matt 20030226]
