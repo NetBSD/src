@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: modf.S,v 1.3 1994/12/15 17:24:50 mycroft Exp $")
+	ASMSTR("$Id: modf.S,v 1.4 1995/09/25 19:28:27 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,12 +48,24 @@
  */
 LEAF(modf)
 	cfc1	t0, $31			# get the control register
-	cfc1	t0, $31			# get the control register
+	li.d	$f2, 4503599627370496e0 # f2 <- 2^52
+
 	or	t1, t0, 0x3		# set rounding mode to round to zero
 	xor	t1, t1, 0x2		#  (i.e., 01)
 	ctc1	t1, $31
-	cvt.w.d	$f0, $f12		# convert val to integer
-	cvt.d.w	$f0, $f0		# convert back to double
+
+	abs.d	$f4, $f12		# f4 <- |f12|
+	c.olt.d $f4, $f2		# f4 ? < f2 
+	bc1f	1f			# leave alone if Nan, infinity 
+					# or >=2^52
+	c.eq.d	$f12,$f4		# was f12 positive ?
+	add.d	$f4,$f2,$f4		# round off to integer
+	bc1f	2f			# No -> will have to negate result
+	sub.d	$f0,$f4,$f2		# Remove fudge factor
+	j	1f			# integer fraction got
+2:	
+	sub.d	$f0,$f2,$f4		# Remove fudge factor and negate
+1:	
 	ctc1	t0, $31			# restore old rounding mode
 	s.d	$f0, 0(a2)		# save the integer part
 	sub.d	$f0, $f12, $f0		# subtract val - integer part
