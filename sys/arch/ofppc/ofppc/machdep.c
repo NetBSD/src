@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1999/12/18 01:37:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2000/01/19 03:28:23 danw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,6 +123,7 @@ initppc(startkernel, endkernel, args)
 	char name[32];
 	struct machvec *mp;
 	extern trapcode, trapsize;
+	extern alitrap, alisize;
 	extern dsitrap, dsisize;
 	extern isitrap, isisize;
 	extern decrint, decrsize;
@@ -201,6 +202,9 @@ initppc(startkernel, endkernel, args)
 			/*
 			 * This one is (potentially) installed during autoconf
 			 */
+			break;
+		case EXC_ALI:
+			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
 			break;
 		case EXC_DSI:
 			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
