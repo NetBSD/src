@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.67 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.68 2000/03/23 06:30:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
@@ -113,6 +114,9 @@ void endtsleep __P((void *));
 
 __inline void awaken __P((struct proc *));
 
+struct callout roundrobin_ch = CALLOUT_INITIALIZER;
+struct callout schedcpu_ch = CALLOUT_INITIALIZER;
+
 /*
  * Force switch among equal priority processes every 100ms.
  */
@@ -123,7 +127,7 @@ roundrobin(arg)
 {
 
 	need_resched();
-	timeout(roundrobin, NULL, hz / 10);
+	callout_reset(&roundrobin_ch, hz / 10, roundrobin, NULL);
 }
 
 /*
@@ -276,7 +280,7 @@ schedcpu(arg)
 	proclist_unlock_read();
 	uvm_meter();
 	wakeup((caddr_t)&lbolt);
-	timeout(schedcpu, (void *)0, hz);
+	callout_reset(&schedcpu_ch, hz, schedcpu, NULL);
 }
 
 /*
@@ -386,7 +390,7 @@ tsleep(ident, priority, wmesg, timo)
 		*qp->sq_tailp = p;
 	*(qp->sq_tailp = &p->p_forw) = 0;
 	if (timo)
-		timeout(endtsleep, (void *)p, timo);
+		callout_reset(&p->p_tsleep_ch, timo, endtsleep, p);
 	/*
 	 * We put ourselves on the sleep queue and start our timeout
 	 * before calling CURSIG, as we could stop there, and a wakeup
@@ -431,7 +435,7 @@ resume:
 			return (EWOULDBLOCK);
 		}
 	} else if (timo)
-		untimeout(endtsleep, (void *)p);
+		callout_stop(&p->p_tsleep_ch);
 	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_CSW))

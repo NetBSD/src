@@ -90,6 +90,7 @@ static unsigned char * compute_charset_base ( unsigned fontset );
 static void scrnsv_timedout ( void *arg );
 static u_short *savedscreen = (u_short *)0;	/* ptr to screen contents */
 static size_t scrnsv_size = (size_t)-1;		/* size of saved image */
+static struct callout scrnsv_timedout_ch = CALLOUT_INITIALIZER;
 
 #if PCVT_PRETTYSCRNS
 static u_short *scrnsv_current = (u_short *)0;	/* attention char ptr */
@@ -1748,6 +1749,8 @@ set_2ndcharset(void)
 #if PCVT_SCREENSAVER
 #if PCVT_PRETTYSCRNS
 
+static struct callout scrnsv_blink_ch = CALLOUT_INITIALIZER;
+
 /*---------------------------------------------------------------------------*
  * produce some kinda random number, had a look into the system library...
  *---------------------------------------------------------------------------*/
@@ -1787,7 +1790,7 @@ scrnsv_blink(void)
 	*scrnsv_current = (7 /* LIGHTGRAY */ << 8) + '*';
 	if(adaptor_type == VGA_ADAPTOR)
 		vgapaletteio(7 /* LIGHTGRAY */, &blink_rgb[(r >> 4) & 7], 1);
-	timeout((TIMEOUT_FUNC_T)scrnsv_blink, NULL, hz);
+	callout_reset(&scrnsv_blink_ch, hz, (TIMEOUT_FUNC_T)scrnsv_blink, NULL);
 }
 
 #endif /* PCVT_PRETTYSCRNS */
@@ -1801,7 +1804,7 @@ pcvt_set_scrnsv_tmo(int timeout)
 	int x = splhigh();
 
 	if(scrnsv_timeout)
-		untimeout((TIMEOUT_FUNC_T)scrnsv_timedout, NULL);
+		callout_stop(&scrnsv_timedout_ch);
 
 	scrnsv_timeout = timeout;
 	pcvt_scrnsv_reset();		/* sanity */
@@ -1878,8 +1881,8 @@ scrnsv_timedout(void *arg)
 			vgapaletteio(0 /* BLACK */, &black, 1);
 		}
 		/* prepare for next time... */
-		timeout((TIMEOUT_FUNC_T)scrnsv_timedout /* me! */,
-				NULL, hz / 10);
+		callout_reset(&scrnsv_timedout_ch, hz / 10,
+		    (TIMEOUT_FUNC_T)scrnsv_timedout, NULL);
 	}
 	else
 	{
@@ -1889,7 +1892,8 @@ scrnsv_timedout(void *arg)
 
 #if PCVT_PRETTYSCRNS
 		scrnsv_current = vsp->Crtat;
-		timeout((TIMEOUT_FUNC_T)scrnsv_blink, NULL, hz);
+		callout_reset(scrnsv_blink_ch, hz,
+		    (TIMEOUT_FUNC_T)scrnsv_blink, NULL);
 #endif /* PCVT_PRETTYSCRNS */
 
 		sw_cursor(0);	/* cursor off on mda/cga */
@@ -1917,14 +1921,14 @@ pcvt_scrnsv_reset(void)
 	{
 		last_schedule = time.tv_sec;
 		reschedule = 1;
-		untimeout((TIMEOUT_FUNC_T)scrnsv_timedout, NULL);
+		callout_stop(&scrnsv_timedout_ch);
 	}
 	if(scrnsv_active)
 	{
 
 #if PCVT_PRETTYSCRNS
 		if(scrnsv_active > 1)
-			untimeout((TIMEOUT_FUNC_T)scrnsv_blink, NULL);
+			callout_stop(&scrnsv_blink_ch);
 #endif /* PCVT_PRETTYSCRNS */
 
 		bcopy(savedscreen, vsp->Crtat, scrnsv_size);
@@ -1947,8 +1951,8 @@ pcvt_scrnsv_reset(void)
 	if(reschedule)
 	{
 		/* mark next timeout */
-		timeout((TIMEOUT_FUNC_T)scrnsv_timedout, NULL,
-				scrnsv_timeout * hz);
+		callout_reset(&scrnsv_timedout_ch, scrnsv_timeout * hz,
+		    (TIMEOUT_FUNC_T)scrnsv_timedout, NULL);
 	}
 	splx(x);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.104 2000/03/16 17:19:54 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.105 2000/03/23 06:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -221,8 +221,6 @@ long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
 int	hzto __P((struct timeval *tv));
-void	timeout __P((void (*func)(void *), void *arg, int ticks));
-void	untimeout __P((void (*func)(void *), void *arg));
 void	realitexpire __P((void *));
 
 void	hardclock __P((struct clockframe *frame));

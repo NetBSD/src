@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2000/02/21 20:38:46 erh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 2000/03/23 06:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
@@ -1559,6 +1560,7 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 void candbtimer __P((void));
+struct callout candbtimer_ch = CALLOUT_INITIALIZER;
 
 void
 candbtimer()
@@ -1594,7 +1596,8 @@ nmihand(frame)
 				      "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, (caddr_t)0, candbdelay);
+			callout_reset(&candbtimer_ch, candbdelay,
+			    candbtimer, NULL);
 		}
 #endif
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.115 1999/07/24 15:10:02 tron Exp $	*/
+/*	$NetBSD: tty.c,v 1.116 2000/03/23 06:30:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1528,8 +1528,8 @@ ttycheckoutq(tp, wait)
 				splx(s);
 				return (0);
 			}
-			timeout((void (*)__P((void *)))wakeup,
-			    (void *)&tp->t_outq, hz);
+			callout_reset(&tp->t_outq_ch, hz,
+			    (void (*)__P((void *)))wakeup, &tp->t_outq);
 			SET(tp->t_state, TS_ASLEEP);
 			error = tsleep(&tp->t_outq, (PZERO - 1) | PCATCH,
 			    "ttckoutq", 0);
@@ -2182,6 +2182,8 @@ ttymalloc()
 
 	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
+	callout_init(&tp->t_outq_ch);
+	callout_init(&tp->t_rstrt_ch);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);
@@ -2201,6 +2203,8 @@ ttyfree(tp)
 	struct tty *tp;
 {
 
+	callout_stop(&tp->t_outq_ch);
+	callout_stop(&tp->t_rstrt_ch);
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);

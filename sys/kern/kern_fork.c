@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.61 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.62 2000/03/23 06:30:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -318,6 +318,9 @@ again:
 	p2->p_pptr = p1;
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
+
+	callout_init(&p2->p_realit_ch);
+	callout_init(&p2->p_tsleep_ch);
 
 #ifdef KTRACE
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.38 2000/01/18 19:33:32 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.39 2000/03/23 06:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -846,6 +846,7 @@ sbicinit(dev)
 		TAILQ_INIT(&dev->ready_list);
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
+		callout_init(&dev->sc_timo_ch);
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
@@ -857,7 +858,8 @@ sbicinit(dev)
 		bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
 #ifdef DEBUG
 		/* make sure timeout is really not needed */
-		timeout((void *)sbictimeout, dev, 30 * hz);
+		callout_reset(&dev->sc_timo_ch, 30 * hz,
+		    (void *)sbictimeout, dev);
 #endif
 
 	} else panic("sbic: reinitializing driver!");
@@ -2712,7 +2714,8 @@ sbictimeout(dev)
 		dev->sc_dmatimo++;
 	}
 	splx(s);
-	timeout((void *)sbictimeout, dev, 30 * hz);
+	callout_reset(&dev->sc_timo_ch, 30 * hz,
+	    (void *)sbictimeout, dev);
 }
 
 void

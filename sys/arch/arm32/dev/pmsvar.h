@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.1 1997/10/14 19:35:35 mark Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.2 2000/03/23 06:35:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,12 +43,16 @@
  * softc structure for the pms device
  */
 
+#include <sys/callout.h>
+
 struct pms_softc {
 	struct device sc_dev;		/* device node */
 	void *sc_ih;			/* interrupt pointer */
 	bus_space_tag_t sc_iot;		/* bus tag */
 	bus_space_handle_t sc_ioh;	/* bus handle */
 	int sc_irqnum;			/* interrupt number */
+
+	struct callout sc_watchdog_ch;
 
 	void (*sc_intenable) __P((struct pms_softc *, int));
 
