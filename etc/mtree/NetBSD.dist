@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.263 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.264 2004/05/18 05:39:27 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -355,7 +355,6 @@
 ./usr/share/doc/smm/07.lpd
 ./usr/share/doc/smm/08.sendmailop
 ./usr/share/doc/smm/09.sendmail
-./usr/share/doc/smm/10.named
 ./usr/share/doc/smm/11.timedop
 ./usr/share/doc/smm/12.timed
 ./usr/share/doc/smm/13.amd
@@ -413,7 +412,6 @@
 ./usr/share/examples/isdn
 ./usr/share/examples/kerberos
 ./usr/share/examples/mount_portal
-./usr/share/examples/named
 ./usr/share/examples/openssl
 ./usr/share/examples/postfix
 ./usr/share/examples/racoon
