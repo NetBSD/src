@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mem.4	5.3 (Berkeley) 5/2/91
-.\"	$NetBSD: mem.4,v 1.3 1997/10/18 03:53:25 mark Exp $
+.\"	$NetBSD: mem.4,v 1.4 1998/02/26 21:50:41 mark Exp $
 .\"
 .Dd July 28, 1995
 .Dt MEM 4 arm
@@ -57,19 +57,19 @@ in the same manner as
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On
-.Tn ISA
+.Tn Acorn RiscPC, A7000(+) and RC7500 systems
 the
 .Tn I/O
-memory space begins at physical address 0x000a0000
-and runs to 0x00100000.
+memory space (podule space and SuperIO) begins at physical address 0x03000000
+and runs to 0x033fffff.
+On the RiscPC, EASI space runs from 0x08000000 to 0x0fffffff.
 The
 per-process data
 size
 for the current process
 is
 .Dv UPAGES
-long, and ends at virtual
-address 0xfe000000.
+long, and starts at VM_MAXUSER_ADDRESS.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/mem
