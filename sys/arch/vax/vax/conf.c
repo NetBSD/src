@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1998/11/07 20:58:09 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1998/11/13 04:47:10 oster Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -95,6 +95,9 @@ bdev_decl(rl);
 #include "ccd.h"
 bdev_decl(ccd);
 
+#include "raid.h"
+bdev_decl(raid);
+
 #include "vnd.h"
 bdev_decl(vnd);
 
@@ -141,6 +144,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
 	bdev_disk_init(NMD,md),		/* 23: memory disk driver */
 	bdev_disk_init(NRY,ry),		/* 24: VS3100 floppy */
+	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -261,6 +265,7 @@ cdev_decl(gencn);
 cdev_decl(rx);
 cdev_decl(rl);
 cdev_decl(ccd);
+cdev_decl(raid);
 cdev_decl(rd);
 cdev_decl(ry);
 cdev_decl(sd);
@@ -460,6 +465,7 @@ struct cdevsw	cdevsw[] =
 			wsmouse),	/* 70: mice */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 72: SCSI bus */
+	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -550,6 +556,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 70 */
 	NODEV,	/* 71 */
 	NODEV,	/* 72 */
+	25,	/* 73 */
 };
 
 dev_t

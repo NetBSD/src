@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1998/10/10 02:00:52 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1998/11/13 04:47:04 oster Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ bdev_decl(scd);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
+#include "raid.h"
+bdev_decl(raid);
 
 struct bdevsw	bdevsw[] =
 {
@@ -90,6 +92,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
+	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -182,6 +185,7 @@ cdev_decl(vnd);
 cdev_decl(audio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
+cdev_decl(raid);
 #include "joy.h"
 cdev_decl(joy);
 
@@ -262,6 +266,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),       /* 49: mice */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 50: SCSI bus */
+	cdev_disk_init(NRAID,raid),	/* 51: RAIDframe disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -354,6 +359,7 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	18,
 };
 
 /*

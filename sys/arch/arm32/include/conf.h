@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.8 1998/10/10 02:00:49 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.9 1998/11/13 04:47:04 oster Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -49,6 +49,8 @@ bdev_decl(fd);
 cdev_decl(fd);
 bdev_decl(md);
 cdev_decl(md);
+bdev_decl(raid);
+cdev_decl(raid);
 
 /* Character device declarations */
 

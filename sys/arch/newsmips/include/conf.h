@@ -7,6 +7,9 @@ cdev_decl(mm);
 bdev_decl(sw);
 cdev_decl(sw);
 
+bdev_decl(raid);
+cdev_decl(raid);
+
 bdev_decl(fd);
 cdev_decl(fd);
 

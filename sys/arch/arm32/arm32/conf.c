@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1998/10/10 02:00:52 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1998/11/13 04:47:04 oster Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -62,6 +62,7 @@
 #include "cd.h"
 #include "vnd.h"
 #include "ccd.h"
+#include "raid.h"
 
 /* Block devices */
 
@@ -136,6 +137,8 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 67: */
 	bdev_lkm_dummy(),		/* 68: */
 	bdev_lkm_dummy(),		/* 69: */
+	bdev_lkm_dummy(),		/* 70: */
+	bdev_disk_init(NRAID,raid),	/* 71: RAIDframe disk driver */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -275,6 +278,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 68: reserved */
 	cdev_lkm_dummy(),		/* 69: reserved */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 70: SCSI bus */
+	cdev_disk_init(NRAID,raid),    	/* 71: RAIDframe disk driver */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -387,6 +391,7 @@ static int chrtoblktbl[] = {
     /* 68 */	    NODEV,
     /* 69 */	    NODEV,
     /* 70 */	    NODEV,
+    /* 71 */	    71,
 };
 
 /*

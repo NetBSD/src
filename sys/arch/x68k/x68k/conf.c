@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1998/10/10 02:00:59 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1998/11/13 04:47:10 oster Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -52,6 +52,8 @@ bdev_decl(sd);
 bdev_decl(cd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "raid.h"
+bdev_decl(raid);
 #include "vnd.h"
 bdev_decl(vnd);
 #include "st.h"
@@ -77,6 +79,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_disk_init(NCCD,ccd),	/* 15: concatenated disk driver */
+	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -151,6 +154,7 @@ cdev_decl(par);
 #include "ite.h"
 cdev_decl(ite);
 cdev_decl(ccd);
+cdev_decl(raid);
 cdev_decl(vnd);
 cdev_decl(md);
 cdev_decl(st);
@@ -233,6 +237,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 38: IP filter device */
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 40: SCSI bus */
+	cdev_disk_init(NRAID,raid),	/* 41: RAIDframe disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -293,7 +298,7 @@ static int chrtoblktbl[] = {
 	/* 34 */	15,		/* 35 */	NODEV,
 	/* 36 */	NODEV,		/* 37 */	NODEV,
 	/* 38 */	NODEV,		/* 39 */	NODEV,
-	/* 40 */	NODEV,
+	/* 40 */	NODEV,		/* 41 */	16,
 };
 
 /*
