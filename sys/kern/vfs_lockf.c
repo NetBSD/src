@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.22 2003/02/01 06:23:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.23 2003/03/05 18:28:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.22 2003/02/01 06:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.23 2003/03/05 18:28:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,12 +157,10 @@ lf_advlock(ap, head, size)
 	lock->lf_flags = ap->a_flags;
 	if (lock->lf_flags & F_POSIX) {
 		KASSERT(curproc == (struct proc *)ap->a_id);
-		lock->lf_id = (caddr_t) curlwp;
-	} else {
-		lock->lf_id = ap->a_id; /* Not a proc at all, but a file * */
 	}
+	lock->lf_id = (struct proc *)ap->a_id;
+	lock->lf_lwp = curlwp;
 		
-
 	/*
 	 * Do the requested operation.
 	 */
@@ -240,18 +238,20 @@ lf_setlock(lock)
 			struct lockf *waitblock;
 			int i = 0;
 
-			/* The block is waiting on something */
-			wlwp = (struct lwp *)block->lf_id;
-			while (wlwp->l_wchan &&
-			       (wlwp->l_wmesg == lockstr) &&
-			       (i++ < maxlockdepth)) {
+			/*
+			 * The block is waiting on something.  if_lwp will be
+			 * 0 once the lock is granted, so we terminate the
+			 * loop if we find this.
+			 */
+			wlwp = block->lf_lwp;
+			while (wlwp && (i++ < maxlockdepth)) {
 				waitblock = (struct lockf *)wlwp->l_wchan;
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)
 					break;
-				wlwp = (struct lwp *)waitblock->lf_id;
-				if (wlwp == (struct lwp *)lock->lf_id) {
+				wlwp = waitblock->lf_lwp;
+				if (wlwp == lock->lf_lwp) {
 					free(lock, M_LOCKF);
 					return (EDEADLK);
 				}
@@ -316,6 +316,7 @@ lf_setlock(lock)
 	 * Skip over locks owned by other processes.
 	 * Handle any locks that overlap and are owned by ourselves.
 	 */
+	lock->lf_lwp = 0;
 	prev = head;
 	block = *head;
 	needtolink = 1;
@@ -534,7 +535,7 @@ lf_getlock(lock, fl)
 		else
 			fl->l_len = block->lf_end - block->lf_start + 1;
 		if (block->lf_flags & F_POSIX)
-			fl->l_pid = ((struct lwp *)(block->lf_id))->l_proc->p_pid;
+			fl->l_pid = ((struct proc *)block->lf_id)->p_pid;
 		else
 			fl->l_pid = -1;
 	} else {
@@ -596,8 +597,8 @@ lf_findoverlap(lf, lock, type, prev, overlap)
 	start = lock->lf_start;
 	end = lock->lf_end;
 	while (lf != NOLOCKF) {
-		if (((type & SELF) && lf->lf_id != lock->lf_id) ||
-		    ((type & OTHERS) && lf->lf_id == lock->lf_id)) {
+		if (((type == SELF) && lf->lf_id != lock->lf_id) ||
+		    ((type == OTHERS) && lf->lf_id == lock->lf_id)) {
 			*prev = &lf->lf_next;
 			*overlap = lf = lf->lf_next;
 			continue;
@@ -763,9 +764,9 @@ lf_print(tag, lock)
 	
 	printf("%s: lock %p for ", tag, lock);
 	if (lock->lf_flags & F_POSIX)
-		printf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
+		printf("proc %d", ((struct proc *)lock->lf_id)->p_pid);
 	else
-		printf("id 0x%p", lock->lf_id);
+		printf("file 0x%p", (struct file *)lock->lf_id);
 	printf(" %s, start %qx, end %qx",
 		lock->lf_type == F_RDLCK ? "shared" :
 		lock->lf_type == F_WRLCK ? "exclusive" :
@@ -788,9 +789,9 @@ lf_printlist(tag, lock)
 	for (lf = *lock->lf_head; lf; lf = lf->lf_next) {
 		printf("\tlock %p for ", lf);
 		if (lf->lf_flags & F_POSIX)
-			printf("proc %d", ((struct proc *)(lf->lf_id))->p_pid);
+			printf("proc %d", ((struct proc *)lf->lf_id)->p_pid);
 		else
-			printf("id 0x%p", lf->lf_id);
+			printf("file 0x%p", (struct file *)lf->lf_id);
 		printf(", %s, start %qx, end %qx",
 			lf->lf_type == F_RDLCK ? "shared" :
 			lf->lf_type == F_WRLCK ? "exclusive" :
@@ -799,9 +800,9 @@ lf_printlist(tag, lock)
 		TAILQ_FOREACH(blk, &lf->lf_blkhd, lf_block) {
 			if (blk->lf_flags & F_POSIX)
 				printf("proc %d",
-				    ((struct proc *)(blk->lf_id))->p_pid);
+				    ((struct proc *)blk->lf_id)->p_pid);
 			else
-				printf("id 0x%p", blk->lf_id);
+				printf("file 0x%p", (struct file *)blk->lf_id);
 			printf(", %s, start %qx, end %qx",
 				blk->lf_type == F_RDLCK ? "shared" :
 				blk->lf_type == F_WRLCK ? "exclusive" :
