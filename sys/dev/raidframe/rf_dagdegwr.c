@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.21 2004/03/20 05:21:53 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.22 2004/03/21 03:22:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.21 2004/03/20 05:21:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.22 2004/03/21 03:22:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -512,6 +512,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		commitNode->succedents[i] = tmpwndNode;
 		tmpwndNode->antecedents[0] = commitNode;
 		tmpwndNode->antType[0] = rf_control;
+		tmpwndNode = tmpwndNode->list_next;
 	}
 
 	/* link the commit node to wnp, wnq nodes */
@@ -535,6 +536,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		tmpwndNode->succedents[0] = unblockNode;
 		unblockNode->antecedents[i] = tmpwndNode;
 		unblockNode->antType[i] = rf_control;
+		tmpwndNode = tmpwndNode->list_next;
 	}
 
 	/* link write new parity node to unblock node */
