@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 1999/10/11 01:57:44 eeh Exp $ */
+/*	$NetBSD: frame.h,v 1.7 2000/07/23 06:15:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  * of the frame, you must first force the kernel to write any such
  * windows to the stack.
  */
-#ifndef _LOCORE
+#if !defined(_LOCORE) && !defined(_LIBC)
 struct frame32 {
 	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
@@ -88,7 +88,7 @@ struct frame32 {
  * V9 frames have an odd bias, so you can tall a v9 frame from
  * a v8 frame by testing the stack pointer's lsb.
  */
-#ifndef _LOCORE
+#if !defined(_LOCORE) && !defined(_LIBC)
 struct frame64 {
 	int64_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int64_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
@@ -100,9 +100,10 @@ struct frame64 {
 	int64_t fr_argd[6];	/* `register save area' (lunacy) */
 	int64_t	fr_argx[0];	/* arg extension (args 7..n; variable size) */
 };
-#endif
 
 #define v9next_frame(f)		((struct frame64*)(f->fr_fp+BIAS))
+#endif
+
 /*
  * CC64FSZ (C Compiler 64-bit Frame SiZe) is the size of a stack frame used
  * by the compiler in 64-bit mode.  It is (16)*8; space for 8 ins, 8 outs.
