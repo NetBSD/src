@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.9 1996/02/09 21:32:06 christos Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.10 1996/02/29 20:36:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -55,7 +55,7 @@
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <miscfs/fifofs/fifo.h> /* XXX */
 #include <sys/malloc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 
 #include <isofs/cd9660/iso.h>
 
