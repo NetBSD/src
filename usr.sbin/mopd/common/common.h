@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.3 1997/10/16 23:24:26 lukem Exp $	*/
+/*	$NetBSD: common.h,v 1.4 1998/02/07 00:03:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.3 1997/10/16 23:24:26 lukem Exp $
+ *	$NetBSD: common.h,v 1.4 1998/02/07 00:03:19 cgd Exp $
  *
  */
 
@@ -60,7 +60,7 @@ struct if_info {
 	char	if_name[IFNAME_SIZE];	/* Interface Name		   */
 	int	(*iopen) __P((char *, int, u_short, int));
 					/* Interface Open Routine	   */
-	int	(*write) __P((int, u_char *, int, int));;
+	int	(*write) __P((int, u_char *, int, int));
 					/* Interface Write Routine	   */
 	void	(*read) __P((void));	/* Interface Read Routine          */
 	struct if_info *next;		/* Next Interface		   */

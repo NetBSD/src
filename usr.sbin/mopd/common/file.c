@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.4 1997/10/16 23:24:35 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.5 1998/02/07 00:03:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.4 1997/10/16 23:24:35 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.5 1998/02/07 00:03:22 cgd Exp $");
 #endif
 
 #include "os.h"
@@ -334,6 +334,7 @@ getMID(old_mid,new_mid)
 		break;
 #endif
 	default:
+		break;
 	}
 
 	return(mid);
@@ -508,6 +509,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		ex.a_drsize= mopFileGetBX((u_char *)&ex_swap, 28, 4);
 		break;
 	default:
+		break;
 	}
 
 	printf("a.out image (");
@@ -559,6 +561,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		break;
 #endif
 	default:
+		break;
 	}
 	printf(") Magic: ");
 	switch (N_GETMAGIC (ex)) {
