@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.22 1997/11/17 01:58:12 lukem Exp $
+#	$NetBSD: STEELHEAD,v 1.23 1998/03/20 19:15:18 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -12,7 +12,7 @@ maxusers	10			# estimated number of users
 
 #options 	ACCOUNTING		# process accounting
 options 	KTRACE			# system call tracing, a la ktrace(1)
-#options 	SYSVSHM			# System V shared memory; broken
+options 	SYSVSHM			# System V shared memory
 #options 	"SHMMAXPGS=1024"
 #options 	LKM			# loadable kernel modules
 
