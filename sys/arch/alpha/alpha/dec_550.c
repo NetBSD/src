@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.1 1998/06/05 02:13:41 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.2 1998/06/06 20:53:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.1 1998/06/05 02:13:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.2 1998/06/06 20:53:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.1 1998/06/05 02:13:41 thorpej Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+/* Write this to Pyxis General Purpose Output to turn off the power. */
+#define	DEC_550_PYXIS_GPO_POWERDOWN	0x00000400
+
 #include "pckbd.h"
 
 #ifndef CONSPEED
@@ -70,6 +73,7 @@ static int comcnrate = CONSPEED;
 void dec_550_init __P((void));
 static void dec_550_cons_init __P((void));
 static void dec_550_device_register __P((struct device *, void *));
+static void dec_550_powerdown __P((void));
 
 void
 dec_550_init()
@@ -85,6 +89,7 @@ dec_550_init()
 	platform.iobus = "cia";
 	platform.cons_init = dec_550_cons_init;
 	platform.device_register = dec_550_device_register;
+	platform.powerdown = dec_550_powerdown;
 }
 
 static void
@@ -260,4 +265,12 @@ dec_550_device_register(dev, aux)
 			return;
 		}
 	}
+}
+
+static void
+dec_550_powerdown()
+{
+
+	REGVAL(PYXIS_GPO) = DEC_550_PYXIS_GPO_POWERDOWN;
+	alpha_mb();
 }
