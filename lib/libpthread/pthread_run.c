@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.18 2002/12/16 18:32:21 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.19 2002/12/20 01:06:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 
 	SDPRINTF(("(sched_idle %p) idling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
-	thread->pt_type = PT_THREAD_IDLE;
+
 	thread->pt_flags &= ~PT_FLAG_IDLED;
 	_INITCONTEXT_U(thread->pt_uc);
 	thread->pt_uc->uc_stack = thread->pt_stack;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.35 2002/12/18 22:51:47 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.36 2002/12/20 01:06:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ pthread__start(void)
 			err(1, "Couldn't allocate stack for idle thread!");
 		pthread__initthread(self, idle);
 		sigfillset(&idle->pt_sigmask);
+		idle->pt_type = PT_THREAD_IDLE;
 		PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
 		pthread__sched_idle(self, idle);
 	}
