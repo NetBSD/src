@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1998/06/26 22:40:59 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1998/08/08 23:39:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -204,11 +204,11 @@ configure()
 
 #ifdef DEBUG
 	/* Debugging information */
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_CLOCK]);
-	printf("ipl_imp=%08x ipl_none=%08x\n", irqmasks[IPL_IMP],
-	    irqmasks[IPL_NONE]);
+	    irqmasks[IPL_IMP]);
+	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
+	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
 #endif

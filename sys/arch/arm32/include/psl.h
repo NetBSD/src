@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 1998/01/20 01:18:18 mark Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 1998/08/08 23:39:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -53,19 +53,21 @@
 #define _SPL_BIO	2
 #define _SPL_NET	3
 #define _SPL_TTY	4
-#define _SPL_CLOCK	5
-#define _SPL_IMP	6
-#define _SPL_HIGH	7
-#define _SPL_LEVELS	8
+#define _SPL_IMP	5
+#define	_SPL_AUDIO	6
+#define _SPL_CLOCK	7
+#define _SPL_HIGH	8
+#define _SPL_LEVELS	9
 
 #define spl0()		splx(_SPL_0)
 #define splsoft()	raisespl(_SPL_SOFT)
-#define splsoftnet()	splsoft()
 #define splsoftclock()	lowerspl(_SPL_SOFT)
+#define splsoftnet()	splsoft()
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)
 #define spltty()	raisespl(_SPL_TTY)
 #define splimp()	raisespl(_SPL_IMP)
+#define	splaudio()	raisespl(_SPL_AUDIO)
 #define splclock()	raisespl(_SPL_CLOCK)
 #define splstatclock()	raisespl(_SPL_CLOCK)
 #define splhigh()	splx(_SPL_HIGH)
