@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.22 2003/11/18 14:11:33 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.23 2003/11/20 22:05:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ void mach_e_proc_init(struct proc *, struct vmspace *);
 void mach_e_proc_exit(struct proc *);
 void mach_e_proc_exec(struct proc *, struct exec_package *);
 void mach_e_proc_fork(struct proc *, struct proc *);
+void mach_e_proc_fork1(struct proc *, struct proc *, int);
 
 extern const struct emul emul_mach;
 
