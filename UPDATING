@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.60 2002/05/02 22:13:30 sommerfeld Exp $
+$NetBSD: UPDATING,v 1.61 2002/05/14 23:33:07 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,21 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020515:
+	sshd user/group has been added.  Need to hand add this in, or sshd
+	will not let you log in (with default, or UsePrivlegeSeparation=yes)
+
+	Add the following into /etc/group:
+
+	sshd:*:16:
+
+	and the following to /etc/master.passwd (via vipw):
+
+	sshd:*:16:16::0:0:sshd privsep:/var/empty:/sbin/nologin
+	
+	also /var/empty directory needs to be present (digged as a part of
+	build process).
 
 20020426:
 	NBUILDJOBS obsoleted in favor of just using -j.

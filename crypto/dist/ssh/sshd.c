@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.20 2002/05/13 02:58:19 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.21 2002/05/14 23:33:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.240 2002/04/23 22:16:29 djm Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.241 2002/05/13 15:53:19 millert Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1296,6 +1296,14 @@ main(int ac, char **av)
 	/* This is the child processing a new connection. */
 
 	/*
+	 * Create a new session and process group since the 4.4BSD
+	 * setlogin() affects the entire process group.  We don't
+	 * want the child to be able to affect the parent.
+	 */
+	if (setsid() < 0)
+		error("setsid: %.100s", strerror(errno));
+
+	/*
 	 * Disable the key regeneration alarm.  We will not regenerate the
 	 * key since we are no longer in a position to give it to anyone. We
 	 * will not restart on SIGHUP since it no longer makes sense.
@@ -1685,8 +1693,6 @@ static void
 do_ssh2_kex(void)
 {
 	Kex *kex;
-
-/* KEXINIT */
 
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
