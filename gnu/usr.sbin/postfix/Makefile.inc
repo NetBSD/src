@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2004/02/07 05:10:44 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2004/05/31 03:54:20 heas Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,12 @@ PFIX_ETCDIR=	/etc/postfix
 PFIX_EXAMPLEDIR=/usr/share/examples/postfix
 PFIX_HTMLDIR=	/usr/share/doc/html/postfix
 PFIX_SBINDIR=	/usr/sbin
+
+# override defaults which are otherwise empty and/or so postconf is correct
+CPPFLAGS+=	-DDEF_HTML_DIR=\"${PFIX_HTMLDIR}\" \
+		-DDEF_README_DIR=\"${PFIX_EXAMPLEDIR}\" \
+		-DDEF_SAMPLE_DIR=\"${PFIX_EXAMPLEDIR}\" \
+		-DDEF_MANPAGE_DIR=\"${MANDIR}\"
 
 # postfix check wants a lot of files to be owned by root
 BINOWN=	root
