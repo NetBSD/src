@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.22 2001/07/22 22:56:51 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.23 2001/08/18 17:10:05 ad Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -61,7 +61,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.58 2001/07/22 21:04:15 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.22 2001/07/22 22:56:51 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.23 2001/08/18 17:10:05 ad Exp $");
 #endif
 #endif	/* lint */
 
@@ -148,7 +148,7 @@ main(argc, argv)
 			}
 		}
 
-	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzCL")) != EOF)
+	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzCL")) != -1)
 		switch (c) {
 		case 'b':
 			++bflag;
