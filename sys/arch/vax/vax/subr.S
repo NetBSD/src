@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2.2.6 2002/06/24 22:08:58 nathanw Exp $	   */
+/*	$NetBSD: subr.S,v 1.2.2.7 2002/12/30 18:49:34 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -335,8 +335,8 @@ idle:
 	brb	lp			# check sched_whichqs again
 
 #
-# cpu_switch, cpu_exit and the idle loop implemented in assembler 
-# for efficiency.  This is called at IPL_HIGH.
+# cpu_switch, cpu_preempt, cpu_exit and the idle loop implemented in
+# assembler for efficiency.  This is called at IPL_HIGH.
 #
 
 JSBENTRY(Swtch)
@@ -408,12 +408,12 @@ _C_LABEL(tramp):
 	rei
 #endif
 
-ENTRY(cpu_preempt, 0)
+JSBENTRY(Swtchto)
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
 	clrl	CI_CURLWP(%r1)		# Stop process accounting
 	svpctx				# Now on interrupt stack
 
-	movl	8(%ap),%r0		# get new lwp
+	# New LWP already in %r0
 	remque	(%r0),%r2		# remove new lwp from queue
 	bneq	1f			# jmp if queue not empty?
 	halt		# XXX
@@ -435,8 +435,15 @@ ENTRY(cpu_preempt, 0)
 
 	mtpr	%r3,$PR_PCBB
 	ldpctx
+#if defined(LOCKDEBUG)
+	pushl	%r0
+	calls	$0,_C_LABEL(sched_unlock_idle)
+	movl	(%sp)+,%r0
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# clear sched lock
+#endif
 	rei	
-	
+
 #
 # the last routine called by a process.
 #
