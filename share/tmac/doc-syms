@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.22 1997/07/02 02:55:46 phil Exp $
+.\"	$NetBSD: doc-syms,v 1.23 1997/07/15 00:36:48 kleink Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -225,6 +225,16 @@
 .	nr cZ \\n(.s
 .	ds aa \&\f\\n(cF\s\\n(cZ
 .	nr aP \\n(aP+1
+.       if "\\*(A\\n(aP"-p1003.1c-95" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1c-1995\\*(sV
+.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1c-1995\\*(sV
+.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.		\}
+.       \}
 .       if "\\*(A\\n(aP"-p1003.1b-93" \{\
 .		ie \\n(sT==1 \{\
 .			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b-1993\\*(sV
