@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.30 2001/12/04 21:32:15 ross Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.31 2001/12/08 19:46:39 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.30 2001/12/04 21:32:15 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.31 2001/12/08 19:46:39 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -133,6 +133,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.30 2001/12/04 21:32:15 ross Exp $"
 #define IPCP_OPT_ADDRESSES	1	/* both IP addresses; deprecated */
 #define IPCP_OPT_COMPRESSION	2	/* IP compression protocol */
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
+#define	IPCP_OPT_PRIMDNS	129	/* primary remote dns address */
+#define	IPCP_OPT_SECDNS		131	/* secondary remote dns address */
 
 #define IPV6CP_OPT_IFID		1	/* interface identifier */
 #define IPV6CP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
@@ -365,7 +367,8 @@ static void sppp_keepalive(void *dummy);
 static void sppp_phase_network(struct sppp *sp);
 static void sppp_print_bytes(const u_char *p, u_short len);
 static void sppp_print_string(const char *p, u_short len);
-static void sppp_set_ip_addr(struct sppp *sp, u_int32_t src);
+static void sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr);
+static void sppp_clear_ip_addrs(struct sppp *sp);
 #ifdef INET6
 static void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
 				struct in6_addr *dst, struct in6_addr *srcmask);
@@ -2665,7 +2668,9 @@ sppp_ipcp_open(struct sppp *sp)
 	STDDCL;
 	u_int32_t myaddr, hisaddr;
 
-	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN);
+	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
+	sp->ipcp.req_myaddr = 0;
+	sp->ipcp.req_hisaddr = 0;
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	/*
@@ -2682,15 +2687,21 @@ sppp_ipcp_open(struct sppp *sp)
 		return;
 	}
 
-	if (myaddr == 0L) {
+	if (myaddr == 0) {
 		/*
 		 * I don't have an assigned address, so i need to
 		 * negotiate my address.
 		 */
 		sp->ipcp.flags |= IPCP_MYADDR_DYN;
 		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
-	} else
-		sp->ipcp.flags |= IPCP_MYADDR_SEEN;
+	}
+	if (hisaddr == 1) {
+		/*
+		 * XXX - remove this hack!
+		 * remote has no valid adress, we need to get one assigned.
+		 */
+		sp->ipcp.flags |= IPCP_HISADDR_DYN;
+	}
 	sppp_open_event(&ipcp, sp);
 }
 
@@ -2698,11 +2709,11 @@ static void
 sppp_ipcp_close(struct sppp *sp)
 {
 	sppp_close_event(&ipcp, sp);
-	if (sp->ipcp.flags & IPCP_MYADDR_DYN)
+	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
 		/*
-		 * My address was dynamic, clear it again.
+		 * Some address was dynamic, clear it again.
 		 */
-		sppp_set_ip_addr(sp, 0L);
+		sppp_clear_ip_addrs(sp);
 }
 
 static void
@@ -2724,7 +2735,6 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
 	u_int32_t hisaddr, desiredaddr;
-	int gotmyaddr = 0;
 
 	len -= 4;
 	origlen = len;
@@ -2783,7 +2793,10 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 
 	/* pass 2: parse option values */
-	sppp_get_ip_addrs(sp, 0, &hisaddr, 0);
+	if (sp->ipcp.flags & IPCP_HISADDR_SEEN)
+		hisaddr = sp->ipcp.req_hisaddr;	/* we already aggreed on that */
+	else
+		sppp_get_ip_addrs(sp, 0, &hisaddr, 0);	/* user configuration */
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "ipcp parse opt values: ",
 		       SPP_ARGS(ifp));
@@ -2800,62 +2813,42 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		case IPCP_OPT_ADDRESS:
 			desiredaddr = p[2] << 24 | p[3] << 16 |
 				p[4] << 8 | p[5];
-			if (!(sp->ipcp.flags & IPCP_MYADDR_SEEN) &&
-			        (sp->ipcp.flags & IPCP_MYADDR_DYN)) {
+			if (desiredaddr == hisaddr ||
+		    	   ((sp->ipcp.flags & IPCP_HISADDR_DYN) && desiredaddr != 0)) {
 				/*
-				 * hopefully this is our address !!
-				 */
-			 	if (debug)
-					addlog(" [wantmyaddr %s]",
-						sppp_dotted_quad(desiredaddr));
-				/*
-				 * When doing dynamic address assignment,
-			   	 * we accept his offer.  Otherwise, we
-			    	 * ignore it and thus continue to negotiate
-			     	 * our already existing value.
-		      		 */
-				sppp_set_ip_addr(sp, desiredaddr);
-				if (debug)
-					addlog(" [agree]");
-				sp->ipcp.flags |= IPCP_MYADDR_SEEN;
-				gotmyaddr++;
-				continue;
-			} else {
-				if (desiredaddr == hisaddr ||
-			    	(hisaddr == 1 && desiredaddr != 0)) {
-					/*
-				 	* Peer's address is same as our value,
-				 	* this is agreeable.  Gonna conf-ack
-				 	* it.
-				 	*/
-					if (debug)
-						addlog(" %s [ack]",
-					       		sppp_dotted_quad(hisaddr));
-					/* record that we've seen it already */
-					sp->ipcp.flags |= IPCP_HISADDR_SEEN;
-					continue;
-				}
-				/*
-			 	* The address wasn't agreeable.  This is either
-			 	* he sent us 0.0.0.0, asking to assign him an
-			 	* address, or he send us another address not
-			 	* matching our value.  Either case, we gonna
-			 	* conf-nak it with our value.
+			 	* Peer's address is same as our value,
+			 	* this is agreeable.  Gonna conf-ack
+			 	* it.
 			 	*/
-				if (debug) {
-					if (desiredaddr == 0)
-						addlog(" [addr requested]");
-					else
-						addlog(" %s [not agreed]",
-					       		sppp_dotted_quad(desiredaddr));
-				}
-
-				p[2] = hisaddr >> 24;
-				p[3] = hisaddr >> 16;
-				p[4] = hisaddr >> 8;
-				p[5] = hisaddr;
-				break;
+				if (debug)
+					addlog(" %s [ack]",
+				       		sppp_dotted_quad(hisaddr));
+				/* record that we've seen it already */
+				sp->ipcp.flags |= IPCP_HISADDR_SEEN;
+				sp->ipcp.req_hisaddr = desiredaddr;
+				hisaddr = desiredaddr;
+				continue;
 			}
+			/*
+		 	* The address wasn't agreeable.  This is either
+		 	* he sent us 0.0.0.0, asking to assign him an
+		 	* address, or he send us another address not
+		 	* matching our value.  Either case, we gonna
+		 	* conf-nak it with our value.
+		 	*/
+			if (debug) {
+				if (desiredaddr == 0)
+					addlog(" [addr requested]");
+				else
+					addlog(" %s [not agreed]",
+				       		sppp_dotted_quad(desiredaddr));
+			}
+
+			p[2] = hisaddr >> 24;
+			p[3] = hisaddr >> 16;
+			p[4] = hisaddr >> 8;
+			p[5] = hisaddr;
+			break;
 		}
 		/* Add the option to nak'ed list. */
 		bcopy (p, r, p[1]);
@@ -2873,7 +2866,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	 * doesn't want to send us his address.  Q: What should we do
 	 * about it?  XXX  A: implement the max-failure counter.
 	 */
-	if (rlen == 0 && !(sp->ipcp.flags & IPCP_HISADDR_SEEN) && !gotmyaddr) {
+	if (rlen == 0 && !(sp->ipcp.flags & IPCP_HISADDR_SEEN)) {
 		buf[0] = IPCP_OPT_ADDRESS;
 		buf[1] = 6;
 		buf[2] = hisaddr >> 24;
@@ -2992,10 +2985,10 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				 * our already existing value.
 				 */
 				if (sp->ipcp.flags & IPCP_MYADDR_DYN) {
-					sppp_set_ip_addr(sp, wantaddr);
 					if (debug)
 						addlog(" [agree]");
 					sp->ipcp.flags |= IPCP_MYADDR_SEEN;
+					sp->ipcp.req_myaddr = wantaddr;
 				}
 			}
 			break;
@@ -3017,7 +3010,14 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 static void
 sppp_ipcp_tlu(struct sppp *sp)
 {
-	/* we are up - notify isdn daemon */
+	/* we are up. Set addresses and notify anyone interested */
+	u_int32_t myaddr, hisaddr;
+	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
+	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
+		myaddr = sp->ipcp.req_myaddr;
+	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
+		hisaddr = sp->ipcp.req_hisaddr;
+	sppp_set_ip_addrs(sp, myaddr, hisaddr);
 	if (sp->pp_con)
 		sp->pp_con(sp);
 }
@@ -3060,7 +3060,10 @@ sppp_ipcp_scr(struct sppp *sp)
 #endif
 
 	if (sp->ipcp.opts & (1 << IPCP_OPT_ADDRESS)) {
-		sppp_get_ip_addrs(sp, &ouraddr, 0, 0);
+		if (sp->ipcp.flags & IPCP_MYADDR_SEEN)
+			ouraddr = sp->ipcp.req_myaddr;	/* not sure if this can ever happen */
+		else
+			sppp_get_ip_addrs(sp, &ouraddr, 0, 0);
 		opt[i++] = IPCP_OPT_ADDRESS;
 		opt[i++] = 6;
 		opt[i++] = ouraddr >> 24;
@@ -4550,14 +4553,16 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *sr
 }
 
 /*
- * Set my IP address.  Must be called at splnet.
+ * Set IP addresses.  Must be called at splnet.
+ * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addr(struct sppp *sp, u_int32_t src)
+sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 {
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si;
+	struct sockaddr_in *dest;
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -4570,6 +4575,7 @@ sppp_set_ip_addr(struct sppp *sp, u_int32_t src)
 		if (ifa->ifa_addr->sa_family == AF_INET)
 		{
 			si = (struct sockaddr_in *)ifa->ifa_addr;
+			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
 			if (si)
 				break;
 		}
@@ -4579,14 +4585,78 @@ sppp_set_ip_addr(struct sppp *sp, u_int32_t src)
 	{
 		int error;
 		struct sockaddr_in new_sin = *si;
+		struct sockaddr_in new_dst = *dest;
 
-		new_sin.sin_addr.s_addr = htonl(src);
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 1);
+		/*
+		 * Scrub old routes now instead of calling in_ifinit with
+		 * scrub=1, because we may change the dstaddr
+		 * before the call to in_ifinit.
+		 */
+		in_ifscrub(ifp, ifatoia(ifa));
+
+		if (myaddr != 0)
+			new_sin.sin_addr.s_addr = htonl(myaddr);
+		if (hisaddr != 0) {
+			new_dst.sin_addr.s_addr = htonl(hisaddr);
+			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr) {
+				sp->ipcp.saved_hisaddr = dest->sin_addr.s_addr;
+				*dest = new_dst; /* fix dstaddr in place */
+			}
+		}
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
 		if(debug && error)
 		{
-			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addr: in_ifinit "
+			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
 		}
+	}
+}			
+
+/*
+ * Clear IP addresses.  Must be called at splnet.
+ */
+static void
+sppp_clear_ip_addrs(struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+	struct ifaddr *ifa;
+	struct sockaddr_in *si;
+	struct sockaddr_in *dest;
+
+	u_int32_t remote;
+	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
+		remote = sp->ipcp.saved_hisaddr;
+	else
+		sppp_get_ip_addrs(sp, 0, &remote, 0);
+
+	/*
+	 * Pick the first AF_INET address from the list,
+	 * aliases don't make any sense on a p2p link anyway.
+	 */
+
+	si = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	{
+		if (ifa->ifa_addr->sa_family == AF_INET)
+		{
+			si = (struct sockaddr_in *)ifa->ifa_addr;
+			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
+			if (si)
+				break;
+		}
+	}
+
+	if (ifa && si)
+	{
+		struct sockaddr_in new_sin = *si;
+
+		in_ifscrub(ifp, ifatoia(ifa));
+		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
+			new_sin.sin_addr.s_addr = 0;
+		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
+			/* replace peer addr in place */
+			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
 	}
 }			
 
