@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.34 1997/09/23 13:56:42 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.35 1997/09/23 14:25:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.34 1997/09/23 13:56:42 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.35 1997/09/23 14:25:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,6 +223,49 @@ main(argc, argv, envp)
 	char *cp, line[LINE_MAX];
 	FILE *fd;
 
+	debug = 0;
+	logging = 0;
+	(void)strcpy(confdir, _DEFAULT_CONFDIR);
+
+	while ((ch = getopt(argc, argv, "a:c:C:dlt:T:u:v")) != -1) {
+		switch (ch) {
+		case 'a':
+			anondir = optarg;
+			break;
+
+		case 'c':
+			(void)strncpy(confdir, optarg, sizeof(confdir));
+			confdir[sizeof(confdir)-1] = '\0';
+			break;
+ 
+		case 'C':
+			exit(checkaccess(optarg));
+			/* NOTREACHED */
+
+		case 'd':
+		case 'v':		/* deprecated */
+			debug = 1;
+			break;
+
+		case 'l':
+			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 't':
+		case 'T':
+		case 'u':
+			warnx("-%c has been deprecated in favour of ftpd.conf",
+			    ch);
+			break;
+
+		default:
+			if (optopt == 'a' || optopt == 'C')
+				exit(1);
+			warnx("unknown flag -%c ignored", optopt);
+			break;
+		}
+	}
+
 	/*
 	 * LOG_NDELAY sets up the logging connection immediately,
 	 * necessary for anonymous ftp's that chroot and can't do it later.
@@ -244,44 +287,10 @@ main(argc, argv, envp)
 		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 #endif
 	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
-	debug = 0;
-	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, "a:c:dlt:T:u:v")) != EOF) {
-		switch (ch) {
-		case 'a':
-			anondir = optarg;
-			break;
-
-		case 'c':
-			(void)strncpy(confdir, optarg, sizeof(confdir));
-			confdir[sizeof(confdir)-1] = '\0';
-			break;
-
-		case 'd':
-		case 'v':		/* deprecated */
-			debug = 1;
-			break;
-
-		case 'l':
-			logging++;	/* > 1 == extra logging */
-			break;
-
-		case 't':
-		case 'T':
-		case 'u':
-			warnx("-%c has been deprecated in favour of ftpd.conf",
-			    ch);
-			break;
-
-		default:
-			warnx("unknown flag -%c ignored", optopt);
-			break;
-		}
-	}
 	(void) freopen(_PATH_DEVNULL, "w", stderr);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
@@ -346,7 +355,7 @@ lostconn(signo)
 
 	if (debug)
 		syslog(LOG_DEBUG, "lost connection");
-	dologout(-1);
+	dologout(1);
 }
 
 /*
@@ -543,7 +552,6 @@ checkaccess(name)
 	}
 	(void) fclose(fd);
 	return (retval);
-
 }
 #undef	ALLOWED
 #undef	NOT_ALLOWED
