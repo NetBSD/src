@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.13 1998/04/01 16:04:21 kleink Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.14 1998/05/20 00:58:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.13 1998/04/01 16:04:21 kleink Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.14 1998/05/20 00:58:05 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -247,7 +247,7 @@ cmdloop()
 	hist = history_init();
 	history(hist, &he, H_SETMAXSIZE, 100);	/* 100 elt history buffer */
 
-	elptr = el_init(__progname, stdin, stdout);
+	elptr = el_init(__progname, stdin, stdout, stderr);
 	el_set(elptr, EL_EDITOR, "emacs");
 	el_set(elptr, EL_PROMPT, prompt);
 	el_set(elptr, EL_HIST, history, hist);
