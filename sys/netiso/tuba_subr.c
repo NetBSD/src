@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.8 1996/09/17 16:43:51 mycroft Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.9 1997/07/23 21:30:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -272,11 +272,9 @@ tuba_tcpinput(m, va_alist)
 	struct socket  *so = NULL;
 	int             todrop, acked, ourfinisacked, needoutput = 0;
 	short           ostate = 0;
-	struct in_addr  laddr;
-	int             dropsocket = 0, iss = 0;
+	int             iss = 0;
 	u_long          tiwin;
-	u_int32_t       ts_val, ts_ecr;
-	int             ts_present = 0;
+	struct tcp_opt_info opti;
 	struct sockaddr_iso *src, *dst;
 	va_list 	ap;
 
@@ -285,6 +283,8 @@ tuba_tcpinput(m, va_alist)
 	dst = va_arg(ap, struct sockaddr_iso *);
 	va_end(ap);
 
+	opti.ts_present = 0;
+	opti.maxseg = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("tuba_tcpinput");
