@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.20 2002/11/24 22:35:44 christos Exp $ */
+/* $NetBSD: kill.c,v 1.21 2002/11/25 14:23:07 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.20 2002/11/24 22:35:44 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.21 2002/11/25 14:23:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,12 @@ main(int argc, char *argv[])
 			warn("%s", *argv);
 			errors = 1;
 		}
+#ifdef SHELL
+		/* Wakeup the process if it was suspended, so it can
+		   exit without an explicit 'fg'. */
+		if (numsig == SIGTERM || numsig == SIGHUP)
+			kill(pid, SIGCONT);
+#endif
 	}
 
 	exit(errors);
