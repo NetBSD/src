@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.4 2004/09/19 15:06:32 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.5 2004/09/20 18:51:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,6 @@
 
 #ifndef _ARM_LINUX_TYPES_H
 #define _ARM_LINUX_TYPES_H
-
-typedef struct {
-	long	val[2];
-} linux_fsid_t;
 
 typedef unsigned short linux_uid_t;
 typedef unsigned short linux_gid_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.6 2004/09/19 15:06:32 jdolecek Exp $ */
+/*	$NetBSD: linux_types.h,v 1.7 2004/09/20 18:51:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,6 @@
 /* 
  * from Linux's include/asm-mips/posix-types.h 
  */
-typedef struct {
-	int val[2];
-} linux_fsid_t;
-
 typedef int linux_uid_t;
 typedef int linux_gid_t;
 typedef unsigned int linux_dev_t;
