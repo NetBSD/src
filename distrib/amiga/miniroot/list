@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2000/05/02 16:06:46 sjg Exp $
+#	$NetBSD: list,v 1.10 2000/09/17 21:11:09 is Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/mount_ados
@@ -52,4 +52,4 @@ COPYDIR	${DESTDIR}/usr/share/keymaps/amiga	usr/share/keymaps/amiga
 SPECIAL	rmdir usr/share/zoneinfo
 
 # Generic kernel
-COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/amiga/compile}/GENERIC/netbsd	netbsd
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/amiga/compile}/INSTALL/netbsd	netbsd
