@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.1 2001/12/17 05:40:40 mhitch Exp $	*/
+/*	$NetBSD: startit.s,v 1.2 2002/05/20 05:58:45 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.1 2001/12/17 05:40:40 mhitch Exp $
+ * From: $NetBSD: startit.s,v 1.2 2002/05/20 05:58:45 mhitch Exp $
  */
 #include "machine/asm.h"
 
@@ -44,5 +44,17 @@ ENTRY_NOPROFILE(startit)
 	movel	%sp@(4),%a0		| Boot loader address
 	movel	%sp@(8),%a1		| IOR
 	movel	%sp@(12),%a5		| Console data
+/*
+ * Installboot can modify the default command in the bootblock loader,
+ * but boot.amiga uses the default command in boot.amiga.  Copy the
+ * possibly modified default command before entering the boot loader.
+ */
+	lea	%pc@(_C_LABEL(default_command)),%a2
+	lea	%a0@(16),%a3
+	moveq	#(32/4)-1,%d0
+Lcommand:
+	movel	%a2@+,%a3@+
+	dbra	%d0,Lcommand
+
 	jsr	%a0@(12)
 	rts
