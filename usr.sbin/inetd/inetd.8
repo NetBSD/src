@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.20 1999/07/02 16:49:34 itojun Exp $
+.\"	$NetBSD: inetd.8,v 1.21 1999/07/02 16:55:45 itojun Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -404,8 +404,10 @@ properly on the
 .Pa inetd.conf
 lines.
 For safety reasons the author recommends you to run
-two separate process for the same server,
-on
+two separate process for the same server program,
+specified as two separate lines on 
+.Pa inetd.conf ,
+for
 .Dq tcp6
 and
 .Dq tcp4 .
@@ -472,8 +474,8 @@ If you have two servers on
 and
 .Dq tcp6 ,
 IPv4 traffic will be routed to the server on
-.Dq tcp4, and
-IPv6 traffic will go to server on
+.Dq tcp4,
+and IPv6 traffic will go to server on
 .Dq tcp6 .
 .It
 If you have only one server on
