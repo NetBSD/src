@@ -1,4 +1,4 @@
-/*	$NetBSD: scsivar.h,v 1.2 2003/08/07 16:27:42 agc Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -45,3 +45,12 @@ struct	scsi_softc {
 };
 
 extern	struct scsi_softc scsi_softc[];
+
+void scsiinit(void);
+int scsialive(int);
+void scsiabort(struct scsi_softc *, volatile struct scsidevice *);
+int scsi_test_unit_rdy(int, int);
+int scsi_request_sense(int, int, u_char *, unsigned int);
+int scsi_read_capacity(int, int, u_char *, unsigned int);
+int scsi_tt_read(int, int, u_char *, u_int, daddr_t, u_int);
+int scsi_tt_write(int, int, u_char *, u_int, daddr_t, u_int);

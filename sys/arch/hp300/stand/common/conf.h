@@ -1,7 +1,7 @@
-/*	$NetBSD: exec.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $ */
+/*	$NetBSD: conf.h,v 1.1 2003/11/14 16:52:40 tsutsui Exp $	*/
 
-/*-
- * Copyright (c) 1982, 1986, 1990, 1993
+/*
+ * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,46 +28,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/param.h>
+#ifdef SUPPORT_ETHERNET
+int netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int netopen(struct open_file *, ...);
+int netclose(struct open_file *);
+#endif
 
-#include <machine/bootinfo.h>
+#ifdef SUPPORT_TAPE
+int ctstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int ctopen(struct open_file *, ...);
+int ctclose(struct open_file *);
+int ctpunit(int, int, int *);
+#endif
 
-#include <lib/libsa/stand.h>
-#include <lib/libsa/loadfile.h>
+#ifdef SUPPORT_DISK
+int rdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int rdopen(struct open_file *, ...);
+int rdclose(struct open_file *);
 
-#include <hp300/stand/common/samachdep.h>
+int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int sdopen(struct open_file *, ...);
+int sdclose(struct open_file *);
+#endif
 
-#define	round_to_size(x) \
-	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
-
-void
-exec_hp300(file, loadaddr, howto)
-	char *file;
-	u_long loadaddr;
-	int howto;
-{
-	u_long marks[MARK_MAX];
-	struct btinfo_magic *bt;
-	int fd;
-
-	marks[MARK_START] = loadaddr;
-	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
-		return;
-
-	marks[MARK_END] = round_to_size(marks[MARK_END] - loadaddr);
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
-	    marks[MARK_ENTRY], marks[MARK_NSYM],
-	    marks[MARK_SYM], marks[MARK_END]);
-
-	bt = (struct btinfo_magic *)loadaddr;
-	bt->common.type = BTINFO_MAGIC;
-	bt->magic1 = BOOTINFO_MAGIC1;
-	bt->magic2 = BOOTINFO_MAGIC2;
-
-	machdep_start((char *)marks[MARK_ENTRY], howto,
-	    (char *)loadaddr, (char *)marks[MARK_SYM],
-	    (char *)marks[MARK_END]);
-}
+#ifdef SUPPORT_ETHERNET
+extern struct netif_driver le_driver;
+#endif

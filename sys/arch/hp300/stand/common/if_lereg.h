@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.3 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -104,10 +104,10 @@ struct init_block {
 	u_short mode;		/* mode register */
 	u_char padr[6];		/* ethernet address */
 	u_long ladrf[2];	/* logical address filter (multicast) */
-        u_short rdra;           /* low order pointer to receive ring */
-        u_short rlen;           /* high order pointer and no. rings */
-        u_short tdra;           /* low order pointer to transmit ring */
-        u_short tlen;           /* high order pointer and no rings */
+	u_short rdra;		/* low order pointer to receive ring */
+	u_short rlen;		/* high order pointer and no. rings */
+	u_short tdra;		/* low order pointer to transmit ring */
+	u_short tlen;		/* high order pointer and no rings */
 } __attribute__((__packed__));
 
 /*
@@ -123,7 +123,7 @@ struct init_block {
 #define	LE_DRX		0x0001		/* disable receiver */
 #define	LE_NORMAL	0x0000
 
-/* 
+/*
  * Message descriptor
  */
 struct mds {
