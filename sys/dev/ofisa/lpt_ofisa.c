@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.3 2001/11/13 07:29:45 lukem Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.3 2001/11/13 07:29:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ lpt_ofisa_probe(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = { "pnpPNP,401", NULL };
+	static const char *const compatible_strings[] = { "pnpPNP,401", NULL };
 	int rv = 0;
 
 	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
