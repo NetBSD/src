@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.17 2003/10/06 16:08:35 matt Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.18 2004/05/14 11:11:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -153,14 +153,14 @@ _rtld_bootstrap_hppa_got(Elf_Dyn *dynp, Elf_Addr relocbase,
 	 * Process all relocations that look like they're in 
 	 * the GOT.
 	 */
-	for(rela = relafirst; rela < relalim; rela++) {
+	for (rela = relafirst; rela < relalim; rela++) {
 		where = (Elf_Addr)(relocbase + rela->r_offset);
 		if (where >= got_begin && where < got_end)
 			*((Elf_Addr *)where) = relocbase + rela->r_addend;
 	}
 
 #if defined(RTLD_DEBUG_HPPA)
-	for(rela = relafirst; rela < relalim; rela++) {
+	for (rela = relafirst; rela < relalim; rela++) {
 		where = (Elf_Addr)(relocbase + rela->r_offset);
 		if (where >= got_begin && where < got_end)
 			xprintf("GOT rela @%p(%p) -> %p(%p)\n",
