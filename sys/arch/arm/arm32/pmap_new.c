@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.9 2003/05/03 03:49:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.10 2003/05/03 16:18:57 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.9 2003/05/03 03:49:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.10 2003/05/03 16:18:57 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -3783,9 +3783,10 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
  * We are passed the following parameters
  *  - kernel_l1pt
  *    This is a pointer to the base of the kernel's L1 translation table.
- *  - avail
+ *  - vstart
  *    1MB-aligned start of managed kernel virtual memory.
- *    (ARM32_NEW_VM_LAYOUT only)
+ *  - vend
+ *    1MB-aligned end of managed kernel virtual memory.
  *
  * We use the first parameter to build the metadata (struct l1_ttable and
  * struct l2_dtable) necessary to track kernel mappings.
@@ -4223,7 +4224,8 @@ pmap_postinit(void)
  * of the kernel L2 tables during bootstrap, so that pmap_map_chunk() can
  * find them as necessary.
  *
- * Note that the data on this list is not valid after initarm() returns.
+ * Note that the data on this list MUST remain valid after initarm() returns,
+ * as pmap_bootstrap() uses it to contruct L2 table metadata.
  */
 SLIST_HEAD(, pv_addr) kernel_pt_list = SLIST_HEAD_INITIALIZER(kernel_pt_list);
 
