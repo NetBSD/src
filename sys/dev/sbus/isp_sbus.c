@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.20 2000/01/09 18:55:11 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.21 2000/01/14 08:43:17 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -197,6 +197,10 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	/*
+	 * There's no tool on sparc to set NVRAM for ISPs, so ignore it.
+	 */
+	isp->isp_confopts |= ISP_CFG_NONVRAM;
 	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
