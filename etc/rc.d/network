@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.5 2000/04/08 23:02:54 tsarna Exp $
+# $NetBSD: network,v 1.6 2000/04/11 05:03:24 lukem Exp $
 #
 
 # PROVIDE: network
@@ -11,7 +11,7 @@
 
 name="network"
 start_cmd="network_start"
-stop_cmd="network_stop"
+stop_cmd=":"
 
 network_start()
 {
