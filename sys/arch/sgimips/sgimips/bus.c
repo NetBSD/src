@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.20 2003/07/15 03:35:54 lukem Exp $	*/
+/*	$NetBSD: bus.c,v 1.21 2003/10/07 14:37:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.20 2003/07/15 03:35:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.21 2003/10/07 14:37:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.20 2003/07/15 03:35:54 lukem Exp $");
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 #include <mips/cache.h>
+
+#include <sgimips/dev/macereg.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
@@ -88,14 +90,14 @@ bus_space_read_1(t, h, o)
 	wbflush(); /* XXX ? */
 
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return *(volatile u_int8_t *)(h + o);
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		return *(volatile u_int8_t *)(h + (o << 2) + 3);
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		return *(volatile u_int8_t *)(h + (o | 3) - (o & 3));
-	case 3: /* mace devices */
+	case SGIMIPS_BUS_SPACE_MACE:
 		return *(volatile u_int8_t *)(h + (o << 8) + 7);
 	default:
 		panic("no bus tag");
@@ -110,17 +112,17 @@ bus_space_write_1(t, h, o, v)
 	u_int8_t v;
 {
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		*(volatile u_int8_t *)(h + o) = v;
 		break;
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		*(volatile u_int8_t *)(h + (o << 2) + 3) = v;
 		break;
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		*(volatile u_int8_t *)(h + (o | 3) - (o & 3)) = v;
 		break;
-	case 3: /* mace devices */
+	case SGIMIPS_BUS_SPACE_MACE:
 		*(volatile u_int8_t *)(h + (o << 8) + 7) = v;
 		break;
 	default:
@@ -139,12 +141,12 @@ bus_space_read_2(t, h, o)
 	wbflush(); /* XXX ? */
 
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return *(volatile u_int16_t *)(h + o);
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		return *(volatile u_int16_t *)(h + (o << 2) + 1);
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		return *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
 	default:
 		panic("no bus tag");
@@ -159,14 +161,14 @@ bus_space_write_2(t, h, o, v)
 	u_int16_t v;
 {
 	switch (t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		*(volatile u_int16_t *)(h + o) = v;
 		break;
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		*(volatile u_int16_t *)(h + (o << 2) + 1) = v;
 		break;
-	case 2: /* mem */
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_MEM:
+	case SGIMIPS_BUS_SPACE_IO:
 		*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
 		break;
 	default:
@@ -194,15 +196,12 @@ bus_space_map(t, bpa, size, flags, bshp)
 /*
  * XXX
  */
-
-#define PCI_LOW_MEMORY		0x1A000000
-#define PCI_LOW_IO		0x18000000
-
 	/* XXX O2 */
 	if (bpa > 0x80000000 && bpa < 0x82000000)
-		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_MEMORY + (bpa & 0xfffffff));
+		*bshp = MIPS_PHYS_TO_KSEG1(MACE_PCI_LOW_MEMORY +
+		    (bpa & 0xfffffff));
 	if (bpa < 0x00010000)
-		*bshp = MIPS_PHYS_TO_KSEG1(PCI_LOW_IO + bpa);
+		*bshp = MIPS_PHYS_TO_KSEG1(MACE_PCI_LOW_IO + bpa);
 
 	return 0;
 }
@@ -255,16 +254,16 @@ bus_space_vaddr(t, bsh)
 	bus_space_handle_t bsh;
 {
 	switch(t) {
-	case 0:
+	case SGIMIPS_BUS_SPACE_NORMAL:
 		return ((void *)bsh);
 
-	case 1: /* XXX HPC */
+	case SGIMIPS_BUS_SPACE_HPC:
 		panic("bus_space_vaddr not supported on HPC space!");
 
-	case 2: /* mem */
+	case SGIMIPS_BUS_SPACE_MEM:
 		return ((void *)bsh);
 
-	case 4: /* I/O */
+	case SGIMIPS_BUS_SPACE_IO:
 		panic("bus_space_vaddr not supported on I/O space!");
 
 	default:
