@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.16 2003/11/03 17:24:22 mycroft Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.16 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -128,7 +128,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &asc->res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		return;
 
 	/* find our i/o registers */
@@ -238,7 +238,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	int i, drives = -1;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &buf);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
 		printf("%s: failed to evaluate _FDE: %s\n",
 		    sc->sc_dev.dv_xname, rv, AcpiFormatException(rv));
@@ -301,7 +301,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		if ((sc->sc_present & (1 << i)) == 0)
 			continue;
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &buf);
-		if (rv != AE_OK) {
+		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
 			printf("%s: failed to evaluate _FDI: %s on drive %d\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv), i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.55 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.56 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.55 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.56 2003/11/03 18:07:10 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -191,7 +191,7 @@ acpi_probe(void)
 #endif
 
 	rv = AcpiInitializeSubsystem();
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to initialize ACPICA: %s\n",
 		    AcpiFormatException(rv));
 		return (0);
@@ -203,7 +203,7 @@ acpi_probe(void)
 #endif
 
 	rv = AcpiLoadTables();
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("ACPI: unable to load tables: %s\n",
 		    AcpiFormatException(rv));
 		return (0);
@@ -288,13 +288,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	rv = AcpiEnableSubsystem(0);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to enable ACPI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 	rv = AcpiInitializeObjects(0);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to initialize ACPI objects: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -357,10 +357,12 @@ void
 acpi_shutdown(void *arg)
 {
 	struct acpi_softc *sc = arg;
+	ACPI_STATUS rv;
 
-	if (acpi_disable(sc) != AE_OK)
-		printf("%s: WARNING: unable to disable ACPI\n",
-		    sc->sc_dev.dv_xname);
+	rv = acpi_disable(sc);
+	if (ACPI_FAILURE(rv))
+		printf("%s: WARNING: unable to disable ACPI: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 }
 
 /*
@@ -375,7 +377,7 @@ acpi_disable(struct acpi_softc *sc)
 
 	if (acpi_active) {
 		rv = AcpiDisable();
-		if (rv == AE_OK)
+		if (ACPI_SUCCESS(rv))
 			acpi_active = 0;
 	}
 	return (rv);
@@ -407,6 +409,7 @@ acpi_build_tree(struct acpi_softc *sc)
 	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 	ACPI_HANDLE parent;
+	ACPI_STATUS rv;
 	int i;
 
 	TAILQ_INIT(&sc->sc_scopes);
@@ -425,8 +428,9 @@ acpi_build_tree(struct acpi_softc *sc)
 
 		state.scope = as;
 
-		if (AcpiGetHandle(ACPI_ROOT_OBJECT, (char *) scopes[i],
-		    &parent) == AE_OK) {
+		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, (char *) scopes[i],
+		    &parent);
+		if (ACPI_SUCCESS(rv)) {
 			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
 			    acpi_make_devnode, &state, NULL);
 		}
@@ -529,11 +533,12 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_STATUS rv;
 
-	if (AcpiGetType(handle, &type) == AE_OK) {
+	rv = AcpiGetType(handle, &type);
+	if (ACPI_SUCCESS(rv)) {
 		buf.Pointer = NULL;
 		buf.Length = ACPI_ALLOCATE_BUFFER;
 		rv = AcpiGetObjectInfo(handle, &buf);
-		if (rv != AE_OK) {
+		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
 			printf("%s: AcpiGetObjectInfo failed: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
@@ -604,6 +609,7 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
+	ACPI_STATUS rv;
 
 	if (pnp) {
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
@@ -612,8 +618,9 @@ acpi_print(void *aux, const char *pnp)
 			char *str;
 
 			aprint_normal("%s ", pnpstr);
-			if (acpi_eval_string(aa->aa_node->ad_handle,
-			    "_STR", &str) == AE_OK) {
+			rv = acpi_eval_string(aa->aa_node->ad_handle,
+			    "_STR", &str);
+			if (ACPI_SUCCESS(rv)) {
 				aprint_normal("[%s] ", str);
 				AcpiOsFree(str);
 			}
@@ -693,10 +700,11 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 			rv = AcpiInstallFixedEventHandler(
 			    ACPI_EVENT_POWER_BUTTON,
 			    acpi_fixed_button_handler, &sc->sc_smpsw_power);
-			if (rv != AE_OK) {
+			if (ACPI_FAILURE(rv)) {
 				printf("%s: unable to install handler for "
-				    "fixed power button: %d\n",
-				    sc->sc_dev.dv_xname, rv);
+				    "fixed power button: %s\n",
+				    sc->sc_dev.dv_xname,
+				    AcpiFormatException(rv));
 			}
 		}
 	}
@@ -713,10 +721,11 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 			rv = AcpiInstallFixedEventHandler(
 			    ACPI_EVENT_SLEEP_BUTTON,
 			    acpi_fixed_button_handler, &sc->sc_smpsw_sleep);
-			if (rv != AE_OK) {
+			if (ACPI_FAILURE(rv)) {
 				printf("%s: unable to install handler for "
-				    "fixed sleep button: %d\n",
-				    sc->sc_dev.dv_xname, rv);
+				    "fixed sleep button: %s\n",
+				    sc->sc_dev.dv_xname,
+				    AcpiFormatException(rv));
 			}
 		}
 	}
@@ -739,7 +748,7 @@ acpi_fixed_button_handler(void *context)
 
 	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 	    acpi_fixed_button_pressed, smpsw);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		printf("%s: WARNING: unable to queue fixed button pressed "
 		    "callback: %s\n", smpsw->smpsw_name,
 		    AcpiFormatException(rv));
@@ -788,7 +797,7 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	buf.Length = sizeof(param);
 
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_INTEGER);
-	if (rv == AE_OK)
+	if (ACPI_SUCCESS(rv))
 		*valp = param.Integer.Value;
 
 	return (rv);
@@ -812,7 +821,7 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 	buf.Length = ACPI_ALLOCATE_BUFFER;
 
 	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
-	if (rv == AE_OK) {
+	if (ACPI_SUCCESS(rv)) {
 		ACPI_OBJECT *param = buf.Pointer;
 		char *ptr = param->String.Pointer;
 		size_t len = param->String.Length;
@@ -988,11 +997,13 @@ void
 acpi_pci_fixup(struct acpi_softc *sc)
 {
 	ACPI_HANDLE parent;
+	ACPI_STATUS rv;
 
 #ifdef ACPI_DEBUG
 	printf("acpi_pci_fixup starts:\n");
 #endif
-	if (AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent) != AE_OK)
+	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent);
+	if (ACPI_FAILURE(rv))
 		return;
 	sc->sc_pci_bus = 0;
 	AcpiWalkNamespace(ACPI_TYPE_DEVICE, parent, 100,

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 	 */
 
 	status = acpi_get(ad->ad_handle, &buf, AcpiGetCurrentResources);
-	if (status != AE_OK) {
+	if (ACPI_FAILURE(status)) {
 		printf("%s: ACPI: unable to get Current Resources: %s\n",
 		    dev->dv_xname, AcpiFormatException(status));
 		return_ACPI_STATUS(status);

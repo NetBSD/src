@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.11 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.11 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -174,7 +174,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX See acpiacad_notify_handler() */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpiacad_notify_handler, sc);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -198,9 +198,10 @@ acpiacad_get_status(void *arg)
 {
 	struct acpiacad_softc *sc = arg;
 	int status, s;
+	ACPI_STATUS rv;
 
-	if (acpi_eval_integer(sc->sc_node->ad_handle, "_PSR",
-	    &status) != AE_OK)
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PSR", &status);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	AACAD_LOCK(sc, s);
@@ -256,7 +257,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		AACAD_UNLOCK(sc, s);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpiacad_get_status, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: unable to queue status check: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
