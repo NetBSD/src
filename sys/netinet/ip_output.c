@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.98 2002/06/24 08:01:35 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.99 2002/06/24 08:11:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.98 2002/06/24 08:01:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.99 2002/06/24 08:11:30 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -268,6 +268,7 @@ ip_output(m0, va_alist)
 	    imo != NULL && imo->imo_multicast_ifp != NULL) {
 		ifp = imo->imo_multicast_ifp;
 		mtu = ifp->if_mtu;
+		IFP_TO_IA(ifp, ia);
 	} else {
 		if (ro->ro_rt == 0)
 			rtalloc(ro);
