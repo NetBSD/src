@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.32 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.33 2005/01/15 11:01:46 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -32,6 +32,36 @@
  *
  * $FreeBSD: src/sys/dev/an/if_an.c,v 1.12 2000/11/13 23:04:12 wpaul Exp $
  */
+/*
+ * Copyright (c) 2004, 2005 David Young.  All rights reserved.
+ * Copyright (c) 2004, 2005 OJC Technologies.  All rights reserved.
+ * Copyright (c) 2004, 2005 Dayton Data Center Services, LLC.  All
+ *     rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the author nor the names of any co-contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY David Young AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL David Young AND CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Aironet 4500/4800 802.11 PCMCIA/ISA/PCI driver for FreeBSD.
@@ -47,12 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.32 2004/08/24 00:53:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.33 2005/01/15 11:01:46 dyoung Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
@@ -121,6 +152,8 @@ int an_debug = 0;
 
 #define	DPRINTF(X)	if (an_debug) printf X
 #define	DPRINTF2(X)	if (an_debug > 1) printf X
+static int an_sysctl_verify(SYSCTLFN_PROTO, int lower, int upper);
+static int an_sysctl_verify_debug(SYSCTLFN_PROTO);
 #else
 #define	DPRINTF(X)
 #define	DPRINTF2(X)
@@ -288,6 +321,69 @@ an_attach(struct an_softc *sc)
 
 	return 0;
 }
+
+#ifdef AN_DEBUG
+/*
+ * Setup sysctl(3) MIB, hw.an.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
+{
+	int rc;
+	struct sysctlnode *cnode, *rnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "an",
+	    "Cisco/Aironet 802.11 controls",
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable Cisco/Aironet debugging output"),
+	    an_sysctl_verify_debug, 0, &an_debug, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+static int
+an_sysctl_verify(SYSCTLFN_ARGS, int lower, int upper)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < lower || t > upper)
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+static int
+an_sysctl_verify_debug(SYSCTLFN_ARGS)
+{
+	return an_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 2);
+}
+#endif /* AN_DEBUG */
 
 int
 an_detach(struct an_softc *sc)
@@ -1213,6 +1309,33 @@ an_write_wepkey(struct an_softc *sc, int type, struct an_wepkey *keys, int kid)
 	return error;
 }
 
+#ifdef AN_DEBUG
+static void
+an_dump_pkt(const char *devname, struct mbuf *m)
+{
+	int col, col0, i;
+	uint8_t *pkt = mtod(m, uint8_t *);
+	const char *delim = "";
+	int delimw = 0;
+
+	printf("%s: pkt ", devname);
+	col = col0 = strlen(devname) + strlen(": pkt ");
+	for (i = 0; i < m->m_len; i++) {
+		printf("%s%02x", delim, pkt[i]);
+		delim = ":";
+		delimw = 1;
+		col += delimw + 2;
+		if (col >= 72) {
+			printf("\n%*s", col0, "");
+			col = col0;
+			delim = "";
+			delimw = 0;
+		}
+	}
+	if (col != 0)
+		printf("\n");
+}
+#endif /* AN_DEBUG */
 
 /*
  * Low level functions
@@ -1228,7 +1351,8 @@ an_rx_intr(struct an_softc *sc)
 	struct an_rxframe frmhdr;
 	struct mbuf *m;
 	u_int16_t status;
-	int fid, off, len;
+	int fid, gaplen, len, off;
+	uint8_t *gap;
 
 	fid = CSR_READ_2(sc, AN_RX_FID);
 
@@ -1264,7 +1388,8 @@ an_rx_intr(struct an_softc *sc)
 		return;
 	}
 
-	len = le16toh(frmhdr.an_rx_payload_len);
+	/* the payload length field includes a 16-bit "mystery field" */
+	len = le16toh(frmhdr.an_rx_payload_len) - sizeof(uint16_t);
 	off = ALIGN(sizeof(struct ieee80211_frame));
 
 	if (off + len > MCLBYTES) {
@@ -1284,7 +1409,7 @@ an_rx_intr(struct an_softc *sc)
 		DPRINTF(("an_rx_intr: MGET failed\n"));
 		return;
 	}
-	if (off + len > MHLEN) {
+	if (off + len + AN_GAPLEN_MAX > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
@@ -1297,29 +1422,45 @@ an_rx_intr(struct an_softc *sc)
 	m->m_data += off - sizeof(struct ieee80211_frame);
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		gaplen = le16toh(frmhdr.an_gaplen);
+		if (gaplen > AN_GAPLEN_MAX) {
+			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
+			m_freem(m);
+			ifp->if_ierrors++;
+			DPRINTF(("%s: gap too long\n", __func__));
+			return;
+		}
 		/*
-		 * The gap and the payload length should be skipped.
-		 * Make dummy read to avoid seek.
+		 * We don't need the 16-bit mystery field (payload length?),
+		 * so read it into the region reserved for the 802.11 header.
+		 *
+		 * When Cisco Aironet 350 cards w/ firmware version 5 or
+		 * greater operate with certain Cisco 350 APs,
+		 * the "gap" is filled with the SNAP header.  Read
+		 * it in after the 802.11 header.
 		 */
-		an_read_bap(sc, fid, -1, m->m_data,
-		    le16toh(frmhdr.an_gaplen) + sizeof(u_int16_t));
+		gap = m->m_data + sizeof(struct ieee80211_frame) -
+		    sizeof(uint16_t);
+		an_read_bap(sc, fid, -1, gap, gaplen + sizeof(u_int16_t));
 #ifdef AN_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
 		    (IFF_DEBUG|IFF_LINK2)) {
 			int i;
 			printf(" gap&len");
-			for (i = 0;
-			    i < le16toh(frmhdr.an_gaplen) + sizeof(u_int16_t);
-			    i++)
-				printf(" %02x", mtod(m, u_int8_t *)[i]);
+			for (i = 0; i < gaplen + sizeof(u_int16_t); i++)
+				printf(" %02x", gap[i]);
 			printf("\n");
 		}
 #endif
-	}
+	} else
+		gaplen = 0;
+
+	an_read_bap(sc, fid, -1,
+	    m->m_data + sizeof(struct ieee80211_frame) + gaplen, len);
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + gaplen +
+	    len;
+
 	memcpy(m->m_data, &frmhdr.an_whdr, sizeof(struct ieee80211_frame));
-	an_read_bap(sc, fid, -1, m->m_data + sizeof(struct ieee80211_frame),
-	    len);
-	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame) + len;
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
@@ -1331,6 +1472,11 @@ an_rx_intr(struct an_softc *sc)
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
+
+#ifdef AN_DEBUG
+	if (an_debug > 1)
+		an_dump_pkt(sc->sc_dev.dv_xname, m);
+#endif /* AN_DEBUG */
 
 	ni = ieee80211_find_rxnode(ic, wh);
 	ieee80211_input(ifp, m, ni, frmhdr.an_rx_signal_strength,
