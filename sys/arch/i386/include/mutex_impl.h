@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/18 01:43:19 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/19 05:13:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,14 +42,18 @@
 struct mutex {
 	union {
 		/* Adaptive mutex */
-		__volatile unsigned long mtx_owner;
+		__volatile unsigned long mtx_owner;	/* 0-3 */
 
 		/* Spin mutex */
 		struct {
-			unsigned int mtx_dummy;
-			__cpu_simple_lock_t mtx_lock;
-			int mtx_oldspl;
-			int mtx_minspl;
+			/*
+			 * We want mtx_dummy to overlap with the
+			 * LSB of mtx_owner.
+			 */
+			char mtx_dummy;			/* 0 */
+			__cpu_simple_lock_t mtx_lock;	/* 1 */
+			short mtx_minspl;		/* 2-3 */
+			int mtx_oldspl;			/* 4-7 */
 		} mtx_spin;
 	} mtx_un;
 };
