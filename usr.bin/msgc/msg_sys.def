@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.9 1999/06/23 17:42:11 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.10 1999/07/04 07:40:51 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,11 +41,8 @@ static char *cbuffer;
 static size_t cbuffersize;
 static int do_echo = 1;
 
-#if defined(DYNAMIC_MESSAGE_LAYOUT)
 static int last_i_was_nl, last_i_was_space;
 static int last_o_was_punct, last_o_was_space;
-#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
-
 
 /* Routines */
 
@@ -83,10 +80,8 @@ void msg_clear(void)
 {
 	wclear (msg_win);
 	wrefresh (msg_win);
-#if defined(DYNAMIC_MESSAGE_LAYOUT)
 	last_o_was_punct = 0;
 	last_o_was_space = 1;
-#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 }
 
 void msg_standout(void)
@@ -99,17 +94,27 @@ void msg_standend(void)
 	wstandend(msg_win);
 }
 
-int msg_vprintf (char *fmt, va_list ap)
+int msg_vprintf (int auto_fill, char *fmt, va_list ap)
 {
-#if defined(DYNAMIC_MESSAGE_LAYOUT)
 	const char *wstart, *afterw;
 	int wordlen, nspaces;
-#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	int ret;
 
 	ret = vsnprintf (cbuffer, cbuffersize, fmt, ap);
 
-#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	if (!auto_fill) {
+		waddstr(msg_win, cbuffer);
+
+		/*
+		 * nothing is perfect if they flow text after a table,
+		 * but this may be decent.
+		 */
+		last_i_was_nl = last_i_was_space = 1;
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+		goto out;
+	}
+
 	for (wstart = afterw = cbuffer; *wstart; wstart = afterw) {
 
 		/* eat one space, or a whole word of non-spaces */
@@ -119,7 +124,6 @@ int msg_vprintf (char *fmt, va_list ap)
 			while (*afterw && !isspace(*afterw))
 				afterw++;
 
-		/* last was an nl, this is an nl: paragraph break */
 		/* this is an nl: special formatting necessary */
 		if (*wstart == '\n') {
 			if (last_i_was_nl || last_i_was_space) {
@@ -209,10 +213,8 @@ int msg_vprintf (char *fmt, va_list ap)
 		last_o_was_punct = 0;
 		last_o_was_space = 1;
 	}
-#else /* defined(DYNAMIC_MESSAGE_LAYOUT) */
-	waddstr (msg_win, cbuffer);
-#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 
+out:
 	wrefresh (msg_win);
 	return ret;
 }
@@ -224,7 +226,7 @@ void msg_display(int msg_no, ...)
 	msg_clear();
 
 	va_start(ap, msg_no);
-	(void)msg_vprintf (msg_list[msg_no], ap);
+	(void)msg_vprintf(0/*XXX*/, msg_list[msg_no], ap);
 	va_end(ap);
 }
 
@@ -233,7 +235,7 @@ void msg_display_add(int msg_no, ...)
 	va_list ap;
 
 	va_start (ap, msg_no);
-	(void)msg_vprintf (msg_list[msg_no], ap);
+	(void)msg_vprintf(0/*XXX*/, msg_list[msg_no], ap);
 	va_end (ap);
 }
 
@@ -245,7 +247,7 @@ int msg_printf (char *fmt, ...)
 	msg_clear();
 
 	va_start (ap, fmt);
-	res = msg_vprintf (fmt, ap);
+	res = msg_vprintf (0/*XXX*/, fmt, ap);
 	va_end (ap);
 	return res;
 }
@@ -256,7 +258,7 @@ int msg_printf_add (char *fmt, ...)
 	int  res;
 
 	va_start (ap, fmt);
-	res = msg_vprintf (fmt, ap);
+	res = msg_vprintf (0/*XXX*/, fmt, ap);
 	va_end (ap);
 	return res;
 }
@@ -270,7 +272,7 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	int y,x;
 	char *ibuf = alloca(max_chars);
 
-	msg_vprintf (msg, ap);
+	msg_vprintf (0, msg, ap);
 	if (def != NULL && *def) {
 		waddstr (msg_win, " [");
 		waddstr (msg_win, def);
@@ -336,10 +338,8 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	}
 	if (do_echo) {
 		waddch(msg_win, '\n');
-#if defined(DYNAMIC_MESSAGE_LAYOUT)
 		last_o_was_punct = 0;
 		last_o_was_space = 1;
-#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	}
 
 	/* copy the appropriate string to the output */
@@ -401,3 +401,24 @@ void msg_echo()
 {
 	do_echo = 1;
 }
+
+void msg_table(int msg_no, ...)
+{
+	va_list ap;
+
+	msg_clear();
+
+	va_start(ap, msg_no);
+	(void)msg_vprintf(0, msg_list[msg_no], ap);
+	va_end(ap);
+}
+
+void msg_table_add(int msg_no, ...)
+{
+	va_list ap;
+
+	va_start (ap, msg_no);
+	(void)msg_vprintf(0, msg_list[msg_no], ap);
+	va_end (ap);
+}
+
