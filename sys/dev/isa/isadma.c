@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.28 1997/07/28 20:56:16 augustss Exp $	*/
+/*	$NetBSD: isadma.c,v 1.29 1997/07/31 22:20:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ isa_dmamap_create(isadev, chan, size, flags)
 
 	if (ISA_DRQ_ISFREE(sc, chan) == 0) {
 		printf("%s: drq %d is not free\n", sc->sc_dev.dv_xname, chan);
-		goto lose;
+		return EBUSY;	/* XXX should caller check for free drq? */
 	}
 
 	ISA_DRQ_ALLOC(sc, chan);
