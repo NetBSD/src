@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.18 1997/04/07 23:40:46 cgd Exp $ */
+/* $NetBSD: sio.c,v 1.19 1997/06/06 23:54:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.18 1997/04/07 23:40:46 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.19 1997/06/06 23:54:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ struct sio_softc {
 	struct device	sc_dv;
 
 	bus_space_tag_t sc_iot, sc_memt;
+	bus_dma_tag_t	sc_parent_dmat;
 	int		sc_haseisa;
 };
 
@@ -138,6 +139,7 @@ sioattach(parent, self, aux)
 
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
+	sc->sc_parent_dmat = pa->pa_dmat;
 	sc->sc_haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 #ifdef EVCNT_COUNTERS
@@ -168,6 +170,8 @@ sio_bridge_callback(v)
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_iot = sc->sc_iot;
 		sa.sa_eba.eba_memt = sc->sc_memt;
+		sa.sa_eba.eba_dmat =
+		    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_EISA);
 		sa.sa_eba.eba_ec = &ec;
 		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
@@ -180,6 +184,8 @@ sio_bridge_callback(v)
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
 	sa.sa_iba.iba_memt = sc->sc_memt;
+	sa.sa_iba.iba_dmat =
+	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
 	sa.sa_iba.iba_ic = &ic;
 	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }

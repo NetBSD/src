@@ -1,10 +1,10 @@
-/* $NetBSD: lcareg.h,v 1.6 1997/06/03 21:54:06 cgd Exp $ */
+/* $NetBSD: lcareg.h,v 1.7 1997/06/06 23:54:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Jeffrey Hsu
+ * Authors: Jeffrey Hsu, Jason R. Thorpe
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -51,6 +51,10 @@
 #define LCA_IOC_STAT0	(LCA_IOC_BASE + 0x040)	/* Status 0 */
 #define LCA_IOC_STAT1	(LCA_IOC_BASE + 0x060)	/* Status 1 */
 
+#define	LCA_IOC_TBIA	(LCA_IOC_BASE + 0x080)	/* TLB Invalidate All */
+#define	LCA_IOC_TB_ENA	(LCA_IOC_BASE + 0x0a0)	/* TLB Enable */
+#define	IOC_TB_ENA_TEN	0x0000000000000080UL
+
 #define LCA_IOC_W_BASE0	(LCA_IOC_BASE + 0x100)	/* Window Base */
 #define LCA_IOC_W_MASK0	(LCA_IOC_BASE + 0x140)	/* Window Mask */
 #define LCA_IOC_W_T_BASE0 (LCA_IOC_BASE + 0x180) /* Translated Base */
@@ -58,3 +62,23 @@
 #define LCA_IOC_W_BASE1	(LCA_IOC_BASE + 0x120)	/* Window Base */
 #define LCA_IOC_W_MASK1	(LCA_IOC_BASE + 0x160)	/* Window Mask */
 #define LCA_IOC_W_T_BASE1 (LCA_IOC_BASE + 0x1a0) /* Translated Base */
+
+#define	IOC_W_BASE_W_BASE 0x00000000fff00000UL	/* Window base value */
+#define	IOC_W_BASE_SG	  0x0000000100000000UL	/* Window uses SGMAPs */
+#define	IOC_W_BASE_WEN	  0x0000000200000000UL	/* Window enable */
+
+#define	IOC_W_MASK_1M	0x0000000000000000UL	/* 1MB window */
+#define	IOC_W_MASK_2M	0x0000000000100000UL	/* 2MB window */
+#define	IOC_W_MASK_4M	0x0000000000300000UL	/* 4MB window */
+#define	IOC_W_MASK_8M	0x0000000000700000UL	/* 8MB window */
+#define	IOC_W_MASK_16M	0x0000000000f00000UL	/* 16MB window */
+#define	IOC_W_MASK_32M	0x0000000001f00000UL	/* 32MB window */
+#define	IOC_W_MASK_64M	0x0000000003f00000UL	/* 64MB window */
+#define	IOC_W_MASK_128M	0x0000000007f00000UL	/* 128M window */
+#define	IOC_W_MASK_256M	0x000000000ff00000UL	/* 256M window */
+#define	IOC_W_MASK_512M	0x000000001ff00000UL	/* 512M window */
+#define	IOC_W_MASK_1G	0x000000003ff00000UL	/* 1GB window */
+#define	IOC_W_MASK_2G	0x000000007ff00000UL	/* 2GB window */
+#define	IOC_W_MASK_4G	0x00000000fff00000UL	/* 4GB window */
+
+#define	IOC_W_T_BASE	0x00000000fffffc00UL	/* page table base */

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.4 1997/04/06 22:30:41 cgd Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.5 1997/06/06 23:55:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -91,4 +91,28 @@ typedef int32_t		tc_offset_t;
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
 
-bus_space_tag_t tc_bus_mem_init __P((void *memv));;
+/*
+ * Functions that may be called by machine-independent code.
+ */
+extern bus_dma_tag_t (*tc_dma_get_tag_func) __P((int slot));
+#define	tc_dma_get_tag(s)	(*tc_dma_get_tag_func)((s))
+
+/*
+ * These functions are private, and may not be called by
+ * machine-independent code.
+ */
+bus_space_tag_t tc_bus_mem_init __P((void *memv));
+void tc_dma_init __P((void));
+
+/*
+ * Address of scatter/gather SRAM on the 3000/500-series.
+ *
+ * There is room for 32K entries, yielding 256M of sgva space.
+ * The page table is readable in both dense and sparse space.
+ * The page table is writable only in sparse space.
+ *
+ * In sparse space, the 32-bit PTEs are followed by 32-bits
+ * of pad.
+ */
+#define	TC_SGSRAM_DENSE		0x0000001c2800000UL
+#define	TC_SGSRAM_SPARSE	0x0000001d5000000UL
