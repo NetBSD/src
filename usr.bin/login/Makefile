@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.2.3 2000/07/26 23:17:34 mycroft Exp $
+#	$NetBSD: Makefile,v 1.29.2.4 2000/10/18 04:19:58 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,6 @@ DPADD+=	${LIBUTIL} ${LIBCRYPT}
 LDADD+=	-lutil -lcrypt
 BINOWN=	root
 BINMODE=4555
-INSTALLFLAGS=-fschg
 CPPFLAGS+=-DLOGIN_CAP
 
 .ifdef SKEY
