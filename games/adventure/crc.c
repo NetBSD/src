@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
+/*	$NetBSD: crc.c,v 1.3 1997/08/11 14:06:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,18 +36,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-static char rcsid[] = "$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $";
+__RCSID("$NetBSD: crc.c,v 1.3 1997/08/11 14:06:11 christos Exp $");
 #endif
 #endif /* not lint */
 
-typedef	unsigned long	u_long;
+#include "extern.h"
 
-u_long crctab[] = {
+unsigned long crctab[] = {
 	0x7fffffff,
 	0x77073096,  0xee0e612c,  0x990951ba,  0x076dc419,  0x706af48f,
 	0xe963a535,  0x9e6495a3,  0x0edb8832,  0x79dcb8a4,  0xe0d5e91e,
@@ -110,15 +111,16 @@ u_long crctab[] = {
  *      it.
  */
 
-u_long crcval;
+unsigned long crcval;
 int step;
 
+void
 crc_start()
 {
 	crcval = step = 0;
 }
 
-u_long crc(ptr, nr) /* Process nr bytes at a time; ptr points to them */
+unsigned long crc(ptr, nr) /* Process nr bytes at a time; ptr points to them */
 char *ptr;
 int nr;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $	*/
+/*	$NetBSD: done.c,v 1.3 1997/08/11 14:06:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,18 +38,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $";
+__RCSID("$NetBSD: done.c,v 1.3 1997/08/11 14:06:12 christos Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: termination routines                  */
 
+#include <stdio.h>
 #include "hdr.h"
+#include "extern.h"
 
+int
 score()                                         /* sort of like 20000   */
 {       register int scor,i;
 	mxscor=scor=0;
@@ -86,6 +90,7 @@ score()                                         /* sort of like 20000   */
 	return(scor);
 }
 
+void
 done(entry)     /* entry=1 means goto 13000 */  /* game is over         */
 int entry;      /* entry=2 means goto 20000 */ /* 3=19000 */
 {       register int i,sc;
@@ -114,6 +119,7 @@ int entry;      /* entry=2 means goto 20000 */ /* 3=19000 */
 }
 
 
+int
 die(entry)                                      /* label 90             */
 int entry;
 {       register int i;
