@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.27 2002/09/13 16:31:28 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.28 2002/09/13 16:54:14 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -249,8 +249,17 @@ _rtld_relocate_nonplt_objects(obj, self)
 		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
 		    sym->st_name + obj->strtab, *got));
 
-		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    ELF_ST_BIND(sym->st_info) != STB_WEAK)
+		/* if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    ELF_ST_BIND(sym->st_info) != STB_WEAK &&
+		    sym->st_shndx == SHN_UNDEF)
+			*got = sym->st_value + (Elf_Addr)obj->relocbase;
+		else */ if (sym->st_shndx == SHN_UNDEF ||
+		    sym->st_shndx == SHN_COMMON) {
+			def = _rtld_find_symdef(i, obj, &defobj, true);
+			if (def == NULL)
+				return -1;
+			*got = def->st_value + (Elf_Addr)defobj->relocbase;
+		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
 			*got = sym->st_value + (Elf_Addr)obj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
@@ -275,4 +284,5 @@ int
 _rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
 {
+	return 0;
 }
