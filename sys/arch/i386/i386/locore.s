@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.238 2001/05/16 05:01:28 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.239 2001/05/16 22:09:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -280,19 +280,19 @@ start:	movw	$0x1234,0x472			# warm boot
 	addl	$4, %eax
 	movl	(%eax), %ecx		/* address of entry */
 	pushl	%eax
-	pushl	(%ecx)		/* len */
+	pushl	(%ecx)			/* len */
+	pushl	%ecx
 	pushl	%edx
 	addl	(%ecx), %edx		/* update dest pointer */
 	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edx
 	jg	2f
-	pushl	%ecx
-	call	_C_LABEL(bcopy)
+	call	_C_LABEL(memcpy)
 	addl	$12, %esp
 	popl	%eax
 	subl	$1, %ebx
 	jmp	2b
 2:	/* cleanup for overflow case */
-	addl	$12, %esp
+	addl	$16, %esp
 	movl	$RELOC(bootinfo), %edx
 	subl	%ebx, (%edx)		/* correct number of entries */
 1:
@@ -779,62 +779,6 @@ ENTRY(fillw)
 	stosw
 	popl	%edi
 	ret
-
-/*
- * XXX Note: bcopy was obsoleted some time ago in favor of the mem* functions.
- * It seems to only be legitimately called *inside* locore.s given that
- * systm.h defines it to memcpy. Perhaps something should be cleaned up here?
- * -- Perry Metzger, May 7, 2001
- */
-/*
- * void bcopy(const void *from, void *to, size_t len);
- * Copy len bytes.
- * This routine handles overlapping regions, although bcopy
- * is not specified to do so (and should not be counted on to do so).
- */
-/* LINTSTUB: Func: void bcopy(const void *from, void *to, size_t len) */
-ENTRY(bcopy)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax		# overlapping?
-	jb	1f
-	cld				# nope, copy forward
-	shrl	$2,%ecx			# copy by 32-bit words
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx			# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$3,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 32-bit words
-	shrl	$2,%ecx
-	subl	$3,%esi
-	subl	$3,%edi
-	rep
-	movsl
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
 
 /*
  * XXX No section 9 man page for kcopy. IMHO,
