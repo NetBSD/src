@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.10 1994/02/13 21:13:23 chopps Exp $
+ *	$Id: locore.s,v 1.11 1994/02/22 02:05:27 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -616,7 +616,7 @@ Lstackok:
 	btst	#1,d0			| timerB interrupt?
 	jeq     LtimerA			| no, must be timerA
 	lea	sp@(16),a1		| get pointer to PS
-#ifdef GPROF
+#ifdef PROF
 	.globl	_profclock
 	movl	d0,sp@-			| save status so jsr will not clobber
 	movl	a1@,sp@-		| push padded PS
@@ -650,7 +650,7 @@ LtimerA:
 	addql	#1,_intrcnt+28		| add another system clock interrupt
 #ifdef PROFTIMER
 Ltimend:
-#ifdef GPROF
+#ifdef PROF
 	.globl	_profiling, _startprofclock
 	tstl	_profiling		| kernel profiling desired?
 	jne	Ltimdone		| no, all done
@@ -1007,18 +1007,7 @@ _szicode:
 /*
  * Primitives
  */
-
-#ifdef GPROF
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name: link a6,#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
-#else
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name:
-#define ALTENTRY(name, rname) \
-	.globl _/**/name; _/**/name:
-#endif
+#include <m68k/asm.h>
 
 /*
  * update profiling information for the user
@@ -1337,7 +1326,7 @@ Lswnochg:
 #endif
 	bclr	#0,_profon		| clear user profiling bit, was set?
 	jeq	Lskipoff		| no, clock off or doing kernel only
-#ifdef GPROF
+#ifdef PROF
 	tstb	_profon			| kernel profiling also enabled?
 	jlt	Lskipoff		| yes, nothing more to do
 #endif
@@ -1398,7 +1387,7 @@ Lres5:
 	tstl	a1@(U_PROFSCALE)	| process being profiled?
 	jeq	Lskipon			| no, do nothing
 	orb	#1,_profon		| turn on user profiling bit
-#ifdef GPROF
+#ifdef PROF
 	jlt	Lskipon			| already profiling kernel, all done
 #endif
 	CIABADDR(a0)
