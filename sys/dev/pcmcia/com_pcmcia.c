@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.17 1998/11/19 00:04:02 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.18 1998/12/20 03:49:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,18 +233,28 @@ retry:
 		if (cfe->num_iospace != 1)
 			continue;
 
-		if (autoalloc == 1) {
-			if (cfe->iomask == 3) {
-				if (!pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-									 cfe->iospace[0].length,
+		if (autoalloc == 0) {
+			/* 
+			 * cfe->iomask == 3 is our test for the "generic" config table 
+			 * entry, which we want to avoid on the first pass and use
+			 * exclusively on the second pass. 
+			 */
+			if (cfe->iomask != 3) {
+				if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+									 cfe->iospace[0].length, 
+									 0, 
 									 &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
 		} else {
-			if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-								 cfe->iospace[0].length, 0, &psc->sc_pcioh)) {
-				goto found;
+		    if (cfe->iomask == 3) {
+				if (!pcmcia_io_alloc(pa->pf, 0, 
+									 cfe->iospace[0].length,
+									 cfe->iospace[0].length,
+									 &psc->sc_pcioh)) {
+					goto found;
+				}
 			}
 		}
 	}
