@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.15 2001/10/31 19:59:43 tv Exp $
+#  $NetBSD: build.sh,v 1.16 2001/11/01 00:14:17 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -96,6 +96,7 @@ usage () {
 	echo "    -n: show commands that would be executed, but do not execute them"
 	echo "    -o: set MKOBJDIRS=no (do not create objdirs at start of build)"
 	echo "    -r: remove contents of TOOLDIR and DESTDIR before building"
+	echo "    -t: build and install tools only (implies -b)"
 	echo "    -u: set UPDATE (overrides mk.conf)"
 	echo "    -w: create nbmake script at wrapper (default TOOLDIR/bin/nbmake-MACHINE)"
 	echo "    -D: set DESTDIR to dest (overrides mk.conf)"
@@ -112,13 +113,14 @@ usage () {
 buildtarget=build
 cwd=`pwd`
 do_buildsystem=true
+do_buildonlytools=false
 do_rebuildmake=false
 do_removedirs=false
 makeenv='exec'
 makeflags=''
 makewrapper=''
 opt_a=no
-opts='a:bhj:m:noruw:D:O:R:T:'
+opts='a:bhj:m:nortuw:D:O:R:T:'
 runcmd=''
 
 if type getopts >/dev/null 2>&1; then
@@ -156,6 +158,8 @@ while eval $getoptcmd; do case $opt in
 	-o)	MKOBJDIRS=no;;
 
 	-r)	do_removedirs=true; do_rebuildmake=true;;
+
+	-t)	do_buildonlytools=true; do_buildsystem=false;;
 
 	-u)	makeflags="$makeflags UPDATE=yes";;
 
@@ -252,13 +256,15 @@ fi
 removedirs="$TOOLDIR"
 
 if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
-	if [ "$buildtarget" = "release" ] || \
-	   [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
-	   [ "`uname -m`" != "$MACHINE" ]; then
+	if $do_buildsystem && \
+	   ([ "$buildtarget" = "release" ] || \
+	    [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
+	    [ "`uname -m`" != "$MACHINE" ]); then
 		bomb "DESTDIR must be set to a non-root path for cross builds or -R."
+	elif $do_buildsystem; then
+		echo "===> WARNING: Building to /."
+		echo "===> If your kernel is not up to date, this may cause the system to break!"
 	fi
-	echo "===> WARNING: Building to /."
-	echo "===> If your kernel is not up to date, this may cause the system to break!"
 else
 	removedirs="$removedirs $DESTDIR"
 fi
@@ -297,7 +303,7 @@ if $do_rebuildmake || [ ! -f $makewrapper ] || [ $makewrapper -ot build.sh ]; th
 	eval $mkscriptcmd <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.15 2001/10/31 19:59:43 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.16 2001/11/01 00:14:17 thorpej Exp $
 #
 $makeenv $TOOLDIR/bin/nbmake $makeflags \${1+\$@}
 EOF
@@ -307,4 +313,10 @@ fi
 
 if $do_buildsystem; then
 	${runcmd-exec} $makewrapper $buildtarget
+elif $do_buildonlytools; then
+	if [ "$MKOBJDIRS" != "no" ]; then
+		$makewrapper obj-tools || exit 1
+	fi
+	${runcmd-exec} sh -c "cd tools && \
+	    $makewrapper MKTOOLS=always build"
 fi
