@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.1.2.6 1998/05/29 20:48:51 mycroft Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.1.2.7 1998/11/16 07:10:28 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@
 #include "menu_defs.h"
 }
 
-default x=20, y=12, no exit;
+default x=20, y=12, no exit, scrollable;
 
 menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	display action  { toplevel(); };
