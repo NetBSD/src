@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.5 1999/03/16 18:57:31 christos Exp $
+#	$NetBSD: checkver,v 1.6 1999/06/10 00:32:23 simonb Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,12 +37,9 @@
 #
 
 #--------------------------------------------------------------------#
-# checkver [-q] -d [installedlibdir [library name]]"
-# checkver [-q] -s [setlistdir [library name]]"
-# checkver [-q] -f liblistfile [library name]"
-#
-# This script must be run from a directory in which
-# a shlib_version file resides.
+# checkver [-q] [-v shlib_version_file] -d [installedlibdir [library name]]"
+# checkver [-q] [-v shlib_version_file] -s [setlistdir [library name]]"
+# checkver [-q] [-v shlib_version_file] -f liblistfile [library name]"
 #
 # One of -d, -s or -f must be specified.
 #
@@ -60,6 +57,9 @@
 #
 # -f: Checks the version against the provided list.  A filename
 #	must be supplied.
+#
+# -v: Specify the filename of the shlib_version file.  Defaults
+#     to "./shlib_version".
 #
 # This script produces no output if all library version are not 
 # large than the source version.  If an installed library with a
@@ -84,6 +84,7 @@ Usage() {
 basedir=/usr/src
 setsdir=$basedir/distrib/sets/lists
 libdir=/usr/lib
+shlib_version=./shlib_version
 
 error=0
 quiet=0
@@ -91,7 +92,7 @@ usedir=0
 usefile=0
 usesets=0
 CWD=`pwd`
-args=`getopt "df:shq" "$@"`
+args=`getopt "df:shqv:" "$@"`
 if [ $? -ne 0 ] ; then
     Usage $0
     exit 0
@@ -113,6 +114,7 @@ while . ; do
 	    if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
 		Usage $0 ; exit 2
 	    fi;;
+	-v) shlib_version=$2; shift ; shift ;;
 	-h) Usage $0 ; exit 0;;
 	-q) quiet=1 ; shift;;
 	--) shift ; break;;
@@ -180,16 +182,16 @@ if [ $? != 0 ]; then
 fi
 
 
-if [ ! -f ./shlib_version ] ; then
-    echo "$0: unable to find ./shlib_version"
+if [ ! -f $shlib_version ] ; then
+    echo "$0: unable to find $shlib_version"
     exit 2
 fi
 
 # Grab major and minor numbers from the source.
-. ./shlib_version
+. $shlib_version
 
 if [ "X$minor" = "X" -o "X$major" = "X" ] ; then
-    echo "$0: shlib_version doesn't contain the version."
+    echo "$0: $shlib_version doesn't contain the version."
     exit 2
 fi
 
