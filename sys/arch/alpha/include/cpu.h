@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.36 1999/12/16 20:17:23 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.37 2000/02/29 22:19:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,6 +95,14 @@
 #ifdef _KERNEL
 #include <machine/frame.h>
 
+/*
+ * Machine check information.
+ */
+struct mchkinfo {
+	__volatile int mc_expected;	/* machine check is expected */
+	__volatile int mc_received;	/* machine check was received */
+};
+
 #if defined(MULTIPROCESSOR)
 
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
@@ -121,6 +129,7 @@ struct cpu_info {
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
 	struct device *ci_dev;		/* pointer to our device */
+	struct mchkinfo ci_mcinfo;	/* machine check info */
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
@@ -135,10 +144,15 @@ extern	struct cpu_info cpu_info[];
 #define	fpcurproc	curcpu()->ci_fpcurproc
 #define	curpcb		curcpu()->ci_curpcb
 
+#define	cpu_mchkinfo()	(&curcpu()->ci_mcinfo)
+
 void	cpu_boot_secondary_processors __P((void));
 #else
 extern	struct proc *fpcurproc;		/* current owner of FPU */
 extern	paddr_t curpcb;			/* PA of current HW context */
+extern	struct mchkinfo mchkinfo_store;	/* mchkifo for single-cpu configs */
+
+#define	cpu_mchkinfo()	(&mchkinfo_store)
 #endif /* MULTIPROCESSOR */
 
 /*
