@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.10 1996/09/30 23:18:45 cgd Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Christopher G. Demetriou
+ * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,11 @@
 #include <sys/mman.h>
 
 #include <vm/vm.h>
+
+/*
+ * XXX cgd 960926: this module should collect simple statistics
+ * (calls, extends, kills).
+ */
 
 #ifdef DEBUG
 /*
@@ -164,7 +169,7 @@ vmcmd_map_readvn(p, cmd)
 		return error;
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
-	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT|IO_NODELOCKED,
+	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
 	    p->p_ucred, (int *)0, p);
 	if (error)
 		return error;
