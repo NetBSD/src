@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.8 1997/06/08 07:59:20 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.9 1997/08/16 01:18:30 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.8 1997/06/08 07:59:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.9 1997/08/16 01:18:30 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,10 +253,20 @@ dwlpx_init(sc)
 	for (i = 0; i < sc->dwlpx_nhpc; i++) {
 		u_int32_t ctl = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase);
 		ctl &= 0x0fffffff;
-		ctl &= ~((0x1f << 14) | (0x1f << 9) | 0x3);
-#if	0
-		ctl |=  ((1 << 14) | (1 << 9));
-#endif
+		ctl &= ~(PCIA_CTL_MHAE(0x1f) | PCIA_CTL_IHAE(0x1f));
+		/*
+		 * I originally also had it or'ing in 3, which makes no sense.
+		 */
+
+		ctl |= PCIA_CTL_RMMENA | PCIA_CTL_RMMARB;
+
+		/*
+		 * Only valid if we're attached to a KFTIA or a KTHA.
+		 */
+		ctl |= PCIA_CTL_3UP;
+
+		ctl |= PCIA_CTL_CUTENA;
+
 		REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = ctl;
 	}
 	ccp->cc_initted = 1;
