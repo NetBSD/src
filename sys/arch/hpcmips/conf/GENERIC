@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2002/04/07 04:34:33 shin Exp $
+# $NetBSD: GENERIC,v 1.117 2002/04/09 13:20:30 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 maxusers	16
 
@@ -354,13 +354,13 @@ txcsbus1	at tx39biu? platform SHARP_TELIOS
 # Fujitsu INTERTOP CX310
 #
 vrc4172gpio0 at vrgiu? platform FUJITSU_INTERTOP_IT310 addr 0x15001080 size 0x4a port 10
-vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
-isa5	at vrisab5
-pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrisab8	at vrc4172gpio0 isaportoffset 0x1000000
+isa8	at vrisab8
+pcic0	at isa8 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_INTERTOP_IT310
 pci*	at vrc4172pci?
-hpcioman5 at vrc4172gpio0 platform FUJITSU_INTERTOP_IT310
-hpcin*	at hpcioman5 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
+hpcioman8 at vrc4172gpio0 platform FUJITSU_INTERTOP_IT310
+hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
