@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_frag.h,v 1.8.2.1 1997/10/30 07:13:47 mrg Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.8.2.2 1998/11/24 07:19:35 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
