@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.25 1999/04/24 15:22:45 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.26 1999/04/26 04:34:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -135,7 +135,7 @@ rcons_connect (info)
 
 	/* Choose 'Gallant' font if this is an 8-bit display */
 	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
-		wsfont_lock(cookie, &ri.ri_font, WSFONT_LITTLE, WSFONT_LITTLE);
+		wsfont_lock(cookie, &ri.ri_font, WSFONT_L2R, WSFONT_L2R);
 
 	/* Get operations set and set framebugger colormap */
 	rasops_init(&ri, 0, 80, 1, 0);
@@ -177,7 +177,6 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 {
 	extern dev_t cn_in_dev;	/* XXX rcons hackery */
 
-	/* Do we really need this? - ad */
 	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 
 	fbconstty = &rcons_tty [0];
