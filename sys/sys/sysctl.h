@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.21 1997/02/27 06:25:27 mikel Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.22 1997/03/19 05:36:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -204,8 +204,8 @@ struct kinfo_proc {
 		dev_t	e_tdev;			/* controlling tty dev */
 		pid_t	e_tpgid;		/* tty process group id */
 		struct	session *e_tsess;	/* tty session pointer */
-#define	WMESGLEN	7
-		char	e_wmesg[WMESGLEN+1];	/* wchan message */
+#define	WMESGLEN	8
+		char	e_wmesg[WMESGLEN];	/* wchan message */
 		segsz_t e_xsize;		/* text size */
 		short	e_xrssize;		/* text rss */
 		short	e_xccount;		/* text references */
