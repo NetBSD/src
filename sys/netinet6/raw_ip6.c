@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.67 2004/07/23 09:53:10 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.68 2004/09/06 10:05:14 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.67 2004/07/23 09:53:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.68 2004/09/06 10:05:14 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -479,11 +479,8 @@ rip6_output(m, va_alist)
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
-		struct mbuf *n;
 		int off;
-		u_int16_t *sump;
 		u_int16_t sum;
-		int sumoff;
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
@@ -496,16 +493,20 @@ rip6_output(m, va_alist)
 		}
 		off += sizeof(struct ip6_hdr);
 
-		n = m_pulldown(m, off, sizeof(*sump), &sumoff);
-		if (n == NULL) {
-			m = NULL;
+		sum = 0;
+		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		    M_DONTWAIT);
+		if (m == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
-		sump = (u_int16_t *)(mtod(n, caddr_t) + sumoff);
-		memset(sump, 0, sizeof(*sump));
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		memcpy(sump, &sum, sizeof(*sump));
+		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		    M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
 	}
 
 	flags = 0;
