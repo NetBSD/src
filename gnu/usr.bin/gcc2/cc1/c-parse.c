@@ -1,6 +1,10 @@
 
 /*  A Bison parser, made from c-parse.y  */
 
+#ifndef lint
+static char rcsid[] = "$Id: c-parse.c,v 1.2 1993/08/02 18:26:12 mycroft Exp $";
+#endif /* not lint */
+
 #define YYBISON 1  /* Identify Bison output.  */
 
 #define	IDENTIFIER	258
