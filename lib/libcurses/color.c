@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.27 2003/10/21 00:25:21 fvdl Exp $	*/
+/*	$NetBSD: color.c,v 1.28 2004/03/16 07:52:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.27 2003/10/21 00:25:21 fvdl Exp $");
+__RCSID("$NetBSD: color.c,v 1.28 2004/03/16 07:52:43 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -298,9 +298,9 @@ init_pair(short pair, short fore, short back)
 
 	if (pair < 0 || pair >= COLOR_PAIRS)
 		return (ERR);
-	if (fore < -1 || fore >= COLORS)
+	if (fore >= COLORS)
 		return (ERR);
-	if (back < -1 || back >= COLORS)
+	if (back >= COLORS)
 		return (ERR);
 
 	/* Swap red/blue and yellow/cyan */
@@ -461,6 +461,37 @@ assume_default_colors(short fore, short back)
 #ifdef DEBUG
 	__CTRACE("assume_default_colors: %d, %d\n", fore, back);
 #endif
+	/* Swap red/blue and yellow/cyan */
+	if (_cursesi_screen->color_type == COLOR_OTHER) {
+		switch (fore) {
+		case COLOR_RED:
+			fore = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			fore = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			fore = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			fore = COLOR_YELLOW;
+			break;
+		}
+		switch (back) {
+		case COLOR_RED:
+			back = COLOR_BLUE;
+			break;
+		case COLOR_BLUE:
+			back = COLOR_RED;
+			break;
+		case COLOR_YELLOW:
+			back = COLOR_CYAN;
+			break;
+		case COLOR_CYAN:
+			back = COLOR_YELLOW;
+			break;
+		}
+	}
 	__default_pair.fore = fore;
 	__default_pair.back = back;
 	__default_pair.flags = __USED;
@@ -512,14 +543,14 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 	switch (_cursesi_screen->color_type) {
 	/* Set ANSI forground and background colours */
 	case COLOR_ANSI:
-		if (_cursesi_screen->colour_pairs[pair].fore == -1 ||
-		    _cursesi_screen->colour_pairs[pair].back == -1)
+		if (_cursesi_screen->colour_pairs[pair].fore < 0 ||
+		    _cursesi_screen->colour_pairs[pair].back < 0)
 			__unset_color(curscr);
-		if (_cursesi_screen->colour_pairs[pair].fore != -1)
+		if (_cursesi_screen->colour_pairs[pair].fore >= 0)
 			tputs(__parse_cap(_cursesi_screen->tc_AF,
 			    _cursesi_screen->colour_pairs[pair].fore),
 			    0, __cputchar);
-		if (_cursesi_screen->colour_pairs[pair].back != -1)
+		if (_cursesi_screen->colour_pairs[pair].back >= 0)
 			tputs(__parse_cap(_cursesi_screen->tc_AB,
 			    _cursesi_screen->colour_pairs[pair].back),
 			    0, __cputchar);
@@ -531,14 +562,14 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 		/* XXX: need to support Tek style */
 		break;
 	case COLOR_OTHER:
-		if (_cursesi_screen->colour_pairs[pair].fore == -1 ||
-		    _cursesi_screen->colour_pairs[pair].back == -1)
+		if (_cursesi_screen->colour_pairs[pair].fore < 0 ||
+		    _cursesi_screen->colour_pairs[pair].back < 0)
 			__unset_color(curscr);
-		if (_cursesi_screen->colour_pairs[pair].fore != -1)
+		if (_cursesi_screen->colour_pairs[pair].fore >= 0)
 			tputs(__parse_cap(_cursesi_screen->tc_Sf,
 			    _cursesi_screen->colour_pairs[pair].fore),
 			    0, __cputchar);
-		if (_cursesi_screen->colour_pairs[pair].back != -1)
+		if (_cursesi_screen->colour_pairs[pair].back >= 0)
 			tputs(__parse_cap(_cursesi_screen->tc_Sb,
 			    _cursesi_screen->colour_pairs[pair].back),
 			    0, __cputchar);
