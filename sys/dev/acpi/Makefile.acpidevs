@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acpidevs,v 1.2 2003/12/04 13:57:30 keihan Exp $
+#	$NetBSD: Makefile.acpidevs,v 1.3 2003/12/12 06:51:47 jmc Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
@@ -12,4 +12,4 @@ AWK=	awk
 
 acpidevs_data.h: acpidevs devlist2h.awk
 	/bin/rm -f acpidevs_data.h
-	${AWK} -F'	' -f devlist2h.awk acpidevs
+	${AWK} -f devlist2h.awk acpidevs
