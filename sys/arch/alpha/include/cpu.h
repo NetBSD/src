@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.33 1999/08/15 18:32:51 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.34 1999/08/16 06:24:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@
 /*
  * Exported definitions unique to Alpha cpu support.
  */
+
+#include <machine/alpha_cpu.h>
 
 #ifdef _KERNEL
 #include <machine/frame.h>
