@@ -1,4 +1,4 @@
-.\" $NetBSD: BBBB.8,v 1.2 2000/11/22 00:43:02 bjh21 Exp $
+.\" $NetBSD: BBBB.8,v 1.3 2000/11/25 23:55:34 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -42,8 +42,7 @@ is a program that runs under
 .Tn RISC OS
 and launches the
 .Nx Ns /arm26
-kernel.  It needs to be installed in a
-.Tn RISC OS
+kernel.  It needs to be installed in a RISC OS
 filesystem and given file type FFB (BASIC).  The kernel it is to load
 also needs to be stored in a
 .Tn RISC OS
@@ -76,16 +75,56 @@ Cause the kernel to emit more messages than normal while starting up.
 .El
 .Pp
 .Nm
-attempts to load the kernel from the
-.Tn RISC OS
-file specified as
+attempts to load the kernel from the RISC OS file specified as
 .Ar file ,
 or from
 .Pa netbsd
 if
 .Ar file
 is not specified.
+.Ss Screen display
+.\" From <URL:http://mail-index.netbsd.org/port-arm26/2000/05/02/0001.html>
+When it starts up,
+.Nm
+displays the current memory map.
+Each character in the map represents one page of (physical) RAM.  The
+ticks along the top are to stop you getting lost.  The characters in the
+map indicate what the memory's being used for (actually where it's
+logically mapped):
+.Pp
+.Bd -literal -offset indent
+0 -> zero-page
++ -> BBBB workspace
+* -> Free space (BBBB wants to put the kernel here)
+d -> RAM disc
+s -> System sprite area
+m -> RMA
+h -> System heap/stack
+f -> Font cache
+S -> Screen memory
+.Ed
+.Pp
+On a machine with 32k pages (which is all
+.Nx Ns /arm26
+supports), the left
+half of the first line is potential screen memory, and hence not used by
+.Nm "" .
+The next page is usually zero page under RISC OS, and is used for
+zero page under
+.Nx .  The next is usually system heap under RISC OS,
+and is used for process 0's kernel stack under
+.Nx .
+The next is used for the message buffer under
+.Nx .
+Pages from there on are used to load
+the kernel, and must be free if
+.Nm
+is to do so successfully.  Future
+bootloaders should load the kernel into whatever pages are free, then kick
+out RISC OS and shuffle them into the right shape.  This is left as an
+exercise for the enthusiatic reader.
 .Sh SEE ALSO
+.Xr reboot 2 ,
 .Xr ddb 4 ,
 .Xr init 8
 .Sh HISTORY
