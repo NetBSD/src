@@ -32,7 +32,7 @@
  *
  * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: boot.c,v 1.1 1994/02/26 10:57:13 pk Exp $
+ * $Id: boot.c,v 1.2 1994/03/20 09:13:37 pk Exp $
  */
 
 #include <sys/param.h>
@@ -44,9 +44,15 @@
 /*
  * Boot device is derived from ROM provided information.
  */
+#define LOADADDR	0x4000
 extern char		*version;
 extern struct promvec	*promvec;
-char			*ssym, *esym;
+unsigned long		esym;
+char			*strtab;
+int			strtablen;
+#if 0
+struct nlist		*nlp, *enlp;
+#endif
 
 main(pp)
 struct promvec *pp;
@@ -67,8 +73,8 @@ struct promvec *pp;
 	}
 	reset_twiddle();
 
-	printf("Booting %s @ 0x%x\n", file, 0x4000);
-	copyunix(io, 0x4000);
+	printf("Booting %s @ 0x%x\n", file, LOADADDR);
+	copyunix(io, LOADADDR);
 	promvec->pv_halt();
 }
 
@@ -108,22 +114,27 @@ copyunix(io, addr)
 	printf("+%d", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
-	ssym = addr;
 	if (x.a_syms != 0) {
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
+#if 0
+		nlp = (struct nlist *)addr;
+#endif
 		printf(" [%d+", x.a_syms);
 		if (read(io, addr, x.a_syms) != x.a_syms)
 			goto shread;
 		addr += x.a_syms;
+#if 0
+		enlp = (struct nlist *)(strtab = addr);
+#endif
 		reset_twiddle();
 
-		if (read(io, &i, sizeof(int)) != sizeof(int))
+		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
 			goto shread;
 		reset_twiddle();
 
-		bcopy(&i, addr, sizeof(int));
-		if (i) {
+		bcopy(&strtablen, addr, sizeof(int));
+		if (i = strtablen) {
 			i -= sizeof(int);
 			addr += sizeof(int);
 			if (read(io, addr, i) != i)
@@ -132,10 +143,26 @@ copyunix(io, addr)
 			addr += i;
 		}
 		printf("%d] ", i);
+		esym = KERNBASE +
+			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 	}
 
+#if 0
+	while (nlp < enlp) {
+		register int strx = nlp->n_un.n_strx;
+		if (strx > strtablen)
+			continue;
+		if (strcmp(strtab+strx, "_esym") == 0) {
+			*(int*)(nlp->n_value - KERNBASE) = esym;
+			break;
+		}
+		nlp++;
+	}
+#endif
+
 	printf(" start 0x%x\n", (int)entry);
-	(*entry)(promvec);
+#define DDB_MAGIC ( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
+	(*entry)(promvec, esym, DDB_MAGIC);
 	return;
 shread:
 	printf("Short read\n");
@@ -163,3 +190,4 @@ twiddle()
 	putchar(tw_chars[tw_pos++]);
 	tw_pos %= (sizeof(tw_chars) - 1);
 }
+
