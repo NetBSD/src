@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: malloc.c,v 1.3 1993/08/26 00:48:03 jtc Exp $";
+static char *rcsid = "$Id: malloc.c,v 1.4 1994/10/19 03:06:34 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -74,7 +74,7 @@ union	overhead {
 		u_char	ovu_index;	/* bucket # */
 #ifdef RCHECK
 		u_short	ovu_rmagic;	/* range magic number */
-		u_int	ovu_size;	/* actual block size */
+		u_long	ovu_size;	/* actual block size */
 #endif
 	} ovu;
 #define	ov_magic	ovu.ovu_magic
@@ -133,7 +133,7 @@ malloc(nbytes)
 	size_t nbytes;
 {
   	register union overhead *op;
-  	register int bucket, n;
+  	register long bucket, n;
 	register unsigned amt;
 
 	/*
@@ -143,7 +143,7 @@ malloc(nbytes)
 	if (pagesz == 0) {
 		pagesz = n = getpagesize();
 		op = (union overhead *)sbrk(0);
-  		n = n - sizeof (*op) - ((int)op & (n - 1));
+  		n = n - sizeof (*op) - ((long)op & (n - 1));
 		if (n < 0)
 			n += pagesz;
   		if (n) {
@@ -171,7 +171,7 @@ malloc(nbytes)
 		amt = 16;	/* size of first bucket */
 		bucket = 1;
 #endif
-		n = -(sizeof (*op) + RSLOP);
+		n = -((long)sizeof (*op) + RSLOP);
 	} else {
 		amt = pagesz;
 		bucket = pagebucket;
@@ -218,8 +218,8 @@ morecore(bucket)
 	int bucket;
 {
   	register union overhead *op;
-	register int sz;		/* size of desired block */
-  	int amt;			/* amount to allocate */
+	register long sz;		/* size of desired block */
+  	long amt;			/* amount to allocate */
   	int nblks;			/* how many blocks we get */
 
 	/*
@@ -242,7 +242,7 @@ morecore(bucket)
 	}
 	op = (union overhead *)sbrk(amt);
 	/* no more room! */
-  	if ((int)op == -1)
+  	if ((long)op == -1)
   		return;
 	/*
 	 * Add new memory allocated to that on
@@ -259,7 +259,7 @@ void
 free(cp)
 	void *cp;
 {   
-  	register int size;
+  	register long size;
 	register union overhead *op;
 
   	if (cp == NULL)
@@ -302,8 +302,8 @@ realloc(cp, nbytes)
 	void *cp; 
 	size_t nbytes;
 {   
-  	register u_int onb;
-	register int i;
+  	register u_long onb;
+	register long i;
 	union overhead *op;
   	char *res;
 	int was_alloced = 0;
