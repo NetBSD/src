@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.4 2001/02/05 06:27:57 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.5 2001/02/06 10:32:34 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -259,12 +259,12 @@ sunos32_sys_access(p, v, retval)
 	return (sys_access(p, &ua, retval));
 }
 
-static __inline void sunos32_from___stat13 __P((struct stat *, struct stat43 *));
+static __inline void sunos32_from___stat13 __P((struct stat *, struct netbsd32_stat43 *));
 
 static __inline void
 sunos32_from___stat13(sbp, sb32p)
 	struct stat *sbp;
-	struct stat43 *sb32p;
+	struct netbsd32_stat43 *sb32p;
 {
 	sb32p->st_dev = sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
@@ -300,7 +300,7 @@ sunos32_sys_stat(p, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat43p_t) ub;
 	} */ *uap = v;
-	struct stat43 sb32;
+	struct netbsd32_stat43 sb32;
 	struct stat sb;
 	struct nameidata nd;
 	caddr_t sg;
@@ -335,7 +335,7 @@ sunos32_sys_lstat(p, v, retval)
 	} */ *uap = v;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
-	struct stat43 sb32;
+	struct netbsd32_stat43 sb32;
 	int error;
 	struct nameidata nd;
 	int ndflags;
@@ -1044,7 +1044,6 @@ sunos32_sys_open(p, v, retval)
 	int l, r;
 	int noctty;
 	int ret;
-	
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	/* convert mode into NetBSD mode */
