@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2000/07/20 20:43:21 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -1026,7 +1026,7 @@ db_disasm(loc, altfmt)
 			db_printf("0x%-2.2x", ((insn >> 5) & 0xff));
 			break;
 		case 'o':
-			db_printf("%%fcc%ld", ((insn >> 25) & 0x3));
+			db_printf("%%fcc%d", ((insn >> 25) & 0x3));
 			break;
 		case 'p':
 		case '7':
@@ -1034,7 +1034,7 @@ db_disasm(loc, altfmt)
 				  regs[((insn >> 14) & 0x1f)],
 				  regs[(insn & 0x1f)]);
 			if (*f_ptr == '7')
-				db_printf(" %ld", ((insn >> 5) & 0xff));
+				db_printf(" %d", ((insn >> 5) & 0xff));
 			break;
 		case 'q':
 		case '8':
