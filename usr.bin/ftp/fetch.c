@@ -1,11 +1,11 @@
-/*	$NetBSD: fetch.c,v 1.53 1999/04/28 13:35:40 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.54 1999/05/12 11:16:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason Thorpe and Luke Mewburn.
+ * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.53 1999/04/28 13:35:40 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.54 1999/05/12 11:16:43 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -80,7 +80,8 @@ typedef enum {
 } url_t;
 
 void    	aborthttp __P((int));
-static int	auth_url __P((const char *, char **));
+static int	auth_url __P((const char *, char **, const char *,
+				const char *));
 static void	base64_encode __P((const char *, size_t, char *));
 static int	go_fetch __P((const char *));
 static int	fetch_ftp __P((const char *));
@@ -107,9 +108,11 @@ static int	redirect_loop;
  * Sets response to a malloc(3)ed string; caller should free.
  */
 static int
-auth_url(challenge, response)
+auth_url(challenge, response, guser, gpass)
 	const char	 *challenge;
 	char		**response;
+	const char	 *guser;
+	const char	 *gpass;
 {
 	char		*cp, *ep, *clear, *line, *realm, *scheme;
 	char		user[BUFSIZ], *pass;
@@ -154,23 +157,33 @@ auth_url(challenge, response)
 		goto cleanup_auth_url;
 	}
 
-	fprintf(ttyout, "Username for `%s': ", realm);
-	(void)fflush(ttyout);
-	if (fgets(user, sizeof(user) - 1, stdin) == NULL)
-		goto cleanup_auth_url;
-	user[strlen(user) - 1] = '\0';
-	pass = getpass("Password: ");
+	if (guser != NULL) {
+		strncpy(user, guser, sizeof(user) - 1);
+		user[sizeof(user) - 1] = '\0';
+	} else {
+		fprintf(ttyout, "Username for `%s': ", realm);
+		(void)fflush(ttyout);
+		if (fgets(user, sizeof(user) - 1, stdin) == NULL)
+			goto cleanup_auth_url;
+		user[strlen(user) - 1] = '\0';
+	}
+	if (gpass != NULL)
+		pass = (char *)gpass;
+	else
+		pass = getpass("Password: ");
 
 	len = strlen(user) + strlen(pass) + 1;		/* user + ":" + pass */
 	clear = (char *)xmalloc(len + 1);
 	sprintf(clear, "%s:%s", user, pass);
-	memset(pass, '\0', strlen(pass));
+	if (gpass == NULL)
+		memset(pass, '\0', strlen(pass));
 
 						/* scheme + " " + enc */
 	len = strlen(scheme) + 1 + (len + 2) * 4 / 3;
 	*response = (char *)xmalloc(len + 1);
 	len = sprintf(*response, "%s ", scheme);
 	base64_encode(clear, strlen(clear), *response + len);
+	memset(clear, '\0', strlen(clear));
 	rval = 0;
 
 cleanup_auth_url:
@@ -324,9 +337,10 @@ cleanup_parse_url:
 	}
 
 	cp = strchr(thost, '@');
-					/* look for user[:pass]@ in ftp URLs */
-	if (*type == FTP_URL_T && cp != NULL) {
-		anonftp = 0;		/* disable anonftp */
+					/* look for user[:pass]@ in URLs */
+	if (cp != NULL) {
+		if (*type == FTP_URL_T)
+			anonftp = 0;	/* disable anonftp */
 		*user = thost;
 		*cp = '\0';
 		*host = xstrdup(cp + 1);
@@ -389,6 +403,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char			*cp, *ep, *buf, *savefile;
 	char			*auth, *location, *message;
 	char			*user, *pass, *host, *path, *decodedpath;
+	char			*puser, *ppass;
 	off_t			hashbytes;
 	int			 (*closefunc) __P((FILE *));
 	FILE			*fin, *fout;
@@ -404,7 +419,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
 	hp = NULL;
-	user = pass = host = path = decodedpath = NULL;
+	user = pass = host = path = decodedpath = puser = ppass = NULL;
 
 #ifdef __GNUC__			/* shut up gcc warnings */
 	(void)&closefunc;
@@ -494,8 +509,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		direction = "retrieved";
 		if (proxyenv != NULL) {				/* use proxy */
 			url_t purltype;
-			char *puser, *ppass, *phost;
-			char *ppath;
+			char *phost, *ppath;
 
 			isproxy = 1;
 
@@ -543,22 +557,16 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				     && strcmp(ppath, "/") != 0)) {
 					warnx("Malformed proxy URL `%s'",
 					    proxyenv);
-					FREEPTR(puser);
-					FREEPTR(ppass);
 					FREEPTR(phost);
 					FREEPTR(ppath);
 					goto cleanup_fetch_url;
 				}
 
-				FREEPTR(user);
-				user = puser;
-				FREEPTR(pass);
-				pass = ppass;
 				FREEPTR(host);
 				host = phost;
 				FREEPTR(path);
-				FREEPTR(ppath);
 				path = xstrdup(url);
+				FREEPTR(ppath);
 			}
 		} /* proxyenv != NULL */
 
@@ -802,6 +810,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			}
 
 		}
+				/* finished parsing header */
 		FREEPTR(buf);
 
 		switch (hcode) {
@@ -838,6 +847,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		case 407:
 		    {
 			char **authp;
+			char *auser, *apass;
 
 			fprintf(ttyout, "%s\n", message);
 			if (EMPTYSTRING(auth)) {
@@ -845,7 +855,15 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			    "No authentication challenge provided by server");
 				goto cleanup_fetch_url;
 			}
-			authp = (hcode == 401) ? &wwwauth : &proxyauth;
+			if (hcode == 401) {
+				authp = &wwwauth;
+				auser = user;
+				apass = pass;
+			} else {
+				authp = &proxyauth;
+				auser = puser;
+				apass = ppass;
+			}
 			if (*authp != NULL) {
 				char reply[10];
 
@@ -854,8 +872,10 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				if (fgets(reply, sizeof(reply), stdin) != NULL
 				    && tolower(reply[0]) != 'y')
 					goto cleanup_fetch_url;
+				auser = NULL;
+				apass = NULL;
 			}
-			if (auth_url(auth, authp) == 0) {
+			if (auth_url(auth, authp, auser, apass) == 0) {
 				rval = fetch_url(url, proxyenv,
 				    proxyauth, wwwauth);
 				memset(*authp, '\0', strlen(*authp));
@@ -1010,6 +1030,8 @@ cleanup_fetch_url:
 	FREEPTR(host);
 	FREEPTR(path);
 	FREEPTR(decodedpath);
+	FREEPTR(puser);
+	FREEPTR(ppass);
 	FREEPTR(buf);
 	FREEPTR(auth);
 	FREEPTR(location);
