@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.27 1998/02/18 23:14:55 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.28 1998/02/19 03:30:24 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -166,7 +166,13 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysdcl
 
 	printf " * created from%s\n */\n\n", $0 > sysnames
-	printf "\nchar *%s[] = {\n",namesname > sysnamesbottom
+
+	# System call names are included by userland (kdump(1)), so
+	# hide the include files from it.
+	printf "#if defined(_KERNEL) && !defined(_LKM)\n" > sysnames
+
+	printf "#endif /* _KERNEL && ! _LKM */\n\n" > sysnamesbottom
+	printf "char *%s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
