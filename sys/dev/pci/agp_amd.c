@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.4 2001/10/01 14:41:09 fvdl Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.5 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -156,6 +156,7 @@ agp_amd_match(const struct pci_attach_args *pa)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_SC751_SC:
+	case PCI_PRODUCT_AMD_SC762_NB:
 		return 1;
 	}
 
