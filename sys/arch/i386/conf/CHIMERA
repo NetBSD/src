@@ -1,0 +1,85 @@
+#
+#	CHIMERA -- Adam Glass's confused machine
+#
+#	$Id: CHIMERA,v 1.1 1994/08/26 05:07:00 glass Exp $
+#
+
+machine		"i386"
+ident		CHIMERA
+
+cpu		"I486_CPU"
+
+options		MACHINE_NONCONTIG
+
+timezone	8 dst
+maxusers	8
+
+options		SWAPPAGER
+options		VNODEPAGER,DEVPAGER
+
+options		FIFO
+options		SYSVMSG
+options		SYSVSEM
+options		SYSVSHM
+options		SHMMAXPGS=1024		# 1024 pages is the default
+
+options		SCSI
+
+options		FFS
+options		MFS
+options		NFSSERVER
+options		NFSCLIENT
+options		"CD9660"
+options		MSDOSFS
+options		FDESC
+options		KERNFS
+options		UNIONFS
+
+options		INET
+
+options		DDB, PANICWAIT, KTRACE
+
+options		"COMPAT_NOMID"
+options		"COMPAT_09"
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+
+config		netbsd	root on sd0 swap on sd0
+
+controller	isa0
+
+device		vt0	at isa? port "IO_KBD" irq 1
+
+device		com0	at isa? port "IO_COM1" irq 4
+device		com1	at isa? port "IO_COM2" irq 3
+
+master ast0 at isa? port 0x1a0 irq 5
+device com2 at ast0 slave 0 flags 1
+device com3 at ast0 slave 1 flags 1
+device com4 at ast0 slave 2 flags 1
+device com5 at ast0 slave 3 flags 1
+
+device		lpt0	at isa? port "IO_LPT1" irq 7
+
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
+disk		fd0	at fdc0 drive ?
+
+controller	aha0	at isa? port "IO_AHA0" irq 11 drq 5
+master		scsibus0 at aha0
+device		sd0	at scsibus0 slave ?
+device		sd1	at scsibus0 slave ?
+device		st0	at scsibus0 slave ?
+device		cd0	at scsibus0 slave ?
+
+device ep0 at isa? port 0x350 irq 10
+
+device		npx0	at isa? port "IO_NPX" irq 13
+
+pseudo-device pty	32
+pseudo-device loop
+pseudo-device ether
+pseudo-device log
+pseudo-device bpfilter	6
+pseudo-device ppp 3
+pseudo-device vn 4
+pseudo-device tb
