@@ -1,13 +1,15 @@
-#	$NetBSD: bsd.dep.mk,v 1.15 1997/05/07 08:42:18 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.16 1997/05/07 16:44:04 mycroft Exp $
 
 .PHONY:		cleandepend
+cleandir:	cleandepend
 
 MKDEP?=		mkdep
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
-depend: beforedepend .depend _SUBDIRUSE afterdepend
+depend: beforedepend
 .if defined(SRCS)
+depend: .depend
 .depend: ${SRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
@@ -31,9 +33,8 @@ depend: beforedepend .depend _SUBDIRUSE afterdepend
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
-.else
-.depend:
 .endif
+depend: _SUBDIRUSE afterdepend
 .if !target(beforedepend)
 beforedepend:
 .endif
@@ -53,7 +54,8 @@ tags:
 .endif
 
 .if defined(SRCS)
-cleandir: cleandepend
 cleandepend:
 	rm -f .depend ${.CURDIR}/tags
+.else
+cleandepend:
 .endif
