@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.7 1995/04/10 12:42:36 mycroft Exp $     */
+/*      $NetBSD: pmap.h,v 1.8 1995/04/12 15:26:54 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -93,7 +93,6 @@ struct pmap	kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 
-extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL
 
 /* Routines that are best to define as macros */
