@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.163 2000/10/01 22:31:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.164 2000/10/14 16:45:42 hubertf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -51,7 +51,7 @@ MKISOFS?=	mkisofs
 MKISOFS_FLAGS+= -J -l \
 		-r -T -v \
 		-P "The NetBSD Project" \
-		-m "${RELEASEDIR}/instalation/cdrom"
+		-m "${RELEASEDIR}/installation/cdrom"
 
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
