@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.8 2000/09/28 10:02:09 ad Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.9 2000/10/02 14:41:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -586,7 +586,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 	evl = mtod(m, struct ether_vlan_header *);
-	KASSERT(htons(evl->evl_encap_proto) == ETHERTYPE_VLAN);
+	KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
 
 	tag = EVL_VLANOFTAG(ntohs(evl->evl_tag));
 
