@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.646 2004/01/04 13:20:49 lukem Exp $
+# $NetBSD: mi,v 1.647 2004/01/07 12:57:44 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1543,6 +1543,7 @@
 ./usr/share/man/cat8/cleanup.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/clri.0			man-sysutil-catman
 ./usr/share/man/cat8/cnwctl.0			man-sysutil-catman
+./usr/share/man/cat8/cobalt/boot.0		man-sys-catman
 ./usr/share/man/cat8/cobalt/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete	obsolete
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman
@@ -3590,6 +3591,7 @@
 ./usr/share/man/man8/cleanup.8			man-postfix-man	postfix
 ./usr/share/man/man8/clri.8			man-sysutil-man
 ./usr/share/man/man8/cnwctl.8			man-sysutil-man
+./usr/share/man/man8/cobalt/boot.8		man-sys-man
 ./usr/share/man/man8/cobalt/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/cobalt/makedev.8		man-obsolete	obsolete
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man
