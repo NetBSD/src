@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.68 2002/02/03 22:21:55 skrll Exp $	*/
+/*	$NetBSD: defs.h,v 1.69 2002/04/04 14:26:43 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -357,6 +357,7 @@ void	ask_verbose_dist (void);
 int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check (void);
 int	set_timezone (void);
+int	set_crypt_type (void);
 int	set_root_password (void);
 void	scripting_fprintf(FILE *, const char *, ...);
 void	scripting_vfprintf(FILE *, const char *, va_list);
