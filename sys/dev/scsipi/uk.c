@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.27 1998/12/08 00:19:28 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.28 2000/03/29 18:11:44 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -64,12 +65,15 @@ struct uk_softc {
 
 int ukmatch __P((struct device *, struct cfdata *, void *));
 void ukattach __P((struct device *, struct device *, void *));
+int ukactivate __P((struct device *, enum devact));
+int ukdetach __P((struct device *, int));
 
 struct cfattach uk_scsibus_ca = {
-	sizeof(struct uk_softc), ukmatch, ukattach
+	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
+
 };
 struct cfattach uk_atapibus_ca = {
-	sizeof(struct uk_softc), ukmatch, ukattach
+	sizeof(struct uk_softc), ukmatch, ukattach, ukdetach, ukactivate,
 };
 
 extern struct cfdriver uk_cd;
@@ -121,6 +125,47 @@ ukattach(parent, self, aux)
 
 	printf("\n");
 	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
+}
+
+int
+ukactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+ukdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	/*struct uk_softc *uk = (struct uk_softc *) self;*/
+	int cmaj, mn;
+
+	/* locate the major number */
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == ukopen)
+			break;
+
+	/* Nuke the vnodes for any open instances */
+	mn = self->dv_unit;
+	vdevgone(cmaj, mn, mn, VCHR);
+
+	return (0);
 }
 
 /*
