@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.15 1999/09/24 20:08:08 msaitoh Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.15 1999/09/24 20:08:08 msaitoh Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ HASHINFO openinfo = {
 };
 
 static DB *db;
-static char *dbname = _PATH_KVMDB;
+static char *dbname = NULL;
 static char dbtemp[MAXPATHLEN];
 
 int
@@ -86,6 +86,7 @@ main(argc, argv)
 {
 	int ch;
 	char *p, *nlistpath, *nlistname;
+	int docheck = 0;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
@@ -103,9 +104,20 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	/* If the existing db file matches the currently running kernel, exit */
-	if (testdb())
-		exit(0);
+	if (dbname == NULL) {
+		dbname = _PATH_KVMDB;
+		docheck = 1;
+	} else 	if (strncmp(_PATH_KVMDB, dbname, sizeof(_PATH_KVMDB)) == 0) {
+		docheck = 1;
+	}
+	if (docheck) {
+		/*
+		 * If the existing db file matches the currently running
+		 * kernel, exit
+		 */
+		if (testdb())
+			exit(0);
+	}
 
 #define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
