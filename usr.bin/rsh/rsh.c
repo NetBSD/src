@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.9 1997/06/05 16:10:50 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.10 1997/06/16 20:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	8.4 (Berkeley) 4/29/95";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.9 1997/06/05 16:10:50 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.10 1997/06/16 20:54:16 christos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,11 @@ static char rcsid[] = "$NetBSD: rsh.c,v 1.9 1997/06/05 16:10:50 mrg Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif
 
 #include "pathnames.h"
 
@@ -73,20 +77,24 @@ CREDENTIALS cred;
 Key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm;
-extern char *krb_realmofhost();
+
+void	warning __P((const char *, ...));
 #endif
 
 /*
  * rsh - remote shell
  */
 extern	char *__progname;		/* XXX */
-int	rfd2;
+int	remerr;
+
+static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
 
 char   *copyargs __P((char **));
 void	sendsig __P((int));
-void	talk __P((int, long, pid_t, int));
+int	checkfd __P((struct pollfd *, int));
+void	talk __P((int, sigset_t *, pid_t, int));
 void	usage __P((void));
-void	warning __P(());
+int	main __P((int, char **));
 
 int
 main(argc, argv)
@@ -95,11 +103,12 @@ main(argc, argv)
 {
 	struct passwd *pw;
 	struct servent *sp;
-	long omask;
+	sigset_t oset, nset;
+
 #ifdef IN_RCMD
 	char	*locuser = 0, *loop;
 #endif /* IN_RCMD */
-	int argoff, asrsh, ch, dflag, nflag, one, rem;
+	int argoff, asrsh, ch, dflag, nflag, one, rem, i;
 	pid_t pid;
 	uid_t uid;
 	char *args, *host, *p, *user, *name;
@@ -161,7 +170,7 @@ main(argc, argv)
 
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "malloc");
-	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != EOF)
+	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
 		case 'K':
 #ifdef KERBEROS
@@ -200,7 +209,7 @@ main(argc, argv)
 #ifdef CRYPT
 		case 'x':
 			doencrypt = 1;
-			des_set_key(cred.session, schedule);
+			des_set_key((des_cblock *) cred.session, schedule);
 			break;
 #endif
 #endif
@@ -277,7 +286,7 @@ try_connect:
 		/* fully qualify hostname (needed for krb_realmofhost) */
 		hp = gethostbyname(host);
 		if (hp != NULL && !(host = strdup(hp->h_name)))
-			err(1, NULL);
+			err(1, "strdup");
 #endif
 
 		rem = KSUCCESS;
@@ -288,10 +297,10 @@ try_connect:
 #ifdef CRYPT
 		if (doencrypt)
 			rem = krcmd_mutual(&host, sp->s_port, user, args,
-			    &rfd2, dest_realm, &cred, schedule);
+			    &remerr, dest_realm, &cred, schedule);
 		else
 #endif
-			rem = krcmd(&host, sp->s_port, user, args, &rfd2,
+			rem = krcmd(&host, sp->s_port, user, args, &remerr,
 			    dest_realm);
 		if (rem < 0) {
 			use_kerberos = 0;
@@ -313,7 +322,7 @@ try_connect:
 		rem = rcmd(&host, sp->s_port,
 #endif
 		    name,
-		    user, args, &rfd2);
+		    user, args, &remerr);
 	}
 #else /* KERBEROS */
 
@@ -322,157 +331,195 @@ try_connect:
 #else
 	rem = rcmd(&host, sp->s_port,
 #endif
-	    name, user, args, &rfd2);
+	    name, user, args, &remerr);
 #endif /* KERBEROS */
 	(void)free(name);
 
 	if (rem < 0)
 		exit(1);
 
-	if (rfd2 < 0)
+	if (remerr < 0)
 		errx(1, "can't establish stderr");
 	if (dflag) {
 		if (setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
 			warn("setsockopt remote");
-		if (setsockopt(rfd2, SOL_SOCKET, SO_DEBUG, &one,
+		if (setsockopt(remerr, SOL_SOCKET, SO_DEBUG, &one,
 		    sizeof(one)) < 0)
 			warn("setsockopt stderr");
 	}
 
-	(void)setuid(uid);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGTERM));
-	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-		(void)signal(SIGINT, sendsig);
-	if (signal(SIGQUIT, SIG_IGN) != SIG_IGN)
-		(void)signal(SIGQUIT, sendsig);
-	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
-		(void)signal(SIGTERM, sendsig);
+	(void) setuid(uid);
+
+	(void) sigemptyset(&nset);
+	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
+		(void) sigaddset(&nset, sigs[i]);
+
+	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
+
+	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
+		struct sigaction sa;
+
+		if (sa.sa_handler != SIG_IGN) {
+			sa.sa_handler = sendsig;		
+			(void) sigaction(sigs[i], &sa, NULL);
+		}
+	}
 
 	if (!nflag) {
 		pid = fork();
 		if (pid < 0)
 			err(1, "fork");
 	}
+	else
+		pid = -1;
 
-#ifdef KERBEROS
-#ifdef CRYPT
+#if defined(KERBEROS) && defined(CRYPT)
 	if (!doencrypt)
 #endif
-#endif
 	{
-		(void)ioctl(rfd2, FIONBIO, &one);
+		(void)ioctl(remerr, FIONBIO, &one);
 		(void)ioctl(rem, FIONBIO, &one);
 	}
 
-	talk(nflag, omask, pid, rem);
+	talk(nflag, &oset, pid, rem);
 
 	if (!nflag)
 		(void)kill(pid, SIGKILL);
 	exit(0);
 }
 
+int
+checkfd(fdp, outfd)
+	struct pollfd *fdp;
+	int outfd;
+{
+	int nr, nw;
+	char buf[BUFSIZ];
+
+	if (fdp->revents & (POLLNVAL|POLLERR|POLLHUP))
+		return -1;
+	   
+	if ((fdp->revents & POLLIN) == 0)
+		return 0;
+
+	errno = 0;
+#if defined(KERBEROS) && defined(CRYPT)
+	if (doencrypt)
+		nr = des_read(fdp->fd, buf, sizeof buf);
+	else
+#endif
+		nr = read(fdp->fd, buf, sizeof buf);
+
+	if (nr <= 0) {
+		if (errno != EAGAIN)
+			return -1;
+		else
+			return 0;
+	}
+	else {
+		char *bc = buf;
+		while (nr) {
+			if ((nw = write(outfd, bc, nr)) <= 0)
+				return -1;
+			nr -= nw;
+			bc += nw;
+		}
+		return 0;
+	}
+}
+
 void
-talk(nflag, omask, pid, rem)
+talk(nflag, oset, pid, rem)
 	int nflag;
-	long omask;
+	sigset_t *oset;
 	pid_t pid;
 	int rem;
 {
-	int cc, wc, nfds;
+	int nr, nw, nfds;
 	struct pollfd fds[2], *fdp = &fds[0];
 	char *bp, buf[BUFSIZ];
 
-	if (!nflag && pid == 0) {
-		(void)close(rfd2);
 
-reread:		errno = 0;
-		if ((cc = read(0, buf, sizeof buf)) <= 0)
-			goto done;
+	if (!nflag && pid == 0) {
+		(void)close(remerr);
+
+		fdp->events = POLLOUT|POLLNVAL|POLLERR|POLLHUP;
+		fdp->fd = rem;
+		nr = 0;
 		bp = buf;
 
-rewrite:	fdp->events = POLLOUT;
-		fdp->fd = rem;
-		if (poll(fdp, 1, 0) < 0) {
-			if (errno != EINTR)
-				err(1, "poll");
-			goto rewrite;
-		}
-		if ((fdp->revents & POLLOUT) == 0)
-			goto rewrite;
-#ifdef KERBEROS
-#ifdef CRYPT
-		if (doencrypt)
-			wc = des_write(rem, bp, cc);
-		else
-#endif
-#endif
-			wc = write(rem, bp, cc);
-		if (wc < 0) {
-			if (errno == EWOULDBLOCK)
+		for (;;) {
+			errno = 0;
+
+			if (nr == 0) {
+				if ((nr = read(0, buf, sizeof buf)) == 0)
+					goto done;
+				if (nr == -1) {
+					if (errno == EIO)
+						goto done;
+					if (errno == EINTR)
+						continue;
+					err(1, "read");
+				}
+				bp = buf;
+			}
+
+rewrite:		if (poll(fdp, 1, INFTIM) == -1) {
+				if (errno != EINTR)
+					err(1, "poll");
 				goto rewrite;
-			goto done;
+			}
+
+			if (fdp->revents & (POLLNVAL|POLLERR|POLLHUP))
+				err(1, "poll");
+
+			if ((fdp->revents & POLLOUT) == 0)
+				goto rewrite;
+
+#if defined(KERBEROS) && defined(CRYPT)
+			if (doencrypt)
+				nw = des_write(rem, bp, nr);
+			else
+#endif
+				nw = write(rem, bp, nr);
+
+			if (nw < 0) {
+				if (errno == EAGAIN)
+					continue;
+				err(1, "write");
+			}
+			bp += nw;
+			nr -= nw;
 		}
-		bp += wc;
-		cc -= wc;
-		if (cc == 0)
-			goto reread;
-		goto rewrite;
 done:
 		(void)shutdown(rem, 1);
 		exit(0);
 	}
 
-	(void)sigsetmask(omask);
-	fds[0].events = fds[1].events = POLLIN;
-	fds[0].fd = rfd2;
+	(void) sigprocmask(SIG_SETMASK, oset, NULL);
+	fds[0].events = fds[1].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+	fds[0].fd = remerr;
 	fds[1].fd = rem;
 	fdp = &fds[0];
 	nfds = 2;
 	do {
-		if (poll(fdp, nfds, 0) < 0) {
+		if (poll(fdp, nfds, INFTIM) == -1) {
 			if (errno != EINTR)
 				err(1, "poll");
 			continue;
 		}
-		if (fds[0].events == POLLIN && (fds[0].revents & POLLIN)) {
-			errno = 0;
-#ifdef KERBEROS
-#ifdef CRYPT
-			if (doencrypt)
-				cc = des_read(rfd2, buf, sizeof buf);
-			else
-#endif
-#endif
-				cc = read(rfd2, buf, sizeof buf);
-			if (cc <= 0) {
-				if (errno != EWOULDBLOCK) {
-					nfds--;
-					fds[0].events = 0;
-					fdp = &fds[1];
-				}
-			} else
-				(void)write(2, buf, cc);
+		if (fds[0].events != 0 && checkfd(&fds[0], 2) == -1) {
+			nfds--;
+			fds[0].events = 0;
+			fdp = &fds[1];
 		}
-		if (fds[1].events == POLLIN && (fds[1].revents & POLLIN)) {
-			errno = 0;
-#ifdef KERBEROS
-#ifdef CRYPT
-			if (doencrypt)
-				cc = des_read(rem, buf, sizeof buf);
-			else
-#endif
-#endif
-				cc = read(rem, buf, sizeof buf);
-			if (cc <= 0) {
-				if (errno != EWOULDBLOCK) {
-					nfds--;
-					fds[1].events = 0;
-				}
-			} else
-				(void)write(1, buf, cc);
+		if (fds[1].events != 0 && checkfd(&fds[1], 1) == -1) {
+			nfds--;
+			fds[1].events = 0;
 		}
-	} while (nfds);
+	}
+	while (nfds);
 }
 
 void
@@ -485,28 +532,37 @@ sendsig(sig)
 #ifdef KERBEROS
 #ifdef CRYPT
 	if (doencrypt)
-		(void)des_write(rfd2, &signo, 1);
+		(void)des_write(remerr, &signo, 1);
 	else
 #endif
 #endif
-		(void)write(rfd2, &signo, 1);
+		(void)write(remerr, &signo, 1);
 }
 
 #ifdef KERBEROS
 /* VARARGS */
 void
+#ifdef __STDC__
+warning(const char *fmt, ...)
+#else
 warning(va_alist)
-va_dcl
+	va_dcl
+#endif
 {
 	va_list ap;
-	char *fmt;
+#ifndef __STDC__
+	const char *fmt;
 
-	(void)fprintf(stderr, "rsh: warning, using standard rsh: ");
 	va_start(ap);
-	fmt = va_arg(ap, char *);
-	vfprintf(stderr, fmt, ap);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
+
+	(void) fprintf(stderr, "%s: warning, using standard rsh: ", __progname);
+	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, ".\n");
+	(void) fprintf(stderr, ".\n");
 }
 #endif
 
@@ -521,7 +577,7 @@ copyargs(argv)
 	for (ap = argv; *ap; ++ap)
 		cc += strlen(*ap) + 1;
 	if (!(args = malloc((u_int)cc)))
-		errx(1, "%s", strerror(ENOMEM));
+		err(1, "malloc");
 	for (p = args, *p = '\0', ap = argv; *ap; ++ap) {
 		(void)strcpy(p, *ap);
 		p += strlen(p);
