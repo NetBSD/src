@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.5 1996/10/30 00:24:39 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.6 1996/10/30 00:31:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -160,7 +160,7 @@ si_obio_attach(parent, self, args)
 	struct confargs *ca = args;
 
 	/* Get options from config flags... */
-	sc->sc_options = si_obio_options;
+	sc->sc_options = cf->cf_flags | si_obio_options;
 	printf(": options=%d\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
