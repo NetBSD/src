@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.4 1998/06/20 21:59:44 drochner Exp $ */
+/*	$NetBSD: smg.c,v 1.5 1998/06/26 21:28:57 drochner Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,6 +69,7 @@ struct cfattach smg_ca = {
 };
 
 static void	smg_cursor __P((void *, int, int, int));
+unsigned int	smg_mapchar __P((void *, int));
 static void	smg_putchar __P((void *, int, int, u_int, long));
 static void	smg_copycols __P((void *, int, int, int,int));
 static void	smg_erasecols __P((void *, int, int, int, long));
@@ -78,6 +79,7 @@ static int	smg_alloc_attr __P((void *, int, int, int, long *));
 
 const struct wsdisplay_emulops smg_emulops = {
 	smg_cursor,
+	smg_mapchar,
 	smg_putchar,
 	smg_copycols,
 	smg_erasecols,
@@ -172,6 +174,16 @@ smg_cursor(id, on, row, col)
 	ss->ss_cury = row;
 	if (ss == curscr)
 		sm_addr[(row * 15 * 128) + col + (14 * 128)] = on ? 255 : 0;
+}
+
+unsigned int
+smg_mapchar(id, uni)
+	void *id;
+	int uni;
+{
+	if (uni < 256)
+		return (uni);
+	return (0);
 }
 
 static void
