@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1997/06/11 08:46:55 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 1997/07/08 16:56:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -485,13 +485,14 @@ trap(type, code, v, frame)
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
-		 * XXX This comment/code is not consistent XXX
-		 * SunOS seems to use Trap #2 for some obscure 
-		 * fpu operations.  So far, just ignore it, but
-		 * DONT trap on it.. 
+		 * SunOS uses Trap #2 for a "CPU cache flush".
+		 * Just flush the on-chip caches and return.
 		 */
-		if (p->p_emul == &emul_sunos)
-			goto out;
+		if (p->p_emul == &emul_sunos) {
+			ICIA();
+			DCIU();
+			return;
+		}
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
