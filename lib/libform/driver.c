@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.13 2002/07/29 05:17:37 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.14 2002/08/02 11:48:02 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -457,5 +457,9 @@ form_driver(FORM *form, int c)
 		_formi_draw_page(form);
 
 	pos_form_cursor(form);
+
+	if ((update_page == 1) || (update_field == 1))
+		wrefresh(form->scrwin);
+	
 	return E_OK;
 }
