@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.50 2000/08/11 19:41:58 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.51 2001/11/06 07:18:14 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -965,9 +965,7 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 	int error;
 	daddr_t bn;
 	int blsize;
-	u_long boff;
 
-	boff = diroffset & ~pmp->pm_crbomask;
 	blsize = pmp->pm_bpcluster;
 	if (dirclust == MSDOSFSROOT
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
