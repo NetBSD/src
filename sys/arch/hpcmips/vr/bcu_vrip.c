@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.7 2001/04/18 11:07:26 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.8 2001/04/21 14:44:40 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -120,7 +120,7 @@ vrbcu_dump_regs()
 {
 	struct vrbcu_softc *sc = the_bcu_sc;
 	int cpuclock = 0, tclock = 0, vtclock = 0, cpuid;
-#if !defined(ONLY_VR4181) && !defined(ONLY_VR4102) && defined VRGROUP_4111_4122
+#if !defined(ONLY_VR4102)
 	int spdreg;
 #endif
 #ifdef VRBCUDEBUG
@@ -128,7 +128,7 @@ vrbcu_dump_regs()
 #endif /* VRBCUDEBUG */
 
 	cpuid = vrbcu_vrip_getcpuid();
-#if !defined(ONLY_VR4181) && !defined(ONLY_VR4102) && defined VRGROUP_4111_4122
+#if !defined(ONLY_VR4181) && !defined(ONLY_VR4102)
 	if (cpuid != BCUREVID_FIXRID_4181 
 		&& cpuid <= BCUREVID_RID_4122
 		&& cpuid >= BCUREVID_RID_4111) {
@@ -138,11 +138,38 @@ vrbcu_dump_regs()
 #endif /* VRBCUDEBUG */
 	}
 #endif
+#if defined VR4181
+	if (cpuid == BCUREVID_FIXRID_4181){
+		spdreg = vrbcu_read(sc, BCU81CLKSPEED_REG_W);
+#ifdef VRBCUDEBUG
+		printf("vrbcu: CLKSPEED %x: \n",  spdreg);
+#endif /* VRBCUDEBUG */
+	}
+#endif
 
 	cpuclock = vrbcu_vrip_getcpuclock();
 
 	switch (cpuid) {
+#if defined VR4181
 	case BCUREVID_FIXRID_4181:
+		switch ((spdreg&BCU81CLKSPEED_DIVTMASK)>>BCU81CLKSPEED_DIVTSHFT){
+		case BCU81CLKSPEED_DIVT1:
+			vtclock = tclock = cpuclock;
+			break;
+		case BCU81CLKSPEED_DIVT2:
+			vtclock = tclock = cpuclock/2;
+			break;
+		case BCU81CLKSPEED_DIVT3:
+			vtclock = tclock = cpuclock/3;
+			break;
+		case BCU81CLKSPEED_DIVT4:
+			vtclock = tclock = cpuclock/4;
+			break;
+		default:
+			vtclock = tclock = 0;
+		}
+		break;
+#endif /* VR4181 */
 	case BCUREVID_RID_4101:
 	case BCUREVID_RID_4102:
 		vtclock = tclock = cpuclock/2;
@@ -262,14 +289,16 @@ vrbcu_vrip_getcpuid(void)
 		return vr_cpuid; 
 
 	if (vr_cpuid == -1) {
-		revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+		if (VRIP_BCU_ADDR == VR4181_BCU_ADDR)
+			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCU81REVID_REG_W));
+		else
+			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
 		vr_cpuid = *revreg;
 		vr_cpuid = (vr_cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
-#if !defined(VR4101) && defined(VR4181)
-		if (vr_cpuid == BCUREVID_RID_4181) /* conflict vr4101 */
+		if (VRIP_BCU_ADDR == VR4181_BCU_ADDR 
+		    && vr_cpuid == BCUREVID_RID_4181) /* conflict vr4101 */
 			vr_cpuid = BCUREVID_FIXRID_4181;
-#endif /* !defined(VR4101) && defined(VR4181) */
 	}
 	return vr_cpuid;
 }	
@@ -330,12 +359,13 @@ vrbcu_vrip_getcpuclock(void)
 	cpuid = vrbcu_vrip_getcpuid();
 	if (cpuid != BCUREVID_FIXRID_4181 && cpuid >= BCUREVID_RID_4111) {
 		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
+	} else if (cpuid == BCUREVID_FIXRID_4181) {
+		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCU81CLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
 	}
 
 	switch (cpuid) {
 	case BCUREVID_FIXRID_4181:
-		/* assume 66MHz */
-		cpuclock = 66000000;
+		cpuclock = CLKX / clksp * 64;
 		/* branch delay is 1 clock; 2 clock/loop */
 		cpuspeed = (cpuclock / 2 + MHZ / 2) / MHZ;
 		break;
