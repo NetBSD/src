@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.67.4.3 2001/06/10 18:22:45 he Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.67.4.4 2001/07/29 20:02:05 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1379,9 +1379,13 @@ void
 fdcloseexec(p)
 	struct proc *p;
 {
-	struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp;
 	int fd;
 
+	fdunshare(p);
+	cwdunshare(p);
+
+	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
