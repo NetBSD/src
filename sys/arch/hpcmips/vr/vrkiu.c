@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.11 2000/01/17 12:22:37 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.12 2000/01/22 09:12:35 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -80,10 +80,12 @@ struct vrkiu_chip {
 	bus_space_handle_t kc_ioh;
 	unsigned short kc_scandata[KIU_NSCANLINE/2];
 	int kc_polling;
-	u_int kc_type;
-	int kc_data;
-
-	int kc_sft:1, kc_alt:1, kc_ctrl:1;
+#define NEVENTQ 32
+	struct {
+		u_int kc_type;
+		int kc_data;
+	} kc_eventq[NEVENTQ], *kc_head, *kc_tail;
+	int kc_nevents;
 
 	struct vrkiu_softc* kc_sc;	/* back link */
 };
@@ -96,9 +98,6 @@ struct vrkiu_softc {
 	struct device *sc_wskbddev;
 
 	void *sc_handler;
-#define NKEYBUF 32
-	unsigned char keybuf[NKEYBUF];
-	int keybufhead, keybuftail;
 };
 
 /*
@@ -113,9 +112,9 @@ static int vrkiu_init(struct vrkiu_chip*, bus_space_tag_t, bus_space_handle_t);
 static void vrkiu_write __P((struct vrkiu_chip *, int, unsigned short));
 static unsigned short vrkiu_read __P((struct vrkiu_chip *, int));
 static int vrkiu_is_console(bus_space_tag_t, bus_space_handle_t);
-static void detect_key __P((struct vrkiu_chip *));
-
-static struct vrkiu_softc *the_vrkiu = NULL; /* XXX: kludge!! */
+static int detect_key __P((struct vrkiu_chip *));
+static int vrkiu_getevent __P((struct vrkiu_chip*, u_int*, int*));
+static int vrkiu_putevent __P((struct vrkiu_chip*, u_int, int));
 
 /* wskbd accessopts */
 int vrkiu_enable __P((void *, int));
@@ -337,6 +336,41 @@ vrkiu_is_console(iot, ioh)
 static void
 vrkiu_initkeymap(void)
 {
+	int i;
+	static struct {
+		platid_mask_t *mask;
+		char *keytrans;
+		kbd_t layout;
+	} table[] = {
+		{ &platid_mask_MACH_NEC_MCR_520A,
+		  mobilepro_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_500A,
+		  mobilepro750c_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_700A,
+		  mobilepro_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR,
+		  mcr_jp_keytrans, KB_JP },
+		{ &platid_mask_MACH_IBM_WORKPAD_Z50,
+		  z50_keytrans, KB_US },
+		{ &platid_mask_MACH_SHARP_TRIPAD,
+		  tripad_keytrans, KB_JP },
+		{ &platid_mask_MACH_NEC_MCCS,
+		  mccs_keytrans, KB_JP },
+		{ &platid_mask_MACH_FUJITSU_INTERTOP,
+		  intertop_keytrans, KB_JP },
+		{ NULL } /* end mark */
+	};
+
+	for (i = 0; table[i].mask; i++) {
+		if (platid_match(&platid, table[i].mask)) {
+			keytrans = table[i].keytrans;
+#if !defined(PCKBD_LAYOUT)
+			vrkiu_keymapdata.layout = table[i].layout;
+#endif
+		}
+	}
+
+#if 0
 	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
 		keytrans = mobilepro_keytrans;
 #if !defined(PCKBD_LAYOUT)
@@ -378,6 +412,7 @@ vrkiu_initkeymap(void)
 		vrkiu_keymapdata.layout = KB_JP;
 #endif
 	}
+#endif
 }
 
 /*
@@ -393,6 +428,8 @@ vrkiu_init(chip, iot, ioh)
 	chip->kc_iot = iot;
 	chip->kc_ioh = ioh;
 	chip->kc_polling = 0;
+	chip->kc_head = chip->kc_tail = chip->kc_eventq;
+	chip->kc_nevents = 0;
 
 	/* set KIU */
 	vrkiu_write(chip, KIURST, 1);   /* reset */
@@ -403,6 +440,48 @@ vrkiu_init(chip, iot, ioh)
 				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
 	vrkiu_initkeymap();
 	return 0;
+}
+
+/*
+ * put key event
+ */
+static int
+vrkiu_putevent(chip, type, data)
+	struct vrkiu_chip* chip;
+	u_int type;
+	int data;
+{
+	if (chip->kc_nevents == NEVENTQ) {
+	  return (0);
+	}
+	chip->kc_nevents++;
+	chip->kc_tail->kc_type = type;
+	chip->kc_tail->kc_data = data;
+	if (&chip->kc_eventq[NEVENTQ] <= ++chip->kc_tail) {
+		chip->kc_tail = chip->kc_eventq;
+	}
+	return (1);
+}
+
+/*
+ * gut key event
+ */
+static int
+vrkiu_getevent(chip, type, data)
+	struct vrkiu_chip* chip;
+	u_int *type;
+	int *data;
+{
+	if (chip->kc_nevents == 0) {
+	  return (0);
+	}
+	*type = chip->kc_head->kc_type;
+	*data = chip->kc_head->kc_data;
+	chip->kc_nevents--;
+	if (&chip->kc_eventq[NEVENTQ] <= ++chip->kc_head) {
+		chip->kc_head = chip->kc_eventq;
+	}
+	return (1);
 }
 
 /*
@@ -490,11 +569,12 @@ vrkiu_intr(arg)
 	return 0;
 }
 
-static void
+static int
 detect_key(chip)
 	struct vrkiu_chip* chip;
 {
 	int i, j, modified, mask;
+	int detected;
 	unsigned short scandata[KIU_NSCANLINE/2];
 
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
@@ -503,10 +583,7 @@ detect_key(chip)
 
 	DPRINTF(("%s(%d): detect_key():", __FILE__, __LINE__));
 
-	if (chip->kc_polling) {
-		chip->kc_type = WSCONS_EVENT_ALL_KEYS_UP;
-	}
-
+	detected = 0;
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		modified = scandata[i] ^ chip->kc_scandata[i];
 		mask = 1;
@@ -530,9 +607,11 @@ detect_key(chip)
 				DPRINTF(("(%d,%d)=%s%d ", i, j,
 					 (scandata[i] & mask) ? "v" : "^",
 					 keytrans[key]));
+				detected++;
 				if (chip->kc_polling) {
-					chip->kc_type = type;
-					chip->kc_data = keytrans[key];
+					if (vrkiu_putevent(chip, type,
+							   keytrans[key]) == 0)
+						printf("vrkiu: queue over flow");
 				} else {
 					wskbd_input(chip->kc_sc->sc_wskbddev,
 						    type,
@@ -543,26 +622,20 @@ detect_key(chip)
 		chip->kc_scandata[i] = scandata[i];
 	}
 	DPRINTF(("\n"));
+
+	return (detected);
 }
 
 /* called from biconsdev.c */
 int
 vrkiu_getc()
 {
-	int ret;
-
-	if (the_vrkiu == NULL) {
-		return 0;	/* XXX */
-	}
-
-	while (the_vrkiu->keybuftail == the_vrkiu->keybufhead) {
-		detect_key(vrkiu_consdata);
-	}
-	ret = the_vrkiu->keybuf[the_vrkiu->keybuftail++];
-	if (the_vrkiu->keybuftail >= NKEYBUF) {
-		the_vrkiu->keybuftail = 0;
-	}
-	return ret;
+	/*
+	 * XXX, currently
+	 */
+	printf("%s(%d): vrkiu_getc() is not implemented\n",
+	       __FILE__, __LINE__);
+	return 0;
 }
 
 int
@@ -667,16 +740,17 @@ vrkiu_cngetc(chipx, type, data)
 
 	if (!chip->kc_polling) {
 		printf("%s(%d): kiu is not polled\n", __FILE__, __LINE__);
+		/*
+		 * Don't call panic() because it may call this routine
+		 * recursively.
+		 */
+		printf("halt\n");
 		while (1);
 	}
 
 	s = splimp();
-	if (chip->kc_type == WSCONS_EVENT_ALL_KEYS_UP) {
+	while (vrkiu_getevent(chip, type, data) == 0) /* busy loop */
 		detect_key(chip);
-	}
-	*type = chip->kc_type;
-	*data = chip->kc_data;
-	chip->kc_type = WSCONS_EVENT_ALL_KEYS_UP;
 	splx(s);
 }
 
