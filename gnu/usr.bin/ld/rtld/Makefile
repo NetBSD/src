@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1993/10/27 00:55:24 pk Exp $
+#	$Id: Makefile,v 1.3 1993/11/08 13:20:39 pk Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c shlib.c etc.c md.c
@@ -16,7 +16,7 @@ BINDIR= /usr/libexec
 .SUFFIXES: .S
 
 $(PROG):
-	$(LD) -o $(PROG) $(LDFLAGS) $(OBJS) $(LIBS)
+	$(LD) -o $(PROG) $(LDFLAGS) $(OBJS) $(LIBS) $(LDADD)
 
 .S.o:
 	$(CPP) $(.IMPSRC) | $(AS) -k -o $(.TARGET) -
