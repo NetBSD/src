@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.6 2001/05/27 05:30:02 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.7 2001/05/28 06:18:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -77,8 +77,6 @@ static void vs_close __P((void *));
 static int  vs_query_encoding __P((void *, struct audio_encoding *));
 static int  vs_set_params __P((void *, int, int, struct audio_params *,
 	struct audio_params *));
-static int  vs_init_output __P((void *, void *, int));
-static int  vs_init_input __P((void *, void *, int));
 static int  vs_trigger_output __P((void *, void *, void *, int,
 				   void (*)(void *), void *,
 				   struct audio_params *));
@@ -103,12 +101,6 @@ static int  vs_get_props __P((void *));
 static int vs_round_sr(u_long);
 static void vs_set_sr(struct vs_softc *sc, int);
 static inline void vs_set_po(struct vs_softc *sc, u_long);
-static int adpcm_estimindex[];
-static int adpcm_estim[];
-static u_char adpcm_estimindex_correct[];
-static inline u_char pcm2adpcm_step __P((short, short *, signed char *));
-static void vs_ulinear8_to_adpcm __P((void *, u_char *, int));
-static void vs_mulaw_to_adpcm __P((void *, u_char *, int));
 
 extern struct cfdata vs_cd;
 
@@ -573,7 +565,6 @@ vs_halt_output(void *hdl)
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
 	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
 
-	DPRINTF(("vs_halt_output: csr=%x,cer=%x\n", dmac->csr, dmac->cer));
 	return 0;
 }
 
