@@ -1,3 +1,5 @@
+/* $NetBSD: wdogvar.h,v 1.2 2000/02/24 17:10:16 msaitoh Exp $ */
+
 #ifndef _SH3_WDOGVAR_H_
 #define _SH3_WDOGVAR_H_
 
