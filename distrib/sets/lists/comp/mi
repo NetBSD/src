@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.216 2000/05/02 12:46:05 simonb Exp $
+#	$NetBSD: mi,v 1.217 2000/05/07 00:56:03 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -101,6 +101,7 @@
 ./usr/include/dev/ic/bt459reg.h	comp-c-include
 ./usr/include/dev/ic/bt463reg.h	comp-c-include
 ./usr/include/dev/ic/bt485reg.h	comp-c-include
+./usr/include/dev/ic/bt8xx.h	comp-c-include
 ./usr/include/dev/ic/cacreg.h		comp-c-include
 ./usr/include/dev/ic/cacvar.h		comp-c-include
 ./usr/include/dev/ic/cd1190reg.h	comp-c-include
