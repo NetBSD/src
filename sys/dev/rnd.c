@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.6 1997/10/13 20:00:11 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.7 1997/10/15 07:22:46 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -363,7 +363,8 @@ rndioctl(dev, cmd, addr, flag, p)
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
 
-		bcopy(rndpool_get_pool(NULL), addr, rndpool_get_poolsize());
+		ret = copyout(rndpool_get_pool(NULL),
+			      addr, rndpool_get_poolsize());
 
 		break;
 
