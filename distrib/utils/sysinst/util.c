@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.81 2003/01/22 05:59:08 jhawk Exp $	*/
+/*	$NetBSD: util.c,v 1.82 2003/02/11 11:30:54 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,6 +251,7 @@ int
 get_via_cdrom()
 {
 	char tmpdir[STRSIZE];
+	int retries = 0;
 
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource);
@@ -261,6 +262,10 @@ again:
 	/* Mount it */
 	if (run_prog(0, NULL,
 	    "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+		if (retries++ < 5) {
+			sleep(1);
+			goto again;
+		}
 		msg_display(MSG_badsetdir, cdrom_dev);
 		process_menu(MENU_cdrombadmount);
 		if (!yesno)
