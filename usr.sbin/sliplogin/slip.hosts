@@ -1,3 +1,4 @@
+#	$NetBSD
 #	@(#)slip.hosts	8.1 (Berkeley) 6/6/93
 #
 # login		local-addr	remote-addr	mask		opt1	opt2
