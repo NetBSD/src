@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.38 2000/03/20 02:19:44 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.39 2000/04/03 01:10:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -285,9 +285,12 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_AMASK_MVI		0x0100		/* multimedia extension */
 #define	ALPHA_AMASK_PAT		0x0200		/* precise arith. traps */
 
-#define	ALPHA_AMASK_ALL		(ALPHA_AMASK_BWX|ALPHA_AMASK_FIX	\
-				 ALPHA_AMASK_CIX|ALPHA_AMASK_MVI	\
+#define	ALPHA_AMASK_ALL		(ALPHA_AMASK_BWX|ALPHA_AMASK_FIX|	\
+				 ALPHA_AMASK_CIX|ALPHA_AMASK_MVI|	\
 				 ALPHA_AMASK_PAT)
+
+#define	ALPHA_AMASK_BITS						\
+    "\20\12PAT\11MVI\3CIX\2FIX\1BWX"
 
 /*
  * Chip family IDs returned by implver instruction
