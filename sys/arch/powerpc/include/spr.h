@@ -103,6 +103,7 @@
 #define	SPI_DBAT7L		0x23f	/* .6. Data BAT Reg 7 Lower */
 #define	SPR_UMMCR2		0x3a0	/* .6. User Monitor Mode Control Register 2 */
 #define	SPR_UMMCR0		0x3a8	/* .6. User Monitor Mode Control Register 0 */
+#define	SPR_USIA		0x3ab	/* .6. User Sampled Instruction Address */
 #define	SPR_UMMCR1		0x3ac	/* .6. User Monitor Mode Control Register 1 */
 #define	SPR_ZPR			0x3b0	/* 4.. Zone Protection Register */
 #define	SPR_MMCR2		0x3b0	/* .6. Monitor Mode Control Register 2 */
@@ -120,11 +121,12 @@
 #define	SPR_DCWR		0x3ba	/* 4.. Data Cache Write-through Register */
 #define	SPR_PMC2		0x3ba	/* .6. Performance Counter Register 2 */
 #define	SPR_SLER		0x3bb	/* 4.. Storage Little Endian Register */
+#define	SPR_SIA			0x3bb	/* .6. Sampled Instruction Address */
 #define	SPR_MMCR1		0x3bc	/* .6. Monitor Mode Control Register 2 */
 #define	SPR_SU0R		0x3bc	/* 4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* 4.. Debug Control Register 1 */
-#define	SPR_PMC3		0x3bb	/* .6. Performance Counter Register 3 */
-#define	SPR_PMC4		0x3bc	/* .6. Performance Counter Register 4 */
+#define	SPR_PMC3		0x3bd	/* .6. Performance Counter Register 3 */
+#define	SPR_PMC4		0x3be	/* .6. Performance Counter Register 4 */
 #define	SPR_DMISS		0x3d0	/* .68 Data TLB Miss Address Register */
 #define	SPR_DCMP		0x3d1	/* .68 Data TLB Compare Register */
 #define	SPR_HASH1		0x3d2	/* .68 Primary Hash Address Register */
