@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.8 2000/03/27 03:25:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.9 2001/09/25 02:56:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,12 +74,6 @@ struct RF_RaidDisk_s {
 				   0 otherwise. */
 	dev_t   dev;
 };
-/*
- * An RF_DiskOp_t ptr is really a pointer to a UAGT_CCB, but I want
- * to isolate the cam layer from all other layers, so I typecast to/from
- * RF_DiskOp_t * (i.e. void *) at the interfaces.
- */
-typedef void RF_DiskOp_t;
 
 /* if a disk is in any of these states, it is inaccessible */
 #define RF_DEAD_DISK(_dstat_) (((_dstat_) == rf_ds_spared) || \
