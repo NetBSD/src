@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.114 2003/08/07 16:34:40 agc Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.115 2003/09/20 17:51:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.114 2003/08/07 16:34:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.115 2003/09/20 17:51:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1335,6 +1335,11 @@ lfs_getpages(void *v)
 	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
 		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
 	}
+
+	/*
+	 * we're relying on the fact that genfs_getpages() always read in
+	 * entire filesystem blocks.
+	 */
 	return genfs_getpages(v);
 }
 
@@ -1357,7 +1362,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	off_t soff;
 	voff_t off;
-	int i, dirty, tdirty, nonexistent, any_dirty;
+	int i;
+	int nonexistent;
+	int any_dirty;	/* number of dirty pages */
+	int dirty;	/* number of dirty pages in a block */
+	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 
   top:
@@ -1374,6 +1383,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	}
 	while (by_list || soff < MIN(blkeof, endoffset)) {
 		if (by_list) {
+			/*
+			 * find the first page in a block.
+			 */
 			if (pages_per_block > 1) {
 				while (curpg && (curpg->offset & fs->lfs_bmask))
 					curpg = TAILQ_NEXT(curpg, listq);
@@ -1524,6 +1536,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  *     block are either resident or not, even if those pages are higher
  *     than EOF; that means that we will be getting requests to free
  *     "unused" pages above EOF all the time, and should ignore them.
+ *
+ * XXX note that we're (ab)using PGO_LOCKED as "seglock held".
  */
 
 int
