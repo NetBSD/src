@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.6 1994/01/28 02:56:06 jtc Exp $
+#	$Id: BSD.usr.dist,v 1.7 1994/01/31 23:38:19 jtc Exp $
 #
 
 .	type=dir
@@ -29,6 +29,8 @@ include	type=dir
 	rpc		type=dir uname=bin gname=bin mode=0755
 	..
 	rpcsvc		type=dir uname=bin gname=bin mode=0755
+	..
+	g++		type=dir uname=bin gname=bin mode=0755
 	..
 ..
 
