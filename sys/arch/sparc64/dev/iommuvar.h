@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.2 1999/06/20 00:51:29 eeh Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.3 2000/04/22 17:06:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -58,5 +58,21 @@ void	iommu_reset __P((struct iommu_state *));
 void    iommu_enter __P((struct iommu_state *, vaddr_t, int64_t, int));
 void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));
 int	iommu_flush __P((struct iommu_state *));
+
+int	iommu_dvmamap_load __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));
+void	iommu_dvmamap_unload __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dmamap_t));
+void	iommu_dvmamap_sync __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dmamap_t, bus_addr_t, bus_size_t, int));
+int	iommu_dvmamem_alloc __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *,
+	    int, int *, int));
+void	iommu_dvmamem_free __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dma_segment_t *, int));
+int	iommu_dvmamem_map __P((bus_dma_tag_t, struct iommu_state *,
+	    bus_dma_segment_t *, int, size_t, caddr_t *, int));
+void	iommu_dvmamem_unmap __P((bus_dma_tag_t, struct iommu_state *,
+	    caddr_t, size_t));
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */

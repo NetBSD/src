@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2000/01/25 22:13:24 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 2000/04/22 17:06:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -601,6 +601,7 @@ typedef struct sparc_bus_dmamap		*bus_dmamap_t;
 struct sparc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	bus_size_t	_ds_boundary;	/* don't cross this */
 	void		*_ds_mlist;	/* XXX - dmamap_alloc'ed pages */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
@@ -735,11 +736,5 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high));
 #endif /* _SPARC_BUS_DMA_PRIVATE */
-
-/* 
- * DVMA alloc/free until each bus gets its own map in 64-bit land.
- */
-bus_addr_t dvmamap_alloc __P((int, int));
-void dvmamap_free __P((bus_addr_t, bus_size_t));
 
 #endif /* _SPARC_BUS_H_ */

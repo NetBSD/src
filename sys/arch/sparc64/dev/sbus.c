@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.27 2000/04/22 12:36:29 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.28 2000/04/22 17:06:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,14 +183,14 @@ void sbus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 			   bus_size_t, int));
 int sbus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 			   bus_size_t alignment, bus_size_t boundary,
-			   bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+			   bus_dma_segment_t *segs, int nsegs, int *rsegs,
+			   int flags));
 void sbus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			   int nsegs));
 int sbus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			 int nsegs, size_t size, caddr_t *kvap, int flags));
 void sbus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 			    size_t size));
-
 
 /*
  * Child devices receive the Sbus interrupt level in their attach
@@ -761,356 +761,92 @@ sbus_alloc_dmatag(sc)
 }
 
 int
-sbus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
+sbus_dmamap_load(tag, map, buf, buflen, p, flags)
+	bus_dma_tag_t tag;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
-	int err, s;
-	bus_size_t sgsize;
-	paddr_t curaddr;
-	u_long dvmaddr;
-	vaddr_t vaddr = (vaddr_t)buf;
-	pmap_t pmap;
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	if (map->dm_nsegs) {
-		/* Already in use?? */
-#ifdef DIAGNOSTIC
-		printf("sbus_dmamap_load: map still in use\n");
-#endif
-		bus_dmamap_unload(t, map);
-	}
-
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
-
-	if (buflen > map->_dm_size)
-#ifdef DEBUG
-	{ 
-		printf("sbus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
-#ifdef DDB
-		Debugger();
-#endif
-		return (EINVAL);
-	}		
-#else	
-		return (EINVAL);
-#endif
-	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-	
-	s = splhigh();
-	err = extent_alloc(sc->sc_is.is_dvmamap, sgsize, NBPG,
-			     map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
-	splx(s);
-
-	if (err != 0)
-		return (err);
-
-#ifdef DEBUG
-	if (dvmaddr == (bus_addr_t)-1)	
-	{ 
-		printf("sbus_dmamap_load(): extent_alloc(%d, %x) failed!\n", sgsize, flags);
-#ifdef DDB
-		Debugger();
-#endif
-	}		
-#endif	
-	if (dvmaddr == (bus_addr_t)-1)
-		return (ENOMEM);
-
-	/*
-	 * We always use just one segment.
-	 */
-	map->dm_mapsize = buflen;
-	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
-	map->dm_segs[0].ds_len = sgsize;
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
-
-	dvmaddr = trunc_page(map->dm_segs[0].ds_addr);
-	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-	for (; buflen > 0; ) {
-		/*
-		 * Get the physical address for this page.
-		 */
-		if (pmap_extract(pmap, (vaddr_t)vaddr, &curaddr) == FALSE) {
-			bus_dmamap_unload(t, map);
-			return (-1);
-		}
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
-
-		DPRINTF(SDB_DVMA,
-		    ("sbus_dmamap_load: map %p loading va %lx at pa %lx\n",
-		    map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-		iommu_enter(&sc->sc_is, trunc_page(dvmaddr), trunc_page(curaddr), flags);
-			
-		dvmaddr += PAGE_SIZE;
-		vaddr += sgsize;
-		buflen -= sgsize;
-	}
-	return (0);
+	return (iommu_dvmamap_load(tag, &sc->sc_is, map, buf, buflen, p, flags));
 }
 
 void
-sbus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
+sbus_dmamap_unload(tag, map)
+	bus_dma_tag_t tag;
 	bus_dmamap_t map;
 {
-	vaddr_t addr;
-	int len, error, s;
-	bus_addr_t dvmaddr;
-	bus_size_t sgsize;
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	if (map->dm_nsegs != 1)
-		panic("sbus_dmamap_unload: nsegs = %d", map->dm_nsegs);
-
-	addr = trunc_page(map->dm_segs[0].ds_addr);
-	len = map->dm_segs[0].ds_len;
-
-	DPRINTF(SDB_DVMA,
-	    ("sbus_dmamap_unload: map %p removing va %lx size %lx\n",
-	    map, (long)addr, (long)len));
-	iommu_remove(&sc->sc_is, addr, len);
-	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
-	sgsize = map->dm_segs[0].ds_len;
-
-	/* Mark the mappings as invalid. */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
-	
-	/* Unmapping is bus dependent */
-	s = splhigh();
-	error = extent_free(sc->sc_is.is_dvmamap, dvmaddr, sgsize, EX_NOWAIT);
-	splx(s);
-	if (error != 0)
-		printf("warning: %ld of DVMA space lost\n", (long)sgsize);
-
-	cache_flush((caddr_t)(u_long)dvmaddr, (u_int)sgsize);	
+	iommu_dvmamap_unload(tag, &sc->sc_is, map);
 }
 
 void
-sbus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
+sbus_dmamap_sync(tag, map, offset, len, ops)
+	bus_dma_tag_t tag;
 	bus_dmamap_t map;
 	bus_addr_t offset;
 	bus_size_t len;
 	int ops;
 {
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
-	vaddr_t va = map->dm_segs[0].ds_addr + offset;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	/*
-	 * We only support one DMA segment; supporting more makes this code
-         * too unweildy.
-	 */
-
-	if (ops & BUS_DMASYNC_PREREAD) {
-		DPRINTF(SDB_DVMA,
-	    ("sbus_dmamap_sync: syncing va %p len %lu BUS_DMASYNC_PREREAD\n", 	       
-		    (long)va, (u_long)len));
-
-		/* Nothing to do */;
-	}
-	if (ops & BUS_DMASYNC_POSTREAD) {
-		/*
-		 * We should sync the IOMMU streaming caches here first.
-		 */
-		DPRINTF(SDB_DVMA,
-	    ("sbus_dmamap_sync: syncing va %p len %lu BUS_DMASYNC_POSTREAD\n", 	       
-		    (long)va, (u_long)len));
-		while (len > 0) {
-			DPRINTF(SDB_DVMA,
-		    ("sbus_dmamap_sync: flushing va %p, %lu bytes left\n", 	       
-			    (long)va, (u_long)len));
-			bus_space_write_8(sc->sc_bustag, &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-			if (len <= NBPG) {
-				iommu_flush(&sc->sc_is);
-				len = 0;
-			} else
-				len -= NBPG;
-			va += NBPG;
-		}
-	}
-	if (ops & BUS_DMASYNC_PREWRITE) {
-		DPRINTF(SDB_DVMA,
-	    ("sbus_dmamap_sync: syncing va %p len %lu BUS_DMASYNC_PREWRITE\n", 	       
-			       (long)va, (u_long)len));
-		/* Nothing to do */;
-	}
-	if (ops & BUS_DMASYNC_POSTWRITE) {
-		DPRINTF(SDB_DVMA,
-	    ("sbus_dmamap_sync: syncing va %p len %lu BUS_DMASYNC_POSTWRITE\n",
-		    (long)va, (u_long)len));
-		/* Nothing to do */;
-	}
-	bus_dmamap_sync(t->_parent, map, offset, len, ops);
+	iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
+	bus_dmamap_sync(tag->_parent, map, offset, len, ops);
 }
 
-
-/* 
- * Take memory allocated by our parent bus and generate DVMA mappings for it.
- */
 int
-sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
+sbus_dmamem_alloc(tag, size, alignment, boundary, segs, nsegs, rsegs, flags)
+	bus_dma_tag_t tag;
+	bus_size_t size;
+	bus_size_t alignment;
+	bus_size_t boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
 	int flags;
 {
-	paddr_t curaddr;
-	u_long dvmaddr;
-	vm_page_t m;
-	struct pglist *mlist;
-	int error;
-	int n, s;
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	if ((error = bus_dmamem_alloc(t->_parent, size, alignment, 
-				     boundary, segs, nsegs, rsegs, flags)))
-		return (error);
-
-	/*
-	 * Allocate a DVMA mapping for our new memory.
-	 */
-	for (n = 0; n < *rsegs; n++) {
-		s = splhigh();
-		if (extent_alloc(sc->sc_is.is_dvmamap, segs[0].ds_len, alignment,
-				 boundary, EX_NOWAIT, &dvmaddr)) {
-			splx(s);
-				/* Free what we got and exit */
-			bus_dmamem_free(t->_parent, segs, nsegs);
-			return (ENOMEM);
-		}
-		splx(s);
-		segs[n].ds_addr = dvmaddr;
-		size = segs[n].ds_len;
-		mlist = segs[n]._ds_mlist;
-
-		/* Map memory into DVMA space */
-		for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-			curaddr = VM_PAGE_TO_PHYS(m);
-				DPRINTF(SDB_DVMA,
-		    ("sbus_dmamem_alloc: map %p loading va %lx at pa %lx\n",
-				    (long)m, (long)dvmaddr,
-				    (long)(curaddr & ~(NBPG-1))));
-			iommu_enter(&sc->sc_is, dvmaddr, curaddr, flags);
-			dvmaddr += PAGE_SIZE;
-		}
-	}
-	return (0);
+	return (iommu_dvmamem_alloc(tag, &sc->sc_is, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags));
 }
 
 void
-sbus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
+sbus_dmamem_free(tag, segs, nsegs)
+	bus_dma_tag_t tag;
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vaddr_t addr;
-	int len;
-	int n, s, error;
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-
-	for (n = 0; n < nsegs; n++) {
-		addr = segs[n].ds_addr;
-		len = segs[n].ds_len;
-		iommu_remove(&sc->sc_is, addr, len);
-		s = splhigh();
-		error = extent_free(sc->sc_is.is_dvmamap, addr, len, EX_NOWAIT);
-		splx(s);
-		if (error != 0)
-			printf("warning: %ld of DVMA space lost\n", (long)len);
-	}
-	bus_dmamem_free(t->_parent, segs, nsegs);
+	iommu_dvmamem_free(tag, &sc->sc_is, segs, nsegs);
 }
 
-/*
- * Map the DVMA mappings into the kernel pmap.
- * Check the flags to see whether we're streaming or coherent.
- */
 int
-sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
+sbus_dmamem_map(tag, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t tag;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
-	vaddr_t va;
-	bus_addr_t addr;
-	struct pglist *mlist;
-	int cbit;
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	/* 
-	 * digest flags:
-	 */
-	cbit = 0;
-	if (flags & BUS_DMA_COHERENT)	/* Disable vcache */
-		cbit |= PMAP_NVC;
-	if (flags & BUS_DMA_NOCACHE)	/* sideffects */
-		cbit |= PMAP_NC;
-	/*
-	 * Now take this and map it into the CPU since it should already
-	 * be in the IOMMU.
-	 */
-	*kvap = (caddr_t)va = segs[0].ds_addr;
-	mlist = segs[0]._ds_mlist;
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-		if (size == 0)
-			panic("_bus_dmamem_map: size botch");
-
-		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-
-	return (0);
+	return (iommu_dvmamem_map(tag, &sc->sc_is, segs, nsegs, size, kvap, flags));
 }
 
-/*
- * Unmap DVMA mappings from kernel
- */
 void
-sbus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
+sbus_dmamem_unmap(tag, kva, size)
+	bus_dma_tag_t tag;
 	caddr_t kva;
 	size_t size;
 {
-	
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
-#endif
-	
-	size = round_page(size);
-	pmap_remove(pmap_kernel(), (vaddr_t)kva, size);
+	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+
+	iommu_dvmamem_unmap(tag, &sc->sc_is, kva, size);
 }

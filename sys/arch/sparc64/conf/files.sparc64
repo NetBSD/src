@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.27 2000/04/15 03:08:12 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.28 2000/04/22 17:05:59 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -20,7 +20,6 @@ device  psycho: pcibus
 attach  psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
-file	arch/sparc64/dev/psycho_bus.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
 
 # IOMMU is for both
@@ -37,7 +36,6 @@ file	arch/sparc64/dev/pciide_machdep.c	pciide
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
-file	arch/sparc64/dev/ebus_bus.c		ebus
 
 # network devices MII bus
 include "dev/mii/files.mii"
