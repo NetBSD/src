@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_proto.c,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: mld6_proto.c,v 1.2 2000/05/19 10:43:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -179,37 +179,34 @@ accept_listener_query(src, dst, group, tmo)
     register struct uvif *v;
     struct sockaddr_in6 group_sa = {sizeof(group_sa), AF_INET6};
 
-    /* Ignore my own membership query */
+    /* Ignore my own listener query */
     if (local_address(src) != NO_VIF)
 	return;
 
-    if ((mifi = find_vif_direct(src)) == NO_VIF)
-    {
+    if ((mifi = find_vif_direct(src)) == NO_VIF) {
 	IF_DEBUG(DEBUG_MLD)
 	    log(LOG_INFO, 0,
 		"accept_listener_query: can't find a mif");
 	return;
     }
-  
+    v = &uvifs[mifi];
+    v->uv_in_mld_query++;  
     IF_DEBUG(DEBUG_MLD)
 	log(LOG_DEBUG, 0,
-	    "accepting multicast listener query: "
+	    "accepting multicast listener query on %s: "
 	    "src %s, dst %s, grp %s",
+	    v->uv_name,
 	    inet6_fmt(&src->sin6_addr), inet6_fmt(dst),
 	    inet6_fmt(group));
 
-    v = &uvifs[mifi];
-    v->uv_in_mld_query++;
-
-    if (v->uv_querier == NULL || inet6_equal(&v->uv_querier->al_addr, src))
-    {
+    if (v->uv_querier == NULL || !inet6_equal(&v->uv_querier->al_addr, src)) {
 	/*
-	 * This might be: - A query from a new querier, with a lower source
-	 * address than the current querier (who might be me) - A query from
-	 * a new router that just started up and doesn't know who the querier
-	 * is. - A query from the current querier
+	 * This might be:
+	 * - A query from a new querier, with a lower source address than
+	 *   the current querier (who might be me).
+	 * - A query from a new router that just started up and doesn't know
+	 *   who the querier is.
 	 */
-
 	if (inet6_lessthan(src, (v->uv_querier ? &v->uv_querier->al_addr
 				 : &v->uv_linklocal->pa_addr)))
 	{
@@ -220,22 +217,11 @@ accept_listener_query(src, dst, group, tmo)
 		    v->uv_querier ?
 		    inet6_fmt(&v->uv_querier->al_addr.sin6_addr) :
 		    "me", mifi);
-	    if (!v->uv_querier)
-	    {
+	    if (!v->uv_querier) { /* this should be impossible... */
 		v->uv_querier = (struct listaddr *)malloc(sizeof(struct listaddr));
-		v->uv_querier->al_next = (struct listaddr *) NULL;
-		v->uv_querier->al_timer = 0;
-		v->uv_querier->al_genid = 0;
-		v->uv_querier->al_pv = 0;
-		v->uv_querier->al_mv = 0;
-		v->uv_querier->al_old = 0;
-		v->uv_querier->al_index = 0;
-		v->uv_querier->al_timerid = 0;
-		v->uv_querier->al_query = 0;
-		v->uv_querier->al_flags = 0;
-
-		v->uv_flags &= ~VIFF_QUERIER;
+		memset(v->uv_querier, 0, sizeof(struct listaddr));
 	    }
+	    v->uv_flags &= ~VIFF_QUERIER;
 	    v->uv_querier->al_addr = *src;
 	    time(&v->uv_querier->al_ctime);
 	}
@@ -245,7 +231,7 @@ accept_listener_query(src, dst, group, tmo)
      * Reset the timer since we've received a query.
      */
     if (v->uv_querier && inet6_equal(src, &v->uv_querier->al_addr))
-	v->uv_querier->al_timer = 0;
+	v->uv_querier->al_timer = MLD6_OTHER_QUERIER_PRESENT_INTERVAL;
 
     /*
      * If this is a Group-Specific query which we did not source, we must set

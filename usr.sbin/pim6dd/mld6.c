@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.5 2000/02/28 07:17:34 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.6 2000/05/19 10:43:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -65,7 +65,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: mld6.c,v 1.12 2000/02/28 05:39:35 jinmei Exp
+ *  KAME Id: mld6.c,v 1.13 2000/04/12 07:34:38 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -257,19 +257,6 @@ int recvlen;
 	int ifindex = 0;
 	struct sockaddr_in6 *src = (struct sockaddr_in6 *) rcvmh.msg_name;
 
-	/*
-	 * If control length is zero, it must be an upcall from the kernel
-	 * multicast forwarding engine.
-	 * XXX: can we trust it?
-	 */
-	if (rcvmh.msg_controllen == 0) {
-		/* XXX: msg_controllen must be reset in this case. */
-		rcvmh.msg_controllen = rcvcmsglen;
-
-		process_kernel_call();
-		return;
-	}
-
 	if (recvlen < sizeof(struct mld6_hdr))
 	{
 		log(LOG_WARNING, 0,
@@ -278,6 +265,20 @@ int recvlen;
 		return;
 	}
 	mldh = (struct mld6_hdr *) rcvmh.msg_iov[0].iov_base;
+
+	/*
+	 * Packets sent up from kernel to daemon have ICMPv6 type = 0.
+	 * Note that we set filters on the mld6_socket, so we should never
+	 * see a "normal" ICMPv6 packet with type 0 of ICMPv6 type.
+	 */
+	if (mldh->mld6_type == 0) {
+		/* XXX: msg_controllen must be reset in this case. */
+		rcvmh.msg_controllen = rcvcmsglen;
+
+		process_kernel_call();
+		return;
+	}
+
 	group = &mldh->mld6_addr;
 
 	/* extract optional information via Advanced API */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mrt.c,v 1.4 2000/03/13 23:22:55 soren Exp $	*/
+/*	$NetBSD: mrt.c,v 1.5 2000/05/19 10:43:42 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: mrt.c,v 1.2 1999/08/24 10:04:56 jinmei Exp
+ *  KAME Id: mrt.c,v 1.3 2000/05/18 16:09:39 itojun Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -477,7 +477,7 @@ create_grpentry(group)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the previous entry
  * (or NULL if first in the chain.
  */
 static int
@@ -510,7 +510,7 @@ search_srcmrtlink(srcentry_ptr, group, mrtPtr)
 
 /*
  * Return TRUE if the entry is found and then *mrtPtr is set to point to that
- * entry. Otherwise return FALSE and *mrtPtr points to the previous entry
+ * entry. Otherwise return FALSE and *mrtPtr points the previous entry
  * (or NULL if first in the chain.
  */
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.1 2000/01/28 19:32:46 itojun Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.2 2000/05/19 10:43:46 itojun Exp $	*/
 
 %{
 /*
@@ -540,6 +540,7 @@ slash		\/
 	/* cand_bootstrap_router */
 <S_CNF>cand_bootstrap_router { DP("begin cand_bsr"); BEGIN S_CANDBSR; return(CANDBSR); }
 <S_CANDBSR>priority { YYD_ECHO; return(PRIORITY); }
+<S_CANDBSR>masklen { YYD_ECHO; return(MASKLEN); }
 <S_CANDBSR>time { YYD_ECHO; return(TIME); }
 <S_CANDBSR>{ifname} {
 	YYD_ECHO;

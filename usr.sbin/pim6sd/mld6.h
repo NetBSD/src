@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.h,v 1.1 2000/01/28 19:32:48 itojun Exp $	*/
+/*	$NetBSD: mld6.h,v 1.2 2000/05/19 10:43:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -75,6 +75,9 @@
                 MLD6_QUERY_RESPONSE_INTERVAL / MLD6_TIMER_SCALE)
 #define MLD6_LAST_LISTENER_QUERY_INTERVAL   1000 /* in milliseconds */
 #define MLD6_LAST_LISTENER_QUERY_COUNT      MLD6_ROBUSTNESS_VARIABLE
+#define MLD6_OTHER_QUERIER_PRESENT_INTERVAL (MLD6_ROBUSTNESS_VARIABLE * \
+		MLD6_QUERY_INTERVAL + \
+		MLD6_QUERY_RESPONSE_INTERVAL / (2 * MLD6_TIMER_SCALE))
 
 extern int mld6_socket;
 extern char *mld6_recv_buf;

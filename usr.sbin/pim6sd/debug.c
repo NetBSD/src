@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.3 2000/03/27 17:07:22 kleink Exp $	*/
+/*	$NetBSD: debug.c,v 1.4 2000/05/19 10:43:47 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -93,6 +93,39 @@ unsigned long   debug = 0x00000000;	/* If (long) is smaller than 4 bytes,
 static char     dumpfilename[] = _PATH_PIM6D_DUMP;
 static char     cachefilename[] = _PATH_PIM6D_CACHE;	/* TODO: notused */
 static char	statfilename[] = _PATH_PIM6D_STAT;
+
+static char *sec2str __P((time_t));
+
+static char *
+sec2str(total)
+	time_t total;
+{
+	static char result[256];
+	int days, hours, mins, secs;
+	int first = 1;
+	char *p = result;
+
+	days = total / 3600 / 24;
+	hours = (total / 3600) % 24;
+	mins = (total / 60) % 60;
+	secs = total % 60;
+
+	if (days) {
+		first = 0;
+		p += sprintf(p, "%dd", days);
+	}
+	if (!first || hours) {
+		first = 0;
+		p += sprintf(p, "%dh", hours);
+	}
+	if (!first || mins) {
+		first = 0;
+		p += sprintf(p, "%dm", mins);
+	}
+	sprintf(p, "%ds", secs);
+
+	return(result);
+}
 
 char           *
 packet_kind(proto, type, code)
@@ -264,6 +297,7 @@ fdump(i)
     {
 	dump_vifs(fp);
 	dump_nbrs(fp);
+	dump_mldqueriers(fp);
 	dump_pim_mrt(fp);
 	dump_rp_set(fp);
 	(void) fclose(fp);
@@ -352,6 +386,8 @@ dump_stat()
 			(unsigned long long)v->uv_pim6_nbr_timo);
 		fprintf(fp, "\t%qu MLD listener timeouts\n",
 			(unsigned long long)v->uv_listener_timo);
+		fprintf(fp, "\t%qu MLD querier timeouts\n",
+			(unsigned long long)v->uv_querier_timo);
 		fprintf(fp, "\t%qu out-I/F timeouts\n",
 			(unsigned long long)v->uv_outif_timo);
 	}
@@ -446,6 +482,8 @@ dump_vifs(fp)
 		fprintf(fp, " DR");
 	    if (v->uv_flags & VIFF_PIM_NBR)
 		fprintf(fp, " PIM");
+	    if (v->uv_flags & VIFF_QUERIER)
+		fprintf(fp, " QRY");
 #if 0				/* impossible */
 	    if (v->uv_flags & VIFF_DVMRP_NBR)
 	    {
@@ -453,7 +491,7 @@ dump_vifs(fp)
 	    }
 #endif
 	    if (v->uv_flags & VIFF_NONBRS)
-		fprintf(fp, " %-12s", "NO-NBR");
+		fprintf(fp, " NO-NBR");
 
 	    fprintf(fp, "\n");
 	}
@@ -483,7 +521,7 @@ dump_nbrs(fp)
 			int first = 1;
 
 			fprintf(fp, " %-3u %6s", vifi,
-				(v->uv_flags & MIFF_REGISTER)?"regist":
+				(v->uv_flags & MIFF_REGISTER) ? "regist":
 				v->uv_name);
 			for (; n != NULL; n = n->next) {
 				if (first)
@@ -499,6 +537,35 @@ dump_nbrs(fp)
 
 	fprintf(fp, "\n");
 }
+
+void
+dump_mldqueriers(fp)
+	FILE *fp;
+{
+	struct uvif *v;
+	vifi_t vifi;
+	time_t now;
+
+	fprintf(fp, "MLD Querier List\n");
+	fprintf(fp, " %-3s %6s %-40s %-5s %15s\n",
+		"Mif", "PhyIF", "Address", "Timer", "Last");
+	(void)time(&now);
+
+	for (vifi = 0, v = uvifs; vifi < numvifs; ++vifi, ++v) {
+		if (v->uv_querier) {
+			fprintf(fp, " %-3u %6s", vifi,
+				(v->uv_flags & MIFF_REGISTER) ? "regist":
+				v->uv_name);
+
+			fprintf(fp, " %-40s %5lu %15s\n",
+				sa6_fmt(&v->uv_querier->al_addr),
+				(u_long)v->uv_querier->al_timer,
+				sec2str(now - v->uv_querier->al_ctime));
+		}
+	}
+
+	fprintf(fp, "\n");
+} 
 
 /*
  * Log errors and other messages to the system log daemon and to stderr,

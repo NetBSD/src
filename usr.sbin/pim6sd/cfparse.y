@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.1 2000/01/28 19:32:46 itojun Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.2 2000/05/19 10:43:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -76,7 +76,8 @@ struct attr_list {
 };
 
 enum {IFA_FLAG, IFA_PREFERENCE, IFA_METRIC, RPA_PRIORITY, RPA_TIME,
-      BSRA_PRIORITY, BSRA_TIME, IN6_PREFIX, THRESA_RATE, THRESA_INTERVAL};
+      BSRA_PRIORITY, BSRA_TIME, BSRA_MASKLEN, IN6_PREFIX, THRESA_RATE,
+      THRESA_INTERVAL};
 
 static int strict;		/* flag if the grammer check is strict */
 static struct attr_list *rp_attr, *bsr_attr, *grp_prefix, *regthres_attr,
@@ -104,7 +105,7 @@ extern int yylex __P((void));
 %token REVERSELOOKUP
 %token PHYINT IFNAME DISABLE PREFERENCE METRIC NOLISTENER
 %token GRPPFX
-%token CANDRP CANDBSR TIME PRIORITY
+%token CANDRP CANDBSR TIME PRIORITY MASKLEN
 %token NUMBER STRING SLASH
 %token REGTHRES DATATHRES RATE INTERVAL
 %token SRCMETRIC SRCPREF HELLOPERIOD GRANULARITY JPPERIOD
@@ -297,6 +298,18 @@ bsr_attributes:
 			    == NULL)
 				return(-1);
 		}
+	|	bsr_attributes MASKLEN NUMBER
+		{
+			int masklen = $3;
+
+			if (masklen < 0 || masklen > 128)
+				yywarn("invalid mask length: %d (ignored)",
+				       masklen);
+			else if (($$ = add_attribute_num($1, BSRA_MASKLEN,
+							 masklen))
+				 == NULL)
+				return(-1);
+		}
 	;
 
 /* group_prefix <group-addr>/<prefix_len> */
@@ -315,6 +328,13 @@ grppfx_statement:
 		if (prefix.plen < 0 || prefix.plen > 128) {
 			yywarn("invalid prefix length: %d (ignored)",
 			       prefix.plen);
+			prefixok = 0;
+		}
+		if (IN6_IS_ADDR_MC_NODELOCAL(&prefix.paddr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&prefix.paddr)) {
+			yywarn("group prefix (%s/%d) has a narrow scope "
+			       "(ignored)",
+			       inet6_fmt(&prefix.paddr), prefix.plen);
 			prefixok = 0;
 		}
 
@@ -419,6 +439,10 @@ param_statement:
 	|	GRANULARITY NUMBER EOS
 		{
 			set_param(granularity, $2, "granularity");
+		}
+	|	DATATIME NUMBER EOS
+		{
+			set_param(datatimo, $2, "data_timeout");
 		}
 	|	REGSUPTIME NUMBER EOS
 		{
@@ -548,7 +572,25 @@ param_config()
 		log(LOG_DEBUG, 0, "pim_join_prune_holdtime set to: %u",
 		    pim_join_prune_holdtime);
 	}
-
+	IF_DEBUG(DEBUG_TIMER) {
+		log(LOG_DEBUG,0 , "timer interval set to: %u", timer_interval);
+	}
+	IF_DEBUG(DEBUG_PIM_TIMER) {
+		log(LOG_DEBUG,0 , "PIM data timeout set to: %u",
+		    pim_data_timeout);
+	}
+	IF_DEBUG(DEBUG_PIM_REGISTER) {
+		log(LOG_DEBUG, 0,
+		    "PIM register suppression timeout set to: %u",
+		    pim_register_suppression_timeout);
+		log(LOG_DEBUG, 0, "PIM register probe time set to: %u",
+		    pim_register_probe_time);
+	}
+	IF_DEBUG(DEBUG_PIM_ASSERT) {
+		log(LOG_DEBUG, 0,
+		    "PIM assert timeout set to: %u",
+		    pim_assert_timeout);
+	}
 	return(0);
 }
 
@@ -706,10 +748,12 @@ bsr_config()
 {
 	struct sockaddr_in6 *sa6_bsr = NULL;
 	struct attr_list *al;
+	int my_bsr_hash_masklen;
 
 	/* initialization by default values */
 	my_bsr_period = PIM_DEFAULT_BOOTSTRAP_PERIOD;
 	my_bsr_priority = PIM_DEFAULT_BSR_PRIORITY;
+	my_bsr_hash_masklen = RP_DEFAULT_IPV6_HASHMASKLEN;
 
 	if (cand_bsr_ifname) {
 		sa6_bsr = local_iface(cand_bsr_ifname);
@@ -725,6 +769,10 @@ bsr_config()
 		case BSRA_PRIORITY:
 			if (al->attru.number >= 0)
 				my_bsr_priority = al->attru.number;
+			break;
+		case BSRA_MASKLEN:
+			/* validation has been done. */
+			my_bsr_hash_masklen = al->attru.number;
 			break;
 		case BSRA_TIME:
 			if (al->attru.number < 10)
@@ -744,17 +792,17 @@ bsr_config()
 	if (!sa6_bsr)
 		sa6_bsr = max_global_address(); /* this MUST suceed */
 	my_bsr_address = *sa6_bsr;
+	MASKLEN_TO_MASK6(my_bsr_hash_masklen, my_bsr_hash_mask);
 
 	IF_DEBUG(DEBUG_PIM_BOOTSTRAP) {
-		log(LOG_DEBUG, 0,
-		    "Local BSR address: %s",
+		log(LOG_DEBUG, 0, "Local BSR address: %s",
 		    inet6_fmt(&my_bsr_address.sin6_addr));
-		log(LOG_DEBUG, 0,
-		    "Local BSR priority : %u",my_bsr_priority);
-		log(LOG_DEBUG,0,
-		    "Local BSR period is : %u sec.",
+		log(LOG_DEBUG, 0, "Local BSR priority : %u", my_bsr_priority);
+		log(LOG_DEBUG, 0, "Local BSR period is : %u sec.",
 		    my_bsr_period);
-	}  
+		log(LOG_DEBUG, 0, "Local BSR hash mask length: %d",
+		    my_bsr_hash_masklen);
+	}
 
 	return(0);
 }

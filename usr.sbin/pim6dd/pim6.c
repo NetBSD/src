@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6.c,v 1.4 2000/02/28 07:17:34 itojun Exp $	*/
+/*	$NetBSD: pim6.c,v 1.5 2000/05/19 10:43:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: pim6.c,v 1.5 2000/02/28 07:16:37 itojun Exp
+ *  KAME Id: pim6.c,v 1.6 2000/03/07 02:23:50 jinmei Exp
  */
 
 #include "defs.h"
@@ -86,6 +86,7 @@ static struct sockaddr_in6 from;
 static struct msghdr sndmh;
 static struct iovec sndiov[2];
 static struct in6_pktinfo *sndpktinfo;
+static u_char *sndcmsgbuf = NULL;
 
 /*
  * Local function definitions.
@@ -98,7 +99,6 @@ static int pim6_cksum __P((u_short *, struct in6_addr *,
 void
 init_pim6()
 {
-	static u_char *sndcmsgbuf = NULL;
 	static int sndcmsglen;
 	struct cmsghdr *cmsgp = (struct cmsghdr *)sndcmsgbuf;
 
@@ -131,10 +131,11 @@ init_pim6()
 	sndmh.msg_control = (caddr_t)sndcmsgbuf;
 	sndmh.msg_controllen = sndcmsglen;
 	/* initilization cmsg for specifing outgoing interfaces and source */
-	sndpktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
+	cmsgp=(struct cmsghdr *)sndcmsgbuf;
 	cmsgp->cmsg_len = CMSG_SPACE(sizeof(struct in6_pktinfo));
 	cmsgp->cmsg_level = IPPROTO_IPV6;
 	cmsgp->cmsg_type = IPV6_PKTINFO;
+	sndpktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 
 	if (register_input_handler(pim6_socket, pim6_read) < 0)
 		log(LOG_ERR, 0,

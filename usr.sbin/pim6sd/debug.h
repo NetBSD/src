@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.1 2000/01/28 19:32:47 itojun Exp $	*/
+/*	$NetBSD: debug.h,v 1.2 2000/05/19 10:43:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -146,6 +146,7 @@ extern void fdump           __P((int i));
 extern void cdump           __P((int i));
 extern void dump_vifs       __P((FILE *fp));
 extern void dump_nbrs       __P((FILE *fp));
+extern void dump_mldqueriers    __P((FILE *fp));
 extern void dump_pim_mrt        __P((FILE *fp));
 extern int  dump_rp_set     __P((FILE *fp));
 extern void dump_stat __P((void));
