@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.13 2000/09/08 15:32:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -375,9 +375,9 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int res;
+	int res, intarg;
+	u_long req;
 	struct usl_syncdata *sd;
-	int req, intarg;
 	struct wskbd_bell_data bd;
 	void *arg;
 
