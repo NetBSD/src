@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.1.2.2 2005/02/12 22:33:52 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.1.2.3 2005/02/12 22:37:39 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -180,9 +180,8 @@ xenevt_read(struct file *fp, off_t *offp, struct uio *uio,
 		if (d->flags & XENEVT_F_OVERFLOW)
 			return EFBIG;
 		/* nothing to read */
-		if (/* fp->f_flag & FNONBLOCK */ 1) {
+		if (fp->f_flag & FNONBLOCK)
 			return (EAGAIN);
-		}
 		error = tsleep(&d->ring_read, PRIBIO | PCATCH, "xenevt", 0);
 		if (error == EINTR || error == ERESTART) {
 			return(error);
@@ -236,9 +235,8 @@ xenevt_write(struct file *fp, off_t *offp, struct uio *uio,
 		return error;
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
-		    devevent[chans[i]] == d) {
+		    devevent[chans[i]] == d)
 			hypervisor_unmask_event(chans[i]);
-		}
 	}
 	return 0;
 }
