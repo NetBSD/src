@@ -32,10 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ns.c	5.13 (Berkeley) 3/1/91";
+/* from: static char sccsid[] = "@(#)ns.c	5.13 (Berkeley) 3/1/91"; */
+static char rcsid = "$Id: ns.c,v 1.2 1993/05/20 10:40:57 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
