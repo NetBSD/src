@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.3 2005/02/26 05:45:54 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.4 2005/03/19 00:43:17 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,7 @@ int cachehits = 0;
 int cachemisses = 0;
 int hashmax = 0;
 off_t locked_queue_bytes = 0;
+int locked_queue_count = 0;
 
 /* Simple buffer hash function */
 static int
@@ -91,7 +92,7 @@ bufinit(void)
 		TAILQ_INIT(&bufqueues[i]);
 	}
 	for (i = 0; i < HASH_MAX; i++)
-		LIST_INIT(&bufhash[HASH_MAX]);
+		LIST_INIT(&bufhash[i]);
 }
 
 /* Print statistics of buffer cache usage */
@@ -134,6 +135,7 @@ bremfree(struct ubuf * bp)
 	 */
 	if (bp->b_flags & B_LOCKED) {
 		locked_queue_bytes -= bp->b_bcount;
+		--locked_queue_count;
 	}
 	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
@@ -195,7 +197,7 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 	 * If not enough space, free blocks from the AGE and LRU lists
 	 * to make room.
 	 */
-	while (nbufs >= maxbufs) {
+	while (nbufs >= maxbufs + locked_queue_count) {
 		bp = TAILQ_FIRST(&bufqueues[BQ_AGE]);
 		if (bp)
 			TAILQ_REMOVE(&bufqueues[BQ_AGE], bp, b_freelist);
@@ -212,10 +214,11 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 		}
 #ifdef DEBUG
 		else {
-			if (!warned)
+			if (!warned) {
 				warnx("allocating more than %d buffers",
 					maxbufs);
-			++warned;
+				++warned;
+			}
 			break;
 		}
 #endif
@@ -264,6 +267,7 @@ brelse(struct ubuf * bp)
 	}
 	if (bp->b_flags & B_LOCKED) {
 		locked_queue_bytes += bp->b_bcount;
+		++locked_queue_count;
 		TAILQ_INSERT_TAIL(&bufqueues[BQ_LOCKED], bp, b_freelist);
 	} else if (age) {
 		TAILQ_INSERT_TAIL(&bufqueues[BQ_AGE], bp, b_freelist);
