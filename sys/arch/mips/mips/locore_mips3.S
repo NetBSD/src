@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.24 2000/04/21 02:45:01 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.25 2000/04/21 14:14:55 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1397,56 +1397,6 @@ END(mips3_TLBUpdate)
 
 /*--------------------------------------------------------------------------
  *
- * mips3_TLBReadVPS --
- *
- *	Read the TLB entry, including variable-page-size mask.
- *
- *	mips3_TLBReadVPS(entry, tlb)
- *		unsigned entry;
- *		struct tlb *tlb;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	tlb will contain the TLB entry found.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_TLBReadVPS)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	nop
-	nop
-	nop
-	dmfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
-
-	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
-	nop
-	nop					# required for QED5230
-	tlbr					# Read from the TLB
-	nop
-	nop
-	nop
-	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the hi entry
-	dmfc0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
-	dmfc0	t4, MIPS_COP_0_TLB_LO0		# See what we got
-	dmfc0	t5, MIPS_COP_0_TLB_LO1		# See what we got
-	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	nop
-	nop
-	nop					# wait for PID active
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
-	nop
-	sw	t2, 0(a1)
-	sw	t3, 4(a1)
-	sw	t4, 8(a1)
-	j	ra
-	sw	t5, 12(a1)
-END(mips3_TLBReadVPS)
-
-/*--------------------------------------------------------------------------
- *
  * mips3_TLBRead --
  *
  *	Read the TLB entry.
@@ -1464,29 +1414,30 @@ END(mips3_TLBReadVPS)
  *--------------------------------------------------------------------------
  */
 LEAF(mips3_TLBRead)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS# Disable interrupts
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	nop
+	mfc0	t6, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 	nop
-	nop
-	dmfc0	t0, MIPS_COP_0_TLB_HI	# Get current PID
+	dmfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
-	mtc0	a0, MIPS_COP_0_TLB_INDEX# Set the index register
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	nop
 	nop					# required for QED5230
-	tlbr				# Read from the TLB
+	tlbr					# Read from the TLB
 	nop
 	nop
 	nop
-	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the hi entry
-	dmfc0	t3, MIPS_COP_0_TLB_HI	# fetch the hi entry
-	dmfc0	t4, MIPS_COP_0_TLB_LO0	# See what we got
-	dmfc0	t5, MIPS_COP_0_TLB_LO1	# See what we got
-	dmtc0	t0, MIPS_COP_0_TLB_HI	# restore PID
+	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the pgMask
+	dmfc0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
+	dmfc0	t4, MIPS_COP_0_TLB_LO0		# See what we got
+	dmfc0	t5, MIPS_COP_0_TLB_LO1		# See what we got
+	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	mtc0	t6, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	nop
 	nop
-	nop				# wait for PID active
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
+	nop					# wait for PID active
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	nop
 	sw	t2, 0(a1)
 	sw	t3, 4(a1)
@@ -2309,9 +2260,9 @@ LEAF_NOPROFILE(mips3_TBIS)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
+	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
-	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0			# make sure valid entryHi
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
 	nop
@@ -2335,7 +2286,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	nop
 1:
 	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
-	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgmask
+	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	nop
 	nop
 	j	ra
@@ -2352,8 +2303,8 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
-	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	move	t2, a0
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
 	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 
@@ -2400,9 +2351,9 @@ LEAF_NOPROFILE(mips3_TBIA)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
+	li	v0, MIPS_KSEG0_START		# invalid address
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
-	li	v0, MIPS_KSEG0_START		# invalid address
 	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
