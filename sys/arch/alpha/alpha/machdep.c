@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.254 2002/03/18 22:57:53 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.255 2002/07/01 03:10:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2002/03/18 22:57:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2002/07/01 03:10:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1599,11 +1599,12 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Set up the registers to return to sigcode. */
-	frame->tf_regs[FRAME_PC] = (u_int64_t)p->p_sigctx.ps_sigcode;
+	frame->tf_regs[FRAME_PC] = (u_int64_t)catcher;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = code;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
+	frame->tf_regs[FRAME_RA] = (u_int64_t)p->p_sigctx.ps_sigcode;
 	alpha_pal_wrusp((unsigned long)scp);
 
 	/* Remember that we're now on the signal stack. */
