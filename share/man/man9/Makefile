@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.108.2.1 2002/05/31 11:32:16 tv Exp $
+#       $NetBSD: Makefile,v 1.108.2.2 2002/11/09 10:22:27 tron Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -107,7 +107,8 @@ MLINKS+=cardbus.9 cardbus_attach_card.9 \
 MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
-	copy.9 copyinstr.9 copy.9 copyoutstr.9
+	copy.9 copyinstr.9 copy.9 copyoutstr.9 \
+	copy.9 copyin_proc.9 copy.9 copyout_proc.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
 MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
