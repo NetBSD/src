@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwinder,v 1.7 2001/11/24 00:11:00 thorpej Exp $
+#	$NetBSD: std.netwinder,v 1.8 2001/12/09 05:00:47 atatat Exp $
 #
 # standard NetBSD/netwinder options
 
@@ -12,4 +12,4 @@ options 	EXEC_ELF32
 options 	ARM32
 
 makeoptions	LOADADDRESS="0xF000C000"
-makeoptions	LINKENTRY="-e nwstart"
+makeoptions	ENTRYPOINT="nwstart"
