@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.62 1999/11/24 23:17:27 augustss Exp $
+$NetBSD: usbdevs,v 1.63 1999/12/17 14:07:21 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,6 +192,7 @@ product CYPRESS THERMO		0x0002	thermometer
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 
 /* 3Com products */
+product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
