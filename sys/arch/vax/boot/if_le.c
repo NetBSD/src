@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:05 drochner Exp $ */
+/*	$NetBSD: if_le.c,v 1.4 1998/07/26 09:01:23 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,6 +39,8 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+
+#include <../include/sid.h>
 
 #include <lib/libsa/netif.h>
 
@@ -90,7 +92,7 @@ struct initblock {
 } *initblock = NULL;
 
 struct nireg {
-	volatile short ni_rdp;       /* data port */
+	volatile u_short ni_rdp;       /* data port */
 	volatile short ni_pad0;
 	volatile short ni_rap;       /* register select port */
 } *nireg = (struct nireg *)0x200e0000;
@@ -101,6 +103,8 @@ volatile struct	buffdesc {
 	short	bd_bcnt;
 	short	bd_mcnt;
 } *rdesc, *tdesc;
+
+int addoff;
 
 /* Flags in the address field */
 #define	BR_OWN	0x80000000
@@ -156,6 +160,12 @@ le_init(desc, machdep_hint)
 	*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 	next_rdesc = next_tdesc = 0;
 
+	if (vax_boardtype == VAX_BTYP_43)
+		addoff = 0x28000000;
+	else
+		addoff = 0;
+
+igen:
 	LEWRCSR(LE_CSR0, LE_C0_STOP);
 	while (to--)
 		;
@@ -165,15 +175,15 @@ le_init(desc, machdep_hint)
 		for (i = 0; i < 6; i++)
 			desc->myea[i] = ea[i] & 0377;
 
-		initblock = (void *)alloc(sizeof(struct initblock));
+		initblock = (void *)alloc(sizeof(struct initblock)) + addoff;
 		initblock->ib_mode = LE_MODE_NORMAL;
 		bcopy(desc->myea, initblock->ib_padr, 6);
 		initblock->ib_ladrf1 = 0;
 		initblock->ib_ladrf2 = 0;
 
-		(int)rdesc = QW_ALLOC(sizeof(struct buffdesc) * NRBUF);
+		(int)rdesc = QW_ALLOC(sizeof(struct buffdesc) * NRBUF) + addoff;
 		initblock->ib_rdr = (RLEN << 29) | (int)rdesc;
-		(int)tdesc = QW_ALLOC(sizeof(struct buffdesc) * NTBUF);
+		(int)tdesc = QW_ALLOC(sizeof(struct buffdesc) * NTBUF) + addoff;
 		initblock->ib_tdr = (TLEN << 29) | (int)tdesc;
 
 		for (i = 0; i < NRBUF; i++) {
@@ -195,9 +205,14 @@ le_init(desc, machdep_hint)
 	LEWRCSR(LE_CSR0, LE_C0_INIT);
 
 	to = 100000;
-	while (to--)
+	while (to--) {
 		if (LERDCSR(LE_CSR0) & LE_C0_IDON)
 			break;
+		if (LERDCSR(LE_CSR0) & LE_C0_ERR) {
+			printf("lance init error: csr0 %x\n", LERDCSR(LE_CSR0));
+			goto igen;
+		}
+	}
 
 	LEWRCSR(LE_CSR0, LE_C0_INEA | LE_C0_STRT | LE_C0_IDON);
 }
@@ -228,7 +243,8 @@ retry:
 		if ((len = rdesc[next_rdesc].bd_mcnt - 4) > maxlen)
 			len = maxlen;
 
-		bcopy((void *)(rdesc[next_rdesc].bd_adrflg&0xffffff),pkt,len);
+		bcopy((void *)(rdesc[next_rdesc].bd_adrflg&0xffffff) + addoff,
+		    pkt, len);
 	}
 
 	rdesc[next_rdesc].bd_mcnt = 0;
@@ -260,7 +276,7 @@ retry:
 	if (tdesc[next_tdesc].bd_adrflg & BT_OWN)
 		goto retry;
 
-	bcopy(pkt, (void *)(tdesc[next_tdesc].bd_adrflg & 0xffffff), len);
+	bcopy(pkt, (void *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) + addoff, len);
 	tdesc[next_tdesc].bd_bcnt =
 	    (len < ETHER_MIN_LEN ? -ETHER_MIN_LEN : -len);
 	tdesc[next_tdesc].bd_mcnt = 0;
