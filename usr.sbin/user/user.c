@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.10.2.3 2000/02/04 22:57:21 he Exp $ */
+/* $NetBSD: user.c,v 1.10.2.4 2000/07/05 21:08:32 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.10.2.3 2000/02/04 22:57:21 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.10.2.4 2000/07/05 21:08:32 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -206,8 +206,8 @@ asystem(char *fmt, ...)
 
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ < NetBSD_1_4_K)
 /* bounds checking strncpy */
-static int
-strlcpy(char *to, char *from, size_t tosize)
+size_t
+strlcpy(char *to, const char *from, size_t tosize)
 {
 	size_t	n;
 	int	fromsize;
