@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.90 2002/11/10 02:27:50 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.91 2002/11/10 05:29:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2002/11/10 02:27:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2002/11/10 05:29:18 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,8 @@ vmapbuf(bp, len)
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_enter(vm_map_pmap(phys_map), kva, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -336,7 +337,7 @@ vunmapbuf(bp, len)
 	kva = mips_trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = mips_round_page(off + len);
-	pmap_kremove(kva, len);
+	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
