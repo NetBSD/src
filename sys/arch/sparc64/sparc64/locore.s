@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.189 2004/01/08 13:34:04 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.190 2004/01/16 12:43:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8439,9 +8439,9 @@ ENTRY(snapshot)
 	 restore
 
 /*
- * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
+ * cpu_setfunc() and cpu_lwp_fork() arrange for proc_trampoline() to run
  * after after a process gets chosen in switch(). The stack frame will
- * contain a function pointer in %l0, and an argument to pass to it in %l2.
+ * contain a function pointer in %l0, and an argument to pass to it in %l1.
  *
  * If the function *(%l0) returns, we arrange for an immediate return
  * to user mode. This happens in two known cases: after execve(2) of init,
@@ -8479,9 +8479,7 @@ ENTRY(proc_trampoline)
 	/*
 	 * Here we finish up as in syscall, but simplified.
 	 */
-	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
-	srl	%g1, 0, %g1			! Clear out the condition codes
-	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
+	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 #ifdef SCHED_DEBUG
 	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2	! pc = tf->tf_pc from execve/fork
 	save	%sp, -CC64FSZ, %sp
