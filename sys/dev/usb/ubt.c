@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.1 2002/08/22 10:15:58 augustss Exp $	*/
+/*	$NetBSD: ubt.c,v 1.2 2002/08/22 10:17:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.1 2002/08/22 10:15:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.2 2002/08/22 10:17:46 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,8 @@ USB_ATTACH(ubt)
 
 #if 0
 	sc->sc_child = config_found(self, &ia, ir_print);
+#else
+	printf("%s: driver not implemented\n", USBDEVNAME(sc->sc_dev));
 #endif
 
 	USB_ATTACH_SUCCESS_RETURN;
