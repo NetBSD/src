@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.29 1999/10/01 22:29:12 ad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.30 1999/10/12 16:47:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.29 1999/10/01 22:29:12 ad Exp $";
+    "$NetBSD: wsdisplay.c,v 1.30 1999/10/12 16:47:41 jdolecek Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1707,14 +1707,22 @@ wsdisplay_set_cons_kbd(get, poll)
 }
 
 /*
- * Switch the console display to it's first screen at shutdown.
+ * Switch the console display to it's first screen.
+ */
+void
+wsdisplay_switchtoconsole()
+{
+	if (wsdisplay_console_device != NULL)
+		wsdisplay_switch((struct device *)wsdisplay_console_device, 
+		    0, 0);
+}
+
+/*
+ * Switch the console at shutdown.
  */
 static void
 wsdisplay_shutdownhook(arg)
 	void *arg;
 {
-
-	if (wsdisplay_console_device != NULL)
-		wsdisplay_switch((struct device *)wsdisplay_console_device, 
-		    0, 0);
+	wsdisplay_switchtoconsole();
 }
