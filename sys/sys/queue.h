@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.13 1997/02/08 04:47:41 mrg Exp $	*/
+/*	$NetBSD: queue.h,v 1.14 1998/01/05 06:27:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -128,6 +128,13 @@ struct {								\
 } while (0)
 
 /*
+ * List access methods.
+ */
+#define	LIST_FIRST(head)		((head)->lh_first)
+
+#define	LIST_NEXT(elm, field)		((elm)->field.le_next)
+
+/*
  * Simple queue definitions.
  */
 #define SIMPLEQ_HEAD(name, type)					\
@@ -174,6 +181,13 @@ struct {								\
 	if (((head)->sqh_first = (elm)->field.sqe_next) == NULL)	\
 		(head)->sqh_last = &(head)->sqh_first;			\
 } while (0)
+
+/*
+ * Simple queue access methods.
+ */
+#define	SIMPLEQ_FIRST(head)		((head)->sqh_first)
+
+#define	SIMPLEQ_NEXT(elm, field)	((elm)->field.sqe_next)
 
 /*
  * Tail queue definitions.
@@ -243,6 +257,13 @@ struct {								\
 		(head)->tqh_last = (elm)->field.tqe_prev;		\
 	*(elm)->field.tqe_prev = (elm)->field.tqe_next;			\
 } while (0)
+
+/*
+ * Tail queue access methods.
+ */
+#define	TAILQ_FIRST(head)		((head)->tqh_first)
+
+#define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
 
 /*
  * Circular queue definitions.
@@ -322,4 +343,15 @@ struct {								\
 		(elm)->field.cqe_prev->field.cqe_next =			\
 		    (elm)->field.cqe_next;				\
 } while (0)
+
+/*
+ * Circular queue access methods.
+ */
+#define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
+
+#define	CIRCLEQ_LAST(head)		((head)->cqh_last)
+
+#define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
+
+#define	CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
 #endif	/* !_SYS_QUEUE_H_ */
