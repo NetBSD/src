@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.9 1996/06/13 20:36:04 cgd Exp $
+$NetBSD: README,v 1.10 1996/07/09 22:08:28 cgd Exp $
 
 Obtaining NetBSD/Alpha sources and binaries:
 
@@ -59,7 +59,7 @@ Installing the NetBSD/Alpha distribution:
 	Berkeley Fast File System format, so that you can mount, read, and
 	write them under Digital UNIX.
 
-	If your are using one of the supported systems that includes a
+	If you are using one of the supported systems that includes a
 	PCI bus, and have either a PCI VGA frame buffer of any type or
 	a ZLXp-E1 frame buffer, you may use it as console.  (If you
 	are using your frame buffer as the console, you should use the
