@@ -1,4 +1,4 @@
-/*	$NetBSD: moddi3.c,v 1.4 1997/07/13 20:01:51 christos Exp $	*/
+/*	$NetBSD: moddi3.c,v 1.5 1997/12/30 07:58:36 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)moddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: moddi3.c,v 1.4 1997/07/13 20:01:51 christos Exp $");
+__RCSID("$NetBSD: moddi3.c,v 1.5 1997/12/30 07:58:36 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,7 @@ __RCSID("$NetBSD: moddi3.c,v 1.4 1997/07/13 20:01:51 christos Exp $");
 /*
  * Return remainder after dividing two signed quads.
  *
- * XXX
- * If -1/2 should produce -1 on this machine, this code is wrong.
+ * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
 quad_t
 __moddi3(a, b)
@@ -67,7 +66,7 @@ __moddi3(a, b)
 	if (a < 0)
 		ua = -ua, neg ^= 1;
 	if (b < 0)
-		ub = -ub, neg ^= 1;
+		ub = -ub;
 	(void)__qdivrem(ua, ub, &ur);
 	if (neg)
 		ur = -ur;
