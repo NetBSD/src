@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.204 2000/03/29 03:09:15 enami Exp $ */
+/* $NetBSD: machdep.c,v 1.205 2000/05/22 17:13:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2000/03/29 03:09:15 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2000/05/22 17:13:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,6 @@ u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 #endif
 
 struct platform platform;
-
-u_int32_t vm_phys_size = _VM_PHYS_SIZE;
 
 #ifdef DDB
 /* start and end of kernel symbol table */
@@ -644,18 +642,6 @@ nobootinfo:
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
 #endif
-
-	/*
-	 * Adjust some parameters if the amount of physmem
-	 * available would cause us to croak. This is completely
-	 * eyeballed and isn't meant to be the final answer.
-	 * vm_phys_size is probably the only one to really worry
-	 * about.
- 	 *
-	 * It's for booting a GENERIC kernel on a large memory platform.
-	 */
-	if (physmem >= atop(128 * 1024 * 1024))
-		vm_phys_size <<= 2;
 
 	/*
 	 * Initialize error message buffer (at end of core).
