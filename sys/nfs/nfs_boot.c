@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.13 1995/02/16 21:43:15 pk Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.14 1995/03/18 05:51:22 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -266,7 +266,6 @@ get_path_and_handle(bpsin, key, ndmntp)
 	    ndmntp->ndm_host, pathname);
 	if (error)
 		panic("nfs_boot: bootparam get %s: %d", key, error);
-	printf("%s on %s:%s\n", key, ndmntp->ndm_host, pathname);
 
 	/*
 	 * Get file handle for "key" (root or swap)
