@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.14.4.1 1999/07/01 23:40:50 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.14.4.2 1999/08/02 22:09:23 thorpej Exp $	*/
 
 /*
  *
@@ -348,7 +348,6 @@ xdgetdisklabel(xd, b)
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
-#endif
 
 	xd->ncyl = xd->sc_dk.dk_label->d_ncylinders;
 	xd->acyl = xd->sc_dk.dk_label->d_acylinders;

@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.13.4.1 1999/06/21 01:19:32 thorpej Exp $
+# $NetBSD: files.wscons,v 1.13.4.2 1999/08/02 22:10:26 thorpej Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -52,3 +52,6 @@ file	dev/rcons/raster_op.c			wsrasteremulops
 file	dev/rcons/raster_text.c			wsrasteremulops
 file	dev/wscons/wscons_rinit.c		wsrasteremulops
 file	dev/wscons/wscons_rops.c		wsrasteremulops
+
+defpseudo	wsmux
+file	dev/wscons/wsmux.c			wsmux | wsdisplay needs-flag
