@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.64 2001/07/01 20:42:48 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.64.2.1 2001/07/10 13:52:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -61,6 +61,7 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/event.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -220,6 +221,8 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 	*retval = fd;
+	/* connection has been removed from the listen queue */
+	KNOTE(&so->so_rcv.sb_sel.si_klist, 0);
 	{ struct socket *aso = so->so_q.tqh_first;
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");

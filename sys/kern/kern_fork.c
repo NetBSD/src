@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.86 2001/07/07 23:33:54 fvdl Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.86.2.1 2001/07/10 13:52:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -470,6 +470,11 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Now can be swapped.
 	 */
 	PRELE(p1);
+
+	/*
+	* Notify any interested parties about the new process.
+	*/
+	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.

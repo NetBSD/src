@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.142 2001/06/18 02:00:55 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.142.2.1 2001/07/10 13:52:09 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -633,6 +633,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
+
+	/* notify others that we exec'd */
+	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39 2001/06/16 21:29:32 manu Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39.2.1 2001/07/10 13:52:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -311,6 +311,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+	KNOTE(&sb->sb_sel.si_klist, 0);
 }
 
 /*

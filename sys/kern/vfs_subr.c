@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.155 2001/07/08 10:32:38 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155.2.1 2001/07/10 13:52:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <sys/event.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
@@ -1471,6 +1472,8 @@ loop:
 	return (0);
 }
 
+#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
+
 /*
  * Disassociate the underlying file system from a vnode.
  */
@@ -1589,6 +1592,7 @@ vclean(vp, flags, p)
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	simple_lock(&vp->v_interlock);
+	VN_KNOTE(vp, NOTE_REVOKE);	/* XXXLUKEM: this is in vn_pollgone on FreeBSD */
 	vp->v_flag &= ~VXLOCK;
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;

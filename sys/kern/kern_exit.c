@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.90 2001/03/05 20:38:21 fvdl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.90.2.1 2001/07/10 13:52:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -264,6 +264,11 @@ exit1(struct proc *p, int rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * Notify interested parties of our demise.
+	 */
+	KNOTE(&p->p_klist, NOTE_EXIT);
 
 	/*
 	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
