@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.11 1998/04/18 01:12:24 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.12 1998/04/24 01:25:19 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.11 1998/04/18 01:12:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.12 1998/04/24 01:25:19 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,7 +95,7 @@ pci_kn8ae_pickintr(ccp, first)
         pc->pc_intr_establish = dec_kn8ae_intr_establish;
         pc->pc_intr_disestablish = dec_kn8ae_intr_disestablish;
 
-	/* Not supoprted on KN8AE. */
+	/* Not supported on KN8AE. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
 	if (!first) {
