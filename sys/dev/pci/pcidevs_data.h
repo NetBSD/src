@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.55 1998/02/27 11:46:25 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.56 1998/03/04 00:10:39 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.51 1998/03/04 00:09:11 cgd Exp 
  */
 
 /*
@@ -490,28 +490,52 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL-GD7541",
 	},
 	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640A,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    0,
 	    "CMD Technology",
-	    "640A",
+	    "PCI0640",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_642,
 	    0,
 	    "CMD Technology",
-	    "642",
+	    "PCI0642 /* not on web, Mar. 3 '98 */",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_643,
+	    0,
+	    "CMD Technology",
+	    "PCI0643",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_646,
 	    0,
 	    "CMD Technology",
-	    "646",
+	    "PCI0646",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_647,
+	    0,
+	    "CMD Technology",
+	    "PCI0647",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,
 	    0,
 	    "CMD Technology",
-	    "650A",
+	    "PCI0650A /* not on web, Mar. 3 '98 */",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_670,
+	    0,
+	    "CMD Technology",
+	    "USB0670",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_673,
+	    0,
+	    "CMD Technology",
+	    "USB0673",
 	},
 	{
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
