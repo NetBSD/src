@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.9 2000/09/26 08:37:38 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.10 2000/10/02 17:21:26 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.44 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #include <netinet6/esp.h>
+#include <netinet6/esp_rijndael.h>
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <crypto/des/des.h>
@@ -136,6 +137,11 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_cast128_schedule,
 		esp_cast128_blockdecrypt, esp_cast128_blockencrypt, },
+	{ 16, 16, esp_cbc_mature, 128, 256, esp_rijndael_schedlen,
+		"rijndael-cbc",
+		esp_common_ivlen, esp_cbc_decrypt,
+		esp_cbc_encrypt, esp_rijndael_schedule,
+		esp_rijndael_blockdecrypt, esp_rijndael_blockencrypt },
 };
 
 const struct esp_algorithm *
@@ -154,6 +160,10 @@ esp_algorithm_lookup(idx)
 		return &esp_algorithms[3];
 	case SADB_X_EALG_CAST128CBC:
 		return &esp_algorithms[4];
+#ifdef SADB_X_EALG_RIJNDAELCBC
+	case SADB_X_EALG_RIJNDAELCBC:
+		return &esp_algorithms[5];
+#endif
 	default:
 		return NULL;
 	}
@@ -412,6 +422,16 @@ esp_cbc_mature(sav)
 		break;
 	case SADB_X_EALG_BLOWFISHCBC:
 	case SADB_X_EALG_CAST128CBC:
+#ifdef SADB_X_EALG_RIJNDAELCBC
+	case SADB_X_EALG_RIJNDAELCBC:
+#endif
+		/* allows specific key sizes only */
+		if (!(keylen == 128 || keylen == 192 || keylen == 256)) {
+			ipseclog((LOG_ERR,
+			    "esp_cbc_mature %s: invalid key length %d.\n",
+			    algo->name, keylen));
+			return 1;
+		}
 		break;
 	}
 
