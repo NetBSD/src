@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.17 1999/01/25 01:09:34 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.18 1999/04/18 02:04:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.17 1999/01/25 01:09:34 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.18 1999/04/18 02:04:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,12 @@ __RCSID("$NetBSD: getusershell.c,v 1.17 1999/01/25 01:09:34 lukem Exp $");
 #include <string.h>
 #include <stringlist.h>
 #include <unistd.h>
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #ifdef HESIOD
 #include <hesiod.h>
