@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_irq.S,v 1.1 2001/11/07 00:33:23 thorpej Exp $	*/
+/*	$NetBSD: iq80310_irq.S,v 1.2 2001/11/07 02:06:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -248,7 +248,7 @@ irqloop:
 	ldr	r1, [r4, #(V_INTR)]	/* stat info B */
 
 	teq	r6, #0x00000000		/* Do we have a handler? */
-	moveq	r0, r8			/* IRQ requests ars arg 0. */
+	moveq	r0, r9			/* IRQ # as arg 0. */
 	addeq	lr, pc, #nextirq - . - 8 /* return address */
 	bic	r11, r11, r10		/* clear the IRQ bit */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
