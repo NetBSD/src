@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: bootparams.5,v 1.1 1994/10/03 18:48:42 gwr Exp $
+.\"	$Id: bootparams.5,v 1.2 1994/10/03 19:26:13 gwr Exp $
 .\"
 .Dd October 2, 1994
 .Dt BOOTPARAMS 5
@@ -32,6 +32,8 @@
 .Sh NAME
 .Nm bootparams
 .Nd boot parameter database
+.Sh SYNOPSIS
+.Nm /etc/bootparams
 .Sh DESCRIPTION
 The
 .Nm bootparams
@@ -66,6 +68,11 @@ its logical "root" it will be given the pathname
 as the response to its
 .Tn RPC
 request.
+.Sh FILES
+.Bl -tag -width /etc/bootparams -compact
+.It Pa /etc/bootparams
+default configuration file
+.El
 .Sh "SEE ALSO"
 .Xr diskless 8 ,
 .Xr rpc.bootparamd 8
