@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.59 2002/12/10 13:44:48 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.60 2003/05/03 18:11:39 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.59 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.60 2003/05/03 18:11:39 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,7 +532,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
 
 	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
 	if (dmap->dm_nsegs != 0) {
-		panic("%s: dma map already allocated", isp->isp_name);
+		panic("%s: DMA map already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
@@ -601,7 +601,7 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 	dmap = sbc->sbus_dmamap[isp_handle_index(handle)];
 
 	if (dmap->dm_nsegs == 0) {
-		panic("%s: dma map not already allocated", isp->isp_name);
+		panic("%s: DMA map not already allocated", isp->isp_name);
 		/* NOTREACHED */
 	}
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0,

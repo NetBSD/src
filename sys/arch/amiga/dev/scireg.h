@@ -1,4 +1,4 @@
-/*	$NetBSD: scireg.h,v 1.3 1994/10/26 02:04:46 cgd Exp $	*/
+/*	$NetBSD: scireg.h,v 1.4 2003/05/03 18:10:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,15 +64,15 @@ typedef struct {
 
 	unsigned char pad5[1];
 	volatile unsigned char sci_csr;		/* r:  Status */
-#define	sci_dma_send sci_csr			/* w:  Start dma send data */
+#define	sci_dma_send sci_csr			/* w:  Start DMA send data */
 
 	unsigned char pad6[1];
 	volatile unsigned char sci_idata;	/* r:  Input data */
-#define	sci_trecv sci_idata			/* w:  Start dma receive, target */
+#define	sci_trecv sci_idata			/* w:  Start DMA receive, target */
 
 	unsigned char pad7[1];
 	volatile unsigned char sci_iack;	/* r:  Interrupt Acknowledge  */
-#define	sci_irecv sci_iack			/* w:  Start dma receive, initiator */
+#define	sci_irecv sci_iack			/* w:  Start DMA receive, initiator */
 } sci_regmap_t;
 #endif
 

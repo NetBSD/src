@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.4 2000/12/12 18:00:23 thorpej Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.5 2003/05/03 18:11:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -103,7 +103,7 @@ struct sca_port {
 	 * start of each important bit of information for transmit and
 	 * receive buffers.
 	 *
-	 * note: for non-dma the phys and virtual version should be
+	 * note: for non-DMA the phys and virtual version should be
 	 * the same value and should be an _offset_ from the beginning
 	 * of mapped memory described by sc_memt/sc_memh.
 	 */
@@ -168,8 +168,8 @@ struct sca_softc {
 	int			sc_usedma;
 	union {
 		struct {
-			bus_space_tag_t	p_memt;		/* mem for non-dma */
-			bus_space_handle_t p_memh;	/* mem for non-dma */
+			bus_space_tag_t	p_memt;		/* mem for non-DMA */
+			bus_space_handle_t p_memh;	/* mem for non-DMA */
 			bus_space_handle_t p_sca_ioh[16]; /* io for sca regs */
 			bus_size_t 	p_pagesize;	/* memory page size */
 			bus_size_t 	p_pagemask;	/* memory page mask */
@@ -181,9 +181,9 @@ struct sca_softc {
 			void	(*p_page_off)(struct sca_softc *);
 		} u_paged;
 		struct {
-			bus_dma_tag_t	d_dmat;	/* bus dma tag */
-			bus_dmamap_t	d_dmam;	/* bus dma map */
-			bus_dma_segment_t d_seg;	/* bus dma segment */
+			bus_dma_tag_t	d_dmat;	/* bus DMA tag */
+			bus_dmamap_t	d_dmam;	/* bus DMA map */
+			bus_dma_segment_t d_seg;	/* bus DMA segment */
 			caddr_t		d_dma_addr;	/* kva  of segment */
 			bus_size_t	d_allocsize;	/* size of region */
 		} u_dma;

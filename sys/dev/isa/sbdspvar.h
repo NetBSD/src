@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.51 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.52 2003/05/03 18:11:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -143,8 +143,8 @@ struct sbdsp_softc {
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
 
-	int	(*sc_intr8)(void*);	/* dma completion intr handler */
-	int	(*sc_intr16)(void*);	/* dma completion intr handler */
+	int	(*sc_intr8)(void*);	/* DMA completion intr handler */
+	int	(*sc_intr16)(void*);	/* DMA completion intr handler */
 	void	(*sc_intrp)(void*);	/* PCM output intr handler */
 	void	*sc_argp;		/* arg for sc_intrp() */
 	void	(*sc_intrr)(void*);	/* PCM input intr handler */

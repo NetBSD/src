@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.10 2003/04/01 02:07:13 thorpej Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.11 2003/05/03 18:11:40 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.10 2003/04/01 02:07:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.11 2003/05/03 18:11:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
-	bus_dma_tag_t sc_dmat;			/* bus dma tag */
+	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;			/* bus dmamap */
 	caddr_t *sc_dmaaddr;
 	size_t *sc_dmalen;
@@ -183,7 +183,7 @@ asc_tcds_attach(parent, self, aux)
 	asc->sc_dmat = tcdsdev->tcdsda_dmat;
 	if ((error = bus_dmamap_create(asc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
 	    PAGE_SIZE, BUS_DMA_NOWAIT, &asc->sc_dmamap)) < 0) {
-		printf("failed to create dma map, error = %d\n", error);
+		printf("failed to create DMA map, error = %d\n", error);
 	}
 
 	sc->sc_id = tcdsdev->tcdsda_id;
@@ -254,7 +254,7 @@ tcds_dma_reset(sc)
 }
 
 /*
- * start a dma transfer or keep it going
+ * start a DMA transfer or keep it going
  */
 int
 tcds_dma_setup(sc, addr, len, ispullup, dmasize)

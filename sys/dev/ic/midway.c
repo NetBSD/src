@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.60 2003/05/03 18:11:21 wiz Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.60 2003/05/03 18:11:21 wiz Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -76,10 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $");
 #define	EN_DIAG
 #define	EN_STAT
 #ifndef EN_DMA
-#define EN_DMA		1	/* use dma? */
+#define EN_DMA		1	/* use DMA? */
 #endif
-#define EN_NOTXDMA	0	/* hook to disable tx dma only */
-#define EN_NORXDMA	0	/* hook to disable rx dma only */
+#define EN_NOTXDMA	0	/* hook to disable tx DMA only */
+#define EN_NORXDMA	0	/* hook to disable rx DMA only */
 #define EN_NOWMAYBE	1	/* hook to disable word maybe DMA */
 				/* XXX: WMAYBE doesn't work, needs debugging */
 #define EN_DDBHOOK	1	/* compile in ddb functions */
@@ -256,7 +256,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.59 2003/01/31 00:26:31 thorpej Exp $");
 #define EN_OBTRL	ATM_PH_DRIVER8  /* PDU trailier in last mbuf ! */
 
 #define ENOTHER_FREE	0x01		/* free rxslot */
-#define ENOTHER_DRAIN	0x02		/* almost free (drain DRQ dma) */
+#define ENOTHER_DRAIN	0x02		/* almost free (drain DRQ DMA) */
 #define ENOTHER_RAW	0x04		/* 'raw' access  (aka boodi mode) */
 #define ENOTHER_SWSL	0x08		/* in software service list */
 
@@ -291,7 +291,7 @@ struct en_launch {
 
 
 /*
- * dma table (index by # of words)
+ * DMA table (index by # of words)
  *
  * plan A: use WMAYBE
  * plan B: avoid WMAYBE
@@ -983,7 +983,7 @@ struct en_softc *sc;
   }
 
   /*
-   * test that WMAYBE dma works like we think it should 
+   * test that WMAYBE DMA works like we think it should 
    * (i.e. no alignment restrictions on host address other than alburst)
    */
 
@@ -1045,8 +1045,8 @@ int wmtry;
   /*
    * try it now . . .  DMA it out, then DMA it back in and compare
    *
-   * note: in order to get the dma stuff to reverse directions it wants
-   * the "end" flag set!   since we are not dma'ing valid data we may
+   * note: in order to get the DMA stuff to reverse directions it wants
+   * the "end" flag set!   since we are not DMA'ing valid data we may
    * get an ident mismatch interrupt (which we will ignore).
    *
    * note: we've got two different tests rolled up in the same loop
@@ -1466,7 +1466,7 @@ struct en_softc *sc;
   EN_WRITE(sc, MID_RESID, 0x0);	/* reset hardware */
 
   /*
-   * recv: dump any mbufs we are dma'ing into, if DRAINing, then a reset
+   * recv: dump any mbufs we are DMA'ing into, if DRAINing, then a reset
    * will free us!
    */
 
@@ -1574,7 +1574,7 @@ struct en_softc *sc;
   EN_WRITE(sc, MID_RESID, 0x0);		/* reset */
 
   /*
-   * init obmem data structures: vc tab, dma q's, slist.
+   * init obmem data structures: vc tab, DMA q's, slist.
    *
    * note that we set drq_free/dtq_free to one less than the total number
    * of DTQ/DRQs present.   we do this because the card uses the condition
@@ -2145,7 +2145,7 @@ again:
     dtqneed = 1;		/* header still needs to be added */
     launch.need = MID_TBD_SIZE;	/* not includeded with mbuf */
   } else {
-    dtqneed = 0;		/* header on-board, dma with mbuf */
+    dtqneed = 0;		/* header on-board, DMA with mbuf */
     launch.need = 0;
   }
 
@@ -2307,7 +2307,7 @@ dequeue_drop:
 
 
 /*
- * en_txlaunch: launch an mbuf into the dma pool!
+ * en_txlaunch: launch an mbuf into the DMA pool!
  */
 
 STATIC void en_txlaunch(sc, chan, l)
@@ -2460,7 +2460,7 @@ struct en_launch *l;
       EN_DTQADD(sc, len, chan, 0, vtophys((vaddr_t)data), l->mlen, end);
       if (end)
         goto done;
-      dma = cur;	/* update dma pointer */
+      dma = cur;	/* update DMA pointer */
       continue;
     }
 #endif /* !MIDWAY_ENIONLY */
@@ -2588,7 +2588,7 @@ struct en_launch *l;
         goto done;
     }
 
-    dma = cur;		/* update dma pointer */
+    dma = cur;		/* update DMA pointer */
 #endif /* !MIDWAY_ADPONLY */
 
   } /* next mbuf, please */
@@ -2621,7 +2621,7 @@ struct en_launch *l;
       EN_DTQADD(sc, pad, chan, bcode, vtophys((vaddr_t)l->t->m_data), 0, 0);
       need -= pad;
 #ifdef EN_DEBUG
-      printf("%s: tx%d: pad/FLUSH dma %d bytes (%d left, cur now 0x%x)\n", 
+      printf("%s: tx%d: pad/FLUSH DMA %d bytes (%d left, cur now 0x%x)\n", 
 		sc->sc_dev.dv_xname, chan, pad, need, cur);
 #endif
     }
@@ -2774,7 +2774,7 @@ void *arg;
 	if (!m) panic("enintr: dtqsync");
 	sc->txslot[slot].mbsize -= EN_DQ_LEN(dtq);
 #ifdef EN_DEBUG
-	printf("%s: tx%d: free %d dma bytes, mbsize now %d\n",
+	printf("%s: tx%d: free %d DMA bytes, mbsize now %d\n",
 		sc->sc_dev.dv_xname, slot, EN_DQ_LEN(dtq), 
 		sc->txslot[slot].mbsize);
 #endif
@@ -3262,7 +3262,7 @@ defer:					/* defer processing */
       EN_DRQADD(sc, tlen, vci, 0, vtophys((vaddr_t)data), mlen, slot, end);
       if (end)
         goto done;
-      dma = cur;	/* update dma pointer */
+      dma = cur;	/* update DMA pointer */
       continue;
     }
 #endif /* !MIDWAY_ENIONLY */
@@ -3337,7 +3337,7 @@ defer:					/* defer processing */
         goto done;
     }
 
-    dma = cur;		/* update dma pointer */
+    dma = cur;		/* update DMA pointer */
 
 #endif /* !MIDWAY_ADPONLY */
 
@@ -3436,7 +3436,7 @@ int unit, level;
       printf("  en_stats:\n");
       printf("    %d mfix (%d failed); %d/%d head/tail byte DMAs, %d flushes\n",
 	   sc->mfix, sc->mfixfail, sc->headbyte, sc->tailbyte, sc->tailflush);
-      printf("    %d rx dma overflow interrupts\n", sc->dmaovr);
+      printf("    %d rx DMA overflow interrupts\n", sc->dmaovr);
       printf("    %d times we ran out of TX space and stalled\n", 
 							sc->txoutspace);
       printf("    %d times we ran out of DTQs\n", sc->txdtqout);
@@ -3483,7 +3483,7 @@ int unit, level;
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
 			MID_SL_A2REG(sc->hwslistp));
-      printf("dma addr = 0x%x\n", EN_READ(sc, MID_DMA_ADDR));
+      printf("DMA addr = 0x%x\n", EN_READ(sc, MID_DMA_ADDR));
       printf("DRQ: chip[rd=0x%x,wr=0x%x], sc[chip=0x%x,us=0x%x]\n",
 	MID_DRQ_REG2A(EN_READ(sc, MID_DMA_RDRX)), 
 	MID_DRQ_REG2A(EN_READ(sc, MID_DMA_WRRX)), sc->drq_chip, sc->drq_us);

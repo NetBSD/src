@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.14 2002/01/26 13:41:00 aymeric Exp $	*/
+/*	$NetBSD: scivar.h,v 1.15 2003/05/03 18:10:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,11 +57,11 @@ struct	sci_softc {
 	volatile u_char	*sci_bus_csr;	/* r: Bus Status */
 	volatile u_char	*sci_sel_enb;	/* w: Select enable */
 	volatile u_char	*sci_csr;	/* r: Status */
-	volatile u_char	*sci_dma_send;	/* w: Start dma send data */
+	volatile u_char	*sci_dma_send;	/* w: Start DMA send data */
 	volatile u_char	*sci_idata;	/* r: Input data */
-	volatile u_char	*sci_trecv;	/* w: Start dma receive, target */
+	volatile u_char	*sci_trecv;	/* w: Start DMA receive, target */
 	volatile u_char	*sci_iack;	/* r: Interrupt Acknowledge */
-	volatile u_char	*sci_irecv;	/* w: Start dma receive, initiator */
+	volatile u_char	*sci_irecv;	/* w: Start DMA receive, initiator */
 
 	/* psuedo DMA transfer */
 	int	(*dma_xfer_in)(struct sci_softc *, int, u_char *, int);

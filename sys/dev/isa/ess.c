@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.56 2003/02/01 06:23:37 thorpej Exp $	*/
+/*	$NetBSD: ess.c,v 1.57 2003/05/03 18:11:26 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.56 2003/02/01 06:23:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.57 2003/05/03 18:11:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,12 +281,12 @@ ess_printsc(sc)
 	       (int)sc->sc_open, sc->sc_iobase, sc->out_port,
 	       sc->in_port, sc->spkr_state ? "on" : "off");
 
-	printf("audio1: dmachan %d irq %d nintr %lu intr %p arg %p\n",
+	printf("audio1: DMA chan %d irq %d nintr %lu intr %p arg %p\n",
 	       sc->sc_audio1.drq, sc->sc_audio1.irq, sc->sc_audio1.nintr,
 	       sc->sc_audio1.intr, sc->sc_audio1.arg);
 
 	if (!ESS_USE_AUDIO1(sc->sc_model)) {
-		printf("audio2: dmachan %d irq %d nintr %lu intr %p arg %p\n",
+		printf("audio2: DMA chan %d irq %d nintr %lu intr %p arg %p\n",
 		       sc->sc_audio2.drq, sc->sc_audio2.irq, sc->sc_audio2.nintr,
 		       sc->sc_audio2.intr, sc->sc_audio2.arg);
 	}
@@ -554,7 +554,7 @@ ess_config_drq(sc)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("ess_config_drq: configured dma chan %d not supported for Audio 1\n", 
+		printf("ess_config_drq: configured DMA chan %d not supported for Audio 1\n", 
 		       sc->sc_audio1.drq);
 		return;
 #endif
@@ -582,7 +582,7 @@ ess_config_drq(sc)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("ess_config_drq: configured dma chan %d not supported for Audio 2\n", 
+		printf("ess_config_drq: configured DMA chan %d not supported for Audio 2\n", 
 		       sc->sc_audio2.drq);
 		return;
 #endif

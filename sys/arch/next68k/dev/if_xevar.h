@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xevar.h,v 1.3 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: if_xevar.h,v 1.4 2003/05/03 18:10:55 wiz Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -43,7 +43,7 @@ struct xe_softc {
 	int sc_tx_loaded;
 	u_char			*sc_txbuf;	/* to solve alignment problems, we
 						 * copy the mbuf into this buffer before
-						 * trying to dma it */
+						 * trying to DMA it */
 
 	bus_dmamap_t		sc_rx_dmamap[MB8795_NRXBUFS];
 	struct mbuf		*sc_rx_mb_head[MB8795_NRXBUFS];

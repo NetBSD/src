@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.36 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.37 2003/05/03 18:11:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.36 2003/02/01 06:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.37 2003/05/03 18:11:32 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1096,7 +1096,7 @@ auich_intr(void *v)
 		if (sts & ICH_FIFOE)
 			printf("%s: fifo overrun\n", sc->sc_dev.dv_xname);
 
-		/* TODO mic input dma */
+		/* TODO mic input DMA */
 
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_MIINT);
 	}

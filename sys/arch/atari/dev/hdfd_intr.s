@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.7 2001/09/08 11:15:35 thomas Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.8 2003/05/03 18:10:46 wiz Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -57,7 +57,7 @@ ENTRY_NOPROFILE(mfp_hdfd_nf)
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
 	movl	_C_LABEL(fdio_addr),%a0	|  Get base of fdc registers
 	movb	%a0@(fdsts),%d0		|  Get fdsts
-	btst	#5,%d0			|  Dma active?
+	btst	#5,%d0			|  DMA active?
 	jeq	hdfdc_norm		|  No, normal interrupt
 	tstl	_C_LABEL(fddmalen)	|  Bytecount zero?
 	jeq	hdfdc_norm		|  Yes -> normal interrupt
@@ -69,7 +69,7 @@ hdfd_rd_nf:
 	movb	%a0@(fddata),%a1@+	|  Get a byte
 1:
 	subql	#1, _C_LABEL(fddmalen)	|  decrement bytecount
-	movl	%a1,_C_LABEL(fddmaaddr)	|  update dma pointer
+	movl	%a1,_C_LABEL(fddmaaddr)	|  update DMA pointer
 |	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	moveml	%sp@+,%d0-%d1/%a0-%a1
 	rte
@@ -86,7 +86,7 @@ ENTRY_NOPROFILE(mfp_hdfd_fifo)
 	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
 	movl	_C_LABEL(fdio_addr),%a0	|  Get base of fdc registers
 	movb	%a0@(fdsts),%d0		|  Get fdsts
-	btst	#5,%d0			|  Dma active?
+	btst	#5,%d0			|  DMA active?
 	jeq	hdfdc_norm		|  No, normal interrupt
 	movl	_C_LABEL(fddmaaddr),%a1	|  a1 = dmabuffer
 	btst	#6,%d0			|  Read?
@@ -117,7 +117,7 @@ hdfd_wrt:
 
 hdfdc1:
 	movl	%a1,_C_LABEL(fddmaaddr)	|  update buffer pointer
-	btst	#5,%d0			|  Dma still active?
+	btst	#5,%d0			|  DMA still active?
 	jeq	hdfdc_norm		|  No -> take normal interrupt
 
 	/*

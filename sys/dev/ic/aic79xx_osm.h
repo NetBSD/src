@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.1 2003/04/21 00:14:52 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.1 2003/04/21 00:14:52 fvdl Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.1 2003/04/21 00:14:52 fvdl Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.8 2002/12/04 22:51:29 scottl Exp $
  */
@@ -135,7 +135,7 @@ typedef pcireg_t ahd_dev_softc_t;
 
 /************************ Tunable Driver Parameters  **************************/
 /*
- * The number of dma segments supported.  The sequencer can handle any number
+ * The number of DMA segments supported.  The sequencer can handle any number
  * of physically contiguous S/G entrys.  To reduce the driver's memory
  * consumption, we limit the number supported to be sufficient to handle
  * the largest mapping supported by the kernel, MAXPHYS.  Assuming the

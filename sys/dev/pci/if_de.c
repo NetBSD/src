@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.109 2003/01/20 05:30:07 simonb Exp $	*/
+/*	$NetBSD: if_de.c,v 1.110 2003/05/03 18:11:35 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.109 2003/01/20 05:30:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.110 2003/05/03 18:11:35 wiz Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4373,7 +4373,7 @@ tulip_txput(
 
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
     /*
-     * Reclaim some dma maps from if we are out.
+     * Reclaim some DMA maps from if we are out.
      */
     if (sc->tulip_txmaps_free == 0) {
 #if defined(TULIP_DEBUG)

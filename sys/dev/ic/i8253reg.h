@@ -1,4 +1,4 @@
-/*	$NetBSD: i8253reg.h,v 1.6 2003/02/21 17:14:07 tsutsui Exp $	*/
+/*	$NetBSD: i8253reg.h,v 1.7 2003/05/03 18:11:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -60,7 +60,7 @@
  * The outputs of the three timers are connected as follows:
  *
  *	 timer 0 -> irq 0
- *	 timer 1 -> dma chan 0 (for dram refresh)
+ *	 timer 1 -> DMA chan 0 (for dram refresh)
  * 	 timer 2 -> speaker (via keyboard controller)
  *
  * Timer 0 is used to call hardclock.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.8 2003/02/02 10:24:40 wiz Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.8 2003/02/02 10:24:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $");
 
 #include "opt_inet.h"
 
@@ -1310,7 +1310,7 @@ cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 			(*sc->sc_dma_process_rx)(sc);
 		else
 			/* should panic? */
-			printf("%s: unexpected dma event\n", sc->sc_dev.dv_xname);
+			printf("%s: unexpected DMA event\n", sc->sc_dev.dv_xname);
 	}
 
 	if (bufEvent & BUF_EVENT_TX_UNDR) {

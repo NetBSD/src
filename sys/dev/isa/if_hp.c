@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.35 2003/01/15 22:38:59 bouyer Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.36 2003/05/03 18:11:27 wiz Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.35 2003/01/15 22:38:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.36 2003/05/03 18:11:27 wiz Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -235,7 +235,7 @@ hpfetch(ns, up, ad, len)
 	cmd = inb(hpc + ds_cmd);
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG0 | DSCM_START);
 
-	/* Setup remote dma */
+	/* Setup remote DMA */
 	outb(hpc + ds0_isr, DSIS_RDC);
 
 	if (ns->ns_mode & DSDC_WTS)
@@ -297,7 +297,7 @@ hpput(ns, up, ad, len)
 	cmd = inb(hpc + ds_cmd);
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG0 | DSCM_START);
 
-	/* Setup for remote dma */
+	/* Setup for remote DMA */
 	outb(hpc + ds0_isr, DSIS_RDC);
 
 	if (ns->ns_mode & DSDC_WTS)

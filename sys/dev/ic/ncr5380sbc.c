@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.48 2002/04/05 18:27:53 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.49 2003/05/03 18:11:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.48 2002/04/05 18:27:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49 2003/05/03 18:11:22 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -743,7 +743,7 @@ ncr5380_done(sc)
 	}
 #ifdef	DIAGNOSTIC
 	if (sr->sr_dma_hand)
-		panic("ncr5380_done: dma free did not");
+		panic("ncr5380_done: DMA free did not");
 #endif
 
 	if (sc->sc_state & NCR_ABORTING) {

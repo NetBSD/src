@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.59 2003/04/01 21:26:31 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.60 2003/05/03 18:10:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2003/04/01 21:26:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.60 2003/05/03 18:10:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ bunghole :-) */
 
 #define DISKLEN_READ	(0)	/* fake mask for reading */
 #define DISKLEN_WRITE	(1 << 14)	/* bit for writing */
-#define DISKLEN_DMAEN	(1 << 15)	/* dma go */
-#define DMABUFSZ ((DISKLEN_WRITE - 1) * 2)	/* largest dma possible */
+#define DISKLEN_DMAEN	(1 << 15)	/* DMA go */
+#define DMABUFSZ ((DISKLEN_WRITE - 1) * 2)	/* largest DMA possible */
 
 #define FDMFMSYNC	(0x4489)
 #define FDMFMID		(0x5554)
@@ -230,7 +230,7 @@ u_short	*msblkencode(u_short *, u_char *, int, u_short *);
 /*
  * read size is (nsectors + 1) * mfm secsize + gap bytes + 2 shorts
  * write size is nsectors * mfm secsize + gap bytes + 3 shorts
- * the extra shorts are to deal with a dma hw bug in the controller
+ * the extra shorts are to deal with a DMA hw bug in the controller
  * they are probably too much (I belive the bug is 1 short on write and
  * 3 bits on read) but there is no need to be cheap here.
  */
@@ -334,7 +334,7 @@ fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	if (matchname("fdc", auxp) == 0 || fdc_matched)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
-		printf("fdc: unable to allocate dma buffer\n");
+		printf("fdc: unable to allocate DMA buffer\n");
 		return(0);
 	}
 
@@ -992,7 +992,7 @@ fdmotoroff(void *arg)
 	if ((sc->flags & FDF_MOTORON) == 0)
 		goto done;
 	/*
-	 * if we have a timeout on a dma operation let fddmadone()
+	 * if we have a timeout on a DMA operation let fddmadone()
 	 * deal with it.
 	 */
 	if (fdc_indma == sc) {
@@ -1012,7 +1012,7 @@ fdmotoroff(void *arg)
 		printf("  flushing dirty buffer first\n");
 #endif
 		/*
-		 * if dma'ing done for now, fddone() will call us again
+		 * if DMA'ing done for now, fddone() will call us again
 		 */
 		if (fdc_indma)
 			goto done;
@@ -1172,7 +1172,7 @@ fdstart(struct fd_softc *sc)
 #endif
 
 	/*
-	 * if dma'ing just return. we must have been called from fdstartegy.
+	 * if DMA'ing just return. we must have been called from fdstartegy.
 	 */
 	if (fdc_indma)
 		return;
@@ -1254,7 +1254,7 @@ printf("fdstart: disk changed\n");
 
 	/*
 	 * check to see if same as currently cached track
-	 * if so we need to do no dma read.
+	 * if so we need to do no DMA read.
 	 */
 	if (trk == sc->cachetrk) {
 		fddone(sc);
@@ -1277,7 +1277,7 @@ printf("fdstart: disk changed\n");
 	}
 
 	/*
-	 * start dma read of `trk'
+	 * start DMA read of `trk'
 	 */
 	fddmastart(sc, trk);
 	return;
@@ -1329,7 +1329,7 @@ fdcont(struct fd_softc *sc)
 		}
 	}
 	/*
-	 * start dma read of `trk'
+	 * start DMA read of `trk'
 	 */
 	fddmastart(sc, trk);
 	return;
@@ -1386,7 +1386,7 @@ fddmastart(struct fd_softc *sc, int trk)
 
 	/*
 	 * If writing an MSDOS track, activate disk index pulse
-	 * interrupt, dma will be started in the intr routine fdidxintr()
+	 * interrupt, DMA will be started in the intr routine fdidxintr()
 	 * Otherwise, start the DMA here.
 	 */
 	if (write && sc->openpart == FDMSDOSPART) {
@@ -1399,7 +1399,7 @@ fddmastart(struct fd_softc *sc, int trk)
 	}
 
 #ifdef FDDEBUG
-	printf("  dma started\n");
+	printf("  DMA started\n");
 #endif
 }
 
@@ -1429,7 +1429,7 @@ fdcalibrate(void *arg)
 	else
 		fdsetpos(sc, sc->cachetrk + FDNHEADS, 0);
 	/*
-	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and dma
+	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and DMA
 	 */
 	if (loopcnt < 8)
 		callout_reset(&sc->calibrate_ch, hz / 8, fdcalibrate, sc);
@@ -1462,13 +1462,13 @@ fddmadone(struct fd_softc *sc, int timeo)
 
 	if ((sc->flags & FDF_MOTOROFF) == 0) {
 		/*
-		 * motor runs for 1.5 seconds after last dma
+		 * motor runs for 1.5 seconds after last DMA
 		 */
 		callout_reset(&sc->motor_ch, 3 * hz / 2, fdmotoroff, sc);
 	}
 	if (sc->flags & FDF_DIRTY) {
 		/*
-		 * if buffer dirty, the last dma cleaned it
+		 * if buffer dirty, the last DMA cleaned it
 		 */
 		sc->flags &= ~FDF_DIRTY;
 		if (timeo)
@@ -1477,7 +1477,7 @@ fddmadone(struct fd_softc *sc, int timeo)
 		if (sc->flags & FDF_JUSTFLUSH) {
 			sc->flags &= ~FDF_JUSTFLUSH;
 			/*
-			 * we are done dma'ing
+			 * we are done DMA'ing
 			 */
 			fddone(sc);
 			return;
@@ -1634,7 +1634,7 @@ fdfindwork(int unit)
 				sc->flags &= ~FDF_MOTOROFF;
 			}
 			/*
-			 * if we now have dma unit must have needed
+			 * if we now have DMA unit must have needed
 			 * flushing, quit
 			 */
 			if (fdc_indma)
@@ -1679,7 +1679,7 @@ fdminphys(struct buf *bp)
 }
 
 /*
- * encode the track cache into raw MFM ready for dma
+ * encode the track cache into raw MFM ready for DMA
  * when we go to multiple disk formats, this will call type dependent
  * functions
  */
@@ -1692,7 +1692,7 @@ void fdcachetoraw(struct fd_softc *sc)
 }
 
 /*
- * decode raw MFM from dma into units track cache.
+ * decode raw MFM from DMA into units track cache.
  * when we go to multiple disk formats, this will call type dependent
  * functions
  */

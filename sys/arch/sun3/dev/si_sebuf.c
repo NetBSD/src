@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.19 2002/12/29 14:38:12 kristerw Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.20 2003/05/03 18:11:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -468,7 +468,7 @@ se_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("se_dma_stop: dma not running\n");
+		printf("se_dma_stop: DMA not running\n");
 #endif
 		return;
 	}
@@ -704,7 +704,7 @@ se_dma_poll(ncr_sc)
 	 * XXX: I really doubt that is necessary...
 	 */
 
-	/* Wait for any "dma complete" or error bits. */
+	/* Wait for any "DMA complete" or error bits. */
 	tmo = POLL_TIMO;
 	for (;;) {
 		if (se->se_csr & CSR_MASK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.15 2002/10/02 03:10:50 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.16 2003/05/03 18:11:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.15 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.16 2003/05/03 18:11:29 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ wssfind(parent, sc, probing, ia)
 #if 0
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq[0].ir_drq)) {
-	DPRINTF(("wss: configured dma chan %d invalid\n",
+	DPRINTF(("wss: configured DMA chan %d invalid\n",
 	    ia->ia_drq[0].ir_drq));
 	goto bad;
     }

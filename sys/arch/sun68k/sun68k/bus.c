@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.8 2003/04/01 15:24:45 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.9 2003/05/03 18:11:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -261,7 +261,7 @@ extern	paddr_t avail_end;
 	/*
 	 * We now have physical pages, but no DVMA addresses yet. These
 	 * will be allocated in bus_dmamap_load*() routines. Hence we
-	 * save any alignment and boundary requirements in this dma
+	 * save any alignment and boundary requirements in this DMA
 	 * segment.
 	 */
 	segs[0].ds_addr = 0;

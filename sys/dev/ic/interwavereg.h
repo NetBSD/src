@@ -1,7 +1,7 @@
 #ifndef INTERWAVEREG_H
 #define INTERWAVEREG_H
 
-/*	$NetBSD: interwavereg.h,v 1.5 2003/04/06 18:20:13 wiz Exp $	*/
+/*	$NetBSD: interwavereg.h,v 1.6 2003/05/03 18:11:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 #define IW_MIX_OUT_SRC          3
 
 
-/* dma flags */
+/* DMA flags */
 
 #define IW_PLAYBACK 1L
 #define IW_RECORD   2L

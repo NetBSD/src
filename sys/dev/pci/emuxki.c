@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.25 2003/04/26 22:08:27 wiz Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.26 2003/05/03 18:11:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.25 2003/04/26 22:08:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26 2003/05/03 18:11:34 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,12 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.25 2003/04/26 22:08:27 wiz Exp $");
 #include <dev/pci/emuxkireg.h>
 #include <dev/pci/emuxkivar.h>
 
-/* autconf goo */
+/* autoconf goo */
 static int  emuxki_match(struct device *, struct cfdata *, void *);
 static void emuxki_attach(struct device *, struct device *, void *);
 static int  emuxki_detach(struct device *, int);
 
-/* dma mem mgmt */
+/* DMA mem mgmt */
 static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
 				 int, struct malloc_type *, int);
 static void           dmamem_free(struct dmamem *, struct malloc_type *);
@@ -230,7 +230,7 @@ static const int emuxki_recbuf_sz[] = {
 };
 
 /*
- * Dma memory mgmt
+ * DMA memory mgmt
  */
 
 static void

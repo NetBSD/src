@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.60 2003/05/02 08:45:13 dsl Exp $	*/
+/*	$NetBSD: sd.c,v 1.61 2003/05/03 18:10:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.60 2003/05/02 08:45:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.61 2003/05/03 18:10:48 wiz Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -147,8 +147,8 @@ static struct scsi_fmt_cdb sd_write_cmd = { 10, { CMD_WRITE_EXT } };
 
 /*
  * Table of scsi commands users are allowed to access via "format"
- * mode.  0 means not legal.  1 means "immediate" (doesn't need dma).
- * -1 means needs dma and/or wait for intr.
+ * mode.  0 means not legal.  1 means "immediate" (doesn't need DMA).
+ * -1 means needs DMA and/or wait for intr.
  */
 static char legal_cmds[256] = {
 /*****  0   1   2   3   4   5   6   7     8   9   A   B   C   D   E   F */
@@ -894,7 +894,7 @@ sdstart(arg)
 	struct sd_softc *sc = arg;
 
 	/*
-	 * we have the SCSI bus -- in format mode, we may or may not need dma
+	 * we have the SCSI bus -- in format mode, we may or may not need DMA
 	 * so check now.
 	 */
 	if (sc->sc_format_pid >= 0 && legal_cmds[sc->sc_cmdstore.cdb[0]] > 0) {
@@ -1235,7 +1235,7 @@ sdsize(dev)
 static int sddoingadump;	/* simple mutex */
 
 /*
- * Non-interrupt driven, non-dma dump routine.
+ * Non-interrupt driven, non-DMA dump routine.
  */
 int
 sddump(dev, blkno, va, size)

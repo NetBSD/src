@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.37 2003/01/01 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: ebus.c,v 1.38 2003/05/03 18:11:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  * note that this driver is not complete:
  *	- interrupt establish is written and appears to work
  *	- bus map code is written and appears to work
- *	- ebus2 dma code is completely unwritten, we just punt to
+ *	- ebus2 DMA code is completely unwritten, we just punt to
  *	  the iommu.
  */
 
@@ -111,7 +111,7 @@ void	ebus_find_ino __P((struct ebus_softc *, struct ebus_attach_args *));
 int	ebus_find_node __P((struct pci_attach_args *));
 
 /*
- * here are our bus space and bus dma routines.
+ * here are our bus space and bus DMA routines.
  */
 static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static int _ebus_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int, 

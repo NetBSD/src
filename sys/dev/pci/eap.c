@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.65 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.65 2003/02/01 06:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $");
 
 #include "midi.h"
 
@@ -126,7 +126,7 @@ struct eap_instance {
 	struct device *parent;
 	int index;
 
-	void	(*ei_pintr)(void *);	/* dma completion intr handler */
+	void	(*ei_pintr)(void *);	/* DMA completion intr handler */
 	void	*ei_parg;		/* arg for ei_intr() */
 	struct device *ei_audiodev;		/* audio device, for detach */
 #ifdef DIAGNOSTIC
@@ -144,7 +144,7 @@ struct eap_softc {
 
 	struct eap_dma *sc_dmas;
 
-	void	(*sc_rintr)(void *);	/* dma completion intr handler */
+	void	(*sc_rintr)(void *);	/* DMA completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
 #ifdef DIAGNOSTIC
 	char	sc_rrun;
@@ -872,7 +872,7 @@ eap_intr(void *p)
 		while (((EREAD4(sc, EAP_ADC_SIZE) >> 16) + 8) % nw == 0) {
 			delay(10);
 			if (++n > 100) {
-				printf("eapintr: dma fix timeout");
+				printf("eapintr: DMA fix timeout");
 				break;
 			}
 		}

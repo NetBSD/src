@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.17 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: awacs.c,v 1.18 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -57,11 +57,11 @@ struct awacs_softc {
 	struct device sc_dev;
 	int sc_flags;
 
-	void (*sc_ointr)(void *);	/* dma completion intr handler */
+	void (*sc_ointr)(void *);	/* DMA completion intr handler */
 	void *sc_oarg;			/* arg for sc_ointr() */
 	int sc_opages;			/* # of output pages */
 
-	void (*sc_iintr)(void *);	/* dma completion intr handler */
+	void (*sc_iintr)(void *);	/* DMA completion intr handler */
 	void *sc_iarg;			/* arg for sc_iintr() */
 
 	u_int sc_record_source;		/* recording source mask */

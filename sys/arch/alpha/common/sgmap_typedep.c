@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.24 2003/04/01 02:20:14 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.25 2003/05/03 18:10:42 wiz Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.24 2003/04/01 02:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.25 2003/05/03 18:10:42 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -160,7 +160,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
 		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, "
-		    "dma addr = 0x%lx\n", sgmap->aps_wbase, sgva,
+		    "DMA addr = 0x%lx\n", sgmap->aps_wbase, sgva,
 		    map->dm_segs[seg].ds_addr);
 #endif
 
