@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.6 1993/10/27 06:48:39 mycroft Exp $
+ *	$Id: intr.c,v 1.7 1993/10/27 08:00:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -229,7 +229,10 @@ isa_flushintrs()
 		outb(IO_ICU1, ICU_EOI);
 		outb(IO_ICU2, ICU_EOI);
 	}
+	disable_intr();
+	intr_enable(ipending);
 	ipending = 0;
+	enable_intr();
 }
 
 /*
