@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.21 2001/06/06 17:00:01 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.22 2001/06/07 01:29:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -102,6 +102,7 @@ struct filedesc0 {
  */
 int	dupfdopen(struct proc *p, int indx, int dfd, int mode, int error);
 int	fdalloc(struct proc *p, int want, int *result);
+void	fdexpand(struct proc *p);
 int	fdavail(struct proc *p, int n);
 int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
 void	ffree(struct file *);

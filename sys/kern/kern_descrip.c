@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.75 2001/06/06 17:00:00 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.76 2001/06/07 01:29:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -132,9 +132,12 @@ sys_dup(struct proc *p, void *v, register_t *retval)
 	FILE_USE(fp);
 
 	if ((error = fdalloc(p, 0, &new)) != 0) {
-		FILE_UNUSE(fp, p);
-		if (error == ERESTART)
+		if (error == ENOSPC) {
+			fdexpand(p);
+			FILE_UNUSE(fp, p);
 			goto restart;
+		}
+		FILE_UNUSE(fp, p);
 		return (error);
 	}
 
@@ -177,9 +180,12 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
 
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
-			FILE_UNUSE(fp, p);
-			if (error == ERESTART)
+			if (error == ENOSPC) {
+				fdexpand(p);
+				FILE_UNUSE(fp, p);
 				goto restart;
+			}
+			FILE_UNUSE(fp, p);
 			return (error);
 		}
 		if (new != i)
@@ -242,7 +248,8 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 			goto out;
 		}
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
-			if (error == ERESTART) {
+			if (error == ENOSPC) {
+				fdexpand(p);
 				FILE_UNUSE(fp, p);
 				goto restart;
 			}
@@ -574,15 +581,13 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 /*
  * Allocate a file descriptor for the process.
  */
-int	fdexpand;		/* XXX: what else uses this? */
+int	fdexpanded;		/* XXX: what else uses this? */
 
 int
 fdalloc(struct proc *p, int want, int *result)
 {
 	struct filedesc	*fdp;
-	int		i, lim, last, nfiles, rv = 0;
-	struct file	**newofile;
-	char		*newofileflags;
+	int i, lim, last;
 
 	fdp = p->p_fd;
 
@@ -602,40 +607,52 @@ fdalloc(struct proc *p, int want, int *result)
 				if (want <= fdp->fd_freefile)
 					fdp->fd_freefile = i;
 				*result = i;
-				return (rv);
+				return (0);
 			}
 		}
 
-		/*
-		 * No space in current array.  Expand?
-		 */
+		/* No space in current array.  Expand? */
 		if (fdp->fd_nfiles >= lim)
 			return (EMFILE);
-		if (fdp->fd_nfiles < NDEXTENT)
-			nfiles = NDEXTENT;
-		else
-			nfiles = 2 * fdp->fd_nfiles;
-		rv = ERESTART;
-		newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
-		newofileflags = (char *) &newofile[nfiles];
-		/*
-		 * Copy the existing ofile and ofileflags arrays
-		 * and zero the new portion of each array.
-		 */
-		memcpy(newofile, fdp->fd_ofiles,
-			(i = sizeof(struct file *) * fdp->fd_nfiles));
-		memset((char *)newofile + i, 0,
-		    nfiles * sizeof(struct file *) - i);
-		memcpy(newofileflags, fdp->fd_ofileflags,
-		    (i = sizeof(char) * fdp->fd_nfiles));
-		memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
-		if (fdp->fd_nfiles > NDFILE)
-			free(fdp->fd_ofiles, M_FILEDESC);
-		fdp->fd_ofiles = newofile;
-		fdp->fd_ofileflags = newofileflags;
-		fdp->fd_nfiles = nfiles;
-		fdexpand++;
+
+		/* Let the caller do it. */
+		return (ENOSPC);
 	}
+}
+
+void
+fdexpand(struct proc *p)
+{
+	struct filedesc	*fdp;
+	int		i, nfiles;
+	struct file	**newofile;
+	char		*newofileflags;
+
+	fdp = p->p_fd;
+
+	if (fdp->fd_nfiles < NDEXTENT)
+		nfiles = NDEXTENT;
+	else
+		nfiles = 2 * fdp->fd_nfiles;
+	newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
+	newofileflags = (char *) &newofile[nfiles];
+	/*
+	 * Copy the existing ofile and ofileflags arrays
+	 * and zero the new portion of each array.
+	 */
+	memcpy(newofile, fdp->fd_ofiles,
+		(i = sizeof(struct file *) * fdp->fd_nfiles));
+	memset((char *)newofile + i, 0,
+	    nfiles * sizeof(struct file *) - i);
+	memcpy(newofileflags, fdp->fd_ofileflags,
+	    (i = sizeof(char) * fdp->fd_nfiles));
+	memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
+	if (fdp->fd_nfiles > NDFILE)
+		free(fdp->fd_ofiles, M_FILEDESC);
+	fdp->fd_ofiles = newofile;
+	fdp->fd_ofileflags = newofileflags;
+	fdp->fd_nfiles = nfiles;
+	fdexpanded++;
 }
 
 /*
@@ -687,8 +704,10 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 
  restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
-		if (error == ERESTART)
+		if (error == ENOSPC) {
+			fdexpand(p);
 			goto restart;
+		}
 		return (error);
 	}
 	if (nfiles >= maxfiles) {
