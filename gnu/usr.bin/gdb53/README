@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.3 2003/10/27 00:57:04 wiz Exp $
+# $NetBSD: README,v 1.4 2003/10/28 01:12:11 uwe Exp $
 
 This note describes how to add support for gdb53 to a platform.
 
@@ -7,6 +7,9 @@ To make gdb work on your platform of choice you need to populate the files in
 
 1. Build gdb using the standard configure mechanism in the distribution
    directory /usr/src/gnu/dist/gdb.
+
+   Alternatively, configure and build in a scratch directory, so that
+   you can avoid doing the last distclean step of this instructions.
 
 2. Copy generated files (the ?m.h are not present on some platforms)
         cp gdb/{tm.h,nm.h,xm.h,config.h} ...arch/<platform>
@@ -41,7 +44,7 @@ and at the bottom add:
 #endif
   _initialize_corelow ();
 
-4. Fix defs.h to have the right files. The readline, libiberty,
+4. Fix defs.mk to have the right files. The readline, libiberty,
    ones should be ok; for the others, go to the build directory
 
    ls -1 *.o | sed -e 's/$/ \\/' 
@@ -49,6 +52,9 @@ and at the bottom add:
    and then incorporate the resulting sections into defs.mk. This should be
    done for bfd, gdb, opcodes.
 
-5. Make distclean in the distribution directory and cvs update [distclean
+5. Fix defs.mk to have the right bfd flags in G_BFD_CPPFLAGS.  Copy
+   them from `tdefaults' variable in generated bfd/Makefile.
+
+6. Make distclean in the distribution directory and cvs update [distclean
    removes some generated files we committed because they don't change across
    platforms]
