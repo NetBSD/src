@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.3 1999/01/07 01:57:11 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.4 1999/01/07 22:09:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ __CONCAT(dname,_match)(device_t device)
         struct usb_attach_arg *uaa = device_get_ivars(device)
 
 #define USB_ATTACH(dname) \
-static int
+static int \
 __CONCAT(dname,_attach)(device_t self)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
@@ -187,8 +187,8 @@ __CONCAT(dname,_attach)(device_t self)
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
 	struct __CONCAT(dname,_softc) *sc = \
-		devclass_get_softc(__CONCAT(dname,_devclass), unit);
-	if (!sc)
+		devclass_get_softc(__CONCAT(dname,_devclass), unit); \
+	if (!sc) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
