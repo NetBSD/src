@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.2.2.2 2004/08/13 03:58:46 jmc Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2.2.2.2.1 2005/02/06 07:44:23 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -668,7 +668,7 @@ int	len;
 			sprintf((char *)t, "        ");
 			t += 8;
 			for (k = 16; k; k--, s++)
-				*t++ = (isprint(*s) ? *s : '.');
+				*t++ = (ISPRINT(*s) ? *s : '.');
 			s--;
 		}
 			
@@ -686,7 +686,7 @@ int	len;
 		t += 7;
 		s -= j & 0xf;
 		for (k = j & 0xf; k; k--, s++)
-			*t++ = (isprint(*s) ? *s : '.');
+			*t++ = (ISPRINT(*s) ? *s : '.');
 		*t++ = '\n';
 		*t = '\0';
 	}
@@ -1021,7 +1021,7 @@ int	blen;
 	(void) sprintf(t, "%s", ifname);
 	t += strlen(t);
 # if defined(MENTAT) || defined(linux)
-	if (isalpha(*(t - 1))) {
+	if (ISALPHA(*(t - 1))) {
 		sprintf(t, "%d", ipf->fl_unit);
 		t += strlen(t);
 	}
