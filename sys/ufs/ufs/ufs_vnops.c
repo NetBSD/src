@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.80.2.2 2001/09/18 19:14:03 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.80.2.3 2001/10/01 12:48:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -317,7 +317,7 @@ ufs_getattr(void *v)
 	vap->va_gid = ip->i_ffs_gid;
 	vap->va_rdev = ufs_rw32((dev_t)ip->i_ffs_rdev,
 	    UFS_MPNEEDSWAP(vp->v_mount));
-	vap->va_size = ip->i_ffs_size;
+	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_ffs_atime;
 	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
 	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
@@ -1454,6 +1454,7 @@ ufs_symlink(void *v)
 		ip = VTOI(vp);
 		memcpy((char *)ip->i_ffs_shortlink, ap->a_target, len);
 		ip->i_ffs_size = len;
+		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
@@ -1897,7 +1898,7 @@ ufs_advlock(void *v)
  * Initialize the vnode associated with a new inode, handle aliased
  * vnodes.
  */
-int
+void
 ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct vnode **vpp)
 {
@@ -1950,7 +1951,6 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	SETHIGH(ip->i_modrev, mono_time.tv_sec);
 	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
 	*vpp = vp;
-	return (0);
 }
 
 /*

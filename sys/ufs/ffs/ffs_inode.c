@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.42 2001/08/30 03:47:53 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.42.2.1 2001/10/01 12:48:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,6 +168,7 @@ ffs_truncate(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
+	struct genfs_node *gp = VTOG(ovp);
 	ufs_daddr_t lastblock;
 	struct inode *oip;
 	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
@@ -206,7 +207,6 @@ ffs_truncate(v)
 		return (EFBIG);
 
 	osize = oip->i_ffs_size;
-	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -215,9 +215,14 @@ ffs_truncate(v)
 	 */
 
 	if (osize < length) {
-		ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
+		if (error) {
+			return error;
+		}
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		KASSERT(ovp->v_size == oip->i_ffs_size);
 		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
 
@@ -241,14 +246,16 @@ ffs_truncate(v)
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		uobj = &ovp->v_uvm.u_obj;
+		uobj = &ovp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
-		uobj->pgops->pgo_flush(uobj, length, eoz,
-		    PGO_CLEANIT|PGO_DEACTIVATE|PGO_SYNCIO);
-		simple_unlock(&ovp->v_uvm.u_obj.vmobjlock);
+		error = (uobj->pgops->pgo_put)(uobj, trunc_page(length),
+		    round_page(eoz), PGO_CLEANIT|PGO_DEACTIVATE|PGO_SYNCIO);
+		if (error) {
+			return error;
+		}
 	}
 
-	lockmgr(&ovp->v_glock, LK_EXCLUSIVE, NULL);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
 
 	if (DOINGSOFTDEP(ovp)) {
 		if (length > 0) {
@@ -263,7 +270,7 @@ ffs_truncate(v)
 			 */
 			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
 			    0, 0, ap->a_p)) != 0) {
-				lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
+				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
 			}
 		} else {
@@ -273,7 +280,7 @@ ffs_truncate(v)
 #endif
 			softdep_setup_freeblocks(oip, length);
 			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
-			lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
+			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
@@ -416,11 +423,12 @@ done:
 	oip->i_ffs_blocks -= blocksreleased;
 	if (oip->i_ffs_blocks < 0)			/* sanity */
 		oip->i_ffs_blocks = 0;
-	lockmgr(&ovp->v_glock, LK_RELEASE, NULL);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
+	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_ffs_size);
 	return (allerror);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.11 2000/05/19 20:42:20 thorpej Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.11.12.1 2001/10/01 12:48:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,6 +57,7 @@ int	mfs_sysctl	__P((int *, u_int, void *, size_t *, void *, size_t,
 			     struct proc *));
 
 void	mfs_init	__P((void));
+void	mfs_reinit	__P((void));
 void	mfs_done	__P((void));
 
 /* mfs_vnops.c */

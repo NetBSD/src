@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.24 2001/06/05 09:19:33 mrg Exp $	*/
+/*	$NetBSD: inode.h,v 1.24.6.1 2001/10/01 12:48:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -45,6 +45,7 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <miscfs/genfs/genfs_node.h>
 
 /*
  * Per-filesystem inode extensions.
@@ -68,6 +69,7 @@ struct lfs_inode_ext {
  * active, and is put back when the file is no longer being used.
  */
 struct inode {
+	struct genfs_node i_gnode;
 	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
@@ -88,6 +90,7 @@ struct inode {
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
+
 	/*
 	 * Side effects; used during directory lookup.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.36.2.1 2001/09/18 19:14:01 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.36.2.2 2001/10/01 12:48:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -260,7 +260,7 @@ ext2fs_getattr(v)
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
 	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din.e2di_rdev);
-	vap->va_size = ip->i_e2fs_size;
+	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
 	vap->va_mtime.tv_sec = ip->i_e2fs_mtime;
@@ -1473,10 +1473,8 @@ const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, ext2fs_truncate },	/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_ballocn_desc, ext2fs_ballocn },		/* ballocn */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
-	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
@@ -1530,7 +1528,6 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_specop_opv_desc =
@@ -1582,6 +1579,7 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ext2fs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =

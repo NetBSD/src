@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.10 2000/01/11 06:57:49 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.10.10.1 2001/10/01 12:48:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -54,8 +54,6 @@
 #define UAO_FLAG_KERNSWAP	0x2	/* enable kernel swap */
 
 /* internal flags */
-#define UAO_FLAG_KILLME		0x4	/* aobj should die when last released
-					 * page is no longer PG_BUSY ... */
 #define UAO_FLAG_NOSWAP		0x8	/* aobj can't swap (kernel obj only!) */
 
 #ifdef _KERNEL
@@ -66,6 +64,7 @@
 
 void uao_init __P((void));
 int uao_set_swslot __P((struct uvm_object *, int, int));
+int uao_find_swslot __P((struct uvm_object *, int));
 void uao_dropswap __P((struct uvm_object *, int));
 int uao_swap_off __P((int, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.29 2001/06/26 17:55:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.29.4.1 2001/10/01 12:48:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -138,6 +138,7 @@ struct vm_map_entry {
 	u_int8_t		flags;		/* flags */
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
+#define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
 
 };
 

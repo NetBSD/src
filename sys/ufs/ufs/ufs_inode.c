@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.24 2001/07/04 21:08:48 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.24.4.1 2001/10/01 12:48:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -168,6 +168,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 {
 	off_t oldeof, neweof, oldeob, neweob, oldpagestart, pagestart;
 	struct uvm_object *uobj;
+	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages1, npages2;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
@@ -175,22 +176,16 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	struct vm_page *pgs1[ppb], *pgs2[ppb];
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_uvm.u_size);
+		    vp, off, len, vp->v_size);
 
-	oldeof = vp->v_uvm.u_size;
-	error = VOP_SIZE(vp, oldeof, &oldeob);
-	if (error) {
-		return error;
-	}
+	oldeof = vp->v_size;
+	GOP_SIZE(vp, oldeof, &oldeob);
 
-	neweof = MAX(vp->v_uvm.u_size, off + len);
-	error = VOP_SIZE(vp, neweof, &neweob);
-	if (error) {
-		return error;
-	}
+	neweof = MAX(vp->v_size, off + len);
+	GOP_SIZE(vp, neweof, &neweob);
 
 	error = 0;
-	uobj = &vp->v_uvm.u_obj;
+	uobj = &vp->v_uobj;
 	pgs1[0] = pgs2[0] = NULL;
 
 	/*
@@ -265,22 +260,20 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 * now allocate the range.
 	 */
 
-	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL);
-	error = VOP_BALLOCN(vp, off, len, cred, flags);
-	lockmgr(&vp->v_glock, LK_RELEASE, NULL);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	error = GOP_ALLOC(vp, off, len, flags, cred);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 
 	/*
 	 * clear PG_RDONLY on any pages we are holding
 	 * (since they now have backing store) and unbusy them.
-	 * if we got an error, free any pages we created past the old eob.
+	 * if we got an error, the pages covering the new block
+	 * were already unbusied down in ffs_balloc() to make
+	 * things work out for softdep.
 	 */
 
 out:
 	simple_lock(&uobj->vmobjlock);
-	if (error) {
-		(void) (uobj->pgops->pgo_flush)(uobj, round_page(oldeob), 0,
-		    PGO_FREE);
-	}
 	if (pgs1[0] != NULL) {
 		for (i = 0; i < npages1; i++) {
 			pgs1[i]->flags &= ~PG_RDONLY;
@@ -292,12 +285,14 @@ out:
 		 * We need to flush pages to the new disk locations.
 		 */
 
-		if ((flags & B_SYNC) != 0)
-			(*uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
-			    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
-			    PGO_CLEANIT | PGO_SYNCIO);
+		if (flags & B_SYNC) {
+			(uobj->pgops->pgo_put)(uobj, oldeof & ~(bsize - 1),
+			    MIN((oldeof + bsize) & ~(bsize - 1),
+				round_page(neweob)), PGO_CLEANIT | PGO_SYNCIO);
+			simple_lock(&uobj->vmobjlock);
+		}
 	}
-	if (pgs2[0] != NULL) {
+	if (pgs2[0] != NULL && !error) {
 		for (i = 0; i < npages2; i++) {
 			pgs2[i]->flags &= ~PG_RDONLY;
 		}

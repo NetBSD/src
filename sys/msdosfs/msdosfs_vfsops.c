@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.74.4.2 2001/09/26 15:28:24 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.74.4.3 2001/10/01 12:47:29 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -120,6 +120,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_fhtovp,
 	msdosfs_vptofh,
 	msdosfs_init,
+	msdosfs_reinit,
 	msdosfs_done,
 	msdosfs_sysctl,
 	msdosfs_mountroot,
@@ -909,7 +910,7 @@ loop:
 		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		      vp->v_uvm.u_obj.uo_npages == 0))) {
+		      vp->v_uobj.uo_npages == 0))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.70 2001/07/31 02:25:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.70.2.1 2001/10/01 12:47:46 fvdl Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -127,6 +127,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/domain.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -166,7 +167,7 @@ extern struct mbuf *m_copypack();
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
-int	tcp_cwm = 0;
+int	tcp_cwm = 1;
 int	tcp_cwm_burstsize = 4;
 
 static
@@ -467,7 +468,7 @@ tcp_output(tp)
 		    (tcp_cwm_burstsize * txsegsize) +
 		    (tp->snd_nxt - tp->snd_una));
 	} else {
-		if (idle && tp->t_idle >= tp->t_rxtcur) {
+		if (idle && (tcp_now - tp->t_rcvtime) >= tp->t_rxtcur) {
 			/*
 			 * We have been idle for "a while" and no acks are
 			 * expected to clock out any data we send --
@@ -938,8 +939,8 @@ send:
 			 * Time this transmission if not a retransmission and
 			 * not currently timing anything.
 			 */
-			if (tp->t_rtt == 0) {
-				tp->t_rtt = 1;
+			if (tp->t_rtttime == 0) {
+				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
 				tcpstat.tcps_segstimed++;
 			}
@@ -1090,13 +1091,17 @@ out:
 			if (tp->t_in6pcb)
 				tcp6_quench(tp->t_in6pcb, 0);
 #endif
-			return (0);
-		}
-		if ((error == EHOSTUNREACH || error == ENETDOWN)
-		    && TCPS_HAVERCVDSYN(tp->t_state)) {
+			error = 0;
+		} else if ((error == EHOSTUNREACH || error == ENETDOWN) &&
+		    TCPS_HAVERCVDSYN(tp->t_state)) {
 			tp->t_softerror = error;
-			return (0);
+			error = 0;
 		}
+
+		/* Restart the delayed ACK timer, if necessary. */
+		if (tp->t_flags & TF_DELACK)
+			TCP_RESTART_DELACK(tp);
+
 		return (error);
 	}
 	tcpstat.tcps_sndtotal++;

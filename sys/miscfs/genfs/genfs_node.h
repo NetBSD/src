@@ -1,8 +1,7 @@
-/*	$NetBSD: uvm_vnode.h,v 1.10 2000/11/27 08:40:06 chs Exp $	*/
+/* $NetBSD: genfs_node.h,v 1.2.4.2 2001/10/01 12:47:18 fvdl Exp $ */
 
 /*
- *
- * Copyright (c) 1997 Charles D. Cranor and Washington University.
+ * Copyright (c) 2001 Chuck Silvers.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
+ *      This product includes software developed by Chuck Silvers.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,30 +28,35 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * from: Id: uvm_vnode.h,v 1.1.2.4 1997/10/03 21:18:24 chuck Exp
  */
 
-#ifndef _UVM_UVM_VNODE_H_
-#define _UVM_UVM_VNODE_H_
+#ifndef	_MISCFS_GENFS_GENFS_NODE_H_
+#define	_MISCFS_GENFS_GENFS_NODE_H_
 
-/*
- * uvm_vnode.h
- *
- * vnode handle into the VM system.
- */
+struct vm_page;
 
-/*
- * the uvm_vnode structure.   put at the top of the vnode data structure.
- * this allows:
- *   (struct vnode *) == (struct uvm_vnode *) == (struct uvm_object *)
- */
-
-struct uvm_vnode {
-	struct uvm_object u_obj;	/* the actual VM object */
-	int u_flags;			/* flags */
-	int u_nio;			/* number of running I/O requests */
-	voff_t u_size;			/* size of object */
+struct genfs_ops {
+	void	(*gop_size)(struct vnode *, off_t, off_t *);
+	int	(*gop_alloc)(struct vnode *, off_t, off_t, int, struct ucred *);
+	int	(*gop_write)(struct vnode *, struct vm_page **, int, int);
 };
 
-#endif /* _UVM_UVM_VNODE_H_ */
+#define GOP_SIZE(vp, size, eobp) \
+	(*VTOG(vp)->g_op->gop_size)((vp), (size), (eobp))
+#define GOP_ALLOC(vp, off, len, flags, cred) \
+	(*VTOG(vp)->g_op->gop_alloc)((vp), (off), (len), (flags), (cred))
+#define GOP_WRITE(vp, pgs, npages, flags) \
+	(*VTOG(vp)->g_op->gop_write)((vp), (pgs), (npages), (flags))
+
+struct genfs_node {
+	struct genfs_ops	*g_op;		/* ops vector */
+	struct lock		g_glock;	/* getpages lock */
+};
+
+#define VTOG(vp) ((struct genfs_node *)(vp)->v_data)
+
+void	genfs_size(struct vnode *, off_t, off_t *);
+void	genfs_node_init(struct vnode *, struct genfs_ops *);
+int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
+
+#endif	/* _MISCFS_GENFS_GENFS_NODE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.38 2001/08/17 05:54:37 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.38.2.1 2001/10/01 12:48:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -108,15 +108,13 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
 	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
-	{ &vop_ballocn_desc, ffs_ballocn },		/* balloc */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
-	{ &vop_size_desc, ffs_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -171,7 +169,6 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_specop_opv_desc =
@@ -224,6 +221,7 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =
@@ -267,25 +265,31 @@ ffs_fsync(v)
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
 
-	s = splbio();
-
 	/*
 	 * First, flush all pages in range.
 	 */
 
-	simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-	(vp->v_uvm.u_obj.pgops->pgo_flush)(&vp->v_uvm.u_obj,
-	    ap->a_offlo, ap->a_offhi, PGO_CLEANIT|PGO_SYNCIO);
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+	if (vp->v_type == VREG) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
+		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
+		    PGO_CLEANIT|PGO_SYNCIO);
+		if (error) {
+			return error;
+		}
+	}
 
 	/*
 	 * Then, flush indirect blocks.
 	 */
 
+	s = splbio();
 	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error)
+		if (error) {
+			splx(s);
 			return error;
+		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
 			if (bp != NULL && !(bp->b_flags & B_BUSY) &&
@@ -341,11 +345,14 @@ ffs_full_fsync(v)
 	 */
 
 	if (vp->v_type == VREG) {
-		uobj = &vp->v_uvm.u_obj;
+		uobj = &vp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
-		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
+		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
-		simple_unlock(&uobj->vmobjlock);
+		if (error) {
+			return error;
+		}
 	}
 
 	passes = NIADDR + 1;
@@ -455,30 +462,58 @@ ffs_reclaim(v)
 	return (0);
 }
 
+int
+ffs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+
+	/*
+	 * don't allow a softdep write to create pages for only part of a block.
+	 * the dependency tracking requires that all pages be in memory for
+	 * a block involved in a dependency.
+	 */
+
+	if (ap->a_flags & PGO_OVERWRITE &&
+	    (blkoff(fs, ap->a_offset) != 0 ||
+	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
+	    DOINGSOFTDEP(ap->a_vp)) {
+		if ((ap->a_flags & PGO_LOCKED) == 0) {
+			simple_unlock(&vp->v_uobj.vmobjlock);
+		}
+		return EINVAL;
+	}
+	return genfs_getpages(v);
+}
+
 /*
  * Return the last logical file offset that should be written for this file
  * if we're doing a write that ends at "size".
  */
-int
-ffs_size(v)
-	void *v;
+
+void
+ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
 {
-	struct vop_size_args /* {
-		struct vnode *a_vp;
-		off_t a_size;
-		off_t *a_eobp;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	ufs_lbn_t olbn, nlbn;
 
 	olbn = lblkno(fs, ip->i_ffs_size);
-	nlbn = lblkno(fs, ap->a_size);
-
+	nlbn = lblkno(fs, size);
 	if (nlbn < NDADDR && olbn <= nlbn) {
-		*ap->a_eobp = fragroundup(fs, ap->a_size);
+		*eobp = fragroundup(fs, size);
 	} else {
-		*ap->a_eobp = blkroundup(fs, ap->a_size);
+		*eobp = blkroundup(fs, size);
 	}
-	return 0;
 }

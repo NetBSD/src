@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.4.2 2001/10/01 12:48:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -180,19 +180,19 @@ enum hashtype {
 
 void	*hashinit __P((int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
-int	seltrue __P((struct vnode *devvp, int events, struct proc *p));
+int	seltrue __P((struct vnode *, int, struct proc *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
-int	sprintf __P((char *buf, const char *, ...))
+int	sprintf __P((char *, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
-int	snprintf __P((char *buf, size_t, const char *, ...))
+int	snprintf __P((char *, size_t, const char *, ...))
     __attribute__((__format__(__printf__,3,4)));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
-int	vsprintf __P((char *buf, const char *, _BSD_VA_LIST_));
-int	vsnprintf __P((char *buf, size_t, const char *, _BSD_VA_LIST_));
+int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
 
 void	panic __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
@@ -236,14 +236,14 @@ int	fuswintr __P((const void *));
 long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
-int	hzto __P((struct timeval *tv));
+int	hzto __P((struct timeval *));
 void	realitexpire __P((void *));
 
-void	hardclock __P((struct clockframe *frame));
+void	hardclock __P((struct clockframe *));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	softclock __P((void *));
 #endif
-void	statclock __P((struct clockframe *frame));
+void	statclock __P((struct clockframe *));
 #ifdef NTP
 void	hardupdate __P((long offset));
 #ifdef PPS_SYNC
@@ -258,7 +258,7 @@ void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
-void	setstatclockrate __P((int hzrate));
+void	setstatclockrate __P((int));
 
 /*
  * Shutdown hooks.  Functions to be run with all interrupts disabled

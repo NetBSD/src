@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.11 2001/07/26 14:14:28 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.11.2.1 2001/10/01 12:46:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1013,14 +1013,12 @@ retry:
 	}
 
 	/*
-	 * Handle first iovec, first PIPE_CHUNK_SIZE bytes. Expect caller
-	 * to deal with short write.
-	 *
-	 * Note: need to deal with buffers not aligned to PAGE_SIZE.
+	 * Handle first PIPE_CHUNK_SIZE bytes of buffer. Deal with buffers
+	 * not aligned to PAGE_SIZE.
 	 */
-	bbase = (vaddr_t)uio->uio_iov[0].iov_base;
+	bbase = (vaddr_t)uio->uio_iov->iov_base;
 	base = trunc_page(bbase);
-	bend = round_page(bbase + uio->uio_iov[0].iov_len);
+	bend = round_page(bbase + uio->uio_iov->iov_len);
 	blen = bend - base;
 	bpos = bbase - base;
 
@@ -1029,7 +1027,7 @@ retry:
 		bend = base + blen;
 		bcnt = PIPE_DIRECT_CHUNK - bpos;
 	} else
-		bcnt = uio->uio_iov[0].iov_len;
+		bcnt = uio->uio_iov->iov_len;
 
 	npages = blen / PAGE_SIZE;
 
@@ -1060,6 +1058,7 @@ retry:
 	for(j=0; j < npages; j++, kva += PAGE_SIZE)
 		pmap_enter(pmap_kernel(), kva, res[j]->phys_addr,
 			VM_PROT_READ, 0);
+	pmap_update(pmap_kernel());
 
 	wpipe->pipe_state |= PIPE_DIRECTW;
 	error = 0;
@@ -1081,35 +1080,40 @@ retry:
 
     cleanup:
 	pipelock(wpipe, 0);
+	if (res)
+		uvm_unloan((void **) res, npages, UVM_LOAN_TOPAGE);
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
-	else if (res)
-		uvm_unloanpage(res, npages);
 	pipeunlock(wpipe);
 
-	if (error == EPIPE) {
+	if (error) {
 		pipeselwakeup(wpipe, wpipe);
 
 		/*
-		 * If anything was read from what we offered, return success
-		 * and short write. We return EOF on next write(2).
+		 * If nothing was read from what we offered, return error
+		 * streight on. Otherwise update uio resid first. Caller
+		 * will deal with the error condition, returning short
+		 * write, error, or restarting the write(2) as appropriate.
 		 */
-		if (wpipe->pipe_map.cnt < bcnt) {
-			bcnt -= wpipe->pipe_map.cnt;
-			error = 0;
-		}
-	}
-
-	if (error) {
+		if (wpipe->pipe_map.cnt == bcnt) {
    error:
-		wakeup(wpipe);
-		return (error);
+			wakeup(wpipe);
+			return (error);
+		}
+
+		bcnt -= wpipe->pipe_map.cnt;
 	}
 
 	uio->uio_resid  -= bcnt;
 	/* uio_offset not updated, not set/used for write(2) */
+	(char *) uio->uio_iov->iov_base += bcnt;
+	uio->uio_iov->iov_len -= bcnt;
+	if (uio->uio_iov->iov_len == 0) {
+		uio->uio_iov++;
+		uio->uio_iovcnt--;
+	}
 
-	return (0);
+	return (error);
 }
 #endif /* !PIPE_NODIRECT */
 #endif /* NetBSD */
@@ -1134,7 +1138,6 @@ pipe_write(fp, offset, uio, cred, flags)
 #endif
 {
 	int error = 0;
-	int orig_resid;
 	struct pipe *wpipe, *rpipe;
 
 	rpipe = (struct pipe *) fp->f_data;
@@ -1185,7 +1188,6 @@ pipe_write(fp, offset, uio, cred, flags)
 	KASSERT(wpipe->pipe_buffer.buffer != NULL, ("pipe buffer gone"));
 #endif
 
-	orig_resid = uio->uio_resid;
 	while (uio->uio_resid) {
 		int space;
 
@@ -1199,19 +1201,21 @@ pipe_write(fp, offset, uio, cred, flags)
 		 * The direct write mechanism will detect the reader going
 		 * away on us.
 		 */
-		if ((uio->uio_iov[0].iov_len >= PIPE_MINDIRECT) &&
-		    (uio->uio_resid == orig_resid) &&
+		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
 			error = pipe_direct_write(wpipe, uio);
 
 			/*
-			 * We either errorred, wrote whole buffer, or
-			 * wrote part of buffer. If the error is ENOMEM,
-			 * we failed to allocate some resources for direct
-			 * write and fall back to ordinary write. Otherwise,
-			 * break out now.
+			 * Break out if error occured, unless it's ENOMEM.
+			 * ENOMEM means we failed to allocate some resources
+			 * for direct write, so we just fallback to ordinary
+			 * write. If the direct write was successful,
+			 * process rest of data via ordinary write.
 			 */
+			if (!error)
+				continue;
+
 			if (error != ENOMEM)
 				break;
 		}
@@ -1244,7 +1248,7 @@ pipe_write(fp, offset, uio, cred, flags)
 		space = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
 
 		/* Writes of size <= PIPE_BUF must be atomic. */
-		if ((space < uio->uio_resid) && (orig_resid <= PIPE_BUF))
+		if ((space < uio->uio_resid) && (uio->uio_resid <= PIPE_BUF))
 			space = 0;
 
 		if (space > 0 && (wpipe->pipe_buffer.cnt < PIPE_SIZE)) {
@@ -1403,7 +1407,7 @@ pipe_write(fp, offset, uio, cred, flags)
 	/*
 	 * We have something to offer, wake up select/poll.
 	 * wpipe->pipe_map.cnt is always 0 in this point (direct write
-	 * is only done synchronously), so check wpipe->only pipe_buffer.cnt
+	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (wpipe->pipe_buffer.cnt)
 		pipeselwakeup(wpipe, wpipe);
