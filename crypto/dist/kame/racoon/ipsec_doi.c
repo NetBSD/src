@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.158 2002/09/27 05:55:52 itojun Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.162 2003/06/27 07:32:38 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@ static struct prop_pair *get_ph2approvalx __P((struct ph2handle *,
 static void free_proppair0 __P((struct prop_pair *));
 
 static int get_transform
-	__P((struct isakmp_pl_p *, struct prop_pair **, int *));
+	__P((struct isakmp_pl_p *, struct prop_pair **, int *, int));
 static u_int32_t ipsecdoi_set_ld __P((vchar_t *));
 
 static int check_doi __P((u_int32_t));
@@ -1163,6 +1163,14 @@ get_proppair(sa, mode)
 			vfree(pbuf);
 			return NULL;
 		}
+		if (mode == IPSECDOI_TYPE_PH1
+		 && pa != (struct isakmp_parse_t *)pbuf->v) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"Only a single proposal payload is allowed "
+				"during phase 1 processing.\n");
+			vfree(pbuf);
+			return NULL;
+		}
 
 		prop = (struct isakmp_pl_p *)pa->ptr;
 		proplen = pa->len;
@@ -1192,7 +1200,7 @@ get_proppair(sa, mode)
 			continue;
 
 		/* get transform */
-		if (get_transform(prop, pair, &num_p) < 0) {
+		if (get_transform(prop, pair, &num_p, mode) < 0) {
 			vfree(pbuf);
 			return NULL;
 		}
@@ -1269,10 +1277,11 @@ get_proppair(sa, mode)
  *	0	: No valid transform found.
  */
 static int
-get_transform(prop, pair, num_p)
+get_transform(prop, pair, num_p, mode)
 	struct isakmp_pl_p *prop;
 	struct prop_pair **pair;
 	int *num_p;
+	int mode;
 {
 	int tlen; /* total length of all transform in a proposal */
 	caddr_t bp;
@@ -1302,6 +1311,13 @@ get_transform(prop, pair, num_p)
 		if (pa->type != ISAKMP_NPTYPE_T) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"Invalid payload type=%u\n", pa->type);
+			break;
+		}
+		if (mode == IPSECDOI_TYPE_PH1
+		 && pa != (struct isakmp_parse_t *)pbuf->v) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"Only a single transform payload is allowed "
+				"during phase 1 processing.\n");
 			break;
 		}
 
@@ -2218,6 +2234,14 @@ ahmismatch:
 		return -1;
 	}
 
+	if (proto_id == IPSECDOI_PROTO_IPSEC_ESP
+	 && trns->t_id == IPSECDOI_ESP_NULL
+	 && !attrseen[IPSECDOI_ATTR_AUTH]) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "attr AUTH must be present for ESP NULL encryption.\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -2640,6 +2664,23 @@ setph2proposal0(iph2, pp, pr)
 
 	for (tr = pr->head; tr; tr = tr->next) {
 	
+		switch (pr->proto_id) {
+		case IPSECDOI_PROTO_IPSEC_ESP:
+			/*
+			 * don't build a null encryption
+			 * with no authentication transform.
+			 */
+			if (tr->trns_id == IPSECDOI_ESP_NULL &&
+			    tr->authtype == IPSECDOI_ATTR_AUTH_NONE) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "attr AUTH must be present "
+				    "for ESP NULL encryption.\n");
+				vfree(p);
+				return NULL;
+			}
+			break;
+		}
+
 		if (np_t) {
 			*np_t = ISAKMP_NPTYPE_T;
 			prop->num_t++;
@@ -2825,16 +2866,15 @@ ipsecdoi_setph2proposal(iph2)
 }
 
 /*
- * return 1 if all of the proposed protocols are transport mode.
+ * return 1 if all of the given protocols are transport mode.
  */
 int
-ipsecdoi_transportmode(iph2)
-	struct ph2handle *iph2;
-{
+ipsecdoi_transportmode(pp)
 	struct saprop *pp;
+{
 	struct saproto *pr = NULL;
 
-	for (pp = iph2->proposal; pp; pp = pp->next) {
+	for (; pp; pp = pp->next) {
 		for (pr = pp->head; pr; pr = pr->next) {
 			if (pr->encmode != IPSECDOI_ATTR_ENC_MODE_TRNS)
 				return 0;
@@ -3309,48 +3349,16 @@ ipsecdoi_setid2(iph2)
 		return -1;
 	}
 
-	if (!iph2->sainfo->idv) {
-		iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
+	iph2->id = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.src,
 					sp->spidx.prefs, sp->spidx.ul_proto);
-		if (iph2->id == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get ID for %s\n",
-				spidx2str(&sp->spidx));
-			return -1;
-		}
-		plog(LLV_DEBUG, LOCATION, NULL, "use local ID type %s\n",
-			s_ipsecdoi_ident(((struct ipsecdoi_id_b *)iph2->id->v)->type));
-	} else {
-		struct ipsecdoi_id_b id_b;
-		vchar_t *ident;
-
-		id_b.type = idtype2doi(iph2->sainfo->idvtype);
-		if (id_b.type == 255) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to convert ID type to DOI.\n");
-			return -1;
-		}
-		id_b.proto_id = 0;
-		id_b.port = 0;
-
-		ident = getidval(iph2->sainfo->idvtype, iph2->sainfo->idv);
-		if (!ident) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get ID value.\n");
-			return -1;
-		}
-		iph2->id = vmalloc(sizeof(id_b) + ident->l);
-		if (iph2->id == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to get ID buffer.\n");
-			vfree(ident);
-			return -1;
-		}
-
-		memcpy(iph2->id->v, &id_b, sizeof(id_b));
-		memcpy(iph2->id->v + sizeof(id_b), ident->v, ident->l);
-		vfree(ident);
+	if (iph2->id == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to get ID for %s\n",
+			spidx2str(&sp->spidx));
+		return -1;
 	}
+	plog(LLV_DEBUG, LOCATION, NULL, "use local ID type %s\n",
+		s_ipsecdoi_ident(((struct ipsecdoi_id_b *)iph2->id->v)->type));
 
 	/* remote side */
 	iph2->id_p = ipsecdoi_sockaddr2id((struct sockaddr *)&sp->spidx.dst,
