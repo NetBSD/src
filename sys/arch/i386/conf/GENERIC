@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.288 2000/01/09 17:31:56 joda Exp $
+#	$NetBSD: GENERIC,v 1.289 2000/01/16 13:59:38 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -592,6 +592,11 @@ scsibus* at umass? channel ?
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
 # USB Generic driver
 ugen*	at uhub? port ?
 
@@ -622,6 +627,7 @@ clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -663,6 +669,7 @@ audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
+#audio*	at sbl?
 audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
