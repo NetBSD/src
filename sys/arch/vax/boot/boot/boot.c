@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2000/05/20 13:35:07 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.7 2000/05/23 23:34:20 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -75,6 +75,7 @@ struct vals {
 };
 
 char *filer[] = {
+	"netbsd.vax",
 	"netbsd",
 	"netbsd.gz",
 	"netbsd.old",
