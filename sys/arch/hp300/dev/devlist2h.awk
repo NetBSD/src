@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #
-#	$NetBSD: devlist2h.awk,v 1.2 1997/01/30 09:18:36 thorpej Exp $
+#	$NetBSD: devlist2h.awk,v 1.3 1998/01/05 21:12:34 perry Exp $
 #
 # Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -45,6 +45,7 @@ NR == 1 {
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
 	printf(" *\n") > dfile
+	printf(" * \$NetBSD\$\n") > dfile
 	printf(" * generated from:\n") > dfile
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
@@ -53,6 +54,7 @@ NR == 1 {
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
 	printf(" *\n") > hfile
+	printf(" * \$NetBSD\$\n") > hfile
 	printf(" * generated from:\n") > hfile
 	printf(" *\t%s\n", VERSION) > hfile
 	printf(" */\n") > hfile
