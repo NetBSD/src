@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.9 2002/06/20 03:41:08 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.10 2002/06/21 06:56:32 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ setregs(l, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)p->p_psstr;
+	tf->tf_global[1] = (int)l->l_proc->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
