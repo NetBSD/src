@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.6 2004/01/12 11:30:24 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.7 2004/01/12 11:53:31 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.6 2004/01/12 11:30:24 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.7 2004/01/12 11:53:31 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -242,7 +242,7 @@ ip2x_mappable_intr(void *arg)
 
 	ret = 0;
 	mstat = bus_space_read_4(iot, ioh, INT2_MAP_STATUS);
-	mmask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0 + (which << 2));
+	mmask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0 | (which << 2));
 
 	mstat &= mmask;
 
