@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.37 2004/05/08 18:52:15 kleink Exp $	*/
+/*	$NetBSD: netdb.h,v 1.38 2004/05/08 18:55:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -178,12 +178,12 @@ struct addrinfo {
 	int	ai_family;	/* PF_xxx */
 	int	ai_socktype;	/* SOCK_xxx */
 	int	ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
-#if defined(__sparc64__)
-	int	__ai_pad0;
+#if defined(__sparc__) && defined(_LP64)
+	int	__ai_pad0;	/* ABI compatibility */
 #endif
 	socklen_t ai_addrlen;	/* length of ai_addr */
 #if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
-	int	__ai_pad0;
+	int	__ai_pad0;	/* ABI compatbility */
 #endif
 	char	*ai_canonname;	/* canonical name for hostname */
 	struct sockaddr *ai_addr;	/* binary address */
