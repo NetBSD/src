@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.26 1994/05/25 16:09:40 pk Exp $
+ *	$Id: ld.c,v 1.27 1994/06/10 15:16:07 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -46,13 +46,13 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <ar.h>
 #include <ranlib.h>
 #include <a.out.h>
 #include <stab.h>
+#include <string.h>
 
 #include "ld.h"
 
@@ -148,7 +148,7 @@ int		page_size;		/* Size of a page (machine dependent) */
  * that error messages for these guys can be generated). This list is
  * zero terminated.
  */
-struct glosym	**cmdline_references;
+symbol		**cmdline_references;
 int		cl_refs_allocated;
 
 /*
@@ -249,20 +249,15 @@ static void	write_data __P((void));
 static void	write_rel __P((void));
 static void	write_syms __P((void));
 static void	assign_symbolnums __P((struct file_entry *, int *));
-static void	myfatal __P((void));
+static void	cleanup __P((void));
 static int	parse __P((char *, char *, char *));
 
 
 int
 main(argc, argv)
-	char          **argv;
-	int             argc;
+	int	argc;
+	char	*argv[];
 {
-
-	if ((progname = strrchr(argv[0], '/')) == NULL)
-		progname = argv[0];
-	else
-		progname++;
 
 	/* Added this to stop ld core-dumping on very large .o files.    */
 #ifdef RLIMIT_STACK
@@ -271,9 +266,13 @@ main(argc, argv)
 		struct rlimit   rlim;
 
 		/* Set the stack limit huge so that alloca does not fail. */
-		getrlimit(RLIMIT_STACK, &rlim);
-		rlim.rlim_cur = rlim.rlim_max;
-		setrlimit(RLIMIT_STACK, &rlim);
+		if (getrlimit(RLIMIT_STACK, &rlim) != 0)
+			warn("getrlimit");
+		else {
+			rlim.rlim_cur = rlim.rlim_max;
+			if (setrlimit(RLIMIT_STACK, &rlim) != 0)
+				warn("setrlimit");
+		}
 	}
 #endif	/* RLIMIT_STACK */
 
@@ -325,9 +324,8 @@ main(argc, argv)
 
 	/* Keep a list of symbols referenced from the command line */
 	cl_refs_allocated = 10;
-	cmdline_references
-		= (struct glosym **) xmalloc(cl_refs_allocated
-					     * sizeof(struct glosym *));
+	cmdline_references = (symbol **)
+		xmalloc(cl_refs_allocated * sizeof(symbol *));
 	*cmdline_references = 0;
 
 	/* Completely decode ARGV.  */
@@ -337,7 +335,7 @@ main(argc, argv)
 		(!relocatable_output && (link_mode & SHAREABLE));
 
 	if (building_shared_object && entry_symbol) {
-		fatal("`-Bshareable' and `-e' options are mutually exclusive");
+		errx(1,"`-Bshareable' and `-e' options are mutually exclusive");
 	}
 
 	/* Create the symbols `etext', `edata' and `end'.  */
@@ -459,7 +457,6 @@ decode_command(argc, argv)
 {
 	register int    i;
 	register struct file_entry *p;
-	char           *cp;
 
 	number_of_files = 0;
 	output_filename = "a.out";
@@ -474,7 +471,7 @@ decode_command(argc, argv)
 		register int    code = classify_arg(argv[i]);
 		if (code) {
 			if (i + code > argc)
-				fatal("no argument following %s", argv[i]);
+				errx(1, "no argument following %s", argv[i]);
 
 			decode_option(argv[i], argv[i + 1]);
 
@@ -487,10 +484,10 @@ decode_command(argc, argv)
 	}
 
 	if (!number_of_files)
-		fatal("no input files");
+		errx(1, "no input files");
 
 	p = file_table = (struct file_entry *)
-			xmalloc(number_of_files * sizeof(struct file_entry));
+		xmalloc(number_of_files * sizeof(struct file_entry));
 	bzero(p, number_of_files * sizeof(struct file_entry));
 
 	/* Now scan again and fill in file_table.  */
@@ -531,7 +528,7 @@ decode_command(argc, argv)
 		}
 		if (argv[i][1] == 'A') {
 			if (p != file_table)
-				fatal("-A specified before an input file other than the first");
+				errx(1, "-A specified before an input file other than the first");
 			p->filename = string;
 			p->local_sym_name = string;
 			p->flags |= E_JUST_SYMS;
@@ -551,12 +548,14 @@ decode_command(argc, argv)
 
 	/* Now check some option settings for consistency.  */
 
-	if (page_align_segments
-		&& (text_start - text_start_alignment) & (page_size - 1))
-		fatal("-T argument not multiple of page size, with sharable output");
+	if (page_align_segments &&
+	    (text_start - text_start_alignment) & (page_size - 1))
+		errx(1, "incorrect alignment of text start address");
 
 	/* Append the standard search directories to the user-specified ones. */
-	std_search_dirs(getenv("LD_LIBRARY_PATH"));
+	add_search_path(getenv("LD_LIBRARY_PATH"));
+	if (getenv("LD_NOSTD_PATH") == NULL)
+		std_search_path();
 }
 
 void
@@ -573,13 +572,13 @@ add_cmdline_ref(sp)
 		int diff = ptr - cmdline_references;
 
 		cl_refs_allocated *= 2;
-		cmdline_references = (struct glosym **)
+		cmdline_references = (symbol **)
 			xrealloc(cmdline_references,
-			       cl_refs_allocated * sizeof(struct glosym *));
+			       cl_refs_allocated * sizeof(symbol *));
 		ptr = cmdline_references + diff;
 	}
 	*ptr++ = sp;
-	*ptr = (symbol *) 0;
+	*ptr = (symbol *)0;
 }
 
 int
@@ -657,7 +656,7 @@ decode_option(swt, arg)
 		else if (*arg == 'p')
 			force_alias_definition = 1;
 		else
-			fatal("-d option takes 'c' or 'p' argument");
+			errx(1, "-d option takes 'c' or 'p' argument");
 		return;
 
 	case 'e':
@@ -773,10 +772,10 @@ decode_option(swt, arg)
 		return;
 
 	default:
-		fatal("invalid command option `%s'", swt);
+		errx(1, "invalid command option `%s'", swt);
 	}
 }
-
+
 /* Convenient functions for operating on one or all files being loaded. */
 
 /*
@@ -789,8 +788,8 @@ decode_option(swt, arg)
 
 void
 each_file(function, arg)
-	register void   (*function) ();
-	register int    arg;
+	register void	(*function)();
+	register void	*arg;
 {
 	register int    i;
 
@@ -802,29 +801,29 @@ each_file(function, arg)
 			continue;
 
 		if (!(entry->flags & E_IS_LIBRARY))
-			(*function) (entry, arg);
+			(*function)(entry, arg);
 
 		subentry = entry->subfiles;
 		for (; subentry; subentry = subentry->chain) {
 			if (subentry->flags & E_SCRAPPED)
 				continue;
-			(*function) (subentry, arg);
+			(*function)(subentry, arg);
 		}
 
 #ifdef SUN_COMPAT
 		if (entry->silly_archive) {
 
 			if (!(entry->flags & E_DYNAMIC))
-				error("Silly");
+				warnx("Silly");
 
 			if (!(entry->silly_archive->flags & E_IS_LIBRARY))
-				error("Sillier");
+				warnx("Sillier");
 
 			subentry = entry->silly_archive->subfiles;
 			for (; subentry; subentry = subentry->chain) {
 				if (subentry->flags & E_SCRAPPED)
 					continue;
-				(*function) (subentry, arg);
+				(*function)(subentry, arg);
 			}
 		}
 #endif
@@ -842,8 +841,8 @@ each_file(function, arg)
 
 unsigned long
 check_each_file(function, arg)
-	register unsigned long (*function) ();
-	register int    arg;
+	register unsigned long	(*function)();
+	register void		*arg;
 {
 	register int    i;
 	register unsigned long return_val;
@@ -857,10 +856,10 @@ check_each_file(function, arg)
 			for (; subentry; subentry = subentry->chain) {
 				if (subentry->flags & E_SCRAPPED)
 					continue;
-				if (return_val = (*function) (subentry, arg))
+				if (return_val = (*function)(subentry, arg))
 					return return_val;
 			}
-		} else if (return_val = (*function) (entry, arg))
+		} else if (return_val = (*function)(entry, arg))
 			return return_val;
 	}
 	return 0;
@@ -870,8 +869,8 @@ check_each_file(function, arg)
 
 void
 each_full_file(function, arg)
-	register void   (*function) ();
-	register int    arg;
+	register void	(*function)();
+	register void	*arg;
 {
 	register int    i;
 
@@ -886,16 +885,16 @@ each_full_file(function, arg)
 		if (entry->silly_archive) {
 
 			if (!(entry->flags & E_DYNAMIC))
-				error("Silly");
+				warnx("Silly");
 
 			if (!(entry->silly_archive->flags & E_IS_LIBRARY))
-				error("Sillier");
+				warnx("Sillier");
 
 			subentry = entry->silly_archive->subfiles;
 			for (; subentry; subentry = subentry->chain) {
 				if (subentry->flags & E_SCRAPPED)
 					continue;
-				(*function) (subentry, arg);
+				(*function)(subentry, arg);
 			}
 		}
 #endif
@@ -903,13 +902,13 @@ each_full_file(function, arg)
 			continue;
 
 		if (!(entry->flags & E_IS_LIBRARY))
-			(*function) (entry, arg);
+			(*function)(entry, arg);
 
 		subentry = entry->subfiles;
 		for (; subentry; subentry = subentry->chain) {
 			if (subentry->flags & E_SCRAPPED)
 				continue;
-			(*function) (subentry, arg);
+			(*function)(subentry, arg);
 		}
 
 	}
@@ -931,36 +930,37 @@ file_close()
  * open is not actually done.
  */
 int
-file_open (entry)
-     register struct file_entry *entry;
+file_open(entry)
+	register struct file_entry *entry;
 {
-	register int desc;
+	register int	fd;
 
 	if (entry->superfile && (entry->superfile->flags & E_IS_LIBRARY))
-		return file_open (entry->superfile);
+		return file_open(entry->superfile);
 
 	if (entry == input_file)
 		return input_desc;
 
-	if (input_file) file_close ();
+	if (input_file)
+		file_close();
 
 	if (entry->flags & E_SEARCH_DIRS) {
-		desc = findlib(entry);
+		fd = findlib(entry);
 	} else
-		desc = open (entry->filename, O_RDONLY, 0);
+		fd = open(entry->filename, O_RDONLY, 0);
 
-	if (desc > 0) {
+	if (fd > 0) {
 		input_file = entry;
-		input_desc = desc;
-		return desc;
+		input_desc = fd;
+		return fd;
 	}
 
-	perror_file (entry);
-	/* NOTREACHED */
+	err(1, "%s", get_file_name(entry));
+	return fd;
 }
 
 int
-text_offset (entry)
+text_offset(entry)
      struct file_entry *entry;
 {
 	return entry->starting_offset + N_TXTOFF (entry->header);
@@ -969,64 +969,68 @@ text_offset (entry)
 /*---------------------------------------------------------------------------*/
 
 /*
- * Read a file's header into the proper place in the file_entry. DESC is the
+ * Read a file's header into the proper place in the file_entry. FD is the
  * descriptor on which the file is open. ENTRY is the file's entry.
  */
 void
-read_header (desc, entry)
-     int desc;
-     register struct file_entry *entry;
+read_header(fd, entry)
+	int	fd;
+	struct file_entry *entry;
 {
-	register int len, mid;
+	register int len;
 
-	if (lseek (desc, entry->starting_offset, L_SET) !=
-						entry->starting_offset)
-		fatal_with_file("read_header: lseek failure ", entry);
+	if (lseek(fd, entry->starting_offset, L_SET) !=
+	    entry->starting_offset)
+		err(1, "%s: read_header: lseek", get_file_name(entry));
 
-	len = read (desc, &entry->header, sizeof (struct exec));
+	len = read(fd, &entry->header, sizeof(struct exec));
 	if (len != sizeof (struct exec))
-		fatal_with_file ("failure reading header of ", entry);
+		err(1, "%s: read_header: read", get_file_name(entry));
 
 	md_swapin_exec_hdr(&entry->header);
 
 	if (N_BADMAG (entry->header))
-		fatal_with_file ("bad magic number in ", entry);
+		errx(1, "%s: bad magic", get_file_name(entry));
 
 	if (N_BADMID(entry->header))
-		fatal_with_file ("non-native input file ", entry);
+		errx(1, "%s: non-native input file", get_file_name(entry));
 
 	entry->flags |= E_HEADER_VALID;
 }
 
 /*
  * Read the symbols of file ENTRY into core. Assume it is already open, on
- * descriptor DESC. Also read the length of the string table, which follows
+ * descriptor FD. Also read the length of the string table, which follows
  * the symbol table, but don't read the contents of the string table.
  */
 
 void
-read_entry_symbols (desc, entry)
-     struct file_entry *entry;
-     int desc;
+read_entry_symbols(fd, entry)
+	struct file_entry *entry;
+	int fd;
 {
 	int		str_size;
 	struct nlist	*np;
 	int		i;
 
 	if (!(entry->flags & E_HEADER_VALID))
-		read_header (desc, entry);
+		read_header(fd, entry);
 
-	np = (struct nlist *) alloca (entry->header.a_syms);
+	np = (struct nlist *)alloca(entry->header.a_syms);
 	entry->nsymbols = entry->header.a_syms / sizeof(struct nlist);
+	if (entry->nsymbols == 0)
+		return;
+
 	entry->symbols = (struct localsymbol *)
 		xmalloc(entry->nsymbols * sizeof(struct localsymbol));
 
-	if (lseek(desc, N_SYMOFF(entry->header) + entry->starting_offset, L_SET)
-			!= N_SYMOFF(entry->header) + entry->starting_offset)
-		fatal_with_file ("read_symbols(h): lseek failure ", entry);
+	if (lseek(fd, N_SYMOFF(entry->header) + entry->starting_offset, L_SET)
+	    != N_SYMOFF(entry->header) + entry->starting_offset)
+		err(1, "%s: read_symbols: lseek(syms)", get_file_name(entry));
 
-	if (entry->header.a_syms != read (desc, np, entry->header.a_syms))
-		fatal_with_file ("premature end of file in symbols of ", entry);
+	if (entry->header.a_syms != read(fd, np, entry->header.a_syms))
+		errx(1, "%s: read_symbols: premature end of file in symbols",
+			get_file_name(entry));
 
 	md_swapin_symbols(np, entry->header.a_syms / sizeof(struct nlist));
 
@@ -1041,36 +1045,42 @@ read_entry_symbols (desc, entry)
 	}
 
 	entry->strings_offset = N_STROFF(entry->header) +
-					entry->starting_offset;
-	if (lseek(desc, entry->strings_offset, 0) == (off_t)-1)
-		fatal_with_file ("read_symbols(s): lseek failure ", entry);
-	if (sizeof str_size != read (desc, &str_size, sizeof str_size))
-		fatal_with_file ("bad string table size in ", entry);
+				entry->starting_offset;
+	if (lseek(fd, entry->strings_offset, 0) == (off_t)-1)
+		err(1, "%s: read_symbols: lseek(strings)",
+			get_file_name(entry));
+	if (sizeof str_size != read(fd, &str_size, sizeof str_size))
+		errx(1, "%s: read_symbols: cannot read string table size",
+			get_file_name(entry));
 
 	entry->string_size = md_swap_long(str_size);
 }
 
 /*
- * Read the string table of file ENTRY into core. Assume it is already open,
- * on descriptor DESC.
+ * Read the string table of file ENTRY open on descriptor FD, into core.
  */
 void
-read_entry_strings (desc, entry)
-     struct file_entry *entry;
-     int desc;
+read_entry_strings(fd, entry)
+	struct file_entry *entry;
+	int fd;
 {
-	int buffer;
+
+	if (entry->string_size == 0)
+		return;
 
 	if (!(entry->flags & E_HEADER_VALID) || !entry->strings_offset)
-		fatal_with_file("internal error: cannot read string table for ",
-					entry);
+		errx(1, "%s: read_strings: string table unavailable",
+			get_file_name(entry));
 
-	if (lseek (desc, entry->strings_offset, L_SET) != entry->strings_offset)
-		fatal_with_file ("read_strings: lseek failure ", entry);
+	if (lseek(fd, entry->strings_offset, L_SET) !=
+	    entry->strings_offset)
+		err(1, "%s: read_strings: lseek",
+			get_file_name(entry));
 
-	if (entry->string_size !=
-			read (desc, entry->strings, entry->string_size))
-		fatal_with_file ("premature end of file in strings of ", entry);
+	if (read(fd, entry->strings, entry->string_size) !=
+	    entry->string_size)
+		errx(1, "%s: read_strings: premature end of file in strings",
+			get_file_name(entry));
 
 	return;
 }
@@ -1078,8 +1088,8 @@ read_entry_strings (desc, entry)
 /* Read in the relocation sections of ENTRY if necessary */
 
 void
-read_entry_relocation (desc, entry)
-	int			desc;
+read_entry_relocation(fd, entry)
+	int			fd;
 	struct file_entry	*entry;
 {
 	register struct relocation_info *reloc;
@@ -1088,19 +1098,20 @@ read_entry_relocation (desc, entry)
 	if (!entry->textrel) {
 
 		reloc = (struct relocation_info *)
-				xmalloc(entry->header.a_trsize);
+			xmalloc(entry->header.a_trsize);
 
 		pos = text_offset(entry) +
-				entry->header.a_text + entry->header.a_data;
+			entry->header.a_text + entry->header.a_data;
 
-		if (lseek(desc, pos, L_SET) != pos)
-			fatal_with_file("read_reloc(t): lseek failure ", entry);
+		if (lseek(fd, pos, L_SET) != pos)
+			err(1, "%s: read_reloc(text): lseek",
+				get_file_name(entry));
 
-		if (entry->header.a_trsize !=
-				read(desc, reloc, entry->header.a_trsize)) {
-			fatal_with_file (
-				"premature eof in text relocation of ", entry);
-		}
+		if (read(fd, reloc, entry->header.a_trsize) !=
+		    entry->header.a_trsize)
+			errx(1, "%s: read_reloc(text): premature EOF",
+			     get_file_name(entry));
+
 		md_swapin_reloc(reloc, entry->header.a_trsize / sizeof(*reloc));
 		entry->textrel = reloc;
 		entry->ntextrel = entry->header.a_trsize / sizeof(*reloc);
@@ -1110,19 +1121,20 @@ read_entry_relocation (desc, entry)
 	if (!entry->datarel) {
 
 		reloc = (struct relocation_info *)
-				xmalloc(entry->header.a_drsize);
+			xmalloc(entry->header.a_drsize);
 
 		pos = text_offset(entry) + entry->header.a_text +
-			entry->header.a_data + entry->header.a_trsize;
+		      entry->header.a_data + entry->header.a_trsize;
 
-		if (lseek(desc, pos, L_SET) != pos)
-			fatal_with_file("read_reloc(d): lseek failure ", entry);
+		if (lseek(fd, pos, L_SET) != pos)
+			err(1, "%s: read_reloc(data): lseek",
+				get_file_name(entry));
 
-		if (entry->header.a_drsize !=
-				read (desc, reloc, entry->header.a_drsize)) {
-			fatal_with_file (
-				"premature eof in data relocation of ", entry);
-		}
+		if (read(fd, reloc, entry->header.a_drsize) !=
+		    entry->header.a_drsize)
+			errx(1, "%s: read_reloc(data): premature EOF",
+			     get_file_name(entry));
+
 		md_swapin_reloc(reloc, entry->header.a_drsize / sizeof(*reloc));
 		entry->datarel = reloc;
 		entry->ndatarel = entry->header.a_drsize / sizeof(*reloc);
@@ -1136,7 +1148,7 @@ read_entry_relocation (desc, entry)
  * Read in the symbols of all input files.
  */
 static void
-load_symbols ()
+load_symbols()
 {
 	register int i;
 
@@ -1147,7 +1159,7 @@ load_symbols ()
 		read_file_symbols(&file_table[i]);
 
 	if (trace_files)
-		fprintf (stderr, "\n");
+		fprintf(stderr, "\n");
 }
 
 /*
@@ -1157,55 +1169,57 @@ load_symbols ()
  */
 
 void
-read_file_symbols (entry)
-     register struct file_entry *entry;
+read_file_symbols(entry)
+	register struct file_entry *entry;
 {
-	register int desc;
-	register int len;
-	struct exec hdr;
+	register int	fd;
+	register int	len;
+	struct exec	hdr;
 
-	desc = file_open (entry);
+	fd = file_open(entry);
 
-	len = read (desc, &hdr, sizeof hdr);
+	len = read(fd, &hdr, sizeof hdr);
 	if (len != sizeof hdr)
-		fatal_with_file ("failure reading header of ", entry);
+		errx(1, "%s: read_file_symbols(header): premature EOF",
+			get_file_name(entry));
 
 	md_swapin_exec_hdr(&hdr);
 
 	if (!N_BADMAG (hdr)) {
 		if (N_IS_DYNAMIC(hdr) && !(entry->flags & E_JUST_SYMS)) {
 			if (relocatable_output) {
-				fatal_with_file(
-			"-r and shared objects currently not supported ",
-					entry);
+				errx(1,
+			"%s: -r and shared objects currently not supported ",
+					get_file_name(entry));
 				return;
 			}
 			entry->flags |= E_DYNAMIC;
 			if (entry->superfile || rrs_add_shobj(entry))
-				read_shared_object(desc, entry);
+				read_shared_object(fd, entry);
 			else
 				entry->flags |= E_SCRAPPED;
 		} else {
-			read_entry_symbols (desc, entry);
-			entry->strings = (char *) alloca (entry->string_size);
-			read_entry_strings (desc, entry);
-			read_entry_relocation(desc, entry);
-			enter_file_symbols (entry);
+			read_entry_symbols(fd, entry);
+			entry->strings = (char *)alloca (entry->string_size);
+			read_entry_strings(fd, entry);
+			read_entry_relocation(fd, entry);
+			enter_file_symbols(entry);
 			entry->strings = 0;
 		}
 	} else {
 		char armag[SARMAG];
 
-		lseek (desc, 0, 0);
-		if (SARMAG != read (desc, armag, SARMAG) ||
-					strncmp (armag, ARMAG, SARMAG))
-			fatal_with_file(
-			"malformed input file (not rel or archive) ", entry);
+		lseek (fd, 0, 0);
+		if (SARMAG != read(fd, armag, SARMAG) ||
+		    strncmp (armag, ARMAG, SARMAG))
+			errx(1,
+			     "%s: malformed input file (not rel or archive)",	
+			     get_file_name(entry));
 		entry->flags |= E_IS_LIBRARY;
-		search_library (desc, entry);
+		search_library(fd, entry);
 	}
 
-	file_close ();
+	file_close();
 }
 
 
@@ -1214,12 +1228,13 @@ read_file_symbols (entry)
  */
 
 void
-enter_file_symbols (entry)
+enter_file_symbols(entry)
      struct file_entry *entry;
 {
 	struct localsymbol	*lsp, *lspend;
 
-	if (trace_files) prline_file_name (entry, stderr);
+	if (trace_files)
+		prline_file_name(entry, stderr);
 
 	lspend = entry->symbols + entry->nsymbols;
 
@@ -1248,7 +1263,8 @@ enter_file_symbols (entry)
 			/* Grab the next entry.  */
 			p++;
 			if (p->n_type != (N_UNDF | N_EXT)) {
-				error("Warning symbol found in %s without external reference following.",
+				warnx(
+		"%s: Warning symbol without external reference following.",
 					get_file_name(entry));
 				make_executable = 0;
 				p--;		/* Process normally.  */
@@ -1290,13 +1306,13 @@ enter_file_symbols (entry)
  */
 
 static void
-enter_global_ref (lsp, name, entry)
+enter_global_ref(lsp, name, entry)
      struct localsymbol *lsp;
      char *name;
      struct file_entry *entry;
 {
 	register struct nzlist *nzp = &lsp->nzlist;
-	register symbol *sp = getsym (name);
+	register symbol *sp = getsym(name);
 	register int type = nzp->nz_type;
 	int oldref = (sp->flags & GS_REFERENCED);
 	int olddef = sp->defined;
@@ -1305,7 +1321,7 @@ enter_global_ref (lsp, name, entry)
 	if (type == (N_INDR | N_EXT)) {
 		sp->alias = getsym(entry->strings + (lsp + 1)->nzlist.nz_strx);
 		if (sp == sp->alias) {
-			error("%s: %s is alias for itself",
+			warnx("%s: %s is alias for itself",
 					get_file_name(entry), name);
 			/* Rewrite symbol as global text symbol with value 0 */
 			lsp->nzlist.nz_type = N_TEXT|N_EXT;
@@ -1362,7 +1378,7 @@ enter_global_ref (lsp, name, entry)
 
 	if (sp == dynamic_symbol || sp == got_symbol) {
 		if (type != (N_UNDF | N_EXT) && !(entry->flags & E_JUST_SYMS))
-			fatal("Linker reserved symbol %s defined as type %x ",	
+			errx(1,"Linker reserved symbol %s defined as type %x ",	
 						name, type);
 		return;
 	}
@@ -1389,6 +1405,10 @@ enter_global_ref (lsp, name, entry)
 			 * It used to be undefined and we're defining it.
 			 */
 			undefined_global_sym_count--;
+			if (undefined_global_sym_count < 0)
+				errx(1,
+	"internal error: enter_glob_ref: undefined_global_sym_count = %d",
+					undefined_global_sym_count);
 
 		if (!olddef && type == (N_UNDF | N_EXT) && nzp->nz_value) {
 			/*
@@ -1455,9 +1475,9 @@ enter_global_ref (lsp, name, entry)
 			break;
 		}
 
-		fprintf (stderr, "symbol %s %s in ", sp->name, reftype);
+		fprintf(stderr, "symbol %s %s in ", sp->name, reftype);
 		print_file_name (entry, stderr);
-		fprintf (stderr, "\n");
+		fprintf(stderr, "\n");
 	}
 }
 
@@ -1468,7 +1488,7 @@ enter_global_ref (lsp, name, entry)
  */
 
 unsigned long
-contains_symbol (entry, np)
+contains_symbol(entry, np)
      struct file_entry *entry;
      register struct nlist *np;
 {
@@ -1511,7 +1531,7 @@ contains_symbol (entry, np)
  */
 
 static void
-digest_symbols ()
+digest_symbols()
 {
 
 	if (trace_files)
@@ -1534,10 +1554,10 @@ digest_symbols ()
 	defined_global_sym_count = 0;
 	digest_pass1();
 
-	each_full_file(consider_relocation, 0);	/* Text */
-	each_full_file(consider_relocation, 1); /* Data */
+	each_full_file(consider_relocation, (void *)0);	/* Text */
+	each_full_file(consider_relocation, (void *)1); /* Data */
 
-	each_file(consider_local_symbols, 0);
+	each_file(consider_local_symbols, (void *)0);
 
 	/*
 	 * Compute total size of sections.
@@ -1687,6 +1707,9 @@ digest_pass1()
 			/* Superfluous symbol from shared object */
 			continue;
 		}
+		if (sp->so_defined)
+			/* Already examined; must have bee an alias */
+			continue;
 
 		if (sp == got_symbol || sp == dynamic_symbol)
 			continue;
@@ -1697,7 +1720,7 @@ digest_pass1()
 
 			if (SET_ELEMENT_P(type)) {
 				if (relocatable_output)
-					fatal(
+					errx(1,
 				"internal error: global ref to set el %s with -r",
 						sp->name);
 				if (!defs++) {
@@ -1766,6 +1789,10 @@ digest_pass1()
 		if (building_shared_object) {
 			/* Just punt for now */
 			undefined_global_sym_count--;
+			if (undefined_global_sym_count < 0)
+				errx(1,
+	"internal error: digest_pass1,1: %s: undefined_global_sym_count = %d",
+					sp->name, undefined_global_sym_count);
 			continue;
 		}
 
@@ -1774,8 +1801,8 @@ digest_pass1()
 			register struct nlist *p = &lsp->nzlist.nlist;
 			register int    type = p->n_type;
 
-			if ((type & N_EXT) && type != (N_UNDF | N_EXT)
-						&& (type & N_TYPE) != N_FN) {
+			if ((type & N_EXT) && type != (N_UNDF | N_EXT) &&
+			    (type & N_TYPE) != N_FN) {
 				/* non-common definition */
 				sp->def_nlist = p;
 				lsp->entry->flags |= E_SYMBOLS_USED;
@@ -1788,6 +1815,10 @@ digest_pass1()
 #ifdef DEBUG
 printf("shr: %s gets defined to %x with value %x\n", sp->name, type, sp->value);
 #endif
+				if (undefined_global_sym_count < 0)
+					errx(1,
+		"internal error: digest_pass1,2: %s: undefined_global_sym_count = %d",
+					sp->name, undefined_global_sym_count);
 				if (sp->alias && !(sp->alias->flags & GS_REFERENCED)) {
 					sp = sp->alias;
 					goto again;
@@ -1798,7 +1829,7 @@ printf("shr: %s gets defined to %x with value %x\n", sp->name, type, sp->value);
 	} END_EACH_SYMBOL;
 
 	if (setv_fill_count != set_sect_size/sizeof(long))
-		fatal("internal error: allocated set symbol space (%d) \
+		errx(1, "internal error: allocated set symbol space (%d) \
 doesn't match actual (%d)",
 			set_sect_size/sizeof(long), setv_fill_count);
 }
@@ -1809,7 +1840,7 @@ doesn't match actual (%d)",
  * of the output file.
  */
 static void
-consider_relocation (entry, dataseg)
+consider_relocation(entry, dataseg)
 	struct file_entry	*entry;
 	int			dataseg;
 {
@@ -1904,8 +1935,8 @@ consider_relocation (entry, dataseg)
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			sp = lsp->symbol;
 			if (sp == NULL)
-				fatal_with_file(
-					"internal error, sp==NULL", entry);
+				errx(1, "%s: internal error, sp==NULL",
+					get_file_name(entry));
 
 			if (sp->alias)
 				sp = sp->alias;
@@ -1915,8 +1946,9 @@ consider_relocation (entry, dataseg)
 			 */
 			if (sp == got_symbol) {
 				if (!CHECK_GOT_RELOC(reloc))
-					fatal_with_file(
-					"Unexpected relocation type ", entry);
+					errx(1,
+				"%s: Unexpected relocation type for GOT symbol",
+					get_file_name(entry));
 				continue;
 			}
 
@@ -2038,7 +2070,7 @@ consider_local_symbols(entry)
  * the output file.
  */
 static void
-consider_file_section_lengths (entry)
+consider_file_section_lengths(entry)
      register struct file_entry *entry;
 {
 
@@ -2060,7 +2092,7 @@ consider_file_section_lengths (entry)
  * Also relocate the addresses of the file's local and debugger symbols.
  */
 static void
-relocate_file_addresses (entry)
+relocate_file_addresses(entry)
      register struct file_entry *entry;
 {
 	register struct localsymbol	*lsp, *lspend;
@@ -2104,13 +2136,14 @@ printf("%s: datastart: %#x, bss %#x\n", get_file_name(entry),
 			 * file's text.
 			 */
 			p->n_value += entry->data_start_address -
-						entry->header.a_text;
+				      entry->header.a_text;
 			break;
 		case N_BSS:
 		case N_SETB:
 			/* likewise for symbols with value in BSS.  */
-			p->n_value += entry->bss_start_address
-				- entry->header.a_text - entry->header.a_data;
+			p->n_value += entry->bss_start_address -
+				      (entry->header.a_text +
+				      entry->header.a_data);
 		break;
 		}
 
@@ -2196,7 +2229,7 @@ digest_pass2()
 
 
 		if (sp->defined && sp->def_nlist &&
-				((sp->defined & ~N_EXT) != N_SETV))
+		    ((sp->defined & ~N_EXT) != N_SETV))
 			sp->value = sp->def_nlist->n_value;
 
 		/*
@@ -2211,14 +2244,14 @@ digest_pass2()
 			 * It's a common.
 			 */
 			if (sp->defined != (N_UNDF + N_EXT))
-				fatal("%s: common isn't", sp->name);
+				errx(1, "%s: common isn't", sp->name);
 
 		} else if ((size = sp->size) != 0 && sp->defined == N_SIZE) {
 			/*
 			 * It's data from shared object with size info.
 			 */
 			if (!sp->so_defined)
-				fatal("%s: Bogus N_SIZE item", sp->name);
+				errx(1, "%s: Bogus N_SIZE item", sp->name);
 
 		} else
 			/*
@@ -2274,62 +2307,64 @@ digest_pass2()
 
 /* Write the output file */
 void
-write_output ()
+write_output()
 {
 	struct stat	statbuf;
 	int		filemode;
 
-	if (lstat(output_filename, &statbuf) != -1) {
-		if (!S_ISDIR(statbuf.st_mode))
+	if (lstat(output_filename, &statbuf) == 0) {
+		if (S_ISREG(statbuf.st_mode))
 			(void)unlink(output_filename);
 	}
 
-	outdesc = open (output_filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	outdesc = open(output_filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (outdesc < 0)
-		perror_name (output_filename);
+		err(1, "open: %s", output_filename);
 
-	fatal_cleanup_hook = myfatal;
+	if (atexit(cleanup))
+		err(1, "atexit");
 
 	if (fstat (outdesc, &statbuf) < 0)
-		perror_name (output_filename);
+		err(1, "fstat: %s", output_filename);
 
 	filemode = statbuf.st_mode;
 
 	chmod (output_filename, filemode & ~0111);
 
 	/* Output the a.out header.  */
-	write_header ();
+	write_header();
 
 	/* Output the text and data segments, relocating as we go.  */
-	write_text ();
-	write_data ();
+	write_text();
+	write_data();
 
 	/* Output the merged relocation info, if requested with `-r'.  */
 	if (relocatable_output)
-		write_rel ();
+		write_rel();
 
 	/* Output the symbol table (both globals and locals).  */
-	write_syms ();
+	write_syms();
 
 	/* Output the RSS section */
-	write_rrs ();
-
-	close (outdesc);
+	write_rrs();
 
 	if (chmod (output_filename, filemode | 0111) == -1)
-		perror_name (output_filename);
+		err(1, "chmod: %s", output_filename);
+
+	close(outdesc);
+	outdesc = 0;
 }
 
 /* Total number of symbols to be written in the output file. */
 static int	nsyms;
 
 void
-write_header ()
+write_header()
 {
 	int flags = (rrs_section_type == RRS_FULL) ? EX_DYNAMIC : 0;
 
 	if (oldmagic && (flags & EX_DYNAMIC))
-		error("Cannot set flag in old magic headers\n");
+		warnx("Cannot set flag in old magic headers\n");
 
 	N_SET_FLAG (outheader, flags);
 
@@ -2337,7 +2372,7 @@ write_header ()
 	outheader.a_data = data_size;
 	outheader.a_bss = bss_size;
 	outheader.a_entry = (entry_symbol ? entry_symbol->value
-					: text_start + entry_offset);
+					  : text_start + entry_offset);
 
 	if (strip_symbols == STRIP_ALL)
 		nsyms = 0;
@@ -2358,7 +2393,7 @@ write_header ()
 	}
 
 	md_swapout_exec_hdr(&outheader);
-	mywrite (&outheader, sizeof (struct exec), 1, outdesc);
+	mywrite(&outheader, sizeof (struct exec), 1, outdesc);
 	md_swapin_exec_hdr(&outheader);
 
 	/*
@@ -2367,27 +2402,28 @@ write_header ()
 	 */
 
 #ifndef COFF_ENCAPSULATE
-	padfile (N_TXTOFF(outheader) - sizeof outheader, outdesc);
+	padfile(N_TXTOFF(outheader) - sizeof outheader, outdesc);
 #endif
 }
-
-/* Relocate the text segment of each input file
-   and write to the output file.  */
 
+/*
+ * Relocate the text segment of each input file
+ * and write to the output file.
+ */
 void
-write_text ()
+write_text()
 {
 
 	if (trace_files)
-		fprintf (stderr, "Copying and relocating text:\n\n");
+		fprintf(stderr, "Copying and relocating text:\n\n");
 
-	each_full_file (copy_text, 0);
-	file_close ();
+	each_full_file(copy_text, 0);
+	file_close();
 
 	if (trace_files)
-		fprintf (stderr, "\n");
+		fprintf(stderr, "\n");
 
-	padfile (text_pad, outdesc);
+	padfile(text_pad, outdesc);
 }
 
 /*
@@ -2396,55 +2432,57 @@ write_text ()
  * reuse.
  */
 void
-copy_text (entry)
-     struct file_entry *entry;
+copy_text(entry)
+	struct file_entry *entry;
 {
-	register char *bytes;
-	register int desc;
+	register char	*bytes;
+	register int	fd;
 
 	if (trace_files)
-		prline_file_name (entry, stderr);
+		prline_file_name(entry, stderr);
 
-	desc = file_open (entry);
+	fd = file_open(entry);
 
 	/* Allocate space for the file's text section */
-	bytes = (char *) alloca (entry->header.a_text);
+	bytes = (char *)alloca(entry->header.a_text);
 
 	/* Deal with relocation information however is appropriate */
 	if (entry->textrel == NULL)
-		fatal_with_file("no text relocation of ", entry);
+		errx(1, "%s: no text relocation", get_file_name(entry));
 
 	/* Read the text section into core.  */
-	lseek (desc, text_offset (entry), 0);
-	if (entry->header.a_text != read (desc, bytes, entry->header.a_text))
-		fatal_with_file ("premature eof in text section of ", entry);
-
+	if (lseek(fd, text_offset(entry), L_SET) == (off_t)-1)
+		err(1, "%s: copy_text: lseek", get_file_name(entry));
+	if (entry->header.a_text != read(fd, bytes, entry->header.a_text))
+		errx(1, "%s: copy_text: premature EOF", get_file_name(entry));
 
 	/* Relocate the text according to the text relocation.  */
 	perform_relocation (bytes, entry->header.a_text,
-			entry->textrel, entry->ntextrel, entry, 0);
+			    entry->textrel, entry->ntextrel, entry, 0);
 
 	/* Write the relocated text to the output file.  */
-	mywrite (bytes, 1, entry->header.a_text, outdesc);
+	mywrite(bytes, 1, entry->header.a_text, outdesc);
 }
-
-/* Relocate the data segment of each input file
-   and write to the output file.  */
+
+/*
+ * Relocate the data segment of each input file
+ * and write to the output file.
+ */
 
 void
-write_data ()
+write_data()
 {
-	long	pos;
+	off_t	pos;
 
 	if (trace_files)
-		fprintf (stderr, "Copying and relocating data:\n\n");
+		fprintf(stderr, "Copying and relocating data:\n\n");
 
 	pos = N_DATOFF(outheader) + data_start - rrs_data_start;
 	if (lseek(outdesc, pos, L_SET) != pos)
-		fatal("write_data: lseek: cant position data offset");
+		errx(1, "write_data: lseek");
 
-	each_full_file (copy_data, 0);
-	file_close ();
+	each_full_file(copy_data, 0);
+	file_close();
 
 	/*
 	 * Write out the set element vectors.  See digest symbols for
@@ -2453,14 +2491,14 @@ write_data ()
 
 	if (set_vector_count) {
 		swap_longs(set_vectors, set_symbol_count + 2*set_vector_count);
-		mywrite (set_vectors, set_symbol_count + 2*set_vector_count,
+		mywrite(set_vectors, set_symbol_count + 2*set_vector_count,
 				sizeof (unsigned long), outdesc);
 	}
 
 	if (trace_files)
-		fprintf (stderr, "\n");
+		fprintf(stderr, "\n");
 
-	padfile (data_pad, outdesc);
+	padfile(data_pad, outdesc);
 }
 
 /*
@@ -2469,30 +2507,32 @@ write_data ()
  * reuse. See comments in `copy_text'.
  */
 void
-copy_data (entry)
-     struct file_entry *entry;
+copy_data(entry)
+	struct file_entry *entry;
 {
-	register char *bytes;
-	register int desc;
+	register char	*bytes;
+	register int	fd;
 
 	if (trace_files)
 		prline_file_name (entry, stderr);
 
-	desc = file_open (entry);
+	fd = file_open(entry);
 
 	bytes = (char *)alloca(entry->header.a_data);
 
 	if (entry->datarel == NULL)
-		fatal_with_file("no data relocation of ", entry);
+		errx(1, "%s: no data relocation", get_file_name(entry));
 
-	lseek (desc, text_offset (entry) + entry->header.a_text, 0);
-	if (entry->header.a_data != read(desc, bytes, entry->header.a_data))
-		fatal_with_file ("premature eof in data section of ", entry);
+	if (lseek(fd, text_offset(entry) + entry->header.a_text, L_SET) ==
+	    (off_t)-1)
+		err(1, "%s: copy_data: lseek", get_file_name(entry));
+	if (entry->header.a_data != read(fd, bytes, entry->header.a_data))
+		errx(1, "%s: copy_data: premature EOF", get_file_name(entry));
 
-	perform_relocation (bytes, entry->header.a_data,
-			entry->datarel, entry->ndatarel, entry, 1);
+	perform_relocation(bytes, entry->header.a_data,
+			   entry->datarel, entry->ndatarel, entry, 1);
 
-	mywrite (bytes, 1, entry->header.a_data, outdesc);
+	mywrite(bytes, 1, entry->header.a_data, outdesc);
 }
 
 /*
@@ -2539,8 +2579,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 		 */
 
 		if (addr >= data_size)
-			fatal_with_file(
-				"relocation address out of range in ", entry);
+			errx(1, "%s: relocation address out of range",
+				get_file_name(entry));
 
 		if (RELOC_JMPTAB_P(r)) {
 
@@ -2549,8 +2589,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			symbol		   *sp;
 
 			if (symindex >= entry->nsymbols)
-				fatal_with_file(
-				"relocation symbolnum out of range in ", entry);
+				errx(1, "%s: relocation symbolnum out of range",
+					get_file_name(entry));
 
 			sp = lsp->symbol;
 			if (sp->alias)
@@ -2571,17 +2611,17 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			struct localsymbol *lsp = &entry->symbols[symindex];
 
 			if (symindex >= entry->nsymbols)
-				fatal_with_file(
-				"relocation symbolnum out of range in ", entry);
+				errx(1, "%s: relocation symbolnum out of range",
+					get_file_name(entry));
 
 			if (relocatable_output)
 				relocation = addend;
 			else if (!RELOC_EXTERN_P(r))
-				relocation = claim_rrs_internal_gotslot(entry,
-								r, lsp, addend);
+				relocation = claim_rrs_internal_gotslot(
+						entry, r, lsp, addend);
 			else
-				relocation = claim_rrs_gotslot(entry,
-								r, lsp, addend);
+				relocation = claim_rrs_gotslot(
+						entry, r, lsp, addend);
 
 		} else if (RELOC_EXTERN_P(r)) {
 
@@ -2589,8 +2629,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			symbol  *sp;
 
 			if (symindex >= entry->nsymbols)
-				fatal_with_file(
-				"relocation symbolnum out of range in ", entry);
+				errx(1, "%s: relocation symbolnum out of range",
+					get_file_name(entry));
 
 			sp = entry->symbols[symindex].symbol;
 			if (sp->alias)
@@ -2614,7 +2654,7 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				if (sp == got_symbol) {
 					/* Handle _GOT_ refs */
 					relocation = addend + sp->value
-							+ md_got_reloc(r);
+						     + md_got_reloc(r);
 				} else if (building_shared_object) {
 					/*
 					 * Normal (non-PIC) relocation needs
@@ -2625,8 +2665,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 						entry->data_start_address:
 						entry->text_start_address;
 					relocation = addend;
-					if (claim_rrs_reloc(entry, r,
-							sp, &relocation))
+					if (claim_rrs_reloc(
+						entry, r, sp, &relocation))
 						continue;
 				} else if (sp->defined == N_SIZE) {
 					/*
@@ -2634,7 +2674,7 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					 * run-time copy.
 					 */
 					if (!sp->size)
-						fatal("Copy item isn't: %s",
+						errx(1, "Copy item isn't: %s",
 							sp->name);
 
 					relocation = addend + sp->value;
@@ -2670,15 +2710,15 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					 * while `force_alias' is in effect.
 					 */
 					relocation = addend +
-						claim_rrs_jmpslot(entry, r,
-								sp, addend);
+						     claim_rrs_jmpslot(
+							entry, r, sp, addend);
 				} else {
 					r->r_address += dataseg?
 						entry->data_start_address:
 						entry->text_start_address;
 					relocation = addend;
-					if (claim_rrs_reloc(entry, r,
-							sp, &relocation))
+					if (claim_rrs_reloc(
+						entry, r, sp, &relocation))
 						continue;
 				}
 			}
@@ -2722,8 +2762,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				break;
 
 			default:
-				fatal_with_file(
-				"nonexternal relocation code invalid in ", entry);
+				errx(1, "%s: nonexternal relocation invalid",
+					get_file_name(entry));
 			}
 
 			/*
@@ -2753,19 +2793,19 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
  */
 
 void
-write_rel ()
+write_rel()
 {
 	int count = 0;
 
 	if (trace_files)
-		fprintf (stderr, "Writing text relocation:\n\n");
+		fprintf(stderr, "Writing text relocation:\n\n");
 
 	/*
 	 * Assign each global symbol a sequence number, giving the order
 	 * in which `write_syms' will write it.
 	 * This is so we can store the proper symbolnum fields
 	 * in relocation entries we write.
-	 *
+	 */
 
 	/* BLECH - Assign number 0 to __DYNAMIC (!! Sun compatibility) */
 
@@ -2782,20 +2822,20 @@ write_rel ()
 	} END_EACH_SYMBOL;
 
 	if (count != global_sym_count)
-		fatal ("internal error: write_rel: count = %d", count);
+		errx(1, "internal error: write_rel: count = %d", count);
 
-	each_full_file (assign_symbolnums, &count);
+	each_full_file(assign_symbolnums, &count);
 
 	/* Write out the relocations of all files, remembered from copy_text. */
-	each_full_file (coptxtrel, 0);
+	each_full_file(coptxtrel, 0);
 
 	if (trace_files)
-		fprintf (stderr, "\nWriting data relocation:\n\n");
+		fprintf(stderr, "\nWriting data relocation:\n\n");
 
-	each_full_file (copdatrel, 0);
+	each_full_file(copdatrel, 0);
 
 	if (trace_files)
-		fprintf (stderr, "\n");
+		fprintf(stderr, "\n");
 }
 
 
@@ -2852,8 +2892,8 @@ coptxtrel(entry)
 		}
 
 		if (symindex >= entry->nsymbols)
-			fatal_with_file(
-			"relocation symbolnum out of range in ", entry);
+			errx(1, "%s: relocation symbolnum out of range",
+				get_file_name(entry));
 
 		sp = lsp->symbol;
 
@@ -2861,7 +2901,7 @@ coptxtrel(entry)
 		/* Resolve indirection.  */
 		if ((sp->defined & ~N_EXT) == N_INDR) {
 			if (sp->alias == NULL)
-				fatal("internal error: alias in hyperspace");
+				errx(1, "internal error: alias in hyperspace");
 			sp = sp->alias;
 		}
 #endif
@@ -2897,7 +2937,7 @@ coptxtrel(entry)
 	}
 	md_swapout_reloc(entry->textrel, entry->ntextrel);
 	mywrite(entry->textrel, entry->ntextrel,
-				sizeof(struct relocation_info), outdesc);
+		sizeof(struct relocation_info), outdesc);
 }
 
 static void
@@ -2924,9 +2964,8 @@ copdatrel(entry)
 
 		if (!RELOC_EXTERN_P(r)) {
 			if (RELOC_BASEREL_P(r))
-				fatal_with_file(
-				    "Unsupported relocation type in ",
-					entry);
+				errx(1, "%s: Unsupported relocation type",
+					get_file_name(entry));
 			continue;
 		}
 
@@ -2934,14 +2973,14 @@ copdatrel(entry)
 		sp = entry->symbols[symindex].symbol;
 
 		if (symindex >= entry->header.a_syms)
-			fatal_with_file(
-			"relocation symbolnum out of range in ", entry);
+			errx(1, "%s: relocation symbolnum out of range",
+				get_file_name(entry));
 
 #ifdef N_INDR
 		/* Resolve indirection.  */
 		if ((sp->defined & ~N_EXT) == N_INDR) {
 			if (sp->alias == NULL)
-				fatal("internal error: alias in hyperspace");
+				errx(1, "internal error: alias in hyperspace");
 			sp = sp->alias;
 		}
 #endif
@@ -2963,9 +3002,9 @@ copdatrel(entry)
 	}
 	md_swapout_reloc(entry->datarel, entry->ndatarel);
 	mywrite(entry->datarel, entry->ndatarel,
-				sizeof(struct relocation_info), outdesc);
+		sizeof(struct relocation_info), outdesc);
 }
-
+
 void write_file_syms __P((struct file_entry *, int *));
 void write_string_table __P((void));
 
@@ -2974,24 +3013,24 @@ void write_string_table __P((void));
 static int	symbol_table_offset;
 static int	symbol_table_len;
 
-/* Address in output file where string table starts.  */
+/* Address in output file where string table starts. */
 static int	string_table_offset;
 
 /* Offset within string table
-   where the strings in `strtab_vector' should be written.  */
+   where the strings in `strtab_vector' should be written. */
 static int	string_table_len;
 
 /* Total size of string table strings allocated so far,
-   including strings in `strtab_vector'.  */
+   including strings in `strtab_vector'. */
 static int	strtab_size;
 
-/* Vector whose elements are strings to be added to the string table.  */
+/* Vector whose elements are strings to be added to the string table. */
 static char	**strtab_vector;
 
-/* Vector whose elements are the lengths of those strings.  */
+/* Vector whose elements are the lengths of those strings. */
 static int	*strtab_lens;
 
-/* Index in `strtab_vector' at which the next string will be stored.  */
+/* Index in `strtab_vector' at which the next string will be stored. */
 static int	strtab_index;
 
 /*
@@ -3014,7 +3053,7 @@ assign_string_table_index(name)
 	return index;
 }
 
-FILE           *outstream = (FILE *) 0;
+FILE           *outstream = (FILE *)0;
 
 /*
  * Write the contents of `strtab_vector' into the string table. This is done
@@ -3022,28 +3061,30 @@ FILE           *outstream = (FILE *) 0;
  * symbols.
  */
 void
-write_string_table ()
+write_string_table()
 {
 	register int i;
 
-	lseek (outdesc, string_table_offset + string_table_len, 0);
+	if (lseek(outdesc, string_table_offset + string_table_len, 0) ==
+	    (off_t)-1)
+		err(1, "write_string_table: %s: lseek", output_filename);
 
 	if (!outstream)
-		outstream = fdopen (outdesc, "w");
+		outstream = fdopen(outdesc, "w");
 
 	for (i = 0; i < strtab_index; i++) {
 		fwrite (strtab_vector[i], 1, strtab_lens[i], outstream);
 		string_table_len += strtab_lens[i];
 	}
 
-	fflush (outstream);
+	fflush(outstream);
 
 	/* Report I/O error such as disk full.  */
-	if (ferror (outstream))
-		perror_name (output_filename);
+	if (ferror(outstream))
+		err(1, "write_string_table: %s", output_filename);
 }
-
-/* Write the symbol table and string table of the output file.  */
+
+/* Write the symbol table and string table of the output file. */
 
 void
 write_syms()
@@ -3080,8 +3121,8 @@ write_syms()
 	 * extra space for the references following indirect outputs.
 	 */
 
-	strtab_vector = (char **) alloca((global_sym_count) * sizeof(char *));
-	strtab_lens = (int *) alloca((global_sym_count) * sizeof(int));
+	strtab_vector = (char **)alloca((global_sym_count) * sizeof(char *));
+	strtab_lens = (int *)alloca((global_sym_count) * sizeof(int));
 	strtab_index = 0;
 
 	/*
@@ -3134,12 +3175,12 @@ write_syms()
 			 * (they are in the RRS symbol table).
 			 */
 			if (!building_shared_object)
-				error("symbol %s remains undefined", sp->name);
+				warnx("symbol %s remains undefined", sp->name);
 			continue;
 		}
 
 		if (syms_written >= global_sym_count)
-			fatal(
+			errx(1,
 			"internal error: number of symbols exceeds alloc'd %d",
 				global_sym_count);
 
@@ -3171,7 +3212,7 @@ write_syms()
 					nl.n_type = sp->defined;
 				if (nl.n_type == (N_INDR|N_EXT) &&
 							sp->value != 0)
-					fatal("%s: N_INDR has value %#x",
+					errx(1, "%s: N_INDR has value %#x",
 							sp->name, sp->value);
 				nl.n_value = sp->value;
 				nl.n_other = N_OTHER(0, sp->aux);
@@ -3194,7 +3235,7 @@ write_syms()
 			nl.n_type = N_UNDF | N_EXT;
 			nl.n_value = 0;
 		} else
-			fatal(
+			errx(1,
 			      "internal error: %s defined in mysterious way",
 			      sp->name);
 
@@ -3214,7 +3255,7 @@ write_syms()
 		 */
 		if (nl.n_type == N_INDR + N_EXT) {
 			if (sp->alias == NULL)
-				fatal("internal error: alias in hyperspace");
+				errx(1, "internal error: alias in hyperspace");
 			nl.n_type = N_UNDF + N_EXT;
 			nl.n_un.n_strx =
 				assign_string_table_index(sp->alias->name);
@@ -3244,13 +3285,15 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 	} END_EACH_SYMBOL;
 
 	if (syms_written != strtab_index || strtab_index != global_sym_count)
-		fatal("internal error:\
+		errx(1, "internal error:\
 wrong number (%d) of global symbols written into output file, should be %d",
 				syms_written, global_sym_count);
 
 	/* Output the buffer full of `struct nlist's.  */
 
-	lseek(outdesc, symbol_table_offset + symbol_table_len, 0);
+	if (lseek(outdesc, symbol_table_offset + symbol_table_len, 0) ==
+	    (off_t)-1)
+		err(1, "write_syms: lseek");
 	md_swapout_symbols(buf, bufp - buf);
 	mywrite(buf, bufp - buf, sizeof(struct nlist), outdesc);
 	symbol_table_len += sizeof(struct nlist) * (bufp - buf);
@@ -3259,16 +3302,16 @@ wrong number (%d) of global symbols written into output file, should be %d",
 	write_string_table();
 
 	/* Write the local symbols defined by the various files.  */
-	each_file(write_file_syms, &syms_written);
+	each_file(write_file_syms, (void *)&syms_written);
 	file_close();
 
 	if (syms_written != nsyms)
-		fatal("internal error:\
+		errx(1, "internal error:\
 wrong number of symbols (%d) written into output file, should be %d",
 				syms_written, nsyms);
 
 	if (symbol_table_offset + symbol_table_len != string_table_offset)
-		fatal(
+		errx(1,
 		"internal error: inconsistent symbol table length: %d vs %s",
 		symbol_table_offset + symbol_table_len, string_table_offset);
 
@@ -3289,8 +3332,8 @@ wrong number of symbols (%d) written into output file, should be %d",
  */
 void
 write_file_syms(entry, syms_written_addr)
-	struct file_entry *entry;
-	int            *syms_written_addr;
+	struct file_entry	*entry;
+	int			*syms_written_addr;
 {
 	struct localsymbol	*lsp, *lspend;
 
@@ -3314,8 +3357,8 @@ write_file_syms(entry, syms_written_addr)
 	 * length. The elements are filled in by `assign_string_table_index'.
 	 */
 
-	strtab_vector = (char **) alloca(max_syms * sizeof(char *));
-	strtab_lens = (int *) alloca(max_syms * sizeof(int));
+	strtab_vector = (char **)alloca(max_syms * sizeof(char *));
+	strtab_lens = (int *)alloca(max_syms * sizeof(int));
 	strtab_index = 0;
 
 	/* Generate a local symbol for the start of this file's text.  */
@@ -3324,7 +3367,8 @@ write_file_syms(entry, syms_written_addr)
 		struct nlist    nl;
 
 		nl.n_type = N_FN | N_EXT;
-		nl.n_un.n_strx = assign_string_table_index(entry->local_sym_name);
+		nl.n_un.n_strx =
+			assign_string_table_index(entry->local_sym_name);
 		nl.n_value = entry->text_start_address;
 		nl.n_desc = 0;
 		nl.n_other = 0;
@@ -3333,15 +3377,13 @@ write_file_syms(entry, syms_written_addr)
 	}
 	/* Read the file's string table.  */
 
-	entry->strings = (char *) alloca(entry->string_size);
+	entry->strings = (char *)alloca(entry->string_size);
 	read_entry_strings(file_open(entry), entry);
 
 	lspend = entry->symbols + entry->nsymbols;
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
 		register struct nlist *p = &lsp->nzlist.nlist;
-		register int    type = p->n_type;
-		register int    write = 0;
 		char		*name;
 
 		if (!(lsp->flags & LS_WRITE))
@@ -3402,53 +3444,60 @@ parse(arg, format, error)
 	int x;
 
 	if (1 != sscanf(arg, format, &x))
-		fatal(error, arg);
+		errx(1, error, arg);
 	return x;
 }
 
 /*
- * Output COUNT*ELTSIZE bytes of data at BUF to the descriptor DESC.
+ * Output COUNT*ELTSIZE bytes of data at BUF to the descriptor FD.
  */
 void
-mywrite (buf, count, eltsize, desc)
-     void *buf;
-     int count;
-     int eltsize;
-     int desc;
+mywrite(buf, count, eltsize, fd)
+	void *buf;
+	int count;
+	int eltsize;
+	int fd;
 {
 	register int val;
 	register int bytes = count * eltsize;
 
 	while (bytes > 0) {
-		val = write (desc, buf, bytes);
+		val = write(fd, buf, bytes);
 		if (val <= 0)
-			fatal("%s: %s", output_filename, strerror(errno));
+			err(1, "write: %s", output_filename);
 		buf += val;
 		bytes -= val;
 	}
 }
 
 static void
-myfatal()
+cleanup()
 {
-	if (outdesc > 0)
-		unlink(output_filename);
+	struct stat	statbuf;
+
+	if (outdesc <= 0)
+		return;
+
+	if (fstat(outdesc, &statbuf) == 0) {
+		if (S_ISREG(statbuf.st_mode))
+			(void)unlink(output_filename);
+	}
 }
 
 /*
- * Output PADDING zero-bytes to descriptor OUTDESC.
+ * Output PADDING zero-bytes to descriptor FD.
  * PADDING may be negative; in that case, do nothing.
  */
 void
-padfile (padding, outdesc)
-     int padding;
-     int outdesc;
+padfile(padding, fd)
+	int padding;
+	int fd;
 {
 	register char *buf;
 	if (padding <= 0)
 		return;
 
-	buf = (char *) alloca (padding);
-	bzero (buf, padding);
-	mywrite (buf, padding, 1, outdesc);
+	buf = (char *)alloca(padding);
+	bzero(buf, padding);
+	mywrite(buf, padding, 1, fd);
 }
