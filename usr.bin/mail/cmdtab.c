@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: cmdtab.c,v 1.3 1994/06/29 05:09:13 deraadt Exp $";
+static char rcsid[] = "$Id: cmdtab.c,v 1.4 1994/12/28 13:16:14 mycroft Exp $";
 #endif /* not lint */
 
 #include "def.h"
@@ -59,7 +59,7 @@ struct cmd cmdtab[] = {
 	"delete",	delete,		W|P|MSGLIST,	0,	MMNDEL,
 	"dp",		deltype,	W|MSGLIST,	0,	MMNDEL,
 	"dt",		deltype,	W|MSGLIST,	0,	MMNDEL,
-	"undelete",	undelete,	P|MSGLIST,	MDELETED,MMNDEL,
+	"undelete",	undeletecmd,	P|MSGLIST,	MDELETED,MMNDEL,
 	"unset",	unset,		M|RAWLIST,	1,	1000,
 	"mail",		sendmail,	R|M|I|STRLIST,	0,	0,
 	"mbox",		mboxit,		W|MSGLIST,	0,	0,
