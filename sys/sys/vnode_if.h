@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.22 2000/05/13 23:43:12 perseant Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.22.4.1 2000/12/14 23:56:27 he Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.23 1999/12/07 23:57:49 thorpej Exp 
+ *	NetBSD
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
@@ -429,15 +429,19 @@ struct vop_fsync_args {
 	struct vnode *a_vp;
 	struct ucred *a_cred;
 	int a_flags;
+	off_t a_offlo;
+	off_t a_offhi;
 	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_fsync_desc;
 static __inline int VOP_FSYNC __P((struct vnode *, struct ucred *, int, 
-    struct proc *)) __attribute__((__unused__));
-static __inline int VOP_FSYNC(vp, cred, flags, p)
+    off_t, off_t, struct proc *)) __attribute__((__unused__));
+static __inline int VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
 	struct vnode *vp;
 	struct ucred *cred;
 	int flags;
+	off_t offlo;
+	off_t offhi;
 	struct proc *p;
 {
 	struct vop_fsync_args a;
@@ -445,6 +449,8 @@ static __inline int VOP_FSYNC(vp, cred, flags, p)
 	a.a_vp = vp;
 	a.a_cred = cred;
 	a.a_flags = flags;
+	a.a_offlo = offlo;
+	a.a_offhi = offhi;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
