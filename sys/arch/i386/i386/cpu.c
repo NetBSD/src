@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.5 2000/02/27 20:42:54 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.6 2000/06/25 20:45:45 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ cpu_attach(parent, self, aux)
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP;
+		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		identifycpu(ci);
 		cpu_init(ci);
 		break;
@@ -238,7 +238,7 @@ cpu_attach(parent, self, aux)
 	case CPU_ROLE_BP:
 		printf("apid %d (", caa->cpu_number);
 		printf("boot processor");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP;
+		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		printf(")\n");
 		identifycpu(ci);
 		cpu_init(ci);
@@ -323,7 +323,7 @@ cpu_boot_secondary_processors()
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
 		i386_init_pcb_tss_ldt(ci->ci_idle_pcb);
-		if (ci->ci_flags & (CPUF_BSP|CPUF_SP))
+		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		cpu_boot_secondary(ci);
 	}
