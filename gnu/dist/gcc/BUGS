@@ -17,15 +17,14 @@ Table of Contents
             precompiled header
      * [9]Frequently Reported Bugs in GCC
           + [10]C++
-               o [11]ABI bugs
-               o [12]Missing features
-               o [13]Parse errors for "simple" code
-          + [14]Fortran
-     * [15]Non-bugs
-          + [16]General
-          + [17]C
-          + [18]C++
-               o [19]Common problems updating from G++ 2.95 to G++ 3.0
+               o [11]Missing features
+               o [12]Bugs fixed in the upcoming 3.4 series
+          + [13]Fortran
+     * [14]Non-bugs
+          + [15]General
+          + [16]C
+          + [17]C++
+               o [18]Common problems when upgrading the compiler
      _________________________________________________________________
 
                                 Reporting Bugs
@@ -34,7 +33,7 @@ Table of Contents
    most  important  prerequisite  for  this  is  that  the report must be
    complete and self-contained, which we explain in detail below.
 
-   Before  you report a bug, please check the [20]list of well-known bugs
+   Before  you report a bug, please check the [19]list of well-known bugs
    and,  if  possible  in any way, try a current development snapshot. If
    you  want  to report a bug with versions of GCC before 3.1 we strongly
    recommend upgrading to the current release first.
@@ -102,17 +101,16 @@ Summarized bug reporting instructions
 
   Where to post it
 
-   Please  submit  your  bug report directly to the [21]GCC bug database.
+   Please  submit  your  bug report directly to the [20]GCC bug database.
    Alternatively,  you  can  use  the  gccbug  script that mails your bug
-   report to the bug database. Only if all this is absolutely impossible,
-   mail  all  information to [22]gcc-bugs@gcc.gnu.org, but note that such
-   reports  are  often overlooked since they are not permanently recorded
-   into the database for later processing.
+   report to the bug database.
+   Only  if  all  this  is absolutely impossible, mail all information to
+   [21]gcc-bugs@gcc.gnu.org.
 
 Detailed bug reporting instructions
 
-   Please  refer to the [23]next section when reporting bugs in GNAT, the
-   Ada  compiler,  or  to the [24]one after that when reporting bugs that
+   Please  refer to the [22]next section when reporting bugs in GNAT, the
+   Ada  compiler,  or  to the [23]one after that when reporting bugs that
    appear when using a precompiled header.
 
    In  general, all the information we need can be obtained by collecting
@@ -172,7 +170,7 @@ Detailed bug reporting instructions
 
 Detailed bug reporting instructions for GNAT
 
-   See  the  [25]previous  section for bug reporting instructions for GCC
+   See  the  [24]previous  section for bug reporting instructions for GCC
    language implementations other than Ada.
 
    Bug  reports  have  to  contain  at least the following information in
@@ -204,7 +202,7 @@ Detailed bug reporting instructions for GNAT
    you have to report a bug in gnatprep).
 
    When  you  have  checked that your report meets these criteria, please
-   submit  it  according  to  our [26]generic instructions. (If you use a
+   submit  it  according  to  our [25]generic instructions. (If you use a
    mailing  list  for  reporting,  please  include  an "[Ada]" tag in the
    subject.)
 
@@ -214,11 +212,11 @@ Detailed bug reporting instructions when using a precompiled header
    first thing to do is to delete the precompiled header, and try running
    the  same GCC command again. If the bug happens again, the bug doesn't
    really  involve  precompiled  headers,  please report it without using
-   them by following the instructions [27]above.
+   them by following the instructions [26]above.
 
    If  you've  found  a  bug  while  building  a  precompiled header (for
    instance,   the  compiler  crashes),  follow  the  usual  instructions
-   [28]above.
+   [27]above.
 
    If  you've  found  a  real  precompiled header bug, what we'll need to
    reproduce  it  is  the  sources  to build the precompiled header (as a
@@ -246,21 +244,7 @@ Detailed bug reporting instructions when using a precompiled header
 
 C++
 
-  ABI bugs
-
-   GCC  3.0 had a new ABI, which affected class layout, function mangling
-   and  calling  conventions.  We  had  intended  it  to be complete, but
-   unfortunately  some  issues  came to light, too late to fix in the 3.0
-   series.  The  ABI  should  not change in dot releases, so we addressed
-   most issues in GCC 3.1.
-
-   Covariant return types
-          Up  to (and including) GCC 3.3 we did not implement non-trivial
-          covariant returns. This has been addressed for GCC 3.4.
-
   Missing features
-
-   We know some things are missing from G++.
 
    The export keyword is not implemented.
           Most  C++ compilers (G++ included) do not yet implement export,
@@ -271,71 +255,72 @@ C++
           Alternatively,   the   compilation   unit  containing  template
           definitions may be included from the header.
 
-   Two stage lookup in templates is not implemented.
-          [14.6] specifies how names are looked up inside a template. G++
-          does  not  do  this correctly, but for most templates this will
-          not be noticeable.
+  Bugs fixed in the upcoming 3.4 series
 
-  Parse errors for "simple" code
+   The  following  bugs are present up to (and including) GCC 3.3.x. They
+   have been fixed in 3.4.0.
 
-   Up  to and including GCC 3.0, the compiler will give "parse error" for
-   seemingly simple code, such as
-struct A{
+   Two-stage name-lookup.
+          GCC   did   not   implement  two-stage  name-lookup  (also  see
+          [28]below).
+
+   Covariant return types.
+          GCC did not implement non-trivial covariant returns.
+
+   Parse errors for "simple" code.
+          GCC gave parse errors for seemingly simple code, such as
+
+struct A
+{
   A();
   A(int);
-  void func();
 };
 
-struct B{
+struct B
+{
   B(A);
   B(A,A);
-  void func();
+  void foo();
 };
 
-void foo(){
-  B b(A(),A(1));     //Variable b, initialized with two temporaries
-  B(A(2)).func();    //B temporary, initialized with A temporary
-}
-
-   The  problem  is  that  GCC  starts to parse the declaration of b as a
-   function  b returning B, taking a function returning A as an argument.
-   When  it sees the 1, it is too late. The work-around in these cases is
-   to add additional parentheses around the expressions that are mistaken
-   as declarations:
-  (B(A(2))).func();
-
-   Sometimes,  even  that  is  not enough; to show the compiler that this
-   should be really an expression, a comma operator with a dummy argument
-   can be used:
-  B b((0,A()),A(1));
-
-   Another example is the parse error for the return statement in
-struct A{};
-
-struct B{
-  A a;
-  A f1(bool);
-};
-
-A B::f1(bool b)
+A bar()
 {
-  if (b)
-    return (A());
-  return a;
+  B b(A(),A(1));  // Variable b, initialized with two temporaries
+  B(A(2)).foo();  // B temporary, initialized with A temporary
+  return (A());   // return A temporary
 }
 
-   The  problem is that the compiler interprets A() as a function (taking
-   no  arguments,  returning  A),  and  (A())  as a cast - with a missing
-   expression,  hence  the  parse  error.  The work-around is to omit the
-   parentheses:
-  if (b)
-    return A();
+          Although  being  valid  code,  each  of  the three lines with a
+          comment  was  rejected  by  GCC.  The  work-arounds  for  older
+          compiler versions proposed below do not change the semantics of
+          the programs at all.
 
-   This  problem  occurs  in  a  number of variants; in throw statements,
-   people  also frequently put the object in parentheses. The exact error
-   also  somewhat  varies  with  the  compiler  version. The work-arounds
-   proposed  do not change the semantics of the program at all; they make
-   them perhaps less readable.
+          The problem in the first case was that GCC started to parse the
+          declaration  of  b as a function called b returning B, taking a
+          function returning A as an argument. When it encountered the 1,
+          it  was  too  late.  To  show  the compiler that this should be
+          really  an  expression,  a comma operator with a dummy argument
+          could be used:
+
+B b((0,A()),A(1));
+
+          The  work-around  for  simpler cases like the second one was to
+          add  additional  parentheses  around  the expressions that were
+          mistaken as declarations:
+
+(B(A(2))).foo();
+
+          In the third case, however, additional parentheses were causing
+          the  problems:  The  compiler  interpreted  A()  as  a function
+          (taking no arguments, returning A), and (A()) as a cast lacking
+          an  expression  to  be  casted,  hence  the  parse  error.  The
+          work-around was to omit the parentheses:
+
+return A();
+
+          This  problem  occured  in  a  number  of  variants;  in  throw
+          statements,   people   also   frequently   put  the  object  in
+          parentheses.
      _________________________________________________________________
 
 Fortran
@@ -602,22 +587,45 @@ C++
           i.e.  place  a  space between the opening angle bracket and the
           scope operator.
 
-  Common problems updating from G++ 2.95 to G++ 3.0
+  Common problems when upgrading the compiler
 
-   G++  3.0  conforms  much  closer to the ISO C++ standard (available at
-   [34]http://www.ncits.org/cplusplus.htm).
+    ABI changes
 
-   We  have  also implemented some of the core and library defect reports
+   The  application  binary  interface  (ABI) defines how the elements of
+   classes are laid out, how functions are called, how function names are
+   mangled etc. It usually changes with each major release (i.e. when the
+   first  or  second  part  of  the  version  number  changes).  You must
+   recompile   all   C++   libraries,   or  you  risk  linker  errors  or
+   malfunctioning  programs. However, the ABI is not changed with bug-fix
+   releases (i.e. when the third part of the version number changes). The
+   code should be binary compatible among these versions.
+
+    Standard conformance
+
+   With  each  release,  we try to make G++ conform closer to the ISO C++
+   standard  (available  at  [34]http://www.ncits.org/cplusplus.htm).  We
+   have  also  implemented  some  of  the core and library defect reports
    (available at
    [35]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html      &
    [36]http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
    respectively).
-     * The  ABI  has  changed. This means that both class layout and name
-       mangling  is  different.  You must recompile all c++ libraries (if
-       you don't you will get link errors).
+
+   Non-conforming  legacy code that worked with older versions of GCC may
+   be  rejected by more recent compilers. There is no command-line switch
+   to   ensure   compatibility   in  general,  because  trying  to  parse
+   standard-conforming  and  old-style code at the same time would render
+   the   C++   frontend   unmaintainable.  However,  some  non-conforming
+   constructs  are  allowed  when the command-line option -fpermissive is
+   used.
+
+   Two  milestones in standard conformance are GCC 3.0 (including a major
+   overhaul of the standard library) and the upcoming 3.4.0 version (with
+   its new C++ parser).
+
+    New in GCC 3.0
+
      * The  standard  library is much more conformant, and uses the std::
-       namespace.
-     * std:: is now a real namespace, not an alias for ::.
+       namespace (which is now a real namespace, not an alias for ::).
      * The standard header files for the c library don't end with .h, but
        begin with c (i.e. <cstdlib> rather than <stdlib.h>). The .h names
        are still available, but are deprecated.
@@ -627,18 +635,81 @@ C++
      * If std::operator << (std::ostream &, long long) doesn't exist, you
        need to recompile libstdc++ with --enable-long-long.
 
-   This  means  you  may  get lots of errors about things like strcmp not
-   being found. You've most likely forgotten to tell the compiler to look
-   in the std:: namespace. There are several ways to do this,
-     * Say,  std::strcmp  at  the  call. This is the most explicit way of
-       saying what you mean.
-     * Say,  using  std::strcmp; somewhere before the call. You will need
-       to  do  this  for  each  function or type you wish to use from the
+   If  you  get  lots  of  errors about things like cout not being found,
+   you've most likely forgotten to tell the compiler to look in the std::
+   namespace. There are several ways to do this:
+     * Say std::cout at the call. This is the most explicit way of saying
+       what you mean.
+     * Say  using  std::cout; somewhere before the call. You will need to
+       do  this  for  each  function  or  type  you  wish to use from the
        standard library.
-     * Say,  using  namespace std; somewhere before the call. This is the
+     * Say  using  namespace  std; somewhere before the call. This is the
        quick-but-dirty  fix. This brings the whole of the std:: namespace
-       into scope. Never do this in a header file, as you will be forcing
-       users of your header file to do the same.
+       into  scope. Never do this in a header file, as every user of your
+       header file will be affected by this decision.
+
+    New in GCC 3.4.0
+
+   The  new  parser  brings  a lot of improvements, especially concerning
+   name-lookup.
+     * The  "implicit  typename"  extension  got  removed (it was already
+       deprecated  since  GCC  3.1),  so  that  the following code is now
+       rejected, see [14.6]:
+
+template <typename> struct A
+{
+    typedef int X;
+};
+
+template <typename T> struct B
+{
+    A<T>::X          x;  // error
+    typename A<T>::X y;  // OK
+};
+
+B<void> b;
+
+     * For  similar reasons, the following code now requires the template
+       keyword, see [14.2]:
+
+template <typename> struct A
+{
+    template <int> struct X {};
+};
+
+template <typename T> struct B
+{
+    typename A<T>::X<0>          x;  // error
+    typename A<T>::template X<0> y;  // OK
+};
+
+B<void> b;
+
+     * We  now  have two-stage name-lookup, so that the following code is
+       rejected, see [14.6]/9:
+
+template <typename T> int foo()
+{
+    return i;  // error
+}
+
+     * This also affects members of base classes, see [14.6.2]:
+
+template <typename> struct A
+{
+    int i, j;
+};
+
+template <typename T> struct B : A<T>
+{
+    int foo1() { return i; }       // error
+    int foo2() { return this->i; } // OK
+    int foo3() { return B<T>::i; } // OK
+    int foo4() { return A<T>::i; } // OK
+
+    using A<T>::j;
+    int foo5() { return j; }       // OK
+};
 
    In  addition  to  the  problems  listed  above,  the manual contains a
    section on [37]Common Misunderstandings with GNU C++.
@@ -655,29 +726,29 @@ References
    8. http://gcc.gnu.org/bugs.html#pch
    9. http://gcc.gnu.org/bugs.html#known
   10. http://gcc.gnu.org/bugs.html#cxx
-  11. http://gcc.gnu.org/bugs.html#cxx-abi
-  12. http://gcc.gnu.org/bugs.html#missing
-  13. http://gcc.gnu.org/bugs.html#parsing
-  14. http://gcc.gnu.org/bugs.html#fortran
-  15. http://gcc.gnu.org/bugs.html#nonbugs
-  16. http://gcc.gnu.org/bugs.html#nonbugs_general
-  17. http://gcc.gnu.org/bugs.html#nonbugs_c
-  18. http://gcc.gnu.org/bugs.html#nonbugs_cxx
-  19. http://gcc.gnu.org/bugs.html#updating
-  20. http://gcc.gnu.org/bugs.html#known
-  21. http://gcc.gnu.org/bugzilla/
-  22. mailto:gcc-bugs@gcc.gnu.org
-  23. http://gcc.gnu.org/bugs.html#gnat
-  24. http://gcc.gnu.org/bugs.html#pch
-  25. http://gcc.gnu.org/bugs.html#detailed
-  26. http://gcc.gnu.org/bugs.html#where
+  11. http://gcc.gnu.org/bugs.html#missing
+  12. http://gcc.gnu.org/bugs.html#fixed34
+  13. http://gcc.gnu.org/bugs.html#fortran
+  14. http://gcc.gnu.org/bugs.html#nonbugs
+  15. http://gcc.gnu.org/bugs.html#nonbugs_general
+  16. http://gcc.gnu.org/bugs.html#nonbugs_c
+  17. http://gcc.gnu.org/bugs.html#nonbugs_cxx
+  18. http://gcc.gnu.org/bugs.html#upgrading
+  19. http://gcc.gnu.org/bugs.html#known
+  20. http://gcc.gnu.org/bugzilla/
+  21. mailto:gcc-bugs@gcc.gnu.org
+  22. http://gcc.gnu.org/bugs.html#gnat
+  23. http://gcc.gnu.org/bugs.html#pch
+  24. http://gcc.gnu.org/bugs.html#detailed
+  25. http://gcc.gnu.org/bugs.html#where
+  26. http://gcc.gnu.org/bugs.html#detailed
   27. http://gcc.gnu.org/bugs.html#detailed
-  28. http://gcc.gnu.org/bugs.html#detailed
+  28. http://gcc.gnu.org/bugs.html#new34
   29. http://gcc.gnu.org/onlinedocs/g77/Trouble.html
   30. http://gcc.gnu.org/PR323
   31. http://www.validlab.com/goldberg/paper.ps
   32. http://mail-index.NetBSD.org/tech-kern/2003/08/11/0001.html
-  33. http://www.gnu.org/software/glibc/
+  33. http://www.gnu.org/software/libc/
   34. http://www.ncits.org/cplusplus.htm
   35. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/cwg_defects.html
   36. http://anubis.dkuug.dk/jtc1/sc22/wg21/docs/lwg-defects.html
