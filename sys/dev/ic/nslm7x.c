@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.8 2000/08/02 21:50:37 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.9 2000/08/02 22:20:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -309,8 +309,6 @@ wb_match(sc)
 	switch(j) {
 	case WB_CHIPID_83781:
 		printf(": W83781D\n");
-		sc->numsensors = WB83781_NUM_SENSORS;
-		sc->refresh_sensor_data = wb781_refresh_sensor_data;
 
 		for (i = 0; i < 7; ++i) {
 			sc->sensors[i].units = sc->info[i].units =
@@ -326,17 +324,11 @@ wb_match(sc)
 		sc->info[5].rfact = (int)((210.0 / 60.4) * 10000);
 		sc->info[6].rfact = (int)(( 90.9 / 60.4) * 10000);
 
-		for (i = 7; i < 10; ++i) {
-			sc->sensors[i].units = sc->info[i].units =
-			    ENVSYS_STEMP;
-			sprintf(sc->info[i].desc, "Temp%d", i - 6);
-		}
+		setup_temp(sc, 7, 3);
+		setup_fan(sc, 10, 3);
 
-		for (i = 10; i < 13; ++i) {
-			sc->sensors[i].units = sc->info[i].units =
-			    ENVSYS_SFANRPM;
-			sprintf(sc->info[i].desc, "Fan %d", i - 9);
-		}
+		sc->numsensors = WB83781_NUM_SENSORS;
+		sc->refresh_sensor_data = wb781_refresh_sensor_data;
 		sc->sc_sysmon.sme_streinfo = wb781_streinfo;
 		return 1;
 	case WB_CHIPID_83697:
@@ -792,8 +784,12 @@ wb781_refresh_sensor_data(sc)
 	struct lm_softc *sc;
 {
 	/* Refresh our stored data for every sensor */
+	/* we need to reselect bank0 to access common registers */
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	generic_svolt(sc, &sc->sensors[0], &sc->info[0]);
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	wb_stemp(sc, &sc->sensors[7], 3);
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	generic_fanrpm(sc, &sc->sensors[10]);
 }
 
