@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.3 2000/03/30 12:45:42 augustss Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.4 2001/09/28 14:34:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,7 @@ struct zsops zsops_ms = {
 	ms_zs_softint,	/* process software interrupt */
 };
 
+/* Fall-back baud rate */
 int	ms_zs_bps = MS_BPS;
 
 static int	ms_zs_match(struct device *, struct cfdata *, void *);
@@ -130,6 +131,7 @@ ms_zs_attach(parent, self, aux)
 	struct cfdata *cf;
 	int channel, ms_unit;
 	int reset, s;
+	int bps;
 
 	cf = ms->ms_dev.dv_cfdata;
 	ms_unit = ms->ms_dev.dv_unit;
@@ -138,8 +140,10 @@ ms_zs_attach(parent, self, aux)
 	cs->cs_private = ms;
 	cs->cs_ops = &zsops_ms;
 	ms->ms_cs = cs;
+	if ((bps = cs->cs_defspeed) == 0)
+		bps = ms_zs_bps;
 
-	printf("\n");
+	printf(": baud rate %d\n", bps);
 
 	/* Initialize the speed, etc. */
 	s = splzs();
@@ -150,7 +154,7 @@ ms_zs_attach(parent, self, aux)
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
-	(void) zs_set_speed(cs, ms_zs_bps);
+	(void) zs_set_speed(cs, bps);
 	zs_loadchannelregs(cs);
 	splx(s);
 
