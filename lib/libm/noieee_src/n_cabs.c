@@ -1,4 +1,4 @@
-/*      $NetBSD: n_cabs.c,v 1.3 1999/07/02 15:37:36 simonb Exp $ */
+/*      $NetBSD: n_cabs.c,v 1.3.10.1 2002/06/18 13:38:08 lukem Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,6 +88,7 @@ static char sccsid[] = "@(#)cabs.c	8.1 (Berkeley) 6/4/93";
  * from decimal to binary accurately enough to produce the hexadecimal values
  * shown.
  */
+#define _LIBM_STATIC
 #include "mathimpl.h"
 
 vc(r2p1hi, 2.4142135623730950345E0   ,8279,411a,ef32,99fc,   2, .9A827999FCEF32)
@@ -105,8 +106,7 @@ ic(sqrt2,  1.4142135623730951455E0   ,   0, 1.6A09E667F3BCD)
 #endif
 
 double
-hypot(x,y)
-double x, y;
+hypot(double x, double y)
 {
 	static const double zero=0, one=1,
 		      small=1.0E-18;	/* fl(1+small)==1 */
