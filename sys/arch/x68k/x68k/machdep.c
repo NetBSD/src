@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1998/07/08 04:45:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1998/08/04 16:07:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -685,6 +685,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int	waittime = -1;
+int	power_switch_is_off = 0;
 
 void
 cpu_reboot(howto, bootstr)
@@ -724,7 +725,21 @@ cpu_reboot(howto, bootstr)
 #endif
 
 	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
+	/* a) RB_POWERDOWN
+	 *  a1: the power switch is still on
+	 *	Power cannot be removed; simply halt the system (b)
+	 *	Power switch state is checked in shutdown hook
+	 *  a2: the power switch is off
+	 *	Remove the power; the simplest way is go back to ROM eg. reboot
+	 * b) RB_HALT
+	 *      call cngetc
+         * c) otherwise
+	 *	Reboot
+	*/
+	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off)
+		doboot();
+	else if (/*((howto & RB_POWERDOWN) == RB_POWERDOWN) ||*/
+		 ((howto & RB_HALT) == RB_HALT)) {
 		printf("System halted.  Hit any key to reboot.\n\n");
 		(void)cngetc();
 	}
