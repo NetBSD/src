@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.3 2001/03/17 00:16:38 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.4 2001/03/19 22:20:30 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.3 2001/03/19 22:20:05 jdolecek Exp 
  */
 
 /*-
@@ -50,4 +50,10 @@
 
 #define	MCA_PRODUCT_AHA1640	0x0F1F	/* Adaptec AHA-1640 SCSI Adapter */
 #define	MCA_PRODUCT_3C523	0x6042	/* 3Com EtherLink/MC Ethernet Adapter (3C523) */
+#define	MCA_PRODUCT_3C529	0x627C	/* 3Com 3C529 Ethernet Adapter */
+#define	MCA_PRODUCT_3C529_TP	0x627D	/* 3Com 3C529-TP Ethernet Adapter */
+#define	MCA_PRODUCT_3C529_TM	0x62DB	/* 3Com 3C529 Ethernet Adapter (test mode) */
+#define	MCA_PRODUCT_3C529_2T	0x62F6	/* 3Com 3C529 Ethernet Adapter (10base2/T) */
+#define	MCA_PRODUCT_3C529_T	0x62F7	/* 3Com 3C529 Ethernet Adapter (10baseT) */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */
+#define	MCA_PRODUCT_IBM_MOD	0xEDFF	/* IBM Internal Modem */
