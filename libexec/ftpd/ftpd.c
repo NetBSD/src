@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.61.2.3 2000/07/08 18:58:10 he Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.61.2.4 2000/12/14 22:33:47 he Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.61.2.3 2000/07/08 18:58:10 he Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.61.2.4 2000/12/14 22:33:47 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.61.2.3 2000/07/08 18:58:10 he Exp $");
 #define FALSE	0
 #endif
 
-const char version[] = "Version: 7.1.0";
+const char version[] = "Version: 7.1.0a";
 
 struct	sockaddr_in ctrl_addr;
 struct	sockaddr_in data_source;
@@ -1418,15 +1418,21 @@ static void
 replydirname(name, message)
 	const char *name, *message;
 {
-	char npath[MAXPATHLEN + 1];
-	int i;
+	char *p, *ep;
+	char npath[MAXPATHLEN];
 
-	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
-		npath[i] = *name;
-		if (*name == '"')
-			npath[++i] = '"';
+	p = npath;
+	ep = &npath[sizeof(npath) - 1];
+	while (*name) {
+		if (*name == '"' && ep - p >= 2) {
+			*p++ = *name++;
+			*p++ = '"';
+		} else if (ep - p >= 1)
+			*p++ = *name++;
+		else
+			break;
 	}
-	npath[i] = '\0';
+	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
 }
 
