@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.24 1999/02/11 09:10:44 pk Exp $	*/
+/*	$NetBSD: nfs.c,v 1.25 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -26,6 +26,16 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * XXX Does not currently implement:
+ * XXX
+ * XXX LIBSA_NO_FS_CLOSE
+ * XXX LIBSA_NO_FS_SEEK
+ * XXX LIBSA_NO_FS_WRITE
+ * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
+ * XXX LIBSA_FS_SINGLECOMPONENT (does this even make sense?)
  */
 
 #include <sys/param.h>
@@ -573,7 +583,9 @@ nfs_read(f, buf, size, resid)
 		    (int)fp->off);
 #endif
 	while ((int)size > 0) {
+#if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();
+#endif
 		cc = nfs_readdata(fp, fp->off, (void *)addr, size);
 		/* XXX maybe should retry on certain errors */
 		if (cc == -1) {

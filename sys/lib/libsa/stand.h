@@ -1,4 +1,34 @@
-/*	$NetBSD: stand.h,v 1.30 1999/02/22 10:08:42 simonb Exp $	*/
+/*	$NetBSD: stand.h,v 1.31 1999/03/31 01:50:26 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1993
@@ -58,6 +88,7 @@ struct open_file;
  * This structure is used to define file system operations in a file system
  * independent way.
  */
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
 	int	(*open) __P((char *path, struct open_file *f));
 	int	(*close) __P((struct open_file *f));
@@ -72,12 +103,41 @@ struct fs_ops {
 extern struct fs_ops file_system[];
 extern int nfsys;
 
+#define	FS_OPEN(fs)		((fs)->open)
+#define	FS_CLOSE(fs)		((fs)->close)
+#define	FS_READ(fs)		((fs)->read)
+#define	FS_WRITE(fs)		((fs)->write)
+#define	FS_SEEK(fs)		((fs)->seek)
+#define	FS_STAT(fs)		((fs)->stat)
+
+#else
+
+#define	FS_OPEN(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_open)
+#define	FS_CLOSE(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_close)
+#define	FS_READ(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_read)
+#define	FS_WRITE(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_write)
+#define	FS_SEEK(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_seek)
+#define	FS_STAT(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_stat)
+
+int	FS_OPEN(unused) __P((char *path, struct open_file *f));
+int	FS_CLOSE(unused) __P((struct open_file *f));
+int	FS_READ(unused) __P((struct open_file *f, void *buf,
+			     size_t size, size_t *resid));
+int	FS_WRITE(unused) __P((struct open_file *f, void *buf,
+			      size_t size, size_t *resid));
+off_t	FS_SEEK(unused) __P((struct open_file *f, off_t offset, int where));
+int	FS_STAT(unused) __P((struct open_file *f, struct stat *sb));
+
+#endif
+
 /* where values for lseek(2) */
 #define	SEEK_SET	0	/* set file offset to offset */
 #define	SEEK_CUR	1	/* set file offset to current plus offset */
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
 /* Device switch */
+#if !defined(LIBSA_SINGLE_DEVICE)
+
 struct devsw {
 	char	*dv_name;
 	int	(*dv_strategy) __P((void *devdata, int rw,
@@ -91,13 +151,41 @@ struct devsw {
 extern struct devsw devsw[];	/* device array */
 extern int ndevs;		/* number of elements in devsw[] */
 
+#define	DEV_NAME(d)		((d)->dv_name)
+#define	DEV_STRATEGY(d)		((d)->dv_strategy)
+#define	DEV_OPEN(d)		((d)->dv_open)
+#define	DEV_CLOSE(d)		((d)->dv_close)
+#define	DEV_IOCTL(d)		((d)->dv_ioctl)
+
+#else
+
+#define	DEV_NAME(d)		___STRING(LIBSA_SINGLE_DEVICE)
+#define	DEV_STRATEGY(d)		___CONCAT(LIBSA_SINGLE_DEVICE,strategy)
+#define	DEV_OPEN(d)		___CONCAT(LIBSA_SINGLE_DEVICE,open)
+#define	DEV_CLOSE(d)		___CONCAT(LIBSA_SINGLE_DEVICE,close)
+#define	DEV_IOCTL(d)		___CONCAT(LIBSA_SINGLE_DEVICE,ioctl)
+
+int	DEV_STRATEGY(unused) __P((void *devdata, int rw, daddr_t blk,
+				  size_t size, void *buf, size_t *rsize));
+int	DEV_OPEN(unused) __P((struct open_file *f, ...));
+int	DEV_CLOSE(unused) __P((struct open_file *f));
+int	DEV_IOCTL(unused) __P((struct open_file *f, u_long cmd, void *data));
+
+#endif
+
 struct open_file {
 	int		f_flags;	/* see F_* below */
+#if !defined(LIBSA_SINGLE_DEVICE)
 	struct devsw	*f_dev;		/* pointer to device operations */
+#endif
 	void		*f_devdata;	/* device specific data */
+#if !defined(LIBSA_SINGLE_FILESYSTEM)
 	struct fs_ops	*f_ops;		/* pointer to file system operations */
+#endif
 	void		*f_fsdata;	/* file system specific data */
+#if !defined(LIBSA_NO_RAW_ACCESS)
 	off_t		f_offset;	/* current file offset (F_RAW) */
+#endif
 };
 
 #define	SOPEN_MAX	4
@@ -106,7 +194,9 @@ extern struct open_file files[];
 /* f_flags values */
 #define	F_READ		0x0001	/* file opened for reading */
 #define	F_WRITE		0x0002	/* file opened for writing */
+#if !defined(LIBSA_NO_RAW_ACCESS)
 #define	F_RAW		0x0004	/* raw device open - no file system */
+#endif
 #define F_NODEV		0x0008	/* network open - no device */
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
