@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.51 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.52 2001/05/21 15:50:46 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -454,8 +454,18 @@ typedef enum {
  * It includes information about the source of the command and also the
  * device and adapter for which the command is destined.
  *
- * The adapter_q member may be used by host adapter drivers to queue
- * requests, if necessary.
+ * Before the HBA is given this transaction, channel_q is the linkage on
+ * the related channel's chan_queue.
+ *
+ * When the this transaction is taken off the channel's chan_queue and
+ * the HBA's request entry point is called with this transaction, the
+ * HBA can use the channel_q tag for whatever it likes until it calls
+ * scsipi_done for this transaction, at which time it has to stop
+ * using channel_q.
+ *
+ * After scsipi_done is called with this transaction and if there was an
+ * error on it, channel_q then becomes the linkage on the related channel's
+ * chan_complete cqueue.
  *
  * The device_q member is maintained by the scsipi middle layer.  When
  * a device issues a command, the xfer is placed on that device's
