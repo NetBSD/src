@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.49 2005/01/18 15:20:23 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.50 2005/01/21 03:22:13 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.49 2005/01/18 15:20:23 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.50 2005/01/21 03:22:13 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -961,9 +961,12 @@ void
 softintr(ipl)
 	int ipl;
 {
+	int msrsave;
 
-	atomic_setbits_ulong((volatile unsigned long *) &curcpu()->ci_ipending,
-			     1 << ipl);
+	msrsave = mfmsr();
+	mtmsr(msrsave & ~PSL_EE);
+	curcpu()->ci_ipending |= 1 << ipl;
+	mtmsr(msrsave);
 }
 
 void
