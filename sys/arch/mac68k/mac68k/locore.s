@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112.2.2 1999/07/01 15:19:54 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.112.2.3 1999/08/09 03:18:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1488,7 +1488,6 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
-	rts
 
 /*
  * delay() - delay for a specified number of microseconds
@@ -1533,6 +1532,7 @@ Ldelay:
 	swap	d0			|    return the longword result
 	orl	d1,d0
 Ldelayexit:
+	rts
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
