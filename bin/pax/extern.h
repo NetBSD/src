@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2002/10/17 00:32:36 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2002/12/08 01:35:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -309,6 +309,7 @@ int ustar_id(char *, int);
 int ustar_rd(ARCHD *, char *);
 int ustar_wr(ARCHD *);
 int tar_gnutar_X_compat(const char *);
+int tar_gnutar_minus_minus_exclude(const char *);
 
 /*
  * tty_subs.c
