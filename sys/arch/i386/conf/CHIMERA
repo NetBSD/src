@@ -1,4 +1,4 @@
-#	$NetBSD: CHIMERA,v 1.12 1995/03/16 16:37:41 glass Exp $
+#	$NetBSD: CHIMERA,v 1.13 1995/04/19 19:07:35 mycroft Exp $
 #
 #	CHIMERA -- Adam Glass's confused machine
 #
@@ -69,10 +69,7 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-com2	at ast? slave ? flags 1
-com3	at ast? slave ? flags 1
-com4	at ast? slave ? flags 1
-com5	at ast? slave ? flags 1
+com*	at ast? slave ? flags 1
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
