@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 1998/08/05 16:08:34 minoura Exp $
+#	$NetBSD: INSTALL,v 1.6 1998/09/03 14:29:33 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -66,10 +66,8 @@ options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPU_EMULATE		# software fpu emulation
 options 	M060SP			# int/fp emulation for MC68060
 options 	FPSP			# floating point emulation for MC68040
-options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	JUPITER			# support for "JUPITER-X"
-options 	EIOMAPSIZE=0		# do not map PCI address space
 options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 
 config		netbsd root on ? type ?
