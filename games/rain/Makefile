@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1998/02/04 10:21:12 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1999/07/30 02:14:56 hubertf Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rain
 MAN=	rain.6
-DPADD=	${LIBTERMCAP}
-LDADD=	-ltermcap
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 
 .include <bsd.prog.mk>
