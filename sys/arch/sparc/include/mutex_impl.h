@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.1 2002/03/18 16:36:48 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/19 05:14:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,28 +43,39 @@ struct mutex {
 	union {
 		/* Adaptive mutex */
 		struct {
-			__volatile unsigned long mtx_owner;
-			unsigned char mtx_waiters;
+			__volatile unsigned long mtx_owner;	/* 0-3 */
+			char mtx_waiters;			/* 4 */
+			char mtx_rsvd[2];			/* 5-6 */
+			char mtx_type;				/* 7 */
 		} mtx_adapt;
 
 		/* Spin mutex */
 		struct {
-			unsigned int mtx_dummy;
-			__cpu_simple_lock_t mtx_lock;
-			int mtx_oldspl;
-			int mtx_minspl;
+			/*
+			 * The dummy byte must overlap with the
+			 * MSB of mtx_owner, so as to make the asm
+			 * stubs think that the lock is always held.
+			 */
+			char mtx_dummy;				/* 0 */
+			__cpu_simple_lock_t mtx_lock;		/* 1 */
+			short mtx_minspl;			/* 2-3 */
+			short mtx_oldspl;			/* 4-5 */
+			char mtx_rsvd;				/* 6 */
+			char mtx_type;				/* 7 */
 		} mtx_spin;
 	} mtx_un;
 };
 
 #define	MUTEX_INITIALIZER_ADAPTIVE					\
 	{ { .mtx_adapt = { .mtx_owner = 0,				\
-			   .mtx_waiters = 0 } } }
+			   .mtx_waiters = 0,				\
+			   .mtx_type = MUTEX_ADAPTIVE } } }
 
 #define	MUTEX_INITIALIZER_SPIN(ipl)					\
-	{ { .mtx_spin = { .mtx_dummy = MUTEX_SPIN,			\
+	{ { .mtx_spin = { .mtx_dummy = 0xff,				\
 			  .mtx_lock = __SIMPLELOCK_UNLOCKED,		\
-	  		  .mtx_minspl = (ipl) } } }
+			  .mtx_minspl = (ipl),				\
+			  .mtx_type = MUTEX_SPIN } } }
 
 #define	m_owner			mtx_un.mtx_adapt.mtx_owner
 #define	m_spinlock		mtx_un.mtx_spin.mtx_lock
@@ -79,10 +90,12 @@ do {									\
 	case MUTEX_ADAPTIVE:						\
 		(mtx)->m_owner = 0;					\
 		(mtx)->mtx_un.mtx_adapt.mtx_waiters = 0;		\
+		(mtx)->mtx_un.mtx_adapt.mtx_type = MUTEX_ADAPTIVE;	\
 		break;							\
 	case MUTEX_SPIN:						\
-		(mtx)->mtx_un.mtx_spin.mtx_dummy = 0xffffffffUL;	\
+		(mtx)->mtx_un.mtx_spin.mtx_dummy = 0xff;		\
 		__cpu_simple_lock_init(&(mtx)->m_spinlock);		\
+		(mtx)->mtx_un.mtx_spin.mtx_type = MUTEX_SPIN;		\
 		break;							\
 	default:							\
 		panic("MUTEX_INIT");					\
@@ -90,9 +103,9 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #define	MUTEX_ADAPTIVE_P(mtx)						\
-	((mtx)->mtx_un.mtx_spin.mtx_dummy != 0xffffffffUL)
+	((mtx)->mtx_un.mtx_spin.mtx_type == MUTEX_ADAPTIVE)
 #define	MUTEX_SPIN_P(mtx)						\
-	((mtx)->mtx_un.mtx_spin.mtx_dummy == 0xffffffffUL)
+	((mtx)->mtx_un.mtx_spin.mtx_type == MUTEX_SPIN)
 
 static __inline struct proc * __attribute__((__unused__))
 MUTEX_OWNER(kmutex_t *mtx)
