@@ -15,12 +15,6 @@
 
 #include "libaudio.h"
 
-/* yeah, for now ... */
-#if 1
-#define _PATH_OAUDIO	"/dev/audio"
-#define _PATH_OAUDIOCTL	"/dev/audioctl"
-#endif
-
 int main __P((int, char *[]));
 void usage __P((void));
 ssize_t audioctl_write_fromhdr __P((void *, size_t, int, int));
