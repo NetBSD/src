@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.57 2000/01/04 08:33:52 itojun Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.58 2000/01/21 11:23:01 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -722,7 +722,7 @@ message config_read_error
 
 message nobiosgeom
 {Sysinst could not automatically determine the BIOS geometry of the disk.
-The physical geometry is % cylinders %d sectors %d heads\n}
+The physical geometry is %d cylinders %d sectors %d heads\n}
 
 message biosguess
 {Using the information already on the disk, my best guess for the BIOS
