@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.3 1997/04/07 01:59:57 cgd Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.3.2.1 1997/05/23 21:35:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,6 +33,8 @@
 #include <dev/pci/pcivar.h>
 #include <sys/extent.h>
 
+#include <alpha/pci/pci_dma_sgmap.h>
+
 #define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
 
 /*
@@ -51,6 +53,9 @@ struct dwlpx_config {
 	long				cc_dmem_exstorage[_FSTORE];
 	long				cc_smem_exstorage[_FSTORE];
 	unsigned long			cc_sysbase;	/* shorthand */
+	struct alpha_bus_dma_tag	cc_dmat_direct;
+	struct alpha_bus_dma_tag	cc_dmat_sgmap;
+	struct alpha_pci_sgmap		cc_sgmap;
 };
 
 struct dwlpx_softc {
@@ -64,6 +69,7 @@ struct dwlpx_softc {
 
 void	dwlpx_init __P((struct dwlpx_softc *));
 void	dwlpx_pci_init __P((pci_chipset_tag_t, void *));
+void	dwlpx_dma_init __P((struct dwlpx_config *));
 
 bus_space_tag_t	dwlpx_bus_io_init __P((void *));
 bus_space_tag_t	dwlpx_bus_mem_init __P((void *));
