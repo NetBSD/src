@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.3 1994/10/26 08:01:49 cgd Exp $	*/
+/*	$NetBSD: if_de.c,v 1.4 1995/02/13 00:42:29 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -47,8 +47,6 @@
  * TODO:
  *	timeout routine (get statistics)
  */
-#include "vax/include/pte.h"
-#include "vax/include/sid.h"
 
 #include "sys/param.h"
 #include "sys/systm.h"
@@ -61,6 +59,9 @@
 #include "sys/errno.h"
 #include "sys/syslog.h"
 #include "sys/device.h"
+
+#include "vax/include/pte.h"
+#include "vax/include/sid.h"
 
 #include "net/if.h"
 #include "net/netisr.h"
@@ -96,8 +97,6 @@ extern char all_es_snpa[], all_is_snpa[];
 #define	NRCV	7	/* number of receive buffers (must be > 1) */
 
 int	dedebug = 0;
-
-struct	cfdriver decd;
 
 
 int	deprobe(), deattach(), deintr();
@@ -155,7 +154,7 @@ deprobe(reg)
 	caddr_t reg;
 {
 	register int br, cvec;		/* r11, r10 value-result */
-	register struct dedevice *addr = (struct dedevice *)reg;
+	volatile struct dedevice *addr = (struct dedevice *)reg;
 	register i;
 
 #ifdef lint
@@ -172,14 +171,14 @@ deprobe(reg)
 	     (addr->pcsr0 & PCSR0_FATI) == 0 &&
 	     (addr->pcsr1 & PCSR1_STMASK) == STAT_RESET;
 	     ++i)
-		DELAY(100000);
+		waitabit(10);
 	if ((addr->pcsr0 & PCSR0_FATI) != 0 ||
 	    (addr->pcsr1 & PCSR1_STMASK) != STAT_READY &&
 		(addr->pcsr1 & PCSR1_STMASK) != STAT_RUN)
 		return(0);
 
 	addr->pcsr0 = 0;
-	DELAY(100);
+	waitabit(1);
 	addr->pcsr0 = PCSR0_RSET;
 	while ((addr->pcsr0 & PCSR0_INTR) == 0)
 		;
@@ -188,7 +187,7 @@ deprobe(reg)
 	addr->pcsr2 = 0;
 	addr->pcsr3 = 0;
 	addr->pcsr0 = PCSR0_INTE|CMD_GETPCBB;
-	DELAY(100000);
+	waitabit(10);
 	return(1);
 }
 
@@ -202,7 +201,7 @@ deattach(ui)
 {
 	register struct de_softc *ds = &de_softc[ui->ui_unit];
 	register struct ifnet *ifp = &ds->ds_if;
-	register struct dedevice *addr = (struct dedevice *)ui->ui_addr;
+	volatile struct dedevice *addr = (struct dedevice *)ui->ui_addr;
 	int csr1;
 
 	ifp->if_unit = ui->ui_unit;
@@ -228,7 +227,7 @@ deattach(ui)
 	 * the pcbb buffer onto the Unibus.
 	 */
 	addr->pcsr0 = 0;		/* reset INTE */
-	DELAY(100);
+	waitabit(1);
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ui, "reset");
 
@@ -248,8 +247,6 @@ deattach(ui)
 	    sizeof (ds->ds_addr));
 	printf("de%d: hardware address %s\n", ui->ui_unit,
 		ether_sprintf(ds->ds_addr));
-	printf("if_de: ifp->if_init = deinit\n");
-/* XXX	ifp->if_init = deinit; */
 	ifp->if_output = ether_output;
 	ifp->if_ioctl = deioctl;
 	ifp->if_reset = dereset;
@@ -291,14 +288,13 @@ deinit(unit)
 {
 	struct de_softc *ds;
 	struct uba_device *ui;
-	struct dedevice *addr;
+	volatile struct dedevice *addr;
 	struct ifrw *ifrw;
 	struct ifxmt *ifxp;
 	struct ifnet *ifp;
 	struct de_ring *rp;
 	int s,incaddr;
 
-	printf("deinit: unit %d\n",unit);
 	ds = &de_softc[unit];
 	ui = deinfo[unit];
 	ifp = &ds->ds_if;
@@ -327,7 +323,7 @@ deinit(unit)
 	addr->pcsr2 = incaddr & 0xffff;
 	addr->pcsr3 = (incaddr >> 16) & 0x3;
 	addr->pclow = 0;	/* reset INTE */
-	DELAY(100);
+	waitabit(1);
 	addr->pclow = CMD_GETPCBB;
 	(void)dewait(ui, "pcbb");
 
@@ -400,14 +396,12 @@ destart(ifp)
         int len;
 	int unit = ifp->if_unit;
 	struct uba_device *ui = deinfo[unit];
-	struct dedevice *addr = (struct dedevice *)ui->ui_addr;
+	volatile struct dedevice *addr = (struct dedevice *)ui->ui_addr;
 	register struct de_softc *ds = &de_softc[unit];
 	register struct de_ring *rp;
 	struct mbuf *m;
 	register int nxmit;
 
-printf("destart: if_flags %x, nxmit %x, NXMT %d, unit %d\n",
-	ds->ds_if.if_flags,ds->ds_nxmit,NXMT,unit);
 	/*
 	 * the following test is necessary, since
 	 * the code is not reentrant and we have
@@ -417,14 +411,12 @@ printf("destart: if_flags %x, nxmit %x, NXMT %d, unit %d\n",
 		return;
 	for (nxmit = ds->ds_nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&ds->ds_if.if_snd, m);
-printf("m %x\n",m);
 		if (m == 0)
 			break;
 		rp = &ds->ds_xrent[ds->ds_xfree];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
 		len = if_ubaput(&ds->ds_deuba, &ds->ds_ifw[ds->ds_xfree], m);
-printf("len %d\n",len);
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP)
 			UBAPURGE(ds->ds_deuba.iff_uba,
 			ds->ds_ifw[ds->ds_xfree].ifw_bdp);
@@ -450,13 +442,12 @@ deintr(unit)
 	int unit;
 {
 	struct uba_device *ui;
-	register struct dedevice *addr;
+	volatile struct dedevice *addr;
 	register struct de_softc *ds;
 	register struct de_ring *rp;
 	register struct ifxmt *ifxp;
 	short csr0;
 
-printf("Deintr\n");
 	unit=0; /* XXX J{tteful grej f|r att f} igenom... */
 	ui = deinfo[unit];
 	addr = (struct dedevice *)ui->ui_addr;
@@ -598,7 +589,7 @@ deread(ds, ifrw, len)
 	 * Remember that type was trailer by setting off.
 	 */
 	eh = (struct ether_header *)ifrw->ifrw_addr;
-	eh->ether_type = ntohs((u_short)eh->ether_type);
+/*	eh->ether_type = ntohs((u_short)eh->ether_type); */
 #define	dedataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
 	if (eh->ether_type >= ETHERTYPE_TRAIL &&
 	    eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
@@ -621,7 +612,6 @@ deread(ds, ifrw, len)
 	 * information to be at the front.
 	 */
 	m = if_ubaget(&ds->ds_deuba, ifrw, len, off, &ds->ds_if);
-printf("deread: m %x ifrw %x, len %d, off %d\n",m,ifrw,len,off);
 	if (m)
 		ether_input(&ds->ds_if, eh, m);
 }
@@ -671,7 +661,7 @@ deioctl(ifp, cmd, data)
 		    ds->ds_flags & DSF_RUNNING) {
 			((struct dedevice *)
 			   (deinfo[ifp->if_unit]->ui_addr))->pclow = 0;
-			DELAY(100);
+			waitabit(1);
 			((struct dedevice *)
 			   (deinfo[ifp->if_unit]->ui_addr))->pclow = PCSR0_RSET;
 			ds->ds_flags &= ~DSF_RUNNING;
@@ -697,7 +687,7 @@ de_setaddr(physaddr, unit)
 {
 	register struct de_softc *ds = &de_softc[unit];
 	struct uba_device *ui = deinfo[unit];
-	register struct dedevice *addr= (struct dedevice *)ui->ui_addr;
+	volatile struct dedevice *addr= (struct dedevice *)ui->ui_addr;
 	
 	if (! (ds->ds_flags & DSF_RUNNING))
 		return;
@@ -719,7 +709,7 @@ dewait(ui, fn)
 	register struct uba_device *ui;
 	char *fn;
 {
-	register struct dedevice *addr = (struct dedevice *)ui->ui_addr;
+	volatile struct dedevice *addr = (struct dedevice *)ui->ui_addr;
 	register csr0;
 
 	while ((addr->pcsr0 & PCSR0_INTR) == 0)
@@ -732,4 +722,18 @@ dewait(ui, fn)
 		    addr->pcsr1, PCSR1_BITS);
 	return (csr0 & PCSR0_PCEI);
 }
+
+de_match(){
+	printf("de_match\n");
+	return 0;
+}
+
+de_attach(){
+	printf("de_attach\n");
+}
+
+struct  cfdriver decd =
+        { 0,"de",de_match, de_attach, DV_IFNET, sizeof(struct uba_driver) };
+
+
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.3 1994/10/26 08:01:53 cgd Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.4 1995/02/13 00:42:30 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,8 +41,6 @@
 #include "sys/mbuf.h"
 #include "sys/map.h"
 #include "sys/buf.h"
-/* #include "sys/cmap.h" */
-/* #include "sys/vmmac.h" */
 #include "sys/socket.h"
 #include "sys/syslog.h"
 
@@ -54,6 +52,11 @@
 #include "vax/include/vmparam.h"
 #include "vax/uba/ubareg.h"
 #include "vax/uba/ubavar.h"
+#include "machine/macros.h"
+
+static if_ubaalloc(struct ifubinfo *, struct ifrw *, int);
+static rcv_xmtbuf(struct ifxmt *);
+static restor_xmtbuf(struct ifxmt *);
 
 /*
  * Routines supporting UNIBUS network interfaces.
@@ -191,8 +194,6 @@ if_ubaget(ifu, ifr, totlen, off, ifp)
 	register caddr_t cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
 	register int len;
 	caddr_t epkt = cp + totlen;
-
-printf("I if_ubaget\n");
 	top = 0;
 	mp = &top;
 	/*
@@ -204,15 +205,16 @@ printf("I if_ubaget\n");
 		cp += off;
 	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == 0){
 		return ((struct mbuf *)NULL);
+	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 
-	if (ifr->ifrw_flags & IFRW_W)
+	if (ifr->ifrw_flags & IFRW_W){
 		rcv_xmtbuf((struct ifxmt *)ifr);
-
+	}
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
@@ -229,23 +231,22 @@ printf("I if_ubaget\n");
 			int x, *ip, i;
 
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0){
 				goto nopage;
+			}
 			len = min(len, MCLBYTES);
 			m->m_len = len;
-			if (!claligned(cp))
+			if (!claligned(cp)){
 				goto copy;
-
+			}
 			/*
 			 * Switch pages mapped to UNIBUS with new page pp,
 			 * as quick form of copy.  Remap UNIBUS and invalidate.
 			 */
 			pp = mtod(m, char *);
-			cpte = kvtopte(cp);
-			ppte = kvtopte(pp);
+			cpte = (struct pte *)kvtopte(cp);
+			ppte = (struct pte *)kvtopte(pp);
 			x = vax_btop(cp - ifr->ifrw_addr);
-printf("if_ubaget: pp %x, cp %x, cpte %x, ppte %x, x\n",
-	pp,cp,cpte,ppte,x);
 			ip = (int *)&ifr->ifrw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++) {
 				struct pte t;
@@ -279,8 +280,9 @@ nocopy:
 			cp = ifr->ifrw_addr + ifu->iff_hlen;
 	}
 out:
-	if (ifr->ifrw_flags & IFRW_W)
+	if (ifr->ifrw_flags & IFRW_W){
 		restor_xmtbuf((struct ifxmt *)ifr);
+	}
 	return (top);
 }
 
@@ -359,7 +361,7 @@ if_ubaput(ifu, ifw, m)
 			struct pte *pte;
 			int *ip;
 
-			pte = kvtopte(dp);
+			pte = (struct pte *)kvtopte(dp);
 			x = vax_btop(cp - ifw->ifw_addr);
 			ip = (int *)&ifw->ifw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++)
