@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.c,v 1.2 1999/09/13 18:36:02 kleink Exp $	*/
+/*	$NetBSD: fmtmsg.c,v 1.3 2002/11/11 06:31:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtmsg.c,v 1.2 1999/09/13 18:36:02 kleink Exp $");
+__RCSID("$NetBSD: fmtmsg.c,v 1.3 2002/11/11 06:31:14 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <fmtmsg.h>
@@ -84,7 +84,7 @@ static unsigned int
 msgverb(str)
 	const char *str;
 {
-	int i;
+	u_int i;
 	unsigned int result;
 
 	if (str == NULL)
@@ -134,7 +134,8 @@ severity2str(severity)
 {
 	const char *result;
 
-	if (severity < nseverities)
+	if (severity >= 0 &&
+	    (u_int) severity < nseverities)
 		result = severities[severity];
 	else
 		result = NULL;
