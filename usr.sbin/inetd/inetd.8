@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.16 1998/06/08 12:41:44 lukem Exp $
+.\"	$NetBSD: inetd.8,v 1.17 1999/01/29 19:41:47 tsarna Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,12 +124,12 @@ special case, described below).  The
 fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
-service name
-socket type
+[addr:]service-name
+socket-type
 protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[.max]
 user[.group]
-server program
+server-program
 server program arguments
 .Ed
 .Pp
@@ -138,12 +138,12 @@ To specify an
 based service, the entry would contain these fields.
 .Pp
 .Bd -unfilled -offset indent -compact
-service name/version
-socket type
+service-name/version
+socket-type
 rpc/protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[.max]
 user[.group]
-server program
+server-program
 server program arguments
 .Ed
 .Pp
