@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.15 1999/03/02 02:31:23 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.16 1999/03/03 20:12:06 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.15 1999/03/02 02:31:23 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.16 1999/03/03 20:12:06 hubertf Exp $");
 #endif
 #endif
 
@@ -205,14 +205,6 @@ require_delete(char *home)
     rec_del_t *rdp;
     int rv, fail;
     char *tmp;
-    char *oldcwd;
-
-    /* save current working directory */
-    oldcwd = getcwd(NULL, FILENAME_MAX);
-    if (oldcwd == NULL) {
-	perror("error in getcwd");
-	return 1;
-    }
 
     (void)snprintf(pkgdir, sizeof(pkgdir), "%s",
 	(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
@@ -276,8 +268,8 @@ require_delete(char *home)
     }
 
     /* return to the log dir */
-    if (chdir(oldcwd) == FAIL) {
-	warnx("unable to change directory to %s! deinstall failed", oldcwd);
+    if (chdir(LogDir) == FAIL) {
+	warnx("unable to change directory to %s! deinstall failed", LogDir);
 	fail = 1;
     }
 
