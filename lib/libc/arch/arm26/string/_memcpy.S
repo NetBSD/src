@@ -1,5 +1,4 @@
-/* $Id: _memcpy.S,v 1.1 2000/05/09 21:55:50 bjh21 Exp $ */
-/*	$NetBSD: _memcpy.S,v 1.1 2000/05/09 21:55:50 bjh21 Exp $	*/
+/*	$NetBSD: _memcpy.S,v 1.2 2000/12/28 18:27:24 bjh21 Exp $	*/
 
 /*
  * This code is derived from software contributed to The NetBSD Foundation
