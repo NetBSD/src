@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.75 1999/10/20 15:22:26 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.76 1999/10/21 14:37:58 bouyer Exp $ */
 
 
 /*
@@ -652,6 +652,7 @@ wdcintr(arg)
 {
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
+	int ret;
 
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
@@ -661,7 +662,10 @@ wdcintr(arg)
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
-	return xfer->c_intr(chp, xfer, 1);
+	ret = xfer->c_intr(chp, xfer, 1);
+	if (ret == 0) /* irq was not for us, still waiting for irq */
+		chp->ch_flags |= WDCF_IRQ_WAIT;
+	return (ret);
 }
 
 /* Put all disk in RESET state */
