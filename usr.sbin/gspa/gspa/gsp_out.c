@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_out.c,v 1.6 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_out.c,v 1.7 2002/05/27 21:11:56 wiz Exp $	*/
 /*
  * GSP assembler - binary & listing output
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_out.c,v 1.6 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gsp_out.c,v 1.7 2002/05/27 21:11:56 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -132,13 +132,13 @@ c_dumpbuf()
 {
 	int i;
 
-	printf("\n\n\t%d, 0x%04x, 0x%04x, /* new block */",
+	fprintf(objfile, "\n\n\t%d, 0x%04x, 0x%04x, /* new block */",
 	    c_bufptr, (int)(c_binads >> 16), (int)(c_binads & 0xffff));
 
 	for (i=0; i < c_bufptr; ++i) {
 		if (i%8 == 0)
-			printf("\n\t");
-		printf("0x%04x, ", c_buf[i]);
+			fprintf(objfile, "\n\t");
+		fprintf(objfile, "0x%04x, ", c_buf[i]);
 	}
 	c_binads += c_bufptr;
 	c_bufptr = 0;
