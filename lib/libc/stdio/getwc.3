@@ -1,4 +1,4 @@
-.\"	$NetBSD: getwc.3,v 1.1 2001/12/07 11:47:42 yamt Exp $
+.\"	$NetBSD: getwc.3,v 1.2 2001/12/07 12:35:54 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,8 +75,9 @@ but is a macro that expands in-line.
 The
 .Fn getwchar
 function
-is equivalent to:
-getwc with the argument stdin.
+is equivalent to
+.Fn getwc
+with the argument stdin.
 .Sh RETURN VALUES
 If successful, these routines return the next wide-character
 from the
