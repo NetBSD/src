@@ -11,7 +11,7 @@ What is NetBSD?
 ---- -- ------
 
 The NetBSD Operating System is a fully functional UN*X-like system
-derrived from the Berkeley Networking Release 2 (Net/2), 4.4BSD-Lite,
+derived from the Berkeley Networking Release 2 (Net/2), 4.4BSD-Lite,
 and 4.4BSD-Lite2 sources.  NetBSD runs on many architectures and is
 being ported to more.
 
@@ -30,7 +30,7 @@ commercially available systems.
 It is impossible to summarize the 18 months of development that went
 into the NetBSD _VER release. Some of the significant changes include:
 
-	Support for machine independant device drivers has been
+	Support for machine independent device drivers has been
 	radically improved with the addition of the "bus.h" interface,
 	providing a high quality abstraction for machine and
 	architecture independent device access.
@@ -153,7 +153,7 @@ Compatibility Issues:
 
 As with any system which has functionality added and products
 modified to fit within the goals of portability, standards
-adherance, and uniformity, there have been some changes which
+adherence, and uniformity, there have been some changes which
 affects compatibility with existing NetBSD products.
 
 The following products may need the suggested work-around to
@@ -171,7 +171,7 @@ work in NetBSD _VER:
 	The most common position for a swap partition is the `b'
 	partition of the drive the root file system is on.  For
 	diskless systems, check the new swapctl(8) manual for more
-	detail on how this is done.  Example fstab entrys:
+	detail on how this is done.  Example fstab entries:
 	/dev/sd0b	none	swap	sw,priority=0
 	/dev/sd1b	none	swap	sw,priority=5
 
