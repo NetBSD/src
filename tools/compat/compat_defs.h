@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.4 2002/01/31 22:43:45 tv Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.5 2002/02/06 15:39:01 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -373,10 +373,6 @@ void *setmode(const char *);
 #ifndef MAXPHYS
 #define MAXPHYS (64 * 1024)
 #endif
-
-/* XXX needed by makefs; this should be done in a better way */
-#undef btodb
-#define btodb(x) ((x) << 9)
 
 #ifndef powerof2
 #define powerof2(x) ((((x)-1)&(x))==0)
