@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.143 2001/09/15 04:33:38 thorpej Exp $
+# $NetBSD: files.alpha,v 1.144 2001/09/18 19:54:10 ad Exp $
 #
 # alpha-specific configuration info
 
@@ -193,17 +193,17 @@ file	dev/tc/sfbplus.c		sfbp		needs-flag
 
 # XXX: STIC (stamp interface chip) for PX and PXG
 define	stic
-file	dev/tc/stic.c			stic
+file	dev/tc/stic.c			stic		needs-flag
 
 # XXX: PX PMAG-C
 device	px: wsemuldisplaydev, stic
 attach	px at tc
-file	dev/tc/px.c			px needs-flag
+file	dev/tc/px.c			px		needs-flag
 
 # XXX: PXG PMAG-D, PMAG-E, PMAG-F
 device	pxg: wsemuldisplaydev, stic
 attach	pxg at tc
-file	dev/tc/pxg.c			pxg needs-flag
+file	dev/tc/pxg.c			pxg		needs-flag
 
 # 8530 UARTs
 device	scc: tty
