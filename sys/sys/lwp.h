@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.8 2003/07/28 23:35:21 matt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.9 2003/09/13 07:56:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,12 +72,11 @@ struct	lwp {
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */
+	void	*l_ctxlink;	/* uc_link {get,set}context */
 
 #define l_endzero l_priority
 
 #define l_startcopy l_priority
-
-	void	*l_ctxlink;	/* uc_link {get,set}context */
 
 	u_char	l_priority;	/* Process priority. */
 	u_char	l_usrpri;	/* User-priority based on p_cpu and p_nice. */
