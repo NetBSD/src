@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4 2002/05/04 20:46:23 kleink Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.5 2002/05/04 20:47:48 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -38,11 +38,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <elf.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/disklabel_mbr.h>
-#include <sys/exec_elf.h>
 
 #include "byteorder.h"
 #include "magic.h"
