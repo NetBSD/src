@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.1 2003/04/16 22:16:36 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.2 2003/04/24 17:37:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -141,11 +141,12 @@ start0:
 /* Now scan the mbr partition table for a netbsd partition */
 	
 	xorl	%ebx, %ebx		/* for base extended ptn chain */
-	xorl	%ecx, %ecx		/* for next extended ptn */
 scan_ptn_tbl:
+	xorl	%ecx, %ecx		/* for next extended ptn */
 	movw	$BOOTADDR + MBR_PARTOFF, %di
 1:	movb	4(%di), %al		/* mbrp_typ */
 	movl	8(%di), %ebp		/* mbrp_start == LBA sector */
+	addl	lba_sector, %ebp	/* add base of extended partition */
 	cmpb	$MBR_PTYPE_NETBSD, %al
 	jne	10f
 	testl	%esi, %esi		/* looking for a specific sector? */
