@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.6 1997/10/20 02:20:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $";
+__RCSID("$NetBSD: unexpand.c,v 1.6 1997/10/20 02:20:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
 int	all;
 
+int	main __P((int, char **));
 void tabify __P((char));
 
 int
@@ -63,7 +64,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *cp;
+	char *cp;
 
 	argc--, argv++;
 	if (argc > 0 && argv[0][0] == '-') {
@@ -98,8 +99,8 @@ void
 tabify(c)
 	char c;
 {
-	register char *cp, *dp;
-	register int dcol;
+	char *cp, *dp;
+	int dcol;
 	int ocol;
 
 	ocol = 0;
