@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.266 2002/02/03 23:52:23 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.267 2002/02/04 08:49:04 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -263,17 +263,13 @@ OBJECT_FMT?=	a.out
 .endif
 
 # The sh3 port is incomplete.
-.if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
-NOLINT=		# defined
-.if !defined(HAVE_GCC3)
+.if (${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el") && \
+    !defined(HAVE_GCC3)
 NOPIC=		# defined
-.endif
-NOPROFILE=	# defined
 .endif
 
 # The m68000 port is incomplete.
 .if ${MACHINE_ARCH} == "m68000"
-NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
 .endif
