@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/07/12 20:19:20 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/07/12 20:50:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1999/07/12 20:19:20 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1999/07/12 20:50:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,8 +184,8 @@ setpeer0(host, port)
 	if (connected) {
 		close(f);
 		f = -1;
-		connected = 0;
 	}
+	connected = 0;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -232,6 +232,8 @@ setpeer0(host, port)
 		hostname[sizeof(hostname)-1] = 0;
 		connected = 1;
 	}
+
+	freeaddrinfo(res0);
 }
 
 void
