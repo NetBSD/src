@@ -33,6 +33,9 @@
  *	@(#)spp_timer.h	7.3 (Berkeley) 6/28/90
  */
 
+#ifndef _NETNS_SPP_TIMER_H_
+#define _NETNS_SPP_TIMER_H_
+
 /*
  * Definitions of the SPP timers.  These timers are counted
  * down PR_SLOWHZ times a second.
@@ -120,3 +123,5 @@ char *spptimers[] =
 #ifdef KERNEL
 extern int spp_backoff[];
 #endif
+
+#endif /* !_NETNS_SPP_TIMER_H_ */
