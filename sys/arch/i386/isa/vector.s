@@ -90,7 +90,7 @@
 	enable_icus ;		/* (re)enable ASAP (helps edge trigger?) */ \
 	addl	$4,%esp ; \
 	incl	_cnt+V_INTR ;	/* book-keeping can wait */ \
-	COUNT_EVENT(_intrcnt_actv, id_num) ; \
+	COUNT_INTR(_intrcnt_actv, id_num) ; \
 	SHOW_STI ; \
 	popl	%es ; \
 	popl	%ds ; \
@@ -121,7 +121,7 @@
 	testb	$IRQ_BIT(irq_num),%reg ; \
 	jne	2f ; \
 1: ; \
-	COUNT_EVENT(_intrcnt_actv, id_num) ; \
+	COUNT_INTR(_intrcnt_actv, id_num) ; \
 	movl	_cpl,%eax ; \
 	pushl	%eax ; \
 	pushl	$unit ; \
@@ -272,12 +272,16 @@ _intrcnt_bad15:	.space	4	/* glitches on irq 15 */
 _intrcnt_stray:	.space	4	/* total count of stray interrupts */
 	.globl	_intrcnt_actv
 _intrcnt_actv:	.space	NR_REAL_INT_HANDLERS * 4	/* active interrupts */
+
+#ifdef INTR_DEBUG
 	.globl	_intrcnt_pend
 _intrcnt_pend:	.space	NR_REAL_INT_HANDLERS * 4	/* pending interrupts */
 	.globl	_intrcnt_spl
 _intrcnt_spl:	.space	32 * 4	/* XXX 32 should not be hard coded ? */
 	.globl	_intrcnt_show
 _intrcnt_show:	.space	8 * 4	/* XXX 16 should not be hard coded ? */
+#endif /* INTR_DEBUG */
+
 	.globl	_eintrcnt
 _eintrcnt:			/* used by vmstat to calc size of table */
 
@@ -305,6 +309,8 @@ _intrnames:
 	BUILD_VECTOR(bad,,15,,,,,,)
 	BUILD_VECTOR(stray,,,,,,,,)
 	BUILD_VECTORS
+
+#ifdef INTR_DEBUG
 
 #undef BUILD_FAST_VECTOR
 #define BUILD_FAST_VECTOR	BUILD_VECTOR
@@ -362,5 +368,6 @@ _intrnames:
 	.asciz	"mask5"		/* mask5-mask7 are spares */
 	.asciz	"mask6"
 	.asciz	"mask7"
+#endif /* INTR_DEBUG */
 	
 _eintrnames:
