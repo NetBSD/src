@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.12 1996/07/15 22:52:16 cgd Exp 
+ *	NetBSD: pcidevs,v 1.13 1996/08/23 04:35:41 cgd Exp 
  */
 
 /*
@@ -354,6 +354,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200",
+	},
+	{
+	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200E,
+	    0,
+	    "FORE Systems",
+	    "ATM PCA-200e",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
