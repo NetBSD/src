@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.148 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.149 2004/12/20 23:04:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.148 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.149 2004/12/20 23:04:55 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,6 +358,7 @@ void 	xns_getaddr(const char *, int);
 void 	iso_status(int);
 void 	iso_getaddr(const char *, int);
 
+void	ieee80211_statistics(void);
 void	ieee80211_status(void);
 void	tunnel_status(void);
 void	vlan_status(void);
@@ -1467,6 +1468,69 @@ setifpowersavesleep(const char *val, int d)
 }
 
 void
+ieee80211_statistics(void)
+{
+	struct ieee80211_stats stats;
+
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_data = (caddr_t)&stats;
+	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
+	    (caddr_t)&ifr) == -1)
+		return;
+#define	RX_PRINT(desc, member) printf("\trx " desc ": %u\n", stats.member)
+#define	TX_PRINT(desc, member) printf("\ttx " desc ": %u\n", stats.member)
+
+	RX_PRINT("too short", is_rx_tooshort);
+	RX_PRINT("bad version", is_rx_badversion);
+	RX_PRINT("wrong bss", is_rx_wrongbss);
+	RX_PRINT("duplicate", is_rx_dup);
+	RX_PRINT("wrong direction", is_rx_wrongdir);
+	RX_PRINT("multicast echo", is_rx_mcastecho);
+	RX_PRINT("STA not associated", is_rx_notassoc);
+	RX_PRINT("WEP-encrypted but WEP not configured", is_rx_nowep);
+	RX_PRINT("WEP processing failed", is_rx_wepfail);
+#if 0
+	RX_PRINT("single (M)MSDU, both WEP/non-WEP fragments", is_rx_wepmix);
+	RX_PRINT("non-consecutive fragments", is_rx_fragorder);
+#endif
+	RX_PRINT("decapsulation failed", is_rx_decap);
+	RX_PRINT("management-type discarded", is_rx_mgtdiscard);
+	RX_PRINT("control-type discarded", is_rx_ctl);
+	RX_PRINT("truncated rate set", is_rx_rstoobig);
+	RX_PRINT("beacon/prresp element missing", is_rx_elem_missing);
+	RX_PRINT("beacon/prresp element too big", is_rx_elem_toobig);
+	RX_PRINT("beacon/prresp element too small", is_rx_elem_toosmall);
+	RX_PRINT("beacon/prresp element unknown", is_rx_elem_unknown);
+	RX_PRINT("invalid channel", is_rx_badchan);
+	RX_PRINT("channel mismatch", is_rx_chanmismatch);
+	RX_PRINT("failed node allocation", is_rx_nodealloc);
+	RX_PRINT("SSID mismatch", is_rx_ssidmismatch);
+	RX_PRINT("unsupported authentication algor.", is_rx_auth_unsupported);
+	RX_PRINT("STA authentication failure", is_rx_auth_fail);
+	RX_PRINT("association for wrong bss", is_rx_assoc_bss);
+	RX_PRINT("association without authenication", is_rx_assoc_notauth);
+	RX_PRINT("association capability mismatch", is_rx_assoc_capmismatch);
+	RX_PRINT("association without rate match", is_rx_assoc_norate);
+	RX_PRINT("deauthentication", is_rx_deauth);
+	RX_PRINT("disassocation", is_rx_disassoc);
+	RX_PRINT("unknown subtype", is_rx_badsubtype);
+	RX_PRINT("failed, mbuf unavailable", is_rx_nombuf);
+	RX_PRINT("failed, bad ICV", is_rx_decryptcrc);
+	RX_PRINT("discard mgmt frame in ad-hoc demo mode", is_rx_ahdemo_mgt);
+	RX_PRINT("bad authentication", is_rx_bad_auth);
+	TX_PRINT("failed, mbuf unavailable", is_tx_nombuf);
+	TX_PRINT("failed, no node", is_tx_nonode);
+	TX_PRINT("unknown mgmt frame", is_tx_unknownmgt);
+	printf("\tactive scans: %u\n", stats.is_scan_active);
+	printf("\tpassive scans: %u\n", stats.is_scan_passive);
+	printf("\tnodes timed-out for inactivity: %u\n",
+	    stats.is_node_timeout);
+	printf("\tcrypto context memory unavailable: %u\n",
+	    stats.is_crypto_nomem);
+}
+
+void
 ieee80211_status(void)
 {
 	int i, nwkey_verbose;
@@ -2019,6 +2083,8 @@ status(const struct sockaddr_dl *sdl)
 		printf("\n");
 #undef PLURAL
 	}
+
+	ieee80211_statistics();
 
  proto_status:
 	if ((p = afp) != NULL) {
