@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.38 1999/09/06 23:58:59 soren Exp $ */
+/*	$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.38 1999/09/06 23:58:59 soren Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.39 2000/01/31 15:54:48 soda Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,11 @@ static char lbuf[LBUF];
  *	Created.
  */
 
-char *disk = "/dev/rwd0d";
+#ifndef _PATH_DEFDISK
+#define	_PATH_DEFDISK	"/dev/rwd0d"
+#endif
+
+char *disk = _PATH_DEFDISK;
 
 struct disklabel disklabel;		/* disk parameters */
 
