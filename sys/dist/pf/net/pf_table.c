@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.47 2004/03/09 21:44:41 mcbride Exp $	*/
 
 /*
@@ -190,20 +190,13 @@ struct pfr_ktablehead	 pfr_ktables;
 struct pfr_table	 pfr_nulltable;
 int			 pfr_ktable_cnt;
 
-#ifdef __NetBSD__
-POOL_INIT(pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0, "pfrktable", NULL);
-POOL_INIT(pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0, "pfrkentry", NULL);
-#endif
-
 void
 pfr_initialize(void)
 {
-#ifdef __OpenBSD__
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
 	    "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry", NULL);
-#endif
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -212,6 +205,15 @@ pfr_initialize(void)
 
 	memset(&pfr_ffaddr, 0xff, sizeof(pfr_ffaddr));
 }
+
+#ifdef _LKM
+void
+pfr_destroy(void)
+{
+	pool_destroy(&pfr_ktable_pl);
+	pool_destroy(&pfr_kentry_pl);
+}
+#endif
 
 int
 pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)

@@ -1,3 +1,3 @@
-SUBDIR=	bsdcomp deflate
+SUBDIR=	bsdcomp deflate pf
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.80 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
@@ -135,19 +135,10 @@ struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
 struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents, pf_ncache;
 
-#ifdef __NetBSD__
-POOL_INIT(pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent", NULL);
-POOL_INIT(pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag", NULL);
-POOL_INIT(pf_cache_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrcache", NULL);
-POOL_INIT(pf_cent_pl, sizeof(struct pf_frcache), 0, 0, 0, "pffrcent", NULL);
-POOL_INIT(pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
-    "pfstscr", NULL);
-#endif
 
 void
 pf_normalize_init(void)
 {
-#ifdef __OpenBSD__
 	pool_init(&pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent",
 	    NULL);
 	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
@@ -158,7 +149,6 @@ pf_normalize_init(void)
 	    NULL);
 	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
 	    "pfstscr", NULL);
-#endif
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
@@ -168,6 +158,29 @@ pf_normalize_init(void)
 	TAILQ_INIT(&pf_fragqueue);
 	TAILQ_INIT(&pf_cachequeue);
 }
+
+#ifdef _LKM
+#define TAILQ_DRAIN(list, element)				\
+	do {							\
+		while ((element = TAILQ_FIRST(list)) != NULL)	\
+			TAILQ_REMOVE(list, element, frag_next);	\
+	} while (0)
+
+void
+pf_normalize_destroy(void)
+{
+	struct pf_fragment *fragment_e;
+
+	TAILQ_DRAIN(&pf_fragqueue, fragment_e);
+	TAILQ_DRAIN(&pf_cachequeue, fragment_e);
+
+	pool_destroy(&pf_state_scrub_pl);
+	pool_destroy(&pf_cent_pl);
+	pool_destroy(&pf_cache_pl);
+	pool_destroy(&pf_frag_pl);
+	pool_destroy(&pf_frent_pl);
+}
+#endif
 
 static __inline int
 pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
