@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.6 1999/05/03 07:32:50 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.6.12.1 2002/03/20 22:28:41 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -797,11 +797,13 @@ prom_init_oldmon()
 	promops.po_setcallback = (void *)sparc_noop;
 	promops.po_setcontext = oldpvec->setcxsegmap;
 
+#ifdef SUN4
 #ifndef _STANDALONE
 	if (oldpvec->romvecVersion >= 2) {
 		extern void oldmon_w_cmd __P((u_long, char *));
 		*oldpvec->vector_cmd = oldmon_w_cmd;
 	}
+#endif
 #endif
 }
 
