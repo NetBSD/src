@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.14 2000/02/25 22:24:11 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.15 2000/03/23 14:50:36 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -556,6 +556,8 @@ get_component_label(fd, component)
 	       component_label.blockSize, component_label.numBlocks);
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
+	printf("   Root partition: %s\n",
+	       component_label.root_partition ? "Yes" : "No" );
 	printf("   Last configured as: raid%d\n", component_label.last_unit );
 }
 
