@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.13 2004/04/18 18:54:04 matt Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.14 2004/04/19 05:16:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.13 2004/04/18 18:54:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.14 2004/04/19 05:16:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,7 @@ static struct sockaddr_iso idrp_addrs[2] =
  * IDRP initialization
  */
 void
-idrp_init()
+idrp_init(void)
 {
 	extern struct clnl_protosw clnl_protox[256];
 
@@ -90,13 +90,7 @@ idrp_init()
  * No return value.
  */
 void
-#if __STDC__
 idrp_input(struct mbuf *m, ...)
-#else
-idrp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src, *dst;
 	va_list ap;
@@ -154,11 +148,8 @@ u_long          idrp_recvspace = 40 * 1024;	/* 40 1K datagrams */
 
 /* ARGSUSED */
 int
-idrp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	struct rawcb *rp;
 	int error = 0;

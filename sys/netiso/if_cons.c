@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.15 2003/08/07 16:33:35 agc Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.16 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.15 2003/08/07 16:33:35 agc Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.16 2004/04/19 05:16:45 matt Exp $");
 
 #ifdef TPCONS
 #ifdef _KERNEL
@@ -157,12 +157,12 @@ unsigned        LAST_CALL_PCB;
 
 #define CONS_IFQMAXLEN 5
 
-Static int make_partial_x25_packet __P((struct isopcb *, struct pklcd *));
-Static int NSAPtoDTE __P((struct sockaddr_iso *, struct sockaddr_x25 *));
-Static int FACILtoNSAP __P((struct sockaddr_iso *, u_char *));
-Static void init_siso __P((struct sockaddr_iso *));
-Static int DTEtoNSAP __P((struct sockaddr_iso *, struct sockaddr_x25 *));
-Static int parse_facil __P((struct pklcd *, struct isopcb *, caddr_t, u_char));
+Static int make_partial_x25_packet (struct isopcb *, struct pklcd *);
+Static int NSAPtoDTE (struct sockaddr_iso *, struct sockaddr_x25 *);
+Static int FACILtoNSAP (struct sockaddr_iso *, u_char *);
+Static void init_siso (struct sockaddr_iso *);
+Static int DTEtoNSAP (struct sockaddr_iso *, struct sockaddr_x25 *);
+Static int parse_facil (struct pklcd *, struct isopcb *, caddr_t, u_char);
 
 /* protosw pointers for getting to higher layer */
 Static struct protosw *CLNP_proto;
@@ -186,16 +186,12 @@ extern struct isopcb tp_isopcb;	/* chain of all TP pcbs */
  * RETURNS: VOID
  */
 void
-nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
-	char  *src_octet;
-	char  *dst_octet;
-	unsigned src_nibble;
-	unsigned dst_nibble;
-	int             len;
+nibble_copy(char *src_octet, unsigned int src_nibble, char *dst_octet,
+	unsigned int dst_nibble, int len)
 {
 
 	int i;
-	unsigned dshift, sshift;
+	unsigned int dshift, sshift;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
@@ -236,17 +232,13 @@ nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
  * RETURNS: 0 if they differ, 1 if they are the same.
  */
 int
-nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
-	char  *src_octet;
-	char  *dst_octet;
-	unsigned src_nibble;
-	unsigned dst_nibble;
-	int             len;
+nibble_match(char *src_octet, unsigned int src_nibble, char *dst_octet,
+	unsigned int dst_nibble, int len)
 {
 
 	int i;
-	unsigned dshift, sshift;
-	u_char          nibble_a, nibble_b;
+	u_int dshift, sshift;
+	u_char nibble_a, nibble_b;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
@@ -291,7 +283,7 @@ nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
  *	initialize the protocol
  */
 void
-cons_init()
+cons_init(void)
 {
 	CLNP_proto = pffindproto(AF_ISO, ISOPROTO_CLNP, SOCK_DGRAM);
 	X25_proto = pffindproto(AF_ISO, ISOPROTO_X25, SOCK_STREAM);
@@ -311,9 +303,7 @@ cons_init()
 }
 
 int
-tp_incoming(m, v)
-	struct mbuf *m;
-	void *v;
+tp_incoming(struct mbuf *m, void *v)
 {
 	struct pklcd   *lcp = v;
 	struct isopcb *isop;
@@ -337,9 +327,7 @@ tp_incoming(m, v)
 }
 
 int
-cons_tpinput(m0, v)
-	struct mbuf    *m0;
-	void *v;
+cons_tpinput(struct mbuf *m0, void *v)
 {
 	struct pklcd   *lcp = v;
 	struct isopcb *isop = (struct isopcb *) lcp->lcd_upnext;
@@ -398,8 +386,7 @@ cons_tpinput(m0, v)
  *  returns E*
  */
 int
-cons_connect(isop)
-	struct isopcb *isop;
+cons_connect(struct isopcb *isop)
 {
 	struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 	int             error;
@@ -444,18 +431,14 @@ cons_connect(isop)
  * instead of an address.
  */
 void *
-cons_ctlinput(cmd, sa, v)
-	int             cmd;
-	struct sockaddr *sa;
-	void *v;
+cons_ctlinput(int cmd, struct sockaddr *sa, void *v)
 {
 	return NULL;
 }
 
 
 int
-find_error_reason(xp)
-	struct x25_packet *xp;
+find_error_reason(struct x25_packet *xp)
 {
 	int             error, cause = 0;
 
@@ -557,9 +540,7 @@ int             cons_use_facils = 0;
 int  cons_use_udata = 1;	/* KLUDGE FOR DEBUGGING */
 
 Static int
-make_partial_x25_packet(isop, lcp)
-	struct isopcb  *isop;
-	struct pklcd   *lcp;
+make_partial_x25_packet(struct isopcb *isop, struct pklcd *lcp)
 {
 	u_int           proto = 0;
 	int             flag = 0;
@@ -707,9 +688,7 @@ make_partial_x25_packet(isop, lcp)
  */
 
 Static int
-NSAPtoDTE(siso, sx25)
-	struct sockaddr_iso *siso;
-	struct sockaddr_x25 *sx25;
+NSAPtoDTE(struct sockaddr_iso *siso, struct sockaddr_x25 *sx25)
 {
 	int             dtelen = -1;
 
@@ -777,9 +756,7 @@ NSAPtoDTE(siso, sx25)
  */
 
 Static int
-FACILtoNSAP(addr, buf)
-	u_char *buf;
-	struct sockaddr_iso *addr;
+FACILtoNSAP(u_char *buf, struct sockaddr_iso *addr)
 {
 	int             len_in_nibbles = *++buf & 0x3f;
 	u_char          buf_len = (len_in_nibbles + 1) >> 1;;	/* in bytes */
@@ -820,8 +797,7 @@ FACILtoNSAP(addr, buf)
 }
 
 Static void
-init_siso(siso)
-	struct sockaddr_iso *siso;
+init_siso(struct sockaddr_iso *siso)
 {
 	siso->siso_len = sizeof(*siso);
 	siso->siso_family = AF_ISO;
@@ -842,14 +818,12 @@ init_siso(siso)
  */
 
 Static int
-DTEtoNSAP(addr, sx)
-	struct sockaddr_iso *addr;
-	struct sockaddr_x25 *sx;
+DTEtoNSAP(struct sockaddr_iso *addr, struct sockaddr_x25 *sx)
 {
 	char  *in, *out;
 	int    first;
-	int             pad_tail = 0;
-	int             src_len;
+	int    pad_tail = 0;
+	int    src_len;
 
 
 	init_siso(addr);
@@ -884,11 +858,7 @@ DTEtoNSAP(addr, sx)
  */
 
 Static int
-parse_facil(lcp, isop, buf, buf_len)
-	caddr_t         buf;
-	u_char          buf_len;/* in bytes */
-	struct isopcb  *isop;
-	struct pklcd   *lcp;
+parse_facil(struct pklcd *lcp, struct isopcb *isop, caddr_t buf, u_char buf_len)
 {
 	int    i;
 	u_char *ptr = (u_char *) buf;

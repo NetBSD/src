@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.9 2003/08/07 16:33:43 agc Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.10 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.9 2003/08/07 16:33:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.10 2004/04/19 05:16:46 matt Exp $");
 
 #define TP_TRACEFILE
 
@@ -99,13 +99,8 @@ u_char          tp_traceflags[128];
 /* VARARGS */
 
 void
-tpTrace(tpcb, event, arg, src, len, arg4, arg5)
-	struct tp_pcb  *tpcb;
-	u_int           event, arg;
-	u_int           src;
-	u_int           len;
-	u_int           arg4;
-	u_int           arg5;
+tpTrace(struct tp_pcb  *tpcb, u_int event, u_int arg, u_int src, u_int len,
+	u_int arg4, u_int arg5)
 {
 	struct tp_Trace *tp;
 

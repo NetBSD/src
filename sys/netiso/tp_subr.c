@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.18 2003/08/11 15:17:31 itojun Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.19 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.18 2003/08/11 15:17:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.19 2004/04/19 05:16:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,7 @@ int             tprexmtthresh = 3;
  * 	Returns 1 if it did this, 0 if the ack caused no action.
  */
 int
-tp_goodXack(tpcb, seq)
-	struct tp_pcb  *tpcb;
-	SeqNum          seq;
+tp_goodXack(struct tp_pcb  *tpcb, SeqNum seq)
 {
 
 #ifdef TPPT
@@ -162,8 +160,7 @@ tp_goodXack(tpcb, seq)
  */
 
 void
-tp_rtt_rtv(tpcb)
-	struct tp_pcb *tpcb;
+tp_rtt_rtv(struct tp_pcb *tpcb)
 {
 	int             old = tpcb->tp_rtt;
 	int             elapsed, delta = 0;
@@ -247,11 +244,7 @@ tp_rtt_rtv(tpcb)
  * 	No need to see the tpdu itself.
  */
 int
-tp_goodack(tpcb, cdt, seq, subseq)
-	struct tp_pcb *tpcb;
-	u_int           cdt;
-	SeqNum seq;
-	u_int           subseq;
+tp_goodack(struct tp_pcb *tpcb, u_int cdt, SeqNum seq, u_int subseq)
 {
 	int             old_fcredit = 0;
 	int             bang = 0;	/* bang --> ack for something
@@ -440,9 +433,7 @@ done:
  *  from the retransmission queue.
  */
 int
-tp_sbdrop(tpcb, seq)
-	struct tp_pcb *tpcb;
-	SeqNum          seq;
+tp_sbdrop(struct tp_pcb *tpcb, SeqNum seq)
 {
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
 	int    i = SEQ_SUB(tpcb, seq, tpcb->tp_snduna);
@@ -482,8 +473,7 @@ tp_sbdrop(tpcb, seq)
  *  using this value.
  */
 void
-tp_send(tpcb)
-	struct tp_pcb *tpcb;
+tp_send(struct tp_pcb *tpcb)
 {
 	int    len;
 	struct mbuf *m;
@@ -667,10 +657,7 @@ int             TPNagleok;
 int             TPNagled;
 
 int
-tp_packetize(tpcb, m, eotsdu)
-	struct tp_pcb *tpcb;
-	struct mbuf *m;
-	int             eotsdu;
+tp_packetize(struct tp_pcb *tpcb, struct mbuf *m, int eotsdu)
 {
 	struct mbuf *n = NULL;
 	struct sockbuf *sb = &tpcb->tp_sock->so_snd;
@@ -773,9 +760,7 @@ out:
  */
 
 int
-tp_stash(tpcb, e)
-	struct tp_pcb *tpcb;
-	struct tp_event *e;
+tp_stash(struct tp_pcb *tpcb, struct tp_event *e)
 {
 	int    ack_reason = tpcb->tp_ack_strat & ACK_STRAT_EACH;
 	/* 0--> delay acks until full window */
@@ -959,8 +944,7 @@ tp_stash(tpcb, e)
  * the space avaible in the receive socket (XXX).
  */
 void
-tp_rsyflush(tpcb)
-	struct tp_pcb *tpcb;
+tp_rsyflush(struct tp_pcb *tpcb)
 {
 	struct mbuf **mp;
 	if (tpcb->tp_rsycnt) {
@@ -980,8 +964,7 @@ tp_rsyflush(tpcb)
 }
 
 void
-tp_rsyset(tpcb)
-	struct tp_pcb *tpcb;
+tp_rsyset(struct tp_pcb *tpcb)
 {
 	struct socket *so = tpcb->tp_sock;
 	int             maxcredit = tpcb->tp_xtd_format ? 0xffff : 0xf;
@@ -1003,9 +986,7 @@ tp_rsyset(tpcb)
 
 
 void
-tpsbcheck(tpcb, i)
-	struct tp_pcb  *tpcb;
-	int i;
+tpsbcheck(struct tp_pcb *tpcb, int i)
 {
 	struct mbuf *n, *m;
 	int    len = 0, mbcnt = 0, pktlen;

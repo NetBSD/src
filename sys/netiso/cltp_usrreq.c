@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.23 2003/09/30 00:01:18 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.24 2004/04/19 05:16:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.23 2003/09/30 00:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.24 2004/04/19 05:16:45 matt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -193,7 +193,6 @@ cltp_ctlinput(cmd, sa, dummy)
 	struct sockaddr *sa;
 	void *dummy;
 {
-	extern u_char   inetctlerrmap[];
 	struct sockaddr_iso *siso;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
@@ -211,13 +210,13 @@ cltp_ctlinput(cmd, sa, dummy)
 	case PRC_REDIRECT_TOSNET:
 	case PRC_REDIRECT_TOSHOST:
 		iso_pcbnotify(&cltb, siso,
-			      (int) inetctlerrmap[cmd], iso_rtchange);
+			      (int) isoctlerrmap[cmd], iso_rtchange);
 		break;
 
 	default:
-		if (inetctlerrmap[cmd] == 0)
+		if (isoctlerrmap[cmd] == 0)
 			return;	/* XXX */
-		iso_pcbnotify(&cltb, siso, (int) inetctlerrmap[cmd],
+		iso_pcbnotify(&cltb, siso, (int) isoctlerrmap[cmd],
 			      cltp_notify);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.24 2004/04/18 18:54:04 matt Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.25 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.24 2004/04/18 18:54:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.24 2004/04/18 18:54:04 matt Exp $");
 #include <netccitt/pk_extern.h>
 
 #if 0
-static void copyQOSparms __P((struct tp_conn_param *, struct tp_conn_param *));
+static void copyQOSparms (struct tp_conn_param *, struct tp_conn_param *);
 #endif
 
 /*
@@ -141,8 +141,7 @@ static void copyQOSparms __P((struct tp_conn_param *, struct tp_conn_param *));
  *  debugging messages easily here.
  */
 void
-tp_local_credit(tpcb)
-	struct tp_pcb  *tpcb;
+tp_local_credit(struct tp_pcb *tpcb)
 {
 	LOCAL_CREDIT(tpcb);
 #ifdef ARGO_DEBUG
@@ -183,9 +182,7 @@ tp_local_credit(tpcb)
  * NOTES:
  */
 int
-tp_protocol_error(e, tpcb)
-	struct tp_event *e;
-	struct tp_pcb  *tpcb;
+tp_protocol_error(struct tp_event *e, struct tp_pcb  *tpcb)
 {
 	printf("TP PROTOCOL ERROR! tpcb %p event 0x%x, state 0x%x\n",
 	       tpcb, e->ev_number, tpcb->tp_state);
@@ -201,7 +198,7 @@ tp_protocol_error(e, tpcb)
 
 /* Not used at the moment */
 void
-tp_drain()
+tp_drain(void)
 {
 }
 
@@ -227,10 +224,7 @@ tp_drain()
  * NOTES:
  */
 void
-tp_indicate(ind, tpcb, error)
-	int             ind;
-	u_short         error;
-	struct tp_pcb *tpcb;
+tp_indicate(int ind, struct tp_pcb *tpcb, u_int error)
 {
 	struct socket *so = tpcb->tp_sock;
 #ifdef TPPT
@@ -306,8 +300,7 @@ tp_indicate(ind, tpcb, error)
  * NOTES:
  */
 void
-tp_getoptions(tpcb)
-	struct tp_pcb  *tpcb;
+tp_getoptions(struct tp_pcb *tpcb)
 {
 	tpcb->tp_seqmask =
 		tpcb->tp_xtd_format ? TP_XTD_FMT_MASK : TP_NML_FMT_MASK;
@@ -336,8 +329,7 @@ tp_getoptions(tpcb)
  * NOTES:
  */
 void
-tp_recycle_tsuffix(v)
-	void *v;
+tp_recycle_tsuffix(void *v)
 {
 	struct tp_pcb  *tpcb = v;
 	bzero((caddr_t) tpcb->tp_lsuffix, sizeof(tpcb->tp_lsuffix));
@@ -375,9 +367,7 @@ tp_recycle_tsuffix(v)
  * NOTES:
  */
 void
-tp_quench(ipcb, cmd)
-	struct inpcb  *ipcb;
-	int             cmd;
+tp_quench(struct inpcb  *ipcb, int cmd)
 {
 	struct tp_pcb  *tpcb = (struct tp_pcb *) ipcb;
 #ifdef ARGO_DEBUG
@@ -417,9 +407,7 @@ tp_quench(ipcb, cmd)
  * NOTES:
  */
 void
-tp_netcmd(tpcb, cmd)
-	struct tp_pcb  *tpcb;
-	int             cmd;
+tp_netcmd(struct tp_pcb *tpcb, int cmd)
 {
 #ifdef TPCONS
 	struct isopcb  *isop;
@@ -464,8 +452,7 @@ tp_netcmd(tpcb, cmd)
  * 	Convert a class mask to the highest numeric value it represents.
  */
 int
-tp_mask_to_num(x)
-	u_char          x;
+tp_mask_to_num(u_char x)
 {
 	int    j;
 
@@ -493,8 +480,7 @@ tp_mask_to_num(x)
 
 #if 0
 static void
-copyQOSparms(src, dst)
-	struct tp_conn_param *src, *dst;
+copyQOSparms(const struct tp_conn_param *src, struct tp_conn_params *dst)
 {
 	/* copy all but the bits stuff at the end */
 #define COPYSIZE (12 * sizeof(short))
@@ -516,9 +502,7 @@ copyQOSparms(src, dst)
  * parameters from pre-set or cached values in the routing entry.
  */
 void
-tp_mss(tpcb, nhdr_size)
-	struct tp_pcb *tpcb;
-	int             nhdr_size;
+tp_mss(struct tp_pcb *tpcb, int nhdr_size)
 {
 	struct rtentry *rt;
 	struct ifnet   *ifp;
@@ -643,10 +627,7 @@ punt_route:
  *	 based on information cached on the route.
  */
 int
-tp_route_to(m, tpcb, channel)
-	struct mbuf    *m;
-	struct tp_pcb *tpcb;
-	caddr_t         channel;
+tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, caddr_t channel)
 {
 	struct sockaddr_iso *siso;	/* NOTE: this may be a
 						 * sockaddr_in */
@@ -757,18 +738,14 @@ done:
 
 #ifndef CCITT
 void
-pk_flowcontrol(lcp, foo, bar)
-	struct pklcd *lcp;
-	int foo, bar;
+pk_flowcontrol(struct pklcd *lcp, int foo, int bar)
 {
 }
 #endif
 
 /* class zero version */
 void
-tp0_stash(tpcb, e)
-	struct tp_pcb *tpcb;
-	struct tp_event *e;
+tp0_stash(struct tp_pcb *tpcb, struct tp_event *e)
 {
 #define E e->TPDU_ATTR(DT)
 
@@ -817,8 +794,7 @@ tp0_stash(tpcb, e)
 }
 
 void
-tp0_openflow(tpcb)
-	struct tp_pcb *tpcb;
+tp0_openflow(struct tp_pcb *tpcb)
 {
 	struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
@@ -844,8 +820,7 @@ tp0_openflow(tpcb)
  */
 
 int
-tp_setup_perf(tpcb)
-	struct tp_pcb *tpcb;
+tp_setup_perf(struct tp_pcb *tpcb)
 {
 	if (tpcb->tp_p_meas == 0) {
 		tpcb->tp_p_meas = malloc(sizeof(struct tp_pmeas), M_PCB, M_WAITOK|M_ZERO);
@@ -865,8 +840,7 @@ tp_setup_perf(tpcb)
 
 #ifdef ARGO_DEBUG
 void
-dump_addr(addr)
-	struct sockaddr *addr;
+dump_addr(struct sockaddr *addr)
 {
 	switch (addr->sa_family) {
 	case AF_INET:
@@ -892,9 +866,7 @@ dump_addr(addr)
  *		character representations (if printable).
  */
 void
-Dump_buf(buf, len)
-	caddr_t         buf;
-	int             len;
+Dump_buf(caddr_t buf, int len)
 {
 	int             i, j;
 #define Buf ((u_char *)buf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.17 2004/02/13 17:56:17 wiz Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.18 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.17 2004/02/13 17:56:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.18 2004/04/19 05:16:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,12 +117,11 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.17 2004/02/13 17:56:17 wiz Exp $");
 
 #include <machine/stdarg.h>
 
-static struct socket *tp_newsocket __P((struct socket *, struct sockaddr *,
-					caddr_t, u_int, u_int));
+static struct socket *
+	tp_newsocket(struct socket *, struct sockaddr *, caddr_t, u_int, u_int);
 
-struct mbuf    *
-tp_inputprep(m)
-	struct mbuf *m;
+struct mbuf *
+tp_inputprep(struct mbuf *m)
 {
 	int             hdrlen;
 
@@ -196,7 +195,7 @@ tp_inputprep(m)
 #define TP_LEN_CLASS_0_INDEX	2
 #define TP_MAX_DATA_INDEX 3
 
-static u_char   tpdu_info[][4] =
+static const u_char tpdu_info[][4] =
 {
 	/* length						 max data len */
 	/* reg fmt 	xtd fmt  class 0  		 	  */
@@ -261,12 +260,12 @@ static u_char   tpdu_info[][4] =
  * NOTES:
  */
 static struct socket *
-tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
-	struct socket  *so;
-	struct sockaddr *fname;
-	caddr_t         cons_channel;
-	u_int          class_to_use;
-	u_int           netservice;
+tp_newsocket(
+	struct socket  *so,
+	struct sockaddr *fname,
+	caddr_t         cons_channel,
+	u_int          class_to_use,
+	u_int           netservice)
 {
 	struct tp_pcb *tpcb = sototpcb(so);	/* old tpcb, needed
 							 * below */
@@ -417,17 +416,11 @@ ok:
  * reasonable minimum.
  */
 void
-#if __STDC__
 tp_input(struct mbuf *m, ...)
-#else
-tp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;	/* NSAP addresses */
 	caddr_t         cons_channel;
-	int             (*dgout_routine) __P((struct mbuf *, ...));
+	int             (*dgout_routine) (struct mbuf *, ...);
 	int             ce_bit;
 	struct tp_pcb *tpcb;
 	struct tpdu *hdr;
@@ -455,7 +448,7 @@ tp_input(m, va_alist)
 	laddr = va_arg(ap, struct sockaddr *);
 	cons_channel = va_arg(ap, caddr_t);
 	/* XXX: Does va_arg does not work for function ptrs */
-	dgout_routine = (int (*) __P((struct mbuf *, ...))) va_arg(ap, void *);
+	dgout_routine = (int (*)(struct mbuf *, ...)) va_arg(ap, void *);
 	ce_bit = va_arg(ap, int);
 	va_end(ap);
 
@@ -1749,9 +1742,7 @@ respond:
  * NOTES:	 It would be nice if it got the network header size as well.
  */
 int
-tp_headersize(dutype, tpcb)
-	int             dutype;
-	struct tp_pcb  *tpcb;
+tp_headersize(int dutype, struct tp_pcb *tpcb)
 {
 	int    size = 0;
 

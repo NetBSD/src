@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.16 2003/09/06 23:56:27 christos Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.17 2004/04/19 05:16:46 matt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.16 2003/09/06 23:56:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.17 2004/04/19 05:16:46 matt Exp $");
 
 #include "tp_states.h"
 
@@ -43,14 +43,11 @@ static const struct act_ent {
 static int trick_hc = 1;
 
 #include "tp_events.h"
-static int _Xebec_action __P((int, struct tp_event *, struct tp_pcb *));
-static int _Xebec_index __P((struct tp_event *, struct tp_pcb *));
+static int _Xebec_action (int, struct tp_event *, struct tp_pcb *);
+static int _Xebec_index (struct tp_event *, struct tp_pcb *);
 
 static int
-_Xebec_action(a, e, p)
-	int             a;
-	struct tp_event *e;
-	struct tp_pcb  *p;
+_Xebec_action(int a, struct tp_event *e, struct tp_pcb *p)
 {
 	int             error;
 	struct mbuf    *data = NULL;
@@ -953,7 +950,7 @@ _Xebec_index(e, p)
 		return 0;
 	}			/* end switch */
 }				/* _Xebec_index() */
-static const int      inx[26][9] =
+static const int inx[26][9] =
 {
     {0, 0, 0, 0, 0, 0, 0, 0, 0,},
     {0x0, 0x0, 0x0, 0x0, 0x31, 0x0, 0x0, 0x0, 0x0,},
@@ -983,13 +980,11 @@ static const int      inx[26][9] =
     {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, -1,},
 };
 int
-tp_driver(p, e)
-	struct tp_pcb *p;
-	struct tp_event *e;
+tp_driver(struct tp_pcb *p, struct tp_event *e)
 {
 	int    index, error = 0;
 	const struct act_ent *a;
-	static struct act_ent erroraction = {0, -1};
+	static const struct act_ent erroraction = {0, -1};
 
 	index = inx[1 + e->ev_number][p->tp_state];
 	if (index < 0)

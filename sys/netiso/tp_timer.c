@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.14 2004/04/18 18:54:04 matt Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.15 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.14 2004/04/18 18:54:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.15 2004/04/19 05:16:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ struct tp_pcb  *tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
  *  initialize data structures for the timers
  */
 void
-tp_timerinit()
+tp_timerinit(void)
 {
 	int    s;
 	/*
@@ -118,10 +118,10 @@ tp_timerinit()
  * Set an E type timer.
  */
 void
-tp_etimeout(tpcb, fun, ticks)
-	struct tp_pcb *tpcb;
-	int             fun;	/* function to be called */
-	int             ticks;
+tp_etimeout(
+	struct tp_pcb *tpcb,
+	int             fun,	/* function to be called */
+	int             ticks)
 {
 
 	u_int *callp;
@@ -153,9 +153,7 @@ tp_etimeout(tpcb, fun, ticks)
  *  Cancel all occurrences of E-timer function (fun) for reference (refp)
  */
 void
-tp_euntimeout(tpcb, fun)
-	struct tp_pcb *tpcb;
-	int             fun;
+tp_euntimeout(struct tp_pcb *tpcb, int fun)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_TIMER]) {
@@ -184,7 +182,7 @@ tp_euntimeout(tpcb, fun)
  *  the timers and possibly generate events.
  */
 void
-tp_slowtimo()
+tp_slowtimo(void)
 {
 	u_int *cp;
 	struct tp_ref *rp;
@@ -234,8 +232,7 @@ tp_slowtimo()
  * Called From: tp.trans from tp_slowtimo() -- retransmission timer went off.
  */
 void
-tp_data_retrans(tpcb)
-	struct tp_pcb *tpcb;
+tp_data_retrans(struct tp_pcb *tpcb)
 {
 	int             rexmt, win;
 	tpcb->tp_rttemit = 0;	/* cancel current round trip time */
@@ -280,7 +277,7 @@ tp_data_retrans(tpcb)
 }
 
 void
-tp_fasttimo()
+tp_fasttimo(void)
 {
 	struct tp_pcb *t;
 	int             s = splsoftnet();
@@ -313,9 +310,7 @@ tp_fasttimo()
  * 	Set a C type timer of type (which) to go off after (ticks) time.
  */
 void
-tp_ctimeout(tpcb, which, ticks)
-	struct tp_pcb *tpcb;
-	int             which, ticks;
+tp_ctimeout(struct tp_pcb *tpcb, int which, int ticks)
 {
 
 #ifdef TPPT
@@ -340,9 +335,7 @@ tp_ctimeout(tpcb, which, ticks)
  * 	parameter (ticks) is > the current value of the timer.
  */
 void
-tp_ctimeout_MIN(tpcb, which, ticks)
-	struct tp_pcb *tpcb;
-	int             which, ticks;
+tp_ctimeout_MIN(struct tp_pcb *tpcb, int which, int ticks)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_TIMER]) {
@@ -365,9 +358,7 @@ tp_ctimeout_MIN(tpcb, which, ticks)
  *  Cancel the (which) timer in the ref structure indicated by (refp).
  */
 void
-tp_cuntimeout(tpcb, which)
-	struct tp_pcb *tpcb;
-	int             which;
+tp_cuntimeout(struct tp_pcb *tpcb, int which)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {

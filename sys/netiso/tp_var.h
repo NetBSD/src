@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.6 2003/06/29 22:32:07 fvdl Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.7 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ void tp_soisdisconnected __P((struct tp_pcb *));
 void tp_freeref __P((RefNum));
 u_long tp_getref __P((struct tp_pcb *));
 int tp_set_npcb __P((struct tp_pcb *));
-int tp_attach   __P((struct socket *, long));
+int tp_attach   __P((struct socket *, int));
 void tp_detach  __P((struct tp_pcb *));
 int tp_tselinuse __P((int, caddr_t, struct sockaddr_iso *, int));
 int tp_pcbbind  __P((void *, struct mbuf *, struct proc *));
@@ -145,7 +145,7 @@ void tpsbcheck   __P((struct tp_pcb *, int));
 void tp_local_credit __P((struct tp_pcb *));
 int tp_protocol_error __P((struct tp_event *, struct tp_pcb *));
 void tp_drain   __P((void));
-void tp_indicate __P((int, struct tp_pcb *, u_short));
+void tp_indicate __P((int, struct tp_pcb *, u_int));
 void tp_getoptions __P((struct tp_pcb *));
 void tp_recycle_tsuffix __P((void *));
 void tp_quench  __P((struct inpcb *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.24 2003/08/11 15:17:30 itojun Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.24 2003/08/11 15:17:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.25 2004/04/19 05:16:46 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -117,10 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.24 2003/08/11 15:17:30 itojun Exp $"
  */
 
 int
-tp_consistency(tpcb, cmd, param)
-	u_int           cmd;
-	struct tp_conn_param *param;
-	struct tp_pcb  *tpcb;
+tp_consistency(struct tp_pcb *tpcb, u_int cmd, struct tp_conn_param *param)
 {
 	int    error = EOK;
 	int             class_to_use = tp_mask_to_num(param->p_class);
@@ -388,10 +385,8 @@ done:
  * NOTES:
  */
 int
-tp_ctloutput(cmd, so, level, optname, mp)
-	int             cmd, level, optname;
-	struct socket  *so;
-	struct mbuf   **mp;
+tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
+	struct mbuf **mp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);

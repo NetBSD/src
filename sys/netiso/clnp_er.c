@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.14 2003/08/07 16:33:32 agc Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.15 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.14 2003/08/07 16:33:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.15 2004/04/19 05:16:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.14 2003/08/07 16:33:32 agc Exp $");
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
 
-static struct clnp_fixed er_template = {
+static const struct clnp_fixed er_template = {
 	ISO8473_CLNP,		/* network identifier */
 	0,			/* length */
 	ISO8473_V1,		/* version */
@@ -105,10 +105,10 @@ static struct clnp_fixed er_template = {
  * NOTES:
  */
 void
-clnp_er_input(m, src, reason)
-	struct mbuf    *m;	/* ptr to packet itself */
-	struct iso_addr *src;	/* ptr to src of er */
-	u_int           reason;	/* reason code of er */
+clnp_er_input(
+	struct mbuf    *m,	/* ptr to packet itself */
+	struct iso_addr *src,	/* ptr to src of er */
+	u_int           reason)	/* reason code of er */
 {
 	int             cmd = -1;
 
@@ -381,8 +381,7 @@ done:
 }
 
 int
-clnp_er_index(p)
-	u_int p;
+clnp_er_index(u_int p)
 {
 	u_char *cp = clnp_er_codes + CLNP_ERRORS;
 	while (cp > clnp_er_codes) {
