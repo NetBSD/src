@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.6 2003/07/15 00:24:59 lukem Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.7 2003/07/31 17:51:09 he Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.6 2003/07/15 00:24:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.7 2003/07/31 17:51:09 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ struct arm32_pci_chipset ifpga_pci_chipset = {
 struct arm32_bus_dma_tag ifpga_pci_bus_dma_tag = {
 	0,
 	0,
+	NULL,
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
