@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.14 2003/08/07 11:16:49 agc Exp $
+.\"	$NetBSD: tset.1,v 1.15 2004/07/23 13:35:02 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,9 +116,6 @@ The options are as follows:
 .It Fl
 The terminal type is displayed to the standard output, and the terminal is
 not initialized in any way.
-.It Fl e
-Set the erase character to
-.Ar ch .
 .It Fl E
 Emit the extended termcap entry.
 By default the termcap entry is
@@ -126,6 +123,9 @@ truncated to 1024 bytes, this flag specifies the untruncated termcap
 entry is to be output.
 Using this flag may cause problems with some
 shells.
+.It Fl e
+Set the erase character to
+.Ar ch .
 .It Fl I
 Do not send the terminal or tab initialization strings to the terminal.
 .It Fl i
