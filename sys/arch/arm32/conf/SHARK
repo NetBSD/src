@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.40 2000/11/13 18:40:34 abs Exp $
+#	$NetBSD: SHARK,v 1.41 2000/11/14 23:42:35 matt Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.40 $"
+#ident		"GENERIC-$Revision: 1.41 $"
 
 # estimated number of users
 maxusers	32
@@ -220,3 +220,4 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
+pseudo-device	openfirm		# /dev/openfirm
