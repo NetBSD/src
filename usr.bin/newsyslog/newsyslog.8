@@ -1,8 +1,28 @@
-.\"	$NetBSD: newsyslog.8,v 1.12 1999/12/29 06:54:01 cgd Exp $
+.\"	$NetBSD: newsyslog.8,v 1.13 2000/07/07 10:52:41 ad Exp $
+.\"
+.\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" This file contains changes from the Open Software Foundation.
-.\"
-.\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
 .\" 
@@ -18,6 +38,8 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
+.\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
+.\"
 .Dd November 20, 1999
 .Dt NEWSYSLOG 8
 .Os
@@ -26,7 +48,7 @@
 .Nd maintain system log files to manageable sizes
 .Sh SYNOPSIS
 .Nm newsyslog
-.Op Fl Fnrv
+.Op Fl Frv
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
 .Nm Newsyslog
@@ -73,7 +95,7 @@ By default, this configuration file is
 Each line of the file contains information about a particular log file
 that should be handled by
 .Nm newsyslog .
-Each line has five mandatory fields and four optional fields, with a
+Each line has six mandatory fields and three optional fields, with
 whitespace separating each field.  Blank lines or lines beginning with
 ``#'' are ignored.  The fields of the configuration file are as
 follows: 
@@ -111,14 +133,13 @@ when determining when to trim the log file.
 The
 .Ar interval
 field specifies the time separation (in hours) between trimming of the 
-logfile.  If this field
+log file.  If this field
 is replaced by an asterisk
 .Pq Ql \&* ,
 then the interval is not taken into account
 when determining when to trim the log file.
 .It Ar flags
-This optional field specifies if any special processing is required.
-The
+This field specifies any special processing that is required.  The
 .Ar Z
 flag means that archived log files should be compressed with
 .Xr gzip 1
@@ -129,14 +150,16 @@ flag means that the file is a binary file and so the
 .Tn ASCII
 message which
 .Nm
-inserts to indicate the fact that the logs have been
-trimmed should not be included.  The
+inserts to indicate that the logs have been trimmed should not be included.
+The
 .Ar N
 flag means that no signal should be sent when the log is trimmed.  The
+.Ar C
+flag instructs
+.Nm
+to create an empty log file if none currently exists.  The
 .Ar -
-flag means nothing, but can be used as a placeholder when the
-.Ar path_to_pid_file
-field is specified.
+flag means nothing - it is used as a spacer when no flags are set.
 .It Ar path_to_pid_file
 This optional field specifies
 the file name to read to find the daemon process id.  If this
@@ -164,11 +187,6 @@ Place
 .Nm
 in verbose mode.  In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
-.It Fl n
-Cause
-.Nm
-not to trim the logs, but to print out what it would do if this option
-were not specified.
 .It Fl r
 Remove the restriction that
 .Nm
@@ -194,8 +212,12 @@ configuration file.
 .Sh AUTHORS
 .An Theodore Ts'o ,
 MIT Project Athena
+.An Andrew Doran ,
+The NetBSD Project
 .Pp
 Copyright 1987, Massachusetts Institute of Technology
+.Pp
+Copyright 1999, 2000 Andrew Doran
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr syslog 3 ,
