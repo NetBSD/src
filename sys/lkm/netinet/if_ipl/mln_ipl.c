@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.9 1997/04/15 18:58:27 christos Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.10 1997/05/28 02:49:06 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -47,6 +47,7 @@
 #endif
 #include <sys/lkm.h>
 #include "ipl.h"
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
@@ -59,16 +60,6 @@
 
 extern	int	lkmenodev __P((void));
 
-
-#ifdef NETBSD_PF
-#include <net/pfil.h>
-#endif
-
-#ifndef IPFILTER_LOG
-# ifndef NETBSD_PF
-#  define	iplread	nodev
-# endif
-#endif
 
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
@@ -107,7 +98,6 @@ struct	cdevsw	ipldevsw =
 	NULL			/* strategy */
 };
 #endif
-static	struct	cdevsw	cdev_sav;
 int	ipl_major = 0;
 
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
@@ -160,7 +150,7 @@ int cmd;
 }
 
 
-static int ipl_remove __P((void))
+static int ipl_remove()
 {
 	struct nameidata nd;
 	int error;
@@ -188,6 +178,7 @@ static int ipl_remove __P((void))
 	VOP_LOCK(nd.ni_vp);
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	return (0);
 }
 
 
@@ -217,7 +208,7 @@ static int ipl_load()
 	error = 0;
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return error;
 	if (nd.ni_vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -238,7 +229,7 @@ static int ipl_load()
 		return error;
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPNAT_NAME, curproc);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return error;
 	if (nd.ni_vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -259,7 +250,7 @@ static int ipl_load()
 		return error;
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPSTATE_NAME, curproc);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return error;
 	if (nd.ni_vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -276,8 +267,7 @@ static int ipl_load()
 	vattr.va_rdev = (ipl_major<<8)|2;
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
 	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error)
-		return error;
+	return error;
 }
 
 
