@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.33 2000/07/11 04:10:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.33 2000/07/11 04:10:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,8 +108,7 @@ int	ioasic_intrnull __P((void *));
 #define	IOASIC_NCOOKIES		4
 
 struct ioasic_dev ioasic_devs[] = {
-	/* XXX lance name */
-	{ "lance",    IOASIC_SLOT_3_START, C(IOASIC_DEV_LANCE),
+	{ "PMAD-BA ", IOASIC_SLOT_3_START, C(IOASIC_DEV_LANCE),
 	  IOASIC_INTR_LANCE, },
 	{ "z8530   ", IOASIC_SLOT_4_START, C(IOASIC_DEV_SCC0),
 	  IOASIC_INTR_SCC_0, },
