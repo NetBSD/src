@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.3 2003/12/07 04:22:57 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.4 2004/01/10 06:30:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -893,12 +893,27 @@ struct atw_rxdesc {
 #define		RF3000_HIGAINCAL_DSSSPAD	BIT(6)	/* 6dB gain pad for DSSS
 							 * modes (meaning?)
 							 */
-#define RF3000_MAGIC0		0x1C		/* magic register derived from
-						 * a binary-only driver
-						 */
-#define		RF3000_MAGIC0_VAL	0x00
-#define RF3000_MAGIC1		0x1D		/* magic register derived from
-						 * a binary-only driver
-						 */
-#define		RF3000_MAGIC1_VAL	0x80
+#define RF3000_OPTIONS1		0x1C		/* Options Register 1 */
+/* Saturation threshold is 4 + offset, where -3 <= offset <= 3.
+ * SAT_THRESH is the absolute value, SAT_THRESH_SIGN is the sign.
+ */
+#define		RF3000_OPTIONS1_SAT_THRESH_SIGN	BIT(7)
+#define		RF3000_OPTIONS1_SAT_THRESH	BITS(6,5)
+#define		RF3000_OPTIONS1_ALTAGC		BIT(4)	/* 1: retrigger AGC
+ 							 * algorithm on ADC
+ 							 * saturation
+							 */
+#define		RF3000_OPTIONS1_ALTBUS		BIT(3)	/* 1: enable alternate
+							 * Tx/Rx data bus
+							 * interface.
+							 */
+#define		RF3000_OPTIONS1_RESERVED0_MASK	BITS(2,0)/* 0 */
+
+#define RF3000_OPTIONS2		0x1D		/* Options Register 2 */
+/* 1: delay next AGC 2us instead of 1us after a 1->0 LNAGS-pin transition. */
+#define		RF3000_OPTIONS2_LNAGS_DELAY	BIT(7)
+#define		RF3000_OPTIONS2_RESERVED0_MASK	BITS(6,3)	/* 0 */
+/* Threshold for AGC re-trigger. 0: high count, 1: low count. */
+#define		RF3000_OPTIONS2_RTG_THRESH	BIT(2)
+#define		RF3000_OPTIONS2_RESERVED1_MASK	BITS(1,0)	/* 0 */
 
