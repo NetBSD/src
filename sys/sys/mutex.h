@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.2 2002/03/11 00:43:13 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.3 2002/03/11 17:08:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -132,6 +132,8 @@ void	mutex_exit(kmutex_t *);
 void	mutex_vector_enter(kmutex_t *);
 int	mutex_vector_tryenter(kmutex_t *);
 void	mutex_vector_exit(kmutex_t *);
+
+struct proc *mutex_owner(kmutex_t *);
 
 #include <machine/mutex_impl.h>
 
