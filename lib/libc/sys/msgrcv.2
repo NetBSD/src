@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgrcv.2,v 1.11 2000/04/12 13:03:52 simonb Exp $	
+.\"	$NetBSD: msgrcv.2,v 1.11.6.1 2001/10/08 20:21:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Ft ssize_t
 .Fn msgrcv "int msqid" "void *msgp" "size_t msgsz" "long msgtyp" "int msgflg"
 .Sh DESCRIPTION
-The 
+The
 .Fn msgrcv
 function receives a message from the message queue specified in
 .Fa msqid ,
@@ -191,7 +191,7 @@ is set in
 .It Bq Er EIDRM
 The message queue identifier
 .Fa msqid
-is removed from the system. 
+is removed from the system.
 .It Bq Er ENOMSG
 The queue does not contain a message of the desired type and
 .Dv IPC_NOWAIT

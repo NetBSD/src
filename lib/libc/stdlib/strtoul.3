@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.11 2000/03/06 18:32:33 kleink Exp $
+.\"	$NetBSD: strtoul.3,v 1.11.6.1 2001/10/08 20:21:20 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,29 +37,34 @@
 .\"
 .\"     from: @(#)strtoul.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 6, 2000
+.Dd April 26, 2001
 .Dt STRTOUL 3
 .Os
 .Sh NAME
-.Nm strtoul , 
-.Nm strtoull , 
+.Nm strtoul ,
+.Nm strtoull ,
+.Nm strtoumax ,
 .Nm strtouq
-.Nd "convert a string to an unsigned long, unsigned long long or uquad_t integer"
+.Nd "convert a string to an unsigned long, unsigned long long, uintmax_t or uquad_t integer"
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft unsigned long int
-.Fn strtoul "const char *nptr" "char **endptr" "int base"
+.Fn strtoul "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Ft unsigned long long int
-.Fn strtoull "const char *nptr" "char **endptr" "int base"
+.Fn strtoull "const char * restrict nptr" "char ** restrict endptr" "int base"
+
+.Fd #include <inttypes.h>
+.Ft uintmax_t
+.Fn strtoumax "const char * restrict nptr" "char ** restrict endptr" "int base"
 
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft u_quad_t
-.Fn strtouq "const char *nptr" "char **endptr" "int base"
+.Fn strtouq "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Sh DESCRIPTION
 The
 .Fn strtoul
@@ -76,6 +81,14 @@ converts the string in
 .Fa nptr
 to an
 .Em unsigned long long int
+value.
+The
+.Fn strtoumax
+function
+converts the string in
+.Fa nptr
+to an
+.Em uintmax_t
 value.
 The
 .Fn strtouq
@@ -157,10 +170,16 @@ unless the original (non-negated) value would overflow;
 in the latter case,
 .Fn strtoul
 returns
-.Dv ULONG_MAX
-and sets the global variable
+.Dv ULONG_MAX ,
+.Fn strtoull
+returns
+.Dv ULLONG_MAX ,
+.Fn strtoumax
+returns
+.Dv UINTMAX_MAX ,
+and the global variable
 .Va errno
-to
+is set to
 .Er ERANGE .
 .Sh ERRORS
 .Bl -tag -width Er
@@ -168,7 +187,8 @@ to
 The given string was out of range; the value converted has been clamped.
 .El
 .Sh SEE ALSO
-.Xr strtol 3
+.Xr strtoimax 3 ,
+.Xr strtol 3 ,
 .Xr strtoll 3
 .Sh STANDARDS
 The
@@ -178,8 +198,9 @@ conforms to
 .St -ansiC .
 The
 .Fn strtoull
-function
-conforms to
+and
+.Fn strtoumax
+functions conform to
 .St -isoC99 .
 .Sh BUGS
 Ignores the current locale.

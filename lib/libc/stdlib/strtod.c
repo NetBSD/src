@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.36.2.1 2001/08/08 16:27:45 nathanw Exp $	*/
+/*	$NetBSD: strtod.c,v 1.36.2.2 2001/10/08 20:21:18 nathanw Exp $	*/
 
 /****************************************************************
  *
@@ -93,13 +93,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.36.2.1 2001/08/08 16:27:45 nathanw Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.36.2.2 2001/10/08 20:21:18 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
-    defined(__powerpc__) || defined(__sh3__) || \
+    defined(__powerpc__) || defined(__sh3__) || defined(__x86_64__) || \
     (defined(__arm__) && defined(__VFP_FP__))
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN

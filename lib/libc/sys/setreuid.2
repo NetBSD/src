@@ -1,4 +1,4 @@
-.\"	$NetBSD: setreuid.2,v 1.14 2001/01/05 23:31:39 mycroft Exp $
+.\"	$NetBSD: setreuid.2,v 1.14.2.1 2001/10/08 20:22:07 nathanw Exp $
 .\"
 .\" Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ user ID.
 .Pp
 If
 .Fa ruid
-or 
+or
 .Fa euid
 is -1, the current uid is filled in by the system.
 Unprivileged users may change the real user
@@ -110,7 +110,7 @@ IDs in set-user-ID programs to temporarily relinquish the set-user-ID
 value.  This purpose is now better served by the use of the
 .Fn seteuid
 function (see
-.Xr setuid 2 ).
+.Xr setuid 2 ) .
 .Pp
 When setting the real and effective user IDs to the same value, this
 function is equivalent to the
@@ -135,8 +135,8 @@ was specified.
 .Sh SEE ALSO
 .Xr getuid 2 ,
 .Xr seteuid 2 ,
-.Xr setuid 2 ,
-.Xr setgid 2
+.Xr setgid 2 ,
+.Xr setuid 2
 .Sh HISTORY
 The
 .Fn setreuid

@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.17 2000/11/17 11:40:05 mrg Exp $
+.\"	$NetBSD: swapctl.2,v 1.17.2.1 2001/10/08 20:22:13 nathanw Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -157,10 +157,17 @@ parameter points to a dev_t, which is filled in by the current dump device.
 .El
 .Pp
 When swapping is enabled on a block device, the first portion of the disk is
-left unused to prevent any disklable present from being overwritten.  This
+left unused to prevent any disklabel present from being overwritten.  This
 space is allocated from the swap device when the
 .Dv SWAP_ON
 command is used.
+.Pp
+The priority of a swap device can be used to fill faster swap devices before
+slower ones.  A priority of 0 is the highest, with larger numbers having
+lower priority.  For a fuller discussion on swap priority, see the
+.Sx SWAP PRIORITY
+section in
+.Xr swapctl 8 .
 .Sh RETURN VALUES
 If the
 .Fa cmd
@@ -182,9 +189,9 @@ succeeds unless:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv NAME_MAX
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
@@ -208,7 +215,7 @@ has no associated size, or the
 .Fa cmd
 was unknown.
 .It Bq Er ENXIO
-The major device number of 
+The major device number of
 .Fa arg
 is out of range (this indicates no device driver exists
 for the associated hardware).
@@ -220,11 +227,6 @@ points outside the process' allocated address space.
 .El
 .Sh SEE ALSO
 .Xr swapctl 8
-.Sh AUTHOR
-The current swap system was designed and implemented by Matthew Green
-<mrg@eterna.com.au>, with help from Paul Kranenburg <pk@NetBSD.ORG>
-and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
-<thorpej@NetBSD.ORG>.
 .Sh HISTORY
 The
 .Fn swapctl
@@ -240,3 +242,8 @@ when the header file was also moved from
 .Pa <vm/vm_swap.h> ,
 to its current location in
 .Pa <sys/swap.h> .
+.Sh AUTHORS
+The current swap system was designed and implemented by Matthew Green
+<mrg@eterna.com.au>, with help from Paul Kranenburg <pk@NetBSD.ORG>
+and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
+<thorpej@NetBSD.ORG>.

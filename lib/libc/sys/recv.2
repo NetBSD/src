@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.16 1999/12/02 21:42:38 kleink Exp $
+.\"	$NetBSD: recv.2,v 1.16.6.1 2001/10/08 20:22:02 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,9 +71,9 @@ the buffer associated with
 and modified on return to indicate the actual size of the
 address stored there.
 .Pp
-The 
+The
 .Fn recv
-call is normally used only on a 
+call is normally used only on a
 .Em connected
 socket (see
 .Xr connect 2 )
@@ -112,13 +112,13 @@ described in
 .Pp
 The
 .Xr select 2
-or 
-.Xr poll 2 
+or
+.Xr poll 2
 call may be used to determine when more data arrive.
 .Pp
 The
 .Fa flags
-argument to a recv call is formed by 
+argument to a recv call is formed by
 .Em or Ap ing
 one or more of the values:
 .Bl -column MSG_WAITALL -offset indent
@@ -144,7 +144,7 @@ or the next data to be received is of a different type than that returned.
 .Pp
 The
 .Fn recvmsg
-call uses a 
+call uses a
 .Fa msghdr
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
@@ -223,7 +223,6 @@ control data were discarded due to lack of space in the buffer
 for ancillary data.
 .Dv MSG_OOB
 is returned to indicate that expedited or out-of-band data were received.
-.Pp
 .Sh RETURN VALUES
 These calls return the number of bytes received, or -1
 if an error occurred.
@@ -239,7 +238,7 @@ The socket is associated with a connection-oriented protocol
 and has not been connected (see
 .Xr connect 2
 and
-.Xr accept 2 ).
+.Xr accept 2 ) .
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
@@ -274,10 +273,10 @@ or is greater than
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
-.Xr read 2 ,
-.Xr poll 2 ,
-.Xr select 2 ,
 .Xr getsockopt 2 ,
+.Xr poll 2 ,
+.Xr read 2 ,
+.Xr select 2 ,
 .Xr socket 2
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
+.\"	$NetBSD: mlockall.2,v 1.6.2.1 2001/10/08 20:21:54 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,13 +68,13 @@ at the time the mapping is established.  Note that this may cause
 future mappings to fail if those mappings cause resource limits to
 be exceeded.
 .El
-.Pp 
+.Pp
 Since physical memory is a potentially scarce resource, processes are
 limited in how much they can lock down.
 A single process can lock the minimum of a system-wide
 .Dq wired pages
 limit and the per-process
-.Li RLIMIT_MEMLOCK 
+.Li RLIMIT_MEMLOCK
 resource limit.
 .Pp
 The

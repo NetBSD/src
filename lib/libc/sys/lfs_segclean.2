@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_segclean.2,v 1.1 2000/05/24 21:55:00 perseant Exp $
+.\"	$NetBSD: lfs_segclean.2,v 1.1.6.1 2001/10/08 20:21:50 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,16 +66,16 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem. 
+does not specify a valid filesystem.
 .It Bq Er EBUSY
 .Fa segment
 is marked SU_ACTIVE, meaning that it does not yet belong to a valid checkpoint.
 .El
 .Sh SEE ALSO
-.Xr lfs_cleanerd 8 ,
 .Xr lfs_bmapv 2 ,
 .Xr lfs_markv 2 ,
-.Xr lfs_segwait 2
+.Xr lfs_segwait 2 ,
+.Xr lfs_cleanerd 8
 .Sh HISTORY
 The
 .Fn lfs_segclean

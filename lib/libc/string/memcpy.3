@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.3,v 1.5 1998/02/05 18:50:35 perry Exp $
+.\"	$NetBSD: memcpy.3,v 1.5.12.1 2001/10/08 20:21:26 nathanw Exp $
 .\"
 .Dd June 4, 1993
 .Dt MEMCPY 3
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft void *
-.Fn memcpy "void *dst" "const void *src" "size_t len"
+.Fn memcpy "void * restrict dst" "const void * restrict src" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn memcpy
@@ -58,6 +58,9 @@ bytes from string
 .Fa src
 to string
 .Fa dst .
+The arguments must not overlap -- behavior if the arguments overlap is
+undefined. To copy byte strings that overlap, use
+.Xr memmove 3 .
 .Sh RETURN VALUES
 The
 .Fn memcpy
@@ -74,13 +77,4 @@ The
 .Fn memcpy
 function
 conforms to
-.St -ansiC .
-.Sh BUGS
-In this implementation
-.Fn memcpy
-is implemented using
-.Xr bcopy 3 ,
-and therefore the strings may overlap.
-On other systems, copying overlapping strings may produce surprises.
-A simpler solution is to not use
-.Fn memcpy .
+.St -isoC99 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.18 2000/10/05 12:45:23 ad Exp $
+.\"	$NetBSD: socket.2,v 1.18.2.1 2001/10/08 20:22:11 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,7 +133,7 @@ call.  Once connected, data may be transferred using
 .Xr read 2
 and
 .Xr write 2
-calls or some variant of the 
+calls or some variant of the
 .Xr send 2
 and
 .Xr recv 2
@@ -176,7 +176,7 @@ sockets employ the same system calls
 as
 .Dv SOCK_STREAM
 sockets.  The only difference
-is that 
+is that
 .Xr read 2
 calls will return only the amount of data requested,
 and any remaining in the arriving packet will be discarded.
@@ -191,7 +191,7 @@ calls.  Datagrams are generally received with
 .Xr recvfrom 2 ,
 which returns the next datagram with its return address.
 .Pp
-An 
+An
 .Xr fcntl 2
 call can be used to specify a process group to receive
 a
@@ -237,20 +237,20 @@ The socket cannot be created until sufficient resources are freed.
 .Xr accept 2 ,
 .Xr bind 2 ,
 .Xr connect 2 ,
-.Xr getprotoent 3 ,
 .Xr getsockname 2 ,
 .Xr getsockopt 2 ,
 .Xr ioctl 2 ,
 .Xr listen 2 ,
+.Xr poll 2 ,
 .Xr read 2 ,
 .Xr recv 2 ,
-.Xr poll 2 ,
 .Xr select 2 ,
 .Xr send 2 ,
 .Xr setsockopt 2 ,
 .Xr shutdown 2 ,
 .Xr socketpair 2 ,
-.Xr write 2
+.Xr write 2 ,
+.Xr getprotoent 3
 .Rs
 .%T "An Introductory 4.3 BSD Interprocess Communication Tutorial"
 .%O "reprinted in UNIX Programmer's Supplementary Documents Volume 1"

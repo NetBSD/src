@@ -1,4 +1,4 @@
-.\"	$NetBSD: syscall.2,v 1.9 2000/01/31 15:15:07 christos Exp $
+.\"	$NetBSD: syscall.2,v 1.9.6.1 2001/10/08 20:22:15 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,6 +69,11 @@ In general, a 0 return value indicates success.
 A -1 return value indicates an error,
 and an error code is stored in
 .Va errno .
+.Sh HISTORY
+The
+.Fn syscall
+function call appeared in
+.Bx 4.0 .
 .Sh BUGS
 There is no way to simulate system calls that have multiple return values
 such as
@@ -82,8 +87,3 @@ conversion between passing structs and unions is handled normally
 via userland stubs. The correct arguments for the kernel entry
 points for each system call can be found in the header file
 .Ao Pa sys/syscallargs.h Ac
-.Sh HISTORY
-The
-.Fn syscall
-function call appeared in
-.Bx 4.0 .

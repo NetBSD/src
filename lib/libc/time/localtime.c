@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24.2.1 2001/08/08 16:27:45 nathanw Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.2 2001/10/08 20:22:20 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24.2.1 2001/08/08 16:27:45 nathanw Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.2 2001/10/08 20:22:20 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: localtime.c,v 1.24.2.1 2001/08/08 16:27:45 nathanw Exp $");
 
 #ifdef __weak_alias
 __weak_alias(ctime_r,_ctime_r)
+__weak_alias(daylight,_daylight)
 __weak_alias(gmtime_r,_gmtime_r)
 __weak_alias(localtime_r,_localtime_r)
 __weak_alias(offtime,_offtime)
@@ -228,7 +229,7 @@ static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
 static struct tm	tm;
 
 #ifdef USG_COMPAT
-time_t			timezone = 0;
+long int		timezone = 0;
 int			daylight = 0;
 #endif /* defined USG_COMPAT */
 
@@ -1039,6 +1040,8 @@ tzset_unlocked P((void))
 		*/
 		lclptr->leapcnt = 0;		/* so, we're off a little */
 		lclptr->timecnt = 0;
+		lclptr->typecnt = 0;
+		lclptr->ttis[0].tt_isdst = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
 		(void)strncpy(lclptr->chars, gmt, sizeof(lclptr->chars) - 1);

@@ -1,31 +1,31 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.1 2001/03/05 23:34:39 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.2 2001/10/08 20:21:31 nathanw Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
+SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
 	getcontext.S \
-	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
+	ptrace.S sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
-	syscall.S __syscall.S
+	syscall.S __syscall.S __clone.S
 SRCS+=	cerror.S
 
-LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
+LSRCS+=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c \
-	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
-DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
+	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
+DPSRCS+= Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
+	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c \
-	pread.c preadv.c pwrite.c pwritev.c semctl.c \
-	sigaltstack.c stat.c swapon.c truncate.c
+SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
+	msync.c ntp_adjtime.c pread.c preadv.c pwrite.c pwritev.c semctl.c \
+	settimeofday.c sigaltstack.c stat.c swapon.c truncate.c
 
 # glue to syscalls that may pass structs or unions, which cannot be
 # handled portably and easily by the syscall interface. The glue
@@ -43,9 +43,9 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 
 
 # modules with default implementations on all architectures:
-ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
+ASM=	accept.o access.o acct.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
-	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
+	close.o connect.o dup.o dup2.o execve.o \
 	fchdir.o fchflags.o fchmod.o fchown.o fchroot.o fcntl.o \
 	fdatasync.o fhopen.o fhstat.o fhstatfs.o \
 	fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
@@ -59,13 +59,13 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
 	mlock.o mlockall.o mount.o mprotect.o __msgctl13.o msgget.o msgrcv.o \
 	msgsnd.o __msync13.o munlock.o munlockall.o munmap.o nanosleep.o \
-	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
+	nfssvc.o ntp_gettime.o open.o pathconf.o \
 	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
 	sendto.o setcontext.o setegid.o seteuid.o setgid.o setgroups.o \
 	setitimer.o setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
-	setsid.o setsockopt.o settimeofday.o setuid.o \
+	setsid.o setsockopt.o setuid.o \
 	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
 	socket.o socketpair.o __stat13.o statfs.o \
@@ -197,8 +197,8 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
-	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 close.2 connect.2 \
-	dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
+	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
+	connect.2 dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 getdirentries.3 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
@@ -208,7 +208,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
-	munmap.2 nanosleep.2 nfssvc.2 open.2 pathconf.2 pipe.2 \
+	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
 	poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 select.2 semctl.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
@@ -220,11 +220,13 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
 
 MLINKS+=brk.2 sbrk.2
+MLINKS+=clone.2 __clone.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
+MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
@@ -245,6 +247,7 @@ MLINKS+=lseek.2 seek.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
+MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2

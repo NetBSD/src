@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.27.6.1 2001/10/08 20:20:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.27.6.1 2001/10/08 20:20:59 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -70,28 +72,31 @@ __RCSID("$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $");
 /*
  * Flags used during conversion.
  */
-#define	LONG		0x01	/* l: long or double */
-#define	LONGDBL		0x02	/* L: long double; unimplemented */
-#define	SHORT		0x04	/* h: short */
-#define	QUAD		0x08	/* q: quad */
-#define	LONGLONG	0x10	/* ll: long long */
-#define	SUPPRESS	0x20	/* suppress assignment */
-#define	POINTER		0x40	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x80	/* do not skip blanks */
+#define	LONG		0x0001	/* l: long or double */
+#define	LONGDBL		0x0002	/* L: long double; unimplemented */
+#define	SHORT		0x0004	/* h: short */
+#define	QUAD		0x0008	/* q: quad */
+#define	LONGLONG	0x0010	/* ll: long long */
+#define	MAXINT		0x0020	/* j: intmax_t */
+#define	PTRINT		0x0040	/* t: ptrdiff_t */
+#define	SIZEINT		0x0080	/* z: size_t */
+#define	SUPPRESS	0x0100	/* suppress assignment */
+#define	POINTER		0x0200	/* weird %p pointer (`fake hex') */
+#define	NOSKIP		0x0400	/* do not skip blanks */
 
 /*
  * The following are used in numeric conversions only:
  * SIGNOK, NDIGITS, DPTOK, and EXPOK are for floating point;
  * SIGNOK, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
-#define	SIGNOK		0x080	/* +/- is (still) legal */
-#define	NDIGITS		0x100	/* no digits detected */
+#define	SIGNOK		0x0800	/* +/- is (still) legal */
+#define	NDIGITS		0x1000	/* no digits detected */
 
-#define	DPTOK		0x200	/* (float) decimal point is still legal */
-#define	EXPOK		0x400	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x2000	/* (float) decimal point is still legal */
+#define	EXPOK		0x4000	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x200	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x400	/* no zero digits detected */
+#define	PFXOK		0x2000	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x4000	/* no zero digits detected */
 
 /*
  * Conversion types.
@@ -99,7 +104,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.27 2000/03/08 19:33:47 kleink Exp $");
 #define	CT_CHAR		0	/* %c conversion */
 #define	CT_CCL		1	/* %[...] conversion */
 #define	CT_STRING	2	/* %s conversion */
-#define	CT_INT		3	/* integer, i.e., strtoll or strtoull */
+#define	CT_INT		3	/* integer, i.e., strtoimax or strtoumax */
 #define	CT_FLOAT	4	/* floating, i.e., strtod */
 
 #define u_char unsigned char
@@ -125,10 +130,9 @@ __svfscanf(fp, fmt0, ap)
 	char *p0;	/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
-	int base;		/* base argument to strtoll/strtoull */
-	/* LONGLONG */
-	unsigned long long int (*ccfn) __P((const char *, char **, int));
-				/* conversion function (strtoll/strtoull) */
+	int base;		/* base argument to strtoimax/strtoumax */
+	uintmax_t (*ccfn) __P((const char *, char **, int));
+				/* conversion function (strtoimax/strtoumax) */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
 
@@ -186,6 +190,9 @@ literal:
 		case 'h':
 			flags |= SHORT;
 			goto again;
+		case 'j':
+			flags |= MAXINT;
+			goto again;
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
@@ -196,6 +203,12 @@ literal:
 			goto again;
 		case 'q':
 			flags |= QUAD;
+			goto again;
+		case 't':
+			flags |= PTRINT;
+			goto again;
+		case 'z':
+			flags |= SIZEINT;
 			goto again;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -215,15 +228,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'd':
 			c = CT_INT;
-			/* LONGLONG */
-			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
+			ccfn = (uintmax_t (*) __P((const char *, char **, int)))strtoimax;
 			base = 10;
 			break;
 
 		case 'i':
 			c = CT_INT;
-			/* LONGLONG */
-			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
+			ccfn = (uintmax_t (*) __P((const char *, char **, int)))strtoimax;
 			base = 0;
 			break;
 
@@ -232,13 +243,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'o':
 			c = CT_INT;
-			ccfn = strtoull;
+			ccfn = strtoumax;
 			base = 8;
 			break;
 
 		case 'u':
 			c = CT_INT;
-			ccfn = strtoull;
+			ccfn = strtoumax;
 			base = 10;
 			break;
 
@@ -246,7 +257,7 @@ literal:
 		case 'x':
 			flags |= PFXOK;	/* enable 0x prefixing */
 			c = CT_INT;
-			ccfn = strtoull;
+			ccfn = strtoumax;
 			base = 16;
 			break;
 
@@ -278,7 +289,7 @@ literal:
 		case 'p':	/* pointer format is like hex */
 			flags |= POINTER | PFXOK;
 			c = CT_INT;
-			ccfn = strtoull;
+			ccfn = strtoumax;
 			base = 16;
 			break;
 
@@ -289,6 +300,17 @@ literal:
 				*va_arg(ap, short *) = nread;
 			else if (flags & LONG)
 				*va_arg(ap, long *) = nread;
+			else if (flags & QUAD)
+				*va_arg(ap, quad_t *) = nread;
+			else if (flags & LONGLONG)
+				/* LONGLONG */
+				*va_arg(ap, long long int *) = nread;
+			else if (flags & SIZEINT)
+				*va_arg(ap, ssize_t *) = nread;
+			else if (flags & PTRINT)
+				*va_arg(ap, ptrdiff_t *) = nread;
+			else if (flags & MAXINT)
+				*va_arg(ap, intmax_t *) = nread;
 			else
 				*va_arg(ap, int *) = nread;
 			continue;
@@ -304,8 +326,7 @@ literal:
 			if (isupper(c))
 				flags |= LONG;
 			c = CT_INT;
-			/* LONGLONG */
-			ccfn = (unsigned long long int (*) __P((const char *, char **, int)))strtoll;
+			ccfn = (uintmax_t (*) __P((const char *, char **, int)))strtoimax;
 			base = 10;
 			break;
 		}
@@ -447,7 +468,7 @@ literal:
 			continue;
 
 		case CT_INT:
-			/* scan an integer as if by strtoll/strtoull */
+			/* scan an integer as if by strtoimax/strtoumax */
 #ifdef hardway
 			if (width == 0 || width > sizeof(buf) - 1)
 				width = sizeof(buf) - 1;
@@ -565,14 +586,20 @@ literal:
 				(void) ungetc(c, fp);
 			}
 			if ((flags & SUPPRESS) == 0) {
-				/* LONGLONG */
-				unsigned long long int res;
+				uintmax_t res;
 
 				*p = 0;
 				res = (*ccfn)(buf, (char **)NULL, base);
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
 					    (void *)(long)res;
+				else if (flags & MAXINT)
+					*va_arg(ap, intmax_t *) = res;
+				else if (flags & PTRINT)
+					*va_arg(ap, ptrdiff_t *) =
+					    (ptrdiff_t)res;
+				else if (flags & SIZEINT)
+					*va_arg(ap, ssize_t *) = (ssize_t)res;
 				else if (flags & LONGLONG)
 					/* LONGLONG */
 					*va_arg(ap, long long int *) = res;

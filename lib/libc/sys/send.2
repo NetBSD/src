@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.15 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: send.2,v 1.15.6.1 2001/10/08 20:22:06 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,9 +59,9 @@ and
 .Fn sendmsg
 are used to transmit a message to another socket.
 .Fn send
-may be used only when the socket is in a 
+may be used only when the socket is in a
 .Em connected
-state, while 
+state, while
 .Fn sendto
 and
 .Fn sendmsg
@@ -69,7 +69,7 @@ may be used at any time.
 .Pp
 The address of the target is given by
 .Fa to
-with 
+with
 .Fa tolen
 specifying its size.
 The length of the message is given by
@@ -116,7 +116,7 @@ data.
 .Dv MSG_DONTROUTE
 is usually used only by diagnostic or routing programs.
 .Pp
-See 
+See
 .Xr recv 2
 for a description of the
 .Fa msghdr
@@ -178,9 +178,9 @@ or is greater than
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
+.Xr getsockopt 2 ,
 .Xr recv 2 ,
 .Xr select 2 ,
-.Xr getsockopt 2 ,
 .Xr socket 2 ,
 .Xr write 2
 .Sh HISTORY

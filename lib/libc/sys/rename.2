@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.12 2000/06/17 19:33:34 hubertf Exp $
+.\"	$NetBSD: rename.2,v 1.12.4.1 2001/10/08 20:22:03 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,10 +51,10 @@ causes the link named
 .Fa from
 to be renamed as
 .Fa to .
-If 
+If
 .Fa to
 exists, it is first removed.
-Both 
+Both
 .Fa from
 and
 .Fa to
@@ -78,38 +78,12 @@ If both
 and
 .Fa to
 are pathnames of the same existing file in the file system's name space,
-.Fn return
+.Fn rename
 returns successfully and performs no other action.
-.Sh CAVEAT
-The system can deadlock if a loop in the file system graph is present.
-This loop takes the form of an entry in directory
-.Ql Pa a ,
-say
-.Ql Pa a/foo ,
-being a hard link to directory
-.Ql Pa b ,
-and an entry in
-directory
-.Ql Pa b ,
-say
-.Ql Pa b/bar ,
-being a hard link
-to directory
-.Ql Pa a .
-When such a loop exists and two separate processes attempt to
-perform
-.Ql rename a/foo b/bar
-and
-.Ql rename b/bar a/foo ,
-respectively, 
-the system may deadlock attempting to lock
-both directories for modification.
-Hard links to directories should be
-replaced by symbolic links by the system administrator.
 .Sh RETURN VALUES
 A 0 value is returned if the operation succeeds, otherwise
 .Fn rename
-returns -1 and the global variable 
+returns -1 and the global variable
 .Va errno
 indicates the reason for the failure.
 .Sh ERRORS
@@ -118,9 +92,9 @@ will fail and neither of the argument files will be
 affected if:
 .Bl -tag -width Er
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -238,3 +212,29 @@ function conforms to
 .St -p1003.1-90
 and
 .St -xpg4.2 .
+.Sh BUGS
+The system can deadlock if a loop in the file system graph is present.
+This loop takes the form of an entry in directory
+.Ql Pa a ,
+say
+.Ql Pa a/foo ,
+being a hard link to directory
+.Ql Pa b ,
+and an entry in
+directory
+.Ql Pa b ,
+say
+.Ql Pa b/bar ,
+being a hard link
+to directory
+.Ql Pa a .
+When such a loop exists and two separate processes attempt to
+perform
+.Ql rename a/foo b/bar
+and
+.Ql rename b/bar a/foo ,
+respectively,
+the system may deadlock attempting to lock
+both directories for modification.
+Hard links to directories should be
+replaced by symbolic links by the system administrator.
