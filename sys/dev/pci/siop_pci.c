@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.2 2000/04/27 14:06:59 bouyer Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.3 2000/05/02 03:59:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -174,6 +174,10 @@ siop_lookup_product(id, rev)
 {
 	const struct siop_product_desc *pp;
 	const struct siop_product_desc *rp = NULL;
+
+	if (PCI_VENDOR(id) != PCI_VENDOR_SYMBIOS)
+		return NULL;
+
 	for (pp = siop_products; pp->name != NULL; pp++) {
 		if (PCI_PRODUCT(id) == pp->product && pp->revision <= rev)
 			if (rp == NULL || pp->revision > rp->revision)
