@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.17 2000/11/24 20:34:01 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.18 2000/11/24 22:41:39 chs Exp $	*/
 
 /*
  *
@@ -207,6 +207,14 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 #define VM_PAGER_AGAIN		5
 #define VM_PAGER_UNLOCK		6
 #define VM_PAGER_REFAULT	7
+
+/*
+ * XXX
+ * this is needed until the device strategy interface
+ * is changed to do physically-addressed i/o.
+ */
+
+#define PAGER_MAP_SIZE       (16 * 1024 * 1024)
 
 #endif /* _KERNEL */
 
