@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.7 2002/04/27 18:46:49 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.7.4.1 2005/03/17 17:43:18 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -53,6 +53,7 @@ struct esiop_slot {
 struct esiop_xfer {
 	struct siop_common_xfer siop_tables;
 	u_int32_t tlq; /* target/lun/tag loaded in scratchC by script */
+		      /* will also containt scratcha at end of command */
 } __attribute__((__packed__));
 
 /*
