@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.3 2001/07/25 01:48:14 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -632,7 +632,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX a reasonable way on this chip.
 	 */
 	sc->sc_ethercom.ec_capabilities |=
-	    ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
+	    ETHERCAP_VLAN_MTU /* XXX | ETHERCAP_JUMBO_MTU */;
 
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
