@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.40 1995/05/04 00:00:25 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.41 1995/05/04 00:16:40 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -574,10 +574,9 @@ npxinit()
 {
 	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 	static u_short control = __INITIAL_NPXCW__;
-#ifdef DIAGNOSTIC
-	extern int cold;
 
-	if (cpl != 0 && !cold || npx_nointr != 0)
+#ifdef DIAGNOSTIC
+	if (cpl != 0 || npx_nointr != 0)
 		panic("npxinit: masked");
 #endif
 	lcr0(pcb->pcb_cr0 &= ~(CR0_EM|CR0_TS));
