@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.20 2001/12/01 06:33:40 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.21 2001/12/01 14:21:18 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -722,6 +722,8 @@ struct cpu_functions cpufuncs;
 u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
+#if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
+    defined(CPU_SA110) || defined(CPU_XSCALE)
 static void
 get_cachetype()
 {
@@ -785,6 +787,7 @@ get_cachetype()
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
+#endif /* ARM7TDMI || ARM8 || ARM9 || SA110 || XSCALE */
 
 /*
  * Cannot panic here as we may not have a console yet ...
