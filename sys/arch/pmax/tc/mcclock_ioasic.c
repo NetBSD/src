@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.5 1998/02/01 02:25:34 jonathan Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.6 1998/04/19 07:50:26 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.5 1998/02/01 02:25:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.6 1998/04/19 07:50:26 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,36 +40,21 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.5 1998/02/01 02:25:34 jonathan 
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
+
+
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h> 
 #include <dev/tc/ioasicvar.h>                   /* XXX */
 
-struct mcclock_ioasic_clockdatum {
-	u_char	datum;
-	char	pad[3];
-};
-
-struct mcclock_ioasic_softc {
-	struct mcclock_softc	sc_mcclock;
-
-	struct mcclock_ioasic_clockdatum *sc_dp;
-};
+#include  <pmax/dev/mcclock_decvar.h>
 
 int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ioasic_ca = {
-	sizeof (struct mcclock_ioasic_softc), (void *)mcclock_ioasic_match,
-	    mcclock_ioasic_attach, 
+	sizeof (struct mcclock_dec_softc),
+	     (void *)mcclock_ioasic_match, mcclock_ioasic_attach, 
 };
-
-void	mcclock_ioasic_write __P((struct mcclock_softc *, u_int, u_int));
-u_int	mcclock_ioasic_read __P((struct mcclock_softc *, u_int));
-
-const struct mcclock_busfns mcclock_ioasic_busfns = {
-	mcclock_ioasic_write, mcclock_ioasic_read,
-};
-
 
 int
 mcclock_ioasic_match(parent, match, aux)
@@ -77,31 +62,19 @@ mcclock_ioasic_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-#define	CFMATCH(cf,x) !strcmp((cf)->dv_cfdata->cf_driver->cd_name,(x))
-	char *name;
-	vm_offset_t addr;
+	struct ioasicdev_attach_args *d = aux;
 
-	if (CFMATCH(parent, "mainbus")) {
-		struct confargs *ca = aux;
-		addr = (vm_offset_t)ca->ca_addr;
-		name = ca->ca_name;
-	}
-	else
-	if (CFMATCH(parent, "ioasic")) {
-		struct ioasicdev_attach_args *d = aux;
-		addr = d->iada_addr;
-		name = d->iada_modname;
-	}
-	else {
-		/*panic("clock must be attached with mainbus or ioasic\n");*/
-		printf("clock on %s: must be attached at mainbus or ioasic\n",
-		       parent->dv_cfdata->cf_driver->cd_name);
-		return(0);
-	}
-	if (strcmp("mc146818", name))
+#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
+	if (strcmp(CFNAME(parent), "ioasic") != 0)
+		return 0;
+
+	if (strcmp("mc146818", d->iada_modname) != 0)
 		return (0);
+
+	if (tc_badaddr(d->iada_addr))
+		return (0);
+
 	return (1);
-#undef	CFMATCH
 }
 
 void
@@ -110,40 +83,10 @@ mcclock_ioasic_attach(parent, self, aux)
 	void *aux;
 {
 	struct ioasicdev_attach_args *ioasicdev = aux;
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)self;
+	struct mcclock_dec_softc *sc = (struct mcclock_dec_softc *)self;
 
-	sc->sc_dp = (struct mcclock_ioasic_clockdatum *)ioasicdev->iada_addr;
+	sc->sc_dp = (struct mcclock_dec_clockdatum *)ioasicdev->iada_addr;
 
-	mcclock_attach(&sc->sc_mcclock, &mcclock_ioasic_busfns);
-}
-
-void
-mcclock_ioasic_write(dev, reg, datum)
-	struct mcclock_softc *dev;
-	u_int reg, datum;
-{
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
-
-	sc->sc_dp[reg].datum = datum;
-}
-
-u_int
-mcclock_ioasic_read(dev, reg)
-	struct mcclock_softc *dev;
-	u_int reg;
-{
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
-
-	return (sc->sc_dp[reg].datum);
-}
-
-/*XXX*/
-/*
- * Wait "n" microseconds. (scsi code needs this).
- */
-void
-delay(n)
-        int n;
-{
-        DELAY(n);
+	/* Attach MI driver, using busfns with TC-style register padding */
+	mcclock_attach(&sc->sc_mcclock, &mcclock_dec_busfns);
 }

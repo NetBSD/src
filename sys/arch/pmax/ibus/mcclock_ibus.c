@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ibus.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $ */
+/* $NetBSD: mcclock_ibus.c,v 1.2 1998/04/19 07:50:26 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.2 1998/04/19 07:50:26 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,14 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.1 1998/04/19 02:52:45 jonathan Ex
 #include <dev/ic/mc146818reg.h>
 
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/dev/mcclock_decvar.h>
+#include <dev/dec/mcclock_pad32.h>
 
 
 int	mcclock_ibus_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_ibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mcclock_ibus_ca = {
-	sizeof (struct mcclock_dec_softc),
+	sizeof (struct mcclock_pad32_softc),
 	     (void *)mcclock_ibus_match, mcclock_ibus_attach, 
 };
 
@@ -82,10 +82,10 @@ mcclock_ibus_attach(parent, self, aux)
 	void *aux;
 {
 	struct ibus_attach_args *ia =aux;
-	struct mcclock_dec_softc *sc = (struct mcclock_dec_softc *)self;
+	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)self;
 
-	sc->sc_dp = (struct mcclock_dec_clockdatum*)ia->ia_addr;
+	sc->sc_dp = (struct mcclock_pad32_clockdatum*)ia->ia_addr;
 
 	/* Attach MI driver, using busfns with TC-style register padding */
-	mcclock_attach(&sc->sc_mcclock, &mcclock_dec_busfns);
+	mcclock_attach(&sc->sc_mcclock, &mcclock_pad32_busfns);
 }
