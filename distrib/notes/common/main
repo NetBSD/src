@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.97 2000/11/16 01:48:29 hubertf Exp $
+.\"	$NetBSD: main,v 1.98 2000/11/28 23:19:50 jtb Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1076,6 +1076,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
 .It Ta Christoph Badura Ta Mt bad@netbsd.org
 .It Ta Robert V. Baron Ta Mt rvb@netbsd.org
+.It Ta Jason Beegan Ta Mt jtb@netbsd.org
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
 .It Ta John Birrell Ta Mt jb@netbsd.org
 .It Ta Mason Loring Bliss Ta Mt mason@netbsd.org
