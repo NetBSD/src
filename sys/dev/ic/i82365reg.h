@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.3 1998/12/20 17:53:28 nathanw Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.4 2000/01/01 21:57:46 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -180,6 +180,12 @@
 #define	PCIC_CSC_INTR_BATTWARN_ENABLE		0x02
 #define	PCIC_CSC_INTR_BATTDEAD_ENABLE		0x01	/* for memory cards */
 #define	PCIC_CSC_INTR_RI_ENABLE			0x01	/* for I/O cards */
+
+#define PCIC_CSC_INTR_FORMAT "\177\020" "f\4\4CSC_INTR_IRQ\0"   \
+				"b\0RI\0"			\
+				"b\1BATTWARN\0" 		\
+				"b\2READY\0"			\
+				"b\3CD\0"
 
 #define	PCIC_CSC_INTR_IRQ_VALIDMASK		0xDEB8 /* 1101 1110 1011 1000 */
 
