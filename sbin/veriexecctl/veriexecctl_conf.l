@@ -13,7 +13,7 @@ int lineno = 1;
 
 void yyerror(const char *message);
 void warning(const char *message);
-int yylex __P((void));
+int yylex(void);
 
 %}
 
