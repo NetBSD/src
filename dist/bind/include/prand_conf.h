@@ -1,14 +1,15 @@
-/*	$NetBSD: prand_conf.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: prand_conf.h,v 1.1.1.2 2001/05/17 20:46:41 itojun Exp $	*/
 
 #ifndef _PRAND_CMD_H_
 #define _PRAND_CMD_H_
 
 
 #ifndef HAVE_DEV_RANDOM
- # define HAVE_DEV_RANDOM 1
- #endif /* HAVE_DEV_RANDOM */
+# define HAVE_DEV_RANDOM 1
+#endif /* HAVE_DEV_RANDOM */
 
-const char *cmds[] = {
+
+static static const char *cmds[] = {
 	"/bin/ps -axlw 2>&1",
 	"/usr/sbin/arp -an 2>&1",
 	"/usr/bin/netstat -an 2>&1",
@@ -22,7 +23,7 @@ const char *cmds[] = {
 	NULL
 };
 
-const char *dirs[] = {
+static const char *dirs[] = {
 	"/tmp",
 	"/var/tmp",
 	".",
@@ -35,7 +36,7 @@ const char *dirs[] = {
 	NULL
 };
 
-const char *files[] = {
+static const char *files[] = {
 	"/var/log/messages",
 	"/var/log/wtmp",
 	"/var/log/lastlog",
