@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.2 2001/11/26 19:55:38 yamt Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.3 2001/12/31 22:07:58 thorpej Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa dma routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.2 2001/11/26 19:55:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.3 2001/12/31 22:07:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ cs_isa_dma_attach(struct cs_softc *sc)
 		sc->sc_cfgflags |= CFGFLG_DMA_MODE;
 		isc->sc_dmaaddr = dma_addr;
 after_dma_block:
+		;
 	}
 }
 
