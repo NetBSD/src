@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 1997/05/25 22:11:48 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,8 @@
 #endif
 #include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
+
+#include <dev/clock_subr.h>
 
 #if defined(PROF) && defined(PROFTIMER)
 #include <sys/PROF.h>
@@ -645,14 +647,14 @@ profclock(pc, ps)
 
 /* this is a hook set by a clock driver for the configured realtime clock,
    returning plain current unix-time */
-long (*gettod) __P((void));
-int (*settod) __P((long));
+time_t (*gettod) __P((void));
+int (*settod) __P((time_t));
 void *clockaddr;
 
-long a3gettod __P((void));
-long a2gettod __P((void));
-int a3settod __P((long));
-int a2settod __P((long));
+time_t a3gettod __P((void));
+time_t a2gettod __P((void));
+int a3settod __P((time_t));
+int a2settod __P((time_t));
 int rtcinit __P((void));
 
 /*
@@ -663,13 +665,13 @@ void
 inittodr(base)
 	time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
+	time_t timbuf = base;	/* assume no battery clock exists */
   
 	if (gettod == NULL && rtcinit() == 0)
 		printf("WARNING: no battery clock\n");
 	else
 		timbuf = gettod();
-  
+
 	if (timbuf < base) {
 		printf("WARNING: bad date in battery clock\n");
 		timbuf = base;
@@ -712,75 +714,49 @@ rtcinit()
 	return(1);
 }
 
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-long
+time_t
 a3gettod()
 {
 	struct rtclock3000 *rt;
-	int i, year, month, day, wday, hour, min, sec;
-	u_long tmp;
+	struct clock_ymdhms dt;
+	time_t secs;
 
 	rt = clockaddr;
 
 	/* hold clock */
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
 
-	/* read it */
-	sec   = rt->second1 * 10 + rt->second2;
-	min   = rt->minute1 * 10 + rt->minute2;
-	hour  = rt->hour1   * 10 + rt->hour2;
-	wday  = rt->weekday;
-	day   = rt->day1    * 10 + rt->day2;
-	month = rt->month1  * 10 + rt->month2;
-	year  = rt->year1   * 10 + rt->year2   + 1900;
+	/* Copy the info.  Careful about the order! */
+	dt.dt_sec   = rt->second1 * 10 + rt->second2;
+	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
+	dt.dt_hour  = rt->hour1   * 10 + rt->hour2;
+	dt.dt_wday  = rt->weekday;
+	dt.dt_day   = rt->day1    * 10 + rt->day2;
+	dt.dt_mon   = rt->month1  * 10 + rt->month2;
+	dt.dt_year  = rt->year1   * 10 + rt->year2;
+
+	dt.dt_year += CLOCK_BASE_YEAR;
 
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
-	if (range_test(hour, 0, 23))
-		return(0);
-	if (range_test(wday, 0, 6))
-		return(0);
-	if (range_test(day, 1, 31))
-		return(0);
-	if (range_test(month, 1, 12))
-		return(0);
-	if (range_test(year, STARTOFTIME, 2000))
-		return(0);
+	if ((dt.dt_hour > 23) ||
+	    (dt.dt_wday > 6) || 
+	    (dt.dt_day  > 31) || 
+	    (dt.dt_mon  > 12) ||
+	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+		return (0);
 
-	tmp = 0;
-
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-
-	for (i = 1; i < month; i++)
-		tmp += days_in_month(i);
-
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-
-	return(tmp);
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
 }
 
 int
-a3settod(tim)
-	long tim;
+a3settod(secs)
+	time_t secs;
 {
-	register int i;
-	register long hms, day;
-	u_char sec1, sec2;
-	u_char min1, min2;
-	u_char hour1, hour2;
-/*	u_char wday; */
-	u_char day1, day2;
-	u_char mon1, mon2;
-	u_char year1, year2;
 	struct rtclock3000 *rt;
+	struct clock_ymdhms dt;
 
 	rt = clockaddr;
 	/*
@@ -789,71 +765,37 @@ a3settod(tim)
 	 */
 
 	if (! rt)
-		return 0;
+		return (0);
 
-	/* prepare values to be written to clock */
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
-
-	hour2 = hms / 3600;
-	hour1 = hour2 / 10;
-	hour2 %= 10;
-
-	min2 = (hms % 3600) / 60;
-	min1 = min2 / 10;
-	min2 %= 10;
-
-
-	sec2 = (hms % 3600) % 60;
-	sec1 = sec2 / 10;
-	sec2 %= 10;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-		day -= days_in_year(i);
-	year1 = i / 10;
-	year2 = i % 10;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-
-	mon1 = i / 10;
-	mon2 = i % 10;
-
-	/* Days are what is left over (+1) from all that. */
-	day ++;
-	day1 = day / 10;
-	day2 = day % 10;
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
-	rt->second1 = sec1;
-	rt->second2 = sec2;
-	rt->minute1 = min1;
-	rt->minute2 = min2;
-	rt->hour1   = hour1;
-	rt->hour2   = hour2;
-/*	rt->weekday = wday; */
-	rt->day1    = day1;
-	rt->day2    = day2;
-	rt->month1  = mon1;
-	rt->month2  = mon2;
-	rt->year1   = year1;
-	rt->year2   = year2;
+	rt->second1 = dt.dt_sec / 10;
+	rt->second2 = dt.dt_sec % 10;
+	rt->minute1 = dt.dt_min / 10;
+	rt->minute2 = dt.dt_min % 10;
+	rt->hour1   = dt.dt_hour / 10;
+	rt->hour2   = dt.dt_hour % 10;
+	rt->weekday = dt.dt_wday;
+	rt->day1    = dt.dt_day / 10;
+	rt->day2    = dt.dt_day % 10;
+	rt->month1  = dt.dt_mon / 10;
+	rt->month2  = dt.dt_mon % 10;
+	rt->year1   = dt.dt_year / 10;
+	rt->year2   = dt.dt_year % 10;
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
-	return 1;
+	return (1);
 }
 
-long
+time_t
 a2gettod()
 {
 	struct rtclock2000 *rt;
-	int i, year, month, day, hour, min, sec;
-	u_long tmp;
+	struct clock_ymdhms dt;
+	time_t secs;
+	int i;
 
 	rt = clockaddr;
 
@@ -867,21 +809,38 @@ a2gettod()
 	if (rt->control1 & A2CONTROL1_BUSY)
 		return (0);	/* Give up and say it's not there */
 
+	/* Copy the info.  Careful about the order! */
+	dt.dt_sec   = rt->second1 * 10 + rt->second2;
+	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
+	dt.dt_hour  = (rt->hour1 & 3) * 10 + rt->hour2;
+	dt.dt_day   = rt->day1    * 10 + rt->day2;
+	dt.dt_mon   = rt->month1  * 10 + rt->month2;
+	dt.dt_year  = rt->year1   * 10 + rt->year2;
+	dt.dt_wday  = rt->weekday;
+
 	/*
-	 * read it
+	 * The oki clock chip has a register to put the clock into
+	 * 12/24h mode.
+	 *
+	 *  clockmode   |    A2HOUR1_PM
+	 *  24h   12h   |  am = 0, pm = 1
+	 * ---------------------------------
+	 *   0    12    |       0
+	 *   1     1    |       0
+	 *  ..    ..    |       0
+	 *  11    11    |       0
+	 *  12    12    |       1
+	 *  13     1    |       1
+	 *  ..    ..    |       1
+	 *  23    11    |       1
+	 *
 	 */
-	sec = rt->second1 * 10 + rt->second2;
-	min = rt->minute1 * 10 + rt->minute2;
-	hour = (rt->hour1 & 3)  * 10 + rt->hour2;
-	day = rt->day1 * 10 + rt->day2;
-	month = rt->month1 * 10 + rt->month2;
-	year = rt->year1 * 10 + rt->year2   + 1900;
 
 	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if ((rt->hour1 & A2HOUR1_PM) == 0 && hour == 12)
-			hour = 0;
-		else if ((rt->hour1 & A2HOUR1_PM) && hour != 12)
-			hour += 12;
+		if ((rt->hour1 & A2HOUR1_PM) == 0 && dt.dt_hour == 12)
+			dt.dt_hour = 0;
+		else if ((rt->hour1 & A2HOUR1_PM) && dt.dt_hour != 12)
+			dt.dt_hour += 12;
 	}
 
 	/* 
@@ -889,115 +848,75 @@ a2gettod()
 	 */
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
-	if (range_test(hour, 0, 23))
-		return(0);
-	if (range_test(day, 1, 31))
-		return(0);
-	if (range_test(month, 1, 12))
-		return(0);
-	if (range_test(year, STARTOFTIME, 2000))
-		return(0);
+	dt.dt_year += CLOCK_BASE_YEAR;
+
+	if ((dt.dt_hour > 23) ||
+	    (dt.dt_day  > 31) || 
+	    (dt.dt_mon  > 12) ||
+	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+		return (0);
   
-	tmp = 0;
-  
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-  
-	for (i = 1; i < month; i++)
-		tmp += days_in_month(i);
-  
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-  
-	return(tmp);
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
 }
 
-/*
- * there is some question as to whether this works
- * I guess
- */
 int
-a2settod(tim)
-	long tim;
+a2settod(secs)
+	time_t secs;
 {
-
-	int i;
-	long hms, day;
-	u_char sec1, sec2;
-	u_char min1, min2;
-	u_char hour1, hour2;
-	u_char day1, day2;
-	u_char mon1, mon2;
-	u_char year1, year2;
 	struct rtclock2000 *rt;
+	struct clock_ymdhms dt;
+	int ampm, i;
 
 	rt = clockaddr;
 	/* 
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
-	 *
-	 * XXX Check out the above where we (hour1 & 3)
 	 */
 	if (! rt)
-		return 0;
+		return (0);
 
-	/* prepare values to be written to clock */
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
 
-	hour2 = hms / 3600;
-	hour1 = hour2 / 10;
-	hour2 %= 10;
-
-	min2 = (hms % 3600) / 60;
-	min1 = min2 / 10;
-	min2 %= 10;
-
-
-	sec2 = (hms % 3600) % 60;
-	sec1 = sec2 / 10;
-	sec2 %= 10;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-		day -= days_in_year(i);
-	year1 = i / 10;
-	year2 = i % 10;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-
-	mon1 = i / 10;
-	mon2 = i % 10;
-  
-	/* Days are what is left over (+1) from all that. */
-	day ++;
-	day1 = day / 10;
-	day2 = day % 10;
-
-	/* 
-	 * XXXX spin wait as with reading???
+	/*
+	 * hold clock
 	 */
 	rt->control1 |= A2CONTROL1_HOLD;
-	rt->second1 = sec1;
-	rt->second2 = sec2;
-	rt->minute1 = min1;
-	rt->minute2 = min2;
-	rt->hour1   = hour1;
-	rt->hour2   = hour2;
-	rt->day1    = day1;
-	rt->day2    = day2;
-	rt->month1  = mon1;
-	rt->month2  = mon2;
-	rt->year1   = year1;
-	rt->year2   = year2;
+	i = 0x1000;
+	while (rt->control1 & A2CONTROL1_BUSY && i--)
+		;
+	if (rt->control1 & A2CONTROL1_BUSY)
+		return (0);	/* Give up and say it's not there */
+
+	ampm = 0;
+	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
+		if (dt.dt_hour >= 12) {
+			ampm = A2HOUR1_PM;
+			if (dt.dt_hour != 12)
+				dt.dt_hour -= 12;
+		} else if (dt.dt_hour == 0) {
+			dt.dt_hour = 12;
+		}
+	}
+	rt->hour1   = (dt.dt_hour / 10) | ampm;
+	rt->hour2   = dt.dt_hour % 10;
+	rt->second1 = dt.dt_sec / 10;
+	rt->second2 = dt.dt_sec % 10;
+	rt->minute1 = dt.dt_min / 10;
+	rt->minute2 = dt.dt_min % 10;
+	rt->day1    = dt.dt_day / 10;
+	rt->day2    = dt.dt_day % 10;
+	rt->month1  = dt.dt_mon / 10;
+	rt->month2  = dt.dt_mon % 10;
+	rt->year1   = dt.dt_year / 10;
+	rt->year2   = dt.dt_year % 10;
+	rt->weekday = dt.dt_wday;
+
+	/* 
+	 * release the clock 
+	 */
 	rt->control2 &= ~A2CONTROL1_HOLD;
 
-	return 1;
+	return (1);
 }
