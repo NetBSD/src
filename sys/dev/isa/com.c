@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.51 1995/04/19 19:12:53 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.52 1995/04/19 22:04:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -376,7 +376,8 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = comcd.cd_devs[COMUNIT(dev)]->sc_tty;
+	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -387,7 +388,8 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = comcd.cd_devs[COMUNIT(dev)]->sc_tty;
+	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -396,8 +398,10 @@ struct tty *
 comtty(dev)
 	dev_t dev;
 {
+	struct com_softc *sc = comcd.cd_devs[COMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 
-	return (comcd.cd_devs[COMUNIT(dev)]->sc_tty);
+	return (tp);
 }
  
 static u_char
