@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.133 2003/09/29 15:12:08 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.134 2003/10/03 13:02:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.133 2003/09/29 15:12:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.134 2003/10/03 13:02:54 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -601,7 +601,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			maxseg = min(segleft, fs->lfs_sepb);
 			for (i = 0; i < maxseg; i++) {
 				sn = curseg + i;
-				if (sn != fs->lfs_curseg &&
+				if (sn != dtosn(fs, fs->lfs_curseg) &&
 				    segusep->su_flags & SEGUSE_ACTIVE) {
 					segusep->su_flags &= ~SEGUSE_ACTIVE;
 					--fs->lfs_nactive;
