@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.22 1995/04/21 02:48:06 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.23 1995/06/08 12:52:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -390,13 +390,15 @@ serwrite(dev, uio, flag)
  */
 
 /* serial interrupt code */
-extern int
+extern void
 ser_intr(void)
 {
 	register struct ser_softc *sc;
 	unsigned char reg0, reg1, ch, ch1, c, bits;
 	int     s;
 	register int unit;
+
+	if (!initted) return;
 
 	/* read status to reset SCC state machine */
 	reg0 = SCCCNTL(0);
@@ -476,12 +478,13 @@ ser_intr(void)
 		break;
 	}
 
-	return (1);
 	/* end of serial interrupt code */
 }
-/* serial software interrupt. do all the things we could
-   not do at splscc();
-*/
+
+/*
+ * serial software interrupt. do all the things we could
+ * not do at splscc();
+ */
 
 extern void
 sersir(void)
