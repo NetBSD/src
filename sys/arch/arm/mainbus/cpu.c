@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/02/26 13:45:07 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2001/02/26 14:01:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -261,29 +261,26 @@ identify_master_cpu(cpu_number, dev_name)
 		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
 		cpus[cpu_number].fpu_flags = 0;
 
-	/*
-	 * Ok if ARMFPE is defined and the boot options request the ARM FPE
-	 * then it will be installed as the FPE.
-	 * This is just while I work on integrating the new FPE.
-	 * It means the new FPE gets installed if compiled int (ARMFPE
-	 * defined) and also gives me a on/off option when I boot in case
-	 * the new FPE is causing panics.
-	 */
+		/*
+		 * Ok if ARMFPE is defined and the boot options request the 
+		 * ARM FPE then it will be installed as the FPE.
+		 * This is just while I work on integrating the new FPE.
+		 * It means the new FPE gets installed if compiled int (ARMFPE
+		 * defined) and also gives me a on/off option when I boot in
+		 * case the new FPE is causing panics.
+		 */
 
 #ifdef ARMFPE
-        if (boot_args) {
-        	char *ptr;
-       
-		ptr = strstr(boot_args, "noarmfpe");
-		if (!ptr) {
-			if (initialise_arm_fpe(&cpus[cpu_number]) != 0) {
-				identify_arm_fpu(cpu_number);
+		if (boot_args) {
+			char *ptr;
+
+			ptr = strstr(boot_args, "noarmfpe");
+			if (!ptr) {
+				if (initialise_arm_fpe(&cpus[cpu_number]) != 0)
+					identify_arm_fpu(cpu_number);
 			}
 		}
-	}
 
-#else
-		/* Now we support softfloat libraries we may not have an FPE. */
 #endif
 	}
 
