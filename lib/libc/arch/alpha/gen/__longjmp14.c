@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/03/21 18:04:27 matt Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 01:41:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,27 +72,27 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_V0] = val;
 
 	/* Copy saved registers */
-        uc.uc_mcontext.__gregs[_REG_S0] = sc->sc_regs[R_S0];
-        uc.uc_mcontext.__gregs[_REG_S1] = sc->sc_regs[R_S1];
-        uc.uc_mcontext.__gregs[_REG_S2] = sc->sc_regs[R_S2];
-        uc.uc_mcontext.__gregs[_REG_S3] = sc->sc_regs[R_S3];
-        uc.uc_mcontext.__gregs[_REG_S4] = sc->sc_regs[R_S4];
-        uc.uc_mcontext.__gregs[_REG_S5] = sc->sc_regs[R_S5];
-        uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[R_S6];
-        uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[R_RA];
-        uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_sp;
-        uc.uc_mcontext.__gregs[_REG_PC] = sc->sc_pc;
-        uc.uc_mcontext.__gregs[_REG_PS] =
+	uc.uc_mcontext.__gregs[_REG_S0] = sc->sc_regs[R_S0];
+	uc.uc_mcontext.__gregs[_REG_S1] = sc->sc_regs[R_S1];
+	uc.uc_mcontext.__gregs[_REG_S2] = sc->sc_regs[R_S2];
+	uc.uc_mcontext.__gregs[_REG_S3] = sc->sc_regs[R_S3];
+	uc.uc_mcontext.__gregs[_REG_S4] = sc->sc_regs[R_S4];
+	uc.uc_mcontext.__gregs[_REG_S5] = sc->sc_regs[R_S5];
+	uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[R_S6];
+	uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[R_RA];
+	uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_sp;
+	uc.uc_mcontext.__gregs[_REG_PC] = sc->sc_pc;
+	uc.uc_mcontext.__gregs[_REG_PS] =
 	   (sc->sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
 	/* Copy FP state */
-        if (sc->sc_ownedfp) {
-                memcpy(&uc.uc_mcontext.__fpregs.__fp_fr,
-                    &sc->sc_fpregs, 31 * sizeof(unsigned long));
-                sc->sc_fpcr = uc.uc_mcontext.__fpregs.__fp_fpcr;
-                /* XXX sc_fp_control */
-                uc.uc_flags |= _UC_FPU;
-        }
+	if (sc->sc_ownedfp) {
+		memcpy(&uc.uc_mcontext.__fpregs.__fp_fr,
+		    &sc->sc_fpregs, 31 * sizeof(unsigned long));
+		sc->sc_fpcr = uc.uc_mcontext.__fpregs.__fp_fpcr;
+		/* XXX sc_fp_control */
+		uc.uc_flags |= _UC_FPU;
+	}
 
 	/* Copy signal mask */
 	uc.uc_sigmask = sc->sc_mask;
