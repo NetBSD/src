@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.1 1998/07/19 17:28:17 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.2 1998/07/19 17:30:02 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp 
+ *	NetBSD: pcmciadevs,v 1.1 1998/07/19 17:28:17 christos Exp 
  */
 
 /*
@@ -61,18 +61,18 @@
 /* Adaptec Products */
 #define	PCMCIA_CIS_ADAPTEC_APA1460_1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_1	0x0001
-#define	PCMCIA_STR_ADAPTEC_APA1460_1	"APA-1460/A SCSI Host Adapter"
+#define	PCMCIA_STR_ADAPTEC_APA1460_1	"Adaptec APA-1460/A SCSI Host Adapter"
 #define	PCMCIA_CIS_ADAPTEC_APA1460_2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
-#define	PCMCIA_STR_ADAPTEC_APA1460_2	"APA-1460/B SCSI Host Adapter"
+#define	PCMCIA_STR_ADAPTEC_APA1460_2	"Adaptec APA-1460/B SCSI Host Adapter"
 
 /* 3COM Products */
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C562	0x0562
-#define	PCMCIA_STR_3COM_3C562	"3c562 33.6 Modem/10Mbps Ethernet"
+#define	PCMCIA_STR_3COM_3C562	"3Com 3c562 33.6 Modem/10Mbps Ethernet"
 #define	PCMCIA_CIS_3COM_3C589	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C589	0x0589
-#define	PCMCIA_STR_3COM_3C589	"3c589 10Mbps Ethernet"
+#define	PCMCIA_STR_3COM_3C589	"3Com 3c589 10Mbps Ethernet"
 
 /* Dayna Products */
 #define	PCMCIA_CIS_DAYNA_COMMUNICARD_E	{ NULL, NULL, NULL, NULL }
