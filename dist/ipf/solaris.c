@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.10 2002/05/02 16:51:24 martti Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.11 2002/09/19 07:56:06 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.30 2002/04/23 14:57:51 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.32 2002/06/27 14:39:41 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -654,6 +654,18 @@ tryagain:
 		frstats[out].fr_nodata++;
 		return 0;	/* No data blocks */
 	}
+
+#if SOLARIS2 >= 8
+	/* Skip tunnel header for tunnel devices */
+	if (out && off == 0 && qif->qf_tunoff > 0) {
+		ipha_t *ipha;
+		off = qif->qf_tunoff;
+
+		ipha = (ipha_t *)(m->b_rptr + off);
+
+		off += IPH_HDR_LENGTH(ipha);
+	}
+#endif
 
 	ip = (ip_t *)(m->b_rptr + off);		/* MMM */
 
@@ -1523,6 +1535,17 @@ void solattach()
 		 */
 		if (il->ill_type == IFT_ETHER && !il->ill_bcast_addr_length)
 			qif->qf_hl = 0;
+                        qif->qf_hl = 0;
+
+		/*
+		 * Tunnels are special; they have a 32 byte header followed
+		 * by the encapsulated header.
+		 */
+		if (strncmp(il->ill_name, "ip.tun", 6) == 0)
+			qif->qf_tunoff = 32;    /* no constant defined */
+		else
+			qif->qf_tunoff = 0;
+
 #endif
 		strncpy(qif->qf_name, il->ill_name, sizeof(qif->qf_name));
 		qif->qf_name[sizeof(qif->qf_name) - 1] = '\0';
@@ -1988,7 +2011,8 @@ frdest_t *fdp;
 #else
 		mp = dir->ire_fp_mp;
 		hlen = mp ? mp->b_wptr - mp->b_rptr : 0;
-		mp = dir->ire_dlureq_mp;
+		if (mp == NULL)
+			mp = dir->ire_dlureq_mp;
 #endif
 		if (mp != NULL) {
 			s = mb->b_rptr;

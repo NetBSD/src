@@ -1,9 +1,11 @@
 #! /bin/sh
+unset LD_LIBRARY_PATH
+
 if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.5.2.12 2002/03/13 03:59:06 darrenr Exp
+# Id: buildsunos,v 2.5.2.13 2002/06/04 14:37:54 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then

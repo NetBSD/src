@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.24 2002/05/02 17:03:30 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.25 2002/09/19 08:04:43 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -99,7 +99,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp";
 #endif
 
 #ifndef	_KERNEL
@@ -1078,7 +1078,7 @@ int out;
 		fin->fin_fr = fr;
 		if ((pass & (FR_KEEPFRAG|FR_KEEPSTATE)) == FR_KEEPFRAG) {
 			if (fin->fin_fl & FI_FRAG) {
-				if (ipfr_newfrag(ip, fin, pass) == -1) {
+				if (ipfr_newfrag(ip, fin) == -1) {
 					ATOMIC_INCL(frstats[out].fr_bnfr);
 				} else {
 					ATOMIC_INCL(frstats[out].fr_nfr);
@@ -1193,7 +1193,16 @@ logit:
 		 * some operating systems.
 		 */
 		if (!out) {
-			if (pass & FR_RETICMP) {
+			if (changed == -1)
+				/*
+				 * If a packet results in a NAT error, do not
+				 * send a reset or ICMP error as it may disrupt
+				 * an existing flow.  This is the proxy saying
+				 * the content is bad so just drop the packet
+				 * silently.
+				 */
+				;
+			else if (pass & FR_RETICMP) {
 				int dst;
 
 				if ((pass & FR_RETMASK) == FR_FAKEICMP)
@@ -1503,7 +1512,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp
+ * Id: fil.c,v 2.35.2.63 2002/08/28 12:40:08 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1618,7 +1627,6 @@ frgroup_t ***fgpp;
 		fgp = &ipfgroups[0][set];
 	else
 		return NULL;
-	num &= 0xffff;
 
 	while ((fg = *fgp))
 		if (fg->fg_num == num)

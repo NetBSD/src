@@ -3,6 +3,7 @@ i copyright=../copyright
 !default 0755 root root
 i postinstall=../postinstall
 #i preinstall=../preinstall
+i preremove=../preremove
 i postremove=../postremove
 d none /opt ? ? ?
 d none /opt/ipf

@@ -248,6 +248,7 @@ $(OBJ)/ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
 
 clean:
+	${RM} -f ../ipf ../ipftest ../ipmon ../ipnat
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \
 		${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon ipnat ipf.exe ipfs; \
 		${RM} -f ipnat.5 ipnat.4 ipnat.8 ipfilter.5; \

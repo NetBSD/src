@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.6 2002/05/02 16:50:36 martti Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.7 2002/09/19 07:56:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -15,7 +15,11 @@
 
 #if defined(__FreeBSD__)
 # ifndef __FreeBSD_version
-#  include <sys/osreldate.h>
+#  ifdef IPFILTER_LKM
+#   include <osreldate.h>
+#  else
+#   include <sys/osreldate.h>
+#  endif
 # endif
 # ifdef	IPFILTER_LKM
 #  define	ACTUALLY_LKM_NOT_KERNEL

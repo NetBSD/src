@@ -219,6 +219,7 @@ ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
 
 clean:
+	${RM} -f ../ipf ../ipftest ../ipmon ../ipnat
 	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \
 		ipfs $(LKM) y.tab.? lex.yy.c
 	${MAKE} -f Makefile.ipsend clean

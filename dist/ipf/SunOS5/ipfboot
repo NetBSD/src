@@ -38,6 +38,47 @@ block_default_workaround() {
 	done
 }
 
+
+load_ipf_config() {
+	bad=0
+	if [ -r ${IPFILCONF} ]; then
+		if `/sbin/ipf -V | \
+		      nawk '$1 == "Default:" && $2 == "pass" { exit 1 }'` ; then
+			block_default_workaround
+		fi
+		ipf -IFa -f ${IPFILCONF}
+		if [ $? != 0 ]; then
+			echo "$0: load of ${IPFILCONF} into alternate set failed"
+			bad=1
+		fi
+	fi
+	if [ -r ${IP6FILCONF} ]; then
+		ipf -6IFa -f ${IP6FILCONF}
+		if [ $? != 0 ]; then
+			echo "$0: load of ${IPFILCONF} into alternate set failed"
+			bad=1
+		fi
+	fi
+	if [ $bad -eq 0 ] ; then
+		ipf -s -y
+	else
+		echo Not switching config due to load error.
+	fi
+}
+
+
+load_ipnat_config() {
+	if [ -r ${IPNATCONF} ]; then
+		ipnat -CF -f ${IPNATCONF}
+		if [ $? != 0 ]; then
+			echo "$0: load of ${IPNATCONF} failed"
+		else
+			ipf -y
+		fi
+	fi
+}
+
+
 case "$1" in
 	start)
 		if [ x"$pid" != x ] ; then
@@ -47,34 +88,8 @@ case "$1" in
 			modunload -i $id 2>/dev/null
 		fi
 		modload /usr/kernel/drv/ipf
-		if [ -r ${IPFILCONF} ]; then
-			if `/sbin/ipf -V | \
-                              nawk '$1 == "Default:" && $2 == "pass" { exit 1 }'` ; then
-				block_default_workaround
-			fi
-			ipf -IFa -f ${IPFILCONF}
-			if [ $? != 0 ]; then
-				echo "$0: load of ${IPFILCONF} into alternate set failed"
-			else
-				ipf -s
-			fi
-		fi
-		ipf -y
-		if [ -r ${IP6FILCONF} ]; then
-			ipf -IFa -6f ${IP6FILCONF}
-			if [ $? != 0 ]; then
-				echo "$0: load of ${IPFILCONF} into alternate set failed"
-			else
-				ipf -IF a
-				ipf -6f ${IP6FILCONF}
-			fi
-		fi
-		if [ -r ${IPNATCONF} ]; then
-			ipnat -CF -f ${IPNATCONF}
-			if [ $? != 0 ]; then
-				echo "$0: load of ${IPNATCONF} failed"
-			fi
-		fi
+		load_ipf_config
+		load_ipnat_config
 		ipmon -Ds
 		;;
 
@@ -88,34 +103,18 @@ case "$1" in
 		;;
 
 	reload)
-		if [ -r ${IPFILCONF} ]; then
-			ipf -I -Fa -f ${IPFILCONF}
-			if [ $? != 0 ]; then
-				echo "$0: reload of ${IPFILCONF} into alternate set failed"
-			else
-				ipf -s
-			fi
-		fi
-		if [ -r ${IPNATCONF} ]; then
-			ipnat -CF -f ${IPNATCONF}
-			if [ $? != 0 ]; then
-				echo "$0: reload of ${IPNATCONF} failed"
-			fi
-		fi
+		load_ipf_config
+		load_ipnat_config
 		;;
 
 	reipf)
-		if [ -r ${IPFILCONF} ]; then
-			ipf -I -Fa -f ${IPFILCONF}
-			if [ $? != 0 ]; then
-				echo "$0: reload of ${IPFILCONF} into alternate set failed"
-			else
-				ipf -s
-			fi
-		fi
+		load_ipf_config
+		;;
+	reipnat)
+		load_ipnat_config
 		;;
 	*)
-		echo "Usage: $0 (start|stop|reload)" >&2
+		echo "Usage: $0 (start|stop|reload|reipf|reipnat)" >&2
 		exit 1
 		;;
 

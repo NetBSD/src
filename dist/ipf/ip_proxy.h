@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.5 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.6 2002/09/19 07:55:56 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.8.2.12 2002/01/01 13:41:43 darrenr Exp
+ * Id: ip_proxy.h,v 2.8.2.13 2002/07/04 11:07:37 darrenr Exp
  */
 
 #ifndef	__IP_PROXY_H__
@@ -97,7 +97,7 @@ typedef	struct	aproxy	{
 typedef struct  ftpside {
 	char	*ftps_rptr;
 	char	*ftps_wptr;
-	u_32_t	ftps_seq;
+	u_32_t	ftps_seq[2];
 	u_32_t	ftps_len;
 	int	ftps_junk;
 	int	ftps_cmds;

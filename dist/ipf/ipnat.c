@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.8 2002/03/14 12:30:10 martti Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.9 2002/09/19 07:56:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -62,7 +62,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.20 2002/02/22 15:32:55 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.21 2002/06/06 10:49:19 darrenr Exp";
 #endif
 
 
@@ -177,6 +177,8 @@ char *argv[];
 		    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
 			(void) fprintf(stderr, "%s: open: %s\n", IPL_NAT,
 				STRERROR(errno));
+			if (errno == ENODEV)
+				fprintf(stderr, "IPFilter enabled?\n");
 			exit(1);
 		}
 		if (ioctl(fd, SIOCGNATS, &nsp) == -1) {
