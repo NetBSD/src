@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.27 2000/12/29 20:07:53 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28 2001/02/05 10:42:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -75,10 +75,6 @@
 #include <compat/linux/common/linux_sockio.h>
 
 #include <compat/linux/linux_syscallargs.h>
-
-#ifndef MIN
-#define	MIN(a,b) (((a)<(b))?(a):(b))
-#endif
 
 /*
  * The calls in this file are entered either via the linux_socketcall()

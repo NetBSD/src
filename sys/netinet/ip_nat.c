@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.36 2000/08/12 08:08:54 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.37 2001/02/05 10:42:44 chs Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.36 2000/08/12 08:08:54 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.37 2001/02/05 10:42:44 chs Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.20 2000/08/08 16:01:01 darrenr Exp";
@@ -110,9 +110,6 @@ extern struct ifnet vpnif;
 #include "netinet/ip_state.h"
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
-#endif
-#ifndef	MIN
-# define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 #undef	SOCKADDR_IN
 #define	SOCKADDR_IN	struct sockaddr_in

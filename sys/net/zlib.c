@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.12 2001/01/18 20:28:20 jdolecek Exp $	*/
+/*	$NetBSD: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.12 2001/01/18 20:28:20 jdolecek Exp $
+ * $Id: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $
  */
 
 /* 
@@ -2054,10 +2054,6 @@ local void send_bits(s, value, length)
   }\
 }
 #endif /* DEBUG_ZLIB */
-
-
-#define MAX(a,b) (a >= b ? a : b)
-/* the arguments must not have side effects */
 
 /* ===========================================================================
  * Initialize the various 'constant' tables. In a multi-threaded environment,
