@@ -134,15 +134,15 @@ int pmsprobe(struct isa_device *dvp)
 
 static inline void pms_write(int ioport, u_char value)
 {
-	outb(0xd4, ioport+CNTRL);
-	outb(value, ioport+DATA);
+	outb(ioport+CNTRL, 0xd4);
+	outb(ioport+DATA, value);
 	while (!(inb(ioport+STATUS) & PMS_OUTPUT_ACK));
 }
 
 static inline void pms_command(int ioport, u_char value)
 {
-	outb(0x60, ioport+CNTRL);
-	outb(value, ioport+DATA);
+	outb(ioport+CNTRL, 0x60);
+	outb(ioport+DATA, value);
 }
 
 int pmsattach(struct isa_device *dvp)
@@ -158,7 +158,9 @@ int pmsattach(struct isa_device *dvp)
 	/* Disable mouse interrupts */
 
 	pms_command(ioport, PMS_DISABLE);
+#if 0
 	pms_command(ioport, PMS_INT_DISABLE);
+#endif
 	pms_write(ioport, PMS_DEV_DISABLE);
 
 	pms_write(ioport, PMS_SET_RES);
@@ -225,7 +227,9 @@ int pmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 	/* Enable Bus Mouse interrupts */
 
 	pms_write(ioport, PMS_DEV_ENABLE);
+#if 0
 	pms_command(ioport, PMS_INT_ENABLE);
+#endif
 	pms_command(ioport, PMS_ENABLE);
 
 	/* Successful open */
@@ -247,7 +251,9 @@ int pmsclose(dev_t dev, int flag, int fmt, struct proc *p)
 	/* Disable further mouse interrupts */
 
 	pms_command(ioport, PMS_DISABLE);
+#if 0
 	pms_command(ioport, PMS_INT_DISABLE);
+#endif
 	pms_write(ioport, PMS_DEV_DISABLE);
 
 	/* Complete the close */
