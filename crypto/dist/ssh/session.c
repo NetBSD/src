@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.38 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.39 2005/02/22 02:29:32 elric Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.180 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.38 2005/02/13 18:14:04 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.39 2005/02/22 02:29:32 elric Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -333,6 +333,58 @@ do_authenticated1(Authctxt *authctxt)
 			if (packet_set_maxsize(packet_get_int()) > 0)
 				success = 1;
 			break;
+
+#if defined(AFS) || defined(KRB5)
+		case SSH_CMSG_HAVE_KERBEROS_TGT:
+			if (!options.kerberos_tgt_passing) {
+				verbose("Kerberos TGT passing disabled.");
+			} else {
+				char *kdata = packet_get_string(&dlen);
+				packet_check_eom();
+
+				/* XXX - 0x41, see creds_to_radix version */
+				if (kdata[0] != 0x41) {
+#ifdef KRB5
+					krb5_data tgt;
+					tgt.data = kdata;
+					tgt.length = dlen;
+
+					if (auth_krb5_tgt(s->authctxt, &tgt))
+						success = 1;
+					else
+						verbose("Kerberos v5 TGT refused for %.100s", s->authctxt->user);
+#endif /* KRB5 */
+				} else {
+#ifdef AFS
+					if (auth_krb4_tgt(s->authctxt, kdata))
+						success = 1;
+					else
+						verbose("Kerberos v4 TGT refused for %.100s", s->authctxt->user);
+#endif /* AFS */
+				}
+				xfree(kdata);
+			}
+			break;
+#endif /* AFS || KRB5 */
+
+#ifdef AFS
+		case SSH_CMSG_HAVE_AFS_TOKEN:
+			if (!options.afs_token_passing || !k_hasafs()) {
+				verbose("AFS token passing disabled.");
+			} else {
+				/* Accept AFS token. */
+				char *token = packet_get_string(&dlen);
+				packet_check_eom();
+
+				if (auth_afs_token(s->authctxt, token))
+					success = 1;
+				else
+					verbose("AFS token refused for %.100s",
+					    s->authctxt->user);
+				xfree(token);
+			}
+			break;
+#endif /* AFS */
 
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
@@ -987,6 +1039,11 @@ do_setup_env(Session *s, const char *shell)
 	if (original_command)
 		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
 		    original_command);
+#ifdef KRB4
+	if (s->authctxt->krb4_ticket_file)
+		child_set_env(&env, &envsize, "KRBTKFILE",
+		    s->authctxt->krb4_ticket_file);
+#endif
 #ifdef KRB5
 	if (s->authctxt->krb5_ticket_file)
 		child_set_env(&env, &envsize, "KRB5CCNAME",
@@ -2102,6 +2159,10 @@ do_cleanup(Authctxt *authctxt)
 
 	if (authctxt == NULL)
 		return;
+#ifdef KRB4
+	if (options.kerberos_ticket_cleanup)
+		krb4_cleanup_proc(authctxt);
+#endif
 #ifdef KRB5
 	if (options.kerberos_ticket_cleanup &&
 	    authctxt->krb5_ctx)

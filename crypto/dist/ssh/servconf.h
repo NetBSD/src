@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.18 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: servconf.h,v 1.19 2005/02/22 02:29:32 elric Exp $	*/
 /*	$OpenBSD: servconf.h,v 1.70 2004/06/24 19:30:54 djm Exp $	*/
 
 /*
@@ -88,8 +88,14 @@ typedef struct {
 						 * /etc/passwd */
 	int     kerberos_ticket_cleanup;	/* If true, destroy ticket
 						 * file on logout. */
+	int	kerberos_tgt_passing;		/* If true, permit Kerberos TGT
+						 * passing. */
 	int     kerberos_get_afs_token;		/* If true, try to get AFS token if
 						 * authenticated with Kerberos. */
+#ifdef AFS
+	int     afs_token_passing;      /* If true, permit AFS token passing. */
+#endif
+
 	int     gss_authentication;	/* If true, permit GSSAPI authentication */
 	int     gss_cleanup_creds;	/* If true, destroy cred cache on logout */
 	int     password_authentication;	/* If true, permit password

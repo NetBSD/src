@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.36 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.37 2005/02/22 02:29:32 elric Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshd.c,v 1.301 2004/08/11 11:50:09 dtucker Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.36 2005/02/13 18:14:04 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.37 2005/02/22 02:29:32 elric Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1769,6 +1769,18 @@ do_ssh1_kex(void)
 		auth_mask |= 1 << SSH_AUTH_RHOSTS_RSA;
 	if (options.rsa_authentication)
 		auth_mask |= 1 << SSH_AUTH_RSA;
+#if defined(KRB4) || defined(KRB5)
+	if (options.kerberos_authentication)
+		auth_mask |= 1 << SSH_AUTH_KERBEROS;
+#endif
+#if defined(AFS) || defined(KRB5)
+	if (options.kerberos_tgt_passing)
+		auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
+#endif
+#ifdef AFS
+	if (options.afs_token_passing)
+		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
+#endif
 	if (options.challenge_response_authentication == 1)
 		auth_mask |= 1 << SSH_AUTH_TIS;
 	if (options.password_authentication)
