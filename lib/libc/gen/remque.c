@@ -27,18 +27,21 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: remque.c,v 1.3 1993/08/26 00:44:58 jtc Exp $";
+static char *rcsid = "$Id: remque.c,v 1.4 1993/10/21 21:08:57 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
+
+#include <search.h>
 
 struct qelem {
         struct qelem *q_forw;
         struct qelem *q_back;
 };
 
-struct qelem *
-remque(struct qelem *elt)
+void
+remque(element)
+	void *element;
 {
-	(elt->q_forw)->q_back = elt->q_back;
-	(elt->q_back)->q_forw = elt->q_forw;
-	return(elt);
+	struct qelem *e = (struct qelem *) element;
+	e->q_forw->q_back = e->q_back;
+	e->q_back->q_forw = e->q_forw;
 }
