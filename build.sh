@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.82 2003/01/15 01:49:03 lukem Exp $
+#  $NetBSD: build.sh,v 1.83 2003/01/22 11:26:11 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -139,33 +139,37 @@ Usage: $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest]
 		[-i instdir] [-j njob] [-k kernel] [-M obj] [-m mach]
 		[-O obj] [-R release] [-T tools] [-V var=[value]] [-w wrapper]
 
-    -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
-    -B buildid	set BUILDID to buildid
-    -b		build nbmake and nbmake wrapper script, if needed
-    -D dest	set DESTDIR to dest
-    -d		build a full distribution into DESTDIR (including etc files)
-    -E		set "expert" mode; disables some DESTDIR checks
-    -i instdir	installworld from DESTDIR to instdir (after build completes)
-    -j njob	run up to njob jobs in parallel; see make(1)
-    -k kernel	build a kernel using the named configuration file
-    -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
-    -m mach	set MACHINE to mach (not required if NetBSD native)
-    -n		show commands that would be executed, but do not execute them
-    -O obj	set obj root directory to obj (sets a MAKEOBJDIR pattern)
-    -o		set MKOBJDIRS=no (do not create objdirs at start of build)
-    -R release	build a release (and set RELEASEDIR to release)
-    -r		remove contents of TOOLDIR and DESTDIR before building
-    -T tools	set TOOLDIR to tools
-    -t		build and install tools only (implies -b)
-    -U		set UNPRIVED
-    -u		set UPDATE
-    -V v=[val]	set variable \`v' to \`val'
-    -w wrapper	create nbmake script at wrapper
-		(default TOOLDIR/bin/nbmake-MACHINE)
+ Mutually exclusive build operations (last specified takes precedence):
+    -b		Build nbmake and nbmake wrapper script (if necessary)
+    -t		Build and install tools only (performs -b first)
+  (default)	"make build" into DESTDIR
+    -d		"make distribution" into DESTDIR (including etc files)
+    -R release	"make release" (and set RELEASEDIR to release)
+    -k kernel	Build a kernel using the named configuration file
 
-Notes:
-    *	The last specified option with "build" functionality will be run.
-    *	If -T is unset and TOOLDIR is not set in the environment,
+ Options to set various parameters:
+    -a arch	Set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
+    -B buildid	Set BUILDID to buildid
+    -D dest	Set DESTDIR to dest
+    -E		Set "expert" mode; disables some DESTDIR checks
+    -i instdir	"make installworld" from DESTDIR to instdir
+		(after build completes)
+    -j njob	Run up to njob jobs in parallel; see make(1)
+    -M obj	Set obj root directory to obj (sets MAKEOBJDIRPREFIX)
+    -m mach	Set MACHINE to mach (not required if NetBSD native)
+    -n		Show commands that would be executed, but do not execute them
+    -O obj	Set obj root directory to obj (sets a MAKEOBJDIR pattern)
+    -o		Set MKOBJDIRS=no (do not create objdirs at start of build)
+    -r		Remove contents of TOOLDIR and DESTDIR before building
+    -T tools	Set TOOLDIR to tools.
+    -U		Set UNPRIVED
+    -u		Set UPDATE
+    -V v=[val]	Set variable \`v' to \`val'
+    -w wrapper	Create nbmake script as wrapper
+		(default: \${TOOLDIR}/bin/nbmake-\${MACHINE} )
+
+Note:
+     +	If -T is unset and TOOLDIR is not set in the environment,
 	nbmake will be [re]built unconditionally.
 _usage_
 	exit 1
@@ -474,7 +478,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.82 2003/01/15 01:49:03 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.83 2003/01/22 11:26:11 lukem Exp $
 #
 
 EOF
