@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.1 1996/05/14 23:37:30 jtc Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.2 1996/05/18 19:01:19 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,14 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_all.c,v 1.1 1996/05/14 23:37:30 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_all.c,v 1.2 1996/05/18 19:01:19 jtc Exp $";
 #endif
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-extern int _yplib_timeout;
+extern struct timeval _yplib_timeout;
 extern int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
 extern void *ypresp_data;
 
@@ -51,17 +51,23 @@ yp_all(indomain, inmap, incallback)
 {
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;
-	struct timeval  tv;
 	struct sockaddr_in clnt_sin;
 	CLIENT         *clnt;
 	u_long          status;
 	int             clnt_sock;
 
+	if (indomain == NULL || *indomain == '\0'
+	    || strlen(indomain) > YPMAXDOMAIN)
+		return YPERR_BADARGS;
+	if (inmap == NULL || *inmap == '\0'
+	    || strlen(inmap) > YPMAXMAP)
+		return YPERR_BADARGS;
+	if (incallback == NULL)
+		return YPERR_BADARGS;
+
 	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
-	tv.tv_sec = _yplib_timeout;
-	tv.tv_usec = 0;
 	clnt_sock = RPC_ANYSOCK;
 	clnt_sin = ysd->dom_server_addr;
 	clnt_sin.sin_port = 0;
@@ -76,7 +82,8 @@ yp_all(indomain, inmap, incallback)
 	ypresp_data = (void *) incallback->data;
 
 	(void) clnt_call(clnt, YPPROC_ALL,
-		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
+		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status,
+		  _yplib_timeout);
 	clnt_destroy(clnt);
 	/* not really needed... */
 	xdr_free(xdr_ypresp_all_seq, (char *) &status);
