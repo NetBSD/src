@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 1999/03/26 21:18:50 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.107.2.1 1999/04/30 16:20:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 
 #include "opt_bb060stupidrom.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
 
 #include "assym.h"
 #include <machine/asm.h>
