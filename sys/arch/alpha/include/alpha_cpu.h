@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.9 1997/04/24 23:58:24 cgd Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.10 1997/09/02 14:29:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -200,7 +200,7 @@ struct alpha_logout_area {
 #define	ALPHA_PTE_KW			0x1000
 #define	ALPHA_PTE_UW			0x2000
 
-#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_KW)
+#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_UW)
 
 #define	ALPHA_PTE_SOFTWARE		0xffff0000
 
