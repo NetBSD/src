@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.11 2002/01/30 20:38:50 tv Exp $	*/
+/*	$NetBSD: reader.c,v 1.12 2003/07/14 11:45:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.11 2002/01/30 20:38:50 tv Exp $");
+__RCSID("$NetBSD: reader.c,v 1.12 2003/07/14 11:45:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1247,7 +1247,7 @@ insert_empty_rule()
     bucket *bp, **bpp;
 
     assert(cache);
-    sprintf(cache, "$$%d", ++gensym);
+    snprintf(cache, cache_size, "$$%d", ++gensym);
     bp = make_bucket(cache);
     last_symbol->next = bp;
     last_symbol = bp;
@@ -1637,8 +1637,8 @@ pack_names()
     name_pool = MALLOC(name_pool_size);
     if (name_pool == 0) no_space();
 
-    strcpy(name_pool, "$accept");
-    strcpy(name_pool+8, "$end");
+    strlcpy(name_pool, "$accept", name_pool_size);
+    strlcpy(name_pool+8, "$end", name_pool_size - 8);
     t = name_pool + 13;
     for (bp = first_symbol; bp; bp = bp->next)
     {
