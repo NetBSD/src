@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.26 2001/07/28 15:55:14 chs Exp $
+.\"	$NetBSD: uvm.9,v 1.27 2001/08/17 17:11:51 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -573,6 +573,12 @@ in either the object
 or the anonymous memory
 .Fa anon ,
 which must be locked by the caller.
+Only one of
+.Fa uobj
+and
+.Fa anon
+can be non
+.Dv NULL .
 Returns
 .Dv NULL
 when no page can be found.
