@@ -1,4 +1,5 @@
-/*	$NetBSD: route.h,v 1.1 2000/01/28 19:32:51 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: route.h,v 1.5 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,8 +49,6 @@
 
 #ifndef ROUTE_H
 #define ROUTE_H
-
-#include "mrt.h"
 
 extern u_int32 default_source_preference;
 extern u_int32 default_source_metric;

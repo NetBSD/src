@@ -1,4 +1,5 @@
-/*	$NetBSD: rp.h,v 1.1 2000/01/28 19:32:52 itojun Exp $	*/
+/*	$NetBSD: rp.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: rp.h,v 1.5 2000/12/04 06:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,9 +49,6 @@
 
 #ifndef RP_H
 #define RP_H
-
-#include "defs.h"
-#include "mrt.h"
 
 extern cand_rp_t				*cand_rp_list;
 extern grp_mask_t       *grp_mask_list;

@@ -1,4 +1,5 @@
-/*	$NetBSD: route.c,v 1.2 2000/07/23 23:05:38 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.3 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: route.c,v 1.14 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -50,7 +51,17 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_mroute.h>
+#include <string.h>
+#include <stdio.h>
 #include <syslog.h>
+#include "defs.h"
 #include "pimd.h"
 #include "vif.h"
 #include "mrt.h"
@@ -62,8 +73,6 @@
 #include "kern.h"
 #include "timer.h"
 #include "inet6.h"
-#include <netinet6/ip6_mroute.h>
-#include <netinet/ip6.h>
 #include "routesock.h"
 
 static void process_cache_miss __P((struct mrt6msg * im));
@@ -208,45 +217,54 @@ set_incoming(srcentry_ptr, srctype)
     /*
      * The upstream router must be a (PIM router) neighbor, otherwise we are
      * in big trouble ;-). 
-     * Yes but the neighbors are link-local and the rp is global ipv6..
      */
-/* WARNING WARNING WARNING WARNING */
-/* If the router is directly connected to the RP and the RP is the BSR , the next hop is
- * the globally reachable addresse of the RP : NOT link local neighbor but
- * a ipv6 global neighbor... 
- * the upstream router is the globally reachable router...
- *
- */
-/* WARNING WARNING WARNING WARNING */
-
     v = &uvifs[srcentry_ptr->incoming];
-    if (inet6_equal(&source,&neighbor_addr))
-    {
-	srcentry_ptr->upstream=v->uv_pim_neighbors;
- 	return (TRUE);
-    }
 
     for (n = v->uv_pim_neighbors; n != NULL; n = n->next)
     {
-	if (inet6_lessthan(&neighbor_addr,&n->address))
+	struct phaddr *pa;
+
+#if 0
+	/* we must go through all entries for aux_addr match */
+	if (inet6_lessthan(&neighbor_addr, &n->address))
 	    continue;
-	if (inet6_equal(&neighbor_addr,&n->address))
+#endif
+	if (inet6_equal(&neighbor_addr, &n->address))
 	{
 	    /*
 	     * The upstream router is found in the list of neighbors. We are
 	     * safe!
 	     */
-
 	    srcentry_ptr->upstream = n;
 	    IF_DEBUG(DEBUG_RPF)
 		log(LOG_DEBUG, 0,
 		    "For src %s, iif is %d, next hop router is %s",
-		    inet6_fmt(&source.sin6_addr), srcentry_ptr->incoming,
-		    inet6_fmt(&neighbor_addr.sin6_addr));
+		    sa6_fmt(&source), srcentry_ptr->incoming,
+		    sa6_fmt(&neighbor_addr));
 	    return (TRUE);
 	}
-	else
-	    break;
+
+	/*
+	 * If the router is directly connected to the RP, the next hop is the
+	 * globally reachable address of the RP: NOT link-local neighbor but an
+	 * IPv6 global neighbor.
+	 * Thus, we search through the list of additional addresses of the
+	 * neighbor to see if an additional address matches the RP address.
+	 * XXX: is there a scope issue here? maybe yes for a site-local RP.
+	 */
+	for (pa = n->aux_addrs; pa; pa = pa->pa_next) {
+	    if (inet6_equal(&neighbor_addr, &pa->pa_addr)) {
+		IF_DEBUG(DEBUG_RPF)
+		    log(LOG_DEBUG, 0,
+			"For src %s, iif is %d, next hop router is %s"
+			" (aux_addr match)",
+			sa6_fmt(&source), srcentry_ptr->incoming,
+			sa6_fmt(&neighbor_addr));
+
+		srcentry_ptr->upstream = n;
+		return (TRUE);
+	    }
+	}
     }
 
     /* TODO: control the number of messages! */
@@ -277,24 +295,20 @@ add_leaf(vifi, source, group)
     if_set     new_oifs;
     if_set     new_leaves;
 
+    if ((uvifs[vifi].uv_flags & VIFF_DR) != 0) {
+	    /*
+	     * I am not the DR on the subnet on which the report is received.
+	     * Ignore the report.
+	     */
+	    log(LOG_DEBUG, 0, "I'm not the DR on mif %d. Ignore a report.\n",
+		vifi);
+	    return;
+    }
 
     mrtentry_ptr = find_route(&sockaddr6_any, group, MRTF_WC, CREATE);
 
     if (mrtentry_ptr == (mrtentry_t *) NULL)
 	return;
-
-    if ((mrtentry_ptr->incoming == vifi)
-	&& (!(uvifs[vifi].uv_flags & VIFF_DR)))
-    {
-	/*
-	 * The report is received on the iif for this routing entry and I am
-	 * not the DR for that subnet. Ignore it.
-	 */
-
-	if (mrtentry_ptr->flags & MRTF_NEW)
-	    delete_mrtentry(mrtentry_ptr);
-	return;
-    }
 
     IF_DEBUG(DEBUG_MRT)
 	log(LOG_DEBUG, 0, "Adding vif %d for group %s", vifi,
