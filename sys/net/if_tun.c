@@ -13,7 +13,7 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Id: if_tun.c,v 1.5 1993/08/09 01:19:38 deraadt Exp $
+ * $Id: if_tun.c,v 1.5.2.1 1993/11/03 21:31:40 mycroft Exp $
  * 
  */
 
@@ -159,7 +159,6 @@ int             unit;
         ifp->if_mtu = TUNMTU;
         ifp->if_ioctl = tunioctl;
         ifp->if_output = tunoutput;
-        ifp->if_init = tuninit;
 #ifndef BSD4_3
         sin = (struct sockaddr_in *) & ifp->if_addr;
         sin->sin_family = AF_INET;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.2.4.2 1993/10/16 10:51:50 mycroft Exp $
+ *	$Id: if_eon.c,v 1.2.4.3 1993/11/03 21:31:48 mycroft Exp $
  */
 
 /***********************************************************
@@ -148,7 +148,6 @@ eonattach()
 	ifp->if_mtu = ETHERMTU; 
 		/* since everything will go out over ether or token ring */
 
-	ifp->if_init = eoninit;
 	ifp->if_ioctl = eonioctl;
 	ifp->if_output = eonoutput;
 	ifp->if_type = IFT_EON;
