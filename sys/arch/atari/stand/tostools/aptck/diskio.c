@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.2 1996/01/16 15:15:16 leo Exp $	*/
+/*	$NetBSD: diskio.c,v 1.3 1996/02/09 20:52:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -105,7 +105,7 @@ disk_read(dd, start, count)
 		return(buffer);
 	if (e == -32 || (e == -1 && XHGetVersion() == -1)) {
 		if (!ahdi_compatible())
-			fatal(-1, "AHDI 3.0 compatible harddisk driver required");
+		    fatal(-1, "AHDI 3.0 compatible harddisk driver required");
 		bdev = BIOSDEV(dd->major, dd->minor);
 		if (bdev && !bios_read(buffer, start, count, bdev))
 			return(buffer);
@@ -128,7 +128,7 @@ disk_write(dd, start, count, buffer)
 	e = XHReadWrite(dd->major, dd->minor, 1, start, count, buffer);
 	if (e == -32 || (e == -1 && XHGetVersion() == -1)) {
 		if (!ahdi_compatible())
-			fatal(-1, "AHDI 3.0 compatible harddisk driver required");
+		    fatal(-1, "AHDI 3.0 compatible harddisk driver required");
 		bdev = BIOSDEV(dd->major, dd->minor);
 		if (bdev)
 			e = bios_write(buffer, start, count, bdev);
@@ -167,9 +167,9 @@ setmami(dd, name)
 		bus = IDE;
 		if (*++p < '0' || *p > '1') {
 			if (*p)
-				error(-1, "%s: invalid IDE target `%c'", name, *p);
+			    error(-1, "%s: invalid IDE target `%c'", name, *p);
 			else
-				error(-1, "%s: missing IDE target", name);
+			    error(-1, "%s: missing IDE target", name);
 			return(-1);
 		}
 		target = *p++ - '0';
@@ -189,7 +189,8 @@ setmami(dd, name)
 		}
 		if (*++p < '0' || *p > '7') {
 			if (*p)
-				error(-1, "%s: invalid %s target `%c'", name, b, *p);
+				error(-1, "%s: invalid %s target `%c'", name,
+									b, *p);
 			else
 				error(-1, "%s: missing %s target", name, b);
 			return(-1);
@@ -198,7 +199,8 @@ setmami(dd, name)
 
 		if (*p < '0' || *p > '7') {
 			if (*p) {
-				error(-1, "%s: invalid %s lun `%c'", name, b, *p);
+				error(-1, "%s: invalid %s lun `%c'", name,
+								     b, *p);
 				return(-1);
 			}
 			lun = 0;
@@ -264,23 +266,24 @@ setsizes(dd)
 	disk_t	*dd;
 {
 	if (XHGetVersion() != -1) {
-		char	*p, prod[1024];
+	    char	*p, prod[1024];
 
-		if (XHInqTarget2(dd->major, dd->minor, &dd->bsize, NULL, prod, sizeof(prod))) {
-			if (XHInqTarget(dd->major, dd->minor, &dd->bsize, NULL, prod)) {
-				error(-1, "%s: device not configured", dd->sname);
-				return(-1);
-			}
+	    if (XHInqTarget2(dd->major, dd->minor, &dd->bsize, NULL, prod,
+								sizeof(prod))) {
+		if (XHInqTarget(dd->major, dd->minor, &dd->bsize, NULL, prod)) {
+			error(-1, "%s: device not configured", dd->sname);
+			return(-1);
 		}
-		p = strrchr(prod, '\0');
-		while (isspace(*--p))
-			*p = '\0';
-		dd->product = strbd(prod, NULL);
-		if (!XHGetCapacity(dd->major, dd->minor, &dd->msize, &dd->bsize))
-			return(0);
+	    }
+	    p = strrchr(prod, '\0');
+	    while (isspace(*--p))
+		*p = '\0';
+	    dd->product = strbd(prod, NULL);
+	    if (!XHGetCapacity(dd->major, dd->minor, &dd->msize, &dd->bsize))
+		return(0);
 	} else {
-		dd->product = strbd("unknown", NULL);
-		dd->bsize = AHDI_BSIZE;		/* XXX */
+	    dd->product = strbd("unknown", NULL);
+	    dd->bsize = AHDI_BSIZE;		/* XXX */
 	}
 
 	/* Trial&error search for last sector on medium */
