@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.4 1998/08/01 20:25:13 thorpej Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.4 1998/08/01 20:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,8 +199,8 @@ dec_eb66_intr_string(lcv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
 	if (ih >= EB66_MAX_IRQ)
-		panic("dec_eb66_intr_string: bogus eb66 IRQ 0x%x\n", ih);
-	sprintf(irqstr, "eb66 irq %d", ih);
+		panic("dec_eb66_intr_string: bogus eb66 IRQ 0x%lx\n", ih);
+	sprintf(irqstr, "eb66 irq %ld", ih);
 	return (irqstr);
 }
 
@@ -214,7 +214,7 @@ dec_eb66_intr_establish(lcv, ih, level, func, arg)
 	void *cookie;
 
 	if (ih >= EB66_MAX_IRQ)
-		panic("dec_eb66_intr_establish: bogus eb66 IRQ 0x%x\n", ih);
+		panic("dec_eb66_intr_establish: bogus eb66 IRQ 0x%lx\n", ih);
 
 	cookie = alpha_shared_intr_establish(eb66_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "eb66 irq");
@@ -254,7 +254,7 @@ eb66_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (EB66_MAX_IRQ << 4))
-			panic("eb66_iointr: vec 0x%x out of range\n", vec);
+			panic("eb66_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
 
 		if (EB66_MAX_IRQ != INTRCNT_EB66_IRQ_LEN)
@@ -275,7 +275,7 @@ eb66_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("eb66_iointr: weird vec 0x%x\n", vec);
+	panic("eb66_iointr: weird vec 0x%lx\n", vec);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb66_intr.S. */
