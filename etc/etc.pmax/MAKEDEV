@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 1996/09/17 21:45:53 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1997/06/01 09:12:02 thorpej Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -47,6 +47,7 @@ all)
 	sh MAKEDEV lkm local
 #	sh MAKEDEV audio pm0 cfb0 xcfb0 mfb0 sfb0
 	sh MAKEDEV fb0 fb1 fb2
+	sh MAKEDEV ipl
 	;;
 
 std)
@@ -263,6 +264,16 @@ pty*)
 		fi
 		;;
 	esac
+	;;
+
+ipl)
+	umask 0
+	rm -f ipl ipnat ipstate
+	mknod ipl c 91 0
+	mknod ipnat c 91 1
+	mknod ipstate c 91 2
+	chown root.wheel ipl ipnat ipstate
+	chmod 600 ipl ipnat ipstate
 	;;
 
 local)
