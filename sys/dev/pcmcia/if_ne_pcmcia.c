@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.63 2000/10/17 01:50:40 shin Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.64 2000/11/02 07:04:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -624,8 +624,10 @@ again:
 	}
 
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
-		if (ne_pcmcia_ax88190_set_iobase(psc))
-			goto fail_5;
+		if (ne_pcmcia_ax88190_set_iobase(psc)) {
+			++i;
+			goto again;
+		}
 		nsc->sc_type = NE2000_TYPE_AX88190;
 		typestr = " (AX88190)";
 	}
@@ -829,10 +831,13 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	struct pcmcia_mem_handle pcmh;
 	bus_addr_t offset;
 	int rv = 1, mwindow;
+	u_int last_liobase, new_liobase;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+#if 0
 		printf("%s: can't alloc mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
+#endif
 		goto fail_1;
 	}
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
@@ -843,21 +848,25 @@ ne_pcmcia_ax88190_set_iobase(psc)
 		goto fail_2;
 	}
 
+	last_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #ifdef DIAGNOSTIC
 	printf("%s: LAN iobase 0x%x (0x%x) ->", dsc->sc_dev.dv_xname,
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8,
-	    (u_int)psc->sc_pcioh.addr);
+	    last_liobase, (u_int)psc->sc_pcioh.addr);
 #endif
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset,
 	    psc->sc_pcioh.addr & 0xff);
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
 	    psc->sc_pcioh.addr >> 8);
+
+	new_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #ifdef DIAGNOSTIC
-	printf(" 0x%x\n", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
+	printf(" 0x%x\n", new_liobase);
 #endif
-	rv = 0;
+	if ((last_liobase == psc->sc_pcioh.addr)
+	    || (last_liobase != new_liobase))
+		rv = 0;
 
 	pcmcia_mem_unmap(psc->sc_pf, mwindow);
  fail_2:
