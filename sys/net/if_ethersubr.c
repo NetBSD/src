@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75.2.9 2002/08/19 22:25:45 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.75.2.10 2002/08/26 20:29:43 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.9 2002/08/19 22:25:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.10 2002/08/26 20:29:43 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -243,7 +243,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    (u_long) time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -481,7 +481,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	eh = mtod(m, struct ether_header *);
 	/* Note: etype is already in network byte order. */
 #ifdef __NO_STRICT_ALIGNMENT
-	eh->ether_type = type;
+	eh->ether_type = etype;
 #else
 	{
 		uint8_t *dstp = (uint8_t *) &eh->ether_type;
@@ -1138,7 +1138,7 @@ ether_crc32_le(const u_int8_t *buf, size_t len)
 		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 	};
 	u_int32_t crc;
-	int i;
+	size_t i;
 
 	crc = 0xffffffffU;	/* initial value */
 
