@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.256 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.257 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -575,3 +575,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		perform all of the other checks.  [lukem 20040106]
 	pkg_info(1) now also prints the post-install message formerly only
 		available via -D by default, if present. [hubertf 20040106]
+	sparc64: restartable atomic sequences (RAS) implemented [martin 20040106]
