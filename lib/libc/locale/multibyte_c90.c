@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.1 2002/03/17 22:14:29 tshiozak Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.2 2002/03/18 09:56:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.1 2002/03/17 22:14:29 tshiozak Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.2 2002/03/18 09:56:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -44,8 +44,11 @@ int
 mblen(const char *s, size_t n)
 {
 	int ret;
+	int err0;
 
-	errno = _citrus_ctype_mblen(_to_cur_ctype(), s, n, &ret);
+	err0 = _citrus_ctype_mblen(_to_cur_ctype(), s, n, &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
@@ -54,11 +57,14 @@ size_t
 mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	size_t ret;
+	int err0;
 
 	_fixup_ps(_CurrentRuneLocale, ps, s==NULL);
 
-	errno = _citrus_ctype_mbrtowc(_ps_to_ctype(ps), pwc, s, n,
+	err0 = _citrus_ctype_mbrtowc(_ps_to_ctype(ps), pwc, s, n,
 				      _ps_to_private(ps), &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
@@ -67,8 +73,11 @@ size_t
 mbstowcs(wchar_t *pwcs, const char *s, size_t n)
 {
 	size_t ret;
+	int err0;
 
-	errno = _citrus_ctype_mbstowcs(_to_cur_ctype(), pwcs, s, n, &ret);
+	err0 = _citrus_ctype_mbstowcs(_to_cur_ctype(), pwcs, s, n, &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
@@ -77,8 +86,11 @@ int
 mbtowc(wchar_t *pw, const char *s, size_t n)
 {
 	int ret;
+	int err0;
 
-	errno = _citrus_ctype_mbtowc(_to_cur_ctype(), pw, s, n, &ret);
+	err0 = _citrus_ctype_mbtowc(_to_cur_ctype(), pw, s, n, &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
@@ -87,8 +99,11 @@ size_t
 wcstombs(char *s, const wchar_t *wcs, size_t n)
 {
 	size_t ret;
+	int err0;
 
-	errno = _citrus_ctype_wcstombs(_to_cur_ctype(), s, wcs, n, &ret);
+	err0 = _citrus_ctype_wcstombs(_to_cur_ctype(), s, wcs, n, &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
@@ -97,8 +112,11 @@ int
 wctomb(char *s, wchar_t wc)
 {
 	int ret;
+	int err0;
 
-	errno = _citrus_ctype_wctomb(_to_cur_ctype(), s, wc, &ret);
+	err0 = _citrus_ctype_wctomb(_to_cur_ctype(), s, wc, &ret);
+	if (err0)
+		errno = err0;
 
 	return ret;
 }
