@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.4 1997/10/07 16:51:47 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.5 1997/10/10 01:36:32 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@
  * The address returned by the allocation routine is a virtual address that
  * the requesting driver must use to access the buffer.  It is up to the
  * device driver to convert this virtual address into the appropriate slave
- * address that its device should issue to access the buffer.  (The will be
- * routines that will assist the driver in doing so.)
+ * address that its device should issue to access the buffer.  (There will be
+ * routines that assist the driver in doing so.)
  */
 #include <sys/param.h>
 #include <sys/systm.h>
