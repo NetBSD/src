@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Symmetric Computer Systems.
@@ -35,13 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
+static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #endif /* not lint */
 
@@ -50,10 +50,12 @@ static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <ufs/fs.h>
-#include <string.h>
+#include <sys/stat.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
+#include <ufs/ffs/fs.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include "pathnames.h"
@@ -61,54 +63,34 @@ static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
 /*
  * Disklabel: read and write disklabels.
  * The label is usually placed on one of the first sectors of the disk.
- * Many machines (VAX 11/750) also place a bootstrap in the same area,
+ * Many machines also place a bootstrap in the same area,
  * in which case the label is embedded in the bootstrap.
  * The bootstrap source must leave space at the proper offset
  * for the label on such machines.
- *
- * On 386BSD, the disklabel may either be at the start of the disk, or, at
- * the start of an MS/DOS partition. In this way, it can be used either
- * in concert with other operating systems sharing a disk, or with the
- * disk dedicated to 386BSD. In shared mode, the DOS disk geometry must be
- * identical to that which disklabel uses, and the disklabel must solely
- * describe the space within the partition selected. Otherwise, the disk
- * must be dedicated to 386BSD. -wfj
  */
 
-#if defined(vax)
-#define RAWPARTITION	'c'
-#endif
-
-#if defined(i386)
-/* with 386BSD, 'c' maps the portion of the disk given over to 386BSD,
-   and 'd' maps the entire drive, ignoring any partition tables */
-#define RAWPARTITION	'd'
-#endif
-
-#if defined(vax)==0 && defined(i386)==0
+#ifdef tahoe
 #define RAWPARTITION	'a'
+#else
+#define RAWPARTITION	'c'
 #endif
 
 #ifndef BBSIZE
 #define	BBSIZE	8192			/* size of boot area, with label */
 #endif
 
-#if defined(vax) || defined(i386)
-#define	BOOT				/* also have bootstrap in "boot area" */
-#define	BOOTDIR	_PATH_BOOTDIR		/* source of boot binaries */
+#ifdef tahoe
+#define	NUMBOOT	0
 #else
-#ifdef lint
-#define	BOOT
+#if defined(hp300) || defined(hp800)
+#define	NUMBOOT	1
+#else
+#define	NUMBOOT	2
 #endif
 #endif
 
 #define	DEFEDITOR	_PATH_VI
 #define	streq(a,b)	(strcmp(a,b) == 0)
-
-#ifdef BOOT
-char	*xxboot;
-char	*bootxx;
-#endif
 
 char	*dkname;
 char	*specname;
@@ -119,34 +101,57 @@ char	namebuf[BBSIZE], *np = namebuf;
 struct	disklabel lab;
 struct	disklabel *readlabel(), *makebootarea();
 char	bootarea[BBSIZE];
+
+#if NUMBOOT > 0
+int	installboot;	/* non-zero if we should install a boot program */
+char	*bootbuf;	/* pointer to buffer with remainder of boot prog */
+int	bootsize;	/* size of remaining boot program */
+char	*xxboot;	/* primary boot */
+char	*bootxx;	/* secondary boot */
 char	boot0[MAXPATHLEN];
 char	boot1[MAXPATHLEN];
+#endif
 
-enum	{ UNSPEC, EDIT, NOWRITE, READ, RESTORE, WRITE, WRITEABLE } op = UNSPEC;
+enum	{
+	UNSPEC, EDIT, NOWRITE, READ, RESTORE, WRITE, WRITEABLE, WRITEBOOT
+} op = UNSPEC;
 
 int	rflag;
 
 #ifdef DEBUG
 int	debug;
+#define OPTIONS	"BNRWb:ders:w"
+#else
+#define OPTIONS	"BNRWb:ers:w"
 #endif
 
-#ifdef __386BSD__
-struct dos_partition *dosdp;	/* 386BSD DOS partition, if found */
-struct dos_partition *readmbr(int);
-#endif
 
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	extern char *optarg;
 	extern int optind;
 	register struct disklabel *lp;
 	FILE *t;
-	int ch, f, error = 0;
-	char *name = 0, *type;
+	int ch, f, flag, error = 0;
+	char *name = 0;
 
-	while ((ch = getopt(argc, argv, "NRWerw")) != EOF)
+	while ((ch = getopt(argc, argv, OPTIONS)) != EOF)
 		switch (ch) {
+#if NUMBOOT > 0
+			case 'B':
+				++installboot;
+				break;
+			case 'b':
+				xxboot = optarg;
+				break;
+#if NUMBOOT > 1
+			case 's':
+				bootxx = optarg;
+				break;
+#endif
+#endif
 			case 'N':
 				if (op != UNSPEC)
 					usage();
@@ -186,8 +191,20 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
+#if NUMBOOT > 0
+	if (installboot) {
+		rflag++;
+		if (op == UNSPEC)
+			op = WRITEBOOT;
+	} else {
+		if (op == UNSPEC)
+			op = READ;
+		xxboot = bootxx = 0;
+	}
+#else
 	if (op == UNSPEC)
 		op = READ;
+#endif
 	if (argc < 1)
 		usage();
 
@@ -207,100 +224,81 @@ main(argc, argv)
 	if (f < 0)
 		Perror(specname);
 
-#ifdef	__386BSD__
-	/*
-	 * Check for presence of DOS partition table in
-	 * master boot record. Return pointer to 386BSD
-	 * partition, if present. If no valid partition table,
-	 * return 0. If valid partition table present, but no
-	 * partition to use, return a pointer to a non-386bsd
-	 * partition.
-	 */
-	dosdp = readmbr(f);
-	{ int mfd; unsigned char params[0x10];
-		/* sleezy, but we need it fast! */
-		mfd = open("/dev/mem", 0);
-		lseek(mfd, 0x300, 0);
-		read (mfd, params, 0x10);
-	}
-
-#endif
-
 	switch(op) {
+
 	case EDIT:
 		if (argc != 1)
 			usage();
 		lp = readlabel(f);
 		error = edit(lp, f);
 		break;
-	case NOWRITE: {
-		int flag = 0;
+
+	case NOWRITE:
+		flag = 0;
 		if (ioctl(f, DIOCWLABEL, (char *)&flag) < 0)
 			Perror("ioctl DIOCWLABEL");
 		break;
-	}
+
 	case READ:
 		if (argc != 1)
 			usage();
-			
 		lp = readlabel(f);
 		display(stdout, lp);
 		error = checklabel(lp);
 		break;
+
 	case RESTORE:
-#ifdef BOOT
-		if (rflag) {
-			if (argc == 4) {	/* [ priboot secboot ] */
-				xxboot = argv[2];
-				bootxx = argv[3];
-				lab.d_secsize = DEV_BSIZE;	/* XXX */
-				lab.d_bbsize = BBSIZE;		/* XXX */
-			}
-			else if (argc == 3) 	/* [ disktype ] */
-				makelabel(argv[2], (char *)NULL, &lab);
-			else {
-				fprintf(stderr,
-"Must specify either disktype or bootfiles with -r flag of RESTORE option\n");
-				exit(1);
-			}
+#if NUMBOOT > 0
+		if (installboot && argc == 3) {
+			makelabel(argv[2], 0, &lab);
+			argc--;
 		}
-		else
 #endif
 		if (argc != 2)
 			usage();
-		lp = makebootarea(bootarea, &lab);
-		if (!(t = fopen(argv[1],"r")))
+		lp = makebootarea(bootarea, &lab, f);
+		if (!(t = fopen(argv[1], "r")))
 			Perror(argv[1]);
 		if (getasciilabel(t, lp))
 			error = writelabel(f, bootarea, lp);
 		break;
+
 	case WRITE:
-		type = argv[1];
-#ifdef BOOT
-		if (argc > 5 || argc < 2)
-			usage();
-		if (argc > 3) {
-			bootxx = argv[--argc];
-			xxboot = argv[--argc];
+		if (argc == 3) {
+			name = argv[2];
+			argc--;
 		}
-#else
-		if (argc > 3 || argc < 2)
+		if (argc != 2)
 			usage();
-#endif
-		if (argc > 2)
-			name = argv[--argc];
-		makelabel(type, name, &lab);
-		lp = makebootarea(bootarea, &lab);
+		makelabel(argv[1], name, &lab);
+		lp = makebootarea(bootarea, &lab, f);
 		*lp = lab;
 		if (checklabel(lp) == 0)
 			error = writelabel(f, bootarea, lp);
 		break;
-	case WRITEABLE: {
-		int flag = 1;
+
+	case WRITEABLE:
+		flag = 1;
 		if (ioctl(f, DIOCWLABEL, (char *)&flag) < 0)
 			Perror("ioctl DIOCWLABEL");
 		break;
+
+#if NUMBOOT > 0
+	case WRITEBOOT:
+	{
+		struct disklabel tlab;
+
+		lp = readlabel(f);
+		tlab = *lp;
+		if (argc == 2)
+			makelabel(argv[1], 0, &lab);
+		lp = makebootarea(bootarea, &lab, f);
+		*lp = tlab;
+		if (checklabel(lp) == 0)
+			error = writelabel(f, bootarea, lp);
+		break;
 	}
+#endif
 	}
 	exit(error);
 }
@@ -323,30 +321,33 @@ makelabel(type, name, lp)
 		exit(1);
 	}
 	*lp = *dp;
-#ifdef BOOT
+#if NUMBOOT > 0
 	/*
-	 * Check if disktab specifies the bootstraps (b0 or b1).
+	 * Set bootstrap name(s).
+	 * 1. If set from command line, use those,
+	 * 2. otherwise, check if disktab specifies them (b0 or b1),
+	 * 3. otherwise, makebootarea() will choose ones based on the name
+	 *    of the disk special file. E.g. /dev/ra0 -> raboot, bootra
 	 */
 	if (!xxboot && lp->d_boot0) {
 		if (*lp->d_boot0 != '/')
-			(void)sprintf(boot0, "%s/%s", BOOTDIR, lp->d_boot0);
+			(void)sprintf(boot0, "%s/%s",
+				      _PATH_BOOTDIR, lp->d_boot0);
 		else
 			(void)strcpy(boot0, lp->d_boot0);
 		xxboot = boot0;
 	}
+#if NUMBOOT > 1
 	if (!bootxx && lp->d_boot1) {
 		if (*lp->d_boot1 != '/')
-			(void)sprintf(boot1, "%s/%s", BOOTDIR, lp->d_boot1);
+			(void)sprintf(boot1, "%s/%s",
+				      _PATH_BOOTDIR, lp->d_boot1);
 		else
 			(void)strcpy(boot1, lp->d_boot1);
 		bootxx = boot1;
 	}
-	/*
-	 * If bootstraps not specified anywhere, makebootarea()
-	 * will choose ones based on the name of the disk special
-	 * file. E.g. /dev/ra0 -> raboot, bootra
-	 */
-#endif /*BOOT*/
+#endif
+#endif
 	/* d_packname is union d_boot[01], so zero */
 	bzero(lp->d_packname, sizeof(lp->d_packname));
 	if (name)
@@ -360,47 +361,13 @@ writelabel(f, boot, lp)
 {
 	register int i;
 	int flag;
-	off_t lseek();
-#ifdef	__386BSD__
-	off_t lbl_off; struct partition *pp = lp->d_partitions;
-#endif
 
+	setbootflag(lp);
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
-
-#ifdef	__386BSD__
-		/*
-		 * If 386BSD DOS partition is missing, or if 
-		 * the label to be written is not within partition,
-		 * prompt first. Need to allow this in case operator
-		 * wants to convert the drive for dedicated use.
-		 * In this case, partition 'a' had better start at 0,
-		 * otherwise we reject the request as meaningless. -wfj
-		 */
-
-		if (dosdp && dosdp->dp_typ == DOSPTYP_386BSD && pp->p_size &&
-			dosdp->dp_start == pp->p_offset) {
-			lbl_off = pp->p_offset;
-		} else {
-			if (dosdp) {
-				char c;
-
-				printf("overwriting disk with DOS partition table? (n):");
-				fflush(stdout);
-				c = getchar();
-				if (c != EOF && c != (int)'\n')
-					while (getchar() != (int)'\n')
-						;
-				if  (c == (int)'n')
-					exit(0);
-			}
-			lbl_off = 0;
-		}
-		(void)lseek(f, (off_t)(lbl_off * lp->d_secsize), L_SET);
-#endif
 		/*
 		 * First set the kernel disk label,
 		 * then write a label to the raw disk.
@@ -412,9 +379,9 @@ writelabel(f, boot, lp)
 		if (ioctl(f, DIOCSDINFO, lp) < 0 &&
 		    errno != ENODEV && errno != ENOTTY) {
 			l_perror("ioctl DIOCSDINFO");
-			/*return (1);*/
+			return (1);
 		}
-		
+		(void)lseek(f, (off_t)0, SEEK_SET);
 		/*
 		 * write enable label sector before write (if necessary),
 		 * disable after writing.
@@ -426,19 +393,29 @@ writelabel(f, boot, lp)
 			perror("write");
 			return (1);
 		}
+#if NUMBOOT > 0
+		/*
+		 * Output the remainder of the disklabel
+		 */
+		if (bootbuf && write(f, bootbuf, bootsize) != bootsize) {
+			perror("write");
+			return(1);
+		}
+#endif
 		flag = 0;
 		(void) ioctl(f, DIOCWLABEL, &flag);
 	} else if (ioctl(f, DIOCWDINFO, lp) < 0) {
 		l_perror("ioctl DIOCWDINFO");
 		return (1);
 	}
-
-	if (lp->d_type != DTYPE_SCSI && lp->d_flags & D_BADSECT) {
+#ifdef vax
+	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		daddr_t alt;
 
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			(void)lseek(f, (off_t)((alt + i) * lp->d_secsize), L_SET);
+			(void)lseek(f, (off_t)((alt + i) * lp->d_secsize),
+			    SEEK_SET);
 			if (write(f, boot, lp->d_secsize) < lp->d_secsize) {
 				int oerrno = errno;
 				fprintf(stderr, "alternate label %d ", i/2);
@@ -447,7 +424,7 @@ writelabel(f, boot, lp)
 			}
 		}
 	}
-
+#endif
 	return (0);
 }
 
@@ -478,7 +455,6 @@ l_perror(s)
 	case EXDEV:
 		fprintf(stderr,
 	"Labeled partition or 'a' partition must start at beginning of disk\n");
-		fprintf(stderr, "or DOS partition\n");
 		break;
 
 	default:
@@ -487,53 +463,6 @@ l_perror(s)
 		break;
 	}
 }
-
-#ifdef __386BSD__
-/*
- * Fetch DOS partition table from disk.
- */
-struct dos_partition *
-readmbr(f)
-	int f;
-{
-	static struct dos_partition dos_partitions[NDOSPART];
-	struct dos_partition *dp, *bsdp;
-	char mbr[DEV_BSIZE];
-	int i, npart, nboot, njunk;
-
-	(void)lseek(f, (off_t)DOSBBSECTOR, L_SET);
-	if (read(f, mbr, sizeof(mbr)) < sizeof(mbr))
-		Perror("can't read master boot record");
-		
-	bcopy(mbr + DOSPARTOFF, dos_partitions, sizeof(dos_partitions));
-
-	/*
-	 * Don't (yet) know disk geometry (BIOS), use
-	 * partition table to find 386BSD partition, and obtain
-	 * disklabel from there.
-	 */
-	dp = dos_partitions;
-	npart = njunk = nboot = 0;
-	for (i = 0; i < NDOSPART; i++, dp++) {
-		if (dp->dp_flag != 0x80 && dp->dp_flag != 0) njunk++;
-		else
-			if (dp->dp_size > 0) npart++;
-		if (dp->dp_flag == 0x80) nboot++;
-		if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD)
-			bsdp = dp;
-	}
-
-	/* valid partition table? */
-	if (nboot != 1 || npart == 0 || njunk)
-		return (0);
-	/* if no bsd partition, pass back first one */
-	if (!bsdp) {
-		Warning("DOS partition table with no valid 386BSD partition");
-		return (dos_partitions);
-	}
-	return (bsdp);
-}
-#endif
 
 /*
  * Fetch disklabel for disk.
@@ -546,16 +475,6 @@ readlabel(f)
 	register struct disklabel *lp;
 
 	if (rflag) {
-#ifdef __386BSD__
-		off_t sectoffset;
-
-		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
-			sectoffset = dosdp->dp_start * DEV_BSIZE;
-		else
-			sectoffset = 0;
-		(void)lseek(f, sectoffset, L_SET);
-#endif
-			
 		if (read(f, bootarea, BBSIZE) < BBSIZE)
 			Perror(specname);
 		for (lp = (struct disklabel *)bootarea;
@@ -569,12 +488,10 @@ readlabel(f)
 		    dkcksum(lp) != 0) {
 			fprintf(stderr,
 	"Bad pack magic number (label is damaged, or pack is unlabeled)\n");
-			/* lp = (struct disklabel *)(bootarea + LABELOFFSET);
-			exit (1); */
-			goto tryioctl;
+			/* lp = (struct disklabel *)(bootarea + LABELOFFSET); */
+			exit (1);
 		}
 	} else {
-tryioctl:
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)
 			Perror("ioctl DIOCGDINFO");
@@ -582,25 +499,51 @@ tryioctl:
 	return (lp);
 }
 
+/*
+ * Construct a bootarea (d_bbsize bytes) in the specified buffer ``boot''
+ * Returns a pointer to the disklabel portion of the bootarea.
+ */
 struct disklabel *
-makebootarea(boot, dp)
+makebootarea(boot, dp, f)
 	char *boot;
 	register struct disklabel *dp;
+	int f;
 {
 	struct disklabel *lp;
 	register char *p;
 	int b;
-#ifdef BOOT
-	char	*dkbasename;
-#endif /*BOOT*/
+#if NUMBOOT > 0
+	char *dkbasename;
+	struct stat sb;
+#endif
 
-	lp = (struct disklabel *)(boot + (LABELSECTOR * dp->d_secsize) +
-	    LABELOFFSET);
-#ifdef BOOT
-	if (!rflag)
+	/* XXX */
+	if (dp->d_secsize == 0) {
+		dp->d_secsize = DEV_BSIZE;
+		dp->d_bbsize = BBSIZE;
+	}
+	lp = (struct disklabel *)
+		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
+	bzero((char *)lp, sizeof *lp);
+#if NUMBOOT > 0
+	/*
+	 * If we are not installing a boot program but we are installing a
+	 * label on disk then we must read the current bootarea so we don't
+	 * clobber the existing boot.
+	 */
+	if (!installboot) {
+		if (rflag) {
+			if (read(f, boot, BBSIZE) < BBSIZE)
+				Perror(specname);
+			bzero((char *)lp, sizeof *lp);
+		}
 		return (lp);
-
-	if (xxboot == NULL || bootxx == NULL) {
+	}
+	/*
+	 * We are installing a boot program.  Determine the name(s) and
+	 * read them into the appropriate places in the boot area.
+	 */
+	if (!xxboot || !bootxx) {
 		dkbasename = np;
 		if ((p = rindex(dkname, '/')) == NULL)
 			p = dkname;
@@ -610,43 +553,80 @@ makebootarea(boot, dp)
 			*np++ = *p++;
 		*np++ = '\0';
 
-		if (xxboot == NULL) {
-			(void)sprintf(np, "%s/%sboot", BOOTDIR, dkbasename);
+		if (!xxboot) {
+			(void)sprintf(np, "%s/%sboot",
+				      _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			xxboot = np;
-			(void)sprintf(xxboot, "%s/%sboot", BOOTDIR, dkbasename);
+			(void)sprintf(xxboot, "%s/%sboot",
+				      _PATH_BOOTDIR, dkbasename);
 			np += strlen(xxboot) + 1;
 		}
-		if (bootxx == NULL) {
-			(void)sprintf(np, "%s/boot%s", BOOTDIR, dkbasename);
+#if NUMBOOT > 1
+		if (!bootxx) {
+			(void)sprintf(np, "%s/boot%s",
+				      _PATH_BOOTDIR, dkbasename);
 			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
 				dkbasename++;
 			bootxx = np;
-			(void)sprintf(bootxx, "%s/boot%s", BOOTDIR, dkbasename);
+			(void)sprintf(bootxx, "%s/boot%s",
+				      _PATH_BOOTDIR, dkbasename);
 			np += strlen(bootxx) + 1;
 		}
+#endif
 	}
 #ifdef DEBUG
 	if (debug)
 		fprintf(stderr, "bootstraps: xxboot = %s, bootxx = %s\n",
-			xxboot, bootxx);
+			xxboot, bootxx ? bootxx : "NONE");
 #endif
 
+	/*
+	 * Strange rules:
+	 * 1. One-piece bootstrap (hp300/hp800)
+	 *	up to d_bbsize bytes of ``xxboot'' go in bootarea, the rest
+	 *	is remembered and written later following the bootarea.
+	 * 2. Two-piece bootstraps (vax/i386?/mips?)
+	 *	up to d_secsize bytes of ``xxboot'' go in first d_secsize
+	 *	bytes of bootarea, remaining d_bbsize-d_secsize filled
+	 *	from ``bootxx''.
+	 */
 	b = open(xxboot, O_RDONLY);
 	if (b < 0)
 		Perror(xxboot);
+#if NUMBOOT > 1
 	if (read(b, boot, (int)dp->d_secsize) < 0)
 		Perror(xxboot);
-	close(b);
+	(void)close(b);
 	b = open(bootxx, O_RDONLY);
 	if (b < 0)
 		Perror(bootxx);
 	if (read(b, &boot[dp->d_secsize], (int)(dp->d_bbsize-dp->d_secsize)) < 0)
 		Perror(bootxx);
+#else
+	if (read(b, boot, (int)dp->d_bbsize) < 0)
+		Perror(xxboot);
+	(void)fstat(b, &sb);
+	bootsize = (int)sb.st_size - dp->d_bbsize;
+	if (bootsize > 0) {
+		/* XXX assume d_secsize is a power of two */
+		bootsize = (bootsize + dp->d_secsize-1) & ~(dp->d_secsize-1);
+		bootbuf = (char *)malloc((size_t)bootsize);
+		if (bootbuf == 0)
+			Perror(xxboot);
+		if (read(b, bootbuf, bootsize) < 0) {
+			free(bootbuf);
+			Perror(xxboot);
+		}
+	}
+#endif
 	(void)close(b);
-#endif /*BOOT*/
-
+#endif
+	/*
+	 * Make sure no part of the bootstrap is written in the area
+	 * reserved for the label.
+	 */
 	for (p = (char *)lp; p < (char *)lp + sizeof(struct disklabel); p++)
 		if (*p) {
 			fprintf(stderr,
@@ -759,7 +739,7 @@ edit(lp, f)
 		fprintf(stderr, "%s: Can't create\n", tmpfil);
 		return (1);
 	}
-	(void)fchmod(fd, 0600);
+	(void)fchmod(fileno(fd), 0600);
 	display(fd, lp);
 	fclose(fd);
 	for (;;) {
@@ -1177,45 +1157,36 @@ checklabel(lp)
 		errors++;
 	}
 	if (lp->d_rpm == 0)
-		Warning("revolutions/minute %d\n", lp->d_rpm);
+		Warning("revolutions/minute %d", lp->d_rpm);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
-#ifdef __386BSD__notyet
-	if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD
-		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
-		fprintf(stderr, "exceeds DOS partition size\n");
-		errors++;
-		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
-	}
-	/* XXX should also check geometry against BIOS's idea */
-#endif
 	if (lp->d_bbsize == 0) {
 		fprintf(stderr, "boot block size %d\n", lp->d_bbsize);
 		errors++;
 	} else if (lp->d_bbsize % lp->d_secsize)
-		Warning("boot block size %% sector-size != 0\n");
+		Warning("boot block size %% sector-size != 0");
 	if (lp->d_sbsize == 0) {
 		fprintf(stderr, "super block size %d\n", lp->d_sbsize);
 		errors++;
 	} else if (lp->d_sbsize % lp->d_secsize)
-		Warning("super block size %% sector-size != 0\n");
+		Warning("super block size %% sector-size != 0");
 	if (lp->d_npartitions > MAXPARTITIONS)
-		Warning("number of partitions (%d) > MAXPARTITIONS (%d)\n",
+		Warning("number of partitions (%d) > MAXPARTITIONS (%d)",
 		    lp->d_npartitions, MAXPARTITIONS);
 	for (i = 0; i < lp->d_npartitions; i++) {
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0 && pp->p_offset != 0)
-			Warning("partition %c: size 0, but offset %d\n",
+			Warning("partition %c: size 0, but offset %d",
 			    part, pp->p_offset);
 #ifdef notdef
 		if (pp->p_size % lp->d_secpercyl)
-			Warning("partition %c: size %% cylinder-size != 0\n",
+			Warning("partition %c: size %% cylinder-size != 0",
 			    part);
 		if (pp->p_offset % lp->d_secpercyl)
-			Warning("partition %c: offset %% cylinder-size != 0\n",
+			Warning("partition %c: offset %% cylinder-size != 0",
 			    part);
 #endif
 		if (pp->p_offset > lp->d_secperunit) {
@@ -1234,10 +1205,54 @@ checklabel(lp)
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size || pp->p_offset)
-			Warning("unused partition %c: size %d offset %d\n",
+			Warning("unused partition %c: size %d offset %d",
 			    'a' + i, pp->p_size, pp->p_offset);
 	}
 	return (errors);
+}
+
+/*
+ * If we are installing a boot program that doesn't fit in d_bbsize
+ * we need to mark those partitions that the boot overflows into.
+ * This allows newfs to prevent creation of a filesystem where it might
+ * clobber bootstrap code.
+ */
+setbootflag(lp)
+	register struct disklabel *lp;
+{
+	register struct partition *pp;
+	int i, errors = 0;
+	char part;
+	u_long boffset;
+
+	if (bootbuf == 0)
+		return;
+	boffset = bootsize / lp->d_secsize;
+	for (i = 0; i < lp->d_npartitions; i++) {
+		part = 'a' + i;
+		pp = &lp->d_partitions[i];
+		if (pp->p_size == 0)
+			continue;
+		if (boffset <= pp->p_offset) {
+			if (pp->p_fstype == FS_BOOT)
+				pp->p_fstype = FS_UNUSED;
+		} else if (pp->p_fstype != FS_BOOT) {
+			if (pp->p_fstype != FS_UNUSED) {
+				fprintf(stderr,
+					"boot overlaps used partition %c\n",
+					part);
+				errors++;
+			} else {
+				pp->p_fstype = FS_BOOT;
+				Warning("boot overlaps partition %c, %s",
+					part, "marked as FS_BOOT");
+			}
+		}
+	}
+	if (errors) {
+		fprintf(stderr, "Cannot install boot program\n");
+		exit(4);
+	}
 }
 
 /*VARARGS1*/
@@ -1259,13 +1274,34 @@ Perror(str)
 
 usage()
 {
-#ifdef BOOT
-	fprintf(stderr, "%-62s%s\n%-62s%s\n%-62s%s\n%-62s%s\n%-62s%s\n",
-"usage: disklabel [-r] disk", "(to read label)",
-"or disklabel -w [-r] disk type [ packid ] [ xxboot bootxx ]", "(to write label)",
-"or disklabel -e [-r] disk", "(to edit label)",
-"or disklabel -R [-r] disk protofile [ type | xxboot bootxx ]", "(to restore label)",
-"or disklabel [-NW] disk", "(to write disable/enable label)");
+#if NUMBOOT > 0
+	fprintf(stderr,
+"%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n",
+"usage: disklabel [-r] disk",
+		"(to read label)",
+"or disklabel -w [-r] disk type [ packid ]",
+		"(to write label with existing boot program)",
+"or disklabel -e [-r] disk",
+		"(to edit label)",
+"or disklabel -R [-r] disk protofile",
+		"(to restore label with existing boot program)",
+#if NUMBOOT > 1
+"or disklabel -B [ -b boot1 [ -s boot2 ] ] disk [ type ]",
+		"(to install boot program with existing label)",
+"or disklabel -w -B [ -b boot1 [ -s boot2 ] ] disk type [ packid ]",
+		"(to write label and boot program)",
+"or disklabel -R -B [ -b boot1 [ -s boot2 ] ] disk protofile [ type ]",
+		"(to restore label and boot program)",
+#else
+"or disklabel -B [ -b bootprog ] disk [ type ]",
+		"(to install boot program with existing on-disk label)",
+"or disklabel -w -B [ -b bootprog ] disk type [ packid ]",
+		"(to write label and install boot program)",
+"or disklabel -R -B [ -b bootprog ] disk protofile [ type ]",
+		"(to restore label and install boot program)",
+#endif
+"or disklabel [-NW] disk",
+		"(to write disable/enable label)");
 #else
 	fprintf(stderr, "%-43s%s\n%-43s%s\n%-43s%s\n%-43s%s\n%-43s%s\n",
 "usage: disklabel [-r] disk", "(to read label)",
