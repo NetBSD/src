@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.20 1994/02/02 06:14:54 hpeyerl Exp $
+ * $Id: if_ed.c,v 1.21 1994/02/08 03:06:20 mycroft Exp $
  */
 
 /*
@@ -987,17 +987,15 @@ ed_attach(isa_dev)
 	ifp->if_ioctl = ed_ioctl;
 	ifp->if_reset = ed_reset;
 	ifp->if_watchdog = ed_watchdog;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+			IFF_MULTICAST;
 
 	/*
 	 * Set default state for ALTPHYS flag (used to disable the tranceiver
 	 *	for AUI operation), based on compile-time config option.
 	 */
 	if (isa_dev->id_flags & ED_FLAGS_DISABLE_TRANCEIVER)
-		ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS
-			| IFF_ALTPHYS);
-	else
-		ifp->if_flags = (IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS);
-	ifp->if_flags |= IFF_MULTICAST;
+		ifp->if_flags |= IFF_ALTPHYS;
 
 	/*
 	 * Attach the interface
@@ -1224,10 +1222,10 @@ ed_init(unit)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
 	/* set up multicast addresses and filter modes */
-	if (sc != 0 && (ifp->if_flags & IFF_MULTICAST) != 0) {
+	if ((ifp->if_flags & (IFF_MULTICAST | IFF_PROMISC)) != 0) {
 		u_long mcaf[2];
 
-		if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
+		if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 			mcaf[0] = 0xffffffff;
 			mcaf[1] = 0xffffffff;
 		} else
@@ -1265,26 +1263,20 @@ ed_init(unit)
 	 *	(there is no settable hardware default).
 	 */
 	if (sc->vendor == ED_VENDOR_3COM) {
-		if (ifp->if_flags & IFF_ALTPHYS) {
+		if (ifp->if_flags & IFF_ALTPHYS)
 			outb(sc->asic_addr + ED_3COM_CR, 0);
-		} else {
+		else
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
-		}
 	}
 
 	i = ED_RCR_AB;
-	if (sc != 0) {
-		if ((ifp->if_flags & IFF_PROMISC) != 0) {
-			/*
-			 * Set promiscuous mode.
-			 * Also reconfigure the multicast filter.
-			 */
-			int j;
-
-			i |= ED_RCR_PRO|ED_RCR_AM|ED_RCR_AR|ED_RCR_SEP;
-			for (j = 0; j < 8; j++)
-				outb(sc->nic_addr + ED_P1_MAR0 + j, 0xff);
-		}
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/*
+		 * Set promiscuous mode.  Multicast filter was set earlier so
+		 * that we should receive all multicast packets.
+		 */
+		i |= ED_RCR_AM | ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
+	} else if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		i |= ED_RCR_AM;
 	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
@@ -1520,7 +1512,7 @@ outloop:
 		etype = ntohs(eh->ether_type);
 		if (etype >= ETHERTYPE_TRAIL &&
 		    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-			datasize = ((etype - ETHERTYPE_TRAIL) << 9);
+			datasize = (etype - ETHERTYPE_TRAIL) << 9;
 			off = datasize + sizeof(struct ether_header);
 
 			/* copy trailer_header into a data structure */
@@ -1916,24 +1908,29 @@ ed_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked down and it is running, then stop it
-		 */
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
 			ed_stop(ifp->if_unit);
 			ifp->if_flags &= ~IFF_RUNNING;
+		} else if ((ifp->if_flags & IFF_UP) &&
+		    	   ((ifp->if_flags & IFF_RUNNING) == 0)) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			ed_init(ifp->if_unit);
 		} else {
-		/*
-		 * If interface is marked up and it is stopped, then start it
-		 */
-			if ((ifp->if_flags & IFF_UP) &&
-		    	    ((ifp->if_flags & IFF_RUNNING) == 0))
-				ed_init(ifp->if_unit);
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect hardware registers.
+			 */
+			ed_stop(ifp->if_unit);
+			ed_init(ifp->if_unit);
 		}
-		/*
-		 * NB: There was a bunch of code here that's now in ed_init.
-		 */
 		break;
 
 	case SIOCADDMULTI:
@@ -2017,7 +2014,7 @@ ed_get_packet(sc, buf, len)
 	head->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
 
-	etype = ntohs((u_short)eh->ether_type);
+	etype = ntohs(eh->ether_type);
 
 	/*
 	 * Deal with trailer protocol:
@@ -2029,7 +2026,6 @@ ed_get_packet(sc, buf, len)
 	 */
 	if (etype >= ETHERTYPE_TRAIL &&
 	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-
 		off = (etype - ETHERTYPE_TRAIL) << 9;
 		if ((off + sizeof(struct trailer_header)) > len)
 			goto bad;	/* insanity */
@@ -2052,13 +2048,16 @@ ed_get_packet(sc, buf, len)
 			resid = trailer_header.ether_residual;
 		}
 
-		if ((off + resid) > len) goto bad;	/* insanity */
+		if ((off + resid) > len)
+			goto bad;	/* insanity */
 
 		resid -= sizeof(struct trailer_header);
-		if (resid < 0) goto bad;	/* insanity */
+		if (resid < 0)
+			goto bad;	/* insanity */
 
 		m = ed_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, char *), head, resid);
-		if (m == 0) goto bad;
+		if (m == 0)
+			goto bad;
 
 		len = off;
 		head->m_pkthdr.len -= 4; /* subtract trailer header */
