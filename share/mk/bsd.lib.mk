@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.29 1993/10/06 17:54:01 pk Exp $
+#	$Id: bsd.lib.mk,v 1.30 1993/10/07 01:34:07 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -103,7 +103,7 @@ clean:
 	rm -f ${OBJS}
 	rm -f ${POBJS} profiled/*.o
 	rm -f ${SOBJS} shared/*.o
-	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
+	rm -f lib${LIB}.a lib${LIB}_p.a lib${LIB}_pic.a llib-l${LIB}.ln
 .endif
 
 cleandir: clean
