@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.5 2005/03/11 14:28:52 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.6 2005/03/16 05:02:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2005 Fujitsu Component Limited
@@ -159,5 +159,7 @@ mmu_init_table:
 	/* map VA 0xc0000000..0xc3ffffff to PA 0x08000000..0x0bffffff */
 	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
 
+	/* Map all built-in peripheral registers at 0xfd000000 */
+	MMU_INIT(SMDK2800_IO_AREA_VBASE, S3C2800_PERIPHERALS, 2, L1_TYPE_S|L1_S_AP(AP_KRW))
 	.word 0	/* end of table */
 

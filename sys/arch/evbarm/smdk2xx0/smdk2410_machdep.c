@@ -1,8 +1,8 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.11 2005/03/08 16:51:44 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.12 2005/03/16 05:02:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
- * Copyright (c) 2002, 2003 Genetec Corporation
+ * Copyright (c) 2002, 2003, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.11 2005/03/08 16:51:44 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.12 2005/03/16 05:02:12 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -160,7 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.11 2005/03/08 16:51:44 bsh Ex
 /*
  * Address to map I/O registers in early initialize stage.
  */
-#define SMDK2410_VBASE_FREE	0xfd000000
+#define SMDK2410_IO_VBASE	0xfd000000
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
@@ -252,10 +252,6 @@ struct user *proc0paddr;
 void consinit(void);
 void kgdb_port_init(void);
 
-static int 
-bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int cacheable, bus_space_handle_t * bshp);
-static void copy_io_area_map(pd_entry_t * new_pd);
 
 #include "com.h"
 #if NCOM > 0
@@ -283,7 +279,6 @@ static void copy_io_area_map(pd_entry_t * new_pd);
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
-struct bus_space bootstrap_bs_tag;
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -351,7 +346,81 @@ cpu_reboot(int howto, char *bootstr)
 	/* NOTREACHED */
 }
 
-#define ioreg_write8(a,v)  (*(volatile uint8_t *)(a)=(v))
+/*
+ * Static device mappings. These peripheral registers are mapped at
+ * fixed virtual addresses very early in initarm() so that we can use
+ * them while booting the kernel , and stay at the same address
+ * throughout whole kernel's life time.
+ *
+ * We use this table twice; once with bootstrap page table, and once
+ * with kernel's page table which we build up in initarm().
+ *
+ * Since we map these registers into the bootstrap page table using
+ * pmap_devmap_bootstrap() which calls pmap_map_chunk(), we map
+ * registers segment-aligned and segment-rounded in order to avoid
+ * using the 2nd page tables.
+ */
+
+#define	_A(a)	((a) & ~L1_S_OFFSET)
+#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
+
+#define	_V(n)	(SMDK2410_IO_VBASE + (n) * L1_S_SIZE)
+
+#define	GPIO_VBASE	_V(0)
+#define	INTCTL_VBASE	_V(1)
+#define	CLKMAN_VBASE	_V(2)
+#define	UART_VBASE	_V(3)
+#ifdef	MEMORY_DISK_DYNAMIC
+#define	MEMORY_DISK_VADDR	_V(4)
+#endif
+
+static const struct pmap_devmap smdk2410_devmap[] = {
+	/* GPIO registers */
+	{
+		GPIO_VBASE,
+		_A(S3C2410_GPIO_BASE),
+		_S(S3C2410_GPIO_SIZE),
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
+	{
+		INTCTL_VBASE,
+		_A(S3C2410_INTCTL_BASE),
+		_S(S3C2410_INTCTL_SIZE),
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
+	{
+		CLKMAN_VBASE,
+		_A(S3C2410_CLKMAN_BASE),
+		_S(S3C24X0_CLKMAN_SIZE),
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
+	{	/* UART registers for UART0, 1, 2. */
+		UART_VBASE,
+		_A(S3C2410_UART0_BASE),
+		_S(S3C2410_UART_BASE(3) - S3C2410_UART0_BASE),
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
+
+	{ 0, 0, 0, 0 }
+};
+
+#undef	_A
+#undef	_S
+
+static __inline	pd_entry_t *
+read_ttb(void)
+{
+	long ttb;
+
+	__asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
+
+
+	return (pd_entry_t *)(ttb & ~((1 << 14) - 1));
+}
+
+
+#define	ioreg_read8(a)  	(*(volatile uint8_t *)(a))
+#define	ioreg_write8(a,v)	(*(volatile uint8_t *)(a)=(v))
 #define	ioreg_read32(a)  	(*(volatile uint32_t *)(a))
 #define	ioreg_write32(a,v)  	(*(volatile uint32_t *)(a)=(v))
 
@@ -378,7 +447,6 @@ initarm(void *arg)
 	extern int etext asm("_etext");
 	extern int end asm("_end");
 	pv_addr_t kernel_l1pt;
-	struct s3c24x0_softc temp_softc;	/* used to initialize IO regs */
 	int progress_counter = 0;
 
 #ifdef DO_MEMORY_DISK
@@ -386,8 +454,7 @@ initarm(void *arg)
 #define MD_ROOT_SIZE (MEMORY_DISK_ROOT_SIZE * DEV_BSIZE)
 #endif
 
-#define gpio_read8(reg) bus_space_read_1(temp_softc.sc_sx.sc_iot,  \
-					 temp_softc.sc_sx.sc_gpio_ioh, (reg))
+#define gpio_read8(reg) ioreg_read8(GPIO_VBASE + (reg))
 
 #define LEDSTEP()  __LED(progress_counter++)
 
@@ -419,37 +486,25 @@ initarm(void *arg)
 	LEDSTEP();
 
 	/*
-	 * prepare fake bus space tag
+	 * Map I/O registers that are used in startup.  Now we are
+	 * still using page table prepared by bootloader.  Later we'll
+	 * map those registers at the same address in the kernel page
+	 * table.
 	 */
-	bootstrap_bs_tag = s3c2xx0_bs_tag;
-	bootstrap_bs_tag.bs_map = bootstrap_bs_map;
-	s3c2xx0_softc = &temp_softc.sc_sx;
-	s3c2xx0_softc->sc_iot = &bootstrap_bs_tag;
+	pmap_devmap_bootstrap((vaddr_t)read_ttb(), smdk2410_devmap);
 
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2410_GPIO_BASE,
-	    S3C2410_GPIO_SIZE, 0, &temp_softc.sc_sx.sc_gpio_ioh);
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2410_INTCTL_BASE,
-	    S3C2410_INTCTL_SIZE, 0, &temp_softc.sc_sx.sc_intctl_ioh);
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2410_CLKMAN_BASE,
-	    S3C24X0_CLKMAN_SIZE, 0, &temp_softc.sc_sx.sc_clkman_ioh);
+#undef	pdatf
+#define pdatf (*(volatile uint8_t *)(GPIO_VBASE+GPIO_PFDAT))
 
-#undef __LED
-#define __LED(x) 								\
-	bus_space_write_1(&bootstrap_bs_tag, temp_softc.sc_sx.sc_gpio_ioh,	\
-	    GPIO_PFDAT, (~((x)<<4) & 0xf0) |					\
-	    (gpio_read8(GPIO_PFDAT) & ~0xf0))
 
 	LEDSTEP();
 
 	/* Disable all peripheral interrupts */
-	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
-	    INTCTL_INTMSK, ~0);
+	ioreg_write32(INTCTL_VBASE + INTCTL_INTMSK, ~0);
+
 	/* initialize some variables so that splfoo() doesn't
 	   touch illegal address.  */
-	s3c2xx0_intr_bootstrap((vaddr_t)bus_space_vaddr(&bootstrap_bs_tag, 
-	    temp_softc.sc_sx.sc_intctl_ioh));
-
-	s3c24x0_clock_freq(s3c2xx0_softc);
+	s3c2xx0_intr_bootstrap(INTCTL_VBASE);
 
 	consinit();
 #ifdef VERBOSE_INIT_ARM
@@ -714,9 +769,8 @@ initarm(void *arg)
 
 #ifdef MEMORY_DISK_DYNAMIC
 	/* map MD root image */
-	bootstrap_bs_map(&bootstrap_bs_tag, md_root_start, MD_ROOT_SIZE,
-			 BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR,
-			 (bus_space_handle_t *)&md_root_start);
+	pmap_map_chunk(l1pagetable, MEMORY_DISK_VADDR, md_root_start,
+	    MD_ROOT_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
 
 	md_root_setconf((void *)md_root_start, MD_ROOT_SIZE);
 #endif /* MEMORY_DISK_DYNAMIC */
@@ -724,7 +778,7 @@ initarm(void *arg)
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
 	 */
-	copy_io_area_map((pd_entry_t *)l1pagetable);
+	pmap_devmap_bootstrap(l1pagetable, smdk2410_devmap);
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
@@ -896,13 +950,15 @@ void
 consinit(void)
 {
 	static int consinit_done = 0;
-	bus_space_tag_t iot = s3c2xx0_softc->sc_iot;
-	int pclk = s3c2xx0_softc->sc_pclk;
+	bus_space_tag_t iot = &s3c2xx0_bs_tag;
+	int pclk;
 
 	if (consinit_done != 0)
 		return;
 
 	consinit_done = 1;
+
+	s3c24x0_clock_freq2(CLKMAN_VBASE, NULL, NULL, &pclk);
 
 #if NSSCOM > 0
 #ifdef SSCOM0CONSOLE
@@ -949,7 +1005,7 @@ kgdb_port_init(void)
 {
 #if (NSSCOM > 0)
 	int unit = -1;
-	int pclk = s3c2xx0_softc->sc_pclk;
+	int pclk;
 
 	if (strcmp(kgdb_devname, "sscom0") == 0)
 		unit = 0;
@@ -957,25 +1013,14 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c2410_sscom_kgdb_attach(s3c2xx0_softc->sc_iot,
+		s3c24x0_clock_freq2(CLKMAN_VBASE, NULL, NULL, &pclk);
+
+		s3c2410_sscom_kgdb_attach(&s3c2xx0_bs_tag,
 		    unit, kgdb_rate, pclk, kgdb_sscom_mode);
 	}
 #endif
 }
 #endif
-
-static __inline
-       pd_entry_t *
-read_ttb(void)
-{
-	long ttb;
-
-	__asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
-
-
-	return (pd_entry_t *)(ttb & ~((1 << 14) - 1));
-}
-
 
 static __inline void
 writeback_dcache_line(vaddr_t va)
@@ -996,73 +1041,6 @@ clean_dcache_line(vaddr_t va)
 	asm("mcr	p15, 0, %0, c7, c14, 1"
 	    : : "r"(va));
 }
-
-static vaddr_t section_free = SMDK2410_VBASE_FREE;
-
-/*
- * simple memory mapping function used in early bootstrap stage
- * before pmap is initialized.
- * This assumes only peripheral registers to map. they are mapped to
- * fixed address with section mapping.
- */
-static int
-bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int flag, bus_space_handle_t * bshp)
-{
-	long offset;
-	int modified = 0;
-	pd_entry_t *pagedir = read_ttb();
-	/* This assumes PA==VA for page directory */
-
-	if (0) {
-	} else {
-		vaddr_t va;
-		bus_addr_t pa;
-		int cacheable = flag & BUS_SPACE_MAP_CACHEABLE;
-
-
-		size = (size + L1_S_OFFSET) & ~L1_S_OFFSET;
-		pa = bpa & ~L1_S_OFFSET;
-		offset = bpa - pa;
-
-		va = section_free;
-		while (size) {
-			pmap_map_section((vaddr_t)pagedir, va,
-			    pa, VM_PROT_READ | VM_PROT_WRITE,
-			    cacheable ? PTE_CACHE : PTE_NOCACHE);
-			writeback_dcache_line((vaddr_t)& pagedir[va >> L1_S_SHIFT]);
-			va += L1_S_SIZE;
-			pa += L1_S_SIZE;
-			size -= L1_S_SIZE;
-		}
-
-		*bshp = (bus_space_handle_t)(section_free + offset);
-		section_free = va;
-	}
-
-
-	if (modified) {
-
-		cpu_drain_writebuf();
-		cpu_tlb_flushD();
-	}
-	return (0);
-}
-
-static void
-copy_io_area_map(pd_entry_t * new_pd)
-{
-	pd_entry_t *cur_pd = read_ttb();
-	int sec;
-
-	for (sec = SMDK2410_VBASE_FREE >> L1_S_SHIFT;
-	    sec < (section_free >> L1_S_SHIFT); ++sec) {
-		new_pd[sec] = cur_pd[sec];
-		writeback_dcache_line((vaddr_t)&new_pd[sec]);
-	}
-	cpu_drain_writebuf();
-}
-
 
 static struct arm32_dma_range smdk2410_dma_ranges[1];
 

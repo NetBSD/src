@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.7 2003/08/04 12:09:19 bsh Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.8 2005/03/16 05:02:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.7 2003/08/04 12:09:19 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.8 2005/03/16 05:02:12 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,29 +196,42 @@ s3c2800_softreset(void)
 
 /*
  * fill sc_pclk, sc_hclk, sc_fclk from values of clock controller register.
+ *
+ * s3c2800_clock_freq2() is meant to be called from kernel startup routines.
+ * s3c2800_clock_freq() is for after kernel initialization is done.
  */
 void
-s3c2800_clock_freq(struct s3c2xx0_softc *sc)
+s3c2800_clock_freq2(vaddr_t clkman_base, int *fclk, int *hclk, int *pclk)
 {
+	uint32_t pllcon, clkcon;
 	int mdiv, pdiv, sdiv;
-	int pllcon, clkcon;
+	int f, h, p;
 
-	pllcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
-	    CLKMAN_PLLCON);
-	clkcon = bus_space_read_4(sc->sc_iot, sc->sc_clkman_ioh,
-	    CLKMAN_CLKCON);
+	pllcon = *(volatile uint32_t *)(clkman_base + CLKMAN_PLLCON);
+	clkcon = *(volatile uint32_t *)(clkman_base + CLKMAN_CLKCON);
 
 	mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
 	pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
 	sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
 
-	sc->sc_fclk = ((mdiv + 8) * S3C2XX0_XTAL_CLK) / 
-	    ((pdiv + 2) * (1 << sdiv));
-	sc->sc_hclk = sc->sc_fclk;
+	f = ((mdiv + 8) * S3C2XX0_XTAL_CLK) / ((pdiv + 2) * (1 << sdiv));
+	h = f;
 	if (clkcon & CLKCON_HCLK)
-		sc->sc_hclk /= 2;
-	sc->sc_pclk = sc->sc_hclk;
+		h /= 2;
+	p = h;
 	if (clkcon & CLKCON_PCLK)
-		sc->sc_pclk /= 2;
+		p /= 2;
+
+	if (fclk) *fclk = f;
+	if (hclk) *hclk = h;
+	if (pclk) *pclk = p;
+}
+
+void
+s3c2800_clock_freq(struct s3c2xx0_softc *sc)
+{
+	s3c2800_clock_freq2(
+		(vaddr_t)bus_space_vaddr(sc->sc_iot, sc->sc_clkman_ioh),
+		&sc->sc_fclk, &sc->sc_hclk, &sc->sc_pclk);
 }
 
