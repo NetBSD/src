@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.3 1995/01/04 05:40:10 mycroft Exp $	*/
+/*	$NetBSD: chflags.c,v 1.4 1995/03/26 08:49:20 glass Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -40,8 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";*/
-static char rcsid[] = "$NetBSD: chflags.c,v 1.3 1995/01/04 05:40:10 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
+#else
+static char rcsid[] = "$NetBSD: chflags.c,v 1.4 1995/03/26 08:49:20 glass Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
