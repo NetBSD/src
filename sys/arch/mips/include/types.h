@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.31 2002/08/28 08:34:06 gmcgarry Exp $	*/
+/*	$NetBSD: types.h,v 1.32 2002/09/22 04:11:33 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,5 +93,6 @@ typedef int		register_t;
 #define	__HAVE_CPU_COUNTER
 #endif
 #define __HAVE_RAS
+#define __HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */
