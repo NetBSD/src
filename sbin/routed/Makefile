@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1995/03/18 15:00:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1995/05/31 20:44:35 ragge Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/19/93
 
 PROG=	routed
@@ -10,14 +10,3 @@ DPADD=	${LIBCOMPAT}
 LDADD=	-lcompat
 
 .include <bsd.prog.mk>
-
-.if (${MACHINE} == "vax")
-# The following can be deleted where not appropriate to use the kernel's
-# inline code expansions.
-INLINE=	/sys/vax/inline/obj/inline
-C2=	/usr/libexec/c2
-.c.o:
-	${CC} -S ${CFLAGS} ${.CURDIR}/${.PREFIX}.c
-	@${C2} ${.PREFIX}.s | ${INLINE} | ${AS} -o ${.PREFIX}.o
-	@rm -f ${.PREFIX}.s
-.endif
