@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.36 2002/01/27 13:23:16 jdolecek Exp $
+#	$NetBSD: TX3912,v 1.37 2002/01/28 05:40:30 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -88,7 +88,7 @@ options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 options 	NFS_BOOT_DHCP
 
 # compile options
-makeoptions	DEFGP="-G 18"
+makeoptions	DEFGP="-G 14"
 
 config		netbsd		root on ? type ?
 
