@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.2 1999/08/14 11:30:48 ragge Exp $ */
+/*	$NetBSD: cmi.c,v 1.3 2000/06/04 18:02:35 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,39 +34,35 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/ka750.h>
 
-static	int cmi_print __P((void *, const char *));
-static	int cmi_match __P((struct device *, struct cfdata *, void *));
-static	void cmi_attach __P((struct device *, struct device *, void*));
+static	int cmi_print(void *, const char *);
+static	int cmi_match(struct device *, struct cfdata *, void *);
+static	void cmi_attach(struct device *, struct device *, void*);
 
 struct	cfattach cmi_ca = {
 	sizeof(struct device), cmi_match, cmi_attach
 };
 
 int
-cmi_print(aux, name)
-	void *aux;
-	const char *name;
+cmi_print(void *aux, const char *name)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
 	if (name)
-		printf("unknown device 0x%x at %s", sa->type, name);
+		printf("unknown device 0x%x at %s", sa->sa_type, name);
 
-	printf(" tr%d", sa->nexnum);
+	printf(" tr%d", sa->sa_nexnum);
 	return (UNCONF);
 }
 
 
 int
-cmi_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+cmi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (vax_bustype == VAX_CMIBUS)
 		return 1;
@@ -74,9 +70,7 @@ cmi_match(parent, cf, aux)
 }
 
 void
-cmi_attach(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+cmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct	sbi_attach_args sa;
 
@@ -85,13 +79,13 @@ cmi_attach(parent, self, aux)
 	 * Probe for memory, can be in the first 4 slots.
 	 */
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
-	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
-		sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
-		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-		if (badaddr((caddr_t)sa.nexaddr, 4)) {
-			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
+	for (sa.sa_nexnum = 0; sa.sa_nexnum < 4; sa.sa_nexnum++) {
+		sa.sa_ioh = vax_map_physmem(NEX750 +
+		    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
+		if (badaddr((caddr_t)sa.sa_ioh, 4)) {
+			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
-			sa.type = NEX_MEM16;
+			sa.sa_type = NEX_MEM16;
 			config_found(self, (void*)&sa, cmi_print);
 		}
 	}
@@ -99,13 +93,13 @@ cmi_attach(parent, self, aux)
 	/*
 	 * Probe for mba's, can be in slot 4 - 7.
 	 */
-	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
-		sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
-		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-		if (badaddr((caddr_t)sa.nexaddr, 4)) {
-			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
+	for (sa.sa_nexnum = 4; sa.sa_nexnum < 7; sa.sa_nexnum++) {
+		sa.sa_ioh = vax_map_physmem(NEX750 +
+		    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
+		if (badaddr((caddr_t)sa.sa_ioh, 4)) {
+			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
-			sa.type = NEX_MBA;
+			sa.sa_type = NEX_MBA;
 			config_found(self, (void*)&sa, cmi_print);
 		}
 	}
@@ -113,18 +107,18 @@ cmi_attach(parent, self, aux)
 	/*
 	 * There are always one generic UBA, and maybe an optional.
 	 */
-	sa.nexnum = 8;
-	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
-	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-	sa.type = NEX_UBA0;
+	sa.sa_nexnum = 8;
+	sa.sa_ioh = vax_map_physmem(NEX750 +
+	    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
+	sa.sa_type = NEX_UBA0;
 	config_found(self, (void*)&sa, cmi_print);
 
-	sa.nexnum = 9;
-	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
-	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-	sa.type = NEX_UBA1;
-	if (badaddr((caddr_t)sa.nexaddr, 4))
-		vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
+	sa.sa_nexnum = 9;
+	sa.sa_ioh = vax_map_physmem(NEX750 +
+	    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
+	sa.sa_type = NEX_UBA1;
+	if (badaddr((caddr_t)sa.sa_ioh, 4))
+		vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 	else
 		config_found(self, (void*)&sa, cmi_print);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.30 1999/08/14 11:30:48 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.31 2000/06/04 18:02:35 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -40,6 +40,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/ka750.h>
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
@@ -50,11 +51,11 @@
 
 #include "locators.h"
 
-void	ctuattach __P((void));
-static	void	ka750_clrf __P((void));
-static	void	ka750_conf __P((void));
-static	void    ka750_memerr __P((void));
-static	int     ka750_mchk __P((caddr_t));
+void	ctuattach(void);
+static	void ka750_clrf(void);
+static	void ka750_conf(void);
+static	void ka750_memerr(void);
+static	int ka750_mchk(caddr_t);
 
 
 struct	cpu_dep ka750_calls = {
@@ -93,25 +94,23 @@ ka750_conf()
 	ctuattach();
 }
 
-static int ka750_memmatch __P((struct  device  *, struct cfdata	 *, void *));
-static void ka750_memenable __P((struct	 device	 *, struct  device  *, void *));
+static int ka750_memmatch(struct device  *, struct cfdata *, void *);
+static void ka750_memenable(struct device *, struct device *, void *);
 
 struct	cfattach mem_cmi_ca = {
 	sizeof(struct device), ka750_memmatch, ka750_memenable
 };
 
 int
-ka750_memmatch(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+ka750_memmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if (cf->cf_loc[CMICF_TR] != sa->nexnum && cf->cf_loc[CMICF_TR] > -1)
+	if (cf->cf_loc[CMICF_TR] != sa->sa_nexnum &&
+	    cf->cf_loc[CMICF_TR] > CMICF_TR_DEFAULT)
 		return 0;
 
-	if (sa->type != NEX_MEM16)
+	if (sa->sa_type != NEX_MEM16)
 		return 0;
 
 	return 1;
@@ -137,15 +136,13 @@ struct	mcr750 {
 
 /* enable crd interrupts */
 void
-ka750_memenable(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+ka750_memenable(struct device *parent, struct device *self, void *aux)
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct mcr750 *mcr = (struct mcr750 *)sa->nexaddr;
+	struct mcr750 *mcr = (struct mcr750 *)sa->sa_ioh;
 	int k, l, m, cardinfo;
 	
-	mcraddr[self->dv_unit] = (caddr_t)sa->nexaddr;
+	mcraddr[self->dv_unit] = (caddr_t)sa->sa_ioh;
 
 	/* We will use this info for error reporting - later! */
 	cardinfo = mcr->mc_inf;
@@ -227,8 +224,7 @@ struct mc750frame {
 #define MC750_TBPAR	4		/* tbuf par bit in mcesr */
 
 int
-ka750_mchk(cmcf)
-	caddr_t cmcf;
+ka750_mchk(caddr_t cmcf)
 {
 	register struct mc750frame *mcf = (struct mc750frame *)cmcf;
 	register int type = mcf->mc5_summary;
