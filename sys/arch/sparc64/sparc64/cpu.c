@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2000/06/12 23:32:47 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.7 2000/06/19 23:30:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,7 +133,8 @@ static char *iu_vendor[16] = {
  *	Return the TLB entry for the cpuinfo.
  */
 u_int64_t
-cpu_start(cpu_num)
+cpu_init(pa, cpu_num)
+	paddr_t pa;
 	int cpu_num;
 {
 	struct cpu_info *ci;

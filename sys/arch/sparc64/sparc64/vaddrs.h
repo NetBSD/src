@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.4 2000/06/12 23:32:48 eeh Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.5 2000/06/19 23:30:37 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,16 +56,6 @@
  * a 24-bit address space out to 32 bits.  This is a legacy of the
  * IBM PC AT bus, actually, just so you know who to blame.)
  *
- * We reserve several pages at the base of our IO virtual space
- * for `oft-used' devices which must be present anyway in order to
- * configure.  In particular, we want the counter-timer register and
- * the Zilog ZSCC serial port chips to be mapped at fixed VAs to make
- * microtime() and the zs hardware interrupt handlers faster.
- *
- * [sun4/sun4c:]
- * Ideally, we should map the interrupt enable register here as well,
- * but that would require allocating pmegs in locore.s, so instead we
- * use one of the two `wasted' pages at KERNBASE+_MAXNBPG (see locore.s).
  */
 
 #ifndef IODEV_0
@@ -76,11 +66,11 @@
 
 /* [4m:] interrupt and counter registers take (1 + NCPU) pages. */
 
-#define	CPUINFO_VA	(    INTSTACK)
-#define	AUXREG_VA	(   EINTSTACK)
+#define	AUXREG_VA	(      KERNEND + _MAXNBPG) /* 1 page REDZONE */
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
-#define	IODEV_BASE	(    MSGBUF_VA + _MAXNBPG)
+#define	CPUINFO_VA	(      KERNEND + 8*_MAXNBPG) /* 64K after kernel end */
+#define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
 #define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
 
 #endif /* IODEV_0 */

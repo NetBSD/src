@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS64,v 1.12 1999/11/20 18:09:52 eeh Exp $
+# 	$NetBSD: NONPLUS64,v 1.13 2000/06/19 23:30:32 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -10,9 +10,9 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - Ultra 140 and 170
-options		TRAPWIN		# use a new window for traps
 options		__ELF__		# we use elf 
 options		_LP64		# we're using a 64-bit compiler
+makeoptions	SPARC64_BINARIES=1
 
 ## System options specific to the sparc machine type
 

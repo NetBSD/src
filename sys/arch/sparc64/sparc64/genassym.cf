@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2000/05/26 00:36:50 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.15 2000/06/19 23:30:35 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@ define	USIZ		sizeof(struct user)
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-#define	VM_PMAP_CTX	offsetof(struct vmspace, vm_map.pmap.pm_ctx)
 
 # pmap structure fields
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
@@ -147,7 +146,18 @@ define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
 
 # CPU info structure
-#define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
+define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
+define	CI_NEXT		offsetof(struct cpu_info, ci_next)
+define	CI_FPPROC	offsetof(struct cpu_info, ci_fpproc)
+define	CI_NUMBER	offsetof(struct cpu_info, ci_number)
+define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
+define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
+define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
+define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
+define	CURPROC		(CPUINFO_VA+CI_CURPROC)
+define	CPCB		(CPUINFO_VA+CI_CPCB)
+define	FPPROC		(CPUINFO_VA+CI_FPPROC)
 
 # FPU state
 define	FS_REGS		offsetof(struct fpstate64, fs_regs)
@@ -158,8 +168,8 @@ define	FS_QUEUE	offsetof(struct fpstate64, fs_queue)
 define	FS_SIZE		sizeof(struct fpstate64)
 define	FSR_QNE		FSR_QNE
 define	FPRS_FEF	FPRS_FEF
-define	FPRS_DL		FPRS_DL
 define	FPRS_DU		FPRS_DU
+define	FPRS_DL		FPRS_DL
 
 # system calls
 define	SYS___sigreturn14 SYS___sigreturn14
@@ -223,48 +233,6 @@ define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
 	
-
-ifdef notyet
-# ZSCC interrupt fields
-define	ZSC_A		offsetof(struct zs_softc, sc_a)
-define	ZSC_B		offsetof(struct zs_softc, sc_b)
-#define	ZL_WREG		offsetof(struct zs_line, zl_wreg)
-define	ZL_TBC		offsetof(struct zs_line, zl_tbc)
-define	ZL_TBA		offsetof(struct zs_line, zl_tba)
-define	ZL_RBPUT	offsetof(struct zs_line, zl_rbput)
-define	ZL_RBUF		offsetof(struct zs_line, zl_rbuf)
-define	ZSRR1_DO_bit	ffs(ZSRR1_DO) - 1
-endif
-
-ifdef notyet
-# audio trap handler fields
-define	AU_AMD		offsetof(struct auio, au_amd)
-define	AU_RDATA	offsetof(struct auio, au_rdata)
-define	AU_REND		offsetof(struct auio, au_rend)
-define	AU_PDATA	offsetof(struct auio, au_pdata)
-define	AU_PEND		offsetof(struct auio, au_pend)
-define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
-
-define	AMD_IR		offsetof(struct amd7930, ir)
-define	AMD_BBRB	offsetof(struct amd7930, bbrb)
-define	AMD_BBTB	offsetof(struct amd7930, bbtb)
-endif
-
-#define	PROM_BASE	PROM_BASE
-
-define	PV_NODEOPS	offsetof(struct promvec, pv_nodeops)
-define	PV_HALT		offsetof(struct promvec, pv_halt)
-define	PV_EVAL		offsetof(struct promvec, pv_fortheval.v0_eval)
-define	PV_ROMVEC_VERS	offsetof(struct promvec, pv_romvec_vers)
-
-define	NO_NEXTNODE	offsetof(struct nodeops, no_nextnode)
-define	NO_GETPROP	offsetof(struct nodeops, no_getprop)
-
-ifdef notyet
-define	OLDMON_PRINTF	offsetof(struct om_vector, printf)
-define	OLDMON_HALT	offsetof(struct om_vector, exitToMon)
-endif
-
 # floppy trap handler fields
 define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
 define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2000/06/13 05:04:05 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.20 2000/06/19 23:30:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,10 +120,6 @@
 extern int nbpg, pgofset, pgshift;
 #endif
 
-#define	KERNBASE	0x0f1000000	/* start of kernel virtual space */
-#define	KERNEND		0x0fe000000	/* end of kernel virtual space */
-#define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
-
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	BLKDEV_IOSIZE	2048
@@ -137,11 +133,67 @@ extern int nbpg, pgofset, pgshift;
 #endif
 #define	USPACE		(SSIZE*8192)
 
+
+/*
+ * Here are all the magic kernel virtual addresses and how they're allocated.
+ * 
+ * First, the PROM is usually a fixed-sized block from 0x00000000f0000000 to
+ * 0x00000000f0100000.  It also uses some space around 0x00000000fff00000 to
+ * map in device registers.  The rest is pretty much ours to play with.
+ *
+ * The kernel starts at KERNBASE.  Here's they layout.  We use macros to set
+ * the addresses so we can relocate everything easily.  We use 4MB locked TTEs
+ * to map in the kernel text and data segments.  Any extra pages are recycled,
+ * so they can potentially be double-mapped.  This shouldn't really be a
+ * problem since they're unused, but wild pointers can cause silent data
+ * corruption if they are in those segments.
+ *
+ * 0x0000000000000000:	64K NFO page zero
+ * 0x0000000000010000:	Userland or PROM
+ * KERNBASE:		4MB kernel text and read only data
+ *				This is mapped in the ITLB and 
+ *				Read-Only in the DTLB
+ * KERNBASE+0x400000:	4MB kernel data and BSS -- not in ITLB
+ *				Contains context table, kernel pmap,
+ *				and other important structures.
+ * KERNBASE+0x800000:	Unmapped page -- redzone
+ * KERNBASE+0x802000:	Process 0 stack and u-area
+ * KERNBASE+0x806000:	2 pages for pmap_copy_page and /dev/mem
+ * KERNBASE+0x80a000:	Start of kernel VA segment
+ * KERNEND:		End of kernel VA segment
+ * KERNEND+0x02000:	Auxreg_va (unused?)
+ * KERNEND+0x04000:	TMPMAP_VA (unused?)
+ * KERNEND+0x06000:	message buffer.
+ * KERNEND+0x010000:	64K locked TTE -- different for each CPU
+ *			Contains interrupt stack, cpu_info structure,
+ *			and 32KB kernel TSB.
+ * KERNEND+0x020000:	IODEV_BASE -- begin mapping IO devices here.
+ * 0x00000000fe000000:	IODEV_END -- end of device mapping space.
+ *
+ */
+#define	KERNBASE	0x0f1000000	/* start of kernel virtual space */
+#define	KERNEND		0x0fe000000	/* end of kernel virtual space */
+#define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
+
+#if 0
+#define	AUXREG_VA	(      KERNEND + _MAXNBPG) /* 1 page REDZONE */
+#define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
+#define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
+#define	CPUINFO_VA	(      KERNEND + 8*_MAXBPG) /* 64K after kernel end */
+#define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
+#define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
+#endif
+
 /*
  * Here's the location of the interrupt stack and CPU structure.
  */
-#define	INTSTACK	(KERNEND)
-#define	EINTSTACK	(INTSTACK+USPACE)
+#if 1
+#define	INTSTACK	(KERNEND+(64*1024))
+#define	EINTSTACK	(INTSTACK+2*USPACE)
+#else
+#define	INTSTACK	intstack
+#define	EINTSTACK	eintstack
+#endif
 
 /*
  * Constants related to network buffer management.

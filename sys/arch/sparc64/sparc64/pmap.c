@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2000/06/15 15:51:07 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 2000/06/19 23:30:36 eeh Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -181,6 +181,12 @@ typedef struct pv_entry {
  * and collect/clear all the ref/mod information and copy it into the pv_entry.
  */
 
+#ifdef	NO_VCACHE
+#define	FORCE_ALIAS	1
+#else
+#define FORCE_ALIAS	0
+#endif
+
 #define	PV_ALIAS	0x1LL
 #define PV_REF		0x2LL
 #define PV_MOD		0x4LL
@@ -219,15 +225,24 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 struct pmap kernel_pmap_;
 
 int physmem;
-u_long ksegv;				/* vaddr start of kernel */
-u_int64_t ksegp;			/* paddr of start of kernel */
-u_long ksegend;
-u_int64_t ksegpend;
+/*
+ * Virtual and physical addresses of the start and end of kernel text
+ * and data segments.
+ */
+vaddr_t ktext;
+paddr_t ktextp;
+vaddr_t ektext;
+paddr_t ektextp;
+vaddr_t kdata;
+paddr_t kdatap;
+vaddr_t ekdata;
+paddr_t ekdatap;
+
 static int npgs;
 static u_int nextavail;
 static struct mem_region memlist[8]; /* Pick a random size here */
 
-caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
+vaddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 
 struct mem_region *mem, *avail, *orig;
 int memsize;
@@ -352,28 +367,73 @@ int numctx;
 #define CTXSIZE		(numctx*CTXENTRY)
 
 #define	pmap_get_page(p)	uvm_page_physget((p));
+
+
+/*
+ * Enter a TTE into the kernel pmap only.  Don't do anything else.
+ */
+static void pmap_enter_kpage __P((vaddr_t, int64_t));
+static void
+pmap_enter_kpage(va, data)
+	vaddr_t va;
+	int64_t data;
+{
+	paddr_t newp;
+
+	newp = NULL;
+	while (pseg_set(pmap_kernel(), va, data, newp) != NULL) {
+		pmap_get_page(&newp);
+		pmap_zero_page(newp);
+#ifdef DEBUG
+		enter_stats.ptpneeded ++;
+#endif
+#ifdef BOOT1_DEBUG
+		prom_printf(
+			"pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
+			pmap_kernel(), va, (long)data, (long)newp);
+		{int i; for (i=0; i<140000000; i++) ;}
+#endif
+	}
+}
+
 /*
  * This is called during bootstrap, before the system is really initialized.
  *
- * It's called with the start and end virtual addresses of the kernel.
- * We bootstrap the pmap allocator now.  We will allocate the basic
- * structures we need to bootstrap the VM system here: the page frame
- * tables, the TSB, and the free memory lists.
+ * It's called with the start and end virtual addresses of the kernel.  We
+ * bootstrap the pmap allocator now.  We will allocate the basic structures we
+ * need to bootstrap the VM system here: the page frame tables, the TSB, and
+ * the free memory lists.
+ *
+ * Now all this is becoming a bit obsolete.  maxctx is still important, but by
+ * separating the kernel text and data segments we really would need to
+ * provide the start and end of each segment.  But we can't.  The rodata
+ * segment is attached to the end of the kernel segment and has nothing to
+ * delimit its end.  We could still pass in the beginning of the kernel and
+ * the beginning and end of the data segment but we could also just as easily
+ * calculate that all in here.
+ *
+ * To handle the kernel text, we need to do a reverse mapping of the start of
+ * the kernel, then traverse the free memory lists to find out how big it is.
  */
+
 void
 pmap_bootstrap(kernelstart, kernelend, maxctx)
 	u_long kernelstart, kernelend;
 	u_int maxctx;
 {
+	extern int data_start[], end[];	/* start of data segment */
 	extern int msgbufmapped;
 	struct mem_region *mp, *mp1;
 	int msgbufsiz;
 	int pcnt;
 	size_t s, sz;
 	int i, j;
+	int64_t data;
+	vaddr_t va;
 	u_int64_t phys_msgbuf;
-	u_long firstaddr, newkp, ksize;
-	u_long *newkv;
+	paddr_t newkp;
+	vaddr_t newkv, firstaddr;
+	vsize_t kdsize, ktsize;
 #ifdef DEBUG
 	int opmapdebug = pmapdebug;
 	pmapdebug = 0;
@@ -414,7 +474,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * Get hold or the message buffer.
 	 */
 	msgbufp = (struct kern_msgbuf *)MSGBUF_VA;
-/* XXXXX -- for uvmhist printing */
+/* XXXXX -- increase msgbufsiz for uvmhist printing */
 	msgbufsiz = 4*NBPG /* round_page(sizeof(struct msgbuf)) */;
 #ifdef BOOT_DEBUG
 	prom_printf("Trying to allocate msgbuf at %lx, size %lx\r\n", 
@@ -441,14 +501,18 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
 
 	/* 
-	 * Record kernel mapping -- we will map this with a permanent 4MB
+	 * Record kernel mapping -- we will map these with a permanent 4MB
 	 * TLB entry when we initialize the CPU later.
 	 */
 #ifdef BOOT_DEBUG
 	prom_printf("translating kernelstart %p\r\n", (void *)kernelstart);
 #endif
-	ksegv = kernelstart;
-	ksegp = prom_vtop(kernelstart);
+	ktext = kernelstart;
+	ktextp = prom_vtop(kernelstart);
+
+	kdata = (vaddr_t)data_start;
+	kdatap = prom_vtop(kdata);
+	ekdata = (vaddr_t)end;
 
 	/*
 	 * Find the real size of the kernel.  Locate the smallest starting
@@ -458,20 +522,21 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		/*
 		 * Check whether this region is at the end of the kernel.
 		 */
-		if (mp->start > kernelstart && (mp1->start < kernelstart || 
+		if (mp->start >= ekdata && (mp1->start < ekdata || 
 						mp1->start > mp->start))
 			mp1 = mp;
 	}
-	if (mp1->start < kernelstart)
+	if (mp1->start < kdata)
 		prom_printf("Kernel at end of vmem???\r\n");
+
 #ifdef BOOT1_DEBUG
-	prom_printf("The kernel is mapped at %lx, next free seg: %lx, %lx\r\n",
-		    (long)ksegp, (u_long)mp1->start, (u_long)mp1->size);
+	prom_printf("The kernel data is mapped at %lx, next free seg: %lx, %lx\r\n",
+		    (long)kdata, (u_long)mp1->start, (u_long)mp1->size);
 #endif	
 	/* 
 	 * This it bogus and will be changed when the kernel is rounded to 4MB.
 	 */
-	firstaddr = (kernelend + 07) & ~ 07;	/* Longword align */
+	firstaddr = (ekdata + 07) & ~ 07;	/* Longword align */
 
 #if 1
 #define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr += (num)
@@ -482,20 +547,24 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #define MEG		(1<<20) /* 1MB */
 
 	/*
-	 * Since we can't give the loader the hint to align us on a 4MB
+	 * Since we can't always give the loader the hint to align us on a 4MB
 	 * boundary, we will need to do the alignment ourselves.  First
 	 * allocate a new 4MB aligned segment for the kernel, then map it
 	 * in, copy the kernel over, swap mappings, then finally, free the
 	 * old kernel.  Then we can continue with this.
+	 *
+	 * We'll do the data segment up here since we know how big it is.
+	 * We'll do the text segment after we've read in the PROM translations
+	 * so we can figure out its size.
 	 */
-	ksize = round_page(kernelend - kernelstart);
+	kdsize = round_page(ekdata - kdata);
 
-	if (ksegp & (4*MEG-1)) {
+	if (kdatap & (4*MEG-1)) {
 #ifdef BOOT1_DEBUG
-		prom_printf("Allocating new %lx kernel at 4MB boundary\r\n",
-		    (u_long)ksize);
+		prom_printf("Allocating new %lx kernel data at 4MB boundary\r\n",
+		    (u_long)kdsize);
 #endif
-		if ((newkp = prom_alloc_phys(ksize, 4*MEG)) == 0 ) {
+		if ((newkp = prom_alloc_phys(4*MEG, 4*MEG)) == 0 ) {
 			prom_printf("Cannot allocate new kernel\r\n");
 			OF_exit();
 		}
@@ -503,8 +572,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		prom_printf("Allocating new va for buffer at %p\r\n",
 		    (void *)newkp);
 #endif
-		if ((newkv = (u_long*)prom_alloc_virt(ksize, 8)) ==
-		    (u_long*)-1) {
+		if ((newkv = (vaddr_t)prom_alloc_virt(4*MEG, 8)) ==
+		    (vaddr_t)-1) {
 			prom_printf("Cannot allocate new kernel va\r\n");
 			OF_exit();
 		}
@@ -514,11 +583,11 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 		prom_map_phys(newkp, 4*MEG, (vaddr_t)newkv, -1); 
 #ifdef BOOT1_DEBUG
-		prom_printf("Copying kernel...");
+		prom_printf("Copying %ld bytes kernel data...", kdsize);
 #endif
-		bzero(newkv, 4*MEG);
-		bcopy((void *)kernelstart, (void *)newkv,
-		    kernelend - kernelstart);
+		bzero((void *)newkv, 4*MEG);
+		bcopy((void *)kdata, (void *)newkv,
+		    kdsize);
 #ifdef BOOT1_DEBUG
 		prom_printf("done.  Swapping maps..unmap new\r\n");
 #endif
@@ -526,7 +595,14 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef BOOT_DEBUG
 		prom_printf("remap old ");
 #endif
-		prom_map_phys(newkp, 4*MEG, kernelstart, -1); 
+#if 0
+		/*
+		 * calling the prom will probably require reading part of the
+		 * data segment so we can't do this.  
+		 */
+		prom_unmap_virt((vaddr_t)kdatap, kdsize);
+#endif
+		prom_map_phys(newkp, 4*MEG, kdata, -1); 
 		/*
 		 * we will map in 4MB, more than we allocated, to allow
 		 * further allocation
@@ -534,8 +610,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef BOOT1_DEBUG
 		prom_printf("free old\r\n");
 #endif
-		prom_free_phys(ksegp, ksize);
-		ksegp = newkp;
+		prom_free_phys(kdatap, kdsize);
+		kdatap = newkp;
 		
 #ifdef BOOT1_DEBUG
 		prom_printf("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
@@ -544,18 +620,28 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 	} else {
 		/* We was at a 4MB boundary after all! */
-		newkp = ksegp;
+#if 1
+		/*
+		 * XXXX should we not overlap?
+		 */
+		prom_map_phys(kdatap, 4*MEG, kdata, -1); 
+#else
+		psize_t szdiff = 4*MEG - kdsize;
+
+		/* Claim the rest of the physical page. */
+		newkp = kdatap + kdsize;
+		newkv = kdata + kdsize;
+		if (kdatap != prom_claim_phys(newkp, szdiff))
+			prom_printf("pmap_bootstrap: could not claim physical "
+				"dseg extention at %lx size %lx\r\n", newkp, szdiff);
+		/* And the rest of the virtual page. */
+		if (prom_claim_virt(newkv, szdiff) != newkv)
+			prom_printf("pmap_bootstrap: could not claim virtual "
+				"dseg extention at size %lx\r\n", newkv, szdiff);
 
 		/* Make sure all 4MB are mapped */
-		prom_map_phys(ksegp, 4*MEG, kernelstart, -1); 
-	}
-
-	/*
-	 * Allocate a 64MB page for the cpu_info structure now.
-	 */
-	if ((cpu0paddr = prom_alloc_phys(8*NBPG, 8*NBPG)) == 0 ) {
-		prom_printf("Cannot allocate new cpu_info\r\n");
-		OF_exit();
+		prom_map_phys(newkp, szdiff, newkv, -1);
+#endif
 	}
 
 	/*
@@ -604,35 +690,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		tsbsize = 2;
 
 	/*
-	 * Count the number of available entries.  And make an extra
-	 * copy to fiddle with.
-	 */
-	sz = OF_getproplen(memh, "available") + sizeof(struct mem_region);
-	valloc(orig, struct mem_region, sz);
-	bzero((caddr_t)orig, sz);
-	if (OF_getprop(memh, "available", orig, sz) <= 0) {
-		prom_printf("no available RAM?");
-		OF_exit();
-	}
-
-#ifdef BOOT1_DEBUG
-	/* print out mem list */
-	prom_printf("Available physical memory:\r\n");
-	for (mp = orig; mp->size; mp++) {
-		prom_printf("memlist start %lx size %lx\r\n",
-		    (u_long)mp->start, (u_long)mp->size);
-	}
-	prom_printf("End of available physical memory\r\n");
-#endif
-	valloc(avail, struct mem_region, sz);
-	bzero((caddr_t)avail, sz);
-	for (pcnt = 0, mp = orig, mp1 = avail; (mp1->size = mp->size);
-	    mp++, mp1++) {
-		mp1->start = mp->start;
-		pcnt++;
-	}
-
-	/*
 	 * Save the prom translations
 	 */
 	sz = OF_getproplen(vmemh, "translations");
@@ -653,18 +710,119 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("End of prom xlations\r\n");
 #endif
 	/*
+	 * Hunt for the kernel text segment and figure out it size and
+	 * alignment.  
+	 */
+	for (i = 0; i < prom_map_size; i++) 
+		if (prom_map[i].vstart == ktext)
+			break;
+	if (i == prom_map_size) 
+		panic("No kernel text segment!\r\n");
+	ktsize = prom_map[i].vsize;
+	ektext = ktext + ktsize;
+
+	if (ktextp & (4*MEG-1)) {
+#ifdef BOOT1_DEBUG
+		prom_printf("Allocating new %lx kernel text at 4MB boundary\r\n",
+		    (u_long)ktsize);
+#endif
+		if ((newkp = prom_alloc_phys(ktsize, 4*MEG)) == 0 ) {
+			prom_printf("Cannot allocate new kernel text\r\n");
+			OF_exit();
+		}
+#ifdef BOOT1_DEBUG
+		prom_printf("Allocating new va for buffer at %p\r\n",
+		    (void *)newkp);
+#endif
+		if ((newkv = (vaddr_t)prom_alloc_virt(ktsize, 8)) ==
+		    (vaddr_t)-1) {
+			prom_printf("Cannot allocate new kernel text va\r\n");
+			OF_exit();
+		}
+#ifdef BOOT1_DEBUG
+		prom_printf("Mapping in buffer %lx at %lx\r\n",
+		    (u_long)newkp, (u_long)newkv);
+#endif
+		prom_map_phys(newkp, ktsize, (vaddr_t)newkv, -1); 
+#ifdef BOOT1_DEBUG
+		prom_printf("Copying %ld bytes kernel text...", ktsize);
+#endif
+		bcopy((void *)ktext, (void *)newkv,
+		    ktsize);
+#ifdef BOOT1_DEBUG
+		prom_printf("done.  Swapping maps..unmap new\r\n");
+#endif
+		prom_unmap_virt((vaddr_t)newkv, 4*MEG);
+#ifdef BOOT_DEBUG
+		prom_printf("remap old ");
+#endif
+#if 0
+		/*
+		 * calling the prom will probably require reading part of the
+		 * text segment so we can't do this.  
+		 */
+		prom_unmap_virt((vaddr_t)ktextp, ktsize);
+#endif
+		prom_map_phys(newkp, ktsize, ktext, -1); 
+		/*
+		 * we will map in 4MB, more than we allocated, to allow
+		 * further allocation
+		 */
+#ifdef BOOT1_DEBUG
+		prom_printf("free old\r\n");
+#endif
+		prom_free_phys(ktextp, ktsize);
+		ktextp = newkp;
+		
+#ifdef BOOT1_DEBUG
+		prom_printf("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
+		    "avail for kernel\r\n", (u_long)firstaddr,
+		    (u_long)prom_vtop(firstaddr));
+#endif
+
+		/*
+		 * Re-fetch translations -- they've certainly changed.
+		 */
+		if (OF_getprop(vmemh, "translations", (void*)prom_map, sz) <=
+			0) {
+			prom_printf("no translations installed?");
+			OF_exit();
+		}
+#ifdef BOOT_DEBUG
+		/* print out mem list */
+		prom_printf("New prom xlations:\r\n");
+		for (i = 0; i < prom_map_size; i++) {
+			prom_printf("start %016lx size %016lx tte %016lx\r\n",
+				(u_long)prom_map[i].vstart, 
+				(u_long)prom_map[i].vsize,
+				(u_long)prom_map[i].tte);
+		}
+		prom_printf("End of prom xlations\r\n");
+#endif
+	} 
+	ektextp = ktextp + ktsize;
+
+	/*
 	 * Here's a quick in-lined reverse bubble sort.  It gets rid of
-	 * any translations inside the kernel VA range.
+	 * any translations inside the kernel data VA range.
 	 */
 	for(i = 0; i < prom_map_size; i++) {
-		if (prom_map[i].vstart >= ksegv &&
+		if (prom_map[i].vstart >= kdata &&
 		    prom_map[i].vstart <= firstaddr) {
 			prom_map[i].vstart = 0;
 			prom_map[i].vsize = 0;
 		}
+		if (prom_map[i].vstart >= ktext &&
+		    prom_map[i].vstart <= ektext) {
+			prom_map[i].vstart = 0;
+			prom_map[i].vsize = 0;
+		}
 		for(j = i; j < prom_map_size; j++) {
-			if (prom_map[j].vstart >= ksegv &&
+			if (prom_map[j].vstart >= kdata &&
 			    prom_map[j].vstart <= firstaddr)
+				continue;	/* this is inside the kernel */
+			if (prom_map[j].vstart >= ktext &&
+			    prom_map[j].vstart <= ektext)
 				continue;	/* this is inside the kernel */
 			if (prom_map[j].vstart > prom_map[i].vstart) {
 				struct prom_map tmp;
@@ -684,6 +842,43 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	}
 	prom_printf("End of prom xlations\r\n");
 #endif
+
+	/*
+	 * Allocate a 64MB page for the cpu_info structure now.
+	 */
+	if ((cpu0paddr = prom_alloc_phys(8*NBPG, 8*NBPG)) == 0 ) {
+		prom_printf("Cannot allocate new cpu_info\r\n");
+		OF_exit();
+	}
+
+
+	/*
+	 * Now the kernel text segment is in its final location we can try to
+	 * find out how much memory really is free.  
+	 */
+	sz = OF_getproplen(memh, "available") + sizeof(struct mem_region);
+	valloc(orig, struct mem_region, sz);
+	bzero((caddr_t)orig, sz);
+	if (OF_getprop(memh, "available", orig, sz) <= 0) {
+		prom_printf("no available RAM?");
+		OF_exit();
+	}
+#ifdef BOOT1_DEBUG
+	/* print out mem list */
+	prom_printf("Available physical memory:\r\n");
+	for (mp = orig; mp->size; mp++) {
+		prom_printf("memlist start %lx size %lx\r\n",
+		    (u_long)mp->start, (u_long)mp->size);
+	}
+	prom_printf("End of available physical memory\r\n");
+#endif
+	valloc(avail, struct mem_region, sz);
+	bzero((caddr_t)avail, sz);
+	for (pcnt = 0, mp = orig, mp1 = avail; (mp1->size = mp->size);
+	    mp++, mp1++) {
+		mp1->start = mp->start;
+		pcnt++;
+	}
 
 	/*
 	 * Allocate and initialize a context table
@@ -749,19 +944,16 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("kernel virtual size %08lx - %08lx\r\n",
 	    (u_long)kernelstart, (u_long)firstaddr);
 #endif
-	kernelstart = kernelstart & ~PGOFSET;
-	kernelend = firstaddr;
-	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
+	kdata = kdata & ~PGOFSET;
+	ekdata = firstaddr;
+	ekdata = (ekdata + PGOFSET) & ~PGOFSET;
 #ifdef BOOT1_DEBUG
 	prom_printf("kernel virtual size %08lx - %08lx\r\n",
 	    (u_long)kernelstart, (u_long)kernelend);
 #endif
-	ksegend = kernelend;
-	ksegpend = kernelend - kernelstart + ksegp;
+	ekdatap = ekdata - kdata + kdatap;
 	/* Switch from vaddrs to paddrs */
-	kernelstart = ksegp & ~PGOFSET;
-	kernelend = ksegpend;
-	if(kernelend > (kernelstart + 4*MEG)) {
+	if(ekdatap > (kdatap + 4*MEG)) {
 		prom_printf("Kernel size exceeds 4MB\r\n");
 		panic("kernel segment size exceeded\n");
 		OF_exit();
@@ -777,15 +969,15 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			    (u_long)mp->size);
 	}
 	prom_printf("End of available physical memory before cleanup\r\n");
-	prom_printf("kernel physical size %08lx - %08lx\r\n",
-	    (u_long)kernelstart, (u_long)kernelend);
+	prom_printf("kernel physical text size %08lx - %08lx\r\n",
+	    (u_long)ktextp, (u_long)ektextp);
+	prom_printf("kernel physical data size %08lx - %08lx\r\n",
+	    (u_long)kdatap, (u_long)ekdatap);
 #endif
 	/*
 	 * Here's a another quick in-lined bubble sort.
 	 */
 	for (i = 0; i < pcnt; i++) {
-		/* XXXMRG: why add up npgs when it is set to zero below? */
-		npgs += btoc(avail[i].size);
 		for (j = i; j < pcnt; j++) {
 			if (avail[j].start < avail[i].start) {
 				struct mem_region tmp;
@@ -796,34 +988,43 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		}
 	}
 
+	/* Throw away page zero if we have it. */
+	if (avail->start == 0) {
+		avail->start += NBPG;
+		avail->size -= NBPG;
+	}
+	/*
+	 * Now we need to remove the area we valloc'ed from the available
+	 * memory lists.  (NB: we may have already alloc'ed the entire space).
+	 */
 	npgs = 0;
 	for (mp = avail; mp->size; mp++) {
 		/*
 		 * Check whether this region holds all of the kernel.
 		 */
 		s = mp->start + mp->size;
-		if (mp->start < kernelstart && s > kernelend) {
-			avail[pcnt].start = kernelend;
-			avail[pcnt++].size = s - kernelend;
-			mp->size = kernelstart - mp->start;
+		if (mp->start < kdatap && s > (kdatap + 4*MEG)) {
+			avail[pcnt].start = kdatap + 4*MEG;
+			avail[pcnt++].size = s - kdatap;
+			mp->size = kdatap - mp->start;
 		}
 		/*
 		 * Look whether this regions starts within the kernel.
 		 */
-		if (mp->start >= kernelstart && mp->start < kernelend) {
-			s = kernelend - mp->start;
+		if (mp->start >= kdatap && mp->start < (kdatap + 4*MEG)) {
+			s = ekdatap - mp->start;
 			if (mp->size > s)
 				mp->size -= s;
 			else
 				mp->size = 0;
-			mp->start = kernelend;
+			mp->start = (kdatap + 4*MEG);
 		}
 		/*
 		 * Now look whether this region ends within the kernel.
 		 */
 		s = mp->start + mp->size;
-		if (s > kernelstart && s < kernelend)
-			mp->size -= s - kernelstart;
+		if (s > kdatap && s < (kdatap + 4*MEG))
+			mp->size -= s - kdatap;
 		/*
 		 * Now page align the start of the region.
 		 */
@@ -869,12 +1070,14 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			VM_FREELIST_DEFAULT);
 	}
 
-#ifdef BOOT_DEBUG
-	/* Throw away page zero if we have it. */
-	if (avail->start == 0) {
-		avail->start += NBPG;
-		avail->size -= NBPG;
+	/* finally, free up any space that valloc did not use */
+	if (ekdatap < (kdatap + (4*MEG))) {
+		uvm_page_physload(atop(ekdatap), atop(kdatap + (4*MEG)),
+			atop(ekdatap), atop(kdatap + (4*MEG)),
+			VM_FREELIST_DEFAULT);
 	}
+
+#ifdef BOOT_DEBUG
 	/* print out mem list */
 	prom_printf("Available physical memory after cleanup:\r\n");
 	for (mp = avail; mp->size; mp++) {
@@ -915,72 +1118,40 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("Inserting mesgbuf into pmap_kernel()\r\n");
 #endif
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
-	{
-		pte_t tte;
-		vaddr_t va = (vaddr_t)msgbufp;
-		paddr_t newp;
+	va = (vaddr_t)msgbufp;
+	while (msgbufsiz) {
 
 		prom_map_phys(phys_msgbuf, NBPG, (vaddr_t)msgbufp, -1); 
-#ifdef NO_VCACHE
-		tte.data.data = TSB_DATA(0 /* global */, 
-					 TLB_8K,
-					 phys_msgbuf,
-					 1 /* priv */,
-					 1 /* Write */,
-					 1 /* Cacheable */,
-					 1 /* ALIAS -- Disable D$ */, 
-					 1 /* valid */,
-					 0 /* IE */);
-#else
-		tte.data.data = TSB_DATA(0 /* global */, 
-					 TLB_8K,
-					 phys_msgbuf,
-					 1 /* priv */,
-					 1 /* Write */,
-					 1 /* Cacheable */,
-					 0 /* No ALIAS */, 
-					 1 /* valid */,
-					 0 /* IE */);
-#endif
-		newp = NULL;
-		while (pseg_set(pmap_kernel(), va, tte.data.data, newp)
-		    != NULL) {
-			pmap_get_page(&newp);
-			pmap_zero_page(newp);
-#ifdef DEBUG
-			enter_stats.ptpneeded ++;
-#endif
-#ifdef BOOT1_DEBUG
-			prom_printf(
-			    "pseg_set: pm=%p va=%p data=%lx newp %lx\r\n", 
-			    pmap_kernel(), va, (long)tte.data.data, (long)newp);
-			{int i; for (i=0; i<140000000; i++) ;}
-#endif
-		}
-		
-		/* 
-		 * Also add a global NFO mapping for page zero.
-		 */
-		tte.data.data = TSB_DATA(0 /* global */, 
-					 TLB_8K,
-					 0 /* Physaddr */,
-					 1 /* priv */,
-					 0 /* Write */,
-					 1 /* Cacheable */,
-					 0 /* No ALIAS */, 
-					 1 /* valid */,
-					 0 /* IE */);
-		tte.data.data |= TLB_L|TLB_NFO;
-		newp = NULL;
-		while(pseg_set(pmap_kernel(), va, tte.data.data, newp)
-		      != NULL) {
-			pmap_get_page(&newp);
-			pmap_zero_page(newp);
-#ifdef DEBUG
-			enter_stats.ptpneeded ++;
-#endif
-		}
+		data = TSB_DATA(0 /* global */, 
+			TLB_8K,
+			phys_msgbuf,
+			1 /* priv */,
+			1 /* Write */,
+			1 /* Cacheable */,
+			FORCE_ALIAS /* ALIAS -- Disable D$ */,
+			1 /* valid */,
+			0 /* IE */);
+		pmap_enter_kpage(va, data);
+		va += NBPG;
+		msgbufsiz -= NBPG;
+		phys_msgbuf += NBPG;
+
 	}
+		
+	/*
+	 * Also add a global NFO mapping for page zero.
+	 */
+	data = TSB_DATA(0 /* global */,
+		TLB_8K,
+		0 /* Physaddr */,
+		1 /* priv */,
+		0 /* Write */,
+		1 /* Cacheable */,
+		0 /* No ALIAS */,
+		1 /* valid */,
+		0 /* IE */);
+	data |= TLB_L|TLB_NFO;
+	pmap_enter_kpage(NULL, data);
 #ifdef BOOT1_DEBUG
 	prom_printf("Done inserting mesgbuf into pmap_kernel()\r\n");
 #endif
@@ -993,7 +1164,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0))
 			for (j = 0; j < prom_map[i].vsize; j += NBPG) {
 				int k;
-				paddr_t newp;
 				
 				for (k = 0; page_size_map[k].mask; k++) {
 					if (((prom_map[i].vstart |
@@ -1007,17 +1177,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 				page_size_map[k].use++;
 #endif
 				/* Enter PROM map into pmap_kernel() */
-				newp = NULL;
-				while (pseg_set(pmap_kernel(),
-				    prom_map[i].vstart + j, 
-				    (prom_map[i].tte + j) |
-				    page_size_map[k].code, newp) != NULL) {
-					pmap_get_page(&newp);
-					pmap_zero_page(newp);
-#ifdef DEBUG
-					enter_stats.ptpneeded++;
-#endif
-				}
+				pmap_enter_kpage(prom_map[i].vstart + j,
+					(prom_map[i].tte + j)|
+					page_size_map[k].code);
 			}
 #ifdef BOOT1_DEBUG
 	prom_printf("Done inserting PROM mappings into pmap_kernel()\r\n");
@@ -1026,63 +1188,98 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/*
 	 * Fix up start of kernel heap.
 	 */
-	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
+	vmmap = (vaddr_t)(kdata + 4*MEG); /* Start after our locked TLB entry */
 	/* Let's keep 1 page of redzone after the kernel */
 	vmmap += NBPG;
-	/* Allocate some VAs for u0 */
 	{ 
 		extern vaddr_t u0[2];
+		extern struct pcb* proc0paddr;
+		extern void main __P((void));
 		paddr_t pa;
 
+		/* Initialize all the pointers to u0 */
+		cpcb = (struct pcb *)vmmap;
+		proc0paddr = cpcb;
 		u0[0] = vmmap;
+		/* Allocate some VAs for u0 */
 		u0[1] = vmmap + 2*USPACE;
 
+#ifdef BOOT1_DEBUG
+	prom_printf("Inserting stack 0 into pmap_kernel() at %p\r\n", vmmap);
+#endif
+
 		while (vmmap < u0[1]) {
-			pte_t tte;
+			int64_t data;
 			vaddr_t va = (vaddr_t)vmmap;
-			paddr_t newp;
 
 			pmap_get_page(&pa);
 			prom_map_phys(pa, NBPG, va, -1);
-#ifdef NO_VCACHE
-			tte.data.data = TSB_DATA(0 /* global */,
+			data = TSB_DATA(0 /* global */,
 				TLB_8K,
 				pa,
 				1 /* priv */,
 				1 /* Write */,
 				1 /* Cacheable */,
-				1 /* ALIAS -- Disable D$ */,
+				FORCE_ALIAS /* ALIAS -- Disable D$ */,
 				1 /* valid */,
 				0 /* IE */);
-#else
-			tte.data.data = TSB_DATA(0 /* global */,
-				TLB_8K,
-				pa,
-				1 /* priv */,
-				1 /* Write */,
-				1 /* Cacheable */,
-				0 /* No ALIAS */,
-				1 /* valid */,
-				0 /* IE */);
-#endif
-			newp = NULL;
-			while (pseg_set(pmap_kernel(), va, tte.data.data, newp)
-				!= NULL) {
-				pmap_get_page(&newp);
-				pmap_zero_page(newp);
-#ifdef DEBUG
-				enter_stats.ptpneeded ++;
-#endif
-#ifdef BOOT1_DEBUG
-				prom_printf(
-					"pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
-					pmap_kernel(), va, (long)tte.data.
-					data, (long)newp);
-				{int i; for (i=0; i<140000000; i++) ;}
-#endif
-			}
+			pmap_enter_kpage(va, data);
 			vmmap += NBPG;
 		}
+#ifdef BOOT1_DEBUG
+	prom_printf("Done inserting stack 0 into pmap_kernel()\r\n");
+#endif
+
+		/* Now map in and initialize our cpu_info structure */
+#ifdef DIAGNOSTIC
+		vmmap += NBPG; /* redzone -- XXXX do we need one? */
+#endif
+		if ((vmmap ^ CPUINFO_VA) & VA_ALIAS_MASK) 
+			vmmap += NBPG; /* Matchup virtual color for D$ */
+		cpus = (struct cpu_info *)vmmap;
+
+#ifdef BOOT1_DEBUG
+	prom_printf("Inserting cpu_info into pmap_kernel() at %p\r\n", cpus);
+#endif
+		/* Now map in all 8 pages of cpu_info */
+		pa = cpu0paddr;
+		for (i=0; i<8; i++) {
+			int64_t data;
+			vaddr_t va = (vaddr_t)vmmap;
+
+			prom_map_phys(pa, NBPG, va, -1);
+			data = TSB_DATA(0 /* global */,
+				TLB_8K,
+				pa,
+				1 /* priv */,
+				1 /* Write */,
+				1 /* Cacheable */,
+				FORCE_ALIAS /* ALIAS -- Disable D$ */,
+				1 /* valid */,
+				0 /* IE */);
+			pmap_enter_kpage(va, data);
+			vmmap += NBPG;
+			pa += NBPG;
+		}
+#ifdef BOOT1_DEBUG
+	prom_printf("Initializing cpu_info\r\n");
+#endif
+
+		/* Initialize our cpu_info structure */
+		bzero(cpus, 8*NBPG);
+		cpus->ci_next = NULL; /* Redundant, I know. */
+		cpus->ci_curproc = &proc0;
+		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
+		cpus->ci_upaid = CPU_UPAID;
+		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
+		cpus->ci_fpproc = NULL;
+		cpus->ci_spinup = main; /* Call main when we're running. */
+		cpus->ci_initstack = (void *)u0[1];
+		cpus->ci_paddr = cpu0paddr;
+		/* The rest will be done at CPU attach time. */
+#ifdef BOOT1_DEBUG
+	prom_printf("Done inserting cpu_info into pmap_kernel()\r\n");
+#endif
 	}
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
@@ -1093,6 +1290,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		avail_end = mp->start+mp->size;
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
+#endif
+#ifdef BOOT1_DEBUG
+	prom_printf("Finished pmap_bootstrap()\r\n");
 #endif
 
 }
@@ -1128,62 +1328,25 @@ pmap_init()
 	if (va == 0)
 		panic("cpu_start: no memory");
 
-	pv_table = va;
+	pv_table = (struct pv_entry *)va;
 	m = TAILQ_FIRST(&mlist);
-	pa = VM_PAGE_TO_PHYS(m);
-	pte = TSB_DATA(0 /* global */,
-		pagesize,
-		pa,
-		1 /* priv */,
-		1 /* Write */,
-		1 /* Cacheable */,
-		1 /* ALIAS -- Disable D$ */,
-		1 /* valid */,
-		0 /* IE */);
 
 	/* Map the pages */
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		paddr_t newp;
 		u_int64_t data;
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_zero_page(pa);
-#ifdef NO_VCACHE
 		data = TSB_DATA(0 /* global */, 
 			TLB_8K,
 			pa,
 			1 /* priv */,
 			1 /* Write */,
 			1 /* Cacheable */,
-			1 /* ALIAS -- Disable D$ */,
+			FORCE_ALIAS /* ALIAS -- Disable D$ */,
 			1 /* valid */,
 			0 /* IE */);
-#else
-		data = TSB_DATA(0 /* global */, 
-			TLB_8K,
-			pa,
-			1 /* priv */,
-			1 /* Write */,
-			1 /* Cacheable */,
-			0 /* No ALIAS */,
-			1 /* valid */,
-			0 /* IE */);
-#endif
-		newp = NULL;
-		while (pseg_set(pmap_kernel(), va, data, newp)
-		    != NULL) {
-			pmap_get_page(&newp);
-			pmap_zero_page(newp);
-#ifdef DEBUG
-			enter_stats.ptpneeded ++;
-#endif
-#ifdef BOOT1_DEBUG
-			prom_printf(
-			    "pseg_set: pm=%p va=%p data=%lx newp %lx\r\n", 
-			    pmap_kernel(), va, (long)data, (long)newp);
-			{int i; for (i=0; i<140000000; i++) ;}
-#endif
-		}
+		pmap_enter_kpage(va, data);
 		va += NBPG;
 	}
 	pmap_initialized = 1;
@@ -1680,7 +1843,7 @@ pmap_kremove(va, size)
 		 * Is this part of the permanent 4MB mapping?
 		 */
 #ifdef DIAGNOSTIC
-		if( pm == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG )
+		if (pm == pmap_kernel() && (va >= ktext && va < kdata+4*MEG))
 			panic("pmap_kremove: va=%08x in locked TLB\r\n", va);
 #endif
 		/* Shouldn't need to do this if the entry's not valid. */
@@ -1766,7 +1929,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	 * Is this part of the permanent 4MB mapping?
 	 */
 #ifdef DIAGNOSTIC
-	if (pm == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG) {
+	if (pm == pmap_kernel() && va >= ktext && va < kdata+4*MEG) {
 		prom_printf("pmap_enter: va=%08x pa=%x:%08x in locked TLB\r\n", 
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
@@ -2084,7 +2247,7 @@ pmap_remove(pm, va, endva)
 		 * Is this part of the permanent 4MB mapping?
 		 */
 #ifdef DIAGNOSTIC
-		if( pm == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) 
+		if( pm == pmap_kernel() && va >= ktext && va < kdata+4*MEG ) 
 			panic("pmap_remove: va=%08x in locked TLB\r\n", va);
 #endif
 		/* We don't really need to do this if the valid bit is not set... */
@@ -2189,7 +2352,7 @@ pmap_protect(pm, sva, eva, prot)
 		/*
 		 * Is this part of the permanent 4MB mapping?
 		 */
-		if( pm == pmap_kernel() && sva >= ksegv && sva < ksegv+4*MEG ) {
+		if( pm == pmap_kernel() && sva >= ktext && sva < kdata+4*MEG ) {
 			prom_printf("pmap_protect: va=%08x in locked TLB\r\n", sva);
 			OF_enter();
 			return;
@@ -2251,9 +2414,17 @@ pmap_extract(pm, va, pap)
 {
 	paddr_t pa;
 
-	if( pm == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) {
+	if( pm == pmap_kernel() && va >= kdata && va < kdata+4*MEG ) {
 		/* Need to deal w/locked TLB entry specially. */
-		pa = (paddr_t) (ksegp - ksegv + va);
+		pa = (paddr_t) (kdata - kdata + va);
+#ifdef DEBUG
+		if (pmapdebug & PDB_EXTRACT) {
+			printf("pmap_extract: va=%x pa=%lx\n", va, (long)pa);
+		}
+#endif
+	} else if( pm == pmap_kernel() && va >= ktext && va < ektext ) {
+		/* Need to deal w/locked TLB entry specially. */
+		pa = (paddr_t) (ktextp - ktext + va);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			printf("pmap_extract: va=%x pa=%lx\n", va, (long)pa);
@@ -2356,7 +2527,7 @@ int size;
 		/*
 		 * Is this part of the permanent 4MB mapping?
 		 */
-		if( pm == pmap_kernel() && sva >= ksegv && sva < ksegv+4*MEG ) {
+		if( pm == pmap_kernel() && sva >= ktext && sva < kdata+4*MEG ) {
 			prom_printf("pmap_changeprot: va=%08x in locked TLB\r\n", sva);
 			OF_enter();
 			return;
@@ -2463,7 +2634,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpu->cputype = CPU_SUN4U;
 	kcpu->kernbase = KERNBASE;
-	kcpu->kphys = (paddr_t)ksegp;
+	kcpu->kphys = (paddr_t)ktextp;
 	kcpu->nmemseg = memsize;
 	kcpu->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
 	kcpu->nsegmap = STSZ;
@@ -2935,7 +3106,7 @@ pmap_unwire(pmap, va)
 	/*
 	 * Is this part of the permanent 4MB mapping?
 	 */
-	if( pmap == pmap_kernel() && va >= ksegv && va < ksegv+4*MEG ) {
+	if( pmap == pmap_kernel() && va >= ktext && va < kdata+4*MEG ) {
 		prom_printf("pmap_unwire: va=%08x in locked TLB\r\n", va);
 		OF_enter();
 		return;

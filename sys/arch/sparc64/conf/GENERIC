@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.34 2000/06/14 22:02:37 veego Exp $
+# 	$NetBSD: GENERIC,v 1.35 2000/06/19 23:30:32 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	32
 
@@ -83,7 +83,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+makeoptions 	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -93,7 +93,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
-#options 	DEBUG
+options 	DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -273,8 +273,8 @@ scsibus* at isp?
 #scsibus* at fas?
 
 ## GLM support missing
-#sym*	at pci?						# 53C875 "glm" compatible
-#scsibus* at sym?
+siop*	at pci?						# 53C875 "glm" compatible
+scsibus* at siop?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
