@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.54 2001/06/08 09:40:31 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.55 2001/06/08 16:25:04 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,6 +62,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <machine/ctlreg.h>
 #include <machine/pte.h>
@@ -927,11 +928,15 @@ smp_vcache_flush_page(va)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_page(va);
+	if (cold)
+		return;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_page *p = &cpi->msg.u.xpmsg_flush_page;
-		if (cpuinfo.mid == cpi->mid)
+		struct xpmsg_flush_page *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+		p = &cpi->msg.u.xpmsg_flush_page;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_PAGE;
@@ -949,11 +954,15 @@ smp_vcache_flush_segment(vr, vs)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_segment(vr, vs);
+	if (cold)
+		return;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_segment *p = &cpi->msg.u.xpmsg_flush_segment;
-		if (cpuinfo.mid == cpi->mid)
+		struct xpmsg_flush_segment *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+		p = &cpi->msg.u.xpmsg_flush_segment;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_SEGMENT;
@@ -972,11 +981,15 @@ smp_vcache_flush_region(vr)
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_region(vr);
+	if (cold)
+		return;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_region *p = &cpi->msg.u.xpmsg_flush_region;
-		if (cpuinfo.mid == cpi->mid)
+		struct xpmsg_flush_region *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+		p = &cpi->msg.u.xpmsg_flush_region;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_REGION;
@@ -993,11 +1006,15 @@ smp_vcache_flush_context()
 	int n, s;
 
 	cpuinfo.sp_vcache_flush_context();
+	if (cold)
+		return;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_context *p = &cpi->msg.u.xpmsg_flush_context;
-		if (cpuinfo.mid == cpi->mid)
+		struct xpmsg_flush_context *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+		p = &cpi->msg.u.xpmsg_flush_context;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_CONTEXT;
@@ -1015,11 +1032,15 @@ smp_cache_flush(va, size)
 	int n, s;
 
 	cpuinfo.sp_cache_flush(va, size);
+	if (cold)
+		return;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_range *p = &cpi->msg.u.xpmsg_flush_range;
-		if (cpuinfo.mid == cpi->mid)
+		struct xpmsg_flush_range *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+		p = &cpi->msg.u.xpmsg_flush_range;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_RANGE;
