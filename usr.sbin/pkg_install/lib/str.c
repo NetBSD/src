@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.14.2.6 2000/02/10 21:23:49 he Exp $	*/
+/*	$NetBSD: str.c,v 1.14.2.7 2000/07/31 18:19:17 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.14.2.6 2000/02/10 21:23:49 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.14.2.7 2000/07/31 18:19:17 he Exp $");
 #endif
 #endif
 
@@ -330,16 +330,40 @@ ispkgpattern(const char *pkg)
  * Also called for FTP matching
  */
 int
-findbestmatchingname_fn(const char *pkg, char *data)
+findbestmatchingname_fn(const char *found, char *best)
 {
-	char   *s1, *s2;
+	char *found_version, *best_version;
+	char *found_tgz, *best_tgz;
+	char found_no_tgz[255];
+	char best_no_tgz[255];
 
-	s1 = strrchr(pkg, '-') + 1;
-	s2 = strrchr(data, '-') + 1;
-
-	if (data[0] == '\0' || deweycmp(s1, GT, s2)) {
-		strcpy(data, pkg);
+	found_version = strrchr(found, '-') + 1;
+	found_tgz = strstr(found, ".tgz");
+	if (found_tgz) {
+		/* strip off any ".tgz" */
+		strncpy(found_no_tgz, found_version, found_tgz-found_version);
+		found_no_tgz[found_tgz-found_version] = '\0';
+		found_version = found_no_tgz;
 	}
+
+	best_version=NULL;
+	if (best && best[0] != '\0') {
+		best_version = strrchr(best, '-') + 1;
+		best_tgz = strstr(best, ".tgz");
+		if (best_tgz) {
+			/* strip off any ".tgz" */
+			strncpy(best_no_tgz, best_version, best_tgz-best_version);
+			best_no_tgz[best_tgz-best_version] = '\0';
+			best_version = best_no_tgz;
+		}
+	}
+
+	if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
+		/* found pkg(version) is bigger than current "best"
+		 * version - remember! */
+		strcpy(best, found);
+	}
+
 	return 0;
 }
 
