@@ -1,7 +1,7 @@
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.1.1.1 1996/09/21 23:35:15 jtc Exp $
+ * $Id: proto.h,v 1.1.1.2 1996/12/18 04:50:31 jtc Exp $
  */
 
 /* alloc.c */
@@ -163,6 +163,7 @@ void 	unwind		ARGS((int i)) GCC_FUNC_ATTR(noreturn);
 void 	newenv		ARGS((int type));
 void 	quitenv		ARGS((void));
 void	cleanup_parents_env ARGS((void));
+void	cleanup_proc_env ARGS((void));
 void 	aerror		ARGS((Area *ap, const char *msg))
 				GCC_FUNC_ATTR(noreturn);
 /* misc.c */

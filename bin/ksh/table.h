@@ -1,4 +1,4 @@
-/* $Id: table.h,v 1.1.1.1 1996/09/21 23:35:17 jtc Exp $ */
+/* $Id: table.h,v 1.1.1.2 1996/12/18 04:50:42 jtc Exp $ */
 
 /*
  * generic hashed associative table for commands and variables.
@@ -64,6 +64,11 @@ struct tbl {			/* table item */
 #define FKSH		BIT(11)	/* function defined with function x (vs x()) */
 #define SPEC_BI		BIT(12)	/* a POSIX special builtin */
 #define REG_BI		BIT(13)	/* a POSIX regular builtin */
+/* Attributes that can be set by the user (used to decide if an unset param
+ * should be repoted by set/typeset).  Does not include ARRAY or LOCAL.
+ */
+#define USERATTRIB	(EXPORT|INTEGER|RDONLY|LJUST|RJUST|ZEROFIL\
+			 |LCASEV|UCASEV_AL|INT_U|INT_L)
 
 /* command types */
 #define	CNONE	0		/* undefined */
