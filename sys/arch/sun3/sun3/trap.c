@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 1997/02/12 01:10:21 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 1997/02/18 15:37:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -84,6 +84,7 @@ void syscall __P((register_t code, struct trapframe));
 void trap __P((int type, u_int code, u_int v, struct trapframe));
 void trap_kdebug __P((int type, struct trapframe tf));
 int _nodb_trap __P((int type, struct trapframe *));
+void straytrap __P((struct trapframe));
 
 static void userret __P((struct proc *, struct trapframe *, u_quad_t));
 
@@ -143,6 +144,7 @@ int mmupid = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_CPFAULT 	8
+static int curtrap = -1;
 #endif
 
 /*
@@ -227,8 +229,19 @@ trap(type, code, v, tf)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = tf.tf_regs;
-	} else
+	} else {
 		sticks = 0;
+#ifdef	DEBUG
+		if (curtrap == -1)
+			curtrap = type;
+		else {
+			printf("trap %d recursion\n", curtrap);
+			/* Debugger may longjmp() */
+			curtrap = -1;
+			goto dopanic;
+		}
+#endif
+	}
 
 	switch (type) {
 	default:
@@ -281,7 +294,7 @@ trap(type, code, v, tf)
 		tf.tf_stackadj = exframesize[tf.tf_format];
 		tf.tf_format = tf.tf_vector = 0;
 		tf.tf_pc = (int) p->p_addr->u_pcb.pcb_onfault;
-		return;
+		goto done;
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
@@ -377,7 +390,7 @@ trap(type, code, v, tf)
 	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
 		tf.tf_sr &= ~PSL_T;
-		return;
+		goto done;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
@@ -482,7 +495,7 @@ trap(type, code, v, tf)
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
@@ -533,12 +546,17 @@ trap(type, code, v, tf)
 finish:
 	/* If trap was from supervisor mode, just return. */
 	if ((type & T_USER) == 0)
-		return;
+		goto done;
 	/* Post a signal if necessary. */
 	if (sig != 0)
 		trapsignal(p, sig, ucode);
 douret:
 	userret(p, &tf, sticks);
+
+done:
+#ifdef	DEBUG
+	curtrap = -1;
+#endif
 }
 
 /*
@@ -757,6 +775,34 @@ trap_kdebug(type, tf)
 	int type;
 	struct trapframe tf;
 {
+
+#ifdef	KGDB
+	/* Let KGDB handle it (if connected) */
+	if (kgdb_trap(type, &tf))
+		return;
+#endif
+#ifdef	DDB
+	/* Let DDB handle it. */
+	if (kdb_trap(type, &tf))
+		return;
+#endif
+
+	/* Drop into the PROM temporarily... */
+	(void)_nodb_trap(type, &tf);
+}
+
+/*
+ * Called by locore.s for an unexpected interrupt.
+ * XXX - Almost identical to trap_kdebug...
+ */
+void
+straytrap(tf)
+	struct trapframe tf;
+{
+	int type = -1;
+
+	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
+		tf.tf_vector, tf.tf_pc);
 
 #ifdef	KGDB
 	/* Let KGDB handle it (if connected) */
