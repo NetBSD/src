@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.7 2000/11/15 02:32:30 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.8 2000/11/16 13:15:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.7 2000/11/15 02:32:30 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.8 2000/11/16 13:15:13 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -602,7 +602,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 			 * since we only need this info in such a case.
 			 */
 	pdir = fe->pdirstat;
-	if (pdir == NULL && curclass.modify) {
+	if (pdir == NULL && CURCLASS_FLAGS_ISSET(modify)) {
 		size_t		len;
 		char		realdir[MAXPATHLEN], *p;
 		struct stat	dir;
@@ -636,15 +636,15 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 	}
 
 			/* 'a': can APPE to file */
-	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(upload) && S_ISREG(fe->stat->st_mode))
 		CPUTC('a', fd);
 
 			/* 'c': can create or append to files in directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('c', fd);
 
 			/* 'd': can delete file or directory */
-	if (pdirwok && curclass.modify) {
+	if (pdirwok && CURCLASS_FLAGS_ISSET(modify)) {
 		int candel;
 
 		candel = 1;
@@ -674,7 +674,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('e', fd);
 
 			/* 'f': can rename file or directory */
-	if (pdirwok && curclass.modify)
+	if (pdirwok && CURCLASS_FLAGS_ISSET(modify))
 		CPUTC('f', fd);
 
 			/* 'l': can list directory */
@@ -682,11 +682,11 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('l', fd);
 
 			/* 'm': can create directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('m', fd);
 
 			/* 'p': can remove files in directory */
-	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(modify) && S_ISDIR(fe->stat->st_mode))
 		CPUTC('p', fd);
 
 			/* 'r': can RETR file */
@@ -694,7 +694,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		CPUTC('r', fd);
 
 			/* 'w': can STOR file */
-	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
+	if (wok && CURCLASS_FLAGS_ISSET(upload) && S_ISREG(fe->stat->st_mode))
 		CPUTC('w', fd);
 
 	CPUTC(';', fd);
