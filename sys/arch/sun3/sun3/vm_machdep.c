@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1997/03/17 19:03:24 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 1997/04/04 20:49:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -214,6 +214,8 @@ cpu_swapout(p)
 
 /*
  * Do any additional state-restoration after swapin.
+ * The pcb will be at the same KVA, but it may now
+ * reside in different physical pages.
  */
 void
 cpu_swapin(p)
