@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.13 2000/05/12 19:12:31 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.14 2000/05/13 09:22:47 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -323,3 +323,7 @@ libexec/ftpd/ftpd.c				patch
 usr.sbin/chown/chown.c				1.21
 
   Deal with user names with `.' in them.  Fixes PR#10043.
+
+sys/netinet/fil.c				1.32
+
+  Fix bug in dealing with large offsets inside very small options.
