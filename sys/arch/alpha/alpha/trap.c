@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.44 1999/04/20 21:16:59 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.45 1999/04/23 05:43:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 1999/04/20 21:16:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 1999/04/23 05:43:02 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,8 @@ syscall(code, framep)
 	case EJUSTRETURN:
 		break;
 	default:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
