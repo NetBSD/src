@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.36 2002/10/21 03:58:08 enami Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.37 2003/03/22 11:15:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.36 2002/10/21 03:58:08 enami Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.37 2003/03/22 11:15:52 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.36 2002/10/21 03:58:08 enami Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 #define	ALTF_BG		0x1
 #define ALTF_CONN	0x2
