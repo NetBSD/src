@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50.2.3 2001/06/17 22:27:20 he Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.50.2.4 2002/04/03 22:11:20 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -206,6 +206,8 @@ linux_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)psp->ps_sigcode;
@@ -282,7 +284,8 @@ linux_sys_sigreturn(p, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
