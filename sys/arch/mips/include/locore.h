@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.6 1997/06/16 06:17:25 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.7 1997/06/16 09:50:26 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -67,6 +67,7 @@ extern void mips3_FlushCache  __P((void));
 extern void mips3_FlushDCache __P((vm_offset_t addr, vm_offset_t len));
 extern void mips3_FlushICache __P((vm_offset_t addr, vm_offset_t len));
 extern void mips3_ForceCacheUpdate __P((void));
+extern void mips3_HitFlushDCache __P((vm_offset_t, int));
 extern void mips3_SetPID  __P((int pid));
 extern void mips3_TLBFlush __P((void));
 extern void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
@@ -77,6 +78,10 @@ extern void mips3_TLBWriteIndexed __P((u_int index, u_int high,
 					   u_int lo0, u_int lo1));
 extern void mips3_wbflush __P((void));
 extern void mips3_proc_trampoline __P((void));
+
+extern void MachHitFlushDCache __P((caddr_t, int));
+extern void mips3_SetWIRED __P((int));
+
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent
@@ -124,6 +129,28 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBWriteIndexed	(*(mips_locore_jumpvec.tlbWriteIndexed))
 #define wbflush			(*(mips_locore_jumpvec.wbflush))
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
+
+
+/*
+ * CPU identification, from PRID register.
+ */
+union cpuprid {
+	int	cpuprid;
+	struct {
+#if BYTE_ORDER == BIG_ENDIAN
+		u_int	pad1:16;	/* reserved */
+		u_int	cp_imp:8;	/* implementation identifier */
+		u_int	cp_majrev:4;	/* major revision identifier */
+		u_int	cp_minrev:4;	/* minor revision identifier */
+#else
+		u_int	cp_minrev:4;	/* minor revision identifier */
+		u_int	cp_majrev:4;	/* major revision identifier */
+		u_int	cp_imp:8;	/* implementation identifier */
+		u_int	pad1:16;	/* reserved */
+#endif
+	} cpu;
+};
+
 
 #ifdef _KERNEL
 
