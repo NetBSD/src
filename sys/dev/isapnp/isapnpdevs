@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.9 1998/11/12 14:06:34 drochner Exp $
+$NetBSD: isapnpdevs,v 1.10 1998/11/23 20:47:51 christos Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ $NetBSD: isapnpdevs,v 1.9 1998/11/12 14:06:34 drochner Exp $
 /*
  * List of known drivers
  */
+driver	aha	Adaptec SCSI
 driver	aic	Adaptec SCSI
 driver	com	National Semiconductor Serial
 driver	ep	3Com 3CXXX Ethernet
@@ -52,6 +53,11 @@ driver	sb	Creative Soundblaster
 driver	wdc	Western Digital Disk Controller
 driver	wss	Microsoft Sound System
 driver	ym	Yamaha Sound
+
+/*
+ * aha
+ */
+devlogic	aha	ADP1542		Adaptec AHA-1542
 
 /*
  * aic
