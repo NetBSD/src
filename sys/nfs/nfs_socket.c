@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.57 2000/06/09 00:00:17 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.57.2.1 2000/12/14 23:37:35 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -440,15 +440,29 @@ nfs_send(so, nam, top, rep)
 		(struct mbuf *)0, flags);
 	if (error) {
 		if (rep) {
-			log(LOG_INFO, "nfs send error %d for server %s\n",error,
-			    rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
-			/*
-			 * Deal with errors for the client side.
-			 */
-			if (rep->r_flags & R_SOFTTERM)
-				error = EINTR;
-			else
+			if (error == ENOBUFS && so->so_type == SOCK_DGRAM) {
+				/*
+				 * We're too fast for the network/driver,
+				 * and UDP isn't flowcontrolled.
+				 * We need to resend. This is not fatal,
+				 * just try again.
+				 *
+				 * Could be smarter here by doing some sort
+				 * of a backoff, but this is rare.
+				 */
 				rep->r_flags |= R_MUSTRESEND;
+			} else {
+				log(LOG_INFO, "nfs send error %d for %s\n",
+				    error,
+				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
+				/*
+				 * Deal with errors for the client side.
+				 */
+				if (rep->r_flags & R_SOFTTERM)
+					error = EINTR;
+				else
+					rep->r_flags |= R_MUSTRESEND;
+			}
 		} else
 			log(LOG_INFO, "nfsd send error %d\n", error);
 
