@@ -4,9 +4,8 @@ CFLAGS+= 	-I${.CURDIR}/../keycap -DKEYB_DEVICE=\"${DEVICE}\"
 
 NOMAN=	yes
 
-# the -Lfoo could be omitted if libkeycap.a were installed before
-# making those programs here
+KEYCAPOBJDIR!=	cd ${.CURDIR}/../keycap; make print-objdir
 
-LDADD =       -L${.CURDIR}/../keycap -L${.CURDIR}/../keycap/obj -lkeycap
+LDADD=		-L${KEYCAPOBJDIR} -lkeycap
 
 .include <bsd.prog.mk>
