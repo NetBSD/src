@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 1997/03/20 12:00:43 matthias Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 1998/09/02 19:17:14 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -93,7 +93,7 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]) - 1;
 /*
  * Stack trace.
  */
-#define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 struct ns532_frame {
 	struct ns532_frame	*f_frame;
@@ -246,8 +246,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	boolean_t	trace_thread = FALSE;
 
 	{
-		register char *cp = modif;
-		register char c;
+		char *cp = modif;
+		char c;
 
 		while ((c = *cp++) != 0) {
 			if (c == 't')
