@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.11 2003/05/08 21:18:42 martin Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.12 2004/07/22 19:14:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.11 2003/05/08 21:18:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.12 2004/07/22 19:14:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -205,7 +205,7 @@ eqs1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
  *	isic_attach_Eqs1pp - attach for ELSA QuickStep 1000pro/PCI
  *---------------------------------------------------------------------------*/
 
-void
+int
 isic_attach_Eqs1pp(psc, pa)
 	struct pci_isic_softc *psc;
 	struct pci_attach_args *pa;
@@ -221,7 +221,7 @@ isic_attach_Eqs1pp(psc, pa)
 	   && pci_mapreg_map(pa, ELSA_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
 		printf("%s: can't map card registers\n", sc->sc_dev.dv_xname);
-		return;
+		return (0);
 	}
 
 	/* PLX9050 Errata #1 */
@@ -236,7 +236,7 @@ isic_attach_Eqs1pp(psc, pa)
 	if (pci_mapreg_map(pa, ELSA_PORT1_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[1].t, &sc->sc_maps[1].h, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
+		return (0);
 	}
 
 	/* setup access routines */
@@ -272,6 +272,8 @@ isic_attach_Eqs1pp(psc, pa)
 	/* disable any interrupts */
 	IPAC_WRITE(IPAC_MASK, 0xff);
         bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
+
+	return (1);
 }
 
 int
