@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.82 2000/12/29 21:07:16 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83 2001/01/05 15:31:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ linux_sys_fstatfs(p, v, retval)
 }
 
 char linux_sysname[] = "Linux";
-char linux_release[] = "2.2.5";
+char linux_release[] = "2.0.38";
 char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
 
 /*
