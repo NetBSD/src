@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.10 2003/02/10 11:38:31 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.11 2003/02/11 17:25:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/lock.h>
 
 #include <machine/adrsmap.h>
 #include <machine/cpu.h>
