@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.4 2001/07/17 20:18:39 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.5 2001/07/17 20:22:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,10 @@ pthread__start(void)
 {
 	pthread_t first, idle;
 	int i, ret;
+
+#ifdef PTHREAD__DEBUG
+	pthread__debug_init();
+#endif
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
