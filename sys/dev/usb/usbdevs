@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.202 2001/11/25 17:17:22 augustss Exp $
+$NetBSD: usbdevs,v 1.203 2001/11/29 13:58:22 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -642,7 +642,10 @@ product INSYSTEM F5U002		0x0002	Parallel printer adapter
 product INSYSTEM ATAPI		0x0031	ATAPI adapter
 product INSYSTEM ISD110		0x0200	IDE adapter ISD110
 product INSYSTEM ISD105		0x0202	IDE adapter ISD105
+product INSYSTEM DRIVEV2	0x0301	Portable USB Harddrive V2
+product INSYSTEM DRIVEV2_5	0x0351	Portable USB Harddrive V2
 product INSYSTEM USBCABLE	0x081a	USB cable
+product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 
 /* Intel products */
 product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
