@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.89 1998/02/06 07:21:48 mrg Exp $
+#	$NetBSD: Makefile.i386,v 1.90 1998/04/12 23:47:43 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -42,10 +42,14 @@ S!=	cd ../../../..; pwd
 .endif
 I386=	$S/arch/i386
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Di386
-CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F0100000 -e start

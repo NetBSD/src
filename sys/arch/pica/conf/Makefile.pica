@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.19 1998/03/03 07:38:40 thorpej Exp $
+#	$NetBSD: Makefile.pica,v 1.20 1998/04/12 23:47:44 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -44,10 +44,14 @@ S=	../../../..
 PICA=	$S/arch/pica
 MIPS=	$S/arch/mips
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dpica -D__NetBSD__ ${GP}
-CWARNFLAGS=	-Wall -Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS?=	-Wall -Wmissing-prototypes -Wstrict-prototypes
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
