@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
+.\"	$NetBSD: disk.9,v 1.3 1996/06/19 22:53:54 pk Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Ft void
 .Fn disk_attach "struct disk *"
 .Ft void
-.Fn disk_detatch "struct disk *"
+.Fn disk_detach "struct disk *"
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
@@ -119,7 +119,7 @@ Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
 timestamp, insert the disk into the disklist, and intrement the
 system disk count.
-.It Fn disk_detatch
+.It Fn disk_detach
 Detatch a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.  If the count
 drops below zero, panic.
@@ -144,7 +144,7 @@ or NULL if the disk does not exist.
 .Pp
 The functions typically called by device drivers are
 .Fn disk_attach ,
-.Fn disk_detatch ,
+.Fn disk_detach ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
 and
