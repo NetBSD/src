@@ -1,4 +1,4 @@
-/*	$NetBSD: dptivar.h,v 1.2 2001/09/27 18:43:37 ad Exp $	*/
+/*	$NetBSD: dptivar.h,v 1.2.18.1 2002/12/12 23:35:05 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@ struct dpti_ptbuf {
 /*
  * Constants used by the `signature'.
  */
+ 
+/* I2O */
 #define	DPTI_VERSION		1
 #define	DPTI_REVISION		0
 #define	DPTI_SUBREVISION	0
@@ -92,6 +94,15 @@ struct dpti_ptbuf {
 #define	DPTI_YEAR		1
 #define	DPTI_MONTH		9
 #define	DPTI_DAY		12
+
+/* EATA */
+#define	DPT_VERSION		1
+#define	DPT_REVISION		0
+#define	DPT_SUBREVISION		0
+
+#define	DPT_YEAR		1
+#define	DPT_MONTH		9
+#define	DPT_DAY			12
 
 /*
  * ioctls.  We define only the lower 16 bits, since the DPT utilities don't
@@ -133,6 +144,29 @@ struct dpt_ctlrinfo {
 #define	FLG_OSD_PCI_VALID 0x0001
 #define	FLG_OSD_DMA       0x0002
 #define	FLG_OSD_I2O       0x0004
+
+struct dpt_eata_ctlrinfo {
+	u_int8_t	state;
+	u_int8_t	id;
+	int		vect;
+	int		base;
+	int		njobs;
+	int		qdepth;
+	int		wakebase;
+	u_long		sgsize;
+	u_int		heads;
+	u_int		sectors;
+	u_int8_t	do_drive32;
+	u_int8_t	busquiet;
+	u_int8_t	idpal[4];
+	u_int8_t	primary;
+	u_int8_t	eataVersion;
+	u_long		cpLength;
+	u_long		spLength;
+	u_int8_t	drqNum;
+	u_int8_t	flag1;
+	u_int8_t	flag2;
+};
 
 struct dpt_targetbusy {
 	u_long		channel;
