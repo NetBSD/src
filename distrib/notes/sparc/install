@@ -23,7 +23,7 @@ available during the installation process.
 Loading the miniroot onto your raw partition is simple. On NetBSD as well
 as SunOS you use a command like:
 
-	# dd if=miniroot-RELEASE.fs of=/dev/rsd0b bs=20b conv=sync
+	# dd if=miniroot-_VER.fs of=/dev/rsd0b bs=20b conv=sync
 
 (here `/dev/rsd0b' is assumed to be your swap partition). There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
@@ -292,13 +292,13 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-device /sbus/esp/sd@0,0
 
 
-Congratulations, you have successfully installed NetBSD RELEASE.  When you
+Congratulations, you have successfully installed NetBSD _VER.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD RELEASE distribution might need to be
+Some of the files in the NetBSD _VER distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
