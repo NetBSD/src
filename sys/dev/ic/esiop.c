@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.26 2004/03/15 22:43:43 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.27 2004/03/16 19:10:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.26 2004/03/15 22:43:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.27 2004/03/16 19:10:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1788,8 +1788,8 @@ esiop_timeout(v)
 	bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
 	printf("istat 0x%x\n", bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT));
 #else
-	printf("command timeout, CBD: ");
-	scsipi_print_cbd(esiop_cmd->cmd_c.xs->cmd);
+	printf("command timeout, CDB: ");
+	scsipi_print_cdb(esiop_cmd->cmd_c.xs->cmd);
 	printf("\n");
 #endif
 	/* reset the scsi bus */
