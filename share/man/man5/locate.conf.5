@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.1 2004/02/07 04:48:31 itohy Exp $
+.\"	$NetBSD: locate.conf.5,v 1.2 2004/02/07 09:49:28 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ The
 .Nm
 file contains a list of newline separated records,
 each of which is composed of a keyword and arguments,
-which are separated by white spaces.
+which are separated by white space.
 Lines beginning with
 .Dq #
 are treated as comments and ignored.
@@ -67,26 +67,26 @@ The configuration options are as follows:
 Ignore files or directories.
 On building database,
 do not descend into files or directories
-which match to one of the specified patterns.
+which match one of the specified patterns.
 The matched files or directories are not stored to the database.
 .Pp
-default: Not specified.
+Default: Not specified.
 .It Sy ignorecontents Ar pattern ...
 Ignore contents of directories.
 On building database,
 do not descend into files or directories
-which match to one of the specified patterns.
+which match one of the specified patterns.
 The matched files or directories themselves are stored to the database.
 .Pp
-default: Not specified.
+Default: Not specified.
 .It Sy ignorefs Ar type ...
 Ignore filesystem by type.
 On building database,
 do not descend into filesystems which have one of the specified
 .Ar type .
 The mount points are not stored to the database.
-If an
-.Dq !
+If a
+.Dq \&!
 is prepended to
 .Ar type ,
 the meaning is negated,
@@ -97,18 +97,18 @@ is specified for
 .Ar type ,
 the default rule is disabled and all filesystems are traversed.
 .Pp
-default: !local cd9660 fdesc kernfs procfs
+Default: !local cd9660 fdesc kernfs procfs
 .It Sy searchpath Ar directory ...
 Specify base directories to be put in the database.
 .Pp
-default: /
+Default: /
 .It Sy workdir Ar directory
 Specify the working directory of locate.updatedb,
 in which a temporary file is placed.
 The temporary file is a list of all files,
 and you should specify a directory that has enough space to hold it.
 .Pp
-default: /tmp
+Default: /tmp
 .El
 .Pp
 Refer to
@@ -131,7 +131,7 @@ The file
 resides in
 .Pa /etc .
 .It Pa /usr/libexec/locate.updatedb
-uses settings in
+Uses settings in
 .Nm locate.conf .
 .El
 .Sh SEE ALSO
