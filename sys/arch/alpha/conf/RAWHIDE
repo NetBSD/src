@@ -1,11 +1,11 @@
-# $NetBSD: RAWHIDE,v 1.8 2000/03/22 00:58:17 cgd Exp $
+# $NetBSD: RAWHIDE,v 1.9 2000/05/23 02:04:30 thorpej Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
 include	"arch/alpha/conf/std.alpha"
 maxusers	64
 #makeoptions	DEBUG="-g"
-options 	DEC_KN300	# KN300:	AlphaServer 4100
+options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 options 	KTRACE		# System call tracing support
 options 	DEBUG		# Expensive debugging checks/support
 options 	KMEMSTATS	# Collect kmem usage statistics

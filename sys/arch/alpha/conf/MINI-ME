@@ -1,4 +1,4 @@
-# $NetBSD: MINI-ME,v 1.1 2000/05/22 16:38:25 thorpej Exp $
+# $NetBSD: MINI-ME,v 1.2 2000/05/23 02:04:30 thorpej Exp $
 #
 # mini-me.shagadelic.org - thorpej's Multia
 #
@@ -19,7 +19,7 @@ options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 #options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 #options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 #options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
-#options 	DEC_KN300	# KN300:	AlphaServer 4100
+#options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 #options 	DEC_550		# Miata:	Digital Personal Workstation
 
 # Standard system options
