@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.12 2000/02/02 16:58:10 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.13 2000/02/02 17:54:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1380,18 +1380,15 @@ in6_purgemkludge(ifp)
 	struct ifnet *ifp;
 {
 	struct multi6_kludge *mk;
-	struct in6_multi *in6m, *next;
+	struct in6_multi *in6m;
 
 	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
 		if (mk->mk_ifp != ifp)
 			continue;
 
-		for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
-			next = in6m->in6m_entry.le_next;
-			LIST_REMOVE(in6m, in6m_entry);
+		/* leave from all multicast groups joined */
+		while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL)
 			in6_delmulti(in6m);
-			in6m = NULL;
-		}
 		LIST_REMOVE(mk, mk_entry);
 		free(mk, M_IPMADDR);
 		break;
