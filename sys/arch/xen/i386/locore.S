@@ -1,5 +1,5 @@
-/*	$NetBSD: locore.S,v 1.6.4.3 2004/12/17 14:38:39 bouyer Exp $	*/
-/*	$NetBSD: locore.S,v 1.6.4.3 2004/12/17 14:38:39 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.6.4.4 2004/12/17 15:44:23 bouyer Exp $	*/
+/*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
