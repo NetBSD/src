@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.17 2001/04/24 07:29:31 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.18 2001/04/25 08:49:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2401,6 +2401,7 @@ printf("<<RESELECT CONT'd>>");
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
 				callout_stop(&ecb->xs->xs_callout);
+				ncr53c9x_dequeue(sc, ecb);
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
 				ecb->flags |= ECB_READY;
 				ecb = sc->sc_nexus = NULL;
