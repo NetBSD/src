@@ -39,16 +39,15 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: rsh.c,v 1.2 1993/08/01 18:09:05 mycroft Exp $";
+static char rcsid[] = "$Id: rsh.c,v 1.3 1995/06/27 00:31:00 jtc Exp $";
 #endif /* not lint */
 
 /*
  * $Source: /cvsroot/src/usr.bin/rsh/rsh.c,v $
- * $Header: /cvsroot/src/usr.bin/rsh/rsh.c,v 1.2 1993/08/01 18:09:05 mycroft Exp $
+ * $Header: /cvsroot/src/usr.bin/rsh/rsh.c,v 1.3 1995/06/27 00:31:00 jtc Exp $
  */
 
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -57,6 +56,7 @@ static char rcsid[] = "$Id: rsh.c,v 1.2 1993/08/01 18:09:05 mycroft Exp $";
 #include <netdb.h>
 
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
