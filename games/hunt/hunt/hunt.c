@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.7 1998/08/30 09:19:37 veego Exp $	*/
+/*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.7 1998/08/30 09:19:37 veego Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
@@ -87,7 +87,7 @@ extern int	cur_row, cur_col;
 void	dump_scores __P((SOCKET));
 long	env_init __P((long));
 void	fill_in_blanks __P((void));
-void	leave __P((int, char *));
+void	leave __P((int, char *)) __attribute__((__noreturn__));
 int	main __P((int, char *[]));
 # ifdef INTERNET
 SOCKET *list_drivers __P((void));

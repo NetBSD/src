@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.9 1997/10/12 02:18:25 lukem Exp $	*/
+/*	$NetBSD: worms.c,v 1.10 1998/09/13 15:27:31 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.9 1997/10/12 02:18:25 lukem Exp $");
+__RCSID("$NetBSD: worms.c,v 1.10 1998/09/13 15:27:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,8 +185,8 @@ static struct	worm {
 
 void	 fputchar __P((int));
 int	 main __P((int, char **));
-void	 nomem __P((void));
-void	 onsig __P((int));
+void	 nomem __P((void)) __attribute__((__noreturn__));
+void	 onsig __P((int)) __attribute__((__noreturn__));
 int	 tgetent __P((char *, char *));
 int	 tgetflag __P((char *));
 int	 tgetnum __P((char *));

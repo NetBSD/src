@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.12 1997/09/20 14:28:18 lukem Exp $	*/
+/*	$NetBSD: quiz.c,v 1.13 1998/09/13 15:27:29 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.12 1997/09/20 14:28:18 lukem Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.13 1998/09/13 15:27:29 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ char	*next_cat __P((char *));
 void	 quiz __P((void));
 void	 score __P((u_int, u_int, u_int));
 void	 show_index __P((void));
-void	 usage __P((void));
+void	 usage __P((void)) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1998/07/25 10:52:14 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -367,8 +367,8 @@ int boarding __P((struct ship *, int));
 void unboard __P((struct ship *, struct ship *, int));
 
 /* pl_1.c */
-void leave __P((int));
-void choke __P((int));
+void leave __P((int)) __attribute__((__noreturn__));
+void choke __P((int)) __attribute__((__noreturn__));
 void child __P((int));
 
 /* pl_2.c */

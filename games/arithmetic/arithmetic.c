@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.10 1998/02/03 05:33:32 perry Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.11 1998/09/13 15:27:25 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.10 1998/02/03 05:33:32 perry Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.11 1998/09/13 15:27:25 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,13 +89,13 @@ __RCSID("$NetBSD: arithmetic.c,v 1.10 1998/02/03 05:33:32 perry Exp $");
 #include <unistd.h>
 
 int	getrandom __P((int, int, int));
-void	intr __P((int));
+void	intr __P((int)) __attribute__((__noreturn__));
 int	main __P((int, char *[]));
 int	opnum __P((int));
 void	penalise __P((int, int, int));
 int	problem __P((void));
 void	showstats __P((void));
-void	usage __P((void));
+void	usage __P((void)) __attribute__((__noreturn__));
 
 char keylist[] = "+-x/";
 char defaultkeys[] = "+-";

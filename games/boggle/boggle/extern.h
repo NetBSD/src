@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/04/24 12:22:37 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/09/13 15:27:26 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -69,5 +69,5 @@ void	 starttime __P((void));
 void	 startwords __P((void));
 void	 stoptime __P((void));
 int	 timerch __P((void));
-void	 usage __P((void));
+void	 usage __P((void)) __attribute__((__noreturn__));
 int	 validword __P((char *));

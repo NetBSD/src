@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.7 1997/10/12 01:04:55 lukem Exp $	*/
+/*	$NetBSD: primes.c,v 1.8 1998/09/13 15:27:29 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.7 1997/10/12 01:04:55 lukem Exp $");
+__RCSID("$NetBSD: primes.c,v 1.8 1998/09/13 15:27:29 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ extern int pattern_size;	/* length of pattern array */
 int	main __P((int, char *[]));
 void	primes __P((ubig, ubig));
 ubig	read_num_buf __P((void));
-void	usage __P((void));
+void	usage __P((void)) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

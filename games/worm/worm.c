@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.8 1997/10/12 02:12:48 lukem Exp $	*/
+/*	$NetBSD: worm.c,v 1.9 1998/09/13 15:27:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.8 1997/10/12 02:12:48 lukem Exp $");
+__RCSID("$NetBSD: worm.c,v 1.9 1998/09/13 15:27:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,10 +82,10 @@ int start_len = LENGTH;
 char lastch;
 char outbuf[BUFSIZ];
 
-void	crash __P((void));
+void	crash __P((void)) __attribute__((__noreturn__));
 void	display __P((struct body *, char));
 int	main __P((int, char **));
-void	leave __P((int));
+void	leave __P((int)) __attribute__((__noreturn__));
 void	life __P((void));
 void	newpos __P((struct body *));
 void	process __P((char));

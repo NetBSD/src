@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.h,v 1.4 1997/10/10 08:59:55 lukem Exp $	*/
+/*	$NetBSD: tutor.h,v 1.5 1998/09/13 15:27:26 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,5 +68,5 @@ extern	struct situatn	test[];
 
 int	brdeq __P((int *, int *));
 void	clrest __P((void));
-void	leave __P((void));
-void	tutor __P((void));
+void	leave __P((void)) __attribute__((__noreturn__));
+void	tutor __P((void)) __attribute__((__noreturn__));
