@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 1999/12/23 14:38:10 abs Exp $
+# $NetBSD: mi,v 1.138 1999/12/24 09:12:55 agc Exp $
 .
 ./altroot
 ./bin
@@ -554,6 +554,7 @@
 ./usr/sbin/group
 ./usr/sbin/groupadd
 ./usr/sbin/groupdel
+./usr/sbin/groupinfo
 ./usr/sbin/groupmod
 ./usr/sbin/hlfsd
 ./usr/sbin/ifmcstat
@@ -673,6 +674,7 @@
 ./usr/sbin/user
 ./usr/sbin/useradd
 ./usr/sbin/userdel
+./usr/sbin/userinfo
 ./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
