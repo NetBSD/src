@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.210 2004/10/01 01:08:01 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.211 2004/10/03 10:17:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.210 2004/10/01 01:08:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.211 2004/10/03 10:17:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2673,6 +2673,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			tlen = reclen - DIRHDSIZ;
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if (reclen > left) {
+				memset(uiop->uio_iov->iov_base, 0, left);
 				dp->d_reclen += left;
 				uiop->uio_iov->iov_base =
 				    (caddr_t)uiop->uio_iov->iov_base + left;
@@ -2697,9 +2698,10 @@ nfs_readdirrpc(vp, uiop, cred)
 				    (caddr_t)uiop->uio_iov->iov_base + DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
-				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
-				*cp = '\0';	/* null terminate */
+				/* null terminate */
+				KDASSERT(tlen > 0);
+				memset(uiop->uio_iov->iov_base, 0, tlen);
 				uiop->uio_iov->iov_base =
 				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
@@ -2755,6 +2757,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	 */
 	if (blksiz > 0) {
 		left = NFS_DIRFRAGSIZ - blksiz;
+		memset(uiop->uio_iov->iov_base, 0, left);
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
 		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
@@ -2867,6 +2870,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				 * DIRFRAGSIZ is aligned, no need to align
 				 * again here.
 				 */
+				memset(uiop->uio_iov->iov_base, 0, left);
 				dp->d_reclen += left;
 				uiop->uio_iov->iov_base =
 				    (caddr_t)uiop->uio_iov->iov_base + left;
@@ -2894,9 +2898,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				cnp->cn_nameptr = uiop->uio_iov->iov_base;
 				cnp->cn_namelen = len;
 				nfsm_mtouio(uiop, len);
-				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
-				*cp = '\0';
+				/* null terminate */
+				KDASSERT(tlen > 0);
+				memset(uiop->uio_iov->iov_base, 0, tlen);
 				uiop->uio_iov->iov_base =
 				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
@@ -2989,6 +2994,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	 */
 	if (blksiz > 0) {
 		left = NFS_DIRFRAGSIZ - blksiz;
+		memset(uiop->uio_iov->iov_base, 0, left);
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
 		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
