@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.34 1995/07/24 18:04:21 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.35 1995/07/27 04:39:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,16 +60,26 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
+#include "isa.h"
+#include "pci.h"
+
+#if NISA > 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/isa_machdep.h>
 #include <dev/isa/isadmavar.h>
+#include <i386/isa/isa_machdep.h>
+#endif
+
+#if NPCI > 0
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#endif
+
 #include <dev/isa/if_levar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
-char *card_type[] = {"unknown", "BICC Isolan", "NE2100", "DEPCA"};
-char *chip_type[] = {"unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
+char *card_type[] = {"unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA", "PCnet-PCI"};
 
 #define	LE_SOFTC(unit)	lecd.cd_devs[unit]
 #define	LE_DELAY(x)	delay(x)
@@ -115,49 +125,34 @@ leprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct le_softc *sc = match;
-	struct isa_attach_args *ia = aux;
+	extern struct cfdriver isacd, pcicd;
 
-	if (bicc_probe(sc, ia))
-		goto found;
-	if (ne2100_probe(sc, ia))
-		goto found;
-	if (depca_probe(sc, ia))
-		goto found;
-	return (0);
+#if NISA > 0
+	if (parent->dv_cfdata->cf_driver == &isacd) {
+		struct isa_attach_args *ia = aux;
 
-found:
-	if (sc->sc_card == DEPCA) {
-		u_char *mem, val;
-		int i;
-
-		mem = sc->sc_mem = ISA_HOLE_VADDR(ia->ia_maddr);
-
-		val = 0xff;
-		for (;;) {
-			for (i = 0; i < ia->ia_msize; i++)
-				mem[i] = val;
-			for (i = 0; i < ia->ia_msize; i++)
-				if (mem[i] != val) {
-					printf("%s: failed to clear memory\n",
-					    sc->sc_dev.dv_xname);
-					return (0);
-				}
-			if (val == 0x00)
-				break;
-			val -= 0x55;
-		}
-	} else {
-		sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
-		if (!sc->sc_mem) {
-			printf("%s: couldn't allocate memory for card\n",
-			    sc->sc_dev.dv_xname);
-			return (0);
-		}
+		if (bicc_probe(sc, ia))
+			return (1);
+		if (ne2100_probe(sc, ia))
+			return (1);
+		if (depca_probe(sc, ia))
+			return (1);
 	}
+#endif
 
-	return (1);
+#if NPCI > 0
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = aux;
+
+		if (pa->pa_id == 0x20001022)
+			return (1);
+	}
+#endif
+
+	return (0);
 }
 
+#if NISA > 0
 int
 depca_probe(sc, ia)
 	struct le_softc *sc;
@@ -172,7 +167,7 @@ depca_probe(sc, ia)
 	sc->sc_rdp = iobase + DEPCA_RDP;
 	sc->sc_card = DEPCA;
 
-	if ((sc->sc_chip = lance_probe(sc)) == 0)
+	if (lance_probe(sc) == 0)
 		return 0;
 
 	outb(iobase + DEPCA_CSR, DEPCA_CSR_DUM);
@@ -251,7 +246,7 @@ ne2100_probe(sc, ia)
 	sc->sc_rdp = iobase + NE2100_RDP;
 	sc->sc_card = NE2100;
 
-	if ((sc->sc_chip = lance_probe(sc)) == 0)
+	if (lance_probe(sc) == 0)
 		return 0;
 
 	/*
@@ -276,7 +271,7 @@ bicc_probe(sc, ia)
 	sc->sc_rdp = iobase + BICC_RDP;
 	sc->sc_card = BICC;
 
-	if ((sc->sc_chip = lance_probe(sc)) == 0)
+	if (lance_probe(sc) == 0)
 		return 0;
 
 	/*
@@ -296,7 +291,6 @@ int
 lance_probe(sc)
 	struct le_softc *sc;
 {
-	int type;
 
 	/* Stop the LANCE chip and put it in a known state. */
 	lewrcsr(sc, LE_CSR0, LE_C0_STOP);
@@ -305,26 +299,10 @@ lance_probe(sc)
 	if (lerdcsr(sc, LE_CSR0) != LE_C0_STOP)
 		return 0;
 
-	/*
-	 * The PCnet-ISA chip doesn't allow some bits to be set.
-	 */
-	lewrcsr(sc, LE_CSR3, PROBE_MASK);
-
-	switch (lerdcsr(sc, LE_CSR3) & PROBE_MASK) {
-	case LANCE_MASK:
-		type = LANCE;
-		break;
-	case PCnet_ISA_MASK:
-		type = PCnet_ISA;
-		break;
-	default:
-		type = 0;
-		break;
-	}
-
 	lewrcsr(sc, LE_CSR3, sc->sc_conf3);
-	return type;
+	return 1;
 }
+#endif
 
 void
 leattach(parent, self, aux)
@@ -332,7 +310,72 @@ leattach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	extern struct cfdriver isacd, pcicd;
+
+#if NPCI > 0
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = aux;
+		int iobase;
+
+		if (pa->pa_id == 0x20001022) {
+			int i;
+
+			if (pci_map_io(pa->pa_tag, 0x10, &iobase))
+				return;
+
+			sc->sc_rap = iobase + NE2100_RAP;
+			sc->sc_rdp = iobase + NE2100_RDP;
+			sc->sc_card = PCnet_PCI;
+
+			/*
+			 * Extract the physical MAC address from the ROM.
+			 */
+			for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
+				sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
+		}
+	}
+#endif
+
+#if NISA > 0
+	if (sc->sc_card == DEPCA) {
+		struct isa_attach_args *ia = aux;
+		u_char *mem, val;
+		int i;
+
+		mem = sc->sc_mem = ISA_HOLE_VADDR(ia->ia_maddr);
+
+		val = 0xff;
+		for (;;) {
+			for (i = 0; i < ia->ia_msize; i++)
+				mem[i] = val;
+			for (i = 0; i < ia->ia_msize; i++)
+				if (mem[i] != val) {
+					printf("%s: failed to clear memory\n",
+					    sc->sc_dev.dv_xname);
+					return;
+				}
+			if (val == 0x00)
+				break;
+			val -= 0x55;
+		}
+
+		sc->sc_conf3 = LE_C3_ACON;
+		sc->sc_addr = 0;
+		sc->sc_memsize = ia->ia_msize;
+	} else
+#endif
+	{
+		sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
+		if (sc->sc_mem == 0) {
+			printf("%s: couldn't allocate memory for card\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		sc->sc_conf3 = 0;
+		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_memsize = 16384;
+	}
 
 	sc->sc_copytodesc = copytobuf_contig;
 	sc->sc_copyfromdesc = copyfrombuf_contig;
@@ -340,30 +383,37 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
 
-	if (sc->sc_card == DEPCA) {
-		sc->sc_conf3 = LE_C3_ACON;
-		sc->sc_addr = 0;
-		sc->sc_memsize = ia->ia_msize;
-	} else {
-		sc->sc_conf3 = 0;
-		sc->sc_addr = kvtop(sc->sc_mem);
-		sc->sc_memsize = 16384;
-	}
-
 	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
 	leconfig(sc);
 
-	printf("%s: type %s %s\n",
-	    sc->sc_dev.dv_xname,
-	    card_type[sc->sc_card], chip_type[sc->sc_chip]);
+	printf("%s: type %s\n", sc->sc_dev.dv_xname, card_type[sc->sc_card]);
 
-	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_drq);
+#if NISA > 0
+	if (parent->dv_cfdata->cf_driver == &isacd) {
+		struct isa_attach_args *ia = aux;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    leintredge, sc);
+		if (ia->ia_drq != DRQUNK)
+			isa_dmacascade(ia->ia_drq);
+
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+		    ISA_IPL_NET, leintredge, sc);
+	}
+#endif
+
+#if NPCI > 0
+	if (parent->dv_cfdata->cf_driver == &pcicd) {
+		struct pci_attach_args *pa = aux;
+
+		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    pci_conf_read(pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+		    PCI_COMMAND_MASTER_ENABLE);
+
+		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, leintr, sc);
+	}
+#endif
 }
 
+#if NISA > 0
 /*
  * Controller interrupt.
  */
@@ -377,6 +427,7 @@ leintredge(arg)
 		if (leintr(arg) == 0)
 			return (1);
 }
+#endif
 
 /*
  * Routines for accessing the transmit and receive buffers.
