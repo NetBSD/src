@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1999/07/14 16:41:31 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.16 1999/07/14 16:47:37 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -270,6 +270,8 @@ md_make_bsd_partitions()
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart;
+		if (partsize > remain)
+		    partsize = remain;
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
@@ -280,20 +282,22 @@ md_make_bsd_partitions()
 		
 		/* /usr */
 		remain = fsdsize - partstart;
-		partsize = fsdsize - partstart;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsusr, isize, isize, 20,
-			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		if (remain - partsize < sizemult)
-			partsize = remain;
-		bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
-		bsdlabel[PART_USR].pi_offset = partstart;
-		bsdlabel[PART_USR].pi_size = partsize;
-		bsdlabel[PART_USR].pi_bsize = 8192;
-		bsdlabel[PART_USR].pi_fsize = 1024;
-		strcpy (fsmount[PART_USR], "/usr");
-		partstart += partsize;
+		if (remain >= dlcylsize) {
+			partsize = fsdsize - partstart;
+			snprintf (isize, 20, "%d", partsize/sizemult);
+			msg_prompt_add (MSG_askfsusr, isize, isize, 20,
+				    remain/sizemult, multname);
+			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			if (remain - partsize < sizemult)
+				partsize = remain;
+			bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
+			bsdlabel[PART_USR].pi_offset = partstart;
+			bsdlabel[PART_USR].pi_size = partsize;
+			bsdlabel[PART_USR].pi_bsize = 8192;
+			bsdlabel[PART_USR].pi_fsize = 1024;
+			strcpy (fsmount[PART_USR], "/usr");
+			partstart += partsize;
+		}
 
 		/* Others ... */
 		remain = fsdsize - partstart;
@@ -360,7 +364,25 @@ md_update()
 }
 
 void
-md_cleanup_install()
+md_cleanup_install(void)
 {
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+	char sedcmd[STRSIZE];
 
+	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
+	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
+	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
+	    realfrom, realto);
+	if (logging)
+		(void)fprintf(log, "%s\n", sedcmd);
+	if (scripting)
+		(void)fprintf(script, "%s\n", sedcmd);
+	do_system(sedcmd);
+
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 }
