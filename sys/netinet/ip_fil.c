@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.47 2000/03/30 13:24:57 augustss Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.48 2000/04/16 20:58:53 chs Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.47 2000/03/30 13:24:57 augustss Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.48 2000/04/16 20:58:53 chs Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -1035,7 +1035,6 @@ struct in_addr dst;
 	bcopy((char *)oip, (char *)&icmp->icmp_ip, sizeof(*oip));
 	bcopy((char *)oip + (oip->ip_hl << 2),
 	      (char *)&icmp->icmp_ip + sizeof(*oip), 8);	/* 64 bits */
-# ifndef	sparc
 	{
 	u_short	__iplen, __ipoff;
 	ip_t *ip = &icmp->icmp_ip;
@@ -1045,7 +1044,6 @@ struct in_addr dst;
 	ip->ip_len = htons(__iplen);
 	ip->ip_off = htons(__ipoff);
 	}
-# endif
 	icmp->icmp_cksum = ipf_cksum((u_short *)icmp, sizeof(*icmp) + 8);
 	return send_ip(m, nip);
 }
@@ -1174,13 +1172,11 @@ frdest_t *fdp;
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
-# ifndef sparc
 #  ifndef __NetBSD__
 		ip->ip_id = htons(ip->ip_id);
 #  endif
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
-# endif
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # if	BSD >= 199306
@@ -1262,9 +1258,7 @@ frdest_t *fdp;
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = NULL;
 # endif
-# ifndef sparc
 		mhip->ip_off = htons((u_short)mhip->ip_off);
-# endif
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
