@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.41 2001/05/08 10:15:15 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.42 2001/05/24 07:22:28 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.84 2001/02/07 07:38:25 itojun Exp $	*/
 
 /*
@@ -521,8 +521,11 @@ udp6_ctlinput(cmd, sa, d)
 		 */
 
 		/* check if we can safely examine src and dst ports */
-		if (m->m_pkthdr.len < off + sizeof(*uhp))
+		if (m->m_pkthdr.len < off + sizeof(*uhp)) {
+			if (cmd == PRC_MSGSIZE)
+				icmp6_mtudisc_update((struct ip6ctlparam *)d, 0);
 			return;
+		}
 
 		bzero(&uh, sizeof(uh));
 		m_copydata(m, off, sizeof(*uhp), (caddr_t)&uh);
