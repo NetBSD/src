@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.18 2001/03/28 21:16:48 christos Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.19 2001/03/28 22:13:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.18 2001/03/28 21:16:48 christos Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.19 2001/03/28 22:13:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,7 +153,7 @@ typedef char Char;
 
 
 static int	 compare __P((const void *, const void *));
-static void	 g_Ctoc __P((const Char *, char *));
+static int	 g_Ctoc __P((const Char *, char *, size_t));
 static int	 g_lstat __P((Char *, struct STAT *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((const Char *, int));
@@ -164,7 +164,7 @@ static int	 glob2 __P((Char *, Char *, Char *, glob_t *, size_t *));
 static int	 glob3 __P((Char *, Char *, Char *, Char *, glob_t *,
     size_t *));
 static int	 globextend __P((const Char *, glob_t *, size_t *));
-static const Char *	 globtilde __P((const Char *, Char *, glob_t *));
+static const Char *	 globtilde __P((const Char *, Char *, size_t, glob_t *));
 static int	 globexp1 __P((const Char *, glob_t *));
 static int	 globexp2 __P((const Char *, const Char *, glob_t *, int *));
 static int	 match __P((Char *, Char *, Char *));
@@ -367,9 +367,10 @@ globexp2(ptr, pattern, pglob, rv)
  * expand tilde from the passwd file.
  */
 static const Char *
-globtilde(pattern, patbuf, pglob)
+globtilde(pattern, patbuf, patsize, pglob)
 	const Char *pattern;
 	Char *patbuf;
+	size_t patsize;
 	glob_t *pglob;
 {
 	struct passwd *pwd;
@@ -377,6 +378,9 @@ globtilde(pattern, patbuf, pglob)
 	const Char *p;
 	Char *b;
 	char *d;
+	Char *pend = &patbuf[patsize];
+
+	pend--;
 
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(patbuf != NULL);
@@ -386,9 +390,13 @@ globtilde(pattern, patbuf, pglob)
 		return pattern;
 
 	/* Copy up to the end of the string or / */
-	for (p = pattern + 1, d = (char *)(void *)patbuf; *p && *p != SLASH; 
+	for (p = pattern + 1, d = (char *)(void *)patbuf; 
+	     d < (char *)(void *)pend && *p && *p != SLASH; 
 	     *d++ = *p++)
 		continue;
+
+	if (d == (char *)(void *)pend)
+		return NULL;
 
 	*d = EOS;
 	d = (char *)(void *)patbuf;
@@ -416,12 +424,18 @@ globtilde(pattern, patbuf, pglob)
 	}
 
 	/* Copy the home directory */
-	for (b = patbuf; *h; *b++ = *h++)
+	for (b = patbuf; b < pend && *h; *b++ = *h++)
 		continue;
+
+	if (b == pend)
+		return NULL;
 	
 	/* Append the rest of the pattern */
-	while ((*b++ = *p++) != EOS)
+	while (b < pend && (*b++ = *p++) != EOS)
 		continue;
+
+	if (b == pend)
+		return NULL;
 
 	return patbuf;
 }
@@ -447,7 +461,8 @@ glob0(pattern, pglob)
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(pglob != NULL);
 
-	qpatnext = globtilde(pattern, patbuf, pglob);
+	if ((qpatnext = globtilde(pattern, patbuf, sizeof(patbuf), pglob)) == NULL)
+		return GLOB_ABEND;
 	oldpathc = pglob->gl_pathc;
 	bufnext = patbuf;
 
@@ -653,7 +668,8 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {
-			g_Ctoc(pathbuf, buf);
+			if (g_Ctoc(pathbuf, buf, sizeof(buf)))
+				return (GLOB_ABORTED);
 			if (pglob->gl_errfunc(buf, errno) ||
 			    pglob->gl_flags & GLOB_ERR)
 				return (GLOB_ABORTED);
@@ -743,7 +759,10 @@ globextend(path, pglob, limit)
 	len = (size_t)(p - path);
 	*limit += len;
 	if ((copy = malloc(len)) != NULL) {
-		g_Ctoc(path, copy);
+		if (g_Ctoc(path, copy, len)) {
+			free(copy);
+			return(GLOB_ABORTED);
+		}
 		pathv[pglob->gl_offs + pglob->gl_pathc++] = copy;
 	}
 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
@@ -781,8 +800,7 @@ match(name, pat, patend)
 			do 
 			    if (match(name, pat, patend))
 				    return(1);
-			while (*name++ != EOS)
-				continue;
+			while (*name++ != EOS);
 			return(0);
 		case M_ONE:
 			if (*name++ == EOS)
@@ -844,9 +862,11 @@ g_opendir(str, pglob)
 	_DIAGASSERT(pglob != NULL);
 
 	if (!*str)
-		strcpy(buf, ".");
-	else
-		g_Ctoc(str, buf);
+		(void)strcpy(buf, ".");
+	else {
+		if (g_Ctoc(str, buf, sizeof(buf)))
+			return NULL;
+	}
 
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_opendir)(buf));
@@ -866,7 +886,8 @@ g_lstat(fn, sb, pglob)
 	_DIAGASSERT(sb != NULL);
 	_DIAGASSERT(pglob != NULL);
 
-	g_Ctoc(fn, buf);
+	if (g_Ctoc(fn, buf, sizeof(buf)))
+		return -1;
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_lstat)(buf, sb));
 	return(lstat(buf, sb));
@@ -884,7 +905,8 @@ g_stat(fn, sb, pglob)
 	_DIAGASSERT(sb != NULL);
 	_DIAGASSERT(pglob != NULL);
 
-	g_Ctoc(fn, buf);
+	if (g_Ctoc(fn, buf, sizeof(buf)))
+		return -1;
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_stat)(buf, sb));
 	return(stat(buf, sb));
@@ -906,18 +928,24 @@ g_strchr(str, ch)
 	return NULL;
 }
 
-static void
-g_Ctoc(str, buf)
+static int
+g_Ctoc(str, buf, len)
 	const Char *str;
 	char *buf;
+	size_t len;
 {
 	char *dc;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(buf != NULL);
 
-	for (dc = buf; (*dc++ = *str++) != EOS;)
+	if (len == 0)
+		return 1;
+
+	for (dc = buf; len && (*dc++ = *str++) != EOS; len--)
 		continue;
+
+	return len == 0;
 }
 
 #ifdef DEBUG
