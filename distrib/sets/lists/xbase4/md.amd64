@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.4 2003/12/28 15:45:58 lukem Exp $
+# $NetBSD: md.amd64,v 1.5 2005/03/18 20:45:42 tron Exp $
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
@@ -40,7 +40,7 @@
 ./usr/X11R6/lib/X11/etc/xmodmap.std
 ./usr/X11R6/lib/libXxf86dga.so
 ./usr/X11R6/lib/libXxf86dga.so.1
-./usr/X11R6/lib/libXxf86dga.so.1.0
+./usr/X11R6/lib/libXxf86dga.so.1.1
 ./usr/X11R6/man/cat1/XFree86.0
 ./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/gtf.0
