@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.43 2000/08/22 17:31:32 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.44 2000/08/22 19:47:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ TAILQ_HEAD(, lock) spinlock_list =
 #define	HAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = splhigh();					\
+		int s = spllock();					\
 		SPINLOCK_LIST_LOCK();					\
 		/* XXX Cast away volatile. */				\
 		TAILQ_INSERT_TAIL(&spinlock_list, (struct lock *)(lkp),	\
@@ -254,7 +254,7 @@ do {									\
 #define	DONTHAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int s = splhigh();					\
+		int s = spllock();					\
 		SPINLOCK_LIST_LOCK();					\
 		/* XXX Cast away volatile. */				\
 		TAILQ_REMOVE(&spinlock_list, (struct lock *)(lkp),	\
@@ -336,7 +336,7 @@ spinlock_switchcheck(void)
 	u_long cnt;
 	int s;
 
-	s = splhigh();
+	s = spllock();
 #if defined(MULTIPROCESSOR)
 	cnt = curcpu()->ci_spin_locks;
 #else
@@ -349,6 +349,35 @@ spinlock_switchcheck(void)
 		    (u_long) cpu_number(), cnt);
 }
 #endif /* LOCKDEBUG || DIAGNOSTIC */
+
+/*
+ * Locks and IPLs (interrupt priority levels):
+ *
+ * Locks which may be taken from interrupt context must be handled
+ * very carefully; you must spl to the highest IPL where the lock
+ * is needed before acquiring the lock.
+ *
+ * It is also important to avoid deadlock, since certain (very high
+ * priority) interrupts are often needed to keep the system as a whole
+ * from deadlocking, and must not be blocked while you are spinning
+ * waiting for a lower-priority lock.
+ *
+ * In addition, the lock-debugging hooks themselves need to use locks!
+ *
+ * A raw __cpu_simple_lock may be used from interrupts are long as it
+ * is acquired and held at a single IPL.
+ *
+ * A simple_lock (which is a __cpu_simple_lock wrapped with some
+ * debugging hooks) may be used at or below spllock(), which is
+ * typically at or just below splhigh() (i.e. blocks everything
+ * but certain machine-dependent extremely high priority interrupts).
+ *
+ * spinlockmgr spinlocks should be used at or below splsched().
+ *
+ * Some platforms may have interrupts of higher priority than splsched(),
+ * including hard serial interrupts, inter-processor interrupts, and
+ * kernel debugger traps.
+ */
 
 /*
  * XXX XXX kludge around another kludge..
@@ -811,7 +840,7 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 	cpuid_t cpu_id = cpu_number();
 	int s;
 
-	s = splhigh();
+	s = spllock();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
@@ -860,7 +889,7 @@ _simple_lock_held(__volatile struct simplelock *alp)
 	cpuid_t cpu_id = cpu_number();
 	int s, locked = 0;
 
-	s = splhigh();
+	s = spllock();
 
 #if defined(MULTIPROCESSOR)
 	if (__cpu_simple_lock_try(&alp->lock_data) == 0)
@@ -885,7 +914,7 @@ _simple_lock_try(__volatile struct simplelock *alp, const char *id, int l)
 	cpuid_t cpu_id = cpu_number();
 	int s, rv = 0;
 
-	s = splhigh();
+	s = spllock();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
@@ -933,7 +962,7 @@ _simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
 {
 	int s;
 
-	s = splhigh();
+	s = spllock();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' because we think we hold
@@ -977,7 +1006,7 @@ simple_lock_dump(void)
 	struct simplelock *alp;
 	int s;
 
-	s = splhigh();
+	s = spllock();
 	SLOCK_LIST_LOCK();
 	lock_printf("all simple locks:\n");
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
@@ -995,7 +1024,7 @@ simple_lock_freecheck(void *start, void *end)
 	struct simplelock *alp;
 	int s;
 
-	s = splhigh();
+	s = spllock();
 	SLOCK_LIST_LOCK();
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
@@ -1023,7 +1052,7 @@ simple_lock_switchcheck(void)
 
 	SCHED_ASSERT_LOCKED();
 
-	s = splhigh();		/* XXX spllock */
+	s = spllock();
 	SLOCK_LIST_LOCK();
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
