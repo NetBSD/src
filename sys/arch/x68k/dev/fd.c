@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 1998/08/22 14:38:37 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.24 1999/02/08 16:33:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1479,6 +1479,7 @@ fdioctl(dev, cmd, addr, flag, p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int unit = FDUNIT(dev);
+	int part = DISKPART(dev);
 	struct disklabel buffer;
 	int error;
 
@@ -1505,7 +1506,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &fd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
+		    &fd->sc_dk.dk_label->d_partitions[part];
 		return(0);
 
 	case DIOCWLABEL:
@@ -1532,6 +1533,19 @@ fdioctl(dev, cmd, addr, flag, p)
 		return 0; /* XXX */
 
 	case DIOCEJECT:
+		if (*(int *)addr == 0) {
+			/*
+			 * Don't force eject: check that we are the only
+			 * partition open. If so, unlock it.
+			 */
+			if ((fd->sc_dk.dk_openmask & ~(1 << part)) != 0 ||
+			    fd->sc_dk.dk_bopenmask + fd->sc_dk.dk_copenmask !=
+			    fd->sc_dk.dk_openmask) {
+				return (EBUSY);
+			}
+		}
+		/* FALLTHROUGH */
+	case ODIOCEJECT:
 		fd_do_eject(unit);
 		return 0;
 
