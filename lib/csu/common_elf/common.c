@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.11 2000/07/03 23:01:01 matt Exp $ */
+/* $NetBSD: common.c,v 1.11.2.1 2004/05/28 09:01:24 tron Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -74,13 +74,4 @@ _rtld_setup(cleanup, obj)
 	atexit(cleanup);
 }
 
-#ifdef __weak_alias
-__weak_alias(dlopen,_dlopen);
-__weak_alias(dlclose,_dlclose);
-__weak_alias(dlsym,_dlsym);
-__weak_alias(dlerror,_dlerror);
-__weak_alias(dladdr,_dladdr);
-#endif
-
-#include <dlfcn_stubs.c>
 #endif /* DYNAMIC */
