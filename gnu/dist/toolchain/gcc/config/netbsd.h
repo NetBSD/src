@@ -29,8 +29,8 @@
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
 
-#undef MD_STARTFILE_PREFIX
-#define MD_STARTFILE_PREFIX		"/usr/lib/"
+#undef STANDARD_STARTFILE_PREFIX
+#define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
 
 #endif
 

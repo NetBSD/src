@@ -3057,6 +3057,7 @@ process_command (argc, argv)
      (such as cpp) rather than those of the host system.  */
   /* Use 2 as fourth arg meaning try just the machine as a suffix,
      as well as trying the machine and the version.  */
+#ifndef NETBSD_NATIVE
 #ifndef OS2
   add_prefix (&exec_prefixes, standard_exec_prefix, "BINUTILS",
 	      0, 2, warn_std_ptr);
@@ -3108,6 +3109,7 @@ process_command (argc, argv)
   add_prefix (&startfile_prefixes,
 	      concat (tooldir_prefix, "lib", dir_separator_str, NULL_PTR),
 	      "BINUTILS", 0, 0, NULL_PTR);
+#endif
 
   /* More prefixes are enabled in main, after we read the specs file
      and determine whether this is cross-compilation or not.  */
@@ -4796,9 +4798,11 @@ main (argc, argv)
 
   /* Read specs from a file if there is one.  */
 
+#ifndef NETBSD_NATIVE
   machine_suffix = concat (spec_machine, dir_separator_str,
 			   spec_version, dir_separator_str, NULL_PTR);
   just_machine_suffix = concat (spec_machine, dir_separator_str, NULL_PTR);
+#endif
 
   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK);
   /* Read the specs file unless it is a default one.  */
@@ -4807,6 +4811,7 @@ main (argc, argv)
   else
     init_spec ();
 
+#ifndef NETBSD_NATIVE
   /* We need to check standard_exec_prefix/just_machine_suffix/specs
      for any override of as, ld and libraries. */
   specs_file = (char *) alloca (strlen (standard_exec_prefix)
@@ -4818,13 +4823,16 @@ main (argc, argv)
   strcat (specs_file, "specs");
   if (access (specs_file, R_OK) == 0)
     read_specs (specs_file, TRUE);
+#endif
  
   /* If not cross-compiling, look for startfiles in the standard places.  */
   if (*cross_compile == '0')
     {
 #ifdef MD_EXEC_PREFIX
       add_prefix (&exec_prefixes, md_exec_prefix, "GCC", 0, 0, NULL_PTR);
+#ifndef NETBSD_NATIVE
       add_prefix (&startfile_prefixes, md_exec_prefix, "GCC", 0, 0, NULL_PTR);
+#endif
 #endif
 
 #ifdef MD_STARTFILE_PREFIX
@@ -4865,10 +4873,12 @@ main (argc, argv)
 		      NULL_PTR, 0, 0, NULL_PTR);
 	}		       
 
+#ifndef NETBSD_NATIVE
       add_prefix (&startfile_prefixes, standard_startfile_prefix_1,
 		  "BINUTILS", 0, 0, NULL_PTR);
       add_prefix (&startfile_prefixes, standard_startfile_prefix_2,
 		  "BINUTILS", 0, 0, NULL_PTR);
+#endif
 #if 0 /* Can cause surprises, and one can use -B./ instead.  */
       add_prefix (&startfile_prefixes, "./", NULL_PTR, 0, 1, NULL_PTR);
 #endif
@@ -4923,7 +4933,9 @@ main (argc, argv)
 
   if (print_search_dirs)
     {
+#ifndef NETBSD_NATIVE
       printf ("install: %s%s\n", standard_exec_prefix, machine_suffix);
+#endif
       printf ("programs: %s\n", build_search_list (&exec_prefixes, "", 0));
       printf ("libraries: %s\n", build_search_list (&startfile_prefixes, "", 0));
       exit (0);
