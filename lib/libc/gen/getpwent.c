@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.26 1998/06/08 03:18:00 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.27 1998/06/27 05:08:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.26 1998/06/08 03:18:00 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.27 1998/06/27 05:08:22 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: getpwent.c,v 1.26 1998/06/08 03:18:00 lukem Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 #endif
+
+#include "pw_private.h"
 
 #ifdef __weak_alias
 __weak_alias(endpwent,_endpwent);
@@ -294,7 +296,7 @@ __ypparse(pw, s)
 	flags = _PASSWORD_NOWARN;
 	if (maptype != YPMAP_MASTER)
 		flags |= _PASSWORD_OLDFMT;
-	if (! pw_scan(s, pw, &flags))
+	if (! __pw_scan(s, pw, &flags))
 		return 1;
 
 	/* now let the prototype override, if set. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.1 1998/06/08 03:18:00 lukem Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.2 1998/06/27 05:08:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.1 1998/06/08 03:18:00 lukem Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.2 1998/06/27 05:08:23 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,8 +48,16 @@ __RCSID("$NetBSD: pw_scan.c,v 1.1 1998/06/08 03:18:00 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#ifndef __LIBUTIL_BUILD
+#include "pw_private.h"
+#endif
+
 int
+#ifdef __LIBUTIL_BUILD
 pw_scan(bp, pw, flags)
+#else
+__pw_scan(bp, pw, flags)
+#endif
 	char *bp;
 	struct passwd *pw;
 	int *flags;
