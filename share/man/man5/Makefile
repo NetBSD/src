@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2000/07/06 11:23:10 ad Exp $
+#	$NetBSD: Makefile,v 1.34 2000/08/03 09:49:09 ad Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5 
@@ -13,8 +13,6 @@ MAN=	a.out.5 acct.5 ar.5 core.5 daily.conf.5 dir.5 disktab.5 ethers.5 fs.5 \
 	ttyaction.5 types.5 utmp.5 weekly.conf.5
 MLINKS=	dir.5 dirent.5 fs.5 inode.5 hosts.equiv.5 rhosts.5
 MLINKS+=utmp.5 wtmp.5 utmp.5 lastlog.5 passwd.5 master.passwd.5
-
-SUBDIR=	man5.i386
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
