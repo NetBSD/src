@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.8 1998/06/20 21:52:50 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.9 1999/01/10 00:28:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.8 1998/06/20 21:52:50 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.9 1999/01/10 00:28:21 augustss Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -337,7 +337,7 @@ wsemul_sun_output_haveesc(edp, c)
 
 	switch (c) {
 	case '[':		/* continuation of multi-char sequence */
-		bzero(edp->args, sizeof (edp->args));
+		memset(edp->args, 0, sizeof (edp->args));
 		newstate = SUN_EMUL_STATE_CONTROL;
 		break;
 
