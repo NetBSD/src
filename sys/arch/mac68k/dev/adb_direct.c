@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.31 1999/11/07 05:50:26 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.32 1999/11/07 06:15:09 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1562,7 +1562,7 @@ int
 send_adb_iop(int cmd, u_char * buffer, void *compRout, void *data)
 {
 	u_char	buff[32];
-	int	i, cnt;
+	int	cnt;
 
 	if (adbActionState != ADB_ACTION_RUNNING)
 		return -1;
@@ -2087,21 +2087,21 @@ void
 adb_reinit(void)
 {
 	u_char send_string[ADB_MAX_MSG_LENGTH];
-	int s = 0;
+	ADBDataBlock data;	/* temp. holder for getting device info */
 	volatile int i, x;
+	int s;
 	int command;
 	int result;
 	int saveptr;		/* point to next free relocation address */
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
-	ADBDataBlock data;	/* temp. holder for getting device info */
-
-	(void)(&s);		/* work around lame GCC bug */
 
 	/* Make sure we are not interrupted while building the table. */
 	/* ints must be on for PB & IOP (at least, for now) */
 	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
 		s = splhigh();
+	else
+		s = 0;		/* XXX shut the compiler up*/
 
 	ADBNumDevices = 0;	/* no devices yet */
 
