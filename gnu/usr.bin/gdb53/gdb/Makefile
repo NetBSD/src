@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/09/26 17:51:18 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2003/10/25 18:24:23 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -35,8 +35,8 @@ SRCS+=		${G_TUI_OBJS:.o=.c}
 CPPFLAGS+=	-DUSE_TUI
 .endif
 
-LDADD=		-lcurses -ltermcap -lintl -lm -lkvm
-DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD=		-lcurses -lintl -lm -lkvm
+DPADD=		${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 
 .if ${SRCS:Mnbsd-thread.c} != ""
 LDADD+=                -lpthread_dbg
@@ -75,7 +75,14 @@ LIBEDIT= -L${LIBREADLINEDIR} -lreadline
 LDADD+= -L${LIBOPCODESDIR} -lopcodes\
 	-L${LIBBFDDIR} -lbfd \
 	${LIBEDIT} \
+	-ltermcap \
 	-L${LIBIBERTYDIR} -liberty \
+
+DPADD+= ${LIBOPCODESDIR}/libopcodes.a \
+	${LIBBFDDIR}/libbfd.a \
+	${LIBEDIT} \
+	${LIBTERMCAP} \
+	${LIBIBERTYDIR}/libiberty.a \
 
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
