@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.1.2.2 2002/08/29 05:22:22 gehenna Exp $	*/
+/*	$NetBSD: bthci.c,v 1.1.2.3 2002/08/29 12:30:07 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,8 +61,6 @@ int bthcidebug = 0;
 #define Static static
 #endif
 
-cdev_decl(bthci);
-
 int bthci_match(struct device *parent, struct cfdata *match, void *aux);
 void bthci_attach(struct device *parent, struct device *self, void *aux);
 int bthci_activate(struct device *self, enum devact act);
@@ -82,6 +80,15 @@ struct cfattach bthci_ca = {
 
 extern struct cfattach bthci_ca;
 extern struct cfdriver bthci_cd;
+
+dev_type_open(bthciopen);
+dev_type_close(bthciclose);
+dev_type_poll(bthcipoll);
+
+const struct cdevsw bthci_cdevsw = {
+	bthciopen, bthciclose, noread, nowrite, noioctl,
+	nostop, notty, bthcipoll, nommap,
+};
 
 #define IRFRAMEUNIT(dev) (minor(dev))
 
@@ -138,9 +145,7 @@ bthci_detach(struct device *self, int flags)
 	/* XXX needs reference count */
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == bthciopen)
-			break;
+	maj = cdevsw_lookup(&bthciopen);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
