@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.210 2002/07/17 14:31:47 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.211 2002/09/07 18:51:05 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5829,7 +5829,7 @@ pmap_kremove4_4c(va, len)
 		}
 	}
 	simple_unlock(&pm->pm_lock);
-	setcontext(ctx);
+	setcontext4(ctx);
 	splx(s);
 }
 
@@ -6293,7 +6293,7 @@ pmap_kremove4m(va, len)
 		sp->sg_npte = nleft;
 	}
 	simple_unlock(&pm->pm_lock);
-	setcontext(ctx);
+	setcontext4m(ctx);
 }
 
 #endif /* SUN4M || SUN4D */
