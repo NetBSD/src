@@ -1,16 +1,15 @@
-#       $NetBSD: Makefile,v 1.5 2002/02/23 22:02:08 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.6 2002/02/24 09:57:18 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	1200k
-USE_SYSINST=	yes
 
 WARNS=		1
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 IMAGEDEPENDS+=	${CRUNCHBIN} dot.profile termcap.mini \
@@ -21,9 +20,6 @@ IMAGEDEPENDS+=	${CRUNCHBIN} dot.profile termcap.mini \
 
 MAKEDEVTARGETS+=std md0
 
-.if defined(USE_SYSINST)
-LISTS+=		${DISTRIBDIR}/common/list.sysinst
-.endif
 
 realall: ${IMAGE}
 
