@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.7 2001/06/23 19:37:42 itojun Exp $
+#	$NetBSD: sshd_config,v 1.8 2001/08/31 08:16:24 cjs Exp $
 #	$OpenBSD: sshd_config,v 1.41 2001/06/22 21:55:50 markus Exp $
 
 # This is the sshd server system-wide configuration file.  See sshd(8)
@@ -27,7 +27,7 @@ LogLevel INFO
 # Authentication:
 
 LoginGraceTime 600
-PermitRootLogin yes
+PermitRootLogin no
 StrictModes yes
 
 RSAAuthentication yes
