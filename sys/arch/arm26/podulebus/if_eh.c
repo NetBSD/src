@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.12 2001/02/12 18:49:03 thorpej Exp $ */
+/* $NetBSD: if_eh.c,v 1.13 2001/02/13 18:20:57 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.12 2001/02/12 18:49:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.13 2001/02/13 18:20:57 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -777,7 +777,7 @@ eh_identifymau(struct eh_softc *sc)
 }
 
 void
-eh_init_media(struct dp8390_softc *dsc)
+eh_media_init(struct dp8390_softc *dsc)
 {
 	struct eh_softc *sc = (struct eh_softc *) dsc;
 	int i;
