@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.80 2002/09/26 20:35:56 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.81 2002/09/26 20:42:10 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -164,7 +164,7 @@ _rtld_init(mapbase, relocbase)
 #endif
 
 #ifdef __vax__
-	_rtld_relocate_nonplt_objects(&_rtld_objself, true);
+	_rtld_relocate_nonplt_objects(&_rtld_objself);
 #endif
 
 	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
@@ -413,7 +413,7 @@ _rtld(sp, relocbase)
 		_rtld_objlist_add(&_rtld_list_main, obj);
 
 	dbg(("relocating objects"));
-	if (_rtld_relocate_objects(_rtld_objmain, bind_now, false) == -1)
+	if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)
 		_rtld_die();
 
 	dbg(("doing copy relocations"));
@@ -626,7 +626,7 @@ _rtld_dlopen(name, mode)
 			if (_rtld_load_needed_objects(obj, mode) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW), false)) == -1) {
+			    ((mode & 3) == RTLD_NOW))) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;

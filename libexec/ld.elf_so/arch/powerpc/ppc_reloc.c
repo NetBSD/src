@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.30 2002/09/26 03:25:29 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.31 2002/09/26 20:42:11 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -113,14 +113,10 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self)
+_rtld_relocate_nonplt_objects(obj)
 	const Obj_Entry *obj;
-	bool self;
 {
 	const Elf_Rela *rela;
-
-	if (self)
-		return 0;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;

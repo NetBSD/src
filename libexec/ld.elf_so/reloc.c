@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.73 2002/09/25 07:27:49 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.74 2002/09/26 20:42:10 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -148,10 +148,9 @@ _rtld_do_copy_relocations(dstobj)
  * or -1 on failure.
  */
 int
-_rtld_relocate_objects(first, bind_now, self)
+_rtld_relocate_objects(first, bind_now)
 	Obj_Entry *first;
 	bool bind_now;
-	bool self;
 {
 	Obj_Entry *obj;
 	int ok = 1;
@@ -184,7 +183,7 @@ _rtld_relocate_objects(first, bind_now, self)
 			}
 		}
 		dbg(("doing non-PLT relocations"));
-		if (_rtld_relocate_nonplt_objects(obj, self) < 0)
+		if (_rtld_relocate_nonplt_objects(obj) < 0)
 			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,
