@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.31 2000/03/18 22:33:02 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.32 2000/04/21 16:53:20 bouyer Exp $
 
 # config file for mvme68k
 
@@ -91,11 +91,11 @@ attach wdsc at pcc with wdsc_pcc
 file arch/mvme68k/dev/wdsc.c			wdsc_pcc
 
 # NCR53C710 SCSI ...
-define siop
-file arch/mvme68k/dev/siop.c			siop
+define msiop
+file arch/mvme68k/dev/siop.c			msiop
 
 # ... on everything else
-device ncrsc: siop, scsi
+device ncrsc: msiop, scsi
 attach ncrsc at pcctwo with ncrsc_pcctwo
 file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo
 
