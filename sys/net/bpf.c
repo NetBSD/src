@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.18 1995/03/22 16:08:32 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.19 1995/04/22 13:26:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -120,15 +120,15 @@ static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_freed __P((struct bpf_d *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-static void	bpf_mcopy __P((const void *, void *, u_int));
+static void	bpf_mcopy __P((const void *, void *, size_t));
 static int	bpf_movein __P((struct uio *, int,
 		    struct mbuf **, struct sockaddr *, int *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
-static void	catchpacket __P((struct bpf_d *, u_char *, u_int,
-		    u_int, void (*)(const void *, void *, u_int)));
+static void	catchpacket __P((struct bpf_d *, u_char *, size_t,
+		    size_t, void (*)(const void *, void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
 
 static int
@@ -735,15 +735,9 @@ bpfioctl(dev, cmd, addr, flag)
 	case BIOCSRTIMEOUT:
 		{
 			struct timeval *tv = (struct timeval *)addr;
-			u_long msec;
 
-			/* Compute number of milliseconds. */
-			msec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-			/* Scale milliseconds to ticks.  Assume hard
-			   clock has millisecond or greater resolution
-			   (i.e. tick >= 1000).  For 10ms hardclock,
-			   tick/1000 = 10, so rtout<-msec/10. */
-			d->bd_rtout = msec / (tick / 1000);
+			/* Compute number of ticks. */
+			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
 			break;
 		}
 
@@ -753,11 +747,9 @@ bpfioctl(dev, cmd, addr, flag)
 	case BIOCGRTIMEOUT:
 		{
 			struct timeval *tv = (struct timeval *)addr;
-			u_long msec = d->bd_rtout;
 
-			msec *= tick / 1000;
-			tv->tv_sec = msec / 1000;
-			tv->tv_usec = msec % 1000;
+			tv->tv_sec = d->bd_rtout / hz;
+			tv->tv_usec = (d->bd_rtout % hz) * tick;
 			break;
 		}
 
@@ -1010,7 +1002,7 @@ bpf_tap(arg, pkt, pktlen)
 {
 	struct bpf_if *bp;
 	register struct bpf_d *d;
-	register u_int slen;
+	register size_t slen;
 	/*
 	 * Note that the ipl does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
@@ -1033,7 +1025,7 @@ static void
 bpf_mcopy(src_arg, dst_arg, len)
 	const void *src_arg;
 	void *dst_arg;
-	register u_int len;
+	register size_t len;
 {
 	register const struct mbuf *m;
 	register u_int count;
@@ -1062,7 +1054,7 @@ bpf_mtap(arg, m)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
-	u_int pktlen, slen;
+	size_t pktlen, slen;
 	struct mbuf *m0;
 
 	pktlen = 0;
@@ -1089,8 +1081,8 @@ static void
 catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	register struct bpf_d *d;
 	register u_char *pkt;
-	register u_int pktlen, snaplen;
-	register void (*cpfn) __P((const void *, void *, u_int));
+	register size_t pktlen, snaplen;
+	register void (*cpfn) __P((const void *, void *, size_t));
 {
 	register struct bpf_hdr *hp;
 	register int totlen, curlen;

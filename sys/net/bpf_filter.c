@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.10 1995/04/01 03:04:49 mycroft Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.11 1995/04/22 13:26:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993
@@ -48,18 +48,19 @@
 #include <netinet/in.h>
 #endif
 
-#if defined(sparc) || defined(mips) || defined(ibm032)
+#if defined(sparc) || defined(mips) || defined(ibm032) || \
+    (defined(__NetBSD__) && !defined(UNALIGNED_ACCESS))
 #define BPF_ALIGN
 #endif
 
 #ifndef BPF_ALIGN
-#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
+#define EXTRACT_SHORT(p)	((u_int16_t)ntohs(*(u_int16_t *)p))
 #define EXTRACT_LONG(p)		(ntohl(*(u_int32_t *)p))
 #else
 #define EXTRACT_SHORT(p)\
-	((u_short)\
-		((u_short)*((u_char *)p+0)<<8|\
-		 (u_short)*((u_char *)p+1)<<0))
+	((u_int16_t)\
+		((u_int16_t)*((u_char *)p+0)<<8|\
+		 (u_int16_t)*((u_char *)p+1)<<0))
 #define EXTRACT_LONG(p)\
 		((u_int32_t)*((u_char *)p+0)<<24|\
 		 (u_int32_t)*((u_char *)p+1)<<16|\
@@ -208,7 +209,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 		case BPF_LD|BPF_H|BPF_ABS:
 			k = pc->k;
-			if (k + sizeof(short) > buflen) {
+			if (k + sizeof(int16_t) > buflen) {
 #ifdef _KERNEL
 				int merr;
 
@@ -272,7 +273,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 		case BPF_LD|BPF_H|BPF_IND:
 			k = X + pc->k;
-			if (k + sizeof(short) > buflen) {
+			if (k + sizeof(int16_t) > buflen) {
 #ifdef _KERNEL
 				int merr;
 
