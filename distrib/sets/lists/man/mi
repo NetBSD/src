@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.226 2000/04/24 22:08:32 mellon Exp $
+# $NetBSD: mi,v 1.227 2000/04/25 05:38:56 mellon Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1887,7 +1887,6 @@
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8
 ./usr/share/man/man8/statd.8
-./usr/share/man/man8/statmsg.8
 ./usr/share/man/man8/stdethers.8
 ./usr/share/man/man8/stdhosts.8
 ./usr/share/man/man8/sticky.8
@@ -1898,7 +1897,6 @@
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8
 ./usr/share/man/man8/sync.8
-./usr/share/man/man8/sysconfd.8
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/talkd.8
