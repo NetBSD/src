@@ -153,7 +153,7 @@
 /* #undef TARGET_CPU_DEFAULT */
 
 /* Define if the simulator is being linked in.  */
-#define WITH_SIM 1
+/* #undef WITH_SIM */
 
 /* Set to true if the save_state_t structure is present */
 /* #undef HAVE_STRUCT_SAVE_STATE_T */
