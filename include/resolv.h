@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.19 2000/08/09 14:40:52 itojun Exp $	*/
+/*	$NetBSD: resolv.h,v 1.19.2.1 2003/01/08 20:53:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -127,7 +127,7 @@
 #define	RES_MAXNDOTS		15	/* should reflect bit field size */
 
 struct __res_state {
-	int	retrans;	 	/* retransmition time interval */
+	int	retrans;	 	/* retransmission time interval */
 	int	retry;			/* number of times to retransmit */
 	u_long	options;		/* option flags - see below. */
 	int	nscount;		/* number of name servers */
