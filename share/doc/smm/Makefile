@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2.1.2 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.3 1993/07/31 15:32:55 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/09/30 23:31:17 jtc Exp $
 
 # Missing: 03.kdebug 09.uucpimpl 12.uchanges 13.kchanges 17.security
 #	   18.password 19.porttour 21.uucpnet
@@ -17,14 +17,9 @@ SUBDIR+=01.setup
 .endif
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
-                /bin/rm -f ${DESTDIR}${BINDIR} ; \
-                mkdir -p ${DESTDIR}${BINDIR} ; \
-                chown root.wheel ${DESTDIR}${BINDIR} ; \
-                chmod 755 ${DESTDIR}${BINDIR} ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
+
+realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 
