@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.13 2000/03/15 02:05:19 fvdl Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.14 2000/09/24 12:37:04 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -122,6 +122,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -141,16 +142,6 @@
 #include <dev/ic/aic77xxreg.h>
 #include <dev/ic/aic77xxvar.h>
 #include <dev/ic/smc93cx6var.h>
-
-/*
- * Under normal circumstances, these messages are unnecessary
- * and not terribly cosmetic.
- */
-#ifdef DEBUG
-#define bootverbose	1
-#else
-#define bootverbose	1
-#endif
 
 /* IO port address setting range as EISA slot number */
 #define AHC_ISA_MIN_SLOT	0x1	/* from iobase = 0x1c00 */
