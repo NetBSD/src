@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.76 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77 2005/03/08 00:18:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -73,13 +73,8 @@
  * Compile-time options for LFS.
  */
 #define LFS_IFIND_RETRIES  16
-#define LFS_EAGAIN_FAIL		/* markv fail with EAGAIN if ino is locked */
-#define LFS_DEBUG_RFW		/* print roll-forward debugging info */
 #define LFS_LOGLENGTH      1024 /* size of debugging log */
 #define LFS_MAX_ACTIVE	   10	/* Dirty segments before ckp forced */
-#define LFS_PD			/* pagedaemon codaemon */
-
-/* #define DEBUG_LFS */		 /* Intensive debugging of LFS subsystem */
 
 /*
  * Fixed filesystem layout parameters
@@ -202,10 +197,12 @@ typedef struct lfs_res_blk {
 # define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
      (bp)->b_iodone == lfs_callback)
 
-# ifdef DEBUG_LOCKED_LIST
+# ifdef DEBUG
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
-	wakeup(&locked_queue_count);					\
+	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
+		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
+		wakeup(&locked_queue_count);				\
+	}								\
 } while (0)
 # else
 #  define LFS_DEBUG_COUNTLOCKED(m)
@@ -241,9 +238,28 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
 			      bp->b_lblkno, bp->b_flags);		\
 } while (0)
+
+/* Must match list in lfs_vfsops.c ! */
+#  define DLOG_RF     0  /* roll forward */
+#  define DLOG_ALLOC  1  /* inode alloc */
+#  define DLOG_AVAIL  2  /* lfs_{,r,f}avail */
+#  define DLOG_FLUSH  3  /* flush */
+#  define DLOG_LLIST  4  /* locked list accounting */
+#  define DLOG_WVNODE 5  /* vflush/writevnodes verbose */
+#  define DLOG_VNODE  6  /* vflush/writevnodes */
+#  define DLOG_SEG    7  /* segwrite */
+#  define DLOG_SU     8  /* seguse accounting */
+#  define DLOG_CLEAN  9  /* cleaner routines */
+#  define DLOG_MOUNT  10 /* mount/unmount */
+#  define DLOG_PAGE   11 /* putpages/gop_write */
+#  define DLOG_DIROP  12 /* dirop accounting */
+#  define DLOG_MALLOC 13 /* lfs_malloc accounting */
+#  define DLOG_MAX    14 /* The terminator */
+#  define DLOG(a) lfs_debug_log a
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
 #  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */
 # define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
@@ -972,7 +988,7 @@ struct lfs_inode_ext {
 #define LFS_NRESERVE(F) (btofsb((F), (2 * NIADDR + 3) << (F)->lfs_bshift))
 
 /* Statistics Counters */
-struct lfs_stats {
+struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int	segsused;
 	u_int	psegwrites;
 	u_int	psyncwrites;
@@ -986,6 +1002,8 @@ struct lfs_stats {
 	u_int	write_exceeded;
 	u_int	flush_invoked;
 	u_int	vflush_invoked;
+	u_int	clean_inlocked;
+	u_int	clean_vnlocked;
 };
 #ifdef _KERNEL
 extern struct lfs_stats lfs_stats;
