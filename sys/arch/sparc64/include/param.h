@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 1998/09/09 02:56:38 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.7 1998/09/09 11:01:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,11 +53,12 @@
 #ifdef _LP64
 #define	_MACHINE_ARCH	sparc64
 #define	MACHINE_ARCH	"sparc64"
+#define	MID_MACHINE	MID_SPARC64
 #else
 #define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
-#endif
 #define	MID_MACHINE	MID_SPARC
+#endif
 
 #ifdef _KERNEL				/* XXX */
 #ifndef _LOCORE				/* XXX */
