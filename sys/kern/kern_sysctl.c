@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.81 2000/09/26 23:59:23 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.82 2000/11/08 22:41:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -524,6 +524,19 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
 		return (sysctl_rdint(oldp, oldlenp, newp, ALIGNBYTES));
+	case HW_CNMAGIC: {
+		char magic[CNS_LEN];
+		int error;
+
+		if (oldp)
+			cn_get_magic(magic, CNS_LEN);
+		error = sysctl_string(oldp, oldlenp, newp, newlen,
+		    magic, sizeof(magic));
+		if (newp && !error) {
+			error = cn_set_magic(magic);
+		}
+		return (error);
+	}
 	default:
 		return (EOPNOTSUPP);
 	}

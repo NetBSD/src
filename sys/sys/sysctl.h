@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.56 2000/09/09 16:42:06 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.57 2000/11/08 22:41:59 eeh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,7 +165,7 @@ struct ctlname {
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
-#define	KERN_MAXID		56	/* number of valid kern ids */
+#define	KERN_MAXID		57	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -431,7 +431,8 @@ struct kinfo_proc2 {
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
-#define	HW_MAXID	12		/* number of valid hw ids */
+#define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
+#define	HW_MAXID	13		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -446,6 +447,7 @@ struct kinfo_proc2 {
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
+	{ "cnmagic", CTLTYPE_STRING }, \
 }
 
 /*

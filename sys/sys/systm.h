@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.119 2000/11/08 14:25:23 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.120 2000/11/08 22:41:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -321,6 +321,54 @@ void	kmstartup __P((void));
 #endif
 
 #ifdef _KERNEL
+
+/*
+ * Stuff to handle debugger magic key sequences.
+ */
+#define CNS_LEN			128
+#define CNS_MAGIC_VAL(x)	((x)&0x1ff)
+#define CNS_MAGIC_NEXT(x)	(((x)>>9)&0x7f)
+#define CNS_TERM		0x7f	/* End of sequence */
+
+typedef struct cnm_state {
+	int	cnm_state;
+	u_short	*cnm_magic;
+} cnm_state_t;
+
+/* Override db_console() in MD headers */
+#ifndef cn_trap
+#define cn_trap()	console_debugger()
+#endif
+#ifndef cn_isconsole
+#define cn_isconsole(d)	((d) == cn_tab->cn_dev)
+#endif
+
+void cn_init_magic __P((cnm_state_t *cnm));
+void cn_destroy_magic __P((cnm_state_t *cnm));
+int cn_set_magic __P((char *magic));
+int cn_get_magic __P((char *magic, int len));
+/* This should be called for each byte read */
+#ifndef cn_check_magic
+#define cn_check_magic(d, k, s)						\
+	do {								\
+		if (cn_isconsole(d)) {					\
+			int v = (s).cnm_magic[(s).cnm_state];		\
+			if ((k) == CNS_MAGIC_VAL(v)) {			\
+				(s).cnm_state = CNS_MAGIC_NEXT(v);	\
+				if ((s).cnm_state == CNS_TERM) {	\
+					cn_trap();			\
+					(s).cnm_state = 0;		\
+				}					\
+			} else {					\
+				(s).cnm_state = 0;			\
+			}						\
+		}							\
+	} while (0)
+#endif
+
+/* Encode out-of-band events this way when passing to cn_check_magic() */
+#define	CNC_BREAK		0x100
+
 #if defined(DDB) || defined(sun3)
 /* note that cpu_Debugger() is always available on sun3 */
 void	cpu_Debugger __P((void));
