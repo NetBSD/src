@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2001/03/18 12:57:19 tsubai Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2001/04/06 09:39:29 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,8 +91,8 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
-#	openfirm OpenFireware queries
-#	random	Random number generator
+#	openfirm OpenFirmware queries
+#	random	random number generator
 #	lkm	loadable kernel modules interface
 #	audio*	audio devices
 #	tun*	network tunnel driver
