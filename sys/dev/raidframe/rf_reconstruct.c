@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.12 2000/01/09 01:29:28 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.13 2000/01/09 01:45:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,16 +74,9 @@
 #define Dprintf5(s,a,b,c,d,e) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
 #define Dprintf6(s,a,b,c,d,e,f) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),NULL,NULL)
 #define Dprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
-#define Dprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
 #define DDprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define DDprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
-#define DDprintf3(s,a,b,c)     if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
-#define DDprintf4(s,a,b,c,d)   if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),NULL,NULL,NULL,NULL)
-#define DDprintf5(s,a,b,c,d,e) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
-#define DDprintf6(s,a,b,c,d,e,f) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),NULL,NULL)
-#define DDprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
-#define DDprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
 static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
@@ -169,7 +162,7 @@ rf_RegisterReconDoneProc(
 		*handlep = p;
 	return (0);
 }
-/*****************************************************************************************
+/**************************************************************************
  *
  * sets up the parameters that will be used by the reconstruction process
  * currently there are none, except for those that the layout-specific
@@ -177,7 +170,7 @@ rf_RegisterReconDoneProc(
  *
  * in the kernel, we fire off the recon thread.
  *
- ****************************************************************************************/
+ **************************************************************************/
 static void 
 rf_ShutdownReconstruction(ignored)
 	void   *ignored;
@@ -257,12 +250,12 @@ FreeReconDesc(reconDesc)
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  *
  * primary routine to reconstruct a failed disk.  This should be called from
  * within its own thread.  It won't return until reconstruction completes,
  * fails, or is aborted.
- ****************************************************************************************/
+ *****************************************************************************/
 int 
 rf_ReconstructFailedDisk(raidPtr, row, col)
 	RF_Raid_t *raidPtr;
@@ -805,10 +798,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 	SignalReconDone(raidPtr);
 	return (0);
 }
-/*****************************************************************************************
+/*****************************************************************************
  * do the right thing upon each reconstruction event.
- * returns nonzero if and only if there is nothing left unread on the indicated disk
- ****************************************************************************************/
+ * returns nonzero if and only if there is nothing left unread on the 
+ * indicated disk
+ *****************************************************************************/
 static int 
 ProcessReconEvent(raidPtr, frow, event)
 	RF_Raid_t *raidPtr;
@@ -918,23 +912,27 @@ ProcessReconEvent(raidPtr, frow, event)
 	rf_FreeReconEventDesc(event);
 	return (retcode);
 }
-/*****************************************************************************************
+/*****************************************************************************
  *
- * find the next thing that's needed on the indicated disk, and issue a read
- * request for it.  We assume that the reconstruction buffer associated with this
- * process is free to receive the data.  If reconstruction is blocked on the
- * indicated RU, we issue a blockage-release request instead of a physical disk
- * read request.  If the current disk gets too far ahead of the others, we issue
- * a head-separation wait request and return.
+ * find the next thing that's needed on the indicated disk, and issue
+ * a read request for it.  We assume that the reconstruction buffer
+ * associated with this process is free to receive the data.  If
+ * reconstruction is blocked on the indicated RU, we issue a
+ * blockage-release request instead of a physical disk read request.
+ * If the current disk gets too far ahead of the others, we issue a
+ * head-separation wait request and return.
  *
- * ctrl->{ru_count, curPSID, diskOffset} and rbuf->failedDiskSectorOffset are
- * maintained to point the the unit we're currently accessing.  Note that this deviates
- * from the standard C idiom of having counters point to the next thing to be
- * accessed.  This allows us to easily retry when we're blocked by head separation
- * or reconstruction-blockage events.
+ * ctrl->{ru_count, curPSID, diskOffset} and
+ * rbuf->failedDiskSectorOffset are maintained to point the the unit
+ * we're currently accessing.  Note that this deviates from the
+ * standard C idiom of having counters point to the next thing to be
+ * accessed.  This allows us to easily retry when we're blocked by
+ * head separation or reconstruction-blockage events.
  *
- * returns nonzero if and only if there is nothing left unread on the indicated disk
- ****************************************************************************************/
+ * returns nonzero if and only if there is nothing left unread on the
+ * indicated disk
+ *
+ *****************************************************************************/
 static int 
 IssueNextReadRequest(raidPtr, row, col)
 	RF_Raid_t *raidPtr;
@@ -1003,11 +1001,16 @@ IssueNextReadRequest(raidPtr, row, col)
 	retcode = TryToRead(raidPtr, row, col);
 	return (retcode);
 }
-/* tries to issue the next read on the indicated disk.  We may be blocked by (a) the heads being too
- * far apart, or (b) recon on the indicated RU being blocked due to a write by a user thread.
- * In this case, we issue a head-sep or blockage wait request, which will cause this same routine
- * to be invoked again later when the blockage has cleared.
+
+/*
+ * tries to issue the next read on the indicated disk.  We may be
+ * blocked by (a) the heads being too far apart, or (b) recon on the
+ * indicated RU being blocked due to a write by a user thread.  In
+ * this case, we issue a head-sep or blockage wait request, which will
+ * cause this same routine to be invoked again later when the blockage
+ * has cleared.  
  */
+
 static int 
 TryToRead(raidPtr, row, col)
 	RF_Raid_t *raidPtr;
@@ -1081,26 +1084,31 @@ out:
 }
 
 
-/* given a parity stripe ID, we want to find out whether both the current disk and the
- * failed disk exist in that parity stripe.  If not, we want to skip this whole PS.
- * If so, we want to find the disk offset of the start of the PS on both the current
- * disk and the failed disk.
+/*
+ * given a parity stripe ID, we want to find out whether both the
+ * current disk and the failed disk exist in that parity stripe.  If
+ * not, we want to skip this whole PS.  If so, we want to find the
+ * disk offset of the start of the PS on both the current disk and the
+ * failed disk.
  *
- * this works by getting a list of disks comprising the indicated parity stripe, and
- * searching the list for the current and failed disks.  Once we've decided they both
- * exist in the parity stripe, we need to decide whether each is data or parity,
- * so that we'll know which mapping function to call to get the corresponding disk
+ * this works by getting a list of disks comprising the indicated
+ * parity stripe, and searching the list for the current and failed
+ * disks.  Once we've decided they both exist in the parity stripe, we
+ * need to decide whether each is data or parity, so that we'll know
+ * which mapping function to call to get the corresponding disk
  * offsets.
  *
- * this is kind of unpleasant, but doing it this way allows the reconstruction code
- * to use parity stripe IDs rather than physical disks address to march through the
- * failed disk, which greatly simplifies a lot of code, as well as eliminating the
- * need for a reverse-mapping function.  I also think it will execute faster, since
- * the calls to the mapping module are kept to a minimum.
+ * this is kind of unpleasant, but doing it this way allows the
+ * reconstruction code to use parity stripe IDs rather than physical
+ * disks address to march through the failed disk, which greatly
+ * simplifies a lot of code, as well as eliminating the need for a
+ * reverse-mapping function.  I also think it will execute faster,
+ * since the calls to the mapping module are kept to a minimum.
  *
- * ASSUMES THAT THE STRIPE IDENTIFIER IDENTIFIES THE DISKS COMPRISING THE STRIPE
- * IN THE CORRECT ORDER
- */
+ * ASSUMES THAT THE STRIPE IDENTIFIER IDENTIFIES THE DISKS COMPRISING
+ * THE STRIPE IN THE CORRECT ORDER */
+
+
 static int 
 ComputePSDiskOffsets(
     RF_Raid_t * raidPtr,	/* raid descriptor */
@@ -1256,11 +1264,14 @@ IssueNextWriteRequest(raidPtr, row)
 
 	return (0);
 }
-/* this gets called upon the completion of a reconstruction read operation
- * the arg is a pointer to the per-disk reconstruction control structure
- * for the process that just finished a read.
+
+/*
+ * this gets called upon the completion of a reconstruction read
+ * operation the arg is a pointer to the per-disk reconstruction
+ * control structure for the process that just finished a read.
  *
- * called at interrupt context in the kernel, so don't do anything illegal here.
+ * called at interrupt context in the kernel, so don't do anything
+ * illegal here.  
  */
 static int 
 ReconReadDoneProc(arg, status)
@@ -1309,7 +1320,10 @@ ReconWriteDoneProc(arg, status)
 }
 
 
-/* computes a new minimum head sep, and wakes up anyone who needs to be woken as a result */
+/* 
+ * computes a new minimum head sep, and wakes up anyone who needs to
+ * be woken as a result 
+ */
 static void 
 CheckForNewMinHeadSep(raidPtr, row, hsCtr)
 	RF_Raid_t *raidPtr;
@@ -1349,16 +1363,18 @@ CheckForNewMinHeadSep(raidPtr, row, hsCtr)
 	}
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 }
-/* checks to see that the maximum head separation will not be violated
- * if we initiate a reconstruction I/O on the indicated disk.  Limiting the
- * maximum head separation between two disks eliminates the nasty buffer-stall
- * conditions that occur when one disk races ahead of the others and consumes
- * all of the floating recon buffers.  This code is complex and unpleasant
- * but it's necessary to avoid some very nasty, albeit fairly rare,
- * reconstruction behavior.
+
+/*
+ * checks to see that the maximum head separation will not be violated
+ * if we initiate a reconstruction I/O on the indicated disk.
+ * Limiting the maximum head separation between two disks eliminates
+ * the nasty buffer-stall conditions that occur when one disk races
+ * ahead of the others and consumes all of the floating recon buffers.
+ * This code is complex and unpleasant but it's necessary to avoid
+ * some very nasty, albeit fairly rare, reconstruction behavior.
  *
- * returns non-zero if and only if we have to stop working on the indicated disk
- * due to a head-separation delay.
+ * returns non-zero if and only if we have to stop working on the
+ * indicated disk due to a head-separation delay.  
  */
 static int 
 CheckHeadSeparation(
@@ -1419,12 +1435,12 @@ CheckHeadSeparation(
 
 	return (retval);
 }
-/* checks to see if reconstruction has been either forced or blocked by a user operation.
- * if forced, we skip this RU entirely.
- * else if blocked, put ourselves on the wait list.
- * else return 0.
+/* 
+ * checks to see if reconstruction has been either forced or blocked
+ * by a user operation.  if forced, we skip this RU entirely.  else if
+ * blocked, put ourselves on the wait list.  else return 0.
  *
- * ASSUMES THE PSS MUTEX IS LOCKED UPON ENTRY
+ * ASSUMES THE PSS MUTEX IS LOCKED UPON ENTRY 
  */
 static int 
 CheckForcedOrBlockedReconstruction(
@@ -1459,11 +1475,13 @@ CheckForcedOrBlockedReconstruction(
 
 	return (retcode);
 }
-/* if reconstruction is currently ongoing for the indicated stripeID, reconstruction
- * is forced to completion and we return non-zero to indicate that the caller must
- * wait.  If not, then reconstruction is blocked on the indicated stripe and the
- * routine returns zero.  If and only if we return non-zero, we'll cause the cbFunc
- * to get invoked with the cbArg when the reconstruction has completed.
+/*
+ * if reconstruction is currently ongoing for the indicated stripeID,
+ * reconstruction is forced to completion and we return non-zero to
+ * indicate that the caller must wait.  If not, then reconstruction is
+ * blocked on the indicated stripe and the routine returns zero.  If
+ * and only if we return non-zero, we'll cause the cbFunc to get
+ * invoked with the cbArg when the reconstruction has completed.  
  */
 int 
 rf_ForceOrBlockRecon(raidPtr, asmap, cbFunc, cbArg)
@@ -1635,18 +1653,17 @@ rf_UnblockRecon(raidPtr, asmap)
 		pssPtr->flags &= ~RF_PSS_RECON_BLOCKED;
 
 
-		while (pssPtr->blockWaitList) {	/* spin through the block-wait
-						 * list and release all the
-						 * waiters */
+		while (pssPtr->blockWaitList) {	
+			/* spin through the block-wait list and
+			   release all the waiters */
 			cb = pssPtr->blockWaitList;
 			pssPtr->blockWaitList = cb->next;
 			cb->next = NULL;
 			rf_CauseReconEvent(raidPtr, cb->row, cb->col, NULL, RF_REVENT_BLOCKCLEAR);
 			rf_FreeCallbackDesc(cb);
 		}
-		if (!(pssPtr->flags & RF_PSS_UNDER_RECON)) {	/* if no recon was
-								 * requested while recon
-								 * was blocked */
+		if (!(pssPtr->flags & RF_PSS_UNDER_RECON)) {
+			/* if no recon was requested while recon was blocked */
 			rf_PSStatusDelete(raidPtr, raidPtr->reconControl[row]->pssTable, pssPtr);
 		}
 	}
