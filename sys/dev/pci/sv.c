@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.23 2004/07/09 01:02:32 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.24 2004/07/09 02:42:45 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.23 2004/07/09 01:02:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.24 2004/07/09 02:42:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -971,6 +971,7 @@ sv_halt_output(addr)
 	DPRINTF(("sv: sv_halt_output\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_PLAY_ENABLE);
+	sc->sc_pintr = 0;
 
 	return (0);
 }
@@ -985,6 +986,7 @@ sv_halt_input(addr)
 	DPRINTF(("sv: sv_halt_input\n"));
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode & ~SV_RECORD_ENABLE);
+	sc->sc_rintr = 0;
 
 	return (0);
 }

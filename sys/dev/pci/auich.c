@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.59 2004/07/09 01:02:32 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.60 2004/07/09 02:42:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.59 2004/07/09 01:02:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.60 2004/07/09 02:42:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,6 +900,7 @@ auich_halt_output(void *v)
 	DPRINTF(ICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL, ICH_RR);
+	sc->sc_pintr = NULL;
 
 	return (0);
 }
@@ -916,6 +917,7 @@ auich_halt_input(void *v)
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, ICH_RR);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_MICI + ICH_CTRL, ICH_RR);
+	sc->sc_rintr = NULL;
 
 	return (0);
 }

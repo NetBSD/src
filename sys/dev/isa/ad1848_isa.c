@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.24 2004/07/09 02:11:17 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.25 2004/07/09 02:42:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.24 2004/07/09 02:11:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.25 2004/07/09 02:42:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,16 +708,16 @@ ad1848_isa_intr(arg)
 	if ((status & INTERRUPT_STATUS) != 0) {
 		if (sc->mode == 2 && isc->sc_playdrq != isc->sc_recdrq) {
 			status = ad_read(sc, CS_IRQ_STATUS);
-			if ((status & CS_IRQ_PI) && isc->sc_pintr != NULL) {
+			if ((status & CS_IRQ_PI) && isc->sc_playrun) {
 				(*isc->sc_pintr)(isc->sc_parg);
 				retval = 1;
 			}
-			if ((status & CS_IRQ_CI) && isc->sc_rintr != NULL) {
+			if ((status & CS_IRQ_CI) && isc->sc_recrun) {
 				(*isc->sc_rintr)(isc->sc_rarg);
 				retval = 1;
 			}
 		} else {
-			if (isc->sc_pintr != NULL) {
+			if (isc->sc_playrun) {
 				(*isc->sc_pintr)(isc->sc_parg);
 				retval = 1;
 			}
