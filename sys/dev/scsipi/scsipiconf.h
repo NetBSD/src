@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.29.2.1 1999/04/08 15:52:43 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.29.2.2 2000/01/16 17:50:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,7 +304,8 @@ struct scsipi_xfer {
 #define	SCSI_TARGET	0x2000	/* This defines a TARGET mode op.	*/
 #define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
 #define	SCSI_URGENT	0x8000	/* Urgent operation (e.g., HTAG)	*/
-		/* 0x00ff0000 reserved for ATAPI. */
+#define SCSI_PROBE   0x1000000	/* We are probing the target		*/
+		 /* 0x00ff0000 reserved for ATAPI. */
 
 /*
  * Error values an adapter driver may return
