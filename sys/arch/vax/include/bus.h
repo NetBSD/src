@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1999/05/24 20:10:30 ragge Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1999/06/06 19:07:11 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -882,6 +882,11 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
+
+/*
+ * Private flags stored in the DMA map.
+ */
+#define DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
