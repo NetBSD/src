@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.20 2005/01/11 23:11:05 peter Exp $       */
+/*      $NetBSD: sushi.c,v 1.21 2005/01/12 00:05:20 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,13 +80,13 @@ main(int argc, char **argv)
 	int i;
 	MTREE_ENTRY *mte = NULL;
 	
-	parse_config();
-
 	catalog = catopen("sushi", 0);
 	if (getenv("LANG") == NULL)
 		lang_id = NULL;
 	else
 		lang_id = strdup(getenv("LANG"));
+
+	parse_config();
 
 	if (initscr() == NULL)
 		errx(1, "%s", "Cannot initialize curses");
@@ -177,6 +177,8 @@ parse_config(void)
 	char *key, *env;
 	char **n;
 
+	searchpaths = NULL;
+
 	if ((conf = fopen("/etc/sushi.conf", "r")) != NULL) {
 		i = 0;
 		while ((p = fgetln(conf, &len))) {
@@ -193,22 +195,20 @@ parse_config(void)
 			word = p;
 			while (*++p && !isspace((unsigned char)*p));
 			key = strdup(word);
+			if (key == NULL)
+				err(1, "strdup");
 			if (strcmp(key, "searchpath") == 0) {
 				word = next_word(&p);
 				n = (char **)realloc(searchpaths,
-				    sizeof(char *) * (i + 2));
+				    sizeof(char *) * (i + 3));
 				if (n == NULL)
 					err(1, "realloc");
 				searchpaths = n;
-				searchpaths[i] = (char *)malloc(sizeof(char)
-				    * len + 1);
-				if (searchpaths[i] == NULL)
-					err(1, "malloc");
 				searchpaths[i] = strdup(word);
-				for (j = 0; j < len; j++)
-					if (searchpaths[i][j] == '\n' ||
-					    searchpaths[i][j] == '\r')
-						searchpaths[i][j] = '\0';
+				if (searchpaths[i] == NULL)
+					err(1, "strdup");
+				if ((t = strpbrk(searchpaths[i], "\r\n")))
+					*t = '\0';
 				i++;
 			} else if (strcmp(key, "bind") == 0) {
 				word = next_word(&p);
@@ -221,16 +221,19 @@ parse_config(void)
 				/* now get the string */
 				word = next_word(&p);
 				keylabel[j] = strdup(word);
+				if (keylabel[j] == NULL)
+					err(1, "strdup");
 			} else if (strcmp(key, "env") == 0) {
 				env = next_word(&p);
 				word = next_word(&p);
-				if (strcmp(word, "") == 0)
+				if (*word == '\0')
 					errx(1, "Invalid env value");
 				setenv(env, word, 1);
 			} else {
 				errx(1, "%s: %s", catgets(catalog, 1, 21,
 				    "Bad keyword in config file"), key);
 			}
+			free(key);
 		} /* while */
 	}
 
@@ -245,10 +248,10 @@ parse_config(void)
 		i = 4;
 	}
 
-	searchpaths[i] = (char *)malloc(sizeof(char) * PATH_MAX);
-	if (searchpaths[i] == NULL)
-		err(1, "malloc");
 	if (getenv("HOME") != NULL) {
+		searchpaths[i] = (char *)malloc(sizeof(char) * PATH_MAX);
+		if (searchpaths[i] == NULL)
+			err(1, "malloc");
 		strlcpy(searchpaths[i], getenv("HOME"), PATH_MAX);
 		strlcat(searchpaths[i], "/sushi", PATH_MAX);
 		i++;
