@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.6 1997/10/17 08:56:35 mrg Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.7 1997/10/17 14:19:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: readmsg.c,v 1.7 1997/10/17 14:19:36 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "globals.h"
@@ -472,8 +477,8 @@ struct sockaddr_in *addr;
 			tsptype[msg->tsp_type],
 			msg->tsp_vers,
 			msg->tsp_seq,
-			msg->tsp_time.tv_sec,
-			msg->tsp_time.tv_usec,
+			(long)msg->tsp_time.tv_sec,
+			(long)msg->tsp_time.tv_usec,
 			inet_ntoa(addr->sin_addr),
 			msg->tsp_name);
 		break;

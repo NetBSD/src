@@ -10,5 +10,4 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	timed.8
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>

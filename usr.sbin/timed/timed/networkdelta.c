@@ -1,4 +1,4 @@
-/*	$NetBSD: networkdelta.c,v 1.4 1997/10/17 08:56:22 mrg Exp $	*/
+/*	$NetBSD: networkdelta.c,v 1.5 1997/10/17 14:19:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)networkdelta.c	8.3 (Berkeley) 4/27/95";
+#else
+__RCSID("$NetBSD: networkdelta.c,v 1.5 1997/10/17 14:19:33 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"

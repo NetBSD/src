@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/17 08:57:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/17 14:19:54 lukem Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/93
 
 PROG=	timedc
@@ -8,5 +8,4 @@ BINOWN=	root
 BINMODE=4555
 .PATH:	${.CURDIR}/../timed
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -31,17 +31,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.5 1997/04/16 17:45:05 christos Exp $";
+__RCSID("$NetBSD: update.c,v 1.6 1997/10/17 13:59:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,9 @@ static char rcsid[] = "$NetBSD: update.c,v 1.5 1997/04/16 17:45:05 christos Exp 
 #include <stdlib.h>
 #include <unistd.h>
 
-void mysync __P((int));
-void usage __P((void));
+int	main __P((int, char **));
+void	mysync __P((int));
+void	usage __P((void));
 
 int
 main(argc, argv)
