@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/06/15 23:09:07 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2003/09/21 14:41:34 cl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ typedef	u_long	bus_space_handle_t;
 typedef u_long	bus_type_t;
 typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
+
+#define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
 
 /*
  * Access methods for bus resources and address space.

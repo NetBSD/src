@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 2003/08/07 16:29:53 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 2003/09/21 14:41:33 cl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -176,7 +176,7 @@ L_high_code:
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
 	lea	_C_LABEL(lwp0),%a0	| proc0.p_md.md_regs = 
-	movl	%a1,%a0@(P_MDREGS)	|   trapframe
+	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
 	PANIC("main() returned")
 
