@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.24 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: label.c,v 1.25 2003/01/11 19:44:04 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.24 2003/01/10 20:00:28 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.25 2003/01/11 19:44:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -197,61 +197,6 @@ emptylabel(lp)
 		lp[i].pi_fsize = 0;
 	}
 }
-
-#ifdef notdef
-int
-/*ARGSUSED*/
-savenewlabel(lp, nparts)
-	partinfo *lp;
-	int nparts;
-{
-	FILE *f;
-	int i;
-
-#ifdef DEBUG
-	f = fopen("/tmp/disktab", "a");
-#else
-	/* Create the disktab.preinstall */
-	f = fopen("/etc/disktab", "w");
-#endif
-	if (logging)
-		(void)fprintf(logfp, "Creating disklabel %s\n", bsddiskname);
-	scripting_fprintf(NULL, "cat <<EOF >>/etc/disktab\n");
-	if (f == NULL) {
-		endwin();
-		(void)fprintf(stderr, "Could not open /etc/disktab");
-		if (logging)
-			(void)fprintf(logfp,
-			    "Failed to open /etc/diskabel for appending.\n");
-		exit (1);
-	}
-	scripting_fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	scripting_fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	scripting_fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	scripting_fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	scripting_fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i = 0; i < nparts; i++) {
-		scripting_fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-		    'a'+i, bsdlabel[i].pi_size,
-		    'a'+i, bsdlabel[i].pi_offset,
-		    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
-		if (PI_ISBSDFS(&bsdlabel[i]))
-			scripting_fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
-				       'a'+i, bsdlabel[i].pi_bsize,
-				       'a'+i, bsdlabel[i].pi_fsize);
-	
-		if (i < nparts - 1)
-			scripting_fprintf(f, "\\\n");
-		else
-			scripting_fprintf(f, "\n");
-	}
-	fclose (f);
-	scripting_fprintf(NULL, "EOF\n");
-	fflush(NULL);
-	return(0);
-}
-#endif
-
 
 /*
  * XXX MSDOS?

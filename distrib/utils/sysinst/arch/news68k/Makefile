@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/16 17:26:55 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2003/01/11 19:44:12 christos Exp $
 #
 # Makefile for news68k
 #
@@ -7,7 +7,7 @@
 
 SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c
+	label.c target.c md.c savenewlabel.c sizemultname.c
 SRCS+=	aout2elf.c
 
 md.o:	menu_defs.h msg_defs.h
