@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.3 2002/07/13 08:28:43 scw Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.1 2002/07/13 08:28:43 scw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,8 +79,6 @@
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_aout_m68k.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,131 +101,39 @@
 
 #include <uvm/uvm_extern.h>
 
-/*
- * Defined in machine-specific code (usually trap.c)
- * XXX: This will disappear when all m68k ports share common trap() code...
- */
-extern void machine_userret(struct proc *, struct frame *, u_quad_t);
-
-void syscall(register_t, struct frame);
-
-void	syscall_intern(struct proc *);
-#ifdef COMPAT_AOUT_M68K
-void	aoutm68k_syscall_intern(struct proc *);
-#endif
-static void syscall_plain(register_t, struct proc *, struct frame *);
-static void syscall_fancy(register_t, struct proc *, struct frame *);
-
-
-/*
- * Process a system call.
- */
-void
-syscall(code, frame)
-	register_t code;
-	struct frame frame;
-{
-	struct proc *p;
-	u_quad_t sticks;
-
-	uvmexp.syscalls++;
-	if (!USERMODE(frame.f_sr))
-		panic("syscall");
-
-	p = curproc;
-	sticks = p->p_sticks;
-	p->p_md.md_regs = frame.f_regs;
-
-	(p->p_md.md_syscall)(code, p, &frame);
-
-	machine_userret(p, &frame, sticks);
-}
+void	linux_syscall_intern(struct proc *);
+static void linux_syscall_plain(register_t, struct proc *, struct frame *);
+static void linux_syscall_fancy(register_t, struct proc *, struct frame *);
 
 void
-syscall_intern(struct proc *p)
+linux_syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 #endif
-		p->p_md.md_syscall = syscall_plain;
+		p->p_md.md_syscall = linux_syscall_plain;
 }
-
-#ifdef COMPAT_AOUT_M68K
-/*
- * Not worth the effort of a whole new set of syscall_{plain,fancy} functions
- */
-void
-aoutm68k_syscall_intern(struct proc *p)
-{
-
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
-		p->p_md.md_syscall = syscall_plain;
-}
-#endif
 
 static void
-syscall_plain(register_t code, struct proc *p, struct frame *frame)
+linux_syscall_plain(register_t code, struct proc *p, struct frame *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
-	register_t args[16], rval[2];
+	register_t args[8], rval[2];
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		/*
-		 * XXX sigreturn requires special stack manipulation
-		 * that is only done if entered via the sigreturn
-		 * trap.  Cannot allow it here so make sure we fail.
-		 */
-		switch (code) {
-#ifdef COMPAT_13
-		case SYS_compat_13_sigreturn13:
-#endif
-		case SYS___sigreturn14:
-			code = nsys;
-			break;
-		}
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;		/* illegal */
@@ -235,10 +141,27 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		callp += code;
 
 	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
-		if (error)
-			goto bad;
+
+	/*
+	 * Linux passes the args in d1-d5
+	 */
+	switch (argsize) {
+	case 20:
+		args[4] = frame->f_regs[D5];
+	case 16:
+		args[3] = frame->f_regs[D4];
+	case 12:
+		args[2] = frame->f_regs[D3];
+	case 8:
+		args[1] = frame->f_regs[D2];
+	case 4:
+		args[0] = frame->f_regs[D1];
+	case 0:
+		break;
+	default:
+		panic("linux syscall %d weird argsize %d",
+			code, argsize);
+		break;
 	}
 
 #ifdef SYSCALL_DEBUG
@@ -259,18 +182,6 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
-
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#endif
 		break;
 	case ERESTART:
 		/*
@@ -283,11 +194,6 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 		/* nothing to do */
 		break;
 	default:
-	bad:
-		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
-		 * to translate errno.
-		 */
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;
@@ -296,56 +202,22 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval)
+	scdebug_ret(p, code, error, rval);
 #endif
 }
 
 static void
-syscall_fancy(register_t code, struct proc *p, struct frame *frame)
+linux_syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
-	register_t args[16], rval[2];
+	register_t args[8], rval[2];
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
 	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		/*
-		 * XXX sigreturn requires special stack manipulation
-		 * that is only done if entered via the sigreturn
-		 * trap.  Cannot allow it here so make sure we fail.
-		 */
-		switch (code) {
-#ifdef COMPAT_13
-		case SYS_compat_13_sigreturn13:
-#endif
-		case SYS___sigreturn14:
-			code = nsys;
-			break;
-		}
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;		/* illegal */
@@ -353,10 +225,27 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		callp += code;
 
 	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
-		if (error)
-			goto bad;
+
+	/*
+	 * Linux passes the args in d1-d5
+	 */
+	switch (argsize) {
+	case 20:
+		args[4] = frame->f_regs[D5];
+	case 16:
+		args[3] = frame->f_regs[D4];
+	case 12:
+		args[2] = frame->f_regs[D3];
+	case 8:
+		args[1] = frame->f_regs[D2];
+	case 4:
+		args[0] = frame->f_regs[D1];
+	case 0:
+		break;
+	default:
+		panic("linux syscall %d weird argsize %d",
+			code, argsize);
+		break;
 	}
 
 	if ((error = trace_enter(p, code, args, rval)) != 0)
@@ -376,18 +265,6 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		frame->f_regs[D0] = rval[0];
 		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
-
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#endif
 		break;
 	case ERESTART:
 		/*
@@ -401,10 +278,6 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 		break;
 	default:
 	bad:
-		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
-		 * to translate errno.
-		 */
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->f_regs[D0] = error;
@@ -413,23 +286,4 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 	}
 
 	trace_exit(p, code, args, rval, error);
-}
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-	/* See cpu_fork() */
-	struct frame *f = (struct frame *)p->p_md.md_regs;
-
-	f->f_regs[D0] = 0;
-	f->f_sr &= ~PSL_C;
-	f->f_format = FMT0;
-
-	machine_userret(p, f, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
-#endif
 }
