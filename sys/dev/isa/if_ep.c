@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42 1994/07/01 23:08:11 deraadt Exp $
+ *	$Id: if_ep.c,v 1.43 1994/07/21 02:51:53 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -160,6 +160,7 @@ epprobe(parent, self, aux)
 	static int firsttime;
 	int slot, port, i;
 	u_short k, k2;
+	u_char b1, b2;
 
 	if (firsttime==0) {
 		firsttime = 1;
@@ -167,6 +168,14 @@ epprobe(parent, self, aux)
 		/* find all EISA cards */
 		for (slot = 1; slot < 8; slot++) {
 			port = 0x1000 * slot;
+
+			b1 = inb(port + 0xc80);
+			b2 = inb(port + 0xc81);
+			/* XXX no card version checking performed! */
+			if (CHAR1(b1, b2) != 'T' || CHAR2(b1, b2) != 'C' ||
+			    CHAR3(b1, b2) != 'M')
+				continue;
+
 			outw(port + EP_COMMAND, GLOBAL_RESET);
 			delay(1000);
 			if (inw(port + EP_W0_MFG_ID) != MFG_ID)
