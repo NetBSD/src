@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.14 2002/04/09 00:55:15 thorpej Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.14.2.1 2002/11/06 20:42:19 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.14 2002/04/09 00:55:15 thorpej Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.14.2.1 2002/11/06 20:42:19 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(argc, argv)
 			break;
 		lp = NULL;
 		if (no_forward && strchr(*ap, '@')) {
-			(void) puts("fowarding service denied\r\n");
+			(void) puts("forwarding service denied\r\n");
 			exit(1);
 		}
 
