@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.34 2000/12/12 05:35:48 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.35 2000/12/12 18:13:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,12 +108,12 @@ syscall(frame, code)
 	trapframe_t *frame;
 	int code;
 {
-	caddr_t params;
+	caddr_t stackargs;
 	const struct sysent *callp;
 	struct proc *p;
 	int error;
 	u_int argsize;
-	int args[8], rval[2];
+	int *args, copyargs[8], rval[2];
 	int regparams;
 
 	/*
@@ -185,17 +185,17 @@ syscall(frame, code)
 		return;
 	}
 
-	params = (caddr_t)&frame->tf_r0;
-	regparams = 4;
+	stackargs = (caddr_t)&frame->tf_r0;
+	regparams = 4 * sizeof(int);
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
 	case SYS_syscall:
 		/* Don't have to look in user space, we have it in the trapframe */
-/*		code = fuword(params);*/
-		code = ReadWord(params);
-		params += sizeof(int);
-		regparams -= 1;
+/*		code = fuword(stackargs);*/
+		code = ReadWord(stackargs);
+		stackargs += sizeof(int);
+		regparams -= sizeof(int);
 		break;
 	
         case SYS___syscall:
@@ -203,10 +203,10 @@ syscall(frame, code)
 			break;
 
 		/* Since this will be a register we look in the trapframe not user land */
-/*		code = fuword(params + _QUAD_LOWWORD * sizeof(int));*/
-		code = ReadWord(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		regparams -= 2;
+/*		code = fuword(stackargs + _QUAD_LOWWORD * sizeof(int));*/
+		code = ReadWord(stackargs + _QUAD_LOWWORD * sizeof(int));
+		stackargs += sizeof(quad_t);
+		regparams -= sizeof(quad_t);
 		break;
 
         default:
@@ -217,19 +217,18 @@ syscall(frame, code)
 	callp += (code & (SYS_NSYSENT - 1));
 
 	argsize = callp->sy_argsize;
-	if (argsize > (regparams * sizeof(int)))
-		argsize = regparams*sizeof(int);
-	if (argsize)
-		bcopy(params, (caddr_t)args, argsize);
-
-	argsize = callp->sy_argsize;
-	if (callp->sy_argsize > (regparams * sizeof(int))
-	    && (error = copyin((caddr_t)frame->tf_usr_sp,
-	    (caddr_t)&args[regparams], argsize - (regparams * sizeof(int))))) {
+	if (argsize <= regparams)
+		args = (int *)stackargs;
+	else {
+		args = copyargs;
+		bcopy(stackargs, (caddr_t)args, regparams);
+		if ((error = copyin((caddr_t)frame->tf_usr_sp,
+		    (caddr_t)args + regparams, argsize - regparams))) {
 #ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args);
+			scdebug_call(p, code, callp->sy_narg, args);
 #endif
-		goto bad;
+			goto bad;
+		}
 	}
 
 #ifdef SYSCALL_DEBUG
