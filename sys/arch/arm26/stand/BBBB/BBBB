@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,v 1.1 2000/11/25 13:32:52 bjh21 Exp $
+REM $NetBSD: BBBB,v 1.2 2000/11/25 18:30:23 bjh21 Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -30,7 +30,7 @@ REM This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines.
 REM
 REM Ben's BASIC BSD Booter (allegedly)
 debug% = 1
-PRINT ">> BBBB, Revision 0.32"
+PRINT ">> BBBB, Revision 0.40"
 SYS "OS_ReadMemMapInfo" TO nbpp%, npages%
 IF debug% THEN
   PRINT "Machine has ";npages%;" pages of ";nbpp% DIV 1024;"K each.  ";
@@ -44,6 +44,9 @@ twirl% = 0
 
 DIM vaddr%(npages%-1), access%(npages%-1), pgok%(npages%-1)
 pgok%() = FALSE
+maxfiles% = 10
+DIM file$(maxfiles%), file%(maxfiles%), fsiz%(maxfiles%)
+nfiles% = 0
 
 PROCget_mem_map
 SYS "OS_GetEnv" TO A$
@@ -77,20 +80,30 @@ WHILE LEN(A$) > 0
     WHEN " "
       A$ = MID$(A$, 2)
     OTHERWISE
-      IF file$ <> "" THEN ERROR EXT 0, "Too many files!"
+      IF nfiles% = maxfiles% THEN ERROR EXT 0, "Too many files!"
       WHILE LEFT$(A$, 1) <> " " AND LEN(A$) > 0
-        file$ += LEFT$(A$,1)
+        file$(nfiles%) += LEFT$(A$,1)
         A$ = MID$(A$, 2)
       ENDWHILE
+      nfiles% += 1
   ENDCASE
 ENDWHILE
 IF file$ = "" AND (howto% AND &01) THEN
-  INPUT "boot: "file$
+  INPUT "boot: "file$(0)
+  nfiles% = 1
 ELSE
-  IF file$ = "" THEN file$ = "netbsd"
+  IF nfiles% = 0 THEN
+    file$(0) = "netbsd"
+    nfiles% = 1
+  ENDIF
 ENDIF
-PRINT "Booting "; file$; " (howto = 0x"; ~howto%; ")"
-PROCload_kernel(file$)
+PRINT "Booting ";
+FOR i% = 0 TO nfiles% - 1
+  PRINT file$(i%);
+  IF i% < nfiles% - 1 THEN PRINT '"        ";
+NEXT
+PRINT " (howto = 0x"; ~howto%; ")"
+PROCload_kernel
 DIM P% 1023
 REM
 [ OPT 2
@@ -173,26 +186,23 @@ DEF PROCget_mem_map
   NEXT
 ENDPROC
 
-DEF PROCload_kernel(file$)
-  LOCAL file%, magic%
-  file% = OPENIN(file$)
-  IF file% = 0 THEN ERROR 1, "Can't open kernel"
+DEF PROCload_kernel
+  LOCAL magic%
   DIM magic% 3
-  SYS "OS_GBPB", 3, file%, magic%, 4, 0
+  PROCread(magic%, 4, 0)
   IF magic%?0 = 127 AND magic%?1 = ASC("E") AND magic%?2 = ASC("L") AND magic%?3 = ASC("F") THEN
-    PROCload_kernel_elf(file%)
+    PROCload_kernel_elf
   ELSE
-    PROCload_kernel_aout(file%)
+    ERROR 1, "Not an ELF kernel"
   ENDIF
-  CLOSE#file%
 ENDPROC
 
-DEF PROCload_kernel_elf(file%)
+DEF PROCload_kernel_elf
   LOCAL hdr%, phoff%, phentsize%, phnum%, phdrs%, ph%
   LOCAL offset%, vaddr%, filesz%, memsz%, flags%, first%
   LOCAL shoff%, shentsize%, shnum%, shdrs%, sh%, havesyms%, mshdrs%
   DIM hdr% 51
-  SYS "OS_GBPB", 3, file%, hdr%, 52, 0
+  PROCread(hdr%, 52, 0)
   IF hdr%?4 <> 1 THEN ERROR 1, "Not a 32-bit ELF file"
   IF hdr%?5 <> 1 THEN ERROR 1, "Not an LSB ELF file"
   IF hdr%?6 <> 1 THEN ERROR 1, "Not a version-1 ELF file"
@@ -207,7 +217,7 @@ DEF PROCload_kernel_elf(file%)
   shentsize% = hdr%!46 AND &FFFF
   shnum% = hdr%!48 AND &FFFF
   DIM phdrs% phnum% * phentsize% - 1
-  SYS "OS_GBPB", 3, file%, phdrs%, phnum% * phentsize%, phoff%
+  PROCread(phdrs%, phnum% * phentsize%, phoff%)
   IF phnum% = 0 THEN ERROR 1, "No program headers"
   first% = TRUE
   FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
@@ -231,7 +241,7 @@ DEF PROCload_kernel_elf(file%)
   ssym% = 0
   esym% = 0
   DIM shdrs% shnum% * shentsize% - 1
-  SYS "OS_GBPB", 3, file%, shdrs%, shnum% * shentsize%, shoff%
+  PROCread(shdrs%, shnum% * shentsize%, shoff%)
   IF shnum% <> 0 THEN
     havesyms% = FALSE
     FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
@@ -265,6 +275,30 @@ DEF PROCload_kernel_elf(file%)
   REM XXX
 ENDPROC
 
+DEF PROCread(addr%, size%, offset%)
+  LOCAL i%
+  FOR i% = 0 TO nfiles%
+    IF file%(i%) = 0 THEN
+      file%(i%) = OPENIN(file$(i%))
+      IF file%(i%) = 0 THEN ERROR 1, "Couldn't open " + file$(i%)
+      fsiz%(i%) = EXT#file%(i%)
+    ENDIF
+    IF offset% > fsiz%(i%) THEN
+      offset% -= fsiz%(i%)
+    ELSE
+      IF offset% + size% <= fsiz%(i%) THEN
+        SYS "OS_GBPB", 3, file%(i%), addr%, size%, offset%
+        ENDPROC
+      ELSE
+        SYS "OS_GBPB", 3, file%(i%), addr%, fsiz%(i%) - offset%, offset%
+        size% -= fsiz%(i%) - offset%
+        offset% = 0
+      ENDIF
+    ENDIF
+  NEXT
+  ERROR 1, "Ran off end of last file"
+ENDPROC
+
 DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
   LOCAL paddr%, ppn%, fragaddr%, fragsz%
   PRINT ;filesz%;
@@ -275,7 +309,7 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
     fragaddr% = vaddr%(ppn%) + paddr% MOD nbpp%
     fragsz% = nbpp% - (paddr% MOD nbpp%)
     IF fragsz% > filesz% THEN fragsz% = filesz%
-    SYS "OS_GBPB", 3, file%, fragaddr%, fragsz%, offset%
+    PROCread(fragaddr%, fragsz%, offset%)
     PROCtwirl
     offset% += fragsz%
     vaddr% += fragsz%
@@ -301,74 +335,6 @@ ENDPROC
 
 DEF PROCwrite_word(paddr%, val%)
   !(vaddr%(paddr% DIV nbpp%) + paddr% MOD nbpp%) = val%
-ENDPROC
-
-DEF PROCload_kernel_aout(file%)
-  LOCAL hdr%
-  DIM hdr% 32
-  ssym% = 0 : esym% = 0
-  SYS "OS_GBPB", 3, file%, hdr%, 32, 0
-  bemagic% = (hdr%?0 << 24) OR (hdr%?1 <<16) OR (hdr%?2 << 8) OR hdr%?3
-  IF debug% THEN
-    CASE bemagic% AND &0000FFFF OF
-     WHEN &0107
-       PRINT "(OMAGIC)";
-     WHEN &0108
-       PRINT "(NMAGIC)";
-      WHEN &010B
-        PRINT "(ZMAGIC)";
-      WHEN &00CC
-        PRINT "(QMAGIC)";
-    ENDCASE
-  ENDIF
-  REM XXX: Assume ZMAGIC
-
-  REM foooff% is byte offset in file.  foobasepage% is base page in RAM.
-  txtoff% = nbpp%
-  txtbase% = &98000
-  txtbasepage% = txtbase% DIV nbpp%
-  txtsize% = hdr%!4
-  IF txtsize% MOD nbpp% <> 0 THEN
-    ERROR EXT 1, "Text size not a multiple of page size"
-  ENDIF
-  txtpages% = txtsize% DIV nbpp%
-  dataoff% = txtoff% + txtsize%
-  databasepage% = txtbasepage% + txtpages%
-  database% = databasepage% * nbpp%
-  datasize% = hdr%!8
-  IF datasize% MOD nbpp% <> 0 THEN
-    ERROR EXT 1, "Data size not a multiple of page size"
-  ENDIF
-  datapages% = datasize% DIV nbpp%
-  bssbasepage% = databasepage% + datapages%
-  bssbase% = bssbasepage% * nbpp%
-  bsssize% = hdr%!12
-  freebase% = bssbase% + bsssize%
-  entry% = hdr%!20
-
-  PRINT ;txtsize%;
-  FOR pg% = 0 TO txtpages%-1
-    IF NOT pgok%(txtbasepage% + pg%) THEN ERROR 0,"Page not mine!"
-    SYS "OS_GBPB", 3, file%, vaddr%(txtbasepage%+pg%), nbpp%, txtoff% + pg%*nbpp%
-    PROCtwirl
-  NEXT
-
-  PRINT "+";datasize%;
-  FOR pg% = 0 TO datapages%-1
-    IF NOT pgok%(databasepage% + pg%) THEN ERROR 0,"Page not mine!"
-    SYS "OS_GBPB", 3, file%, vaddr%(databasepage%+pg%), nbpp%, dataoff% + pg%*nbpp%
-    PROCtwirl
-  NEXT
-
-  PRINT "+";bsssize%;
-  FOR pg% = 0 TO bsssize% DIV nbpp% : REM overshoot is safe
-    IF NOT pgok%(bssbasepage% + pg%) THEN ERROR 0,"Page not mine!"
-    PROCbzero(vaddr%(bssbasepage%+pg%), nbpp%)
-    PROCtwirl
-  NEXT
-
-  PRINT " "
-
 ENDPROC
 
 DEF PROCtwirl
