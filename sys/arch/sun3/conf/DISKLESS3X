@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS3X,v 1.1.1.1 1997/01/14 20:57:01 gwr Exp $
+#	$NetBSD: DISKLESS3X,v 1.2 1997/01/31 06:05:14 thorpej Exp $
 
 #
 # DISKLESS Sun3x (3/80, 3/470)
@@ -25,13 +25,14 @@ options 	SYMTAB_SPACE=0x18000
 #options 	KGDB
 
 # Filesystem options
-options 	NFSCLIENT	# nfs client support
-#
-options 	FDESC		# /dev/fd/*
+file-system 	NFS		# nfs client support
+file-system 	FDESC		# /dev/fd/*
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	PROCFS		# /proc
+
+# File system options
 options 	FIFO		# FIFOs; RECOMMENDED
-options 	KERNFS		# /kern
-options 	NULLFS		# loopback file system
-options 	PROCFS		# /proc
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -53,7 +54,7 @@ options 	PMAP_DEBUG
 #options 	EXEC_DEBUG
 options 	DIAGNOSTIC
 
-config		netbsd root on nfs swap on nfs
+config		netbsd root on ? type nfs
 
 #
 # Serial ports
