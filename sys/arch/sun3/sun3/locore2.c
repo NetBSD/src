@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.29 1994/12/13 18:43:03 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.30 1995/01/11 20:39:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -85,17 +85,18 @@ vm_offset_t proc0_user_pa;
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
+/*
+ * Switch to our own interrupt vector table, but
+ * keep the PROM's NMI handler until clock_init
+ */
 static void initialize_vector_table()
 {
-	int i;
-	
+	int nmivec = AUTO_VECTOR_BASE + 7;
+
 	old_vector_table = getvbr();
-	for (i = 0; i < NVECTORS; i++) {
-		if (vector_table[i] == COPY_ENTRY)
-			set_vector_entry(i, (void(*)())old_vector_table[i]);
-	}
+	orig_nmi_vector = old_vector_table[nmivec];
+	vector_table[nmivec] = (void (*)()) orig_nmi_vector;
 	setvbr((unsigned int *) vector_table);
-	orig_nmi_vector = get_vector_entry(AUTO_VECTOR_BASE+7);
 }
 
 vm_offset_t high_segment_alloc(npages)

@@ -1,6 +1,7 @@
-/*	$NetBSD: isr.h,v 1.7 1994/12/12 18:59:40 gwr Exp $	*/
+/*	$NetBSD: isr.h,v 1.8 1995/01/11 20:38:34 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1982 Regents of the University of California.
  * All rights reserved.
@@ -36,16 +37,6 @@
  *	from: @(#)isr.h	7.1 (Berkeley) 5/8/90
  *	isr.h,v 1.2 1993/05/22 07:57:26 cgd Exp
  */
-
-struct isr {
-	struct	isr *isr_forw;
-	struct	isr *isr_back;
-	int	(*isr_intr)();
-	void *isr_arg;
-	int	isr_ipl;
-};
-
-#define NISR 8
 
 void isr_init __P((void));
 void isr_cleanup __P((void));

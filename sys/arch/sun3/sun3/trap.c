@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1994/12/02 06:20:54 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1995/01/11 20:39:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -380,8 +380,7 @@ trap(type, code, v, frame)
 		}
 		/*FALLTHROUGH*/
 
-	case T_MMUFLT|T_USER:	/* page fault */
-	    {
+	case T_MMUFLT|T_USER: { 	/* page fault */
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
@@ -397,14 +396,14 @@ trap(type, code, v, frame)
 
 		/*
 		 * It is only a kernel address space fault iff:
-		 * 	1. (type & T_USER) == 0  and
+		 * 	1. (type & T_USER) == 0  and: (2 or 3)
 		 * 	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space data fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
 		map = &vm->vm_map;
-		if (type == T_MMUFLT) {
+		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
 			if ((p->p_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
@@ -453,7 +452,6 @@ trap(type, code, v, frame)
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
 #endif	/* DDB */
-		}
 #endif	/* DEBUG */
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x, %x, %x, 0) -> %x\n",
@@ -482,7 +480,8 @@ trap(type, code, v, frame)
 		if (rv == KERN_SUCCESS)
 			goto finish;
 
-		if (type == T_MMUFLT) {
+		if ((type & T_USER) == 0) {
+			/* supervisor mode fault */
 			if (p->p_addr->u_pcb.pcb_onfault) {
 #ifdef	DEBUG
 				if (mmudebug & MDB_CPFAULT) {
@@ -499,8 +498,8 @@ trap(type, code, v, frame)
 		ucode = v;
 		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		break;
-	    }
-	}
+	} /* T_MMUFLT */
+	} /* switch */
 
 finish:
 	/* If trap was from supervisor mode, just return. */

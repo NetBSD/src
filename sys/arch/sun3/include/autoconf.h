@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 1994/12/13 18:26:39 gwr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 1995/01/11 20:38:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -58,3 +58,4 @@ int always_match __P((struct device *, void *, void *));
 void bus_scan __P((struct device *, void *, int));
 int  bus_print __P((void *, char *));
 int  bus_peek __P((int, int, int));
+char * bus_mapin __P((int, int, int));
