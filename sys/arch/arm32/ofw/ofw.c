@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.5 1998/06/10 21:55:30 tv Exp $	*/
+/*	$NetBSD: ofw.c,v 1.6 1998/06/12 23:08:53 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -101,6 +101,7 @@
 #include "arm32/isa/isa_machdep.h"
 #endif
 
+#include "opt_uvm.h"
 #include "pc.h"
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
@@ -1259,8 +1260,12 @@ printf("forcing align to be 0x%x\n", align);
 #endif
 
 	args_n_results[nargs + 1] =
+#if defined(UVM)
+	    uvm_pglistalloc(size, low, high, align, 0, &alloclist, 1, 0);
+#else
 	    vm_page_alloc_memory(size, low, high, align, 0, &alloclist,
 	      1, 0);
+#endif
 #if 0
 printf(" -> 0x%lx", args_n_results[nargs + 1]);
 #endif
