@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.33 2004/09/15 19:45:17 hubertf Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.34 2005/02/21 04:32:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,6 +157,7 @@ int
 main(int argc, char *argv[])
 {
 	int i;
+	time_t now;
 
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
@@ -211,6 +212,10 @@ main(int argc, char *argv[])
 
 	if (argc - optind > 0)
 		usage();
+
+	time(&now);
+	printf("IPC status from %s as of %s\n",	/* and extra \n from ctime(3) */
+	    core == NULL ? "<running system>" : core, ctime(&now));
 
         if (display == 0)
 		display = SHMINFO | MSGINFO | SEMINFO;
