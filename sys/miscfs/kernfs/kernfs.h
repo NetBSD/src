@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.10 1996/02/09 22:40:21 christos Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.11 1997/05/10 22:04:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,24 @@
 #ifdef _KERNEL
 struct kernfs_mount {
 	struct vnode	*kf_root;	/* Root node */
+};
+
+struct kern_target {
+	u_char kt_type;
+	u_char kt_namlen;
+	char *kt_name;
+	void *kt_data;
+#define	KTT_NULL	 1
+#define	KTT_TIME	 5
+#define KTT_INT		17
+#define	KTT_STRING	31
+#define KTT_HOSTNAME	47
+#define KTT_AVENRUN	53
+#define KTT_DEVICE	71
+#define	KTT_MSGBUF	89
+	u_char kt_tag;
+	u_char kt_vtype;
+	mode_t kt_mode;
 };
 
 struct kernfs_node {
