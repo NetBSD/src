@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.3 1998/02/04 00:59:02 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.4 1998/02/06 00:22:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -389,7 +389,7 @@ ie_vme_match(parent, cf, aux)
 	int mod;
 
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	return (vme_bus_probe(ct, bt, va->vma_reg[0], 2, mod, 0, 0));
+	return (vme_bus_probe(ct, bt, va->vma_reg[0], 0, 2, mod, 0, 0));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.43 1998/02/04 20:50:47 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.44 1998/02/06 00:24:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -308,8 +308,8 @@ si_match(parent, cf, aux)
 
 	/* Make sure there is something there... */
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	vme_addr = va->vma_reg[0] + 1;
-	if (vme_bus_probe(ct, bt, vme_addr, 1, mod, NULL, 0) == 0)
+	vme_addr = va->vma_reg[0];
+	if (vme_bus_probe(ct, bt, vme_addr, 1, 1, mod, NULL, 0) == 0)
 		return (0);
 
 	/*
@@ -318,8 +318,8 @@ si_match(parent, cf, aux)
 	 * be determined using the fact that the "sc" board occupies
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
-	vme_addr = va->vma_reg[0] + 0x801;
-	return (vme_bus_probe(ct, bt, vme_addr, 1, mod, NULL, 0));
+	vme_addr = va->vma_reg[0];
+	return (vme_bus_probe(ct, bt, vme_addr, 0x801, 1, mod, NULL, 0));
 }
 
 static void
