@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.7 2001/09/25 16:30:13 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.8 2001/11/17 00:44:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
 void	cpu_fiddle_uc(struct lwp *, ucontext_t *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
 void	startlwp(void *);
-void    upcallret(void *);
+void	upcallret(struct lwp *);
 
 void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
