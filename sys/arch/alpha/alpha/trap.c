@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.94 2004/07/17 04:56:31 petrov Exp $ */
+/* $NetBSD: trap.c,v 1.95 2004/07/17 12:21:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2004/07/17 04:56:31 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2004/07/17 12:21:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,6 +542,7 @@ do_fault:
 				    l->l_addr->u_pcb.pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
 					    l->l_addr->u_pcb.pcb_onfault;
+					framep->tf_regs[FRAME_V0] = rv;
 					l->l_addr->u_pcb.pcb_onfault = 0;
 					goto out;
 				}

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.105 2003/11/04 10:33:16 dsl Exp $ */
+/* $NetBSD: locore.s,v 1.106 2004/07/17 12:21:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.105 2003/11/04 10:33:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.106 2004/07/17 12:21:20 yamt Exp $");
 
 #include "assym.h"
 
@@ -1079,7 +1079,7 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
 	mov	v0, s0
@@ -1108,7 +1108,7 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
 	mov	v0, s0
@@ -1182,7 +1182,6 @@ LEAF(kcopyerr, 0)
 	ldq	s0, (32-16)(sp)			/* restore s0.		     */
 	ldq	s1, (32-24)(sp)			/* restore s1.		     */
 	lda	sp, 32(sp)			/* kill stack frame.	     */
-	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(kcopyerr)
 
@@ -1193,7 +1192,7 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Swap a0, a1, for call to memcpy(). */
 	mov	a1, v0
 	mov	a0, a1
@@ -1225,7 +1224,7 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Swap a0, a1, for call to memcpy(). */
 	mov	a1, v0
 	mov	a0, a1
@@ -1250,12 +1249,13 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	RET
 	END(copyout)
 
-LEAF(copyerr, 0)
+LEAF(copyerr_efault, 0)
+	ldiq	v0, EFAULT			/* return EFAULT.	     */
+XLEAF(copyerr, 0)
 	LDGP(pv)
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
-	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(copyerr)
 
