@@ -101,18 +101,19 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-//#include <sys/select.h>
-//#include <sys/tty.h>
-//#include <sys/proc.h>
-//#include <sys/user.h>
+/* #include <sys/select.h> */
+/* #include <sys/tty.h> */
+#include <sys/proc.h>
+/* #include <sys/user.h> */
 #include <sys/conf.h>
-//#include <sys/file.h>
-//#include <sys/uio.h>
+/* #include <sys/file.h> */
+/* #include <sys/uio.h> */
 #include <sys/kernel.h>
-//#include <sys/syslog.h>
+/* #include <sys/syslog.h> */
 #include <sys/types.h>
 #include <sys/device.h>
 #include <dev/isa/isavar.h>
+#include <machine/cpufunc.h>
 
 
 /* SCR_DEBUG is the master switch for turning on debugging */        
@@ -664,12 +665,7 @@ struct cfattach scr_ca =
         sizeof(struct scr_softc), (cfmatch_t)scrprobe, scrattach
 };
 
-struct cfdriver scr_cd =
-{
-    NULL, "scr", DV_TTY
-};
-
-
+extern struct cfdriver scr_cd;
 
 
 /*
@@ -907,7 +903,7 @@ struct proc *p;
 
 
     // david,jim - remove ifdef this when NCI can cope with only 1 open
-    #ifdef 0   
+#if 0   
     if (sc->open)
     {
 
@@ -918,7 +914,7 @@ struct proc *p;
 
     /* set all initial conditions */
     sc->open = TRUE;
-    #endif
+#endif
 
     KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("scropen: success \n"));
     /* Now invoke the line discipline open routine 
@@ -966,15 +962,17 @@ int scrclose(dev, flag, mode, p)
     int         mode;
     struct proc *p;
 {
+#if 0
     int                unit = SCRUNIT(dev);
     struct scr_softc   *sc  = scr_cd.cd_devs[unit];
+#endif
 
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,
                 ("scrclose: called for minor device %d flag 0x%x\n",
-                 unit, flag));
+                 SCRUNIT(dev), flag));
 
     // david,jim - remove ifdef this when NCI can cope with only 1 open
-    #ifdef 0   
+#if 0   
     /* Check we are open in the first place
     */
     if (sc->open)
@@ -991,7 +989,7 @@ int scrclose(dev, flag, mode, p)
     {
         KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,("\t scrclose, device not open\n"));
     }
-    #endif
+#endif
 
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,("scrclose exiting\n"));
     return(0);
@@ -1624,7 +1622,6 @@ struct proc  *p;
 */
 static void masterSM(struct scr_softc * sc,int cmd)
 {
-    u_int savedInts;    
 
     if (sc->bigTrouble) return;     // david,jim , remove this when dust settles 
 
@@ -1964,10 +1961,17 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
                         scrTimeout(t0SendSM,sc,t0scTWorkWaiting,T_WORK_WAITING);
                     }
 
+#ifdef ORIGINAL_SW1_CODE /* XXX XXX XXX cgd */
                     /* see if we have a SW1 byte */
                     else if ( ((sc->dataByte & 0xf0)  == 0x60) || ((sc->dataByte & 0xf0)  == 0x90)  
                               &&
                               sc->dataByte != 0x60)
+#else /* XXX XXX XXX cgd */
+                    /* see if we have a SW1 byte */
+                    else if ( ( ((sc->dataByte & 0xf0)  == 0x60) || ((sc->dataByte & 0xf0)  == 0x90) )
+                              &&
+                              sc->dataByte != 0x60)
+#endif /* XXX XXX XXX cgd */
                     {
                         sc->pIoctlT0->sw1 = sc->dataByte;
                         sc->t0SendS = t0ssRecvSW2;
@@ -2262,10 +2266,17 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                         scrTimeout(t0RecvSM,sc,t0rcTWorkWaiting,T_WORK_WAITING);
                     }
 
+#ifdef ORIGINAL_SW1_CODE /* XXX XXX XXX cgd */
                     /* see if we have a SW1 byte */
                     else if ( ((sc->dataByte & 0xf0)  == 0x60) || ((sc->dataByte & 0xf0)  == 0x90)  
                               &&
                               sc->dataByte != 0x60)
+#else /* XXX XXX XXX cgd */
+                    /* see if we have a SW1 byte */
+                    else if ( ( ((sc->dataByte & 0xf0)  == 0x60) || ((sc->dataByte & 0xf0)  == 0x90) ) 
+                              &&
+                              sc->dataByte != 0x60)
+#endif /* XXX XXX XXX cgd */
                     {
                         sc->pIoctlT0->sw1 = sc->dataByte;
                         sc->t0RecvS = t0rsRecvSW2;
