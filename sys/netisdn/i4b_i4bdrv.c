@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.16 2002/03/29 20:29:53 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.17 2002/03/30 11:15:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.16 2002/03/29 20:29:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.17 2002/03/30 11:15:41 martin Exp $");
 
 #include "isdn.h"
 
@@ -446,7 +446,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			else
 			{
-				d->l3driver->N_CONNECT_REQUEST(mcr->cdid);
+				d->l3driver->N_CONNECT_REQUEST(cd);
 			}
 			break;
 		}
@@ -486,7 +486,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = EINVAL;
 				break;
 			}
-			d->l3driver->N_CONNECT_RESPONSE(mcrsp->cdid, mcrsp->response, mcrsp->cause);
+			d->l3driver->N_CONNECT_RESPONSE(cd, mcrsp->response, mcrsp->cause);
 			break;
 		}
 		
@@ -514,7 +514,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 
-			d->l3driver->N_DISCONNECT_REQUEST(mdr->cdid, mdr->cause);
+			d->l3driver->N_DISCONNECT_REQUEST(cd, mdr->cause);
 			break;
 		}
 		
@@ -677,7 +677,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = EINVAL;
 				break;
 			}
-			d->l3driver->N_ALERT_REQUEST(mar->cdid);
+			d->l3driver->N_ALERT_REQUEST(cd);
 
 			break;
 		}
@@ -1026,7 +1026,7 @@ isdn_bri_ready(int bri)
 	printf("BRI %d at %s\n", bri, d->devname);
 	if (!openflag) return;
 
-	d->l3driver->N_MGMT_COMMAND(bri, CMR_DOPEN, 0);
+	d->l3driver->N_MGMT_COMMAND(d, CMR_DOPEN, 0);
 	i4b_l4_contr_ev_ind(bri, 1);
 }
 

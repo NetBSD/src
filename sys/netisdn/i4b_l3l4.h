@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.11 2002/03/30 07:08:13 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.12 2002/03/30 11:15:41 martin Exp $
  *
  * $FreeBSD$
  *
@@ -71,7 +71,7 @@ struct isdn_l4_driver_functions;
  *	this structure describes one call/connection on one B-channel
  *	and all its parameters
  *---------------------------------------------------------------------------*/
-typedef struct
+typedef struct call_desc
 {
 	u_int	cdid;			/* call descriptor id		*/
 	int	bri;			/* isdn controller number	*/
@@ -222,6 +222,7 @@ const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int uni
 /* forward decl. */
 struct isdn_diagnostic_request;
 struct isdn_dr_prot;
+struct isdn_l3_driver;
 
 /*
  * functions exported by a layer 3 driver to layer 4
@@ -230,13 +231,13 @@ struct isdn_l3_driver_functions {
 	isdn_link_t* (*get_linktab)(void*, int channel);
 	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 	
-	void	(*N_CONNECT_REQUEST)	(unsigned int);	
-	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
-	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
-	void	(*N_ALERT_REQUEST)	(unsigned int);
+	void	(*N_CONNECT_REQUEST)	(struct call_desc *cd);	
+	void	(*N_CONNECT_RESPONSE)	(struct call_desc *cd, int, int);
+	void	(*N_DISCONNECT_REQUEST)	(struct call_desc *cd, int);
+	void	(*N_ALERT_REQUEST)	(struct call_desc *cd);
 	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
 	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
-	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
+	void	(*N_MGMT_COMMAND)	(struct isdn_l3_driver *, int cmd, void *);
 };
 
 /*---------------------------------------------------------------------------*

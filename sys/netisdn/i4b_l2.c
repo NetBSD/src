@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.11 2002/03/29 20:29:53 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.11 2002/03/29 20:29:53 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.11 2002/03/29 20:29:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.11 2002/03/29 20:29:53 martin Exp $");
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
@@ -286,11 +287,11 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 /*---------------------------------------------------------------------------*
  *	MDL_COMMAND_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_mdl_command_req(int bri, int command, void * parm)
+int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
 {
-	struct l2_softc *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
+	struct l2_softc *sc = (l2_softc_t*)drv->l1_token;
 
-	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", bri, command, parm);
+	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", drv->bri, command, parm);
 
 	switch(command)
 	{

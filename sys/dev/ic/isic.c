@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.9 2002/03/29 20:29:54 martin Exp $ 
+ *	$Id: isic.c,v 1.10 2002/03/30 11:15:42 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.9 2002/03/29 20:29:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.10 2002/03/30 11:15:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -63,11 +63,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.9 2002/03/29 20:29:54 martin Exp $");
 
 isdn_link_t *isic_ret_linktab(void*, int channel);
 void isic_set_link(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
-void n_connect_request(u_int cdid);
-void n_connect_response(u_int cdid, int response, int cause);
-void n_disconnect_request(u_int cdid, int cause);
-void n_alert_request(u_int cdid);
-void n_mgmt_command(int bri, int cmd, void *parm);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
 const struct isdn_l3_driver_functions
 isic_l3_driver = {

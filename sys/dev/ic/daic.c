@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.10 2002/03/29 20:29:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.11 2002/03/30 11:15:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,9 @@ struct cfdriver daic_cd = {
 static char * cardtypename __P((int cardtype));
 static int daic_download __P((void *, int portcount, struct isdn_dr_prot *data));
 static int daic_diagnostic __P((void *, struct isdn_diagnostic_request *req));
-static void daic_connect_request(unsigned int);
-static void daic_connect_response(unsigned int, int, int);
-static void daic_disconnect_request(unsigned int, int);
+static void daic_connect_request(struct call_desc *cd);
+static void daic_connect_response(struct call_desc *cd, int, int);
+static void daic_disconnect_request(struct call_desc *cd, int);
 static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize));
 static int daic_handle_intr __P((struct daic_softc *sc, int port));
 static void daic_register_port(struct daic_softc *sc, int port);
@@ -82,8 +82,8 @@ static void daic_bch_config(void *, int channel, int bprot, int updown);
 static void daic_bch_tx_start(void *, int channel);
 static void daic_set_link(void *softc, int channel,
 	const struct isdn_l4_driver_functions *l4_driver, void *l4_inst );
-static void daic_mgmt_command(int bri, int cmd, void *parm);
-static void daic_alert_request(unsigned int);
+static void daic_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
+static void daic_alert_request(struct call_desc *cd);
 
 static isdn_link_t *daic_ret_linktab(void *softc, int channel);
 
@@ -956,10 +956,9 @@ daic_indicate_ind(struct daic_softc *sc, int port)
  *	Layer 4 request a call setup
  *---------------------------------------------------------------------------*/
 static void
-daic_connect_request(unsigned int cdid)
+daic_connect_request(struct call_desc *cd)
 {
 	u_int8_t id, cpn[TELNO_MAX+4], parms[TELNO_MAX+16], *p;
-	call_desc_t *cd = cd_by_cdid(cdid);
 	struct daic_unit *du = cd->ilt->l1token;
 	struct daic_softc *sc = du->du_sc;
 	int port = du->du_port;
@@ -1010,7 +1009,7 @@ daic_connect_request(unsigned int cdid)
 
 	/* map it to the call descriptor id */
 	assoc = malloc(sizeof(struct outcallentry), 0, M_DEVBUF);
-	assoc->cdid = cdid;
+	assoc->cdid = cd->cdid;
 	assoc->dchan_id = id;
 	x = splnet();
 	TAILQ_INSERT_TAIL(&sc->sc_outcalls[port], assoc, queue);
@@ -1037,14 +1036,14 @@ daic_connect_request(unsigned int cdid)
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_connect_response(unsigned int cdid, int response, int cause)
+static void daic_connect_response(struct call_desc *cd, int response, int cause)
 {
 }
 
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_disconnect_request(unsigned int cdid, int cause)
+static void daic_disconnect_request(struct call_desc *cd, int cause)
 {
 }
 
@@ -1068,7 +1067,7 @@ static void daic_bch_tx_start(void *token, int channel)
  *	TODO:
  *---------------------------------------------------------------------------*/
 static void
-daic_mgmt_command(int whatever, int cmd, void *parm)
+daic_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm)
 {
 }
 
@@ -1076,7 +1075,7 @@ daic_mgmt_command(int whatever, int cmd, void *parm)
  *	TODO:
  *---------------------------------------------------------------------------*/
 static void
-daic_alert_request(unsigned int whatever)
+daic_alert_request(struct call_desc *cd)
 {
 }
 
