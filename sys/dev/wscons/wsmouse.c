@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.32 2003/08/07 16:31:30 agc Exp $ */
+/* $NetBSD: wsmouse.c,v 1.33 2003/09/21 19:17:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.32 2003/08/07 16:31:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.33 2003/09/21 19:17:01 jdolecek Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -581,6 +581,14 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
 		sc->sc_base.me_evp->async = *(int *)data != 0;
+		return (0);
+
+	case FIOSETOWN:
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (-*(int *)data != sc->sc_base.me_evp->io->p_pgid
+		    && *(int *)data != sc->sc_base.me_evp->io->p_pid)
+			return (EPERM);
 		return (0);
 
 	case TIOCSPGRP:

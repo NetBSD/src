@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.70 2003/08/07 16:31:29 agc Exp $ */
+/* $NetBSD: wskbd.c,v 1.71 2003/09/21 19:16:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.70 2003/08/07 16:31:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.71 2003/09/21 19:16:59 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -864,6 +864,14 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
 		sc->sc_base.me_evp->async = *(int *)data != 0;
+		return (0);
+
+	case FIOSETOWN:
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (-*(int *)data != sc->sc_base.me_evp->io->p_pgid
+		    && *(int *)data != sc->sc_base.me_evp->io->p_pid)
+			return (EPERM);
 		return (0);
 
 	case TIOCSPGRP:

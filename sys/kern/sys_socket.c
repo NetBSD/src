@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.38 2003/08/07 16:31:55 agc Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.39 2003/09/21 19:17:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.38 2003/08/07 16:31:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.39 2003/09/21 19:17:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,12 +117,14 @@ soo_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case SIOCSPGRP:
-		so->so_pgid = *(int *)data;
-		return (0);
+	case FIOSETOWN:
+	case TIOCSPGRP:
+		return fsetown(p, &so->so_pgid, cmd, data);
 
 	case SIOCGPGRP:
-		*(int *)data = so->so_pgid;
-		return (0);
+	case FIOGETOWN:
+	case TIOCGPGRP:
+		return fgetown(p, so->so_pgid, cmd, data);
 
 	case SIOCATMARK:
 		*(int *)data = (so->so_state&SS_RCVATMARK) != 0;
