@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.74 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.75 2003/12/10 22:35:35 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.74 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.75 2003/12/10 22:35:35 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2062,10 +2062,11 @@ ip6_setpktoptions(control, opt, priv)
 					htons(opt->ip6po_pktinfo->ipi6_ifindex);
 
 			if (opt->ip6po_pktinfo->ipi6_ifindex >= if_indexlim ||
-			    opt->ip6po_pktinfo->ipi6_ifindex < 0 ||
-			    !ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex]) {
+			    opt->ip6po_pktinfo->ipi6_ifindex < 0)
 				return (ENXIO);
-			}
+			if (opt->ip6po_pktinfo->ipi6_ifindex > 0 &&
+			    !ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex])
+				return (ENXIO);
 
 			/*
 			 * Check if the requested source address is indeed a
