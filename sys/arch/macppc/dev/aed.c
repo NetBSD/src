@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.1 1998/10/13 11:21:21 tsubai Exp $	*/
+/*	$NetBSD: aed.c,v 1.2 1998/10/13 13:15:29 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -361,7 +361,7 @@ aed_handoff(event)
 		aed_enqevent(event);
 	else {
 		if (event->def_addr == 2)
-			adb_intr(event);
+			kbd_intr(event);
 	}
 }
 
