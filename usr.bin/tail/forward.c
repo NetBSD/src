@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.13 1998/09/18 01:42:54 cjs Exp $	*/
+/*	$NetBSD: forward.c,v 1.14 1998/11/03 14:26:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.13 1998/09/18 01:42:54 cjs Exp $");
+__RCSID("$NetBSD: forward.c,v 1.14 1998/11/03 14:26:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ forward(fp, style, off, sbp)
 			bytes(fp, off);
 		break;
 	case RLINES:
-		if (S_ISREG(sbp->st_mode))
+		if (S_ISREG(sbp->st_mode)) {
 			if (!off) {
 				if (fseek(fp, 0L, SEEK_END) == -1) {
 					ierr();
@@ -161,6 +161,7 @@ forward(fp, style, off, sbp)
 				}
 			} else
 				rlines(fp, off, sbp);
+		}
 		else if (off == 0) {
 			while (getc(fp) != EOF);
 			if (ferror(fp)) {
