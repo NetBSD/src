@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.21 1996/10/13 04:16:30 christos Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.22 1996/10/25 23:14:07 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -405,15 +405,15 @@ dos2unixfn(dn, un, lower)
  */
 int
 unix2dosfn(un, dn, unlen, gen)
-	u_char *un;
+	const u_char *un;
 	u_char dn[12];
 	int unlen;
 	u_int gen;
 {
 	int i, j, l;
 	int conv = 1;
-	u_char *cp, *dp, *dp1;
-	u_char gentext[6];
+	const u_char *cp, *dp, *dp1;
+	u_char gentext[6], *wcp;
 	
 	/*
 	 * Fill the dos filename string with blanks. These are DOS's pad
@@ -534,16 +534,16 @@ unix2dosfn(un, dn, unlen, gen)
 	/*
 	 * Now insert the generation number into the filename part
 	 */
-	for (cp = gentext + sizeof(gentext); cp > gentext && gen; gen /= 10)
-		*--cp = gen % 10 + '0';
+	for (wcp = gentext + sizeof(gentext); wcp > gentext && gen; gen /= 10)
+		*--wcp = gen % 10 + '0';
 	if (gen)
 		return 0;
 	for (i = 8; dn[--i] == ' ';);
-	if (gentext + sizeof(gentext) - cp + 1 > 8 - i)
-		i = 8 - (gentext + sizeof(gentext) - cp + 1);
+	if (gentext + sizeof(gentext) - wcp + 1 > 8 - i)
+		i = 8 - (gentext + sizeof(gentext) - wcp + 1);
 	dn[i++] = '~';
-	while (cp < gentext + sizeof(gentext))
-		dn[i] = *cp++;
+	while (wcp < gentext + sizeof(gentext))
+		dn[i] = *wcp++;
 	return 3;
 }
 
@@ -554,13 +554,14 @@ unix2dosfn(un, dn, unlen, gen)
  */
 int
 unix2winfn(un, unlen, wep, cnt, chksum)
-	u_char *un;
+	const u_char *un;
 	int unlen;
 	struct winentry *wep;
 	int cnt;
 	int chksum;
 {
-	u_int8_t *cp;
+	const u_int8_t *cp;
+	u_int8_t *wcp;
 	int i;
 
 	/*
@@ -574,7 +575,7 @@ unix2winfn(un, unlen, wep, cnt, chksum)
 	/*
 	 * Initialize winentry to some useful default
 	 */
-	for (cp = (u_int8_t *)wep, i = sizeof(*wep); --i >= 0; *cp++ = 0xff);
+	for (wcp = (u_int8_t *)wep, i = sizeof(*wep); --i >= 0; *wcp++ = 0xff);
 	wep->weCnt = cnt;
 	wep->weAttributes = ATTR_WIN95;
 	wep->weReserved1 = 0;
@@ -584,31 +585,31 @@ unix2winfn(un, unlen, wep, cnt, chksum)
 	/*
 	 * Now convert the filename parts
 	 */
-	for (cp = wep->wePart1, i = sizeof(wep->wePart1)/2; --i >= 0;) {
+	for (wcp = wep->wePart1, i = sizeof(wep->wePart1)/2; --i >= 0;) {
 		if (--unlen < 0)
 			goto done;
-		*cp++ = *un++;
-		*cp++ = 0;
+		*wcp++ = *un++;
+		*wcp++ = 0;
 	}
-	for (cp = wep->wePart2, i = sizeof(wep->wePart2)/2; --i >= 0;) {
+	for (wcp = wep->wePart2, i = sizeof(wep->wePart2)/2; --i >= 0;) {
 		if (--unlen < 0)
 			goto done;
-		*cp++ = *un++;
-		*cp++ = 0;
+		*wcp++ = *un++;
+		*wcp++ = 0;
 	}
-	for (cp = wep->wePart3, i = sizeof(wep->wePart3)/2; --i >= 0;) {
+	for (wcp = wep->wePart3, i = sizeof(wep->wePart3)/2; --i >= 0;) {
 		if (--unlen < 0)
 			goto done;
-		*cp++ = *un++;
-		*cp++ = 0;
+		*wcp++ = *un++;
+		*wcp++ = 0;
 	}
 	if (!unlen)
 		wep->weCnt |= WIN_LAST;
 	return unlen;
 
 done:
-	*cp++ = 0;
-	*cp++ = 0;
+	*wcp++ = 0;
+	*wcp++ = 0;
 	wep->weCnt |= WIN_LAST;
 	return 0;
 }
@@ -619,7 +620,7 @@ done:
  */
 int
 winChkName(un, unlen, wep, chksum)
-	u_char *un;
+	const u_char *un;
 	int unlen;
 	struct winentry *wep;
 	int chksum;
@@ -805,7 +806,7 @@ winChksum(name)
  */
 int
 winSlotCnt(un, unlen)
-	u_char *un;
+	const u_char *un;
 	int unlen;
 {
 	for (un += unlen; unlen > 0; unlen--)

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.12 1996/10/25 23:14:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -47,7 +47,7 @@ struct nameidata {
 	/*
 	 * Arguments to namei/lookup.
 	 */
-	caddr_t	ni_dirp;		/* pathname pointer */
+	const char *ni_dirp;		/* pathname pointer */
 	enum	uio_seg ni_segflg;	/* location of pathname */
      /* u_long	ni_nameiop;		   namei operation */
      /* u_long	ni_flags;		   flags to namei */
@@ -67,7 +67,7 @@ struct nameidata {
 	 * Shared between namei and lookup/commit routines.
 	 */
 	size_t	ni_pathlen;		/* remaining chars in path */
-	char	*ni_next;		/* next location in pathname */
+	const char *ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
 	/*
 	 * Lookup parameters: this structure describes the subset of
@@ -86,7 +86,7 @@ struct nameidata {
 		 * Shared between lookup and commit routines.
 		 */
 		char	*cn_pnbuf;	/* pathname buffer */
-		char	*cn_nameptr;	/* pointer to looked up name */
+		const char *cn_nameptr;	/* pointer to looked up name */
 		long	cn_namelen;	/* length of looked up component */
 		u_long	cn_hash;	/* hash value of looked up name */
 		long	cn_consume;	/* chars to consume in lookup() */

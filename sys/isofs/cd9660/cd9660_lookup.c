@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.14 1996/02/09 21:31:56 christos Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.15 1996/10/25 23:14:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -123,7 +123,7 @@ cd9660_lookup(v)
 	char altname[NAME_MAX];
 	int res;
 	int assoc, len;
-	char *name;
+	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct ucred *cred = cnp->cn_cred;
