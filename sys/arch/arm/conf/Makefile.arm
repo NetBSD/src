@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.10 2001/10/26 06:45:35 jmc Exp $
+#	$NetBSD: Makefile.arm,v 1.11 2001/11/06 19:52:21 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -126,6 +126,11 @@ SYSTEM_LD_TAIL+=; \
 .else
 #LINKFLAGS+=	-S
 LINKFLAGS+=	-X
+.endif
+
+.if defined(SYSTEM_LD_TAIL_EXTRA)
+SYSTEM_LD_TAIL+=; \
+		${SYSTEM_LD_TAIL_EXTRA}
 .endif
 
 %LOAD
