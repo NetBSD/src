@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25.2.1 1999/04/13 21:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.2 1999/11/08 06:26:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -516,17 +516,48 @@ lfs_rename(v)
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
 	} */ *ap = v;
-	int ret;
-	
-	if((ret=SET_DIROP(VTOI(ap->a_fdvp)->i_lfs))!=0)
-		return ret;
-	MARK_VNODE(ap->a_fdvp);
-	MARK_VNODE(ap->a_tdvp);
-	ret = ufs_rename(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_fvp);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_tvp);
-	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,ap->a_fdvp,"rename");
-	return (ret);
+	struct vnode *tvp, *fvp, *tdvp, *fdvp;
+	int error;
+	struct lfs *fs;
+
+	fs = VTOI(ap->a_fdvp)->i_lfs;
+	tvp = ap->a_tvp;
+	tdvp = ap->a_tdvp;
+	fvp = ap->a_fvp;
+	fdvp = ap->a_fdvp;
+
+	/*
+	 * Check for cross-device rename.
+	 * If it is, we don't want to set dirops, just error out.
+	 * (In particular note that MARK_VNODE(tdvp) will DTWT on
+	 * a cross-device rename.)
+	 *
+	 * Copied from ufs_rename.
+	 */
+	if ((fvp->v_mount != tdvp->v_mount) ||
+	    (tvp && (fvp->v_mount != tvp->v_mount))) {
+		error = EXDEV;
+		VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
+		if (tdvp == tvp)
+			vrele(tdvp);
+		else
+			vput(tdvp);
+		if (tvp)
+			vput(tvp);
+		VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
+		vrele(fdvp);
+		vrele(fvp);
+		return (error);
+	}
+	if((error=SET_DIROP(fs))!=0)
+		return (error);
+	MARK_VNODE(fdvp);
+	MARK_VNODE(tdvp);
+	error = ufs_rename(ap);
+	MAYBE_INACTIVE(fs,fvp);
+	MAYBE_INACTIVE(fs,tvp);
+	SET_ENDOP(fs,fdvp,"rename");
+	return (error);
 }
 
 /* XXX hack to avoid calling ITIMES in getattr */
