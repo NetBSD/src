@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockatmark.3,v 1.4 2002/02/07 07:00:22 ross Exp $
+.\"	$NetBSD: sockatmark.3,v 1.5 2003/03/31 18:38:11 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ is at the out-of-band mark.
 If successful, the
 .Nm sockatmark
 function returns 1 to indicate that the socket is at an out-of-band mark;
-0 is returned if there is no out-of-band mark or the mark is preceeded
+0 is returned if there is no out-of-band mark or the mark is preceded
 by in-band data.
 Otherwise, -1 is returned and
 .Va errno
@@ -71,7 +71,7 @@ The argument
 .Fa s
 is not a valid file descriptor.
 .It Bq Er ENOTTY
-The file desciptor
+The file descriptor
 .Fa s
 does not refer to a socket.
 .El
