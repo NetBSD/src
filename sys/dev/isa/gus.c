@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.65 1999/02/17 21:44:55 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.66 1999/02/19 16:59:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ struct gus_softc {
 
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
-	int sc_drq;			/* DMA channel for play */
+	int sc_playdrq;			/* DMA channel for play */
 	int sc_recdrq;			/* DMA channel for recording */
 
 	int sc_flags;			/* Various flags about the GUS */
@@ -829,7 +829,7 @@ gusattach(parent, self, aux)
 
 	sc->sc_iobase = iobase;
 	sc->sc_irq = ia->ia_irq;
-	sc->sc_drq = ia->ia_drq;
+	sc->sc_playdrq = ia->ia_drq;
 	sc->sc_recdrq = ia->ia_drq2;
 
 	/*
@@ -863,11 +863,11 @@ gusattach(parent, self, aux)
 
 	c = ((unsigned char) gus_irq_map[ia->ia_irq]) | GUSMASK_BOTH_RQ;
 
-	if (sc->sc_recdrq == sc->sc_drq)
-		d = (unsigned char) (gus_drq_map[sc->sc_drq] |
+	if (sc->sc_recdrq == sc->sc_playdrq)
+		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
 				GUSMASK_BOTH_RQ);
 	else
-		d = (unsigned char) (gus_drq_map[sc->sc_drq] |
+		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
 				gus_drq_map[sc->sc_recdrq] << 3);
 
 	/*
@@ -920,15 +920,15 @@ gusattach(parent, self, aux)
 	}
 	if (sc->sc_revision < 0xa || !gus_init_cs4231(sc)) {
 		/* Not using the CS4231, so create our DMA maps. */
-		if (sc->sc_drq != -1) {
-			if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
+		if (sc->sc_playdrq != -1) {
+			if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 				printf("%s: can't create map for drq %d\n",
-				       sc->sc_dev.dv_xname, sc->sc_drq);
+				       sc->sc_dev.dv_xname, sc->sc_playdrq);
 				return;
 			}
 		}
-		if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
+		if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
 			if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 				printf("%s: can't create map for drq %d\n",
@@ -1426,7 +1426,7 @@ gus_dmaout_timeout(arg)
  	
 #if 0
  	/* XXX we will dmadone below? */
- 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
 #endif
  	
  	gus_dmaout_dointr(sc);
@@ -1468,7 +1468,7 @@ gus_dmaout_dointr(sc)
  	bus_space_handle_t ioh2 = sc->sc_ioh2;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
- 	isa_dmadone(sc->sc_ic, sc->sc_drq);
+ 	isa_dmadone(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
  	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
@@ -1958,7 +1958,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	 * extra hoops; this includes translating the DRAM address a bit
 	 */
 
-	if (sc->sc_drq >= 4) {
+	if (sc->sc_playdrq >= 4) {
 		c |= GUSMASK_DMA_WIDTH;
 		gusaddr = convert_to_16bit(gusaddr);
 	}
@@ -1982,7 +1982,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
- 	isa_dmastart(sc->sc_ic, sc->sc_drq, buffaddr, length,
+ 	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buffaddr, length,
  	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 	/*
@@ -2871,7 +2871,7 @@ gus_init_cs4231(sc)
 	 * The codec is a bit weird--swapped dma channels.
 	 */
 	ctrl |= GUS_MAX_CODEC_ENABLE;
-	if (sc->sc_drq >= 4)
+	if (sc->sc_playdrq >= 4)
 		ctrl |= GUS_MAX_RECCHAN16;
 	if (sc->sc_recdrq >= 4)
 		ctrl |= GUS_MAX_PLAYCHAN16;
@@ -2888,8 +2888,8 @@ gus_init_cs4231(sc)
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.sc_ad1848.parent = sc;
-		sc->sc_codec.sc_drq = sc->sc_recdrq;
-		sc->sc_codec.sc_recdrq = sc->sc_drq;
+		sc->sc_codec.sc_playdrq = sc->sc_recdrq;
+		sc->sc_codec.sc_recdrq = sc->sc_playdrq;
 		gus_hw_if = gusmax_hw_if;
 		/* enable line in and mic in the GUS mixer; the codec chip
 		   will do the real mixing for them. */
@@ -3073,7 +3073,7 @@ gus_halt_out_dma(addr)
  	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
 	untimeout(gus_dmaout_timeout, sc);
- 	isa_dmaabort(sc->sc_ic, sc->sc_drq);
+ 	isa_dmaabort(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3558,7 +3558,7 @@ gus_get_props(addr)
 {
 	struct gus_softc *sc = addr;
 	return (AUDIO_PROP_MMAP |
-	    (sc->sc_recdrq == sc->sc_drq ? 0 : AUDIO_PROP_FULLDUPLEX));
+	    (sc->sc_recdrq == sc->sc_playdrq ? 0 : AUDIO_PROP_FULLDUPLEX));
 }
 
 STATIC int
