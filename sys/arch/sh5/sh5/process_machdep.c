@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 2002/10/31 14:20:39 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 2002/12/06 10:22:15 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #include <sys/user.h>
 
 #include <machine/cpu.h>
+#include <machine/cacheops.h>
 #include <machine/pcb.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -110,6 +111,21 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);
+
+	/*
+	 * XXX: This is a disgusting hack to work-around an unknown
+	 * problem with the pmap which results in stale icache data
+	 * during process exec.
+	 *
+	 * It seems that tearing down the original vmspace can, under some
+	 * circumstances, leave turds in the icache, leading to random
+	 * lossage in the new executable.
+	 *
+	 * Until such time as the cause is determined and fixed, this works
+	 * around the problem.
+	 */
+	if (__cpu_cache_iinv_all)
+		__cpu_cache_iinv_all();
 }
 
 int
