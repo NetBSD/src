@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: krb_locl.h,v 1.2 2001/01/07 05:44:03 christos Exp $ */
+/* $Id: krb_locl.h,v 1.3 2001/09/17 12:21:42 assar Exp $ */
 
 #ifndef __krb_locl_h
 #define __krb_locl_h
@@ -137,12 +137,6 @@ krb_name_to_name __P((
 	const char *host,
 	char *phost,
 	size_t phost_size));
-
-void
-encrypt_ktext __P((
-	KTEXT cip,
-	des_cblock *key,
-	int encrypt));
 
 int
 kdc_reply_cipher __P((

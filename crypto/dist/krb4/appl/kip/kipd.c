@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$Id: kipd.c,v 1.2 2001/01/11 03:01:29 lukem Exp $");
+RCSID("$Id: kipd.c,v 1.3 2001/09/17 12:21:41 assar Exp $");
 
 static int
 recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
@@ -44,7 +44,7 @@ recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
      AUTH_DAT auth;
      char instance[INST_SZ];
      struct sockaddr_in thisaddr, thataddr;
-     int addrlen;
+     socklen_t addrlen;
      char version[KRB_SENDAUTH_VLEN + 1];
      u_char ok = 0;
      struct passwd *passwd;
@@ -162,8 +162,8 @@ main (int argc, char **argv)
     int port;
     int optind = 0;
 
-    set_progname (argv[0]);
-    roken_openlog(__progname, LOG_PID, LOG_DAEMON);
+    setprogname (argv[0]);
+    roken_openlog(getprogname(), LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))

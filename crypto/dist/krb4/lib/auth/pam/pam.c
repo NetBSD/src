@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include<config.h>
-RCSID("$Id: pam.c,v 1.2 2001/01/11 03:00:31 lukem Exp $");
+RCSID("$Id: pam.c,v 1.3 2001/09/17 12:21:41 assar Exp $");
 #endif
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kadm_locl.h,v 1.2 2001/02/04 18:02:30 christos Exp $ */
+/* $Id: kadm_locl.h,v 1.3 2001/09/17 12:21:42 assar Exp $ */
 
 #include "config.h"
 #include "protos.h"
@@ -69,7 +69,11 @@ struct hostent  *gethostbyname(const char *);
 
 #include <roken.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <krb_err.h>
 #include <krb_db.h>
