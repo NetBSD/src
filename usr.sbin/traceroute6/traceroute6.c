@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.4 1999/07/30 01:19:58 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.5 1999/09/03 01:49:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.4 1999/07/30 01:19:58 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.5 1999/09/03 01:49:16 itojun Exp $");
 #endif
 #endif
 
@@ -529,11 +529,14 @@ main(argc, argv)
     {
 	int len;
 	char buf[16];
+
+	/*
+	 * do not raise error even if setsockopt fails, kernel may have ipsec
+	 * turned off.
+	 */
 	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0)
 		errx(1, ipsec_strerror());
-	if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
-		       buf, len) < 0)
-		err(1, "Unable to set IPSec policy");
+	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len);
     }
 #else
     {
@@ -588,11 +591,14 @@ main(argc, argv)
     {
 	int len;
 	char buf[16];
+
+	/*
+	 * do not raise error even if setsockopt fails, kernel may have ipsec
+	 * turned off.
+	 */
 	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0)
 		errx(1, ipsec_strerror());
-	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
-		       buf, len) < 0)
-		err(1, "Unable to set IPSec policy");
+	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len);
     }
 #else
     {
