@@ -1,7 +1,7 @@
 #
 #	PAIN -- one of cgd's 486/50 EISA boxes
 #
-#	$Id: PAIN,v 1.13.2.2 1993/09/29 05:37:21 mycroft Exp $
+#	$Id: PAIN,v 1.13.2.3 1993/09/29 06:57:07 mycroft Exp $
 #
 
 # standard options
@@ -12,7 +12,7 @@ options		DUMMY_NOPS		# speed hack; dangerous
 
 #options	GENERIC			# historical
 maxusers	10			# estimated number of users
-options		TIMEZONE="'8*60'"	# time zone to read RTC in
+options		TIMEZONE=480, DST=1	# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 options		DDB			# kernel debugger; recommended
