@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.205 2003/09/11 15:34:26 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.206 2003/09/14 11:09:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.205 2003/09/11 15:34:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.206 2003/09/14 11:09:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -555,6 +555,7 @@ getnewvnode(tag, mp, vops, vpp)
 
 	if (tryalloc &&
 	    (vp = pool_get(&vnode_pool, PR_NOWAIT)) != NULL) {
+		numvnodes++;
 		simple_unlock(&vnode_free_list_slock);
 		memset(vp, 0, sizeof(*vp));
 		simple_lock_init(&vp->v_interlock);
@@ -562,7 +563,6 @@ getnewvnode(tag, mp, vops, vpp)
 		uobj->pgops = &uvm_vnodeops;
 		uobj->uo_npages = 0;
 		TAILQ_INIT(&uobj->memq);
-		numvnodes++;
 	} else {
 		vp = getcleanvnode(p);
 		/*
