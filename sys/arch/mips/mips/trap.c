@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2000/03/28 00:55:33 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.123 2000/03/28 02:58:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2000/03/28 00:55:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2000/03/28 02:58:50 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -180,9 +180,9 @@ void interrupt __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
 void dealfpu __P((unsigned, unsigned, unsigned));
 
-extern void MachEmulateFP __P((unsigned));
-extern void MachFPInterrupt __P((unsigned, unsigned, unsigned,
-				struct frame *));
+void MachEmulateFP __P((unsigned));
+void MachFPInterrupt __P((unsigned, unsigned, unsigned,
+			  struct frame *));
 
 /*
  * Other forward declarations.
@@ -408,7 +408,7 @@ trap(status, cause, vaddr, opc, frame)
 	struct proc *p = curproc;
 	vm_prot_t ftype;
 	extern struct proc *fpcurproc;
-	extern void fswintrberr __P((void));
+	void fswintrberr __P((void));
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
@@ -1136,7 +1136,7 @@ extern char mips3_UserGenException[];
 extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
-extern int main __P((void*));
+int main __P((void*));
 
 /*
  *  stack trace code, also useful to DDB one day
