@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.21 2005/02/27 00:27:02 perry Exp $ */
+/* $NetBSD: rtwvar.h,v 1.22 2005/03/02 05:20:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -157,7 +157,7 @@ struct rtw_txsoft {
 #define RTW_TXQLENLO	64	/* low-priority queue length */
 #define RTW_TXQLENMD	64	/* medium-priority */
 #define RTW_TXQLENHI	64	/* high-priority */
-#define RTW_TXQLENBCN	1	/* beacon */
+#define RTW_TXQLENBCN	2	/* beacon */
 
 #define RTW_NTXDESCLO	RTW_TXQLENLO
 #define RTW_NTXDESCMD	RTW_TXQLENMD
