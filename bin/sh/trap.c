@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1996/10/16 15:45:19 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1997/07/04 21:02:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-static char rcsid[] = "$NetBSD: trap.c,v 1.16 1996/10/16 15:45:19 christos Exp $";
+__RCSID("$NetBSD: trap.c,v 1.17 1997/07/04 21:02:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +164,6 @@ setsignal(signo)
 	int action;
 	sig_t sigact = SIG_DFL;
 	char *t;
-	extern void onsig();
 
 	if ((t = trap[signo]) == NULL)
 		action = S_DFL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.35 1997/03/14 01:42:19 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.36 1997/07/04 21:01:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.35 1997/03/14 01:42:19 christos Exp $";
+__RCSID("$NetBSD: eval.c,v 1.36 1997/07/04 21:01:56 christos Exp $");
 #endif
 #endif /* not lint */
 
