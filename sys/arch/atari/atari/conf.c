@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1998/06/25 20:22:04 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1998/08/18 07:45:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -179,6 +179,13 @@ cdev_decl(i4brbch);
 cdev_decl(i4btel);
 #endif /* __I4B_IS_INTEGRATED */
 
+/* open, close, read, write, ioctl, mmap */
+#define cdev_leo_init(c,n) { \
+       dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+       dev_init(c,n,write), dev_init(c,n,ioctl), \
+       (dev_type_stop((*))) enodev, 0, seltrue, \
+       dev_init(c,n,mmap) }
+
 #include "bpfilter.h"
 #include "ch.h"
 #include "et.h"
@@ -198,6 +205,7 @@ cdev_decl(i4btel);
 #include "uk.h"
 #include "view.h"
 #include "zs.h"
+#include "leo.h"
 
 cdev_decl(bpf);
 cdev_decl(ccd);
@@ -235,6 +243,7 @@ cdev_decl(view);
 cdev_decl(wd);
 cdev_decl(zs);
 cdev_decl(et);
+cdev_decl(leo);
 
 struct cdevsw	cdevsw[] =
 {
@@ -277,7 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 36: ip-filter device */
 	cdev_disk_init(NMD,md),		/* 37: memory disk - for install disk */
 	cdev_rnd_init(NRND,rnd),	/* 38: random source pseudo-device */
-  	cdev_notdef(),			/* 39 */
+  	cdev_leo_init(NLEO,leo),	/* 39: Circad Leonardo video */
 	cdev_et_init(NET,et),		/* 40: ET4000 color video */
   	cdev_notdef(),			/* 41 */
   	cdev_notdef(),			/* 42 */
