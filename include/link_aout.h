@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.18 2000/02/09 22:41:53 kristerw Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.19 2000/09/14 20:36:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <a.out.h>			/* for struct nlist */
 
 /*
- * A `Shared Object Descriptor' descibes a shared object that is needed
+ * A `Shared Object Descriptor' describes a shared object that is needed
  * to complete the link edit process of the object containing it.
  * A list of such objects (chained through `sod_next') is pointed at
  * by `sdt_sods' in the section_dispatch_table structure.
@@ -233,7 +233,7 @@ struct	_dynamic {
  */
 struct crt_ldso {
 	int		crt_ba;		/* Base address of ld.so */
-	int		crt_dzfd;	/* "/dev/zero" file decriptor (SunOS) */
+	int		crt_dzfd;	/* "/dev/zero" file descriptor (SunOS) */
 	int		crt_ldfd;	/* ld.so file descriptor */
 	struct _dynamic	*crt_dp;	/* Main's __DYNAMIC */
 	char		**crt_ep;	/* environment strings */
