@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
+/*	$NetBSD: lif.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -105,10 +105,10 @@ lif_open(const char *path, struct open_file *f)
 			if (debug)
 				printf("lif_open: "
 				       "%s <--> '%c%c%c%c%c%c%c%c%c%c'\n",
-				       path, dp->dir_name[0], dp->dir_name[1], 
-				       dp->dir_name[2], dp->dir_name[3], 
-				       dp->dir_name[4], dp->dir_name[5], 
-				       dp->dir_name[6], dp->dir_name[7], 
+				       path, dp->dir_name[0], dp->dir_name[1],
+				       dp->dir_name[2], dp->dir_name[3],
+				       dp->dir_name[4], dp->dir_name[5],
+				       dp->dir_name[6], dp->dir_name[7],
 				       dp->dir_name[8], dp->dir_name[9]);
 #endif
 			for (p = path, q = dp->dir_name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.3 2003/10/21 12:22:37 itohy Exp $	*/
+/*	$NetBSD: itecons.c,v 1.4 2003/10/21 13:10:42 itohy Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -100,7 +100,7 @@ ite_probe(struct consdev *cn)
 		/* morse code with the LED's?!! */
 		cons_pzdev->pz_iodc_io = kbd_pzdev->pz_iodc_io = NULL;
 	} else {
-        	cn->cn_pri = CN_INTERNAL;
+		cn->cn_pri = CN_INTERNAL;
 		cn->cn_dev = makedev(0, 0);
 	}
 }
