@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.47.2.1 2002/07/18 04:47:47 lukem Exp $
+# $NetBSD: makeflist,v 1.47.2.2 2002/07/23 09:15:47 lukem Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
 # set defaults
-: ${MAKE=make}
+MAKE="${MAKE:-make} -j 1"
 machine=`${MAKE} print_machine`
 machine_arch=`${MAKE} print_machine_arch`
 machine_cpu=`${MAKE} print_machine_cpu`
