@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.3 (Berkeley) 10/13/93
+ *	@(#)pathnames.h	8.3 (Berkeley) 1/2/94
  */
 
 #define	_PATH_MANCONF	"/etc/man.conf"
