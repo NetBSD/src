@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.12 2004/05/06 07:11:40 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.13 2004/05/09 08:19:21 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.12 2004/05/06 07:11:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.13 2004/05/09 08:19:21 dyoung Exp $");
 #endif
 
 /*
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.12 2004/05/06 07:11:40 dyoung Exp $"
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_sysctl.h>
 
 #include <net/bpf.h>
 
@@ -103,6 +104,9 @@ SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 
 int	ieee80211_inact_max = IEEE80211_INACT_MAX;
 static int ieee80211_inact_max_nodenum;
+
+struct ieee80211com_head ieee80211com_head =
+    LIST_HEAD_INITIALIZER(ieee80211com_head);
 
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
 		enum ieee80211_phymode);
@@ -177,6 +181,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
 
+	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);
 	ieee80211_proto_attach(ifp);
 }
@@ -189,6 +194,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	ieee80211_proto_detach(ifp);
 	ieee80211_crypto_detach(ifp);
 	ieee80211_node_detach(ifp);
+	LIST_REMOVE(ic, ic_list);
 #ifdef __FreeBSD__
 	ifmedia_removeall(&ic->ic_media);
 #else
@@ -915,6 +921,12 @@ ieee80211_media2rate(int mword)
 }
 
 #ifdef __NetBSD__
+struct ieee80211_node_walk {
+	struct ieee80211com	*nw_ic;
+	struct ieee80211_node	*nw_ni;
+	u_short			nw_ifindex;
+};
+
 /* TBD factor with sysctl_ath_verify. */
 static int
 sysctl_ieee80211_verify(SYSCTLFN_ARGS)
@@ -933,8 +945,9 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 	    __func__, t, node.sysctl_num, rnode->sysctl_num));
 
 	if (node.sysctl_num == ieee80211_inact_max_nodenum) {
-		if (t < 0)
+		if (t < 1)
 			return (EINVAL);
+		t = roundup(t, IEEE80211_INACT_WAIT) / IEEE80211_INACT_WAIT;
 #ifdef IEEE80211_DEBUG
 	} else if (node.sysctl_num == ieee80211_debug_nodenum) {
 		if (t < 0 || t > 2)
@@ -946,6 +959,183 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 	*(int*)rnode->sysctl_data = t;
 
 	return (0);
+}
+
+static struct ieee80211_node *
+ieee80211_node_walkfirst(struct ieee80211_node_walk *nw,
+    u_short if_index)
+{
+	struct ieee80211com *ic;
+	(void)memset(nw, 0, sizeof(*nw));
+
+	nw->nw_ifindex = if_index;
+
+	LIST_FOREACH(ic, &ieee80211com_head, ic_list) {
+		IEEE80211_DPRINTF(("%s: visiting ic %p\n", __func__, ic));
+		if (if_index != 0 && ic->ic_if.if_index != if_index) {
+			IEEE80211_DPRINTF(("%s: wrong ifindex, "
+			    "skipping ic %p\n", __func__, ic));
+			continue;
+		}
+		nw->nw_ic = ic;
+		nw->nw_ni = ic->ic_bss;
+	}
+	IEEE80211_DPRINTF(("%s: ic %p ni %p\n", __func__, nw->nw_ic,
+	    nw->nw_ni));
+	return nw->nw_ni;
+}
+
+static struct ieee80211_node *
+ieee80211_node_walknext(struct ieee80211_node_walk *nw)
+{
+	KASSERT(nw->nw_ic != NULL && nw->nw_ni != NULL);
+
+	if (nw->nw_ni == nw->nw_ic->ic_bss)
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_node);
+	else
+		nw->nw_ni = TAILQ_NEXT(nw->nw_ni, ni_list);
+
+	while (nw->nw_ni == NULL) {
+		if (nw->nw_ifindex != 0)
+			return NULL;
+
+		nw->nw_ic = LIST_NEXT(nw->nw_ic, ic_list);
+		if (nw->nw_ic == NULL)
+			return NULL;
+
+		nw->nw_ni = TAILQ_FIRST(&nw->nw_ic->ic_node);
+	}
+
+	IEEE80211_DPRINTF(("%s: ic %p bss %p ni %p\n", __func__, nw->nw_ic,
+	    nw->nw_ic->ic_bss, nw->nw_ni));
+
+	return nw->nw_ni;
+}
+
+static void
+sysctl_ieee80211_fill_node(struct ieee80211_node *ni,
+    struct ieee80211_node_sysctl *ns, int ifindex,
+    struct ieee80211_channel *chan0)
+{
+	ns->ns_ifindex = ifindex;
+	ns->ns_capinfo = ni->ni_capinfo;
+	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
+	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
+	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
+		ns->ns_freq = ni->ni_chan->ic_freq;
+		ns->ns_chanflags = ni->ni_chan->ic_flags;
+		ns->ns_chanidx = ni->ni_chan - chan0;
+	} else {
+		ns->ns_freq = ns->ns_chanflags = 0;
+		ns->ns_chanidx = 0;
+	}
+	ns->ns_rssi = ni->ni_rssi;
+	ns->ns_esslen = ni->ni_esslen;
+	(void)memcpy(ns->ns_essid, ni->ni_essid, sizeof(ns->ns_essid));
+	ns->ns_pwrsave = ni->ni_pwrsave;
+	ns->ns_erp = ni->ni_erp;
+	ns->ns_associd = ni->ni_associd;
+	ns->ns_inact = ni->ni_inact * IEEE80211_INACT_WAIT;
+	ns->ns_rstamp = ni->ni_rstamp;
+	ns->ns_rates = ni->ni_rates;
+	ns->ns_txrate = ni->ni_txrate;
+	ns->ns_intval = ni->ni_intval;
+	(void)memcpy(ns->ns_tstamp, ni->ni_tstamp, sizeof(ns->ns_tstamp));
+	ns->ns_txseq = ni->ni_txseq;
+	ns->ns_rxseq = ni->ni_rxseq;
+	ns->ns_fhdwell = ni->ni_fhdwell;
+	ns->ns_fhindex = ni->ni_fhindex;
+	ns->ns_fails = ni->ni_fails;
+}
+
+#define IEEE80211_SYSCTL_NODE_GROWTH	10
+
+static int
+sysctl_ieee80211_node(SYSCTLFN_ARGS)
+{
+	struct ieee80211_node_walk nw;
+	struct ieee80211_node *ni;
+	struct ieee80211_node_sysctl ns;
+	char *dp;
+	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
+	size_t len, needed, eltsize, out_size;
+	int error, s, nelt;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != IEEE80211_SYSCTL_NODENAMELEN)
+		return (EINVAL);
+
+	/* ifindex.op.arg.header.eltsize.nelt */
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	ifindex = name[IEEE80211_SYSCTL_NODENAME_IF];
+	op = name[IEEE80211_SYSCTL_NODENAME_OP];
+	arg = name[IEEE80211_SYSCTL_NODENAME_ARG];
+	hdr_type = name[IEEE80211_SYSCTL_NODENAME_TYPE];
+	eltsize = name[IEEE80211_SYSCTL_NODENAME_ELTSIZE];
+	nelt = name[IEEE80211_SYSCTL_NODENAME_ELTCOUNT];
+	out_size = MIN(sizeof(ns), eltsize);
+
+	IEEE80211_DPRINTF(("%s: ifindex %u op %u arg %u hdr_type %u eltsize %u "
+	    "nelt %d out_size %u\n", __func__, ifindex, op, arg, hdr_type,
+	    eltsize, nelt, out_size));
+
+	if (op != IEEE80211_SYSCTL_OP_ALL || arg != 0 ||
+	    hdr_type != IEEE80211_SYSCTL_T_NODE || eltsize < 1 || nelt < 0)
+		return (EINVAL);
+
+	error = 0;
+	needed = 0;
+	ifcount = 0;
+	last_ifindex = 0;
+
+	s = splnet();
+
+	for (ni = ieee80211_node_walkfirst(&nw, ifindex); ni != NULL;
+	     ni = ieee80211_node_walknext(&nw)) {
+		struct ieee80211com *ic;
+
+		ic = nw.nw_ic;
+		cur_ifindex = ic->ic_if.if_index;
+
+		IEEE80211_DPRINTF(("%s: visit ic %p idx %u\n", __func__, ic,
+		    cur_ifindex));
+
+		if (cur_ifindex != last_ifindex) {
+			ifcount++;
+			last_ifindex = cur_ifindex;
+		}
+
+		IEEE80211_DPRINTF(("%s: ni %p dp %p len %u nelt %d\n",
+		    __func__, ni, dp, len, nelt));
+
+		if (len >= eltsize && nelt > 0) {
+			sysctl_ieee80211_fill_node(ni, &ns, cur_ifindex,
+			    &ic->ic_channels[0]);
+			error = copyout(&ns, dp, out_size);
+			if (error)
+				goto cleanup;
+			dp += eltsize;
+			len -= eltsize;
+		}
+		if (nelt > 0) {
+			needed += eltsize;
+			if (nelt != INT_MAX)
+				nelt--;
+		}
+		IEEE80211_DPRINTF(("%s: needed %u\n", __func__, needed));
+	}
+	IEEE80211_DPRINTF(("%s: %u interfaces\n", __func__, ifcount)); 
+cleanup:
+	splx(s);
+
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += ifcount * IEEE80211_SYSCTL_NODE_GROWTH * eltsize;
+
+	return (error);
 }
 
 /*
@@ -971,6 +1161,11 @@ SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nodes", NULL,
+	    sysctl_ieee80211_node, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef IEEE80211_DEBUG
