@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1997/06/12 15:46:44 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.6.1 1997/09/08 23:40:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -580,22 +580,23 @@ sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oldonstack;
 	
 	frame.sf_signum = sig;
 	
 	tf = trapframe(p);
-	oldonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oldonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	
 	/*
 	 * Allocate stack space for signal handler.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK)
 	    && !oldonstack
-	    && (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp
-					 + psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    && (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp
+					 + p->p_sigstk.ss_size);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
@@ -643,9 +644,9 @@ sys_sigreturn(p, v, retval)
 		return EINVAL;
 	bcopy(&sc.sc_frame, tf, sizeof *tf);
 	if (sc.sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = sc.sc_mask & ~sigcantmask;
 	return EJUSTRETURN;
 }

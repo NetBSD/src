@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 1997/08/12 15:47:00 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.72.2.1 1997/09/08 23:43:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -315,10 +315,8 @@ trap(type, code, v, tf)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
+		SIGACTION(p, SIGILL) = SIG_DFL;
 		tmp = sigmask(SIGILL);
-		p->p_sigignore &= ~tmp;
-		p->p_sigcatch  &= ~tmp;
 		p->p_sigmask   &= ~tmp;
 		sig = SIGILL;
 		ucode = tf.tf_format;
