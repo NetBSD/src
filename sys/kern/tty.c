@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.77 1996/10/25 22:11:39 cgd Exp $	*/
+/*	$NetBSD: tty.c,v 1.78 1997/03/29 23:26:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -227,6 +227,12 @@ ttyinput(c, tp)
 	register int iflag, lflag;
 	register u_char *cc;
 	int i, error;
+
+	/*
+	 * Unless the receiver is enabled, drop incoming data.
+	 */
+	if (!ISSET(tp->t_cflag, CREAD))
+		return (0);
 
 	/*
 	 * If input is pending take it first.
