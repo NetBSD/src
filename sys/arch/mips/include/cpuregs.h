@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.35 2000/07/17 23:35:13 jeffs Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.36 2000/09/16 00:04:57 chuck Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -291,13 +291,15 @@
 #define MIPS3_CONFIG_DC_SHIFT	6
 #define MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define MIPS3_CONFIG_IC_SHIFT	9
+#define MIPS3_CONFIG_C_DEFBASE	0x1000		/* default base 2^12 */
 #ifdef MIPS3_4100				/* VR4100 core */
+/* XXXCDC: THIS MIPS3_4100 SPECIAL CASE SHOULD GO AWAY */
 #define MIPS3_CONFIG_CS		0x00001000	/* cache size mode indication*/
-#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, dummy, shift) \
 	((((config)&MIPS3_CONFIG_CS)?0x400:0x1000) << (((config) & (mask)) >> (shift)))
 #else
-#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
-	(0x1000 << (((config) & (mask)) >> (shift)))
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, base, shift) \
+	((base) << (((config) & (mask)) >> (shift)))
 #endif
 
 /* Block ordering: 0: sequential, 1: sub-block */

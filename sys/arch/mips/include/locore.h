@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.41 2000/09/13 01:20:41 chuck Exp $ */
+/* $NetBSD: locore.h,v 1.42 2000/09/16 00:04:57 chuck Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -62,7 +62,7 @@ void	mips1_wbflush(void);
 void	mips1_proc_trampoline(void);
 void	mips1_cpu_switch_resume(void);
 
-void	mips3_ConfigCache(void);
+void	mips3_ConfigCache(int);
 void	mips3_FlushCache(void);
 void	mips3_FlushDCache(vaddr_t addr, vaddr_t len);
 void	mips3_FlushICache(vaddr_t addr, vaddr_t len);
