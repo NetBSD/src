@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2001/05/28 08:41:37 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2001/05/30 15:24:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
+#include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_mbtype.h"
 #include "kbd.h"

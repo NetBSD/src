@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.13 2001/05/16 12:42:38 msaitoh Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.14 2001/05/30 15:24:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>

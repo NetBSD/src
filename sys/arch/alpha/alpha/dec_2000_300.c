@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.3 2001/04/25 17:53:04 bouyer Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.4 2001/05/30 15:24:26 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.3 2001/04/25 17:53:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.4 2001/05/30 15:24:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

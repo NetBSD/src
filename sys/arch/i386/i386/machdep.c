@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.442 2001/05/25 04:39:33 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.443 2001/05/30 15:24:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_kgdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"

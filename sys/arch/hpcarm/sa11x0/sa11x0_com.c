@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.9 2001/05/21 16:50:35 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.10 2001/05/30 15:24:30 lukem Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,9 +74,10 @@
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
+#include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
-#include "opt_com.h"
+#include "opt_kgdb.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

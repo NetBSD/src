@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.23 2001/05/17 06:00:22 enami Exp $	*/
+/*	$NetBSD: vr.c,v 1.24 2001/05/30 15:24:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  *
  */
+#include "opt_kgdb.h"
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
