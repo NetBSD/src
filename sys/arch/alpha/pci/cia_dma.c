@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.8 1998/05/13 21:21:17 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.9 1998/06/03 18:25:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.8 1998/05/13 21:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.9 1998/06/03 18:25:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ cia_dma_init(ccp)
 	t->_wbase = CIA_DIRECT_MAPPED_BASE;
 	t->_wsize = CIA_DIRECT_MAPPED_SIZE;
 	t->_next_window = NULL;
+	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
@@ -139,6 +140,7 @@ cia_dma_init(ccp)
 	t->_wbase = CIA_SGMAP_MAPPED_BASE;
 	t->_wsize = CIA_SGMAP_MAPPED_SIZE;
 	t->_next_window = NULL;
+	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_sgmap;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = cia_bus_dmamap_create_sgmap;
