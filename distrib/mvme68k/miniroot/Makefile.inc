@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/03/06 12:04:52 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/03/17 21:37:25 scw Exp $
 
 IMAGESIZE=	7m
 IMAGEENDIAN=	be
@@ -7,3 +7,6 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/install.md \
 		${DESTDIR}/etc/disktab ${DESTDIR}/etc/spwd.db \
 		${KERNOBJDIR}/GENERIC/netbsd \
 		${_SRC_TOP_}/share/termcap/termcap.src
+
+image_md_post:
+
