@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 1995/10/11 04:19:50 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 1995/10/14 14:06:16 fvdl Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -653,9 +653,19 @@ child_return(p, frame)
 	struct proc *p;
 	struct trapframe frame;
 {
+#ifdef COMPAT_LINUX
+	extern struct emul emul_linux_aout, emul_linux_elf;
 
+	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf)
+		frame.tf_eax = frame.tf_edx = 0;
+	else {
+		frame.tf_eax = p->p_pid;
+		frame.tf_edx = 1;
+	}
+#else
 	frame.tf_eax = p->p_pid;
 	frame.tf_edx = 1;
+#endif
 	frame.tf_eflags &= ~PSL_C;
 
 	userret(p, frame.tf_eip, 0);
