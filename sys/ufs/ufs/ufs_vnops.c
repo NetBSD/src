@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.10 1995/06/15 23:22:51 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.11 1995/10/09 11:19:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1450,9 +1450,9 @@ ufs_readdir(ap)
 		register int ncookies = ap->a_ncookies;
 
 		/*
-		 * Only the NFS server uses cookies, and it loads the
-		 * directory block into system space, so we can just look at
-		 * it directly.
+		 * Only the NFS server and emulations use cookies, and they
+		 * load the directory block into system space, so we can
+		 * just look at it directly.
 		 */
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("ufs_readdir: lost in space");
