@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.3 1998/07/05 06:49:12 jonathan Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.4 1998/07/20 20:45:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -876,7 +876,7 @@ epic_init(sc)
 	/*
 	 * Magical mystery initialization.
 	 */
-	bus_space_write_4(st, sh, EPIC_TEST, TEST_INIT);
+	bus_space_write_4(st, sh, EPIC_TEST, TEST_CLOCKTEST);
 	bus_space_write_4(st, sh, EPIC_TXTEST, 0);
 
 	/*

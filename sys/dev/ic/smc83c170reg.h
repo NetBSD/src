@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.1 1998/06/02 01:29:42 thorpej Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.2 1998/07/20 20:45:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ struct epic_fraglist {
 #define	PBLCNT_MASK		0x0000003f	/* programmable burst length */
 
 #define	EPIC_TEST		0x1c /* TEST */
-#define	TEST_INIT		0x00000008
+#define	TEST_CLOCKTEST		0x00000008
 
 #define	EPIC_CRCCNT		0x20 /* CRC ERROR COUNTER */
 #define	CRCCNT_MASK		0x0000000f	/* crc errs since last read */
