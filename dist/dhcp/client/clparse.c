@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.7 2004/03/31 19:05:18 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.8 2004/04/02 22:53:15 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -460,6 +460,7 @@ void parse_client_statement (cfile, ip, config)
 					    "invalid omapi port %d.", tmp);
 			config -> omapi_port = tmp;
 			parse_semi (cfile);
+#if !defined (SMALL)
 		} else if (token == KEY) {
 			token = next_token (&val, (unsigned *)0, cfile);
 			if (token != STRING && !is_identifier (token)) {
@@ -471,6 +472,7 @@ void parse_client_statement (cfile, ip, config)
 							val) != ISC_R_SUCCESS)
 				parse_warn (cfile, "unknown key %s", val);
 			parse_semi (cfile);
+#endif
 		} else {
 			parse_warn (cfile,
 				    "unexpected omapi subtype: %s", val);
