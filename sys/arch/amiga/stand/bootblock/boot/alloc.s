@@ -1,5 +1,5 @@
 /*
- * $NetBSD: alloc.s,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: alloc.s,v 1.2 1998/11/11 21:43:18 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -43,7 +43,7 @@ _alloc:
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),d0
 	movl	#0x50001,d1	| MEMF_CLEAR|MEMF_REVERSE|MEMF_PUBLIC for now.
-	jsr	a6@(-0xc6)
+	jsr	a6@(-0x2ac)	| AllocVec
 	movl	sp@+,a6
 	rts
 
@@ -52,8 +52,7 @@ _free:
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
-	movl	sp@(12),d0
-	jsr	a6@(-0xd2)
+	jsr	a6@(-0x2b2)	| FreeVec
 	movl	sp@+,a6
 	rts
 
