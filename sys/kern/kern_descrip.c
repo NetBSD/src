@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.69 2000/07/04 15:33:31 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.70 2000/08/15 16:26:42 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -296,17 +296,17 @@ sys_fcntl(p, v, retval)
 			goto out;
 		}
 		if ((long)SCARG(uap, arg) <= 0) {
-			SCARG(uap, arg) = (void *)(-(long)SCARG(uap, arg));
+			tmp = (-(long)SCARG(uap, arg));
 		} else {
 			struct proc *p1 = pfind((long)SCARG(uap, arg));
 			if (p1 == 0) {
 				error = ESRCH;
 				goto out;
 			}
-			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
+			tmp = (void *)(long)p1->p_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
-		    (fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p);
+		    (fp, TIOCSPGRP, (caddr_t)&tmp, p);
 		break;
 
 	case F_SETLKW:
