@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.3 1997/10/26 23:50:33 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.4 1997/10/29 00:31:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = tmpinfo.blocksize;
 		break;
 	case SNDCTL_DSP_SETFMT:
+		AUDIO_INITINFO(&tmpinfo);
 		switch (INTARG) {
 		case AFMT_MU_LAW:
 			tmpinfo.play.precision =
@@ -184,7 +185,6 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		default:
 			return EINVAL;
 		}
-		AUDIO_INITINFO(&tmpinfo);
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* fall into ... */
 	case SOUND_PCM_READ_BITS:
