@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 1999/03/05 07:21:44 mycroft Exp $
+#	$NetBSD: Makefile,v 1.106 1999/03/08 02:37:56 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -33,6 +33,7 @@
 #    snapshot: calls distribution, above, and then tars up the files
 #	into a release(7) format in RELEASEDIR. Any port-dependent
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
+#    release: a synonym for `snapshot'
 
 # XXX: For NO_SENDMAIL and USE_BIND4
 .include <bsd.own.mk>
@@ -100,7 +101,7 @@ PCS=	pcs750.bin
 all clean cleandir depend distclean etc includes install lint:
 
 .ifndef DESTDIR
-distribution distrib-dirs snapshot:
+distribution distrib-dirs release snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
@@ -209,7 +210,7 @@ distrib-dirs:
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
-snapshot snap_pre:
+release snapshot snap_pre:
 	@echo setenv RELEASEDIR before doing that!
 	@false
 .else
