@@ -1,7 +1,8 @@
+/*	$NetBSD: ident.c,v 1.4 1996/10/15 07:00:02 veego Exp $	*/
 /* Identify RCS keyword strings in files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +30,15 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ident.c,v $
- * Revision 1.3  1995/02/24 02:07:55  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:02  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.9  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.8  1995/06/01 16:23:43  eggert
+ * (exiterr, reportError): New functions, needed for DOS and OS/2 ports.
+ * (scanfile): Use them.
  *
  * Revision 5.7  1994/03/20 04:52:58  eggert
  * Remove `exiting' from identExit.
@@ -95,11 +104,12 @@ Report problems and direct all questions to:
 #include  "rcsbase.h"
 
 static int match P((FILE*));
-static void scanfile P((FILE*,char const*,int));
+static int scanfile P((FILE*,char const*,int));
+static void reportError P((char const*));
 
-mainProg(identId, "ident", "$Id: ident.c,v 1.3 1995/02/24 02:07:55 mycroft Exp $")
+mainProg(identId, "ident", "Id: ident.c,v 5.9 1995/06/16 06:19:24 eggert Exp")
 /*  Ident searches the named files for all occurrences
- *  of the pattern $keyword: text $.
+ *  of the pattern $@: text $ where @ is a keyword.
  */
 
 {
@@ -117,79 +127,100 @@ mainProg(identId, "ident", "$Id: ident.c,v 1.3 1995/02/24 02:07:55 mycroft Exp $
 
 		case 'V':
 		    VOID printf("RCS version %s\n", RCS_version_string);
-		    exitmain(0);
+		    quiet = -1;
+		    break;
 
 		default:
 		    VOID fprintf(stderr,
 			"ident: usage: ident -{qV} [file...]\n"
 		    );
-		    exitmain(1);
+		    exitmain(EXIT_FAILURE);
 		    break;
 	    }
 
-   if (!a)
-	scanfile(stdin, (char*)0, quiet);
-   else
-	do {
-	    if (!(fp = fopen(a, FOPEN_R))) {
-		VOID fprintf(stderr,  "%s error: can't open %s\n", cmdid, a);
-		status = EXIT_FAILURE;
-	    } else {
-		scanfile(fp, a, quiet);
-		if (argv[1]) VOID putchar('\n');
-	    }
-	} while ((a = *++argv));
+   if (0 <= quiet)
+       if (!a)
+	    VOID scanfile(stdin, (char*)0, quiet);
+       else
+	    do {
+		if (!(fp = fopen(a, FOPEN_RB))) {
+		    reportError(a);
+		    status = EXIT_FAILURE;
+		} else if (
+		    scanfile(fp, a, quiet) != 0
+		    || (argv[1]  &&  putchar('\n') == EOF)
+		)
+		    break;
+	    } while ((a = *++argv));
 
    if (ferror(stdout) || fclose(stdout)!=0) {
-      VOID fprintf(stderr,  "%s error: write error\n", cmdid);
+      reportError("standard output");
       status = EXIT_FAILURE;
    }
    exitmain(status);
 }
 
 #if RCS_lint
-	void identExit() { _exit(EXIT_FAILURE); }
+#	define exiterr identExit
 #endif
-
+	void
+exiterr()
+{
+	_exit(EXIT_FAILURE);
+}
 
 	static void
+reportError(s)
+	char const *s;
+{
+	int e = errno;
+	VOID fprintf(stderr, "%s error: ", cmdid);
+	errno = e;
+	perror(s);
+}
+
+
+	static int
 scanfile(file, name, quiet)
 	register FILE *file;
 	char const *name;
 	int quiet;
 /* Function: scan an open file with descriptor file for keywords.
- * Return false if there's a read error.
+ * Return -1 if there's a write error; exit immediately on a read error.
  */
 {
    register int c;
 
-   if (name)
+   if (name) {
       VOID printf("%s:\n", name);
-   else
-      name = "input";
+      if (ferror(stdout))
+	 return -1;
+   } else
+      name = "standard input";
    c = 0;
-   for (;;) {
-      if (c == EOF) {
-	 if (feof(file))
-	    break;
-	 if (ferror(file))
-	    goto read_error;
-      }
+   while (c != EOF  ||  ! (feof(file)|ferror(file))) {
       if (c == KDELIM) {
 	 if ((c = match(file)))
 	    continue;
+	 if (ferror(stdout))
+	    return -1;
 	 quiet = true;
       }
       c = getc(file);
    }
+   if (ferror(file) || fclose(file) != 0) {
+      reportError(name);
+      /*
+      * The following is equivalent to exit(EXIT_FAILURE), but we invoke
+      * exiterr to keep lint happy.  The DOS and OS/2 ports need exiterr.
+      */
+      VOID fflush(stderr);
+      VOID fflush(stdout);
+      exiterr();
+   }
    if (!quiet)
       VOID fprintf(stderr, "%s warning: no id keywords in %s\n", cmdid, name);
-   if (fclose(file) == 0)
-      return;
-
- read_error:
-   VOID fprintf(stderr, "%s error: %s: read error\n", cmdid, name);
-   exit(EXIT_FAILURE);
+   return 0;
 }
 
 
@@ -239,6 +270,6 @@ match(fp)   /* group substring between two KDELIM's; then do pattern match */
       return c;
    *tp++ = c;     /*append trailing KDELIM*/
    *tp   = '\0';
-   VOID fprintf(stdout, "     %c%s\n", KDELIM, line);
+   VOID printf("     %c%s\n", KDELIM, line);
    return 0;
 }

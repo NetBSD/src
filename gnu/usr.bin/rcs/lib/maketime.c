@@ -1,6 +1,8 @@
+/*	$NetBSD: maketime.c,v 1.5 1996/10/15 07:00:06 veego Exp $	*/
+
 /* Convert struct partime into time_t.  */
 
-/* Copyright 1992, 1993 Paul Eggert
+/* Copyright 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -25,12 +28,24 @@ Report problems and direct all questions to:
 
 */
 
-#include "conf.h"
+#if has_conf_h
+#	include "conf.h"
+#else
+#	ifdef __STDC__
+#		define P(x) x
+#	else
+#		define const
+#		define P(x) ()
+#	endif
+#	include <stdlib.h>
+#	include <time.h>
+#endif
+
 #include "partime.h"
 #include "maketime.h"
 
 char const maketId[]
-  = "$Id: maketime.c,v 1.4 1996/05/21 13:35:27 mrg Exp $";
+  = "Id: maketime.c,v 5.11 1995/06/16 06:19:24 eggert Exp";
 
 static int isleap P((int));
 static int month_days P((struct tm const*));
@@ -94,61 +109,78 @@ difftm(a, b)
 {
 	int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
 	int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
+	int difference_in_day_of_year = a->tm_yday - b->tm_yday;
+	int intervening_leap_days = (
+		((ay >> 2) - (by >> 2))
+		- (ay/100 - by/100)
+		+ ((ay/100 >> 2) - (by/100 >> 2))
+	);
+	time_t difference_in_years = ay - by;
+	time_t difference_in_days = (
+		difference_in_years*365
+		+ (intervening_leap_days + difference_in_day_of_year)
+	);
 	return
 		(
 			(
-				(
-					/* difference in day of year */
-					   a->tm_yday - b->tm_yday
-					/* + intervening leap days */
-					+  ((ay >> 2) - (by >> 2))
-					-  (ay/100 - by/100)
-					+  ((ay/100 >> 2) - (by/100 >> 2))
-					/* + difference in years * 365 */
-					+  (time_t)(ay-by) * 365
-				)*24 + (a->tm_hour - b->tm_hour)
+				24*difference_in_days
+				+ (a->tm_hour - b->tm_hour)
 			)*60 + (a->tm_min - b->tm_min)
 		)*60 + (a->tm_sec - b->tm_sec);
 }
 
 /*
-* Adjust T by adding MINUTES.  MINUTES must be at most 24 hours' worth.
-* Adjust only T's year, mon, mday, hour and min members;
+* Adjust time T by adding SECONDS.  SECONDS must be at most 24 hours' worth.
+* Adjust only T's year, mon, mday, hour, min and sec members;
 * plus adjust wday if it is defined.
 */
 	void
-adjzone(t, minutes)
+adjzone(t, seconds)
 	register struct tm *t;
-	int minutes;
+	long seconds;
 {
-	if ((t->tm_min += minutes) < 0) {
-	    if ((t->tm_hour -= (59-t->tm_min)/60) < 0) {
-		t->tm_hour += 24;
-		if (TM_DEFINED(t->tm_wday)  &&  --t->tm_wday < 0)
-		    t->tm_wday = 6;
-		if (--t->tm_mday <= 0) {
-		    if (--t->tm_mon < 0) {
-			--t->tm_year;
-			t->tm_mon = 11;
+	/*
+	* This code can be off by a second if SECONDS is not a multiple of 60,
+	* if T is local time, and if a leap second happens during this minute.
+	* But this bug has never occurred, and most likely will not ever occur.
+	* Liberia, the last country for which SECONDS % 60 was nonzero,
+	* switched to UTC in May 1972; the first leap second was in June 1972.
+	*/
+	int leap_second = t->tm_sec == 60;
+	long sec = seconds + (t->tm_sec - leap_second);
+	if (sec < 0) {
+	    if ((t->tm_min -= (59-sec)/60) < 0) {
+		if ((t->tm_hour -= (59-t->tm_min)/60) < 0) {
+		    t->tm_hour += 24;
+		    if (TM_DEFINED(t->tm_wday)  &&  --t->tm_wday < 0)
+			t->tm_wday = 6;
+		    if (--t->tm_mday <= 0) {
+			if (--t->tm_mon < 0) {
+			    --t->tm_year;
+			    t->tm_mon = 11;
+			}
+			t->tm_mday = month_days(t);
 		    }
-		    t->tm_mday = month_days(t);
 		}
+		t->tm_min += 24 * 60;
 	    }
-	    t->tm_min += 24*60;
+	    sec += 24L * 60 * 60;
 	} else
-	    if (24 <= (t->tm_hour += t->tm_min/60)) {
-		t->tm_hour -= 24;
-		if (TM_DEFINED(t->tm_wday)  &&  ++t->tm_wday == 7)
-		    t->tm_wday = 0;
-		if (month_days(t) < ++t->tm_mday) {
-		    if (11 < ++t->tm_mon) {
-			++t->tm_year;
-			t->tm_mon = 0;
+	    if (60 <= (t->tm_min += sec/60))
+		if (24 <= (t->tm_hour += t->tm_min/60)) {
+		    t->tm_hour -= 24;
+		    if (TM_DEFINED(t->tm_wday)  &&  ++t->tm_wday == 7)
+			t->tm_wday = 0;
+		    if (month_days(t) < ++t->tm_mday) {
+			if (11 < ++t->tm_mon) {
+			    ++t->tm_year;
+			    t->tm_mon = 0;
+			}
+			t->tm_mday = 1;
 		    }
-		    t->tm_mday = 1;
 		}
-	    }
 	t->tm_min %= 60;
+	t->tm_sec = (int) (sec%60) + leap_second;
 }
 
 /*
@@ -286,7 +318,7 @@ maketime(pt, default_time)
 str2time(source, default_time, default_zone)
 	char const *source;
 	time_t default_time;
-	int default_zone;
+	long default_zone;
 {
 	struct partime pt;
 
@@ -303,7 +335,7 @@ str2time(source, default_time, default_zone)
 main(argc, argv) int argc; char **argv;
 {
 	time_t default_time = time((time_t *)0);
-	int default_zone = argv[1] ? atoi(argv[1]) : 0;
+	long default_zone = argv[1] ? atol(argv[1]) : 0;
 	char buf[1000];
 	while (fgets(buf, 1000, stdin)) {
 		time_t t = str2time(buf, default_time, default_zone);

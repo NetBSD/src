@@ -1,7 +1,9 @@
+/*	$NetBSD: rcs.c,v 1.4 1996/10/15 07:00:33 veego Exp $	*/
+
 /* Change RCS file attributes.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,19 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcs.c,v $
- * Revision 1.3  1995/02/24 02:25:24  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:33  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.21  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.20  1995/06/01 16:23:43  eggert
+ * (main): Warn if no options were given.  Punctuate messages properly.
+ *
+ * (sendmail): Rewind mailmess before flushing it.
+ * Output another warning if mail should work but fails.
+ *
+ * (buildeltatext): Pass "--binary" if -kb and if --binary makes a difference.
  *
  * Revision 5.19  1994/03/17 14:05:48  eggert
  * Use ORCSerror to clean up after a fatal error.  Remove lint.
@@ -267,7 +281,7 @@ static struct delrevpair delrev;
 static struct hshentry *cuthead, *cuttail, *delstrt;
 static struct hshentries *gendeltas;
 
-mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.3 1995/02/24 02:25:24 mycroft Exp $")
+mainProg(rcsId, "rcs", "Id: rcs.c,v 5.21 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const cmdusage[] =
 		"\nrcs usage: rcs -{ae}logins -Afile -{blu}[rev] -cstring -{iILqTU} -ksubst -mrev:msg -{nN}name[:[rev]] -orange -sstate[:rev] -t[text] -Vn -xsuff -zzone file ...";
@@ -302,6 +316,9 @@ mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.3 1995/02/24 02:25:24 mycroft Exp $")
 	Ttimeflag = false;
 
         /*  preprocessing command options    */
+	if (1 < argc  &&  argv[1][0] != '-')
+		warn("No options were given; this usage is obsolescent.");
+
 	argc = getRCSINIT(argc, argv, &newargv);
 	argv = newargv;
 	while (a = *++argv,  0<--argc && *a++=='-') {
@@ -373,7 +390,7 @@ mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.3 1995/02/24 02:25:24 mycroft Exp $")
                 case 'L':   /*  set strict locking */
 			if (strict_selected) {
 			   if (!strictlock)	  /* Already selected -U? */
-			       warn("-U overridden by -L.");
+			       warn("-U overridden by -L");
                         }
                         strictlock = true;
 			strict_selected = true;
@@ -382,7 +399,7 @@ mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.3 1995/02/24 02:25:24 mycroft Exp $")
                 case 'U':   /*  release strict locking */
 			if (strict_selected) {
 			   if (strictlock)	  /* Already selected -L? */
-			       warn("-L overridden by -U.");
+			       warn("-L overridden by -U");
                         }
 			strict_selected = true;
                         break;
@@ -1005,7 +1022,7 @@ sendmail(Delta, who)
 {
 #ifdef SENDMAIL
 	char const *messagefile;
-	int old1, old2, c;
+	int old1, old2, c, status;
         FILE    * mailmess;
 #endif
 
@@ -1019,12 +1036,12 @@ sendmail(Delta, who)
         /* go ahead with breaking  */
 #ifdef SENDMAIL
 	messagefile = maketemp(0);
-	if (!(mailmess = fopen(messagefile, "w+"))) {
+	if (!(mailmess = fopenSafer(messagefile, "w+"))) {
 	    efaterror(messagefile);
         }
 
 	aprintf(mailmess, "Subject: Broken lock on %s\n\nYour lock on revision %s of file %s\nhas been broken by %s for the following reason:\n",
-		basename(RCSname), Delta, getfullRCSname(), getcaller()
+		basefilename(RCSname), Delta, getfullRCSname(), getcaller()
 	);
 	aputs("State the reason for breaking the lock:\n(terminate with single '.' or end of file)\n>> ", stderr);
 	eflush();
@@ -1047,15 +1064,16 @@ sendmail(Delta, who)
 		}
             }
         }
+	Orewind(mailmess);
 	aflush(mailmess);
-
-	if (run(fileno(mailmess), (char*)0, SENDMAIL, who, (char*)0))
-		warn("Mail may have failed."),
-#else
-		warn("Mail notification of broken locks is not available."),
-#endif
-		warn("Please tell `%s' why you broke the lock.", who);
+	status = run(fileno(mailmess), (char*)0, SENDMAIL, who, (char*)0);
 	Ozclose(&mailmess);
+	if (status == 0)
+		return true;
+	warn("Mail failed.");
+#endif
+	warn("Mail notification of broken locks is not available.");
+	warn("Please tell `%s' why you broke the lock.", who);
 	return(true);
 }
 
@@ -1070,7 +1088,7 @@ breaklock(delta)
  * Prints an error message if there is no such lock or error.
  */
 {
-	register struct lock *next, **trail;
+	register struct rcslock *next, **trail;
 	char const *num;
 
 	num=delta->num;
@@ -1126,7 +1144,7 @@ struct  hshentry        *strt,  *tail;
 
 {
         struct  hshentry    *pt;
-	struct lock const *lockpt;
+	struct rcslock const *lockpt;
 
 	for (pt = strt;  pt != tail;  pt = pt->next) {
             if ( pt->branches ){ /*  a branch point  */
@@ -1498,14 +1516,14 @@ buildeltatext(deltas)
 /*              change to delta text                                */
 {
 	register FILE *fcut;	/* temporary file to rebuild delta tree */
-	char const *cutname, *diffname;
+	char const *cutname;
 
 	fcut = 0;
 	cuttail->selector = false;
 	scanlogtext(deltas->first, false);
         if ( cuthead )  {
 	    cutname = maketemp(3);
-	    if (!(fcut = fopen(cutname, FOPEN_W_WORK))) {
+	    if (!(fcut = fopenSafer(cutname, FOPEN_WPLUS_WORK))) {
 		efaterror(cutname);
             }
 
@@ -1525,10 +1543,19 @@ buildeltatext(deltas)
 	Ozclose(&fcopy);
 
 	if (fcut) {
-	    diffname = maketemp(0);
-	    switch (run(fileno(fcut), diffname,
-			DIFF DIFF_FLAGS, "-", resultname, (char*)0
-	    )) {
+	    char const *diffname = maketemp(0);
+	    char const *diffv[6 + !!OPEN_O_BINARY];
+	    char const **diffp = diffv;
+	    *++diffp = DIFF;
+	    *++diffp = DIFFFLAGS;
+#	    if OPEN_O_BINARY
+		if (Expand == BINARY_EXPAND)
+		    *++diffp == "--binary";
+#	    endif
+	    *++diffp = "-";
+	    *++diffp = resultname;
+	    *++diffp = 0;
+	    switch (runv(fileno(fcut), diffname, diffv)) {
 		case DIFF_FAILURE: case DIFF_SUCCESS: break;
 		default: rcsfaterror("diff failed");
 	    }

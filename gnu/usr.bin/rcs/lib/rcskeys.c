@@ -1,7 +1,9 @@
+/*	$NetBSD: rcskeys.c,v 1.7 1996/10/15 07:00:22 veego Exp $	*/
+
 /* RCS keyword table and match operation */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -26,10 +29,14 @@ Report problems and direct all questions to:
 
 */
 
-/* $Log: rcskeys.c,v $
-/* Revision 1.6  1995/02/24 02:25:08  mycroft
-/* RCS 5.6.7.4
 /*
+ * $Log: rcskeys.c,v $
+ * Revision 1.7  1996/10/15 07:00:22  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.4  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
  * Revision 5.3  1993/11/03 17:42:27  eggert
  * Add Name keyword.
  *
@@ -62,16 +69,13 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.6 1995/02/24 02:25:08 mycroft Exp $")
+libId(keysId, "Id: rcskeys.c,v 5.4 1995/06/16 06:19:24 eggert Exp")
 
 
 char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	0,
 	AUTHOR, DATE, HEADER, IDH,
-#ifdef LOCALID
-	LOCALID,
-#endif
 	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE
 };
 

@@ -1,7 +1,9 @@
+/*	$NetBSD: rcskeep.c,v 1.6 1996/10/15 07:00:21 veego Exp $	*/
+
 /* Extract RCS keyword string values from working files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,14 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcskeep.c,v $
- * Revision 1.5  1995/02/24 02:25:07  mycroft
- * RCS 5.6.7.4
+ * Revision 1.6  1996/10/15 07:00:21  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.10  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.9  1995/06/01 16:23:43  eggert
+ * (getoldkeys): Don't panic if a Name: is empty.
  *
  * Revision 5.8  1994/03/17 14:05:48  eggert
  * Remove lint.
@@ -95,7 +104,7 @@ Report problems and direct all questions to:
 
 #include  "rcsbase.h"
 
-libId(keepId, "$Id: rcskeep.c,v 1.5 1995/02/24 02:25:07 mycroft Exp $")
+libId(keepId, "Id: rcskeep.c,v 5.10 1995/06/16 06:19:24 eggert Exp")
 
 static int badly_terminated P((void));
 static int checknum P((char const*));
@@ -188,9 +197,6 @@ getoldkeys(fp)
                 break;
             case Header:
             case Id:
-#ifdef LOCALID
-	    case LocalId:
-#endif
 		if (!(
 		      getval(fp, (struct buf*)0, false) &&
 		      keeprev(fp) &&
@@ -220,11 +226,11 @@ getoldkeys(fp)
 		c = 0;
                 break;
 	    case Name:
-		if (!getval(fp, &prevname, false))
-		    return false;
-		if (*prevname.string)
-		    checkssym(prevname.string);
-		prevname_found = 1;
+		if (getval(fp, &prevname, false)) {
+		    if (*prevname.string)
+			checkssym(prevname.string);
+		    prevname_found = 1;
+		}
 		c = 0;
 		break;
             case Revision:

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1994/12/22 09:45:36 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1996/10/15 07:00:41 veego Exp $
 
 MAN=	rcsfreeze.1
 

@@ -1,9 +1,11 @@
+/*	$NetBSD: rcsbase.h,v 1.7 1996/10/15 07:00:11 veego Exp $	*/
+
 /* RCS common definitions and data structures */
 
-#define RCSBASE "$Id: rcsbase.h,v 1.6 1995/02/24 02:24:59 mycroft Exp $"
+#define RCSBASE "Id: rcsbase.h,v 5.20 1995/06/16 06:19:24 eggert Exp"
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -19,8 +21,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -30,8 +33,28 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
- * Revision 1.6  1995/02/24 02:24:59  mycroft
- * RCS 5.6.7.4
+ * Revision 1.7  1996/10/15 07:00:11  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.20  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.19  1995/06/01 16:23:43  eggert
+ * (SIZEABLE_PATH): Don't depend on PATH_MAX: it's not worth configuring.
+ * (Ioffset_type,BINARY_EXPAND,MIN_UNEXPAND,MIN_UNCHANGED_EXPAND): New macros.
+ * (maps_memory): New macro; replaces many instances of `has_mmap'.
+ * (cacheptr): Renamed from cachetell.
+ * (struct RILE): New alternate name for RILE; the type is now recursive.
+ * (deallocate): New member for RILE, used for generic buffer deallocation.
+ * (cacheunget_): No longer take a failure arg; just call Ierror on failure.
+ * (struct rcslock): Renamed from struct lock, to avoid collisions with
+ * system headers on some hosts.  All users changed.
+ * (basefilename): Renamed from basename, likewise.
+ * (dirtpname): Remove; no longer external.
+ * (dirlen, dateform): Remove; no longer used.
+ * (cmpdate, fopenSafer, fdSafer, readAccessFilenameBuffer): New functions.
+ * (zonelenmax): Increase to 9 for full ISO 8601 format.
+ * (catchmmapints): Depend on has_NFS.
  *
  * Revision 5.18  1994/03/17 14:05:48  eggert
  * Add primitives for reading backwards from a RILE;
@@ -173,10 +196,10 @@ Report problems and direct all questions to:
 
 #define EXIT_TROUBLE DIFF_TROUBLE
 
-#ifdef PATH_MAX
-#	define SIZEABLE_PATH PATH_MAX /* size of a large path; not a hard limit */
-#else
+#ifdef _POSIX_PATH_MAX
 #	define SIZEABLE_PATH _POSIX_PATH_MAX
+#else
+#	define SIZEABLE_PATH 255 /* size of a large path; not a hard limit */
 #endif
 
 /* for traditional C hosts with unusual size arguments */
@@ -205,7 +228,7 @@ Report problems and direct all questions to:
                               /* used in production environments.           */
 
 #define yearlength	   16 /* (good through AD 9,999,999,999,999,999)    */
-#define datesize (yearlength+16) /* size of output of dateform		    */
+#define datesize (yearlength+16)	/* size of output of time2date */
 #define RCSTMPPREFIX '_' /* prefix for temp files in working dir  */
 #define KDELIM            '$' /* delimiter for keywords                     */
 #define VDELIM            ':' /* separates keywords from values             */
@@ -228,27 +251,28 @@ Report problems and direct all questions to:
  * Iget_(f,c) - like Igeteof_, except EOF is an error
  * cacheget_(c) - Iget_ applied to the local RILE
  * cacheunget_(f,c,s) - read c backwards from cached f, executing s at BOF
- * Ifileno, Irewind, Iseek, Itell - analogs to stdio routines
+ * Ifileno, Ioffset_type, Irewind, Itell - analogs to stdio routines
  *
  * By conventions, macros whose names end in _ are statements, not expressions.
  * Following such macros with `; else' results in a syntax error.
  */
 
+#define maps_memory (has_map_fd || has_mmap)
+
 #if large_memory
 	typedef unsigned char const *Iptr_type;
-	typedef struct {
+	typedef struct RILE {
 		Iptr_type ptr, lim;
-		unsigned char *base; /* for lint, not Iptr_type even if has_mmap */
-#		if has_mmap
-#			define Ifileno(f) ((f)->fd)
-			int fd;
+		unsigned char *base; /* not Iptr_type for lint's sake */
+		unsigned char *readlim;
+		int fd;
+#		if maps_memory
+			void (*deallocate) P((struct RILE *));
 #		else
-#			define Ifileno(f) fileno((f)->stream)
 			FILE *stream;
-			unsigned char *readlim;
 #		endif
 	} RILE;
-#	if has_mmap
+#	if maps_memory
 #		define declarecache register Iptr_type ptr, lim
 #		define setupcache(f) (lim = (f)->lim)
 #		define Igeteof_(f,c,s) if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++;
@@ -264,11 +288,12 @@ Report problems and direct all questions to:
 #	define cache(f) (ptr = (f)->ptr)
 #	define Iget_(f,c) Igeteof_(f,c,Ieof();)
 #	define cacheget_(c) cachegeteof_(c,Ieof();)
-#	define cacheunget_(f,c,s) if ((f)->base==ptr-1) s else (c)=(--ptr)[-1];
-#	define Itell(f) ((f)->ptr)
-#	define Iseek(f,p) ((f)->ptr = (p))
-#	define Irewind(f) Iseek(f, (f)->base)
-#	define cachetell() ptr
+#	define cacheunget_(f,c) (c)=(--ptr)[-1];
+#	define Ioffset_type size_t
+#	define Itell(f) ((f)->ptr - (f)->base)
+#	define Irewind(f) ((f)->ptr = (f)->base)
+#	define cacheptr() ptr
+#	define Ifileno(f) ((f)->fd)
 #else
 #	define RILE FILE
 #	define declarecache register FILE *ptr
@@ -279,7 +304,9 @@ Report problems and direct all questions to:
 #	define cachegeteof_(c,s) Igeteof_(ptr,c,s)
 #	define Iget_(f,c) { if (((c)=getc(f))==EOF) testIeof(f); }
 #	define cacheget_(c) Iget_(ptr,c)
-#	define cacheunget_(f,c,s) if(fseek(ptr,-2L,SEEK_CUR)){VOID fseek(ptr,1L,SEEK_SET);s}else cacheget_(c)
+#	define cacheunget_(f,c) if(fseek(ptr,-2L,SEEK_CUR))Ierror();else cacheget_(c)
+#	define Ioffset_type long
+#	define Itell(f) ftell(f)
 #	define Ifileno(f) fileno(f)
 #endif
 
@@ -366,10 +393,10 @@ struct access {
 };
 
 /* list element for locks  */
-struct lock {
+struct rcslock {
 	char const	  * login;
         struct hshentry   * delta;
-        struct lock       * nextlock;
+	struct rcslock    * nextlock;
 };
 
 /* list element for symbolic names */
@@ -387,7 +414,7 @@ struct assoc {
 #	define mainProg(name,cmd,rcsid) int name mainArgs
 #else
 #	define libId(name,rcsid) char const name[] = rcsid;
-#	define mainProg(n,c,i) char const Copyright[] = "Copyright 1982,1988,1989 Walter F. Tichy\nPurdue CS\nCopyright 1990,1991,1992,1993,1994 Paul Eggert", baseid[] = RCSBASE, cmdid[] = c; libId(n,i) int main P((int,char**)); int main mainArgs
+#	define mainProg(n,c,i) char const Copyright[] = "Copyright 1982,1988,1989 Walter F. Tichy, Purdue CS\nCopyright 1990,1991,1992,1993,1994,1995 Paul Eggert", baseid[] = RCSBASE, cmdid[] = c; libId(n,i) int main P((int,char**)); int main mainArgs
 #endif
 
 /*
@@ -408,9 +435,6 @@ struct assoc {
 #define keylength 8 /* max length of any of the above keywords */
 
 enum markers { Nomatch, Author, Date, Header, Id,
-#ifdef LOCALID
-	       LocalId,
-#endif
 	       Locker, Log, Name, RCSfile, Revision, Source, State };
 	/* This must be in the same order as rcskeys.c's Keyword[] array. */
 
@@ -432,7 +456,6 @@ extern FILE *fcopy;
 extern char const *resultname;
 extern char const ciklog[ciklogsize];
 extern int locker_expansion;
-extern struct buf dirtpname[];
 RILE *rcswriteopen P((struct buf*,struct stat*,int));
 char const *makedirtemp P((int));
 char const *getcaller P((void));
@@ -447,7 +470,6 @@ int findlock P((int,struct hshentry**));
 int setmtime P((char const*,time_t));
 void ORCSclose P((void));
 void ORCSerror P((void));
-void aflush P((FILE*));
 void copystring P((void));
 void dirtempunlink P((void));
 void enterstring P((void));
@@ -482,12 +504,11 @@ extern int fdlock;
 extern struct stat RCSstat;
 RILE *rcsreadopen P((struct buf*,struct stat*,int));
 char *bufenlarge P((struct buf*,char const**));
-char const *basename P((char const*));
+char const *basefilename P((char const*));
 char const *getfullRCSname P((void));
 char const *maketemp P((int));
 char const *rcssuffix P((char const*));
 int pairnames P((int,char**,RILE*(*)P((struct buf*,struct stat*,int)),int,int));
-size_t dirlen P((char const*));
 struct cbuf bufremember P((struct buf*,size_t));
 void bufalloc P((struct buf*,size_t));
 void bufautoend P((struct buf*));
@@ -553,6 +574,7 @@ void Lexinit P((void));
 void Ofclose P((FILE*));
 void Orewind P((FILE*));
 void Ozclose P((FILE**));
+void aflush P((FILE*));
 void afputc P((int,FILE*));
 void aprintf P((FILE*,char const*,...)) printf_string(2,3);
 void aputs P((char const*,FILE*));
@@ -586,7 +608,7 @@ void workwarn P((char const*,...)) printf_string(1,2);
 #	define advise_access(f,advice)
 #	define if_advise_access(p,f,advice)
 #endif
-#if has_mmap && large_memory
+#if large_memory && maps_memory
 	RILE *I_open P((char const*,struct stat*));
 #	define Iopen(f,m,s) I_open(f,s)
 #else
@@ -604,6 +626,7 @@ extern enum tokens const ctab[];
 char *partialno P((struct buf*,char const*,int));
 char const *namedrev P((char const*,struct hshentry*));
 char const *tiprev P((void));
+int cmpdate P((char const*,char const*));
 int cmpnum P((char const*,char const*));
 int cmpnumfld P((char const*,char const*,int));
 int compartial P((char const*,char const*,int));
@@ -620,6 +643,10 @@ void getbranchno P((char const*,struct buf*));
 #define KEY_EXPAND 2 /* -kk `$Keyword$' */
 #define VAL_EXPAND 3 /* -kv `value' */
 #define OLD_EXPAND 4 /* -ko use old string, omitting expansion */
+#define BINARY_EXPAND 5 /* -kb like -ko, but use binary mode I/O */
+#define MIN_UNEXPAND OLD_EXPAND /* min value for no logical expansion */
+#define MIN_UNCHANGED_EXPAND (OPEN_O_BINARY ? BINARY_EXPAND : OLD_EXPAND)
+			/* min value guaranteed to yield an identical file */
 struct diffcmd {
 	long
 		line1, /* number of first line */
@@ -632,7 +659,7 @@ extern struct access   * AccessList;
 extern struct assoc    * Symbols;
 extern struct cbuf Comment;
 extern struct cbuf Ignored;
-extern struct lock     * Locks;
+extern struct rcslock *Locks;
 extern struct hshentry * Head;
 extern int		 Expand;
 extern int               StrictLocks;
@@ -655,8 +682,7 @@ void putstring P((FILE*,int,struct cbuf,int));
 void puttree P((struct hshentry const*,FILE*));
 
 /* rcstime */
-#define zonelenmax 5 /* maxiumum length of time zone string, e.g. "+1100" */
-extern char const dateform[];
+#define zonelenmax 9 /* maxiumum length of time zone string, e.g. "+12:34:56" */
 char const *date2str P((char const[datesize],char[datesize + zonelenmax]));
 time_t date2time P((char const[datesize]));
 void str2date P((char const*,char[datesize]));
@@ -665,10 +691,12 @@ void zone_set P((char const*));
 
 /* rcsutil */
 extern int RCSversion;
+FILE *fopenSafer P((char const*,char const*));
 char *cgetenv P((char const*));
 char *fstr_save P((char const*));
 char *str_save P((char const*));
 char const *getusername P((int));
+int fdSafer P((int));
 int getRCSINIT P((int,char**,char***));
 int run P((int,char const*,...));
 int runv P((int,char const*,char const**));
@@ -706,11 +734,12 @@ void setRCSversion P((char const*));
 #	define restoreints()
 #endif
 #if has_mmap && large_memory
-#	if has_signal && mmap_signal
-		void catchmmapints P((void));
-#	else
-#		define catchmmapints()
-#	endif
+#   if has_NFS && mmap_signal
+	void catchmmapints P((void));
+	void readAccessFilenameBuffer P((char const*,unsigned char const*));
+#   else
+#	define catchmmapints()
+#   endif
 #endif
 #if has_getuid
 	uid_t ruid P((void));

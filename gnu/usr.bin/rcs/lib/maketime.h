@@ -1,4 +1,4 @@
-/*	$NetBSD: maketime.h,v 1.1.1.1 1996/10/13 21:57:10 veego Exp $	*/
+/*	$NetBSD: maketime.h,v 1.2 1996/10/15 07:00:07 veego Exp $	*/
 
 /* Yield time_t from struct partime yielded by partime.  */
 
