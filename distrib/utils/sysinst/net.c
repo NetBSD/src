@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.92 2003/07/27 21:09:57 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.93 2003/08/06 13:56:59 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,8 +99,8 @@ static void write_etc_hosts(FILE *f);
 #define DHCLIENT_EX "/sbin/dhclient"
 #include <signal.h>
 static int config_dhcp(char *);
-static void get_command_out(char *, int, const char *, const char *);
-static void get_dhcp_value(char *, const char *);
+static void get_command_out(char *, size_t, int, const char *, const char *);
+static void get_dhcp_value(char *, size_t, const char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
@@ -176,31 +176,30 @@ url_encode(char *dst, const char *src, size_t len,
 	const char *safe_chars, int encode_leading_slash)
 {
 	char *p = dst;
+	char *ep = dst + len;
 
 	/*
 	 * If encoding of a leading slash was desired, and there was in
 	 * fact one or more leading slashes, encode one in the output string.
 	 */
 	if (encode_leading_slash && *src == '/') {
-		if (len < 3)
+		if (ep - p < 3)
 			goto done;
-		sprintf(p, "%%%02X", '/');
+		snprintf(p, ep - p, "%%%02X", '/');
 		src++;
 		p += 3;
-		len -= 3;
 	}
 
-	while (--len > 0 && *src != '\0') {
+	while (ep - p > 1 && *src != '\0') {
 		if (safe_chars != NULL &&
 		    (isalnum(*src) || strchr(safe_chars, *src))) {
 			*p++ = *src++;
 		} else {
 			/* encode this char */
-			if (len < 3)
+			if (ep - p < 3)
 				break;
-			sprintf(p, "%%%02X", *src++);
+			snprintf(p, ep - p, "%%%02X", *src++);
 			p += 3;
-			len -= 2;
 		}
 	}
 done:
@@ -319,13 +318,13 @@ get_ifinterface_info(void)
 			if (strcmp(t, "inet") == 0) {
 				t = strtok(NULL, " \t\n");
 				if (strcmp(t, "0.0.0.0") != 0)
-					strcpy(net_ip, t);
+					strlcpy(net_ip, t, sizeof(net_ip));
 				continue;
 			}
 			if (strcmp(t, "netmask") == 0) {
 				t = strtok(NULL, " \t\n");
 				if (strcmp(t, "0x0") != 0)
-					strcpy(net_mask, t);
+					strlcpy(net_mask, t, sizeof(net_mask));
 				continue;
 			}
 			if (strcmp(t, "media:") == 0) {
@@ -335,7 +334,8 @@ get_ifinterface_info(void)
 					t = strtok(NULL, " \t\n");
 				if (strcmp(t, "none") != 0 &&
 				    strcmp(t, "manual") != 0)
-					strcpy(net_media, t);
+					strlcpy(net_media, t,
+					    sizeof(net_media));
 			}
 		}
 	}
@@ -360,7 +360,7 @@ get_ifinterface_info(void)
 			while (*p && *p != ' ' && *p != '\n')
 				p++;
 			*p = '\0';
-			strcpy(net_ip6, t);
+			strlcpy(net_ip6, t, sizeof(net_ip6));
 			break;
 		}
 	}
@@ -516,22 +516,22 @@ again:
 		net_dhcpconf |= DHCPCONF_IPADDR;
 
 		/* run route show and extract data */
-		get_command_out(net_defroute, AF_INET,
+		get_command_out(net_defroute, sizeof(net_defroute), AF_INET,
 		    "/sbin/route -n show -inet 2>/dev/null", "default");
 
 		/* pull nameserver info out of /etc/resolv.conf */
-		get_command_out(net_namesvr, AF_INET,
+		get_command_out(net_namesvr, sizeof(net_namesvr), AF_INET,
 		    "cat /etc/resolv.conf 2> /dev/null", "nameserver");
 		if (net_namesvr[0] != 0)
 			net_dhcpconf |= DHCPCONF_NAMESVR;
 
 		/* pull domainname out of leases file */
-		get_dhcp_value(net_domain, "domain-name");
+		get_dhcp_value(net_domain, sizeof(net_domain), "domain-name");
 		if (net_domain[0] != 0)
 			net_dhcpconf |= DHCPCONF_DOMAIN;
 
 		/* pull hostname out of leases file */
-		get_dhcp_value(net_host, "hostname");
+		get_dhcp_value(net_host, sizeof(net_host), "hostname");
 		if (net_host[0] != 0)
 			net_dhcpconf |= DHCPCONF_HOST;
 	}
@@ -546,11 +546,14 @@ again:
 		octet0 = atoi(net_ip);
 		if (!pass) {
 			if (0 <= octet0 && octet0 <= 127)
-				strcpy(net_mask, "0xff000000");
+				strlcpy(net_mask, "0xff000000",
+				    sizeof(net_mask));
 			else if (128 <= octet0 && octet0 <= 191)
-				strcpy(net_mask, "0xffff0000");
+				strlcpy(net_mask, "0xffff0000",
+				    sizeof(net_mask));
 			else if (192 <= octet0 && octet0 <= 223)
-				strcpy(net_mask, "0xffffff00");
+				strlcpy(net_mask, "0xffffff00",
+				    sizeof(net_mask));
 		}
 		msg_prompt_add(MSG_net_mask, net_mask, net_mask,
 		    sizeof net_mask);
@@ -874,7 +877,7 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strcpy(ext_dir, "/mnt2");
+	strlcpy(ext_dir, "/mnt2", sizeof(ext_dir));
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -1048,7 +1051,8 @@ config_dhcp(char *inter)
 }
 
 static void
-get_command_out(char *targ, int af, const char *command, const char *search)
+get_command_out(char *targ, size_t l, int af, const char *command,
+    const char *search)
 {
 	int textsize;
 	char *textbuf;
@@ -1074,7 +1078,7 @@ get_command_out(char *targ, int af, const char *command, const char *search)
 				t = strtok(NULL, " \t\n");
 				if (inet_pton(af, t, &in) == 1 &&
 				    strcmp(t, "0.0.0.0") != 0) {
-					strcpy(targ, t);
+					strlcpy(targ, t, l);
 				}
 			}
 		}
@@ -1084,7 +1088,7 @@ get_command_out(char *targ, int af, const char *command, const char *search)
 }
 
 static void
-get_dhcp_value(char *targ, const char *line)
+get_dhcp_value(char *targ, size_t l, const char *line)
 {
 	int textsize;
 	char *textbuf;
@@ -1116,7 +1120,7 @@ get_dhcp_value(char *targ, const char *line)
 					*walkp = '\0';
 					t++;
 				}
-				strcpy(targ, t);
+				strlcpy(targ, t, l);
 				break;
 			}
 		}

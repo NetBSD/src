@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.49 2003/08/05 13:35:29 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.50 2003/08/06 13:56:59 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,7 +112,7 @@ log_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (logging == 1) {
-		sprintf(log_text[0], "Logging: Off");
+		snprintf(log_text[0], sizeof(log_text[0]), "Logging: Off");
 		logging = 0;
 		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(logfp);
@@ -120,7 +120,8 @@ log_flip(menudesc *m, void *arg)
 	} else {
 		logfp = fopen("sysinst.log", "a");
 		if (logfp != NULL) {
-			sprintf(log_text[0], "Logging: On");
+			snprintf(log_text[0], sizeof(log_text[0]),
+			    "Logging: On");
 			logging = 1;
 			fprintf(logfp,
 			    "Log started at: %s\n", asctime(localtime(&tloc)));
@@ -140,7 +141,7 @@ script_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (scripting == 1) {
-		sprintf(log_text[1], "Scripting: Off");
+		snprintf(log_text[1], sizeof(log_text[1]), "Scripting: Off");
 		scripting_fprintf(NULL, "# Script ended at: %s\n", asctime(localtime(&tloc)));
 		scripting = 0;
 		fflush(script);
@@ -148,7 +149,8 @@ script_flip(menudesc *m, void *arg)
 	} else {
 		script = fopen("sysinst.sh", "w");
 		if (script != NULL) {
-			sprintf(log_text[1], "Scripting: On");
+			snprintf(log_text[1], sizeof(log_text[1]),
+			    "Scripting: On");
 			scripting = 1;
 			scripting_fprintf(NULL, "#!/bin/sh\n");
 			scripting_fprintf(NULL, "# Script started at: %s\n",

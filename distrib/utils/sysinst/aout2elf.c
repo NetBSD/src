@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.7 2003/06/25 15:45:21 dsl Exp $
+/*	$NetBSD: aout2elf.c,v 1.8 2003/08/06 13:56:58 itojun Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -214,7 +214,7 @@ move_aout_libs(void)
 	 * See if /emul exists. If not, create it.
 	 */
 	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
-		strcpy(prefix, target_expand("/emul"));
+		strlcpy(prefix, target_expand("/emul"), sizeof(prefix));
 		if (lstat(prefix, &st) == 0) {
 			run_prog(0, NULL, "mv -f %s %s", prefix,
 			    target_expand("/emul.old"));
@@ -232,7 +232,7 @@ move_aout_libs(void)
 	 * If an old aout link exists (apparently pointing to nowhere),
 	 * move it out of the way.
 	 */
-	strcpy(src, concat_paths(prefix, "aout"));
+	strlcpy(src, concat_paths(prefix, "aout"), sizeof(src));
 	if (lstat(src, &st) == 0) {
 		run_prog(0, NULL, "mv -f %s %s", src,
 		    concat_paths(prefix, "aout.old"));
@@ -244,7 +244,7 @@ move_aout_libs(void)
 	 * existed, we'll use a symbolic link in /emul to /usr/aout, to
 	 * avoid overflowing the root partition.
 	 */
-	strcpy(prefix, target_expand("/usr/aout"));
+	strlcpy(prefix, target_expand("/usr/aout"), sizeof(prefix));
 	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s", prefix);
 	run_prog(RUN_FATAL, MSG_aoutfail, "ln -s %s %s",
 	    "/usr/aout", src);
@@ -259,10 +259,10 @@ domove:
 	 * /emul/aout/usr/lib. This is where the a.out code in ldconfig
 	 * and ld.so respectively will find them.
 	 */
-	strcpy(src, concat_paths(prefix, "usr/lib"));
+	strlcpy(src, concat_paths(prefix, "usr/lib"), sizeof(src));
 	run_prog(0, NULL, "mv -f %s %s", src,
 	    concat_paths(prefix, "usr/lib.old"));
-	strcpy(src, concat_paths(prefix, "etc/ld.so.conf"));
+	strlcpy(src, concat_paths(prefix, "etc/ld.so.conf"), sizeof(src));
 	run_prog(0, NULL, "mv -f %s %s", src,
 	    concat_paths(prefix, "etc/ld.so.conf.old"));
 	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
@@ -270,18 +270,18 @@ domove:
 	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
 	    concat_paths(prefix, "etc"));
 
-	strcpy(src, target_expand("/etc/ld.so.conf"));
+	strlcpy(src, target_expand("/etc/ld.so.conf"), sizeof(src));
 	run_prog(RUN_FATAL, MSG_aoutfail, "mv -f %s %s", src,
 	    concat_paths(prefix, "etc/ld.so.conf"));
 
-	strcpy(src, target_expand("/usr/lib"));
+	strlcpy(src, target_expand("/usr/lib"), sizeof(src));
 	n = handle_aout_libs(src, LIB_MOVE,
 	    concat_paths(prefix, "usr/lib"));
 
 	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
 	    concat_paths(prefix, "usr/X11R6/lib"));
 
-	strcpy(src, target_expand("/usr/X11R6/lib"));
+	strlcpy(src, target_expand("/usr/X11R6/lib"), sizeof(src));
 	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
 
 	if (backedup) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.110 2003/07/29 12:08:32 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.111 2003/08/06 13:57:00 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -290,7 +290,7 @@ get_via_floppy(void)
 				mounted = 1;
 				first = 0;
 			}
-			sprintf(catcmd, "/bin/cat %s >> %s%s",
+			snprintf(catcmd, sizeof(catcmd), "/bin/cat %s >> %s%s",
 				full_name, list->name, dist_postfix);
 			if (logging)
 				(void)fprintf(logfp, "%s\n", catcmd);
@@ -1295,7 +1295,8 @@ tzm_set_names(menudesc *m, void *arg)
 				tz_menu[nfiles].opt_action = set_tz_select;
 			else if (S_ISDIR(sb.st_mode)) {
 				tz_menu[nfiles].opt_action = set_tz_dir;
-				strcat(fp, "/");
+				strlcat(fp, "/",
+				    sizeof(zoneinfo_dir) - (fp - zoneinfo_dir));
 			} else
 				continue;
 			tz_names[nfiles] = strdup(zoneinfo_dir + zonerootlen);
