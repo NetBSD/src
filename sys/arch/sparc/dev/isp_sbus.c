@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.1.1.1 1997/03/12 20:44:50 cgd Exp $ */
+/*	$NetBSD: isp_sbus.c,v 1.2 1997/03/12 21:06:41 cgd Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -30,7 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>

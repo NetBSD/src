@@ -1,9 +1,13 @@
+/*	$NetBSD: asm_sbus.h,v 1.2 1997/03/12 21:07:34 cgd Exp $	*/
+
 /*
  * Copyright (c) 1997 by Matthew Jacob 
  * NASA AMES Research Center
  * All rights reserved.
  *
  *	Version 1.24 Initiator Firmware (Aug 8, 1996)
+ *
+ *	[from Qlogic]
  */
 
 #define	ISP_CODE_ORG	0x1000
