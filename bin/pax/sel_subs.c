@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.13 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.14 2001/12/04 17:56:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.13 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.14 2001/12/04 17:56:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,8 @@ sel_chk(ARCHD *arcn)
  * User/group selection routines
  *
  * Routines to handle user selection of files based on the file uid/gid. To
- * add an entry, the user supplies either then name or the uid/gid starting with
- * a # on the command line. A \# will eascape the #.
+ * add an entry, the user supplies either the name or the uid/gid starting with
+ * a # on the command line. A \# will escape the #.
  */
 
 /*
