@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.13 1997/12/13 00:25:15 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.14 1998/01/22 23:00:26 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -71,9 +71,9 @@ le0 at obio0 addr   0x120000 level 3
 
 # Sun3 "si" SCSI controller (NCR 5380)
 # See GENERIC for the flags description.
-si0 at obio0 addr   0x140000 level 2 flags 0x1000f
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40 flags 0xf
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41 flags 0xf
+si0 at obio0 addr   0x140000 level 2
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 # Xylogics 450/451 controllers
 xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
