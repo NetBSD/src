@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 1997/10/10 04:01:02 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 1997/10/11 01:03:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -162,7 +162,7 @@ whichType(part)
 		if (bzb->bzbType == BZB_TYPESWAP)
 			return SWAP_PART;
 
-		return 0;
+		return SCRATCH_PART;
 	}
 	if (strcmp(PART_MAC_TYPE, (char *)part->pmPartType) == 0)
 		return HFS_PART;
