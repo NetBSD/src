@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.2 2002/06/14 00:58:40 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.3 2002/06/14 05:21:21 perseant Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,6 +83,36 @@ static int log2int(int n)
 	return log - 1;
 }
 
+enum coalesce_returncodes {
+	COALESCE_OK = 0,
+	COALESCE_NOINODE,
+	COALESCE_TOOSMALL,
+	COALESCE_BADSIZE,
+	COALESCE_BADBLOCKSIZE,
+	COALESCE_NOMEM,
+	COALESCE_BADBMAPV,
+	COALESCE_NOTWORTHIT,
+	COALESCE_NOTHINGLEFT,
+	COALESCE_NOTHINGLEFT2,
+
+	COALESCE_MAXERROR
+};
+
+char *coalesce_return[] = {
+	"Successfully coalesced",
+	"File not in use or inode not found",
+	"Not large enough to coalesce",
+	"Negative size",
+	"Not enough blocks to account for size",
+	"Malloc failed",
+	"lfs_bmapv failed",
+	"Not broken enough to fix",
+	"Too many blocks not found",
+	"Too many blocks found in active segments",
+
+	"No such error"
+};
+
 /*
  * Find out if this inode's data blocks are discontinuous; if they are,
  * rewrite them using lfs_markv.  Return the number of inodes rewritten.
@@ -102,31 +132,33 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 
         dip = get_dinode(fsp, ino);
 	if (dip == NULL)
-		return 0;
+		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for lfs_bmapv */
 	onb = nb = btofsb(lfsp, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
 	if (nb < NDADDR)
-		return 0;
+		return COALESCE_TOOSMALL;
 
 	/* Sanity checks */
 	if (dip->di_size < 0) {
-		syslog(LOG_WARNING, "ino %d, negative size (%lld)",
-			ino, (long long)dip->di_size);
-		return -1;
+		if (debug)
+			syslog(LOG_DEBUG, "ino %d, negative size (%lld)",
+				ino, (long long)dip->di_size);
+		return COALESCE_BADSIZE;
 	}
 	if (nb > dip->di_blocks) {
-		syslog(LOG_WARNING, "ino %d, computed blocks %d > held blocks %d",
-			ino, nb, dip->di_blocks);
-		return -1;
+		if (debug)
+			syslog(LOG_DEBUG, "ino %d, computed blocks %d > held blocks %d",
+				ino, nb, dip->di_blocks);
+		return COALESCE_BADBLOCKSIZE;
 	}
 
 	bip = (BLOCK_INFO_15 *)malloc(sizeof(BLOCK_INFO_15) * nb);
 	if (bip == NULL) {
 		syslog(LOG_WARNING, "ino %d, %d blocks: %m", ino, nb);
-		return -1;
+		return COALESCE_NOMEM;
 	}
 	for (i = 0; i < nb; i++) {
 		memset(bip + i, 0, sizeof(BLOCK_INFO_15));
@@ -138,7 +170,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, bip, nb)) < 0) { 
                 syslog(LOG_WARNING, "lfs_bmapv: %m");
 		free(bip);
-		return -1;
+		return COALESCE_BADBMAPV;
 	}
 	noff = toff = 0;
 	for (i = 1; i < nb; i++) {
@@ -157,7 +189,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	if (nb <= 1 || noff == 0 || noff < log2int(nb) ||
 	    segtod(lfsp, noff) * 2 < nb) {
 		free(bip);
-		return 0;
+		return COALESCE_NOTWORTHIT;
 	} else if (debug)
 		syslog(LOG_DEBUG, "ino %d total discontinuity "
 			"%d (%d) for %d blocks", ino, noff, toff, nb);
@@ -181,29 +213,17 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
                 --nb;
         if (nb == 0) {
 		free(bip);
-		return 0;
+		return COALESCE_NOTHINGLEFT;
 	}
-
-#if 0
-	/*
-	 * Double-check that we've tossed everything invalid. (wtf?!)
-	 */
-	for (i = 0; i < nb; i++) {
-		if (bip[i].bi_daddr <= 0) {
-			syslog(LOG_ERR, "negative daddr not tossed, bombing");
-			free(bip);
-			return 0;
-		}
-	}
-#endif
 
 	/*
 	 * We may have tossed enough blocks that it is no longer worthwhile
 	 * to rewrite this inode.
 	 */
-	if ((1 << (onb - nb)) > onb) {
-		syslog(LOG_DEBUG, "too many blocks tossed, not rewriting");
-		return 0;
+	if (onb - nb > log2int(onb)) {
+		if (debug)
+			syslog(LOG_DEBUG, "too many blocks tossed, not rewriting");
+		return COALESCE_NOTHINGLEFT2;
 	}
 
         /*
@@ -237,7 +257,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		if (bip[i].bi_bp)
 			free(bip[i].bi_bp);
 	free(bip);
-	return 1;
+	return COALESCE_OK;
 }
 
 /*
@@ -246,16 +266,21 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
  */
 int clean_all_inodes(struct fs_info *fsp)
 {
-	int i;
-	int r, tot;
+	int i, r;
+	int totals[COALESCE_MAXERROR];
 
-	tot = 0;
+	memset(totals, 0, sizeof(totals));
 	for (i = 0; i < fsp->fi_ifile_count; i++) {
 		r = clean_inode(fsp, i);
-		if (r > 0)
-			tot += r;
+		++totals[r];
 	}
-	return tot;
+
+	for (i = 0; i < COALESCE_MAXERROR; i++)
+		if (totals[i])
+			syslog(LOG_DEBUG, "%s: %d", coalesce_return[i],
+				totals[i]);
+
+	return totals[COALESCE_OK];
 }
 
 int fork_coalesce(struct fs_info *fsp)
@@ -280,7 +305,7 @@ int fork_coalesce(struct fs_info *fsp)
 		syslog(LOG_ERR, "fork: %m");
 		return 0;
 	} else if (childpid == 0) {
-		syslog(LOG_NOTICE, "new coalescing process (%d)", childpid);
+		syslog(LOG_NOTICE, "new coalescing process, pid %d", getpid());
 		num = clean_all_inodes(fsp);
 		syslog(LOG_NOTICE, "coalesced %d discontiguous inodes", num);
 		exit(0);
