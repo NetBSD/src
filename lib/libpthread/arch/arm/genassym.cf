@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2001/11/16 23:57:25 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2001/11/22 06:18:25 thorpej Exp $
 
 # Copyright (c) 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ include "pthread_md.h"
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
 define _REG_R0		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R0])
 define _REG_R4		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R4])
+define _REG_PC		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
 define _REG_CPSR	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_CPSR])
 
 # uc_flags
@@ -61,8 +62,6 @@ define PT_SWITCHTOUC	offsetof(struct pthread_st, pt_switchtouc)
 define PT_STATE		offsetof(struct pthread_st, pt_state)
 define PT_HELDLOCK	offsetof(struct pthread_st, pt_heldlock)
 define PT_SLEEPUC	offsetof(struct pthread_st, pt_sleepuc)
-
-define _REG_PC		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
 
 define PT_STATE_RECYCLABLE PT_STATE_RECYCLABLE
 define RND_CTXSIZE	((sizeof(ucontext_t) + 7) & ~7)
