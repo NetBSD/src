@@ -1,8 +1,10 @@
+/*	$NetBSD: lex.h,v 1.2 1997/01/12 19:12:05 tls Exp $	*/
+
 /*
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.1.1.3 1996/10/09 15:29:20 jtc Exp $ */
+/* $NetBSD: lex.h,v 1.2 1997/01/12 19:12:05 tls Exp $ */
 
 #define	IDENT	64
 

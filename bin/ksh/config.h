@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.4 1997/01/12 19:11:44 tls Exp $	*/
+
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.c,v 1.2 1997/01/12 19:12:24 tls Exp $	*/
+
 #include "sh.h"
 #include "ksh_stat.h"
 #define EXTERN

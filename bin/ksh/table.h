@@ -1,4 +1,4 @@
-/* $Id: table.h,v 1.1.1.2 1996/12/18 04:50:42 jtc Exp $ */
+/* $NetBSD: table.h,v 1.2 1997/01/12 19:12:21 tls Exp $ */
 
 /*
  * generic hashed associative table for commands and variables.

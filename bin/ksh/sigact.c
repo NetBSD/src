@@ -1,3 +1,5 @@
+/*	$NetBSD: sigact.c,v 1.2 1997/01/12 19:12:15 tls Exp $	*/
+
 /* NAME:
  *      sigact.c - fake sigaction(2)
  *

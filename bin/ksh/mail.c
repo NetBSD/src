@@ -1,3 +1,5 @@
+/*	$NetBSD: mail.c,v 1.2 1997/01/12 19:12:06 tls Exp $	*/
+
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
  * John R. MacMillan

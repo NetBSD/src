@@ -1,8 +1,10 @@
+/*	$NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $	*/
+
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.1.1.2 1996/10/09 15:12:52 jtc Exp $ */
+/* $NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: emacs.c,v 1.2 1997/01/12 19:11:47 tls Exp $	*/
+
 /*
  *  Emacs-like command line editing and history
  *

@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.3 1997/01/12 19:11:37 tls Exp $
 CFLAGS+=	-DHAVE_CONFIG_H -I.
 
 PROG=	ksh

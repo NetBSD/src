@@ -1,3 +1,5 @@
+/*	$NetBSD: lex.c,v 1.2 1997/01/12 19:12:04 tls Exp $	*/
+
 /*
  * lexical analysis and source input
  */

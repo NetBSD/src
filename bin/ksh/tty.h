@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.h,v 1.2 1997/01/12 19:12:25 tls Exp $	*/
+
 /*
 	tty.h -- centralized definitions for a variety of terminal interfaces
 
@@ -8,7 +10,7 @@
 
 	last edit:	30-Jul-1987	D A Gwyn
 */
-/* $Id: tty.h,v 1.1.1.2 1996/12/18 04:50:47 jtc Exp $ */
+/* $NetBSD: tty.h,v 1.2 1997/01/12 19:12:25 tls Exp $ */
 
 /* some useful #defines */
 #ifdef EXTERN

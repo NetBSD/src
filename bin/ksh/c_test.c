@@ -1,3 +1,5 @@
+/*	$NetBSD: c_test.c,v 1.2 1997/01/12 19:11:40 tls Exp $	*/
+
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
  * modified by Eric Gisin to be used as built-in.

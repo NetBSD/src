@@ -1,7 +1,9 @@
+/*	$NetBSD: expand.h,v 1.2 1997/01/12 19:11:51 tls Exp $	*/
+
 /*
  * Expanding strings
  */
-/* $Id: expand.h,v 1.1.1.1 1996/09/21 23:35:14 jtc Exp $ */
+/* $NetBSD: expand.h,v 1.2 1997/01/12 19:11:51 tls Exp $ */
 
 
 #if 0				/* Usage */

@@ -1,8 +1,10 @@
+/*	$NetBSD: tree.h,v 1.2 1997/01/12 19:12:23 tls Exp $	*/
+
 /*
  * command trees for compile/execute
  */
 
-/* $Id: tree.h,v 1.1.1.1 1996/09/21 23:35:17 jtc Exp $ */
+/* $NetBSD: tree.h,v 1.2 1997/01/12 19:12:23 tls Exp $ */
 
 #define	NOBLOCK	((struct op *)NULL)
 #define	NOWORD	((char *)NULL)

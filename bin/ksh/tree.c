@@ -1,3 +1,5 @@
+/*	$NetBSD: tree.c,v 1.2 1997/01/12 19:12:23 tls Exp $	*/
+
 /*
  * command tree climbing
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: vi.c,v 1.2 1997/01/12 19:12:28 tls Exp $	*/
+
 /*
  *	vi command editing
  *	written by John Rochester (initially for nsh)

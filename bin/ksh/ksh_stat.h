@@ -1,5 +1,7 @@
+/*	$NetBSD: ksh_stat.h,v 1.2 1997/01/12 19:12:00 tls Exp $	*/
+
 /* Wrapper around the ugly sys/stat includes/ifdefs */
-/* $Id: ksh_stat.h,v 1.1.1.2 1996/10/09 15:12:43 jtc Exp $ */
+/* $NetBSD: ksh_stat.h,v 1.2 1997/01/12 19:12:00 tls Exp $ */
 
 /* assumes <sys/types.h> already included */
 #include <sys/stat.h>
