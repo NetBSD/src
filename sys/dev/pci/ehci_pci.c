@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.11 2002/09/30 20:37:18 thorpej Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.11 2002/09/30 20:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct ehci_pci_softc {
 };
 
 CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
-    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate)
+    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);
 
 int
 ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)

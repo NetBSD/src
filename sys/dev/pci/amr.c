@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.5 2002/09/30 20:37:07 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.6 2002/10/02 16:51:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.5 2002/09/30 20:37:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.6 2002/10/02 16:51:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static inline void	amr_outb(struct amr_softc *, int, u_int8_t);
 static inline void	amr_outl(struct amr_softc *, int, u_int32_t);
 
 CFATTACH_DECL(amr, sizeof(struct amr_softc),
-    amr_match, amr_attach, NULL, NULL)
+    amr_match, amr_attach, NULL, NULL);
 
 #define AT_QUARTZ	0x01	/* `Quartz' chipset */
 #define	AT_SIG		0x02	/* Check for signature */
