@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.19 1997/10/19 23:31:54 lukem Exp $	*/
+/*	$NetBSD: su.c,v 1.19.2.1 1997/10/24 20:59:05 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.19 1997/10/19 23:31:54 lukem Exp $");
+__RCSID("$NetBSD: su.c,v 1.19.2.1 1997/10/24 20:59:05 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,12 +351,10 @@ kerberos(username, user, uid)
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;
-	char *p;
 	int kerno;
 	u_long faddr;
 	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
 	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
-	char *ontty(), *krb_get_phost();
 
 	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
 		return (1);
