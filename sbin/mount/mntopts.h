@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.7 1997/10/30 22:49:35 enami Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.8 1998/12/01 23:20:43 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -46,6 +46,7 @@ struct mntopt {
 #define MOPT_ASYNC		{ "async",	0, MNT_ASYNC, 0 }
 #define MOPT_NOCOREDUMP		{ "coredump",	1, MNT_NOCOREDUMP, 0 }
 #define MOPT_NODEV		{ "dev",	1, MNT_NODEV, 0 }
+#define MOPT_NODEVMTIME		{ "devmtime",	1, MNT_NODEVMTIME, 0 }
 #define MOPT_NOEXEC		{ "exec",	1, MNT_NOEXEC, 0 }
 #define MOPT_NOSUID		{ "suid",	1, MNT_NOSUID, 0 }
 #define MOPT_RDONLY		{ "rdonly",	0, MNT_RDONLY, 0 }
