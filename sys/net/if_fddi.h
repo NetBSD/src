@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_fddi.h	8.1 (Berkeley) 6/10/93
- * $Id: if_fddi.h,v 1.1.1.1 1995/08/19 00:59:47 cgd Exp $
  */
 
 #ifndef _NETINET_IF_FDDI_H_
@@ -66,7 +67,7 @@ struct	fddi_header {
 #define FDDIFC_LLC_SYNC         0xd0
 #define	FDDIFC_SMT		0x40
 
-#if defined(KERNEL) || defined(_KERNEL)
+#if defined(_KERNEL)
 #define	fddibroadcastaddr	etherbroadcastaddr
 #define	fddi_ipmulticast_min	ether_ipmulticast_min
 #define	fddi_ipmulticast_max	ether_ipmulticast_max

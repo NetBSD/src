@@ -1,3 +1,5 @@
+/*	$NetBSD: pdqvar.h,v 1.2 1995/08/19 04:35:22 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -20,53 +22,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: pdqvar.h,v 1.1.1.1 1995/08/19 00:59:48 cgd Exp $
- *
- * $Log: pdqvar.h,v $
- * Revision 1.1.1.1  1995/08/19 00:59:48  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
- *
- * Revision 1.10  1995/08/16  22:57:28  thomas
- * Add support for NetBSD
- *
- * Revision 1.9  1995/06/21  18:29:27  thomas
- * SVR4.2 changes
- *
- * Revision 1.8  1995/06/12  17:49:37  thomas
- * Add SVR4.2 support
- *
- * Revision 1.7  1995/04/20  20:17:33  thomas
- * Add PCI support for BSD/OS.
- * Fix BSD/OS EISA support.
- * Set latency timer for DEFPA to recommended value if 0.
- *
- * Revision 1.6  1995/03/14  01:52:52  thomas
- * Update for new FreeBSD PCI Interrupt interface
- * Use inl/inb/... inline macros provided by FreeBSD and BSDI
- *
- * Revision 1.5  1995/03/10  17:42:24  thomas
- * More changes for BSDI
- *
- * Revision 1.4  1995/03/06  17:08:56  thomas
- * Add copyright/disclaimer
- * Add inx/outx macros
- *
- * Revision 1.3  1995/03/03  13:48:35  thomas
- * more fixes
- *
- *
  */
 
 /*
  * DEC PDQ FDDI Controller; PDQ O/S dependent definitions
  *
  * Written by Matt Thomas
- *
  */
 
 #ifndef _PDQ_OS_H
@@ -287,6 +248,5 @@ extern void pdq_run(pdq_t *pdq);
 
 extern int pdq_interrupt(pdq_t *pdq);
 extern pdq_t *pdq_initialize(void *csr_va, const char *name, int unit, void *ctx, pdq_type_t type);
-
 
 #endif /* _PDQ_OS_H */
