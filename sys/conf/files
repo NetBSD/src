@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.423 2001/02/13 02:31:41 thorpej Exp $
+#	$NetBSD: files,v 1.424 2001/02/14 08:44:24 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1086,6 +1086,7 @@ file nfs/nfs_syscalls.c			nfsserver | nfs
 file nfs/nfs_vfsops.c			nfs
 file nfs/nfs_vnops.c			nfs
 file ntfs/ntfs_compr.c			ntfs
+file ntfs/ntfs_conv.c			ntfs
 file ntfs/ntfs_ihash.c			ntfs
 file ntfs/ntfs_subr.c			ntfs
 file ntfs/ntfs_vfsops.c			ntfs
