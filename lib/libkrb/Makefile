@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2000/12/30 17:21:45 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.9 2001/05/26 08:07:54 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,19 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/krb
 .PATH: ${DIST}/krb4/doc
 .PATH: ${DIST}/openssl/crypto/des
+.PATH: ${DIST}/krb4/man
+
+MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
+	krb.conf.5 krb.equiv.5 krb.extra.5 krb.realms.5
+MLINKS=	kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 \
+	kerberos.3 krb_kntoln.3 kerberos.3 krb_set_key.3 \
+	kerberos.3 krb_get_cred.3 kerberos.3 krb_mk_priv.3 \
+	kerberos.3 krb_rd_priv.3 kerberos.3 krb_mk_safe.3 \
+	kerberos.3 krb_rd_safe.3 kerberos.3 krb_mk_err.3 \
+	kerberos.3 krb_rd_err.3 kerberos.3 krb_ck_repl.3 \
+	krb_realmofhost.3 krb_get_krbhst.3 \
+	krb_realmofhost.3 krb_get_lrealm.3 \
+	krb_realmofhost.3 krb_get_phost.3
 
 WARNS?=  1
 MKLINT= no
