@@ -1,8 +1,8 @@
-/*	$NetBSD: sprint.c,v 1.7 1997/09/09 02:41:10 mrg Exp $	*/
+/*	$NetBSD: sprint.c,v 1.8 1997/10/19 08:13:46 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -36,29 +36,44 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$NetBSD: sprint.c,v 1.7 1997/09/09 02:41:10 mrg Exp $";
+#if 0
+static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: sprint.c,v 1.8 1997/10/19 08:13:46 mrg Exp $");
+#endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
+
+#include <time.h>
 #include <tzfile.h>
+#include <db.h>
+#include <err.h>
+#include <pwd.h>
+#include <errno.h>
+#include <utmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "finger.h"
 #include "extern.h"
+
+static void	  stimeprint __P((WHERE *));
 
 void
 sflag_print()
 {
 	PERSON *pn;
 	WHERE *w;
-	int cnt;
+	int sflag, r;
 	char *p;
-	PERSON **list;
+	PERSON *tmp;
+	DBT data, key;
 
-	list = sort();
 	/*
 	 * short format --
 	 *	login name
@@ -77,12 +92,19 @@ sflag_print()
 	 *		office phone
 	 */
 #define	MAXREALNAME	20
-#define	MAXHOSTNAME	20
 	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
 	    "Name", "Tty  Idle  Login Time  ", (gflag) ? "" :
 	    (oflag) ? "Office     Office Phone" : "Where");
-	for (cnt = 0; cnt < entries; ++cnt) {
-		pn = list[cnt];
+
+	for (sflag = R_FIRST;; sflag = R_NEXT) {
+		r = (*db->seq)(db, &key, &data, sflag);
+		if (r == -1)
+			err(1, "db seq");
+		if (r == 1)
+			break;
+		memmove(&tmp, data.data, sizeof tmp);
+		pn = tmp;
+
 		for (w = pn->whead; w != NULL; w = w->next) {
 			(void)printf("%-*.*s %-*.*s ", UT_NAMESIZE, UT_NAMESIZE,
 			    pn->name, MAXREALNAME, MAXREALNAME,
@@ -126,37 +148,14 @@ office:
 					(void)printf(" %-.15s",
 						    prphone(pn->officephone));
 			} else
-				(void)printf("%.*s", MAXHOSTNAME, w->host);
+				(void)printf("%.*s", MAXHOSTNAMELEN, w->host);
 no_gecos:
 			putchar('\n');
 		}
 	}
 }
 
-PERSON **
-sort()
-{
-	PERSON *pn, **lp;
-	PERSON **list;
-
-	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *))))) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
-	for (lp = list, pn = phead; pn != NULL; pn = pn->next)
-		*lp++ = pn;
-	(void)qsort(list, entries, sizeof(PERSON *), psort);
-	return(list);
-}
-
-int
-psort(p, t)
-	const void *p, *t;
-{
-	return(strcmp((*(PERSON **)p)->name, (*(PERSON **)t)->name));
-}
-
-void
+static void
 stimeprint(w)
 	WHERE *w;
 {

@@ -1,8 +1,8 @@
-/*	$NetBSD: net.c,v 1.9 1997/05/17 19:42:25 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.10 1997/10/19 08:13:42 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -36,20 +36,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: net.c,v 1.9 1997/05/17 19:42:25 pk Exp $";
+#if 0
+static char sccsid[] = "@(#)net.c	8.4 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: net.c,v 1.10 1997/10/19 08:13:42 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
+
 #include <arpa/inet.h>
+
 #include <netdb.h>
+#include <db.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <utmp.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+
 #include "finger.h"
 #include "extern.h"
 
@@ -122,7 +134,7 @@ netfinger(name)
 		while ((c = getc(fp)) != EOF) {
 			c &= 0x7f;
 			if (c == '\r') {
-				if (lastc == '\r')
+				if (lastc == '\r')	/* ^M^M - skip dupes */
 					continue;
 				c = '\n';
 				lastc = '\r';
@@ -140,5 +152,6 @@ netfinger(name)
 		}
 	if (lastc != '\n')
 		putchar('\n');
+	putchar('\n');
 	(void)fclose(fp);
 }
