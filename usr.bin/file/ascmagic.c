@@ -27,7 +27,7 @@
  */
 
 #ifndef	lint
-static char rcsid[] = "$Id: ascmagic.c,v 1.3 1993/08/01 18:16:28 mycroft Exp $";
+static char rcsid[] = "$Id: ascmagic.c,v 1.4 1994/04/08 05:26:49 mycroft Exp $";
 #endif	/* not lint */
 
 #include <stdio.h>
@@ -79,6 +79,7 @@ int nbytes;	/* size actually read */
 	/* look for tokens from names.h - this is expensive! */
 	/* make a copy of the buffer here because strtok() will destroy it */
 	s = (unsigned char*) memcpy(nbuf, buf, HOWMANY);
+	s[HOWMANY] = '\0';
 	has_escapes = (memchr(s, '\033', HOWMANY) != NULL);
 	while ((token = strtok((char*)s, " \t\n\r\f")) != NULL) {
 		s = NULL;	/* make strtok() keep on tokin' */
