@@ -1,4 +1,4 @@
-#	$NetBSD: files.becc,v 1.2 2003/04/20 20:50:50 thorpej Exp $
+#	$NetBSD: files.becc,v 1.3 2003/05/30 18:38:02 thorpej Exp $
 #
 # Configuration info for the ADI Engineering Big Endian Companion Chip
 # for the Intel i80200 processor
@@ -7,10 +7,11 @@
 file	arch/arm/xscale/becc_icu.c
 file	arch/arm/xscale/becc_timer.c
 
-device	becc {}: pcibus, bus_space_generic
+device	becc {}: pcibus
 # Board-specific front-end provides attachment.
 file	arch/arm/xscale/becc.c			becc
 file	arch/arm/xscale/becc_pci.c		becc
+file	arch/arm/xscale/becc_pci_space_asm.S	becc
 file	arch/arm/xscale/becc_space.c		becc
 
 # Reset button.
