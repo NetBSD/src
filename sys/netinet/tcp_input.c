@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.195 2004/04/20 19:49:15 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.196 2004/04/22 15:05:33 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.195 2004/04/20 19:49:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.196 2004/04/22 15:05:33 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -342,6 +342,8 @@ static void tcp6_log_refused
     __P((const struct ip6_hdr *, const struct tcphdr *));
 #endif
 
+#define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
+
 int
 tcp_reass(tp, th, m, tlen)
 	struct tcpcb *tp;
@@ -395,7 +397,8 @@ tcp_reass(tp, th, m, tlen)
 		if (pkt_seq == p->ipqe_seq + p->ipqe_len) {
 			p->ipqe_len += pkt_len;
 			p->ipqe_flags |= pkt_flags;
-			m_cat(p->ipqe_m, m);
+			m_cat(p->ipre_mlast, m);
+			TRAVERSE(p->ipre_mlast);
 			m = NULL;
 			tiqe = p;
 			TAILQ_REMOVE(&tp->timeq, p, ipqe_timeq);
@@ -426,6 +429,8 @@ tcp_reass(tp, th, m, tlen)
 			q->ipqe_flags |= pkt_flags;
 			m_cat(m, q->ipqe_m);
 			q->ipqe_m = m;
+			q->ipre_mlast = m; /* last mbuf may have changed */
+			TRAVERSE(q->ipre_mlast);
 			tiqe = q;
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prependfirst);
@@ -457,7 +462,8 @@ tcp_reass(tp, th, m, tlen)
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			pkt_seq = q->ipqe_seq;
-			m_cat(q->ipqe_m, m);
+			m_cat(q->ipre_mlast, m);
+			TRAVERSE(q->ipre_mlast);
 			m = q->ipqe_m;
 			TCP_REASS_COUNTER_INCR(&tcp_reass_append);
 			goto free_ipqe;
@@ -521,7 +527,8 @@ tcp_reass(tp, th, m, tlen)
 #endif
 			m_adj(m, overlap);
 			rcvpartdupbyte += overlap;
-			m_cat(q->ipqe_m, m);
+			m_cat(q->ipre_mlast, m);
+			TRAVERSE(q->ipre_mlast);
 			m = q->ipqe_m;
 			pkt_seq = q->ipqe_seq;
 			pkt_len += q->ipqe_len - overlap;
@@ -635,6 +642,7 @@ tcp_reass(tp, th, m, tlen)
 	 * Insert the new fragment queue entry into both queues.
 	 */
 	tiqe->ipqe_m = m;
+	tiqe->ipre_mlast = m;
 	tiqe->ipqe_seq = pkt_seq;
 	tiqe->ipqe_len = pkt_len;
 	tiqe->ipqe_flags = pkt_flags;
