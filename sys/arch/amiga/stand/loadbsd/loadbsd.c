@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: loadbsd.c,v 1.12 1994/06/15 19:17:36 chopps Exp $
+ *	$Id: loadbsd.c,v 1.13 1994/06/23 05:28:04 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -90,8 +90,9 @@ void warnx __P((const char *, ...));
  *	2.5	05/17/94 - Add check for "A3000 bonus".
  *	2.6	06/05/94 - Added -c option to override machine type.
  *	2.7	06/15/94 - Pass E clock frequency.
+ *	2.8	06/22/94 - Fix supervisor stack usage.
  */
-static const char _version[] = "$VER: LoadBSD 2.7 (15.6.94)";
+static const char _version[] = "$VER: LoadBSD 2.8 (22.6.94)";
 
 /*
  * Kernel parameter passing version
@@ -501,7 +502,7 @@ start_super:
 
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
-	movel	a3@(12),sp@-		| entry point [save on stack for rts]
+	movel	a3@(12),sp		| entry point in stack pointer
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
@@ -558,7 +559,7 @@ L0:
 	movel	d6,a3
 	movel	d6,a5
 	movel	d6,a6
-	rts				| return to kernel entry point
+	jmp	sp@			| jump to kernel entry point
 
 
 | A do-nothing MMU root pointer (includes the following long as well)
