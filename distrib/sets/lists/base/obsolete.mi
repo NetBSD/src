@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.45 2002/05/16 20:59:37 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.46 2002/06/06 23:05:36 thorpej Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -71,6 +71,7 @@
 /usr/sbin/kmpstat
 /usr/sbin/lmtp
 /usr/sbin/mbrlabel
+/usr/sbin/mopa.out
 /usr/sbin/mtrace6
 /usr/sbin/nfsiod
 /usr/sbin/nslookup
