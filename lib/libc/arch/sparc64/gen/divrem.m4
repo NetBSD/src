@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.2 2002/10/27 18:41:27 chs Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.3 2002/10/29 04:40:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,13 +39,16 @@
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
  */
 
+#include <machine/asm.h>
+#include <machine/trap.h>
+
 /*
  * Division and remainder, from Appendix E of the Sparc Version 8
  * Architecture Manual, with fixes from Gordon Irlam.
  */
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: divrem.m4,v 1.2 2002/10/27 18:41:27 chs Exp $")
+	RCSID("$NetBSD: divrem.m4,v 1.3 2002/10/29 04:40:55 chs Exp $")
 #endif
 
 /*
@@ -128,9 +131,6 @@ L.$1.eval(TWOSUPN+$2):
 		add	Q, ($2*2-1), Q
 	', `	DEVELOP_QUOTIENT_BITS(incr($1), `eval(2*$2-1)')')
 	ifelse($1, 1, `9:')')
-
-#include <machine/asm.h>
-#include <machine/trap.h>
 
 FUNC(NAME)
 ifelse(S, `true',
