@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.389.2.3 2001/03/30 21:30:17 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.389.2.4 2001/04/25 09:30:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,17 @@ u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((paddr_t));
+
+/*
+ * Map Brand ID from cpuid instruction to brand name.
+ * Source: Intel Processor Identification and the CPUID Instruction, AP-485
+ */
+const char * const i386_p3_brand[] = {
+	"",		/* Unsupported */
+	"Celeron",	/* Intel (R) Celeron (TM) processor */
+	"",		/* Intel (R) Pentium (R) III processor */	
+	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
+};
 
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
@@ -473,7 +484,7 @@ char	cpu_model[120];
  * Note: these are just the ones that may not have a cpuid instruction.
  * We deal with the rest in a different way.
  */
-struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
 		NULL},				/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
@@ -504,7 +515,7 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
 		CPUVENDOR_INTEL,
@@ -539,10 +550,12 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"Pentium Pro (A-step)", "Pentium Pro", 0,
 				"Pentium II (Klamath)", "Pentium Pro",
-				"Pentium II (Deschutes)",
-				"Pentium II (Celeron)",
-				"Pentium III", "Pentium III (E)",
-				0, 0, 0, 0, 0, 0, 0,
+				"Pentium II/Celeron (Deschutes)",
+				"Celeron (Mendocino)",
+				"Pentium III (Katmai)",
+				"Pentium III (Coppermine)",
+				0, "Pentium III (Cascades)", 0, 0,
+				0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL
@@ -571,7 +584,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-2", "K6-III", 0, 0, 0, 0, 0, 0,
+				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
 			NULL
@@ -580,8 +594,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "K7 (Athlon)", 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 1", "Athlon Model 2",
+				"Duron", "Athlon Model 4 (Thunderbird)",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL
@@ -702,10 +717,11 @@ identifycpu()
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
-	const char *name, *modifier, *vendorname;
+	extern int cpu_brand_id;
+	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
-	struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup) __P((void));
 
 	if (cpuid_level == -1) {
@@ -768,10 +784,19 @@ identifycpu()
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
+
+			/*
+			 * Intel processors family >= 6, model 8 allow to
+			 * recognize brand by Brand ID value.
+			 */
+			if (vendor == CPUVENDOR_INTEL && family >= 6
+			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
+				brand = i386_p3_brand[cpu_brand_id];
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
+	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
+		(*brand) ? " " : "", brand,
 		classnames[class]);
 
 	cpu_class = class;
