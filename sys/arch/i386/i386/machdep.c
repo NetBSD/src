@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.462 2001/11/20 07:42:33 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.463 2001/11/20 07:44:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.462 2001/11/20 07:42:33 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.463 2001/11/20 07:44:17 enami Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2698,11 +2698,11 @@ init386(first_avail)
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0) {
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
 			    bim->entry[x].addr,
 			    bim->entry[x].size,
@@ -2875,7 +2875,7 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end;
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start, tmp,
 				    atop(seg_start), atop(tmp));
@@ -2887,7 +2887,7 @@ init386(first_avail)
 			}
 
 			if (seg_start != seg_end) {
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start, seg_end,
 				    atop(seg_start), atop(seg_end));
@@ -2908,7 +2908,7 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end1;
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start1, tmp,
 				    atop(seg_start1), atop(tmp));
@@ -2920,7 +2920,7 @@ init386(first_avail)
 			}
 
 			if (seg_start1 != seg_end1) {
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start1, seg_end1,
 				    atop(seg_start1), atop(seg_end1));
