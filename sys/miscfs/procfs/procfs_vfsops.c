@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vfsops.c,v 1.3 1993/08/24 16:47:25 pk Exp $
+ *	$Id: procfs_vfsops.c,v 1.4 1993/08/24 17:49:16 pk Exp $
  */
 
 /*
@@ -166,13 +166,13 @@ pfs_statfs(mp, sbp, p)
 	struct proc *p;
 {
 	sbp->f_type = MOUNT_PROCFS;
-	sbp->f_fsize = nprocs;
+	sbp->f_fsize = 0;
 	sbp->f_bsize = 0;
 	sbp->f_blocks = 0;
-	sbp->f_bfree = maxproc - nprocs;
+	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
-	sbp->f_files =  0;
-	sbp->f_ffree = 0;
+	sbp->f_files =  maxproc;
+	sbp->f_ffree = maxproc - nprocs;
 
 	return 0;
 }
