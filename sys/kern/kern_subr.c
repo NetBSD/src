@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
- * All rights reserved. 
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,15 +35,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_subr.c	7.7 (Berkeley) 4/15/91
- *	$Id: kern_subr.c,v 1.9 1994/05/17 04:22:00 cgd Exp $
+ *	from: @(#)kern_subr.c	8.3 (Berkeley) 1/21/94
+ *	$Id: kern_subr.c,v 1.10 1994/05/18 10:21:18 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
-int
 uiomove(cp, n, uio)
 	register caddr_t cp;
 	register int n;
@@ -52,7 +53,6 @@ uiomove(cp, n, uio)
 	register struct iovec *iov;
 	u_int cnt;
 	int error = 0;
-
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -99,64 +99,20 @@ uiomove(cp, n, uio)
 	return (error);
 }
 
-int
-uioapply(func, arg1, arg2, uio)
-	int (*func)();
-	int arg1, arg2;
-	register struct uio *uio;
-{
-	register struct iovec *iov;
-	u_int cnt, cnt1;
-	int error = 0;
-
-
-/*#ifdef DIAGNOSTIC*/
-	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
-		panic("uioapply: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
-		panic("uioapply proc");
-/*#endif*/
-	while (uio->uio_resid) {
-		iov = uio->uio_iov;
-		cnt = iov->iov_len;
-		if (cnt == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			continue;
-		}
-		cnt1 = cnt;
-		error = (*func)(arg1, arg2, uio->uio_offset, uio->uio_rw,
-			iov->iov_base, &cnt1, uio->uio_procp);
-		cnt -= cnt1;
-		iov->iov_base += cnt;
-		iov->iov_len -= cnt;
-		uio->uio_resid -= cnt;
-		uio->uio_offset += cnt;
-		if (error || cnt1)
-			return (error);
-	}
-	return (0);
-}
-
 /*
  * Give next character to user as result of read.
  */
-int
 ureadc(c, uio)
 	register int c;
 	register struct uio *uio;
 {
 	register struct iovec *iov;
 
-	if (uio->uio_resid <= 0)
-		panic("ureadc: uio_resid == 0");
-
 again:
-	if (uio->uio_iovcnt == 0)
-		panic("ureadc: uio_iovcnt == 0");
-
+	if (uio->uio_iovcnt == 0 || uio->uio_resid == 0)
+		panic("ureadc");
 	iov = uio->uio_iov;
-	if (iov->iov_len <= 0) {
+	if (iov->iov_len == 0) {
 		uio->uio_iovcnt--;
 		uio->uio_iov++;
 		goto again;
@@ -184,11 +140,10 @@ again:
 	return (0);
 }
 
-#ifndef lint	/* unused except by ct.c, other oddities XXX */
+#ifdef vax	/* unused except by ct.c, other oddities XXX */
 /*
  * Get next character written in by user from uio.
  */
-int
 uwritec(uio)
 	struct uio *uio;
 {
@@ -229,4 +184,28 @@ again:
 	uio->uio_offset++;
 	return (c);
 }
-#endif /* notdef */
+#endif /* vax */
+
+/*
+ * General routine to allocate a hash table.
+ */
+void *
+hashinit(elements, type, hashmask)
+	int elements, type;
+	u_long *hashmask;
+{
+	long hashsize;
+	LIST_HEAD(generic, generic) *hashtbl;
+	int i;
+
+	if (elements <= 0)
+		panic("hashinit: bad cnt");
+	for (hashsize = 1; hashsize <= elements; hashsize <<= 1)
+		continue;
+	hashsize >>= 1;
+	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, M_WAITOK);
+	for (i = 0; i < hashsize; i++)
+		LIST_INIT(&hashtbl[i]);
+	*hashmask = hashsize - 1;
+	return (hashtbl);
+}
