@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.15 1996/05/02 00:25:13 neil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -239,8 +239,9 @@ struct sockproto {
 /*
  * Maximum queue length specifiable by listen(2).
  */
+#ifndef SOMAXCONN
 #define	SOMAXCONN	128
-
+#endif
 /*
  * Message header for recvmsg and sendmsg calls.
  * Used value-result for recvmsg, value only for sendmsg.
