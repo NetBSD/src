@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.47 1994/12/28 19:42:47 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.48 1995/01/13 10:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -88,7 +88,6 @@ struct cd_softc {
 	int flags;
 #define	CDF_LOCKED	0x01
 #define	CDF_WANTED	0x02
-#define	CDF_BSDLABEL	0x04
 	struct scsi_link *sc_link;	/* address of scsi low level switch */
 	struct cd_parms {
 		int blksize;
@@ -249,7 +248,6 @@ cdopen(dev, flag, fmt)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			cd->flags &= ~CDF_BSDLABEL;
 			sc_link->flags |= SDEV_MEDIA_LOADED;
 
 			/* Load the physical device parameters. */
@@ -416,22 +414,13 @@ cdstrategy(bp)
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
+
 	/*
-	 * Decide which unit and partition we are talking about
+	 * Do bounds checking, adjust transfer. if error, process.
+	 * If end of partition, just return.
 	 */
-	if (CDPART(bp->b_dev) != RAW_PART) {
-		if ((cd->flags & CDF_BSDLABEL) == 0) {
-			bp->b_error = EIO;
-			goto bad;
-		}
-		/*
-		 * do bounds checking, adjust transfer. if error, process.
-		 * if end of partition, just return
-		 */
-		if (bounds_check_with_label(bp, &cd->sc_dk.dk_label, 1) <= 0)
-			goto done;
-		/* otherwise, process transfer request */
-	}
+	if (bounds_check_with_label(bp, &cd->sc_dk.dk_label, 0) <= 0)
+		goto done;
 
 	opri = splbio();
 
@@ -601,11 +590,8 @@ cdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&cd->sc_dk.dk_label,
-		    (struct disklabel *)addr,
-		    /*(cd->flags & CDF_BSDLABEL) ? cd->sc_dk.dk_openmask : */0,
+		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
 		    &cd->sc_dk.dk_cpulabel);
-		if (error == 0)
-			cd->flags |= CDF_BSDLABEL;
 		return error;
 
 	case DIOCWLABEL:
@@ -831,9 +817,6 @@ cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
 
-	if ((cd->flags & CDF_BSDLABEL) != 0)
-		return;
-
 	bzero(&cd->sc_dk.dk_label, sizeof(struct disklabel));
 	bzero(&cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
@@ -862,8 +845,6 @@ cdgetdisklabel(cd)
 	cd->sc_dk.dk_label.d_magic = DISKMAGIC;
 	cd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
 	cd->sc_dk.dk_label.d_checksum = dkcksum(&cd->sc_dk.dk_label);
-
-	cd->flags |= CDF_BSDLABEL;
 }
 
 /*

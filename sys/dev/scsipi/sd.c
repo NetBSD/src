@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.51 1994/12/28 19:43:13 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.52 1995/01/13 10:51:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -87,8 +87,7 @@ struct sd_softc {
 	int flags;
 #define	SDF_LOCKED	0x01
 #define	SDF_WANTED	0x02
-#define	SDF_BSDLABEL	0x04
-#define	SDF_WLABEL	0x08		/* label is writable */
+#define	SDF_WLABEL	0x04		/* label is writable */
 	struct scsi_link *sc_link;	/* contains our targ, lun etc. */
 	struct disk_parms {
 		u_char heads;		/* Number of heads */
@@ -252,7 +251,6 @@ sdopen(dev, flag, fmt)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			sd->flags &= ~SDF_BSDLABEL;
 			sc_link->flags |= SDEV_MEDIA_LOADED;
 
 			/* Load the physical device parameters. */
@@ -419,24 +417,14 @@ sdstrategy(bp)
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
+
 	/*
-	 * Decide which unit and partition we are talking about
-	 * only raw is ok if no label
+	 * Do bounds checking, adjust transfer. if error, process.
+	 * If end of partition, just return.
 	 */
-	if (SDPART(bp->b_dev) != RAW_PART) {
-		if ((sd->flags & SDF_BSDLABEL) == 0) {
-			bp->b_error = EIO;
-			goto bad;
-		}
-		/*
-		 * do bounds checking, adjust transfer. if error, process.
-		 * if end of partition, just return
-		 */
-		if (bounds_check_with_label(bp, &sd->sc_dk.dk_label,
-		    (sd->flags & SDF_WLABEL) != 0) <= 0)
-			goto done;
-		/* otherwise, process transfer request */
-	}
+	if (bounds_check_with_label(bp, &sd->sc_dk.dk_label,
+	    (sd->flags & SDF_WLABEL) != 0) <= 0)
+		goto done;
 
 	opri = splbio();
 
@@ -601,11 +589,8 @@ sdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *)addr,
-		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openmask : */0,
+		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
-		if (error == 0)
-			sd->flags |= SDF_BSDLABEL;
 		return error;
 
 	case DIOCWLABEL:
@@ -621,12 +606,9 @@ sdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *)addr,
-		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openmask : */0,
+		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
 		if (error == 0) {
-			sd->flags |= SDF_BSDLABEL;
-
 			/* Simulate opening partition 0 so write succeeds. */
 			sd->sc_dk.dk_openmask |= (1 << 0);	/* XXX */
 			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
@@ -655,9 +637,6 @@ sdgetdisklabel(sd)
 	struct sd_softc *sd;
 {
 	char *errstring;
-
-	if ((sd->flags & SDF_BSDLABEL) != 0)
-		return;
 
 	bzero(&sd->sc_dk.dk_label, sizeof(struct disklabel));
 	bzero(&sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
@@ -701,8 +680,6 @@ sdgetdisklabel(sd)
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}
-
-	sd->flags |= SDF_BSDLABEL;
 }
 
 /*
@@ -861,8 +838,7 @@ sdsize(dev)
 		return -1;
 	sd = sdcd.cd_devs[SDUNIT(dev)];
 	part = SDPART(dev);
-	if ((sd->flags & SDF_BSDLABEL) == 0 ||
-	    sd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+	if (sd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = sd->sc_dk.dk_label.d_partitions[part].p_size;
