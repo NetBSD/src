@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.5.6.1 2005/02/12 18:17:30 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.5.6.2 2005/02/13 10:04:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.5.6.1 2005/02/12 18:17:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.5.6.2 2005/02/13 10:04:46 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -166,7 +166,8 @@ gdt_init()
 	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
 
 	old_gdt = gdtstore;
-	gdtstore = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+	gdtstore = (char *)uvm_km_alloc(kernel_map, MAXGDTSIZ, 0,
+	    UVM_KMF_VAONLY);
 	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MINGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
