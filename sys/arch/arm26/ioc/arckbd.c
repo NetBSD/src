@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.9 2001/01/22 23:08:27 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.10 2001/01/23 22:07:59 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.9 2001/01/22 23:08:27 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.10 2001/01/23 22:07:59 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -206,18 +206,18 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	bst = sc->sc_bst = ioc->ioc_fast_t;
 	bsh = sc->sc_bsh = ioc->ioc_fast_h; 
 
-	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
-	    NULL);
 	evcnt_attach_dynamic(&sc->sc_rev, EVCNT_TYPE_INTR, NULL,
 	    sc->sc_dev.dv_xname, "rx intr");
+	sc->sc_rirq = irq_establish(IOC_IRQ_SRX, IPL_TTY, arckbd_rint, self,
+	    &sc->sc_rev);
 	if (bootverbose)
 		printf("\n%s: interrupting at %s (rx)", self->dv_xname,
 		    irq_string(sc->sc_rirq));
 
-	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
-	    NULL);
 	evcnt_attach_dynamic(&sc->sc_xev, EVCNT_TYPE_INTR, NULL,
 	    sc->sc_dev.dv_xname, "tx intr");
+	sc->sc_xirq = irq_establish(IOC_IRQ_STX, IPL_TTY, arckbd_xint, self,
+	    &sc->sc_xev);
 	irq_disable(sc->sc_xirq);
 	if (bootverbose)
 		printf(" and %s (tx)", irq_string(sc->sc_xirq));
@@ -422,8 +422,6 @@ arckbd_xint(void *cookie)
 {
 	struct arckbd_softc *sc = cookie;
 
-	if (!(sc->sc_flags & AKF_POLLING))
-		sc->sc_xev.ev_count++;
 	irq_disable(sc->sc_xirq);
 	/* First, process queued commands (acks from the last receive) */
 	if (sc->sc_cmdqueued) {
@@ -453,8 +451,6 @@ arckbd_rint(void *cookie)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int data;
 
-	if (!(sc->sc_flags & AKF_POLLING))
-		sc->sc_rev.ev_count++;
 	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
 	data = bus_space_read_1(bst, bsh, 0);
 	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
