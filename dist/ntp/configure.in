@@ -5,7 +5,7 @@ AC_CANONICAL_SYSTEM
 AC_DEFINE_UNQUOTED(STR_SYSTEM, "$target")
 AM_CONFIG_HEADER(config.h)
 AC_ARG_PROGRAM
-AM_INIT_AUTOMAKE(ntp, 4.0.99g)
+AM_INIT_AUTOMAKE(ntp, 4.0.99i)
 AC_PREREQ(2.14)
 
 ac_cv_var_oncore_ok=no
@@ -92,7 +92,11 @@ esac
 ac_busted_vpath_in_make=no
 
 case "$target" in
+ *-next-nextstep3)
+    CFLAGS="$CFLAGS -posix"
+    ;;
  *-*-irix6.1*)	# 64 bit only
+    # busted vpath?
     ;;
  *-*-irix6*)	# 6.2 (and later?)
     ac_busted_vpath_in_make=yes
@@ -114,8 +118,6 @@ case "$target" in
       esac
     fi
     ;;
- *-next-nextstep3)
-    CFLAGS="$CFLAGS -posix" ;;
  *-*-solaris2.5.1)
     ac_busted_vpath_in_make=yes
     ;;
@@ -187,8 +189,8 @@ AC_CHECK_LIB(rt, sched_setscheduler, ,
 AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(bstring.h errno.h fcntl.h memory.h netdb.h poll.h resolv.h)
-AC_CHECK_HEADERS(sched.h sgtty.h stdlib.h string.h termio.h termios.h)
+AC_CHECK_HEADERS(bstring.h errno.h fcntl.h ieeefp.h memory.h netdb.h poll.h)
+AC_CHECK_HEADERS(resolv.h sched.h sgtty.h stdlib.h string.h termio.h termios.h)
 AC_CHECK_HEADERS(timepps.h timex.h unistd.h utmp.h utmpx.h)
 AC_CHECK_HEADERS(arpa/nameser.h net/if.h netinet/in_systm.h netinet/in.h)
 AC_CHECK_HEADERS(netinfo/ni.h, [AC_DEFINE(HAVE_NETINFO)])
@@ -558,7 +560,7 @@ case "$target" in
  *) AC_CHECK_FUNCS(getuid)
     ;;
 esac
-AC_CHECK_FUNCS(K_open kvm_open memcpy memmove memset)
+AC_CHECK_FUNCS(hstrerror K_open kvm_open memcpy memmove memset)
 case "$target" in
  *-*-sco3.2v5.0.*)
     # Just stubs.  Idiots.
@@ -612,7 +614,7 @@ esac
 AC_CHECK_FUNCS(setlinebuf)
 AC_CHECK_FUNCS(setpgid setpriority setsid settimeofday setvbuf sigaction)
 AC_CHECK_FUNCS(sigvec sigset sigsuspend stime strchr sysconf sysctl)
-AC_REPLACE_FUNCS(strerror)
+AC_REPLACE_FUNCS(snprintf strerror)
 case "$target" in
  *-*-aix4*)
     # Just stubs.  Idiots.
@@ -737,9 +739,8 @@ AC_CACHE_CHECK([[if declaring 'char *sys_errlist[]' is ok]], ac_cv_decl_sys_errl
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif],
-  changequote(<<, >>)dnl
-  <<extern char *sys_errlist[];>>
-  changequote([, ]),
+  [extern char *sys_errlist[];
+],
   ac_cv_decl_sys_errlist=yes, ac_cv_decl_sys_errlist=no)])
 case "$ac_cv_decl_sys_errlist" in
  yes) AC_DEFINE(CHAR_SYS_ERRLIST) ;;
@@ -766,9 +767,7 @@ case "$ac_cv_decl_syscall" in
 esac
 
 case "$target" in
-changequote(<<, >>)dnl
- *-*-osf[45]*)
-changequote([, ])dnl
+ *-*-osf[[45]]*)
     AC_DEFINE(DECL_PLOCK_0)
     AC_DEFINE(DECL_STIME_1)
     ;;
@@ -859,13 +858,11 @@ AC_CACHE_CHECK(if we should use a streams device for ifconfig,
 
 AC_CACHE_CHECK(if we need extra room for SO_RCVBUF, ac_cv_var_rcvbuf_slop,
 [ans=no
-changequote(<<, >>)dnl
 case "$target" in
- *-*-hpux[567]*)
+ *-*-hpux[[567]]*)
     ans=yes
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_rcvbuf_slop=$ans])
 case "$ac_cv_var_rcvbuf_slop" in
  yes) AC_DEFINE(NEED_RCVBUF_SLOP) ;;
@@ -899,9 +896,8 @@ case "$ac_cv_var_hpux_findconfig" in
 esac
 
 AC_CACHE_CHECK(if process groups are set with -pid, ac_cv_arg_setpgrp_negpid,
-[changequote(<<, >>)dnl
-case "$target" in
- *-*-hpux[567]*)
+[case "$target" in
+ *-*-hpux[[567]]*)
     ans=no
     ;;
  *-*-hpux*)
@@ -920,7 +916,6 @@ case "$target" in
     ans=no
     ;;
 esac
-changequote([, ])dnl
 ac_cv_arg_setpgrp_negpid=$ans])
 case "$ac_cv_arg_setpgrp_negpid" in
  yes) AC_DEFINE(UDP_BACKWARDS_SETOWN) ;;
@@ -1082,7 +1077,6 @@ AC_CACHE_CHECK(if we can use SIGPOLL for UDP I/O, ac_cv_var_use_udp_sigpoll,
 [ans=no
 case "$ac_cv_hdr_def_sigpoll" in
  yes)
-    changequote(<<, >>)dnl
     case "$target" in
      mips-sgi-irix*)
 	ans=no
@@ -1117,7 +1111,6 @@ case "$ac_cv_hdr_def_sigpoll" in
      *) ans=yes
         ;;
     esac
-    changequote([, ])dnl
     ;;
 esac
 ac_cv_var_use_udp_sigpoll=$ans])
@@ -1361,7 +1354,10 @@ AC_CACHE_CHECK(if we want to use MD5 authentication, ac_cv_var_use_md5,
     [ans=$enableval], [ans=yes])
 ac_cv_var_use_md5=$ans])
 case "$ac_cv_var_use_md5" in
- yes) AC_DEFINE(MD5) ;;
+ yes)
+     AC_DEFINE(AUTOKEY, , [Autokey?])
+     AC_DEFINE(MD5)
+     ;;
 esac
 
 # Check for ioctls TIOCGPPSEV
@@ -2238,15 +2234,27 @@ AC_MSG_RESULT($ans)
 AC_SUBST(RSAREF)
 AC_SUBST(LIBRSAREF)
 AC_SUBST(MAKE_LIBRSAREF)
+AC_SUBST(MAKE_NTP_GENKEYS)
 AC_MSG_CHECKING(if we need to make and use the RSAREF library)
-ans=no
-if test -f $srcdir/rsaref2/source/rsa.c
-then
-    ans=yes
-    LIBRSAREF=../librsaref/librsaref.a
-    MAKE_LIBRSAREF=librsaref.a
-    AC_DEFINE(DES)
-fi
+AC_ARG_WITH(rsaref,	[  --with-rsaref           + Use rsaref if possible],
+[ans=yes
+case "$withval" in
+ no) ans=no ;;
+esac], [ans=yes])
+case "$ans" in
+ yes)
+    ans=no
+    if test -f $srcdir/rsaref2/source/rsa.c
+    then
+	ans=yes
+	LIBRSAREF=../librsaref/librsaref.a
+	MAKE_LIBRSAREF=librsaref.a
+	MAKE_NTP_GENKEYS=ntp_genkeys
+	AC_DEFINE(DES)
+	AC_DEFINE(PUBKEY, , [Public key?])
+    fi
+    ;;
+esac
 AC_MSG_RESULT($ans)
 
 AC_SUBST(TESTDCF)
@@ -2302,15 +2310,13 @@ AC_SUBST(CLKTEST)	dnl Set to "clktest"
 
 AC_SUBST(MAKE_ADJTIMED)
 AC_MSG_CHECKING(if we want HP-UX adjtimed support)
-changequote(<<, >>)dnl
 case "$target" in
- *-*-hpux[56789]*)
+ *-*-hpux[[56789]]*)
     ans=yes
     ;;
  *) ans=no
     ;;
 esac
-changequote([, ])dnl
 if test "$ans" = "yes"; then
     MAKE_ADJTIMED=adjtimed
     AC_DEFINE(NEED_HPUX_ADJTIME)
@@ -2320,8 +2326,7 @@ AC_MSG_RESULT($ans)
 AC_CACHE_CHECK(if we can read kmem, ac_cv_var_can_kmem,
 [AC_ARG_ENABLE(kmem,		[  --enable-kmem           s read /dev/kmem for tick and/or tickadj],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$ac_cv_func_nlist$ac_cv_func_K_open$ac_cv_func_kvm_open" in
+    [case "$ac_cv_func_nlist$ac_cv_func_K_open$ac_cv_func_kvm_open" in
      *yes*)
 	ans=yes
 	;;
@@ -2338,7 +2343,7 @@ AC_CACHE_CHECK(if we can read kmem, ac_cv_var_can_kmem,
      *-*-hpux*)
 	#ans=no
 	;;
-     *-*-irix[456]*)
+     *-*-irix[[456]]*)
 	ans=no
 	;;
      *-*-linux*)
@@ -2348,7 +2353,6 @@ AC_CACHE_CHECK(if we can read kmem, ac_cv_var_can_kmem,
 	ans=no
 	;;
     esac
-    changequote([, ])dnl
     ])
 ac_cv_var_can_kmem=$ans])
 
@@ -2361,15 +2365,14 @@ AC_CACHE_CHECK(if adjtime is accurate, ac_cv_var_adjtime_is_accurate,
 [AC_ARG_ENABLE(accurate-adjtime, [  --enable-accurate-adjtime
                           s the adjtime() call is accurate],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$target" in
+    [case "$target" in
       i386-sequent-ptx*)
 	 ans=no
 	 ;;
       i386-unknown-osf1*)
 	 ans=yes
 	 ;;
-      mips-sgi-irix[456]*)
+      mips-sgi-irix[[456]]*)
 	 ans=yes
 	 ;;
       *-fujitsu-uxp*)
@@ -2381,7 +2384,7 @@ AC_CACHE_CHECK(if adjtime is accurate, ac_cv_var_adjtime_is_accurate,
       *-*-linux*)
 	 ans=yes
 	 ;;
-      *-*-solaris2.[01]*)
+      *-*-solaris2.[[01]]*)
 	 ans=no
 	 ;;
       *-*-solaris2*)
@@ -2390,7 +2393,6 @@ AC_CACHE_CHECK(if adjtime is accurate, ac_cv_var_adjtime_is_accurate,
       *) ans=no
 	 ;;
      esac
-     changequote([, ])dnl
      ])
 ac_cv_var_adjtime_is_accurate=$ans])
 case "$ac_cv_var_adjtime_is_accurate" in
@@ -2399,25 +2401,24 @@ esac
 
 AC_CACHE_CHECK([the name of 'tick' in the kernel],
 ac_cv_var_nlist_tick,
-[changequote(<<, >>)dnl
-ans=_tick
+[ans=_tick
 case "$target" in
  m68*-hp-hpux*) # HP9000/300?
     ans=_old_tick
     ;;
- *-apple-aux[23]*)
+ *-apple-aux[[23]]*)
     ans=tick
     ;;
  *-hp-hpux*)
     ans=old_tick
     ;;
- *-ibm-aix[34]*)
+ *-ibm-aix[[34]]*)
     ans=no
     ;;
  *-*-ptx*)
     ans=tick
     ;;
- *-*-sco3.2v[45]*)
+ *-*-sco3.2v[[45]]*)
     ans=no
     ;;
  *-*-solaris2*)
@@ -2427,7 +2428,6 @@ case "$target" in
     ans=tick
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_nlist_tick=$ans])
 case "$ac_cv_var_nlist_tick" in
  ''|no) ;;	# HMS: I think we can only get 'no' here...
@@ -2436,14 +2436,12 @@ esac
 #
 AC_CACHE_CHECK([for the units of 'tick'],
 ac_cv_var_tick_nano,
-[changequote(<<, >>)dnl
-ans=usec
+[ans=usec
 case "$target" in
  *-*-solaris2*)
     ans=nsec
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_tick_nano=$ans])
 case "$ac_cv_var_tick_nano" in
  nsec)
@@ -2453,13 +2451,12 @@ esac
 #
 AC_CACHE_CHECK([the name of 'tickadj' in the kernel],
 ac_cv_var_nlist_tickadj,
-[changequote(<<, >>)dnl
-ans=_tickadj
+[ans=_tickadj
 case "$target" in
  m68*-hp-hpux*) # HP9000/300?
     ans=_tickadj
     ;;
- *-apple-aux[23]*)
+ *-apple-aux[[23]]*)
     ans=tickadj
     ;;
  *-hp-hpux10*)
@@ -2490,7 +2487,6 @@ case "$target" in
     ans=tickadj
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_nlist_tickadj=$ans])
 case "$ac_cv_var_nlist_tickadj" in
  ''|no) ;;	# HMS: I think we can only get 'no' here...
@@ -2499,14 +2495,12 @@ esac
 #
 AC_CACHE_CHECK([for the units of 'tickadj'],
 ac_cv_var_tickadj_nano,
-[changequote(<<, >>)dnl
-ans=usec
+[ans=usec
 case "$target" in
  *-*-solaris2*)
     ans=nsec
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_tickadj_nano=$ans])
 case "$ac_cv_var_tickadj_nano" in
  nsec)
@@ -2516,9 +2510,8 @@ esac
 #
 AC_CACHE_CHECK([half-heartedly for 'dosynctodr' in the kernel],
 ac_cv_var_nlist_dosynctodr,
-[changequote(<<, >>)dnl
-case "$target" in
- *-apple-aux[23]*)
+[case "$target" in
+ *-apple-aux[[23]]*)
     ans=no
     ;;
  *-sni-sysv*)
@@ -2552,7 +2545,6 @@ case "$target" in
     ans=_dosynctodr
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_nlist_dosynctodr=$ans])
 case "$ac_cv_var_nlist_dosynctodr" in
  no) ;;
@@ -2562,9 +2554,8 @@ esac
 #
 AC_CACHE_CHECK([half-heartedly for 'noprintf' in the kernel],
 ac_cv_var_nlist_noprintf,
-[changequote(<<, >>)dnl
-case "$target" in
- *-apple-aux[23]*)
+[case "$target" in
+ *-apple-aux[[23]]*)
     ans=no
     ;;
  *-sni-sysv*)
@@ -2592,7 +2583,6 @@ case "$target" in
     ans=_noprintf
     ;;
 esac
-changequote([, ])dnl
 ac_cv_var_nlist_noprintf=$ans])
 case "$ac_cv_var_nlist_noprintf" in
  no) ;;
@@ -2853,12 +2843,11 @@ esac
 AC_CACHE_CHECK(if we should always slew the time, ac_cv_var_slew_always,
 [AC_ARG_ENABLE(slew-always,	 [  --enable-slew-always    s always slew the time],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$target" in
-      *-apple-aux[23]*)
+    [case "$target" in
+      *-apple-aux[[23]]*)
 	 ans=yes
 	 ;;
-      *-*-bsdi[012]*)
+      *-*-bsdi[[012]]*)
 	 ans=no
 	 ;;
       *-*-bsdi*)
@@ -2870,7 +2859,6 @@ AC_CACHE_CHECK(if we should always slew the time, ac_cv_var_slew_always,
       *) ans=no
 	 ;;
      esac
-     changequote([, ])dnl
      ])
 ac_cv_var_slew_always=$ans])
 case "$ac_cv_var_slew_always" in
@@ -2880,8 +2868,7 @@ esac
 AC_CACHE_CHECK(if we should step and slew the time, ac_cv_var_step_slew,
 [AC_ARG_ENABLE(step-slew,	 [  --enable-step-slew      s step and slew the time],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$target" in
+    [case "$target" in
       *-sni-sysv*)
 	 ans=yes
 	 ;;
@@ -2891,7 +2878,7 @@ AC_CACHE_CHECK(if we should step and slew the time, ac_cv_var_step_slew,
       *-*-ptx*)
 	 ans=yes
 	 ;;
-      *-*-solaris2.[012]*)
+      *-*-solaris2.[[012]]*)
 	 ans=yes
 	 ;;
       *-*-sysv4*)	# HMS: Does this catch Fujitsu UXP?
@@ -2900,7 +2887,6 @@ AC_CACHE_CHECK(if we should step and slew the time, ac_cv_var_step_slew,
       *) ans=no
 	 ;;
      esac
-     changequote([, ])dnl
      ])
 ac_cv_var_step_slew=$ans])
 case "$ac_cv_var_step_slew" in
@@ -2910,15 +2896,13 @@ esac
 AC_CACHE_CHECK(if ntpdate should step the time, ac_cv_var_ntpdate_step,
 [AC_ARG_ENABLE(ntpdate-step,	 [  --enable-ntpdate-step   s if ntpdate should step the time],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$target" in
-      *-apple-aux[23]*)
+    [case "$target" in
+      *-apple-aux[[23]]*)
 	 ans=yes
 	 ;;
       *) ans=no
 	 ;;
      esac
-     changequote([, ])dnl
      ])
 ac_cv_var_ntpdate_step=$ans])
 case "$ac_cv_var_ntpdate_step" in
@@ -2947,8 +2931,7 @@ esac
 AC_CACHE_CHECK(if we should avoid kernel FLL bug, ac_cv_var_kernel_fll_bug,
 [AC_ARG_ENABLE(kernel-fll-bug, [  --enable-kernel-fll-bug s if we should avoid a kernel FLL bug],
     [ans=$enableval],
-    [changequote(<<, >>)dnl
-    case "$target" in
+    [case "$target" in
      *-*-solaris2.6)
 	 case "`uname -v`" in
 	  Generic_105181-17)
@@ -2973,7 +2956,6 @@ AC_CACHE_CHECK(if we should avoid kernel FLL bug, ac_cv_var_kernel_fll_bug,
      *) ans=no
 	 ;;
     esac
-    changequote([, ])dnl
     ])
 ac_cv_var_kernel_fll_bug=$ans])
 case "$ac_cv_var_kernel_fll_bug" in

@@ -1,3 +1,4 @@
+* Crypto/authentication rewrite
 * WINNT builds with MD5 by default
 * WINNT no longer requires Perl for building with Visual C++ 6.0
 * algorithmic improvements, bugfixes
@@ -5,6 +6,7 @@
 * html/pic/* is *lots* smaller
 * New drivers: Forum Graphic GPS, WWV/H
 * Rewrite of the audio drivers
+(4.0.99)
 * Driver updates: CHU, DCF, GPS/VME, Oncore, PCF, Ulink, WWVB, burst
   If you use the ONCORE driver with a HARDPPS kernel module,
   you *must* have a properly specified:

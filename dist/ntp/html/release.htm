@@ -54,8 +54,10 @@ the network load.</LI>
 results in good accuracy with intermittent connections typical of PPP
 and ISDN services. When enabled, at each poll interval the server sends
 eight messages over the next 30-s interval and processes them in a
-batch. Outlyers due to initial dial-up delays, etc., are avoided and the
-server synchronizes with its peer generally within 30 s.</LI>
+batch. However, the interval between the first and subsequent messages
+is about 20 s in order for a dialup modem to complete the call. Outlyers
+due to initial dial-up delays, etc., are avoided and the server
+synchronizes with its peer generally within 30 s.</LI>
 
 <P><LI>In addition to the NTPv3 authentication scheme, which uses
 private-key cryptography, a new NTPv4 <A HREF=authopt.htm>autokey
@@ -70,7 +72,7 @@ modes.</LI>
 applications can avoid per-host configuration altogether. Both of these
 are based on multicast technology. They provide for automatic discovery
 and configuration of servers and clients. In <A HREF=assoc.htm>multicast
-</A>mode, a server sends a message at fixed intervals using specified
+</A> mode, a server sends a message at fixed intervals using specified
 multicast addresses, while clients listen on these addresses. Upon
 receiving the message, a client exchanges several messages with the
 server in order to calibrate the multicast propagation delay between the
@@ -83,13 +85,14 @@ somewhat better accuracy than the multicast scheme at the price of
 additional network overhead.</LI>
 
 <P><LI>The reference clock driver interface is smaller, more rational
-and moreaccurate. Support for pulse-per-second (PPS) signals has been
+and more accurate. Support for pulse-per-second (PPS) signals has been
 extended to all drivers as an intrinsic function. Most of the drivers in
 NTPv3 have been converted to this interface, but some, including the
 PARSE subinterface, have yet to be overhauled. New drivers have been
-added for several GPS receivers now on the market. Drivers for the
-Canadian standard time and frequency station CHU and for audio IRIG
-signals have been updated and capabilites added to allow direct
+added for several GPS receivers now on the market for a total of 37
+drivers. Drivers for the Canadian standard time and frequency station
+CHU, the US standard time and frequency stations WWV/H and for IRIG
+signals have been updated and capabilities added to allow direct
 connection of these signals to the Sun audio port
 <TT>/dev/audio</TT>.</LI>
 
@@ -119,7 +122,7 @@ worry about:
 
 <P><LI>As required by Defense Trade Regulations (DTR), the cryptographic
 routines supporting the Data Encryption Standard (DES) has been removed
-from the export version of the distribtution. These routines are readily
+from the export version of the distribution. These routines are readily
 available in most countries from RSA Laboratories. Directions for their
 use are in the <A HREF=build.htm>Building and Installing the
 Distribution</A> page.</LI>
@@ -136,7 +139,7 @@ Options</A> page for details.</LI>
 
 <P><LI>The scheme for enabling the <TT>ppsclock</TT> line
 discipline/streams module has changed. Formerly, it was enabled by
-setting f<TT>udge flag3</TT> for the serial port connected to the PPS
+setting f<TT>fudge flag3</TT> for the serial port connected to the PPS
 signal. Now, there is an explicit command <TT>pps</TT> used to designate
 the device name. See the <A HREF=clockopt.htm>Reference Clock
 Options</A> page for details.</LI>
@@ -144,47 +147,49 @@ Options</A> page for details.</LI>
 <P><LI>While in fact not a new problem, some obscure option combinations
 require the <TT>server</TT> and <TT>peer</TT> commands to follow the
 others; in particular, the <TT>enable</TT> and <TT>pps</TT> commands
-should preceed these commands.</LI>
+should precede these commands.</LI>
 
 </OL>
 
 <H4>Caveats</H4>
 
 This release has been compiled and tested on several systems, including
-SunOS 4.1.3, Solaris 2.5.1 and 2.6, Alpha 4.0, Ultrix 4.4, Linux,
-FreeBSD and HP-UX 10.02. It has not been compiled for Windows NT or VMS.
-We are relying on the NTP volunteer brigade to do that. Known problems
-are summarized below:
+SunOS 4.1.3, Solaris 2.5.1 and 2.7, Alpha 4.0, Ultrix 4.4, Linux,
+FreeBSD 3.4 and HP-UX 10.02. It has not been compiled for Windows NT or
+VMS. We are relying on the NTP volunteer brigade to do that. Known
+problems are summarized below:
 
 <OL>
+
+<p><li>The latest NTPv4 <tt>ntpdc</tt> does not work with previous versions of <tt>ntpd</tt> and previous versions of <tt>ntpdc</tt> do not work with latest <tt>ntpd</tt>. This situation is regrettable and may be fixed in future; however, it is necessary in order for the autokey function to retrieve canonical names and certificates from directory services such as Secure DNS.
 
 <P><LI>To work properly in all cases, the <TT>enable</TT> and
 <TT>pps</TT> commands, if used, should appear before the <TT>server</TT>
 and <TT>fudge</TT> commands in the configuration file.</LI>
 
-<P><LI>The precision time kernel modifications now in stock Solaris 2.6
-have bugs. The kernel discipline has been disabled by default. For
-testing, the kernel can be enabled using the <TT>enable kernel</TT>
+<P><LI>The precision time kernel modifications formerly in stock Solaris
+2.6 have bugs that were fixed in 2.7. A patch is available that fixes
+the 2.6 bugs. The 2.6 kernel discipline has been disabled by default.
+For testing, the kernel can be enabled using the <TT>enable kernel</TT>
 command either in the configuration file or via <TT>ntpdc</TT>.</LI>
 
 <P><LI>On Alpha 4.0 with reference clocks configured, debugging with the
 <TT>-d</TT> options doesn't work.</LI>
 
-<P><LI>The autokey function requires an NTP header extensions field,
-which is documented in an internet draft and implemented in this
-release. This field holds the public-key signature and certificate;
-however, the detailed format for these data have not yet been
-determined. It is expected this will happen in the near future and that
-implementation of the required algorithms will quickly follow using
-available cryptographic algorithms.</LI>
+<P><LI>The autokey function uses NTP header extensions fields,
+which is documented in an Internet Draft and implemented in this
+release. At present the keys and related cryptographic data are stored
+in the form of files generated by the <a
+href=genkeys.htm>ntp_genkeys</a> program. It is expected that in future
+these values will be obtained automatically from the Secure DNS
+following deployment.</LI>
 
 <P><LI>The manycast function still needs some work. Ideally, the
 existing I/O routines would be enhanced to include the capability to
 determine the source address on every multicast packet sent, so that the
 autokey function could reliably construct the correct cryptosum.
 Meanwhile, the utility of manycast in conjunction with autokey is
-limited to clients with only a single network
-interface.</LI>
+limited to clients with only a single network interface.</LI>
 
 <P><LI>The HTML documentation has been partially updated. However, most
 of the NTPv3 documentation continues to apply to NTPv4. Until the update

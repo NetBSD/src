@@ -1,22 +1,41 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.2 2000/04/22 14:53:16 simonb Exp $	*/
+/*	$NetBSD: ntp_resolver.c,v 1.1.1.1 2000/04/22 14:53:21 simonb Exp $	*/
 
 /*
- * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
- * routine callable from ntpd, rather than separate program
- * also, key info passed in via a global, so no key file needed.
- */
-
-/*
- * ntpres - process configuration entries which require use of the resolver
- *
- * This is meant to be run by ntpd on the fly.  It is not guaranteed
- * to work properly if run by hand.  This is actually a quick hack to
- * stave off violence from people who hate using numbers in the
- * configuration file (at least I hope the rest of the daemon is
- * better than this).  Also might provide some ideas about how one
- * might go about autoconfiguring an NTP distribution network.
- *
- */
+** Ancestor was ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
+**
+** The previous resolver only needed to do forward lookups, and all names
+** were known before we started the resolver process.
+**
+** The new code must be able to handle reverse lookups, and the requests can
+** show up at any time.
+**
+** Here's the drill for the new logic.
+**
+** We want to be able to do forward or reverse lookups.  Forward lookups
+** require one set of information to be sent back to the daemon, reverse
+** lookups require a different set of information.  The caller knows this.
+**
+** The daemon must not block.  This includes communicating with the resolver
+** process (if the resolver process is a separate task).
+**
+** Current resolver code blocks waiting for the response, so the
+** alternatives are:
+**
+** - Find a nonblocking resolver library
+** - Do each (initial) lookup in a separate process
+** - - subsequent lookups *could* be handled by a different process that has
+**     a queue of pending requests
+**
+** We could use nonblocking lookups in a separate process (just to help out
+** with timers).
+**
+** If we don't have nonblocking resolver calls we have more opportunities
+** for denial-of-service problems.
+**
+** - too many fork()s
+** - communications path
+**
+*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -29,13 +48,8 @@
 #include <netdb.h>
 #include <signal.h>
 
-/**/
 #include <netinet/in.h>
 #include <arpa/inet.h>
-/**/
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>		/* MAXHOSTNAMELEN (often) */
-#endif
 
 #include "ntpd.h"
 #include "ntp_io.h"
@@ -49,26 +63,27 @@
  * Each item we are to resolve and configure gets one of these
  * structures defined for it.
  */
-struct conf_entry {
-	struct conf_entry *ce_next;
-	char *ce_name;			/* name we are trying to resolve */
-	struct conf_peer ce_config;	/* configuration info for peer */
+struct dns_entry {
+	int de_done;
+#define DE_NAME		001
+#define DE_ADDR		002
+#define DE_NA		(DE_NAME | DE_ADDR)
+#define DE_PENDING	000
+#define DE_GOT		010
+#define DE_FAIL		020
+#define DE_RESULT	(DE_PENDING | DE_GOT | DE_FAIL)
+	struct dns_entry *de_next;
+	struct info_dns_assoc de_info; /* DNS info for peer */
 };
-#define	ce_peeraddr	ce_config.peeraddr
-#define	ce_hmode	ce_config.hmode
-#define	ce_version	ce_config.version
-#define ce_minpoll	ce_config.minpoll
-#define ce_maxpoll	ce_config.maxpoll
-#define	ce_flags	ce_config.flags
-#define ce_ttl		ce_config.ttl
-#define	ce_keyid	ce_config.keyid
-#define ce_keystr	ce_config.keystr
+#define	de_associd	de_info.associd
+#define	de_peeraddr	de_info.peeraddr
+#define	de_hostname	de_info.hostname
 
 /*
- * confentries is a pointer to the list of configuration entries
+ * dns_entries is a pointer to the list of configuration entries
  * we have left to do.
  */
-static struct conf_entry *confentries = NULL;
+static struct dns_entry *dns_entries = NULL;
 
 /*
  * We take an interrupt every thirty seconds, at which time we decrement
@@ -84,6 +99,7 @@ static struct conf_entry *confentries = NULL;
 #define	MAXRESOLVE	32
 #define	CONFIG_TIME	2
 #define	ALARM_TIME	30
+
 #define	SLEEPTIME	2
 
 static	volatile int config_timer = 0;
@@ -104,59 +120,40 @@ static	int resolve_value;	/* next value of resolve timer */
 #define	TIMEOUT_SEC	2
 #define	TIMEOUT_USEC	0
 
-
-/*
- * Input processing.  The data on each line in the configuration file
- * is supposed to consist of entries in the following order
- */
-#define	TOK_HOSTNAME	0
-#define	TOK_HMODE	1
-#define	TOK_VERSION	2
-#define TOK_MINPOLL	3
-#define TOK_MAXPOLL	4
-#define	TOK_FLAGS	5
-#define TOK_TTL		6
-#define	TOK_KEYID	7
-#define TOK_KEYSTR	8
-#define	NUMTOK		9
-
-#define	MAXLINESIZE	512
-
-
 /*
  * File descriptor for ntp request code.
  */
 static	int sockfd = -1;
 
+/*
+ * Pipe descriptors
+ */
+int p_fd[2] = { -1, -1 };
 
 /* stuff to be filled in by caller */
 
-keyid_t req_keyid;	/* request keyid */
-char *req_file;		/* name of the file with configuration info */
+extern keyid_t req_keyid;	/* request keyid */
 
 /* end stuff to be filled in */
 
-
+void		ntp_res		P((void));
 static	RETSIGTYPE bong		P((int));
 static	void	checkparent	P((void));
-static	void	removeentry	P((struct conf_entry *));
-static	void	addentry	P((char *, int, int, int, int, int,
-				   int, keyid_t, char *));
-static	int	findhostaddr	P((struct conf_entry *));
+static	void	removeentry	P((struct dns_entry *));
+static	void	addentry	P((char *, u_int32, u_short));
+static	void	findhostaddr	P((struct dns_entry *));
 static	void	openntp		P((void));
-static	int	request		P((struct conf_peer *));
-static	char *	nexttoken	P((char **));
-static	void	readconf	P((FILE *, char *));
+static	int	tell_ntpd	P((struct info_dns_assoc *));
 static	void	doconfigure	P((int));
 
 struct ntp_res_t_pkt {		/* Tagged packet: */
 	void *tag;		/* For the caller */
 	u_int32 paddr;		/* IP to look up, or 0 */
-	char name[MAXHOSTNAMELEN]; /* Name to look up (if 1st byte is not 0) */
+	char name[NTP_MAXHOSTNAME]; /* Name to look up (if 1st byte is not 0) */
 };
 
 struct ntp_res_c_pkt {		/* Control packet: */
-	char name[MAXHOSTNAMELEN];
+	char name[NTP_MAXHOSTNAME];
 	u_int32 paddr;
 	int mode;
 	int version;
@@ -168,33 +165,74 @@ struct ntp_res_c_pkt {		/* Control packet: */
 	u_char keystr[MAXFILENAME];
 };
 
-
 /*
- * ntp_res_recv: Process an answer from the resolver
+ * ntp_res_name
  */
 
 void
-ntp_res_recv(void)
+ntp_res_name(
+	u_int32 paddr,		/* Address to resolve */
+	u_short associd		/* Association ID */
+	)
 {
+	pid_t pid;
+
 	/*
-	  We have data ready on our descriptor.
-	  It may be an EOF, meaning the resolver process went away.
-	  Otherwise, it will be an "answer".
-	*/
+	 * fork.
+	 * - parent returns
+	 * - child stuffs data and calls ntp_res()
+	 */
+
+	for (pid = -1; pid == -1;) {
+#ifdef RES_TEST
+		pid = 0;
+#else
+		pid = fork();
+#endif
+		if (pid == -1) {
+			msyslog(LOG_ERR, "ntp_res_name: fork() failed: %m");
+			sleep(2);
+		}
+	}
+	switch (pid) {
+	    case -1:	/* Error */
+		msyslog(LOG_INFO, "ntp_res_name: error...");
+		/* Can't happen */
+		break;
+
+	    case 0:	/* Child */
+		closelog();
+		kill_asyncio();
+		(void) signal_no_reset(SIGCHLD, SIG_DFL);
+#ifndef LOG_DAEMON
+		openlog("ntp_res", LOG_PID);
+# else /* LOG_DAEMON */
+#  ifndef LOG_NTP
+#   define	LOG_NTP LOG_DAEMON
+#  endif
+		openlog("ntp_res_name", LOG_PID | LOG_NDELAY, LOG_NTP);
+#endif
+
+		addentry(NULL, paddr, associd);
+		ntp_res();
+		break;
+
+	    default:	/* Parent */
+		/* Nothing to do.  (In Real Life, this never happens.) */
+		return;
+	}
 }
 
-
 /*
- * ntp_intres needs;
+ * ntp_res needs;
  *
- *	req_key(???), req_keyid, req_file valid
+ *	req_key(???), req_keyid valid
  *	syslog still open
  */
 
 void
-ntp_intres(void)
+ntp_res(void)
 {
-	FILE *in;
 #ifdef HAVE_SIGSUSPEND
 	sigset_t set;
 
@@ -202,8 +240,8 @@ ntp_intres(void)
 #endif /* HAVE_SIGSUSPEND */
 
 #ifdef DEBUG
-	if (debug > 1) {
-		msyslog(LOG_INFO, "NTP_INTRES running");
+	if (debug) {
+		msyslog(LOG_INFO, "NTP_RESOLVER running");
 	}
 #endif
 
@@ -217,32 +255,13 @@ ntp_intres(void)
 	}
 
 	/*
-	 * Read the configuration info
-	 * {this is bogus, since we are forked, but it is easier
-	 * to keep this code - gdt}
-	 */
-	if ((in = fopen(req_file, "r")) == NULL) {
-		msyslog(LOG_ERR, "can't open configuration file %s: %m",
-			req_file);
-		exit(1);
-	}
-	readconf(in, req_file);
-	(void) fclose(in);
-
-	if (!debug )
-		(void) unlink(req_file);
-
-	/*
-	 * Sleep a little to make sure the server is completely up
-	 */
-
-	sleep(SLEEPTIME);
-
-	/*
 	 * Make a first cut at resolving the bunch
 	 */
 	doconfigure(1);
-	if (confentries == NULL) {
+	if (dns_entries == NULL) {
+		if (debug) {
+			msyslog(LOG_INFO, "NTP_RESOLVER done!");
+		}
 #if defined SYS_WINNT
 		ExitThread(0);	/* Don't want to kill whole NT process */
 #else
@@ -262,7 +281,7 @@ ntp_intres(void)
 #endif /* SYS_WINNT */
 
 	for (;;) {
-		if (confentries == NULL)
+		if (dns_entries == NULL)
 		    exit(0);
 
 		checkparent();
@@ -350,29 +369,28 @@ checkparent(void)
 }
 
 
-
 /*
  * removeentry - we are done with an entry, remove it from the list
  */
 static void
 removeentry(
-	struct conf_entry *entry
+	struct dns_entry *entry
 	)
 {
-	register struct conf_entry *ce;
+	register struct dns_entry *de;
 
-	ce = confentries;
-	if (ce == entry) {
-		confentries = ce->ce_next;
+	de = dns_entries;
+	if (de == entry) {
+		dns_entries = de->de_next;
 		return;
 	}
 
-	while (ce != NULL) {
-		if (ce->ce_next == entry) {
-			ce->ce_next = entry->ce_next;
+	while (de != NULL) {
+		if (de->de_next == entry) {
+			de->de_next = entry->de_next;
 			return;
 		}
-		ce = ce->ce_next;
+		de = de->de_next;
 	}
 }
 
@@ -383,53 +401,44 @@ removeentry(
 static void
 addentry(
 	char *name,
-	int mode,
-	int version,
-	int minpoll,
-	int maxpoll,
-	int flags,
-	int ttl,
-	keyid_t keyid,
-	char *keystr
+	u_int32 paddr,
+	u_short associd
 	)
 {
-	register char *cp;
-	register struct conf_entry *ce;
-	unsigned int len;
+	register struct dns_entry *de;
 
 #ifdef DEBUG
-	if (debug > 1)
+	if (debug > 1) {
+		struct in_addr si;
+
+		si.s_addr = paddr;
 		msyslog(LOG_INFO, 
-			"intres: <%s> %d %d %d %d %d %d %u %s\n",
-			name, mode, version,
-			minpoll, maxpoll, flags, ttl, keyid, keystr);
+			"ntp_res_name: <%s> %s associd %d\n",
+			(name) ? name : "", inet_ntoa(si), associd);
+	}
 #endif
-	len = strlen(name) + 1;
-	cp = (char *)emalloc(len);
-	memmove(cp, name, len);
 
-	ce = (struct conf_entry *)emalloc(sizeof(struct conf_entry));
-	ce->ce_name = cp;
-	ce->ce_peeraddr = 0;
-	ce->ce_hmode = (u_char)mode;
-	ce->ce_version = (u_char)version;
-	ce->ce_minpoll = (u_char)minpoll;
-	ce->ce_maxpoll = (u_char)maxpoll;
-	ce->ce_flags = (u_char)flags;
-	ce->ce_ttl = (u_char)ttl;
-	ce->ce_keyid = keyid;
-	strncpy(ce->ce_keystr, keystr, MAXFILENAME);
-	ce->ce_next = NULL;
-
-	if (confentries == NULL) {
-		confentries = ce;
+	de = (struct dns_entry *)emalloc(sizeof(struct dns_entry));
+	if (name) {
+		strncpy(de->de_hostname, name, sizeof de->de_hostname);
+		de->de_done = DE_PENDING | DE_ADDR;
 	} else {
-		register struct conf_entry *cep;
+		de->de_hostname[0] = 0;
+		de->de_done = DE_PENDING | DE_NAME;
+	}
+	de->de_peeraddr = paddr;
+	de->de_associd = associd;
+	de->de_next = NULL;
 
-		for (cep = confentries; cep->ce_next != NULL;
-		     cep = cep->ce_next)
+	if (dns_entries == NULL) {
+		dns_entries = de;
+	} else {
+		register struct dns_entry *dep;
+
+		for (dep = dns_entries; dep->de_next != NULL;
+		     dep = dep->de_next)
 		    /* nothing */;
-		cep->ce_next = ce;
+		dep->de_next = de;
 	}
 }
 
@@ -437,90 +446,146 @@ addentry(
 /*
  * findhostaddr - resolve a host name into an address (Or vice-versa)
  *
- * Given one of {ce_peeraddr,ce_name}, find the other one.
- * It returns 1 for "success" and 0 for an uncorrectable failure.
- * Note that "success" includes try again errors.  You can tell that you
- *  got a "try again" since {ce_peeraddr,ce_name} will still be zero.
+ * sets entry->de_done appropriately when we're finished.  We're finished if
+ * we either successfully look up the missing name or address, or if we get a
+ * "permanent" failure on the lookup.
+ *
  */
-static int
+static void
 findhostaddr(
-	struct conf_entry *entry
+	struct dns_entry *entry
 	)
 {
 	struct hostent *hp;
 
 	checkparent();		/* make sure our guy is still running */
 
-	if (entry->ce_name && entry->ce_peeraddr) {
-		/* HMS: Squawk? */
-		msyslog(LOG_ERR, "findhostaddr: both ce_name and ce_peeraddr are defined...");
-		return 1;
+	/*
+	 * The following should never trip - this subroutine isn't
+	 * called if hostname and peeraddr are "filled".
+	 */
+	if (entry->de_hostname[0] && entry->de_peeraddr) {
+		struct in_addr si;
+
+		si.s_addr = entry->de_peeraddr;
+		msyslog(LOG_ERR, "findhostaddr: both de_hostname and de_peeraddr are defined: <%s>/%s: state %#x",
+			&entry->de_hostname[0], inet_ntoa(si), entry->de_done);
+		return;
 	}
 
-	if (!entry->ce_name && !entry->ce_peeraddr) {
-		msyslog(LOG_ERR, "findhostaddr: both ce_name and ce_peeraddr are undefined!");
-		return 0;
+	/*
+	 * The following should never trip.
+	 */
+	if (!entry->de_hostname[0] && !entry->de_peeraddr) {
+		msyslog(LOG_ERR, "findhostaddr: both de_hostname and de_peeraddr are undefined!");
+		entry->de_done |= DE_FAIL;
+		return;
 	}
 
-	if (entry->ce_name) {
+	if (entry->de_hostname[0]) {
 #ifdef DEBUG
 		if (debug > 2)
 			msyslog(LOG_INFO, "findhostaddr: Resolving <%s>",
-				entry->ce_name);
+				&entry->de_hostname[0]);
 #endif DEBUG
-		hp = gethostbyname(entry->ce_name);
+		hp = gethostbyname(&entry->de_hostname[0]);
 	} else {
 #ifdef DEBUG
-		if (debug > 2)
-			msyslog(LOG_INFO, "findhostaddr: Resolving %x>",
-				entry->ce_peeraddr);
+		if (debug > 2) {
+			struct in_addr si;
+
+			si.s_addr = entry->de_peeraddr;
+			msyslog(LOG_INFO, "findhostaddr: Resolving %s",
+				inet_ntoa(si));
+		}
 #endif
-		hp = gethostbyaddr((const char *)entry->ce_peeraddr,
-				   sizeof entry->ce_peeraddr,
+		hp = gethostbyaddr((const char *)&entry->de_peeraddr,
+				   sizeof entry->de_peeraddr,
 				   AF_INET);
 	}
 
 	if (hp == NULL) {
 		/*
-		 * If the resolver is in use, see if the failure is
-		 * temporary.  If so, return success.
+		 * Bail if we should TRY_AGAIN.
+		 * Otherwise, we have a permanent failure.
 		 */
 		if (h_errno == TRY_AGAIN)
-		    return (1);
-		return (0);
-	}
-
-	if (entry->ce_name) {
-#ifdef DEBUG
-		if (debug > 2)
-			msyslog(LOG_INFO, "findhostaddr: name resolved.");
-#endif
-		/*
-		 * Use the first address.  We don't have any way to tell
-		 * preferences and older gethostbyname() implementations
-		 * only return one.
-		 */
-		memmove((char *)&(entry->ce_peeraddr),
-			(char *)hp->h_addr,
-			sizeof(struct in_addr));
-		if (entry->ce_keystr[0] == '*')
-			strncpy((char *)&(entry->ce_keystr), hp->h_name,
-				MAXFILENAME);
+			return;
+		entry->de_done |= DE_FAIL;
 	} else {
-		char *cp;
-		size_t s;
-
-#ifdef DEBUG
-		if (debug > 2)
-			msyslog(LOG_INFO, "findhostaddr: address resolved.");
-#endif
-		s = strlen(hp->h_name) + 1;
-		cp = emalloc(s);
-		strcpy(cp, hp->h_name);
-		entry->ce_name = cp;
+		entry->de_done |= DE_GOT;
 	}
-		   
-	return (1);
+
+	if (entry->de_done & DE_GOT) {
+		switch (entry->de_done & DE_NA) {
+		    case DE_NAME:
+#ifdef DEBUG
+			if (debug > 2)
+				msyslog(LOG_INFO,
+					"findhostaddr: name resolved.");
+#endif
+			/*
+			 * Use the first address.  We don't have any way to
+			 * tell preferences and older gethostbyname()
+			 * implementations only return one.
+			 */
+			memmove((char *)&(entry->de_peeraddr),
+				(char *)hp->h_addr,
+				sizeof(struct in_addr));
+			break;
+		    case DE_ADDR:
+#ifdef DEBUG
+			if (debug > 2)
+				msyslog(LOG_INFO,
+					"findhostaddr: address resolved.");
+#endif
+			strncpy(&entry->de_hostname[0], hp->h_name,
+				sizeof entry->de_hostname);
+			break;
+		    default:
+			msyslog(LOG_ERR, "findhostaddr: Bogus de_done: %#x",
+				entry->de_done);
+			break;
+		}
+	} else {
+#ifdef DEBUG
+		if (debug > 2) {
+			struct in_addr si;
+			char *hes;
+#ifndef HAVE_HSTRERROR
+			char hnum[20];
+			
+			switch (h_errno) {
+			    case HOST_NOT_FOUND:
+				hes = "Authoritive Answer Host not found";
+				break;
+			    case TRY_AGAIN:
+				hes = "Non-Authoritative Host not found, or SERVERFAIL";
+				break;
+			    case NO_RECOVERY:
+				hes = "Non recoverable errors, FORMERR, REFUSED, NOTIMP";
+				break;
+			    case NO_DATA:
+				hes = "Valid name, no data record of requested type";
+				break;
+			    default:
+				snprintf(hnum, sizeof hnum, "%d", h_errno);
+				hes = hnum;
+				break;
+			}
+#else
+			hes = hstrerror(h_errno);
+#endif
+
+			si.s_addr = entry->de_peeraddr;
+			msyslog(LOG_INFO,
+				"findhostaddr: Failed resolution on <%s>/%s: %s",
+				entry->de_hostname, inet_ntoa(si), hes);
+		}
+#endif
+		/* Send a NAK message back to the daemon */
+	}
+	return;
 }
 
 
@@ -550,31 +615,31 @@ openntp(void)
 	 * Make the socket non-blocking.  We'll wait with select()
 	 */
 #ifndef SYS_WINNT
-#if defined(O_NONBLOCK)
+# if defined(O_NONBLOCK)
 	if (fcntl(sockfd, F_SETFL, O_NONBLOCK) == -1) {
 		msyslog(LOG_ERR, "fcntl(O_NONBLOCK) failed: %m");
 		exit(1);
 	}
-#else
-#if defined(FNDELAY)
+# else
+#  if defined(FNDELAY)
 	if (fcntl(sockfd, F_SETFL, FNDELAY) == -1) {
 		msyslog(LOG_ERR, "fcntl(FNDELAY) failed: %m");
 		exit(1);
 	}
-#else
-# include "Bletch: NEED NON BLOCKING IO"
-#endif /* FNDDELAY */
-#endif /* O_NONBLOCK */
+#  else
+#   include "Bletch: NEED NON BLOCKING IO"
+#  endif /* FNDDELAY */
+# endif /* O_NONBLOCK */
 #else  /* SYS_WINNT */
 	{
 		int on = 1;
+
 		if (ioctlsocket(sockfd,FIONBIO,(u_long *) &on) == SOCKET_ERROR) {
 			msyslog(LOG_ERR, "ioctlsocket(FIONBIO) fails: %m");
 			exit(1); /* Windows NT - set socket in non-blocking mode */
 		}
 	}
 #endif /* SYS_WINNT */
-
 
 	if (connect(sockfd, (struct sockaddr *)&saddr, sizeof(saddr)) == -1) {
 		msyslog(LOG_ERR, "openntp: connect() failed: %m");
@@ -584,11 +649,11 @@ openntp(void)
 
 
 /*
- * request - send a configuration request to the server, wait for a response
+ * tell_ntpd: Tell ntpd what we discovered.
  */
 static int
-request(
-	struct conf_peer *conf
+tell_ntpd(
+	struct info_dns_assoc *conf
 	)
 {
 	fd_set fdset;
@@ -635,10 +700,10 @@ request(
 	reqpkt.rm_vn_mode = RM_VN_MODE(0, 0, 0);
 	reqpkt.auth_seq = AUTH_SEQ(1, 0);	/* authenticated, no seq */
 	reqpkt.implementation = IMPL_XNTPD;	/* local implementation */
-	reqpkt.request = REQ_CONFIG;		/* configure a new peer */
+	reqpkt.request = REQ_HOSTNAME_ASSOCID;	/* Hostname for associd */
 	reqpkt.err_nitems = ERR_NITEMS(0, 1);	/* one item */
-	reqpkt.mbz_itemsize = MBZ_ITEMSIZE(sizeof(struct conf_peer));
-	memmove(reqpkt.data, (char *)conf, sizeof(struct conf_peer));
+	reqpkt.mbz_itemsize = MBZ_ITEMSIZE(sizeof(struct info_dns_assoc));
+	memmove(reqpkt.data, (char *)conf, sizeof(struct info_dns_assoc));
 	reqpkt.keyid = htonl(req_keyid);
 
 	get_systime(&ts);
@@ -710,7 +775,7 @@ request(
 		}
 		else if (n == 0)
 		{
-			if (debug)
+			if(debug)
 			    msyslog(LOG_INFO, "select() returned 0.");
 			return 0;
 		}
@@ -794,12 +859,13 @@ request(
 		}
 
 		if (reqpkt.implementation != IMPL_XNTPD ||
-		    reqpkt.request != REQ_CONFIG) {
+		    reqpkt.request != REQ_HOSTNAME_ASSOCID) {
 #ifdef DEBUG
 			if (debug > 1)
 			    msyslog(LOG_INFO,
-				    "implementation (%d) or request (%d) incorrect",
-				    reqpkt.implementation, reqpkt.request);
+				    "implementation (%d/%d) or request (%d/%d) incorrect",
+				    reqpkt.implementation, IMPL_XNTPD,
+				    reqpkt.request, REQ_HOSTNAME_ASSOCID);
 #endif
 			continue;
 		}
@@ -859,197 +925,67 @@ request(
 
 
 /*
- * nexttoken - return the next token from a line
- */
-static char *
-nexttoken(
-	char **lptr
-	)
-{
-	register char *cp;
-	register char *tstart;
-
-	cp = *lptr;
-
-	/*
-	 * Skip leading white space
-	 */
-	while (*cp == ' ' || *cp == '\t')
-	    cp++;
-	
-	/*
-	 * If this is the end of the line, return nothing.
-	 */
-	if (*cp == '\n' || *cp == '\0') {
-		*lptr = cp;
-		return NULL;
-	}
-	
-	/*
-	 * Must be the start of a token.  Record the pointer and look
-	 * for the end.
-	 */
-	tstart = cp++;
-	while (*cp != ' ' && *cp != '\t' && *cp != '\n' && *cp != '\0')
-	    cp++;
-	
-	/*
-	 * Terminate the token with a \0.  If this isn't the end of the
-	 * line, space to the next character.
-	 */
-	if (*cp == '\n' || *cp == '\0')
-	    *cp = '\0';
-	else
-	    *cp++ = '\0';
-
-	*lptr = cp;
-	return tstart;
-}
-
-
-/*
- * readconf - read the configuration information out of the file we
- *	      were passed.  Note that since the file is supposed to be
- *	      machine generated, we bail out at the first sign of trouble.
- */
-static void
-readconf(
-	FILE *fp,
-	char *name
-	)
-{
-	register int i;
-	char *token[NUMTOK];
-	u_long intval[NUMTOK];
-	int flags;
-	char buf[MAXLINESIZE];
-	char *bp;
-
-	while (fgets(buf, MAXLINESIZE, fp) != NULL) {
-
-		bp = buf;
-		for (i = 0; i < NUMTOK; i++) {
-			if ((token[i] = nexttoken(&bp)) == NULL) {
-				msyslog(LOG_ERR,
-					"tokenizing error in file `%s', quitting",
-					name);
-				exit(1);
-			}
-		}
-
-		for (i = 1; i < NUMTOK - 1; i++) {
-			if (!atouint(token[i], &intval[i])) {
-				msyslog(LOG_ERR,
-					"format error for integer token `%s', file `%s', quitting",
-					token[i], name);
-				exit(1);
-			}
-		}
-
-		if (intval[TOK_HMODE] != MODE_ACTIVE &&
-		    intval[TOK_HMODE] != MODE_CLIENT &&
-		    intval[TOK_HMODE] != MODE_BROADCAST) {
-			msyslog(LOG_ERR, "invalid mode (%ld) in file %s",
-				intval[TOK_HMODE], name);
-			exit(1);
-		}
-
-		if (intval[TOK_VERSION] > NTP_VERSION ||
-		    intval[TOK_VERSION] < NTP_OLDVERSION) {
-			msyslog(LOG_ERR, "invalid version (%ld) in file %s",
-				intval[TOK_VERSION], name);
-			exit(1);
-		}
-		if (intval[TOK_MINPOLL] < NTP_MINPOLL ||
-		    intval[TOK_MINPOLL] > NTP_MAXPOLL) {
-			msyslog(LOG_ERR, "invalid MINPOLL value (%ld) in file %s",
-				intval[TOK_MINPOLL], name);
-			exit(1);
-		}
-
-		if (intval[TOK_MAXPOLL] < NTP_MINPOLL ||
-		    intval[TOK_MAXPOLL] > NTP_MAXPOLL) {
-			msyslog(LOG_ERR, "invalid MAXPOLL value (%ld) in file %s",
-				intval[TOK_MAXPOLL], name);
-			exit(1);
-		}
-
-		if ((intval[TOK_FLAGS] & ~(FLAG_AUTHENABLE | FLAG_PREFER |
-				   FLAG_NOSELECT | FLAG_BURST | FLAG_SKEY))
-		    != 0) {
-			msyslog(LOG_ERR, "invalid flags (%ld) in file %s",
-				intval[TOK_FLAGS], name);
-			exit(1);
-		}
-
-		flags = 0;
-		if (intval[TOK_FLAGS] & FLAG_AUTHENABLE)
-		    flags |= CONF_FLAG_AUTHENABLE;
-		if (intval[TOK_FLAGS] & FLAG_PREFER)
-		    flags |= CONF_FLAG_PREFER;
-		if (intval[TOK_FLAGS] & FLAG_NOSELECT)
-		    flags |= CONF_FLAG_NOSELECT;
-		if (intval[TOK_FLAGS] & FLAG_BURST)
-		    flags |= CONF_FLAG_BURST;
-		if (intval[TOK_FLAGS] & FLAG_SKEY)
-		    flags |= CONF_FLAG_SKEY;
-
-		/*
-		 * This is as good as we can check it.  Add it in.
-		 */
-		addentry(token[TOK_HOSTNAME], (int)intval[TOK_HMODE],
-			 (int)intval[TOK_VERSION], (int)intval[TOK_MINPOLL],
-			 (int)intval[TOK_MAXPOLL], flags, (int)intval[TOK_TTL],
-			 intval[TOK_KEYID], token[TOK_KEYSTR]);
-	}
-}
-
-
-/*
- * doconfigure - attempt to resolve names and configure the server
+ * doconfigure - attempt to resolve names/addresses
  */
 static void
 doconfigure(
 	int dores
 	)
 {
-	register struct conf_entry *ce;
-	register struct conf_entry *ceremove;
+	register struct dns_entry *de;
+	register struct dns_entry *deremove;
+	char *done_msg = "";
 
-	ce = confentries;
-	while (ce != NULL) {
+	de = dns_entries;
+	while (de != NULL) {
 #ifdef DEBUG
-		if (debug > 1)
+		if (debug > 1) {
+			struct in_addr si;
+
+			si.s_addr = de->de_peeraddr;
 			msyslog(LOG_INFO,
-			    "doconfigure: <%s> has peeraddr %#x",
-			    ce->ce_name, ce->ce_peeraddr);
+			    "doconfigure: name: <%s> peeraddr: %s",
+			    de->de_hostname, inet_ntoa(si));
+		}
 #endif
-		if (dores && ce->ce_peeraddr == 0) {
-			if (!findhostaddr(ce)) {
-				msyslog(LOG_ERR,
-					"couldn't resolve `%s', giving up on it",
-					ce->ce_name);
-				ceremove = ce;
-				ce = ceremove->ce_next;
-				removeentry(ceremove);
-				continue;
-			}
+		if (dores && (de->de_hostname[0] == 0 || de->de_peeraddr == 0)) {
+			findhostaddr(de);
 		}
 
-		if (ce->ce_peeraddr != 0) {
-			if (request(&ce->ce_config)) {
-				ceremove = ce;
-				ce = ceremove->ce_next;
-				removeentry(ceremove);
-				continue;
-			}
-#ifdef DEBUG
-			if (debug > 1) {
-				msyslog(LOG_INFO,
-				    "doconfigure: request() FAILED, maybe next time.");
-			}
-#endif
+		switch (de->de_done & DE_RESULT) {
+		    case DE_PENDING:
+			done_msg = "";
+			break;
+		    case DE_GOT:
+			done_msg = "succeeded";
+			break;
+		    case DE_FAIL:
+			done_msg = "failed";
+			break;
+		    default:
+			done_msg = "(error - shouldn't happen)";
+			break;
 		}
-		ce = ce->ce_next;
+		if (done_msg[0]) {
+			/* Send the answer */
+			if (tell_ntpd(&de->de_info)) {
+				struct in_addr si;
+
+				si.s_addr = de->de_peeraddr;
+#ifdef DEBUG
+				if (debug > 1) {
+					msyslog(LOG_INFO,
+						"DNS resolution on <%s>/%s %s",
+						de->de_hostname, inet_ntoa(si),
+						done_msg);
+				}
+#endif
+				deremove = de;
+				de = deremove->de_next;
+				removeentry(deremove);
+			}
+		} else {
+			de = de->de_next;
+		}
 	}
 }

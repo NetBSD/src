@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.2 2000/04/22 14:52:40 simonb Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -10,58 +10,64 @@
 #include "ntp_types.h"
 #include <math.h>
 
-	/* common definitions for Y2K repairs			[ Y2KFixes */
+/*
+ * Calendar arithmetic - contributed by G. Healton
+ */
+#define YEAR_BREAK 500		/* years < this are tm_year values:
+				 * Break < AnyFourDigitYear && Break >
+				 * Anytm_yearYear */
 
-		/* (this might better be put in ntp_calendar.h) */
-#define YEAR_BREAK 500		/* assume years < this are tm_year values: */
-				    /*    Break < AnyFourDigitYear
-				       && Break > Anytm_yearYear */
-#define YEAR_PIVOT 98		/* 97/98: assume years < this are year 2000+ */
-	/* FYI: official UNIX pivot year is 68/69 */
+#define YEAR_PIVOT 98		/* 97/98: years < this are year 2000+
+				 * FYI: official UNIX pivot year is
+				 * 68/69 */
 
-  /* Number of Days since (mythical) 1.BC Gregorian to 1 January of given year*/
-#define julian0(year) \
-	(	\
-	  ( (year) * 365 ) + ( (year) > 0  	\
-		? ( ((year)+3) / 4 - ((year-1) / 100) + ((year-1) / 400) )  \
-		: 0 ) \
-	)
+/*
+ * Number of Days since 1 BC Gregorian to 1 January of given year
+ */
+#define julian0(year)	(((year) * 365 ) + ((year) > 0 ? (((year) + 3) \
+			    / 4 - ((year - 1) / 100) + ((year - 1) / \
+			    400)) : 0))
 
-  /* Number of days since start of NTP time to 1 January of given year */
-#define ntp0(year)  ( julian0(year) - julian0(1900) )
+/*
+ * Number of days since start of NTP time to 1 January of given year
+ */
+#define ntp0(year)	(julian0(year) - julian0(1900))
 
-  /* Number of days since start of UNIX time to 1 January of given year */
-#define unix0(year)  ( julian0(year) - julian0(1970) )
+/*
+ * Number of days since start of UNIX time to 1 January of given year
+ */
+#define unix0(year)	(julian0(year) - julian0(1970))
 
-  /* LEAP YEAR test for full 4-digit years (e.g, 1999, 2010) */
-#define isleap_4(y)     /* a TRUE and PROPER leap year test */ \
-		   ((y)%4 == 0 && !((y)%100 == 0 && !(y%400 == 0)))
-	    /* NOTE: year 2000 TRULY IS A LEAP YEAR!!! */
+/*
+ * LEAP YEAR test for full 4-digit years (e.g, 1999, 2010)
+ */
+#define isleap_4(y)	((y) % 4 == 0 && !((y) % 100 == 0 && !(y % \
+			    400 == 0)))
 
-  /* LEAP YEAR test for tm_year (struct tm) years (e.g, 99, 110) */
-#define isleap_tm(y)     /* a TRUE and PROPER leap year test */ \
-		   ((y)%4 == 0 && !((y)%100 == 0 && !(((y)+1900)%400 == 0)))
+/*
+ * LEAP YEAR test for tm_year (struct tm) years (e.g, 99, 110)
+ */
+#define isleap_tm(y)	((y) % 4 == 0 && !((y) % 100 == 0 && !(((y) \
+			    + 1900) % 400 == 0)))
 
-  /* to convert simple two-digit years to tm_year style years:
-	if ( year < YEAR_PIVOT ) year += 100;
-
-   * to convert either two-digit OR tm_year years to four-digit years:
-	if ( year < YEAR_PIVOT ) year += 100;
-	if ( year < YEAR_BREAK ) year += 1900;
-
- CALL TO STANDARD:
-   * As the Internet is an INTERNATIONAL network, it makes SENSE to use
-     the international standard ISO 8601 to format dates and times.
-     Basically this is yyyy-mm-dd for years and hh:mm:ss for times
-     (joining the two togeather in computer readable media calls for
-     yyyy-mm-ddThh:mm:ss, though yyyy-mm-dd hh:mm:ss is often used
-     for human readable forms even though it is not not strictly
-     valid ISO 8601). Standard time-zone offsets ([+-]hh:mm) are allowed.
-					ghealton	         ] Y2KFixes */
+/*
+ * to convert simple two-digit years to tm_year style years:
+ *
+ *	if (year < YEAR_PIVOT)
+ *		year += 100;
+ *
+ * to convert either two-digit OR tm_year years to four-digit years:
+ *
+ *	if (year < YEAR_PIVOT)
+ *		year += 100;
+ *
+ *	if (year < YEAR_BREAK)
+ *		year += 1900;
+ */
 
 /*
  * How to get signed characters.  On machines where signed char works,
- * use it.  On machines where signed char doesn't work, char had better
+ * use it. On machines where signed char doesn't work, char had better
  * be signed.
  */
 #ifdef NEED_S_CHAR_TYPEDEF
@@ -92,6 +98,7 @@ typedef char s_char;
 #define	NTP_MAXSTRATUM	((u_char)15) /* max stratum, infinity a la Bellman-Ford */
 #define	NTP_MAXAGE	86400	/* one day in seconds */
 #define NTP_UNREACH	16	/* poll interval backoff count */
+#define NTP_TAILMAX	4	/* tailgate poll counter max */
 #define NTP_MINDPOLL	6	/* log2 default min poll interval (64 s) */
 #define NTP_MAXDPOLL	10	/* log2 default max poll interval (~17 m) */
 #define	NTP_MINPOLL	4	/* log2 min poll interval (16 s) */
@@ -102,7 +109,7 @@ typedef char s_char;
 #define	NTP_WINDOW	8	/* reachability register size */
 #define	NTP_SHIFT	8	/* 8 suitable for crystal time base */
 #define	NTP_MAXKEY	65535	/* maximum authentication key number */
-#define NTP_MAXSESSION	100	/* maximum entries on session key list */
+#define NTP_MAXSESSION	100	/* maximum session key list entries */
 #define NTP_AUTOMAX	12	/* log2 default max session key lifetime */
 #define KEY_REVOKE	16	/* log2 default key revoke timeout */
 #define NTP_FWEIGHT	.5	/* clock filter weight */
@@ -113,13 +120,14 @@ typedef char s_char;
  
 /*
  * Operations for jitter (variance) calculations (these use doubles).
- * Note that we carefully separate the jitter component from the dispersion
- * component (frequency error plus precision). The frequency error
- * component is computed as CLOCK_PHI times the difference between the epoch
- * of the time measurement and the reference time. The precision componen
- * is computed as the square root of the mean of the squares of a zero-
- * mean, uniform distribution of unit maximum amplitude. Whether this
- * makes statistical sense may be arguable.
+ *
+ * Note that we carefully separate the jitter component from the
+ * dispersion component (frequency error plus precision). The frequency
+ * error component is computed as CLOCK_PHI times the difference between
+ * the epoch of the time measurement and the reference time. The
+ * precision componen is computed as the square root of the mean of the
+ * squares of a zero-mean, uniform distribution of unit maximum
+ * amplitude. Whether this makes statistical sense may be arguable.
  */
 #define SQUARE(x) ((x) * (x))
 #define SQRT(x) (sqrt(x))
@@ -141,7 +149,44 @@ typedef char s_char;
  */
 #define CLOCK_PHI	15e-6	/* max frequency wander */
 
-#define	EVENT_TIMEOUT 0		/* one second, that is */
+#define	EVENT_TIMEOUT	0	/* one second, that is */
+
+#ifdef AUTOKEY
+/*
+ * The autokey structure holds the data necessary to authenticate
+ * the key IDs.
+ */
+struct autokey {		/* network byte order */
+	u_int32	tstamp;		/* timestamp */
+	keyid_t	key;		/* key ID */
+	int	seq;		/* key number */
+	u_int	siglen;		/* signature length */
+	u_char	*sig;		/* signature */
+};
+
+/*
+ * The cookie structure holds the current private value used to
+ * construct session keys.
+ */
+struct cookie {			/* network byte order */
+	u_int32	tstamp;		/* timestamp */
+	keyid_t	key;		/* key ID */
+	u_int	siglen;		/* signature length */
+	u_char	*sig;		/* signature */
+};
+
+/*
+ * The value structure holds variable length data such as host
+ * name and public value.
+ */
+struct	value {			/* network byte order */
+	u_int32	tstamp;		/* timestamp */
+	u_int	vallen;		/* value length */
+	u_char	*val;		/* value */
+	u_int	siglen;		/* signature length */
+	u_char	*sig;		/* signature */
+};
+#endif /* AUTOKEY */
 
 /*
  * The interface structure is used to hold the addresses and socket
@@ -151,8 +196,8 @@ struct interface {
 	int fd;			/* socket this is opened on */
 	int bfd;		/* socket for receiving broadcasts */
 	struct sockaddr_in sin;	/* interface address */
-	struct sockaddr_in bcast;	/* broadcast address */
-	struct sockaddr_in mask;	/* interface mask */
+	struct sockaddr_in bcast; /* broadcast address */
+	struct sockaddr_in mask; /* interface mask */
 	char name[8];		/* name of interface */
 	int flags;		/* interface flags */
 	int last_ttl;		/* last TTL specified */
@@ -170,7 +215,7 @@ struct interface {
 #define INT_MULTICAST	8	/* multicasting enabled */
 
 /*
- * Define flasher bits (tests 1 through 8 in packet procedure)
+ * Define flasher bits (tests 1 through 11 in packet procedure)
  * These reveal the state at the last grumble from the peer and are
  * most handy for diagnosing problems, even if not strictly a state
  * variable in the spec. These are recorded in the peer structure.
@@ -183,97 +228,139 @@ struct interface {
 #define TEST6		0x0020	/* peer clock unsynchronized */
 #define TEST7		0x0040	/* peer stratum out of bounds */
 #define TEST8		0x0080	/* root delay/dispersion bounds check */
-#define TEST9		0x0100	/* peer not authenticated */
-#define TEST10		0x0200	/* access denied */
+#define TEST9		0x0100	/* access denied */
+#define TEST10		0x0200	/* autokey not authentic */
+#define TEST11		0x0400	/* autokey not confirmed */
 
 /*
- * The peer structure.  Holds state information relating to the guys
- * we are peering with.  Most of this stuff is from section 3.2 of the
+ * The peer structure. Holds state information relating to the guys
+ * we are peering with. Most of this stuff is from section 3.2 of the
  * spec.
  */
 struct peer {
-	struct peer *next;
-	struct peer *ass_next;		/* link pointer in associd hash */
-	struct sockaddr_in srcadr;	/* address of remote host */
-	struct interface *dstadr;	/* pointer to address on local host */
-	struct refclockproc *procptr;	/* pointer to reference clock stuff */
-	u_char leap;			/* leap indicator */
-	u_char hmode;			/* association mode with this peer */
-	u_char pmode;			/* peer's association mode */
-	u_char stratum;			/* stratum of remote peer */
-	s_char precision;		/* peer's clock precision */
-	u_char ppoll;			/* peer poll interval */
-	u_char hpoll;			/* local host poll interval */
-	u_char minpoll;			/* min local host poll interval */
-	u_char maxpoll;			/* max local host poll interval */
-	u_char burst;			/* packets remaining in burst */
-	u_char version;			/* version number */
-	u_int flags;			/* peer flags */
-	u_char cast_flags;		/* flags MDF_?CAST */
-	u_int flash;			/* protocol error tally bits */
-	u_char refclktype;		/* reference clock type */
-	u_char refclkunit;		/* reference clock unit number */
-	u_char sstclktype;		/* clock type for system status word */
-	u_int32 refid;			/* peer reference ID */
-	l_fp reftime;			/* update epoch */
-	u_long keyid;			/* current key ID */
-	u_long pkeyid;			/* previous key ID (autokey) */
-	u_long *keylist;		/* session key identifier list */
-	int keynumber;			/* session key identifier number */
-	u_short associd;		/* association ID, a unique integer */
-	u_char ttl;			/* time to live (multicast) */
+	struct peer *next;	/* pointer to next association */
+	struct peer *ass_next;	/* link pointer in associd hash */
+	struct sockaddr_in srcadr; /* address of remote host */
+	struct interface *dstadr; /* pointer to address on local host */
+	u_short	associd;	/* association ID, a unique integer */
+	u_char	version;	/* version number */
+	u_char	hmode;		/* local association mode */
+	u_char	hpoll;		/* local poll interval */
+	u_char	minpoll;	/* min poll interval */
+	u_char	maxpoll;	/* max poll interval */
+	u_char	burst;		/* packets remaining in burst */
+	u_int	flags;		/* peer association flags */
+	u_char	cast_flags;	/* additional flags */
+	u_int	flash;		/* protocol error test tally bits */
+	u_char	last_event;	/* last peer error code */
+	u_char	num_events;	/* number of error events */
+	u_char	ttl;		/* m'cast time to live/refclock mode */
 
-/* **Start of clear-to-zero area.*** */
-/* Everything that is cleared to zero goes below here */
-	u_char valid;			/* valid counter */
-#define	clear_to_zero valid
-	double estbdelay;		/* broadcast offset */
-	u_char status;			/* peer status */
-	u_char pollsw;			/* what it says */
-	u_char reach;			/* reachability, NTP_WINDOW bits */
-	u_char unreach;			/* unreachable count */
-	u_short filter_nextpt;		/* index into filter shift register */
-	double filter_delay[NTP_SHIFT];	/* delay part of shift register */
-	double filter_offset[NTP_SHIFT]; /* offset part of shift register */
-	double filter_disp[NTP_SHIFT];	/* dispersion part of shift register */
-	u_long filter_epoch[NTP_SHIFT];	/* epoch part of shift register */
-	u_char filter_order[NTP_SHIFT];	/* we keep the filter sorted here */
-	l_fp org;			/* originate time stamp */
-	l_fp rec;			/* receive time stamp */
-	l_fp xmt;			/* transmit time stamp */
-	double offset;			/* peer clock offset */
-	double delay;			/* peer roundtrip delay */
-	double variance;		/* peer variance (jitter) */
-	double disp;			/* peer dispersion */
-	double rootdelay;		/* roundtrip delay to primary clock */
-	double rootdispersion;		/* dispersion to primary clock */
-	u_long epoch;			/* reference epoch */
-
-/* ***End of clear-to-zero area.*** */
-/* Everything that is cleared to zero goes above here */
-	u_long update;			/* receive epoch */
-#define end_clear_to_zero update
-	u_long outdate;			/* send time last packet */
-	u_long nextdate;		/* send time next packet */
-        u_long nextaction;	        /* peer local activity timeout (refclocks mainly) */
-        void   (*action) P((struct peer *));/* action timeout function */
 	/*
-	 * statistic counters
+	 * Variables used by reference clock support
 	 */
-	u_long timereset;		/* time stat counters were reset */
-	u_long sent;			/* number of updates sent */
-	u_long received;		/* number of frames received */
-	u_long timereceived;		/* last time a frame received */
-	u_long timereachable;		/* last reachable/unreachable event */
-	u_long processed;		/* processed by the protocol */
-	u_long badauth;			/* bad credentials detected */
-	u_long bogusorg;		/* rejected due to bogus origin */
-	u_long oldpkt;			/* rejected as duplicate packet */
-	u_long seldisptoolarge;		/* too much dispersion for selection */
-	u_long selbroken;		/* broken NTP detected in selection */
-	u_long seltooold;		/* too long since sync in selection */
-	u_char last_event;		/* set to code for last peer error */
-	u_char num_events;		/* num. of events which have occurred */
+	struct refclockproc *procptr; /* refclock structure pointer */
+	u_char	refclktype;	/* reference clock type */
+	u_char	refclkunit;	/* reference clock unit number */
+	u_char	sstclktype;	/* clock type for system status word */
+
+	/*
+	 * Variables set by received packet
+	 */
+	u_char	leap;		/* local leap indicator */
+	u_char	pmode;		/* remote association mode */
+	u_char	stratum;	/* remote stratum */
+	s_char	precision;	/* remote clock precision */
+	u_char	ppoll;		/* remote poll interval */
+	u_int32	refid;		/* remote reference ID */
+	l_fp	reftime;	/* update epoch */
+
+	/*
+	 * Variables used by authenticated client
+	 */
+	keyid_t	keyid;		/* current key ID */
+	u_char	*keystr;	/* public key file name */
+#ifdef PUBKEY
+	u_char	*pubkey;	/* public key */
+#endif /* PUBKEY */
+	keyid_t	pkeyid;		/* previous key ID */
+#ifdef AUTOKEY
+#define clear_to_zero pkeyid
+#define crypto_to_zero pkeyid
+	keyid_t	hcookie;	/* host cookie */
+	struct cookie pcookie;	/* peer cookie */
+	struct autokey recauto;	/* autokey */
+	u_int32	cmmd;		/* peer command */
+	u_short	assoc;		/* association ID of peer */
+
+	/*
+	 * Variables used by authenticated server
+	 */
+	keyid_t	*keylist;	/* session key ID list */
+	int	keynumber;	/* current key number */
+	struct autokey sndauto;	/* autokey */
+#endif /* AUTOKEY */
+
+	/*
+	 * Ephemeral state variables
+	 */
+	u_int	valid;		/* valid update counter */
+#ifdef AUTOKEY
+#define end_crypto_to_zero valid
+#else
+#define clear_to_zero valid
+#endif /* AUTOKEY */
+	u_int	tailcnt;	/* tailgate poll counter */
+	u_char	status;		/* peer status */
+	u_char	pollsw;		/* what it says */
+	u_char	reach;		/* reachability register */
+	u_char	unreach;	/* unreachable count */
+	u_long	epoch;		/* reference epoch */
+	u_short	filter_nextpt;	/* index into filter shift register */
+	double	filter_delay[NTP_SHIFT]; /* delay shift register */
+	double	filter_offset[NTP_SHIFT]; /* offset shift register */
+	double	filter_disp[NTP_SHIFT]; /* dispersion shift register */
+	u_long	filter_epoch[NTP_SHIFT]; /* epoch shift register */
+	u_char	filter_order[NTP_SHIFT]; /* filter sort index */
+	l_fp	org;		/* originate time stamp */
+	l_fp	rec;		/* receive time stamp */
+	l_fp	xmt;		/* transmit time stamp */
+	double	offset;		/* peer clock offset */
+	double	delay;		/* peer roundtrip delay */
+	double	variance;	/* peer variance (jitter) */
+	double	disp;		/* peer dispersion */
+	double	estbdelay;	/* clock offset to broadcast server */
+
+	/*
+	 * Variables set by received packet
+	 */
+	double	rootdelay;	/* roundtrip delay to primary clock */
+	double	rootdispersion;	/* dispersion to primary clock */
+
+	/*
+	 * End of clear-to-zero area
+	 */
+	u_long	update;		/* receive epoch */
+#define end_clear_to_zero update
+	u_long	outdate;	/* send time last packet */
+	u_long	nextdate;	/* send time next packet */
+        u_long	nextaction;	/* peer local activity timeout (refclocks mainly) */
+        void (*action) P((struct peer *)); /* action timeout function */
+	/*
+	 * Statistic counters
+	 */
+	u_long	timereset;	/* time stat counters were reset */
+	u_long	timereceived;	/* last packet received time */
+	u_long	timereachable;	/* last reachable/unreachable time */
+
+	u_long	sent;		/* packets sent */
+	u_long	received;	/* packets received */
+	u_long	processed;	/* packets processed by the protocol */
+	u_long	badauth;	/* packets cryptosum failed */
+	u_long	bogusorg;	/* packets bogus origin */
+	u_long	oldpkt;		/* packets duplicate packet */
+	u_long	seldisptoolarge; /* packets dispersion to large*/
+	u_long	selbroken;	/* not used */
 };
 
 /*
@@ -312,17 +399,18 @@ struct peer {
 /*
  * Values for peer.flags
  */
-#define	FLAG_CONFIG		0x1	/* association was configured */
-#define	FLAG_AUTHENABLE		0x2	/* this guy needs authentication */
-#define	FLAG_MCAST1		0x4	/* multicast client/server mode */
-#define	FLAG_MCAST2		0x8	/* multicast client mode */
-#define	FLAG_AUTHENTIC		0x10	/* last message was authentic */
-#define	FLAG_REFCLOCK		0x20	/* this is actually a reference clock */
-#define	FLAG_SYSPEER		0x40	/* this is one of the selected peers */
-#define FLAG_PREFER		0x80	/* this is the preferred peer */
-#define FLAG_BURST		0x100	/* burst mode */
-#define FLAG_SKEY		0x200	/* autokey authentication */
-#define FLAG_NOSELECT		0x400	/* this is a "noselect" peer */
+#define	FLAG_CONFIG	0x0001	/* association was configured */
+#define	FLAG_AUTHENABLE	0x0002	/* authentication required */
+#define	FLAG_MCAST1	0x0004	/* multicast client/server mode */
+#define	FLAG_MCAST2	0x0008	/* multicast client mode */
+#define	FLAG_AUTHENTIC	0x0010	/* last message was authentic */
+#define	FLAG_REFCLOCK	0x0020	/* this is actually a reference clock */
+#define	FLAG_SYSPEER	0x0040	/* this is one of the selected peers */
+#define FLAG_PREFER	0x0080	/* this is the preferred peer */
+#define FLAG_BURST	0x0100	/* burst mode */
+#define FLAG_SKEY	0x0200	/* autokey authentication */
+#define FLAG_NOSELECT	0x0400	/* this is a "noselect" peer */
+#define FLAG_AUTOKEY	0x0800	/* autokey confirmed */
 
 /*
  * Definitions for the clear() routine.  We use memset() to clear
@@ -333,6 +421,11 @@ struct peer {
 #define	END_CLEAR_TO_ZERO(p)	((char *)&((p)->end_clear_to_zero))
 #define	LEN_CLEAR_TO_ZERO	(END_CLEAR_TO_ZERO((struct peer *)0) \
 				    - CLEAR_TO_ZERO((struct peer *)0))
+#define CRYPTO_TO_ZERO(p)        ((char *)&((p)->clear_to_zero))
+#define END_CRYPTO_TO_ZERO(p)    ((char *)&((p)->end_clear_to_zero))
+#define LEN_CRYPTO_TO_ZERO       (END_CRYPTO_TO_ZERO((struct peer *)0) \
+				    - CRYPTO_TO_ZERO((struct peer *)0))
+
 /*
  * Reference clock identifiers (for pps signal)
  */
@@ -422,9 +515,9 @@ struct peer {
  * and must be converted (except the mac, which isn't, really).
  */
 struct pkt {
-	u_char li_vn_mode;	/* contains leap indicator, version and mode */
-	u_char stratum;		/* peer's stratum */
-	u_char ppoll;		/* the peer polling interval */
+	u_char li_vn_mode;	/* leap indicator, version and mode */
+	u_char stratum;		/* peer stratum */
+	u_char ppoll;		/* peer poll interval */
 	s_char precision;	/* peer clock precision */
 	u_fp rootdelay;		/* distance to primary clock */
 	u_fp rootdispersion;	/* clock dispersion */
@@ -434,31 +527,26 @@ struct pkt {
 	l_fp rec;		/* receive time stamp */
 	l_fp xmt;		/* transmit time stamp */
 
-#define MIN_MAC_LEN	(sizeof(u_int32) + 8)		/* DES */
-#define MAX_MAC_LEN	(sizeof(u_int32) + 16)		/* MD5 */
+#define	LEN_PKT_NOMAC	12 * sizeof(u_int32) /* min header length */
+#define	LEN_PKT_MAC	LEN_PKT_NOMAC +  sizeof(u_int32)
+#define MIN_MAC_LEN	3 * sizeof(u_int32)	/* DES */
+#define MAX_MAC_LEN	5 * sizeof(u_int32)	/* MD5 */
+#define	MAX_EXT_LEN	264			/* RSA public key */
 
 	/*
 	 * The length of the packet less MAC must be a multiple of 64
-	 * bits. For normal private-key cryptography, the cryptosum
-	 * covers only the raw NTP header. For autokey cryptography,
-	 * the heade is incresed by 64 bits to contain the field length
-	 * and private value.
+	 * bits. The maximum length of an extension data field is 272
+	 * octets. The next longest is 80 octets. There can only be
+	 * two extension fields in a message, so the maximum lenth
+	 * is 352 octets or 88 words, so we cheat and call it 100.
 	 */
-	u_int32 keyid1;		/* key identifier 1 */
-	u_int32 keyid2;		/* key identifier 2 */
-	u_int32	keyid3;		/* key identifier 3 */
+#ifdef AUTOKEY
+	u_int32 exten[100];	/* extension field */
+#else
+	u_int32	exten[1];	/* misused */
+#endif /* AUTOKEY */
 	u_char mac[MAX_MAC_LEN]; /* mac */
 };
-
-/*
- * Packets can come in two flavours, one with a mac and one without.
- */
-#define LEN_PKT_NOMAC	(sizeof(struct pkt) - MAX_MAC_LEN - 3 * sizeof(u_int32))
-
-/*
- * Minimum size of packet with a MAC: has to include at least a key number.
- */
-#define LEN_PKT_MAC	(LEN_PKT_NOMAC + sizeof(u_int32))
 
 /*
  * Stuff for extracting things from li_vn_mode
@@ -484,37 +572,42 @@ struct pkt {
 #define	STRATUM_TO_PKT(s)	((u_char)(((s) == (STRATUM_UNSPEC)) ?\
 				(STRATUM_PKT_UNSPEC) : (s)))
 
+/*
+ * Event codes. Used for reporting errors/events to the control module
+ */
+#define	PEER_EVENT	0x80	/* this is a peer event */
 
 /*
- * Event codes.  Used for reporting errors/events to the control module
+ * System event codes
  */
-#define	PEER_EVENT	0x80		/* this is a peer event */
+#define	EVNT_UNSPEC	0	/* unspecified */
+#define	EVNT_SYSRESTART	1	/* system restart */
+#define	EVNT_SYSFAULT	2	/* wsystem or hardware fault */
+#define	EVNT_SYNCCHG	3	/* new leap or synch change */
+#define	EVNT_PEERSTCHG	4	/* new source or stratum */
+#define	EVNT_CLOCKRESET	5	/* clock reset */
+#define	EVNT_BADDATETIM	6	/* invalid time or date */
+#define	EVNT_CLOCKEXCPT	7	/* reference clock exception */
 
-#define	EVNT_UNSPEC	0
-#define	EVNT_SYSRESTART	1
-#define	EVNT_SYSFAULT	2
-#define	EVNT_SYNCCHG	3
-#define	EVNT_PEERSTCHG	4
-#define	EVNT_CLOCKRESET	5
-#define	EVNT_BADDATETIM	6
-#define	EVNT_CLOCKEXCPT	7
-
-#define	EVNT_PEERIPERR	(1|PEER_EVENT)
-#define	EVNT_PEERAUTH	(2|PEER_EVENT)
-#define	EVNT_UNREACH	(3|PEER_EVENT)
-#define	EVNT_REACH	(4|PEER_EVENT)
-#define	EVNT_PEERCLOCK	(5|PEER_EVENT)
+/*
+ * Peer event codes
+ */
+#define	EVNT_PEERIPERR	(1 | PEER_EVENT) /* IP error */
+#define	EVNT_PEERAUTH	(2 | PEER_EVENT) /* authentication failure */
+#define	EVNT_UNREACH	(3 | PEER_EVENT) /* change to unreachable */
+#define	EVNT_REACH	(4 | PEER_EVENT) /* change to reachable */
+#define	EVNT_PEERCLOCK	(5 | PEER_EVENT) /* clock exception */
 
 /*
  * Clock event codes
  */
-#define	CEVNT_NOMINAL	0
-#define	CEVNT_TIMEOUT	1
-#define	CEVNT_BADREPLY	2
-#define	CEVNT_FAULT	3
-#define	CEVNT_PROP	4
-#define	CEVNT_BADDATE	5
-#define	CEVNT_BADTIME	6
+#define	CEVNT_NOMINAL	0	/* unspecified */
+#define	CEVNT_TIMEOUT	1	/* poll timeout */
+#define	CEVNT_BADREPLY	2	/* bad reply format */
+#define	CEVNT_FAULT	3	/* hardware or software fault */
+#define	CEVNT_PROP	4	/* propagation failure */
+#define	CEVNT_BADDATE	5	/* bad date format or value */
+#define	CEVNT_BADTIME	6	/* bad time format or value */
 #define CEVNT_MAX	CEVNT_BADTIME
 
 /*
@@ -524,8 +617,8 @@ struct pkt {
 
 
 /*
- * To speed lookups, peers are hashed by the low order bits of the remote
- * IP address.  These definitions relate to that.
+ * To speed lookups, peers are hashed by the low order bits of the
+ * remote IP address. These definitions relate to that.
  */
 #define	HASH_SIZE	32
 #define	HASH_MASK	(HASH_SIZE-1)

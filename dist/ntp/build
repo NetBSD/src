@@ -28,6 +28,14 @@ case "$IAM" in
     ;;
 esac
 
+RSASUF=""
+
+case "$CONFIG_ARGS" in
+ *--without-rsaref*)
+    [ -d rsaref2 ] && RSASUF="-norsa"
+    ;;
+esac
+
 CCSUF=""
 
 case "$CC" in
@@ -36,7 +44,7 @@ case "$CC" in
     ;;
 esac
 
-BDIR="$BDIR$CCSUF"
+BDIR="$BDIR$RSASUF$CCSUF"
 
 [ -d "$BDIR" ] || mkdir $BDIR
 [ -f "$BDIR/.buildcvo" ] || echo $CVO > $BDIR/.buildcvo

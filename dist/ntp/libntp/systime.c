@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: systime.c,v 1.1.1.2 2000/04/22 14:53:00 simonb Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -161,7 +161,8 @@ adj_systime(
 	/* casey - we need a posix type thang here */
 	if (adjtime(&adjtv, &oadjtv) < 0)
 	{
-		msyslog(LOG_ERR, "Can't adjust time: %m");
+		msyslog(LOG_ERR, "Can't adjust time (%d sec, %d usec): %m",
+			adjtv.tv_sec, adjtv.tv_usec);
 		return 0;
 	} 
 	else {

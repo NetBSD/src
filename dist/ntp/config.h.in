@@ -456,6 +456,9 @@
 /* toupper()? */
 #undef DECL_TOUPPER_0
 
+/* Autokey? */
+#undef AUTOKEY
+
 /* Define if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
 
@@ -488,6 +491,12 @@
 
 /* Define if you have the `getuid' function. */
 #undef HAVE_GETUID
+
+/* Define if you have the `hstrerror' function. */
+#undef HAVE_HSTRERROR
+
+/* Define if you have the <ieeefp.h> header file. */
+#undef HAVE_IEEEFP_H
 
 /* Define if you have the `kvm_open' function. */
 #undef HAVE_KVM_OPEN
@@ -641,6 +650,9 @@
 
 /* Define if you have the `sigvec' function. */
 #undef HAVE_SIGVEC
+
+/* Define if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
 
 /* Define if you have the `srand48' function. */
 #undef HAVE_SRAND48
@@ -845,6 +857,9 @@
 
 /* Define if compiler has function prototypes */
 #undef PROTOTYPES
+
+/* Public key? */
+#undef PUBKEY
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE

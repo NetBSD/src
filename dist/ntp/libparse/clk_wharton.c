@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_wharton.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: clk_wharton.c,v 1.1.1.2 2000/04/22 14:53:06 simonb Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_wharton.c,v 4.1 1999/02/28 15:27:24 kardel RELEASE_19990228_A
@@ -15,7 +15,7 @@
 /*
  * Support for WHARTON 400A Series clock + 404.2 serial interface.
  *
- * Copyright (C) 1999 by Philippe De Muyter <phdm@macqel.be>
+ * Copyright (C) 1999, 2000 by Philippe De Muyter <phdm@macqel.be>
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -93,9 +93,10 @@ cvt_wharton_400a(
 	int	i;
 
 	/* The given `size' includes a terminating null-character. */
-	if (size != 16 || buffer[0] != STX || buffer[14] != ETX)
+	if (size != 16 || buffer[0] != STX || buffer[14] != ETX
+	    || buffer[13] < '0' || buffer[13] > ('0' + 0xf))
 		return CVT_NONE;
-	for (i = 1; i < 14; i += 1)
+	for (i = 1; i < 13; i += 1)
 		if (buffer[i] < '0' || buffer[i] > '9')
 			return CVT_NONE;
 	clock_time->second = (buffer[2] - '0') * 10 + buffer[1] - '0';

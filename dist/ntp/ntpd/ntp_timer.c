@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.2 2000/04/22 14:53:22 simonb Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <sys/signal.h>
-
+#include <unistd.h>
 #include "ntp_machine.h"
 #include "ntpd.h"
 #include "ntp_stdlib.h"
@@ -20,6 +20,10 @@
 # include "ntp_iocompletionport.h"
 # include "ntp_timer.h"
 #endif
+
+#ifdef PUBKEY
+#include "ntp_crypto.h"
+#endif /* PUBKEY */
 
 /*
  * These routines provide support for the event timer.	The timer is
@@ -43,8 +47,11 @@ volatile int alarm_flag;
 static	u_long adjust_timer;		/* second timer */
 static	u_long keys_timer;		/* minute timer */
 static	u_long hourly_timer;		/* hour timer */
+#ifdef AUTOKEY
 static	u_long revoke_timer;		/* keys revoke timer */
-u_long	sys_revoke = KEY_REVOKE;	/* keys revoke timeout */
+u_long	sys_revoke = 1 << KEY_REVOKE;	/* keys revoke timeout */
+l_fp	sys_revoketime;			/* last key revoke time */
+#endif /* AUTOKEY */
 
 /*
  * Statistics counter for the interested.
@@ -208,7 +215,7 @@ void
 timer(void)
 {
 	register struct peer *peer, *next_peer;
-	int n;
+	u_int n;
 
 	current_time += (1<<EVENT_TIMEOUT);
 
@@ -251,13 +258,20 @@ timer(void)
 		auth_agekeys();
 	}
 
+#ifdef AUTOKEY
 	/*
-	 * Garbage collect revoked keys
+	 * Garbage collect old keys and generate new private value
 	 */
 	if (revoke_timer <= current_time) {
-		revoke_timer += RANDPOLL(sys_revoke);
-		key_expire_all();
+		revoke_timer += sys_revoke;
+		expire_all();
+#ifdef DEBUG
+		if (debug)
+			printf("key expire: at %lu  next %lu\n",
+			    current_time, revoke_timer);
+#endif
 	}
+#endif /* AUTOKEY */
 
 	/*
 	 * Finally, call the hourly routine.

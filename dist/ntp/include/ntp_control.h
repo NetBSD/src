@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.1.1.2 2000/04/22 14:52:41 simonb Exp $	*/
 
 /*
  * ntp_control.h - definitions related to NTP mode 6 control messages
@@ -165,8 +165,16 @@ struct ntp_control {
 #define	CS_SYSTEM	16
 #define	CS_STABIL	17
 #define CS_VARLIST	18
-
+#ifdef PUBKEY
+#define	CS_PRIVATE	19
+#define CS_PUBLIC	20
+#define CS_DHPARAMS	21
+#define	CS_HOSTNAM	22
+#define	CS_REVTIME	23
+#define	CS_MAXCODE	CS_REVTIME
+#else
 #define	CS_MAXCODE	CS_VARLIST
+#endif /* PUBKEY */
 
 /*
  * Peer variables we understand
@@ -208,8 +216,17 @@ struct ntp_control {
 #define	CP_FLASH	35
 #define CP_DISP		36
 #define CP_VARLIST	37
-
+#ifdef PUBKEY
+#define CP_PUBLIC	38
+#define	CP_SESKEY	39
+#define	CP_SASKEY	40
+#define	CP_INITSEQ	41
+#define	CP_INITKEY	42
+#define	CP_INITTSP	43
+#define	CP_MAXCODE	CP_INITTSP
+#else
 #define	CP_MAXCODE	CP_VARLIST
+#endif /* PUBKEY */
 
 /*
  * Clock variables we understand

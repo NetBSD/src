@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.1.1.2 2000/04/22 14:53:42 simonb Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -704,7 +704,7 @@ transmit(
 	if (sys_authenticate) {
 		int len;
 
-		xpkt.keyid1 = htonl(sys_authkey);
+		xpkt.exten[0] = htonl(sys_authkey);
 		get_systime(&server->xmt);
 		L_ADDUF(&server->xmt, sys_authdelay);
 		HTONL_FP(&server->xmt, &xpkt.xmt);
@@ -812,11 +812,11 @@ receive(
 
 		if (debug > 3)
 			printf("receive: rpkt keyid=%ld sys_authkey=%ld decrypt=%ld\n",
-			   (long int)ntohl(rpkt->keyid1), (long int)sys_authkey,
+			   (long int)ntohl(rpkt->exten[0]), (long int)sys_authkey,
 			   (long int)authdecrypt(sys_authkey, (u_int32 *)rpkt,
 				LEN_PKT_NOMAC, (int)(rbufp->recv_length - LEN_PKT_NOMAC)));
 
-		if (has_mac && ntohl(rpkt->keyid1) == sys_authkey &&
+		if (has_mac && ntohl(rpkt->exten[0]) == sys_authkey &&
 			authdecrypt(sys_authkey, (u_int32 *)rpkt, LEN_PKT_NOMAC,
 			(int)(rbufp->recv_length - LEN_PKT_NOMAC)))
 			is_authentic = 1;

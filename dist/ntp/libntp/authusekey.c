@@ -1,4 +1,4 @@
-/*	$NetBSD: authusekey.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.1.1.2 2000/04/22 14:52:56 simonb Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
@@ -32,7 +32,7 @@
 
 int
 authusekey(
-	u_long keyno,
+	keyid_t keyno,
 	int keytype,
 	const u_char *str
 	)

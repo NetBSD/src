@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.1.1.2 2000/04/22 14:53:39 simonb Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -2647,7 +2647,10 @@ wwv_qsy(
  * agc	audio gain (0-255)
  * iden	station identifier (station and frequency)
  * comp	minute sync compare counter
- * errs	bit errors in last minute * freq	frequency offset (PPM) * avgt	averaging time (s) */
+ * errs	bit errors in last minute
+ * freq	frequency offset (PPM)
+ * avgt	averaging time (s)
+ */
 static int
 timecode(
 	struct wwvunit *up,	/* driver structure pointer */
