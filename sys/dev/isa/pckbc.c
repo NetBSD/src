@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.6 1998/05/03 11:54:38 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.7 1998/05/03 12:04:53 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -448,8 +448,11 @@ pckbc_attach(parent, self, aux)
 		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
-	} else
+	}
+#ifdef PCKBCDEBUG
+	  else
 		printf("kbc: aux port test: %x\n", res);
+#endif
 
 	/* enable needed interrupts */
 	t->t_cmdbyte |= cmdbits;
