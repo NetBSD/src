@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.1.2.1 2004/05/22 15:58:19 he Exp $	*/
+/*	$NetBSD: xen.h,v 1.1.2.2 2004/06/17 09:23:19 tron Exp $	*/
 
 /*
  *
@@ -54,10 +54,6 @@ void	xenmachmem_init(void);
 void	xenprivcmd_init(void);
 void	xenvfr_init(void);
 
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-
 #ifdef XENDEBUG
 void printk(const char *, ...);
 void vprintk(const char *, va_list);
@@ -110,8 +106,6 @@ void vprintk(const char *, va_list);
 /* Everything below this point is not included by assembler (.S) files. */
 #ifndef _LOCORE
 
-#include <machine/hypervisor-ifs/hypervisor-if.h>
-
 /* some function prototypes */
 void trap_init(void);
 
@@ -122,184 +116,120 @@ void trap_init(void);
  * the enable bit is set, there may be pending events to be handled.
  * We may therefore call into do_hypervisor_callback() directly.
  */
-#define unlikely(x)  __builtin_expect((x),0)
-#define __save_flags(x)                                                       \
-do {                                                                          \
-    (x) = test_bit(EVENTS_MASTER_ENABLE_BIT,                                  \
-                   &HYPERVISOR_shared_info->events_mask);                     \
-    barrier();                                                                \
+
+#define __save_flags(x)							\
+do {									\
+	(x) = x86_atomic_test_bit(&HYPERVISOR_shared_info->events_mask,	\
+		EVENTS_MASTER_ENABLE_BIT);				\
+	__insn_barrier();						\
 } while (0)
 
-#define __restore_flags(x)                                                    \
-do {                                                                          \
-    shared_info_t *_shared = HYPERVISOR_shared_info;                          \
-    if (x) set_bit(EVENTS_MASTER_ENABLE_BIT, &_shared->events_mask);          \
-    barrier();                                                                \
+#define __restore_flags(x)						\
+do {									\
+	shared_info_t *_shared = HYPERVISOR_shared_info;		\
+	if (x) x86_atomic_set_bit(&_shared->events_mask,		\
+		EVENTS_MASTER_ENABLE_BIT);				\
+	__insn_barrier();						\
 } while (0)
-/*     if ( unlikely(_shared->events) && (x) ) do_hypervisor_callback(NULL);     \ */
+/*     if (__predict_false(_shared->events) && (x)) do_hypervisor_callback(NULL);     \ */
 
-#define __cli()                                                               \
-do {                                                                          \
-    clear_bit(EVENTS_MASTER_ENABLE_BIT, &HYPERVISOR_shared_info->events_mask);\
-    barrier();                                                                \
+#define __cli()								\
+do {									\
+	x86_atomic_clear_bit(&HYPERVISOR_shared_info->events_mask,	\
+		EVENTS_MASTER_ENABLE_BIT);				\
+	    __insn_barrier();						\
 } while (0)
 
-#define __sti()                                                               \
-do {                                                                          \
-    shared_info_t *_shared = HYPERVISOR_shared_info;                          \
-    set_bit(EVENTS_MASTER_ENABLE_BIT, &_shared->events_mask);                 \
-    barrier();                                                                \
+#define __sti()								\
+do {									\
+	shared_info_t *_shared = HYPERVISOR_shared_info;		\
+	x86_atomic_set_bit(&_shared->events_mask,			\
+		EVENTS_MASTER_ENABLE_BIT);				\
+    __insn_barrier();							\
 } while (0)
-/*     if ( unlikely(_shared->events) ) do_hypervisor_callback(NULL);            \ */
-#define cli() __cli()
-#define sti() __sti()
-#define save_flags(x) __save_flags(x)
-#define restore_flags(x) __restore_flags(x)
-#define save_and_cli(x) __save_and_cli(x)
-#define save_and_sti(x) __save_and_sti(x)
+/*     if (__predict_false(_shared->events)) do_hypervisor_callback(NULL); \ */
 
+#define cli()			__cli()
+#define sti()			__sti()
+#define save_flags(x)		__save_flags(x)
+#define restore_flags(x)	__restore_flags(x)
+#define save_and_cli(x)		__save_and_cli(x)
+#define save_and_sti(x)		__save_and_sti(x)
 
-
-/* This is a barrier for the compiler only, NOT the processor! */
-#define barrier() __asm__ __volatile__("": : :"memory")
-
+#ifdef MULTIPROCESSOR
+#define __LOCK_PREFIX "lock; "
+#else
 #define __LOCK_PREFIX ""
-#define __LOCK ""
-#define __ADDR (*(volatile long *) addr)
-/*
- * Make sure gcc doesn't try to be clever and move things around
- * on us. We need to use _exactly_ the address the user gave us,
- * not some alias that contains the same information.
- */
-typedef struct { volatile int counter; } atomic_t;
+#endif
 
-
-#define xchg(ptr,v) \
-        ((__typeof__(*(ptr)))__xchg((unsigned long)(v),(ptr),sizeof(*(ptr))))
-struct __xchg_dummy { unsigned long a[100]; };
-#define __xg(x) ((struct __xchg_dummy *)(x))
-static inline unsigned long __xchg(unsigned long x, volatile void * ptr,
-                                   int size)
+static __inline__ unsigned long
+x86_atomic_xchg(unsigned long *ptr, unsigned long val)
 {
-    switch (size) {
-    case 1:
-        __asm__ __volatile__("xchgb %b0,%1"
-                             :"=q" (x)
-                             :"m" (*__xg(ptr)), "0" (x)
-                             :"memory");
-        break;
-    case 2:
-        __asm__ __volatile__("xchgw %w0,%1"
-                             :"=r" (x)
-                             :"m" (*__xg(ptr)), "0" (x)
-                             :"memory");
-        break;
-    case 4:
-        __asm__ __volatile__("xchgl %0,%1"
-                             :"=r" (x)
-                             :"m" (*__xg(ptr)), "0" (x)
-                             :"memory");
-        break;
-    }
-    return x;
+	unsigned long result;
+
+        __asm __volatile("xchgl %0,%1"
+	    :"=r" (result)
+	    :"m" (*ptr), "0" (val)
+	    :"memory");
+
+	return result;
 }
 
-/**
- * test_and_clear_bit - Clear a bit and return its old value
- * @nr: Bit to set
- * @addr: Address to count from
- *
- * This operation is atomic and cannot be reordered.  
- * It also implies a memory barrier.
- */
-static __inline__ int test_and_clear_bit(int nr, volatile void * addr)
+static __inline__ int
+x86_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
 {
-        int oldbit;
+        int result;
 
-        __asm__ __volatile__( __LOCK_PREFIX
-                "btrl %2,%1\n\tsbbl %0,%0"
-                :"=r" (oldbit),"=m" (__ADDR)
-                :"Ir" (nr) : "memory");
-        return oldbit;
+        __asm __volatile(__LOCK_PREFIX
+	    "btrl %2,%1 ;"
+	    "sbbl %0,%0"
+	    :"=r" (result), "=m" (*(volatile uint32_t *)(ptr))
+	    :"Ir" (bitno) : "memory");
+        return result;
 }
 
-static __inline__ int constant_test_bit(int nr, const volatile void * addr)
+static __inline int
+x86_constant_test_bit(const volatile void *ptr, int bitno)
 {
-    return ((1UL << (nr & 31)) & (((const volatile unsigned int *) addr)[nr >> 5])) != 0;
+	return ((1UL << (bitno & 31)) &
+	    (((const volatile uint32_t *) ptr)[bitno >> 5])) != 0;
 }
 
-static __inline__ int variable_test_bit(int nr, volatile void * addr)
+static __inline int
+x86_variable_test_bit(const volatile void *ptr, int bitno)
 {
-    int oldbit;
+	int result;
     
-    __asm__ __volatile__(
-        "btl %2,%1\n\tsbbl %0,%0"
-        :"=r" (oldbit)
-        :"m" (__ADDR),"Ir" (nr));
-    return oldbit;
+	__asm __volatile(
+		"btl %2,%1 ;"
+		"sbbl %0,%0"
+		:"=r" (result)
+		:"m" (*(volatile uint32_t *)(ptr)), "Ir" (bitno));
+	return result;
 }
 
-#define test_bit(nr,addr) \
-(__builtin_constant_p(nr) ? \
- constant_test_bit((nr),(addr)) : \
- variable_test_bit((nr),(addr)))
+#define x86_atomic_test_bit(ptr, bitno) \
+	(__builtin_constant_p(bitno) ? \
+	 x86_constant_test_bit((ptr),(bitno)) : \
+	 variable_test_bit((ptr),(bitno)))
 
-
-/**
- * set_bit - Atomically set a bit in memory
- * @nr: the bit to set
- * @addr: the address to start counting from
- *
- * This function is atomic and may not be reordered.  See __set_bit()
- * if you do not require the atomic guarantees.
- * Note that @nr may be almost arbitrarily large; this function is not
- * restricted to acting on a single-word quantity.
- */
-static __inline__ void set_bit(int nr, volatile void * addr)
+static __inline void
+x86_atomic_set_bit(volatile void *ptr, int bitno)
 {
-        __asm__ __volatile__( __LOCK_PREFIX
-                "btsl %1,%0"
-                :"=m" (__ADDR)
-                :"Ir" (nr));
+        __asm __volatile(__LOCK_PREFIX
+	    "btsl %1,%0"
+	    :"=m" (*(volatile uint32_t *)(ptr))
+	    :"Ir" (bitno));
 }
 
-/**
- * clear_bit - Clears a bit in memory
- * @nr: Bit to clear
- * @addr: Address to start counting from
- *
- * clear_bit() is atomic and may not be reordered.  However, it does
- * not contain a memory barrier, so if it is used for locking purposes,
- * you should call smp_mb__before_clear_bit() and/or smp_mb__after_clear_bit()
- * in order to ensure changes are visible on other processors.
- */
-static __inline__ void clear_bit(int nr, volatile void * addr)
+static __inline void
+x86_atomic_clear_bit(volatile void *ptr, int bitno)
 {
-        __asm__ __volatile__( __LOCK_PREFIX
-                "btrl %1,%0"
-                :"=m" (__ADDR)
-                :"Ir" (nr));
+        __asm __volatile(__LOCK_PREFIX
+	    "btrl %1,%0"
+	    :"=m" (*(volatile uint32_t *)(ptr))
+	    :"Ir" (bitno));
 }
-
-/**
- * atomic_inc - increment atomic variable
- * @v: pointer of type atomic_t
- * 
- * Atomically increments @v by 1.  Note that the guaranteed
- * useful range of an atomic_t is only 24 bits.
- */ 
-static __inline__ void atomic_inc(atomic_t *v)
-{
-        __asm__ __volatile__(
-                __LOCK "incl %0"
-                :"=m" (v->counter)
-                :"m" (v->counter));
-}
-
-
-#define rdtscll(val) \
-     __asm__ __volatile__("rdtsc" : "=A" (val))
-
 
 #endif /* !__ASSEMBLY__ */
 
