@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.11 1997/10/05 15:21:46 mrg Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.11.4.1 2000/10/19 17:05:19 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.11 1997/10/05 15:21:46 mrg Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.11.4.1 2000/10/19 17:05:19 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,8 @@ static char	*sp = "";
 static char	 tfname[NAME_MAX];	/* tmp copy of cf before linking */
 
 static int        chksize __P((int));
-static void       frecverr __P((const char *, ...));
+static void       frecverr __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 static int        noresponse __P((void));
 static void       rcleanup __P((int));
 static int        read_number __P((char *));
