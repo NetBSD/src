@@ -103,6 +103,7 @@
 #include <events.h>
 #include <find_inet.h>
 #include <iostuff.h>
+#include <sane_connect.h>
 
 /* Global library. */
 
@@ -411,7 +412,7 @@ static void start_connect(SESSION *session)
     session->stream = vstream_fdopen(fd, O_RDWR);
     event_enable_write(fd, connect_done, (char *) session);
     smtp_timeout_setup(session->stream, var_timeout);
-    if (connect(fd, sa, sa_length) < 0 && errno != EINPROGRESS)
+    if (sane_connect(fd, sa, sa_length) < 0 && errno != EINPROGRESS)
 	fail_connect(session);
 }
 
@@ -651,6 +652,7 @@ static void data_done(int unused_event, char *context)
 	    mydate = mail_date(time((time_t *) 0));
 	    mypid = getpid();
 	}
+#if SMTP_PRINTF_NO_LONGER_FLUSHES
 	smtp_printf(session->stream, "From: <%s>", sender);
 	smtp_printf(session->stream, "To: <%s>", recipient);
 	smtp_printf(session->stream, "Date: %s", mydate);
@@ -658,6 +660,16 @@ static void data_done(int unused_event, char *context)
 		    mypid, vstream_fileno(session->stream), message_count, var_myhostname);
 	if (subject)
 	    smtp_printf(session->stream, "Subject: %s", subject);
+#else
+	vstream_fprintf(session->stream, "From: <%s>\r\n", sender);
+	vstream_fprintf(session->stream, "To: <%s>\r\n", recipient);
+	vstream_fprintf(session->stream, "Date: %s\r\n", mydate);
+	vstream_fprintf(session->stream, "Message-Id: <%04x.%04x.%04x@%s>\r\n",
+		      mypid, vstream_fileno(session->stream), message_count,
+			var_myhostname);
+	if (subject)
+	    vstream_fprintf(session->stream, "Subject: %s\r\n", subject);
+#endif
 	smtp_fputs("", 0, session->stream);
     }
 
@@ -672,6 +684,11 @@ static void data_done(int unused_event, char *context)
 	smtp_fputs("La de da de da 3.", 17, session->stream);
 	smtp_fputs("La de da de da 4.", 17, session->stream);
     } else {
+
+	/*
+	 * XXX This may cause the process to block with message content
+	 * larger than VSTREAM_BUFIZ bytes.
+	 */
 	smtp_fputs(message_data, message_length, session->stream);
     }
 

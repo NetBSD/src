@@ -98,6 +98,7 @@
 #include <iostuff.h>
 #include <msg_vstream.h>
 #include <stringops.h>
+#include <sane_accept.h>
 
 /* Global library. */
 
@@ -496,7 +497,7 @@ static void connect_event(int unused_event, char *context)
     SINK_STATE *state;
     int     fd;
 
-    if ((fd = accept(sock, &sa, &len)) >= 0) {
+    if ((fd = sane_accept(sock, &sa, &len)) >= 0) {
 	if (msg_verbose)
 	    msg_info("connect (%s)",
 #ifdef AF_LOCAL

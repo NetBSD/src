@@ -31,7 +31,7 @@
 # TABLE FORMAT
 # .ad
 # .fi
-#	The format of the access table is as follows:
+#	The input format for the \fBpostmap\fR(1) command is as follows:
 # .IP "\fIpattern action\fR"
 #	When \fIpattern\fR matches a mail address, domain or host address,
 #	perform the corresponding \fIaction\fR.
@@ -45,8 +45,8 @@
 # .ad
 # .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
-#	tables such as NIS, LDAP or SQL, the following lookup patterns are
-#	examined in the order as listed:
+#	tables such as NIS, LDAP or SQL, patterns are tried in the order as
+#	listed below:
 # .IP \fIuser\fR@\fIdomain\fR
 #	Matches the specified mail address.
 # .IP \fIdomain.tld\fR
@@ -92,6 +92,11 @@
 # .IP \fInet\fR
 #	Matches any host address in the specified network. A network
 #	address is a sequence of one or more octets separated by ".".
+#
+#	Note: CIDR notation (network/netmask) is not supported with
+#	lookups from indexed files such as DB or DBM, or from networked
+#	tables such as NIS,
+#	LDAP or SQL.
 # ACTIONS
 # .ad
 # .fi

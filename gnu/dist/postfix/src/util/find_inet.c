@@ -49,6 +49,7 @@
 /* Application-specific. */
 
 #include "msg.h"
+#include "stringops.h"
 #include "find_inet.h"
 
 #ifndef INADDR_NONE
@@ -82,7 +83,7 @@ int     find_inet_port(const char *service, const char *protocol)
     struct servent *sp;
     int     port;
 
-    if ((port = atoi(service)) != 0) {
+    if (alldig(service) && (port = atoi(service)) != 0) {
 	return (htons(port));
     } else {
 	if ((sp = getservbyname(service, protocol)) == 0)

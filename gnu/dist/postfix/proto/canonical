@@ -45,7 +45,7 @@
 # TABLE FORMAT
 # .ad
 # .fi
-#	The format of the \fBcanonical\fR table is as follows:
+#	The input format for the \fBpostmap\fR(1) command is as follows:
 # .IP "\fIpattern result\fR"
 #	When \fIpattern\fR matches a mail address, replace it by the
 #	corresponding \fIresult\fR.

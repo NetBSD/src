@@ -188,6 +188,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdio.h>			/* remove() */
+#include <utime.h>
 
 /* Utility library. */
 
@@ -428,6 +429,7 @@ static int requeue_one(const char **queue_names, const char *queue_id)
     VSTRING *new_path_buf;
     int     found;
     int     tries;
+    struct utimbuf tbuf;
 
     /*
      * Sanity check. No early returns beyond this point.
@@ -454,6 +456,9 @@ static int requeue_one(const char **queue_names, const char *queue_id)
 		continue;
 	    (void) mail_queue_path(new_path_buf, MAIL_QUEUE_MAILDROP, queue_id);
 	    if (postrename(old_path, STR(new_path_buf)) == 0) {
+		tbuf.actime = tbuf.modtime = time((time_t *) 0);
+		if (utime(STR(new_path_buf), &tbuf) < 0) 
+		    msg_warn("%s: reset time stamps: %m", STR(new_path_buf));
 		msg_info("%s: requeued", queue_id);
 		found = 1;
 		break;
@@ -985,16 +990,13 @@ int     main(int argc, char **argv)
 	    msg_fatal("open /dev/null: %m");
 
     /*
-     * Process environment options as early as we can. We might be called
-     * from a set-uid (set-gid) program, so be careful with importing
-     * environment variables.
+     * Process this environment option as early as we can, to aid debugging.
      */
     if (safe_getenv(CONF_ENV_VERB))
 	msg_verbose = 1;
 
     /*
-     * Initialize. Set up logging, read the global configuration file and
-     * extract configuration information.
+     * Initialize logging.
      */
     if ((slash = strrchr(argv[0], '/')) != 0)
 	argv[0] = slash + 1;
@@ -1002,47 +1004,37 @@ int     main(int argc, char **argv)
     msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
-    mail_conf_read();
-    if (chdir(var_queue_dir))
-	msg_fatal("chdir %s: %m", var_queue_dir);
-
     /*
-     * Be sure to log a warning if we do not finish structural repair. Maybe
-     * we should have an fsck-style "clean" flag so Postfix will not start
-     * with a broken queue.
+     * Disallow unsafe practices, and refuse to run set-uid (or as the child
+     * of a set-uid process). Whenever a privileged wrapper program is
+     * needed, it must properly sanitize the real/effective/saved UID/GID,
+     * the secondary groups, the process environment, and so on. Otherwise,
+     * accidents can happen. If not with Postfix, then with other software.
      */
-    signal(SIGHUP, interrupted);
-    signal(SIGINT, interrupted);
-    signal(SIGQUIT, interrupted);
-    signal(SIGTERM, interrupted);
-    msg_cleanup(fatal_exit);
-
-    /*
-     * All file/directory updates must be done as the mail system owner. This
-     * is because Postfix daemons manipulate the queue with those same
-     * privileges, so directories must be created with the right ownership.
-     * 
-     * Running as a non-root user is also required for security reasons. When
-     * the Postfix queue hierarchy is compromised, an attacker could trick us
-     * into entering other file hierarchies and afflicting damage. Running as
-     * a non-root user limits the damage to the already compromised mail
-     * owner.
-     */
+    if (unsafe() != 0)
+	msg_fatal("this postfix command must not run as a set-uid process");
     if (getuid())
 	msg_fatal("use of this command is reserved for the superuser");
-    set_ugid(var_owner_uid, var_owner_gid);
 
     /*
      * Parse JCL.
      */
-    while ((c = GETOPT(argc, argv, "d:h:H:pr:sv")) > 0) {
+    while ((c = GETOPT(argc, argv, "c:d:h:H:pr:sv")) > 0) {
 	switch (c) {
 	default:
-	    msg_fatal("usage: %s [-d queue_id (delete)] "
+	    msg_fatal("usage: %s "
+		      "[-c config_dir] "
+		      "[-d queue_id (delete)] "
 		      "[-h queue_id (hold)] [-H queue_id (un-hold)] "
 		      "[-p (purge temporary files)] [-r queue_id (requeue)] "
 		      "[-s (structure fix)] [-v (verbose)] "
 		      "[queue...]", argv[0]);
+	case 'c':
+	    if (*optarg != '/')
+		msg_fatal("-c requires absolute pathname");
+	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
+		msg_fatal("setenv: %m");
+	    break;
 	case 'd':
 	    if (delete_names == 0)
 		delete_names = argv_alloc(1);
@@ -1082,6 +1074,42 @@ int     main(int argc, char **argv)
 	    break;
 	}
     }
+
+    /*
+     * Read the global configuration file and extract configuration
+     * information. The -c command option can override the default
+     * configuration directory location.
+     */
+    mail_conf_read();
+    if (chdir(var_queue_dir))
+	msg_fatal("chdir %s: %m", var_queue_dir);
+
+    /*
+     * All file/directory updates must be done as the mail system owner. This
+     * is because Postfix daemons manipulate the queue with those same
+     * privileges, so directories must be created with the right ownership.
+     * 
+     * Running as a non-root user is also required for security reasons. When
+     * the Postfix queue hierarchy is compromised, an attacker could trick us
+     * into entering other file hierarchies and afflicting damage. Running as
+     * a non-root user limits the damage to the already compromised mail
+     * owner.
+     */
+    set_ugid(var_owner_uid, var_owner_gid);
+
+    /*
+     * Be sure to log a warning if we do not finish structural repair. Maybe
+     * we should have an fsck-style "clean" flag so Postfix will not start
+     * with a broken queue.
+     * 
+     * Set up signal handlers after permanently dropping super-user privileges,
+     * so that signal handlers will always run with the correct privileges.
+     */
+    signal(SIGHUP, interrupted);
+    signal(SIGINT, interrupted);
+    signal(SIGQUIT, interrupted);
+    signal(SIGTERM, interrupted);
+    msg_cleanup(fatal_exit);
 
     /*
      * Sanity checks.

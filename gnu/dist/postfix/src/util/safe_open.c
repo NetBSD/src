@@ -244,12 +244,16 @@ VSTREAM *safe_open(const char *path, int flags, int mode,
 	/*
 	 * Open an existing file or create a new one, carefully. When opening
 	 * an existing file, we are prepared to deal with "no file" errors
-	 * only. Any other error means we better give up trying.
+	 * only. When creating a file, we are prepared for "file exists"
+	 * errors only. Any other error means we better give up trying.
 	 */
     case O_CREAT:
-	if ((fp = safe_open_exist(path, flags, st, why)) == 0)
-	    if (errno == ENOENT)
-		fp = safe_open_create(path, flags, mode, st, user, group, why);
+	fp = safe_open_exist(path, flags, st, why);
+	if (fp == 0 && errno == ENOENT) {
+	    fp = safe_open_create(path, flags, mode, st, user, group, why);
+	    if (fp == 0 && errno == EEXIST)
+		fp = safe_open_exist(path, flags, st, why);
+	}
 	return (fp);
 
 	/*

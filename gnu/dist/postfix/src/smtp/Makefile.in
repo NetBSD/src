@@ -137,6 +137,7 @@ smtp_connect.o: ../../include/iostuff.h
 smtp_connect.o: ../../include/timed_connect.h
 smtp_connect.o: ../../include/stringops.h
 smtp_connect.o: ../../include/host_port.h
+smtp_connect.o: ../../include/sane_connect.h
 smtp_connect.o: ../../include/mail_params.h
 smtp_connect.o: ../../include/own_inet_addr.h
 smtp_connect.o: ../../include/dns.h
