@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.38 1999/03/24 05:51:26 mrg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.39 1999/03/31 01:26:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -82,10 +82,18 @@ mbinit()
 	    mclpool_release, 0);
 
 	/*
-	 * Set the high water mark on the mclpool to the number of
-	 * mbuf clusters the kernel is to support.
+	 * Set the hard limit on the mclpool to the number of
+	 * mbuf clusters the kernel is to support.  Log the limit
+	 * reached message max once a minute.
 	 */
-	pool_sethiwat(&mclpool, NMBCLUSTERS);
+	pool_sethardlimit(&mclpool, NMBCLUSTERS,
+	    "WARNING: mclpool limit reached; increase NMBCLUSTERS", 60);
+	
+	/*
+	 * XXX Consider setting a low-water mark here.  That will help
+	 * e.g. pagedaemon on diskless systems as it scrambles to clean
+	 * pages in memory starvation situations.
+	 */
 }
 
 void *
@@ -94,29 +102,10 @@ mclpool_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
-	volatile static struct timeval lastlogged;
-	struct timeval curtime, logdiff;
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-	vaddr_t va;
-	int s;
 
-	va = uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object, waitok);
-	if (va == 0) {
-		s = splclock();
-		curtime = mono_time;
-		splx(s);
-		timersub(&curtime, &lastlogged, &logdiff);
-		if (logdiff.tv_sec >= 60) {
-			lastlogged = curtime;
-			log(LOG_ERR, "mb_map full\n");
-		}
-		/*
-		 * Don't need to reclaim here; MCLGET(), which calls
-		 * pool_get(), will reclaim and attempt the allocation
-		 * again.
-		 */
-	}
-	return ((void *)va);
+	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
+	    waitok));
 }
 
 void
