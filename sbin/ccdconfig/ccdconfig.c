@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.7 1996/06/06 23:34:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -162,6 +162,13 @@ main(argc, argv)
 
 	if (options > 1)
 		usage();
+
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (core != NULL || kernel != NULL)
+		setgid(getgid());
 
 	switch (action) {
 		case CCD_CONFIG:
