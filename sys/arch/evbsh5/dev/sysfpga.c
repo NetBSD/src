@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.13 2002/10/22 14:17:34 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.14 2002/10/22 14:38:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 
 #include "sh5pci.h"
 #include "superio.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +244,7 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 	    EVCNT_TYPE_INTR, ev, sysfpga_intr, "pci2");
 #endif
 
-#ifdef DEBUG
+#ifdef DDB
 	sysfpga_reg_write(sc, SYSFPGA_REG_NMIMR, 1);
 #endif
 
