@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.16 2001/11/28 13:46:06 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.17 2001/12/02 00:46:03 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.16 2001/11/28 13:46:06 christos Exp $");
-
-#include "opt_compat_irix.h"
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.17 2001/12/02 00:46:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
