@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.17 2001/04/06 11:13:46 wiz Exp $	*/
+/*	$NetBSD: whois.c,v 1.18 2002/06/13 23:26:43 wiz Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -47,9 +47,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(sun) && defined(solaris)
-#define SYSV
-#endif
 
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
@@ -61,7 +58,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.17 2001/04/06 11:13:46 wiz Exp $");
+__RCSID("$NetBSD: whois.c,v 1.18 2002/06/13 23:26:43 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -88,39 +85,15 @@ char sccsid[] =
 #include <pwd.h>
 #include <signal.h>
 
-#if defined(SYSV)
-#include	<crypt.h>
-#endif /* SYSV */
-
-#ifndef __NetBSD__
-#ifdef __STDC__
-extern int	getopt(int argc, char * const *argv, const char *optstring);
-extern int	kill(pid_t pid, int sig);
-extern FILE	*fdopen(int fildes, const char *type); 
-extern int	gethostname(char *name, int namelen);
-#else /* !__STDC__ */
-extern int	gethostname();
-#endif /* __STDC__ */
-#endif /* __NetBSD__ */
-
-#if defined(SYSV) || defined(__STDC__)
-
-#define		index(s,c)		strchr((const char*)(s),(int)(c))
-#define		rindex(s,c)		strrchr((const char*)(s),(int)(c))
-#define		bzero(s,n)		memset((void*)s,0,(size_t)n)
+#define		index(s,c)	strchr((const char*)(s),(int)(c))
+#define		rindex(s,c)	strrchr((const char*)(s),(int)(c))
+#define		bzero(s,n)	memset((void*)s,0,(size_t)n)
 
 #ifdef HASMEMMOVE
 # define	bcopy(s,d,n)	memmove((void*)(d),(void*)(s),(size_t)(n))
 #else
 # define	bcopy(s,d,n)	memcpy((void*)(d),(void*)(s),(size_t)(n))
 #endif /* HASMEMMOVE */
-
-#endif /* SYSV || __STDC__ */
-
-#ifdef GLIBC
-typedef __u_short u_short;
-typedef __caddr_t caddr_t;
-#endif /* GLIBC */
 
 /*
 
@@ -151,19 +124,15 @@ typedef __caddr_t caddr_t;
 #endif /* !RIPE */
 #endif /* TOPDOMAIN || CLEVER */
 
-#if defined(RIPE) && !defined(__NetBSD__)
-#include <sys/param.h>
-#define NICHOST "whois.ripe.net"
-#else
 #define NICHOST "whois.internic.net"
-#endif
 
-int main __P((int, char **));
-static void usage __P((void));
-static void closesocket __P((int, int));
-static void termhandler __P((int));
+int main(int, char **);
+static void usage(void);
+static void closesocket(int, int);
+static void termhandler(int);
 
-void usage()
+void
+usage(void)
 {
 #ifdef RIPE
 #ifdef NETWORKUPDATE
@@ -215,8 +184,8 @@ void usage()
 
 int s;
 
-void closesocket(s, child) 
-int s, child;
+void
+closesocket(int s, int child)
 {
   /* printf("close connection child=%i\n", child);  */
 
@@ -232,36 +201,19 @@ int s, child;
 
 }
 
-void termhandler(sig)
-int sig;
+void
+termhandler(int sig)
 {
   closesocket(s,1);
 }   
 
 
 #ifdef RIPE
-#if defined(__STDC__) || defined(SYSV)
 #define occurs(str,pat)		((int) strstr((str),(pat)))
-#else /* !__STDC__ && !SYSV */
-int occurs(str, pat)
-     char *str, *pat;
-{
-  register char *point = str;
-  
-  while ((point=index(point, *pat)))
-    {
-      if (strncmp(point, pat, strlen(pat)) == 0)
-	return(1);
-      point++;
-    }
-  return(0);
-}
-#endif
 #endif
 
-int main(argc, argv)
-     int argc;
-     char **argv;
+int
+main(int argc, char *argv[])
 {
   extern char *optarg;
   extern int optind;
@@ -630,5 +582,4 @@ int main(argc, argv)
   closesocket(s, 1);
 
   exit(0);
-
 }
