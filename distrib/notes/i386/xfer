@@ -5,17 +5,17 @@ Installation is supported from several media types, including:
 	Remote NFS partition
 	FTP
 
-No matter which installation medium you choose, you'll need to have
-two floppy disks (either 1.2M or 1.44 will work, though both should be
-the same type).  On the first, you'll put the kernel-copy image that's
-appropriate for your system.  On the second, you'll put the install or
-upgrade floppy image, depending on whether you're installing NetBSD
-for the first time, or upgrading a previous installation.
+No matter which installation medium you choose, you'll need to have a
+floppy disk (either 1.2M or 1.44 will work).  You'll put the
+appropriate install or upgrade floppy image onto this disk, depending
+on whether you're installing NetBSD for the first time, or upgrading a
+previous installation, and on whether you have a machine with only
+four megabytes of memory.
 
-If you are using an Adaptec SCSI host adapter, you need the kcadp12.fs
-kernel-copy image.  If you're using any other SCSI host adapter,
-you'll need the kcoth12.fs image.  If you're using a non-SCSI disk
-controller, either kernel-copy disk image will work for you.
+If you are installing for the first time, you want an inst12D.fs or
+insts12D.fs floppy image. The second is the "small installation" disk
+for four meg machines. If you are upgrading, you want an upgr12D.fs or
+an upgrs12D.fs floppy.
 
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the "dd" command to copy the file system images
@@ -30,11 +30,11 @@ use the "rawrite" utility, provided in the "i386/utilities" directory
 of the NetBSD distribution.  It will write the file system images (.fs
 files) to disks.
 
-Note that, when installing, the kernel-copy floppy can be write-protected
-(i.e. read-only), but the install floppy MUST not be write-protected.
-The install program needs to write some temporary files, and if the
-disk is write-protected, it can't.  If you're upgrading your system,
-both the kernel-copy and upgrade floppies may be write-protected.
+Note that, when installing or upgrading, the floppy can be
+write-protected if you wish. These systems mount ramdisks as their
+root file systems once booted, and will not need to write to the
+floppy itself at any time -- indeed, once booted, the floppy may be
+removed from the disk drive.
 
 Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you
