@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 1999/01/22 09:13:17 mycroft Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.3 2000/12/12 07:35:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,11 +38,9 @@
 
 #include <machine/asm.h>
 
-_BEGIN_ENTRY;
-_ENTRY(_C_FUNC(__bswap16));
-_ENTRY(_C_FUNC(ntohs));
-_ENTRY(_C_FUNC(htons));
-_END_ENTRY
+ENTRY(__bswap16)
+ALTENTRY(ntohs)
+ALTENTRY(htons)
 	and		r1, r0, #0xFF00
 	mov		r0, r0, lsl #8
 	orr		r0, r0, r1, lsr #8
