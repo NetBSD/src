@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.35 2004/01/17 22:52:42 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.36 2004/01/17 23:41:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.35 2004/01/17 22:52:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.36 2004/01/17 23:41:20 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -351,67 +351,65 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 	struct vidcaudio_softc *sc = addr;
 	int sample_period, ch;
 
-	if (setmode & AUMODE_PLAY) {
-		if (sc->sc_is16bit) {
-			/* ARM7500ish, 16-bit, two-channel */
-			if (p->encoding == AUDIO_ENCODING_ULAW &&
-			    p->precision == 8) {
-				p->sw_code = mulaw_to_slinear16_le;
-				p->factor = 2; p->factor_denom = 1;
-			} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
-			    p->precision != 16)
-				return EINVAL;
-			p->hw_channels = 2;
-			sample_period = 705600 / 4 / p->sample_rate;
-			if (sample_period < 3) sample_period = 3;
-			p->hw_sample_rate =
-			    705600 / 4 / sample_period;
-			vidcaudio_rate(sample_period - 2);
-			vidcaudio_ctrl(SCR_SERIAL);
-			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-			p->hw_precision = 16;
-		} else {
-			/* VIDC20ish, u-law, 8-channel */
-			if (p->encoding != AUDIO_ENCODING_ULAW ||
-			    p->precision != 8)
-				return EINVAL;
-			/*
-			 * We always use two hardware channels,
-			 * because using one at 8kHz gives a nasty
-			 * whining sound from the speaker.  The
-			 * aurateconv mechanism doesn't support ulaw,
-			 * so we do the channel duplication ourselves,
-			 * and don't try to do rate conversion.
-			 */
-			switch (p->channels) {
-			case 1:
-				p->sw_code = mulaw_to_vidc_stereo;
-				p->factor = 2; p->factor_denom = 1;
-				break;
-			case 2:
-				p->sw_code = mulaw_to_vidc;
-				p->factor = 1; p->factor_denom = 1;
-				break;
-			default:
-				return EINVAL;
-			}
-			p->hw_channels = p->channels;
-			sample_period =
-			    1000000 / 2 / p->sample_rate;
-			if (sample_period < 3) sample_period = 3;
-			p->hw_sample_rate = p->sample_rate =
-			    1000000 / 2 / sample_period;
-			p->hw_encoding = AUDIO_ENCODING_NONE;
-			p->hw_precision = 8;
-			vidcaudio_rate(sample_period - 2);
-			vidcaudio_ctrl(SCR_SDAC | SCR_CLKSEL);
-			if (p->hw_channels == 1)
-				for (ch = 0; ch < 8; ch++)
-					vidcaudio_stereo(ch, SIR_CENTRE);
-			else
-				for (ch = 0; ch < 8; ch++)
-					vidcaudio_stereo(ch, ch & 1 ? 
-					    SIR_LEFT_100 : SIR_RIGHT_100);
+	if ((setmode & AUMODE_PLAY) == 0)
+		return;
+
+	if (sc->sc_is16bit) {
+		/* ARM7500ish, 16-bit, two-channel */
+		if (p->encoding == AUDIO_ENCODING_ULAW && p->precision == 8) {
+			p->sw_code = mulaw_to_slinear16_le;
+			p->factor = 2; p->factor_denom = 1;
+		} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
+		    p->precision != 16)
+			return EINVAL;
+		p->hw_channels = 2;
+		sample_period = 705600 / 4 / p->sample_rate;
+		if (sample_period < 3) sample_period = 3;
+		p->hw_sample_rate = 705600 / 4 / sample_period;
+		vidcaudio_rate(sample_period - 2);
+		vidcaudio_ctrl(SCR_SERIAL);
+		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		p->hw_precision = 16;
+	} else {
+		/* VIDC20ish, u-law, 8-channel */
+		if (p->encoding != AUDIO_ENCODING_ULAW || p->precision != 8)
+			return EINVAL;
+		/*
+		 * We always use two hardware channels, because using
+		 * one at 8kHz gives a nasty whining sound from the
+		 * speaker.  The aurateconv mechanism doesn't support
+		 * ulaw, so we do the channel duplication ourselves,
+		 * and don't try to do rate conversion.
+		 */
+		switch (p->channels) {
+		case 1:
+			p->sw_code = mulaw_to_vidc_stereo;
+			p->factor = 2; p->factor_denom = 1;
+			break;
+		case 2:
+			p->sw_code = mulaw_to_vidc;
+			p->factor = 1; p->factor_denom = 1;
+			break;
+		default:
+			return EINVAL;
+		}
+		p->hw_channels = p->channels;
+		sample_period = 1000000 / 2 / p->sample_rate;
+		if (sample_period < 3) sample_period = 3;
+		p->hw_sample_rate = p->sample_rate =
+		    1000000 / 2 / sample_period;
+		p->hw_encoding = AUDIO_ENCODING_NONE;
+		p->hw_precision = 8;
+		vidcaudio_rate(sample_period - 2);
+		vidcaudio_ctrl(SCR_SDAC | SCR_CLKSEL);
+		if (p->hw_channels == 1)
+			for (ch = 0; ch < 8; ch++)
+				vidcaudio_stereo(ch, SIR_CENTRE);
+		else {
+			for (ch = 0; ch < 8; ch += 2)
+				vidcaudio_stereo(ch, SIR_LEFT_100);
+			for (ch = 1; ch < 8; ch += 2)
+				vidcaudio_stereo(ch, SIR_RIGHT_100);
 		}
 	}
 	return 0;
