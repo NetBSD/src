@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.211 2003/06/15 01:34:34 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.212 2003/06/18 04:35:23 bsh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.211 2003/06/15 01:34:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.212 2003/06/18 04:35:23 bsh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2387,7 +2387,12 @@ cominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+#ifdef COM_PXA2X0
+	bus_space_write_1(iot, ioh, com_ier,
+	    type == COM_TYPE_PXA2x0 ?  IER_EUART : 0);
+#else
 	bus_space_write_1(iot, ioh, com_ier, 0);
+#endif
 
 	*iohp = ioh;
 	return (0);
