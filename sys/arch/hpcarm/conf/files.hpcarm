@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.19 2001/06/18 22:26:17 bjh21 Exp $
+#	$NetBSD: files.hpcarm,v 1.20 2001/06/23 09:20:06 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -98,6 +98,11 @@ file	arch/hpcarm/dev/sed_saip.c		sed
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
+
+device	j720ssp: wskbddev
+attach	j720ssp at saip
+file	arch/hpcarm/dev/j720ssp.c		j720ssp
+file	arch/hpcarm/dev/j720kbdmap.c		j720ssp
 
 file	dev/cninit.c
 
