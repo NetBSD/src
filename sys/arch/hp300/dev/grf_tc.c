@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.12 1997/10/04 10:00:07 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.13 1998/01/11 21:56:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ topcat_intio_match(parent, match, aux)
 #if 0
 		case DIO_DEVICE_SECID_XXXCATSEYE:
 #endif
-			ia->ia_addr = (caddr_t)GRFIADDR;
+			ia->ia_addr = (bus_addr_t)GRFIADDR;
 			return (1);
 		}
 	}

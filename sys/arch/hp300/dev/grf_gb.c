@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.12 1997/10/04 09:59:59 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.13 1998/01/11 21:56:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ gbox_intio_match(parent, match, aux)
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    grf->gr_id2 == DIO_DEVICE_SECID_GATORBOX) {
-		ia->ia_addr = (caddr_t)GRFIADDR;
+		ia->ia_addr = (bus_addr_t)GRFIADDR;
 		return (1);
 	}
 
