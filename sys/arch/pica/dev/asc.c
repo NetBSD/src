@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.8 1996/12/10 21:27:42 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.9 1997/03/26 22:42:55 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1265,7 +1265,7 @@ abort:
 #if 0
 	panic("asc_intr");
 #else
-	boot(4, NULL); /* XXX */
+	cpu_reboot(4, NULL); /* XXX */
 #endif
 }
 

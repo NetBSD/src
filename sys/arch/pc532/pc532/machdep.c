@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1997/03/22 08:28:59 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1997/03/26 22:42:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -560,7 +560,7 @@ int waittime = -1;
 static struct switchframe dump_sf;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -700,14 +700,14 @@ cpu_dump()
 }
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks, dumpblks;	/* size of dump area */
 	int maj;
@@ -777,7 +777,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0) {
 		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;

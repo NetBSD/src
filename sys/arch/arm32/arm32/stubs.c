@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.16 1997/02/04 05:47:56 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.17 1997/03/26 22:42:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -171,7 +171,7 @@ long	dumplo = 0; 		/* blocks */
 struct pcb dumppcb;
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
@@ -179,7 +179,7 @@ struct pcb dumppcb;
  */
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -235,7 +235,7 @@ dumpsys()
 	if (dumpdev == NODEV)
 		return;
 	if (dumpsize == 0) {
-		dumpconf();
+		cpu_dumpconf();
 		if (dumpsize == 0)
 			return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 1997/03/18 18:29:06 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 1997/03/26 22:42:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -968,7 +968,7 @@ bootsync(void)
 
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
@@ -1004,7 +1004,7 @@ long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;
 	int i;
@@ -1077,7 +1077,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);

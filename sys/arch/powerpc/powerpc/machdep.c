@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1997/03/26 22:43:03 gwr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -834,7 +834,7 @@ intr_return(level)
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-boot(howto, what)
+cpu_reboot(howto, what)
 	int howto;
 	char *what;
 {

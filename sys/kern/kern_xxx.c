@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.38 1996/10/13 02:32:36 christos Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.39 1997/03/26 22:42:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -73,7 +73,7 @@ sys_reboot(p, v, retval)
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
-	boot(SCARG(uap, opt), bootstr);
+	cpu_reboot(SCARG(uap, opt), bootstr);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 1996/09/30 16:34:43 ws Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 1997/03/26 22:43:01 gwr Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -367,10 +367,10 @@ done:
 }
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;		/* size of dump device */
 	int skip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1997/02/04 04:46:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1997/03/26 22:42:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -393,7 +393,7 @@ mach_init(argc, argv, code, cv)
 	/* check for MIPS based platform */
 	if (((i >> 24) & 0xFF) != 0x82) {
 		printf("Unknown System type '%s' 0x%x\n", cp, i);
-		boot(RB_HALT | RB_NOSYNC, NULL);
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -617,7 +617,7 @@ mach_init(argc, argv, code, cv)
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC, NULL);
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -1115,7 +1115,7 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;
 
@@ -1156,7 +1156,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
@@ -1224,7 +1224,7 @@ prom_halt(howto, bootstr)
 }
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
