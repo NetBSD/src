@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.12 2001/06/14 05:44:25 itojun Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.13 2004/12/05 05:43:04 christos Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -41,6 +41,7 @@ struct strip_softc {
 	long sc_statetimo;		/* When (secs) current state ends */
 
 	struct timeval sc_lastpacket;	/* for watchdog */
+	LIST_ENTRY(strip_softc) sc_iflist;
 };
 
 
@@ -55,7 +56,7 @@ struct strip_softc {
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 #ifdef _KERNEL
-void	stripattach __P((int n));
+void	stripattach __P((void));
 void	stripclose __P((struct tty *));
 void	stripinput __P((int, struct tty *));
 int	stripioctl __P((struct ifnet *, u_long, caddr_t));

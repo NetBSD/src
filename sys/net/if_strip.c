@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.53 2004/08/19 20:58:24 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.54 2004/12/05 05:43:04 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,9 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.53 2004/08/19 20:58:24 christos Exp $");
-
-#include "strip.h"
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.54 2004/12/05 05:43:04 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -214,7 +212,13 @@ typedef char ttychar_t;
 #define	ABT_COUNT	3	/* count of escapes for abort */
 #define	ABT_WINDOW	(ABT_COUNT*2+2)	/* in seconds - time to count */
 
-struct strip_softc strip_softc[NSTRIP];
+static int		strip_clone_create(struct if_clone *, int);
+static int		strip_clone_destroy(struct ifnet *);
+
+static LIST_HEAD(, strip_softc) strip_softc_list;
+
+struct if_clone strip_cloner =
+    IF_CLONE_INITIALIZER("strip", strip_clone_create, strip_clone_destroy);
 
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
@@ -330,42 +334,60 @@ void	strip_timeout __P((void *x));
 
 
 
-/*
- * Called from boot code to establish sl interfaces.
- */
 void
-stripattach(n)
-	int n;
+stripattach(void)
+{
+    LIST_INIT(&strip_softc_list);
+    if_clone_attach(&strip_cloner);
+}
+
+int
+strip_clone_create(struct if_clone *ifc, int unit)
 {
 	struct strip_softc *sc;
-	int i = 0;
 
-	for (sc = strip_softc; i < NSTRIP; sc++) {
-		sc->sc_unit = i;		/* XXX */
-		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
-		    "strip%d", i++);
-		callout_init(&sc->sc_timo_ch);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_mtu = SLMTU;
-		sc->sc_if.if_flags = 0;
-		sc->sc_if.if_type = IFT_OTHER;
+	MALLOC(sc, struct sl_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	sc->sc_unit = unit;
+	(void)snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
+	    "%s%d", ifc->ifc_name, i++);
+	callout_init(&sc->sc_timo_ch);
+	sc->sc_if.if_softc = sc;
+	sc->sc_if.if_mtu = SLMTU;
+	sc->sc_if.if_flags = 0;
+	sc->sc_if.if_type = IFT_OTHER;
 #if 0
-		sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
+	sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
 #endif
-		sc->sc_if.if_type = IFT_SLIP;
-		sc->sc_if.if_ioctl = stripioctl;
-		sc->sc_if.if_output = stripoutput;
-		sc->sc_if.if_dlt = DLT_SLIP;
-		sc->sc_fastq.ifq_maxlen = 32;
-		IFQ_SET_READY(&sc->sc_if.if_snd);
+	sc->sc_if.if_type = IFT_SLIP;
+	sc->sc_if.if_ioctl = stripioctl;
+	sc->sc_if.if_output = stripoutput;
+	sc->sc_if.if_dlt = DLT_SLIP;
+	sc->sc_fastq.ifq_maxlen = 32;
+	IFQ_SET_READY(&sc->sc_if.if_snd);
 
-		sc->sc_if.if_watchdog = strip_watchdog;
-		if_attach(&sc->sc_if);
-		if_alloc_sadl(&sc->sc_if);
+	sc->sc_if.if_watchdog = strip_watchdog;
+	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
+	bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
-	}
+	LIST_INSERT_HEAD(&strip_softc_list, sc, sc_iflist);
+}
+
+static int
+strip_clone_destroy(struct ifnet *ifp)
+{
+    struct strip_softc *sc = (struct strip_softc *)ifp->if_softc;
+
+    if (sc->sc_ttyp != NULL)
+	return EBUSY; /* Not removing it */
+
+    LIST_REMOVE(sc, sc_iflist);
+
+    if_detach(ifp);
+
+    FREE(sc, M_DEVBUF);
+    return 0;
 }
 
 static int
@@ -443,7 +465,7 @@ stripopen(dev, tp)
 	if (tp->t_linesw->l_no == STRIPDISC)
 		return (0);
 
-	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {
+	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			sc->sc_si = softintr_establish(IPL_SOFTNET,
@@ -1065,10 +1087,8 @@ void
 stripnetisr(void)
 {
 	struct strip_softc *sc;
-	int i;
 
-	for (i = 0; i < NSTRIP; i++) {
-		sc = &strip_softc[i];
+	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL)
 			continue;
 		stripintr(sc);
