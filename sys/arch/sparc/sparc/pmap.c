@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1995/12/11 01:27:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.50 1996/02/12 21:15:37 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -477,7 +477,7 @@ pmap_next_page(paddr)
  * The returned index does NOT need to start at zero.
  *
  */
-u_long
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
