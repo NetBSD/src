@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.66 1998/10/08 22:23:44 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.67 1998/10/09 08:01:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -681,7 +681,7 @@ timerattach_obio(parent, self, aux)
 
 		/* Map each CPU's counter */
 		for (i = 0; i < sa->sa_nreg - 1; i++) {
-			struct cpu_info *cpi;
+			struct cpu_info *cpi = NULL;
 			int n;
 
 			/*
