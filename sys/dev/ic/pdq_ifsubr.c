@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.29 2000/12/12 18:00:23 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.30 2000/12/14 06:27:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -162,7 +162,7 @@ pdq_ifwatchdog(
     ifp->if_timer = 0;
     for (;;) {
 	struct mbuf *m;
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL)
 	    return;
 	PDQ_OS_DATABUF_FREE(PDQ_OS_IFP_TO_SOFTC(ifp)->sc_pdq, m);
@@ -174,7 +174,6 @@ pdq_ifstart(
     struct ifnet *ifp)
 {
     pdq_softc_t * const sc = PDQ_OS_IFP_TO_SOFTC(ifp);
-    struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
 
@@ -189,7 +188,7 @@ pdq_ifstart(
 	return;
     }
     for (;; tx = 1) {
-	IF_DEQUEUE(ifq, m);
+	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL)
 	    break;
 #if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
@@ -222,11 +221,10 @@ pdq_ifstart(
 
 	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE)
 	    break;
+	IFQ_DEQUEUE(&ifp->if_snd, m);
     }
-    if (m != NULL) {
+    if (m != NULL)
 	ifp->if_flags |= IFF_OACTIVE;
-	IF_PREPEND(ifq, m);
-    }
     if (tx)
 	PDQ_DO_TYPE2_PRODUCER(sc->sc_pdq);
 }
@@ -281,7 +279,7 @@ pdq_os_restart_transmitter(
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    if (sc->sc_if.if_snd.ifq_head != NULL) {
+    if (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
 	pdq_ifstart(&sc->sc_if);
     } else {

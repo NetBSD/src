@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.39 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.40 2000/12/14 06:27:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -257,6 +257,7 @@ epic_attach(sc)
 	ifp->if_watchdog = epic_watchdog;
 	ifp->if_init = epic_init;
 	ifp->if_stop = epic_stop;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -350,7 +351,7 @@ epic_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -375,7 +376,6 @@ epic_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -384,7 +384,6 @@ epic_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
@@ -397,10 +396,10 @@ epic_start(ifp)
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 		}
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/* Initialize the fraglist. */
 		fr->ef_nfrags = dmamap->dm_nsegs;
