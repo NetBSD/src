@@ -1,4 +1,4 @@
-/*      $NetBSD: psl.h,v 1.6 1997/06/07 12:15:28 ragge Exp $      */
+/*      $NetBSD: psl.h,v 1.7 1999/08/05 18:31:06 thorpej Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -83,7 +83,7 @@
 #define	PSL_PREVU	0x00c00000	/* Previous user mode */
 #define	PSL_K		0x00000000	/* kernel mode */
 #define	PSL_E		0x01000000     	/* executive mode */
-#define	PSL_S		0x02000000     	/* executive mode */
+#define	PSL_S		0x02000000     	/* supervisor mode */
 #define	PSL_U		0x03000000	/* user mode */
 #define	PSL_IS		0x04000000	/* interrupt stack select */
 #define	PSL_FPD	        0x08000000	/* first part done flag */
