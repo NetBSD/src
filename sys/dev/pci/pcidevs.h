@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.406 2002/02/16 16:36:36 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.407 2002/02/20 23:46:55 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.401 2002/02/16 16:35:48 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.402 2002/02/20 23:45:50 simonb Exp 
  */
 
 /*
@@ -555,7 +555,7 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
-#define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
+#define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom Corp. (SiByte) */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */

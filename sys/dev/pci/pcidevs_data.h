@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.404 2002/02/16 16:36:37 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.405 2002/02/20 23:46:56 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.401 2002/02/16 16:35:48 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.402 2002/02/20 23:45:50 simonb Exp 
  */
 
 /*
@@ -10026,7 +10026,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SIBYTE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "SiByte, Inc.",
+	    "Broadcom Corp. (SiByte)",
 	    NULL,
 	},
 	{
