@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.27 2000/08/03 14:52:39 castor Exp $	*/
+/*	$NetBSD: dir.c,v 1.28 2000/12/14 00:32:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.27 2000/08/03 14:52:39 castor Exp $");
+__RCSID("$NetBSD: dir.c,v 1.28 2000/12/14 00:32:22 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: dir.c,v 1.27 2000/08/03 14:52:39 castor Exp $");
 
 char	*lfname = "lost+found";
 int	lfmode = 01700;
+ino_t	lfdir;
 struct	dirtemplate emptydir = { 0, DIRBLKSIZ };
 struct	dirtemplate dirhead = {
 	0, 12, DT_DIR, 1, ".",
