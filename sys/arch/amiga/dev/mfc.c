@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.3 1995/03/02 02:23:59 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.4 1995/04/02 20:38:49 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -209,7 +209,54 @@ int	mfcsswflags[NMFCS];
 struct	vbl_node mfcs_vbl_node[NMFCS];
 struct	tty *mfcs_tty[NMFCS + 128];
 
-struct speedtab mfcs3speedtab[] = {
+#ifdef notyet
+/*
+ * MultiFaceCard III, II+ (not supported yet), and
+ * SerialMaster 500+ (not supported yet)
+ * baud rate tables for BRG set 1 [not used yet]
+ */
+
+struct speedtab mfcs3speedtab1[] = {
+	0,	0,
+	100,	0x00,
+	220,	0x11,
+	600,	0x44,
+	1200,	0x55,
+	2400,	0x66,
+	4800,	0x88,
+	9600,	0x99,
+	19200,	0xbb,
+	115200,	0xcc,
+	-1,	-1
+};
+
+/*
+ * MultiFaceCard II, I, and SerialMaster 500
+ * baud rate tables for BRG set 1 [not used yet]
+ */
+
+struct speedtab mfcs2speedtab1[] = {
+	0,	0,
+	50,	0x00,
+	110,	0x11,
+	300,	0x44,
+	600,	0x55,
+	1200,	0x66,
+	2400,	0x88,
+ 	4800,	0x99,
+	9600,	0xbb,
+	38400,	0xcc,
+	-1,	-1
+};
+#endif
+
+/*
+ * MultiFaceCard III, II+ (not supported yet), and
+ * SerialMaster 500+ (not supported yet)
+ * baud rate tables for BRG set 2
+ */
+
+struct speedtab mfcs3speedtab2[] = {
 	0,	0,
 	150,	0x00,
 	200,	0x11,
@@ -224,7 +271,12 @@ struct speedtab mfcs3speedtab[] = {
 	-1,	-1
 };
 
-struct speedtab mfcs2speedtab[] = {
+/*
+ * MultiFaceCard II, I, and SerialMaster 500
+ * baud rate tables for BRG set 2
+ */
+
+struct speedtab mfcs2speedtab2[] = {
 	0,	0,
 	75,	0x00,
 	100,	0x11,
@@ -619,7 +671,7 @@ mfcsioctl(dev, cmd, data, flag, p)
 		mfcsswflags[unit] = *(int *)data;
                 mfcsswflags[unit] &= /* only allow valid flags */
                   (TIOCFLAG_SOFTCAR | TIOCFLAG_CLOCAL | TIOCFLAG_CRTSCTS);
-		/* XXXX need to change duart parameters!! */
+		/* XXXX need to change duart parameters? */
 		break;
 	default:
 		return(ENOTTY);
@@ -643,8 +695,8 @@ mfcsparam(tp, t)
 		--scc->ct_usecnt;
 		sc->flags &= ~CT_USED;
 	}
-	ospeed = ttspeedtab(t->c_ospeed, scc->mfc_iii ? mfcs3speedtab :
-	    mfcs2speedtab);
+	ospeed = ttspeedtab(t->c_ospeed, scc->mfc_iii ? mfcs3speedtab2 :
+	    mfcs2speedtab2);
 
 	/*
 	 * If Baud Rate Generator can't generate requested speed,
@@ -666,6 +718,8 @@ mfcsparam(tp, t)
 	/* XXXX 68681 duart could handle split speeds */
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return(EINVAL);
+
+	/* XXXX handle parity, character size, stop bits, flow control */
 
 	/*
 	 * copy to tty
@@ -818,7 +872,7 @@ mfcsmctl(dev, bits, how)
 	switch (how) {
 	case DMSET:
 		sc->sc_regs->du_btst = ub;
-		sc->sc_regs->du_btrst = ~ub;
+		sc->sc_regs->du_btrst = ub ^ (0x05 << unit);
 		break;
 
 	case DMBIC:
@@ -837,7 +891,7 @@ mfcsmctl(dev, bits, how)
 	}
 	(void)splx(s);
 
-	/* XXXX need to keep DTR & RTS states in softc */
+	/* XXXX should keep DTR & RTS states in softc? */
 	bits = TIOCM_DTR | TIOCM_RTS;
 	if (ub & (1 << unit))
 		bits |= TIOCM_CTS;
@@ -845,6 +899,7 @@ mfcsmctl(dev, bits, how)
 		bits |= TIOCM_DSR;
 	if (ub & (0x10 << unit))
 		bits |= TIOCM_CD;
+	/* XXXX RI is not supported on all boards */
 	if (sc->sc_regs->pad26 & (1 << unit))
 		bits |= TIOCM_RI;
 
@@ -988,7 +1043,7 @@ mfcsxintr(unit)
 			    sc->sc_dev.dv_xname, ovfl);
 	}
 	if (sc->incnt == 0 && (tp->t_state & TS_TBLOCK) == 0) {
-		sc->sc_regs->du_btst = 1 << unit;	/* XXX */
+		sc->sc_regs->du_btst = 1 << unit;	/* XXXX */
 	}
 	splx(s1);
 }

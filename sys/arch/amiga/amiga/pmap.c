@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1995/02/12 19:18:44 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1995/04/02 20:38:22 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -351,7 +351,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 #ifdef M68040
 	if (cpu040) {
 		kernel_pmap->pm_rtab = Sysseg1;
-		pmap_ishift = SG4_ISHIFT;
+		pmap_ishift = SG4_SHIFT2;
 	} else
 #endif
 		pmap_ishift = SG_ISHIFT;
@@ -2105,8 +2105,9 @@ pmap_enter_ptpage(pmap, va)
 	 */
 #ifdef M68040
 	if (cpu040) {
-		ste = pmap_ste(pmap, va & (SG4_IMASK << 6));
-		va = trunc_page((vm_offset_t)pmap_pte(pmap, va & (SG4_IMASK << 6)));
+		ste = pmap_ste(pmap, va & ((SG4_MASK1 | SG4_MASK2) << 6));
+		va = trunc_page((vm_offset_t)pmap_pte(pmap,
+		    va & ((SG4_MASK1|SG4_MASK2) << 6)));
 	} else
 #endif
 	{
