@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.18 2000/11/03 10:18:56 abs Exp $
+#	$NetBSD: EBSA285,v 1.19 2000/11/13 18:40:34 abs Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -29,6 +29,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 #options 	IOMD		# We have an IOMD
