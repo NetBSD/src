@@ -1,4 +1,4 @@
-/*	$NetBSD: machtype.h,v 1.1 2001/05/11 04:38:22 thorpej Exp $	*/
+/*	$NetBSD: machtype.h,v 1.2 2001/06/14 01:06:08 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -65,5 +65,9 @@
 
 #define MACH_SGI_IP22_FULLHOUSE		22	/* Indigo2 */
 #define MACH_SGI_IP22_GUINESS		24	/* Indy, Challenge S */
+
+extern int mach_type;		/* IPxx type */
+extern int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
+extern int mach_boardrev;	/* machine board revision, in case it matters */
 
 #endif /* __MACHTYPE__ */
