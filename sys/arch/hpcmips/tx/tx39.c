@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39.c,v 1.15 2000/04/11 17:57:43 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.16 2000/04/24 13:02:14 uch Exp $ */
 
 /*
- * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,20 +9,20 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -165,23 +165,14 @@ tx_fb_init(kernend)
 	caddr_t *kernend;
 {
 #ifdef TX391X
-	tx_chipset_tag_t tc;
-	u_int32_t fb_start, fb_addr, fb_size, fb_line_bytes;
+	paddr_t fb_end;
 
-	/* Initialize to access TX39 configuration register */
-	tc = tx_conf_get_tag();
-
-	fb_start = MIPS_KSEG0_TO_PHYS(*kernend);
-	tx3912video_init(tc, fb_start, bootinfo->fb_width,
-			bootinfo->fb_height, &fb_addr, &fb_size, 
-			&fb_line_bytes);
-
-	/* Setup bootinfo */
-	bootinfo->fb_line_bytes = fb_line_bytes;
-	bootinfo->fb_addr = (unsigned char*)MIPS_PHYS_TO_KSEG1(fb_addr);
-
+	fb_end = MIPS_KSEG0_TO_PHYS(mem_clusters[0].start + 
+				    mem_clusters[0].size - 1);
+	tx3912video_init(MIPS_KSEG0_TO_PHYS(*kernend), &fb_end);
+			 
 	/* Skip V-RAM area */
-	*kernend += fb_size;
+	*kernend = (caddr_t)MIPS_PHYS_TO_KSEG0(fb_end);
 #endif /* TX391X */
 #ifdef TX392X 
 	/* 
