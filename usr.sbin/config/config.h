@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.9 1993/10/14 01:22:27 deraadt Exp $
+ *	$Id: config.h,v 1.10 1993/10/15 23:26:39 cgd Exp $
  */
 
 /*
@@ -140,7 +140,7 @@ char	*machinename;
 #define MACHINE_HP300	3
 #define	MACHINE_I386	4
 #define	MACHINE_PC532	5
-#define	MACHINE_PC532	6
+#define	MACHINE_PMAX	6
 
 /*
  * For each machine, a set of CPU's may be specified as supported.
