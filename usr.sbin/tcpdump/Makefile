@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/10/18 23:13:58 itojun Exp $	
+#	$NetBSD: Makefile,v 1.31 2003/03/28 11:06:32 jdolecek Exp $	
 
 .include <bsd.own.mk>
 
@@ -22,11 +22,11 @@ SRCS=	addrtoname.c gmt2local.c machdep.c parsenfsfh.c \
 	print-ntp.c print-null.c print-ospf.c print-pflog.c \
 	print-pim.c print-ppp.c print-pppoe.c print-pptp.c \
 	print-radius.c print-raw.c print-rip.c print-rx.c \
-	print-sctp.c print-sl.c print-sll.c print-snmp.c \
+	print-sctp.c print-sl.c print-sll.c print-smb.c print-snmp.c \
 	print-stp.c print-sunrpc.c print-tcp.c \
 	print-telnet.c print-tftp.c print-timed.c print-token.c \
 	print-udp.c print-vjc.c print-vrrp.c print-wb.c print-zephyr.c \
-	setsignal.c tcpdump.c util.c
+	setsignal.c smbutil.c tcpdump.c util.c
 
 SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \
 	print-rt6.c print-ospf6.c print-dhcp6.c
@@ -61,7 +61,7 @@ CPPFLAGS+= \
 	-DRETSIGTYPE=void -DRETSIGVAL= -DHAVE_SIGACTION=1 \
 	-DHAVE_SOCKADDR_SA_LEN=1 -DHAVE_H_ERRNO=1
 CPPFLAGS+=-DLBL_ALIGN=1
-#CPPFLAGS+=-DTCPDUMP_DO_SMB=1
+CPPFLAGS+=-DTCPDUMP_DO_SMB=1
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=-DHAVE_LIBCRYPTO=1 
