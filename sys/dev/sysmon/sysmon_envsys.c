@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.6 2003/06/29 22:30:50 fvdl Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.7 2003/08/11 14:24:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.6 2003/06/29 22:30:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.7 2003/08/11 14:24:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -244,6 +244,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 {
 	int error = 0;
 
+	KASSERT((sme->sme_flags & SME_FLAG_BUSY) == 0);
 	simple_lock(&sysmon_envsys_list_slock);
 
 	if (sme->sme_envsys_version != SYSMON_ENVSYS_VERSION) {
@@ -270,6 +271,9 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 
 	simple_lock(&sysmon_envsys_list_slock);
+	while (sme->sme_flags & SME_FLAG_BUSY) {
+		ltsleep(sme, PWAIT, "smeunreg", 0, &sysmon_envsys_list_slock);
+	}
 	LIST_REMOVE(sme, sme_list);
 	simple_unlock(&sysmon_envsys_list_slock);
 }
@@ -277,8 +281,8 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 /*
  * sysmon_envsys_find:
  *
- *	Find an ENVSYS device.  The list remains locked upon
- *	a match.
+ *	Find an ENVSYS device.
+ *	the found device should be sysmon_envsys_release'ed by the caller.
  */
 struct sysmon_envsys *
 sysmon_envsys_find(u_int idx)
@@ -286,16 +290,23 @@ sysmon_envsys_find(u_int idx)
 	struct sysmon_envsys *sme;
 
 	simple_lock(&sysmon_envsys_list_slock);
-
+again:
 	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
 	     sme = LIST_NEXT(sme, sme_list)) {
 		if (idx >= sme->sme_fsensor &&
-		    idx < (sme->sme_fsensor + sme->sme_nsensors))
-			return (sme);
+		    idx < (sme->sme_fsensor + sme->sme_nsensors)) {
+			if (sme->sme_flags & SME_FLAG_BUSY) {
+				ltsleep(sme, PWAIT, "smefind", 0,
+				    &sysmon_envsys_list_slock);
+				goto again;
+			}
+			sme->sme_flags |= SME_FLAG_BUSY;
+			break;
+		}
 	}
 
 	simple_unlock(&sysmon_envsys_list_slock);
-	return (NULL);
+	return sme;
 }
 
 /*
@@ -308,5 +319,10 @@ void
 sysmon_envsys_release(struct sysmon_envsys *sme)
 {
 
+	KASSERT(sme->sme_flags & SME_FLAG_BUSY);
+
+	simple_lock(&sysmon_envsys_list_slock);
+	sme->sme_flags &= ~SME_FLAG_BUSY;
+	wakeup(sme);
 	simple_unlock(&sysmon_envsys_list_slock);
 }
