@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.450 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.451 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -12,3 +12,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
                 a new tso4/-tso4 switch. [matt 20050306]
 	agr(4): Add pseudo-device driver for link aggregation. [yamt 20050318]
 	kernel: Limit the number of locks per user to 1024 [christos 20050320]
+	crypto: Upgrade to OpenSSL 0.9.7f [christos 20050325]
