@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.83 2003/01/29 09:17:08 kei Exp $
+$NetBSD: UPDATING,v 1.84 2003/02/06 04:37:59 grant Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -158,6 +158,17 @@ Recent changes:
 	is statically linked.
 
 	Solution: update and reinstall usr.bin/crunch
+
+20020605:
+	smmsp user/group has been added for sendmail.
+
+	Add the following into /etc/group:
+
+	smmsp:*:17:
+
+	and the following to /etc/master.passwd (via vipw):
+
+	smmsp:*:17:17::0:0:Sendmail Message Submission Program:/nonexistent:/sbin/nologin
 
 20020515:
 	sshd user/group has been added.  Need to hand add this in, or sshd
