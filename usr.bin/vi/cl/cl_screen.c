@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.6 2002/04/09 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: cl_screen.c,v 1.6.4.1 2004/06/14 20:23:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #else
-__RCSID("$NetBSD: cl_screen.c,v 1.6 2002/04/09 01:47:30 thorpej Exp $");
+__RCSID("$NetBSD: cl_screen.c,v 1.6.4.1 2004/06/14 20:23:10 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,7 @@ static int
 cl_vi_init(sp)
 	SCR *sp;
 {
+	static int newterm_done = 0;
 	CL_PRIVATE *clp;
 	GS *gp;
 	char *o_cols, *o_lines, *o_term, *ttype;
@@ -250,7 +251,7 @@ cl_vi_init(sp)
 	 * have to specify the terminal type.
 	 */
 	errno = 0;
-	if (newterm(ttype, stdout, stdin) == NULL) {
+	if (!newterm_done && newterm(ttype, stdout, stdin) == NULL) {
 		if (errno)
 			if (strcmp(ttype, "unknown") == 0)
 				msgq(sp, M_ERR, "terminal type unknown");
@@ -260,7 +261,12 @@ cl_vi_init(sp)
 		else
 			msgq(sp, M_ERR, "%s: unknown terminal type", ttype);
 		return (1);
+	} else if (newterm_done) {
+		setterm(ttype);
+		resizeterm(O_VAL(sp, O_LINES), O_VAL(sp, O_COLUMNS));
 	}
+
+	newterm_done = 1;
 
 	if (o_term == NULL)
 		unsetenv("TERM");
@@ -379,9 +385,11 @@ cl_vi_init(sp)
 
 fast:	/* Set the terminal modes. */
 	if (tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &clp->vi_enter)) {
-		msgq(sp, M_SYSERR, "tcsetattr");
-err:		(void)cl_vi_end(sp->gp);
-		return (1);
+		if (errno != EINTR) {
+			msgq(sp, M_SYSERR, "tcsetattr");
+err:			(void)cl_vi_end(sp->gp);
+			return (1);
+		}
 	}
 	return (0);
 }
@@ -497,8 +505,10 @@ cl_ex_init(sp)
 #endif
 
 fast:	if (tcsetattr(STDIN_FILENO, TCSADRAIN | TCSASOFT, &clp->ex_enter)) {
-		msgq(sp, M_SYSERR, "tcsetattr");
-		return (1);
+		if (errno != EINTR) {
+			msgq(sp, M_SYSERR, "tcsetattr");
+			return (1);
+		}
 	}
 	return (0);
 }
