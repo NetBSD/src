@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.1 1999/06/27 12:26:32 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.2 1999/12/14 23:58:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ hme_config(sc)
 	 *     all the time) on the reveiver side.
 	 */
 #define _HME_NDESC	32
-#define _HME_BUFSZ	32
+#define _HME_BUFSZ	1536
 
 	/* Note: the # of descriptors must be a multiple of 16 */
 	sc->sc_rb.rb_ntbuf = _HME_NDESC;
@@ -223,6 +223,8 @@ hme_config(sc)
 		sc->sc_copyfrombuf = hme_copyfrombuf_contig;
 #endif
 
+	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
+
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -240,7 +242,10 @@ hme_config(sc)
 
 	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	mii_phy_probe(&sc->sc_dev, mii, 0xffffffff,
+			MII_PHY_ANY, MII_OFFSET_ANY);
+
+	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		/* No PHY attached */
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
@@ -259,8 +264,6 @@ hme_config(sc)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
-	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	sc->sc_sh = shutdownhook_establish(hme_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -378,8 +381,8 @@ hme_meminit(sc)
 	 * Initialize receive buffer descriptors
 	 */
 	for (i = 0; i < nrbuf; i++) {
-		HME_XD_SETADDR(hr->rb_txd, i, rxbufdma + i * _HME_BUFSZ);
-		HME_XD_SETFLAGS(hr->rb_txd, i,
+		HME_XD_SETADDR(hr->rb_rxd, i, rxbufdma + i * _HME_BUFSZ);
+		HME_XD_SETFLAGS(hr->rb_rxd, i,
 				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 	}
 
@@ -463,8 +466,14 @@ hme_init(sc)
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
-			  HME_SEB_STAT_SENTFRAME | HME_SEB_STAT_TXPERR |
-			  HME_SEB_STAT_GOTFRAME  | HME_SEB_STAT_RCNTEXP);
+			~(
+			  /*HME_SEB_STAT_GOTFRAME | HME_SEB_STAT_SENTFRAME |*/
+			  HME_SEB_STAT_HOSTTOTX |
+			  HME_SEB_STAT_RXTOHOST |
+			  HME_SEB_STAT_TXALL |
+			  HME_SEB_STAT_TXPERR |
+			  HME_SEB_STAT_RCNTEXP |
+			  HME_SEB_STAT_ALL_ERRORS ));
 
 	switch (sc->sc_burst) {
 	default:
@@ -485,23 +494,27 @@ hme_init(sc)
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
-	v = bus_space_read_4(t, erx, HME_ETXI_CFG);
+	v = bus_space_read_4(t, etx, HME_ETXI_CFG);
 	v |= HME_ETX_CFG_DMAENABLE;
-	bus_space_write_4(t, erx, HME_ETXI_CFG, v);
+	bus_space_write_4(t, etx, HME_ETXI_CFG, v);
 
 	/* Descriptor ring size: in increments of 16 */
-	bus_space_write_4(t, erx, HME_ETXI_RSIZE, _HME_NDESC / 16);
+	bus_space_write_4(t, etx, HME_ETXI_RSIZE, _HME_NDESC / 16);
 
 
 	/* step 10. ERX Configuration: use default values; enable DMA */
-	v = bus_space_read_4(t, etx, HME_ERXI_CFG);
+	v = bus_space_read_4(t, erx, HME_ERXI_CFG);
 	v |= HME_ERX_CFG_DMAENABLE;
-	bus_space_write_4(t, etx, HME_ERXI_CFG, v);
+	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
 	/* step 11. XIF Configuration */
 	v = bus_space_read_4(t, mac, HME_MACI_XIF);
 	v |= HME_MAC_XIF_OE;
+	/* If an external transceiver is connected, disable MII drivers */
+	if ((bus_space_read_4(t, mif, HME_MIFI_CFG) & HME_MIF_CFG_MDI1) != 0)
+		v |= HME_MAC_XIF_MIIDISAB;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
+
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
@@ -510,7 +523,7 @@ hme_init(sc)
 
 	/* step 13. TX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
-	v |= HME_MAC_TXCFG_ENABLE;
+	v |= (HME_MAC_TXCFG_ENABLE | HME_MAC_TXCFG_DGIVEUP);
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
 	/* step 14. Issue Transmit Pending command */
@@ -652,7 +665,6 @@ hme_read(sc, ix, len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -673,15 +685,14 @@ hme_read(sc, ix, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf) {
+		struct ether_header *eh;
+
 		bpf_mtap(ifp->if_bpf, m);
 
 		/*
@@ -689,6 +700,10 @@ hme_read(sc, ix, len)
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
+
+		/* We assume that the header fit entirely in one mbuf. */
+		eh = mtod(m, struct ether_header *);
+
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    ether_cmp(eh->ether_dhost, sc->sc_enaddr)) {
@@ -933,6 +948,7 @@ hme_mii_readreg(self, phy, reg)
 
 	bus_space_write_4(t, mif, HME_MIFI_FO, v);
 	for (n = 0; n < 100; n++) {
+		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB)
 			return (v & HME_MIF_FO_DATA);
@@ -963,12 +979,13 @@ hme_mii_writereg(self, phy, reg, val)
 
 	bus_space_write_4(t, mif, HME_MIFI_FO, v);
 	for (n = 0; n < 100; n++) {
+		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB)
 			return;
 	}
 
-	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
 }
 
 static void
