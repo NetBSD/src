@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.12 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.13 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -286,7 +286,7 @@ struct MonDef {
 
 /*
  * This Routine uses the blitter to perform fast copies
- * in the text-display. The paramters are:
+ * in the text-display. The parameters are:
  *  xs - source x-coordinate
  *  ys - source y-coordinate
  *  xd - destination x-coordinate
