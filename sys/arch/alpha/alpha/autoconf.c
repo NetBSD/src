@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1996/10/10 23:50:13 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1996/10/13 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ configure()
 	(void)spl0();
 
 	if (booted_device == NULL)
-		kprintf("WARNING: can't figure what device matches \"%s\"\n",
+		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    boot_dev);
 	setroot();
 	swapconf();
@@ -172,20 +172,20 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		kprintf("use one of:");
+		printf("use one of:");
 #ifdef RAMDISK_HOOKS
-		kprintf(" %s[a-h]", fakerdrootdev.dv_xname);
+		printf(" %s[a-h]", fakerdrootdev.dv_xname);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
-				kprintf(" %s[a-h]", dv->dv_xname);
+				printf(" %s[a-h]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				kprintf(" %s", dv->dv_xname);
+				printf(" %s", dv->dv_xname);
 #endif
 		}
-		kprintf(" halt\n");
+		printf(" halt\n");
 	}
 	return (dv);
 }
@@ -290,14 +290,14 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			kprintf("root device");
+			printf("root device");
 			if (bootdv != NULL) {
-				kprintf(" (default %s", bootdv->dv_xname);
+				printf(" (default %s", bootdv->dv_xname);
 				if (bootdv->dv_class == DV_DISK)
-					kprintf("%c", bootpartition + 'a');
-				kprintf(")");
+					printf("%c", bootpartition + 'a');
+				printf(")");
 			}
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
@@ -328,12 +328,12 @@ setroot()
 			goto gotswap;
 		}
 		for (;;) {
-			kprintf("swap device");
-			kprintf(" (default %s", rootdv->dv_xname);
+			printf("swap device");
+			printf(" (default %s", rootdv->dv_xname);
 			if (rootdv->dv_class == DV_DISK)
-				kprintf("b");
-			kprintf(")");
-			kprintf(": ");
+				printf("b");
+			printf(")");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0) {
 				switch (rootdv->dv_class) {
@@ -403,7 +403,7 @@ gotswap:
 			strcpy(root_device, "??");
 		} else {
 			/* Root on known block device. */
-			ksprintf(root_device, "%s%d%c", rootdevname,
+			sprintf(root_device, "%s%d%c", rootdevname,
 			    DISKUNIT(rootdev), DISKPART(rootdev) + 'a');
 		}
 			
@@ -421,17 +421,17 @@ gotswap:
 #if defined(FFS)
 	case DV_DISK:
 		mountroot = ffs_mountroot;
-		ksprintf(root_device, "%s%c", rootdv->dv_xname,
+		sprintf(root_device, "%s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
-		kprintf("root on %s", root_device);
+		printf("root on %s", root_device);
 		if (nswapdev != NODEV)
-			kprintf(" swap on %s%c", swapdv->dv_xname,
+			printf(" swap on %s%c", swapdv->dv_xname,
 			    DISKPART(nswapdev) + 'a');
-		kprintf("\n");
+		printf("\n");
 		break;
 #endif
 	default:
-		kprintf("can't figure root, hope your kernel is right\n");
+		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
 
@@ -475,7 +475,7 @@ getstr(cp, size)
 		switch (c) {
 		case '\n':
 		case '\r':
-			kprintf("\n");
+			printf("\n");
 			*lp++ = '\0';
 			return (len);
 		case '\b':
@@ -484,21 +484,21 @@ getstr(cp, size)
 			if (len) {
 				--len;
 				--lp;
-				kprintf("\b \b");
+				printf("\b \b");
 			}
 			continue;
 		case '@':
 		case 'u'&037:
 			len = 0;
 			lp = cp;
-			kprintf("\n");
+			printf("\n");
 			continue;
 		default:
 			if (len + 1 >= size || c < ' ') {
-				kprintf("\007");
+				printf("\007");
 				continue;
 			}
-			kprintf("%c", c);
+			printf("%c", c);
 			++len;
 			*lp++ = c;
 		}
@@ -520,7 +520,7 @@ parse_prom_bootdev()
         prom_getenv(PROM_E_BOOTED_DEV, boot_dev, sizeof(boot_dev));
 	bcopy(boot_dev, hacked_boot_dev, sizeof hacked_boot_dev);
 #if 0
-	kprintf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
+	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
 #endif
 
 	i = 0;
@@ -541,9 +541,9 @@ parse_prom_bootdev()
 		return;		/* doesn't look like anything we know! */
 
 #if 0
-	kprintf("i = %d, done = %d\n", i, done);
+	printf("i = %d, done = %d\n", i, done);
 	for (i--; i >= 0; i--)
-		kprintf("%d = %s\n", i, boot_fields[i]);
+		printf("%d = %s\n", i, boot_fields[i]);
 #endif
 
 	bd.protocol = boot_fields[0];
@@ -556,9 +556,9 @@ parse_prom_bootdev()
 	bd.ctrl_dev_type = boot_fields[7];
 
 #if 0
-	kprintf("parsed: proto = %s, bus = %d, slot = %d, channel = %d,\n",
+	printf("parsed: proto = %s, bus = %d, slot = %d, channel = %d,\n",
 	    bd.protocol, bd.bus, bd.slot, bd.channel);
-	kprintf("\tremote = %s, unit = %d, dev_type = %d, ctrl_type = %s\n",
+	printf("\tremote = %s, unit = %d, dev_type = %d, ctrl_type = %s\n",
 	    bd.remote_address, bd.unit, bd.boot_dev_type, bd.ctrl_dev_type);
 #endif
 
