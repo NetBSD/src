@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.14 1996/09/07 01:19:45 mhitch Exp $	*/
+/*	$NetBSD: sii.c,v 1.15 1996/09/21 08:48:00 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -149,15 +149,6 @@ struct scsi_device sii_dev = {
 };
 #endif
 
-/*
- * Definition of the controller for the old auto-configuration program
- * and old-style pmax scsi drivers.
- */
-void	siistart();
-struct	pmax_driver siidriver = {
-	"sii", NULL, siistart, 0,
-};
-
 
 /*
  * MACROS for timing out spin loops.
@@ -239,6 +230,14 @@ void  CopyToBuffer __P((u_short *src, 	/* NOTE: must be short aligned */
 void CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
 
 
+/*
+ * Definition of the controller for the old-style, non-MI
+ * pmax scsi drivers, and for autoconfiguring devices via those
+ * drivers.
+ */
+struct	pmax_driver siidriver = {
+	"sii", NULL, siistart, 0,
+};
 
 /*
  * Match driver based on name

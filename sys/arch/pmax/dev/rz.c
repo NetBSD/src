@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.17 1996/07/12 21:55:48 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.18 1996/09/21 08:47:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -214,6 +214,13 @@ static char legal_cmds[256] = {
 /*e0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 /*f0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 };
+
+/*
+ * Private forward declarations
+ */
+
+static	int rzready __P((register struct rz_softc *sc));
+static void rzlblkstrat __P((register struct buf *bp, register int bsize));
 
 /*
  * Test to see if the unit is ready and if not, try to make it ready.
