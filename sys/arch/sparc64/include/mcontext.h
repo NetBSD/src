@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/10/13 23:45:14 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4 2003/10/26 08:06:56 christos Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_
@@ -61,6 +61,9 @@ typedef struct {
 	__fpregset32_t	__fpregs;	/* FPU state, if any */
 	__xrs_t		__xrs;		/* may indicate extra reg state */
 } mcontext32_t;
+
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
 
 #define _UC_MACHINE32_PAD_32		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG32_O6])
