@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 23:09:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/02/11 21:36:35 tv Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -7,7 +7,7 @@ NOLINKLIB=	# defined
 
 .include <bsd.own.mk>
 
-.if defined(USE_NEW_TOOLCHAIN)
+.if defined(USE_NEW_TOOLCHAIN) && exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 
 LIB=		iberty
 
