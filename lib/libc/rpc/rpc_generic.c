@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.15 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.16 2003/10/21 00:03:47 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.15 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.16 2003/10/21 00:03:47 fvdl Exp $");
 #endif
 
 #include "namespace.h"
@@ -209,7 +209,7 @@ getnettype(nettype)
 {
 	int i;
 
-	if ((nettype == NULL) || (nettype[0] == NULL)) {
+	if ((nettype == NULL) || (nettype[0] == 0)) {
 		return (_RPC_NETPATH);	/* Default */
 	}
 
@@ -314,7 +314,7 @@ __rpc_getconfip(nettype)
 	else {
 		return (NULL);
 	}
-	if ((netid == NULL) || (netid[0] == NULL)) {
+	if ((netid == NULL) || (netid[0] == 0)) {
 		return (NULL);
 	}
 	dummy = getnetconfigent(netid);
