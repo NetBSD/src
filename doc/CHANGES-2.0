@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.475 2004/10/01 03:46:51 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.476 2004/10/01 03:48:53 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7670,3 +7670,10 @@ sys/kern/kern_sig.c				1.198
 	Adjust the change of rev. 1.190 so that trap signals not matching
 	the reset condition are processed properly. PR#26687
 	[jdolecek, ticket #881]
+
+sys/dev/ata/wd.c				1.295
+
+	Add a WD_QUIRK_FORCE_LBA48 quirck, which forces all access to use LBA48.
+	Use it for ST3200822A, which has a broken firmware and return an error
+	when accessing sector 0xfffffff with a LBA command.
+	[bouyer, ticket #882]
