@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $	*/
+/*	$NetBSD: dd.c,v 1.20 2001/04/28 22:47:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $");
+__RCSID("$NetBSD: dd.c,v 1.20 2001/04/28 22:47:23 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -64,7 +65,6 @@ __RCSID("$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "dd.h"
@@ -225,7 +225,7 @@ setup()
 #endif	/* NO_CONV */
 	}
 
-	(void)time(&st.start);			/* Statistics timestamp. */
+	(void)gettimeofday(&st.start, NULL);	/* Statistics timestamp. */
 }
 
 static void

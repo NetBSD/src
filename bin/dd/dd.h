@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.5 1998/02/04 06:42:31 enami Exp $	*/
+/*	$NetBSD: dd.h,v 1.6 2001/04/28 22:47:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -71,7 +71,7 @@ typedef struct {
 	u_long	trunc;			/* # of truncated records */
 	u_long	swab;			/* # of odd-length swab blocks */
 	u_quad_t bytes;			/* # of bytes written */
-	time_t	start;			/* start time of dd */
+	struct timeval start;		/* start time of dd */
 } STAT;
 
 /* Flags (in ddflags). */
