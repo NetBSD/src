@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: routed,v 1.2 2000/03/13 04:04:03 lukem Exp $
+# $NetBSD: routed,v 1.3 2000/03/29 09:09:06 enami Exp $
 #
 
 # PROVIDE: routed
@@ -10,7 +10,7 @@
 . /etc/rc.conf
 
 name="routed"
-command="/usr/sbin/${name}"
+command="/sbin/${name}"
 start_precmd="routed_precmd"
 
 routed_precmd()
