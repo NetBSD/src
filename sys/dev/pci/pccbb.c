@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.53 2001/01/17 08:37:09 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.54 2001/01/22 01:13:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -49,7 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/reboot.h>
+#include <sys/reboot.h>		/* for bootverbose */
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
