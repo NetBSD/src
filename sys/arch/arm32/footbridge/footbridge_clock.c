@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.3 2000/01/22 05:21:24 tsutsui Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.4 2000/02/13 04:59:57 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,7 +73,7 @@ clockmatch(parent, cf, aux)
 {
 	union footbridge_attach_args *fba = aux;
 
-	if (strcmp(fba->fba_ca.ca_name, "clk") == 0 && cf->cf_unit == 0)
+	if (strcmp(fba->fba_ca.ca_name, "clk") == 0)
 		return(1);
 	return(0);
 }
