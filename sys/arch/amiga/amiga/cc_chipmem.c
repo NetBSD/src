@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc_chipmem.c,v 1.2 1994/01/29 06:58:41 chopps Exp $
+ *	$Id: cc_chipmem.c,v 1.3 1994/01/30 08:50:17 chopps Exp $
  */
 #include "types.h"
 #include "cc_chipmem.h"
@@ -223,9 +223,7 @@ cc_init_chipmem (void)
     mem_node_t *mem;
     extern u_byte *chipmem_end, *chipmem_start;
 
-/*#ifdef GODZILLA*/
-/* XXXXX */
-#if 1
+#ifdef GODZILLA /* XXX */
     /* spare the lower chipmem regions.. */
     chip.size = 512*1024;
 #else
@@ -237,7 +235,7 @@ cc_init_chipmem (void)
     chip.alloc_nodes = 0;
     chip.total = chip.size - sizeof (mem_node_t);
     
-    mem = (struct free_list *)chip.memory;
+    mem = (mem_node_t *)chip.memory;
     mem->size = chip.total;
 
     dinit_list (&chip.node_list);
