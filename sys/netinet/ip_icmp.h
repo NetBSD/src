@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.11 1996/08/03 15:48:18 neil Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.12 1997/08/26 18:27:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -142,6 +142,9 @@ struct icmp {
 #define		ICMP_UNREACH_HOST_PROHIB 10		/* ditto */
 #define		ICMP_UNREACH_TOSNET	11		/* bad tos for net */
 #define		ICMP_UNREACH_TOSHOST	12		/* bad tos for host */
+#define		ICMP_UNREACH_ADMIN_PROHIBIT 13		/* communication
+							   administratively
+							   prohibited */
 #define	ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
 #define	ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
