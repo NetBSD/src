@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.15 2000/08/02 16:46:16 christos Exp $	*/
+/*	$NetBSD: dd.c,v 1.16 2000/08/02 19:44:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.15 2000/08/02 16:46:16 christos Exp $");
+__RCSID("$NetBSD: dd.c,v 1.16 2000/08/02 19:44:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ u_int	cbsz;			/* conversion block size */
 u_int	files_cnt = 1;		/* # of files to copy */
 int	progress = 0;		/* display sign of life */
 const u_char	*ctab;		/* conversion table */
-sigset_t nset;			/* a set blocking SIGINFO */
+sigset_t infoset;			/* a set blocking SIGINFO */
 
 int
 main(argc, argv)
@@ -98,8 +98,8 @@ main(argc, argv)
 
 	(void)signal(SIGINFO, summaryx);
 	(void)signal(SIGINT, terminate);
-	(void)sigemptyset(&nset);
-	(void)sigaddset(&nset, SIGINFO);
+	(void)sigemptyset(&infoset);
+	(void)sigaddset(&infoset, SIGINFO);
 
 	(void)atexit(summary);
 
@@ -431,7 +431,7 @@ bwrite(fd, buf, len)
 	ssize_t rv;
 	int oerrno;
 
-	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
+	(void)sigprocmask(SIG_BLOCK, &infoset, &oset);
 	rv = write(fd, buf, len);
 	oerrno = errno;
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
