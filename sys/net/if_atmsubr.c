@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.15 1998/05/01 03:50:59 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.16 1998/05/06 18:23:34 drochner Exp $       */
 
 /*
  *
@@ -177,7 +177,6 @@ atm_output(ifp, m0, dst, rt0)
 			bcopy(ATMLLC_HDR, atmllc->llchdr, 
 						sizeof(atmllc->llchdr));
 			ATM_LLC_SETTYPE(atmllc, etype); 
-					/* note: already in network order */
 		}
 	}
 
