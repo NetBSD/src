@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.47 2002/07/13 19:35:34 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.46 2002/01/07 01:58:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.47 2002/07/13 19:35:34 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,12 +657,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 	struct buf *bp = (struct buf *) bp_in;
 
 	raidAddress += rf_raidSectorOffset;
-
-	if (!raidPtr->valid) {
-		RF_ERRORMSG("RAIDframe driver not successfully configured.  Rejecting access.\n");
-		IO_BUF_ERR(bp, EINVAL);
-		return (EINVAL);
-	}
 
 	if (rf_accessDebug) {
 
