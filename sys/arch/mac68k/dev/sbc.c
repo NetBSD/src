@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.38.4.2 1999/11/02 06:46:13 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.38.4.3 1999/11/16 16:14:00 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -313,11 +313,7 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
 	volatile u_int8_t *byte_data = (u_int8_t *)sc->sc_nodrq_addr;
 	label_t faultbuf;
-#if 0
 	int resid, s;
-#else
-	int s;
-#endif
 	u_int8_t icmd;
 
 #if 1
@@ -340,10 +336,6 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	*ncr_sc->sci_mode |= SCI_MODE_DMA;
 	*ncr_sc->sci_dma_send = 0;
 
-#if 1
-	sc->sc_resid = datalen;
-#endif
-
 	/*
 	 * Setup for a possible bus error caused by SCSI controller
 	 * switching out of DATA OUT before we're done with the
@@ -354,34 +346,9 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 	if (setjmp(nofault)) {
 		printf("buf = 0x%lx, fault = 0x%lx\n",
 		    (u_long)sc->sc_drq_addr, (u_long)m68k_fault_addr);
-#if 0
 		panic("Unexpected bus error in sbc_pdma_out()");
-#else
-		sc->sc_resid -=
-		    (u_long)m68k_fault_addr - (u_long)sc->sc_drq_addr;
-		goto interrupt;
-#endif
 	}
 
-#if 1
-#define	resid	sc->sc_resid
-#define W1	do { \
-			*byte_data = *((u_int8_t *)data)++; \
-			resid--; \
-		} while (0)
-#define W4	do { \
-			*long_data = *((u_int32_t *)data)++; \
-			resid -= 4; \
-		} while (0)
-	while (resid >= 64) {
-		if (sbc_ready(ncr_sc))
-			goto interrupt;
-		W4; W4; W4; W4;
-		W4; W4; W4; W4;
-		W4; W4; W4; W4;
-		W4; W4; W4; W4;
-	}
-#else
 #define W1	*byte_data = *((u_int8_t *)data)++
 #define W4	*long_data = *((u_int32_t *)data)++
 	for (resid = datalen; resid >= 64; resid -= 64) {
@@ -404,7 +371,6 @@ sbc_pdma_out(ncr_sc, phase, datalen, data)
 		W4; W4; W4; W4;
 		W4; W4; W4;
 	}
-#endif
 	while (resid) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
