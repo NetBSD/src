@@ -787,6 +787,7 @@
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/sparc
+./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/x68k
@@ -843,6 +844,7 @@
 ./usr/share/man/man8/pc532
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/sparc
+./usr/share/man/man8/sparc64
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/x68k
