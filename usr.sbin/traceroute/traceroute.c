@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.57 2002/11/16 15:43:52 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.58 2003/05/15 00:04:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.57 2002/11/16 15:43:52 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.58 2003/05/15 00:04:16 itojun Exp $");
 #endif
 #endif
 
@@ -244,7 +244,6 @@ __RCSID("$NetBSD: traceroute.c,v 1.57 2002/11/16 15:43:52 itojun Exp $");
 #endif
 
 #include "ifaddrlist.h"
-#include "savestr.h"
 #include "as.h"
 
 /* Maximum number of gateways (include room for one noop) */
