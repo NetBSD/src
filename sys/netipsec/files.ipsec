@@ -1,0 +1,16 @@
+#	$Id: files.ipsec,v 1.1 2003/07/25 21:12:40 jonathan Exp $
+#
+#
+defflag fast_ipsec
+
+file	netipsec/ipsec.c		fast_ipsec
+file	netipsec/ipsec_input.c		fast_ipsec
+file	netipsec/ipsec_mbuf.c		fast_ipsec
+file	netipsec/ipsec_output.c		fast_ipsec
+file	netipsec/key.c			fast_ipsec
+file	netipsec/key_debug.c		fast_ipsec
+file	netipsec/keysock.c		fast_ipsec
+file	netipsec/xform_ah.c		fast_ipsec
+file	netipsec/xform_esp.c		fast_ipsec
+file	netipsec/xform_ipcomp.c		fast_ipsec
+file	netipsec/xform_ipip.c		fast_ipsec
