@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29 1998/07/26 21:47:48 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.30 1998/07/29 02:46:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.29 1998/07/26 21:47:48 mycroft Exp $");
+__RCSID("$NetBSD: util.c,v 1.30 1998/07/29 02:46:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -912,6 +912,7 @@ controlediting()
 {
 	if (editing && el == NULL && hist == NULL) {
 		HistEvent ev;
+		int editmode;
 
 		el = el_init(__progname, stdin, ttyout, stderr);
 		/* init editline */
@@ -927,10 +928,15 @@ controlediting()
 		    "Context sensitive argument completion",
 		    complete);
 		el_set(el, EL_BIND, "^I", "ftp-complete", NULL);
-
 		el_source(el, NULL);	/* read ~/.editrc */
-		el_set(el, EL_SIGNAL, 1);
-	} else if (!editing) {
+		if ((el_get(el, EL_EDITMODE, &editmode) != -1) && editmode == 0)
+			editing = 0;	/* the user doesn't want editing,
+					 * so disable, and let statement
+					 * below cleanup */
+		else
+			el_set(el, EL_SIGNAL, 1);
+	}
+	if (!editing) {
 		if (hist) {
 			history_end(hist);
 			hist = NULL;
