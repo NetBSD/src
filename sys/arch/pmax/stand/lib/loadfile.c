@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.1 1999/03/24 23:51:26 simonb Exp $ */
+/* $NetBSD: loadfile.c,v 1.2 1999/03/25 03:38:53 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -467,11 +467,16 @@ aout_exec(fd, x, marks, flags)
 	 * The kernel may use this to verify that the
 	 * symbols were loaded by this boot program.
 	 */
-	if (flags & LOAD_HDR)
-		BCOPY(x, maxp, sizeof(*x));
-	if (flags & (LOAD_HDR|COUNT_HDR))
-		maxp += sizeof(*x);
-
+	if (magic == OMAGIC) {
+		if (flags & LOAD_HDR)
+			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
+	}
+	else {
+		if (flags & LOAD_HDR)
+			BCOPY(x, maxp, sizeof(*x));
+		if (flags & (LOAD_HDR|COUNT_HDR))
+			maxp += sizeof(*x);
+	}
 
 	/*
 	 * Read in the text segment.
