@@ -1260,7 +1260,7 @@ alpha_register_convert_to_virtual (regnum, valtype, raw_buffer, virtual_buffer)
     }
   else if (TYPE_CODE (valtype) == TYPE_CODE_INT && TYPE_LENGTH (valtype) <= 4)
     {
-      ULONGEST l;
+      unsigned LONGEST l;
       l = extract_unsigned_integer (raw_buffer, REGISTER_RAW_SIZE (regnum));
       l = ((l >> 32) & 0xc0000000) | ((l >> 29) & 0x3fffffff);
       store_unsigned_integer (virtual_buffer, TYPE_LENGTH (valtype), l);
@@ -1289,7 +1289,7 @@ alpha_register_convert_to_raw (valtype, regnum, virtual_buffer, raw_buffer)
     }
   else if (TYPE_CODE (valtype) == TYPE_CODE_INT && TYPE_LENGTH (valtype) <= 4)
     {
-      ULONGEST l;
+      unsigned LONGEST l;
       if (TYPE_UNSIGNED (valtype))
 	l = extract_unsigned_integer (virtual_buffer, TYPE_LENGTH (valtype));
       else
