@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16.4.1 2001/03/20 17:59:44 he Exp $	*/
+/*	$NetBSD: main.c,v 1.16.4.2 2002/02/23 18:04:05 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16.4.1 2001/03/20 17:59:44 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.4.2 2002/02/23 18:04:05 he Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.16.4.1 2001/03/20 17:59:44 he Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:";
+static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:UI:";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -43,8 +43,10 @@ char   *BuildInfo = NULL;
 char   *SizePkg = NULL;
 char   *SizeAll = NULL;
 char   *SrcDir = NULL;
+char   *realprefix = NULL;
 char    PlayPen[FILENAME_MAX];
 size_t  PlayPenSize = sizeof(PlayPen);
+int	update_pkgdb = 1;
 int     Dereference = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
@@ -54,11 +56,12 @@ Boolean File2Pkg = FALSE;
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n",
-	    "usage: pkg_create [-ORhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n",
+	    "usage: pkg_create [-ORUhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
 	    "                  [-b build-version-file] [-B build-info-file]",
+	    "                  [-I realprefix]",
 	    "                  -c comment -d description -f packlist pkg-name");
 	exit(1);
 }
@@ -76,12 +79,20 @@ main(int argc, char **argv)
 			Verbose = TRUE;
 			break;
 
+		case 'I':
+			realprefix = optarg;
+			break;
+
 		case 'O':
 			PlistOnly = 1;
 			break;
 
 		case 'R':
 			ReorderDirs = 1;
+			break;
+
+		case 'U':
+			update_pkgdb = 0;
 			break;
 
 		case 'p':
