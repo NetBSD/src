@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.7 1999/11/12 04:42:19 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.8 1999/12/15 08:12:30 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 
 #include "tctrl.h"
 #if NTCTRL > 0
+#include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>
 #endif
 
