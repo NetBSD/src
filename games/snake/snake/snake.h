@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.7 1996/07/03 04:17:25 chopps Exp $	*/
+/*	$NetBSD: snake.h,v 1.8 1997/10/12 01:49:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,13 +35,16 @@
  *	@(#)snake.h	8.1 (Berkeley) 5/31/93
  */
 
-# include <stdio.h>
-# include <string.h>
-# include <assert.h>
 # include <sys/types.h>
-# include <signal.h>
-# include <termios.h>
+# include <sys/ioctl.h>
+# include <assert.h>
+# include <err.h>
 # include <math.h>
+# include <signal.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <termios.h>
 
 #define ESC	'\033'
 
@@ -59,7 +62,6 @@ int	lcnt, ccnt;	/* user's idea of screen size */
 char	PC;
 int	AM, BW;
 char	tbuf[1024], tcapbuf[128];
-char	*tgetstr(), *tgoto();
 int	Klength;	/* length of KX strings */
 int	chunk;		/* amount of money given at a time */
 speed_t	ospeed;
@@ -74,13 +76,52 @@ struct point {
 };
 struct point cursor;
 struct termios orig, new;
-struct point *point();
-#if __STDC__
-void	apr(struct point *, const char *, ...);
-void	pr(const char *, ...);
-#else
-void	apr();
-void	pr();
-#endif
 
 #define	same(s1, s2)	((s1)->line == (s2)->line && (s1)->col == (s2)->col)
+
+
+void		apr __P((struct point *, const char *, ...));
+void		bs __P((void));
+void		chase __P((struct point *, struct point *));
+int		chk __P((struct point *));
+void		clear __P((void));
+void		cook __P((void));
+void		cr __P((void));
+void		delay __P((int));
+void		done __P((void));
+void		down __P((void));
+void		drawbox __P((void));
+void		flushi __P((void));
+void		getcap __P((void));
+void		gto __P((struct point *));
+void		home __P((void));
+void		length __P((int));
+void		ll __P((void));
+void		logit __P((const char *));
+void		mainloop __P((void));
+void		move __P((struct point *));
+void		nd __P((void));
+void		outch __P((int));
+void		pch __P((int));
+void		pchar __P((struct point *, char));
+struct point   *point __P((struct point *, int, int));
+int		post __P((int, int));
+void		pr __P((const char *, ...));
+void		pstring __P((const char *));
+int		pushsnake __P((void));
+void		putpad __P((char *));
+void		raw __P((void));
+void		right __P((struct point *));
+void		setup __P((void));
+void		snap __P((void));
+void		snap __P((void));
+void		snrand __P((struct point *));
+void		spacewarp __P((int));
+void		stop __P((int));
+int		stretch __P((struct point *));
+int		stretch __P((struct point *));
+void		surround __P((struct point *));
+void		suspend __P((void));
+void		up __P((void));
+void		win __P((struct point *));
+void		winnings __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $	*/
+/*	$NetBSD: snscore.c,v 1.6 1997/10/12 01:49:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,21 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $";
+__RCSID("$NetBSD: snscore.c,v 1.6 1997/10/12 01:49:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,8 +64,12 @@ struct	player	{
 	char	*name;
 } players[MAXPLAYERS], temp;
 
+int	main __P((int, char **));
+
 int
-main()
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	short	uid, score;
 	FILE	*fd;
@@ -75,10 +80,8 @@ main()
 	struct	passwd	*p;
 
 	fd = fopen(recfile, "r");
-	if (fd == NULL) {
-		perror(recfile);
-		exit(1);
-	}
+	if (fd == NULL)
+		err(1, "opening `%s'", recfile);
 	printf("Snake players scores to date\n");
 	fread(&whoallbest, sizeof(short), 1, fd);
 	fread(&allbest, sizeof(short), 1, fd);
