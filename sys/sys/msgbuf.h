@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)msgbuf.h	7.5 (Berkeley) 5/2/91
- *	$Id: msgbuf.h,v 1.3 1993/05/20 16:22:45 cgd Exp $
+ *	$Id: msgbuf.h,v 1.4 1993/08/27 23:45:55 brezak Exp $
  */
 
 #ifndef _SYS_MSGBUF_H_
@@ -46,7 +46,8 @@ struct	msgbuf {
 	char	msg_bufc[MSG_BSIZE];	/* buffer */
 };
 #ifdef KERNEL
-struct	msgbuf *msgbufp;
+extern struct	msgbuf *msgbufp;
+extern int	msgbufmapped;
 #endif
 
 #endif /* !_SYS_MSGBUF_H_ */
