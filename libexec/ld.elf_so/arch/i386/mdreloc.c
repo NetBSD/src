@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.13 2002/09/12 20:21:00 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.14 2002/09/12 22:56:30 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,10 +43,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rel *rel;
 #define COMBRELOC
@@ -89,7 +88,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 #endif
 
 			*where += target - (Elf_Addr)where;
-			rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
+			rdbg(("PC32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
@@ -115,14 +114,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			tmp = target + *where;
 			if (*where != tmp)
 				*where = tmp;
-			rdbg(dodebug, ("32/GLOB_DAT %s in %s --> %p in %s",
+			rdbg(("32/GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			break;
 
@@ -139,11 +138,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				    obj->path);
 				return -1;
 			}
-			rdbg(dodebug, ("COPY (avoid in main)"));
+			rdbg(("COPY (avoid in main)"));
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset, (void *)*where,
@@ -158,9 +157,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rel *rel;
 
@@ -174,19 +172,17 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	}
 
 	return 0;
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp)
 	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
@@ -200,7 +196,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		return -1;
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p",
+	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;

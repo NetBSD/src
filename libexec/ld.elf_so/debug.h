@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.4 1999/03/01 16:40:07 christos Exp $	*/
+/*	$NetBSD: debug.h,v 1.5 2002/09/12 22:56:28 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -50,9 +50,9 @@ extern int debug;
 # define dbg(a)		((void) 0)
 #endif
 #ifdef RTLD_DEBUG_RELOC
-# define rdbg(f, a)	if (f) debug_printf a
+# define rdbg(a)	debug_printf a
 #else
-# define rdbg(f, a)	((void) 0)
+# define rdbg(a)	((void) 0)
 #endif
 
 #endif

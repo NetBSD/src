@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.13 2002/09/12 20:27:35 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.14 2002/09/12 22:56:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include "debug.h"
 
 #ifdef RTLD_DEBUG_HPPA
-#define	hdbg(x)		if (dodebug) xprintf x
+#define	hdbg(x)		xprintf x
 #else
 #define	hdbg(x)		/* nothing */
 #endif
@@ -267,8 +267,7 @@ _rtld_function_descriptor_function(const void *addr)
  * This handles an IPLT relocation, with or without a symbol.
  */
 int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
-    bool dodebug)
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp)
 {
 	Elf_Addr	*where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym	*def;
@@ -322,10 +321,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -368,7 +366,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 				if (*where != tmp)
 					*where = tmp;
-				rdbg(dodebug, ("DIR32 %s in %s --> %p in %s",
+				rdbg(("DIR32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
 				    obj->path, (void *)*where, defobj->path));
 			} else {
@@ -384,10 +382,10 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				    (caddr_t)where >= (caddr_t)_GOT_END_) {
 					if (*where != tmp)
 						*where = tmp;
-					rdbg(dodebug, ("DIR32 in %s --> %p",
-					    obj->path, (void *)*where));
+					rdbg(("DIR32 in %s --> %p", obj->path,
+					    (void *)*where));
 				} else
-					rdbg(dodebug, ("DIR32 in %s stays at %p",
+					rdbg(("DIR32 in %s stays at %p",
 					    obj->path, (void *)*where));
 			}
 			break;
@@ -410,7 +408,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 				if (*where != tmp)
 					*where = tmp;
-				rdbg(dodebug, ("PLABEL32 %s in %s --> %p in %s",
+				rdbg(("PLABEL32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
 				    obj->path, (void *)*where, defobj->path));
 			} else {
@@ -435,8 +433,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 				if (*where != tmp)
 					*where = tmp;
-				rdbg(dodebug, ("PLABEL32 in %s --> %p",
-				    obj->path, (void *)*where));
+				rdbg(("PLABEL32 in %s --> %p", obj->path,
+				    (void *)*where));
 			}
 			break;
 
@@ -453,11 +451,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				    obj->path);
 				return -1;
 			}
-			rdbg(dodebug, ("COPY (avoid in main)"));
+			rdbg(("COPY (avoid in main)"));
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
@@ -473,9 +471,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.47 2002/09/12 20:27:34 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.48 2002/09/12 22:56:29 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -253,23 +253,22 @@ void _rtld_digest_dynamic __P((Obj_Entry *));
 Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
 
 /* load.c */
-Obj_Entry *_rtld_load_object __P((char *, int, bool));
-int _rtld_load_needed_objects __P((Obj_Entry *, int, bool));
-int _rtld_preload __P((const char *, bool));
+Obj_Entry *_rtld_load_object __P((char *, int));
+int _rtld_load_needed_objects __P((Obj_Entry *, int));
+int _rtld_preload __P((const char *));
 
 /* path.c */
-void _rtld_add_paths __P((Search_Path **, const char *, bool));
-void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *,
-    bool));
+void _rtld_add_paths __P((Search_Path **, const char *));
+void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *));
 
 /* reloc.c */
-int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
+int _rtld_do_copy_relocations __P((const Obj_Entry *));
 caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
-int _rtld_relocate_objects __P((Obj_Entry *, bool, bool, bool));
-int _rtld_relocate_nonplt_objects __P((const Obj_Entry *, bool, bool));
-int _rtld_relocate_plt_lazy __P((const Obj_Entry *, bool));
+int _rtld_relocate_objects __P((Obj_Entry *, bool, bool));
+int _rtld_relocate_nonplt_objects __P((const Obj_Entry *, bool));
+int _rtld_relocate_plt_lazy __P((const Obj_Entry *));
 int _rtld_relocate_plt_object __P((const Obj_Entry *, const Elf_Rela *,
-    caddr_t *, bool));
+    caddr_t *));
 
 /* search.c */
 char *_rtld_find_library __P((const char *, const Obj_Entry *));
