@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.11 1997/10/09 07:25:53 jtc Exp $
+#	$NetBSD: install.md,v 1.12 1999/06/27 12:55:59 mrg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,14 @@
 #
 
 # Machine-dependent install sets
-MDSETS="xbin xman xinc xcon"
+MDSETS="kern xbase xcomp xcontrib xfont xserver"
 
 if [ "$MODE" = upgrade ]; then
 	RELOCATED_FILES_13="${RELOCATED_FILES_13} /usr/sbin/installboot /usr/mdec/installboot"
 fi
+
+# Mount /kern to get at /kern/msgbuf
+mount -t kernfs none /kern
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -78,17 +81,17 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | egrep "(^sd[0-9] |^x[dy][0-9] )" | cut -d" " -f1 | sort -u
+	< /kern/msgbuf sed -n -e 's/^\(sd[0-9]\) .*/\1/p' -e 's/^\(x[dy][0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | grep "^cd[0-9] " | cut -d" " -f1 | sort -u
+	< /kern/msgbuf sed -n -e 's/^\(cd[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	dmesg | egrep "(^le[0-9] |^ie[0-9] )" | cut -d" " -f1 | sort -u
+	< /kern/msgbuf sed -n -e 's/^\(le[0-9]\) .*/\1/p' -e 's/^\(ie[0-9]\) .*/\1/p' | sort -u
 }
 
 md_get_partition_range() {
@@ -110,17 +113,20 @@ md_native_fsopts() {
 md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
+	local cfdl
 
-	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
-	if grep "no disk label" /tmp/checkfordisklabel; then
+	cfdl=`disklabel $1 2>&1 > /dev/null | \
+	    sed -n -e '/no disk label/{s/.*/ndl/p;q;}; \
+		 /disk label corrupted/{s/.*/dlc/p;q;}; \
+		 $s/.*/no/p'`
+	if [ x$cfdl = xndl ]; then
 		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
+	elif [ x$cfdl = xdlc ]; then
 		rval=2
 	else
 		rval=0
 	fi
 
-	rm -f /tmp/checkfordisklabel
 	return $rval
 }
 
@@ -176,13 +182,21 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
-	disklabel -e ${_disk}
+	if [ -f /usr/bin/vi ]; then 
+		disklabel -e ${_disk}
+	else
+		disklabel -i ${_disk}
+	fi
 }
 
 md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
-	echo "done."
+	if [ -f /mnt/netbsd.GENERIC ]; then
+		echo -n "Linking /netbsd.GENERIC to /netbsd ... "
+		ln /mnt/netbsd.GENERIC /mnt/netbsd
+		echo "done."
+	else
+		echo "WARNING: No /netbsd.GENERIC!  Please install /netbsd manually!"
+	fi
 }
 
 md_welcome_banner() {
