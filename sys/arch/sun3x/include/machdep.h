@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.9 1997/03/18 23:39:21 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.10 1997/03/21 22:46:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,6 +86,7 @@
 
 /* Prototypes... */
 
+struct cpu_kcore_hdr;
 struct frame;
 struct fpframe;
 struct mmu_rootptr;
@@ -161,6 +162,7 @@ void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((vm_offset_t nextva));
 int 	pmap_pa_exists __P((vm_offset_t pa));
+void	pmap_set_kcore_hdr __P((struct cpu_kcore_hdr *));
 
 void	regdump __P((struct trapframe *, int));
 
