@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.47 2004/11/16 06:00:51 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.48 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -297,59 +297,59 @@ struct addrinfo {
 #endif /* (_POSIX_C_SOURCE - 0) >= 200112L || ... */
 
 __BEGIN_DECLS
-void		endhostent __P((void));
-void		endnetent __P((void));
-void		endprotoent __P((void));
-void		endservent __P((void));
+void		endhostent(void);
+void		endnetent(void);
+void		endprotoent(void);
+void		endservent(void);
 #if (_XOPEN_SOURCE - 0) >= 520 && (_XOPEN_SOURCE - 0) < 600 || \
     defined(_NETBSD_SOURCE)
 #if 0 /* we do not ship this */
-void		freehostent __P((struct hostent *));
+void		freehostent(struct hostent *);
 #endif
 #endif
-struct hostent	*gethostbyaddr __P((const char *, socklen_t, int));
-struct hostent	*gethostbyname __P((const char *));
+struct hostent	*gethostbyaddr(const char *, socklen_t, int);
+struct hostent	*gethostbyname(const char *);
 #if defined(_NETBSD_SOURCE)
-struct hostent	*gethostbyname2 __P((const char *, int));
+struct hostent	*gethostbyname2(const char *, int);
 #endif
-struct hostent	*gethostent __P((void));
+struct hostent	*gethostent(void);
 #if (_XOPEN_SOURCE - 0) >= 520 && (_XOPEN_SOURCE - 0) < 600 || \
     defined(_NETBSD_SOURCE)
 #if 0 /* we do not ship these */
-struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
-struct hostent	*getipnodebyname __P((const char *, int, int, int *));
+struct hostent	*getipnodebyaddr(const void *, size_t, int, int *);
+struct hostent	*getipnodebyname(const char *, int, int, int *);
 #endif
 #endif
-struct netent	*getnetbyaddr __P((uint32_t, int));
-struct netent	*getnetbyname __P((const char *));
-struct netent	*getnetent __P((void));
-struct protoent	*getprotobyname __P((const char *));
-struct protoent	*getprotobynumber __P((int));
-struct protoent	*getprotoent __P((void));
-struct servent	*getservbyname __P((const char *, const char *));
-struct servent	*getservbyport __P((int, const char *));
-struct servent	*getservent __P((void));
+struct netent	*getnetbyaddr(uint32_t, int);
+struct netent	*getnetbyname(const char *);
+struct netent	*getnetent(void);
+struct protoent	*getprotobyname(const char *);
+struct protoent	*getprotobynumber(int);
+struct protoent	*getprotoent(void);
+struct servent	*getservbyname(const char *, const char *);
+struct servent	*getservbyport(int, const char *);
+struct servent	*getservent(void);
 #if defined(_NETBSD_SOURCE)
-void		herror __P((const char *));
-const char	*hstrerror __P((int));
+void		herror(const char *);
+const char	*hstrerror(int);
 #endif
-void		sethostent __P((int));
+void		sethostent(int);
 #if defined(_NETBSD_SOURCE)
-/* void		sethostfile __P((const char *)); */
+/* void		sethostfile(const char *); */
 #endif
-void		setnetent __P((int));
-void		setprotoent __P((int));
+void		setnetent(int);
+void		setprotoent(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-void		setservent __P((int));
-int		getaddrinfo __P((const char *, const char *,
-				 const struct addrinfo *, struct addrinfo **));
-int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,
-				 socklen_t, char *, socklen_t, int));
-void		freeaddrinfo __P((struct addrinfo *));
-const char	*gai_strerror __P((int));
+void		setservent(int);
+int		getaddrinfo(const char *, const char *,
+				 const struct addrinfo *, struct addrinfo **);
+int		getnameinfo(const struct sockaddr *, socklen_t, char *,
+				 socklen_t, char *, socklen_t, int);
+void		freeaddrinfo(struct addrinfo *);
+const char	*gai_strerror(int);
 #endif
-void		setservent __P((int));
+void		setservent(int);
 
 #if defined(_NETBSD_SOURCE) && defined(_LIBC)
 
@@ -363,13 +363,13 @@ struct protoent_data {
 	void *dummy;
 };
 
-struct protoent	*getprotoent_r __P((struct protoent *, struct protoent_data *));
-struct protoent	*getprotobyname_r __P((const char *,
-    struct protoent *, struct protoent_data *));
-struct protoent	*getprotobynumber_r __P((int,
-    struct protoent *, struct protoent_data *));
-void setprotoent_r __P((int, struct protoent_data *));
-void endprotoent_r __P((struct protoent_data *));
+struct protoent	*getprotoent_r(struct protoent *, struct protoent_data *);
+struct protoent	*getprotobyname_r(const char *,
+    struct protoent *, struct protoent_data *);
+struct protoent	*getprotobynumber_r(int,
+    struct protoent *, struct protoent_data *);
+void setprotoent_r(int, struct protoent_data *);
+void endprotoent_r(struct protoent_data *);
 
 struct servent_data {
         FILE *fp;
@@ -381,13 +381,13 @@ struct servent_data {
 	void *dummy;
 };
 
-struct servent	*getservent_r __P((struct servent *, struct servent_data *));
-struct servent	*getservbyname_r __P((const char *, const char *,
-    struct servent *, struct servent_data *));
-struct servent	*getservbyport_r __P((int, const char *,
-    struct servent *, struct servent_data *));
-void setservent_r __P((int, struct servent_data *));
-void endservent_r __P((struct servent_data *));
+struct servent	*getservent_r(struct servent *, struct servent_data *);
+struct servent	*getservbyname_r(const char *, const char *,
+    struct servent *, struct servent_data *);
+struct servent	*getservbyport_r(int, const char *,
+    struct servent *, struct servent_data *);
+void setservent_r(int, struct servent_data *);
+void endservent_r(struct servent_data *);
 
 #endif /* _NETBSD_SOURCE && _LIBC */
 __END_DECLS

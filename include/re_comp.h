@@ -1,4 +1,4 @@
-/*	$NetBSD: re_comp.h,v 1.2 1997/07/30 23:00:05 jtc Exp $	*/
+/*	$NetBSD: re_comp.h,v 1.3 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char   *re_comp __P((const char *));
-int	re_exec __P((const char *));
+char   *re_comp(const char *);
+int	re_exec(const char *);
 __END_DECLS
 
 #endif /* _RE_COMP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.19 2000/09/14 20:36:39 wiz Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.20 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,13 +176,13 @@ struct so_debug {
  * Entry points into ld.so - user interface to the run-time linker.
  */
 struct ld_entry {
-	void	*(*dlopen) __P((const char *, int));
-	int	(*dlclose) __P((void *));
-	void	*(*dlsym) __P((void *, const char *));
-	int	(*dlctl) __P((void *, int, void *));
-	void	(*dlexit) __P((void));
-	int	(*dladdr) __P((const void *, Dl_info *));
-	void	(*dlrsrvd[2]) __P((void));
+	void	*(*dlopen)(const char *, int);
+	int	(*dlclose)(void *);
+	void	*(*dlsym)(void *, const char *);
+	int	(*dlctl)(void *, int, void *);
+	void	(*dlexit)(void);
+	int	(*dladdr)(const void *, Dl_info *);
+	void	(*dlrsrvd[2])(void);
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.68 2004/12/16 03:54:56 atatat Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.69 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -93,45 +93,44 @@ extern size_t __mb_cur_max;
 #define	MB_CUR_MAX	__mb_cur_max
 
 __BEGIN_DECLS
-__dead	 void _Exit __P((int)) __attribute__((__noreturn__));
-__dead	 void abort __P((void)) __attribute__((__noreturn__));
-__pure	 int abs __P((int));
-int	 atexit __P((void (*)(void)));
-double	 atof __P((const char *));
-int	 atoi __P((const char *));
-long	 atol __P((const char *));
+__dead	 void _Exit(int) __attribute__((__noreturn__));
+__dead	 void abort(void) __attribute__((__noreturn__));
+__pure	 int abs(int);
+int	 atexit(void (*)(void));
+double	 atof(const char *);
+int	 atoi(const char *);
+long	 atol(const char *);
 #ifndef __BSEARCH_DECLARED
 #define __BSEARCH_DECLARED
 /* also in search.h */
-void	*bsearch __P((const void *, const void *, size_t, size_t,
-    int (*)(const void *, const void *)));
+void	*bsearch(const void *, const void *, size_t, size_t,
+    int (*)(const void *, const void *));
 #endif /* __BSEARCH_DECLARED */
-void	*calloc __P((size_t, size_t));
-div_t	 div __P((int, int));
-__dead	 void exit __P((int)) __attribute__((__noreturn__));
-void	 free __P((void *));
-__aconst char *getenv __P((const char *));
+void	*calloc(size_t, size_t);
+div_t	 div(int, int);
+__dead	 void exit(int) __attribute__((__noreturn__));
+void	 free(void *);
+__aconst char *getenv(const char *);
 __pure long
-	 labs __P((long));
-ldiv_t	 ldiv __P((long, long));
-void	*malloc __P((size_t));
-void	 qsort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
-int	 rand __P((void));
-void	*realloc __P((void *, size_t));
-void	 srand __P((unsigned));
-double	 strtod __P((const char * __restrict, char ** __restrict));
-long	 strtol __P((const char * __restrict, char ** __restrict, int));
+	 labs(long);
+ldiv_t	 ldiv(long, long);
+void	*malloc(size_t);
+void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 rand(void);
+void	*realloc(void *, size_t);
+void	 srand(unsigned);
+double	 strtod(const char * __restrict, char ** __restrict);
+long	 strtol(const char * __restrict, char ** __restrict, int);
 unsigned long
-	 strtoul __P((const char * __restrict, char ** __restrict, int));
-int	 system __P((const char *));
+	 strtoul(const char * __restrict, char ** __restrict, int);
+int	 system(const char *);
 
 /* These are currently just stubs. */
-int	 mblen __P((const char *, size_t));
-size_t	 mbstowcs __P((wchar_t * __restrict, const char * __restrict, size_t));
-int	 wctomb __P((char *, wchar_t));
-int	 mbtowc __P((wchar_t * __restrict, const char * __restrict, size_t));
-size_t	 wcstombs __P((char * __restrict, const wchar_t * __restrict, size_t));
+int	 mblen(const char *, size_t);
+size_t	 mbstowcs(wchar_t * __restrict, const char * __restrict, size_t);
+int	 wctomb(char *, wchar_t);
+int	 mbtowc(wchar_t * __restrict, const char * __restrict, size_t);
+size_t	 wcstombs(char * __restrict, const wchar_t * __restrict, size_t);
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
@@ -142,7 +141,7 @@ size_t	 wcstombs __P((char * __restrict, const wchar_t * __restrict, size_t));
  */
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
-int	 rand_r __P((unsigned int *));
+int	 rand_r(unsigned int *);
 #endif
 
 
@@ -150,18 +149,18 @@ int	 rand_r __P((unsigned int *));
  * X/Open Portability Guide >= Issue 4
  */
 #if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
-double	 drand48 __P((void));
-double	 erand48 __P((unsigned short[3]));
-long	 jrand48 __P((unsigned short[3]));
-void	 lcong48 __P((unsigned short[7]));
-long	 lrand48 __P((void));
-long	 mrand48 __P((void));
-long	 nrand48 __P((unsigned short[3]));
+double	 drand48(void);
+double	 erand48(unsigned short[3]);
+long	 jrand48(unsigned short[3]);
+void	 lcong48(unsigned short[7]);
+long	 lrand48(void);
+long	 mrand48(void);
+long	 nrand48(unsigned short[3]);
 unsigned short *
-	 seed48 __P((unsigned short[3]));
-void	 srand48 __P((long));
+	 seed48(unsigned short[3]);
+void	 srand48(long);
 
-int	 putenv __P((const char *));
+int	 putenv(const char *);
 #endif
 
 
@@ -170,31 +169,31 @@ int	 putenv __P((const char *));
  */
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
-long	 a64l __P((const char *));
-char	*l64a __P((long));
+long	 a64l(const char *);
+char	*l64a(long);
 
-char	*initstate __P((unsigned long, char *, size_t));
-long	 random __P((void));
-char	*setstate __P((char *));
-void	 srandom __P((unsigned long));
+char	*initstate(unsigned long, char *, size_t);
+long	 random(void);
+char	*setstate(char *);
+void	 srandom(unsigned long);
 
-char	*mkdtemp __P((char *));
-int	 mkstemp __P((char *));
+char	*mkdtemp(char *);
+int	 mkstemp(char *);
 #ifndef __AUDIT__
-char	*mktemp __P((char *));
+char	*mktemp(char *);
 #endif
 
-int	 setkey __P((const char *));
+int	 setkey(const char *);
 
-char	*realpath __P((const char *, char *));
+char	*realpath(const char *, char *);
 
-int	 ttyslot __P((void));
+int	 ttyslot(void);
 
-void	*valloc __P((size_t));		/* obsoleted by malloc() */
+void	*valloc(size_t);		/* obsoleted by malloc() */
 
-int	 grantpt __P((int));
-int	 unlockpt __P((int));
-char	*ptsname __P((int));
+int	 grantpt(int);
+int	 unlockpt(int);
+char	*ptsname(int);
 #endif
 
 /*
@@ -203,17 +202,16 @@ char	*ptsname __P((int));
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
     defined(_NETBSD_SOURCE)
 /* LONGLONG */
-long long int	atoll __P((const char *));
+long long int	atoll(const char *);
 /* LONGLONG */
-long long int	llabs __P((long long int));
+long long int	llabs(long long int);
 /* LONGLONG */
-lldiv_t		lldiv __P((long long int, long long int));
+lldiv_t		lldiv(long long int, long long int);
 /* LONGLONG */
-long long int	strtoll __P((const char * __restrict, char ** __restrict, int));
+long long int	strtoll(const char * __restrict, char ** __restrict, int);
 /* LONGLONG */
 unsigned long long int
-		strtoull __P((const char * __restrict, char ** __restrict,
-		    int));
+		strtoull(const char * __restrict, char ** __restrict, int);
 #endif
 
 /*
@@ -221,15 +219,15 @@ unsigned long long int
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
-int	 setenv __P((const char *, const char *, int));
+int	 setenv(const char *, const char *, int);
 #ifdef __LIBC12_SOURCE__
-void	 unsetenv __P((const char *));
-int	 __unsetenv13 __P((const char *));
+void	 unsetenv(const char *);
+int	 __unsetenv13(const char *);
 #else
-int	 unsetenv __P((const char *))		__RENAME(__unsetenv13);
+int	 unsetenv(const char *) __RENAME(__unsetenv13);
 #endif
 
-int	 posix_openpt __P((int));
+int	 posix_openpt(int);
 #endif
 
 /*
@@ -237,50 +235,49 @@ int	 posix_openpt __P((int));
  */
 #if defined(_NETBSD_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
-void	*alloca __P((int));     /* built-in for gcc */ 
+void	*alloca(int);     /* built-in for gcc */ 
 #else 
-void	*alloca __P((size_t)); 
+void	*alloca(size_t); 
 #endif /* __GNUC__ */ 
 
-u_int32_t arc4random __P((void));
-void	 arc4random_stir __P((void));
-void	 arc4random_addrandom __P((u_char *, int));
-char	*getbsize __P((int *, long *));
-char	*cgetcap __P((char *, const char *, int));
-int	 cgetclose __P((void));
-int	 cgetent __P((char **, const char * const *, const char *));
-int	 cgetfirst __P((char **, const char * const *));
-int	 cgetmatch __P((const char *, const char *));
-int	 cgetnext __P((char **, const char * const *));
-int	 cgetnum __P((char *, const char *, long *));
-int	 cgetset __P((const char *));
-int	 cgetstr __P((char *, const char *, char **));
-int	 cgetustr __P((char *, const char *, char **));
+u_int32_t arc4random(void);
+void	 arc4random_stir(void);
+void	 arc4random_addrandom(u_char *, int);
+char	*getbsize(int *, long *);
+char	*cgetcap(char *, const char *, int);
+int	 cgetclose(void);
+int	 cgetent(char **, const char * const *, const char *);
+int	 cgetfirst(char **, const char * const *);
+int	 cgetmatch(const char *, const char *);
+int	 cgetnext(char **, const char * const *);
+int	 cgetnum(char *, const char *, long *);
+int	 cgetset(const char *);
+int	 cgetstr(char *, const char *, char **);
+int	 cgetustr(char *, const char *, char **);
 
-int	 daemon __P((int, int));
-__aconst char *devname __P((dev_t, mode_t));
-dev_t	 getdevmajor __P((const char *, mode_t));
-int	 getloadavg __P((double [], int));
+int	 daemon(int, int);
+__aconst char *devname(dev_t, mode_t);
+dev_t	 getdevmajor(const char *, mode_t);
+int	 getloadavg(double [], int);
 
-void	 cfree __P((void *));
+void	 cfree(void *);
 
-int	 heapsort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
-int	 mergesort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
-int	 radixsort __P((const unsigned char **, int, const unsigned char *,
-	    unsigned));
-int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
-	    unsigned));
+int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 mergesort(void *, size_t, size_t,
+	    int (*)(const void *, const void *));
+int	 radixsort(const unsigned char **, int, const unsigned char *,
+	    unsigned);
+int	 sradixsort(const unsigned char **, int, const unsigned char *,
+	    unsigned);
 
-void	 setproctitle __P((const char *, ...))
+void	 setproctitle(const char *, ...)
 	    __attribute__((__format__(__printf__, 1, 2)));
-const char *getprogname __P((void)) __attribute__((__const__));
-void	setprogname __P((const char *));
+const char *getprogname(void) __attribute__((__const__));
+void	setprogname(const char *);
 
-quad_t	 qabs __P((quad_t));
-quad_t	 strtoq __P((const char * __restrict, char ** __restrict, int));
-u_quad_t strtouq __P((const char * __restrict, char ** __restrict, int));
+quad_t	 qabs(quad_t);
+quad_t	 strtoq(const char * __restrict, char ** __restrict, int);
+u_quad_t strtouq(const char * __restrict, char ** __restrict, int);
 
 	/* LONGLONG */
 long long strsuftoll(const char *, const char *, long long, long long);
@@ -288,15 +285,15 @@ long long strsuftoll(const char *, const char *, long long, long long);
 long long strsuftollx(const char *, const char *, long long, long long,
 	    		char *, size_t);
 
-int	 l64a_r __P((long, char *, int));
+int	 l64a_r(long, char *, int);
 
-size_t	shquote __P((const char *, char *, size_t));
-size_t	shquotev __P((int, char * const *, char *, size_t));
+size_t	shquote(const char *, char *, size_t);
+size_t	shquotev(int, char * const *, char *, size_t);
 #endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
-qdiv_t	 qdiv __P((quad_t, quad_t));
+qdiv_t	 qdiv(quad_t, quad_t);
 #endif
 __END_DECLS
 

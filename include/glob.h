@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.18 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: glob.h,v 1.19 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,22 +49,22 @@ typedef struct {
 	int gl_flags;		/* Copy of flags parameter to glob. */
 	char **gl_pathv;	/* List of paths matching pattern. */
 				/* Copy of errfunc parameter to glob. */
-	int (*gl_errfunc) __P((const char *, int));
+	int (*gl_errfunc)(const char *, int);
 
 	/*
 	 * Alternate filesystem access methods for glob; replacement
 	 * versions of closedir(3), readdir(3), opendir(3), stat(2)
 	 * and lstat(2).
 	 */
-	void (*gl_closedir) __P((void *));
-	struct dirent *(*gl_readdir) __P((void *));	
-	void *(*gl_opendir) __P((const char *));
+	void (*gl_closedir)(void *);
+	struct dirent *(*gl_readdir)(void *);	
+	void *(*gl_opendir)(const char *);
 #ifdef __LIBC12_SOURCE__
-	int (*gl_lstat) __P((const char *, struct stat12 *));
-	int (*gl_stat) __P((const char *, struct stat12 *));
+	int (*gl_lstat)(const char *, struct stat12 *);
+	int (*gl_stat)(const char *, struct stat12 *);
 #else
-	int (*gl_lstat) __P((const char *, struct stat *));
-	int (*gl_stat) __P((const char *, struct stat *));
+	int (*gl_lstat)(const char *, struct stat *);
+	int (*gl_stat)(const char *, struct stat *);
 #endif
 } glob_t;
 
@@ -95,14 +95,14 @@ typedef struct {
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-int	glob __P((const char * __restrict, int,
-	    int (*)(const char *, int), glob_t * __restrict));
-void	globfree __P((glob_t *));
+int	glob(const char * __restrict, int,
+	    int (*)(const char *, int), glob_t * __restrict);
+void	globfree(glob_t *);
 #else
-int	glob __P((const char * __restrict, int,
-	    int (*)(const char *, int), glob_t * __restrict))
+int	glob(const char * __restrict, int,
+	    int (*)(const char *, int), glob_t * __restrict)
 	__RENAME(__glob13);
-void	globfree __P((glob_t *)) __RENAME(__globfree13);
+void	globfree(glob_t *) __RENAME(__globfree13);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.21 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: dirent.h,v 1.22 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -84,24 +84,23 @@ struct _dirdesc {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int closedir __P((DIR *));
-DIR *opendir __P((const char *));
-struct dirent *readdir __P((DIR *));
-int readdir_r __P((DIR *, struct dirent * __restrict,
-    struct dirent ** __restrict));
-void rewinddir __P((DIR *));
+int closedir(DIR *);
+DIR *opendir(const char *);
+struct dirent *readdir(DIR *);
+int readdir_r(DIR *, struct dirent * __restrict, struct dirent ** __restrict);
+void rewinddir(DIR *);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-void seekdir __P((DIR *, long));
-long telldir __P((const DIR *));
+void seekdir(DIR *, long);
+long telldir(const DIR *);
 #endif /* defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE) */
 #if defined(_NETBSD_SOURCE)
-DIR *__opendir2 __P((const char *, int));
-void __seekdir __P((DIR *, long));
-int scandir __P((const char *, struct dirent ***,
-    int (*)(const struct dirent *), int (*)(const void *, const void *)));
-int alphasort __P((const void *, const void *));
-int getdirentries __P((int, char *, int, long *));
-int getdents __P((int, char *, size_t));
+DIR *__opendir2(const char *, int);
+void __seekdir(DIR *, long);
+int scandir(const char *, struct dirent ***,
+    int (*)(const struct dirent *), int (*)(const void *, const void *));
+int alphasort(const void *, const void *);
+int getdirentries(int, char *, int, long *);
+int getdents(int, char *, size_t);
 #endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 

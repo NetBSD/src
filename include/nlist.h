@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.11 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: nlist.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,8 +85,8 @@ struct nlist {
 #define	N_STAB		0x0e0	/* mask for debugger symbols -- stab(5) */
 
 __BEGIN_DECLS
-int nlist __P((const char *, struct nlist *));
-int __fdnlist __P((int, struct nlist *));		/* XXX for libkvm */
+int nlist(const char *, struct nlist *);
+int __fdnlist(int, struct nlist *);		/* XXX for libkvm */
 __END_DECLS
 
 #endif /* !_NLIST_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.h,v 1.1 2001/03/19 04:18:53 atatat Exp $	*/
+/*	$NetBSD: md2.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 #ifndef _MD2_H_
 #define _MD2_H_
@@ -14,12 +14,12 @@ typedef struct MD2Context {
 } MD2_CTX;
 
 __BEGIN_DECLS
-void	MD2Init __P((MD2_CTX *));
-void	MD2Update __P((MD2_CTX *, const unsigned char *, unsigned int));
-void	MD2Final __P((unsigned char[16], MD2_CTX *));
-char	*MD2End __P((MD2_CTX *, char *));
-char	*MD2File __P((const char *, char *));
-char	*MD2Data __P((const unsigned char *, unsigned int, char *));
+void	MD2Init(MD2_CTX *);
+void	MD2Update(MD2_CTX *, const unsigned char *, unsigned int);
+void	MD2Final(unsigned char[16], MD2_CTX *);
+char	*MD2End(MD2_CTX *, char *);
+char	*MD2File(const char *, char *);
+char	*MD2Data(const unsigned char *, unsigned int, char *);
 __END_DECLS
 
 #endif /* _MD2_H_ */
