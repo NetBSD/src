@@ -1,4 +1,4 @@
-.\"	$NetBSD: stpcide.4,v 1.3 2003/10/31 09:35:25 nisimura Exp $
+.\"	$NetBSD: stpcide.4,v 1.4 2003/11/03 03:29:51 nisimura Exp $
 .\"
 .\" Copyright (c) 2003 Toru Nishimura.
 .\"
@@ -38,10 +38,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the STMicroelectronics STPC internal IDE controllers,
+driver supports the STMicroelectronics STPC x86 SoC internal IDE controllers,
 and provides the interface with the hardware for the
 .Xr ata 4
 driver.
+The driver features DMA mode 2 and PIO mode 4 transfer speeds.
 .Pp
 The 0x0002 flag forces the
 .Nm
@@ -58,7 +59,7 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr wd 4 ,
 .Xr wdc 4
 .Sh BUGS
-The timings used for the PIO and DMA modes are for STPC Atlas with its
-PCI clock configured at 33 MHz.
-Other speeds including STPC Vega IDE controller will need parametric
+The timings used for the DMA and PIO modes are for STPC Atlas and
+its siblings with their PCI clock configured at 33 MHz.
+Other speeds including STPC Vega Ultra-IDE controller will need
 adjustments.
