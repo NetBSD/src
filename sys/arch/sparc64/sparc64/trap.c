@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2003/10/12 19:48:52 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.96 2003/10/26 19:17:41 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2003/10/12 19:48:52 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/10/26 19:17:41 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -1885,7 +1885,7 @@ syscall(tf, code, pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
-	struct proc *p;
+	struct proc *p = curproc;
 	int error = 0, new;
 	union args {
 		register32_t i[8];
@@ -1898,9 +1898,6 @@ syscall(tf, code, pc)
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
 #endif
-
-	/* Don't dereference a non-existent curlwp XXX how can this happen? */
-	if (l) p = l->l_proc;
 
 #ifdef DEBUG
 	write_user_windows();
