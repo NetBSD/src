@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.4 2001/06/13 10:46:00 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.5 2001/06/13 15:03:53 soda Exp $	*/
 /*	NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp 	*/
 
 /*-
@@ -44,7 +44,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
-#include <arc/isa/timerreg.h>
+#include <dev/ic/i8253reg.h>
 
 /*
  * The game port can manage 4 buttons and 4 variable resistors (usually 2
