@@ -1,4 +1,4 @@
-/*	$NetBSD: blist.h,v 1.4 2005/04/06 11:36:37 yamt Exp $	*/
+/*	$NetBSD: blist.h,v 1.5 2005/04/06 13:09:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -57,26 +57,29 @@
 #ifndef _SYS_BLIST_H_
 #define _SYS_BLIST_H_
 
+typedef uint32_t blist_bitmap_t;
+typedef uint32_t blist_blkno_t;
+
 /*
  * note: currently use BLIST_NONE as an absolute value rather then 
  * a flag bit.
  */
 
-#define BLIST_NONE	((uint64_t)-1)
+#define BLIST_NONE	((blist_blkno_t)-1)
 
 typedef struct blist *blist_t;
 
-#define BLIST_BMAP_RADIX	(sizeof(uint64_t)*8)
-
+#define BLIST_BMAP_RADIX	(sizeof(blist_bitmap_t)*8)
 #define BLIST_MAX_ALLOC		BLIST_BMAP_RADIX
 
-extern blist_t blist_create(uint64_t blocks);
+extern blist_t blist_create(blist_blkno_t blocks);
 extern void blist_destroy(blist_t blist);
-extern uint64_t blist_alloc(blist_t blist, uint64_t count);
-extern void blist_free(blist_t blist, uint64_t blkno, uint64_t count);
-extern int blist_fill(blist_t bl, uint64_t blkno, uint64_t count);
+extern blist_blkno_t blist_alloc(blist_t blist, blist_blkno_t count);
+extern void blist_free(blist_t blist, blist_blkno_t blkno, blist_blkno_t count);
+extern blist_blkno_t blist_fill(blist_t bl, blist_blkno_t blkno,
+    blist_blkno_t count);
 extern void blist_print(blist_t blist);
-extern void blist_resize(blist_t *pblist, uint64_t count, int freenew);
+extern void blist_resize(blist_t *pblist, blist_blkno_t count, int freenew);
 
 #endif	/* _SYS_BLIST_H_ */
 
