@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.67 2000/06/29 06:29:14 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.68 2000/09/21 22:38:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.67 2000/06/29 06:29:14 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.68 2000/09/21 22:38:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,6 +597,8 @@ dosum()
 	    uvmexp.pga_zerohit);
 	(void)printf("%9u pagealloc zero wanted and not avail\n",
 	    uvmexp.pga_zeromiss);
+	(void)printf("%9u aborts of idle page zeroing\n",
+	    uvmexp.zeroaborts);
 
 	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
 	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);
