@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.5 1997/09/15 05:35:37 lukem Exp $
+.\"	$NetBSD: mount_null.8,v 1.6 1997/09/16 12:31:01 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,14 +34,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mount_null.8	8.4 (Berkeley) 4/19/94
+.\"     @(#)mount_null.8	8.6 (Berkeley) 5/1/95
 .\"
-.Dd April 19, 1994
+.\"
+.Dd May 1, 1995
 .Dt MOUNT_NULL 8
 .Os BSD 4.4
 .Sh NAME
 .Nm mount_null
-.Nd demonstrate the use of a null file system layer
+.Nd mount a loopback filesystem sub-tree;
+demonstrate the use of a null file system layer
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar options
@@ -53,7 +55,23 @@ The
 command creates a
 null layer, duplicating a sub-tree of the file system
 name space under another part of the global file system namespace.
-It is implemented using a stackable layers technique, and its
+This allows existing files and directories to be accessed
+using a different pathname.
+.Pp
+The primary differences between a virtual copy of the filesystem
+and a symbolic link are that
+.Xr getcwd 3
+functions correctly in the virtual copy, and that other filesystems
+may be mounted on the virtual copy without affecting the original.
+A different device number for the virtual copy is returned by
+.Xr stat 2 ,
+but in other respects it is indistinguishable from the original.
+.Pp
+The
+.Nm mount_null
+filesystem differs from a traditional
+loopback file system in two respects: it is implemented using
+a stackable layers techniques, and it's 
 .Do
 null-nodes
 .Dc
