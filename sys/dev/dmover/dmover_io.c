@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.11.2.1 2003/07/02 15:26:03 darrenr Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.11.2.2 2003/07/02 21:48:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.1 2003/07/02 15:26:03 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11.2.2 2003/07/02 21:48:14 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -514,7 +514,7 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
  *	Ioctl file op.
  */
 static int
-dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
+dmio_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int error, s;
@@ -574,7 +574,7 @@ dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
  *	Fcntl file op.
  */
 static int
-dmio_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
+dmio_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
 
 	if (cmd == FNONBLOCK || cmd == FASYNC)
@@ -589,7 +589,7 @@ dmio_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
  *	Poll file op.
  */
 static int
-dmio_poll(struct file *fp, int events, struct proc *p)
+dmio_poll(struct file *fp, int events, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int s, revents = 0;
@@ -621,7 +621,7 @@ dmio_poll(struct file *fp, int events, struct proc *p)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
-		selrecord(p, &ds->ds_selq);
+		selrecord(l, &ds->ds_selq);
 		ds->ds_flags |= DMIO_STATE_SEL;
 	}
 
@@ -638,7 +638,7 @@ dmio_poll(struct file *fp, int events, struct proc *p)
  *	Stat file op.
  */
 static int
-dmio_stat(struct file *fp, struct stat *sb, struct proc *p)
+dmio_stat(struct file *fp, struct stat *sb, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
@@ -650,7 +650,7 @@ dmio_stat(struct file *fp, struct stat *sb, struct proc *p)
  *	Close file op.
  */
 static int
-dmio_close(struct file *fp, struct proc *p)
+dmio_close(struct file *fp, struct lwp *l)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -709,11 +709,12 @@ static struct fileops dmio_fileops = {
  *	Device switch open routine.
  */
 int
-dmoverioopen(dev_t dev, int flag, int mode, struct proc *p)
+dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dmio_state *ds;
 	struct file *fp;
 	int error, fd, s;
+	struct proc *p = l->l_proc;
 
 	/* falloc() will use the descriptor for us. */
 	if ((error = falloc(p, &fp, &fd)) != 0)
@@ -734,7 +735,7 @@ dmoverioopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	p->p_dupfd = fd;
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	return (ENXIO);
 }
