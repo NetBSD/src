@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.41 1998/04/03 07:49:16 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.42 1999/01/30 21:43:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -111,6 +111,12 @@ rip_input(m, va_alist)
 	ripsrc.sin_addr = ip->ip_src;
 	ripsrc.sin_port = 0;
 	bzero((caddr_t)ripsrc.sin_zero, sizeof(ripsrc.sin_zero));
+
+	/*
+	 * XXX Compatibility: programs using raw IP expect ip_len
+	 * XXX to have the header length subtracted.
+	 */
+	ip->ip_len -= ip->ip_hl << 2;
 
 	for (inp = rawcbtable.inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
