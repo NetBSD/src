@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.76 1996/10/13 02:32:45 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.77 1996/10/25 22:11:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1527,8 +1527,8 @@ loop:
 			if (!ISSET(tp->t_oflag, OPOST))
 				ce = cc;
 			else {
-				ce = cc - scanc((u_int)cc, cp,
-				   (u_char *)char_type, CCLASSMASK);
+				ce = cc - scanc((u_int)cc, cp, char_type,
+				    CCLASSMASK);
 				/*
 				 * If ce is zero, then we're processing
 				 * a special character through ttyoutput.
