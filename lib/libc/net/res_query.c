@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.21 1998/11/15 17:40:37 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.22 1998/11/24 22:19:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.21 1998/11/15 17:40:37 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.22 1998/11/24 22:19:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -386,9 +386,12 @@ __hostalias(name)
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
+#if 0
+	/* Why do we bother turning off buffering in the stream? */
 	setbuf(fp, NULL);
+#endif
 	buf[sizeof(buf) - 1] = '\0';
-	while (fgets(buf, sizeof(buf), fp)) {
+	while (fgets(buf, sizeof(buf) - 1, fp)) {
 		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1)
 			;
 		if (!*cp1)
@@ -403,10 +406,10 @@ __hostalias(name)
 				;
 			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);
-			fclose(fp);
+			(void)fclose(fp);
 			return (abuf);
 		}
 	}
-	fclose(fp);
+	(void)fclose(fp);
 	return (NULL);
 }
