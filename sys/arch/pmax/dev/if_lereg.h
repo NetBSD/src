@@ -1,3 +1,5 @@
+/*	$NetBSD: if_lereg.h,v 1.4 1994/10/26 21:09:08 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_lereg.h	8.1 (Berkeley) 6/10/93
- *      $Id: if_lereg.h,v 1.3 1994/05/27 08:58:58 glass Exp $
+ *	@(#)if_lereg.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	LEMTU		1518

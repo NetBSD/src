@@ -1,3 +1,5 @@
+/*	$NetBSD: pmax_trap.c,v 1.8 1994/10/26 21:10:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
- *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: pmax_trap.c,v 1.7 1994/10/20 05:34:11 cgd Exp $
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
 #include <sys/param.h>

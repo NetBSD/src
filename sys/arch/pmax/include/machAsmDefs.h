@@ -1,3 +1,5 @@
+/*	$NetBSD: machAsmDefs.h,v 1.4 1994/10/26 21:09:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)machAsmDefs.h	8.1 (Berkeley) 6/10/93
- *      $Id: machAsmDefs.h,v 1.3 1994/05/27 09:01:19 glass Exp $
+ *	@(#)machAsmDefs.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
@@ -52,7 +53,6 @@
  *
  * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machAsmDefs.h,
  *	v 1.2 89/08/15 18:28:24 rab Exp  SPRITE (DECWRL)
- * $Id: machAsmDefs.h,v 1.3 1994/05/27 09:01:19 glass Exp $
  */
 
 #ifndef _MACHASMDEFS

@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.h,v 1.8 1994/10/26 21:09:34 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
- *      $Id: cpu.h,v 1.7 1994/06/02 06:15:03 glass Exp $
+ *	@(#)cpu.h	8.4 (Berkeley) 1/4/94
  */
 
 #ifndef _CPU_H_

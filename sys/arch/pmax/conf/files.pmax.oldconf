@@ -1,4 +1,4 @@
-# $Id: files.pmax.oldconf,v 1.6 1994/06/02 06:14:56 glass Exp $
+#	$NetBSD: files.pmax.oldconf,v 1.7 1994/10/26 21:08:47 cgd Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard

@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.h,v 1.5 1994/10/26 21:09:50 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmap.h,v 1.4 1994/05/27 09:01:41 glass Exp $
+ *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef	_PMAP_MACHINE_

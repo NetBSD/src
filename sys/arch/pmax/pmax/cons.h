@@ -1,3 +1,5 @@
+/*	$NetBSD: cons.h,v 1.4 1994/10/26 21:10:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cons.h	8.1 (Berkeley) 6/10/93
- *      $Id: cons.h,v 1.3 1994/05/27 09:03:07 glass Exp $
+ *	@(#)cons.h	8.1 (Berkeley) 6/10/93
  */
 
 struct consdev {

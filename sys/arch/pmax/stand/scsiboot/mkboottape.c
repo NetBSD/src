@@ -1,3 +1,5 @@
+/*	$NetBSD: mkboottape.c,v 1.5 1994/10/26 21:10:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mkboottape.c	8.1 (Berkeley) 6/10/93
- *      $Id: mkboottape.c,v 1.4 1994/09/17 00:24:06 mycroft Exp $
+ *	@(#)mkboottape.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

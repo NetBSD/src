@@ -1,3 +1,5 @@
+/*	$NetBSD: endian.h,v 1.4 1994/10/26 21:09:38 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)endian.h	8.1 (Berkeley) 6/11/93
- *      $Id: endian.h,v 1.3 1994/05/27 09:00:49 glass Exp $
+ *	@(#)endian.h	8.1 (Berkeley) 6/11/93
  */
 
 #ifndef _ENDIAN_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: sii.c,v 1.4 1994/10/26 21:09:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sii.c	8.2 (Berkeley) 11/30/93
- *      $Id: sii.c,v 1.3 1994/05/27 08:59:32 glass Exp $
+ *	@(#)sii.c	8.2 (Berkeley) 11/30/93
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devSII.c,
  *	v 9.2 89/09/14 13:37:41 jhh Exp $ SPRITE (DECWRL)";

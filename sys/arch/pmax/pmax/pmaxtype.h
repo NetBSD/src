@@ -1,3 +1,5 @@
+/*	$NetBSD: pmaxtype.h,v 1.5 1994/10/26 21:10:39 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmaxtype.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmaxtype.h,v 1.4 1994/06/02 21:27:50 glass Exp $
+ *	@(#)pmaxtype.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

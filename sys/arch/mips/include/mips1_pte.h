@@ -1,3 +1,5 @@
+/*	$NetBSD: mips1_pte.h,v 1.4 1994/10/26 21:09:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: pte.h 1.11 89/09/03
  *
- *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
- *      $Id: mips1_pte.h,v 1.3 1994/05/27 09:01:59 glass Exp $
+ *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

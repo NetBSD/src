@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.4 1994/10/26 21:10:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
- *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.3 1994/05/27 09:02:56 glass Exp $
+ *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: start.s,v 1.4 1994/10/26 21:10:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)start.s	8.2 (Berkeley) 1/21/94
- *      $Id: start.s,v 1.3 1994/05/27 09:05:33 glass Exp $
+ *	@(#)start.s	8.2 (Berkeley) 1/21/94
  */
 
 /*

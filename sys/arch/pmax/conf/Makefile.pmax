@@ -1,5 +1,6 @@
-#	from: @(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
-#       $Id: Makefile.pmax,v 1.7 1994/06/15 05:18:31 glass Exp $
+#	$NetBSD: Makefile.pmax,v 1.8 1994/10/26 21:08:45 cgd Exp $
+
+#	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
 # Makefile for 4.4 BSD
 #

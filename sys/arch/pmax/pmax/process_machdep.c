@@ -1,3 +1,5 @@
+/*	$NetBSD: process_machdep.c,v 1.3 1994/10/26 21:10:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass   
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,8 +39,6 @@
  *
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: process_machdep.c,v 1.2 1994/08/15 16:37:29 cgd Exp $
  */
 
 /*

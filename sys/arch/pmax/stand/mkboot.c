@@ -1,3 +1,5 @@
+/*	$NetBSD: mkboot.c,v 1.4 1994/10/26 21:10:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,18 +35,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mkboot.c	8.1 (Berkeley) 6/10/93
- *      $Id: mkboot.c,v 1.3 1994/05/27 09:05:17 glass Exp $
+ *	@(#)mkboot.c	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef lint
 static char copyright[] =
-"from: @(#) Copyright (c) 1992, 1993\n\
+"@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif not lint
 
 #ifndef lint
-static char sccsid[] = "from: @(#)mkboot.c	8.1 (Berkeley) 6/10/93";
+#ifdef notdef
+static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
+#endif
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.4 1994/10/26 21:10:56 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>

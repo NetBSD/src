@@ -1,3 +1,5 @@
+/*	$NetBSD: locore.s,v 1.5 1994/10/26 21:10:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,8 +50,7 @@
  * from: Header: /sprite/src/kernel/vm/ds3100.md/vmPmaxAsm.s,
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
- *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.s,v 1.4 1994/06/25 07:05:12 glass Exp $
+ *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
 /*

@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
-#	$Id: Makefile,v 1.3 1994/05/27 08:57:32 glass Exp $
+#	$NetBSD: Makefile,v 1.4 1994/10/26 21:08:38 cgd Exp $
+
+#	@(#)Makefile	8.1 (Berkeley) 6/16/93
 
 # Makefile for pmax links, tags file
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: xcfb.c,v 1.4 1994/10/26 21:09:24 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)xcfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: xcfb.c,v 1.3 1994/05/27 08:59:43 glass Exp $
+ *	@(#)xcfb.c	8.1 (Berkeley) 6/10/93
  */
 
 /* 
@@ -77,7 +78,6 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: xcfb.c,v 1.3 1994/05/27 08:59:43 glass Exp $
  */
 
 #include <xcfb.h>

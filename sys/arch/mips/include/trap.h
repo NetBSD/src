@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.h,v 1.4 1994/10/26 21:10:04 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: trap.h 1.1 90/07/09
  *
- *	from: @(#)trap.h	8.1 (Berkeley) 6/10/93
- *      $Id: trap.h,v 1.3 1994/05/27 09:02:30 glass Exp $
+ *	@(#)trap.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

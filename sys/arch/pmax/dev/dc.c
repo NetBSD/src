@@ -1,3 +1,5 @@
+/*	$NetBSD: dc.c,v 1.8 1994/10/26 21:08:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
- *      $Id: dc.c,v 1.7 1994/06/15 05:18:38 glass Exp $
+ *	@(#)dc.c	8.2 (Berkeley) 11/30/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: types.h,v 1.7 1994/10/26 21:10:07 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)types.h	8.3 (Berkeley) 1/5/94
- *      $Id: types.h,v 1.6 1994/10/20 05:34:04 cgd Exp $
+ *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
 #ifndef	_MACHTYPES_H_

@@ -1,8 +1,8 @@
+#	$NetBSD: DISKLESS,v 1.2 1994/10/26 21:08:42 cgd Exp $
 #
 # Diskless DECstation (3100 or 5000/xxx)
 #
-#	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: DISKLESS,v 1.1 1994/07/24 23:04:32 glass Exp $
+#	@(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
 #
 machine		pmax
 
