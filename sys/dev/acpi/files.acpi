@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.11 2002/12/28 19:31:35 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.12 2002/12/31 05:26:57 explorer Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -25,12 +25,12 @@ attach	acpibut at acpi
 file	dev/acpi/acpi_button.c		acpibut
 
 # ACPI AC Adapter
-device	acpiacad
+device	acpiacad: sysmon_envsys
 attach	acpiacad at acpi
 file	dev/acpi/acpi_acad.c		acpiacad
 
 # ACPI Control Method Battery
-device	acpibat
+device	acpibat: sysmon_envsys
 attach	acpibat at acpi
 file	dev/acpi/acpi_bat.c		acpibat
 
