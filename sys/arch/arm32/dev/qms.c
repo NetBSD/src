@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.10 1996/10/15 21:06:53 mark Exp $ */
+/* $NetBSD: qms.c,v 1.11 1996/10/29 23:25:29 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -74,7 +74,7 @@ struct quadmouse_softc {
 #define QMOUSE_OPEN 0x01
 #define QMOUSE_ASLEEP 0x02
 	int sc_state;
-	int mode;
+	int sc_mode;
 	int boundx, boundy, bounda, boundb;	/* Bounding box.  x,y is bottom left */
 	int origx, origy;
 	int xmult, ymult;	/* Multipliers */
@@ -206,7 +206,7 @@ quadmouseopen(dev, flag, mode, p)
 	if (clalloc(&sc->sc_buffer, QMOUSE_BSIZE, 0) == -1)
 		return(ENOMEM);
 
-	sc->mode = MOUSEMODE_ABS;
+	sc->sc_mode = MOUSEMODE_ABS;
 
 	sc->sc_state |= QMOUSE_OPEN;
 
@@ -366,7 +366,7 @@ quadmouseioctl(dev, cmd, data, flag, p)
 #ifdef MOUSE_IOC_ACK
 		s = spltty();
 #endif
-		sc->mode = *(u_int *)data;
+		sc->sc_mode = *(int *)data;
 
 		buffer.status = IOC_ACK;
 		buffer.x = sc->origx;
@@ -448,7 +448,7 @@ quadmouseintr(sc)
         if (x != sc->lastx || y != sc->lasty || b != sc->lastb) {
 		/* Mouse state changed */
 		buffer.status = b | ( b ^ sc->lastb) << 3 | (((x==sc->lastx) && (y==sc->lasty))?0:MOVEMENT);
-		if((sc->mode & MOUSEMODE_REL) == MOUSEMODE_REL) {
+		if(sc->sc_mode == MOUSEMODE_REL) {
 			sc->origx = sc->origy = 0;
 			WriteWord(IOMD_MOUSEX, sc->origx);
 			WriteWord(IOMD_MOUSEY, sc->origy);
