@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: intro.4,v 1.1 1994/09/19 17:40:52 chopps Exp $
+.\"	$Id: intro.4,v 1.2 1995/07/04 17:18:14 chopps Exp $
 .\"
 .Dd August 30, 1994
 .Dt INTRO 4 amiga
@@ -107,7 +107,7 @@ man page first appeared in
 The devices listed below are supported in this incarnation of
 the system.  Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
-.Bl -tag -width "zthreebus" -compact -offset indent
+.Bl -tag -width "zbus" -compact -offset indent
 .It Em ahsc
 A3000 low level SCSI controller interface
 .It Em atzsc
@@ -150,8 +150,6 @@ Warp Engine low level SCSI controller interface
 Wordsync II low level SCSI controller interface
 .It Em zssc
 Zeus low level SCSI controller interface
-.It Em ztwobus
-Amiga Zorro II bus
-.It Em zthreebus
-Amiga Zorro III bus
+.It Em zbus
+Amiga Zorro II/III bus
 .El
