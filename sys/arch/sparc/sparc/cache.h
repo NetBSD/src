@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.14 1997/03/24 19:56:58 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.15 1997/05/06 21:00:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -55,8 +55,7 @@
  *
  * VAC_NONE is not actually used now, but if someone builds a physical
  * cache Sun-4 (or, more likely, a virtual index/physical tag cache)
- * everything will work (after pulling out the #ifdef notdef's: grep
- * for VAC_NONE to find them).
+ * everything will work.
  */
 enum vactype { VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
@@ -176,7 +175,7 @@ void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
 void	ms1_cache_flush __P((caddr_t, u_int));
 void	viking_cache_flush __P((caddr_t, u_int));
 void	viking_pcache_flush_line __P((int, int));
-void	cypress_pcache_flush_line __P((int, int));
+void	srmmu_pcache_flush_line __P((int, int));
 
 extern void sparc_noop __P((void));
 
@@ -210,7 +209,8 @@ struct cacheinfo {
 	int	c_linesize;		/* line size, in bytes */
 	int	c_l2linesize;		/* log2(linesize) */
 	int	c_nlines;		/* number of cache lines */
-	int	c_physical;		/* true => cache is physical */
+	int	c_physical;		/* true => cache has physical
+						   address tags */
 	int 	c_associativity;	/* # of "buckets" in cache line */
 	int 	c_split;		/* true => cache is split */
 
