@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2002/06/30 12:07:35 lukem Exp $
+.\"	$NetBSD: prep,v 1.6 2005/01/15 17:39:45 jmc Exp $
 .
 .Ss2 Get to the ROM Monitor prompt
 .
@@ -64,7 +64,7 @@ Here is an example configuration session:
 .No "allow any ROM command even if password protected:  no?" Ic "no"
 .No "allow boot from any device even if password protected:  no?" Ic "no"
 .No "allow optical drive #0 eject even if password protected:  yes?" Ic "yes"
-.No "enable parity cehcking if parity memory is present:  no?" Ic "no"
+.No "enable parity checking if parity memory is present:  no?" Ic "no"
 .disp)
 .Pp
 Now, whenever you reset or power on your system, it will attempt to netboot.
