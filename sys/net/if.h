@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.75 2002/03/17 10:21:42 simonb Exp $	*/
+/*	$NetBSD: if.h,v 1.76 2002/05/23 21:34:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -541,6 +541,11 @@ struct ifaliasreq {
 	struct	sockaddr ifra_dstaddr;
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
+};
+
+struct ifdatareq {
+	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	if_data ifdr_data;
 };
 
 struct ifmediareq {
