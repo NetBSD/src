@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.38 1998/02/19 02:17:07 cgd Exp $
+#  $NetBSD: Makefile,v 1.39 1998/02/19 06:58:07 cgd Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -45,9 +45,6 @@
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S
-# XXX LINT SIGFPEs in e_exp.c's strtod().  FP underflow/denorm software
-# handling is broken (doesn't exist!) on the Alpha port.
-NOLINT=		nolint (XXX lint bugs and needs stubs)
 .elif (${MACHINE_ARCH} == "i386")
 # Uncomment the following lines if you have a i387 (or i486 or Pentium)
 #.PATH:	${.CURDIR}/arch/i387
@@ -130,6 +127,8 @@ SRCS=	${COMMON_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
 .endfor
 
+
+NOLINT=		nolint (XXX lint bugs on some archs and needs stubs)
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
