@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.43 1997/10/19 02:00:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -101,7 +101,7 @@ sys_acct(p, v, retval)
 	register_t *retval;
 {
 	struct sys_acct_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	struct nameidata nd;
 	int error;

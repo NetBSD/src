@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.107 1997/10/17 21:40:00 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.108 1997/10/19 02:00:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -439,7 +439,7 @@ start_init(p)
 {
 	vm_offset_t addr;
 	struct sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char * const *) argp;
 		syscallarg(char * const *) envp;
 	} */ args;
