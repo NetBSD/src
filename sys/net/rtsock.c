@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.17 1996/02/13 22:00:52 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -367,7 +367,7 @@ rt_setmetrics(which, in, out)
 }
 
 #define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(int32_t) - 1))) : sizeof(int32_t))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static void
