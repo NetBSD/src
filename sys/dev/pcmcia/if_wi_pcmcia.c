@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.29 2002/10/02 16:52:16 thorpej Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.30 2002/11/06 05:45:17 onoe Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.29 2002/10/02 16:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.30 2002/11/06 05:45:17 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,8 +451,19 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
 	if (pp->pp_vendor == PCMCIA_VENDOR_SYMBOL &&
-	    pp->pp_product == PCMCIA_PRODUCT_SYMBOL_LA4100) {
+	    pp->pp_product == PCMCIA_PRODUCT_SYMBOL_LA4100)
 		psc->sc_symbol_cf = 1;
+	/*
+	 * XXX: Sony PEGA-WL100 CF card has a same vendor/product id as
+	 *	Intel PCMCIA card.  It may be incorrect to detect by the
+	 *	initial value of COR register.
+	 */
+	if (pp->pp_vendor == PCMCIA_VENDOR_INTEL &&
+	    pp->pp_product == PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011 &&
+	    CSR_READ_2(sc, WI_COR) == WI_COR_IOMODE)
+		psc->sc_symbol_cf = 1;
+
+	if (psc->sc_symbol_cf) {
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
 		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
