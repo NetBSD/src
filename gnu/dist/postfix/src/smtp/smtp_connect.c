@@ -534,7 +534,7 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
     char   *save;
     char   *dest;
     char   *cp;
-    int     found_myself;
+    int     found_myself = 0;
 
     /*
      * First try to deliver to the indicated destination, then try to deliver
