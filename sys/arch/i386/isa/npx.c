@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.75 2001/04/26 17:56:37 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.76 2001/05/17 16:35:06 lukem Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -99,11 +99,6 @@
 #define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
-#define	read_eflags()		({register u_long ef; \
-				  __asm("pushfl; popl %0" : "=r" (ef)); \
-				  ef;})
-#define	write_eflags(x)		({register u_long ef = (x); \
-				  __asm("pushl %0; popfl" : : "r" (ef));})
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
