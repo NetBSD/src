@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.4 1998/02/03 04:51:29 perry Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.5 1999/01/11 22:40:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,9 +31,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.4 1998/02/03 04:51:29 perry Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.5 1999/01/11 22:40:01 kleink Exp $");
 #endif
 
+#include <errno.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
@@ -42,7 +43,6 @@ __RCSID("$NetBSD: loop-bsd.c,v 1.4 1998/02/03 04:51:29 perry Exp $");
 #endif
 #include <net/bpf.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 
 #include "os.h"
 #include "common.h"
