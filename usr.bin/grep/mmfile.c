@@ -1,3 +1,5 @@
+/*	$NetBSD: mmfile.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -23,8 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mmfile.c,v 1.1.1.1 2004/01/02 14:58:44 cjep Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mmfile.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -47,19 +53,19 @@ mmopen(char *fn, char *mode)
 
 	/* XXX ignore mode for now */
 	mode = mode;
-	
+
 	mmf = grep_malloc(sizeof *mmf);	
 	if ((mmf->fd = open(fn, O_RDONLY)) == -1)
 		goto ouch1;
 	if (fstat(mmf->fd, &st) == -1)
 		goto ouch2;
-	if (st.st_size > SIZE_T_MAX) /* too big to mmap */		
+	if (st.st_size > SIZE_T_MAX)		/* too big to mmap */		
 		goto ouch2;
-	if ((st.st_mode & S_IFREG) == 0) /* only mmap regular files */
+	if ((st.st_mode & S_IFREG) == 0)	/* only mmap regular files */
 		goto ouch2;
 	mmf->len = (size_t)st.st_size;
 	mmf->base = mmap(NULL, mmf->len, PROT_READ, MAP_PRIVATE, mmf->fd, 0);
-	if (mmf->base == NULL)
+	if (mmf->base == MAP_FAILED)
 		goto ouch2;
 	mmf->ptr = mmf->base;
 	mmf->end = mmf->base + mmf->len;
@@ -89,21 +95,15 @@ mmfgetln(mmf_t *mmf, size_t *l)
 	if (mmf->ptr >= mmf->end)
 		return NULL;
 	for (p = mmf->ptr; mmf->ptr < mmf->end; ++mmf->ptr)
-		if (*mmf->ptr == '\n')
+		if (*mmf->ptr == line_endchar)
 			break;
 	*l = mmf->ptr - p;
 	++mmf->ptr;
 	return p;
 }
 
-long
-mmtell(mmf_t *mmf)
-{
-    return mmf->ptr - mmf->base;
-}
-
 void
 mmrewind(mmf_t *mmf)
 {
-    mmf->ptr = mmf->base;
+	mmf->ptr = mmf->base;
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: queue.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -23,8 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: queue.c,v 1.1.1.1 2004/01/02 14:58:43 cjep Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: queue.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
+#endif /* not lint */
 
 /*
  * A really poor man's queue.  It does only what it has to and gets out of
@@ -39,14 +45,14 @@
 #include "grep.h"
 
 typedef struct queue {
-	struct queue   *next;
-	str_t		data;
+	struct queue *next;
+	str_t data;
 } queue_t;
 
-static queue_t	*q_head, *q_tail;
-static int	 count;
+static queue_t *q_head, *q_tail;
+static int count;
 
-static queue_t	*dequeue(void);
+static queue_t *dequeue(void);
 
 void
 initqueue(void)
@@ -63,7 +69,7 @@ free_item(queue_t *item)
 void
 enqueue(str_t *x)
 {
-	queue_t	       *item;
+	queue_t *item;
 
 	item = grep_malloc(sizeof *item + x->len);
 	item->data.len = x->len;
@@ -88,7 +94,7 @@ enqueue(str_t *x)
 static queue_t *
 dequeue(void)
 {
-	queue_t	       *item;
+	queue_t *item;
 
 	if (q_head == NULL)
 		return NULL;
@@ -107,7 +113,7 @@ printqueue(void)
 	queue_t *item;
 
 	while ((item = dequeue()) != NULL) {
-		printline(&item->data, '-');
+		printline(&item->data, fn_dashchar, (regmatch_t *)NULL, 0);
 		free_item(item);
 	}
 }
@@ -119,10 +125,4 @@ clearqueue(void)
 
 	while ((item = dequeue()) != NULL)
 		free_item(item);
-}
-
-int
-countqueue(void)
-{
-	return count;
 }
