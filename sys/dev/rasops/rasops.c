@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.21 1999/11/05 10:16:11 ad Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.22 1999/11/06 01:01:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.21 1999/11/05 10:16:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.22 1999/11/06 01:01:20 enami Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -770,7 +770,7 @@ rasops_do_cursor(ri)
 			rp += ri->ri_stride;
 	
 			if (slop1 & 1)
-				*dp++ ^= ^0;
+				*dp++ ^= ~0;
 
 			if (slop1 & 2) {
 				*(int16_t *)dp ^= ~0;
