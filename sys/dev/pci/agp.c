@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.2 2001/09/11 06:51:47 fvdl Exp $	*/
+/*	$NetBSD: agp.c,v 1.3 2001/09/13 16:14:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -358,8 +358,8 @@ agp_generic_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	if (mem == NULL)
 		return NULL;
 
-	if (bus_dmamap_create(sc->as_dmat, size, 1, size, 0, BUS_DMA_NOWAIT,
-	    &mem->am_dmamap) != 0) {
+	if (bus_dmamap_create(sc->as_dmat, size, size / PAGE_SIZE + 1,
+			      size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
 		free(mem, M_AGP);
 		return NULL;
 	}
@@ -434,7 +434,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 	for (contigpages = 8; contigpages > 0; contigpages >>= 1) {
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
-		segs = malloc(sizeof *segs, M_AGP, M_WAITOK);
+		segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
 		if (segs == NULL)
 			return NULL;
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
@@ -478,8 +478,9 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
 		     j += AGP_PAGE_SIZE) {
 			pa = seg->ds_addr + j;
-			AGP_DPF("binding offset %#x to pa %#x\n",
-				offset + done + j, pa);
+			AGP_DPF("binding offset %#lx to pa %#lx\n",
+				(unsigned long)(offset + done + j),
+				(unsigned long)pa);
 			error = AGP_BIND_PAGE(sc, offset + done + j, pa);
 			if (error) {
 				/*
@@ -610,8 +611,11 @@ agp_info_user(struct agp_softc *sc, agp_info *info)
 {
 	memset(info, 0, sizeof *info);
 	info->bridge_id = sc->as_id;
-	info->agp_mode = pci_conf_read(sc->as_pc, sc->as_tag,
-	     sc->as_capoff + AGP_STATUS);
+	if (sc->as_capoff != 0)
+		info->agp_mode = pci_conf_read(sc->as_pc, sc->as_tag,
+					       sc->as_capoff + AGP_STATUS);
+	else
+		info->agp_mode = 0; /* i810 doesn't have real AGP */
 	info->aper_base = sc->as_apaddr;
 	info->aper_size = AGP_GET_APERTURE(sc) >> 20;
 	info->pg_total = info->pg_system = sc->as_maxmem >> AGP_PAGE_SHIFT;
@@ -870,7 +874,7 @@ agp_alloc_dmamem(bus_dma_tag_t tag, size_t size, int flags,
 		goto out;
 	level++;
 
-	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
+	if ((error = bus_dmamap_create(tag, size, *rseg, size, 0,
 			BUS_DMA_NOWAIT, mapp)) != 0)
 		goto out;
 	level++;
