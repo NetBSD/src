@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.3 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.4 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -2998,7 +2998,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		this queue which preserves the ordering of requests.
 		A simple mechanism ensures that the iods are shared
 		out fairly between active mount points.
-		Reviewed/integrated/approved by fvdl@netbsd.org.
+		Reviewed/integrated/approved by fvdl@NetBSD.org.
 		[thorpej 19961202]
 	nfs: Make NFSSERVER w/o NFSCLIENT work.	 Fixes PR1308
 		and PR1780 (Kenneth Stailey and Chris Demetriou,
@@ -3577,7 +3577,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		pmaxes.	 Partly from Michael L. Hitch [jonathan 19970628]
 	libsa: In exec(), fix ZMAGIC loading, loading of stripped kernels,
 		and allow machine-dependent code to adjust the start
-		address.  From Matthias Pfaller <matthias@netbsd.org>.
+		address.  From Matthias Pfaller <matthias@NetBSD.org>.
 		[thorpej 19970628]
 	mac68k: use new bus error and address error handlers from the amiga
 		amiga port, slightly optimized and with a generalized method
@@ -3631,7 +3631,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		Among other things, this provides complete protection from
 		"SYN flood attacks" without the need to drop half-open
 		connections.  MANY MANY thanks to BSDI for releasing
-		the original code, and to Ted Lemon <mellon@netbsd.org>
+		the original code, and to Ted Lemon <mellon@NetBSD.org>
 		for doing the initial integration work!	 [thorpej 19970723]
 	alpha: Pass a bootinfo structure from the boot program to the
 		kernel, containing booted kernel name, flags, and
@@ -3879,7 +3879,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		per discussion in the IETF tcpimpl working group.
 		[thorpej 19971211]
 	netinet: define INADDR_ALLRTRS_GROUP and INADDR_MAX_LOCAL_GROUP
-		multicast groups (noted by chopps@netbsd.org)
+		multicast groups (noted by chopps@NetBSD.org)
 		[thorpej 19971216]
 	netinet: Pull in a few changes from 4.4BSD-Lite2 (effectively
 		bringing us in sync in sys/netinet), including some
@@ -6437,7 +6437,7 @@ Changes from NetBSD 1.5 to NetBSD 1.6:
 		commandline option (-P) to pack locators.  [gmcgarry 20010701]
 	userconf(4): In-kernel device configuration manager.  Written by
 		Mats O Jansson <moj@stacken.kth.se> and reworked by
-		Jun-ichiro itojun Hagino <itojun@netbsd.org>.
+		Jun-ichiro itojun Hagino <itojun@NetBSD.org>.
 		[gmcgarry 20010701]
 	cdplay(1): Add support for skipping to the previous and next tracks.
 		[gmcgarry 20010701]

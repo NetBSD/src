@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.4 2003/05/16 23:43:29 scw Exp $
+# $NetBSD: HACKS,v 1.5 2003/07/26 17:24:48 salo Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -327,7 +327,7 @@ descr
 	Swap red/blue and yellow/cyan colours for COLOR_OTHER.
 	Fix is to enhance libtermcap to understand terminfo-style % sequences.
 	See also:
-	    http://mail-index.netbsd.org/tech-userlevel/2003/04/06/0000.html
+	    http://mail-index.NetBSD.org/tech-userlevel/2003/04/06/0000.html
 kcah
 
 hack	SuperH SH5 Toolchain Bugs
