@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.13 1996/11/11 21:08:12 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.14 1996/11/25 03:55:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,20 +89,27 @@ ciamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-cia_init(ccp)
+cia_init(ccp, mallocsafe)
 	struct cia_config *ccp;
+	int mallocsafe;
 {
 
 	/*
 	 * Can't set up SGMAP data here; can be called before malloc().
+	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
 	 */
-
-        ccp->cc_iot = cia_bus_io_init(ccp);
-        ccp->cc_memt = cia_bus_mem_init(ccp);
-        cia_pci_init(&ccp->cc_pc, ccp);
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
+
+	if (!ccp->cc_initted) {
+		/* don't do these twice since they set up extents */
+		ccp->cc_iot = cia_bus_io_init(ccp);
+		ccp->cc_memt = cia_bus_mem_init(ccp);
+	}
+	ccp->cc_mallocsafe = mallocsafe;
+
+	cia_pci_init(&ccp->cc_pc, ccp);
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
@@ -110,6 +117,8 @@ cia_init(ccp)
 		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
+
+	ccp->cc_initted = 1;
 }
 
 void
@@ -129,7 +138,7 @@ ciaattach(parent, self, aux)
 	 * (maybe), but doesn't hurt to do twice.
 	 */
 	ccp = sc->sc_ccp = &cia_configuration;
-	cia_init(ccp);
+	cia_init(ccp, 1);
 
 	/* XXX print chipset information */
 	printf("\n");
