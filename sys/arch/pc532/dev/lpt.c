@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.16 1996/11/24 13:32:48 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.17 1996/12/23 08:37:02 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -172,7 +172,7 @@ struct lpt_softc {
 /* XXX does not belong here */
 cdev_decl(lpt);
 
-static int lptmatch __P((struct device *, void *, void *aux));
+static int lptmatch __P((struct device *, struct cfdata *, void *aux));
 static void lptattach __P((struct device *, struct device *, void *));
 static void lptintr __P((void *));
 static int notready __P((u_char, struct lpt_softc *));
@@ -200,7 +200,8 @@ struct cfdriver lpt_cd = {
 static int
 lptmatch(parent, cf, aux)
 	struct device *parent;
-	void *cf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	volatile struct i8255 *i8255 =
 		(volatile struct i8255 *)((struct cfdata *)cf)->cf_loc[0];
@@ -257,7 +258,7 @@ lptattach(parent, self, aux)
 	plipattach(sc, self->dv_unit);
 #endif
 	intr_establish(sc->sc_irq, lptintr, sc, sc->sc_dev.dv_xname,
-			IPL_NONE, FALLING_EDGE);
+			IPL_ZERO, IPL_ZERO, FALLING_EDGE);
 	printf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
 }
 
@@ -517,7 +518,7 @@ plipattach(sc, unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif                 
 	sc->sc_ifsoftint = intr_establish(SOFTINT, plipsoftint, sc,
-					sc->sc_dev.dv_xname, IPL_NET, 0);
+				sc->sc_dev.dv_xname, IPL_NET, IPL_ZERO, 0);
 }
 
 /*
