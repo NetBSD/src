@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.1 2003/09/02 05:47:24 mbw Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.2 2003/09/02 07:47:48 mbw Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -717,8 +717,8 @@ and MS-DOS FAT).  Unfortunately, Open Firmware is
 able to directly boot from the
 .Nx
 file system (FFS) or Apple's 
-.if \*[OF_VERSION_3] new BSD-based filesystem (UFS),
-.if \*[OF_VERSION_12] filesystems (HFS, HFS+, or UFS),
+.if \*[OF_VERSION_3] new BSD-based file system (UFS),
+.if \*[OF_VERSION_12] file systems (HFS, HFS+, or UFS),
 so we must put the bootloader in a location that Open Firmware is capable 
 of understanding.
 .Pp
@@ -1037,15 +1037,15 @@ for UFS partitions.
 .Pp
 After you've written the partition map with
 .Ic pdisk ,
-you will need to create the filesystems.  Use
+you will need to create the file systems.  Use
 .Xr newfs 8
 and 
 .Xr mount 8
 for 
 .Nx
-filesystems, and 
+file systems, and 
 .Ic hfstools
-to create and mount HFS filesystems.
+to create and mount HFS file systems.
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
 .Pp
 Make the following partitions:
