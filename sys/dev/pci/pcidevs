@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1 1995/06/18 01:07:06 cgd Exp $
+$NetBSD: pcidevs,v 1.2 1995/06/20 04:50:43 cgd Exp $
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -42,8 +42,10 @@ vendor CIRRUS		0x1013		Cirrus Logic
 vendor IBM		0x1014		IBM
 vendor NCR		0x101A		NCR
 vendor AMD		0x1022		AMD
+vendor ACER		0x1025		Acer
 vendor COMPAQ		0x1032		Compaq
 vendor NEC		0x1033		NEC
+vendor SIS		0x1039		SIS
 vendor HP		0x103C		Hewlett-Packard
 vendor KPC		0x1040		Kubota Pacific Corp.
 vendor TI		0x104C		Texas Instruments

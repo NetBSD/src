@@ -47,8 +47,10 @@
 #define	PCI_VENDOR_IBM	0x1014		/* IBM */
 #define	PCI_VENDOR_NCR	0x101A		/* NCR */
 #define	PCI_VENDOR_AMD	0x1022		/* AMD */
+#define	PCI_VENDOR_ACER	0x1025		/* Acer */
 #define	PCI_VENDOR_COMPAQ	0x1032		/* Compaq */
 #define	PCI_VENDOR_NEC	0x1033		/* NEC */
+#define	PCI_VENDOR_SIS	0x1039		/* SIS */
 #define	PCI_VENDOR_HP	0x103C		/* Hewlett-Packard */
 #define	PCI_VENDOR_KPC	0x1040		/* Kubota Pacific Corp. */
 #define	PCI_VENDOR_TI	0x104C		/* Texas Instruments */

@@ -236,6 +236,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ACER, 0,
+	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
+	    "Acer",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_COMPAQ, 0,
 	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
 	    "Compaq",
@@ -245,6 +251,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NEC, 0,
 	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
 	    "NEC",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SIS, 0,
+	    PCI_KNOWNDEV_UNSUPP | PCI_KNOWNDEV_NOPROD,
+	    "SIS",
 	    NULL,
 	},
 	{
