@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.17 2001/05/06 15:09:57 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.18 2001/05/15 20:51:30 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.16 2001/05/03 21:00:46 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.17 2001/05/06 15:09:33 he Exp 
  */
 
 /*
@@ -703,6 +703,10 @@
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* AMD756 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* AMD756 USB Host Controller */
+#define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 PCI-to-ISA Bridge */
+#define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
+#define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
+#define	PCI_PRODUCT_AMD_PBC766_USB	0x7414		/* AMD766 USB Host Controller */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
