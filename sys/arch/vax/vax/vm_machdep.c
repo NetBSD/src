@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.16 1995/10/02 12:33:32 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.17 1995/11/10 19:07:16 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -337,7 +337,7 @@ printf("Warning: reno_omagic\n");
 }
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
