@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.4 1999/12/30 20:56:45 is Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.5 2000/01/23 21:06:13 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ ne_zbus_attach(parent, self, aux)
 	if (zap->manid == 4626)
 		 zsc->sc_bst.base += 0x8000;
 
-	zsc->sc_bst.absm = &amiga_bus_stride_2word;
+	zsc->sc_bst.absm = &amiga_bus_stride_2;
 
 	printf("\n");
 
