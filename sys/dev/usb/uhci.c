@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.16 1998/12/28 20:14:00 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.17 1998/12/28 21:05:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -787,7 +787,11 @@ uhci_ii_done(ii, timo)
 	DPRINTFN(10, ("uhci_check_intr: len=%d, status=0x%x\n", len, status));
 	if (status != 0) {
 		DPRINTFN(-1+(status==UHCI_TD_STALLED),
-			 ("uhci_ii_done: error, status 0x%b\n", (long)status, 
+			 ("uhci_ii_done: error, addr=%d, endpt=0x%02x, "
+			  "status 0x%b\n",
+			  reqh->pipe->device->address,
+			  reqh->pipe->endpoint->edesc->bEndpointAddress,
+			  (long)status, 
 			  "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
 			  "STALLED\30ACTIVE"));
 		if (status == UHCI_TD_STALLED)
