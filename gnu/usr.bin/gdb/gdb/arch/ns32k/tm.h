@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.3 1995/08/29 08:03:33 phil Exp $
+	$Id: tm.h,v 1.4 1996/09/28 08:41:28 matthias Exp $
 */
 
 /* Override number of expected traps from sysv. */
@@ -45,4 +45,14 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     : read_memory_integer ((FRAME)->frame + 4, 4)) \
    )
 
+#undef FRAME_NUM_ARGS
+#define FRAME_NUM_ARGS(numargs, fi) numargs = frame_num_args(fi)
 
+#undef FRAME_CHAIN
+#define FRAME_CHAIN(thisframe)  \
+  (read_memory_integer ((thisframe)->frame, 4) > (thisframe)->frame ? \
+   read_memory_integer ((thisframe)->frame, 4) : 0)
+
+#define FRAME_CHAIN_VALID(chain, thisframe)	\
+  ((chain) != 0					\
+   && !inside_main_func ((thisframe) -> pc))
