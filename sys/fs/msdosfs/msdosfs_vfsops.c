@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.18 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.19 2004/06/27 06:55:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.18 2004/05/25 14:54:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.19 2004/06/27 06:55:12 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -263,6 +263,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		args.flags = pmp->pm_flags;
 		args.version = MSDOSFSMNT_VERSION;
 		args.dirmask = pmp->pm_dirmask;
+		args.gmtoff = pmp->pm_gmtoff;
 		vfs_showexport(mp, &args.export, &pmp->pm_export);
 		return copyout(&args, data, sizeof(args));
 	}
