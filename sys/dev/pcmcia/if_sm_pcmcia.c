@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.24 2001/07/01 16:35:37 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.25 2001/09/05 16:40:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ const struct pcmcia_product sm_pcmcia_products[] = {
 	{ PCMCIA_STR_SMC_8020BT,		PCMCIA_VENDOR_SMC,
 	  PCMCIA_PRODUCT_SMC_8020BT,		0, },
 #endif
+	{ PCMCIA_STR_PSION_GOLDCARD,		PCMCIA_VENDOR_PSION,
+	  PCMCIA_PRODUCT_PSION_GOLDCARD,	0, },
 
 	{ NULL }
 };
@@ -295,7 +297,8 @@ sm_pcmcia_lannid_ciscallback(tuple, arg)
 	u_int8_t *myla = arg;
 	int i;
 
-	if (tuple->code == PCMCIA_CISTPL_FUNCE) {
+	if (tuple->code == PCMCIA_CISTPL_FUNCE
+	    || tuple->code == PCMCIA_CISTPL_SPCL) {
 		/* subcode, length */
 		if (tuple->length < 2)
 			return (0);
@@ -319,6 +322,10 @@ sm_pcmcia_enable(sc)
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 	int rv;
 
+	rv = pcmcia_function_enable(psc->sc_pf);
+	if (rv != 0)
+		return (rv);
+
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
 	    sc);
@@ -327,11 +334,7 @@ sm_pcmcia_enable(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-
-	rv = pcmcia_function_enable(psc->sc_pf);
-	if (rv != 0)
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	return (rv);
+	return (0);
 }
 
 void
@@ -340,6 +343,6 @@ sm_pcmcia_disable(sc)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)sc;
 
-	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	pcmcia_function_disable(psc->sc_pf);
 }
