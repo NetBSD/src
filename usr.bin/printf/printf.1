@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
-.\"	$Id: printf.1,v 1.4 1995/02/15 15:32:27 jtc Exp $
+.\"	$Id: printf.1,v 1.5 1995/07/07 23:00:13 jtc Exp $
 .\"
 .Dd November 5, 1993
 .Dt PRINTF 1
@@ -208,7 +208,11 @@ or unsigned hexadecimal (X or x), respectively.
 .It Cm f
 The
 .Ar argument
-is printed in the style `[\-]ddd.ddd' where the number of d's
+is printed in the style 
+.Sm off
+.Pf [\-]ddd Cm \&. No ddd
+.Sm on
+where the number of d's
 after the decimal point is equal to the precision specification for
 the argument.
 If the precision is missing, 6 digits are given; if the precision
@@ -216,9 +220,10 @@ is explicitly 0, no digits and no decimal point are printed.
 .It Cm eE
 The
 .Ar argument
-is printed in the style
-.Cm e
-.`[-]d.ddd Ns \(+-dd\' 
+is printed in the style 
+.Sm off
+.Pf [\-]d Cm \&. No ddd Cm e No \\*(Pmdd
+.Sm on
 where there
 is one digit before the decimal point and the number after is equal to
 the precision specification for the argument; when the precision is
