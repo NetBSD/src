@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.77 2000/02/03 08:26:33 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.78 2000/02/09 13:33:23 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.76 2000/02/03 08:25:55 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.79 2000/02/09 13:32:23 enami Exp 
  */
 
 /*-
@@ -311,6 +311,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Megahertz X-JACK Ethernet Modem"	},
 	},
 	{
+	    PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
+	    PCMCIA_CIS_MELCO_LPC3_TX,
+	    0,
+	    "Melco Corporation",
+	    "Melco LPC3-TX"	},
+	},
+	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
 	    PCMCIA_CIS_USROBOTICS_WORLDPORT144,
 	    0,
@@ -535,6 +542,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Planex FNW-3600-T"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_PLANEX_FNW3700T,
+	    PCMCIA_CIS_PLANEX_FNW3700T,
+	    0,
+	    "Planex Communications Inc",
+	    "Planex FNW-3700-T"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DE650,
 	    PCMCIA_CIS_DLINK_DE650,
 	    0,
@@ -664,7 +678,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MELCO_WLI_PCM,
 	    PCMCIA_CIS_MELCO_WLI_PCM,
 	    0,
-	    "Melco Inc",
+	    "Melco Corporation",
 	    "Melco WLI-PCM"	},
 	},
 	{
@@ -673,6 +687,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "ICOM Inc",
 	    "Icom SL-200"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_XIRCOM_CFE_10,
+	    PCMCIA_CIS_XIRCOM_CFE_10,
+	    0,
+	    "Xircom",
+	    "Xircom CompactCard CFE-10"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
@@ -871,6 +892,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_MELCO, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Melco Corporation",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_CONTEC, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -987,13 +1015,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "EXP Computer Inc",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_MELCO, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Melco Inc",
 	    NULL,
 	},
 	{
