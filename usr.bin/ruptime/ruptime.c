@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.7 1998/04/19 19:52:33 hubertf Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.8 1998/12/19 21:44:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.7 1998/04/19 19:52:33 hubertf Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.8 1998/12/19 21:44:31 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -235,14 +235,14 @@ int
 lcmp(a1, a2)
 	const void *a1, *a2;
 {
-	if (ISDOWN(HS(a1)))
+	if (ISDOWN(HS(a1))) {
 		if (ISDOWN(HS(a2)))
 			return (tcmp(a1, a2));
 		else
 			return (rflg);
-	else if (ISDOWN(HS(a2)))
+	} else if (ISDOWN(HS(a2))) {
 		return (-rflg);
-	else
+	} else
 		return (rflg *
 		   (HS(a2)->hs_wd->wd_loadav[0] - HS(a1)->hs_wd->wd_loadav[0]));
 }
@@ -252,14 +252,14 @@ int
 ucmp(a1, a2)
 	const void *a1, *a2;
 {
-	if (ISDOWN(HS(a1)))
+	if (ISDOWN(HS(a1))) {
 		if (ISDOWN(HS(a2)))
 			return (tcmp(a1, a2));
 		else
 			return (rflg);
-	else if (ISDOWN(HS(a2)))
+	} else if (ISDOWN(HS(a2))) {
 		return (-rflg);
-	else
+	} else
 		return (rflg * (HS(a2)->hs_nusers - HS(a1)->hs_nusers));
 }
 
