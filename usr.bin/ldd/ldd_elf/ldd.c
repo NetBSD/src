@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.5 1999/06/26 11:28:26 hannken Exp $	*/
+/*	$NetBSD: ldd.c,v 1.6 1999/08/01 19:47:07 kleink Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -59,6 +59,7 @@ Obj_Entry *_rtld_objmain;	/* The main program shared object */
 int _rtld_pagesz = 8192;	/* XXX fake variable page size */
 #endif
 
+Search_Path *_rtld_default_paths;
 Search_Path *_rtld_paths;
 
 static void print_needed(Obj_Entry *);
@@ -71,7 +72,7 @@ main(
 #ifdef DEBUG
     debug = 1;
 #endif
-    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+    _rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
 
 
     _rtld_trust = geteuid() == getuid() && getegid() == getgid();

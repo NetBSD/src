@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.4 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: search.c,v 1.5 1999/08/01 19:47:07 kleink Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -174,13 +174,18 @@ _rtld_find_library(name, refobj)
 
 	namelen = strlen(name);
 
+	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
+		if ((pathname = _rtld_search_library_path(name, namelen,
+		    sp->sp_path, sp->sp_pathlen)) != NULL)
+			return (pathname);
+
 	if (refobj != NULL)
 		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
-			if ((pathname = _rtld_search_library_path(name, namelen,
-			    sp->sp_path, sp->sp_pathlen)) != NULL)
+			if ((pathname = _rtld_search_library_path(name,
+			    namelen, sp->sp_path, sp->sp_pathlen)) != NULL)
 				return (pathname);
 
-	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
+	for (sp = _rtld_default_paths; sp != NULL; sp = sp->sp_next)
 		if ((pathname = _rtld_search_library_path(name, namelen,
 		    sp->sp_path, sp->sp_pathlen)) != NULL)
 			return (pathname);

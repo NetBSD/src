@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.21 1999/07/22 00:18:19 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.22 1999/08/01 19:47:07 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -90,6 +90,7 @@ char            _rtld_path[] = _PATH_RTLD;
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 #endif
 
+Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
 /*
  * Global declarations normally provided by crt0.
@@ -199,7 +200,7 @@ _rtld_init(mapbase)
 	_rtld_objself = objself;
 
 	_rtld_objself.path = _rtld_path;
-	_rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
