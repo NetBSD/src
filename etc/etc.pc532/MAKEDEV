@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 1997/02/15 10:28:13 matthias Exp $
+#	$NetBSD: MAKEDEV,v 1.10 1997/03/18 01:43:51 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	se*	SCSI Ethernet
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -72,6 +73,7 @@ all)
 	sh $0 pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
 	sh $0 tun0 tun1 tun2 lkm ipl ccd0 ccd1 ccd2
 	sh $0 ccd3 md0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
+	sh $0 se0 se1 se2 se3
 	;;
 
 floppy)
@@ -206,10 +208,11 @@ st*)
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
-ch*|uk*)
+ch*|uk*|se*)
 	case $i in
 	ch*) name=ch;	unit=${i#ch};	chr=16;;
 	uk*) name=uk;	unit=${i#uk};	chr=20;;
+	se*) name=se;	unit=${i#se};	chr=22;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
