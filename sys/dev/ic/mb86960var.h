@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.23 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.24 1999/03/25 23:19:16 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -177,11 +177,6 @@ struct mb86960_softc {
 	void	(*sc_mediastatus) __P((struct mb86960_softc *,
 		    struct ifmediareq *));
 };
-
-/* Ethernet constants.  To be defined in if_ehter.h?  FIXME. */
-#define ETHER_MIN_LEN	60	/* with header, without CRC. */
-#define ETHER_MAX_LEN	1514	/* with header, without CRC. */
-#define ETHER_HDR_SIZE	14	/* src addr, dst addr, and data type. */
 
 /*
  * Fe driver specific constants which relate to 86960/86965.
