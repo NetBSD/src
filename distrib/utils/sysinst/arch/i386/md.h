@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.30 2001/11/29 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.31 2001/11/29 23:24:24 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,11 +70,11 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-GENERIC",		1, "aj", "Kernel        : "},
-    {"kern-GENERIC_TINY",	1, "aj", "Kernel        : "},
-    {"kern-GENERIC_LAPTOP",	1, "aj", "Kernel        : "},
-    {"kern-GENERIC_DIAGNOSTIC",	1, "aj", "Kernel        : "},
-    {"kern-GENERIC_PS2TINY",	1, "aj", "Kernel        : "},
+    {"kern-GENERIC",		0, "aj", "Kernel        : "},
+    {"kern-GENERIC_TINY",	0, "aj", "Kernel        : "},
+    {"kern-GENERIC_LAPTOP",	0, "aj", "Kernel        : "},
+    {"kern-GENERIC_DIAGNOSTIC",	0, "aj", "Kernel        : "},
+    {"kern-GENERIC_PS2TINY",	0, "aj", "Kernel        : "},
     {"base",			1, "cr", "Base          : "},
     {"etc",			1, "aa", "System (/etc) : "},
     {"comp",			1, "ca", "Compiler      : "},
