@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.6 1997/01/31 01:57:11 thorpej Exp $
+#	$NetBSD: SALMON,v 1.7 1997/03/22 08:29:48 matthias Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -50,7 +50,6 @@ options		INET			# IP
 #options	"CONSOLE_SPEED=B9600"	# default baud on the console (tty00)
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
-options		"DEV_RTC"		# /dev/rtc access to hardware clock
 
 config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and vnd0a
 
