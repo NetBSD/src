@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 2000/07/18 23:29:48 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2001/02/04 21:56:11 christos Exp $	*/
 /*	$KAME: parse.y,v 1.30 2000/07/15 16:08:01 itojun Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ extern int m_len;
 extern char cmdarg[8192];
 extern int f_debug;
 
-int setkeymsg __P((void));
 static struct addrinfo *parse_addr __P((char *, char *, int));
 static int setvarbuf __P((int *, struct sadb_ext *, int, caddr_t, int));
 void parse_init __P((void));
