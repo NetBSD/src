@@ -1,16 +1,16 @@
 .\" Copyright (c) 1991, 1992, 1993 Free Software Foundation	-*- nroff -*-
 .\" See section COPYING for conditions for redistribution
 .\"
-.\"	$Id: cpp.1,v 1.2 1993/08/02 17:36:37 mycroft Exp $
+.\"	$Id: cpp.1,v 1.3 1994/11/02 09:07:33 deraadt Exp $
 .\"
 .TH cpp 1 "30apr1993" "GNU Tools" "GNU Tools"
 .SH NAME
-cccp, cpp \- The GNU C-Compatible Compiler Preprocessor.
+cpp \- The GNU C-Compatible Compiler Preprocessor.
 .SH SYNOPSIS
 .hy 0
 .na
 .TP
-.B cccp
+.B ccp
 .RB "[\|" \-$ "\|]"
 .RB "[\|" \-A \c
 .I predicate\c
@@ -141,13 +141,6 @@ undesirable to do this.
 Most often when you use the C preprocessor you will not have to invoke it
 explicitly: the C compiler will do so automatically.  However, the
 preprocessor is sometimes useful individually.
-
-When you call the preprocessor individually, either name
-(\c
-.B cpp\c
-\& or \c
-.B cccp\c
-\&) will do\(em\&they are completely synonymous.
 
 The C preprocessor expects two file names as arguments, \c
 .I infile\c
