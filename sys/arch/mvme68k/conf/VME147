@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.25 1998/06/26 01:54:03 lukem Exp $
+#	$NetBSD: VME147,v 1.26 1998/12/15 19:50:16 itohy Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -36,6 +36,8 @@ options 	TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 options 	COMPAT_09, COMPAT_10, COMPAT_11, COMPAT_12, COMPAT_13
 options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
+#options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
