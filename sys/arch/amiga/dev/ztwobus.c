@@ -27,12 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.4 1994/05/26 03:05:01 chopps Exp $
+ *	$Id: ztwobus.c,v 1.5 1994/06/03 00:30:52 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
+#include <amiga/amiga/device.h>
 #include <amiga/dev/ztwobusvar.h>
 
 struct aconfdata {
@@ -41,10 +42,16 @@ struct aconfdata {
 	int prodid;
 };
 
+struct preconfdata {
+	int manid;
+	int prodid;
+};
+
+
 /* 
  * explian the names.. 0123456789 => zothfisven
  */
-struct aconfdata aconftab[] = {
+static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	3 },
@@ -81,27 +88,39 @@ struct aconfdata aconftab[] = {
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 };
-int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
+static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
+
+/*
+ * Anything listed in this table is subject to pre-configuration,
+ * if autoconf.c:config_console() calls amiga_config_found() on
+ * the Zorro III device.
+ */
+static struct preconfdata preconftab[] = {
+	/* Retina BLT Z3 */
+	{ 18260, 6 }
+};
+static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
+
 
 void ztwoattach __P((struct device *, struct device *, void *));
 int ztwoprint __P((void *, char *));
 int ztwomatch __P((struct device *, struct cfdata *,void *));
-char *aconflookup __P((int, int));
+static char *aconflookup __P((int, int));
 
 /*
  * given a manufacturer id and product id, find the name
  * that describes this board.
  */
-char *
+static char *
 aconflookup(mid, pid)
 	int mid, pid;
 {
-	int an;
+	struct aconfdata *adp, *eadp;
 
-	for (an = 0; an < naconfent; an++) {
-		if (aconftab[an].manid == mid && aconftab[an].prodid == pid)
-			return(aconftab[an].name);
-	}
+	eadp = &aconftab[naconfent];
+	for (adp = aconftab; adp < eadp; adp++)
+		if (adp->manid == mid && adp->prodid == pid)
+			return(adp->name);
 	return("board");
 }
 
@@ -113,6 +132,8 @@ struct cfdriver ztwobuscd = {
 	DV_DULL, sizeof(struct device), NULL, 0
 };
 
+static struct cfdata *early_cfdata;
+
 /*ARGSUSED*/
 int
 ztwomatch(pdp, cfp, auxp)
@@ -120,9 +141,11 @@ ztwomatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if (matchname(auxp, "ztwobus"))
-		return(1);
-	return(0);
+	if (matchname(auxp, "ztwobus") == 0)
+		return(0);
+	if (amiga_realconfig == 0)
+		early_cfdata = cfp;
+	return(1);
 }
 
 /*
@@ -136,28 +159,39 @@ ztwoattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct ztwobus_args za;
-	u_long lpa;
-	int i, zcnt;
+	struct preconfdata *pcp, *epcp;
+	struct cfdev *cdp, *ecdp;
 
-	if (ZTWOMEMADDR)
-		printf(" mem %08x-%08x",
-		    ZTWOMEMADDR, ZTWOMEMADDR + ZTWOMEMSIZE - 1);
-	printf("\n");
+	epcp = &preconftab[npreconfent];
+	ecdp = &cfdev[ncfdev];
+	if (amiga_realconfig) {
+		if (ZTWOMEMADDR)
+			printf(" mem %08x-%08x",
+			    ZTWOMEMADDR, ZTWOMEMADDR + ZTWOMEMSIZE - 1);
+		printf("\n");
+	}
+	for (cdp = cfdev; cdp < ecdp; cdp++) {
+		for (pcp = preconftab; pcp < epcp; pcp++) {
+			if (pcp->manid == cdp->rom.manid && 
+			    pcp->prodid == cdp->rom.prodid)
+				break;
+		}
+		if (amiga_realconfig == 0 && pcp >= epcp)
+			continue;
 
-	for (i = 0; i < ncfdev; i++) {
-		za.pa = cfdev[i].addr;
+		za.pa = cdp->addr;
 		/*
 		 * check that its from zorro II space
 		 */
 		if ((u_long)za.pa >= 0xF00000 || (u_long)za.pa < 0xE90000)
 			continue;
 		za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) : 0);
-		za.size = cfdev[i].size;
-		za.manid = cfdev[i].rom.manid;
-		za.prodid = cfdev[i].rom.prodid;
-		za.serno = cfdev[i].rom.serno;
+		za.size = cdp->size;
+		za.manid = cdp->rom.manid;
+		za.prodid = cdp->rom.prodid;
+		za.serno = cdp->rom.serno;
 		za.slot = (((u_long)za.pa >> 16) & 0xF) - 0x9;
-		config_found(dp, &za, ztwoprint);
+		amiga_config_found(early_cfdata, dp, &za, ztwoprint);
 	}
 }
 

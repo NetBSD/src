@@ -34,6 +34,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <amiga/amiga/cfdev.h>
+#include <amiga/amiga/device.h>
 #include <amiga/dev/zthreebusvar.h>
 
 struct aconfdata {
@@ -42,48 +43,66 @@ struct aconfdata {
 	int prodid;
 };
 
+struct preconfdata {
+	int manid;
+	int prodid;
+	caddr_t vaddr;
+};
+
+
 /* 
  * explain the names.. 0123456789 => zothfisven
  */
-struct aconfdata aconf3tab[] = {
+static struct aconfdata aconftab[] = {
 	/* MacroSystemsUS */
-	{ "wesc",	2203,	19},
+	{ "wesc",	2203,	19},	/* Warp engine */
+	{ "grfrtblt",	18260,	16}	/* Retina BLT Z3 */
 };
-int naconf3ent = sizeof(aconf3tab) / sizeof(struct aconfdata);
+static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
-extern caddr_t ZTHREEADDR;
-extern u_int ZTHREEAVAIL;
+/*
+ * Anything listed in this table is subject to pre-configuration,
+ * if autoconf.c:config_console() calls amiga_config_found() on
+ * the Zorro III device.
+ */
+static struct preconfdata preconftab[] = {
+	/* Retina BLT Z3 */
+	{ 18260, 16, 0 }
+};
+static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 void zthreeattach __P((struct device *, struct device *, void *));
 int zthreeprint __P((void *, char *));
 int zthreematch __P((struct device *, struct cfdata *,void *));
 caddr_t zthreemap __P((caddr_t, u_int));
-char *aconf3lookup __P((int, int));
+static char *aconflookup __P((int, int));
 
 /*
  * given a manufacturer id and product id, find the name
  * that describes this board.
  */
-char *
-aconf3lookup(mid, pid)
+static char *
+aconflookup(mid, pid)
 	int mid, pid;
 {
-	int an;
+	struct aconfdata *adp, *eadp;
 
-	for (an = 0; an < naconf3ent; an++) {
-		if (aconf3tab[an].manid == mid && aconf3tab[an].prodid == pid)
-			return(aconf3tab[an].name);
-	}
+	eadp = &aconftab[naconfent];
+	for (adp = aconftab; adp < eadp; adp++)
+		if (adp->manid == mid && adp->prodid == pid)
+			return(adp->name);
 	return("board");
 }
 
 /* 
- * mainbus driver 
+ * zorro three bus driver 
  */
 struct cfdriver zthreebuscd = {
 	NULL, "zthreebus", zthreematch, zthreeattach, 
 	DV_DULL, sizeof(struct device), NULL, 0
 };
+
+static struct cfdata *early_cfdata;
 
 /*ARGSUSED*/
 int
@@ -92,15 +111,21 @@ zthreematch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if (matchname(auxp, "zthreebus"))
-		return(1);
-	return(0);
+	if (matchname(auxp, "zthreebus") == 0)
+		return(0);
+	if (amiga_realconfig == 0)
+		early_cfdata = cfp;
+	return(1);
 }
 
 /*
  * called to attach bus, we probe, i.e., scan configdev structs passed
  * in, for each found name call config_found() which will do this again
  * with that driver if matched else print a diag.
+ *
+ * If called during config_console() (i.e., amiga_realconfig == 0), skip
+ * everything but the approved devices in preconftab, and when doing
+ * those devices save the allocated virtual address.
  */
 void
 zthreeattach(pdp, dp, auxp)
@@ -108,32 +133,58 @@ zthreeattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct zthreebus_args za;
-	u_long lpa;
-	int i, zcnt;
+	struct preconfdata *pcp, *epcp;
+	struct cfdev *cdp, *ecdp;
 
-	if (ZTHREEAVAIL)
-	  	printf (" I/O size 0x%08x", ZTHREEAVAIL);
+	epcp = &preconftab[npreconfent];
+	ecdp = &cfdev[ncfdev];
+
+	if (amiga_realconfig) {
+		if (ZTHREEAVAIL)
+			printf (" I/O size 0x%08x", ZTHREEAVAIL);
 #if 0
-	if (ZTHREEMEMADDR)
-		printf (" mem %08x-%08x\n",
-		  ZTHREEMEMADDR, ZTHREEMEMADDR + ZTHREEMEMSIZE - 1);
+		if (ZTHREEMEMADDR)
+			printf(" mem %08x-%08x\n",
+			    ZTHREEMEMADDR, ZTHREEMEMADDR + ZTHREEMEMSIZE - 1);
 #endif
-	printf("\n");
+		printf("\n");
+	}
 
-	for (i = 0; i < ncfdev; i++) {
-		za.pa = cfdev[i].addr;
-		za.size = cfdev[i].size;
-		/*
-		 * check that its from zorro III space
-		 */
-		if ((u_long)za.pa >= ZTHREETOP || (u_long)za.pa < ZTHREEBASE)
+	for (cdp = cfdev; cdp < ecdp; cdp++) {
+		for (pcp = preconftab; pcp < epcp; pcp++) {
+			if (pcp->manid == cdp->rom.manid && 
+			    pcp->prodid == cdp->rom.prodid)
+				break;
+		}
+		if (amiga_realconfig == 0 && pcp >= epcp)
 			continue;
-		za.va = (void *) (iszthreepa(za.pa) ? zthreemap(za.pa, za.size) : 0);
-		za.manid = cfdev[i].rom.manid;
-		za.prodid = cfdev[i].rom.prodid;
-		za.serno = cfdev[i].rom.serno;
+
+		za.pa = cdp->addr;
+		za.size = cdp->size;
+
+		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
+			za.va = pcp->vaddr;
+		else {
+			/*
+			 * check that its from zorro III space
+			 */
+			if ((u_long)za.pa >= ZTHREETOP ||
+			    (u_long)za.pa < ZTHREEBASE)
+				continue;
+			za.va = (void *)(iszthreepa(za.pa) ?
+			    zthreemap(za.pa, za.size) : 0);
+
+			/*
+			 * save value if early console init 
+			 */
+			if (amiga_realconfig == 0)
+				pcp->vaddr = za.va;
+		}
+		za.manid = cdp->rom.manid;
+		za.prodid = cdp->rom.prodid;
+		za.serno = cdp->rom.serno;
 		za.slot = (((u_long)za.pa >> 16) & 0xF) - 0x9;
-		config_found(dp, &za, zthreeprint);
+		amiga_config_found(early_cfdata, dp, &za, zthreeprint);
 	}
 }
 
@@ -152,7 +203,7 @@ zthreeprint(auxp, pnp)
 	zap = auxp;
 
 	if (pnp) {
-		printf("%s at %s", aconf3lookup(zap->manid, zap->prodid),
+		printf("%s at %s", aconflookup(zap->manid, zap->prodid),
 		    pnp);
 		if (zap->manid == -1)
 			rv = UNSUPP;
