@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.1 2000/07/03 22:34:17 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.2 2000/07/21 18:52:09 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -417,6 +417,7 @@
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
+#define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -516,3 +517,6 @@
 #define	PCMCIA_CIS_NDC_ND5100_E	{ "NDC", "Ethernet", "A", NULL }
 #define	PCMCIA_PRODUCT_NDC_ND5100_E	-1
 #define	PCMCIA_STR_NDC_ND5100_E	"Sohoware ND5100E NE2000 Compatible Card"
+#define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL}
+#define	PCMCIA_PRODUCT_INTERSIL_PRISM2	-1
+#define	PCMCIA_STR_INTERSIL_PRISM2	"Intersil Prism II"
