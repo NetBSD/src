@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/30 20:47:23 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/30 21:05:04 christos Exp $
 
 NOMAN=		# defined
+WARNS=2
 
 PROG=		symbolcheck
 

@@ -161,8 +161,8 @@
 #include <sys/syscallargs.h> /* Moved */
 
 /*
- * XXX: We are not doing <netinet/*.h> yet, but we need
- * the following in <net/*>
+ * XXX: We are not doing <netinet> yet, but we need
+ * the following in <net>
  */
 #include <netinet/in_systm.h>	/* Special */
 #include <netinet/in.h>		/* Special */
@@ -353,3 +353,11 @@
 struct {
 } vaddr_t;
 #endif
+
+int main(int, char *[]);
+
+int
+main(int argc, char *argv[])
+{
+	return 0;
+}
