@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.5 1998/05/23 20:51:13 is Exp $	*/
+/*	$NetBSD: bsd_audio.c,v 1.6 1998/05/24 19:32:48 is Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -48,8 +48,6 @@
  * read from the device in play mode, you get zero filled buffers
  * at the rate at which samples are naturally generated.
  */
-
-#include "opt_m68kcpu.h"
 
 #include "audio.h"
 #if NAUDIO > 0

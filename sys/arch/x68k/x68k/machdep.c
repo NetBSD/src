@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1998/05/23 20:51:14 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1998/05/24 19:32:49 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,6 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

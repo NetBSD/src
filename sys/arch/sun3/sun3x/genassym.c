@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.15 1998/05/23 20:51:13 is Exp $	*/
+/*	$NetBSD: genassym.c,v 1.16 1998/05/24 19:32:47 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -59,8 +59,6 @@
  * data, and the genassym.cf method depends on features of
  * the gcc asm() statement (inline assembly).
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.32 1998/05/23 20:51:06 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.33 1998/05/24 19:32:34 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -42,8 +42,6 @@
 /* #define BAH_DEBUG 3 */
 
 /* zeroth version of M68060 support */
-
-#include "opt_m68kcpu.h"
 
 #if defined(M68060) && defined(BAHASMCOPY)
 #undef BAHASMCOPY

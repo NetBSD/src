@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 1998/05/23 20:51:14 is Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 1998/05/24 19:32:49 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -38,8 +38,6 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

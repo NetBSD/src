@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.5 1998/05/23 20:51:11 is Exp $	*/
+/*	$NetBSD: copypage.s,v 1.6 1998/05/24 19:32:42 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 /*
  * Optimized functions for copying/clearing a whole page.
  */
-
-#include "opt_m68kcpu.h"
 
 #include <machine/asm.h>
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.4 1998/05/23 20:51:07 is Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.5 1998/05/24 19:32:35 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -34,8 +34,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 1998/05/23 20:51:07 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.19 1998/05/24 19:32:36 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -34,8 +34,6 @@
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
  */
-
-#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +127,7 @@ cachectl(req, addr, len)
 {
 	int error = 0;
 #if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-#endif
-	{
+	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end = 0;
@@ -209,9 +204,8 @@ cachectl(req, addr, len)
 		} while (addr < end);
 		return(error);
 	}
-#endif	/* M68040/60 */
+#endif	/* M68040 */
 
-#if defined(M68020) || defined(M68030)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
@@ -230,7 +224,6 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
-#endif	/* M68020/30 */
 }
 
 /*
@@ -244,10 +237,7 @@ dma_cachectl(addr, len)
 	int len;
 {
 #if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-#endif	/* M68020/30 */
-	{
+	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;
@@ -278,7 +268,7 @@ dma_cachectl(addr, len)
 			addr += inc;
 		} while (addr < end);
 	}
-#endif	/* M68040/60 */
+#endif	/* M68040 */
 	return(0);
 }
 
