@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2002/10/13 00:34:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -180,7 +180,7 @@ void ls_tty(ARCHD *);
 void safe_print(const char *, FILE *);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
-#ifndef NET2_STAT
+#if !defined(NET2_STAT) && !defined(_LP64)
 unsigned long long asc_ull(char *, int, int);
 int ull_asc(unsigned long long, char *, int, int);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.25 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.26 2002/10/13 00:34:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.25 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.26 2002/10/13 00:34:16 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ ul_asc(u_long val, char *str, int len, int base)
 	return(0);
 }
 
-#ifndef NET2_STAT
+#if !defined(NET2_STAT) && !defined(_LP64)
 /*
  * asc_ull()
  *	convert hex/octal character string into a unsigned long long. We do
