@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.3,v 1.26 2002/08/19 10:11:42 pooka Exp $
+.\"	$NetBSD: termcap.3,v 1.27 2002/09/26 01:03:02 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,7 +135,8 @@ the
 .Ev TERMCAP
 string is used instead of reading a
 .Nm termcap
-file.  If the value does contain the ZZ capability then the
+file.
+If the value does contain the ZZ capability then the
 .Ev TERM
 environment string is used to read
 .Nm termcap ,
@@ -287,7 +288,8 @@ If the call to
 succeeds then the argument
 .Fa info
 will be updated with the address of an object that contains the termcap
-entry.  This pointer can then be passed to calls of
+entry.
+This pointer can then be passed to calls of
 .Fn t_getnum ,
 .Fn t_getflag
 and
@@ -325,16 +327,19 @@ argument is updated by the
 call to give the number of characters that remain available in
 .Fa area .
 If the t_getstr call fails then
-.Sy NULL
-will be returned and errno set to indicate the failure, ENOENT indicates
-there was no termcap entry for the given
+.Dv NULL
+will be returned and errno set to indicate the failure,
+.Er ENOENT
+indicates there was no termcap entry for the given
 .Fa id ,
-E2BIG indicates the retrieved entry would have overflowed
+.Er E2BIG
+indicates the retrieved entry would have overflowed
 .Fa area .
 If t_getstr is called with
 .Fa area
-being NULL then the size required to hold the capability string will be
-returned in
+being
+.Dv NULL
+then the size required to hold the capability string will be returned in
 .Fa limit
 so the caller can allocate enough storage to hold the capability.
 .Pp
@@ -342,7 +347,8 @@ The function
 .Fn t_agetstr
 performs the same function as
 .Fn t_getstr
-except it handles memory allocation automatically. The memory that
+except it handles memory allocation automatically.
+The memory that
 .Fn t_agetstr
 allocates will be freed when
 .Fn t_freent
@@ -356,20 +362,27 @@ associated with
 in the buffer pointed to by
 .Fa area .
 .Fn t_getterm
-returns 0 on success and -1 on error.  On error errno will be set to
-EINVAL if the termcap entry in
+returns 0 on success and \-1 on error.
+On error errno will be set to
+.Er EINVAL
+if the termcap entry in
 .Fa info
-is malformed or E2BIG if the size of the name exceeds the size
-specified by
+is malformed or
+.Er E2BIG
+if the size of the name exceeds the size specified by
 .Fa limit .
 If
 .Fa area
-is NULL then the size required to hold the terminal name will be
-returned in
+is
+.Dv NULL
+then the size required to hold the terminal name will be returned in
 .Fa limit
-allowing sufficient storage to be allocated.  If
+allowing sufficient storage to be allocated.
+If
 .Fa limit
-is NULL then no bounds checking will be performed.
+is
+.Dv NULL
+then no bounds checking will be performed.
 .Pp
 The
 .Fn t_goto
@@ -395,8 +408,8 @@ would exceed the space in
 .Fa buffer
 then
 .Fn t_goto
-will return -1 and set errno to
-.Sy E2BIG .
+will return \-1 and set errno to
+.Er E2BIG .
 The function
 .Fn t_puts
 is similar to the
@@ -407,20 +420,24 @@ holds a pointer to the termcap object that was returned by a previous
 .Fn t_getent
 call, this object will be used to retrieve the
 .Sy pc
-attribute for the terminal.  The
+attribute for the terminal.
+The
 .Fa outc
 function is a pointer to a function that will be called by
 .Fn t_puts
 to output each character in the
 .Fa cp
-string.  The
+string.
+The
 .Fa outc
-function will be called with two parameters.  The first is the character
+function will be called with two parameters.
+The first is the character
 to be printed and the second is an optional argument that was passed to
 .Fn t_puts
 in the
 .Fa args
-argument.  The interpretation of the contents of
+argument.
+The interpretation of the contents of
 .Fa args
 is dependent solely on the implementation of
 .Fa outc .
@@ -431,20 +448,22 @@ function allows the termcap entry contained in the
 .Fa entry
 string to be inserted into the the
 .Fa info
-structure.  Memory sufficient to hold the contents of
+structure.
+Memory sufficient to hold the contents of
 .Fa entry
-is automatically allocated.  This allows the programmer to provide a
-fail over terminal capability string if fetching the termcap entry
-from the termcap database fails.  The format of the string
+is automatically allocated.
+This allows the programmer to provide a fail over terminal capability
+string if fetching the termcap entry from the termcap database fails.
+The format of the string
 .Fa entry
 is assumed to be a valid termcap entry.
 .Pp
 NOTE: A special capability of
 .Fa ZZ
-is added to the end of the termcap entry retrieved.  The number that follows
-this entry is the address of the buffer allocated to hold the full termcap
-entry.  The caller may retrieve the pointer to the extended buffer by
-performing a
+is added to the end of the termcap entry retrieved.
+The number that follows this entry is the address of the buffer allocated
+to hold the full termcap entry.
+The caller may retrieve the pointer to the extended buffer by performing a
 .Fn tgetstr
 to retrieve the
 .Fa ZZ
@@ -452,7 +471,8 @@ capability, the string is the output of a
 .Fn printf
 %p and may be converted back to a pointer using
 .Fn sscanf
-or similar.  The ZZ capability is only necessary if the caller wishes to
+or similar.
+The ZZ capability is only necessary if the caller wishes to
 directly manipulate the termcap entry, all the termcap function calls
 automatically use the extended buffer to retrieve terminal capabilities.
 .Sh FILES
