@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.28 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.29 2000/08/07 05:56:11 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.28 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.29 2000/08/07 05:56:11 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,15 +73,20 @@ __weak_alias(fts_set,_fts_set)
 
 #ifdef __LIBC12_SOURCE__
 __warn_references(fts_children,
-    "warning: reference to compatibility fts_children(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_children();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_close,
-    "warning: reference to compatibility fts_close(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_close();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_open,
-    "warning: reference to compatibility fts_open(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_open();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_read,
-    "warning: reference to compatibility fts_read(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_read();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_set,
-    "warning: reference to compatibility fts_set(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_set();"
+    " include <fts.h> for correct reference")
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
@@ -1009,7 +1014,8 @@ fts_alloc(sp, name, namelen)
 	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
-		p->fts_statp = (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
+		p->fts_statp =
+		    (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
@@ -1101,12 +1107,12 @@ fts_padjust(sp, head)
 
 	_DIAGASSERT(sp != NULL);
 
-#define	ADJUST(p) {							\
+#define	ADJUST(p) do {							\
 	if ((p)->fts_accpath != (p)->fts_name)				\
 		(p)->fts_accpath =					\
 		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
-}
+} while (0)
 
 	addr = sp->fts_path;
 
