@@ -1,5 +1,5 @@
 /*
- *	$Id: db_machdep.h,v 1.3 1994/01/09 16:39:38 cgd Exp $
+ *	$Id: db_machdep.h,v 1.1 1994/01/09 16:35:32 cgd Exp $
  */
 
 /* Just use the common m68k definition */
