@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.56 2002/07/30 13:16:35 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.57 2002/09/01 18:54:12 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.56 2002/07/30 13:16:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.57 2002/09/01 18:54:12 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -84,7 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.56 2002/07/30 13:16:35 christos Ex
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
 
-#define MAXALIVECNT     		3	/* max. alive packets */
+#define	LCP_KEEPALIVE_INTERVAL		10	/* seconds */
+#define MAXALIVECNT     		3	/* max. missed alive packets */
 #define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
 
 /*
@@ -919,7 +920,7 @@ sppp_attach(struct ifnet *ifp)
 	/* Initialize keepalive handler. */
 	if (! spppq) {
 		callout_init(&keepalive_ch);
-		callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
+		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
 
 	/* Insert new entry into the keepalive list. */
@@ -4639,6 +4640,12 @@ sppp_keepalive(void *dummy)
 		    sp->pp_phase < SPPP_PHASE_AUTHENTICATE)
 			continue;
 
+		/* No echo reply, but maybe user data passed through? */
+		if ((now - sp->pp_last_activity) < LCP_KEEPALIVE_INTERVAL) {
+			sp->pp_alivecnt = 0;
+			continue;
+		}
+
 		if (sp->pp_alivecnt == MAXALIVECNT) {
 			/* No keepalive packets got.  Stop the interface. */
 			if_down (ifp);
@@ -4673,7 +4680,7 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
-	callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
+	callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 }
 
 /*
