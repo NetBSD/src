@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.13 2001/04/20 11:19:27 jdolecek Exp $
+$NetBSD: mcadevs,v 1.14 2001/04/23 06:10:09 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ product 0x6BBB "Barr Synchronous Communications Adapter"		[6]
 product 0x6BBC "Apricot Synchronous Communications Adapter"		[7]
 product 0x6BCB "CONNECT ARCnet Adapter"					[6]
 product 0x6BE7 "Symicron dtsx12 Token Ring Adapter"			[7]
-product 0x6BE9 "SKNET Ethernet Adapter"					[10]
+product 0x6BE9 SKNET "SKNET Ethernet Adapter"				[10]
 product 0x6BFF "Torus Ethernet Adapter/MC"				[6]
 product 0x6C0F "Roland MIDI Processing Unit MPU-IMC"			[5]
 product 0x6DAC "Logitech ScanMan Adapter"				[5]
