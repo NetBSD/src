@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.16 2003/05/28 20:03:37 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.17 2003/05/28 21:08:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.16 2003/05/28 20:03:37 christos Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.17 2003/05/28 21:08:23 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: readdir.c,v 1.16 2003/05/28 20:03:37 christos Exp $");
 
 #include <dirent.h>
 #include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
