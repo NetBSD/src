@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1996/08/20 23:16:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -246,7 +246,7 @@ alpha_init(pfn, ptb)
 	 * Disable System and Processor Correctable Error reporting.
 	 * Clear pending machine checks and error reports, etc.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() | ALPHA_MCES_SCE | ALPHA_MCES_PCE);
+	alpha_pal_wrmces(alpha_pal_rdmces() | ALPHA_MCES_DSC | ALPHA_MCES_DPC);
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -547,7 +547,12 @@ alpha_init(pfn, ptb)
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
+#ifndef NEW_PMAP
 	pmap_bootstrap((vm_offset_t)v, ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT));
+#else
+	pmap_bootstrap((vm_offset_t)v, ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT),
+	    hwrpb->rpb_max_asn);
+#endif
 
 	/*
 	 * Initialize the rest of proc 0's PCB, and cache its physical
@@ -564,14 +569,8 @@ alpha_init(pfn, ptb)
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
-#ifndef OLD_PMAP
-	printf("going to set up new pcb\n");
-	proc0paddr->u_pcb.pcb_hw.apcb_asn = kernel_pmap->pid;
-	proc0paddr->u_pcb.pcb_hw.apcb_ptbr =
-	    alpha_btop(kvtophys((unsigned long)kernel_pmap->dirbase));
-	printf("did new pcb setup (asn = %d, ptbr = 0x%lx)\n",
-	    proc0paddr->u_pcb.pcb_hw.apcb_asn,
-	    proc0paddr->u_pcb.pcb_hw.apcb_ptbr);
+#ifdef NEW_PMAP
+	pmap_activate(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
 #endif
 
 	/*
@@ -648,7 +647,7 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-#if defined(DEBUG) && defined(OLD_PMAP)
+#if defined(DEBUG)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 
@@ -728,7 +727,7 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-#if defined(DEBUG) && defined(OLD_PMAP)
+#if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %ld\n", (long)ptoa(cnt.v_free_count));
