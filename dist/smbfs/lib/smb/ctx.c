@@ -45,7 +45,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
-#include <sys/iconv.h>
+#include <netsmb/iconv.h>
 
 #define NB_NEEDRESOLVER
 
@@ -571,6 +571,7 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 	int fd, i;
 	char buf[20];
 
+#ifndef __NetBSD__
 	/*
 	 * First, try to open as cloned device
 	 */
@@ -579,6 +580,8 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 		ctx->ct_fd = fd;
 		return 0;
 	}
+#endif
+
 	/*
 	 * well, no clone capabilities available - we have to scan
 	 * all devices in order to get free one
@@ -590,7 +593,11 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 			ctx->ct_fd = fd;
 			return 0;
 		 }
+		 if (errno == ENOENT)
+		         return ENOENT;
 	 }
+
+#ifndef __NetBSD
 	 /*
 	  * This is a compatibility with old /dev/net/nsmb device
 	  */
@@ -604,6 +611,8 @@ smb_ctx_gethandle(struct smb_ctx *ctx)
 		 if (errno == ENOENT)
 		         return ENOENT;
 	 }
+#endif
+
 	 return ENOENT;
 }
 
