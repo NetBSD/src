@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.1 1997/06/06 23:26:01 veego Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.2 1997/06/09 00:04:03 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/param.h>
+
 /* the following is used externally (sysctl_hw) */
-char machine_arch[] = "m68k";
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
