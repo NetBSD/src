@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2003/01/17 22:40:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2003/04/01 23:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,17 +166,18 @@ void fic_init()
 	/*
 	 * map and init interrupt controller
 	 */
-	physaccess((void*)virtual_avail, (void*)0x44000000, NBPG, PG_RW|PG_CI);
+	physaccess((void*)virtual_avail, (void*)0x44000000,
+	    PAGE_SIZE, PG_RW|PG_CI);
 	sicinit((void*)virtual_avail);
-	virtual_avail += NBPG;
+	virtual_avail += PAGE_SIZE;
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
@@ -220,9 +221,10 @@ consinit()
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	physaccess((void*)virtual_avail, (void*)0x58000000, NBPG, PG_RW|PG_CI);
+	physaccess((void*)virtual_avail,
+	    (void*)0x58000000, PAGE_SIZE, PG_RW|PG_CI);
 	zs_cnattach((void*)virtual_avail);
-	virtual_avail += NBPG;
+	virtual_avail += PAGE_SIZE;
 
 #ifdef KGDB
         kgdb_dev = 1;
@@ -306,7 +308,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -346,7 +348,7 @@ cpu_startup()
 #endif
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 	printf("using %u buffers containing %d bytes of memory\n",
-		nbuf, bufpages * NBPG);
+		nbuf, bufpages * PAGE_SIZE);
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
@@ -605,7 +607,7 @@ dumpsys()
 	printf("dump ");
 	maddr = lowram;
 	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/NBPG)
+#define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
@@ -614,11 +616,11 @@ dumpsys()
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
-		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
 		switch (error) {
 		case 0:
-			maddr += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 			break;
 
 		case ENXIO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,9 +99,6 @@
  *		(*pte & PG_PROT) [4] != pte->pg_prot [1]
  *	and a couple of routines that deal with protection and wiring take
  *	some shortcuts that assume the and/or definitions.
- *
- *	This implementation will only work for PAGE_SIZE == NBPG
- *	(i.e. 4096 bytes).
  */
 
 /*
@@ -131,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.3 2003/04/02 00:00:46 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -482,7 +479,7 @@ pmap_init()
 	kpt_pages = &((struct kpt_page *)addr2)[npages];
 	kpt_free_list = NULL;
 	do {
-		addr2 -= NBPG;
+		addr2 -= PAGE_SIZE;
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
@@ -552,7 +549,7 @@ pmap_init()
 		paddr = (paddr_t)Segtabzeropa;
 		while (paddr < (paddr_t)Segtabzeropa + M68K_STSIZE) {
 			pmap_changebit(paddr, PG_CI, ~PG_CCB);
-			paddr += NBPG;
+			paddr += PAGE_SIZE;
 		}
 
 		DCIS();
@@ -578,7 +575,7 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
+		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -627,7 +624,7 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
 		break;
 	}
 }
@@ -692,7 +689,7 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
 	}
 }
 
@@ -719,8 +716,8 @@ pmap_map(va, spa, epa, prot)
 
 	while (spa < epa) {
 		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += NBPG;
-		spa += NBPG;
+		va += PAGE_SIZE;
+		spa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 	return (va);
@@ -980,7 +977,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 				pmap_remove_mapping(pmap, sva, pte, flags);
 			}
 			pte++;
-			sva += NBPG;
+			sva += PAGE_SIZE;
 		}
 	}
 
@@ -1162,7 +1159,7 @@ pmap_protect(pmap, sva, eva, prot)
 				firstpage = FALSE;
 			}
 			pte++;
-			sva += NBPG;
+			sva += PAGE_SIZE;
 		}
 	}
 }
@@ -1582,7 +1579,7 @@ pmap_kremove(va, size)
 		while (va < nssva) {
 			if (!pmap_pte_v(pte)) {
 				pte++;
-				va += NBPG;
+				va += PAGE_SIZE;
 				continue;
 			}
 #ifdef M68K_MMU_HP
@@ -1612,7 +1609,7 @@ pmap_kremove(va, size)
 			*pte = PG_NV;
 			TBIS(va);
 			pte++;
-			va += NBPG;
+			va += PAGE_SIZE;
 		}
 	}
 
@@ -1802,7 +1799,7 @@ pmap_collect1(pmap, startpa, endpa)
 	int opmapdebug = 0;
 #endif
 
-	for (pa = startpa; pa < endpa; pa += NBPG) {
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE) {
 		struct kpt_page *kpt, **pkpt;
 
 		/*
@@ -1827,7 +1824,7 @@ pmap_collect1(pmap, startpa, endpa)
 			continue;
 		}
 #endif
-		pte = (pt_entry_t *)(pv->pv_va + NBPG);
+		pte = (pt_entry_t *)(pv->pv_va + PAGE_SIZE);
 		while (--pte >= (pt_entry_t *)pv->pv_va && *pte == PG_NV)
 			;
 		if (pte >= (pt_entry_t *)pv->pv_va)
@@ -2701,12 +2698,12 @@ pmap_enter_ptpage(pmap, va)
 		/*
 		 * Since a level 2 descriptor maps a block of SG4_LEV3SIZE
 		 * level 3 descriptors, we need a chunk of NPTEPG/SG4_LEV3SIZE
-		 * (16) such descriptors (NBPG/SG4_LEV3SIZE bytes) to map a
+		 * (16) such descriptors (PAGE_SIZE/SG4_LEV3SIZE bytes) to map a
 		 * PT page--the unit of allocation.  We set `ste' to point
 		 * to the first entry of that chunk which is validated in its
 		 * entirety below.
 		 */
-		ste = (st_entry_t *)((int)ste & ~(NBPG/SG4_LEV3SIZE-1));
+		ste = (st_entry_t *)((int)ste & ~(PAGE_SIZE/SG4_LEV3SIZE-1));
 
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 		    ("enter: ste2 %p (%p)\n", pmap_ste2(pmap, va), ste));
@@ -2738,7 +2735,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		memset((caddr_t)kpt->kpt_va, 0, NBPG);
+		memset((caddr_t)kpt->kpt_va, 0, PAGE_SIZE);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap);
@@ -3039,7 +3036,8 @@ pmap_check_wiring(str, va)
 	}
 
 	count = 0;
-	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
+	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + PAGE_SIZE);
+	     pte++)
 		if (*pte)
 			count++;
 	if (pg->wire_count != count)
