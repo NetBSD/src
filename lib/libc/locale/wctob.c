@@ -1,4 +1,4 @@
-/*	$NetBSD: wctob.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $	*/
+/*	$NetBSD: wctob.c,v 1.4 2003/03/04 13:27:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wctob.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $");
+__RCSID("$NetBSD: wctob.c,v 1.4 2003/03/04 13:27:12 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -54,7 +54,7 @@ wctob(wc)
 
 	memset(&mbs, 0, sizeof(mbs));
 	if (wcrtomb(mb, wc, &mbs) != 1)
-		return (WEOF);
+		return (EOF);
 
 	return ((int)(unsigned char)mb[0]);
 }
