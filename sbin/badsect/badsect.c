@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.25 2004/01/05 23:23:32 jmmv Exp $	*/
+/*	$NetBSD: badsect.c,v 1.26 2004/03/21 19:13:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.25 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.26 2004/03/21 19:13:59 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,28 +151,37 @@ main(argc, argv)
 
 	fs = &sblock;
 
-	for (i = 0; sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1)
+			errx(1, "%s: bad superblock", name);
 		rdfs(sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, (char *)fs);
 		switch (fs->fs_magic) {
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			goto found;
+			ffs_sb_swap(fs, fs);
+			break;
 		default:
 			continue;
 		}
+
+		/* Ensure we don't use 1st alternate if ffsv1 and bs=64k */
+		if (fs->fs_old_flags & FS_FLAGS_UPDATED) {
+			if (fs->fs_sblockloc != sblock_try[i])
+				continue;
+		} else {
+			if (sblock_try[i] == SBLOCK_UFS2)
+				continue;
+		}
+		break;
 	}
-	errx(1, "%s: bad superblock", name);
-found:
-	if (needswap)
-		ffs_sb_swap(fs, fs);
 
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
