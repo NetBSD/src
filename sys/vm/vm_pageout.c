@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.18 1994/10/30 19:11:23 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.19 1995/01/09 01:33:17 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -545,8 +545,7 @@ vm_pageout()
 
 	simple_lock(&vm_pages_needed_lock);
 	while (TRUE) {
-		thread_sleep(&vm_pages_needed, &vm_pages_needed_lock,
-			     FALSE);
+		thread_sleep(&vm_pages_needed, &vm_pages_needed_lock, FALSE);
 		/*
 		 * Compute the inactive target for this scan.
 		 * We need to keep a reasonable amount of memory in the
