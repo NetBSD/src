@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.46 2000/01/18 07:45:04 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.47 2000/01/24 18:03:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
 #include <machine/limits.h>
 
 /*
@@ -94,6 +95,8 @@ static void config_process_deferred __P((struct deferred_config_head *,
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
+
+__volatile int config_pending;		/* semaphore for mountroot */
 
 /*
  * Configure the system's hardware.
@@ -611,6 +614,7 @@ config_defer(dev, func)
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
+	config_pending_incr();
 }
 
 /*
@@ -647,6 +651,7 @@ config_interrupts(dev, func)
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
+	config_pending_incr();
 }
 
 /*
@@ -665,8 +670,32 @@ config_process_deferred(queue, parent)
 			TAILQ_REMOVE(queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
 			free(dc, M_DEVBUF);
+			config_pending_decr();
 		}
 	}
+}
+
+/*
+ * Manipulate the config_pending semaphore.
+ */
+void
+config_pending_incr()
+{
+
+	config_pending++;
+}
+
+void
+config_pending_decr()
+{
+
+#ifdef DIAGNOSTIC
+	if (config_pending == 0)
+		panic("config_pending_decr: config_pending == 0");
+#endif
+	config_pending--;
+	if (config_pending == 0)
+		wakeup((void *)&config_pending);
 }
 
 /*

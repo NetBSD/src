@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.162 2000/01/19 20:05:50 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.163 2000/01/24 18:03:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -138,6 +138,8 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
 struct	timeval runtime;
+
+__volatile int start_init_exec;		/* semaphore for start_init() */
 
 static void check_console __P((struct proc *p));
 static void start_init __P((void *));
@@ -367,11 +369,50 @@ main()
 	kmstartup();
 #endif
 
+	/*
+	 * Initialize signal-related data structures, and signal state
+	 * for proc0.
+	 */
+	signal_init();
+	p->p_sigacts = &sigacts0;
+	siginit(p);
+
 	/* Kick off timeout driven events by calling first time. */
 	roundrobin(NULL);
 	schedcpu(NULL);
 
-	/* Determine the root and dump devices. */
+	/*
+	 * Create process 1 (init(8)).  We do this now, as Unix has
+	 * historically had init be process 1, and changing this would
+	 * probably upset a lot of people.
+	 *
+	 * Note that process 1 won't immediately exec init(8), but will
+	 * wait for us to inform it that the root file system has been
+	 * mounted.
+	 */
+	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
+		panic("fork init");
+	cpu_set_kpc(initproc, start_init, initproc);
+
+	/*
+	 * Create any kernel threads who's creation was deferred because
+	 * initproc had not yet been created.
+	 */
+	kthread_run_deferred_queue();
+
+	/*
+	 * Now that device driver threads have been created, wait for
+	 * them to finish any deferred autoconfiguration.  Note we don't
+	 * need to lock this semaphore, since we haven't booted any
+	 * secondary processors, yet.
+	 */
+	while (config_pending)
+		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+
+	/*
+	 * Now that autoconfiguration has completed, we can determine
+	 * the root and dump devices.
+	 */
 	cpu_rootconf();
 	cpu_dumpconf();
 
@@ -400,48 +441,54 @@ main()
 	VREF(cwdi0.cwdi_cdir);
 	VOP_UNLOCK(rootvnode, 0);
 	cwdi0.cwdi_rdir = NULL;
-	uvm_swap_init();
+
+	/*
+	 * Now that root is mounted, we can fixup initproc's CWD
+	 * info.  All other processes are kthreads, which merely
+	 * share proc0's CWD info.
+	 */
+	initproc->p_cwdi->cwdi_cdir = rootvnode;
+	VREF(initproc->p_cwdi->cwdi_cdir);
+	initproc->p_cwdi->cwdi_rdir = NULL;
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	p->p_stats->p_start = runtime = mono_time = boottime = time;
-	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	proclist_lock_read();
+	s = splclock();		/* so we can read time */
+	for (p = LIST_FIRST(&allproc); p != NULL;
+	     p = LIST_NEXT(p, p_list)) {
+		p->p_stats->p_start = runtime = mono_time = boottime = time;
+		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	}
+	splx(s);
+	proclist_unlock_read();
 
-	/*
-	 * Initialize signal-related data structures, and signal state
-	 * for proc0.
-	 */
-	signal_init();
-	p->p_sigacts = &sigacts0;
-	siginit(p);
-
-	/* Create process 1 (init(8)). */
-	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
-		panic("fork init");
-	cpu_set_kpc(initproc, start_init, initproc);
-
-	/* Create process 2, the pageout daemon kernel thread. */
+	/* Create the pageout daemon kernel thread. */
+	uvm_swap_init();
 	if (kthread_create1(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
-	/* Create process 3, the process reaper kernel thread. */
+	/* Create the process reaper kernel thread. */
 	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create process 4, the filesystem syncer */
+	/* Create the filesystem syncer kernel thread. */
 	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
-
-	/* Create any other deferred kernel threads. */
-	kthread_run_deferred_queue();
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
 #endif
+
+	/*
+	 * Okay, now we can let init(8) exec!  It's off to userland!
+	 */
+	start_init_exec = 1;
+	wakeup((void *)&start_init_exec);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -499,6 +546,12 @@ start_init(arg)
 	 * Now in process 1.
 	 */
 	strncpy(p->p_comm, "init", MAXCOMLEN);
+
+	/*
+	 * Wait for main() to tell us that it's safe to exec.
+	 */
+	while (start_init_exec == 0)
+		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
 
 	/*
 	 * This is not the right way to do this.  We really should

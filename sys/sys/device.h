@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.35 1999/09/23 15:14:58 minoura Exp $	*/
+/*	$NetBSD: device.h,v 1.36 2000/01/24 18:03:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,6 +171,8 @@ struct pdevinit {
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 
+extern __volatile int config_pending; 	/* semaphore for mountroot */
+
 void configure __P((void));
 struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
 struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
@@ -184,6 +186,8 @@ int config_activate __P((struct device *));
 int config_deactivate __P((struct device *));
 void config_defer __P((struct device *, void (*)(struct device *)));
 void config_interrupts __P((struct device *, void (*)(struct device *)));
+void config_pending_incr __P((void));
+void config_pending_decr __P((void));
 #if defined(__alpha__) || defined(hp300) || defined(__i386__) || \
 	defined(__sparc__) || defined(__vax__) || defined(x68k)
 void device_register __P((struct device *, void *));
