@@ -81,7 +81,7 @@ static u_long *rpc_uidp = (u_long *)0;
 static u_long nfs_xid = 1;
 static char *rpc_unixauth;
 extern long hostid;
-enum vtype ntov_type[7] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON };
+
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsreq nfsreqh;
 
@@ -521,12 +521,15 @@ nfs_init()
 	for (i = 0; i < NFS_NPROCS; i++)
 		nfs_procids[i] = txdr_unsigned(i);
 	/* Ensure async daemons disabled */
+	nfs_xdrneg1 = txdr_unsigned(-1);
+#ifdef NFSCLIENT	
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
 		nfs_iodwant[i] = (struct proc *)0;
-	nfs_xdrneg1 = txdr_unsigned(-1);
 	nfs_nhinit();			/* Init the nfsnode table */
+#endif /* NFSCLIENT */
+#ifdef NFSSERVER
 	nfsrv_initcache();		/* Init the server request cache */
-
+#endif /*NFSSERVER */
 	/*
 	 * Initialize reply list and start timer
 	 */
@@ -580,161 +583,6 @@ static char *nfs_unixauth(cr)
 	tl = (u_long *)(rpc_unixauth+4);
 	*tl = txdr_unsigned(i);
 	return (rpc_unixauth);
-}
-
-/*
- * Attribute cache routines.
- * nfs_loadattrcache() - loads or updates the cache contents from attributes
- *	that are on the mbuf list
- * nfs_getattrcache() - returns valid attributes if found in cache, returns
- *	error otherwise
- */
-
-/*
- * Load the attribute cache (that lives in the nfsnode entry) with
- * the values on the mbuf list and
- * Iff vap not NULL
- *    copy the attributes to *vaper
- */
-nfs_loadattrcache(vpp, mdp, dposp, vaper)
-	struct vnode **vpp;
-	struct mbuf **mdp;
-	caddr_t *dposp;
-	struct vattr *vaper;
-{
-	register struct vnode *vp = *vpp;
-	register struct vattr *vap;
-	register struct nfsv2_fattr *fp;
-	extern struct vnodeops spec_nfsv2nodeops;
-	register struct nfsnode *np;
-	register long t1;
-	caddr_t dpos, cp2;
-	int error = 0;
-	struct mbuf *md;
-	enum vtype type;
-	u_short mode;
-	long rdev;
-	struct timeval mtime;
-	struct vnode *nvp;
-
-	md = *mdp;
-	dpos = *dposp;
-	t1 = (mtod(md, caddr_t)+md->m_len)-dpos;
-	if (error = nfsm_disct(&md, &dpos, NFSX_FATTR, t1, TRUE, &cp2))
-		return (error);
-	fp = (struct nfsv2_fattr *)cp2;
-	type = nfstov_type(fp->fa_type);
-	mode = fxdr_unsigned(u_short, fp->fa_mode);
-	if (type == VNON)
-		type = IFTOVT(mode);
-	rdev = fxdr_unsigned(long, fp->fa_rdev);
-	fxdr_time(&fp->fa_mtime, &mtime);
-	/*
-	 * If v_type == VNON it is a new node, so fill in the v_type,
-	 * n_mtime fields. Check to see if it represents a special 
-	 * device, and if so, check for a possible alias. Once the
-	 * correct vnode has been obtained, fill in the rest of the
-	 * information.
-	 */
-	np = VTONFS(vp);
-	if (vp->v_type == VNON) {
-		if (type == VCHR && rdev == 0xffffffff)
-			vp->v_type = type = VFIFO;
-		else
-			vp->v_type = type;
-		if (vp->v_type == VFIFO) {
-#ifdef FIFO
-			extern struct vnodeops fifo_nfsv2nodeops;
-			vp->v_op = &fifo_nfsv2nodeops;
-#else
-			return (EOPNOTSUPP);
-#endif /* FIFO */
-		}
-		if (vp->v_type == VCHR || vp->v_type == VBLK) {
-			vp->v_op = &spec_nfsv2nodeops;
-			if (nvp = checkalias(vp, (dev_t)rdev, vp->v_mount)) {
-				/*
-				 * Reinitialize aliased node.
-				 */
-				np = VTONFS(nvp);
-				np->n_vnode = nvp;
-				np->n_flag = 0;
-				nfs_lock(nvp);
-				bcopy((caddr_t)&VTONFS(vp)->n_fh,
-					(caddr_t)&np->n_fh, NFSX_FH);
-				insque(np, nfs_hash(&np->n_fh));
-				np->n_attrstamp = 0;
-				np->n_sillyrename = (struct sillyrename *)0;
-				/*
-				 * Discard unneeded vnode and update actual one
-				 */
-				vput(vp);
-				*vpp = nvp;
-			}
-		}
-		np->n_mtime = mtime.tv_sec;
-	}
-	vap = &np->n_vattr;
-	vap->va_type = type;
-	vap->va_mode = (mode & 07777);
-	vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
-	vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
-	vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
-	vap->va_size = fxdr_unsigned(u_long, fp->fa_size);
-	if ((np->n_flag & NMODIFIED) == 0 || vap->va_size > np->n_size) {
-		np->n_size = vap->va_size;
-		vnode_pager_setsize(vp, np->n_size);
-	}
-	vap->va_size_rsv = 0;
-	vap->va_blocksize = fxdr_unsigned(long, fp->fa_blocksize);
-	vap->va_rdev = (dev_t)rdev;
-	vap->va_bytes = fxdr_unsigned(long, fp->fa_blocks) * NFS_FABLKSIZE;
-	vap->va_bytes_rsv = 0;
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
-	vap->va_fileid = fxdr_unsigned(long, fp->fa_fileid);
-	vap->va_atime.tv_sec = fxdr_unsigned(long, fp->fa_atime.tv_sec);
-	vap->va_atime.tv_usec = 0;
-	vap->va_flags = fxdr_unsigned(u_long, fp->fa_atime.tv_usec);
-	vap->va_mtime = mtime;
-	vap->va_ctime.tv_sec = fxdr_unsigned(long, fp->fa_ctime.tv_sec);
-	vap->va_ctime.tv_usec = 0;
-	vap->va_gen = fxdr_unsigned(u_long, fp->fa_ctime.tv_usec);
-	np->n_attrstamp = time.tv_sec;
-	*dposp = dpos;
-	*mdp = md;
-	if (vaper != NULL) {
-		bcopy((caddr_t)vap, (caddr_t)vaper, sizeof(*vap));
-		if ((np->n_flag & NMODIFIED) && (np->n_size > vap->va_size))
-			vaper->va_size = np->n_size;
-	}
-	return (0);
-}
-
-/*
- * Check the time stamp
- * If the cache is valid, copy contents to *vap and return 0
- * otherwise return an error
- */
-nfs_getattrcache(vp, vap)
-	register struct vnode *vp;
-	struct vattr *vap;
-{
-	register struct nfsnode *np;
-
-	np = VTONFS(vp);
-	if ((time.tv_sec-np->n_attrstamp) < NFS_ATTRTIMEO) {
-		nfsstats.attrcache_hits++;
-		bcopy((caddr_t)&np->n_vattr,(caddr_t)vap,sizeof(struct vattr));
-		if ((np->n_flag & NMODIFIED) == 0) {
-			np->n_size = vap->va_size;
-			vnode_pager_setsize(vp, np->n_size);
-		} else if (np->n_size > vap->va_size)
-			vap->va_size = np->n_size;
-		return (0);
-	} else {
-		nfsstats.attrcache_misses++;
-		return (ENOENT);
-	}
 }
 
 /*

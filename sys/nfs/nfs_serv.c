@@ -91,6 +91,44 @@ extern u_long nfs_false, nfs_true;
 nfstype nfs_type[9]={ NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON,
 		      NFCHR, NFNON };
 
+int	nfsrv_null(),
+	nfsrv_getattr(),
+	nfsrv_setattr(),
+	nfsrv_lookup(),
+	nfsrv_readlink(),
+	nfsrv_read(),
+	nfsrv_write(),
+	nfsrv_create(),
+	nfsrv_remove(),
+	nfsrv_rename(),
+	nfsrv_link(),
+	nfsrv_symlink(),
+	nfsrv_mkdir(),
+	nfsrv_rmdir(),
+	nfsrv_readdir(),
+	nfsrv_statfs(),
+	nfsrv_noop();
+
+int (*nfsrv_procs[NFS_NPROCS])() = {
+	nfsrv_null,
+	nfsrv_getattr,
+	nfsrv_setattr,
+	nfsrv_noop,
+	nfsrv_lookup,
+	nfsrv_readlink,
+	nfsrv_read,
+	nfsrv_noop,
+	nfsrv_write,
+	nfsrv_create,
+	nfsrv_remove,
+	nfsrv_rename,
+	nfsrv_link,
+	nfsrv_symlink,
+	nfsrv_mkdir,
+	nfsrv_rmdir,
+	nfsrv_readdir,
+	nfsrv_statfs,
+};
 /*
  * nfs getattr service
  */
