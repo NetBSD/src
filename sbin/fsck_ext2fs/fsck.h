@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.2 1997/10/09 13:19:35 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.3 2000/01/26 16:21:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -184,6 +184,7 @@ char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
 char	*statemap;		/* ptr to inode state table */
+u_char	*typemap;		/* ptr to inode type table */
 int16_t	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
