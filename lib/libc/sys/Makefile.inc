@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.92 1999/06/15 23:31:19 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.93 1999/06/29 22:22:06 wrstuden Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -34,7 +34,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
 	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
 	fchdir.o fchflags.o fchmod.o fchown.o fchroot.o fcntl.o \
-	fdatasync.o fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
+	fdatasync.o fhopen.o fhstat.o fhstatfs.o \
+	fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
 	fsync.o futimes.o __getcwd.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
