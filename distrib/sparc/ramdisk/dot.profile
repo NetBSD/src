@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.12 2000/10/30 23:13:10 pk Exp $
+# $NetBSD: dot.profile,v 1.13 2000/10/31 20:53:04 pk Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,14 +96,11 @@ EOF
 
 tape()
 {
-	local dev fn bs
+	local dev fn bsa
 	cat <<EOF
 By default, the installation utilities are located in the second tape file
 on the NetBSD/sparc installation tape. In case your tape layout is different,
 choose the appropriate tape file number below.
-If the installation tape was written with a different block size than
-the default suggested by this installation procedure, you have the
-opportunity to change that as well.
 
 EOF
 	dev="/dev/nrst0"
@@ -114,16 +111,17 @@ EOF
 	echo -n "Tape file number [$fn]: "
 	getresp "$fn"; fn="$_resp"
 
-	bs=4k
-	echo -n "Tape block size [$bs]: "
-	getresp "$bs"; bs="$_resp"
+	echo -n "Tape block size (use only if you know you need it): "
+	getresp ""; if [ "$_resp" != "" ]; then
+		bsa="-b $_resp"
+	fi
 
 	echo "Positioning tape... "
 	mt -f $dev asf $(($fn - 1))
 	[ $? = 0 ] || return 1
 
 	echo "Extracting installation utilities... "
-	(cd $INSTFS_MP && tar zxpbf $bs $dev) || return 1
+	(cd $INSTFS_MP && tar $bsa -z -x -p -f $dev) || return 1
 }
 
 cdrom()
