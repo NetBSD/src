@@ -1,11 +1,9 @@
-#	$NetBSD: VME147,v 1.16 1997/07/22 18:49:21 phil Exp $
+#	$NetBSD: VME147,v 1.17 1997/09/12 08:14:06 mycroft Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
 # Boards this kernel supports; need at lest the correct one
 options		MVME147
-
-options		FPCOPROC	# Support for MC6888[12] (Required)
 
 maxusers	2
 
