@@ -1,4 +1,11 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 1998/08/28 23:05:54 dbj Exp $	*/
+
+/*
+ * This file was taken from from mvme68k/include/vmparam.h and
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id: NetBSD: vmparam.h,v 1.9 1998/08/22 10:55:34 scw Exp 
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,10 +52,10 @@
 #ifndef _NEXT68K_VMPARAM_H_
 #define _NEXT68K_VMPARAM_H_
 
-
 /*
  * Machine dependent constants for NEXT68K
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
@@ -219,11 +226,11 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFFFFF000)
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
+#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -231,11 +238,39 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
 
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+/* Use new VM page bootstrap interface. */
+#define MACHINE_NEW_NONCONTIG
 
-#endif /* _NEXT68K_VMPARAM_H_ */
+#if 0
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * The mvme68k port has two physical memory segments: 1 for onboard RAM
+ * and another for contiguous VMEbus RAM.
+ */
+#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define	VM_PHYSSEG_NOADD
+
+#define	VM_NFREELIST		2
+#define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_VMEMEM	1
+#else
+/* @@@ check and verify these, also get values from seglist.h */
+#define	VM_PHYSSEG_MAX		5
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define	VM_PHYSSEG_NOADD
+#endif
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+
+#endif /* _MVME68K_VMPARAM_H_ */

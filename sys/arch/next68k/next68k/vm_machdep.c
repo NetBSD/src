@@ -1,4 +1,13 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1998/07/28 18:34:56 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 1998/08/28 23:05:55 dbj Exp $	*/
+
+/*
+ * This file was taken from from mvme68k/mvme68k/vm_machdep.c
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id:
+ *	NetBSD: vm_machdep.c,v 1.15 1998/08/22 10:55:36 scw Exp
+ */
+
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +51,9 @@
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
+#include "opt_uvm.h"
+#include "opt_compat_hpux.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -52,13 +64,17 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <machine/frame.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <m68k/cacheops.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -73,13 +89,13 @@ void
 cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
-	void child_return __P((struct proc *, struct frame));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
+	extern void proc_trampoline(), child_return();
 
-	p2->p_md.md_flags = p1->p_md.md_flags;
+	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
@@ -105,7 +121,7 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = (int) pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (u_long) pc;	/* A2 */
 }
 
 /*
@@ -121,10 +137,18 @@ cpu_exit(p)
 	struct proc *p;
 {
 
+#ifdef UVM
+	uvmspace_free(p->p_vmspace);
+#else
 	vmspace_free(p->p_vmspace);
+#endif
 
-	(void) splimp();
+	(void) splhigh();
+#ifdef UVM
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -147,6 +171,18 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	int error;
 
+#ifdef COMPAT_HPUX
+	extern struct emul emul_hpux;
+
+	/*
+	 * If we loaded from an HP-UX format binary file we dump enough
+	 * of an HP-UX style user struct so that the HP-UX debuggers can
+	 * grok it.
+	 */
+	if (p->p_emul == &emul_hpux)
+		return (hpux_dumpu(vp, cred));
+#endif
+
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
@@ -157,15 +193,10 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	if (fputype) {
-		/* Save floating point registers. */
-		error = process_read_fpregs(p, &md_core.freg);
-		if (error)
-			return error;
-	} else {
-		/* Make sure these are clear. */
-		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
-	}
+	/* Save floating point registers. */
+	error = process_read_fpregs(p, &md_core.freg);
+	if (error)
+		return error;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
 	cseg.c_addr = 0;
@@ -197,24 +228,24 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -257,15 +288,83 @@ physunaccess(vaddr, size)
 }
 
 /*
+ * Allocate/deallocate a cache-inhibited range of kernel virtual address
+ * space mapping the indicated physical range [pa - pa+size].
+ */
+void *
+iomap(paddr, size)
+	u_long paddr;
+	size_t size;
+{
+	u_long pa, off;
+	vaddr_t va, rval;
+
+	off = paddr & PGOFSET;
+	pa = m68k_trunc_page(paddr);
+	size += off;
+	size = m68k_round_page(size);
+
+	/* Get some kernel virtual space. */
+#ifdef UVM
+	va = uvm_km_alloc(kernel_map, size);
+#else
+	va = kmem_alloc_pageable(kernel_map, size);
+#endif
+	if (va == 0)
+		return (NULL);
+	rval = va + off;
+
+	/* Map the PA range. */
+	physaccess((caddr_t)va, (caddr_t)pa, size, PG_RW|PG_CI);
+
+	return ((void *)rval);
+}
+
+void
+iounmap(kva, size)
+	void *kva;
+	size_t size;
+{
+	vaddr_t va;
+
+	va = m68k_trunc_page((vaddr_t)kva);
+	size = m68k_round_page(size);
+
+	physunaccess((caddr_t)va, size);
+#ifdef UVM
+	uvm_km_free(kernel_map, va, size);
+#else
+	kmem_free(kernel_map, va, size);
+#endif
+}
+
+/*
+ * Set a red zone in the kernel stack after the u. area.
+ * We don't support a redzone right now.  It really isn't clear
+ * that it is a good idea since, if the kernel stack were to roll
+ * into a write protected page, the processor would lock up (since
+ * it cannot create an exception frame) and we would get no useful
+ * post-mortem info.  Currently, under the DEBUG option, we just
+ * check at every clock interrupt to see if the current k-stack has
+ * gone too far (i.e. into the "redzone" page) and if so, panic.
+ * Look at _lev6intr in locore.s for more details.
+ */
+/*ARGSUSED*/
+setredzone(pte, vaddr)
+	pt_entry_t *pte;
+	caddr_t vaddr;
+{
+}
+
+/*
  * Convert kernel VA to physical address
  */
-int
 kvtop(addr)
 	caddr_t addr;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
@@ -284,21 +383,25 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
+#ifdef UVM
+	kva = uvm_km_valloc_wait(phys_map, len);
+#else
 	kva = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -320,23 +423,27 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
 	/*
 	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
 	 * will do it for us.
 	 */
+#ifdef UVM
+	uvm_km_free_wakeup(phys_map, kva, len);
+#else
 	kmem_free_wakeup(phys_map, kva, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

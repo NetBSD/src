@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.3 1998/08/04 19:08:23 dbj Exp $	*/
+/*	$NetBSD: seglist.h,v 1.4 1998/08/28 23:05:55 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -41,11 +41,15 @@
  *
  * NOTE: If you change this, you'll need to update locore.s ...
  */
-struct phys_seg_list_t {
+typedef struct {
 	vm_offset_t	ps_start;	/* Start of segment */
 	vm_offset_t	ps_end;		/* End of segment */
 	int		ps_startpage;	/* Page number of first page */
-};
+}  phys_seg_list_t;
+
+/* @@@ this next specific stuff should be moved elsewhere
+ * and this file should be re-synced to the mvme version
+ */ 
 
 #define	N_SIMM		4		/* number of SIMMs in machine */
 
@@ -72,4 +76,4 @@ struct phys_seg_list_t {
 
 /* Instantiated in pmap.c */
 /* size +1 is for list termination */
-extern struct phys_seg_list_t phys_seg_list[MAX_PHYS_SEGS];
+extern phys_seg_list_t phys_seg_list[];

@@ -1,4 +1,13 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 1998/08/28 23:05:55 dbj Exp $	*/
+
+/*
+ * This file was taken from from mvme68k/mvme68k/pmap_bootstrap.c
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id:
+ *	NetBSD: pmap_bootstrap.c,v 1.10 1998/08/22 10:55:35 scw Exp
+ */
+
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,13 +49,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/kcore.h>
+#include <machine/kcore.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 
-#ifdef	MACHINE_NONCONTIG
 #include <next68k/next68k/seglist.h>
-#endif
 
 #include <vm/vm.h>
 
@@ -59,12 +68,12 @@ extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
-extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
-extern vm_size_t mem_size;
-#ifdef MACHINE_NONCONTIG
-extern vm_size_t avail_remaining;
-extern vm_offset_t avail_next;
-#endif
+extern paddr_t avail_start, avail_end;
+extern vaddr_t virtual_avail, virtual_end;
+extern vsize_t mem_size;
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
+extern paddr_t msgbufpa;
 extern int protection_codes[];
 #ifdef HAVEVAC
 extern int pmap_aliasmask;
@@ -76,12 +85,10 @@ extern int pmap_aliasmask;
  *
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
- *	ledbase:	SPU LEDs
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap, ledbase;
+caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
-
 #ifdef MAP_LEDATABUF
 extern void *ledatabuf; /* XXXCDC */
 #endif
@@ -99,16 +106,15 @@ extern void *ledatabuf; /* XXXCDC */
  */
 void
 pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	register vm_offset_t firstpa;
+	paddr_t nextpa;
+	paddr_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	register st_entry_t protoste, *ste;
-	register pt_entry_t protopte, *pte, *epte;
-#ifdef MACHINE_NONCONTIG
+	st_entry_t protoste, *ste;
+	pt_entry_t protopte, *pte, *epte;
+	psize_t size;
 	int i;
-#endif
 
 	/*
 	 * Calculate important physical addresses:
@@ -192,7 +198,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
-		register int num;
+		int num;
 
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -411,85 +417,80 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
 
 	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
+	 * Initialize the mem_clusters[] array for the crash dump
+	 * code.  While we're at it, compute the total amount of
+	 * physical memory in the system.
 	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-
-#ifndef MACHINE_NONCONTIG
-	RELOC(avail_end, vm_offset_t) =
-		m68k_ptob(RELOC(maxmem, int))
-			/* XXX allow for msgbuf */
-			- m68k_round_page(MSGBUFSIZE);
-
-#else
-	RELOC(avail_next, vm_offset_t) = RELOC(avail_start, vm_offset_t);
-
-	/* leave space at end of onboard RAM for message buffer */
-	RELOC(phys_seg_list[0].ps_end, vm_offset_t) -=
-		m68k_round_page(MSGBUFSIZE);
-
-	/* initial avail_end is end of onboard RAM */
-	RELOC(avail_end, vm_offset_t) =
-		m68k_round_page(RELOC(phys_seg_list[0].ps_end, vm_offset_t));
-
-	RELOC(avail_remaining, vm_size_t) =
-		(RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
-		 RELOC(avail_start, vm_offset_t)) >> PGSHIFT;
-
-	RELOC(phys_seg_list[0].ps_start, vm_offset_t) = 
-		RELOC(avail_start, vm_offset_t);
-	RELOC(phys_seg_list[0].ps_startpage, vm_offset_t) = 0;
-
-	/* initial physmem is size of segment zero (onboard RAM) */
-	RELOC(physmem, int) = 
-		    (RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
-		     RELOC(phys_seg_list[0].ps_start, vm_offset_t)) / NBPG;
-
-	/* iterate over any remaining segments */
-	for (i = 1; i < MAX_PHYS_SEGS; i++) {
-		vm_offset_t	len;
-
-		if ( RELOC(phys_seg_list[i].ps_start, vm_offset_t) == 0 )
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (RELOC(phys_seg_list[i].ps_start, paddr_t) ==
+		    RELOC(phys_seg_list[i].ps_end, paddr_t)) {
+			/*
+			 * No more memory.
+			 */
 			break;
-
-		len = RELOC(phys_seg_list[i].ps_end, vm_offset_t) -
-		      RELOC(phys_seg_list[i].ps_start, vm_offset_t);
-
-		/* compute the first page number for this segment */
-		RELOC(phys_seg_list[i].ps_startpage, int) =
-		    RELOC(phys_seg_list[i - 1].ps_startpage, int) +
-		    (RELOC(phys_seg_list[i - 1].ps_end, vm_offset_t) -
-		     RELOC(phys_seg_list[i - 1].ps_start, vm_offset_t)) / NBPG;
-
-		RELOC(avail_remaining, vm_size_t) += (len / NBPG);
-		RELOC(physmem, int) += (len / NBPG);
-
-		if ( m68k_round_page(RELOC(phys_seg_list[i].ps_end,
-					   vm_offset_t)) >
-			RELOC(avail_end, vm_offset_t) ) {
-			RELOC(avail_end, vm_offset_t) =
-				m68k_round_page(RELOC(phys_seg_list[i].ps_end,
-						      vm_offset_t));
 		}
+
+		/*
+		 * Make sure these are properly rounded.
+		 */
+		RELOC(phys_seg_list[i].ps_start, paddr_t) =
+		    m68k_round_page(RELOC(phys_seg_list[i].ps_start,
+					  paddr_t));
+		RELOC(phys_seg_list[i].ps_end, paddr_t) =
+		    m68k_trunc_page(RELOC(phys_seg_list[i].ps_end,
+					  paddr_t));
+
+		size = RELOC(phys_seg_list[i].ps_end, paddr_t) -
+		    RELOC(phys_seg_list[i].ps_start, paddr_t);
+
+		RELOC(mem_clusters[i].start, u_quad_t) =
+		    RELOC(phys_seg_list[i].ps_start, paddr_t);
+		RELOC(mem_clusters[i].size, u_quad_t) = size;
+
+		RELOC(physmem, int) += size >> PGSHIFT;
+
+		RELOC(mem_cluster_cnt, int) += 1;
 	}
-#endif
 
-	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_avail, vm_offset_t) =
-		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
-
-#ifdef HAVEVAC
 	/*
-	 * Determine VA aliasing distance if any
+	 * Scoot the start of available on-board RAM forward to
+	 * account for:
+	 *
+	 *	(1) The bootstrap programs in low memory (so
+	 *	    that we can jump back to them without
+	 *	    reloading).
+	 *
+	 *	(2) The kernel text, data, and bss.
+	 *
+	 *	(3) The pages we stole above for pmap data
+	 *	    structures.
 	 */
-	if (RELOC(ectype, int) == EC_VIRT)
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-#endif
+	RELOC(phys_seg_list[0].ps_start, paddr_t) = nextpa;
+
+	/*
+	 * Reserve space at the end of on-board RAM for the message
+	 * buffer.  We force it into on-board RAM because VME RAM
+	 * isn't cached by the hardware (s-l-o-w).
+	 */
+	RELOC(phys_seg_list[0].ps_end, paddr_t) -=
+	    m68k_round_page(MSGBUFSIZE);
+	RELOC(msgbufpa, paddr_t) =
+	    RELOC(phys_seg_list[0].ps_end, paddr_t);
+
+	/*
+	 * Initialize avail_start and avail_end.
+	 */
+	i = RELOC(mem_cluster_cnt, int) - 1;
+	RELOC(avail_start, paddr_t) =
+	    RELOC(phys_seg_list[0].ps_start, paddr_t);
+	RELOC(avail_end, paddr_t) =
+	    RELOC(phys_seg_list[i].ps_end, paddr_t);
+
+	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
+
+	RELOC(virtual_avail, vaddr_t) =
+		VM_MIN_KERNEL_ADDRESS + (vaddr_t)(nextpa - firstpa);
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Initialize protection array.
@@ -497,7 +498,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * absolute "jmp" table.
 	 */
 	{
-		register int *kp;
+		int *kp;
 
 		kp = &RELOC(protection_codes, int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
@@ -511,7 +512,7 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 
 	/*
-	 * Kernel page/segment table allocated in locore,
+	 * Kernel page/segment table allocated above,
 	 * just initialize pointers.
 	 */
 	{
@@ -530,7 +531,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 *	MAXKL2SIZE-1:	maps last-page page table
 		 */
 		if (RELOC(mmutype, int) == MMU_68040) {
-			register int num;
+			int num;
 			
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
@@ -549,7 +550,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
+		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
@@ -557,10 +558,8 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(ledbase, caddr_t) = (caddr_t)va;
-		va += NBPG;
 		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
-		RELOC(virtual_avail, vm_offset_t) = va;
+		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }

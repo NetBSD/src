@@ -1,4 +1,11 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/* $ NetBSD: pmap.h,v 1.12 1998/08/22 10:55:34 scw Exp $ */
+
+/*
+ * This file was taken from from mvme68k/include/pmap.h and
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id: NetBSD: pmap.h,v 1.12 1998/08/22 10:55:34 scw Exp
+ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,11 +50,9 @@
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_
 
-#include <machine/cpu.h>
 #include <machine/pte.h>
 
 #if defined(M68040) && 0
-@@@ Why is this not always NBSEG ? -- jewell@mit.edu
 #define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
 #define HP_SEG_SIZE	NBSEG
@@ -92,7 +97,7 @@ typedef struct pmap	*pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((vm_offset_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));	\
 }
 
 /*
@@ -102,7 +107,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -133,7 +138,6 @@ struct pv_page {
 #ifdef	_KERNEL
 
 extern struct pmap	kernel_pmap_store;
-extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
@@ -144,16 +148,18 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-#ifndef MACHINE_NONCONTIG
+#ifndef MACHINE_NEW_NONCONTIG
 #define pmap_page_index(pa)		atop(pa - vm_first_phys)
 #endif
-#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
+
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
 #endif /* _KERNEL */
 
 #endif /* !_MACHINE_PMAP_H_ */
