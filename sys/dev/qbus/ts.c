@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.3 2001/11/13 07:11:25 lukem Exp $ */
+/*	$NetBSD: ts.c,v 1.3.8.1 2002/05/16 11:49:10 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.3 2001/11/13 07:11:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.3.8.1 2002/05/16 11:49:10 gehenna Exp $");
 
 #undef	TSDEBUG
 
@@ -169,11 +169,25 @@ static	int tsmatch(struct device *, struct cfdata *, void *);
 static	void tsattach(struct device *, struct device *, void *);
 static	int tsready(struct uba_unit *);
 
-cdev_decl(ts);
-bdev_decl(ts);
-
 struct	cfattach ts_ca = {
 	sizeof(struct ts_softc), tsmatch, tsattach
+};
+
+dev_type_open(tsopen);
+dev_type_close(tsclose);
+dev_type_read(tsread);
+dev_type_write(tswrite);
+dev_type_ioctl(tsioctl);
+dev_type_strategy(tsstrategy);
+dev_type_dump(tsdump);
+
+const struct bdevsw ts_bdevsw = {
+	tsopen, tsclose, tsstrategy, tsioctl, tsdump, nosize, D_TAPE
+};
+
+const struct cdevsw ts_cdevsw = {
+	tsopen, tsclose, tsread, tswrite, tsioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
 };
 
 /* Bits in minor device */ 
