@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.24 2003/08/07 01:12:15 mjacob Exp $ */
+/* $NetBSD: isp_target.c,v 1.25 2003/11/02 11:07:45 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.24 2003/08/07 01:12:15 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -750,7 +750,7 @@ isp_handle_atio(struct ispsoftc *isp, at_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator
@@ -837,7 +837,7 @@ isp_handle_atio2(struct ispsoftc *isp, at2_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator
@@ -947,7 +947,7 @@ isp_handle_ctio(struct ispsoftc *isp, ct_entry_t *ct)
 		 * Bus Device Reset message received or the SCSI Bus has
 		 * been Reset; the firmware has gone to Bus Free.
 		 *
-		 * The firmware generates an async mailbox interupt to
+		 * The firmware generates an async mailbox interrupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.
@@ -1100,7 +1100,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 		/*
 		 * Target Reset function received.
 		 *
-		 * The firmware generates an async mailbox interupt to
+		 * The firmware generates an async mailbox interrupt to
 		 * notify us of this and returns outstanding CTIOs with this
 		 * status. These CTIOs are handled in that same way as
 		 * CT_ABORTED ones, so just fall through here.

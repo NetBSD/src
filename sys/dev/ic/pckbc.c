@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $ */
+/* $NetBSD: pckbc.c,v 1.27 2003/11/02 11:07:45 wiz Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26 2003/06/12 03:34:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.27 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -779,7 +779,7 @@ pckbc_start(t, slot)
 }
 
 /*
- * Handle command responses coming in asynchonously,
+ * Handle command responses coming in asynchronously,
  * return nonzero if valid response.
  * to be called at spltty()
  */

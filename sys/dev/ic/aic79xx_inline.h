@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.8 2003/08/29 05:48:39 thorpej Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.9 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -404,7 +404,7 @@ ahd_targetcmd_offset(struct ahd_softc *ahd, u_int index)
 	       - (uint8_t *)ahd->qoutfifo);
 }
 
-/*********************** Miscelaneous Support Functions ***********************/
+/*********************** Miscellaneous Support Functions ***********************/
 static __inline void	ahd_complete_scb(struct ahd_softc *, struct scb *);
 static __inline void	ahd_update_residual(struct ahd_softc *, struct scb *);
 static __inline struct ahd_initiator_tinfo *
@@ -976,7 +976,7 @@ ahd_minphys(bp)
  * Even though the card can transfer up to 16megs per command
  * we are limited by the number of segments in the DMA segment
  * list that we can hold.  The worst case is that all pages are
- * discontinuous physically, hense the "page per segment" limit
+ * discontinuous physically, hence the "page per segment" limit
  * enforced here.
  */
         if (bp->b_bcount > AHD_MAXTRANSFER_SIZE) {
