@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.17 1995/12/11 12:43:30 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.18 1996/01/11 11:19:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -362,7 +362,7 @@ bus_map(pa, len, bustype)
 	int len;
 	int bustype;
 {
-	u_long	pf = (u_long)pa >> PGSHIFT;
+	u_long	pf = (u_long)(pa->rr_paddr) >> PGSHIFT;
 	u_long	va, pte;
 	int pgtype;
 
