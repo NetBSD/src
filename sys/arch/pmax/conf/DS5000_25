@@ -2,7 +2,7 @@
 # Sample Config file for DECstation 5000/20 or 5000/25
 # (UNTESTED!)
 #
-# 	$NetBSD: DS5000_25,v 1.5 1997/01/31 01:59:12 thorpej Exp $
+# 	$NetBSD: DS5000_25,v 1.6 1997/05/29 02:22:35 mhitch Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -71,7 +71,7 @@ options		COMPAT_ULTRIX	# ultrix compatibility
 options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options		"HZ=256"	# RTC rate required
 
-config		netbsd root on rz2a type ffs swap on rz2b and rz1b dumps on rz2b
+config		netbsd root on ? type ?
 
 
 
