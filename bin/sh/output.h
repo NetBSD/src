@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.12 1996/10/16 15:45:14 christos Exp $	*/
+/*	$NetBSD: output.h,v 1.13 1997/04/11 23:08:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #ifndef OUTPUT_INCL
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
