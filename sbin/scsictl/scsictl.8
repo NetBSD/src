@@ -1,6 +1,6 @@
-.\"	$NetBSD: scsictl.8,v 1.13 2001/11/16 11:26:56 wiz Exp $
+.\"	$NetBSD: scsictl.8,v 1.13.2.1 2003/07/28 17:35:38 he Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 15, 1998
+.Dd September 3, 2002
 .Dt SCSICTL 8
 .Os
 .Sh NAME
@@ -69,8 +69,41 @@ and displayed to the standard output.
 The following commands are supported for SCSI devices:
 .Pp
 .Nm format
+.Oo blocksize
+.Oo immediate
+.Oc
+.Oc
 .Pp
-(Low level) format the named device.
+(Low level) format the named device. If the optional
+.Li blocksize
+parameter is provided, the device geometry will be modified to
+use the specified
+.Li blocksize .
+If this parameter is different form the Current or Default Mode Page 3
+parameters, the device will update Mode Page 3 at the successful
+completion of the Format.  Device geometry may change as a result of
+using a new device
+.Li blocksize .
+When the optional
+.Li blocksize
+parameter is specified, the Defect List on the drive will revert to
+the original primary defect list created at the time of manufacture
+if available.  The drive will usually recertify itself
+during the Format and add any other defective blocks to the new Defect
+List.  Some disks may not support the ability to change the blocksize and
+may enter a Degraded Mode when fed a Format command of this type.  If this
+happens the standard recovery for the drive requires issuing a correct
+Format command, i.e. one without the blocksize parameter.
+.Pp
+When the
+.Li immediate
+parameter is also specified, the disk is instructed to return from the
+format command right away. It continues to format, and every ten seconds
+.Nm
+issues a TEST UNIT READY command to check the associated sense data. This
+associated sense data has a progress indicator which indicates how far
+the format is progressing. Note well that most SCSI disk drives prior to
+a few years ago do not support this option.
 .Pp
 .Nm identify
 .Pp
@@ -90,12 +123,66 @@ command to the device, adding the specified blocks to the
 grown defect list.  This command is only supported on
 direct access devices.
 .Pp
+.Nm release
+.Pp
+Send a
+.Dq RELEASE
+command to the device to release a reservation on it.
+.Pp
+.Nm reserve
+.Pp
+Send a
+.Dq RESERVE
+command to the device to place a reservation on it.
+.Pp
 .Nm reset
 .Pp
 Reset the device.  This command is only supported for devices which
 support the
 .Li SCIOCRESET
 ioctl.
+.Pp
+.Nm start
+.Pp
+Send a
+.Dq START
+command to the device.  This is useful typically only for
+disk devices.
+.Pp
+.Nm stop
+.Pp
+Send a
+.Dq STOP
+command to the device.  This is useful typically only for
+disk devices.
+.Pp
+.Nm tur
+.Pp
+Send a
+.Dq TEST UNIT READY
+command to the device.  This is useful for generating
+current device status.
+.Pp
+.Nm getcache
+.Pp
+Returns basic cache parameters for the device.
+.Pp
+.Nm setcache
+.Ar none|r|w|rw
+.Op Ar save
+.Pp
+Set basic cache parameters for the device.  The cache may be disabled
+.Pq none ,
+the read cache enabled
+.Pq r ,
+the write cache enabled
+.Pq w ,
+or both read and write cache enabled
+.Pq rw .
+If the drive's cache parameters are savable, specifying
+.Ar save
+after the cache enable state will cause the parameters to be saved in
+non-volatile storage.
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
 .Pp
