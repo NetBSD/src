@@ -41,6 +41,7 @@ extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_sr_support;
 extern initialize_file_ftype _initialize_tracepoint;
 extern initialize_file_ftype _initialize_ax_gdb;
+extern initialize_file_ftype _initialize_remote_sim;
 extern initialize_file_ftype _initialize_mem;
 extern initialize_file_ftype _initialize_parse;
 extern initialize_file_ftype _initialize_language;
@@ -128,6 +129,7 @@ initialize_all_files (void)
   _initialize_sr_support ();
   _initialize_tracepoint ();
   _initialize_ax_gdb ();
+  _initialize_remote_sim ();
   _initialize_mem ();
   _initialize_parse ();
   _initialize_language ();
