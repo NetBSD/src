@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2003/02/01 14:48:17 dsl Exp $
+#	$NetBSD: Makefile,v 1.42 2003/02/02 21:05:53 dsl Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -51,8 +51,8 @@ CPPFLAGS+= -DPASS_MEMMAP
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about
-# "not enough fragment space in bootcode" (default: 10)
-#CPPFLAGS+= -DMAXFLENTRIES=15
+# "not enough fragment space in bootcode" (default: 20)
+#CPPFLAGS+= -DMAXFLENTRIES=30
 #set PRIM_LOADSZ to <=9 to make a 720k boot floppy (default: 15)
 #CPPFLAGS+= -DPRIM_LOADSZ=9
 
