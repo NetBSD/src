@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.6 1998/02/10 14:12:18 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.7 1998/02/18 14:50:32 drochner Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -1567,8 +1567,7 @@ int flags;
 
       if (copy_ok) {
 	oldoffset = (entry->start + fudge) - start;
-	elen = entry->end - entry->start;
-	elen = min(elen, end - (dstaddr + oldoffset));
+	elen = min(end, entry->end) - (entry->start + fudge);
 	pmap_copy(dstmap->pmap, srcmap->pmap, dstaddr + oldoffset, 
 		  elen, entry->start + fudge);
       }
