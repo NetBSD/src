@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.13 1997/10/08 16:55:44 kleink Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.14 1997/10/17 11:54:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif not lint
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nfsiod.c	8.4 (Berkeley) 5/3/95"
 #else
-static char rcsid[] = "$NetBSD: nfsiod.c,v 1.13 1997/10/08 16:55:44 kleink Exp $";
+__RCSID("$NetBSD: nfsiod.c,v 1.14 1997/10/17 11:54:37 lukem Exp $");
 #endif
 #endif not lint
 
@@ -77,9 +77,10 @@ int debug = 1;
 int debug = 0;
 #endif
 
-void nonfs __P((int));
-void reapchild __P((int));
-void usage __P((void));
+int	main __P((int, char **));
+void	nonfs __P((int));
+void	reapchild __P((int));
+void	usage __P((void));
 
 /*
  * Nfsiod does asynchronous buffered I/O on behalf of the NFS client.
@@ -102,7 +103,7 @@ main(argc, argv)
 			num_servers = atoi(optarg);
 			if (num_servers < 1 || num_servers > MAXNFSDCNT) {
 				warnx("nfsiod count %d; reset to %d",
-				    DEFNFSDCNT);
+				    num_servers, DEFNFSDCNT);
 				num_servers = DEFNFSDCNT;
 			}
 			break;
@@ -122,7 +123,8 @@ main(argc, argv)
 	if (argc == 1) {
 		num_servers = atoi(argv[0]);
 		if (num_servers < 1 || num_servers > MAXNFSDCNT) {
-			warnx("nfsiod count %d; reset to %d", DEFNFSDCNT);
+			warnx("nfsiod count %d; reset to %d",
+			    num_servers, DEFNFSDCNT);
 			num_servers = DEFNFSDCNT;
 		}
 	}

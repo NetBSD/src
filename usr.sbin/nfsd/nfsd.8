@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.7 1996/02/18 11:58:24 fvdl Exp $
+.\"   $NetBSD: nfsd.8,v 1.8 1997/10/17 11:53:25 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,16 +42,16 @@
 .Tn NFS
 server
 .Sh SYNOPSIS
-.Nm nfsd
+.Nm
 .Op Fl rut
 .Op Fl n Ar num_servers
 .Sh DESCRIPTION
-.Nm Nfsd
+.Nm
 runs on a server machine to service
 .Tn NFS
 requests from client machines.
 At least one
-.Nm nfsd
+.Nm
 must be running for a machine to operate as a server.
 .Pp
 Unless otherwise specified, four servers for
@@ -95,7 +95,7 @@ A server should run enough daemons to handle
 the maximum level of concurrency from its clients,
 typically four to six.
 .Pp
-.Nm Nfsd
+.Nm
 listens for service requests at the port indicated in the
 .Tn NFS
 server specification; see
@@ -104,7 +104,7 @@ RFC1094 and
 .%T "NFS: Network File System Version 3 Protocol Specification" .
 .Pp
 The
-.Nm nfsd
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
@@ -113,5 +113,5 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr portmap 8
 .Sh HISTORY
 The
-.Nm nfsd
+.Nm
 utility first appeared in 4.4BSD.
